@@ -1,0 +1,112 @@
+@inject ICoworkeeApi Api
+@inject ISnackbar Snackbar
+
+@if (_groups is null)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else
+{
+    @foreach (var group in _groups)
+    {
+        <MudText Typo="Typo.overline" Class="mt-4 d-block">@group.DisplayName</MudText>
+        @foreach (var setting in group.Settings)
+        {
+            <div data-setting="@setting.Name" class="mb-3">
+                @switch (setting.Type)
+                {
+                    case SettingType.Bool:
+                        <MudCheckBox T="bool" Value="@(bool.TryParse(Current(setting), out var on) && on)" ValueChanged="@((bool v) => Set(setting, v ? "true" : "false"))" Label="@setting.DisplayName" />
+                        break;
+                    case SettingType.Int:
+                        <MudTextField T="string" Value="@Current(setting)" ValueChanged="@((string v) => Set(setting, v))" Label="@setting.DisplayName"
+                                      InputType="InputType.Number" Placeholder="@setting.DefaultValue" />
+                        break;
+                    case SettingType.Secret:
+                        <MudTextField T="string" Value="@_edited.GetValueOrDefault(setting.Name)" ValueChanged="@((string v) => Set(setting, v))" Label="@setting.DisplayName"
+                                      InputType="InputType.Password" HelperText="@(IsStored(setting) ? "A value is stored. Type to replace it." : "No value stored.")" />
+                        break;
+                    case SettingType.Text:
+                        <MudTextField T="string" Value="@Current(setting)" ValueChanged="@((string v) => Set(setting, v))" Label="@setting.DisplayName" Lines="4" />
+                        break;
+                    case SettingType.Choice:
+                        <MudSelect T="string" Value="@Current(setting)" ValueChanged="@((string v) => Set(setting, v))" Label="@setting.DisplayName">
+                            @foreach (var choice in setting.Choices ?? [])
+                            {
+                                <MudSelectItem Value="@choice">@choice</MudSelectItem>
+                            }
+                        </MudSelect>
+                        break;
+                    default:
+                        <MudTextField T="string" Value="@Current(setting)" ValueChanged="@((string v) => Set(setting, v))" Label="@setting.DisplayName" Placeholder="@setting.DefaultValue" />
+                        break;
+                }
+                @if (setting.Description is not null)
+                {
+                    <MudText Typo="Typo.caption">@setting.Description</MudText>
+                }
+            </div>
+        }
+    }
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="@(_saving || _edited.Count == 0)" data-testid="save-settings">Save</MudButton>
+}
+
+@code {
+    private IReadOnlyList<SettingGroupDto>? _groups;
+    private Dictionary<string, SettingValueDto> _stored = [];
+    private readonly Dictionary<string, string?> _edited = new(StringComparer.Ordinal);
+    private bool _saving;
+
+    [Parameter, EditorRequired] public SettingScope Scope { get; set; }
+
+    protected override async Task OnParametersSetAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        var definitions = await Api.GetSettingDefinitionsAsync(Scope == SettingScope.User);
+        _stored = (await Api.GetSettingsAsync(Scope)).ToDictionary(v => v.Name, StringComparer.Ordinal);
+        _groups = definitions
+            .Select(g => g with { Settings = g.Settings.Where(s => s.Scopes.Contains(Scope)).ToList() })
+            .Where(g => g.Settings.Count > 0)
+            .ToList();
+        _edited.Clear();
+    }
+
+    private string? Current(SettingDefinitionDto setting) =>
+        _edited.TryGetValue(setting.Name, out var edited) ? edited : _stored.GetValueOrDefault(setting.Name)?.Value;
+
+    private bool IsStored(SettingDefinitionDto setting) => _stored.GetValueOrDefault(setting.Name)?.HasValue == true;
+
+    private void Set(SettingDefinitionDto setting, string? value)
+    {
+        var normalized = string.IsNullOrEmpty(value) ? null : value;
+        if (setting.Type == SettingType.Secret ? normalized is null : normalized == _stored.GetValueOrDefault(setting.Name)?.Value)
+        {
+            _edited.Remove(setting.Name);
+        }
+        else
+        {
+            _edited[setting.Name] = normalized;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        try
+        {
+            await Api.SetSettingsAsync(Scope, new Dictionary<string, string?>(_edited, StringComparer.Ordinal));
+            Snackbar.Add("Settings saved.", Severity.Success);
+            await LoadAsync();
+        }
+        catch (ApiException exception)
+        {
+            Snackbar.Add(exception.Errors is { Count: > 0 } errors ? string.Join(" ", errors.SelectMany(e => e.Value)) : exception.Message, Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}

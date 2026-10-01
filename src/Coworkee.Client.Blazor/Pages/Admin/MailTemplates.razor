@@ -1,0 +1,31 @@
+@page "/admin/mail/templates"
+@attribute [Authorize(Policy = "perm:" + MailPermissions.Templates.Manage)]
+@inject ICoworkeeApi Api
+
+<PageTitle>Mail templates</PageTitle>
+<MudText Typo="Typo.h4" Class="mb-4">Mail templates</MudText>
+<MudSimpleTable Dense="true" Hover="true">
+    <thead><tr><th>Template</th><th>Name</th><th>Languages</th></tr></thead>
+    <tbody>
+        @foreach (var template in _templates)
+        {
+            <tr>
+                <td>@template.DisplayName</td>
+                <td><MudText Typo="Typo.caption">@template.Name</MudText></td>
+                <td>
+                    @foreach (var culture in template.Cultures)
+                    {
+                        <MudChip T="string" Size="Size.Small" Href="@($"/admin/mail/templates/{Uri.EscapeDataString(template.Name)}/{culture}")"
+                                 Color="@(template.OverriddenCultures.Contains(culture) ? Color.Secondary : Color.Default)">@culture</MudChip>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</MudSimpleTable>
+
+@code {
+    private IReadOnlyList<MailTemplateSummaryDto> _templates = [];
+
+    protected override async Task OnInitializedAsync() => _templates = await Api.GetMailTemplatesAsync();
+}

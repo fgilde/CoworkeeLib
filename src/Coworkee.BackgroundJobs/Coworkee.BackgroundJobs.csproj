@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\Coworkee.Contracts\Coworkee.Contracts.csproj" />
+    <ProjectReference Include="..\Coworkee.Application\Coworkee.Application.csproj" />
+    <ProjectReference Include="..\Coworkee.AspNetCore\Coworkee.AspNetCore.csproj" />
+    <PackageReference Include="Hangfire.AspNetCore" />
+    <PackageReference Include="Hangfire.PostgreSql" />
+    <PackageReference Include="Newtonsoft.Json" />
+  </ItemGroup>
+</Project>

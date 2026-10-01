@@ -1,10 +1,14 @@
 using Coworkee.Application;
 using Coworkee.Core.Security;
+using Coworkee.Infrastructure.DataProtection;
 using Coworkee.Infrastructure.Persistence.Interceptors;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace Coworkee.Infrastructure.Persistence;
 
@@ -34,6 +38,10 @@ public static class DbContextServiceCollectionExtensions
             options.AddInterceptors(provider.GetServices<IInterceptor>());
         });
         services.AddScoped<CoworkeeDbContext>(provider => provider.GetRequiredService<TContext>());
+        services.TryAddSingleton<DbXmlRepository>();
+        services.AddDataProtection().SetApplicationName("Coworkee");
+        services.AddSingleton<IConfigureOptions<KeyManagementOptions>>(provider =>
+            new ConfigureOptions<KeyManagementOptions>(options => options.XmlRepository = provider.GetRequiredService<DbXmlRepository>()));
         services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<TContext>());
         return services;
     }

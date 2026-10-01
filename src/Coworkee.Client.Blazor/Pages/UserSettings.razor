@@ -1,0 +1,6 @@
+@page "/settings"
+@attribute [Authorize]
+
+<PageTitle>My settings</PageTitle>
+<MudText Typo="Typo.h4" Class="mb-4">My settings</MudText>
+<SettingsForm Scope="SettingScope.User" />

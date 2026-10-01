@@ -14,5 +14,7 @@ public sealed class BffOptions
 
     public List<string> Scopes { get; set; } = [];
 
+    public List<string> ForwardedPrefixes { get; set; } = [];
+
     public string? AuthorizationEndpoint { get; set; }
 }

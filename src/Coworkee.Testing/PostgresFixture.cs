@@ -12,6 +12,8 @@ public class PostgresFixture : IAsyncLifetime
 
     public string ConnectionString => _container.GetConnectionString();
 
+    protected virtual string[] SchemasToExclude => [];
+
     public virtual async ValueTask InitializeAsync() => await _container.StartAsync();
 
     public virtual async ValueTask DisposeAsync()
@@ -28,6 +30,7 @@ public class PostgresFixture : IAsyncLifetime
         {
             DbAdapter = DbAdapter.Postgres,
             TablesToIgnore = ["__EFMigrationsHistory"],
+            SchemasToExclude = SchemasToExclude,
         });
         await _respawner.ResetAsync(connection);
     }

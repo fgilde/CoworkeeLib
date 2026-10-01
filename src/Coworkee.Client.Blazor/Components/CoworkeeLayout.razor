@@ -32,12 +32,12 @@
             {
                 if (item.Permission is null)
                 {
-                    <MudNavLink Href="@item.Href" Icon="@item.Icon">@item.Title</MudNavLink>
+                    <MudNavLink Href="@item.Href" Icon="@item.Icon" ForceLoad="@item.ForceLoad">@item.Title</MudNavLink>
                 }
                 else
                 {
                     <PermissionView Permission="@item.Permission">
-                        <MudNavLink Href="@item.Href" Icon="@item.Icon">@item.Title</MudNavLink>
+                        <MudNavLink Href="@item.Href" Icon="@item.Icon" ForceLoad="@item.ForceLoad">@item.Title</MudNavLink>
                     </PermissionView>
                 }
             }

@@ -1,0 +1,98 @@
+@inject ICoworkeeApi Api
+@inject ISnackbar Snackbar
+
+@if (_template is null)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+        <MudChip T="string" Size="Size.Small" Color="@(_template.IsOverridden ? Color.Secondary : Color.Default)">@(_template.IsOverridden ? "customized" : "default")</MudChip>
+        <MudSpacer />
+        <MudButton OnClick="PreviewAsync" data-testid="preview">Preview</MudButton>
+        <MudButton OnClick="SendTestAsync" data-testid="send-test">Send test to me</MudButton>
+        <MudButton OnClick="ResetAsync" Disabled="@(!_template.IsOverridden)" data-testid="reset-template">Reset to default</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" data-testid="save-template">Save</MudButton>
+    </MudStack>
+
+    <MudTextField @bind-Value="_subject" Label="Subject" />
+    <MudTextField @bind-Value="_body" Label="Body (Scriban, HTML)" Lines="16" Class="mt-2" Style="font-family:monospace" />
+    <MudText Typo="Typo.caption">Model values are available as {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.</MudText>
+
+    @if (_errors.Count > 0)
+    {
+        <MudAlert Severity="Severity.Error" Class="mt-3" data-testid="template-errors">
+            @foreach (var error in _errors)
+            {
+                <div>@error</div>
+            }
+        </MudAlert>
+    }
+
+    @if (_preview is not null)
+    {
+        <MudText Typo="Typo.overline" Class="mt-4 d-block">Preview: @_preview.Subject</MudText>
+        <iframe data-testid="preview-frame" sandbox="" srcdoc="@_preview.HtmlBody" title="Mail preview" style="width:100%;height:480px;border:1px solid var(--mud-palette-lines-default);background:#fff"></iframe>
+    }
+}
+
+@code {
+    private MailTemplateDto? _template;
+    private string _subject = string.Empty;
+    private string _body = string.Empty;
+    private RenderedMailDto? _preview;
+    private List<string> _errors = [];
+
+    [Parameter, EditorRequired] public string Name { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired] public string Culture { get; set; } = string.Empty;
+
+    protected override async Task OnParametersSetAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _template = await Api.GetMailTemplateAsync(Name, Culture);
+        _subject = _template.Subject;
+        _body = _template.Body;
+        _errors = [];
+    }
+
+    private SaveMailTemplateRequest Content => new(_subject, _body);
+
+    private Task PreviewAsync() => RunAsync(async () => _preview = await Api.PreviewMailTemplateAsync(Name, Culture, Content));
+
+    private Task SaveAsync() => RunAsync(async () =>
+    {
+        await Api.SaveMailTemplateAsync(Name, Culture, Content);
+        Snackbar.Add("Template saved.", Severity.Success);
+        await LoadAsync();
+    });
+
+    private Task ResetAsync() => RunAsync(async () =>
+    {
+        await Api.ResetMailTemplateAsync(Name, Culture);
+        await LoadAsync();
+    });
+
+    private Task SendTestAsync() => RunAsync(async () =>
+    {
+        await Api.SendTestMailAsync(Name, Culture);
+        Snackbar.Add("Test mail queued.", Severity.Info);
+    });
+
+    private async Task RunAsync(Func<Task> action)
+    {
+        _errors = [];
+        try
+        {
+            await action();
+        }
+        catch (ApiException exception)
+        {
+            _errors = exception.Errors is { Count: > 0 } errors
+                ? errors.SelectMany(e => e.Value).SelectMany(v => v.Split('\n', StringSplitOptions.RemoveEmptyEntries)).ToList()
+                : [exception.Message];
+        }
+    }
+}

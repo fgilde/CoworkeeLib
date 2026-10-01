@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Coworkee.Settings\Coworkee.Settings.csproj" />
+    <ProjectReference Include="..\Coworkee.BackgroundJobs\Coworkee.BackgroundJobs.csproj" />
+    <PackageReference Include="Scriban" />
+    <PackageReference Include="MailKit" />
+    <EmbeddedResource Include="Templates\*.scriban" />
+  </ItemGroup>
+</Project>

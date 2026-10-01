@@ -3,6 +3,7 @@ using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
 using Coworkee.AspNetCore;
 using Coworkee.Core.Modularity;
+using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
 using Coworkee.Identity.Permissions;
 using Coworkee.Identity.Persistence;
@@ -31,6 +32,8 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
         services.AddScoped<IPermissionChecker, PermissionChecker>();
         services.AddSingleton<PermissionCache>();
         services.AddScoped<IInterceptor, PermissionCacheInterceptor>();
+        services.AddScoped<IUserDirectory, Users.UserDirectory>();
+        services.AddScoped<ITenantDirectory, Users.TenantDirectory>();
         services.AddSingleton<SetupToken>();
         services.AddSingleton<SystemStateCache>();
         services.AddHostedService<SetupTokenAnnouncer>();
