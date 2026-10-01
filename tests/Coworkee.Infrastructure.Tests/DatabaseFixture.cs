@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
 
 [assembly: AssemblyFixture(typeof(Coworkee.Infrastructure.Tests.DatabaseFixture))]
+[assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly)]
 
 namespace Coworkee.Infrastructure.Tests;
 

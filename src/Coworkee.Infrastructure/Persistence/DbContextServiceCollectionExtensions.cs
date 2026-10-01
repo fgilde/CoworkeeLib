@@ -14,9 +14,11 @@ public static class DbContextServiceCollectionExtensions
     {
         services.TryAddSingleton(TimeProvider.System);
         services.TryAddScoped<ICurrentUser, AnonymousCurrentUser>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IModelContributor, CoworkeeModelContributor>());
         services.AddScoped<SoftDeleteInterceptor>();
         services.AddScoped<AuditablePropertiesInterceptor>();
         services.AddScoped<MultiTenantInterceptor>();
+        services.AddScoped<AuditTrailInterceptor>();
 
         services.AddDbContext<TContext>((provider, options) =>
         {
@@ -24,7 +26,8 @@ public static class DbContextServiceCollectionExtensions
             options.AddInterceptors(
                 provider.GetRequiredService<SoftDeleteInterceptor>(),
                 provider.GetRequiredService<AuditablePropertiesInterceptor>(),
-                provider.GetRequiredService<MultiTenantInterceptor>());
+                provider.GetRequiredService<MultiTenantInterceptor>(),
+                provider.GetRequiredService<AuditTrailInterceptor>());
         });
         services.AddScoped<CoworkeeDbContext>(provider => provider.GetRequiredService<TContext>());
         services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<TContext>());
