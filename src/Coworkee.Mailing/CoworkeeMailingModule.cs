@@ -35,6 +35,7 @@ public sealed class CoworkeeMailingModule : CoworkeeModule, IWebModule
         var services = context.Services;
         services.AddMessagingFromAssembly(typeof(CoworkeeMailingModule).Assembly);
         services.AddSingleton<IModelContributor, MailModelContributor>();
+        services.AddSingleton<Coworkee.Infrastructure.Versioning.IVersionedTypeContributor, MailVersionedTypes>();
         services.AddSingleton<IPermissionDefinitionContributor, MailPermissionDefinitions>();
         services.AddSingleton<ISettingDefinitionContributor, MailSettingDefinitions>();
         services.AddSingleton<IMailTemplateContributor, CoreMailTemplates>();
