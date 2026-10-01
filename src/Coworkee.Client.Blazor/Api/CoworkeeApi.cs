@@ -4,6 +4,7 @@ using Coworkee.Contracts;
 using Coworkee.Contracts.Auditing;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Mailing;
+using Coworkee.Contracts.Notifications;
 using Coworkee.Contracts.Settings;
 using Coworkee.Contracts.Theming;
 
@@ -157,6 +158,18 @@ internal sealed class CoworkeeApi(HttpClient http) : ICoworkeeApi
 
     public Task RestoreVersionAsync(string type, Guid id, int revision, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Post, $"{Versions}/{Uri.EscapeDataString(type)}/{id}/{revision}/restore", null, cancellationToken);
+
+    public Task<UnreadCountDto> GetUnreadNotificationCountAsync(CancellationToken cancellationToken = default) =>
+        GetAsync<UnreadCountDto>("api/v1/notifications/unread-count", cancellationToken);
+
+    public Task<PagedResult<NotificationDto>> GetNotificationsAsync(bool unreadOnly, PageRequest page, CancellationToken cancellationToken = default) =>
+        GetAsync<PagedResult<NotificationDto>>($"api/v1/notifications?unreadOnly={unreadOnly.ToString().ToLowerInvariant()}&page={page.Page}&pageSize={page.PageSize}", cancellationToken);
+
+    public Task MarkNotificationReadAsync(Guid id, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Post, $"api/v1/notifications/{id}/read", null, cancellationToken);
+
+    public Task MarkAllNotificationsReadAsync(CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Post, "api/v1/notifications/read-all", null, cancellationToken);
 
     private static void Add(List<string> parameters, string name, string? value)
     {

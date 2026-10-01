@@ -6,6 +6,7 @@
 @inject ISnackbar Snackbar
 
 <PageTitle>Themes</PageTitle>
+<RealtimeSubscription Topic="type:ThemeDefinition" OnEvent="_ => ReloadAsync()" />
 <MudText Typo="Typo.h4" Class="mb-4">Themes</MudText>
 <MudGrid>
     @foreach (var theme in _themes)

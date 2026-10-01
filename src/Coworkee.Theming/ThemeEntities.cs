@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Theming;
 
+[Realtime(Contracts.Theming.ThemePermissions.Manage)]
 public sealed class ThemeDefinition : AuditedAggregateRoot, IVersioned
 {
     public required string Name { get; set; }

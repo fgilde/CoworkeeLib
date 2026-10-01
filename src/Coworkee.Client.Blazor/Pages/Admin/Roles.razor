@@ -4,6 +4,7 @@
 @inject ISnackbar Snackbar
 
 <PageTitle>Roles</PageTitle>
+<RealtimeSubscription Topic="type:Role" OnEvent="ReloadAsync" />
 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
     <MudText Typo="Typo.h4">Roles</MudText>
     <MudSpacer />
@@ -38,7 +39,9 @@
     private IReadOnlyList<RoleDto> _roles = [];
     private string? _name;
 
-    protected override async Task OnInitializedAsync() => _roles = await Api.GetRolesAsync();
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync() => _roles = await Api.GetRolesAsync();
 
     private async Task CreateAsync()
     {

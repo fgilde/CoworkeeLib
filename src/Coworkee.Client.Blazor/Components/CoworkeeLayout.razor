@@ -27,6 +27,7 @@
         <MudIconButton Icon="@(_dark ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" Color="Color.Inherit" OnClick="() => _dark = !_dark" aria-label="Toggle dark mode" />
         <AuthorizeView>
             <Authorized>
+                <NotificationBell />
                 <MudText Typo="Typo.body2" Class="mx-3">@context.User.Identity?.Name</MudText>
                 <MudButton Variant="Variant.Outlined" Color="Color.Inherit" Size="Size.Small" OnClick="LogoutAsync">Sign out</MudButton>
             </Authorized>

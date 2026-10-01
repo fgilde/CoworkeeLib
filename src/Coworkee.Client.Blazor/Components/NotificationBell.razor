@@ -1,0 +1,113 @@
+@using System.Security.Claims
+@using Coworkee.Client.Blazor.Realtime
+@using Coworkee.Contracts.Notifications
+@using Coworkee.Contracts.Realtime
+@implements IAsyncDisposable
+@inject ICoworkeeApi Api
+@inject RealtimeClient Realtime
+@inject NavigationManager Nav
+
+<MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" OpenChanged="OpenChangedAsync">
+    <ActivatorContent>
+        <MudBadge Content="@_count" Visible="@(_count > 0)" Color="Color.Secondary" Overlap="true">
+            <MudIconButton Icon="@Icons.Material.Outlined.Notifications" Color="Color.Inherit" aria-label="Notifications" />
+        </MudBadge>
+        <span data-testid="unread" style="display:none">@_count</span>
+    </ActivatorContent>
+    <ChildContent>
+        @if (_items.Count == 0)
+        {
+            <MudMenuItem Disabled="true">No notifications</MudMenuItem>
+        }
+        @foreach (var item in _items)
+        {
+            <MudMenuItem OnClick="() => OpenAsync(item)">
+                <MudText Typo="Typo.body2" Style="@(item.ReadAt is null ? "font-weight:600" : null)">@item.Title</MudText>
+                @if (item.Body is not null)
+                {
+                    <MudText Typo="Typo.caption">@item.Body</MudText>
+                }
+            </MudMenuItem>
+        }
+        @if (_count > 0)
+        {
+            <MudDivider />
+            <MudMenuItem OnClick="MarkAllAsync">Mark all as read</MudMenuItem>
+        }
+    </ChildContent>
+</MudMenu>
+
+@code {
+    private int _count;
+    private IReadOnlyList<NotificationDto> _items = [];
+    private IAsyncDisposable? _subscription;
+
+    [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshCountAsync();
+        var user = AuthenticationState is null ? null : (await AuthenticationState).User;
+        if (Guid.TryParse(user?.FindFirst("sub")?.Value, out var userId))
+        {
+            _subscription = await Realtime.SubscribeAsync(RealtimeTopics.User(userId), _ => InvokeAsync(async () =>
+            {
+                await RefreshCountAsync();
+                StateHasChanged();
+            }));
+        }
+    }
+
+    private async Task RefreshCountAsync()
+    {
+        try
+        {
+            _count = (await Api.GetUnreadNotificationCountAsync())?.Count ?? 0;
+        }
+        catch (ApiException)
+        {
+        }
+    }
+
+    private async Task OpenChangedAsync(bool open)
+    {
+        if (open)
+        {
+            try
+            {
+                _items = (await Api.GetNotificationsAsync(false, new Coworkee.Contracts.PageRequest(1, 10))).Items;
+            }
+            catch (ApiException)
+            {
+            }
+        }
+    }
+
+    private async Task OpenAsync(NotificationDto item)
+    {
+        if (item.ReadAt is null)
+        {
+            await Api.MarkNotificationReadAsync(item.Id);
+            await RefreshCountAsync();
+        }
+
+        if (item.Link is { Length: > 0 } link && link.StartsWith('/'))
+        {
+            Nav.NavigateTo(link);
+        }
+    }
+
+    private async Task MarkAllAsync()
+    {
+        await Api.MarkAllNotificationsReadAsync();
+        await RefreshCountAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_subscription is not null)
+        {
+            await _subscription.DisposeAsync();
+        }
+    }
+}
