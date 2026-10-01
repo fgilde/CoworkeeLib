@@ -1,0 +1,129 @@
+using System.Net.Http.Json;
+using Coworkee.Contracts.Identity;
+using Coworkee.Contracts.Realtime;
+using Coworkee.Testing;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
+
+namespace Coworkee.Realtime.Tests;
+
+public sealed class RealtimeTests(RealtimeApp app) : IAsyncLifetime
+{
+    private SetupResultDto _setup = null!;
+
+    public async ValueTask InitializeAsync() => _setup = await app.SetupAsync();
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
+
+    [Fact]
+    public async Task Subscriber_receives_entity_changed_after_commit()
+    {
+        await using var admin = await app.ConnectAsync(_setup.AdminUserId, _setup.TenantId);
+        await admin.SubscribeAsync("type:Ticket");
+
+        var id = await CreateTicketAsync("Hello");
+
+        var envelope = await admin.NextAsync(e => e.Topic == "type:Ticket");
+        envelope.Type.ShouldBe(RealtimeEventTypes.EntityChanged);
+        envelope.Payload.GetProperty("entityId").GetString().ShouldBe(id.ToString());
+        envelope.Payload.GetProperty("action").GetString().ShouldBe("Created");
+    }
+
+    [Fact]
+    public async Task Entity_topic_receives_changes_of_that_entity_only()
+    {
+        var id = await CreateTicketAsync("One");
+        await using var admin = await app.ConnectAsync(_setup.AdminUserId, _setup.TenantId);
+        await admin.SubscribeAsync($"entity:Ticket:{id}");
+
+        await CreateTicketAsync("Two");
+        await RenameAsync(id, "One more");
+
+        var envelope = await admin.NextAsync(e => e.Topic == $"entity:Ticket:{id}");
+        envelope.Payload.GetProperty("action").GetString().ShouldBe("Updated");
+        admin.Events.ShouldAllBe(e => e.Topic == $"entity:Ticket:{id}");
+    }
+
+    [Fact]
+    public async Task Rollback_publishes_nothing()
+    {
+        await using var admin = await app.ConnectAsync(_setup.AdminUserId, _setup.TenantId);
+        await admin.SubscribeAsync("type:Ticket");
+
+        await Should.ThrowAsync<DbUpdateException>(() => CreateTicketAsync(new string('x', 50)));
+
+        await Task.Delay(TimeSpan.FromSeconds(2), Ct);
+        admin.Events.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Payload_has_property_names_only()
+    {
+        var id = await CreateTicketAsync("Public");
+        await using var admin = await app.ConnectAsync(_setup.AdminUserId, _setup.TenantId);
+        await admin.SubscribeAsync("type:Ticket");
+
+        await RenameAsync(id, "secret-title");
+
+        var envelope = await admin.NextAsync(e => e.Payload.GetProperty("action").GetString() == "Updated");
+        envelope.Payload.GetProperty("changedProperties").EnumerateArray().Select(p => p.GetString()).ShouldContain("Title");
+        envelope.Payload.GetRawText().ShouldNotContain("secret-title");
+    }
+
+    [Fact]
+    public async Task Subscription_without_permission_is_rejected_but_the_connection_stays()
+    {
+        var response = await app.App.GetTestClient().AsUser(_setup.AdminUserId, _setup.TenantId)
+            .PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest("bob@acme.test", "Passw0rd!x", null, null), Ct);
+        var bob = (await response.Content.ReadFromJsonAsync<UserDto>(Ct))!;
+        await using var listener = await app.ConnectAsync(bob.Id, _setup.TenantId);
+
+        await Should.ThrowAsync<HubException>(() => listener.SubscribeAsync("type:Ticket"));
+
+        await listener.SubscribeAsync($"user:{bob.Id}");
+    }
+
+    [Theory]
+    [InlineData("user:{0}")]
+    [InlineData("nope:thing")]
+    [InlineData("type:Unknown")]
+    public async Task Foreign_user_topic_and_unknown_topics_are_rejected(string pattern)
+    {
+        await using var admin = await app.ConnectAsync(_setup.AdminUserId, _setup.TenantId);
+
+        await Should.ThrowAsync<HubException>(() => admin.SubscribeAsync(string.Format(System.Globalization.CultureInfo.InvariantCulture, pattern, Guid.CreateVersion7())));
+    }
+
+    [Fact]
+    public async Task Other_tenant_receives_nothing()
+    {
+        var (otherUser, otherTenant) = await app.CreateTenantAdminAsync();
+        await using var other = await app.ConnectAsync(otherUser, otherTenant);
+        await other.SubscribeAsync("type:Ticket");
+        await using var admin = await app.ConnectAsync(_setup.AdminUserId, _setup.TenantId);
+        await admin.SubscribeAsync("type:Ticket");
+
+        await CreateTicketAsync("Mine");
+
+        await admin.NextAsync(e => e.Topic == "type:Ticket");
+        await Task.Delay(TimeSpan.FromSeconds(1), Ct);
+        other.Events.ShouldBeEmpty();
+    }
+
+    private Task<Guid> CreateTicketAsync(string title) => app.AsActorAsync(_setup.AdminUserId, _setup.TenantId, async db =>
+    {
+        var ticket = new Ticket { Title = title };
+        db.Add(ticket);
+        await db.SaveChangesAsync(Ct);
+        return ticket.Id;
+    });
+
+    private Task RenameAsync(Guid id, string title) => app.AsActorAsync(_setup.AdminUserId, _setup.TenantId, async db =>
+    {
+        (await db.Set<Ticket>().SingleAsync(t => t.Id == id, Ct)).Title = title;
+        return await db.SaveChangesAsync(Ct);
+    });
+}
