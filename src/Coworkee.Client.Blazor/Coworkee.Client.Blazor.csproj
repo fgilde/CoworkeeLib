@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+    <ProjectReference Include="..\Coworkee.Contracts\Coworkee.Contracts.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="MudBlazor" />
+    <PackageReference Include="MudBlazor.Extensions" />
+  </ItemGroup>
+</Project>
