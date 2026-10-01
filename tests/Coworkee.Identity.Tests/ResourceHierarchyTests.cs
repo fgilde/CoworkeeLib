@@ -40,6 +40,19 @@ public sealed class ResourceHierarchyTests(IdentityApp app) : IAsyncLifetime
         (await IsGrantedAsync(user, child)).ShouldBeFalse();
     }
 
+    [Fact]
+    public async Task Granted_resources_list_the_direct_grants_carrying_the_permission()
+    {
+        var (user, parent, _) = await PrepareAsync();
+
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(user, _setup.TenantId));
+        await using var scope = app.App.Services.CreateAsyncScope();
+        var checker = scope.ServiceProvider.GetRequiredService<IPermissionChecker>();
+
+        (await checker.GetGrantedResourcesAsync(IdentityPermissions.Groups.View, "Folder", Ct)).ShouldBe([parent]);
+        (await checker.GetGrantedResourcesAsync(IdentityPermissions.Groups.Manage, "Folder", Ct)).ShouldBeEmpty();
+    }
+
     private async Task<(Guid User, Guid Parent, Guid Child)> PrepareAsync()
     {
         var user = (await (await Admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest($"{Guid.NewGuid():N}@acme.test", "Passw0rd!x", null, null), Ct))

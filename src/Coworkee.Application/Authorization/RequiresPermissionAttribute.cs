@@ -22,6 +22,8 @@ public interface IPermissionChecker
     Task<bool> IsGrantedAsync(string permission, CancellationToken cancellationToken);
 
     Task<bool> IsGrantedAsync(string permission, string resourceType, Guid resourceId, CancellationToken cancellationToken);
+
+    Task<IReadOnlyCollection<Guid>> GetGrantedResourcesAsync(string permission, string resourceType, CancellationToken cancellationToken);
 }
 
 public interface IResourceHierarchy

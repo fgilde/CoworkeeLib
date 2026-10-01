@@ -62,6 +62,32 @@ internal sealed class PermissionChecker(
         return roleIds.Count > 0 && (await GrantsForRolesAsync(roleIds, currentUser.TenantId, cancellationToken)).Contains(permission);
     }
 
+    public async Task<IReadOnlyCollection<Guid>> GetGrantedResourcesAsync(string permission, string resourceType, CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is not { } userId || !await IsActiveMemberAsync(userId, currentUser.TenantId, cancellationToken))
+        {
+            return [];
+        }
+
+        var groupIds = await GroupIdsAsync(userId, cancellationToken);
+        var grants = await db.Set<ResourcePermission>()
+            .Where(p => p.ResourceType == resourceType)
+            .Where(p => (p.PrincipalType == PrincipalType.User && p.PrincipalId == userId)
+                        || (p.PrincipalType == PrincipalType.Group && groupIds.Contains(p.PrincipalId)))
+            .Select(p => new { p.ResourceId, p.RoleId })
+            .ToListAsync(cancellationToken);
+        var allowedRoles = new HashSet<Guid>();
+        foreach (var roleId in grants.Select(g => g.RoleId).Distinct())
+        {
+            if ((await GrantsForRolesAsync([roleId], currentUser.TenantId, cancellationToken)).Contains(permission))
+            {
+                allowedRoles.Add(roleId);
+            }
+        }
+
+        return grants.Where(g => allowedRoles.Contains(g.RoleId)).Select(g => g.ResourceId).Distinct().ToList();
+    }
+
     internal async Task<string[]> GetGrantedForAsync(Guid userId, Guid? tenantId, CancellationToken cancellationToken)
     {
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(userId, tenantId));
