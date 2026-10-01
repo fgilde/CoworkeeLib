@@ -1,0 +1,69 @@
+@inject ICoworkeeApi Api
+@inject ISnackbar Snackbar
+
+@if (_versions is null)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else
+{
+    <MudSimpleTable Dense="true" Hover="true">
+        <thead><tr><th>Version</th><th>When</th><th>Who</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var version in _versions)
+            {
+                <tr>
+                    <td>@version.Revision @if (version == _versions[0]) { <MudChip T="string" Size="Size.Small">current</MudChip> }</td>
+                    <td>@version.CreatedAt.ToLocalTime().ToString("g")</td>
+                    <td>@(version.CreatedByName ?? "system")</td>
+                    <td style="text-align:right">
+                        <MudButton Size="Size.Small" OnClick="() => ShowAsync(version.Revision)">View</MudButton>
+                        @if (version != _versions[0] && !version.IsDeleted)
+                        {
+                            <MudButton Size="Size.Small" Color="Color.Secondary" OnClick="() => RestoreAsync(version.Revision)" data-testid="@($"restore-{version.Revision}")">Restore</MudButton>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </MudSimpleTable>
+
+    @if (_detail is not null)
+    {
+        <MudText Typo="Typo.overline" Class="mt-3 d-block">Version @_detail.Revision</MudText>
+        <pre style="white-space:pre-wrap;font-size:12px;max-height:320px;overflow:auto">@System.Text.Json.JsonSerializer.Serialize(_detail.Payload, Indented)</pre>
+    }
+}
+
+@code {
+    private static readonly System.Text.Json.JsonSerializerOptions Indented = new() { WriteIndented = true };
+    private IReadOnlyList<EntityVersionDto>? _versions;
+    private EntityVersionDetailDto? _detail;
+
+    [Parameter, EditorRequired] public string Type { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired] public Guid Id { get; set; }
+
+    [Parameter] public EventCallback OnRestored { get; set; }
+
+    protected override async Task OnParametersSetAsync() => await ReloadAsync();
+
+    public async Task ReloadAsync() => _versions = await Api.GetVersionsAsync(Type, Id);
+
+    private async Task ShowAsync(int revision) => _detail = await Api.GetVersionAsync(Type, Id, revision);
+
+    private async Task RestoreAsync(int revision)
+    {
+        try
+        {
+            await Api.RestoreVersionAsync(Type, Id, revision);
+            Snackbar.Add($"Version {revision} restored.", Severity.Success);
+            await OnRestored.InvokeAsync();
+            await ReloadAsync();
+        }
+        catch (ApiException exception)
+        {
+            Snackbar.Add(exception.Message, Severity.Error);
+        }
+    }
+}

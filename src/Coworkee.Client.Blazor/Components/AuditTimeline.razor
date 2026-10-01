@@ -1,0 +1,35 @@
+@inject ICoworkeeApi Api
+
+@if (_entries is null)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else if (_entries.Count == 0)
+{
+    <MudText Typo="Typo.body2">No changes recorded yet.</MudText>
+}
+else
+{
+    <MudTimeline TimelinePosition="TimelinePosition.Start" Class="pt-0">
+        @foreach (var entry in _entries)
+        {
+            <MudTimelineItem Size="Size.Small" Color="@(entry.Action == "Deleted" ? Color.Error : entry.Action == "Restored" ? Color.Secondary : Color.Default)">
+                <MudText Typo="Typo.body2"><b>@entry.Action</b> by @(entry.ActorName ?? "system") · @entry.OccurredAt.ToLocalTime().ToString("g")</MudText>
+                <AuditChanges Changes="entry.Changes" />
+            </MudTimelineItem>
+        }
+    </MudTimeline>
+}
+
+@code {
+    private IReadOnlyList<AuditEntryDto>? _entries;
+
+    [Parameter, EditorRequired] public string EntityType { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired] public string EntityId { get; set; } = string.Empty;
+
+    protected override async Task OnParametersSetAsync() => await ReloadAsync();
+
+    public async Task ReloadAsync() =>
+        _entries = (await Api.GetAuditAsync(new AuditQuery(EntityType, EntityId, PageSize: 50))).Items;
+}

@@ -1,0 +1,22 @@
+@if (Changes.Count > 0)
+{
+    <MudSimpleTable Dense="true" Elevation="0" Class="mt-1">
+        <tbody>
+            @foreach (var change in Changes)
+            {
+                <tr data-change="@change.Property">
+                    <td style="width:30%"><MudText Typo="Typo.caption">@change.Property</MudText></td>
+                    <td><MudText Typo="Typo.caption" Style="text-decoration:line-through;opacity:.7">@Display(change.OldValue)</MudText></td>
+                    <td><MudText Typo="Typo.caption">@Display(change.NewValue)</MudText></td>
+                </tr>
+            }
+        </tbody>
+    </MudSimpleTable>
+}
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<AuditChangeDto> Changes { get; set; } = [];
+
+    private static string Display(string? value) =>
+        value is null ? "–" : value.Length > 1 && value[0] == '"' && value[^1] == '"' ? value[1..^1] : value;
+}

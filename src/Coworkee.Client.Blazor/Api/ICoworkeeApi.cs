@@ -1,7 +1,9 @@
 using Coworkee.Contracts;
+using Coworkee.Contracts.Auditing;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Mailing;
 using Coworkee.Contracts.Settings;
+using Coworkee.Contracts.Theming;
 
 namespace Coworkee.Client.Blazor.Api;
 
@@ -76,6 +78,28 @@ public interface ICoworkeeApi
     Task SendTestMailAsync(string name, string culture, CancellationToken cancellationToken = default);
 
     Task<PagedResult<OutgoingMailDto>> GetOutgoingMailsAsync(PageRequest page, OutgoingMailStatus? status, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyDictionary<string, string?>> GetClientSettingsAsync(CancellationToken cancellationToken = default);
+
+    Task<ThemeDto> GetCurrentThemeAsync(CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ThemeDto>> GetThemesAsync(CancellationToken cancellationToken = default);
+
+    Task<ThemeDto> CreateThemeAsync(ThemeRequest request, CancellationToken cancellationToken = default);
+
+    Task<ThemeDto> UpdateThemeAsync(Guid id, ThemeRequest request, CancellationToken cancellationToken = default);
+
+    Task DeleteThemeAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task SetDefaultThemeAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<PagedResult<AuditEntryDto>> GetAuditAsync(AuditQuery query, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<EntityVersionDto>> GetVersionsAsync(string type, Guid id, CancellationToken cancellationToken = default);
+
+    Task<EntityVersionDetailDto> GetVersionAsync(string type, Guid id, int revision, CancellationToken cancellationToken = default);
+
+    Task RestoreVersionAsync(string type, Guid id, int revision, CancellationToken cancellationToken = default);
 }
 
 public sealed class ApiException(int status, string? code, IReadOnlyDictionary<string, string[]>? errors)
