@@ -9,8 +9,8 @@
     <MudText Typo="Typo.h4">Roles</MudText>
     <MudSpacer />
     <PermissionView Permission="@IdentityPermissions.Roles.Manage">
-        <MudTextField @bind-Value="_name" Placeholder="New role name" />
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateAsync" Disabled="@string.IsNullOrWhiteSpace(_name)">Add role</MudButton>
+        <MudTextField @bind-Value="_name" Placeholder="New role name" Immediate="true" data-testid="new-role-name" />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateAsync" Disabled="@string.IsNullOrWhiteSpace(_name)" data-testid="add-role">Add role</MudButton>
     </PermissionView>
 </MudStack>
 
