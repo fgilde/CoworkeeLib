@@ -9,7 +9,8 @@ using Microsoft.Extensions.Caching.Hybrid;
 
 namespace Coworkee.Identity.Permissions;
 
-internal sealed class PermissionChecker(CoworkeeDbContext db, ICurrentUser currentUser, IPermissionDefinitionManager definitions, HybridCache cache)
+internal sealed class PermissionChecker(
+    CoworkeeDbContext db, ICurrentUser currentUser, IPermissionDefinitionManager definitions, HybridCache cache, IEnumerable<IResourceHierarchy> hierarchies)
     : IPermissionChecker
 {
     public async Task<IReadOnlyCollection<string>> GetGrantedAsync(CancellationToken cancellationToken)
@@ -47,8 +48,11 @@ internal sealed class PermissionChecker(CoworkeeDbContext db, ICurrentUser curre
         }
 
         var groupIds = await GroupIdsAsync(userId, cancellationToken);
+        var chain = hierarchies.FirstOrDefault(h => h.ResourceType == resourceType) is { } hierarchy
+            ? await hierarchy.GetInheritanceChainAsync(resourceId, cancellationToken)
+            : [resourceId];
         var roleIds = await db.Set<ResourcePermission>()
-            .Where(p => p.ResourceType == resourceType && p.ResourceId == resourceId)
+            .Where(p => p.ResourceType == resourceType && chain.Contains(p.ResourceId))
             .Where(p => (p.PrincipalType == PrincipalType.User && p.PrincipalId == userId)
                         || (p.PrincipalType == PrincipalType.Group && groupIds.Contains(p.PrincipalId)))
             .Select(p => p.RoleId)

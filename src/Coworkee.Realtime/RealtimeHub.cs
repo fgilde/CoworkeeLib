@@ -83,9 +83,20 @@ internal sealed class EntityTopicAuthorizer(CoworkeeDbContext db, IPermissionChe
         var parts = topic.Split(':');
         var valid = parts is ["type", _] || (parts is ["entity", _, _] && parts[2].Length > 0);
         var attribute = valid
-            ? db.Model.GetEntityTypes().Select(t => t.ClrType).FirstOrDefault(t => t.Name == parts[1])?
+            ? db.Model.GetEntityTypes().Where(t => t.BaseType is null).Select(t => t.ClrType).FirstOrDefault(t => t.Name == parts[1])?
                 .GetCustomAttributes(typeof(RealtimeAttribute), false).OfType<RealtimeAttribute>().FirstOrDefault()
             : null;
-        return attribute is not null && await permissions.IsGrantedAsync(attribute.Permission, cancellationToken);
+        if (attribute is null)
+        {
+            return false;
+        }
+
+        if (await permissions.IsGrantedAsync(attribute.Permission, cancellationToken))
+        {
+            return true;
+        }
+
+        return parts is ["entity", _, _] && attribute.ResourceType is { } resourceType && Guid.TryParse(parts[2], out var resourceId)
+            && await permissions.IsGrantedAsync(attribute.Permission, resourceType, resourceId, cancellationToken);
     }
 }

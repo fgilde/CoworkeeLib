@@ -85,7 +85,22 @@ public sealed class IdentityTestDbContext(DbContextOptions<IdentityTestDbContext
 [DependsOn(typeof(CoworkeeIdentityModule))]
 public sealed class TestAppModule : CoworkeeModule
 {
-    public override void ConfigureServices(ModuleServiceContext context) =>
+    public override void ConfigureServices(ModuleServiceContext context)
+    {
+        context.Services.AddSingleton<Coworkee.Application.Authorization.IResourceHierarchy>(TestFolderHierarchy.Instance);
         context.Services.AddCoworkeeDbContext<IdentityTestDbContext>((provider, options) =>
             options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
+    }
+}
+
+public sealed class TestFolderHierarchy : Coworkee.Application.Authorization.IResourceHierarchy
+{
+    public static readonly TestFolderHierarchy Instance = new();
+
+    public System.Collections.Concurrent.ConcurrentDictionary<Guid, Guid[]> Chains { get; } = new();
+
+    public string ResourceType => "Folder";
+
+    public Task<IReadOnlyList<Guid>> GetInheritanceChainAsync(Guid resourceId, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<Guid>>(Chains.TryGetValue(resourceId, out var chain) ? chain : [resourceId]);
 }
