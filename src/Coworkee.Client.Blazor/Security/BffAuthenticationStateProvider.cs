@@ -22,6 +22,10 @@ public sealed class BffAuthenticationStateProvider(ICoworkeeApi api) : Authentic
 
             var claims = new List<Claim> { new("name", user.Name ?? user.Email ?? string.Empty), new("email", user.Email ?? string.Empty), new("sub", user.UserId?.ToString() ?? string.Empty) };
             claims.AddRange(user.Roles.Select(r => new Claim("role", r)));
+            if (user.ManageUrl is { Length: > 0 } manage)
+            {
+                claims.Add(new Claim("manage_url", manage));
+            }
             return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity(claims, "bff", "name", "role")));
         }
         catch (ApiException)

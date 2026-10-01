@@ -24,6 +24,15 @@ internal sealed class CoworkeeApi(HttpClient http) : ICoworkeeApi
 
     public Task<SetupStatusDto> GetSetupStatusAsync(CancellationToken cancellationToken = default) => GetAsync<SetupStatusDto>("api/v1/setup/status", cancellationToken);
 
+    public async Task<IReadOnlyList<SetupCheckDto>> GetSetupChecksAsync(CancellationToken cancellationToken = default) =>
+        await GetAsync<SetupCheckDto[]>("api/v1/setup/checks", cancellationToken);
+
+    public Task SendPasswordResetAsync(Guid userId, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Post, $"{Identity}/users/{userId}/password-reset", null, cancellationToken);
+
+    public async Task<IReadOnlyList<string>> GetEffectivePermissionsAsync(Guid userId, CancellationToken cancellationToken = default) =>
+        await GetAsync<string[]>($"{Identity}/users/{userId}/permissions", cancellationToken);
+
     public Task<SetupResultDto> CompleteSetupAsync(CompleteSetupRequest request, CancellationToken cancellationToken = default) =>
         SendAsync<SetupResultDto>(HttpMethod.Post, "api/v1/setup/complete", request, cancellationToken);
 

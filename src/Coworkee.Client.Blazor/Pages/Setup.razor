@@ -5,7 +5,7 @@
 
 <PageTitle>Set up @Options.AppTitle</PageTitle>
 <MudPaper Outlined="true" Class="pa-6 mx-auto" Style="max-width:560px">
-    <MudText Typo="Typo.overline">Step @(Math.Min(_step + 1, 3)) of 3</MudText>
+    <MudText Typo="Typo.overline">Step @(Math.Min(_step + 1, LastStep + 1)) of @(LastStep + 1)</MudText>
     <MudText Typo="Typo.h4" Class="mb-4">Set up @Options.AppTitle</MudText>
 
     @if (_done)
@@ -22,15 +22,40 @@
                 <MudTextField @bind-Value="_request.SetupToken" Label="Setup token" data-testid="setup-token" Required="true" />
                 break;
             case 1:
+                <MudText Class="mb-2">System check</MudText>
+                @if (_checks is null)
+                {
+                    <MudProgressLinear Indeterminate="true" />
+                }
+                else
+                {
+                    @foreach (var check in _checks)
+                    {
+                        <MudAlert Severity="@SeverityOf(check.Status)" Dense="true" Class="mb-2" data-check="@check.Name">
+                            <b>@check.Name</b> @(check.Message ?? "OK")
+                        </MudAlert>
+                    }
+                }
+                break;
+            case 2:
                 <MudTextField @bind-Value="_request.TenantName" Label="Organisation name" data-testid="tenant-name" Required="true" />
                 break;
-            default:
+            case 3:
                 <MudTextField @bind-Value="_request.AdminEmail" Label="Administrator email" InputType="InputType.Email" data-testid="admin-email" Required="true"
                               Error="@HasError("AdminEmail")" ErrorText="@ErrorFor("AdminEmail")" />
                 <MudTextField @bind-Value="_request.AdminPassword" Label="Password" InputType="InputType.Password" data-testid="admin-password" Required="true"
                               Error="@HasError("Password")" ErrorText="@ErrorFor("Password")" />
                 <MudTextField @bind-Value="_request.AdminFirstName" Label="First name" data-testid="admin-first" />
                 <MudTextField @bind-Value="_request.AdminLastName" Label="Last name" data-testid="admin-last" />
+                break;
+            default:
+                <MudText Class="mb-2">Mail server (optional). You can change this later under Settings.</MudText>
+                <MudTextField @bind-Value="_mail.Host" Label="SMTP host" data-testid="mail-host" />
+                <MudTextField @bind-Value="_mail.Port" Label="SMTP port" InputType="InputType.Number" Placeholder="25" data-testid="mail-port" />
+                <MudTextField @bind-Value="_mail.From" Label="Sender address" InputType="InputType.Email" data-testid="mail-from" />
+                <MudTextField @bind-Value="_mail.UserName" Label="User name" data-testid="mail-user" />
+                <MudTextField @bind-Value="_mail.Password" Label="Password" InputType="InputType.Password" data-testid="mail-password" />
+                <MudCheckBox @bind-Value="_mail.UseSsl" Label="Use SSL" />
                 break;
         }
 
@@ -45,9 +70,9 @@
                 <MudButton OnClick="() => _step--">Back</MudButton>
             }
             <MudSpacer />
-            @if (_step < 2)
+            @if (_step < LastStep)
             {
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => _step++" data-testid="next">Next</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="NextAsync" Disabled="@BlockedByChecks" data-testid="next">Next</MudButton>
             }
             else
             {
@@ -58,16 +83,70 @@
 </MudPaper>
 
 @code {
+    private const int LastStep = 4;
     private readonly SetupInput _request = new();
+    private readonly MailInput _mail = new();
+    private IReadOnlyList<SetupCheckDto>? _checks;
     private int _step;
     private bool _busy;
     private bool _done;
     private string? _error;
     private IReadOnlyDictionary<string, string[]>? _errors;
 
+    private bool BlockedByChecks => _step == 1 && (_checks is null || _checks.Any(c => c.Status == SetupCheckStatus.Error));
+
     private bool HasError(string field) => _errors?.Keys.Any(k => k.EndsWith(field, StringComparison.OrdinalIgnoreCase)) == true;
 
     private string? ErrorFor(string field) => _errors?.FirstOrDefault(e => e.Key.EndsWith(field, StringComparison.OrdinalIgnoreCase)).Value?.FirstOrDefault();
+
+    private static Severity SeverityOf(SetupCheckStatus status) => status switch
+    {
+        SetupCheckStatus.Ok => Severity.Success,
+        SetupCheckStatus.Warning => Severity.Warning,
+        _ => Severity.Error,
+    };
+
+    private async Task NextAsync()
+    {
+        _step++;
+        if (_step == 1)
+        {
+            _checks = null;
+            try
+            {
+                _checks = await Api.GetSetupChecksAsync();
+            }
+            catch (ApiException exception)
+            {
+                _checks = [new SetupCheckDto("System", SetupCheckStatus.Error, exception.Message)];
+            }
+        }
+    }
+
+    private Dictionary<string, string?> MailSettings()
+    {
+        var settings = new Dictionary<string, string?>(StringComparer.Ordinal);
+        if (string.IsNullOrWhiteSpace(_mail.Host))
+        {
+            return settings;
+        }
+
+        settings["Mail.Smtp.Host"] = _mail.Host.Trim();
+        Add(settings, "Mail.Smtp.Port", _mail.Port);
+        Add(settings, "Mail.From", _mail.From);
+        Add(settings, "Mail.Smtp.UserName", _mail.UserName);
+        Add(settings, "Mail.Smtp.Password", _mail.Password);
+        settings["Mail.Smtp.UseSsl"] = _mail.UseSsl ? "true" : "false";
+        return settings;
+    }
+
+    private static void Add(Dictionary<string, string?> settings, string name, string? value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            settings[name] = value.Trim();
+        }
+    }
 
     private async Task FinishAsync()
     {
@@ -76,7 +155,8 @@
         _errors = null;
         try
         {
-            await Api.CompleteSetupAsync(new CompleteSetupRequest(_request.SetupToken, _request.TenantName, _request.AdminEmail, _request.AdminPassword, _request.AdminFirstName, _request.AdminLastName));
+            await Api.CompleteSetupAsync(new CompleteSetupRequest(
+                _request.SetupToken, _request.TenantName, _request.AdminEmail, _request.AdminPassword, _request.AdminFirstName, _request.AdminLastName, MailSettings()));
             _done = true;
         }
         catch (ApiException exception) when (exception.Status == 403)
@@ -91,7 +171,7 @@
         catch (ApiException exception)
         {
             _errors = exception.Errors;
-            _error = exception.Errors is null ? exception.Message : "Please correct the highlighted fields.";
+            _error = exception.Errors is null ? exception.Message : "Please correct the highlighted fields: " + string.Join(" ", exception.Errors.SelectMany(e => e.Value));
         }
         finally
         {
@@ -112,5 +192,20 @@
         public string? AdminFirstName { get; set; }
 
         public string? AdminLastName { get; set; }
+    }
+
+    private sealed class MailInput
+    {
+        public string? Host { get; set; }
+
+        public string? Port { get; set; }
+
+        public string? From { get; set; }
+
+        public string? UserName { get; set; }
+
+        public string? Password { get; set; }
+
+        public bool UseSsl { get; set; }
     }
 }

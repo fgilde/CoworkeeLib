@@ -31,9 +31,28 @@
     </MudPaper>
 }
 
+@if (_permissionsOf is not null)
+{
+    <MudPaper Outlined="true" Class="pa-4 mb-4">
+        <MudStack Row="true" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.h6">Effective permissions of @_permissionsOf.Email</MudText>
+            <MudSpacer />
+            <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small" aria-label="Close" OnClick="() => _permissionsOf = null" />
+        </MudStack>
+        @if (_permissions.Count == 0)
+        {
+            <MudText Typo="Typo.body2">No permissions.</MudText>
+        }
+        @foreach (var permission in _permissions)
+        {
+            <MudChip T="string" Size="Size.Small">@permission</MudChip>
+        }
+    </MudPaper>
+}
+
 <MudTable @ref="_table" T="UserDto" ServerData="LoadAsync" Dense="true" Hover="true" RowsPerPage="25">
     <HeaderContent>
-        <MudTh>Email</MudTh><MudTh>Name</MudTh><MudTh>Roles</MudTh><MudTh>Active</MudTh>
+        <MudTh>Email</MudTh><MudTh>Name</MudTh><MudTh>Roles</MudTh><MudTh>Active</MudTh><MudTh></MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd>@context.Email</MudTd>
@@ -54,6 +73,12 @@
         </MudTd>
         <MudTd>
             <MudSwitch T="bool" Value="@context.IsActive" ValueChanged="v => SetActiveAsync(context, v)" Color="Color.Secondary" />
+        </MudTd>
+        <MudTd Style="text-align:right;white-space:nowrap">
+            <MudIconButton Icon="@Icons.Material.Outlined.Key" Size="Size.Small" aria-label="Effective permissions" OnClick="() => ShowPermissionsAsync(context)" />
+            <PermissionView Permission="@IdentityPermissions.Users.Manage">
+                <MudIconButton Icon="@Icons.Material.Outlined.LockReset" Size="Size.Small" aria-label="Send password reset" OnClick="() => SendResetAsync(context)" />
+            </PermissionView>
         </MudTd>
     </RowTemplate>
     <PagerContent><MudTablePager /></PagerContent>
@@ -86,6 +111,35 @@
     private Task SetRolesAsync(UserDto user, IEnumerable<Guid> ids) => RunAsync(() => Api.SetUserRolesAsync(user.Id, ids.ToList()));
 
     private Task SetActiveAsync(UserDto user, bool active) => RunAsync(() => Api.UpdateUserAsync(user.Id, new UpdateUserRequest(user.FirstName, user.LastName, active)));
+
+    private UserDto? _permissionsOf;
+    private IReadOnlyList<string> _permissions = [];
+
+    private async Task ShowPermissionsAsync(UserDto user)
+    {
+        try
+        {
+            _permissions = await Api.GetEffectivePermissionsAsync(user.Id);
+            _permissionsOf = user;
+        }
+        catch (ApiException exception)
+        {
+            Snackbar.Add(exception.Message, Severity.Error);
+        }
+    }
+
+    private async Task SendResetAsync(UserDto user)
+    {
+        try
+        {
+            await Api.SendPasswordResetAsync(user.Id);
+            Snackbar.Add($"Password reset mail queued for {user.Email}.", Severity.Success);
+        }
+        catch (ApiException exception)
+        {
+            Snackbar.Add(exception.Message, Severity.Error);
+        }
+    }
 
     private async Task RunAsync(Func<Task> action)
     {
