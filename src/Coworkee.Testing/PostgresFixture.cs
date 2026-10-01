@@ -34,6 +34,24 @@ public class PostgresFixture : IAsyncLifetime
             TablesToIgnore = [new Respawn.Graph.Table("__EFMigrationsHistory"), .. TablesToKeep.Select(t => new Respawn.Graph.Table(t.Schema, t.Table))],
             SchemasToExclude = SchemasToExclude,
         });
-        await _respawner.ResetAsync(connection);
+        await using (var command = new NpgsqlCommand("SET lock_timeout = '1s'", connection))
+        {
+            await command.ExecuteNonQueryAsync();
+        }
+
+        // Background work (outbox, jobs) can hold row locks while it waits on a second connection; queueing the exclusive
+        // TRUNCATE behind it would block that connection too. Give up quickly and retry instead.
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                await _respawner.ResetAsync(connection);
+                return;
+            }
+            catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.LockNotAvailable && attempt < 20)
+            {
+                await Task.Delay(200);
+            }
+        }
     }
 }
