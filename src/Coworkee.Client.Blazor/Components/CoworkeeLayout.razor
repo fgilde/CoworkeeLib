@@ -20,7 +20,7 @@
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="() => _drawer = !_drawer" aria-label="Toggle navigation" />
         @if (ThemeService.LogoSvg is { Length: > 0 } logo)
         {
-            <span class="ml-2" style="display:inline-flex;height:28px">@((MarkupString)logo)</span>
+            <img class="ml-2" data-testid="logo" alt="" style="height:28px" src="@($"data:image/svg+xml;base64,{Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(logo))}")" />
         }
         <MudText Typo="Typo.h6" Class="ml-2">@Options.AppTitle</MudText>
         <MudSpacer />

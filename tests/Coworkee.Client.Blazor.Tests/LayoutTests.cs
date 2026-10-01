@@ -41,6 +41,20 @@ public sealed class LayoutTests : ClientTestBase
     }
 
     [Fact]
+    public void Logo_is_rendered_as_an_image_never_as_markup()
+    {
+        Api.GetCurrentThemeAsync(Arg.Any<CancellationToken>()).Returns(new Coworkee.Contracts.Theming.ThemeDto(
+            Guid.CreateVersion7(), "Brand", false, true, System.Text.Json.JsonSerializer.SerializeToElement(new { }), System.Text.Json.JsonSerializer.SerializeToElement(new { }),
+            null, null, "<svg xmlns=\"http://www.w3.org/2000/svg\"><circle r=\"4\"/></svg>", null, 1));
+        AddAuthorization();
+
+        var layout = Render<CoworkeeLayout>(p => p.Add(l => l.Body, (RenderFragment)(b => b.AddContent(0, "body"))));
+
+        layout.WaitForAssertion(() => layout.Find("img[data-testid='logo']").GetAttribute("src")!.ShouldStartWith("data:image/svg+xml;base64,"));
+        layout.Markup.ShouldNotContain("<circle");
+    }
+
+    [Fact]
     public void Uninitialized_system_redirects_to_setup()
     {
         Api.GetSetupStatusAsync(Arg.Any<CancellationToken>()).Returns(new SetupStatusDto(false));

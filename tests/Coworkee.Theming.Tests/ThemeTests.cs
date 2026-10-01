@@ -65,6 +65,12 @@ public sealed class ThemeTests(ThemeApp app) : IAsyncLifetime
     [InlineData(null, "<svg onload=\"alert(1)\"></svg>")]
     [InlineData(null, "<svg><script>alert(1)</script></svg>")]
     [InlineData(null, "<img src=x>")]
+    [InlineData(null, "<svg/onload=alert(1)></svg>")]
+    [InlineData(null, "<svg a=\"b\"onload=alert(1)></svg>")]
+    [InlineData(null, "<svg><a href=\"javascript&colon;alert(1)\">x</a></svg>")]
+    [InlineData(null, "<svg><a href=\"&#106;avascript:alert(1)\">x</a></svg>")]
+    [InlineData(null, "<svg><style>body{display:none}</style></svg>")]
+    [InlineData(null, "<svg><image href=\"https://evil.test/p.gif\"/></svg>")]
     public async Task Unsafe_css_and_svg_are_rejected(string? css, string? logo) =>
         (await Admin.PostAsJsonAsync("/api/v1/themes", Brand(css: css, logo: logo), Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 

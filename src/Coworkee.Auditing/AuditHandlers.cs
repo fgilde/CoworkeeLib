@@ -31,7 +31,8 @@ internal sealed class AuditQueryHandler(CoworkeeDbContext db, ICurrentUser curre
     {
         var query = request.Query;
         var tenantId = currentUser.TenantId;
-        var entries = db.Set<AuditEntry>().AsNoTracking().Where(e => e.TenantId == tenantId);
+        var system = tenantId is { } tenant && services.GetService<ITenantDirectory>() is { } tenants && await tenants.IsSystemTenantAsync(tenant, cancellationToken);
+        var entries = db.Set<AuditEntry>().AsNoTracking().Where(e => e.TenantId == tenantId || (system && e.TenantId == null));
         if (!string.IsNullOrWhiteSpace(query.EntityType))
         {
             entries = entries.Where(e => e.EntityType == query.EntityType);

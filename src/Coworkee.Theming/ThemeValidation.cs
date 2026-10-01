@@ -10,7 +10,11 @@ public static partial class ThemeValidation
     private const int MaxSvg = 100_000;
 
     private static readonly string[] ForbiddenCss = ["</style", "<script", "@import", "expression(", "javascript:", "behavior:", "-moz-binding"];
-    private static readonly string[] ForbiddenSvg = ["<script", "javascript:", "<foreignobject", "<iframe", "<embed", "<object", "<!entity", "<!doctype", "data:text/html"];
+    private static readonly string[] ForbiddenSvg =
+    [
+        "<script", "javascript:", "<foreignobject", "<iframe", "<embed", "<object", "<!entity", "<!doctype", "data:text/html",
+        "&", "<style", "<image", "<use", "<a", "<set", "<feimage", "<handler", "<listener",
+    ];
 
     public static string? Validate(ThemeRequest request)
     {
@@ -103,13 +107,17 @@ public static partial class ThemeValidation
             && trimmed.StartsWith("<svg", StringComparison.OrdinalIgnoreCase)
             && trimmed.EndsWith("</svg>", StringComparison.OrdinalIgnoreCase)
             && !ForbiddenSvg.Any(f => trimmed.Contains(f, StringComparison.OrdinalIgnoreCase))
-            && !EventAttribute().IsMatch(trimmed);
+            && !EventAttribute().IsMatch(trimmed)
+            && !ExternalReference().IsMatch(trimmed);
         return valid ? null : "LogoSvg must be a plain SVG without scripts, event handlers or embedded documents.";
     }
 
     [GeneratedRegex(@"^(#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})|(rgb|rgba|hsl|hsla)\(\s*[0-9.]+%?\s*(,\s*[0-9.]+%?\s*){2,3}\)|transparent)$")]
     private static partial Regex Color();
 
-    [GeneratedRegex(@"\son[a-z]+\s*=", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"[\s/""']on[a-z]+\s*=", RegexOptions.IgnoreCase)]
     private static partial Regex EventAttribute();
+
+    [GeneratedRegex(@"href\s*=\s*[""']?(?!#)", RegexOptions.IgnoreCase)]
+    private static partial Regex ExternalReference();
 }

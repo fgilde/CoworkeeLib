@@ -55,6 +55,17 @@ public sealed class AuditTests(AuditApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task System_tenant_sees_entries_without_tenant_but_others_do_not()
+    {
+        (await Admin.GetFromJsonAsync<PagedResult<AuditEntryDto>>("/api/v1/audit?entityType=Tenant", Ct))!.Items.ShouldContain(e => e.Action == "Created");
+
+        var (user, tenant) = await app.CreateTenantAdminAsync();
+
+        (await app.As(user, tenant).GetFromJsonAsync<PagedResult<AuditEntryDto>>("/api/v1/audit?entityType=Tenant", Ct))!.Items
+            .ShouldNotContain(e => e.EntityId == _setup.TenantId.ToString());
+    }
+
+    [Fact]
     public async Task Audit_requires_permission()
     {
         var response = await Admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest("bob@acme.test", "Passw0rd!x", null, null), Ct);
