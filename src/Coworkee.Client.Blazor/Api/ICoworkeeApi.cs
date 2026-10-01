@@ -2,6 +2,7 @@ using Coworkee.Contracts;
 using Coworkee.Contracts.Auditing;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Mailing;
+using Coworkee.Contracts.Notifications;
 using Coworkee.Contracts.Settings;
 using Coworkee.Contracts.Theming;
 
@@ -100,6 +101,14 @@ public interface ICoworkeeApi
     Task<EntityVersionDetailDto> GetVersionAsync(string type, Guid id, int revision, CancellationToken cancellationToken = default);
 
     Task RestoreVersionAsync(string type, Guid id, int revision, CancellationToken cancellationToken = default);
+
+    Task<UnreadCountDto> GetUnreadNotificationCountAsync(CancellationToken cancellationToken = default);
+
+    Task<PagedResult<NotificationDto>> GetNotificationsAsync(bool unreadOnly, PageRequest page, CancellationToken cancellationToken = default);
+
+    Task MarkNotificationReadAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task MarkAllNotificationsReadAsync(CancellationToken cancellationToken = default);
 }
 
 public sealed class ApiException(int status, string? code, IReadOnlyDictionary<string, string[]>? errors)

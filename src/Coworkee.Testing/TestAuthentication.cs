@@ -28,6 +28,11 @@ public sealed class TestAuthHandler(IOptionsMonitor<AuthenticationSchemeOptions>
             claims.Add(new Claim("tenant", parts[1]));
         }
 
+        if (parts.Length > 2 && parts[2].Length > 0)
+        {
+            claims.Add(new Claim("exp", parts[2]));
+        }
+
         var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, SchemeName));
         return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(principal, SchemeName)));
     }

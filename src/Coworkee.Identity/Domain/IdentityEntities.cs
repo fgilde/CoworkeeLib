@@ -23,6 +23,7 @@ public sealed class Tenant : AuditedAggregateRoot
     public bool AcceptsRegistrations { get; set; }
 }
 
+[Realtime(IdentityPermissions.Users.View)]
 public sealed class User : IdentityUser<Guid>, IAuditable
 {
     public User()
@@ -50,6 +51,7 @@ public sealed class User : IdentityUser<Guid>, IAuditable
     public Guid? ModifiedBy { get; set; }
 }
 
+[Realtime(IdentityPermissions.Roles.View)]
 public sealed class Role : IdentityRole<Guid>, IAuditable
 {
     public Role() => Id = Guid.CreateVersion7();
@@ -69,6 +71,7 @@ public sealed class Role : IdentityRole<Guid>, IAuditable
     public Guid? ModifiedBy { get; set; }
 }
 
+[Realtime(IdentityPermissions.Groups.View)]
 public sealed class UserGroup : AuditedAggregateRoot, IMultiTenant
 {
     public required string Name { get; set; }

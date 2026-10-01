@@ -34,3 +34,19 @@ public interface IVersioned
 {
     int Revision { get; set; }
 }
+
+[AttributeUsage(AttributeTargets.Class, Inherited = false)]
+public sealed class RealtimeAttribute(string permission) : Attribute
+{
+    public string Permission { get; } = permission;
+}
+
+public interface IHasRealtimeTopics
+{
+    IEnumerable<string> RealtimeTopics { get; }
+}
+
+public interface IRealtimeTopicMapper
+{
+    IEnumerable<string> TopicsFor(object entity);
+}

@@ -4,6 +4,7 @@
 @inject ISnackbar Snackbar
 
 <PageTitle>Groups</PageTitle>
+<RealtimeSubscription Topic="type:UserGroup" OnEvent="_ => ReloadAsync()" />
 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
     <MudText Typo="Typo.h4">Groups</MudText>
     <MudSpacer />

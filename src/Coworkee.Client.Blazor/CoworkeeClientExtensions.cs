@@ -18,6 +18,8 @@ public static class CoworkeeClientExtensions
         services.AddHttpClient<ICoworkeeApi, CoworkeeApi>(client => client.BaseAddress = baseAddress);
         services.AddScoped<PermissionStore>();
         services.AddScoped<Theming.ThemeService>();
+        services.AddScoped<Realtime.IRealtimeConnection, Realtime.SignalRRealtimeConnection>();
+        services.AddScoped<Realtime.RealtimeClient>();
         services.AddScoped<BffAuthenticationStateProvider>();
         services.AddScoped<AuthenticationStateProvider>(provider => provider.GetRequiredService<BffAuthenticationStateProvider>());
         services.AddAuthorizationCore();
