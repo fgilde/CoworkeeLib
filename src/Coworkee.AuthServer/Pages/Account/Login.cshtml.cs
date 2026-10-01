@@ -1,21 +1,28 @@
+using Coworkee.Account;
 using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
 using Coworkee.Infrastructure.Persistence;
+using Coworkee.Settings;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Coworkee.AuthServer.Pages.Account;
 
-public sealed class LoginModel(SignInManager<User> signIn, UserManager<User> users, CoworkeeDbContext db) : PageModel
+public sealed class LoginModel(SignInManager<User> signIn, UserManager<User> users, CoworkeeDbContext db, ISettingProvider settings) : PageModel
 {
     [BindProperty]
     public LoginInput Input { get; set; } = new();
 
     public string? ErrorMessage { get; private set; }
 
+    public bool AllowRegistration { get; private set; }
+
+    public async Task OnGetAsync() => AllowRegistration = await settings.GetAsync<bool>(AccountSettings.AllowRegistration);
+
     public async Task<IActionResult> OnPostAsync(string? returnUrl)
     {
+        AllowRegistration = await settings.GetAsync<bool>(AccountSettings.AllowRegistration);
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
         var user = await users.FindByEmailAsync(Input.Email);
         if (user is null || !user.IsActive)
@@ -26,6 +33,11 @@ public sealed class LoginModel(SignInManager<User> signIn, UserManager<User> use
 
         var result = await signIn.PasswordSignInAsync(user, Input.Password, Input.RememberMe, lockoutOnFailure: true);
         await db.SaveChangesAsync();
+        if (result.RequiresTwoFactor)
+        {
+            return RedirectToPage("LoginWith2fa", new { ReturnUrl = returnUrl, Input.RememberMe });
+        }
+
         if (result.IsLockedOut)
         {
             ErrorMessage = "Too many attempts. Try again later.";

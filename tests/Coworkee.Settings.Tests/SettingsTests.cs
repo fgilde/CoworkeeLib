@@ -4,6 +4,7 @@ using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Settings;
 using Coworkee.Infrastructure.Auditing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Settings.Tests;
@@ -76,6 +77,29 @@ public sealed class SettingsTests(SettingsApp app) : IAsyncLifetime
         (await SendAsync(other, "global", "Test.Text", "x")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await other.GetAsync("/api/v1/settings/global", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await SendAsync(other, "tenant", "Test.Text", "mine")).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+    }
+
+    [Fact]
+    public async Task Setup_applies_settings_from_the_request()
+    {
+        var setup = await app.SetupAsync(new Dictionary<string, string?> { ["Test.GlobalOnly"] = "9", ["Test.Secret"] = "smtp-pass" });
+
+        (await app.AsActorAsync(setup.AdminUserId, setup.TenantId, sp => sp.GetRequiredService<ISettingProvider>().GetAsync<int>("Test.GlobalOnly", Ct))).ShouldBe(9);
+        (await app.AsActorAsync(setup.AdminUserId, setup.TenantId, sp => sp.GetRequiredService<ISettingProvider>().GetAsync("Test.Secret", Ct))).ShouldBe("smtp-pass");
+    }
+
+    [Fact]
+    public async Task Invalid_setup_setting_rejects_the_whole_setup()
+    {
+        await app.ResetAsync();
+        app.App.Services.GetRequiredService<Coworkee.Identity.Setup.SystemStateCache>().Reset();
+
+        var response = await app.App.GetTestClient().PostAsJsonAsync("/api/v1/setup/complete",
+            new CompleteSetupRequest("token", "Acme", "admin@acme.test", "Admin#12345", null, null, new Dictionary<string, string?> { ["Test.GlobalOnly"] = "abc" }), Ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await app.App.GetTestClient().GetFromJsonAsync<SetupStatusDto>("/api/v1/setup/status", Ct))!.IsInitialized.ShouldBeFalse();
+        (await app.InDbAsync(db => db.Set<Coworkee.Identity.Domain.Tenant>().CountAsync(Ct))).ShouldBe(0);
     }
 
     [Fact]

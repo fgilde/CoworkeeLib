@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/Coworkee.Account/Coworkee.Account.csproj" />
     <Project Path="src/Coworkee.Application/Coworkee.Application.csproj" />
     <Project Path="src/Coworkee.Aspire/Coworkee.Aspire.csproj" />
     <Project Path="src/Coworkee.AspNetCore/Coworkee.AspNetCore.csproj" />
@@ -21,6 +22,7 @@
     <Project Path="src/Coworkee.Theming/Coworkee.Theming.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Coworkee.Account.Tests/Coworkee.Account.Tests.csproj" />
     <Project Path="tests/Coworkee.Application.Tests/Coworkee.Application.Tests.csproj" />
     <Project Path="tests/Coworkee.ArchitectureTests/Coworkee.ArchitectureTests.csproj" />
     <Project Path="tests/Coworkee.Aspire.Tests/Coworkee.Aspire.Tests.csproj" />

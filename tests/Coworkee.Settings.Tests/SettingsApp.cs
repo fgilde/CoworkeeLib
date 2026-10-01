@@ -50,12 +50,12 @@ public sealed class SettingsApp : PostgresFixture
         await base.DisposeAsync();
     }
 
-    public async Task<SetupResultDto> SetupAsync()
+    public async Task<SetupResultDto> SetupAsync(IReadOnlyDictionary<string, string?>? settings = null)
     {
         await ResetAsync();
         App.Services.GetRequiredService<SystemStateCache>().Reset();
         var response = await App.GetTestClient().PostAsJsonAsync("/api/v1/setup/complete",
-            new CompleteSetupRequest("token", "Acme", "admin@acme.test", "Admin#12345", "Ada", "Admin"));
+            new CompleteSetupRequest("token", "Acme", "admin@acme.test", "Admin#12345", "Ada", "Admin", settings));
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<SetupResultDto>())!;
     }

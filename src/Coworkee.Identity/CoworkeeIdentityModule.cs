@@ -36,6 +36,7 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
         services.AddScoped<ITenantDirectory, Users.TenantDirectory>();
         services.AddSingleton<Coworkee.Domain.IRealtimeTopicMapper, IdentityRealtimeTopics>();
         services.AddSingleton<SetupToken>();
+        services.AddScoped<Coworkee.Application.Setup.ISetupCheck, DatabaseSetupCheck>();
         services.AddSingleton<SystemStateCache>();
         services.AddHostedService<SetupTokenAnnouncer>();
         services.AddOptions<SetupGateOptions>();
@@ -48,7 +49,7 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
             })
             .AddDefaultTokenProviders();
-        services.AddScoped<IUserStore<User>>(provider => new UserStore<User, Role, CoworkeeDbContext, Guid>(provider.GetRequiredService<CoworkeeDbContext>()) { AutoSaveChanges = false });
+        services.AddScoped<IUserStore<User>>(provider => new Users.CoworkeeUserStore(provider.GetRequiredService<CoworkeeDbContext>()) { AutoSaveChanges = false });
     }
 
     public void ConfigureApplication(WebApplication app)

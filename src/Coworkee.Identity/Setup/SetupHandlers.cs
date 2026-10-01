@@ -1,4 +1,5 @@
 using Coworkee.Application.Messaging;
+using Coworkee.Application.Setup;
 using Coworkee.Contracts.Identity;
 using Coworkee.Core.Results;
 using Coworkee.Core.Security;
@@ -11,6 +12,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Coworkee.Identity.Setup;
 
 public sealed record GetSetupStatus : IQuery<Result<SetupStatusDto>>;
+
+public sealed record GetSetupChecks : IQuery<Result<IReadOnlyList<SetupCheckDto>>>;
 
 public sealed record CompleteSetup(CompleteSetupRequest Request) : ICommand<Result<SetupResultDto>>;
 
@@ -31,7 +34,44 @@ internal sealed class GetSetupStatusHandler(SystemStateCache state) : IHandler<G
         new SetupStatusDto(await state.IsInitializedAsync(cancellationToken));
 }
 
-internal sealed class CompleteSetupHandler(CoworkeeDbContext db, UserManager<User> users, SetupToken token, SystemStateCache state, TimeProvider clock)
+internal sealed class GetSetupChecksHandler(SystemStateCache state, IEnumerable<ISetupCheck> checks) : IHandler<GetSetupChecks, Result<IReadOnlyList<SetupCheckDto>>>
+{
+    public async Task<Result<IReadOnlyList<SetupCheckDto>>> HandleAsync(GetSetupChecks request, CancellationToken cancellationToken)
+    {
+        if (await state.IsInitializedAsync(cancellationToken))
+        {
+            return Error.Conflict("setup.completed", "The system is already set up.");
+        }
+
+        var results = new List<SetupCheckDto>();
+        foreach (var check in checks)
+        {
+            try
+            {
+                results.Add(await check.RunAsync(cancellationToken));
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                results.Add(new SetupCheckDto(check.Name, SetupCheckStatus.Error, exception.Message));
+            }
+        }
+
+        return results;
+    }
+}
+
+internal sealed class DatabaseSetupCheck(CoworkeeDbContext db) : ISetupCheck
+{
+    public string Name => "Database";
+
+    public async Task<SetupCheckDto> RunAsync(CancellationToken cancellationToken) =>
+        await db.Database.CanConnectAsync(cancellationToken)
+            ? new SetupCheckDto(Name, SetupCheckStatus.Ok, null)
+            : new SetupCheckDto(Name, SetupCheckStatus.Error, "The database is not reachable.");
+}
+
+internal sealed class CompleteSetupHandler(
+    CoworkeeDbContext db, UserManager<User> users, SetupToken token, SystemStateCache state, TimeProvider clock, IEnumerable<ISetupStep> steps)
     : IHandler<CompleteSetup, Result<SetupResultDto>>
 {
     public async Task<Result<SetupResultDto>> HandleAsync(CompleteSetup command, CancellationToken cancellationToken)
@@ -72,6 +112,17 @@ internal sealed class CompleteSetupHandler(CoworkeeDbContext db, UserManager<Use
         }
 
         db.Set<IdentityUserRole<Guid>>().Add(new IdentityUserRole<Guid> { UserId = user.Id, RoleId = admin.Id });
+        using (CurrentUserScope.Begin(new ImpersonatedUser(user.Id, tenant.Id)))
+        {
+            foreach (var step in steps)
+            {
+                if (await step.ApplyAsync(request, tenant.Id, cancellationToken) is { } failed)
+                {
+                    return failed;
+                }
+            }
+        }
+
         var systemState = await db.Set<SystemState>().FindAsync([SystemState.SingletonId], cancellationToken);
         if (systemState is null)
         {

@@ -16,6 +16,12 @@ public interface ICoworkeeApi
 
     Task<SetupStatusDto> GetSetupStatusAsync(CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<SetupCheckDto>> GetSetupChecksAsync(CancellationToken cancellationToken = default);
+
+    Task SendPasswordResetAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<string>> GetEffectivePermissionsAsync(Guid userId, CancellationToken cancellationToken = default);
+
     Task<SetupResultDto> CompleteSetupAsync(CompleteSetupRequest request, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyCollection<string>> GetMyPermissionsAsync(CancellationToken cancellationToken = default);

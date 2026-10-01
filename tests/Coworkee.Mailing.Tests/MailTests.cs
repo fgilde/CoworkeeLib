@@ -7,6 +7,7 @@ using Coworkee.Contracts.Mailing;
 using Coworkee.Contracts.Settings;
 using Coworkee.Core.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Mailing.Tests;
@@ -84,6 +85,17 @@ public sealed class MailTests(MailApp app) : IAsyncLifetime
     [Fact]
     public void Syntax_error_is_reported_with_position() =>
         MailTemplateValidation.Validate("ok", "{{ if }}").ShouldContain(e => e.Contains("(1,", StringComparison.Ordinal));
+
+    [Fact]
+    public async Task Setup_check_reports_the_reachable_mail_server()
+    {
+        await app.ResetAsync();
+        app.App.Services.GetRequiredService<Coworkee.Identity.Setup.SystemStateCache>().Reset();
+
+        var checks = await app.App.GetTestClient().GetFromJsonAsync<SetupCheckDto[]>("/api/v1/setup/checks", Ct);
+
+        checks!.ShouldContain(c => c.Name == "Mail" && c.Status == SetupCheckStatus.Ok);
+    }
 
     [Fact]
     public async Task Queued_mail_is_sent_after_commit()

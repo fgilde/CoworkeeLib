@@ -25,6 +25,17 @@ public sealed class SetupTests(IdentityApp app) : IAsyncLifetime
         (await app.Anonymous().GetAsync("/api/v1/identity/users", Ct)).StatusCode.ShouldBe(HttpStatusCode.ServiceUnavailable);
 
     [Fact]
+    public async Task Checks_report_the_database_before_setup_and_disappear_afterwards()
+    {
+        var checks = await app.Anonymous().GetFromJsonAsync<SetupCheckDto[]>("/api/v1/setup/checks", Ct);
+        checks!.ShouldContain(c => c.Name == "Database" && c.Status == SetupCheckStatus.Ok);
+
+        await app.SetupAsync();
+
+        (await app.Anonymous().GetAsync("/api/v1/setup/checks", Ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
     public async Task Status_reports_state()
     {
         (await Status()).IsInitialized.ShouldBeFalse();

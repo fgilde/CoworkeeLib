@@ -119,7 +119,8 @@ public static class BffExtensions
                 user.FindFirstValue("email"),
                 Guid.TryParse(user.FindFirstValue("sub"), out var id) ? id : null,
                 Guid.TryParse(user.FindFirstValue("tenant"), out var tenant) ? tenant : null,
-                user.FindAll("role").Select(c => c.Value).ToArray())
+                user.FindAll("role").Select(c => c.Value).ToArray(),
+                options.Authority.TrimEnd('/') + "/Account/Manage/TwoFactor")
             : BffUserDto.Anonymous);
 
         foreach (var prefix in options.ForwardedPrefixes.Prepend("/api"))

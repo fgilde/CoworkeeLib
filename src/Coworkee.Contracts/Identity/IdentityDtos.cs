@@ -30,6 +30,18 @@ public sealed record GrantResourcePermissionRequest(PrincipalType PrincipalType,
 
 public sealed record SetupStatusDto(bool IsInitialized);
 
-public sealed record CompleteSetupRequest(string SetupToken, string TenantName, string AdminEmail, string AdminPassword, string? AdminFirstName, string? AdminLastName);
+public sealed record CompleteSetupRequest(
+    string SetupToken, string TenantName, string AdminEmail, string AdminPassword, string? AdminFirstName, string? AdminLastName,
+    IReadOnlyDictionary<string, string?>? Settings = null);
+
+[System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter<SetupCheckStatus>))]
+public enum SetupCheckStatus
+{
+    Ok,
+    Warning,
+    Error,
+}
+
+public sealed record SetupCheckDto(string Name, SetupCheckStatus Status, string? Message);
 
 public sealed record SetupResultDto(Guid TenantId, Guid AdminUserId);

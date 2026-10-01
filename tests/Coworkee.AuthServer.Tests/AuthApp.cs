@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 [assembly: AssemblyFixture(typeof(Coworkee.AuthServer.Tests.AuthApp))]
 [assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly)]
@@ -24,6 +25,10 @@ public sealed class AuthApp : PostgresFixture
     public const string RedirectUri = "https://client.test/signin-oidc";
 
     public WebApplication App { get; private set; } = null!;
+
+    public CapturingMailSender Mails { get; } = new();
+
+    protected override string[] SchemasToExclude => ["hangfire"];
 
     public override async ValueTask InitializeAsync()
     {
@@ -41,14 +46,20 @@ public sealed class AuthApp : PostgresFixture
             ["Coworkee:Auth:Clients:0:RedirectUris:0"] = RedirectUri,
             ["Coworkee:Auth:Clients:0:PostLogoutRedirectUris:0"] = "https://client.test/",
             ["Coworkee:Auth:Clients:0:Scopes:0"] = "test_api",
+            ["Coworkee:Jobs:ConnectionStringName"] = "test",
+            ["Coworkee:Jobs:RunServer"] = "false",
+            ["Coworkee:Account:PublicAuthUrl"] = "http://localhost",
         });
         builder.AddCoworkee<TestAuthModule>();
+        builder.Services.RemoveAll<Coworkee.Mailing.IMailSender>();
+        builder.Services.AddSingleton<Coworkee.Mailing.IMailSender>(Mails);
         App = builder.Build();
-        App.UseCoworkee();
         await using (var scope = App.Services.CreateAsyncScope())
         {
             await scope.ServiceProvider.GetRequiredService<AuthTestDbContext>().Database.EnsureCreatedAsync();
         }
+
+        App.UseCoworkee();
 
         await App.StartAsync();
     }
@@ -68,6 +79,8 @@ public sealed class AuthApp : PostgresFixture
     public async Task<SetupResultDto> SetupAsync()
     {
         await ResetAsync();
+        Mails.Sent.Clear();
+        await App.Services.GetRequiredService<Microsoft.Extensions.Caching.Hybrid.HybridCache>().RemoveByTagAsync("coworkee:settings");
         App.Services.GetRequiredService<Coworkee.Identity.Setup.SystemStateCache>().Reset();
         await App.Services.GetRequiredService<AuthClientSeeder>().SeedAsync(CancellationToken.None);
         var response = await Browser().PostAsJsonAsync("/api/v1/setup/complete",
@@ -103,4 +116,23 @@ public sealed class TestAuthModule : CoworkeeModule
     public override void ConfigureServices(ModuleServiceContext context) =>
         context.Services.AddCoworkeeDbContext<AuthTestDbContext>((provider, options) =>
             options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
+}
+
+public sealed record CapturedMail(string To, string Template, object Model);
+
+public sealed class CapturingMailSender : Coworkee.Mailing.IMailSender
+{
+    public System.Collections.Concurrent.ConcurrentQueue<CapturedMail> Sent { get; } = new();
+
+    public Task<Guid> QueueAsync(string to, string template, object model, string? culture, CancellationToken cancellationToken)
+    {
+        Sent.Enqueue(new CapturedMail(to, template, model));
+        return Task.FromResult(Guid.CreateVersion7());
+    }
+
+    public string LinkFor(string template, string property)
+    {
+        var mail = Sent.Last(m => m.Template == template);
+        return (string)mail.Model.GetType().GetProperty(property)!.GetValue(mail.Model)!;
+    }
 }

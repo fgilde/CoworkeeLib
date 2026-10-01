@@ -29,6 +29,10 @@
             <Authorized>
                 <NotificationBell />
                 <MudText Typo="Typo.body2" Class="mx-3">@context.User.Identity?.Name</MudText>
+                @if (context.User.FindFirst("manage_url")?.Value is { } manage)
+                {
+                    <MudIconButton Icon="@Icons.Material.Outlined.Security" Color="Color.Inherit" Href="@manage" Target="_blank" aria-label="Account security" />
+                }
                 <MudButton Variant="Variant.Outlined" Color="Color.Inherit" Size="Size.Small" OnClick="LogoutAsync">Sign out</MudButton>
             </Authorized>
             <NotAuthorized>
