@@ -1,0 +1,77 @@
+@inherits LayoutComponentBase
+@inject CoworkeeClientOptions Options
+@inject IEnumerable<INavigationContributor> Navigation
+@inject ICoworkeeApi Api
+@inject NavigationManager Nav
+
+<MudThemeProvider Theme="CoworkeeTheme.Default" @bind-IsDarkMode="_dark" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="0" Dense="true">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="() => _drawer = !_drawer" aria-label="Toggle navigation" />
+        <MudText Typo="Typo.h6" Class="ml-2">@Options.AppTitle</MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@(_dark ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" Color="Color.Inherit" OnClick="() => _dark = !_dark" aria-label="Toggle dark mode" />
+        <AuthorizeView>
+            <Authorized>
+                <MudText Typo="Typo.body2" Class="mx-3">@context.User.Identity?.Name</MudText>
+                <MudButton Variant="Variant.Outlined" Color="Color.Inherit" Size="Size.Small" OnClick="LogoutAsync">Sign out</MudButton>
+            </Authorized>
+            <NotAuthorized>
+                <MudButton Variant="Variant.Outlined" Color="Color.Inherit" Size="Size.Small" Href="@($"{Options.LoginPath}?returnUrl={Uri.EscapeDataString(Nav.ToBaseRelativePath(Nav.Uri) is { Length: > 0 } p ? "/" + p : "/")}")">Sign in</MudButton>
+            </NotAuthorized>
+        </AuthorizeView>
+    </MudAppBar>
+    <MudDrawer @bind-Open="_drawer" Elevation="0" Variant="DrawerVariant.Responsive">
+        <MudNavMenu>
+            <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Home">Home</MudNavLink>
+            @foreach (var item in Navigation.SelectMany(n => n.Items))
+            {
+                if (item.Permission is null)
+                {
+                    <MudNavLink Href="@item.Href" Icon="@item.Icon">@item.Title</MudNavLink>
+                }
+                else
+                {
+                    <PermissionView Permission="@item.Permission">
+                        <MudNavLink Href="@item.Href" Icon="@item.Icon">@item.Title</MudNavLink>
+                    </PermissionView>
+                }
+            }
+        </MudNavMenu>
+    </MudDrawer>
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Large" Class="py-6">@Body</MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _drawer = true;
+    private bool _dark;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Nav.Uri.Contains("/setup", StringComparison.Ordinal))
+        {
+            try
+            {
+                if (!(await Api.GetSetupStatusAsync()).IsInitialized)
+                {
+                    Nav.NavigateTo("/setup");
+                }
+            }
+            catch (ApiException)
+            {
+            }
+        }
+    }
+
+    private async Task LogoutAsync()
+    {
+        var logout = await Api.LogoutAsync();
+        Nav.NavigateTo(logout.Redirect, forceLoad: true);
+    }
+}

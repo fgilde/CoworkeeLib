@@ -1,0 +1,113 @@
+@page "/admin/users"
+@attribute [Authorize(Policy = "perm:" + IdentityPermissions.Users.View)]
+@inject ICoworkeeApi Api
+@inject ISnackbar Snackbar
+
+<PageTitle>Users</PageTitle>
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+    <MudText Typo="Typo.h4">Users</MudText>
+    <MudSpacer />
+    <MudTextField T="string" @bind-Value="_search" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search"
+                  Immediate="true" DebounceInterval="300" OnDebounceIntervalElapsed="_ => _table!.ReloadServerData()" />
+    <PermissionView Permission="@IdentityPermissions.Users.Manage">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => _creating = true">New user</MudButton>
+    </PermissionView>
+</MudStack>
+
+@if (_creating)
+{
+    <MudPaper Outlined="true" Class="pa-4 mb-4">
+        <MudStack Row="true" Wrap="Wrap.Wrap">
+            <MudTextField @bind-Value="_new.Email" Label="Email" InputType="InputType.Email" Required="true" />
+            <MudTextField @bind-Value="_new.FirstName" Label="First name" />
+            <MudTextField @bind-Value="_new.LastName" Label="Last name" />
+            <MudTextField @bind-Value="_new.Password" Label="Initial password" InputType="InputType.Password" Required="true" />
+        </MudStack>
+        <MudStack Row="true" Class="mt-3">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateAsync">Create</MudButton>
+            <MudButton OnClick="() => _creating = false">Cancel</MudButton>
+        </MudStack>
+    </MudPaper>
+}
+
+<MudTable @ref="_table" T="UserDto" ServerData="LoadAsync" Dense="true" Hover="true" RowsPerPage="25">
+    <HeaderContent>
+        <MudTh>Email</MudTh><MudTh>Name</MudTh><MudTh>Roles</MudTh><MudTh>Active</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.Email</MudTd>
+        <MudTd>@context.FirstName @context.LastName</MudTd>
+        <MudTd>
+            <PermissionView Permission="@IdentityPermissions.Users.Manage">
+                <ChildContent>
+                    <MudSelect T="Guid" MultiSelection="true" Dense="true" SelectedValues="@context.Roles.Select(r => r.Id).ToArray()"
+                               SelectedValuesChanged="ids => SetRolesAsync(context, ids)" ToStringFunc="RoleName">
+                        @foreach (var role in _roles)
+                        {
+                            <MudSelectItem Value="@role.Id">@role.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </ChildContent>
+                <NotAuthorized>@string.Join(", ", context.Roles.Select(r => r.Name))</NotAuthorized>
+            </PermissionView>
+        </MudTd>
+        <MudTd>
+            <MudSwitch T="bool" Value="@context.IsActive" ValueChanged="v => SetActiveAsync(context, v)" Color="Color.Secondary" />
+        </MudTd>
+    </RowTemplate>
+    <PagerContent><MudTablePager /></PagerContent>
+</MudTable>
+
+@code {
+    private MudTable<UserDto>? _table;
+    private string? _search;
+    private bool _creating;
+    private NewUser _new = new();
+    private IReadOnlyList<RoleDto> _roles = [];
+
+    protected override async Task OnInitializedAsync() => _roles = await Api.GetRolesAsync();
+
+    private async Task<TableData<UserDto>> LoadAsync(TableState state, CancellationToken cancellationToken)
+    {
+        var page = await Api.GetUsersAsync(new PageRequest(state.Page + 1, state.PageSize, _search), cancellationToken);
+        return new TableData<UserDto> { Items = page.Items, TotalItems = page.TotalCount };
+    }
+
+    private string RoleName(Guid id) => _roles.FirstOrDefault(r => r.Id == id)?.Name ?? string.Empty;
+
+    private async Task CreateAsync() => await RunAsync(async () =>
+    {
+        await Api.CreateUserAsync(new CreateUserRequest(_new.Email, _new.Password, _new.FirstName, _new.LastName));
+        _new = new NewUser();
+        _creating = false;
+    });
+
+    private Task SetRolesAsync(UserDto user, IEnumerable<Guid> ids) => RunAsync(() => Api.SetUserRolesAsync(user.Id, ids.ToList()));
+
+    private Task SetActiveAsync(UserDto user, bool active) => RunAsync(() => Api.UpdateUserAsync(user.Id, new UpdateUserRequest(user.FirstName, user.LastName, active)));
+
+    private async Task RunAsync(Func<Task> action)
+    {
+        try
+        {
+            await action();
+        }
+        catch (ApiException exception)
+        {
+            Snackbar.Add(exception.Errors is { Count: > 0 } errors ? string.Join(" ", errors.SelectMany(e => e.Value)) : exception.Message, Severity.Error);
+        }
+
+        await _table!.ReloadServerData();
+    }
+
+    private sealed class NewUser
+    {
+        public string Email { get; set; } = string.Empty;
+
+        public string Password { get; set; } = string.Empty;
+
+        public string? FirstName { get; set; }
+
+        public string? LastName { get; set; }
+    }
+}

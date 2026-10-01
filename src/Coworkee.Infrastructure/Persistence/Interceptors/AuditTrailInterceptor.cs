@@ -53,7 +53,8 @@ internal sealed class AuditTrailInterceptor(ICurrentUser currentUser, TimeProvid
     private static bool IsAudited(EntityEntry entry) =>
         entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted or EntityState.Unchanged
         && !entry.Metadata.IsOwned()
-        && entry.Metadata.ClrType.GetCustomAttribute<NotAuditedAttribute>() is null;
+        && entry.Metadata.ClrType.GetCustomAttribute<NotAuditedAttribute>() is null
+        && entry.Metadata.FindAnnotation(AuditPropertyBuilderExtensions.NotAudited)?.Value is not true;
 
     private AuditEntry? Create(EntityEntry entry, DateTimeOffset now, string? correlationId)
     {

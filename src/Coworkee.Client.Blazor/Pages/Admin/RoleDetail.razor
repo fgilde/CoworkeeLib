@@ -1,0 +1,27 @@
+@page "/admin/roles/{Id:guid}"
+@attribute [Authorize(Policy = "perm:" + IdentityPermissions.Roles.View)]
+@inject ICoworkeeApi Api
+
+<PageTitle>@(_role?.Name ?? "Role")</PageTitle>
+@if (_role is not null)
+{
+    <MudText Typo="Typo.h4">@_role.Name</MudText>
+    <MudText Typo="Typo.body2" Class="mb-4">@_role.Description</MudText>
+    @if (_role.IsSystem && _role.Name == "admin")
+    {
+        <MudAlert Severity="Severity.Info" Class="mb-4">Administrators have every permission.</MudAlert>
+    }
+
+    <PermissionView Permission="@IdentityPermissions.Permissions.Manage">
+        <ChildContent><PermissionMatrix ProviderType="PermissionProviderType.Role" ProviderKey="_role.Id" ReadOnly="_role.IsSystem" /></ChildContent>
+        <NotAuthorized><PermissionMatrix ProviderType="PermissionProviderType.Role" ProviderKey="_role.Id" ReadOnly="true" /></NotAuthorized>
+    </PermissionView>
+}
+
+@code {
+    private RoleDto? _role;
+
+    [Parameter] public Guid Id { get; set; }
+
+    protected override async Task OnParametersSetAsync() => _role = (await Api.GetRolesAsync()).FirstOrDefault(r => r.Id == Id);
+}
