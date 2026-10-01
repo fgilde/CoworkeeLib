@@ -1,0 +1,116 @@
+@page "/setup"
+@attribute [AllowAnonymous]
+@inject ICoworkeeApi Api
+@inject CoworkeeClientOptions Options
+
+<PageTitle>Set up @Options.AppTitle</PageTitle>
+<MudPaper Outlined="true" Class="pa-6 mx-auto" Style="max-width:560px">
+    <MudText Typo="Typo.overline">Step @(Math.Min(_step + 1, 3)) of 3</MudText>
+    <MudText Typo="Typo.h4" Class="mb-4">Set up @Options.AppTitle</MudText>
+
+    @if (_done)
+    {
+        <MudAlert Severity="Severity.Success" Class="mb-4">The system is ready. Sign in with the administrator account.</MudAlert>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@($"{Options.LoginPath}?returnUrl=/admin/users")">Sign in</MudButton>
+    }
+    else
+    {
+        @switch (_step)
+        {
+            case 0:
+                <MudText Class="mb-2">Enter the setup token. It is printed in the API log on first start, or configured as <code>Coworkee:SetupToken</code>.</MudText>
+                <MudTextField @bind-Value="_request.SetupToken" Label="Setup token" data-testid="setup-token" Required="true" />
+                break;
+            case 1:
+                <MudTextField @bind-Value="_request.TenantName" Label="Organisation name" data-testid="tenant-name" Required="true" />
+                break;
+            default:
+                <MudTextField @bind-Value="_request.AdminEmail" Label="Administrator email" InputType="InputType.Email" data-testid="admin-email" Required="true"
+                              Error="@HasError("AdminEmail")" ErrorText="@ErrorFor("AdminEmail")" />
+                <MudTextField @bind-Value="_request.AdminPassword" Label="Password" InputType="InputType.Password" data-testid="admin-password" Required="true"
+                              Error="@HasError("Password")" ErrorText="@ErrorFor("Password")" />
+                <MudTextField @bind-Value="_request.AdminFirstName" Label="First name" data-testid="admin-first" />
+                <MudTextField @bind-Value="_request.AdminLastName" Label="Last name" data-testid="admin-last" />
+                break;
+        }
+
+        @if (_error is not null)
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-4" data-testid="setup-error">@_error</MudAlert>
+        }
+
+        <MudStack Row="true" Class="mt-6">
+            @if (_step > 0)
+            {
+                <MudButton OnClick="() => _step--">Back</MudButton>
+            }
+            <MudSpacer />
+            @if (_step < 2)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => _step++" data-testid="next">Next</MudButton>
+            }
+            else
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="FinishAsync" Disabled="_busy" data-testid="finish">Finish setup</MudButton>
+            }
+        </MudStack>
+    }
+</MudPaper>
+
+@code {
+    private readonly SetupInput _request = new();
+    private int _step;
+    private bool _busy;
+    private bool _done;
+    private string? _error;
+    private IReadOnlyDictionary<string, string[]>? _errors;
+
+    private bool HasError(string field) => _errors?.Keys.Any(k => k.EndsWith(field, StringComparison.OrdinalIgnoreCase)) == true;
+
+    private string? ErrorFor(string field) => _errors?.FirstOrDefault(e => e.Key.EndsWith(field, StringComparison.OrdinalIgnoreCase)).Value?.FirstOrDefault();
+
+    private async Task FinishAsync()
+    {
+        _busy = true;
+        _error = null;
+        _errors = null;
+        try
+        {
+            await Api.CompleteSetupAsync(new CompleteSetupRequest(_request.SetupToken, _request.TenantName, _request.AdminEmail, _request.AdminPassword, _request.AdminFirstName, _request.AdminLastName));
+            _done = true;
+        }
+        catch (ApiException exception) when (exception.Status == 403)
+        {
+            _error = "The setup token is not valid.";
+            _step = 0;
+        }
+        catch (ApiException exception) when (exception.Status == 409)
+        {
+            _error = "The system is already set up.";
+        }
+        catch (ApiException exception)
+        {
+            _errors = exception.Errors;
+            _error = exception.Errors is null ? exception.Message : "Please correct the highlighted fields.";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private sealed class SetupInput
+    {
+        public string SetupToken { get; set; } = string.Empty;
+
+        public string TenantName { get; set; } = string.Empty;
+
+        public string AdminEmail { get; set; } = string.Empty;
+
+        public string AdminPassword { get; set; } = string.Empty;
+
+        public string? AdminFirstName { get; set; }
+
+        public string? AdminLastName { get; set; }
+    }
+}
