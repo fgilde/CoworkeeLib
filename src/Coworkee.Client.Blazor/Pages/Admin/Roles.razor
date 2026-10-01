@@ -1,0 +1,69 @@
+@page "/admin/roles"
+@attribute [Authorize(Policy = "perm:" + IdentityPermissions.Roles.View)]
+@inject ICoworkeeApi Api
+@inject ISnackbar Snackbar
+
+<PageTitle>Roles</PageTitle>
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+    <MudText Typo="Typo.h4">Roles</MudText>
+    <MudSpacer />
+    <PermissionView Permission="@IdentityPermissions.Roles.Manage">
+        <MudTextField @bind-Value="_name" Placeholder="New role name" />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateAsync" Disabled="@string.IsNullOrWhiteSpace(_name)">Add role</MudButton>
+    </PermissionView>
+</MudStack>
+
+<MudSimpleTable Hover="true" Dense="true">
+    <thead><tr><th>Name</th><th>Description</th><th></th></tr></thead>
+    <tbody>
+        @foreach (var role in _roles)
+        {
+            <tr>
+                <td><MudLink Href="@($"/admin/roles/{role.Id}")">@role.Name</MudLink> @if (role.IsSystem) { <MudChip T="string" Size="Size.Small">system</MudChip> }</td>
+                <td>@role.Description</td>
+                <td style="text-align:right">
+                    @if (!role.IsSystem)
+                    {
+                        <PermissionView Permission="@IdentityPermissions.Roles.Manage">
+                            <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" aria-label="Delete role" OnClick="() => DeleteAsync(role)" />
+                        </PermissionView>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</MudSimpleTable>
+
+@code {
+    private IReadOnlyList<RoleDto> _roles = [];
+    private string? _name;
+
+    protected override async Task OnInitializedAsync() => _roles = await Api.GetRolesAsync();
+
+    private async Task CreateAsync()
+    {
+        try
+        {
+            await Api.CreateRoleAsync(new RoleRequest(_name!, null));
+            _name = null;
+            _roles = await Api.GetRolesAsync();
+        }
+        catch (ApiException exception)
+        {
+            Snackbar.Add(exception.Message, Severity.Error);
+        }
+    }
+
+    private async Task DeleteAsync(RoleDto role)
+    {
+        try
+        {
+            await Api.DeleteRoleAsync(role.Id);
+            _roles = await Api.GetRolesAsync();
+        }
+        catch (ApiException exception)
+        {
+            Snackbar.Add(exception.Message, Severity.Error);
+        }
+    }
+}

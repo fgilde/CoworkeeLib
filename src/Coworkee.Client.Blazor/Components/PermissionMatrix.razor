@@ -1,0 +1,92 @@
+@inject ICoworkeeApi Api
+@inject ISnackbar Snackbar
+
+@if (_groups is null)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else
+{
+    @foreach (var group in _groups)
+    {
+        <MudText Typo="Typo.overline" Class="mt-4 d-block">@group.DisplayName</MudText>
+        <MudSimpleTable Dense="true" Hover="true" Bordered="false" Class="mb-2">
+            <tbody>
+                @foreach (var permission in group.Permissions)
+                {
+                    <tr data-permission="@permission.Name">
+                        <td style="width:48px">
+                            <input type="checkbox" checked="@_selected.Contains(permission.Name)" disabled="@ReadOnly" aria-label="@permission.DisplayName"
+                                   @onchange="e => Toggle(permission.Name, e.Value is true)" />
+                        </td>
+                        <td>@permission.DisplayName</td>
+                        <td><MudText Typo="Typo.caption">@permission.Name</MudText></td>
+                        <td>
+                            @if (permission.Implies.Count > 0)
+                            {
+                                <MudText Typo="Typo.caption">includes @string.Join(", ", permission.Implies)</MudText>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </MudSimpleTable>
+    }
+
+    @if (!ReadOnly)
+    {
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_saving" data-testid="save-permissions">Save</MudButton>
+    }
+}
+
+@code {
+    private IReadOnlyList<PermissionGroupDto>? _groups;
+    private readonly HashSet<string> _selected = new(StringComparer.Ordinal);
+    private bool _saving;
+
+    [Parameter, EditorRequired] public PermissionProviderType ProviderType { get; set; }
+
+    [Parameter, EditorRequired] public Guid ProviderKey { get; set; }
+
+    [Parameter] public bool ReadOnly { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var definitions = Api.GetPermissionDefinitionsAsync();
+        var grants = ReadOnly ? Task.FromResult<IReadOnlyList<string>>([]) : Api.GetGrantsAsync(ProviderType, ProviderKey);
+        _groups = await definitions;
+        _selected.Clear();
+        _selected.UnionWith(await grants);
+    }
+
+    private void Toggle(string name, bool on)
+    {
+        if (on)
+        {
+            _selected.Add(name);
+        }
+        else
+        {
+            _selected.Remove(name);
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        try
+        {
+            var ordered = _groups!.SelectMany(g => g.Permissions).Select(p => p.Name).Where(_selected.Contains).ToList();
+            await Api.SetGrantsAsync(ProviderType, ProviderKey, ordered);
+            Snackbar.Add("Permissions saved.", Severity.Success);
+        }
+        catch (ApiException exception)
+        {
+            Snackbar.Add(exception.Message, Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}

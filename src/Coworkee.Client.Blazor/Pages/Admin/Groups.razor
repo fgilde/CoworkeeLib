@@ -1,0 +1,87 @@
+@page "/admin/groups"
+@attribute [Authorize(Policy = "perm:" + IdentityPermissions.Groups.View)]
+@inject ICoworkeeApi Api
+@inject ISnackbar Snackbar
+
+<PageTitle>Groups</PageTitle>
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+    <MudText Typo="Typo.h4">Groups</MudText>
+    <MudSpacer />
+    <PermissionView Permission="@IdentityPermissions.Groups.Manage">
+        <MudTextField @bind-Value="_name" Placeholder="New group name" />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateAsync" Disabled="@string.IsNullOrWhiteSpace(_name)">Add group</MudButton>
+    </PermissionView>
+</MudStack>
+
+<MudSimpleTable Dense="true" Hover="true">
+    <thead><tr><th>Name</th><th>Members</th><th>Roles</th><th></th></tr></thead>
+    <tbody>
+        @foreach (var group in _groups)
+        {
+            <tr>
+                <td>@group.Name</td>
+                <td>
+                    <MudSelect T="Guid" MultiSelection="true" Dense="true" SelectedValues="group.MemberIds" ToStringFunc="UserName"
+                               SelectedValuesChanged="ids => RunAsync(() => Api.SetGroupMembersAsync(group.Id, ids.ToList()))">
+                        @foreach (var user in _users)
+                        {
+                            <MudSelectItem Value="@user.Id">@user.Email</MudSelectItem>
+                        }
+                    </MudSelect>
+                </td>
+                <td>
+                    <MudSelect T="Guid" MultiSelection="true" Dense="true" SelectedValues="group.RoleIds" ToStringFunc="RoleName"
+                               SelectedValuesChanged="ids => RunAsync(() => Api.SetGroupRolesAsync(group.Id, ids.ToList()))">
+                        @foreach (var role in _roles.Where(r => !r.IsSystem))
+                        {
+                            <MudSelectItem Value="@role.Id">@role.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </td>
+                <td style="text-align:right">
+                    <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" aria-label="Delete group" OnClick="() => RunAsync(() => Api.DeleteGroupAsync(group.Id))" />
+                </td>
+            </tr>
+        }
+    </tbody>
+</MudSimpleTable>
+
+@code {
+    private IReadOnlyList<GroupDto> _groups = [];
+    private IReadOnlyList<UserDto> _users = [];
+    private IReadOnlyList<RoleDto> _roles = [];
+    private string? _name;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _users = (await Api.GetUsersAsync(new PageRequest(1, 200))).Items;
+        _roles = await Api.GetRolesAsync();
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync() => _groups = (await Api.GetGroupsAsync(new PageRequest(1, 200))).Items;
+
+    private string UserName(Guid id) => _users.FirstOrDefault(u => u.Id == id)?.Email ?? string.Empty;
+
+    private string RoleName(Guid id) => _roles.FirstOrDefault(r => r.Id == id)?.Name ?? string.Empty;
+
+    private Task CreateAsync() => RunAsync(async () =>
+    {
+        await Api.CreateGroupAsync(new GroupRequest(_name!, null));
+        _name = null;
+    });
+
+    private async Task RunAsync(Func<Task> action)
+    {
+        try
+        {
+            await action();
+        }
+        catch (ApiException exception)
+        {
+            Snackbar.Add(exception.Errors is { Count: > 0 } errors ? string.Join(" ", errors.SelectMany(e => e.Value)) : exception.Message, Severity.Error);
+        }
+
+        await ReloadAsync();
+    }
+}
