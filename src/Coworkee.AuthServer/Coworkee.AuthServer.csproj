@@ -4,7 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <ProjectReference Include="..\Coworkee.Identity\Coworkee.Identity.csproj" />
+    <ProjectReference Include="..\Coworkee.Account\Coworkee.Account.csproj" />
     <PackageReference Include="OpenIddict.AspNetCore" />
     <PackageReference Include="OpenIddict.EntityFrameworkCore" />
   </ItemGroup>

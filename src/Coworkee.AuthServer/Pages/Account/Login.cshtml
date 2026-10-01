@@ -13,4 +13,11 @@
   {
     <p class="error" role="alert">@Model.ErrorMessage</p>
   }
+  <div class="links">
+    <a asp-page="ForgotPassword">Forgot password?</a>
+    @if (Model.AllowRegistration)
+    {
+      <a asp-page="Register">Create an account</a>
+    }
+  </div>
 </form>

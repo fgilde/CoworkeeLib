@@ -10,7 +10,7 @@ using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace Coworkee.AuthServer;
 
-[DependsOn(typeof(CoworkeeIdentityModule), typeof(CoworkeeAuthStoreModule))]
+[DependsOn(typeof(CoworkeeIdentityModule), typeof(CoworkeeAuthStoreModule), typeof(Coworkee.Account.CoworkeeAccountModule))]
 public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
 {
     public override void ConfigureServices(ModuleServiceContext context)

@@ -4,6 +4,8 @@ public sealed class AuthServerOptions
 {
     public const string Section = "Coworkee:Auth";
 
+    public string DisplayName { get; set; } = "Coworkee";
+
     public bool AllowHttp { get; set; }
 
     public TimeSpan AccessTokenLifetime { get; set; } = TimeSpan.FromMinutes(15);
