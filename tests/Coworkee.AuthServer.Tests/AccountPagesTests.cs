@@ -48,6 +48,21 @@ public sealed partial class AccountPagesTests(AuthApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Reset_lifts_a_lockout()
+    {
+        for (var attempt = 0; attempt < 10; attempt++)
+        {
+            await LoginAsync(app.Browser(), "admin@acme.test", "wrong-password");
+        }
+
+        await PostFormAsync(app.Browser(), "/Account/ForgotPassword", new() { ["Input.Email"] = "admin@acme.test" });
+        await PostFormAsync(app.Browser(), LocalPath(app.Mails.LinkFor("Identity.ResetPassword", "reset_url")),
+            new() { ["Input.Password"] = "Brand#New123", ["Input.ConfirmPassword"] = "Brand#New123" });
+
+        (await LoginAsync(app.Browser(), "admin@acme.test", "Brand#New123")).StatusCode.ShouldBe(HttpStatusCode.Redirect);
+    }
+
+    [Fact]
     public async Task Reset_token_of_another_user_is_rejected()
     {
         var other = await CreateUserAsync("eve@acme.test");

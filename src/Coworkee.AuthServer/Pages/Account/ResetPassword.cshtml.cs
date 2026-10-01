@@ -50,6 +50,7 @@ public sealed class ResetPasswordModel(UserManager<User> users, CoworkeeDbContex
         }
 
         await users.ResetAccessFailedCountAsync(user);
+        await users.SetLockoutEndDateAsync(user, null);
         await db.SaveChangesAsync(HttpContext.RequestAborted);
         Done = true;
     }
