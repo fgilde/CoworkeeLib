@@ -73,6 +73,7 @@ public static class BffExtensions
                 }
             });
         builder.Services.AddAuthorization();
+        builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationPolicyProvider, ClientPolicyProvider>();
         return builder;
     }
 

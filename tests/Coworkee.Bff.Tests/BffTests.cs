@@ -29,6 +29,7 @@ public sealed class BffTests : IAsyncLifetime
         builder.AddCoworkeeBff();
         _app = builder.Build();
         _app.MapCoworkeeBff();
+        _app.MapGet("/test/page", () => "page").RequireAuthorization("perm:Identity.Roles.View");
         await _app.StartAsync();
         _client = _app.GetTestClient();
     }
@@ -85,6 +86,10 @@ public sealed class BffTests : IAsyncLifetime
             .Get("OpenIdConnect").StateDataFormat.Unprotect(state)!;
         properties.RedirectUri.ShouldBe("/");
     }
+
+    [Fact]
+    public async Task Pages_with_client_permission_policies_challenge_instead_of_failing() =>
+        (await _client.GetAsync("/test/page", TestContext.Current.CancellationToken)).StatusCode.ShouldBe(HttpStatusCode.Redirect);
 
     [Fact]
     public async Task Login_challenges_the_identity_provider()
