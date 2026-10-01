@@ -1,10 +1,11 @@
 using System.Text;
+using DotNet.Testcontainers.Builders;
+using DotNet.Testcontainers.Containers;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
 using Testcontainers.Azurite;
-using Testcontainers.Minio;
 
 namespace Coworkee.Storage.Tests;
 
@@ -97,17 +98,21 @@ public sealed class FileSystemBlobStorageTests : BlobStorageContractTests
 
 public sealed class S3BlobStorageTests : BlobStorageContractTests
 {
-    private readonly MinioContainer _minio = new MinioBuilder("minio/minio:RELEASE.2023-01-31T02-24-19Z").Build();
+    // MinIO no longer publishes public images; s3mock speaks the same S3 API
+    private readonly IContainer _s3 = new ContainerBuilder("adobe/s3mock@sha256:ab01a6946750f451ca215a47e91030695b260e4003b8a5a6201d25029b8fca92")
+        .WithPortBinding(9090, true)
+        .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(r => r.ForPort(9090).ForPath("/")))
+        .Build();
 
     protected override async Task<Dictionary<string, string?>> ConfigureAsync()
     {
-        await _minio.StartAsync();
+        await _s3.StartAsync();
         return new Dictionary<string, string?>
         {
             ["Coworkee:Storage:Provider"] = StorageProviders.S3,
-            ["Coworkee:Storage:S3:ServiceUrl"] = _minio.GetConnectionString(),
-            ["Coworkee:Storage:S3:AccessKey"] = _minio.GetAccessKey(),
-            ["Coworkee:Storage:S3:SecretKey"] = _minio.GetSecretKey(),
+            ["Coworkee:Storage:S3:ServiceUrl"] = $"http://{_s3.Hostname}:{_s3.GetMappedPublicPort(9090)}",
+            ["Coworkee:Storage:S3:AccessKey"] = "test",
+            ["Coworkee:Storage:S3:SecretKey"] = "test",
             ["Coworkee:Storage:S3:Bucket"] = "coworkee-tests",
         };
     }
@@ -115,7 +120,7 @@ public sealed class S3BlobStorageTests : BlobStorageContractTests
     public override async ValueTask DisposeAsync()
     {
         await base.DisposeAsync();
-        await _minio.DisposeAsync();
+        await _s3.DisposeAsync();
     }
 }
 

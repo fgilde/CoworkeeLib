@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <ProjectReference Include="..\..\src\Coworkee.Storage\Coworkee.Storage.csproj" />
-    <PackageReference Include="Testcontainers.Minio" />
     <PackageReference Include="Testcontainers.Azurite" />
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
   </ItemGroup>
