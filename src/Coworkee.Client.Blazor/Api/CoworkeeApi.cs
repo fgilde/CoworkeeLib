@@ -1,9 +1,11 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using Coworkee.Contracts;
+using Coworkee.Contracts.Auditing;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Mailing;
 using Coworkee.Contracts.Settings;
+using Coworkee.Contracts.Theming;
 
 namespace Coworkee.Client.Blazor.Api;
 
@@ -12,6 +14,8 @@ internal sealed class CoworkeeApi(HttpClient http) : ICoworkeeApi
     private const string Identity = "api/v1/identity";
     private const string Settings = "api/v1/settings";
     private const string Mail = "api/v1/mail";
+    private const string Themes = "api/v1/themes";
+    private const string Versions = "api/v1/versions";
 
     public Task<BffUserDto> GetUserAsync(CancellationToken cancellationToken = default) => GetAsync<BffUserDto>("bff/user", cancellationToken);
 
@@ -116,6 +120,51 @@ internal sealed class CoworkeeApi(HttpClient http) : ICoworkeeApi
         GetAsync<PagedResult<OutgoingMailDto>>(
             $"{Mail}/outgoing?page={page.Page}&pageSize={page.PageSize}&search={Uri.EscapeDataString(page.Search ?? string.Empty)}{(status is null ? string.Empty : "&status=" + status)}",
             cancellationToken);
+
+    public async Task<IReadOnlyDictionary<string, string?>> GetClientSettingsAsync(CancellationToken cancellationToken = default) =>
+        await GetAsync<Dictionary<string, string?>>($"{Settings}/client", cancellationToken);
+
+    public Task<ThemeDto> GetCurrentThemeAsync(CancellationToken cancellationToken = default) => GetAsync<ThemeDto>($"{Themes}/current", cancellationToken);
+
+    public async Task<IReadOnlyList<ThemeDto>> GetThemesAsync(CancellationToken cancellationToken = default) => await GetAsync<ThemeDto[]>(Themes, cancellationToken);
+
+    public Task<ThemeDto> CreateThemeAsync(ThemeRequest request, CancellationToken cancellationToken = default) =>
+        SendAsync<ThemeDto>(HttpMethod.Post, Themes, request, cancellationToken);
+
+    public Task<ThemeDto> UpdateThemeAsync(Guid id, ThemeRequest request, CancellationToken cancellationToken = default) =>
+        SendAsync<ThemeDto>(HttpMethod.Put, $"{Themes}/{id}", request, cancellationToken);
+
+    public Task DeleteThemeAsync(Guid id, CancellationToken cancellationToken = default) => SendAsync(HttpMethod.Delete, $"{Themes}/{id}", null, cancellationToken);
+
+    public Task SetDefaultThemeAsync(Guid id, CancellationToken cancellationToken = default) => SendAsync(HttpMethod.Post, $"{Themes}/{id}/default", null, cancellationToken);
+
+    public Task<PagedResult<AuditEntryDto>> GetAuditAsync(AuditQuery query, CancellationToken cancellationToken = default)
+    {
+        var parameters = new List<string> { $"page={query.Page}", $"pageSize={query.PageSize}" };
+        Add(parameters, "entityType", query.EntityType);
+        Add(parameters, "entityId", query.EntityId);
+        Add(parameters, "actorId", query.ActorId?.ToString());
+        Add(parameters, "from", query.From?.ToString("o", System.Globalization.CultureInfo.InvariantCulture));
+        Add(parameters, "to", query.To?.ToString("o", System.Globalization.CultureInfo.InvariantCulture));
+        return GetAsync<PagedResult<AuditEntryDto>>($"api/v1/audit?{string.Join('&', parameters)}", cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<EntityVersionDto>> GetVersionsAsync(string type, Guid id, CancellationToken cancellationToken = default) =>
+        await GetAsync<EntityVersionDto[]>($"{Versions}/{Uri.EscapeDataString(type)}/{id}", cancellationToken);
+
+    public Task<EntityVersionDetailDto> GetVersionAsync(string type, Guid id, int revision, CancellationToken cancellationToken = default) =>
+        GetAsync<EntityVersionDetailDto>($"{Versions}/{Uri.EscapeDataString(type)}/{id}/{revision}", cancellationToken);
+
+    public Task RestoreVersionAsync(string type, Guid id, int revision, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Post, $"{Versions}/{Uri.EscapeDataString(type)}/{id}/{revision}/restore", null, cancellationToken);
+
+    private static void Add(List<string> parameters, string name, string? value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            parameters.Add($"{name}={Uri.EscapeDataString(value)}");
+        }
+    }
 
     private static string Scope(SettingScope scope) => scope.ToString().ToLowerInvariant();
 

@@ -1,0 +1,37 @@
+@if (Changes.Count > 0)
+{
+    <MudSimpleTable Dense="true" Elevation="0" Class="mt-1">
+        <tbody>
+            @foreach (var change in Changes)
+            {
+                <tr data-change="@change.Property">
+                    <td style="width:30%"><MudText Typo="Typo.caption">@change.Property</MudText></td>
+                    <td><MudText Typo="Typo.caption" Style="text-decoration:line-through;opacity:.7">@Display(change.OldValue)</MudText></td>
+                    <td><MudText Typo="Typo.caption">@Display(change.NewValue)</MudText></td>
+                </tr>
+            }
+        </tbody>
+    </MudSimpleTable>
+}
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<AuditChangeDto> Changes { get; set; } = [];
+
+    private static string Display(string? value)
+    {
+        if (value is null)
+        {
+            return "–";
+        }
+
+        try
+        {
+            var element = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(value);
+            return element.ValueKind == System.Text.Json.JsonValueKind.String ? element.GetString()! : element.GetRawText();
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return value;
+        }
+    }
+}

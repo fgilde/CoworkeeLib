@@ -29,3 +29,8 @@ public interface IHasConcurrencyToken
 {
     uint Version { get; set; }
 }
+
+public interface IVersioned
+{
+    int Revision { get; set; }
+}

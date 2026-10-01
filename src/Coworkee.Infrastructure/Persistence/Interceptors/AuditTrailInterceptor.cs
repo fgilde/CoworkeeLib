@@ -142,6 +142,6 @@ internal sealed class AuditTrailInterceptor(ICurrentUser currentUser, TimeProvid
         return IsSensitive(property.Metadata) ? Masked : JsonSerializer.Serialize(value);
     }
 
-    private static bool IsSensitive(IReadOnlyProperty property) =>
+    internal static bool IsSensitive(IReadOnlyProperty property) =>
         property.PropertyInfo?.GetCustomAttribute<SensitiveAttribute>() is not null || property.HasFlag(AuditPropertyBuilderExtensions.Sensitive);
 }

@@ -15,6 +15,7 @@ public abstract class ClientTestBase : BunitContext
         Services.AddMudServices();
         Services.AddSingleton(Api);
         Services.AddSingleton(new CoworkeeClientOptions());
+        Services.AddScoped<Theming.ThemeService>();
     }
 
     protected ICoworkeeApi Api { get; } = Substitute.For<ICoworkeeApi>();

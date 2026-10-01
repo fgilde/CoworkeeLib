@@ -27,6 +27,15 @@ internal sealed class CoworkeeModelContributor : IModelContributor
             entity.Property(e => e.FriendlyName).HasMaxLength(200);
         });
 
+        modelBuilder.Entity<Versioning.EntitySnapshot>(entity =>
+        {
+            entity.ToTable("EntitySnapshots", Schema);
+            entity.Property(e => e.EntityType).HasMaxLength(200);
+            entity.Property(e => e.EntityId).HasMaxLength(200);
+            entity.Property(e => e.Payload).HasColumnType("jsonb");
+            entity.HasIndex(e => new { e.EntityType, e.EntityId, e.Revision }).IsUnique();
+        });
+
         modelBuilder.Entity<OutboxMessage>(entity =>
         {
             entity.ToTable("OutboxMessages", Schema);

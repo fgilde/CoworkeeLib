@@ -1,0 +1,59 @@
+@page "/admin/audit"
+@attribute [Authorize(Policy = "perm:" + AuditPermissions.View)]
+@inject ICoworkeeApi Api
+
+<PageTitle>Audit log</PageTitle>
+<MudText Typo="Typo.h4" Class="mb-4">Audit log</MudText>
+<MudStack Row="true" Wrap="Wrap.Wrap" AlignItems="AlignItems.End" Class="mb-4">
+    <MudTextField T="string" @bind-Value="_entityType" Label="Entity type" Immediate="true" DebounceInterval="400" OnDebounceIntervalElapsed="_ => _table!.ReloadServerData()" />
+    <MudTextField T="string" @bind-Value="_entityId" Label="Entity id" Immediate="true" DebounceInterval="400" OnDebounceIntervalElapsed="_ => _table!.ReloadServerData()" />
+    <MudDatePicker Label="From" Date="_from" DateChanged="d => FilterAsync(() => _from = d)" Clearable="true" />
+    <MudDatePicker Label="To" Date="_to" DateChanged="d => FilterAsync(() => _to = d)" Clearable="true" />
+</MudStack>
+
+<MudTable @ref="_table" T="AuditEntryDto" ServerData="LoadAsync" Dense="true" Hover="true" RowsPerPage="25" OnRowClick="e => Toggle(e.Item!)">
+    <HeaderContent>
+        <MudTh>When</MudTh><MudTh>Action</MudTh><MudTh>Entity</MudTh><MudTh>Who</MudTh><MudTh>Changes</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.OccurredAt.ToLocalTime().ToString("g")</MudTd>
+        <MudTd>@context.Action</MudTd>
+        <MudTd>@context.EntityType <MudText Typo="Typo.caption" Inline="true">@context.EntityId</MudText></MudTd>
+        <MudTd>@(context.ActorName ?? "system")</MudTd>
+        <MudTd>@context.Changes.Count</MudTd>
+    </RowTemplate>
+    <ChildRowContent>
+        @if (_expanded == context.Id)
+        {
+            <MudTr><td colspan="5"><AuditChanges Changes="context.Changes" /></td></MudTr>
+        }
+    </ChildRowContent>
+    <PagerContent><MudTablePager /></PagerContent>
+</MudTable>
+
+@code {
+    private MudTable<AuditEntryDto>? _table;
+    private string? _entityType;
+    private string? _entityId;
+    private DateTime? _from;
+    private DateTime? _to;
+    private Guid? _expanded;
+
+    private async Task<TableData<AuditEntryDto>> LoadAsync(TableState state, CancellationToken cancellationToken)
+    {
+        var page = await Api.GetAuditAsync(new AuditQuery(
+            _entityType, _entityId, null,
+            _from is { } from ? new DateTimeOffset(from.Date) : null,
+            _to is { } to ? new DateTimeOffset(to.Date.AddDays(1)) : null,
+            state.Page + 1, state.PageSize), cancellationToken);
+        return new TableData<AuditEntryDto> { Items = page.Items, TotalItems = page.TotalCount };
+    }
+
+    private void Toggle(AuditEntryDto entry) => _expanded = _expanded == entry.Id ? null : entry.Id;
+
+    private async Task FilterAsync(Action apply)
+    {
+        apply();
+        await _table!.ReloadServerData();
+    }
+}

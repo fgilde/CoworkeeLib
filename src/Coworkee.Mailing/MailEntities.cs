@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Mailing;
 
-public sealed class MailTemplateOverride : AuditedAggregateRoot
+public sealed class MailTemplateOverride : AuditedAggregateRoot, IVersioned
 {
     public required string Name { get; set; }
 
@@ -16,6 +16,14 @@ public sealed class MailTemplateOverride : AuditedAggregateRoot
     public required string Subject { get; set; }
 
     public required string Body { get; set; }
+
+    public int Revision { get; set; }
+}
+
+internal sealed class MailVersionedTypes : Coworkee.Infrastructure.Versioning.IVersionedTypeContributor
+{
+    public void Define(Coworkee.Infrastructure.Versioning.VersionedTypeContext context) =>
+        context.Add<MailTemplateOverride>("MailTemplate", Coworkee.Contracts.Mailing.MailPermissions.Templates.Manage);
 }
 
 public sealed record MailQueued(Guid MailId) : IDomainEvent;

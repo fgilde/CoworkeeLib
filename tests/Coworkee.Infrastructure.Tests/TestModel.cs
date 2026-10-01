@@ -46,6 +46,16 @@ public sealed class Document : AggregateRoot, IAuditable, ISoftDelete, IMultiTen
     }
 }
 
+public sealed class Article : AggregateRoot, IVersioned
+{
+    public required string Title { get; set; }
+
+    [Sensitive]
+    public string? Secret { get; set; }
+
+    public int Revision { get; set; }
+}
+
 public sealed class DocumentSettings
 {
     public string Color { get; set; } = "none";
@@ -59,6 +69,7 @@ public sealed class TestModelContributor : IModelContributor
         document.OwnsOne(d => d.Settings, s => s.ToJson());
         document.Property(d => d.Note).IsSensitive();
         document.Property(d => d.Internal).IsNotAudited();
+        modelBuilder.Entity<Article>();
     }
 }
 
