@@ -1,0 +1,35 @@
+namespace Coworkee.Contracts.Identity;
+
+public sealed record RoleRefDto(Guid Id, string Name);
+
+public sealed record UserDto(Guid Id, string UserName, string Email, string? FirstName, string? LastName, bool IsActive, IReadOnlyList<RoleRefDto> Roles);
+
+public sealed record CreateUserRequest(string Email, string Password, string? FirstName, string? LastName);
+
+public sealed record UpdateUserRequest(string? FirstName, string? LastName, bool IsActive);
+
+public sealed record IdListRequest(IReadOnlyList<Guid> Ids);
+
+public sealed record RoleDto(Guid Id, string Name, string? Description, bool IsSystem);
+
+public sealed record RoleRequest(string Name, string? Description);
+
+public sealed record GroupDto(Guid Id, string Name, string? Description, IReadOnlyList<Guid> MemberIds, IReadOnlyList<Guid> RoleIds);
+
+public sealed record GroupRequest(string Name, string? Description);
+
+public sealed record PermissionDto(string Name, string DisplayName, IReadOnlyList<string> Implies);
+
+public sealed record PermissionGroupDto(string Name, string DisplayName, IReadOnlyList<PermissionDto> Permissions);
+
+public sealed record NameListRequest(IReadOnlyList<string> Names);
+
+public sealed record ResourcePermissionDto(Guid Id, PrincipalType PrincipalType, Guid PrincipalId, Guid RoleId);
+
+public sealed record GrantResourcePermissionRequest(PrincipalType PrincipalType, Guid PrincipalId, Guid RoleId);
+
+public sealed record SetupStatusDto(bool IsInitialized);
+
+public sealed record CompleteSetupRequest(string SetupToken, string TenantName, string AdminEmail, string AdminPassword, string? AdminFirstName, string? AdminLastName);
+
+public sealed record SetupResultDto(Guid TenantId, Guid AdminUserId);
