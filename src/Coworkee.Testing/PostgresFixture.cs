@@ -14,6 +14,8 @@ public class PostgresFixture : IAsyncLifetime
 
     protected virtual string[] SchemasToExclude => [];
 
+    protected virtual IReadOnlyList<(string Schema, string Table)> TablesToKeep => [];
+
     public virtual async ValueTask InitializeAsync() => await _container.StartAsync();
 
     public virtual async ValueTask DisposeAsync()
@@ -29,7 +31,7 @@ public class PostgresFixture : IAsyncLifetime
         _respawner ??= await Respawner.CreateAsync(connection, new RespawnerOptions
         {
             DbAdapter = DbAdapter.Postgres,
-            TablesToIgnore = ["__EFMigrationsHistory"],
+            TablesToIgnore = [new Respawn.Graph.Table("__EFMigrationsHistory"), .. TablesToKeep.Select(t => new Respawn.Graph.Table(t.Schema, t.Table))],
             SchemasToExclude = SchemasToExclude,
         });
         await _respawner.ResetAsync(connection);
