@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="..\Coworkee.Core\Coworkee.Core.csproj" />
     <PackageReference Include="Testcontainers.PostgreSql" />
     <PackageReference Include="Respawn" />
