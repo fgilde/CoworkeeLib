@@ -28,5 +28,7 @@
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="NSubstitute" Version="6.2.0" />
     <PackageVersion Include="NetArchTest.eNhancedEdition" Version="1.4.5" />
+    <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Hybrid" Version="10.10.0" />
   </ItemGroup>
 </Project>
