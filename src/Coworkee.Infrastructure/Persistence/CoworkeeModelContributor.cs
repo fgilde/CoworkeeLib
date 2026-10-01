@@ -21,6 +21,12 @@ internal sealed class CoworkeeModelContributor : IModelContributor
             entity.OwnsMany(e => e.Changes, changes => changes.ToJson());
         });
 
+        modelBuilder.Entity<DataProtection.DataProtectionKey>(entity =>
+        {
+            entity.ToTable("DataProtectionKeys", Schema);
+            entity.Property(e => e.FriendlyName).HasMaxLength(200);
+        });
+
         modelBuilder.Entity<OutboxMessage>(entity =>
         {
             entity.ToTable("OutboxMessages", Schema);

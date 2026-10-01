@@ -7,14 +7,11 @@ using Coworkee.Contracts.Settings;
 using Coworkee.Core.Modularity;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 
 namespace Coworkee.Settings;
 
@@ -32,10 +29,6 @@ public sealed class CoworkeeSettingsModule : CoworkeeModule, IWebModule
         services.AddSingleton<SettingProtector>();
         services.AddScoped<IInterceptor, SettingCacheInterceptor>();
         services.AddHybridCache();
-        services.AddSingleton<DbXmlRepository>();
-        services.AddDataProtection().SetApplicationName("Coworkee");
-        services.AddSingleton<IConfigureOptions<KeyManagementOptions>>(provider =>
-            new ConfigureOptions<KeyManagementOptions>(options => options.XmlRepository = provider.GetRequiredService<DbXmlRepository>()));
     }
 
     public void ConfigureApplication(WebApplication app)

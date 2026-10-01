@@ -33,6 +33,7 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
         services.AddSingleton<PermissionCache>();
         services.AddScoped<IInterceptor, PermissionCacheInterceptor>();
         services.AddScoped<IUserDirectory, Users.UserDirectory>();
+        services.AddScoped<ITenantDirectory, Users.TenantDirectory>();
         services.AddSingleton<SetupToken>();
         services.AddSingleton<SystemStateCache>();
         services.AddHostedService<SetupTokenAnnouncer>();

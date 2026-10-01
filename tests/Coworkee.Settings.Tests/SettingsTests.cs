@@ -68,6 +68,17 @@ public sealed class SettingsTests(SettingsApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Admin_of_another_tenant_cannot_touch_global_settings_but_owns_its_tenant()
+    {
+        var (user, tenant) = await app.CreateTenantAdminAsync();
+        var other = app.As(user, tenant);
+
+        (await SendAsync(other, "global", "Test.Text", "x")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await other.GetAsync("/api/v1/settings/global", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await SendAsync(other, "tenant", "Test.Text", "mine")).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+    }
+
+    [Fact]
     public async Task Configured_default_overrides_definition_default() =>
         (await app.AsActorAsync(_setup.AdminUserId, _setup.TenantId, sp => sp.GetRequiredService<ISettingProvider>().GetAsync<int>("Test.Configured", Ct))).ShouldBe(7);
 

@@ -69,6 +69,19 @@ public sealed class SettingsApp : PostgresFixture
         return await action(scope.ServiceProvider.GetRequiredService<SettingsTestDbContext>());
     }
 
+    public Task<(Guid UserId, Guid TenantId)> CreateTenantAdminAsync() => InDbAsync(async db =>
+    {
+        var tenant = new Coworkee.Identity.Domain.Tenant { Name = "Other", Identifier = "other-" + Guid.NewGuid().ToString("N")[..8] };
+        var email = $"admin-{Guid.NewGuid():N}@other.test";
+        var user = new Coworkee.Identity.Domain.User { TenantId = tenant.Id, UserName = email, NormalizedUserName = email.ToUpperInvariant(), Email = email, NormalizedEmail = email.ToUpperInvariant() };
+        var adminRole = await db.Set<Coworkee.Identity.Domain.Role>().Where(r => r.IsSystem && r.Name == Coworkee.Identity.Domain.SystemRoles.Admin).Select(r => r.Id).SingleAsync();
+        db.Add(tenant);
+        db.Add(user);
+        db.Add(new Microsoft.AspNetCore.Identity.IdentityUserRole<Guid> { UserId = user.Id, RoleId = adminRole });
+        await db.SaveChangesAsync();
+        return (user.Id, tenant.Id);
+    });
+
     public async Task<T> AsActorAsync<T>(Guid userId, Guid tenantId, Func<IServiceProvider, Task<T>> action)
     {
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(userId, tenantId));

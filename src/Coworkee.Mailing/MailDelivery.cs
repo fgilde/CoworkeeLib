@@ -65,20 +65,25 @@ internal sealed class SendMailJob(CoworkeeDbContext db, ISettingProvider setting
 {
     public async Task ExecuteAsync(Guid mailId, CancellationToken cancellationToken)
     {
-        var mail = await db.Set<OutgoingMail>().SingleOrDefaultAsync(m => m.Id == mailId, cancellationToken);
-        if (mail is null || mail.Status != OutgoingMailStatus.Queued)
+        var claimed = await db.Set<OutgoingMail>()
+            .Where(m => m.Id == mailId && m.Status == OutgoingMailStatus.Queued)
+            .ExecuteUpdateAsync(update => update
+                .SetProperty(m => m.Status, OutgoingMailStatus.Sending)
+                .SetProperty(m => m.Attempts, m => m.Attempts + 1), cancellationToken);
+        if (claimed == 0)
         {
             return;
         }
 
+        var mail = await db.Set<OutgoingMail>().SingleAsync(m => m.Id == mailId, cancellationToken);
         if (!MailWhitelist.Allows(await settings.GetAsync(MailSettings.Whitelist, cancellationToken), mail.To))
         {
             mail.Status = OutgoingMailStatus.Skipped;
-            await db.SaveChangesAsync(cancellationToken);
+            mail.LastError = "Recipient is not on the whitelist.";
+            await db.SaveChangesAsync(CancellationToken.None);
             return;
         }
 
-        mail.Attempts++;
         try
         {
             var smtp = await SmtpSettingsAsync(cancellationToken);
@@ -86,26 +91,25 @@ internal sealed class SendMailJob(CoworkeeDbContext db, ISettingProvider setting
             message.From.Add(MailboxAddress.Parse(smtp.From));
             message.To.Add(MailboxAddress.Parse(mail.To));
             await transport.SendAsync(smtp, message, cancellationToken);
-            mail.Status = OutgoingMailStatus.Sent;
-            mail.SentAt = clock.GetUtcNow();
-            mail.LastError = null;
-            await db.SaveChangesAsync(CancellationToken.None);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             mail.LastError = exception.Message.Length > 2000 ? exception.Message[..2000] : exception.Message;
-            var final = mail.Attempts >= options.Value.Attempts;
-            if (final)
-            {
-                mail.Status = OutgoingMailStatus.Failed;
-            }
-
+            mail.Status = mail.Attempts >= options.Value.Attempts ? OutgoingMailStatus.Failed : OutgoingMailStatus.Queued;
             await db.SaveChangesAsync(CancellationToken.None);
-            if (!final)
+            if (mail.Status == OutgoingMailStatus.Queued)
             {
                 throw;
             }
+
+            return;
         }
+
+        // ponytail: a crash between SMTP and this write leaves the mail in Sending (never resent); add a reconciler if that shows up
+        mail.Status = OutgoingMailStatus.Sent;
+        mail.SentAt = clock.GetUtcNow();
+        mail.LastError = null;
+        await db.SaveChangesAsync(CancellationToken.None);
     }
 
     private async Task<SmtpSettings> SmtpSettingsAsync(CancellationToken cancellationToken)

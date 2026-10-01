@@ -21,6 +21,7 @@ public static class MailPermissions
 public enum OutgoingMailStatus
 {
     Queued,
+    Sending,
     Sent,
     Failed,
     Skipped,

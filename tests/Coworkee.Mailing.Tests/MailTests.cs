@@ -97,6 +97,30 @@ public sealed class MailTests(MailApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Concurrent_runs_for_the_same_mail_send_it_once()
+    {
+        var to = Recipient();
+        var id = await app.InDbAsync(async db =>
+        {
+            var mail = OutgoingMail.Queue(to, new RenderedMail("Once", "<p>once</p>"), "Test.Hello", _setup.TenantId, DateTimeOffset.UtcNow);
+            mail.ClearDomainEvents();
+            db.Add(mail);
+            await db.SaveChangesAsync(Ct);
+            return mail.Id;
+        });
+
+        await Task.WhenAll(Enumerable.Range(0, 4).Select(_ => app.AsActorAsync(null, _setup.TenantId, async sp =>
+        {
+            await ActivatorUtilities.CreateInstance<SendMailJob>(sp).ExecuteAsync(id, Ct);
+            return 0;
+        })));
+
+        await Task.Delay(TimeSpan.FromSeconds(2), Ct);
+        (await app.MessagesToAsync(to)).Count.ShouldBe(1);
+        (await StatusAsync(to)).ShouldBe(OutgoingMailStatus.Sent);
+    }
+
+    [Fact]
     public async Task Rolled_back_mail_is_never_sent()
     {
         var to = Recipient();

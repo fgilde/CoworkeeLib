@@ -47,7 +47,8 @@ internal sealed class SettingDefinitionHandlers(ISettingDefinitionManager defini
     }
 }
 
-internal sealed class SettingValueHandlers(CoworkeeDbContext db, ICurrentUser currentUser, ISettingDefinitionManager definitions, SettingProtector protector, ISettingProvider provider)
+internal sealed class SettingValueHandlers(
+    CoworkeeDbContext db, ICurrentUser currentUser, ISettingDefinitionManager definitions, SettingProtector protector, ISettingProvider provider, IServiceProvider services)
     : IHandler<GetManagedSettings, Result<IReadOnlyList<SettingValueDto>>>,
       IHandler<SetManagedSettings, Result>,
       IHandler<GetUserSettings, Result<IReadOnlyList<SettingValueDto>>>,
@@ -73,9 +74,9 @@ internal sealed class SettingValueHandlers(CoworkeeDbContext db, ICurrentUser cu
 
     private async Task<Result<IReadOnlyList<SettingValueDto>>> ReadAsync(SettingScope scope, CancellationToken cancellationToken)
     {
-        if (!TryScopeKey(scope, out var key, out var error))
+        if (!TryScopeKey(scope, out var key, out var error) || !await MayUseAsync(scope, cancellationToken))
         {
-            return error;
+            return error ?? GlobalForbidden;
         }
 
         var stored = await db.Set<SettingValue>().AsNoTracking()
@@ -92,9 +93,9 @@ internal sealed class SettingValueHandlers(CoworkeeDbContext db, ICurrentUser cu
 
     private async Task<Result> WriteAsync(SettingScope scope, IReadOnlyDictionary<string, string?> values, CancellationToken cancellationToken)
     {
-        if (!TryScopeKey(scope, out var key, out var error))
+        if (!TryScopeKey(scope, out var key, out var error) || !await MayUseAsync(scope, cancellationToken))
         {
-            return error;
+            return error ?? GlobalForbidden;
         }
 
         foreach (var (name, value) in values)
@@ -138,7 +139,16 @@ internal sealed class SettingValueHandlers(CoworkeeDbContext db, ICurrentUser cu
         return Result.Success();
     }
 
-    private bool TryScopeKey(SettingScope scope, out Guid? key, out Error error)
+    private static readonly Error GlobalForbidden =
+        Error.Forbidden("settings.global_forbidden", "System wide settings can only be changed from the system organisation.");
+
+    private async Task<bool> MayUseAsync(SettingScope scope, CancellationToken cancellationToken) =>
+        scope != SettingScope.Global
+        || (currentUser.TenantId is { } tenantId
+            && services.GetService(typeof(ITenantDirectory)) is ITenantDirectory tenants
+            && await tenants.IsSystemTenantAsync(tenantId, cancellationToken));
+
+    private bool TryScopeKey(SettingScope scope, out Guid? key, out Error? error)
     {
         key = scope switch
         {
@@ -146,7 +156,7 @@ internal sealed class SettingValueHandlers(CoworkeeDbContext db, ICurrentUser cu
             SettingScope.User => currentUser.UserId,
             _ => null,
         };
-        error = null!;
+        error = null;
         if (scope != SettingScope.Global && key is null)
         {
             error = Error.Validation(nameof(scope), $"No {scope.ToString().ToLowerInvariant()} in the current context.");
