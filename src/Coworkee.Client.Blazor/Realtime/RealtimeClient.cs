@@ -23,7 +23,7 @@ internal sealed class SignalRRealtimeConnection : IRealtimeConnection
     {
         _connection = new HubConnectionBuilder()
             .WithUrl(navigation.ToAbsoluteUri(RealtimeHubMethods.Path))
-            .WithAutomaticReconnect()
+            .WithAutomaticReconnect(new ForeverRetryPolicy())
             .Build();
         _connection.Reconnected += _ => Reconnected?.Invoke() ?? Task.CompletedTask;
     }
@@ -39,6 +39,13 @@ internal sealed class SignalRRealtimeConnection : IRealtimeConnection
     public ValueTask DisposeAsync() => _connection.DisposeAsync();
 }
 
+public sealed class ForeverRetryPolicy : IRetryPolicy
+{
+    private static readonly TimeSpan[] Delays = [TimeSpan.Zero, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(30)];
+
+    public TimeSpan? NextRetryDelay(RetryContext retryContext) => Delays[Math.Min(retryContext.PreviousRetryCount, Delays.Length - 1)];
+}
+
 public sealed class RealtimeClient(IRealtimeConnection connection)
 {
     private readonly Dictionary<string, List<Func<RealtimeEnvelope, Task>>> _handlers = new(StringComparer.Ordinal);
@@ -47,8 +54,22 @@ public sealed class RealtimeClient(IRealtimeConnection connection)
 
     public async Task<IAsyncDisposable> SubscribeAsync(string topic, Func<RealtimeEnvelope, Task> handler)
     {
-        if (!await (_started ??= StartAsync()))
+        Task<bool> started;
+        lock (_lock)
         {
+            started = _started ??= StartAsync();
+        }
+
+        if (!await started)
+        {
+            lock (_lock)
+            {
+                if (_started == started)
+                {
+                    _started = null;
+                }
+            }
+
             return NoSubscription.Instance;
         }
 
@@ -73,10 +94,17 @@ public sealed class RealtimeClient(IRealtimeConnection connection)
         return new Subscription(this, topic, handler);
     }
 
+    private bool _wired;
+
     private async Task<bool> StartAsync()
     {
-        connection.OnEvent(Dispatch);
-        connection.Reconnected += ResubscribeAsync;
+        if (!_wired)
+        {
+            _wired = true;
+            connection.OnEvent(Dispatch);
+            connection.Reconnected += ResubscribeAsync;
+        }
+
         try
         {
             await connection.StartAsync();

@@ -113,6 +113,69 @@ public sealed class RealtimeTests(RealtimeApp app) : IAsyncLifetime
         other.Events.ShouldBeEmpty();
     }
 
+    [Fact]
+    public async Task Role_assignment_and_group_membership_changes_are_published()
+    {
+        var api = app.App.GetTestClient().AsUser(_setup.AdminUserId, _setup.TenantId);
+        var bob = (await (await api.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest("bob@acme.test", "Passw0rd!x", null, null), Ct))
+            .Content.ReadFromJsonAsync<UserDto>(Ct))!;
+        var role = (await (await api.PostAsJsonAsync("/api/v1/identity/roles", new RoleRequest("Editors", null), Ct)).Content.ReadFromJsonAsync<Guid>(Ct))!;
+        var group = (await (await api.PostAsJsonAsync("/api/v1/identity/groups", new GroupRequest("Team", null), Ct)).Content.ReadFromJsonAsync<Guid>(Ct))!;
+        await using var admin = await app.ConnectAsync(_setup.AdminUserId, _setup.TenantId);
+        await admin.SubscribeAsync("type:User");
+        await admin.SubscribeAsync("type:UserGroup");
+
+        (await api.PutAsJsonAsync($"/api/v1/identity/users/{bob.Id}/roles", new IdListRequest([role]), Ct)).EnsureSuccessStatusCode();
+        (await api.PutAsJsonAsync($"/api/v1/identity/groups/{group}/members", new IdListRequest([bob.Id]), Ct)).EnsureSuccessStatusCode();
+
+        await admin.NextAsync(e => e.Topic == "type:User");
+        await admin.NextAsync(e => e.Topic == "type:UserGroup");
+    }
+
+    [Fact]
+    public async Task Connection_is_closed_when_the_token_expires()
+    {
+        await using var admin = await app.ConnectAsync(_setup.AdminUserId, _setup.TenantId, DateTimeOffset.UtcNow.AddSeconds(2));
+        var closed = new TaskCompletionSource();
+        admin.Connection.Closed += _ =>
+        {
+            closed.TrySetResult();
+            return Task.CompletedTask;
+        };
+
+        await closed.Task.WaitAsync(TimeSpan.FromSeconds(20), Ct);
+    }
+
+    [Fact]
+    public async Task Events_inside_a_transaction_wait_for_the_commit()
+    {
+        await using var admin = await app.ConnectAsync(_setup.AdminUserId, _setup.TenantId);
+        await admin.SubscribeAsync("type:Ticket");
+
+        await app.AsActorAsync(_setup.AdminUserId, _setup.TenantId, async db =>
+        {
+            await using var transaction = await db.Database.BeginTransactionAsync(Ct);
+            db.Add(new Ticket { Title = "Rolled back" });
+            await db.SaveChangesAsync(Ct);
+            await Task.Delay(TimeSpan.FromSeconds(1), Ct);
+            admin.Events.ShouldBeEmpty();
+            await transaction.RollbackAsync(Ct);
+            return 0;
+        });
+        await Task.Delay(TimeSpan.FromSeconds(1), Ct);
+        admin.Events.ShouldBeEmpty();
+
+        await app.AsActorAsync(_setup.AdminUserId, _setup.TenantId, async db =>
+        {
+            await using var transaction = await db.Database.BeginTransactionAsync(Ct);
+            db.Add(new Ticket { Title = "Committed" });
+            await db.SaveChangesAsync(Ct);
+            await transaction.CommitAsync(Ct);
+            return 0;
+        });
+        await admin.NextAsync(e => e.Topic == "type:Ticket");
+    }
+
     private Task<Guid> CreateTicketAsync(string title) => app.AsActorAsync(_setup.AdminUserId, _setup.TenantId, async db =>
     {
         var ticket = new Ticket { Title = title };

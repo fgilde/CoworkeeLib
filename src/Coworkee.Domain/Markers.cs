@@ -45,3 +45,8 @@ public interface IHasRealtimeTopics
 {
     IEnumerable<string> RealtimeTopics { get; }
 }
+
+public interface IRealtimeTopicMapper
+{
+    IEnumerable<string> TopicsFor(object entity);
+}

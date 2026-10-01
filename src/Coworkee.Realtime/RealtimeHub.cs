@@ -13,6 +13,26 @@ namespace Coworkee.Realtime;
 [Authorize]
 public sealed class RealtimeHub(IEnumerable<IRealtimeTopicAuthorizer> authorizers) : Hub
 {
+    public override Task OnConnectedAsync()
+    {
+        if (long.TryParse(Context.User?.FindFirstValue("exp"), out var expires))
+        {
+            var context = Context;
+            var remaining = DateTimeOffset.FromUnixTimeSeconds(expires) - DateTimeOffset.UtcNow;
+            if (remaining <= TimeSpan.Zero)
+            {
+                context.Abort();
+            }
+            else
+            {
+                _ = Task.Delay(remaining, context.ConnectionAborted)
+                    .ContinueWith(delay => { if (!delay.IsCanceled) { context.Abort(); } }, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
+            }
+        }
+
+        return base.OnConnectedAsync();
+    }
+
     public async Task Subscribe(string topic)
     {
         var (userId, tenantId) = Identity(Context.User);
@@ -35,7 +55,8 @@ public sealed class RealtimeHub(IEnumerable<IRealtimeTopicAuthorizer> authorizer
 
 public static class RealtimeGroups
 {
-    public static string For(Guid? tenantId, string topic) => $"{tenantId}|{topic}";
+    public static string For(Guid? tenantId, string topic) =>
+        topic.StartsWith("user:", StringComparison.Ordinal) ? topic : $"{tenantId}|{topic}";
 }
 
 public interface IRealtimeTopicAuthorizer

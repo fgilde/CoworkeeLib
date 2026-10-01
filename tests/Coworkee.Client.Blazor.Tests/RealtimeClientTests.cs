@@ -26,6 +26,27 @@ public sealed class RealtimeClientTests : ClientTestBase
     }
 
     [Fact]
+    public async Task A_failed_first_start_is_retried_on_the_next_subscription()
+    {
+        var connection = new FakeRealtimeConnection { FailStarts = 1 };
+        var client = new RealtimeClient(connection);
+
+        await client.SubscribeAsync("type:User", _ => Task.CompletedTask);
+        await client.SubscribeAsync("type:User", _ => Task.CompletedTask);
+
+        connection.Invocations.ShouldContain((RealtimeHubMethods.Subscribe, "type:User"));
+    }
+
+    [Fact]
+    public void Retry_policy_never_gives_up()
+    {
+        var policy = new ForeverRetryPolicy();
+
+        policy.NextRetryDelay(new Microsoft.AspNetCore.SignalR.Client.RetryContext { PreviousRetryCount = 0 }).ShouldBe(TimeSpan.Zero);
+        policy.NextRetryDelay(new Microsoft.AspNetCore.SignalR.Client.RetryContext { PreviousRetryCount = 500 }).ShouldBe(TimeSpan.FromSeconds(30));
+    }
+
+    [Fact]
     public async Task Events_reach_only_handlers_of_their_topic_and_last_dispose_unsubscribes()
     {
         var connection = new FakeRealtimeConnection();

@@ -47,6 +47,22 @@ public sealed class NotificationTests(NotificationApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Push_reaches_the_user_when_the_sender_has_no_tenant()
+    {
+        var (connection, events) = await app.ConnectAsync(_bob.Id, _setup.TenantId);
+        await using var _ = connection;
+
+        await app.NotifyAsync(null, null, _bob.Id);
+
+        var deadline = DateTime.UtcNow.AddSeconds(15);
+        while (events.IsEmpty)
+        {
+            DateTime.UtcNow.ShouldBeLessThan(deadline);
+            await Task.Delay(100, Ct);
+        }
+    }
+
+    [Fact]
     public async Task List_and_unread_count_are_per_user()
     {
         await app.NotifyAsync(_setup.AdminUserId, _setup.TenantId, _bob.Id);

@@ -24,7 +24,8 @@ internal sealed class RealtimePublisher(IHubContext<RealtimeHub> hub) : IRealtim
 }
 
 // ponytail: events are sent after commit but not persisted; a crash between commit and send drops UI refresh signals. Route through the outbox if a consumer needs delivery guarantees.
-internal sealed class RealtimeChangeInterceptor(IRealtimePublisher publisher, ICurrentUser currentUser) : SaveChangesInterceptor
+internal sealed class RealtimeChangeInterceptor(IRealtimePublisher publisher, ICurrentUser currentUser, IEnumerable<IRealtimeTopicMapper> mappers)
+    : SaveChangesInterceptor, IDbTransactionInterceptor
 {
     private static readonly ConcurrentDictionary<Type, bool> RealtimeTypes = new();
     private readonly List<(Guid? TenantId, string Topic, EntityChangedPayload Payload)> _pending = [];
@@ -43,14 +44,34 @@ internal sealed class RealtimeChangeInterceptor(IRealtimePublisher publisher, IC
 
     public override async ValueTask<int> SavedChangesAsync(SaveChangesCompletedEventData eventData, int result, CancellationToken cancellationToken = default)
     {
-        await FlushAsync();
+        if (eventData.Context?.Database.CurrentTransaction is null)
+        {
+            await FlushAsync();
+        }
+
         return result;
     }
 
     public override int SavedChanges(SaveChangesCompletedEventData eventData, int result)
     {
-        FlushAsync().GetAwaiter().GetResult();
+        if (eventData.Context?.Database.CurrentTransaction is null)
+        {
+            FlushAsync().GetAwaiter().GetResult();
+        }
+
         return result;
+    }
+
+    public void TransactionCommitted(System.Data.Common.DbTransaction transaction, TransactionEndEventData eventData) => FlushAsync().GetAwaiter().GetResult();
+
+    public Task TransactionCommittedAsync(System.Data.Common.DbTransaction transaction, TransactionEndEventData eventData, CancellationToken cancellationToken = default) => FlushAsync();
+
+    public void TransactionRolledBack(System.Data.Common.DbTransaction transaction, TransactionEndEventData eventData) => _pending.Clear();
+
+    public Task TransactionRolledBackAsync(System.Data.Common.DbTransaction transaction, TransactionEndEventData eventData, CancellationToken cancellationToken = default)
+    {
+        _pending.Clear();
+        return Task.CompletedTask;
     }
 
     public override void SaveChangesFailed(DbContextErrorEventData eventData) => _pending.Clear();
@@ -65,7 +86,10 @@ internal sealed class RealtimeChangeInterceptor(IRealtimePublisher publisher, IC
     {
         foreach (var entry in context?.ChangeTracker.Entries().Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted) ?? [])
         {
-            var extraTopics = entry.Entity is IHasRealtimeTopics topics ? topics.RealtimeTopics.ToList() : [];
+            var extraTopics = (entry.Entity is IHasRealtimeTopics topics ? topics.RealtimeTopics : [])
+                .Concat(mappers.SelectMany(m => m.TopicsFor(entry.Entity)))
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
             if (!IsRealtime(entry.Metadata.ClrType) && extraTopics.Count == 0)
             {
                 continue;

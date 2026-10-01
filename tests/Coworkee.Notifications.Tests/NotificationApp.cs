@@ -64,7 +64,7 @@ public sealed class NotificationApp : PostgresFixture
 
     public HttpClient As(Guid userId, Guid tenantId) => App.GetTestClient().AsUser(userId, tenantId);
 
-    public async Task NotifyAsync(Guid actor, Guid tenantId, params Guid[] users)
+    public async Task NotifyAsync(Guid? actor, Guid? tenantId, params Guid[] users)
     {
         using var scopeActor = CurrentUserScope.Begin(new ImpersonatedUser(actor, tenantId));
         await using var scope = App.Services.CreateAsyncScope();

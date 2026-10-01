@@ -12,7 +12,9 @@ public sealed class FakeRealtimeConnection : IRealtimeConnection
 
     public event Func<Task>? Reconnected;
 
-    public Task StartAsync() => Task.CompletedTask;
+    public int FailStarts { get; set; }
+
+    public Task StartAsync() => FailStarts-- > 0 ? throw new HttpRequestException("offline") : Task.CompletedTask;
 
     public Task InvokeAsync(string method, string topic)
     {

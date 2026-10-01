@@ -66,7 +66,7 @@ public sealed class RealtimeApp : PostgresFixture
         return (await response.Content.ReadFromJsonAsync<SetupResultDto>())!;
     }
 
-    public async Task<Listener> ConnectAsync(Guid userId, Guid tenantId)
+    public async Task<Listener> ConnectAsync(Guid userId, Guid tenantId, DateTimeOffset? expires = null)
     {
         var server = App.GetTestServer();
         var connection = new HubConnectionBuilder()
@@ -74,7 +74,7 @@ public sealed class RealtimeApp : PostgresFixture
             {
                 options.HttpMessageHandlerFactory = _ => server.CreateHandler();
                 options.Transports = HttpTransportType.LongPolling;
-                options.Headers["Authorization"] = $"{TestAuthHandler.SchemeName} {userId};{tenantId}";
+                options.Headers["Authorization"] = $"{TestAuthHandler.SchemeName} {userId};{tenantId};{expires?.ToUnixTimeSeconds()}";
             })
             .Build();
         var listener = new Listener(connection);
