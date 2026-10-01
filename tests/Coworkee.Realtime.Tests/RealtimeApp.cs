@@ -134,8 +134,8 @@ public sealed class Listener : IAsyncDisposable
     public async ValueTask DisposeAsync() => await Connection.DisposeAsync();
 }
 
-[Realtime(Ticket.ViewPermission)]
-public sealed class Ticket : AggregateRoot, IMultiTenant
+[Realtime(Ticket.ViewPermission, ResourceType = "Ticket")]
+public class Ticket : AggregateRoot, IMultiTenant
 {
     public const string ViewPermission = "Test.Tickets.View";
 
@@ -144,12 +144,21 @@ public sealed class Ticket : AggregateRoot, IMultiTenant
     public Guid TenantId { get; set; }
 }
 
+public sealed class UrgentTicket : Ticket
+{
+    public int Priority { get; set; }
+}
+
 public sealed class RealtimeTestDbContext(DbContextOptions<RealtimeTestDbContext> options, ICurrentUser currentUser, IEnumerable<IModelContributor> contributors)
     : CoworkeeDbContext(options, currentUser, contributors);
 
 internal sealed class TicketModel : IModelContributor, IPermissionDefinitionContributor
 {
-    public void Apply(ModelBuilder modelBuilder) => modelBuilder.Entity<Ticket>().Property(t => t.Title).HasMaxLength(20);
+    public void Apply(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Ticket>().Property(t => t.Title).HasMaxLength(20);
+        modelBuilder.Entity<UrgentTicket>();
+    }
 
     public void Define(PermissionDefinitionContext context) => context.Group("Test", "Test").Add(Ticket.ViewPermission, "View tickets");
 }

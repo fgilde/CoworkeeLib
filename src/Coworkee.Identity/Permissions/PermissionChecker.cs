@@ -9,7 +9,8 @@ using Microsoft.Extensions.Caching.Hybrid;
 
 namespace Coworkee.Identity.Permissions;
 
-internal sealed class PermissionChecker(CoworkeeDbContext db, ICurrentUser currentUser, IPermissionDefinitionManager definitions, HybridCache cache)
+internal sealed class PermissionChecker(
+    CoworkeeDbContext db, ICurrentUser currentUser, IPermissionDefinitionManager definitions, HybridCache cache, IEnumerable<IResourceHierarchy> hierarchies)
     : IPermissionChecker
 {
     public async Task<IReadOnlyCollection<string>> GetGrantedAsync(CancellationToken cancellationToken)
@@ -47,8 +48,11 @@ internal sealed class PermissionChecker(CoworkeeDbContext db, ICurrentUser curre
         }
 
         var groupIds = await GroupIdsAsync(userId, cancellationToken);
+        var chain = hierarchies.FirstOrDefault(h => h.ResourceType == resourceType) is { } hierarchy
+            ? await hierarchy.GetInheritanceChainAsync(resourceId, cancellationToken)
+            : [resourceId];
         var roleIds = await db.Set<ResourcePermission>()
-            .Where(p => p.ResourceType == resourceType && p.ResourceId == resourceId)
+            .Where(p => p.ResourceType == resourceType && chain.Contains(p.ResourceId))
             .Where(p => (p.PrincipalType == PrincipalType.User && p.PrincipalId == userId)
                         || (p.PrincipalType == PrincipalType.Group && groupIds.Contains(p.PrincipalId)))
             .Select(p => p.RoleId)
@@ -56,6 +60,32 @@ internal sealed class PermissionChecker(CoworkeeDbContext db, ICurrentUser curre
             .ToListAsync(cancellationToken);
 
         return roleIds.Count > 0 && (await GrantsForRolesAsync(roleIds, currentUser.TenantId, cancellationToken)).Contains(permission);
+    }
+
+    public async Task<IReadOnlyCollection<Guid>> GetGrantedResourcesAsync(string permission, string resourceType, CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is not { } userId || !await IsActiveMemberAsync(userId, currentUser.TenantId, cancellationToken))
+        {
+            return [];
+        }
+
+        var groupIds = await GroupIdsAsync(userId, cancellationToken);
+        var grants = await db.Set<ResourcePermission>()
+            .Where(p => p.ResourceType == resourceType)
+            .Where(p => (p.PrincipalType == PrincipalType.User && p.PrincipalId == userId)
+                        || (p.PrincipalType == PrincipalType.Group && groupIds.Contains(p.PrincipalId)))
+            .Select(p => new { p.ResourceId, p.RoleId })
+            .ToListAsync(cancellationToken);
+        var allowedRoles = new HashSet<Guid>();
+        foreach (var roleId in grants.Select(g => g.RoleId).Distinct())
+        {
+            if ((await GrantsForRolesAsync([roleId], currentUser.TenantId, cancellationToken)).Contains(permission))
+            {
+                allowedRoles.Add(roleId);
+            }
+        }
+
+        return grants.Where(g => allowedRoles.Contains(g.RoleId)).Select(g => g.ResourceId).Distinct().ToList();
     }
 
     internal async Task<string[]> GetGrantedForAsync(Guid userId, Guid? tenantId, CancellationToken cancellationToken)

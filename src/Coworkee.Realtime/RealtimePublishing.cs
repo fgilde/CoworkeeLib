@@ -86,22 +86,23 @@ internal sealed class RealtimeChangeInterceptor(IRealtimePublisher publisher, IC
     {
         foreach (var entry in context?.ChangeTracker.Entries().Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted) ?? [])
         {
+            var root = entry.Metadata.GetRootType().ClrType;
             var extraTopics = (entry.Entity is IHasRealtimeTopics topics ? topics.RealtimeTopics : [])
                 .Concat(mappers.SelectMany(m => m.TopicsFor(entry.Entity)))
                 .Distinct(StringComparer.Ordinal)
                 .ToList();
-            if (!IsRealtime(entry.Metadata.ClrType) && extraTopics.Count == 0)
+            if (!IsRealtime(root) && extraTopics.Count == 0)
             {
                 continue;
             }
 
-            var name = entry.Metadata.ClrType.Name;
+            var name = root.Name;
             var id = string.Join(",", entry.Metadata.FindPrimaryKey()!.Properties.Select(p => entry.Property(p.Name).CurrentValue));
             var payload = new EntityChangedPayload(name, id, Action(entry), entry.State == EntityState.Modified
                 ? entry.Properties.Where(p => p.IsModified).Select(p => p.Metadata.Name).ToList()
                 : []);
             var tenantId = TenantOf(entry) ?? currentUser.TenantId;
-            if (IsRealtime(entry.Metadata.ClrType))
+            if (IsRealtime(root))
             {
                 _pending.Add((tenantId, RealtimeTopics.Type(name), payload));
                 _pending.Add((tenantId, RealtimeTopics.Entity(name, id), payload));

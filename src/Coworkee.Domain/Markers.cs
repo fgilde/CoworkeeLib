@@ -39,6 +39,8 @@ public interface IVersioned
 public sealed class RealtimeAttribute(string permission) : Attribute
 {
     public string Permission { get; } = permission;
+
+    public string? ResourceType { get; init; }
 }
 
 public interface IHasRealtimeTopics

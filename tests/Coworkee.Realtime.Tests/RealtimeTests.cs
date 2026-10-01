@@ -176,6 +176,39 @@ public sealed class RealtimeTests(RealtimeApp app) : IAsyncLifetime
         await admin.NextAsync(e => e.Topic == "type:Ticket");
     }
 
+    [Fact]
+    public async Task Derived_types_publish_under_their_root_type()
+    {
+        await using var admin = await app.ConnectAsync(_setup.AdminUserId, _setup.TenantId);
+        await admin.SubscribeAsync("type:Ticket");
+
+        await app.AsActorAsync(_setup.AdminUserId, _setup.TenantId, async db =>
+        {
+            db.Add(new UrgentTicket { Title = "Urgent", Priority = 1 });
+            return await db.SaveChangesAsync(Ct);
+        });
+
+        (await admin.NextAsync(e => e.Topic == "type:Ticket")).Payload.GetProperty("entityType").GetString().ShouldBe("Ticket");
+    }
+
+    [Fact]
+    public async Task A_resource_grant_allows_the_entity_topic_but_not_the_type_topic()
+    {
+        var api = app.App.GetTestClient().AsUser(_setup.AdminUserId, _setup.TenantId);
+        var bob = (await (await api.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest("bob@acme.test", "Passw0rd!x", null, null), Ct))
+            .Content.ReadFromJsonAsync<UserDto>(Ct))!;
+        var role = (await (await api.PostAsJsonAsync("/api/v1/identity/roles", new RoleRequest("Ticket readers", null), Ct)).Content.ReadFromJsonAsync<Guid>(Ct))!;
+        (await api.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{role}", new NameListRequest([Ticket.ViewPermission]), Ct)).EnsureSuccessStatusCode();
+        var ticket = await CreateTicketAsync("Shared");
+        (await api.PostAsJsonAsync($"/api/v1/identity/resource-permissions/Ticket/{ticket}",
+            new GrantResourcePermissionRequest(PrincipalType.User, bob.Id, role), Ct)).EnsureSuccessStatusCode();
+        await using var listener = await app.ConnectAsync(bob.Id, _setup.TenantId);
+
+        await listener.SubscribeAsync($"entity:Ticket:{ticket}");
+        await Should.ThrowAsync<HubException>(() => listener.SubscribeAsync("type:Ticket"));
+        await Should.ThrowAsync<HubException>(() => listener.SubscribeAsync($"entity:Ticket:{Guid.CreateVersion7()}"));
+    }
+
     private Task<Guid> CreateTicketAsync(string title) => app.AsActorAsync(_setup.AdminUserId, _setup.TenantId, async db =>
     {
         var ticket = new Ticket { Title = title };
