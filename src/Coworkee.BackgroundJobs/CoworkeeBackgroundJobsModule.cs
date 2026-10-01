@@ -41,13 +41,14 @@ public sealed class CoworkeeBackgroundJobsModule : CoworkeeModule, IWebModule
     public override void ConfigureServices(ModuleServiceContext context)
     {
         var services = context.Services;
-        var options = context.Configuration.GetSection(BackgroundJobOptions.Section).Get<BackgroundJobOptions>() ?? new BackgroundJobOptions();
+        var runServer = context.Configuration.GetSection(BackgroundJobOptions.Section).Get<BackgroundJobOptions>()?.RunServer ?? true;
         services.Configure<BackgroundJobOptions>(context.Configuration.GetSection(BackgroundJobOptions.Section));
         services.AddSingleton<IPermissionDefinitionContributor, JobsPermissionDefinitions>();
         services.AddScoped<IBackgroundJobs, HangfireBackgroundJobs>();
 
         services.AddHangfire((provider, config) =>
         {
+            var options = provider.GetRequiredService<IOptions<BackgroundJobOptions>>().Value;
             var connectionString = provider.GetRequiredService<IConfiguration>().GetConnectionString(options.ConnectionStringName)
                 ?? throw new InvalidOperationException($"Connection string '{options.ConnectionStringName}' for background jobs is missing.");
             config.UseSimpleAssemblyNameTypeSerializer()
@@ -59,10 +60,11 @@ public sealed class CoworkeeBackgroundJobsModule : CoworkeeModule, IWebModule
         });
         GlobalJobFilters.Filters.Remove(typeof(AutomaticRetryAttribute));
 
-        if (options.RunServer)
+        if (runServer)
         {
-            services.AddHangfireServer(server =>
+            services.AddHangfireServer((provider, server) =>
             {
+                var options = provider.GetRequiredService<IOptions<BackgroundJobOptions>>().Value;
                 server.Queues = options.Queues;
                 server.WorkerCount = options.WorkerCount;
                 server.SchedulePollingInterval = options.PollingInterval;

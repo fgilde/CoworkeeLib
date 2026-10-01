@@ -122,14 +122,18 @@ public static class BffExtensions
                 user.FindAll("role").Select(c => c.Value).ToArray())
             : BffUserDto.Anonymous);
 
-        app.MapForwarder("/api/{**catch-all}", options.ApiAddress, transforms => transforms.AddRequestTransform(async transform =>
+        foreach (var prefix in options.ForwardedPrefixes.Prepend("/api"))
         {
-            var token = await transform.HttpContext.GetTokenAsync("access_token");
-            if (token is not null)
+            app.MapForwarder(prefix.TrimEnd('/') + "/{**catch-all}", options.ApiAddress, transforms => transforms.AddRequestTransform(async transform =>
             {
-                transform.ProxyRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
-        }));
+                var token = await transform.HttpContext.GetTokenAsync("access_token");
+                if (token is not null)
+                {
+                    transform.ProxyRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                }
+            }));
+        }
+
         return app;
     }
 }
