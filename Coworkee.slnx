@@ -4,6 +4,7 @@
     <Project Path="src/Coworkee.Aspire/Coworkee.Aspire.csproj" />
     <Project Path="src/Coworkee.AspNetCore/Coworkee.AspNetCore.csproj" />
     <Project Path="src/Coworkee.AuthServer/Coworkee.AuthServer.csproj" />
+    <Project Path="src/Coworkee.BackgroundJobs/Coworkee.BackgroundJobs.csproj" />
     <Project Path="src/Coworkee.Bff/Coworkee.Bff.csproj" />
     <Project Path="src/Coworkee.Client.Blazor/Coworkee.Client.Blazor.csproj" />
     <Project Path="src/Coworkee.Contracts/Coworkee.Contracts.csproj" />
@@ -20,6 +21,7 @@
     <Project Path="tests/Coworkee.Aspire.Tests/Coworkee.Aspire.Tests.csproj" />
     <Project Path="tests/Coworkee.AspNetCore.Tests/Coworkee.AspNetCore.Tests.csproj" />
     <Project Path="tests/Coworkee.AuthServer.Tests/Coworkee.AuthServer.Tests.csproj" />
+    <Project Path="tests/Coworkee.BackgroundJobs.Tests/Coworkee.BackgroundJobs.Tests.csproj" />
     <Project Path="tests/Coworkee.Bff.Tests/Coworkee.Bff.Tests.csproj" />
     <Project Path="tests/Coworkee.Client.Blazor.Tests/Coworkee.Client.Blazor.Tests.csproj" />
     <Project Path="tests/Coworkee.Core.Tests/Coworkee.Core.Tests.csproj" />
