@@ -1,4 +1,5 @@
 using Coworkee.Application.Messaging;
+using Coworkee.Core.Security;
 using Coworkee.Infrastructure.Outbox;
 using Coworkee.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -58,11 +59,72 @@ public sealed class OutboxTests(DatabaseFixture database) : IAsyncLifetime
         _handler.Received.ShouldHaveSingleItem();
     }
 
-    private ServiceProvider Services() => database.CreateServices(_user, _clock, services =>
+    [Fact]
+    public async Task Failed_message_waits_for_backoff_before_retry()
+    {
+        await using var provider = Services();
+        await using (var scope = provider.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<TestDbContext>();
+            db.Set<OutboxMessage>().Add(new OutboxMessage { Type = "Unknown.Type, Missing", Payload = "{}", OccurredAt = _clock.GetUtcNow() });
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        var processor = provider.GetRequiredService<OutboxProcessor<TestDbContext>>();
+        await processor.ProcessBatchAsync(10, TestContext.Current.CancellationToken);
+        (await processor.ProcessBatchAsync(10, TestContext.Current.CancellationToken)).ShouldBe(0);
+
+        _clock.Advance(TimeSpan.FromMinutes(1));
+        (await processor.ProcessBatchAsync(10, TestContext.Current.CancellationToken)).ShouldBe(1);
+        (await MessagesAsync(provider)).Single().Attempts.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task Handlers_run_as_the_user_and_tenant_that_raised_the_event()
+    {
+        var context = new ContextRecorder();
+        await using var provider = Services(services =>
+        {
+            services.AddSingleton(context);
+            services.AddScoped<IDomainEventHandler<DocumentRenamed>, ContextRecordingHandler>();
+        });
+        var raisingUser = _user.UserId;
+        var raisingTenant = _user.TenantId;
+        var document = new Document { Title = "A" };
+        document.Rename("B");
+        await SaveAsync(provider, document);
+
+        _user.UserId = null;
+        _user.TenantId = null;
+        await provider.GetRequiredService<OutboxProcessor<TestDbContext>>().ProcessBatchAsync(10, TestContext.Current.CancellationToken);
+
+        context.UserId.ShouldBe(raisingUser);
+        context.TenantId.ShouldBe(raisingTenant);
+    }
+
+    private ServiceProvider Services(Action<IServiceCollection>? configure = null) => database.CreateServices(_user, _clock, services =>
     {
         services.AddSingleton<IDomainEventHandler<DocumentRenamed>>(_handler);
         services.AddCoworkeeOutboxProcessing<TestDbContext>();
+        configure?.Invoke(services);
     });
+
+    private sealed class ContextRecorder
+    {
+        public Guid? UserId { get; set; }
+
+        public Guid? TenantId { get; set; }
+    }
+
+    private sealed class ContextRecordingHandler(ICurrentUser currentUser, ContextRecorder recorder) : IDomainEventHandler<DocumentRenamed>
+    {
+        public Task HandleAsync(DocumentRenamed domainEvent, CancellationToken cancellationToken)
+        {
+            recorder.UserId = currentUser.UserId;
+            recorder.TenantId = currentUser.TenantId;
+            return Task.CompletedTask;
+        }
+    }
 
     private static async Task SaveAsync(IServiceProvider provider, Document document)
     {

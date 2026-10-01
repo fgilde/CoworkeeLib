@@ -50,23 +50,30 @@ internal sealed class AuditTrailInterceptor(ICurrentUser currentUser, TimeProvid
     }
 
     private static bool IsAudited(EntityEntry entry) =>
-        entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted
+        entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted or EntityState.Unchanged
         && !entry.Metadata.IsOwned()
         && entry.Metadata.ClrType.GetCustomAttribute<NotAuditedAttribute>() is null;
 
     private AuditEntry? Create(EntityEntry entry, DateTimeOffset now, string? correlationId)
     {
+        var ownedChanges = OwnedChanges(entry).ToList();
+        if (entry.State == EntityState.Unchanged && ownedChanges.Count == 0)
+        {
+            return null;
+        }
+
         var action = ActionOf(entry);
         var changes = entry.Properties
             .Where(p => !p.Metadata.IsShadowProperty() && !p.Metadata.IsPrimaryKey() && !BookkeepingProperties.Contains(p.Metadata.Name))
             .Where(p => p.Metadata.PropertyInfo?.GetCustomAttribute<NotAuditedAttribute>() is null)
-            .Where(p => entry.State != EntityState.Modified || (p.IsModified && !Equals(p.OriginalValue, p.CurrentValue)))
+            .Where(p => entry.State is EntityState.Added or EntityState.Deleted || (p.IsModified && !Equals(p.OriginalValue, p.CurrentValue)))
             .Select(p => new AuditChange
             {
                 Property = p.Metadata.Name,
                 OldValue = entry.State == EntityState.Added ? null : Format(p, p.OriginalValue),
                 NewValue = entry.State == EntityState.Deleted ? null : Format(p, p.CurrentValue),
             })
+            .Concat(ownedChanges)
             .ToList();
 
         if (action == AuditAction.Updated && changes.Count == 0)
@@ -107,6 +114,21 @@ internal sealed class AuditTrailInterceptor(ICurrentUser currentUser, TimeProvid
 
         return AuditAction.Updated;
     }
+
+    private static IEnumerable<AuditChange> OwnedChanges(EntityEntry owner) =>
+        owner.References
+            .Where(r => r.Metadata.TargetEntityType.IsOwned() && r.TargetEntry is { State: EntityState.Added or EntityState.Modified or EntityState.Deleted })
+            .Select(r => new AuditChange
+            {
+                Property = r.Metadata.Name,
+                OldValue = r.TargetEntry!.State == EntityState.Added ? null : Snapshot(r.TargetEntry, original: true),
+                NewValue = r.TargetEntry.State == EntityState.Deleted ? null : Snapshot(r.TargetEntry, original: false),
+            });
+
+    private static string Snapshot(EntityEntry owned, bool original) =>
+        JsonSerializer.Serialize(owned.Properties
+            .Where(p => !p.Metadata.IsShadowProperty() && !p.Metadata.IsKey())
+            .ToDictionary(p => p.Metadata.Name, p => p.Metadata.PropertyInfo?.GetCustomAttribute<SensitiveAttribute>() is not null ? "***" : original ? p.OriginalValue : p.CurrentValue, StringComparer.Ordinal));
 
     private static string? Format(PropertyEntry property, object? value)
     {

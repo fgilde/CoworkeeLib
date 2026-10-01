@@ -2,11 +2,11 @@ namespace Coworkee.Core.Security;
 
 public sealed class AnonymousCurrentUser : ICurrentUser
 {
-    public Guid? UserId => null;
+    public Guid? UserId => CurrentUserScope.Current?.UserId;
 
-    public Guid? TenantId => null;
+    public Guid? TenantId => CurrentUserScope.Current?.TenantId;
 
-    public bool IsAuthenticated => false;
+    public bool IsAuthenticated => CurrentUserScope.Current?.IsAuthenticated ?? false;
 
-    public IReadOnlyCollection<string> Roles => [];
+    public IReadOnlyCollection<string> Roles => CurrentUserScope.Current?.Roles ?? [];
 }

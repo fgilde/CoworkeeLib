@@ -39,6 +39,45 @@ public sealed class PersistenceConventionTests(DatabaseFixture database) : IAsyn
     }
 
     [Fact]
+    public async Task Insert_into_foreign_tenant_is_rejected()
+    {
+        var foreign = new Document { Title = "Foreign", TenantId = Guid.CreateVersion7() };
+
+        var ex = await Should.ThrowAsync<InvalidOperationException>(() => ExecuteAsync(db =>
+        {
+            db.Documents.Add(foreign);
+            return Task.CompletedTask;
+        }));
+
+        ex.Message.ShouldContain("tenant", Case.Insensitive);
+    }
+
+    [Fact]
+    public async Task Moving_entity_to_foreign_tenant_is_rejected()
+    {
+        var id = await InsertAsync("Mine");
+
+        await Should.ThrowAsync<InvalidOperationException>(() =>
+            ExecuteAsync(async db => (await db.Documents.SingleAsync(d => d.Id == id)).TenantId = Guid.CreateVersion7()));
+    }
+
+    [Fact]
+    public async Task Tenantless_actor_may_write_any_tenant()
+    {
+        var target = Guid.CreateVersion7();
+        _user.TenantId = null;
+
+        await ExecuteAsync(db =>
+        {
+            db.Documents.Add(new Document { Title = "System", TenantId = target });
+            return Task.CompletedTask;
+        });
+
+        _user.TenantId = target;
+        (await QueryAsync(db => db.Documents.CountAsync())).ShouldBe(1);
+    }
+
+    [Fact]
     public async Task Update_sets_modified_fields()
     {
         var id = await InsertAsync("Old");

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Coworkee.Core.Security;
 using Coworkee.Domain;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -18,8 +19,13 @@ public sealed partial class OutboxProcessor<TContext>(IServiceScopeFactory scope
         var db = scope.ServiceProvider.GetRequiredService<TContext>();
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
 
+        var now = clock.GetUtcNow();
         var messages = await db.Set<OutboxMessage>()
-            .FromSql($"""SELECT * FROM cw."OutboxMessages" WHERE "ProcessedAt" IS NULL AND "Attempts" < {MaxAttempts} ORDER BY "OccurredAt" LIMIT {batchSize} FOR UPDATE SKIP LOCKED""")
+            .FromSql($"""
+                SELECT * FROM cw."OutboxMessages"
+                WHERE "ProcessedAt" IS NULL AND "Attempts" < {MaxAttempts} AND ("NextAttemptAt" IS NULL OR "NextAttemptAt" <= {now})
+                ORDER BY "OccurredAt" LIMIT {batchSize} FOR UPDATE SKIP LOCKED
+                """)
             .ToListAsync(cancellationToken);
 
         foreach (var message in messages)
@@ -28,6 +34,7 @@ public sealed partial class OutboxProcessor<TContext>(IServiceScopeFactory scope
             {
                 var type = Type.GetType(message.Type, throwOnError: true)!;
                 var domainEvent = (IDomainEvent)JsonSerializer.Deserialize(message.Payload, type)!;
+                using var actor = CurrentUserScope.Begin(new ImpersonatedUser(message.ActorId, message.TenantId));
                 await using var handlerScope = scopes.CreateAsyncScope();
                 await DomainEventDispatch.DispatchAsync(domainEvent, handlerScope.ServiceProvider, cancellationToken);
                 message.ProcessedAt = clock.GetUtcNow();
@@ -35,6 +42,7 @@ public sealed partial class OutboxProcessor<TContext>(IServiceScopeFactory scope
             catch (Exception exception) when (exception is not OperationCanceledException)
             {
                 message.Attempts++;
+                message.NextAttemptAt = clock.GetUtcNow().AddSeconds(Math.Pow(2, message.Attempts));
                 message.Error = exception.Message;
                 LogFailed(exception, message.Id);
             }

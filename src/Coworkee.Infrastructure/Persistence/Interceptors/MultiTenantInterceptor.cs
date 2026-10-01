@@ -21,10 +21,18 @@ internal sealed class MultiTenantInterceptor(ICurrentUser currentUser) : SaveCha
 
     private void Apply(DbContext? context)
     {
-        foreach (var entry in context?.ChangeTracker.Entries<IMultiTenant>().Where(e => e.State == EntityState.Added && e.Entity.TenantId == Guid.Empty) ?? [])
+        var tenantId = currentUser.TenantId;
+        foreach (var entry in context?.ChangeTracker.Entries<IMultiTenant>().Where(e => e.State is EntityState.Added or EntityState.Modified) ?? [])
         {
-            entry.Entity.TenantId = currentUser.TenantId
-                ?? throw new InvalidOperationException($"Cannot save {entry.Metadata.ClrType.Name} without a tenant.");
+            if (entry.State == EntityState.Added && entry.Entity.TenantId == Guid.Empty)
+            {
+                entry.Entity.TenantId = tenantId
+                    ?? throw new InvalidOperationException($"Cannot save {entry.Metadata.ClrType.Name} without a tenant.");
+            }
+            else if (tenantId is { } mine && entry.Entity.TenantId != mine)
+            {
+                throw new InvalidOperationException($"Cannot save {entry.Metadata.ClrType.Name} into a foreign tenant.");
+            }
         }
     }
 }

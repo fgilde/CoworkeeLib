@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.Text.Json;
+using Coworkee.Core.Security;
 using Coworkee.Domain;
 using Coworkee.Infrastructure.Outbox;
 using Microsoft.EntityFrameworkCore;
@@ -6,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace Coworkee.Infrastructure.Persistence.Interceptors;
 
-internal sealed class OutboxInterceptor(TimeProvider clock) : SaveChangesInterceptor
+internal sealed class OutboxInterceptor(ICurrentUser currentUser, TimeProvider clock) : SaveChangesInterceptor
 {
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
@@ -28,6 +30,7 @@ internal sealed class OutboxInterceptor(TimeProvider clock) : SaveChangesInterce
         }
 
         var now = clock.GetUtcNow();
+        var correlationId = Activity.Current?.TraceId.ToHexString();
         foreach (var aggregate in context.ChangeTracker.Entries<AggregateRoot>().Select(e => e.Entity).Where(a => a.DomainEvents.Count > 0).ToArray())
         {
             context.Set<OutboxMessage>().AddRange(aggregate.DomainEvents.Select(domainEvent => new OutboxMessage
@@ -35,6 +38,9 @@ internal sealed class OutboxInterceptor(TimeProvider clock) : SaveChangesInterce
                 Type = domainEvent.GetType().AssemblyQualifiedName!,
                 Payload = JsonSerializer.Serialize(domainEvent, domainEvent.GetType()),
                 OccurredAt = now,
+                TenantId = currentUser.TenantId,
+                ActorId = currentUser.UserId,
+                CorrelationId = correlationId,
             }));
             aggregate.ClearDomainEvents();
         }

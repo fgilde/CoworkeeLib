@@ -54,6 +54,20 @@ public sealed class AuditTrailTests(DatabaseFixture database) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Change_inside_owned_json_is_recorded_on_owner()
+    {
+        var id = await InsertAsync("Styled");
+
+        await ExecuteAsync(async db => (await db.Documents.SingleAsync(d => d.Id == id)).Settings.Color = "red");
+
+        var update = (await EntriesAsync(id)).Single(e => e.Action == AuditAction.Updated);
+        var change = update.Changes.ShouldHaveSingleItem();
+        change.Property.ShouldBe(nameof(Document.Settings));
+        change.OldValue!.ShouldContain("none");
+        change.NewValue!.ShouldContain("red");
+    }
+
+    [Fact]
     public async Task Soft_delete_records_deleted()
     {
         var id = await InsertAsync("Doomed");

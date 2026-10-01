@@ -32,6 +32,8 @@ public sealed class Document : AggregateRoot, IAuditable, ISoftDelete, IMultiTen
 
     public uint Version { get; set; }
 
+    public DocumentSettings Settings { get; set; } = new();
+
     public void Rename(string title)
     {
         Title = title;
@@ -39,9 +41,14 @@ public sealed class Document : AggregateRoot, IAuditable, ISoftDelete, IMultiTen
     }
 }
 
+public sealed class DocumentSettings
+{
+    public string Color { get; set; } = "none";
+}
+
 public sealed class TestModelContributor : IModelContributor
 {
-    public void Apply(ModelBuilder modelBuilder) => modelBuilder.Entity<Document>();
+    public void Apply(ModelBuilder modelBuilder) => modelBuilder.Entity<Document>().OwnsOne(d => d.Settings, s => s.ToJson());
 }
 
 public sealed class TestDbContext(DbContextOptions<TestDbContext> options, ICurrentUser currentUser, IEnumerable<IModelContributor> contributors)

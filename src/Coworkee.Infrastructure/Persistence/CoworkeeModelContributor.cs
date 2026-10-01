@@ -25,7 +25,8 @@ internal sealed class CoworkeeModelContributor : IModelContributor
         {
             entity.ToTable("OutboxMessages", Schema);
             entity.Property(e => e.Type).HasMaxLength(1024);
-            entity.HasIndex(e => new { e.ProcessedAt, e.OccurredAt });
+            entity.Property(e => e.CorrelationId).HasMaxLength(64);
+            entity.HasIndex(e => new { e.ProcessedAt, e.NextAttemptAt, e.OccurredAt });
         });
     }
 }
