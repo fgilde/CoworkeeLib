@@ -90,6 +90,21 @@ public sealed class AuditTrailTests(DatabaseFixture database) : IAsyncLifetime
         (await EntriesAsync(document.Id)).Single().Changes.Single(c => c.Property == nameof(Document.Secret)).NewValue.ShouldBe("\"***\"");
     }
 
+    [Fact]
+    public async Task Fluent_annotations_mask_and_skip_properties()
+    {
+        var document = new Document { Title = "T", Note = "secret", Internal = "skip" };
+        await ExecuteAsync(db =>
+        {
+            db.Documents.Add(document);
+            return Task.CompletedTask;
+        });
+
+        var changes = (await EntriesAsync(document.Id)).Single().Changes;
+        changes.Single(c => c.Property == nameof(Document.Note)).NewValue.ShouldBe("\"***\"");
+        changes.ShouldNotContain(c => c.Property == nameof(Document.Internal));
+    }
+
     private async Task<Guid> InsertAsync(string title)
     {
         var document = new Document { Title = title };

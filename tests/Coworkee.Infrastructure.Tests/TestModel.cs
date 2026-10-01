@@ -1,5 +1,6 @@
 using Coworkee.Core.Security;
 using Coworkee.Domain;
+using Coworkee.Infrastructure.Auditing;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,6 +14,10 @@ public sealed class Document : AggregateRoot, IAuditable, ISoftDelete, IMultiTen
 
     [Sensitive]
     public string? Secret { get; set; }
+
+    public string? Note { get; set; }
+
+    public string? Internal { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
 
@@ -48,7 +53,13 @@ public sealed class DocumentSettings
 
 public sealed class TestModelContributor : IModelContributor
 {
-    public void Apply(ModelBuilder modelBuilder) => modelBuilder.Entity<Document>().OwnsOne(d => d.Settings, s => s.ToJson());
+    public void Apply(ModelBuilder modelBuilder)
+    {
+        var document = modelBuilder.Entity<Document>();
+        document.OwnsOne(d => d.Settings, s => s.ToJson());
+        document.Property(d => d.Note).IsSensitive();
+        document.Property(d => d.Internal).IsNotAudited();
+    }
 }
 
 public sealed class TestDbContext(DbContextOptions<TestDbContext> options, ICurrentUser currentUser, IEnumerable<IModelContributor> contributors)
