@@ -1,0 +1,9 @@
+namespace Coworkee.Application.Messaging;
+
+public static class MiddlewareOrder
+{
+    public const int Logging = 100;
+    public const int Authorization = 200;
+    public const int Validation = 300;
+    public const int UnitOfWork = 400;
+}
