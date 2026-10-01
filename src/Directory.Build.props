@@ -6,8 +6,8 @@
     <Authors>fgilde</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>icon.png</PackageIcon>
-    <PackageProjectUrl>https://github.com/fgilde/coworkee</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/fgilde/coworkee</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/fgilde/CoworkeeLib</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/fgilde/CoworkeeLib</RepositoryUrl>
     <Description>Coworkee application framework – $(MSBuildProjectName)</Description>
   </PropertyGroup>
   <ItemGroup>
