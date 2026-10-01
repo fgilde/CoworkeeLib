@@ -1,0 +1,16 @@
+@page
+@model Coworkee.AuthServer.Pages.Account.LoginModel
+@{ ViewData["Title"] = "Sign in"; }
+<h1>Sign in</h1>
+<form method="post">
+  <label for="email">Email</label>
+  <input id="email" type="email" asp-for="Input.Email" autocomplete="username" required autofocus />
+  <label for="password">Password</label>
+  <input id="password" type="password" asp-for="Input.Password" autocomplete="current-password" required />
+  <label class="check"><input type="checkbox" asp-for="Input.RememberMe" /> Stay signed in</label>
+  <button type="submit">Sign in</button>
+  @if (Model.ErrorMessage is not null)
+  {
+    <p class="error" role="alert">@Model.ErrorMessage</p>
+  }
+</form>

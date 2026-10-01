@@ -6,5 +6,6 @@
     <ProjectReference Include="..\Coworkee.AspNetCore\Coworkee.AspNetCore.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
+    <InternalsVisibleTo Include="Coworkee.AuthServer.Tests" />
   </ItemGroup>
 </Project>
