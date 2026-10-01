@@ -22,7 +22,11 @@ internal sealed class PermissionChecker(CoworkeeDbContext db, ICurrentUser curre
         var tenantId = currentUser.TenantId;
         return await cache.GetOrCreateAsync(
             $"coworkee:permissions:{tenantId}:{userId}",
-            async ct => await LoadAsync(userId, tenantId, ct),
+            async ct =>
+            {
+                using var actor = CurrentUserScope.Begin(new ImpersonatedUser(userId, tenantId));
+                return await LoadAsync(userId, tenantId, ct);
+            },
             tags: [PermissionCache.Tag],
             cancellationToken: cancellationToken);
     }
