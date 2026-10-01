@@ -36,6 +36,7 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
         services.AddScoped<ITenantDirectory, Users.TenantDirectory>();
         services.AddSingleton<Coworkee.Domain.IRealtimeTopicMapper, IdentityRealtimeTopics>();
         services.AddSingleton<SetupToken>();
+        services.AddScoped<Coworkee.Application.Setup.ISetupCheck, DatabaseSetupCheck>();
         services.AddSingleton<SystemStateCache>();
         services.AddHostedService<SetupTokenAnnouncer>();
         services.AddOptions<SetupGateOptions>();

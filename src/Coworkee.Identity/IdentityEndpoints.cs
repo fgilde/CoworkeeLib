@@ -16,6 +16,7 @@ internal static partial class IdentityEndpoints
     {
         var setup = app.MapGroup("/api/v1/setup").WithTags("Setup").AllowAnonymous();
         setup.MapGet("/status", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetSetupStatus(), ct).ToHttpResult());
+        setup.MapGet("/checks", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetSetupChecks(), ct).ToHttpResult());
         setup.MapPost("/complete", (CompleteSetupRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new CompleteSetup(body), ct).ToHttpResult());
 
         var api = app.MapGroup("/api/v1/identity").WithTags("Identity").RequireAuthorization();

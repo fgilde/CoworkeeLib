@@ -48,7 +48,7 @@ internal sealed class SettingDefinitionHandlers(ISettingDefinitionManager defini
 }
 
 internal sealed class SettingValueHandlers(
-    CoworkeeDbContext db, ICurrentUser currentUser, ISettingDefinitionManager definitions, SettingProtector protector, ISettingProvider provider, IServiceProvider services)
+    CoworkeeDbContext db, ICurrentUser currentUser, ISettingDefinitionManager definitions, SettingWriter writer, ISettingProvider provider, IServiceProvider services)
     : IHandler<GetManagedSettings, Result<IReadOnlyList<SettingValueDto>>>,
       IHandler<SetManagedSettings, Result>,
       IHandler<GetUserSettings, Result<IReadOnlyList<SettingValueDto>>>,
@@ -98,6 +98,41 @@ internal sealed class SettingValueHandlers(
             return error ?? GlobalForbidden;
         }
 
+        return await writer.WriteAsync(scope, key, values, cancellationToken) is { } invalid ? invalid : Result.Success();
+    }
+
+    private static readonly Error GlobalForbidden =
+        Error.Forbidden("settings.global_forbidden", "System wide settings can only be changed from the system organisation.");
+
+    private async Task<bool> MayUseAsync(SettingScope scope, CancellationToken cancellationToken) =>
+        scope != SettingScope.Global
+        || (currentUser.TenantId is { } tenantId
+            && services.GetService(typeof(ITenantDirectory)) is ITenantDirectory tenants
+            && await tenants.IsSystemTenantAsync(tenantId, cancellationToken));
+
+    private bool TryScopeKey(SettingScope scope, out Guid? key, out Error? error)
+    {
+        key = scope switch
+        {
+            SettingScope.Tenant => currentUser.TenantId,
+            SettingScope.User => currentUser.UserId,
+            _ => null,
+        };
+        error = null;
+        if (scope != SettingScope.Global && key is null)
+        {
+            error = Error.Validation(nameof(scope), $"No {scope.ToString().ToLowerInvariant()} in the current context.");
+            return false;
+        }
+
+        return true;
+    }
+}
+
+internal sealed class SettingWriter(CoworkeeDbContext db, ISettingDefinitionManager definitions, SettingProtector protector)
+{
+    public async Task<Error?> WriteAsync(SettingScope scope, Guid? key, IReadOnlyDictionary<string, string?> values, CancellationToken cancellationToken)
+    {
         foreach (var (name, value) in values)
         {
             var definition = definitions.Find(name);
@@ -136,33 +171,12 @@ internal sealed class SettingValueHandlers(
             }
         }
 
-        return Result.Success();
+        return null;
     }
+}
 
-    private static readonly Error GlobalForbidden =
-        Error.Forbidden("settings.global_forbidden", "System wide settings can only be changed from the system organisation.");
-
-    private async Task<bool> MayUseAsync(SettingScope scope, CancellationToken cancellationToken) =>
-        scope != SettingScope.Global
-        || (currentUser.TenantId is { } tenantId
-            && services.GetService(typeof(ITenantDirectory)) is ITenantDirectory tenants
-            && await tenants.IsSystemTenantAsync(tenantId, cancellationToken));
-
-    private bool TryScopeKey(SettingScope scope, out Guid? key, out Error? error)
-    {
-        key = scope switch
-        {
-            SettingScope.Tenant => currentUser.TenantId,
-            SettingScope.User => currentUser.UserId,
-            _ => null,
-        };
-        error = null;
-        if (scope != SettingScope.Global && key is null)
-        {
-            error = Error.Validation(nameof(scope), $"No {scope.ToString().ToLowerInvariant()} in the current context.");
-            return false;
-        }
-
-        return true;
-    }
+internal sealed class SettingsSetupStep(SettingWriter writer) : Coworkee.Application.Setup.ISetupStep
+{
+    public async Task<Error?> ApplyAsync(Coworkee.Contracts.Identity.CompleteSetupRequest request, Guid tenantId, CancellationToken cancellationToken) =>
+        request.Settings is { Count: > 0 } settings ? await writer.WriteAsync(SettingScope.Global, null, settings, cancellationToken) : null;
 }

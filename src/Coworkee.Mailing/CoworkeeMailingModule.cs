@@ -42,6 +42,7 @@ public sealed class CoworkeeMailingModule : CoworkeeModule, IWebModule
         services.AddSingleton<IMailTemplateDefinitionManager, MailTemplateDefinitionManager>();
         services.AddScoped<IMailTemplateRenderer, MailTemplateRenderer>();
         services.AddScoped<IMailSender, MailSender>();
+        services.AddScoped<Coworkee.Application.Setup.ISetupCheck, MailSetupCheck>();
         services.TryAddSingleton<ISmtpTransport, MailKitSmtpTransport>();
         services.TryAddSingleton(TimeProvider.System);
     }
