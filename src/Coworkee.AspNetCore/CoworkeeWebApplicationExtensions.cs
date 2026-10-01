@@ -28,15 +28,15 @@ public static class CoworkeeWebApplicationExtensions
     public static WebApplication UseCoworkee(this WebApplication app)
     {
         app.UseExceptionHandler();
-        app.UseAuthentication();
-        app.UseAuthorization();
-        app.MapOpenApi();
-        app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "v1"));
         foreach (var module in app.Services.GetRequiredService<IReadOnlyList<CoworkeeModule>>().OfType<IWebModule>())
         {
             module.ConfigureApplication(app);
         }
 
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.MapOpenApi();
+        app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "v1"));
         return app;
     }
 }

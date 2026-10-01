@@ -21,6 +21,10 @@ public sealed class SetupTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Anonymous_requests_are_gated_too() =>
+        (await app.Anonymous().GetAsync("/api/v1/identity/users", Ct)).StatusCode.ShouldBe(HttpStatusCode.ServiceUnavailable);
+
+    [Fact]
     public async Task Status_reports_state()
     {
         (await Status()).IsInitialized.ShouldBeFalse();
