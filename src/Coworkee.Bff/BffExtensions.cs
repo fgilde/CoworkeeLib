@@ -76,6 +76,19 @@ public static class BffExtensions
         return builder;
     }
 
+    private static bool IsLocalPath([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] string? url) =>
+        url is { Length: > 0 } && url[0] == '/' && (url.Length == 1 || (url[1] != '/' && url[1] != '\\'));
+
+    private static async Task<IResult> LogoutAsync(HttpContext context)
+    {
+        await context.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme, new AuthenticationProperties { RedirectUri = "/" });
+        await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        var redirect = context.Response.Headers.Location.ToString();
+        context.Response.Headers.Location = default;
+        context.Response.StatusCode = StatusCodes.Status200OK;
+        return Results.Ok(new BffLogoutDto(redirect.Length > 0 ? redirect : "/"));
+    }
+
     public static WebApplication MapCoworkeeBff(this WebApplication app)
     {
         var options = app.Configuration.GetSection(BffOptions.Section).Get<BffOptions>() ?? new BffOptions();
@@ -96,11 +109,9 @@ public static class BffExtensions
         app.UseAuthorization();
 
         app.MapGet("/bff/login", (string? returnUrl) => Results.Challenge(
-            new AuthenticationProperties { RedirectUri = returnUrl is { Length: > 0 } && returnUrl.StartsWith('/') && !returnUrl.StartsWith("//", StringComparison.Ordinal) ? returnUrl : "/" },
+            new AuthenticationProperties { RedirectUri = IsLocalPath(returnUrl) ? returnUrl : "/" },
             [OpenIdConnectDefaults.AuthenticationScheme]));
-        app.MapPost("/bff/logout", () => Results.SignOut(
-            new AuthenticationProperties { RedirectUri = "/" },
-            [CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme]));
+        app.MapPost("/bff/logout", (Delegate)LogoutAsync);
         app.MapGet("/bff/user", (ClaimsPrincipal user) => user.Identity?.IsAuthenticated == true
             ? new BffUserDto(
                 true,

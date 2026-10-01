@@ -11,7 +11,7 @@ internal sealed class CoworkeeApi(HttpClient http) : ICoworkeeApi
 
     public Task<BffUserDto> GetUserAsync(CancellationToken cancellationToken = default) => GetAsync<BffUserDto>("bff/user", cancellationToken);
 
-    public Task LogoutAsync(CancellationToken cancellationToken = default) => SendAsync(HttpMethod.Post, "bff/logout", null, cancellationToken);
+    public Task<BffLogoutDto> LogoutAsync(CancellationToken cancellationToken = default) => SendAsync<BffLogoutDto>(HttpMethod.Post, "bff/logout", null, cancellationToken);
 
     public Task<SetupStatusDto> GetSetupStatusAsync(CancellationToken cancellationToken = default) => GetAsync<SetupStatusDto>("api/v1/setup/status", cancellationToken);
 

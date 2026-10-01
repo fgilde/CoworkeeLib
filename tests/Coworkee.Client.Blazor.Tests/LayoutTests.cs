@@ -29,6 +29,18 @@ public sealed class LayoutTests : ClientTestBase
     }
 
     [Fact]
+    public async Task Sign_out_navigates_to_the_identity_provider_end_session_url()
+    {
+        Api.LogoutAsync(Arg.Any<CancellationToken>()).Returns(new BffLogoutDto("https://auth.test/connect/endsession?x=1"));
+        AddAuthorization().SetAuthorized("Ada");
+        var layout = Render<CoworkeeLayout>(p => p.Add(l => l.Body, (RenderFragment)(b => b.AddContent(0, "body"))));
+
+        await layout.FindAll("button").Single(b => b.TextContent.Contains("Sign out")).ClickAsync(new());
+
+        Services.GetRequiredService<NavigationManager>().Uri.ShouldBe("https://auth.test/connect/endsession?x=1");
+    }
+
+    [Fact]
     public void Uninitialized_system_redirects_to_setup()
     {
         Api.GetSetupStatusAsync(Arg.Any<CancellationToken>()).Returns(new SetupStatusDto(false));

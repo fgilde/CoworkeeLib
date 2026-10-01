@@ -96,6 +96,20 @@ public sealed partial class AuthorizationCodeFlowTests(AuthApp app) : IAsyncLife
     }
 
     [Fact]
+    public async Task Repeated_wrong_passwords_lock_the_account()
+    {
+        for (var attempt = 0; attempt < 10; attempt++)
+        {
+            await PostLoginAsync(NoRedirects(), "admin@acme.test", "wrong-password", "/");
+        }
+
+        var (response, html) = await PostLoginAsync(NoRedirects(), "admin@acme.test", "Admin#12345", "/");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        html.ShouldContain("Too many attempts");
+    }
+
+    [Fact]
     public async Task Unknown_redirect_uri_is_rejected()
     {
         var url = AuthorizeUrl(Challenge(Verifier())).Replace(Uri.EscapeDataString(AuthApp.RedirectUri), Uri.EscapeDataString("https://evil.test/cb"), StringComparison.Ordinal);

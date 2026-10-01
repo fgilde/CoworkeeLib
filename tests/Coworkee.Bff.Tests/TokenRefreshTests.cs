@@ -42,6 +42,21 @@ public sealed class TokenRefreshTests : IAsyncDisposable
         (await browser.GetStringAsync("/test/token", TestContext.Current.CancellationToken)).ShouldBe("t:new-access");
     }
 
+    [Fact]
+    public async Task Logout_ends_the_local_session_and_returns_the_identity_provider_end_session_url()
+    {
+        var browser = await StartAsync(new StubTokenEndpoint(HttpStatusCode.OK, """{"access_token":"a","refresh_token":"r","expires_in":900}"""));
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/bff/logout");
+        request.Headers.Add("X-CSRF", "1");
+
+        var response = await browser.SendAsync(request, TestContext.Current.CancellationToken);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var logout = await response.Content.ReadFromJsonAsync<BffLogoutDto>(TestContext.Current.CancellationToken);
+        logout!.Redirect.ShouldStartWith("https://auth.test/connect/endsession");
+        (await browser.GetFromJsonAsync<BffUserDto>("/bff/user", TestContext.Current.CancellationToken))!.IsAuthenticated.ShouldBeFalse();
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_app is not null)

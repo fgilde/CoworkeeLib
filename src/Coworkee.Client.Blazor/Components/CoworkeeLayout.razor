@@ -71,7 +71,7 @@
 
     private async Task LogoutAsync()
     {
-        await Api.LogoutAsync();
-        Nav.NavigateTo("/", forceLoad: true);
+        var logout = await Api.LogoutAsync();
+        Nav.NavigateTo(logout.Redirect, forceLoad: true);
     }
 }

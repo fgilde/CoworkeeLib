@@ -7,7 +7,7 @@ public interface ICoworkeeApi
 {
     Task<BffUserDto> GetUserAsync(CancellationToken cancellationToken = default);
 
-    Task LogoutAsync(CancellationToken cancellationToken = default);
+    Task<BffLogoutDto> LogoutAsync(CancellationToken cancellationToken = default);
 
     Task<SetupStatusDto> GetSetupStatusAsync(CancellationToken cancellationToken = default);
 

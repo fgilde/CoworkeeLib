@@ -1,12 +1,13 @@
 using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
+using Coworkee.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Coworkee.AuthServer.Pages.Account;
 
-public sealed class LoginModel(SignInManager<User> signIn, UserManager<User> users) : PageModel
+public sealed class LoginModel(SignInManager<User> signIn, UserManager<User> users, CoworkeeDbContext db) : PageModel
 {
     [BindProperty]
     public LoginInput Input { get; set; } = new();
@@ -24,6 +25,7 @@ public sealed class LoginModel(SignInManager<User> signIn, UserManager<User> use
         }
 
         var result = await signIn.PasswordSignInAsync(user, Input.Password, Input.RememberMe, lockoutOnFailure: true);
+        await db.SaveChangesAsync();
         if (result.IsLockedOut)
         {
             ErrorMessage = "Too many attempts. Try again later.";

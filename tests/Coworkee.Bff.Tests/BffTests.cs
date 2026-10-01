@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Bff.Tests;
 
@@ -62,6 +63,20 @@ public sealed class BffTests : IAsyncLifetime
     [Fact]
     public async Task Logout_without_csrf_header_is_rejected() =>
         (await _client.PostAsync("/bff/logout", null, TestContext.Current.CancellationToken)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+    [Theory]
+    [InlineData("/\\evil.test")]
+    [InlineData("//evil.test")]
+    [InlineData("https://evil.test")]
+    public async Task Login_never_redirects_off_site(string returnUrl)
+    {
+        var response = await _client.GetAsync("/bff/login?returnUrl=" + Uri.EscapeDataString(returnUrl), TestContext.Current.CancellationToken);
+
+        var state = System.Web.HttpUtility.ParseQueryString(response.Headers.Location!.Query)["state"]!;
+        var properties = _app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptionsMonitor<Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions>>()
+            .Get("OpenIdConnect").StateDataFormat.Unprotect(state)!;
+        properties.RedirectUri.ShouldBe("/");
+    }
 
     [Fact]
     public async Task Login_challenges_the_identity_provider()
