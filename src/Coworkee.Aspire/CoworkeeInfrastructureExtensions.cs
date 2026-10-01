@@ -1,5 +1,6 @@
 using Aspire.Hosting.ApplicationModel;
 using CommunityToolkit.Aspire.Hosting.MailPit;
+using Microsoft.Extensions.Configuration;
 
 namespace Aspire.Hosting;
 
@@ -10,16 +11,21 @@ public sealed record CoworkeeInfrastructure(
 
 public static class CoworkeeInfrastructureExtensions
 {
+    public const string EphemeralSetting = "Coworkee:EphemeralInfrastructure";
+
     public static CoworkeeInfrastructure AddCoworkeeInfrastructure(this IDistributedApplicationBuilder builder, string databaseName)
     {
-        var database = builder.AddPostgres("postgres")
-            .WithDataVolume()
-            .WithLifetime(ContainerLifetime.Persistent)
-            .AddDatabase(databaseName);
-        var redis = builder.AddRedis("redis")
-            .WithDataVolume()
-            .WithLifetime(ContainerLifetime.Persistent);
+        var persistent = !builder.Configuration.GetValue<bool>(EphemeralSetting);
+
+        var postgres = builder.AddPostgres("postgres");
+        var redis = builder.AddRedis("redis");
+        if (persistent)
+        {
+            postgres.WithDataVolume().WithLifetime(ContainerLifetime.Persistent);
+            redis.WithDataVolume().WithLifetime(ContainerLifetime.Persistent);
+        }
+
         var mail = builder.AddMailPit("mail");
-        return new CoworkeeInfrastructure(database, redis, mail);
+        return new CoworkeeInfrastructure(postgres.AddDatabase(databaseName), redis, mail);
     }
 }
