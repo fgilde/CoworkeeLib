@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Coworkee.Account\Coworkee.Account.csproj" />
+    <ProjectReference Include="..\..\src\Coworkee.Testing\Coworkee.Testing.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+  </ItemGroup>
+</Project>

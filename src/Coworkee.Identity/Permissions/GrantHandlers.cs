@@ -80,3 +80,23 @@ internal sealed class SetGrantsHandler(CoworkeeDbContext db, ICurrentUser curren
         _ => db.Set<UserGroup>().AnyAsync(g => g.Id == command.ProviderKey, cancellationToken),
     };
 }
+
+[RequiresPermission(IdentityPermissions.Users.View)]
+public sealed record GetEffectivePermissions(Guid UserId) : IQuery<Result<IReadOnlyList<string>>>;
+
+internal sealed class GetEffectivePermissionsHandler(CoworkeeDbContext db, ICurrentUser currentUser, IPermissionChecker checker)
+    : IHandler<GetEffectivePermissions, Result<IReadOnlyList<string>>>
+{
+    public async Task<Result<IReadOnlyList<string>>> HandleAsync(GetEffectivePermissions query, CancellationToken cancellationToken)
+    {
+        if (!await db.Set<User>().AnyAsync(u => u.Id == query.UserId && u.TenantId == currentUser.TenantId, cancellationToken))
+        {
+            return Error.NotFound("identity.user_not_found", "The user does not exist.");
+        }
+
+        IReadOnlyList<string> granted = (await ((PermissionChecker)checker).GetGrantedForAsync(query.UserId, currentUser.TenantId, cancellationToken))
+            .Order(StringComparer.Ordinal)
+            .ToList();
+        return Result<IReadOnlyList<string>>.Success(granted);
+    }
+}

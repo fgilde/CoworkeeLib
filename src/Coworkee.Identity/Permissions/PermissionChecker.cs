@@ -58,6 +58,12 @@ internal sealed class PermissionChecker(CoworkeeDbContext db, ICurrentUser curre
         return roleIds.Count > 0 && (await GrantsForRolesAsync(roleIds, currentUser.TenantId, cancellationToken)).Contains(permission);
     }
 
+    internal async Task<string[]> GetGrantedForAsync(Guid userId, Guid? tenantId, CancellationToken cancellationToken)
+    {
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(userId, tenantId));
+        return await LoadAsync(userId, tenantId, cancellationToken);
+    }
+
     private async Task<string[]> LoadAsync(Guid userId, Guid? tenantId, CancellationToken cancellationToken)
     {
         if (!await IsActiveMemberAsync(userId, tenantId, cancellationToken))
