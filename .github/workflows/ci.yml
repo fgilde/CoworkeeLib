@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "feat/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Build
+        run: dotnet build Coworkee.slnx -c Release
+
+      - name: Test
+        run: dotnet test --solution Coworkee.slnx -c Release --no-build
+
+      - name: Pack
+        shell: pwsh
+        run: ./build/pack-local.ps1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coworkee-packages
+          path: artifacts/nuget/*.nupkg
+          retention-days: 14
