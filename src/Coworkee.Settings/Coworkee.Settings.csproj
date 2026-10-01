@@ -4,7 +4,6 @@
     <ProjectReference Include="..\Coworkee.Contracts\Coworkee.Contracts.csproj" />
     <ProjectReference Include="..\Coworkee.Infrastructure\Coworkee.Infrastructure.csproj" />
     <ProjectReference Include="..\Coworkee.AspNetCore\Coworkee.AspNetCore.csproj" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
   </ItemGroup>
 </Project>

@@ -49,7 +49,7 @@ public sealed class SystemStateCache(IServiceScopeFactory scopes)
         return _initialized;
     }
 
-    internal void Reset() => _initialized = false;
+    public void Reset() => _initialized = false;
 }
 
 internal sealed partial class SetupTokenAnnouncer(SystemStateCache state, SetupToken token, ILogger<SetupTokenAnnouncer> logger) : BackgroundService
