@@ -16,6 +16,7 @@
     <Project Path="src/Coworkee.Mailing/Coworkee.Mailing.csproj" />
     <Project Path="src/Coworkee.Settings/Coworkee.Settings.csproj" />
     <Project Path="src/Coworkee.Testing/Coworkee.Testing.csproj" />
+    <Project Path="src/Coworkee.Theming/Coworkee.Theming.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Coworkee.Application.Tests/Coworkee.Application.Tests.csproj" />
@@ -33,5 +34,6 @@
     <Project Path="tests/Coworkee.Infrastructure.Tests/Coworkee.Infrastructure.Tests.csproj" />
     <Project Path="tests/Coworkee.Mailing.Tests/Coworkee.Mailing.Tests.csproj" />
     <Project Path="tests/Coworkee.Settings.Tests/Coworkee.Settings.Tests.csproj" />
+    <Project Path="tests/Coworkee.Theming.Tests/Coworkee.Theming.Tests.csproj" />
   </Folder>
 </Solution>

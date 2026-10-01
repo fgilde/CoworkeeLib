@@ -21,4 +21,7 @@ internal sealed class TenantDirectory(CoworkeeDbContext db) : ITenantDirectory
 {
     public Task<bool> IsSystemTenantAsync(Guid tenantId, CancellationToken cancellationToken) =>
         db.Set<Tenant>().AnyAsync(t => t.Id == tenantId && t.IsDefault, cancellationToken);
+
+    public Task<Guid?> GetSystemTenantIdAsync(CancellationToken cancellationToken) =>
+        db.Set<Tenant>().Where(t => t.IsDefault).Select(t => (Guid?)t.Id).FirstOrDefaultAsync(cancellationToken);
 }

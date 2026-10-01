@@ -10,4 +10,6 @@ public interface IUserDirectory
 public interface ITenantDirectory
 {
     Task<bool> IsSystemTenantAsync(Guid tenantId, CancellationToken cancellationToken);
+
+    Task<Guid?> GetSystemTenantIdAsync(CancellationToken cancellationToken);
 }
