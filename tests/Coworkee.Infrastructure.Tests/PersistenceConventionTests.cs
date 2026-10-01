@@ -86,8 +86,8 @@ public sealed class PersistenceConventionTests(DatabaseFixture database) : IAsyn
         await using var second = provider.CreateAsyncScope();
         var a = first.ServiceProvider.GetRequiredService<TestDbContext>();
         var b = second.ServiceProvider.GetRequiredService<TestDbContext>();
-        (await a.Documents.SingleAsync(d => d.Id == id)).Title = "A";
-        (await b.Documents.SingleAsync(d => d.Id == id)).Title = "B";
+        (await a.Documents.SingleAsync(d => d.Id == id, TestContext.Current.CancellationToken)).Title = "A";
+        (await b.Documents.SingleAsync(d => d.Id == id, TestContext.Current.CancellationToken)).Title = "B";
         await ((IUnitOfWork)a).SaveChangesAsync(TestContext.Current.CancellationToken);
 
         await Should.ThrowAsync<ConcurrencyConflictException>(() => ((IUnitOfWork)b).SaveChangesAsync(TestContext.Current.CancellationToken));

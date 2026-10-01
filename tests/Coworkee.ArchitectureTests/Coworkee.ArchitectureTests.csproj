@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Coworkee.AspNetCore\Coworkee.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\src\Coworkee.Infrastructure\Coworkee.Infrastructure.csproj" />
+    <PackageReference Include="NetArchTest.eNhancedEdition" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Coworkee.Aspire\Coworkee.Aspire.csproj" />
+  </ItemGroup>
+</Project>

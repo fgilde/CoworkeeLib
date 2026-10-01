@@ -5,5 +5,6 @@
     <PackageReference Include="Respawn" />
     <PackageReference Include="Npgsql" />
     <PackageReference Include="xunit.v3.extensibility.core" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
   </ItemGroup>
 </Project>
