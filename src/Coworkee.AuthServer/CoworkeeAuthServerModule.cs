@@ -2,7 +2,6 @@ using Coworkee.AspNetCore;
 using Coworkee.Core.Modularity;
 using Coworkee.Identity;
 using Coworkee.Identity.Domain;
-using Coworkee.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -11,7 +10,7 @@ using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace Coworkee.AuthServer;
 
-[DependsOn(typeof(CoworkeeIdentityModule))]
+[DependsOn(typeof(CoworkeeIdentityModule), typeof(CoworkeeAuthStoreModule))]
 public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
 {
     public override void ConfigureServices(ModuleServiceContext context)
@@ -19,7 +18,6 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
         var services = context.Services;
         var options = context.Configuration.GetSection(AuthServerOptions.Section).Get<AuthServerOptions>() ?? new AuthServerOptions();
         services.Configure<AuthServerOptions>(context.Configuration.GetSection(AuthServerOptions.Section));
-        services.AddSingleton<IModelContributor, AuthModelContributor>();
         services.AddSingleton<AuthClientSeeder>();
         services.AddHostedService(provider => provider.GetRequiredService<AuthClientSeeder>());
         services.AddRazorPages().AddApplicationPart(typeof(CoworkeeAuthServerModule).Assembly);
@@ -33,7 +31,6 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
         new IdentityBuilder(typeof(User), typeof(Role), services).AddSignInManager();
 
         services.AddOpenIddict()
-            .AddCore(core => core.UseEntityFrameworkCore().UseDbContext<CoworkeeDbContext>().ReplaceDefaultEntities<Guid>())
             .AddServer(server =>
             {
                 server.SetAuthorizationEndpointUris("/connect/authorize")
