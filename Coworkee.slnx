@@ -3,6 +3,7 @@
     <Project Path="src/Coworkee.Application/Coworkee.Application.csproj" />
     <Project Path="src/Coworkee.Aspire/Coworkee.Aspire.csproj" />
     <Project Path="src/Coworkee.AspNetCore/Coworkee.AspNetCore.csproj" />
+    <Project Path="src/Coworkee.Contracts/Coworkee.Contracts.csproj" />
     <Project Path="src/Coworkee.Core/Coworkee.Core.csproj" />
     <Project Path="src/Coworkee.Domain/Coworkee.Domain.csproj" />
     <Project Path="src/Coworkee.Infrastructure/Coworkee.Infrastructure.csproj" />

@@ -1,3 +1,4 @@
+using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
 using Coworkee.Core.Modularity;
 using Coworkee.Core.Security;
@@ -13,8 +14,10 @@ public sealed class CoworkeeApplicationModule : CoworkeeModule
         var services = context.Services;
         services.AddDispatcher();
         services.AddScoped<IRequestMiddleware, LoggingMiddleware>();
+        services.AddScoped<IRequestMiddleware, AuthorizationMiddleware>();
         services.AddScoped<IRequestMiddleware, ValidationMiddleware>();
         services.AddScoped<IRequestMiddleware, UnitOfWorkMiddleware>();
+        services.TryAddSingleton<IPermissionDefinitionManager, PermissionDefinitionManager>();
         services.TryAddSingleton(TimeProvider.System);
         services.TryAddScoped<ICurrentUser, AnonymousCurrentUser>();
     }
