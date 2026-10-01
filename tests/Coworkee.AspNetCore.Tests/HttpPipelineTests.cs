@@ -49,6 +49,8 @@ public sealed class HttpPipelineTests : IAsyncLifetime
     [Theory]
     [InlineData("/missing", HttpStatusCode.NotFound, "thing.missing")]
     [InlineData("/conflict", HttpStatusCode.Conflict, "thing.conflict")]
+    [InlineData("/unauthorized", HttpStatusCode.Unauthorized, "auth.required")]
+    [InlineData("/forbidden", HttpStatusCode.Forbidden, "auth.forbidden")]
     public async Task Failures_return_problem_with_code(string path, HttpStatusCode status, string code)
     {
         var response = await _client.GetAsync(path, TestContext.Current.CancellationToken);
@@ -75,6 +77,14 @@ public sealed class HttpPipelineTests : IAsyncLifetime
     [Fact]
     public async Task Concurrency_conflict_returns_409() =>
         (await _client.GetAsync("/throw-concurrency", TestContext.Current.CancellationToken)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+    [Fact]
+    public async Task Forbidden_exception_returns_403() =>
+        (await _client.GetAsync("/throw-forbidden", TestContext.Current.CancellationToken)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+    [Fact]
+    public async Task Enums_are_serialized_as_strings() =>
+        (await _client.GetStringAsync("/enum", TestContext.Current.CancellationToken)).ShouldBe("\"Conflict\"");
 
     [Fact]
     public async Task OpenApi_document_lists_endpoints()
@@ -109,6 +119,10 @@ public sealed class HttpPipelineTests : IAsyncLifetime
             app.MapGet("/conflict", () => Task.FromResult(Result.Failure(Error.Conflict("thing.conflict", "Conflict"))).ToHttpResult());
             app.MapGet("/validate", (IDispatcher dispatcher, CancellationToken ct) => dispatcher.SendAsync(new Named(""), ct).ToHttpResult());
             app.MapGet("/throw-validation", IResult () => throw new ValidationException("bad"));
+            app.MapGet("/unauthorized", () => Task.FromResult(Result.Failure(Error.Unauthorized("auth.required", "Login required"))).ToHttpResult());
+            app.MapGet("/forbidden", () => Task.FromResult(Result.Failure(Error.Forbidden("auth.forbidden", "Nope"))).ToHttpResult());
+            app.MapGet("/throw-forbidden", IResult () => throw new ForbiddenException("nope"));
+            app.MapGet("/enum", () => Task.FromResult<Result<ErrorKind>>(ErrorKind.Conflict).ToHttpResult());
             app.MapGet("/throw-concurrency", IResult () => throw new ConcurrencyConflictException("changed", new InvalidOperationException()));
         }
     }

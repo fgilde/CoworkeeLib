@@ -27,8 +27,9 @@ public static class ResultHttpExtensions
 
     private static int StatusCodeOf(ErrorKind kind) => kind switch
     {
-        ErrorKind.NotFound => StatusCodes.Status404NotFound,
+        ErrorKind.Unauthorized => StatusCodes.Status401Unauthorized,
         ErrorKind.Forbidden => StatusCodes.Status403Forbidden,
+        ErrorKind.NotFound => StatusCodes.Status404NotFound,
         ErrorKind.Conflict => StatusCodes.Status409Conflict,
         _ => StatusCodes.Status500InternalServerError,
     };
