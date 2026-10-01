@@ -7,6 +7,7 @@ using Coworkee.Infrastructure.Auditing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Coworkee.Infrastructure.Persistence.Interceptors;
 
@@ -65,7 +66,7 @@ internal sealed class AuditTrailInterceptor(ICurrentUser currentUser, TimeProvid
         var action = ActionOf(entry);
         var changes = entry.Properties
             .Where(p => !p.Metadata.IsShadowProperty() && !p.Metadata.IsPrimaryKey() && !BookkeepingProperties.Contains(p.Metadata.Name))
-            .Where(p => p.Metadata.PropertyInfo?.GetCustomAttribute<NotAuditedAttribute>() is null)
+            .Where(p => p.Metadata.PropertyInfo?.GetCustomAttribute<NotAuditedAttribute>() is null && !p.Metadata.HasFlag(AuditPropertyBuilderExtensions.NotAudited))
             .Where(p => entry.State is EntityState.Added or EntityState.Deleted || (p.IsModified && !Equals(p.OriginalValue, p.CurrentValue)))
             .Select(p => new AuditChange
             {
@@ -127,8 +128,8 @@ internal sealed class AuditTrailInterceptor(ICurrentUser currentUser, TimeProvid
 
     private static string Snapshot(EntityEntry owned, bool original) =>
         JsonSerializer.Serialize(owned.Properties
-            .Where(p => !p.Metadata.IsShadowProperty() && !p.Metadata.IsKey())
-            .ToDictionary(p => p.Metadata.Name, p => p.Metadata.PropertyInfo?.GetCustomAttribute<SensitiveAttribute>() is not null ? "***" : original ? p.OriginalValue : p.CurrentValue, StringComparer.Ordinal));
+            .Where(p => !p.Metadata.IsShadowProperty() && !p.Metadata.IsKey() && !p.Metadata.HasFlag(AuditPropertyBuilderExtensions.NotAudited))
+            .ToDictionary(p => p.Metadata.Name, p => IsSensitive(p.Metadata) ? "***" : original ? p.OriginalValue : p.CurrentValue, StringComparer.Ordinal));
 
     private static string? Format(PropertyEntry property, object? value)
     {
@@ -137,6 +138,9 @@ internal sealed class AuditTrailInterceptor(ICurrentUser currentUser, TimeProvid
             return null;
         }
 
-        return property.Metadata.PropertyInfo?.GetCustomAttribute<SensitiveAttribute>() is not null ? Masked : JsonSerializer.Serialize(value);
+        return IsSensitive(property.Metadata) ? Masked : JsonSerializer.Serialize(value);
     }
+
+    private static bool IsSensitive(IReadOnlyProperty property) =>
+        property.PropertyInfo?.GetCustomAttribute<SensitiveAttribute>() is not null || property.HasFlag(AuditPropertyBuilderExtensions.Sensitive);
 }

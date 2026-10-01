@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Coworkee.AspNetCore.Http;
 using Coworkee.AspNetCore.Security;
 using Coworkee.Core.Modularity;
@@ -14,6 +15,9 @@ public static class CoworkeeWebApplicationExtensions
     {
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
+        builder.Services.AddAuthentication();
+        builder.Services.AddAuthorization();
+        builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
         builder.Services.AddCoworkeeModules<TRoot>(builder.Configuration);
         builder.Services.AddProblemDetails();
         builder.Services.AddExceptionHandler<CoworkeeExceptionHandler>();
@@ -24,13 +28,15 @@ public static class CoworkeeWebApplicationExtensions
     public static WebApplication UseCoworkee(this WebApplication app)
     {
         app.UseExceptionHandler();
-        app.MapOpenApi();
-        app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "v1"));
         foreach (var module in app.Services.GetRequiredService<IReadOnlyList<CoworkeeModule>>().OfType<IWebModule>())
         {
             module.ConfigureApplication(app);
         }
 
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.MapOpenApi();
+        app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "v1"));
         return app;
     }
 }

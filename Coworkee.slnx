@@ -3,8 +3,10 @@
     <Project Path="src/Coworkee.Application/Coworkee.Application.csproj" />
     <Project Path="src/Coworkee.Aspire/Coworkee.Aspire.csproj" />
     <Project Path="src/Coworkee.AspNetCore/Coworkee.AspNetCore.csproj" />
+    <Project Path="src/Coworkee.Contracts/Coworkee.Contracts.csproj" />
     <Project Path="src/Coworkee.Core/Coworkee.Core.csproj" />
     <Project Path="src/Coworkee.Domain/Coworkee.Domain.csproj" />
+    <Project Path="src/Coworkee.Identity/Coworkee.Identity.csproj" />
     <Project Path="src/Coworkee.Infrastructure/Coworkee.Infrastructure.csproj" />
     <Project Path="src/Coworkee.Testing/Coworkee.Testing.csproj" />
   </Folder>
@@ -15,6 +17,7 @@
     <Project Path="tests/Coworkee.AspNetCore.Tests/Coworkee.AspNetCore.Tests.csproj" />
     <Project Path="tests/Coworkee.Core.Tests/Coworkee.Core.Tests.csproj" />
     <Project Path="tests/Coworkee.Domain.Tests/Coworkee.Domain.Tests.csproj" />
+    <Project Path="tests/Coworkee.Identity.Tests/Coworkee.Identity.Tests.csproj" />
     <Project Path="tests/Coworkee.Infrastructure.Tests/Coworkee.Infrastructure.Tests.csproj" />
   </Folder>
 </Solution>

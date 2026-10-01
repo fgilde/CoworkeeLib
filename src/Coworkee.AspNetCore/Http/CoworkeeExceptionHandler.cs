@@ -16,6 +16,8 @@ internal sealed class CoworkeeExceptionHandler : IExceptionHandler
                 .GroupBy(f => f.PropertyName, StringComparer.Ordinal)
                 .ToDictionary(g => g.Key, g => g.Select(f => f.ErrorMessage).ToArray(), StringComparer.Ordinal)),
             ConcurrencyConflictException conflict => Error.Conflict("concurrency.conflict", conflict.Message),
+            ForbiddenException forbidden => Error.Forbidden("auth.forbidden", forbidden.Message),
+            UnauthorizedAccessException unauthorized => Error.Unauthorized("auth.required", unauthorized.Message),
             _ => null,
         };
 
