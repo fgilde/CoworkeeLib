@@ -1,0 +1,4 @@
+<p>Hallo {{ user.first_name }},</p>
+<ul>
+{{ for n in notifications }}  <li><a href="{{ n.link }}">{{ n.title }}</a><br>{{ n.body }}</li>
+{{ end }}</ul>
