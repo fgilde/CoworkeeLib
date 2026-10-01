@@ -1,0 +1,64 @@
+@page "/admin/mail/log"
+@attribute [Authorize(Policy = "perm:" + MailPermissions.Log.View)]
+@inject ICoworkeeApi Api
+
+<PageTitle>Mail log</PageTitle>
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+    <MudText Typo="Typo.h4">Mail log</MudText>
+    <MudSpacer />
+    <MudSelect T="OutgoingMailStatus?" Value="_status" ValueChanged="StatusChangedAsync" Label="Status" Clearable="true" Dense="true" Style="max-width:200px">
+        @foreach (var status in Enum.GetValues<OutgoingMailStatus>())
+        {
+            <MudSelectItem T="OutgoingMailStatus?" Value="status">@status</MudSelectItem>
+        }
+    </MudSelect>
+    <MudTextField T="string" @bind-Value="_search" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search"
+                  Immediate="true" DebounceInterval="300" OnDebounceIntervalElapsed="_ => _table!.ReloadServerData()" />
+</MudStack>
+
+<MudTable @ref="_table" T="OutgoingMailDto" ServerData="LoadAsync" Dense="true" Hover="true" RowsPerPage="25">
+    <HeaderContent>
+        <MudTh>Queued</MudTh><MudTh>To</MudTh><MudTh>Subject</MudTh><MudTh>Template</MudTh><MudTh>Status</MudTh><MudTh>Attempts</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.QueuedAt.ToLocalTime().ToString("g")</MudTd>
+        <MudTd>@context.To</MudTd>
+        <MudTd>@context.Subject</MudTd>
+        <MudTd><MudText Typo="Typo.caption">@context.TemplateName</MudText></MudTd>
+        <MudTd>
+            <MudChip T="string" Size="Size.Small" Color="@ColorFor(context.Status)">@context.Status</MudChip>
+            @if (context.LastError is not null)
+            {
+                <MudTooltip Text="@context.LastError"><MudIcon Icon="@Icons.Material.Outlined.Info" Size="Size.Small" /></MudTooltip>
+            }
+        </MudTd>
+        <MudTd>@context.Attempts</MudTd>
+    </RowTemplate>
+    <PagerContent><MudTablePager /></PagerContent>
+</MudTable>
+
+@code {
+    private MudTable<OutgoingMailDto>? _table;
+    private OutgoingMailStatus? _status;
+    private string? _search;
+
+    private async Task<TableData<OutgoingMailDto>> LoadAsync(TableState state, CancellationToken cancellationToken)
+    {
+        var page = await Api.GetOutgoingMailsAsync(new PageRequest(state.Page + 1, state.PageSize, _search), _status, cancellationToken);
+        return new TableData<OutgoingMailDto> { Items = page.Items, TotalItems = page.TotalCount };
+    }
+
+    private async Task StatusChangedAsync(OutgoingMailStatus? status)
+    {
+        _status = status;
+        await _table!.ReloadServerData();
+    }
+
+    private static Color ColorFor(OutgoingMailStatus status) => status switch
+    {
+        OutgoingMailStatus.Sent => Color.Success,
+        OutgoingMailStatus.Failed => Color.Error,
+        OutgoingMailStatus.Skipped => Color.Warning,
+        _ => Color.Default,
+    };
+}

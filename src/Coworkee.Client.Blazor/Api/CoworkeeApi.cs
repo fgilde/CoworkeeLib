@@ -2,12 +2,16 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Coworkee.Contracts;
 using Coworkee.Contracts.Identity;
+using Coworkee.Contracts.Mailing;
+using Coworkee.Contracts.Settings;
 
 namespace Coworkee.Client.Blazor.Api;
 
 internal sealed class CoworkeeApi(HttpClient http) : ICoworkeeApi
 {
     private const string Identity = "api/v1/identity";
+    private const string Settings = "api/v1/settings";
+    private const string Mail = "api/v1/mail";
 
     public Task<BffUserDto> GetUserAsync(CancellationToken cancellationToken = default) => GetAsync<BffUserDto>("bff/user", cancellationToken);
 
@@ -80,6 +84,42 @@ internal sealed class CoworkeeApi(HttpClient http) : ICoworkeeApi
 
     public Task RevokeResourcePermissionAsync(string resourceType, Guid resourceId, Guid id, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Delete, $"{Identity}/resource-permissions/{resourceType}/{resourceId}/{id}", null, cancellationToken);
+
+    public async Task<IReadOnlyList<SettingGroupDto>> GetSettingDefinitionsAsync(bool userScope, CancellationToken cancellationToken = default) =>
+        await GetAsync<SettingGroupDto[]>(userScope ? $"{Settings}/definitions/user" : $"{Settings}/definitions", cancellationToken);
+
+    public async Task<IReadOnlyList<SettingValueDto>> GetSettingsAsync(SettingScope scope, CancellationToken cancellationToken = default) =>
+        await GetAsync<SettingValueDto[]>($"{Settings}/{Scope(scope)}", cancellationToken);
+
+    public Task SetSettingsAsync(SettingScope scope, IReadOnlyDictionary<string, string?> values, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Put, $"{Settings}/{Scope(scope)}", new SetSettingsRequest(values), cancellationToken);
+
+    public async Task<IReadOnlyList<MailTemplateSummaryDto>> GetMailTemplatesAsync(CancellationToken cancellationToken = default) =>
+        await GetAsync<MailTemplateSummaryDto[]>($"{Mail}/templates", cancellationToken);
+
+    public Task<MailTemplateDto> GetMailTemplateAsync(string name, string culture, CancellationToken cancellationToken = default) =>
+        GetAsync<MailTemplateDto>(Template(name, culture), cancellationToken);
+
+    public Task SaveMailTemplateAsync(string name, string culture, SaveMailTemplateRequest request, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Put, Template(name, culture), request, cancellationToken);
+
+    public Task ResetMailTemplateAsync(string name, string culture, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Delete, Template(name, culture), null, cancellationToken);
+
+    public Task<RenderedMailDto> PreviewMailTemplateAsync(string name, string culture, SaveMailTemplateRequest request, CancellationToken cancellationToken = default) =>
+        SendAsync<RenderedMailDto>(HttpMethod.Post, Template(name, culture) + "/preview", request, cancellationToken);
+
+    public Task SendTestMailAsync(string name, string culture, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Post, Template(name, culture) + "/test", null, cancellationToken);
+
+    public Task<PagedResult<OutgoingMailDto>> GetOutgoingMailsAsync(PageRequest page, OutgoingMailStatus? status, CancellationToken cancellationToken = default) =>
+        GetAsync<PagedResult<OutgoingMailDto>>(
+            $"{Mail}/outgoing?page={page.Page}&pageSize={page.PageSize}&search={Uri.EscapeDataString(page.Search ?? string.Empty)}{(status is null ? string.Empty : "&status=" + status)}",
+            cancellationToken);
+
+    private static string Scope(SettingScope scope) => scope.ToString().ToLowerInvariant();
+
+    private static string Template(string name, string culture) => $"{Mail}/templates/{Uri.EscapeDataString(name)}/{Uri.EscapeDataString(culture)}";
 
     private async Task<T> GetAsync<T>(string url, CancellationToken cancellationToken)
     {

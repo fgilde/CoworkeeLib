@@ -9,7 +9,7 @@ public sealed class CoworkeeClientOptions
     public string LogoutPath { get; set; } = "/bff/logout";
 }
 
-public sealed record CoworkeeNavItem(string Title, string Href, string Icon, string? Permission = null);
+public sealed record CoworkeeNavItem(string Title, string Href, string Icon, string? Permission = null, bool ForceLoad = false);
 
 public interface INavigationContributor
 {

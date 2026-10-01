@@ -1,5 +1,7 @@
 using Coworkee.Contracts;
 using Coworkee.Contracts.Identity;
+using Coworkee.Contracts.Mailing;
+using Coworkee.Contracts.Settings;
 
 namespace Coworkee.Client.Blazor.Api;
 
@@ -54,6 +56,26 @@ public interface ICoworkeeApi
     Task<Guid> GrantResourcePermissionAsync(string resourceType, Guid resourceId, GrantResourcePermissionRequest request, CancellationToken cancellationToken = default);
 
     Task RevokeResourcePermissionAsync(string resourceType, Guid resourceId, Guid id, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<SettingGroupDto>> GetSettingDefinitionsAsync(bool userScope, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<SettingValueDto>> GetSettingsAsync(SettingScope scope, CancellationToken cancellationToken = default);
+
+    Task SetSettingsAsync(SettingScope scope, IReadOnlyDictionary<string, string?> values, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<MailTemplateSummaryDto>> GetMailTemplatesAsync(CancellationToken cancellationToken = default);
+
+    Task<MailTemplateDto> GetMailTemplateAsync(string name, string culture, CancellationToken cancellationToken = default);
+
+    Task SaveMailTemplateAsync(string name, string culture, SaveMailTemplateRequest request, CancellationToken cancellationToken = default);
+
+    Task ResetMailTemplateAsync(string name, string culture, CancellationToken cancellationToken = default);
+
+    Task<RenderedMailDto> PreviewMailTemplateAsync(string name, string culture, SaveMailTemplateRequest request, CancellationToken cancellationToken = default);
+
+    Task SendTestMailAsync(string name, string culture, CancellationToken cancellationToken = default);
+
+    Task<PagedResult<OutgoingMailDto>> GetOutgoingMailsAsync(PageRequest page, OutgoingMailStatus? status, CancellationToken cancellationToken = default);
 }
 
 public sealed class ApiException(int status, string? code, IReadOnlyDictionary<string, string[]>? errors)
