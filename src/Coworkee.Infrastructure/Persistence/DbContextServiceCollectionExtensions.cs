@@ -19,6 +19,7 @@ public static class DbContextServiceCollectionExtensions
         services.AddScoped<AuditablePropertiesInterceptor>();
         services.AddScoped<MultiTenantInterceptor>();
         services.AddScoped<AuditTrailInterceptor>();
+        services.AddScoped<OutboxInterceptor>();
 
         services.AddDbContext<TContext>((provider, options) =>
         {
@@ -27,7 +28,8 @@ public static class DbContextServiceCollectionExtensions
                 provider.GetRequiredService<SoftDeleteInterceptor>(),
                 provider.GetRequiredService<AuditablePropertiesInterceptor>(),
                 provider.GetRequiredService<MultiTenantInterceptor>(),
-                provider.GetRequiredService<AuditTrailInterceptor>());
+                provider.GetRequiredService<AuditTrailInterceptor>(),
+                provider.GetRequiredService<OutboxInterceptor>());
         });
         services.AddScoped<CoworkeeDbContext>(provider => provider.GetRequiredService<TContext>());
         services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<TContext>());

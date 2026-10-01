@@ -1,4 +1,5 @@
 using Coworkee.Infrastructure.Auditing;
+using Coworkee.Infrastructure.Outbox;
 using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Infrastructure.Persistence;
@@ -18,6 +19,13 @@ internal sealed class CoworkeeModelContributor : IModelContributor
             entity.HasIndex(e => new { e.EntityType, e.EntityId });
             entity.HasIndex(e => e.OccurredAt);
             entity.OwnsMany(e => e.Changes, changes => changes.ToJson());
+        });
+
+        modelBuilder.Entity<OutboxMessage>(entity =>
+        {
+            entity.ToTable("OutboxMessages", Schema);
+            entity.Property(e => e.Type).HasMaxLength(1024);
+            entity.HasIndex(e => new { e.ProcessedAt, e.OccurredAt });
         });
     }
 }
