@@ -2,6 +2,7 @@ using Coworkee.Application;
 using Coworkee.Core.Security;
 using Coworkee.Infrastructure.Persistence.Interceptors;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -30,6 +31,7 @@ public static class DbContextServiceCollectionExtensions
                 provider.GetRequiredService<MultiTenantInterceptor>(),
                 provider.GetRequiredService<AuditTrailInterceptor>(),
                 provider.GetRequiredService<OutboxInterceptor>());
+            options.AddInterceptors(provider.GetServices<IInterceptor>());
         });
         services.AddScoped<CoworkeeDbContext>(provider => provider.GetRequiredService<TContext>());
         services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<TContext>());

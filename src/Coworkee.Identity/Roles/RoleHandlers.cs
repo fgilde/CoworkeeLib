@@ -82,7 +82,7 @@ internal sealed class UpdateRoleHandler(CoworkeeDbContext db, ICurrentUser curre
     }
 }
 
-internal sealed class DeleteRoleHandler(CoworkeeDbContext db, ICurrentUser currentUser, PermissionCache cache) : IHandler<DeleteRole, Result>
+internal sealed class DeleteRoleHandler(CoworkeeDbContext db, ICurrentUser currentUser) : IHandler<DeleteRole, Result>
 {
     public async Task<Result> HandleAsync(DeleteRole command, CancellationToken cancellationToken)
     {
@@ -99,7 +99,6 @@ internal sealed class DeleteRoleHandler(CoworkeeDbContext db, ICurrentUser curre
 
         db.RemoveRange(await db.Set<PermissionGrant>().Where(g => g.ProviderType == PermissionProviderType.Role && g.ProviderKey == role.Id).ToListAsync(cancellationToken));
         db.Remove(role);
-        await cache.InvalidateAsync(cancellationToken);
         return Result.Success();
     }
 }

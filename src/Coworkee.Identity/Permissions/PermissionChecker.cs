@@ -41,7 +41,7 @@ internal sealed class PermissionChecker(CoworkeeDbContext db, ICurrentUser curre
             return true;
         }
 
-        if (currentUser.UserId is not { } userId)
+        if (currentUser.UserId is not { } userId || !await IsActiveMemberAsync(userId, currentUser.TenantId, cancellationToken))
         {
             return false;
         }
@@ -60,6 +60,11 @@ internal sealed class PermissionChecker(CoworkeeDbContext db, ICurrentUser curre
 
     private async Task<string[]> LoadAsync(Guid userId, Guid? tenantId, CancellationToken cancellationToken)
     {
+        if (!await IsActiveMemberAsync(userId, tenantId, cancellationToken))
+        {
+            return [];
+        }
+
         var groupIds = await GroupIdsAsync(userId, cancellationToken);
         var roleIds = await db.Set<IdentityUserRole<Guid>>().Where(r => r.UserId == userId).Select(r => r.RoleId)
             .Union(db.Set<UserGroupRole>().Where(r => groupIds.Contains(r.GroupId)).Select(r => r.RoleId))
@@ -90,6 +95,9 @@ internal sealed class PermissionChecker(CoworkeeDbContext db, ICurrentUser curre
             .ToListAsync(cancellationToken);
         return definitions.Expand(names);
     }
+
+    private Task<bool> IsActiveMemberAsync(Guid userId, Guid? tenantId, CancellationToken cancellationToken) =>
+        db.Set<User>().AnyAsync(u => u.Id == userId && u.TenantId == tenantId && u.IsActive, cancellationToken);
 
     private Task<List<Guid>> GroupIdsAsync(Guid userId, CancellationToken cancellationToken) =>
         (from member in db.Set<UserGroupMember>()

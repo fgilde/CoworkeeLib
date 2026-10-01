@@ -42,7 +42,7 @@ internal sealed class GetGrantsHandler(CoworkeeDbContext db, ICurrentUser curren
             .ToListAsync(cancellationToken);
 }
 
-internal sealed class SetGrantsHandler(CoworkeeDbContext db, ICurrentUser currentUser, IPermissionDefinitionManager definitions, PermissionCache cache)
+internal sealed class SetGrantsHandler(CoworkeeDbContext db, ICurrentUser currentUser, IPermissionDefinitionManager definitions)
     : IHandler<SetGrants, Result>
 {
     public async Task<Result> HandleAsync(SetGrants command, CancellationToken cancellationToken)
@@ -70,7 +70,6 @@ internal sealed class SetGrantsHandler(CoworkeeDbContext db, ICurrentUser curren
             ProviderKey = command.ProviderKey,
             TenantId = currentUser.TenantId,
         }));
-        await cache.InvalidateAsync(cancellationToken);
         return Result.Success();
     }
 

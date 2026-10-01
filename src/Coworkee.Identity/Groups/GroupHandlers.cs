@@ -51,7 +51,7 @@ internal sealed class GetGroupsHandler(CoworkeeDbContext db) : IHandler<GetGroup
     public async Task<Result<PagedResult<GroupDto>>> HandleAsync(GetGroups query, CancellationToken cancellationToken)
     {
         var page = query.Page;
-        var groups = db.Set<UserGroup>().AsNoTracking();
+        var groups = db.Set<UserGroup>().AsNoTracking().AsSplitQuery();
         if (!string.IsNullOrWhiteSpace(page.Search))
         {
             var search = page.Search.Trim().ToLowerInvariant();
@@ -104,7 +104,7 @@ internal sealed class UpdateGroupHandler(CoworkeeDbContext db) : IHandler<Update
     }
 }
 
-internal sealed class DeleteGroupHandler(CoworkeeDbContext db, PermissionCache cache) : IHandler<DeleteGroup, Result>
+internal sealed class DeleteGroupHandler(CoworkeeDbContext db) : IHandler<DeleteGroup, Result>
 {
     public async Task<Result> HandleAsync(DeleteGroup command, CancellationToken cancellationToken)
     {
@@ -117,12 +117,11 @@ internal sealed class DeleteGroupHandler(CoworkeeDbContext db, PermissionCache c
         db.RemoveRange(await db.Set<PermissionGrant>().Where(g => g.ProviderType == PermissionProviderType.Group && g.ProviderKey == group.Id).ToListAsync(cancellationToken));
         db.RemoveRange(await db.Set<ResourcePermission>().Where(p => p.PrincipalType == PrincipalType.Group && p.PrincipalId == group.Id).ToListAsync(cancellationToken));
         db.Remove(group);
-        await cache.InvalidateAsync(cancellationToken);
         return Result.Success();
     }
 }
 
-internal sealed class SetGroupMembersHandler(CoworkeeDbContext db, ICurrentUser currentUser, PermissionCache cache) : IHandler<SetGroupMembers, Result>
+internal sealed class SetGroupMembersHandler(CoworkeeDbContext db, ICurrentUser currentUser) : IHandler<SetGroupMembers, Result>
 {
     public async Task<Result> HandleAsync(SetGroupMembers command, CancellationToken cancellationToken)
     {
@@ -141,12 +140,11 @@ internal sealed class SetGroupMembersHandler(CoworkeeDbContext db, ICurrentUser 
 
         group.Members.RemoveAll(m => !wanted.Contains(m.UserId));
         group.Members.AddRange(wanted.Where(id => group.Members.All(m => m.UserId != id)).Select(id => new UserGroupMember { GroupId = group.Id, UserId = id }));
-        await cache.InvalidateAsync(cancellationToken);
         return Result.Success();
     }
 }
 
-internal sealed class SetGroupRolesHandler(CoworkeeDbContext db, ICurrentUser currentUser, PermissionCache cache) : IHandler<SetGroupRoles, Result>
+internal sealed class SetGroupRolesHandler(CoworkeeDbContext db, ICurrentUser currentUser) : IHandler<SetGroupRoles, Result>
 {
     public async Task<Result> HandleAsync(SetGroupRoles command, CancellationToken cancellationToken)
     {
@@ -157,15 +155,14 @@ internal sealed class SetGroupRolesHandler(CoworkeeDbContext db, ICurrentUser cu
         }
 
         var wanted = command.RoleIds.Distinct().ToList();
-        var valid = await db.Set<Role>().CountAsync(r => wanted.Contains(r.Id) && (r.TenantId == null || r.TenantId == currentUser.TenantId), cancellationToken);
+        var valid = await db.Set<Role>().CountAsync(r => wanted.Contains(r.Id) && !r.IsSystem && r.TenantId == currentUser.TenantId, cancellationToken);
         if (valid != wanted.Count)
         {
-            return Error.Validation(nameof(command.RoleIds), "Unknown role.");
+            return Error.Validation(nameof(command.RoleIds), "Unknown role or system role. System roles cannot be assigned to groups.");
         }
 
         group.Roles.RemoveAll(r => !wanted.Contains(r.RoleId));
         group.Roles.AddRange(wanted.Where(id => group.Roles.All(r => r.RoleId != id)).Select(id => new UserGroupRole { GroupId = group.Id, RoleId = id }));
-        await cache.InvalidateAsync(cancellationToken);
         return Result.Success();
     }
 }

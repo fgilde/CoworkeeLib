@@ -92,6 +92,12 @@ internal sealed class UpdateUserHandler(CoworkeeDbContext db, ICurrentUser curre
             return UserErrors.NotFound;
         }
 
+        if (user.IsActive && !command.User.IsActive && await AdminGuard.IsAdminAsync(db, user.Id, cancellationToken)
+            && !await AdminGuard.OtherActiveAdminExistsAsync(db, currentUser.TenantId, user.Id, cancellationToken))
+        {
+            return AdminGuard.LastAdmin;
+        }
+
         user.FirstName = command.User.FirstName;
         user.LastName = command.User.LastName;
         user.IsActive = command.User.IsActive;
@@ -99,7 +105,7 @@ internal sealed class UpdateUserHandler(CoworkeeDbContext db, ICurrentUser curre
     }
 }
 
-internal sealed class SetUserRolesHandler(CoworkeeDbContext db, ICurrentUser currentUser, PermissionCache cache) : IHandler<SetUserRoles, Result>
+internal sealed class SetUserRolesHandler(CoworkeeDbContext db, ICurrentUser currentUser) : IHandler<SetUserRoles, Result>
 {
     public async Task<Result> HandleAsync(SetUserRoles command, CancellationToken cancellationToken)
     {
@@ -115,24 +121,46 @@ internal sealed class SetUserRolesHandler(CoworkeeDbContext db, ICurrentUser cur
             return Error.Validation(nameof(command.RoleIds), "Unknown role.");
         }
 
-        var adminRole = await db.Set<Role>().SingleAsync(r => r.IsSystem && r.Name == SystemRoles.Admin, cancellationToken);
-        if (!wanted.Contains(adminRole.Id) && !await OtherAdminExistsAsync(command.Id, adminRole.Id, cancellationToken))
+        var adminRoleId = await AdminGuard.AdminRoleIdAsync(db, cancellationToken);
+        var current = await db.Set<IdentityUserRole<Guid>>().Where(r => r.UserId == command.Id).ToListAsync(cancellationToken);
+        var hadAdmin = current.Any(r => r.RoleId == adminRoleId);
+        if (hadAdmin != wanted.Contains(adminRoleId) && !await AdminGuard.IsAdminAsync(db, currentUser.UserId, cancellationToken))
         {
-            return Error.Conflict("identity.last_admin", "The last administrator cannot lose the administrator role.");
+            return Error.Forbidden("identity.admin_role_restricted", "Only administrators can grant or revoke the administrator role.");
         }
 
-        var current = await db.Set<IdentityUserRole<Guid>>().Where(r => r.UserId == command.Id).ToListAsync(cancellationToken);
+        if (hadAdmin && !wanted.Contains(adminRoleId) && !await AdminGuard.OtherActiveAdminExistsAsync(db, currentUser.TenantId, command.Id, cancellationToken))
+        {
+            return AdminGuard.LastAdmin;
+        }
+
         db.RemoveRange(current.Where(r => !wanted.Contains(r.RoleId)));
         db.AddRange(wanted.Where(id => current.All(r => r.RoleId != id)).Select(id => new IdentityUserRole<Guid> { UserId = command.Id, RoleId = id }));
-        await cache.InvalidateAsync(cancellationToken);
         return Result.Success();
     }
+}
 
-    private Task<bool> OtherAdminExistsAsync(Guid userId, Guid adminRoleId, CancellationToken cancellationToken) =>
-        (from userRole in db.Set<IdentityUserRole<Guid>>()
-         join user in db.Set<User>() on userRole.UserId equals user.Id
-         where userRole.RoleId == adminRoleId && user.Id != userId && user.TenantId == currentUser.TenantId && user.IsActive
-         select user.Id).AnyAsync(cancellationToken);
+internal static class AdminGuard
+{
+    public static readonly Error LastAdmin = Error.Conflict("identity.last_admin", "The last active administrator cannot be removed or deactivated.");
+
+    public static Task<Guid> AdminRoleIdAsync(CoworkeeDbContext db, CancellationToken cancellationToken) =>
+        db.Set<Role>().Where(r => r.IsSystem && r.Name == SystemRoles.Admin).Select(r => r.Id).SingleAsync(cancellationToken);
+
+    public static async Task<bool> IsAdminAsync(CoworkeeDbContext db, Guid? userId, CancellationToken cancellationToken)
+    {
+        var adminRoleId = await AdminRoleIdAsync(db, cancellationToken);
+        return await db.Set<IdentityUserRole<Guid>>().AnyAsync(r => r.UserId == userId && r.RoleId == adminRoleId, cancellationToken);
+    }
+
+    public static async Task<bool> OtherActiveAdminExistsAsync(CoworkeeDbContext db, Guid? tenantId, Guid userId, CancellationToken cancellationToken)
+    {
+        var adminRoleId = await AdminRoleIdAsync(db, cancellationToken);
+        return await (from userRole in db.Set<IdentityUserRole<Guid>>()
+                      join user in db.Set<User>() on userRole.UserId equals user.Id
+                      where userRole.RoleId == adminRoleId && user.Id != userId && user.TenantId == tenantId && user.IsActive
+                      select user.Id).AnyAsync(cancellationToken);
+    }
 }
 
 internal static class UserErrors

@@ -42,7 +42,7 @@ internal sealed class GrantResourcePermissionHandler(CoworkeeDbContext db, ICurr
         var principalExists = grant.PrincipalType == PrincipalType.User
             ? await db.Set<User>().AnyAsync(u => u.Id == grant.PrincipalId && u.TenantId == currentUser.TenantId, cancellationToken)
             : await db.Set<UserGroup>().AnyAsync(g => g.Id == grant.PrincipalId, cancellationToken);
-        var roleExists = await db.Set<Role>().AnyAsync(r => r.Id == grant.RoleId && (r.TenantId == null || r.TenantId == currentUser.TenantId), cancellationToken);
+        var roleExists = await db.Set<Role>().AnyAsync(r => r.Id == grant.RoleId && !r.IsSystem && r.TenantId == currentUser.TenantId, cancellationToken);
         if (!principalExists || !roleExists)
         {
             return Error.Validation(nameof(command.Grant), "Unknown principal or role.");

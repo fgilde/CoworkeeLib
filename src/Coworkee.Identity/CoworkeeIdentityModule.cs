@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -29,6 +30,7 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
         services.AddHybridCache();
         services.AddScoped<IPermissionChecker, PermissionChecker>();
         services.AddSingleton<PermissionCache>();
+        services.AddScoped<IInterceptor, PermissionCacheInterceptor>();
         services.AddSingleton<SetupToken>();
         services.AddSingleton<SystemStateCache>();
         services.AddHostedService<SetupTokenAnnouncer>();
@@ -42,7 +44,7 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
             })
             .AddDefaultTokenProviders();
-        services.AddScoped<IUserStore<User>>(provider => new UserStore<User, Role, CoworkeeDbContext, Guid>(provider.GetRequiredService<CoworkeeDbContext>()));
+        services.AddScoped<IUserStore<User>>(provider => new UserStore<User, Role, CoworkeeDbContext, Guid>(provider.GetRequiredService<CoworkeeDbContext>()) { AutoSaveChanges = false });
     }
 
     public void ConfigureApplication(WebApplication app)
