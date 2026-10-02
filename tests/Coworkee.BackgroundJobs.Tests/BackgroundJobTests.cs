@@ -35,6 +35,23 @@ public sealed class BackgroundJobTests(JobsApp app)
     }
 
     [Fact]
+    public async Task Scheduled_job_runs_later_with_captured_actor_in_its_queue()
+    {
+        var (user, tenant, marker) = (Guid.CreateVersion7(), Guid.CreateVersion7(), Guid.NewGuid().ToString());
+        string id;
+        using (CurrentUserScope.Begin(new ImpersonatedUser(user, tenant)))
+        using (var scope = app.App.Services.CreateScope())
+        {
+            id = scope.ServiceProvider.GetRequiredService<IBackgroundJobs>().Schedule<RecordingJob, string>(marker, TimeSpan.FromSeconds(2), "mail");
+        }
+
+        app.App.Services.GetRequiredService<JobStorage>().GetMonitoringApi().JobDetails(id).History.First().StateName.ShouldBe("Scheduled");
+        await Eventually(() => RecordingJob.Calls.Any(c => c.Value == marker), TimeSpan.FromSeconds(60));
+        RecordingJob.Calls.Single(c => c.Value == marker).ShouldBe((marker, user, tenant));
+        app.App.Services.GetRequiredService<JobStorage>().GetMonitoringApi().JobDetails(id).Job.Queue.ShouldBe("mail");
+    }
+
+    [Fact]
     public async Task Failing_job_is_retried()
     {
         var marker = Guid.NewGuid().ToString();
