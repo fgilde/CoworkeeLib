@@ -18,6 +18,7 @@
     <Project Path="src/Coworkee.Notifications/Coworkee.Notifications.csproj" />
     <Project Path="src/Coworkee.Realtime/Coworkee.Realtime.csproj" />
     <Project Path="src/Coworkee.Settings/Coworkee.Settings.csproj" />
+    <Project Path="src/Coworkee.Storage/Coworkee.Storage.csproj" />
     <Project Path="src/Coworkee.Testing/Coworkee.Testing.csproj" />
     <Project Path="src/Coworkee.Theming/Coworkee.Theming.csproj" />
   </Folder>
@@ -40,6 +41,7 @@
     <Project Path="tests/Coworkee.Notifications.Tests/Coworkee.Notifications.Tests.csproj" />
     <Project Path="tests/Coworkee.Realtime.Tests/Coworkee.Realtime.Tests.csproj" />
     <Project Path="tests/Coworkee.Settings.Tests/Coworkee.Settings.Tests.csproj" />
+    <Project Path="tests/Coworkee.Storage.Tests/Coworkee.Storage.Tests.csproj" />
     <Project Path="tests/Coworkee.Theming.Tests/Coworkee.Theming.Tests.csproj" />
   </Folder>
 </Solution>

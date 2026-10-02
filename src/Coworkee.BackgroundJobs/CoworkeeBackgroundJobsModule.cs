@@ -45,6 +45,7 @@ public sealed class CoworkeeBackgroundJobsModule : CoworkeeModule, IWebModule
         services.Configure<BackgroundJobOptions>(context.Configuration.GetSection(BackgroundJobOptions.Section));
         services.AddSingleton<IPermissionDefinitionContributor, JobsPermissionDefinitions>();
         services.AddScoped<IBackgroundJobs, HangfireBackgroundJobs>();
+        services.AddHostedService<RecurringJobScheduler>();
 
         services.AddHangfire((provider, config) =>
         {
@@ -72,10 +73,12 @@ public sealed class CoworkeeBackgroundJobsModule : CoworkeeModule, IWebModule
         }
     }
 
-    public void ConfigureApplication(WebApplication app) =>
+    public void ConfigureApplication(WebApplication app)
+    {
         app.UseHangfireDashboard(
             app.Services.GetRequiredService<IOptions<BackgroundJobOptions>>().Value.DashboardPath,
             new DashboardOptions { AsyncAuthorization = [new PermissionDashboardAuthorization()], DisplayStorageConnectionString = false });
+    }
 }
 
 internal sealed class JobsPermissionDefinitions : IPermissionDefinitionContributor
