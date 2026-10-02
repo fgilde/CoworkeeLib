@@ -15,6 +15,12 @@ internal sealed class UserDirectory(CoworkeeDbContext db) : IUserDirectory
             .ToDictionary(
                 u => u.Id,
                 u => string.Join(' ', new[] { u.FirstName, u.LastName }.Where(n => !string.IsNullOrWhiteSpace(n))) is { Length: > 0 } name ? name : u.Email ?? u.Id.ToString());
+
+    public async Task<IReadOnlyDictionary<Guid, string>> GetActiveEmailsAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken) =>
+        await (from user in db.Set<User>()
+               join tenant in db.Set<Tenant>() on user.TenantId equals tenant.Id
+               where userIds.Contains(user.Id) && user.IsActive && tenant.IsActive && user.Email != null
+               select new { user.Id, user.Email }).ToDictionaryAsync(u => u.Id, u => u.Email!, cancellationToken);
 }
 
 internal sealed class TenantDirectory(CoworkeeDbContext db) : ITenantDirectory

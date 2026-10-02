@@ -47,7 +47,7 @@ public sealed class NotificationTests(NotificationApp app) : IAsyncLifetime
         await RunDigestAsync();
         (await MailsToAsync("bob@acme.test")).Count.ShouldBe(1);
 
-        (await Bob.PutAsJsonAsync("/api/v1/settings/user", new SetSettingsRequest(new Dictionary<string, string?> { [NotificationDigestJob.Setting] = "false" }), Ct)).EnsureSuccessStatusCode();
+        (await Bob.PutAsJsonAsync("/api/v1/settings/user", new SetSettingsRequest(new Dictionary<string, string?> { [NotificationDigestJob.Setting] = "False" }), Ct)).EnsureSuccessStatusCode();
         await app.NotifyAsync(_setup.AdminUserId, _setup.TenantId, _bob.Id);
         await RunDigestAsync();
         (await MailsToAsync("bob@acme.test")).Count.ShouldBe(1);

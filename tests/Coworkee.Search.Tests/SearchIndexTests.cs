@@ -15,7 +15,7 @@ public sealed class ElasticFixture : IAsyncLifetime
     private readonly IContainer _container = new ContainerBuilder("docker.elastic.co/elasticsearch/elasticsearch:9.1.4")
         .WithEnvironment("discovery.type", "single-node")
         .WithEnvironment("xpack.security.enabled", "false")
-        .WithEnvironment("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
+        .WithEnvironment("ES_JAVA_OPTS", "-Xms512m -Xmx512m -XX:TieredStopAtLevel=1")
         .WithEnvironment("cluster.routing.allocation.disk.threshold_enabled", "false")
         .WithPortBinding(9200, true)
         .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(r => r.ForPort(9200).ForPath("/_cluster/health")))
