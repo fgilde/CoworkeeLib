@@ -10,7 +10,8 @@ using Microsoft.Extensions.Caching.Hybrid;
 namespace Coworkee.Identity.Permissions;
 
 internal sealed class PermissionChecker(
-    CoworkeeDbContext db, ICurrentUser currentUser, IPermissionDefinitionManager definitions, HybridCache cache, IEnumerable<IResourceHierarchy> hierarchies)
+    CoworkeeDbContext db, ICurrentUser currentUser, IPermissionDefinitionManager definitions, HybridCache cache, IEnumerable<IResourceHierarchy> hierarchies,
+    IEnumerable<IResourceRestriction> restrictions)
     : IPermissionChecker
 {
     public async Task<IReadOnlyCollection<string>> GetGrantedAsync(CancellationToken cancellationToken)
@@ -35,7 +36,30 @@ internal sealed class PermissionChecker(
     public async Task<bool> IsGrantedAsync(string permission, CancellationToken cancellationToken) =>
         (await GetGrantedAsync(cancellationToken)).Contains(permission);
 
-    public async Task<bool> IsGrantedAsync(string permission, string resourceType, Guid resourceId, CancellationToken cancellationToken)
+    public async Task<bool> IsGrantedAsync(string permission, string resourceType, Guid resourceId, CancellationToken cancellationToken) =>
+        await IsGrantedOnResourceAsync(permission, resourceType, resourceId, cancellationToken) && !await IsRestrictedAsync(resourceType, resourceId, cancellationToken);
+
+    private async Task<bool> IsRestrictedAsync(string resourceType, Guid resourceId, CancellationToken cancellationToken)
+    {
+        var applicable = restrictions.Where(r => r.ResourceType == resourceType).ToList();
+        if (applicable.Count == 0)
+        {
+            return false;
+        }
+
+        var roleIds = await GetRoleIdsAsync(cancellationToken);
+        foreach (var restriction in applicable)
+        {
+            if (await restriction.IsRestrictedAsync(resourceId, roleIds, cancellationToken))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private async Task<bool> IsGrantedOnResourceAsync(string permission, string resourceType, Guid resourceId, CancellationToken cancellationToken)
     {
         if (await IsGrantedAsync(permission, cancellationToken))
         {

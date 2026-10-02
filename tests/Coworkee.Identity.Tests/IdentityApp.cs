@@ -88,9 +88,23 @@ public sealed class TestAppModule : CoworkeeModule
     public override void ConfigureServices(ModuleServiceContext context)
     {
         context.Services.AddSingleton<Coworkee.Application.Authorization.IResourceHierarchy>(TestFolderHierarchy.Instance);
+        context.Services.AddSingleton<Coworkee.Application.Authorization.IResourceRestriction>(TestFolderRestriction.Instance);
         context.Services.AddCoworkeeDbContext<IdentityTestDbContext>((provider, options) =>
             options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
     }
+}
+
+public sealed class TestFolderRestriction : Coworkee.Application.Authorization.IResourceRestriction
+{
+    public static readonly TestFolderRestriction Instance = new();
+
+    /// <summary>Resource to the role it is hidden from.</summary>
+    public System.Collections.Concurrent.ConcurrentDictionary<Guid, Guid> Restricted { get; } = new();
+
+    public string ResourceType => "Folder";
+
+    public Task<bool> IsRestrictedAsync(Guid resourceId, IReadOnlyCollection<Guid> roleIds, CancellationToken cancellationToken) =>
+        Task.FromResult(Restricted.TryGetValue(resourceId, out var role) && roleIds.Contains(role));
 }
 
 public sealed class TestFolderHierarchy : Coworkee.Application.Authorization.IResourceHierarchy
