@@ -94,6 +94,16 @@ internal sealed class PermissionChecker(
         return await LoadAsync(userId, tenantId, cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<Guid>> GetRoleIdsAsync(CancellationToken cancellationToken) =>
+        currentUser.UserId is { } userId && await IsActiveMemberAsync(userId, currentUser.TenantId, cancellationToken)
+            ? await RoleIdsAsync(userId, await GroupIdsAsync(userId, cancellationToken), cancellationToken)
+            : [];
+
+    private Task<List<Guid>> RoleIdsAsync(Guid userId, List<Guid> groupIds, CancellationToken cancellationToken) =>
+        db.Set<IdentityUserRole<Guid>>().Where(r => r.UserId == userId).Select(r => r.RoleId)
+            .Union(db.Set<UserGroupRole>().Where(r => groupIds.Contains(r.GroupId)).Select(r => r.RoleId))
+            .ToListAsync(cancellationToken);
+
     private async Task<string[]> LoadAsync(Guid userId, Guid? tenantId, CancellationToken cancellationToken)
     {
         if (!await IsActiveMemberAsync(userId, tenantId, cancellationToken))
@@ -102,9 +112,7 @@ internal sealed class PermissionChecker(
         }
 
         var groupIds = await GroupIdsAsync(userId, cancellationToken);
-        var roleIds = await db.Set<IdentityUserRole<Guid>>().Where(r => r.UserId == userId).Select(r => r.RoleId)
-            .Union(db.Set<UserGroupRole>().Where(r => groupIds.Contains(r.GroupId)).Select(r => r.RoleId))
-            .ToListAsync(cancellationToken);
+        var roleIds = await RoleIdsAsync(userId, groupIds, cancellationToken);
 
         var roleGrants = await GrantsForRolesAsync(roleIds, tenantId, cancellationToken);
         var direct = await db.Set<PermissionGrant>()

@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using System.Net.Http.Json;
 using Coworkee.Contracts;
@@ -33,6 +34,24 @@ public sealed class GroupAndResourceTests(IdentityApp app) : IAsyncLifetime
         await PutAsync($"/api/v1/identity/groups/{group}/members", new IdListRequest([]));
 
         (await client.GetAsync("/api/v1/identity/users", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task Role_ids_of_a_user_come_directly_and_through_groups()
+    {
+        var user = await CreateUserAsync("rolf@acme.test");
+        var direct = await CreateRoleAsync("Direct");
+        var viaGroup = await CreateRoleAsync("Via group");
+        await PutAsync($"/api/v1/identity/users/{user}/roles", new IdListRequest([direct]));
+        var group = await PostAsync<Guid>("/api/v1/identity/groups", new GroupRequest("Ops", null));
+        await PutAsync($"/api/v1/identity/groups/{group}/roles", new IdListRequest([viaGroup]));
+        await PutAsync($"/api/v1/identity/groups/{group}/members", new IdListRequest([user]));
+
+        using var actor = Coworkee.Core.Security.CurrentUserScope.Begin(new Coworkee.Core.Security.ImpersonatedUser(user, _setup.TenantId));
+        await using var scope = app.App.Services.CreateAsyncScope();
+        var roles = await scope.ServiceProvider.GetRequiredService<Coworkee.Application.Authorization.IPermissionChecker>().GetRoleIdsAsync(Ct);
+
+        roles.ShouldBe([direct, viaGroup], ignoreOrder: true);
     }
 
     [Fact]
