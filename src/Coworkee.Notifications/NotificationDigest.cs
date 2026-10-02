@@ -46,60 +46,89 @@ public sealed class NotificationDigestJob(
     public const string Setting = "Notifications.Digest";
     public const string Template = "Notifications.Digest";
 
-    private const int MaxUsers = 2000;
+    private const int PageSize = 500;
     private const int MaxItems = 50;
 
+    // ponytail: two runs at the same moment (manual trigger during the scheduled one) could both mail; a database lock would rule that out
     public async Task ExecuteAsync(CancellationToken cancellationToken)
     {
         var now = clock.GetUtcNow();
         var since = now.AddDays(-1);
-        var globallyOff = await db.Set<SettingValue>().AnyAsync(v => v.Name == Setting && v.Scope == SettingScope.Global && v.Value == "false", cancellationToken);
-        var optedIn = db.Set<SettingValue>().Where(v => v.Name == Setting && v.Scope == SettingScope.User && v.Value == "true").Select(v => v.ScopeKey);
-        var optedOut = db.Set<SettingValue>().Where(v => v.Name == Setting && v.Scope == SettingScope.User && v.Value == "false").Select(v => v.ScopeKey);
 
-        // the user's own choice wins over the global default
-        var unread = db.Set<Notification>().AsNoTracking().Where(n => n.ReadAt == null && n.CreatedAt > since);
+        // bool settings may be stored in any casing
+        var globallyOff = await db.Set<SettingValue>().AnyAsync(v => v.Name == Setting && v.Scope == SettingScope.Global && v.Value!.ToLower() == "false", cancellationToken);
+        var optedIn = db.Set<SettingValue>().Where(v => v.Name == Setting && v.Scope == SettingScope.User && v.Value!.ToLower() == "true").Select(v => v.ScopeKey);
+        var optedOut = db.Set<SettingValue>().Where(v => v.Name == Setting && v.Scope == SettingScope.User && v.Value!.ToLower() == "false").Select(v => v.ScopeKey);
+
+        // notifications of the window up to now: those created while the job runs go into tomorrow's digest
+        var unread = db.Set<Notification>().AsNoTracking().Where(n => n.ReadAt == null && n.CreatedAt > since && n.CreatedAt <= now);
         unread = globallyOff ? unread.Where(n => optedIn.Contains(n.UserId)) : unread.Where(n => !optedOut.Contains(n.UserId));
-        var userIds = await unread.Select(n => n.UserId).Distinct().Take(MaxUsers).ToListAsync(cancellationToken);
+
+        // every recipient in pages of users, so nobody is starved behind a cap
+        Guid? after = null;
+        while (await unread.Select(n => n.UserId).Distinct().Where(id => after == null || id.CompareTo(after.Value) > 0).OrderBy(id => id).Take(PageSize).ToListAsync(cancellationToken) is { Count: > 0 } page)
+        {
+            after = page[^1];
+            await SendPageAsync(page, unread, since, now, cancellationToken);
+        }
+    }
+
+    private async Task SendPageAsync(List<Guid> userIds, IQueryable<Notification> unread, DateTimeOffset since, DateTimeOffset now, CancellationToken cancellationToken)
+    {
         var states = await db.Set<NotificationDigestState>().Where(s => userIds.Contains(s.UserId)).ToDictionaryAsync(s => s.UserId, cancellationToken);
+        var emails = await users.GetActiveEmailsAsync(userIds, cancellationToken);
         var names = await users.GetDisplayNamesAsync(userIds, cancellationToken);
+        var pending = (await unread.Where(n => userIds.Contains(n.UserId)).OrderByDescending(n => n.CreatedAt).ToListAsync(cancellationToken)).ToLookup(n => n.UserId);
         foreach (var userId in userIds)
         {
-            var after = states.TryGetValue(userId, out var state) && state.LastSentAt > since ? state.LastSentAt : since;
-            var items = await unread.Where(n => n.UserId == userId && n.CreatedAt > after).OrderByDescending(n => n.CreatedAt).Take(MaxItems).ToListAsync(cancellationToken);
-            if (items.Count == 0 || await users.GetEmailAsync(userId, cancellationToken) is not { Length: > 0 } email)
+            var last = states.TryGetValue(userId, out var state) && state.LastSentAt > since ? state.LastSentAt : since;
+            var items = pending[userId].Where(n => n.CreatedAt > last).Take(MaxItems).ToList();
+            if (items.Count == 0 || !emails.TryGetValue(userId, out var email))
             {
                 continue;
             }
 
             try
             {
-                // ponytail: one mail per user through the global mail settings; tenant mail settings would need the tenant on the queued mail
+                // ponytail: one mail per user through the global mail settings and the default language; tenant mail settings and user languages would need both on the queued mail
                 await mails.QueueAsync(email, Template, new
                 {
                     user = new { first_name = names.GetValueOrDefault(userId) ?? email, email },
                     notifications = items.Select(n => new { title = n.Title, body = n.Body, link = Absolute(n.Link) }).ToList(),
                 }, null, cancellationToken);
-                if (state is null)
-                {
-                    state = new NotificationDigestState { UserId = userId };
-                    db.Add(state);
-                    states[userId] = state;
-                }
-
-                state.LastSentAt = now;
-                await db.SaveChangesAsync(cancellationToken);
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {
+                // this user's mail is left out; the others of the page still go
                 logger.LogWarning(exception, "The notification digest for {UserId} could not be queued.", userId);
-                db.ChangeTracker.Clear();
+                foreach (var entry in db.ChangeTracker.Entries().Where(e => e.State == EntityState.Added && e.Entity is not NotificationDigestState).ToList())
+                {
+                    entry.State = EntityState.Detached;
+                }
+
+                continue;
             }
+
+            if (state is null)
+            {
+                state = new NotificationDigestState { UserId = userId };
+                db.Add(state);
+                states[userId] = state;
+            }
+
+            state.LastSentAt = now;
         }
+
+        await db.SaveChangesAsync(cancellationToken);
     }
 
-    private string? Absolute(string? link) =>
-        link is { Length: > 0 } && options.Value.PublicAppUrl is { Length: > 0 } root && !Uri.IsWellFormedUriString(link, UriKind.Absolute)
-            ? root.TrimEnd('/') + "/" + link.TrimStart('/')
-            : link;
+    /// <summary>Server-made links are relative paths; they are made absolute, anything that is not a path or http(s) is dropped.</summary>
+    private string? Absolute(string? link) => link switch
+    {
+        null or "" => null,
+        _ when link.StartsWith('/') && !link.StartsWith("//", StringComparison.Ordinal) =>
+            options.Value.PublicAppUrl is { Length: > 0 } root ? root.TrimEnd('/') + link : link,
+        _ when Uri.TryCreate(link, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp) => link,
+        _ => null,
+    };
 }
