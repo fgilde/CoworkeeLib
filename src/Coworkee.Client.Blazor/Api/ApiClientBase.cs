@@ -24,9 +24,13 @@ public abstract class ApiClientBase(HttpClient http)
         using var response = await SendCoreAsync(method, url, body, cancellationToken);
     }
 
-    protected async Task<HttpResponseMessage> SendCoreAsync(HttpMethod method, string url, object? body, CancellationToken cancellationToken)
+    protected Task<HttpResponseMessage> SendCoreAsync(HttpMethod method, string url, object? body, CancellationToken cancellationToken) =>
+        SendContentAsync(method, url, body is null ? null : JsonContent.Create(body), cancellationToken);
+
+    /// <summary>Sends any content, for example binary chunks; the caller disposes the response.</summary>
+    protected async Task<HttpResponseMessage> SendContentAsync(HttpMethod method, string url, HttpContent? content, CancellationToken cancellationToken)
     {
-        using var request = new HttpRequestMessage(method, url) { Content = body is null ? null : JsonContent.Create(body) };
+        using var request = new HttpRequestMessage(method, url) { Content = content };
         request.Headers.Add("X-CSRF", "1");
         var response = await http.SendAsync(request, cancellationToken);
         await EnsureSuccessAsync(response, cancellationToken);
