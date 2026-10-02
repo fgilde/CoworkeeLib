@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Coworkee.Search.Elasticsearch\Coworkee.Search.Elasticsearch.csproj" />
+    <PackageReference Include="Testcontainers" />
+  </ItemGroup>
+</Project>

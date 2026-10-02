@@ -12,7 +12,7 @@ public sealed class InfrastructureTests
 
         var infrastructure = builder.AddCoworkeeInfrastructure("shareme");
 
-        builder.Resources.Select(r => r.Name).ShouldBe(["postgres", "shareme", "redis", "mail"], ignoreOrder: true);
+        builder.Resources.Select(r => r.Name).ShouldBe(["postgres", "shareme", "redis", "mail", "elasticsearch"], ignoreOrder: true);
         infrastructure.Database.Resource.DatabaseName.ShouldBe("shareme");
     }
 
