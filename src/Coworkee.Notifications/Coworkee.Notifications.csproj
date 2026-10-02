@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <ProjectReference Include="..\Coworkee.Realtime\Coworkee.Realtime.csproj" />
+    <ProjectReference Include="..\Coworkee.Mailing\Coworkee.Mailing.csproj" />
   </ItemGroup>
 </Project>
