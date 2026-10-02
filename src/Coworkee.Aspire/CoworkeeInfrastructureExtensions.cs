@@ -21,8 +21,10 @@ public static class CoworkeeInfrastructureExtensions
         var postgres = builder.AddPostgres("postgres");
         var redis = builder.AddRedis("redis");
 
-        // a small heap keeps development machines responsive; production sizes the cluster itself
-        var search = builder.AddElasticsearch("elasticsearch").WithEnvironment("ES_JAVA_OPTS", "-Xms512m -Xmx512m");
+        // a small heap keeps development machines responsive and nearly full dev disks do not block shards; production configures its own cluster
+        var search = builder.AddElasticsearch("elasticsearch")
+            .WithEnvironment("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
+            .WithEnvironment("cluster.routing.allocation.disk.threshold_enabled", "false");
         if (persistent)
         {
             postgres.WithDataVolume().WithLifetime(ContainerLifetime.Persistent);
