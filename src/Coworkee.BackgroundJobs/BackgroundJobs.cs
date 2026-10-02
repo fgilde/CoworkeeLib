@@ -15,6 +15,10 @@ public interface IBackgroundJobs
 {
     string Enqueue<TJob, TArgs>(TArgs args, string queue = "default")
         where TJob : IBackgroundJob<TArgs>;
+
+    /// <summary>Runs the job after <paramref name="delay"/>, as the current user like <see cref="Enqueue{TJob, TArgs}"/>; for waiting on work of other jobs without holding a worker.</summary>
+    string Schedule<TJob, TArgs>(TArgs args, TimeSpan delay, string queue = "default")
+        where TJob : IBackgroundJob<TArgs>;
 }
 
 /// <summary>A job that runs on a cron schedule, outside of any user or tenant; register with <see cref="RecurringJobExtensions.AddRecurringJob{TJob}"/>.</summary>
@@ -115,6 +119,13 @@ internal sealed class HangfireBackgroundJobs(IBackgroundJobClient client, ICurre
     {
         var envelope = new JobEnvelope<TArgs>(args, currentUser.UserId, currentUser.TenantId);
         return client.Enqueue<JobRunner<TJob, TArgs>>(queue, runner => runner.RunAsync(envelope, CancellationToken.None));
+    }
+
+    public string Schedule<TJob, TArgs>(TArgs args, TimeSpan delay, string queue = "default")
+        where TJob : IBackgroundJob<TArgs>
+    {
+        var envelope = new JobEnvelope<TArgs>(args, currentUser.UserId, currentUser.TenantId);
+        return client.Schedule<JobRunner<TJob, TArgs>>(queue, runner => runner.RunAsync(envelope, CancellationToken.None), delay);
     }
 }
 
