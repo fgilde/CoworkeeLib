@@ -1,6 +1,7 @@
 using System.Net;
 using Coworkee.Core.Security;
 using Hangfire;
+using Hangfire.Storage;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -59,6 +60,19 @@ public sealed class BackgroundJobTests(JobsApp app)
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(user, tenant));
         using var scope = app.App.Services.CreateScope();
         return scope.ServiceProvider.GetRequiredService<IBackgroundJobs>().Enqueue<TJob, string>(args, queue);
+    }
+
+    [Fact]
+    public async Task Recurring_jobs_are_scheduled_and_run_without_a_tenant()
+    {
+        using var connection = app.App.Services.GetRequiredService<JobStorage>().GetConnection();
+        connection.GetRecurringJobs().ShouldContain(j => j.Id == "tests-tick" && j.Cron == "0 0 1 1 *");
+        var before = TickJob.Calls.Count;
+
+        app.App.Services.GetRequiredService<IRecurringJobManager>().Trigger("tests-tick");
+
+        await Eventually(() => TickJob.Calls.Count > before);
+        TickJob.Calls.ShouldAllBe(tenant => tenant == null);
     }
 
     private static async Task Eventually(Func<bool> condition, TimeSpan? timeout = null)

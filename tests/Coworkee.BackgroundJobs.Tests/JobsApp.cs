@@ -77,9 +77,23 @@ public sealed class JobsTestDbContext(DbContextOptions<JobsTestDbContext> option
 [DependsOn(typeof(CoworkeeBackgroundJobsModule), typeof(CoworkeeIdentityModule))]
 public sealed class TestJobsModule : CoworkeeModule
 {
-    public override void ConfigureServices(ModuleServiceContext context) =>
+    public override void ConfigureServices(ModuleServiceContext context)
+    {
         context.Services.AddCoworkeeDbContext<JobsTestDbContext>((provider, options) =>
             options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
+        context.Services.AddRecurringJob<TickJob>("tests-tick", "0 0 1 1 *");
+    }
+}
+
+public sealed class TickJob(ICurrentUser currentUser) : IRecurringJob
+{
+    public static ConcurrentBag<Guid?> Calls { get; } = [];
+
+    public Task ExecuteAsync(CancellationToken cancellationToken)
+    {
+        Calls.Add(currentUser.TenantId);
+        return Task.CompletedTask;
+    }
 }
 
 public sealed class RecordingJob(ICurrentUser currentUser) : IBackgroundJob<string>

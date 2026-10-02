@@ -15,6 +15,36 @@ public interface IBackgroundJobs
         where TJob : IBackgroundJob<TArgs>;
 }
 
+/// <summary>A job that runs on a cron schedule, outside of any user or tenant; register with <see cref="RecurringJobExtensions.AddRecurringJob{TJob}"/>.</summary>
+public interface IRecurringJob
+{
+    Task ExecuteAsync(CancellationToken cancellationToken);
+}
+
+public sealed record RecurringJobRegistration(string Id, string Cron, Action<IRecurringJobManager, string, string> Schedule);
+
+public static class RecurringJobExtensions
+{
+    public static IServiceCollection AddRecurringJob<TJob>(this IServiceCollection services, string id, string cron)
+        where TJob : class, IRecurringJob
+    {
+        services.AddScoped<TJob>();
+        return services.AddSingleton(new RecurringJobRegistration(id, cron, (manager, jobId, schedule) =>
+            manager.AddOrUpdate<RecurringJobRunner<TJob>>(jobId, runner => runner.RunAsync(CancellationToken.None), schedule)));
+    }
+}
+
+public sealed class RecurringJobRunner<TJob>(IServiceProvider services)
+    where TJob : IRecurringJob
+{
+    public async Task RunAsync(CancellationToken cancellationToken)
+    {
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
+        await using var scope = services.CreateAsyncScope();
+        await scope.ServiceProvider.GetRequiredService<TJob>().ExecuteAsync(cancellationToken);
+    }
+}
+
 public sealed record JobEnvelope<TArgs>(TArgs Args, Guid? UserId, Guid? TenantId);
 
 internal sealed class HangfireBackgroundJobs(IBackgroundJobClient client, ICurrentUser currentUser) : IBackgroundJobs

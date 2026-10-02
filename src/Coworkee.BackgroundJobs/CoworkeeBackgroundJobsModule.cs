@@ -72,10 +72,17 @@ public sealed class CoworkeeBackgroundJobsModule : CoworkeeModule, IWebModule
         }
     }
 
-    public void ConfigureApplication(WebApplication app) =>
+    public void ConfigureApplication(WebApplication app)
+    {
         app.UseHangfireDashboard(
             app.Services.GetRequiredService<IOptions<BackgroundJobOptions>>().Value.DashboardPath,
             new DashboardOptions { AsyncAuthorization = [new PermissionDashboardAuthorization()], DisplayStorageConnectionString = false });
+        var manager = app.Services.GetRequiredService<IRecurringJobManager>();
+        foreach (var job in app.Services.GetServices<RecurringJobRegistration>())
+        {
+            job.Schedule(manager, job.Id, job.Cron);
+        }
+    }
 }
 
 internal sealed class JobsPermissionDefinitions : IPermissionDefinitionContributor
