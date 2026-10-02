@@ -32,6 +32,22 @@ public sealed class ResourceHierarchyTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Restrictions_take_access_away_from_users_with_the_role_only()
+    {
+        var (user, parent, child) = await PrepareAsync();
+        TestFolderHierarchy.Instance.Chains[child] = [child, parent];
+        var role = (await (await Admin.PostAsJsonAsync("/api/v1/identity/roles", new RoleRequest("External " + Guid.NewGuid().ToString("N")[..6], null), Ct)).Content.ReadFromJsonAsync<Guid>(Ct))!;
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/users/{user}/roles", new IdListRequest([role]), Ct)).EnsureSuccessStatusCode();
+
+        TestFolderRestriction.Instance.Restricted[child] = Guid.CreateVersion7();
+        (await IsGrantedAsync(user, child)).ShouldBeTrue();
+
+        TestFolderRestriction.Instance.Restricted[child] = role;
+        (await IsGrantedAsync(user, child)).ShouldBeFalse();
+        (await IsGrantedAsync(user, parent)).ShouldBeTrue();
+    }
+
+    [Fact]
     public async Task An_interrupted_chain_stops_inheritance()
     {
         var (user, _, child) = await PrepareAsync();
