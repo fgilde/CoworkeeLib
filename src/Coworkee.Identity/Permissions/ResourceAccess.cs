@@ -5,7 +5,6 @@ using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
 using Coworkee.Infrastructure.Outbox;
 using Coworkee.Infrastructure.Persistence;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
@@ -20,8 +19,9 @@ internal sealed class ResourceAccessReader(CoworkeeDbContext db, ICurrentUser cu
         var grants = await db.Set<ResourcePermission>().AsNoTracking().Where(p => p.ResourceType == resourceType && ids.Contains(p.ResourceId))
             .Select(p => new { p.ResourceId, p.PrincipalType, p.PrincipalId, p.RoleId }).ToListAsync(cancellationToken);
         var roles = await RolesGrantingAsync(permission, grants.Select(g => g.RoleId).Distinct().ToList(), cancellationToken);
-        var activeUsers = await ActiveUsersAsync(grants.Where(g => g.PrincipalType == PrincipalType.User).Select(g => g.PrincipalId).Distinct().ToList(), cancellationToken);
-        return grants.Where(g => roles.Contains(g.RoleId) && (g.PrincipalType != PrincipalType.User || activeUsers.Contains(g.PrincipalId)))
+
+        // inactive users stay listed: callers resolve the current user at read time, so reactivation needs no refresh
+        return grants.Where(g => roles.Contains(g.RoleId))
             .GroupBy(g => g.ResourceId)
             .ToDictionary(
                 g => g.Key,
@@ -70,7 +70,6 @@ internal sealed class ResourceAccessReader(CoworkeeDbContext db, ICurrentUser cu
 /// <summary>Turns grant, role and membership changes into outbox events in the same transaction.</summary>
 internal sealed class AccessChangeInterceptor(ICurrentUser currentUser, TimeProvider clock) : SaveChangesInterceptor
 {
-    private static readonly HashSet<Type> RuleTypes = [typeof(PermissionGrant), typeof(IdentityUserRole<Guid>), typeof(UserGroupRole), typeof(UserGroupMember), typeof(Role), typeof(UserGroup)];
 
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
@@ -93,15 +92,19 @@ internal sealed class AccessChangeInterceptor(ICurrentUser currentUser, TimeProv
 
         var changed = context.ChangeTracker.Entries().Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted).ToList();
         var resources = changed.Select(e => e.Entity).OfType<ResourcePermission>().Select(p => (p.ResourceType, p.ResourceId, p.TenantId)).Distinct().ToList();
-        var rules = changed.Any(e => RuleTypes.Contains(e.Metadata.ClrType) || (e.Entity is User && e.State == EntityState.Modified && e.Property(nameof(User.IsActive)).IsModified));
         foreach (var (type, id, tenant) in resources)
         {
             context.Set<OutboxMessage>().Add(Message(new ResourceAccessChanged(type, id), tenant));
         }
 
-        if (rules)
+        // memberships, role assignments and user states are resolved when reading; only what a role grants changes the meaning of stored grants
+        var roles = changed.Where(e => e.Entity is PermissionGrant { ProviderType: PermissionProviderType.Role })
+            .Select(e => (Role: ((PermissionGrant)e.Entity).ProviderKey, Tenant: ((PermissionGrant)e.Entity).TenantId))
+            .Concat(changed.Where(e => e.Entity is Role && e.State == EntityState.Deleted).Select(e => (Role: ((Role)e.Entity).Id, Tenant: ((Role)e.Entity).TenantId)))
+            .ToList();
+        foreach (var tenant in roles.GroupBy(r => r.Tenant))
         {
-            context.Set<OutboxMessage>().Add(Message(new AccessRulesChanged(), currentUser.TenantId));
+            context.Set<OutboxMessage>().Add(Message(new AccessRulesChanged([.. tenant.Select(r => r.Role).Distinct()]), tenant.Key));
         }
     }
 

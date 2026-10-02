@@ -22,5 +22,5 @@ public static class PrincipalKeys
 /// <summary>Grants on one resource were added, changed or removed.</summary>
 public sealed record ResourceAccessChanged(string ResourceType, Guid ResourceId) : IDomainEvent;
 
-/// <summary>Role permissions, group memberships or user states changed; any resource grant may mean something else now.</summary>
-public sealed record AccessRulesChanged : IDomainEvent;
+/// <summary>The permissions of these roles changed (or the roles are gone), so every resource grant using them may mean something else now; raised in the roles' tenant, or without tenant for roles shared by all tenants.</summary>
+public sealed record AccessRulesChanged(Guid[] RoleIds) : IDomainEvent;

@@ -136,7 +136,7 @@ internal sealed class ElasticsearchIndex : ISearchIndex, IDisposable
         }
     }
 
-    public async Task<IReadOnlyList<string>> UpsertAsync(string target, IEnumerable<SearchDocument> documents, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<SearchWriteError>> UpsertAsync(string target, IEnumerable<SearchDocument> documents, CancellationToken cancellationToken)
     {
         var body = new StringBuilder();
         foreach (var document in documents)
@@ -202,13 +202,19 @@ internal sealed class ElasticsearchIndex : ISearchIndex, IDisposable
         {
             ["query"] = Bool(query.Filters, types, term),
             ["size"] = Math.Clamp(query.Size, 0, 1000),
+            ["timeout"] = "10s",
             ["track_total_hits"] = true,
             ["sort"] = sort,
             ["_source"] = query.Include.Count == 0 ? false : new JsonArray([.. query.Include.Select(f => (JsonNode)f)]),
         };
         if (query.Cursor is { Length: > 0 } cursor)
         {
-            body["search_after"] = JsonNode.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(cursor)));
+            body["search_after"] = Cursor(cursor, sort.Count);
+        }
+
+        if (query.FacetFilters.Count > 0)
+        {
+            body["post_filter"] = Bool(query.FacetFilters, types, null);
         }
 
         if (query.Facets.Count > 0)
@@ -216,7 +222,12 @@ internal sealed class ElasticsearchIndex : ISearchIndex, IDisposable
             var aggs = new JsonObject();
             foreach (var facet in query.Facets)
             {
-                aggs[facet] = new JsonObject { ["terms"] = new JsonObject { ["field"] = ExactField(facet, types), ["size"] = 50 } };
+                // every facet counts under the other facets' selections, so further values of the same facet stay selectable
+                aggs[facet] = new JsonObject
+                {
+                    ["filter"] = Bool([.. query.FacetFilters.Where(f => f.Field != facet)], types, null),
+                    ["aggs"] = new JsonObject { ["values"] = new JsonObject { ["terms"] = new JsonObject { ["field"] = ExactField(facet, types), ["size"] = 50 } } },
+                };
             }
 
             body["aggs"] = aggs;
@@ -230,7 +241,7 @@ internal sealed class ElasticsearchIndex : ISearchIndex, IDisposable
         {
             foreach (var (name, aggregation) in aggregations)
             {
-                facets[name] = aggregation!["buckets"]!.AsArray()
+                facets[name] = aggregation!["values"]!["buckets"]!.AsArray()
                     .Select(b => new FacetValue(b!["key_as_string"]?.GetValue<string>() ?? b["key"]!.ToString(), b["doc_count"]!.GetValue<long>())).ToList();
             }
         }
@@ -326,9 +337,9 @@ internal sealed class ElasticsearchIndex : ISearchIndex, IDisposable
         var exact = ExactField(filter.Field, types);
         JsonArray Terms() => new([.. values.Select(v => (JsonNode)v)]);
         JsonObject AnyOf(Func<string, JsonObject> each) => new() { ["bool"] = new JsonObject { ["should"] = new JsonArray([.. values.Select(v => (JsonNode)each(v))]), ["minimum_should_match"] = 1 } };
-        // substring, case insensitive, on the exact value
-        JsonObject Contains() => AnyOf(v => new JsonObject { ["wildcard"] = new JsonObject { [exact] = new JsonObject { ["value"] = $"*{v}*", ["case_insensitive"] = true } } });
-        JsonObject Range(string op, string value) => new() { ["range"] = new JsonObject { [filter.Field] = new JsonObject { [op] = value } } };
+        // substring, case insensitive, on the exact value; wildcard characters in the value are literal
+        JsonObject Contains() => AnyOf(v => new JsonObject { ["wildcard"] = new JsonObject { [exact] = new JsonObject { ["value"] = $"*{EscapeWildcard(v)}*", ["case_insensitive"] = true } } });
+        JsonObject Range(string op, string value) => new() { ["range"] = new JsonObject { [exact] = new JsonObject { [op] = value } } };
 
         return filter.Operator switch
         {
@@ -342,9 +353,27 @@ internal sealed class ElasticsearchIndex : ISearchIndex, IDisposable
             FilterOperator.FuzzyContains => (AnyOf(v => new JsonObject { ["match"] = new JsonObject { [TextField(filter.Field, types)] = new JsonObject { ["query"] = v, ["fuzziness"] = "AUTO" } } }), false),
             FilterOperator.GreaterThanOrEquals => (Range("gte", values[0]), false),
             FilterOperator.LessThanOrEquals => (Range("lte", values[0]), false),
-            FilterOperator.Between => (new JsonObject { ["range"] = new JsonObject { [filter.Field] = new JsonObject { ["gte"] = values[0], ["lte"] = values[1] } } }, false),
+            FilterOperator.Between => (new JsonObject { ["range"] = new JsonObject { [exact] = new JsonObject { ["gte"] = values[0], ["lte"] = values[1] } } }, false),
             _ => throw new ArgumentOutOfRangeException(nameof(filter), filter.Operator, "Unknown operator."),
         };
+    }
+
+    private static string EscapeWildcard(string value) => value.Replace(@"\", @"\\").Replace("*", @"\*").Replace("?", @"\?");
+
+    private static JsonNode Cursor(string cursor, int sortFields)
+    {
+        try
+        {
+            if (JsonNode.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(cursor))) is JsonArray values && values.Count == sortFields)
+            {
+                return values;
+            }
+        }
+        catch (Exception exception) when (exception is FormatException or JsonException)
+        {
+        }
+
+        throw new SearchIndexException("The cursor does not belong to this search.", isInvalidRequest: true);
     }
 
     private static string ExactField(string field, IReadOnlyDictionary<string, SearchFieldType> types) =>
@@ -402,7 +431,7 @@ internal sealed class ElasticsearchIndex : ISearchIndex, IDisposable
     }
 
     /// <summary>Writes through an alias require it to exist, so a missing alias fails instead of auto creating an index of that name.</summary>
-    private async Task<IReadOnlyList<string>> BulkAsync(StringBuilder body, bool requireAlias, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<SearchWriteError>> BulkAsync(StringBuilder body, bool requireAlias, CancellationToken cancellationToken)
     {
         if (body.Length == 0)
         {
@@ -414,7 +443,7 @@ internal sealed class ElasticsearchIndex : ISearchIndex, IDisposable
         var result = await ReadAsync(response, cancellationToken);
         return result?["errors"]?.GetValue<bool>() == true
             ? result["items"]!.AsArray().Select(i => i!.AsObject().First().Value!).Where(i => i["error"] is not null && i["status"]?.GetValue<int>() != 404)
-                .Select(i => i["_id"]!.GetValue<string>()).ToList()
+                .Select(i => new SearchWriteError(i["_id"]!.GetValue<string>(), i["error"]!["reason"]?.ToString() ?? i["error"]!.ToJsonString())).ToList()
             : [];
     }
 
@@ -435,11 +464,11 @@ internal sealed class ElasticsearchIndex : ISearchIndex, IDisposable
         var text = await response.Content.ReadAsStringAsync(cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            throw new SearchIndexException($"Elasticsearch answered {(int)response.StatusCode}: {(text.Length > 2000 ? text[..2000] : text)}");
+            var status = (int)response.StatusCode;
+            throw new SearchIndexException($"Elasticsearch answered {status}: {(text.Length > 2000 ? text[..2000] : text)}", isInvalidRequest: status == 400);
         }
 
         return text.Length == 0 ? null : JsonNode.Parse(text) as JsonObject;
     }
 }
 
-public sealed class SearchIndexException(string message) : Exception(message);

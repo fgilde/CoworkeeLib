@@ -106,6 +106,33 @@ public sealed class SearchIndexTests(ElasticFixture elastic)
     }
 
     [Fact]
+    public async Task Facet_selections_filter_hits_but_keep_their_own_values_countable()
+    {
+        var alias = await SeedAsync();
+
+        var result = await Index.SearchAsync(alias, new SearchQuery
+        {
+            FacetFilters = [new("color", FilterOperator.Equals, ["red"]), new("approved", FilterOperator.Equals, ["true"])],
+            Facets = ["color", "approved"],
+        }, Ct);
+
+        result.Hits.Select(h => h.Id).ShouldBe(["a"]);
+        result.Facets["color"].ShouldBe([new FacetValue("red", 1), new FacetValue("green", 1)], ignoreOrder: true);
+        result.Facets["approved"].ShouldBe([new FacetValue("true", 1)]);
+    }
+
+    [Fact]
+    public async Task Wildcards_in_values_are_literal_and_foreign_cursors_are_refused()
+    {
+        var alias = await SeedAsync();
+
+        (await Index.SearchAsync(alias, new SearchQuery { Filters = [new("name", FilterOperator.Contains, ["*"])] }, Ct)).Hits.ShouldBeEmpty();
+        (await Index.SearchAsync(alias, new SearchQuery { Filters = [new("name", FilterOperator.Contains, ["\\"])] }, Ct)).Hits.ShouldBeEmpty();
+        (await Should.ThrowAsync<SearchIndexException>(() => Index.SearchAsync(alias, new SearchQuery { Cursor = "not-a-cursor" }, Ct))).IsInvalidRequest.ShouldBeTrue();
+        (await Should.ThrowAsync<SearchIndexException>(() => Index.SearchAsync(alias, new SearchQuery { Cursor = Convert.ToBase64String("[1,2,3,4,5]"u8.ToArray()) }, Ct))).IsInvalidRequest.ShouldBeTrue();
+    }
+
+    [Fact]
     public async Task Suggestions_find_prefixes_and_typos_within_the_filters()
     {
         var alias = await SeedAsync();

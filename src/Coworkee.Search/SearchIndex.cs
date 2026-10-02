@@ -60,6 +60,9 @@ public sealed record SearchQuery
 
     public IReadOnlyList<SearchFilter> Filters { get; init; } = [];
 
+    /// <summary>Selected facet values: they filter the hits, while each facet still counts the values of its own field as if it were not selected (multi-select facets).</summary>
+    public IReadOnlyList<SearchFilter> FacetFilters { get; init; } = [];
+
     public IReadOnlyList<string> Facets { get; init; } = [];
 
     public IReadOnlyList<SearchSort> Sort { get; init; } = [];
@@ -77,6 +80,15 @@ public sealed record SearchHit(string Id, double? Score, JsonObject? Fields);
 
 public sealed record FacetValue(string Value, long Count);
 
+/// <summary>A document the index refused, with the reason given by the index.</summary>
+public sealed record SearchWriteError(string Id, string Reason);
+
+/// <summary>The index refused a request; <see cref="IsInvalidRequest"/> when the request itself was at fault (bad value, bad cursor), otherwise the index is unavailable.</summary>
+public sealed class SearchIndexException(string message, bool isInvalidRequest) : Exception(message)
+{
+    public bool IsInvalidRequest { get; } = isInvalidRequest;
+}
+
 public sealed record SearchResult(IReadOnlyList<SearchHit> Hits, long Total, IReadOnlyDictionary<string, IReadOnlyList<FacetValue>> Facets, string? Cursor);
 
 /// <summary>Full text index; schemas are owned by the application, documents are plain JSON.</summary>
@@ -91,8 +103,8 @@ public interface ISearchIndex
     /// <summary>Points the alias at <paramref name="index"/> and removes the indexes it pointed at before.</summary>
     Task SwapAsync(string alias, string index, CancellationToken cancellationToken);
 
-    /// <summary>Adds or replaces documents; <paramref name="target"/> is an alias or an index name. Returns the ids that failed.</summary>
-    Task<IReadOnlyList<string>> UpsertAsync(string target, IEnumerable<SearchDocument> documents, CancellationToken cancellationToken);
+    /// <summary>Adds or replaces documents; <paramref name="target"/> is an alias or an index name. Returns the documents that were refused.</summary>
+    Task<IReadOnlyList<SearchWriteError>> UpsertAsync(string target, IEnumerable<SearchDocument> documents, CancellationToken cancellationToken);
 
     Task DeleteAsync(string target, IEnumerable<string> ids, CancellationToken cancellationToken);
 
