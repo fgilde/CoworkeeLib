@@ -118,10 +118,26 @@ internal sealed class PermissionChecker(
         return await LoadAsync(userId, tenantId, cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<Guid>> GetRoleIdsAsync(CancellationToken cancellationToken) =>
-        currentUser.UserId is { } userId && await IsActiveMemberAsync(userId, currentUser.TenantId, cancellationToken)
-            ? await RoleIdsAsync(userId, await GroupIdsAsync(userId, cancellationToken), cancellationToken)
-            : [];
+    // once per user and tenant in a scope: resource restrictions ask for every checked resource
+    private readonly Dictionary<(Guid, Guid?), IReadOnlyCollection<Guid>> _roleIds = [];
+
+    public async Task<IReadOnlyCollection<Guid>> GetRoleIdsAsync(CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is not { } userId)
+        {
+            return [];
+        }
+
+        var key = (userId, currentUser.TenantId);
+        if (!_roleIds.TryGetValue(key, out var roles))
+        {
+            _roleIds[key] = roles = await IsActiveMemberAsync(userId, currentUser.TenantId, cancellationToken)
+                ? await RoleIdsAsync(userId, await GroupIdsAsync(userId, cancellationToken), cancellationToken)
+                : [];
+        }
+
+        return roles;
+    }
 
     private Task<List<Guid>> RoleIdsAsync(Guid userId, List<Guid> groupIds, CancellationToken cancellationToken) =>
         db.Set<IdentityUserRole<Guid>>().Where(r => r.UserId == userId).Select(r => r.RoleId)
