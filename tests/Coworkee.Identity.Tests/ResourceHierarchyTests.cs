@@ -53,6 +53,28 @@ public sealed class ResourceHierarchyTests(IdentityApp app) : IAsyncLifetime
         (await checker.GetGrantedResourcesAsync(IdentityPermissions.Groups.Manage, "Folder", Ct)).ShouldBeEmpty();
     }
 
+    [Fact]
+    public async Task Principals_holding_a_permission_on_resources_can_be_listed_and_grant_changes_are_published()
+    {
+        var (user, parent, child) = await PrepareAsync();
+
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(user, _setup.TenantId));
+        await using var scope = app.App.Services.CreateAsyncScope();
+        var reader = scope.ServiceProvider.GetRequiredService<IResourceAccessReader>();
+
+        var principals = await reader.GetPrincipalsAsync(IdentityPermissions.Groups.View, "Folder", [parent, child], Ct);
+        principals.Keys.ShouldBe([parent]);
+        principals[parent].ShouldBe([PrincipalKeys.User(user)]);
+        (await reader.GetPrincipalsAsync(IdentityPermissions.Groups.Manage, "Folder", [parent], Ct)).ShouldBeEmpty();
+        (await reader.GetCurrentPrincipalsAsync(Ct)).ShouldBe([PrincipalKeys.User(user)]);
+
+        var db = scope.ServiceProvider.GetRequiredService<Coworkee.Infrastructure.Persistence.CoworkeeDbContext>();
+        var messages = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync(
+            Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.IgnoreQueryFilters(db.Set<Coworkee.Infrastructure.Outbox.OutboxMessage>()), Ct);
+        messages.ShouldContain(m => m.Type.StartsWith(typeof(ResourceAccessChanged).FullName!) && m.Payload.Contains(parent.ToString()) && m.TenantId == _setup.TenantId);
+        messages.ShouldContain(m => m.Type.StartsWith(typeof(AccessRulesChanged).FullName!));
+    }
+
     private async Task<(Guid User, Guid Parent, Guid Child)> PrepareAsync()
     {
         var user = (await (await Admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest($"{Guid.NewGuid():N}@acme.test", "Passw0rd!x", null, null), Ct))

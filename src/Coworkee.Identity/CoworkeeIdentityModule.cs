@@ -32,6 +32,8 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
         services.AddScoped<IPermissionChecker, PermissionChecker>();
         services.AddSingleton<PermissionCache>();
         services.AddScoped<IInterceptor, PermissionCacheInterceptor>();
+        services.AddScoped<IInterceptor, AccessChangeInterceptor>();
+        services.AddScoped<IResourceAccessReader, ResourceAccessReader>();
         services.AddScoped<IUserDirectory, Users.UserDirectory>();
         services.AddScoped<ITenantDirectory, Users.TenantDirectory>();
         services.AddSingleton<Coworkee.Domain.IRealtimeTopicMapper, IdentityRealtimeTopics>();
