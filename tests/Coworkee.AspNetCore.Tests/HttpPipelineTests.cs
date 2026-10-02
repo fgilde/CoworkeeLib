@@ -34,6 +34,21 @@ public sealed class HttpPipelineTests : IAsyncLifetime
     public async ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     [Fact]
+    public async Task Worker_hosts_map_no_module_endpoints_and_no_openapi()
+    {
+        var builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.AddCoworkee<TestWebModule>();
+        await using var worker = builder.Build();
+        worker.UseCoworkeeWorker();
+        await worker.StartAsync(TestContext.Current.CancellationToken);
+        var client = worker.GetTestClient();
+
+        (await client.GetAsync("/value", TestContext.Current.CancellationToken)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await client.GetAsync("/openapi/v1.json", TestContext.Current.CancellationToken)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
     public async Task Success_returns_value()
     {
         var response = await _client.GetAsync("/value", TestContext.Current.CancellationToken);
