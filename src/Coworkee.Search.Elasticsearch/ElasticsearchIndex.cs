@@ -43,6 +43,8 @@ internal sealed class ElasticsearchIndex : ISearchIndex, IDisposable
 
     private readonly HttpClient _http;
     private readonly ConcurrentDictionary<string, IReadOnlyDictionary<string, SearchFieldType>> _types = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, bool> _aliases = new(StringComparer.Ordinal);
+    private readonly SemaphoreSlim _ensureLock = new(1, 1);
 
     public ElasticsearchIndex(ElasticsearchOptions options)
     {
@@ -57,29 +59,52 @@ internal sealed class ElasticsearchIndex : ISearchIndex, IDisposable
         }
     }
 
-    public void Dispose() => _http.Dispose();
+    public void Dispose()
+    {
+        _http.Dispose();
+        _ensureLock.Dispose();
+    }
 
     public async Task EnsureAsync(SearchSchema schema, CancellationToken cancellationToken)
     {
-        using var head = await _http.SendAsync(new HttpRequestMessage(HttpMethod.Head, $"_alias/{schema.Alias}"), cancellationToken);
-        if (head.StatusCode == HttpStatusCode.NotFound)
+        // two jobs creating the alias at once would leave it on two indexes without a write index
+        await _ensureLock.WaitAsync(cancellationToken);
+        try
         {
-            var index = await CreateIndexAsync(schema, cancellationToken);
-            await SendAsync(HttpMethod.Post, "_aliases", new JsonObject { ["actions"] = new JsonArray(new JsonObject { ["add"] = new JsonObject { ["index"] = index, ["alias"] = schema.Alias } }) }, cancellationToken);
-        }
-        else
-        {
-            // new fields are added; changing the type of an existing field needs a reindex
-            await SendAsync(HttpMethod.Put, $"{schema.Alias}/_mapping", new JsonObject { ["properties"] = Properties(schema) }, cancellationToken);
-        }
+            using var head = await _http.SendAsync(new HttpRequestMessage(HttpMethod.Head, $"_alias/{schema.Alias}"), cancellationToken);
+            if (head.StatusCode == HttpStatusCode.NotFound)
+            {
+                // an index carrying the alias name can only come from a write that auto created it; it holds nothing the next reindex would not restore
+                await SendAsync(HttpMethod.Delete, schema.Alias, null, cancellationToken);
+                await CreateIndexAsync(schema, cancellationToken, alias: schema.Alias);
+            }
+            else
+            {
+                // new fields are added; changing the type of an existing field needs a reindex
+                await SendAsync(HttpMethod.Put, $"{schema.Alias}/_mapping", new JsonObject { ["properties"] = Properties(schema) }, cancellationToken);
+            }
 
-        Remember(schema.Alias, schema);
+            _aliases.TryAdd(schema.Alias, true);
+            Remember(schema.Alias, schema);
+        }
+        finally
+        {
+            _ensureLock.Release();
+        }
     }
 
-    public async Task<string> CreateIndexAsync(SearchSchema schema, CancellationToken cancellationToken)
+    public Task<string> CreateIndexAsync(SearchSchema schema, CancellationToken cancellationToken) => CreateIndexAsync(schema, cancellationToken, alias: null);
+
+    private async Task<string> CreateIndexAsync(SearchSchema schema, CancellationToken cancellationToken, string? alias)
     {
         var index = $"{schema.Alias}-{DateTime.UtcNow:yyyyMMddHHmmssfff}-{Guid.NewGuid().ToString("N")[..4]}";
-        await SendAsync(HttpMethod.Put, index, new JsonObject { ["settings"] = Settings(), ["mappings"] = new JsonObject { ["properties"] = Properties(schema) } }, cancellationToken);
+        var body = new JsonObject { ["settings"] = Settings(), ["mappings"] = new JsonObject { ["properties"] = Properties(schema) } };
+        if (alias is not null)
+        {
+            body["aliases"] = new JsonObject { [alias] = new JsonObject { ["is_write_index"] = true } };
+        }
+
+        await SendAsync(HttpMethod.Put, index, body, cancellationToken);
         Remember(index, schema);
         Remember(schema.Alias, schema);
         return index;
@@ -97,13 +122,14 @@ internal sealed class ElasticsearchIndex : ISearchIndex, IDisposable
         }
 
         var actions = new JsonArray(previous.Select(name => (JsonNode)new JsonObject { ["remove"] = new JsonObject { ["index"] = name, ["alias"] = alias } }).ToArray());
-        actions.Add(new JsonObject { ["add"] = new JsonObject { ["index"] = index, ["alias"] = alias } });
+        actions.Add(new JsonObject { ["add"] = new JsonObject { ["index"] = index, ["alias"] = alias, ["is_write_index"] = true } });
         await SendAsync(HttpMethod.Post, "_aliases", new JsonObject { ["actions"] = actions }, cancellationToken);
         foreach (var name in previous)
         {
             await SendAsync(HttpMethod.Delete, name, null, cancellationToken);
         }
 
+        _aliases.TryAdd(alias, true);
         if (_types.TryGetValue(index, out var types))
         {
             _types[alias] = types;
@@ -121,7 +147,7 @@ internal sealed class ElasticsearchIndex : ISearchIndex, IDisposable
             body.Append(source.ToJsonString()).Append('\n');
         }
 
-        return await BulkAsync(body, cancellationToken);
+        return await BulkAsync(body, _aliases.ContainsKey(target), cancellationToken);
     }
 
     public async Task DeleteAsync(string target, IEnumerable<string> ids, CancellationToken cancellationToken)
@@ -132,7 +158,7 @@ internal sealed class ElasticsearchIndex : ISearchIndex, IDisposable
             body.Append(new JsonObject { ["delete"] = new JsonObject { ["_index"] = target, ["_id"] = id } }.ToJsonString()).Append('\n');
         }
 
-        await BulkAsync(body, cancellationToken);
+        await BulkAsync(body, _aliases.ContainsKey(target), cancellationToken);
     }
 
     public async Task DeleteWhereAsync(string target, IReadOnlyList<SearchFilter> filters, CancellationToken cancellationToken)
@@ -375,14 +401,15 @@ internal sealed class ElasticsearchIndex : ISearchIndex, IDisposable
         }
     }
 
-    private async Task<IReadOnlyList<string>> BulkAsync(StringBuilder body, CancellationToken cancellationToken)
+    /// <summary>Writes through an alias require it to exist, so a missing alias fails instead of auto creating an index of that name.</summary>
+    private async Task<IReadOnlyList<string>> BulkAsync(StringBuilder body, bool requireAlias, CancellationToken cancellationToken)
     {
         if (body.Length == 0)
         {
             return [];
         }
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, "_bulk?refresh=wait_for") { Content = new StringContent(body.ToString(), Encoding.UTF8, "application/x-ndjson") };
+        using var request = new HttpRequestMessage(HttpMethod.Post, "_bulk?refresh=wait_for" + (requireAlias ? "&require_alias=true" : string.Empty)) { Content = new StringContent(body.ToString(), Encoding.UTF8, "application/x-ndjson") };
         using var response = await _http.SendAsync(request, cancellationToken);
         var result = await ReadAsync(response, cancellationToken);
         return result?["errors"]?.GetValue<bool>() == true
