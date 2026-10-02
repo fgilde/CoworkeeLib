@@ -7,7 +7,8 @@ namespace Aspire.Hosting;
 public sealed record CoworkeeInfrastructure(
     IResourceBuilder<PostgresDatabaseResource> Database,
     IResourceBuilder<RedisResource> Redis,
-    IResourceBuilder<MailPitContainerResource> Mail);
+    IResourceBuilder<MailPitContainerResource> Mail,
+    IResourceBuilder<ElasticsearchResource> Search);
 
 public static class CoworkeeInfrastructureExtensions
 {
@@ -19,13 +20,17 @@ public static class CoworkeeInfrastructureExtensions
 
         var postgres = builder.AddPostgres("postgres");
         var redis = builder.AddRedis("redis");
+
+        // a small heap keeps development machines responsive; production sizes the cluster itself
+        var search = builder.AddElasticsearch("elasticsearch").WithEnvironment("ES_JAVA_OPTS", "-Xms512m -Xmx512m");
         if (persistent)
         {
             postgres.WithDataVolume().WithLifetime(ContainerLifetime.Persistent);
             redis.WithDataVolume().WithLifetime(ContainerLifetime.Persistent);
+            search.WithDataVolume().WithLifetime(ContainerLifetime.Persistent);
         }
 
         var mail = builder.AddMailPit("mail");
-        return new CoworkeeInfrastructure(postgres.AddDatabase(databaseName), redis, mail);
+        return new CoworkeeInfrastructure(postgres.AddDatabase(databaseName), redis, mail, search);
     }
 }
