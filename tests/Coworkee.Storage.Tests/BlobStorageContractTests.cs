@@ -66,6 +66,44 @@ public abstract class BlobStorageContractTests : IAsyncLifetime
         await Storage.DeleteAsync(key, Ct);
     }
 
+    [Fact]
+    public async Task Read_streams_know_their_length_and_can_seek()
+    {
+        var key = BlobKeys.New(Guid.CreateVersion7(), TimeProvider.System);
+        var content = Enumerable.Range(0, 100_000).Select(i => (byte)(i % 251)).ToArray();
+        await Storage.PutAsync(key, new MemoryStream(content), null, Ct);
+
+        await using var read = (await Storage.OpenReadAsync(key, Ct))!;
+
+        read.CanSeek.ShouldBeTrue();
+        read.Length.ShouldBe(content.Length);
+        read.Seek(90_000, SeekOrigin.Begin);
+        var tail = new MemoryStream();
+        await read.CopyToAsync(tail, Ct);
+        tail.ToArray().ShouldBe(content[90_000..]);
+        read.Position = 10;
+        var two = new byte[2];
+        (await read.ReadAsync(two, Ct)).ShouldBe(2);
+        two.ShouldBe(content[10..12]);
+    }
+
+    [Fact]
+    public async Task Deleting_a_prefix_removes_everything_below_it_only()
+    {
+        var tenant = Guid.CreateVersion7().ToString("N");
+        foreach (var key in new[] { $"{tenant}/uploads/a/0", $"{tenant}/uploads/a/1", $"{tenant}/uploads/ab/0" })
+        {
+            await Storage.PutAsync(key, new MemoryStream([1]), null, Ct);
+        }
+
+        await Storage.DeletePrefixAsync($"{tenant}/uploads/a", Ct);
+        await Storage.DeletePrefixAsync($"{tenant}/uploads/missing", Ct);
+
+        (await Storage.ExistsAsync($"{tenant}/uploads/a/0", Ct)).ShouldBeFalse();
+        (await Storage.ExistsAsync($"{tenant}/uploads/a/1", Ct)).ShouldBeFalse();
+        (await Storage.ExistsAsync($"{tenant}/uploads/ab/0", Ct)).ShouldBeTrue();
+    }
+
     [Theory]
     [InlineData("../escape")]
     [InlineData("/absolute")]
