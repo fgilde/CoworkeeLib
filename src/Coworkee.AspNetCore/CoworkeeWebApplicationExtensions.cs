@@ -39,4 +39,11 @@ public static class CoworkeeWebApplicationExtensions
         app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "v1"));
         return app;
     }
+
+    /// <summary>For worker hosts (background jobs only): the modules' services run, but no module endpoints, dashboards or OpenAPI are mapped.</summary>
+    public static WebApplication UseCoworkeeWorker(this WebApplication app)
+    {
+        app.UseExceptionHandler();
+        return app;
+    }
 }
