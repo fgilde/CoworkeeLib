@@ -3,6 +3,10 @@ using System.Net.Http.Json;
 using Coworkee.Contracts;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Notifications;
+using Coworkee.Contracts.Settings;
+using Coworkee.Mailing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Notifications.Tests;
 
@@ -25,6 +29,41 @@ public sealed class NotificationTests(NotificationApp app) : IAsyncLifetime
     private HttpClient Admin => app.As(_setup.AdminUserId, _setup.TenantId);
 
     private HttpClient Bob => app.As(_bob.Id, _setup.TenantId);
+
+    [Fact]
+    public async Task The_daily_digest_mails_unread_notifications_once_and_respects_the_opt_out()
+    {
+        await app.NotifyAsync(_setup.AdminUserId, _setup.TenantId, _bob.Id);
+        await app.NotifyAsync(_setup.AdminUserId, _setup.TenantId, _bob.Id);
+
+        await RunDigestAsync();
+        var mails = await MailsToAsync("bob@acme.test");
+        mails.Count.ShouldBe(1);
+        mails[0].TemplateName.ShouldBe(NotificationDigestJob.Template);
+        mails[0].Subject.ShouldContain("2");
+        mails[0].HtmlBody.ShouldContain("https://app.test/d/1");
+
+        // nothing new: no second mail
+        await RunDigestAsync();
+        (await MailsToAsync("bob@acme.test")).Count.ShouldBe(1);
+
+        (await Bob.PutAsJsonAsync("/api/v1/settings/user", new SetSettingsRequest(new Dictionary<string, string?> { [NotificationDigestJob.Setting] = "false" }), Ct)).EnsureSuccessStatusCode();
+        await app.NotifyAsync(_setup.AdminUserId, _setup.TenantId, _bob.Id);
+        await RunDigestAsync();
+        (await MailsToAsync("bob@acme.test")).Count.ShouldBe(1);
+    }
+
+    private async Task RunDigestAsync()
+    {
+        await using var scope = app.App.Services.CreateAsyncScope();
+        await scope.ServiceProvider.GetRequiredService<NotificationDigestJob>().ExecuteAsync(Ct);
+    }
+
+    private async Task<List<OutgoingMail>> MailsToAsync(string to)
+    {
+        await using var scope = app.App.Services.CreateAsyncScope();
+        return await scope.ServiceProvider.GetRequiredService<NotificationTestDbContext>().Set<OutgoingMail>().IgnoreQueryFilters().Where(m => m.To == to).ToListAsync(Ct);
+    }
 
     [Fact]
     public async Task Notify_stores_and_pushes_to_the_user_topic()

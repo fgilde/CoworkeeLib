@@ -1,4 +1,5 @@
 using Coworkee.Application.Messaging;
+using Coworkee.BackgroundJobs;
 using Coworkee.AspNetCore;
 using Coworkee.AspNetCore.Http;
 using Coworkee.Contracts;
@@ -131,7 +132,8 @@ internal sealed class NotificationHandlers(CoworkeeDbContext db, ICurrentUser cu
 
 internal sealed class NotificationModelContributor : IModelContributor
 {
-    public void Apply(ModelBuilder modelBuilder) =>
+    public void Apply(ModelBuilder modelBuilder)
+    {
         modelBuilder.Entity<Notification>(notification =>
         {
             notification.ToTable("Notifications", "cw");
@@ -140,10 +142,18 @@ internal sealed class NotificationModelContributor : IModelContributor
             notification.Property(n => n.Title).HasMaxLength(300);
             notification.Property(n => n.Link).HasMaxLength(2000);
             notification.HasIndex(n => new { n.UserId, n.ReadAt, n.CreatedAt });
+            notification.HasIndex(n => new { n.ReadAt, n.CreatedAt });
         });
+
+        modelBuilder.Entity<NotificationDigestState>(state =>
+        {
+            state.ToTable("NotificationDigests", "cw");
+            state.HasIndex(s => s.UserId).IsUnique();
+        });
+    }
 }
 
-[DependsOn(typeof(CoworkeeRealtimeModule))]
+[DependsOn(typeof(CoworkeeRealtimeModule), typeof(Coworkee.Mailing.CoworkeeMailingModule))]
 public sealed class CoworkeeNotificationsModule : CoworkeeModule, IWebModule
 {
     public override void ConfigureServices(ModuleServiceContext context)
@@ -151,6 +161,10 @@ public sealed class CoworkeeNotificationsModule : CoworkeeModule, IWebModule
         context.Services.AddMessagingFromAssembly(typeof(CoworkeeNotificationsModule).Assembly);
         context.Services.AddSingleton<IModelContributor, NotificationModelContributor>();
         context.Services.AddScoped<INotifier, Notifier>();
+        context.Services.AddOptions<NotificationOptions>().BindConfiguration(NotificationOptions.Section);
+        context.Services.AddSingleton<Coworkee.Settings.ISettingDefinitionContributor, NotificationSettingDefinitions>();
+        context.Services.AddRecurringJob<NotificationDigestJob>(NotificationDigestJob.Id,
+            context.Configuration[$"{NotificationOptions.Section}:DigestCron"] is { Length: > 0 } cron ? cron : new NotificationOptions().DigestCron);
         context.Services.TryAddSingleton(TimeProvider.System);
     }
 

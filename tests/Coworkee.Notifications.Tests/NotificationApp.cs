@@ -25,6 +25,8 @@ namespace Coworkee.Notifications.Tests;
 
 public sealed class NotificationApp : PostgresFixture
 {
+    protected override string[] SchemasToExclude => ["hangfire"];
+
     public WebApplication App { get; private set; } = null!;
 
     public override async ValueTask InitializeAsync()
@@ -34,6 +36,11 @@ public sealed class NotificationApp : PostgresFixture
         builder.WebHost.UseTestServer();
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
+        builder.Configuration["Coworkee:Notifications:PublicAppUrl"] = "https://app.test";
+        builder.Configuration["Coworkee:Jobs:ConnectionStringName"] = "test";
+
+        // mails stay queued in the database; no job server sends them
+        builder.Configuration["Coworkee:Jobs:RunServer"] = "false";
         builder.AddCoworkee<TestNotificationModule>();
         builder.Services.AddTestAuthentication();
         App = builder.Build();
