@@ -79,7 +79,7 @@ internal sealed class ElasticsearchIndex : ISearchIndex, IDisposable
     public async Task<string> CreateIndexAsync(SearchSchema schema, CancellationToken cancellationToken)
     {
         var index = $"{schema.Alias}-{DateTime.UtcNow:yyyyMMddHHmmssfff}-{Guid.NewGuid().ToString("N")[..4]}";
-        await SendAsync(HttpMethod.Put, index, new JsonObject { ["mappings"] = new JsonObject { ["properties"] = Properties(schema) } }, cancellationToken);
+        await SendAsync(HttpMethod.Put, index, new JsonObject { ["settings"] = Settings(), ["mappings"] = new JsonObject { ["properties"] = Properties(schema) } }, cancellationToken);
         Remember(index, schema);
         Remember(schema.Alias, schema);
         return index;
@@ -238,6 +238,24 @@ internal sealed class ElasticsearchIndex : ISearchIndex, IDisposable
         return response["hits"]!["hits"]!.AsArray().Select(h => new SearchHit(h!["_id"]!.GetValue<string>(), h["_score"]?.GetValue<double>(), h["_source"] as JsonObject)).ToList();
     }
 
+    /// <summary>Text is split at punctuation and case changes too ("pixel.png", "QuarterlyReport"), keeps the original token, ignores case and accents.</summary>
+    private static JsonObject Settings() => new()
+    {
+        ["analysis"] = new JsonObject
+        {
+            ["filter"] = new JsonObject
+            {
+                ["cw_split"] = new JsonObject { ["type"] = "word_delimiter_graph", ["preserve_original"] = true, ["split_on_numerics"] = false },
+            },
+            ["analyzer"] = new JsonObject
+            {
+                [TextAnalyzer] = new JsonObject { ["type"] = "custom", ["tokenizer"] = "whitespace", ["filter"] = new JsonArray("cw_split", "lowercase", "asciifolding") },
+            },
+        },
+    };
+
+    private const string TextAnalyzer = "cw_text";
+
     private static JsonObject Properties(SearchSchema schema)
     {
         var properties = new JsonObject { [IdField] = new JsonObject { ["type"] = "keyword" } };
@@ -245,8 +263,8 @@ internal sealed class ElasticsearchIndex : ISearchIndex, IDisposable
         {
             properties[field.Name] = field.Type switch
             {
-                SearchFieldType.Keyword => new JsonObject { ["type"] = "keyword", ["fields"] = new JsonObject { ["text"] = new JsonObject { ["type"] = "text" } } },
-                SearchFieldType.Text => new JsonObject { ["type"] = "text", ["fields"] = new JsonObject { ["keyword"] = new JsonObject { ["type"] = "keyword", ["ignore_above"] = 512 } } },
+                SearchFieldType.Keyword => new JsonObject { ["type"] = "keyword", ["fields"] = new JsonObject { ["text"] = new JsonObject { ["type"] = "text", ["analyzer"] = TextAnalyzer } } },
+                SearchFieldType.Text => new JsonObject { ["type"] = "text", ["analyzer"] = TextAnalyzer, ["fields"] = new JsonObject { ["keyword"] = new JsonObject { ["type"] = "keyword", ["ignore_above"] = 512 } } },
                 SearchFieldType.Date => new JsonObject { ["type"] = "date" },
                 SearchFieldType.Long => new JsonObject { ["type"] = "long" },
                 SearchFieldType.Double => new JsonObject { ["type"] = "double" },

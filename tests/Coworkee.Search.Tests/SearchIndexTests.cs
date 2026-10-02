@@ -95,10 +95,12 @@ public sealed class SearchIndexTests(ElasticFixture elastic)
         any.Total.ShouldBe(3);
         any.Facets["color"].ShouldBe([new FacetValue("blue", 1), new FacetValue("green", 1), new FacetValue("red", 1)], ignoreOrder: true);
         (await Index.SearchAsync(alias, new SearchQuery { Term = "sunny beach", Exact = true, TextFields = ["name"] }, Ct)).Hits.Select(h => h.Id).ShouldBe(["a"]);
+        (await Index.SearchAsync(alias, new SearchQuery { Term = "night", TextFields = ["name"] }, Ct)).Hits.Select(h => h.Id).ShouldBe(["d"]);
+        (await Index.SearchAsync(alias, new SearchQuery { Term = "jpg", TextFields = ["name"] }, Ct)).Hits.Select(h => h.Id).ShouldBe(["d"]);
 
         var first = await Index.SearchAsync(alias, new SearchQuery { Sort = [new("pages", Descending: true)], Size = 3, Include = ["name"] }, Ct);
         first.Hits.Select(h => h.Id).ShouldBe(["d", "c", "b"]);
-        first.Hits[0].Fields!["name"]!.GetValue<string>().ShouldBe("Night city");
+        first.Hits[0].Fields!["name"]!.GetValue<string>().ShouldBe("Night city NightCity.jpg");
         var next = await Index.SearchAsync(alias, new SearchQuery { Sort = [new("pages", Descending: true)], Size = 3, Cursor = first.Cursor }, Ct);
         next.Hits.Select(h => h.Id).ShouldBe(["a"]);
     }
@@ -136,7 +138,7 @@ public sealed class SearchIndexTests(ElasticFixture elastic)
             Doc("a", "Sunny beach", "red", 10, 9.5, "2026-01-15", true, ["u:1"], "acme"),
             Doc("b", "Mountain lake", "blue", 20, 4, "2026-02-10", false, ["u:2"]),
             Doc("c", "Sunny meadow", "green", 30, 12, "2026-03-05", true, ["g:7"]),
-            Doc("d", "Night city", null, 40, 20, "2026-04-01", false, []),
+            Doc("d", "Night city NightCity.jpg", null, 40, 20, "2026-04-01", false, []),
         ], Ct)).ShouldBeEmpty();
         return alias;
     }
