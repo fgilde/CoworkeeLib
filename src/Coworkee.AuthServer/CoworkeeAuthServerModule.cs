@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Security.Cryptography.X509Certificates;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace Coworkee.AuthServer;
@@ -40,8 +41,7 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
                 server.RequireProofKeyForCodeExchange();
                 server.RegisterScopes([Scopes.OpenId, Scopes.Profile, Scopes.Email, Scopes.Roles, Scopes.OfflineAccess, .. options.ApiScopes.Keys]);
                 server.SetAccessTokenLifetime(options.AccessTokenLifetime);
-                // ponytail: development certificates; load signing/encryption certificates from configuration before production
-                server.AddDevelopmentEncryptionCertificate().AddDevelopmentSigningCertificate();
+                AddCertificates(server, options, context.Configuration);
                 server.DisableAccessTokenEncryption();
                 var aspNetCore = server.UseAspNetCore()
                     .EnableAuthorizationEndpointPassthrough()
@@ -58,6 +58,36 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
                 validation.UseAspNetCore();
             });
     }
+
+    /// <summary>
+    /// Configured certificates; the per machine development certificates only in Development or when allowed explicitly,
+    /// because tokens signed with them break on every other instance and after the machine changes.
+    /// </summary>
+    private static void AddCertificates(OpenIddictServerBuilder server, AuthServerOptions options, IConfiguration configuration)
+    {
+        if (options.SigningCertificate is { } signing && options.EncryptionCertificate is { } encryption)
+        {
+            server.AddSigningCertificate(Load(signing)).AddEncryptionCertificate(Load(encryption));
+        }
+        else if (options.DevelopmentCertificates
+            || string.Equals(configuration["ASPNETCORE_ENVIRONMENT"] ?? configuration["DOTNET_ENVIRONMENT"], "Development", StringComparison.OrdinalIgnoreCase))
+        {
+            server.AddDevelopmentEncryptionCertificate().AddDevelopmentSigningCertificate();
+        }
+        else
+        {
+            throw new InvalidOperationException(
+                $"Configure {AuthServerOptions.Section}:SigningCertificate and :EncryptionCertificate (Path, Password) for the auth server, or set {AuthServerOptions.Section}:DevelopmentCertificates for tests and demos.");
+        }
+
+        if (options.Issuer is { } issuer)
+        {
+            server.SetIssuer(issuer);
+        }
+    }
+
+    private static X509Certificate2 Load(CertificateOptions certificate) =>
+        X509CertificateLoader.LoadPkcs12FromFile(certificate.Path, certificate.Password, X509KeyStorageFlags.EphemeralKeySet);
 
     public void ConfigureApplication(WebApplication app)
     {
