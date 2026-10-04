@@ -17,14 +17,19 @@ public sealed class InfrastructureTests
     }
 
     [Fact]
-    public void Persists_containers_by_default()
+    public void Keeps_data_in_volumes_by_default_with_session_containers()
     {
         var builder = DistributedApplication.CreateBuilder();
 
-        builder.AddCoworkeeInfrastructure("shareme");
+        var infrastructure = builder.AddCoworkeeInfrastructure("shareme");
 
-        Container(builder, "postgres").Annotations.OfType<ContainerLifetimeAnnotation>().ShouldHaveSingleItem().Lifetime.ShouldBe(ContainerLifetime.Persistent);
-        Container(builder, "postgres").Annotations.OfType<ContainerMountAnnotation>().ShouldNotBeEmpty();
+        foreach (var name in new[] { "postgres", "redis", "elasticsearch" })
+        {
+            Container(builder, name).Annotations.OfType<ContainerMountAnnotation>().ShouldNotBeEmpty(name);
+            Container(builder, name).Annotations.OfType<ContainerLifetimeAnnotation>().ShouldBeEmpty(name);
+        }
+
+        infrastructure.Server.Resource.Name.ShouldBe("postgres");
     }
 
     [Fact]
