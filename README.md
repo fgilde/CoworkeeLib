@@ -19,6 +19,20 @@
 | `Coworkee.AspNetCore` | `AddCoworkee<TRoot>()`, result to problem-details mapping, OpenAPI and Swagger UI |
 | `Coworkee.Testing` | Postgres test container fixture, test user, web application factory |
 | `Coworkee.Aspire` | `AddCoworkeeInfrastructure()` for Postgres, Redis and Mailpit |
+| `Coworkee.Contracts` | DTOs, permission names and paging records shared by server and clients |
+| `Coworkee.Identity` | Users, roles, groups, tenants and permission grants with resource level checks |
+| `Coworkee.AuthServer` / `Coworkee.Account` | OpenIddict server, login, registration, two factor and account pages |
+| `Coworkee.Bff` | Backend for frontend: cookie session, token handling, API forwarding |
+| `Coworkee.Settings` | Typed settings per global, tenant and user scope with encrypted secrets |
+| `Coworkee.Mailing` | Scriban mail templates with overrides, queued SMTP delivery |
+| `Coworkee.Notifications` / `Coworkee.Realtime` | In app notifications, digests and SignalR push |
+| `Coworkee.BackgroundJobs` | Hangfire jobs with queues, retries and delayed follow-ups |
+| `Coworkee.Storage` | Blob storage on the file system or Azure |
+| `Coworkee.Search` / `Coworkee.Search.Elasticsearch` | Search index abstraction and Elasticsearch provider |
+| `Coworkee.Auditing` | Audit trail queries and history views |
+| `Coworkee.Theming` | Tenant themes and branding |
+| `Coworkee.Ai` | Assistant chat with Claude over the tools of all modules, MCP server, tool call audit |
+| `Coworkee.Client.Blazor` | MudBlazor shell, navigation, settings and admin pages for WebAssembly clients |
 
 ## Example
 
@@ -61,7 +75,11 @@ dotnet test --solution Coworkee.slnx   # needs Docker for the Postgres tests
 pwsh build/pack-local.ps1              # packs into artifacts/nuget for local consumers
 ```
 
-Packages are not on nuget.org yet. Consumers point a `nuget.config` source at `artifacts/nuget`.
+Until the packages are on nuget.org, consumers point a `nuget.config` source at `artifacts/nuget`.
+
+## Release
+
+Pushing a tag `v1.2.3` builds, tests and publishes all packages with that version to nuget.org (workflow `release.yml`, secret `NUGET_API_KEY`).
 
 ## Used by
 
