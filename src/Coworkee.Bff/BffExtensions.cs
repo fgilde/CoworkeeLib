@@ -124,9 +124,11 @@ public static class BffExtensions
                 options.Authority.TrimEnd('/') + "/Account/Manage/TwoFactor")
             : BffUserDto.Anonymous);
 
+        // the assistant may think and call tools for minutes before the first byte of its answer
+        var longRequests = new Yarp.ReverseProxy.Forwarder.ForwarderRequestConfig { ActivityTimeout = TimeSpan.FromMinutes(10) };
         foreach (var prefix in options.ForwardedPrefixes.Prepend("/api"))
         {
-            app.MapForwarder(prefix.TrimEnd('/') + "/{**catch-all}", options.ApiAddress, transforms => transforms.AddRequestTransform(async transform =>
+            app.MapForwarder(prefix.TrimEnd('/') + "/{**catch-all}", options.ApiAddress, longRequests, transforms => transforms.AddRequestTransform(async transform =>
             {
                 var token = await transform.HttpContext.GetTokenAsync("access_token");
                 if (token is not null)
