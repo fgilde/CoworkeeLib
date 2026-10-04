@@ -59,14 +59,16 @@ public sealed class CoworkeeAiModule : CoworkeeModule, IWebModule
                         Name = t.Name,
                         Description = t.Description,
                         InputSchema = JsonSerializer.SerializeToElement(runner.SchemaOf(t)),
+                        Annotations = new ToolAnnotations { ReadOnlyHint = t.ReadOnly, DestructiveHint = !t.ReadOnly, OpenWorldHint = false },
                     })],
                 };
             })
             .WithCallToolHandler(async (request, ct) =>
             {
+                // MCP clients ask their user before tools that are not read only (see the annotations above)
                 var runner = request.Services!.GetRequiredService<AiToolRunner>();
                 var input = JsonSerializer.SerializeToElement(request.Params?.Arguments ?? new Dictionary<string, JsonElement>());
-                var outcome = await runner.RunAsync(request.Params?.Name ?? string.Empty, input, AiChannels.Mcp, ct);
+                var outcome = await runner.RunAsync(request.Params?.Name ?? string.Empty, input, AiChannels.Mcp, allowWrites: true, ct);
                 return new CallToolResult { Content = [new TextContentBlock { Text = outcome.Output }], IsError = !outcome.Succeeded };
             });
     }
@@ -79,12 +81,43 @@ public sealed class CoworkeeAiModule : CoworkeeModule, IWebModule
         api.MapPost("/chat", (ChatRequest body, AiChat chat, CancellationToken ct) => chat.SendAsync(body, ct).ToHttpResult());
         api.MapGet("/tool-calls", ([AsParameters] PageRequest page, string? channel, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new GetAiToolCalls(page, channel), ct).ToHttpResult());
-        app.MapMcp("/mcp").RequireAuthorization();
+        app.MapMcp("/mcp").RequireAuthorization().Add(endpoint =>
+        {
+            var next = endpoint.RequestDelegate!;
+            endpoint.RequestDelegate = context => IsAllowedMcpRequest(context.Request) ? next(context) : Reject(context);
+        });
+    }
+
+    /// <summary>
+    /// JSON bodies only and no foreign browser origins: a cross site form or text/plain post must not reach the tools
+    /// with the cookie of a signed-in user.
+    /// </summary>
+    internal static bool IsAllowedMcpRequest(HttpRequest request)
+    {
+        if (HttpMethods.IsPost(request.Method) && request.ContentType?.StartsWith("application/json", StringComparison.OrdinalIgnoreCase) != true)
+        {
+            return false;
+        }
+
+        var origin = request.Headers.Origin.ToString();
+        return origin.Length == 0
+            || (Uri.TryCreate(origin, UriKind.Absolute, out var uri) && string.Equals(uri.Authority, request.Host.Value, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static Task Reject(HttpContext context)
+    {
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        return Task.CompletedTask;
     }
 }
 
 [RequiresPermission(AiPermissions.Audit)]
 public sealed record GetAiToolCalls(PageRequest Page, string? Channel) : IQuery<Result<PagedResult<AiToolCallDto>>>;
+
+internal sealed class GetAiToolCallsValidator : FluentValidation.AbstractValidator<GetAiToolCalls>
+{
+    public GetAiToolCallsValidator() => RuleFor(q => q.Page).SetValidator(new Coworkee.Application.Paging.PageRequestValidator());
+}
 
 internal sealed class AiToolCallsHandler(CoworkeeDbContext db, ICurrentUser currentUser) : IHandler<GetAiToolCalls, Result<PagedResult<AiToolCallDto>>>
 {
@@ -121,7 +154,8 @@ internal sealed class AiPermissionDefinitions : IPermissionDefinitionContributor
 
 internal sealed class AiSettingDefinitions : ISettingDefinitionContributor
 {
-    private static readonly SettingScope[] Scopes = [SettingScope.Global, SettingScope.Tenant];
+    // global only: tenants must not switch on the assistant, pick a model or raise limits on the host's key
+    private static readonly SettingScope[] Scopes = [SettingScope.Global];
 
     public void Define(SettingDefinitionContext context) =>
         context.Group("Ai", "AI assistant")

@@ -26,17 +26,25 @@ namespace Coworkee.Ai;
 public sealed record AiTool(string Name, string Description, Type RequestType, Type ResultType)
 {
     public IReadOnlyList<string> Permissions { get; } = RequestType.GetCustomAttributes<RequiresPermissionAttribute>().Select(a => a.Permission).ToList();
+
+    /// <summary>Queries only read; commands change data and run only on a direct user request (see <see cref="AiToolRunner.RunAsync"/>).</summary>
+    public bool ReadOnly { get; } = !RequestType.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ICommand<>));
 }
 
 public static class AiToolServiceCollectionExtensions
 {
-    /// <summary>Offers <typeparamref name="TRequest"/> as a tool. Names are lower snake case and unique.</summary>
+    /// <summary>Offers <typeparamref name="TRequest"/> as a tool. Names are lower snake case and unique; the request returns a <see cref="Result"/>.</summary>
     public static IServiceCollection AddAiTool<TRequest>(this IServiceCollection services, string name, string description)
         where TRequest : class
     {
         var resultType = typeof(TRequest).GetInterfaces()
             .SingleOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IRequest<>))?.GetGenericArguments()[0]
             ?? throw new ArgumentException($"{typeof(TRequest).Name} is not a dispatcher request.", nameof(TRequest));
+        if (!typeof(Result).IsAssignableFrom(resultType))
+        {
+            throw new ArgumentException($"{typeof(TRequest).Name} must return a Result, so failures reach the model as messages.", nameof(TRequest));
+        }
+
         return services.AddSingleton(new AiTool(name, description, typeof(TRequest), resultType));
     }
 }
@@ -56,6 +64,9 @@ public sealed class AiToolRunner(
 {
     public const int MaxOutputLength = 20_000;
 
+    public const string WriteNeedsUser =
+        "This tool changes data and runs only right after a user message. Tell the user what you are about to do and ask them to confirm.";
+
     private const int MaxAuditedInputLength = 4_000;
 
     private static readonly MethodInfo Send = typeof(IDispatcher).GetMethod(nameof(IDispatcher.SendAsync))!;
@@ -66,6 +77,7 @@ public sealed class AiToolRunner(
 
     public JsonObject SchemaOf(AiTool tool) => schemas.Get(tool, JsonOptions);
 
+    /// <summary>The tools of the current user: none without <see cref="AiPermissions.Chat"/> or while the assistant is off.</summary>
     public async Task<IReadOnlyList<AiTool>> AvailableAsync(CancellationToken cancellationToken)
     {
         if (_available is not null)
@@ -74,7 +86,9 @@ public sealed class AiToolRunner(
         }
 
         var available = new List<AiTool>();
-        if (currentUser.IsAuthenticated && await settings.GetAsync<bool>(AiSettings.Enabled, cancellationToken))
+        if (currentUser.IsAuthenticated
+            && await settings.GetAsync<bool>(AiSettings.Enabled, cancellationToken)
+            && await permissions.IsGrantedAsync(AiPermissions.Chat, cancellationToken))
         {
             foreach (var tool in tools)
             {
@@ -94,43 +108,55 @@ public sealed class AiToolRunner(
         return _available = available;
     }
 
-    public async Task<AiToolOutcome> RunAsync(string name, JsonElement input, string channel, CancellationToken cancellationToken)
+    /// <summary>
+    /// Runs a tool and audits the call, also when it fails or is cancelled. With <paramref name="allowWrites"/> false only
+    /// read only tools run: the assistant passes false once tool output is in its context, so text planted in content
+    /// cannot make it change data without the user asking again.
+    /// </summary>
+    public async Task<AiToolOutcome> RunAsync(string name, JsonElement input, string channel, bool allowWrites, CancellationToken cancellationToken)
     {
         var started = Stopwatch.GetTimestamp();
-        var tool = (await AvailableAsync(cancellationToken)).FirstOrDefault(t => t.Name == name);
-        string output;
-        string? error = null;
-        if (tool is null)
+        var output = "The call was cancelled.";
+        string? error = output;
+        AiToolCall call;
+        try
         {
-            error = $"Unknown tool '{name}'.";
-            output = error;
-        }
-        else
-        {
-            (output, error) = await DispatchAsync(tool, input, cancellationToken);
-        }
+            var tool = (await AvailableAsync(cancellationToken)).FirstOrDefault(t => t.Name == name);
+            if (tool is null)
+            {
+                error = output = $"Unknown tool '{name}'.";
+            }
+            else if (!tool.ReadOnly && !allowWrites)
+            {
+                error = output = WriteNeedsUser;
+            }
+            else
+            {
+                (output, error) = await DispatchAsync(tool, input, cancellationToken);
+            }
 
-        if (output.Length > MaxOutputLength)
-        {
-            output = output[..MaxOutputLength] + " …(truncated)";
+            if (output.Length > MaxOutputLength)
+            {
+                output = output[..MaxOutputLength] + " …(truncated)";
+            }
         }
-
-        var call = new AiToolCall
+        finally
         {
-            TenantId = currentUser.TenantId,
-            UserId = currentUser.UserId,
-            Channel = channel,
-            Tool = name.Length > 100 ? name[..100] : name,
-            Input = Truncate(input.ValueKind == JsonValueKind.Undefined ? "{}" : input.GetRawText(), MaxAuditedInputLength),
-            Succeeded = error is null,
-            Error = error is null ? null : Truncate(error, 2000),
-            DurationMs = (int)Stopwatch.GetElapsedTime(started).TotalMilliseconds,
-            At = DateTimeOffset.UtcNow,
-        };
+            call = new AiToolCall
+            {
+                TenantId = currentUser.TenantId,
+                UserId = currentUser.UserId,
+                Channel = channel,
+                Tool = Truncate(name, 100),
+                Input = Truncate(AiAuditRedaction.Redact(input), MaxAuditedInputLength),
+                Succeeded = error is null,
+                Error = error is null ? null : Truncate(error, 2000),
+                DurationMs = (int)Stopwatch.GetElapsedTime(started).TotalMilliseconds,
+                At = DateTimeOffset.UtcNow,
+            };
 
-        // Own scope: a failed tool may leave changes in its context that must never be saved with the audit row.
-        await using (var scope = scopes.CreateAsyncScope())
-        {
+            // Own scope: a failed tool may leave changes in its context that must never be saved with the audit row.
+            await using var scope = scopes.CreateAsyncScope();
             var db = scope.ServiceProvider.GetRequiredService<CoworkeeDbContext>();
             db.Add(call);
             await db.SaveChangesAsync(CancellationToken.None);
@@ -148,7 +174,7 @@ public sealed class AiToolRunner(
                 ? JsonSerializer.Deserialize("{}", tool.RequestType, JsonOptions)
                 : input.Deserialize(tool.RequestType, JsonOptions)) ?? throw new JsonException("The input is empty.");
         }
-        catch (Exception exception) when (exception is JsonException or NotSupportedException or InvalidOperationException)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
             var message = $"Invalid input: {exception.Message}";
             return (message, message);
@@ -161,21 +187,18 @@ public sealed class AiToolRunner(
             var dispatcher = scope.ServiceProvider.GetRequiredService<IDispatcher>();
             var task = (Task)Send.MakeGenericMethod(tool.ResultType).Invoke(dispatcher, [request, cancellationToken])!;
             await task;
-            var result = task.GetType().GetProperty(nameof(Task<object>.Result))!.GetValue(task);
-            switch (result)
+            var result = (Result)task.GetType().GetProperty(nameof(Task<object>.Result))!.GetValue(task)!;
+            if (result.Error is { } failure)
             {
-                case Result { IsSuccess: false, Error: { } failure }:
-                    var message = failure.Details is { Count: > 0 } details
-                        ? $"{failure.Code}: {failure.Message} {string.Join("; ", details.Select(d => $"{d.Key}: {string.Join(" ", d.Value)}"))}"
-                        : $"{failure.Code}: {failure.Message}";
-                    return (message, message);
-                case Result success when success.GetType().IsGenericType:
-                    return (JsonSerializer.Serialize(success.GetType().GetProperty(nameof(Result<object>.Value))!.GetValue(success), JsonOptions), null);
-                case Result:
-                    return ("Done.", null);
-                default:
-                    return (JsonSerializer.Serialize(result, JsonOptions), null);
+                var message = failure.Details is { Count: > 0 } details
+                    ? $"{failure.Code}: {failure.Message} {string.Join("; ", details.Select(d => $"{d.Key}: {string.Join(" ", d.Value)}"))}"
+                    : $"{failure.Code}: {failure.Message}";
+                return (message, message);
             }
+
+            return result.GetType().IsGenericType
+                ? (JsonSerializer.Serialize(result.GetType().GetProperty(nameof(Result<object>.Value))!.GetValue(result), JsonOptions), null)
+                : ("Done.", null);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -198,13 +221,76 @@ public sealed class AiToolSchemas
         {
             if (!_schemas.TryGetValue(tool.Name, out var schema))
             {
-                var resolved = options.TypeInfoResolver is null ? new JsonSerializerOptions(options) { TypeInfoResolver = new DefaultJsonTypeInfoResolver() } : options;
+                var resolved = new JsonSerializerOptions(options)
+                {
+                    TypeInfoResolver = options.TypeInfoResolver ?? new DefaultJsonTypeInfoResolver(),
+                    RespectNullableAnnotations = true,
+                };
                 schema = JsonSchemaExporter.GetJsonSchemaAsNode(resolved, tool.RequestType, new JsonSchemaExporterOptions { TreatNullObliviousAsNonNullable = true }) as JsonObject
                     ?? new JsonObject { ["type"] = "object" };
+
+                // nullable inputs may be left out instead of sent as null
+                if (schema["required"] is JsonArray required && schema["properties"] is JsonObject properties)
+                {
+                    foreach (var name in required.Select(r => r!.GetValue<string>()).ToList())
+                    {
+                        if (properties[name]?["type"] is JsonArray types && types.Any(t => t?.GetValue<string>() == "null"))
+                        {
+                            required.Remove(required.First(r => r!.GetValue<string>() == name));
+                        }
+                    }
+                }
+
                 _schemas[tool.Name] = schema;
             }
 
             return (JsonObject)schema.DeepClone();
+        }
+    }
+}
+
+/// <summary>Masks values of inputs that look like secrets before they are stored in the audit.</summary>
+public static class AiAuditRedaction
+{
+    private static readonly string[] Sensitive = ["password", "secret", "apikey", "api_key", "token", "credential"];
+
+    public static string Redact(JsonElement input)
+    {
+        if (input.ValueKind is JsonValueKind.Undefined)
+        {
+            return "{}";
+        }
+
+        var node = JsonNode.Parse(input.GetRawText());
+        Mask(node);
+        return node?.ToJsonString() ?? "null";
+    }
+
+    private static void Mask(JsonNode? node)
+    {
+        switch (node)
+        {
+            case JsonObject obj:
+                foreach (var (key, value) in obj.ToList())
+                {
+                    if (Sensitive.Any(s => key.Contains(s, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        obj[key] = "***";
+                    }
+                    else
+                    {
+                        Mask(value);
+                    }
+                }
+
+                break;
+            case JsonArray array:
+                foreach (var item in array)
+                {
+                    Mask(item);
+                }
+
+                break;
         }
     }
 }

@@ -101,8 +101,10 @@ public sealed class FakeClaude : HttpMessageHandler
 
     public void Text(string text) => Enqueue("end_turn", new JsonObject { ["type"] = "text", ["text"] = text });
 
-    public void ToolUse(params (string Name, JsonObject Input)[] uses) =>
-        Enqueue("tool_use", [.. uses.Select((u, i) => new JsonObject
+    public void ToolUse(params (string Name, JsonObject Input)[] uses) => ToolUseStopping("tool_use", uses);
+
+    public void ToolUseStopping(string stopReason, params (string Name, JsonObject Input)[] uses) =>
+        Enqueue(stopReason, [.. uses.Select((u, i) => new JsonObject
         {
             ["type"] = "tool_use",
             ["id"] = $"toolu_{Guid.NewGuid():N}",
@@ -180,7 +182,7 @@ public sealed record AddNote(string Title) : ICommand<Result<Guid>>;
 [RequiresPermission(NotePermissions.Write)]
 public sealed record FailNote(string Title) : ICommand<Result<Guid>>;
 
-public sealed record ListNotes : IQuery<Result<IReadOnlyList<string>>>;
+public sealed record ListNotes(string? Contains) : IQuery<Result<IReadOnlyList<string>>>;
 
 internal sealed class NoteHandlers(CoworkeeDbContext db, ICurrentUser currentUser)
     : IHandler<AddNote, Result<Guid>>, IHandler<FailNote, Result<Guid>>, IHandler<ListNotes, Result<IReadOnlyList<string>>>
@@ -199,5 +201,5 @@ internal sealed class NoteHandlers(CoworkeeDbContext db, ICurrentUser currentUse
     }
 
     public async Task<Result<IReadOnlyList<string>>> HandleAsync(ListNotes query, CancellationToken cancellationToken) =>
-        Result<IReadOnlyList<string>>.Success(await db.Set<Note>().Select(n => n.Title).ToListAsync(cancellationToken));
+        Result<IReadOnlyList<string>>.Success(await db.Set<Note>().Where(n => query.Contains == null || n.Title.Contains(query.Contains)).Select(n => n.Title).ToListAsync(cancellationToken));
 }
