@@ -13,6 +13,25 @@ public sealed class AuthServerOptions
     public Dictionary<string, string> ApiScopes { get; set; } = new(StringComparer.Ordinal);
 
     public List<AuthClientOptions> Clients { get; set; } = [];
+
+    /// <summary>Public base address tokens name as issuer; set it when the server sits behind a proxy or runs on several instances.</summary>
+    public Uri? Issuer { get; set; }
+
+    /// <summary>PKCS#12 file that signs tokens. Required outside development, shared by all instances.</summary>
+    public CertificateOptions? SigningCertificate { get; set; }
+
+    /// <summary>PKCS#12 file that encrypts authorization codes and refresh tokens. Required outside development.</summary>
+    public CertificateOptions? EncryptionCertificate { get; set; }
+
+    /// <summary>Allows the per machine development certificates outside the Development environment (tests, demos).</summary>
+    public bool DevelopmentCertificates { get; set; }
+}
+
+public sealed class CertificateOptions
+{
+    public required string Path { get; set; }
+
+    public string? Password { get; set; }
 }
 
 public sealed class AuthClientOptions
