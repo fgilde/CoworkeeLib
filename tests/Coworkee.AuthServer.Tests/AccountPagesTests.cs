@@ -35,6 +35,37 @@ public sealed partial class AccountPagesTests(AuthApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_signed_in_user_changes_the_password_knowing_the_current_one()
+    {
+        var browser = app.Browser();
+        (await LoginAsync(browser, "admin@acme.test", Password)).StatusCode.ShouldBe(HttpStatusCode.Redirect);
+
+        var wrong = await PostFormAsync(browser, "/Account/Manage/ChangePassword",
+            new() { ["Input.CurrentPassword"] = "not-it", ["Input.NewPassword"] = "Brand#New123", ["Input.ConfirmPassword"] = "Brand#New123" });
+        wrong.Html.ShouldContain("current password is not correct");
+        var changed = await PostFormAsync(browser, "/Account/Manage/ChangePassword",
+            new() { ["Input.CurrentPassword"] = Password, ["Input.NewPassword"] = "Brand#New123", ["Input.ConfirmPassword"] = "Brand#New123" });
+
+        changed.Html.ShouldContain("Your password was changed");
+        (await LoginAsync(app.Browser(), "admin@acme.test", "Brand#New123")).StatusCode.ShouldBe(HttpStatusCode.Redirect);
+        (await LoginAsync(app.Browser(), "admin@acme.test", Password)).StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task Account_security_needs_a_sign_in() =>
+        (await app.Browser().GetAsync("/Account/Manage/ChangePassword", Ct)).StatusCode.ShouldNotBe(HttpStatusCode.OK);
+
+    [Fact]
+    public async Task Sign_in_records_the_last_login()
+    {
+        (await app.LastLoginAsync("admin@acme.test")).ShouldBeNull();
+
+        (await LoginAsync(app.Browser(), "admin@acme.test", Password)).StatusCode.ShouldBe(HttpStatusCode.Redirect);
+
+        (await app.LastLoginAsync("admin@acme.test")).ShouldNotBeNull();
+    }
+
+    [Fact]
     public async Task Login_starts_with_the_address_the_client_hinted()
     {
         var returnUrl = "/connect/authorize?client_id=client&login_hint=" + Uri.EscapeDataString("ada@acme.test");

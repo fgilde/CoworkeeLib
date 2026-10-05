@@ -7,30 +7,47 @@
 }
 else
 {
-    @foreach (var group in _groups)
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2" Wrap="Wrap.Wrap">
+        <MudTextField @bind-Value="_search" Immediate="true" Placeholder="Search permissions" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search"
+                      Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" data-testid="permission-search" Style="max-width:360px" />
+        <MudSpacer />
+        <MudText Typo="Typo.body2" Class="mud-text-secondary" data-testid="total-count">@_selected.Count(Known) of @_groups.Sum(g => g.Permissions.Count) granted</MudText>
+    </MudStack>
+
+    @foreach (var group in Visible())
     {
-        <MudText Typo="Typo.overline" Class="mt-4 d-block">@group.DisplayName</MudText>
-        <MudSimpleTable Dense="true" Hover="true" Bordered="false" Class="mb-2">
-            <tbody>
-                @foreach (var permission in group.Permissions)
+        var all = group.Permissions.All(p => _selected.Contains(p.Name));
+        <div data-group="@group.Name" class="mt-4">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                @if (!ReadOnly)
                 {
-                    <tr data-permission="@permission.Name">
-                        <td style="width:48px">
-                            <input type="checkbox" checked="@_selected.Contains(permission.Name)" disabled="@ReadOnly" aria-label="@permission.DisplayName"
-                                   @onchange="e => Toggle(permission.Name, e.Value is true)" />
-                        </td>
-                        <td>@permission.DisplayName</td>
-                        <td><MudText Typo="Typo.caption">@permission.Name</MudText></td>
-                        <td>
-                            @if (permission.Implies.Count > 0)
-                            {
-                                <MudText Typo="Typo.caption">includes @string.Join(", ", permission.Implies)</MudText>
-                            }
-                        </td>
-                    </tr>
+                    <input type="checkbox" checked="@all" aria-label="@($"All of {group.DisplayName}")" data-testid="group-all" @onchange="e => ToggleGroup(group, e.Value is true)" />
                 }
-            </tbody>
-        </MudSimpleTable>
+                <MudText Typo="Typo.subtitle2">@group.DisplayName</MudText>
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(all ? Color.Primary : Color.Default)" data-testid="group-count">@group.Permissions.Count(p => _selected.Contains(p.Name)) / @group.Permissions.Count</MudChip>
+            </MudStack>
+            <MudSimpleTable Dense="true" Hover="true" Bordered="false" Class="mb-2">
+                <tbody>
+                    @foreach (var permission in group.Permissions.Where(Matches))
+                    {
+                        <tr data-permission="@permission.Name">
+                            <td style="width:48px">
+                                <input type="checkbox" checked="@_selected.Contains(permission.Name)" disabled="@ReadOnly" aria-label="@permission.DisplayName"
+                                       @onchange="e => Toggle(permission.Name, e.Value is true)" />
+                            </td>
+                            <td>@permission.DisplayName</td>
+                            <td><MudText Typo="Typo.caption">@permission.Name</MudText></td>
+                            <td>
+                                @if (permission.Implies.Count > 0)
+                                {
+                                    <MudText Typo="Typo.caption">includes @string.Join(", ", permission.Implies)</MudText>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        </div>
     }
 
     @if (!ReadOnly)
@@ -43,6 +60,25 @@ else
     private IReadOnlyList<PermissionGroupDto>? _groups;
     private readonly HashSet<string> _selected = new(StringComparer.Ordinal);
     private bool _saving;
+    private string? _search;
+
+    private bool Matches(PermissionDto permission) =>
+        string.IsNullOrWhiteSpace(_search)
+        || permission.DisplayName.Contains(_search.Trim(), StringComparison.OrdinalIgnoreCase)
+        || permission.Name.Contains(_search.Trim(), StringComparison.OrdinalIgnoreCase);
+
+    private IEnumerable<PermissionGroupDto> Visible() =>
+        _groups!.Where(g => g.Permissions.Any(Matches));
+
+    private bool Known(string name) => _groups!.Any(g => g.Permissions.Any(p => p.Name == name));
+
+    private void ToggleGroup(PermissionGroupDto group, bool on)
+    {
+        foreach (var permission in group.Permissions)
+        {
+            Toggle(permission.Name, on);
+        }
+    }
 
     [Parameter, EditorRequired] public PermissionProviderType ProviderType { get; set; }
 

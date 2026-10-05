@@ -4,6 +4,18 @@ public sealed record RoleRefDto(Guid Id, string Name);
 
 public sealed record UserDto(Guid Id, string UserName, string Email, string? FirstName, string? LastName, bool IsActive, IReadOnlyList<RoleRefDto> Roles);
 
+/// <summary>A user as the admin page shows one: status, roles and groups.</summary>
+public sealed record UserDetailDto(
+    Guid Id, string UserName, string Email, string? FirstName, string? LastName, bool IsActive, bool EmailConfirmed, bool TwoFactorEnabled,
+    DateTimeOffset? LockedUntil, DateTimeOffset? LastLoginAt, IReadOnlyList<RoleRefDto> Roles, IReadOnlyList<GroupRefDto> Groups);
+
+public sealed record GroupRefDto(Guid Id, string Name);
+
+/// <summary>What everyone may change about themselves; the address and the password belong to the sign-in.</summary>
+public sealed record ProfileDto(string Email, string? FirstName, string? LastName, string? PhoneNumber);
+
+public sealed record UpdateProfileRequest(string? FirstName, string? LastName, string? PhoneNumber);
+
 public sealed record CreateUserRequest(string Email, string Password, string? FirstName, string? LastName);
 
 public sealed record UpdateUserRequest(string? FirstName, string? LastName, bool IsActive);

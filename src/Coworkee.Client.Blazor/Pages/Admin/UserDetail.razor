@@ -1,0 +1,180 @@
+@page "/admin/users/{Id:guid}"
+@attribute [Authorize(Policy = "perm:" + IdentityPermissions.Users.View)]
+@inject ICoworkeeApi Api
+@inject ISnackbar Snackbar
+
+<PageTitle>@(_user?.Email ?? "User")</PageTitle>
+<MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" Href="/admin/users" Class="mb-2">Users</MudButton>
+
+@if (_error is not null)
+{
+    <MudAlert Severity="Severity.Error">@_error</MudAlert>
+}
+else if (_user is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <MudPaper Outlined="true" Class="pa-4 mb-4">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Wrap="Wrap.Wrap">
+            <MudAvatar Color="Color.Primary" Size="Size.Large">@Initials(_user)</MudAvatar>
+            <div>
+                <MudText Typo="Typo.h5" data-testid="user-name">@DisplayName(_user)</MudText>
+                <MudText Class="mud-text-secondary">@_user.Email</MudText>
+            </div>
+            <MudSpacer />
+            <MudChip T="string" Size="Size.Small" Color="@(_user.IsActive ? Color.Success : Color.Default)" data-testid="status-active">@(_user.IsActive ? "Active" : "Inactive")</MudChip>
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(_user.EmailConfirmed ? Color.Success : Color.Warning)">@(_user.EmailConfirmed ? "Email confirmed" : "Email not confirmed")</MudChip>
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@(_user.TwoFactorEnabled ? "Two-factor on" : "Two-factor off")</MudChip>
+            @if (_user.LockedUntil is { } until)
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Error" data-testid="status-locked">Locked until @until.ToLocalTime().ToString("g")</MudChip>
+                <PermissionView Permission="@IdentityPermissions.Users.Manage">
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Outlined.LockOpen" OnClick="UnlockAsync" data-testid="unlock">Unlock</MudButton>
+                </PermissionView>
+            }
+        </MudStack>
+        <MudText Typo="Typo.caption" Class="mt-2 d-block mud-text-secondary">Last sign-in: @(_user.LastLoginAt?.ToLocalTime().ToString("g") ?? "never")</MudText>
+    </MudPaper>
+
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudPaper Outlined="true" Class="pa-4">
+                <MudText Typo="Typo.h6" Class="mb-2">Profile</MudText>
+                <MudTextField @bind-Value="_firstName" Label="First name" Immediate="true" data-testid="first-name" ReadOnly="@(!_canManage)" />
+                <MudTextField @bind-Value="_lastName" Label="Last name" Immediate="true" data-testid="last-name" ReadOnly="@(!_canManage)" />
+                <MudSwitch T="bool" @bind-Value="_active" Label="Active" Color="Color.Primary" Disabled="@(!_canManage)" Class="mt-2" />
+                <PermissionView Permission="@IdentityPermissions.Users.Manage">
+                    <MudStack Row="true" Class="mt-4">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_busy" data-testid="save-user">Save</MudButton>
+                        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.LockReset" OnClick="SendResetAsync">Send password reset</MudButton>
+                    </MudStack>
+                </PermissionView>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudPaper Outlined="true" Class="pa-4 mb-4">
+                <MudText Typo="Typo.h6" Class="mb-2">Roles</MudText>
+                @if (_canManage)
+                {
+                    <MudSelect T="Guid" MultiSelection="true" Label="Roles" SelectedValues="_roleIds" SelectedValuesChanged="SetRolesAsync" ToStringFunc="RoleName" Disabled="_busy" data-testid="user-roles">
+                        @foreach (var role in _roles)
+                        {
+                            <MudSelectItem Value="@role.Id">@role.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                }
+                else
+                {
+                    @foreach (var role in _user.Roles)
+                    {
+                        <MudChip T="string" Size="Size.Small">@role.Name</MudChip>
+                    }
+                }
+                <MudText Typo="Typo.h6" Class="mt-4 mb-2">Groups</MudText>
+                @if (_user.Groups.Count == 0)
+                {
+                    <MudText Class="mud-text-secondary">No groups.</MudText>
+                }
+                @foreach (var group in _user.Groups)
+                {
+                    <MudChip T="string" Size="Size.Small" Href="/admin/groups" Icon="@Icons.Material.Outlined.Groups">@group.Name</MudChip>
+                }
+            </MudPaper>
+            <MudPaper Outlined="true" Class="pa-4">
+                <MudText Typo="Typo.h6" Class="mb-2">Effective permissions</MudText>
+                @if (_permissions.Count == 0)
+                {
+                    <MudText Class="mud-text-secondary">No permissions.</MudText>
+                }
+                @foreach (var permission in _permissions)
+                {
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@permission</MudChip>
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    [CascadingParameter] private Task<AuthenticationState> AuthenticationState { get; set; } = null!;
+
+    [Inject] private IAuthorizationService Authorization { get; set; } = null!;
+
+    private UserDetailDto? _user;
+    private IReadOnlyList<RoleDto> _roles = [];
+    private IReadOnlyList<string> _permissions = [];
+    private IReadOnlyCollection<Guid> _roleIds = [];
+    private string? _firstName;
+    private string? _lastName;
+    private bool _active;
+    private bool _canManage;
+    private bool _busy;
+    private string? _error;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _canManage = (await Authorization.AuthorizeAsync((await AuthenticationState).User, Security.PermissionPolicy.For(IdentityPermissions.Users.Manage))).Succeeded;
+        try
+        {
+            _roles = await Api.GetRolesAsync();
+            await LoadAsync();
+        }
+        catch (ApiException exception)
+        {
+            _error = exception.Status == 404 ? "This user does not exist." : exception.Message;
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        _user = await Api.GetUserDetailAsync(Id);
+        _permissions = await Api.GetEffectivePermissionsAsync(Id);
+        (_firstName, _lastName, _active) = (_user.FirstName, _user.LastName, _user.IsActive);
+        _roleIds = _user.Roles.Select(r => r.Id).ToList();
+    }
+
+    private static string DisplayName(UserDetailDto user) =>
+        $"{user.FirstName} {user.LastName}".Trim() is { Length: > 0 } name ? name : user.Email;
+
+    private static string Initials(UserDetailDto user) =>
+        string.Concat(DisplayName(user).Split(' ', '@', '.').Where(p => p.Length > 0).Take(2).Select(p => char.ToUpperInvariant(p[0])));
+
+    private string RoleName(Guid id) => _roles.FirstOrDefault(r => r.Id == id)?.Name ?? string.Empty;
+
+    private Task SaveAsync() => RunAsync(() => Api.UpdateUserAsync(Id, new UpdateUserRequest(_firstName, _lastName, _active)), "Saved.");
+
+    private Task UnlockAsync() => RunAsync(() => Api.UnlockUserAsync(Id), "Unlocked.");
+
+    private Task SendResetAsync() => RunAsync(() => Api.SendPasswordResetAsync(Id), "Password reset sent.");
+
+    private Task SetRolesAsync(IReadOnlyCollection<Guid> ids) => RunAsync(() => Api.SetUserRolesAsync(Id, ids.ToList()), "Roles saved.");
+
+    private async Task RunAsync(Func<Task> action, string done)
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await action();
+            Snackbar.Add(done, Severity.Success);
+            await LoadAsync();
+        }
+        catch (ApiException exception)
+        {
+            Snackbar.Add(exception.Message, Severity.Error);
+            await LoadAsync();
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

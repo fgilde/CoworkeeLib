@@ -60,6 +60,9 @@ public sealed class LoginModel(SignInManager<User> signIn, UserManager<User> use
             return Page();
         }
 
+        user.LastLoginAt = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync();
+
         return LocalRedirect(Url.IsLocalUrl(returnUrl) ? returnUrl : "/");
     }
 

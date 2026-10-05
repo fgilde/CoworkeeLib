@@ -20,14 +20,6 @@
     .cw-step.active b { background: var(--mud-palette-primary); color: var(--mud-palette-primary-text); }
     .cw-card { padding: 36px 40px; border-radius: 18px !important; backdrop-filter: blur(6px);
         background: color-mix(in srgb, var(--mud-palette-surface) 92%, transparent) !important; }
-    .cw-themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; }
-    .cw-theme { cursor: pointer; border-radius: 14px; padding: 12px; border: 2px solid var(--mud-palette-lines-default); background: var(--mud-palette-surface);
-        transition: transform 120ms ease, border-color 120ms ease; display: block; }
-    .cw-theme:focus-visible { outline: 2px solid var(--mud-palette-primary); outline-offset: 2px; }
-    .cw-theme:hover { transform: translateY(-2px); }
-    .cw-theme.selected { border-color: var(--mud-palette-primary); box-shadow: 0 6px 20px color-mix(in srgb, var(--mud-palette-primary) 30%, transparent); }
-    .cw-swatch { height: 64px; border-radius: 10px; display: flex; overflow: hidden; margin-bottom: 10px; box-shadow: inset 0 0 0 1px var(--mud-palette-lines-default); }
-    .cw-swatch span { flex: 1; display: block; }
     .cw-done { text-align: center; padding: 24px 0 8px; }
 </style>
 
@@ -86,36 +78,9 @@
                     <MudTextField @bind-Value="_request.TenantName" Label="Organisation name" Variant="Variant.Outlined" data-testid="tenant-name" Required="true" Immediate="true" />
                     break;
                 case 3:
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
-                        <MudText Typo="Typo.subtitle2">Color mode</MudText>
-                        <MudButtonGroup Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">
-                            @foreach (var (mode, label, icon) in Modes)
-                            {
-                                <MudButton data-mode="@mode" StartIcon="@icon" Variant="@(ThemeService.Mode == mode ? Variant.Filled : Variant.Outlined)" OnClick="() => ThemeService.SetMode(mode)">@label</MudButton>
-                            }
-                        </MudButtonGroup>
-                    </MudStack>
-                    @if (_themes is null)
+                    <ThemePicker Themes="_themes" SelectedId="SelectedThemeId" SelectedIdChanged="Choose" Mode="@ThemeService.Mode" ModeChanged="ThemeService.SetMode" />
+                    @if (_themes is not null)
                     {
-                        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
-                    }
-                    else
-                    {
-                        <div class="cw-themes">
-                            @foreach (var theme in _themes)
-                            {
-                                <div role="button" tabindex="0" aria-pressed="@(theme.Id == SelectedThemeId)" class="@($"cw-theme {(theme.Id == SelectedThemeId ? "selected" : string.Empty)}")" data-theme="@theme.Name"
-                                     @onclick="() => Choose(theme)" @onkeydown="e => ChooseByKey(e, theme)">
-                                    <div class="cw-swatch">
-                                        @foreach (var color in Swatch(theme))
-                                        {
-                                            <span style="background:@color"></span>
-                                        }
-                                    </div>
-                                    <MudText Typo="Typo.subtitle2">@theme.Name</MudText>
-                                </div>
-                            }
-                        </div>
                         <MudText Typo="Typo.caption" Class="mt-3 d-block mud-text-secondary">Admins can create their own themes later under Themes; everyone can pick one under My settings.</MudText>
                     }
                     break;
@@ -189,13 +154,6 @@
         "Optional: the server for invitations and password mails. You can set it later under Settings.",
     ];
 
-    private static readonly (string Mode, string Label, string Icon)[] Modes =
-    [
-        ("light", "Light", Icons.Material.Outlined.LightMode),
-        ("system", "System", Icons.Material.Outlined.Contrast),
-        ("dark", "Dark", Icons.Material.Outlined.DarkMode),
-    ];
-
     private readonly SetupInput _request = new();
     private readonly MailInput _mail = new();
     private IReadOnlyList<SetupCheckDto>? _checks;
@@ -226,31 +184,12 @@
         _ => Severity.Error,
     };
 
-    // only plain color values go into the style attribute
-    private static IEnumerable<string> Swatch(ThemeDto theme)
+    private void Choose(Guid id)
     {
-        foreach (var key in new[] { "Primary", "Secondary", "Background", "Surface" })
+        if (_themes?.FirstOrDefault(t => t.Id == id) is { } theme)
         {
-            if (theme.PaletteLight.ValueKind == System.Text.Json.JsonValueKind.Object && theme.PaletteLight.TryGetProperty(key, out var value)
-                && value.ValueKind == System.Text.Json.JsonValueKind.String && value.GetString() is { Length: > 0 and <= 40 } color
-                && color.All(c => char.IsAsciiLetterOrDigit(c) || c is '#' or '(' or ')' or ',' or '.' or ' ' or '%'))
-            {
-                yield return color;
-            }
-        }
-    }
-
-    private void Choose(ThemeDto theme)
-    {
-        _themeId = theme.Id;
-        ThemeService.Apply(theme);
-    }
-
-    private void ChooseByKey(KeyboardEventArgs e, ThemeDto theme)
-    {
-        if (e.Key is "Enter" or " ")
-        {
-            Choose(theme);
+            _themeId = id;
+            ThemeService.Apply(theme);
         }
     }
 

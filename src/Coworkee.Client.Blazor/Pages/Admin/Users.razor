@@ -55,7 +55,7 @@
         <MudTh>Email</MudTh><MudTh>Name</MudTh><MudTh>Roles</MudTh><MudTh>Active</MudTh><MudTh></MudTh>
     </HeaderContent>
     <RowTemplate>
-        <MudTd data-user="@context.Email">@context.Email</MudTd>
+        <MudTd data-user="@context.Email"><MudLink Href="@($"/admin/users/{context.Id}")">@context.Email</MudLink></MudTd>
         <MudTd>@context.FirstName @context.LastName</MudTd>
         <MudTd>
             <PermissionView Permission="@IdentityPermissions.Users.Manage">

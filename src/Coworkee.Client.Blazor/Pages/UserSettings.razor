@@ -1,6 +1,71 @@
 @page "/settings"
 @attribute [Authorize]
+@inject ICoworkeeApi Api
+@inject ThemeService ThemeService
+@implements IDisposable
 
 <PageTitle>My settings</PageTitle>
 <MudText Typo="Typo.h4" Class="mb-4">My settings</MudText>
-<SettingsForm Scope="SettingScope.User" />
+
+<MudPaper Outlined="true" Class="pa-4 mb-6">
+    <MudText Typo="Typo.h6" Class="mb-3">Appearance</MudText>
+    <ThemePicker Themes="_themes" SelectedId="ThemeService.Current?.Id" SelectedIdChanged="ChooseAsync" Mode="@ThemeService.Mode" ModeChanged="ModeAsync">
+        <MudSpacer />
+        <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Outlined.Business" OnClick="UseDefaultAsync" data-testid="theme-default">Organisation default</MudButton>
+    </ThemePicker>
+</MudPaper>
+
+<SettingsForm Scope="SettingScope.User" Hide="Hidden" />
+
+@code {
+    private static readonly IReadOnlySet<string> Hidden = new HashSet<string>(StringComparer.Ordinal) { ThemeSettings.Mode, ThemeSettings.ThemeId };
+
+    private IReadOnlyList<ThemeDto>? _themes;
+
+    protected override void OnInitialized() => ThemeService.Changed += Refresh;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _themes = await Api.GetThemesAsync();
+        }
+        catch (ApiException)
+        {
+            _themes = [];
+        }
+    }
+
+    public void Dispose() => ThemeService.Changed -= Refresh;
+
+    private void Refresh() => InvokeAsync(StateHasChanged);
+
+    private async Task ChooseAsync(Guid id)
+    {
+        if (_themes?.FirstOrDefault(t => t.Id == id) is { } theme)
+        {
+            ThemeService.Apply(theme);
+            await SaveAsync(ThemeSettings.ThemeId, id.ToString());
+        }
+    }
+
+    private async Task ModeAsync(string mode)
+    {
+        ThemeService.SetMode(mode);
+        await SaveAsync(ThemeSettings.Mode, mode);
+    }
+
+    private async Task UseDefaultAsync()
+    {
+        await SaveAsync(ThemeSettings.ThemeId, null);
+        try
+        {
+            ThemeService.Apply(await Api.GetCurrentThemeAsync());
+        }
+        catch (ApiException)
+        {
+        }
+    }
+
+    private Task SaveAsync(string name, string? value) => Api.SetSettingsAsync(SettingScope.User, new Dictionary<string, string?>(StringComparer.Ordinal) { [name] = value });
+}
