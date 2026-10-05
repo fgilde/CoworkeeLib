@@ -1,0 +1,26 @@
+<AuthorizeView>
+    <Authorized>
+        <NotificationBell />
+        <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" data-testid="user-menu">
+            <ActivatorContent Context="menu">
+                <MudButton Variant="Variant.Text" Color="Color.Inherit" Class="ml-2" Style="text-transform:none" StartIcon="@Icons.Material.Outlined.AccountCircle"
+                           EndIcon="@Icons.Material.Filled.ArrowDropDown" aria-label="Account" OnClick="@(() => menu.ToggleAsync())">
+                    @context.User.Identity?.Name
+                </MudButton>
+            </ActivatorContent>
+            <ChildContent>
+                <MudMenuItem Href="/profile" Icon="@Icons.Material.Outlined.Badge">My profile</MudMenuItem>
+                <MudMenuItem Href="/settings" Icon="@Icons.Material.Outlined.ManageAccounts">My settings</MudMenuItem>
+                @if (context.User.FindFirst("manage_url")?.Value is { } manage)
+                {
+                    <MudMenuItem Href="@manage" Target="_blank" Icon="@Icons.Material.Outlined.Security">Password and security</MudMenuItem>
+                }
+                <MudDivider />
+                <MudMenuItem OnClick="LogoutAsync" Icon="@Icons.Material.Outlined.Logout">Sign out</MudMenuItem>
+            </ChildContent>
+        </MudMenu>
+    </Authorized>
+    <NotAuthorized>
+        <MudButton Variant="Variant.Outlined" Color="Color.Inherit" Size="Size.Small" Href="@SignInHref">Sign in</MudButton>
+    </NotAuthorized>
+</AuthorizeView>

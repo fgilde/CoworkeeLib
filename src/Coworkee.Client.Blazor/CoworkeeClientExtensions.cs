@@ -27,6 +27,8 @@ public static class CoworkeeClientExtensions
         services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         services.AddScoped<IAuthorizationHandler, PermissionHandler>();
         services.AddSingleton<INavigationContributor, AdminNavigation>();
+        services.AddOptions<Navigation.NavigationMenuOptions>();
+        Customization.ComponentReplacementExtensions.AddComponentReplacement(services);
         return services;
     }
 
@@ -51,22 +53,24 @@ public sealed record ClientAppConfiguration(string Section, string Title, Type T
 internal sealed class ConfigurationNavigation : INavigationContributor
 {
     public IEnumerable<CoworkeeNavItem> Items =>
-        [new("Configuration", "/admin/configuration", MudBlazor.Icons.Material.Outlined.SettingsApplications, Coworkee.Contracts.Settings.SettingsPermissions.Manage)];
+        [new("Configuration", "/admin/configuration", MudBlazor.Icons.Material.Outlined.SettingsApplications, Coworkee.Contracts.Settings.SettingsPermissions.Manage, Group: AdminNavigation.AdminGroup)];
 }
 
 internal sealed class AdminNavigation : INavigationContributor
 {
+    public const string AdminGroup = "Administration";
+
     public IEnumerable<CoworkeeNavItem> Items =>
     [
-        new("Users", "/admin/users", MudBlazor.Icons.Material.Outlined.Person, Coworkee.Contracts.Identity.IdentityPermissions.Users.View),
-        new("Groups", "/admin/groups", MudBlazor.Icons.Material.Outlined.Groups, Coworkee.Contracts.Identity.IdentityPermissions.Groups.View),
-        new("Roles", "/admin/roles", MudBlazor.Icons.Material.Outlined.Shield, Coworkee.Contracts.Identity.IdentityPermissions.Roles.View),
-        new("Settings", "/admin/settings", MudBlazor.Icons.Material.Outlined.Tune, Coworkee.Contracts.Settings.SettingsPermissions.Manage),
-        new("Mail templates", "/admin/mail/templates", MudBlazor.Icons.Material.Outlined.Email, Coworkee.Contracts.Mailing.MailPermissions.Templates.Manage),
-        new("Mail log", "/admin/mail/log", MudBlazor.Icons.Material.Outlined.Outbox, Coworkee.Contracts.Mailing.MailPermissions.Log.View),
-        new("Jobs", "/admin/jobs", MudBlazor.Icons.Material.Outlined.Schedule, Coworkee.Contracts.Jobs.JobsPermissions.View, ForceLoad: true),
-        new("Themes", "/admin/themes", MudBlazor.Icons.Material.Outlined.Palette, Coworkee.Contracts.Theming.ThemePermissions.Manage),
-        new("Audit log", "/admin/audit", MudBlazor.Icons.Material.Outlined.History, Coworkee.Contracts.Auditing.AuditPermissions.View),
+        new("Users", "/admin/users", MudBlazor.Icons.Material.Outlined.Person, Coworkee.Contracts.Identity.IdentityPermissions.Users.View, Group: AdminGroup),
+        new("Groups", "/admin/groups", MudBlazor.Icons.Material.Outlined.Groups, Coworkee.Contracts.Identity.IdentityPermissions.Groups.View, Group: AdminGroup),
+        new("Roles", "/admin/roles", MudBlazor.Icons.Material.Outlined.Shield, Coworkee.Contracts.Identity.IdentityPermissions.Roles.View, Group: AdminGroup),
+        new("Settings", "/admin/settings", MudBlazor.Icons.Material.Outlined.Tune, Coworkee.Contracts.Settings.SettingsPermissions.Manage, Group: AdminGroup),
+        new("Mail templates", "/admin/mail/templates", MudBlazor.Icons.Material.Outlined.Email, Coworkee.Contracts.Mailing.MailPermissions.Templates.Manage, Group: AdminGroup),
+        new("Mail log", "/admin/mail/log", MudBlazor.Icons.Material.Outlined.Outbox, Coworkee.Contracts.Mailing.MailPermissions.Log.View, Group: AdminGroup),
+        new("Jobs", "/admin/jobs", MudBlazor.Icons.Material.Outlined.Schedule, Coworkee.Contracts.Jobs.JobsPermissions.View, ForceLoad: true, Group: AdminGroup),
+        new("Themes", "/admin/themes", MudBlazor.Icons.Material.Outlined.Palette, Coworkee.Contracts.Theming.ThemePermissions.Manage, Group: AdminGroup),
+        new("Audit log", "/admin/audit", MudBlazor.Icons.Material.Outlined.History, Coworkee.Contracts.Auditing.AuditPermissions.View, Group: AdminGroup),
         new("My settings", "/settings", MudBlazor.Icons.Material.Outlined.ManageAccounts),
     ];
 }

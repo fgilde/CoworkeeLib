@@ -1,0 +1,11 @@
+<MudAppBar Elevation="0" Dense="true">
+    <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" aria-label="Toggle navigation" />
+    <CoworkeeBrand />
+    <MudSpacer />
+    @foreach (var item in Items)
+    {
+        <DynamicComponent Type="item.Component" Parameters="item.Parameters" />
+    }
+    <MudIconButton Icon="@(Dark ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" Color="Color.Inherit" OnClick="ToggleDark" aria-label="Toggle dark mode" />
+    <CoworkeeUserMenu />
+</MudAppBar>

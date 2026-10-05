@@ -1,5 +1,3 @@
-@inject ICoworkeeApi Api
-@inject ISnackbar Snackbar
 
 @if (_versions is null)
 {
@@ -32,38 +30,5 @@ else
     {
         <MudText Typo="Typo.overline" Class="mt-3 d-block">Version @_detail.Revision</MudText>
         <pre style="white-space:pre-wrap;font-size:12px;max-height:320px;overflow:auto">@System.Text.Json.JsonSerializer.Serialize(_detail.Payload, Indented)</pre>
-    }
-}
-
-@code {
-    private static readonly System.Text.Json.JsonSerializerOptions Indented = new() { WriteIndented = true };
-    private IReadOnlyList<EntityVersionDto>? _versions;
-    private EntityVersionDetailDto? _detail;
-
-    [Parameter, EditorRequired] public string Type { get; set; } = string.Empty;
-
-    [Parameter, EditorRequired] public Guid Id { get; set; }
-
-    [Parameter] public EventCallback OnRestored { get; set; }
-
-    protected override async Task OnParametersSetAsync() => await ReloadAsync();
-
-    public async Task ReloadAsync() => _versions = await Api.GetVersionsAsync(Type, Id);
-
-    private async Task ShowAsync(int revision) => _detail = await Api.GetVersionAsync(Type, Id, revision);
-
-    private async Task RestoreAsync(int revision)
-    {
-        try
-        {
-            await Api.RestoreVersionAsync(Type, Id, revision);
-            Snackbar.Add($"Version {revision} restored.", Severity.Success);
-            await OnRestored.InvokeAsync();
-            await ReloadAsync();
-        }
-        catch (ApiException exception)
-        {
-            Snackbar.Add(exception.Message, Severity.Error);
-        }
     }
 }

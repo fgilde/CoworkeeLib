@@ -1,7 +1,4 @@
 @inherits LayoutComponentBase
-@inject CoworkeeClientOptions Options
-@inject ThemeService ThemeService
-@implements IDisposable
 
 @* first run: no navigation and no account menu, only the app's name, the theme being chosen and the wizard *@
 <MudThemeProvider @ref="_provider" Theme="ThemeService.Theme" IsDarkMode="_dark" />
@@ -51,36 +48,3 @@
     </div>
     <div class="cw-setup-main">@Body</div>
 </div>
-
-@code {
-    private MudThemeProvider? _provider;
-    private bool _dark;
-    private bool _systemDark;
-
-    protected override void OnInitialized() => ThemeService.Changed += Refresh;
-
-    public void Dispose() => ThemeService.Changed -= Refresh;
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await ThemeService.LoadAsync();
-            _systemDark = _provider is not null && await _provider.GetSystemDarkModeAsync();
-            Refresh();
-        }
-    }
-
-    private void ToggleDark() => ThemeService.SetMode(_dark ? "light" : "dark");
-
-    private void Refresh() => InvokeAsync(() =>
-    {
-        _dark = ThemeService.Mode switch
-        {
-            "dark" => true,
-            "light" => false,
-            _ => _systemDark,
-        };
-        StateHasChanged();
-    });
-}

@@ -1,0 +1,5 @@
+@if (ThemeService.LogoSvg is { Length: > 0 } logo)
+{
+    <img class="ml-2" data-testid="logo" alt="" style="height:28px" src="@LogoSource(logo)" />
+}
+<MudText Typo="Typo.h6" Class="ml-2">@Options.AppTitle</MudText>
