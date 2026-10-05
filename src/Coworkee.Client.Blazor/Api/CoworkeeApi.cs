@@ -138,6 +138,18 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
 
     public async Task<IReadOnlyList<ThemeDto>> GetThemesAsync(CancellationToken cancellationToken = default) => await GetAsync<ThemeDto[]>(Themes, cancellationToken);
 
+    public async Task<IReadOnlyList<AppConfigurationDto>> GetAppConfigurationsAsync(CancellationToken cancellationToken = default) =>
+        await GetAsync<AppConfigurationDto[]>("api/v1/configuration", cancellationToken);
+
+    public Task<AppConfigurationValuesDto> GetAppConfigurationAsync(string section, CancellationToken cancellationToken = default) =>
+        GetAsync<AppConfigurationValuesDto>($"api/v1/configuration/{Uri.EscapeDataString(section)}", cancellationToken);
+
+    public Task<AppConfigurationValuesDto> SaveAppConfigurationAsync(string section, System.Text.Json.JsonElement values, CancellationToken cancellationToken = default) =>
+        SendAsync<AppConfigurationValuesDto>(HttpMethod.Put, $"api/v1/configuration/{Uri.EscapeDataString(section)}", values, cancellationToken);
+
+    public Task<AppConfigurationValuesDto> ResetAppConfigurationAsync(string section, CancellationToken cancellationToken = default) =>
+        SendAsync<AppConfigurationValuesDto>(HttpMethod.Delete, $"api/v1/configuration/{Uri.EscapeDataString(section)}", null, cancellationToken);
+
     public async Task<IReadOnlyList<ThemeDto>> GetBuiltInThemesAsync(CancellationToken cancellationToken = default) => await GetAsync<ThemeDto[]>($"{Themes}/built-in", cancellationToken);
 
     public Task<ThemeDto> CreateThemeAsync(ThemeRequest request, CancellationToken cancellationToken = default) =>

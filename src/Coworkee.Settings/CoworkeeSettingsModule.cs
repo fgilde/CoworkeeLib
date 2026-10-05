@@ -23,6 +23,7 @@ public sealed class CoworkeeSettingsModule : CoworkeeModule, IWebModule
         var services = context.Services;
         services.AddMessagingFromAssembly(typeof(CoworkeeSettingsModule).Assembly);
         services.AddSingleton<IModelContributor, SettingsModelContributor>();
+        services.AddSingleton<IModelContributor, AppConfigurationModelContributor>();
         services.AddSingleton<IPermissionDefinitionContributor, SettingsPermissionDefinitions>();
         services.AddSingleton<ISettingDefinitionManager, SettingDefinitionManager>();
         services.AddScoped<ISettingProvider, SettingProvider>();
@@ -41,6 +42,11 @@ public sealed class CoworkeeSettingsModule : CoworkeeModule, IWebModule
         api.MapGet("/client", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetClientSettings(), ct).ToHttpResult());
         api.MapGet("/user", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetUserSettings(), ct).ToHttpResult());
         api.MapPut("/user", (SetSettingsRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SetUserSettings(body.Values), ct).ToHttpResult());
+        var configuration = app.MapGroup("/api/v1/configuration").WithTags("Configuration").RequireAuthorization();
+        configuration.MapGet("/", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetAppConfigurations(), ct).ToHttpResult());
+        configuration.MapGet("/{section}", (string section, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetAppConfiguration(section), ct).ToHttpResult());
+        configuration.MapPut("/{section}", (string section, System.Text.Json.JsonElement body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SaveAppConfiguration(section, body), ct).ToHttpResult());
+        configuration.MapDelete("/{section}", (string section, IDispatcher d, CancellationToken ct) => d.SendAsync(new ResetAppConfiguration(section), ct).ToHttpResult());
         foreach (var scope in new[] { SettingScope.Global, SettingScope.Tenant })
         {
             var path = "/" + scope.ToString().ToLowerInvariant();

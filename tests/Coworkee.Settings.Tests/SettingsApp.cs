@@ -32,6 +32,14 @@ public sealed class SettingsApp : PostgresFixture
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
         builder.Configuration["Coworkee:Settings:Defaults:Test.Configured"] = "7";
+        builder.Configuration["TestApp:Name"] = "Default";
+        builder.Configuration["TestApp:Limit"] = "10";
+        builder.Configuration["TestApp:ApiKey"] = "secret-default";
+        builder.Configuration["TestApp:Tags:0"] = "a";
+        builder.Configuration["TestApp:Tags:1"] = "b";
+        builder.Configuration.AddCoworkeeAppConfigurationDefaults(
+            new MemoryStream("""{ "Name": "FromFile", "Mode": "file" /* comments are fine */ }"""u8.ToArray()), "TestApp");
+        builder.Configuration.AddCoworkeeDatabaseConfiguration("test", TimeSpan.FromHours(1));
         builder.AddCoworkee<TestSettingsModule>();
         builder.Services.AddTestAuthentication();
         App = builder.Build();
@@ -59,6 +67,10 @@ public sealed class SettingsApp : PostgresFixture
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<SetupResultDto>())!;
     }
+
+    /// <summary>The database provider after a reset or a write from outside the API.</summary>
+    public void RefreshConfiguration() =>
+        ((IConfigurationRoot)App.Services.GetRequiredService<IConfiguration>()).Providers.OfType<DatabaseConfigurationProvider>().Single().Refresh();
 
     public HttpClient As(Guid userId, Guid tenantId) => App.GetTestClient().AsUser(userId, tenantId);
 
@@ -109,7 +121,21 @@ public sealed class TestSettingsModule : CoworkeeModule
     public override void ConfigureServices(ModuleServiceContext context)
     {
         context.Services.AddSingleton<ISettingDefinitionContributor, TestSettingDefinitions>();
+        context.Services.AddCoworkeeAppConfiguration<TestAppConfig>(context.Configuration, "TestApp", "Test app");
         context.Services.AddCoworkeeDbContext<SettingsTestDbContext>((provider, options) =>
             options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
     }
+}
+
+public sealed class TestAppConfig
+{
+    public string? Name { get; set; }
+
+    public int Limit { get; set; }
+
+    public string? ApiKey { get; set; }
+
+    public List<string> Tags { get; set; } = [];
+
+    public string? Mode { get; set; }
 }

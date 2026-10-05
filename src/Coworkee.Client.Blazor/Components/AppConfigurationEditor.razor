@@ -1,0 +1,96 @@
+@typeparam T where T : class, new()
+@using System.Text.Json
+@using MudBlazor.Extensions.Components.ObjectEdit
+@using MudBlazor.Extensions.Components.ObjectEdit.Options
+@inject ICoworkeeApi Api
+@inject ISnackbar Snackbar
+@inject IDialogService Dialogs
+
+@if (_error is not null)
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4" data-testid="configuration-error">@_error</MudAlert>
+}
+
+@if (_value is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <MudExObjectEditForm @key="_revision" Value="_value" IsLoading="_busy"
+                         StickyToolbar="true" StickyActionBar="true" AllowExport="true" AllowImport="true" ImportNeedsConfirmation="true"
+                         GroupingStyle="GroupingStyle.Flat" DefaultGroupName="General"
+                         MetaConfiguration="@(Registration.Meta as Action<ObjectEditMeta<T>>)"
+                         OnValidSubmit="SaveAsync">
+        <ToolBarContent>
+            <MudSpacer />
+            @if (_changed.Count > 0)
+            {
+                <MudTooltip Text="@string.Join(", ", _changed)">
+                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined" data-testid="changed-count">@_changed.Count changed in the app</MudChip>
+                </MudTooltip>
+            }
+            <MudTooltip Text="Restore the configured values (appsettings and environment)">
+                <MudIconButton Icon="@Icons.Material.Outlined.SettingsBackupRestore" OnClick="ResetAsync" Disabled="@(_changed.Count == 0 || _busy)" data-testid="reset" aria-label="Restore defaults" />
+            </MudTooltip>
+        </ToolBarContent>
+    </MudExObjectEditForm>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public ClientAppConfiguration Registration { get; set; } = null!;
+
+    private T? _value;
+    private IReadOnlyList<string> _changed = [];
+    private string? _error;
+    private bool _busy;
+    private int _revision;
+
+    protected override async Task OnParametersSetAsync() => await LoadAsync(() => Api.GetAppConfigurationAsync(Registration.Section));
+
+    private async Task LoadAsync(Func<Task<AppConfigurationValuesDto>> call)
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var section = await call();
+            _value = section.Values.Deserialize<T>(JsonSerializerOptions.Web) ?? new T();
+            _changed = section.ChangedKeys;
+            _revision++;
+        }
+        catch (ApiException exception)
+        {
+            _error = exception.Status == 403 ? "The app configuration is managed from the system organisation." : exception.Message;
+        }
+        finally
+        {
+            _busy = false;
+            StateHasChanged();
+        }
+    }
+
+    public async Task SaveAsync()
+    {
+        if (_value is null)
+        {
+            return;
+        }
+
+        var values = JsonSerializer.SerializeToElement(_value, JsonSerializerOptions.Web);
+        await LoadAsync(() => Api.SaveAppConfigurationAsync(Registration.Section, values));
+        if (_error is null)
+        {
+            Snackbar.Add($"{Registration.Title} saved. Some values only apply after the services restart.", Severity.Success);
+        }
+    }
+
+    private async Task ResetAsync()
+    {
+        if (await Dialogs.ShowMessageBoxAsync("Restore defaults", "All changes made here go away; the configured values apply again.", yesText: "Restore", cancelText: "Cancel") == true)
+        {
+            await LoadAsync(() => Api.ResetAppConfigurationAsync(Registration.Section));
+        }
+    }
+}

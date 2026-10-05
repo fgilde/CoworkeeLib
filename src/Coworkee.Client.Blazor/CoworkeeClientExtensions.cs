@@ -29,6 +29,29 @@ public static class CoworkeeClientExtensions
         services.AddSingleton<INavigationContributor, AdminNavigation>();
         return services;
     }
+
+    /// <summary>
+    /// Lets admins edit the typed section under Configuration (the server registers the same type with
+    /// AddCoworkeeAppConfiguration); <paramref name="meta"/> tunes the form like any MudExObjectEditForm.
+    /// </summary>
+    public static IServiceCollection AddCoworkeeAppConfiguration<T>(this IServiceCollection services, string section, string title,
+        Action<MudBlazor.Extensions.Components.ObjectEdit.Options.ObjectEditMeta<T>>? meta = null)
+        where T : class, new()
+    {
+        services.AddSingleton(new ClientAppConfiguration(section, title, typeof(T), meta));
+        Microsoft.Extensions.DependencyInjection.Extensions.ServiceCollectionDescriptorExtensions.TryAddEnumerable(services,
+            ServiceDescriptor.Singleton<INavigationContributor, ConfigurationNavigation>());
+        return services;
+    }
+}
+
+/// <summary>A typed configuration section the admin pages offer; <see cref="Meta"/> is an Action&lt;ObjectEditMeta&lt;T&gt;&gt; or null.</summary>
+public sealed record ClientAppConfiguration(string Section, string Title, Type Type, object? Meta);
+
+internal sealed class ConfigurationNavigation : INavigationContributor
+{
+    public IEnumerable<CoworkeeNavItem> Items =>
+        [new("Configuration", "/admin/configuration", MudBlazor.Icons.Material.Outlined.SettingsApplications, Coworkee.Contracts.Settings.SettingsPermissions.Manage)];
 }
 
 internal sealed class AdminNavigation : INavigationContributor

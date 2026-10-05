@@ -35,3 +35,15 @@ public sealed record SettingGroupDto(string Name, string DisplayName, IReadOnlyL
 public sealed record SettingValueDto(string Name, string? Value, bool HasValue);
 
 public sealed record SetSettingsRequest(IReadOnlyDictionary<string, string?> Values);
+
+/// <summary>A typed configuration section the app lets admins edit (its class is usually generated from a JSON file).</summary>
+public sealed record AppConfigurationDto(string Section, string Title);
+
+/// <summary>The section as it applies now and as it would without changes made in the app; secrets come masked.</summary>
+public sealed record AppConfigurationValuesDto(string Section, System.Text.Json.JsonElement Values, System.Text.Json.JsonElement Defaults, IReadOnlyList<string> ChangedKeys);
+
+public static class AppConfigurationMask
+{
+    /// <summary>Stands for a stored secret; sending it back keeps the secret.</summary>
+    public const string Value = "********";
+}

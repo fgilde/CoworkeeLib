@@ -1,0 +1,24 @@
+@page "/admin/configuration"
+@attribute [Authorize(Policy = "perm:" + SettingsPermissions.Manage)]
+@inject IEnumerable<ClientAppConfiguration> Registrations
+
+<PageTitle>Configuration</PageTitle>
+<MudText Typo="Typo.h4">Configuration</MudText>
+<MudText Class="mb-4 mud-text-secondary">Applies to every organisation and every service. Values not changed here come from appsettings and the environment.</MudText>
+
+@if (!Registrations.Any())
+{
+    <MudAlert Severity="Severity.Info">This app has no editable configuration.</MudAlert>
+}
+else
+{
+    <MudTabs Elevation="0" Outlined="true">
+        @foreach (var registration in Registrations)
+        {
+            <MudTabPanel Text="@registration.Title">
+                <div class="pa-4" data-section="@registration.Section"><DynamicComponent Type="@typeof(AppConfigurationEditor<>).MakeGenericType(registration.Type)"
+                                  Parameters="@(new Dictionary<string, object> { ["Registration"] = registration })" /></div>
+            </MudTabPanel>
+        }
+    </MudTabs>
+}
