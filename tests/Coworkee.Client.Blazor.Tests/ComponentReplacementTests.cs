@@ -27,6 +27,10 @@ public sealed class ComponentReplacementTests : ClientTestBase
         options.Resolve(typeof(GreetingHost)).ShouldBe(typeof(GreetingHost));
     }
 
+    [Fact]
+    public void A_replacement_that_leads_back_to_the_original_is_refused() =>
+        Should.Throw<InvalidOperationException>(() => new ComponentReplacementOptions().Replace<Greeting, LoudGreeting>().Replace<LoudGreeting, Greeting>());
+
     public class Greeting : ComponentBase
     {
         [Parameter] public string Name { get; set; } = string.Empty;

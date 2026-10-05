@@ -12,6 +12,11 @@ public sealed class ComponentReplacementOptions
         where TOriginal : IComponent
         where TReplacement : IComponent
     {
+        if (Resolve(typeof(TReplacement)) == typeof(TOriginal))
+        {
+            throw new InvalidOperationException($"Replacing {typeof(TOriginal).Name} with {typeof(TReplacement).Name} would replace it with itself.");
+        }
+
         _replacements[typeof(TOriginal)] = typeof(TReplacement);
         return this;
     }
