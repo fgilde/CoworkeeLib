@@ -35,6 +35,16 @@ public sealed partial class AccountPagesTests(AuthApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Login_starts_with_the_address_the_client_hinted()
+    {
+        var returnUrl = "/connect/authorize?client_id=client&login_hint=" + Uri.EscapeDataString("ada@acme.test");
+
+        var page = await app.Browser().GetStringAsync("/Account/Login?ReturnUrl=" + Uri.EscapeDataString(returnUrl), Ct);
+
+        page.ShouldContain("value=\"ada@acme.test\"");
+    }
+
+    [Fact]
     public async Task Forgot_password_answers_the_same_for_unknown_addresses()
     {
         var known = await PostFormAsync(app.Browser(), "/Account/ForgotPassword", new() { ["Input.Email"] = "admin@acme.test" });

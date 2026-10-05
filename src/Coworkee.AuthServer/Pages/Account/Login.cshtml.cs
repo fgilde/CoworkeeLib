@@ -18,7 +18,17 @@ public sealed class LoginModel(SignInManager<User> signIn, UserManager<User> use
 
     public bool AllowRegistration { get; private set; }
 
-    public async Task OnGetAsync() => AllowRegistration = await settings.GetAsync<bool>(AccountSettings.AllowRegistration);
+    public async Task OnGetAsync(string? returnUrl)
+    {
+        AllowRegistration = await settings.GetAsync<bool>(AccountSettings.AllowRegistration);
+
+        // the authorization request carries the client's login_hint (the address entered in setup, for example)
+        if (returnUrl is not null && returnUrl.IndexOf('?') is var query and >= 0
+            && Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(returnUrl[query..]).TryGetValue("login_hint", out var hint) && hint.ToString() is { Length: > 0 and <= 256 } email)
+        {
+            Input.Email = email;
+        }
+    }
 
     public async Task<IActionResult> OnPostAsync(string? returnUrl)
     {

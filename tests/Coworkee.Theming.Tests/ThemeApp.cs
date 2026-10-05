@@ -50,12 +50,14 @@ public sealed class ThemeApp : PostgresFixture
         await base.DisposeAsync();
     }
 
-    public async Task<SetupResultDto> SetupAsync()
+    public async Task<SetupResultDto> SetupAsync(string? themeName = null, IReadOnlyDictionary<string, string?>? settings = null)
     {
         await ResetAsync();
         App.Services.GetRequiredService<SystemStateCache>().Reset();
+        var themeId = themeName is null ? null
+            : (Guid?)(await App.GetTestClient().GetFromJsonAsync<Coworkee.Contracts.Theming.ThemeDto[]>("/api/v1/themes/built-in"))!.Single(t => t.Name == themeName).Id;
         var response = await App.GetTestClient().PostAsJsonAsync("/api/v1/setup/complete",
-            new CompleteSetupRequest("token", "Acme", "admin@acme.test", "Admin#12345", "Ada", "Admin"));
+            new CompleteSetupRequest("token", "Acme", "admin@acme.test", "Admin#12345", "Ada", "Admin", settings, themeId));
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<SetupResultDto>())!;
     }

@@ -7,6 +7,7 @@ using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
 using Coworkee.Identity.Permissions;
 using Coworkee.Identity.Persistence;
+using Coworkee.Application.Setup;
 using Coworkee.Identity.Setup;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Builder;

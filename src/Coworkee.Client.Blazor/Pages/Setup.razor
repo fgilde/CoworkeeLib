@@ -1,92 +1,208 @@
 @page "/setup"
+@layout SetupLayout
 @attribute [AllowAnonymous]
 @inject ICoworkeeApi Api
 @inject CoworkeeClientOptions Options
+@inject ThemeService ThemeService
 
 <PageTitle>Set up @Options.AppTitle</PageTitle>
-<MudPaper Outlined="true" Class="pa-6 mx-auto" Style="max-width:560px">
-    <MudText Typo="Typo.overline">Step @(Math.Min(_step + 1, LastStep + 1)) of @(LastStep + 1)</MudText>
-    <MudText Typo="Typo.h4" Class="mb-4">Set up @Options.AppTitle</MudText>
 
-    @if (_done)
+<style>
+    .cw-wizard { width: 100%; max-width: 820px; }
+    .cw-steps { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
+    .cw-step { display: flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px; font-size: .85rem;
+        color: var(--mud-palette-text-secondary); background: color-mix(in srgb, var(--mud-palette-surface) 70%, transparent); }
+    .cw-step b { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: .75rem;
+        background: var(--mud-palette-lines-default); color: var(--mud-palette-text-primary); }
+    .cw-step.done b { background: color-mix(in srgb, var(--mud-palette-primary) 30%, transparent); }
+    .cw-step.active { color: var(--mud-palette-text-primary); font-weight: 600; background: var(--mud-palette-surface);
+        box-shadow: 0 4px 14px color-mix(in srgb, var(--mud-palette-primary) 22%, transparent); }
+    .cw-step.active b { background: var(--mud-palette-primary); color: var(--mud-palette-primary-text); }
+    .cw-card { padding: 36px 40px; border-radius: 18px !important; backdrop-filter: blur(6px);
+        background: color-mix(in srgb, var(--mud-palette-surface) 92%, transparent) !important; }
+    .cw-themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; }
+    .cw-theme { cursor: pointer; border-radius: 14px; padding: 12px; border: 2px solid var(--mud-palette-lines-default); background: var(--mud-palette-surface);
+        transition: transform 120ms ease, border-color 120ms ease; display: block; }
+    .cw-theme:focus-visible { outline: 2px solid var(--mud-palette-primary); outline-offset: 2px; }
+    .cw-theme:hover { transform: translateY(-2px); }
+    .cw-theme.selected { border-color: var(--mud-palette-primary); box-shadow: 0 6px 20px color-mix(in srgb, var(--mud-palette-primary) 30%, transparent); }
+    .cw-swatch { height: 64px; border-radius: 10px; display: flex; overflow: hidden; margin-bottom: 10px; box-shadow: inset 0 0 0 1px var(--mud-palette-lines-default); }
+    .cw-swatch span { flex: 1; display: block; }
+    .cw-done { text-align: center; padding: 24px 0 8px; }
+</style>
+
+<div class="cw-wizard">
+    @if (!_done)
     {
-        <MudAlert Severity="Severity.Success" Class="mb-4">The system is ready. Sign in with the administrator account.</MudAlert>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@($"{Options.LoginPath}?returnUrl=/admin/users")">Sign in</MudButton>
+        <div class="cw-steps" aria-label="Setup steps">
+            @for (var i = 0; i <= LastStep; i++)
+            {
+                <div class="@($"cw-step {(i == _step ? "active" : i < _step ? "done" : string.Empty)}")">
+                    <b>@(i < _step ? "✓" : (i + 1).ToString())</b>@StepTitles[i]
+                </div>
+            }
+        </div>
     }
-    else
-    {
-        @switch (_step)
+
+    <MudPaper Elevation="8" Class="cw-card">
+        @if (_done)
         {
-            case 0:
-                <MudText Class="mb-2">Enter the setup token. It is printed in the API log on first start, or configured as <code>Coworkee:SetupToken</code>.</MudText>
-                <MudTextField @bind-Value="_request.SetupToken" Label="Setup token" data-testid="setup-token" Required="true" />
-                break;
-            case 1:
-                <MudText Class="mb-2">System check</MudText>
-                @if (_checks is null)
+            <div class="cw-done">
+                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Style="font-size:64px" />
+                <MudText Typo="Typo.h4" Class="mt-2">@Options.AppTitle is ready</MudText>
+                <MudText Class="mt-2 mb-6 mud-text-secondary">Sign in as <b>@_request.AdminEmail</b> with the password you just chose.</MudText>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" data-testid="sign-in"
+                           Href="@($"{Options.LoginPath}?returnUrl={Uri.EscapeDataString("/")}&loginHint={Uri.EscapeDataString(_request.AdminEmail)}")">Sign in</MudButton>
+            </div>
+        }
+        else
+        {
+            <MudText Typo="Typo.overline">Step @(_step + 1) of @(LastStep + 1)</MudText>
+            <MudText Typo="Typo.h4" Class="mb-1">@StepTitles[_step]</MudText>
+            <MudText Class="mb-6 mud-text-secondary">@StepHints[_step]</MudText>
+
+            @switch (_step)
+            {
+                case 0:
+                    <MudTextField @bind-Value="_request.SetupToken" Label="Setup token" Variant="Variant.Outlined" data-testid="setup-token" Required="true" Immediate="true"
+                                  HelperText="Printed in the API log on first start, or configured as Coworkee:SetupToken." />
+                    break;
+                case 1:
+                    @if (_checks is null)
+                    {
+                        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                    }
+                    else
+                    {
+                        @foreach (var check in _checks)
+                        {
+                            <MudAlert Severity="@SeverityOf(check.Status)" Variant="Variant.Outlined" Dense="true" Class="mb-2" data-check="@check.Name">
+                                <b>@check.Name</b> @(check.Message ?? "OK")
+                            </MudAlert>
+                        }
+                    }
+                    break;
+                case 2:
+                    <MudTextField @bind-Value="_request.TenantName" Label="Organisation name" Variant="Variant.Outlined" data-testid="tenant-name" Required="true" Immediate="true" />
+                    break;
+                case 3:
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+                        <MudText Typo="Typo.subtitle2">Color mode</MudText>
+                        <MudButtonGroup Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">
+                            @foreach (var (mode, label, icon) in Modes)
+                            {
+                                <MudButton data-mode="@mode" StartIcon="@icon" Variant="@(ThemeService.Mode == mode ? Variant.Filled : Variant.Outlined)" OnClick="() => ThemeService.SetMode(mode)">@label</MudButton>
+                            }
+                        </MudButtonGroup>
+                    </MudStack>
+                    @if (_themes is null)
+                    {
+                        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                    }
+                    else
+                    {
+                        <div class="cw-themes">
+                            @foreach (var theme in _themes)
+                            {
+                                <div role="button" tabindex="0" aria-pressed="@(theme.Id == SelectedThemeId)" class="@($"cw-theme {(theme.Id == SelectedThemeId ? "selected" : string.Empty)}")" data-theme="@theme.Name"
+                                     @onclick="() => Choose(theme)" @onkeydown="e => ChooseByKey(e, theme)">
+                                    <div class="cw-swatch">
+                                        @foreach (var color in Swatch(theme))
+                                        {
+                                            <span style="background:@color"></span>
+                                        }
+                                    </div>
+                                    <MudText Typo="Typo.subtitle2">@theme.Name</MudText>
+                                </div>
+                            }
+                        </div>
+                        <MudText Typo="Typo.caption" Class="mt-3 d-block mud-text-secondary">Admins can create their own themes later under Themes; everyone can pick one under My settings.</MudText>
+                    }
+                    break;
+                case 4:
+                    <MudStack Spacing="3">
+                        <MudTextField @bind-Value="_request.AdminEmail" Label="Administrator email" Variant="Variant.Outlined" InputType="InputType.Email" data-testid="admin-email" Required="true" Immediate="true"
+                                      Error="@HasError("AdminEmail")" ErrorText="@ErrorFor("AdminEmail")" />
+                        <MudStack Row="true" Spacing="3">
+                            <MudTextField @bind-Value="_request.AdminFirstName" Label="First name" Variant="Variant.Outlined" data-testid="admin-first" Immediate="true" />
+                            <MudTextField @bind-Value="_request.AdminLastName" Label="Last name" Variant="Variant.Outlined" data-testid="admin-last" Immediate="true" />
+                        </MudStack>
+                        <MudTextField @bind-Value="_request.AdminPassword" Label="Password" Variant="Variant.Outlined" InputType="@PasswordInput" data-testid="admin-password" Required="true" Immediate="true"
+                                      Adornment="Adornment.End" AdornmentIcon="@(_showPassword ? Icons.Material.Outlined.VisibilityOff : Icons.Material.Outlined.Visibility)"
+                                      OnAdornmentClick="() => _showPassword = !_showPassword" AdornmentAriaLabel="Show password"
+                                      Error="@HasError("Password")" ErrorText="@ErrorFor("Password")" />
+                        <MudTextField @bind-Value="_confirmPassword" Label="Repeat password" Variant="Variant.Outlined" InputType="@PasswordInput" data-testid="admin-password-confirm" Required="true" Immediate="true" />
+                    </MudStack>
+                    break;
+                default:
+                    <MudStack Spacing="3">
+                        <MudStack Row="true" Spacing="3">
+                            <MudTextField @bind-Value="_mail.Host" Label="SMTP host" Variant="Variant.Outlined" data-testid="mail-host" Immediate="true" />
+                            <MudTextField @bind-Value="_mail.Port" Label="SMTP port" Variant="Variant.Outlined" InputType="InputType.Number" Placeholder="25" data-testid="mail-port" Immediate="true" Style="max-width:140px" />
+                        </MudStack>
+                        <MudTextField @bind-Value="_mail.From" Label="Sender address" Variant="Variant.Outlined" InputType="InputType.Email" data-testid="mail-from" Immediate="true" />
+                        <MudStack Row="true" Spacing="3">
+                            <MudTextField @bind-Value="_mail.UserName" Label="User name" Variant="Variant.Outlined" data-testid="mail-user" Immediate="true" />
+                            <MudTextField @bind-Value="_mail.Password" Label="Password" Variant="Variant.Outlined" InputType="InputType.Password" data-testid="mail-password" Immediate="true" />
+                        </MudStack>
+                        <MudCheckBox @bind-Value="_mail.UseSsl" Label="Use SSL" Color="Color.Primary" />
+                    </MudStack>
+                    break;
+            }
+
+            @if (_error is not null)
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mt-6" data-testid="setup-error">@_error</MudAlert>
+            }
+
+            <MudStack Row="true" Class="mt-8" AlignItems="AlignItems.Center">
+                @if (_step > 0)
                 {
-                    <MudProgressLinear Indeterminate="true" />
+                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="Back">Back</MudButton>
+                }
+                <MudSpacer />
+                @if (_step < LastStep)
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" EndIcon="@Icons.Material.Filled.ArrowForward" OnClick="NextAsync" Disabled="@BlockedByChecks" data-testid="next">Next</MudButton>
                 }
                 else
                 {
-                    @foreach (var check in _checks)
-                    {
-                        <MudAlert Severity="@SeverityOf(check.Status)" Dense="true" Class="mb-2" data-check="@check.Name">
-                            <b>@check.Name</b> @(check.Message ?? "OK")
-                        </MudAlert>
-                    }
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" EndIcon="@Icons.Material.Filled.Check" OnClick="FinishAsync" Disabled="_busy" data-testid="finish">Finish setup</MudButton>
                 }
-                break;
-            case 2:
-                <MudTextField @bind-Value="_request.TenantName" Label="Organisation name" data-testid="tenant-name" Required="true" />
-                break;
-            case 3:
-                <MudTextField @bind-Value="_request.AdminEmail" Label="Administrator email" InputType="InputType.Email" data-testid="admin-email" Required="true"
-                              Error="@HasError("AdminEmail")" ErrorText="@ErrorFor("AdminEmail")" />
-                <MudTextField @bind-Value="_request.AdminPassword" Label="Password" InputType="InputType.Password" data-testid="admin-password" Required="true"
-                              Error="@HasError("Password")" ErrorText="@ErrorFor("Password")" />
-                <MudTextField @bind-Value="_request.AdminFirstName" Label="First name" data-testid="admin-first" />
-                <MudTextField @bind-Value="_request.AdminLastName" Label="Last name" data-testid="admin-last" />
-                break;
-            default:
-                <MudText Class="mb-2">Mail server (optional). You can change this later under Settings.</MudText>
-                <MudTextField @bind-Value="_mail.Host" Label="SMTP host" data-testid="mail-host" />
-                <MudTextField @bind-Value="_mail.Port" Label="SMTP port" InputType="InputType.Number" Placeholder="25" data-testid="mail-port" />
-                <MudTextField @bind-Value="_mail.From" Label="Sender address" InputType="InputType.Email" data-testid="mail-from" />
-                <MudTextField @bind-Value="_mail.UserName" Label="User name" data-testid="mail-user" />
-                <MudTextField @bind-Value="_mail.Password" Label="Password" InputType="InputType.Password" data-testid="mail-password" />
-                <MudCheckBox @bind-Value="_mail.UseSsl" Label="Use SSL" />
-                break;
+            </MudStack>
         }
-
-        @if (_error is not null)
-        {
-            <MudAlert Severity="Severity.Error" Class="mt-4" data-testid="setup-error">@_error</MudAlert>
-        }
-
-        <MudStack Row="true" Class="mt-6">
-            @if (_step > 0)
-            {
-                <MudButton OnClick="() => _step--">Back</MudButton>
-            }
-            <MudSpacer />
-            @if (_step < LastStep)
-            {
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="NextAsync" Disabled="@BlockedByChecks" data-testid="next">Next</MudButton>
-            }
-            else
-            {
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="FinishAsync" Disabled="_busy" data-testid="finish">Finish setup</MudButton>
-            }
-        </MudStack>
-    }
-</MudPaper>
+    </MudPaper>
+</div>
 
 @code {
-    private const int LastStep = 4;
+    private const int LastStep = 5;
+    private const int LookStep = 3;
+    private const int AdministratorStep = 4;
+    private static readonly string[] StepTitles = ["Welcome", "System check", "Organisation", "Look and feel", "Administrator", "Mail"];
+    private static readonly string[] StepHints =
+    [
+        "A few steps and the system is ready. Start with the setup token.",
+        "Everything the system needs, checked once.",
+        "The name your people will see.",
+        "Pick a theme; it applies right away. You can change it any time.",
+        "The first account, with full access.",
+        "Optional: the server for invitations and password mails. You can set it later under Settings.",
+    ];
+
+    private static readonly (string Mode, string Label, string Icon)[] Modes =
+    [
+        ("light", "Light", Icons.Material.Outlined.LightMode),
+        ("system", "System", Icons.Material.Outlined.Contrast),
+        ("dark", "Dark", Icons.Material.Outlined.DarkMode),
+    ];
+
     private readonly SetupInput _request = new();
     private readonly MailInput _mail = new();
     private IReadOnlyList<SetupCheckDto>? _checks;
+    private IReadOnlyList<ThemeDto>? _themes;
+    private Guid? _themeId;
+    private string _confirmPassword = string.Empty;
+    private bool _showPassword;
     private int _step;
     private bool _busy;
     private bool _done;
@@ -94,6 +210,10 @@
     private IReadOnlyDictionary<string, string[]>? _errors;
 
     private bool BlockedByChecks => _step == 1 && (_checks is null || _checks.Any(c => c.Status == SetupCheckStatus.Error));
+
+    private InputType PasswordInput => _showPassword ? InputType.Text : InputType.Password;
+
+    private Guid? SelectedThemeId => _themeId ?? _themes?.FirstOrDefault(t => t.Id == ThemeService.Current?.Id)?.Id ?? _themes?.FirstOrDefault(t => t.IsDefault)?.Id;
 
     private bool HasError(string field) => _errors?.Keys.Any(k => k.EndsWith(field, StringComparison.OrdinalIgnoreCase)) == true;
 
@@ -106,8 +226,60 @@
         _ => Severity.Error,
     };
 
+    // only plain color values go into the style attribute
+    private static IEnumerable<string> Swatch(ThemeDto theme)
+    {
+        foreach (var key in new[] { "Primary", "Secondary", "Background", "Surface" })
+        {
+            if (theme.PaletteLight.ValueKind == System.Text.Json.JsonValueKind.Object && theme.PaletteLight.TryGetProperty(key, out var value)
+                && value.ValueKind == System.Text.Json.JsonValueKind.String && value.GetString() is { Length: > 0 and <= 40 } color
+                && color.All(c => char.IsAsciiLetterOrDigit(c) || c is '#' or '(' or ')' or ',' or '.' or ' ' or '%'))
+            {
+                yield return color;
+            }
+        }
+    }
+
+    private void Choose(ThemeDto theme)
+    {
+        _themeId = theme.Id;
+        ThemeService.Apply(theme);
+    }
+
+    private void ChooseByKey(KeyboardEventArgs e, ThemeDto theme)
+    {
+        if (e.Key is "Enter" or " ")
+        {
+            Choose(theme);
+        }
+    }
+
+    private void Back()
+    {
+        _error = null;
+        _step--;
+    }
+
+    /// <summary>Why the current step cannot be left yet, if it cannot.</summary>
+    private string? Problem() => _step switch
+    {
+        0 when string.IsNullOrWhiteSpace(_request.SetupToken) => "Enter the setup token.",
+        2 when string.IsNullOrWhiteSpace(_request.TenantName) => "Enter the name of the organisation.",
+        AdministratorStep when string.IsNullOrWhiteSpace(_request.AdminEmail) || !_request.AdminEmail.Contains('@') => "Enter the administrator's email address.",
+        AdministratorStep when string.IsNullOrEmpty(_request.AdminPassword) => "Choose a password.",
+        AdministratorStep when _request.AdminPassword != _confirmPassword => "The passwords do not match.",
+        _ => null,
+    };
+
     private async Task NextAsync()
     {
+        if (Problem() is { } problem)
+        {
+            _error = problem;
+            return;
+        }
+
+        _error = null;
         _step++;
         if (_step == 1)
         {
@@ -121,11 +293,27 @@
                 _checks = [new SetupCheckDto("System", SetupCheckStatus.Error, exception.Message)];
             }
         }
+        else if (_step == LookStep && _themes is null)
+        {
+            try
+            {
+                _themes = await Api.GetBuiltInThemesAsync();
+            }
+            catch (Exception exception) when (exception is ApiException or HttpRequestException)
+            {
+                _themes = [];
+            }
+        }
     }
 
-    private Dictionary<string, string?> MailSettings()
+    private Dictionary<string, string?> Settings()
     {
         var settings = new Dictionary<string, string?>(StringComparer.Ordinal);
+        if (ThemeService.Mode is "light" or "dark")
+        {
+            settings["Theme.Mode"] = ThemeService.Mode;
+        }
+
         if (string.IsNullOrWhiteSpace(_mail.Host))
         {
             return settings;
@@ -155,8 +343,10 @@
         _errors = null;
         try
         {
+            _request.AdminEmail = _request.AdminEmail.Trim();
             await Api.CompleteSetupAsync(new CompleteSetupRequest(
-                _request.SetupToken, _request.TenantName, _request.AdminEmail, _request.AdminPassword, _request.AdminFirstName, _request.AdminLastName, MailSettings()));
+                _request.SetupToken.Trim(), _request.TenantName.Trim(), _request.AdminEmail, _request.AdminPassword, _request.AdminFirstName, _request.AdminLastName,
+                Settings(), _themeId));
             _done = true;
         }
         catch (ApiException exception) when (exception.Status == 403)
@@ -172,6 +362,14 @@
         {
             _errors = exception.Errors;
             _error = exception.Errors is null ? exception.Message : "Please correct the highlighted fields: " + string.Join(" ", exception.Errors.SelectMany(e => e.Value));
+            if (HasError("Password") || HasError("Email"))
+            {
+                _step = AdministratorStep;
+            }
+            else if (HasError("ThemeId"))
+            {
+                _step = LookStep;
+            }
         }
         finally
         {

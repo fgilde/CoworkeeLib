@@ -69,3 +69,20 @@ public sealed class ThemeServiceTests
         JsonSerializer.SerializeToElement(new Dictionary<string, object> { ["DefaultBorderRadius"] = "2px" }),
         null, ".x{}", 1);
 }
+
+public sealed class ThemeMapperDerivedColorTests
+{
+    [Fact]
+    public void Shades_follow_the_theme_colors()
+    {
+        var dto = new Coworkee.Contracts.Theming.ThemeDto(Guid.CreateVersion7(), "Ocean", true, false,
+            System.Text.Json.JsonSerializer.SerializeToElement(new Dictionary<string, string> { ["Primary"] = "#1565c0" }),
+            System.Text.Json.JsonSerializer.SerializeToElement(new Dictionary<string, string> { ["Primary"] = "#64b5f6" }),
+            null, null, null, null, 1);
+
+        var theme = Coworkee.Client.Blazor.Theming.ThemeMapper.ToMudTheme(dto);
+
+        var expected = new MudBlazor.Utilities.MudColor("#1565c0");
+        theme.PaletteLight.PrimaryDarken.ShouldBe(expected.ColorRgbDarken().ToString(MudBlazor.Utilities.MudColorOutputFormats.RGB));
+    }
+}

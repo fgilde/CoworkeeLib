@@ -98,4 +98,12 @@ public sealed class BffTests : IAsyncLifetime
 
         response.StatusCode.ShouldBe(HttpStatusCode.Redirect);
     }
+
+    [Fact]
+    public async Task Login_passes_the_login_hint_to_the_identity_provider()
+    {
+        var response = await _client.GetAsync("/bff/login?returnUrl=/admin&loginHint=" + Uri.EscapeDataString("ada@acme.test"), TestContext.Current.CancellationToken);
+
+        response.Headers.Location!.Query.ShouldContain("login_hint=ada%40acme.test");
+    }
 }

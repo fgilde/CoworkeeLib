@@ -26,12 +26,20 @@ public sealed class CoworkeeThemingModule : CoworkeeModule, IWebModule
         services.AddSingleton<IVersionedTypeContributor>(provider => provider.GetRequiredService<ThemeModelContributor>());
         services.AddSingleton<IPermissionDefinitionContributor, ThemePermissionDefinitions>();
         services.AddSingleton<ISettingDefinitionContributor, ThemeSettingDefinitions>();
+        services.AddScoped<Coworkee.Application.Setup.ISetupStep, ThemeSetupStep>();
+        services.Configure<Coworkee.Application.Setup.SetupGateOptions>(options =>
+        {
+            // the setup page is themed and offers the built-in themes
+            options.AllowedPrefixes.Add("/api/v1/themes/current");
+            options.AllowedPrefixes.Add("/api/v1/themes/built-in");
+        });
     }
 
     public void ConfigureApplication(WebApplication app)
     {
         var themes = app.MapGroup("/api/v1/themes").WithTags("Themes");
         themes.MapGet("/current", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetCurrentTheme(), ct).ToHttpResult()).AllowAnonymous();
+        themes.MapGet("/built-in", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetBuiltInThemes(), ct).ToHttpResult()).AllowAnonymous();
         var managed = themes.MapGroup(string.Empty).RequireAuthorization();
         managed.MapGet("/", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetThemes(), ct).ToHttpResult());
         managed.MapPost("/", (ThemeRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new CreateTheme(body), ct).ToHttpResult());
@@ -51,6 +59,6 @@ internal sealed class ThemeSettingDefinitions : ISettingDefinitionContributor
 {
     public void Define(SettingDefinitionContext context) =>
         context.Group("Appearance", "Appearance")
-            .Add(ThemeSettings.Mode, "Color mode", SettingType.Choice, [SettingScope.User], "system", visibleToClient: true, choices: ["system", "light", "dark"])
+            .Add(ThemeSettings.Mode, "Color mode", SettingType.Choice, [SettingScope.Global, SettingScope.Tenant, SettingScope.User], "system", visibleToClient: true, choices: ["system", "light", "dark"])
             .Add(ThemeSettings.ThemeId, "Theme", SettingType.String, [SettingScope.User], visibleToClient: true);
 }

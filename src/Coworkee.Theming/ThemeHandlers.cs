@@ -14,6 +14,9 @@ public sealed record GetThemes : IQuery<Result<IReadOnlyList<ThemeDto>>>;
 
 public sealed record GetCurrentTheme : IQuery<Result<ThemeDto>>;
 
+/// <summary>The themes that ship with the app, for anyone (setup offers them before there is an organisation).</summary>
+public sealed record GetBuiltInThemes : IQuery<Result<IReadOnlyList<ThemeDto>>>;
+
 [RequiresPermission(ThemePermissions.Manage)]
 public sealed record CreateTheme(ThemeRequest Theme) : ICommand<Result<ThemeDto>>;
 
@@ -29,6 +32,7 @@ public sealed record SetDefaultTheme(Guid Id) : ICommand<Result>;
 internal sealed class ThemeHandlers(CoworkeeDbContext db, ICurrentUser currentUser, IServiceProvider services)
     : IHandler<GetThemes, Result<IReadOnlyList<ThemeDto>>>,
       IHandler<GetCurrentTheme, Result<ThemeDto>>,
+      IHandler<GetBuiltInThemes, Result<IReadOnlyList<ThemeDto>>>,
       IHandler<CreateTheme, Result<ThemeDto>>,
       IHandler<UpdateTheme, Result<ThemeDto>>,
       IHandler<DeleteTheme, Result>,
@@ -43,6 +47,16 @@ internal sealed class ThemeHandlers(CoworkeeDbContext db, ICurrentUser currentUs
         var defaultId = (await EffectiveAsync(currentUser.TenantId, cancellationToken))?.Id;
         IReadOnlyList<ThemeDto> themes = (await Visible().OrderBy(t => t.Name).ToListAsync(cancellationToken))
             .Select(t => ToDto(t, t.Id == defaultId))
+            .ToList();
+        return Result<IReadOnlyList<ThemeDto>>.Success(themes);
+    }
+
+    public async Task<Result<IReadOnlyList<ThemeDto>>> HandleAsync(GetBuiltInThemes query, CancellationToken cancellationToken)
+    {
+        await ThemeSeeds.EnsureAsync(db, cancellationToken);
+        IReadOnlyList<ThemeDto> themes = (await db.Set<ThemeDefinition>().AsNoTracking().Where(t => t.TenantId == null)
+                .OrderByDescending(t => t.IsDefault).ThenBy(t => t.Name).ToListAsync(cancellationToken))
+            .Select(t => ToDto(t, t.IsDefault))
             .ToList();
         return Result<IReadOnlyList<ThemeDto>>.Success(themes);
     }
@@ -186,4 +200,25 @@ internal sealed class ThemeHandlers(CoworkeeDbContext db, ICurrentUser currentUs
         theme.Revision);
 
     private static JsonElement? Parse(string? json) => json is null ? null : JsonDocument.Parse(json).RootElement.Clone();
+}
+
+/// <summary>Makes the theme chosen in setup the organisation's default; only a built-in one, there is nothing else yet.</summary>
+internal sealed class ThemeSetupStep(CoworkeeDbContext db) : Coworkee.Application.Setup.ISetupStep
+{
+    public async Task<Error?> ApplyAsync(Coworkee.Contracts.Identity.CompleteSetupRequest request, Guid tenantId, CancellationToken cancellationToken)
+    {
+        if (request.ThemeId is not { } themeId)
+        {
+            return null;
+        }
+
+        await ThemeSeeds.EnsureAsync(db, cancellationToken);
+        if (!await db.Set<ThemeDefinition>().AnyAsync(t => t.Id == themeId && t.TenantId == null, cancellationToken))
+        {
+            return Error.Validation("ThemeId", "Choose one of the offered themes.");
+        }
+
+        db.Add(new TenantTheme { TenantId = tenantId, ThemeId = themeId });
+        return null;
+    }
 }
