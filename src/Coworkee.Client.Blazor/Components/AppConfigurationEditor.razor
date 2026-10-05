@@ -18,7 +18,7 @@
 else
 {
     <MudExObjectEditForm @key="_revision" Value="_value" IsLoading="_busy"
-                         StickyToolbar="true" StickyActionBar="true" AllowExport="true" AllowImport="true" ImportNeedsConfirmation="true"
+                         StickyToolbar="true" StickyActionBar="false" AllowExport="true" AllowImport="true" ImportNeedsConfirmation="true"
                          GroupingStyle="GroupingStyle.Flat" DefaultGroupName="General"
                          MetaConfiguration="@(Registration.Meta as Action<ObjectEditMeta<T>>)"
                          OnValidSubmit="SaveAsync">
