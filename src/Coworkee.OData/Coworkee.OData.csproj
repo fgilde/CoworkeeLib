@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\Coworkee.Application\Coworkee.Application.csproj" />
+    <ProjectReference Include="..\Coworkee.Infrastructure\Coworkee.Infrastructure.csproj" />
+    <ProjectReference Include="..\Coworkee.AspNetCore\Coworkee.AspNetCore.csproj" />
+    <PackageReference Include="Nextended.Web" />
+  </ItemGroup>
+</Project>
