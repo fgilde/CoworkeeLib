@@ -49,6 +49,10 @@ public static class BffExtensions
                 oidc.ClientId = options.ClientId;
                 oidc.ClientSecret = options.ClientSecret;
                 oidc.ResponseType = OpenIdConnectResponseType.Code;
+
+                // the code comes back as a plain redirect: a form_post answer needs an inline auto-submit script that the
+                // auth server's content security policy refuses; PKCE protects the code
+                oidc.ResponseMode = OpenIdConnectResponseMode.Query;
                 oidc.UsePkce = true;
                 oidc.SaveTokens = true;
                 oidc.MapInboundClaims = false;
