@@ -13,6 +13,8 @@ namespace Coworkee.Application.Tests;
 
 public sealed class BehaviorTests
 {
+    private static readonly AsyncLocal<string?> Ambient = new();
+
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     [Fact]
@@ -47,6 +49,15 @@ public sealed class BehaviorTests
         (await dispatcher.SendAsync(new Bump(), Ct)).IsSuccess.ShouldBeTrue();
 
         (await dispatcher.SendAsync(new Count(), Ct)).Value.ShouldBe(3);
+    }
+
+    [Fact]
+    public async Task Cached_query_handlers_run_in_the_async_context_of_the_caller()
+    {
+        var dispatcher = Build(_ => { });
+        Ambient.Value = "caller";
+
+        (await dispatcher.SendAsync(new ReadAmbient(), Ct)).Value.ShouldBe("caller");
     }
 
     [Fact]
@@ -117,6 +128,18 @@ public sealed class BehaviorTests
         public string CacheKey => "count";
 
         public IReadOnlyList<string> CacheTags => ["counter"];
+    }
+
+    public sealed record ReadAmbient : IQuery<Result<string>>, ICachedQuery
+    {
+        public string CacheKey => "ambient";
+
+        public IReadOnlyList<string> CacheTags => [];
+    }
+
+    internal sealed class ReadAmbientHandler : IHandler<ReadAmbient, Result<string>>
+    {
+        public Task<Result<string>> HandleAsync(ReadAmbient request, CancellationToken cancellationToken) => Task.FromResult(Result<string>.Success(Ambient.Value ?? "none"));
     }
 
     public sealed record Bump : ICommand<Result>, IInvalidatesCache
