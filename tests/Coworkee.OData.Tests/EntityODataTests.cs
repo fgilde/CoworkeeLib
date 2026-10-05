@@ -60,6 +60,16 @@ public sealed class EntityODataTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Hidden_properties_are_neither_returned_nor_queryable()
+    {
+        var page = await Admin.GetStringAsync("/odata/Gadgets", Ct);
+
+        page.ShouldContain("Drill");
+        page.ShouldNotContain("SerialCode");
+        (await Admin.GetAsync("/odata/Gadgets?$filter=SerialCode eq 'x'", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
     public async Task Select_projects_and_top_is_capped()
     {
         var page = await Admin.GetFromJsonAsync<JsonElement>("/odata/Gadgets?$select=Name&$orderby=Name&$top=1", Ct);

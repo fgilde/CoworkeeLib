@@ -19,7 +19,9 @@ public sealed class ResponseFilterTests : IAsyncLifetime
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
         builder.Services.AddCoworkeeResponseFilters([typeof(ResponseFilterTests).Assembly]);
+        builder.Services.AddControllers().AddApplicationPart(typeof(ResponseFilterTests).Assembly);
         _app = builder.Build();
+        _app.MapControllers();
         var api = _app.MapCoworkeeApi("/api/v1/people");
         api.MapGet("/{name}", (string name) => Task.FromResult(Result<Person>.Success(new Person(name, "secret-token", "4111111111111111"))).ToHttpResult());
         _app.MapGet("/outside", () => new Person("Ada", "secret-token", "4111111111111111"));
@@ -43,6 +45,16 @@ public sealed class ResponseFilterTests : IAsyncLifetime
     [Fact]
     public async Task Endpoints_outside_the_api_groups_are_left_alone() =>
         (await _app.GetTestClient().GetFromJsonAsync<JsonElement>("/outside", Ct)).GetProperty("token").GetString().ShouldBe("secret-token");
+
+    [Fact]
+    public async Task Controllers_are_filtered_but_deferred_queries_are_left_to_their_serializer()
+    {
+        (await _app.GetTestClient().GetFromJsonAsync<JsonElement>("/mvc/people/one", Ct)).TryGetProperty("token", out _).ShouldBeFalse();
+
+        var all = await _app.GetTestClient().GetFromJsonAsync<JsonElement>("/mvc/people", Ct);
+
+        all[0].GetProperty("token").GetString().ShouldBe("secret-token");
+    }
 
     public sealed record Person(string Name, string Token, string Card);
 
