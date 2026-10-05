@@ -20,6 +20,7 @@ public static class CoworkeeClientExtensions
         services.AddScoped<Data.FileDownloader>();
         services.AddScoped<PermissionStore>();
         services.AddScoped<Theming.ThemeService>();
+        services.AddScoped<Layout.LayoutPreferences>();
         services.AddScoped<Realtime.IRealtimeConnection, Realtime.SignalRRealtimeConnection>();
         services.AddScoped<Realtime.RealtimeClient>();
         services.AddScoped<BffAuthenticationStateProvider>();

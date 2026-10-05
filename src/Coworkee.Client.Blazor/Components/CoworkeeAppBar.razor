@@ -6,6 +6,12 @@
     {
         <DynamicComponent Type="item.Component" Parameters="item.Parameters" />
     }
+    <ThemeMenu />
+    <MudTooltip Text="Right to left">
+        <MudIconButton Icon="@Icons.Material.Outlined.FormatTextdirectionRToL" Color="@(Preferences.RightToLeft ? Color.Warning : Color.Inherit)"
+                       OnClick="() => Preferences.SetRightToLeftAsync(!Preferences.RightToLeft)" aria-label="Toggle right to left" data-testid="rtl-toggle" />
+    </MudTooltip>
     <MudIconButton Icon="@(Dark ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" Color="Color.Inherit" OnClick="ToggleDark" aria-label="Toggle dark mode" />
     <CoworkeeUserMenu />
+    <MudIconButton Icon="@Icons.Material.Outlined.Info" Color="Color.Inherit" Size="Size.Small" OnClick="ShowAboutAsync" aria-label="About" data-testid="about-button" />
 </MudAppBar>

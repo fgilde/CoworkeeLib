@@ -1,4 +1,5 @@
 using Coworkee.Client.Blazor.Api;
+using Coworkee.Client.Blazor.Layout;
 using Coworkee.Client.Blazor.Theming;
 using Coworkee.Contracts.Settings;
 using Coworkee.Contracts.Theming;
@@ -21,9 +22,15 @@ public partial class CoworkeeLayout : IDisposable
 
     [Inject] private ThemeService ThemeService { get; set; } = null!;
 
+    [Inject] private LayoutPreferences Preferences { get; set; } = null!;
+
     [CascadingParameter] private Task<AuthenticationState> AuthenticationState { get; set; } = null!;
 
-    protected override void OnInitialized() => ThemeService.Changed += Refresh;
+    protected override void OnInitialized()
+    {
+        ThemeService.Changed += Refresh;
+        Preferences.Changed += FollowPin;
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -51,12 +58,23 @@ public partial class CoworkeeLayout : IDisposable
             return;
         }
 
+        await Preferences.LoadAsync();
         await ThemeService.LoadAsync();
         _systemDark = _provider is not null && await _provider.GetSystemDarkModeAsync();
         Refresh();
     }
 
-    public void Dispose() => ThemeService.Changed -= Refresh;
+    public void Dispose()
+    {
+        ThemeService.Changed -= Refresh;
+        Preferences.Changed -= FollowPin;
+    }
+
+    private void FollowPin() => InvokeAsync(() =>
+    {
+        _drawer = Preferences.Pinned;
+        StateHasChanged();
+    });
 
     private void Refresh() => InvokeAsync(() =>
     {

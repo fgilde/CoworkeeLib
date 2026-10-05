@@ -1,19 +1,44 @@
+@if (!Mini)
+{
+    <div class="d-flex align-center gap-1 px-3 pt-3 pb-1" data-testid="nav-tools">
+        <MudTextField T="string" Value="_filter" ValueChanged="Filter" Immediate="true" Placeholder="Filter" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense"
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" data-testid="nav-filter" />
+        <MudTooltip Text="@(Preferences.Pinned ? "Unpin" : "Pin")">
+            <MudToggleIconButton Toggled="Preferences.Pinned" ToggledChanged="Preferences.SetPinnedAsync" Size="Size.Small" ToggledSize="Size.Small"
+                                 Icon="@Icons.Material.Outlined.PushPin" ToggledIcon="@Icons.Material.Filled.PushPin" ToggledColor="Color.Primary" aria-label="Pin navigation" data-testid="nav-pin" />
+        </MudTooltip>
+        <MudTooltip Text="@(Preferences.SingleExpand ? "Expand many groups" : "Expand one group at a time")">
+            <MudToggleIconButton Toggled="Preferences.SingleExpand" ToggledChanged="Preferences.SetSingleExpandAsync" Size="Size.Small" ToggledSize="Size.Small"
+                                 Icon="@Icons.Material.Outlined.UnfoldMore" ToggledIcon="@Icons.Material.Outlined.UnfoldLess" ToggledColor="Color.Primary" aria-label="Expand one group at a time" data-testid="nav-single-expand" />
+        </MudTooltip>
+    </div>
+}
 <MudNavMenu>
-    @if (Options.ShowHome)
+    @if (Options.ShowHome && string.IsNullOrWhiteSpace(_filter))
     {
         <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Home">@Options.HomeTitle</MudNavLink>
     }
-    @foreach (var item in NavigationTree.Ungrouped(Items, Options))
+    @foreach (var item in NavigationTree.Ungrouped(Items, Options, _filter))
     {
         <CoworkeeNavLink Item="item" />
     }
-    @foreach (var group in NavigationTree.Groups(Items, Options))
+    @foreach (var group in NavigationTree.Groups(Items, Options, _filter))
     {
-        <MudNavGroup Title="@group.Title" Expanded="true" data-nav-group="@group.Title">
+        @if (Mini)
+        {
             @foreach (var item in group.Items)
             {
                 <CoworkeeNavLink Item="item" />
             }
-        </MudNavGroup>
+        }
+        else
+        {
+            <MudNavGroup Title="@group.Title" Expanded="IsExpanded(group)" ExpandedChanged="expanded => SetExpanded(group, expanded)" data-nav-group="@group.Title">
+                @foreach (var item in group.Items)
+                {
+                    <CoworkeeNavLink Item="item" />
+                }
+            </MudNavGroup>
+        }
     }
 </MudNavMenu>

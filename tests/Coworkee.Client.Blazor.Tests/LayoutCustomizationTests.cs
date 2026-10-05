@@ -58,7 +58,7 @@ public sealed class LayoutCustomizationTests : ClientTestBase
         layout.FindAll("[data-testid='user-menu']").ShouldBeEmpty();
     }
 
-    private sealed class StaticNavigation(params CoworkeeNavItem[] items) : INavigationContributor
+    internal sealed class StaticNavigation(params CoworkeeNavItem[] items) : INavigationContributor
     {
         public IEnumerable<CoworkeeNavItem> Items { get; } = items;
     }
