@@ -32,6 +32,12 @@ internal sealed class RequestInvoker<TRequest, TResult> : RequestInvoker<TResult
             ?? throw new InvalidOperationException($"No handler registered for '{typeof(TRequest).Name}'.");
 
         RequestHandlerDelegate<TResult> pipeline = () => handler.HandleAsync(typed, cancellationToken);
+        foreach (var behavior in services.GetServices<IRequestBehavior<TRequest, TResult>>().Reverse())
+        {
+            var inner = pipeline;
+            pipeline = () => behavior.HandleAsync(typed, inner, cancellationToken);
+        }
+
         foreach (var middleware in services.GetServices<IRequestMiddleware>().OrderByDescending(m => m.Order))
         {
             var next = pipeline;
