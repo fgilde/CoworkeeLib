@@ -9,12 +9,14 @@
 <MudDialogProvider />
 <MudSnackbarProvider />
 
-<MudLayout>
-    <CoworkeeAppBar Dark="_dark" ToggleDrawer="() => _drawer = !_drawer" ToggleDark="ToggleDarkAsync" />
-    <MudDrawer @bind-Open="_drawer" Elevation="0" Variant="DrawerVariant.Responsive">
-        <CoworkeeNavMenu />
-    </MudDrawer>
-    <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.Large" Class="py-6">@Body</MudContainer>
-    </MudMainContent>
-</MudLayout>
+<MudRTLProvider RightToLeft="Preferences.RightToLeft">
+    <MudLayout>
+        <CoworkeeAppBar Dark="_dark" ToggleDrawer="() => _drawer = !_drawer" ToggleDark="ToggleDarkAsync" />
+        <MudDrawer @bind-Open="_drawer" Elevation="0" Variant="@(Preferences.Pinned ? DrawerVariant.Responsive : DrawerVariant.Mini)" OpenMiniOnHover="true" data-testid="nav-drawer">
+            <CoworkeeNavMenu Mini="@(!Preferences.Pinned && !_drawer)" />
+        </MudDrawer>
+        <MudMainContent>
+            <MudContainer MaxWidth="MaxWidth.Large" Class="py-6">@Body</MudContainer>
+        </MudMainContent>
+    </MudLayout>
+</MudRTLProvider>

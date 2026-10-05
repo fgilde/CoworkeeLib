@@ -1,0 +1,30 @@
+<MudDialog data-testid="about">
+    <TitleContent>
+        <MudText Typo="Typo.h6">About @Options.AppTitle</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (!string.IsNullOrWhiteSpace(Options.AppDescription))
+        {
+            <MudText Class="mb-4">@Options.AppDescription</MudText>
+        }
+        <MudSimpleTable Dense="true" Elevation="0">
+            <tbody>
+                <tr><td>@Options.AppTitle</td><td data-testid="app-version">@AppVersion</td></tr>
+                <tr><td>Coworkee</td><td>@Version(typeof(CoworkeeClientOptions).Assembly)</td></tr>
+                <tr><td>Runtime</td><td>@System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription</td></tr>
+            </tbody>
+        </MudSimpleTable>
+        @if (Options.AboutLinks.Count > 0)
+        {
+            <MudStack Row="true" Wrap="Wrap.Wrap" Class="mt-4">
+                @foreach (var link in Options.AboutLinks)
+                {
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" Href="@link.Url" Target="_blank">@link.Title</MudButton>
+                }
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close">Close</MudButton>
+    </DialogActions>
+</MudDialog>
