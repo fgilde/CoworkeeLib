@@ -25,16 +25,16 @@ public sealed class AppConfigurationEditorTests : ClientTestBase
         changed);
 
     [Fact]
-    public void Edits_the_typed_section_and_saves_it()
+    public async Task Edits_the_typed_section_and_saves_it()
     {
         var editor = Render<AppConfigurationEditor<SampleConfig>>(p => p.Add(e => e.Registration, Registration));
 
         editor.WaitForAssertion(() => editor.FindAll("input").Select(i => i.GetAttribute("value")).ShouldContain("Default"));
         editor.Find("[data-testid='reset']").HasAttribute("disabled").ShouldBeTrue();
 
-        editor.InvokeAsync(() => editor.Instance.SaveAsync()).GetAwaiter().GetResult();
+        await editor.InvokeAsync(() => editor.Instance.SaveAsync());
 
-        Api.Received(1).SaveAppConfigurationAsync("Sample", Arg.Is<JsonElement>(v => v.GetProperty("name").GetString() == "Default" && v.GetProperty("limit").GetInt32() == 10), Arg.Any<CancellationToken>());
+        await Api.Received(1).SaveAppConfigurationAsync("Sample", Arg.Is<JsonElement>(v => v.GetProperty("name").GetString() == "Default" && v.GetProperty("limit").GetInt32() == 10), Arg.Any<CancellationToken>());
         editor.WaitForAssertion(() => editor.Find("[data-testid='changed-count']").TextContent.ShouldContain("1 changed"));
     }
 

@@ -1,0 +1,19 @@
+<MudNavMenu>
+    @if (Options.ShowHome)
+    {
+        <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Home">@Options.HomeTitle</MudNavLink>
+    }
+    @foreach (var item in NavigationTree.Ungrouped(Items, Options))
+    {
+        <CoworkeeNavLink Item="item" />
+    }
+    @foreach (var group in NavigationTree.Groups(Items, Options))
+    {
+        <MudNavGroup Title="@group.Title" Expanded="true" data-nav-group="@group.Title">
+            @foreach (var item in group.Items)
+            {
+                <CoworkeeNavLink Item="item" />
+            }
+        </MudNavGroup>
+    }
+</MudNavMenu>
