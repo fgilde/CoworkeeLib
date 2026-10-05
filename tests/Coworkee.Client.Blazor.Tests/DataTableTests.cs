@@ -103,6 +103,14 @@ public sealed class DataTableTests : ClientTestBase
     }
 
     [Fact]
+    public void Columns_in_markup_take_the_item_type_from_the_table()
+    {
+        var table = Render<GadgetTable>();
+
+        table.WaitForAssertion(() => table.Markup.ShouldContain("Tools"));
+    }
+
+    [Fact]
     public void Csv_export_quotes_what_needs_quotes()
     {
         var csv = TableExport.ToCsv([new Gadget(Guid.Empty, "Drill; heavy", "Tools")]);

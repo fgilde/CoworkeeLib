@@ -1,0 +1,9 @@
+@using Coworkee.Client.Blazor.Components.Data
+@using MudBlazor
+
+<CoworkeeDataTable T="DataTableTests.Gadget" EntitySet="Gadgets">
+    <Columns>
+        <PropertyColumn Property="g => g.Name" />
+        <PropertyColumn Property="g => g.Category" />
+    </Columns>
+</CoworkeeDataTable>
