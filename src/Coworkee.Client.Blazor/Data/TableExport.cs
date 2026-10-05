@@ -37,7 +37,7 @@ public static class TableExport
         _ => value.ToString() ?? string.Empty,
     };
 
-    private static string Escape(string value) => Quote(value.Length > 0 && value[0] is '=' or '+' or '-' or '@' or '	' or '' ? "'" + value : value);
+    private static string Escape(string value) => Quote(value.Length > 0 && "=+-@\t\r".Contains(value[0]) ? "'" + value : value);
 
     private static string Quote(string value) =>
         value.IndexOfAny([';', '"', '\n', '\r']) >= 0 ? "\"" + value.Replace("\"", "\"\"", StringComparison.Ordinal) + "\"" : value;
