@@ -59,6 +59,15 @@ public sealed class EntityODataTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Select_projects_and_top_is_capped()
+    {
+        var page = await Admin.GetFromJsonAsync<JsonElement>("/odata/Gadgets?$select=Name&$orderby=Name&$top=1", Ct);
+
+        page.GetProperty("value")[0].EnumerateObject().Select(p => p.Name).ShouldBe(["Name"]);
+        (await Admin.GetAsync("/odata/Gadgets?$top=5000", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
     public async Task A_single_entity_comes_by_key()
     {
         var id = (await Admin.GetFromJsonAsync<JsonElement>("/odata/Gadgets?$filter=Name eq 'Lamp'", Ct)).GetProperty("value")[0].GetProperty("Id").GetGuid();

@@ -3,6 +3,7 @@ using Coworkee.AspNetCore;
 using Coworkee.Core.Modularity;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.OData;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
@@ -23,6 +24,8 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
         var model = new Lazy<IEdmModel>(() => BuildModel(registry));
         services.AddTransient<IFacetBuilder, FacetBuilder>();
         services.AddODataAuto(_ => model.Value);
+        services.Configure<CoworkeeODataOptions>(context.Configuration.GetSection(CoworkeeODataOptions.Section));
+        services.AddSingleton<Microsoft.Extensions.Options.IPostConfigureOptions<ODataOptions>, ODataQueryLimits>();
         services.AddSingleton<Microsoft.AspNetCore.Mvc.ApplicationModels.IApplicationModelProvider>(new EntityODataControllerNameProvider(registry));
         services.AddControllers()
             .ConfigureApplicationPartManager(parts => parts.FeatureProviders.Add(new EntityODataControllerFeatureProvider(registry)))

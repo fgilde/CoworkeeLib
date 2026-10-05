@@ -8,6 +8,7 @@ namespace Coworkee.OData;
 
 [Authorize]
 [ODataEntityPermission]
+[ODataQueryError]
 public class EntityODataController<TEntity> : GenericODataController<TEntity>
     where TEntity : class
 {
