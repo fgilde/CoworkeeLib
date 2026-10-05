@@ -81,11 +81,14 @@ public sealed class DatabaseConfigurationSource(string connectionStringName, Tim
 {
     public IConfigurationProvider Build(IConfigurationBuilder builder)
     {
-        // the connection string comes from what is configured before this source (appsettings, environment, Aspire)
-        var connectionString = builder is IConfiguration configured
-            ? configured.GetConnectionString(connectionStringName)
-            : new ConfigurationBuilder().AddRange(builder.Sources.Where(s => s != this)).Build().GetConnectionString(connectionStringName);
-        return new DatabaseConfigurationProvider(connectionString, reloadInterval);
+        // the connection string comes from the other sources (appsettings, environment, Aspire, test hosts that add theirs later)
+        if (builder is IConfiguration configured)
+        {
+            return new DatabaseConfigurationProvider(() => configured.GetConnectionString(connectionStringName), reloadInterval);
+        }
+
+        var connectionString = new ConfigurationBuilder().AddRange(builder.Sources.Where(s => s != this)).Build().GetConnectionString(connectionStringName);
+        return new DatabaseConfigurationProvider(() => connectionString, reloadInterval);
     }
 }
 
@@ -104,17 +107,13 @@ file static class ConfigurationBuilderRange
 
 public sealed class DatabaseConfigurationProvider : ConfigurationProvider, IDisposable
 {
-    private readonly string? _connectionString;
-    private readonly Timer? _timer;
+    private readonly Func<string?> _connectionString;
+    private readonly Timer _timer;
 
-    internal DatabaseConfigurationProvider(string? connectionString, TimeSpan reloadInterval)
+    internal DatabaseConfigurationProvider(Func<string?> connectionString, TimeSpan reloadInterval)
     {
-        if (connectionString is not null)
-        {
-            // never let a slow database hold up the start of a service
-            _connectionString = new NpgsqlConnectionStringBuilder(connectionString) { Timeout = 5, CommandTimeout = 5 }.ConnectionString;
-            _timer = new Timer(_ => Refresh(), null, reloadInterval, reloadInterval);
-        }
+        _connectionString = connectionString;
+        _timer = new Timer(_ => Refresh(), null, reloadInterval, reloadInterval);
     }
 
     public override void Load() => Data = Read() ?? new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
@@ -133,14 +132,25 @@ public sealed class DatabaseConfigurationProvider : ConfigurationProvider, IDisp
 
     private Dictionary<string, string?>? Read()
     {
-        if (_connectionString is null)
+        string? connectionString;
+        try
+        {
+            connectionString = _connectionString();
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
+
+        if (string.IsNullOrEmpty(connectionString))
         {
             return null;
         }
 
         try
         {
-            using var connection = new NpgsqlConnection(_connectionString);
+            // never let a slow database hold up the start of a service
+            using var connection = new NpgsqlConnection(new NpgsqlConnectionStringBuilder(connectionString) { Timeout = 5, CommandTimeout = 5 }.ConnectionString);
             connection.Open();
             using var command = new NpgsqlCommand("""select "Key", "Value" from cw."ConfigurationEntries" """, connection);
             using var reader = command.ExecuteReader();
@@ -152,14 +162,14 @@ public sealed class DatabaseConfigurationProvider : ConfigurationProvider, IDisp
 
             return values;
         }
-        catch (Exception exception) when (exception is NpgsqlException or InvalidOperationException or TimeoutException)
+        catch (Exception exception) when (exception is NpgsqlException or InvalidOperationException or TimeoutException or ArgumentException)
         {
             // not migrated yet, or the database is away for a moment: keep what we have
             return null;
         }
     }
 
-    public void Dispose() => _timer?.Dispose();
+    public void Dispose() => _timer.Dispose();
 }
 
 [RequiresPermission(SettingsPermissions.Manage)]
