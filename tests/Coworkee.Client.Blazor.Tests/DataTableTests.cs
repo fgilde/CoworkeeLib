@@ -30,6 +30,7 @@ public sealed class DataTableTests : ClientTestBase
     {
         new ODataQuery { Filter = "A eq 'x'", OrderBy = "Name desc", Top = 25, Skip = 50 }.ToQueryString()
             .ShouldBe("?$filter=A%20eq%20%27x%27&$orderby=Name%20desc&$top=25&$skip=50&$count=true");
+        new ODataQuery { Expand = "Brand", Count = false }.ToQueryString().ShouldBe("?$expand=Brand");
         ODataFilter.Search("O'Neil", ["Name", "Email"]).ShouldBe("(contains(tolower(Name),'o''neil') or contains(tolower(Email),'o''neil'))");
         ODataFilter.And("A eq 1", null, "(B eq 2 or B eq 3)").ShouldBe("(A eq 1) and (B eq 2 or B eq 3)");
     }

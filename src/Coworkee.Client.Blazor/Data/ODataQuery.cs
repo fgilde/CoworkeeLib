@@ -10,6 +10,8 @@ public sealed record ODataQuery
 
     public string? OrderBy { get; init; }
 
+    public string? Expand { get; init; }
+
     public int? Top { get; init; }
 
     public int? Skip { get; init; }
@@ -24,6 +26,7 @@ public sealed record ODataQuery
         Add(parts, "$filter", Filter);
         Add(parts, "$search", Search);
         Add(parts, "$orderby", OrderBy);
+        Add(parts, "$expand", Expand);
         Add(parts, "$top", Top?.ToString(CultureInfo.InvariantCulture));
         Add(parts, "$skip", Skip is > 0 ? Skip.Value.ToString(CultureInfo.InvariantCulture) : null);
         if (Count)
