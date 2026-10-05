@@ -53,6 +53,8 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     [Parameter] public string? Filter { get; set; }
 
+    [Parameter] public string? Expand { get; set; }
+
     [Parameter] public bool MultiSelection { get; set; }
 
     [Parameter] public int PageSize { get; set; } = 25;
@@ -123,7 +125,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
         var items = new List<T>();
         while (true)
         {
-            var page = await OData.QueryAsync<T>(EntitySet, new ODataQuery { Filter = CurrentFilter, Top = Batch, Skip = items.Count, Count = false });
+            var page = await OData.QueryAsync<T>(EntitySet, new ODataQuery { Filter = CurrentFilter, Expand = Expand, Top = Batch, Skip = items.Count, Count = false });
             items.AddRange(page.Items);
             if (page.Items.Count < Batch)
             {
@@ -144,6 +146,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
         {
             Filter = CurrentFilter,
             OrderBy = OrderBy(state),
+            Expand = Expand,
             Top = state.PageSize,
             Skip = state.Page * state.PageSize,
             Facets = Facets,
@@ -160,7 +163,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     private static string? OrderBy(GridState<T> state)
     {
-        var sorts = state.SortDefinitions.Select(s => $"{s.SortBy} {(s.Descending ? "desc" : "asc")}").ToList();
+        var sorts = state.SortDefinitions.Select(s => $"{s.SortBy.Replace('.', '/')} {(s.Descending ? "desc" : "asc")}").ToList();
         return sorts.Count == 0 ? null : string.Join(",", sorts);
     }
 }
