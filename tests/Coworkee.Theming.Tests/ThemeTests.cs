@@ -26,13 +26,49 @@ public sealed class ThemeTests(ThemeApp app) : IAsyncLifetime
     private static JsonElement Palette(string primary) =>
         JsonSerializer.SerializeToElement(new Dictionary<string, object> { ["Primary"] = primary, ["Secondary"] = "rgba(10, 20, 30, 0.5)", ["HoverOpacity"] = 0.06 });
 
+    private static readonly string[] BuiltIn = ["Classic", "Coworkee", "Forest", "High Contrast", "Midnight", "Ocean", "Sunset"];
+
     [Fact]
-    public async Task Seeds_three_global_themes_with_coworkee_as_default()
+    public async Task Seeds_global_themes_with_coworkee_as_default()
     {
         var themes = await Admin.GetFromJsonAsync<ThemeDto[]>("/api/v1/themes", Ct);
 
-        themes!.Where(t => t.IsGlobal).Select(t => t.Name).ShouldBe(["Classic", "Coworkee", "High Contrast"], ignoreOrder: true);
+        themes!.Where(t => t.IsGlobal).Select(t => t.Name).ShouldBe(BuiltIn, ignoreOrder: true);
         (await app.Anonymous().GetFromJsonAsync<ThemeDto>("/api/v1/themes/current", Ct))!.Name.ShouldBe("Coworkee");
+    }
+
+    [Fact]
+    public async Task Built_in_themes_are_listed_for_anyone_so_setup_can_offer_them()
+    {
+        var themes = await app.Anonymous().GetFromJsonAsync<ThemeDto[]>("/api/v1/themes/built-in", Ct);
+
+        themes!.Select(t => t.Name).ShouldBe(BuiltIn, ignoreOrder: true);
+        themes.ShouldAllBe(t => t.IsGlobal);
+        (await Admin.PostAsJsonAsync("/api/v1/themes", Brand("Private"), Ct)).EnsureSuccessStatusCode();
+        (await app.Anonymous().GetFromJsonAsync<ThemeDto[]>("/api/v1/themes/built-in", Ct))!.ShouldNotContain(t => t.Name == "Private");
+    }
+
+    [Fact]
+    public async Task Setup_makes_the_chosen_theme_and_mode_the_organisation_default()
+    {
+        _setup = await app.SetupAsync("Ocean", new Dictionary<string, string?> { ["Theme.Mode"] = "dark" });
+
+        (await Admin.GetFromJsonAsync<ThemeDto>("/api/v1/themes/current", Ct))!.Name.ShouldBe("Ocean");
+        (await app.Anonymous().GetFromJsonAsync<ThemeDto>("/api/v1/themes/current", Ct))!.Name.ShouldBe("Ocean");
+        (await Admin.GetFromJsonAsync<Dictionary<string, string?>>("/api/v1/settings/client", Ct))!["Theme.Mode"].ShouldBe("dark");
+    }
+
+    [Fact]
+    public async Task Setup_rejects_a_theme_that_is_not_built_in()
+    {
+        await app.ResetAsync();
+        Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Coworkee.Identity.Setup.SystemStateCache>(app.App.Services).Reset();
+
+        var response = await app.Anonymous().PostAsJsonAsync("/api/v1/setup/complete",
+            new CompleteSetupRequest("token", "Acme", "admin@acme.test", "Admin#12345", null, null, null, Guid.CreateVersion7()), Ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        _setup = await app.SetupAsync();
     }
 
     [Fact]

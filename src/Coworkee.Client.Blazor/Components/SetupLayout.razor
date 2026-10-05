@@ -1,0 +1,86 @@
+@inherits LayoutComponentBase
+@inject CoworkeeClientOptions Options
+@inject ThemeService ThemeService
+@implements IDisposable
+
+@* first run: no navigation and no account menu, only the app's name, the theme being chosen and the wizard *@
+<MudThemeProvider @ref="_provider" Theme="ThemeService.Theme" IsDarkMode="_dark" />
+@if (ThemeService.CustomCss is { Length: > 0 } css)
+{
+    <style>@css</style>
+}
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<style>
+    .cw-setup {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background:
+            radial-gradient(1100px 620px at 8% -12%, color-mix(in srgb, var(--mud-palette-primary) 34%, transparent), transparent 62%),
+            radial-gradient(900px 560px at 108% 112%, color-mix(in srgb, var(--mud-palette-secondary) 30%, transparent), transparent 60%),
+            var(--mud-palette-background);
+        transition: background 300ms ease;
+    }
+
+    .cw-setup-bar { display: flex; align-items: center; gap: 12px; padding: 20px 28px; }
+    .cw-setup-mark {
+        width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; font-weight: 700;
+        color: var(--mud-palette-primary-text);
+        background: linear-gradient(135deg, var(--mud-palette-primary), var(--mud-palette-secondary));
+        box-shadow: 0 6px 18px color-mix(in srgb, var(--mud-palette-primary) 40%, transparent);
+    }
+    .cw-setup-main { flex: 1; display: flex; justify-content: center; align-items: flex-start; padding: 8px 16px 48px; }
+</style>
+
+<div class="cw-setup">
+    <div class="cw-setup-bar">
+        @if (ThemeService.LogoSvg is { Length: > 0 } logo)
+        {
+            <img alt="" style="height:32px" src="@($"data:image/svg+xml;base64,{Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(logo))}")" />
+        }
+        else
+        {
+            <div class="cw-setup-mark">@(Options.AppTitle.Length > 0 ? Options.AppTitle[..1] : "C")</div>
+        }
+        <MudText Typo="Typo.h6">@Options.AppTitle</MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@(_dark ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" OnClick="ToggleDark" aria-label="Toggle dark mode" />
+    </div>
+    <div class="cw-setup-main">@Body</div>
+</div>
+
+@code {
+    private MudThemeProvider? _provider;
+    private bool _dark;
+    private bool _systemDark;
+
+    protected override void OnInitialized() => ThemeService.Changed += Refresh;
+
+    public void Dispose() => ThemeService.Changed -= Refresh;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await ThemeService.LoadAsync();
+            _systemDark = _provider is not null && await _provider.GetSystemDarkModeAsync();
+            Refresh();
+        }
+    }
+
+    private void ToggleDark() => ThemeService.SetMode(_dark ? "light" : "dark");
+
+    private void Refresh() => InvokeAsync(() =>
+    {
+        _dark = ThemeService.Mode switch
+        {
+            "dark" => true,
+            "light" => false,
+            _ => _systemDark,
+        };
+        StateHasChanged();
+    });
+}

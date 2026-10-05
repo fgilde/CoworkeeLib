@@ -15,6 +15,8 @@ namespace Coworkee.Bff;
 
 public static class BffExtensions
 {
+    private const string LoginHintItem = "login_hint";
+
     private const string CsrfHeader = "X-CSRF";
 
     public static WebApplicationBuilder AddCoworkeeBff(this WebApplicationBuilder builder)
@@ -54,6 +56,16 @@ public static class BffExtensions
                 // auth server's content security policy refuses; PKCE protects the code
                 oidc.ResponseMode = OpenIdConnectResponseMode.Query;
                 oidc.UsePkce = true;
+                oidc.Events.OnRedirectToIdentityProvider = context =>
+                {
+                    // e.g. right after setup: the sign-in form starts with the administrator's address
+                    if (context.Properties.Items.TryGetValue(LoginHintItem, out var hint) && !string.IsNullOrWhiteSpace(hint))
+                    {
+                        context.ProtocolMessage.LoginHint = hint;
+                    }
+
+                    return Task.CompletedTask;
+                };
                 oidc.SaveTokens = true;
                 oidc.MapInboundClaims = false;
                 oidc.GetClaimsFromUserInfoEndpoint = false;
@@ -113,8 +125,11 @@ public static class BffExtensions
         app.UseAuthentication();
         app.UseAuthorization();
 
-        app.MapGet("/bff/login", (string? returnUrl) => Results.Challenge(
-            new AuthenticationProperties { RedirectUri = IsLocalPath(returnUrl) ? returnUrl : "/" },
+        app.MapGet("/bff/login", (string? returnUrl, string? loginHint) => Results.Challenge(
+            new AuthenticationProperties(loginHint is { Length: > 0 and <= 256 } ? new Dictionary<string, string?> { [LoginHintItem] = loginHint } : [])
+            {
+                RedirectUri = IsLocalPath(returnUrl) ? returnUrl : "/",
+            },
             [OpenIdConnectDefaults.AuthenticationScheme]));
         app.MapPost("/bff/logout", (Delegate)LogoutAsync);
         app.MapGet("/bff/user", (ClaimsPrincipal user) => user.Identity?.IsAuthenticated == true

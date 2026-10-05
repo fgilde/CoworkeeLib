@@ -32,7 +32,8 @@ public sealed record SetupStatusDto(bool IsInitialized);
 
 public sealed record CompleteSetupRequest(
     string SetupToken, string TenantName, string AdminEmail, string AdminPassword, string? AdminFirstName, string? AdminLastName,
-    IReadOnlyDictionary<string, string?>? Settings = null);
+    IReadOnlyDictionary<string, string?>? Settings = null,
+    Guid? ThemeId = null);
 
 [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter<SetupCheckStatus>))]
 public enum SetupCheckStatus

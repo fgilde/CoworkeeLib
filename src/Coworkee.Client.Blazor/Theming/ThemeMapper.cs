@@ -141,6 +141,13 @@ public sealed class ThemeService(Api.ICoworkeeApi api)
         Changed?.Invoke();
     }
 
+    /// <summary>Switches between "light", "dark" and "system" for this session (setup, or a toggle before it is saved).</summary>
+    public void SetMode(string mode)
+    {
+        Mode = mode;
+        Changed?.Invoke();
+    }
+
     public void Preview(MudTheme theme)
     {
         Theme = theme;

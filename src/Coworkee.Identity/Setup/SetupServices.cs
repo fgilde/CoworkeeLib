@@ -10,11 +10,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Coworkee.Identity.Setup;
 
-public sealed class SetupGateOptions
-{
-    public List<string> AllowedPrefixes { get; } = ["/api/v1/setup"];
-}
-
 public sealed class SetupToken
 {
     public SetupToken(IConfiguration configuration)
