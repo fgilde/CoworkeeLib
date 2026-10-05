@@ -41,6 +41,8 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
         services.AddSingleton<SetupToken>();
         services.AddScoped<Coworkee.Application.Setup.ISetupCheck, DatabaseSetupCheck>();
         services.AddSingleton<SystemStateCache>();
+        services.AddScoped<SystemInitializer>();
+        services.AddScoped<IdentitySeeder>();
         services.AddHostedService<SetupTokenAnnouncer>();
         services.AddOptions<SetupGateOptions>();
 

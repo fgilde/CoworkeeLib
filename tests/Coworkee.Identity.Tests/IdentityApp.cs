@@ -34,6 +34,13 @@ public sealed class IdentityApp : PostgresFixture
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
         builder.AddCoworkee<TestAppModule>();
         builder.Services.AddTestAuthentication();
+        builder.Services.AddCoworkeeIdentitySeed(seed =>
+        {
+            seed.TenantName = "Seeded";
+            seed.Roles.Add(new SeedRole("Editor", "Edits things", [IdentityPermissions.Users.View]));
+            seed.Users.Add(new SeedUser("root@seed.test", "Admin#12345", "Root", null, IsAdmin: true));
+            seed.Users.Add(new SeedUser("editor@seed.test", "Editor#12345", "Ed") { Roles = ["Editor"] });
+        });
         App = builder.Build();
         App.UseCoworkee();
         await using (var scope = App.Services.CreateAsyncScope())
