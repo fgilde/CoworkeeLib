@@ -170,7 +170,7 @@ public sealed class CoworkeeNotificationsModule : CoworkeeModule, IWebModule
 
     public void ConfigureApplication(WebApplication app)
     {
-        var api = app.MapGroup("/api/v1/notifications").WithTags("Notifications").RequireAuthorization();
+        var api = app.MapCoworkeeApi("/api/v1/notifications").WithTags("Notifications").RequireAuthorization();
         api.MapGet("/", (bool? unreadOnly, [AsParameters] PageRequest page, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new GetNotifications(unreadOnly == true, page), ct).ToHttpResult());
         api.MapGet("/unread-count", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetUnreadCount(), ct).ToHttpResult());

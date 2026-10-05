@@ -20,6 +20,7 @@
     <Project Path="src/Coworkee.OData/Coworkee.OData.csproj" />
     <Project Path="src/Coworkee.Realtime/Coworkee.Realtime.csproj" />
     <Project Path="src/Coworkee.Search/Coworkee.Search.csproj" />
+    <Project Path="src/Coworkee.ResponseFilters/Coworkee.ResponseFilters.csproj" />
     <Project Path="src/Coworkee.Search.Elasticsearch/Coworkee.Search.Elasticsearch.csproj" />
     <Project Path="src/Coworkee.Settings/Coworkee.Settings.csproj" />
     <Project Path="src/Coworkee.Storage/Coworkee.Storage.csproj" />
@@ -46,6 +47,7 @@
     <Project Path="tests/Coworkee.Notifications.Tests/Coworkee.Notifications.Tests.csproj" />
     <Project Path="tests/Coworkee.OData.Tests/Coworkee.OData.Tests.csproj" />
     <Project Path="tests/Coworkee.Realtime.Tests/Coworkee.Realtime.Tests.csproj" />
+    <Project Path="tests/Coworkee.ResponseFilters.Tests/Coworkee.ResponseFilters.Tests.csproj" />
     <Project Path="tests/Coworkee.Search.Tests/Coworkee.Search.Tests.csproj" />
     <Project Path="tests/Coworkee.Settings.Tests/Coworkee.Settings.Tests.csproj" />
     <Project Path="tests/Coworkee.Storage.Tests/Coworkee.Storage.Tests.csproj" />

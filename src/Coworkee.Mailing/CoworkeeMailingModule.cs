@@ -49,7 +49,7 @@ public sealed class CoworkeeMailingModule : CoworkeeModule, IWebModule
 
     public void ConfigureApplication(WebApplication app)
     {
-        var api = app.MapGroup("/api/v1/mail").WithTags("Mail").RequireAuthorization();
+        var api = app.MapCoworkeeApi("/api/v1/mail").WithTags("Mail").RequireAuthorization();
         api.MapGet("/templates", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetMailTemplates(), ct).ToHttpResult());
         api.MapGet("/templates/{name}/{culture}", (string name, string culture, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new GetMailTemplate(name, culture), ct).ToHttpResult());

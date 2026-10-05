@@ -75,7 +75,7 @@ public sealed class CoworkeeAiModule : CoworkeeModule, IWebModule
 
     public void ConfigureApplication(WebApplication app)
     {
-        var api = app.MapGroup("/api/v1/ai").WithTags("AI").RequireAuthorization();
+        var api = app.MapCoworkeeApi("/api/v1/ai").WithTags("AI").RequireAuthorization();
         api.MapGet("/tools", async (AiToolRunner runner, CancellationToken ct) =>
             Results.Ok((await runner.AvailableAsync(ct)).Select(t => new AiToolDto(t.Name, t.Description))));
         api.MapPost("/chat", (ChatRequest body, AiChat chat, CancellationToken ct) => chat.SendAsync(body, ct).ToHttpResult());
