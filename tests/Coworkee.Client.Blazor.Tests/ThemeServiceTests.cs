@@ -83,7 +83,6 @@ public sealed class ThemeMapperDerivedColorTests
         var theme = Coworkee.Client.Blazor.Theming.ThemeMapper.ToMudTheme(dto);
 
         var expected = new MudBlazor.Utilities.MudColor("#1565c0");
-        System.Console.WriteLine($"darken={theme.PaletteLight.PrimaryDarken} lighten={theme.PaletteLight.PrimaryLighten} default={new MudBlazor.PaletteLight().PrimaryDarken}");
         theme.PaletteLight.PrimaryDarken.ShouldBe(expected.ColorRgbDarken().ToString(MudBlazor.Utilities.MudColorOutputFormats.RGB));
     }
 }
