@@ -94,5 +94,12 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.AddCoworkeeDbContext<GadgetDbContext>((provider, options) =>
             options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
         context.Services.AddODataEntity<Gadget>("Gadgets", ODataApp.ViewGadgets);
+        context.Services.AddScoped<IODataEntityFilter<Gadget>, HideSecretGadgets>();
     }
+}
+
+internal sealed class HideSecretGadgets : IODataEntityFilter<Gadget>
+{
+    public Task<IQueryable<Gadget>> ApplyAsync(IQueryable<Gadget> query, CancellationToken cancellationToken) =>
+        Task.FromResult(query.Where(g => g.Category != "Secret"));
 }

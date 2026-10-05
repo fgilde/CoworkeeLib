@@ -18,7 +18,8 @@ public sealed class EntityODataTests(ODataApp app) : IAsyncLifetime
             db.AddRange(
                 new Gadget { Name = "Drill", Category = "Tools", Price = 99, TenantId = _setup.TenantId },
                 new Gadget { Name = "Hammer", Category = "Tools", Price = 19, TenantId = _setup.TenantId },
-                new Gadget { Name = "Lamp", Category = "Light", Price = 35, TenantId = _setup.TenantId });
+                new Gadget { Name = "Lamp", Category = "Light", Price = 35, TenantId = _setup.TenantId },
+                new Gadget { Name = "Vault", Category = "Secret", Price = 1000, TenantId = _setup.TenantId });
             return await db.SaveChangesAsync();
         });
         var other = Guid.CreateVersion7();
@@ -65,6 +66,17 @@ public sealed class EntityODataTests(ODataApp app) : IAsyncLifetime
 
         page.GetProperty("value")[0].EnumerateObject().Select(p => p.Name).ShouldBe(["Name"]);
         (await Admin.GetAsync("/odata/Gadgets?$top=5000", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Entity_filters_hide_rows_from_lists_counts_facets_and_keys()
+    {
+        var page = await Admin.GetFromJsonAsync<JsonElement>("/odata/Gadgets?$count=true", Ct);
+
+        page.GetProperty("@odata.count").GetInt32().ShouldBe(3);
+        page.ToString().ShouldNotContain("Vault");
+        var id = await app.InDbAsync(_setup.TenantId, db => Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.SingleAsync(db.Set<Gadget>(), g => g.Name == "Vault"));
+        (await Admin.GetAsync($"/odata/Gadgets({id.Id})", Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]
