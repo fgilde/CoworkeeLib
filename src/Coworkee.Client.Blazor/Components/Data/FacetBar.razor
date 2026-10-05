@@ -1,0 +1,24 @@
+@foreach (var group in Groups.OrderBy(g => g.Order))
+{
+    <MudMenu AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft" data-facet="@group.Key">
+        <ActivatorContent Context="menu">
+            <MudButton Variant="@(SelectedCount(group) > 0 ? Variant.Filled : Variant.Outlined)" Color="Color.Primary" Size="Size.Small"
+                       EndIcon="@Icons.Material.Filled.ArrowDropDown" OnClick="@(() => menu.ToggleAsync())" Class="mr-2 mb-2" data-testid="facet-button">
+                @group.Label@(SelectedCount(group) > 0 ? $" ({SelectedCount(group)})" : string.Empty)
+            </MudButton>
+        </ActivatorContent>
+        <ChildContent>
+            @foreach (var option in group.Options)
+            {
+                <MudMenuItem AutoClose="false" Disabled="@(!option.Enabled && !Selection.IsSelected(group, option))" OnClick="() => Selection.Toggle(group, option)" data-option="@option.OData">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Size="Size.Small" Icon="@(Selection.IsSelected(group, option) ? Icons.Material.Filled.CheckBox : Icons.Material.Outlined.CheckBoxOutlineBlank)" />
+                        <MudText Typo="Typo.body2">@option.Label</MudText>
+                        <MudSpacer />
+                        <MudChip T="int" Size="Size.Small" Variant="Variant.Text">@option.Count</MudChip>
+                    </MudStack>
+                </MudMenuItem>
+            }
+        </ChildContent>
+    </MudMenu>
+}

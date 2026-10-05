@@ -1,0 +1,26 @@
+@typeparam T
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-1">
+    @if (SearchFields.Count > 0)
+    {
+        <MudTextField T="string" Value="_search" ValueChanged="SearchAsync" Immediate="true" DebounceInterval="300" Placeholder="@SearchPlaceholder"
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense"
+                      Class="mr-2 mb-2" Style="max-width:320px" data-testid="table-search" />
+    }
+    @if (Facets)
+    {
+        <FacetBar Groups="_facets" Selection="_selection" />
+    }
+    <MudSpacer />
+    @ToolBarContent
+</MudStack>
+<FacetChips Selection="_selection" />
+<MudDataGrid @ref="_grid" T="T" ServerData="LoadAsync" MultiSelection="MultiSelection" SelectedItemsChanged="SelectedItemsChanged" RowsPerPage="PageSize"
+             SortMode="SortMode.Multiple" Dense="true" Hover="true" Striped="true" Elevation="0" Outlined="true" Columns="Columns" data-testid="data-table">
+    <NoRecordsContent>
+        <MudText Class="mud-text-secondary pa-4">@NoRecordsText</MudText>
+    </NoRecordsContent>
+    <PagerContent>
+        <MudDataGridPager T="T" />
+    </PagerContent>
+</MudDataGrid>

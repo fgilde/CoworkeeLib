@@ -16,6 +16,7 @@ public static class CoworkeeClientExtensions
         services.AddSingleton(options);
         services.AddMudServicesWithExtensions();
         services.AddHttpClient<ICoworkeeApi, CoworkeeApi>(client => client.BaseAddress = baseAddress);
+        services.AddHttpClient<Data.IODataClient, Data.ODataClient>(client => client.BaseAddress = baseAddress);
         services.AddScoped<PermissionStore>();
         services.AddScoped<Theming.ThemeService>();
         services.AddScoped<Realtime.IRealtimeConnection, Realtime.SignalRRealtimeConnection>();

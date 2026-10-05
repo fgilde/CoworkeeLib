@@ -145,7 +145,7 @@ public static class BffExtensions
 
         // the assistant may think and call tools for minutes before the first byte of its answer
         var longRequests = new Yarp.ReverseProxy.Forwarder.ForwarderRequestConfig { ActivityTimeout = TimeSpan.FromMinutes(10) };
-        foreach (var prefix in options.ForwardedPrefixes.Prepend("/api"))
+        foreach (var prefix in options.ForwardedPrefixes.Prepend("/odata").Prepend("/api").Distinct(StringComparer.OrdinalIgnoreCase))
         {
             app.MapForwarder(prefix.TrimEnd('/') + "/{**catch-all}", options.ApiAddress, longRequests, transforms => transforms.AddRequestTransform(async transform =>
             {
