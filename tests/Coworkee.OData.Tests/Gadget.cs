@@ -12,5 +12,7 @@ public sealed class Gadget : AuditedEntity, IMultiTenant
 
     public decimal Price { get; set; }
 
+    public string? SerialCode { get; set; }
+
     public Guid TenantId { get; set; }
 }

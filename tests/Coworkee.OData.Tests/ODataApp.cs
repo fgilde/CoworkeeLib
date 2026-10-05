@@ -93,7 +93,7 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.AddSingleton<Coworkee.Application.Authorization.IPermissionDefinitionContributor, GadgetPermissions>();
         context.Services.AddCoworkeeDbContext<GadgetDbContext>((provider, options) =>
             options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
-        context.Services.AddODataEntity<Gadget>("Gadgets", ODataApp.ViewGadgets);
+        context.Services.AddODataEntity<Gadget>("Gadgets", ODataApp.ViewGadgets, g => g.SerialCode);
         context.Services.AddScoped<IODataEntityFilter<Gadget>, HideSecretGadgets>();
     }
 }

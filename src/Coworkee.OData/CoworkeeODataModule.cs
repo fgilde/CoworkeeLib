@@ -41,6 +41,11 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
         {
             var type = builder.AddEntityType(entity.EntityType);
             type.HasKey(entity.EntityType.GetProperty("Id") ?? throw new InvalidOperationException($"{entity.EntityType.Name} needs an Id property for OData."));
+            foreach (var hidden in entity.HiddenProperties)
+            {
+                type.RemoveProperty(entity.EntityType.GetProperty(hidden)!);
+            }
+
             builder.AddEntitySet(entity.EntitySet, type);
         }
 
