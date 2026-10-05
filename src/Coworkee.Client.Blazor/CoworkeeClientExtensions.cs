@@ -60,7 +60,7 @@ internal sealed class ConfigurationNavigation : INavigationContributor
 
 internal sealed class AdminNavigation : INavigationContributor
 {
-    public const string AdminGroup = "Administration";
+    public const string AdminGroup = Navigation.NavigationGroups.Administration;
 
     public IEnumerable<CoworkeeNavItem> Items =>
     [
