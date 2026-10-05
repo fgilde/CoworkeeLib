@@ -176,6 +176,7 @@
 
 @code {
     private const int LastStep = 5;
+    private const int LookStep = 3;
     private const int AdministratorStep = 4;
     private static readonly string[] StepTitles = ["Welcome", "System check", "Organisation", "Look and feel", "Administrator", "Mail"];
     private static readonly string[] StepHints =
@@ -292,7 +293,7 @@
                 _checks = [new SetupCheckDto("System", SetupCheckStatus.Error, exception.Message)];
             }
         }
-        else if (_step == 3 && _themes is null)
+        else if (_step == LookStep && _themes is null)
         {
             try
             {
@@ -364,6 +365,10 @@
             if (HasError("Password") || HasError("Email"))
             {
                 _step = AdministratorStep;
+            }
+            else if (HasError("ThemeId"))
+            {
+                _step = LookStep;
             }
         }
         finally
