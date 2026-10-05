@@ -106,14 +106,29 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     private async Task ExportAsync(ExportFormat format)
     {
-        var page = await OData.QueryAsync<T>(EntitySet, new ODataQuery { Filter = CurrentFilter, Top = 1000, Count = false });
+        var items = await AllAsync();
         if (format == ExportFormat.Csv)
         {
-            await Downloader.DownloadAsync($"{ExportFileName}.csv", "text/csv", TableExport.ToCsv(page.Items));
+            await Downloader.DownloadAsync($"{ExportFileName}.csv", "text/csv", TableExport.ToCsv(items));
         }
         else
         {
-            await Downloader.DownloadAsync($"{ExportFileName}.json", "application/json", TableExport.ToJson(page.Items));
+            await Downloader.DownloadAsync($"{ExportFileName}.json", "application/json", TableExport.ToJson(items));
+        }
+    }
+
+    private async Task<List<T>> AllAsync()
+    {
+        const int Batch = 1000;
+        var items = new List<T>();
+        while (true)
+        {
+            var page = await OData.QueryAsync<T>(EntitySet, new ODataQuery { Filter = CurrentFilter, Top = Batch, Skip = items.Count, Count = false });
+            items.AddRange(page.Items);
+            if (page.Items.Count < Batch)
+            {
+                return items;
+            }
         }
     }
 

@@ -108,6 +108,7 @@ public sealed class DataTableTests : ClientTestBase
 
         csv.Split(Environment.NewLine)[0].ShouldBe("Id;Name;Category");
         csv.ShouldContain("\"Drill; heavy\"");
+        TableExport.ToCsv([new Gadget(Guid.Empty, "=HYPERLINK(1)", "-x")]).ShouldContain("'=HYPERLINK(1);'-x");
     }
 
     private static RenderFragment Columns() => builder =>
