@@ -8,9 +8,9 @@
 @inject NavigationManager Nav
 
 <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" OpenChanged="OpenChangedAsync">
-    <ActivatorContent>
+    <ActivatorContent Context="menu">
         <MudBadge Content="@_count" Visible="@(_count > 0)" Color="Color.Secondary" Overlap="true">
-            <MudIconButton Icon="@Icons.Material.Outlined.Notifications" Color="Color.Inherit" aria-label="Notifications" />
+            <MudIconButton Icon="@Icons.Material.Outlined.Notifications" Color="Color.Inherit" aria-label="Notifications" OnClick="@(() => menu.ToggleAsync())" />
         </MudBadge>
         <span data-testid="unread" style="display:none">@_count</span>
     </ActivatorContent>
@@ -29,11 +29,12 @@
                 }
             </MudMenuItem>
         }
+        <MudDivider />
         @if (_count > 0)
         {
-            <MudDivider />
             <MudMenuItem OnClick="MarkAllAsync">Mark all as read</MudMenuItem>
         }
+        <MudMenuItem Href="/notifications" Icon="@Icons.Material.Outlined.List">All notifications</MudMenuItem>
     </ChildContent>
 </MudMenu>
 
@@ -91,7 +92,7 @@
             await RefreshCountAsync();
         }
 
-        if (item.Link is { Length: > 0 } link && link.StartsWith('/'))
+        if (item.Link is { Length: > 0 } link && link.StartsWith('/') && !link.StartsWith("//", StringComparison.Ordinal))
         {
             Nav.NavigateTo(link);
         }
