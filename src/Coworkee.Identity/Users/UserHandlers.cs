@@ -24,6 +24,47 @@ public sealed record GetUser(Guid Id) : IQuery<Result<UserDetailDto>>;
 [RequiresPermission(IdentityPermissions.Users.Manage)]
 public sealed record UnlockUser(Guid Id) : ICommand<Result>;
 
+public sealed record GetMyProfile : IQuery<Result<ProfileDto>>;
+
+public sealed record UpdateMyProfile(UpdateProfileRequest Profile) : ICommand<Result<ProfileDto>>;
+
+internal sealed class UpdateMyProfileValidator : AbstractValidator<UpdateMyProfile>
+{
+    public UpdateMyProfileValidator()
+    {
+        RuleFor(c => c.Profile.FirstName).MaximumLength(100);
+        RuleFor(c => c.Profile.LastName).MaximumLength(100);
+        RuleFor(c => c.Profile.PhoneNumber).MaximumLength(50);
+    }
+}
+
+internal sealed class MyProfileHandlers(CoworkeeDbContext db, ICurrentUser currentUser)
+    : IHandler<GetMyProfile, Result<ProfileDto>>, IHandler<UpdateMyProfile, Result<ProfileDto>>
+{
+    public async Task<Result<ProfileDto>> HandleAsync(GetMyProfile query, CancellationToken cancellationToken) =>
+        await MeAsync(cancellationToken) is { } user ? Map(user) : UserErrors.NotFound;
+
+    public async Task<Result<ProfileDto>> HandleAsync(UpdateMyProfile command, CancellationToken cancellationToken)
+    {
+        if (await MeAsync(cancellationToken) is not { } user)
+        {
+            return UserErrors.NotFound;
+        }
+
+        user.FirstName = Clean(command.Profile.FirstName);
+        user.LastName = Clean(command.Profile.LastName);
+        user.PhoneNumber = Clean(command.Profile.PhoneNumber);
+        return Map(user);
+    }
+
+    private Task<User?> MeAsync(CancellationToken cancellationToken) =>
+        db.Set<User>().SingleOrDefaultAsync(u => u.Id == currentUser.UserId && u.TenantId == currentUser.TenantId, cancellationToken);
+
+    private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static ProfileDto Map(User user) => new(user.Email!, user.FirstName, user.LastName, user.PhoneNumber);
+}
+
 [RequiresPermission(IdentityPermissions.Users.Manage)]
 public sealed record CreateUser(CreateUserRequest User) : ICommand<Result<UserDto>>;
 

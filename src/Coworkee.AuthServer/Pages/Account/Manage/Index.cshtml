@@ -1,0 +1,8 @@
+@page
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(AuthenticationSchemes = "Identity.Application")]
+@{ ViewData["Title"] = "Account security"; }
+<h1>Account security</h1>
+<div class="links">
+  <a asp-page="ChangePassword">Change password</a>
+  <a asp-page="TwoFactor">Two-step verification</a>
+</div>

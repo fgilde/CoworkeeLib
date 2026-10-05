@@ -35,7 +35,8 @@ public sealed class LayoutTests : ClientTestBase
         AddAuthorization().SetAuthorized("Ada");
         var layout = Render<CoworkeeLayout>(p => p.Add(l => l.Body, (RenderFragment)(b => b.AddContent(0, "body"))));
 
-        await layout.FindAll("button").Single(b => b.TextContent.Contains("Sign out")).ClickAsync(new());
+        await layout.Find("button[aria-label='Account']").ClickAsync(new());
+        await layout.WaitForElements(".mud-menu-item").Single(i => i.TextContent.Contains("Sign out")).ClickAsync(new());
 
         Services.GetRequiredService<NavigationManager>().Uri.ShouldBe("https://auth.test/connect/endsession?x=1");
     }

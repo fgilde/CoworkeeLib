@@ -20,6 +20,10 @@ public interface ICoworkeeApi
 
     Task SendPasswordResetAsync(Guid userId, CancellationToken cancellationToken = default);
 
+    Task<ProfileDto> GetMyProfileAsync(CancellationToken cancellationToken = default);
+
+    Task<ProfileDto> UpdateMyProfileAsync(UpdateProfileRequest request, CancellationToken cancellationToken = default);
+
     Task<UserDetailDto> GetUserDetailAsync(Guid userId, CancellationToken cancellationToken = default);
 
     Task UnlockUserAsync(Guid userId, CancellationToken cancellationToken = default);

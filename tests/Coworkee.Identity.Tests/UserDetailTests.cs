@@ -68,3 +68,32 @@ public sealed class UserDetailTests(IdentityApp app) : IAsyncLifetime
         (await app.As(viewer.Id, _setup.TenantId).GetAsync($"/api/v1/identity/users/{viewer.Id}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 }
+
+public sealed class MyProfileTests(IdentityApp app) : IAsyncLifetime
+{
+    private SetupResultDto _setup = null!;
+
+    public async ValueTask InitializeAsync()
+    {
+        await app.ResetAllAsync();
+        _setup = await app.SetupAsync();
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
+
+    [Fact]
+    public async Task Everyone_edits_their_own_name_and_phone_but_not_the_address()
+    {
+        var admin = app.As(_setup.AdminUserId, _setup.TenantId);
+        var bob = (await (await admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest("bob@acme.test", "Passw0rd!x", "Bob", null), Ct)).Content.ReadFromJsonAsync<UserDto>(Ct))!;
+        var me = app.As(bob.Id, _setup.TenantId);
+
+        (await me.PutAsJsonAsync("/api/v1/identity/me", new UpdateProfileRequest("Robert", "Builder", "+49 30 1234"), Ct)).EnsureSuccessStatusCode();
+
+        var profile = (await me.GetFromJsonAsync<ProfileDto>("/api/v1/identity/me", Ct))!;
+        profile.ShouldBe(new ProfileDto("bob@acme.test", "Robert", "Builder", "+49 30 1234"));
+        (await me.PutAsJsonAsync("/api/v1/identity/me", new UpdateProfileRequest(new string('x', 101), null, null), Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+}

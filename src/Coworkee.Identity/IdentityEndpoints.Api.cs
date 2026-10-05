@@ -26,6 +26,8 @@ internal static partial class IdentityEndpoints
     {
         api.MapGet("/users", ([AsParameters] PageRequest page, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetUsers(page), ct).ToHttpResult());
         api.MapPost("/users", (CreateUserRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new CreateUser(body), ct).ToHttpResult());
+        api.MapGet("/me", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetMyProfile(), ct).ToHttpResult());
+        api.MapPut("/me", (UpdateProfileRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new UpdateMyProfile(body), ct).ToHttpResult());
         api.MapGet("/users/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetUser(id), ct).ToHttpResult());
         api.MapPost("/users/{id:guid}/unlock", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new UnlockUser(id), ct).ToHttpResult());
         api.MapPut("/users/{id:guid}", (Guid id, UpdateUserRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new UpdateUser(id, body), ct).ToHttpResult());
