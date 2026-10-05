@@ -1,0 +1,8 @@
+@if (Permission is null)
+{
+    @ChildContent
+}
+else
+{
+    <PermissionView Permission="@Permission">@ChildContent</PermissionView>
+}

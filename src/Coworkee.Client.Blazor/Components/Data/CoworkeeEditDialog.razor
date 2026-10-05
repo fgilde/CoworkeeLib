@@ -1,0 +1,12 @@
+@using MudBlazor.Extensions.Components.ObjectEdit
+@using MudBlazor.Extensions.Components.ObjectEdit.Options
+@typeparam TModel
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">@Title</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudExObjectEditForm Value="Model" MetaConfiguration="Meta" GroupingStyle="GroupingStyle.Flat" OnValidSubmit="Save" OnCancel="Cancel" />
+    </DialogContent>
+</MudDialog>

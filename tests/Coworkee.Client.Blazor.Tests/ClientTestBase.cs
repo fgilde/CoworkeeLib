@@ -16,6 +16,7 @@ public abstract class ClientTestBase : BunitContext
         Services.AddSingleton(Api);
         Services.AddSingleton(new CoworkeeClientOptions());
         Services.AddScoped<Theming.ThemeService>();
+        Services.AddScoped<Data.FileDownloader>();
         Services.AddSingleton<FakeRealtimeConnection>();
         Services.AddSingleton<Realtime.IRealtimeConnection>(sp => sp.GetRequiredService<FakeRealtimeConnection>());
         Services.AddScoped<Realtime.RealtimeClient>();
