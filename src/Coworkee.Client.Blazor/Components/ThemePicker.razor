@@ -1,0 +1,84 @@
+@* themes as cards with their colors, and the color mode; the parent applies and stores the choice *@
+
+<style>
+    .cw-themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; }
+    .cw-theme { cursor: pointer; border-radius: 14px; padding: 12px; border: 2px solid var(--mud-palette-lines-default); background: var(--mud-palette-surface);
+        transition: transform 120ms ease, border-color 120ms ease; display: block; }
+    .cw-theme:hover { transform: translateY(-2px); }
+    .cw-theme:focus-visible { outline: 2px solid var(--mud-palette-primary); outline-offset: 2px; }
+    .cw-theme.selected { border-color: var(--mud-palette-primary); box-shadow: 0 6px 20px color-mix(in srgb, var(--mud-palette-primary) 30%, transparent); }
+    .cw-swatch { height: 64px; border-radius: 10px; display: flex; overflow: hidden; margin-bottom: 10px; box-shadow: inset 0 0 0 1px var(--mud-palette-lines-default); }
+    .cw-swatch span { flex: 1; display: block; }
+</style>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4" Wrap="Wrap.Wrap">
+    <MudText Typo="Typo.subtitle2">Color mode</MudText>
+    <MudButtonGroup Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">
+        @foreach (var (mode, label, icon) in Modes)
+        {
+            <MudButton data-mode="@mode" StartIcon="@icon" Variant="@(Mode == mode ? Variant.Filled : Variant.Outlined)" OnClick="() => ModeChanged.InvokeAsync(mode)">@label</MudButton>
+        }
+    </MudButtonGroup>
+    @ChildContent
+</MudStack>
+
+@if (Themes is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <div class="cw-themes">
+        @foreach (var theme in Themes)
+        {
+            <div role="button" tabindex="0" aria-pressed="@(theme.Id == SelectedId)" class="@($"cw-theme {(theme.Id == SelectedId ? "selected" : string.Empty)}")" data-theme="@theme.Name"
+                 @onclick="() => SelectedIdChanged.InvokeAsync(theme.Id)" @onkeydown="e => KeyAsync(e, theme)">
+                <div class="cw-swatch">
+                    @foreach (var color in Swatch(theme))
+                    {
+                        <span style="background:@color"></span>
+                    }
+                </div>
+                <MudText Typo="Typo.subtitle2">@theme.Name</MudText>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private static readonly (string Mode, string Label, string Icon)[] Modes =
+    [
+        ("light", "Light", Icons.Material.Outlined.LightMode),
+        ("system", "System", Icons.Material.Outlined.Contrast),
+        ("dark", "Dark", Icons.Material.Outlined.DarkMode),
+    ];
+
+    [Parameter] public IReadOnlyList<ThemeDto>? Themes { get; set; }
+
+    [Parameter] public Guid? SelectedId { get; set; }
+
+    [Parameter] public EventCallback<Guid> SelectedIdChanged { get; set; }
+
+    [Parameter] public string Mode { get; set; } = "system";
+
+    [Parameter] public EventCallback<string> ModeChanged { get; set; }
+
+    /// <summary>More actions next to the mode buttons.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private Task KeyAsync(KeyboardEventArgs e, ThemeDto theme) => e.Key is "Enter" or " " ? SelectedIdChanged.InvokeAsync(theme.Id) : Task.CompletedTask;
+
+    // only plain color values go into the style attribute
+    private static IEnumerable<string> Swatch(ThemeDto theme)
+    {
+        foreach (var key in new[] { "Primary", "Secondary", "Background", "Surface" })
+        {
+            if (theme.PaletteLight.ValueKind == System.Text.Json.JsonValueKind.Object && theme.PaletteLight.TryGetProperty(key, out var value)
+                && value.ValueKind == System.Text.Json.JsonValueKind.String && value.GetString() is { Length: > 0 and <= 40 } color
+                && color.All(c => char.IsAsciiLetterOrDigit(c) || c is '#' or '(' or ')' or ',' or '.' or ' ' or '%'))
+            {
+                yield return color;
+            }
+        }
+    }
+}
