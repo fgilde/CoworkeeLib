@@ -23,6 +23,18 @@ public sealed partial class AccountPagesTests(AuthApp app) : IAsyncLifetime
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     [Fact]
+    public async Task Account_pages_send_a_content_security_policy_that_lets_sign_in_return_to_the_clients()
+    {
+        using var response = await app.Browser().GetAsync("/Account/Login", TestContext.Current.CancellationToken);
+
+        var policy = response.Headers.GetValues("Content-Security-Policy").Single();
+        policy.ShouldContain("script-src 'self'");
+        policy.ShouldContain("frame-ancestors 'none'");
+        policy.ShouldContain("form-action 'self' https://client.test");
+        response.Headers.GetValues("X-Content-Type-Options").Single().ShouldBe("nosniff");
+    }
+
+    [Fact]
     public async Task Forgot_password_answers_the_same_for_unknown_addresses()
     {
         var known = await PostFormAsync(app.Browser(), "/Account/ForgotPassword", new() { ["Input.Email"] = "admin@acme.test" });

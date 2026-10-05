@@ -86,11 +86,34 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
         }
     }
 
+    /// <summary>
+    /// The account pages run no script and style inline; after sign-in the browser follows redirects to the clients, which
+    /// browsers check against form-action, so the clients' origins are allowed there.
+    /// </summary>
+    internal static string ContentSecurityPolicy(AuthServerOptions options)
+    {
+        var clients = options.Clients.SelectMany(c => c.RedirectUris.Concat(c.PostLogoutRedirectUris))
+            .Select(u => Uri.TryCreate(u, UriKind.Absolute, out var uri) ? uri.GetLeftPart(UriPartial.Authority) : null)
+            .OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase);
+        return "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; "
+            + $"frame-ancestors 'none'; form-action {string.Join(' ', ["'self'", .. clients])}";
+    }
+
     private static X509Certificate2 Load(CertificateOptions certificate) =>
         X509CertificateLoader.LoadPkcs12FromFile(certificate.Path, certificate.Password, X509KeyStorageFlags.EphemeralKeySet);
 
     public void ConfigureApplication(WebApplication app)
     {
+        var policy = ContentSecurityPolicy(app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<AuthServerOptions>>().Value);
+        app.Use(async (context, next) =>
+        {
+            var headers = context.Response.Headers;
+            headers.ContentSecurityPolicy = policy;
+            headers.XContentTypeOptions = "nosniff";
+            headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+            await next();
+        });
+
         AuthEndpoints.Map(app);
         app.MapRazorPages();
     }
