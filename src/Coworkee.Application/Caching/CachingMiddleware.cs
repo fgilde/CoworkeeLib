@@ -64,11 +64,12 @@ internal sealed class CachingMiddleware(HybridCache cache, ICurrentUser currentU
         ICachedQuery query, Type requestType, Func<Task<TValue>> load, Func<TValue, bool> cacheable, CancellationToken cancellationToken)
     {
         var options = query.CacheDuration is { } duration ? new HybridCacheEntryOptions { Expiration = duration, LocalCacheExpiration = duration } : null;
+        var caller = ExecutionContext.Capture();
         try
         {
             return await cache.GetOrCreateAsync(
                 Key(query, requestType),
-                async _ => await load() is var value && cacheable(value) ? value : throw new NotCached<TValue>(value),
+                async _ => await InCallerContext(caller, load) is var value && cacheable(value) ? value : throw new NotCached<TValue>(value),
                 options,
                 query.CacheTags.Select(Tag).ToList(),
                 cancellationToken);
@@ -77,6 +78,19 @@ internal sealed class CachingMiddleware(HybridCache cache, ICurrentUser currentU
         {
             return notCached.Value;
         }
+    }
+
+    // HybridCache may run the factory on a pool thread without the caller's ExecutionContext, which would lose the current user and tenant.
+    private static Task<TValue> InCallerContext<TValue>(ExecutionContext? caller, Func<Task<TValue>> load)
+    {
+        if (caller is null)
+        {
+            return load();
+        }
+
+        Task<TValue>? task = null;
+        ExecutionContext.Run(caller, _ => task = load(), null);
+        return task!;
     }
 
     private string Key(ICachedQuery query, Type requestType) => query.CacheScope switch
