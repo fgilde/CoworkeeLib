@@ -92,6 +92,14 @@ public interface ICoworkeeApi
 
     Task<IReadOnlyList<ThemeDto>> GetThemesAsync(CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<AppConfigurationDto>> GetAppConfigurationsAsync(CancellationToken cancellationToken = default);
+
+    Task<AppConfigurationValuesDto> GetAppConfigurationAsync(string section, CancellationToken cancellationToken = default);
+
+    Task<AppConfigurationValuesDto> SaveAppConfigurationAsync(string section, System.Text.Json.JsonElement values, CancellationToken cancellationToken = default);
+
+    Task<AppConfigurationValuesDto> ResetAppConfigurationAsync(string section, CancellationToken cancellationToken = default);
+
     /// <summary>The themes that ship with the app; answers before setup.</summary>
     Task<IReadOnlyList<ThemeDto>> GetBuiltInThemesAsync(CancellationToken cancellationToken = default);
 
