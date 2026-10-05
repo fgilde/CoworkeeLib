@@ -13,10 +13,57 @@
     }
     <MudSpacer />
     @ToolBarContent
+    @if (Exportable)
+    {
+        <MudMenu Icon="@Icons.Material.Outlined.FileDownload" Size="Size.Small" Class="mb-2" aria-label="Export" data-testid="export">
+            <MudMenuItem OnClick="() => ExportAsync(ExportFormat.Csv)">CSV</MudMenuItem>
+            <MudMenuItem OnClick="() => ExportAsync(ExportFormat.Json)">JSON</MudMenuItem>
+        </MudMenu>
+    }
+    @if (OnDelete is not null && MultiSelection && _selected.Count > 0)
+    {
+        <PermissionGate Permission="@DeletePermission">
+            <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Outlined.Delete" Size="Size.Small" Class="ml-2 mb-2"
+                       OnClick="() => DeleteAsync(_selected.ToList())" data-testid="delete-selected">Delete @_selected.Count</MudButton>
+        </PermissionGate>
+    }
+    @if (OnCreate.HasDelegate)
+    {
+        <PermissionGate Permission="@CreatePermission">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Size="Size.Small" Class="ml-2 mb-2"
+                       OnClick="CreateAsync" data-testid="create">@CreateText</MudButton>
+        </PermissionGate>
+    }
 </MudStack>
 <FacetChips Selection="_selection" />
-<MudDataGrid @ref="_grid" T="T" ServerData="LoadAsync" MultiSelection="MultiSelection" SelectedItemsChanged="SelectedItemsChanged" RowsPerPage="PageSize"
-             SortMode="SortMode.Multiple" Dense="true" Hover="true" Striped="true" Elevation="0" Outlined="true" Columns="Columns" data-testid="data-table">
+<MudDataGrid @ref="_grid" T="T" ServerData="LoadAsync" MultiSelection="MultiSelection" SelectedItemsChanged="SelectionChangedAsync" RowsPerPage="PageSize"
+             SortMode="SortMode.Multiple" Dense="true" Hover="true" Striped="true" Elevation="0" Outlined="true" data-testid="data-table">
+    <Columns>
+        @if (MultiSelection)
+        {
+            <SelectColumn T="T" />
+        }
+        @Columns
+        @if (OnEdit.HasDelegate || OnDelete is not null)
+        {
+            <TemplateColumn T="T" Sortable="false" CellStyle="text-align:right;white-space:nowrap">
+                <CellTemplate Context="cell">
+                    @if (OnEdit.HasDelegate)
+                    {
+                        <PermissionGate Permission="@EditPermission">
+                            <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" aria-label="Edit" OnClick="() => EditAsync(cell.Item)" data-testid="edit-row" />
+                        </PermissionGate>
+                    }
+                    @if (OnDelete is not null)
+                    {
+                        <PermissionGate Permission="@DeletePermission">
+                            <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" aria-label="Delete" OnClick="() => DeleteAsync([cell.Item])" data-testid="delete-row" />
+                        </PermissionGate>
+                    }
+                </CellTemplate>
+            </TemplateColumn>
+        }
+    </Columns>
     <NoRecordsContent>
         <MudText Class="mud-text-secondary pa-4">@NoRecordsText</MudText>
     </NoRecordsContent>

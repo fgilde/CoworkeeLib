@@ -16,7 +16,11 @@ public sealed class DataTableTests : ClientTestBase
 
     private readonly FakeOData _odata = new();
 
-    public DataTableTests() => Services.AddSingleton<IODataClient>(_odata);
+    public DataTableTests()
+    {
+        Services.AddSingleton<IODataClient>(_odata);
+        AddAuthorization().SetAuthorized("Ada");
+    }
 
     private static FacetOptionDto Option(string value, int count) =>
         new(JsonSerializer.SerializeToElement(value), value, true, count, $"Category eq '{value}'");
@@ -66,6 +70,46 @@ public sealed class DataTableTests : ClientTestBase
         table.WaitForAssertion(() => _odata.LastQuery!.Filter.ShouldBe("(Category eq 'Tools') and (contains(tolower(Name),'dri'))"), TimeSpan.FromSeconds(3));
     }
 
+    [Fact]
+    public async Task Create_edit_and_delete_run_the_page_callbacks_and_reload()
+    {
+        var created = 0;
+        Gadget? edited = null;
+        IReadOnlyCollection<Gadget>? deleted = null;
+        var dialogs = Render<MudDialogProvider>();
+        Render<MudPopoverProvider>();
+        var table = Render<CoworkeeDataTable<Gadget>>(p => p
+            .Add(t => t.EntitySet, "Gadgets")
+            .Add(t => t.Columns, Columns())
+            .Add(t => t.MultiSelection, true)
+            .Add(t => t.OnCreate, () => created++)
+            .Add(t => t.OnEdit, (Gadget g) => edited = g)
+            .Add(t => t.OnDelete, items => { deleted = items; return Task.CompletedTask; }));
+        table.WaitForAssertion(() => table.FindAll("[data-testid='edit-row']").Count.ShouldBe(2));
+        var loads = _odata.Loads;
+
+        await table.Find("[data-testid='create']").ClickAsync(new());
+        await table.FindAll("[data-testid='edit-row']")[1].ClickAsync(new());
+        var deleting = table.FindAll("[data-testid='delete-row']")[0].ClickAsync(new());
+        dialogs.WaitForAssertion(() => dialogs.FindAll("button").Any(b => b.TextContent.Trim() == "Delete").ShouldBeTrue());
+        await dialogs.FindAll("button").First(b => b.TextContent.Trim() == "Delete").ClickAsync(new());
+        await deleting;
+
+        created.ShouldBe(1);
+        edited!.Name.ShouldBe("Lamp");
+        table.WaitForAssertion(() => deleted!.Single().Name.ShouldBe("Drill"));
+        _odata.Loads.ShouldBeGreaterThan(loads);
+    }
+
+    [Fact]
+    public void Csv_export_quotes_what_needs_quotes()
+    {
+        var csv = TableExport.ToCsv([new Gadget(Guid.Empty, "Drill; heavy", "Tools")]);
+
+        csv.Split(Environment.NewLine)[0].ShouldBe("Id;Name;Category");
+        csv.ShouldContain("\"Drill; heavy\"");
+    }
+
     private static RenderFragment Columns() => builder =>
     {
         builder.OpenComponent<PropertyColumn<Gadget, string>>(0);
@@ -81,9 +125,12 @@ public sealed class DataTableTests : ClientTestBase
 
         public ODataQuery? LastQuery { get; private set; }
 
+        public int Loads { get; private set; }
+
         public Task<ODataPage<T>> QueryAsync<T>(string entitySet, ODataQuery query, CancellationToken cancellationToken = default)
         {
             (LastSet, LastQuery) = (entitySet, query);
+            Loads++;
             IReadOnlyList<T> items = (IReadOnlyList<T>)(object)new List<Gadget> { new(Guid.CreateVersion7(), "Drill", "Tools"), new(Guid.CreateVersion7(), "Lamp", "Light") };
             return Task.FromResult(new ODataPage<T>(items, 2, [Category]));
         }

@@ -11,6 +11,31 @@ public partial class CoworkeeDataTable<T> : IDisposable
     private MudDataGrid<T>? _grid;
     private IReadOnlyList<FacetGroupDto> _facets = [];
     private string? _search;
+    private HashSet<T> _selected = [];
+
+    [Inject] private IDialogService Dialogs { get; set; } = null!;
+
+    [Inject] private FileDownloader Downloader { get; set; } = null!;
+
+    [Parameter] public bool Exportable { get; set; } = true;
+
+    [Parameter] public string ExportFileName { get; set; } = "export";
+
+    [Parameter] public string CreateText { get; set; } = "New";
+
+    [Parameter] public string? CreatePermission { get; set; }
+
+    [Parameter] public string? EditPermission { get; set; }
+
+    [Parameter] public string? DeletePermission { get; set; }
+
+    [Parameter] public EventCallback OnCreate { get; set; }
+
+    [Parameter] public EventCallback<T> OnEdit { get; set; }
+
+    [Parameter] public Func<IReadOnlyCollection<T>, Task>? OnDelete { get; set; }
+
+    [Parameter] public Func<T, string>? DescribeItem { get; set; }
 
     [Inject] private IODataClient OData { get; set; } = null!;
 
@@ -47,6 +72,50 @@ public partial class CoworkeeDataTable<T> : IDisposable
     public Task ReloadAsync() => _grid?.ReloadServerData() ?? Task.CompletedTask;
 
     private void Reload() => InvokeAsync(ReloadAsync);
+
+    private async Task SelectionChangedAsync(HashSet<T> selected)
+    {
+        _selected = selected;
+        await SelectedItemsChanged.InvokeAsync(selected);
+    }
+
+    private async Task CreateAsync()
+    {
+        await OnCreate.InvokeAsync();
+        await ReloadAsync();
+    }
+
+    private async Task EditAsync(T item)
+    {
+        await OnEdit.InvokeAsync(item);
+        await ReloadAsync();
+    }
+
+    private async Task DeleteAsync(IReadOnlyCollection<T> items)
+    {
+        var what = items.Count == 1 && DescribeItem is not null ? DescribeItem(items.First()) : $"{items.Count} entries";
+        if (await Dialogs.ShowMessageBoxAsync("Delete", $"Delete {what}? This cannot be undone.", yesText: "Delete", cancelText: "Cancel") != true)
+        {
+            return;
+        }
+
+        await OnDelete!(items);
+        _selected = [];
+        await ReloadAsync();
+    }
+
+    private async Task ExportAsync(ExportFormat format)
+    {
+        var page = await OData.QueryAsync<T>(EntitySet, new ODataQuery { Filter = CurrentFilter, Top = 1000, Count = false });
+        if (format == ExportFormat.Csv)
+        {
+            await Downloader.DownloadAsync($"{ExportFileName}.csv", "text/csv", TableExport.ToCsv(page.Items));
+        }
+        else
+        {
+            await Downloader.DownloadAsync($"{ExportFileName}.json", "application/json", TableExport.ToJson(page.Items));
+        }
+    }
 
     private Task SearchAsync(string? text)
     {
