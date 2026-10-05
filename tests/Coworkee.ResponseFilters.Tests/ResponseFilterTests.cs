@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using Coworkee.Application.Authorization;
 using Coworkee.AspNetCore.Http;
 using Coworkee.Core.Results;
 using Microsoft.AspNetCore.Builder;
@@ -19,11 +20,14 @@ public sealed class ResponseFilterTests : IAsyncLifetime
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
         builder.Services.AddCoworkeeResponseFilters([typeof(ResponseFilterTests).Assembly]);
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<IPermissionChecker, HeaderPermissionChecker>();
         builder.Services.AddControllers().AddApplicationPart(typeof(ResponseFilterTests).Assembly);
         _app = builder.Build();
         _app.MapControllers();
         var api = _app.MapCoworkeeApi("/api/v1/people");
         api.MapGet("/{name}", (string name) => Task.FromResult(Result<Person>.Success(new Person(name, "secret-token", "4111111111111111"))).ToHttpResult());
+        api.MapGet("/salary/{name}", (string name) => Task.FromResult(Result<Employee>.Success(new Employee(name, 5000))).ToHttpResult());
         _app.MapGet("/outside", () => new Person("Ada", "secret-token", "4111111111111111"));
         await _app.StartAsync();
     }
@@ -56,7 +60,24 @@ public sealed class ResponseFilterTests : IAsyncLifetime
         all[0].GetProperty("token").GetString().ShouldBe("secret-token");
     }
 
+    [Fact]
+    public async Task Permission_rules_apply_only_to_callers_without_the_permission()
+    {
+        using var granted = new HttpRequestMessage(HttpMethod.Get, "/api/v1/people/salary/ada");
+        granted.Headers.Add("X-Permission", "Hr.Salaries");
+
+        (await _app.GetTestClient().GetFromJsonAsync<JsonElement>("/api/v1/people/salary/ada", Ct)).GetProperty("salary").ValueKind.ShouldBe(JsonValueKind.Null);
+        (await (await _app.GetTestClient().SendAsync(granted, Ct)).Content.ReadFromJsonAsync<JsonElement>(Ct)).GetProperty("salary").GetInt32().ShouldBe(5000);
+    }
+
     public sealed record Person(string Name, string Token, string Card);
+
+    public sealed record Employee(string Name, int? Salary);
+
+    public sealed class EmployeeFilter : ResponseFilter<Employee>
+    {
+        public EmployeeFilter() => Nullify(e => e.Salary).UnlessGranted("Hr.Salaries");
+    }
 
     public sealed class PersonFilter : ResponseFilter<Person>
     {
