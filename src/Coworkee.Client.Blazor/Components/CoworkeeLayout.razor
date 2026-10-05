@@ -30,7 +30,7 @@
                 <NotificationBell />
                 <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" data-testid="user-menu">
                     <ActivatorContent Context="menu">
-                        <MudButton Variant="Variant.Text" Color="Color.Inherit" Class="ml-2" StartIcon="@Icons.Material.Outlined.AccountCircle" EndIcon="@Icons.Material.Filled.ArrowDropDown" aria-label="Account" OnClick="@(() => menu.ToggleAsync())">
+                        <MudButton Variant="Variant.Text" Color="Color.Inherit" Class="ml-2" Style="text-transform:none" StartIcon="@Icons.Material.Outlined.AccountCircle" EndIcon="@Icons.Material.Filled.ArrowDropDown" aria-label="Account" OnClick="@(() => menu.ToggleAsync())">
                             @context.User.Identity?.Name
                         </MudButton>
                     </ActivatorContent>
