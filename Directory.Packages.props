@@ -41,6 +41,8 @@
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.19.2" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="10.10.0" />
+    <PackageVersion Include="Nextended.Web" Version="10.1.40" />
+    <PackageVersion Include="Nextended.ResponseFilters.AspNetCore" Version="10.1.40" />
     <PackageVersion Include="MudBlazor" Version="9.10.0" />
     <PackageVersion Include="MudBlazor.Extensions" Version="9.10.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.Web" Version="10.0.12" />

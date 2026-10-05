@@ -36,13 +36,13 @@ public sealed class CoworkeeSettingsModule : CoworkeeModule, IWebModule
 
     public void ConfigureApplication(WebApplication app)
     {
-        var api = app.MapGroup("/api/v1/settings").WithTags("Settings").RequireAuthorization();
+        var api = app.MapCoworkeeApi("/api/v1/settings").WithTags("Settings").RequireAuthorization();
         api.MapGet("/definitions", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetSettingDefinitions(), ct).ToHttpResult());
         api.MapGet("/definitions/user", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetUserSettingDefinitions(), ct).ToHttpResult());
         api.MapGet("/client", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetClientSettings(), ct).ToHttpResult());
         api.MapGet("/user", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetUserSettings(), ct).ToHttpResult());
         api.MapPut("/user", (SetSettingsRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SetUserSettings(body.Values), ct).ToHttpResult());
-        var configuration = app.MapGroup("/api/v1/configuration").WithTags("Configuration").RequireAuthorization();
+        var configuration = app.MapCoworkeeApi("/api/v1/configuration").WithTags("Configuration").RequireAuthorization();
         configuration.MapGet("/", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetAppConfigurations(), ct).ToHttpResult());
         configuration.MapGet("/{section}", (string section, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetAppConfiguration(section), ct).ToHttpResult());
         configuration.MapPut("/{section}", (string section, System.Text.Json.JsonElement body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SaveAppConfiguration(section, body), ct).ToHttpResult());

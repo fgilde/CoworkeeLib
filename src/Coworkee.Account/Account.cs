@@ -128,6 +128,6 @@ public sealed class CoworkeeAccountModule : CoworkeeModule, IWebModule
     }
 
     public void ConfigureApplication(WebApplication app) =>
-        app.MapGroup("/api/v1/identity").WithTags("Identity").RequireAuthorization()
+        app.MapCoworkeeApi("/api/v1/identity").WithTags("Identity").RequireAuthorization()
             .MapPost("/users/{id:guid}/password-reset", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new SendPasswordReset(id), ct).ToHttpResult());
 }

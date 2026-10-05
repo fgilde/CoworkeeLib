@@ -37,7 +37,7 @@ public sealed class CoworkeeThemingModule : CoworkeeModule, IWebModule
 
     public void ConfigureApplication(WebApplication app)
     {
-        var themes = app.MapGroup("/api/v1/themes").WithTags("Themes");
+        var themes = app.MapCoworkeeApi("/api/v1/themes").WithTags("Themes");
         themes.MapGet("/current", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetCurrentTheme(), ct).ToHttpResult()).AllowAnonymous();
         themes.MapGet("/built-in", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetBuiltInThemes(), ct).ToHttpResult()).AllowAnonymous();
         var managed = themes.MapGroup(string.Empty).RequireAuthorization();

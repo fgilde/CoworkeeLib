@@ -14,12 +14,12 @@ internal static partial class IdentityEndpoints
 {
     public static void Map(WebApplication app)
     {
-        var setup = app.MapGroup("/api/v1/setup").WithTags("Setup").AllowAnonymous();
+        var setup = app.MapCoworkeeApi("/api/v1/setup").WithTags("Setup").AllowAnonymous();
         setup.MapGet("/status", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetSetupStatus(), ct).ToHttpResult());
         setup.MapGet("/checks", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetSetupChecks(), ct).ToHttpResult());
         setup.MapPost("/complete", (CompleteSetupRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new CompleteSetup(body), ct).ToHttpResult());
 
-        var api = app.MapGroup("/api/v1/identity").WithTags("Identity").RequireAuthorization();
+        var api = app.MapCoworkeeApi("/api/v1/identity").WithTags("Identity").RequireAuthorization();
         api.MapGet("/permissions/me", async (IPermissionChecker checker, CancellationToken ct) =>
             TypedResults.Ok(await checker.GetGrantedAsync(ct)));
         MapIdentityApi(api);
