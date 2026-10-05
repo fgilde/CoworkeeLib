@@ -13,7 +13,7 @@ internal sealed class CachingMiddleware(HybridCache cache, ICurrentUser currentU
     public async Task<TResult> InvokeAsync<TRequest, TResult>(TRequest request, RequestHandlerDelegate<TResult> next, CancellationToken cancellationToken)
         where TRequest : IRequest<TResult>
     {
-        if (request is ICachedQuery query)
+        if (request is ICachedQuery query && (query.CacheScope != CacheScope.User || currentUser.UserId is not null))
         {
             return await ReadThroughAsync(query, typeof(TRequest), next, cancellationToken);
         }
@@ -31,12 +31,14 @@ internal sealed class CachingMiddleware(HybridCache cache, ICurrentUser currentU
     {
         if (typeof(TResult).IsGenericType && typeof(TResult).GetGenericTypeDefinition() == typeof(Result<>))
         {
-            var read = ReadResultMethod.MakeGenericMethod(typeof(TResult).GetGenericArguments()[0]);
+            var read = ReadResultMethods.GetOrAdd(typeof(TResult), type => ReadResultMethod.MakeGenericMethod(type.GetGenericArguments()[0]));
             return (Task<TResult>)read.Invoke(this, [query, requestType, next, cancellationToken])!;
         }
 
         return ReadAsync(query, requestType, () => next(), _ => true, cancellationToken);
     }
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, MethodInfo> ReadResultMethods = new();
 
     private static readonly MethodInfo ReadResultMethod =
         typeof(CachingMiddleware).GetMethod(nameof(ReadResultAsync), BindingFlags.Instance | BindingFlags.NonPublic)!;
@@ -81,10 +83,10 @@ internal sealed class CachingMiddleware(HybridCache cache, ICurrentUser currentU
     {
         CacheScope.User => $"coworkee:query:{currentUser.TenantId}:{currentUser.UserId}:{requestType.FullName}:{query.CacheKey}",
         CacheScope.Global => $"coworkee:query:global:{requestType.FullName}:{query.CacheKey}",
-        _ => $"coworkee:query:{currentUser.TenantId}:{requestType.FullName}:{query.CacheKey}",
+        _ => $"coworkee:query:{currentUser.TenantId?.ToString() ?? "anonymous"}:{requestType.FullName}:{query.CacheKey}",
     };
 
-    private string Tag(string tag) => $"coworkee:{currentUser.TenantId}:{tag}";
+    private string Tag(string tag) => $"coworkee:{currentUser.TenantId?.ToString() ?? "anonymous"}:{tag}";
 
     private static bool Succeeded<TResult>(TResult result) => result is not Result { IsSuccess: false };
 
