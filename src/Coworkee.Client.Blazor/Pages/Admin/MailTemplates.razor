@@ -1,6 +1,5 @@
 @page "/admin/mail/templates"
 @attribute [Authorize(Policy = "perm:" + MailPermissions.Templates.Manage)]
-@inject ICoworkeeApi Api
 
 <PageTitle>Mail templates</PageTitle>
 <MudText Typo="Typo.h4" Class="mb-4">Mail templates</MudText>
@@ -23,9 +22,3 @@
         }
     </tbody>
 </MudSimpleTable>
-
-@code {
-    private IReadOnlyList<MailTemplateSummaryDto> _templates = [];
-
-    protected override async Task OnInitializedAsync() => _templates = await Api.GetMailTemplatesAsync();
-}

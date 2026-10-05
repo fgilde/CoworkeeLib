@@ -1,6 +1,5 @@
 @page "/admin/configuration"
 @attribute [Authorize(Policy = "perm:" + SettingsPermissions.Manage)]
-@inject IEnumerable<ClientAppConfiguration> Registrations
 
 <PageTitle>Configuration</PageTitle>
 <MudText Typo="Typo.h4">Configuration</MudText>

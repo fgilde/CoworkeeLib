@@ -1,6 +1,5 @@
 @page "/admin/roles/{Id:guid}"
 @attribute [Authorize(Policy = "perm:" + IdentityPermissions.Roles.View)]
-@inject ICoworkeeApi Api
 
 <PageTitle>@(_role?.Name ?? "Role")</PageTitle>
 @if (_role is not null)
@@ -16,12 +15,4 @@
         <ChildContent><PermissionMatrix ProviderType="PermissionProviderType.Role" ProviderKey="_role.Id" ReadOnly="_role.IsSystem" /></ChildContent>
         <NotAuthorized><PermissionMatrix ProviderType="PermissionProviderType.Role" ProviderKey="_role.Id" ReadOnly="true" /></NotAuthorized>
     </PermissionView>
-}
-
-@code {
-    private RoleDto? _role;
-
-    [Parameter] public Guid Id { get; set; }
-
-    protected override async Task OnParametersSetAsync() => _role = (await Api.GetRolesAsync()).FirstOrDefault(r => r.Id == Id);
 }
