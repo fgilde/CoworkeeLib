@@ -18,6 +18,12 @@ namespace Coworkee.Identity.Users;
 [RequiresPermission(IdentityPermissions.Users.View)]
 public sealed record GetUsers(PageRequest Page) : IQuery<Result<PagedResult<UserDto>>>;
 
+[RequiresPermission(IdentityPermissions.Users.View)]
+public sealed record GetUser(Guid Id) : IQuery<Result<UserDetailDto>>;
+
+[RequiresPermission(IdentityPermissions.Users.Manage)]
+public sealed record UnlockUser(Guid Id) : ICommand<Result>;
+
 [RequiresPermission(IdentityPermissions.Users.Manage)]
 public sealed record CreateUser(CreateUserRequest User) : ICommand<Result<UserDto>>;
 
@@ -79,6 +85,40 @@ internal sealed class CreateUserHandler(UserManager<User> users, ICurrentUser cu
 
         var created = await users.CreateAsync(user, request.Password);
         return created.Succeeded ? user.ToDto(new Dictionary<Guid, List<RoleRefDto>>()) : IdentityErrors.ToError(created);
+    }
+}
+
+internal sealed class UserDetailHandlers(CoworkeeDbContext db, ICurrentUser currentUser, TimeProvider clock)
+    : IHandler<GetUser, Result<UserDetailDto>>, IHandler<UnlockUser, Result>
+{
+    public async Task<Result<UserDetailDto>> HandleAsync(GetUser query, CancellationToken cancellationToken)
+    {
+        if (await db.Set<User>().AsNoTracking().SingleOrDefaultAsync(u => u.Id == query.Id && u.TenantId == currentUser.TenantId, cancellationToken) is not { } user)
+        {
+            return UserErrors.NotFound;
+        }
+
+        var roles = await UserRoles.ForAsync(db, [user.Id], cancellationToken);
+        var groups = await (from member in db.Set<UserGroupMember>()
+                            join userGroup in db.Set<UserGroup>() on member.GroupId equals userGroup.Id
+                            where member.UserId == user.Id
+                            orderby userGroup.Name
+                            select new GroupRefDto(userGroup.Id, userGroup.Name)).ToListAsync(cancellationToken);
+        var lockedUntil = user.LockoutEnd is { } end && end > clock.GetUtcNow() ? end : (DateTimeOffset?)null;
+        return new UserDetailDto(user.Id, user.UserName!, user.Email!, user.FirstName, user.LastName, user.IsActive, user.EmailConfirmed, user.TwoFactorEnabled,
+            lockedUntil, user.LastLoginAt, roles.GetValueOrDefault(user.Id) ?? [], groups);
+    }
+
+    public async Task<Result> HandleAsync(UnlockUser command, CancellationToken cancellationToken)
+    {
+        if (await db.Set<User>().SingleOrDefaultAsync(u => u.Id == command.Id && u.TenantId == currentUser.TenantId, cancellationToken) is not { } user)
+        {
+            return UserErrors.NotFound;
+        }
+
+        user.LockoutEnd = null;
+        user.AccessFailedCount = 0;
+        return Result.Success();
     }
 }
 

@@ -30,6 +30,12 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
     public Task SendPasswordResetAsync(Guid userId, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Post, $"{Identity}/users/{userId}/password-reset", null, cancellationToken);
 
+    public Task<UserDetailDto> GetUserDetailAsync(Guid userId, CancellationToken cancellationToken = default) =>
+        GetAsync<UserDetailDto>($"{Identity}/users/{userId}", cancellationToken);
+
+    public Task UnlockUserAsync(Guid userId, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Post, $"{Identity}/users/{userId}/unlock", null, cancellationToken);
+
     public async Task<IReadOnlyList<string>> GetEffectivePermissionsAsync(Guid userId, CancellationToken cancellationToken = default) =>
         await GetAsync<string[]>($"{Identity}/users/{userId}/permissions", cancellationToken);
 

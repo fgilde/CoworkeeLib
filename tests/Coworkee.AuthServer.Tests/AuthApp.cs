@@ -98,6 +98,14 @@ public sealed class AuthApp : PostgresFixture
             .CountAsync(e => e.EntityType.StartsWith(entityTypePrefix));
     }
 
+    public async Task<DateTimeOffset?> LastLoginAsync(string email)
+    {
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
+        await using var scope = App.Services.CreateAsyncScope();
+        return await scope.ServiceProvider.GetRequiredService<AuthTestDbContext>().Set<Coworkee.Identity.Domain.User>()
+            .Where(u => u.Email == email).Select(u => u.LastLoginAt).SingleAsync();
+    }
+
     public async Task DeactivateAsync(Guid userId)
     {
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, null));

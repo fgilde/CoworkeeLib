@@ -35,6 +35,16 @@ public sealed partial class AccountPagesTests(AuthApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Sign_in_records_the_last_login()
+    {
+        (await app.LastLoginAsync("admin@acme.test")).ShouldBeNull();
+
+        (await LoginAsync(app.Browser(), "admin@acme.test", Password)).StatusCode.ShouldBe(HttpStatusCode.Redirect);
+
+        (await app.LastLoginAsync("admin@acme.test")).ShouldNotBeNull();
+    }
+
+    [Fact]
     public async Task Login_starts_with_the_address_the_client_hinted()
     {
         var returnUrl = "/connect/authorize?client_id=client&login_hint=" + Uri.EscapeDataString("ada@acme.test");
