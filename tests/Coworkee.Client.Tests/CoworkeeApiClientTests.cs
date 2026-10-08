@@ -19,6 +19,22 @@ public sealed class CoworkeeApiClientTests
         (failure.Status, failure.Code, failure.Errors["Name"][0]).ShouldBe((HttpStatusCode.BadRequest, "validation", "must not be empty"));
     }
 
+    [Fact]
+    public async Task Queries_an_entity_set_with_options_and_count()
+    {
+        Uri? asked = null;
+        var client = new TestClient(request =>
+        {
+            asked = request.RequestUri;
+            return Json(HttpStatusCode.OK, """{"@odata.count":7,"value":[{"name":"Drill"}]}""");
+        });
+
+        var page = await client.QueryAsync<Gadget>("Gadgets", filter: "Price gt 10", orderBy: "Name", top: 1, cancellationToken: TestContext.Current.CancellationToken);
+
+        (page.Count, page.Items.Single().Name).ShouldBe((7L, "Drill"));
+        asked!.PathAndQuery.ShouldBe("/odata/Gadgets?$filter=Price%20gt%2010&$orderby=Name&$top=1&$count=true");
+    }
+
     private static HttpResponseMessage Json(HttpStatusCode status, string json) =>
         new(status) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
 

@@ -31,6 +31,20 @@ public abstract class CoworkeeApiClient(HttpClient http)
         using var response = await SendContentAsync(method, path, Content(body), cancellationToken);
     }
 
+    /// <summary>Reads an OData entity set, e.g. "Products" with filter "Rate gt 10" and order "Name".</summary>
+    public async Task<ODataResult<T>> QueryAsync<T>(
+        string entitySet, string? filter = null, string? orderBy = null, int? top = null, int? skip = null, string? expand = null, CancellationToken cancellationToken = default)
+    {
+        var options = new[] { ("$filter", filter), ("$orderby", orderBy), ("$expand", expand), ("$top", top?.ToString()), ("$skip", skip?.ToString()) }
+            .Where(o => !string.IsNullOrWhiteSpace(o.Item2))
+            .Select(o => $"{o.Item1}={Uri.EscapeDataString(o.Item2!)}")
+            .Append("$count=true");
+        var page = await GetAsync<JsonElement>($"odata/{Uri.EscapeDataString(entitySet)}?{string.Join("&", options)}", cancellationToken);
+        return new ODataResult<T>(
+            page.GetProperty("value").Deserialize<List<T>>(Json) ?? [],
+            page.TryGetProperty("@odata.count", out var count) ? count.GetInt64() : null);
+    }
+
     /// <summary>Sends any content, for example a multipart upload; the caller disposes the response.</summary>
     protected async Task<HttpResponseMessage> SendContentAsync(HttpMethod method, string path, HttpContent? content, CancellationToken cancellationToken)
     {
