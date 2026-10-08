@@ -49,7 +49,11 @@ await host.RunAsync();
 
 ## Verwaltung
 
-- *Sprachen* (`/admin/languages`): welche Sprachen Benutzer wählen können und welche Standard ist.
+- *Sprachen* (`/admin/languages`): alle Kulturen, nach Sprache gruppiert, mit einem Schalter. Beim Einschalten werden fehlende Texte mit dem Azure AI Translator übersetzt, wenn `Localization.TranslatorKey` (und `Localization.TranslatorRegion`) in den Einstellungen gesetzt sind; ein Knopf übersetzt später noch Fehlendes. Der Stern markiert die Standardsprache, die sich nicht abschalten lässt.
+
+![Sprachen](../assets/screenshots/languages.png){ .shot }
 - *Übersetzungen* (`/admin/translations`): jeder Schlüssel mit Modultext und bearbeitetem Text je Sprache. Bearbeitungen gewinnen gegen die Modultexte.
 
 Beides braucht `Localization.Manage`.
+
+Jede Änderung erreicht alle Clients sofort (Realtime-Topic `global:localization`): sie laden ihre Texte neu, und Benutzer, deren Sprache abgeschaltet wurde, wechseln mit kurzem Hinweis zur Standardsprache.

@@ -49,7 +49,11 @@ await host.RunAsync();
 
 ## Administration
 
-- *Languages* (`/admin/languages`): which languages users can choose and the default.
+- *Languages* (`/admin/languages`): every culture, grouped by language, with a switch. Switching one on translates the texts it lacks with the Azure AI Translator when `Localization.TranslatorKey` (and `Localization.TranslatorRegion`) are set in the settings; a button translates what is still missing later. The star marks the default language, which cannot be switched off.
+
+![Languages](../assets/screenshots/languages.png){ .shot }
 - *Translations* (`/admin/translations`): every key with the module text and the edited text per language. Edits win over the module texts.
 
 Both need `Localization.Manage`.
+
+Every change reaches all clients at once (`global:localization` realtime topic): they reload their texts, and users whose language was switched off move to the default language with a short notice.

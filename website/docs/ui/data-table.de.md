@@ -47,7 +47,26 @@ if (await Dialogs.ShowEditAsync("Edit brand", model) is { } saved)
 }
 ```
 
-Mit `meta => ...` konfigurieren Sie das `MudExObjectEditForm` (Beschriftungen, Reihenfolge, Editoren). Für Nachschlagelisten, Uploads oder Eigenes schreiben Sie eine Dialogkomponente, wie das Template mit `ProductDialog` und `DocumentDialog`.
+Bearbeitungsdialoge sind Seitenblätter in voller Höhe, die von der Seite hereingleiten, auf die der Benutzer geklickt hat, auf breiten Bildschirmen zweispaltig. Mit `meta => ...` konfigurieren Sie das `MudExObjectEditForm` (Beschriftungen, Reihenfolge, Editoren). Mit einer Speicherfunktion bleibt der Dialog offen und zeigt die Meldungen der API, wenn das Speichern scheitert:
+
+![Bearbeitungsdialog](../assets/screenshots/edit-sheet.png){ .shot }
+
+```csharp
+await Dialogs.ShowEditAsync(L["New product"], model, saved => Api.SaveProductAsync(id, saved), meta =>
+{
+    meta.Property(p => p.BrandId).WithLabel(L["Brand"])
+        .RenderWith<ODataPicker, Guid>(p => p.Value)
+        .WithAdditionalAttribute(nameof(ODataPicker.EntitySet), "Brands");
+    meta.Property(p => p.ImageDataUrl).WithLabel(L["Image"]).RenderWith<ImageDataUrlEdit, string?>(p => p.Value);
+});
+```
+
+| Editor | für |
+|---|---|
+| `ODataPicker` | einen Fremdschlüssel: sucht in einem OData-Entity-Set über eine Texteigenschaft |
+| `ImageDataUrlEdit` | ein Bild, gespeichert als Data-URL |
+
+`ShowSideSheetAsync<TDialog>` öffnet eine eigene Dialogkomponente genauso, `ConfirmAsync` fragt vor etwas, das sich nicht rückgängig machen lässt.
 
 ## Ansichten, URL und Spalten
 

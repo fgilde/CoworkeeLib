@@ -55,8 +55,9 @@ internal sealed class MyAppNavigation : INavigationContributor
 | `OrderGroup(name, order)` | position of a group; unknown groups come last, by name |
 | `Hide(hrefs)` | removes entries, also the built-in admin pages |
 | `ShowHome`, `HomeTitle` | the home link at the top |
+| `IconForGroup(name, icon)` | the icon of a group node |
 
-Users can filter the menu, pin it or let it collapse to icons (it opens on hover), and choose whether one group or several stay open. The choice is stored in the browser.
+The menu is a `MudExTreeView`: groups are nodes, the filter box highlights matches and opens their groups, and the view can switch between tree, list and flat list. Pinned, the drawer stays as an icon strip under the app bar and the menu button widens it; unpinned, it opens as an overlay and hides again. Whether one group or several stay open is a second toggle. Both choices are stored in the browser.
 
 ![Collapsed navigation](../assets/screenshots/mini-drawer.png){ .shot }
 
@@ -88,6 +89,17 @@ internal sealed class CatalogApi(HttpClient http) : ApiClientBase(http), ICatalo
 ```
 
 `Snackbar.RunAsync(() => api.SaveAsync(...), "Saved")` runs a call and shows success or the validation messages of a failure.
+
+## People
+
+`UserAvatar` shows a user's picture or initials, `UserCard` picture and name with an optional second line. Both load in batches and update for everyone the moment someone changes name or picture on the profile page (`tenant:users` realtime topic).
+
+![Profile page](../assets/screenshots/profile.png){ .shot }
+
+```razor
+<UserCard UserId="entry.ActorId">@entry.CreatedAt.ToString("g")</UserCard>
+<UserAvatar UserId="message.FromUserId" Size="Size.Small" ShowTooltip="true" />
+```
 
 ## Building blocks
 

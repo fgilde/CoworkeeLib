@@ -55,8 +55,9 @@ internal sealed class MyAppNavigation : INavigationContributor
 | `OrderGroup(name, order)` | Position einer Gruppe; unbekannte Gruppen kommen zuletzt, nach Namen |
 | `Hide(hrefs)` | entfernt Einträge, auch die eingebauten Admin-Seiten |
 | `ShowHome`, `HomeTitle` | der Startseiten-Link oben |
+| `IconForGroup(name, icon)` | das Symbol eines Gruppenknotens |
 
-Benutzer können das Menü filtern, anheften oder auf Symbole einklappen lassen (es öffnet sich beim Darüberfahren) und wählen, ob eine oder mehrere Gruppen offen bleiben. Die Wahl speichert der Browser.
+Das Menü ist ein `MudExTreeView`: Gruppen sind Knoten, das Filterfeld hebt Treffer hervor und öffnet ihre Gruppen, und die Ansicht wechselt zwischen Baum, Liste und flacher Liste. Angeheftet bleibt die Leiste als Symbolstreifen unter der App-Leiste, der Menüknopf verbreitert sie; nicht angeheftet öffnet sie sich als Überlagerung und verschwindet wieder. Ob eine oder mehrere Gruppen offen bleiben, ist ein zweiter Schalter. Beides speichert der Browser.
 
 ![Eingeklappte Navigation](../assets/screenshots/mini-drawer.png){ .shot }
 
@@ -88,6 +89,17 @@ internal sealed class CatalogApi(HttpClient http) : ApiClientBase(http), ICatalo
 ```
 
 `Snackbar.RunAsync(() => api.SaveAsync(...), "Saved")` führt einen Aufruf aus und zeigt Erfolg oder die Validierungsmeldungen eines Fehlers.
+
+## Personen
+
+`UserAvatar` zeigt das Bild eines Benutzers oder seine Initialen, `UserCard` Bild und Name mit optionaler zweiter Zeile. Beide laden gebündelt und aktualisieren sich für alle, sobald jemand Name oder Bild auf der Profilseite ändert (Realtime-Topic `tenant:users`).
+
+![Profilseite](../assets/screenshots/profile.png){ .shot }
+
+```razor
+<UserCard UserId="entry.ActorId">@entry.CreatedAt.ToString("g")</UserCard>
+<UserAvatar UserId="message.FromUserId" Size="Size.Small" ShowTooltip="true" />
+```
 
 ## Bausteine
 

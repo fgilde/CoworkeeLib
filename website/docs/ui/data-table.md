@@ -47,7 +47,27 @@ if (await Dialogs.ShowEditAsync("Edit brand", model) is { } saved)
 }
 ```
 
-Pass `meta => ...` to configure the `MudExObjectEditForm` (labels, order, editors). For lookups, uploads or anything custom write a dialog component, as the template does with `ProductDialog` and `DocumentDialog`.
+Edit dialogs are full height side sheets that slide in from the side the user clicked on, with two columns on wide screens.
+
+![Edit side sheet](../assets/screenshots/edit-sheet.png){ .shot }
+ Pass `meta => ...` to configure the `MudExObjectEditForm` (labels, order, editors). With a save function the dialog stays open and shows the messages of the API when saving fails:
+
+```csharp
+await Dialogs.ShowEditAsync(L["New product"], model, saved => Api.SaveProductAsync(id, saved), meta =>
+{
+    meta.Property(p => p.BrandId).WithLabel(L["Brand"])
+        .RenderWith<ODataPicker, Guid>(p => p.Value)
+        .WithAdditionalAttribute(nameof(ODataPicker.EntitySet), "Brands");
+    meta.Property(p => p.ImageDataUrl).WithLabel(L["Image"]).RenderWith<ImageDataUrlEdit, string?>(p => p.Value);
+});
+```
+
+| Editor | for |
+|---|---|
+| `ODataPicker` | a foreign key: searches an OData entity set by a text property |
+| `ImageDataUrlEdit` | a picture kept as data URL |
+
+`ShowSideSheetAsync<TDialog>` opens your own dialog component the same way, `ConfirmAsync` asks before something that cannot be undone.
 
 ## Views, URL and columns
 
