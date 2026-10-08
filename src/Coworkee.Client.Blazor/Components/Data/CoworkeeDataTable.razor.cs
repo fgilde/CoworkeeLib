@@ -162,7 +162,9 @@ public partial class CoworkeeDataTable<T> : IDisposable
         }
     }
 
-    private static string? ColumnName(Column<T> column) => column.Title ?? column.PropertyName;
+    // select and action columns carry a generated property name; only titled or property columns can be chosen
+    private static string? ColumnName(Column<T> column) =>
+        column.Title ?? (column.GetType() is { IsGenericType: true } type && type.GetGenericTypeDefinition() == typeof(PropertyColumn<,>) ? column.PropertyName : null);
 
     private async Task ToggleColumnAsync(Column<T> column)
     {
