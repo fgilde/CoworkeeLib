@@ -10,7 +10,7 @@ public static class DialogPlacement
 
     public static async Task StartAsync(IJSRuntime js)
     {
-        _module ??= await js.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");
+        _module = await js.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");
         await _module.InvokeVoidAsync("trackPointer");
     }
 
