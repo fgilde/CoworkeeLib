@@ -43,7 +43,27 @@ internal static class KeycloakRealm
                 credentials = new[] { new { type = "password", value = $"${{{UserPasswordVariable}}}", temporary = false } },
             }),
         };
-        File.WriteAllText(Path.Combine(directory, $"{realm}-realm.json"), JsonSerializer.Serialize(document, new JsonSerializerOptions { WriteIndented = true }));
+        WriteIfChanged(Path.Combine(directory, $"{realm}-realm.json"), JsonSerializer.Serialize(document, new JsonSerializerOptions { WriteIndented = true }));
         return directory;
+    }
+
+    // app hosts of parallel tests share the file and a running container may hold it open
+    private static void WriteIfChanged(string path, string json)
+    {
+        if (File.Exists(path) && File.ReadAllText(path) == json)
+        {
+            return;
+        }
+
+        var temp = $"{path}.{Guid.NewGuid():N}.tmp";
+        File.WriteAllText(temp, json);
+        try
+        {
+            File.Move(temp, path, overwrite: true);
+        }
+        catch (IOException) when (File.Exists(path) && File.ReadAllText(path) == json)
+        {
+            File.Delete(temp);
+        }
     }
 }
