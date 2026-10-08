@@ -5,19 +5,6 @@
 @using Nextended.Core.Types
 @using Coworkee.Client.Blazor.Navigation
 
-@if (!Mini)
-{
-    <div class="d-flex align-center justify-end gap-1 px-3 pt-2" data-testid="nav-tools">
-        <MudTooltip Text="@L[Preferences.Pinned ? "Unpin" : "Pin"]">
-            <MudToggleIconButton Toggled="Preferences.Pinned" ToggledChanged="Preferences.SetPinnedAsync" Size="Size.Small" ToggledSize="Size.Small"
-                                 Icon="@Icons.Material.Outlined.PushPin" ToggledIcon="@Icons.Material.Filled.PushPin" ToggledColor="Color.Warning" aria-label="Pin navigation" data-testid="nav-pin" />
-        </MudTooltip>
-        <MudTooltip Text="@L[Preferences.SingleExpand ? "Expand many groups" : "Expand one group at a time"]">
-            <MudToggleIconButton Toggled="Preferences.SingleExpand" ToggledChanged="Preferences.SetSingleExpandAsync" Size="Size.Small" ToggledSize="Size.Small"
-                                 Icon="@Icons.Material.Outlined.Expand" ToggledIcon="@Icons.Material.Outlined.UnfoldLess" ToggledColor="Color.Warning" aria-label="Expand one group at a time" data-testid="nav-single-expand" />
-        </MudTooltip>
-    </div>
-}
 @if (_entries is not null)
 {
     <MudExTreeView T="NavigationEntry" Items="_entries"
@@ -39,6 +26,21 @@
                    TreeViewModeToggleComponent="@(Mini ? TreeViewModeToggleComponent.None : TreeViewModeToggleComponent.ToggleButton)"
                    ToggleableViewModes="@(Mini ? [] : ToggleableViewModes)"
                    data-testid="nav-tree">
+        <ToolBarContent>
+            @if (!Mini)
+            {
+                <span class="d-flex align-center" data-testid="nav-tools">
+                    <MudTooltip Text="@L[Preferences.Pinned ? "Unpin" : "Pin"]">
+                        <MudToggleIconButton Toggled="Preferences.Pinned" ToggledChanged="Preferences.SetPinnedAsync" Size="Size.Small" ToggledSize="Size.Small"
+                                             Icon="@Icons.Material.Outlined.PushPin" ToggledIcon="@Icons.Material.Filled.PushPin" ToggledColor="Color.Warning" aria-label="Pin navigation" data-testid="nav-pin" />
+                    </MudTooltip>
+                    <MudTooltip Text="@L[Preferences.SingleExpand ? "Expand many groups" : "Expand one group at a time"]">
+                        <MudToggleIconButton Toggled="Preferences.SingleExpand" ToggledChanged="Preferences.SetSingleExpandAsync" Size="Size.Small" ToggledSize="Size.Small"
+                                             Icon="@Icons.Material.Outlined.Expand" ToggledIcon="@Icons.Material.Outlined.UnfoldLess" ToggledColor="Color.Warning" aria-label="Expand one group at a time" data-testid="nav-single-expand" />
+                    </MudTooltip>
+                </span>
+            }
+        </ToolBarContent>
         <ItemContentTemplate>
             <div class="d-flex align-center" style="width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" data-nav="@context.Value?.Href" data-nav-group="@(context.Value?.HasChildren == true ? context.Value.Text : null)">
                 @if (!string.IsNullOrWhiteSpace(context.Value?.Icon))
