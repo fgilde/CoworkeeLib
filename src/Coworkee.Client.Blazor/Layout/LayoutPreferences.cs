@@ -10,7 +10,8 @@ public sealed class LayoutPreferences(IJSRuntime js)
 
     public bool Pinned { get; private set; } = true;
 
-    public bool SingleExpand { get; private set; }
+    /// <summary>Null until the user chooses; the theme decides until then.</summary>
+    public bool? SingleExpand { get; private set; }
 
     public bool RightToLeft { get; private set; }
 
@@ -51,5 +52,5 @@ public sealed class LayoutPreferences(IJSRuntime js)
         }
     }
 
-    private sealed record State(bool Pinned, bool SingleExpand, bool RightToLeft);
+    private sealed record State(bool Pinned, bool? SingleExpand, bool RightToLeft);
 }

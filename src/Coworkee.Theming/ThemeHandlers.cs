@@ -29,7 +29,7 @@ public sealed record DeleteTheme(Guid Id) : ICommand<Result>;
 [RequiresPermission(ThemePermissions.Manage)]
 public sealed record SetDefaultTheme(Guid Id) : ICommand<Result>;
 
-internal sealed class ThemeHandlers(CoworkeeDbContext db, ICurrentUser currentUser, IServiceProvider services)
+internal sealed class ThemeHandlers(CoworkeeDbContext db, ICurrentUser currentUser, IPermissionChecker permissions, IServiceProvider services)
     : IHandler<GetThemes, Result<IReadOnlyList<ThemeDto>>>,
       IHandler<GetCurrentTheme, Result<ThemeDto>>,
       IHandler<GetBuiltInThemes, Result<IReadOnlyList<ThemeDto>>>,
@@ -45,7 +45,9 @@ internal sealed class ThemeHandlers(CoworkeeDbContext db, ICurrentUser currentUs
     {
         await ThemeSeeds.EnsureAsync(db, cancellationToken);
         var defaultId = (await EffectiveAsync(currentUser.TenantId, cancellationToken))?.Id;
-        IReadOnlyList<ThemeDto> themes = (await Visible().OrderBy(t => t.Name).ToListAsync(cancellationToken))
+        var all = await permissions.IsGrantedAsync(ThemePermissions.Manage, cancellationToken);
+        IReadOnlyList<ThemeDto> themes = (await Visible().Where(t => all || t.TenantId == null || t.IsPublished || t.Id == defaultId)
+                .OrderBy(t => t.Name).ToListAsync(cancellationToken))
             .Select(t => ToDto(t, t.Id == defaultId))
             .ToList();
         return Result<IReadOnlyList<ThemeDto>>.Success(themes);
@@ -179,6 +181,9 @@ internal sealed class ThemeHandlers(CoworkeeDbContext db, ICurrentUser currentUs
         theme.PaletteDark = request.PaletteDark.GetRawText();
         theme.Typography = Raw(request.Typography);
         theme.LayoutProperties = Raw(request.LayoutProperties);
+        theme.Shadows = Raw(request.Shadows);
+        theme.Options = Raw(request.Options);
+        theme.IsPublished = request.IsPublished;
         theme.LogoSvg = string.IsNullOrWhiteSpace(request.LogoSvg) ? null : request.LogoSvg.Trim();
         theme.CustomCss = string.IsNullOrWhiteSpace(request.CustomCss) ? null : request.CustomCss;
     }
@@ -197,7 +202,10 @@ internal sealed class ThemeHandlers(CoworkeeDbContext db, ICurrentUser currentUs
         Parse(theme.LayoutProperties),
         theme.LogoSvg,
         theme.CustomCss,
-        theme.Revision);
+        theme.Revision,
+        Parse(theme.Shadows),
+        Parse(theme.Options),
+        theme.TenantId is null || theme.IsPublished);
 
     private static JsonElement? Parse(string? json) => json is null ? null : JsonDocument.Parse(json).RootElement.Clone();
 }

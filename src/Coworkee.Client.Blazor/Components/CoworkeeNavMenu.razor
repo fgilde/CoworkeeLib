@@ -5,6 +5,32 @@
 @using Nextended.Core.Types
 @using Coworkee.Client.Blazor.Navigation
 
+@if (!Mini && (Theme.CanPinNav || Theme.CanChangeNavExpandMode))
+{
+    <div class="d-flex justify-end align-center px-2 pt-1" style="position:relative;z-index:2" data-testid="nav-tools">
+        @if (Theme.CanPinNav)
+        {
+            <MudTooltip Text="@L[Preferences.Pinned ? "Unpin" : "Pin"]">
+                <MudToggleIconButton Toggled="Preferences.Pinned" ToggledChanged="Preferences.SetPinnedAsync" Size="Size.Small" ToggledSize="Size.Small"
+                                     Icon="@Icons.Material.Outlined.PushPin" ToggledIcon="@Icons.Material.Filled.PushPin" ToggledColor="Color.Warning" aria-label="Pin navigation" data-testid="nav-pin" />
+            </MudTooltip>
+        }
+        @if (Theme.CanChangeNavExpandMode)
+        {
+            <MudTooltip Text="@L[SingleExpand ? "Expand many groups" : "Expand one group at a time"]">
+                <MudToggleIconButton Toggled="SingleExpand" ToggledChanged="Preferences.SetSingleExpandAsync" Size="Size.Small" ToggledSize="Size.Small"
+                                     Icon="@Icons.Material.Outlined.Expand" ToggledIcon="@Icons.Material.Outlined.UnfoldLess" ToggledColor="Color.Warning" aria-label="Expand one group at a time" data-testid="nav-single-expand" />
+            </MudTooltip>
+        }
+    </div>
+}
+@if (!Mini && Theme.ShowLogoInNav)
+{
+    <div class="d-flex justify-center mt-2 mb-3" data-testid="nav-logo">
+        <CoworkeeLogo Height="88" />
+    </div>
+    <MudDivider Class="mb-2" />
+}
 @if (_entries is not null)
 {
     <MudExTreeView T="NavigationEntry" Items="_entries"
@@ -15,7 +41,7 @@
                    FilterChipsPlacedRight="true"
                    ExpandOnFilter="true"
                    FilterPlaceholder="@L["Filter"]"
-                   FilterMode="@(Mini || ViewMode == TreeViewMode.Breadcrumb ? PropertyFilterMode.Disabled : PropertyFilterMode.AlwaysVisible)"
+                   FilterMode="@(Mini || !Theme.ShowNavFilter || ViewMode == TreeViewMode.Breadcrumb ? PropertyFilterMode.Disabled : PropertyFilterMode.AlwaysVisible)"
                    FilterBoxStyle="margin:10px;"
                    Style="margin: 0 10px;"
                    TextFunc="@(entry => L[entry.Text])"
@@ -26,21 +52,6 @@
                    TreeViewModeToggleComponent="@(Mini ? TreeViewModeToggleComponent.None : TreeViewModeToggleComponent.ToggleButton)"
                    ToggleableViewModes="@(Mini ? [] : ToggleableViewModes)"
                    data-testid="nav-tree">
-        <ToolBarContent>
-            @if (!Mini)
-            {
-                <span class="d-flex align-center" data-testid="nav-tools">
-                    <MudTooltip Text="@L[Preferences.Pinned ? "Unpin" : "Pin"]">
-                        <MudToggleIconButton Toggled="Preferences.Pinned" ToggledChanged="Preferences.SetPinnedAsync" Size="Size.Small" ToggledSize="Size.Small"
-                                             Icon="@Icons.Material.Outlined.PushPin" ToggledIcon="@Icons.Material.Filled.PushPin" ToggledColor="Color.Warning" aria-label="Pin navigation" data-testid="nav-pin" />
-                    </MudTooltip>
-                    <MudTooltip Text="@L[Preferences.SingleExpand ? "Expand many groups" : "Expand one group at a time"]">
-                        <MudToggleIconButton Toggled="Preferences.SingleExpand" ToggledChanged="Preferences.SetSingleExpandAsync" Size="Size.Small" ToggledSize="Size.Small"
-                                             Icon="@Icons.Material.Outlined.Expand" ToggledIcon="@Icons.Material.Outlined.UnfoldLess" ToggledColor="Color.Warning" aria-label="Expand one group at a time" data-testid="nav-single-expand" />
-                    </MudTooltip>
-                </span>
-            }
-        </ToolBarContent>
         <ItemContentTemplate>
             <div class="d-flex align-center" style="width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" data-nav="@context.Value?.Href" data-nav-group="@(context.Value?.HasChildren == true ? context.Value.Text : null)">
                 @if (!string.IsNullOrWhiteSpace(context.Value?.Icon))

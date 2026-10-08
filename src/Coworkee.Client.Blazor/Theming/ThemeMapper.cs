@@ -1,54 +1,71 @@
 using System.Reflection;
 using System.Text.Json;
-using Coworkee.Client.Blazor.Components;
 using Coworkee.Contracts.Theming;
 using MudBlazor;
 using MudBlazor.Utilities;
 
 namespace Coworkee.Client.Blazor.Theming;
 
+/// <summary>Maps the stored theme sections (palettes, typography, layout, shadows, options) to a <see cref="CoworkeeTheme"/> and back.</summary>
 public static class ThemeMapper
 {
-    public static MudTheme ToMudTheme(ThemeDto dto)
+    private static readonly string[] Meta = [nameof(CoworkeeTheme.IsPublished), nameof(CoworkeeTheme.LogoSvg), nameof(CoworkeeTheme.CustomCss)];
+
+    public static CoworkeeTheme ToTheme(ThemeDto dto)
     {
-        var theme = new MudTheme();
+        var theme = new CoworkeeTheme { IsPublished = dto.IsPublished, LogoSvg = dto.LogoSvg, CustomCss = dto.CustomCss };
         Fill(theme.PaletteLight, dto.PaletteLight);
         Fill(theme.PaletteDark, dto.PaletteDark);
-        if (dto.LayoutProperties is { } layout)
-        {
-            Fill(theme.LayoutProperties, layout);
-        }
-
+        Fill(theme.Typography, dto.Typography);
+        Fill(theme.LayoutProperties, dto.LayoutProperties);
+        Fill(theme.Shadows, dto.Shadows);
+        Fill(theme, dto.Options, Options);
         return theme;
     }
 
-    public static ThemeRequest ToRequest(string name, MudTheme theme, string? logoSvg, string? customCss) => new(
+    public static ThemeRequest ToRequest(string name, CoworkeeTheme theme) => new(
         name,
-        ToJson(theme.PaletteLight),
-        ToJson(theme.PaletteDark),
-        null,
-        ToJson(theme.LayoutProperties),
-        logoSvg,
-        customCss);
+        Json(theme.PaletteLight),
+        Json(theme.PaletteDark),
+        Json(theme.Typography),
+        Json(theme.LayoutProperties),
+        string.IsNullOrWhiteSpace(theme.LogoSvg) ? null : theme.LogoSvg,
+        string.IsNullOrWhiteSpace(theme.CustomCss) ? null : theme.CustomCss,
+        Json(theme.Shadows),
+        JsonSerializer.SerializeToElement(Values(theme, Options)),
+        theme.IsPublished);
 
-    private static void Fill(object target, JsonElement values)
+    private static IEnumerable<PropertyInfo> Options(Type type) =>
+        typeof(CoworkeeTheme).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Where(p => !Meta.Contains(p.Name));
+
+    private static IEnumerable<PropertyInfo> Settable(Type type) =>
+        type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead && p.CanWrite && p.GetIndexParameters().Length == 0);
+
+    private static void Fill(object? target, JsonElement? values, Func<Type, IEnumerable<PropertyInfo>>? properties = null)
     {
-        if (values.ValueKind != JsonValueKind.Object)
+        if (target is null || values is not { ValueKind: JsonValueKind.Object } json)
         {
             return;
         }
 
-        var properties = Properties(target);
-        foreach (var value in values.EnumerateObject())
+        var byName = (properties ?? Settable)(target.GetType()).ToDictionary(p => p.Name, StringComparer.Ordinal);
+        foreach (var value in json.EnumerateObject())
         {
-            if (!properties.TryGetValue(value.Name, out var property))
+            if (!byName.TryGetValue(value.Name, out var property))
             {
                 continue;
             }
 
             try
             {
-                property.SetValue(target, Convert(property.PropertyType, value.Value));
+                if (value.Value.ValueKind == JsonValueKind.Object && IsSection(property.PropertyType))
+                {
+                    Fill(property.GetValue(target), value.Value);
+                }
+                else
+                {
+                    property.SetValue(target, Convert(property.PropertyType, value.Value));
+                }
             }
             catch (Exception exception) when (exception is FormatException or ArgumentException or InvalidOperationException or TargetInvocationException)
             {
@@ -58,103 +75,40 @@ public static class ThemeMapper
 
     private static object? Convert(Type type, JsonElement value) => type switch
     {
+        _ when value.ValueKind == JsonValueKind.Null => null,
         _ when type == typeof(MudColor) => new MudColor(value.GetString()!),
+        _ when type == typeof(string) => value.GetString(),
+        _ when type == typeof(string[]) => value.EnumerateArray().Select(v => v.GetString()!).ToArray(),
         _ when type == typeof(double) => value.GetDouble(),
         _ when type == typeof(int) => value.GetInt32(),
         _ when type == typeof(bool) => value.GetBoolean(),
-        _ when type == typeof(string) => value.GetString(),
+        _ when type.IsEnum => Enum.Parse(type, value.ToString()),
         _ => throw new InvalidOperationException($"Unsupported theme property type {type.Name}."),
     };
 
-    private static JsonElement ToJson(object source)
+    private static JsonElement Json(object section) => JsonSerializer.SerializeToElement(Values(section, Settable));
+
+    private static Dictionary<string, object> Values(object source, Func<Type, IEnumerable<PropertyInfo>> properties)
     {
-        var values = new Dictionary<string, object?>(StringComparer.Ordinal);
-        foreach (var property in Properties(source).Values)
+        var values = new Dictionary<string, object>(StringComparer.Ordinal);
+        foreach (var property in properties(source.GetType()))
         {
-            var value = property.GetValue(source);
-            values[property.Name] = value switch
+            object? value = property.GetValue(source) switch
             {
                 MudColor color => color.ToString(MudColorOutputFormats.HexA),
-                double or int or bool or string => value,
+                string or string[] or double or int or bool => property.GetValue(source),
+                Enum e => e.ToString(),
+                { } section when IsSection(property.PropertyType) => Values(section, Settable),
                 _ => null,
             };
-        }
-
-        return JsonSerializer.SerializeToElement(values.Where(v => v.Value is not null).ToDictionary(v => v.Key, v => v.Value));
-    }
-
-    private static Dictionary<string, PropertyInfo> Properties(object target) =>
-        target.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => p.CanRead && p.CanWrite && p.GetIndexParameters().Length == 0
-                && (p.PropertyType == typeof(MudColor) || p.PropertyType == typeof(double) || p.PropertyType == typeof(int) || p.PropertyType == typeof(bool) || p.PropertyType == typeof(string)))
-            .ToDictionary(p => p.Name, StringComparer.Ordinal);
-}
-
-public sealed class ThemeService(Api.ICoworkeeApi api)
-{
-    public MudTheme Theme { get; private set; } = CoworkeeTheme.Default;
-
-    public ThemeDto? Current { get; private set; }
-
-    public string Mode { get; private set; } = "system";
-
-    public string? CustomCss => Current?.CustomCss;
-
-    public string? LogoSvg => Current?.LogoSvg;
-
-    /// <summary>The settings the server shares with the client, read once with the theme.</summary>
-    public IReadOnlyDictionary<string, string?> ClientSettings { get; private set; } = new Dictionary<string, string?>();
-
-    public event Action? Changed;
-
-    public async Task LoadAsync()
-    {
-        try
-        {
-            if (await api.GetCurrentThemeAsync() is { } current)
+            if (value is not null)
             {
-                Apply(current);
+                values[property.Name] = value;
             }
         }
-        catch (Exception exception) when (exception is Api.ApiException or HttpRequestException or JsonException)
-        {
-        }
 
-        try
-        {
-            var settings = await api.GetClientSettingsAsync() ?? new Dictionary<string, string?>();
-            ClientSettings = settings;
-            Mode = settings.GetValueOrDefault(ThemeSettings.Mode) is { Length: > 0 } mode ? mode : "system";
-            if (settings.GetValueOrDefault(ThemeSettings.ThemeId) is { } id && Guid.TryParse(id, out var themeId) && themeId != Current?.Id
-                && (await api.GetThemesAsync() ?? []).FirstOrDefault(t => t.Id == themeId) is { } chosen)
-            {
-                Apply(chosen);
-            }
-        }
-        catch (Exception exception) when (exception is Api.ApiException or HttpRequestException or JsonException)
-        {
-        }
-
-        Changed?.Invoke();
+        return values;
     }
 
-    public void Apply(ThemeDto theme)
-    {
-        Current = theme;
-        Theme = ThemeMapper.ToMudTheme(theme);
-        Changed?.Invoke();
-    }
-
-    /// <summary>Switches between "light", "dark" and "system" for this session (setup, or a toggle before it is saved).</summary>
-    public void SetMode(string mode)
-    {
-        Mode = mode;
-        Changed?.Invoke();
-    }
-
-    public void Preview(MudTheme theme)
-    {
-        Theme = theme;
-        Changed?.Invoke();
-    }
+    private static bool IsSection(Type type) => type.IsClass && type != typeof(string) && type != typeof(MudColor) && !type.IsArray;
 }

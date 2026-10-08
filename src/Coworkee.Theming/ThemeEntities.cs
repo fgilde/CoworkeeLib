@@ -22,6 +22,14 @@ public sealed class ThemeDefinition : AuditedAggregateRoot, IVersioned
 
     public string? LayoutProperties { get; set; }
 
+    public string? Shadows { get; set; }
+
+    /// <summary>The app's own theme options: navigation, logo, tables.</summary>
+    public string? Options { get; set; }
+
+    /// <summary>Users can choose it; built-in themes always can.</summary>
+    public bool IsPublished { get; set; }
+
     public string? LogoSvg { get; set; }
 
     public string? CustomCss { get; set; }
@@ -48,6 +56,8 @@ internal sealed class ThemeModelContributor : IModelContributor, IVersionedTypeC
             theme.Property(t => t.PaletteDark).HasColumnType("jsonb");
             theme.Property(t => t.Typography).HasColumnType("jsonb");
             theme.Property(t => t.LayoutProperties).HasColumnType("jsonb");
+            theme.Property(t => t.Shadows).HasColumnType("jsonb");
+            theme.Property(t => t.Options).HasColumnType("jsonb");
             theme.HasIndex(t => new { t.TenantId, t.Name }).IsUnique().AreNullsDistinct(false);
         });
 

@@ -25,6 +25,8 @@ public partial class CoworkeeDataTable<T> : IDisposable
     private IReadOnlyList<string>? _hiddenToApply;
     private readonly HashSet<string> _hidden = new(StringComparer.Ordinal);
 
+    [Inject] private Theming.ThemeService ThemeService { get; set; } = null!;
+
     [Inject] private IDialogService Dialogs { get; set; } = null!;
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;

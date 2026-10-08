@@ -23,6 +23,8 @@ public partial class CoworkeeNavMenu : IDisposable
 
     [Inject] private LayoutPreferences Preferences { get; set; } = null!;
 
+    [Inject] private Theming.ThemeService ThemeService { get; set; } = null!;
+
     [Inject] private PermissionStore Permissions { get; set; } = null!;
 
     [Inject] private Microsoft.AspNetCore.Authorization.IAuthorizationService Authorization { get; set; } = null!;
@@ -38,9 +40,13 @@ public partial class CoworkeeNavMenu : IDisposable
 
     private TreeViewMode ViewMode => Mini ? TreeViewMode.FlatList : _viewMode;
 
+    private Theming.CoworkeeTheme Theme => ThemeService.Theme;
+
+    private bool SingleExpand => Preferences.SingleExpand ?? Theme.NavSingleExpand;
+
     private Dictionary<string, object> TreeParameters => new()
     {
-        ["ExpandBehaviour"] = Preferences.SingleExpand ? TreeViewExpandBehaviour.SingleExpand : TreeViewExpandBehaviour.Default,
+        ["ExpandBehaviour"] = SingleExpand ? TreeViewExpandBehaviour.SingleExpand : TreeViewExpandBehaviour.Default,
         ["RenderHomeLink"] = false,
         ["BackLinkLabel"] = L["Back"],
     };
@@ -48,6 +54,7 @@ public partial class CoworkeeNavMenu : IDisposable
     protected override async Task OnInitializedAsync()
     {
         Preferences.Changed += Refresh;
+        ThemeService.Changed += Refresh;
         Permissions.Changed += Reload;
         Nav.LocationChanged += LocationChanged;
         await BuildAsync();
@@ -56,6 +63,7 @@ public partial class CoworkeeNavMenu : IDisposable
     public void Dispose()
     {
         Preferences.Changed -= Refresh;
+        ThemeService.Changed -= Refresh;
         Permissions.Changed -= Reload;
         Nav.LocationChanged -= LocationChanged;
     }

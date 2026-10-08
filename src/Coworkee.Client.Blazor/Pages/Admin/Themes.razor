@@ -1,46 +1,28 @@
 @page "/admin/themes"
 @attribute [Authorize(Policy = "perm:" + ThemePermissions.Manage)]
+@using MudBlazor.Extensions.Components
+@using Coworkee.Client.Blazor.Theming
 
-<PageTitle>Themes</PageTitle>
-<RealtimeSubscription Topic="type:ThemeDefinition" OnEvent="_ => ReloadAsync()" />
-<MudText Typo="Typo.h4" Class="mb-4">Themes</MudText>
-<MudGrid>
-    @foreach (var theme in _themes)
+<PageHeader Title="Themes" Description="Create, change and delete themes; colors, fonts, radius, shadows, navigation and logo. Everyone can choose the published ones. Built-in themes stay as they are: saving one creates a copy.">
+    @if (_selected is { } selected)
     {
-        <MudItem xs="12" sm="6" md="4">
-            <MudPaper Outlined="true" Class="pa-4">
-                <MudStack Row="true" AlignItems="AlignItems.Center">
-                    <MudText Typo="Typo.h6">@theme.Name</MudText>
-                    <MudSpacer />
-                    @if (theme.IsDefault)
-                    {
-                        <MudChip T="string" Size="Size.Small" Color="Color.Secondary">default</MudChip>
-                    }
-                    @if (theme.IsGlobal)
-                    {
-                        <MudChip T="string" Size="Size.Small">built-in</MudChip>
-                    }
-                </MudStack>
-                <MudStack Row="true" Spacing="1" Class="my-3">
-                    @foreach (var color in Swatches(theme))
-                    {
-                        <div style="width:28px;height:28px;border:1px solid var(--mud-palette-lines-default);background:@color" title="@color"></div>
-                    }
-                </MudStack>
-                <MudStack Row="true">
-                    <MudButton Size="Size.Small" OnClick="() => ThemeService.Apply(theme)">Try</MudButton>
-                    <MudButton Size="Size.Small" Disabled="theme.IsDefault" OnClick="() => SetDefaultAsync(theme)">Make default</MudButton>
-                    @if (theme.IsGlobal)
-                    {
-                        <MudButton Size="Size.Small" OnClick="() => CopyAsync(theme)">Copy</MudButton>
-                    }
-                    else
-                    {
-                        <MudButton Size="Size.Small" Href="@($"/admin/themes/{theme.Id}")">Edit</MudButton>
-                        <MudButton Size="Size.Small" Color="Color.Error" OnClick="() => DeleteAsync(theme)">Delete</MudButton>
-                    }
-                </MudStack>
-            </MudPaper>
-        </MudItem>
+        @if (selected.IsGlobal)
+        {
+            <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Outlined.Lock">@L["built-in"]</MudChip>
+        }
+        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Outlined.Star" Disabled="selected.IsDefault" OnClick="SetDefaultAsync"
+                   data-testid="theme-default">@L[selected.IsDefault ? "Default theme" : "Make default"]</MudButton>
     }
-</MudGrid>
+</PageHeader>
+
+@if (_presets is not null)
+{
+    <MudExThemeEdit @key="_version" TTheme="CoworkeeTheme" Presets="_presets" Theme="_theme" AllowPresetsEdit="true" AllowModeToggle="true"
+                    ShowSaveButton="true" ShowCancelButton="true" AutoSaveRestoreState="false" CanDelete="CanDelete"
+                    ThemeCreated="CreateAsync" ThemeDeleted="DeleteAsync" ThemeSaved="SaveAsync" ThemeChanged="Preview" EditCanceled="CancelAsync"
+                    data-testid="theme-edit" />
+}
+else
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}

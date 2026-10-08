@@ -34,9 +34,9 @@
 
 <div class="cw-setup">
     <div class="cw-setup-bar">
-        @if (ThemeService.LogoSvg is { Length: > 0 } logo)
+        @if (ThemeService.LogoSvg is { Length: > 0 } || Options.AppLogo is not null)
         {
-            <img alt="" style="height:32px" src="@($"data:image/svg+xml;base64,{Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(logo))}")" />
+            <CoworkeeLogo Height="32" />
         }
         else
         {

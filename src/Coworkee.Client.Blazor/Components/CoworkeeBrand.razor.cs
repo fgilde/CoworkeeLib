@@ -1,4 +1,3 @@
-using System.Text;
 using Coworkee.Client.Blazor.Theming;
 using Microsoft.AspNetCore.Components;
 
@@ -15,6 +14,4 @@ public partial class CoworkeeBrand : IDisposable
     public void Dispose() => ThemeService.Changed -= Refresh;
 
     private void Refresh() => InvokeAsync(StateHasChanged);
-
-    private static string LogoSource(string svg) => $"data:image/svg+xml;base64,{Convert.ToBase64String(Encoding.UTF8.GetBytes(svg))}";
 }

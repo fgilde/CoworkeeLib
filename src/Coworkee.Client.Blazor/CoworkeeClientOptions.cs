@@ -6,6 +6,9 @@ public sealed class CoworkeeClientOptions
 
     public string? AppDescription { get; set; }
 
+    /// <summary>Address of the app's logo (for example an SVG in wwwroot); a theme with its own logo replaces it.</summary>
+    public string? AppLogo { get; set; }
+
     /// <summary>Shown in the about dialog; defaults to the informational version of the app assembly.</summary>
     public string? AppVersion { get; set; }
 

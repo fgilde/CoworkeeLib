@@ -15,6 +15,7 @@ public static class CoworkeeClientExtensions
         configure?.Invoke(options);
         services.AddSingleton(options);
         services.AddMudServicesWithExtensions();
+        MudBlazor.Extensions.Components.ObjectEdit.Options.ObjectEditPropertyMetaSettings.DefaultLabelResolverFn = Localization.PropertyLabels.For;
         services.AddTransient<Localization.CultureHeaderHandler>();
         services.ConfigureHttpClientDefaults(client => client.AddHttpMessageHandler<Localization.CultureHeaderHandler>());
         services.AddHttpClient<ICoworkeeApi, CoworkeeApi>(client => client.BaseAddress = baseAddress);

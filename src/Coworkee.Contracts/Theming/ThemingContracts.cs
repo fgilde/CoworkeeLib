@@ -25,7 +25,10 @@ public sealed record ThemeDto(
     JsonElement? LayoutProperties,
     string? LogoSvg,
     string? CustomCss,
-    int Revision);
+    int Revision,
+    JsonElement? Shadows = null,
+    JsonElement? Options = null,
+    bool IsPublished = true);
 
 public sealed record ThemeRequest(
     string Name,
@@ -34,4 +37,7 @@ public sealed record ThemeRequest(
     JsonElement? Typography,
     JsonElement? LayoutProperties,
     string? LogoSvg,
-    string? CustomCss);
+    string? CustomCss,
+    JsonElement? Shadows = null,
+    JsonElement? Options = null,
+    bool IsPublished = false);

@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Coworkee.Client.Blazor.Api;
-using Coworkee.Client.Blazor.Components;
 using Coworkee.Client.Blazor.Theming;
 using Coworkee.Contracts.Theming;
 using MudBlazor;
@@ -51,14 +50,29 @@ public sealed class ThemeServiceTests
     }
 
     [Fact]
-    public void Round_trips_a_palette_through_json()
+    public void Round_trips_every_section_through_json()
     {
-        var theme = ThemeMapper.ToMudTheme(Theme("#123456"));
+        var theme = ThemeMapper.ToTheme(Theme("#123456"));
+        theme.Typography.H1.FontFamily = ["Georgia", "serif"];
+        theme.Shadows.Elevation[1] = "none";
+        theme.LayoutProperties.DrawerWidthLeft = "320px";
+        theme.ShowLogoInNav = false;
+        theme.NavSingleExpand = true;
+        theme.IsPublished = true;
 
-        var request = ThemeMapper.ToRequest("Copy", theme, null, null);
+        var request = ThemeMapper.ToRequest("Copy", theme);
+        var copy = ThemeMapper.ToTheme(new ThemeDto(Guid.Empty, "Copy", false, false, request.PaletteLight, request.PaletteDark, request.Typography,
+            request.LayoutProperties, request.LogoSvg, request.CustomCss, 1, request.Shadows, request.Options, request.IsPublished));
 
-        ThemeMapper.ToMudTheme(new ThemeDto(Guid.Empty, "Copy", false, false, request.PaletteLight, request.PaletteDark, null, request.LayoutProperties, null, null, 1))
-            .PaletteLight.Primary.ToString(MudColorOutputFormats.Hex).ShouldBe("#123456");
+        copy.PaletteLight.Primary.ToString(MudColorOutputFormats.Hex).ShouldBe("#123456");
+        copy.Typography.H1.FontFamily.ShouldBe(["Georgia", "serif"]);
+        copy.Shadows.Elevation[1].ShouldBe("none");
+        copy.LayoutProperties.DrawerWidthLeft.ShouldBe("320px");
+        copy.ShowLogoInNav.ShouldBeFalse();
+        copy.NavSingleExpand.ShouldBeTrue();
+        copy.IsPublished.ShouldBeTrue();
+        copy.CustomCss.ShouldBe(".x{}");
+        request.Options!.Value.TryGetProperty(nameof(CoworkeeTheme.CustomCss), out _).ShouldBeFalse();
     }
 
     private static ThemeDto Theme(string primary) => new(
@@ -80,7 +94,7 @@ public sealed class ThemeMapperDerivedColorTests
             System.Text.Json.JsonSerializer.SerializeToElement(new Dictionary<string, string> { ["Primary"] = "#64b5f6" }),
             null, null, null, null, 1);
 
-        var theme = Coworkee.Client.Blazor.Theming.ThemeMapper.ToMudTheme(dto);
+        var theme = Coworkee.Client.Blazor.Theming.ThemeMapper.ToTheme(dto);
 
         var expected = new MudBlazor.Utilities.MudColor("#1565c0");
         theme.PaletteLight.PrimaryDarken.ShouldBe(expected.ColorRgbDarken().ToString(MudBlazor.Utilities.MudColorOutputFormats.RGB));

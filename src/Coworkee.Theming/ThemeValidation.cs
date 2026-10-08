@@ -27,6 +27,8 @@ public static partial class ThemeValidation
             ?? Palette(request.PaletteDark, "PaletteDark")
             ?? Tokens(request.Typography, "Typography")
             ?? Tokens(request.LayoutProperties, "LayoutProperties")
+            ?? Tokens(request.Shadows, "Shadows")
+            ?? Tokens(request.Options, "Options")
             ?? Css(request.CustomCss)
             ?? Svg(request.LogoSvg);
     }
