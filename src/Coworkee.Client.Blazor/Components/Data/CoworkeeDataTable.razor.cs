@@ -80,6 +80,9 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     [Parameter] public RenderFragment? ToolBarContent { get; set; }
 
+    /// <summary>Details below a row, opened with the arrow in the first column.</summary>
+    [Parameter] public RenderFragment<CellContext<T>>? ChildRowContent { get; set; }
+
     [Parameter] public IReadOnlyCollection<string> SearchFields { get; set; } = [];
 
     [Parameter] public string SearchPlaceholder { get; set; } = "Search";

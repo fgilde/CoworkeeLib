@@ -1,15 +1,20 @@
-@if (Changes.Count > 0)
-{
-    <MudSimpleTable Dense="true" Elevation="0" Class="mt-1">
-        <tbody>
-            @foreach (var change in Changes)
+<MudStack Spacing="1" Class="py-1">
+    @foreach (var change in Changes)
+    {
+        <div class="d-flex align-center flex-wrap" style="gap:4px" data-change="@change.Property">
+            <MudChip T="string" Size="Size.Small" Label="true" Variant="Variant.Text">@change.Property</MudChip>
+            @if (change.OldValue is not null)
             {
-                <tr data-change="@change.Property">
-                    <td style="width:30%"><MudText Typo="Typo.caption">@change.Property</MudText></td>
-                    <td><MudText Typo="Typo.caption" Style="text-decoration:line-through;opacity:.7">@Display(change.OldValue)</MudText></td>
-                    <td><MudText Typo="Typo.caption">@Display(change.NewValue)</MudText></td>
-                </tr>
+                <MudChip T="string" Size="Size.Small" Label="true" Variant="Variant.Outlined" Color="Color.Warning" Style="text-decoration:line-through">@Display(change.OldValue)</MudChip>
             }
-        </tbody>
-    </MudSimpleTable>
-}
+            @if (change.OldValue is not null && change.NewValue is not null)
+            {
+                <MudIcon Icon="@Icons.Material.Outlined.ArrowForward" Size="Size.Small" Class="mud-text-secondary" />
+            }
+            @if (change.NewValue is not null)
+            {
+                <MudChip T="string" Size="Size.Small" Label="true" Variant="Variant.Outlined" Color="Color.Success">@Display(change.NewValue)</MudChip>
+            }
+        </div>
+    }
+</MudStack>

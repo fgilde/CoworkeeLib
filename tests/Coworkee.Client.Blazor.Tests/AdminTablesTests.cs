@@ -19,7 +19,7 @@ public sealed class AdminTablesTests : ClientTestBase
     {
         Services.AddSingleton<IODataClient>(_odata);
         Services.AddScoped<Security.PermissionStore>();
-        AddAuthorization().SetAuthorized("Ada").SetPolicies(
+        AddAuthorization().SetAuthorized("Ada").SetClaims(new System.Security.Claims.Claim("sub", AdaId.ToString())).SetPolicies(
             Security.PermissionPolicy.For(IdentityPermissions.Users.View), Security.PermissionPolicy.For(AuditPermissions.View));
         Render<MudPopoverProvider>();
     }
@@ -48,9 +48,19 @@ public sealed class AdminTablesTests : ClientTestBase
             [new AuditChangeDto("Name", "Old", "New")]));
         Api.GetUserCardsAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<CancellationToken>()).Returns([new Contracts.Identity.UserCardDto(AdaId, "Ada Lovelace", null)]);
 
+        var filters = new List<string?>();
+        _odata.Queried += (_, query) => filters.Add(query.Filter);
+
         var page = Render<AuditLog>();
 
         page.WaitForAssertion(() => page.Markup.ShouldContain("Ada Lovelace"));
         page.Markup.ShouldContain("Modified");
+        filters.ShouldAllBe(f => f != null && f.Contains($"ActorId eq {AdaId}"));
+
+        page.Find(".mud-table-body .mud-table-row button").Click();
+        page.WaitForAssertion(() => page.Find("[data-change='Name']").TextContent.ShouldSatisfyAllConditions(t => t.ShouldContain("Old"), t => t.ShouldContain("New")));
+
+        page.Find("input[data-testid='audit-mine'], [data-testid='audit-mine'] input").Change(false);
+        page.WaitForAssertion(() => filters.Last().ShouldBeNull());
     }
 }

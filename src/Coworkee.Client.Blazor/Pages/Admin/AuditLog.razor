@@ -1,15 +1,28 @@
 @page "/admin/audit"
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + AuditPermissions.View)]
 
-<PageHeader Title="Audit log" Description="Every change, field by field, with who made it." />
-<CoworkeeDataTable T="AuditEntryDto" EntitySet="AuditEntries" SearchFields="SearchFields" ExportFileName="audit">
+<PageHeader Title="Audit log" Description="Every change, field by field, with who made it. Open a row to see what changed." />
+<CoworkeeDataTable @ref="_table" T="AuditEntryDto" EntitySet="AuditEntries" SearchFields="SearchFields" Filter="@Filter" ExportFileName="audit" NoRecordsText="No changes in this period.">
+    <ToolBarContent>
+        <MudSwitch T="bool" Value="_mine" ValueChanged="MineAsync" Label="@L["Only my changes"]" Color="Color.Primary" Class="mb-2" data-testid="audit-mine" />
+        <MudDateRangePicker DateRange="_range" DateRangeChanged="RangeAsync" Label="@L["Period"]" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense"
+                            Class="mb-2 mr-2" Style="max-width:260px" data-testid="audit-period" />
+    </ToolBarContent>
     <Columns>
-        <PropertyColumn Property="e => e.OccurredAt" Title="@L["When"]" Format="g" />
+        <PropertyColumn Property="e => e.OccurredAt" Title="@L["When"]">
+            <CellTemplate>
+                <MudTooltip Text="@Utc(context.Item.OccurredAt)">
+                    <MudText Typo="Typo.body2" Style="white-space:nowrap">@context.Item.OccurredAt.ToLocalTime().ToString("g")</MudText>
+                </MudTooltip>
+            </CellTemplate>
+        </PropertyColumn>
         <PropertyColumn Property="e => e.Action" Title="@L["Action"]">
-            <CellTemplate>@L[context.Item.Action]</CellTemplate>
+            <CellTemplate>
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="ActionColor(context.Item.Action)" Icon="@ActionIcon(context.Item.Action)">@L[context.Item.Action]</MudChip>
+            </CellTemplate>
         </PropertyColumn>
         <PropertyColumn Property="e => e.EntityType" Title="@L["Entity"]">
-            <CellTemplate>@context.Item.EntityType <MudText Typo="Typo.caption" Inline="true">@context.Item.EntityId</MudText></CellTemplate>
+            <CellTemplate>@context.Item.EntityType <MudText Typo="Typo.caption" Inline="true" Class="mud-text-secondary">@context.Item.EntityId</MudText></CellTemplate>
         </PropertyColumn>
         <PropertyColumn Property="e => e.ActorId" Title="@L["Who"]">
             <CellTemplate>
@@ -25,10 +38,18 @@
         </PropertyColumn>
         <TemplateColumn T="AuditEntryDto" Title="@L["Changes"]" Sortable="false">
             <CellTemplate>
-                <MudButton Size="Size.Small" Variant="Variant.Text" Disabled="context.Item.Changes.Count == 0" OnClick="() => ShowChangesAsync(context.Item)">
-                    @context.Item.Changes.Count
-                </MudButton>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">@Summary(context.Item)</MudText>
             </CellTemplate>
         </TemplateColumn>
     </Columns>
+    <ChildRowContent>
+        @if (context.Item.Changes.Count > 0)
+        {
+            <div class="px-4"><AuditChanges Changes="context.Item.Changes" /></div>
+        }
+        else
+        {
+            <MudText Typo="Typo.caption" Class="mud-text-secondary px-4">@L["No field changes recorded."]</MudText>
+        }
+    </ChildRowContent>
 </CoworkeeDataTable>

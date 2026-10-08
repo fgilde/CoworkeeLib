@@ -243,5 +243,18 @@
   "Phone": "Telefon",
   "Profile saved": "Profil gespeichert",
   "Picture saved": "Bild gespeichert",
-  "This file is no picture the browser can show.": "Diese Datei ist kein Bild, das der Browser anzeigen kann."
+  "This file is no picture the browser can show.": "Diese Datei ist kein Bild, das der Browser anzeigen kann.",
+  "Profile": "Profil",
+  "Security": "Sicherheit",
+  "Address": "Adresse",
+  "Street": "Straße",
+  "Zip code": "PLZ",
+  "City": "Ort",
+  "Country": "Land",
+  "Only my changes": "Nur meine Änderungen",
+  "Period": "Zeitraum",
+  "No changes in this period.": "Keine Änderungen in diesem Zeitraum.",
+  "No field changes recorded.": "Keine Feldänderungen erfasst.",
+  "Every change, field by field, with who made it. Open a row to see what changed.": "Jede Änderung, Feld für Feld, und wer sie gemacht hat. Öffnen Sie eine Zeile, um zu sehen, was sich geändert hat.",
+  "Localization": "Lokalisierung"
 }
