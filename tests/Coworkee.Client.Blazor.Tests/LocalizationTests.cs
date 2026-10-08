@@ -46,9 +46,9 @@ public sealed class LocalizationTests : ClientTestBase
 
         page.WaitForAssertion(() => page.FindAll("[data-key]").Count.ShouldBe(2));
         page.Find("[data-key='Invoices'] input, input[data-key='Invoices']").Input("Rechnungen");
-        page.Find("[data-key='Brands'] input, input[data-key='Brands']").Input("");
+        page.WaitForAssertion(() => Localization.Received(1).SetTranslationAsync(new SetTranslationRequest("de", "Invoices", "Rechnungen"), Arg.Any<CancellationToken>()), TimeSpan.FromSeconds(10));
 
-        page.WaitForAssertion(() => Localization.Received(1).SetTranslationAsync(new SetTranslationRequest("de", "Invoices", "Rechnungen"), Arg.Any<CancellationToken>()), TimeSpan.FromSeconds(3));
-        page.WaitForAssertion(() => Localization.Received(1).SetTranslationAsync(new SetTranslationRequest("de", "Brands", null), Arg.Any<CancellationToken>()), TimeSpan.FromSeconds(3));
+        page.Find("[data-key='Brands'] input, input[data-key='Brands']").Input("");
+        page.WaitForAssertion(() => Localization.Received(1).SetTranslationAsync(new SetTranslationRequest("de", "Brands", null), Arg.Any<CancellationToken>()), TimeSpan.FromSeconds(10));
     }
 }

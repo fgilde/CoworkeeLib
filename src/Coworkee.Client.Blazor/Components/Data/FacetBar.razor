@@ -4,7 +4,7 @@
         <ActivatorContent Context="menu">
             <MudButton Variant="@(SelectedCount(group) > 0 ? Variant.Filled : Variant.Outlined)" Color="Color.Primary" Size="Size.Small"
                        EndIcon="@Icons.Material.Filled.ArrowDropDown" OnClick="@(() => menu.ToggleAsync())" Class="mr-2 mb-2" data-testid="facet-button">
-                @group.Label@(SelectedCount(group) > 0 ? $" ({SelectedCount(group)})" : string.Empty)
+                @L[group.Label]@(SelectedCount(group) > 0 ? $" ({SelectedCount(group)})" : string.Empty)
             </MudButton>
         </ActivatorContent>
         <ChildContent>

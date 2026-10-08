@@ -4,7 +4,7 @@
         @foreach (var facet in Selection.All)
         {
             <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined" OnClose="() => Selection.Remove(facet)" data-chip="@facet.OData">
-                <b>@facet.GroupLabel:</b>&nbsp;@facet.Label
+                <b>@L[facet.GroupLabel]:</b>&nbsp;@facet.Label
             </MudChip>
         }
         <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="Selection.Clear" data-testid="clear-facets">Clear all</MudButton>

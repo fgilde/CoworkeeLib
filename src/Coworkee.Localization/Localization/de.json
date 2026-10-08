@@ -60,7 +60,7 @@
   "Texts of the application per language. Keys are the English texts; edits here win over the texts the modules ship.": "Texte der Anwendung pro Sprache. Schlüssel sind die englischen Texte; Änderungen hier haben Vorrang vor den Texten der Module.",
 
   "MudDataGridPager_RowsPerPage": "Zeilen pro Seite:",
-  "MudDataGridPager_InfoFormat": "{first_item}-{last_item} von {all_items}",
+  "MudDataGridPager_InfoFormat": "{0}-{1} von {2}",
   "MudDataGridPager_AllItems": "Alle",
   "MudDataGridPager_FirstPage": "Erste Seite",
   "MudDataGridPager_PreviousPage": "Vorherige Seite",

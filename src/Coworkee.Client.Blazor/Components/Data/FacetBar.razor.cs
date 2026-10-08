@@ -6,6 +6,8 @@ namespace Coworkee.Client.Blazor.Components.Data;
 
 public partial class FacetBar
 {
+    [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
+
     [Parameter] public IReadOnlyList<FacetGroupDto> Groups { get; set; } = [];
 
     [Parameter, EditorRequired] public FacetSelection Selection { get; set; } = null!;
