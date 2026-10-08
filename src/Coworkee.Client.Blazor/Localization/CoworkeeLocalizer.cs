@@ -89,6 +89,32 @@ public sealed class CoworkeeLocalizer(ILocalizationApi api, IJSRuntime js) : IDi
         }
     }
 
+    /// <summary>
+    /// After an administrator changed languages or texts: reloads both. Returns the language switched to when the current one
+    /// was switched off, otherwise null.
+    /// </summary>
+    public async Task<string?> RefreshAsync()
+    {
+        try
+        {
+            Languages = await api.GetLanguagesAsync();
+        }
+        catch (Exception exception) when (exception is ApiException or HttpRequestException)
+        {
+            return null;
+        }
+
+        if (IsOffered(Culture))
+        {
+            await UseAsync(Culture);
+            return null;
+        }
+
+        var fallback = Languages.FirstOrDefault(l => l.IsDefault)?.Culture ?? Languages.FirstOrDefault()?.Culture ?? English;
+        await UseAsync(fallback);
+        return fallback;
+    }
+
     public void Dispose() => _flush?.Dispose();
 
     private bool IsOffered(string? culture) => culture is { Length: > 0 } && Languages.Any(l => string.Equals(l.Culture, culture, StringComparison.OrdinalIgnoreCase));

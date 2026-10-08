@@ -17,4 +17,8 @@ public interface ILocalizationApi
     Task<IReadOnlyList<TranslationRowDto>> GetTranslationRowsAsync(string culture, CancellationToken cancellationToken = default);
 
     Task SetTranslationAsync(SetTranslationRequest request, CancellationToken cancellationToken = default);
+
+    Task<LanguageSwitchDto> SetLanguageEnabledAsync(string culture, bool enabled, CancellationToken cancellationToken = default);
+
+    Task<TranslateMissingDto> TranslateMissingAsync(string culture, CancellationToken cancellationToken = default);
 }

@@ -25,6 +25,10 @@ internal static class LocalizationEndpoints
         managed.MapPut("/languages/{id:guid}", (Guid id, AddEditLanguageRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new AddEditLanguageCommand(id, body), ct).ToHttpResult());
         managed.MapPost("/languages/delete", (IdListRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteLanguagesCommand(body.Ids), ct).ToHttpResult());
         managed.MapGet("/translations/{culture}", (string culture, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetTranslationRowsQuery(culture), ct).ToHttpResult());
+        managed.MapPut("/languages/{culture}/enabled", (string culture, SetLanguageEnabledRequest body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new SetLanguageEnabledCommand(culture, body.Enabled), ct).ToHttpResult());
+        managed.MapPost("/translations/{culture}/translate", (string culture, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new TranslateMissingCommand(culture), ct).ToHttpResult());
         managed.MapPut("/translations", (SetTranslationRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SetTranslationCommand(body), ct).ToHttpResult());
     }
 }

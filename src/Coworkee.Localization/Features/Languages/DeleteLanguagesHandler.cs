@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Localization.Features.Languages;
 
-internal sealed class DeleteLanguagesHandler(CoworkeeDbContext db) : IHandler<DeleteLanguagesCommand, Result>
+internal sealed class DeleteLanguagesHandler(CoworkeeDbContext db, Coworkee.Localization.Texts.LocalizationChanges changes) : IHandler<DeleteLanguagesCommand, Result>
 {
     public async Task<Result> HandleAsync(DeleteLanguagesCommand command, CancellationToken cancellationToken)
     {
@@ -17,6 +17,8 @@ internal sealed class DeleteLanguagesHandler(CoworkeeDbContext db) : IHandler<De
         }
 
         db.RemoveRange(languages);
+        await db.SaveChangesAsync(cancellationToken);
+        await changes.NotifyAsync(cancellationToken);
         return Result.Success();
     }
 }

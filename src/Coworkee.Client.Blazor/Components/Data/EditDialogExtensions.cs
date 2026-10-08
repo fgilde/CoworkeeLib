@@ -14,7 +14,7 @@ public static class EditDialogExtensions
     /// <summary>Asks for the values only; the caller saves them.</summary>
     public static async Task<TModel?> ShowEditAsync<TModel>(this IDialogService dialogs, string title, TModel model, Action<ObjectEditMeta<TModel>>? meta = null)
     {
-        var (cancelled, result) = await dialogs.EditObjectAsync(model, title, Icon(model), await SideSheetAsync(), meta);
+        var (cancelled, result) = await dialogs.EditObjectAsync(model, title, Icon(model), await SideSheetAsync(), Grid(meta));
         return cancelled ? default : result;
     }
 
@@ -22,7 +22,7 @@ public static class EditDialogExtensions
     public static async Task<bool> ShowEditAsync<TModel>(this IDialogService dialogs, string title, TModel model, Func<TModel, Task> save, Action<ObjectEditMeta<TModel>>? meta = null)
     {
         var parameters = new DialogParameters { { nameof(MudExObjectEditDialog<TModel>.DialogIcon), Icon(model) } };
-        var (cancelled, _) = await dialogs.EditObjectAsync(model, title, (value, _) => SaveAsync(save, value), await SideSheetAsync(), meta, parameters);
+        var (cancelled, _) = await dialogs.EditObjectAsync(model, title, (value, _) => SaveAsync(save, value), await SideSheetAsync(), Grid(meta), parameters);
         return !cancelled;
     }
 
@@ -65,6 +65,19 @@ public static class EditDialogExtensions
         BackdropClick = false,
         Animations = [AnimationType.FadeIn, AnimationType.FlipX],
     };
+
+    // two columns on wider screens like the classic forms; a page's meta can widen single fields with WrapInMudItem(i => i.md = 12)
+#pragma warning disable BL0005 // MudEx configures the wrapping grid items through these instances
+    private static Action<ObjectEditMeta<TModel>> Grid<TModel>(Action<ObjectEditMeta<TModel>>? meta) => m =>
+    {
+        m.WrapEachInMudItem(i =>
+        {
+            i.xs = 12;
+            i.md = 6;
+        });
+        meta?.Invoke(m);
+    };
+#pragma warning restore BL0005
 
     private static string Icon<TModel>(TModel model) =>
         model?.GetType().GetProperty("Id")?.GetValue(model) is { } id && !Equals(id, Guid.Empty) ? Icons.Material.Filled.Edit : Icons.Material.Filled.Add;

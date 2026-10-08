@@ -1,3 +1,8 @@
+<AuthorizeView>
+    <Authorized>
+        <RealtimeSubscription Topic="@LocalizationEvents.Topic" OnEvent="RefreshAsync" />
+    </Authorized>
+</AuthorizeView>
 @if (L.Languages.Count > 1)
 {
     <MudMenu Icon="@Icons.Material.Outlined.Translate" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="true"

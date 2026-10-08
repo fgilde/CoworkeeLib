@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Localization.Features.Languages;
 
-internal sealed class AddEditLanguageHandler(CoworkeeDbContext db) : IHandler<AddEditLanguageCommand, Result<LanguageDto>>
+internal sealed class AddEditLanguageHandler(CoworkeeDbContext db, Coworkee.Localization.Texts.LocalizationChanges changes) : IHandler<AddEditLanguageCommand, Result<LanguageDto>>
 {
     public async Task<Result<LanguageDto>> HandleAsync(AddEditLanguageCommand command, CancellationToken cancellationToken)
     {
@@ -35,6 +35,8 @@ internal sealed class AddEditLanguageHandler(CoworkeeDbContext db) : IHandler<Ad
         language.Name = request.Name.Trim();
         language.IsEnabled = request.IsEnabled || request.IsDefault;
         language.IsDefault = request.IsDefault;
+        await db.SaveChangesAsync(cancellationToken);
+        await changes.NotifyAsync(cancellationToken);
         return new LanguageDto(language.Id, language.Culture, language.Name, language.IsEnabled, language.IsDefault);
     }
 }

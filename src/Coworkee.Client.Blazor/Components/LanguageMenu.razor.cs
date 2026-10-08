@@ -13,7 +13,19 @@ public partial class LanguageMenu : IDisposable
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
+    [Inject] private MudBlazor.ISnackbar Snackbar { get; set; } = null!;
+
     [CascadingParameter] private Task<AuthenticationState>? Authentication { get; set; }
+
+    private async Task RefreshAsync(Contracts.Realtime.RealtimeEnvelope _)
+    {
+        var previous = L.Culture;
+        if (await L.RefreshAsync() is { } fallback)
+        {
+            var name = L.Languages.FirstOrDefault(l => l.Culture == fallback)?.Name ?? fallback;
+            Snackbar.Add(L["The language {0} was switched off; the app now shows {1}.", previous, name], MudBlazor.Severity.Info);
+        }
+    }
 
     protected override void OnInitialized() => L.Changed += Refresh;
 

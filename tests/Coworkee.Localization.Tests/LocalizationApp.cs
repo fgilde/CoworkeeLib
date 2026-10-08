@@ -83,6 +83,7 @@ public sealed class TestLocalizationModule : CoworkeeModule
     public override void ConfigureServices(ModuleServiceContext context)
     {
         context.Services.AddSingleton<ILocalizationResourceContributor, TestTexts>();
+        context.Services.AddHttpClient(Coworkee.Localization.MachineTranslation.TextTranslator.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => new StubTranslator());
         context.Services.AddCoworkeeDbContext<LocalizationTestDbContext>((provider, options) =>
             options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
     }

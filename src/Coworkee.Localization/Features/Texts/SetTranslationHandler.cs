@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Localization.Features.Texts;
 
-internal sealed class SetTranslationHandler(CoworkeeDbContext db, TextStore store) : IHandler<SetTranslationCommand, Result>
+internal sealed class SetTranslationHandler(CoworkeeDbContext db, LocalizationChanges changes) : IHandler<SetTranslationCommand, Result>
 {
     public async Task<Result> HandleAsync(SetTranslationCommand command, CancellationToken cancellationToken)
     {
@@ -30,7 +30,7 @@ internal sealed class SetTranslationHandler(CoworkeeDbContext db, TextStore stor
         }
 
         await db.SaveChangesAsync(cancellationToken);
-        await store.InvalidateAsync(cancellationToken);
+        await changes.NotifyAsync(cancellationToken);
         return Result.Success();
     }
 }

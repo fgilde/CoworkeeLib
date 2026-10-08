@@ -2,6 +2,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Coworkee.Settings\Coworkee.Settings.csproj" />
     <ProjectReference Include="..\Coworkee.OData\Coworkee.OData.csproj" />
+    <ProjectReference Include="..\Coworkee.Realtime\Coworkee.Realtime.csproj" />
     <EmbeddedResource Include="Localization\*.json" />
   </ItemGroup>
 </Project>

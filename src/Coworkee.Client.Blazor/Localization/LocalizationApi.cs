@@ -30,4 +30,10 @@ internal sealed class LocalizationApi(HttpClient http) : ApiClientBase(http), IL
 
     public Task SetTranslationAsync(SetTranslationRequest request, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Put, $"{Root}/translations", request, cancellationToken);
+
+    public Task<LanguageSwitchDto> SetLanguageEnabledAsync(string culture, bool enabled, CancellationToken cancellationToken = default) =>
+        SendAsync<LanguageSwitchDto>(HttpMethod.Put, $"{Root}/languages/{Uri.EscapeDataString(culture)}/enabled", new SetLanguageEnabledRequest(enabled), cancellationToken);
+
+    public Task<TranslateMissingDto> TranslateMissingAsync(string culture, CancellationToken cancellationToken = default) =>
+        SendAsync<TranslateMissingDto>(HttpMethod.Post, $"{Root}/translations/{Uri.EscapeDataString(culture)}/translate", null, cancellationToken);
 }

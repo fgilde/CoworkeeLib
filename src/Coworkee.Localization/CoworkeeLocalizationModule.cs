@@ -18,7 +18,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Coworkee.Localization;
 
 /// <summary>Languages, module texts in embedded JSON resources and the edits of the administrators.</summary>
-[DependsOn(typeof(CoworkeeSettingsModule), typeof(CoworkeeODataModule))]
+[DependsOn(typeof(CoworkeeSettingsModule), typeof(CoworkeeODataModule), typeof(Coworkee.Realtime.CoworkeeRealtimeModule))]
 public sealed class CoworkeeLocalizationModule : CoworkeeModule, IWebModule
 {
     public override void ConfigureServices(ModuleServiceContext context)
@@ -31,6 +31,14 @@ public sealed class CoworkeeLocalizationModule : CoworkeeModule, IWebModule
         services.AddSingleton<ILocalizationResourceContributor, CoworkeeTexts>();
         services.AddSingleton<LocalizationResources>();
         services.AddScoped<TextStore>();
+        services.AddScoped<LocalizationChanges>();
+        services.AddScoped<MachineTranslation.TextTranslator>();
+        services.AddScoped<MachineTranslation.MissingTexts>();
+        services.AddHttpClient(MachineTranslation.TextTranslator.HttpClientName, client =>
+        {
+            client.BaseAddress = new Uri(context.Configuration["Coworkee:Localization:TranslatorEndpoint"] ?? "https://api.cognitive.microsofttranslator.com/");
+            client.Timeout = TimeSpan.FromMinutes(2);
+        });
         services.AddODataEntity<Domain.Language>("Languages", Contracts.Localization.LocalizationPermissions.Manage);
         services.Configure<SetupGateOptions>(options => options.AllowedPrefixes.Add("/api/v1/localization/"));
     }

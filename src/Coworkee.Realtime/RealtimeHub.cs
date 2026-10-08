@@ -56,7 +56,7 @@ public sealed class RealtimeHub(IEnumerable<IRealtimeTopicAuthorizer> authorizer
 public static class RealtimeGroups
 {
     public static string For(Guid? tenantId, string topic) =>
-        topic.StartsWith("user:", StringComparison.Ordinal) ? topic : $"{tenantId}|{topic}";
+        topic.StartsWith("user:", StringComparison.Ordinal) || topic.StartsWith(GlobalTopicAuthorizer.Prefix, StringComparison.Ordinal) ? topic : $"{tenantId}|{topic}";
 }
 
 public interface IRealtimeTopicAuthorizer
@@ -72,6 +72,16 @@ internal sealed class UserTopicAuthorizer(ICurrentUser currentUser) : IRealtimeT
 
     public Task<bool> AuthorizeAsync(string topic, CancellationToken cancellationToken) =>
         Task.FromResult(currentUser.UserId is { } id && topic == RealtimeTopics.User(id));
+}
+
+/// <summary>Topics every signed-in user of every organisation may follow, e.g. "global:localization".</summary>
+internal sealed class GlobalTopicAuthorizer(ICurrentUser currentUser) : IRealtimeTopicAuthorizer
+{
+    public const string Prefix = "global:";
+
+    public bool Handles(string topic) => topic.StartsWith(Prefix, StringComparison.Ordinal);
+
+    public Task<bool> AuthorizeAsync(string topic, CancellationToken cancellationToken) => Task.FromResult(currentUser.UserId is not null);
 }
 
 internal sealed class EntityTopicAuthorizer(CoworkeeDbContext db, IPermissionChecker permissions) : IRealtimeTopicAuthorizer

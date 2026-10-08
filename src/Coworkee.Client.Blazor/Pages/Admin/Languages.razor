@@ -1,14 +1,72 @@
 @page "/admin/languages"
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + LocalizationPermissions.Manage)]
 
-<PageHeader Title="Languages" Description="Languages users can choose. Without any, English and every language a module ships texts for are offered." />
-<CoworkeeDataTable @ref="_table" T="LanguageDto" EntitySet="Languages" SearchFields="SearchFields" MultiSelection="true" Exportable="false" DescribeItem="l => l.Name"
-                   CreateText="@L["New language"]" CreatePermission="@LocalizationPermissions.Manage" EditPermission="@LocalizationPermissions.Manage" DeletePermission="@LocalizationPermissions.Manage"
-                   OnCreate="CreateAsync" OnEdit="EditAsync" OnDelete="DeleteAsync">
-    <Columns>
-        <PropertyColumn Property="l => l.Name" Title="@L["Name"]" />
-        <PropertyColumn Property="l => l.Culture" Title="@L["Culture"]" />
-        <PropertyColumn Property="l => l.IsEnabled" Title="@L["Enabled"]" />
-        <PropertyColumn Property="l => l.IsDefault" Title="@L["Default"]" />
-    </Columns>
-</CoworkeeDataTable>
+<PageHeader Title="Languages" Description="Switch on the languages users can choose. Switching one on translates its missing texts automatically when a translator key is set in the settings (Localization). Users of a language that is switched off move to the default language right away." />
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-3">
+    <MudTextField T="string" @bind-Value="_filter" Immediate="true" DebounceInterval="200" Placeholder="@L["Search languages"]" Clearable="true"
+                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:340px"
+                  data-testid="language-filter" />
+    <MudSwitch T="bool" @bind-Value="_onlyEnabled" Color="Color.Primary" Label="@L["Only switched on"]" data-testid="only-enabled" />
+    <MudSpacer />
+    <MudChip T="string" Icon="@Icons.Material.Outlined.Translate" Color="Color.Primary" Variant="Variant.Outlined">@L["{0} switched on", EnabledCount]</MudChip>
+</MudStack>
+
+@if (_busy is { } busy)
+{
+    <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3" Icon="@Icons.Material.Outlined.HourglassTop">@busy</MudAlert>
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-3" />
+}
+
+<MudExpansionPanels MultiExpansion="true" Elevation="0" Outlined="true" data-testid="languages">
+    @foreach (var group in VisibleGroups)
+    {
+        var open = IsOpen(group);
+        <MudExpansionPanel Expanded="open" ExpandedChanged="expanded => Toggle(group, expanded)" data-language="@group.Neutral.Name">
+            <TitleContent>
+                <div class="d-flex align-center gap-3">
+                    <MudText Typo="Typo.subtitle1">@Title(group.Neutral)</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@group.Neutral.EnglishName</MudText>
+                    @if (EnabledIn(group) is > 0 and var count)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Text">@L["{0} on", count]</MudChip>
+                    }
+                </div>
+            </TitleContent>
+            <ChildContent>
+                @if (open)
+                {
+                    <MudGrid Spacing="1">
+                        @foreach (var culture in group.Cultures)
+                        {
+                            var language = Find(culture);
+                            <MudItem xs="12" md="6" lg="4">
+                                <MudPaper Outlined="true" Class="d-flex align-center pa-2 gap-1" data-culture="@culture.Name">
+                                    <MudSwitch T="bool" Value="language?.IsEnabled == true" ValueChanged="on => SwitchAsync(culture, on)" Color="Color.Primary"
+                                               Disabled="_busy is not null || language?.IsDefault == true" />
+                                    <div style="flex:1;min-width:0">
+                                        <MudText Typo="Typo.body2" Style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">@Title(culture)</MudText>
+                                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@culture.Name</MudText>
+                                    </div>
+                                    @if (language?.IsDefault == true)
+                                    {
+                                        <MudTooltip Text="@L["Default language"]"><MudIcon Icon="@Icons.Material.Filled.Star" Color="Color.Warning" Size="Size.Small" /></MudTooltip>
+                                    }
+                                    else if (language?.IsEnabled == true)
+                                    {
+                                        <MudTooltip Text="@L["Make default"]">
+                                            <MudIconButton Icon="@Icons.Material.Outlined.StarBorder" Size="Size.Small" Disabled="_busy is not null" OnClick="() => MakeDefaultAsync(language)" />
+                                        </MudTooltip>
+                                        <MudTooltip Text="@L["Translate missing texts"]">
+                                            <MudIconButton Icon="@Icons.Material.Outlined.GTranslate" Size="Size.Small" Disabled="_busy is not null" OnClick="() => TranslateAsync(culture)" />
+                                        </MudTooltip>
+                                    }
+                                </MudPaper>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                }
+            </ChildContent>
+        </MudExpansionPanel>
+    }
+</MudExpansionPanels>

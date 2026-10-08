@@ -53,4 +53,30 @@ public sealed class LocalizationTests : ClientTestBase
         page.Find("[data-key='Brands'] input, input[data-key='Brands']").Input("");
         page.WaitForAssertion(() => Localization.Received(1).SetTranslationAsync(new SetTranslationRequest("de", "Brands", null), Arg.Any<CancellationToken>()), TimeSpan.FromSeconds(10));
     }
+
+    [Fact]
+    public async Task Switching_off_the_current_language_moves_the_client_to_the_default()
+    {
+        var localizer = Services.GetRequiredService<Localization.CoworkeeLocalizer>();
+        await localizer.UseAsync("de");
+        Localization.GetLanguagesAsync(Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns([new LanguageDto(Guid.NewGuid(), "en", "English", true, true)]);
+
+        (await localizer.RefreshAsync()).ShouldBe("en");
+        localizer.Culture.ShouldBe("en");
+    }
+
+    [Fact]
+    public async Task Cultures_are_grouped_by_language_and_switched_with_one_click()
+    {
+        Localization.SetLanguageEnabledAsync("fr-CH", true, Arg.Any<CancellationToken>())
+            .Returns(new LanguageSwitchDto(new LanguageDto(Guid.NewGuid(), "fr-CH", "Français (Suisse)", true, false), 12, true));
+        Render<MudSnackbarProvider>();
+        var page = Render<Languages>();
+
+        page.Find("input[data-testid='language-filter'], [data-testid='language-filter'] input").Input("fr-CH");
+        page.WaitForAssertion(() => page.Find("[data-culture='fr-CH'] input[type='checkbox']"));
+        await page.Find("[data-culture='fr-CH'] input[type='checkbox']").ChangeAsync(new ChangeEventArgs { Value = true });
+
+        await Localization.Received(1).SetLanguageEnabledAsync("fr-CH", true, Arg.Any<CancellationToken>());
+    }
 }
