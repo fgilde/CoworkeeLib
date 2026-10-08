@@ -22,7 +22,7 @@ public sealed class HttpPipelineTests : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        var builder = WebApplication.CreateBuilder();
+        var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Development" });
         builder.WebHost.UseTestServer();
         builder.AddCoworkee<TestWebModule>();
         _app = builder.Build();
@@ -100,6 +100,23 @@ public sealed class HttpPipelineTests : IAsyncLifetime
     [Fact]
     public async Task Enums_are_serialized_as_strings() =>
         (await _client.GetStringAsync("/enum", TestContext.Current.CancellationToken)).ShouldBe("\"Conflict\"");
+
+    [Fact]
+    public async Task Production_hides_openapi_unless_enabled()
+    {
+        foreach (var (enabled, status) in new[] { ("false", HttpStatusCode.NotFound), ("true", HttpStatusCode.OK) })
+        {
+            var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Production" });
+            builder.WebHost.UseTestServer();
+            builder.Configuration[CoworkeeWebApplicationExtensions.OpenApiSetting] = enabled;
+            builder.AddCoworkee<TestWebModule>();
+            await using var app = builder.Build();
+            app.UseCoworkee();
+            await app.StartAsync(TestContext.Current.CancellationToken);
+
+            (await app.GetTestClient().GetAsync("/openapi/v1.json", TestContext.Current.CancellationToken)).StatusCode.ShouldBe(status);
+        }
+    }
 
     [Fact]
     public async Task OpenApi_document_lists_endpoints()

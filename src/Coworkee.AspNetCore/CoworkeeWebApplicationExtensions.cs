@@ -4,12 +4,17 @@ using Coworkee.AspNetCore.Security;
 using Coworkee.Core.Modularity;
 using Coworkee.Core.Security;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Coworkee.AspNetCore;
 
 public static class CoworkeeWebApplicationExtensions
 {
+    /// <summary>OpenAPI document and Swagger UI outside Development (they describe every endpoint, so production keeps them off by default).</summary>
+    public const string OpenApiSetting = "Coworkee:OpenApi:Enabled";
+
     public static WebApplicationBuilder AddCoworkee<TRoot>(this WebApplicationBuilder builder)
         where TRoot : CoworkeeModule
     {
@@ -35,8 +40,12 @@ public static class CoworkeeWebApplicationExtensions
 
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapOpenApi();
-        app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "v1"));
+        if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>(OpenApiSetting))
+        {
+            app.MapOpenApi();
+            app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "v1"));
+        }
+
         return app;
     }
 
