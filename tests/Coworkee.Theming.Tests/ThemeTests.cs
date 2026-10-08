@@ -38,6 +38,25 @@ public sealed class ThemeTests(ThemeApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Reading_themes_does_not_rewrite_unchanged_built_in_themes()
+    {
+        await app.InDbAsync(async db =>
+        {
+            await ThemeSeeds.EnsureAsync(db, Ct);
+            return 0;
+        });
+        var before = await app.InDbAsync(db => db.Set<ThemeDefinition>().Where(t => t.TenantId == null).Select(t => t.ModifiedAt).ToListAsync(Ct));
+
+        await app.InDbAsync(async db =>
+        {
+            await ThemeSeeds.EnsureAsync(db, Ct);
+            return 0;
+        });
+
+        (await app.InDbAsync(db => db.Set<ThemeDefinition>().Where(t => t.TenantId == null).Select(t => t.ModifiedAt).ToListAsync(Ct))).ShouldBe(before);
+    }
+
+    [Fact]
     public async Task Built_in_themes_are_listed_for_anyone_so_setup_can_offer_them()
     {
         var themes = await app.Anonymous().GetFromJsonAsync<ThemeDto[]>("/api/v1/themes/built-in", Ct);

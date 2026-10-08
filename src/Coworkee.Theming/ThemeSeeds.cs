@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using System.Text.Json;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +21,9 @@ internal static class ThemeSeeds
                 db.Add(seed);
                 changed.Add(seed);
             }
-            else if (existing.PaletteLight != seed.PaletteLight || existing.PaletteDark != seed.PaletteDark || existing.LayoutProperties != seed.LayoutProperties || existing.IsDefault != seed.IsDefault)
+            // jsonb hands back reformatted text, so compare the JSON, not the strings
+            else if (!SameJson(existing.PaletteLight, seed.PaletteLight) || !SameJson(existing.PaletteDark, seed.PaletteDark)
+                     || !SameJson(existing.LayoutProperties, seed.LayoutProperties) || existing.IsDefault != seed.IsDefault)
             {
                 (existing.PaletteLight, existing.PaletteDark, existing.LayoutProperties, existing.IsDefault) = (seed.PaletteLight, seed.PaletteDark, seed.LayoutProperties, seed.IsDefault);
                 changed.Add(existing);
@@ -45,6 +48,9 @@ internal static class ThemeSeeds
             }
         }
     }
+
+    private static bool SameJson(string? stored, string? seed) =>
+        stored == seed || (stored is not null && seed is not null && JsonNode.DeepEquals(JsonNode.Parse(stored), JsonNode.Parse(seed)));
 
     private static List<ThemeDefinition> Create() =>
     [

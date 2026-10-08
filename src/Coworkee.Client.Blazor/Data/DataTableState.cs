@@ -8,6 +8,7 @@ public sealed record DataTableState(string? Search, IReadOnlyList<SelectedFacet>
 {
     public static readonly DataTableState Empty = new(null, [], []);
 
+    [System.Text.Json.Serialization.JsonIgnore]
     public bool IsEmpty => string.IsNullOrEmpty(Search) && Facets.Count == 0 && HiddenColumns.Count == 0;
 
     public string Encode() =>
