@@ -15,6 +15,8 @@ public static class CoworkeeClientExtensions
         configure?.Invoke(options);
         services.AddSingleton(options);
         services.AddMudServicesWithExtensions();
+        services.AddTransient<Localization.CultureHeaderHandler>();
+        services.ConfigureHttpClientDefaults(client => client.AddHttpMessageHandler<Localization.CultureHeaderHandler>());
         services.AddHttpClient<ICoworkeeApi, CoworkeeApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Data.IODataClient, Data.ODataClient>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Localization.ILocalizationApi, Localization.LocalizationApi>(client => client.BaseAddress = baseAddress);

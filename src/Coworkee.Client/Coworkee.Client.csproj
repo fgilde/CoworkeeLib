@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Base for typed .NET clients (SDKs) of Coworkee APIs: JSON calls and problem details as exceptions.</Description>
+  </PropertyGroup>
+</Project>

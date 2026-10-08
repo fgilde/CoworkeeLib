@@ -53,6 +53,16 @@ public sealed class ChatTests(ChatApp app) : IAsyncLifetime
         (await app.As(_bob.Id, Guid.NewGuid()).GetAsync("/api/v1/chat/contacts", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
+    [Fact]
+    public async Task Validation_messages_follow_the_requested_language()
+    {
+        using var german = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/chat/conversations/{_bob.Id}") { Content = JsonContent.Create(new SendChatMessageRequest("")) };
+        german.Headers.AcceptLanguage.ParseAdd("de-DE");
+
+        (await (await Admin.PostAsJsonAsync($"/api/v1/chat/conversations/{_bob.Id}", new SendChatMessageRequest(""), Ct)).Content.ReadAsStringAsync(Ct)).ShouldContain("must not be empty");
+        (await (await Admin.SendAsync(german, Ct)).Content.ReadAsStringAsync(Ct)).ShouldContain("darf nicht leer sein");
+    }
+
     private async Task<UserDto> CreateUserAsync(string email, params string[] permissions)
     {
         var response = await Admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest(email, "Passw0rd!x", null, null), Ct);

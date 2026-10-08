@@ -100,4 +100,6 @@ POST /api/v1/data/Brands/import   (multipart, field "file")
 -> { "imported": 12, "errors": [ { "row": 7, "message": "Name: must not be empty" } ] }
 ```
 
+![Import result](../assets/screenshots/import.png){ .shot }
+
 [`CoworkeeDataTable`](../ui/data-table.md) offers both: *Excel* in the export menu and an import button with `Importable="true"`.

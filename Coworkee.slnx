@@ -17,6 +17,7 @@
     <Project Path="src/Coworkee.Ai/Coworkee.Ai.csproj" />
     <Project Path="src/Coworkee.Backup/Coworkee.Backup.csproj" />
     <Project Path="src/Coworkee.Chat/Coworkee.Chat.csproj" />
+    <Project Path="src/Coworkee.Client/Coworkee.Client.csproj" />
     <Project Path="src/Coworkee.ExtendedAttributes/Coworkee.ExtendedAttributes.csproj" />
     <Project Path="src/Coworkee.Localization/Coworkee.Localization.csproj" />
     <Project Path="src/Coworkee.Mailing/Coworkee.Mailing.csproj" />
@@ -49,6 +50,7 @@
     <Project Path="tests/Coworkee.Ai.Tests/Coworkee.Ai.Tests.csproj" />
     <Project Path="tests/Coworkee.Backup.Tests/Coworkee.Backup.Tests.csproj" />
     <Project Path="tests/Coworkee.Chat.Tests/Coworkee.Chat.Tests.csproj" />
+    <Project Path="tests/Coworkee.Client.Tests/Coworkee.Client.Tests.csproj" />
     <Project Path="tests/Coworkee.ExtendedAttributes.Tests/Coworkee.ExtendedAttributes.Tests.csproj" />
     <Project Path="tests/Coworkee.Localization.Tests/Coworkee.Localization.Tests.csproj" />
     <Project Path="tests/Coworkee.Mailing.Tests/Coworkee.Mailing.Tests.csproj" />

@@ -2,6 +2,8 @@
 
 `Coworkee.Backup` saves the whole database as one zip in the [file storage](storage.md) and restores it.
 
+![Backups page](../assets/screenshots/backups.png){ .shot }
+
 ```csharp
 [DependsOn(typeof(CoworkeeBackupModule))]
 public sealed class MyAppDatabaseModule : CoworkeeModule;

@@ -1,3 +1,5 @@
+using System.Globalization;
+using Microsoft.AspNetCore.Localization;
 using System.Text.Json.Serialization;
 using Coworkee.AspNetCore.Http;
 using Coworkee.AspNetCore.Security;
@@ -30,9 +32,18 @@ public static class CoworkeeWebApplicationExtensions
         return builder;
     }
 
+    /// <summary>Messages (validation and others) follow Accept-Language; number and date formats stay English.</summary>
+    private static readonly RequestLocalizationOptions RequestCultures = new()
+    {
+        DefaultRequestCulture = new RequestCulture("en"),
+        SupportedCultures = [new CultureInfo("en")],
+        SupportedUICultures = CultureInfo.GetCultures(CultureTypes.AllCultures).Where(c => c.Name.Length > 0).ToList(),
+    };
+
     public static WebApplication UseCoworkee(this WebApplication app)
     {
         app.UseExceptionHandler();
+        app.UseRequestLocalization(RequestCultures);
         foreach (var module in app.Services.GetRequiredService<IReadOnlyList<CoworkeeModule>>().OfType<IWebModule>())
         {
             module.ConfigureApplication(app);

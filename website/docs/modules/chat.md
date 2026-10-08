@@ -2,6 +2,8 @@
 
 `Coworkee.Chat` adds direct messages between the people of an organisation. New messages reach sender and recipient over the [realtime hub](realtime.md) on their `user:{id}` topic, so every open tab updates at once.
 
+![Chat page](../assets/screenshots/chat.png){ .shot }
+
 ```csharp
 [DependsOn(typeof(CoworkeeChatModule))]
 public sealed class MyAppDatabaseModule : CoworkeeModule;

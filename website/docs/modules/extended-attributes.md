@@ -2,6 +2,8 @@
 
 `Coworkee.ExtendedAttributes` lets users attach free key/value pairs to any entity without a schema change. A value is text, a decimal, a date or JSON; attributes can be grouped, described, carry an external id and be switched off.
 
+![Attributes of a document](../assets/screenshots/extended-attributes.png){ .shot }
+
 ```csharp
 [DependsOn(typeof(CoworkeeExtendedAttributesModule))]
 public sealed class MyAppDocumentsModule : CoworkeeModule
