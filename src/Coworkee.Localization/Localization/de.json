@@ -185,5 +185,16 @@
   "Direct messages with the people of your organisation.": "Direktnachrichten mit den Personen Ihrer Organisation.",
   "Pick a person to chat with.": "Wählen Sie eine Person zum Chatten.",
   "Write a message": "Nachricht schreiben",
-  "Chat with people of the organisation": "Mit Personen der Organisation chatten"
+  "Chat with people of the organisation": "Mit Personen der Organisation chatten",
+  "No attributes yet.": "Noch keine Attribute.",
+  "Key": "Schlüssel",
+  "Type": "Typ",
+  "Value": "Wert",
+  "Group": "Gruppe",
+  "Add attribute": "Attribut hinzufügen",
+  "Decimal": "Zahl",
+  "Text": "Text",
+  "DateTime": "Datum",
+  "Json": "JSON",
+  "Attributes": "Attribute"
 }

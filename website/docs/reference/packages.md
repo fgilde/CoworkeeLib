@@ -27,6 +27,7 @@ Which package goes where, and what to put in the `using` block.
 | `Coworkee.Localization` | API | `Coworkee.Localization.Resources` | `CoworkeeLocalizationModule`, `ILocalizationResourceContributor`, `AddEmbeddedJson` |
 | `Coworkee.Backup` | API | `Coworkee.Backup` | `CoworkeeBackupModule` |
 | `Coworkee.Chat` | API | `Coworkee.Chat` | `CoworkeeChatModule`, `ChatEvents` |
+| `Coworkee.ExtendedAttributes` | API | `Coworkee.ExtendedAttributes` | `CoworkeeExtendedAttributesModule`, `AddExtendedAttributes<T>` |
 | `Coworkee.Client.Blazor` | WebAssembly client | `Coworkee.Client.Blazor`, `.Components`, `.Components.Data`, `.Data`, `.Api`, `.Navigation`, `.Security`, `.Customization` | `AddCoworkeeClient`, `CoworkeeLayout`, `CoworkeeDataTable<T>`, `IODataClient`, `ApiClientBase`, `ReplaceComponent` |
 | `Coworkee.Aspire` | app host | `Aspire.Hosting`, `Coworkee.Aspire.Settings` | `AddCoworkeeApp`, `CoworkeeApp`, `WithSetting` |
 | `Coworkee.Testing` | tests | `Coworkee.Testing` | `PostgresFixture`, `PostgresWebApplicationFactory`, `AddTestAuthentication` |

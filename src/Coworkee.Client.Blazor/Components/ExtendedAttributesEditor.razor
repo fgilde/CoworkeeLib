@@ -1,0 +1,65 @@
+@using Coworkee.Contracts.ExtendedAttributes
+
+<MudStack Spacing="1" data-testid="extended-attributes">
+    @if (_attributes.Count == 0)
+    {
+        <MudText Class="mud-text-secondary">@L["No attributes yet."]</MudText>
+    }
+    @foreach (var item in _attributes)
+    {
+        <MudPaper Outlined="true" Class="pa-2" data-attribute="@item.Key">
+            <MudGrid Spacing="1">
+                <MudItem xs="12" sm="4">
+                    <MudTextField @bind-Value="item.Key" Label="@L["Key"]" Required="true" MaxLength="100" ReadOnly="ReadOnly" Margin="Margin.Dense" data-testid="attribute-key" />
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudSelect T="ExtendedAttributeType" @bind-Value="item.Type" Label="@L["Type"]" ReadOnly="ReadOnly" Margin="Margin.Dense">
+                        @foreach (var type in Enum.GetValues<ExtendedAttributeType>())
+                        {
+                            <MudSelectItem T="ExtendedAttributeType" Value="type">@L[type.ToString()]</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="5">
+                    @if (item.Type == ExtendedAttributeType.Decimal)
+                    {
+                        <MudNumericField T="decimal?" @bind-Value="item.Decimal" Label="@L["Value"]" ReadOnly="ReadOnly" Margin="Margin.Dense" />
+                    }
+                    else if (item.Type == ExtendedAttributeType.DateTime)
+                    {
+                        <MudDatePicker Date="item.DateTime?.LocalDateTime" DateChanged="d => SetDate(item, d)" Label="@L["Value"]" ReadOnly="ReadOnly" Margin="Margin.Dense" />
+                    }
+                    else if (item.Type == ExtendedAttributeType.Json)
+                    {
+                        <MudTextField @bind-Value="item.Json" Label="@L["Value"]" Lines="3" ReadOnly="ReadOnly" Margin="Margin.Dense" Style="font-family:monospace" />
+                    }
+                    else
+                    {
+                        <MudTextField @bind-Value="item.Text" Label="@L["Value"]" ReadOnly="ReadOnly" Margin="Margin.Dense" data-testid="attribute-text" />
+                    }
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudTextField @bind-Value="item.Group" Label="@L["Group"]" MaxLength="100" ReadOnly="ReadOnly" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="item.Description" Label="@L["Description"]" MaxLength="500" ReadOnly="ReadOnly" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="2" Class="d-flex align-center justify-end">
+                    <MudCheckBox @bind-Value="item.IsActive" ReadOnly="ReadOnly" Dense="true" aria-label="@L["Active"]" />
+                    @if (!ReadOnly)
+                    {
+                        <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" aria-label="@L["Delete"]" OnClick="() => _attributes.Remove(item)" />
+                    }
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+    }
+    @if (!ReadOnly)
+    {
+        <MudStack Row="true">
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Add" Size="Size.Small" OnClick="Add" data-testid="add-attribute">@L["Add attribute"]</MudButton>
+            <MudSpacer />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Disabled="_saving" OnClick="SaveAsync" data-testid="save-attributes">@L["Save"]</MudButton>
+        </MudStack>
+    }
+</MudStack>

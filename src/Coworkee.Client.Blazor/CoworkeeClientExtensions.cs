@@ -18,6 +18,7 @@ public static class CoworkeeClientExtensions
         services.AddHttpClient<ICoworkeeApi, CoworkeeApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Data.IODataClient, Data.ODataClient>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Localization.ILocalizationApi, Localization.LocalizationApi>(client => client.BaseAddress = baseAddress);
+        services.AddHttpClient<ExtendedAttributes.IExtendedAttributesApi, ExtendedAttributes.ExtendedAttributesApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Chat.IChatApi, Chat.ChatApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Backup.IBackupApi, Backup.BackupApi>(client =>
         {

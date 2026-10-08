@@ -1,0 +1,11 @@
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">@Title</MudText>
+    </TitleContent>
+    <DialogContent>
+        <ExtendedAttributesEditor EntityType="@EntityType" EntityId="EntityId" ReadOnly="ReadOnly" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog.Close()">@L["Close"]</MudButton>
+    </DialogActions>
+</MudDialog>
