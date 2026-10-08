@@ -33,6 +33,17 @@ public sealed class ProfileTests : ClientTestBase
         Render<ProfileSecurity>().FindAll("a").Select(a => a.GetAttribute("href")).ShouldContain("https://auth.test/Account/Manage/ChangePassword");
     }
 
+    [Fact]
+    public void The_route_opens_the_security_tab()
+    {
+        Api.GetMyProfileAsync(Arg.Any<CancellationToken>()).Returns(new ProfileDto("ada@acme.test", "Ada", null, null));
+        AddAuthorization().SetAuthorized("Ada").SetClaims(new Claim("manage_url", "https://auth.test/Account/Manage"));
+
+        var page = Render<Profile>(p => p.Add(x => x.Tab, "security"));
+
+        page.WaitForAssertion(() => page.Find("[data-testid='profile-security']"));
+    }
+
     // first name, last name, phone, street, zip code, city, country; the object edit's own filter box is left out
     private static List<AngleSharp.Dom.IElement> Fields(IRenderedComponent<Profile> page) =>
         [.. page.FindAll("form input[type='text'], form input[type='tel']").Where(i => i.GetAttribute("placeholder") != "Filter")];

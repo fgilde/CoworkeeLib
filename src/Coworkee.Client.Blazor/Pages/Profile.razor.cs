@@ -11,6 +11,8 @@ public partial class Profile
     private static readonly string[] BuiltIn = [string.Empty, "security", "notifications", "settings"];
     private List<ProfileTab> _extra = [];
     private bool _ready;
+    private bool _activated;
+    private MudBlazor.MudTabs? _tabs;
 
     [Parameter] public string? Tab { get; set; }
 
@@ -40,6 +42,15 @@ public partial class Profile
         }
 
         _ready = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_tabs is not null && !_activated)
+        {
+            _activated = true;
+            await _tabs.ActivatePanelAsync(ActiveIndex);
+        }
     }
 
     private void Select(int index)
