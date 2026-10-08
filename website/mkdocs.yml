@@ -86,6 +86,8 @@ plugins:
             Realtime and notifications: Realtime und Benachrichtigungen
             Theming: Themes
             Auditing: Audit
+            Localization: Lokalisierung
+            Database backups: Datenbank-Backups
             AI assistant and MCP: KI-Assistent und MCP
             Hosting: Hosting
             Aspire app host: Aspire-AppHost
@@ -143,6 +145,8 @@ nav:
       - Realtime and notifications: modules/realtime.md
       - Theming: modules/theming.md
       - Auditing: modules/auditing.md
+      - Localization: modules/localization.md
+      - Database backups: modules/backups.md
       - AI assistant and MCP: modules/ai.md
   - Hosting:
       - Aspire app host: hosting/aspire.md

@@ -7,6 +7,14 @@ services.AddAiTool<SearchAssetsQuery>("search_assets", "Finds assets by text, fo
 services.AddAiTool<TagAssetsCommand>("tag_assets", "Adds tags to assets.");
 ```
 
+Without any registration, every request of a module that returns a `Result` and carries `[RequiresPermission]` or `[AiTool]` becomes a tool. Its `[Description]` is the tool description; `[AiTool(Exclude = true)]` keeps a request out, for example one that changes permissions:
+
+```csharp
+[RequiresPermission(CatalogPermissions.Brands.View)]
+[Description("Lists brands, optionally filtered by name.")]
+public sealed record GetBrandsQuery(string? Search) : IQuery<Result<IReadOnlyList<BrandDto>>>;
+```
+
 The request type becomes the tool's input schema, the `Result` its output. Failures reach the model as messages it can react to.
 
 - **Assistant page** for users with `Ai.Chat`: a chat with the tools of all modules, as the signed-in user.

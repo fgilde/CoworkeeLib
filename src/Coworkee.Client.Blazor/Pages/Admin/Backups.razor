@@ -1,0 +1,31 @@
+@page "/admin/backups"
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + BackupPermissions.Manage)]
+
+<PageHeader Title="Backups" Description="Backups of the whole database. A restore replaces every table and only fits the migration the backup was made at." />
+<MudStack Row="true" Class="mb-2">
+    <MudSpacer />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Backup" Size="Size.Small" Disabled="_busy"
+               OnClick="CreateAsync" data-testid="create-backup">@L["Create backup"]</MudButton>
+</MudStack>
+<MudDataGrid T="BackupDto" Items="_backups" Loading="_busy" Dense="true" Hover="true" Striped="true" Elevation="0" Outlined="true" data-testid="backups">
+    <Columns>
+        <PropertyColumn Property="b => b.Name" Title="@L["Name"]" />
+        <PropertyColumn Property="b => b.CreatedAt" Title="@L["Created"]" Format="g" />
+        <TemplateColumn Title="@L["Size"]" Sortable="false">
+            <CellTemplate>@FileHelper.GetReadableFileSize(context.Item.Size)</CellTemplate>
+        </TemplateColumn>
+        <PropertyColumn Property="b => b.Tables" Title="@L["Tables"]" />
+        <PropertyColumn Property="b => b.Migration" Title="@L["Migration"]" />
+        <TemplateColumn T="BackupDto" Sortable="false" CellStyle="text-align:right;white-space:nowrap">
+            <CellTemplate>
+                <MudIconButton Icon="@Icons.Material.Outlined.FileDownload" Size="Size.Small" aria-label="@L["Download"]" Disabled="_busy" OnClick="() => DownloadAsync(context.Item)" />
+                <MudIconButton Icon="@Icons.Material.Outlined.SettingsBackupRestore" Size="Size.Small" Color="Color.Warning" aria-label="@L["Restore"]" Disabled="_busy"
+                               OnClick="() => RestoreAsync(context.Item)" data-testid="restore-backup" />
+                <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" aria-label="@L["Delete"]" Disabled="_busy" OnClick="() => DeleteAsync(context.Item)" />
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <NoRecordsContent>
+        <MudText Class="mud-text-secondary pa-4">@L["No backups yet."]</MudText>
+    </NoRecordsContent>
+</MudDataGrid>

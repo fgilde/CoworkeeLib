@@ -74,3 +74,30 @@ var page = await odata.QueryAsync<BrandDto>("Brands", new ODataQuery { OrderBy =
 ```
 
 Der BFF leitet `/odata` mit dem Token des Benutzers an die API weiter.
+
+## Excel-Export und -Import
+
+Jedes Entity-Set lässt sich als Excel-Arbeitsmappe exportieren. Der Export nimmt dieselben `$filter`, `$search` und `$orderby` wie die Liste und beachtet Berechtigung, Entity-Filter und ausgeblendete Eigenschaften:
+
+```http
+GET /api/v1/data/Products/export?$filter=Rate gt 10&$orderby=Name
+```
+
+Die Zeilenzahl begrenzt `Coworkee:OData:MaxExportRows` (Standard 100 000).
+
+Ein Import macht aus jeder Zeile einer hochgeladenen Tabelle einen Command. Spalten werden per Name auf Eigenschaften abgebildet, unbekannte Spalten ignoriert. Jede Zeile läuft einzeln durch die Pipeline, Validierung und Berechtigungen gelten also; fehlerhafte Zeilen kommen mit ihrer Zeilennummer zurück:
+
+```csharp
+// Zeilen sind der Request-Typ, das Lambda verpackt sie in den Command
+services.AddODataImport("Brands", (AddEditBrandRequest row) => new AddEditBrandCommand(null, row));
+
+// oder der Command selbst ist die Zeile
+services.AddODataImport<AddNoteCommand>("Notes");
+```
+
+```http
+POST /api/v1/data/Brands/import   (multipart, Feld "file")
+-> { "imported": 12, "errors": [ { "row": 7, "message": "Name: must not be empty" } ] }
+```
+
+[`CoworkeeDataTable`](../ui/data-table.md) bietet beides: *Excel* im Export-Menü und einen Import-Button mit `Importable="true"`.

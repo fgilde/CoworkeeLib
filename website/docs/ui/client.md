@@ -14,7 +14,9 @@ builder.Services.AddCoworkeeClient(baseAddress, options =>
 builder.Services.AddHttpClient<ICatalogApi, CatalogApi>(client => client.BaseAddress = baseAddress);
 builder.Services.AddSingleton<INavigationContributor, MyAppNavigation>();
 builder.Services.Configure<NavigationMenuOptions>(MyAppNavigation.Order);
-await builder.Build().RunAsync();
+var host = builder.Build();
+await host.Services.InitializeCoworkeeClientAsync();
+await host.RunAsync();
 ```
 
 ```razor title="Routes.razor"

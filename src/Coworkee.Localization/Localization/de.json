@@ -167,5 +167,18 @@
   "Input": "Eingabe",
   "Result": "Ergebnis",
   "OK": "OK",
-  "Succeeded": "Erfolgreich"
+  "Succeeded": "Erfolgreich",
+  "Backups": "Backups",
+  "Backups of the whole database. A restore replaces every table and only fits the migration the backup was made at.": "Backups der gesamten Datenbank. Eine Wiederherstellung ersetzt alle Tabellen und passt nur zum Migrationsstand, auf dem das Backup erstellt wurde.",
+  "Create backup": "Backup erstellen",
+  "Size": "Größe",
+  "Tables": "Tabellen",
+  "Migration": "Migration",
+  "Download": "Herunterladen",
+  "Restore": "Wiederherstellen",
+  "No backups yet.": "Noch keine Backups.",
+  "Backup created": "Backup erstellt",
+  "Backup restored": "Backup wiederhergestellt",
+  "Replace every table with the backup {0}? Changes made since then are lost.": "Alle Tabellen durch das Backup {0} ersetzen? Änderungen seitdem gehen verloren.",
+  "Create, download and restore database backups": "Datenbank-Backups erstellen, herunterladen und wiederherstellen"
 }

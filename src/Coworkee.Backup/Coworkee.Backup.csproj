@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\Coworkee.Contracts\Coworkee.Contracts.csproj" />
+    <ProjectReference Include="..\Coworkee.Infrastructure\Coworkee.Infrastructure.csproj" />
+    <ProjectReference Include="..\Coworkee.AspNetCore\Coworkee.AspNetCore.csproj" />
+    <ProjectReference Include="..\Coworkee.Storage\Coworkee.Storage.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
+  </ItemGroup>
+</Project>

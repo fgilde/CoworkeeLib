@@ -10,7 +10,7 @@ Which package goes where, and what to put in the `using` block.
 | `Coworkee.Application` | modules | `Coworkee.Application.Messaging`, `.Authorization`, `.Caching`, `.Setup` | `IDispatcher`, `ICommand`, `IQuery`, `IHandler`, `RequiresPermission`, `IPermissionChecker`, `ICachedQuery`, `ISetupStep` |
 | `Coworkee.Infrastructure` | infrastructure | `Coworkee.Infrastructure.Persistence`, `.Outbox` | `CoworkeeDbContext`, `IModelContributor`, `AddCoworkeeDbContext`, `AddCoworkeeOutboxProcessing` |
 | `Coworkee.AspNetCore` | web hosts | `Coworkee.AspNetCore`, `.Http`, `.Authentication` | `AddCoworkee`, `UseCoworkee`, `IWebModule`, `MapCoworkeeApi`, `ToHttpResult`, `AddCoworkeeApiAuthentication` |
-| `Coworkee.OData` | API | `Coworkee.OData` | `CoworkeeODataModule`, `AddODataEntity`, `IODataEntityFilter<T>` |
+| `Coworkee.OData` | API | `Coworkee.OData` | `CoworkeeODataModule`, `AddODataEntity`, `AddODataImport`, `IODataEntityFilter<T>` |
 | `Coworkee.ResponseFilters` | API | `Coworkee.ResponseFilters` | `AddCoworkeeResponseFilters`, `UnlessGranted`, `WhenGranted` |
 | `Coworkee.Identity` | API, auth, migrations | `Coworkee.Identity`, `.Setup`, `.Domain` | `CoworkeeIdentityModule`, `AddCoworkeeIdentitySeed`, `SeedRole`, `SeedUser` |
 | `Coworkee.AuthServer`, `Coworkee.Account` | auth host | `Coworkee.AuthServer` | `CoworkeeAuthServerModule`, external providers |
@@ -24,6 +24,8 @@ Which package goes where, and what to put in the `using` block.
 | `Coworkee.Auditing` | API | `Coworkee.Auditing` | audit log queries |
 | `Coworkee.Theming` | API | `Coworkee.Theming` | theme store, built-in themes |
 | `Coworkee.Ai` | API | `Coworkee.Ai` | `AddAiTool<TRequest>`, MCP server |
+| `Coworkee.Localization` | API | `Coworkee.Localization.Resources` | `CoworkeeLocalizationModule`, `ILocalizationResourceContributor`, `AddEmbeddedJson` |
+| `Coworkee.Backup` | API | `Coworkee.Backup` | `CoworkeeBackupModule` |
 | `Coworkee.Client.Blazor` | WebAssembly client | `Coworkee.Client.Blazor`, `.Components`, `.Components.Data`, `.Data`, `.Api`, `.Navigation`, `.Security`, `.Customization` | `AddCoworkeeClient`, `CoworkeeLayout`, `CoworkeeDataTable<T>`, `IODataClient`, `ApiClientBase`, `ReplaceComponent` |
 | `Coworkee.Aspire` | app host | `Aspire.Hosting`, `Coworkee.Aspire.Settings` | `AddCoworkeeApp`, `CoworkeeApp`, `WithSetting` |
 | `Coworkee.Testing` | tests | `Coworkee.Testing` | `PostgresFixture`, `PostgresWebApplicationFactory`, `AddTestAuthentication` |
