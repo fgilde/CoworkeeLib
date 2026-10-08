@@ -1,10 +1,11 @@
-using Coworkee.Application;
 using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
-using Coworkee.AspNetCore;
+using Coworkee.Application;
 using Coworkee.AspNetCore.Http;
+using Coworkee.AspNetCore;
 using Coworkee.Contracts.Auditing;
 using Coworkee.Core.Modularity;
+using Coworkee.OData;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +19,8 @@ public sealed class CoworkeeAuditingModule : CoworkeeModule, IWebModule
     {
         context.Services.AddMessagingFromAssembly(typeof(CoworkeeAuditingModule).Assembly);
         context.Services.AddSingleton<IPermissionDefinitionContributor, AuditPermissionDefinitions>();
+        context.Services.AddODataEntity<Coworkee.Infrastructure.Auditing.AuditEntry>("AuditEntries", Contracts.Auditing.AuditPermissions.View);
+        context.Services.AddScoped<IODataEntityFilter<Coworkee.Infrastructure.Auditing.AuditEntry>, OData.AuditEntryODataFilter>();
     }
 
     public void ConfigureApplication(WebApplication app)

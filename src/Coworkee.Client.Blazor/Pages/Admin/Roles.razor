@@ -1,34 +1,21 @@
 @page "/admin/roles"
-@attribute [Authorize(Policy = "perm:" + IdentityPermissions.Roles.View)]
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + IdentityPermissions.Roles.View)]
 
-<PageTitle>Roles</PageTitle>
-<RealtimeSubscription Topic="type:Role" OnEvent="ReloadAsync" />
-<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
-    <MudText Typo="Typo.h4">Roles</MudText>
-    <MudSpacer />
-    <PermissionView Permission="@IdentityPermissions.Roles.Manage">
-        <MudTextField @bind-Value="_name" Placeholder="New role name" Immediate="true" data-testid="new-role-name" />
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateAsync" Disabled="@string.IsNullOrWhiteSpace(_name)" data-testid="add-role">Add role</MudButton>
-    </PermissionView>
-</MudStack>
-
-<MudSimpleTable Hover="true" Dense="true">
-    <thead><tr><th>Name</th><th>Description</th><th></th></tr></thead>
-    <tbody>
-        @foreach (var role in _roles)
-        {
-            <tr>
-                <td><MudLink Href="@($"/admin/roles/{role.Id}")">@role.Name</MudLink> @if (role.IsSystem) { <MudChip T="string" Size="Size.Small">system</MudChip> }</td>
-                <td>@role.Description</td>
-                <td style="text-align:right">
-                    @if (!role.IsSystem)
-                    {
-                        <PermissionView Permission="@IdentityPermissions.Roles.Manage">
-                            <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" aria-label="Delete role" OnClick="() => DeleteAsync(role)" />
-                        </PermissionView>
-                    }
-                </td>
-            </tr>
-        }
-    </tbody>
-</MudSimpleTable>
+<PageHeader Title="Roles" Description="Roles bundle permissions; users and groups get roles." />
+<RealtimeSubscription Topic="type:Role" OnEvent="_ => _table.ReloadAsync()" />
+<CoworkeeDataTable @ref="_table" T="RoleDto" EntitySet="Roles" SearchFields="SearchFields" ExportFileName="roles" DescribeItem="r => r.Name"
+                   CreateText="New role" CreatePermission="@IdentityPermissions.Roles.Manage" DeletePermission="@IdentityPermissions.Roles.Manage"
+                   OnCreate="CreateAsync" OnDelete="DeleteAsync">
+    <Columns>
+        <PropertyColumn Property="r => r.Name" Title="@L["Name"]">
+            <CellTemplate>
+                <MudLink Href="@($"/admin/roles/{context.Item.Id}")">@context.Item.Name</MudLink>
+                @if (context.Item.IsSystem)
+                {
+                    <MudChip T="string" Size="Size.Small">@L["system"]</MudChip>
+                }
+            </CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="r => r.Description" Title="@L["Description"]" />
+    </Columns>
+</CoworkeeDataTable>

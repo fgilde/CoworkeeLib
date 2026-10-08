@@ -3,8 +3,8 @@ using Coworkee.AspNetCore;
 using Coworkee.Contracts.Identity;
 using Coworkee.Core.Modularity;
 using Coworkee.Core.Security;
-using Coworkee.Identity;
 using Coworkee.Identity.Setup;
+using Coworkee.Identity;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.Testing;
 using Microsoft.AspNetCore.Builder;
@@ -89,7 +89,7 @@ public sealed class IdentityApp : PostgresFixture
 public sealed class IdentityTestDbContext(DbContextOptions<IdentityTestDbContext> options, ICurrentUser currentUser, IEnumerable<IModelContributor> contributors)
     : CoworkeeDbContext(options, currentUser, contributors);
 
-[DependsOn(typeof(CoworkeeIdentityModule))]
+[DependsOn(typeof(CoworkeeIdentityModule), typeof(Coworkee.OData.CoworkeeODataModule))]
 public sealed class TestAppModule : CoworkeeModule
 {
     public override void ConfigureServices(ModuleServiceContext context)

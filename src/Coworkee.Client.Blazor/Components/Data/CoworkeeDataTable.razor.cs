@@ -65,6 +65,9 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     [Parameter] public EventCallback<HashSet<T>> SelectedItemsChanged { get; set; }
 
+    /// <summary>After each page arrived, e.g. to load details for the visible rows in one call.</summary>
+    [Parameter] public EventCallback<IReadOnlyList<T>> OnLoaded { get; set; }
+
     public FacetSelection Selection => _selection;
 
     public string? CurrentFilter => ODataFilter.And(Filter, _selection.ToFilter(), ODataFilter.Search(_search, SearchFields));
@@ -154,6 +157,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
             Facets = Facets,
         };
         var page = await OData.QueryAsync<T>(EntitySet, query, cancellationToken);
+        await OnLoaded.InvokeAsync(page.Items);
         if (Facets)
         {
             _facets = page.Facets;

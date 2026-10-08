@@ -1,45 +1,36 @@
 @page "/admin/users"
-@attribute [Authorize(Policy = "perm:" + IdentityPermissions.Users.View)]
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + IdentityPermissions.Users.View)]
 
-<PageTitle>Users</PageTitle>
-<RealtimeSubscription Topic="type:User" OnEvent="_ => _table!.ReloadServerData()" />
-<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
-    <MudText Typo="Typo.h4">Users</MudText>
-    <MudSpacer />
-    <MudTextField T="string" @bind-Value="_search" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search"
-                  Immediate="true" DebounceInterval="300" OnDebounceIntervalElapsed="_ => _table!.ReloadServerData()" />
-    <PermissionView Permission="@IdentityPermissions.Users.Manage">
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => _creating = true" data-testid="new-user">New user</MudButton>
-    </PermissionView>
-</MudStack>
-
-@if (_creating)
-{
-    <MudPaper Outlined="true" Class="pa-4 mb-4">
-        <MudStack Row="true" Wrap="Wrap.Wrap">
-            <MudTextField @bind-Value="_new.Email" Label="Email" InputType="InputType.Email" Required="true" data-testid="new-user-email" />
-            <MudTextField @bind-Value="_new.FirstName" Label="First name" />
-            <MudTextField @bind-Value="_new.LastName" Label="Last name" />
-            <MudTextField @bind-Value="_new.Password" Label="Initial password" InputType="InputType.Password" Required="true" data-testid="new-user-password" />
-        </MudStack>
-        <MudStack Row="true" Class="mt-3">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateAsync" data-testid="create-user">Create</MudButton>
-            <MudButton OnClick="() => _creating = false">Cancel</MudButton>
-        </MudStack>
-    </MudPaper>
-}
-
+<PageHeader Title="Users" Description="Accounts of this organisation, their roles and whether they may sign in." />
+<RealtimeSubscription Topic="type:User" OnEvent="_ => _table.ReloadAsync()" />
+<PermissionView Permission="@IdentityPermissions.Users.Manage">
+    @if (_creating)
+    {
+        <MudPaper Outlined="true" Class="pa-4 mb-4">
+            <MudStack Row="true" Wrap="Wrap.Wrap">
+                <MudTextField @bind-Value="_new.Email" Label="@L["Email"]" InputType="InputType.Email" Required="true" data-testid="new-user-email" />
+                <MudTextField @bind-Value="_new.FirstName" Label="@L["First name"]" />
+                <MudTextField @bind-Value="_new.LastName" Label="@L["Last name"]" />
+                <MudTextField @bind-Value="_new.Password" Label="@L["Initial password"]" InputType="InputType.Password" Required="true" data-testid="new-user-password" />
+            </MudStack>
+            <MudStack Row="true" Class="mt-3">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateAsync" data-testid="create-user">@L["Create"]</MudButton>
+                <MudButton OnClick="() => _creating = false">@L["Cancel"]</MudButton>
+            </MudStack>
+        </MudPaper>
+    }
+</PermissionView>
 @if (_permissionsOf is not null)
 {
     <MudPaper Outlined="true" Class="pa-4 mb-4">
         <MudStack Row="true" AlignItems="AlignItems.Center">
-            <MudText Typo="Typo.h6">Effective permissions of @_permissionsOf.Email</MudText>
+            <MudText Typo="Typo.h6">@L["Effective permissions of {0}", _permissionsOf.Email]</MudText>
             <MudSpacer />
-            <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small" aria-label="Close" OnClick="() => _permissionsOf = null" />
+            <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small" aria-label="@L["Close"]" OnClick="() => _permissionsOf = null" />
         </MudStack>
         @if (_permissions.Count == 0)
         {
-            <MudText Typo="Typo.body2">No permissions.</MudText>
+            <MudText Typo="Typo.body2">@L["No permissions."]</MudText>
         }
         @foreach (var permission in _permissions)
         {
@@ -47,37 +38,47 @@
         }
     </MudPaper>
 }
-
-<MudTable @ref="_table" T="UserDto" ServerData="LoadAsync" Dense="true" Hover="true" RowsPerPage="25">
-    <HeaderContent>
-        <MudTh>Email</MudTh><MudTh>Name</MudTh><MudTh>Roles</MudTh><MudTh>Active</MudTh><MudTh></MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd data-user="@context.Email"><MudLink Href="@($"/admin/users/{context.Id}")">@context.Email</MudLink></MudTd>
-        <MudTd>@context.FirstName @context.LastName</MudTd>
-        <MudTd>
-            <PermissionView Permission="@IdentityPermissions.Users.Manage">
-                <ChildContent>
-                    <MudSelect T="Guid" MultiSelection="true" Dense="true" SelectedValues="@context.Roles.Select(r => r.Id).ToArray()" data-testid="@($"roles-{context.Email}")"
-                               SelectedValuesChanged="ids => SetRolesAsync(context, ids)" ToStringFunc="RoleName">
-                        @foreach (var role in _roles)
-                        {
-                            <MudSelectItem Value="@role.Id">@role.Name</MudSelectItem>
-                        }
-                    </MudSelect>
-                </ChildContent>
-                <NotAuthorized>@string.Join(", ", context.Roles.Select(r => r.Name))</NotAuthorized>
-            </PermissionView>
-        </MudTd>
-        <MudTd>
-            <MudSwitch T="bool" Value="@context.IsActive" ValueChanged="v => SetActiveAsync(context, v)" Color="Color.Secondary" />
-        </MudTd>
-        <MudTd Style="text-align:right;white-space:nowrap">
-            <MudIconButton Icon="@Icons.Material.Outlined.Key" Size="Size.Small" aria-label="Effective permissions" OnClick="() => ShowPermissionsAsync(context)" />
-            <PermissionView Permission="@IdentityPermissions.Users.Manage">
-                <MudIconButton Icon="@Icons.Material.Outlined.LockReset" Size="Size.Small" aria-label="Send password reset" OnClick="() => SendResetAsync(context)" />
-            </PermissionView>
-        </MudTd>
-    </RowTemplate>
-    <PagerContent><MudTablePager /></PagerContent>
-</MudTable>
+<CoworkeeDataTable @ref="_table" T="UserRow" EntitySet="Users" SearchFields="SearchFields" ExportFileName="users" OnLoaded="LoadRolesAsync"
+                   CreateText="New user" CreatePermission="@IdentityPermissions.Users.Manage" OnCreate="() => _creating = true">
+    <Columns>
+        <PropertyColumn Property="u => u.Email" Title="@L["Email"]">
+            <CellTemplate><MudLink Href="@($"/admin/users/{context.Item.Id}")" data-user="@context.Item.Email">@context.Item.Email</MudLink></CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="u => u.LastName" Title="@L["Name"]">
+            <CellTemplate>@context.Item.Name</CellTemplate>
+        </PropertyColumn>
+        <TemplateColumn T="UserRow" Title="@L["Roles"]" Sortable="false">
+            <CellTemplate>
+                <PermissionView Permission="@IdentityPermissions.Users.Manage">
+                    <ChildContent>
+                        <MudSelect T="Guid" MultiSelection="true" Dense="true" SelectedValues="RolesOf(context.Item)" ToStringFunc="RoleName"
+                                   SelectedValuesChanged="ids => SetRolesAsync(context.Item, ids)" data-testid="@($"roles-{context.Item.Email}")">
+                            @foreach (var role in _roles)
+                            {
+                                <MudSelectItem T="Guid" Value="@role.Id">@role.Name</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </ChildContent>
+                    <NotAuthorized>@string.Join(", ", RolesOf(context.Item).Select(RoleName))</NotAuthorized>
+                </PermissionView>
+            </CellTemplate>
+        </TemplateColumn>
+        <PropertyColumn Property="u => u.IsActive" Title="@L["Active"]">
+            <CellTemplate>
+                <PermissionView Permission="@IdentityPermissions.Users.Manage">
+                    <ChildContent><MudSwitch T="bool" Value="@context.Item.IsActive" ValueChanged="v => SetActiveAsync(context.Item, v)" Color="Color.Secondary" /></ChildContent>
+                    <NotAuthorized>@L[context.Item.IsActive ? "yes" : "no"]</NotAuthorized>
+                </PermissionView>
+            </CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="u => u.LastLoginAt" Title="@L["Last sign-in"]" Format="g" />
+        <TemplateColumn T="UserRow" Sortable="false" CellStyle="text-align:right;white-space:nowrap">
+            <CellTemplate>
+                <MudIconButton Icon="@Icons.Material.Outlined.Key" Size="Size.Small" aria-label="@L["Effective permissions"]" OnClick="() => ShowPermissionsAsync(context.Item)" />
+                <PermissionView Permission="@IdentityPermissions.Users.Manage">
+                    <MudIconButton Icon="@Icons.Material.Outlined.LockReset" Size="Size.Small" aria-label="@L["Send password reset"]" OnClick="() => SendResetAsync(context.Item)" />
+                </PermissionView>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+</CoworkeeDataTable>

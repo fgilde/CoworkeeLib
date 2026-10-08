@@ -1,18 +1,19 @@
 using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
-using Coworkee.AspNetCore;
 using Coworkee.AspNetCore.Http;
+using Coworkee.AspNetCore;
 using Coworkee.BackgroundJobs;
-using Coworkee.Contracts;
 using Coworkee.Contracts.Mailing;
 using Coworkee.Contracts.Settings;
+using Coworkee.Contracts;
 using Coworkee.Core.Modularity;
 using Coworkee.Infrastructure.Persistence;
+using Coworkee.OData;
 using Coworkee.Settings;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Mailing;
 
@@ -37,6 +38,8 @@ public sealed class CoworkeeMailingModule : CoworkeeModule, IWebModule
         services.AddSingleton<IModelContributor, MailModelContributor>();
         services.AddSingleton<Coworkee.Infrastructure.Versioning.IVersionedTypeContributor, MailVersionedTypes>();
         services.AddSingleton<IPermissionDefinitionContributor, MailPermissionDefinitions>();
+        services.AddODataEntity<OutgoingMail>("Mails", Contracts.Mailing.MailPermissions.Log.View, m => m.HtmlBody);
+        services.AddScoped<IODataEntityFilter<OutgoingMail>, OData.OutgoingMailODataFilter>();
         services.AddSingleton<ISettingDefinitionContributor, MailSettingDefinitions>();
         services.AddSingleton<IMailTemplateContributor, CoreMailTemplates>();
         services.AddSingleton<IMailTemplateDefinitionManager, MailTemplateDefinitionManager>();

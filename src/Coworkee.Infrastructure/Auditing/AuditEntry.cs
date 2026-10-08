@@ -1,4 +1,5 @@
 using Coworkee.Domain;
+using Nextended.Core.Facets;
 
 namespace Coworkee.Infrastructure.Auditing;
 
@@ -17,10 +18,12 @@ public sealed class AuditEntry
 
     public Guid? TenantId { get; init; }
 
+    [ProvideFacet(Label = "Entity")]
     public required string EntityType { get; init; }
 
     public required string EntityId { get; init; }
 
+    [ProvideFacet(Label = "Action")]
     public AuditAction Action { get; init; }
 
     public Guid? ActorId { get; init; }

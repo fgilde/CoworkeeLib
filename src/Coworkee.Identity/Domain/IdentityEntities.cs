@@ -16,6 +16,7 @@ public sealed class Tenant : AuditedAggregateRoot
 
     public required string Identifier { get; set; }
 
+    [Nextended.Core.Facets.ProvideFacet(Label = "Active")]
     public bool IsActive { get; set; } = true;
 
     public bool IsDefault { get; set; }
@@ -38,6 +39,7 @@ public sealed class User : IdentityUser<Guid>, IAuditable
 
     public string? LastName { get; set; }
 
+    [Nextended.Core.Facets.ProvideFacet(Label = "Active")]
     public bool IsActive { get; set; } = true;
 
     public DateTimeOffset? LastLoginAt { get; set; }
@@ -60,6 +62,7 @@ public sealed class Role : IdentityRole<Guid>, IAuditable
 
     public string? Description { get; set; }
 
+    [Nextended.Core.Facets.ProvideFacet(Label = "System")]
     public bool IsSystem { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
