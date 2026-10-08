@@ -11,7 +11,8 @@ public sealed class CoworkeeKeycloakOptions
 
     public LoginMode LoginMode { get; set; } = LoginMode.Both;
 
-    public int Port { get; set; } = 8080;
+    /// <summary>Fixed host port; empty lets Aspire choose one, so several app hosts run side by side.</summary>
+    public int? Port { get; set; }
 
     /// <summary>Users of the imported realm; they share one generated password (see the parameter in the dashboard).</summary>
     public List<KeycloakUser> Users { get; } = [];
