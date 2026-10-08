@@ -3,7 +3,7 @@
         @if (_themes.Count > 1)
         {
             <MudMenu Icon="@Icons.Material.Outlined.Palette" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="true"
-                     aria-label="Theme" data-testid="theme-menu">
+                     aria-label="@L["Theme"]" data-testid="theme-menu">
                 @foreach (var theme in _themes)
                 {
                     <MudMenuItem OnClick="() => ChooseAsync(theme)" Icon="@(theme.Id == ThemeService.Current?.Id ? Icons.Material.Filled.Check : Icons.Material.Outlined.Circle)"

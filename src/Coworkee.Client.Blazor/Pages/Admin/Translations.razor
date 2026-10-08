@@ -1,0 +1,31 @@
+@page "/admin/translations"
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + LocalizationPermissions.Manage)]
+
+<PageHeader Title="Translations" Description="Texts of the application per language. Keys are the English texts; edits here win over the texts the modules ship." />
+<MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-2">
+    <MudSelect T="string" Value="_culture" ValueChanged="SelectAsync" Label="@L["Language"]" Dense="true" Variant="Variant.Outlined" Style="max-width:220px" data-testid="translation-culture">
+        @foreach (var language in _languages.Where(l => l.Culture != CoworkeeLocalizer.English))
+        {
+            <MudSelectItem T="string" Value="language.Culture">@language.Name</MudSelectItem>
+        }
+    </MudSelect>
+    <MudTextField T="string" @bind-Value="_search" Immediate="true" Placeholder="@L["Search"]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search"
+                  Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Style="max-width:320px" />
+    <MudSwitch T="bool" @bind-Value="_onlyMissing" Label="@L["Only untranslated"]" Color="Color.Primary" data-testid="only-missing" />
+    <MudSpacer />
+    <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["{0} of {1} translated", _rows.Count(r => Text(r) is not null), _rows.Count]</MudText>
+</MudStack>
+<MudDataGrid T="TranslationRowDto" Items="Visible" Dense="true" Hover="true" Striped="true" Elevation="0" Outlined="true" RowsPerPage="50" data-testid="translations">
+    <Columns>
+        <PropertyColumn Property="r => r.Key" Title="@L["English"]" />
+        <TemplateColumn T="TranslationRowDto" Title="@L["Translation"]" Sortable="false">
+            <CellTemplate>
+                <MudTextField T="string" Value="@Text(context.Item)" ValueChanged="value => SaveAsync(context.Item, value)" Placeholder="@context.Item.Default"
+                              Variant="Variant.Text" Margin="Margin.Dense" DebounceInterval="600" data-key="@context.Item.Key" />
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="TranslationRowDto" />
+    </PagerContent>
+</MudDataGrid>

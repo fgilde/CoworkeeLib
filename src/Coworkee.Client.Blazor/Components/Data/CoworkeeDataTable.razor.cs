@@ -16,6 +16,8 @@ public partial class CoworkeeDataTable<T> : IDisposable
     [Inject] private IDialogService Dialogs { get; set; } = null!;
 
     [Inject] private FileDownloader Downloader { get; set; } = null!;
+    [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
+
 
     [Parameter] public bool Exportable { get; set; } = true;
 
@@ -95,8 +97,8 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     private async Task DeleteAsync(IReadOnlyCollection<T> items)
     {
-        var what = items.Count == 1 && DescribeItem is not null ? DescribeItem(items.First()) : $"{items.Count} entries";
-        if (await Dialogs.ShowMessageBoxAsync("Delete", $"Delete {what}? This cannot be undone.", yesText: "Delete", cancelText: "Cancel") != true)
+        var what = items.Count == 1 && DescribeItem is not null ? DescribeItem(items.First()) : L["{0} entries", items.Count];
+        if (await Dialogs.ShowMessageBoxAsync(L["Delete"], L["Delete {0}? This cannot be undone.", what], yesText: L["Delete"], cancelText: L["Cancel"]) != true)
         {
             return;
         }

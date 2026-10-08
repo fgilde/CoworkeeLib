@@ -1,10 +1,10 @@
 @if (Item.Permission is null)
 {
-    <MudNavLink Href="@Item.Href" Icon="@Item.Icon" ForceLoad="@Item.ForceLoad">@Item.Title</MudNavLink>
+    <MudNavLink Href="@Item.Href" Icon="@Item.Icon" ForceLoad="@Item.ForceLoad">@L[Item.Title]</MudNavLink>
 }
 else
 {
     <PermissionView Permission="@Item.Permission">
-        <MudNavLink Href="@Item.Href" Icon="@Item.Icon" ForceLoad="@Item.ForceLoad">@Item.Title</MudNavLink>
+        <MudNavLink Href="@Item.Href" Icon="@Item.Icon" ForceLoad="@Item.ForceLoad">@L[Item.Title]</MudNavLink>
     </PermissionView>
 }

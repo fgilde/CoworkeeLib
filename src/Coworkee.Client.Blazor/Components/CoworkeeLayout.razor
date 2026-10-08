@@ -10,7 +10,7 @@
 <MudSnackbarProvider />
 
 <MudRTLProvider RightToLeft="Preferences.RightToLeft">
-    <MudLayout>
+    <MudLayout @key="L.Culture">
         <CoworkeeAppBar Dark="_dark" ToggleDrawer="() => _drawer = !_drawer" ToggleDark="ToggleDarkAsync" />
         <MudDrawer @bind-Open="_drawer" Elevation="0" Variant="@(Preferences.Pinned ? DrawerVariant.Responsive : DrawerVariant.Mini)" OpenMiniOnHover="true" data-testid="nav-drawer">
             <CoworkeeNavMenu Mini="@(!Preferences.Pinned && !_drawer)" />

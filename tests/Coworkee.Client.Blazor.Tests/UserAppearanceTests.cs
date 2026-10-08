@@ -87,7 +87,7 @@ public sealed class UserAppearanceTests : ClientTestBase
         AddAuthorization().SetAuthorized("Ada");
         var layout = Render<CoworkeeLayout>(p => p.Add(l => l.Body, (RenderFragment)(b => b.AddContent(0, "body"))));
 
-        await layout.Find("button[aria-label='Toggle dark mode']").ClickAsync(new());
+        await layout.Find("button[aria-label='Dark mode']").ClickAsync(new());
 
         Services.GetRequiredService<ThemeService>().Mode.ShouldBeOneOf("dark", "light");
         await Api.Received(1).SetSettingsAsync(SettingScope.User,

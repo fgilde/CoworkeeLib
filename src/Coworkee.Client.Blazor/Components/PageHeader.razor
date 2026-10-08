@@ -1,10 +1,10 @@
-<PageTitle>@Title</PageTitle>
+<PageTitle>@L[Title]</PageTitle>
 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4" data-testid="page-header">
     <div>
-        <MudText Typo="Typo.h5" Color="Color.Primary">@Title</MudText>
+        <MudText Typo="Typo.h5" Color="Color.Primary">@L[Title]</MudText>
         @if (!string.IsNullOrEmpty(Description))
         {
-            <MudText Typo="Typo.body2" Class="mud-text-secondary">@Description</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">@L[Description]</MudText>
         }
     </div>
     <MudSpacer />

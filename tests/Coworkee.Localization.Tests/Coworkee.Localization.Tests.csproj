@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Coworkee.Localization\Coworkee.Localization.csproj" />
+    <ProjectReference Include="..\..\src\Coworkee.Identity\Coworkee.Identity.csproj" />
+    <ProjectReference Include="..\..\src\Coworkee.Testing\Coworkee.Testing.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <EmbeddedResource Include="Localization\*.json" />
+  </ItemGroup>
+</Project>
