@@ -5,6 +5,8 @@ namespace Coworkee.Client.Blazor.Navigation;
 /// <summary>A node of the navigation tree: a group or a link.</summary>
 public sealed class NavigationEntry : Hierarchical<NavigationEntry>
 {
+    public const char GroupSeparator = '/';
+
     public string Text { get; set; } = string.Empty;
 
     public string? Icon { get; set; }
@@ -15,28 +17,46 @@ public sealed class NavigationEntry : Hierarchical<NavigationEntry>
 
     public override string ToString() => Text;
 
-    /// <summary>Groups become parents of their links; links without a group stay on the first level, home first.</summary>
+    /// <summary>Groups become parents of their links, a group path like "Administration/Localization" nests; links without a group stay on the first level, home first.</summary>
     public static HashSet<NavigationEntry> Build(IEnumerable<CoworkeeNavItem> items, NavigationMenuOptions options, string? homeTitle)
     {
-        var tree = new HashSet<NavigationEntry>();
+        var arranged = items.Select(options.Arrange).ToList();
+        var root = new NavigationEntry { Children = [] };
         if (homeTitle is not null)
         {
-            tree.Add(new NavigationEntry { Text = homeTitle, Icon = MudBlazor.Icons.Material.Outlined.Home, Href = "/" });
+            root.Children.Add(new NavigationEntry { Text = homeTitle, Icon = MudBlazor.Icons.Material.Outlined.Home, Href = "/" });
         }
 
-        foreach (var item in NavigationTree.Ungrouped(items, options))
+        foreach (var item in NavigationTree.Ungrouped(arranged, options))
         {
-            tree.Add(Link(item, null));
+            root.Children.Add(Link(item, null));
         }
 
-        foreach (var group in NavigationTree.Groups(items, options))
+        var groups = new Dictionary<string, NavigationEntry>(StringComparer.Ordinal);
+        foreach (var group in NavigationTree.Groups(arranged, options))
         {
-            var parent = new NavigationEntry { Text = group.Title, Icon = options.GroupIcon(group.Title) };
-            parent.Children = [.. group.Items.Select(i => Link(i, parent))];
-            tree.Add(parent);
+            var parent = Group(group.Title, root, groups, options);
+            foreach (var item in group.Items)
+            {
+                parent.Children!.Add(Link(item, parent));
+            }
         }
 
-        return tree;
+        return root.Children;
+    }
+
+    private static NavigationEntry Group(string path, NavigationEntry root, Dictionary<string, NavigationEntry> groups, NavigationMenuOptions options)
+    {
+        if (groups.TryGetValue(path, out var existing))
+        {
+            return existing;
+        }
+
+        var cut = path.LastIndexOf(GroupSeparator);
+        var parent = cut < 0 ? root : Group(path[..cut], root, groups, options);
+        var group = new NavigationEntry { Text = path[(cut + 1)..], Icon = options.GroupIcon(path), Children = [], Parent = cut < 0 ? null! : parent };
+        parent.Children!.Add(group);
+        return groups[path] = group;
     }
 
     private static NavigationEntry Link(CoworkeeNavItem item, NavigationEntry? parent) =>

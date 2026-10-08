@@ -56,6 +56,7 @@ internal sealed class MyAppNavigation : INavigationContributor
 | `Hide(hrefs)` | removes entries, also the built-in admin pages |
 | `ShowHome`, `HomeTitle` | the home link at the top |
 | `IconForGroup(name, icon)` | the icon of a group node |
+| `Place(href, group, title?, order?)` | moves a link of the library into another group; a group path like `Administration/Localization` nests |
 
 The menu is a `MudExTreeView`: groups are nodes, the filter box highlights matches and opens their groups, and the view can switch between tree, list and flat list. Pinned, the drawer stays as an icon strip under the app bar and the menu button widens it; unpinned, it opens as an overlay and hides again. Whether one group or several stay open is a second toggle. Both choices are stored in the browser.
 

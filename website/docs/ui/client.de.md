@@ -56,6 +56,7 @@ internal sealed class MyAppNavigation : INavigationContributor
 | `Hide(hrefs)` | entfernt Einträge, auch die eingebauten Admin-Seiten |
 | `ShowHome`, `HomeTitle` | der Startseiten-Link oben |
 | `IconForGroup(name, icon)` | das Symbol eines Gruppenknotens |
+| `Place(href, group, title?, order?)` | verschiebt einen Link der Bibliothek in eine andere Gruppe; ein Gruppenpfad wie `Administration/Localization` verschachtelt |
 
 Das Menü ist ein `MudExTreeView`: Gruppen sind Knoten, das Filterfeld hebt Treffer hervor und öffnet ihre Gruppen, und die Ansicht wechselt zwischen Baum, Liste und flacher Liste. Angeheftet bleibt die Leiste als Symbolstreifen unter der App-Leiste, der Menüknopf verbreitert sie; nicht angeheftet öffnet sie sich als Überlagerung und verschwindet wieder. Ob eine oder mehrere Gruppen offen bleiben, ist ein zweiter Schalter. Beides speichert der Browser.
 
