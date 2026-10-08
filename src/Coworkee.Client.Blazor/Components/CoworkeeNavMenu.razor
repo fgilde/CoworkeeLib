@@ -26,10 +26,10 @@
 }
 @if (!Mini && Theme.ShowLogoInNav)
 {
-    <div class="d-flex justify-center mt-2 mb-3" data-testid="nav-logo">
-        <CoworkeeLogo Height="88" />
+    <div data-testid="nav-logo">
+        <div class="d-flex justify-center mt-2 mb-3"><CoworkeeLogo Height="88" /></div>
+        <MudDivider Class="mb-2" />
     </div>
-    <MudDivider Class="mb-2" />
 }
 @if (_entries is not null)
 {
