@@ -50,20 +50,42 @@ internal static class KeycloakRealm
     // app hosts of parallel tests share the file and a running container may hold it open
     private static void WriteIfChanged(string path, string json)
     {
-        if (File.Exists(path) && File.ReadAllText(path) == json)
+        if (Same(path, json))
         {
             return;
         }
 
         var temp = $"{path}.{Guid.NewGuid():N}.tmp";
         File.WriteAllText(temp, json);
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                File.Move(temp, path, overwrite: true);
+                return;
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException && attempt < 10)
+            {
+                if (Same(path, json))
+                {
+                    File.Delete(temp);
+                    return;
+                }
+
+                Thread.Sleep(100 * attempt);
+            }
+        }
+    }
+
+    private static bool Same(string path, string json)
+    {
         try
         {
-            File.Move(temp, path, overwrite: true);
+            return File.Exists(path) && File.ReadAllText(path) == json;
         }
-        catch (IOException) when (File.Exists(path) && File.ReadAllText(path) == json)
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            File.Delete(temp);
+            return false;
         }
     }
 }
