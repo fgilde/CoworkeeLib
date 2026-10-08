@@ -1,4 +1,4 @@
-namespace Coworkee.Bff;
+namespace Coworkee.Contracts.Configuration;
 
 public sealed class BffOptions
 {

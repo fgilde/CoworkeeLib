@@ -1,7 +1,8 @@
+using Coworkee.Contracts.Configuration;
 using Coworkee.Core.Modularity;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Storage;
 

@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Security.Cryptography;
+using Coworkee.Contracts.Configuration;
 using Microsoft.AspNetCore.DataProtection;
 
 namespace Coworkee.Storage;
@@ -19,13 +20,6 @@ public interface IBlobStorage
     Task DeleteAsync(string key, CancellationToken cancellationToken);
 
     Task<bool> ExistsAsync(string key, CancellationToken cancellationToken);
-}
-
-public static class StorageProviders
-{
-    public const string FileSystem = "FileSystem";
-    public const string S3 = "S3";
-    public const string AzureBlob = "AzureBlob";
 }
 
 public static class BlobKeys

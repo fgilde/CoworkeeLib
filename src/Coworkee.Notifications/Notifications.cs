@@ -1,10 +1,11 @@
 using Coworkee.Application.Messaging;
-using Coworkee.BackgroundJobs;
-using Coworkee.AspNetCore;
 using Coworkee.AspNetCore.Http;
-using Coworkee.Contracts;
+using Coworkee.AspNetCore;
+using Coworkee.BackgroundJobs;
+using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Notifications;
 using Coworkee.Contracts.Realtime;
+using Coworkee.Contracts;
 using Coworkee.Core.Modularity;
 using Coworkee.Core.Results;
 using Coworkee.Core.Security;
@@ -14,8 +15,8 @@ using Coworkee.Realtime;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Notifications;
 

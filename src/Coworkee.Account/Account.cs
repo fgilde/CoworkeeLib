@@ -1,15 +1,16 @@
 using System.Text;
 using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
-using Coworkee.AspNetCore;
 using Coworkee.AspNetCore.Http;
+using Coworkee.AspNetCore;
+using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Settings;
 using Coworkee.Core.Modularity;
 using Coworkee.Core.Results;
 using Coworkee.Core.Security;
-using Coworkee.Identity;
 using Coworkee.Identity.Domain;
+using Coworkee.Identity;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.Mailing;
 using Coworkee.Settings;
@@ -23,13 +24,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace Coworkee.Account;
-
-public sealed class AccountOptions
-{
-    public const string Section = "Coworkee:Account";
-
-    public string PublicAuthUrl { get; set; } = string.Empty;
-}
 
 public static class AccountSettings
 {

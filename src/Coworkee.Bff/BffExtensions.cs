@@ -1,9 +1,10 @@
 using System.Net.Http.Headers;
 using System.Security.Claims;
+using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Identity;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;

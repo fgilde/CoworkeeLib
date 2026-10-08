@@ -51,6 +51,11 @@ public sealed class AuthApp : PostgresFixture
             ["Coworkee:Jobs:ConnectionStringName"] = "test",
             ["Coworkee:Jobs:RunServer"] = "false",
             ["Coworkee:Account:PublicAuthUrl"] = "http://localhost",
+            ["Coworkee:Auth:External:Providers:keycloak:DisplayName"] = "Keycloak",
+            ["Coworkee:Auth:External:Providers:keycloak:Authority"] = "http://keycloak.test/realms/demo",
+            ["Coworkee:Auth:External:Providers:keycloak:ClientId"] = "demo-auth",
+            ["Coworkee:Auth:External:Providers:keycloak:ClientSecret"] = "secret",
+            ["Coworkee:Auth:External:Providers:keycloak:RequireHttpsMetadata"] = "false",
         });
         builder.AddCoworkee<TestAuthModule>();
         builder.Services.RemoveAll<Coworkee.Mailing.IMailSender>();
