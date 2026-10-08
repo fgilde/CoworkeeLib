@@ -10,6 +10,7 @@ public partial class Profile
 {
     private static readonly string[] BuiltIn = [string.Empty, "security", "notifications", "settings"];
     private List<ProfileTab> _extra = [];
+    private bool _ready;
 
     [Parameter] public string? Tab { get; set; }
 
@@ -37,6 +38,8 @@ public partial class Profile
                 _extra.Add(tab);
             }
         }
+
+        _ready = true;
     }
 
     private void Select(int index)
