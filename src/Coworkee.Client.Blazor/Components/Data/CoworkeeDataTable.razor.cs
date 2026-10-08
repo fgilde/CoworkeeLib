@@ -17,6 +17,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
     private HashSet<T> _selected = [];
     private string? _orderBy;
     private bool _importing;
+    private MudFileUpload<IBrowserFile>? _upload;
 
     [Inject] private IDialogService Dialogs { get; set; } = null!;
 
@@ -180,6 +181,10 @@ public partial class CoworkeeDataTable<T> : IDisposable
         finally
         {
             _importing = false;
+            if (_upload is not null)
+            {
+                await _upload.ClearAsync();
+            }
         }
     }
 

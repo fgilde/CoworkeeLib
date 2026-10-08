@@ -17,10 +17,11 @@
     @if (Importable)
     {
         <PermissionGate Permission="@ImportPermission">
-            <MudFileUpload T="IBrowserFile" Accept=".xlsx" FilesChanged="ImportAsync" Class="mb-2" data-testid="import">
+            <MudFileUpload @ref="_upload" T="IBrowserFile" Accept=".xlsx" FilesChanged="ImportAsync" Class="mb-2" data-testid="import">
                 <CustomContent Context="upload">
                     <MudIconButton Icon="@Icons.Material.Outlined.FileUpload" Size="Size.Small" aria-label="@L["Import"]" Disabled="_importing" OnClick="upload.OpenFilePickerAsync" />
                 </CustomContent>
+                <SelectedTemplate />
             </MudFileUpload>
         </PermissionGate>
     }

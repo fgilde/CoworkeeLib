@@ -49,6 +49,14 @@ public sealed class DataTransferTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Export_without_options_writes_every_visible_row()
+    {
+        using var workbook = new XLWorkbook(await Admin.GetStreamAsync("/api/v1/data/Gadgets/export", Ct));
+
+        workbook.Worksheet(1).RowsUsed().Count().ShouldBe(4);
+    }
+
+    [Fact]
     public async Task Import_sends_one_command_per_row_and_reports_failed_rows()
     {
         using var workbook = new XLWorkbook();
