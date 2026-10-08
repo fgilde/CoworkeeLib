@@ -44,6 +44,11 @@ public sealed class User : IdentityUser<Guid>, IAuditable
 
     public DateTimeOffset? LastLoginAt { get; set; }
 
+    /// <summary>Profile picture as data URL.</summary>
+    public string? AvatarUrl { get; set; }
+
+    public DateTimeOffset? AvatarChangedAt { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
 
     public Guid? CreatedBy { get; set; }

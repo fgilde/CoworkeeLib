@@ -15,6 +15,7 @@ public abstract class ClientTestBase : BunitContext
         JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddMudServicesWithExtensions();
         Services.AddScoped<Security.PermissionStore>();
+        Services.AddScoped<People.UserCards>();
         Services.AddSingleton(Api);
         Services.AddSingleton(new CoworkeeClientOptions());
         Services.AddScoped<Theming.ThemeService>();

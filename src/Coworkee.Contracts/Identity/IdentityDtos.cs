@@ -12,7 +12,7 @@ public sealed record UserDetailDto(
 public sealed record GroupRefDto(Guid Id, string Name);
 
 /// <summary>What everyone may change about themselves; the address and the password belong to the sign-in.</summary>
-public sealed record ProfileDto(string Email, string? FirstName, string? LastName, string? PhoneNumber);
+public sealed record ProfileDto(string Email, string? FirstName, string? LastName, string? PhoneNumber, string? AvatarUrl = null);
 
 public sealed record UpdateProfileRequest(string? FirstName, string? LastName, string? PhoneNumber);
 

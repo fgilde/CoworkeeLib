@@ -24,6 +24,11 @@ public interface ICoworkeeApi
 
     Task<ProfileDto> UpdateMyProfileAsync(UpdateProfileRequest request, CancellationToken cancellationToken = default);
 
+    /// <summary>Sets the own profile picture (data URL) or removes it with null.</summary>
+    Task<ProfileDto> SetMyAvatarAsync(string? dataUrl, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<UserCardDto>> GetUserCardsAsync(IReadOnlyList<Guid> userIds, CancellationToken cancellationToken = default);
+
     Task<UserDetailDto> GetUserDetailAsync(Guid userId, CancellationToken cancellationToken = default);
 
     Task UnlockUserAsync(Guid userId, CancellationToken cancellationToken = default);

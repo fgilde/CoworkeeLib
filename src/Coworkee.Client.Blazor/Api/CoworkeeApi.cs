@@ -33,6 +33,12 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
     public Task<ProfileDto> UpdateMyProfileAsync(UpdateProfileRequest request, CancellationToken cancellationToken = default) =>
         SendAsync<ProfileDto>(HttpMethod.Put, $"{Identity}/me", request, cancellationToken);
 
+    public Task<ProfileDto> SetMyAvatarAsync(string? dataUrl, CancellationToken cancellationToken = default) =>
+        SendAsync<ProfileDto>(HttpMethod.Put, $"{Identity}/me/avatar", new SetAvatarRequest(dataUrl), cancellationToken);
+
+    public async Task<IReadOnlyList<UserCardDto>> GetUserCardsAsync(IReadOnlyList<Guid> userIds, CancellationToken cancellationToken = default) =>
+        await SendAsync<UserCardDto[]>(HttpMethod.Post, $"{Identity}/users/cards", new IdListRequest(userIds), cancellationToken);
+
     public Task<UserDetailDto> GetUserDetailAsync(Guid userId, CancellationToken cancellationToken = default) =>
         GetAsync<UserDetailDto>($"{Identity}/users/{userId}", cancellationToken);
 

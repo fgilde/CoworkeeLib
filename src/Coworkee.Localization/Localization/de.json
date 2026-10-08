@@ -231,5 +231,17 @@
   "The image may have at most {0} KB.": "Das Bild darf höchstens {0} KB groß sein.",
   "Back": "Zurück",
   "Preview": "Vorschau",
-  "Image": "Bild"
+  "Image": "Bild",
+  "Your picture and name show next to your messages, changes and documents for everyone in the organisation.": "Ihr Bild und Ihr Name erscheinen für alle in der Organisation neben Ihren Nachrichten, Änderungen und Dokumenten.",
+  "Upload picture": "Bild hochladen",
+  "Remove picture": "Bild entfernen",
+  "Profile details": "Profildaten",
+  "Sign-in": "Anmeldung",
+  "Your address signs you in. Password and two-step verification are managed on the sign-in pages.": "Mit Ihrer Adresse melden Sie sich an. Passwort und Zwei-Faktor-Anmeldung verwalten Sie auf den Anmeldeseiten.",
+  "Change password": "Passwort ändern",
+  "Two-step verification": "Zwei-Faktor-Anmeldung",
+  "Phone": "Telefon",
+  "Profile saved": "Profil gespeichert",
+  "Picture saved": "Bild gespeichert",
+  "This file is no picture the browser can show.": "Diese Datei ist kein Bild, das der Browser anzeigen kann."
 }

@@ -1,0 +1,21 @@
+@if (ShowTooltip && _card is not null)
+{
+    <MudTooltip Text="@_card.Name">@Avatar</MudTooltip>
+}
+else
+{
+    @Avatar
+}
+
+@code {
+    private RenderFragment Avatar => @<MudAvatar Size="Size" Style="@StyleText" Color="@(_card?.AvatarVersion is null ? Color.Primary : Color.Default)" data-user="@UserId">
+        @if (_card?.AvatarVersion is not null)
+        {
+            <MudImage Src="@People.UserCards.AvatarUrl(_card)" Alt="@_card.Name" ObjectFit="ObjectFit.Cover" />
+        }
+        else
+        {
+            @Initials
+        }
+    </MudAvatar>;
+}

@@ -135,5 +135,4 @@ public partial class Chat : IAsyncDisposable
         _contact = _contact is null ? null : _contacts.FirstOrDefault(c => c.UserId == _contact.UserId) ?? _contact;
     }
 
-    private static string Initial(string name) => name.Length == 0 ? "?" : name[..1].ToUpperInvariant();
 }

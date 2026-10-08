@@ -19,11 +19,16 @@ public sealed class ProfileTests : ClientTestBase
         auth.SetClaims(new Claim("manage_url", "https://auth.test/Account/Manage"));
         var page = Render<Profile>();
 
-        page.WaitForElement("input[data-testid='profile-last'], [data-testid='profile-last'] input").Input("Lovelace");
-        await page.Find("[data-testid='save-profile']").ClickAsync(new());
+        page.WaitForAssertion(() => Fields(page).Count.ShouldBe(3));
+        Fields(page)[1].Change("Lovelace");
+        await page.Find("form").SubmitAsync();
 
         await Api.Received(1).UpdateMyProfileAsync(Arg.Is<UpdateProfileRequest>(r => r.FirstName == "Ada" && r.LastName == "Lovelace"), Arg.Any<CancellationToken>());
         page.Markup.ShouldContain("Ada Lovelace");
         page.FindAll("a").Select(a => a.GetAttribute("href")).ShouldContain("https://auth.test/Account/Manage/ChangePassword");
     }
+
+    // first name, last name, phone; the object edit's own filter box is left out
+    private static List<AngleSharp.Dom.IElement> Fields(IRenderedComponent<Profile> page) =>
+        [.. page.FindAll("form input[type='text'], form input[type='tel']").Where(i => i.GetAttribute("placeholder") != "Filter")];
 }

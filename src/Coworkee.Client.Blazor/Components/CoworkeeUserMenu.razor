@@ -3,9 +3,13 @@
         <NotificationBell />
         <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" data-testid="user-menu">
             <ActivatorContent Context="menu">
-                <MudButton Variant="Variant.Text" Color="Color.Inherit" Class="ml-2" Style="text-transform:none" StartIcon="@Icons.Material.Outlined.AccountCircle"
+                <MudButton Variant="Variant.Text" Color="Color.Inherit" Class="ml-2" Style="text-transform:none"
                            EndIcon="@Icons.Material.Filled.ArrowDropDown" aria-label="@L["Account"]" OnClick="@(() => menu.ToggleAsync())">
-                    @context.User.Identity?.Name
+                    @if (Guid.TryParse(context.User.FindFirst("sub")?.Value, out var me))
+                    {
+                        <UserAvatar UserId="me" Size="Size.Small" />
+                    }
+                    <span class="ml-2">@context.User.Identity?.Name</span>
                 </MudButton>
             </ActivatorContent>
             <ChildContent>

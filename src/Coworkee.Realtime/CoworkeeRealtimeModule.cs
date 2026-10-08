@@ -27,6 +27,7 @@ public sealed class CoworkeeRealtimeModule : CoworkeeModule, IWebModule
         services.AddScoped<IInterceptor, RealtimeChangeInterceptor>();
         services.AddScoped<IRealtimeTopicAuthorizer, UserTopicAuthorizer>();
         services.AddScoped<IRealtimeTopicAuthorizer, GlobalTopicAuthorizer>();
+        services.AddScoped<IRealtimeTopicAuthorizer, TenantTopicAuthorizer>();
         services.AddScoped<IRealtimeTopicAuthorizer, EntityTopicAuthorizer>();
     }
 

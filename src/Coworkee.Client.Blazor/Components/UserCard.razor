@@ -1,0 +1,10 @@
+<div class="d-flex align-center gap-2" style="min-width:0" data-user-card="@UserId">
+    <UserAvatar UserId="UserId" Size="Size" />
+    <div style="min-width:0">
+        <MudText Typo="@(Size == Size.Small ? Typo.body2 : Typo.subtitle1)" Style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">@(_card?.Name ?? "…")</MudText>
+        @if (ChildContent is not null)
+        {
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">@ChildContent</MudText>
+        }
+    </div>
+</div>

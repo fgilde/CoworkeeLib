@@ -28,6 +28,20 @@ internal static partial class IdentityEndpoints
         api.MapPost("/users", (CreateUserRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new CreateUser(body), ct).ToHttpResult());
         api.MapGet("/me", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetMyProfile(), ct).ToHttpResult());
         api.MapPut("/me", (UpdateProfileRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new UpdateMyProfile(body), ct).ToHttpResult());
+        api.MapPut("/me/avatar", (SetAvatarRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new Users.Profile.SetMyAvatar(body.DataUrl), ct).ToHttpResult());
+        api.MapGet("/users/{id:guid}/avatar", async (Guid id, IDispatcher d, HttpResponse response, CancellationToken ct) =>
+        {
+            var avatar = await d.SendAsync(new Users.Profile.GetUserAvatar(id), ct);
+            if (!avatar.IsSuccess)
+            {
+                return avatar.Error.ToProblem();
+            }
+
+            // the URL carries the version, so the picture never changes behind it
+            response.Headers.CacheControl = "private, max-age=31536000, immutable";
+            return Results.File(avatar.Value.Content, avatar.Value.ContentType);
+        });
+        api.MapPost("/users/cards", (IdListRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new Users.Profile.GetUserCards(body.Ids), ct).ToHttpResult());
         api.MapGet("/users/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetUser(id), ct).ToHttpResult());
         api.MapPost("/users/names", (IdListRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new Users.Lookups.GetUserNamesQuery(body.Ids), ct).ToHttpResult());
         api.MapPost("/users/roles", (IdListRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new Users.Lookups.GetUsersRolesQuery(body.Ids), ct).ToHttpResult());

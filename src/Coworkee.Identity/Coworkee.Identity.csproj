@@ -5,6 +5,7 @@
     <ProjectReference Include="..\Coworkee.Infrastructure\Coworkee.Infrastructure.csproj" />
     <ProjectReference Include="..\Coworkee.AspNetCore\Coworkee.AspNetCore.csproj" />
     <ProjectReference Include="..\Coworkee.OData\Coworkee.OData.csproj" />
+    <ProjectReference Include="..\Coworkee.Realtime\Coworkee.Realtime.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
   </ItemGroup>

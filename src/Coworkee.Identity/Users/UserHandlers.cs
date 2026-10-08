@@ -38,7 +38,7 @@ internal sealed class UpdateMyProfileValidator : AbstractValidator<UpdateMyProfi
     }
 }
 
-internal sealed class MyProfileHandlers(CoworkeeDbContext db, ICurrentUser currentUser)
+internal sealed class MyProfileHandlers(CoworkeeDbContext db, ICurrentUser currentUser, Profile.UserChanges changes)
     : IHandler<GetMyProfile, Result<ProfileDto>>, IHandler<UpdateMyProfile, Result<ProfileDto>>
 {
     public async Task<Result<ProfileDto>> HandleAsync(GetMyProfile query, CancellationToken cancellationToken) =>
@@ -54,6 +54,8 @@ internal sealed class MyProfileHandlers(CoworkeeDbContext db, ICurrentUser curre
         user.FirstName = Clean(command.Profile.FirstName);
         user.LastName = Clean(command.Profile.LastName);
         user.PhoneNumber = Clean(command.Profile.PhoneNumber);
+        await db.SaveChangesAsync(cancellationToken);
+        await changes.NotifyAsync(user, cancellationToken);
         return Map(user);
     }
 
@@ -62,7 +64,7 @@ internal sealed class MyProfileHandlers(CoworkeeDbContext db, ICurrentUser curre
 
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
-    private static ProfileDto Map(User user) => new(user.Email!, user.FirstName, user.LastName, user.PhoneNumber);
+    private static ProfileDto Map(User user) => new(user.Email!, user.FirstName, user.LastName, user.PhoneNumber, user.AvatarUrl);
 }
 
 [RequiresPermission(IdentityPermissions.Users.Manage)]

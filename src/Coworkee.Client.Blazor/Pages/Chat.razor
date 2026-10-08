@@ -12,7 +12,7 @@
                 {
                     <MudListItem Value="contact" data-contact="@contact.UserId">
                         <MudStack Row="true" AlignItems="AlignItems.Center">
-                            <MudAvatar Size="Size.Small" Color="Color.Primary">@Initial(contact.Name)</MudAvatar>
+                            <UserAvatar UserId="contact.UserId" Size="Size.Small" />
                             <MudStack Spacing="0" Style="min-width:0;flex:1">
                                 <MudText Typo="Typo.body2" Style="@(contact.Unread > 0 ? "font-weight:600" : null)">@contact.Name</MudText>
                                 <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">@contact.LastMessage</MudText>
@@ -40,7 +40,11 @@
                     @foreach (var message in _messages)
                     {
                         var mine = message.FromUserId == _me;
-                        <div class="d-flex @(mine ? "justify-end" : "justify-start") my-1">
+                        <div class="d-flex align-end gap-2 @(mine ? "justify-end" : "justify-start") my-1">
+                            @if (!mine)
+                            {
+                                <UserAvatar UserId="message.FromUserId" Size="Size.Small" />
+                            }
                             <MudPaper Elevation="0" Class="@($"px-3 py-2 {(mine ? "mud-theme-primary" : "mud-background-gray")}")" Style="max-width:75%;border-radius:12px;white-space:pre-wrap">
                                 <MudText Typo="Typo.body2">@message.Text</MudText>
                                 <MudText Typo="Typo.caption" Style="opacity:.7">@message.SentAt.ToLocalTime().ToString("g")</MudText>

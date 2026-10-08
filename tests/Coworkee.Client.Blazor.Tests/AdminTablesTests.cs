@@ -46,7 +46,7 @@ public sealed class AdminTablesTests : ClientTestBase
     {
         _odata.With("AuditEntries", new AuditEntryDto(Guid.CreateVersion7(), "Brand", "42", "Modified", AdaId, null, DateTimeOffset.UtcNow, null,
             [new AuditChangeDto("Name", "Old", "New")]));
-        Api.GetUserNamesAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<CancellationToken>()).Returns(new Dictionary<Guid, string> { [AdaId] = "Ada Lovelace" });
+        Api.GetUserCardsAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<CancellationToken>()).Returns([new Contracts.Identity.UserCardDto(AdaId, "Ada Lovelace", null)]);
 
         var page = Render<AuditLog>();
 
