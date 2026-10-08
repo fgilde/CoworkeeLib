@@ -16,7 +16,7 @@ public sealed class LayoutTests : ClientTestBase
     }
 
     [Fact]
-    public void Navigation_shows_only_permitted_items()
+    public async Task Navigation_shows_only_permitted_items()
     {
         var auth = AddAuthorization();
         auth.SetAuthorized("Ada");
@@ -24,7 +24,9 @@ public sealed class LayoutTests : ClientTestBase
 
         var layout = Render<CoworkeeLayout>(p => p.Add(l => l.Body, (RenderFragment)(b => b.AddContent(0, "body"))));
 
-        layout.Markup.ShouldContain("/admin/users");
+        await OpenNavigationAsync(layout);
+
+        layout.WaitForAssertion(() => layout.Markup.ShouldContain("/admin/users"));
         layout.Markup.ShouldNotContain("/admin/roles");
     }
 

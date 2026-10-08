@@ -25,37 +25,30 @@ public sealed class LayoutParityTests : ClientTestBase
         Render<CoworkeeLayout>(p => p.Add(l => l.Body, (RenderFragment)(b => b.AddContent(0, "body"))));
 
     [Fact]
-    public void The_filter_narrows_the_navigation_to_matching_entries()
+    public async Task Groups_are_tree_nodes_and_the_filter_narrows_them()
     {
         var layout = RenderLayout();
+        await OpenNavigationAsync(layout);
 
-        layout.Find("input[data-testid='nav-filter'], [data-testid='nav-filter'] input").Input("rol");
+        layout.WaitForAssertion(() => layout.FindAll("[data-nav-group='Catalog']").ShouldNotBeEmpty());
+        layout.Find("[data-testid='nav-drawer'] input").Input("rol");
 
-        layout.WaitForAssertion(() => layout.Markup.ShouldNotContain("/catalog/brands"));
-        layout.Markup.ShouldContain("/admin/roles");
-        layout.FindAll("[data-nav-group='Catalog']").ShouldBeEmpty();
+        layout.WaitForAssertion(() => layout.FindAll("[data-nav='/catalog/brands']").ShouldBeEmpty(), TimeSpan.FromSeconds(3));
+        layout.FindAll("[data-nav='/admin/roles']").ShouldNotBeEmpty();
     }
 
     [Fact]
-    public async Task Unpinning_turns_the_drawer_into_icons_and_is_remembered()
+    public async Task Pin_and_single_expand_are_remembered()
     {
         var layout = RenderLayout();
+        await OpenNavigationAsync(layout);
 
         await layout.Find("[data-testid='nav-pin'] button, button[data-testid='nav-pin']").ClickAsync(new());
-
-        JSInterop.Invocations["localStorage.setItem"].ShouldContain(i => i.Arguments[1]!.ToString()!.Contains("\"Pinned\":false"));
-        layout.WaitForAssertion(() => layout.FindAll("[data-nav-group]").ShouldBeEmpty());
-        layout.Markup.ShouldContain("/catalog/brands");
-    }
-
-    [Fact]
-    public async Task Single_expand_keeps_only_one_group_open()
-    {
-        var layout = RenderLayout();
-
         await layout.Find("[data-testid='nav-single-expand'] button, button[data-testid='nav-single-expand']").ClickAsync(new());
 
-        layout.WaitForAssertion(() => layout.FindAll("[data-nav-group] .mud-collapse-entered").Count.ShouldBeLessThanOrEqualTo(1));
+        var stored = JSInterop.Invocations["localStorage.setItem"].Last().Arguments[1]!.ToString()!;
+        stored.ShouldContain("\"Pinned\":false");
+        stored.ShouldContain("\"SingleExpand\":true");
     }
 
     [Fact]

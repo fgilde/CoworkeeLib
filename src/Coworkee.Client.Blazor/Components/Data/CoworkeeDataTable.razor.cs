@@ -241,7 +241,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
     private async Task DeleteAsync(IReadOnlyCollection<T> items)
     {
         var what = items.Count == 1 && DescribeItem is not null ? DescribeItem(items.First()) : L["{0} entries", items.Count];
-        if (await Dialogs.ShowMessageBoxAsync(L["Delete"], L["Delete {0}? This cannot be undone.", what], yesText: L["Delete"], cancelText: L["Cancel"]) != true)
+        if (!await Dialogs.ConfirmAsync(L["Delete"], L["Delete {0}? This cannot be undone.", what], L["Delete"], L["Cancel"], Icons.Material.Outlined.DeleteForever))
         {
             return;
         }

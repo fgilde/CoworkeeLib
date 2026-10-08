@@ -1,3 +1,4 @@
+using MudBlazor.Extensions;
 using Coworkee.Client.Blazor.Layout;
 using Coworkee.Client.Blazor.Navigation;
 using Microsoft.AspNetCore.Components;
@@ -29,5 +30,5 @@ public partial class CoworkeeAppBar : IDisposable
 
     private void Refresh() => InvokeAsync(StateHasChanged);
 
-    private Task ShowAboutAsync() => Dialogs.ShowAsync<AboutDialog>(string.Empty, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true });
+    private Task ShowAboutAsync() => Dialogs.ShowExAsync<AboutDialog>(string.Empty, new DialogParameters(), Data.EditDialogExtensions.Small());
 }

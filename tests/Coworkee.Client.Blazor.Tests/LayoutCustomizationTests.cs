@@ -27,14 +27,16 @@ public sealed class LayoutCustomizationTests : ClientTestBase
         Render<CoworkeeLayout>(p => p.Add(l => l.Body, (RenderFragment)(b => b.AddContent(0, "body"))));
 
     [Fact]
-    public void Navigation_groups_orders_and_hides_items()
+    public async Task Navigation_groups_orders_and_hides_items()
     {
         Services.Configure<NavigationMenuOptions>(o => o.Hide("/secret").OrderGroup("Catalog", 1));
 
         var layout = RenderLayout();
+        await OpenNavigationAsync(layout);
 
-        var catalog = layout.Find("[data-nav-group='Catalog']");
-        catalog.InnerHtml.IndexOf("/catalog/brands", StringComparison.Ordinal).ShouldBeLessThan(catalog.InnerHtml.IndexOf("/catalog/products", StringComparison.Ordinal));
+        layout.WaitForAssertion(() => layout.FindAll("[data-nav-group='Catalog']").ShouldNotBeEmpty());
+        var drawer = layout.Find("[data-testid='nav-drawer']").InnerHtml;
+        drawer.IndexOf("/catalog/brands", StringComparison.Ordinal).ShouldBeLessThan(drawer.IndexOf("/catalog/products", StringComparison.Ordinal));
         layout.Markup.ShouldContain("/dashboard");
         layout.Markup.ShouldNotContain("/secret");
     }

@@ -12,8 +12,10 @@
 <MudRTLProvider RightToLeft="Preferences.RightToLeft">
     <MudLayout @key="L.Culture">
         <CoworkeeAppBar Dark="_dark" ToggleDrawer="() => _drawer = !_drawer" ToggleDark="ToggleDarkAsync" />
-        <MudDrawer @bind-Open="_drawer" Elevation="0" Variant="@(Preferences.Pinned ? DrawerVariant.Responsive : DrawerVariant.Mini)" OpenMiniOnHover="true" data-testid="nav-drawer">
-            <CoworkeeNavMenu Mini="@(!Preferences.Pinned && !_drawer)" />
+        @* pinned: a mini icon strip under the app bar that the toggle widens; unpinned: an overlay that hides when closed *@
+        <MudDrawer @bind-Open="_drawer" Elevation="1" Variant="@(Preferences.Pinned ? DrawerVariant.Mini : DrawerVariant.Temporary)"
+                   ClipMode="@(Preferences.Pinned ? DrawerClipMode.Always : DrawerClipMode.Never)" data-testid="nav-drawer">
+            <CoworkeeNavMenu Mini="@(Preferences.Pinned && !_drawer)" />
         </MudDrawer>
         <MudMainContent>
             <MudContainer MaxWidth="MaxWidth.Large" Class="py-6">@Body</MudContainer>

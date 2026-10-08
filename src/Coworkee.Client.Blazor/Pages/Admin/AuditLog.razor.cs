@@ -1,3 +1,4 @@
+using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Components;
 using Coworkee.Client.Blazor.Localization;
@@ -30,6 +31,5 @@ public partial class AuditLog
     }
 
     private Task ShowChangesAsync(AuditEntryDto entry) =>
-        Dialogs.ShowAsync<AuditChangesDialog>(L["Changes"], new DialogParameters<AuditChangesDialog> { { d => d.Changes, entry.Changes } },
-            new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true });
+        Dialogs.ShowSideSheetAsync<AuditChangesDialog>(L["Changes"], new DialogParameters<AuditChangesDialog> { { d => d.Changes, entry.Changes } });
 }

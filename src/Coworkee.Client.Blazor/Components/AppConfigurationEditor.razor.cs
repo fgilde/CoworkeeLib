@@ -1,3 +1,4 @@
+using Coworkee.Client.Blazor.Components.Data;
 using System.Text.Json;
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Contracts.Settings;
@@ -65,7 +66,7 @@ public partial class AppConfigurationEditor<T>
 
     private async Task ResetAsync()
     {
-        if (await Dialogs.ShowMessageBoxAsync("Restore defaults", "All changes made here go away; the configured values apply again.", yesText: "Restore", cancelText: "Cancel") == true)
+        if (await Dialogs.ConfirmAsync("Restore defaults", "All changes made here go away; the configured values apply again.", "Restore", "Cancel", Icons.Material.Outlined.SettingsBackupRestore))
         {
             await LoadAsync(() => Api.ResetAppConfigurationAsync(Registration.Section));
         }

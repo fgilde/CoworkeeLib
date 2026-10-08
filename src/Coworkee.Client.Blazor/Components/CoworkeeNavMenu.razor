@@ -1,44 +1,64 @@
+@using MudBlazor.Extensions.Components
+@using MudBlazor.Extensions.Components.ObjectEdit
+@using MudBlazor.Extensions.Core
+@using MudBlazor.Extensions.Core.Enums
+@using Nextended.Core.Types
+@using Coworkee.Client.Blazor.Navigation
+
 @if (!Mini)
 {
-    <div class="d-flex align-center gap-1 px-3 pt-3 pb-1" data-testid="nav-tools">
-        <MudTextField T="string" Value="_filter" ValueChanged="Filter" Immediate="true" Placeholder="@L["Filter"]" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense"
-                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" data-testid="nav-filter" />
+    <div class="d-flex align-center justify-end gap-1 px-3 pt-2" data-testid="nav-tools">
         <MudTooltip Text="@L[Preferences.Pinned ? "Unpin" : "Pin"]">
             <MudToggleIconButton Toggled="Preferences.Pinned" ToggledChanged="Preferences.SetPinnedAsync" Size="Size.Small" ToggledSize="Size.Small"
-                                 Icon="@Icons.Material.Outlined.PushPin" ToggledIcon="@Icons.Material.Filled.PushPin" ToggledColor="Color.Primary" aria-label="Pin navigation" data-testid="nav-pin" />
+                                 Icon="@Icons.Material.Outlined.PushPin" ToggledIcon="@Icons.Material.Filled.PushPin" ToggledColor="Color.Warning" aria-label="Pin navigation" data-testid="nav-pin" />
         </MudTooltip>
         <MudTooltip Text="@L[Preferences.SingleExpand ? "Expand many groups" : "Expand one group at a time"]">
             <MudToggleIconButton Toggled="Preferences.SingleExpand" ToggledChanged="Preferences.SetSingleExpandAsync" Size="Size.Small" ToggledSize="Size.Small"
-                                 Icon="@Icons.Material.Outlined.UnfoldMore" ToggledIcon="@Icons.Material.Outlined.UnfoldLess" ToggledColor="Color.Primary" aria-label="Expand one group at a time" data-testid="nav-single-expand" />
+                                 Icon="@Icons.Material.Outlined.Expand" ToggledIcon="@Icons.Material.Outlined.UnfoldLess" ToggledColor="Color.Warning" aria-label="Expand one group at a time" data-testid="nav-single-expand" />
         </MudTooltip>
     </div>
 }
-<MudNavMenu>
-    @if (Options.ShowHome && string.IsNullOrWhiteSpace(_filter))
-    {
-        <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Home">@L[Options.HomeTitle]</MudNavLink>
-    }
-    @foreach (var item in NavigationTree.Ungrouped(Items, Options, _filter))
-    {
-        <CoworkeeNavLink Item="item" />
-    }
-    @foreach (var group in NavigationTree.Groups(Items, Options, _filter))
-    {
-        @if (Mini)
-        {
-            @foreach (var item in group.Items)
-            {
-                <CoworkeeNavLink Item="item" />
-            }
-        }
-        else
-        {
-            <MudNavGroup Title="@L[group.Title]" Expanded="IsExpanded(group)" ExpandedChanged="expanded => SetExpanded(group, expanded)" data-nav-group="@group.Title">
-                @foreach (var item in group.Items)
+@if (_entries is not null)
+{
+    <MudExTreeView T="NavigationEntry" Items="_entries"
+                   SelectedNode="_selected" SelectedNodeChanged="SelectAsync"
+                   SelectedItemBackgroundColor="@(_selected?.HasChildren == true || ViewMode != TreeViewMode.Default ? MudExColor.Default : MudExColor.HoverBackground)"
+                   AllowedToSelectFunc="HasLink"
+                   ItemContentStyle="font-size:14px;"
+                   FilterChipsPlacedRight="true"
+                   ExpandOnFilter="true"
+                   FilterPlaceholder="@L["Filter"]"
+                   FilterMode="@(Mini || ViewMode == TreeViewMode.Breadcrumb ? PropertyFilterMode.Disabled : PropertyFilterMode.AlwaysVisible)"
+                   FilterBoxStyle="margin:10px;"
+                   Style="margin: 0 10px;"
+                   TextFunc="@(entry => L[entry.Text])"
+                   ExpandButtonDirection="LeftOrRight.Right"
+                   ViewMode="ViewMode" ViewModeChanged="SetViewMode"
+                   Parameters="TreeParameters"
+                   ItemTemplate="@(Mini ? MiniItem : null)"
+                   TreeViewModeToggleComponent="@(Mini ? TreeViewModeToggleComponent.None : TreeViewModeToggleComponent.ToggleButton)"
+                   ToggleableViewModes="@(Mini ? [] : ToggleableViewModes)"
+                   data-testid="nav-tree">
+        <ItemContentTemplate>
+            <div class="d-flex align-center" style="width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" data-nav="@context.Value?.Href" data-nav-group="@(context.Value?.HasChildren == true ? context.Value.Text : null)">
+                @if (!string.IsNullOrWhiteSpace(context.Value?.Icon))
                 {
-                    <CoworkeeNavLink Item="item" />
+                    <MudIcon Icon="@context.Value!.Icon" Class="ml-0 mr-2" Size="Size.Small" />
                 }
-            </MudNavGroup>
+                @context.TreeView.RenderItemContent(context)
+            </div>
+        </ItemContentTemplate>
+    </MudExTreeView>
+}
+
+@code {
+    private RenderFragment MiniItem(TreeViewItemContext<NavigationEntry> context) => @<text>
+        @if (HasLink(context.Value))
+        {
+            <MudTooltip Text="@L[context.Value!.Text]" Placement="Placement.End">
+                <MudIconButton Icon="@context.Value.Icon" Size="Size.Small" Class="ml-1 mt-1" OnClick="() => SelectAsync(context.Value)" aria-label="@L[context.Value.Text]"
+                               Color="@(context.Value == _selected ? Color.Primary : Color.Default)" data-nav="@context.Value.Href" />
+            </MudTooltip>
         }
-    }
-</MudNavMenu>
+    </text>;
+}

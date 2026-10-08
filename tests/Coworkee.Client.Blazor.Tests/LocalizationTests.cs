@@ -25,11 +25,13 @@ public sealed class LocalizationTests : ClientTestBase
     }
 
     [Fact]
-    public void The_stored_language_translates_navigation_and_offers_the_others()
+    public async Task The_stored_language_translates_navigation_and_offers_the_others()
     {
         JSInterop.Setup<string?>("localStorage.getItem", "coworkee.culture").SetResult("de");
 
         var layout = Render<CoworkeeLayout>(p => p.Add(l => l.Body, (RenderFragment)(b => b.AddContent(0, "body"))));
+
+        await OpenNavigationAsync(layout);
 
         layout.WaitForAssertion(() => layout.Markup.ShouldContain("Produkte"));
         layout.Markup.ShouldContain("Katalog");

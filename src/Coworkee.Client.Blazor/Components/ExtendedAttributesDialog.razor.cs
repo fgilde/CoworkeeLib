@@ -1,3 +1,4 @@
+using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Localization;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -19,11 +20,11 @@ public partial class ExtendedAttributesDialog
     [Parameter] public bool ReadOnly { get; set; }
 
     public static Task ShowAsync(IDialogService dialogs, string title, string entityType, Guid entityId, bool readOnly = false) =>
-        dialogs.ShowAsync<ExtendedAttributesDialog>(null, new DialogParameters<ExtendedAttributesDialog>
+        dialogs.ShowSideSheetAsync<ExtendedAttributesDialog>(title, new DialogParameters<ExtendedAttributesDialog>
         {
             { d => d.Title, title },
             { d => d.EntityType, entityType },
             { d => d.EntityId, entityId },
             { d => d.ReadOnly, readOnly },
-        }, new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
+        });
 }

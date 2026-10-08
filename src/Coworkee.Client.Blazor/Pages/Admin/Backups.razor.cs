@@ -1,3 +1,4 @@
+using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Backup;
 using Coworkee.Client.Blazor.Data;
@@ -32,8 +33,8 @@ public partial class Backups
 
     private async Task RestoreAsync(BackupDto backup)
     {
-        if (await Dialogs.ShowMessageBoxAsync(L["Restore"], L["Replace every table with the backup {0}? Changes made since then are lost.", backup.Name],
-                yesText: L["Restore"], cancelText: L["Cancel"]) == true)
+        if (await Dialogs.ConfirmAsync(L["Restore"], L["Replace every table with the backup {0}? Changes made since then are lost.", backup.Name], L["Restore"], L["Cancel"],
+                Icons.Material.Outlined.SettingsBackupRestore))
         {
             await RunAsync(() => Api.RestoreAsync(backup.Id), L["Backup restored"]);
         }
@@ -41,7 +42,7 @@ public partial class Backups
 
     private async Task DeleteAsync(BackupDto backup)
     {
-        if (await Dialogs.ShowMessageBoxAsync(L["Delete"], L["Delete {0}? This cannot be undone.", backup.Name], yesText: L["Delete"], cancelText: L["Cancel"]) == true)
+        if (await Dialogs.ConfirmAsync(L["Delete"], L["Delete {0}? This cannot be undone.", backup.Name], L["Delete"], L["Cancel"], Icons.Material.Outlined.DeleteForever))
         {
             await RunAsync(() => Api.DeleteAsync(backup.Id));
         }

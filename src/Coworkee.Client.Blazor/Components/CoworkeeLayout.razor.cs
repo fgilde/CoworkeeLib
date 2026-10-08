@@ -16,6 +16,8 @@ public partial class CoworkeeLayout : IDisposable
     private bool _systemDark;
     private MudThemeProvider? _provider;
 
+    [Inject] private Microsoft.JSInterop.IJSRuntime JS { get; set; } = null!;
+
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
     [Inject] private NavigationManager Nav { get; set; } = null!;
@@ -63,6 +65,7 @@ public partial class CoworkeeLayout : IDisposable
 
         await Preferences.LoadAsync();
         await ThemeService.LoadAsync();
+        await Data.DialogPlacement.StartAsync(JS);
         await L.InitializeAsync(ThemeService.ClientSettings.GetValueOrDefault(Contracts.Localization.LocalizationSettings.Culture));
         _systemDark = _provider is not null && await _provider.GetSystemDarkModeAsync();
         Refresh();
@@ -77,7 +80,12 @@ public partial class CoworkeeLayout : IDisposable
 
     private void FollowPin() => InvokeAsync(() =>
     {
-        _drawer = Preferences.Pinned;
+        // unpinning a closed mini drawer would hide the menu completely, so it opens as overlay
+        if (!Preferences.Pinned && !_drawer)
+        {
+            _drawer = true;
+        }
+
         StateHasChanged();
     });
 
