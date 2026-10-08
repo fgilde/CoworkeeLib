@@ -33,6 +33,7 @@ public static class CoworkeeClientExtensions
             client.Timeout = TimeSpan.FromMinutes(5);
         });
         services.AddSingleton<Localization.CoworkeeLocalizer>();
+        services.AddSingleton(typeof(Microsoft.Extensions.Localization.IStringLocalizer<>), typeof(Localization.CoworkeeStringLocalizer<>));
         MudBlazor.Services.ServiceCollectionExtensions.AddLocalizationInterceptor<Localization.CoworkeeMudLocalization>(services);
         services.AddScoped<Data.FileDownloader>();
         services.AddScoped<PermissionStore>();

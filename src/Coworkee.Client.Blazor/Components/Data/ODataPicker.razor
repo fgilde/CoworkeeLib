@@ -1,0 +1,4 @@
+<MudAutocomplete T="ODataPickerItem" Value="_selected" ValueChanged="SelectAsync" SearchFunc="SearchAsync" ToStringFunc="@(item => item?.Text)"
+                 Label="@Label" Required="Required" RequiredError="@L["Choose an entry."]" Clearable="!Required" ResetValueOnEmptyText="true"
+                 DebounceInterval="250" MaxItems="50" Disabled="Disabled" ReadOnly="ReadOnly" Variant="Variant" Margin="Margin"
+                 AdornmentIcon="@Icons.Material.Outlined.Search" data-testid="@($"picker-{EntitySet}")" />

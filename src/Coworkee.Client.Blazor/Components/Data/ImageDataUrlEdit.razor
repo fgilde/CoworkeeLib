@@ -1,0 +1,21 @@
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="my-2" data-testid="image-edit">
+    @if (!string.IsNullOrEmpty(Value))
+    {
+        <MudAvatar Size="Size.Large" Rounded="true"><MudImage Src="@Value" Alt="@Label" ObjectFit="ObjectFit.Cover" /></MudAvatar>
+        @if (!ReadOnly)
+        {
+            <MudIconButton Icon="@Icons.Material.Outlined.Clear" Size="Size.Small" aria-label="@L["Remove image"]" OnClick="() => SetAsync(null)" />
+        }
+    }
+    @if (!ReadOnly)
+    {
+        <MudFileUpload T="IBrowserFile" Accept="image/*" FilesChanged="LoadAsync">
+            <CustomContent Context="upload">
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Outlined.Image" OnClick="upload.OpenFilePickerAsync">
+                    @(Label is null ? L["Choose image"] : L["Choose {0}", Label])
+                </MudButton>
+            </CustomContent>
+            <SelectedTemplate />
+        </MudFileUpload>
+    }
+</MudStack>
