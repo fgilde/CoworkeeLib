@@ -43,7 +43,7 @@ public sealed class CoworkeeAppTests
     public async Task Keycloak_is_imported_with_a_realm_for_the_app_and_offered_at_the_auth_server()
     {
         var builder = DistributedApplication.CreateBuilder();
-        var app = builder.AddCoworkeeApp("demo", o => o.UseKeycloak(k => k.Users.Add(new KeycloakUser("ada@demo.test", "Ada"))));
+        var app = builder.AddCoworkeeApp("demo", o => o.UseKeycloak(k => k.Users.Add(new KeycloakUser("ada@demo.test", "Ada", "Lovelace"))));
 
         app.AddMigrations<FakeProjects.Migrations>();
         var auth = app.AddAuthServer<FakeProjects.Auth>();
