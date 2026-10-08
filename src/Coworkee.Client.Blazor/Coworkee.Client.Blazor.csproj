@@ -8,5 +8,6 @@
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
     <PackageReference Include="MudBlazor" />
     <PackageReference Include="MudBlazor.Extensions" />
+    <None Include="build\Coworkee.Client.Blazor.props" Pack="true" PackagePath="build;buildTransitive" />
   </ItemGroup>
 </Project>

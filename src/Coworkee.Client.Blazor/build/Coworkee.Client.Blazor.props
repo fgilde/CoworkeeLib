@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- the localizer sets the culture at startup (InitializeCoworkeeClientAsync), which needs all ICU data -->
+    <BlazorWebAssemblyLoadAllGlobalizationData Condition="'$(BlazorWebAssemblyLoadAllGlobalizationData)' == ''">true</BlazorWebAssemblyLoadAllGlobalizationData>
+  </PropertyGroup>
+</Project>
