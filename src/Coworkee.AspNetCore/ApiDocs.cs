@@ -14,9 +14,9 @@ internal static class ApiDocs
     private const string Scheme = "Bearer";
 
     // through the BFF the document names the API host as server: requests are sent to the page origin, with the BFF's CSRF header
-    // one line: Swashbuckle puts it into a JSON string
+    // one line without backslashes: Swashbuckle puts it into a JSON string
     private const string RequestInterceptor =
-        @"request => { request.headers['X-CSRF'] = '1'; request.url = request.url.replace(/^https?:\/\/[^/]+/, location.origin); return request; }";
+        "request => { const url = new URL(request.url, location.href); request.url = location.origin + url.pathname + url.search; request.headers['X-CSRF'] = '1'; return request; }";
 
     private const string Theme = """
         <style>

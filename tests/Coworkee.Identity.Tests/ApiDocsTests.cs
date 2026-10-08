@@ -19,11 +19,13 @@ public sealed class ApiDocsTests(IdentityApp app)
         page.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await page.Content.ReadAsStringAsync(Ct)).ShouldContain("theme-toggle");
 
-        // the UI reads the request interceptor from a JSON string; a raw line break in it leaves the page blank
+        // the UI reads the interceptor as JSON inside a JS string: decoded like the browser does, it must still be the function we wrote
         var script = await app.As(setup.AdminUserId, setup.TenantId).GetStringAsync("/swagger/index.js", Ct);
-        var interceptor = script.Split('\n').Single(line => line.Contains("X-CSRF", StringComparison.Ordinal));
-        interceptor.ShouldContain("return request;");
-        interceptor.ShouldNotContain(@"\n");
+        var literal = System.Text.RegularExpressions.Regex.Match(script, @"var interceptors = JSON\.parse\('(.*)'\);").Groups[1].Value;
+        var json = literal.Replace(@"\\", "\u0001", StringComparison.Ordinal).Replace(@"\'", "'", StringComparison.Ordinal).Replace("\u0001", @"\", StringComparison.Ordinal);
+        var function = System.Text.Json.JsonDocument.Parse(json).RootElement.GetProperty("RequestInterceptorFunction").GetString()!;
+        function.ShouldStartWith("request => { const url = new URL(request.url, location.href);");
+        function.ShouldNotContain("\n");
     }
 
     [Fact]
