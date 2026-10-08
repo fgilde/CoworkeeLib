@@ -5,5 +5,6 @@
     <ProjectReference Include="..\Coworkee.AspNetCore\Coworkee.AspNetCore.csproj" />
     <PackageReference Include="Anthropic" />
     <PackageReference Include="ModelContextProtocol.AspNetCore" />
+    <ProjectReference Include="..\Coworkee.OData\Coworkee.OData.csproj" />
   </ItemGroup>
 </Project>

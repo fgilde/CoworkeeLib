@@ -1,15 +1,16 @@
 using System.Text.Json;
 using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
-using Coworkee.AspNetCore;
 using Coworkee.AspNetCore.Http;
-using Coworkee.Contracts;
+using Coworkee.AspNetCore;
 using Coworkee.Contracts.Ai;
 using Coworkee.Contracts.Settings;
+using Coworkee.Contracts;
 using Coworkee.Core.Modularity;
 using Coworkee.Core.Results;
 using Coworkee.Core.Security;
 using Coworkee.Infrastructure.Persistence;
+using Coworkee.OData;
 using Coworkee.Settings;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -44,6 +45,9 @@ public sealed class CoworkeeAiModule : CoworkeeModule, IWebModule
         services.AddSingleton<IPermissionDefinitionContributor, AiPermissionDefinitions>();
         services.AddSingleton<ISettingDefinitionContributor, AiSettingDefinitions>();
         services.AddSingleton<AiToolSchemas>();
+        services.AddSingleton<AiToolCatalog>();
+        services.AddODataEntity<AiToolCall>("AiToolCalls", AiPermissions.Audit);
+        services.AddScoped<IODataEntityFilter<AiToolCall>, OData.AiToolCallODataFilter>();
         services.AddScoped<AiToolRunner>();
         services.AddScoped<AiChat>();
         services.AddHttpClient(AiChat.HttpClientName, client => client.Timeout = TimeSpan.FromMinutes(5));
@@ -111,6 +115,7 @@ public sealed class CoworkeeAiModule : CoworkeeModule, IWebModule
     }
 }
 
+[Coworkee.Application.Messaging.AiTool(Exclude = true)]
 [RequiresPermission(AiPermissions.Audit)]
 public sealed record GetAiToolCalls(PageRequest Page, string? Channel) : IQuery<Result<PagedResult<AiToolCallDto>>>;
 

@@ -1,9 +1,9 @@
-using System.Net;
 using System.Net.Http.Json;
+using System.Net;
 using System.Text.Json.Nodes;
-using Coworkee.Contracts;
 using Coworkee.Contracts.Ai;
 using Coworkee.Contracts.Identity;
+using Coworkee.Contracts;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using ModelContextProtocol.Client;
@@ -98,14 +98,14 @@ public sealed class AiTests(AiApp app) : IAsyncLifetime
     public async Task Tools_the_user_lacks_rights_for_are_not_offered_nor_run()
     {
         var chatter = app.As(await UserAsync(AiPermissions.Chat), _setup.TenantId);
-        (await chatter.GetFromJsonAsync<AiToolDto[]>("/api/v1/ai/tools", Ct))!.Select(t => t.Name).ShouldBe(["list_notes"]);
+        (await chatter.GetFromJsonAsync<AiToolDto[]>("/api/v1/ai/tools", Ct))!.Select(t => t.Name).ShouldBe(["list_notes", "count_notes"], ignoreOrder: true);
         app.Claude.ToolUse(("add_note", new JsonObject { ["title"] = "sneaky" }));
         app.Claude.Text("I could not add it.");
 
         var answer = (await (await chatter.PostAsJsonAsync("/api/v1/ai/chat", Ask("add sneaky"), Ct)).Content.ReadFromJsonAsync<ChatResponseDto>(Ct))!;
 
         answer.ToolCalls.Single().Error!.ShouldContain("Unknown tool");
-        app.Claude.Requests.First()["tools"]!.AsArray().Select(t => t!["name"]!.GetValue<string>()).ShouldBe(["list_notes"]);
+        app.Claude.Requests.First()["tools"]!.AsArray().Select(t => t!["name"]!.GetValue<string>()).ShouldBe(["list_notes", "count_notes"], ignoreOrder: true);
         (await app.InDbAsync(db => db.Set<Note>().CountAsync(Ct))).ShouldBe(0);
         (await chatter.GetAsync("/api/v1/ai/tool-calls", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
@@ -132,13 +132,16 @@ public sealed class AiTests(AiApp app) : IAsyncLifetime
             new HttpClientTransport(new HttpClientTransportOptions { Endpoint = new Uri(http.BaseAddress!, "/mcp"), TransportMode = HttpTransportMode.StreamableHttp }, http),
             cancellationToken: Ct);
 
-        (await client.ListToolsAsync(cancellationToken: Ct)).Select(t => t.Name).ShouldBe(["add_note", "fail_note", "list_notes"], ignoreOrder: true);
+        var listed = (await client.ListToolsAsync(cancellationToken: Ct)).Select(t => t.Name).ToList();
+        listed.ShouldContain("add_note");
+        listed.ShouldContain("get_users");
+        listed.ShouldNotContain("set_grants");
         var added = await client.CallToolAsync("add_note", new Dictionary<string, object?> { ["title"] = "From MCP" }, cancellationToken: Ct);
         added.IsError.ShouldNotBe(true);
         var failed = await client.CallToolAsync("fail_note", new Dictionary<string, object?> { ["title"] = "x" }, cancellationToken: Ct);
         failed.IsError.ShouldBe(true);
-        var listed = await client.CallToolAsync("list_notes", cancellationToken: Ct);
-        ((ModelContextProtocol.Protocol.TextContentBlock)listed.Content.Single()).Text.ShouldBe("""["From MCP"]""");
+        var notes = await client.CallToolAsync("list_notes", cancellationToken: Ct);
+        ((ModelContextProtocol.Protocol.TextContentBlock)notes.Content.Single()).Text.ShouldBe("""["From MCP"]""");
 
         (await app.InDbAsync(db => db.Set<Note>().SingleAsync(Ct))).CreatedBy.ShouldBe(_setup.AdminUserId);
         (await Admin.GetFromJsonAsync<PagedResult<AiToolCallDto>>("/api/v1/ai/tool-calls?channel=mcp", Ct))!.TotalCount.ShouldBe(3);

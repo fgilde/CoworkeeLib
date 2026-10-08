@@ -16,6 +16,7 @@ public sealed record GetUserSettingDefinitions : IQuery<Result<IReadOnlyList<Set
 [RequiresPermission(SettingsPermissions.Manage)]
 public sealed record GetManagedSettings(SettingScope Scope) : IQuery<Result<IReadOnlyList<SettingValueDto>>>;
 
+[Coworkee.Application.Messaging.AiTool(Exclude = true)]
 [RequiresPermission(SettingsPermissions.Manage)]
 public sealed record SetManagedSettings(SettingScope Scope, IReadOnlyDictionary<string, string?> Values) : ICommand<Result>;
 

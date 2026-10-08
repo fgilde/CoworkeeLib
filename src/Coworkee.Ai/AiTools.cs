@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Reflection;
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Schema;
 using System.Text.Json.Serialization.Metadata;
+using System.Text.Json;
 using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
 using Coworkee.Contracts.Ai;
@@ -53,7 +53,7 @@ public sealed record AiToolOutcome(string Output, bool Succeeded, AiToolCallDto 
 
 /// <summary>Lists the tools the current user may use and runs them as that user, auditing every call.</summary>
 public sealed class AiToolRunner(
-    IEnumerable<AiTool> tools,
+    AiToolCatalog catalog,
     IPermissionChecker permissions,
     ISettingProvider settings,
     ICurrentUser currentUser,
@@ -90,7 +90,7 @@ public sealed class AiToolRunner(
             && await settings.GetAsync<bool>(AiSettings.Enabled, cancellationToken)
             && await permissions.IsGrantedAsync(AiPermissions.Chat, cancellationToken))
         {
-            foreach (var tool in tools)
+            foreach (var tool in catalog.Tools)
             {
                 var granted = true;
                 foreach (var permission in tool.Permissions)
@@ -234,7 +234,7 @@ public sealed class AiToolSchemas
                 {
                     foreach (var name in required.Select(r => r!.GetValue<string>()).ToList())
                     {
-                        if (properties[name]?["type"] is JsonArray types && types.Any(t => t?.GetValue<string>() == "null"))
+                        if (properties[name] is JsonObject property && property["type"] is JsonArray types && types.Any(t => t?.GetValue<string>() == "null"))
                         {
                             required.Remove(required.First(r => r!.GetValue<string>() == name));
                         }
@@ -302,12 +302,15 @@ public sealed class AiToolCall : AggregateRoot
 
     public Guid? UserId { get; set; }
 
+    [Nextended.Core.Facets.ProvideFacet(Label = "Channel")]
     public required string Channel { get; set; }
 
+    [Nextended.Core.Facets.ProvideFacet(Label = "Tool")]
     public required string Tool { get; set; }
 
     public required string Input { get; set; }
 
+    [Nextended.Core.Facets.ProvideFacet(Label = "Succeeded")]
     public bool Succeeded { get; set; }
 
     public string? Error { get; set; }
