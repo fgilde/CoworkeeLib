@@ -37,7 +37,7 @@
                 @if (open)
                 {
                     <MudGrid Spacing="1">
-                        @foreach (var culture in group.Cultures)
+                        @foreach (var culture in CulturesOf(group))
                         {
                             var language = Find(culture);
                             <MudItem xs="12" md="6" lg="4">

@@ -52,11 +52,18 @@ public partial class Languages
         }
     }
 
-    private bool Matches(CultureInfo culture) =>
-        culture.Name.Contains(_filter!.Trim(), StringComparison.OrdinalIgnoreCase)
-        || culture.NativeName.Contains(_filter.Trim(), StringComparison.CurrentCultureIgnoreCase)
-        || culture.EnglishName.Contains(_filter.Trim(), StringComparison.CurrentCultureIgnoreCase)
-        || culture.DisplayName.Contains(_filter.Trim(), StringComparison.CurrentCultureIgnoreCase);
+    // "fr" finds French and fr-CH, not "Africa": codes and words are matched from their start
+    private bool Matches(CultureInfo culture)
+    {
+        var filter = _filter!.Trim();
+        return culture.Name.StartsWith(filter, StringComparison.OrdinalIgnoreCase)
+            || new[] { culture.NativeName, culture.EnglishName, culture.DisplayName }
+                .SelectMany(name => name.Split([' ', '(', ')', ',', '-'], StringSplitOptions.RemoveEmptyEntries))
+                .Any(word => word.StartsWith(filter, StringComparison.CurrentCultureIgnoreCase));
+    }
+
+    private IEnumerable<CultureInfo> CulturesOf(LanguageGroup group) =>
+        string.IsNullOrWhiteSpace(_filter) || Matches(group.Neutral) ? group.Cultures : group.Cultures.Where(Matches);
 
     private static string Title(CultureInfo culture) => char.ToUpper(culture.NativeName[0], culture) + culture.NativeName[1..];
 

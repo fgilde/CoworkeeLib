@@ -31,6 +31,7 @@ public partial class Profile
 
     private ProfileDto? _profile;
     private ProfileForm _form = new();
+    private ObjectEditMeta<ProfileForm>? _meta;
     private Guid _userId;
     private string? _manage;
     private bool _busy;
@@ -49,6 +50,7 @@ public partial class Profile
     {
         _profile = profile;
         _form = new ProfileForm { FirstName = profile.FirstName, LastName = profile.LastName, PhoneNumber = profile.PhoneNumber };
+        _meta = _form.ObjectEditMeta(Configure);
     }
 
     private void Configure(ObjectEditMeta<ProfileForm> meta)

@@ -14,15 +14,14 @@ public static class EditDialogExtensions
     /// <summary>Asks for the values only; the caller saves them.</summary>
     public static async Task<TModel?> ShowEditAsync<TModel>(this IDialogService dialogs, string title, TModel model, Action<ObjectEditMeta<TModel>>? meta = null)
     {
-        var (cancelled, result) = await dialogs.EditObjectAsync(model, title, Icon(model), await SideSheetAsync(), Grid(meta));
+        var (cancelled, result) = await dialogs.EditObjectAsync(model, title, await SideSheetAsync(), null, Parameters(model, meta));
         return cancelled ? default : result;
     }
 
     /// <summary>Saves inside the dialog: it stays open with the messages of the API when saving fails.</summary>
     public static async Task<bool> ShowEditAsync<TModel>(this IDialogService dialogs, string title, TModel model, Func<TModel, Task> save, Action<ObjectEditMeta<TModel>>? meta = null)
     {
-        var parameters = new DialogParameters { { nameof(MudExObjectEditDialog<TModel>.DialogIcon), Icon(model) } };
-        var (cancelled, _) = await dialogs.EditObjectAsync(model, title, (value, _) => SaveAsync(save, value), await SideSheetAsync(), Grid(meta), parameters);
+        var (cancelled, _) = await dialogs.EditObjectAsync(model, title, (value, _) => SaveAsync(save, value), await SideSheetAsync(), null, Parameters(model, meta));
         return !cancelled;
     }
 
@@ -78,6 +77,13 @@ public static class EditDialogExtensions
         meta?.Invoke(m);
     };
 #pragma warning restore BL0005
+
+    // the meta is configured before the dialog renders: MudEx applies a MetaConfiguration only after its editors took their labels
+    private static DialogParameters Parameters<TModel>(TModel model, Action<ObjectEditMeta<TModel>>? meta) => new()
+    {
+        { nameof(MudExObjectEditDialog<TModel>.DialogIcon), Icon(model) },
+        { nameof(MudExObjectEditDialog<TModel>.MetaInformation), model.ObjectEditMeta(Grid(meta)) },
+    };
 
     private static string Icon<TModel>(TModel model) =>
         model?.GetType().GetProperty("Id")?.GetValue(model) is { } id && !Equals(id, Guid.Empty) ? Icons.Material.Filled.Edit : Icons.Material.Filled.Add;

@@ -36,7 +36,7 @@ else
         <MudItem xs="12" sm="7" md="8" lg="9">
             <MudPaper Outlined="true" Class="pa-4 mb-4">
                 <MudText Typo="Typo.h6" Class="mb-2">@L["Profile details"]</MudText>
-                <MudExObjectEditForm T="ProfileForm" Value="_form" MetaConfiguration="Configure" OnValidSubmit="SaveAsync" GroupingStyle="GroupingStyle.Flat"
+                <MudExObjectEditForm T="ProfileForm" Value="_form" MetaInformation="_meta" OnValidSubmit="SaveAsync" GroupingStyle="GroupingStyle.Flat"
                                      GlobalResetSettings="@(new GlobalResetSettings { AllowReset = false })" data-testid="profile-form" />
             </MudPaper>
             <MudPaper Outlined="true" Class="pa-4">

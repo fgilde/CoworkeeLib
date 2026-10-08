@@ -20,6 +20,7 @@ public sealed class ProfileTests : ClientTestBase
         var page = Render<Profile>();
 
         page.WaitForAssertion(() => Fields(page).Count.ShouldBe(3));
+        page.FindAll("form label").Select(l => l.TextContent.Trim()).ShouldContain("Last name");
         Fields(page)[1].Change("Lovelace");
         await page.Find("form").SubmitAsync();
 
