@@ -31,6 +31,7 @@ public sealed class IdentityApp : PostgresFixture
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
         builder.Configuration["Coworkee:SetupToken"] = SetupToken;
+        builder.Configuration[CoworkeeWebApplicationExtensions.OpenApiSetting] = "true";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
         builder.AddCoworkee<TestAppModule>();
         builder.Services.AddTestAuthentication();

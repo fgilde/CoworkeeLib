@@ -70,6 +70,16 @@ public sealed class BffTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Api_docs_need_a_login_but_the_openapi_document_is_forwarded_anonymously()
+    {
+        var swagger = await _client.GetAsync("/swagger/index.html", TestContext.Current.CancellationToken);
+
+        swagger.StatusCode.ShouldBe(HttpStatusCode.Redirect);
+        swagger.Headers.Location!.Host.ShouldBe("auth.test");
+        (await _client.GetAsync("/openapi/v1.json", TestContext.Current.CancellationToken)).StatusCode.ShouldBe(HttpStatusCode.BadGateway);
+    }
+
+    [Fact]
     public async Task Logout_without_csrf_header_is_rejected() =>
         (await _client.PostAsync("/bff/logout", null, TestContext.Current.CancellationToken)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 

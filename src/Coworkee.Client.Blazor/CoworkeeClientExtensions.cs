@@ -50,6 +50,7 @@ public static class CoworkeeClientExtensions
         services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         services.AddScoped<IAuthorizationHandler, PermissionHandler>();
         services.AddSingleton<INavigationContributor, AdminNavigation>();
+        services.AddSingleton<INavigationContributor, Navigation.ApiDocsNavigation>();
         services.AddOptions<Navigation.NavigationMenuOptions>();
         Customization.ComponentReplacementExtensions.AddComponentReplacement(services);
         return services;

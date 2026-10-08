@@ -20,6 +20,8 @@ public static class BffExtensions
 
     private const string CsrfHeader = "X-CSRF";
 
+    private const string SwaggerUi = "/swagger";
+
     public static WebApplicationBuilder AddCoworkeeBff(this WebApplicationBuilder builder)
     {
         var options = builder.Configuration.GetSection(BffOptions.Section).Get<BffOptions>() ?? new BffOptions();
@@ -146,9 +148,9 @@ public static class BffExtensions
 
         // the assistant may think and call tools for minutes before the first byte of its answer
         var longRequests = new Yarp.ReverseProxy.Forwarder.ForwarderRequestConfig { ActivityTimeout = TimeSpan.FromMinutes(10) };
-        foreach (var prefix in options.ForwardedPrefixes.Prepend("/odata").Prepend("/api").Distinct(StringComparer.OrdinalIgnoreCase))
+        foreach (var prefix in options.ForwardedPrefixes.Prepend("/openapi").Prepend(SwaggerUi).Prepend("/odata").Prepend("/api").Distinct(StringComparer.OrdinalIgnoreCase))
         {
-            app.MapForwarder(prefix.TrimEnd('/') + "/{**catch-all}", options.ApiAddress, longRequests, transforms => transforms.AddRequestTransform(async transform =>
+            var forwarder = app.MapForwarder(prefix.TrimEnd('/') + "/{**catch-all}", options.ApiAddress, longRequests, transforms => transforms.AddRequestTransform(async transform =>
             {
                 var token = await transform.HttpContext.GetTokenAsync("access_token");
                 if (token is not null)
@@ -156,6 +158,12 @@ public static class BffExtensions
                     transform.ProxyRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
                 }
             }));
+
+            // signed-out visitors of the API docs go through the login first; the API checks the permission
+            if (prefix == SwaggerUi)
+            {
+                forwarder.RequireAuthorization();
+            }
         }
 
         return app;

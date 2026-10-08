@@ -41,3 +41,5 @@ Authority und Audience kommen aus `Coworkee:ApiAuth`; der [AppHost](../hosting/a
 ## OpenAPI
 
 `UseCoworkee` liefert in der Umgebung Development das OpenAPI-Dokument (`/openapi/v1.json`) und die Swagger-Oberfläche aus, sonst nur mit `Coworkee:OpenApi:Enabled=true`. Tags und Namen kommen aus den Endpunktdefinitionen (`WithTags`, `WithName`).
+
+Das Dokument bleibt anonym lesbar (SDK-Generatoren und Snapshot-Tests lesen es) und deklariert ein Bearer-Schema, sodass der Authorize-Knopf direkt gegen die API funktioniert. Die Swagger-Oberfläche (`/swagger`) braucht einen angemeldeten Benutzer mit `ApiDocs.View`. Das BFF leitet `/swagger` und `/openapi` weiter: `/swagger` auf der Adresse der Web-App öffnen (Menüeintrag „API“) meldet zuerst an, danach läuft jede Anfrage als Sie, Token und CSRF-Header kommen automatisch dazu. Ein Dunkelmodus-Schalter folgt der Systemeinstellung.
