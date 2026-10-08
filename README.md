@@ -8,6 +8,8 @@
 
 ---
 
+**Documentation:** [fgilde.github.io/CoworkeeLib](https://fgilde.github.io/CoworkeeLib/) (English, [Deutsch](https://fgilde.github.io/CoworkeeLib/de/))
+
 ## Packages
 
 | Package | What it gives you |
@@ -16,9 +18,11 @@
 | `Coworkee.Domain` | `Entity`, `AggregateRoot` with domain events, markers for audit, soft delete, tenants and concurrency |
 | `Coworkee.Application` | Dispatcher for commands and queries with logging, validation and unit-of-work middleware |
 | `Coworkee.Infrastructure` | `CoworkeeDbContext`, interceptors, field-level audit trail, transactional outbox with retries |
-| `Coworkee.AspNetCore` | `AddCoworkee<TRoot>()`, result to problem-details mapping, OpenAPI and Swagger UI |
+| `Coworkee.AspNetCore` | `AddCoworkee<TRoot>()`, result to problem-details mapping, API groups, bearer authentication, OpenAPI and Swagger UI |
+| `Coworkee.OData` | OData set per entity with facets, row filters and hidden properties |
+| `Coworkee.ResponseFilters` | Permission dependent response filters on Nextended.ResponseFilters |
 | `Coworkee.Testing` | Postgres test container fixture, test user, web application factory |
-| `Coworkee.Aspire` | `AddCoworkeeInfrastructure()` for Postgres, Redis and Mailpit |
+| `Coworkee.Aspire` | `AddCoworkeeApp()` wires migrations, auth server, APIs, workers and the web host with Postgres, Redis, Mailpit, Elasticsearch and Keycloak |
 | `Coworkee.Contracts` | DTOs, permission names and paging records shared by server and clients |
 | `Coworkee.Identity` | Users, roles, groups, tenants and permission grants with resource level checks |
 | `Coworkee.AuthServer` / `Coworkee.Account` | OpenIddict server, login, registration, two factor and account pages |
@@ -27,7 +31,7 @@
 | `Coworkee.Mailing` | Scriban mail templates with overrides, queued SMTP delivery |
 | `Coworkee.Notifications` / `Coworkee.Realtime` | In app notifications, digests and SignalR push |
 | `Coworkee.BackgroundJobs` | Hangfire jobs with queues, retries and delayed follow-ups |
-| `Coworkee.Storage` | Blob storage on the file system or Azure |
+| `Coworkee.Storage` | Blob storage on the file system, S3 or Azure |
 | `Coworkee.Search` / `Coworkee.Search.Elasticsearch` | Search index abstraction and Elasticsearch provider |
 | `Coworkee.Auditing` | Audit trail queries and history views |
 | `Coworkee.Theming` | Tenant themes and branding |
