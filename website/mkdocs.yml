@@ -1,0 +1,151 @@
+site_name: Coworkee
+site_description: Modular application framework for .NET 10, Blazor and Aspire
+site_url: https://fgilde.github.io/CoworkeeLib/
+repo_url: https://github.com/fgilde/CoworkeeLib
+repo_name: fgilde/CoworkeeLib
+edit_uri: edit/main/website/docs/
+copyright: Florian Gilde
+
+theme:
+  name: material
+  logo: assets/icon.svg
+  favicon: assets/icon.svg
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep orange
+      accent: deep orange
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep orange
+      accent: deep orange
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - navigation.indexes
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - toc.follow
+
+extra_css:
+  - assets/extra.css
+
+plugins:
+  - search
+  - i18n:
+      docs_structure: suffix
+      fallback_to_default: true
+      reconfigure_material: true
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+        - locale: de
+          name: Deutsch
+          build: true
+          site_description: Modulares Anwendungsframework für .NET 10, Blazor und Aspire
+          nav_translations:
+            Home: Start
+            Getting started: Erste Schritte
+            Installation: Installation
+            Solution structure: Aufbau der Solution
+            Your first feature: Das erste Feature
+            Fundamentals: Grundlagen
+            Modules: Module
+            Messaging and pipeline: Messaging und Pipeline
+            Persistence: Persistenz
+            Web: Web
+            HTTP APIs: HTTP-APIs
+            OData and facets: OData und Facetten
+            Response filters: Response-Filter
+            Security: Sicherheit
+            Permissions: Berechtigungen
+            Authentication and Keycloak: Anmeldung und Keycloak
+            Blazor UI: Blazor-UI
+            Client and layout: Client und Layout
+            Data tables: Datentabellen
+            Replacing components: Komponenten ersetzen
+            Modules in detail: Module im Detail
+            Settings and app configuration: Einstellungen und App-Konfiguration
+            Mailing: Mailversand
+            Background jobs: Hintergrundjobs
+            File storage: Dateiablage
+            Search: Suche
+            Realtime and notifications: Realtime und Benachrichtigungen
+            Theming: Themes
+            Auditing: Audit
+            AI assistant and MCP: KI-Assistent und MCP
+            Hosting: Hosting
+            Aspire app host: Aspire-AppHost
+            Testing: Tests
+            Reference: Referenz
+            Packages and namespaces: Pakete und Namespaces
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Home: index.md
+  - Getting started:
+      - Installation: getting-started/installation.md
+      - Solution structure: getting-started/solution-structure.md
+      - Your first feature: getting-started/first-feature.md
+  - Fundamentals:
+      - Modules: fundamentals/modules.md
+      - Messaging and pipeline: fundamentals/messaging.md
+      - Persistence: fundamentals/persistence.md
+  - Web:
+      - HTTP APIs: web/http-api.md
+      - OData and facets: web/odata.md
+      - Response filters: web/response-filters.md
+  - Security:
+      - Permissions: security/permissions.md
+      - Authentication and Keycloak: security/authentication.md
+  - Blazor UI:
+      - Client and layout: ui/client.md
+      - Data tables: ui/data-table.md
+      - Replacing components: ui/customizing.md
+  - Modules in detail:
+      - Settings and app configuration: modules/settings.md
+      - Mailing: modules/mailing.md
+      - Background jobs: modules/background-jobs.md
+      - File storage: modules/storage.md
+      - Search: modules/search.md
+      - Realtime and notifications: modules/realtime.md
+      - Theming: modules/theming.md
+      - Auditing: modules/auditing.md
+      - AI assistant and MCP: modules/ai.md
+  - Hosting:
+      - Aspire app host: hosting/aspire.md
+  - Testing: testing.md
+  - Reference:
+      - Packages and namespaces: reference/packages.md
