@@ -4,5 +4,6 @@
     <ProjectReference Include="..\..\src\Coworkee.Identity\Coworkee.Identity.csproj" />
     <ProjectReference Include="..\..\src\Coworkee.Testing\Coworkee.Testing.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <PackageReference Include="ClosedXML" />
   </ItemGroup>
 </Project>

@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using Coworkee.Application.Messaging;
 using Coworkee.AspNetCore;
 using Coworkee.Contracts.Identity;
 using Coworkee.Core.Modularity;
@@ -95,6 +96,8 @@ public sealed class GadgetModule : CoworkeeModule
             options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
         context.Services.AddODataEntity<Gadget>("Gadgets", ODataApp.ViewGadgets, g => g.SerialCode);
         context.Services.AddScoped<IODataEntityFilter<Gadget>, HideSecretGadgets>();
+        context.Services.AddMessagingFromAssembly(typeof(GadgetModule).Assembly);
+        context.Services.AddODataImport<AddGadgetCommand>("Gadgets");
     }
 }
 

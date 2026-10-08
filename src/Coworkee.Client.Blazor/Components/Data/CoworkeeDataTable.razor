@@ -14,9 +14,20 @@
     }
     <MudSpacer />
     @ToolBarContent
+    @if (Importable)
+    {
+        <PermissionGate Permission="@ImportPermission">
+            <MudFileUpload T="IBrowserFile" Accept=".xlsx" FilesChanged="ImportAsync" Class="mb-2" data-testid="import">
+                <CustomContent Context="upload">
+                    <MudIconButton Icon="@Icons.Material.Outlined.FileUpload" Size="Size.Small" aria-label="@L["Import"]" Disabled="_importing" OnClick="upload.OpenFilePickerAsync" />
+                </CustomContent>
+            </MudFileUpload>
+        </PermissionGate>
+    }
     @if (Exportable)
     {
         <MudMenu Icon="@Icons.Material.Outlined.FileDownload" Size="Size.Small" Class="mb-2" aria-label="@L["Export"]" data-testid="export">
+            <MudMenuItem OnClick="() => ExportAsync(ExportFormat.Excel)">Excel</MudMenuItem>
             <MudMenuItem OnClick="() => ExportAsync(ExportFormat.Csv)">CSV</MudMenuItem>
             <MudMenuItem OnClick="() => ExportAsync(ExportFormat.Json)">JSON</MudMenuItem>
         </MudMenu>

@@ -1,6 +1,7 @@
 using Coworkee.Application;
 using Coworkee.AspNetCore;
 using Coworkee.Core.Modularity;
+using Coworkee.OData.Transfer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.OData;
 using Microsoft.Extensions.Configuration;
@@ -32,7 +33,11 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
             .AddOData();
     }
 
-    public void ConfigureApplication(WebApplication app) => app.MapControllers();
+    public void ConfigureApplication(WebApplication app)
+    {
+        app.MapControllers();
+        app.MapDataTransferEndpoints();
+    }
 
     private static IEdmModel BuildModel(ODataEntityRegistry registry)
     {

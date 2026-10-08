@@ -1,19 +1,26 @@
 using Coworkee.Client.Blazor.Data;
 using Coworkee.Contracts.Data;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
 using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Components.Data;
 
 public partial class CoworkeeDataTable<T> : IDisposable
 {
+    private const long MaxImportBytes = 20 * 1024 * 1024;
+
     private readonly FacetSelection _selection = new();
     private MudDataGrid<T>? _grid;
     private IReadOnlyList<FacetGroupDto> _facets = [];
     private string? _search;
     private HashSet<T> _selected = [];
+    private string? _orderBy;
+    private bool _importing;
 
     [Inject] private IDialogService Dialogs { get; set; } = null!;
+
+    [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
     [Inject] private FileDownloader Downloader { get; set; } = null!;
     [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
@@ -22,6 +29,11 @@ public partial class CoworkeeDataTable<T> : IDisposable
     [Parameter] public bool Exportable { get; set; } = true;
 
     [Parameter] public string ExportFileName { get; set; } = "export";
+
+    /// <summary>Uploads an Excel sheet to the import registered for the entity set (AddODataImport on the server).</summary>
+    [Parameter] public bool Importable { get; set; }
+
+    [Parameter] public string? ImportPermission { get; set; }
 
     [Parameter] public string CreateText { get; set; } = "New";
 
@@ -113,6 +125,13 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     private async Task ExportAsync(ExportFormat format)
     {
+        if (format == ExportFormat.Excel)
+        {
+            var workbook = await OData.ExportAsync(EntitySet, new ODataQuery { Filter = CurrentFilter, OrderBy = _orderBy });
+            await Downloader.DownloadAsync($"{ExportFileName}.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", workbook);
+            return;
+        }
+
         var items = await AllAsync();
         if (format == ExportFormat.Csv)
         {
@@ -139,6 +158,31 @@ public partial class CoworkeeDataTable<T> : IDisposable
         }
     }
 
+    private async Task ImportAsync(IBrowserFile? file)
+    {
+        if (file is null)
+        {
+            return;
+        }
+
+        _importing = true;
+        try
+        {
+            await using var stream = file.OpenReadStream(MaxImportBytes);
+            var result = await OData.ImportAsync(EntitySet, stream, file.Name);
+            Snackbar.Add(L["{0} rows imported, {1} failed.", result.Imported, result.Errors.Count], result.Errors.Count == 0 ? Severity.Success : Severity.Warning);
+            await ReloadAsync();
+            if (result.Errors.Count > 0)
+            {
+                _ = Dialogs.ShowMessageBoxAsync(L["Import"], string.Join(Environment.NewLine, result.Errors.Take(20).Select(e => L["Row {0}: {1}", e.Row, e.Message])));
+            }
+        }
+        finally
+        {
+            _importing = false;
+        }
+    }
+
     private Task SearchAsync(string? text)
     {
         _search = text;
@@ -147,10 +191,11 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     private async Task<GridData<T>> LoadAsync(GridState<T> state, CancellationToken cancellationToken)
     {
+        _orderBy = OrderBy(state);
         var query = new ODataQuery
         {
             Filter = CurrentFilter,
-            OrderBy = OrderBy(state),
+            OrderBy = _orderBy,
             Expand = Expand,
             Top = state.PageSize,
             Skip = state.Page * state.PageSize,

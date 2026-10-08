@@ -3,10 +3,16 @@ namespace Coworkee.OData;
 public sealed class ODataEntityRegistry
 {
     private readonly List<ODataEntityRegistration> _entities = [];
+    private readonly List<Transfer.ODataImportRegistration> _imports = [];
 
     public IReadOnlyList<ODataEntityRegistration> Entities => _entities;
 
     public ODataEntityRegistration? Find(Type entityType) => _entities.FirstOrDefault(e => e.EntityType == entityType);
+
+    public Transfer.ODataImportRegistration? FindImport(string entitySet) =>
+        _imports.FirstOrDefault(i => string.Equals(i.EntitySet, entitySet, StringComparison.OrdinalIgnoreCase));
+
+    internal void Add(Transfer.ODataImportRegistration import) => _imports.Add(import);
 
     internal void Add(ODataEntityRegistration registration)
     {

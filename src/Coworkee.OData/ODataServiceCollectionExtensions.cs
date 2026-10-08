@@ -14,6 +14,13 @@ public static class ODataServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>Rows of an uploaded Excel sheet become <typeparamref name="TCommand"/>s: columns map to its properties by name.</summary>
+    public static IServiceCollection AddODataImport<TCommand>(this IServiceCollection services, string entitySet)
+    {
+        services.Registry().Add(Transfer.ODataImportRegistration.For<TCommand>(entitySet));
+        return services;
+    }
+
     private static string PropertyName<TEntity>(Expression<Func<TEntity, object?>> property) =>
         (property.Body is UnaryExpression { Operand: MemberExpression boxed } ? boxed : property.Body as MemberExpression)?.Member.Name
         ?? throw new ArgumentException($"{property} does not select a property.", nameof(property));

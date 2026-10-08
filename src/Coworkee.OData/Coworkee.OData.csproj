@@ -5,5 +5,6 @@
     <ProjectReference Include="..\Coworkee.Infrastructure\Coworkee.Infrastructure.csproj" />
     <ProjectReference Include="..\Coworkee.AspNetCore\Coworkee.AspNetCore.csproj" />
     <PackageReference Include="Nextended.Web" />
+    <PackageReference Include="ClosedXML" />
   </ItemGroup>
 </Project>
