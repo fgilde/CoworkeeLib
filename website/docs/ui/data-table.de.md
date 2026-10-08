@@ -48,3 +48,15 @@ if (await Dialogs.ShowEditAsync("Edit brand", model) is { } saved)
 ```
 
 Mit `meta => ...` konfigurieren Sie das `MudExObjectEditForm` (Beschriftungen, Reihenfolge, Editoren). Für Nachschlagelisten, Uploads oder Eigenes schreiben Sie eine Dialogkomponente, wie das Template mit `ProductDialog` und `DocumentDialog`.
+
+## Ansichten, URL und Spalten
+
+- **URL**: Suche und gewählte Facetten stehen im Query-String (`?products=...`), eine gefilterte Liste lässt sich also neu laden, als Lesezeichen speichern und an Kollegen schicken. `UrlState="false"` schaltet das ab, `StateKey` benennt den Parameter, wenn eine Seite zwei Tabellen desselben Sets zeigt.
+- **Gespeicherte Ansichten**: das Lesezeichen-Menü speichert Suche, Facetten und ausgeblendete Spalten unter einem Namen und stellt sie mit einem Klick wieder her. Ansichten liegen pro Browser.
+- **Spalten**: das Spalten-Menü blendet Spalten ein und aus.
+
+```razor
+<CoworkeeDataTable T="ProductDto" EntitySet="Products" UrlState="true" SavedViews="true" ColumnChooser="true" ... />
+```
+
+`CurrentState` liefert, was die Tabelle zeigt, als `DataTableState`, zum Beispiel für eigene Links.

@@ -196,5 +196,9 @@
   "Text": "Text",
   "DateTime": "Datum",
   "Json": "JSON",
-  "Attributes": "Attribute"
+  "Attributes": "Attribute",
+  "Views": "Ansichten",
+  "Save current view as": "Aktuelle Ansicht speichern als",
+  "Columns": "Spalten",
+  "View saved": "Ansicht gespeichert"
 }

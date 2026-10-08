@@ -51,6 +51,24 @@ public sealed class FacetSelection
         Changed?.Invoke();
     }
 
+    /// <summary>Replaces the selection, e.g. from the URL or a saved view.</summary>
+    public void Restore(IEnumerable<SelectedFacet> facets)
+    {
+        _selected.Clear();
+        foreach (var facet in facets)
+        {
+            if (!_selected.TryGetValue(facet.GroupKey, out var options))
+            {
+                options = new Dictionary<string, SelectedFacet>(StringComparer.Ordinal);
+                _selected[facet.GroupKey] = options;
+            }
+
+            options[facet.OData] = facet;
+        }
+
+        Changed?.Invoke();
+    }
+
     public void Clear()
     {
         _selected.Clear();

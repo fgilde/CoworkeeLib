@@ -14,6 +14,44 @@
     }
     <MudSpacer />
     @ToolBarContent
+    @if (SavedViews)
+    {
+        <MudMenu Icon="@Icons.Material.Outlined.BookmarkBorder" Size="Size.Small" Class="mb-2" aria-label="@L["Views"]" data-testid="views">
+            @foreach (var view in _views)
+            {
+                <MudMenuItem OnClick="() => ApplyViewAsync(view)">
+                    <div class="d-flex align-center" data-view="@view.Name">
+                        <span style="flex:1">@view.Name</span>
+                        <span @onclick:stopPropagation="true">
+                            <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small" aria-label="@L["Delete"]" OnClick="() => DeleteViewAsync(view)" />
+                        </span>
+                    </div>
+                </MudMenuItem>
+            }
+            @if (_views.Count > 0)
+            {
+                <MudDivider />
+            }
+            <div class="d-flex align-center pa-2" @onclick:stopPropagation="true">
+                <MudTextField T="string" @bind-Value="_viewName" Placeholder="@L["Save current view as"]" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                              data-testid="view-name" />
+                <MudIconButton Icon="@Icons.Material.Outlined.Save" Size="Size.Small" Disabled="string.IsNullOrWhiteSpace(_viewName)" OnClick="SaveViewAsync"
+                               aria-label="@L["Save"]" data-testid="save-view" />
+            </div>
+        </MudMenu>
+    }
+    @if (ColumnChooser && _grid is not null)
+    {
+        <MudMenu Icon="@Icons.Material.Outlined.ViewColumn" Size="Size.Small" Class="mb-2" aria-label="@L["Columns"]" data-testid="columns">
+            @foreach (var column in _grid.RenderedColumns.Where(c => !string.IsNullOrEmpty(ColumnName(c))))
+            {
+                <MudMenuItem AutoClose="false" OnClick="() => ToggleColumnAsync(column)"
+                             Icon="@(_hidden.Contains(ColumnName(column)!) ? Icons.Material.Outlined.CheckBoxOutlineBlank : Icons.Material.Outlined.CheckBox)">
+                    <span data-column="@ColumnName(column)">@ColumnName(column)</span>
+                </MudMenuItem>
+            }
+        </MudMenu>
+    }
     @if (Importable)
     {
         <PermissionGate Permission="@ImportPermission">

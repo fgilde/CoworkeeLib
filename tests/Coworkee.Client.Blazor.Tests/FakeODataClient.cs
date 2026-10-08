@@ -13,8 +13,11 @@ internal sealed class FakeODataClient : IODataClient
         return this;
     }
 
+    public event EventHandler<ODataQuery>? Queried;
+
     public Task<ODataPage<T>> QueryAsync<T>(string entitySet, ODataQuery query, CancellationToken cancellationToken = default)
     {
+        Queried?.Invoke(this, query);
         var items = _sets.TryGetValue(entitySet, out var set) ? (T[])set : [];
         return Task.FromResult(new ODataPage<T>(items, items.Length, []));
     }

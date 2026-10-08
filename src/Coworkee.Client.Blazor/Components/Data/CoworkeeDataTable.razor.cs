@@ -1,7 +1,9 @@
 using Coworkee.Client.Blazor.Data;
 using Coworkee.Contracts.Data;
 using Microsoft.AspNetCore.Components;
+using System.Web;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Components.Data;
@@ -18,10 +20,18 @@ public partial class CoworkeeDataTable<T> : IDisposable
     private string? _orderBy;
     private bool _importing;
     private MudFileUpload<IBrowserFile>? _upload;
+    private IReadOnlyList<SavedTableView> _views = [];
+    private string? _viewName;
+    private IReadOnlyList<string>? _hiddenToApply;
+    private readonly HashSet<string> _hidden = new(StringComparer.Ordinal);
 
     [Inject] private IDialogService Dialogs { get; set; } = null!;
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
+
+    [Inject] private NavigationManager Nav { get; set; } = null!;
+
+    [Inject] private IJSRuntime JS { get; set; } = null!;
 
     [Inject] private FileDownloader Downloader { get; set; } = null!;
     [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
@@ -30,6 +40,16 @@ public partial class CoworkeeDataTable<T> : IDisposable
     [Parameter] public bool Exportable { get; set; } = true;
 
     [Parameter] public string ExportFileName { get; set; } = "export";
+
+    /// <summary>Keeps search and facets in the URL, so the page can be reloaded, bookmarked and shared as it is.</summary>
+    [Parameter] public bool UrlState { get; set; } = true;
+
+    /// <summary>Query parameter for <see cref="UrlState"/>; defaults to the entity set. Set it when a page has two tables of one set.</summary>
+    [Parameter] public string? StateKey { get; set; }
+
+    [Parameter] public bool SavedViews { get; set; } = true;
+
+    [Parameter] public bool ColumnChooser { get; set; } = true;
 
     /// <summary>Uploads an Excel sheet to the import registered for the entity set (AddODataImport on the server).</summary>
     [Parameter] public bool Importable { get; set; }
@@ -85,13 +105,118 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     public string? CurrentFilter => ODataFilter.And(Filter, _selection.ToFilter(), ODataFilter.Search(_search, SearchFields));
 
-    protected override void OnInitialized() => _selection.Changed += Reload;
+    private string Key => StateKey ?? EntitySet.ToLowerInvariant();
+
+    public DataTableState CurrentState => new(
+        _search,
+        [.. _selection.All],
+        [.. _hidden]);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (UrlState && DataTableState.Decode(HttpUtility.ParseQueryString(new Uri(Nav.Uri).Query)[Key]) is { } state)
+        {
+            Apply(state);
+        }
+
+        _selection.Changed += Reload;
+        if (SavedViews)
+        {
+            _views = await Views.GetAsync(EntitySet);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // the column chooser lists the grid's columns, which exist only after the first render
+            StateHasChanged();
+        }
+
+        if (_hiddenToApply is { } hidden && _grid is not null)
+        {
+            _hiddenToApply = null;
+            await ApplyHiddenAsync(hidden);
+            StateHasChanged();
+        }
+    }
+
+    private TableViews Views => new(JS);
+
+    private void Apply(DataTableState state)
+    {
+        _search = state.Search;
+        _selection.Restore(state.Facets);
+        _hiddenToApply = state.HiddenColumns;
+    }
+
+    private async Task ApplyHiddenAsync(IReadOnlyList<string> hidden)
+    {
+        foreach (var column in _grid!.RenderedColumns.Where(c => !string.IsNullOrEmpty(ColumnName(c))))
+        {
+            if (hidden.Contains(ColumnName(column)!) != _hidden.Contains(ColumnName(column)!))
+            {
+                await ToggleColumnAsync(column);
+            }
+        }
+    }
+
+    private static string? ColumnName(Column<T> column) => column.Title ?? column.PropertyName;
+
+    private async Task ToggleColumnAsync(Column<T> column)
+    {
+        if (_hidden.Remove(ColumnName(column)!))
+        {
+            await column.ShowAsync();
+        }
+        else
+        {
+            _hidden.Add(ColumnName(column)!);
+            await column.HideAsync();
+        }
+    }
+
+    private async Task ApplyViewAsync(SavedTableView view)
+    {
+        Apply(view.State);
+        await ApplyHiddenAsync(view.State.HiddenColumns);
+        _hiddenToApply = null;
+        WriteUrl();
+    }
+
+    private async Task SaveViewAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_viewName))
+        {
+            return;
+        }
+
+        _views = await Views.SaveAsync(EntitySet, _viewName.Trim(), CurrentState);
+        Snackbar.Add(L["View saved"], Severity.Success);
+        _viewName = null;
+    }
+
+    private async Task DeleteViewAsync(SavedTableView view) => _views = await Views.DeleteAsync(EntitySet, view.Name);
+
+    private void WriteUrl()
+    {
+        if (UrlState)
+        {
+            var state = CurrentState with { HiddenColumns = [] };
+            Nav.NavigateTo(Nav.GetUriWithQueryParameter(Key, state.IsEmpty ? null : state.Encode()), replace: true);
+        }
+    }
 
     public void Dispose() => _selection.Changed -= Reload;
 
     public Task ReloadAsync() => _grid?.ReloadServerData() ?? Task.CompletedTask;
 
-    private void Reload() => InvokeAsync(ReloadAsync);
+    private void Reload() => InvokeAsync(() =>
+    {
+        WriteUrl();
+        return ReloadAsync();
+    });
 
     private async Task SelectionChangedAsync(HashSet<T> selected)
     {
@@ -191,6 +316,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
     private Task SearchAsync(string? text)
     {
         _search = text;
+        WriteUrl();
         return ReloadAsync();
     }
 

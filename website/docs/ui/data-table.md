@@ -48,3 +48,15 @@ if (await Dialogs.ShowEditAsync("Edit brand", model) is { } saved)
 ```
 
 Pass `meta => ...` to configure the `MudExObjectEditForm` (labels, order, editors). For lookups, uploads or anything custom write a dialog component, as the template does with `ProductDialog` and `DocumentDialog`.
+
+## Views, URL and columns
+
+- **URL**: search and chosen facets go into the query string (`?products=...`), so a filtered list can be reloaded, bookmarked and sent to a colleague. `UrlState="false"` turns it off, `StateKey` names the parameter when a page shows two tables of one set.
+- **Saved views**: the bookmark menu saves search, facets and hidden columns under a name and brings them back with one click. Views are kept per browser.
+- **Columns**: the column menu shows and hides columns.
+
+```razor
+<CoworkeeDataTable T="ProductDto" EntitySet="Products" UrlState="true" SavedViews="true" ColumnChooser="true" ... />
+```
+
+`CurrentState` returns what the table shows as a `DataTableState`, for example to build your own links.
