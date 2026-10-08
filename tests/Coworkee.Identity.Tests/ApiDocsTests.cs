@@ -24,7 +24,7 @@ public sealed class ApiDocsTests(IdentityApp app)
         var literal = System.Text.RegularExpressions.Regex.Match(script, @"var interceptors = JSON\.parse\('(.*)'\);").Groups[1].Value;
         var json = literal.Replace(@"\\", "\u0001", StringComparison.Ordinal).Replace(@"\'", "'", StringComparison.Ordinal).Replace("\u0001", @"\", StringComparison.Ordinal);
         var function = System.Text.Json.JsonDocument.Parse(json).RootElement.GetProperty("RequestInterceptorFunction").GetString()!;
-        function.ShouldStartWith("request => { const url = new URL(request.url, location.href);");
+        function.ShouldStartWith("function (request) { const url = new URL(request.url, location.href);");
         function.ShouldNotContain("\n");
     }
 
