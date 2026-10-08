@@ -28,7 +28,7 @@ internal static class ExcelImport
             return new ImportResult(0, []);
         }
 
-        var properties = import.CommandType.GetProperties().ToDictionary(p => p.Name, StringComparer.OrdinalIgnoreCase);
+        var properties = import.RowType.GetProperties().ToDictionary(p => p.Name, StringComparer.OrdinalIgnoreCase);
         var columns = used.FirstRow().Cells()
             .Select(cell => properties.GetValueOrDefault(cell.GetString().Trim()))
             .ToList();
@@ -65,7 +65,7 @@ internal static class ExcelImport
                 }
             }
 
-            command = values.Deserialize(import.CommandType, Json)!;
+            command = values.Deserialize(import.RowType, Json)!;
         }
         catch (JsonException exception)
         {

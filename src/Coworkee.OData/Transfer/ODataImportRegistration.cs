@@ -3,7 +3,7 @@ using Coworkee.Core.Results;
 
 namespace Coworkee.OData.Transfer;
 
-public sealed record ODataImportRegistration(string EntitySet, Type CommandType, Func<IDispatcher, object, CancellationToken, Task<Result>> Send)
+public sealed record ODataImportRegistration(string EntitySet, Type RowType, Func<IDispatcher, object, CancellationToken, Task<Result>> Send)
 {
     internal static ODataImportRegistration For<TCommand>(string entitySet)
     {
@@ -16,6 +16,10 @@ public sealed record ODataImportRegistration(string EntitySet, Type CommandType,
             .CreateDelegate<Func<IDispatcher, object, CancellationToken, Task<Result>>>();
         return new ODataImportRegistration(entitySet, typeof(TCommand), send);
     }
+
+    internal static ODataImportRegistration For<TRow, TResult>(string entitySet, Func<TRow, IRequest<TResult>> toCommand)
+        where TResult : Result =>
+        new(entitySet, typeof(TRow), (dispatcher, row, cancellationToken) => SendAsync<TResult>(dispatcher, toCommand((TRow)row), cancellationToken));
 
     private static async Task<Result> SendAsync<TResult>(IDispatcher dispatcher, object command, CancellationToken cancellationToken)
         where TResult : Result =>

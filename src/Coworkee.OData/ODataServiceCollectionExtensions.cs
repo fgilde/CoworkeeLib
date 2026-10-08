@@ -21,6 +21,14 @@ public static class ODataServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>Rows become <typeparamref name="TRow"/>s, e.g. the request record of an add command, and <paramref name="toCommand"/> wraps each one.</summary>
+    public static IServiceCollection AddODataImport<TRow, TResult>(this IServiceCollection services, string entitySet, Func<TRow, Application.Messaging.IRequest<TResult>> toCommand)
+        where TResult : Core.Results.Result
+    {
+        services.Registry().Add(Transfer.ODataImportRegistration.For(entitySet, toCommand));
+        return services;
+    }
+
     private static string PropertyName<TEntity>(Expression<Func<TEntity, object?>> property) =>
         (property.Body is UnaryExpression { Operand: MemberExpression boxed } ? boxed : property.Body as MemberExpression)?.Member.Name
         ?? throw new ArgumentException($"{property} does not select a property.", nameof(property));
