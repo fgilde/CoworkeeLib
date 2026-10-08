@@ -131,6 +131,7 @@ nav:
       - HTTP APIs: web/http-api.md
       - OData and facets: web/odata.md
       - Response filters: web/response-filters.md
+      - SDKs: web/sdk.md
   - Security:
       - Permissions: security/permissions.md
       - Authentication and Keycloak: security/authentication.md
