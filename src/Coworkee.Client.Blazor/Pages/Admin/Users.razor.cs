@@ -1,5 +1,7 @@
 using Coworkee.Client.Blazor.Api;
-using Coworkee.Contracts;
+using Coworkee.Client.Blazor.Components.Data;
+using Coworkee.Client.Blazor.Data.Admin;
+using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Identity;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -8,79 +10,60 @@ namespace Coworkee.Client.Blazor.Pages.Admin;
 
 public partial class Users
 {
+    private static readonly string[] SearchFields = [nameof(UserRow.Email), nameof(UserRow.FirstName), nameof(UserRow.LastName)];
+    private CoworkeeDataTable<UserRow> _table = null!;
+    private IReadOnlyList<RoleDto> _roles = [];
+    private IReadOnlyDictionary<Guid, IReadOnlyList<RoleRefDto>> _userRoles = new Dictionary<Guid, IReadOnlyList<RoleRefDto>>();
+    private bool _creating;
+    private NewUser _new = new();
+    private UserRow? _permissionsOf;
+    private IReadOnlyList<string> _permissions = [];
+
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
+
+    [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
-    private MudTable<UserDto>? _table;
-    private string? _search;
-    private bool _creating;
-    private NewUser _new = new();
-    private IReadOnlyList<RoleDto> _roles = [];
+    protected override async Task OnInitializedAsync() => await Snackbar.RunAsync(async () => _roles = await Api.GetRolesAsync());
 
-    protected override async Task OnInitializedAsync() => _roles = await Api.GetRolesAsync();
+    private async Task LoadRolesAsync(IReadOnlyList<UserRow> users) =>
+        await Snackbar.RunAsync(async () => _userRoles = await Api.GetUsersRolesAsync([.. users.Select(u => u.Id)]));
 
-    private async Task<TableData<UserDto>> LoadAsync(TableState state, CancellationToken cancellationToken)
-    {
-        var page = await Api.GetUsersAsync(new PageRequest(state.Page + 1, state.PageSize, _search), cancellationToken);
-        return new TableData<UserDto> { Items = page.Items, TotalItems = page.TotalCount };
-    }
+    private IReadOnlyCollection<Guid> RolesOf(UserRow user) => [.. _userRoles.GetValueOrDefault(user.Id)?.Select(r => r.Id) ?? []];
 
     private string RoleName(Guid id) => _roles.FirstOrDefault(r => r.Id == id)?.Name ?? string.Empty;
 
-    private async Task CreateAsync() => await RunAsync(async () =>
+    private async Task CreateAsync()
     {
-        await Api.CreateUserAsync(new CreateUserRequest(_new.Email, _new.Password, _new.FirstName, _new.LastName));
-        _new = new NewUser();
-        _creating = false;
-    });
-
-    private Task SetRolesAsync(UserDto user, IEnumerable<Guid> ids) => RunAsync(() => Api.SetUserRolesAsync(user.Id, ids.ToList()));
-
-    private Task SetActiveAsync(UserDto user, bool active) => RunAsync(() => Api.UpdateUserAsync(user.Id, new UpdateUserRequest(user.FirstName, user.LastName, active)));
-
-    private UserDto? _permissionsOf;
-    private IReadOnlyList<string> _permissions = [];
-
-    private async Task ShowPermissionsAsync(UserDto user)
-    {
-        try
+        if (await Snackbar.RunAsync(() => Api.CreateUserAsync(new CreateUserRequest(_new.Email, _new.Password, _new.FirstName, _new.LastName)), L["User created"]))
         {
-            _permissions = await Api.GetEffectivePermissionsAsync(user.Id);
+            (_new, _creating) = (new NewUser(), false);
+            await _table.ReloadAsync();
+        }
+    }
+
+    private async Task SetRolesAsync(UserRow user, IEnumerable<Guid> ids)
+    {
+        await Snackbar.RunAsync(() => Api.SetUserRolesAsync(user.Id, [.. ids]));
+        await _table.ReloadAsync();
+    }
+
+    private async Task SetActiveAsync(UserRow user, bool active)
+    {
+        await Snackbar.RunAsync(() => Api.UpdateUserAsync(user.Id, new UpdateUserRequest(user.FirstName, user.LastName, active)));
+        await _table.ReloadAsync();
+    }
+
+    private async Task ShowPermissionsAsync(UserRow user)
+    {
+        if (await Snackbar.RunAsync(async () => _permissions = await Api.GetEffectivePermissionsAsync(user.Id)))
+        {
             _permissionsOf = user;
         }
-        catch (ApiException exception)
-        {
-            Snackbar.Add(exception.Message, Severity.Error);
-        }
     }
 
-    private async Task SendResetAsync(UserDto user)
-    {
-        try
-        {
-            await Api.SendPasswordResetAsync(user.Id);
-            Snackbar.Add($"Password reset mail queued for {user.Email}.", Severity.Success);
-        }
-        catch (ApiException exception)
-        {
-            Snackbar.Add(exception.Message, Severity.Error);
-        }
-    }
-
-    private async Task RunAsync(Func<Task> action)
-    {
-        try
-        {
-            await action();
-        }
-        catch (ApiException exception)
-        {
-            Snackbar.Add(exception.Errors is { Count: > 0 } errors ? string.Join(" ", errors.SelectMany(e => e.Value)) : exception.Message, Severity.Error);
-        }
-
-        await _table!.ReloadServerData();
-    }
+    private Task SendResetAsync(UserRow user) => Snackbar.RunAsync(() => Api.SendPasswordResetAsync(user.Id), L["Password reset mail queued for {0}.", user.Email]);
 
     private sealed class NewUser
     {

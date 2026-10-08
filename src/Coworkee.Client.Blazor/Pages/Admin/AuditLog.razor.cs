@@ -1,4 +1,6 @@
 using Coworkee.Client.Blazor.Api;
+using Coworkee.Client.Blazor.Components;
+using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Auditing;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -7,30 +9,27 @@ namespace Coworkee.Client.Blazor.Pages.Admin;
 
 public partial class AuditLog
 {
+    private static readonly string[] SearchFields = [nameof(AuditEntryDto.EntityType), nameof(AuditEntryDto.EntityId)];
+    private IReadOnlyDictionary<Guid, string> _names = new Dictionary<Guid, string>();
+
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
-    private MudTable<AuditEntryDto>? _table;
-    private string? _entityType;
-    private string? _entityId;
-    private DateTime? _from;
-    private DateTime? _to;
-    private Guid? _expanded;
+    [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
-    private async Task<TableData<AuditEntryDto>> LoadAsync(TableState state, CancellationToken cancellationToken)
+    [Inject] private IDialogService Dialogs { get; set; } = null!;
+
+    [Inject] private ISnackbar Snackbar { get; set; } = null!;
+
+    private async Task LoadNamesAsync(IReadOnlyList<AuditEntryDto> entries)
     {
-        var page = await Api.GetAuditAsync(new AuditQuery(
-            _entityType, _entityId, null,
-            _from is { } from ? new DateTimeOffset(from.Date) : null,
-            _to is { } to ? new DateTimeOffset(to.Date.AddDays(1)) : null,
-            state.Page + 1, state.PageSize), cancellationToken);
-        return new TableData<AuditEntryDto> { Items = page.Items, TotalItems = page.TotalCount };
+        var ids = entries.Select(e => e.ActorId).OfType<Guid>().Distinct().ToList();
+        if (ids.Count > 0)
+        {
+            await Snackbar.RunAsync(async () => _names = await Api.GetUserNamesAsync(ids));
+        }
     }
 
-    private void Toggle(AuditEntryDto entry) => _expanded = _expanded == entry.Id ? null : entry.Id;
-
-    private async Task FilterAsync(Action apply)
-    {
-        apply();
-        await _table!.ReloadServerData();
-    }
+    private Task ShowChangesAsync(AuditEntryDto entry) =>
+        Dialogs.ShowAsync<AuditChangesDialog>(L["Changes"], new DialogParameters<AuditChangesDialog> { { d => d.Changes, entry.Changes } },
+            new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true });
 }

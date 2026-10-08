@@ -1,37 +1,22 @@
 @page "/admin/mail/log"
-@attribute [Authorize(Policy = "perm:" + MailPermissions.Log.View)]
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + MailPermissions.Log.View)]
 
-<PageTitle>Mail log</PageTitle>
-<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
-    <MudText Typo="Typo.h4">Mail log</MudText>
-    <MudSpacer />
-    <MudSelect T="OutgoingMailStatus?" Value="_status" ValueChanged="StatusChangedAsync" Label="Status" Clearable="true" Dense="true" Style="max-width:200px">
-        @foreach (var status in Enum.GetValues<OutgoingMailStatus>())
-        {
-            <MudSelectItem T="OutgoingMailStatus?" Value="status">@status</MudSelectItem>
-        }
-    </MudSelect>
-    <MudTextField T="string" @bind-Value="_search" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search"
-                  Immediate="true" DebounceInterval="300" OnDebounceIntervalElapsed="_ => _table!.ReloadServerData()" />
-</MudStack>
-
-<MudTable @ref="_table" T="OutgoingMailDto" ServerData="LoadAsync" Dense="true" Hover="true" RowsPerPage="25">
-    <HeaderContent>
-        <MudTh>Queued</MudTh><MudTh>To</MudTh><MudTh>Subject</MudTh><MudTh>Template</MudTh><MudTh>Status</MudTh><MudTh>Attempts</MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd>@context.QueuedAt.ToLocalTime().ToString("g")</MudTd>
-        <MudTd>@context.To</MudTd>
-        <MudTd>@context.Subject</MudTd>
-        <MudTd><MudText Typo="Typo.caption">@context.TemplateName</MudText></MudTd>
-        <MudTd>
-            <MudChip T="string" Size="Size.Small" Color="@ColorFor(context.Status)">@context.Status</MudChip>
-            @if (context.LastError is not null)
-            {
-                <MudTooltip Text="@context.LastError"><MudIcon Icon="@Icons.Material.Outlined.Info" Size="Size.Small" /></MudTooltip>
-            }
-        </MudTd>
-        <MudTd>@context.Attempts</MudTd>
-    </RowTemplate>
-    <PagerContent><MudTablePager /></PagerContent>
-</MudTable>
+<PageHeader Title="Mail log" Description="Mails the application queued and whether they went out." />
+<CoworkeeDataTable T="OutgoingMailDto" EntitySet="Mails" SearchFields="SearchFields" ExportFileName="mails">
+    <Columns>
+        <PropertyColumn Property="m => m.QueuedAt" Title="@L["Queued"]" Format="g" />
+        <PropertyColumn Property="m => m.To" Title="@L["To"]" />
+        <PropertyColumn Property="m => m.Subject" Title="@L["Subject"]" />
+        <PropertyColumn Property="m => m.TemplateName" Title="@L["Template"]" />
+        <PropertyColumn Property="m => m.Status" Title="@L["Status"]">
+            <CellTemplate>
+                <MudChip T="string" Size="Size.Small" Color="@ColorFor(context.Item.Status)">@L[context.Item.Status.ToString()]</MudChip>
+                @if (context.Item.LastError is { } error)
+                {
+                    <MudTooltip Text="@error"><MudIcon Icon="@Icons.Material.Outlined.Info" Size="Size.Small" /></MudTooltip>
+                }
+            </CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="m => m.Attempts" Title="@L["Attempts"]" />
+    </Columns>
+</CoworkeeDataTable>

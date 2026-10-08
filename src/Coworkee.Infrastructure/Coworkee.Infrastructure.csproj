@@ -2,6 +2,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Coworkee.Application\Coworkee.Application.csproj" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Nextended.Core" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection" />

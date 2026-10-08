@@ -2,6 +2,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Coworkee.Settings\Coworkee.Settings.csproj" />
     <ProjectReference Include="..\Coworkee.BackgroundJobs\Coworkee.BackgroundJobs.csproj" />
+    <ProjectReference Include="..\Coworkee.OData\Coworkee.OData.csproj" />
     <PackageReference Include="Scriban" />
     <PackageReference Include="MailKit" />
     <EmbeddedResource Include="Templates\*.scriban" />

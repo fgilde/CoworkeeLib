@@ -1,10 +1,10 @@
-using Coworkee.Contracts;
 using Coworkee.Contracts.Auditing;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Mailing;
 using Coworkee.Contracts.Notifications;
 using Coworkee.Contracts.Settings;
 using Coworkee.Contracts.Theming;
+using Coworkee.Contracts;
 
 namespace Coworkee.Client.Blazor.Api;
 
@@ -41,6 +41,10 @@ public interface ICoworkeeApi
     Task UpdateUserAsync(Guid id, UpdateUserRequest request, CancellationToken cancellationToken = default);
 
     Task SetUserRolesAsync(Guid id, IReadOnlyList<Guid> roleIds, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyDictionary<Guid, IReadOnlyList<RoleRefDto>>> GetUsersRolesAsync(IReadOnlyList<Guid> userIds, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyDictionary<Guid, string>> GetUserNamesAsync(IReadOnlyList<Guid> userIds, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<RoleDto>> GetRolesAsync(CancellationToken cancellationToken = default);
 

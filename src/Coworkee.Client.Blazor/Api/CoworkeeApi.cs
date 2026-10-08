@@ -1,10 +1,10 @@
-using Coworkee.Contracts;
 using Coworkee.Contracts.Auditing;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Mailing;
 using Coworkee.Contracts.Notifications;
 using Coworkee.Contracts.Settings;
 using Coworkee.Contracts.Theming;
+using Coworkee.Contracts;
 
 namespace Coworkee.Client.Blazor.Api;
 
@@ -59,6 +59,12 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
 
     public Task SetUserRolesAsync(Guid id, IReadOnlyList<Guid> roleIds, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Put, $"{Identity}/users/{id}/roles", new IdListRequest(roleIds), cancellationToken);
+
+    public async Task<IReadOnlyDictionary<Guid, IReadOnlyList<RoleRefDto>>> GetUsersRolesAsync(IReadOnlyList<Guid> userIds, CancellationToken cancellationToken = default) =>
+        await SendAsync<Dictionary<Guid, IReadOnlyList<RoleRefDto>>>(HttpMethod.Post, $"{Identity}/users/roles", new IdListRequest(userIds), cancellationToken);
+
+    public async Task<IReadOnlyDictionary<Guid, string>> GetUserNamesAsync(IReadOnlyList<Guid> userIds, CancellationToken cancellationToken = default) =>
+        await SendAsync<Dictionary<Guid, string>>(HttpMethod.Post, $"{Identity}/users/names", new IdListRequest(userIds), cancellationToken);
 
     public async Task<IReadOnlyList<RoleDto>> GetRolesAsync(CancellationToken cancellationToken = default) =>
         await GetAsync<RoleDto[]>($"{Identity}/roles", cancellationToken);

@@ -41,10 +41,12 @@ public sealed class OutgoingMail : AggregateRoot
 
     public string HtmlBody { get; private set; } = string.Empty;
 
+    [Nextended.Core.Facets.ProvideFacet(Label = "Template")]
     public string TemplateName { get; private set; } = string.Empty;
 
     public Guid? TenantId { get; private set; }
 
+    [Nextended.Core.Facets.ProvideFacet(Label = "Status")]
     public OutgoingMailStatus Status { get; set; }
 
     public int Attempts { get; set; }

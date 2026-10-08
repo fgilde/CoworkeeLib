@@ -1,46 +1,34 @@
 @page "/admin/groups"
-@attribute [Authorize(Policy = "perm:" + IdentityPermissions.Groups.View)]
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + IdentityPermissions.Groups.View)]
 
-<PageTitle>Groups</PageTitle>
-<RealtimeSubscription Topic="type:UserGroup" OnEvent="_ => ReloadAsync()" />
-<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
-    <MudText Typo="Typo.h4">Groups</MudText>
-    <MudSpacer />
-    <PermissionView Permission="@IdentityPermissions.Groups.Manage">
-        <MudTextField @bind-Value="_name" Placeholder="New group name" />
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateAsync" Disabled="@string.IsNullOrWhiteSpace(_name)">Add group</MudButton>
-    </PermissionView>
-</MudStack>
-
-<MudSimpleTable Dense="true" Hover="true">
-    <thead><tr><th>Name</th><th>Members</th><th>Roles</th><th></th></tr></thead>
-    <tbody>
-        @foreach (var group in _groups)
-        {
-            <tr>
-                <td>@group.Name</td>
-                <td>
-                    <MudSelect T="Guid" MultiSelection="true" Dense="true" SelectedValues="group.MemberIds" ToStringFunc="UserName"
-                               SelectedValuesChanged="ids => RunAsync(() => Api.SetGroupMembersAsync(group.Id, ids.ToList()))">
-                        @foreach (var user in _users)
-                        {
-                            <MudSelectItem Value="@user.Id">@user.Email</MudSelectItem>
-                        }
-                    </MudSelect>
-                </td>
-                <td>
-                    <MudSelect T="Guid" MultiSelection="true" Dense="true" SelectedValues="group.RoleIds" ToStringFunc="RoleName"
-                               SelectedValuesChanged="ids => RunAsync(() => Api.SetGroupRolesAsync(group.Id, ids.ToList()))">
-                        @foreach (var role in _roles.Where(r => !r.IsSystem))
-                        {
-                            <MudSelectItem Value="@role.Id">@role.Name</MudSelectItem>
-                        }
-                    </MudSelect>
-                </td>
-                <td style="text-align:right">
-                    <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" aria-label="Delete group" OnClick="() => RunAsync(() => Api.DeleteGroupAsync(group.Id))" />
-                </td>
-            </tr>
-        }
-    </tbody>
-</MudSimpleTable>
+<PageHeader Title="Groups" Description="Groups give their members roles together." />
+<RealtimeSubscription Topic="type:UserGroup" OnEvent="_ => _table.ReloadAsync()" />
+<CoworkeeDataTable @ref="_table" T="GroupRow" EntitySet="Groups" SearchFields="SearchFields" Exportable="false" DescribeItem="g => g.Name"
+                   CreateText="New group" CreatePermission="@IdentityPermissions.Groups.Manage" DeletePermission="@IdentityPermissions.Groups.Manage"
+                   OnCreate="CreateAsync" OnDelete="DeleteAsync">
+    <Columns>
+        <PropertyColumn Property="g => g.Name" Title="@L["Name"]" />
+        <TemplateColumn T="GroupRow" Title="@L["Members"]" Sortable="false">
+            <CellTemplate>
+                <MudSelect T="Guid" MultiSelection="true" Dense="true" SelectedValues="context.Item.Members.Select(m => m.UserId).ToArray()" ToStringFunc="UserName"
+                           Disabled="!_canManage" SelectedValuesChanged="ids => SetMembersAsync(context.Item, ids)">
+                    @foreach (var user in _users)
+                    {
+                        <MudSelectItem T="Guid" Value="@user.Id">@user.Email</MudSelectItem>
+                    }
+                </MudSelect>
+            </CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn T="GroupRow" Title="@L["Roles"]" Sortable="false">
+            <CellTemplate>
+                <MudSelect T="Guid" MultiSelection="true" Dense="true" SelectedValues="context.Item.Roles.Select(r => r.RoleId).ToArray()" ToStringFunc="RoleName"
+                           Disabled="!_canManage" SelectedValuesChanged="ids => SetRolesAsync(context.Item, ids)">
+                    @foreach (var role in _roles.Where(r => !r.IsSystem))
+                    {
+                        <MudSelectItem T="Guid" Value="@role.Id">@role.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+</CoworkeeDataTable>

@@ -1,31 +1,25 @@
 @page "/admin/audit"
-@attribute [Authorize(Policy = "perm:" + AuditPermissions.View)]
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + AuditPermissions.View)]
 
-<PageTitle>Audit log</PageTitle>
-<MudText Typo="Typo.h4" Class="mb-4">Audit log</MudText>
-<MudStack Row="true" Wrap="Wrap.Wrap" AlignItems="AlignItems.End" Class="mb-4">
-    <MudTextField T="string" @bind-Value="_entityType" Label="Entity type" Immediate="true" DebounceInterval="400" OnDebounceIntervalElapsed="_ => _table!.ReloadServerData()" />
-    <MudTextField T="string" @bind-Value="_entityId" Label="Entity id" Immediate="true" DebounceInterval="400" OnDebounceIntervalElapsed="_ => _table!.ReloadServerData()" />
-    <MudDatePicker Label="From" Date="_from" DateChanged="d => FilterAsync(() => _from = d)" Clearable="true" />
-    <MudDatePicker Label="To" Date="_to" DateChanged="d => FilterAsync(() => _to = d)" Clearable="true" />
-</MudStack>
-
-<MudTable @ref="_table" T="AuditEntryDto" ServerData="LoadAsync" Dense="true" Hover="true" RowsPerPage="25" OnRowClick="e => Toggle(e.Item!)">
-    <HeaderContent>
-        <MudTh>When</MudTh><MudTh>Action</MudTh><MudTh>Entity</MudTh><MudTh>Who</MudTh><MudTh>Changes</MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd>@context.OccurredAt.ToLocalTime().ToString("g")</MudTd>
-        <MudTd>@context.Action</MudTd>
-        <MudTd>@context.EntityType <MudText Typo="Typo.caption" Inline="true">@context.EntityId</MudText></MudTd>
-        <MudTd>@(context.ActorName ?? "system")</MudTd>
-        <MudTd>@context.Changes.Count</MudTd>
-    </RowTemplate>
-    <ChildRowContent>
-        @if (_expanded == context.Id)
-        {
-            <MudTr><td colspan="5"><AuditChanges Changes="context.Changes" /></td></MudTr>
-        }
-    </ChildRowContent>
-    <PagerContent><MudTablePager /></PagerContent>
-</MudTable>
+<PageHeader Title="Audit log" Description="Every change, field by field, with who made it." />
+<CoworkeeDataTable T="AuditEntryDto" EntitySet="AuditEntries" SearchFields="SearchFields" ExportFileName="audit" OnLoaded="LoadNamesAsync">
+    <Columns>
+        <PropertyColumn Property="e => e.OccurredAt" Title="@L["When"]" Format="g" />
+        <PropertyColumn Property="e => e.Action" Title="@L["Action"]">
+            <CellTemplate>@L[context.Item.Action]</CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="e => e.EntityType" Title="@L["Entity"]">
+            <CellTemplate>@context.Item.EntityType <MudText Typo="Typo.caption" Inline="true">@context.Item.EntityId</MudText></CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="e => e.ActorId" Title="@L["Who"]">
+            <CellTemplate>@(context.Item.ActorId is { } actor ? _names.GetValueOrDefault(actor, actor.ToString()) : L["system"])</CellTemplate>
+        </PropertyColumn>
+        <TemplateColumn T="AuditEntryDto" Title="@L["Changes"]" Sortable="false">
+            <CellTemplate>
+                <MudButton Size="Size.Small" Variant="Variant.Text" Disabled="context.Item.Changes.Count == 0" OnClick="() => ShowChangesAsync(context.Item)">
+                    @context.Item.Changes.Count
+                </MudButton>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+</CoworkeeDataTable>

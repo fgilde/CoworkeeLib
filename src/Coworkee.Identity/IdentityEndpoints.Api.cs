@@ -1,7 +1,7 @@
 using Coworkee.Application.Messaging;
 using Coworkee.AspNetCore.Http;
-using Coworkee.Contracts;
 using Coworkee.Contracts.Identity;
+using Coworkee.Contracts;
 using Coworkee.Identity.Permissions;
 using Coworkee.Identity.Roles;
 using Coworkee.Identity.Users;
@@ -29,6 +29,8 @@ internal static partial class IdentityEndpoints
         api.MapGet("/me", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetMyProfile(), ct).ToHttpResult());
         api.MapPut("/me", (UpdateProfileRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new UpdateMyProfile(body), ct).ToHttpResult());
         api.MapGet("/users/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetUser(id), ct).ToHttpResult());
+        api.MapPost("/users/names", (IdListRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new Users.Lookups.GetUserNamesQuery(body.Ids), ct).ToHttpResult());
+        api.MapPost("/users/roles", (IdListRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new Users.Lookups.GetUsersRolesQuery(body.Ids), ct).ToHttpResult());
         api.MapPost("/users/{id:guid}/unlock", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new UnlockUser(id), ct).ToHttpResult());
         api.MapPut("/users/{id:guid}", (Guid id, UpdateUserRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new UpdateUser(id, body), ct).ToHttpResult());
         api.MapGet("/users/{id:guid}/permissions", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetEffectivePermissions(id), ct).ToHttpResult());
