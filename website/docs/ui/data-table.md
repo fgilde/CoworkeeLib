@@ -55,6 +55,10 @@ Pass `meta => ...` to configure the `MudExObjectEditForm` (labels, order, editor
 - **Saved views**: the bookmark menu saves search, facets and hidden columns under a name and brings them back with one click. Views are kept per browser.
 - **Columns**: the column menu shows and hides columns.
 
+![Column menu](../assets/screenshots/data-table-columns.png){ .shot }
+
+![Saved views](../assets/screenshots/data-table-views.png){ .shot }
+
 ```razor
 <CoworkeeDataTable T="ProductDto" EntitySet="Products" UrlState="true" SavedViews="true" ColumnChooser="true" ... />
 ```

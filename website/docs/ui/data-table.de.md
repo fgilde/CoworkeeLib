@@ -55,6 +55,10 @@ Mit `meta => ...` konfigurieren Sie das `MudExObjectEditForm` (Beschriftungen, R
 - **Gespeicherte Ansichten**: das Lesezeichen-Menü speichert Suche, Facetten und ausgeblendete Spalten unter einem Namen und stellt sie mit einem Klick wieder her. Ansichten liegen pro Browser.
 - **Spalten**: das Spalten-Menü blendet Spalten ein und aus.
 
+![Spalten-Menü](../assets/screenshots/data-table-columns.png){ .shot }
+
+![Gespeicherte Ansichten](../assets/screenshots/data-table-views.png){ .shot }
+
 ```razor
 <CoworkeeDataTable T="ProductDto" EntitySet="Products" UrlState="true" SavedViews="true" ColumnChooser="true" ... />
 ```
