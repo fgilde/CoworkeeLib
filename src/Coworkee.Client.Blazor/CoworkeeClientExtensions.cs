@@ -17,6 +17,9 @@ public static class CoworkeeClientExtensions
         services.AddMudServicesWithExtensions();
         services.AddHttpClient<ICoworkeeApi, CoworkeeApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Data.IODataClient, Data.ODataClient>(client => client.BaseAddress = baseAddress);
+        services.AddHttpClient<Localization.ILocalizationApi, Localization.LocalizationApi>(client => client.BaseAddress = baseAddress);
+        services.AddScoped<Localization.CoworkeeLocalizer>();
+        MudBlazor.Services.ServiceCollectionExtensions.AddLocalizationInterceptor<Localization.CoworkeeMudLocalization>(services);
         services.AddScoped<Data.FileDownloader>();
         services.AddScoped<PermissionStore>();
         services.AddScoped<Theming.ThemeService>();
@@ -74,6 +77,8 @@ internal sealed class AdminNavigation : INavigationContributor
         new("Jobs", "/admin/jobs", MudBlazor.Icons.Material.Outlined.Schedule, Coworkee.Contracts.Jobs.JobsPermissions.View, ForceLoad: true, Group: AdminGroup),
         new("Themes", "/admin/themes", MudBlazor.Icons.Material.Outlined.Palette, Coworkee.Contracts.Theming.ThemePermissions.Manage, Group: AdminGroup),
         new("Audit log", "/admin/audit", MudBlazor.Icons.Material.Outlined.History, Coworkee.Contracts.Auditing.AuditPermissions.View, Group: AdminGroup),
+        new("Languages", "/admin/languages", MudBlazor.Icons.Material.Outlined.Language, Coworkee.Contracts.Localization.LocalizationPermissions.Manage, Group: AdminGroup),
+        new("Translations", "/admin/translations", MudBlazor.Icons.Material.Outlined.Translate, Coworkee.Contracts.Localization.LocalizationPermissions.Manage, Group: AdminGroup),
         new("My settings", "/settings", MudBlazor.Icons.Material.Outlined.ManageAccounts),
     ];
 }

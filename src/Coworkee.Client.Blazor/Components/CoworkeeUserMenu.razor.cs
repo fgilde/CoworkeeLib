@@ -11,6 +11,8 @@ public partial class CoworkeeUserMenu
 
     [Inject] private NavigationManager Nav { get; set; } = null!;
 
+    [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
+
     private string SignInHref
     {
         get

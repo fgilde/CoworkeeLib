@@ -18,6 +18,8 @@ public partial class CoworkeeNavMenu : IDisposable
     [Inject] private LayoutPreferences Preferences { get; set; } = null!;
 
     [Inject] private NavigationManager Nav { get; set; } = null!;
+    [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
+
 
     /// <summary>The drawer shows icons only: groups flatten and the tools hide.</summary>
     [Parameter] public bool Mini { get; set; }

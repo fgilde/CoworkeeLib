@@ -43,7 +43,7 @@ public sealed class LayoutParityTests : ClientTestBase
 
         await layout.Find("[data-testid='nav-pin'] button, button[data-testid='nav-pin']").ClickAsync(new());
 
-        JSInterop.VerifyInvoke("localStorage.setItem").Arguments[1]!.ToString()!.ShouldContain("\"Pinned\":false");
+        JSInterop.Invocations["localStorage.setItem"].ShouldContain(i => i.Arguments[1]!.ToString()!.Contains("\"Pinned\":false"));
         layout.WaitForAssertion(() => layout.FindAll("[data-nav-group]").ShouldBeEmpty());
         layout.Markup.ShouldContain("/catalog/brands");
     }

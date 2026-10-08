@@ -1,17 +1,18 @@
 <MudAppBar Elevation="0" Dense="true">
-    <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" aria-label="Toggle navigation" />
+    <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" aria-label="@L["Navigation"]" />
     <CoworkeeBrand />
     <MudSpacer />
     @foreach (var item in Items)
     {
         <DynamicComponent Type="item.Component" Parameters="item.Parameters" />
     }
+    <LanguageMenu />
     <ThemeMenu />
-    <MudTooltip Text="Right to left">
+    <MudTooltip Text="@L["Right to left"]">
         <MudIconButton Icon="@Icons.Material.Outlined.FormatTextdirectionRToL" Color="@(Preferences.RightToLeft ? Color.Warning : Color.Inherit)"
-                       OnClick="() => Preferences.SetRightToLeftAsync(!Preferences.RightToLeft)" aria-label="Toggle right to left" data-testid="rtl-toggle" />
+                       OnClick="() => Preferences.SetRightToLeftAsync(!Preferences.RightToLeft)" aria-label="@L["Right to left"]" data-testid="rtl-toggle" />
     </MudTooltip>
-    <MudIconButton Icon="@(Dark ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" Color="Color.Inherit" OnClick="ToggleDark" aria-label="Toggle dark mode" />
+    <MudIconButton Icon="@(Dark ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" Color="Color.Inherit" OnClick="ToggleDark" aria-label="@L["Dark mode"]" />
     <CoworkeeUserMenu />
-    <MudIconButton Icon="@Icons.Material.Outlined.Info" Color="Color.Inherit" Size="Size.Small" OnClick="ShowAboutAsync" aria-label="About" data-testid="about-button" />
+    <MudIconButton Icon="@Icons.Material.Outlined.Info" Color="Color.Inherit" Size="Size.Small" OnClick="ShowAboutAsync" aria-label="@L["About"]" data-testid="about-button" />
 </MudAppBar>

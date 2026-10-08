@@ -1,0 +1,11 @@
+@if (L.Languages.Count > 1)
+{
+    <MudMenu Icon="@Icons.Material.Outlined.Translate" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="true"
+             aria-label="@L["Language"]" data-testid="language-menu">
+        @foreach (var language in L.Languages)
+        {
+            <MudMenuItem OnClick="() => ChooseAsync(language.Culture)" data-culture="@language.Culture"
+                         Icon="@(string.Equals(language.Culture, L.Culture, StringComparison.OrdinalIgnoreCase) ? Icons.Material.Filled.Check : Icons.Material.Outlined.Circle)">@language.Name</MudMenuItem>
+        }
+    </MudMenu>
+}

@@ -1,0 +1,14 @@
+@page "/admin/languages"
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + LocalizationPermissions.Manage)]
+
+<PageHeader Title="Languages" Description="Languages users can choose. Without any, English and every language a module ships texts for are offered." />
+<CoworkeeDataTable @ref="_table" T="LanguageDto" EntitySet="Languages" SearchFields="SearchFields" MultiSelection="true" Exportable="false" DescribeItem="l => l.Name"
+                   CreateText="@L["New language"]" CreatePermission="@LocalizationPermissions.Manage" EditPermission="@LocalizationPermissions.Manage" DeletePermission="@LocalizationPermissions.Manage"
+                   OnCreate="CreateAsync" OnEdit="EditAsync" OnDelete="DeleteAsync">
+    <Columns>
+        <PropertyColumn Property="l => l.Name" Title="@L["Name"]" />
+        <PropertyColumn Property="l => l.Culture" Title="@L["Culture"]" />
+        <PropertyColumn Property="l => l.IsEnabled" Title="@L["Enabled"]" />
+        <PropertyColumn Property="l => l.IsDefault" Title="@L["Default"]" />
+    </Columns>
+</CoworkeeDataTable>

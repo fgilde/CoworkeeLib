@@ -102,6 +102,9 @@ public sealed class ThemeService(Api.ICoworkeeApi api)
 
     public string? LogoSvg => Current?.LogoSvg;
 
+    /// <summary>The settings the server shares with the client, read once with the theme.</summary>
+    public IReadOnlyDictionary<string, string?> ClientSettings { get; private set; } = new Dictionary<string, string?>();
+
     public event Action? Changed;
 
     public async Task LoadAsync()
@@ -120,6 +123,7 @@ public sealed class ThemeService(Api.ICoworkeeApi api)
         try
         {
             var settings = await api.GetClientSettingsAsync() ?? new Dictionary<string, string?>();
+            ClientSettings = settings;
             Mode = settings.GetValueOrDefault(ThemeSettings.Mode) is { Length: > 0 } mode ? mode : "system";
             if (settings.GetValueOrDefault(ThemeSettings.ThemeId) is { } id && Guid.TryParse(id, out var themeId) && themeId != Current?.Id
                 && (await api.GetThemesAsync() ?? []).FirstOrDefault(t => t.Id == themeId) is { } chosen)

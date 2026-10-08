@@ -7,6 +7,8 @@ namespace Coworkee.Client.Blazor.Components.Data;
 public partial class CoworkeeEditDialog<TModel>
 {
     [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = null!;
+    [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
+
 
     [Parameter] public string Title { get; set; } = string.Empty;
 

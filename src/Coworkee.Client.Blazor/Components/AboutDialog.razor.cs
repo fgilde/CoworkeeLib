@@ -9,6 +9,8 @@ public partial class AboutDialog
     [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = null!;
 
     [Inject] private CoworkeeClientOptions Options { get; set; } = null!;
+    [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
+
 
     private string AppVersion => Options.AppVersion ?? (Assembly.GetEntryAssembly() is { } app ? Version(app) : "-");
 

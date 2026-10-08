@@ -13,6 +13,8 @@ public partial class ThemeMenu
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
     [Inject] private ThemeService ThemeService { get; set; } = null!;
+    [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
+
 
     protected override async Task OnInitializedAsync()
     {

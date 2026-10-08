@@ -24,12 +24,15 @@ public partial class CoworkeeLayout : IDisposable
 
     [Inject] private LayoutPreferences Preferences { get; set; } = null!;
 
+    [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
+
     [CascadingParameter] private Task<AuthenticationState> AuthenticationState { get; set; } = null!;
 
     protected override void OnInitialized()
     {
         ThemeService.Changed += Refresh;
         Preferences.Changed += FollowPin;
+        L.Changed += Refresh;
     }
 
     protected override async Task OnInitializedAsync()
@@ -60,6 +63,7 @@ public partial class CoworkeeLayout : IDisposable
 
         await Preferences.LoadAsync();
         await ThemeService.LoadAsync();
+        await L.InitializeAsync(ThemeService.ClientSettings.GetValueOrDefault(Contracts.Localization.LocalizationSettings.Culture));
         _systemDark = _provider is not null && await _provider.GetSystemDarkModeAsync();
         Refresh();
     }
@@ -68,6 +72,7 @@ public partial class CoworkeeLayout : IDisposable
     {
         ThemeService.Changed -= Refresh;
         Preferences.Changed -= FollowPin;
+        L.Changed -= Refresh;
     }
 
     private void FollowPin() => InvokeAsync(() =>

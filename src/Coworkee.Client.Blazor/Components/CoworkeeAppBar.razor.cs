@@ -12,6 +12,8 @@ public partial class CoworkeeAppBar : IDisposable
     [Inject] private LayoutPreferences Preferences { get; set; } = null!;
 
     [Inject] private IDialogService Dialogs { get; set; } = null!;
+    [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
+
 
     [Parameter] public bool Dark { get; set; }
 
