@@ -52,20 +52,26 @@ public sealed class CoworkeeLocalizer(ILocalizationApi api, IJSRuntime js, Authe
 
     public async Task UseAsync(string culture)
     {
+        IReadOnlyDictionary<string, string> texts;
         try
         {
-            _texts = (await api.GetTextsAsync(culture)).Texts;
+            texts = (await api.GetTextsAsync(culture)).Texts;
         }
         catch (Exception exception) when (exception is ApiException or HttpRequestException)
         {
-            _texts = new Dictionary<string, string>();
+            texts = new Dictionary<string, string>();
         }
 
-        Culture = culture;
+        // re-rendering the whole layout resets inputs being typed into, so only when something changed
+        var changed = culture != Culture || texts.Count > 0 || _texts.Count > 0;
+        (_texts, Culture) = (texts, culture);
         var info = CultureInfo.GetCultureInfo(culture);
         CultureInfo.DefaultThreadCurrentCulture = CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = info;
         await TryJsAsync<object?>("localStorage.setItem", StorageKey, culture);
-        Changed?.Invoke();
+        if (changed)
+        {
+            Changed?.Invoke();
+        }
     }
 
     public void Dispose() => _flush?.Dispose();
