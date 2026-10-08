@@ -7,7 +7,7 @@
 
 @if (!Mini && (Theme.CanPinNav || Theme.CanChangeNavExpandMode))
 {
-    <div class="d-flex justify-end align-center px-2 pt-1" style="position:relative;z-index:2" data-testid="nav-tools">
+    <div class="d-flex justify-end align-center px-2 pt-1" style="position:relative;z-index:5" data-testid="nav-tools">
         @if (Theme.CanPinNav)
         {
             <MudTooltip Text="@L[Preferences.Pinned ? "Unpin" : "Pin"]">

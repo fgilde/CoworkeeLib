@@ -18,6 +18,12 @@ public sealed class ApiDocsTests(IdentityApp app)
         var page = await app.As(setup.AdminUserId, setup.TenantId).GetAsync("/swagger/index.html", Ct);
         page.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await page.Content.ReadAsStringAsync(Ct)).ShouldContain("theme-toggle");
+
+        // the UI reads the request interceptor from a JSON string; a raw line break in it leaves the page blank
+        var script = await app.As(setup.AdminUserId, setup.TenantId).GetStringAsync("/swagger/index.js", Ct);
+        var interceptor = script.Split('\n').Single(line => line.Contains("X-CSRF", StringComparison.Ordinal));
+        interceptor.ShouldContain("return request;");
+        interceptor.ShouldNotContain(@"\n");
     }
 
     [Fact]
