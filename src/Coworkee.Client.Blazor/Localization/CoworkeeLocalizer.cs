@@ -1,15 +1,14 @@
 using System.Globalization;
 using Coworkee.Client.Blazor.Api;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 
 namespace Coworkee.Client.Blazor.Localization;
 
 /// <summary>
 /// Texts of the current language: <c>L["Save"]</c>. Keys are the English texts, so English needs no translation and a missing
-/// translation shows the English text. Keys a translation lacks are reported (signed-in users only) for the translation editor.
+/// translation shows the English text. Keys a translation lacks are reported for the translation editor (the server takes them from signed-in users only).
 /// </summary>
-public sealed class CoworkeeLocalizer(ILocalizationApi api, IJSRuntime js, AuthenticationStateProvider? authentication = null) : IDisposable
+public sealed class CoworkeeLocalizer(ILocalizationApi api, IJSRuntime js) : IDisposable
 {
     public const string English = "en";
     private const string StorageKey = "coworkee.culture";
@@ -31,9 +30,26 @@ public sealed class CoworkeeLocalizer(ILocalizationApi api, IJSRuntime js, Authe
     /// <summary>The translation of <paramref name="key"/>, or null when the language has none.</summary>
     public string? Find(string key) => _texts.TryGetValue(key, out var text) ? text : null;
 
-    /// <summary>Picks the language: the stored choice, then the user setting, then the browser, then the default.</summary>
+    public bool IsInitialized { get; private set; }
+
+    /// <summary>
+    /// Picks the language: the stored choice, then the user setting, then the browser, then the default. Runs at startup before the
+    /// first render (see InitializeCoworkeeClientAsync), so pages never rebuild for it; later calls only apply a user setting on a new device.
+    /// </summary>
     public async Task InitializeAsync(string? userCulture)
     {
+        var stored = await TryJsAsync<string?>("localStorage.getItem", StorageKey);
+        if (IsInitialized)
+        {
+            if (stored is null && IsOffered(userCulture) && !string.Equals(userCulture, Culture, StringComparison.OrdinalIgnoreCase))
+            {
+                await UseAsync(userCulture!);
+            }
+
+            return;
+        }
+
+        IsInitialized = true;
         try
         {
             Languages = await api.GetLanguagesAsync();
@@ -43,7 +59,6 @@ public sealed class CoworkeeLocalizer(ILocalizationApi api, IJSRuntime js, Authe
             return;
         }
 
-        var stored = await TryJsAsync<string?>("localStorage.getItem", StorageKey);
         var browser = await TryJsAsync<string?>("eval", "navigator.language");
         var culture = new[] { stored, userCulture, browser, browser?.Split('-')[0] }.FirstOrDefault(IsOffered)
             ?? Languages.FirstOrDefault(l => l.IsDefault)?.Culture ?? English;
@@ -109,7 +124,7 @@ public sealed class CoworkeeLocalizer(ILocalizationApi api, IJSRuntime js, Authe
 
         _flush?.Dispose();
         _flush = null;
-        if (keys.Length == 0 || authentication is null || (await authentication.GetAuthenticationStateAsync()).User.Identity?.IsAuthenticated != true)
+        if (keys.Length == 0)
         {
             return;
         }

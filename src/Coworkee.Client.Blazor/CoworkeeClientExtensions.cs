@@ -23,7 +23,7 @@ public static class CoworkeeClientExtensions
             client.BaseAddress = baseAddress;
             client.Timeout = TimeSpan.FromMinutes(5);
         });
-        services.AddScoped<Localization.CoworkeeLocalizer>();
+        services.AddSingleton<Localization.CoworkeeLocalizer>();
         MudBlazor.Services.ServiceCollectionExtensions.AddLocalizationInterceptor<Localization.CoworkeeMudLocalization>(services);
         services.AddScoped<Data.FileDownloader>();
         services.AddScoped<PermissionStore>();
@@ -42,6 +42,10 @@ public static class CoworkeeClientExtensions
         Customization.ComponentReplacementExtensions.AddComponentReplacement(services);
         return services;
     }
+
+    /// <summary>Call between Build and RunAsync: picks the language before the first render, so pages do not rebuild for it.</summary>
+    public static Task InitializeCoworkeeClientAsync(this IServiceProvider services) =>
+        services.GetRequiredService<Localization.CoworkeeLocalizer>().InitializeAsync(null);
 
     /// <summary>
     /// Lets admins edit the typed section under Configuration (the server registers the same type with
