@@ -1,4 +1,5 @@
 using System.Text;
+using Coworkee.Contracts.Configuration;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using Microsoft.AspNetCore.DataProtection;

@@ -1,12 +1,14 @@
+using System.Security.Cryptography.X509Certificates;
 using Coworkee.AspNetCore;
+using Coworkee.AuthServer.External;
+using Coworkee.Contracts.Configuration;
 using Coworkee.Core.Modularity;
-using Coworkee.Identity;
 using Coworkee.Identity.Domain;
+using Coworkee.Identity;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Security.Cryptography.X509Certificates;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace Coworkee.AuthServer;
@@ -23,7 +25,10 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
         services.AddHostedService(provider => provider.GetRequiredService<AuthClientSeeder>());
         services.AddRazorPages().AddApplicationPart(typeof(CoworkeeAuthServerModule).Assembly);
 
-        services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();
+        var authentication = services.AddAuthentication(IdentityConstants.ApplicationScheme);
+        authentication.AddIdentityCookies();
+        authentication.AddExternalProviders(options.External);
+        services.AddScoped<ExternalSignIn>();
         services.ConfigureApplicationCookie(cookie =>
         {
             cookie.LoginPath = "/Account/Login";
@@ -94,7 +99,7 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
     {
         var clients = options.Clients.SelectMany(c => c.RedirectUris.Concat(c.PostLogoutRedirectUris))
             .Select(u => Uri.TryCreate(u, UriKind.Absolute, out var uri) ? uri.GetLeftPart(UriPartial.Authority) : null)
-            .OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase);
+            .OfType<string>().Concat(ExternalProviders.Origins(options.External)).Distinct(StringComparer.OrdinalIgnoreCase);
         return "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; "
             + $"frame-ancestors 'none'; form-action {string.Join(' ', ["'self'", .. clients])}";
     }

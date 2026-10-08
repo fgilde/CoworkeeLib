@@ -1,5 +1,6 @@
 using Coworkee.Application.Messaging;
 using Coworkee.BackgroundJobs;
+using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Mailing;
 using Coworkee.Core.Security;
 using Coworkee.Infrastructure.Persistence;

@@ -1,4 +1,5 @@
 using Coworkee.BackgroundJobs;
+using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Settings;
 using Coworkee.Core.Security;
 using Coworkee.Domain;
@@ -10,17 +11,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Coworkee.Notifications;
-
-public sealed class NotificationOptions
-{
-    public const string Section = "Coworkee:Notifications";
-
-    /// <summary>Base of the links in digest mails (the web app); without it the links stay relative.</summary>
-    public string? PublicAppUrl { get; set; }
-
-    /// <summary>When the daily digest goes out (cron, UTC).</summary>
-    public string DigestCron { get; set; } = "0 6 * * *";
-}
 
 /// <summary>When a user last got a digest, so nothing is mailed twice.</summary>
 [NotAudited]

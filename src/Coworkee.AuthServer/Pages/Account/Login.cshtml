@@ -2,6 +2,21 @@
 @model Coworkee.AuthServer.Pages.Account.LoginModel
 @{ ViewData["Title"] = "Sign in"; }
 <h1>Sign in</h1>
+@if (Model.Mode != Coworkee.Contracts.Configuration.LoginMode.Internal)
+{
+  <form method="post" asp-page-handler="External" asp-route-returnUrl="@Model.Request.Query["returnUrl"]" class="external">
+    @foreach (var (scheme, displayName) in Model.Providers)
+    {
+      <button type="submit" name="provider" value="@scheme" data-provider="@scheme">Sign in with @displayName</button>
+    }
+  </form>
+}
+@if (Model.ShowsPasswordForm)
+{
+@if (Model.Providers.Count > 0 && Model.Mode == Coworkee.Contracts.Configuration.LoginMode.Both)
+{
+  <p class="divider">or with your password</p>
+}
 <form method="post">
   <label for="email">Email</label>
   <input id="email" type="email" asp-for="Input.Email" autocomplete="username" required autofocus />
@@ -21,3 +36,4 @@
     }
   </div>
 </form>
+}
