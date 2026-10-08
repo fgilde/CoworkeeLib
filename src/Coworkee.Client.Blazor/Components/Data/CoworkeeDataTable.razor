@@ -88,7 +88,7 @@
 </MudStack>
 <FacetChips Selection="_selection" />
 <MudDataGrid @ref="_grid" T="T" ServerData="LoadAsync" MultiSelection="MultiSelection" SelectedItemsChanged="SelectionChangedAsync" RowsPerPage="PageSize"
-             SortMode="SortMode.Multiple" Dense="@ThemeService.Theme.DenseTables" Hover="true" Striped="@ThemeService.Theme.StripedTables" Elevation="0" Outlined="true" ChildRowContent="ChildRowContent" data-testid="data-table">
+             SortMode="SortMode.Multiple" Dense="@Theme.DenseTables" Hover="true" Striped="@Theme.StripedTables" Elevation="0" Outlined="true" ChildRowContent="ChildRowContent" data-testid="data-table">
     <Columns>
         @if (ChildRowContent is not null)
         {

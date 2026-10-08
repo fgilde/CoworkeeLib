@@ -25,7 +25,9 @@ public partial class CoworkeeDataTable<T> : IDisposable
     private IReadOnlyList<string>? _hiddenToApply;
     private readonly HashSet<string> _hidden = new(StringComparer.Ordinal);
 
-    [Inject] private Theming.ThemeService ThemeService { get; set; } = null!;
+    [Inject] private IServiceProvider Services { get; set; } = null!;
+
+    private Theming.CoworkeeTheme Theme => Services.GetService(typeof(Theming.ThemeService)) is Theming.ThemeService themes ? themes.Theme : Theming.CoworkeeTheme.Default;
 
     [Inject] private IDialogService Dialogs { get; set; } = null!;
 
