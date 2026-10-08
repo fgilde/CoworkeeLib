@@ -23,7 +23,7 @@ public abstract class ClientTestBase : BunitContext
         Services.AddScoped<Realtime.RealtimeClient>();
         Localization.GetTextsAsync(default!, default).ReturnsForAnyArgs(call => new Contracts.Localization.TextsDto(call.Arg<string>(), new Dictionary<string, string>()));
         Services.AddSingleton(Localization);
-        Services.AddScoped<Localization.CoworkeeLocalizer>();
+        Services.AddSingleton<Localization.CoworkeeLocalizer>();
     }
 
     protected ICoworkeeApi Api { get; } = Substitute.For<ICoworkeeApi>();
