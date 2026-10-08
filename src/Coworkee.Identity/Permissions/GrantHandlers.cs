@@ -15,6 +15,7 @@ public sealed record GetPermissionDefinitions : IQuery<Result<IReadOnlyList<Perm
 [RequiresPermission(IdentityPermissions.Permissions.Manage)]
 public sealed record GetGrants(PermissionProviderType ProviderType, Guid ProviderKey) : IQuery<Result<IReadOnlyList<string>>>;
 
+[Coworkee.Application.Messaging.AiTool(Exclude = true)]
 [RequiresPermission(IdentityPermissions.Permissions.Manage)]
 public sealed record SetGrants(PermissionProviderType ProviderType, Guid ProviderKey, IReadOnlyList<string> Names) : ICommand<Result>;
 

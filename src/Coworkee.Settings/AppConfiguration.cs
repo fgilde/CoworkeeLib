@@ -1,6 +1,6 @@
 using System.Globalization;
-using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
@@ -178,9 +178,11 @@ public sealed record GetAppConfigurations : IQuery<Result<IReadOnlyList<AppConfi
 [RequiresPermission(SettingsPermissions.Manage)]
 public sealed record GetAppConfiguration(string Section) : IQuery<Result<AppConfigurationValuesDto>>;
 
+[Coworkee.Application.Messaging.AiTool(Exclude = true)]
 [RequiresPermission(SettingsPermissions.Manage)]
 public sealed record SaveAppConfiguration(string Section, JsonElement Values) : ICommand<Result<AppConfigurationValuesDto>>;
 
+[Coworkee.Application.Messaging.AiTool(Exclude = true)]
 [RequiresPermission(SettingsPermissions.Manage)]
 public sealed record ResetAppConfiguration(string Section) : ICommand<Result<AppConfigurationValuesDto>>;
 

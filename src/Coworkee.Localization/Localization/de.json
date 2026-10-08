@@ -148,5 +148,21 @@
   "Sending": "Wird gesendet",
   "Sent": "Gesendet",
   "Failed": "Fehlgeschlagen",
-  "Skipped": "Übersprungen"
+  "Skipped": "Übersprungen",
+  "Assistant": "Assistent",
+  "New conversation": "Neues Gespräch",
+  "Ask for something the application can do, for example to find or change records.": "Bitten Sie um etwas, das die Anwendung kann, zum Beispiel Einträge finden oder ändern.",
+  "You": "Sie",
+  "Message": "Nachricht",
+  "Send": "Senden",
+  "(no answer)": "(keine Antwort)",
+  "The assistant did not answer in time. Try again or start a new conversation.": "Der Assistent hat nicht rechtzeitig geantwortet. Versuchen Sie es erneut oder beginnen Sie ein neues Gespräch.",
+  "AI tool calls": "KI-Werkzeugaufrufe",
+  "Every tool the assistant and MCP clients ran, with input, result and user.": "Jedes Werkzeug, das der Assistent und MCP-Clients ausgeführt haben, mit Eingabe, Ergebnis und Benutzer.",
+  "Channel": "Kanal",
+  "Tool": "Werkzeug",
+  "Input": "Eingabe",
+  "Result": "Ergebnis",
+  "OK": "OK",
+  "Succeeded": "Erfolgreich"
 }

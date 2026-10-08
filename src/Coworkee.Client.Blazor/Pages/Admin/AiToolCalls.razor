@@ -1,0 +1,21 @@
+@page "/admin/ai-tool-calls"
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + AiPermissions.Audit)]
+
+<PageHeader Title="AI tool calls" Description="Every tool the assistant and MCP clients ran, with input, result and user." />
+<CoworkeeDataTable T="AiToolCallDto" EntitySet="AiToolCalls" SearchFields="SearchFields" ExportFileName="ai-tool-calls" OnLoaded="LoadNamesAsync">
+    <Columns>
+        <PropertyColumn Property="c => c.At" Title="@L["When"]" Format="g" />
+        <PropertyColumn Property="c => c.Channel" Title="@L["Channel"]" />
+        <PropertyColumn Property="c => c.Tool" Title="@L["Tool"]" />
+        <PropertyColumn Property="c => c.UserId" Title="@L["Who"]">
+            <CellTemplate>@(context.Item.UserId is { } user ? _names.GetValueOrDefault(user, user.ToString()) : string.Empty)</CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="c => c.Input" Title="@L["Input"]" Sortable="false">
+            <CellTemplate><code style="overflow-wrap:anywhere">@context.Item.Input</code></CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="c => c.Succeeded" Title="@L["Result"]">
+            <CellTemplate>@(context.Item.Succeeded ? L["OK"] : context.Item.Error)</CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="c => c.DurationMs" Title="ms" />
+    </Columns>
+</CoworkeeDataTable>
