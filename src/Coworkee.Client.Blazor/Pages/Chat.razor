@@ -1,0 +1,60 @@
+@page "/chat"
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + ChatPermissions.Use)]
+
+<PageHeader Title="Chat" Description="Direct messages with the people of your organisation." />
+<MudGrid Spacing="2">
+    <MudItem xs="12" md="4">
+        <MudPaper Outlined="true" Class="pa-2" Style="height:65vh;overflow:auto">
+            <MudTextField T="string" @bind-Value="_filter" Immediate="true" Placeholder="@L["Search"]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search"
+                          Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-2" />
+            <MudList T="ChatContactDto" Dense="true" SelectedValue="_contact" SelectedValueChanged="OpenAsync" data-testid="chat-contacts">
+                @foreach (var contact in Contacts)
+                {
+                    <MudListItem Value="contact" data-contact="@contact.UserId">
+                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                            <MudAvatar Size="Size.Small" Color="Color.Primary">@Initial(contact.Name)</MudAvatar>
+                            <MudStack Spacing="0" Style="min-width:0;flex:1">
+                                <MudText Typo="Typo.body2" Style="@(contact.Unread > 0 ? "font-weight:600" : null)">@contact.Name</MudText>
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">@contact.LastMessage</MudText>
+                            </MudStack>
+                            @if (contact.Unread > 0)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Secondary">@contact.Unread</MudChip>
+                            }
+                        </MudStack>
+                    </MudListItem>
+                }
+            </MudList>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" md="8">
+        <MudPaper Outlined="true" Class="pa-3 d-flex flex-column" Style="height:65vh">
+            @if (_contact is null)
+            {
+                <MudText Class="mud-text-secondary ma-auto">@L["Pick a person to chat with."]</MudText>
+            }
+            else
+            {
+                <MudText Typo="Typo.h6" Class="mb-2">@_contact.Name</MudText>
+                <div style="flex:1;overflow:auto" data-testid="chat-messages">
+                    @foreach (var message in _messages)
+                    {
+                        var mine = message.FromUserId == _me;
+                        <div class="d-flex @(mine ? "justify-end" : "justify-start") my-1">
+                            <MudPaper Elevation="0" Class="@($"px-3 py-2 {(mine ? "mud-theme-primary" : "mud-background-gray")}")" Style="max-width:75%;border-radius:12px;white-space:pre-wrap">
+                                <MudText Typo="Typo.body2">@message.Text</MudText>
+                                <MudText Typo="Typo.caption" Style="opacity:.7">@message.SentAt.ToLocalTime().ToString("g")</MudText>
+                            </MudPaper>
+                        </div>
+                    }
+                </div>
+                <MudStack Row="true" AlignItems="AlignItems.End" Class="mt-2">
+                    <MudTextField T="string" @bind-Value="_text" Lines="2" Variant="Variant.Outlined" Placeholder="@L["Write a message"]" Immediate="true"
+                                  OnKeyDown="KeyDownAsync" MaxLength="4000" data-testid="chat-text" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Send" Color="Color.Primary" Disabled="string.IsNullOrWhiteSpace(_text)" OnClick="SendAsync"
+                                   aria-label="@L["Send"]" data-testid="chat-send" />
+                </MudStack>
+            }
+        </MudPaper>
+    </MudItem>
+</MudGrid>

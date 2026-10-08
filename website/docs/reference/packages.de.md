@@ -26,6 +26,7 @@ Welches Paket wohin gehört und was in den `using`-Block kommt.
 | `Coworkee.Ai` | API | `Coworkee.Ai` | `AddAiTool<TRequest>`, MCP-Server |
 | `Coworkee.Localization` | API | `Coworkee.Localization.Resources` | `CoworkeeLocalizationModule`, `ILocalizationResourceContributor`, `AddEmbeddedJson` |
 | `Coworkee.Backup` | API | `Coworkee.Backup` | `CoworkeeBackupModule` |
+| `Coworkee.Chat` | API | `Coworkee.Chat` | `CoworkeeChatModule`, `ChatEvents` |
 | `Coworkee.Client.Blazor` | WebAssembly-Client | `Coworkee.Client.Blazor`, `.Components`, `.Components.Data`, `.Data`, `.Api`, `.Navigation`, `.Security`, `.Customization` | `AddCoworkeeClient`, `CoworkeeLayout`, `CoworkeeDataTable<T>`, `IODataClient`, `ApiClientBase`, `ReplaceComponent` |
 | `Coworkee.Aspire` | AppHost | `Aspire.Hosting`, `Coworkee.Aspire.Settings` | `AddCoworkeeApp`, `CoworkeeApp`, `WithSetting` |
 | `Coworkee.Testing` | Tests | `Coworkee.Testing` | `PostgresFixture`, `PostgresWebApplicationFactory`, `AddTestAuthentication` |

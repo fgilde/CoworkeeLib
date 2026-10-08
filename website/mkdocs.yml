@@ -88,6 +88,7 @@ plugins:
             Auditing: Audit
             Localization: Lokalisierung
             Database backups: Datenbank-Backups
+            Chat: Chat
             AI assistant and MCP: KI-Assistent und MCP
             Hosting: Hosting
             Aspire app host: Aspire-AppHost
@@ -147,6 +148,7 @@ nav:
       - Auditing: modules/auditing.md
       - Localization: modules/localization.md
       - Database backups: modules/backups.md
+      - Chat: modules/chat.md
       - AI assistant and MCP: modules/ai.md
   - Hosting:
       - Aspire app host: hosting/aspire.md

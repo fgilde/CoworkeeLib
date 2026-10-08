@@ -180,5 +180,10 @@
   "Backup created": "Backup erstellt",
   "Backup restored": "Backup wiederhergestellt",
   "Replace every table with the backup {0}? Changes made since then are lost.": "Alle Tabellen durch das Backup {0} ersetzen? Änderungen seitdem gehen verloren.",
-  "Create, download and restore database backups": "Datenbank-Backups erstellen, herunterladen und wiederherstellen"
+  "Create, download and restore database backups": "Datenbank-Backups erstellen, herunterladen und wiederherstellen",
+  "Chat": "Chat",
+  "Direct messages with the people of your organisation.": "Direktnachrichten mit den Personen Ihrer Organisation.",
+  "Pick a person to chat with.": "Wählen Sie eine Person zum Chatten.",
+  "Write a message": "Nachricht schreiben",
+  "Chat with people of the organisation": "Mit Personen der Organisation chatten"
 }
