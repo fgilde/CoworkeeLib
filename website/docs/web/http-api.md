@@ -41,3 +41,5 @@ Authority and audience come from `Coworkee:ApiAuth`; the [app host](../hosting/a
 ## OpenAPI
 
 `UseCoworkee` serves the OpenAPI document (`/openapi/v1.json`) and Swagger UI in Development; elsewhere only with `Coworkee:OpenApi:Enabled=true`. Tags and names come from the endpoint definitions (`WithTags`, `WithName`).
+
+The document stays anonymous (SDK generators and snapshot tests read it) and declares a bearer scheme, so the Authorize button works against the API directly. Swagger UI (`/swagger`) needs a signed-in user with `ApiDocs.View`. The BFF forwards `/swagger` and `/openapi`: open `/swagger` on the web app origin (menu entry "API") and it signs you in first, then every request runs as you, with token and CSRF header added for you. A dark-mode toggle follows the system setting.

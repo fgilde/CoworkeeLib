@@ -28,7 +28,8 @@ public static class CoworkeeWebApplicationExtensions
         builder.Services.AddCoworkeeModules<TRoot>(builder.Configuration);
         builder.Services.AddProblemDetails();
         builder.Services.AddExceptionHandler<CoworkeeExceptionHandler>();
-        builder.Services.AddOpenApi("v1");
+        builder.Services.AddOpenApi("v1", ApiDocs.AddBearerScheme);
+        builder.Services.AddSingleton<Application.Authorization.IPermissionDefinitionContributor, ApiDocsPermissionDefinitions>();
         return builder;
     }
 
@@ -54,7 +55,7 @@ public static class CoworkeeWebApplicationExtensions
         if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>(OpenApiSetting))
         {
             app.MapOpenApi();
-            app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "v1"));
+            ApiDocs.UseSwaggerUi(app);
         }
 
         return app;
