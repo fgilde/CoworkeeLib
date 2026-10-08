@@ -1,3 +1,4 @@
+using Coworkee.Application.Messaging;
 using Coworkee.Application;
 using Coworkee.AspNetCore;
 using Coworkee.Core.Modularity;
@@ -22,6 +23,7 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
     {
         var services = context.Services;
         var registry = services.Registry();
+        services.AddMessagingFromAssembly(typeof(CoworkeeODataModule).Assembly);
         var model = new Lazy<IEdmModel>(() => BuildModel(registry));
         services.AddTransient<IFacetBuilder, FacetBuilder>();
         services.AddODataAuto(_ => model.Value);

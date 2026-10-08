@@ -55,7 +55,7 @@ internal static class ExcelExport
         sheet.Columns().AdjustToContents();
     }
 
-    private static List<System.Reflection.PropertyInfo> Columns<TEntity>(IEdmModel model)
+    internal static List<System.Reflection.PropertyInfo> Columns<TEntity>(IEdmModel model)
     {
         var type = (IEdmStructuredType)model.FindDeclaredType(typeof(TEntity).FullName);
         return

@@ -15,6 +15,8 @@ Auch ohne Registrierung wird jeder Request eines Moduls zum Werkzeug, der ein `R
 public sealed record GetBrandsQuery(string? Search) : IQuery<Result<IReadOnlyList<BrandDto>>>;
 ```
 
+Mit dem OData-Modul bekommt der Assistent zusätzlich ein Werkzeug `query_data`: es listet Zeilen jedes registrierten Entity-Sets mit OData-Filter und Sortierung, mit denselben Berechtigungen, Zeilenfiltern und ausgeblendeten Eigenschaften wie die Tabellen.
+
 Der Request-Typ wird zum Eingabeschema des Werkzeugs, das `Result` zu seiner Ausgabe. Fehler erreichen das Modell als Meldungen, auf die es reagieren kann.
 
 - **Assistent-Seite** für Benutzer mit `Ai.Chat`: ein Chat mit den Werkzeugen aller Module, als angemeldeter Benutzer.

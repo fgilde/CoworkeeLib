@@ -15,6 +15,8 @@ Without any registration, every request of a module that returns a `Result` and 
 public sealed record GetBrandsQuery(string? Search) : IQuery<Result<IReadOnlyList<BrandDto>>>;
 ```
 
+With the OData module, the assistant also gets a `query_data` tool: it lists rows of any registered entity set with an OData filter and order, with the same permissions, row filters and hidden properties as the tables.
+
 The request type becomes the tool's input schema, the `Result` its output. Failures reach the model as messages it can react to.
 
 - **Assistant page** for users with `Ai.Chat`: a chat with the tools of all modules, as the signed-in user.
