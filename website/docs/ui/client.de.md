@@ -102,6 +102,14 @@ internal sealed class CatalogApi(HttpClient http) : ApiClientBase(http), ICatalo
 <UserAvatar UserId="message.FromUserId" Size="Size.Small" ShowTooltip="true" />
 ```
 
+## Kontoseite
+
+`/profile` enthält die Tabs Profil (Bild, Name, Telefon, Adresse), Sicherheit, Benachrichtigungen und Einstellungen; `/profile/{key}` öffnet einen direkt. Mit einem `ProfileTab` fügen Sie eigene hinzu:
+
+```csharp
+builder.Services.AddSingleton(new ProfileTab("Documents", "documents", typeof(MyDocuments), DocumentPermissions.Documents.View));
+```
+
 ## Bausteine
 
 | Komponente | Zweck |

@@ -1,0 +1,9 @@
+<MudPaper Outlined="true" Class="pa-4" data-testid="profile-security">
+    <MudText Typo="Typo.h6" Class="mb-2">@L["Sign-in"]</MudText>
+    <MudText Class="mud-text-secondary mb-4">@L["Your address signs you in. Password and two-step verification are managed on the sign-in pages."]</MudText>
+    @if (_manage is not null)
+    {
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Password" Href="@($"{_manage}/ChangePassword")" Target="_blank" Class="mr-2 mb-2">@L["Change password"]</MudButton>
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Security" Href="@($"{_manage}/TwoFactor")" Target="_blank" Class="mb-2">@L["Two-step verification"]</MudButton>
+    }
+</MudPaper>

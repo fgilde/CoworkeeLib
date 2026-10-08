@@ -35,6 +35,10 @@ internal sealed class UpdateMyProfileValidator : AbstractValidator<UpdateMyProfi
         RuleFor(c => c.Profile.FirstName).MaximumLength(100);
         RuleFor(c => c.Profile.LastName).MaximumLength(100);
         RuleFor(c => c.Profile.PhoneNumber).MaximumLength(50);
+        RuleFor(c => c.Profile.Address!.Street).MaximumLength(200).When(c => c.Profile.Address is not null);
+        RuleFor(c => c.Profile.Address!.ZipCode).MaximumLength(20).When(c => c.Profile.Address is not null);
+        RuleFor(c => c.Profile.Address!.City).MaximumLength(100).When(c => c.Profile.Address is not null);
+        RuleFor(c => c.Profile.Address!.Country).MaximumLength(100).When(c => c.Profile.Address is not null);
     }
 }
 
@@ -54,6 +58,10 @@ internal sealed class MyProfileHandlers(CoworkeeDbContext db, ICurrentUser curre
         user.FirstName = Clean(command.Profile.FirstName);
         user.LastName = Clean(command.Profile.LastName);
         user.PhoneNumber = Clean(command.Profile.PhoneNumber);
+        user.Street = Clean(command.Profile.Address?.Street);
+        user.ZipCode = Clean(command.Profile.Address?.ZipCode);
+        user.City = Clean(command.Profile.Address?.City);
+        user.Country = Clean(command.Profile.Address?.Country);
         await db.SaveChangesAsync(cancellationToken);
         await changes.NotifyAsync(user, cancellationToken);
         return Map(user);
@@ -64,7 +72,9 @@ internal sealed class MyProfileHandlers(CoworkeeDbContext db, ICurrentUser curre
 
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
-    private static ProfileDto Map(User user) => new(user.Email!, user.FirstName, user.LastName, user.PhoneNumber, user.AvatarUrl);
+    internal static ProfileDto Map(User user) => new(
+        user.Email!, user.FirstName, user.LastName, user.PhoneNumber, user.AvatarUrl,
+        (user.Street ?? user.ZipCode ?? user.City ?? user.Country) is null ? null : new PostalAddress(user.Street, user.ZipCode, user.City, user.Country));
 }
 
 [RequiresPermission(IdentityPermissions.Users.Manage)]

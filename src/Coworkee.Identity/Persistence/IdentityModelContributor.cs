@@ -33,6 +33,10 @@ internal sealed class IdentityModelContributor : IModelContributor
             user.Property(u => u.NormalizedEmail).HasMaxLength(256);
             user.Property(u => u.FirstName).HasMaxLength(100);
             user.Property(u => u.LastName).HasMaxLength(100);
+            user.Property(u => u.Street).HasMaxLength(200);
+            user.Property(u => u.ZipCode).HasMaxLength(20);
+            user.Property(u => u.City).HasMaxLength(100);
+            user.Property(u => u.Country).HasMaxLength(100);
             user.Property(u => u.PasswordHash).IsSensitive();
             user.Property(u => u.SecurityStamp).IsNotAudited();
             user.Property(u => u.ConcurrencyStamp).IsConcurrencyToken().IsNotAudited();

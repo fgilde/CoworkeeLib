@@ -49,6 +49,14 @@ public sealed class User : IdentityUser<Guid>, IAuditable
 
     public DateTimeOffset? AvatarChangedAt { get; set; }
 
+    public string? Street { get; set; }
+
+    public string? ZipCode { get; set; }
+
+    public string? City { get; set; }
+
+    public string? Country { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
 
     public Guid? CreatedBy { get; set; }

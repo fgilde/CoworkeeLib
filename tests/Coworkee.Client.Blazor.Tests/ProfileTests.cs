@@ -19,17 +19,21 @@ public sealed class ProfileTests : ClientTestBase
         auth.SetClaims(new Claim("manage_url", "https://auth.test/Account/Manage"));
         var page = Render<Profile>();
 
-        page.WaitForAssertion(() => Fields(page).Count.ShouldBe(3));
+        page.WaitForAssertion(() => Fields(page).Count.ShouldBe(7));
         page.FindAll("form label").Select(l => l.TextContent.Trim()).ShouldContain("Last name");
+        page.FindAll("form label").Select(l => l.TextContent.Trim()).ShouldContain("City");
         Fields(page)[1].Change("Lovelace");
+        Fields(page)[5].Change("London");
         await page.Find("form").SubmitAsync();
 
-        await Api.Received(1).UpdateMyProfileAsync(Arg.Is<UpdateProfileRequest>(r => r.FirstName == "Ada" && r.LastName == "Lovelace"), Arg.Any<CancellationToken>());
+        await Api.Received(1).UpdateMyProfileAsync(
+            Arg.Is<UpdateProfileRequest>(r => r.FirstName == "Ada" && r.LastName == "Lovelace" && r.Address!.City == "London"), Arg.Any<CancellationToken>());
         page.Markup.ShouldContain("Ada Lovelace");
-        page.FindAll("a").Select(a => a.GetAttribute("href")).ShouldContain("https://auth.test/Account/Manage/ChangePassword");
+
+        Render<ProfileSecurity>().FindAll("a").Select(a => a.GetAttribute("href")).ShouldContain("https://auth.test/Account/Manage/ChangePassword");
     }
 
-    // first name, last name, phone; the object edit's own filter box is left out
+    // first name, last name, phone, street, zip code, city, country; the object edit's own filter box is left out
     private static List<AngleSharp.Dom.IElement> Fields(IRenderedComponent<Profile> page) =>
         [.. page.FindAll("form input[type='text'], form input[type='tel']").Where(i => i.GetAttribute("placeholder") != "Filter")];
 }

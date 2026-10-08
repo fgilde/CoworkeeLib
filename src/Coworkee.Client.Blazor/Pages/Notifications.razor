@@ -2,9 +2,12 @@
 @attribute [Authorize]
 @using Coworkee.Contracts.Notifications
 
-<PageTitle>Notifications</PageTitle>
 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
-    <MudText Typo="Typo.h4">Notifications</MudText>
+    @if (!Embedded)
+    {
+        <PageTitle>Notifications</PageTitle>
+        <MudText Typo="Typo.h4">Notifications</MudText>
+    }
     <MudSpacer />
     <MudSwitch T="bool" Value="_unreadOnly" ValueChanged="FilterAsync" Label="Unread only" Color="Color.Primary" data-testid="unread-only" />
     <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.DoneAll" OnClick="MarkAllAsync" data-testid="mark-all">Mark all as read</MudButton>

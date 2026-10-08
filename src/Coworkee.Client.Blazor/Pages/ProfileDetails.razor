@@ -1,0 +1,39 @@
+@using MudBlazor.Extensions.Components.ObjectEdit
+@using MudBlazor.Extensions.Components.ObjectEdit.Options
+
+@if (_profile is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <MudGrid>
+        <MudItem xs="12" sm="5" md="4" lg="3">
+            <MudPaper Outlined="true" Class="pa-4 d-flex flex-column align-center" data-testid="profile-card">
+                <UserAvatar UserId="_userId" Pixels="160" />
+                <MudText Typo="Typo.h6" Align="Align.Center" Class="mt-3" Style="word-break:break-word">@DisplayName</MudText>
+                <MudText Typo="Typo.body2" Align="Align.Center" Class="mud-text-secondary" Style="word-break:break-word">@_profile.Email</MudText>
+                <MudStack Row="true" Justify="Justify.Center" Class="mt-3">
+                    <MudFileUpload T="IBrowserFile" Accept="image/*" FilesChanged="UploadAsync" data-testid="avatar-upload">
+                        <CustomContent Context="upload">
+                            <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.CloudUpload"
+                                       Disabled="_busy" OnClick="upload.OpenFilePickerAsync">@L["Upload picture"]</MudButton>
+                        </CustomContent>
+                        <SelectedTemplate />
+                    </MudFileUpload>
+                    @if (_profile.AvatarUrl is not null)
+                    {
+                        <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" StartIcon="@Icons.Material.Filled.Delete" Disabled="_busy"
+                                   OnClick="RemoveAsync" data-testid="avatar-remove">@L["Remove picture"]</MudButton>
+                    }
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="7" md="8" lg="9">
+            <MudPaper Outlined="true" Class="pa-4">
+                <MudExObjectEditForm T="ProfileForm" Value="_form" MetaInformation="_meta" OnValidSubmit="SaveAsync" GroupingStyle="GroupingStyle.Flat"
+                                     GlobalResetSettings="@(new GlobalResetSettings { AllowReset = false })" data-testid="profile-form" />
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}

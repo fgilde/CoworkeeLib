@@ -90,10 +90,10 @@ public sealed class MyProfileTests(IdentityApp app) : IAsyncLifetime
         var bob = (await (await admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest("bob@acme.test", "Passw0rd!x", "Bob", null), Ct)).Content.ReadFromJsonAsync<UserDto>(Ct))!;
         var me = app.As(bob.Id, _setup.TenantId);
 
-        (await me.PutAsJsonAsync("/api/v1/identity/me", new UpdateProfileRequest("Robert", "Builder", "+49 30 1234"), Ct)).EnsureSuccessStatusCode();
+        (await me.PutAsJsonAsync("/api/v1/identity/me", new UpdateProfileRequest("Robert", "Builder", "+49 30 1234", new PostalAddress("Main St 1", "10115", " Berlin ", null)), Ct)).EnsureSuccessStatusCode();
 
         var profile = (await me.GetFromJsonAsync<ProfileDto>("/api/v1/identity/me", Ct))!;
-        profile.ShouldBe(new ProfileDto("bob@acme.test", "Robert", "Builder", "+49 30 1234"));
+        profile.ShouldBe(new ProfileDto("bob@acme.test", "Robert", "Builder", "+49 30 1234", Address: new PostalAddress("Main St 1", "10115", "Berlin", null)));
         (await me.PutAsJsonAsync("/api/v1/identity/me", new UpdateProfileRequest(new string('x', 101), null, null), Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 }

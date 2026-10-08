@@ -8,6 +8,9 @@ namespace Coworkee.Client.Blazor.Pages;
 
 public partial class UserSettings : IDisposable
 {
+    /// <summary>Shown as a tab of the account page: without own title.</summary>
+    [Parameter] public bool Embedded { get; set; }
+
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
     [Inject] private ThemeService ThemeService { get; set; } = null!;

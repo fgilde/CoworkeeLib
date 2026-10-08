@@ -1,53 +1,16 @@
 @page "/profile"
+@page "/profile/{Tab}"
 @attribute [Authorize]
-@using MudBlazor.Extensions.Components.ObjectEdit
-@using MudBlazor.Extensions.Components.ObjectEdit.Options
 
-<PageHeader Title="My profile" Description="Your picture and name show next to your messages, changes and documents for everyone in the organisation." />
+<PageHeader Title="Account" Description="Your picture and name show next to your messages, changes and documents for everyone in the organisation." />
 
-@if (_profile is null)
-{
-    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
-}
-else
-{
-    <MudGrid>
-        <MudItem xs="12" sm="5" md="4" lg="3">
-            <MudPaper Outlined="true" Class="pa-4 d-flex flex-column align-center" data-testid="profile-card">
-                <UserAvatar UserId="_userId" Pixels="160" />
-                <MudText Typo="Typo.h6" Align="Align.Center" Class="mt-3" Style="word-break:break-word">@DisplayName</MudText>
-                <MudText Typo="Typo.body2" Align="Align.Center" Class="mud-text-secondary" Style="word-break:break-word">@_profile.Email</MudText>
-                <MudStack Row="true" Justify="Justify.Center" Class="mt-3">
-                    <MudFileUpload T="IBrowserFile" Accept="image/*" FilesChanged="UploadAsync" data-testid="avatar-upload">
-                        <CustomContent Context="upload">
-                            <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.CloudUpload"
-                                       Disabled="_busy" OnClick="upload.OpenFilePickerAsync">@L["Upload picture"]</MudButton>
-                        </CustomContent>
-                        <SelectedTemplate />
-                    </MudFileUpload>
-                    @if (_profile.AvatarUrl is not null)
-                    {
-                        <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" StartIcon="@Icons.Material.Filled.Delete" Disabled="_busy"
-                                   OnClick="RemoveAsync" data-testid="avatar-remove">@L["Remove picture"]</MudButton>
-                    }
-                </MudStack>
-            </MudPaper>
-        </MudItem>
-        <MudItem xs="12" sm="7" md="8" lg="9">
-            <MudPaper Outlined="true" Class="pa-4 mb-4">
-                <MudText Typo="Typo.h6" Class="mb-2">@L["Profile details"]</MudText>
-                <MudExObjectEditForm T="ProfileForm" Value="_form" MetaInformation="_meta" OnValidSubmit="SaveAsync" GroupingStyle="GroupingStyle.Flat"
-                                     GlobalResetSettings="@(new GlobalResetSettings { AllowReset = false })" data-testid="profile-form" />
-            </MudPaper>
-            <MudPaper Outlined="true" Class="pa-4">
-                <MudText Typo="Typo.h6" Class="mb-2">@L["Sign-in"]</MudText>
-                <MudText Class="mud-text-secondary mb-4">@L["Your address signs you in. Password and two-step verification are managed on the sign-in pages."]</MudText>
-                @if (_manage is not null)
-                {
-                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Password" Href="@($"{_manage}/ChangePassword")" Target="_blank" Class="mr-2 mb-2">@L["Change password"]</MudButton>
-                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Security" Href="@($"{_manage}/TwoFactor")" Target="_blank" Class="mb-2">@L["Two-step verification"]</MudButton>
-                }
-            </MudPaper>
-        </MudItem>
-    </MudGrid>
-}
+<MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" TabPanelsClass="pt-6" ActivePanelIndex="ActiveIndex" ActivePanelIndexChanged="Select" data-testid="profile-tabs">
+    <MudTabPanel Text="@L["Profile"]" Icon="@Icons.Material.Outlined.Badge"><ProfileDetails /></MudTabPanel>
+    <MudTabPanel Text="@L["Security"]" Icon="@Icons.Material.Outlined.Security"><ProfileSecurity /></MudTabPanel>
+    <MudTabPanel Text="@L["Notifications"]" Icon="@Icons.Material.Outlined.Notifications"><Notifications Embedded="true" /></MudTabPanel>
+    <MudTabPanel Text="@L["Settings"]" Icon="@Icons.Material.Outlined.Tune"><UserSettings Embedded="true" /></MudTabPanel>
+    @foreach (var tab in _extra)
+    {
+        <MudTabPanel @key="tab.Key" Text="@L[tab.Title]" Icon="@tab.Icon"><DynamicComponent Type="tab.Component" /></MudTabPanel>
+    }
+</MudTabs>

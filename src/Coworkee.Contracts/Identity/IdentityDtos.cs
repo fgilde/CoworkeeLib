@@ -11,10 +11,12 @@ public sealed record UserDetailDto(
 
 public sealed record GroupRefDto(Guid Id, string Name);
 
-/// <summary>What everyone may change about themselves; the address and the password belong to the sign-in.</summary>
-public sealed record ProfileDto(string Email, string? FirstName, string? LastName, string? PhoneNumber, string? AvatarUrl = null);
+/// <summary>What everyone may change about themselves; the email and the password belong to the sign-in.</summary>
+public sealed record ProfileDto(string Email, string? FirstName, string? LastName, string? PhoneNumber, string? AvatarUrl = null, PostalAddress? Address = null);
 
-public sealed record UpdateProfileRequest(string? FirstName, string? LastName, string? PhoneNumber);
+public sealed record UpdateProfileRequest(string? FirstName, string? LastName, string? PhoneNumber, PostalAddress? Address = null);
+
+public sealed record PostalAddress(string? Street, string? ZipCode, string? City, string? Country);
 
 public sealed record CreateUserRequest(string Email, string Password, string? FirstName, string? LastName);
 

@@ -1,106 +1,48 @@
-using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Localization;
-using Coworkee.Client.Blazor.People;
-using Coworkee.Contracts.Identity;
+using Coworkee.Client.Blazor.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.JSInterop;
-using MudBlazor;
-using MudBlazor.Extensions.Components.ObjectEdit;
-using MudBlazor.Extensions.Components.ObjectEdit.Options;
 
 namespace Coworkee.Client.Blazor.Pages;
 
 public partial class Profile
 {
-    private const long MaxUploadBytes = 10 * 1024 * 1024;
-    private const int AvatarPixels = 256;
+    private static readonly string[] BuiltIn = [string.Empty, "security", "notifications", "settings"];
+    private List<ProfileTab> _extra = [];
 
-    [Inject] private ICoworkeeApi Api { get; set; } = null!;
+    [Parameter] public string? Tab { get; set; }
 
-    [Inject] private UserCards Cards { get; set; } = null!;
+    [Inject] private IEnumerable<ProfileTab> Tabs { get; set; } = null!;
 
-    [Inject] private IJSRuntime JS { get; set; } = null!;
+    [Inject] private IAuthorizationService Authorization { get; set; } = null!;
 
-    [Inject] private ISnackbar Snackbar { get; set; } = null!;
+    [Inject] private NavigationManager Nav { get; set; } = null!;
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
     [CascadingParameter] private Task<AuthenticationState> AuthenticationState { get; set; } = null!;
 
-    private ProfileDto? _profile;
-    private ProfileForm _form = new();
-    private ObjectEditMeta<ProfileForm>? _meta;
-    private Guid _userId;
-    private string? _manage;
-    private bool _busy;
+    private IEnumerable<string> Keys => BuiltIn.Concat(_extra.Select(t => t.Key));
 
-    private string DisplayName => $"{_profile?.FirstName} {_profile?.LastName}".Trim() is { Length: > 0 } name ? name : _profile!.Email;
+    private int ActiveIndex => Math.Max(0, Keys.ToList().FindIndex(k => string.Equals(k, Tab ?? string.Empty, StringComparison.OrdinalIgnoreCase)));
 
     protected override async Task OnInitializedAsync()
     {
         var user = (await AuthenticationState).User;
-        _manage = user.FindFirst("manage_url")?.Value?.TrimEnd('/');
-        _userId = Guid.TryParse(user.FindFirst("sub")?.Value, out var id) ? id : Guid.Empty;
-        Show(await Api.GetMyProfileAsync());
+        foreach (var tab in Tabs.OrderBy(t => t.Order))
+        {
+            if (tab.Permission is null || (await Authorization.AuthorizeAsync(user, PermissionPolicy.For(tab.Permission))).Succeeded)
+            {
+                _extra.Add(tab);
+            }
+        }
     }
 
-    private void Show(ProfileDto profile)
+    private void Select(int index)
     {
-        _profile = profile;
-        _form = new ProfileForm { FirstName = profile.FirstName, LastName = profile.LastName, PhoneNumber = profile.PhoneNumber };
-        _meta = _form.ObjectEditMeta(Configure);
-    }
-
-    private void Configure(ObjectEditMeta<ProfileForm> meta)
-    {
-        meta.Property(p => p.FirstName).WithLabel(L["First name"]).WithAdditionalAttribute("MaxLength", 100);
-        meta.Property(p => p.LastName).WithLabel(L["Last name"]).WithAdditionalAttribute("MaxLength", 100);
-        meta.Property(p => p.PhoneNumber).WithLabel(L["Phone"]).WithAdditionalAttribute("MaxLength", 50);
-    }
-
-    private Task SaveAsync(EditContext context) => RunAsync(async () =>
-    {
-        Show(await Api.UpdateMyProfileAsync(new UpdateProfileRequest(_form.FirstName, _form.LastName, _form.PhoneNumber)));
-        Cards.Forget(_userId);
-        Snackbar.Add(L["Profile saved"], Severity.Success);
-    });
-
-    private Task UploadAsync(IBrowserFile? file) => file is null ? Task.CompletedTask : RunAsync(async () =>
-    {
-        await using var stream = file.OpenReadStream(MaxUploadBytes);
-        using var memory = new MemoryStream();
-        await stream.CopyToAsync(memory);
-        var module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");
-        var resized = await module.InvokeAsync<string?>("resizeImage", $"data:{file.ContentType};base64,{Convert.ToBase64String(memory.ToArray())}", AvatarPixels);
-        if (resized is null)
-        {
-            Snackbar.Add(L["This file is no picture the browser can show."], Severity.Warning);
-            return;
-        }
-
-        Show(await Api.SetMyAvatarAsync(resized));
-        Cards.Forget(_userId);
-        Snackbar.Add(L["Picture saved"], Severity.Success);
-    });
-
-    private Task RemoveAsync() => RunAsync(async () =>
-    {
-        Show(await Api.SetMyAvatarAsync(null));
-        Cards.Forget(_userId);
-    });
-
-    private async Task RunAsync(Func<Task> action)
-    {
-        _busy = true;
-        try
-        {
-            await Snackbar.RunAsync(action);
-        }
-        finally
-        {
-            _busy = false;
-        }
+        var key = Keys.ElementAt(index);
+        Tab = key;
+        Nav.NavigateTo(key.Length == 0 ? "/profile" : $"/profile/{key}", replace: true);
     }
 }
