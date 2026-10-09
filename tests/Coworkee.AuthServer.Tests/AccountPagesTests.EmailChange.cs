@@ -34,6 +34,16 @@ public sealed partial class AccountPagesTests
         (await LoginAsync(app.Browser(), "admin@acme.test", Password)).StatusCode.ShouldBe(HttpStatusCode.Redirect);
     }
 
+    [Fact]
+    public async Task An_email_change_to_an_address_that_may_not_sign_in_is_rejected()
+    {
+        await SendEmailChangeAsync("ada@other.test");
+        var link = LocalPath(app.Mails.LinkFor("Identity.ChangeEmail", "confirm_url"));
+
+        (await app.Browser().GetStringAsync(link, Ct)).ShouldContain("The link is invalid or has expired.");
+        (await LoginAsync(app.Browser(), "admin@acme.test", Password)).StatusCode.ShouldBe(HttpStatusCode.Redirect);
+    }
+
     private async Task SendEmailChangeAsync(string email)
     {
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(_setup.AdminUserId, _setup.TenantId));
