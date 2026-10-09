@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>coworkee</ToolCommandName>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <Description>Coworkee command line: create a Coworkee application, run it, add migrations and modules, update the packages.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine" />
+    <EmbeddedResource Include="Scaffold/**" LogicalName="Scaffold/%(RecursiveDir)%(Filename)%(Extension)" WithCulture="false" />
+  </ItemGroup>
+</Project>

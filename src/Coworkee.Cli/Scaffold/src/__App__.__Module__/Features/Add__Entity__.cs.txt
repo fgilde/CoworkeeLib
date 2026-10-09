@@ -1,0 +1,23 @@
+using System.ComponentModel;
+using Coworkee.Application.Authorization;
+using Coworkee.Application.Messaging;
+using Coworkee.Core.Results;
+using Coworkee.Infrastructure.Persistence;
+using __App__.__Module__.Domain;
+using __App__.Contracts.__Module__;
+
+namespace __App__.__Module__.Features;
+
+[Description("Creates a __Entity__.")]
+[RequiresPermission(__Module__Permissions.Create)]
+public sealed record Add__Entity__Command(Add__Entity__Request Request) : ICommand<Result<__Entity__Dto>>;
+
+internal sealed class Add__Entity__Handler(CoworkeeDbContext db) : IHandler<Add__Entity__Command, Result<__Entity__Dto>>
+{
+    public Task<Result<__Entity__Dto>> HandleAsync(Add__Entity__Command command, CancellationToken cancellationToken)
+    {
+        var entity = new __Entity__ { Name = command.Request.Name.Trim() };
+        db.Add(entity);
+        return Task.FromResult<Result<__Entity__Dto>>(new __Entity__Dto(entity.Id, entity.Name));
+    }
+}

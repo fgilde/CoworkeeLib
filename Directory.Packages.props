@@ -64,5 +64,6 @@
     <PackageVersion Include="MailKit" Version="4.18.1" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageVersion Include="ClosedXML" Version="0.105.1" />
+    <PackageVersion Include="System.CommandLine" Version="2.0.8" />
   </ItemGroup>
 </Project>

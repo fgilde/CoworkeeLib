@@ -1,0 +1,16 @@
+using Coworkee.Application.Messaging;
+using Coworkee.AspNetCore.Http;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+using __App__.__Module__.Features;
+using __App__.Contracts.__Module__;
+
+namespace __App__.__Module__.Endpoints;
+
+internal static class __Entity__Endpoints
+{
+    public static void Map__Entity__Endpoints(this IEndpointRouteBuilder app) =>
+        app.MapCoworkeeApi("/api/v1/__route__").WithTags("__Module__").RequireAuthorization()
+            .MapPost("/", (Add__Entity__Request body, IDispatcher d, CancellationToken ct) => d.SendAsync(new Add__Entity__Command(body), ct).ToHttpResult());
+}

@@ -1,0 +1,14 @@
+using Coworkee.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using __App__.__Module__.Domain;
+
+namespace __App__.__Module__.Persistence;
+
+internal sealed class __Module__ModelContributor : IModelContributor
+{
+    public void Apply(ModelBuilder modelBuilder) => modelBuilder.Entity<__Entity__>(entity =>
+    {
+        entity.ToTable("__Module__", "app");
+        entity.Property(e => e.Name).HasMaxLength(200);
+    });
+}

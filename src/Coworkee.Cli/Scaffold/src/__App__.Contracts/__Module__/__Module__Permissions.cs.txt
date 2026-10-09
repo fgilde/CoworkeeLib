@@ -1,0 +1,8 @@
+namespace __App__.Contracts.__Module__;
+
+public static class __Module__Permissions
+{
+    public const string GroupName = "__Module__";
+    public const string View = "__Module__.View";
+    public const string Create = "__Module__.Create";
+}

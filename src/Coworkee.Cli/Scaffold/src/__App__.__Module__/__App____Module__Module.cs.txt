@@ -1,0 +1,29 @@
+using Coworkee.Application.Authorization;
+using Coworkee.Application.Messaging;
+using Coworkee.AspNetCore;
+using Coworkee.Core.Modularity;
+using Coworkee.Infrastructure.Persistence;
+using Coworkee.OData;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using __App__.__Module__.Domain;
+using __App__.__Module__.Endpoints;
+using __App__.__Module__.Permissions;
+using __App__.__Module__.Persistence;
+using __App__.Contracts.__Module__;
+
+namespace __App__.__Module__;
+
+[DependsOn(typeof(CoworkeeODataModule))]
+public sealed class __App____Module__Module : CoworkeeModule, IWebModule
+{
+    public override void ConfigureServices(ModuleServiceContext context)
+    {
+        context.Services.AddMessagingFromAssembly(typeof(__App____Module__Module).Assembly);
+        context.Services.AddSingleton<IModelContributor, __Module__ModelContributor>();
+        context.Services.AddSingleton<IPermissionDefinitionContributor, __Module__PermissionDefinitions>();
+        context.Services.AddODataEntity<__Entity__>("__Module__", __Module__Permissions.View);
+    }
+
+    public void ConfigureApplication(WebApplication app) => app.Map__Entity__Endpoints();
+}

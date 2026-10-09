@@ -1,0 +1,11 @@
+using Coworkee.Application.Authorization;
+using __App__.Contracts.__Module__;
+
+namespace __App__.__Module__.Permissions;
+
+internal sealed class __Module__PermissionDefinitions : IPermissionDefinitionContributor
+{
+    public void Define(PermissionDefinitionContext context) => context.Group(__Module__Permissions.GroupName, "__Module__")
+        .Add(__Module__Permissions.View, "View __Module__")
+        .Add(__Module__Permissions.Create, "Create __Module__", __Module__Permissions.View);
+}
