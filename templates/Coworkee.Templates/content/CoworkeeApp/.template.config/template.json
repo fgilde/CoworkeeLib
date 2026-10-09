@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "fgilde",
+  "classifications": ["Web", "Blazor", "Aspire", "Coworkee"],
+  "identity": "Coworkee.Templates.App",
+  "groupIdentity": "Coworkee.App",
+  "name": "Coworkee application",
+  "description": "Aspire app host, API, auth server, Blazor WebAssembly with BFF and Postgres, built on the Coworkee packages.",
+  "shortName": ["coworkee", "coworkee-app"],
+  "sourceName": "MyApp",
+  "preferNameDirectory": true,
+  "tags": { "language": "C#", "type": "solution" },
+  "symbols": {
+    "samples": { "type": "parameter", "datatype": "bool", "defaultValue": "true", "description": "Include the Catalog and Documents sample modules." },
+    "keycloak": { "type": "parameter", "datatype": "bool", "defaultValue": "false", "description": "Add a Keycloak container as external sign-in." },
+    "tests": { "type": "parameter", "datatype": "bool", "defaultValue": "true", "description": "Include the test projects." },
+    "title": { "type": "parameter", "datatype": "string", "description": "Display title of the app (default: the name)." },
+    "appTitle": { "type": "generated", "generator": "coalesce", "parameters": { "sourceVariableName": "title", "fallbackVariableName": "name" }, "replaces": "COWORKEE_APP_TITLE" },
+    "seedPassword": { "type": "generated", "generator": "guid", "parameters": { "defaultFormat": "N" }, "replaces": "SEED_PASSWORD" }
+  },
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "condition": "(!samples)",
+          "exclude": [
+            "src/MyApp.Catalog/**",
+            "src/MyApp.Documents/**",
+            "src/MyApp.Contracts/Catalog/**",
+            "src/MyApp.Contracts/Documents/**",
+            "src/MyApp.Application/Dashboard/**",
+            "src/MyApp.Migrations/DemoData.cs",
+            "src/MyApp.Web.Client/Api/**",
+            "src/MyApp.Web.Client/Components/**",
+            "src/MyApp.Web.Client/Pages/Catalog/**",
+            "src/MyApp.Web.Client/Pages/Documents/**",
+            "src/MyApp.Web.Client/Pages/Dashboard.*",
+            "tests/MyApp.Web.Client.Tests/**",
+            "tests/MyApp.Api.Tests/CatalogTests.cs",
+            "tests/MyApp.Api.Tests/AiToolTests.cs"
+          ]
+        },
+        { "condition": "(!tests)", "exclude": ["tests/**"] }
+      ]
+    }
+  ],
+  "specialCustomOperations": {
+    "**/*.slnx": {
+      "operations": [
+        {
+          "type": "conditional",
+          "configuration": {
+            "actionableIf": ["<!--#if"],
+            "actionableElse": ["#else", "<!--#else"],
+            "actionableElseif": ["#elseif", "<!--#elseif"],
+            "endif": ["#endif", "<!--#endif"],
+            "trim": "true",
+            "wholeLine": "true",
+            "evaluator": "C++"
+          }
+        }
+      ]
+    }
+  }
+}

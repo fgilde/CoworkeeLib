@@ -33,6 +33,9 @@
     <Project Path="src/Coworkee.Testing/Coworkee.Testing.csproj" />
     <Project Path="src/Coworkee.Theming/Coworkee.Theming.csproj" />
   </Folder>
+  <Folder Name="/templates/">
+    <Project Path="templates/Coworkee.Templates/Coworkee.Templates.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Coworkee.Account.Tests/Coworkee.Account.Tests.csproj" />
     <Project Path="tests/Coworkee.Application.Tests/Coworkee.Application.Tests.csproj" />

@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>Coworkee.Templates</PackageId>
+    <PackageType>Template</PackageType>
+    <Description>dotnet new template for Coworkee applications (coworkee): Aspire app host, API, auth server, Blazor WebAssembly with BFF and Postgres.</Description>
+    <Authors>fgilde</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://fgilde.github.io/CoworkeeLib/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/fgilde/CoworkeeLib</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>coworkee;template;dotnet-new;aspire;blazor</PackageTags>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <NoDefaultExcludes>true</NoDefaultExcludes>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="content/**" Exclude="content/**/bin/**;content/**/obj/**;content/CoworkeeApp/Directory.Packages.props" Pack="true" PackagePath="content/%(RecursiveDir)%(Filename)%(Extension)" />
+    <None Include="../../assets/icon.png" Pack="true" PackagePath="/" Visible="false" />
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+  <!-- the generated app references the Coworkee packages of the release that packs this template -->
+  <Target Name="PackCoworkeeVersion" BeforeTargets="_GetPackageFiles">
+    <PropertyGroup>
+      <_CoworkeePackagesProps>$(IntermediateOutputPath)Directory.Packages.props</_CoworkeePackagesProps>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(_CoworkeePackagesProps)" Lines="$([MSBuild]::Escape($([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/content/CoworkeeApp/Directory.Packages.props').Replace('COWORKEE_VERSION', '$(PackageVersion)'))))" Overwrite="true" />
+    <ItemGroup>
+      <None Include="$(_CoworkeePackagesProps)" Pack="true" PackagePath="content/CoworkeeApp/Directory.Packages.props" />
+    </ItemGroup>
+  </Target>
+</Project>
