@@ -16,6 +16,8 @@
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Contracts'"><Description>DTOs, permission names and paging records shared by server and clients.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Core'"><Description>Module system with [DependsOn], Result and Error, current user and ambient user scope.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Domain'"><Description>Entity and AggregateRoot with domain events, markers for audit, soft delete, tenants and concurrency.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.EventBus'"><Description>Integration events between apps and services through the transactional outbox, with an inbox for idempotent handlers. Works without a broker.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.EventBus.RabbitMq'"><Description>RabbitMQ transport for Coworkee.EventBus with publisher confirms, quorum queues and dead lettering.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.ExtendedAttributes'"><Description>Extra attributes for any entity without schema changes.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Identity'"><Description>Users, roles, groups, tenants and permission grants with resource level checks.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Infrastructure'"><Description>CoworkeeDbContext with tenants, soft delete, field level audit trail and transactional outbox.</Description></PropertyGroup>

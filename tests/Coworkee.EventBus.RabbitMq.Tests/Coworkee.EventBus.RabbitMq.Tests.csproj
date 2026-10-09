@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Coworkee.EventBus.RabbitMq\Coworkee.EventBus.RabbitMq.csproj" />
+    <ProjectReference Include="..\..\src\Coworkee.Testing\Coworkee.Testing.csproj" />
+    <PackageReference Include="Testcontainers.RabbitMq" />
+  </ItemGroup>
+</Project>

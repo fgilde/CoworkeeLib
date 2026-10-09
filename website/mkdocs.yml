@@ -66,6 +66,7 @@ plugins:
             Modules: Module
             Messaging and pipeline: Messaging und Pipeline
             Persistence: Persistenz
+            Events and locks: Events und Sperren
             Web: Web
             HTTP APIs: HTTP-APIs
             OData and facets: OData und Facetten
@@ -128,6 +129,7 @@ nav:
       - Modules: fundamentals/modules.md
       - Messaging and pipeline: fundamentals/messaging.md
       - Persistence: fundamentals/persistence.md
+      - Events and locks: fundamentals/events.md
   - Web:
       - HTTP APIs: web/http-api.md
       - OData and facets: web/odata.md
