@@ -112,12 +112,25 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     public string? CurrentFilter => ODataFilter.And(Filter, _selection.ToFilter(), ODataFilter.Search(_search, SearchFields));
 
+    private string? _lastFilter;
+
     private string Key => StateKey ?? EntitySet.ToLowerInvariant();
 
     public DataTableState CurrentState => new(
         _search,
         [.. _selection.All],
         [.. _hidden]);
+
+    protected override void OnParametersSet()
+    {
+        // a new filter from the page reloads the rows
+        if (_lastFilter != Filter && _grid is not null)
+        {
+            Reload();
+        }
+
+        _lastFilter = Filter;
+    }
 
     protected override async Task OnInitializedAsync()
     {

@@ -52,6 +52,17 @@ public sealed class DataTableTests : ClientTestBase
     }
 
     [Fact]
+    public void A_new_filter_from_the_page_reloads_the_rows()
+    {
+        var table = Render<CoworkeeDataTable<Gadget>>(p => p.Add(t => t.EntitySet, "Gadgets").Add(t => t.Filter, "Category eq 'Tools'").Add(t => t.Columns, Columns()));
+        table.WaitForAssertion(() => _odata.LastQuery!.Filter.ShouldBe("Category eq 'Tools'"));
+
+        table.Render(p => p.Add(t => t.Filter, "Category eq 'Light'"));
+
+        table.WaitForAssertion(() => _odata.LastQuery!.Filter.ShouldBe("Category eq 'Light'"));
+    }
+
+    [Fact]
     public async Task The_table_loads_pages_shows_facets_and_reloads_with_the_chosen_ones()
     {
         var popovers = Render<MudPopoverProvider>();

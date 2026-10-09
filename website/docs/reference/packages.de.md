@@ -30,6 +30,9 @@ Welches Paket wohin gehört und was in den `using`-Block kommt.
 | `Coworkee.Chat` | API | `Coworkee.Chat` | `CoworkeeChatModule`, `ChatEvents` |
 | `Coworkee.ExtendedAttributes` | API | `Coworkee.ExtendedAttributes` | `CoworkeeExtendedAttributesModule`, `AddExtendedAttributes<T>` |
 | `Coworkee.Social` | API | `Coworkee.Social` | `CoworkeeSocialModule`, `AddCoworkeeSocial` |
+| `Coworkee.EventBus`, `Coworkee.EventBus.RabbitMq` | API, workers | `Coworkee.EventBus` | `IEventBus`, `IIntegrationEvent`, `IIntegrationEventHandler<T>`, `CoworkeeRabbitMqEventBusModule` |
+| `Coworkee.Cli` | Ihr Rechner | | `coworkee new`, `run`, `migrations add`, `module add`, `update`, `doctor` |
+| `Coworkee.Templates` | Ihr Rechner | | `dotnet new coworkee` |
 | `Coworkee.Client` | SDKs, other .NET apps | `Coworkee.Client` | `CoworkeeApiClient`, `CoworkeeApiException`, `BearerTokenHandler`, `ODataResult<T>` |
 | `Coworkee.Client.Blazor` | WebAssembly-Client | `Coworkee.Client.Blazor`, `.Components`, `.Components.Data`, `.Data`, `.Api`, `.Navigation`, `.Security`, `.Customization` | `AddCoworkeeClient`, `CoworkeeLayout`, `CoworkeeDataTable<T>`, `IODataClient`, `ApiClientBase`, `ReplaceComponent` |
 | `Coworkee.Aspire` | AppHost | `Aspire.Hosting`, `Coworkee.Aspire.Settings` | `AddCoworkeeApp`, `CoworkeeApp`, `WithSetting` |
