@@ -39,8 +39,13 @@ public sealed record SetSettingsRequest(IReadOnlyDictionary<string, string?> Val
 /// <summary>A typed configuration section the app lets admins edit (its class is usually generated from a JSON file).</summary>
 public sealed record AppConfigurationDto(string Section, string Title);
 
-/// <summary>The section as it applies now and as it would without changes made in the app; secrets come masked.</summary>
-public sealed record AppConfigurationValuesDto(string Section, System.Text.Json.JsonElement Values, System.Text.Json.JsonElement Defaults, IReadOnlyList<string> ChangedKeys);
+/// <summary>
+/// The section as it applies now and as it would without changes made in the app; secrets come masked, hidden values not at all.
+/// <see cref="Locked"/> and <see cref="Hidden"/> are property paths below the section ("Jobs:WorkerCount").
+/// </summary>
+public sealed record AppConfigurationValuesDto(
+    string Section, System.Text.Json.JsonElement Values, System.Text.Json.JsonElement Defaults, IReadOnlyList<string> ChangedKeys,
+    IReadOnlyList<string>? Locked = null, IReadOnlyList<string>? Hidden = null);
 
 public static class AppConfigurationMask
 {

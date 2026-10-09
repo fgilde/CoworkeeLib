@@ -41,7 +41,8 @@ public sealed class AppConfigurationTests(SettingsApp app) : IAsyncLifetime
 
     [Fact]
     public async Task Lists_the_registered_sections() =>
-        (await Admin.GetFromJsonAsync<AppConfigurationDto[]>("/api/v1/configuration", Ct))!.ShouldBe([new AppConfigurationDto("TestApp", "Test app")]);
+        (await Admin.GetFromJsonAsync<AppConfigurationDto[]>("/api/v1/configuration", Ct))!.ShouldBe(
+            [new AppConfigurationDto("TestApp", "Test app"), new AppConfigurationDto(CoworkeeAppSettings.Section, "App settings")], ignoreOrder: true);
 
     [Fact]
     public async Task Shows_the_section_typed_with_secrets_masked()

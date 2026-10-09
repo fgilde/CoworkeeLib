@@ -1,6 +1,6 @@
 # Client und Layout
 
-`Coworkee.Client.Blazor` ist eine vollständige WebAssembly-Shell: Layout, Navigation, Benutzermenü, Benachrichtigungen, Admin-Seiten für Benutzer, Gruppen, Rollen, Einstellungen, Themes, Mail-Vorlagen, Jobs und Audit-Log. Die App ergänzt ihre Seiten und Menüeinträge.
+`Coworkee.Client.Blazor` ist eine vollständige WebAssembly-Shell: Layout, Navigation, Benutzermenü, Benachrichtigungen, Admin-Seiten für Benutzer, Gruppen, Rollen, Einstellungen, Dienste, Themes, Mail-Vorlagen und Audit-Log. Die App ergänzt ihre Seiten und Menüeinträge.
 
 ```csharp title="MyApp.Web.Client/Program.cs"
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -58,9 +58,11 @@ internal sealed class MyAppNavigation : INavigationContributor
 | `IconForGroup(name, icon)` | das Symbol eines Gruppenknotens |
 | `Place(href, group, title?, order?)` | verschiebt einen Link der Bibliothek in eine andere Gruppe; ein Gruppenpfad wie `Administration/Localization` verschachtelt |
 
+Die Admin-Seiten der Bibliothek liegen in Gruppen unter **Administration**: `NavigationGroups.Identity` (Benutzer, Gruppen, Rollen, Anwendungen, Scopes), `NavigationGroups.System` (Einstellungen, Dienste, Mandanten, Editionen, Themes, Sicherungen), `NavigationGroups.Communication` (Mail-Vorlagen, Mail-Log), `NavigationGroups.Localization` (Sprachen, Übersetzungen) und `NavigationGroups.Monitoring` (Audit-Log, KI-Werkzeugaufrufe). Verschachtelte Gruppen sortieren sich innerhalb ihrer obersten Gruppe, die ihren Platz aus `OrderGroup` behält.
+
 Das Menü ist ein `MudExTreeView`: Gruppen sind Knoten, das Filterfeld hebt Treffer hervor und öffnet ihre Gruppen, und die Ansicht wechselt zwischen Baum, Liste und flacher Liste. Angeheftet bleibt die Leiste als Symbolstreifen unter der App-Leiste, der Menüknopf verbreitert sie; nicht angeheftet öffnet sie sich als Überlagerung und verschwindet wieder. Ob eine oder mehrere Gruppen offen bleiben, ist ein zweiter Schalter. Beides speichert der Browser.
 
-Einträge mit `HostOnly: true` dienen der ganzen Installation und erscheinen nur Benutzern der Systemorganisation; die Bibliothek markiert so Mandanten, Editionen, Anwendungen, Scopes, Konfiguration und Sicherungen, und die Einstellungsseite blendet anderswo ihren Reiter System aus. Die Organisation kennt der Client aus `/bff/user` (`SystemTenant`, aus dem Claim `system_tenant` des Auth-Servers); Anmeldungen von vor diesem Claim zeigen alles wie bisher.
+Einträge mit `HostOnly: true` dienen der ganzen Installation und erscheinen nur Benutzern der Systemorganisation; die Bibliothek markiert so Mandanten, Editionen, Anwendungen, Scopes, Dienste und Sicherungen, und die Einstellungsseite zeigt ihre typisierten Reiter und den Reiter System nur dort. Die Organisation kennt der Client aus `/bff/user` (`SystemTenant`, aus dem Claim `system_tenant` des Auth-Servers); Anmeldungen von vor diesem Claim zeigen alles wie bisher.
 
 ![Eingeklappte Navigation](../assets/screenshots/mini-drawer.png){ .shot }
 

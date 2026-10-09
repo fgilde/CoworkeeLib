@@ -1,16 +1,23 @@
 @page "/admin/settings"
+@page "/admin/configuration"
 @attribute [Authorize(Policy = "perm:" + SettingsPermissions.Manage)]
 
-<PageTitle>Settings</PageTitle>
-<MudText Typo="Typo.h4" Class="mb-4">Settings</MudText>
+<PageHeader Title="Settings" />
 <MudTabs Elevation="0" Outlined="true">
     @if (_system)
     {
-        <MudTabPanel Text="System">
+        @foreach (var registration in Sections)
+        {
+            <MudTabPanel Text="@L[registration.Title]">
+                <div class="pa-4" data-section="@registration.Section"><DynamicComponent Type="@typeof(AppConfigurationEditor<>).MakeGenericType(registration.Type)"
+                                  Parameters="@(new Dictionary<string, object> { ["Registration"] = registration })" /></div>
+            </MudTabPanel>
+        }
+        <MudTabPanel Text="@L["System"]">
             <div class="pa-4"><SettingsForm Scope="SettingScope.Global" /></div>
         </MudTabPanel>
     }
-    <MudTabPanel Text="Organisation">
+    <MudTabPanel Text="@L["Organisation"]">
         <div class="pa-4"><SettingsForm Scope="SettingScope.Tenant" /></div>
     </MudTabPanel>
 </MudTabs>

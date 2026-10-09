@@ -33,6 +33,11 @@ public sealed class CoworkeeSettingsModule : CoworkeeModule, IWebModule
         services.AddScoped<Coworkee.Application.Setup.ISetupStep, SettingsSetupStep>();
         services.AddScoped<IInterceptor, SettingCacheInterceptor>();
         services.AddHybridCache();
+        services.AddHttpClient(ServiceDirectoryHandler.Client).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+        if (!services.HasAppSettings())
+        {
+            services.AddCoworkeeSettings<CoworkeeAppSettings>(context.Configuration);
+        }
     }
 
     public void ConfigureApplication(WebApplication app)
@@ -48,6 +53,8 @@ public sealed class CoworkeeSettingsModule : CoworkeeModule, IWebModule
         configuration.MapGet("/{section}", (string section, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetAppConfiguration(section), ct).ToHttpResult());
         configuration.MapPut("/{section}", (string section, System.Text.Json.JsonElement body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SaveAppConfiguration(section, body), ct).ToHttpResult());
         configuration.MapDelete("/{section}", (string section, IDispatcher d, CancellationToken ct) => d.SendAsync(new ResetAppConfiguration(section), ct).ToHttpResult());
+        app.MapCoworkeeApi("/api/v1/services").WithTags("Services").RequireAuthorization()
+            .MapGet("/", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetServices(), ct).ToHttpResult());
         foreach (var scope in new[] { SettingScope.Global, SettingScope.Tenant })
         {
             var path = "/" + scope.ToString().ToLowerInvariant();

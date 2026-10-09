@@ -22,5 +22,7 @@ public sealed class CoworkeeSection
 
     public SettingsSection Settings { get; } = new();
 
+    public CoworkeeServicesOptions Services { get; } = new();
+
     public string? SetupToken { get; set; }
 }

@@ -1,0 +1,45 @@
+@page "/admin/services"
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + SettingsPermissions.Manage)]
+
+<PageHeader Title="Services" Description="The services of the app and their state, checked every few seconds by the server.">
+    <MudIconButton Icon="@Icons.Material.Outlined.Refresh" OnClick="RefreshAsync" Disabled="_busy" aria-label="@L["Refresh"]" data-testid="refresh-services" />
+</PageHeader>
+
+@if (_error is not null)
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
+}
+else if (_services is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_services.Count == 0)
+{
+    <MudAlert Severity="Severity.Info">@L["No services are configured (Coworkee:Services)."]</MudAlert>
+}
+else
+{
+    <MudGrid Spacing="3" data-testid="services">
+        @foreach (var service in _services)
+        {
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudCard Outlined="true" Class="cursor-pointer" Style="height:100%" data-service="@service.Name" @onclick="() => Open(service)">
+                    <MudCardHeader>
+                        <CardHeaderAvatar>
+                            <MudAvatar Color="Color.Primary" Variant="Variant.Outlined"><MudIcon Icon="@ServiceIcons.For(service.Name)" /></MudAvatar>
+                        </CardHeaderAvatar>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">@service.Title</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudChip T="string" Size="Size.Small" Color="@HealthColor(service.Health)" Variant="Variant.Text" data-health="@service.Health">@L[service.Health.ToString()]</MudChip>
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent Class="pt-0">
+                        <MudLink Href="@service.Url" Target="_blank" Typo="Typo.body2" Style="word-break:break-all" @onclick:stopPropagation="true">@service.Url</MudLink>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+}
