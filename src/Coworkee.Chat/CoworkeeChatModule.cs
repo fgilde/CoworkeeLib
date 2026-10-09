@@ -24,6 +24,7 @@ public sealed class CoworkeeChatModule : CoworkeeModule, IWebModule
         services.AddMessagingFromAssembly(typeof(CoworkeeChatModule).Assembly);
         services.AddSingleton<IModelContributor, ChatModelContributor>();
         services.AddSingleton<IPermissionDefinitionContributor, ChatPermissionDefinitions>();
+        services.AddScoped<Application.Privacy.IPersonalDataContributor, ChatPersonalData>();
     }
 
     public void ConfigureApplication(WebApplication app)

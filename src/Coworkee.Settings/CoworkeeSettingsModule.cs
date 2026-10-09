@@ -29,6 +29,7 @@ public sealed class CoworkeeSettingsModule : CoworkeeModule, IWebModule
         services.AddScoped<ISettingProvider, SettingProvider>();
         services.AddSingleton<SettingProtector>();
         services.AddScoped<SettingWriter>();
+        services.AddScoped<Application.Privacy.IPersonalDataContributor, SettingPersonalData>();
         services.AddScoped<Coworkee.Application.Setup.ISetupStep, SettingsSetupStep>();
         services.AddScoped<IInterceptor, SettingCacheInterceptor>();
         services.AddHybridCache();

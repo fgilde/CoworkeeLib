@@ -60,3 +60,5 @@ public enum SetupCheckStatus
 public sealed record SetupCheckDto(string Name, SetupCheckStatus Status, string? Message);
 
 public sealed record SetupResultDto(Guid TenantId, Guid AdminUserId);
+
+public sealed record DeleteAccountRequest(string Email);

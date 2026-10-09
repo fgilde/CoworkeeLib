@@ -19,6 +19,7 @@ public sealed class CoworkeeAuditingModule : CoworkeeModule, IWebModule
     {
         context.Services.AddMessagingFromAssembly(typeof(CoworkeeAuditingModule).Assembly);
         context.Services.AddSingleton<IPermissionDefinitionContributor, AuditPermissionDefinitions>();
+        context.Services.AddScoped<Application.Privacy.IPersonalDataContributor, AuditPersonalData>();
         context.Services.AddODataEntity<Coworkee.Infrastructure.Auditing.AuditEntry>("AuditEntries", Contracts.Auditing.AuditPermissions.View);
         context.Services.AddScoped<IODataEntityFilter<Coworkee.Infrastructure.Auditing.AuditEntry>, OData.AuditEntryODataFilter>();
     }

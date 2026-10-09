@@ -162,6 +162,7 @@ public sealed class CoworkeeNotificationsModule : CoworkeeModule, IWebModule
         context.Services.AddMessagingFromAssembly(typeof(CoworkeeNotificationsModule).Assembly);
         context.Services.AddSingleton<IModelContributor, NotificationModelContributor>();
         context.Services.AddScoped<INotifier, Notifier>();
+        context.Services.AddScoped<Application.Privacy.IPersonalDataContributor, NotificationPersonalData>();
         context.Services.AddOptions<NotificationOptions>().BindConfiguration(NotificationOptions.Section);
         context.Services.AddSingleton<Coworkee.Settings.ISettingDefinitionContributor, NotificationSettingDefinitions>();
         context.Services.AddRecurringJob<NotificationDigestJob>(NotificationDigestJob.Id,
