@@ -90,6 +90,7 @@ plugins:
             Database backups: Datenbank-Backups
             Chat: Chat
             Extended attributes: Erweiterte Attribute
+            Comments, tags and ratings: Kommentare, Tags und Bewertungen
             AI assistant and MCP: KI-Assistent und MCP
             Hosting: Hosting
             Aspire app host: Aspire-AppHost
@@ -152,6 +153,7 @@ nav:
       - Database backups: modules/backups.md
       - Chat: modules/chat.md
       - Extended attributes: modules/extended-attributes.md
+      - Comments, tags and ratings: modules/social.md
       - AI assistant and MCP: modules/ai.md
   - Hosting:
       - Aspire app host: hosting/aspire.md
