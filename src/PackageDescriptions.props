@@ -17,6 +17,7 @@
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Core'"><Description>Module system with [DependsOn], Result and Error, current user and ambient user scope.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Domain'"><Description>Entity and AggregateRoot with domain events, markers for audit, soft delete, tenants and concurrency.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.ExtendedAttributes'"><Description>Extra attributes for any entity without schema changes.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Features'"><Description>Feature management with editions and per tenant overrides, tenant administration, [RequiresFeature] and feature gates for Blazor.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Identity'"><Description>Users, roles, groups, tenants and permission grants with resource level checks.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Infrastructure'"><Description>CoworkeeDbContext with tenants, soft delete, field level audit trail and transactional outbox.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Localization'"><Description>Languages and translations stored in the database, machine translation and live updates.</Description></PropertyGroup>
