@@ -1,3 +1,4 @@
+using Coworkee.Application;
 using Coworkee.BackgroundJobs;
 using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Settings;
@@ -30,7 +31,7 @@ internal sealed class NotificationSettingDefinitions : ISettingDefinitionContrib
 
 /// <summary>Once a day every user with unread notifications since the last digest (at most a day back) gets one mail listing them, unless they switched it off.</summary>
 public sealed class NotificationDigestJob(
-    CoworkeeDbContext db, IMailSender mails, IUserDirectory users, IOptions<NotificationOptions> options, TimeProvider clock, ILogger<NotificationDigestJob> logger) : IRecurringJob
+    CoworkeeDbContext db, IMailSender mails, IUserDirectory users, IDistributedLock locks, IOptions<NotificationOptions> options, TimeProvider clock, ILogger<NotificationDigestJob> logger) : IRecurringJob
 {
     public const string Id = "coworkee-notification-digest";
     public const string Setting = "Notifications.Digest";
@@ -39,9 +40,15 @@ public sealed class NotificationDigestJob(
     private const int PageSize = 500;
     private const int MaxItems = 50;
 
-    // ponytail: two runs at the same moment (manual trigger during the scheduled one) could both mail; a database lock would rule that out
     public async Task ExecuteAsync(CancellationToken cancellationToken)
     {
+        // a run that is already going (manual trigger during the scheduled one) mails everything this one would
+        await using var held = await locks.AcquireAsync(Id, TimeSpan.Zero, cancellationToken);
+        if (held is null)
+        {
+            return;
+        }
+
         var now = clock.GetUtcNow();
         var since = now.AddDays(-1);
 

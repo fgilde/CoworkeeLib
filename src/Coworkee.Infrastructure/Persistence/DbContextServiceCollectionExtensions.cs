@@ -1,6 +1,7 @@
 using Coworkee.Application;
 using Coworkee.Core.Security;
 using Coworkee.Infrastructure.DataProtection;
+using Coworkee.Infrastructure.Locking;
 using Coworkee.Infrastructure.Persistence.Interceptors;
 using Coworkee.Infrastructure.Versioning;
 using Microsoft.AspNetCore.DataProtection;
@@ -41,6 +42,7 @@ public static class DbContextServiceCollectionExtensions
             options.AddInterceptors(provider.GetServices<IInterceptor>());
         });
         services.AddScoped<CoworkeeDbContext>(provider => provider.GetRequiredService<TContext>());
+        services.TryAddSingleton<IDistributedLock, PostgresDistributedLock>();
         services.TryAddSingleton<DbXmlRepository>();
         services.TryAddSingleton<IVersionedTypeRegistry, VersionedTypeRegistry>();
         services.AddDataProtection().SetApplicationName("Coworkee");

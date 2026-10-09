@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Coworkee.Realtime;
 
@@ -21,6 +22,11 @@ public sealed class CoworkeeRealtimeModule : CoworkeeModule, IWebModule
         if (context.Configuration.GetConnectionString(RedisConnectionStringName) is { Length: > 0 } redis)
         {
             signalR.AddStackExchangeRedis(redis, options => options.Configuration.ChannelPrefix = StackExchange.Redis.RedisChannel.Literal("coworkee"));
+            if (string.Equals(context.Configuration[RedisDistributedLock.ProviderSetting], "Redis", StringComparison.OrdinalIgnoreCase))
+            {
+                services.TryAddSingleton<StackExchange.Redis.IConnectionMultiplexer>(_ => StackExchange.Redis.ConnectionMultiplexer.Connect(redis));
+                services.AddSingleton<IDistributedLock, RedisDistributedLock>();
+            }
         }
 
         services.AddSingleton<IRealtimePublisher, RealtimePublisher>();
