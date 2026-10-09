@@ -1,0 +1,48 @@
+<style>
+    .cw-about-credits { display: flex; flex-direction: column; gap: 10px; }
+    .cw-about-credit { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 14px; text-decoration: none; color: inherit;
+        border: 1px solid var(--mud-palette-lines-default); background: var(--mud-palette-surface);
+        transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease; }
+    .cw-about-credit:hover, .cw-about-credit:focus-visible { transform: translateY(-2px); border-color: var(--mud-palette-primary); outline: none;
+        box-shadow: 0 8px 22px color-mix(in srgb, var(--mud-palette-primary) 22%, transparent); }
+    .cw-about-credit-icon { width: 40px; height: 40px; flex: none; display: grid; place-items: center; }
+    .cw-about-credit-icon img { width: 40px; height: 40px; object-fit: contain; }
+    .cw-about-credit-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .cw-about-credit-url { font-size: .75rem; color: var(--mud-palette-text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cw-about-credit-version { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .75rem; padding: 2px 8px; border-radius: 999px;
+        background: var(--mud-palette-action-default-hover); color: var(--mud-palette-text-secondary); }
+    .cw-about-credit .cw-about-credit-go { color: var(--mud-palette-text-secondary); transition: transform 160ms ease, color 160ms ease; }
+    .cw-about-credit:hover .cw-about-credit-go { transform: translateX(3px); color: var(--mud-palette-primary); }
+    @@media (prefers-reduced-motion: reduce) { .cw-about-credit, .cw-about-credit-go { transition: none; } .cw-about-credit:hover { transform: none; } }
+</style>
+
+@if (Options.About.Credits.Count > 0)
+{
+    <div class="cw-about-credits" data-testid="about-credits">
+        <MudText Typo="Typo.overline" Class="mud-text-secondary">@L["Built with"]</MudText>
+        @foreach (var credit in Options.About.Credits)
+        {
+            <a class="cw-about-credit" href="@credit.Url" target="_blank" rel="noopener" data-credit="@credit.Title">
+                <span class="cw-about-credit-icon">
+                    @if (IsImage(credit.Icon))
+                    {
+                        <img src="@credit.Icon" alt="" loading="lazy" />
+                    }
+                    else
+                    {
+                        <MudIcon Icon="@credit.Icon" Color="Color.Primary" Size="Size.Large" />
+                    }
+                </span>
+                <span class="cw-about-credit-text">
+                    <MudText Typo="Typo.subtitle1">@credit.Title</MudText>
+                    <span class="cw-about-credit-url">@Host(credit.Url)</span>
+                </span>
+                @if (credit.Version is { } version)
+                {
+                    <span class="cw-about-credit-version">@version</span>
+                }
+                <MudIcon Icon="@Icons.Material.Outlined.ArrowForward" Size="Size.Small" Class="cw-about-credit-go" />
+            </a>
+        }
+    </div>
+}

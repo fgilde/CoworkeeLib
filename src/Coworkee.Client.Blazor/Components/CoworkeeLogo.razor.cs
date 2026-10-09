@@ -11,6 +11,9 @@ public partial class CoworkeeLogo : IDisposable
 
     [Parameter] public string? Class { get; set; }
 
+    /// <summary>Shown when neither the theme nor the app has a logo.</summary>
+    [Parameter] public RenderFragment? Fallback { get; set; }
+
     [Inject] private CoworkeeClientOptions Options { get; set; } = null!;
 
     [Inject] private ThemeService ThemeService { get; set; } = null!;

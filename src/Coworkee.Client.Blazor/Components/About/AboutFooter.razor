@@ -1,0 +1,41 @@
+<style>
+    .cw-about-footer { margin-top: auto; padding-top: 24px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .cw-about-runtime { font-size: .7rem; letter-spacing: .04em; color: var(--mud-palette-text-disabled); }
+    .cw-gilde { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; text-decoration: none; color: var(--mud-palette-text-secondary); border-radius: 12px; padding: 4px 8px; }
+    .cw-gilde:focus-visible { outline: 2px solid var(--mud-palette-primary); outline-offset: 2px; }
+    .cw-gilde svg { width: 56px; height: 56px; overflow: visible; transition: transform 400ms cubic-bezier(.34, 1.56, .64, 1), filter 400ms ease;
+        filter: drop-shadow(0 0 4px rgba(224, 162, 78, .35)); }
+    .cw-gilde path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: cw-gilde-draw 1400ms cubic-bezier(.65, 0, .35, 1) 300ms both; }
+    .cw-gilde path + path { animation-delay: 1300ms; animation-duration: 500ms; }
+    .cw-gilde span { font-size: .7rem; letter-spacing: .12em; opacity: 0; animation: cw-gilde-fade 600ms ease 1700ms forwards; }
+    .cw-gilde:hover svg, .cw-gilde:focus-visible svg { transform: scale(1.12) rotate(-8deg); filter: drop-shadow(0 0 10px rgba(224, 162, 78, .55)); }
+    .cw-gilde:hover span { color: #e0a24e; }
+    @@keyframes cw-gilde-draw { from { opacity: 0; } 4% { opacity: 1; } to { stroke-dashoffset: 0; opacity: 1; } }
+    @@keyframes cw-gilde-fade { to { opacity: .8; } }
+    @@media (prefers-reduced-motion: reduce) {
+        .cw-gilde path { animation: none; stroke-dashoffset: 0; }
+        .cw-gilde span { animation: none; opacity: .8; }
+        .cw-gilde svg { transition: none; }
+        .cw-gilde:hover svg, .cw-gilde:focus-visible svg { transform: none; }
+    }
+</style>
+
+<div class="cw-about-footer" data-testid="about-footer">
+    <span class="cw-about-runtime" data-testid="about-runtime">@Runtime</span>
+    <a class="cw-gilde" href="https://gilde.org" target="_blank" rel="noopener" aria-label="gilde.org" data-testid="gilde">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" aria-hidden="true">
+            <defs>
+                <linearGradient id="cw-gilde-gold" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#ffe6a8" />
+                    <stop offset="0.45" stop-color="#e0a24e" />
+                    <stop offset="1" stop-color="#a9761f" />
+                </linearGradient>
+            </defs>
+            <g fill="none" stroke="url(#cw-gilde-gold)" stroke-width="56" stroke-linecap="square" stroke-linejoin="miter">
+                <path d="M376 88H112v264l144 112 144-112v-96H280" pathLength="1" />
+                <path d="M280 216h120" pathLength="1" />
+            </g>
+        </svg>
+        <span>GILDE.ORG</span>
+    </a>
+</div>

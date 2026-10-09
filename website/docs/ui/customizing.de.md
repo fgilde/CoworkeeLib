@@ -34,6 +34,21 @@ Das Layout ist aufgeteilt, damit Sie einen Teil statt des Ganzen ersetzen:
 
 Seiten funktionieren genauso: Ersetzen Sie `Profile` durch eine eigene Profilseite, und jeder Link dorthin öffnet Ihre.
 
+## Info-Dialog
+
+Der Info-Dialog fährt von rechts herein und zeigt die Abschnitte aus `options.About.Sections` der Reihe nach: `AboutHeader` (Logo oder Monogramm, Titel, Version), `AboutCredits` (die Bibliotheken mit Logo und laufender Version), `AboutLinks` (die `AboutLinks` der App) und `AboutFooter` (Runtime und gilde.org-Zeichen). Abschnitte sind normale Komponenten: entfernen, einfügen oder tauschen Sie sie; die Credits sind ebenfalls eine Liste.
+
+```csharp
+builder.Services.AddCoworkeeClient(baseAddress, options =>
+{
+    options.About.Sections.Remove(typeof(AboutCredits));
+    options.About.Sections.Insert(1, typeof(LicenseSection));
+    options.About.Credits.Add(new AboutCredit("MyLib", "https://example.org", Icons.Material.Outlined.Extension, AboutVersion.Of(typeof(MyLib).Assembly)));
+});
+```
+
+Für einen ganz anderen Dialog ersetzen Sie ihn: `builder.Services.ReplaceComponent<AboutDialog, MyAbout>();`. `MyAbout` ist ein normaler `MudDialog`.
+
 ## Ersetzen oder beitragen
 
 Nehmen Sie die Erweiterungspunkte, wenn sie passen: `INavigationContributor` für Menüeinträge, `IAppBarContributor` für die obere Leiste, `NavigationMenuOptions` zum Ausblenden und Sortieren. Ersetzen Sie eine Komponente, wenn Sie anderes Markup oder Verhalten brauchen.

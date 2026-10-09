@@ -50,6 +50,20 @@ public static class EditDialogExtensions
         DisablePositionMargin = true,
     };
 
+    /// <summary>A narrow full height sheet that always slides in from the right, like the about dialog.</summary>
+    public static DialogOptionsEx RightSheet() => new()
+    {
+        CloseButton = true,
+        CloseOnEscapeKey = true,
+        MaxWidth = MaxWidth.Small,
+        FullWidth = true,
+        Position = DialogPosition.CenterRight,
+        Animations = [AnimationType.SlideIn],
+        FullHeight = true,
+        DisableSizeMarginY = true,
+        DisablePositionMargin = true,
+    };
+
     /// <summary>Asks before something that cannot be undone.</summary>
     public static Task<bool> ConfirmAsync(this IDialogService dialogs, string title, string message, string confirmText, string cancelText, string? icon = null) =>
         dialogs.ShowConfirmationDialogAsync(title, message, confirmText, cancelText, icon ?? Icons.Material.Outlined.HelpOutline, Small());
