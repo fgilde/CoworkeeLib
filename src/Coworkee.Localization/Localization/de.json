@@ -334,7 +334,7 @@
   "Admin email": "E-Mail des Administrators",
   "Admin password": "Passwort des Administrators",
   "Files": "Dateien",
-  "Folders and files of your organisation. Double-click a file to preview it, drag files in to upload them.": "Ordner und Dateien Ihrer Organisation. Doppelklicken Sie auf eine Datei für die Vorschau, ziehen Sie Dateien hinein, um sie hochzuladen.",
+  "The organisation's drive: folders and files with permissions per folder. Double-click a file to preview it, drag files in to upload them.": "Das Laufwerk Ihrer Organisation: Ordner und Dateien mit Berechtigungen je Ordner. Doppelklicken Sie auf eine Datei für die Vorschau, ziehen Sie Dateien hinein, um sie hochzuladen.",
   "Choose files": "Dateien auswählen",
   "Choose a file": "Datei auswählen",
   "Choose": "Auswählen",

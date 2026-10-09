@@ -16,8 +16,6 @@ namespace MyApp.Documents.Endpoints;
 
 internal static class DocumentEndpoints
 {
-    private const string SandboxPolicy = "sandbox; default-src 'none'; img-src 'self' data:; media-src 'self'; style-src 'unsafe-inline'";
-
     public static void MapDocumentEndpoints(this IEndpointRouteBuilder app)
     {
         var documents = app.MapCoworkeeApi("/api/v1/documents").WithTags("Documents").RequireAuthorization();
@@ -36,23 +34,11 @@ internal static class DocumentEndpoints
         return await dispatcher.SendAsync(new UploadDocumentCommand(request, file.FileName, file.Length, content), cancellationToken).ToHttpResult();
     }
 
-    private static async Task<IResult> ContentAsync(Guid id, bool? download, HttpResponse response, IDispatcher dispatcher, CancellationToken cancellationToken)
+    private static async Task<IResult> ContentAsync(Guid id, bool? download, IDispatcher dispatcher, CancellationToken cancellationToken)
     {
         var result = await dispatcher.SendAsync(new OpenDocumentQuery(id), cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return result.Error!.ToProblem();
-        }
-
-        var document = result.Value;
-        var inline = download != true;
-        response.Headers.XContentTypeOptions = "nosniff";
-        response.Headers.CacheControl = "private, no-store";
-        if (inline)
-        {
-            response.Headers.ContentSecurityPolicy = SandboxPolicy;
-        }
-
-        return Results.File(document.Content, document.MimeType, inline ? null : document.FileName, enableRangeProcessing: true);
+        return result.IsSuccess
+            ? new BlobContentResult(result.Value.Content, result.Value.MimeType, result.Value.FileName, download == true)
+            : result.Error!.ToProblem();
     }
 }

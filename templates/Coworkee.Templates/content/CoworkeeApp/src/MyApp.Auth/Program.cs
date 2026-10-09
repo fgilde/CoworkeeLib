@@ -14,5 +14,10 @@ app.MapDefaultEndpoints();
 app.UseCoworkee();
 app.Run();
 
+#if (samples)
+// registration documents go to the documents of the app
+[DependsOn(typeof(MyAppInfrastructureModule), typeof(CoworkeeAuthServerModule), typeof(MyApp.Documents.Registration.MyAppRegistrationDocumentsModule))]
+#else
 [DependsOn(typeof(MyAppInfrastructureModule), typeof(CoworkeeAuthServerModule))]
+#endif
 internal sealed class MyAppAuthModule : CoworkeeModule;

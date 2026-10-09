@@ -2,6 +2,8 @@
 
 `Coworkee.Files` keeps folders and files of an organisation in the [blob storage](storage.md): nested folders, upload, download, preview of nearly every file type, move, rename and delete, with per-folder permissions.
 
+Files is the organisation's drive. The *Documents* sample of the app template is something else: a list of typed records, each with an owner and private or public. An app can have both side by side; code that copies a stored file elsewhere reads it with `OpenFile` as the current user, so the folder permissions apply.
+
 ```csharp
 [DependsOn(typeof(CoworkeeFilesModule))]
 public sealed class MyAppDatabaseModule : CoworkeeModule;
@@ -27,7 +29,13 @@ public sealed class MyAppDatabaseModule : CoworkeeModule;
 | `POST /api/v1/files/delete` | `{ "fileIds": [], "folderIds": [] }` |
 | `GET /api/v1/files/{id}/content` | inline, `?download=true` as attachment |
 
-The inline answer carries `Content-Security-Policy: sandbox; default-src 'none'; ...` and `X-Content-Type-Options: nosniff`, so an uploaded HTML or SVG file can be viewed but runs no script and loads nothing.
+The inline answer carries `Content-Security-Policy: sandbox; default-src 'none'; ...` and `X-Content-Type-Options: nosniff`, so an uploaded HTML or SVG file can be viewed but runs no script and loads nothing. Endpoints of your own that serve uploaded content return the same answer with `BlobContentResult` (`Coworkee.AspNetCore.Http`):
+
+```csharp
+return new BlobContentResult(content.Stream, content.ContentType, content.FileName, download: download == true);
+```
+
+It streams with range support, sets the sandbox policy when inline and `nosniff` plus `Cache-Control: private, no-store` always.
 
 ## Choosing files in a form
 
@@ -44,6 +52,8 @@ meta.Property(p => p.LogoId).RenderWith<CoworkeeFilePicker, Guid?>(p => p.Value)
 ```
 
 `IFilesApi` is the typed client, `FileUrls.FileUrl(navigation, id)` the absolute address for `MudExFileDisplay` (it loads with its own `HttpClient`, a relative address does not work).
+
+`FilePreviewDialog.ShowAsync(dialogs, file)` previews a stored file in a side sheet; `FilePreviewDialog.ShowAsync(dialogs, url, contentType, name)` previews any content address of the app, for example the documents of your own module (a relative address is made absolute).
 
 ## Database
 

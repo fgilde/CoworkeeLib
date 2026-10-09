@@ -2,6 +2,8 @@
 
 `Coworkee.Files` verwaltet Ordner und Dateien einer Organisation im [Dateispeicher](storage.md): verschachtelte Ordner, Hochladen, Herunterladen, Vorschau für fast jeden Dateityp, Verschieben, Umbenennen und Löschen, mit Berechtigungen pro Ordner.
 
+Dateien sind das Laufwerk der Organisation. Das Beispiel *Documents* der App-Vorlage ist etwas anderes: eine Liste typisierter Datensätze, jeder mit Besitzer und privat oder öffentlich. Eine App kann beides nebeneinander haben; Code, der eine gespeicherte Datei anderswohin kopiert, liest sie mit `OpenFile` als aktueller Benutzer, die Ordnerberechtigungen gelten also.
+
 ```csharp
 [DependsOn(typeof(CoworkeeFilesModule))]
 public sealed class MyAppDatabaseModule : CoworkeeModule;
@@ -27,7 +29,13 @@ public sealed class MyAppDatabaseModule : CoworkeeModule;
 | `POST /api/v1/files/delete` | `{ "fileIds": [], "folderIds": [] }` |
 | `GET /api/v1/files/{id}/content` | inline, mit `?download=true` als Anhang |
 
-Die Inline-Antwort trägt `Content-Security-Policy: sandbox; default-src 'none'; ...` und `X-Content-Type-Options: nosniff`: Eine hochgeladene HTML- oder SVG-Datei lässt sich ansehen, führt aber kein Skript aus und lädt nichts nach.
+Die Inline-Antwort trägt `Content-Security-Policy: sandbox; default-src 'none'; ...` und `X-Content-Type-Options: nosniff`: Eine hochgeladene HTML- oder SVG-Datei lässt sich ansehen, führt aber kein Skript aus und lädt nichts nach. Eigene Endpunkte, die hochgeladene Inhalte ausliefern, geben dieselbe Antwort mit `BlobContentResult` (`Coworkee.AspNetCore.Http`):
+
+```csharp
+return new BlobContentResult(content.Stream, content.ContentType, content.FileName, download: download == true);
+```
+
+Es streamt mit Range-Unterstützung, setzt inline die Sandbox-Policy und immer `nosniff` sowie `Cache-Control: private, no-store`.
 
 ## Dateien in Formularen auswählen
 
@@ -44,6 +52,8 @@ meta.Property(p => p.LogoId).RenderWith<CoworkeeFilePicker, Guid?>(p => p.Value)
 ```
 
 `IFilesApi` ist der typisierte Client, `FileUrls.FileUrl(navigation, id)` die absolute Adresse für `MudExFileDisplay` (es lädt mit einem eigenen `HttpClient`, eine relative Adresse funktioniert dort nicht).
+
+`FilePreviewDialog.ShowAsync(dialogs, file)` zeigt eine gespeicherte Datei in einem Seitenblatt; `FilePreviewDialog.ShowAsync(dialogs, url, contentType, name)` zeigt jede Inhaltsadresse der App, zum Beispiel die Dokumente eines eigenen Moduls (eine relative Adresse wird absolut gemacht).
 
 ## Datenbank
 

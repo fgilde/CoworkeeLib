@@ -1,12 +1,11 @@
-@using Coworkee.Client.Blazor.Files
 @using MudBlazor.Extensions.Components
 <MudDialog Class="@MudBlazor.Extensions.Helper.MudExCss.Classes.Dialog.Initial" ContentClass="d-flex flex-column">
     <TitleContent>
-        <MudText Typo="Typo.h6">@File.Name</MudText>
+        <MudText Typo="Typo.h6">@Name</MudText>
     </TitleContent>
     <DialogContent>
         <div style="flex:1 1 auto;min-height:360px" data-testid="file-preview">
-            <MudExFileDisplay Dense="Density.Dense" Url="@Navigation.FileUrl(File.Id)" ContentType="@File.ContentType" FileName="@File.Name" ShowFileName="false" Style="height:100%" />
+            <MudExFileDisplay Dense="Density.Dense" Url="@Navigation.ToAbsoluteUri(Url).ToString()" ContentType="@ContentType" FileName="@Name" ShowFileName="false" Style="height:100%" />
         </div>
     </DialogContent>
 </MudDialog>

@@ -33,7 +33,7 @@ app.UseCoworkee();                       // authentication, problem details, the
 
 Hosts without HTTP, such as the migration service, call `services.AddCoworkeeModules<TRoot>(configuration)` instead.
 
-Different hosts compose different graphs from the same modules. In the template the API root depends on the catalog and documents modules, the auth host only on infrastructure and `CoworkeeAuthServerModule`. A module that is not in a host's graph costs that host nothing.
+Different hosts compose different graphs from the same modules. In the template the API root depends on the catalog and documents modules, the auth host only on infrastructure, `CoworkeeAuthServerModule` and, with samples, the slim `MyAppRegistrationDocumentsModule` that stores registration documents without the documents API. A module that is not in a host's graph costs that host nothing.
 
 ## Contributors instead of central lists
 

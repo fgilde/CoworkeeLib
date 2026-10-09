@@ -1,4 +1,5 @@
 using System.Security.Cryptography.X509Certificates;
+using Coworkee.Application.Registration;
 using Coworkee.AspNetCore;
 using Coworkee.AspNetCore.RateLimiting;
 using Coworkee.AuthServer.External;
@@ -22,7 +23,11 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
         var services = context.Services;
         var options = context.Configuration.GetSection(AuthServerOptions.Section).Get<AuthServerOptions>() ?? new AuthServerOptions();
         services.Configure<AuthServerOptions>(context.Configuration.GetSection(AuthServerOptions.Section));
-        services.Configure<RegistrationOptions>(context.Configuration.GetSection(RegistrationOptions.Section));
+        services.AddOptions<RegistrationOptions>().Bind(context.Configuration.GetSection(RegistrationOptions.Section))
+            .Validate<IServiceProviderIsService>(
+                (registration, registered) => !registration.RequireDocuments || registration.Documents.Count == 0 || registered.IsService(typeof(IRegistrationDocumentStore)),
+                $"{RegistrationOptions.Section}:Documents needs an {nameof(IRegistrationDocumentStore)}: add Coworkee.Files or register your own store.")
+            .ValidateOnStart();
         services.Configure<IdentityOptions>(identity => identity.SignIn.RequireConfirmedEmail = true);
         services.AddScoped<Registration.AccountRegistration>();
         services.AddScoped<AuthBrandingProvider>();
