@@ -30,6 +30,8 @@ services.AddScoped<IPersonalDataContributor, TaskPersonalData>();
 | `aiToolCalls` | AI: tool call log (the assistant keeps no chat history) | deleted |
 | `mails` | Mailing: mails queued for the address, without bodies | deleted |
 | `activity` | Auditing: what the user changed | kept; the trail names the actor only by id, which points to nobody afterwards |
+| `social` | Comments, tags and ratings: own comments and ratings | deleted, replies to the comments too |
+| `files` | Files: uploaded files (name, type, size) | kept, they belong to the organisation's folders |
 | `signIns` | Auth server: granted clients | grants and tokens deleted, every session ends |
 
 Database backups keep earlier data until they are rotated.

@@ -30,6 +30,8 @@ services.AddScoped<IPersonalDataContributor, TaskPersonalData>();
 | `aiToolCalls` | KI: Protokoll der Tool-Aufrufe (der Assistent speichert keinen Chatverlauf) | gelöscht |
 | `mails` | Mailversand: Mails an die Adresse, ohne Inhalt | gelöscht |
 | `activity` | Audit: was der Benutzer geändert hat | bleibt; der Verlauf nennt den Handelnden nur per ID, die danach auf niemanden mehr zeigt |
+| `social` | Kommentare, Tags und Bewertungen: eigene Kommentare und Bewertungen | gelöscht, Antworten auf die Kommentare ebenso |
+| `files` | Dateien: hochgeladene Dateien (Name, Typ, Größe) | bleiben, sie gehören in die Ordner der Organisation |
 | `signIns` | Auth-Server: freigegebene Clients | Freigaben und Tokens gelöscht, jede Sitzung endet |
 
 Datenbank-Backups behalten frühere Daten, bis sie rotiert werden.

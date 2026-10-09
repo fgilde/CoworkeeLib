@@ -25,6 +25,7 @@ public sealed class CoworkeeSocialModule : CoworkeeModule, IWebModule
         services.AddSingleton<IModelContributor, SocialModelContributor>();
         services.AddSingleton<IPermissionDefinitionContributor, SocialPermissionDefinitions>();
         services.AddScoped<SocialGuard>();
+        services.AddScoped<Application.Privacy.IPersonalDataContributor, SocialPersonalData>();
         services.AddScoped<IRealtimeTopicAuthorizer, CommentTopicAuthorizer>();
         services.TryAddSingleton(TimeProvider.System);
     }

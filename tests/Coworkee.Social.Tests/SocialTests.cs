@@ -101,6 +101,24 @@ public sealed class SocialTests(SocialApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Personal_data_lists_own_comments_and_ratings_and_erasing_the_user_removes_them()
+    {
+        var bob = await CreateUserAsync("leaver@acme.test", SocialPermissions.Comments.Create, SocialPermissions.Ratings.Create);
+        var asBob = app.As(bob.Id, _setup.TenantId);
+        await ReadAsync<CommentDto>(await asBob.PostAsJsonAsync(Comments, new CommentRequest("My two cents"), Ct));
+        await ReadAsync<RatingDto>(await asBob.PutAsJsonAsync($"/api/v1/ratings/Notes/{_note}", new RateRequest(3), Ct));
+
+        var export = await asBob.GetFromJsonAsync<System.Text.Json.JsonElement>("/api/v1/identity/me/personal-data", Ct);
+        export.GetProperty("social").GetProperty("comments")[0].GetProperty("text").GetString().ShouldBe("My two cents");
+        export.GetProperty("social").GetProperty("ratings")[0].GetProperty("stars").GetInt32().ShouldBe(3);
+
+        (await Admin.DeleteAsync($"/api/v1/identity/users/{bob.Id}", Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        (await Admin.GetFromJsonAsync<CommentThreadDto>(Comments, Ct))!.Comments.ShouldBeEmpty();
+        (await Admin.GetFromJsonAsync<RatingDto>($"/api/v1/ratings/Notes/{_note}", Ct))!.Count.ShouldBe(0);
+    }
+
+    [Fact]
     public async Task Unregistered_types_foreign_or_hidden_entities_and_missing_permissions_are_rejected()
     {
         var foreign = await app.AddNoteAsync(null, Guid.NewGuid());
