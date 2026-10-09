@@ -30,6 +30,11 @@ public static class CoworkeeClientExtensions
             client.BaseAddress = baseAddress;
             client.Timeout = TimeSpan.FromMinutes(10);
         });
+        services.AddHttpClient<Files.IFilesApi, Files.FilesApi>(client =>
+        {
+            client.BaseAddress = baseAddress;
+            client.Timeout = TimeSpan.FromHours(1);
+        });
         services.AddHttpClient<Ai.IAssistantApi, Ai.AssistantApi>(client =>
         {
             client.BaseAddress = baseAddress;
@@ -108,6 +113,7 @@ internal sealed class AdminNavigation : INavigationContributor
         new("Translations", "/admin/translations", MudBlazor.Icons.Material.Outlined.Translate, Coworkee.Contracts.Localization.LocalizationPermissions.Manage, Group: Navigation.NavigationGroups.Localization),
         new("Backups", "/admin/backups", MudBlazor.Icons.Material.Outlined.Backup, Coworkee.Contracts.Backup.BackupPermissions.Manage, Group: AdminGroup),
         new("AI tool calls", "/admin/ai-tool-calls", MudBlazor.Icons.Material.Outlined.ManageSearch, Coworkee.Contracts.Ai.AiPermissions.Audit, Group: AdminGroup),
+        new("Files", "/files", MudBlazor.Icons.Material.Outlined.FolderOpen, Coworkee.Contracts.Files.FilePermissions.View, Order: -8),
         new("Chat", "/chat", MudBlazor.Icons.Material.Outlined.Chat, Coworkee.Contracts.Chat.ChatPermissions.Use, Order: -9),
         new("Assistant", "/assistant", MudBlazor.Icons.Material.Outlined.AutoAwesome, Coworkee.Contracts.Ai.AiPermissions.Chat, Order: -10),
     ];

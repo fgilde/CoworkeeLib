@@ -1,0 +1,15 @@
+@using MudBlazor.Extensions.Components
+@using MudBlazor.Extensions.Core.FileManager
+<MudDialog Class="@MudBlazor.Extensions.Helper.MudExCss.Classes.Dialog.Initial" ContentClass="d-flex flex-column">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@L[Multiple ? "Choose files" : "Choose a file"]</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudExFileManager Manager="_manager" Panels="MudExFileManagerPanels.Tree | MudExFileManagerPanels.Files" AllowMultiSelect="Multiple" Height="@("65vh")"
+                          SelectedNodesChanged="Select" CurrentDirectoryChanged="Enter" OnFileOpened="Open" data-testid="file-picker-manager" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">@L["Cancel"]</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_selected.Count == 0" OnClick="Choose" data-testid="file-picker-choose">@L["Choose"]</MudButton>
+    </DialogActions>
+</MudDialog>

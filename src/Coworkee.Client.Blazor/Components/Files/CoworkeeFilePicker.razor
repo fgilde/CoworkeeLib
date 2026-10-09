@@ -1,0 +1,24 @@
+<MudStack Spacing="1" Class="my-2" data-testid="file-picker">
+    @if (Label is not null)
+    {
+        <MudText Typo="Typo.caption" Class="mud-text-secondary">@Label</MudText>
+    }
+    <MudStack Row="true" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Spacing="1">
+        @foreach (var id in Selected)
+        {
+            @if (ReadOnly || Disabled)
+            {
+                <MudChip T="Guid" Icon="@Icons.Material.Outlined.InsertDriveFile" Size="Size.Small" data-testid="@($"file-chip-{id}")">@NameOf(id)</MudChip>
+            }
+            else
+            {
+                <MudChip T="Guid" Icon="@Icons.Material.Outlined.InsertDriveFile" Size="Size.Small" OnClose="() => RemoveAsync(id)" data-testid="@($"file-chip-{id}")">@NameOf(id)</MudChip>
+            }
+        }
+        @if (!ReadOnly)
+        {
+            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Outlined.FolderOpen" Disabled="Disabled" OnClick="ChooseAsync"
+                       data-testid="file-picker-open">@L[Multiple ? "Choose files" : "Choose a file"]</MudButton>
+        }
+    </MudStack>
+</MudStack>

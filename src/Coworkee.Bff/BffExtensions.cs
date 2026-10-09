@@ -159,6 +159,9 @@ public static class BffExtensions
                 }
             }));
 
+            // the API enforces its own body limits per endpoint, large file uploads stream through
+            forwarder.WithMetadata(new Microsoft.AspNetCore.Mvc.DisableRequestSizeLimitAttribute());
+
             // signed-out visitors of the API docs go through the login first; the API checks the permission
             if (prefix == SwaggerUi)
             {

@@ -1,0 +1,8 @@
+@page "/files"
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + Coworkee.Contracts.Files.FilePermissions.View)]
+@using MudBlazor.Extensions.Components
+@using MudBlazor.Extensions.Core.FileManager
+
+<PageHeader Title="Files" Description="Folders and files of your organisation. Double-click a file to preview it, drag files in to upload them." />
+<MudExFileManager Manager="_manager" Panels="MudExFileManagerPanels.Tree | MudExFileManagerPanels.Files | MudExFileManagerPanels.Meta" Height="@("75vh")"
+                  CurrentDirectoryChanged="Enter" OnFileOpened="PreviewAsync" data-testid="files" />

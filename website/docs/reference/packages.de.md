@@ -19,6 +19,7 @@ Welches Paket wohin gehört und was in den `using`-Block kommt.
 | `Coworkee.Mailing` | API | `Coworkee.Mailing` | `IMailTemplateContributor`, `IMailSender` |
 | `Coworkee.BackgroundJobs` | API, Worker | `Coworkee.BackgroundJobs` | `IBackgroundJob<T>`, `IBackgroundJobs`, `IRecurringJob`, `AddRecurringJob` |
 | `Coworkee.Storage` | API, Worker | `Coworkee.Storage` | `IBlobStorage`, `BlobLinks` |
+| `Coworkee.Files` | API | `Coworkee.Files` | `CoworkeeFilesModule`, `FilesOptions` |
 | `Coworkee.Search`, `Coworkee.Search.Elasticsearch` | API, Worker | `Coworkee.Search` | `ISearchIndex`, `SearchSchema`, `SearchQuery` |
 | `Coworkee.Realtime`, `Coworkee.Notifications` | API, Worker | `Coworkee.Realtime`, `Coworkee.Notifications` | `IRealtimePublisher`, `INotifier` |
 | `Coworkee.Auditing` | API | `Coworkee.Auditing` | Abfragen des Audit-Logs |

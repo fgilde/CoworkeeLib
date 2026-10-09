@@ -85,6 +85,7 @@ plugins:
             Mailing: Mailversand
             Background jobs: Hintergrundjobs
             File storage: Dateiablage
+            Files: Dateien
             Search: Suche
             Realtime and notifications: Realtime und Benachrichtigungen
             Theming: Themes
@@ -151,6 +152,7 @@ nav:
       - Mailing: modules/mailing.md
       - Background jobs: modules/background-jobs.md
       - File storage: modules/storage.md
+      - Files: modules/files.md
       - Search: modules/search.md
       - Realtime and notifications: modules/realtime.md
       - Theming: modules/theming.md
