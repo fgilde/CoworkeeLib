@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -12,7 +12,19 @@
     main { width:min(420px, 92vw); border:1px solid var(--ink); padding:32px; }
     h1 { font-family: Georgia, serif; font-weight:400; font-size:34px; margin:0 0 24px; }
     label { display:block; font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-2); margin:16px 0 6px; }
-    input[type=email], input[type=password] { width:100%; padding:12px; border:1px solid var(--rule); background:transparent; color:var(--ink); font:inherit; }
+    input[type=email], input[type=password], input[type=text], input[type=tel], input[type=file] { width:100%; padding:12px; border:1px solid var(--rule); background:transparent; color:var(--ink); font:inherit; }
+    .row { display:grid; grid-template-columns:1fr 2fr; gap:12px; }
+    .steps { display:flex; flex-wrap:wrap; gap:6px 14px; list-style:none; padding:0; margin:0 0 8px; font-size:13px; color:var(--ink-2); counter-reset:step; }
+    .steps li { counter-increment:step; }
+    .steps li::before { content:counter(step) ". "; }
+    .steps li.current { color:var(--ink); font-weight:600; border-bottom:2px solid var(--signal); }
+    .actions { display:flex; flex-direction:row-reverse; gap:8px; margin-top:18px; }
+    button.secondary { background:transparent; color:var(--ink); border:1px solid var(--ink); }
+    .choice { display:flex; gap:10px; align-items:flex-start; padding:12px; border:1px solid var(--rule); margin:8px 0; text-transform:none; letter-spacing:0; font-size:15px; color:var(--ink); cursor:pointer; }
+    .summary { display:grid; grid-template-columns:auto 1fr; gap:4px 14px; margin:8px 0 16px; }
+    .summary dt { color:var(--ink-2); font-size:13px; text-transform:uppercase; letter-spacing:.08em; }
+    .summary dd { margin:0; }
+    .hint { display:block; color:var(--ink-2); margin-bottom:6px; }
     .check { display:flex; gap:8px; align-items:center; margin:16px 0; text-transform:none; letter-spacing:0; }
     button { width:100%; padding:13px; background:var(--ink); color:var(--paper); border:0; font:inherit; text-transform:uppercase; letter-spacing:.08em; cursor:pointer; }
     button:hover { background:var(--signal); }

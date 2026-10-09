@@ -1,30 +1,48 @@
 @page
 @model Coworkee.AuthServer.Pages.Account.RegisterModel
-@{ ViewData["Title"] = "Create an account"; }
-<h1>Create an account</h1>
-@if (Model.Registered)
+@using Coworkee.AuthServer.Registration
+@{ ViewData["Title"] = T("Create an account"); }
+<h1>@T("Create an account")</h1>
+@if (Model.Registered is { } user)
 {
-  <p class="notice" role="status">Check your inbox to confirm your email address. An administrator activates new accounts.</p>
-  <div class="links"><a asp-page="Login">Back to sign in</a></div>
+  @if (!user.EmailConfirmed)
+  {
+    <p class="notice" role="status">@T("Check your inbox to confirm your email address.")</p>
+  }
+  @if (!user.IsActive)
+  {
+    <p class="notice" role="status">@T("An administrator activates new accounts. We will let you know by email.")</p>
+  }
+  else if (user.EmailConfirmed)
+  {
+    <p class="notice" role="status">@T("Your account is ready.")</p>
+  }
+  <div class="links"><a asp-page="Login">@T("Back to sign in")</a></div>
 }
 else
 {
-  <form method="post">
-    <label for="first">First name</label>
-    <input id="first" type="text" asp-for="Input.FirstName" autocomplete="given-name" style="width:100%;padding:12px;border:1px solid var(--rule);background:transparent;color:var(--ink);font:inherit" />
-    <label for="last">Last name</label>
-    <input id="last" type="text" asp-for="Input.LastName" autocomplete="family-name" style="width:100%;padding:12px;border:1px solid var(--rule);background:transparent;color:var(--ink);font:inherit" />
-    <label for="email">Email</label>
-    <input id="email" type="email" asp-for="Input.Email" autocomplete="email" required />
-    <label for="password">Password</label>
-    <input id="password" type="password" asp-for="Input.Password" autocomplete="new-password" required />
-    <label for="confirm">Repeat password</label>
-    <input id="confirm" type="password" asp-for="Input.ConfirmPassword" autocomplete="new-password" required />
-    <button type="submit" style="margin-top:18px">Create account</button>
+  var index = Model.Steps.ToList().IndexOf(Model.Step);
+  <ol class="steps" aria-label="@T("Steps")">
+    @foreach (var step in Model.Steps)
+    {
+      <li class="@(step == Model.Step ? "current" : null)" aria-current="@(step == Model.Step ? "step" : null)">@T(RegistrationSteps.Title(step))</li>
+    }
+  </ol>
+  <form method="post" enctype="multipart/form-data" data-step="@Model.Step">
+    <input type="hidden" name="Step" value="@Model.Step" />
+    <input type="hidden" name="State" value="@Model.ProtectedState" />
+    <partial name="@($"_Register{char.ToUpperInvariant(Model.Step[0])}{Model.Step[1..]}")" model="Model" />
     @foreach (var error in Model.Errors)
     {
       <p class="error" role="alert">@error</p>
     }
-    <div class="links"><a asp-page="Login">Back to sign in</a></div>
+    <div class="actions">
+      <button type="submit" name="nav" value="next">@(index == Model.Steps.Count - 1 ? T("Create account") : T("Next"))</button>
+      @if (index > 0)
+      {
+        <button type="submit" name="nav" value="back" class="secondary" formnovalidate>@T("Back")</button>
+      }
+    </div>
+    <div class="links"><a asp-page="Login">@T("Back to sign in")</a></div>
   </form>
 }

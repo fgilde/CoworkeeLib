@@ -22,6 +22,9 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
         var services = context.Services;
         var options = context.Configuration.GetSection(AuthServerOptions.Section).Get<AuthServerOptions>() ?? new AuthServerOptions();
         services.Configure<AuthServerOptions>(context.Configuration.GetSection(AuthServerOptions.Section));
+        services.Configure<RegistrationOptions>(context.Configuration.GetSection(RegistrationOptions.Section));
+        services.Configure<IdentityOptions>(identity => identity.SignIn.RequireConfirmedEmail = true);
+        services.AddScoped<Registration.AccountRegistration>();
         services.AddSingleton<AuthClientSeeder>();
         services.AddHostedService(provider => provider.GetRequiredService<AuthClientSeeder>());
         services.AddRazorPages().AddApplicationPart(typeof(CoworkeeAuthServerModule).Assembly);

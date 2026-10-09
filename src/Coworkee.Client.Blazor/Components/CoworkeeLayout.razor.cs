@@ -13,6 +13,7 @@ public partial class CoworkeeLayout : IDisposable
 {
     private bool _drawer = true;
     private bool _dark;
+    private bool _visible;
     private bool _systemDark;
     private MudThemeProvider? _provider;
 
@@ -28,6 +29,8 @@ public partial class CoworkeeLayout : IDisposable
 
     [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
 
+    [Inject] private CoworkeeClientOptions Options { get; set; } = null!;
+
     [CascadingParameter] private Task<AuthenticationState> AuthenticationState { get; set; } = null!;
 
     protected override void OnInitialized()
@@ -39,6 +42,7 @@ public partial class CoworkeeLayout : IDisposable
 
     protected override async Task OnInitializedAsync()
     {
+        _visible = Options.AllowAnonymous;
         if (Nav.Uri.Contains("/setup", StringComparison.Ordinal))
         {
             return;
@@ -49,11 +53,20 @@ public partial class CoworkeeLayout : IDisposable
             if (!(await Api.GetSetupStatusAsync()).IsInitialized)
             {
                 Nav.NavigateTo("/setup");
+                return;
             }
         }
         catch (ApiException)
         {
         }
+
+        if (!_visible && (await AuthenticationState).User.Identity?.IsAuthenticated != true)
+        {
+            Nav.NavigateTo(Options.SignInHref(Nav.ToBaseRelativePath(Nav.Uri)), forceLoad: true);
+            return;
+        }
+
+        _visible = true;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

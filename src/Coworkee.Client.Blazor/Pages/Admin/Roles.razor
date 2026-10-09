@@ -17,5 +17,8 @@
             </CellTemplate>
         </PropertyColumn>
         <PropertyColumn Property="r => r.Description" Title="@L["Description"]" />
+        <PropertyColumn Property="r => r.SelectableForRegistration" Title="@L["Registration"]">
+            <CellTemplate>@(context.Item.SelectableForRegistration ? L["offered"] : "")</CellTemplate>
+        </PropertyColumn>
     </Columns>
 </CoworkeeDataTable>

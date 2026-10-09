@@ -1,4 +1,4 @@
-using Coworkee.Account;
+using Coworkee.AuthServer.Registration;
 using Coworkee.Contracts.Configuration;
 using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Options;
+using static Coworkee.AuthServer.AuthTexts;
 
 namespace Coworkee.AuthServer.Pages.Account;
 
@@ -25,6 +26,8 @@ public sealed class LoginModel(
 
     public bool ShowsPasswordForm => Mode != LoginMode.External;
 
+    public bool AllowUserName => options.Value.Login.AllowUserName;
+
     public IReadOnlyList<(string Scheme, string DisplayName)> Providers =>
         [.. options.Value.External.Providers.Select(p => (p.Key, p.Value.DisplayName ?? p.Key))];
 
@@ -41,7 +44,7 @@ public sealed class LoginModel(
 
     public async Task OnGetAsync(string? returnUrl)
     {
-        AllowRegistration = await settings.GetAsync<bool>(AccountSettings.AllowRegistration);
+        AllowRegistration = (await RegistrationPolicy.LoadAsync(settings, HttpContext.RequestAborted)).Enabled && ShowsPasswordForm;
 
         // the authorization request carries the client's login_hint (the address entered in setup, for example)
         if (returnUrl is not null && returnUrl.IndexOf('?') is var query and >= 0
@@ -58,12 +61,12 @@ public sealed class LoginModel(
             return NotFound();
         }
 
-        AllowRegistration = await settings.GetAsync<bool>(AccountSettings.AllowRegistration);
+        AllowRegistration = (await RegistrationPolicy.LoadAsync(settings, HttpContext.RequestAborted)).Enabled;
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
-        var user = await users.FindByEmailAsync(Input.Email);
-        if (user is null || !user.IsActive)
+        var user = await users.FindByEmailAsync(Input.Email) ?? (AllowUserName ? await users.FindByNameAsync(Input.Email) : null);
+        if (user is null || !user.IsActive || !Wildcards.Allows(options.Value.Login.AllowedEmails, user.Email))
         {
-            ErrorMessage = "Email or password is not correct.";
+            ErrorMessage = T("Email or password is not correct.");
             return Page();
         }
 
@@ -76,13 +79,19 @@ public sealed class LoginModel(
 
         if (result.IsLockedOut)
         {
-            ErrorMessage = "Too many attempts. Try again later.";
+            ErrorMessage = T("Too many attempts. Try again later.");
+            return Page();
+        }
+
+        if (result.IsNotAllowed)
+        {
+            ErrorMessage = T("Confirm your email address first; the link is in the mail we sent you.");
             return Page();
         }
 
         if (!result.Succeeded)
         {
-            ErrorMessage = "Email or password is not correct.";
+            ErrorMessage = T("Email or password is not correct.");
             return Page();
         }
 

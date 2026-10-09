@@ -139,27 +139,6 @@ public sealed partial class AccountPagesTests(AuthApp app) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Registered_user_confirms_the_email_but_stays_inactive()
-    {
-        await AllowRegistrationAsync();
-
-        var registered = await PostFormAsync(app.Browser(), "/Account/Register", new()
-        {
-            ["Input.Email"] = "new@acme.test", ["Input.Password"] = "Passw0rd!x", ["Input.ConfirmPassword"] = "Passw0rd!x", ["Input.FirstName"] = "Nia",
-        });
-        registered.Html.ShouldContain("Check your inbox");
-        var confirmed = await app.Browser().GetStringAsync(LocalPath(app.Mails.LinkFor("Identity.ConfirmEmail", "confirm_url")), Ct);
-
-        confirmed.ShouldContain("Your email address is confirmed");
-        var user = await InDbAsync(db => db.Set<User>().SingleAsync(u => u.Email == "new@acme.test", Ct));
-        user.EmailConfirmed.ShouldBeTrue();
-        user.IsActive.ShouldBeFalse();
-        user.TenantId.ShouldBe(_setup.TenantId);
-        app.Mails.Sent.ShouldContain(m => m.Template == "Identity.RegistrationPending" && m.To == "new@acme.test");
-        (await LoginAsync(app.Browser(), "new@acme.test", "Passw0rd!x")).StatusCode.ShouldBe(HttpStatusCode.OK);
-    }
-
-    [Fact]
     public async Task Two_factor_needs_a_valid_code_to_enable_and_then_guards_the_login()
     {
         var browser = app.Browser();

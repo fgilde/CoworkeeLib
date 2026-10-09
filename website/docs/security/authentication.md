@@ -78,7 +78,7 @@ Any OpenID Connect provider can sign users in. Each one is a section under `Cowo
 | `Scopes` | defaults to `openid profile email` |
 | `RequireHttpsMetadata` | `false` only for a local Keycloak on http |
 
-On sign-in the auth server looks for the user in this order: the linked external login, then an account with the same email, then a new account. Linking by email requires the provider to mark the address as verified (`email_verified`), otherwise the sign-in is refused. New users start without roles.
+On sign-in the auth server looks for the user in this order: the linked external login, then an account with the same email, then a new account. Linking by email requires the provider to mark the address as verified (`email_verified`) or to be configured with `TrustEmail`, otherwise the sign-in is refused. New users follow the [registration settings](registration.md) and start without roles.
 
 Locally, `options.UseKeycloak()` in the app host starts Keycloak with a realm for the app and configures all of this.
 
@@ -104,4 +104,4 @@ public static void Configure(IdentitySeedOptions seed)
 
 ## Account features
 
-Registration is off by default; the setting `Account.AllowRegistration` turns it on, new accounts confirm their email first. Users change password, email and two factor settings on the account page of the auth server, linked from the user menu.
+Registration is off by default; the setting `Account.AllowRegistration` turns it on. The wizard, activation, allowed addresses, documents and the sign-in rules are described in [Registration and sign-in rules](registration.md). Users change password, email and two factor settings on the account page of the auth server, linked from the user menu.

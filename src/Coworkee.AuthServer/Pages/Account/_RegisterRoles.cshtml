@@ -1,0 +1,9 @@
+@model Coworkee.AuthServer.Pages.Account.RegisterModel
+<p>@T("Register as")</p>
+@foreach (var role in Model.Roles)
+{
+  <label class="choice">
+    <input type="checkbox" name="Input.RoleIds" value="@role.Id" checked="@Model.Input.RoleIds.Contains(role.Id)" />
+    <span><strong>@role.Name</strong>@if (role.Description is { Length: > 0 } description) {<br /><small>@description</small>}</span>
+  </label>
+}

@@ -1,20 +1,20 @@
 @page
 @model Coworkee.AuthServer.Pages.Account.ConfirmEmailModel
-@{ ViewData["Title"] = "Confirm email"; }
-<h1>Confirm email</h1>
+@{ ViewData["Title"] = T("Confirm email"); }
+<h1>@T("Confirm email")</h1>
 @if (Model.Confirmed)
 {
-  <p class="notice" role="status">Your email address is confirmed.</p>
+  <p class="notice" role="status">@T("Your email address is confirmed.")</p>
   @if (Model.PendingApproval)
   {
-    <p>An administrator will activate your account. We will let you know by email.</p>
+    <p>@T("An administrator activates new accounts. We will let you know by email.")</p>
   }
   else
   {
-    <div class="links"><a asp-page="Login">Sign in</a></div>
+    <div class="links"><a asp-page="Login">@T("Sign in")</a></div>
   }
 }
 else
 {
-  <p class="error" role="alert">The link is invalid or has expired.</p>
+  <p class="error" role="alert">@T("The link is invalid or has expired.")</p>
 }

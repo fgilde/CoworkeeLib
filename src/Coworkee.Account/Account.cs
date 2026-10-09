@@ -28,6 +28,10 @@ namespace Coworkee.Account;
 public static class AccountSettings
 {
     public const string AllowRegistration = "Account.AllowRegistration";
+
+    public const string RegistrationRequiresActivation = "Account.RegistrationRequiresActivation";
+
+    public const string RegistrationRequiresEmailConfirmation = "Account.RegistrationRequiresEmailConfirmation";
 }
 
 public interface IAccountMailer
@@ -107,7 +111,11 @@ internal sealed class AccountSettingDefinitions : ISettingDefinitionContributor
     public void Define(SettingDefinitionContext context) =>
         context.Group("Account", "Accounts")
             .Add(AccountSettings.AllowRegistration, "Allow self registration", SettingType.Bool, [SettingScope.Global], "false",
-                description: "New accounts stay inactive until an administrator activates them.");
+                description: "Shows the registration wizard on the sign-in page and lets external sign-ins create accounts.")
+            .Add(AccountSettings.RegistrationRequiresActivation, "New accounts need activation", SettingType.Bool, [SettingScope.Global], "true",
+                description: "New accounts stay inactive until an administrator activates them; administrators get a notification.")
+            .Add(AccountSettings.RegistrationRequiresEmailConfirmation, "New accounts confirm their email", SettingType.Bool, [SettingScope.Global], "true",
+                description: "Signing in waits until the link in the confirmation mail was opened.");
 }
 
 [DependsOn(typeof(CoworkeeIdentityModule), typeof(CoworkeeMailingModule))]
@@ -116,6 +124,7 @@ public sealed class CoworkeeAccountModule : CoworkeeModule, IWebModule
     public override void ConfigureServices(ModuleServiceContext context)
     {
         context.Services.Configure<AccountOptions>(context.Configuration.GetSection(AccountOptions.Section));
+        context.Services.Configure<IdentityOptions>(identity => context.Configuration.GetSection(RegistrationOptions.PasswordSection).Bind(identity.Password));
         context.Services.AddMessagingFromAssembly(typeof(CoworkeeAccountModule).Assembly);
         context.Services.AddScoped<IAccountMailer, AccountMailer>();
         context.Services.AddSingleton<ISettingDefinitionContributor, AccountSettingDefinitions>();

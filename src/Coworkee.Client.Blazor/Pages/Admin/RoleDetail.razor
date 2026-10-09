@@ -6,6 +6,13 @@
 {
     <MudText Typo="Typo.h4">@_role.Name</MudText>
     <MudText Typo="Typo.body2" Class="mb-4">@_role.Description</MudText>
+    @if (!_role.IsSystem)
+    {
+        <PermissionView Permission="@IdentityPermissions.Roles.Manage">
+            <MudSwitch T="bool" Value="_role.SelectableForRegistration" ValueChanged="SetSelectableAsync" Color="Color.Primary" Class="mb-4"
+                       Label="@L["Offered in the registration"]" data-testid="role-registration" />
+        </PermissionView>
+    }
     @if (_role.IsSystem && _role.Name == "admin")
     {
         <MudAlert Severity="Severity.Info" Class="mb-4">Administrators have every permission.</MudAlert>

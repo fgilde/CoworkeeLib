@@ -12,6 +12,9 @@ public sealed class CoworkeeKeycloakOptions
 
     public LoginMode LoginMode { get; set; } = LoginMode.Both;
 
+    /// <summary>The realm belongs to the app, so its addresses count as verified and sign-ins join local accounts with the same email.</summary>
+    public bool TrustEmail { get; set; } = true;
+
     /// <summary>Fixed host port; empty lets Aspire choose one, so several app hosts run side by side.</summary>
     public int? Port { get; set; }
 

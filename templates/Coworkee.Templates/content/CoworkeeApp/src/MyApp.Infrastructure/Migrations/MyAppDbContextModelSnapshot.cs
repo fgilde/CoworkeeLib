@@ -358,6 +358,9 @@ namespace MyApp.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<bool>("SelectableForRegistration")
+                        .HasColumnType("boolean");
+
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uuid");
 
@@ -2210,6 +2213,9 @@ namespace MyApp.Infrastructure.Migrations
                     b.Property<string>("NormalizedName")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
+
+                    b.Property<bool>("SelectableForRegistration")
+                        .HasColumnType("boolean");
 
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uuid");

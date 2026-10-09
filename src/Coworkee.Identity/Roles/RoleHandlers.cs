@@ -39,7 +39,7 @@ internal sealed class GetRolesHandler(CoworkeeDbContext db, ICurrentUser current
         await db.Set<Role>().AsNoTracking()
             .Where(r => r.TenantId == null || r.TenantId == currentUser.TenantId)
             .OrderByDescending(r => r.IsSystem).ThenBy(r => r.Name)
-            .Select(r => new RoleDto(r.Id, r.Name!, r.Description, r.IsSystem))
+            .Select(r => new RoleDto(r.Id, r.Name!, r.Description, r.IsSystem, r.SelectableForRegistration))
             .ToListAsync(cancellationToken);
 }
 
@@ -53,7 +53,11 @@ internal sealed class CreateRoleHandler(CoworkeeDbContext db, ICurrentUser curre
             return RoleNames.Taken;
         }
 
-        var role = new Role { Name = command.Role.Name.Trim(), NormalizedName = normalized, Description = command.Role.Description, TenantId = currentUser.TenantId };
+        var role = new Role
+        {
+            Name = command.Role.Name.Trim(), NormalizedName = normalized, Description = command.Role.Description, TenantId = currentUser.TenantId,
+            SelectableForRegistration = command.Role.SelectableForRegistration,
+        };
         db.Add(role);
         return role.Id;
     }
@@ -78,6 +82,7 @@ internal sealed class UpdateRoleHandler(CoworkeeDbContext db, ICurrentUser curre
         role.Name = command.Role.Name.Trim();
         role.NormalizedName = normalized;
         role.Description = command.Role.Description;
+        role.SelectableForRegistration = command.Role.SelectableForRegistration;
         return Result.Success();
     }
 }

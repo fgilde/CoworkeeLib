@@ -24,9 +24,10 @@ public sealed record UpdateUserRequest(string? FirstName, string? LastName, bool
 
 public sealed record IdListRequest(IReadOnlyList<Guid> Ids);
 
-public sealed record RoleDto(Guid Id, string Name, string? Description, bool IsSystem);
+public sealed record RoleDto(Guid Id, string Name, string? Description, bool IsSystem, bool SelectableForRegistration = false);
 
-public sealed record RoleRequest(string Name, string? Description);
+/// <summary>A role; <paramref name="SelectableForRegistration"/> offers it in the registration wizard.</summary>
+public sealed record RoleRequest(string Name, string? Description, bool SelectableForRegistration = false);
 
 public sealed record GroupDto(Guid Id, string Name, string? Description, IReadOnlyList<Guid> MemberIds, IReadOnlyList<Guid> RoleIds);
 

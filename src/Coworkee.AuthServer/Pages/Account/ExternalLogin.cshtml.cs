@@ -21,7 +21,7 @@ public sealed class ExternalLoginModel(SignInManager<User> signIn, ExternalSignI
         await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
         if (login is null)
         {
-            ErrorMessage = "The sign-in provider did not confirm the sign-in.";
+            ErrorMessage = AuthTexts.T("The sign-in provider did not confirm the sign-in.");
             return Page();
         }
 

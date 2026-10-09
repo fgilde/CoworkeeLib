@@ -1,8 +1,8 @@
 @page
 @model Coworkee.AuthServer.Pages.Account.ExternalLoginModel
-@{ ViewData["Title"] = "Sign in"; }
-<h1>Sign in</h1>
+@{ ViewData["Title"] = T("Sign in"); }
+<h1>@T("Sign in")</h1>
 <p class="error" role="alert">@Model.ErrorMessage</p>
 <div class="links">
-  <a asp-page="Login" asp-route-returnUrl="@Model.ReturnUrl">Back to sign in</a>
+  <a asp-page="Login" asp-route-returnUrl="@Model.ReturnUrl">@T("Back to sign in")</a>
 </div>

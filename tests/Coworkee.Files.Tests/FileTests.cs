@@ -6,6 +6,7 @@ using System.Text.Json;
 using Coworkee.Contracts.Files;
 using Coworkee.Contracts.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Files.Tests;
 
@@ -90,6 +91,34 @@ public sealed class FileTests(FilesApp app) : IAsyncLifetime
         var row = page.GetProperty("value").EnumerateArray().ShouldHaveSingleItem();
         row.GetProperty("Name").GetString().ShouldBe("report-2026.pdf");
         row.TryGetProperty("BlobKey", out _).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Registration_documents_land_in_a_folder_only_the_user_and_admins_see()
+    {
+        var nia = await PostAsync<UserDto>("/api/v1/identity/users", new CreateUserRequest("nia@acme.test", "Passw0rd!x", null, null));
+        var tom = await PostAsync<UserDto>("/api/v1/identity/users", new CreateUserRequest("tom@acme.test", "Passw0rd!x", null, null));
+        using (Core.Security.CurrentUserScope.Begin(new Core.Security.ImpersonatedUser(nia.Id, _setup.TenantId)))
+        {
+            await using var scope = app.App.Services.CreateAsyncScope();
+            var store = scope.ServiceProvider.GetRequiredService<Application.Registration.IRegistrationDocumentStore>();
+            var slot = new Contracts.Configuration.RegistrationDocumentSlot { Name = "Passport" };
+            foreach (var name in new[] { "front.png", "back.png" })
+            {
+                await store.SaveAsync(new Application.Registration.RegistrationDocument(nia.Id, nia.Email, slot, name, "image/png", 3, new MemoryStream([1, 2, 3])), Ct);
+            }
+
+            await scope.ServiceProvider.GetRequiredService<FilesTestDbContext>().SaveChangesAsync(Ct);
+        }
+
+        var mine = (await ContentAsync(app.As(nia.Id, _setup.TenantId), null)).Folders.ShouldHaveSingleItem();
+        mine.Name.ShouldBe("nia@acme.test");
+        (await ContentAsync(app.As(nia.Id, _setup.TenantId), mine.Id)).Files.Select(f => f.Name).ShouldBe(["Passport - back.png", "Passport - front.png"]);
+        (await ContentAsync(app.As(nia.Id, _setup.TenantId), mine.Id)).CanUpload.ShouldBeFalse();
+        (await ContentAsync(app.As(tom.Id, _setup.TenantId), null)).Folders.ShouldBeEmpty();
+        var registrations = (await ContentAsync(Admin, null)).Folders.ShouldHaveSingleItem();
+        registrations.Name.ShouldBe("Registrations");
+        (await ContentAsync(Admin, registrations.Id)).Folders.ShouldHaveSingleItem().Id.ShouldBe(mine.Id);
     }
 
     private async Task<FolderDto> CreateFolderAsync(Guid? parentId, string name) => await PostAsync<FolderDto>("/api/v1/files/folders", new CreateFolderRequest(parentId, name));

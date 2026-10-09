@@ -1,0 +1,18 @@
+@model Coworkee.AuthServer.Pages.Account.RegisterModel
+@{ var input = Model.Input; }
+<dl class="summary">
+  <dt>@T("Email")</dt><dd>@input.Email</dd>
+  <dt>@T("Name")</dt><dd>@input.FirstName @input.LastName</dd>
+  @if (input.PhoneNumber is { } phone)
+  {
+    <dt>@T("Phone")</dt><dd>@phone</dd>
+  }
+  @if (Model.Options.RequireAddress)
+  {
+    <dt>@T("Address")</dt><dd>@input.Street, @input.ZipCode @input.City, @input.Country</dd>
+  }
+  @if (Model.Roles.Count > 0)
+  {
+    <dt>@T("Role")</dt><dd>@(string.Join(", ", Model.Roles.Where(r => input.RoleIds.Contains(r.Id)).Select(r => r.Name)) is { Length: > 0 } roles ? roles : "-")</dd>
+  }
+</dl>

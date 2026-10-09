@@ -1,0 +1,14 @@
+@model Coworkee.AuthServer.Pages.Account.RegisterModel
+@using Coworkee.AuthServer.Registration
+<partial name="_RegisterSummary" model="Model" />
+<p>@T("Please add the documents that confirm your person and qualification.")</p>
+@for (var index = 0; index < Model.Options.Documents.Count; index++)
+{
+  var slot = Model.Options.Documents[index];
+  <label for="document-@index">@slot.Name@(slot.Required ? " *" : "")</label>
+  @if (slot.Description is { Length: > 0 } description)
+  {
+    <small class="hint">@description</small>
+  }
+  <input id="document-@index" type="file" name="@RegistrationDocuments.Field(index)" accept="@RegistrationDocuments.Accept(slot)" required="@slot.Required" />
+}

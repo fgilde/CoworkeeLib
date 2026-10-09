@@ -1,13 +1,13 @@
 @page
 @model Coworkee.AuthServer.Pages.Account.LoginModel
-@{ ViewData["Title"] = "Sign in"; }
-<h1>Sign in</h1>
+@{ ViewData["Title"] = T("Sign in"); }
+<h1>@T("Sign in")</h1>
 @if (Model.Mode != Coworkee.Contracts.Configuration.LoginMode.Internal)
 {
   <form method="post" asp-page-handler="External" asp-route-returnUrl="@Model.Request.Query["returnUrl"]" class="external">
     @foreach (var (scheme, displayName) in Model.Providers)
     {
-      <button type="submit" name="provider" value="@scheme" data-provider="@scheme">Sign in with @displayName</button>
+      <button type="submit" name="provider" value="@scheme" data-provider="@scheme">@T("Sign in with {0}", displayName)</button>
     }
   </form>
 }
@@ -15,24 +15,24 @@
 {
 @if (Model.Providers.Count > 0 && Model.Mode == Coworkee.Contracts.Configuration.LoginMode.Both)
 {
-  <p class="divider">or with your password</p>
+  <p class="divider">@T("or with your password")</p>
 }
 <form method="post">
-  <label for="email">Email</label>
-  <input id="email" type="email" asp-for="Input.Email" autocomplete="username" required autofocus />
-  <label for="password">Password</label>
+  <label for="email">@(Model.AllowUserName ? T("Email or user name") : T("Email"))</label>
+  <input id="email" type="@(Model.AllowUserName ? "text" : "email")" asp-for="Input.Email" autocomplete="username" required autofocus />
+  <label for="password">@T("Password")</label>
   <input id="password" type="password" asp-for="Input.Password" autocomplete="current-password" required />
-  <label class="check"><input type="checkbox" asp-for="Input.RememberMe" /> Stay signed in</label>
-  <button type="submit">Sign in</button>
+  <label class="check"><input type="checkbox" asp-for="Input.RememberMe" /> @T("Stay signed in")</label>
+  <button type="submit">@T("Sign in")</button>
   @if (Model.ErrorMessage is not null)
   {
     <p class="error" role="alert">@Model.ErrorMessage</p>
   }
   <div class="links">
-    <a asp-page="ForgotPassword">Forgot password?</a>
+    <a asp-page="ForgotPassword">@T("Forgot password?")</a>
     @if (Model.AllowRegistration)
     {
-      <a asp-page="Register">Create an account</a>
+      <a asp-page="Register">@T("Create an account")</a>
     }
   </div>
 </form>

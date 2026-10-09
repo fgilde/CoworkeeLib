@@ -64,7 +64,10 @@ internal sealed class IdentitySeeder(
 
     private Role AddRole(SeedRole seed, Guid tenantId)
     {
-        var role = new Role { Name = seed.Name, NormalizedName = seed.Name.ToUpperInvariant(), Description = seed.Description, TenantId = tenantId };
+        var role = new Role
+        {
+            Name = seed.Name, NormalizedName = seed.Name.ToUpperInvariant(), Description = seed.Description, TenantId = tenantId, SelectableForRegistration = seed.SelectableForRegistration,
+        };
         db.Add(role);
         db.AddRange(seed.Permissions.Select(p => new PermissionGrant { TenantId = tenantId, Name = p, ProviderType = PermissionProviderType.Role, ProviderKey = role.Id }));
         return role;

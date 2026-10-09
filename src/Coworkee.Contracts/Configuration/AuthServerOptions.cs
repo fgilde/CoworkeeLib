@@ -16,6 +16,8 @@ public sealed class AuthServerOptions
 
     public ExternalLoginOptions External { get; set; } = new();
 
+    public LoginOptions Login { get; set; } = new();
+
     /// <summary>Public base address tokens name as issuer; set it when the server sits behind a proxy or runs on several instances.</summary>
     public Uri? Issuer { get; set; }
 

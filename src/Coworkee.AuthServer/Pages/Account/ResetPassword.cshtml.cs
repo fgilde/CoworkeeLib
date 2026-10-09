@@ -10,7 +10,7 @@ namespace Coworkee.AuthServer.Pages.Account;
 
 public sealed class ResetPasswordModel(UserManager<User> users, CoworkeeDbContext db) : PageModel
 {
-    private const string InvalidLink = "The link is invalid or has expired. Request a new one.";
+    private static string InvalidLink => AuthTexts.T("The link is invalid or has expired. Request a new one.");
 
     [BindProperty(SupportsGet = true)]
     public Guid UserId { get; set; }
@@ -29,7 +29,7 @@ public sealed class ResetPasswordModel(UserManager<User> users, CoworkeeDbContex
     {
         if (Input.Password != Input.ConfirmPassword)
         {
-            Errors.Add("The passwords do not match.");
+            Errors.Add(AuthTexts.T("The passwords do not match."));
             return;
         }
 

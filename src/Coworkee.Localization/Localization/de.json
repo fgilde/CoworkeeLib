@@ -340,5 +340,15 @@
   "Download my data": "Meine Daten herunterladen",
   "Delete account": "Konto löschen",
   "Your profile, messages, notifications and settings are removed for good. The history of changes keeps what you did, without your name.": "Ihr Profil, Ihre Nachrichten, Benachrichtigungen und Einstellungen werden endgültig entfernt. Der Änderungsverlauf behält, was Sie getan haben, ohne Ihren Namen.",
-  "Enter your e-mail address to confirm": "Geben Sie zur Bestätigung Ihre E-Mail-Adresse ein"
+  "Enter your e-mail address to confirm": "Geben Sie zur Bestätigung Ihre E-Mail-Adresse ein",
+  "Offered in the registration": "In der Registrierung angeboten",
+  "Registration": "Registrierung",
+  "offered": "angeboten",
+  "Selectable for registration": "Bei der Registrierung wählbar",
+  "Allow self registration": "Selbstregistrierung erlauben",
+  "Shows the registration wizard on the sign-in page and lets external sign-ins create accounts.": "Zeigt den Registrierungsassistenten auf der Anmeldeseite und lässt externe Anmeldungen Konten anlegen.",
+  "New accounts need activation": "Neue Konten brauchen eine Freischaltung",
+  "New accounts stay inactive until an administrator activates them; administrators get a notification.": "Neue Konten bleiben inaktiv, bis ein Administrator sie freischaltet; Administratoren werden benachrichtigt.",
+  "New accounts confirm their email": "Neue Konten bestätigen ihre E-Mail",
+  "Signing in waits until the link in the confirmation mail was opened.": "Die Anmeldung ist erst möglich, wenn der Link in der Bestätigungsmail geöffnet wurde."
 }

@@ -78,6 +78,9 @@ public sealed class Role : IdentityRole<Guid>, IAuditable
     [Nextended.Core.Facets.ProvideFacet(Label = "System")]
     public bool IsSystem { get; set; }
 
+    /// <summary>Offered in the registration wizard; new users pick it themselves.</summary>
+    public bool SelectableForRegistration { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
 
     public Guid? CreatedBy { get; set; }

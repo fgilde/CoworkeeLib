@@ -1,17 +1,17 @@
 @page
 @model Coworkee.AuthServer.Pages.Account.LoginWith2faModel
-@{ ViewData["Title"] = "Two-step verification"; }
-<h1>Verification</h1>
+@{ ViewData["Title"] = T("Two-step verification"); }
+<h1>@T("Verification")</h1>
 <form method="post">
-  <p>Enter the code from your authenticator app, or one of your recovery codes.</p>
-  <label for="code">Code</label>
+  <p>@T("Enter the code from your authenticator app, or one of your recovery codes.")</p>
+  <label for="code">@T("Code")</label>
   <input id="code" type="text" asp-for="Input.Code" autocomplete="one-time-code" inputmode="numeric" required autofocus
          style="width:100%;padding:12px;border:1px solid var(--rule);background:transparent;color:var(--ink);font:inherit" />
-  <label class="check"><input type="checkbox" asp-for="Input.UseRecoveryCode" /> This is a recovery code</label>
-  <button type="submit">Verify</button>
+  <label class="check"><input type="checkbox" asp-for="Input.UseRecoveryCode" /> @T("This is a recovery code")</label>
+  <button type="submit">@T("Verify")</button>
   @if (Model.ErrorMessage is not null)
   {
     <p class="error" role="alert">@Model.ErrorMessage</p>
   }
-  <div class="links"><a asp-page="Login">Back to sign in</a></div>
+  <div class="links"><a asp-page="Login">@T("Back to sign in")</a></div>
 </form>

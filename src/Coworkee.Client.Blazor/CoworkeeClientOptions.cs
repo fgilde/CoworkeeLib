@@ -20,6 +20,15 @@ public sealed class CoworkeeClientOptions
     public string LoginPath { get; set; } = "/bff/login";
 
     public string LogoutPath { get; set; } = "/bff/logout";
+
+    /// <summary>
+    /// When false, every page of the layout sends visitors who are not signed in straight to the sign-in (no anonymous home page);
+    /// the setup wizard stays reachable. The BFF and the API keep their own rules either way.
+    /// </summary>
+    public bool AllowAnonymous { get; set; } = true;
+
+    /// <summary>The sign-in address that returns to <paramref name="relativePath"/> (relative to the base address).</summary>
+    public string SignInHref(string relativePath) => $"{LoginPath}?returnUrl={Uri.EscapeDataString("/" + relativePath)}";
 }
 
 public sealed record AboutLink(string Title, string Url);

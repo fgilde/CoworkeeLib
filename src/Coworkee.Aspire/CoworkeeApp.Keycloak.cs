@@ -31,6 +31,7 @@ public sealed partial class CoworkeeApp
             .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].Authority, ReferenceExpression.Create($"{Keycloak.GetEndpoint("http")}/realms/{realm}"))
             .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].ClientId, clientId)
             .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].ClientSecret, secret)
-            .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].RequireHttpsMetadata, false);
+            .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].RequireHttpsMetadata, false)
+            .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].TrustEmail, options.TrustEmail);
     }
 }

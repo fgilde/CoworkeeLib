@@ -1,0 +1,24 @@
+@model Coworkee.AuthServer.Pages.Account.RegisterModel
+<label for="first">@T("First name")</label>
+<input id="first" type="text" asp-for="Input.FirstName" autocomplete="given-name" required autofocus />
+<label for="last">@T("Last name")</label>
+<input id="last" type="text" asp-for="Input.LastName" autocomplete="family-name" required />
+<label for="phone">@T("Phone")</label>
+<input id="phone" type="tel" asp-for="Input.PhoneNumber" autocomplete="tel" />
+@if (Model.Options.RequireAddress)
+{
+  <label for="street">@T("Street")</label>
+  <input id="street" type="text" asp-for="Input.Street" autocomplete="street-address" required />
+  <div class="row">
+    <div>
+      <label for="zip">@T("Zip code")</label>
+      <input id="zip" type="text" asp-for="Input.ZipCode" autocomplete="postal-code" required />
+    </div>
+    <div>
+      <label for="city">@T("City")</label>
+      <input id="city" type="text" asp-for="Input.City" autocomplete="address-level2" required />
+    </div>
+  </div>
+  <label for="country">@T("Country")</label>
+  <input id="country" type="text" asp-for="Input.Country" autocomplete="country-name" required />
+}

@@ -45,7 +45,7 @@ public sealed class LoginWith2faModel(SignInManager<User> signIn, CoworkeeDbCont
             return LocalRedirect(Url.IsLocalUrl(ReturnUrl) ? ReturnUrl : "/");
         }
 
-        ErrorMessage = result.IsLockedOut ? "Too many attempts. Try again later." : "The code is not valid.";
+        ErrorMessage = AuthTexts.T(result.IsLockedOut ? "Too many attempts. Try again later." : "The code is not valid.");
         return Page();
     }
 

@@ -1,0 +1,7 @@
+@model Coworkee.AuthServer.Pages.Account.RegisterModel
+<label for="email">@T("Email")</label>
+<input id="email" type="email" asp-for="Input.Email" autocomplete="email" required autofocus />
+<label for="password">@T("Password")</label>
+<input id="password" type="password" asp-for="Input.Password" autocomplete="new-password" required />
+<label for="confirm">@T("Repeat password")</label>
+<input id="confirm" type="password" asp-for="Input.ConfirmPassword" autocomplete="new-password" required />

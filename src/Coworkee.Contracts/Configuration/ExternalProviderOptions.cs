@@ -14,4 +14,7 @@ public sealed class ExternalProviderOptions
     public List<string> Scopes { get; set; } = ["openid", "profile", "email"];
 
     public bool RequireHttpsMetadata { get; set; } = true;
+
+    /// <summary>Takes the provider's email addresses as verified even without an email_verified claim (a provider you run yourself).</summary>
+    public bool TrustEmail { get; set; }
 }

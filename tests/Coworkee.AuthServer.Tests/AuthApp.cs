@@ -28,6 +28,8 @@ public sealed class AuthApp : PostgresFixture
 
     public CapturingMailSender Mails { get; } = new();
 
+    public CapturingDocumentStore Documents { get; } = new();
+
     protected override string[] SchemasToExclude => ["hangfire"];
 
     public override async ValueTask InitializeAsync()
@@ -57,10 +59,26 @@ public sealed class AuthApp : PostgresFixture
             ["Coworkee:Auth:External:Providers:keycloak:ClientId"] = "demo-auth",
             ["Coworkee:Auth:External:Providers:keycloak:ClientSecret"] = "secret",
             ["Coworkee:Auth:External:Providers:keycloak:RequireHttpsMetadata"] = "false",
+            ["Coworkee:Auth:External:Providers:trusted:Authority"] = "http://trusted.test/realms/demo",
+            ["Coworkee:Auth:External:Providers:trusted:ClientId"] = "demo-auth",
+            ["Coworkee:Auth:External:Providers:trusted:RequireHttpsMetadata"] = "false",
+            ["Coworkee:Auth:External:Providers:trusted:TrustEmail"] = "true",
+            ["Coworkee:Auth:Login:AllowUserName"] = "true",
+            ["Coworkee:Auth:Login:AllowedEmails:0"] = "*@acme.test",
+            ["Coworkee:Registration:RequireAddress"] = "true",
+            ["Coworkee:Registration:AllowedEmails:0"] = "*@acme.test",
+            ["Coworkee:Registration:RequireDocuments"] = "true",
+            ["Coworkee:Registration:Documents:0:Name"] = "Passport",
+            ["Coworkee:Registration:Documents:0:ContentTypes:0"] = "image/*",
+            ["Coworkee:Registration:Documents:0:ContentTypes:1"] = "application/pdf",
+            ["Coworkee:Registration:Documents:0:MaxSize"] = "1000",
+            ["Coworkee:Registration:Documents:1:Name"] = "Certificate",
+            ["Coworkee:Registration:Documents:1:Required"] = "false",
         });
         builder.AddCoworkee<TestAuthModule>();
         builder.Services.RemoveAll<Coworkee.Mailing.IMailSender>();
         builder.Services.AddSingleton<Coworkee.Mailing.IMailSender>(Mails);
+        builder.Services.AddSingleton<Coworkee.Application.Registration.IRegistrationDocumentStore>(Documents);
         App = builder.Build();
         await using (var scope = App.Services.CreateAsyncScope())
         {
@@ -88,6 +106,7 @@ public sealed class AuthApp : PostgresFixture
     {
         await ResetAsync();
         Mails.Sent.Clear();
+        Documents.Saved.Clear();
         await App.Services.GetRequiredService<Microsoft.Extensions.Caching.Hybrid.HybridCache>().RemoveByTagAsync("coworkee:settings");
         App.Services.GetRequiredService<Coworkee.Identity.Setup.SystemStateCache>().Reset();
         await App.Services.GetRequiredService<AuthClientSeeder>().SeedAsync(CancellationToken.None);
@@ -112,6 +131,19 @@ public sealed class AuthApp : PostgresFixture
             .Where(u => u.Email == email).Select(u => u.LastLoginAt).SingleAsync();
     }
 
+    public Task SetSettingAsync(string name, string value) => InDbAsync(db =>
+    {
+        db.Add(new Coworkee.Settings.SettingValue { Name = name, Scope = Coworkee.Contracts.Settings.SettingScope.Global, Value = value });
+        return db.SaveChangesAsync();
+    });
+
+    public async Task<T> InDbAsync<T>(Func<AuthTestDbContext, Task<T>> action)
+    {
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
+        await using var scope = App.Services.CreateAsyncScope();
+        return await action(scope.ServiceProvider.GetRequiredService<AuthTestDbContext>());
+    }
+
     public async Task DeactivateAsync(Guid userId)
     {
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
@@ -126,7 +158,7 @@ public sealed class AuthApp : PostgresFixture
 public sealed class AuthTestDbContext(DbContextOptions<AuthTestDbContext> options, ICurrentUser currentUser, IEnumerable<IModelContributor> contributors)
     : CoworkeeDbContext(options, currentUser, contributors);
 
-[DependsOn(typeof(CoworkeeAuthServerModule))]
+[DependsOn(typeof(CoworkeeAuthServerModule), typeof(Coworkee.Notifications.CoworkeeNotificationsModule))]
 public sealed class TestAuthModule : CoworkeeModule
 {
     public override void ConfigureServices(ModuleServiceContext context) =>
@@ -135,6 +167,20 @@ public sealed class TestAuthModule : CoworkeeModule
 }
 
 public sealed record CapturedMail(string To, string Template, object Model);
+
+public sealed record CapturedDocument(Guid UserId, string Slot, string FileName, string ContentType, byte[] Content, Guid? ActingUser);
+
+public sealed class CapturingDocumentStore : Coworkee.Application.Registration.IRegistrationDocumentStore
+{
+    public System.Collections.Concurrent.ConcurrentQueue<CapturedDocument> Saved { get; } = new();
+
+    public async Task SaveAsync(Coworkee.Application.Registration.RegistrationDocument document, CancellationToken cancellationToken)
+    {
+        using var copy = new MemoryStream();
+        await document.Content.CopyToAsync(copy, cancellationToken);
+        Saved.Enqueue(new CapturedDocument(document.UserId, document.Slot.Name, document.FileName, document.ContentType, copy.ToArray(), CurrentUserScope.Current?.UserId));
+    }
+}
 
 public sealed class CapturingMailSender : Coworkee.Mailing.IMailSender
 {

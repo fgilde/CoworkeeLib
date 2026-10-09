@@ -1,5 +1,9 @@
 @inherits LayoutComponentBase
 
+@if (!_visible)
+{
+    return;
+}
 <MudThemeProvider @ref="_provider" Theme="ThemeService.Theme" IsDarkMode="_dark" />
 @if (ThemeService.CustomCss is { Length: > 0 } css)
 {

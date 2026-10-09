@@ -10,6 +10,8 @@ public sealed class CoworkeeSection
 
     public AccountOptions Account { get; } = new();
 
+    public RegistrationOptions Registration { get; } = new();
+
     public ApiAuthenticationOptions ApiAuth { get; } = new();
 
     public StorageOptions Storage { get; } = new();

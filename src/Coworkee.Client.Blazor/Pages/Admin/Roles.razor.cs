@@ -27,7 +27,7 @@ public partial class Roles
         if (await Dialogs.ShowEditAsync(L["New role"], new NewRole()) is { } role)
         {
             Guid id = default;
-            if (await Snackbar.RunAsync(async () => id = await Api.CreateRoleAsync(new RoleRequest(role.Name, role.Description))))
+            if (await Snackbar.RunAsync(async () => id = await Api.CreateRoleAsync(new RoleRequest(role.Name, role.Description, role.SelectableForRegistration))))
             {
                 Nav.NavigateTo($"/admin/roles/{id}");
             }
@@ -47,5 +47,7 @@ public partial class Roles
         public string Name { get; set; } = string.Empty;
 
         public string? Description { get; set; }
+
+        public bool SelectableForRegistration { get; set; }
     }
 }

@@ -36,6 +36,7 @@ public sealed class CoworkeeFilesModule : CoworkeeModule, IWebModule
         services.AddScoped<FolderAccess>();
         services.AddScoped<Application.Privacy.IPersonalDataContributor, FilePersonalData>();
         services.TryAddSingleton(TimeProvider.System);
+        services.TryAddScoped<Application.Registration.IRegistrationDocumentStore, FileRegistrationDocuments>();
         services.AddODataEntity<StoredFile>("StoredFiles", FilePermissions.View, f => f.BlobKey);
         services.AddODataEntity<FileFolder>("FileFolders", FilePermissions.View);
     }

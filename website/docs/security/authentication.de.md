@@ -78,7 +78,7 @@ Jeder OpenID-Connect-Anbieter kann Benutzer anmelden. Jeder ist ein Abschnitt un
 | `Scopes` | Standard `openid profile email` |
 | `RequireHttpsMetadata` | `false` nur für ein lokales Keycloak über http |
 
-Bei der Anmeldung sucht der Auth-Server den Benutzer in dieser Reihenfolge: über den verknüpften externen Login, dann über ein Konto mit derselben E-Mail, dann legt er ein neues an. Die Verknüpfung über die E-Mail setzt voraus, dass der Anbieter die Adresse als bestätigt meldet (`email_verified`), sonst wird die Anmeldung abgelehnt. Neue Benutzer starten ohne Rollen.
+Bei der Anmeldung sucht der Auth-Server den Benutzer in dieser Reihenfolge: über den verknüpften externen Login, dann über ein Konto mit derselben E-Mail, dann legt er ein neues an. Die Verknüpfung über die E-Mail setzt voraus, dass der Anbieter die Adresse als bestätigt meldet (`email_verified`) oder mit `TrustEmail` konfiguriert ist, sonst wird die Anmeldung abgelehnt. Neue Benutzer folgen den [Registrierungseinstellungen](registration.md) und starten ohne Rollen.
 
 Lokal startet `options.UseKeycloak()` im AppHost ein Keycloak mit einem Realm für die App und konfiguriert all das.
 
@@ -104,4 +104,4 @@ public static void Configure(IdentitySeedOptions seed)
 
 ## Kontofunktionen
 
-Registrierung ist standardmäßig aus; die Einstellung `Account.AllowRegistration` schaltet sie ein, neue Konten bestätigen zuerst ihre E-Mail. Passwort, E-Mail und Zwei-Faktor ändern Benutzer auf der Kontoseite des Auth-Servers, verlinkt aus dem Benutzermenü.
+Registrierung ist standardmäßig aus; die Einstellung `Account.AllowRegistration` schaltet sie ein. Assistent, Freischaltung, erlaubte Adressen, Dokumente und Anmelderegeln beschreibt [Registrierung und Anmelderegeln](registration.md). Passwort, E-Mail und Zwei-Faktor ändern Benutzer auf der Kontoseite des Auth-Servers, verlinkt aus dem Benutzermenü.

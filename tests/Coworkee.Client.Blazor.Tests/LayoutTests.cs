@@ -44,6 +44,31 @@ public sealed class LayoutTests : ClientTestBase
     }
 
     [Fact]
+    public void Without_anonymous_access_visitors_go_straight_to_the_sign_in()
+    {
+        Services.AddSingleton(new CoworkeeClientOptions { AllowAnonymous = false });
+        AddAuthorization();
+        var nav = Services.GetRequiredService<NavigationManager>();
+        nav.NavigateTo("/products?page=2");
+
+        var layout = Render<CoworkeeLayout>(p => p.Add(l => l.Body, (RenderFragment)(b => b.AddContent(0, "secret body"))));
+
+        layout.WaitForAssertion(() => nav.Uri.ShouldBe("http://localhost/bff/login?returnUrl=%2Fproducts%3Fpage%3D2"));
+        layout.Markup.ShouldNotContain("secret body");
+    }
+
+    [Fact]
+    public void Without_anonymous_access_signed_in_users_see_the_page()
+    {
+        Services.AddSingleton(new CoworkeeClientOptions { AllowAnonymous = false });
+        AddAuthorization().SetAuthorized("Ada");
+
+        var layout = Render<CoworkeeLayout>(p => p.Add(l => l.Body, (RenderFragment)(b => b.AddContent(0, "secret body"))));
+
+        layout.WaitForAssertion(() => layout.Markup.ShouldContain("secret body"));
+    }
+
+    [Fact]
     public void Logo_is_rendered_as_an_image_never_as_markup()
     {
         Api.GetCurrentThemeAsync(Arg.Any<CancellationToken>()).Returns(new Coworkee.Contracts.Theming.ThemeDto(

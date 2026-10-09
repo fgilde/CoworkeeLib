@@ -13,14 +13,7 @@ public partial class CoworkeeUserMenu
 
     [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
 
-    private string SignInHref
-    {
-        get
-        {
-            var path = Nav.ToBaseRelativePath(Nav.Uri);
-            return $"{Options.LoginPath}?returnUrl={Uri.EscapeDataString(path.Length > 0 ? "/" + path : "/")}";
-        }
-    }
+    private string SignInHref => Options.SignInHref(Nav.ToBaseRelativePath(Nav.Uri));
 
     private async Task LogoutAsync()
     {
