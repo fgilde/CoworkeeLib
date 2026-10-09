@@ -539,5 +539,13 @@
   "Every day at {0} UTC": "Jeden Tag um {0} UTC",
   "Every {0} at {1} UTC": "Jeden {0} um {1} UTC",
   "Every month on day {0} at {1} UTC": "Jeden Monat am {0}. um {1} UTC",
-  "Custom schedule": "Eigener Zeitplan"
+  "Custom schedule": "Eigener Zeitplan",
+  "Add": "Hinzufügen",
+  "Remove All": "Alle entfernen",
+  "Edit {0}": "{0} bearbeiten",
+  "Reset {0}": "{0} zurücksetzen",
+  "Remove language": "Sprache entfernen",
+  "No translations; the default text applies in every language.": "Keine Übersetzungen; der Standardtext gilt in jeder Sprache.",
+  "Add a language, e.g. de or fr-CA": "Sprache hinzufügen, z. B. de oder fr-CA",
+  "Not a language code like de or fr-CA": "Kein Sprachcode wie de oder fr-CA"
 }

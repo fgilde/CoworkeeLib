@@ -6,7 +6,7 @@ using MudBlazor.Extensions.Components.ObjectEdit.Options;
 namespace Coworkee.Client.Blazor.Components.Editors;
 
 /// <summary>
-/// Renders properties marked with [ContentTypes], [Cron] or [FileSize] with the editors here, in every MudExObjectEdit of the app.
+/// Renders properties marked with [ContentTypes], [Cron], [FileSize] or [Translations] with the editors here, in every MudExObjectEdit of the app.
 /// AddCoworkeeClient registers it; a meta's RenderWith still wins.
 /// </summary>
 public sealed class CoworkeeEditors : IDefaultRenderDataProvider
@@ -43,6 +43,15 @@ public sealed class CoworkeeEditors : IDefaultRenderDataProvider
             return type == typeof(long?) ? new RenderData<long?, long?>(nameof(FileSizeEditor.Value), typeof(FileSizeEditor))
                 : type == typeof(long) ? new RenderData<long, long?>(nameof(FileSizeEditor.Value), typeof(FileSizeEditor)) { ToFieldTypeConverterFn = v => v, ToPropertyTypeConverterFn = v => v ?? 0 }
                 : null;
+        }
+
+        if (property.IsDefined(typeof(TranslationsAttribute)) && type == typeof(Dictionary<string, string>))
+        {
+            return new RenderData<Dictionary<string, string>, IReadOnlyDictionary<string, string>>(nameof(TranslationsEditor.Value), typeof(TranslationsEditor))
+            {
+                ToFieldTypeConverterFn = v => v ?? new Dictionary<string, string>(),
+                ToPropertyTypeConverterFn = v => new(v ?? new Dictionary<string, string>(), StringComparer.OrdinalIgnoreCase),
+            };
         }
 
         return null;

@@ -97,20 +97,21 @@ builder.Services.AddCoworkeeSettings<ShopSettings>(section: "Shop", title: "Shop
 | `Lock(s => s.A.B)` | the value shows read only; the server keeps what applies whatever comes in. Locking an object locks all its properties |
 | `Hide(s => s.A.B)` | the value is neither sent to the browser nor changed |
 | secrets | properties named like password, secret, api key, token or connection string come masked; sending the mask back keeps the stored value |
-| meta | the client `meta` groups, labels, orders or renders properties like any `MudExObjectEditForm`; locks and hides from the server apply on top. The form shows each section under its heading in two columns (lists over the full width); `WrapInMudItem(i => i.md = 12)` widens a single field |
+| meta | the client `meta` groups, labels, orders or renders properties like any `MudExObjectEditForm`; locks and hides from the server apply on top. The form shows each section under its heading in two columns (lists over the full width); `WrapInMudItem(i => i.md = 12)` widens a single field. Computed properties (no setter) are left out and fields have no reset of their own; a list item opened in its dialog (like a registration document) follows the same rules |
 | scope | typed settings apply to the whole installation and are edited from the system organisation only; per tenant and per user values are settings (above) |
 
 **Restore defaults** drops the values changed in the app; appsettings and environment apply again.
 
-### Editors for file types, sizes and schedules
+### Editors for file types, sizes, schedules and translations
 
-Three attributes from `Coworkee.Contracts.Configuration` pick a better editor for a property, in the Settings page and in every other object form of the app:
+Four attributes from `Coworkee.Contracts.Configuration` pick a better editor for a property, in the Settings page and in every other object form of the app:
 
 | Attribute | Property | Editor |
 |---|---|---|
 | `[ContentTypes]` | `List<string>` or `string[]` of MIME types | chips with readable names and icons; common types and groups (images, PDF, Office documents, videos, audio, archives) to pick, other types like `image/x-icon` typed in. Empty accepts every type |
 | `[FileSize]` | `long?` or `long` in bytes | a number in KB, MB or GB; empty means no limit |
 | `[Cron]` | `string` with a cron expression | presets (every few minutes, hourly, daily, weekly, monthly) and the expression itself, described in words (UTC); an invalid expression is not taken |
+| `[Translations]` | `Dictionary<string, string>` of culture to text | a row per language with its name and code; the app's languages to pick, other culture codes like `fr-CA` typed in, rows removed with their button |
 
 ```csharp title="Contracts"
 public sealed class ImportSettings
@@ -123,10 +124,13 @@ public sealed class ImportSettings
 
     [FileSize]
     public long? MaxFileSize { get; set; } = 10 * 1024 * 1024;
+
+    [Translations]
+    public Dictionary<string, string> Titles { get; set; } = [];
 }
 ```
 
-The built-in settings use them for the registration documents (`Registration:Documents`) and the digest time (`Notifications:DigestCron`). A `RenderWith` in the client `meta` still wins over the attribute.
+The built-in settings use them for the registration documents (`Registration:Documents`, with their names and descriptions per language) and the digest time (`Notifications:DigestCron`). A `RenderWith` in the client `meta` still wins over the attribute.
 
 ### More sections
 
