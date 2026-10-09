@@ -10,6 +10,9 @@ namespace Coworkee.Client.Blazor.Tests;
 
 public abstract class ClientTestBase : BunitContext
 {
+    // the solution runs all test projects at once; on a busy thread pool one second is too short for background loads
+    static ClientTestBase() => DefaultWaitTimeout = TimeSpan.FromSeconds(10);
+
     protected ClientTestBase()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;

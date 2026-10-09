@@ -12,6 +12,9 @@ using NSubstitute;
 
 namespace Coworkee.Client.Blazor.Tests;
 
+// switching the language sets the process-wide culture, so these run alone instead of next to tests that read English texts
+[CollectionDefinition(nameof(LocalizationTests), DisableParallelization = true)]
+[Collection(nameof(LocalizationTests))]
 public sealed class LocalizationTests : ClientTestBase
 {
     public LocalizationTests()

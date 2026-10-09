@@ -13,6 +13,7 @@ public sealed class UserCards(ICoworkeeApi api, RealtimeClient realtime) : IAsyn
 {
     private readonly Dictionary<Guid, Task<UserCardDto?>> _cards = [];
     private readonly HashSet<Guid> _queued = [];
+    private readonly Lock _gate = new();
     private TaskCompletionSource<IReadOnlyDictionary<Guid, UserCardDto>>? _batch;
     private IAsyncDisposable? _subscription;
 
@@ -49,9 +50,14 @@ public sealed class UserCards(ICoworkeeApi api, RealtimeClient realtime) : IAsyn
 
     private async Task<UserCardDto?> QueueAsync(Guid userId)
     {
-        _queued.Add(userId);
-        var batch = _batch ??= StartBatch();
-        return (await batch.Task).GetValueOrDefault(userId);
+        Task<IReadOnlyDictionary<Guid, UserCardDto>> batch;
+        lock (_gate)
+        {
+            _queued.Add(userId);
+            batch = (_batch ??= StartBatch()).Task;
+        }
+
+        return (await batch).GetValueOrDefault(userId);
     }
 
     // ponytail: collects the ids of one render pass for 30 ms, so a list of 50 rows asks once
@@ -61,9 +67,15 @@ public sealed class UserCards(ICoworkeeApi api, RealtimeClient realtime) : IAsyn
         _ = Task.Run(async () =>
         {
             await Task.Delay(30);
-            var ids = _queued.ToList();
-            _queued.Clear();
-            _batch = null;
+            List<Guid> ids;
+            // an id queued between taking the list and starting the next batch would otherwise be lost
+            lock (_gate)
+            {
+                ids = [.. _queued];
+                _queued.Clear();
+                _batch = null;
+            }
+
             try
             {
                 batch.SetResult((await api.GetUserCardsAsync(ids)).ToDictionary(c => c.Id));
