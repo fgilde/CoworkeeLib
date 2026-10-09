@@ -34,6 +34,21 @@ The layout is split so you can replace a part instead of the whole:
 
 Pages work the same way: replace `Profile` with your own profile page and every link to it opens yours.
 
+## About dialog
+
+The about dialog slides in from the right and renders the sections of `options.About.Sections` in order: `AboutHeader` (logo or monogram, title, version), `AboutCredits` (the libraries with logo and running version), `AboutLinks` (the app's `AboutLinks`) and `AboutFooter` (runtime and gilde.org mark). Sections are plain components, so remove, insert or swap them; credits are a list as well.
+
+```csharp
+builder.Services.AddCoworkeeClient(baseAddress, options =>
+{
+    options.About.Sections.Remove(typeof(AboutCredits));
+    options.About.Sections.Insert(1, typeof(LicenseSection));
+    options.About.Credits.Add(new AboutCredit("MyLib", "https://example.org", Icons.Material.Outlined.Extension, AboutVersion.Of(typeof(MyLib).Assembly)));
+});
+```
+
+For a completely different dialog, replace it: `builder.Services.ReplaceComponent<AboutDialog, MyAbout>();`. `MyAbout` is an ordinary `MudDialog`.
+
 ## When to replace and when to contribute
 
 Prefer the contribution points when they fit: `INavigationContributor` for menu entries, `IAppBarContributor` for the top bar, `NavigationMenuOptions` to hide or order. Replace a component when you need different markup or behavior.

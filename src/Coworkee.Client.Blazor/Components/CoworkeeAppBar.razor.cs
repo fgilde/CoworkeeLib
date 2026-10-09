@@ -30,5 +30,5 @@ public partial class CoworkeeAppBar : IDisposable
 
     private void Refresh() => InvokeAsync(StateHasChanged);
 
-    private Task ShowAboutAsync() => Dialogs.ShowExAsync<AboutDialog>(string.Empty, new DialogParameters(), Data.EditDialogExtensions.Small());
+    private Task ShowAboutAsync() => Dialogs.ShowExAsync<AboutDialog>(string.Empty, new DialogParameters(), Data.EditDialogExtensions.RightSheet());
 }
