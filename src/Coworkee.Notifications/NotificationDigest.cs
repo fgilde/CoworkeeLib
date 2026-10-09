@@ -91,7 +91,7 @@ public sealed class NotificationDigestJob(
                 await mails.QueueAsync(email, Template, new
                 {
                     user = new { first_name = names.GetValueOrDefault(userId) ?? email, email },
-                    notifications = items.Select(n => new { title = n.Title, body = n.Body, link = Absolute(n.Link) }).ToList(),
+                    notifications = items.Select(n => new { title = Notification.Format(n.Title, n.Arguments), body = Notification.Format(n.Body, n.Arguments), link = Absolute(n.Link) }).ToList(),
                 }, null, cancellationToken);
             }
             catch (Exception exception) when (exception is not OperationCanceledException)

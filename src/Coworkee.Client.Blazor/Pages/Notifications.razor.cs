@@ -14,6 +14,8 @@ public partial class Notifications
 
     [Inject] private NavigationManager Nav { get; set; } = null!;
 
+    [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
+
     private const int PageSize = 25;
 
     private PagedResult<NotificationDto>? _page;

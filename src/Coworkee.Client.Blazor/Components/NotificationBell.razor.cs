@@ -15,6 +15,8 @@ public partial class NotificationBell : IAsyncDisposable
 
     [Inject] private NavigationManager Nav { get; set; } = null!;
 
+    [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
+
     private int _count;
     private IReadOnlyList<NotificationDto> _items = [];
     private IAsyncDisposable? _subscription;

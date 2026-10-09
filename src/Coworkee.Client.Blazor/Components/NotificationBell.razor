@@ -18,10 +18,10 @@
         @foreach (var item in _items)
         {
             <MudMenuItem OnClick="() => OpenAsync(item)">
-                <MudText Typo="Typo.body2" Style="@(item.ReadAt is null ? "font-weight:600" : null)">@item.Title</MudText>
+                <MudText Typo="Typo.body2" Style="@(item.ReadAt is null ? "font-weight:600" : null)">@L.Server(item.Title, item.Arguments)</MudText>
                 @if (item.Body is not null)
                 {
-                    <MudText Typo="Typo.caption">@item.Body</MudText>
+                    <MudText Typo="Typo.caption">@L.Server(item.Body, item.Arguments)</MudText>
                 }
             </MudMenuItem>
         }

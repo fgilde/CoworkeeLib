@@ -27,6 +27,10 @@ public sealed class CoworkeeLocalizer(ILocalizationApi api, IJSRuntime js) : IDi
 
     public string this[string key, params object?[] arguments] => string.Format(CultureInfo.CurrentCulture, Lookup(key), arguments);
 
+    /// <summary>A text from the server: translated and filled when it came with arguments (a localizable text), else as it is.</summary>
+    [return: System.Diagnostics.CodeAnalysis.NotNullIfNotNull(nameof(text))]
+    public string? Server(string? text, IReadOnlyList<string>? arguments) => text is null || arguments is null ? text : this[text, [.. arguments]];
+
     /// <summary>The translation of <paramref name="key"/>, or null when the language has none.</summary>
     public string? Find(string key) => _texts.TryGetValue(key, out var text) ? text : null;
 

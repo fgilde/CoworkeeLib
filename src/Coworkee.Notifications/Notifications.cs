@@ -35,21 +35,42 @@ public sealed class Notification : Entity, IHasRealtimeTopics
 
     public string? Link { get; set; }
 
+    /// <summary>Set for localizable notifications: <see cref="Title"/> and <see cref="Body"/> are texts with placeholders the reader's language translates.</summary>
+    public List<string>? Arguments { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
 
     public DateTimeOffset? ReadAt { get; set; }
 
     public IEnumerable<string> RealtimeTopics => [Contracts.Realtime.RealtimeTopics.User(UserId)];
+
+    /// <summary>The text in English, placeholders filled.</summary>
+    public static string? Format(string? text, IReadOnlyList<string>? arguments) =>
+        text is null || arguments is null ? text : string.Format(System.Globalization.CultureInfo.InvariantCulture, text, [.. arguments]);
 }
 
 public interface INotifier
 {
     Task NotifyAsync(IEnumerable<Guid> userIds, string type, string title, string? body = null, string? link = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// A notification every reader sees in his language: <paramref name="title"/> and <paramref name="body"/> are English texts (the
+    /// localization keys) with {0} placeholders for <paramref name="arguments"/>; translations go into the app's texts.
+    /// </summary>
+    Task NotifyLocalizedAsync(
+        IEnumerable<Guid> userIds, string type, string title, string? body, IReadOnlyList<string> arguments, string? link = null, CancellationToken cancellationToken = default);
 }
 
 internal sealed class Notifier(CoworkeeDbContext db, ICurrentUser currentUser, TimeProvider clock) : INotifier
 {
-    public Task NotifyAsync(IEnumerable<Guid> userIds, string type, string title, string? body = null, string? link = null, CancellationToken cancellationToken = default)
+    public Task NotifyAsync(IEnumerable<Guid> userIds, string type, string title, string? body = null, string? link = null, CancellationToken cancellationToken = default) =>
+        AddAsync(userIds, type, title, body, null, link);
+
+    public Task NotifyLocalizedAsync(
+        IEnumerable<Guid> userIds, string type, string title, string? body, IReadOnlyList<string> arguments, string? link = null, CancellationToken cancellationToken = default) =>
+        AddAsync(userIds, type, title, body, [.. arguments], link);
+
+    private Task AddAsync(IEnumerable<Guid> userIds, string type, string title, string? body, List<string>? arguments, string? link)
     {
         var now = clock.GetUtcNow();
         db.AddRange(userIds.Distinct().Select(userId => new Notification
@@ -59,6 +80,7 @@ internal sealed class Notifier(CoworkeeDbContext db, ICurrentUser currentUser, T
             Type = type,
             Title = title,
             Body = body,
+            Arguments = arguments,
             Link = link,
             CreatedAt = now,
         }));
@@ -93,7 +115,7 @@ internal sealed class NotificationHandlers(CoworkeeDbContext db, ICurrentUser cu
         var total = await mine.CountAsync(cancellationToken);
         var items = await mine.OrderByDescending(n => n.CreatedAt).ThenByDescending(n => n.Id)
             .Skip((page - 1) * pageSize).Take(pageSize)
-            .Select(n => new NotificationDto(n.Id, n.Type, n.Title, n.Body, n.Link, n.CreatedAt, n.ReadAt))
+            .Select(n => new NotificationDto(n.Id, n.Type, n.Title, n.Body, n.Link, n.CreatedAt, n.ReadAt, n.Arguments))
             .ToListAsync(cancellationToken);
         return new PagedResult<NotificationDto>(items, total, page, pageSize);
     }

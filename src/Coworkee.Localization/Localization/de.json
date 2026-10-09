@@ -350,5 +350,7 @@
   "New accounts need activation": "Neue Konten brauchen eine Freischaltung",
   "New accounts stay inactive until an administrator activates them; administrators get a notification.": "Neue Konten bleiben inaktiv, bis ein Administrator sie freischaltet; Administratoren werden benachrichtigt.",
   "New accounts confirm their email": "Neue Konten bestätigen ihre E-Mail",
-  "Signing in waits until the link in the confirmation mail was opened.": "Die Anmeldung ist erst möglich, wenn der Link in der Bestätigungsmail geöffnet wurde."
+  "Signing in waits until the link in the confirmation mail was opened.": "Die Anmeldung ist erst möglich, wenn der Link in der Bestätigungsmail geöffnet wurde.",
+  "New registration": "Neue Registrierung",
+  "{0} ({1}) waits for activation.": "{0} ({1}) wartet auf Freischaltung."
 }

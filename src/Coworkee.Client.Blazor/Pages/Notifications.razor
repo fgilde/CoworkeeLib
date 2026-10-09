@@ -31,10 +31,10 @@ else
                              IconColor="@(item.ReadAt is null ? Color.Primary : Color.Default)" IconSize="Size.Small">
                     <MudStack Row="true" AlignItems="AlignItems.Center">
                         <div>
-                            <MudText Typo="Typo.body1" Style="@(item.ReadAt is null ? "font-weight:600" : null)">@item.Title</MudText>
+                            <MudText Typo="Typo.body1" Style="@(item.ReadAt is null ? "font-weight:600" : null)">@L.Server(item.Title, item.Arguments)</MudText>
                             @if (item.Body is not null)
                             {
-                                <MudText Typo="Typo.body2" Class="mud-text-secondary">@item.Body</MudText>
+                                <MudText Typo="Typo.body2" Class="mud-text-secondary">@L.Server(item.Body, item.Arguments)</MudText>
                             }
                             <MudText Typo="Typo.caption" Class="mud-text-secondary">@item.CreatedAt.ToLocalTime().ToString("g")</MudText>
                         </div>

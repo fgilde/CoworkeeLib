@@ -86,6 +86,25 @@ public sealed class NotificationTests(NotificationApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Localized_notifications_keep_the_text_and_its_arguments_and_the_digest_fills_them()
+    {
+        using (Core.Security.CurrentUserScope.Begin(new Core.Security.ImpersonatedUser(_setup.AdminUserId, _setup.TenantId)))
+        {
+            await using var scope = app.App.Services.CreateAsyncScope();
+            await scope.ServiceProvider.GetRequiredService<INotifier>().NotifyLocalizedAsync([_bob.Id], "test", "New registration", "{0} ({1}) waits for activation.",
+                ["Nia New", "nia@acme.test"], "/admin/users/1", Ct);
+            await scope.ServiceProvider.GetRequiredService<NotificationTestDbContext>().SaveChangesAsync(Ct);
+        }
+
+        var item = (await Bob.GetFromJsonAsync<PagedResult<NotificationDto>>("/api/v1/notifications", Ct))!.Items.Single();
+        (item.Title, item.Body).ShouldBe(("New registration", "{0} ({1}) waits for activation."));
+        item.Arguments.ShouldBe(["Nia New", "nia@acme.test"]);
+
+        await RunDigestAsync();
+        (await MailsToAsync("bob@acme.test")).Single().HtmlBody.ShouldContain("Nia New (nia@acme.test) waits for activation.");
+    }
+
+    [Fact]
     public async Task Push_reaches_the_user_when_the_sender_has_no_tenant()
     {
         var (connection, events) = await app.ConnectAsync(_bob.Id, _setup.TenantId);

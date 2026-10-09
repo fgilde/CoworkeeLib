@@ -23,6 +23,18 @@ public sealed class NotificationTests : ClientTestBase
     }
 
     [Fact]
+    public void Localized_notifications_are_translated_and_filled()
+    {
+        var localized = new NotificationDto(Guid.CreateVersion7(), "account.registration", "New registration", "{0} ({1}) waits for activation.", null,
+            DateTimeOffset.UtcNow, null, ["Nia New", "nia@acme.test"]);
+        Api.GetNotificationsAsync(Arg.Any<bool>(), Arg.Any<PageRequest>(), Arg.Any<CancellationToken>()).Returns(new PagedResult<NotificationDto>([localized], 1, 1, 25));
+
+        var page = Render<Notifications>();
+
+        page.WaitForAssertion(() => page.Markup.ShouldContain("Nia New (nia@acme.test) waits for activation."));
+    }
+
+    [Fact]
     public async Task The_bell_opens_with_the_latest_and_a_link_to_all()
     {
         var popovers = Render<MudBlazor.MudPopoverProvider>();
