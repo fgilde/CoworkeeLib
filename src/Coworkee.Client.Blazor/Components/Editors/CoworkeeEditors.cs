@@ -13,7 +13,14 @@ public sealed class CoworkeeEditors : IDefaultRenderDataProvider
 {
     private static readonly CoworkeeEditors Instance = new();
 
-    public static void Register() => RenderDataDefaults.AddRenderDataProvider(Instance);
+    private static readonly Lazy<bool> Registered = new(() =>
+    {
+        RenderDataDefaults.AddRenderDataProvider(Instance);
+        return true;
+    });
+
+    // MudEx keeps the providers in a static list: adding again (or while another form reads it) would break rendering
+    public static void Register() => _ = Registered.Value;
 
     public IRenderData? GetRenderData(ObjectEditPropertyMeta propertyMeta)
     {
