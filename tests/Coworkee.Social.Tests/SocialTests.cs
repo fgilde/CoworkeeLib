@@ -38,7 +38,8 @@ public sealed class SocialTests(SocialApp app) : IAsyncLifetime
 
         (reply.ParentId, reply.Text, reply.AuthorId).ShouldBe((first.Id, "Agreed", bob.Id));
         var notification = (await app.NotificationsAsync()).ShouldHaveSingleItem();
-        (notification.UserId, notification.Link, notification.Body).ShouldBe((_setup.AdminUserId, $"/notes/{_note}", "Agreed"));
+        (notification.UserId, notification.Link, notification.Title, notification.Body).ShouldBe((_setup.AdminUserId, $"/notes/{_note}", "New comment", "{0}"));
+        notification.Arguments.ShouldBe(["Agreed"]);
         var thread = (await asBob.GetFromJsonAsync<CommentThreadDto>(Comments, Ct))!;
         (thread.Comments.Count, thread.CanComment, thread.CanModerate).ShouldBe((2, true, false));
 

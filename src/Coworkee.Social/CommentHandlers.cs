@@ -120,7 +120,7 @@ internal sealed class CommentHandlers(
         if (recipients.Count > 0)
         {
             var body = comment.Text.Length > 200 ? comment.Text[..200] + "…" : comment.Text;
-            await notifier.NotifyAsync(recipients, "social.comment", "New comment", body, target.Link?.Invoke(comment.EntityId), cancellationToken);
+            await notifier.NotifyLocalizedAsync(recipients, "social.comment", "New comment", "{0}", [body], target.Link?.Invoke(comment.EntityId), cancellationToken);
         }
     }
 
