@@ -47,7 +47,7 @@ public sealed partial class CoworkeeApp
             yield return ("jobs", ReferenceExpression.Create($"{web.GetEndpoint("https")}/admin/jobs"), null);
         }
 
-        foreach (var resource in Builder.Resources.OfType<IResourceWithEndpoints>().Where(r => r != Migrations?.Resource))
+        foreach (var resource in Builder.Resources.OfType<IResourceWithEndpoints>().Where(r => r != Migrations?.Resource && r.Name != "aspire-dashboard"))
         {
             var endpoint = resource.Annotations.OfType<EndpointAnnotation>()
                 .Where(e => e.UriScheme is "http" or "https")

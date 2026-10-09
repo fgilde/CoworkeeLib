@@ -474,5 +474,20 @@
   "The services are shown in the system organisation.": "Die Dienste werden in der Systemorganisation angezeigt.",
   "Healthy": "Läuft",
   "Unhealthy": "Gestört",
-  "Unreachable": "Nicht erreichbar"
+  "Unreachable": "Nicht erreichbar",
+  "Require address": "Adresse verlangen",
+  "Allowed emails": "Erlaubte E-Mails",
+  "Require documents": "Dokumente verlangen",
+  "Public app url": "Öffentliche App-Adresse",
+  "Digest cron": "Zeitplan der Zusammenfassung (Cron)",
+  "Connection string name": "Name der Verbindungszeichenfolge",
+  "Run server": "Job-Server ausführen",
+  "Worker count": "Anzahl Worker",
+  "Polling interval": "Abfrageintervall",
+  "Dashboard path": "Pfad des Dashboards",
+  "Names": "Namen",
+  "Descriptions": "Beschreibungen",
+  "Required": "Pflicht",
+  "Content types": "Dateitypen",
+  "Max size": "Maximale Größe"
 }
