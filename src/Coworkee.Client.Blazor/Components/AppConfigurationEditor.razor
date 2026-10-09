@@ -14,8 +14,11 @@
 else
 {
     <MudExObjectEditForm @key="_revision" Value="_value" IsLoading="_busy"
-                         StickyToolbar="true" StickyActionBar="false" AllowExport="true" AllowImport="true" ImportNeedsConfirmation="true"
-                         GroupingStyle="GroupingStyle.Flat" DefaultGroupName="@L["General"]"
+                         StickyToolbar="true" StickyActionBar="true" AllowExport="true" AllowImport="true" ImportNeedsConfirmation="true"
+                         ToolbarColor="Color.Surface" ActionBarColor="Color.Surface" ActionBarClass="border-t border-solid mud-border-lines-default"
+                         ToolBarActionAlignment="ActionAlignment.Left"
+                         GroupingStyle="GroupingStyle.Flat" GroupLineColor="@("--mud-palette-lines-default")" PathDisplayMode="PathDisplayMode.None"
+                         GlobalResetSettings="NoReset" DefaultPropertyResetSettings="NoPropertyReset" DefaultGroupName="@L["General"]"
                          MetaInformation="_meta"
                          OnValidSubmit="SaveAsync">
         <ToolBarContent>
@@ -29,6 +32,7 @@ else
             <MudTooltip Text="@L["Restore the configured values (appsettings and environment)"]">
                 <MudIconButton Icon="@Icons.Material.Outlined.SettingsBackupRestore" OnClick="ResetAsync" Disabled="@(_changed.Count == 0 || _busy)" data-testid="reset" aria-label="@L["Restore defaults"]" />
             </MudTooltip>
+            <MudDivider Vertical="true" FlexItem="true" Class="mx-2 my-3" />
         </ToolBarContent>
     </MudExObjectEditForm>
 }
