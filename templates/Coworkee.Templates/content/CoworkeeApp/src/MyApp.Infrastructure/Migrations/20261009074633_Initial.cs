@@ -1,5 +1,6 @@
 #if (samples)
 using System;
+using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -307,6 +308,7 @@ namespace MyApp.Infrastructure.Migrations
                     Title = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
                     Body = table.Column<string>(type: "text", nullable: true),
                     Link = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    Arguments = table.Column<List<string>>(type: "text[]", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     ReadAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
                 },
@@ -1438,6 +1440,7 @@ namespace MyApp.Infrastructure.Migrations
 }
 #else
 using System;
+using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -1674,6 +1677,7 @@ namespace MyApp.Infrastructure.Migrations
                     Title = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
                     Body = table.Column<string>(type: "text", nullable: true),
                     Link = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    Arguments = table.Column<List<string>>(type: "text[]", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     ReadAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
                 },
