@@ -81,26 +81,45 @@ public static class EditDialogExtensions
 
     // two columns on wider screens like the classic forms; a page's meta can widen single fields with WrapInMudItem(i => i.md = 12)
 #pragma warning disable BL0005 // MudEx configures the wrapping grid items through these instances
-    private static Action<ObjectEditMeta<TModel>> Grid<TModel>(Action<ObjectEditMeta<TModel>>? meta) => m =>
+    private static Action<ObjectEditMeta<TModel>> Grid<TModel>(Action<ObjectEditMeta<TModel>>? meta, bool existing) => m =>
     {
         m.WrapEachInMudItem(i =>
         {
             i.xs = 12;
             i.md = 6;
         });
+        if (!existing)
+        {
+            foreach (var property in m.AllProperties)
+            {
+                property.WithResetOptions(new PropertyResetSettings { AllowReset = false });
+            }
+        }
+
         meta?.Invoke(m);
     };
 #pragma warning restore BL0005
 
     // the meta is configured before the dialog renders: MudEx applies a MetaConfiguration only after its editors took their labels
-    private static DialogParameters Parameters<TModel>(TModel model, Action<ObjectEditMeta<TModel>>? meta) => new()
+    // a new object has nothing to go back to, so it gets no reset
+    private static DialogParameters Parameters<TModel>(TModel model, Action<ObjectEditMeta<TModel>>? meta)
     {
-        { nameof(MudExObjectEditDialog<TModel>.DialogIcon), Icon(model) },
-        { nameof(MudExObjectEditDialog<TModel>.MetaInformation), model.ObjectEditMeta(Grid(meta)) },
-    };
+        var existing = Exists(model);
+        var parameters = new DialogParameters
+        {
+            { nameof(MudExObjectEditDialog<TModel>.DialogIcon), existing ? Icons.Material.Filled.Edit : Icons.Material.Filled.Add },
+            { nameof(MudExObjectEditDialog<TModel>.MetaInformation), model.ObjectEditMeta(Grid(meta, existing)) },
+        };
+        if (!existing)
+        {
+            parameters.Add(nameof(MudExObjectEditDialog<TModel>.GlobalResetSettings), new GlobalResetSettings { AllowReset = false });
+        }
 
-    private static string Icon<TModel>(TModel model) =>
-        model?.GetType().GetProperty("Id")?.GetValue(model) is { } id && !Equals(id, Guid.Empty) ? Icons.Material.Filled.Edit : Icons.Material.Filled.Add;
+        return parameters;
+    }
+
+    private static bool Exists<TModel>(TModel model) =>
+        model?.GetType().GetProperty("Id")?.GetValue(model) is { } id && !Equals(id, Guid.Empty);
 
     private static async Task<string?> SaveAsync<TModel>(Func<TModel, Task> save, TModel value)
     {
