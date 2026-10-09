@@ -83,6 +83,16 @@ public sealed class AuthApp : PostgresFixture
             ["Coworkee:Registration:Documents:1:Required"] = "false",
         });
         builder.AddCoworkee<TestAuthModule>();
+
+        // an API next to the auth server, validating its access tokens like the real API does
+        builder.Services.AddAuthentication().AddJwtBearer(jwt =>
+        {
+            jwt.Authority = "http://localhost";
+            jwt.Audience = "test_api";
+            jwt.RequireHttpsMetadata = false;
+            jwt.MapInboundClaims = false;
+            jwt.BackchannelHttpHandler = App.GetTestServer().CreateHandler();
+        });
         builder.Services.RemoveAll<Coworkee.Mailing.IMailSender>();
         builder.Services.AddSingleton<Coworkee.Mailing.IMailSender>(Mails);
         builder.Services.AddSingleton<Coworkee.Application.Registration.IRegistrationDocumentStore>(Documents);
@@ -93,6 +103,8 @@ public sealed class AuthApp : PostgresFixture
         }
 
         App.UseCoworkee();
+        App.MapGet("/test/api", (System.Security.Claims.ClaimsPrincipal user) => user.FindFirst("sub")?.Value)
+            .RequireAuthorization(new Microsoft.AspNetCore.Authorization.AuthorizeAttribute { AuthenticationSchemes = "Bearer" });
 
         // stands in for the provider's callback: signs the browser into the external cookie like the OIDC handler does
         App.MapGet("/test/external", (HttpContext context, string sub, string email, string? given) => context.SignInAsync(IdentityConstants.ExternalScheme,

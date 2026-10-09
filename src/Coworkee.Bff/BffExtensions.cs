@@ -150,14 +150,26 @@ public static class BffExtensions
         var longRequests = new Yarp.ReverseProxy.Forwarder.ForwarderRequestConfig { ActivityTimeout = TimeSpan.FromMinutes(10) };
         foreach (var prefix in options.ForwardedPrefixes.Prepend("/openapi").Prepend(SwaggerUi).Prepend("/odata").Prepend("/api").Distinct(StringComparer.OrdinalIgnoreCase))
         {
-            var forwarder = app.MapForwarder(prefix.TrimEnd('/') + "/{**catch-all}", options.ApiAddress, longRequests, transforms => transforms.AddRequestTransform(async transform =>
+            var forwarder = app.MapForwarder(prefix.TrimEnd('/') + "/{**catch-all}", options.ApiAddress, longRequests, transforms =>
             {
-                var token = await transform.HttpContext.GetTokenAsync("access_token");
-                if (token is not null)
+                transforms.AddRequestTransform(async transform =>
                 {
-                    transform.ProxyRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                }
-            }));
+                    var token = await transform.HttpContext.GetTokenAsync("access_token");
+                    if (token is not null)
+                    {
+                        transform.ProxyRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    }
+                });
+
+                // the API refused a token the session still held: an administrator signed the user out or locked the account
+                transforms.AddResponseTransform(async transform =>
+                {
+                    if (transform.ProxyResponse?.StatusCode == System.Net.HttpStatusCode.Unauthorized && transform.HttpContext.User.Identity?.IsAuthenticated == true)
+                    {
+                        await transform.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                    }
+                });
+            });
 
             // the API enforces its own body limits per endpoint, large file uploads stream through
             forwarder.WithMetadata(new Microsoft.AspNetCore.Mvc.DisableRequestSizeLimitAttribute());

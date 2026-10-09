@@ -36,7 +36,7 @@ public partial class Users
 
     private async Task CreateAsync()
     {
-        if (await Snackbar.RunAsync(() => Api.CreateUserAsync(new CreateUserRequest(_new.Email, _new.Password, _new.FirstName, _new.LastName)), L["User created"]))
+        if (await Snackbar.RunAsync(() => Api.CreateUserAsync(new CreateUserRequest(_new.Email, _new.Password, _new.FirstName, _new.LastName, _new.MustChangePassword)), L["User created"]))
         {
             (_new, _creating) = (new NewUser(), false);
             await _table.ReloadAsync();
@@ -74,5 +74,7 @@ public partial class Users
         public string? FirstName { get; set; }
 
         public string? LastName { get; set; }
+
+        public bool MustChangePassword { get; set; }
     }
 }

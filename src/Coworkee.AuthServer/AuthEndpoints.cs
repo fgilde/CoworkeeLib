@@ -1,7 +1,10 @@
+using System.Collections.Immutable;
 using System.Security.Claims;
+using Coworkee.Account;
 using Coworkee.Contracts.Configuration;
 using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
+using Coworkee.Identity.Users;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -9,6 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
@@ -19,6 +23,9 @@ namespace Coworkee.AuthServer;
 
 internal static class AuthEndpoints
 {
+    /// <summary>The consent page sends the user back to the authorization with this parameter when the user declined.</summary>
+    public const string ConsentDenied = "consent_denied";
+
     public static void Map(WebApplication app)
     {
         app.MapMethods("/connect/authorize", [HttpMethods.Get, HttpMethods.Post], (Delegate)AuthorizeAsync).ExcludeFromDescription();
@@ -26,23 +33,74 @@ internal static class AuthEndpoints
         app.MapMethods("/connect/endsession", [HttpMethods.Get, HttpMethods.Post], (Delegate)EndSessionAsync).ExcludeFromDescription();
     }
 
-    private static async Task<IResult> AuthorizeAsync(HttpContext context, CoworkeeDbContext db, IOptions<AuthServerOptions> options)
+    private static async Task<IResult> AuthorizeAsync(HttpContext context, CoworkeeDbContext db, IOptions<AuthServerOptions> options, PasswordPolicy policy, TimeProvider clock)
     {
         var request = context.GetOpenIddictServerRequest() ?? throw new InvalidOperationException("No OpenID Connect request.");
         var cookie = await context.AuthenticateAsync(IdentityConstants.ApplicationScheme);
         if (!cookie.Succeeded || request.HasPromptValue(PromptValues.Login))
         {
-            var parameters = context.Request.HasFormContentType ? context.Request.Form.ToList() : context.Request.Query.ToList();
-            return Results.Challenge(
-                new AuthenticationProperties { RedirectUri = context.Request.PathBase + context.Request.Path + QueryString.Create(parameters) },
-                [IdentityConstants.ApplicationScheme]);
+            return SignInFirst(context);
         }
 
-        var userId = Guid.Parse(cookie.Principal!.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        var principal = await CreatePrincipalAsync(db, userId, request.GetScopes(), options.Value);
-        return principal is null
-            ? Results.Forbid(Error(Errors.AccessDenied, "The account is not active."), [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme])
-            : Results.SignIn(principal, null, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+        var user = await FindActiveAsync(db, Guid.Parse(cookie.Principal!.FindFirstValue(ClaimTypes.NameIdentifier)!));
+        if (user is null)
+        {
+            return Results.Forbid(Error(Errors.AccessDenied, "The account is not active."), [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]);
+        }
+
+        // signed out everywhere or locked by an administrator after this browser signed in: the sign-in no longer counts
+        var stampClaim = context.RequestServices.GetRequiredService<IOptions<IdentityOptions>>().Value.ClaimsIdentity.SecurityStampClaimType;
+        if (cookie.Principal.FindFirstValue(stampClaim) != user.SecurityStamp || (user.LockoutEnabled && user.LockoutEnd > clock.GetUtcNow()))
+        {
+            await context.SignOutAsync(IdentityConstants.ApplicationScheme);
+            return SignInFirst(context);
+        }
+
+        if (await policy.RequiresChangeAsync(user, context.RequestAborted))
+        {
+            return Results.Redirect("/Account/ChangePasswordRequired?returnUrl=" + Uri.EscapeDataString(ReturnUrl(context)));
+        }
+
+        var consent = await ConsentAsync(context, request, user);
+        if (consent.Result is { } result)
+        {
+            return result;
+        }
+
+        var principal = await CreatePrincipalAsync(context.RequestServices, user, request.GetScopes(), options.Value);
+        if (consent.AuthorizationId is { } authorizationId)
+        {
+            principal.SetAuthorizationId(authorizationId);
+        }
+
+        return Results.SignIn(principal, null, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+    }
+
+    /// <summary>Clients with explicit consent need the user's permanent authorization for the requested scopes; the consent page records it.</summary>
+    private static async Task<(IResult? Result, string? AuthorizationId)> ConsentAsync(HttpContext context, OpenIddictRequest request, User user)
+    {
+        var applications = context.RequestServices.GetRequiredService<IOpenIddictApplicationManager>();
+        var application = await applications.FindByClientIdAsync(request.ClientId!, context.RequestAborted)
+                          ?? throw new InvalidOperationException("The client is not known.");
+        if (!await applications.HasConsentTypeAsync(application, ConsentTypes.Explicit, context.RequestAborted))
+        {
+            return (null, null);
+        }
+
+        var authorizations = context.RequestServices.GetRequiredService<IOpenIddictAuthorizationManager>();
+        var granted = await authorizations.FindAsync(user.Id.ToString(), await applications.GetIdAsync(application, context.RequestAborted), Statuses.Valid,
+            AuthorizationTypes.Permanent, request.GetScopes(), context.RequestAborted).FirstOrDefaultAsync(context.RequestAborted);
+        if (granted is not null)
+        {
+            return (null, await authorizations.GetIdAsync(granted, context.RequestAborted));
+        }
+
+        if (request.HasPromptValue(PromptValues.None) || request[ConsentDenied] is not null)
+        {
+            return (Results.Forbid(Error(Errors.ConsentRequired, "The user did not allow the application."), [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]), null);
+        }
+
+        return (Results.Redirect("/Account/Consent?returnUrl=" + Uri.EscapeDataString(ReturnUrl(context))), null);
     }
 
     private static async Task<IResult> TokenAsync(HttpContext context, CoworkeeDbContext db, IOptions<AuthServerOptions> options)
@@ -54,13 +112,22 @@ internal static class AuthEndpoints
         }
 
         var result = await context.AuthenticateAsync(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
-        var subject = result.Principal?.GetClaim(Claims.Subject);
-        var principal = Guid.TryParse(subject, out var userId)
-            ? await CreatePrincipalAsync(db, userId, result.Principal!.GetScopes(), options.Value)
-            : null;
-        return principal is null
-            ? Results.Forbid(Error(Errors.InvalidGrant, "The account is no longer allowed to sign in."), [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme])
-            : Results.SignIn(principal, null, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+        var user = Guid.TryParse(result.Principal?.GetClaim(Claims.Subject), out var userId) ? await FindActiveAsync(db, userId) : null;
+
+        // a new security stamp (signed out everywhere, locked, new password) ends the refresh tokens issued before
+        var stamp = result.Principal?.GetClaim(SessionStamp.ClaimType);
+        if (user is null || (stamp is not null && stamp != SessionStamp.Hash(user.SecurityStamp)))
+        {
+            return Results.Forbid(Error(Errors.InvalidGrant, "The account is no longer allowed to sign in."), [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]);
+        }
+
+        var principal = await CreatePrincipalAsync(context.RequestServices, user, result.Principal!.GetScopes(), options.Value);
+        if (result.Principal!.GetAuthorizationId() is { } authorizationId)
+        {
+            principal.SetAuthorizationId(authorizationId);
+        }
+
+        return Results.SignIn(principal, null, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
     }
 
     private static async Task<IResult> EndSessionAsync(HttpContext context)
@@ -69,31 +136,47 @@ internal static class AuthEndpoints
         return Results.SignOut(new AuthenticationProperties { RedirectUri = "/" }, [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]);
     }
 
-    private static async Task<ClaimsPrincipal?> CreatePrincipalAsync(CoworkeeDbContext db, Guid userId, IEnumerable<string> scopes, AuthServerOptions options)
+    private static IResult SignInFirst(HttpContext context) =>
+        Results.Challenge(new AuthenticationProperties { RedirectUri = ReturnUrl(context) }, [IdentityConstants.ApplicationScheme]);
+
+    private static string ReturnUrl(HttpContext context)
+    {
+        var parameters = (context.Request.HasFormContentType ? context.Request.Form.ToList() : context.Request.Query.ToList())
+            .Where(p => p.Key != ConsentDenied);
+        return context.Request.PathBase + context.Request.Path + QueryString.Create(parameters);
+    }
+
+    private static async Task<User?> FindActiveAsync(CoworkeeDbContext db, Guid userId)
     {
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
-        var user = await db.Set<User>().AsNoTracking().SingleOrDefaultAsync(u => u.Id == userId && u.IsActive);
-        if (user is null)
-        {
-            return null;
-        }
+        return await db.Set<User>().AsNoTracking().SingleOrDefaultAsync(u => u.Id == userId && u.IsActive);
+    }
 
-        var roles = await (from userRole in db.Set<IdentityUserRole<Guid>>()
+    private static async Task<ClaimsPrincipal> CreatePrincipalAsync(IServiceProvider services, User user, ImmutableArray<string> scopes, AuthServerOptions options)
+    {
+        var db = services.GetRequiredService<CoworkeeDbContext>();
+        List<string> roles;
+        using (CurrentUserScope.Begin(new ImpersonatedUser(null, null)))
+        {
+            roles = await (from userRole in db.Set<IdentityUserRole<Guid>>()
                            join role in db.Set<Role>() on userRole.RoleId equals role.Id
-                           where userRole.UserId == userId
+                           where userRole.UserId == user.Id
                            select role.Name!).ToListAsync();
+        }
 
         var identity = new ClaimsIdentity(TokenValidationParameters.DefaultAuthenticationType, Claims.Name, Claims.Role);
         identity.SetClaim(Claims.Subject, user.Id.ToString())
             .SetClaim(Claims.Email, user.Email)
             .SetClaim(Claims.Name, string.Join(' ', new[] { user.FirstName, user.LastName }.Where(n => !string.IsNullOrWhiteSpace(n))) is { Length: > 0 } name ? name : user.Email)
             .SetClaim("tenant", user.TenantId.ToString())
+            .SetClaim(SessionStamp.ClaimType, SessionStamp.Hash(user.SecurityStamp))
             .SetClaims(Claims.Role, [.. roles]);
 
-        var granted = scopes.ToArray();
-        identity.SetScopes(granted);
-        identity.SetResources(granted.Where(options.ApiScopes.ContainsKey).Select(s => options.ApiScopes[s]).Distinct());
-        identity.SetDestinations(_ => [Destinations.AccessToken, Destinations.IdentityToken]);
+        identity.SetScopes(scopes);
+        var stored = await services.GetRequiredService<IOpenIddictScopeManager>()
+            .ListResourcesAsync([.. scopes.Where(s => !options.ApiScopes.ContainsKey(s))]).ToListAsync();
+        identity.SetResources(scopes.Where(options.ApiScopes.ContainsKey).Select(s => options.ApiScopes[s]).Concat(stored).Distinct(StringComparer.Ordinal));
+        identity.SetDestinations(claim => claim.Type == SessionStamp.ClaimType ? [Destinations.AccessToken] : [Destinations.AccessToken, Destinations.IdentityToken]);
         return new ClaimsPrincipal(identity);
     }
 

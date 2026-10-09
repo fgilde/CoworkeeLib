@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Coworkee.Contracts.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -8,8 +9,14 @@ using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace Coworkee.AuthServer;
 
+/// <summary>
+/// Writes the clients and API scopes of the configuration to the OpenIddict stores at startup. They carry <see cref="ManagedProperty"/>:
+/// the admin pages show them read-only, the configuration stays their source.
+/// </summary>
 public sealed partial class AuthClientSeeder(IServiceScopeFactory scopes, IOptions<AuthServerOptions> options, ILogger<AuthClientSeeder> logger) : IHostedService
 {
+    public const string ManagedProperty = "coworkee_managed";
+
     public async Task SeedAsync(CancellationToken cancellationToken)
     {
         await using var scope = scopes.CreateAsyncScope();
@@ -24,6 +31,21 @@ public sealed partial class AuthClientSeeder(IServiceScopeFactory scopes, IOptio
             else
             {
                 await manager.CreateAsync(descriptor, cancellationToken);
+            }
+        }
+
+        var scopeManager = scope.ServiceProvider.GetRequiredService<IOpenIddictScopeManager>();
+        foreach (var (name, resource) in options.Value.ApiScopes)
+        {
+            var descriptor = new OpenIddictScopeDescriptor { Name = name, DisplayName = name, Resources = { resource } };
+            descriptor.Properties[ManagedProperty] = JsonSerializer.SerializeToElement(true);
+            if (await scopeManager.FindByNameAsync(name, cancellationToken) is { } existing)
+            {
+                await scopeManager.UpdateAsync(existing, descriptor, cancellationToken);
+            }
+            else
+            {
+                await scopeManager.CreateAsync(descriptor, cancellationToken);
             }
         }
     }
@@ -65,6 +87,7 @@ public sealed partial class AuthClientSeeder(IServiceScopeFactory scopes, IOptio
             },
             Requirements = { Requirements.Features.ProofKeyForCodeExchange },
         };
+        descriptor.Properties[ManagedProperty] = JsonSerializer.SerializeToElement(true);
 
         foreach (var scope in client.Scopes)
         {

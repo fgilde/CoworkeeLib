@@ -44,6 +44,15 @@ public sealed class User : IdentityUser<Guid>, IAuditable
 
     public DateTimeOffset? LastLoginAt { get; set; }
 
+    /// <summary>The next sign-in asks for a new password before the app gets tokens.</summary>
+    public bool MustChangePassword { get; set; }
+
+    /// <summary>When the password was set last; password expiry counts from here.</summary>
+    public DateTimeOffset? PasswordChangedAt { get; set; }
+
+    /// <summary>Hashes of earlier passwords, newest first, one per line; the password history setting refuses them.</summary>
+    public string? PasswordHistory { get; set; }
+
     /// <summary>Profile picture as data URL.</summary>
     public string? AvatarUrl { get; set; }
 

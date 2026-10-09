@@ -141,6 +141,9 @@ public sealed class CoworkeeAccountModule : CoworkeeModule, IWebModule
         context.Services.AddScoped<IAccountMailer, AccountMailer>();
         context.Services.AddScoped<Coworkee.Identity.Users.IUserActivationListener, RegistrationApprovedMail>();
         context.Services.AddSingleton<ISettingDefinitionContributor, AccountSettingDefinitions>();
+        context.Services.AddSingleton<ISettingDefinitionContributor, SecuritySettingDefinitions>();
+        context.Services.AddScoped<PasswordPolicy>();
+        context.Services.AddScoped<IPasswordValidator<User>, PasswordHistoryValidator>();
     }
 
     public void ConfigureApplication(WebApplication app) =>

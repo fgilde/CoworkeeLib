@@ -14,5 +14,6 @@ internal sealed class IdentityPermissionDefinitions : IPermissionDefinitionContr
             .Add(IdentityPermissions.Roles.View, "View roles")
             .Add(IdentityPermissions.Roles.Manage, "Manage roles", IdentityPermissions.Roles.View)
             .Add(IdentityPermissions.Permissions.Manage, "Manage permissions", IdentityPermissions.Roles.View)
-            .Add(IdentityPermissions.ResourcePermissions.Manage, "Manage resource permissions", IdentityPermissions.Roles.View);
+            .Add(IdentityPermissions.ResourcePermissions.Manage, "Manage resource permissions", IdentityPermissions.Roles.View)
+            .Add(IdentityPermissions.Clients.Manage, "Manage OpenID Connect clients");
 }

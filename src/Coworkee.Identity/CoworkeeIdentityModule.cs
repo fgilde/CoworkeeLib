@@ -10,6 +10,7 @@ using Coworkee.Identity.OData;
 using Coworkee.Identity.Permissions;
 using Coworkee.Identity.Persistence;
 using Coworkee.Identity.Setup;
+using Coworkee.Identity.Users;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -58,6 +59,7 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
             })
             .AddDefaultTokenProviders();
+        services.ValidateBearerTokens();
         services.AddScoped<IUserStore<User>>(provider => new Users.CoworkeeUserStore(provider.GetRequiredService<CoworkeeDbContext>()) { AutoSaveChanges = false });
     }
 

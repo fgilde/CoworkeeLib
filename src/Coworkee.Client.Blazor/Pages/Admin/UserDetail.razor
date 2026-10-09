@@ -25,13 +25,26 @@ else
             <MudChip T="string" Size="Size.Small" Color="@(_user.IsActive ? Color.Success : Color.Default)" data-testid="status-active">@(_user.IsActive ? "Active" : "Inactive")</MudChip>
             <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(_user.EmailConfirmed ? Color.Success : Color.Warning)">@(_user.EmailConfirmed ? "Email confirmed" : "Email not confirmed")</MudChip>
             <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@(_user.TwoFactorEnabled ? "Two-factor on" : "Two-factor off")</MudChip>
+            @if (_user.MustChangePassword)
+            {
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Warning" data-testid="status-must-change">@L["Must change password"]</MudChip>
+            }
             @if (_user.LockedUntil is { } until)
             {
-                <MudChip T="string" Size="Size.Small" Color="Color.Error" data-testid="status-locked">Locked until @until.ToLocalTime().ToString("g")</MudChip>
+                <MudChip T="string" Size="Size.Small" Color="Color.Error" data-testid="status-locked">@(until.Year > 9000 ? L["Locked"] : L["Locked until {0}", until.ToLocalTime().ToString("g")])</MudChip>
                 <PermissionView Permission="@IdentityPermissions.Users.Manage">
-                    <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Outlined.LockOpen" OnClick="UnlockAsync" data-testid="unlock">Unlock</MudButton>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Outlined.LockOpen" OnClick="UnlockAsync" data-testid="unlock">@L["Unlock"]</MudButton>
                 </PermissionView>
             }
+            else
+            {
+                <PermissionView Permission="@IdentityPermissions.Users.Manage">
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Outlined.Lock" OnClick="LockAsync" Disabled="_busy" data-testid="lock">@L["Lock"]</MudButton>
+                </PermissionView>
+            }
+            <PermissionView Permission="@IdentityPermissions.Users.Manage">
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Outlined.Logout" OnClick="SignOutAsync" Disabled="_busy" data-testid="sign-out-everywhere">@L["Sign out everywhere"]</MudButton>
+            </PermissionView>
         </MudStack>
         <MudText Typo="Typo.caption" Class="mt-2 d-block mud-text-secondary">Last sign-in: @(_user.LastLoginAt?.ToLocalTime().ToString("g") ?? "never")</MudText>
     </MudPaper>
@@ -43,6 +56,7 @@ else
                 <MudTextField @bind-Value="_firstName" Label="First name" Immediate="true" data-testid="first-name" ReadOnly="@(!_canManage)" />
                 <MudTextField @bind-Value="_lastName" Label="Last name" Immediate="true" data-testid="last-name" ReadOnly="@(!_canManage)" />
                 <MudSwitch T="bool" @bind-Value="_active" Label="Active" Color="Color.Primary" Disabled="@(!_canManage)" Class="mt-2" />
+                <MudSwitch T="bool" @bind-Value="_mustChangePassword" Label="@L["Change password at next sign-in"]" Color="Color.Primary" Disabled="@(!_canManage)" data-testid="must-change-password" />
                 <PermissionView Permission="@IdentityPermissions.Users.Manage">
                     <MudStack Row="true" Class="mt-4">
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_busy" data-testid="save-user">Save</MudButton>

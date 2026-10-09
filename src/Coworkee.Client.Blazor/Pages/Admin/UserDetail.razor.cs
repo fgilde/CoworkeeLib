@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Contracts.Identity;
@@ -18,6 +19,8 @@ public partial class UserDetail
 
     [Inject] private NavigationManager Nav { get; set; } = null!;
 
+    [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
+
     [Parameter] public Guid Id { get; set; }
 
     [CascadingParameter] private Task<AuthenticationState> AuthenticationState { get; set; } = null!;
@@ -31,6 +34,7 @@ public partial class UserDetail
     private string? _firstName;
     private string? _lastName;
     private bool _active;
+    private bool _mustChangePassword;
     private bool _canManage;
     private bool _busy;
     private string? _error;
@@ -53,7 +57,7 @@ public partial class UserDetail
     {
         _user = await Api.GetUserDetailAsync(Id);
         _permissions = await Api.GetEffectivePermissionsAsync(Id);
-        (_firstName, _lastName, _active) = (_user.FirstName, _user.LastName, _user.IsActive);
+        (_firstName, _lastName, _active, _mustChangePassword) = (_user.FirstName, _user.LastName, _user.IsActive, _user.MustChangePassword);
         _roleIds = _user.Roles.Select(r => r.Id).ToList();
     }
 
@@ -65,9 +69,34 @@ public partial class UserDetail
 
     private string RoleName(Guid id) => _roles.FirstOrDefault(r => r.Id == id)?.Name ?? string.Empty;
 
-    private Task SaveAsync() => RunAsync(() => Api.UpdateUserAsync(Id, new UpdateUserRequest(_firstName, _lastName, _active)), "Saved.");
+    private Task SaveAsync() => RunAsync(() => Api.UpdateUserAsync(Id, new UpdateUserRequest(_firstName, _lastName, _active, _mustChangePassword)), "Saved.");
 
     private Task UnlockAsync() => RunAsync(() => Api.UnlockUserAsync(Id), "Unlocked.");
+
+    private async Task LockAsync()
+    {
+        if (await Dialogs.ShowEditAsync(L["Lock {0}", _user!.Email], new LockForm()) is { } form)
+        {
+            var until = form.Until is { } date ? new DateTimeOffset(date.Date.AddDays(1), DateTimeOffset.Now.Offset) : (DateTimeOffset?)null;
+            await RunAsync(() => Api.LockUserAsync(Id, until), L["Locked; the user was signed out everywhere."]);
+        }
+    }
+
+    private async Task SignOutAsync()
+    {
+        if (await Dialogs.ConfirmAsync(L["Sign out everywhere"], L["End all sessions of {0}? Open windows sign out right away.", _user!.Email], L["Sign out"], L["Cancel"],
+                Icons.Material.Outlined.Logout))
+        {
+            await RunAsync(() => Api.SignOutUserAsync(Id), L["The user was signed out everywhere."]);
+        }
+    }
+
+    private sealed class LockForm
+    {
+        /// <summary>Locked through this day; empty locks until an administrator unlocks.</summary>
+        [Display(Name = "Locked through (empty: until unlocked)")]
+        public DateTime? Until { get; set; }
+    }
 
     private Task SendResetAsync() => RunAsync(() => Api.SendPasswordResetAsync(Id), "Password reset sent.");
 

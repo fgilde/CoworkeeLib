@@ -134,6 +134,7 @@ internal sealed class CreateUserHandler(UserManager<User> users, ICurrentUser cu
             EmailConfirmed = true,
             FirstName = request.FirstName,
             LastName = request.LastName,
+            MustChangePassword = request.MustChangePassword,
         };
 
         var created = await users.CreateAsync(user, request.Password);
@@ -159,7 +160,7 @@ internal sealed class UserDetailHandlers(CoworkeeDbContext db, ICurrentUser curr
                             select new GroupRefDto(userGroup.Id, userGroup.Name)).ToListAsync(cancellationToken);
         var lockedUntil = user.LockoutEnd is { } end && end > clock.GetUtcNow() ? end : (DateTimeOffset?)null;
         return new UserDetailDto(user.Id, user.UserName!, user.Email!, user.FirstName, user.LastName, user.IsActive, user.EmailConfirmed, user.TwoFactorEnabled,
-            lockedUntil, user.LastLoginAt, roles.GetValueOrDefault(user.Id) ?? [], groups);
+            lockedUntil, user.LastLoginAt, roles.GetValueOrDefault(user.Id) ?? [], groups, user.MustChangePassword);
     }
 
     public async Task<Result> HandleAsync(UnlockUser command, CancellationToken cancellationToken)
@@ -195,6 +196,7 @@ internal sealed class UpdateUserHandler(CoworkeeDbContext db, ICurrentUser curre
         user.FirstName = command.User.FirstName;
         user.LastName = command.User.LastName;
         user.IsActive = command.User.IsActive;
+        user.MustChangePassword = command.User.MustChangePassword ?? user.MustChangePassword;
         if (activated)
         {
             foreach (var listener in activation)

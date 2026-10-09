@@ -7,7 +7,7 @@ public sealed record UserDto(Guid Id, string UserName, string Email, string? Fir
 /// <summary>A user as the admin page shows one: status, roles and groups.</summary>
 public sealed record UserDetailDto(
     Guid Id, string UserName, string Email, string? FirstName, string? LastName, bool IsActive, bool EmailConfirmed, bool TwoFactorEnabled,
-    DateTimeOffset? LockedUntil, DateTimeOffset? LastLoginAt, IReadOnlyList<RoleRefDto> Roles, IReadOnlyList<GroupRefDto> Groups);
+    DateTimeOffset? LockedUntil, DateTimeOffset? LastLoginAt, IReadOnlyList<RoleRefDto> Roles, IReadOnlyList<GroupRefDto> Groups, bool MustChangePassword = false);
 
 public sealed record GroupRefDto(Guid Id, string Name);
 
@@ -18,9 +18,14 @@ public sealed record UpdateProfileRequest(string? FirstName, string? LastName, s
 
 public sealed record PostalAddress(string? Street, string? ZipCode, string? City, string? Country);
 
-public sealed record CreateUserRequest(string Email, string Password, string? FirstName, string? LastName);
+/// <summary>A new user; <paramref name="MustChangePassword"/> makes the first sign-in ask for an own password.</summary>
+public sealed record CreateUserRequest(string Email, string Password, string? FirstName, string? LastName, bool MustChangePassword = false);
 
-public sealed record UpdateUserRequest(string? FirstName, string? LastName, bool IsActive);
+/// <summary>Changes a user; <paramref name="MustChangePassword"/> null leaves the flag as it is.</summary>
+public sealed record UpdateUserRequest(string? FirstName, string? LastName, bool IsActive, bool? MustChangePassword = null);
+
+/// <summary>Locks a user out until <paramref name="Until"/>, or for good when it is null.</summary>
+public sealed record LockUserRequest(DateTimeOffset? Until);
 
 public sealed record IdListRequest(IReadOnlyList<Guid> Ids);
 

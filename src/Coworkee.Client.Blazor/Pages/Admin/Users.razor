@@ -12,6 +12,7 @@
                 <MudTextField @bind-Value="_new.FirstName" Label="@L["First name"]" />
                 <MudTextField @bind-Value="_new.LastName" Label="@L["Last name"]" />
                 <MudTextField @bind-Value="_new.Password" Label="@L["Initial password"]" InputType="InputType.Password" Required="true" data-testid="new-user-password" />
+                <MudCheckBox T="bool" @bind-Value="_new.MustChangePassword" Label="@L["Change password at first sign-in"]" data-testid="new-user-must-change" />
             </MudStack>
             <MudStack Row="true" Class="mt-3">
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateAsync" data-testid="create-user">@L["Create"]</MudButton>

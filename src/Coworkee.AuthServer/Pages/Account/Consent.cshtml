@@ -1,0 +1,18 @@
+@page
+@model Coworkee.AuthServer.Pages.Account.ConsentModel
+@{ ViewData["Title"] = T("Allow access"); }
+<h1>@T("Allow access")</h1>
+<p>@T("{0} asks for access to your account:", Model.ApplicationName)</p>
+<ul data-testid="consent-scopes">
+  @foreach (var scope in Model.Scopes)
+  {
+    <li>@scope</li>
+  }
+</ul>
+<form method="post">
+  <input type="hidden" asp-for="ReturnUrl" />
+  <div class="actions">
+    <button type="submit" asp-page-handler="Allow">@T("Allow")</button>
+    <button type="submit" class="secondary" asp-page-handler="Deny">@T("Deny")</button>
+  </div>
+</form>

@@ -14,7 +14,7 @@ using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace Coworkee.AuthServer;
 
-[DependsOn(typeof(CoworkeeIdentityModule), typeof(CoworkeeAuthStoreModule), typeof(Coworkee.Account.CoworkeeAccountModule))]
+[DependsOn(typeof(CoworkeeIdentityModule), typeof(CoworkeeAuthStoreModule), typeof(Coworkee.Account.CoworkeeAccountModule), typeof(Coworkee.Theming.CoworkeeThemingModule))]
 public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
 {
     public override void ConfigureServices(ModuleServiceContext context)
@@ -25,6 +25,7 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
         services.Configure<RegistrationOptions>(context.Configuration.GetSection(RegistrationOptions.Section));
         services.Configure<IdentityOptions>(identity => identity.SignIn.RequireConfirmedEmail = true);
         services.AddScoped<Registration.AccountRegistration>();
+        services.AddScoped<AuthBrandingProvider>();
         services.AddSingleton<AuthClientSeeder>();
         services.AddHostedService(provider => provider.GetRequiredService<AuthClientSeeder>());
         services.AddRazorPages().AddApplicationPart(typeof(CoworkeeAuthServerModule).Assembly);
@@ -99,25 +100,63 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
     /// The account pages run no script and style inline; after sign-in the browser follows redirects to the clients, which
     /// browsers check against form-action, so the clients' origins are allowed there.
     /// </summary>
-    internal static string ContentSecurityPolicy(AuthServerOptions options)
+    internal static string ContentSecurityPolicy(AuthServerOptions options, IEnumerable<string> storedClientUris)
     {
-        var clients = options.Clients.SelectMany(c => c.RedirectUris.Concat(c.PostLogoutRedirectUris))
+        var clients = options.Clients.SelectMany(c => c.RedirectUris.Concat(c.PostLogoutRedirectUris)).Concat(storedClientUris)
             .Select(u => Uri.TryCreate(u, UriKind.Absolute, out var uri) ? uri.GetLeftPart(UriPartial.Authority) : null)
             .OfType<string>().Concat(ExternalProviders.Origins(options.External)).Distinct(StringComparer.OrdinalIgnoreCase);
         return "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; "
             + $"frame-ancestors 'none'; form-action {string.Join(' ', ["'self'", .. clients])}";
     }
 
+    // clients added in the admin pages redirect to their origins as well; the auth server learns about them within a minute
+    private static async Task<string[]> StoredClientUrisAsync(Microsoft.AspNetCore.Http.HttpContext context)
+    {
+        try
+        {
+            return await ClientUrisAsync(context);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            // before the database is migrated
+            return [];
+        }
+    }
+
+    private static async Task<string[]> ClientUrisAsync(Microsoft.AspNetCore.Http.HttpContext context) =>
+        await context.RequestServices.GetRequiredService<Microsoft.Extensions.Caching.Hybrid.HybridCache>().GetOrCreateAsync(
+            "coworkee:auth-client-uris",
+            async ct =>
+            {
+                var applications = context.RequestServices.GetRequiredService<OpenIddict.Abstractions.IOpenIddictApplicationManager>();
+                var uris = new List<string>();
+                await foreach (var application in applications.ListAsync(null, null, ct))
+                {
+                    uris.AddRange(await applications.GetRedirectUrisAsync(application, ct));
+                    uris.AddRange(await applications.GetPostLogoutRedirectUrisAsync(application, ct));
+                }
+
+                return uris.ToArray();
+            },
+            new Microsoft.Extensions.Caching.Hybrid.HybridCacheEntryOptions { Expiration = TimeSpan.FromMinutes(1), LocalCacheExpiration = TimeSpan.FromMinutes(1) },
+            cancellationToken: context.RequestAborted);
+
     private static X509Certificate2 Load(CertificateOptions certificate) =>
         X509CertificateLoader.LoadPkcs12FromFile(certificate.Path, certificate.Password, X509KeyStorageFlags.EphemeralKeySet);
 
     public void ConfigureApplication(WebApplication app)
     {
-        var policy = ContentSecurityPolicy(app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<AuthServerOptions>>().Value);
+        var options = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<AuthServerOptions>>().Value;
         app.Use(async (context, next) =>
         {
             var headers = context.Response.Headers;
-            headers.ContentSecurityPolicy = policy;
+            headers.ContentSecurityPolicy = ContentSecurityPolicy(options, await StoredClientUrisAsync(context));
+            if (context.Request.Path.StartsWithSegments("/Account"))
+            {
+                await context.RequestServices.GetRequiredService<Coworkee.Account.PasswordPolicy>()
+                    .ApplyLockoutAsync(context.RequestServices.GetRequiredService<UserManager<User>>(), context.RequestAborted);
+            }
+
             headers.XContentTypeOptions = "nosniff";
             headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
             await next();

@@ -22,4 +22,17 @@ internal sealed class CoworkeeUserStore(CoworkeeDbContext context) : UserStore<U
         user.ConcurrencyStamp = Guid.NewGuid().ToString();
         return IdentityResult.Success;
     }
+
+    // every way to a new password passes here: the old hash goes to the history, and a changed password ends a forced change
+    public override async Task SetPasswordHashAsync(User user, string? passwordHash, CancellationToken cancellationToken = default)
+    {
+        if (user.PasswordHash is { } previous && previous != passwordHash)
+        {
+            user.PasswordHistory = string.Join('\n', new[] { previous }.Concat(PasswordHistory.Of(user)).Take(PasswordHistory.Max));
+            user.MustChangePassword = false;
+        }
+
+        user.PasswordChangedAt = passwordHash is null ? null : DateTimeOffset.UtcNow;
+        await base.SetPasswordHashAsync(user, passwordHash, cancellationToken);
+    }
 }

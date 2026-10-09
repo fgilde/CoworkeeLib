@@ -1,0 +1,45 @@
+@page "/admin/clients"
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + IdentityPermissions.Clients.Manage)]
+
+<PageHeader Title="Applications" Description="OpenID Connect clients that sign users in with this installation. Clients from the configuration change only there." />
+<MudStack Row="true" Class="mb-2">
+    <MudSpacer />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" Size="Size.Small" Disabled="_busy"
+               OnClick="CreateAsync" data-testid="create-client">@L["New application"]</MudButton>
+</MudStack>
+<MudDataGrid T="ClientDto" Items="_clients" Loading="_busy" Dense="true" Hover="true" Striped="true" Elevation="0" Outlined="true" data-testid="clients">
+    <Columns>
+        <PropertyColumn Property="c => c.ClientId" Title="@L["Client id"]">
+            <CellTemplate>
+                <span data-client="@context.Item.ClientId">@context.Item.ClientId</span>
+                @if (context.Item.Managed)
+                {
+                    <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Outlined.Lock" data-testid="managed">@L["configuration"]</MudChip>
+                }
+            </CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="c => c.DisplayName" Title="@L["Name"]" />
+        <PropertyColumn Property="c => c.ClientType" Title="@L["Type"]" />
+        <PropertyColumn Property="c => c.ConsentType" Title="@L["Consent"]" />
+        <TemplateColumn T="ClientDto" Title="@L["Redirect addresses"]" Sortable="false">
+            <CellTemplate>@string.Join(", ", context.Item.RedirectUris)</CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn T="ClientDto" Sortable="false" CellStyle="text-align:right;white-space:nowrap">
+            <CellTemplate>
+                @if (!context.Item.Managed)
+                {
+                    <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" aria-label="@L["Edit"]" Disabled="_busy" OnClick="() => EditAsync(context.Item)"
+                                   data-testid="@($"edit-client-{context.Item.ClientId}")" />
+                    @if (context.Item.ClientType == "confidential")
+                    {
+                        <MudIconButton Icon="@Icons.Material.Outlined.Key" Size="Size.Small" aria-label="@L["New secret"]" Disabled="_busy" OnClick="() => RegenerateAsync(context.Item)" />
+                    }
+                    <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" aria-label="@L["Delete"]" Disabled="_busy" OnClick="() => DeleteAsync(context.Item)" />
+                }
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <NoRecordsContent>
+        <MudText Class="mud-text-secondary pa-4">@L["No applications yet."]</MudText>
+    </NoRecordsContent>
+</MudDataGrid>

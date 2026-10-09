@@ -11,7 +11,7 @@ internal static class IdentityODataSets
     public static void AddIdentityODataSets(this IServiceCollection services)
     {
         services.AddODataEntity<User>("Users", IdentityPermissions.Users.View,
-            u => u.PasswordHash, u => u.SecurityStamp, u => u.ConcurrencyStamp, u => u.NormalizedEmail, u => u.NormalizedUserName);
+            u => u.PasswordHash, u => u.PasswordHistory, u => u.SecurityStamp, u => u.ConcurrencyStamp, u => u.NormalizedEmail, u => u.NormalizedUserName);
         services.AddODataEntity<Role>("Roles", IdentityPermissions.Roles.View, r => r.NormalizedName, r => r.ConcurrencyStamp);
         services.AddODataEntity<UserGroup>("Groups", IdentityPermissions.Groups.View);
         services.AddScoped<IODataEntityFilter<User>, UserODataFilter>();

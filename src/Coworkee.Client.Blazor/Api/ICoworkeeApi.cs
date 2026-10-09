@@ -40,6 +40,12 @@ public interface ICoworkeeApi
 
     Task UnlockUserAsync(Guid userId, CancellationToken cancellationToken = default);
 
+    /// <summary>Locks the user out until <paramref name="until"/> or for good, and ends the user's sessions at once.</summary>
+    Task LockUserAsync(Guid userId, DateTimeOffset? until, CancellationToken cancellationToken = default);
+
+    /// <summary>Ends all sessions of the user at once; the open clients of the user sign out.</summary>
+    Task SignOutUserAsync(Guid userId, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<string>> GetEffectivePermissionsAsync(Guid userId, CancellationToken cancellationToken = default);
 
     Task<SetupResultDto> CompleteSetupAsync(CompleteSetupRequest request, CancellationToken cancellationToken = default);

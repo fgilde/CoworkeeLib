@@ -1,9 +1,11 @@
+@inject Coworkee.AuthServer.AuthBrandingProvider BrandingProvider
+@{ var brand = await BrandingProvider.GetAsync(Context.RequestAborted); }
 <!doctype html>
 <html lang="@System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>@ViewData["Title"]</title>
+  <title>@ViewData["Title"] · @brand.AppName</title>
   <style>
     :root { --paper:#f3efe6; --ink:#16140f; --ink-2:#4a463d; --rule:#d6cfbf; --signal:#e2552d; }
     @@media (prefers-color-scheme: dark) { :root { --paper:#14130f; --ink:#efe9dc; --ink-2:#bdb6a6; --rule:#34312a; --signal:#f06a43; } }
@@ -37,7 +39,22 @@
     a { color:var(--ink); }
     code.recovery { display:inline-block; margin:4px 8px 4px 0; font-size:15px; }
     .key { font-family:monospace; font-size:18px; letter-spacing:.08em; }
+    .brand { display:flex; align-items:center; gap:10px; margin:0 0 20px; font-size:13px; text-transform:uppercase; letter-spacing:.12em; color:var(--ink-2); }
+    .brand img { height:32px; max-width:160px; }
   </style>
+  @if (brand.Css is { Length: > 0 } css)
+  {
+    <style>@Html.Raw(css)</style>
+  }
 </head>
-<body><main>@RenderBody()</main></body>
+<body><main>
+  <div class="brand" data-testid="brand">
+    @if (brand.LogoDataUrl is { } logo)
+    {
+      <img src="@logo" alt="" />
+    }
+    <span>@brand.AppName</span>
+  </div>
+  @RenderBody()
+</main></body>
 </html>

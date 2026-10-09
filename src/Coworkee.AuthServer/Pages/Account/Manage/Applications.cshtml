@@ -1,0 +1,25 @@
+@page
+@model Coworkee.AuthServer.Pages.Account.Manage.ApplicationsModel
+@{ ViewData["Title"] = T("Authorized applications"); }
+<h1>@T("Authorized applications")</h1>
+@if (Model.Applications.Count == 0)
+{
+  <p class="hint">@T("No application has access to your account.")</p>
+}
+@foreach (var application in Model.Applications)
+{
+  <form method="post" class="choice" data-testid="authorized-application">
+    <input type="hidden" name="applicationId" value="@application.Id" />
+    <div style="flex:1">
+      <strong>@application.Name</strong>
+      <span class="hint">@T("Since {0}", application.Since?.ToLocalTime().ToString("g") ?? "?") · @(application.Consented ? T("allowed by you") : T("signed in"))</span>
+      <span class="hint">@string.Join(", ", application.Scopes)</span>
+    </div>
+    <button type="submit" class="secondary" style="width:auto">@T("Revoke")</button>
+  </form>
+}
+@if (Model.Revoked)
+{
+  <p class="notice" role="status">@T("The access was revoked; the application has to ask you to sign in again.")</p>
+}
+<div class="links"><a asp-page="Index">@T("Account security")</a></div>

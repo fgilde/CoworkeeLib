@@ -57,6 +57,29 @@ public sealed class TokenRefreshTests : IAsyncDisposable
         (await browser.GetFromJsonAsync<BffUserDto>("/bff/user", TestContext.Current.CancellationToken))!.IsAuthenticated.ShouldBeFalse();
     }
 
+    [Fact]
+    public async Task Session_ends_when_the_api_refuses_its_token()
+    {
+        var browser = await StartAsync(new StubTokenEndpoint(HttpStatusCode.OK, """{"access_token":"a","refresh_token":"r","expires_in":900}"""),
+            new StubTokenEndpoint(HttpStatusCode.Unauthorized, "{}"));
+
+        var response = await browser.GetAsync("/api/v1/identity/me", TestContext.Current.CancellationToken);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        (await browser.GetFromJsonAsync<BffUserDto>("/bff/user", TestContext.Current.CancellationToken))!.IsAuthenticated.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Session_stays_when_the_api_answers()
+    {
+        var browser = await StartAsync(new StubTokenEndpoint(HttpStatusCode.OK, """{"access_token":"a","refresh_token":"r","expires_in":900}"""),
+            new StubTokenEndpoint(HttpStatusCode.Forbidden, "{}"));
+
+        await browser.GetAsync("/api/v1/identity/me", TestContext.Current.CancellationToken);
+
+        (await browser.GetFromJsonAsync<BffUserDto>("/bff/user", TestContext.Current.CancellationToken))!.IsAuthenticated.ShouldBeTrue();
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_app is not null)
@@ -65,7 +88,7 @@ public sealed class TokenRefreshTests : IAsyncDisposable
         }
     }
 
-    private async Task<HttpClient> StartAsync(StubTokenEndpoint endpoint)
+    private async Task<HttpClient> StartAsync(StubTokenEndpoint endpoint, HttpMessageHandler? api = null)
     {
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -78,6 +101,10 @@ public sealed class TokenRefreshTests : IAsyncDisposable
         });
         builder.AddCoworkeeBff();
         builder.Services.AddHttpClient(nameof(TokenRefresher)).ConfigurePrimaryHttpMessageHandler(() => endpoint);
+        if (api is not null)
+        {
+            builder.Services.AddSingleton<Yarp.ReverseProxy.Forwarder.IForwarderHttpClientFactory>(new StubForwarderClients(api));
+        }
         _app = builder.Build();
         _app.MapCoworkeeBff();
         _app.MapGet("/test/signin", async (HttpContext context) =>
@@ -99,6 +126,11 @@ public sealed class TokenRefreshTests : IAsyncDisposable
         var browser = new HttpClient(new CookieContainerHandler { InnerHandler = server.CreateHandler() }) { BaseAddress = server.BaseAddress };
         (await browser.GetAsync("/test/signin", TestContext.Current.CancellationToken)).EnsureSuccessStatusCode();
         return browser;
+    }
+
+    private sealed class StubForwarderClients(HttpMessageHandler handler) : Yarp.ReverseProxy.Forwarder.IForwarderHttpClientFactory
+    {
+        public HttpMessageInvoker CreateClient(Yarp.ReverseProxy.Forwarder.ForwarderHttpClientContext context) => new(handler, disposeHandler: false);
     }
 
     private sealed class StubTokenEndpoint(HttpStatusCode status, string body) : HttpMessageHandler

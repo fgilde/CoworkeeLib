@@ -6,6 +6,7 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="..\Coworkee.Account\Coworkee.Account.csproj" />
     <ProjectReference Include="..\Coworkee.Notifications\Coworkee.Notifications.csproj" />
+    <ProjectReference Include="..\Coworkee.Theming\Coworkee.Theming.csproj" />
     <Content Remove="Texts\*.json" />
     <EmbeddedResource Include="Texts\*.json" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" />

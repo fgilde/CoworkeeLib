@@ -33,6 +33,12 @@ public static class IdentityPermissions
     {
         public const string Manage = "Identity.ResourcePermissions.Manage";
     }
+
+    /// <summary>OpenID Connect clients and scopes of the auth server; only the system organisation uses it.</summary>
+    public static class Clients
+    {
+        public const string Manage = "Identity.Clients.Manage";
+    }
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter<PermissionProviderType>))]

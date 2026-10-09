@@ -86,5 +86,20 @@
   "Turn on": "Einschalten",
   "Add this key to an authenticator app, then enter the code it shows.": "Fügen Sie diesen Schlüssel einer Authenticator-App hinzu und geben Sie dann den angezeigten Code ein.",
   "Complete your account first.": "Vervollständigen Sie zuerst Ihr Konto.",
-  "You signed in with {0} as {1}. Complete your account.": "Sie haben sich mit {0} als {1} angemeldet. Vervollständigen Sie Ihr Konto."
+  "You signed in with {0} as {1}. Complete your account.": "Sie haben sich mit {0} als {1} angemeldet. Vervollständigen Sie Ihr Konto.",
+  "Your password expired. Choose a new one to continue.": "Ihr Passwort ist abgelaufen. Wählen Sie ein neues, um fortzufahren.",
+  "An administrator asks you to choose your own password before you continue.": "Ein Administrator bittet Sie, vor dem Fortfahren ein eigenes Passwort zu wählen.",
+  "Choose a password other than the current one.": "Wählen Sie ein anderes als das aktuelle Passwort.",
+  "Choose a password you did not use recently.": "Wählen Sie ein Passwort, das Sie nicht kürzlich verwendet haben.",
+  "Allow access": "Zugriff erlauben",
+  "{0} asks for access to your account:": "{0} bittet um Zugriff auf Ihr Konto:",
+  "Allow": "Erlauben",
+  "Deny": "Ablehnen",
+  "Authorized applications": "Berechtigte Anwendungen",
+  "No application has access to your account.": "Keine Anwendung hat Zugriff auf Ihr Konto.",
+  "Since {0}": "Seit {0}",
+  "allowed by you": "von Ihnen erlaubt",
+  "signed in": "angemeldet",
+  "Revoke": "Widerrufen",
+  "The access was revoked; the application has to ask you to sign in again.": "Der Zugriff wurde widerrufen; die Anwendung muss Sie erneut um eine Anmeldung bitten."
 }

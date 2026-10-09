@@ -1,0 +1,38 @@
+@page "/admin/scopes"
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + IdentityPermissions.Clients.Manage)]
+
+<PageHeader Title="Scopes" Description="What clients may ask for; the resources of a scope become the audiences of the access token. openid, profile, email, roles and offline_access are built in." />
+<MudStack Row="true" Class="mb-2">
+    <MudSpacer />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" Size="Size.Small" Disabled="_busy"
+               OnClick="CreateAsync" data-testid="create-scope">@L["New scope"]</MudButton>
+</MudStack>
+<MudDataGrid T="ScopeDto" Items="_scopes" Loading="_busy" Dense="true" Hover="true" Striped="true" Elevation="0" Outlined="true" data-testid="scopes">
+    <Columns>
+        <PropertyColumn Property="s => s.Name" Title="@L["Name"]">
+            <CellTemplate>
+                @context.Item.Name
+                @if (context.Item.BuiltIn)
+                {
+                    <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Outlined.Lock">@L["configuration"]</MudChip>
+                }
+            </CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="s => s.DisplayName" Title="@L["Display name"]" />
+        <TemplateColumn T="ScopeDto" Title="@L["Resources"]" Sortable="false">
+            <CellTemplate>@string.Join(", ", context.Item.Resources)</CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn T="ScopeDto" Sortable="false" CellStyle="text-align:right;white-space:nowrap">
+            <CellTemplate>
+                @if (!context.Item.BuiltIn)
+                {
+                    <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" aria-label="@L["Edit"]" Disabled="_busy" OnClick="() => EditAsync(context.Item)" />
+                    <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" aria-label="@L["Delete"]" Disabled="_busy" OnClick="() => DeleteAsync(context.Item)" />
+                }
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <NoRecordsContent>
+        <MudText Class="mud-text-secondary pa-4">@L["No scopes yet."]</MudText>
+    </NoRecordsContent>
+</MudDataGrid>
