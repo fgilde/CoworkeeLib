@@ -7,6 +7,9 @@ public sealed partial class CoworkeeAppOptions
     /// <summary>Shown on the sign-in page and as name of the web client.</summary>
     public string? DisplayName { get; set; }
 
+    /// <summary>Logo of the sign-in pages when the theme has none: an absolute address, or a path the web app serves (e.g. <c>/coworkee-icon.svg</c>).</summary>
+    public string? LogoUrl { get; set; }
+
     /// <summary>Folder for uploaded files, shared by all services; defaults to .data/blobs next to src.</summary>
     public string? BlobRoot { get; set; }
 

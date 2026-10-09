@@ -79,7 +79,8 @@ public partial class CoworkeeNavMenu : IDisposable
         var allowed = new List<CoworkeeNavItem>();
         foreach (var item in Contributors.SelectMany(c => c.Items))
         {
-            if ((item.Permission is null || (await Authorization.AuthorizeAsync(user, PermissionPolicy.For(item.Permission))).Succeeded)
+            if (!(item.HostOnly && SystemTenant.IsOutside(user))
+                && (item.Permission is null || (await Authorization.AuthorizeAsync(user, PermissionPolicy.For(item.Permission))).Succeeded)
                 && (item.Feature is null || await Features.IsEnabledAsync(item.Feature)))
             {
                 allowed.Add(item);

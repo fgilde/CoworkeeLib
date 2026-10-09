@@ -4,7 +4,7 @@ namespace Coworkee.Contracts.Realtime;
 
 public sealed record RealtimeEnvelope(string Topic, string Type, JsonElement Payload);
 
-/// <summary>Why the session ended: "signed-out" or "locked".</summary>
+/// <summary>Why the session ended: "signed-out", "locked" or "password-changed" (in another session or by an administrator).</summary>
 public sealed record SessionRevokedPayload(string Reason);
 
 public sealed record EntityChangedPayload(string EntityType, string EntityId, string Action, IReadOnlyList<string> ChangedProperties);
@@ -21,7 +21,7 @@ public static class RealtimeEventTypes
 {
     public const string EntityChanged = "EntityChanged";
 
-    /// <summary>On the user's own topic: an administrator signed the user out or locked the account; the client ends its session.</summary>
+    /// <summary>On the user's own topic: the session ended (signed out or locked by an administrator, new password); the client ends it too.</summary>
     public const string SessionRevoked = "SessionRevoked";
 }
 

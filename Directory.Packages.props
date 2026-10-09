@@ -40,6 +40,7 @@
     <PackageVersion Include="NetArchTest.eNhancedEdition" Version="1.4.5" />
     <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Hybrid" Version="10.10.0" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.12" />
     <PackageVersion Include="OpenIddict.AspNetCore" Version="7.7.1" />
     <PackageVersion Include="OpenIddict.EntityFrameworkCore" Version="7.7.1" />

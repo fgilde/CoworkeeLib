@@ -26,6 +26,7 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
         services.Configure<IdentityOptions>(identity => identity.SignIn.RequireConfirmedEmail = true);
         services.AddScoped<Registration.AccountRegistration>();
         services.AddScoped<AuthBrandingProvider>();
+        services.AddSingleton<Application.Localization.ITextTranslator, AuthTextTranslator>();
         services.AddSingleton<AuthClientSeeder>();
         services.AddHostedService(provider => provider.GetRequiredService<AuthClientSeeder>());
         services.AddRazorPages().AddApplicationPart(typeof(CoworkeeAuthServerModule).Assembly);
@@ -38,6 +39,12 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
         {
             cookie.LoginPath = "/Account/Login";
             cookie.LogoutPath = "/Account/Logout";
+            var signingIn = cookie.Events.OnSigningIn;
+            cookie.Events.OnSigningIn = async signIn =>
+            {
+                await signingIn(signIn);
+                await OwnPassword.NameSession(signIn);
+            };
         });
         new IdentityBuilder(typeof(User), typeof(Role), services).AddSignInManager();
 
@@ -47,7 +54,7 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
                 server.SetAuthorizationEndpointUris("/connect/authorize")
                     .SetTokenEndpointUris("/connect/token")
                     .SetEndSessionEndpointUris("/connect/endsession");
-                server.AllowAuthorizationCodeFlow().AllowRefreshTokenFlow();
+                server.AllowAuthorizationCodeFlow().AllowRefreshTokenFlow().AllowClientCredentialsFlow();
                 server.RequireProofKeyForCodeExchange();
                 server.RegisterScopes([Scopes.OpenId, Scopes.Profile, Scopes.Email, Scopes.Roles, Scopes.OfflineAccess, .. options.ApiScopes.Keys]);
                 server.SetAccessTokenLifetime(options.AccessTokenLifetime);
@@ -98,14 +105,15 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
 
     /// <summary>
     /// The account pages run no script and style inline; after sign-in the browser follows redirects to the clients, which
-    /// browsers check against form-action, so the clients' origins are allowed there.
+    /// browsers check against form-action, so the clients' origins are allowed there. A logo from elsewhere adds its origin to img-src.
     /// </summary>
     internal static string ContentSecurityPolicy(AuthServerOptions options, IEnumerable<string> storedClientUris)
     {
         var clients = options.Clients.SelectMany(c => c.RedirectUris.Concat(c.PostLogoutRedirectUris)).Concat(storedClientUris)
             .Select(u => Uri.TryCreate(u, UriKind.Absolute, out var uri) ? uri.GetLeftPart(UriPartial.Authority) : null)
             .OfType<string>().Concat(ExternalProviders.Origins(options.External)).Distinct(StringComparer.OrdinalIgnoreCase);
-        return "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; "
+        var logo = Uri.TryCreate(options.LogoUrl, UriKind.Absolute, out var logoUri) && logoUri.Scheme is "https" or "http" ? " " + logoUri.GetLeftPart(UriPartial.Authority) : string.Empty;
+        return $"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:{logo}; object-src 'none'; base-uri 'self'; "
             + $"frame-ancestors 'none'; form-action {string.Join(' ', ["'self'", .. clients])}";
     }
 

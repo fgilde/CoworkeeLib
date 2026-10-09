@@ -6,6 +6,9 @@ public sealed class AuthServerOptions
 
     public string DisplayName { get; set; } = "Coworkee";
 
+    /// <summary>Logo of the account pages when the theme has none: an absolute address or a path on the auth server.</summary>
+    public string? LogoUrl { get; set; }
+
     public bool AllowHttp { get; set; }
 
     public TimeSpan AccessTokenLifetime { get; set; } = TimeSpan.FromMinutes(15);

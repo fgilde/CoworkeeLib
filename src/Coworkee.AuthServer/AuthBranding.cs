@@ -9,8 +9,11 @@ using Microsoft.Extensions.Options;
 
 namespace Coworkee.AuthServer;
 
-/// <summary>Name, logo and colors of the account pages: the app's display name and the default theme of the system organisation.</summary>
-public sealed record AuthBranding(string AppName, string? LogoDataUrl, string? Css);
+/// <summary>
+/// Name, logo and colors of the account pages: the app's display name and the default theme of the system organisation; without a
+/// theme logo the configured <see cref="AuthServerOptions.LogoUrl"/>.
+/// </summary>
+public sealed record AuthBranding(string AppName, string? LogoUrl, string? Css);
 
 public sealed partial class AuthBrandingProvider(IDispatcher dispatcher, HybridCache cache, IOptions<AuthServerOptions> options)
 {
@@ -27,10 +30,10 @@ public sealed partial class AuthBrandingProvider(IDispatcher dispatcher, HybridC
         var theme = await dispatcher.SendAsync(new GetCurrentTheme(), cancellationToken);
         if (!theme.IsSuccess)
         {
-            return new AuthBranding(options.Value.DisplayName, null, null);
+            return new AuthBranding(options.Value.DisplayName, options.Value.LogoUrl, null);
         }
 
-        var logo = theme.Value.LogoSvg is { Length: > 0 } svg ? "data:image/svg+xml;base64," + Convert.ToBase64String(Encoding.UTF8.GetBytes(svg)) : null;
+        var logo = theme.Value.LogoSvg is { Length: > 0 } svg ? "data:image/svg+xml;base64," + Convert.ToBase64String(Encoding.UTF8.GetBytes(svg)) : options.Value.LogoUrl;
         var css = $":root{{{Declarations(theme.Value.PaletteLight)}}}@media (prefers-color-scheme: dark){{:root{{{Declarations(theme.Value.PaletteDark)}}}}}";
         return new AuthBranding(options.Value.DisplayName, logo, css);
     }

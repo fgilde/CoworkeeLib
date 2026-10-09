@@ -14,9 +14,13 @@ namespace Coworkee.Client.Blazor.Pages.Admin;
 public partial class Clients
 {
     private IReadOnlyList<ClientDto> _clients = [];
+    private IReadOnlyList<RoleDto> _roles = [];
+    private IReadOnlyList<string> _permissions = [];
     private bool _busy;
 
     [Inject] private IClientsApi Api { get; set; } = null!;
+
+    [Inject] private ICoworkeeApi Identity { get; set; } = null!;
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
@@ -24,7 +28,18 @@ public partial class Clients
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
-    protected override Task OnInitializedAsync() => RunAsync(() => Task.CompletedTask);
+    protected override Task OnInitializedAsync() => RunAsync(async () =>
+    {
+        _roles = await Identity.GetRolesAsync();
+        _permissions = [.. (await Identity.GetPermissionDefinitionsAsync()).SelectMany(g => g.Permissions).Select(p => p.Name)];
+    });
+
+    private static bool IsService(ClientDto client) => client.GrantTypes.Contains(ClientGrantTypes.ClientCredentials);
+
+    private string RoleName(Guid id) => _roles.FirstOrDefault(r => r.Id == id)?.Name ?? string.Empty;
+
+    private Task SetRightsAsync(ClientDto client, IReadOnlyList<Guid> roles, IReadOnlyList<string> permissions) =>
+        RunAsync(() => Api.UpdateClientAsync(client.Id, ClientForm.From(client).ToRequest() with { Roles = roles, Permissions = permissions }));
 
     private async Task CreateAsync()
     {
@@ -133,6 +148,13 @@ public partial class Clients
         [Display(Name = "Allow refresh tokens")]
         public bool RefreshTokens { get; set; } = true;
 
+        [Display(Name = "Service client")]
+        public bool ServiceClient { get; set; }
+
+        private IReadOnlyList<Guid> _roles = [];
+
+        private IReadOnlyList<string> _permissions = [];
+
         public static ClientForm From(ClientDto client) => new()
         {
             ClientId = client.ClientId,
@@ -143,6 +165,9 @@ public partial class Clients
             PostLogoutRedirectUris = string.Join(Environment.NewLine, client.PostLogoutRedirectUris),
             Scopes = string.Join(' ', client.Scopes.Prepend("openid").Distinct()),
             RefreshTokens = client.GrantTypes.Contains(ClientGrantTypes.RefreshToken),
+            ServiceClient = IsService(client),
+            _roles = client.Roles,
+            _permissions = client.Permissions,
         };
 
         public ClientRequest ToRequest() => new(
@@ -152,8 +177,31 @@ public partial class Clients
             Consent.ToString().ToLowerInvariant(),
             Split(RedirectUris),
             Split(PostLogoutRedirectUris),
-            RefreshTokens ? [ClientGrantTypes.AuthorizationCode, ClientGrantTypes.RefreshToken] : [ClientGrantTypes.AuthorizationCode],
-            [.. Scopes.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Distinct()]);
+            GrantTypes(),
+            [.. Scopes.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Distinct()],
+            _roles,
+            _permissions);
+
+        // a service client without redirect addresses signs nobody in
+        private List<string> GrantTypes()
+        {
+            var grants = new List<string>();
+            if (!ServiceClient || Split(RedirectUris).Length > 0)
+            {
+                grants.Add(ClientGrantTypes.AuthorizationCode);
+                if (RefreshTokens)
+                {
+                    grants.Add(ClientGrantTypes.RefreshToken);
+                }
+            }
+
+            if (ServiceClient)
+            {
+                grants.Add(ClientGrantTypes.ClientCredentials);
+            }
+
+            return grants;
+        }
 
         private static string[] Split(string lines) => lines.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
     }

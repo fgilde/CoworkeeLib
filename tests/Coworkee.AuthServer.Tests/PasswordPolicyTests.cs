@@ -70,6 +70,21 @@ public sealed class PasswordPolicyTests(AuthApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Password_rules_and_identity_errors_speak_the_request_language()
+    {
+        await CreateUserAsync("bob@acme.test");
+        var flow = new OidcFlow(app);
+        flow.Browser.DefaultRequestHeaders.AcceptLanguage.ParseAdd("de");
+        await flow.LoginAsync("bob@acme.test", Password);
+
+        var html = System.Net.WebUtility.HtmlDecode((await ChangeAsync(flow, "/Account/Manage/ChangePassword", Password, "kurz")).Html);
+
+        html.ShouldContain("Passwörter müssen mindestens 8 Zeichen lang sein.");
+        html.ShouldContain("Passwörter müssen mindestens eine Ziffer");
+        System.Net.WebUtility.HtmlDecode((await ChangeAsync(flow, "/Account/Manage/ChangePassword", "falsch", NewPassword)).Html).ShouldContain("Das aktuelle Passwort");
+    }
+
+    [Fact]
     public async Task The_lockout_follows_the_settings()
     {
         await CreateUserAsync("bob@acme.test");

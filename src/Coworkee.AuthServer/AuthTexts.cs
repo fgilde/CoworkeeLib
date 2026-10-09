@@ -9,8 +9,10 @@ public static class AuthTexts
 {
     private static readonly ConcurrentDictionary<string, IReadOnlyDictionary<string, string>> Languages = new(StringComparer.OrdinalIgnoreCase);
 
-    public static string T(string text) =>
-        Languages.GetOrAdd(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, Load).TryGetValue(text, out var translated) ? translated : text;
+    public static string T(string text) => Find(text, CultureInfo.CurrentUICulture) ?? text;
+
+    public static string? Find(string text, CultureInfo culture) =>
+        Languages.GetOrAdd(culture.TwoLetterISOLanguageName, Load).TryGetValue(text, out var translated) ? translated : null;
 
     public static string T(string text, params object?[] arguments) => string.Format(CultureInfo.CurrentCulture, T(text), arguments);
 
@@ -21,4 +23,10 @@ public static class AuthTexts
             ? new Dictionary<string, string>()
             : JsonSerializer.Deserialize<Dictionary<string, string>>(stream) ?? [];
     }
+}
+
+/// <summary>The account page texts for server messages such as the ones of ASP.NET Core Identity.</summary>
+internal sealed class AuthTextTranslator : Application.Localization.ITextTranslator
+{
+    public string? Translate(string text, CultureInfo culture) => AuthTexts.Find(text, culture);
 }

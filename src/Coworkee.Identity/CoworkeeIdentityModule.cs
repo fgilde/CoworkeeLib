@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
+using Coworkee.Realtime;
 using Microsoft.Extensions.Options;
 
 namespace Coworkee.Identity;
@@ -58,8 +59,14 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
                 options.Lockout.MaxFailedAccessAttempts = 10;
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
             })
-            .AddDefaultTokenProviders();
+            .AddDefaultTokenProviders()
+            .AddErrorDescriber<LocalizedIdentityErrorDescriber>();
         services.ValidateBearerTokens();
+        services.AddCoworkeeRedis(context.Configuration);
+        services.AddSingleton<SessionStamps>();
+        services.AddSingleton<SessionSignal>();
+        services.AddHostedService(provider => provider.GetRequiredService<SessionSignal>());
+        services.AddScoped<IInterceptor, SessionChangeInterceptor>();
         services.AddScoped<IUserStore<User>>(provider => new Users.CoworkeeUserStore(provider.GetRequiredService<CoworkeeDbContext>()) { AutoSaveChanges = false });
     }
 

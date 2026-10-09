@@ -68,6 +68,30 @@ public sealed class SessionTests(AuthApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Changing_the_own_password_keeps_this_session_and_ends_the_others()
+    {
+        await CreateUserAsync("bob@acme.test");
+        var mine = new OidcFlow(app);
+        var mineTokens = await mine.SignInAsync("bob@acme.test", Password);
+        var other = new OidcFlow(app);
+        var otherTokens = await other.SignInAsync("bob@acme.test", Password);
+
+        var (response, html) = await mine.PostFormAsync("/Account/Manage/ChangePassword",
+            new() { ["Input.CurrentPassword"] = Password, ["Input.NewPassword"] = "N3w-Passw0rd!", ["Input.ConfirmPassword"] = "N3w-Passw0rd!" });
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        html.ShouldContain("Your password was changed.");
+        (await CallApiAsync(mineTokens)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var refreshed = await mine.RefreshAsync(mineTokens);
+        refreshed.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await CallApiAsync(JsonDocument.Parse(await refreshed.Content.ReadAsStringAsync(Ct)).RootElement)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await mine.FollowAsync(await mine.AuthorizeAsync())).Headers.Location!.ToString().ShouldStartWith(AuthApp.RedirectUri);
+        (await CallApiAsync(otherTokens)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        (await other.RefreshAsync(otherTokens)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await other.AuthorizeAsync()).Headers.Location!.ToString().ShouldContain("/Account/Login");
+    }
+
+    [Fact]
     public async Task Locks_end_in_the_future_and_administrators_keep_their_own_session()
     {
         var bob = await CreateUserAsync("bob@acme.test");

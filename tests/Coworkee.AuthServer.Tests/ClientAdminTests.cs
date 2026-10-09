@@ -119,6 +119,41 @@ public sealed class ClientAdminTests(AuthApp app) : IAsyncLifetime
         html.ShouldContain("--signal:");
     }
 
+    [Fact]
+    public async Task Clients_and_scopes_the_configuration_dropped_are_removed_at_startup_admin_created_ones_stay()
+    {
+        await SendAsync(new CreateClient(Request("partner", "public", "implicit")));
+        await SendAsync(new CreateScope(new ScopeRequest("reports", null, null, ["reports_api"])));
+        await using (var scope = app.App.Services.CreateAsyncScope())
+        {
+            var managed = new Dictionary<string, System.Text.Json.JsonElement> { [AuthClientSeeder.ManagedProperty] = System.Text.Json.JsonSerializer.SerializeToElement(true) };
+            var client = new OpenIddict.Abstractions.OpenIddictApplicationDescriptor { ClientId = "retired", ClientType = "public" };
+            var apiScope = new OpenIddict.Abstractions.OpenIddictScopeDescriptor { Name = "retired_api" };
+            foreach (var (key, value) in managed)
+            {
+                client.Properties[key] = value;
+                apiScope.Properties[key] = value;
+            }
+
+            await scope.ServiceProvider.GetRequiredService<OpenIddict.Abstractions.IOpenIddictApplicationManager>().CreateAsync(client, Ct);
+            await scope.ServiceProvider.GetRequiredService<OpenIddict.Abstractions.IOpenIddictScopeManager>().CreateAsync(apiScope, Ct);
+        }
+
+        await app.App.Services.GetRequiredService<AuthClientSeeder>().SeedAsync(Ct);
+
+        (await SendAsync(new GetClients())).Value.Select(c => c.ClientId).ShouldBe([AuthApp.ClientId, "partner"], ignoreOrder: true);
+        (await SendAsync(new GetScopes())).Value.Select(s => s.Name).ShouldBe(["reports", "test_api"], ignoreOrder: true);
+    }
+
+    [Fact]
+    public void A_logo_from_another_origin_is_allowed_as_image()
+    {
+        var policy = CoworkeeAuthServerModule.ContentSecurityPolicy(new Contracts.Configuration.AuthServerOptions { LogoUrl = "https://web.test/coworkee-icon.svg" }, []);
+
+        policy.ShouldContain("img-src 'self' data: https://web.test;");
+        CoworkeeAuthServerModule.ContentSecurityPolicy(new Contracts.Configuration.AuthServerOptions { LogoUrl = "/logo.svg" }, []).ShouldContain("img-src 'self' data:;");
+    }
+
     private static ClientRequest Request(string clientId, string type, string consent) =>
         new(clientId, "Partner", type, consent, [Callback], [], [ClientGrantTypes.AuthorizationCode, ClientGrantTypes.RefreshToken], ["openid", "profile", "offline_access"]);
 

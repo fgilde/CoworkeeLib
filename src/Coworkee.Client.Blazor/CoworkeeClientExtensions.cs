@@ -90,7 +90,7 @@ public sealed record ClientAppConfiguration(string Section, string Title, Type T
 internal sealed class ConfigurationNavigation : INavigationContributor
 {
     public IEnumerable<CoworkeeNavItem> Items =>
-        [new("Configuration", "/admin/configuration", MudBlazor.Icons.Material.Outlined.SettingsApplications, Coworkee.Contracts.Settings.SettingsPermissions.Manage, Group: AdminNavigation.AdminGroup)];
+        [new("Configuration", "/admin/configuration", MudBlazor.Icons.Material.Outlined.SettingsApplications, Coworkee.Contracts.Settings.SettingsPermissions.Manage, Group: AdminNavigation.AdminGroup, HostOnly: true)];
 }
 
 internal sealed class AdminNavigation : INavigationContributor
@@ -107,14 +107,14 @@ internal sealed class AdminNavigation : INavigationContributor
         new("Mail log", "/admin/mail/log", MudBlazor.Icons.Material.Outlined.Outbox, Coworkee.Contracts.Mailing.MailPermissions.Log.View, Group: AdminGroup),
         new("Jobs", "/admin/jobs", MudBlazor.Icons.Material.Outlined.Schedule, Coworkee.Contracts.Jobs.JobsPermissions.View, ForceLoad: true, Group: AdminGroup),
         new("Themes", "/admin/themes", MudBlazor.Icons.Material.Outlined.Palette, Coworkee.Contracts.Theming.ThemePermissions.Manage, Group: AdminGroup),
-        new("Tenants", "/admin/tenants", MudBlazor.Icons.Material.Outlined.Domain, Coworkee.Contracts.Features.FeaturePermissions.Tenants, Group: AdminGroup),
-        new("Applications", "/admin/clients", MudBlazor.Icons.Material.Outlined.Apps, Coworkee.Contracts.Identity.IdentityPermissions.Clients.Manage, Group: AdminGroup),
-        new("Scopes", "/admin/scopes", MudBlazor.Icons.Material.Outlined.Key, Coworkee.Contracts.Identity.IdentityPermissions.Clients.Manage, Group: AdminGroup),
-        new("Editions", "/admin/editions", MudBlazor.Icons.Material.Outlined.WorkspacePremium, Coworkee.Contracts.Features.FeaturePermissions.Editions, Group: AdminGroup),
+        new("Tenants", "/admin/tenants", MudBlazor.Icons.Material.Outlined.Domain, Coworkee.Contracts.Features.FeaturePermissions.Tenants, Group: AdminGroup, HostOnly: true),
+        new("Applications", "/admin/clients", MudBlazor.Icons.Material.Outlined.Apps, Coworkee.Contracts.Identity.IdentityPermissions.Clients.Manage, Group: AdminGroup, HostOnly: true),
+        new("Scopes", "/admin/scopes", MudBlazor.Icons.Material.Outlined.Key, Coworkee.Contracts.Identity.IdentityPermissions.Clients.Manage, Group: AdminGroup, HostOnly: true),
+        new("Editions", "/admin/editions", MudBlazor.Icons.Material.Outlined.WorkspacePremium, Coworkee.Contracts.Features.FeaturePermissions.Editions, Group: AdminGroup, HostOnly: true),
         new("Audit log", "/admin/audit", MudBlazor.Icons.Material.Outlined.History, Coworkee.Contracts.Auditing.AuditPermissions.View, Group: AdminGroup),
         new("Languages", "/admin/languages", MudBlazor.Icons.Material.Outlined.Language, Coworkee.Contracts.Localization.LocalizationPermissions.Manage, Group: Navigation.NavigationGroups.Localization),
         new("Translations", "/admin/translations", MudBlazor.Icons.Material.Outlined.Translate, Coworkee.Contracts.Localization.LocalizationPermissions.Manage, Group: Navigation.NavigationGroups.Localization),
-        new("Backups", "/admin/backups", MudBlazor.Icons.Material.Outlined.Backup, Coworkee.Contracts.Backup.BackupPermissions.Manage, Group: AdminGroup),
+        new("Backups", "/admin/backups", MudBlazor.Icons.Material.Outlined.Backup, Coworkee.Contracts.Backup.BackupPermissions.Manage, Group: AdminGroup, HostOnly: true),
         new("AI tool calls", "/admin/ai-tool-calls", MudBlazor.Icons.Material.Outlined.ManageSearch, Coworkee.Contracts.Ai.AiPermissions.Audit, Group: AdminGroup),
         new("Files", "/files", MudBlazor.Icons.Material.Outlined.FolderOpen, Coworkee.Contracts.Files.FilePermissions.View, Order: -8),
         new("Chat", "/chat", MudBlazor.Icons.Material.Outlined.Chat, Coworkee.Contracts.Chat.ChatPermissions.Use, Order: -9),

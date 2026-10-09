@@ -60,6 +60,8 @@ internal sealed class MyAppNavigation : INavigationContributor
 
 The menu is a `MudExTreeView`: groups are nodes, the filter box highlights matches and opens their groups, and the view can switch between tree, list and flat list. Pinned, the drawer stays as an icon strip under the app bar and the menu button widens it; unpinned, it opens as an overlay and hides again. Whether one group or several stay open is a second toggle. Both choices are stored in the browser.
 
+Entries with `HostOnly: true` serve the whole installation and show only to users of the system organisation; the library marks Tenants, Editions, Applications, Scopes, Configuration and Backups that way, and the settings page hides its System tab elsewhere. The client knows the organisation from `/bff/user` (`SystemTenant`, from the `system_tenant` claim of the auth server); sign-ins from before that claim show everything as before.
+
 ![Collapsed navigation](../assets/screenshots/mini-drawer.png){ .shot }
 
 ## App bar

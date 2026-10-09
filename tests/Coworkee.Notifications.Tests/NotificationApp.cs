@@ -101,7 +101,7 @@ public sealed class NotificationApp : PostgresFixture
 public sealed class NotificationTestDbContext(DbContextOptions<NotificationTestDbContext> options, ICurrentUser currentUser, IEnumerable<IModelContributor> contributors)
     : CoworkeeDbContext(options, currentUser, contributors);
 
-[DependsOn(typeof(CoworkeeNotificationsModule), typeof(CoworkeeIdentityModule))]
+[DependsOn(typeof(CoworkeeNotificationsModule), typeof(CoworkeeIdentityModule), typeof(Coworkee.Localization.CoworkeeLocalizationModule))]
 public sealed class TestNotificationModule : CoworkeeModule
 {
     public override void ConfigureServices(ModuleServiceContext context) =>

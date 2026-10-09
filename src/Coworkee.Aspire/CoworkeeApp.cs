@@ -73,6 +73,10 @@ public sealed partial class CoworkeeApp
         auth.WithSetting(s => s.Coworkee.Jobs.RunServer, false)
             .WithSetting(s => s.Coworkee.Account.PublicAuthUrl, auth.GetEndpoint("https"))
             .WithSetting(s => s.Coworkee.Auth.DisplayName, Options.DisplayName ?? Name);
+        if (Uri.TryCreate(Options.LogoUrl, UriKind.Absolute, out _))
+        {
+            auth.WithSetting(s => s.Coworkee.Auth.LogoUrl, Options.LogoUrl);
+        }
         if (Builder.Environment.IsDevelopment())
         {
             // per machine certificates are fine locally; production configures SigningCertificate and EncryptionCertificate
@@ -132,6 +136,11 @@ public sealed partial class CoworkeeApp
             .WithSettings(s => s.Coworkee.Auth.Clients[0].Scopes, ApiAudience)
             .WithSetting(s => s.Coworkee.Auth.Clients[0].RedirectUris[0], ReferenceExpression.Create($"{redirect}/signin-oidc"))
             .WithSetting(s => s.Coworkee.Auth.Clients[0].PostLogoutRedirectUris[0], ReferenceExpression.Create($"{redirect}/signout-callback-oidc"));
+        if (Options.LogoUrl is { } logo && logo.StartsWith('/'))
+        {
+            auth.WithSetting(s => s.Coworkee.Auth.LogoUrl, ReferenceExpression.Create($"{redirect}{logo}"));
+        }
+
         return Added<TProject>(web, suffix);
     }
 

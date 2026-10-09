@@ -57,15 +57,13 @@ public sealed class ChangePasswordRequiredModel(UserManager<User> users, SignInM
             return Page();
         }
 
-        var result = await users.ChangePasswordAsync(user, Input.CurrentPassword, Input.NewPassword);
+        var result = await OwnPassword.ChangeAsync(HttpContext, users, signIn, db, user, Input.CurrentPassword, Input.NewPassword);
         if (!result.Succeeded)
         {
             Errors = result.Errors.Select(e => e.Code == "PasswordMismatch" ? T("The current password is not correct.") : T(e.Description)).ToList();
             return Page();
         }
 
-        await db.SaveChangesAsync();
-        await signIn.RefreshSignInAsync(user);
         return LocalRedirect(Url.IsLocalUrl(ReturnUrl) ? ReturnUrl : "/");
     }
 }

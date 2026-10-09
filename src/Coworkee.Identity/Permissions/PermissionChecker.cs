@@ -18,7 +18,7 @@ internal sealed class PermissionChecker(
     {
         if (currentUser.UserId is not { } userId)
         {
-            return [];
+            return currentUser.ClientId is null ? [] : await GetClientGrantedAsync(cancellationToken);
         }
 
         var tenantId = currentUser.TenantId;
@@ -31,6 +31,24 @@ internal sealed class PermissionChecker(
             },
             tags: [PermissionCache.Tag],
             cancellationToken: cancellationToken);
+    }
+
+    // a service client has what its roles in its organisation grant and what its token names
+    private async Task<IReadOnlyCollection<string>> GetClientGrantedAsync(CancellationToken cancellationToken)
+    {
+        var tenantId = currentUser.TenantId;
+        var roles = currentUser.Roles.Order(StringComparer.Ordinal).ToArray();
+        var fromRoles = await cache.GetOrCreateAsync(
+            $"coworkee:permissions:roles:{tenantId}:{string.Join(',', roles)}",
+            async ct =>
+            {
+                using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, tenantId));
+                var roleIds = await db.Set<Role>().Where(r => roles.Contains(r.Name!) && r.TenantId == tenantId && !r.IsSystem).Select(r => r.Id).ToListAsync(ct);
+                return (await GrantsForRolesAsync(roleIds, tenantId, ct)).ToArray();
+            },
+            tags: [PermissionCache.Tag],
+            cancellationToken: cancellationToken);
+        return [.. definitions.Expand(fromRoles.Concat(currentUser.ClientPermissions.Where(definitions.Exists)))];
     }
 
     public async Task<bool> IsGrantedAsync(string permission, CancellationToken cancellationToken) =>

@@ -26,6 +26,9 @@ internal static class AuthEndpoints
     /// <summary>The consent page sends the user back to the authorization with this parameter when the user declined.</summary>
     public const string ConsentDenied = "consent_denied";
 
+    /// <summary>"true" when the user belongs to the system organisation; the client shows the installation-wide pages only then.</summary>
+    public const string SystemTenantClaim = "system_tenant";
+
     public static void Map(WebApplication app)
     {
         app.MapMethods("/connect/authorize", [HttpMethods.Get, HttpMethods.Post], (Delegate)AuthorizeAsync).ExcludeFromDescription();
@@ -67,7 +70,8 @@ internal static class AuthEndpoints
             return result;
         }
 
-        var principal = await CreatePrincipalAsync(context.RequestServices, user, request.GetScopes(), options.Value);
+        var sid = cookie.Properties?.Items.TryGetValue(OwnPassword.SessionItem, out var item) == true ? item : null;
+        var principal = await CreatePrincipalAsync(context.RequestServices, user, request.GetScopes(), options.Value, sid);
         if (consent.AuthorizationId is { } authorizationId)
         {
             principal.SetAuthorizationId(authorizationId);
@@ -106,6 +110,11 @@ internal static class AuthEndpoints
     private static async Task<IResult> TokenAsync(HttpContext context, CoworkeeDbContext db, IOptions<AuthServerOptions> options)
     {
         var request = context.GetOpenIddictServerRequest() ?? throw new InvalidOperationException("No OpenID Connect request.");
+        if (request.IsClientCredentialsGrantType())
+        {
+            return Results.SignIn(await Clients.ServiceClient.CreatePrincipalAsync(context, request, options.Value), null, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+        }
+
         if (!request.IsAuthorizationCodeGrantType() && !request.IsRefreshTokenGrantType())
         {
             return Results.Forbid(Error(Errors.UnsupportedGrantType, "The grant type is not supported."), [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]);
@@ -116,12 +125,13 @@ internal static class AuthEndpoints
 
         // a new security stamp (signed out everywhere, locked, new password) ends the refresh tokens issued before
         var stamp = result.Principal?.GetClaim(SessionStamp.ClaimType);
-        if (user is null || (stamp is not null && stamp != SessionStamp.Hash(user.SecurityStamp)))
+        var sid = result.Principal?.GetClaim(SessionStamp.SessionClaimType);
+        if (user is null || (stamp is not null && !SessionStamp.IsCurrent(new UserStamp(user.SecurityStamp, user.KeptSession), stamp, sid)))
         {
             return Results.Forbid(Error(Errors.InvalidGrant, "The account is no longer allowed to sign in."), [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]);
         }
 
-        var principal = await CreatePrincipalAsync(context.RequestServices, user, result.Principal!.GetScopes(), options.Value);
+        var principal = await CreatePrincipalAsync(context.RequestServices, user, result.Principal!.GetScopes(), options.Value, sid);
         if (result.Principal!.GetAuthorizationId() is { } authorizationId)
         {
             principal.SetAuthorizationId(authorizationId);
@@ -152,7 +162,7 @@ internal static class AuthEndpoints
         return await db.Set<User>().AsNoTracking().SingleOrDefaultAsync(u => u.Id == userId && u.IsActive);
     }
 
-    private static async Task<ClaimsPrincipal> CreatePrincipalAsync(IServiceProvider services, User user, ImmutableArray<string> scopes, AuthServerOptions options)
+    private static async Task<ClaimsPrincipal> CreatePrincipalAsync(IServiceProvider services, User user, ImmutableArray<string> scopes, AuthServerOptions options, string? sid)
     {
         var db = services.GetRequiredService<CoworkeeDbContext>();
         List<string> roles;
@@ -170,14 +180,22 @@ internal static class AuthEndpoints
             .SetClaim(Claims.Name, string.Join(' ', new[] { user.FirstName, user.LastName }.Where(n => !string.IsNullOrWhiteSpace(n))) is { Length: > 0 } name ? name : user.Email)
             .SetClaim("tenant", user.TenantId.ToString())
             .SetClaim(SessionStamp.ClaimType, SessionStamp.Hash(user.SecurityStamp))
+            .SetClaim(SessionStamp.SessionClaimType, sid)
+            .SetClaim(SystemTenantClaim, await services.GetRequiredService<ITenantDirectory>().IsSystemTenantAsync(user.TenantId, CancellationToken.None) ? "true" : "false")
             .SetClaims(Claims.Role, [.. roles]);
 
         identity.SetScopes(scopes);
+        identity.SetResources(await ResourcesAsync(services, scopes, options));
+        identity.SetDestinations(claim => claim.Type is SessionStamp.ClaimType or SessionStamp.SessionClaimType ? [Destinations.AccessToken] : [Destinations.AccessToken, Destinations.IdentityToken]);
+        return new ClaimsPrincipal(identity);
+    }
+
+    /// <summary>The audiences of the access token: the resources of the API scopes from the configuration and of the stored scopes.</summary>
+    internal static async Task<IEnumerable<string>> ResourcesAsync(IServiceProvider services, ImmutableArray<string> scopes, AuthServerOptions options)
+    {
         var stored = await services.GetRequiredService<IOpenIddictScopeManager>()
             .ListResourcesAsync([.. scopes.Where(s => !options.ApiScopes.ContainsKey(s))]).ToListAsync();
-        identity.SetResources(scopes.Where(options.ApiScopes.ContainsKey).Select(s => options.ApiScopes[s]).Concat(stored).Distinct(StringComparer.Ordinal));
-        identity.SetDestinations(claim => claim.Type == SessionStamp.ClaimType ? [Destinations.AccessToken] : [Destinations.AccessToken, Destinations.IdentityToken]);
-        return new ClaimsPrincipal(identity);
+        return scopes.Where(options.ApiScopes.ContainsKey).Select(s => options.ApiScopes[s]).Concat(stored).Distinct(StringComparer.Ordinal);
     }
 
     private static AuthenticationProperties Error(string error, string description) => new(new Dictionary<string, string?>

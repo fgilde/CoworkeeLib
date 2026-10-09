@@ -36,18 +36,13 @@ public sealed class ChangePasswordModel(UserManager<User> users, SignInManager<U
             return Page();
         }
 
-        var result = await users.ChangePasswordAsync(user, Input.CurrentPassword, Input.NewPassword);
+        var result = await OwnPassword.ChangeAsync(HttpContext, users, signIn, db, user, Input.CurrentPassword, Input.NewPassword);
         if (!result.Succeeded)
         {
-            Errors = result.Errors.Select(e => e.Code == "PasswordMismatch" ? AuthTexts.T("The current password is not correct.") : e.Description).ToList();
+            Errors = result.Errors.Select(e => e.Code == "PasswordMismatch" ? AuthTexts.T("The current password is not correct.") : AuthTexts.T(e.Description)).ToList();
             return Page();
         }
 
-        // the store leaves saving to the unit of work
-        await db.SaveChangesAsync();
-
-        // the security stamp changed: keep this session, other sessions fall out at their next check
-        await signIn.RefreshSignInAsync(user);
         Done = true;
         return Page();
     }

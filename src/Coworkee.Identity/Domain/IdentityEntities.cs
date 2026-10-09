@@ -53,6 +53,9 @@ public sealed class User : IdentityUser<Guid>, IAuditable
     /// <summary>Hashes of earlier passwords, newest first, one per line; the password history setting refuses them.</summary>
     public string? PasswordHistory { get; set; }
 
+    /// <summary>The session that changed its own password keeps its tokens until their next refresh (<see cref="Users.SessionStamp.Keep"/>).</summary>
+    public string? KeptSession { get; set; }
+
     /// <summary>Profile picture as data URL.</summary>
     public string? AvatarUrl { get; set; }
 

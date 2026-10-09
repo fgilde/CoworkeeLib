@@ -105,6 +105,27 @@ public sealed class NotificationTests(NotificationApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_digest_shows_localized_notifications_in_each_readers_language()
+    {
+        (await Bob.PutAsJsonAsync("/api/v1/settings/user", new SetSettingsRequest(new Dictionary<string, string?> { [Contracts.Localization.LocalizationSettings.Culture] = "de" }), Ct))
+            .EnsureSuccessStatusCode();
+        using (Core.Security.CurrentUserScope.Begin(new Core.Security.ImpersonatedUser(_setup.AdminUserId, _setup.TenantId)))
+        {
+            await using var scope = app.App.Services.CreateAsyncScope();
+            await scope.ServiceProvider.GetRequiredService<INotifier>().NotifyLocalizedAsync([_bob.Id, _setup.AdminUserId], "test", "New registration", "{0} ({1}) waits for activation.",
+                ["Nia New", "nia@acme.test"], "/admin/users/1", Ct);
+            await scope.ServiceProvider.GetRequiredService<NotificationTestDbContext>().SaveChangesAsync(Ct);
+        }
+
+        await RunDigestAsync();
+
+        var german = (await MailsToAsync("bob@acme.test")).Single();
+        german.HtmlBody.ShouldContain("Neue Registrierung");
+        german.HtmlBody.ShouldContain("Nia New (nia@acme.test) wartet auf Freischaltung.");
+        (await MailsToAsync("admin@acme.test")).Single().HtmlBody.ShouldContain("Nia New (nia@acme.test) waits for activation.");
+    }
+
+    [Fact]
     public async Task Push_reaches_the_user_when_the_sender_has_no_tenant()
     {
         var (connection, events) = await app.ConnectAsync(_bob.Id, _setup.TenantId);

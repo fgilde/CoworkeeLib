@@ -106,6 +106,11 @@ public sealed class AuthApp : PostgresFixture
         App.UseCoworkee();
         App.MapGet("/test/api", (System.Security.Claims.ClaimsPrincipal user) => user.FindFirst("sub")?.Value)
             .RequireAuthorization(new Microsoft.AspNetCore.Authorization.AuthorizeAttribute { AuthenticationSchemes = "Bearer" });
+        App.MapGet("/test/me", (ICurrentUser user) => new { user.UserId, user.ClientId, user.TenantId })
+            .RequireAuthorization(new Microsoft.AspNetCore.Authorization.AuthorizeAttribute { AuthenticationSchemes = "Bearer" });
+        App.MapGet("/test/clients", (Coworkee.Application.Messaging.IDispatcher dispatcher, CancellationToken ct) =>
+                Coworkee.AspNetCore.Http.ResultHttpExtensions.ToHttpResult(dispatcher.SendAsync(new Clients.GetClients(), ct)))
+            .RequireAuthorization(new Microsoft.AspNetCore.Authorization.AuthorizeAttribute { AuthenticationSchemes = "Bearer" });
 
         // stands in for the provider's callback: signs the browser into the external cookie like the OIDC handler does
         App.MapGet("/test/external", (HttpContext context, string sub, string email, string? given) => context.SignInAsync(IdentityConstants.ExternalScheme,

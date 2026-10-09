@@ -36,6 +36,9 @@ internal sealed class ClientRequestValidator : AbstractValidator<ClientRequest>
         RuleFor(c => c.ConsentType).Must(t => t is ConsentTypes.Implicit or ConsentTypes.Explicit).WithMessage("Choose implicit or explicit.");
         RuleFor(c => c.GrantTypes).NotEmpty().Must(g => g.All(ClientGrantTypes.All.Contains)).WithMessage("Unknown grant type.");
         RuleFor(c => c.RedirectUris).NotEmpty().When(c => c.GrantTypes.Contains(ClientGrantTypes.AuthorizationCode));
+        RuleFor(c => c.ClientType).Equal(ClientTypes.Confidential).When(c => c.GrantTypes.Contains(ClientGrantTypes.ClientCredentials))
+            .WithMessage("Service clients have to be confidential.");
+        RuleForEach(c => c.Permissions).NotEmpty();
         RuleForEach(c => c.RedirectUris).Must(BeAbsolute).WithMessage("'{PropertyValue}' is not an absolute address.");
         RuleForEach(c => c.PostLogoutRedirectUris).Must(BeAbsolute).WithMessage("'{PropertyValue}' is not an absolute address.");
         RuleForEach(c => c.Scopes).NotEmpty().Matches("^[A-Za-z0-9._:-]+$");
@@ -54,7 +57,7 @@ internal sealed class UpdateClientValidator : AbstractValidator<UpdateClient>
     public UpdateClientValidator() => RuleFor(c => c.Client).SetValidator(new ClientRequestValidator());
 }
 
-internal sealed class ClientHandlers(IOpenIddictApplicationManager applications, HostAccess host)
+internal sealed class ClientHandlers(IOpenIddictApplicationManager applications, HostAccess host, ServiceClientRights rights)
     : IHandler<GetClients, Result<IReadOnlyList<ClientDto>>>,
       IHandler<CreateClient, Result<ClientSecretDto>>,
       IHandler<UpdateClient, Result<ClientSecretDto>>,
@@ -95,6 +98,11 @@ internal sealed class ClientHandlers(IOpenIddictApplicationManager applications,
             return Duplicate;
         }
 
+        if (await rights.CheckAsync(command.Client, cancellationToken) is { } refused)
+        {
+            return refused;
+        }
+
         var descriptor = new OpenIddictApplicationDescriptor();
         var secret = Apply(descriptor, command.Client);
         var application = await applications.CreateAsync(descriptor, cancellationToken);
@@ -113,6 +121,11 @@ internal sealed class ClientHandlers(IOpenIddictApplicationManager applications,
             && await applications.GetIdAsync(other, cancellationToken) != command.Id.ToString())
         {
             return Duplicate;
+        }
+
+        if (await rights.CheckAsync(command.Client, cancellationToken) is { } refused)
+        {
+            return refused;
         }
 
         var descriptor = new OpenIddictApplicationDescriptor();
@@ -191,11 +204,18 @@ internal sealed class ClientHandlers(IOpenIddictApplicationManager applications,
         descriptor.PostLogoutRedirectUris.Clear();
         descriptor.PostLogoutRedirectUris.UnionWith(request.PostLogoutRedirectUris.Select(u => new Uri(u)));
         descriptor.Permissions.Clear();
-        descriptor.Permissions.UnionWith([Permissions.Endpoints.Authorization, Permissions.Endpoints.Token, Permissions.Endpoints.EndSession, Permissions.ResponseTypes.Code]);
+        descriptor.Permissions.Add(Permissions.Endpoints.Token);
         descriptor.Permissions.UnionWith(request.GrantTypes.Select(g => Permissions.Prefixes.GrantType + g));
         descriptor.Permissions.UnionWith(request.Scopes.Where(s => s != Scopes.OpenId).Select(s => Permissions.Prefixes.Scope + s));
         descriptor.Requirements.Clear();
-        descriptor.Requirements.Add(Requirements.Features.ProofKeyForCodeExchange);
+        if (request.GrantTypes.Contains(ClientGrantTypes.AuthorizationCode))
+        {
+            descriptor.Permissions.UnionWith([Permissions.Endpoints.Authorization, Permissions.Endpoints.EndSession, Permissions.ResponseTypes.Code]);
+            descriptor.Requirements.Add(Requirements.Features.ProofKeyForCodeExchange);
+        }
+
+        var service = request.GrantTypes.Contains(ClientGrantTypes.ClientCredentials);
+        ServiceClient.Write(descriptor, service ? request.Roles ?? [] : [], service ? request.Permissions ?? [] : []);
         return secret;
     }
 
@@ -204,6 +224,7 @@ internal sealed class ClientHandlers(IOpenIddictApplicationManager applications,
     private async Task<ClientDto> ToDtoAsync(object application, CancellationToken cancellationToken)
     {
         var permissions = await applications.GetPermissionsAsync(application, cancellationToken);
+        var properties = await applications.GetPropertiesAsync(application, cancellationToken);
         return new ClientDto(
             Guid.Parse((await applications.GetIdAsync(application, cancellationToken))!),
             (await applications.GetClientIdAsync(application, cancellationToken))!,
@@ -214,7 +235,9 @@ internal sealed class ClientHandlers(IOpenIddictApplicationManager applications,
             [.. await applications.GetPostLogoutRedirectUrisAsync(application, cancellationToken)],
             [.. Unprefixed(permissions, Permissions.Prefixes.GrantType)],
             [.. Unprefixed(permissions, Permissions.Prefixes.Scope)],
-            (await applications.GetPropertiesAsync(application, cancellationToken)).ContainsKey(AuthClientSeeder.ManagedProperty));
+            properties.ContainsKey(AuthClientSeeder.ManagedProperty),
+            ServiceClient.Roles(properties),
+            ServiceClient.Permissions(properties));
     }
 
     private static IEnumerable<string> Unprefixed(IEnumerable<string> permissions, string prefix) =>

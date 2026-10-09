@@ -8,11 +8,14 @@ var builder = DistributedApplication.CreateBuilder(args);
 builder.AddCoworkeeApp("myapp", options =>
 {
     options.DisplayName = "MyApp";
+    options.LogoUrl = "/coworkee-icon.svg";
     options.UseKeycloak(keycloak => keycloak.Users.Add(new KeycloakUser("info@coworkee.de", "Administrator", "MyApp")));
 }).AddProjects();
 
 builder.Build().Run();
 ```
+
+`LogoUrl` ist das Logo der Anmeldeseiten, solange das Theme keines hat: Ein Pfad wird auf der Web-App genommen (`{web}/coworkee-icon.svg`), eine absolute Adresse so, wie sie ist.
 
 Sharemee ergänzt danach einen Worker, dessen Name keiner Konvention folgt:
 
@@ -64,7 +67,7 @@ Bevor Coworkee einen Dienst verdrahtet, liest es dessen `obj/project.assets.json
 | Paket im Dienst | Er bekommt |
 |---|---|
 | `Coworkee.Infrastructure` | Connection-String der App-Datenbank, wartet, bis die Migrationen fertig sind |
-| `Coworkee.Realtime` | Redis für die SignalR-Backplane |
+| `Coworkee.Realtime` | Redis für die SignalR-Backplane, die Sitzungsänderungen zwischen Instanzen und den gemeinsamen Cache der Sitzungs-Stamps |
 | `Coworkee.Mailing` | Mailpit als Standard-SMTP-Server |
 | `Coworkee.Storage` | den gemeinsamen Blob-Ordner `.data/blobs` (nur lokal; veröffentlichte Container behalten ihren Standard) |
 | `Coworkee.Search.Elasticsearch` | Elasticsearch |

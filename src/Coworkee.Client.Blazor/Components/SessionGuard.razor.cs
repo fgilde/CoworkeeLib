@@ -53,8 +53,13 @@ public partial class SessionGuard : IAsyncDisposable
         {
         }
 
-        var locked = envelope.Payload.Deserialize<SessionRevokedPayload>(JsonSerializerOptions.Web)?.Reason == "locked";
-        await Dialogs.ShowMessageBoxAsync(L["Signed out"], locked ? L["An administrator locked your account."] : L["An administrator ended your session."]);
+        var message = envelope.Payload.Deserialize<SessionRevokedPayload>(JsonSerializerOptions.Web)?.Reason switch
+        {
+            "locked" => L["An administrator locked your account."],
+            "password-changed" => L["The password of your account was changed. Please sign in again."],
+            _ => L["An administrator ended your session."],
+        };
+        await Dialogs.ShowMessageBoxAsync(L["Signed out"], message);
         Nav.NavigateTo(redirect, forceLoad: true);
     }
 

@@ -60,6 +60,8 @@ internal sealed class MyAppNavigation : INavigationContributor
 
 Das Menü ist ein `MudExTreeView`: Gruppen sind Knoten, das Filterfeld hebt Treffer hervor und öffnet ihre Gruppen, und die Ansicht wechselt zwischen Baum, Liste und flacher Liste. Angeheftet bleibt die Leiste als Symbolstreifen unter der App-Leiste, der Menüknopf verbreitert sie; nicht angeheftet öffnet sie sich als Überlagerung und verschwindet wieder. Ob eine oder mehrere Gruppen offen bleiben, ist ein zweiter Schalter. Beides speichert der Browser.
 
+Einträge mit `HostOnly: true` dienen der ganzen Installation und erscheinen nur Benutzern der Systemorganisation; die Bibliothek markiert so Mandanten, Editionen, Anwendungen, Scopes, Konfiguration und Sicherungen, und die Einstellungsseite blendet anderswo ihren Reiter System aus. Die Organisation kennt der Client aus `/bff/user` (`SystemTenant`, aus dem Claim `system_tenant` des Auth-Servers); Anmeldungen von vor diesem Claim zeigen alles wie bisher.
+
 ![Eingeklappte Navigation](../assets/screenshots/mini-drawer.png){ .shot }
 
 ## App-Leiste

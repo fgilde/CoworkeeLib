@@ -138,6 +138,37 @@ public sealed class FileTests(FilesApp app) : IAsyncLifetime
         (await ContentAsync(ivy, mine.Id)).Files.Count.ShouldBe(2);
     }
 
+    [Fact]
+    public async Task Plain_file_viewers_see_their_own_registration_folder_and_no_other()
+    {
+        var nia = await PostAsync<UserDto>("/api/v1/identity/users", new CreateUserRequest("nia@acme.test", "Passw0rd!x", null, null));
+        var tom = await PostAsync<UserDto>("/api/v1/identity/users", new CreateUserRequest("tom@acme.test", "Passw0rd!x", null, null));
+        await SaveRegistrationAsync(nia);
+        await SaveRegistrationAsync(tom);
+        var role = await PostAsync<Guid>("/api/v1/identity/roles", new RoleRequest("File viewer", null));
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{role}", new NameListRequest([FilePermissions.View]), Ct)).EnsureSuccessStatusCode();
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/users/{nia.Id}/roles", new IdListRequest([role]), Ct)).EnsureSuccessStatusCode();
+        var client = app.As(nia.Id, _setup.TenantId);
+
+        var registrations = (await ContentAsync(client, null)).Folders.ShouldHaveSingleItem();
+        registrations.Name.ShouldBe("Registrations");
+        var mine = (await ContentAsync(client, registrations.Id)).Folders.ShouldHaveSingleItem();
+        mine.Name.ShouldBe("nia@acme.test");
+        (await ContentAsync(client, mine.Id)).Files.ShouldHaveSingleItem().Name.ShouldBe("Passport - scan.png");
+        var toms = (await ContentAsync(Admin, registrations.Id)).Folders.Single(f => f.Name == "tom@acme.test");
+        (await client.GetAsync($"/api/v1/files/folders/content?folderId={toms.Id}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    private async Task SaveRegistrationAsync(UserDto user)
+    {
+        using var actor = Core.Security.CurrentUserScope.Begin(new Core.Security.ImpersonatedUser(user.Id, _setup.TenantId));
+        await using var scope = app.App.Services.CreateAsyncScope();
+        var slot = new Contracts.Configuration.RegistrationDocumentSlot { Name = "Passport" };
+        await scope.ServiceProvider.GetRequiredService<Application.Registration.IRegistrationDocumentStore>()
+            .SaveAsync(new Application.Registration.RegistrationDocument(user.Id, user.Email, slot, "scan.png", "image/png", 3, new MemoryStream([1, 2, 3])), Ct);
+        await scope.ServiceProvider.GetRequiredService<FilesTestDbContext>().SaveChangesAsync(Ct);
+    }
+
     private async Task<FolderDto> CreateFolderAsync(Guid? parentId, string name) => await PostAsync<FolderDto>("/api/v1/files/folders", new CreateFolderRequest(parentId, name));
 
     private static async Task<FolderContentDto> ContentAsync(HttpClient client, Guid? folderId) =>

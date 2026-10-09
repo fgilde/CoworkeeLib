@@ -38,6 +38,7 @@ public sealed class TokenRefreshTests : IAsyncDisposable
         var user = await browser.GetFromJsonAsync<BffUserDto>("/bff/user", TestContext.Current.CancellationToken);
 
         user!.IsAuthenticated.ShouldBeTrue();
+        user.SystemTenant.ShouldBe(false);
         endpoint.Calls.ShouldBe(1);
         (await browser.GetStringAsync("/test/token", TestContext.Current.CancellationToken)).ShouldBe("t:new-access");
     }
@@ -117,7 +118,7 @@ public sealed class TokenRefreshTests : IAsyncDisposable
                 new AuthenticationToken { Name = "expires_at", Value = DateTimeOffset.UtcNow.AddMinutes(-1).ToString("o", CultureInfo.InvariantCulture) },
             ]);
             await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(new ClaimsIdentity([new Claim("sub", Guid.CreateVersion7().ToString()), new Claim("name", "Ada")], "test", "name", "role")), properties);
+                new ClaimsPrincipal(new ClaimsIdentity([new Claim("sub", Guid.CreateVersion7().ToString()), new Claim("name", "Ada"), new Claim("system_tenant", "false")], "test", "name", "role")), properties);
         });
         _app.MapGet("/test/token", async (HttpContext context) => "t:" + await context.GetTokenAsync("access_token"));
         await _app.StartAsync();

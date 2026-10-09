@@ -40,6 +40,7 @@ internal sealed class IdentityModelContributor : IModelContributor
             user.Property(u => u.PasswordHash).IsSensitive();
             user.Property(u => u.PasswordHistory).IsSensitive();
             user.Property(u => u.SecurityStamp).IsNotAudited();
+            user.Property(u => u.KeptSession).HasMaxLength(100).IsNotAudited();
             user.Property(u => u.ConcurrencyStamp).IsConcurrencyToken().IsNotAudited();
             user.HasOne<Tenant>().WithMany().HasForeignKey(u => u.TenantId);
             user.HasMany<IdentityUserClaim<Guid>>().WithOne().HasForeignKey(c => c.UserId).IsRequired();

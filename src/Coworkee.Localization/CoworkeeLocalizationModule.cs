@@ -30,6 +30,7 @@ public sealed class CoworkeeLocalizationModule : CoworkeeModule, IWebModule
         services.AddSingleton<ISettingDefinitionContributor, LocalizationSettingDefinitions>();
         services.AddSingleton<ILocalizationResourceContributor, CoworkeeTexts>();
         services.AddSingleton<LocalizationResources>();
+        services.AddSingleton<Application.Localization.ITextTranslator, ResourceTextTranslator>();
         services.AddScoped<TextStore>();
         services.AddScoped<LocalizationChanges>();
         services.AddScoped<MachineTranslation.TextTranslator>();

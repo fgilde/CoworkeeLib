@@ -1,6 +1,9 @@
+using System.Globalization;
 using Coworkee.Application;
+using Coworkee.Application.Localization;
 using Coworkee.BackgroundJobs;
 using Coworkee.Contracts.Configuration;
+using Coworkee.Contracts.Localization;
 using Coworkee.Contracts.Settings;
 using Coworkee.Core.Security;
 using Coworkee.Domain;
@@ -31,7 +34,8 @@ internal sealed class NotificationSettingDefinitions : ISettingDefinitionContrib
 
 /// <summary>Once a day every user with unread notifications since the last digest (at most a day back) gets one mail listing them, unless they switched it off.</summary>
 public sealed class NotificationDigestJob(
-    CoworkeeDbContext db, IMailSender mails, IUserDirectory users, IDistributedLock locks, IOptions<NotificationOptions> options, TimeProvider clock, ILogger<NotificationDigestJob> logger) : IRecurringJob
+    CoworkeeDbContext db, IMailSender mails, IUserDirectory users, IDistributedLock locks, IOptions<NotificationOptions> options, TimeProvider clock,
+    IEnumerable<ITextTranslator> translators, ILogger<NotificationDigestJob> logger) : IRecurringJob
 {
     public const string Id = "coworkee-notification-digest";
     public const string Setting = "Notifications.Digest";
@@ -76,6 +80,7 @@ public sealed class NotificationDigestJob(
         var emails = await users.GetActiveEmailsAsync(userIds, cancellationToken);
         var names = await users.GetDisplayNamesAsync(userIds, cancellationToken);
         var pending = (await unread.Where(n => userIds.Contains(n.UserId)).OrderByDescending(n => n.CreatedAt).ToListAsync(cancellationToken)).ToLookup(n => n.UserId);
+        var cultures = await CulturesAsync(userIds, pending, cancellationToken);
         foreach (var userId in userIds)
         {
             var last = states.TryGetValue(userId, out var state) && state.LastSentAt > since ? state.LastSentAt : since;
@@ -87,12 +92,13 @@ public sealed class NotificationDigestJob(
 
             try
             {
-                // ponytail: one mail per user through the global mail settings and the default language; tenant mail settings and user languages would need both on the queued mail
+                // ponytail: one mail per user through the global mail settings; tenant mail settings would need the tenant on the queued mail
+                var culture = cultures.GetValueOrDefault(userId);
                 await mails.QueueAsync(email, Template, new
                 {
                     user = new { first_name = names.GetValueOrDefault(userId) ?? email, email },
-                    notifications = items.Select(n => new { title = Notification.Format(n.Title, n.Arguments), body = Notification.Format(n.Body, n.Arguments), link = Absolute(n.Link) }).ToList(),
-                }, null, cancellationToken);
+                    notifications = items.Select(n => new { title = Text(n.Title, n.Arguments, culture), body = Text(n.Body, n.Arguments, culture), link = Absolute(n.Link) }).ToList(),
+                }, culture?.Name, cancellationToken);
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {
@@ -118,6 +124,37 @@ public sealed class NotificationDigestJob(
 
         await db.SaveChangesAsync(cancellationToken);
     }
+
+    /// <summary>Each reader's language: his own setting, else the one of his organisation, else the system's; none leaves the default.</summary>
+    private async Task<Dictionary<Guid, CultureInfo?>> CulturesAsync(List<Guid> userIds, ILookup<Guid, Notification> pending, CancellationToken cancellationToken)
+    {
+        var tenantIds = pending.SelectMany(g => g).Select(n => n.TenantId).OfType<Guid>().Distinct().ToList();
+        var values = await db.Set<SettingValue>().AsNoTracking()
+            .Where(v => v.Name == LocalizationSettings.Culture && v.Value != null && v.Value != string.Empty)
+            .Where(v => v.Scope == SettingScope.Global
+                        || (v.Scope == SettingScope.Tenant && tenantIds.Contains(v.ScopeKey!.Value))
+                        || (v.Scope == SettingScope.User && userIds.Contains(v.ScopeKey!.Value)))
+            .ToListAsync(cancellationToken);
+        string? Of(SettingScope scope, Guid? key) => values.FirstOrDefault(v => v.Scope == scope && v.ScopeKey == key)?.Value;
+        return userIds.ToDictionary(id => id, id => Culture(
+            Of(SettingScope.User, id) ?? Of(SettingScope.Tenant, pending[id].FirstOrDefault()?.TenantId) ?? Of(SettingScope.Global, null)));
+    }
+
+    private static CultureInfo? Culture(string? name)
+    {
+        try
+        {
+            return name is null ? null : CultureInfo.GetCultureInfo(name);
+        }
+        catch (CultureNotFoundException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Localizable notifications (with arguments) in the reader's language, the others as written.</summary>
+    private string? Text(string? text, IReadOnlyList<string>? arguments, CultureInfo? culture) =>
+        text is null || arguments is null || culture is null ? Notification.Format(text, arguments) : Notification.Format(translators.Translate(text, culture), arguments);
 
     /// <summary>Server-made links are relative paths; they are made absolute, anything that is not a path or http(s) is dropped.</summary>
     private string? Absolute(string? link) => link switch

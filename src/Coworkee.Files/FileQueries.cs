@@ -28,14 +28,19 @@ internal sealed class FileQueryHandlers(CoworkeeDbContext db, FolderAccess acces
             return FileErrors.FolderNotFound;
         }
 
+        if (query.FolderId is { } folderId && await db.Set<FileFolder>().AnyAsync(f => f.Id == folderId && f.ParentId == null && f.Name == FileRegistrationDocuments.RootFolder, cancellationToken)
+            && !await registrations.CanViewAllAsync(cancellationToken))
+        {
+            return await OwnRegistrationsAsync(cancellationToken);
+        }
+
         var canUpload = await access.CanAsync(FilePermissions.Upload, query.FolderId, cancellationToken);
         var canManage = await access.CanAsync(FilePermissions.Manage, query.FolderId, cancellationToken);
         if (await access.CanAsync(FilePermissions.View, query.FolderId, cancellationToken))
         {
             var folders = await db.Set<FileFolder>().AsNoTracking().Where(f => f.ParentId == query.FolderId).OrderBy(f => f.Name).ToListAsync(cancellationToken);
-            if (query.FolderId is null && !await registrations.CanViewAllAsync(cancellationToken))
+            if (query.FolderId is null && !await registrations.CanViewAllAsync(cancellationToken) && (await registrations.OwnFoldersAsync(cancellationToken)).Count == 0)
             {
-                // ponytail: a global file grant hides Registrations, the user's own registration folder is then reached only by link
                 folders.RemoveAll(RegistrationFolders.IsRoot);
             }
 
@@ -52,6 +57,19 @@ internal sealed class FileQueryHandlers(CoworkeeDbContext db, FolderAccess acces
         var granted = await permissions.GetGrantedResourcesAsync(FilePermissions.View, FilePermissions.FolderResource, cancellationToken);
         var shared = await db.Set<FileFolder>().AsNoTracking().Where(f => granted.Contains(f.Id)).OrderBy(f => f.Name).ToListAsync(cancellationToken);
         return new FolderContentDto(shared.Select(FileMapping.ToDto).ToList(), [], false, false);
+    }
+
+    // without Files.Registrations.View the registration documents show only the user's own folder
+    private async Task<Result<FolderContentDto>> OwnRegistrationsAsync(CancellationToken cancellationToken)
+    {
+        var own = await registrations.OwnFoldersAsync(cancellationToken);
+        if (own.Count == 0)
+        {
+            return FileErrors.Forbidden;
+        }
+
+        var folders = await db.Set<FileFolder>().AsNoTracking().Where(f => own.Contains(f.Id)).OrderBy(f => f.Name).ToListAsync(cancellationToken);
+        return new FolderContentDto(folders.Select(FileMapping.ToDto).ToList(), [], false, false);
     }
 
     public async Task<Result<StoredFileDto>> HandleAsync(GetFile query, CancellationToken cancellationToken)

@@ -11,7 +11,7 @@ namespace Coworkee.AuthServer;
 
 /// <summary>
 /// Writes the clients and API scopes of the configuration to the OpenIddict stores at startup. They carry <see cref="ManagedProperty"/>:
-/// the admin pages show them read-only, the configuration stays their source.
+/// the admin pages show them read-only, the configuration stays their source, and those it no longer names are removed.
 /// </summary>
 public sealed partial class AuthClientSeeder(IServiceScopeFactory scopes, IOptions<AuthServerOptions> options, ILogger<AuthClientSeeder> logger) : IHostedService
 {
@@ -47,6 +47,34 @@ public sealed partial class AuthClientSeeder(IServiceScopeFactory scopes, IOptio
             {
                 await scopeManager.CreateAsync(descriptor, cancellationToken);
             }
+        }
+
+        await RemoveStaleAsync(options.Value.Clients.Select(c => c.ClientId), manager.ListAsync, manager.GetClientIdAsync, manager.GetPropertiesAsync, manager.DeleteAsync, cancellationToken);
+        await RemoveStaleAsync(options.Value.ApiScopes.Keys, scopeManager.ListAsync, scopeManager.GetNameAsync, scopeManager.GetPropertiesAsync, scopeManager.DeleteAsync, cancellationToken);
+    }
+
+    // only what the configuration wrote before: clients and scopes added in the admin pages stay
+    private static async Task RemoveStaleAsync(
+        IEnumerable<string> configured,
+        Func<int?, int?, CancellationToken, IAsyncEnumerable<object>> list,
+        Func<object, CancellationToken, ValueTask<string?>> name,
+        Func<object, CancellationToken, ValueTask<System.Collections.Immutable.ImmutableDictionary<string, JsonElement>>> properties,
+        Func<object, CancellationToken, ValueTask> delete,
+        CancellationToken cancellationToken)
+    {
+        var keep = configured.ToHashSet(StringComparer.Ordinal);
+        var stale = new List<object>();
+        await foreach (var item in list(null, null, cancellationToken))
+        {
+            if ((await properties(item, cancellationToken)).ContainsKey(ManagedProperty) && !keep.Contains(await name(item, cancellationToken) ?? string.Empty))
+            {
+                stale.Add(item);
+            }
+        }
+
+        foreach (var item in stale)
+        {
+            await delete(item, cancellationToken);
         }
     }
 

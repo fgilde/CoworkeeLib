@@ -19,7 +19,11 @@ public sealed class CoworkeeAppTests
     public async Task Services_get_the_infrastructure_of_their_modules_and_the_settings_that_connect_them()
     {
         var builder = DistributedApplication.CreateBuilder();
-        var app = builder.AddCoworkeeApp("demo", o => o.DisplayName = "Demo");
+        var app = builder.AddCoworkeeApp("demo", o =>
+        {
+            o.DisplayName = "Demo";
+            o.LogoUrl = "/coworkee-icon.svg";
+        });
 
         app.AddMigrations<FakeProjects.Migrations>();
         var auth = app.AddAuthServer<FakeProjects.Auth>();
@@ -35,6 +39,7 @@ public sealed class CoworkeeAppTests
         apiSettings.Keys.ShouldNotContain("ConnectionStrings__elasticsearch");
         (await Environment(auth.Resource))["Coworkee__Auth__Clients__0__ClientId"].ShouldBe("demo-web");
         (await Environment(auth.Resource))["Coworkee__Auth__ApiScopes__demo_api"].ShouldBe("demo_api");
+        (await Environment(auth.Resource))["Coworkee__Auth__LogoUrl"].ShouldEndWith("/coworkee-icon.svg");
         (await Environment(web.Resource))["Coworkee__Bff__ApiAddress"].ShouldBe("https+http://demo-api");
         api.Resource.Annotations.OfType<WaitAnnotation>().Select(w => w.Resource.Name).ShouldContain("demo-migrations");
     }

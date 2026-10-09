@@ -5,6 +5,7 @@ using Coworkee.Testing;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Realtime.Tests;
 
@@ -144,6 +145,39 @@ public sealed class RealtimeTests(RealtimeApp app) : IAsyncLifetime
         };
 
         await closed.Task.WaitAsync(TimeSpan.FromSeconds(20), Ct);
+    }
+
+    [Fact]
+    public async Task Ending_a_users_sessions_tells_and_closes_his_connections_only()
+    {
+        var bob = await app.AsActorAsync(null, null, async db =>
+        {
+            var user = new Coworkee.Identity.Domain.User { TenantId = _setup.TenantId, UserName = "bob@acme.test", NormalizedUserName = "BOB@ACME.TEST", Email = "bob@acme.test" };
+            db.Add(user);
+            await db.SaveChangesAsync();
+            return user.Id;
+        });
+        await using var bobs = await app.ConnectAsync(bob, _setup.TenantId);
+        await using var admins = await app.ConnectAsync(_setup.AdminUserId, _setup.TenantId);
+        var closed = new TaskCompletionSource();
+        bobs.Connection.Closed += _ =>
+        {
+            closed.TrySetResult();
+            return Task.CompletedTask;
+        };
+
+        using (Core.Security.CurrentUserScope.Begin(new Core.Security.ImpersonatedUser(_setup.AdminUserId, _setup.TenantId)))
+        {
+            await using var scope = app.App.Services.CreateAsyncScope();
+            (await scope.ServiceProvider.GetRequiredService<Application.Messaging.IDispatcher>().SendAsync(new Identity.Users.LockUser(bob, null), Ct)).IsSuccess.ShouldBeTrue();
+        }
+
+        var revoked = await bobs.NextAsync(e => e.Type == RealtimeEventTypes.SessionRevoked);
+        revoked.Topic.ShouldBe(RealtimeTopics.User(bob));
+        revoked.Payload.GetProperty("reason").GetString().ShouldBe("locked");
+        await closed.Task.WaitAsync(TimeSpan.FromSeconds(20), Ct);
+        admins.Connection.State.ShouldBe(Microsoft.AspNetCore.SignalR.Client.HubConnectionState.Connected);
+        admins.Events.ShouldNotContain(e => e.Type == RealtimeEventTypes.SessionRevoked);
     }
 
     [Fact]

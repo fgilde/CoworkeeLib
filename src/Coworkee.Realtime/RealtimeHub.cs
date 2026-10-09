@@ -11,10 +11,11 @@ using Microsoft.EntityFrameworkCore;
 namespace Coworkee.Realtime;
 
 [Authorize]
-public sealed class RealtimeHub(IEnumerable<IRealtimeTopicAuthorizer> authorizers) : Hub
+public sealed class RealtimeHub(IEnumerable<IRealtimeTopicAuthorizer> authorizers, RealtimeConnections connections) : Hub
 {
     public override Task OnConnectedAsync()
     {
+        connections.Add(Context);
         if (long.TryParse(Context.User?.FindFirstValue("exp"), out var expires))
         {
             var context = Context;
@@ -31,6 +32,12 @@ public sealed class RealtimeHub(IEnumerable<IRealtimeTopicAuthorizer> authorizer
         }
 
         return base.OnConnectedAsync();
+    }
+
+    public override Task OnDisconnectedAsync(Exception? exception)
+    {
+        connections.Remove(Context.ConnectionId);
+        return base.OnDisconnectedAsync(exception);
     }
 
     public async Task Subscribe(string topic)

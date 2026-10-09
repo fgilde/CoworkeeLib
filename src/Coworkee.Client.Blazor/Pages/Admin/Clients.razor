@@ -24,6 +24,29 @@
         <TemplateColumn T="ClientDto" Title="@L["Redirect addresses"]" Sortable="false">
             <CellTemplate>@string.Join(", ", context.Item.RedirectUris)</CellTemplate>
         </TemplateColumn>
+        <TemplateColumn T="ClientDto" Title="@L["Service client"]" Sortable="false">
+            <CellTemplate>
+                @if (IsService(context.Item))
+                {
+                    <MudSelect T="Guid" MultiSelection="true" Dense="true" Label="@L["Roles"]" SelectedValues="context.Item.Roles" ToStringFunc="RoleName"
+                               Disabled="@(_busy || context.Item.Managed)" SelectedValuesChanged="ids => SetRightsAsync(context.Item, [.. ids], context.Item.Permissions)"
+                               data-testid="@($"client-roles-{context.Item.ClientId}")">
+                        @foreach (var role in _roles.Where(r => !r.IsSystem))
+                        {
+                            <MudSelectItem T="Guid" Value="@role.Id">@role.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudSelect T="string" MultiSelection="true" Dense="true" Label="@L["Permissions"]" SelectedValues="context.Item.Permissions"
+                               Disabled="@(_busy || context.Item.Managed)" SelectedValuesChanged="names => SetRightsAsync(context.Item, context.Item.Roles, [.. names])"
+                               data-testid="@($"client-permissions-{context.Item.ClientId}")">
+                        @foreach (var permission in _permissions)
+                        {
+                            <MudSelectItem T="string" Value="@permission">@permission</MudSelectItem>
+                        }
+                    </MudSelect>
+                }
+            </CellTemplate>
+        </TemplateColumn>
         <TemplateColumn T="ClientDto" Sortable="false" CellStyle="text-align:right;white-space:nowrap">
             <CellTemplate>
                 @if (!context.Item.Managed)

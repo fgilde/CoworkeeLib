@@ -25,6 +25,18 @@ internal sealed class RegistrationFolders(CoworkeeDbContext db, ICurrentUser cur
 
     public static bool IsRoot(FileFolder folder) => folder.ParentId == null && folder.Name == FileRegistrationDocuments.RootFolder;
 
+    /// <summary>The user's own folders below the root, those granted to him.</summary>
+    public async Task<List<Guid>> OwnFoldersAsync(CancellationToken cancellationToken)
+    {
+        var userId = currentUser.UserId;
+        var folders = db.Set<FileFolder>();
+        var roots = folders.Where(f => f.ParentId == null && f.Name == FileRegistrationDocuments.RootFolder).Select(f => f.Id);
+        var children = folders.Where(f => f.ParentId != null && roots.Contains(f.ParentId.Value)).Select(f => f.Id);
+        return await db.Set<ResourcePermission>()
+            .Where(p => p.ResourceType == FilePermissions.FolderResource && p.PrincipalType == PrincipalType.User && p.PrincipalId == userId && children.Contains(p.ResourceId))
+            .Select(p => p.ResourceId).Distinct().ToListAsync(cancellationToken);
+    }
+
     public async Task<bool> IsRestrictedAsync(Guid resourceId, IReadOnlyCollection<Guid> roleIds, CancellationToken cancellationToken)
     {
         var chain = await FolderHierarchy.ChainAsync(db, resourceId, cancellationToken);

@@ -4,9 +4,12 @@
 <PageTitle>Settings</PageTitle>
 <MudText Typo="Typo.h4" Class="mb-4">Settings</MudText>
 <MudTabs Elevation="0" Outlined="true">
-    <MudTabPanel Text="System">
-        <div class="pa-4"><SettingsForm Scope="SettingScope.Global" /></div>
-    </MudTabPanel>
+    @if (_system)
+    {
+        <MudTabPanel Text="System">
+            <div class="pa-4"><SettingsForm Scope="SettingScope.Global" /></div>
+        </MudTabPanel>
+    }
     <MudTabPanel Text="Organisation">
         <div class="pa-4"><SettingsForm Scope="SettingScope.Tenant" /></div>
     </MudTabPanel>

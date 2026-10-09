@@ -143,7 +143,8 @@ public static class BffExtensions
                 Guid.TryParse(user.FindFirstValue("sub"), out var id) ? id : null,
                 Guid.TryParse(user.FindFirstValue("tenant"), out var tenant) ? tenant : null,
                 user.FindAll("role").Select(c => c.Value).ToArray(),
-                options.Authority.TrimEnd('/') + "/Account/Manage")
+                options.Authority.TrimEnd('/') + "/Account/Manage",
+                user.FindFirstValue("system_tenant") is { } system ? system == "true" : null)
             : BffUserDto.Anonymous);
 
         // the assistant may think and call tools for minutes before the first byte of its answer
