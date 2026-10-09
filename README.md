@@ -8,7 +8,12 @@
 
 ---
 
-**Documentation:** [fgilde.github.io/CoworkeeLib](https://fgilde.github.io/CoworkeeLib/) (English, [Deutsch](https://fgilde.github.io/CoworkeeLib/de/))
+**Documentation:** [fgilde.github.io/CoworkeeLib](https://fgilde.github.io/CoworkeeLib/) (English, [Deutsch](https://fgilde.github.io/CoworkeeLib/de/)) · **Demo app:** [fgilde/Coworkee](https://github.com/fgilde/Coworkee/tree/master), a complete application on the packages
+
+```bash
+dotnet tool install -g Coworkee.Cli
+coworkee new MyApp
+```
 
 ## Packages
 
@@ -85,16 +90,19 @@ Apps that build against unreleased sources point a `nuget.config` source at `art
 
 Publishing a GitHub release (or pushing a tag `v1.2.3`) builds, tests and publishes all packages, the templates and the CLI with that version to nuget.org. The workflow `release.yml` signs in with nuget.org trusted publishing, so there is no API key secret; the repository variable `NUGET_USER` overrides the nuget.org account name (default `fgilde`).
 
-## Start an app
-
-```bash
-dotnet tool install -g Coworkee.Cli
-coworkee new MyApp
-```
-
 ## Used by
 
-[Sharemee](https://github.com/fgilde/sharemee): assets, documents, knowledge base and intranet.
+- [Coworkee demo app](https://github.com/fgilde/Coworkee/tree/master): catalog, documents, dashboard and administration, the former standalone template ([original](https://github.com/fgilde/Coworkee/tree/release/last-standalone)) rebuilt on the packages
+- [Sharemee](https://github.com/fgilde/sharemee): assets, documents, knowledge base and intranet
+
+## Built with
+
+<a href="https://www.mudex.org"><img src="https://raw.githubusercontent.com/fgilde/MudBlazor.Extensions/main/MudExtension.png" height="48" alt="MudBlazor.Extensions" /></a>
+
+- [MudBlazor.Extensions](https://www.mudex.org): object edit, file display and file manager, tree view, dialogs, theme editor
+- [MudBlazor](https://mudblazor.com): the component library underneath
+- [Nextended](https://github.com/fgilde/Nextended): facets, response filters and code generation
+- [.NET Aspire](https://aspire.dev), [OpenIddict](https://openiddict.com), [Hangfire](https://www.hangfire.io)
 
 ## License
 
