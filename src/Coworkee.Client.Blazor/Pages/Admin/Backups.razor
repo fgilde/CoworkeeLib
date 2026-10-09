@@ -7,7 +7,7 @@
     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Backup" Size="Size.Small" Disabled="_busy"
                OnClick="CreateAsync" data-testid="create-backup">@L["Create backup"]</MudButton>
 </MudStack>
-<MudDataGrid T="BackupDto" Items="_backups" Loading="_busy" Dense="true" Hover="true" Striped="true" Elevation="0" Outlined="true" data-testid="backups">
+<MudDataGrid T="BackupDto" Items="_backups" Loading="_busy" Dense="Density.Dense" Hover="true" Striped="true" Elevation="0" Outlined="true" data-testid="backups">
     <Columns>
         <PropertyColumn Property="b => b.Name" Title="@L["Name"]" />
         <PropertyColumn Property="b => b.CreatedAt" Title="@L["Created"]" Format="g" />

@@ -10,7 +10,7 @@
         <PropertyColumn Property="g => g.Name" Title="@L["Name"]" />
         <TemplateColumn T="GroupRow" Title="@L["Members"]" Sortable="false">
             <CellTemplate>
-                <MudSelect T="Guid" MultiSelection="true" Dense="true" SelectedValues="context.Item.Members.Select(m => m.UserId).ToArray()" ToStringFunc="UserName"
+                <MudSelect Margin="Density.Margin" T="Guid" MultiSelection="true" Dense="Density.Dense" SelectedValues="context.Item.Members.Select(m => m.UserId).ToArray()" ToStringFunc="UserName"
                            Disabled="!_canManage" SelectedValuesChanged="ids => SetMembersAsync(context.Item, ids)">
                     @foreach (var user in _users)
                     {
@@ -21,7 +21,7 @@
         </TemplateColumn>
         <TemplateColumn T="GroupRow" Title="@L["Roles"]" Sortable="false">
             <CellTemplate>
-                <MudSelect T="Guid" MultiSelection="true" Dense="true" SelectedValues="context.Item.Roles.Select(r => r.RoleId).ToArray()" ToStringFunc="RoleName"
+                <MudSelect Margin="Density.Margin" T="Guid" MultiSelection="true" Dense="Density.Dense" SelectedValues="context.Item.Roles.Select(r => r.RoleId).ToArray()" ToStringFunc="RoleName"
                            Disabled="!_canManage" SelectedValuesChanged="ids => SetRolesAsync(context.Item, ids)">
                     @foreach (var role in _roles.Where(r => !r.IsSystem))
                     {

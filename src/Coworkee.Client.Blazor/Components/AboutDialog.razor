@@ -7,7 +7,7 @@
         {
             <MudText Class="mb-4">@L[Options.AppDescription]</MudText>
         }
-        <MudSimpleTable Dense="true" Elevation="0">
+        <MudSimpleTable Dense="Density.Dense" Elevation="0">
             <tbody>
                 <tr><td>@Options.AppTitle</td><td data-testid="app-version">@AppVersion</td></tr>
                 <tr><td>Coworkee</td><td>@Version(typeof(CoworkeeClientOptions).Assembly)</td></tr>

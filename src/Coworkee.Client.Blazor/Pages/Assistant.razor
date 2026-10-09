@@ -35,6 +35,6 @@
     }
 </MudStack>
 <MudStack Row="true" AlignItems="AlignItems.End">
-    <MudTextField T="string" @bind-Value="_input" Label="@L["Message"]" Lines="3" Variant="Variant.Outlined" MaxLength="20000" Disabled="_busy" Class="flex-grow-1" data-testid="message" />
+    <MudTextField Margin="Density.Margin" T="string" @bind-Value="_input" Label="@L["Message"]" Lines="3" Variant="Variant.Outlined" MaxLength="20000" Disabled="_busy" Class="flex-grow-1" data-testid="message" />
     <MudButton Variant="Variant.Filled" Color="Color.Primary" EndIcon="@Icons.Material.Outlined.Send" OnClick="SendAsync" Disabled="@(_busy || string.IsNullOrWhiteSpace(_input))" data-testid="send">@L["Send"]</MudButton>
 </MudStack>

@@ -31,7 +31,7 @@ else
         </MudItem>
         <MudItem xs="12" sm="7" md="8" lg="9">
             <MudPaper Outlined="true" Class="pa-4">
-                <MudExObjectEditForm T="ProfileForm" Value="_form" MetaInformation="_meta" OnValidSubmit="SaveAsync" GroupingStyle="GroupingStyle.Flat"
+                <MudExObjectEditForm T="ProfileForm" Value="_form" MetaInformation="_meta" ConfigureMetaInformationAlways="true" OnValidSubmit="SaveAsync" GroupingStyle="GroupingStyle.Flat"
                                      GlobalResetSettings="@(new GlobalResetSettings { AllowReset = false })" data-testid="profile-form" />
             </MudPaper>
         </MudItem>

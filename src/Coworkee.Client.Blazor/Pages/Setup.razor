@@ -53,7 +53,7 @@
             @switch (_step)
             {
                 case 0:
-                    <MudTextField @bind-Value="_request.SetupToken" Label="Setup token" Variant="Variant.Outlined" data-testid="setup-token" Required="true" Immediate="true"
+                    <MudTextField Margin="Density.Margin" @bind-Value="_request.SetupToken" Label="Setup token" Variant="Variant.Outlined" data-testid="setup-token" Required="true" Immediate="true"
                                   HelperText="Printed in the API log on first start, or configured as Coworkee:SetupToken." />
                     break;
                 case 1:
@@ -65,14 +65,14 @@
                     {
                         @foreach (var check in _checks)
                         {
-                            <MudAlert Severity="@SeverityOf(check.Status)" Variant="Variant.Outlined" Dense="true" Class="mb-2" data-check="@check.Name">
+                            <MudAlert Severity="@SeverityOf(check.Status)" Variant="Variant.Outlined" Dense="Density.Dense" Class="mb-2" data-check="@check.Name">
                                 <b>@check.Name</b> @(check.Message ?? "OK")
                             </MudAlert>
                         }
                     }
                     break;
                 case 2:
-                    <MudTextField @bind-Value="_request.TenantName" Label="Organisation name" Variant="Variant.Outlined" data-testid="tenant-name" Required="true" Immediate="true" />
+                    <MudTextField Margin="Density.Margin" @bind-Value="_request.TenantName" Label="Organisation name" Variant="Variant.Outlined" data-testid="tenant-name" Required="true" Immediate="true" />
                     break;
                 case 3:
                     <ThemePicker Themes="_themes" SelectedId="SelectedThemeId" SelectedIdChanged="Choose" Mode="@ThemeService.Mode" ModeChanged="ThemeService.SetMode" />
@@ -83,38 +83,38 @@
                     break;
                 case 4:
                     <MudStack Spacing="3">
-                        <MudTextField @bind-Value="_request.AdminEmail" Label="Administrator email" Variant="Variant.Outlined" InputType="InputType.Email" data-testid="admin-email" Required="true" Immediate="true"
+                        <MudTextField Margin="Density.Margin" @bind-Value="_request.AdminEmail" Label="Administrator email" Variant="Variant.Outlined" InputType="InputType.Email" data-testid="admin-email" Required="true" Immediate="true"
                                       Error="@HasError("AdminEmail")" ErrorText="@ErrorFor("AdminEmail")" />
                         <MudStack Row="true" Spacing="3">
-                            <MudTextField @bind-Value="_request.AdminFirstName" Label="First name" Variant="Variant.Outlined" data-testid="admin-first" Immediate="true" />
-                            <MudTextField @bind-Value="_request.AdminLastName" Label="Last name" Variant="Variant.Outlined" data-testid="admin-last" Immediate="true" />
+                            <MudTextField Margin="Density.Margin" @bind-Value="_request.AdminFirstName" Label="First name" Variant="Variant.Outlined" data-testid="admin-first" Immediate="true" />
+                            <MudTextField Margin="Density.Margin" @bind-Value="_request.AdminLastName" Label="Last name" Variant="Variant.Outlined" data-testid="admin-last" Immediate="true" />
                         </MudStack>
-                        <MudTextField @bind-Value="_request.AdminPassword" Label="Password" Variant="Variant.Outlined" InputType="@PasswordInput" data-testid="admin-password" Required="true" Immediate="true"
+                        <MudTextField Margin="Density.Margin" @bind-Value="_request.AdminPassword" Label="Password" Variant="Variant.Outlined" InputType="@PasswordInput" data-testid="admin-password" Required="true" Immediate="true"
                                       Adornment="Adornment.End" AdornmentIcon="@(_showPassword ? Icons.Material.Outlined.VisibilityOff : Icons.Material.Outlined.Visibility)"
                                       OnAdornmentClick="() => _showPassword = !_showPassword" AdornmentAriaLabel="Show password"
                                       Error="@HasError("Password")" ErrorText="@ErrorFor("Password")" />
-                        <MudTextField @bind-Value="_confirmPassword" Label="Repeat password" Variant="Variant.Outlined" InputType="@PasswordInput" data-testid="admin-password-confirm" Required="true" Immediate="true" />
+                        <MudTextField Margin="Density.Margin" @bind-Value="_confirmPassword" Label="Repeat password" Variant="Variant.Outlined" InputType="@PasswordInput" data-testid="admin-password-confirm" Required="true" Immediate="true" />
                     </MudStack>
                     break;
                 default:
                     <MudStack Spacing="3">
                         <MudStack Row="true" Spacing="3">
-                            <MudTextField @bind-Value="_mail.Host" Label="SMTP host" Variant="Variant.Outlined" data-testid="mail-host" Immediate="true" />
-                            <MudTextField @bind-Value="_mail.Port" Label="SMTP port" Variant="Variant.Outlined" InputType="InputType.Number" Placeholder="25" data-testid="mail-port" Immediate="true" Style="max-width:140px" />
+                            <MudTextField Margin="Density.Margin" @bind-Value="_mail.Host" Label="SMTP host" Variant="Variant.Outlined" data-testid="mail-host" Immediate="true" />
+                            <MudTextField Margin="Density.Margin" @bind-Value="_mail.Port" Label="SMTP port" Variant="Variant.Outlined" InputType="InputType.Number" Placeholder="25" data-testid="mail-port" Immediate="true" Style="max-width:140px" />
                         </MudStack>
-                        <MudTextField @bind-Value="_mail.From" Label="Sender address" Variant="Variant.Outlined" InputType="InputType.Email" data-testid="mail-from" Immediate="true" />
+                        <MudTextField Margin="Density.Margin" @bind-Value="_mail.From" Label="Sender address" Variant="Variant.Outlined" InputType="InputType.Email" data-testid="mail-from" Immediate="true" />
                         <MudStack Row="true" Spacing="3">
-                            <MudTextField @bind-Value="_mail.UserName" Label="User name" Variant="Variant.Outlined" data-testid="mail-user" Immediate="true" />
-                            <MudTextField @bind-Value="_mail.Password" Label="Password" Variant="Variant.Outlined" InputType="InputType.Password" data-testid="mail-password" Immediate="true" />
+                            <MudTextField Margin="Density.Margin" @bind-Value="_mail.UserName" Label="User name" Variant="Variant.Outlined" data-testid="mail-user" Immediate="true" />
+                            <MudTextField Margin="Density.Margin" @bind-Value="_mail.Password" Label="Password" Variant="Variant.Outlined" InputType="InputType.Password" data-testid="mail-password" Immediate="true" />
                         </MudStack>
-                        <MudCheckBox @bind-Value="_mail.UseSsl" Label="Use SSL" Color="Color.Primary" />
+                        <MudCheckBox Dense="Density.Dense" @bind-Value="_mail.UseSsl" Label="Use SSL" Color="Color.Primary" />
                     </MudStack>
                     break;
             }
 
             @if (_error is not null)
             {
-                <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mt-6" data-testid="setup-error">@_error</MudAlert>
+                <MudAlert Dense="Density.Dense" Severity="Severity.Error" Variant="Variant.Filled" Class="mt-6" data-testid="setup-error">@_error</MudAlert>
             }
 
             <MudStack Row="true" Class="mt-8" AlignItems="AlignItems.Center">

@@ -93,7 +93,7 @@ internal static class ThemeSeeds
             dark: new() { ["Primary"] = "#f48fb1", ["PrimaryContrastText"] = "#2a0d18", ["Secondary"] = "#ffab91", ["SecondaryContrastText"] = "#2a120a", ["Background"] = "#1d1417", ["Surface"] = "#261a1e", ["AppbarBackground"] = "#1d1417", ["AppbarText"] = "#fbe9ee", ["DrawerBackground"] = "#21171a", ["TextPrimary"] = "#fbe9ee", ["TextSecondary"] = "#c9aab3", ["LinesDefault"] = "#3d2a31" },
             layout: Layout("20px", "300px", "72px"),
             typography: Fonts(Rounded, Rounded),
-            options: new() { ["ShowLogoInNav"] = true, ["NavSingleExpand"] = true, ["DenseTables"] = false }),
+            options: new() { ["ShowLogoInNav"] = true, ["NavSingleExpand"] = true, ["Dense"] = false }),
         Theme("Midnight", isDefault: false,
             light: new() { ["Primary"] = "#3949ab", ["PrimaryContrastText"] = "#ffffff", ["Secondary"] = "#8e24aa", ["SecondaryContrastText"] = "#ffffff", ["Background"] = "#f4f5fb", ["Surface"] = "#ffffff", ["AppbarBackground"] = "#283593", ["AppbarText"] = "#ffffff", ["DrawerBackground"] = "#eceef8" },
             dark: new() { ["Primary"] = "#9fa8da", ["PrimaryContrastText"] = "#0d0f1a", ["Secondary"] = "#ce93d8", ["SecondaryContrastText"] = "#1a0d1d", ["Background"] = "#0d0f1a", ["Surface"] = "#151829", ["AppbarBackground"] = "#0d0f1a", ["AppbarText"] = "#e8eaf6", ["DrawerBackground"] = "#111421", ["TextPrimary"] = "#e8eaf6", ["TextSecondary"] = "#a9aecb", ["LinesDefault"] = "#262a42" },
@@ -111,7 +111,7 @@ internal static class ThemeSeeds
             dark: new() { ["Primary"] = "#ffff00", ["PrimaryContrastText"] = "#000000", ["Secondary"] = "#00ffff", ["SecondaryContrastText"] = "#000000", ["Background"] = "#000000", ["Surface"] = "#000000", ["TextPrimary"] = "#ffffff", ["TextSecondary"] = "#ffffff", ["LinesDefault"] = "#ffffff", ["AppbarBackground"] = "#000000", ["AppbarText"] = "#ffff00" },
             layout: Layout("0px", "320px", "64px"),
             typography: Fonts(Plain, Plain),
-            options: new() { ["ShowLogoInNav"] = true, ["DenseTables"] = false },
+            options: new() { ["ShowLogoInNav"] = true, ["Dense"] = false },
             flat: true),
     ];
 

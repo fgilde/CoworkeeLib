@@ -6,6 +6,6 @@
 <MudPaper Outlined="true" Class="pa-4">
     <MudText Typo="Typo.h6" Class="mb-2">@L["Delete account"]</MudText>
     <MudText Class="mud-text-secondary mb-4">@L["Your profile, messages, notifications and settings are removed for good. The history of changes keeps what you did, without your name."]</MudText>
-    <MudTextField @bind-Value="_confirmation" Label="@L["Enter your e-mail address to confirm"]" Immediate="true" InputType="InputType.Email" Class="mb-4" data-testid="delete-confirmation" />
+    <MudTextField Margin="Density.Margin" @bind-Value="_confirmation" Label="@L["Enter your e-mail address to confirm"]" Immediate="true" InputType="InputType.Email" Class="mb-4" data-testid="delete-confirmation" />
     <MudButton Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Outlined.DeleteForever" OnClick="DeleteAsync" Disabled="@(_busy || !Confirmed)" data-testid="delete-account">@L["Delete account"]</MudButton>
 </MudPaper>

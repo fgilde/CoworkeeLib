@@ -7,7 +7,7 @@
     }
     else
     {
-        <MudSimpleTable Dense="true">
+        <MudSimpleTable Dense="Density.Dense">
             <thead><tr><th>Who</th><th>Role</th><th></th></tr></thead>
             <tbody>
                 @foreach (var entry in _entries)
@@ -25,7 +25,7 @@
         </MudSimpleTable>
 
         <MudStack Row="true" AlignItems="AlignItems.End" Class="mt-4">
-            <MudSelect T="string" Label="User or group" @bind-Value="_principal" Dense="true">
+            <MudSelect Margin="Density.Margin" T="string" Label="User or group" @bind-Value="_principal" Dense="Density.Dense">
                 @foreach (var user in _users)
                 {
                     <MudSelectItem Value="@($"User:{user.Key}")">@user.Value</MudSelectItem>
@@ -35,7 +35,7 @@
                     <MudSelectItem Value="@($"Group:{group.Key}")">@group.Value (group)</MudSelectItem>
                 }
             </MudSelect>
-            <MudSelect T="Guid" Label="Role" @bind-Value="_role" Dense="true">
+            <MudSelect Margin="Density.Margin" T="Guid" Label="Role" @bind-Value="_role" Dense="Density.Dense">
                 @foreach (var role in _roles)
                 {
                     <MudSelectItem Value="@role.Key">@role.Value</MudSelectItem>

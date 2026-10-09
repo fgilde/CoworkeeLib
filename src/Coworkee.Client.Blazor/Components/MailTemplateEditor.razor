@@ -14,13 +14,13 @@ else
         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" data-testid="save-template">Save</MudButton>
     </MudStack>
 
-    <MudTextField @bind-Value="_subject" Label="Subject" />
-    <MudTextField @bind-Value="_body" Label="Body (Scriban, HTML)" Lines="16" Class="mt-2" Style="font-family:monospace" />
+    <MudTextField Margin="Density.Margin" @bind-Value="_subject" Label="Subject" />
+    <MudTextField Margin="Density.Margin" @bind-Value="_body" Label="Body (Scriban, HTML)" Lines="16" Class="mt-2" Style="font-family:monospace" />
     <MudText Typo="Typo.caption">Model values are available as {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.</MudText>
 
     @if (_errors.Count > 0)
     {
-        <MudAlert Severity="Severity.Error" Class="mt-3" data-testid="template-errors">
+        <MudAlert Dense="Density.Dense" Severity="Severity.Error" Class="mt-3" data-testid="template-errors">
             @foreach (var error in _errors)
             {
                 <div>@error</div>

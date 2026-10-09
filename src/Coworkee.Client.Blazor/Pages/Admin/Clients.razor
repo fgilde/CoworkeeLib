@@ -7,7 +7,7 @@
     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" Size="Size.Small" Disabled="_busy"
                OnClick="CreateAsync" data-testid="create-client">@L["New application"]</MudButton>
 </MudStack>
-<MudDataGrid T="ClientDto" Items="_clients" Loading="_busy" Dense="true" Hover="true" Striped="true" Elevation="0" Outlined="true" data-testid="clients">
+<MudDataGrid T="ClientDto" Items="_clients" Loading="_busy" Dense="Density.Dense" Hover="true" Striped="true" Elevation="0" Outlined="true" data-testid="clients">
     <Columns>
         <PropertyColumn Property="c => c.ClientId" Title="@L["Client id"]">
             <CellTemplate>
@@ -28,7 +28,7 @@
             <CellTemplate>
                 @if (IsService(context.Item))
                 {
-                    <MudSelect T="Guid" MultiSelection="true" Dense="true" Label="@L["Roles"]" SelectedValues="context.Item.Roles" ToStringFunc="RoleName"
+                    <MudSelect Margin="Density.Margin" T="Guid" MultiSelection="true" Dense="Density.Dense" Label="@L["Roles"]" SelectedValues="context.Item.Roles" ToStringFunc="RoleName"
                                Disabled="@(_busy || context.Item.Managed)" SelectedValuesChanged="ids => SetRightsAsync(context.Item, [.. ids], context.Item.Permissions)"
                                data-testid="@($"client-roles-{context.Item.ClientId}")">
                         @foreach (var role in _roles.Where(r => !r.IsSystem))
@@ -36,7 +36,7 @@
                             <MudSelectItem T="Guid" Value="@role.Id">@role.Name</MudSelectItem>
                         }
                     </MudSelect>
-                    <MudSelect T="string" MultiSelection="true" Dense="true" Label="@L["Permissions"]" SelectedValues="context.Item.Permissions"
+                    <MudSelect Margin="Density.Margin" T="string" MultiSelection="true" Dense="Density.Dense" Label="@L["Permissions"]" SelectedValues="context.Item.Permissions"
                                Disabled="@(_busy || context.Item.Managed)" SelectedValuesChanged="names => SetRightsAsync(context.Item, context.Item.Roles, [.. names])"
                                data-testid="@($"client-permissions-{context.Item.ClientId}")">
                         @foreach (var permission in _permissions)

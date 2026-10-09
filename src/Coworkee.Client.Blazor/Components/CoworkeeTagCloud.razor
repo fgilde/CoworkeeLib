@@ -1,4 +1,4 @@
-<MudChipSet T="string" SelectedValue="_selected" SelectedValueChanged="SelectAsync" SelectionMode="SelectionMode.ToggleSelection" data-testid="tag-cloud">
+<MudChipSet Size="Density.Size" T="string" SelectedValue="_selected" SelectedValueChanged="SelectAsync" SelectionMode="SelectionMode.ToggleSelection" data-testid="tag-cloud">
     @foreach (var tag in _tags)
     {
         <MudChip T="string" Value="tag.Name" Size="Size.Small" Variant="Variant.Outlined" SelectedColor="Color.Primary" data-tag="@tag.Name">@tag.Name (@tag.Count)</MudChip>
