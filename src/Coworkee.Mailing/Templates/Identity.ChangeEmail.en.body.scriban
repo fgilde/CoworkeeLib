@@ -1,0 +1,3 @@
+<p>Hello {{ user.first_name }},</p>
+<p>please confirm that {{ new_email }} is the new address of your account. Until then you sign in with {{ user.email }}. If you did not ask for this, you can ignore this message.</p>
+<p style="margin:24px 0;"><a href="{{ confirm_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">Confirm new address</a></p>

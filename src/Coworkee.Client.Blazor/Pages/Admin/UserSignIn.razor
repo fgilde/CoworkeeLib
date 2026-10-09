@@ -1,0 +1,61 @@
+<MudPaper Outlined="true" Class="pa-4 mb-4" data-testid="user-sign-in">
+    <MudText Typo="Typo.h6" Class="mb-2">@L["Sign-in"]</MudText>
+
+    <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="py-2">
+        <MudIcon Icon="@Icons.Material.Outlined.AlternateEmail" />
+        <div class="flex-grow-1">
+            <MudText>@User.Email</MudText>
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">@L[User.EmailConfirmed ? "Email confirmed" : "Email not confirmed"]</MudText>
+        </div>
+        @if (CanManage)
+        {
+            <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="ChangeEmailAsync" data-testid="change-user-email">@L["Change email"]</MudButton>
+        }
+    </MudStack>
+    <MudDivider />
+
+    <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="py-2">
+        <MudIcon Icon="@Icons.Material.Outlined.Password" />
+        <MudText Class="flex-grow-1">@L[User.HasPassword ? "Password set" : "No password yet"]</MudText>
+        @if (CanManage)
+        {
+            <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="SetPasswordAsync" data-testid="set-password">@L["Set password"]</MudButton>
+            @if (User.HasPassword)
+            {
+                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="SendResetAsync" data-testid="send-reset">@L["Send password reset"]</MudButton>
+            }
+            else
+            {
+                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="InviteAsync" data-testid="send-invitation">@L["Send invitation"]</MudButton>
+            }
+        }
+    </MudStack>
+    <MudDivider />
+
+    <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="py-2">
+        <MudIcon Icon="@Icons.Material.Outlined.Security" />
+        <MudText Class="flex-grow-1">@L[User.TwoFactorEnabled ? "Two-step verification on" : "Two-step verification off"]</MudText>
+        @if (CanManage && User.TwoFactorEnabled)
+        {
+            <MudButton Variant="Variant.Text" Size="Size.Small" Color="Color.Error" OnClick="ResetTwoFactorAsync" data-testid="reset-two-factor">@L["Reset"]</MudButton>
+        }
+    </MudStack>
+    <MudDivider />
+
+    <MudText Typo="Typo.subtitle2" Class="mt-3 mb-1">@L["External sign-ins"]</MudText>
+    @if (Logins.Count == 0)
+    {
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["None"]</MudText>
+    }
+    @foreach (var login in Logins)
+    {
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="py-1" data-login="@login.LoginProvider">
+            <MudIcon Icon="@Icons.Material.Outlined.Link" Size="Size.Small" />
+            <MudText Typo="Typo.body2" Class="flex-grow-1">@(login.DisplayName ?? login.LoginProvider)</MudText>
+            @if (CanManage)
+            {
+                <MudIconButton Icon="@Icons.Material.Outlined.LinkOff" Size="Size.Small" aria-label="@L["Remove"]" OnClick="() => RemoveLoginAsync(login)" />
+            }
+        </MudStack>
+    }
+</MudPaper>

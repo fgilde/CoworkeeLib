@@ -63,6 +63,36 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
     public Task SignOutUserAsync(Guid userId, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Post, $"{Identity}/users/{userId}/sign-out", null, cancellationToken);
 
+    public Task ChangeMyEmailAsync(ChangeEmailRequest request, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Post, $"{Identity}/me/email", request, cancellationToken);
+
+    public Task SetUserEmailAsync(Guid userId, SetUserEmailRequest request, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Put, $"{Identity}/users/{userId}/email", request, cancellationToken);
+
+    public Task SendInvitationAsync(Guid userId, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Post, $"{Identity}/users/{userId}/invitation", null, cancellationToken);
+
+    public Task SetUserPasswordAsync(Guid userId, SetPasswordRequest request, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Put, $"{Identity}/users/{userId}/password", request, cancellationToken);
+
+    public Task ResetUserTwoFactorAsync(Guid userId, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Post, $"{Identity}/users/{userId}/two-factor/reset", null, cancellationToken);
+
+    public Task RemoveUserLoginAsync(Guid userId, UserLoginDto login, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Delete, $"{Identity}/users/{userId}/logins?provider={Uri.EscapeDataString(login.LoginProvider)}&key={Uri.EscapeDataString(login.ProviderKey)}", null, cancellationToken);
+
+    public Task SetUserGroupsAsync(Guid userId, IReadOnlyList<Guid> groupIds, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Put, $"{Identity}/users/{userId}/groups", new IdListRequest(groupIds), cancellationToken);
+
+    public Task SetUserAvatarAsync(Guid userId, string? dataUrl, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Put, $"{Identity}/users/{userId}/avatar", new SetAvatarRequest(dataUrl), cancellationToken);
+
+    public Task<UserLanguageDto> GetUserLanguageAsync(Guid userId, CancellationToken cancellationToken = default) =>
+        GetAsync<UserLanguageDto>($"{Identity}/users/{userId}/language", cancellationToken);
+
+    public Task SetUserLanguageAsync(Guid userId, string? culture, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Put, $"{Identity}/users/{userId}/language", new UserLanguageDto(culture), cancellationToken);
+
     public async Task<IReadOnlyList<string>> GetEffectivePermissionsAsync(Guid userId, CancellationToken cancellationToken = default) =>
         await GetAsync<string[]>($"{Identity}/users/{userId}/permissions", cancellationToken);
 

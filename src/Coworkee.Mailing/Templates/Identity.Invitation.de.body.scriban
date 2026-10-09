@@ -1,0 +1,3 @@
+<p>Hallo {{ user.first_name }},</p>
+<p>für dich wurde ein Konto eingerichtet: {{ user.email }}. Wähle dein Passwort, um dich anzumelden.</p>
+<p style="margin:24px 0;"><a href="{{ invitation_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">Passwort wählen</a></p>

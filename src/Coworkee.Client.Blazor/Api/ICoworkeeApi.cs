@@ -46,6 +46,28 @@ public interface ICoworkeeApi
     /// <summary>Ends all sessions of the user at once; the open clients of the user sign out.</summary>
     Task SignOutUserAsync(Guid userId, CancellationToken cancellationToken = default);
 
+    /// <summary>Mails a confirmation link to the new address; the current address stays until the link is opened.</summary>
+    Task ChangeMyEmailAsync(ChangeEmailRequest request, CancellationToken cancellationToken = default);
+
+    Task SetUserEmailAsync(Guid userId, SetUserEmailRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>Invites the user by mail to choose a password.</summary>
+    Task SendInvitationAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    Task SetUserPasswordAsync(Guid userId, SetPasswordRequest request, CancellationToken cancellationToken = default);
+
+    Task ResetUserTwoFactorAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    Task RemoveUserLoginAsync(Guid userId, UserLoginDto login, CancellationToken cancellationToken = default);
+
+    Task SetUserGroupsAsync(Guid userId, IReadOnlyList<Guid> groupIds, CancellationToken cancellationToken = default);
+
+    Task SetUserAvatarAsync(Guid userId, string? dataUrl, CancellationToken cancellationToken = default);
+
+    Task<UserLanguageDto> GetUserLanguageAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    Task SetUserLanguageAsync(Guid userId, string? culture, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<string>> GetEffectivePermissionsAsync(Guid userId, CancellationToken cancellationToken = default);
 
     Task<SetupResultDto> CompleteSetupAsync(CompleteSetupRequest request, CancellationToken cancellationToken = default);

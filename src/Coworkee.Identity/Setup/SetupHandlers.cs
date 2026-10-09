@@ -86,7 +86,7 @@ internal sealed class CompleteSetupHandler(SetupToken token, SystemStateCache st
     }
 }
 
-internal static class IdentityErrors
+public static class IdentityErrors
 {
     public static Error ToError(IdentityResult result) =>
         Error.Validation(result.Errors

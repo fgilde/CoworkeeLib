@@ -129,5 +129,7 @@
   "Your applications": "Ihre Anwendungen",
   "No application is available yet.": "Noch ist keine Anwendung verfügbar.",
   "Sign out": "Abmelden",
-  "Sign in again": "Erneut anmelden"
+  "Sign in again": "Erneut anmelden",
+  "Confirm new email address": "Neue E-Mail-Adresse bestätigen",
+  "Your account now uses {0}. Sign in with the new address.": "Ihr Konto verwendet jetzt {0}. Melden Sie sich mit der neuen Adresse an."
 }

@@ -41,12 +41,35 @@ public sealed class UserDetailTests : ClientTestBase
         page.WaitForElement("[data-testid='unlock']");
 
         await page.Find("[data-testid='unlock']").ClickAsync(new());
-        page.Find("input[data-testid='first-name'], [data-testid='first-name'] input").Input("Robert");
-        await page.Find("[data-testid='save-user']").ClickAsync(new());
+        page.WaitForAssertion(() => page.FindAll("form label").Select(l => l.TextContent.Trim()).ShouldContain("Phone"));
+        Field(page, "First name").Change("Robert");
+        Field(page, "City").Change("Berlin");
+        await page.Find("form").SubmitAsync();
 
         await Api.Received(1).UnlockUserAsync(_user, Arg.Any<CancellationToken>());
-        await Api.Received(1).UpdateUserAsync(_user, Arg.Is<UpdateUserRequest>(r => r.FirstName == "Robert" && r.LastName == "Builder" && r.IsActive), Arg.Any<CancellationToken>());
+        await Api.Received(1).UpdateUserAsync(_user, Arg.Is<UpdateUserRequest>(r =>
+            r.FirstName == "Robert" && r.LastName == "Builder" && r.IsActive && r.UserName == "bob@acme.test" && r.Address!.City == "Berlin"), Arg.Any<CancellationToken>());
+        await Api.DidNotReceive().SetUserLanguageAsync(_user, Arg.Any<string?>(), Arg.Any<CancellationToken>());
     }
+
+    [Fact]
+    public void Readers_see_the_user_without_editing()
+    {
+        var auth = AddAuthorization();
+        auth.SetAuthorized("viewer");
+        auth.SetPolicies(Security.PermissionPolicy.For(IdentityPermissions.Users.View));
+
+        var page = Render<UserDetail>(p => p.Add(d => d.Id, _user));
+
+        page.WaitForAssertion(() => page.FindAll("form input[type='text']").ShouldNotBeEmpty());
+        page.FindAll("form input[type='text']").Where(i => i.GetAttribute("placeholder")?.StartsWith("Filter", StringComparison.Ordinal) != true)
+            .ShouldAllBe(i => i.HasAttribute("readonly"));
+        page.FindAll("[data-testid='set-password']").ShouldBeEmpty();
+        page.FindAll("[data-testid='delete-user']").ShouldBeEmpty();
+    }
+
+    private static AngleSharp.Dom.IElement Field(IRenderedComponent<UserDetail> page, string label) =>
+        page.FindAll("form .mud-input-control").First(c => c.QuerySelector("label")?.TextContent.Trim() == label).QuerySelector("input")!;
 
     [Fact]
     public async Task Signing_out_everywhere_asks_first_and_calls_the_api()

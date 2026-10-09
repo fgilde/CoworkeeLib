@@ -123,6 +123,11 @@ internal sealed class CoreMailTemplates : IMailTemplateContributor
         context.Add(new("Identity.RegistrationPending", "Registration pending", new { user = User }, EmbeddedTemplates.Load(assembly, "Identity.RegistrationPending")));
         context.Add(new("Identity.RegistrationApproved", "Registration approved", new { user = User, login_url = "https://example.com" }, EmbeddedTemplates.Load(assembly, "Identity.RegistrationApproved")));
         context.Add(new("Identity.Welcome", "Welcome", new { user = User, login_url = "https://example.com" }, EmbeddedTemplates.Load(assembly, "Identity.Welcome")));
+        context.Add(new("Identity.Invitation", "Invitation", new { user = User, invitation_url = "https://example.com/reset" }, EmbeddedTemplates.Load(assembly, "Identity.Invitation")));
+        context.Add(new("Identity.ChangeEmail", "Confirm new email", new { user = User, new_email = "ada@example.org", confirm_url = "https://example.com/confirm" },
+            EmbeddedTemplates.Load(assembly, "Identity.ChangeEmail")));
+        context.Add(new("Identity.EmailChangeNotice", "Email change notice", new { user = User, new_email = "ada@example.org", pending = true },
+            EmbeddedTemplates.Load(assembly, "Identity.EmailChangeNotice")));
         context.Add(new("Notifications.Digest", "Notification digest", new
         {
             user = User,

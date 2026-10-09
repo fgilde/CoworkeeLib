@@ -1,8 +1,10 @@
 @page "/admin/users/{Id:guid}"
 @attribute [Authorize(Policy = "perm:" + IdentityPermissions.Users.View)]
+@using MudBlazor.Extensions.Components.ObjectEdit
+@using MudBlazor.Extensions.Components.ObjectEdit.Options
 
 <PageTitle>@(_user?.Email ?? "User")</PageTitle>
-<MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" Href="/admin/users" Class="mb-2">Users</MudButton>
+<MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" Href="/admin/users" Class="mb-2">@L["Users"]</MudButton>
 
 @if (_error is not null)
 {
@@ -16,15 +18,33 @@ else
 {
     <MudPaper Outlined="true" Class="pa-4 mb-4">
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Wrap="Wrap.Wrap">
-            <MudAvatar Color="Color.Primary" Size="Size.Large">@Initials(_user)</MudAvatar>
+            <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                <UserAvatar UserId="Id" Pixels="72" />
+                @if (_canManage)
+                {
+                    <MudStack Row="true" Spacing="0">
+                        <MudFileUpload T="IBrowserFile" Accept="image/*" FilesChanged="UploadAvatarAsync" data-testid="user-avatar-upload">
+                            <CustomContent Context="upload">
+                                <MudIconButton Icon="@Icons.Material.Outlined.CloudUpload" Size="Size.Small" aria-label="@L["Upload picture"]" Disabled="_busy" OnClick="upload.OpenFilePickerAsync" />
+                            </CustomContent>
+                            <SelectedTemplate />
+                        </MudFileUpload>
+                        @if (_user.HasAvatar)
+                        {
+                            <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" aria-label="@L["Remove picture"]" Disabled="_busy"
+                                           OnClick="RemoveAvatarAsync" data-testid="user-avatar-remove" />
+                        }
+                    </MudStack>
+                }
+            </MudStack>
             <div>
                 <MudText Typo="Typo.h5" data-testid="user-name">@DisplayName(_user)</MudText>
                 <MudText Class="mud-text-secondary">@_user.Email</MudText>
             </div>
             <MudSpacer />
-            <MudChip T="string" Size="Size.Small" Color="@(_user.IsActive ? Color.Success : Color.Default)" data-testid="status-active">@(_user.IsActive ? "Active" : "Inactive")</MudChip>
-            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(_user.EmailConfirmed ? Color.Success : Color.Warning)">@(_user.EmailConfirmed ? "Email confirmed" : "Email not confirmed")</MudChip>
-            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@(_user.TwoFactorEnabled ? "Two-factor on" : "Two-factor off")</MudChip>
+            <MudChip T="string" Size="Size.Small" Color="@(_user.IsActive ? Color.Success : Color.Default)" data-testid="status-active">@L[_user.IsActive ? "Active" : "Inactive"]</MudChip>
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(_user.EmailConfirmed ? Color.Success : Color.Warning)">@L[_user.EmailConfirmed ? "Email confirmed" : "Email not confirmed"]</MudChip>
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@L[_user.TwoFactorEnabled ? "Two-factor on" : "Two-factor off"]</MudChip>
             @if (_user.MustChangePassword)
             {
                 <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Warning" data-testid="status-must-change">@L["Must change password"]</MudChip>
@@ -46,33 +66,26 @@ else
                 <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Outlined.Logout" OnClick="SignOutAsync" Disabled="_busy" data-testid="sign-out-everywhere">@L["Sign out everywhere"]</MudButton>
             </PermissionView>
         </MudStack>
-        <MudText Typo="Typo.caption" Class="mt-2 d-block mud-text-secondary">Last sign-in: @(_user.LastLoginAt?.ToLocalTime().ToString("g") ?? "never")</MudText>
+        <MudText Typo="Typo.caption" Class="mt-2 d-block mud-text-secondary">@L["Last sign-in: {0}", _user.LastLoginAt?.ToLocalTime().ToString("g") ?? L["never"]]</MudText>
     </MudPaper>
 
     <MudGrid>
-        <MudItem xs="12" md="6">
-            <MudPaper Outlined="true" Class="pa-4">
-                <MudText Typo="Typo.h6" Class="mb-2">Profile</MudText>
-                <MudTextField Margin="Density.Margin" @bind-Value="_firstName" Label="First name" Immediate="true" data-testid="first-name" ReadOnly="@(!_canManage)" />
-                <MudTextField Margin="Density.Margin" @bind-Value="_lastName" Label="Last name" Immediate="true" data-testid="last-name" ReadOnly="@(!_canManage)" />
-                <MudSwitch T="bool" @bind-Value="_active" Label="Active" Color="Color.Primary" Disabled="@(!_canManage)" Class="mt-2" />
-                <MudSwitch T="bool" @bind-Value="_mustChangePassword" Label="@L["Change password at next sign-in"]" Color="Color.Primary" Disabled="@(!_canManage)" data-testid="must-change-password" />
-                <PermissionView Permission="@IdentityPermissions.Users.Manage">
-                    <MudStack Row="true" Class="mt-4">
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_busy" data-testid="save-user">Save</MudButton>
-                        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.LockReset" OnClick="SendResetAsync">Send password reset</MudButton>
-                        <MudSpacer />
-                        <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Outlined.DeleteForever" OnClick="DeleteAsync" Disabled="_busy" data-testid="delete-user">Delete user</MudButton>
-                    </MudStack>
-                </PermissionView>
-            </MudPaper>
-        </MudItem>
-        <MudItem xs="12" md="6">
+        <MudItem xs="12" md="7">
             <MudPaper Outlined="true" Class="pa-4 mb-4">
-                <MudText Typo="Typo.h6" Class="mb-2">Roles</MudText>
+                <MudExObjectEditForm T="UserForm" Value="_form" MetaInformation="_meta" OnValidSubmit="SaveAsync" GroupingStyle="GroupingStyle.Flat"
+                                     ShowSaveButton="_canManage" GlobalResetSettings="@(new GlobalResetSettings { AllowReset = false })" data-testid="user-form" />
+            </MudPaper>
+            <PermissionView Permission="@IdentityPermissions.Users.Manage">
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Outlined.DeleteForever" OnClick="DeleteAsync" Disabled="_busy" data-testid="delete-user">@L["Delete user"]</MudButton>
+            </PermissionView>
+        </MudItem>
+        <MudItem xs="12" md="5">
+            <UserSignIn User="_user" CanManage="_canManage" Changed="LoadAsync" />
+            <MudPaper Outlined="true" Class="pa-4 mb-4">
+                <MudText Typo="Typo.h6" Class="mb-2">@L["Roles"]</MudText>
                 @if (_canManage)
                 {
-                    <MudSelect Margin="Density.Margin" Dense="Density.Dense" T="Guid" MultiSelection="true" Label="Roles" SelectedValues="_roleIds" SelectedValuesChanged="SetRolesAsync" ToStringFunc="RoleName" Disabled="_busy" data-testid="user-roles">
+                    <MudSelect Margin="Density.Margin" Dense="Density.Dense" T="Guid" MultiSelection="true" Label="@L["Roles"]" SelectedValues="_roleIds" SelectedValuesChanged="SetRolesAsync" ToStringFunc="RoleName" Disabled="_busy" data-testid="user-roles">
                         @foreach (var role in _roles)
                         {
                             <MudSelectItem Value="@role.Id">@role.Name</MudSelectItem>
@@ -86,21 +99,33 @@ else
                         <MudChip T="string" Size="Size.Small">@role.Name</MudChip>
                     }
                 }
-                <MudText Typo="Typo.h6" Class="mt-4 mb-2">Groups</MudText>
-                @if (_user.Groups.Count == 0)
+                <MudText Typo="Typo.h6" Class="mt-4 mb-2">@L["Groups"]</MudText>
+                @if (_canManageGroups)
                 {
-                    <MudText Class="mud-text-secondary">No groups.</MudText>
+                    <MudSelect Margin="Density.Margin" Dense="Density.Dense" T="Guid" MultiSelection="true" Label="@L["Groups"]" SelectedValues="_groupIds" SelectedValuesChanged="SetGroupsAsync" ToStringFunc="GroupName" Disabled="_busy" data-testid="user-groups">
+                        @foreach (var group in _groups)
+                        {
+                            <MudSelectItem Value="@group.Id">@group.Name</MudSelectItem>
+                        }
+                    </MudSelect>
                 }
-                @foreach (var group in _user.Groups)
+                else
                 {
-                    <MudChip T="string" Size="Size.Small" Href="/admin/groups" Icon="@Icons.Material.Outlined.Groups">@group.Name</MudChip>
+                    @if (_user.Groups.Count == 0)
+                    {
+                        <MudText Class="mud-text-secondary">@L["No groups."]</MudText>
+                    }
+                    @foreach (var group in _user.Groups)
+                    {
+                        <MudChip T="string" Size="Size.Small" Href="/admin/groups" Icon="@Icons.Material.Outlined.Groups">@group.Name</MudChip>
+                    }
                 }
             </MudPaper>
             <MudPaper Outlined="true" Class="pa-4">
-                <MudText Typo="Typo.h6" Class="mb-2">Effective permissions</MudText>
+                <MudText Typo="Typo.h6" Class="mb-2">@L["Effective permissions"]</MudText>
                 @if (_permissions.Count == 0)
                 {
-                    <MudText Class="mud-text-secondary">No permissions.</MudText>
+                    <MudText Class="mud-text-secondary">@L["No permissions."]</MudText>
                 }
                 @foreach (var permission in _permissions)
                 {

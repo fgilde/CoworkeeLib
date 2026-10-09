@@ -104,6 +104,8 @@ public static void Configure(IdentitySeedOptions seed)
 
 ## Account features
 
-Registration is off by default; the setting `Account.AllowRegistration` turns it on. The wizard, activation, allowed addresses, documents and the sign-in rules are described in [Registration and sign-in rules](registration.md). Users change password, email and two factor settings on the account page of the auth server, linked from the user menu.
+Registration is off by default; the setting `Account.AllowRegistration` turns it on. The wizard, activation, allowed addresses, documents and the sign-in rules are described in [Registration and sign-in rules](registration.md). Users change password and two factor settings on the account page of the auth server, linked from the user menu. The email address changes under *Account > Security* in the app: after the current password, the new address gets a confirmation link and the old one a notice; the old address keeps working until the link is opened. An address another account uses gets no link, and the answer is the same, so nobody learns which addresses exist.
+
+On a user's page administrators edit everything about the user: user name, names, phone, address, language, active, email confirmed, the address itself (at once, confirmed or with a confirmation mail; the old address gets a notice), the password (set one or send a reset link), an invitation for users without password, lockout, two-step verification reset, external sign-ins, roles, groups and the picture. New users are created in a dialog, either invited by mail to choose a password or with an initial password.
 
 Administrators manage further clients and scopes in the app, end sessions at once and set password rules: see [Clients, sessions and password rules](clients.md).

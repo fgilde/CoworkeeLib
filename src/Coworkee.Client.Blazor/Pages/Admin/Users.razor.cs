@@ -14,8 +14,6 @@ public partial class Users
     private CoworkeeDataTable<UserRow> _table = null!;
     private IReadOnlyList<RoleDto> _roles = [];
     private IReadOnlyDictionary<Guid, IReadOnlyList<RoleRefDto>> _userRoles = new Dictionary<Guid, IReadOnlyList<RoleRefDto>>();
-    private bool _creating;
-    private NewUser _new = new();
     private UserRow? _permissionsOf;
     private IReadOnlyList<string> _permissions = [];
 
@@ -24,6 +22,8 @@ public partial class Users
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
+
+    [Inject] private IDialogService Dialogs { get; set; } = null!;
 
     protected override async Task OnInitializedAsync() => await Snackbar.RunAsync(async () => _roles = await Api.GetRolesAsync());
 
@@ -36,10 +36,19 @@ public partial class Users
 
     private async Task CreateAsync()
     {
-        if (await Snackbar.RunAsync(() => Api.CreateUserAsync(new CreateUserRequest(_new.Email, _new.Password, _new.FirstName, _new.LastName, _new.MustChangePassword)), L["User created"]))
+        if (await Dialogs.ShowEditAsync(L["New user"], new NewUserForm(), SaveAsync, meta => NewUserMeta.Apply(meta, L, _roles)))
         {
-            (_new, _creating) = (new NewUser(), false);
+            Snackbar.Add(L["User created"], Severity.Success);
             await _table.ReloadAsync();
+        }
+    }
+
+    private async Task SaveAsync(NewUserForm form)
+    {
+        var user = await Api.CreateUserAsync(form.ToRequest());
+        if (form.SendInvitation && form.IsActive)
+        {
+            await Api.SendInvitationAsync(user.Id);
         }
     }
 
@@ -64,17 +73,4 @@ public partial class Users
     }
 
     private Task SendResetAsync(UserRow user) => Snackbar.RunAsync(() => Api.SendPasswordResetAsync(user.Id), L["Password reset mail queued for {0}.", user.Email]);
-
-    private sealed class NewUser
-    {
-        public string Email { get; set; } = string.Empty;
-
-        public string Password { get; set; } = string.Empty;
-
-        public string? FirstName { get; set; }
-
-        public string? LastName { get; set; }
-
-        public bool MustChangePassword { get; set; }
-    }
 }
