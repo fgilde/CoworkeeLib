@@ -20,12 +20,12 @@
 }
 else if (_page.Items.Count == 0)
 {
-    <MudAlert Severity="Severity.Info">@(_unreadOnly ? L["Nothing unread."] : L["No notifications yet."])</MudAlert>
+    <MudAlert Severity="Severity.Info" Dense="Density.Dense">@(_unreadOnly ? L["Nothing unread."] : L["No notifications yet."])</MudAlert>
 }
 else
 {
     <MudPaper Outlined="true">
-        <MudList T="string" Dense="false">
+        <MudList T="string" Dense="Density.Dense">
             @foreach (var item in _page.Items)
             {
                 <MudListItem T="string" data-notification="@item.Id" OnClick="() => Center.OpenAsync(item)" Icon="@(item.ReadAt is null ? Icons.Material.Filled.Circle : Icons.Material.Outlined.Circle)"

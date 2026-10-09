@@ -1,6 +1,6 @@
 @using Coworkee.Contracts.Notifications
 
-<MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" OpenChanged="OpenChangedAsync">
+<MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="Density.Dense" OpenChanged="OpenChangedAsync">
     <ActivatorContent Context="menu">
         <MudBadge Content="@Center.UnreadCount" Max="99" Visible="@(Center.UnreadCount > 0)" Color="Color.Secondary" Overlap="true">
             <MudIconButton Icon="@(Center.UnreadCount > 0 ? Icons.Material.Filled.NotificationsActive : Icons.Material.Outlined.Notifications)" Color="Color.Inherit"
