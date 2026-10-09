@@ -84,5 +84,7 @@
   "Two-step verification is on.": "Die Bestätigung in zwei Schritten ist aktiv.",
   "Turn off": "Ausschalten",
   "Turn on": "Einschalten",
-  "Add this key to an authenticator app, then enter the code it shows.": "Fügen Sie diesen Schlüssel einer Authenticator-App hinzu und geben Sie dann den angezeigten Code ein."
+  "Add this key to an authenticator app, then enter the code it shows.": "Fügen Sie diesen Schlüssel einer Authenticator-App hinzu und geben Sie dann den angezeigten Code ein.",
+  "Complete your account first.": "Vervollständigen Sie zuerst Ihr Konto.",
+  "You signed in with {0} as {1}. Complete your account.": "Sie haben sich mit {0} als {1} angemeldet. Vervollständigen Sie Ihr Konto."
 }

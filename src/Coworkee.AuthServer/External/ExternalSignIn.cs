@@ -14,12 +14,15 @@ namespace Coworkee.AuthServer.External;
 
 /// <summary>
 /// Finds the user of an external sign-in: by the linked login, else by a verified email (linking the login), else a new user when
-/// registration allows the address.
+/// registration allows the address. A new user who lacks what the registration asks for gets <see cref="CompletionRequired"/> and
+/// is created by the completion step (the register page with <see cref="Prefill"/>).
 /// </summary>
 public sealed class ExternalSignIn(
     UserManager<User> users, CoworkeeDbContext db, ITenantDirectory tenants, ISettingProvider settings, AccountRegistration registration,
     IOptions<AuthServerOptions> options, IOptions<RegistrationOptions> registrationOptions)
 {
+    public const string CompletionRequired = "external.completion_required";
+
     public async Task<Result<User>> FindOrCreateAsync(ExternalLoginInfo login, CancellationToken cancellationToken)
     {
         using var anyTenant = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
@@ -29,7 +32,7 @@ public sealed class ExternalSignIn(
         }
 
         // linking by address trusts the provider only when it vouches for the address or is configured as trusted
-        if ((login.Principal.FindFirstValue(ClaimTypes.Email) ?? login.Principal.FindFirstValue("email")) is not { Length: > 0 } email || !Verified(login))
+        if (Email(login) is not { Length: > 0 } email || !Verified(login))
         {
             return Error.Forbidden("external.email_unverified", T("The sign-in provider sent no verified email address."));
         }
@@ -66,6 +69,18 @@ public sealed class ExternalSignIn(
         return Allowed(user);
     }
 
+    /// <summary>What the provider tells about a new user, for the completion step.</summary>
+    public static RegistrationInput Prefill(ExternalLoginInfo login, string? returnUrl) => new()
+    {
+        Email = Email(login)!,
+        FirstName = login.Principal.FindFirstValue(ClaimTypes.GivenName),
+        LastName = login.Principal.FindFirstValue(ClaimTypes.Surname),
+        External = new ExternalAccount(login.LoginProvider, login.ProviderKey, login.ProviderDisplayName),
+        ReturnUrl = returnUrl,
+    };
+
+    private static string? Email(ExternalLoginInfo login) => login.Principal.FindFirstValue(ClaimTypes.Email) ?? login.Principal.FindFirstValue("email");
+
     private bool Verified(ExternalLoginInfo login) =>
         string.Equals(login.Principal.FindFirstValue("email_verified"), "true", StringComparison.OrdinalIgnoreCase)
         || (options.Value.External.Providers.TryGetValue(login.LoginProvider, out var provider) && provider.TrustEmail);
@@ -88,6 +103,11 @@ public sealed class ExternalSignIn(
             FirstName = login.Principal.FindFirstValue(ClaimTypes.GivenName),
             LastName = login.Principal.FindFirstValue(ClaimTypes.Surname),
         };
+        if (AccountRegistration.NeedsCompletion(registrationOptions.Value, (await registration.SelectableRolesAsync(tenantId, cancellationToken)).Count > 0, user.FirstName, user.LastName))
+        {
+            return Error.Forbidden(CompletionRequired, T("Complete your account first."));
+        }
+
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(user.Id, tenantId));
         if (await registration.CreateAsync(user, null, policy) is { Succeeded: false } created)
         {

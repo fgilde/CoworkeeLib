@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Coworkee.Contracts.Configuration;
 
 /// <summary>
@@ -28,6 +30,12 @@ public sealed class RegistrationDocumentSlot
 
     public string? Description { get; set; }
 
+    /// <summary>The name per language ("de": "Reisepass"); <see cref="Name"/> is the fallback and what stores file the document under.</summary>
+    public Dictionary<string, string> Names { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>The description per language; <see cref="Description"/> is the fallback.</summary>
+    public Dictionary<string, string> Descriptions { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
     public bool Required { get; set; } = true;
 
     /// <summary>Accepted content types, wildcards allowed ("image/*"); empty accepts every type.</summary>
@@ -35,4 +43,12 @@ public sealed class RegistrationDocumentSlot
 
     /// <summary>Largest file in bytes; null or 0 for no limit.</summary>
     public long? MaxSize { get; set; }
+
+    /// <summary>The name in the current UI language ("de-AT", then "de"), else <see cref="Name"/>.</summary>
+    public string DisplayName => InLanguage(Names) ?? Name;
+
+    public string? DisplayDescription => InLanguage(Descriptions) ?? Description;
+
+    private static string? InLanguage(Dictionary<string, string> texts) =>
+        texts.GetValueOrDefault(CultureInfo.CurrentUICulture.Name) ?? texts.GetValueOrDefault(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
 }

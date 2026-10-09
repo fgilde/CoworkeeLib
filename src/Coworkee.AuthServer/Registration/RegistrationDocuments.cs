@@ -26,7 +26,7 @@ public static class RegistrationDocuments
             {
                 if (slot.Required)
                 {
-                    yield return T("Add the document \"{0}\".", slot.Name);
+                    yield return T("Add the document \"{0}\".", slot.DisplayName);
                 }
 
                 continue;
@@ -34,12 +34,12 @@ public static class RegistrationDocuments
 
             if (!Wildcards.Allows(slot.ContentTypes, file.ContentType))
             {
-                yield return T("\"{0}\" has a file type that is not accepted.", slot.Name);
+                yield return T("\"{0}\" has a file type that is not accepted.", slot.DisplayName);
             }
 
             if (slot.MaxSize is > 0 and var max && file.Length > max)
             {
-                yield return T("\"{0}\" is larger than {1}.", slot.Name, max >= 1024 * 1024 ? $"{max / 1024d / 1024d:0.#} MB" : $"{Math.Ceiling(max / 1024d):0} KB");
+                yield return T("\"{0}\" is larger than {1}.", slot.DisplayName, max >= 1024 * 1024 ? $"{max / 1024d / 1024d:0.#} MB" : $"{Math.Ceiling(max / 1024d):0} KB");
             }
         }
     }

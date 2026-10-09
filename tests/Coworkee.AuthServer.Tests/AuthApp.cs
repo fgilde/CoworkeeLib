@@ -1,4 +1,8 @@
 using System.Net.Http.Json;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Coworkee.AspNetCore;
 using Coworkee.Contracts.Identity;
 using Coworkee.Core.Modularity;
@@ -69,6 +73,9 @@ public sealed class AuthApp : PostgresFixture
             ["Coworkee:Registration:AllowedEmails:0"] = "*@acme.test",
             ["Coworkee:Registration:RequireDocuments"] = "true",
             ["Coworkee:Registration:Documents:0:Name"] = "Passport",
+            ["Coworkee:Registration:Documents:0:Names:de"] = "Reisepass",
+            ["Coworkee:Registration:Documents:0:Description"] = "A scan of your passport",
+            ["Coworkee:Registration:Documents:0:Descriptions:de"] = "Ein Scan Ihres Reisepasses",
             ["Coworkee:Registration:Documents:0:ContentTypes:0"] = "image/*",
             ["Coworkee:Registration:Documents:0:ContentTypes:1"] = "application/pdf",
             ["Coworkee:Registration:Documents:0:MaxSize"] = "1000",
@@ -86,6 +93,15 @@ public sealed class AuthApp : PostgresFixture
         }
 
         App.UseCoworkee();
+
+        // stands in for the provider's callback: signs the browser into the external cookie like the OIDC handler does
+        App.MapGet("/test/external", (HttpContext context, string sub, string email, string? given) => context.SignInAsync(IdentityConstants.ExternalScheme,
+            new ClaimsPrincipal(new ClaimsIdentity(
+            [
+                new Claim(ClaimTypes.NameIdentifier, sub), new Claim(ClaimTypes.Email, email), new Claim("email_verified", "true"),
+                .. given is null ? Array.Empty<Claim>() : [new Claim(ClaimTypes.GivenName, given)],
+            ], "keycloak")),
+            new AuthenticationProperties(new Dictionary<string, string?> { ["LoginProvider"] = "keycloak" })));
 
         await App.StartAsync();
     }

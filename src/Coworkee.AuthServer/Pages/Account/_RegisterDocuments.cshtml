@@ -5,8 +5,8 @@
 @for (var index = 0; index < Model.Options.Documents.Count; index++)
 {
   var slot = Model.Options.Documents[index];
-  <label for="document-@index">@slot.Name@(slot.Required ? " *" : "")</label>
-  @if (slot.Description is { Length: > 0 } description)
+  <label for="document-@index">@slot.DisplayName@(slot.Required ? " *" : "")</label>
+  @if (slot.DisplayDescription is { Length: > 0 } description)
   {
     <small class="hint">@description</small>
   }

@@ -28,7 +28,11 @@ else
       <li class="@(step == Model.Step ? "current" : null)" aria-current="@(step == Model.Step ? "step" : null)">@T(RegistrationSteps.Title(step))</li>
     }
   </ol>
-  <form method="post" enctype="multipart/form-data" data-step="@Model.Step">
+  @if (Model.Input.External is { } login)
+  {
+    <p class="notice" role="status">@T("You signed in with {0} as {1}. Complete your account.", login.DisplayName ?? login.Provider, Model.Input.Email)</p>
+  }
+  <form method="post" asp-page="Register" enctype="multipart/form-data" data-step="@Model.Step">
     <input type="hidden" name="Step" value="@Model.Step" />
     <input type="hidden" name="State" value="@Model.ProtectedState" />
     <partial name="@($"_Register{char.ToUpperInvariant(Model.Step[0])}{Model.Step[1..]}")" model="Model" />

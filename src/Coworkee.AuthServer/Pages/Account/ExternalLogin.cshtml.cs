@@ -18,14 +18,20 @@ public sealed class ExternalLoginModel(SignInManager<User> signIn, ExternalSignI
     {
         ReturnUrl = returnUrl;
         var login = remoteError is null ? await signIn.GetExternalLoginInfoAsync() : null;
+        var user = login is null ? null : await external.FindOrCreateAsync(login, HttpContext.RequestAborted);
+        if (user?.Error?.Code == ExternalSignIn.CompletionRequired)
+        {
+            // the external cookie carries the login to the completion step, which takes it over
+            return RedirectToPage("Register", "External", new { returnUrl });
+        }
+
         await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
-        if (login is null)
+        if (login is null || user is null)
         {
             ErrorMessage = AuthTexts.T("The sign-in provider did not confirm the sign-in.");
             return Page();
         }
 
-        var user = await external.FindOrCreateAsync(login, HttpContext.RequestAborted);
         if (!user.IsSuccess)
         {
             ErrorMessage = user.Error!.Message;

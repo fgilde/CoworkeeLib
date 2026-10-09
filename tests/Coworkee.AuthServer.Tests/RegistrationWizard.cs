@@ -9,13 +9,17 @@ internal sealed partial class RegistrationWizard(HttpClient browser)
 {
     public string Html { get; private set; } = string.Empty;
 
+    public HttpStatusCode Status { get; private set; }
+
+    public string? Location { get; private set; }
+
     public string Step => StepField().Match(Html).Groups[1].Value;
 
     public IReadOnlyList<string> Errors => [.. Error().Matches(Html).Select(m => WebUtility.HtmlDecode(m.Groups[1].Value))];
 
-    public async Task<RegistrationWizard> StartAsync()
+    public async Task<RegistrationWizard> StartAsync(string url = "/Account/Register")
     {
-        Html = await browser.GetStringAsync("/Account/Register", TestContext.Current.CancellationToken);
+        Html = await browser.GetStringAsync(url, TestContext.Current.CancellationToken);
         return this;
     }
 
@@ -62,6 +66,7 @@ internal sealed partial class RegistrationWizard(HttpClient browser)
         }
 
         using var response = await browser.PostAsync("/Account/Register", form, TestContext.Current.CancellationToken);
+        (Status, Location) = (response.StatusCode, response.Headers.Location?.OriginalString);
         Html = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         return this;
     }

@@ -95,6 +95,8 @@ public sealed partial class RegistrationTests(AuthApp app) : IAsyncLifetime
         app.Mails.Sent.ShouldContain(m => m.Template == "Identity.ConfirmEmail" && m.To == "nia@acme.test");
         var notification = await app.InDbAsync(db => db.Set<Notification>().SingleAsync(n => n.Type == Registration.AccountRegistration.NotificationType, Ct));
         (notification.UserId, notification.Link).ShouldBe((_setup.AdminUserId, $"/admin/users/{user.Id}"));
+        (notification.Title, notification.Body).ShouldBe(("New registration", "{0} ({1}) waits for activation."));
+        notification.Arguments.ShouldBe(["Nia New", "nia@acme.test"]);
         (await LoginAsync("nia@acme.test")).ShouldBe(HttpStatusCode.OK);
     }
 
@@ -137,6 +139,12 @@ public sealed partial class RegistrationTests(AuthApp app) : IAsyncLifetime
 
         page.ShouldContain("Konto erstellen");
         page.ShouldContain("Persönliche Daten");
+
+        var wizard = await new RegistrationWizard(browser).FillAsync("de@acme.test");
+        WebUtility.HtmlDecode(wizard.Html).ShouldContain("Reisepass *");
+        WebUtility.HtmlDecode(wizard.Html).ShouldContain("Ein Scan Ihres Reisepasses");
+        await wizard.SubmitAsync();
+        wizard.Errors.ShouldBe(["Fügen Sie das Dokument „Reisepass“ hinzu."]);
     }
 
     [Fact]

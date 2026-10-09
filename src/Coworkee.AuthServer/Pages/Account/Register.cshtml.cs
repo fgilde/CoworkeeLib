@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Coworkee.Application.Registration;
+using Coworkee.AuthServer.External;
 using Coworkee.AuthServer.Registration;
 using Coworkee.Contracts.Configuration;
 using Coworkee.Core.Security;
@@ -7,6 +8,7 @@ using Coworkee.Identity.Domain;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.Settings;
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -18,8 +20,9 @@ using static Coworkee.AuthServer.AuthTexts;
 namespace Coworkee.AuthServer.Pages.Account;
 
 public sealed class RegisterModel(
-    AccountRegistration registration, UserManager<User> users, CoworkeeDbContext db, ISettingProvider settings, ITenantDirectory tenants,
-    IOptions<RegistrationOptions> options, IOptions<AuthServerOptions> auth, IDataProtectionProvider protection, IEnumerable<IRegistrationDocumentStore> stores) : PageModel
+    AccountRegistration registration, UserManager<User> users, SignInManager<User> signIn, ExternalSignIn external, CoworkeeDbContext db, ISettingProvider settings,
+    ITenantDirectory tenants, IOptions<RegistrationOptions> options, IOptions<AuthServerOptions> auth, IDataProtectionProvider protection,
+    IEnumerable<IRegistrationDocumentStore> stores) : PageModel
 {
     private readonly ITimeLimitedDataProtector _protector = protection.CreateProtector("Coworkee.Registration").ToTimeLimitedDataProtector();
     private Guid _tenantId;
@@ -56,14 +59,30 @@ public sealed class RegisterModel(
         return Page();
     }
 
+    /// <summary>The completion step of an external sign-up: takes the login over from the external cookie into the state.</summary>
+    public async Task<IActionResult> OnGetExternalAsync(string? returnUrl)
+    {
+        var login = await signIn.GetExternalLoginInfoAsync();
+        await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+        if (login is null || (await external.FindOrCreateAsync(login, HttpContext.RequestAborted)).Error?.Code != ExternalSignIn.CompletionRequired
+            || !await LoadAsync(external: true))
+        {
+            return RedirectToPage("Login", new { returnUrl });
+        }
+
+        Input = ExternalSignIn.Prefill(login, returnUrl);
+        Step = Steps[0];
+        return Page();
+    }
+
     public async Task<IActionResult> OnPostAsync(string? nav)
     {
-        if (!await LoadAsync())
+        var data = Restore() ?? new RegistrationInput();
+        if (!await LoadAsync(data.External is not null))
         {
             return NotFound();
         }
 
-        var data = Restore() ?? new RegistrationInput();
         var index = Math.Max(0, Steps.ToList().IndexOf(Step));
         data.Apply(Steps[index], Input);
         (Input, Step) = (data, Steps[index]);
@@ -89,10 +108,10 @@ public sealed class RegisterModel(
         return await RegisterAsync();
     }
 
-    private async Task<bool> LoadAsync()
+    private async Task<bool> LoadAsync(bool external = false)
     {
         var policy = await RegistrationPolicy.LoadAsync(settings, HttpContext.RequestAborted);
-        if (!policy.Enabled || (auth.Value.External.Mode == LoginMode.External && auth.Value.External.Providers.Count > 0)
+        if (!policy.Enabled || (!external && auth.Value.External.Mode == LoginMode.External && auth.Value.External.Providers.Count > 0)
             || await tenants.GetSystemTenantIdAsync(HttpContext.RequestAborted) is not { } tenantId)
         {
             return false;
@@ -104,11 +123,8 @@ public sealed class RegisterModel(
         }
 
         _tenantId = tenantId;
-        using var anyTenant = CurrentUserScope.Begin(new ImpersonatedUser(null, tenantId));
-        Roles = await db.Set<Role>().AsNoTracking()
-            .Where(r => r.SelectableForRegistration && !r.IsSystem && (r.TenantId == null || r.TenantId == tenantId))
-            .OrderBy(r => r.Name).ToListAsync(HttpContext.RequestAborted);
-        Steps = RegistrationSteps.For(Options, Roles.Count > 0);
+        Roles = await registration.SelectableRolesAsync(tenantId, HttpContext.RequestAborted);
+        Steps = RegistrationSteps.For(Options, Roles.Count > 0, external);
         return true;
     }
 
@@ -157,13 +173,20 @@ public sealed class RegisterModel(
     private async Task<IActionResult> RegisterAsync()
     {
         var cancellationToken = HttpContext.RequestAborted;
+        var login = Input.External;
         var user = new User
         {
             TenantId = _tenantId, UserName = Input.Email, Email = Input.Email, FirstName = Input.FirstName, LastName = Input.LastName, PhoneNumber = Input.PhoneNumber,
             Street = Input.Street, ZipCode = Input.ZipCode, City = Input.City, Country = Input.Country,
+            EmailConfirmed = login is not null, // the provider verified the address
         };
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(user.Id, _tenantId));
-        var created = await registration.CreateAsync(user, Input.Password, await RegistrationPolicy.LoadAsync(settings, cancellationToken));
+        var created = await registration.CreateAsync(user, login is null ? Input.Password : null, await RegistrationPolicy.LoadAsync(settings, cancellationToken));
+        if (created.Succeeded && login is not null)
+        {
+            created = await users.AddLoginAsync(user, new UserLoginInfo(login.Provider, login.Key, login.DisplayName));
+        }
+
         if (!created.Succeeded)
         {
             Errors.AddRange(created.Errors.Select(e => e.Code is "DuplicateEmail" or "DuplicateUserName"
@@ -180,6 +203,14 @@ public sealed class RegisterModel(
 
         await registration.AnnounceAsync(user, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
+        if (login is not null && user.IsActive)
+        {
+            await signIn.SignInAsync(user, isPersistent: false, login.Provider);
+            user.LastLoginAt = DateTimeOffset.UtcNow;
+            await db.SaveChangesAsync(cancellationToken);
+            return LocalRedirect(Url.IsLocalUrl(Input.ReturnUrl) ? Input.ReturnUrl : "/");
+        }
+
         Registered = user;
         return Page();
     }

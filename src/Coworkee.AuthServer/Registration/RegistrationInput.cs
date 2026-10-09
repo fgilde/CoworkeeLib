@@ -25,6 +25,11 @@ public sealed class RegistrationInput
 
     public List<Guid> RoleIds { get; set; } = [];
 
+    /// <summary>The provider login of an external sign-up being completed; never bound from the form, only restored from the state.</summary>
+    public ExternalAccount? External { get; set; }
+
+    public string? ReturnUrl { get; set; }
+
     /// <summary>Takes the fields of <paramref name="step"/> from what was posted.</summary>
     public void Apply(string step, RegistrationInput posted)
     {
@@ -45,3 +50,5 @@ public sealed class RegistrationInput
 
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
+
+public sealed record ExternalAccount(string Provider, string Key, string? DisplayName);
