@@ -8,7 +8,7 @@ namespace Coworkee.Client.Blazor.Pages;
 
 public partial class Profile
 {
-    private static readonly string[] BuiltIn = [string.Empty, "security", "notifications", "settings"];
+    private static readonly string[] BuiltIn = [string.Empty, "security", "notifications", "settings", "privacy"];
     private List<ProfileTab> _extra = [];
     private bool _ready;
     private bool _activated;

@@ -44,6 +44,22 @@ public sealed class ProfileTests : ClientTestBase
         page.WaitForAssertion(() => page.Find("[data-testid='profile-security']"));
     }
 
+    [Fact]
+    public async Task Deleting_the_account_waits_for_the_own_address_and_signs_out()
+    {
+        Api.GetMyProfileAsync(Arg.Any<CancellationToken>()).Returns(new ProfileDto("ada@acme.test", "Ada", null, null));
+        Api.LogoutAsync(Arg.Any<CancellationToken>()).Returns(new BffLogoutDto("/signed-out"));
+        var page = Render<ProfilePrivacy>();
+        var delete = () => page.Find("[data-testid='delete-account']");
+
+        page.WaitForAssertion(() => delete().HasAttribute("disabled").ShouldBeTrue());
+        page.Find("input[type='email']").Input("ADA@acme.test");
+        await delete().ClickAsync(new());
+
+        await Api.Received(1).DeleteMyAccountAsync("ADA@acme.test", Arg.Any<CancellationToken>());
+        await Api.Received(1).LogoutAsync(Arg.Any<CancellationToken>());
+    }
+
     // first name, last name, phone, street, zip code, city, country; the object edit's own filter box is left out
     private static List<AngleSharp.Dom.IElement> Fields(IRenderedComponent<Profile> page) =>
         [.. page.FindAll("form input[type='text'], form input[type='tel']").Where(i => i.GetAttribute("placeholder") != "Filter")];

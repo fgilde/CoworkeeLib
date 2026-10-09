@@ -27,6 +27,13 @@ public interface ICoworkeeApi
     /// <summary>Sets the own profile picture (data URL) or removes it with null.</summary>
     Task<ProfileDto> SetMyAvatarAsync(string? dataUrl, CancellationToken cancellationToken = default);
 
+    /// <summary>The own personal data as JSON, one section per module.</summary>
+    Task<string> ExportMyPersonalDataAsync(CancellationToken cancellationToken = default);
+
+    Task DeleteMyAccountAsync(string email, CancellationToken cancellationToken = default);
+
+    Task DeleteUserAsync(Guid userId, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<UserCardDto>> GetUserCardsAsync(IReadOnlyList<Guid> userIds, CancellationToken cancellationToken = default);
 
     Task<UserDetailDto> GetUserDetailAsync(Guid userId, CancellationToken cancellationToken = default);

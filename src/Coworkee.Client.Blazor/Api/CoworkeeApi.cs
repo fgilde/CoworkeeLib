@@ -36,6 +36,18 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
     public Task<ProfileDto> SetMyAvatarAsync(string? dataUrl, CancellationToken cancellationToken = default) =>
         SendAsync<ProfileDto>(HttpMethod.Put, $"{Identity}/me/avatar", new SetAvatarRequest(dataUrl), cancellationToken);
 
+    public async Task<string> ExportMyPersonalDataAsync(CancellationToken cancellationToken = default)
+    {
+        using var response = await SendContentAsync(HttpMethod.Get, $"{Identity}/me/personal-data", null, cancellationToken);
+        return await response.Content.ReadAsStringAsync(cancellationToken);
+    }
+
+    public Task DeleteMyAccountAsync(string email, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Post, $"{Identity}/me/delete", new DeleteAccountRequest(email), cancellationToken);
+
+    public Task DeleteUserAsync(Guid userId, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Delete, $"{Identity}/users/{userId}", null, cancellationToken);
+
     public async Task<IReadOnlyList<UserCardDto>> GetUserCardsAsync(IReadOnlyList<Guid> userIds, CancellationToken cancellationToken = default) =>
         await SendAsync<UserCardDto[]>(HttpMethod.Post, $"{Identity}/users/cards", new IdListRequest(userIds), cancellationToken);
 

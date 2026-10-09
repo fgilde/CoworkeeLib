@@ -1,4 +1,5 @@
 using Coworkee.Client.Blazor.Api;
+using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Contracts.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -12,6 +13,10 @@ public partial class UserDetail
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
+
+    [Inject] private IDialogService Dialogs { get; set; } = null!;
+
+    [Inject] private NavigationManager Nav { get; set; } = null!;
 
     [Parameter] public Guid Id { get; set; }
 
@@ -65,6 +70,25 @@ public partial class UserDetail
     private Task UnlockAsync() => RunAsync(() => Api.UnlockUserAsync(Id), "Unlocked.");
 
     private Task SendResetAsync() => RunAsync(() => Api.SendPasswordResetAsync(Id), "Password reset sent.");
+
+    private async Task DeleteAsync()
+    {
+        if (!await Dialogs.ConfirmAsync("Delete user", $"Delete {_user!.Email} and all personal data? This cannot be undone.", "Delete", "Cancel", Icons.Material.Outlined.DeleteForever))
+        {
+            return;
+        }
+
+        try
+        {
+            await Api.DeleteUserAsync(Id);
+            Snackbar.Add("User deleted.", Severity.Success);
+            Nav.NavigateTo("/admin/users");
+        }
+        catch (ApiException exception)
+        {
+            Snackbar.Add(exception.Message, Severity.Error);
+        }
+    }
 
     private Task SetRolesAsync(IReadOnlyCollection<Guid> ids) => RunAsync(() => Api.SetUserRolesAsync(Id, ids.ToList()), "Roles saved.");
 

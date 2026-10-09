@@ -11,6 +11,7 @@
         <MudTabPanel Text="@L["Security"]" Icon="@Icons.Material.Outlined.Security"><ProfileSecurity /></MudTabPanel>
         <MudTabPanel Text="@L["Notifications"]" Icon="@Icons.Material.Outlined.Notifications"><Notifications Embedded="true" /></MudTabPanel>
         <MudTabPanel Text="@L["Settings"]" Icon="@Icons.Material.Outlined.Tune"><UserSettings Embedded="true" /></MudTabPanel>
+        <MudTabPanel Text="@L["Privacy"]" Icon="@Icons.Material.Outlined.PrivacyTip"><ProfilePrivacy /></MudTabPanel>
         @foreach (var tab in _extra)
         {
             <MudTabPanel @key="tab.Key" Text="@L[tab.Title]" Icon="@tab.Icon"><DynamicComponent Type="tab.Component" /></MudTabPanel>

@@ -333,5 +333,12 @@
   "Select an entry to see its details.": "Wählen Sie einen Eintrag, um seine Details zu sehen.",
   "View files": "Dateien ansehen",
   "Upload files": "Dateien hochladen",
-  "Manage files": "Dateien verwalten"
+  "Manage files": "Dateien verwalten",
+  "Privacy": "Datenschutz",
+  "Your data": "Ihre Daten",
+  "Download everything the application stores about you as one JSON file.": "Laden Sie alles, was die Anwendung über Sie speichert, als eine JSON-Datei herunter.",
+  "Download my data": "Meine Daten herunterladen",
+  "Delete account": "Konto löschen",
+  "Your profile, messages, notifications and settings are removed for good. The history of changes keeps what you did, without your name.": "Ihr Profil, Ihre Nachrichten, Benachrichtigungen und Einstellungen werden endgültig entfernt. Der Änderungsverlauf behält, was Sie getan haben, ohne Ihren Namen.",
+  "Enter your e-mail address to confirm": "Geben Sie zur Bestätigung Ihre E-Mail-Adresse ein"
 }

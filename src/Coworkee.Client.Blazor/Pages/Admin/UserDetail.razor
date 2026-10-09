@@ -47,6 +47,8 @@ else
                     <MudStack Row="true" Class="mt-4">
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_busy" data-testid="save-user">Save</MudButton>
                         <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.LockReset" OnClick="SendResetAsync">Send password reset</MudButton>
+                        <MudSpacer />
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Outlined.DeleteForever" OnClick="DeleteAsync" Disabled="_busy" data-testid="delete-user">Delete user</MudButton>
                     </MudStack>
                 </PermissionView>
             </MudPaper>
