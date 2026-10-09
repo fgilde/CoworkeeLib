@@ -27,4 +27,10 @@ With several API instances, set the connection string `redis` for the SignalR ba
 await notifier.NotifyAsync([reviewerId], "review.requested", "Review requested", $"{asset.Name} waits for you", link: $"/assets/{asset.Id}", ct);
 ```
 
+Localizable notifications take the English texts as keys with `{0}` placeholders and the arguments apart; every reader sees them in his language (the texts belong into the app's translations), the digest mail fills them in English:
+
+```csharp
+await notifier.NotifyLocalizedAsync(adminIds, "account.registration", "New registration", "{0} ({1}) waits for activation.", [name, email], $"/admin/users/{id}", ct);
+```
+
 Users see them in the bell of the app bar and on the notifications page, live through SignalR. A daily digest mails unread ones (`Coworkee:Notifications:DigestCron`), with links to `PublicAppUrl`.

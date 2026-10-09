@@ -31,7 +31,11 @@ Defaults for a fresh installation come from configuration, for example `Coworkee
     "Password": { "RequiredLength": 8, "RequireUppercase": true, "RequireLowercase": true, "RequireDigit": true, "RequireNonAlphanumeric": false },
     "RequireDocuments": true,
     "Documents": [
-      { "Name": "Passport", "Description": "A scan of your passport", "ContentTypes": [ "image/*", "application/pdf" ], "MaxSize": 4000000 },
+      {
+        "Name": "Passport", "Description": "A scan of your passport",
+        "Names": { "de": "Reisepass" }, "Descriptions": { "de": "Ein Scan Ihres Reisepasses" },
+        "ContentTypes": [ "image/*", "application/pdf" ], "MaxSize": 4000000
+      },
       { "Name": "Certificate", "Required": false, "ContentTypes": [ "application/pdf" ] }
     ]
   }
@@ -44,7 +48,7 @@ Defaults for a fresh installation come from configuration, for example `Coworkee
 | `AllowedEmails` | patterns with `*` an address must match to register; empty allows all |
 | `Password` | ASP.NET Core Identity's `PasswordOptions`; they apply to every password, also the ones admins set |
 | `RequireDocuments` | shows the document uploads |
-| `Documents` | one slot per document: `Name`, `Description`, `Required` (default `true`), `ContentTypes` (wildcards like `image/*` or `application/vnd.openxmlformats-officedocument.*`, empty accepts all), `MaxSize` in bytes (empty or 0 for no limit) |
+| `Documents` | one slot per document: `Name`, `Description`, `Required` (default `true`), `ContentTypes` (wildcards like `image/*` or `application/vnd.openxmlformats-officedocument.*`, empty accepts all), `MaxSize` in bytes (empty or 0 for no limit); `Names` and `Descriptions` per language (`de-AT` before `de`) for what the user reads, `Name` and `Description` are the fallback and `Name` is what stores file the document under |
 
 ## Roles offered in the registration
 
@@ -63,7 +67,7 @@ public interface IRegistrationDocumentStore
 }
 ```
 
-- **`Coworkee.Files`** brings a default: the files land in *Registrations/{email}*. That folder has a single grant, for the new user through the role *Registration documents* (which may view files); only the user and holders of a global file grant, usually administrators, see it.
+- **`Coworkee.Files`** brings a default: the files land in *Registrations/{email}*. That folder has a single grant, for the new user through the role *Registration documents* (which may view files). Global file grants (`Files.View`, `Files.Manage`) do not reach the *Registrations* tree, neither in the file manager nor through OData; only the user and holders of `Files.Registrations.View` see it. Administrators have it like every permission; grant it to a role for others who check registrations.
 - **Your own store** wins over the default when your module registers it later (`services.AddScoped<IRegistrationDocumentStore, MyStore>()`). An app with its own document module stores them there, for example as documents of the type *Registration*, owned by the user and not public.
 
 Required documents without any store stop the auth server with a clear error.
@@ -95,6 +99,16 @@ On an external sign-in the auth server looks for the user by the linked login, t
 - A local account whose own address is **not confirmed** is never joined: someone may have registered an address that is not theirs. The owner confirms it first.
 - **New accounts** need `AutoProvision` and `Account.AllowRegistration`, and the address must match `Registration:AllowedEmails`. They follow `Account.RegistrationRequiresActivation`: an inactive account waits for an administrator, who gets a notification.
 
+### Completing an external sign-up
+
+When the provider does not deliver everything the registration asks for, a new user goes through a short completion step on the auth server before an account or a session exists. It is the wizard without the account step: the email comes from the provider, the names are filled in from it.
+
+- **Personal data** when the provider sent no first or last name, or `RequireAddress` is on,
+- **Role** when roles are offered for registration,
+- **Documents** when `RequireDocuments` is on.
+
+Without any of these the account is created right away as before. The step reads the login from the external cookie once and then carries it in the encrypted wizard state. The last submit creates the account with the linked login and a confirmed email; without activation the user is signed in and sent back to the app, otherwise the page says that an administrator activates the account.
+
 ## No anonymous pages
 
 `CoworkeeClientOptions.AllowAnonymous = false` sends every visitor who is not signed in from every page of the layout straight to the sign-in, with the page as return address. The setup wizard stays reachable. The BFF and the API keep their own rules either way.
@@ -105,4 +119,11 @@ builder.Services.AddCoworkeeClient(baseAddress, options => options.AllowAnonymou
 
 ## Languages
 
-The account pages follow the browser language (`Accept-Language`). The English text is the key; `Texts/de.json` in `Coworkee.AuthServer` holds German.
+The account pages, including the security pages under *Account/Manage* (change password, two-step verification), follow the browser language (`Accept-Language`). The English text is the key; `Texts/de.json` in `Coworkee.AuthServer` holds German. The document slots take their texts per language from `Names` and `Descriptions`.
+
+The administrators' notification *New registration* is localizable: it is stored with the English texts as keys and the name and email as arguments, and every administrator reads it in the language of the app (`New registration` and `{0} ({1}) waits for activation.` in the app's texts).
+
+## Updating
+
+- `cw.Notifications` gets the column `Arguments` (`text[]`): `dotnet ef migrations add NotificationArguments`.
+- Registration folders of `Coworkee.Files` are no longer visible with `Files.View` alone; roles that should see them need `Files.Registrations.View`.

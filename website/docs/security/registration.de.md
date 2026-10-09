@@ -31,7 +31,11 @@ Standardwerte für eine neue Installation kommen aus der Konfiguration, zum Beis
     "Password": { "RequiredLength": 8, "RequireUppercase": true, "RequireLowercase": true, "RequireDigit": true, "RequireNonAlphanumeric": false },
     "RequireDocuments": true,
     "Documents": [
-      { "Name": "Passport", "Description": "A scan of your passport", "ContentTypes": [ "image/*", "application/pdf" ], "MaxSize": 4000000 },
+      {
+        "Name": "Passport", "Description": "A scan of your passport",
+        "Names": { "de": "Reisepass" }, "Descriptions": { "de": "Ein Scan Ihres Reisepasses" },
+        "ContentTypes": [ "image/*", "application/pdf" ], "MaxSize": 4000000
+      },
       { "Name": "Certificate", "Required": false, "ContentTypes": [ "application/pdf" ] }
     ]
   }
@@ -44,7 +48,7 @@ Standardwerte für eine neue Installation kommen aus der Konfiguration, zum Beis
 | `AllowedEmails` | Muster mit `*`, zu denen eine Adresse passen muss, um sich zu registrieren; leer erlaubt alle |
 | `Password` | die `PasswordOptions` von ASP.NET Core Identity; sie gelten für jedes Passwort, auch für die von Admins gesetzten |
 | `RequireDocuments` | zeigt die Dokument-Uploads |
-| `Documents` | ein Slot je Dokument: `Name`, `Description`, `Required` (Standard `true`), `ContentTypes` (Platzhalter wie `image/*` oder `application/vnd.openxmlformats-officedocument.*`, leer nimmt alle), `MaxSize` in Bytes (leer oder 0 ohne Grenze) |
+| `Documents` | ein Slot je Dokument: `Name`, `Description`, `Required` (Standard `true`), `ContentTypes` (Platzhalter wie `image/*` oder `application/vnd.openxmlformats-officedocument.*`, leer nimmt alle), `MaxSize` in Bytes (leer oder 0 ohne Grenze); `Names` und `Descriptions` je Sprache (`de-AT` vor `de`) für das, was der Benutzer liest, `Name` und `Description` sind der Rückfall, und unter `Name` legen Stores das Dokument ab |
 
 ## Rollen in der Registrierung
 
@@ -63,7 +67,7 @@ public interface IRegistrationDocumentStore
 }
 ```
 
-- **`Coworkee.Files`** bringt einen Standard mit: die Dateien landen in *Registrations/{E-Mail}*. Der Ordner hat genau eine Freigabe, für den neuen Benutzer über die Rolle *Registration documents* (darf Dateien sehen); nur der Benutzer und Inhaber einer globalen Datei-Berechtigung, meist Administratoren, sehen ihn.
+- **`Coworkee.Files`** bringt einen Standard mit: die Dateien landen in *Registrations/{E-Mail}*. Der Ordner hat genau eine Freigabe, für den neuen Benutzer über die Rolle *Registration documents* (darf Dateien sehen). Globale Datei-Berechtigungen (`Files.View`, `Files.Manage`) reichen nicht in den Baum *Registrations*, weder in der Dateiverwaltung noch über OData; nur der Benutzer und Inhaber von `Files.Registrations.View` sehen ihn. Administratoren haben sie wie jede Berechtigung; für andere, die Registrierungen prüfen, vergeben Sie sie an eine Rolle.
 - **Ein eigener Store** gewinnt gegen den Standard, wenn Ihr Modul ihn später registriert (`services.AddScoped<IRegistrationDocumentStore, MyStore>()`). Eine App mit eigenem Dokumentenmodul legt sie dort ab, zum Beispiel als Dokumente vom Typ *Registration*, im Besitz des Benutzers und nicht öffentlich.
 
 Verlangte Dokumente ohne jeden Store halten den Auth-Server mit einer klaren Fehlermeldung an.
@@ -95,6 +99,16 @@ Bei einer externen Anmeldung sucht der Auth-Server den Benutzer über den verkn�
 - Ein lokales Konto, dessen eigene Adresse **nicht bestätigt** ist, wird nie verknüpft: jemand könnte eine fremde Adresse registriert haben. Der Inhaber bestätigt sie zuerst.
 - **Neue Konten** brauchen `AutoProvision` und `Account.AllowRegistration`, und die Adresse muss zu `Registration:AllowedEmails` passen. Sie folgen `Account.RegistrationRequiresActivation`: ein inaktives Konto wartet auf einen Administrator, der benachrichtigt wird.
 
+### Externe Registrierung vervollständigen
+
+Liefert der Anbieter nicht alles, was die Registrierung verlangt, geht ein neuer Benutzer durch einen kurzen Schritt auf dem Auth-Server, bevor ein Konto oder eine Sitzung entsteht. Es ist der Assistent ohne den Kontoschritt: die E-Mail kommt vom Anbieter, die Namen werden daraus vorbelegt.
+
+- **Persönliche Daten**, wenn der Anbieter keinen Vor- oder Nachnamen geschickt hat oder `RequireAddress` an ist,
+- **Rolle**, wenn Rollen zur Registrierung angeboten werden,
+- **Dokumente**, wenn `RequireDocuments` an ist.
+
+Trifft nichts davon zu, entsteht das Konto wie bisher sofort. Der Schritt liest den Login einmal aus dem externen Cookie und trägt ihn dann im verschlüsselten Zustand des Assistenten. Das letzte Absenden legt das Konto mit verknüpftem Login und bestätigter E-Mail an; ohne Freischaltung wird der Benutzer angemeldet und zurück zur App geschickt, sonst sagt die Seite, dass ein Administrator das Konto freischaltet.
+
 ## Keine anonymen Seiten
 
 `CoworkeeClientOptions.AllowAnonymous = false` schickt jeden nicht angemeldeten Besucher von jeder Seite des Layouts direkt zur Anmeldung, mit der Seite als Rücksprungadresse. Der Einrichtungsassistent bleibt erreichbar. BFF und API behalten ihre eigenen Regeln.
@@ -105,4 +119,11 @@ builder.Services.AddCoworkeeClient(baseAddress, options => options.AllowAnonymou
 
 ## Sprachen
 
-Die Kontoseiten folgen der Browsersprache (`Accept-Language`). Der englische Text ist der Schlüssel; `Texts/de.json` in `Coworkee.AuthServer` enthält Deutsch.
+Die Kontoseiten, auch die Sicherheitsseiten unter *Account/Manage* (Passwort ändern, Bestätigung in zwei Schritten), folgen der Browsersprache (`Accept-Language`). Der englische Text ist der Schlüssel; `Texts/de.json` in `Coworkee.AuthServer` enthält Deutsch. Die Dokument-Slots nehmen ihre Texte je Sprache aus `Names` und `Descriptions`.
+
+Die Benachrichtigung *Neue Registrierung* an die Administratoren ist lokalisierbar: sie wird mit den englischen Texten als Schlüssel und Name und E-Mail als Argumenten gespeichert, und jeder Administrator liest sie in der Sprache der App (`New registration` und `{0} ({1}) waits for activation.` in den Texten der App).
+
+## Aktualisieren
+
+- `cw.Notifications` bekommt die Spalte `Arguments` (`text[]`): `dotnet ef migrations add NotificationArguments`.
+- Registrierungsordner von `Coworkee.Files` sind mit `Files.View` allein nicht mehr sichtbar; Rollen, die sie sehen sollen, brauchen `Files.Registrations.View`.

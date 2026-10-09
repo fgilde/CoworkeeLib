@@ -10,6 +10,7 @@ public sealed class MyAppDatabaseModule : CoworkeeModule;
 - Seite `/files` (`Files.View`) mit `MudExFileManager`: Ordnerbaum, Dateien als Kacheln oder Liste, Drag-and-drop zum Verschieben und Hochladen. Ein Doppelklick öffnet die Datei in `MudExFileDisplay` in einem Seitenblatt.
 - `Files.View` liest, `Files.Upload` lädt hoch und legt Ordner an, `Files.Manage` benennt um, verschiebt und löscht. Wer eine Datei hochgeladen hat, darf sie selbst umbenennen, verschieben und löschen.
 - Pro Ordner: eine Rolle auf den Ressourcentyp `FileFolder` vergeben (`ResourcePermissionsPanel ResourceType="FileFolder"`); die Freigabe gilt für alle Unterordner. Die oberste Ebene braucht eine globale Berechtigung; ohne sie listet sie die für den Benutzer freigegebenen Ordner.
+- Der Baum *Registrations* mit den Registrierungsdokumenten liegt außerhalb globaler Berechtigungen: nur `Files.Registrations.View` (Administratoren) und die Freigabe jedes Benutzers auf seinen eigenen Ordner öffnen ihn. Auch die OData-Sets lassen ihn aus.
 - Löschen ist ein Soft Delete des Ordners mit allem darunter; die Blobs bleiben erhalten. Jede Änderung landet im Audit-Log und geht über die Realtime-Topics `type:StoredFile` und `type:FileFolder` raus.
 - OData-Sets `StoredFiles` und `FileFolders` (`Files.View`) für Suche und Filter.
 - Ein Upload ist der rohe Request-Body; er wird in eine temporäre Datei und von dort in den Speicher gestreamt. Die Grenze ist `Coworkee:Files:MaxFileSize` (Bytes, Standard 2 GB).
