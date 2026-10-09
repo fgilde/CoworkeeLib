@@ -97,20 +97,21 @@ builder.Services.AddCoworkeeSettings<ShopSettings>(section: "Shop", title: "Shop
 | `Lock(s => s.A.B)` | der Wert ist nur lesbar; der Server behält, was gilt, egal was kommt. Ein gesperrtes Objekt sperrt alle seine Eigenschaften |
 | `Hide(s => s.A.B)` | der Wert wird weder an den Browser geschickt noch geändert |
 | Geheimnisse | Eigenschaften, die wie Passwort, Secret, API-Key, Token oder Connection String heißen, kommen maskiert; die Maske zurückzuschicken behält den gespeicherten Wert |
-| Meta | das `meta` des Clients gruppiert, beschriftet, sortiert oder rendert Eigenschaften wie in jedem `MudExObjectEditForm`; Sperren und Ausblendungen des Servers gelten zusätzlich. Das Formular zeigt jeden Abschnitt unter seiner Überschrift in zwei Spalten (Listen über die volle Breite); `WrapInMudItem(i => i.md = 12)` verbreitert ein einzelnes Feld |
+| Meta | das `meta` des Clients gruppiert, beschriftet, sortiert oder rendert Eigenschaften wie in jedem `MudExObjectEditForm`; Sperren und Ausblendungen des Servers gelten zusätzlich. Das Formular zeigt jeden Abschnitt unter seiner Überschrift in zwei Spalten (Listen über die volle Breite); `WrapInMudItem(i => i.md = 12)` verbreitert ein einzelnes Feld. Berechnete Eigenschaften (ohne Setter) entfallen, Felder haben kein eigenes Zurücksetzen; ein Listeneintrag in seinem Dialog (etwa ein Registrierungsdokument) folgt denselben Regeln |
 | Gültigkeit | typisierte Einstellungen gelten für die ganze Installation und werden nur in der System-Organisation bearbeitet; Werte pro Mandant und Benutzer sind Einstellungen (oben) |
 
 **Standardwerte wiederherstellen** verwirft die in der App geänderten Werte; appsettings und Umgebung gelten wieder.
 
-### Editoren für Dateitypen, Größen und Zeitpläne
+### Editoren für Dateitypen, Größen, Zeitpläne und Übersetzungen
 
-Drei Attribute aus `Coworkee.Contracts.Configuration` wählen für eine Eigenschaft einen passenderen Editor, auf der Einstellungsseite und in jedem anderen Objektformular der App:
+Vier Attribute aus `Coworkee.Contracts.Configuration` wählen für eine Eigenschaft einen passenderen Editor, auf der Einstellungsseite und in jedem anderen Objektformular der App:
 
 | Attribut | Eigenschaft | Editor |
 |---|---|---|
 | `[ContentTypes]` | `List<string>` oder `string[]` mit MIME-Typen | Chips mit lesbaren Namen und Symbolen; gängige Typen und Gruppen (Bilder, PDF, Office-Dokumente, Videos, Audio, Archive) zur Auswahl, andere wie `image/x-icon` werden eingetippt. Leer erlaubt jeden Typ |
 | `[FileSize]` | `long?` oder `long` in Bytes | eine Zahl in KB, MB oder GB; leer heißt keine Begrenzung |
 | `[Cron]` | `string` mit einem Cron-Ausdruck | Vorlagen (alle paar Minuten, stündlich, täglich, wöchentlich, monatlich) und der Ausdruck selbst, in Worten beschrieben (UTC); ein ungültiger Ausdruck wird nicht übernommen |
+| `[Translations]` | `Dictionary<string, string>` von Kultur zu Text | eine Zeile pro Sprache mit Name und Code; die Sprachen der App zur Auswahl, andere Kulturcodes wie `fr-CA` werden eingetippt, Zeilen per Button entfernt |
 
 ```csharp title="Contracts"
 public sealed class ImportSettings
@@ -123,10 +124,13 @@ public sealed class ImportSettings
 
     [FileSize]
     public long? MaxFileSize { get; set; } = 10 * 1024 * 1024;
+
+    [Translations]
+    public Dictionary<string, string> Titles { get; set; } = [];
 }
 ```
 
-Die eingebauten Einstellungen nutzen sie für die Registrierungsdokumente (`Registration:Documents`) und die Uhrzeit der Zusammenfassung (`Notifications:DigestCron`). Ein `RenderWith` in der Client-`meta` hat weiterhin Vorrang vor dem Attribut.
+Die eingebauten Einstellungen nutzen sie für die Registrierungsdokumente (`Registration:Documents`, mit Namen und Beschreibungen pro Sprache) und die Uhrzeit der Zusammenfassung (`Notifications:DigestCron`). Ein `RenderWith` in der Client-`meta` hat weiterhin Vorrang vor dem Attribut.
 
 ### Weitere Abschnitte
 

@@ -31,9 +31,11 @@ public sealed class RegistrationDocumentSlot
     public string? Description { get; set; }
 
     /// <summary>The name per language ("de": "Reisepass"); <see cref="Name"/> is the fallback and what stores file the document under.</summary>
+    [Translations]
     public Dictionary<string, string> Names { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>The description per language; <see cref="Description"/> is the fallback.</summary>
+    [Translations]
     public Dictionary<string, string> Descriptions { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     public bool Required { get; set; } = true;
@@ -51,6 +53,10 @@ public sealed class RegistrationDocumentSlot
 
     public string? DisplayDescription => InLanguage(Descriptions) ?? Description;
 
+    public override string ToString() => DisplayName;
+
     private static string? InLanguage(Dictionary<string, string> texts) =>
-        texts.GetValueOrDefault(CultureInfo.CurrentUICulture.Name) ?? texts.GetValueOrDefault(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+        Text(texts, CultureInfo.CurrentUICulture.Name) ?? Text(texts, CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+
+    private static string? Text(Dictionary<string, string> texts, string culture) => texts.GetValueOrDefault(culture) is { Length: > 0 } text ? text : null;
 }

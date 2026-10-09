@@ -21,6 +21,20 @@ public sealed class ComponentReplacementOptions
         return this;
     }
 
+    /// <summary>Replaces every closed form of a generic component, like MudExObjectEditDialog&lt;&gt; with a derived Dialog&lt;&gt;.</summary>
+    public ComponentReplacementOptions ReplaceGeneric(Type original, Type replacement)
+    {
+        if (!original.IsGenericTypeDefinition || !replacement.IsGenericTypeDefinition)
+        {
+            throw new ArgumentException($"{original.Name} and {replacement.Name} must be open generic types.");
+        }
+
+        _replacements[original] = replacement;
+        return this;
+    }
+
     public Type Resolve(Type componentType) =>
-        _replacements.TryGetValue(componentType, out var replacement) ? Resolve(replacement) : componentType;
+        _replacements.TryGetValue(componentType, out var replacement) ? Resolve(replacement)
+        : componentType.IsConstructedGenericType && _replacements.TryGetValue(componentType.GetGenericTypeDefinition(), out var open) ? Resolve(open.MakeGenericType(componentType.GenericTypeArguments))
+        : componentType;
 }

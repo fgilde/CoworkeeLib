@@ -1,5 +1,6 @@
 using Bunit;
 using Coworkee.Client.Blazor.Components;
+using Coworkee.Client.Blazor.Components.Editors;
 using Coworkee.Client.Blazor.Navigation;
 using Coworkee.Client.Blazor.Pages.Admin;
 using Coworkee.Contracts.Identity;
@@ -78,5 +79,37 @@ public sealed class LocalizationTests : ClientTestBase
         await page.Find("[data-culture='fr-CH'] input[type='checkbox']").ChangeAsync(new ChangeEventArgs { Value = true });
 
         await Localization.Received(1).SetLanguageEnabledAsync("fr-CH", true, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Translations_editor_shows_a_row_per_language_adds_typed_cultures_and_removes_rows()
+    {
+        // here, as the languages of the app set the process culture other test classes would race with
+        await Services.GetRequiredService<Localization.CoworkeeLocalizer>().InitializeAsync(null);
+        IReadOnlyDictionary<string, string>? value = new Dictionary<string, string> { ["de"] = "Reisepass" };
+        Render<MudPopoverProvider>();
+        var editor = Render<TranslationsEditor>(p => p.Add(e => e.Value, value).Add(e => e.ValueChanged, v => value = v));
+
+        editor.Find("[data-culture='de']").TextContent.ShouldContain("Deutsch");
+        editor.Find("[data-culture='de'] input").Change("Pass");
+        value.ShouldBe(new Dictionary<string, string> { ["de"] = "Pass" });
+
+        await AddLanguageAsync(editor, "fr-CA");
+        editor.WaitForAssertion(() => value.Keys.ShouldBe(["de", "fr-CA"]));
+        editor.Find("[data-culture='fr-CA'] input").Change("Passeport");
+        value["fr-CA"].ShouldBe("Passeport");
+
+        await AddLanguageAsync(editor, "not a language");
+        editor.WaitForAssertion(() => editor.Markup.ShouldContain("Not a language code"));
+
+        await editor.Find("[data-culture='de'] [data-testid='translation-remove']").ClickAsync(new());
+        value.Keys.ShouldBe(["fr-CA"]);
+    }
+
+    private static async Task AddLanguageAsync(IRenderedComponent<TranslationsEditor> editor, string text)
+    {
+        const string input = "input[data-testid='translation-language'], [data-testid='translation-language'] input";
+        editor.Find(input).Input(text);
+        await editor.Find(input).KeyDownAsync(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Key = "Enter" });
     }
 }

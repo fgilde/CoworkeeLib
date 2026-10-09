@@ -1,0 +1,42 @@
+<MudStack Spacing="2" Class="my-2" data-testid="translations">
+    @if (Label is not null)
+    {
+        <MudText Typo="Typo.caption" Class="mud-text-secondary">@Label</MudText>
+    }
+    @foreach (var (culture, text) in Texts)
+    {
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" data-culture="@culture">
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Class="ma-0" Style="min-width:3.5rem">@culture</MudChip>
+            <MudTextField T="string" Value="text" ValueChanged="v => SetAsync(culture, v)" Label="@LanguageName(culture)" ReadOnly="ReadOnly"
+                          Variant="Variant.Outlined" Margin="Density.Margin" Immediate="false" Class="flex-grow-1" data-testid="translation-text" />
+            @if (!ReadOnly)
+            {
+                <MudTooltip Text="@L["Remove language"]">
+                    <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Density.Size" OnClick="() => RemoveAsync(culture)" aria-label="@L["Remove language"]" data-testid="translation-remove" />
+                </MudTooltip>
+            }
+        </MudStack>
+    }
+    @if (Texts.Count == 0)
+    {
+        <MudText Typo="Typo.body2" Class="mud-text-secondary" data-testid="translations-none">@L["No translations; the default text applies in every language."]</MudText>
+    }
+    @if (!ReadOnly)
+    {
+        <MudAutocomplete T="string" Value="_input" ValueChanged="SelectAsync" SearchFunc="SearchAsync" CoerceValue="true" ResetValueOnEmptyText="true" Clearable="true"
+                         Placeholder="@L["Add a language, e.g. de or fr-CA"]" Margin="Density.Margin" Dense="Density.Dense" Variant="Variant.Outlined"
+                         Error="_error is not null" ErrorText="@_error" OnKeyDown="KeyDownAsync" Style="max-width:420px"
+                         AdornmentIcon="@Icons.Material.Outlined.Add" OnAdornmentClick="AddInputAsync" data-testid="translation-language">
+            <ItemTemplate>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudText Typo="Typo.body2">@LanguageName(context)</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@context</MudText>
+                </MudStack>
+            </ItemTemplate>
+        </MudAutocomplete>
+    }
+    @if (HelperText is not null)
+    {
+        <MudText Typo="Typo.caption" Class="mud-text-secondary">@HelperText</MudText>
+    }
+</MudStack>
