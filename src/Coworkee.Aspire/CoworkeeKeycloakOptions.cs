@@ -1,3 +1,4 @@
+using Aspire.Hosting.ApplicationModel;
 using Coworkee.Contracts.Configuration;
 
 namespace Aspire.Hosting;
@@ -16,4 +17,6 @@ public sealed class CoworkeeKeycloakOptions
 
     /// <summary>Users of the imported realm; they share one generated password (see the parameter in the dashboard).</summary>
     public List<KeycloakUser> Users { get; } = [];
+
+    internal IResourceBuilder<KeycloakResource>? Resource { get; set; }
 }

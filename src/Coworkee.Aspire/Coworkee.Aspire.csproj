@@ -6,6 +6,8 @@
     <PackageReference Include="Aspire.Hosting.Elasticsearch" />
     <PackageReference Include="CommunityToolkit.Aspire.Hosting.MailPit" />
     <PackageReference Include="Aspire.Hosting.Keycloak" />
+    <PackageReference Include="Aspire.Hosting.Docker" />
+    <PackageReference Include="Npgsql" />
     <ProjectReference Include="..\Coworkee.Contracts\Coworkee.Contracts.csproj" />
   </ItemGroup>
 </Project>

@@ -1,6 +1,8 @@
+using Aspire.Hosting.ApplicationModel;
+
 namespace Aspire.Hosting;
 
-public sealed class CoworkeeAppOptions
+public sealed partial class CoworkeeAppOptions
 {
     /// <summary>Shown on the sign-in page and as name of the web client.</summary>
     public string? DisplayName { get; set; }
@@ -15,6 +17,14 @@ public sealed class CoworkeeAppOptions
     {
         Keycloak = new CoworkeeKeycloakOptions();
         configure?.Invoke(Keycloak);
+        return this;
+    }
+
+    /// <summary>Like <see cref="UseKeycloak(Action{CoworkeeKeycloakOptions}?)"/>, with a Keycloak resource of your own; it gets the realm import.</summary>
+    public CoworkeeAppOptions UseKeycloak(IResourceBuilder<KeycloakResource> keycloak, Action<CoworkeeKeycloakOptions>? configure = null)
+    {
+        UseKeycloak(configure);
+        Keycloak!.Resource = keycloak;
         return this;
     }
 }

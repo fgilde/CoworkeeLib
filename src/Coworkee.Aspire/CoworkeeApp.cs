@@ -1,5 +1,4 @@
 using Aspire.Hosting.ApplicationModel;
-using CommunityToolkit.Aspire.Hosting.MailPit;
 using Coworkee.Aspire.Modules;
 using Coworkee.Aspire.Settings;
 using Microsoft.Extensions.Configuration;
@@ -8,27 +7,28 @@ using Microsoft.Extensions.Hosting;
 namespace Aspire.Hosting;
 
 /// <summary>
-/// A Coworkee application in the app host. Add the services in the order migrations, auth server, apis and workers, web;
+/// A Coworkee application in the app host. Add the services in the order migrations, auth server, apis and workers, web (or all at once with <see cref="AddProjects"/>);
 /// each one gets the infrastructure its Coworkee packages need (database, Redis, mail, search, file storage) and the settings that connect them.
 /// </summary>
-public sealed class CoworkeeApp
+public sealed partial class CoworkeeApp
 {
     private const string Health = "/health";
     private readonly List<IResourceBuilder<ProjectResource>> _apis = [];
-    private IResourceBuilder<RedisResource>? _redis;
-    private IResourceBuilder<MailPitContainerResource>? _mail;
-    private IResourceBuilder<ElasticsearchResource>? _search;
+    private readonly HashSet<Type> _added = [];
 
     internal CoworkeeApp(IDistributedApplicationBuilder builder, string name, CoworkeeAppOptions options)
     {
         (Builder, Name, Options) = (builder, name, options);
-        Server = builder.AddPostgres("postgres");
-        if (Persistent)
+        Modules = BuiltInModules();
+        foreach (var module in options.Disabled)
         {
-            Server.WithDataVolume();
+            Modules.Remove(module);
         }
 
-        Database = Server.AddDatabase(name);
+        if (options.DockerCompose is { } compose)
+        {
+            compose(builder.AddDockerComposeEnvironment("compose"));
+        }
     }
 
     public IDistributedApplicationBuilder Builder { get; }
@@ -37,10 +37,8 @@ public sealed class CoworkeeApp
 
     public CoworkeeAppOptions Options { get; }
 
-    /// <summary>Wait for the server, not the database: the migrations create a missing database, and Aspire 13.6 lost the database state after restarts.</summary>
-    public IResourceBuilder<PostgresServerResource> Server { get; }
-
-    public IResourceBuilder<PostgresDatabaseResource> Database { get; }
+    /// <summary>Wiring by package or project name: a service that references the name gets it, e.g. <c>app.Modules.Add("MyApp.Billing", (app, service) =&gt; service.WithReference(stripe))</c>.</summary>
+    public OrderedDictionary<string, Action<CoworkeeApp, IResourceBuilder<ProjectResource>>> Modules { get; }
 
     public IResourceBuilder<ProjectResource>? Migrations { get; private set; }
 
@@ -56,20 +54,15 @@ public sealed class CoworkeeApp
 
     private bool Persistent => !Builder.Configuration.GetValue<bool>(CoworkeeAppExtensions.EphemeralSetting);
 
-    private string BlobRoot => Options.BlobRoot ?? Path.GetFullPath(Path.Combine(Builder.AppHostDirectory, "..", "..", ".data", "blobs"));
-
-    public IResourceBuilder<RedisResource> Redis => _redis ??= AddRedis();
-
-    public IResourceBuilder<MailPitContainerResource> Mail => _mail ??= Builder.AddMailPit("mail");
-
-    // a small heap keeps development machines responsive and nearly full dev disks do not block shards; the C2 JIT of the bundled JDK crashed (SIGSEGV in PhaseChaitin), so C1 only
-    public IResourceBuilder<ElasticsearchResource> Search => _search ??= AddSearch();
+    private bool LocalDevelopment => Builder.ExecutionContext.IsRunMode && Builder.Environment.IsDevelopment();
 
     public IResourceBuilder<ProjectResource> AddMigrations<TProject>(string suffix = "migrations")
         where TProject : IProjectMetadata, new()
     {
-        Migrations = Builder.AddProject<TProject>($"{Name}-{suffix}").WithReference(Database).WaitFor(Server);
-        return Migrations;
+        Migrations = Builder.AddProject<TProject>($"{Name}-{suffix}").WithReference(AppDatabase, Name);
+        _ = Options.Database is null ? Migrations.WaitFor(Server) : Migrations;
+        AddDatabaseCommands(Migrations);
+        return Added<TProject>(Migrations, suffix);
     }
 
     public IResourceBuilder<ProjectResource> AddAuthServer<TProject>(string suffix = "auth")
@@ -91,7 +84,7 @@ public sealed class CoworkeeApp
             AddKeycloak(auth, keycloak);
         }
 
-        return auth;
+        return Added<TProject>(auth, suffix);
     }
 
     public IResourceBuilder<ProjectResource> AddApi<TProject>(string suffix = "api")
@@ -109,12 +102,12 @@ public sealed class CoworkeeApp
 
         auth.WithSetting(s => s.Coworkee.Auth.ApiScopes[ApiAudience], ApiAudience);
         _apis.Add(api);
-        return api;
+        return Added<TProject>(api, suffix);
     }
 
     /// <summary>A background service: same infrastructure as an api, no public endpoints.</summary>
     public IResourceBuilder<ProjectResource> AddWorker<TProject>(string suffix)
-        where TProject : IProjectMetadata, new() => Service<TProject>(suffix);
+        where TProject : IProjectMetadata, new() => Added<TProject>(Service<TProject>(suffix), suffix);
 
     public IResourceBuilder<ProjectResource> AddWeb<TProject>(string suffix = "web")
         where TProject : IProjectMetadata, new()
@@ -131,6 +124,7 @@ public sealed class CoworkeeApp
             .WithSettings(s => s.Coworkee.Bff.Scopes, ApiAudience)
             .WithSettings(s => s.Coworkee.Bff.ForwardedPrefixes, "/admin/jobs", "/hubs");
         Web = web;
+        AddWebUrls(web);
 
         var redirect = web.GetEndpoint("https");
         auth.WithSetting(s => s.Coworkee.Auth.Clients[0].ClientId, clientId)
@@ -138,92 +132,27 @@ public sealed class CoworkeeApp
             .WithSettings(s => s.Coworkee.Auth.Clients[0].Scopes, ApiAudience)
             .WithSetting(s => s.Coworkee.Auth.Clients[0].RedirectUris[0], ReferenceExpression.Create($"{redirect}/signin-oidc"))
             .WithSetting(s => s.Coworkee.Auth.Clients[0].PostLogoutRedirectUris[0], ReferenceExpression.Create($"{redirect}/signout-callback-oidc"));
-        foreach (var service in _apis.Where(a => CoworkeeModules.Of(a.Resource).Contains(CoworkeeModules.Notifications)))
-        {
-            // links in digest mails lead to the web app
-            service.WithSetting(s => s.Coworkee.Notifications.PublicAppUrl, redirect);
-        }
-
-        return web;
+        return Added<TProject>(web, suffix);
     }
 
     private IResourceBuilder<ProjectResource> Service<TProject>(string suffix)
         where TProject : IProjectMetadata, new()
     {
         var service = Builder.AddProject<TProject>($"{Name}-{suffix}").WithHttpHealthCheck(Health);
-        var modules = CoworkeeModules.Of(service.Resource);
-        if (modules.Contains(CoworkeeModules.Infrastructure))
+        var references = CoworkeeModules.References(service.Resource.GetProjectMetadata().ProjectPath);
+        foreach (var (_, wire) in Modules.Where(m => references.Contains(m.Key)).ToList())
         {
-            service.WithReference(Database);
-            _ = Migrations is { } migrations ? service.WaitForCompletion(migrations) : service.WaitFor(Server);
-        }
-
-        if (modules.Contains(CoworkeeModules.Realtime))
-        {
-            service.WithReference(Redis).WaitFor(Redis);
-        }
-
-        if (modules.Contains(CoworkeeModules.Mailing))
-        {
-            var smtp = Mail.GetEndpoint("smtp");
-            service.WithSetting(s => s.Coworkee.Settings.Defaults["Mail.Smtp.Host"], ReferenceExpression.Create($"{smtp.Property(EndpointProperty.Host)}"))
-                .WithSetting(s => s.Coworkee.Settings.Defaults["Mail.Smtp.Port"], ReferenceExpression.Create($"{smtp.Property(EndpointProperty.Port)}"))
-                .WaitFor(Mail);
-        }
-
-        if (modules.Contains(CoworkeeModules.Storage))
-        {
-            service.WithSetting(s => s.Coworkee.Storage.FileSystem.Root, BlobRoot);
-        }
-
-        if (modules.Contains(CoworkeeModules.Search))
-        {
-            // search may start later: the index is created on first use and index jobs retry
-            service.WithReference(Search);
+            wire(this, service);
         }
 
         return service;
     }
 
-    private void AddKeycloak(IResourceBuilder<ProjectResource> auth, CoworkeeKeycloakOptions options)
+    private IResourceBuilder<ProjectResource> Added<TProject>(IResourceBuilder<ProjectResource> service, string suffix)
     {
-        var realm = options.Realm ?? Name;
-        var clientId = $"{Name}-auth";
-        var secret = Builder.AddParameter($"{Name}-keycloak-client-secret", new GenerateParameterDefault { MinLength = 32, Special = false }, secret: true, persist: true);
-        var password = Builder.AddParameter($"{Name}-keycloak-user-password", new GenerateParameterDefault { MinLength = 16, Special = false }, secret: true, persist: true);
-        var import = KeycloakRealm.Write(Path.Combine(Builder.AppHostDirectory, "obj", "keycloak"), realm, clientId, options.Users);
-
-        Keycloak = Builder.AddKeycloak("keycloak", options.Port)
-            .WithRealmImport(import)
-            .WithEnvironment(KeycloakRealm.ClientSecretVariable, secret)
-            .WithEnvironment(KeycloakRealm.UserPasswordVariable, password);
-        if (Persistent)
-        {
-            Keycloak.WithDataVolume();
-        }
-
-        const string Provider = "keycloak";
-        auth.WaitFor(Keycloak)
-            .WithSetting(s => s.Coworkee.Auth.External.Mode, options.LoginMode.ToString())
-            .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].DisplayName, options.DisplayName)
-            .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].Authority, ReferenceExpression.Create($"{Keycloak.GetEndpoint("http")}/realms/{realm}"))
-            .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].ClientId, clientId)
-            .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].ClientSecret, secret)
-            .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].RequireHttpsMetadata, false);
-    }
-
-    private IResourceBuilder<RedisResource> AddRedis()
-    {
-        var redis = Builder.AddRedis("redis");
-        return Persistent ? redis.WithDataVolume() : redis;
-    }
-
-    private IResourceBuilder<ElasticsearchResource> AddSearch()
-    {
-        var search = Builder.AddElasticsearch("elasticsearch")
-            .WithEnvironment("ES_JAVA_OPTS", "-Xms512m -Xmx512m -XX:TieredStopAtLevel=1")
-            .WithEnvironment("cluster.routing.allocation.disk.threshold_enabled", "false");
-        return Persistent ? search.WithDataVolume() : search;
+        _added.Add(typeof(TProject));
+        Options.Services.GetValueOrDefault(suffix)?.Invoke(service);
+        return service;
     }
 
     private static T Require<T>(T? resource, string add, string caller)

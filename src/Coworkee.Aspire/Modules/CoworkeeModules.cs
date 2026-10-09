@@ -4,7 +4,7 @@ using Aspire.Hosting.ApplicationModel;
 
 namespace Coworkee.Aspire.Modules;
 
-/// <summary>The Coworkee packages a project uses (also transitively), read from its restore output.</summary>
+/// <summary>The Coworkee packages a project uses (also transitively), read from its restore output; <see cref="CoworkeeApp.Modules"/> wires them.</summary>
 public static class CoworkeeModules
 {
     public const string Infrastructure = "Coworkee.Infrastructure";
@@ -18,7 +18,11 @@ public static class CoworkeeModules
 
     public static IReadOnlySet<string> Of(ProjectResource project) => Of(project.GetProjectMetadata().ProjectPath);
 
-    public static IReadOnlySet<string> Of(string projectPath)
+    public static IReadOnlySet<string> Of(string projectPath) =>
+        References(projectPath).Where(n => n.StartsWith("Coworkee.", StringComparison.OrdinalIgnoreCase)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>All packages and projects a project uses, also transitively.</summary>
+    public static IReadOnlySet<string> References(string projectPath)
     {
         var assets = Path.Combine(Path.GetDirectoryName(projectPath)!, "obj", "project.assets.json");
         if (!File.Exists(assets))
@@ -28,8 +32,7 @@ public static class CoworkeeModules
 
         using var document = JsonDocument.Parse(File.ReadAllBytes(assets));
         return document.RootElement.TryGetProperty("libraries", out var libraries)
-            ? libraries.EnumerateObject().Select(l => l.Name.Split('/')[0]).Where(n => n.StartsWith("Coworkee.", StringComparison.OrdinalIgnoreCase))
-                .ToHashSet(StringComparer.OrdinalIgnoreCase)
+            ? libraries.EnumerateObject().Select(l => l.Name.Split('/')[0]).ToHashSet(StringComparer.OrdinalIgnoreCase)
             : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     }
 }
