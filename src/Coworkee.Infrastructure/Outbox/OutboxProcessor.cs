@@ -33,10 +33,19 @@ public sealed partial class OutboxProcessor<TContext>(IServiceScopeFactory scope
             try
             {
                 var type = Type.GetType(message.Type, throwOnError: true)!;
-                var domainEvent = (IDomainEvent)JsonSerializer.Deserialize(message.Payload, type)!;
+                var payload = JsonSerializer.Deserialize(message.Payload, type)!;
                 using var actor = CurrentUserScope.Begin(new ImpersonatedUser(message.ActorId, message.TenantId));
                 await using var handlerScope = scopes.CreateAsyncScope();
-                await DomainEventDispatch.DispatchAsync(domainEvent, handlerScope.ServiceProvider, cancellationToken);
+                if (payload is IDomainEvent domainEvent)
+                {
+                    await DomainEventDispatch.DispatchAsync(domainEvent, handlerScope.ServiceProvider, cancellationToken);
+                }
+
+                foreach (var relay in handlerScope.ServiceProvider.GetServices<IOutboxRelay>())
+                {
+                    await relay.RelayAsync(message, payload, cancellationToken);
+                }
+
                 message.ProcessedAt = clock.GetUtcNow();
             }
             catch (Exception exception) when (exception is not OperationCanceledException)

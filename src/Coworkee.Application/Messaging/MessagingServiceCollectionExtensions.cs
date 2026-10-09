@@ -15,7 +15,7 @@ public static class MessagingServiceCollectionExtensions
     {
         foreach (var type in assembly.GetTypes().Where(t => t is { IsAbstract: false, IsInterface: false, IsGenericTypeDefinition: false }))
         {
-            foreach (var contract in type.GetInterfaces().Where(i => i.IsGenericType && HandlerTypes.Contains(i.GetGenericTypeDefinition())))
+            foreach (var contract in type.GetInterfaces().Where(i => i.IsGenericType && IsHandlerContract(i.GetGenericTypeDefinition())))
             {
                 services.AddScoped(contract, type);
             }
@@ -24,4 +24,7 @@ public static class MessagingServiceCollectionExtensions
         services.AddValidatorsFromAssembly(assembly, ServiceLifetime.Scoped, includeInternalTypes: true);
         return services;
     }
+
+    private static bool IsHandlerContract(Type definition) =>
+        HandlerTypes.Contains(definition) || definition.IsDefined(typeof(HandlerContractAttribute), inherit: false);
 }

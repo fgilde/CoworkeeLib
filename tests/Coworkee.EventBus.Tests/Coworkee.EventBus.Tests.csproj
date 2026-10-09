@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Coworkee.EventBus\Coworkee.EventBus.csproj" />
+    <ProjectReference Include="..\..\src\Coworkee.Testing\Coworkee.Testing.csproj" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+  </ItemGroup>
+</Project>
