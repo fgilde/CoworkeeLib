@@ -16,7 +16,7 @@ public sealed class FilesStructureManager(IFilesApi api, string? accept = null) 
     {
         get
         {
-            var capabilities = MudExFileManagerCapabilities.Read;
+            var capabilities = MudExFileManagerCapabilities.Read | MudExFileManagerCapabilities.Download;
             if (_contents.GetValueOrDefault(CurrentFolderId ?? Guid.Empty) is { } content)
             {
                 capabilities |= content.CanUpload ? MudExFileManagerCapabilities.CreateDirectory | MudExFileManagerCapabilities.Upload : 0;
