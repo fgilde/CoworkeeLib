@@ -50,7 +50,6 @@ public static class CoworkeeClientExtensions
         services.AddScoped<Features.FeatureStore>();
         services.AddScoped<Theming.ThemeService>();
         services.AddCascadingValue(sp => sp.GetRequiredService<Theming.ThemeService>().DensitySource);
-        services.AddScoped(typeof(MudBlazor.Extensions.Components.ObjectEdit.IObjectMetaConfiguration<>), typeof(Theming.DenseObjectEditMeta<>));
         services.AddScoped<Layout.LayoutPreferences>();
         services.AddScoped<Realtime.IRealtimeConnection, Realtime.SignalRRealtimeConnection>();
         services.AddScoped<Realtime.RealtimeClient>();

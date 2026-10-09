@@ -95,26 +95,6 @@ public sealed class ThemeServiceTests
     public void Reads_the_former_DenseTables_option(string options, bool dense) =>
         ThemeMapper.ToTheme(Theme("#123456") with { Options = JsonDocument.Parse(options).RootElement }).Dense.ShouldBe(dense);
 
-    [Theory]
-    [InlineData(true, Margin.Dense)]
-    [InlineData(false, null)]
-    public async Task Object_edit_fields_follow_the_theme_density(bool dense, Margin? expected)
-    {
-        var service = new ThemeService(_api);
-        service.Preview(new CoworkeeTheme { Dense = dense });
-        var meta = new Probe().ObjectEditMeta();
-
-        await new DenseObjectEditMeta<Probe>(service).ConfigureAsync(meta);
-
-        meta.Property(p => p.Name)!.RenderData.Attributes.TryGetValue(nameof(MudTextField<string>.Margin), out var margin);
-        ((Margin?)margin).ShouldBe(expected);
-    }
-
-    public sealed class Probe
-    {
-        public string? Name { get; set; }
-    }
-
     private static ThemeDto Theme(string primary) => new(
         Guid.CreateVersion7(), "Brand", false, true,
         JsonSerializer.SerializeToElement(new Dictionary<string, object> { ["Primary"] = primary, ["HoverOpacity"] = 0.1 }),

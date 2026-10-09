@@ -56,6 +56,15 @@ public sealed partial class AccountPagesTests(AuthApp app) : IAsyncLifetime
         (await app.Browser().GetAsync("/Account/Manage/ChangePassword", Ct)).StatusCode.ShouldNotBe(HttpStatusCode.OK);
 
     [Fact]
+    public async Task The_root_opens_the_account_pages()
+    {
+        using var response = await app.Browser().GetAsync("/", Ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Redirect);
+        response.Headers.Location!.OriginalString.ShouldBe("/Account/Manage");
+    }
+
+    [Fact]
     public async Task Sign_in_records_the_last_login()
     {
         (await app.LastLoginAsync("admin@acme.test")).ShouldBeNull();

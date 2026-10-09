@@ -83,8 +83,6 @@ public static class EditDialogExtensions
     {
         { nameof(MudExObjectEditDialog<TModel>.DialogIcon), Icon(model) },
         { nameof(MudExObjectEditDialog<TModel>.MetaInformation), model.ObjectEditMeta(Grid(meta)) },
-        // so the registered configurations (the theme's density) still apply to the prepared meta
-        { nameof(MudExObjectEditDialog<TModel>.ConfigureMetaInformationAlways), true },
     };
 
     private static string Icon<TModel>(TModel model) =>

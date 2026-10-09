@@ -25,7 +25,7 @@ sequenceDiagram
 | Web | `Coworkee.Bff` | keeps tokens on the server, gives the browser a cookie, forwards `/api`, `/odata`, `/hubs` and `/admin/jobs` |
 | API | `Coworkee.AspNetCore` | validates bearer tokens (`AddCoworkeeApiAuthentication`) |
 
-The browser never sees an access token. Requests from the client carry the `X-CSRF: 1` header, which `ApiClientBase` adds.
+The browser never sees an access token. The sign-in with its tokens lives in a server-side session store (Redis when a `redis` connection string is set, otherwise memory), so the cookie only holds a session key. Requests from the client carry the `X-CSRF: 1` header, which `ApiClientBase` adds.
 
 ## Clients and scopes
 

@@ -128,6 +128,12 @@ public sealed partial class CoworkeeApp
             .WithSettings(s => s.Coworkee.Bff.Scopes, ApiAudience)
             .WithSettings(s => s.Coworkee.Bff.ForwardedPrefixes, "/admin/jobs", "/hubs");
         Web = web;
+        if (_redis is not null || Options.Redis is not null)
+        {
+            // the sign-in sessions survive a restart of the web app and are shared between its instances
+            WireRedis(web);
+        }
+
         AddWebUrls(web);
 
         var redirect = web.GetEndpoint("https");

@@ -7,8 +7,12 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Yarp.ReverseProxy.Transforms;
 
@@ -21,6 +25,8 @@ public static class BffExtensions
     private const string CsrfHeader = "X-CSRF";
 
     private const string SwaggerUi = "/swagger";
+
+    private const string SessionCache = "coworkee:bff:sessions";
 
     public static WebApplicationBuilder AddCoworkeeBff(this WebApplicationBuilder builder)
     {
@@ -91,9 +97,28 @@ public static class BffExtensions
                     };
                 }
             });
+        AddSessionStore(builder);
         builder.Services.AddAuthorization();
         builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationPolicyProvider, ClientPolicyProvider>();
         return builder;
+    }
+
+    // the tokens stay on the server: a cookie carrying them grows past 8 KB, and browsers send it to every localhost port (Keycloak answers 431)
+    private static void AddSessionStore(WebApplicationBuilder builder)
+    {
+        var redis = builder.Configuration.GetConnectionString("redis");
+        builder.Services.AddKeyedSingleton<IDistributedCache>(SessionCache, (_, _) => redis is { Length: > 0 }
+            ? new RedisCache(Options.Create(new RedisCacheOptions { ConfigurationOptions = Reconnecting(redis) }))
+            : new MemoryDistributedCache(Options.Create(new MemoryDistributedCacheOptions())));
+        builder.Services.AddOptions<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme)
+            .Configure<IServiceProvider>((cookie, services) => cookie.SessionStore = new CacheTicketStore(services.GetRequiredKeyedService<IDistributedCache>(SessionCache)));
+    }
+
+    private static StackExchange.Redis.ConfigurationOptions Reconnecting(string redis)
+    {
+        var options = StackExchange.Redis.ConfigurationOptions.Parse(redis);
+        options.AbortOnConnectFail = false;
+        return options;
     }
 
     private static bool IsLocalPath([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] string? url) =>

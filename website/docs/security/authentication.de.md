@@ -25,7 +25,7 @@ sequenceDiagram
 | Web | `Coworkee.Bff` | hält die Tokens auf dem Server, gibt dem Browser ein Cookie, leitet `/api`, `/odata`, `/hubs` und `/admin/jobs` weiter |
 | API | `Coworkee.AspNetCore` | prüft Bearer-Tokens (`AddCoworkeeApiAuthentication`) |
 
-Der Browser sieht nie ein Access-Token. Anfragen des Clients tragen den Header `X-CSRF: 1`, den `ApiClientBase` setzt.
+Der Browser sieht nie ein Access-Token. Die Anmeldung samt Tokens liegt in einem Sitzungsspeicher auf dem Server (Redis, wenn ein Connection String `redis` gesetzt ist, sonst im Speicher), das Cookie enthält nur einen Sitzungsschlüssel. Anfragen des Clients tragen den Header `X-CSRF: 1`, den `ApiClientBase` setzt.
 
 ## Clients und Scopes
 
