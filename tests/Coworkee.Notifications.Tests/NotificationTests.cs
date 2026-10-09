@@ -175,4 +175,34 @@ public sealed class NotificationTests(NotificationApp app) : IAsyncLifetime
         (await Bob.GetFromJsonAsync<UnreadCountDto>("/api/v1/notifications/unread-count", Ct))!.Count.ShouldBe(0);
         (await Admin.GetFromJsonAsync<UnreadCountDto>("/api/v1/notifications/unread-count", Ct))!.Count.ShouldBe(1);
     }
+
+    [Fact]
+    public async Task A_notification_can_be_marked_unread_again_and_deleted_only_by_its_owner()
+    {
+        await app.NotifyAsync(_setup.AdminUserId, _setup.TenantId, _bob.Id);
+        var id = (await Bob.GetFromJsonAsync<PagedResult<NotificationDto>>("/api/v1/notifications", Ct))!.Items.Single().Id;
+        (await Bob.PostAsync($"/api/v1/notifications/{id}/read", null, Ct)).EnsureSuccessStatusCode();
+
+        (await Bob.PostAsync($"/api/v1/notifications/{id}/unread", null, Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await Bob.GetFromJsonAsync<UnreadCountDto>("/api/v1/notifications/unread-count", Ct))!.Count.ShouldBe(1);
+
+        (await Admin.DeleteAsync($"/api/v1/notifications/{id}", Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await Bob.DeleteAsync($"/api/v1/notifications/{id}", Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await Bob.GetFromJsonAsync<PagedResult<NotificationDto>>("/api/v1/notifications", Ct))!.Items.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Delete_all_clears_only_own_notifications_and_the_list_filters_by_type()
+    {
+        await app.NotifyAsync(_setup.AdminUserId, _setup.TenantId, _bob.Id, _setup.AdminUserId);
+        await app.NotifyAsync(_setup.AdminUserId, _setup.TenantId, _bob.Id);
+
+        (await Bob.GetFromJsonAsync<PagedResult<NotificationDto>>("/api/v1/notifications?type=test", Ct))!.TotalCount.ShouldBe(2);
+        (await Bob.GetFromJsonAsync<PagedResult<NotificationDto>>("/api/v1/notifications?type=other", Ct))!.Items.ShouldBeEmpty();
+
+        (await Bob.DeleteAsync("/api/v1/notifications", Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        (await Bob.GetFromJsonAsync<PagedResult<NotificationDto>>("/api/v1/notifications", Ct))!.Items.ShouldBeEmpty();
+        (await Admin.GetFromJsonAsync<UnreadCountDto>("/api/v1/notifications/unread-count", Ct))!.Count.ShouldBe(1);
+    }
 }

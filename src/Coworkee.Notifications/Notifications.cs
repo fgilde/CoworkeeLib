@@ -88,7 +88,7 @@ internal sealed class Notifier(CoworkeeDbContext db, ICurrentUser currentUser, T
     }
 }
 
-public sealed record GetNotifications(bool UnreadOnly, PageRequest Page) : IQuery<Result<PagedResult<NotificationDto>>>;
+public sealed record GetNotifications(bool UnreadOnly, PageRequest Page, string? Type = null) : IQuery<Result<PagedResult<NotificationDto>>>;
 
 public sealed record GetUnreadCount : IQuery<Result<UnreadCountDto>>;
 
@@ -96,11 +96,20 @@ public sealed record MarkNotificationRead(Guid Id) : ICommand<Result>;
 
 public sealed record MarkAllNotificationsRead : ICommand<Result>;
 
+public sealed record MarkNotificationUnread(Guid Id) : ICommand<Result>;
+
+public sealed record DeleteNotification(Guid Id) : ICommand<Result>;
+
+public sealed record DeleteAllNotifications : ICommand<Result>;
+
 internal sealed class NotificationHandlers(CoworkeeDbContext db, ICurrentUser currentUser, TimeProvider clock)
     : IHandler<GetNotifications, Result<PagedResult<NotificationDto>>>,
       IHandler<GetUnreadCount, Result<UnreadCountDto>>,
       IHandler<MarkNotificationRead, Result>,
-      IHandler<MarkAllNotificationsRead, Result>
+      IHandler<MarkAllNotificationsRead, Result>,
+      IHandler<MarkNotificationUnread, Result>,
+      IHandler<DeleteNotification, Result>,
+      IHandler<DeleteAllNotifications, Result>
 {
     public async Task<Result<PagedResult<NotificationDto>>> HandleAsync(GetNotifications query, CancellationToken cancellationToken)
     {
@@ -108,6 +117,11 @@ internal sealed class NotificationHandlers(CoworkeeDbContext db, ICurrentUser cu
         if (query.UnreadOnly)
         {
             mine = mine.Where(n => n.ReadAt == null);
+        }
+
+        if (query.Type is { Length: > 0 } type)
+        {
+            mine = mine.Where(n => n.Type == type);
         }
 
         var page = Math.Max(1, query.Page.Page);
@@ -123,15 +137,19 @@ internal sealed class NotificationHandlers(CoworkeeDbContext db, ICurrentUser cu
     public async Task<Result<UnreadCountDto>> HandleAsync(GetUnreadCount query, CancellationToken cancellationToken) =>
         new UnreadCountDto(await Mine().CountAsync(n => n.ReadAt == null, cancellationToken));
 
-    public async Task<Result> HandleAsync(MarkNotificationRead command, CancellationToken cancellationToken)
-    {
-        var notification = await Mine().SingleOrDefaultAsync(n => n.Id == command.Id, cancellationToken);
-        if (notification is null)
-        {
-            return Error.NotFound("notifications.not_found", "The notification does not exist.");
-        }
+    public Task<Result> HandleAsync(MarkNotificationRead command, CancellationToken cancellationToken) =>
+        WithAsync(command.Id, n => n.ReadAt ??= clock.GetUtcNow(), cancellationToken);
 
-        notification.ReadAt ??= clock.GetUtcNow();
+    public Task<Result> HandleAsync(MarkNotificationUnread command, CancellationToken cancellationToken) =>
+        WithAsync(command.Id, n => n.ReadAt = null, cancellationToken);
+
+    public Task<Result> HandleAsync(DeleteNotification command, CancellationToken cancellationToken) =>
+        WithAsync(command.Id, n => db.Remove(n), cancellationToken);
+
+    // tracked on purpose: every removal reaches the user's open tabs through the realtime topic
+    public async Task<Result> HandleAsync(DeleteAllNotifications command, CancellationToken cancellationToken)
+    {
+        db.RemoveRange(await Mine().ToListAsync(cancellationToken));
         return Result.Success();
     }
 
@@ -143,6 +161,18 @@ internal sealed class NotificationHandlers(CoworkeeDbContext db, ICurrentUser cu
             notification.ReadAt = now;
         }
 
+        return Result.Success();
+    }
+
+    private async Task<Result> WithAsync(Guid id, Action<Notification> change, CancellationToken cancellationToken)
+    {
+        var notification = await Mine().SingleOrDefaultAsync(n => n.Id == id, cancellationToken);
+        if (notification is null)
+        {
+            return Error.NotFound("notifications.not_found", "The notification does not exist.");
+        }
+
+        change(notification);
         return Result.Success();
     }
 
@@ -195,10 +225,13 @@ public sealed class CoworkeeNotificationsModule : CoworkeeModule, IWebModule
     public void ConfigureApplication(WebApplication app)
     {
         var api = app.MapCoworkeeApi("/api/v1/notifications").WithTags("Notifications").RequireAuthorization();
-        api.MapGet("/", (bool? unreadOnly, [AsParameters] PageRequest page, IDispatcher d, CancellationToken ct) =>
-            d.SendAsync(new GetNotifications(unreadOnly == true, page), ct).ToHttpResult());
+        api.MapGet("/", (bool? unreadOnly, string? type, [AsParameters] PageRequest page, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new GetNotifications(unreadOnly == true, page, type), ct).ToHttpResult());
         api.MapGet("/unread-count", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetUnreadCount(), ct).ToHttpResult());
         api.MapPost("/{id:guid}/read", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new MarkNotificationRead(id), ct).ToHttpResult());
         api.MapPost("/read-all", (IDispatcher d, CancellationToken ct) => d.SendAsync(new MarkAllNotificationsRead(), ct).ToHttpResult());
+        api.MapPost("/{id:guid}/unread", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new MarkNotificationUnread(id), ct).ToHttpResult());
+        api.MapDelete("/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteNotification(id), ct).ToHttpResult());
+        api.MapDelete("/", (IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteAllNotifications(), ct).ToHttpResult());
     }
 }

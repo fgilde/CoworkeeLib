@@ -1,92 +1,109 @@
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Realtime;
+using Coworkee.Contracts;
 using Coworkee.Contracts.Notifications;
-using Coworkee.Contracts.Realtime;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
+using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Components;
 
-public partial class NotificationBell : IAsyncDisposable
+/// <summary>The unread count in the app bar, the latest notifications on click and a snackbar for each that arrives.</summary>
+public partial class NotificationBell : IDisposable
 {
+    private const int Latest = 10;
+
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
-    [Inject] private RealtimeClient Realtime { get; set; } = null!;
+    [Inject] private NotificationCenter Center { get; set; } = null!;
 
     [Inject] private NavigationManager Nav { get; set; } = null!;
 
+    [Inject] private ISnackbar Snackbar { get; set; } = null!;
+
     [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
 
-    private int _count;
     private IReadOnlyList<NotificationDto> _items = [];
-    private IAsyncDisposable? _subscription;
-
-    [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
+    private bool _open;
 
     protected override async Task OnInitializedAsync()
     {
-        await RefreshCountAsync();
-        var user = AuthenticationState is null ? null : (await AuthenticationState).User;
-        if (Guid.TryParse(user?.FindFirst("sub")?.Value, out var userId))
-        {
-            _subscription = await Realtime.SubscribeAsync(RealtimeTopics.User(userId), _ => InvokeAsync(async () =>
-            {
-                await RefreshCountAsync();
-                StateHasChanged();
-            }));
-        }
+        Center.Changed += OnChanged;
+        await Center.StartAsync();
     }
 
-    private async Task RefreshCountAsync()
+    private void OnChanged(int arrived) => _ = InvokeAsync(async () =>
+    {
+        if (_open)
+        {
+            await LoadAsync();
+        }
+
+        if (arrived > 0)
+        {
+            await AnnounceAsync(arrived);
+        }
+
+        StateHasChanged();
+    });
+
+    private async Task LoadAsync()
     {
         try
         {
-            _count = (await Api.GetUnreadNotificationCountAsync())?.Count ?? 0;
+            _items = (await Api.GetNotificationsAsync(false, new PageRequest(1, Latest))).Items;
         }
         catch (ApiException)
         {
         }
     }
 
-    private async Task OpenChangedAsync(bool open)
+    private async Task AnnounceAsync(int arrived)
     {
-        if (open)
+        NotificationDto? latest = null;
+        if (arrived == 1)
         {
             try
             {
-                _items = (await Api.GetNotificationsAsync(false, new Coworkee.Contracts.PageRequest(1, 10))).Items;
+                latest = (await Api.GetNotificationsAsync(true, new PageRequest(1, 1))).Items.FirstOrDefault();
             }
             catch (ApiException)
             {
             }
         }
+
+        var text = latest is null ? L["{0} new notifications", arrived] : L.Server(latest.Title, latest.Arguments);
+        Snackbar.Add(text, Severity.Info, options =>
+        {
+            options.Icon = Icons.Material.Outlined.Notifications;
+            options.Action = L["Show"];
+            options.OnClick = _ => latest is null ? NavigateToAll() : Center.OpenAsync(latest);
+        });
     }
 
-    private async Task OpenAsync(NotificationDto item)
+    private Task NavigateToAll()
     {
-        if (item.ReadAt is null)
-        {
-            await Api.MarkNotificationReadAsync(item.Id);
-            await RefreshCountAsync();
-        }
+        Nav.NavigateTo("/notifications");
+        return Task.CompletedTask;
+    }
 
-        if (item.Link is { Length: > 0 } link && link.StartsWith('/') && !link.StartsWith("//", StringComparison.Ordinal))
+    private async Task OpenChangedAsync(bool open)
+    {
+        _open = open;
+        if (open)
         {
-            Nav.NavigateTo(link);
+            await LoadAsync();
         }
     }
+
+    private Task OpenAsync(NotificationDto item) => Center.OpenAsync(item);
 
     private async Task MarkAllAsync()
     {
-        await Api.MarkAllNotificationsReadAsync();
-        await RefreshCountAsync();
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_subscription is not null)
+        if (await Snackbar.RunAsync(() => Api.MarkAllNotificationsReadAsync()))
         {
-            await _subscription.DisposeAsync();
+            await Center.RefreshAsync();
         }
     }
+
+    public void Dispose() => Center.Changed -= OnChanged;
 }

@@ -52,6 +52,7 @@ public static class CoworkeeClientExtensions
         services.AddScoped<Layout.LayoutPreferences>();
         services.AddScoped<Realtime.IRealtimeConnection, Realtime.SignalRRealtimeConnection>();
         services.AddScoped<Realtime.RealtimeClient>();
+        services.AddScoped<Realtime.NotificationCenter>();
         services.AddScoped<BffAuthenticationStateProvider>();
         services.AddScoped<AuthenticationStateProvider>(provider => provider.GetRequiredService<BffAuthenticationStateProvider>());
         services.AddAuthorizationCore();

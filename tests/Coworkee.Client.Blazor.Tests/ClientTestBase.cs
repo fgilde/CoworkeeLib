@@ -26,6 +26,7 @@ public abstract class ClientTestBase : BunitContext
         Services.AddSingleton<FakeRealtimeConnection>();
         Services.AddSingleton<Realtime.IRealtimeConnection>(sp => sp.GetRequiredService<FakeRealtimeConnection>());
         Services.AddScoped<Realtime.RealtimeClient>();
+        Services.AddScoped<Realtime.NotificationCenter>();
         Localization.GetTextsAsync(default!, default).ReturnsForAnyArgs(call => new Contracts.Localization.TextsDto(call.Arg<string>(), new Dictionary<string, string>()));
         Services.AddSingleton(Localization);
         Services.AddSingleton<Localization.CoworkeeLocalizer>();

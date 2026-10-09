@@ -156,6 +156,12 @@ public interface ICoworkeeApi
     Task MarkNotificationReadAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task MarkAllNotificationsReadAsync(CancellationToken cancellationToken = default);
+
+    Task MarkNotificationUnreadAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task DeleteNotificationAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task DeleteAllNotificationsAsync(CancellationToken cancellationToken = default);
 }
 
 public sealed class ApiException(int status, string? code, IReadOnlyDictionary<string, string[]>? errors)

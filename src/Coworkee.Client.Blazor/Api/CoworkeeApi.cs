@@ -233,6 +233,15 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
     public Task MarkAllNotificationsReadAsync(CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Post, "api/v1/notifications/read-all", null, cancellationToken);
 
+    public Task MarkNotificationUnreadAsync(Guid id, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Post, $"api/v1/notifications/{id}/unread", null, cancellationToken);
+
+    public Task DeleteNotificationAsync(Guid id, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Delete, $"api/v1/notifications/{id}", null, cancellationToken);
+
+    public Task DeleteAllNotificationsAsync(CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Delete, "api/v1/notifications", null, cancellationToken);
+
     private static void Add(List<string> parameters, string name, string? value)
     {
         if (!string.IsNullOrWhiteSpace(value))

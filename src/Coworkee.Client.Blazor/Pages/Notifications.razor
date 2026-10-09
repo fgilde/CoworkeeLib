@@ -2,15 +2,16 @@
 @attribute [Authorize]
 @using Coworkee.Contracts.Notifications
 
-<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+<MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-4">
     @if (!Embedded)
     {
-        <PageTitle>Notifications</PageTitle>
-        <MudText Typo="Typo.h4">Notifications</MudText>
+        <PageTitle>@L["Notifications"]</PageTitle>
+        <MudText Typo="Typo.h4">@L["Notifications"]</MudText>
     }
     <MudSpacer />
-    <MudSwitch T="bool" Value="_unreadOnly" ValueChanged="FilterAsync" Label="Unread only" Color="Color.Primary" data-testid="unread-only" />
-    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.DoneAll" OnClick="MarkAllAsync" data-testid="mark-all">Mark all as read</MudButton>
+    <MudSwitch T="bool" Value="_unreadOnly" ValueChanged="FilterAsync" Label="@L["Unread only"]" Color="Color.Primary" data-testid="unread-only" />
+    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.DoneAll" OnClick="MarkAllAsync" Disabled="@(Center.UnreadCount == 0)" data-testid="mark-all">@L["Mark all as read"]</MudButton>
+    <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Outlined.DeleteSweep" OnClick="DeleteAllAsync" Disabled="@(_page is not { TotalCount: > 0 })" data-testid="delete-all">@L["Delete all"]</MudButton>
 </MudStack>
 
 @if (_page is null)
@@ -19,7 +20,7 @@
 }
 else if (_page.Items.Count == 0)
 {
-    <MudAlert Severity="Severity.Info">@(_unreadOnly ? "Nothing unread." : "No notifications yet.")</MudAlert>
+    <MudAlert Severity="Severity.Info">@(_unreadOnly ? L["Nothing unread."] : L["No notifications yet."])</MudAlert>
 }
 else
 {
@@ -27,7 +28,7 @@ else
         <MudList T="string" Dense="false">
             @foreach (var item in _page.Items)
             {
-                <MudListItem T="string" data-notification="@item.Id" OnClick="() => OpenAsync(item)" Icon="@(item.ReadAt is null ? Icons.Material.Filled.Circle : Icons.Material.Outlined.Circle)"
+                <MudListItem T="string" data-notification="@item.Id" OnClick="() => Center.OpenAsync(item)" Icon="@(item.ReadAt is null ? Icons.Material.Filled.Circle : Icons.Material.Outlined.Circle)"
                              IconColor="@(item.ReadAt is null ? Color.Primary : Color.Default)" IconSize="Size.Small">
                     <MudStack Row="true" AlignItems="AlignItems.Center">
                         <div>
@@ -39,10 +40,9 @@ else
                             <MudText Typo="Typo.caption" Class="mud-text-secondary">@item.CreatedAt.ToLocalTime().ToString("g")</MudText>
                         </div>
                         <MudSpacer />
-                        @if (item.ReadAt is null)
-                        {
-                            <MudIconButton Icon="@Icons.Material.Outlined.Done" Size="Size.Small" aria-label="Mark as read" data-testid="mark-read" OnClick="() => MarkAsync(item)" />
-                        }
+                        <span class="d-flex" @onclick:stopPropagation="true">
+                            <NotificationActions Item="item" />
+                        </span>
                     </MudStack>
                 </MudListItem>
                 <MudDivider />

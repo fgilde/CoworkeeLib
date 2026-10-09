@@ -34,3 +34,13 @@ await notifier.NotifyLocalizedAsync(adminIds, "account.registration", "New regis
 ```
 
 Users see them in the bell of the app bar and on the notifications page, live through SignalR. A daily digest mails unread ones (`Coworkee:Notifications:DigestCron`), with links to `PublicAppUrl`.
+
+The bell shows the unread count and the latest ten; a notification that arrives pops up as a snackbar with a link to it. Clicking one marks it read and opens its link (only pages of the app). Each can be marked read or unread again and deleted; the bell marks all as read, the page `/notifications` (also a tab of `/profile`) pages through all or only the unread ones and deletes all. Every change reaches all open tabs of the user at once: the client's `NotificationCenter` holds the unread count and raises `Changed` once per burst, also after "mark all as read".
+
+| Endpoint | |
+|---|---|
+| `GET /api/v1/notifications?unreadOnly=&type=&page=&pageSize=` | newest first |
+| `GET /api/v1/notifications/unread-count` | |
+| `POST /api/v1/notifications/{id}/read`, `/{id}/unread` | |
+| `POST /api/v1/notifications/read-all` | |
+| `DELETE /api/v1/notifications/{id}`, `DELETE /api/v1/notifications` | one, all |

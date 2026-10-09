@@ -1,35 +1,41 @@
-@using System.Security.Claims
-@using Coworkee.Client.Blazor.Realtime
 @using Coworkee.Contracts.Notifications
-@using Coworkee.Contracts.Realtime
 
 <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" OpenChanged="OpenChangedAsync">
     <ActivatorContent Context="menu">
-        <MudBadge Content="@_count" Visible="@(_count > 0)" Color="Color.Secondary" Overlap="true">
-            <MudIconButton Icon="@Icons.Material.Outlined.Notifications" Color="Color.Inherit" aria-label="Notifications" OnClick="@(() => menu.ToggleAsync())" />
+        <MudBadge Content="@Center.UnreadCount" Max="99" Visible="@(Center.UnreadCount > 0)" Color="Color.Secondary" Overlap="true">
+            <MudIconButton Icon="@(Center.UnreadCount > 0 ? Icons.Material.Filled.NotificationsActive : Icons.Material.Outlined.Notifications)" Color="Color.Inherit"
+                           aria-label="@L["Notifications"]" OnClick="@(() => menu.ToggleAsync())" />
         </MudBadge>
-        <span data-testid="unread" style="display:none">@_count</span>
+        <span data-testid="unread" style="display:none">@Center.UnreadCount</span>
     </ActivatorContent>
     <ChildContent>
         @if (_items.Count == 0)
         {
-            <MudMenuItem Disabled="true">No notifications</MudMenuItem>
+            <MudMenuItem Disabled="true">@L["No notifications"]</MudMenuItem>
         }
         @foreach (var item in _items)
         {
-            <MudMenuItem OnClick="() => OpenAsync(item)">
-                <MudText Typo="Typo.body2" Style="@(item.ReadAt is null ? "font-weight:600" : null)">@L.Server(item.Title, item.Arguments)</MudText>
-                @if (item.Body is not null)
-                {
-                    <MudText Typo="Typo.caption">@L.Server(item.Body, item.Arguments)</MudText>
-                }
+            <MudMenuItem OnClick="() => OpenAsync(item)" data-notification="@item.Id">
+                <div class="d-flex align-start gap-2" style="min-width:280px;max-width:380px">
+                    <div class="flex-grow-1">
+                        <MudText Typo="Typo.body2" Style="@(item.ReadAt is null ? "font-weight:600" : null)">@L.Server(item.Title, item.Arguments)</MudText>
+                        @if (item.Body is not null)
+                        {
+                            <MudText Typo="Typo.caption" Class="d-block">@L.Server(item.Body, item.Arguments)</MudText>
+                        }
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@item.CreatedAt.ToLocalTime().ToString("g")</MudText>
+                    </div>
+                    <span class="d-flex" @onclick:stopPropagation="true">
+                        <NotificationActions Item="item" />
+                    </span>
+                </div>
             </MudMenuItem>
         }
         <MudDivider />
-        @if (_count > 0)
+        @if (Center.UnreadCount > 0)
         {
-            <MudMenuItem OnClick="MarkAllAsync">Mark all as read</MudMenuItem>
+            <MudMenuItem OnClick="MarkAllAsync" Icon="@Icons.Material.Outlined.DoneAll" data-testid="bell-mark-all">@L["Mark all as read"]</MudMenuItem>
         }
-        <MudMenuItem Href="/notifications" Icon="@Icons.Material.Outlined.List">All notifications</MudMenuItem>
+        <MudMenuItem Href="/notifications" Icon="@Icons.Material.Outlined.List">@L["All notifications"]</MudMenuItem>
     </ChildContent>
 </MudMenu>

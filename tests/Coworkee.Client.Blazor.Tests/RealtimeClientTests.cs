@@ -93,7 +93,7 @@ public sealed class RealtimeClientTests : ClientTestBase
         var bell = Render<NotificationBell>();
         bell.WaitForAssertion(() => bell.Find("[data-testid='unread']").TextContent.ShouldContain("2"));
 
-        connection.Push(RealtimeTopics.User(userId));
+        connection.Push(RealtimeTopics.User(userId), RealtimeEventTypes.EntityChanged, new EntityChangedPayload("Notification", "1", "Updated", ["ReadAt"]));
 
         bell.WaitForAssertion(() => bell.Find("[data-testid='unread']").TextContent.ShouldContain("3"));
     }

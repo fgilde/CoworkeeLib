@@ -34,3 +34,13 @@ await notifier.NotifyLocalizedAsync(adminIds, "account.registration", "New regis
 ```
 
 Benutzer sehen sie in der Glocke der App-Leiste und auf der Benachrichtigungsseite, live über SignalR. Eine tägliche Zusammenfassung verschickt ungelesene per Mail (`Coworkee:Notifications:DigestCron`), mit Links auf `PublicAppUrl`.
+
+Die Glocke zeigt die Zahl der ungelesenen und die letzten zehn; eine neu eintreffende Benachrichtigung erscheint als Snackbar mit Link darauf. Ein Klick markiert sie als gelesen und öffnet ihren Link (nur Seiten der App). Jede lässt sich wieder als ungelesen markieren und löschen; die Glocke markiert alle als gelesen, die Seite `/notifications` (auch ein Reiter von `/profile`) blättert durch alle oder nur die ungelesenen und löscht alle. Jede Änderung erreicht sofort alle offenen Tabs des Benutzers: das `NotificationCenter` des Clients hält die Zahl der ungelesenen und meldet `Changed` einmal pro Schwall, auch nach „Alle als gelesen markieren“.
+
+| Endpunkt | |
+|---|---|
+| `GET /api/v1/notifications?unreadOnly=&type=&page=&pageSize=` | neueste zuerst |
+| `GET /api/v1/notifications/unread-count` | |
+| `POST /api/v1/notifications/{id}/read`, `/{id}/unread` | |
+| `POST /api/v1/notifications/read-all` | |
+| `DELETE /api/v1/notifications/{id}`, `DELETE /api/v1/notifications` | eine, alle |
