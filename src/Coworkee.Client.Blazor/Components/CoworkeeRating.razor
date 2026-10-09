@@ -1,0 +1,12 @@
+<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" data-testid="rating">
+    <MudRating SelectedValue="@(_rating?.Mine ?? (int)Math.Round(_rating?.Average ?? 0))" SelectedValueChanged="RateAsync" ReadOnly="@(_rating?.CanRate != true || ReadOnly)"
+               Size="Size" Color="@(_rating?.Mine is null ? Color.Default : Color.Warning)" aria-label="@L["Rating"]" />
+    @if (_rating is { Count: > 0 })
+    {
+        <MudText Typo="Typo.caption" Class="mud-text-secondary" data-testid="rating-summary">@L["{0} from {1} ratings", _rating.Average.ToString("0.#"), _rating.Count]</MudText>
+    }
+    @if (_rating?.Mine is not null && _rating.CanRate && !ReadOnly)
+    {
+        <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small" aria-label="@L["Remove my rating"]" OnClick="ClearAsync" data-testid="rating-clear" />
+    }
+</MudStack>

@@ -1,0 +1,23 @@
+<div class="d-flex flex-wrap align-center gap-1" data-testid="tags">
+    @foreach (var tag in _tags)
+    {
+        @if (_canEdit)
+        {
+            <MudChip T="string" Value="tag" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined" OnClose="_ => RemoveAsync(tag)" data-tag="@tag">@tag</MudChip>
+        }
+        else
+        {
+            <MudChip T="string" Value="tag" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined" data-tag="@tag">@tag</MudChip>
+        }
+    }
+    @if (_canEdit)
+    {
+        <MudAutocomplete T="string" @bind-Value="_input" SearchFunc="SearchAsync" CoerceValue="true" ResetValueOnEmptyText="true" MaxLength="50"
+                         Placeholder="@L["Add tag"]" Margin="Margin.Dense" Dense="true" OnKeyDown="KeyDownAsync" Style="max-width:200px"
+                         AdornmentIcon="@Icons.Material.Outlined.Sell" OnAdornmentClick="AddAsync" data-testid="tag-input" />
+    }
+    else if (_tags.Count == 0)
+    {
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["No tags"]</MudText>
+    }
+</div>

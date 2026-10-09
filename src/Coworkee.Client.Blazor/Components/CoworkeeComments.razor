@@ -1,0 +1,53 @@
+@using Coworkee.Contracts.Social
+
+<MudStack Spacing="2" data-testid="comments">
+    @if (_thread is null)
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+    else
+    {
+        @if (_thread.Comments.Count == 0)
+        {
+            <MudText Class="mud-text-secondary">@L["No comments yet."]</MudText>
+        }
+        @foreach (var (comment, depth) in Threaded())
+        {
+            <div style="@($"margin-left:{Math.Min(depth, 4) * 32}px")" data-comment="@comment.Id">
+                <UserCard UserId="comment.AuthorId">@Caption(comment)</UserCard>
+                @if (_editing == comment.Id)
+                {
+                    <CommentComposer Text="@comment.Text" OnSubmit="text => EditAsync(comment, text)" OnCancel="() => _editing = null" />
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2" Class="ml-10" Style="white-space:pre-wrap">@comment.Text</MudText>
+                }
+                <MudStack Row="true" Spacing="0" Class="ml-8">
+                    @if (_thread.CanComment)
+                    {
+                        <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="() => _replyTo = comment.Id" data-testid="comment-reply">@L["Reply"]</MudButton>
+                    }
+                    @if (comment.AuthorId == _me && _thread.CanComment)
+                    {
+                        <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="() => _editing = comment.Id" data-testid="comment-edit">@L["Edit"]</MudButton>
+                    }
+                    @if ((comment.AuthorId == _me && _thread.CanComment) || _thread.CanModerate)
+                    {
+                        <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Error" OnClick="() => DeleteAsync(comment)" data-testid="comment-delete">@L["Delete"]</MudButton>
+                    }
+                </MudStack>
+                @if (_replyTo == comment.Id)
+                {
+                    <div class="ml-8">
+                        <CommentComposer Placeholder="@L["Write a reply"]" OnSubmit="text => AddAsync(text, comment.Id)" OnCancel="() => _replyTo = null" />
+                    </div>
+                }
+            </div>
+        }
+        @if (_thread.CanComment)
+        {
+            <CommentComposer Placeholder="@L["Write a comment"]" OnSubmit="text => AddAsync(text, null)" />
+        }
+    }
+</MudStack>

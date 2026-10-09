@@ -1,0 +1,10 @@
+<MudStack Row="true" AlignItems="AlignItems.End" Spacing="1" data-testid="comment-composer">
+    <MudTextField T="string" @bind-Value="_text" Lines="2" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                  Placeholder="@Placeholder" MaxLength="4000" data-testid="comment-text" />
+    @if (OnCancel.HasDelegate)
+    {
+        <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small" aria-label="@L["Cancel"]" OnClick="OnCancel" />
+    }
+    <MudIconButton Icon="@Icons.Material.Filled.Send" Color="Color.Primary" Disabled="string.IsNullOrWhiteSpace(_text) || _sending" OnClick="SubmitAsync"
+                   aria-label="@L["Send"]" data-testid="comment-send" />
+</MudStack>
