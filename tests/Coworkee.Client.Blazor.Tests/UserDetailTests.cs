@@ -47,4 +47,32 @@ public sealed class UserDetailTests : ClientTestBase
         await Api.Received(1).UnlockUserAsync(_user, Arg.Any<CancellationToken>());
         await Api.Received(1).UpdateUserAsync(_user, Arg.Is<UpdateUserRequest>(r => r.FirstName == "Robert" && r.LastName == "Builder" && r.IsActive), Arg.Any<CancellationToken>());
     }
+
+    [Fact]
+    public async Task Signing_out_everywhere_asks_first_and_calls_the_api()
+    {
+        var dialogs = Render<MudBlazor.MudDialogProvider>();
+        var page = Render<UserDetail>(p => p.Add(d => d.Id, _user));
+        page.WaitForElement("[data-testid='sign-out-everywhere']");
+
+        // the click waits for the confirmation, which this test answers
+        var clicked = page.Find("[data-testid='sign-out-everywhere']").ClickAsync(new());
+        dialogs.WaitForAssertion(() => dialogs.Markup.ShouldContain("End all sessions of bob@acme.test"));
+        await dialogs.FindAll("button").Single(b => b.TextContent.Trim() == "Sign out").ClickAsync(new());
+        await clicked;
+
+        await Api.Received(1).SignOutUserAsync(_user, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public void The_forced_password_change_shows_and_saves_with_the_user()
+    {
+        Api.GetUserDetailAsync(_user, Arg.Any<CancellationToken>()).Returns(new UserDetailDto(
+            _user, "bob@acme.test", "bob@acme.test", "Bob", null, true, true, false, null, null, [], [], MustChangePassword: true));
+
+        var page = Render<UserDetail>(p => p.Add(d => d.Id, _user));
+
+        page.WaitForElement("[data-testid='status-must-change']");
+        page.Find("[data-testid='lock']");
+    }
 }

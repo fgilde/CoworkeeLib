@@ -105,3 +105,5 @@ public static void Configure(IdentitySeedOptions seed)
 ## Account features
 
 Registration is off by default; the setting `Account.AllowRegistration` turns it on. The wizard, activation, allowed addresses, documents and the sign-in rules are described in [Registration and sign-in rules](registration.md). Users change password, email and two factor settings on the account page of the auth server, linked from the user menu.
+
+Administrators manage further clients and scopes in the app, end sessions at once and set password rules: see [Clients, sessions and password rules](clients.md).

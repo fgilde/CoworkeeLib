@@ -105,3 +105,5 @@ public static void Configure(IdentitySeedOptions seed)
 ## Kontofunktionen
 
 Registrierung ist standardmäßig aus; die Einstellung `Account.AllowRegistration` schaltet sie ein. Assistent, Freischaltung, erlaubte Adressen, Dokumente und Anmelderegeln beschreibt [Registrierung und Anmelderegeln](registration.md). Passwort, E-Mail und Zwei-Faktor ändern Benutzer auf der Kontoseite des Auth-Servers, verlinkt aus dem Benutzermenü.
+
+Administratoren verwalten weitere Clients und Scopes in der App, beenden Sitzungen sofort und legen Passwortregeln fest: siehe [Clients, Sitzungen und Passwortregeln](clients.md).

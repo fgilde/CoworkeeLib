@@ -46,6 +46,10 @@ Resource grants inherit along a hierarchy you describe with `IResourceHierarchy`
 
 The UI only hides. The server decides.
 
+## Host-only permissions
+
+Some permissions serve the whole installation: `Features.Tenants`, `Features.Editions` and `Identity.Clients.Manage` ([clients and scopes](clients.md)). Every administrator holds them, but only the administrators of the system organisation can use them.
+
 ## Seeding roles
 
 ```csharp

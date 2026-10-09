@@ -41,6 +41,7 @@ public sealed class AuthApp : PostgresFixture
         await base.InitializeAsync();
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
+        Microsoft.Extensions.Hosting.HostingHostBuilderExtensions.UseDefaultServiceProvider(builder.Host, provider => provider.ValidateOnBuild = provider.ValidateScopes = true);
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["ConnectionStrings:test"] = ConnectionString,

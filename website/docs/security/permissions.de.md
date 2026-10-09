@@ -46,6 +46,10 @@ Berechtigungen auf Ressourcen vererben sich entlang einer Hierarchie, die Sie mi
 
 Die Oberfläche blendet nur aus. Entscheiden tut der Server.
 
+## Berechtigungen nur für den Host
+
+Manche Berechtigungen betreffen die ganze Installation: `Features.Tenants`, `Features.Editions` und `Identity.Clients.Manage` ([Clients und Scopes](clients.md)). Jeder Administrator hat sie, nutzen können sie aber nur die Administratoren der Systemorganisation.
+
 ## Rollen seeden
 
 ```csharp
