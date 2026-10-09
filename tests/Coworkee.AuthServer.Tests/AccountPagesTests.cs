@@ -56,12 +56,12 @@ public sealed partial class AccountPagesTests(AuthApp app) : IAsyncLifetime
         (await app.Browser().GetAsync("/Account/Manage/ChangePassword", Ct)).StatusCode.ShouldNotBe(HttpStatusCode.OK);
 
     [Fact]
-    public async Task The_root_opens_the_account_pages()
+    public async Task The_root_opens_the_app_launcher()
     {
         using var response = await app.Browser().GetAsync("/", Ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Redirect);
-        response.Headers.Location!.OriginalString.ShouldBe("/Account/Manage");
+        response.Headers.Location!.OriginalString.ShouldBe("/Account/Apps");
     }
 
     [Fact]

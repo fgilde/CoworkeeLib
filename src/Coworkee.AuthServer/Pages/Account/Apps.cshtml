@@ -1,0 +1,42 @@
+@page
+@model Coworkee.AuthServer.Pages.Account.AppsModel
+@{
+  ViewData["Title"] = T("Your applications");
+  ViewData["Wide"] = true;
+}
+<h1>@T("Your applications")</h1>
+@if (Model.Apps.Count == 0)
+{
+  <p class="hint">@T("No application is available yet.")</p>
+}
+else
+{
+  <ul class="apps">
+    @foreach (var app in Model.Apps)
+    {
+      <li>
+        <a class="app" href="@app.Url" data-testid="app">
+          @if (app.LogoUrl is { } logo)
+          {
+            <img src="@logo" alt="" />
+          }
+          else
+          {
+            <span class="monogram" aria-hidden="true">@app.Initial</span>
+          }
+          <span class="app-text">
+            <strong>@app.Name</strong>
+            @if (app.Description is { } description)
+            {
+              <span class="hint">@description</span>
+            }
+          </span>
+        </a>
+      </li>
+    }
+  </ul>
+}
+<div class="links">
+  <a asp-page="Manage/Index">@T("Account security")</a>
+  <a asp-page="Logout">@T("Sign out")</a>
+</div>

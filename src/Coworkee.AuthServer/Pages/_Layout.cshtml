@@ -41,20 +41,32 @@
     .key { font-family:monospace; font-size:18px; letter-spacing:.08em; }
     .brand { display:flex; align-items:center; gap:10px; margin:0 0 20px; font-size:13px; text-transform:uppercase; letter-spacing:.12em; color:var(--ink-2); }
     .brand img { height:32px; max-width:160px; }
+    a.brand { text-decoration:none; }
+    main.wide { width:min(760px, 92vw); }
+    .apps { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:12px; list-style:none; padding:0; margin:0; }
+    .app { display:flex; gap:14px; align-items:center; height:100%; padding:16px; border:1px solid var(--rule); text-decoration:none; transition:border-color .15s, transform .15s; }
+    .app:hover, .app:focus-visible { border-color:var(--signal); transform:translateY(-2px); }
+    .app img, .app .monogram { flex:none; width:44px; height:44px; object-fit:contain; }
+    .app .monogram { display:grid; place-items:center; background:var(--ink); color:var(--paper); font:24px Georgia, serif; }
+    .app:hover .monogram { background:var(--signal); }
+    .app-text { display:flex; flex-direction:column; min-width:0; }
+    .app-text strong { font-family:Georgia, serif; font-weight:400; font-size:20px; overflow-wrap:anywhere; }
+    .app-text .hint { margin:2px 0 0; font-size:14px; }
+    @@media (max-width:480px) { main { padding:24px 20px; } }
   </style>
   @if (brand.Css is { Length: > 0 } css)
   {
     <style>@Html.Raw(css)</style>
   }
 </head>
-<body><main>
-  <div class="brand" data-testid="brand">
+<body><main class="@(ViewData["Wide"] is true ? "wide" : null)">
+  <a class="brand" href="/" data-testid="brand">
     @if (brand.LogoUrl is { } logo)
     {
       <img src="@logo" alt="" />
     }
     <span>@brand.AppName</span>
-  </div>
+  </a>
   @RenderBody()
 </main></body>
 </html>

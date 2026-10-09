@@ -99,6 +99,8 @@ public partial class Clients
         }
 
         meta.Property(f => f.Scopes).WithAdditionalAttribute(nameof(MudTextField<string>.HelperText), L["Separated by spaces, e.g. openid profile email offline_access"]);
+        meta.Property(f => f.ClientUri).WithAdditionalAttribute(nameof(MudTextField<string>.HelperText), L["The app launcher of the sign-in server links here"]);
+        meta.Property(f => f.Description).WithAdditionalAttribute(nameof(MudTextField<string>.Lines), 2);
     }
 
     private async Task RunAsync(Func<Task> action, string? success = null)
@@ -151,6 +153,17 @@ public partial class Clients
         [Display(Name = "Service client")]
         public bool ServiceClient { get; set; }
 
+        [Display(Name = "Home address")]
+        public string? ClientUri { get; set; }
+
+        [Display(Name = "Logo address")]
+        public string? LogoUrl { get; set; }
+
+        public string? Description { get; set; }
+
+        [Display(Name = "Show in the app launcher")]
+        public bool ShowInLauncher { get; set; } = true;
+
         private IReadOnlyList<Guid> _roles = [];
 
         private IReadOnlyList<string> _permissions = [];
@@ -166,6 +179,10 @@ public partial class Clients
             Scopes = string.Join(' ', client.Scopes.Prepend("openid").Distinct()),
             RefreshTokens = client.GrantTypes.Contains(ClientGrantTypes.RefreshToken),
             ServiceClient = IsService(client),
+            ClientUri = client.ClientUri,
+            LogoUrl = client.LogoUrl,
+            Description = client.Description,
+            ShowInLauncher = client.ShowInLauncher,
             _roles = client.Roles,
             _permissions = client.Permissions,
         };
@@ -180,7 +197,11 @@ public partial class Clients
             GrantTypes(),
             [.. Scopes.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Distinct()],
             _roles,
-            _permissions);
+            _permissions,
+            ClientUri,
+            LogoUrl,
+            Description,
+            ShowInLauncher);
 
         // a service client without redirect addresses signs nobody in
         private List<string> GrantTypes()

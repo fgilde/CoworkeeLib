@@ -56,6 +56,8 @@ public sealed class AuthApp : PostgresFixture
             ["Coworkee:Auth:Clients:0:RedirectUris:0"] = RedirectUri,
             ["Coworkee:Auth:Clients:0:PostLogoutRedirectUris:0"] = "https://client.test/",
             ["Coworkee:Auth:Clients:0:Scopes:0"] = "test_api",
+            ["Coworkee:Auth:Clients:0:ClientUri"] = "https://client.test/",
+            ["Coworkee:Auth:Clients:0:Description"] = "The test app",
             ["Coworkee:Jobs:ConnectionStringName"] = "test",
             ["Coworkee:Jobs:RunServer"] = "false",
             ["Coworkee:Account:PublicAuthUrl"] = "http://localhost",

@@ -40,6 +40,7 @@ public sealed class CoworkeeAppTests
         (await Environment(auth.Resource))["Coworkee__Auth__Clients__0__ClientId"].ShouldBe("demo-web");
         (await Environment(auth.Resource))["Coworkee__Auth__ApiScopes__demo_api"].ShouldBe("demo_api");
         (await Environment(auth.Resource))["Coworkee__Auth__LogoUrl"].ShouldEndWith("/coworkee-icon.svg");
+        (await Environment(auth.Resource))["Coworkee__Auth__Clients__0__ClientUri"].ShouldNotBeNullOrEmpty();
         (await Environment(web.Resource))["Coworkee__Bff__ApiAddress"].ShouldBe("https+http://demo-api");
         api.Resource.Annotations.OfType<WaitAnnotation>().Select(w => w.Resource.Name).ShouldContain("demo-migrations");
     }

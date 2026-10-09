@@ -110,46 +110,52 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
 
     /// <summary>
     /// The account pages run no script and style inline; after sign-in the browser follows redirects to the clients, which
-    /// browsers check against form-action, so the clients' origins are allowed there. A logo from elsewhere adds its origin to img-src.
+    /// browsers check against form-action, so the clients' origins are allowed there. Logos from elsewhere add their origins to img-src.
     /// </summary>
-    internal static string ContentSecurityPolicy(AuthServerOptions options, IEnumerable<string> storedClientUris)
+    internal static string ContentSecurityPolicy(AuthServerOptions options, StoredClients stored)
     {
-        var clients = options.Clients.SelectMany(c => c.RedirectUris.Concat(c.PostLogoutRedirectUris)).Concat(storedClientUris)
+        var clients = options.Clients.SelectMany(c => c.RedirectUris.Concat(c.PostLogoutRedirectUris)).Concat(stored.Uris)
             .Select(u => Uri.TryCreate(u, UriKind.Absolute, out var uri) ? uri.GetLeftPart(UriPartial.Authority) : null)
             .OfType<string>().Concat(ExternalProviders.Origins(options.External)).Distinct(StringComparer.OrdinalIgnoreCase);
-        var logo = Uri.TryCreate(options.LogoUrl, UriKind.Absolute, out var logoUri) && logoUri.Scheme is "https" or "http" ? " " + logoUri.GetLeftPart(UriPartial.Authority) : string.Empty;
-        return $"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:{logo}; object-src 'none'; base-uri 'self'; "
+        var logos = new[] { options.LogoUrl }.Concat(options.Clients.Select(c => c.LogoUrl)).Concat(stored.Logos)
+            .Where(Clients.ClientApp.IsWebAddress).Select(u => new Uri(u!).GetLeftPart(UriPartial.Authority)).Distinct(StringComparer.OrdinalIgnoreCase);
+        return $"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src {string.Join(' ', ["'self'", "data:", .. logos])}; object-src 'none'; base-uri 'self'; "
             + $"frame-ancestors 'none'; form-action {string.Join(' ', ["'self'", .. clients])}";
     }
 
     // clients added in the admin pages redirect to their origins as well; the auth server learns about them within a minute
-    private static async Task<string[]> StoredClientUrisAsync(Microsoft.AspNetCore.Http.HttpContext context)
+    private static async Task<StoredClients> StoredClientsAsync(Microsoft.AspNetCore.Http.HttpContext context)
     {
         try
         {
-            return await ClientUrisAsync(context);
+            return await LoadStoredClientsAsync(context);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             // before the database is migrated
-            return [];
+            return StoredClients.None;
         }
     }
 
-    private static async Task<string[]> ClientUrisAsync(Microsoft.AspNetCore.Http.HttpContext context) =>
+    private static async Task<StoredClients> LoadStoredClientsAsync(Microsoft.AspNetCore.Http.HttpContext context) =>
         await context.RequestServices.GetRequiredService<Microsoft.Extensions.Caching.Hybrid.HybridCache>().GetOrCreateAsync(
-            "coworkee:auth-client-uris",
+            "coworkee:auth-clients",
             async ct =>
             {
                 var applications = context.RequestServices.GetRequiredService<OpenIddict.Abstractions.IOpenIddictApplicationManager>();
                 var uris = new List<string>();
+                var logos = new List<string>();
                 await foreach (var application in applications.ListAsync(null, null, ct))
                 {
                     uris.AddRange(await applications.GetRedirectUrisAsync(application, ct));
                     uris.AddRange(await applications.GetPostLogoutRedirectUrisAsync(application, ct));
+                    if (Clients.ClientApp.Read(await applications.GetPropertiesAsync(application, ct)).LogoUrl is { } logo)
+                    {
+                        logos.Add(logo);
+                    }
                 }
 
-                return uris.ToArray();
+                return new StoredClients([.. uris], [.. logos]);
             },
             new Microsoft.Extensions.Caching.Hybrid.HybridCacheEntryOptions { Expiration = TimeSpan.FromMinutes(1), LocalCacheExpiration = TimeSpan.FromMinutes(1) },
             cancellationToken: context.RequestAborted);
@@ -163,7 +169,7 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
         app.Use(async (context, next) =>
         {
             var headers = context.Response.Headers;
-            headers.ContentSecurityPolicy = ContentSecurityPolicy(options, await StoredClientUrisAsync(context));
+            headers.ContentSecurityPolicy = ContentSecurityPolicy(options, await StoredClientsAsync(context));
             if (context.Request.Path.StartsWithSegments("/Account"))
             {
                 await context.RequestServices.GetRequiredService<Coworkee.Account.PasswordPolicy>()

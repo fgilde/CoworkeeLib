@@ -13,4 +13,14 @@ public sealed class AuthClientOptions
     public List<string> PostLogoutRedirectUris { get; set; } = [];
 
     public List<string> Scopes { get; set; } = [];
+
+    /// <summary>Home address of the app; the app launcher of the auth server links there.</summary>
+    public string? ClientUri { get; set; }
+
+    /// <summary>Logo in the app launcher, an absolute address; without one the launcher shows the logo of the account pages.</summary>
+    public string? LogoUrl { get; set; }
+
+    public string? Description { get; set; }
+
+    public bool ShowInLauncher { get; set; } = true;
 }

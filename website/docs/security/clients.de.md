@@ -52,6 +52,12 @@ Bei einem Client mit expliziter Zustimmung zeigt der Auth-Server **Zugriff erlau
 
 Auf der Kontoseite (**Kontosicherheit › Berechtigte Anwendungen**) sehen Benutzer jede Anwendung mit Zugriff, seit wann und mit welchen Scopes, und widerrufen sie. Widerrufen beendet die Autorisierungen und Tokens dieser Anwendung; sie muss erneut um eine Anmeldung bitten.
 
+## App-Launcher
+
+Die Startadresse des Auth-Servers öffnet für angemeldete Benutzer **Ihre Anwendungen**: eine Kachel je Anwendung mit Logo, Name, kurzer Beschreibung und einem Link zu ihrer Startadresse. Die Marke oben auf jeder Kontoseite verlinkt dorthin, und die Seite nach dem Abmelden bietet **Erneut anmelden** an.
+
+Der Launcher zeigt Clients, die Benutzer anmelden (Authorization Code), eine Startadresse haben und **Im App-Launcher anzeigen** eingeschaltet haben; Dienst-Clients erscheinen nie. Administratoren setzen **Startadresse**, **Logo-Adresse**, **Beschreibung** und **Im App-Launcher anzeigen** auf der Seite der Clients; Clients aus der Konfiguration nehmen `ClientUri`, `LogoUrl`, `Description` und `ShowInLauncher` (standardmäßig an) aus `Coworkee:Auth:Clients`. Ein konfigurierter Client ohne eigenes Logo zeigt das Logo der Kontoseiten. Im App-Host setzt `AddWeb` die Startadresse des Web-Clients, sodass er ohne weitere Konfiguration erscheint. Adressen müssen absolute http(s)-Adressen sein; die Content Security Policy erlaubt die Herkunft der Logos als Bildquelle.
+
 ## Überall abmelden und sperren
 
 Die Benutzerdetailseite hat **Überall abmelden** und **Sperren** (bis zu einem Tag oder bis zum Entsperren); **Entsperren** hebt eine Sperre auf. Alles wirkt sofort:

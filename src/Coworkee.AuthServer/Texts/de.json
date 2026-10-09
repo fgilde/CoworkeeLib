@@ -125,5 +125,9 @@
   "Passwords must have at least one digit ('0'-'9').": "Passwörter müssen mindestens eine Ziffer ('0'-'9') enthalten.",
   "Passwords must have at least one lowercase ('a'-'z').": "Passwörter müssen mindestens einen Kleinbuchstaben ('a'-'z') enthalten.",
   "Passwords must have at least one uppercase ('A'-'Z').": "Passwörter müssen mindestens einen Großbuchstaben ('A'-'Z') enthalten.",
-  "Your other sessions were signed out.": "Ihre anderen Sitzungen wurden abgemeldet."
+  "Your other sessions were signed out.": "Ihre anderen Sitzungen wurden abgemeldet.",
+  "Your applications": "Ihre Anwendungen",
+  "No application is available yet.": "Noch ist keine Anwendung verfügbar.",
+  "Sign out": "Abmelden",
+  "Sign in again": "Erneut anmelden"
 }

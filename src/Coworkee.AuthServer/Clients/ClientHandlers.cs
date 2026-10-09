@@ -42,6 +42,9 @@ internal sealed class ClientRequestValidator : AbstractValidator<ClientRequest>
         RuleForEach(c => c.RedirectUris).Must(BeAbsolute).WithMessage("'{PropertyValue}' is not an absolute address.");
         RuleForEach(c => c.PostLogoutRedirectUris).Must(BeAbsolute).WithMessage("'{PropertyValue}' is not an absolute address.");
         RuleForEach(c => c.Scopes).NotEmpty().Matches("^[A-Za-z0-9._:-]+$");
+        RuleFor(c => c.ClientUri).Must(ClientApp.IsWebAddress).When(c => !string.IsNullOrWhiteSpace(c.ClientUri)).WithMessage("'{PropertyValue}' is not a web address.");
+        RuleFor(c => c.LogoUrl).Must(ClientApp.IsWebAddress).When(c => !string.IsNullOrWhiteSpace(c.LogoUrl)).WithMessage("'{PropertyValue}' is not a web address.");
+        RuleFor(c => c.Description).MaximumLength(500);
     }
 
     private static bool BeAbsolute(string uri) => Uri.TryCreate(uri, UriKind.Absolute, out _);
@@ -216,6 +219,7 @@ internal sealed class ClientHandlers(IOpenIddictApplicationManager applications,
 
         var service = request.GrantTypes.Contains(ClientGrantTypes.ClientCredentials);
         ServiceClient.Write(descriptor, service ? request.Roles ?? [] : [], service ? request.Permissions ?? [] : []);
+        ClientApp.Of(request.ClientUri, request.LogoUrl, request.Description, request.ShowInLauncher).Write(descriptor);
         return secret;
     }
 
@@ -225,6 +229,7 @@ internal sealed class ClientHandlers(IOpenIddictApplicationManager applications,
     {
         var permissions = await applications.GetPermissionsAsync(application, cancellationToken);
         var properties = await applications.GetPropertiesAsync(application, cancellationToken);
+        var app = ClientApp.Read(properties);
         return new ClientDto(
             Guid.Parse((await applications.GetIdAsync(application, cancellationToken))!),
             (await applications.GetClientIdAsync(application, cancellationToken))!,
@@ -237,7 +242,11 @@ internal sealed class ClientHandlers(IOpenIddictApplicationManager applications,
             [.. Unprefixed(permissions, Permissions.Prefixes.Scope)],
             properties.ContainsKey(AuthClientSeeder.ManagedProperty),
             ServiceClient.Roles(properties),
-            ServiceClient.Permissions(properties));
+            ServiceClient.Permissions(properties),
+            app.ClientUri,
+            app.LogoUrl,
+            app.Description,
+            app.ShowInLauncher);
     }
 
     private static IEnumerable<string> Unprefixed(IEnumerable<string> permissions, string prefix) =>

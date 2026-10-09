@@ -31,7 +31,7 @@ internal static class AuthEndpoints
 
     public static void Map(WebApplication app)
     {
-        app.MapGet("/", () => Results.Redirect("/Account/Manage")).ExcludeFromDescription();
+        app.MapGet("/", () => Results.Redirect("/Account/Apps")).ExcludeFromDescription();
         app.MapMethods("/connect/authorize", [HttpMethods.Get, HttpMethods.Post], (Delegate)AuthorizeAsync).ExcludeFromDescription();
         app.MapPost("/connect/token", TokenAsync).ExcludeFromDescription();
         app.MapMethods("/connect/endsession", [HttpMethods.Get, HttpMethods.Post], (Delegate)EndSessionAsync).ExcludeFromDescription();

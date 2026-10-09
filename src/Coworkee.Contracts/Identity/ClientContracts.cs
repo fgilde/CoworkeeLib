@@ -14,17 +14,20 @@ public static class ClientGrantTypes
 /// <summary>
 /// An OpenID Connect client ("public" or "confidential", consent "implicit" or "explicit"); <paramref name="Managed"/> ones come from the
 /// configuration and change only there. Service clients (grant <see cref="ClientGrantTypes.ClientCredentials"/>) get the permissions of
-/// <paramref name="Roles"/> and <paramref name="Permissions"/>.
+/// <paramref name="Roles"/> and <paramref name="Permissions"/>. Clients with <paramref name="ShowInLauncher"/> and a <paramref name="ClientUri"/> appear as
+/// tiles in the app launcher of the auth server.
 /// </summary>
 public sealed record ClientDto(
     Guid Id, string ClientId, string? DisplayName, string ClientType, string ConsentType, IReadOnlyList<string> RedirectUris,
     IReadOnlyList<string> PostLogoutRedirectUris, IReadOnlyList<string> GrantTypes, IReadOnlyList<string> Scopes, bool Managed,
-    IReadOnlyList<Guid> Roles, IReadOnlyList<string> Permissions);
+    IReadOnlyList<Guid> Roles, IReadOnlyList<string> Permissions, string? ClientUri = null, string? LogoUrl = null, string? Description = null,
+    bool ShowInLauncher = false);
 
 public sealed record ClientRequest(
     string ClientId, string? DisplayName, string ClientType, string ConsentType, IReadOnlyList<string> RedirectUris,
     IReadOnlyList<string> PostLogoutRedirectUris, IReadOnlyList<string> GrantTypes, IReadOnlyList<string> Scopes,
-    IReadOnlyList<Guid>? Roles = null, IReadOnlyList<string>? Permissions = null);
+    IReadOnlyList<Guid>? Roles = null, IReadOnlyList<string>? Permissions = null, string? ClientUri = null, string? LogoUrl = null,
+    string? Description = null, bool ShowInLauncher = false);
 
 /// <summary>The generated secret of a confidential client; it is shown this once and stored only as hash.</summary>
 public sealed record ClientSecretDto(Guid Id, string? ClientSecret);

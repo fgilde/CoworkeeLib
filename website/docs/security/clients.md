@@ -52,6 +52,12 @@ For a client with explicit consent the auth server shows **Allow access** with t
 
 On the account page (**Account security › Authorized applications**) users see every application with access, since when and with which scopes, and revoke it. Revoking ends the authorizations and tokens of that application; it has to ask for a sign-in again.
 
+## App launcher
+
+The root of the auth server opens **Your applications** for the signed-in user: a tile per application with logo, name, short description and a link to its home address. The brand at the top of every account page links there, and the page after signing out offers **Sign in again**.
+
+The launcher lists clients that sign users in (authorization code), have a home address and **Show in the app launcher** on; service clients never appear. Administrators set **Home address**, **Logo address**, **Description** and **Show in the app launcher** on the clients page; clients from the configuration take `ClientUri`, `LogoUrl`, `Description` and `ShowInLauncher` (default on) of `Coworkee:Auth:Clients`. A configured client without own logo shows the logo of the account pages. In the app host, `AddWeb` sets the home address of the web client, so it appears without further configuration. Addresses have to be absolute http(s) addresses; the content security policy allows the origins of the logos as image sources.
+
 ## Signing out everywhere and locking
 
 The user detail page has **Sign out everywhere** and **Lock** (until a day or until unlocked); **Unlock** lifts a lock. All take effect at once:

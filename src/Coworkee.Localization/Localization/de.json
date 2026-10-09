@@ -547,5 +547,9 @@
   "Remove language": "Sprache entfernen",
   "No translations; the default text applies in every language.": "Keine Übersetzungen; der Standardtext gilt in jeder Sprache.",
   "Add a language, e.g. de or fr-CA": "Sprache hinzufügen, z. B. de oder fr-CA",
-  "Not a language code like de or fr-CA": "Kein Sprachcode wie de oder fr-CA"
+  "Not a language code like de or fr-CA": "Kein Sprachcode wie de oder fr-CA",
+  "Home address": "Startadresse",
+  "Logo address": "Logo-Adresse",
+  "Show in the app launcher": "Im App-Launcher anzeigen",
+  "The app launcher of the sign-in server links here": "Der App-Launcher des Anmeldeservers verlinkt hierher"
 }

@@ -109,7 +109,7 @@ public sealed class ClientAdminTests(AuthApp app) : IAsyncLifetime
     public async Task Account_pages_allow_the_origins_of_stored_clients_and_show_the_branding()
     {
         await SendAsync(new CreateClient(Request("partner", "public", "implicit")));
-        await app.App.Services.GetRequiredService<HybridCache>().RemoveAsync("coworkee:auth-client-uris", Ct);
+        await app.App.Services.GetRequiredService<HybridCache>().RemoveAsync("coworkee:auth-clients", Ct);
 
         using var response = await app.Browser().GetAsync("/Account/Login", Ct);
 
@@ -148,10 +148,10 @@ public sealed class ClientAdminTests(AuthApp app) : IAsyncLifetime
     [Fact]
     public void A_logo_from_another_origin_is_allowed_as_image()
     {
-        var policy = CoworkeeAuthServerModule.ContentSecurityPolicy(new Contracts.Configuration.AuthServerOptions { LogoUrl = "https://web.test/coworkee-icon.svg" }, []);
+        var policy = CoworkeeAuthServerModule.ContentSecurityPolicy(new Contracts.Configuration.AuthServerOptions { LogoUrl = "https://web.test/coworkee-icon.svg" }, StoredClients.None);
 
         policy.ShouldContain("img-src 'self' data: https://web.test;");
-        CoworkeeAuthServerModule.ContentSecurityPolicy(new Contracts.Configuration.AuthServerOptions { LogoUrl = "/logo.svg" }, []).ShouldContain("img-src 'self' data:;");
+        CoworkeeAuthServerModule.ContentSecurityPolicy(new Contracts.Configuration.AuthServerOptions { LogoUrl = "/logo.svg" }, StoredClients.None).ShouldContain("img-src 'self' data:;");
     }
 
     private static ClientRequest Request(string clientId, string type, string consent) =>

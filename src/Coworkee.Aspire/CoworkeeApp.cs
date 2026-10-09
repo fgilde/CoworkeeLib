@@ -140,6 +140,7 @@ public sealed partial class CoworkeeApp
         auth.WithSetting(s => s.Coworkee.Auth.Clients[0].ClientId, clientId)
             .WithSetting(s => s.Coworkee.Auth.Clients[0].DisplayName, Options.DisplayName ?? Name)
             .WithSettings(s => s.Coworkee.Auth.Clients[0].Scopes, ApiAudience)
+            .WithSetting(s => s.Coworkee.Auth.Clients[0].ClientUri, redirect)
             .WithSetting(s => s.Coworkee.Auth.Clients[0].RedirectUris[0], ReferenceExpression.Create($"{redirect}/signin-oidc"))
             .WithSetting(s => s.Coworkee.Auth.Clients[0].PostLogoutRedirectUris[0], ReferenceExpression.Create($"{redirect}/signout-callback-oidc"));
         if (Options.LogoUrl is { } logo && logo.StartsWith('/'))
