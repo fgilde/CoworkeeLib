@@ -1,0 +1,38 @@
+<MudDialog Class="@MudBlazor.Extensions.Helper.MudExCss.Classes.Dialog.Initial">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@Title</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-2">@L["Empty fields keep the inherited value."]</MudText>
+        @foreach (var group in Groups)
+        {
+            <MudText Typo="Typo.overline" Class="mt-4 d-block">@L[group.DisplayName]</MudText>
+            @foreach (var feature in group.Features)
+            {
+                <div data-feature="@feature.Name" class="mb-3">
+                    @if (feature.Type == FeatureType.Bool)
+                    {
+                        <MudSelect T="string" Value="@Value(feature)" ValueChanged="@(v => Set(feature, v))" Label="@L[feature.DisplayName]" Clearable="true"
+                                   HelperText="@Inherits(feature)">
+                            <MudSelectItem Value="@("true")">@L["on"]</MudSelectItem>
+                            <MudSelectItem Value="@("false")">@L["off"]</MudSelectItem>
+                        </MudSelect>
+                    }
+                    else
+                    {
+                        <MudTextField T="string" Value="@Value(feature)" ValueChanged="@(v => Set(feature, v))" Label="@L[feature.DisplayName]" Clearable="true"
+                                      InputType="@(feature.Type == FeatureType.Int ? InputType.Number : InputType.Text)" HelperText="@Inherits(feature)" />
+                    }
+                    @if (feature.Description is not null)
+                    {
+                        <MudText Typo="Typo.caption">@L[feature.Description]</MudText>
+                    }
+                </div>
+            }
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog.Cancel()">@L["Cancel"]</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => Dialog.Close(DialogResult.Ok(_values))" data-testid="save-features">@L["Save"]</MudButton>
+    </DialogActions>
+</MudDialog>

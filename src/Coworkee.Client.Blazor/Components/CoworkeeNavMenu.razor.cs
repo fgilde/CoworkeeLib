@@ -27,6 +27,8 @@ public partial class CoworkeeNavMenu : IDisposable
 
     [Inject] private PermissionStore Permissions { get; set; } = null!;
 
+    [Inject] private Features.FeatureStore Features { get; set; } = null!;
+
     [Inject] private Microsoft.AspNetCore.Authorization.IAuthorizationService Authorization { get; set; } = null!;
 
     [CascadingParameter] private Task<Microsoft.AspNetCore.Components.Authorization.AuthenticationState>? AuthenticationState { get; set; }
@@ -56,6 +58,7 @@ public partial class CoworkeeNavMenu : IDisposable
         Preferences.Changed += Refresh;
         ThemeService.Changed += Refresh;
         Permissions.Changed += Reload;
+        Features.Changed += Reload;
         Nav.LocationChanged += LocationChanged;
         await BuildAsync();
     }
@@ -65,6 +68,7 @@ public partial class CoworkeeNavMenu : IDisposable
         Preferences.Changed -= Refresh;
         ThemeService.Changed -= Refresh;
         Permissions.Changed -= Reload;
+        Features.Changed -= Reload;
         Nav.LocationChanged -= LocationChanged;
     }
 
@@ -75,7 +79,8 @@ public partial class CoworkeeNavMenu : IDisposable
         var allowed = new List<CoworkeeNavItem>();
         foreach (var item in Contributors.SelectMany(c => c.Items))
         {
-            if (item.Permission is null || (await Authorization.AuthorizeAsync(user, PermissionPolicy.For(item.Permission))).Succeeded)
+            if ((item.Permission is null || (await Authorization.AuthorizeAsync(user, PermissionPolicy.For(item.Permission))).Succeeded)
+                && (item.Feature is null || await Features.IsEnabledAsync(item.Feature)))
             {
                 allowed.Add(item);
             }

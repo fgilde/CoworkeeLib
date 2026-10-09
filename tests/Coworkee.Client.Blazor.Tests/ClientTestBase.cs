@@ -15,6 +15,8 @@ public abstract class ClientTestBase : BunitContext
         JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddMudServicesWithExtensions();
         Services.AddScoped<Security.PermissionStore>();
+        Services.AddSingleton(FeaturesApi);
+        Services.AddScoped<Features.FeatureStore>();
         Services.AddScoped<People.UserCards>();
         Services.AddSingleton(Api);
         Services.AddSingleton(new CoworkeeClientOptions());
@@ -30,6 +32,8 @@ public abstract class ClientTestBase : BunitContext
     }
 
     protected ICoworkeeApi Api { get; } = Substitute.For<ICoworkeeApi>();
+
+    protected Features.IFeaturesApi FeaturesApi { get; } = Substitute.For<Features.IFeaturesApi>();
 
     /// <summary>The test renderer has a small screen, so the drawer starts closed with icons only.</summary>
     protected static async Task OpenNavigationAsync(IRenderedComponent<Components.CoworkeeLayout> layout)

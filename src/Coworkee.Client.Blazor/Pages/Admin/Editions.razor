@@ -1,0 +1,35 @@
+@page "/admin/editions"
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + FeaturePermissions.Editions)]
+
+<PageHeader Title="Editions" Description="Editions bundle feature values; tenants get an edition and may override single features." />
+<RealtimeSubscription Topic="@FeatureTopics.Changed" OnEvent="_ => LoadAsync()" />
+<MudStack Row="true" Class="mb-2">
+    <MudSpacer />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" Size="Size.Small" OnClick="CreateAsync" data-testid="create-edition">@L["New edition"]</MudButton>
+</MudStack>
+<MudDataGrid T="EditionDto" Items="_editions" Loading="_editions is null" Dense="true" Hover="true" Elevation="0" Outlined="true" data-testid="editions">
+    <Columns>
+        <PropertyColumn Property="e => e.Name" Title="@L["Name"]" />
+        <PropertyColumn Property="e => e.Description" Title="@L["Description"]" />
+        <TemplateColumn T="EditionDto" Title="@L["Features"]" Sortable="false">
+            <CellTemplate>
+                @foreach (var (name, value) in context.Item.Values)
+                {
+                    <MudChip T="string" Size="Size.Small">@($"{FeatureName(name)}: {value}")</MudChip>
+                }
+            </CellTemplate>
+        </TemplateColumn>
+        <PropertyColumn Property="e => e.TenantCount" Title="@L["Tenants"]" />
+        <TemplateColumn T="EditionDto" Sortable="false" CellStyle="text-align:right;white-space:nowrap">
+            <CellTemplate>
+                <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" aria-label="@L["Edit"]" OnClick="() => EditAsync(context.Item)" />
+                <MudIconButton Icon="@Icons.Material.Outlined.ToggleOn" Size="Size.Small" aria-label="@L["Feature values"]" OnClick="() => EditValuesAsync(context.Item)"
+                               data-testid="@($"edition-features-{context.Item.Name}")" />
+                <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" aria-label="@L["Delete"]" OnClick="() => DeleteAsync(context.Item)" />
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <NoRecordsContent>
+        <MudText Class="mud-text-secondary pa-4">@L["No editions yet."]</MudText>
+    </NoRecordsContent>
+</MudDataGrid>
