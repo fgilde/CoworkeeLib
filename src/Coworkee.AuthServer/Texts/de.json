@@ -73,5 +73,16 @@
   "or with your password": "oder mit Ihrem Passwort",
   "Add the document \"{0}\".": "Fügen Sie das Dokument „{0}“ hinzu.",
   "\"{0}\" has a file type that is not accepted.": "„{0}“ hat einen Dateityp, der nicht angenommen wird.",
-  "\"{0}\" is larger than {1}.": "„{0}“ ist größer als {1}."
+  "\"{0}\" is larger than {1}.": "„{0}“ ist größer als {1}.",
+  "Account security": "Kontosicherheit",
+  "Current password": "Aktuelles Passwort",
+  "Repeat new password": "Neues Passwort wiederholen",
+  "Your password was changed.": "Ihr Passwort wurde geändert.",
+  "The new passwords do not match.": "Die neuen Passwörter stimmen nicht überein.",
+  "The current password is not correct.": "Das aktuelle Passwort ist nicht korrekt.",
+  "Two-step verification is on. Keep these recovery codes somewhere safe. Each works once.": "Die Bestätigung in zwei Schritten ist aktiv. Bewahren Sie diese Wiederherstellungscodes sicher auf. Jeder funktioniert nur einmal.",
+  "Two-step verification is on.": "Die Bestätigung in zwei Schritten ist aktiv.",
+  "Turn off": "Ausschalten",
+  "Turn on": "Einschalten",
+  "Add this key to an authenticator app, then enter the code it shows.": "Fügen Sie diesen Schlüssel einer Authenticator-App hinzu und geben Sie dann den angezeigten Code ein."
 }

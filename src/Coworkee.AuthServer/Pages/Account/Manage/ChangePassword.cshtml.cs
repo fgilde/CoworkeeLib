@@ -32,14 +32,14 @@ public sealed class ChangePasswordModel(UserManager<User> users, SignInManager<U
 
         if (Input.NewPassword != Input.ConfirmPassword)
         {
-            Errors = ["The new passwords do not match."];
+            Errors = [AuthTexts.T("The new passwords do not match.")];
             return Page();
         }
 
         var result = await users.ChangePasswordAsync(user, Input.CurrentPassword, Input.NewPassword);
         if (!result.Succeeded)
         {
-            Errors = result.Errors.Select(e => e.Code == "PasswordMismatch" ? "The current password is not correct." : e.Description).ToList();
+            Errors = result.Errors.Select(e => e.Code == "PasswordMismatch" ? AuthTexts.T("The current password is not correct.") : e.Description).ToList();
             return Page();
         }
 

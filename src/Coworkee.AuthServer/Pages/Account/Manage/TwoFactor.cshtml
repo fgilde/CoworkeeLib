@@ -1,10 +1,10 @@
 @page
 @model Coworkee.AuthServer.Pages.Account.Manage.TwoFactorModel
-@{ ViewData["Title"] = "Two-step verification"; }
-<h1>Two-step verification</h1>
+@{ ViewData["Title"] = T("Two-step verification"); }
+<h1>@T("Two-step verification")</h1>
 @if (Model.RecoveryCodes is not null)
 {
-  <p class="notice" role="status">Two-step verification is on. Keep these recovery codes somewhere safe. Each works once.</p>
+  <p class="notice" role="status">@T("Two-step verification is on. Keep these recovery codes somewhere safe. Each works once.")</p>
   <p>@foreach (var code in Model.RecoveryCodes)
   {
     <code class="recovery">@code</code>
@@ -12,25 +12,25 @@
 }
 else if (Model.Enabled)
 {
-  <p class="notice" role="status">Two-step verification is on.</p>
+  <p class="notice" role="status">@T("Two-step verification is on.")</p>
   <form method="post" asp-page-handler="Disable">
-    <button type="submit">Turn off</button>
+    <button type="submit">@T("Turn off")</button>
   </form>
 }
 else
 {
-  <p>Add this key to an authenticator app, then enter the code it shows.</p>
+  <p>@T("Add this key to an authenticator app, then enter the code it shows.")</p>
   <p class="key" data-shared-key="@Model.SharedKey">@Model.SharedKey</p>
   <p style="word-break:break-all;font-size:12px"><a href="@Model.AuthenticatorUri">@Model.AuthenticatorUri</a></p>
   <form method="post" asp-page-handler="Enable">
-    <label for="code">Code</label>
+    <label for="code">@T("Code")</label>
     <input id="code" type="text" name="Code" autocomplete="one-time-code" inputmode="numeric" required
            style="width:100%;padding:12px;border:1px solid var(--rule);background:transparent;color:var(--ink);font:inherit" />
-    <button type="submit" style="margin-top:18px">Turn on</button>
+    <button type="submit" style="margin-top:18px">@T("Turn on")</button>
     @if (Model.ErrorMessage is not null)
     {
       <p class="error" role="alert">@Model.ErrorMessage</p>
     }
   </form>
 }
-<div class="links"><a asp-page="Index">Account security</a></div>
+<div class="links"><a asp-page="Index">@T("Account security")</a></div>

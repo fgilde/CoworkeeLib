@@ -44,7 +44,7 @@ public sealed class TwoFactorModel(UserManager<User> users, CoworkeeDbContext db
         var code = Code.Replace(" ", string.Empty, StringComparison.Ordinal).Replace("-", string.Empty, StringComparison.Ordinal);
         if (!await users.VerifyTwoFactorTokenAsync(user, users.Options.Tokens.AuthenticatorTokenProvider, code))
         {
-            ErrorMessage = "The code is not valid.";
+            ErrorMessage = AuthTexts.T("The code is not valid.");
             return await ShowAsync(user);
         }
 
