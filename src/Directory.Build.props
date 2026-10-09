@@ -3,6 +3,8 @@
   <Import Project="$(MSBuildThisFileDirectory)PackageDescriptions.props" />
   <PropertyGroup>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- the OData controllers are not versioned; Asp.Versioning would ask them for [ApiController] -->
+    <EnableApiVersioningAnalyzers>false</EnableApiVersioningAnalyzers>
     <IsPackable>true</IsPackable>
     <Authors>fgilde</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

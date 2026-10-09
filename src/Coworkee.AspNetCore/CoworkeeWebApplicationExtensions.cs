@@ -34,7 +34,12 @@ public static class CoworkeeWebApplicationExtensions
         builder.Services.AddCoworkeeModules<TRoot>(builder.Configuration);
         builder.Services.AddProblemDetails();
         builder.Services.AddExceptionHandler<CoworkeeExceptionHandler>();
-        builder.Services.AddOpenApi("v1", ApiDocs.AddBearerScheme);
+        builder.Services.AddApiVersioning(options =>
+        {
+            options.ApiVersionReader = new PathApiVersionReader();
+            options.AssumeDefaultVersionWhenUnspecified = true;
+        });
+        builder.Services.AddCoworkeeApiVersion(1);
         builder.Services.AddSingleton<Application.Authorization.IPermissionDefinitionContributor, ApiDocsPermissionDefinitions>();
         return builder;
     }

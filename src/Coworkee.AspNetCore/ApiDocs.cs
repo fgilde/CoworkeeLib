@@ -53,7 +53,11 @@ internal static class ApiDocs
         app.UseWhen(context => context.Request.Path.StartsWithSegments("/swagger"), swagger => swagger.Use(RequireViewAsync));
         app.UseSwaggerUI(options =>
         {
-            options.SwaggerEndpoint("/openapi/v1.json", "v1");
+            foreach (var version in app.Services.GetServices<Http.CoworkeeApiVersion>().Select(v => v.Version).Order())
+            {
+                options.SwaggerEndpoint($"/openapi/v{version}.json", $"v{version}");
+            }
+
             options.DocumentTitle = app.Environment.ApplicationName;
             options.HeadContent = Theme;
             options.UseRequestInterceptor(RequestInterceptor);
