@@ -131,6 +131,10 @@ When the app host runs locally in Development, the migrations resource has two c
 
 The web resource links to **Swagger** (`/swagger`) and, when an API uses `Coworkee.BackgroundJobs`, to the Hangfire dashboard (**Jobs**, `/admin/jobs`). Mailpit shows its inbox as **Mailpit UI**.
 
+## Service addresses
+
+Every service of the app gets the addresses of the others under `Coworkee:Services:<resource>`: the Aspire dashboard (`dashboard`), the Hangfire dashboard (`jobs`), each project (`myapp-api`, `myapp-auth`, `myapp-web`, with `HealthPath` `/health`) and every container with an http endpoint (`mail`, `pgadmin`, `keycloak`, ...), also resources added after `AddCoworkeeApp`. Inject them as `IOptionsMonitor<CoworkeeServicesOptions>`; the admin page **Services** shows them with their live state (see [Settings](../modules/settings.md#services)). Only the local run fills them; a published app lists its public addresses in appsettings.
+
 ## Typed settings
 
 Settings are set through the configuration tree, not through strings:

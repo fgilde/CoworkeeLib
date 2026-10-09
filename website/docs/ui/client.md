@@ -1,6 +1,6 @@
 # Client and layout
 
-`Coworkee.Client.Blazor` is a complete WebAssembly shell: layout, navigation, user menu, notifications, admin pages for users, groups, roles, settings, themes, mail templates, jobs and audit log. The app adds its pages and menu entries.
+`Coworkee.Client.Blazor` is a complete WebAssembly shell: layout, navigation, user menu, notifications, admin pages for users, groups, roles, settings, services, themes, mail templates and audit log. The app adds its pages and menu entries.
 
 ```csharp title="MyApp.Web.Client/Program.cs"
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -58,9 +58,11 @@ internal sealed class MyAppNavigation : INavigationContributor
 | `IconForGroup(name, icon)` | the icon of a group node |
 | `Place(href, group, title?, order?)` | moves a link of the library into another group; a group path like `Administration/Localization` nests |
 
+The admin pages of the library sit in groups below **Administration**: `NavigationGroups.Identity` (users, groups, roles, applications, scopes), `NavigationGroups.System` (settings, services, tenants, editions, themes, backups), `NavigationGroups.Communication` (mail templates, mail log), `NavigationGroups.Localization` (languages, translations) and `NavigationGroups.Monitoring` (audit log, AI tool calls). Nested groups sort within their top level group, which keeps the place `OrderGroup` gives it.
+
 The menu is a `MudExTreeView`: groups are nodes, the filter box highlights matches and opens their groups, and the view can switch between tree, list and flat list. Pinned, the drawer stays as an icon strip under the app bar and the menu button widens it; unpinned, it opens as an overlay and hides again. Whether one group or several stay open is a second toggle. Both choices are stored in the browser.
 
-Entries with `HostOnly: true` serve the whole installation and show only to users of the system organisation; the library marks Tenants, Editions, Applications, Scopes, Configuration and Backups that way, and the settings page hides its System tab elsewhere. The client knows the organisation from `/bff/user` (`SystemTenant`, from the `system_tenant` claim of the auth server); sign-ins from before that claim show everything as before.
+Entries with `HostOnly: true` serve the whole installation and show only to users of the system organisation; the library marks Tenants, Editions, Applications, Scopes, Services and Backups that way, and the settings page shows its typed tabs and the System tab only there. The client knows the organisation from `/bff/user` (`SystemTenant`, from the `system_tenant` claim of the auth server); sign-ins from before that claim show everything as before.
 
 ![Collapsed navigation](../assets/screenshots/mini-drawer.png){ .shot }
 

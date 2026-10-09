@@ -33,4 +33,4 @@ services.AddRecurringJob<CleanupJob>("cleanup", "0 3 * * *");
 | `WorkerCount` | parallele Worker (5) |
 | `Attempts`, `RetryDelaysInSeconds` | Wiederholungen |
 
-Das Hangfire-Dashboard liegt unter `/admin/jobs`, für Benutzer mit der Job-Berechtigung. Blockieren Sie nie einen Job, um auf einen anderen zu warten; planen Sie stattdessen einen Folgejob ein.
+Das Hangfire-Dashboard liegt unter `/admin/jobs`, für Benutzer mit der Job-Berechtigung; die Admin-Seite **Dienste** zeigt es als Kachel. Blockieren Sie nie einen Job, um auf einen anderen zu warten; planen Sie stattdessen einen Folgejob ein.

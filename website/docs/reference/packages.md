@@ -15,7 +15,7 @@ Which package goes where, and what to put in the `using` block.
 | `Coworkee.Identity` | API, auth, migrations | `Coworkee.Identity`, `.Setup`, `.Domain` | `CoworkeeIdentityModule`, `AddCoworkeeIdentitySeed`, `SeedRole`, `SeedUser` |
 | `Coworkee.AuthServer`, `Coworkee.Account` | auth host | `Coworkee.AuthServer` | `CoworkeeAuthServerModule`, external providers |
 | `Coworkee.Bff` | web host | `Coworkee.Bff` | `AddCoworkeeBff`, `MapCoworkeeBff` |
-| `Coworkee.Settings` | API | `Coworkee.Settings` | `ISettingDefinitionContributor`, `ISettingProvider`, `AddCoworkeeAppConfiguration` |
+| `Coworkee.Settings` | API | `Coworkee.Settings` | `ISettingDefinitionContributor`, `ISettingProvider`, `AddCoworkeeSettings`, `AddCoworkeeAppConfiguration` |
 | `Coworkee.Mailing` | API | `Coworkee.Mailing` | `IMailTemplateContributor`, `IMailSender` |
 | `Coworkee.BackgroundJobs` | API, workers | `Coworkee.BackgroundJobs` | `IBackgroundJob<T>`, `IBackgroundJobs`, `IRecurringJob`, `AddRecurringJob` |
 | `Coworkee.Storage` | API, workers | `Coworkee.Storage` | `IBlobStorage`, `BlobLinks` |
