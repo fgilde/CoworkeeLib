@@ -117,11 +117,6 @@ public sealed class RegisterModel(
             return false;
         }
 
-        if (Options.RequireDocuments && Options.Documents.Count > 0 && !stores.Any())
-        {
-            throw new InvalidOperationException($"{RegistrationOptions.Section}:Documents needs an {nameof(IRegistrationDocumentStore)}; add Coworkee.Files or register your own.");
-        }
-
         _tenantId = tenantId;
         Roles = await registration.SelectableRolesAsync(tenantId, HttpContext.RequestAborted);
         Steps = RegistrationSteps.For(Options, Roles.Count > 0, external);

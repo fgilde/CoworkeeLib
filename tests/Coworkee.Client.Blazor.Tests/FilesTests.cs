@@ -79,6 +79,24 @@ public sealed class FilesTests : ClientTestBase
     }
 
     [Fact]
+    public async Task Preview_shows_any_content_url_of_the_app()
+    {
+        var dialogs = Render<MudDialogProvider>();
+        Render<MudPopoverProvider>();
+
+        await dialogs.InvokeAsync(() => FilePreviewDialog.ShowAsync(Services.GetRequiredService<IDialogService>(), "api/v1/documents/42/content", "application/pdf", "offer.pdf"));
+
+        dialogs.WaitForAssertion(() =>
+        {
+            var display = dialogs.FindComponent<MudExFileDisplay>().Instance;
+            display.Url.ShouldBe("http://localhost/api/v1/documents/42/content");
+            display.ContentType.ShouldBe("application/pdf");
+            display.FileName.ShouldBe("offer.pdf");
+        });
+        dialogs.Markup.ShouldContain("offer.pdf");
+    }
+
+    [Fact]
     public void Files_page_lists_the_root_with_the_rights_of_the_folder()
     {
         AddAuthorization().SetAuthorized("Ada").SetPolicies(Security.PermissionPolicy.For(FilePermissions.View));

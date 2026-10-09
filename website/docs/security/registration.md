@@ -70,7 +70,9 @@ public interface IRegistrationDocumentStore
 - **`Coworkee.Files`** brings a default: the files land in *Registrations/{email}*. That folder has a single grant, for the new user through the role *Registration documents* (which may view files). Global file grants (`Files.View`, `Files.Manage`) do not reach the *Registrations* tree, neither in the file manager nor through OData; only the user and holders of `Files.Registrations.View` see it. Administrators have it like every permission; grant it to a role for others who check registrations.
 - **Your own store** wins over the default when your module registers it later (`services.AddScoped<IRegistrationDocumentStore, MyStore>()`). An app with its own document module stores them there, for example as documents of the type *Registration*, owned by the user and not public.
 
-Required documents without any store stop the auth server with a clear error.
+The store has to live in the **auth server host**, where the registration runs; a store in the API host does not count. `Coworkee.Files` registers its default with `TryAdd`, so any store registered by the app wins. The app template with samples puts the registration documents into its *Documents* module (`MyAppRegistrationDocumentsModule` in the auth host); without samples, add `Coworkee.Files` or your own store to the auth host before you configure documents.
+
+Configured documents without any store stop the auth server at startup with an `OptionsValidationException` that names the missing `IRegistrationDocumentStore`.
 
 ## Sign-in rules
 

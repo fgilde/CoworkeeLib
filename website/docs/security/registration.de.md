@@ -70,7 +70,9 @@ public interface IRegistrationDocumentStore
 - **`Coworkee.Files`** bringt einen Standard mit: die Dateien landen in *Registrations/{E-Mail}*. Der Ordner hat genau eine Freigabe, für den neuen Benutzer über die Rolle *Registration documents* (darf Dateien sehen). Globale Datei-Berechtigungen (`Files.View`, `Files.Manage`) reichen nicht in den Baum *Registrations*, weder in der Dateiverwaltung noch über OData; nur der Benutzer und Inhaber von `Files.Registrations.View` sehen ihn. Administratoren haben sie wie jede Berechtigung; für andere, die Registrierungen prüfen, vergeben Sie sie an eine Rolle.
 - **Ein eigener Store** gewinnt gegen den Standard, wenn Ihr Modul ihn später registriert (`services.AddScoped<IRegistrationDocumentStore, MyStore>()`). Eine App mit eigenem Dokumentenmodul legt sie dort ab, zum Beispiel als Dokumente vom Typ *Registration*, im Besitz des Benutzers und nicht öffentlich.
 
-Verlangte Dokumente ohne jeden Store halten den Auth-Server mit einer klaren Fehlermeldung an.
+Der Store muss im **Host des Auth-Servers** liegen, dort läuft die Registrierung; ein Store nur im API-Host zählt nicht. `Coworkee.Files` registriert seinen Standard mit `TryAdd`, jeder Store der App gewinnt also. Die App-Vorlage mit Beispielen legt die Registrierungsdokumente in ihrem Modul *Documents* ab (`MyAppRegistrationDocumentsModule` im Auth-Host); ohne Beispiele nehmen Sie `Coworkee.Files` oder einen eigenen Store in den Auth-Host auf, bevor Sie Dokumente konfigurieren.
+
+Konfigurierte Dokumente ohne jeden Store halten den Auth-Server schon beim Start an, mit einer `OptionsValidationException`, die den fehlenden `IRegistrationDocumentStore` nennt.
 
 ## Anmelderegeln
 

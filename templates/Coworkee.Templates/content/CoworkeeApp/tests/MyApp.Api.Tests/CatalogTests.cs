@@ -8,6 +8,8 @@ using Coworkee.Testing;
 using MyApp.Contracts;
 using MyApp.Contracts.Catalog;
 using MyApp.Contracts.Documents;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MyApp.Api.Tests;
 
@@ -111,6 +113,33 @@ public sealed class CatalogTests(ApiFixture api) : IAsyncLifetime
         (await uploader.GetAsync($"/api/v1/documents/{mine.Id}", Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
+    [Fact]
+    public async Task Owned_documents_are_exported_and_the_private_ones_erased_with_their_files()
+    {
+        typeof(MyApp.Documents.Domain.Document).GetCustomAttributes(typeof(Coworkee.Domain.RealtimeAttribute), false)
+            .Cast<Coworkee.Domain.RealtimeAttribute>().Single().Permission.ShouldBe(DocumentPermissions.Documents.View, "lists reload live for everyone who may view documents");
+        var (owner, ownerId) = await UserAsync("owner@acme.test", DocumentPermissions.Documents.View, DocumentPermissions.Documents.Create);
+        var secret = (await (await UploadAsync(owner, "secret.txt", "s"u8.ToArray(), "Secret", isPublic: false, null)).Content.ReadFromJsonAsync<DocumentDto>(Ct))!;
+        var shared = (await (await UploadAsync(owner, "shared.txt", "p"u8.ToArray(), "Shared", isPublic: true, null)).Content.ReadFromJsonAsync<DocumentDto>(Ct))!;
+
+        var export = await owner.GetFromJsonAsync<JsonElement>("/api/v1/identity/me/personal-data", Ct);
+        export.GetProperty("documents").EnumerateArray().Select(d => d.GetProperty("title").GetString()).ShouldBe(["Secret", "Shared"]);
+
+        var secretKey = await BlobKeyAsync(secret.Id);
+        (await Admin.DeleteAsync($"/api/v1/identity/users/{ownerId}", Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        (await ODataAsync<DocumentDto>(Admin, "/odata/Documents")).Items.Select(d => d.Id).ShouldBe([shared.Id], "public documents belong to the organisation");
+        await using var scope = api.Factory.Services.CreateAsyncScope();
+        (await scope.ServiceProvider.GetRequiredService<Coworkee.Storage.IBlobStorage>().OpenReadAsync(secretKey!, Ct)).ShouldBeNull();
+    }
+
+    private async Task<string?> BlobKeyAsync(Guid documentId)
+    {
+        await using var scope = api.Factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<MyApp.Infrastructure.MyAppDbContext>();
+        return await db.Set<MyApp.Documents.Domain.Document>().IgnoreQueryFilters().Where(d => d.Id == documentId).Select(d => d.BlobKey).SingleOrDefaultAsync(Ct);
+    }
+
     private static async Task<(List<T> Items, long? Count, string Facets)> ODataAsync<T>(HttpClient client, string url)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
@@ -137,12 +166,14 @@ public sealed class CatalogTests(ApiFixture api) : IAsyncLifetime
         return await client.PostAsync("/api/v1/documents", form, Ct);
     }
 
-    private async Task<HttpClient> UserWithPermissionsAsync(string email, params string[] permissions)
+    private async Task<HttpClient> UserWithPermissionsAsync(string email, params string[] permissions) => (await UserAsync(email, permissions)).Client;
+
+    private async Task<(HttpClient Client, Guid Id)> UserAsync(string email, params string[] permissions)
     {
         var user = (await (await Admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest(email, "Passw0rd!x", null, null), Ct)).Content.ReadFromJsonAsync<UserDto>(Ct))!;
         var role = (await (await Admin.PostAsJsonAsync("/api/v1/identity/roles", new RoleRequest("Role " + Guid.NewGuid().ToString("N")[..6], null), Ct)).Content.ReadFromJsonAsync<Guid>(Ct))!;
         (await Admin.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{role}", new NameListRequest(permissions), Ct)).EnsureSuccessStatusCode();
         (await Admin.PutAsJsonAsync($"/api/v1/identity/users/{user.Id}/roles", new IdListRequest([role]), Ct)).EnsureSuccessStatusCode();
-        return api.As(user.Id, _setup.TenantId);
+        return (api.As(user.Id, _setup.TenantId), user.Id);
     }
 }
