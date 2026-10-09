@@ -7,6 +7,11 @@ $work = Join-Path ([IO.Path]::GetTempPath()) ('coworkee-migrations-' + [Guid]::N
 $feed = Join-Path $work 'feed'
 $version = '0.0.0-migrations'
 
+# the version never changes, so restore would take earlier packs from the global cache
+$cache = (dotnet nuget locals global-packages --list) -replace '^global-packages:\s*', ''
+Get-ChildItem $cache -Directory -Filter 'coworkee.*' -ErrorAction SilentlyContinue |
+    ForEach-Object { Join-Path $_.FullName $version } | Where-Object { Test-Path $_ } | Remove-Item -Recurse -Force
+
 dotnet pack (Join-Path $root 'Coworkee.slnx') -c Release -o $feed -p:Version=$version
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 $target = Join-Path $content 'src/MyApp.Infrastructure/Migrations'

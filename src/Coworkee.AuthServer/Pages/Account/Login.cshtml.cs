@@ -79,7 +79,10 @@ public sealed class LoginModel(
 
         if (result.IsLockedOut)
         {
-            ErrorMessage = T("Too many attempts. Try again later.");
+            // failed attempts lock for minutes; an administrator's lock lasts days or has no end
+            ErrorMessage = user.LockoutEnd is { } end && end - DateTimeOffset.UtcNow > TimeSpan.FromDays(1)
+                ? T("This account is locked. Please contact an administrator.")
+                : T("Too many attempts. Try again later.");
             return Page();
         }
 

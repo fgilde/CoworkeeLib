@@ -59,7 +59,10 @@ public sealed class SessionTests(AuthApp app) : IAsyncLifetime
         (await AsAdminAsync(new LockUser(bob, null))).IsSuccess.ShouldBeTrue();
 
         (await flow.RefreshAsync(tokens)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await new OidcFlow(app).LoginAsync("bob@acme.test", Password)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var (response, html) = await new OidcFlow(app).PostFormAsync("/Account/Login?ReturnUrl=%2F",
+            new() { ["Input.Email"] = "bob@acme.test", ["Input.Password"] = Password });
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        html.ShouldContain("This account is locked");
         (await AsAdminAsync(new UnlockUser(bob))).IsSuccess.ShouldBeTrue();
         (await new OidcFlow(app).LoginAsync("bob@acme.test", Password)).StatusCode.ShouldBe(HttpStatusCode.Redirect);
     }
