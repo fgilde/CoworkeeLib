@@ -40,6 +40,7 @@ public static class SessionStamp
         });
 
     // cached with the permissions: every change of a user drops the entry
+    // ponytail: the drop reaches only this instance; other API instances notice within the cache lifetime, a distributed L2 cache closes that gap
     private static async Task<bool> IsCurrentAsync(IServiceProvider services, Guid userId, string stamp, CancellationToken cancellationToken)
     {
         var db = services.GetRequiredService<CoworkeeDbContext>();
