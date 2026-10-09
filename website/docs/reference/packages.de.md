@@ -23,6 +23,7 @@ Welches Paket wohin gehört und was in den `using`-Block kommt.
 | `Coworkee.Realtime`, `Coworkee.Notifications` | API, Worker | `Coworkee.Realtime`, `Coworkee.Notifications` | `IRealtimePublisher`, `INotifier` |
 | `Coworkee.Auditing` | API | `Coworkee.Auditing` | Abfragen des Audit-Logs |
 | `Coworkee.Theming` | API | `Coworkee.Theming` | Theme-Speicher, eingebaute Themes |
+| `Coworkee.Features` | API | `Coworkee.Features` | Features, Editionen, Mandantenverwaltung |
 | `Coworkee.Ai` | API | `Coworkee.Ai` | `AddAiTool<TRequest>`, MCP-Server |
 | `Coworkee.Localization` | API | `Coworkee.Localization.Resources` | `CoworkeeLocalizationModule`, `ILocalizationResourceContributor`, `AddEmbeddedJson` |
 | `Coworkee.Backup` | API | `Coworkee.Backup` | `CoworkeeBackupModule` |
