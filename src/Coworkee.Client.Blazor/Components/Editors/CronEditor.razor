@@ -1,0 +1,52 @@
+<MudStack Spacing="2" Class="my-2" data-testid="cron">
+    @if (Label is not null)
+    {
+        <MudText Typo="Typo.caption" Class="mud-text-secondary">@Label</MudText>
+    }
+    <MudStack Row="true" Wrap="Wrap.Wrap" AlignItems="AlignItems.Start" Spacing="2">
+        <MudSelect T="CronFrequency" Value="_schedule.Frequency" ValueChanged="SetFrequencyAsync" Label="@L["Repeats"]" ReadOnly="ReadOnly"
+                   Margin="Density.Margin" Dense="Density.Dense" Style="min-width:200px" data-testid="cron-frequency">
+            @foreach (var frequency in Enum.GetValues<CronFrequency>())
+            {
+                <MudSelectItem Value="frequency">@L[FrequencyNames[frequency]]</MudSelectItem>
+            }
+        </MudSelect>
+        @switch (_schedule.Frequency)
+        {
+            case CronFrequency.Minutes:
+                <MudNumericField T="int" Value="_schedule.Interval" ValueChanged="i => UpdateAsync(_schedule with { Interval = i })" Min="1" Max="59" Label="@L["Minutes"]"
+                                 ReadOnly="ReadOnly" Margin="Density.Margin" Style="max-width:120px" data-testid="cron-interval" />
+                break;
+            case CronFrequency.Hourly:
+                <MudNumericField T="int" Value="_schedule.Minute" ValueChanged="m => UpdateAsync(_schedule with { Minute = m })" Min="0" Max="59" Label="@L["At minute"]"
+                                 ReadOnly="ReadOnly" Margin="Density.Margin" Style="max-width:120px" data-testid="cron-minute" />
+                break;
+            case CronFrequency.Daily or CronFrequency.Weekly or CronFrequency.Monthly:
+                @if (_schedule.Frequency == CronFrequency.Monthly)
+                {
+                    <MudNumericField T="int" Value="_schedule.DayOfMonth" ValueChanged="d => UpdateAsync(_schedule with { DayOfMonth = d })" Min="1" Max="31" Label="@L["Day of the month"]"
+                                     ReadOnly="ReadOnly" Margin="Density.Margin" Style="max-width:140px" data-testid="cron-day" />
+                }
+                <MudTimePicker Time="new TimeSpan(_schedule.Hour, _schedule.Minute, 0)" TimeChanged="SetTimeAsync" AmPm="false" Label="@L["Time (UTC)"]"
+                               ReadOnly="ReadOnly" Margin="Density.Margin" Style="max-width:140px" data-testid="cron-time" />
+                break;
+        }
+    </MudStack>
+    @if (_schedule.Frequency == CronFrequency.Weekly)
+    {
+        <MudChipSet T="DayOfWeek" SelectionMode="SelectionMode.MultiSelection" SelectedValues="_schedule.Weekdays" SelectedValuesChanged="SetDaysAsync" CheckMark="true"
+                    ReadOnly="ReadOnly" Size="Density.Size" data-testid="cron-days">
+            @foreach (var day in Week)
+            {
+                <MudChip Value="day" Variant="Variant.Outlined" Color="Color.Primary">@Culture.DateTimeFormat.GetAbbreviatedDayName(day)</MudChip>
+            }
+        </MudChipSet>
+    }
+    <MudTextField T="string" Value="_text" ValueChanged="SetTextAsync" Label="@L["Cron expression"]" ReadOnly="ReadOnly"
+                  HelperText="@Description" Error="!_valid" ErrorText="@L["Not a valid cron expression (minute hour day month weekday)"]"
+                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Schedule" Margin="Density.Margin" data-testid="cron-expression" />
+    @if (HelperText is not null)
+    {
+        <MudText Typo="Typo.caption" Class="mud-text-secondary">@HelperText</MudText>
+    }
+</MudStack>

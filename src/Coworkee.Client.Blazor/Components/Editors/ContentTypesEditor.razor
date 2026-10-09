@@ -1,0 +1,52 @@
+<MudStack Spacing="1" Class="my-2" data-testid="content-types">
+    @if (Label is not null)
+    {
+        <MudText Typo="Typo.caption" Class="mud-text-secondary">@Label</MudText>
+    }
+    <MudStack Row="true" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Spacing="1">
+        @foreach (var type in Selected.Select(ContentTypeCatalog.Describe))
+        {
+            <MudTooltip Text="@type.Value">
+                @if (ReadOnly)
+                {
+                    <MudChip T="string" Icon="@type.Icon" Size="Density.Size" data-type="@type.Value">@L[type.Name]</MudChip>
+                }
+                else
+                {
+                    <MudChip T="string" Icon="@type.Icon" Size="Density.Size" OnClose="_ => RemoveAsync(type.Value)" data-type="@type.Value">@L[type.Name]</MudChip>
+                }
+            </MudTooltip>
+        }
+        @if (Selected.Count == 0)
+        {
+            <MudText Typo="Typo.body2" Class="mud-text-secondary" data-testid="content-types-any">@L["Every file type"]</MudText>
+        }
+    </MudStack>
+    @if (!ReadOnly)
+    {
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+            <MudAutocomplete T="string" Value="_input" ValueChanged="SelectAsync" SearchFunc="SearchAsync" CoerceValue="true" ResetValueOnEmptyText="true" Clearable="true"
+                             Placeholder="@L["Add a file type, e.g. application/pdf"]" Margin="Density.Margin" Dense="Density.Dense" Variant="Variant.Outlined"
+                             Error="_error is not null" ErrorText="@_error" OnKeyDown="KeyDownAsync" Style="max-width:420px"
+                             AdornmentIcon="@Icons.Material.Outlined.Add" OnAdornmentClick="AddInputAsync" data-testid="content-type-input">
+                <ItemTemplate>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Icon="@ContentTypeCatalog.Describe(context).Icon" Size="Size.Small" />
+                        <MudText Typo="Typo.body2">@L[ContentTypeCatalog.Describe(context).Name]</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@context</MudText>
+                    </MudStack>
+                </ItemTemplate>
+            </MudAutocomplete>
+            <MudMenu Icon="@Icons.Material.Outlined.PlaylistAdd" Dense="Density.Dense" aria-label="@L["Add a group"]" data-testid="content-type-groups">
+                @foreach (var group in ContentTypeCatalog.Groups)
+                {
+                    <MudMenuItem Icon="@group.Icon" OnClick="() => AddAsync(group.Values)" data-group="@group.Name">@L[group.Name]</MudMenuItem>
+                }
+            </MudMenu>
+        </MudStack>
+    }
+    @if (HelperText is not null)
+    {
+        <MudText Typo="Typo.caption" Class="mud-text-secondary">@HelperText</MudText>
+    }
+</MudStack>

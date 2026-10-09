@@ -102,6 +102,32 @@ builder.Services.AddCoworkeeSettings<ShopSettings>(section: "Shop", title: "Shop
 
 **Restore defaults** drops the values changed in the app; appsettings and environment apply again.
 
+### Editors for file types, sizes and schedules
+
+Three attributes from `Coworkee.Contracts.Configuration` pick a better editor for a property, in the Settings page and in every other object form of the app:
+
+| Attribute | Property | Editor |
+|---|---|---|
+| `[ContentTypes]` | `List<string>` or `string[]` of MIME types | chips with readable names and icons; common types and groups (images, PDF, Office documents, videos, audio, archives) to pick, other types like `image/x-icon` typed in. Empty accepts every type |
+| `[FileSize]` | `long?` or `long` in bytes | a number in KB, MB or GB; empty means no limit |
+| `[Cron]` | `string` with a cron expression | presets (every few minutes, hourly, daily, weekly, monthly) and the expression itself, described in words (UTC); an invalid expression is not taken |
+
+```csharp title="Contracts"
+public sealed class ImportSettings
+{
+    [Cron]
+    public string Schedule { get; set; } = "0 2 * * *";
+
+    [ContentTypes]
+    public List<string> AcceptedFiles { get; set; } = ["text/csv"];
+
+    [FileSize]
+    public long? MaxFileSize { get; set; } = 10 * 1024 * 1024;
+}
+```
+
+The built-in settings use them for the registration documents (`Registration:Documents`) and the digest time (`Notifications:DigestCron`). A `RenderWith` in the client `meta` still wins over the attribute.
+
 ### More sections
 
 Further classes show as further tabs next to the app settings:

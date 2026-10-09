@@ -1,0 +1,10 @@
+<MudStack Row="true" AlignItems="AlignItems.Start" Spacing="1" data-testid="file-size">
+    <MudNumericField T="decimal?" Value="_amount" ValueChanged="SetAmountAsync" Label="@Label" HelperText="@(HelperText ?? (_amount is null ? L["No limit"] : null))"
+                     Min="0" Immediate="false" Clearable="true" ReadOnly="ReadOnly" Variant="Variant.Text" Margin="Density.Margin" Class="flex-grow-1" data-testid="file-size-amount" />
+    <MudSelect T="long" Value="_unit" ValueChanged="SetUnitAsync" ReadOnly="ReadOnly" Margin="Density.Margin" Dense="Density.Dense" Style="max-width:90px" data-testid="file-size-unit">
+        @foreach (var (name, factor) in Units)
+        {
+            <MudSelectItem Value="factor">@name</MudSelectItem>
+        }
+    </MudSelect>
+</MudStack>

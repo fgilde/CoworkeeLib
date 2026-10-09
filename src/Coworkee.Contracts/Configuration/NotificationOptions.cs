@@ -8,5 +8,6 @@ public sealed class NotificationOptions
     public string? PublicAppUrl { get; set; }
 
     /// <summary>When the daily digest goes out (cron, UTC).</summary>
+    [Cron]
     public string DigestCron { get; set; } = "0 6 * * *";
 }

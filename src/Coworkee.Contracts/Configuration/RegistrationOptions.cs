@@ -39,9 +39,11 @@ public sealed class RegistrationDocumentSlot
     public bool Required { get; set; } = true;
 
     /// <summary>Accepted content types, wildcards allowed ("image/*"); empty accepts every type.</summary>
+    [ContentTypes]
     public List<string> ContentTypes { get; set; } = [];
 
     /// <summary>Largest file in bytes; null or 0 for no limit.</summary>
+    [FileSize]
     public long? MaxSize { get; set; }
 
     /// <summary>The name in the current UI language ("de-AT", then "de"), else <see cref="Name"/>.</summary>

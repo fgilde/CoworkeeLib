@@ -102,6 +102,32 @@ builder.Services.AddCoworkeeSettings<ShopSettings>(section: "Shop", title: "Shop
 
 **Standardwerte wiederherstellen** verwirft die in der App geänderten Werte; appsettings und Umgebung gelten wieder.
 
+### Editoren für Dateitypen, Größen und Zeitpläne
+
+Drei Attribute aus `Coworkee.Contracts.Configuration` wählen für eine Eigenschaft einen passenderen Editor, auf der Einstellungsseite und in jedem anderen Objektformular der App:
+
+| Attribut | Eigenschaft | Editor |
+|---|---|---|
+| `[ContentTypes]` | `List<string>` oder `string[]` mit MIME-Typen | Chips mit lesbaren Namen und Symbolen; gängige Typen und Gruppen (Bilder, PDF, Office-Dokumente, Videos, Audio, Archive) zur Auswahl, andere wie `image/x-icon` werden eingetippt. Leer erlaubt jeden Typ |
+| `[FileSize]` | `long?` oder `long` in Bytes | eine Zahl in KB, MB oder GB; leer heißt keine Begrenzung |
+| `[Cron]` | `string` mit einem Cron-Ausdruck | Vorlagen (alle paar Minuten, stündlich, täglich, wöchentlich, monatlich) und der Ausdruck selbst, in Worten beschrieben (UTC); ein ungültiger Ausdruck wird nicht übernommen |
+
+```csharp title="Contracts"
+public sealed class ImportSettings
+{
+    [Cron]
+    public string Schedule { get; set; } = "0 2 * * *";
+
+    [ContentTypes]
+    public List<string> AcceptedFiles { get; set; } = ["text/csv"];
+
+    [FileSize]
+    public long? MaxFileSize { get; set; } = 10 * 1024 * 1024;
+}
+```
+
+Die eingebauten Einstellungen nutzen sie für die Registrierungsdokumente (`Registration:Documents`) und die Uhrzeit der Zusammenfassung (`Notifications:DigestCron`). Ein `RenderWith` in der Client-`meta` hat weiterhin Vorrang vor dem Attribut.
+
 ### Weitere Abschnitte
 
 Weitere Klassen erscheinen als weitere Tabs neben den App-Einstellungen:
