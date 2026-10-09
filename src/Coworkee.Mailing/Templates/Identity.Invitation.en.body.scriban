@@ -1,0 +1,3 @@
+<p>Hello {{ user.first_name }},</p>
+<p>an account was set up for you: {{ user.email }}. Choose your password to sign in.</p>
+<p style="margin:24px 0;"><a href="{{ invitation_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">Choose password</a></p>

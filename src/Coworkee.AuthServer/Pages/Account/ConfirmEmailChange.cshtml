@@ -1,0 +1,13 @@
+@page
+@model Coworkee.AuthServer.Pages.Account.ConfirmEmailChangeModel
+@{ ViewData["Title"] = T("Confirm new email address"); }
+<h1>@T("Confirm new email address")</h1>
+@if (Model.Changed)
+{
+  <p class="notice" role="status">@T("Your account now uses {0}. Sign in with the new address.", Model.Email!)</p>
+  <div class="links"><a asp-page="Login">@T("Sign in")</a></div>
+}
+else
+{
+  <p class="error" role="alert">@T("The link is invalid or has expired.")</p>
+}

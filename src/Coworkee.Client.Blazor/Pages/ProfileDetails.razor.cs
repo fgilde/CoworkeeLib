@@ -14,9 +14,6 @@ namespace Coworkee.Client.Blazor.Pages;
 
 public partial class ProfileDetails
 {
-    private const long MaxUploadBytes = 10 * 1024 * 1024;
-    private const int AvatarPixels = 256;
-
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
     [Inject] private UserCards Cards { get; set; } = null!;
@@ -72,11 +69,7 @@ public partial class ProfileDetails
 
     private Task UploadAsync(IBrowserFile? file) => file is null ? Task.CompletedTask : RunAsync(async () =>
     {
-        await using var stream = file.OpenReadStream(MaxUploadBytes);
-        using var memory = new MemoryStream();
-        await stream.CopyToAsync(memory);
-        var module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");
-        var resized = await module.InvokeAsync<string?>("resizeImage", $"data:{file.ContentType};base64,{Convert.ToBase64String(memory.ToArray())}", AvatarPixels);
+        var resized = await AvatarPicture.ReadAsync(JS, file);
         if (resized is null)
         {
             Snackbar.Add(L["This file is no picture the browser can show."], Severity.Warning);

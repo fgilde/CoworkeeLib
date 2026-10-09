@@ -1,7 +1,6 @@
 using System.Text;
 using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
-using Coworkee.AspNetCore.Http;
 using Coworkee.AspNetCore;
 using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Identity;
@@ -15,7 +14,6 @@ using Coworkee.Infrastructure.Persistence;
 using Coworkee.Mailing;
 using Coworkee.Settings;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
@@ -43,6 +41,15 @@ public interface IAccountMailer
     Task SendRegistrationPendingAsync(User user, CancellationToken cancellationToken);
 
     Task SendRegistrationApprovedAsync(User user, CancellationToken cancellationToken);
+
+    /// <summary>The link that makes <paramref name="newEmail"/> the user's address; it goes to the new address.</summary>
+    Task SendEmailChangeAsync(User user, string newEmail, CancellationToken cancellationToken);
+
+    /// <summary>Tells the previous address that the account's address changes (<paramref name="pending"/>: once confirmed) or changed.</summary>
+    Task SendEmailChangeNoticeAsync(User user, string oldEmail, string newEmail, bool pending, CancellationToken cancellationToken);
+
+    /// <summary>Invites a new user to choose a password.</summary>
+    Task SendInvitationAsync(User user, CancellationToken cancellationToken);
 }
 
 public static class AccountTokens
@@ -82,6 +89,22 @@ internal sealed class AccountMailer(UserManager<User> users, IMailSender mails, 
     public Task SendRegistrationApprovedAsync(User user, CancellationToken cancellationToken) =>
         mails.QueueAsync(user.Email!, "Identity.RegistrationApproved", new { user = Model(user), login_url = $"{options.Value.PublicAuthUrl.TrimEnd('/')}/Account/Login" }, null, cancellationToken);
 
+    public async Task SendEmailChangeAsync(User user, string newEmail, CancellationToken cancellationToken)
+    {
+        var token = await users.GenerateChangeEmailTokenAsync(user, newEmail);
+        var url = $"{Link("ConfirmEmailChange", user, token)}&email={Uri.EscapeDataString(newEmail)}";
+        await mails.QueueAsync(newEmail, "Identity.ChangeEmail", new { user = Model(user), new_email = newEmail, confirm_url = url }, null, cancellationToken);
+    }
+
+    public Task SendEmailChangeNoticeAsync(User user, string oldEmail, string newEmail, bool pending, CancellationToken cancellationToken) =>
+        mails.QueueAsync(oldEmail, "Identity.EmailChangeNotice", new { user = Model(user), new_email = newEmail, pending }, null, cancellationToken);
+
+    public async Task SendInvitationAsync(User user, CancellationToken cancellationToken)
+    {
+        var token = await users.GeneratePasswordResetTokenAsync(user);
+        await mails.QueueAsync(user.Email!, "Identity.Invitation", new { user = Model(user), invitation_url = Link("ResetPassword", user, token) }, null, cancellationToken);
+    }
+
     private string Link(string page, User user, string token) =>
         $"{options.Value.PublicAuthUrl.TrimEnd('/')}/Account/{page}?userId={user.Id}&code={AccountTokens.Encode(token)}";
 
@@ -105,12 +128,12 @@ internal sealed class SendPasswordResetHandler(CoworkeeDbContext db, ICurrentUse
         var user = await db.Set<User>().SingleOrDefaultAsync(u => u.Id == command.UserId && u.TenantId == currentUser.TenantId, cancellationToken);
         if (user is null)
         {
-            return Error.NotFound("identity.user_not_found", "The user does not exist.");
+            return AccountErrors.UserNotFound;
         }
 
         if (!user.IsActive || string.IsNullOrEmpty(user.Email))
         {
-            return Error.Conflict("account.user_inactive", "Inactive users or users without an email address cannot reset their password.");
+            return AccountErrors.UserInactive;
         }
 
         await mailer.SendPasswordResetAsync(user, cancellationToken);
@@ -146,7 +169,5 @@ public sealed class CoworkeeAccountModule : CoworkeeModule, IWebModule
         context.Services.AddScoped<IPasswordValidator<User>, PasswordHistoryValidator>();
     }
 
-    public void ConfigureApplication(WebApplication app) =>
-        app.MapCoworkeeApi("/api/v1/identity").WithTags("Identity").RequireAuthorization()
-            .MapPost("/users/{id:guid}/password-reset", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new SendPasswordReset(id), ct).ToHttpResult());
+    public void ConfigureApplication(WebApplication app) => AccountEndpoints.Map(app);
 }

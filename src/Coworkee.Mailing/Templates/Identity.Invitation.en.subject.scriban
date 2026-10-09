@@ -1,0 +1,1 @@
+You are invited, {{ user.first_name }}

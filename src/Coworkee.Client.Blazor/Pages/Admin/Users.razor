@@ -3,24 +3,6 @@
 
 <PageHeader Title="Users" Description="Accounts of this organisation, their roles and whether they may sign in." />
 <RealtimeSubscription Topic="type:User" OnEvent="_ => _table.ReloadAsync()" />
-<PermissionView Permission="@IdentityPermissions.Users.Manage">
-    @if (_creating)
-    {
-        <MudPaper Outlined="true" Class="pa-4 mb-4">
-            <MudStack Row="true" Wrap="Wrap.Wrap">
-                <MudTextField Margin="Density.Margin" @bind-Value="_new.Email" Label="@L["Email"]" InputType="InputType.Email" Required="true" data-testid="new-user-email" />
-                <MudTextField Margin="Density.Margin" @bind-Value="_new.FirstName" Label="@L["First name"]" />
-                <MudTextField Margin="Density.Margin" @bind-Value="_new.LastName" Label="@L["Last name"]" />
-                <MudTextField Margin="Density.Margin" @bind-Value="_new.Password" Label="@L["Initial password"]" InputType="InputType.Password" Required="true" data-testid="new-user-password" />
-                <MudCheckBox Dense="Density.Dense" T="bool" @bind-Value="_new.MustChangePassword" Label="@L["Change password at first sign-in"]" data-testid="new-user-must-change" />
-            </MudStack>
-            <MudStack Row="true" Class="mt-3">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateAsync" data-testid="create-user">@L["Create"]</MudButton>
-                <MudButton OnClick="() => _creating = false">@L["Cancel"]</MudButton>
-            </MudStack>
-        </MudPaper>
-    }
-</PermissionView>
 @if (_permissionsOf is not null)
 {
     <MudPaper Outlined="true" Class="pa-4 mb-4">
@@ -40,7 +22,7 @@
     </MudPaper>
 }
 <CoworkeeDataTable @ref="_table" T="UserRow" EntitySet="Users" SearchFields="SearchFields" ExportFileName="users" OnLoaded="LoadRolesAsync"
-                   CreateText="New user" CreatePermission="@IdentityPermissions.Users.Manage" OnCreate="() => _creating = true">
+                   CreateText="New user" CreatePermission="@IdentityPermissions.Users.Manage" OnCreate="CreateAsync">
     <Columns>
         <PropertyColumn Property="u => u.Email" Title="@L["Email"]">
             <CellTemplate><MudLink Href="@($"/admin/users/{context.Item.Id}")" data-user="@context.Item.Email">@context.Item.Email</MudLink></CellTemplate>

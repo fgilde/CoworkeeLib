@@ -5,6 +5,7 @@ using Coworkee.Contracts;
 using Coworkee.Identity.Permissions;
 using Coworkee.Identity.Roles;
 using Coworkee.Identity.Users;
+using Coworkee.Identity.Users.Admin;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -52,6 +53,13 @@ internal static partial class IdentityEndpoints
         api.MapPut("/users/{id:guid}", (Guid id, UpdateUserRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new UpdateUser(id, body), ct).ToHttpResult());
         api.MapGet("/users/{id:guid}/permissions", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetEffectivePermissions(id), ct).ToHttpResult());
         api.MapPut("/users/{id:guid}/roles", (Guid id, IdListRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SetUserRoles(id, body.Ids), ct).ToHttpResult());
+        api.MapPut("/users/{id:guid}/groups", (Guid id, IdListRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SetUserGroups(id, body.Ids), ct).ToHttpResult());
+        api.MapPut("/users/{id:guid}/avatar", (Guid id, SetAvatarRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SetUserAvatar(id, body.DataUrl), ct).ToHttpResult());
+        api.MapPut("/users/{id:guid}/password", (Guid id, SetPasswordRequest body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new SetUserPassword(id, body.Password, body.MustChangePassword), ct).ToHttpResult());
+        api.MapPost("/users/{id:guid}/two-factor/reset", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new ResetUserTwoFactor(id), ct).ToHttpResult());
+        api.MapDelete("/users/{id:guid}/logins", (Guid id, string provider, string key, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new RemoveUserLogin(id, provider, key), ct).ToHttpResult());
     }
 
     private static void MapRoles(RouteGroupBuilder api)

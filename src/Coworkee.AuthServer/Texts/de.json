@@ -125,5 +125,7 @@
   "Passwords must have at least one digit ('0'-'9').": "Passwörter müssen mindestens eine Ziffer ('0'-'9') enthalten.",
   "Passwords must have at least one lowercase ('a'-'z').": "Passwörter müssen mindestens einen Kleinbuchstaben ('a'-'z') enthalten.",
   "Passwords must have at least one uppercase ('A'-'Z').": "Passwörter müssen mindestens einen Großbuchstaben ('A'-'Z') enthalten.",
-  "Your other sessions were signed out.": "Ihre anderen Sitzungen wurden abgemeldet."
+  "Your other sessions were signed out.": "Ihre anderen Sitzungen wurden abgemeldet.",
+  "Confirm new email address": "Neue E-Mail-Adresse bestätigen",
+  "Your account now uses {0}. Sign in with the new address.": "Ihr Konto verwendet jetzt {0}. Melden Sie sich mit der neuen Adresse an."
 }

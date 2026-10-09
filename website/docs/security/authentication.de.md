@@ -104,6 +104,8 @@ public static void Configure(IdentitySeedOptions seed)
 
 ## Kontofunktionen
 
-Registrierung ist standardmäßig aus; die Einstellung `Account.AllowRegistration` schaltet sie ein. Assistent, Freischaltung, erlaubte Adressen, Dokumente und Anmelderegeln beschreibt [Registrierung und Anmelderegeln](registration.md). Passwort, E-Mail und Zwei-Faktor ändern Benutzer auf der Kontoseite des Auth-Servers, verlinkt aus dem Benutzermenü.
+Registrierung ist standardmäßig aus; die Einstellung `Account.AllowRegistration` schaltet sie ein. Assistent, Freischaltung, erlaubte Adressen, Dokumente und Anmelderegeln beschreibt [Registrierung und Anmelderegeln](registration.md). Passwort und Zwei-Faktor ändern Benutzer auf der Kontoseite des Auth-Servers, verlinkt aus dem Benutzermenü. Die E-Mail-Adresse ändern sie in der App unter *Konto > Sicherheit*: nach dem aktuellen Passwort bekommt die neue Adresse einen Bestätigungslink und die alte einen Hinweis; die alte Adresse gilt, bis der Link geöffnet wird. Eine Adresse, die ein anderes Konto nutzt, bekommt keinen Link, und die Antwort bleibt gleich, so erfährt niemand, welche Adressen es gibt.
+
+Auf der Seite eines Benutzers bearbeiten Administratoren alles: Benutzername, Namen, Telefon, Adresse, Sprache, aktiv, E-Mail bestätigt, die Adresse selbst (sofort, bestätigt oder mit Bestätigungsmail; die alte Adresse bekommt einen Hinweis), das Passwort (setzen oder Link zum Zurücksetzen senden), eine Einladung für Benutzer ohne Passwort, Sperre, Zurücksetzen der Zwei-Faktor-Anmeldung, externe Anmeldungen, Rollen, Gruppen und das Bild. Neue Benutzer entstehen in einem Dialog, entweder per Mail eingeladen, ein Passwort zu wählen, oder mit einem Startpasswort.
 
 Administratoren verwalten weitere Clients und Scopes in der App, beenden Sitzungen sofort und legen Passwortregeln fest: siehe [Clients, Sitzungen und Passwortregeln](clients.md).

@@ -4,25 +4,32 @@ public sealed record RoleRefDto(Guid Id, string Name);
 
 public sealed record UserDto(Guid Id, string UserName, string Email, string? FirstName, string? LastName, bool IsActive, IReadOnlyList<RoleRefDto> Roles);
 
-/// <summary>A user as the admin page shows one: status, roles and groups.</summary>
+/// <summary>A user as the admin page shows one: status, profile, roles, groups and the ways to sign in.</summary>
 public sealed record UserDetailDto(
     Guid Id, string UserName, string Email, string? FirstName, string? LastName, bool IsActive, bool EmailConfirmed, bool TwoFactorEnabled,
-    DateTimeOffset? LockedUntil, DateTimeOffset? LastLoginAt, IReadOnlyList<RoleRefDto> Roles, IReadOnlyList<GroupRefDto> Groups, bool MustChangePassword = false);
+    DateTimeOffset? LockedUntil, DateTimeOffset? LastLoginAt, IReadOnlyList<RoleRefDto> Roles, IReadOnlyList<GroupRefDto> Groups, bool MustChangePassword = false,
+    string? PhoneNumber = null, PostalAddress? Address = null, bool HasPassword = true, bool HasAvatar = false, IReadOnlyList<UserLoginDto>? Logins = null);
 
 public sealed record GroupRefDto(Guid Id, string Name);
 
 /// <summary>What everyone may change about themselves; the email and the password belong to the sign-in.</summary>
-public sealed record ProfileDto(string Email, string? FirstName, string? LastName, string? PhoneNumber, string? AvatarUrl = null, PostalAddress? Address = null);
+public sealed record ProfileDto(string Email, string? FirstName, string? LastName, string? PhoneNumber, string? AvatarUrl = null, PostalAddress? Address = null, bool HasPassword = true);
 
 public sealed record UpdateProfileRequest(string? FirstName, string? LastName, string? PhoneNumber, PostalAddress? Address = null);
 
 public sealed record PostalAddress(string? Street, string? ZipCode, string? City, string? Country);
 
-/// <summary>A new user; <paramref name="MustChangePassword"/> makes the first sign-in ask for an own password.</summary>
-public sealed record CreateUserRequest(string Email, string Password, string? FirstName, string? LastName, bool MustChangePassword = false);
+/// <summary>
+/// A new user; <paramref name="MustChangePassword"/> makes the first sign-in ask for an own password.
+/// Without <paramref name="Password"/> the user signs in after choosing one from an invitation or reset mail.
+/// </summary>
+public sealed record CreateUserRequest(
+    string Email, string? Password, string? FirstName, string? LastName, bool MustChangePassword = false, IReadOnlyList<Guid>? RoleIds = null, bool IsActive = true);
 
-/// <summary>Changes a user; <paramref name="MustChangePassword"/> null leaves the flag as it is.</summary>
-public sealed record UpdateUserRequest(string? FirstName, string? LastName, bool IsActive, bool? MustChangePassword = null);
+/// <summary>Changes a user; the optional values left null stay as they are, empty texts clear them.</summary>
+public sealed record UpdateUserRequest(
+    string? FirstName, string? LastName, bool IsActive, bool? MustChangePassword = null,
+    string? UserName = null, string? PhoneNumber = null, PostalAddress? Address = null, bool? EmailConfirmed = null);
 
 /// <summary>Locks a user out until <paramref name="Until"/>, or for good when it is null.</summary>
 public sealed record LockUserRequest(DateTimeOffset? Until);

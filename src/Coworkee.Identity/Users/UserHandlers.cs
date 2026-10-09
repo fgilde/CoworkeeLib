@@ -72,9 +72,10 @@ internal sealed class MyProfileHandlers(CoworkeeDbContext db, ICurrentUser curre
 
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
-    internal static ProfileDto Map(User user) => new(
-        user.Email!, user.FirstName, user.LastName, user.PhoneNumber, user.AvatarUrl,
-        (user.Street ?? user.ZipCode ?? user.City ?? user.Country) is null ? null : new PostalAddress(user.Street, user.ZipCode, user.City, user.Country));
+    internal static ProfileDto Map(User user) => new(user.Email!, user.FirstName, user.LastName, user.PhoneNumber, user.AvatarUrl, Address(user), user.PasswordHash is not null);
+
+    internal static PostalAddress? Address(User user) =>
+        (user.Street ?? user.ZipCode ?? user.City ?? user.Country) is null ? null : new PostalAddress(user.Street, user.ZipCode, user.City, user.Country);
 }
 
 [RequiresPermission(IdentityPermissions.Users.Manage)]
@@ -95,8 +96,10 @@ internal sealed class CreateUserValidator : AbstractValidator<CreateUser>
 {
     public CreateUserValidator()
     {
-        RuleFor(c => c.User.Email).NotEmpty().EmailAddress();
-        RuleFor(c => c.User.Password).NotEmpty();
+        RuleFor(c => c.User.Email).NotEmpty().EmailAddress().MaximumLength(256);
+        RuleFor(c => c.User.Password).NotEmpty().When(c => c.User.Password is not null);
+        RuleFor(c => c.User.FirstName).MaximumLength(100);
+        RuleFor(c => c.User.LastName).MaximumLength(100);
     }
 }
 
@@ -121,24 +124,51 @@ internal sealed class GetUsersHandler(CoworkeeDbContext db, ICurrentUser current
     }
 }
 
-internal sealed class CreateUserHandler(UserManager<User> users, ICurrentUser currentUser) : IHandler<CreateUser, Result<UserDto>>
+internal sealed class CreateUserHandler(UserManager<User> users, CoworkeeDbContext db, ICurrentUser currentUser) : IHandler<CreateUser, Result<UserDto>>
 {
     public async Task<Result<UserDto>> HandleAsync(CreateUser command, CancellationToken cancellationToken)
     {
         var request = command.User;
+        var roleIds = request.RoleIds?.Distinct().ToList() ?? [];
+        if (await RolesErrorAsync(roleIds, cancellationToken) is { } error)
+        {
+            return error;
+        }
+
+        var email = request.Email.Trim();
         var user = new User
         {
             TenantId = currentUser.TenantId!.Value,
-            UserName = request.Email,
-            Email = request.Email,
+            UserName = email,
+            Email = email,
             EmailConfirmed = true,
             FirstName = request.FirstName,
             LastName = request.LastName,
             MustChangePassword = request.MustChangePassword,
+            IsActive = request.IsActive,
         };
 
-        var created = await users.CreateAsync(user, request.Password);
-        return created.Succeeded ? user.ToDto(new Dictionary<Guid, List<RoleRefDto>>()) : IdentityErrors.ToError(created);
+        var created = request.Password is null ? await users.CreateAsync(user) : await users.CreateAsync(user, request.Password);
+        if (!created.Succeeded)
+        {
+            return IdentityErrors.ToError(created);
+        }
+
+        db.AddRange(roleIds.Select(id => new IdentityUserRole<Guid> { UserId = user.Id, RoleId = id }));
+        var roles = await db.Set<Role>().Where(r => roleIds.Contains(r.Id)).Select(r => new RoleRefDto(r.Id, r.Name!)).ToListAsync(cancellationToken);
+        return user.ToDto(new Dictionary<Guid, List<RoleRefDto>> { [user.Id] = roles });
+    }
+
+    private async Task<Error?> RolesErrorAsync(List<Guid> roleIds, CancellationToken cancellationToken)
+    {
+        if (await db.Set<Role>().CountAsync(r => roleIds.Contains(r.Id) && (r.TenantId == null || r.TenantId == currentUser.TenantId), cancellationToken) != roleIds.Count)
+        {
+            return Error.Validation(nameof(CreateUserRequest.RoleIds), "Unknown role.");
+        }
+
+        return roleIds.Contains(await AdminGuard.AdminRoleIdAsync(db, cancellationToken)) && !await AdminGuard.IsAdminAsync(db, currentUser.UserId, cancellationToken)
+            ? AdminGuard.AdminRoleRestricted
+            : null;
     }
 }
 
@@ -158,9 +188,12 @@ internal sealed class UserDetailHandlers(CoworkeeDbContext db, ICurrentUser curr
                             where member.UserId == user.Id
                             orderby userGroup.Name
                             select new GroupRefDto(userGroup.Id, userGroup.Name)).ToListAsync(cancellationToken);
+        var logins = await db.Set<IdentityUserLogin<Guid>>().Where(l => l.UserId == user.Id).OrderBy(l => l.LoginProvider)
+            .Select(l => new UserLoginDto(l.LoginProvider, l.ProviderKey, l.ProviderDisplayName)).ToListAsync(cancellationToken);
         var lockedUntil = user.LockoutEnd is { } end && end > clock.GetUtcNow() ? end : (DateTimeOffset?)null;
         return new UserDetailDto(user.Id, user.UserName!, user.Email!, user.FirstName, user.LastName, user.IsActive, user.EmailConfirmed, user.TwoFactorEnabled,
-            lockedUntil, user.LastLoginAt, roles.GetValueOrDefault(user.Id) ?? [], groups, user.MustChangePassword);
+            lockedUntil, user.LastLoginAt, roles.GetValueOrDefault(user.Id) ?? [], groups, user.MustChangePassword,
+            user.PhoneNumber, MyProfileHandlers.Address(user), user.PasswordHash is not null, user.AvatarUrl is not null, logins);
     }
 
     public async Task<Result> HandleAsync(UnlockUser command, CancellationToken cancellationToken)
@@ -176,7 +209,24 @@ internal sealed class UserDetailHandlers(CoworkeeDbContext db, ICurrentUser curr
     }
 }
 
-internal sealed class UpdateUserHandler(CoworkeeDbContext db, ICurrentUser currentUser, IEnumerable<IUserActivationListener> activation) : IHandler<UpdateUser, Result>
+internal sealed class UpdateUserValidator : AbstractValidator<UpdateUser>
+{
+    public UpdateUserValidator()
+    {
+        RuleFor(c => c.User.FirstName).MaximumLength(100);
+        RuleFor(c => c.User.LastName).MaximumLength(100);
+        RuleFor(c => c.User.UserName).NotEmpty().MaximumLength(256).When(c => c.User.UserName is not null);
+        RuleFor(c => c.User.PhoneNumber).MaximumLength(50);
+        RuleFor(c => c.User.Address!.Street).MaximumLength(200).When(c => c.User.Address is not null);
+        RuleFor(c => c.User.Address!.ZipCode).MaximumLength(20).When(c => c.User.Address is not null);
+        RuleFor(c => c.User.Address!.City).MaximumLength(100).When(c => c.User.Address is not null);
+        RuleFor(c => c.User.Address!.Country).MaximumLength(100).When(c => c.User.Address is not null);
+    }
+}
+
+internal sealed class UpdateUserHandler(
+    CoworkeeDbContext db, ICurrentUser currentUser, UserManager<User> users, Profile.UserChanges changes, IEnumerable<IUserActivationListener> activation)
+    : IHandler<UpdateUser, Result>
 {
     public async Task<Result> HandleAsync(UpdateUser command, CancellationToken cancellationToken)
     {
@@ -192,11 +242,26 @@ internal sealed class UpdateUserHandler(CoworkeeDbContext db, ICurrentUser curre
             return AdminGuard.LastAdmin;
         }
 
-        var activated = !user.IsActive && command.User.IsActive;
-        user.FirstName = command.User.FirstName;
-        user.LastName = command.User.LastName;
-        user.IsActive = command.User.IsActive;
-        user.MustChangePassword = command.User.MustChangePassword ?? user.MustChangePassword;
+        var request = command.User;
+        if (request.UserName?.Trim() is { } userName && userName != user.UserName && await users.SetUserNameAsync(user, userName) is { Succeeded: false } renamed)
+        {
+            return IdentityErrors.ToError(renamed);
+        }
+
+        var activated = !user.IsActive && request.IsActive;
+        user.FirstName = request.FirstName;
+        user.LastName = request.LastName;
+        user.IsActive = request.IsActive;
+        user.MustChangePassword = request.MustChangePassword ?? user.MustChangePassword;
+        user.EmailConfirmed = request.EmailConfirmed ?? user.EmailConfirmed;
+        user.PhoneNumber = request.PhoneNumber is null ? user.PhoneNumber : Clean(request.PhoneNumber);
+        if (request.Address is { } address)
+        {
+            (user.Street, user.ZipCode, user.City, user.Country) = (Clean(address.Street), Clean(address.ZipCode), Clean(address.City), Clean(address.Country));
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        await changes.NotifyAsync(user, cancellationToken);
         if (activated)
         {
             foreach (var listener in activation)
@@ -207,6 +272,8 @@ internal sealed class UpdateUserHandler(CoworkeeDbContext db, ICurrentUser curre
 
         return Result.Success();
     }
+
+    private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
 
 internal sealed class SetUserRolesHandler(CoworkeeDbContext db, ICurrentUser currentUser) : IHandler<SetUserRoles, Result>
@@ -230,7 +297,7 @@ internal sealed class SetUserRolesHandler(CoworkeeDbContext db, ICurrentUser cur
         var hadAdmin = current.Any(r => r.RoleId == adminRoleId);
         if (hadAdmin != wanted.Contains(adminRoleId) && !await AdminGuard.IsAdminAsync(db, currentUser.UserId, cancellationToken))
         {
-            return Error.Forbidden("identity.admin_role_restricted", "Only administrators can grant or revoke the administrator role.");
+            return AdminGuard.AdminRoleRestricted;
         }
 
         if (hadAdmin && !wanted.Contains(adminRoleId) && !await AdminGuard.OtherActiveAdminExistsAsync(db, currentUser.TenantId, command.Id, cancellationToken))
@@ -247,6 +314,8 @@ internal sealed class SetUserRolesHandler(CoworkeeDbContext db, ICurrentUser cur
 internal static class AdminGuard
 {
     public static readonly Error LastAdmin = Error.Conflict("identity.last_admin", "The last active administrator cannot be removed or deactivated.");
+
+    public static readonly Error AdminRoleRestricted = Error.Forbidden("identity.admin_role_restricted", "Only administrators can grant or revoke the administrator role.");
 
     public static Task<Guid> AdminRoleIdAsync(CoworkeeDbContext db, CancellationToken cancellationToken) =>
         db.Set<Role>().Where(r => r.IsSystem && r.Name == SystemRoles.Admin).Select(r => r.Id).SingleAsync(cancellationToken);

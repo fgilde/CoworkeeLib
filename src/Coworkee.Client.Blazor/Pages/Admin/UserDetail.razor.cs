@@ -1,11 +1,17 @@
 using System.ComponentModel.DataAnnotations;
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Components.Data;
+using Coworkee.Client.Blazor.People;
+using Coworkee.Contracts;
 using Coworkee.Contracts.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.JSInterop;
 using MudBlazor;
+using MudBlazor.Extensions.Components.ObjectEdit;
+using MudBlazor.Extensions.Components.ObjectEdit.Options;
 
 namespace Coworkee.Client.Blazor.Pages.Admin;
 
@@ -19,6 +25,10 @@ public partial class UserDetail
 
     [Inject] private NavigationManager Nav { get; set; } = null!;
 
+    [Inject] private UserCards Cards { get; set; } = null!;
+
+    [Inject] private IJSRuntime JS { get; set; } = null!;
+
     [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
 
     [Parameter] public Guid Id { get; set; }
@@ -29,27 +39,32 @@ public partial class UserDetail
 
     private UserDetailDto? _user;
     private IReadOnlyList<RoleDto> _roles = [];
+    private IReadOnlyList<GroupDto> _groups = [];
     private IReadOnlyList<string> _permissions = [];
     private IReadOnlyCollection<Guid> _roleIds = [];
-    private string? _firstName;
-    private string? _lastName;
-    private bool _active;
-    private bool _mustChangePassword;
+    private IReadOnlyCollection<Guid> _groupIds = [];
+    private UserForm _form = new();
+    private ObjectEditMeta<UserForm>? _meta;
+    private string? _language;
     private bool _canManage;
+    private bool _canManageGroups;
     private bool _busy;
     private string? _error;
 
     protected override async Task OnParametersSetAsync()
     {
-        _canManage = (await Authorization.AuthorizeAsync((await AuthenticationState).User, Security.PermissionPolicy.For(IdentityPermissions.Users.Manage))).Succeeded;
+        var user = (await AuthenticationState).User;
+        _canManage = (await Authorization.AuthorizeAsync(user, Security.PermissionPolicy.For(IdentityPermissions.Users.Manage))).Succeeded;
+        _canManageGroups = (await Authorization.AuthorizeAsync(user, Security.PermissionPolicy.For(IdentityPermissions.Groups.Manage))).Succeeded;
         try
         {
             _roles = await Api.GetRolesAsync();
+            _groups = _canManageGroups ? (await Api.GetGroupsAsync(new PageRequest(1, 200))).Items : [];
             await LoadAsync();
         }
         catch (ApiException exception)
         {
-            _error = exception.Status == 404 ? "This user does not exist." : exception.Message;
+            _error = exception.Status == 404 ? L["This user does not exist."] : exception.Message;
         }
     }
 
@@ -57,21 +72,59 @@ public partial class UserDetail
     {
         _user = await Api.GetUserDetailAsync(Id);
         _permissions = await Api.GetEffectivePermissionsAsync(Id);
-        (_firstName, _lastName, _active, _mustChangePassword) = (_user.FirstName, _user.LastName, _user.IsActive, _user.MustChangePassword);
+        _language = (await Api.GetUserLanguageAsync(Id))?.Culture;
+        _form = UserForm.From(_user, _language);
+        _meta = _form.ObjectEditMeta(meta => UserFormMeta.Apply(meta, L, !_canManage));
         _roleIds = _user.Roles.Select(r => r.Id).ToList();
+        _groupIds = _user.Groups.Select(g => g.Id).ToList();
     }
 
     private static string DisplayName(UserDetailDto user) =>
         $"{user.FirstName} {user.LastName}".Trim() is { Length: > 0 } name ? name : user.Email;
 
-    private static string Initials(UserDetailDto user) =>
-        string.Concat(DisplayName(user).Split(' ', '@', '.').Where(p => p.Length > 0).Take(2).Select(p => char.ToUpperInvariant(p[0])));
-
     private string RoleName(Guid id) => _roles.FirstOrDefault(r => r.Id == id)?.Name ?? string.Empty;
 
-    private Task SaveAsync() => RunAsync(() => Api.UpdateUserAsync(Id, new UpdateUserRequest(_firstName, _lastName, _active, _mustChangePassword)), "Saved.");
+    private string GroupName(Guid id) => _groups.FirstOrDefault(g => g.Id == id)?.Name ?? string.Empty;
 
-    private Task UnlockAsync() => RunAsync(() => Api.UnlockUserAsync(Id), "Unlocked.");
+    private Task SaveAsync(EditContext context) => RunAsync(async () =>
+    {
+        await Api.UpdateUserAsync(Id, _form.ToRequest());
+        var language = _form.Language.Length == 0 ? null : _form.Language;
+        if (language != _language)
+        {
+            await Api.SetUserLanguageAsync(Id, language);
+        }
+
+        Cards.Forget(Id);
+    }, L["Saved"]);
+
+    private Task UnlockAsync() => RunAsync(() => Api.UnlockUserAsync(Id), L["Unlocked"]);
+
+    private async Task UploadAvatarAsync(IBrowserFile? file)
+    {
+        if (file is null)
+        {
+            return;
+        }
+
+        if (await AvatarPicture.ReadAsync(JS, file) is not { } picture)
+        {
+            Snackbar.Add(L["This file is no picture the browser can show."], Severity.Warning);
+            return;
+        }
+
+        await RunAsync(async () =>
+        {
+            await Api.SetUserAvatarAsync(Id, picture);
+            Cards.Forget(Id);
+        }, L["Picture saved"]);
+    }
+
+    private Task RemoveAvatarAsync() => RunAsync(async () =>
+    {
+        await Api.SetUserAvatarAsync(Id, null);
+        Cards.Forget(Id);
+    }, L["Picture removed"]);
 
     private async Task LockAsync()
     {
@@ -98,28 +151,23 @@ public partial class UserDetail
         public DateTime? Until { get; set; }
     }
 
-    private Task SendResetAsync() => RunAsync(() => Api.SendPasswordResetAsync(Id), "Password reset sent.");
-
     private async Task DeleteAsync()
     {
-        if (!await Dialogs.ConfirmAsync("Delete user", $"Delete {_user!.Email} and all personal data? This cannot be undone.", "Delete", "Cancel", Icons.Material.Outlined.DeleteForever))
+        if (!await Dialogs.ConfirmAsync(L["Delete user"], L["Delete {0} and all personal data? This cannot be undone.", _user!.Email], L["Delete"], L["Cancel"],
+                Icons.Material.Outlined.DeleteForever))
         {
             return;
         }
 
-        try
+        if (await Snackbar.RunAsync(() => Api.DeleteUserAsync(Id), L["User deleted"]))
         {
-            await Api.DeleteUserAsync(Id);
-            Snackbar.Add("User deleted.", Severity.Success);
             Nav.NavigateTo("/admin/users");
-        }
-        catch (ApiException exception)
-        {
-            Snackbar.Add(exception.Message, Severity.Error);
         }
     }
 
-    private Task SetRolesAsync(IReadOnlyCollection<Guid> ids) => RunAsync(() => Api.SetUserRolesAsync(Id, ids.ToList()), "Roles saved.");
+    private Task SetRolesAsync(IReadOnlyCollection<Guid> ids) => RunAsync(() => Api.SetUserRolesAsync(Id, ids.ToList()), L["Roles saved"]);
+
+    private Task SetGroupsAsync(IReadOnlyCollection<Guid> ids) => RunAsync(() => Api.SetUserGroupsAsync(Id, ids.ToList()), L["Groups saved"]);
 
     private async Task RunAsync(Func<Task> action, string done)
     {
@@ -137,7 +185,7 @@ public partial class UserDetail
         }
         catch (ApiException exception)
         {
-            Snackbar.Add(exception.Message, Severity.Error);
+            Snackbar.Add(SnackbarApiExtensions.Describe(exception), Severity.Error);
             await LoadAsync();
         }
         finally
