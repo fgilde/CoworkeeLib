@@ -13,7 +13,7 @@
     @if (_canEdit)
     {
         <MudAutocomplete T="string" @bind-Value="_input" SearchFunc="SearchAsync" CoerceValue="true" ResetValueOnEmptyText="true" MaxLength="50"
-                         Placeholder="@L["Add tag"]" Margin="Margin.Dense" Dense="true" OnKeyDown="KeyDownAsync" Style="max-width:200px"
+                         Placeholder="@L["Add tag"]" Margin="Density.Margin" Dense="Density.Dense" OnKeyDown="KeyDownAsync" Style="max-width:200px"
                          AdornmentIcon="@Icons.Material.Outlined.Sell" OnAdornmentClick="AddAsync" data-testid="tag-input" />
     }
     else if (_tags.Count == 0)

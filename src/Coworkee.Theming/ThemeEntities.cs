@@ -24,7 +24,7 @@ public sealed class ThemeDefinition : AuditedAggregateRoot, IVersioned
 
     public string? Shadows { get; set; }
 
-    /// <summary>The app's own theme options: navigation, logo, tables.</summary>
+    /// <summary>The app's own theme options: navigation, logo, density.</summary>
     public string? Options { get; set; }
 
     /// <summary>Users can choose it; built-in themes always can.</summary>

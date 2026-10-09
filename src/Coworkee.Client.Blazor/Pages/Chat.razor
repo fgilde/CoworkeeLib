@@ -6,8 +6,8 @@
     <MudItem xs="12" md="4">
         <MudPaper Outlined="true" Class="pa-2" Style="height:65vh;overflow:auto">
             <MudTextField T="string" @bind-Value="_filter" Immediate="true" Placeholder="@L["Search"]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search"
-                          Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-2" />
-            <MudList T="ChatContactDto" Dense="true" SelectedValue="_contact" SelectedValueChanged="OpenAsync" data-testid="chat-contacts">
+                          Variant="Variant.Outlined" Margin="Density.Margin" Class="mb-2" />
+            <MudList T="ChatContactDto" Dense="Density.Dense" SelectedValue="_contact" SelectedValueChanged="OpenAsync" data-testid="chat-contacts">
                 @foreach (var contact in Contacts)
                 {
                     <MudListItem Value="contact" data-contact="@contact.UserId">
@@ -53,7 +53,7 @@
                     }
                 </div>
                 <MudStack Row="true" AlignItems="AlignItems.End" Class="mt-2">
-                    <MudTextField T="string" @bind-Value="_text" Lines="2" Variant="Variant.Outlined" Placeholder="@L["Write a message"]" Immediate="true"
+                    <MudTextField Margin="Density.Margin" T="string" @bind-Value="_text" Lines="2" Variant="Variant.Outlined" Placeholder="@L["Write a message"]" Immediate="true"
                                   OnKeyDown="KeyDownAsync" MaxLength="4000" data-testid="chat-text" />
                     <MudIconButton Icon="@Icons.Material.Filled.Send" Color="Color.Primary" Disabled="string.IsNullOrWhiteSpace(_text)" OnClick="SendAsync"
                                    aria-label="@L["Send"]" data-testid="chat-send" />

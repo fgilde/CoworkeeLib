@@ -14,21 +14,21 @@ else
                 @switch (setting.Type)
                 {
                     case SettingType.Bool:
-                        <MudCheckBox T="bool" Value="@(bool.TryParse(Current(setting), out var on) && on)" ValueChanged="@((bool v) => Set(setting, v ? "true" : "false"))" Label="@setting.DisplayName" />
+                        <MudCheckBox Dense="Density.Dense" T="bool" Value="@(bool.TryParse(Current(setting), out var on) && on)" ValueChanged="@((bool v) => Set(setting, v ? "true" : "false"))" Label="@setting.DisplayName" />
                         break;
                     case SettingType.Int:
-                        <MudTextField T="string" Value="@Current(setting)" ValueChanged="@((string v) => Set(setting, v))" Label="@setting.DisplayName"
+                        <MudTextField Margin="Density.Margin" T="string" Value="@Current(setting)" ValueChanged="@((string v) => Set(setting, v))" Label="@setting.DisplayName"
                                       InputType="InputType.Number" Placeholder="@setting.DefaultValue" />
                         break;
                     case SettingType.Secret:
-                        <MudTextField T="string" Value="@_edited.GetValueOrDefault(setting.Name)" ValueChanged="@((string v) => Set(setting, v))" Label="@setting.DisplayName"
+                        <MudTextField Margin="Density.Margin" T="string" Value="@_edited.GetValueOrDefault(setting.Name)" ValueChanged="@((string v) => Set(setting, v))" Label="@setting.DisplayName"
                                       InputType="InputType.Password" HelperText="@(IsStored(setting) ? "A value is stored. Type to replace it." : "No value stored.")" />
                         break;
                     case SettingType.Text:
-                        <MudTextField T="string" Value="@Current(setting)" ValueChanged="@((string v) => Set(setting, v))" Label="@setting.DisplayName" Lines="4" />
+                        <MudTextField Margin="Density.Margin" T="string" Value="@Current(setting)" ValueChanged="@((string v) => Set(setting, v))" Label="@setting.DisplayName" Lines="4" />
                         break;
                     case SettingType.Choice:
-                        <MudSelect T="string" Value="@Current(setting)" ValueChanged="@((string v) => Set(setting, v))" Label="@setting.DisplayName">
+                        <MudSelect Margin="Density.Margin" Dense="Density.Dense" T="string" Value="@Current(setting)" ValueChanged="@((string v) => Set(setting, v))" Label="@setting.DisplayName">
                             @foreach (var choice in setting.Choices ?? [])
                             {
                                 <MudSelectItem Value="@choice">@choice</MudSelectItem>
@@ -36,7 +36,7 @@ else
                         </MudSelect>
                         break;
                     default:
-                        <MudTextField T="string" Value="@Current(setting)" ValueChanged="@((string v) => Set(setting, v))" Label="@setting.DisplayName" Placeholder="@setting.DefaultValue" />
+                        <MudTextField Margin="Density.Margin" T="string" Value="@Current(setting)" ValueChanged="@((string v) => Set(setting, v))" Label="@setting.DisplayName" Placeholder="@setting.DefaultValue" />
                         break;
                 }
                 @if (setting.Description is not null)

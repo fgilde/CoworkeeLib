@@ -2,7 +2,7 @@ using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Theming;
 
-/// <summary>A MudBlazor theme plus the app's own look: navigation, logo, tables. Everything here is editable in the theme editor.</summary>
+/// <summary>A MudBlazor theme plus the app's own look: navigation, logo, density. Everything here is editable in the theme editor.</summary>
 public class CoworkeeTheme : MudTheme
 {
     public static CoworkeeTheme Default { get; } = new()
@@ -49,7 +49,8 @@ public class CoworkeeTheme : MudTheme
     /// <summary>Only one navigation group open at a time, until the user chooses otherwise.</summary>
     public bool NavSingleExpand { get; set; }
 
-    public bool DenseTables { get; set; } = true;
+    /// <summary>Compact tables, lists, inputs, menus and chips across the app.</summary>
+    public bool Dense { get; set; } = true;
 
     public bool StripedTables { get; set; }
 

@@ -1,10 +1,13 @@
 using System.Text.Json;
 using Coworkee.Contracts.Theming;
+using Microsoft.AspNetCore.Components;
 
 namespace Coworkee.Client.Blazor.Theming;
 
 public sealed class ThemeService(Api.ICoworkeeApi api)
 {
+    private bool _dense = Density.Default.Dense;
+
     public CoworkeeTheme Theme { get; private set; } = CoworkeeTheme.Default;
 
     public ThemeDto? Current { get; private set; }
@@ -19,6 +22,9 @@ public sealed class ThemeService(Api.ICoworkeeApi api)
     public IReadOnlyDictionary<string, string?> ClientSettings { get; private set; } = new Dictionary<string, string?>();
 
     public event Action? Changed;
+
+    /// <summary>Cascades the theme's <see cref="CoworkeeTheme.Dense"/> to every component (registered with AddCascadingValue).</summary>
+    public CascadingValueSource<Density> DensitySource { get; } = new(Density.Default, isFixed: false);
 
     public async Task LoadAsync()
     {
@@ -48,26 +54,37 @@ public sealed class ThemeService(Api.ICoworkeeApi api)
         {
         }
 
-        Changed?.Invoke();
+        Notify();
     }
 
     public void Apply(ThemeDto theme)
     {
         Current = theme;
         Theme = ThemeMapper.ToTheme(theme);
-        Changed?.Invoke();
+        Notify();
     }
 
     /// <summary>Switches between "light", "dark" and "system" for this session (setup, or a toggle before it is saved).</summary>
     public void SetMode(string mode)
     {
         Mode = mode;
-        Changed?.Invoke();
+        Notify();
     }
 
     public void Preview(CoworkeeTheme theme)
     {
         Theme = theme;
+        Notify();
+    }
+
+    private void Notify()
+    {
+        if (Theme.Dense != _dense)
+        {
+            _dense = Theme.Dense;
+            _ = DensitySource.NotifyChangedAsync(new Density(_dense));
+        }
+
         Changed?.Invoke();
     }
 }

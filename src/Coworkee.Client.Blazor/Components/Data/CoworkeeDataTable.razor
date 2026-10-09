@@ -5,7 +5,7 @@
     @if (SearchFields.Count > 0)
     {
         <MudTextField T="string" Value="_search" ValueChanged="SearchAsync" Immediate="true" DebounceInterval="300" Placeholder="@L[SearchPlaceholder]"
-                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense"
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" Clearable="true" Variant="Variant.Outlined" Margin="Density.Margin"
                       Class="mr-2 mb-2" Style="max-width:320px" data-testid="table-search" />
     }
     @if (Facets)
@@ -16,7 +16,7 @@
     @ToolBarContent
     @if (SavedViews)
     {
-        <MudMenu Icon="@Icons.Material.Outlined.BookmarkBorder" Size="Size.Small" Class="mb-2" aria-label="@L["Views"]" data-testid="views">
+        <MudMenu Dense="Density.Dense" Icon="@Icons.Material.Outlined.BookmarkBorder" Size="Size.Small" Class="mb-2" aria-label="@L["Views"]" data-testid="views">
             @foreach (var view in _views)
             {
                 <MudMenuItem OnClick="() => ApplyViewAsync(view)">
@@ -33,7 +33,7 @@
                 <MudDivider />
             }
             <div class="d-flex align-center pa-2" @onclick:stopPropagation="true">
-                <MudTextField T="string" @bind-Value="_viewName" Placeholder="@L["Save current view as"]" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                <MudTextField T="string" @bind-Value="_viewName" Placeholder="@L["Save current view as"]" Variant="Variant.Outlined" Margin="Density.Margin" Immediate="true"
                               data-testid="view-name" />
                 <MudIconButton Icon="@Icons.Material.Outlined.Save" Size="Size.Small" Disabled="string.IsNullOrWhiteSpace(_viewName)" OnClick="SaveViewAsync"
                                aria-label="@L["Save"]" data-testid="save-view" />
@@ -42,7 +42,7 @@
     }
     @if (ColumnChooser && _grid is not null)
     {
-        <MudMenu Icon="@Icons.Material.Outlined.ViewColumn" Size="Size.Small" Class="mb-2" aria-label="@L["Columns"]" data-testid="columns">
+        <MudMenu Dense="Density.Dense" Icon="@Icons.Material.Outlined.ViewColumn" Size="Size.Small" Class="mb-2" aria-label="@L["Columns"]" data-testid="columns">
             @foreach (var column in _grid.RenderedColumns.Where(c => !string.IsNullOrEmpty(ColumnName(c))))
             {
                 <MudMenuItem AutoClose="false" OnClick="() => ToggleColumnAsync(column)"
@@ -65,7 +65,7 @@
     }
     @if (Exportable)
     {
-        <MudMenu Icon="@Icons.Material.Outlined.FileDownload" Size="Size.Small" Class="mb-2" aria-label="@L["Export"]" data-testid="export">
+        <MudMenu Dense="Density.Dense" Icon="@Icons.Material.Outlined.FileDownload" Size="Size.Small" Class="mb-2" aria-label="@L["Export"]" data-testid="export">
             <MudMenuItem OnClick="() => ExportAsync(ExportFormat.Excel)">Excel</MudMenuItem>
             <MudMenuItem OnClick="() => ExportAsync(ExportFormat.Csv)">CSV</MudMenuItem>
             <MudMenuItem OnClick="() => ExportAsync(ExportFormat.Json)">JSON</MudMenuItem>
@@ -88,7 +88,7 @@
 </MudStack>
 <FacetChips Selection="_selection" />
 <MudDataGrid @ref="_grid" T="T" ServerData="LoadAsync" MultiSelection="MultiSelection" SelectedItemsChanged="SelectionChangedAsync" RowsPerPage="PageSize"
-             SortMode="SortMode.Multiple" Dense="@Theme.DenseTables" Hover="true" Striped="@Theme.StripedTables" Elevation="0" Outlined="true" ChildRowContent="ChildRowContent" data-testid="data-table">
+             SortMode="SortMode.Multiple" Dense="Density.Dense" Hover="true" Striped="@Theme.StripedTables" Elevation="0" Outlined="true" ChildRowContent="ChildRowContent" data-testid="data-table">
     <Columns>
         @if (ChildRowContent is not null)
         {

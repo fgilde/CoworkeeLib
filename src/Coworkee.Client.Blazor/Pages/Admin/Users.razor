@@ -8,11 +8,11 @@
     {
         <MudPaper Outlined="true" Class="pa-4 mb-4">
             <MudStack Row="true" Wrap="Wrap.Wrap">
-                <MudTextField @bind-Value="_new.Email" Label="@L["Email"]" InputType="InputType.Email" Required="true" data-testid="new-user-email" />
-                <MudTextField @bind-Value="_new.FirstName" Label="@L["First name"]" />
-                <MudTextField @bind-Value="_new.LastName" Label="@L["Last name"]" />
-                <MudTextField @bind-Value="_new.Password" Label="@L["Initial password"]" InputType="InputType.Password" Required="true" data-testid="new-user-password" />
-                <MudCheckBox T="bool" @bind-Value="_new.MustChangePassword" Label="@L["Change password at first sign-in"]" data-testid="new-user-must-change" />
+                <MudTextField Margin="Density.Margin" @bind-Value="_new.Email" Label="@L["Email"]" InputType="InputType.Email" Required="true" data-testid="new-user-email" />
+                <MudTextField Margin="Density.Margin" @bind-Value="_new.FirstName" Label="@L["First name"]" />
+                <MudTextField Margin="Density.Margin" @bind-Value="_new.LastName" Label="@L["Last name"]" />
+                <MudTextField Margin="Density.Margin" @bind-Value="_new.Password" Label="@L["Initial password"]" InputType="InputType.Password" Required="true" data-testid="new-user-password" />
+                <MudCheckBox Dense="Density.Dense" T="bool" @bind-Value="_new.MustChangePassword" Label="@L["Change password at first sign-in"]" data-testid="new-user-must-change" />
             </MudStack>
             <MudStack Row="true" Class="mt-3">
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateAsync" data-testid="create-user">@L["Create"]</MudButton>
@@ -52,7 +52,7 @@
             <CellTemplate>
                 <PermissionView Permission="@IdentityPermissions.Users.Manage">
                     <ChildContent>
-                        <MudSelect T="Guid" MultiSelection="true" Dense="true" SelectedValues="RolesOf(context.Item)" ToStringFunc="RoleName"
+                        <MudSelect Margin="Density.Margin" T="Guid" MultiSelection="true" Dense="Density.Dense" SelectedValues="RolesOf(context.Item)" ToStringFunc="RoleName"
                                    SelectedValuesChanged="ids => SetRolesAsync(context.Item, ids)" data-testid="@($"roles-{context.Item.Email}")">
                             @foreach (var role in _roles)
                             {

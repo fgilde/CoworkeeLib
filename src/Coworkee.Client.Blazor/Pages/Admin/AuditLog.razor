@@ -5,7 +5,7 @@
 <CoworkeeDataTable @ref="_table" T="AuditEntryDto" EntitySet="AuditEntries" SearchFields="SearchFields" Filter="@Filter" ExportFileName="audit" NoRecordsText="No changes in this period.">
     <ToolBarContent>
         <MudSwitch T="bool" Value="_mine" ValueChanged="MineAsync" Label="@L["Only my changes"]" Color="Color.Primary" Class="mb-2" data-testid="audit-mine" />
-        <MudDateRangePicker DateRange="_range" DateRangeChanged="RangeAsync" Label="@L["Period"]" Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense"
+        <MudDateRangePicker DateRange="_range" DateRangeChanged="RangeAsync" Label="@L["Period"]" Clearable="true" Variant="Variant.Outlined" Margin="Density.Margin"
                             Class="mb-2 mr-2" Style="max-width:260px" data-testid="audit-period" />
     </ToolBarContent>
     <Columns>

@@ -20,8 +20,17 @@ public static class ThemeMapper
         Fill(theme.LayoutProperties, dto.LayoutProperties);
         Fill(theme.Shadows, dto.Shadows);
         Fill(theme, dto.Options, Options);
+        if (dto.Options is { ValueKind: JsonValueKind.Object } options && !options.TryGetProperty(nameof(CoworkeeTheme.Dense), out _)
+            && options.TryGetProperty(LegacyDense, out var legacy) && legacy.ValueKind is JsonValueKind.True or JsonValueKind.False)
+        {
+            theme.Dense = legacy.GetBoolean();
+        }
+
         return theme;
     }
+
+    // themes saved before the table-only option became Dense; saving one again stores Dense
+    private const string LegacyDense = "DenseTables";
 
     public static ThemeRequest ToRequest(string name, CoworkeeTheme theme) => new(
         name,

@@ -6,16 +6,13 @@ using Coworkee.Contracts.Theming;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using MudBlazor.Extensions.Components;
+using MudBlazor.Utilities;
 
 namespace Coworkee.Client.Blazor.Pages.Admin;
 
-public partial class Themes : IDisposable
+public partial class Themes
 {
-    private List<ThemePreset<CoworkeeTheme>>? _presets;
-    private Dictionary<Guid, ThemeDto> _themes = [];
-    private CoworkeeTheme? _theme;
-    private ThemeDto? _selected;
-    private int _version;
+    private List<(ThemeDto Dto, CoworkeeTheme Theme)>? _tiles;
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
@@ -27,91 +24,60 @@ public partial class Themes : IDisposable
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
-    protected override Task OnInitializedAsync() => ReloadAsync(ThemeService.Current?.Id);
+    protected override Task OnInitializedAsync() => ReloadAsync();
 
-    // leaving the page drops an unsaved preview
-    public void Dispose() => _ = ThemeService.LoadAsync();
+    private async Task ReloadAsync() => _tiles = [.. (await Api.GetThemesAsync()).Select(t => (t, ThemeMapper.ToTheme(t)))];
 
-    private async Task ReloadAsync(Guid? select)
+    private static string Hex(MudColor color) => color.ToString(MudColorOutputFormats.HexA);
+
+    private Task CreateAsync()
     {
-        var themes = await Api.GetThemesAsync();
-        _themes = themes.ToDictionary(t => t.Id);
-        _presets = [.. themes.Select(t => new ThemePreset<CoworkeeTheme>(t.Name, ThemeMapper.ToTheme(t)) { Id = t.Id })];
-        var preset = _presets.FirstOrDefault(p => Equals(p.Id, select)) ?? _presets.FirstOrDefault(p => _themes[(Guid)p.Id].IsDefault) ?? _presets.FirstOrDefault();
-        _theme = preset?.Theme;
-        _selected = preset is null ? null : _themes[(Guid)preset.Id];
-        _version++;
+        var presets = _tiles?.Select(t => new ThemePreset<CoworkeeTheme>(t.Dto.Name, ThemeMapper.ToTheme(t.Dto)) { Id = t.Dto.Id }).ToList() ?? [];
+        var start = presets.FirstOrDefault(p => _tiles!.Any(t => t.Dto.IsDefault && Equals(t.Dto.Id, p.Id)))?.Theme ?? new CoworkeeTheme();
+        start.IsPublished = false;
+        return OpenAsync(L["New theme"], string.Empty, start, presets, (name, theme) => Api.CreateThemeAsync(ThemeMapper.ToRequest(name, theme)));
     }
 
-    private bool CanDelete(ThemePreset<CoworkeeTheme> preset) => preset.Id is Guid id && _themes.TryGetValue(id, out var theme) && !theme.IsGlobal;
+    private Task EditAsync(ThemeDto dto) => OpenAsync(L["Edit theme"], dto.IsGlobal ? L["{0} copy", dto.Name] : dto.Name, ThemeMapper.ToTheme(dto), null,
+        (name, theme) => dto.IsGlobal ? Api.CreateThemeAsync(ThemeMapper.ToRequest(name, theme)) : Api.UpdateThemeAsync(dto.Id, ThemeMapper.ToRequest(name, theme)));
 
-    private void Preview(CoworkeeTheme theme)
+    private async Task OpenAsync(string title, string name, CoworkeeTheme theme, List<ThemePreset<CoworkeeTheme>>? presets, Func<string, CoworkeeTheme, Task<ThemeDto>> save)
     {
-        var preset = _presets?.FirstOrDefault(p => ReferenceEquals(p.Theme, theme));
-        if (preset?.Id is Guid id && _themes.TryGetValue(id, out var selected))
+        var parameters = new DialogParameters
         {
-            _selected = selected;
+            { nameof(ThemeEditDialog.Name), name },
+            { nameof(ThemeEditDialog.Theme), theme },
+            { nameof(ThemeEditDialog.Presets), presets },
+            { nameof(ThemeEditDialog.Save), save },
+        };
+        var dialog = await Dialogs.ShowSideSheetAsync<ThemeEditDialog>(title, parameters, o => o.MaxWidth = MaxWidth.Large);
+        var result = await dialog.Result;
+        // drops an unsaved preview, shows a saved one
+        await ThemeService.LoadAsync();
+        if (result is { Canceled: false, Data: ThemeDto saved })
+        {
+            Snackbar.Add(L["Theme {0} saved", saved.Name], Severity.Success);
+            await ReloadAsync();
         }
-
-        ThemeService.Preview(theme);
     }
 
-    private Task CreateAsync(ThemePreset<CoworkeeTheme> preset) => RunAsync(async () =>
+    private async Task DeleteAsync(ThemeDto dto)
     {
-        var created = await Api.CreateThemeAsync(ThemeMapper.ToRequest(preset.Name, preset.Theme));
-        await ReloadAsync(created.Id);
-        Snackbar.Add(L["Theme {0} created", created.Name], Severity.Success);
-    });
-
-    private Task DeleteAsync(ThemePreset<CoworkeeTheme> preset) => RunAsync(async () =>
-    {
-        if (!await Dialogs.ConfirmAsync(L["Delete theme"], L["Delete the theme {0}? Users who chose it get the default theme.", preset.Name], L["Delete"], L["Cancel"],
-                Icons.Material.Outlined.Delete))
+        if (await Dialogs.ConfirmAsync(L["Delete theme"], L["Delete the theme {0}? Users who chose it get the default theme.", dto.Name], L["Delete"], L["Cancel"],
+                Icons.Material.Outlined.Delete)
+            && await Snackbar.RunAsync(() => Api.DeleteThemeAsync(dto.Id), L["Theme {0} deleted", dto.Name]))
         {
-            return;
+            await ThemeService.LoadAsync();
+            await ReloadAsync();
         }
+    }
 
-        await Api.DeleteThemeAsync((Guid)preset.Id);
-        await ReloadAsync(null);
-    });
-
-    private Task SaveAsync(ThemeChangedArgs<CoworkeeTheme> args) => RunAsync(async () =>
+    private async Task SetDefaultAsync(ThemeDto dto)
     {
-        var preset = args.Preset ?? _presets?.FirstOrDefault(p => ReferenceEquals(p.Theme, args.Theme));
-        if (preset?.Id is not Guid id || !_themes.TryGetValue(id, out var stored))
+        if (await Snackbar.RunAsync(() => Api.SetDefaultThemeAsync(dto.Id)))
         {
-            return;
-        }
-
-        var saved = stored.IsGlobal
-            ? await Api.CreateThemeAsync(ThemeMapper.ToRequest(L["{0} copy", stored.Name], args.Theme))
-            : await Api.UpdateThemeAsync(id, ThemeMapper.ToRequest(preset.Name, args.Theme));
-        await ReloadAsync(saved.Id);
-        Snackbar.Add(L[stored.IsGlobal ? "Saved as copy {0}" : "Theme {0} saved", saved.Name], Severity.Success);
-    });
-
-    private Task CancelAsync() => RunAsync(async () =>
-    {
-        await ThemeService.LoadAsync();
-        await ReloadAsync(_selected?.Id);
-    });
-
-    private Task SetDefaultAsync() => RunAsync(async () =>
-    {
-        await Api.SetDefaultThemeAsync(_selected!.Id);
-        await ThemeService.LoadAsync();
-        await ReloadAsync(_selected.Id);
-    });
-
-    private async Task RunAsync(Func<Task> action)
-    {
-        try
-        {
-            await action();
-        }
-        catch (ApiException exception)
-        {
-            Snackbar.Add(exception.Errors is { Count: > 0 } errors ? string.Join(" ", errors.SelectMany(e => e.Value)) : exception.Message, Severity.Error);
+            await ThemeService.LoadAsync();
+            await ReloadAsync();
         }
     }
 }

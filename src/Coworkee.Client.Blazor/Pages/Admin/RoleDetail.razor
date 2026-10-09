@@ -15,7 +15,7 @@
     }
     @if (_role.IsSystem && _role.Name == "admin")
     {
-        <MudAlert Severity="Severity.Info" Class="mb-4">Administrators have every permission.</MudAlert>
+        <MudAlert Dense="Density.Dense" Severity="Severity.Info" Class="mb-4">Administrators have every permission.</MudAlert>
     }
 
     <PermissionView Permission="@IdentityPermissions.Permissions.Manage">

@@ -22,7 +22,7 @@
         </TemplateColumn>
         <TemplateColumn T="TenantRow" Title="@L["Edition"]" Sortable="false">
             <CellTemplate>
-                <MudSelect T="Guid?" Dense="true" Value="@Details(context.Item)?.EditionId" ValueChanged="id => SetEditionAsync(context.Item, id)" Clearable="true"
+                <MudSelect Margin="Density.Margin" T="Guid?" Dense="Density.Dense" Value="@Details(context.Item)?.EditionId" ValueChanged="id => SetEditionAsync(context.Item, id)" Clearable="true"
                            ToStringFunc="EditionName" Placeholder="@L["No edition"]" data-testid="@($"edition-{context.Item.Identifier}")">
                     @foreach (var edition in _editions)
                     {

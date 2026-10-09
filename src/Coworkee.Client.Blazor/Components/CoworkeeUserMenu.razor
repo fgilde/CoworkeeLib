@@ -1,7 +1,7 @@
 <AuthorizeView>
     <Authorized>
         <NotificationBell />
-        <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" data-testid="user-menu">
+        <MudMenu Dense="Density.Dense" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" data-testid="user-menu">
             <ActivatorContent Context="menu">
                 <MudButton Variant="Variant.Text" Color="Color.Inherit" Class="ml-2" Style="text-transform:none"
                            EndIcon="@Icons.Material.Filled.ArrowDropDown" aria-label="@L["Account"]" OnClick="@(() => menu.ToggleAsync())">

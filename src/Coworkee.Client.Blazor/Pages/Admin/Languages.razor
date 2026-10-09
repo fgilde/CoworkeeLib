@@ -5,20 +5,20 @@
 
 <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-3">
     <MudTextField T="string" @bind-Value="_filter" Immediate="true" DebounceInterval="200" Placeholder="@L["Search languages"]" Clearable="true"
-                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:340px"
+                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" Variant="Variant.Outlined" Margin="Density.Margin" Style="max-width:340px"
                   data-testid="language-filter" />
     <MudSwitch T="bool" @bind-Value="_onlyEnabled" Color="Color.Primary" Label="@L["Only switched on"]" data-testid="only-enabled" />
     <MudSpacer />
-    <MudChip T="string" Icon="@Icons.Material.Outlined.Translate" Color="Color.Primary" Variant="Variant.Outlined">@L["{0} switched on", EnabledCount]</MudChip>
+    <MudChip Size="Density.Size" T="string" Icon="@Icons.Material.Outlined.Translate" Color="Color.Primary" Variant="Variant.Outlined">@L["{0} switched on", EnabledCount]</MudChip>
 </MudStack>
 
 @if (_busy is { } busy)
 {
-    <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3" Icon="@Icons.Material.Outlined.HourglassTop">@busy</MudAlert>
+    <MudAlert Severity="Severity.Info" Dense="Density.Dense" Class="mb-3" Icon="@Icons.Material.Outlined.HourglassTop">@busy</MudAlert>
     <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-3" />
 }
 
-<MudExpansionPanels MultiExpansion="true" Elevation="0" Outlined="true" data-testid="languages">
+<MudExpansionPanels Dense="Density.Dense" MultiExpansion="true" Elevation="0" Outlined="true" data-testid="languages">
     @foreach (var group in VisibleGroups)
     {
         var open = IsOpen(group);

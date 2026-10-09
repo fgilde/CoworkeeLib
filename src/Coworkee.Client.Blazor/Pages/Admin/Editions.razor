@@ -7,7 +7,7 @@
     <MudSpacer />
     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" Size="Size.Small" OnClick="CreateAsync" data-testid="create-edition">@L["New edition"]</MudButton>
 </MudStack>
-<MudDataGrid T="EditionDto" Items="_editions" Loading="_editions is null" Dense="true" Hover="true" Elevation="0" Outlined="true" data-testid="editions">
+<MudDataGrid T="EditionDto" Items="_editions" Loading="_editions is null" Dense="Density.Dense" Hover="true" Elevation="0" Outlined="true" data-testid="editions">
     <Columns>
         <PropertyColumn Property="e => e.Name" Title="@L["Name"]" />
         <PropertyColumn Property="e => e.Description" Title="@L["Description"]" />

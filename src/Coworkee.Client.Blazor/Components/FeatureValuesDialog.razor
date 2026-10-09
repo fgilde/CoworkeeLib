@@ -12,7 +12,7 @@
                 <div data-feature="@feature.Name" class="mb-3">
                     @if (feature.Type == FeatureType.Bool)
                     {
-                        <MudSelect T="string" Value="@Value(feature)" ValueChanged="@(v => Set(feature, v))" Label="@L[feature.DisplayName]" Clearable="true"
+                        <MudSelect Margin="Density.Margin" Dense="Density.Dense" T="string" Value="@Value(feature)" ValueChanged="@(v => Set(feature, v))" Label="@L[feature.DisplayName]" Clearable="true"
                                    HelperText="@Inherits(feature)">
                             <MudSelectItem Value="@("true")">@L["on"]</MudSelectItem>
                             <MudSelectItem Value="@("false")">@L["off"]</MudSelectItem>
@@ -20,7 +20,7 @@
                     }
                     else
                     {
-                        <MudTextField T="string" Value="@Value(feature)" ValueChanged="@(v => Set(feature, v))" Label="@L[feature.DisplayName]" Clearable="true"
+                        <MudTextField Margin="Density.Margin" T="string" Value="@Value(feature)" ValueChanged="@(v => Set(feature, v))" Label="@L[feature.DisplayName]" Clearable="true"
                                       InputType="@(feature.Type == FeatureType.Int ? InputType.Number : InputType.Text)" HelperText="@Inherits(feature)" />
                     }
                     @if (feature.Description is not null)

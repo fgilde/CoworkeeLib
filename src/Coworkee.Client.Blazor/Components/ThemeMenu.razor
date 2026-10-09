@@ -2,7 +2,7 @@
     <Authorized>
         @if (_themes.Count > 1)
         {
-            <MudMenu Icon="@Icons.Material.Outlined.Palette" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="true"
+            <MudMenu Icon="@Icons.Material.Outlined.Palette" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="Density.Dense"
                      aria-label="@L["Theme"]" data-testid="theme-menu">
                 @foreach (var theme in _themes)
                 {

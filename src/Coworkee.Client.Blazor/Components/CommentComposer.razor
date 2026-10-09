@@ -1,5 +1,5 @@
 <MudStack Row="true" AlignItems="AlignItems.End" Spacing="1" data-testid="comment-composer">
-    <MudTextField T="string" @bind-Value="_text" Lines="2" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+    <MudTextField T="string" @bind-Value="_text" Lines="2" Variant="Variant.Outlined" Margin="Density.Margin" Immediate="true"
                   Placeholder="@Placeholder" MaxLength="4000" data-testid="comment-text" />
     @if (OnCancel.HasDelegate)
     {

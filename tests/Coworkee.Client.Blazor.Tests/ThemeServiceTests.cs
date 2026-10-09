@@ -3,6 +3,7 @@ using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Theming;
 using Coworkee.Contracts.Theming;
 using MudBlazor;
+using MudBlazor.Extensions.Components.ObjectEdit;
 using MudBlazor.Utilities;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -73,6 +74,45 @@ public sealed class ThemeServiceTests
         copy.IsPublished.ShouldBeTrue();
         copy.CustomCss.ShouldBe(".x{}");
         request.Options!.Value.TryGetProperty(nameof(CoworkeeTheme.CustomCss), out _).ShouldBeFalse();
+    }
+
+    [Fact]
+    public void Dense_is_on_by_default_and_round_trips()
+    {
+        ThemeMapper.ToTheme(Theme("#123456")).Dense.ShouldBeTrue();
+        var theme = ThemeMapper.ToTheme(Theme("#123456"));
+        theme.Dense = false;
+
+        var request = ThemeMapper.ToRequest("Loose", theme);
+
+        request.Options!.Value.GetProperty(nameof(CoworkeeTheme.Dense)).GetBoolean().ShouldBeFalse();
+        ThemeMapper.ToTheme(Theme("#123456") with { Options = request.Options }).Dense.ShouldBeFalse();
+    }
+
+    [Theory]
+    [InlineData("{\"DenseTables\":false}", false)]
+    [InlineData("{\"DenseTables\":false,\"Dense\":true}", true)]
+    public void Reads_the_former_DenseTables_option(string options, bool dense) =>
+        ThemeMapper.ToTheme(Theme("#123456") with { Options = JsonDocument.Parse(options).RootElement }).Dense.ShouldBe(dense);
+
+    [Theory]
+    [InlineData(true, Margin.Dense)]
+    [InlineData(false, null)]
+    public async Task Object_edit_fields_follow_the_theme_density(bool dense, Margin? expected)
+    {
+        var service = new ThemeService(_api);
+        service.Preview(new CoworkeeTheme { Dense = dense });
+        var meta = new Probe().ObjectEditMeta();
+
+        await new DenseObjectEditMeta<Probe>(service).ConfigureAsync(meta);
+
+        meta.Property(p => p.Name)!.RenderData.Attributes.TryGetValue(nameof(MudTextField<string>.Margin), out var margin);
+        ((Margin?)margin).ShouldBe(expected);
+    }
+
+    public sealed class Probe
+    {
+        public string? Name { get; set; }
     }
 
     private static ThemeDto Theme(string primary) => new(

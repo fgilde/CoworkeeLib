@@ -7,7 +7,7 @@ else
 {
     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2" Wrap="Wrap.Wrap">
         <MudTextField @bind-Value="_search" Immediate="true" Placeholder="Search permissions" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search"
-                      Clearable="true" Variant="Variant.Outlined" Margin="Margin.Dense" data-testid="permission-search" Style="max-width:360px" />
+                      Clearable="true" Variant="Variant.Outlined" Margin="Density.Margin" data-testid="permission-search" Style="max-width:360px" />
         <MudSpacer />
         <MudText Typo="Typo.body2" Class="mud-text-secondary" data-testid="total-count">@_selected.Count(Known) of @_groups.Sum(g => g.Permissions.Count) granted</MudText>
     </MudStack>
@@ -24,7 +24,7 @@ else
                 <MudText Typo="Typo.subtitle2">@group.DisplayName</MudText>
                 <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(all ? Color.Primary : Color.Default)" data-testid="group-count">@group.Permissions.Count(p => _selected.Contains(p.Name)) / @group.Permissions.Count</MudChip>
             </MudStack>
-            <MudSimpleTable Dense="true" Hover="true" Bordered="false" Class="mb-2">
+            <MudSimpleTable Dense="Density.Dense" Hover="true" Bordered="false" Class="mb-2">
                 <tbody>
                     @foreach (var permission in group.Permissions.Where(Matches))
                     {
