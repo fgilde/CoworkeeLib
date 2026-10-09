@@ -1,5 +1,6 @@
 using System.Security.Cryptography.X509Certificates;
 using Coworkee.AspNetCore;
+using Coworkee.AspNetCore.RateLimiting;
 using Coworkee.AuthServer.External;
 using Coworkee.Contracts.Configuration;
 using Coworkee.Core.Modularity;
@@ -120,6 +121,6 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
         });
 
         AuthEndpoints.Map(app);
-        app.MapRazorPages();
+        app.MapRazorPages().RequireCoworkeeRateLimit(CoworkeeRateLimitOptions.Auth);
     }
 }

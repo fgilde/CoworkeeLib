@@ -39,6 +39,7 @@ public sealed class AuthApp : PostgresFixture
         {
             ["ConnectionStrings:test"] = ConnectionString,
             ["Coworkee:SetupToken"] = "token",
+            ["Coworkee:RateLimiting:Policies:auth:PermitLimit"] = "100000",
             ["Coworkee:Auth:AllowHttp"] = "true",
             ["Coworkee:Auth:SigningCertificate:Path"] = TestCertificates.Write("signing", System.Security.Cryptography.X509Certificates.X509KeyUsageFlags.DigitalSignature),
             ["Coworkee:Auth:EncryptionCertificate:Path"] = TestCertificates.Write("encryption", System.Security.Cryptography.X509Certificates.X509KeyUsageFlags.KeyEncipherment),

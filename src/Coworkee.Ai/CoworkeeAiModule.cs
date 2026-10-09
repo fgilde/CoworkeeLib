@@ -2,6 +2,7 @@ using System.Text.Json;
 using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
 using Coworkee.AspNetCore.Http;
+using Coworkee.AspNetCore.RateLimiting;
 using Coworkee.AspNetCore;
 using Coworkee.Contracts.Ai;
 using Coworkee.Contracts.Settings;
@@ -80,13 +81,13 @@ public sealed class CoworkeeAiModule : CoworkeeModule, IWebModule
 
     public void ConfigureApplication(WebApplication app)
     {
-        var api = app.MapCoworkeeApi("/api/v1/ai").WithTags("AI").RequireAuthorization();
+        var api = app.MapCoworkeeApi("/api/v1/ai").WithTags("AI").RequireAuthorization().RequireCoworkeeRateLimit(CoworkeeRateLimitOptions.Ai);
         api.MapGet("/tools", async (AiToolRunner runner, CancellationToken ct) =>
             Results.Ok((await runner.AvailableAsync(ct)).Select(t => new AiToolDto(t.Name, t.Description))));
         api.MapPost("/chat", (ChatRequest body, AiChat chat, CancellationToken ct) => chat.SendAsync(body, ct).ToHttpResult());
         api.MapGet("/tool-calls", ([AsParameters] PageRequest page, string? channel, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new GetAiToolCalls(page, channel), ct).ToHttpResult());
-        app.MapMcp("/mcp").RequireAuthorization().Add(endpoint =>
+        app.MapMcp("/mcp").RequireAuthorization().RequireCoworkeeRateLimit(CoworkeeRateLimitOptions.Ai).Add(endpoint =>
         {
             var next = endpoint.RequestDelegate!;
             endpoint.RequestDelegate = context => IsAllowedMcpRequest(context.Request) ? next(context) : Reject(context);

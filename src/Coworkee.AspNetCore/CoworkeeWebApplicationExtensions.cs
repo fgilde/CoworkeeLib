@@ -2,13 +2,16 @@ using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using System.Text.Json.Serialization;
 using Coworkee.AspNetCore.Http;
+using Coworkee.AspNetCore.RateLimiting;
 using Coworkee.AspNetCore.Security;
 using Coworkee.Core.Modularity;
 using Coworkee.Core.Security;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace Coworkee.AspNetCore;
 
@@ -25,6 +28,9 @@ public static class CoworkeeWebApplicationExtensions
         builder.Services.AddAuthentication();
         builder.Services.AddAuthorization();
         builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+        builder.Services.Configure<CoworkeeRateLimitOptions>(builder.Configuration.GetSection(CoworkeeRateLimitOptions.Section));
+        builder.Services.AddRateLimiter(_ => { });
+        builder.Services.AddOptions<RateLimiterOptions>().Configure<IOptions<CoworkeeRateLimitOptions>>(CoworkeeRateLimiter.Configure);
         builder.Services.AddCoworkeeModules<TRoot>(builder.Configuration);
         builder.Services.AddProblemDetails();
         builder.Services.AddExceptionHandler<CoworkeeExceptionHandler>();
@@ -52,6 +58,11 @@ public static class CoworkeeWebApplicationExtensions
 
         app.UseAuthentication();
         app.UseAuthorization();
+        if (app.Services.GetRequiredService<IOptions<CoworkeeRateLimitOptions>>().Value.Enabled)
+        {
+            app.UseRateLimiter();
+        }
+
         if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>(OpenApiSetting))
         {
             app.MapOpenApi();
