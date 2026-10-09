@@ -17,7 +17,7 @@ cd Shop
 coworkee run
 ```
 
-The console prints the URL of the Aspire dashboard; open the web app from there. The CLI page lists the options (`--no-samples`, `--keycloak`, …) and the other commands.
+The console prints the URL of the Aspire dashboard; open the web app from there. The [CLI page](cli.md) lists the options (`--no-samples`, `--keycloak`, …) and the other commands.
 
 Without the CLI, the same template works with `dotnet new`:
 

@@ -17,7 +17,7 @@ cd Shop
 coworkee run
 ```
 
-Die Konsole zeigt die Adresse des Aspire-Dashboards; von dort öffnen Sie die Web-App. Die CLI-Seite beschreibt die Optionen (`--no-samples`, `--keycloak`, …) und die übrigen Befehle.
+Die Konsole zeigt die Adresse des Aspire-Dashboards; von dort öffnen Sie die Web-App. Die [CLI-Seite](cli.md) beschreibt die Optionen (`--no-samples`, `--keycloak`, …) und die übrigen Befehle.
 
 Ohne CLI funktioniert dasselbe Template mit `dotnet new`:
 
