@@ -119,6 +119,23 @@ public sealed class FileTests(FilesApp app) : IAsyncLifetime
         var registrations = (await ContentAsync(Admin, null)).Folders.ShouldHaveSingleItem();
         registrations.Name.ShouldBe("Registrations");
         (await ContentAsync(Admin, registrations.Id)).Folders.ShouldHaveSingleItem().Id.ShouldBe(mine.Id);
+        (await Admin.GetFromJsonAsync<JsonElement>("/odata/StoredFiles", Ct)).GetProperty("value").GetArrayLength().ShouldBe(2);
+
+        // a global file grant does not reach the registration documents
+        var viewer = await PostAsync<UserDto>("/api/v1/identity/users", new CreateUserRequest("ivy@acme.test", "Passw0rd!x", null, null));
+        var role = await PostAsync<Guid>("/api/v1/identity/roles", new RoleRequest("File viewer", null));
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{role}", new NameListRequest([FilePermissions.Manage]), Ct)).EnsureSuccessStatusCode();
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/users/{viewer.Id}/roles", new IdListRequest([role]), Ct)).EnsureSuccessStatusCode();
+        var ivy = app.As(viewer.Id, _setup.TenantId);
+        (await ContentAsync(ivy, null)).Folders.ShouldBeEmpty();
+        (await ivy.GetAsync($"/api/v1/files/folders/content?folderId={registrations.Id}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await ivy.GetAsync($"/api/v1/files/folders/content?folderId={mine.Id}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await ivy.GetFromJsonAsync<JsonElement>("/odata/StoredFiles", Ct)).GetProperty("value").GetArrayLength().ShouldBe(0);
+        (await ivy.GetFromJsonAsync<JsonElement>("/odata/FileFolders", Ct)).GetProperty("value").GetArrayLength().ShouldBe(0);
+
+        // Files.Registrations.View opens them
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{role}", new NameListRequest([FilePermissions.Manage, FilePermissions.ViewRegistrations]), Ct)).EnsureSuccessStatusCode();
+        (await ContentAsync(ivy, mine.Id)).Files.Count.ShouldBe(2);
     }
 
     private async Task<FolderDto> CreateFolderAsync(Guid? parentId, string name) => await PostAsync<FolderDto>("/api/v1/files/folders", new CreateFolderRequest(parentId, name));

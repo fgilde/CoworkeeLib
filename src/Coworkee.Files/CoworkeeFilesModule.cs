@@ -34,6 +34,10 @@ public sealed class CoworkeeFilesModule : CoworkeeModule, IWebModule
         services.AddSingleton<IPermissionDefinitionContributor, FilePermissionDefinitions>();
         services.AddScoped<IResourceHierarchy, FolderHierarchy>();
         services.AddScoped<FolderAccess>();
+        services.AddScoped<RegistrationFolders>();
+        services.AddScoped<IResourceRestriction>(sp => sp.GetRequiredService<RegistrationFolders>());
+        services.AddScoped<IODataEntityFilter<FileFolder>>(sp => sp.GetRequiredService<RegistrationFolders>());
+        services.AddScoped<IODataEntityFilter<StoredFile>>(sp => sp.GetRequiredService<RegistrationFolders>());
         services.AddScoped<Application.Privacy.IPersonalDataContributor, FilePersonalData>();
         services.TryAddSingleton(TimeProvider.System);
         services.TryAddScoped<Application.Registration.IRegistrationDocumentStore, FileRegistrationDocuments>();
@@ -50,5 +54,6 @@ internal sealed class FilePermissionDefinitions : IPermissionDefinitionContribut
         context.Group(FilePermissions.GroupName, "Files")
             .Add(FilePermissions.View, "View files")
             .Add(FilePermissions.Upload, "Upload files", FilePermissions.View)
-            .Add(FilePermissions.Manage, "Manage files", FilePermissions.Upload, FilePermissions.View);
+            .Add(FilePermissions.Manage, "Manage files", FilePermissions.Upload, FilePermissions.View)
+            .Add(FilePermissions.ViewRegistrations, "View registration documents of all users", FilePermissions.View);
 }

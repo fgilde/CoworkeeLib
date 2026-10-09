@@ -11,7 +11,8 @@ namespace Coworkee.Files;
 
 /// <summary>
 /// Puts registration documents into Registrations/{user} in the files. The folder carries no grant but one for the user (through
-/// the role <see cref="ReaderRole"/>, which may view files), so only the user and holders of a global file grant (admins) see it.
+/// the role <see cref="ReaderRole"/>, which may view files); global file grants do not reach the tree (<see cref="RegistrationFolders"/>),
+/// so only the user and holders of Files.Registrations.View (admins) see it.
 /// </summary>
 internal sealed class FileRegistrationDocuments(CoworkeeDbContext db, ICurrentUser currentUser, IBlobStorage storage, TimeProvider clock) : IRegistrationDocumentStore
 {

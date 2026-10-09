@@ -16,7 +16,7 @@ public sealed record OpenFile(Guid Id) : IQuery<Result<FileContent>>;
 
 public sealed record FileContent(string Name, string ContentType, Stream Content);
 
-internal sealed class FileQueryHandlers(CoworkeeDbContext db, FolderAccess access, IPermissionChecker permissions, IBlobStorage storage)
+internal sealed class FileQueryHandlers(CoworkeeDbContext db, FolderAccess access, IPermissionChecker permissions, IBlobStorage storage, RegistrationFolders registrations)
     : IHandler<GetFolderContent, Result<FolderContentDto>>,
       IHandler<GetFile, Result<StoredFileDto>>,
       IHandler<OpenFile, Result<FileContent>>
@@ -33,6 +33,12 @@ internal sealed class FileQueryHandlers(CoworkeeDbContext db, FolderAccess acces
         if (await access.CanAsync(FilePermissions.View, query.FolderId, cancellationToken))
         {
             var folders = await db.Set<FileFolder>().AsNoTracking().Where(f => f.ParentId == query.FolderId).OrderBy(f => f.Name).ToListAsync(cancellationToken);
+            if (query.FolderId is null && !await registrations.CanViewAllAsync(cancellationToken))
+            {
+                // ponytail: a global file grant hides Registrations, the user's own registration folder is then reached only by link
+                folders.RemoveAll(RegistrationFolders.IsRoot);
+            }
+
             var files = await db.Set<StoredFile>().AsNoTracking().Where(f => f.FolderId == query.FolderId).OrderBy(f => f.Name).ToListAsync(cancellationToken);
             return new FolderContentDto(folders.Select(FileMapping.ToDto).ToList(), files.Select(FileMapping.ToDto).ToList(), canUpload, canManage);
         }
