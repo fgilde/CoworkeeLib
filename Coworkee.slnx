@@ -17,6 +17,7 @@
     <Project Path="src/Coworkee.Ai/Coworkee.Ai.csproj" />
     <Project Path="src/Coworkee.Backup/Coworkee.Backup.csproj" />
     <Project Path="src/Coworkee.Chat/Coworkee.Chat.csproj" />
+    <Project Path="src/Coworkee.Cli/Coworkee.Cli.csproj" />
     <Project Path="src/Coworkee.Client/Coworkee.Client.csproj" />
     <Project Path="src/Coworkee.EventBus.RabbitMq/Coworkee.EventBus.RabbitMq.csproj" />
     <Project Path="src/Coworkee.EventBus/Coworkee.EventBus.csproj" />
@@ -34,6 +35,9 @@
     <Project Path="src/Coworkee.Storage/Coworkee.Storage.csproj" />
     <Project Path="src/Coworkee.Testing/Coworkee.Testing.csproj" />
     <Project Path="src/Coworkee.Theming/Coworkee.Theming.csproj" />
+  </Folder>
+  <Folder Name="/templates/">
+    <Project Path="templates/Coworkee.Templates/Coworkee.Templates.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Coworkee.Account.Tests/Coworkee.Account.Tests.csproj" />
@@ -53,6 +57,7 @@
     <Project Path="tests/Coworkee.Ai.Tests/Coworkee.Ai.Tests.csproj" />
     <Project Path="tests/Coworkee.Backup.Tests/Coworkee.Backup.Tests.csproj" />
     <Project Path="tests/Coworkee.Chat.Tests/Coworkee.Chat.Tests.csproj" />
+    <Project Path="tests/Coworkee.Cli.Tests/Coworkee.Cli.Tests.csproj" />
     <Project Path="tests/Coworkee.Client.Tests/Coworkee.Client.Tests.csproj" />
     <Project Path="tests/Coworkee.EventBus.RabbitMq.Tests/Coworkee.EventBus.RabbitMq.Tests.csproj" />
     <Project Path="tests/Coworkee.EventBus.Tests/Coworkee.EventBus.Tests.csproj" />

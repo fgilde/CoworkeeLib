@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\__App__.Contracts\__App__.Contracts.csproj" />
+    <ProjectReference Include="..\__App__.Application\__App__.Application.csproj" />
+    <CoworkeePackage Include="Coworkee.AspNetCore" />
+    <CoworkeePackage Include="Coworkee.Infrastructure" />
+    <CoworkeePackage Include="Coworkee.OData" />
+  </ItemGroup>
+</Project>

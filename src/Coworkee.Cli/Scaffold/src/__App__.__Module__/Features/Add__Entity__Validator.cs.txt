@@ -1,0 +1,8 @@
+using FluentValidation;
+
+namespace __App__.__Module__.Features;
+
+internal sealed class Add__Entity__Validator : AbstractValidator<Add__Entity__Command>
+{
+    public Add__Entity__Validator() => RuleFor(c => c.Request.Name).NotEmpty().MaximumLength(200);
+}

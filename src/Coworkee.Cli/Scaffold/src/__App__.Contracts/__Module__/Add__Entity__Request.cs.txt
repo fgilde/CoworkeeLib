@@ -1,0 +1,6 @@
+namespace __App__.Contracts.__Module__;
+
+public sealed class Add__Entity__Request
+{
+    public string Name { get; set; } = string.Empty;
+}

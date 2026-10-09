@@ -60,6 +60,7 @@ plugins:
             Home: Start
             Getting started: Erste Schritte
             Installation: Installation
+            Command line: Kommandozeile
             Solution structure: Aufbau der Solution
             Your first feature: Das erste Feature
             Fundamentals: Grundlagen
@@ -123,6 +124,7 @@ nav:
   - Home: index.md
   - Getting started:
       - Installation: getting-started/installation.md
+      - Command line: getting-started/cli.md
       - Solution structure: getting-started/solution-structure.md
       - Your first feature: getting-started/first-feature.md
   - Fundamentals:

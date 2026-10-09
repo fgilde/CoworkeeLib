@@ -1,0 +1,11 @@
+using Coworkee.Domain;
+using Coworkee.Infrastructure.Persistence;
+
+namespace __App__.__Module__.Domain;
+
+public sealed class __Entity__ : AuditedEntity, IMultiTenant
+{
+    public required string Name { get; set; }
+
+    public Guid TenantId { get; set; }
+}
