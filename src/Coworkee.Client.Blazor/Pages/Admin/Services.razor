@@ -7,7 +7,7 @@
 
 @if (_error is not null)
 {
-    <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
+    <MudAlert Severity="Severity.Error" Dense="Density.Dense" Class="mb-4">@_error</MudAlert>
 }
 else if (_services is null)
 {
@@ -15,7 +15,7 @@ else if (_services is null)
 }
 else if (_services.Count == 0)
 {
-    <MudAlert Severity="Severity.Info">@L["No services are configured (Coworkee:Services)."]</MudAlert>
+    <MudAlert Severity="Severity.Info" Dense="Density.Dense">@L["No services are configured (Coworkee:Services)."]</MudAlert>
 }
 else
 {
