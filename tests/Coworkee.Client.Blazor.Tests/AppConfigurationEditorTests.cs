@@ -18,11 +18,11 @@ public sealed class AppConfigurationEditorTests : ClientTestBase
         Api.SaveAppConfigurationAsync("Sample", Arg.Any<JsonElement>(), Arg.Any<CancellationToken>()).Returns(Values("Changed", 10, ["Sample:Name"]));
     }
 
-    private static AppConfigurationValuesDto Values(string name, int limit, IReadOnlyList<string> changed) => new(
+    private static AppConfigurationValuesDto Values(string name, int limit, IReadOnlyList<string> changed, IReadOnlyList<string>? locked = null, IReadOnlyList<string>? hidden = null) => new(
         "Sample",
         JsonSerializer.SerializeToElement(new SampleConfig { Name = name, Limit = limit }, JsonSerializerOptions.Web),
         JsonSerializer.SerializeToElement(new SampleConfig { Name = "Default", Limit = 10 }, JsonSerializerOptions.Web),
-        changed);
+        changed, locked, hidden);
 
     [Fact]
     public async Task Edits_the_typed_section_and_saves_it()
@@ -39,16 +39,33 @@ public sealed class AppConfigurationEditorTests : ClientTestBase
     }
 
     [Fact]
-    public void The_page_shows_a_tab_per_registered_section()
+    public void Locked_values_show_read_only_and_hidden_ones_not_at_all()
     {
-        Services.AddSingleton(Registration);
+        Api.GetAppConfigurationAsync("Sample", Arg.Any<CancellationToken>()).Returns(Values("Default", 10, [], locked: ["Name"], hidden: ["Inner:Secret"]));
+
+        var editor = Render<AppConfigurationEditor<SampleConfig>>(p => p.Add(e => e.Registration, Registration));
+
+        editor.WaitForAssertion(() => editor.FindAll("input").Single(i => i.GetAttribute("value") == "Default").HasAttribute("readonly").ShouldBeTrue());
+        editor.FindAll("input").Single(i => i.GetAttribute("value") == "10").HasAttribute("readonly").ShouldBeFalse();
+        editor.Markup.ShouldNotContain("Secret");
+        editor.Markup.ShouldContain("Note");
+    }
+
+    [Fact]
+    public void The_settings_page_shows_the_app_settings_first_and_a_tab_per_section()
+    {
         Services.AddSingleton(new ClientAppConfiguration("Other", "Other things", typeof(SampleConfig), null));
+        Services.AddCoworkeeSettings<SampleConfig>(section: "Sample", title: "Mine");
+        Services.AddCoworkeeSettings<SampleConfig>(section: "Sample", title: "Sample");
+        Api.GetSettingDefinitionsAsync(Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns([]);
+        Api.GetSettingsAsync(Arg.Any<SettingScope>(), Arg.Any<CancellationToken>()).Returns([]);
         Authorize();
 
-        var page = Render<AppConfiguration>();
+        var page = Render<Settings>();
 
+        page.FindAll("[data-section]").Select(e => e.GetAttribute("data-section")).First().ShouldBe("Sample");
         page.Markup.ShouldContain("Other things");
-        page.FindAll("[data-section]").Select(e => e.GetAttribute("data-section")).ShouldContain("Sample");
+        page.Markup.ShouldNotContain("Mine");
     }
 
     private void Authorize()
@@ -63,5 +80,14 @@ public sealed class AppConfigurationEditorTests : ClientTestBase
         public string? Name { get; set; }
 
         public int Limit { get; set; }
+
+        public SampleInner Inner { get; set; } = new();
+    }
+
+    public sealed class SampleInner
+    {
+        public string? Secret { get; set; }
+
+        public string? Note { get; set; }
     }
 }

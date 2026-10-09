@@ -4,11 +4,22 @@ public sealed class NavigationMenuOptions
 {
     private readonly HashSet<string> _hidden = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, (string? Group, string? Title, int? Order)> _placements = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Dictionary<string, int> _groupOrder = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, int> _groupOrder = new(StringComparer.Ordinal)
+    {
+        [NavigationGroups.Identity] = 0,
+        [NavigationGroups.System] = 1,
+        [NavigationGroups.Communication] = 2,
+        [NavigationGroups.Localization] = 3,
+        [NavigationGroups.Monitoring] = 4,
+    };
     private readonly Dictionary<string, string> _groupIcons = new(StringComparer.Ordinal) 
     {
         [NavigationGroups.Administration] = MudBlazor.Icons.Material.Outlined.AdminPanelSettings,
+        [NavigationGroups.Identity] = MudBlazor.Icons.Material.Outlined.Badge,
+        [NavigationGroups.System] = MudBlazor.Icons.Material.Outlined.SettingsApplications,
+        [NavigationGroups.Communication] = MudBlazor.Icons.Material.Outlined.Forum,
         [NavigationGroups.Localization] = MudBlazor.Icons.Material.Outlined.Translate,
+        [NavigationGroups.Monitoring] = MudBlazor.Icons.Material.Outlined.MonitorHeart,
     };
 
     public bool ShowHome { get; set; } = true;

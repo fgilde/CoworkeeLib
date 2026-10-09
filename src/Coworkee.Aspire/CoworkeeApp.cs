@@ -148,6 +148,7 @@ public sealed partial class CoworkeeApp
         where TProject : IProjectMetadata, new()
     {
         var service = Builder.AddProject<TProject>($"{Name}-{suffix}").WithHttpHealthCheck(Health);
+        WireServices(service);
         var references = CoworkeeModules.References(service.Resource.GetProjectMetadata().ProjectPath);
         foreach (var (_, wire) in Modules.Where(m => references.Contains(m.Key)).ToList())
         {

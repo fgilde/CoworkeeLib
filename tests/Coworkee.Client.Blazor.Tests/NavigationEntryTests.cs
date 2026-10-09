@@ -22,4 +22,17 @@ public sealed class NavigationEntryTests
         admin.Children!.Last().Children!.Single().Href.ShouldBe("/admin/languages");
         tree.Single(e => e.Text == "Personal").Children!.Single().Text.ShouldBe("Audit Trails");
     }
+
+    [Fact]
+    public void The_admin_pages_sit_in_subgroups_and_the_administration_keeps_its_place()
+    {
+        var options = new NavigationMenuOptions().OrderGroup("Personal", 0).OrderGroup(NavigationGroups.Administration, 1);
+        var tree = NavigationEntry.Build([.. new AdminNavigation().Items, new("Account", "/profile", Icons.Material.Outlined.Person, Group: "Personal")], options, null);
+
+        tree.Where(e => e.Children is not null).Select(e => e.Text).ShouldBe(["Personal", NavigationGroups.Administration]);
+        var admin = tree.Single(e => e.Text == NavigationGroups.Administration);
+        admin.Children!.Select(e => e.Text).ShouldBe(["Identity", "System", "Communication", "Localization", "Monitoring"]);
+        admin.Children!.Single(e => e.Text == "System").Children!.Select(e => e.Href).ShouldContain("/admin/services");
+        new AdminNavigation().Items.Select(i => i.Href).ShouldNotContain("/admin/jobs");
+    }
 }

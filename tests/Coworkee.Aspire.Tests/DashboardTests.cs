@@ -44,6 +44,30 @@ public sealed class DashboardTests
         urls.Select(u => u.Url).ShouldBe(["https://localhost:7001/swagger", "https://localhost:7001/admin/jobs"], ignoreOrder: true);
     }
 
+    [Fact]
+    public async Task Every_service_knows_the_dashboards_and_the_resources_with_a_web_endpoint()
+    {
+        var builder = DistributedApplication.CreateBuilder(["--environment", "Development"]);
+        builder.Configuration["ASPNETCORE_URLS"] = "http://localhost:15000;https://localhost:17000";
+        var app = builder.AddCoworkeeApp("demo").AddProjects();
+        builder.AddContainer("pgadmin", "dpage/pgadmin4").WithHttpEndpoint(targetPort: 80);
+
+        var env = new Dictionary<string, object>();
+        foreach (var callback in app.Apis[0].Resource.Annotations.OfType<EnvironmentCallbackAnnotation>())
+        {
+            await callback.Callback(new EnvironmentCallbackContext(builder.ExecutionContext, env, TestContext.Current.CancellationToken));
+        }
+
+        env["Coworkee__Services__dashboard__Url"].ShouldBe("https://localhost:17000");
+        env["Coworkee__Services__jobs__Url"].ShouldBeOfType<ReferenceExpression>();
+        env["Coworkee__Services__demo-web__Url"].ShouldBeOfType<EndpointReference>().EndpointName.ShouldBe("https");
+        env["Coworkee__Services__demo-api__HealthPath"].ShouldBe("/health");
+        env["Coworkee__Services__mail__Url"].ShouldBeOfType<EndpointReference>().EndpointName.ShouldBe("http");
+        env.Keys.ShouldContain("Coworkee__Services__pgadmin__Url");
+        env.Keys.ShouldNotContain("Coworkee__Services__mail__HealthPath");
+        env.Keys.ShouldNotContain("Coworkee__Services__postgres__Url");
+    }
+
     private static IEnumerable<string> Commands(IDistributedApplicationBuilder builder, Action<CoworkeeAppOptions>? configure = null) =>
         builder.AddCoworkeeApp("demo", configure).AddMigrations<FakeProjects.Migrations>().Resource.Annotations.OfType<ResourceCommandAnnotation>()
             .Select(c => c.Name).Where(n => n.StartsWith("coworkee-", StringComparison.Ordinal));

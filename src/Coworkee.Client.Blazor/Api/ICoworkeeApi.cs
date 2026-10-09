@@ -130,6 +130,9 @@ public interface ICoworkeeApi
 
     Task<AppConfigurationValuesDto> ResetAppConfigurationAsync(string section, CancellationToken cancellationToken = default);
 
+    /// <summary>The services of the app (Coworkee:Services) with the status the server sees.</summary>
+    Task<IReadOnlyList<ServiceDto>> GetServicesAsync(CancellationToken cancellationToken = default);
+
     /// <summary>The themes that ship with the app; answers before setup.</summary>
     Task<IReadOnlyList<ThemeDto>> GetBuiltInThemesAsync(CancellationToken cancellationToken = default);
 

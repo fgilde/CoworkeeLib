@@ -40,9 +40,6 @@ internal sealed class AppConfigurationModelContributor : IModelContributor
         });
 }
 
-/// <summary>A typed section admins may edit; the type binds the section (usually generated from a JSON file with Nextended.CodeGen).</summary>
-public sealed record AppConfigurationRegistration(string Section, string Title, Type Type);
-
 public static class AppConfigurationExtensions
 {
     /// <summary>
@@ -62,15 +59,6 @@ public static class AppConfigurationExtensions
         var source = new Microsoft.Extensions.Configuration.Memory.MemoryConfigurationSource { InitialData = JsonFlattening.Flatten(section, document.RootElement) };
         builder.Sources.Insert(0, source); // a ConfigurationManager rebuilds its providers when its sources change
         return builder;
-    }
-
-    /// <summary>Binds <typeparamref name="T"/> to the section (IOptions/IOptionsMonitor) and lets admins edit it under Configuration.</summary>
-    public static IServiceCollection AddCoworkeeAppConfiguration<T>(this IServiceCollection services, IConfiguration configuration, string section, string title)
-        where T : class
-    {
-        services.Configure<T>(configuration.GetSection(section));
-        services.AddSingleton(new AppConfigurationRegistration(section, title, typeof(T)));
-        return services;
     }
 
     internal static DatabaseConfigurationProvider? DatabaseProvider(this IConfiguration configuration) =>
@@ -193,6 +181,10 @@ internal sealed partial class AppConfigurationHandlers(
       IHandler<SaveAppConfiguration, Result<AppConfigurationValuesDto>>,
       IHandler<ResetAppConfiguration, Result<AppConfigurationValuesDto>>
 {
+    // computed properties (get only) are neither shown nor stored
+    private static readonly JsonSerializerOptions Stored = new() { IgnoreReadOnlyProperties = true };
+    private static readonly JsonSerializerOptions Shown = new(JsonSerializerOptions.Web) { IgnoreReadOnlyProperties = true };
+
     private static readonly Error NotFound = Error.NotFound("configuration.not_found", "There is no such configuration section.");
 
     private static readonly Error SystemOnly =
@@ -235,9 +227,12 @@ internal sealed partial class AppConfigurationHandlers(
         }
 
         // what the section would be without changes made in the app; only what differs is stored
-        var current = JsonFlattening.Flatten(registration.Section, JsonSerializer.SerializeToElement(Current(registration), registration.Type));
-        var defaults = JsonFlattening.Flatten(registration.Section, JsonSerializer.SerializeToElement(Defaults(registration), registration.Type));
-        var wanted = JsonFlattening.Flatten(registration.Section, JsonSerializer.SerializeToElement(typed, registration.Type));
+        var current = JsonFlattening.Flatten(registration.Section, JsonSerializer.SerializeToElement(Current(registration), registration.Type, Stored));
+        var defaults = JsonFlattening.Flatten(registration.Section, JsonSerializer.SerializeToElement(Defaults(registration), registration.Type, Stored));
+        var wanted = JsonFlattening.Flatten(registration.Section, JsonSerializer.SerializeToElement(typed, registration.Type, Stored))
+            .Where(w => !IsProtected(registration, w.Key))
+            .Concat(current.Where(c => IsProtected(registration, c.Key)))
+            .ToDictionary(StringComparer.OrdinalIgnoreCase);
         var entries = new List<ConfigurationEntry>();
         foreach (var (key, value) in wanted)
         {
@@ -271,10 +266,12 @@ internal sealed partial class AppConfigurationHandlers(
         return Describe(registration);
     }
 
-    private async Task<bool> IsSystemAsync(CancellationToken cancellationToken) =>
-        currentUser.TenantId is { } tenantId
-        && services.GetService<ITenantDirectory>() is { } tenants
-        && await tenants.IsSystemTenantAsync(tenantId, cancellationToken);
+    private Task<bool> IsSystemAsync(CancellationToken cancellationToken) => currentUser.IsInSystemTenantAsync(services, cancellationToken);
+
+    // locked and hidden values keep what applies now, whatever comes in
+    private static bool IsProtected(AppConfigurationRegistration registration, string key) =>
+        registration.Locked.Concat(registration.Hidden).Select(p => $"{registration.Section}:{p}")
+            .Any(p => key.Equals(p, StringComparison.OrdinalIgnoreCase) || key.StartsWith(p + ":", StringComparison.OrdinalIgnoreCase));
 
     private ConfigurationEntry Entry(string key, string? value) =>
         new() { Key = key, Value = value, ModifiedAt = clock.GetUtcNow(), ModifiedBy = currentUser.UserId };
@@ -295,14 +292,22 @@ internal sealed partial class AppConfigurationHandlers(
 
     private AppConfigurationValuesDto Describe(AppConfigurationRegistration registration)
     {
-        var current = JsonSerializer.SerializeToNode(Current(registration), registration.Type, JsonSerializerOptions.Web);
-        var defaults = JsonSerializer.SerializeToNode(Defaults(registration), registration.Type, JsonSerializerOptions.Web);
-        Mask(current);
-        Mask(defaults);
+        var current = JsonSerializer.SerializeToNode(Current(registration), registration.Type, Shown);
+        var defaults = JsonSerializer.SerializeToNode(Defaults(registration), registration.Type, Shown);
+        foreach (var node in new[] { current, defaults })
+        {
+            Mask(node);
+            foreach (var path in registration.Hidden)
+            {
+                Remove(node, path.Split(':'));
+            }
+        }
+
         var changed = configuration.DatabaseProvider() is { } provider
             ? configuration.GetSection(registration.Section).AsEnumerable().Select(p => p.Key).Where(k => provider.TryGet(k, out _)).Order().ToList()
             : [];
-        return new AppConfigurationValuesDto(registration.Section, JsonSerializer.SerializeToElement(current), JsonSerializer.SerializeToElement(defaults), changed);
+        return new AppConfigurationValuesDto(registration.Section, JsonSerializer.SerializeToElement(current), JsonSerializer.SerializeToElement(defaults), changed,
+            registration.Locked, registration.Hidden);
     }
 
     private object Current(AppConfigurationRegistration registration) =>
@@ -334,6 +339,23 @@ internal sealed partial class AppConfigurationHandlers(
         || (bool.TryParse(a, out var x) && bool.TryParse(b, out var y) && x == y)
         || (decimal.TryParse(a, NumberStyles.Float, CultureInfo.InvariantCulture, out var m) && decimal.TryParse(b, NumberStyles.Float, CultureInfo.InvariantCulture, out var n) && m == n)
         || (string.IsNullOrEmpty(a) && string.IsNullOrEmpty(b));
+
+    private static void Remove(JsonNode? node, string[] path)
+    {
+        if (node is not JsonObject obj || obj.FirstOrDefault(p => p.Key.Equals(path[0], StringComparison.OrdinalIgnoreCase)) is not { Key: { } name } property)
+        {
+            return;
+        }
+
+        if (path.Length == 1)
+        {
+            obj.Remove(name);
+        }
+        else
+        {
+            Remove(property.Value, path[1..]);
+        }
+    }
 
     private static bool IsSecret(string key) => SecretName().IsMatch(key[(key.LastIndexOf(':') + 1)..]);
 
