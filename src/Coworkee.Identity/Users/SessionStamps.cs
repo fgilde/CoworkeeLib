@@ -30,7 +30,17 @@ public sealed class SessionStamps(HybridCache cache, IServiceScopeFactory scopes
                 .Select(u => new UserStamp(u.SecurityStamp, u.KeptSession)).SingleOrDefaultAsync(ct) ?? new UserStamp(null, null);
         }, Entry, [PermissionCache.Tag], cancellationToken);
 
-    public ValueTask ForgetAsync(Guid userId, CancellationToken cancellationToken) => cache.RemoveAsync(Key(userId), cancellationToken);
+    public async Task ForgetAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await cache.RemoveAsync(Key(userId), cancellationToken);
+        }
+        catch (Exception exception) when (exception is StackExchange.Redis.RedisException or TimeoutException)
+        {
+            // the local entry is gone already; without Redis the shared one expires with the entry lifetime
+        }
+    }
 
     private static string Key(Guid userId) => $"coworkee:stamp:{userId}";
 }

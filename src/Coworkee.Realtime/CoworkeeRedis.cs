@@ -32,9 +32,14 @@ public static class CoworkeeRedis
         services.TryAddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redis));
         if (!services.Any(d => d.ServiceType == typeof(IDistributedCache)))
         {
+            // a cache that does not answer quickly is skipped: the entries load from the database instead
+            var cache = ConfigurationOptions.Parse(redis);
+            cache.AbortOnConnectFail = false;
+            cache.AsyncTimeout = cache.SyncTimeout = 500;
+            cache.ConnectTimeout = 1000;
             services.AddStackExchangeRedisCache(options =>
             {
-                options.Configuration = redis;
+                options.ConfigurationOptions = cache;
                 options.InstanceName = "coworkee:cache:";
             });
             services.Configure<HybridCacheOptions>(options => options.DefaultEntryOptions = new HybridCacheEntryOptions

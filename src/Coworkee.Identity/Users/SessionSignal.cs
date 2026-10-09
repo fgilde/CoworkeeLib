@@ -21,14 +21,20 @@ public sealed partial class SessionSignal(SessionStamps stamps, IServiceProvider
 
     private readonly string _instance = Guid.NewGuid().ToString("N");
 
-    private IConnectionMultiplexer? Redis => services.GetService<IConnectionMultiplexer>();
-
     public async Task PublishAsync(IReadOnlyCollection<SessionChange> changes, CancellationToken cancellationToken)
     {
         await HandleAsync(changes, cancellationToken);
-        if (Redis is { } redis)
+        try
         {
-            await redis.GetSubscriber().PublishAsync(Channel, JsonSerializer.Serialize(new Message(_instance, changes)));
+            if (services.GetService<IConnectionMultiplexer>() is { } redis)
+            {
+                await redis.GetSubscriber().PublishAsync(Channel, JsonSerializer.Serialize(new Message(_instance, changes)));
+            }
+        }
+        catch (Exception exception) when (exception is RedisException or TimeoutException)
+        {
+            // the change is saved; the other instances notice within the cache lifetime
+            LogPublishFailed(exception);
         }
     }
 
@@ -36,7 +42,7 @@ public sealed partial class SessionSignal(SessionStamps stamps, IServiceProvider
     {
         try
         {
-            if (Redis is { } redis)
+            if (services.GetService<IConnectionMultiplexer>() is { } redis)
             {
                 await redis.GetSubscriber().SubscribeAsync(Channel, (channel, value) => _ = ReceiveAsync(value));
             }
@@ -86,6 +92,9 @@ public sealed partial class SessionSignal(SessionStamps stamps, IServiceProvider
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Subscribing to session changes on Redis failed; other instances' changes reach this one only through the cache lifetime")]
     private partial void LogSubscribeFailed(Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Publishing a session change on Redis failed; other instances notice it within the cache lifetime")]
+    private partial void LogPublishFailed(Exception exception);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Handling a session change from another instance failed")]
     private partial void LogReceiveFailed(Exception exception);
