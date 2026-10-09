@@ -79,11 +79,18 @@ dotnet test --solution Coworkee.slnx   # needs Docker for the Postgres tests
 pwsh build/pack-local.ps1              # packs into artifacts/nuget for local consumers
 ```
 
-Until the packages are on nuget.org, consumers point a `nuget.config` source at `artifacts/nuget`.
+Apps that build against unreleased sources point a `nuget.config` source at `artifacts/nuget`.
 
 ## Release
 
-Pushing a tag `v1.2.3` builds, tests and publishes all packages with that version to nuget.org (workflow `release.yml`, secret `NUGET_API_KEY`).
+Publishing a GitHub release (or pushing a tag `v1.2.3`) builds, tests and publishes all packages, the templates and the CLI with that version to nuget.org. The workflow `release.yml` signs in with nuget.org trusted publishing, so there is no API key secret; the repository variable `NUGET_USER` overrides the nuget.org account name (default `fgilde`).
+
+## Start an app
+
+```bash
+dotnet tool install -g Coworkee.Cli
+coworkee new MyApp
+```
 
 ## Used by
 

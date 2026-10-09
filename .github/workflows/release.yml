@@ -3,9 +3,16 @@ name: Release
 on:
   push:
     tags: ["v*.*.*"]
+  release:
+    types: [published]
 
 permissions:
   contents: read
+  # nuget.org trusted publishing exchanges the GitHub OIDC token for a short lived API key
+  id-token: write
+
+concurrency:
+  group: release-${{ github.ref_name }}
 
 jobs:
   release:
@@ -30,5 +37,11 @@ jobs:
       - name: Pack
         run: dotnet pack Coworkee.slnx -c Release --no-build -p:Version=$VERSION -o artifacts/release
 
+      - name: NuGet login
+        id: nuget
+        uses: NuGet/login@v1
+        with:
+          user: ${{ vars.NUGET_USER || 'fgilde' }}
+
       - name: Publish
-        run: dotnet nuget push "artifacts/release/*.nupkg" --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push "artifacts/release/*.nupkg" --api-key "${{ steps.nuget.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate

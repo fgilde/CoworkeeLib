@@ -1,6 +1,6 @@
 # Replacing components
 
-Every component of the shell can be swapped for your own, the way ABP replaces components: register the replacement, and wherever the original would render, yours renders instead. No fork, no copied layout.
+Every component of the shell can be swapped for your own: register the replacement, and wherever the original would render, yours renders instead. No fork, no copied layout.
 
 ```csharp
 builder.Services.ReplaceComponent<CoworkeeUserMenu, MyUserMenu>();

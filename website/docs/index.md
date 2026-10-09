@@ -13,7 +13,7 @@ Coworkee is a modular application framework for .NET 10. It gives a Blazor and A
 
 -   **Start a new app**
 
-    Clone the template, run the app host, sign in with the seeded administrator.
+    Install the CLI, `coworkee new Shop`, `coworkee run`: a complete app on the NuGet packages.
 
     [:octicons-arrow-right-24: Installation](getting-started/installation.md)
 
@@ -80,6 +80,6 @@ app.AddWeb<Projects.MyApp_Web>();
 
 ## Where Coworkee comes from
 
-Coworkee grew out of [CleanArchitectureBaseBlazor](https://github.com/fgilde/CleanArchitectureBaseBlazor). The template is now a thin app on top of the packages, and [Sharemee](https://github.com/fgilde/shareme), a digital asset management system, is the second app built on them. The UI relies on [MudBlazor](https://mudblazor.com) and [MudBlazor.Extensions](https://github.com/fgilde/MudBlazor.Extensions); facets, response filters and code generation come from [Nextended](https://github.com/fgilde/Nextended).
+Coworkee started as my own project template: a [Blazor base template](https://github.com/fgilde/Coworkee/tree/release/last-standalone) with everything a business app needs, copied into every new app. Every app then carried its own copy of identity, permissions, settings, audit and admin pages, and every improvement had to be carried over by hand. So I turned the template into this library: the shared parts are NuGet packages now, and an app only holds its own domain.
 
-The ideas will look familiar if you know ABP: modules with dependencies, permission definitions, settings, replaceable UI. Coworkee keeps less ceremony: no repositories over EF Core, no application service layer, requests and handlers instead.
+The [demo app](https://github.com/fgilde/Coworkee/tree/master) is the former template rebuilt on the packages, and [Sharemee](https://github.com/fgilde/shareme), a digital asset management system, is the second app built on them. The UI relies on [MudBlazor](https://mudblazor.com) and [MudBlazor.Extensions](https://github.com/fgilde/MudBlazor.Extensions); facets, response filters and code generation come from [Nextended](https://github.com/fgilde/Nextended).

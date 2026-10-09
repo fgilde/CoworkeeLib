@@ -1,0 +1,34 @@
+<Project>
+  <!-- generated with the package READMEs: one description per package -->
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Account'"><Description>Account pages and self service for the Coworkee auth server.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Ai'"><Description>AI assistant over the tools of all modules, MCP server and tool call audit.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Application'"><Description>Dispatcher for commands and queries with logging, validation, permission, caching and unit of work middleware.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.AspNetCore'"><Description>AddCoworkee&lt;TRoot&gt;() for ASP.NET Core hosts: problem details, API groups, bearer authentication, OpenAPI and Swagger UI.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Aspire'"><Description>AddCoworkeeApp() for the Aspire app host: migrations, auth server, APIs, workers and web wired with Postgres, Redis, Mailpit, Elasticsearch and Keycloak.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Auditing'"><Description>Audit trail queries, entity history and restore.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.AuthServer'"><Description>OpenIddict auth server with login, registration, two factor and external sign-in.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.BackgroundJobs'"><Description>Hangfire jobs with queues, retries and delayed follow-ups.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Backup'"><Description>Database backups and restore from the admin pages.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Bff'"><Description>Backend for frontend for Blazor WebAssembly: cookie session, token handling and API forwarding.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Chat'"><Description>Direct and group chat with realtime delivery.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Client'"><Description>Typed .NET client for Coworkee APIs.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Client.Blazor'"><Description>MudBlazor shell for Blazor WebAssembly: navigation, data tables, account and admin pages, theming.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Contracts'"><Description>DTOs, permission names and paging records shared by server and clients.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Core'"><Description>Module system with [DependsOn], Result and Error, current user and ambient user scope.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Domain'"><Description>Entity and AggregateRoot with domain events, markers for audit, soft delete, tenants and concurrency.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.ExtendedAttributes'"><Description>Extra attributes for any entity without schema changes.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Identity'"><Description>Users, roles, groups, tenants and permission grants with resource level checks.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Infrastructure'"><Description>CoworkeeDbContext with tenants, soft delete, field level audit trail and transactional outbox.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Localization'"><Description>Languages and translations stored in the database, machine translation and live updates.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Mailing'"><Description>Scriban mail templates with overrides and queued SMTP delivery.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Notifications'"><Description>In app notifications with digests.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.OData'"><Description>OData set per entity with facets, row filters and hidden properties.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Realtime'"><Description>SignalR push for entity changes, notifications and app events.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.ResponseFilters'"><Description>Permission dependent response filters on Nextended.ResponseFilters.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Search'"><Description>Search index abstraction for Coworkee entities.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Search.Elasticsearch'"><Description>Elasticsearch provider for Coworkee.Search.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Settings'"><Description>Typed settings per global, tenant and user scope with encrypted secrets.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Storage'"><Description>Blob storage on the file system, S3 or Azure.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Testing'"><Description>Postgres test container fixture, test users and a web application factory for Coworkee apps.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Theming'"><Description>Themes with palettes, fonts, layout and app options per tenant, editable at runtime.</Description></PropertyGroup>
+</Project>

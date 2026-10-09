@@ -1,6 +1,6 @@
 # Komponenten ersetzen
 
-Jede Komponente der Shell lässt sich durch eine eigene ersetzen, so wie ABP Komponenten ersetzt: Ersatz registrieren, und überall, wo das Original gerendert würde, erscheint Ihre. Kein Fork, kein kopiertes Layout.
+Jede Komponente der Shell lässt sich durch eine eigene ersetzen: Ersatz registrieren, und überall, wo das Original gerendert würde, erscheint Ihre. Kein Fork, kein kopiertes Layout.
 
 ```csharp
 builder.Services.ReplaceComponent<CoworkeeUserMenu, MyUserMenu>();

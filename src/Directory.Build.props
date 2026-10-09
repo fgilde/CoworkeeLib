@@ -1,15 +1,16 @@
 <Project>
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+  <Import Project="$(MSBuildThisFileDirectory)PackageDescriptions.props" />
   <PropertyGroup>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <IsPackable>true</IsPackable>
     <Authors>fgilde</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>icon.png</PackageIcon>
-    <PackageProjectUrl>https://github.com/fgilde/CoworkeeLib</PackageProjectUrl>
+    <PackageProjectUrl>https://fgilde.github.io/CoworkeeLib/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/fgilde/CoworkeeLib</RepositoryUrl>
-    <Description>Coworkee application framework – $(MSBuildProjectName)</Description>
-    <PackageTags>coworkee;framework;modular;aspnetcore;blazor;efcore</PackageTags>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>coworkee;framework;modular;aspnetcore;blazor;mudblazor;aspire;efcore;ddd</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
@@ -18,7 +19,7 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)../assets/icon.png" Pack="true" PackagePath="/" Visible="false" />
-    <None Include="$(MSBuildThisFileDirectory)../README.md" Pack="true" PackagePath="/" Visible="false" />
+    <None Include="README.md" Pack="true" PackagePath="/" Visible="false" />
     <InternalsVisibleTo Include="$(MSBuildProjectName).Tests" />
   </ItemGroup>
 </Project>

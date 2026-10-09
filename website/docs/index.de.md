@@ -13,7 +13,7 @@ Coworkee ist ein modulares Anwendungsframework für .NET 10. Es liefert einer Bl
 
 -   **Neue App anlegen**
 
-    Template klonen, AppHost starten, mit dem geseedeten Administrator anmelden.
+    CLI installieren, `coworkee new Shop`, `coworkee run`: eine vollständige App auf den NuGet-Paketen.
 
     [:octicons-arrow-right-24: Installation](getting-started/installation.md)
 
@@ -80,6 +80,6 @@ app.AddWeb<Projects.MyApp_Web>();
 
 ## Woher Coworkee kommt
 
-Coworkee ist aus [CleanArchitectureBaseBlazor](https://github.com/fgilde/CleanArchitectureBaseBlazor) entstanden. Das Template ist jetzt eine schlanke App auf den Paketen, und [Sharemee](https://github.com/fgilde/shareme), ein Digital-Asset-Management-System, ist die zweite App darauf. Die Oberfläche nutzt [MudBlazor](https://mudblazor.com) und [MudBlazor.Extensions](https://github.com/fgilde/MudBlazor.Extensions); Facetten, Response-Filter und Codegenerierung kommen aus [Nextended](https://github.com/fgilde/Nextended).
+Coworkee war zuerst mein eigenes Projekt-Template: ein [Blazor-Basis-Template](https://github.com/fgilde/Coworkee/tree/release/last-standalone) mit allem, was eine Business-App braucht, kopiert in jede neue App. Jede App trug dann ihre eigene Kopie von Identity, Berechtigungen, Einstellungen, Audit und Administrationsseiten, und jede Verbesserung musste von Hand nachgezogen werden. Deshalb habe ich aus dem Template diese Bibliothek gebaut: Die gemeinsamen Teile sind jetzt NuGet-Pakete, und eine App enthält nur noch ihre eigene Fachlichkeit.
 
-Wer ABP kennt, findet sich schnell zurecht: Module mit Abhängigkeiten, Berechtigungsdefinitionen, Einstellungen, ersetzbare Oberfläche. Coworkee verzichtet auf einiges an Zeremonie: keine Repositories über EF Core, keine Application-Service-Schicht, stattdessen Requests und Handler.
+Die [Demo-App](https://github.com/fgilde/Coworkee/tree/master) ist das frühere Template, neu gebaut auf den Paketen, und [Sharemee](https://github.com/fgilde/shareme), ein Digital-Asset-Management-System, ist die zweite App darauf. Die Oberfläche nutzt [MudBlazor](https://mudblazor.com) und [MudBlazor.Extensions](https://github.com/fgilde/MudBlazor.Extensions); Facetten, Response-Filter und Codegenerierung kommen aus [Nextended](https://github.com/fgilde/Nextended).

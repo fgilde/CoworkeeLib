@@ -1,4 +1,4 @@
-# Roadmap: Template parity (CleanArchitectureBaseBlazor on Coworkee)
+# Roadmap: parity of the demo app with the standalone template
 
 Goal: the template app (`release/last-standalone`) looks and behaves as before, built on Coworkee, with better tables (facets), better permission UI and clean code (CCD, `.razor` + `.razor.cs`, few comments).
 
@@ -10,7 +10,7 @@ Decisions (2026-10-05):
 - Order: A → B → C → D → E.
 
 ## A – Library foundation
-1. UI replacement like ABP: a registry to replace any library component or page, layout slots, grouped navigation tree.
+1. UI replacement: a registry to replace any library component or page, layout slots, grouped navigation tree.
 2. Request pipeline: typed behaviors per request type, performance warning, exception logging, caching.
 3. HTTP: controllers and OData per entity (Nextended.Web `GenericODataController`, facets via `cn.facets`), response filters (Nextended.ResponseFilters), FluentValidation helpers.
 4. Nextended: applied-filter extractor, `Applied` on facet responses, typed facet builder, CodeGen fixes (long inference, leading slash, diagnostics).
