@@ -135,7 +135,8 @@ namespace MyApp.Infrastructure.Migrations
                     b.Property<string>("Text")
                         .IsRequired()
                         .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
+                        .HasColumnType("character varying(4000)")
+                        .HasAnnotation("Coworkee:NotAudited", true);
 
                     b.Property<Guid>("ToUserId")
                         .HasColumnType("uuid");
@@ -503,6 +504,9 @@ namespace MyApp.Infrastructure.Migrations
                     b.Property<Guid?>("ModifiedBy")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("MustChangePassword")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
@@ -511,7 +515,14 @@ namespace MyApp.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<DateTimeOffset?>("PasswordChangedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("PasswordHash")
+                        .HasColumnType("text")
+                        .HasAnnotation("Coworkee:Sensitive", true);
+
+                    b.Property<string>("PasswordHistory")
                         .HasColumnType("text")
                         .HasAnnotation("Coworkee:Sensitive", true);
 
@@ -2069,7 +2080,8 @@ namespace MyApp.Infrastructure.Migrations
                     b.Property<string>("Text")
                         .IsRequired()
                         .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
+                        .HasColumnType("character varying(4000)")
+                        .HasAnnotation("Coworkee:NotAudited", true);
 
                     b.Property<Guid>("ToUserId")
                         .HasColumnType("uuid");
@@ -2363,6 +2375,9 @@ namespace MyApp.Infrastructure.Migrations
                     b.Property<Guid?>("ModifiedBy")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("MustChangePassword")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
@@ -2371,7 +2386,14 @@ namespace MyApp.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<DateTimeOffset?>("PasswordChangedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("PasswordHash")
+                        .HasColumnType("text")
+                        .HasAnnotation("Coworkee:Sensitive", true);
+
+                    b.Property<string>("PasswordHistory")
                         .HasColumnType("text")
                         .HasAnnotation("Coworkee:Sensitive", true);
 
