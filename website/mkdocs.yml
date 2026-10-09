@@ -81,6 +81,7 @@ plugins:
             Replacing components: Komponenten ersetzen
             Modules in detail: Module im Detail
             Settings and app configuration: Einstellungen und App-Konfiguration
+            Features and editions: Features und Editionen
             Mailing: Mailversand
             Background jobs: Hintergrundjobs
             File storage: Dateiablage
@@ -146,6 +147,7 @@ nav:
       - Replacing components: ui/customizing.md
   - Modules in detail:
       - Settings and app configuration: modules/settings.md
+      - Features and editions: modules/features.md
       - Mailing: modules/mailing.md
       - Background jobs: modules/background-jobs.md
       - File storage: modules/storage.md

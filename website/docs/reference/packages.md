@@ -23,6 +23,7 @@ Which package goes where, and what to put in the `using` block.
 | `Coworkee.Realtime`, `Coworkee.Notifications` | API, workers | `Coworkee.Realtime`, `Coworkee.Notifications` | `IRealtimePublisher`, `INotifier` |
 | `Coworkee.Auditing` | API | `Coworkee.Auditing` | audit log queries |
 | `Coworkee.Theming` | API | `Coworkee.Theming` | theme store, built-in themes |
+| `Coworkee.Features` | API | `Coworkee.Features` | features, editions, tenant administration |
 | `Coworkee.Ai` | API | `Coworkee.Ai` | `AddAiTool<TRequest>`, MCP server |
 | `Coworkee.Localization` | API | `Coworkee.Localization.Resources` | `CoworkeeLocalizationModule`, `ILocalizationResourceContributor`, `AddEmbeddedJson` |
 | `Coworkee.Backup` | API | `Coworkee.Backup` | `CoworkeeBackupModule` |

@@ -12,6 +12,7 @@
     <Project Path="src/Coworkee.Contracts/Coworkee.Contracts.csproj" />
     <Project Path="src/Coworkee.Core/Coworkee.Core.csproj" />
     <Project Path="src/Coworkee.Domain/Coworkee.Domain.csproj" />
+    <Project Path="src/Coworkee.Features/Coworkee.Features.csproj" />
     <Project Path="src/Coworkee.Identity/Coworkee.Identity.csproj" />
     <Project Path="src/Coworkee.Infrastructure/Coworkee.Infrastructure.csproj" />
     <Project Path="src/Coworkee.Ai/Coworkee.Ai.csproj" />
@@ -52,6 +53,7 @@
     <Project Path="tests/Coworkee.Client.Blazor.Tests/Coworkee.Client.Blazor.Tests.csproj" />
     <Project Path="tests/Coworkee.Core.Tests/Coworkee.Core.Tests.csproj" />
     <Project Path="tests/Coworkee.Domain.Tests/Coworkee.Domain.Tests.csproj" />
+    <Project Path="tests/Coworkee.Features.Tests/Coworkee.Features.Tests.csproj" />
     <Project Path="tests/Coworkee.Identity.Tests/Coworkee.Identity.Tests.csproj" />
     <Project Path="tests/Coworkee.Infrastructure.Tests/Coworkee.Infrastructure.Tests.csproj" />
     <Project Path="tests/Coworkee.Ai.Tests/Coworkee.Ai.Tests.csproj" />

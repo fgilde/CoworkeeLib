@@ -19,6 +19,7 @@
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.EventBus'"><Description>Integration events between apps and services through the transactional outbox, with an inbox for idempotent handlers. Works without a broker.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.EventBus.RabbitMq'"><Description>RabbitMQ transport for Coworkee.EventBus with publisher confirms, quorum queues and dead lettering.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.ExtendedAttributes'"><Description>Extra attributes for any entity without schema changes.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Features'"><Description>Feature management with editions and per tenant overrides, tenant administration, [RequiresFeature] and feature gates for Blazor.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Identity'"><Description>Users, roles, groups, tenants and permission grants with resource level checks.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Infrastructure'"><Description>CoworkeeDbContext with tenants, soft delete, field level audit trail and transactional outbox.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Localization'"><Description>Languages and translations stored in the database, machine translation and live updates.</Description></PropertyGroup>

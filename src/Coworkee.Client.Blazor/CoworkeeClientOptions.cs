@@ -24,7 +24,8 @@ public sealed class CoworkeeClientOptions
 
 public sealed record AboutLink(string Title, string Url);
 
-public sealed record CoworkeeNavItem(string Title, string Href, string Icon, string? Permission = null, bool ForceLoad = false, string? Group = null, int Order = 0);
+/// <summary>A link of the navigation; hidden without <paramref name="Permission"/> or while the bool <paramref name="Feature"/> is off.</summary>
+public sealed record CoworkeeNavItem(string Title, string Href, string Icon, string? Permission = null, bool ForceLoad = false, string? Group = null, int Order = 0, string? Feature = null);
 
 public interface INavigationContributor
 {

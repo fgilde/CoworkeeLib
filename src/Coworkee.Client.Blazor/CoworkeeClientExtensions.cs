@@ -24,6 +24,7 @@ public static class CoworkeeClientExtensions
         services.AddHttpClient<ExtendedAttributes.IExtendedAttributesApi, ExtendedAttributes.ExtendedAttributesApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Chat.IChatApi, Chat.ChatApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Social.ISocialApi, Social.SocialApi>(client => client.BaseAddress = baseAddress);
+        services.AddHttpClient<Features.IFeaturesApi, Features.FeaturesApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Backup.IBackupApi, Backup.BackupApi>(client =>
         {
             client.BaseAddress = baseAddress;
@@ -40,6 +41,7 @@ public static class CoworkeeClientExtensions
         services.AddScoped<Data.FileDownloader>();
         services.AddScoped<People.UserCards>();
         services.AddScoped<PermissionStore>();
+        services.AddScoped<Features.FeatureStore>();
         services.AddScoped<Theming.ThemeService>();
         services.AddScoped<Layout.LayoutPreferences>();
         services.AddScoped<Realtime.IRealtimeConnection, Realtime.SignalRRealtimeConnection>();
@@ -99,6 +101,8 @@ internal sealed class AdminNavigation : INavigationContributor
         new("Mail log", "/admin/mail/log", MudBlazor.Icons.Material.Outlined.Outbox, Coworkee.Contracts.Mailing.MailPermissions.Log.View, Group: AdminGroup),
         new("Jobs", "/admin/jobs", MudBlazor.Icons.Material.Outlined.Schedule, Coworkee.Contracts.Jobs.JobsPermissions.View, ForceLoad: true, Group: AdminGroup),
         new("Themes", "/admin/themes", MudBlazor.Icons.Material.Outlined.Palette, Coworkee.Contracts.Theming.ThemePermissions.Manage, Group: AdminGroup),
+        new("Tenants", "/admin/tenants", MudBlazor.Icons.Material.Outlined.Domain, Coworkee.Contracts.Features.FeaturePermissions.Tenants, Group: AdminGroup),
+        new("Editions", "/admin/editions", MudBlazor.Icons.Material.Outlined.WorkspacePremium, Coworkee.Contracts.Features.FeaturePermissions.Editions, Group: AdminGroup),
         new("Audit log", "/admin/audit", MudBlazor.Icons.Material.Outlined.History, Coworkee.Contracts.Auditing.AuditPermissions.View, Group: AdminGroup),
         new("Languages", "/admin/languages", MudBlazor.Icons.Material.Outlined.Language, Coworkee.Contracts.Localization.LocalizationPermissions.Manage, Group: Navigation.NavigationGroups.Localization),
         new("Translations", "/admin/translations", MudBlazor.Icons.Material.Outlined.Translate, Coworkee.Contracts.Localization.LocalizationPermissions.Manage, Group: Navigation.NavigationGroups.Localization),

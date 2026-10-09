@@ -1,0 +1,46 @@
+@page "/admin/tenants"
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + FeaturePermissions.Tenants)]
+
+<PageHeader Title="Tenants" Description="Organisations using this installation: their edition, features and whether they may sign in." />
+<RealtimeSubscription Topic="@FeatureTopics.Changed" OnEvent="_ => _table.ReloadAsync()" />
+<CoworkeeDataTable @ref="_table" T="TenantRow" EntitySet="Tenants" SearchFields="SearchFields" ExportFileName="tenants" OnLoaded="LoadDetailsAsync"
+                   CreateText="New tenant" CreatePermission="@FeaturePermissions.Tenants" OnCreate="CreateAsync"
+                   EditPermission="@FeaturePermissions.Tenants" OnEdit="EditAsync">
+    <Columns>
+        <PropertyColumn Property="t => t.Name" Title="@L["Name"]">
+            <CellTemplate>
+                <span data-tenant="@context.Item.Identifier">@context.Item.Name</span>
+                @if (context.Item.IsDefault)
+                {
+                    <MudChip T="string" Size="Size.Small">@L["system"]</MudChip>
+                }
+            </CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="t => t.Identifier" Title="@L["Identifier"]" />
+        <TemplateColumn T="TenantRow" Title="@L["Users"]" Sortable="false">
+            <CellTemplate>@Details(context.Item)?.UserCount</CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn T="TenantRow" Title="@L["Edition"]" Sortable="false">
+            <CellTemplate>
+                <MudSelect T="Guid?" Dense="true" Value="@Details(context.Item)?.EditionId" ValueChanged="id => SetEditionAsync(context.Item, id)" Clearable="true"
+                           ToStringFunc="EditionName" Placeholder="@L["No edition"]" data-testid="@($"edition-{context.Item.Identifier}")">
+                    @foreach (var edition in _editions)
+                    {
+                        <MudSelectItem T="Guid?" Value="@edition.Id">@edition.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </CellTemplate>
+        </TemplateColumn>
+        <PropertyColumn Property="t => t.IsActive" Title="@L["Active"]">
+            <CellTemplate>
+                <MudSwitch T="bool" Value="@context.Item.IsActive" ValueChanged="v => SetActiveAsync(context.Item, v)" Disabled="@context.Item.IsDefault" Color="Color.Secondary" />
+            </CellTemplate>
+        </PropertyColumn>
+        <TemplateColumn T="TenantRow" Sortable="false" CellStyle="text-align:right;white-space:nowrap">
+            <CellTemplate>
+                <MudIconButton Icon="@Icons.Material.Outlined.ToggleOn" Size="Size.Small" aria-label="@L["Override features"]" OnClick="() => OverrideAsync(context.Item)"
+                               data-testid="@($"tenant-features-{context.Item.Identifier}")" />
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+</CoworkeeDataTable>
