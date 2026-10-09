@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20261009105808_Initial")]
+    [Migration("20261009124527_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -487,6 +487,11 @@ namespace MyApp.Infrastructure.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("KeptSession")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasAnnotation("Coworkee:NotAudited", true);
 
                     b.Property<DateTimeOffset?>("LastLoginAt")
                         .HasColumnType("timestamp with time zone");
@@ -1962,7 +1967,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20261009105808_Initial")]
+    [Migration("20261009124527_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -2361,6 +2366,11 @@ namespace MyApp.Infrastructure.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("KeptSession")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasAnnotation("Coworkee:NotAudited", true);
 
                     b.Property<DateTimeOffset?>("LastLoginAt")
                         .HasColumnType("timestamp with time zone");

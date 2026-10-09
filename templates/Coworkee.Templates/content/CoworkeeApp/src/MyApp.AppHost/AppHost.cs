@@ -3,6 +3,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 var app = builder.AddCoworkeeApp("myapp", options =>
 {
     options.DisplayName = "COWORKEE_APP_TITLE";
+    options.LogoUrl = "/coworkee-icon.svg";
 #if (keycloak)
     options.UseKeycloak(keycloak => keycloak.Users.Add(new KeycloakUser("admin@myapp.local", "Administrator", "COWORKEE_APP_TITLE")));
 #endif

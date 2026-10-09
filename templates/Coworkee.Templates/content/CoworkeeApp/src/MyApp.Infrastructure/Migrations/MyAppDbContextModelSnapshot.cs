@@ -485,6 +485,11 @@ namespace MyApp.Infrastructure.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("KeptSession")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasAnnotation("Coworkee:NotAudited", true);
+
                     b.Property<DateTimeOffset?>("LastLoginAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -2355,6 +2360,11 @@ namespace MyApp.Infrastructure.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("KeptSession")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasAnnotation("Coworkee:NotAudited", true);
 
                     b.Property<DateTimeOffset?>("LastLoginAt")
                         .HasColumnType("timestamp with time zone");
