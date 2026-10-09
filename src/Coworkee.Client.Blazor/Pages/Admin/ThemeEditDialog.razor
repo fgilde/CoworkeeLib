@@ -1,0 +1,12 @@
+@using MudBlazor.Extensions.Components
+
+<MudDialog data-testid="theme-dialog">
+    <DialogContent>
+        <MudTextField T="string" @bind-Value="Name" Label="@L["Name"]" Required="true" MaxLength="100" Margin="Density.Margin" Variant="Variant.Outlined"
+                      Class="mb-3" data-testid="theme-name" />
+        <div data-testid="theme-editor">
+            <MudExThemeEdit TTheme="CoworkeeTheme" Theme="Theme" Presets="Presets" AllowPresetsEdit="false" AllowModeToggle="true" ShowSaveButton="true"
+                            ShowCancelButton="true" AutoSaveRestoreState="false" ThemeChanged="ThemeService.Preview" ThemeSaved="SaveAsync" EditCanceled="Cancel" />
+        </div>
+    </DialogContent>
+</MudDialog>
