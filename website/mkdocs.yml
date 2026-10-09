@@ -75,6 +75,7 @@ plugins:
             Security: Sicherheit
             Permissions: Berechtigungen
             Authentication and Keycloak: Anmeldung und Keycloak
+            Privacy and personal data: Datenschutz und personenbezogene Daten
             Blazor UI: Blazor-UI
             Client and layout: Client und Layout
             Data tables: Datentabellen
@@ -142,6 +143,7 @@ nav:
   - Security:
       - Permissions: security/permissions.md
       - Authentication and Keycloak: security/authentication.md
+      - Privacy and personal data: security/privacy.md
   - Blazor UI:
       - Client and layout: ui/client.md
       - Data tables: ui/data-table.md
