@@ -175,7 +175,7 @@ internal sealed class UserDetailHandlers(CoworkeeDbContext db, ICurrentUser curr
     }
 }
 
-internal sealed class UpdateUserHandler(CoworkeeDbContext db, ICurrentUser currentUser) : IHandler<UpdateUser, Result>
+internal sealed class UpdateUserHandler(CoworkeeDbContext db, ICurrentUser currentUser, IEnumerable<IUserActivationListener> activation) : IHandler<UpdateUser, Result>
 {
     public async Task<Result> HandleAsync(UpdateUser command, CancellationToken cancellationToken)
     {
@@ -191,9 +191,18 @@ internal sealed class UpdateUserHandler(CoworkeeDbContext db, ICurrentUser curre
             return AdminGuard.LastAdmin;
         }
 
+        var activated = !user.IsActive && command.User.IsActive;
         user.FirstName = command.User.FirstName;
         user.LastName = command.User.LastName;
         user.IsActive = command.User.IsActive;
+        if (activated)
+        {
+            foreach (var listener in activation)
+            {
+                await listener.UserActivatedAsync(user, cancellationToken);
+            }
+        }
+
         return Result.Success();
     }
 }

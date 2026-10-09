@@ -41,6 +41,8 @@ public interface IAccountMailer
     Task SendEmailConfirmationAsync(User user, CancellationToken cancellationToken);
 
     Task SendRegistrationPendingAsync(User user, CancellationToken cancellationToken);
+
+    Task SendRegistrationApprovedAsync(User user, CancellationToken cancellationToken);
 }
 
 public static class AccountTokens
@@ -77,10 +79,20 @@ internal sealed class AccountMailer(UserManager<User> users, IMailSender mails, 
     public Task SendRegistrationPendingAsync(User user, CancellationToken cancellationToken) =>
         mails.QueueAsync(user.Email!, "Identity.RegistrationPending", new { user = Model(user) }, null, cancellationToken);
 
+    public Task SendRegistrationApprovedAsync(User user, CancellationToken cancellationToken) =>
+        mails.QueueAsync(user.Email!, "Identity.RegistrationApproved", new { user = Model(user), login_url = $"{options.Value.PublicAuthUrl.TrimEnd('/')}/Account/Login" }, null, cancellationToken);
+
     private string Link(string page, User user, string token) =>
         $"{options.Value.PublicAuthUrl.TrimEnd('/')}/Account/{page}?userId={user.Id}&code={AccountTokens.Encode(token)}";
 
     private static object Model(User user) => new { first_name = user.FirstName ?? user.Email, last_name = user.LastName, email = user.Email };
+}
+
+// tells users who registered and waited for an administrator that they can sign in now
+internal sealed class RegistrationApprovedMail(IAccountMailer mailer) : Coworkee.Identity.Users.IUserActivationListener
+{
+    public Task UserActivatedAsync(User user, CancellationToken cancellationToken) =>
+        string.IsNullOrEmpty(user.Email) || user.LastLoginAt is not null ? Task.CompletedTask : mailer.SendRegistrationApprovedAsync(user, cancellationToken);
 }
 
 [RequiresPermission(IdentityPermissions.Users.Manage)]
@@ -127,6 +139,7 @@ public sealed class CoworkeeAccountModule : CoworkeeModule, IWebModule
         context.Services.Configure<IdentityOptions>(identity => context.Configuration.GetSection(RegistrationOptions.PasswordSection).Bind(identity.Password));
         context.Services.AddMessagingFromAssembly(typeof(CoworkeeAccountModule).Assembly);
         context.Services.AddScoped<IAccountMailer, AccountMailer>();
+        context.Services.AddScoped<Coworkee.Identity.Users.IUserActivationListener, RegistrationApprovedMail>();
         context.Services.AddSingleton<ISettingDefinitionContributor, AccountSettingDefinitions>();
     }
 
