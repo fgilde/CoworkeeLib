@@ -97,7 +97,7 @@ builder.Services.AddCoworkeeSettings<ShopSettings>(section: "Shop", title: "Shop
 | `Lock(s => s.A.B)` | the value shows read only; the server keeps what applies whatever comes in. Locking an object locks all its properties |
 | `Hide(s => s.A.B)` | the value is neither sent to the browser nor changed |
 | secrets | properties named like password, secret, api key, token or connection string come masked; sending the mask back keeps the stored value |
-| meta | the client `meta` groups, labels, orders or renders properties like any `MudExObjectEditForm`; locks and hides from the server apply on top |
+| meta | the client `meta` groups, labels, orders or renders properties like any `MudExObjectEditForm`; locks and hides from the server apply on top. The form shows each section under its heading in two columns (lists over the full width); `WrapInMudItem(i => i.md = 12)` widens a single field |
 | scope | typed settings apply to the whole installation and are edited from the system organisation only; per tenant and per user values are settings (above) |
 
 **Restore defaults** drops the values changed in the app; appsettings and environment apply again.

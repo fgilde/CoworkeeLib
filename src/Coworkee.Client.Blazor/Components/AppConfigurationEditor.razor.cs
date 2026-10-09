@@ -33,11 +33,16 @@ public partial class AppConfigurationEditor<T>
     private bool _busy;
     private int _revision;
 
+    // restoring goes through the toolbar (the configured values) or cancel, not per field
+    private static readonly GlobalResetSettings NoReset = new() { AllowReset = false };
+    private static readonly PropertyResetSettings NoPropertyReset = new() { AllowReset = false };
+
     protected override async Task OnParametersSetAsync() => await LoadAsync(() => Api.GetAppConfigurationAsync(Registration.Section));
 
     /// <summary>The meta of the registration, then what the server locks or hides (a locked object locks all its properties).</summary>
     private void Configure(ObjectEditMeta<T> meta)
     {
+        Grid(meta);
         (Registration.Meta as Action<ObjectEditMeta<T>>)?.Invoke(meta);
         foreach (var property in Properties(meta, _locked))
         {
@@ -49,6 +54,26 @@ public partial class AppConfigurationEditor<T>
             property.Ignore();
         }
     }
+
+    // two columns on wider screens, lists over the full width without their own search; a registration's meta can still widen single fields
+#pragma warning disable BL0005 // MudEx configures the wrapping grid items through these instances
+    private static void Grid(ObjectEditMeta<T> meta)
+    {
+        meta.WrapEachInMudItem(i =>
+        {
+            i.xs = 12;
+            i.md = 6;
+        });
+        foreach (var list in meta.AllProperties.Where(IsList))
+        {
+            list.WrapInMudItem(i => i.xs = 12);
+            list.WithAdditionalAttributes(true, new KeyValuePair<string, object>(nameof(MudExCollectionEditor<string>.FilterMode), PropertyFilterMode.Disabled));
+        }
+    }
+#pragma warning restore BL0005
+
+    private static bool IsList(ObjectEditPropertyMeta property) =>
+        property.PropertyInfo.PropertyType != typeof(string) && property.PropertyInfo.PropertyType.IsAssignableTo(typeof(System.Collections.IEnumerable));
 
     // the server names properties like configuration keys ("Jobs:WorkerCount"), the form with dots
     private static IEnumerable<ObjectEditPropertyMeta> Properties(ObjectEditMeta<T> meta, IReadOnlyList<string> paths) =>
