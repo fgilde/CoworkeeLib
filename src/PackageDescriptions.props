@@ -22,6 +22,7 @@
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Features'"><Description>Feature management with editions and per tenant overrides, tenant administration, [RequiresFeature] and feature gates for Blazor.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Identity'"><Description>Users, roles, groups, tenants and permission grants with resource level checks.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Infrastructure'"><Description>CoworkeeDbContext with tenants, soft delete, field level audit trail and transactional outbox.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Files'"><Description>Folders and files with preview, download, upload and per-folder permissions, kept in the blob storage.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Localization'"><Description>Languages and translations stored in the database, machine translation and live updates.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Mailing'"><Description>Scriban mail templates with overrides and queued SMTP delivery.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Notifications'"><Description>In app notifications with digests.</Description></PropertyGroup>

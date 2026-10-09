@@ -23,6 +23,7 @@
     <Project Path="src/Coworkee.EventBus.RabbitMq/Coworkee.EventBus.RabbitMq.csproj" />
     <Project Path="src/Coworkee.EventBus/Coworkee.EventBus.csproj" />
     <Project Path="src/Coworkee.ExtendedAttributes/Coworkee.ExtendedAttributes.csproj" />
+    <Project Path="src/Coworkee.Files/Coworkee.Files.csproj" />
     <Project Path="src/Coworkee.Localization/Coworkee.Localization.csproj" />
     <Project Path="src/Coworkee.Mailing/Coworkee.Mailing.csproj" />
     <Project Path="src/Coworkee.Notifications/Coworkee.Notifications.csproj" />
@@ -64,6 +65,7 @@
     <Project Path="tests/Coworkee.EventBus.RabbitMq.Tests/Coworkee.EventBus.RabbitMq.Tests.csproj" />
     <Project Path="tests/Coworkee.EventBus.Tests/Coworkee.EventBus.Tests.csproj" />
     <Project Path="tests/Coworkee.ExtendedAttributes.Tests/Coworkee.ExtendedAttributes.Tests.csproj" />
+    <Project Path="tests/Coworkee.Files.Tests/Coworkee.Files.Tests.csproj" />
     <Project Path="tests/Coworkee.Localization.Tests/Coworkee.Localization.Tests.csproj" />
     <Project Path="tests/Coworkee.Mailing.Tests/Coworkee.Mailing.Tests.csproj" />
     <Project Path="tests/Coworkee.Notifications.Tests/Coworkee.Notifications.Tests.csproj" />
