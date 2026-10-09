@@ -1,0 +1,23 @@
+<div class="md-copyright">
+  {% if config.copyright %}
+    <div class="md-copyright__highlight">
+      {{ config.copyright }}
+      {% set de = config.theme.language == "de" %}
+      · <a href="#" class="gilde-open" data-widget="gilde-contact">{{ "Kontakt" if de else "Contact" }}</a>
+      · <a href="#" class="gilde-open" data-widget="gilde-support">Support</a>
+    </div>
+  {% endif %}
+  <div class="gilde-widgets">
+    <gilde-contact project="fgilde/CoworkeeLib" language="{{ config.theme.language }}" show-homepage="false" show-footer="false"></gilde-contact>
+    <gilde-support project="fgilde/CoworkeeLib" language="{{ config.theme.language }}" show-homepage="false" show-footer="false"></gilde-support>
+  </div>
+  <script type="module" src="https://connect.gilde.org/widgets/v1.js?v=2"></script>
+  <script>
+    document.addEventListener("click", e => {
+      const link = e.target.closest(".gilde-open");
+      if (!link) return;
+      e.preventDefault();
+      document.querySelector(link.dataset.widget)?.shadowRoot?.querySelector("button[aria-haspopup=dialog]")?.click();
+    });
+  </script>
+</div>

@@ -8,6 +8,7 @@ copyright: Florian Gilde
 
 theme:
   name: material
+  custom_dir: overrides
   logo: assets/icon.svg
   favicon: assets/icon.svg
   palette:

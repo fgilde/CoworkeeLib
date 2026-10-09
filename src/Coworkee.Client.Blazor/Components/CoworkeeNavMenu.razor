@@ -33,7 +33,7 @@
 }
 @if (_entries is not null)
 {
-    <MudExTreeView Dense="Density.Dense" T="NavigationEntry" Items="_entries"
+    <MudExTreeView T="NavigationEntry" Items="_entries"
                    SelectedNode="_selected" SelectedNodeChanged="SelectAsync"
                    SelectedItemBackgroundColor="@(_selected?.HasChildren == true || ViewMode != TreeViewMode.Default ? MudExColor.Default : MudExColor.HoverBackground)"
                    AllowedToSelectFunc="HasLink"
