@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Coworkee.Realtime\Coworkee.Realtime.csproj" />
+    <ProjectReference Include="..\Coworkee.Notifications\Coworkee.Notifications.csproj" />
+  </ItemGroup>
+</Project>

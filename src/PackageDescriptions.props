@@ -28,6 +28,7 @@
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Search'"><Description>Search index abstraction for Coworkee entities.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Search.Elasticsearch'"><Description>Elasticsearch provider for Coworkee.Search.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Settings'"><Description>Typed settings per global, tenant and user scope with encrypted secrets.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Social'"><Description>Comments, tags and ratings for any entity, with realtime updates and notifications.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Storage'"><Description>Blob storage on the file system, S3 or Azure.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Testing'"><Description>Postgres test container fixture, test users and a web application factory for Coworkee apps.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Theming'"><Description>Themes with palettes, fonts, layout and app options per tenant, editable at runtime.</Description></PropertyGroup>
