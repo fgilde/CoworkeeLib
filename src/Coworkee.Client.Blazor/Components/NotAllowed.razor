@@ -1,0 +1,19 @@
+<MudAlert Severity="Severity.Warning" Class="mb-3" data-testid="not-allowed">
+    @(_signedIn ? L["You lack the permission for this page."] : L["You need to sign in, or you lack the permission for this page."])
+</MudAlert>
+@if (!_signedIn)
+{
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@SignInHref">@L["Sign in"]</MudButton>
+}
+else if (_granting.Count > 0)
+{
+    <MudText Typo="Typo.body2" Class="mb-2">@L["Another of your roles has access:"]</MudText>
+    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+        @foreach (var role in _granting)
+        {
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Shield" OnClick="() => SwitchAsync(role.Id)" data-switch-role="@role.Id">
+                @L["Switch to {0}", role.Name]
+            </MudButton>
+        }
+    </MudStack>
+}

@@ -5,11 +5,13 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace Coworkee.Identity.Permissions;
 
-internal sealed class PermissionCacheInterceptor(PermissionCache cache) : SaveChangesInterceptor
+/// <summary>Drops the cached permissions after a relevant change, and again once its transaction commits, so no request caches the old state meanwhile.</summary>
+internal sealed class PermissionCacheInterceptor(PermissionCache cache) : SaveChangesInterceptor, IDbTransactionInterceptor
 {
     private static readonly HashSet<Type> RelevantTypes =
     [
         typeof(PermissionGrant), typeof(IdentityUserRole<Guid>), typeof(UserGroupRole), typeof(UserGroupMember), typeof(Role), typeof(UserGroup), typeof(User),
+        typeof(IdentityUserClaim<Guid>),
     ];
 
     private bool _pending;
@@ -28,24 +30,28 @@ internal sealed class PermissionCacheInterceptor(PermissionCache cache) : SaveCh
 
     public override async ValueTask<int> SavedChangesAsync(SaveChangesCompletedEventData eventData, int result, CancellationToken cancellationToken = default)
     {
-        if (_pending)
-        {
-            _pending = false;
-            await cache.InvalidateAsync(cancellationToken);
-        }
-
+        await InvalidateAsync(eventData.Context?.Database.CurrentTransaction is null, cancellationToken);
         return result;
     }
 
     public override int SavedChanges(SaveChangesCompletedEventData eventData, int result)
     {
-        if (_pending)
-        {
-            _pending = false;
-            cache.InvalidateAsync(CancellationToken.None).GetAwaiter().GetResult();
-        }
-
+        InvalidateAsync(eventData.Context?.Database.CurrentTransaction is null, CancellationToken.None).GetAwaiter().GetResult();
         return result;
+    }
+
+    public Task TransactionCommittedAsync(System.Data.Common.DbTransaction transaction, TransactionEndEventData eventData, CancellationToken cancellationToken = default) =>
+        InvalidateAsync(true, cancellationToken);
+
+    public void TransactionCommitted(System.Data.Common.DbTransaction transaction, TransactionEndEventData eventData) =>
+        InvalidateAsync(true, CancellationToken.None).GetAwaiter().GetResult();
+
+    public void TransactionRolledBack(System.Data.Common.DbTransaction transaction, TransactionEndEventData eventData) => _pending = false;
+
+    public Task TransactionRolledBackAsync(System.Data.Common.DbTransaction transaction, TransactionEndEventData eventData, CancellationToken cancellationToken = default)
+    {
+        _pending = false;
+        return Task.CompletedTask;
     }
 
     public override void SaveChangesFailed(DbContextErrorEventData eventData) => _pending = false;
@@ -54,6 +60,17 @@ internal sealed class PermissionCacheInterceptor(PermissionCache cache) : SaveCh
     {
         _pending = false;
         return Task.CompletedTask;
+    }
+
+    private async Task InvalidateAsync(bool committed, CancellationToken cancellationToken)
+    {
+        if (!_pending)
+        {
+            return;
+        }
+
+        _pending = !committed;
+        await cache.InvalidateAsync(cancellationToken);
     }
 
     private void Detect(DbContext? context) =>

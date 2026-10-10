@@ -74,6 +74,11 @@ public interface ICoworkeeApi
 
     Task<IReadOnlyCollection<string>> GetMyPermissionsAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>The own roles; with <paramref name="permission"/> each says whether it grants it.</summary>
+    Task<MyRolesDto> GetMyRolesAsync(string? permission = null, CancellationToken cancellationToken = default);
+
+    Task SetActiveRoleAsync(Guid? roleId, CancellationToken cancellationToken = default);
+
     Task<PagedResult<UserDto>> GetUsersAsync(PageRequest page, CancellationToken cancellationToken = default);
 
     Task<UserDto> CreateUserAsync(CreateUserRequest request, CancellationToken cancellationToken = default);

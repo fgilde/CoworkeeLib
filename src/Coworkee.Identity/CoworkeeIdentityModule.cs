@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Coworkee.Realtime;
 using Microsoft.Extensions.Options;
 
@@ -34,6 +35,7 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
         services.AddSingleton<IPermissionDefinitionContributor, IdentityPermissionDefinitions>();
         services.AddHybridCache();
         services.AddScoped<IPermissionChecker, PermissionChecker>();
+        services.TryAddScoped<Roles.IActiveRoleSwitch, Roles.ActiveRoleAlwaysOn>();
         services.AddSingleton<PermissionCache>();
         services.AddScoped<IInterceptor, PermissionCacheInterceptor>();
         services.AddScoped<IInterceptor, AccessChangeInterceptor>();

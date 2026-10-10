@@ -65,6 +65,8 @@ internal static partial class IdentityEndpoints
     private static void MapRoles(RouteGroupBuilder api)
     {
         api.MapGet("/roles", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetRoles(), ct).ToHttpResult());
+        api.MapGet("/roles/me", (string? permission, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetMyRoles(permission), ct).ToHttpResult());
+        api.MapPut("/roles/me/active", (SetActiveRoleRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SetActiveRole(body.RoleId), ct).ToHttpResult());
         api.MapPost("/roles", (RoleRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new CreateRole(body), ct).ToHttpResult());
         api.MapPut("/roles/{id:guid}", (Guid id, RoleRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new UpdateRole(id, body), ct).ToHttpResult());
         api.MapDelete("/roles/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteRole(id), ct).ToHttpResult());

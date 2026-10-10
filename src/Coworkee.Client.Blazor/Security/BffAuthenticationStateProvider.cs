@@ -4,17 +4,39 @@ using Microsoft.AspNetCore.Components.Authorization;
 
 namespace Coworkee.Client.Blazor.Security;
 
-public sealed class BffAuthenticationStateProvider(ICoworkeeApi api) : AuthenticationStateProvider
+public sealed class BffAuthenticationStateProvider : AuthenticationStateProvider, IDisposable
 {
+    private readonly ICoworkeeApi _api;
+    private readonly PermissionStore _permissions;
     private Task<AuthenticationState>? _state;
 
+    public BffAuthenticationStateProvider(ICoworkeeApi api, PermissionStore permissions)
+    {
+        _api = api;
+        _permissions = permissions;
+        permissions.Changed += Reevaluate;
+    }
+
     public override Task<AuthenticationState> GetAuthenticationStateAsync() => _state ??= LoadAsync();
+
+    public void Dispose() => _permissions.Changed -= Reevaluate;
+
+    // the same user with other permissions: AuthorizeView and the router check the policies again
+    private void Reevaluate()
+    {
+        if (_state is { } state)
+        {
+            NotifyAuthenticationStateChanged(ReissueAsync(state));
+        }
+    }
+
+    private static async Task<AuthenticationState> ReissueAsync(Task<AuthenticationState> state) => new((await state).User);
 
     private async Task<AuthenticationState> LoadAsync()
     {
         try
         {
-            var user = await api.GetUserAsync();
+            var user = await _api.GetUserAsync();
             if (!user.IsAuthenticated)
             {
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
