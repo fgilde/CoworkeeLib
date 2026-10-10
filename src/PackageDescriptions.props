@@ -14,6 +14,7 @@
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Client'"><Description>Typed .NET client for Coworkee APIs.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Client.Blazor'"><Description>MudBlazor shell for Blazor WebAssembly: navigation, data tables, account and admin pages, theming.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.CodeGen'"><Description>Optional DTO and mapping generation for entities with Nextended.CodeGen, mapped by extension methods or Mapperly.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Client.Blazor.ClientEntities'"><Description>Client entities for Blazor WebAssembly: mirror OData sets in the browser and filter, search, sort and facet them locally.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Contracts'"><Description>DTOs, permission names and paging records shared by server and clients.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Core'"><Description>Module system with [DependsOn], Result and Error, current user and ambient user scope.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Domain'"><Description>Entity and AggregateRoot with domain events, markers for audit, soft delete, tenants and concurrency.</Description></PropertyGroup>

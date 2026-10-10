@@ -37,6 +37,7 @@ Which package goes where, and what to put in the `using` block.
 | `Coworkee.Templates` | your machine | | `dotnet new coworkee` |
 | `Coworkee.Client` | SDKs, other .NET apps | `Coworkee.Client` | `CoworkeeApiClient`, `CoworkeeApiException`, `BearerTokenHandler`, `ODataResult<T>` |
 | `Coworkee.Client.Blazor` | WebAssembly client | `Coworkee.Client.Blazor`, `.Components`, `.Components.Data`, `.Data`, `.Api`, `.Navigation`, `.Security`, `.Customization` | `AddCoworkeeClient`, `CoworkeeLayout`, `CoworkeeDataTable<T>`, `IODataClient`, `ApiClientBase`, `ReplaceComponent` |
+| `Coworkee.Client.Blazor.ClientEntities` | WebAssembly client: local copies of OData sets | `Coworkee.Client.Blazor.ClientEntities` | `AddCoworkeeClientEntities`, `ClientEntities`, `ClientEntitySet<T>`, `ClientEntityIndicator`, `ODataLinq` |
 | `Coworkee.Aspire` | app host | `Aspire.Hosting`, `Coworkee.Aspire.Settings` | `AddCoworkeeApp`, `CoworkeeApp`, `WithSetting` |
 | `Coworkee.Testing` | tests | `Coworkee.Testing` | `PostgresFixture`, `PostgresWebApplicationFactory`, `AddTestAuthentication` |
 
