@@ -1,41 +1,12 @@
 ---
+template: home.html
+title: Coworkee
 hide:
   - navigation
+  - toc
 ---
 
-# Coworkee
-
 Coworkee is a modular application framework for .NET 10. It gives a Blazor and ASP.NET Core application the parts every business app needs, so the app itself can stay about its domain: modules with dependencies, a request pipeline with validation, permissions and caching, EF Core with audit and outbox, an auth server with external sign-in, a Blazor shell with data tables and admin pages, and an Aspire app host that wires all of it.
-
-![The demo application built on Coworkee](assets/screenshots/products.png){ .shot }
-
-<div class="grid cards" markdown>
-
--   **Start a new app**
-
-    Install the CLI, `coworkee new Shop`, `coworkee run`: a complete app on the NuGet packages.
-
-    [:octicons-arrow-right-24: Installation](getting-started/installation.md)
-
--   **Build a feature**
-
-    Entity, permissions, command, endpoint, OData set and a Blazor page with facets, step by step.
-
-    [:octicons-arrow-right-24: Your first feature](getting-started/first-feature.md)
-
--   **Understand the pieces**
-
-    Modules, the dispatcher and its middleware, persistence conventions.
-
-    [:octicons-arrow-right-24: Fundamentals](fundamentals/modules.md)
-
--   **Change the UI**
-
-    Replace any component of the shell, add navigation, build tables.
-
-    [:octicons-arrow-right-24: Blazor UI](ui/client.md)
-
-</div>
 
 ## What is in the box
 

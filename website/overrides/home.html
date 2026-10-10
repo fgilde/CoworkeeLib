@@ -1,0 +1,327 @@
+{% extends "main.html" %}
+
+{% set de = config.theme.language == "de" %}
+{% set base = ("de/" if de else "") %}
+{% set t = {
+  "eyebrow": ".NET 10 · Blazor · Aspire",
+  "title": ("Geschäftsanwendungen ohne das Drumherum" if de else "Business apps without the boilerplate"),
+  "lead": ("Coworkee ist ein modulares Anwendungsframework: Identity, Berechtigungen, Auth-Server, Blazor-Oberfläche, Datentabellen, Themes und ein Aspire-AppHost kommen als NuGet-Pakete. Deine App enthält nur noch ihre Fachlichkeit." if de else "Coworkee is a modular application framework: identity, permissions, an auth server, a Blazor shell, data tables, theming and an Aspire app host come as NuGet packages. Your app only holds its own domain."),
+  "search": ("Dokumentation durchsuchen" if de else "Search the documentation"),
+  "topics": ("Direkt zu" if de else "Jump to"),
+  "start": ("Loslegen" if de else "Get started"),
+  "docs": ("Dokumentation" if de else "Documentation"),
+  "features": ("Was drin ist" if de else "What you get"),
+  "features_lead": ("Die Teile, die jede Geschäftsanwendung braucht, fertig verdrahtet und einzeln ersetzbar." if de else "The parts every business app needs, wired up and replaceable one by one."),
+  "more": ("Mehr" if de else "Read more"),
+  "gs": ("In drei Befehlen zur eigenen App" if de else "Your own app in three commands"),
+  "gs_lead": ("Das CLI-Tool legt die Solution an, startet den Aspire-AppHost und hilft bei Migrationen, Modulen und Updates." if de else "The CLI creates the solution, starts the Aspire app host and helps with migrations, modules and updates."),
+  "step1": ("CLI installieren" if de else "Install the CLI"),
+  "step1_t": ("Ein globales .NET-Tool. <code>coworkee doctor</code> prüft SDK, Docker und dotnet-ef." if de else "A global .NET tool. <code>coworkee doctor</code> checks the SDK, Docker and dotnet-ef."),
+  "step2": ("App anlegen" if de else "Create the app"),
+  "step2_t": ("Solution mit Auth-Server, API, Blazor-Client, Migrationen, Tests und AppHost auf den NuGet-Paketen." if de else "A solution with auth server, API, Blazor client, migrations, tests and app host on the NuGet packages."),
+  "step3": ("Starten" if de else "Run it"),
+  "step3_t": ("Startet Postgres, Redis, Mailpit und alle Dienste über Aspire. Das Dashboard zeigt Logs und Traces." if de else "Starts Postgres, Redis, Mailpit and every service through Aspire. The dashboard shows logs and traces."),
+  "copy_label": ("Kopieren" if de else "Copy"),
+  "copied": ("Kopiert" if de else "Copied"),
+  "cli_doc": ("Alle Befehle" if de else "All commands"),
+  "studio": ("Lieber mit Oberfläche? Coworkee Studio" if de else "Prefer a UI? Coworkee Studio"),
+  "studio_t": ("<code>coworkee ui</code> installiert und startet Coworkee Studio, die Desktop-App zum CLI (Tool-Befehl <code>coworkee-ui</code>). Ein Assistent führt durch Name, Module, Datenbank, Anmeldung und Theme, legt die App an und startet sie." if de else "<code>coworkee ui</code> installs and starts Coworkee Studio, the desktop app for the CLI (tool command <code>coworkee-ui</code>). A wizard walks through name, modules, database, sign-in and theme, creates the app and runs it."),
+  "mcp": ("Für KI-Assistenten" if de else "For AI assistants"),
+  "mcp_t": ("<code>coworkee mcp</code> startet einen MCP-Server: Claude, Copilot und andere Assistenten legen Apps, Module und Migrationen über dieselben Befehle an." if de else "<code>coworkee mcp</code> starts an MCP server: Claude, Copilot and other assistants create apps, modules and migrations through the same commands."),
+  "tour": ("Ein Rundgang durch die Demo-App" if de else "A tour of the demo app"),
+  "tour_lead": ("Alles auf diesen Bildern kommt aus den Paketen. Die Demo-App bringt nur Katalog, Dokumente und Aufträge mit." if de else "Everything in these pictures comes from the packages. The demo app only adds catalog, documents and orders."),
+  "gallery": ("Galerie" if de else "Gallery"),
+  "gallery_lead": ("Hell und dunkel, im Ocean-Theme. Zum Vergrößern anklicken." if de else "Light and dark, in the Ocean theme. Click to enlarge."),
+  "overview": ("Auf einen Blick" if de else "At a glance"),
+  "connect": ("Fragen, Ideen oder Lust zu helfen?" if de else "Questions, ideas or want to help?"),
+  "connect_lead": ("Schreib mir oder unterstütze das Projekt. Coworkee bleibt frei und quelloffen." if de else "Write to me or support the project. Coworkee stays free and open source."),
+  "close": ("Schließen" if de else "Close"),
+  "prev": ("Zurück" if de else "Previous"),
+  "next": ("Weiter" if de else "Next")
+} %}
+
+{% set topics = [
+  ("Installation", "getting-started/installation/"),
+  ("CLI" if not de else "Kommandozeile", "getting-started/cli/"),
+  ("Erstes Feature" if de else "First feature", "getting-started/first-feature/"),
+  ("Module" if de else "Modules", "fundamentals/modules/"),
+  ("Berechtigungen" if de else "Permissions", "security/permissions/"),
+  ("Anmeldeseiten" if de else "Sign-in designs", "security/sign-in-pages/"),
+  ("Datentabellen" if de else "Data tables", "ui/data-table/"),
+  ("Client-Entities" if de else "Client entities", "ui/client-entities/"),
+  ("Themes" if de else "Theming", "modules/theming/"),
+  ("KI und MCP" if de else "AI and MCP", "modules/ai/"),
+  ("Aspire", "hosting/aspire/"),
+  ("SDKs", "web/sdk/")
+] %}
+
+{% set cw_features = [
+  ("material/puzzle-outline", ("Module und Pipeline" if de else "Modules and pipeline"), ("Module mit Abhängigkeiten, ein Dispatcher mit Validierung, Berechtigungen, Caching und Unit of Work." if de else "Modules with dependencies, a dispatcher with validation, permissions, caching and unit of work."), "fundamentals/modules/"),
+  ("material/database-outline", ("Daten mit Gedächtnis" if de else "Data with a memory"), ("EF Core mit Mandanten, Soft Delete, Audit auf Feldebene, Outbox und Realtime-Änderungen." if de else "EF Core with tenants, soft delete, field level audit, outbox and realtime change events."), "fundamentals/persistence/"),
+  ("material/shield-lock-outline", ("Auth-Server und Anmeldung" if de else "Auth server and sign-in"), ("OpenIddict, BFF, Keycloak oder jeder OIDC-Anbieter und umschaltbare Anmelde-Designs: Karte, Split, Slide." if de else "OpenIddict, BFF, Keycloak or any OIDC provider, and switchable sign-in designs: card, split, slide."), "security/sign-in-pages/"),
+  ("material/table-large", ("Datentabellen" if de else "Data tables"), ("Facetten, Spaltenfilter, Gruppierung, Ansichten, Export und Import für jede Entity über OData." if de else "Facets, column filters, grouping, views, export and import for every entity through OData."), "ui/data-table/"),
+  ("material/lightning-bolt-outline", ("Client-Entities" if de else "Client entities"), ("Der Browser hält 100.000 Zeilen und beantwortet Suche, Facetten und Sortierung selbst." if de else "The browser keeps 100,000 rows and answers search, facets and sorting itself."), "ui/client-entities/"),
+  ("material/palette-outline", ("Themes" if de else "Theming"), ("Farben, Schrift, Radius, Dichte und Logo. Admins legen den Standard fest, jeder wählt sein Theme." if de else "Colors, fonts, radius, density and logo. Admins set the default, everyone picks their own."), "modules/theming/"),
+  ("material/cog-outline", ("Dienste" if de else "Services"), ("Einstellungen, App-Konfiguration, Mail-Vorlagen, Jobs, Dateien, Suche, Chat, Benachrichtigungen." if de else "Settings, app configuration, mail templates, jobs, files, search, chat, notifications."), "modules/settings/"),
+  ("material/robot-outline", ("KI-Assistent und MCP" if de else "AI assistant and MCP"), ("Ein Assistent, der die Berechtigungen des Benutzers respektiert, und MCP für externe Werkzeuge." if de else "An assistant that respects the user's permissions, and MCP for external tools."), "modules/ai/"),
+  ("simple/dotnet", ("Aspire-Hosting" if de else "Aspire hosting"), ("Postgres, Redis, Mailpit, Elasticsearch und Keycloak, verdrahtet anhand der Pakete jedes Dienstes." if de else "Postgres, Redis, Mailpit, Elasticsearch and Keycloak, wired from the packages each service uses."), "hosting/aspire/")
+] %}
+
+{% set tour = [
+  ("signin-light", "signin-sliding-light", ("Anmeldung, die gleitet" if de else "Sign-in that slides"), ("Der Auth-Server bringt Anmeldung, Registrierung in Schritten, Passwort vergessen und externe Logins mit. Drei Designs, umschaltbar in der Administration, in den Farben des Standard-Themes." if de else "The auth server ships sign-in, step-by-step registration, password reset and external logins. Three designs, switchable in the administration, in the colors of the default theme."), "security/sign-in-pages/"),
+  ("products-grouped-light", "products-filter-dark", ("Tabellen, die mitdenken" if de else "Tables that think along"), ("Spalte in die Leiste ziehen und gruppieren, Facetten oben, Spaltenfilter mit Anzahlen, Summen und Durchschnitte im Fuß, gespeicherte Ansichten und Export." if de else "Drag a column to group, facets on top, column filters with counts, sums and averages in the footer, saved views and export."), "ui/data-table/"),
+  ("orders-compare-light", "orders-grouped-light", ("100.000 Aufträge im Browser" if de else "100,000 orders in the browser"), ("Eine Client-Entity lädt die Daten einmal und beantwortet danach jede Abfrage lokal. Vergleichen misst dieselben Abfragen auf Server und Browser." if de else "A client entity loads the data once and answers every query locally after that. Compare runs the same queries on the server and in the browser."), "ui/client-entities/"),
+  ("themes-light", "my-settings-light", ("Themes für alle" if de else "Themes for everyone"), ("Admins pflegen Themes und den Standard, jeder Benutzer wählt in seinen Einstellungen Theme und Farbmodus." if de else "Admins maintain themes and the default, every user picks a theme and color mode in their settings."), "modules/theming/"),
+  ("app-configuration-dark", "user-dialog-dark", ("Formulare aus dem Modell" if de else "Forms from the model"), ("Einstellungen und typisierte App-Konfiguration werden mit MudEx Object Edit bearbeitet, Dialoge gleiten von der Seite herein." if de else "Settings and typed app configuration are edited with MudEx object edit, dialogs slide in from the side."), "modules/settings/")
+] %}
+
+{% set gallery = [
+  ("signin-light", "Anmeldung (Slide)" if de else "Sign-in (slide)"),
+  ("register-dark", "Registrierung, dunkel" if de else "Registration, dark"),
+  ("signin-phone-light", "Anmeldung am Telefon" if de else "Sign-in on a phone"),
+  ("dashboard-light", "Dashboard"),
+  ("dashboard-dark", "Dashboard, dunkel" if de else "Dashboard, dark"),
+  ("products-grouped-dark", "Produkte nach Marke gruppiert" if de else "Products grouped by brand"),
+  ("products-filter-dark", "Spaltenfilter mit Anzahlen" if de else "Column filter with counts"),
+  ("orders-grouped-light", "Aufträge nach Status gruppiert" if de else "Orders grouped by status"),
+  ("orders-compare-dark", "Server und Browser im Vergleich" if de else "Server and browser compared"),
+  ("themes-light", "Themes und Anmelde-Design" if de else "Themes and sign-in design"),
+  ("my-settings-light", "Eigene Einstellungen" if de else "My settings"),
+  ("app-configuration-light", "App-Konfiguration" if de else "App configuration"),
+  ("users-light", "Benutzer" if de else "Users"),
+  ("user-dialog-light", "Benutzer anlegen" if de else "New user dialog"),
+  ("roles-dark", "Rollen" if de else "Roles"),
+  ("audit-log-dark", "Audit-Log auf Feldebene" if de else "Field level audit log"),
+  ("services-dark", "Dienste und ihr Zustand" if de else "Services and their health"),
+  ("translations-light", "Übersetzungen" if de else "Translations"),
+  ("languages-light", "Sprachen" if de else "Languages"),
+  ("account-light", "Konto" if de else "Account"),
+  ("swagger-light", "Swagger"),
+  ("studio-wizard", "Coworkee Studio (Vorschau)" if de else "Coworkee Studio (preview)")
+] %}
+
+{% macro shot(name) -%}
+  {{ ("assets/screenshots/" ~ name ~ (".png" if name.startswith("studio-") else ".webp")) | url }}
+{%- endmacro %}
+
+{% macro code(cmd) -%}
+  <div class="cw-cmd"><code>{{ cmd }}</code><button type="button" class="cw-copy" data-copy="{{ cmd }}" title="{{ t.copy_label }}" aria-label="{{ t.copy_label }}">{% include ".icons/material/content-copy.svg" %}</button></div>
+{%- endmacro %}
+
+{% block tabs %}
+  {{ super() }}
+  <section class="cw-hero">
+    <div class="cw-hero__curve" aria-hidden="true"></div>
+    <div class="md-grid cw-hero__inner">
+      <div class="cw-hero__text">
+        <span class="cw-eyebrow">{{ t.eyebrow }}</span>
+        <h1>{{ t.title }}</h1>
+        <p class="cw-lead">{{ t.lead }}</p>
+        <label class="cw-search">
+          <span class="cw-search__icon">{% include ".icons/material/magnify.svg" %}</span>
+          <input type="search" placeholder="{{ t.search }}" aria-label="{{ t.search }}" autocomplete="off">
+          <kbd>/</kbd>
+        </label>
+        <nav class="cw-topics" aria-label="{{ t.topics }}">
+          {% for label, href in topics %}<a href="{{ (base ~ href) | url }}">{{ label }}</a>{% endfor %}
+        </nav>
+        <div class="cw-ctas">
+          <a class="cw-btn cw-btn--primary" href="#get-started">{% include ".icons/material/rocket-launch-outline.svg" %}{{ t.start }}</a>
+          <a class="cw-btn" href="{{ (base ~ 'getting-started/installation/') | url }}">{% include ".icons/material/book-open-variant.svg" %}{{ t.docs }}</a>
+          <a class="cw-btn" href="{{ config.repo_url }}" target="_blank" rel="noopener">{% include ".icons/fontawesome/brands/github.svg" %}GitHub</a>
+        </div>
+      </div>
+      <div class="cw-hero__shot">
+        <div class="cw-frame">
+          <div class="cw-frame__bar"><i></i><i></i><i></i><span>MyApp</span></div>
+          <div class="cw-slides">
+            {% for n in ["signin", "register", "dashboard", "products-grouped"] %}
+              {% set auth = " cw-auth" if loop.index < 3 else "" %}
+              <img class="cw-light{{ auth }}" src="{{ shot(n ~ '-light') }}" alt="" {% if not loop.first %}loading="lazy"{% endif %}>
+              <img class="cw-dark{{ auth }}" src="{{ shot(n ~ '-dark') }}" alt="" loading="lazy">
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cw-section md-typeset">
+    <div class="md-grid">
+      <h2 class="cw-reveal">{{ t.features }}</h2>
+      <p class="cw-section__lead cw-reveal">{{ t.features_lead }}</p>
+      <div class="cw-features">
+        {% for icon, title, text, href in cw_features %}
+          <a class="cw-card cw-reveal" href="{{ (base ~ href) | url }}">
+            <span class="cw-card__icon">{% include ".icons/" ~ icon ~ ".svg" %}</span>
+            <strong>{{ title }}</strong>
+            <span>{{ text }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="cw-section cw-section--alt md-typeset" id="get-started">
+    <div class="md-grid">
+      <h2 class="cw-reveal">{{ t.gs }}</h2>
+      <p class="cw-section__lead cw-reveal">{{ t.gs_lead }}</p>
+      <div class="cw-start">
+        <ol class="cw-steps">
+          <li class="cw-reveal"><strong>{{ t.step1 }}</strong><span>{{ t.step1_t }}</span>{{ code("dotnet tool install -g Coworkee.Cli") }}</li>
+          <li class="cw-reveal"><strong>{{ t.step2 }}</strong><span>{{ t.step2_t }}</span>{{ code("coworkee new Shop") }}</li>
+          <li class="cw-reveal"><strong>{{ t.step3 }}</strong><span>{{ t.step3_t }}</span>{{ code("cd Shop && coworkee run") }}</li>
+          <li class="cw-steps__more cw-reveal"><a href="{{ (base ~ 'getting-started/cli/') | url }}">{{ t.cli_doc }} {% include ".icons/material/arrow-right.svg" %}</a></li>
+        </ol>
+        <div class="cw-studio cw-reveal">
+          <a class="cw-zoom" href="{{ shot('studio-wizard') }}" data-caption="Coworkee Studio">
+            <img src="{{ shot('studio-wizard') }}" alt="Coworkee Studio" loading="lazy">
+          </a>
+          <div class="cw-studio__body">
+            <h3>{% include ".icons/material/monitor-dashboard.svg" %}{{ t.studio }}</h3>
+            <p>{{ t.studio_t }}</p>
+            {{ code("coworkee ui") }}
+            <h3>{% include ".icons/material/creation-outline.svg" %}{{ t.mcp }}</h3>
+            <p>{{ t.mcp_t }}</p>
+            {{ code("coworkee mcp") }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cw-section md-typeset">
+    <div class="md-grid">
+      <h2 class="cw-reveal">{{ t.tour }}</h2>
+      <p class="cw-section__lead cw-reveal">{{ t.tour_lead }}</p>
+      {% for a, b, title, text, href in tour %}
+        <div class="cw-tour cw-reveal{% if loop.index is even %} cw-tour--flip{% endif %}">
+          <div class="cw-tour__shots">
+            <a class="cw-zoom cw-tour__main" href="{{ shot(a) }}" data-caption="{{ title }}"><img src="{{ shot(a) }}" alt="{{ title }}" loading="lazy"></a>
+            <a class="cw-zoom cw-tour__side" href="{{ shot(b) }}" data-caption="{{ title }}"><img src="{{ shot(b) }}" alt="" loading="lazy"></a>
+          </div>
+          <div class="cw-tour__text">
+            <h3>{{ title }}</h3>
+            <p>{{ text }}</p>
+            <a href="{{ (base ~ href) | url }}">{{ t.more }} {% include ".icons/material/arrow-right.svg" %}</a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="cw-section cw-section--alt md-typeset" id="gallery">
+    <div class="md-grid">
+      <h2 class="cw-reveal">{{ t.gallery }}</h2>
+      <p class="cw-section__lead cw-reveal">{{ t.gallery_lead }}</p>
+      <div class="cw-gallery">
+        {% for name, caption in gallery %}
+          <a class="cw-zoom cw-reveal" href="{{ shot(name) }}" data-caption="{{ caption }}">
+            <img src="{{ shot(name) }}" alt="{{ caption }}" loading="lazy">
+            <span>{{ caption }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="cw-section md-typeset">
+    <div class="md-grid">
+      <h2 class="cw-reveal">{{ t.overview }}</h2>
+      <div class="md-content cw-overview" data-md-component="content">
+        <article class="md-content__inner md-typeset">{{ page.content }}</article>
+      </div>
+    </div>
+  </section>
+
+  <section class="cw-section cw-section--alt md-typeset" id="contact">
+    <div class="md-grid">
+      <h2 class="cw-reveal">{{ t.connect }}</h2>
+      <p class="cw-section__lead cw-reveal">{{ t.connect_lead }}</p>
+      <div class="cw-connect">
+        {% set common = 'project="fgilde/CoworkeeLib" inline language="' ~ config.theme.language ~ '" width="560" radius="14" padding="28" show-logo="true" show-description="false" show-homepage="true" show-preview-notice="false" show-footer="false" footer-brand="Coworkee" footer-tagline="gilde.org"' %}
+        <gilde-contact class="cw-widget" widget="contact" {{ common }}>{{ ("Kontakt" if de else "Contact") }}</gilde-contact>
+        <gilde-support class="cw-widget" widget="support" {{ common }} support-layout="rows" show-support-icons="true" show-support-qr="true">Support</gilde-support>
+      </div>
+    </div>
+  </section>
+
+  <dialog class="cw-lightbox" aria-label="{{ t.gallery }}">
+    <img alt="">
+    <p></p>
+    <button type="button" class="cw-lightbox__close" aria-label="{{ t.close }}">{% include ".icons/material/close.svg" %}</button>
+    <button type="button" class="cw-lightbox__prev" aria-label="{{ t.prev }}">{% include ".icons/material/chevron-left.svg" %}</button>
+    <button type="button" class="cw-lightbox__next" aria-label="{{ t.next }}">{% include ".icons/material/chevron-right.svg" %}</button>
+  </dialog>
+{% endblock %}
+
+{% block container %}{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script>
+    (() => {
+      // the hero field hands its text to the built-in search
+      const hero = document.querySelector(".cw-search input");
+      const openSearch = value => {
+        const toggle = document.querySelector("[data-md-toggle=search]");
+        const query = document.querySelector("[data-md-component=search-query]");
+        if (!toggle || !query) return;
+        toggle.checked = true;
+        toggle.dispatchEvent(new Event("change"));
+        query.value = value;
+        query.focus();
+        query.dispatchEvent(new Event("input", { bubbles: true }));
+        query.dispatchEvent(new KeyboardEvent("keyup", { bubbles: true }));
+        hero.value = "";
+      };
+      hero.addEventListener("input", () => openSearch(hero.value));
+      hero.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); openSearch(hero.value); } });
+
+      document.addEventListener("click", async e => {
+        const button = e.target.closest(".cw-copy");
+        if (!button) return;
+        await navigator.clipboard.writeText(button.dataset.copy);
+        button.classList.add("is-done");
+        button.title = "{{ t.copied }}";
+        setTimeout(() => { button.classList.remove("is-done"); button.title = "{{ t.copy_label }}"; }, 1600);
+      });
+
+      const reveal = document.querySelectorAll(".cw-reveal");
+      if ("IntersectionObserver" in window && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        document.documentElement.classList.add("cw-animate");
+        const io = new IntersectionObserver(entries => entries.forEach(entry => {
+          if (entry.isIntersecting) { entry.target.classList.add("is-in"); io.unobserve(entry.target); }
+        }), { rootMargin: "0px 0px -8% 0px" });
+        reveal.forEach(el => io.observe(el));
+      }
+
+      const box = document.querySelector(".cw-lightbox");
+      const img = box.querySelector("img");
+      const text = box.querySelector("p");
+      let items = [], index = 0;
+      const show = i => {
+        index = (i + items.length) % items.length;
+        img.src = items[index].href;
+        img.alt = text.textContent = items[index].dataset.caption || "";
+      };
+      document.addEventListener("click", e => {
+        const link = e.target.closest(".cw-zoom");
+        if (!link) return;
+        e.preventDefault();
+        const group = link.closest(".cw-gallery") || link.closest(".cw-section");
+        items = [...group.querySelectorAll(".cw-zoom")];
+        show(items.indexOf(link));
+        box.showModal();
+      });
+      box.querySelector(".cw-lightbox__close").addEventListener("click", () => box.close());
+      box.querySelector(".cw-lightbox__prev").addEventListener("click", () => show(index - 1));
+      box.querySelector(".cw-lightbox__next").addEventListener("click", () => show(index + 1));
+      box.addEventListener("click", e => { if (e.target === box) box.close(); });
+      box.addEventListener("keydown", e => {
+        if (e.key === "ArrowLeft") show(index - 1);
+        if (e.key === "ArrowRight") show(index + 1);
+      });
+    })();
+  </script>
+{% endblock %}

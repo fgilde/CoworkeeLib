@@ -1,12 +1,58 @@
-<div class="md-copyright">
-  {% if config.copyright %}
-    <div class="md-copyright__highlight">
-      {{ config.copyright }}
-      {% set de = config.theme.language == "de" %}
-      · <a href="#" class="gilde-open" data-widget="gilde-contact">{{ "Kontakt" if de else "Contact" }}</a>
-      · <a href="#" class="gilde-open" data-widget="gilde-support">Support</a>
+{% set de = config.theme.language == "de" %}
+{% set base = "de/" if de else "" %}
+<div class="md-copyright cw-footer">
+  <div class="cw-footer__cols">
+    <div class="cw-footer__brand">
+      <a href="{{ nav.homepage.url | url }}" class="cw-footer__logo">
+        <img src="{{ 'assets/icon.svg' | url }}" alt="" width="36" height="36"><span>Coworkee</span>
+      </a>
+      <p>{{ "Modulares Anwendungsframework für .NET 10, Blazor und Aspire." if de else "Modular application framework for .NET 10, Blazor and Aspire." }}</p>
     </div>
-  {% endif %}
+    <nav>
+      <strong>{{ "Dokumentation" if de else "Documentation" }}</strong>
+      <a href="{{ (base ~ 'getting-started/installation/') | url }}">{{ "Erste Schritte" if de else "Getting started" }}</a>
+      <a href="{{ (base ~ 'getting-started/cli/') | url }}">{{ "Kommandozeile" if de else "Command line" }}</a>
+      <a href="{{ (base ~ 'fundamentals/modules/') | url }}">{{ "Grundlagen" if de else "Fundamentals" }}</a>
+      <a href="{{ (base ~ 'reference/packages/') | url }}">{{ "Pakete" if de else "Packages" }}</a>
+    </nav>
+    <nav>
+      <strong>{{ "Projekt" if de else "Project" }}</strong>
+      <a href="{{ config.repo_url }}" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://www.nuget.org/packages?q=Coworkee" target="_blank" rel="noopener">NuGet</a>
+      <a href="#" class="gilde-open" data-widget="gilde-contact">{{ "Kontakt" if de else "Contact" }}</a>
+      <a href="#" class="gilde-open" data-widget="gilde-support">Support</a>
+    </nav>
+  </div>
+
+  <div class="cw-built">
+    <span>{{ "Gebaut mit" if de else "Built with" }}</span>
+    <a href="https://www.mudex.org" target="_blank" rel="noopener"><img src="{{ 'assets/brands/mudex.png' | url }}" alt="" width="22" height="22">MudBlazor.Extensions</a>
+    <a href="https://mudblazor.com" target="_blank" rel="noopener">{% include ".icons/simple/blazor.svg" %}MudBlazor</a>
+    <a href="https://fgilde.github.io/Nextended/" target="_blank" rel="noopener">{% include ".icons/material/puzzle-outline.svg" %}Nextended</a>
+    <a href="https://aspire.dev" target="_blank" rel="noopener">{% include ".icons/simple/dotnet.svg" %}.NET Aspire</a>
+  </div>
+
+  <div class="cw-footer__bottom">
+    <a class="cw-gilde" href="https://www.gilde.org" target="_blank" rel="noopener" aria-label="gilde.org">
+      <svg viewBox="0 0 512 512" aria-hidden="true">
+        <defs>
+          <linearGradient id="cwGold" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#ffe6a8"/><stop offset="0.45" stop-color="#e0a24e"/><stop offset="1" stop-color="#a9761f"/>
+          </linearGradient>
+          <filter id="cwGlow" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="10" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <g fill="none" stroke="url(#cwGold)" stroke-width="56" stroke-linecap="square" stroke-linejoin="miter" filter="url(#cwGlow)">
+          <path class="cw-gilde__g" pathLength="1" d="M376 88H112v264l144 112 144-112v-96H280"/>
+          <path class="cw-gilde__bar" pathLength="1" d="M280 216h120"/>
+        </g>
+      </svg>
+      <span>gilde.org</span>
+    </a>
+    <span>© <a href="https://florian.gilde.org" target="_blank" rel="noopener">{{ config.copyright }}</a></span>
+  </div>
+
   <div class="gilde-widgets">
     <gilde-contact project="fgilde/CoworkeeLib" language="{{ config.theme.language }}" show-homepage="false" show-footer="false"></gilde-contact>
     <gilde-support project="fgilde/CoworkeeLib" language="{{ config.theme.language }}" show-homepage="false" show-footer="false"></gilde-support>
@@ -17,7 +63,24 @@
       const link = e.target.closest(".gilde-open");
       if (!link) return;
       e.preventDefault();
-      document.querySelector(link.dataset.widget)?.shadowRoot?.querySelector("button[aria-haspopup=dialog]")?.click();
+      document.querySelector(".gilde-widgets " + link.dataset.widget)?.shadowRoot?.querySelector("button[aria-haspopup=dialog]")?.click();
     });
+    // the widgets follow the site's color scheme
+    const cwTheme = () => {
+      const dark = document.body.getAttribute("data-md-color-scheme") === "slate";
+      for (const el of document.querySelectorAll("gilde-contact, gilde-support")) {
+        el.setAttribute("theme", dark ? "dark" : "light");
+        el.setAttribute("accent", dark ? "#64b5f6" : "#1565c0");
+      }
+    };
+    cwTheme();
+    new MutationObserver(cwTheme).observe(document.body, { attributes: true, attributeFilter: ["data-md-color-scheme"] });
+    // the gilde mark draws itself when the footer comes into view, and again on hover
+    const cwGilde = document.querySelector(".cw-gilde");
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver((entries, io) => entries.forEach(entry => {
+        if (entry.isIntersecting) { cwGilde.classList.add("is-drawn"); io.disconnect(); }
+      })).observe(cwGilde);
+    } else cwGilde.classList.add("is-drawn");
   </script>
 </div>
