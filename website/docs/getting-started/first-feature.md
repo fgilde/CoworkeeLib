@@ -262,3 +262,8 @@ internal sealed class MyAppNavigation : INavigationContributor
 ## What you did not write
 
 Logging, transactions, validation responses, permission checks for the list, paging and filtering on the server, CSV export, the delete confirmation, live reload when someone else changes a brand, the audit trail. They come from the packages.
+
+## Next steps
+
+- [Application services](../web/application-services.md): instead of mapping endpoints and writing an API client, declare an interface in the contracts; the server endpoints and the Blazor client are generated. The *Sales Orders* of the template are built that way.
+- [Client entities](../ui/client-entities.md): mark an entity `[ClientEntity]` and the browser keeps its rows, so the table filters, sorts and groups without a round trip. The template does it with 100,000 sales orders.

@@ -23,9 +23,8 @@ public static class ODataLinq
     /// <summary>A null safe getter for a path like "Brand/Name", boxed.</summary>
     public static Func<T, object?> Path<T>(string path)
     {
-        var it = Expression.Parameter(typeof(T), "it");
-        var body = new Binder(it).Bind(Parse(path.Trim()));
-        return Expression.Lambda<Func<T, object?>>(Expression.Convert(body, typeof(object)), it).Compile();
+        var key = Key<T>(path);
+        return Expression.Lambda<Func<T, object?>>(Expression.Convert(key.Body, typeof(object)), key.Parameters).Compile();
     }
 
     public static IEnumerable<T> OrderBy<T>(IEnumerable<T> rows, string? orderBy)
@@ -39,18 +38,33 @@ public static class ODataLinq
         foreach (var clause in orderBy.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
             var parts = clause.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            var key = Path<T>(parts[0]);
+            var key = Key<T>(parts[0]);
             var descending = parts.Length > 1 && parts[1].Equals("desc", StringComparison.OrdinalIgnoreCase);
-            ordered = (ordered, descending) switch
-            {
-                (null, false) => rows.OrderBy(key, KeyComparer.Instance),
-                (null, true) => rows.OrderByDescending(key, KeyComparer.Instance),
-                (_, false) => ordered.ThenBy(key, KeyComparer.Instance),
-                _ => ordered.ThenByDescending(key, KeyComparer.Instance),
-            };
+            ordered = (IOrderedEnumerable<T>)SortBy.MakeGenericMethod(typeof(T), key.ReturnType).Invoke(null, [rows, ordered, key.Compile(), descending])!;
         }
 
         return ordered ?? rows;
+    }
+
+    private static readonly MethodInfo SortBy = typeof(ODataLinq).GetMethod(nameof(Sort), BindingFlags.NonPublic | BindingFlags.Static)!;
+
+    // typed keys: no boxing per row and comparers that know the type, which matters for 100k rows
+    private static IOrderedEnumerable<T> Sort<T, TKey>(IEnumerable<T> rows, IOrderedEnumerable<T>? ordered, Func<T, TKey> key, bool descending)
+    {
+        var comparer = typeof(TKey) == typeof(string) ? (IComparer<TKey>)StringComparer.CurrentCultureIgnoreCase : Comparer<TKey>.Default;
+        return (ordered, descending) switch
+        {
+            (null, false) => rows.OrderBy(key, comparer),
+            (null, true) => rows.OrderByDescending(key, comparer),
+            (_, false) => ordered.ThenBy(key, comparer),
+            _ => ordered.ThenByDescending(key, comparer),
+        };
+    }
+
+    private static LambdaExpression Key<T>(string path)
+    {
+        var it = Expression.Parameter(typeof(T), "it");
+        return Expression.Lambda(new Binder(it).Bind(Parse(path.Trim())), it);
     }
 
     /// <summary>Recognizes "Path eq literal", the shape of list facet options, so they can be counted in one pass.</summary>
@@ -83,20 +97,6 @@ public static class ODataLinq
         {
             throw new NotSupportedException(exception.Message, exception);
         }
-    }
-
-    private sealed class KeyComparer : IComparer<object?>
-    {
-        public static readonly KeyComparer Instance = new();
-
-        public int Compare(object? x, object? y) => (x, y) switch
-        {
-            (null, null) => 0,
-            (null, _) => -1,
-            (_, null) => 1,
-            (string a, string b) => string.Compare(a, b, StringComparison.CurrentCultureIgnoreCase),
-            _ => Comparer<object>.Default.Compare(x, y),
-        };
     }
 
     private sealed class Binder(ParameterExpression it)

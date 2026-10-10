@@ -262,3 +262,8 @@ internal sealed class MyAppNavigation : INavigationContributor
 ## Was Sie nicht schreiben mussten
 
 Logging, Transaktionen, Antworten bei Validierungsfehlern, die Berechtigungsprüfung der Liste, Blättern und Filtern auf dem Server, CSV-Export, die Löschbestätigung, das Neuladen, wenn jemand anderes eine Marke ändert, das Audit. Das kommt aus den Paketen.
+
+## Wie es weitergeht
+
+- [Anwendungsdienste](../web/application-services.md): Statt Endpunkte zu mappen und einen API-Client zu schreiben, deklarieren Sie ein Interface in den Contracts; Server-Endpunkte und Blazor-Client werden generiert. Die *Aufträge* des Templates sind so gebaut.
+- [Client-Entities](../ui/client-entities.md): Markieren Sie eine Entity mit `[ClientEntity]`, und der Browser hält ihre Zeilen vor; die Tabelle filtert, sortiert und gruppiert ohne Roundtrip. Das Template macht es mit 100.000 Aufträgen.
