@@ -31,6 +31,16 @@ public sealed class UiTests
         UiCommand.Plan(installed, wanted).ToString().ShouldBe(step);
 
     [Fact]
+    public void An_exact_studio_version_below_the_installed_one_is_installed_with_a_downgrade()
+    {
+        UiCommand.Plan("1.3.0", "1.2.0", exact: true).ToString().ShouldBe("Downgrade");
+        UiCommand.Plan("1.2.0", "1.2.0", exact: true).ToString().ShouldBe("None");
+        UiCommand.Plan("1.1.0", "1.2.0", exact: true).ToString().ShouldBe("Update");
+        UiCommand.ToolArgs(UiCommand.Plan("1.3.0", "1.2.0", exact: true), "1.2.0", prerelease: false, source: null)
+            .ShouldBe(["dotnet", "tool", "update", "-g", "Coworkee.Studio", "--version", "1.2.0", "--allow-downgrade"]);
+    }
+
+    [Fact]
     public void Prerelease_labels_compare_part_by_part()
     {
         UiCommand.Compare("1.0.0-preview.10", "1.0.0-preview.9").ShouldBeGreaterThan(0);
