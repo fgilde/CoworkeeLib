@@ -17,13 +17,11 @@
             <MudCheckBox @bind-Value="Model.IsPublic" Label="@L["Visible to everyone who may view documents"]" />
             @if (Id is null)
             {
-                <MudFileUpload T="IBrowserFile" @bind-Files="_file" Class="mt-2">
-                    <CustomContent>
-                        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.AttachFile" OnClick="context.OpenFilePickerAsync" data-testid="choose-file">
-                            @(_file?.Name ?? L["Choose file"])
-                        </MudButton>
-                    </CustomContent>
-                </MudFileUpload>
+                <div class="mt-2" data-testid="upload-file">
+                    <MudExUploadEdit T="UploadableFile" @bind-UploadRequest="_file" AllowMultiple="false" AllowFolderUpload="false" AllowExternalUrl="false"
+                                     MaxFileSize="MaxFileBytes" TextUploadFile="@L["Upload"]" ButtonVariant="Variant.Outlined" ButtonColor="Color.Default" ButtonsJustify="Justify.FlexStart"
+                                     ExternalProviderRendering="ExternalProviderRendering.Images" ExternalPickerImageSize="@("30px")" />
+                </div>
             }
         </MudForm>
         @if (Document is { } document)

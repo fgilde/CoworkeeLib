@@ -3,8 +3,8 @@ using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Data;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
 using MudBlazor;
+using MudBlazor.Extensions.Components;
 using MyApp.Contracts.Documents;
 using MyApp.Web.Client.Api;
 
@@ -17,7 +17,7 @@ public partial class DocumentDialog
     private const long MaxFileBytes = 100L * 1024 * 1024;
     private MudForm _form = null!;
     private IReadOnlyList<DocumentTypeDto> _types = [];
-    private IBrowserFile? _file;
+    private UploadableFile? _file;
     private bool _saving;
 
     [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = null!;
@@ -93,8 +93,9 @@ public partial class DocumentDialog
             return;
         }
 
-        await using var content = _file!.OpenReadStream(MaxFileBytes);
-        await Api.UploadDocumentAsync(Model, _file.Name, content);
+        await _file!.EnsureDataLoadedAsync();
+        await using var content = new MemoryStream(_file.Data);
+        await Api.UploadDocumentAsync(Model, _file.FileName, content);
     }
 
     private void Cancel() => Dialog.Cancel();
