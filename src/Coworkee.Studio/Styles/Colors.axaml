@@ -1,0 +1,71 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!-- the Ocean theme of the Coworkee demo -->
+  <ResourceDictionary.ThemeDictionaries>
+    <ResourceDictionary x:Key="Light">
+      <Color x:Key="PrimaryColor">#1565c0</Color>
+      <Color x:Key="SecondaryColor">#00838f</Color>
+      <SolidColorBrush x:Key="Primary" Color="#1565c0" />
+      <SolidColorBrush x:Key="PrimaryHover" Color="#0d57a8" />
+      <SolidColorBrush x:Key="PrimaryPressed" Color="#0b4a90" />
+      <SolidColorBrush x:Key="OnPrimary" Color="#ffffff" />
+      <SolidColorBrush x:Key="PrimarySoft" Color="#e3eefb" />
+      <SolidColorBrush x:Key="Secondary" Color="#00838f" />
+      <SolidColorBrush x:Key="SecondarySoft" Color="#dff3f4" />
+      <SolidColorBrush x:Key="Background" Color="#f4f7fb" />
+      <SolidColorBrush x:Key="Surface" Color="#ffffff" />
+      <SolidColorBrush x:Key="SurfaceAlt" Color="#f7f9fc" />
+      <SolidColorBrush x:Key="SurfaceHover" Color="#eef3fa" />
+      <SolidColorBrush x:Key="Drawer" Color="#eaf1f9" />
+      <SolidColorBrush x:Key="Text" Color="#1b2633" />
+      <SolidColorBrush x:Key="TextSecondary" Color="#5c6b7c" />
+      <SolidColorBrush x:Key="Lines" Color="#dbe4ee" />
+      <SolidColorBrush x:Key="Success" Color="#2e7d32" />
+      <SolidColorBrush x:Key="SuccessSoft" Color="#e5f3e6" />
+      <SolidColorBrush x:Key="Warning" Color="#b45f06" />
+      <SolidColorBrush x:Key="WarningSoft" Color="#fff2e0" />
+      <SolidColorBrush x:Key="Error" Color="#c62828" />
+      <SolidColorBrush x:Key="ErrorSoft" Color="#fdecea" />
+      <SolidColorBrush x:Key="CodeBackground" Color="#0f1722" />
+      <SolidColorBrush x:Key="CodeText" Color="#d7e6f7" />
+      <LinearGradientBrush x:Key="Hero" StartPoint="0%,0%" EndPoint="100%,100%">
+        <GradientStop Offset="0" Color="#1565c0" />
+        <GradientStop Offset="1" Color="#00838f" />
+      </LinearGradientBrush>
+      <BoxShadows x:Key="CardShadow">0 1 2 0 #0f1b3a1a, 0 6 18 0 #0d1565c0</BoxShadows>
+      <BoxShadows x:Key="RaisedShadow">0 2 4 0 #141b3a1a, 0 12 32 0 #221565c0</BoxShadows>
+    </ResourceDictionary>
+    <ResourceDictionary x:Key="Dark">
+      <Color x:Key="PrimaryColor">#64b5f6</Color>
+      <Color x:Key="SecondaryColor">#4dd0e1</Color>
+      <SolidColorBrush x:Key="Primary" Color="#64b5f6" />
+      <SolidColorBrush x:Key="PrimaryHover" Color="#82c4f8" />
+      <SolidColorBrush x:Key="PrimaryPressed" Color="#4ea5ea" />
+      <SolidColorBrush x:Key="OnPrimary" Color="#0b1a2a" />
+      <SolidColorBrush x:Key="PrimarySoft" Color="#1a2d44" />
+      <SolidColorBrush x:Key="Secondary" Color="#4dd0e1" />
+      <SolidColorBrush x:Key="SecondarySoft" Color="#14313a" />
+      <SolidColorBrush x:Key="Background" Color="#0f1722" />
+      <SolidColorBrush x:Key="Surface" Color="#16202e" />
+      <SolidColorBrush x:Key="SurfaceAlt" Color="#131c29" />
+      <SolidColorBrush x:Key="SurfaceHover" Color="#1c2939" />
+      <SolidColorBrush x:Key="Drawer" Color="#121b27" />
+      <SolidColorBrush x:Key="Text" Color="#e3eefb" />
+      <SolidColorBrush x:Key="TextSecondary" Color="#9fb3c8" />
+      <SolidColorBrush x:Key="Lines" Color="#26364a" />
+      <SolidColorBrush x:Key="Success" Color="#81c784" />
+      <SolidColorBrush x:Key="SuccessSoft" Color="#17301d" />
+      <SolidColorBrush x:Key="Warning" Color="#ffb74d" />
+      <SolidColorBrush x:Key="WarningSoft" Color="#33270f" />
+      <SolidColorBrush x:Key="Error" Color="#ef9a9a" />
+      <SolidColorBrush x:Key="ErrorSoft" Color="#3a1c1f" />
+      <SolidColorBrush x:Key="CodeBackground" Color="#0a1019" />
+      <SolidColorBrush x:Key="CodeText" Color="#d7e6f7" />
+      <LinearGradientBrush x:Key="Hero" StartPoint="0%,0%" EndPoint="100%,100%">
+        <GradientStop Offset="0" Color="#1a4f91" />
+        <GradientStop Offset="1" Color="#0b6b77" />
+      </LinearGradientBrush>
+      <BoxShadows x:Key="CardShadow">0 1 2 0 #33000000, 0 6 18 0 #26000000</BoxShadows>
+      <BoxShadows x:Key="RaisedShadow">0 2 4 0 #40000000, 0 12 32 0 #40000000</BoxShadows>
+    </ResourceDictionary>
+  </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>
