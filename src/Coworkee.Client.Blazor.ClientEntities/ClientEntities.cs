@@ -18,7 +18,7 @@ public sealed class ClientEntities : IAsyncDisposable
     private readonly ClientEntitySignal _signal;
     private readonly ILogger<ClientEntities> _logger;
     private readonly Dictionary<string, ClientEntitySet> _sets = new(StringComparer.OrdinalIgnoreCase);
-    private readonly List<IAsyncDisposable> _subscriptions = [];
+    private readonly List<Task<IAsyncDisposable>> _subscriptions = [];
     private Task<ClientEntityManifest?>? _manifest;
 
     internal ClientEntities(ClientEntityApi api, IODataClient server, IClientEntityStorage storage, RealtimeClient? realtime, ClientEntitySignal signal, ILogger<ClientEntities> logger)
@@ -64,16 +64,17 @@ public sealed class ClientEntities : IAsyncDisposable
         var set = new ClientEntitySet<T>(info, expand, manifest.Partition, _server, _api, _storage, _logger);
         _sets[entitySet] = set;
         set.Changed += s => Changed?.Invoke(s);
+        set.Start();
         if (info.RealtimeTopic is { } topic && _realtime is not null)
         {
-            _subscriptions.Add(await _realtime.SubscribeAsync(topic, _ =>
+            // connecting to the hub must not hold back the first query
+            _subscriptions.Add(_realtime.SubscribeAsync(topic, _ =>
             {
                 set.Nudge();
                 return Task.CompletedTask;
             }));
         }
 
-        set.Start();
         return set;
     }
 
@@ -119,7 +120,7 @@ public sealed class ClientEntities : IAsyncDisposable
     {
         foreach (var subscription in _subscriptions)
         {
-            await subscription.DisposeAsync();
+            await (await subscription).DisposeAsync();
         }
 
         foreach (var set in _sets.Values)

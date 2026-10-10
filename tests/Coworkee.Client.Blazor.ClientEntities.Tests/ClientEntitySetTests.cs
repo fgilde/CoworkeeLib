@@ -184,4 +184,28 @@ public sealed class ClientEntitySetTests
         (await entities.SetAsync<Brand>("Gadgets", cancellationToken: Ct)).ShouldBeNull();
         (await entities.SetAsync<Gadget>("Others", cancellationToken: Ct)).ShouldBeNull();
     }
+
+    [Fact]
+    public async Task A_realtime_event_of_the_entity_type_brings_the_change()
+    {
+        _server.RealtimeTopic = "type:Gadget";
+        var realtime = new FakeRealtime();
+        await using var entities = new ClientEntities(new ClientEntityApi(new HttpClient(_server) { BaseAddress = new Uri("http://app/") }), _server,
+            new NoClientEntityStorage(), new Realtime.RealtimeClient(realtime), new ClientEntitySignal(), NullLogger<ClientEntities>.Instance);
+        var set = (await entities.SetAsync<Gadget>("Gadgets", cancellationToken: Ct))!;
+        await set.WhenLocalAsync(Ct);
+        var saw = new Gadget(Guid.CreateVersion7(), "Saw", "Tools", 25);
+        _server.Rows.Add(saw);
+        _server.NextChanges = new ClientEntityChanges(_server.Now.AddMinutes(1), 4, [saw.Id], [], false);
+
+        realtime.Raise("type:Gadget");
+
+        for (var i = 0; i < 100 && set.Items.Count < 4; i++)
+        {
+            await Task.Delay(50, Ct);
+        }
+
+        realtime.Subscribed.ShouldBe(["type:Gadget"]);
+        set.Items.Count.ShouldBe(4);
+    }
 }

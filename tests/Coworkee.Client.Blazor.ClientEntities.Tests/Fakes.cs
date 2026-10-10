@@ -35,7 +35,9 @@ internal sealed class FakeServer : HttpMessageHandler, IODataClient
 
     public DateTimeOffset Now { get; set; } = DateTimeOffset.Parse("2026-10-10T10:00:00Z");
 
-    public ClientEntitySetInfo Info => new("Gadgets", 2, MaxRows, TimeSpan.Zero, null);
+    public string? RealtimeTopic { get; set; }
+
+    public ClientEntitySetInfo Info => new("Gadgets", 2, MaxRows, TimeSpan.Zero, RealtimeTopic);
 
     public ClientEntitySet<Gadget> Set(IClientEntityStorage? storage = null) =>
         new(Info, "Brand", "p1", this, new ClientEntityApi(new HttpClient(this) { BaseAddress = new Uri("http://app/") }), storage ?? new NoClientEntityStorage(), NullLogger.Instance);
@@ -98,4 +100,31 @@ internal sealed class MemoryStorage : IClientEntityStorage
         Saved.Clear();
         return Task.CompletedTask;
     }
+}
+
+internal sealed class FakeRealtime : Realtime.IRealtimeConnection
+{
+    private Action<Contracts.Realtime.RealtimeEnvelope>? _handler;
+
+    public event Func<Task>? Reconnected
+    {
+        add { }
+        remove { }
+    }
+
+    public List<string> Subscribed { get; } = [];
+
+    public Task StartAsync() => Task.CompletedTask;
+
+    public Task InvokeAsync(string method, string topic)
+    {
+        Subscribed.Add(topic);
+        return Task.CompletedTask;
+    }
+
+    public void OnEvent(Action<Contracts.Realtime.RealtimeEnvelope> handler) => _handler = handler;
+
+    public void Raise(string topic) => _handler?.Invoke(new Contracts.Realtime.RealtimeEnvelope(topic, "EntityChanged", JsonSerializer.SerializeToElement(new { })));
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }
