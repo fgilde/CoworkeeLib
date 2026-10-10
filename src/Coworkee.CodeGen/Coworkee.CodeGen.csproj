@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- build-time only: the package brings the Nextended.CodeGen generator and wires codegen.json -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <IncludeSymbols>false</IncludeSymbols>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- PrivateAssets none: the generator must reach the project that references this package -->
+    <PackageReference Include="Nextended.CodeGen" PrivateAssets="none" />
+    <PackageReference Include="Nextended.Core" />
+    <None Include="build\Coworkee.CodeGen.targets" Pack="true" PackagePath="build" />
+  </ItemGroup>
+</Project>

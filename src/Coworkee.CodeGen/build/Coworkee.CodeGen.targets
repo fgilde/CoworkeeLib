@@ -1,0 +1,5 @@
+<Project>
+  <ItemGroup Condition="Exists('$(MSBuildProjectDirectory)\codegen.json')">
+    <AdditionalFiles Include="$(MSBuildProjectDirectory)\codegen.json" />
+  </ItemGroup>
+</Project>
