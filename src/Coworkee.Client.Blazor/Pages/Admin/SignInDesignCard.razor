@@ -1,0 +1,48 @@
+@if (_design is not null)
+{
+    <MudCard Outlined="true" Class="mb-4" data-testid="sign-in-design">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">@L["Sign-in page"]</MudText>
+                <MudText Typo="Typo.body2">@L["How the sign-in and registration pages look for everyone, whichever theme is the default."]</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <div class="d-flex flex-wrap gap-3 mb-4" role="radiogroup" aria-label="@L["Layout"]">
+                @foreach (var layout in Options.SignInLayouts)
+                {
+                    var selected = IsSelected(layout);
+                    <button type="button" role="radio" aria-checked="@(selected ? "true" : "false")" style="@TileStyle(selected)"
+                            @onclick="() => _design.Layout = layout" data-testid="sign-in-layout" data-layout="@(layout)">
+                        <span style="@ThumbStyle(layout)">
+                            @if (HasMedia(layout))
+                            {
+                                <span style="@MediaStyle(layout)"></span>
+                            }
+                            <span style="@FormStyle(layout)"></span>
+                        </span>
+                        <MudText Typo="Typo.body2" Class="mt-1">@L[layout]</MudText>
+                    </button>
+                }
+            </div>
+            <MudGrid Spacing="2">
+                <MudItem xs="12" sm="8">
+                    <MudTextField T="string" @bind-Value="_design.MediaUrl" Label="@L["Image or video address"]" Clearable="true" Margin="Density.Margin"
+                                  Variant="Variant.Outlined" Disabled="!HasMedia(SelectedLayout)" HelperText="@L["For the split and slide layouts, for example /media/welcome.mp4"]"
+                                  data-testid="sign-in-media" />
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudSelect T="SignInMediaSide?" @bind-Value="_design.MediaSide" Label="@L["Image side"]" Clearable="true" Margin="Density.Margin"
+                               Variant="Variant.Outlined" Disabled="!HasMedia(SelectedLayout)">
+                        <MudSelectItem T="SignInMediaSide?" Value="SignInMediaSide.Left">@L["Left"]</MudSelectItem>
+                        <MudSelectItem T="SignInMediaSide?" Value="SignInMediaSide.Right">@L["Right"]</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+        <MudCardActions>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Save" OnClick="SaveAsync" data-testid="sign-in-save">@L["Save"]</MudButton>
+            <MudButton StartIcon="@Icons.Material.Outlined.SettingsBackupRestore" OnClick="ResetAsync" data-testid="sign-in-reset">@L["Restore defaults"]</MudButton>
+        </MudCardActions>
+    </MudCard>
+}

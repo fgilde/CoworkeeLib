@@ -16,6 +16,8 @@ The pages work without script. A small script adds what a browser alone cannot: 
 
 ## Configuration
 
+The design applies to the whole installation, whichever theme is the default. The configuration sets the starting point:
+
 ```json
 "Coworkee": {
   "Auth": {
@@ -24,7 +26,7 @@ The pages work without script. A small script adds what a browser alone cannot: 
       "MediaUrl": "/media/welcome.mp4",
       "MediaSide": "Right"
     },
-    "AllowThemeDesign": true
+    "AllowDesignChanges": true
   }
 }
 ```
@@ -34,27 +36,33 @@ The pages work without script. A small script adds what a browser alone cannot: 
 | `Design:Layout` | `Card`, `Split`, `Slide` or the name of an own layout; unknown names fall back to `Card` |
 | `Design:MediaUrl` | an image, or a video for `.mp4`, `.webm`, `.ogg` and `.mov`; a path on the auth server or an `http(s)` address, whose origin enters `img-src` and `media-src` of the content security policy |
 | `Design:MediaSide` | `Left` (default) or `Right`; with `Slide` the panel of the registration page sits on the other side |
-| `AllowThemeDesign` | `true` (default) lets administrators choose layout and media per theme; `false` keeps the configuration |
+| `AllowDesignChanges` | `true` (default) lets administrators change the design on the Themes page; `false` keeps the configuration. Set it for the service that hosts the API, where the change is saved. |
 
-## In the theme editor
+## On the Themes page
 
-*Administration > Themes > Edit* shows a section *Sign-in page* above the theme editor: layout, image or video address and side. The values are stored in the theme's options under `SignIn`; empty fields keep the configuration. The default theme of the system organisation decides. The client options control the section:
+*Administration > Themes* starts with the card *Sign-in page*: a thumbnail per layout to pick from, the image or video address and its side. *Save* stores the values as the app configuration section `Coworkee:Auth:Design` (table `cw.ConfigurationEntries`, see [App configuration](../modules/settings.md)); *Restore defaults* drops them, so the configured values apply again.
+
+The card shows for administrators of the system organisation who may manage settings (`Settings.Manage`), because the section applies to every organisation. It stays hidden for everyone else and while `AllowDesignChanges` is off.
+
+**How fast the auth server follows.** The auth server reads the design from its configuration on every request. It sees a change once its database configuration source reloads: `AddCoworkeeDatabaseConfiguration` checks every 15 seconds by default (the auth host of the template adds it). A host in the same process as the API sees the change at once. Colors, font and logo come from the default theme and are cached for one minute.
+
+The client options control the card:
 
 ```csharp
 builder.Services.AddCoworkeeClient(options =>
 {
-    options.AllowThemeSignInDesign = false;   // hides the section
+    options.AllowSignInDesign = false;        // hides the card
     options.SignInLayouts.Add("Aurora");      // offers an own layout
 });
 ```
 
-Switch `AllowThemeSignInDesign` together with `Coworkee:Auth:AllowThemeDesign` on the auth server: the client shows the section, the auth server applies it.
+An own layout gets a generic thumbnail with its name. Themes saved with the former per theme value (`SignIn` in the theme options) are ignored; set the design once on the Themes page.
 
 ## Own designs
 
 The layouts are Razor layouts next to the pages of the library: `Pages/_DesignCard.cshtml`, `Pages/_DesignSplit.cshtml` and `Pages/_DesignSlide.cshtml`, all inside `Pages/_Layout.cshtml`, which renders the head, the theme variables, the style sheet and the script. As with every Razor class library, a view of the auth host at the same path wins:
 
-- **Own layout**: add `Pages/_DesignAurora.cshtml` to the auth host and set `Design:Layout` to `Aurora` (or choose it in the theme editor).
+- **Own layout**: add `Pages/_DesignAurora.cshtml` to the auth host and set `Design:Layout` to `Aurora` (or choose it on the Themes page).
 - **Replace a built-in one**: add `Pages/_DesignCard.cshtml` to the auth host.
 - **Replace everything**: add `Pages/_Layout.cshtml`; then the style sheet and the script are yours as well.
 

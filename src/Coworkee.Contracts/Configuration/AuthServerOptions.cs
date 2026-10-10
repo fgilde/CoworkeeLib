@@ -21,11 +21,14 @@ public sealed class AuthServerOptions
 
     public LoginOptions Login { get; set; } = new();
 
-    /// <summary>Layout and media of the account pages; without a layout the centered card.</summary>
+    /// <summary>Layout and media of the account pages; without a layout the centered card. Administrators may change it in the app, see <see cref="AllowDesignChanges"/>.</summary>
     public Theming.SignInDesign Design { get; set; } = new();
 
-    /// <summary>Administrators may choose layout and media per theme under Themes; false keeps <see cref="Design"/>.</summary>
-    public bool AllowThemeDesign { get; set; } = true;
+    /// <summary>
+    /// Administrators may change <see cref="Design"/> on the Themes page; false keeps the configured one. Read by the service that hosts
+    /// the API (the theming module), where the change is saved.
+    /// </summary>
+    public bool AllowDesignChanges { get; set; } = true;
 
     /// <summary>Public base address tokens name as issuer; set it when the server sits behind a proxy or runs on several instances.</summary>
     public Uri? Issuer { get; set; }

@@ -3,6 +3,7 @@ using System.Text.Json;
 using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Theming;
+using Coworkee.Settings;
 using Coworkee.Theming;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,7 +15,7 @@ public sealed class AuthDesignTests(AuthApp app) : IAsyncLifetime
 {
     private SetupResultDto _setup = null!;
 
-    private AuthServerOptions Options => app.App.Services.GetRequiredService<IOptions<AuthServerOptions>>().Value;
+    private AuthServerOptions Options => app.App.Services.GetRequiredService<IOptionsMonitor<AuthServerOptions>>().CurrentValue;
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
@@ -26,8 +27,8 @@ public sealed class AuthDesignTests(AuthApp app) : IAsyncLifetime
 
     public async ValueTask DisposeAsync()
     {
+        (await OidcFlow.SendAsync(app, _setup.AdminUserId, _setup.TenantId, new ResetAppConfiguration(SignInDesign.Section))).IsSuccess.ShouldBeTrue();
         Options.Design = new SignInDesign();
-        Options.AllowThemeDesign = true;
         await ForgetBrandingAsync();
     }
 
@@ -74,11 +75,14 @@ public sealed class AuthDesignTests(AuthApp app) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task The_theme_overrides_the_design_and_the_slide_panel_changes_sides_for_the_registration()
+    public async Task Administrators_change_the_design_for_the_whole_installation_and_the_slide_panel_changes_sides_for_the_registration()
     {
         await app.SetSettingAsync("Account.AllowRegistration", "true");
         await app.App.Services.GetRequiredService<HybridCache>().RemoveByTagAsync("coworkee:settings", Ct);
-        await UseThemeAsync(new { Layout = "Slide", MediaUrl = "https://media.test/welcome.mp4", MediaSide = "Left" });
+        await UseThemeAsync();
+        var saved = await OidcFlow.SendAsync(app, _setup.AdminUserId, _setup.TenantId, new SaveAppConfiguration(SignInDesign.Section,
+            JsonSerializer.SerializeToElement(new SignInDesign { Layout = "Slide", MediaUrl = "https://media.test/welcome.mp4", MediaSide = SignInMediaSide.Left })));
+        saved.IsSuccess.ShouldBeTrue();
 
         using var response = await app.Browser().GetAsync("/Account/Login", Ct);
         var login = await response.Content.ReadAsStringAsync(Ct);
@@ -90,19 +94,14 @@ public sealed class AuthDesignTests(AuthApp app) : IAsyncLifetime
         response.Headers.GetValues("Content-Security-Policy").Single().ShouldContain("media-src 'self' https://media.test;");
         register.ShouldContain("class=\"slide media-right");
         register.ShouldContain("data-testid=\"slide-sign-in\"");
+        saved.Value.Values.GetProperty("mediaSide").GetString().ShouldBe("Left");
     }
 
     [Fact]
-    public async Task Without_permission_for_themes_and_for_unknown_layouts_the_configured_design_stays()
+    public async Task An_unknown_layout_falls_back_to_the_card()
     {
-        Options.Design = new SignInDesign { Layout = SignInLayouts.Split };
-        Options.AllowThemeDesign = false;
-        await UseThemeAsync(new { Layout = "Slide" });
+        Options.Design = new SignInDesign { Layout = "Missing" };
 
-        (await GetAsync("/Account/Login")).ShouldContain("data-design=\"split\"");
-
-        Options.AllowThemeDesign = true;
-        await UseThemeAsync(new { Layout = "Missing" }, "Other");
         (await GetAsync("/Account/Login")).ShouldContain("data-design=\"card\"");
     }
 
@@ -117,24 +116,12 @@ public sealed class AuthDesignTests(AuthApp app) : IAsyncLifetime
         new AuthBranding("App", null, null, new SignInDesign { MediaUrl = "/v/intro.webm?x=1" }).MediaIsVideo.ShouldBeTrue();
     }
 
-    [Fact]
-    public void A_theme_design_fills_only_what_it_sets()
-    {
-        var options = JsonSerializer.SerializeToElement(new { Dense = true, SignIn = new { MediaSide = "Right" } });
-
-        var design = new SignInDesign { Layout = "Split", MediaUrl = "/a.jpg" }.With(AuthBrandingProvider.ThemeDesign(options));
-
-        design.Layout.ShouldBe("Split");
-        design.MediaUrl.ShouldBe("/a.jpg");
-        design.MediaSide.ShouldBe(SignInMediaSide.Right);
-        AuthBrandingProvider.ThemeDesign(JsonSerializer.SerializeToElement(new { SignIn = new { MediaSide = "Up" } })).ShouldBeNull();
-    }
-
-    private async Task UseThemeAsync(object signIn, string name = "Brand")
+    // a theme that still carries the former per theme design: it no longer counts
+    private async Task UseThemeAsync()
     {
         var palette = JsonSerializer.SerializeToElement(new { Primary = "#123456" });
-        var created = await OidcFlow.SendAsync(app, _setup.AdminUserId, _setup.TenantId, new CreateTheme(new ThemeRequest(name, palette, palette, null, null, null, null,
-            Options: JsonSerializer.SerializeToElement(new { SignIn = signIn }))));
+        var created = await OidcFlow.SendAsync(app, _setup.AdminUserId, _setup.TenantId, new CreateTheme(new ThemeRequest("Brand", palette, palette, null, null, null, null,
+            Options: JsonSerializer.SerializeToElement(new { SignIn = new { Layout = "Split" } }))));
         (await OidcFlow.SendAsync(app, _setup.AdminUserId, _setup.TenantId, new SetDefaultTheme(created.Value.Id))).IsSuccess.ShouldBeTrue();
         await ForgetBrandingAsync();
     }

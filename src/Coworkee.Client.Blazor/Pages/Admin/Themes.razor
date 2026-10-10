@@ -5,6 +5,10 @@
     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" OnClick="CreateAsync" data-testid="theme-new">@L["New theme"]</MudButton>
 </PageHeader>
 <RealtimeSubscription Topic="type:ThemeDefinition" OnEvent="_ => ReloadAsync()" />
+@if (Options.AllowSignInDesign)
+{
+    <SignInDesignCard />
+}
 
 @if (_tiles is null)
 {
