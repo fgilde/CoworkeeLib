@@ -33,12 +33,79 @@
 | `PageSize` | Zeilen pro Seite (25) |
 | `Groupable`, `ReorderableColumns`, `ResizableColumns`, `DensityToggle` | Gruppierung, Spalten per Drag & Drop verschieben, Spaltenbreite ziehen und die Dichte-Schaltfläche (alle `true`) |
 | `DataSource` | Zeilen aus einer anderen Quelle als dem OData-Set, siehe unten |
+| `ColumnFilters` | ein Filter in jedem Spaltenkopf, siehe [Spaltenfilter](#spaltenfilter) (Standard `options.DataTable.ColumnFilters`, `true`) |
 
-`ReloadAsync()` lädt von außen neu, etwa aus einer `RealtimeSubscription`. `Selection` liefert die Facettenauswahl, `CurrentFilter` den OData-Filter, den die Tabelle sendet.
+`ReloadAsync()` lädt von außen neu, etwa aus einer `RealtimeSubscription`. `Selection` liefert die Facettenauswahl, `CurrentFilter` den OData-Filter, den die Tabelle sendet (fester Filter, Facetten, Spaltenfilter und Suche).
 
 Für Sets, die als [Client-Entities](client-entities.md) markiert sind, filtert, sucht, sortiert und zählt die Tabelle im Browser, sobald die Zeilen angekommen sind.
 
 Der CSV-Export entschärft Werte, die Tabellenkalkulationen sonst als Formel ausführen würden.
+
+## Spaltenfilter
+
+Wie in QuickGrid lässt sich jede Spalte filtern: das Filtersymbol im Spaltenkopf (oder *Filter* im Spaltenmenü) öffnet einen kleinen Editor passend zum Typ der Spalte. Ein ausgefülltes Symbol zeigt, dass die Spalte gefiltert ist, und jeder Filter erscheint als Chip über der Tabelle; sein &times; entfernt ihn, *Alle entfernen* entfernt Filter und Facetten zusammen.
+
+| Spaltentyp | Editor | OData |
+|---|---|---|
+| Text | *enthält*, *beginnt mit*, *ist gleich* und ein Wert | `contains(tolower(Name),'dri')`, `startswith(...)`, `Name eq 'Drill'` |
+| Zahlen | *=*, *>*, *<*, *zwischen* | `Rate gt 3`, `Rate ge 3 and Rate le 10` |
+| Datum | *ist*, *nach*, *vor*, *zwischen* (ganze Tage) | `Added ge 2026-02-01T00:00:00+01:00 and Added lt ...` |
+| Enums, Ja/Nein | Checkboxen, mehrere sind Alternativen | `(Kind eq 'Hand' or Kind eq 'Power')` |
+| eine Spalte mit Facette | die Optionen der Facette mit ihren Anzahlen | der Filter der Facette |
+
+**Facetten und Spaltenfilter sind dasselbe.** Hat das Set eine Facette auf der Eigenschaft der Spalte, zeigt der Spaltenfilter deren Optionen und Anzahlen; ein Haken dort oder im Facettenmenü ist dieselbe Auswahl (derselbe Chip, dieselbe URL). Eine Spalte auf einer Navigationseigenschaft nutzt die Facette ihres Schlüssels: `Brand.Name` nutzt eine Facette auf `BrandId`.
+
+Die Filter werden mit `and` an den OData-Filter der Tabelle gehängt. Der Server beantwortet sie, bei [Client-Entities](client-entities.md) auch der Browser: sie nutzen nur, was beide verstehen (`eq`, `ne`, `gt`, `ge`, `lt`, `le`, `and`, `or`, `not`, `contains`, `startswith`, `endswith`, `tolower`). Sie gehören zum Zustand der Tabelle: gespeicherte Ansichten, geteilte Links und die Adresszeile behalten sie.
+
+### Ab- und einschalten
+
+Spaltenfilter sind standardmäßig an. Jede Ebene kann das ändern:
+
+```razor
+@* die ganze Tabelle *@
+<CoworkeeDataTable T="ProductDto" EntitySet="Products" ColumnFilters="false" ...>
+    <Columns>
+        @* nur diese Spalte, obwohl die Tabelle sie abschaltet *@
+        <PropertyColumn Property="p => p.Name" Filterable="true" />
+        @* diese Spalte nie *@
+        <PropertyColumn Property="p => p.Description" Filterable="false" />
+        @* nur bestimmte Operatoren *@
+        <PropertyColumn Property="p => p.Barcode" FilterOperators="@(new() { FilterOperator.String.Equal })" />
+    </Columns>
+</CoworkeeDataTable>
+```
+
+Template-Spalten haben keine Eigenschaft und sind nicht filterbar. Für die ganze App, je Typ:
+
+```csharp
+builder.Services.AddCoworkeeClient(new Uri(builder.HostEnvironment.BaseAddress), options =>
+{
+    options.DataTable.ColumnFilters = true;   // Standard jeder Tabelle
+    options.DataTable.FilterOperators<DateTime>(FilterOperator.DateTime.After, FilterOperator.DateTime.Before, DataTableFilters.Between);
+    options.DataTable.FilterOperators<Guid>(); // keine Operatoren: Guid-Spalten sind nicht filterbar
+});
+```
+
+Die Reihenfolge: `Filterable`/`FilterOperators` der Spalte, dann die Optionen für den Typ, dann die Standards oben.
+
+### Eigener Editor
+
+`FilterTemplate` an einer Spalte ersetzt den Editor. Er bekommt MudBlazors `FilterContext`; Filterdefinitionen mit der Spalte und einem von MudBlazors `FilterOperator`s macht die Tabelle zu OData:
+
+```razor
+<PropertyColumn Property="p => p.Rate" Title="Rate">
+    <FilterTemplate>
+        <MudButton OnClick="@(() => context.Actions.ApplyFilterAsync(new FilterDefinition<ProductDto>
+            { Id = Guid.NewGuid(), Column = context.FilterDefinition!.Column, Operator = FilterOperator.Number.GreaterThanOrEqual, Value = 4m }))">
+            Ab Rate 4
+        </MudButton>
+    </FilterTemplate>
+</PropertyColumn>
+```
+
+`DataTableFilters.ToOData(...)` macht aus solchen Bedingungen selbst OData-Text, etwa für eine `ITableDataSource`.
+
+**Grenzen**: ein Editor pro Spalte (zwei Filter für *zwischen*); der Filter gilt der Eigenschaft der Spalte, nicht dem, was ein `CellTemplate` anzeigt. Datumswerte werden nach ganzen Tagen in der Zeitzone des Browsers gefiltert.
 
 ## Bearbeitungsdialoge
 
@@ -80,8 +147,8 @@ Alles, was der Benutzer einrichtet, gehört zum Zustand der Tabelle und lässt s
 - **Gruppierung**: einen Spaltenkopf auf die Zone über den Köpfen ziehen, *Gruppieren* im Menü der Spalte wählen oder Spalten im Gruppier-Menü ankreuzen. Mehrere Spalten gruppieren verschachtelt, in der Reihenfolge der Chips; das &times; eines Chips entfernt seine Ebene. Gruppenzeilen zeigen den Wert und die Anzahl der Zeilen, klappen einzeln oder alle auf und zu und zeigen unter jeder Gruppe die Aggregate der Spalten (`AggregateDefinition`, z. B. einen Durchschnitt).
 - **Sortierung**: mehrere Spaltenköpfe anklicken sortiert nach mehreren Spalten.
 - **Dichte**: die Dichte-Schaltfläche wechselt zwischen kompakten und großzügigen Zeilen; ohne Wahl entscheidet das Theme.
-- **Ansichten**: das Lesezeichen-Menü speichert den aktuellen Zustand unter einem Namen: Suche, Facetten, Reihenfolge, Sichtbarkeit und Breite der Spalten, Gruppierung, Sortierung, Seitengröße und Dichte. Ein Klick stellt ihn wieder her, die Speichern-Schaltfläche überschreibt ihn mit dem aktuellen Zustand, der Stern macht ihn zum Standard, der mit der Tabelle öffnet. *Zurücksetzen* kehrt zu den deklarierten Spalten ohne Filter zurück.
-- **Teilen**: die Link-Schaltfläche kopiert eine Adresse, die die Tabelle genau so öffnet, samt Layout. Die Adresszeile selbst hält Suche und Facetten (`?products=...`), eine gefilterte Liste lässt sich also neu laden und als Lesezeichen speichern. `UrlState="false"` schaltet das ab, `StateKey` benennt den Parameter, wenn eine Seite zwei Tabellen desselben Sets zeigt.
+- **Ansichten**: das Lesezeichen-Menü speichert den aktuellen Zustand unter einem Namen: Suche, Facetten, Spaltenfilter, Reihenfolge, Sichtbarkeit und Breite der Spalten, Gruppierung, Sortierung, Seitengröße und Dichte. Ein Klick stellt ihn wieder her, die Speichern-Schaltfläche überschreibt ihn mit dem aktuellen Zustand, der Stern macht ihn zum Standard, der mit der Tabelle öffnet. *Zurücksetzen* kehrt zu den deklarierten Spalten ohne Filter zurück.
+- **Teilen**: die Link-Schaltfläche kopiert eine Adresse, die die Tabelle genau so öffnet, samt Layout. Die Adresszeile selbst hält Suche, Facetten und Spaltenfilter (`?products=...`), eine gefilterte Liste lässt sich also neu laden und als Lesezeichen speichern. `UrlState="false"` schaltet das ab, `StateKey` benennt den Parameter, wenn eine Seite zwei Tabellen desselben Sets zeigt.
 
 ```razor
 <CoworkeeDataTable T="ProductDto" EntitySet="Products" Expand="Brand" ...>
