@@ -137,6 +137,21 @@ public sealed class DataTableTests : ClientTestBase
     }
 
     [Fact]
+    public async Task A_data_source_replaces_the_odata_set_and_excel_stays_with_odata()
+    {
+        var source = NSubstitute.Substitute.For<ITableDataSource<Gadget>>();
+        NSubstitute.SubstituteExtensions.ReturnsForAnyArgs(source.QueryAsync(default!, default),
+            Task.FromResult(new ODataPage<Gadget>([new Gadget(Guid.Empty, "Kettle", "Kitchen")], 1, [])));
+        var popovers = Render<MudPopoverProvider>();
+        var table = Render<CoworkeeDataTable<Gadget>>(p => p.Add(t => t.EntitySet, "Local").Add(t => t.DataSource, source).Add(t => t.Columns, Columns()));
+
+        table.WaitForAssertion(() => table.Markup.ShouldContain("Kettle"));
+        _odata.Loads.ShouldBe(0);
+        await table.Find("[data-testid='export'] button").ClickAsync(new());
+        popovers.WaitForElements(".mud-menu-item").Select(i => i.TextContent.Trim()).ShouldBe(["CSV", "JSON"]);
+    }
+
+    [Fact]
     public void Columns_in_markup_take_the_item_type_from_the_table()
     {
         var table = Render<GadgetTable>();

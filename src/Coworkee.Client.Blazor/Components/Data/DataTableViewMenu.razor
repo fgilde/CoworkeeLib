@@ -1,0 +1,40 @@
+<MudMenu Dense="Density.Dense" Size="Size.Small" Class="mb-2" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" aria-label="@L["Views"]" data-testid="views"
+         Icon="@(Active is null ? Icons.Material.Outlined.BookmarkBorder : Icons.Material.Filled.Bookmark)" Color="@(Active is null ? Color.Default : Color.Primary)">
+    <div class="cw-table-panel" @onclick:stopPropagation="true">
+        <div class="cw-table-panel-head">
+            <MudText Typo="Typo.subtitle2" Class="flex-grow-1">@L["Saved views"]</MudText>
+            <MudTooltip Text="@L["Copy link to this view"]">
+                <MudIconButton Icon="@Icons.Material.Outlined.Link" Size="Size.Small" aria-label="@L["Copy link to this view"]" OnClick="ShareAsync" data-testid="share-view" />
+            </MudTooltip>
+            <MudTooltip Text="@L["Reset view"]">
+                <MudIconButton Icon="@Icons.Material.Outlined.RestartAlt" Size="Size.Small" aria-label="@L["Reset view"]" OnClick="ResetAsync" data-testid="reset-view" />
+            </MudTooltip>
+        </div>
+        @if (_views.Count == 0)
+        {
+            <MudText Typo="Typo.caption" Class="cw-table-panel-hint">@L["No saved views yet."]</MudText>
+        }
+        @foreach (var view in _views)
+        {
+            <div class="@($"cw-table-panel-item cw-clickable {(view.Name == Active ? "active" : string.Empty)}")" role="menuitem" data-view="@view.Name" @onclick="() => ApplyAsync(view)">
+                <MudText Typo="Typo.body2" Class="flex-grow-1 text-truncate">@view.Name</MudText>
+                <span class="cw-view-actions" @onclick:stopPropagation="true">
+                    <MudIconButton Icon="@(view.IsDefault ? Icons.Material.Filled.Star : Icons.Material.Outlined.StarBorder)" Color="@(view.IsDefault ? Color.Warning : Color.Default)" Size="Size.Small"
+                                   aria-label="@(view.IsDefault ? L["Remove as default"] : L["Set as default"])" OnClick="() => ToggleDefaultAsync(view)" data-testid="default-view" />
+                    <MudIconButton Icon="@Icons.Material.Outlined.Save" Size="Size.Small" aria-label="@L["Overwrite with the current view"]" OnClick="() => OverwriteAsync(view)" data-testid="overwrite-view" />
+                    <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" aria-label="@L["Delete"]" OnClick="() => DeleteAsync(view)" data-testid="delete-view" />
+                </span>
+            </div>
+        }
+        <MudDivider Class="my-1" />
+        <div class="d-flex align-center gap-1 px-3 pb-2">
+            <MudTextField T="string" @bind-Value="_name" Placeholder="@L["Save current view as"]" Variant="Variant.Outlined" Margin="Density.Margin" Immediate="true" data-testid="view-name" />
+            <MudTooltip Text="@L["Open by default"]">
+                <MudToggleIconButton @bind-Toggled="_default" Icon="@Icons.Material.Outlined.StarBorder" ToggledIcon="@Icons.Material.Filled.Star" ToggledColor="Color.Warning" Size="Size.Small"
+                                     aria-label="@L["Open by default"]" data-testid="view-default" />
+            </MudTooltip>
+            <MudIconButton Icon="@Icons.Material.Outlined.Save" Size="Size.Small" Color="Color.Primary" Disabled="string.IsNullOrWhiteSpace(_name)" OnClick="SaveAsync"
+                           aria-label="@L["Save"]" data-testid="save-view" />
+        </div>
+    </div>
+</MudMenu>

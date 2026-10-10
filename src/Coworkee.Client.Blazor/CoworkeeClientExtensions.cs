@@ -46,6 +46,7 @@ public static class CoworkeeClientExtensions
         services.AddSingleton(typeof(Microsoft.Extensions.Localization.IStringLocalizer<>), typeof(Localization.CoworkeeStringLocalizer<>));
         MudBlazor.Services.ServiceCollectionExtensions.AddLocalizationInterceptor<Localization.CoworkeeMudLocalization>(services);
         services.AddScoped<Data.FileDownloader>();
+        services.AddScoped<Data.ITableViewStore, Data.TableViews>();
         services.AddScoped<People.UserCards>();
         services.AddScoped<PermissionStore>();
         services.AddScoped<Features.FeatureStore>();

@@ -45,36 +45,39 @@ public sealed class DataTableStateTests : ClientTestBase
         table.WaitForAssertion(() => table.Markup.ShouldContain("Drill"));
 
         table.Find("input[data-testid='table-search'], [data-testid='table-search'] input").Input("dri");
-        await table.Find("[data-testid='columns'] button").ClickAsync(new());
-        await MenuItem(popovers, "[data-column='Category']").ClickAsync(new());
+        await SetColumnVisibleAsync(table, popovers, "Category", false);
         table.WaitForAssertion(() => (table.Instance.CurrentState.Search, table.Instance.CurrentState.HiddenColumns.Single()).ShouldBe(("dri", "Category")), TimeSpan.FromSeconds(3));
 
-        await table.Find("[data-testid='views'] button").ClickAsync(new());
-        popovers.WaitForElement("input[data-testid='view-name'], [data-testid='view-name'] input").Input("Drills");
+        await OpenAsync(table, popovers, "views", "[data-testid='save-view']");
+        popovers.Find("input[data-testid='view-name'], [data-testid='view-name'] input").Input("Drills");
         await popovers.Find("[data-testid='save-view']").ClickAsync(new());
 
         table.Find("input[data-testid='table-search'], [data-testid='table-search'] input").Input("");
-        if (popovers.FindAll("[data-column='Category']").Count == 0)
-        {
-            await table.Find("[data-testid='columns'] button").ClickAsync(new());
-        }
-        await MenuItem(popovers, "[data-column='Category']").ClickAsync(new());
+        await SetColumnVisibleAsync(table, popovers, "Category", true);
         table.WaitForAssertion(() => table.Instance.CurrentState.IsEmpty.ShouldBeTrue(), TimeSpan.FromSeconds(3));
 
-        if (popovers.FindAll("[data-view='Drills']").Count == 0)
-        {
-            await table.Find("[data-testid='views'] button").ClickAsync(new());
-        }
-
-        await MenuItem(popovers, "[data-view='Drills']").ClickAsync(new());
+        await OpenAsync(table, popovers, "views", "[data-view='Drills']");
+        await popovers.Find("[data-view='Drills']").ClickAsync(new());
 
         table.WaitForAssertion(() => (table.Instance.CurrentState.Search, table.Instance.CurrentState.HiddenColumns.Single()).ShouldBe(("dri", "Category")));
     }
 
-    private static AngleSharp.Dom.IElement MenuItem(IRenderedComponent<MudPopoverProvider> popovers, string inner)
+    internal static async Task OpenAsync<TTable>(IRenderedComponent<TTable> table, IRenderedComponent<MudPopoverProvider> popovers, string menu, string inner)
+        where TTable : Microsoft.AspNetCore.Components.IComponent
     {
+        if (popovers.FindAll(inner).Count == 0)
+        {
+            await table.Find($"[data-testid='{menu}'] button").ClickAsync(new());
+        }
+
         popovers.WaitForElement(inner);
-        return popovers.FindAll(".mud-menu-item").First(item => item.QuerySelector(inner) is not null);
+    }
+
+    internal static async Task SetColumnVisibleAsync<TTable>(IRenderedComponent<TTable> table, IRenderedComponent<MudPopoverProvider> popovers, string column, bool visible)
+        where TTable : Microsoft.AspNetCore.Components.IComponent
+    {
+        await OpenAsync(table, popovers, "columns", $"[data-column='{column}']");
+        await popovers.Find($"[data-column='{column}'] input").ChangeAsync(new Microsoft.AspNetCore.Components.ChangeEventArgs { Value = visible });
     }
 
     private static string? Query(NavigationManager nav, string key) => System.Web.HttpUtility.ParseQueryString(new Uri(nav.Uri).Query)[key];

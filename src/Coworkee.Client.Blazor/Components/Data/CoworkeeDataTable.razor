@@ -1,6 +1,32 @@
 @typeparam T
 @attribute [CascadingTypeParameter(nameof(T))]
 
+<style>
+    .cw-table-panel { min-width: 300px; max-width: 360px; }
+    .cw-table-panel-head { display: flex; align-items: center; gap: 4px; padding: 8px 12px 4px; }
+    .cw-table-panel-hint { display: block; padding: 0 12px 6px; color: var(--mud-palette-text-secondary); }
+    .cw-table-panel-foot { display: block; padding: 6px 12px 8px; text-align: center; color: var(--mud-palette-text-secondary); border-top: 1px solid var(--mud-palette-lines-default); }
+    .cw-table-panel-list { max-height: 340px; overflow-y: auto; padding: 0 4px; }
+    .cw-table-panel-item { display: flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 8px; min-height: 34px; transition: background-color 120ms ease; }
+    .cw-table-panel-item:hover { background: var(--mud-palette-action-default-hover); }
+    .cw-table-panel-item.active { background: color-mix(in srgb, var(--mud-palette-primary) 12%, transparent); }
+    .cw-table-panel-item .cw-drag { cursor: grab; opacity: .4; }
+    .cw-table-panel-item:hover .cw-drag { opacity: 1; }
+    .cw-table-panel-item .cw-view-actions { display: flex; opacity: .55; }
+    .cw-table-panel-item:hover .cw-view-actions { opacity: 1; }
+    .cw-clickable { cursor: pointer; }
+    .cw-group-target { min-height: 34px; border: 1px dashed var(--mud-palette-lines-default); border-radius: 8px; margin: 0 8px 4px; }
+    .cw-group-order { display: inline-grid; place-items: center; min-width: 20px; height: 20px; border-radius: 999px; font-size: .72rem; font-weight: 600;
+        color: var(--mud-palette-primary-text); background: var(--mud-palette-primary); }
+    .cw-group-row th { padding: 6px 8px !important; border-bottom: none !important; }
+    .cw-group-zone { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-height: 38px; padding: 2px 10px; border-radius: 10px;
+        border: 1.5px dashed var(--mud-palette-lines-default); transition: border-color 120ms ease, background-color 120ms ease; }
+    .cw-group-zone.grouped { border-color: color-mix(in srgb, var(--mud-palette-primary) 35%, transparent); background: color-mix(in srgb, var(--mud-palette-primary) 5%, transparent); }
+    .cw-group-zone.drop-allowed { border-color: var(--mud-palette-primary); background: color-mix(in srgb, var(--mud-palette-primary) 10%, transparent); }
+    .cw-group-hint { font-weight: 400; font-size: .85rem; color: var(--mud-palette-text-secondary); }
+    .cw-group-title { color: var(--mud-palette-text-secondary); }
+</style>
+
 <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-1">
     @if (SearchFields.Count > 0)
     {
@@ -14,45 +40,34 @@
     }
     <MudSpacer />
     @ToolBarContent
+    @if (_grid is not null)
+    {
+        @if (Groupable)
+        {
+            <MudTooltip Text="@L["Group by"]">
+                <DataTableGroupMenu T="T" Grid="_grid" GroupingChanged="GroupingChangedAsync" />
+            </MudTooltip>
+        }
+        @if (ColumnChooser)
+        {
+            <MudTooltip Text="@L["Columns"]">
+                <DataTableColumnChooser T="T" Grid="_grid" Changed="StateHasChanged" />
+            </MudTooltip>
+        }
+    }
+    @if (DensityToggle)
+    {
+        <MudTooltip Text="@(Dense ? L["Comfortable rows"] : L["Compact rows"])">
+            <MudIconButton Icon="@(Dense ? Icons.Material.Outlined.DensityMedium : Icons.Material.Outlined.DensitySmall)" Size="Size.Small" Class="mb-2"
+                           aria-label="@(Dense ? L["Comfortable rows"] : L["Compact rows"])" OnClick="() => _dense = !Dense" data-testid="density" />
+        </MudTooltip>
+    }
     @if (SavedViews)
     {
-        <MudMenu Dense="Density.Dense" Icon="@Icons.Material.Outlined.BookmarkBorder" Size="Size.Small" Class="mb-2" aria-label="@L["Views"]" data-testid="views">
-            @foreach (var view in _views)
-            {
-                <MudMenuItem OnClick="() => ApplyViewAsync(view)">
-                    <div class="d-flex align-center" data-view="@view.Name">
-                        <span style="flex:1">@view.Name</span>
-                        <span @onclick:stopPropagation="true">
-                            <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small" aria-label="@L["Delete"]" OnClick="() => DeleteViewAsync(view)" />
-                        </span>
-                    </div>
-                </MudMenuItem>
-            }
-            @if (_views.Count > 0)
-            {
-                <MudDivider />
-            }
-            <div class="d-flex align-center pa-2" @onclick:stopPropagation="true">
-                <MudTextField T="string" @bind-Value="_viewName" Placeholder="@L["Save current view as"]" Variant="Variant.Outlined" Margin="Density.Margin" Immediate="true"
-                              data-testid="view-name" />
-                <MudIconButton Icon="@Icons.Material.Outlined.Save" Size="Size.Small" Disabled="string.IsNullOrWhiteSpace(_viewName)" OnClick="SaveViewAsync"
-                               aria-label="@L["Save"]" data-testid="save-view" />
-            </div>
-        </MudMenu>
+        <DataTableViewMenu Table="@EntitySet" Current="() => CurrentState" Link="ShareLink" OnApply="ApplyStateAsync" OnReset="() => ApplyStateAsync(DataTableState.Empty)"
+                           @bind-Active="_activeView" />
     }
-    @if (ColumnChooser && _grid is not null)
-    {
-        <MudMenu Dense="Density.Dense" Icon="@Icons.Material.Outlined.ViewColumn" Size="Size.Small" Class="mb-2" aria-label="@L["Columns"]" data-testid="columns">
-            @foreach (var column in _grid.RenderedColumns.Where(c => !string.IsNullOrEmpty(ColumnName(c))))
-            {
-                <MudMenuItem AutoClose="false" OnClick="() => ToggleColumnAsync(column)"
-                             Icon="@(_hidden.Contains(ColumnName(column)!) ? Icons.Material.Outlined.CheckBoxOutlineBlank : Icons.Material.Outlined.CheckBox)">
-                    <span data-column="@ColumnName(column)">@ColumnName(column)</span>
-                </MudMenuItem>
-            }
-        </MudMenu>
-    }
-    @if (Importable)
+    @if (Importable && DataSource is null)
     {
         <PermissionGate Permission="@ImportPermission">
             <MudFileUpload @ref="_upload" T="IBrowserFile" Accept=".xlsx" FilesChanged="ImportAsync" Class="mb-2" data-testid="import">
@@ -66,7 +81,10 @@
     @if (Exportable)
     {
         <MudMenu Dense="Density.Dense" Icon="@Icons.Material.Outlined.FileDownload" Size="Size.Small" Class="mb-2" aria-label="@L["Export"]" data-testid="export">
-            <MudMenuItem OnClick="() => ExportAsync(ExportFormat.Excel)">Excel</MudMenuItem>
+            @if (DataSource is null)
+            {
+                <MudMenuItem OnClick="() => ExportAsync(ExportFormat.Excel)">Excel</MudMenuItem>
+            }
             <MudMenuItem OnClick="() => ExportAsync(ExportFormat.Csv)">CSV</MudMenuItem>
             <MudMenuItem OnClick="() => ExportAsync(ExportFormat.Json)">JSON</MudMenuItem>
         </MudMenu>
@@ -88,7 +106,15 @@
 </MudStack>
 <FacetChips Selection="_selection" />
 <MudDataGrid @ref="_grid" T="T" ServerData="LoadAsync" MultiSelection="MultiSelection" SelectedItemsChanged="SelectionChangedAsync" RowsPerPage="PageSize"
-             SortMode="SortMode.Multiple" Dense="Density.Dense" Hover="true" Striped="@Theme.StripedTables" Elevation="0" Outlined="true" ChildRowContent="ChildRowContent" data-testid="data-table">
+             SortMode="SortMode.Multiple" Dense="Dense" Hover="true" Striped="@Theme.StripedTables" Elevation="0" Outlined="true" ChildRowContent="ChildRowContent"
+             Groupable="Groupable" GroupExpanded="true" Hideable="ColumnChooser" DragDropColumnReordering="ReorderableColumns" ColumnReorderMode="DataGridDragAndDropColumnReorderMode.Insert"
+             ColumnResizeMode="@(ResizableColumns ? ResizeMode.Column : ResizeMode.None)" data-testid="data-table">
+    <Header>
+        @if (Groupable && _grid is not null)
+        {
+            <DataTableGroupZone T="T" Grid="_grid" Droppable="ReorderableColumns" GroupingChanged="GroupingChangedAsync" />
+        }
+    </Header>
     <Columns>
         @if (ChildRowContent is not null)
         {
@@ -101,7 +127,8 @@
         @Columns
         @if (OnEdit.HasDelegate || OnDelete is not null)
         {
-            <TemplateColumn T="T" Sortable="false" CellStyle="text-align:right;white-space:nowrap">
+            <TemplateColumn T="T" Sortable="false" Groupable="false" Hideable="false" Resizable="false" DragAndDropEnabled="false" ShowColumnOptions="false"
+                            CellStyle="text-align:right;white-space:nowrap">
                 <CellTemplate Context="cell">
                     @if (OnEdit.HasDelegate)
                     {
@@ -119,6 +146,11 @@
             </TemplateColumn>
         }
     </Columns>
+    <GroupTemplate Context="group">
+        <span class="cw-group-title">@group.Title:</span>
+        <strong class="mx-1" data-group-key="@group.Grouping.Key">@(group.Grouping.Key?.ToString() ?? L["(empty)"])</strong>
+        <MudChip T="int" Size="Size.Small" Variant="Variant.Text">@group.Grouping.Count()</MudChip>
+    </GroupTemplate>
     <NoRecordsContent>
         <MudText Class="mud-text-secondary pa-4">@L[NoRecordsText]</MudText>
     </NoRecordsContent>

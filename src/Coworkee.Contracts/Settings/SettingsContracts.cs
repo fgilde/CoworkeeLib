@@ -21,6 +21,12 @@ public enum SettingType
     Choice,
 }
 
+public static class TableSettings
+{
+    /// <summary>The user's saved table views as JSON, keyed by table.</summary>
+    public const string Views = "Table.Views";
+}
+
 public static class SettingsPermissions
 {
     public const string GroupName = "Settings";

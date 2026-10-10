@@ -3,7 +3,6 @@ using Coworkee.Contracts.Data;
 using Microsoft.AspNetCore.Components;
 using System.Web;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Components.Data;
@@ -20,10 +19,10 @@ public partial class CoworkeeDataTable<T> : IDisposable
     private string? _orderBy;
     private bool _importing;
     private MudFileUpload<IBrowserFile>? _upload;
-    private IReadOnlyList<SavedTableView> _views = [];
-    private string? _viewName;
-    private IReadOnlyList<string>? _hiddenToApply;
-    private readonly HashSet<string> _hidden = new(StringComparer.Ordinal);
+    private DataTableState? _pendingLayout;
+    private IReadOnlyList<string> _declaredOrder = [];
+    private bool? _dense;
+    private string? _activeView;
 
     [Inject] private IServiceProvider Services { get; set; } = null!;
 
@@ -35,11 +34,11 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     [Inject] private NavigationManager Nav { get; set; } = null!;
 
-    [Inject] private IJSRuntime JS { get; set; } = null!;
+    [Inject] private ITableViewStore Views { get; set; } = null!;
 
     [Inject] private FileDownloader Downloader { get; set; } = null!;
-    [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
 
+    [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
 
     [Parameter] public bool Exportable { get; set; } = true;
 
@@ -54,6 +53,17 @@ public partial class CoworkeeDataTable<T> : IDisposable
     [Parameter] public bool SavedViews { get; set; } = true;
 
     [Parameter] public bool ColumnChooser { get; set; } = true;
+
+    /// <summary>Rows group by columns chosen in the group menu or dragged onto the zone above the headers; groups cover the loaded page.</summary>
+    [Parameter] public bool Groupable { get; set; } = true;
+
+    /// <summary>Column headers can be dragged to reorder the columns.</summary>
+    [Parameter] public bool ReorderableColumns { get; set; } = true;
+
+    [Parameter] public bool ResizableColumns { get; set; } = true;
+
+    /// <summary>A button that switches between compact and comfortable rows.</summary>
+    [Parameter] public bool DensityToggle { get; set; } = true;
 
     /// <summary>Uploads an Excel sheet to the import registered for the entity set (AddODataImport on the server).</summary>
     [Parameter] public bool Importable { get; set; }
@@ -78,7 +88,11 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     [Inject] private IODataClient OData { get; set; } = null!;
 
+    /// <summary>The OData set the rows come from; also names the table's saved views and URL state.</summary>
     [Parameter, EditorRequired] public string EntitySet { get; set; } = string.Empty;
+
+    /// <summary>Rows from somewhere else than <see cref="EntitySet"/>, e.g. a local store; Excel export and import stay with OData sets.</summary>
+    [Parameter] public ITableDataSource<T>? DataSource { get; set; }
 
     [Parameter] public RenderFragment? Columns { get; set; }
 
@@ -116,10 +130,28 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     private string Key => StateKey ?? EntitySet.ToLowerInvariant();
 
-    public DataTableState CurrentState => new(
-        _search,
-        [.. _selection.All],
-        [.. _hidden]);
+    private bool Dense => _dense ?? Density.Dense;
+
+    /// <summary>Search, facets and what differs from the declared layout.</summary>
+    public DataTableState CurrentState
+    {
+        get
+        {
+            var filters = new DataTableState(_search, [.. _selection.All], []);
+            if (_grid is null)
+            {
+                return filters;
+            }
+
+            var state = DataGridLayout<T>.Capture(_grid, filters);
+            return state with
+            {
+                ColumnOrder = state.ColumnOrder!.SequenceEqual(_declaredOrder) ? null : state.ColumnOrder,
+                PageSize = _grid.RowsPerPage == PageSize ? null : _grid.RowsPerPage,
+                Dense = _dense,
+            };
+        }
+    }
 
     protected override void OnParametersSet()
     {
@@ -136,96 +168,86 @@ public partial class CoworkeeDataTable<T> : IDisposable
     {
         if (UrlState && DataTableState.Decode(HttpUtility.ParseQueryString(new Uri(Nav.Uri).Query)[Key]) is { } state)
         {
-            Apply(state);
+            ApplyFilters(state);
+        }
+        else if (SavedViews && (await Views.GetAsync(EntitySet)).FirstOrDefault(v => v.IsDefault) is { } view)
+        {
+            _activeView = view.Name;
+            ApplyFilters(view.State);
         }
 
         _selection.Changed += Reload;
-        if (SavedViews)
-        {
-            _views = await Views.GetAsync(EntitySet);
-        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (firstRender && _grid is not null)
         {
-            // the column chooser lists the grid's columns, which exist only after the first render
+            _declaredOrder = DataGridLayout<T>.Named(_grid).Select(c => DataGridLayout<T>.Key(c)!).ToList();
+            FitColumns();
+            // the menus list the grid's columns, which exist only after the first render
             StateHasChanged();
         }
 
-        if (_hiddenToApply is { } hidden && _grid is not null)
+        if (_pendingLayout is { } layout && _grid is not null)
         {
-            _hiddenToApply = null;
-            await ApplyHiddenAsync(hidden);
-            StateHasChanged();
+            _pendingLayout = null;
+            await ApplyLayoutAsync(layout);
         }
     }
 
-    private TableViews Views => new(JS);
-
-    private void Apply(DataTableState state)
+    private void ApplyFilters(DataTableState state)
     {
         _search = state.Search;
         _selection.Restore(state.Facets);
-        _hiddenToApply = state.HiddenColumns;
+        _pendingLayout = state.HasLayout || state.HiddenColumns.Count > 0 ? state : null;
     }
 
-    private async Task ApplyHiddenAsync(IReadOnlyList<string> hidden)
+    private async Task ApplyStateAsync(DataTableState state)
     {
-        foreach (var column in _grid!.RenderedColumns.Where(c => !string.IsNullOrEmpty(ColumnName(c))))
-        {
-            if (hidden.Contains(ColumnName(column)!) != _hidden.Contains(ColumnName(column)!))
-            {
-                await ToggleColumnAsync(column);
-            }
-        }
-    }
-
-    // select and action columns carry a generated property name; only titled or property columns can be chosen
-    private static string? ColumnName(Column<T> column) =>
-        column.Title ?? (column.GetType() is { IsGenericType: true } type && type.GetGenericTypeDefinition() == typeof(PropertyColumn<,>) ? column.PropertyName : null);
-
-    private async Task ToggleColumnAsync(Column<T> column)
-    {
-        if (_hidden.Remove(ColumnName(column)!))
-        {
-            await column.ShowAsync();
-        }
-        else
-        {
-            _hidden.Add(ColumnName(column)!);
-            await column.HideAsync();
-        }
-    }
-
-    private async Task ApplyViewAsync(SavedTableView view)
-    {
-        Apply(view.State);
-        await ApplyHiddenAsync(view.State.HiddenColumns);
-        _hiddenToApply = null;
+        _selection.Changed -= Reload;
+        ApplyFilters(state);
+        _selection.Changed += Reload;
+        _pendingLayout = null;
+        await ApplyLayoutAsync(state);
         WriteUrl();
     }
 
-    private async Task SaveViewAsync()
+    private async Task ApplyLayoutAsync(DataTableState state)
     {
-        if (string.IsNullOrWhiteSpace(_viewName))
-        {
-            return;
-        }
-
-        _views = await Views.SaveAsync(EntitySet, _viewName.Trim(), CurrentState);
-        Snackbar.Add(L["View saved"], Severity.Success);
-        _viewName = null;
+        var grid = _grid!;
+        await DataGridLayout<T>.ApplyAsync(grid, state, _declaredOrder);
+        _dense = state.Dense;
+        await DataGridLayout<T>.SortAsync(grid, state.Sort ?? []);
+        await grid.SetRowsPerPageAsync(state.PageSize ?? PageSize);
+        await ReloadAsync();
+        StateHasChanged();
     }
 
-    private async Task DeleteViewAsync(SavedTableView view) => _views = await Views.DeleteAsync(EntitySet, view.Name);
+    // columns without a property have nothing to group by
+    private void FitColumns()
+    {
+#pragma warning disable BL0005 // only where the page left the parameter unset
+        foreach (var column in _grid!.RenderedColumns.Where(c => !DataGridLayout<T>.IsProperty(c) && c.Groupable is null))
+        {
+            column.Groupable = false;
+        }
+#pragma warning restore BL0005
+    }
+
+    private Task GroupingChangedAsync(IReadOnlyList<string> grouping)
+    {
+        StateHasChanged();
+        return ReloadAsync();
+    }
+
+    private string ShareLink() => Nav.GetUriWithQueryParameter(Key, CurrentState.Encode());
 
     private void WriteUrl()
     {
         if (UrlState)
         {
-            var state = CurrentState with { HiddenColumns = [] };
+            var state = CurrentState.Filters();
             Nav.NavigateTo(Nav.GetUriWithQueryParameter(Key, state.IsEmpty ? null : state.Encode()), replace: true);
         }
     }
@@ -297,7 +319,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
         var items = new List<T>();
         while (true)
         {
-            var page = await OData.QueryAsync<T>(EntitySet, new ODataQuery { Filter = CurrentFilter, Expand = Expand, Top = Batch, Skip = items.Count, Count = false });
+            var page = await QueryAsync(new ODataQuery { Filter = CurrentFilter, OrderBy = _orderBy, Expand = Expand, Top = Batch, Skip = items.Count, Count = false });
             items.AddRange(page.Items);
             if (page.Items.Count < Batch)
             {
@@ -305,6 +327,9 @@ public partial class CoworkeeDataTable<T> : IDisposable
             }
         }
     }
+
+    private Task<ODataPage<T>> QueryAsync(ODataQuery query, CancellationToken cancellationToken = default) =>
+        DataSource?.QueryAsync(query, cancellationToken) ?? OData.QueryAsync<T>(EntitySet, query, cancellationToken);
 
     private async Task ImportAsync(IBrowserFile? file)
     {
@@ -354,7 +379,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
             Skip = state.Page * state.PageSize,
             Facets = Facets,
         };
-        var page = await OData.QueryAsync<T>(EntitySet, query, cancellationToken);
+        var page = await QueryAsync(query, cancellationToken);
         await OnLoaded.InvokeAsync(page.Items);
         if (Facets)
         {
@@ -365,9 +390,15 @@ public partial class CoworkeeDataTable<T> : IDisposable
         return new GridData<T> { Items = page.Items, TotalItems = (int)(page.Count ?? page.Items.Count) };
     }
 
-    private static string? OrderBy(GridState<T> state)
+    // grouping columns sort first, so a group stays together across pages
+    private string? OrderBy(GridState<T> state)
     {
-        var sorts = state.SortDefinitions.Select(s => $"{s.SortBy.Replace('.', '/')} {(s.Descending ? "desc" : "asc")}").ToList();
-        return sorts.Count == 0 ? null : string.Join(",", sorts);
+        var sorts = state.SortDefinitions.ToList();
+        var groups = _grid is null ? [] : DataGridLayout<T>.Grouped(_grid).Select(c => c.PropertyName!).ToList();
+        var parts = groups.Select(g => sorts.FirstOrDefault(s => s.SortBy == g) is { } sort ? sort : new SortDefinition<T>(g, false, -1, _ => null))
+            .Concat(sorts.Where(s => !groups.Contains(s.SortBy)))
+            .Select(s => $"{s.SortBy.Replace('.', '/')} {(s.Descending ? "desc" : "asc")}")
+            .ToList();
+        return parts.Count == 0 ? null : string.Join(",", parts);
     }
 }

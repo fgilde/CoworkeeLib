@@ -156,7 +156,16 @@ public sealed class SettingsTests(SettingsApp app) : IAsyncLifetime
     [Fact]
     public async Task User_definitions_list_only_user_scoped_settings() =>
         (await Admin.GetFromJsonAsync<SettingGroupDto[]>("/api/v1/settings/definitions/user", Ct))!
-            .SelectMany(g => g.Settings).Select(s => s.Name).ShouldBe(["Test.Text"]);
+            .SelectMany(g => g.Settings).Select(s => s.Name).ShouldBe(["Test.Text", TableSettings.Views], ignoreOrder: true);
+
+    [Fact]
+    public async Task Users_keep_their_table_views_in_a_user_setting()
+    {
+        await PutAsync(Admin, "user", TableSettings.Views, """{"Products":[]}""");
+
+        (await Admin.GetFromJsonAsync<SettingValueDto[]>("/api/v1/settings/user", Ct))!
+            .Single(v => v.Name == TableSettings.Views).Value.ShouldBe("""{"Products":[]}""");
+    }
 
     private static async Task<Dictionary<string, string?>> ClientValuesAsync(HttpClient client) =>
         (await client.GetFromJsonAsync<Dictionary<string, string?>>("/api/v1/settings/client", Ct))!;
