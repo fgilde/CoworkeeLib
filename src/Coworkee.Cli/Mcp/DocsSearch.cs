@@ -62,6 +62,12 @@ internal static partial class DocsSearch
     public static async Task<string> SearchAsync(string query, HttpClient http, CancellationToken cancellationToken)
     {
         var terms = query.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (terms.Length == 0)
+        {
+            return "Give words to search for.";
+        }
+
+        query = string.Join(' ', terms);
         try
         {
             var index = await http.GetFromJsonAsync<SearchIndex>(Site + "search/search_index.json", cancellationToken);
@@ -96,6 +102,11 @@ internal static partial class DocsSearch
 
     private static int Count(string text, string term)
     {
+        if (term.Length == 0)
+        {
+            return 0;
+        }
+
         var count = 0;
         for (var index = text.IndexOf(term, StringComparison.OrdinalIgnoreCase); index >= 0; index = text.IndexOf(term, index + term.Length, StringComparison.OrdinalIgnoreCase))
         {

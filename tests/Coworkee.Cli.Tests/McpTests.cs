@@ -46,6 +46,7 @@ public sealed class McpTests : IAsyncLifetime
             ["list_options", "get_spec_schema", "get_spec_example", "validate_spec", "create_app", "add_module", "add_entity", "add_migration", "run_doctor", "update_packages", "search_docs"],
             ignoreOrder: true);
         tools.ShouldAllBe(t => !string.IsNullOrWhiteSpace(t.Description));
+        tools.Single(t => t.Name == "create_app").JsonSchema.GetRawText().ShouldNotContain("templateSource");
         _client.ServerInfo.Name.ShouldBe("coworkee");
         _client.ServerInstructions!.ShouldContain("create_app");
     }
@@ -74,15 +75,17 @@ public sealed class McpTests : IAsyncLifetime
             ["directory"] = folder.Path,
             ["name"] = "Crm",
             ["options"] = new Dictionary<string, string> { ["chat"] = "false", ["logo"] = "logo.svg" },
-            ["templateSource"] = "t.nupkg",
         });
 
         result.ShouldBe("exit code 0\ndone");
         var (args, directory) = _runs.Single();
         directory.ShouldBe(folder.Path);
         args[..2].ShouldBe(["new", "--spec"]);
-        args[3..].ShouldBe(["-o", Path.Combine(folder.Path, "Crm"), "--template-source", "t.nupkg"]);
+        args[3..].ShouldBe(["-o", Path.Combine(folder.Path, "Crm")]);
+        Path.GetDirectoryName(args[2]).ShouldBe(folder.Path);
         File.Exists(args[2]).ShouldBeFalse();
+        (await CallAsync("create_app", new() { ["directory"] = folder.Path, ["name"] = "Crm", ["options"] = new Dictionary<string, string> { ["logo"] = "../logo.svg" } })).ShouldContain("inside the folder");
+        (await CallAsync("create_app", new() { ["directory"] = folder.Path, ["spec"] = """{ "name": "Crm", "output": "../elsewhere" }""" })).ShouldStartWith("output:");
         (await CallAsync("create_app", new() { ["directory"] = folder.Path, ["name"] = "1x" })).ShouldStartWith("name:");
         _runs.Count.ShouldBe(1);
     }
@@ -137,6 +140,23 @@ public sealed class McpTests : IAsyncLifetime
         result.ShouldNotContain("de/ui");
         result.ShouldNotContain("<code>");
         (await DocsSearch.SearchAsync("client entities", offline, Ct)).ShouldContain("pages by title");
+        (await DocsSearch.SearchAsync("   ", online, Ct)).ShouldBe("Give words to search for.");
+        DocsSearch.Score("Title", "text", string.Empty, [string.Empty]).ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task Child_processes_get_no_input_and_die_with_their_children_when_cancelled()
+    {
+        var reader = OperatingSystem.IsWindows() ? new[] { "cmd", "/c", "sort" } : ["cat"];
+        (await McpServerHost.RunAsync(reader, Path.GetTempPath(), Ct).WaitAsync(TimeSpan.FromSeconds(20), Ct)).ExitCode.ShouldBe(0);
+
+        using var cancel = new CancellationTokenSource(TimeSpan.FromMilliseconds(500));
+        var sleeper = OperatingSystem.IsWindows() ? new[] { "cmd", "/c", "ping -n 30 127.0.0.1 > nul" } : ["sh", "-c", "sleep 30"];
+        var started = DateTime.UtcNow;
+
+        await Should.ThrowAsync<OperationCanceledException>(() => McpServerHost.RunAsync(sleeper, Path.GetTempPath(), cancel.Token));
+
+        (DateTime.UtcNow - started).ShouldBeLessThan(TimeSpan.FromSeconds(15));
     }
 
     private sealed class Answer(Func<HttpRequestMessage, HttpResponseMessage> answer) : HttpMessageHandler
