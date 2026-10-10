@@ -13,6 +13,13 @@ internal static partial class Names
         return argument;
     }
 
+    public static Argument<string?> Optional(string name, string description)
+    {
+        var argument = new Argument<string?>(name) { Description = description, Arity = ArgumentArity.ZeroOrOne };
+        argument.Validators.Add(Validate);
+        return argument;
+    }
+
     private static void Validate(ArgumentResult result)
     {
         var value = result.Tokens.SingleOrDefault()?.Value;

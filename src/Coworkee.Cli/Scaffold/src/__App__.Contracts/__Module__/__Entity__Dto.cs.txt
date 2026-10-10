@@ -1,3 +1,0 @@
-namespace __App__.Contracts.__Module__;
-
-public sealed record __Entity__Dto(Guid Id, string Name);

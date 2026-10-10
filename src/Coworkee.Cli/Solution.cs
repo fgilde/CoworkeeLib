@@ -20,6 +20,8 @@ internal sealed record Solution(string Root, string Name)
 
     public string SlnxPath => Path.Combine(Root, Name + ".slnx");
 
+    public bool HasSamples => Directory.Exists(Path.Combine(Src, Name + ".Catalog"));
+
     public string Project(string suffix) =>
         Directory.EnumerateFiles(Src, $"*.{suffix}.csproj", SearchOption.AllDirectories).FirstOrDefault()
         ?? throw new CliException($"No *.{suffix}.csproj below {Src}.");
