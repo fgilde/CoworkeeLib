@@ -31,6 +31,8 @@ var allowed = await settings.GetAsync<bool>(AccountSettings.AllowRegistration, c
 
 Standardwerte können auch aus der Konfiguration kommen: `Coworkee:Settings:Defaults:Mail.Smtp.Host`. Der AppHost nutzt das für Mailpit.
 
+Der Abschnitt **Cloud-Dateiauswahl** im Reiter System enthält die IDs von Google Drive, OneDrive und Dropbox für jedes Upload-Feld, siehe [Dateien](files.md#cloud-dateiauswahl).
+
 ### Eigene Einstellungen auf der Admin-Seite
 
 Die Tabs **System** (Bereich `Global`) und **Organisation** (Bereich `Tenant`) sowie **Meine Einstellungen** des Benutzers (Bereich `User`) haben keinen Formularcode pro Einstellung. Sie laden die Definitionen und zeigen sie mit `MudExObjectEditForm`; eine Einstellung Ihres Moduls erscheint dort, sobald ihr Contributor registriert ist:
