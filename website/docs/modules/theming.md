@@ -11,4 +11,5 @@ Themes are data: palettes for light and dark mode, typography, border radius, dr
 - The library's components inherit `CoworkeeComponentBase`, which receives the theme's `Density` as cascading value (`Density.Dense`, `Density.Margin`, `Density.Size`). Own components can do the same: `@inherits CoworkeeComponentBase` or `[CascadingParameter] Density Density { get; set; } = Density.Default;`. A model's own `IObjectMetaConfiguration<T>` replaces the dense object edit configuration for that model.
 - Without a theme logo the app's own logo shows: `options.AppLogo = "logo.svg"` in `AddCoworkeeClient`.
 - Setup offers the theme as one of its steps.
+- The auth server's account pages follow the default theme too; the theme editor's section *Sign-in page* picks their layout and media, see [Sign-in pages and designs](../security/sign-in-pages.md).
 - `ThemeService` in the client applies a theme at runtime (`Apply`, `Preview`, `SetMode`).
