@@ -8,6 +8,8 @@ products.MapGet("/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => 
 products.MapPost("/", (AddEditProductRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new AddEditProductCommand(null, body), ct).ToHttpResult());
 ```
 
+Dienste mit vielen Endpunkten können sich das Mapping sparen: [Anwendungsdienste](application-services.md) werden per Konvention bereitgestellt und bekommen einen generierten Blazor-Client.
+
 ## Aus Results werden Antworten
 
 | Result | Antwort |

@@ -71,6 +71,7 @@ plugins:
             Events and locks: Events und Sperren
             Web: Web
             HTTP APIs: HTTP-APIs
+            Application services: Anwendungsdienste
             OData and facets: OData und Facetten
             Response filters: Response-Filter
             Security: Sicherheit
@@ -140,6 +141,7 @@ nav:
       - Events and locks: fundamentals/events.md
   - Web:
       - HTTP APIs: web/http-api.md
+      - Application services: web/application-services.md
       - OData and facets: web/odata.md
       - Response filters: web/response-filters.md
       - SDKs: web/sdk.md

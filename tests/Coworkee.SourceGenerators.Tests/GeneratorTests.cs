@@ -1,6 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Coworkee.SourceGenerators.Tests;
 
@@ -106,14 +108,23 @@ public sealed class GeneratorTests
     public void Methods_are_mapped_by_convention(string name, string method, string remainder) =>
         Naming.Operation(name).ShouldBe((method, remainder));
 
-    private static (Compilation Compilation, IReadOnlyList<SyntaxTree> Generated, IReadOnlyList<Diagnostic> Diagnostics) Run(string contract, string implementation)
+    [Fact]
+    public void Proxies_can_be_turned_off()
+    {
+        var (_, generated, _) = Run(Contract, Implementation, proxies: "false");
+
+        generated.Select(t => Path.GetFileName(t.FilePath)).ShouldBe(["CoworkeeApplicationServiceEndpoints.g.cs"]);
+    }
+
+    private static (Compilation Compilation, IReadOnlyList<SyntaxTree> Generated, IReadOnlyList<Diagnostic> Diagnostics) Run(string contract, string implementation, string? proxies = null)
     {
         var references = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!).Split(Path.PathSeparator)
             .Where(p => Path.GetFileNameWithoutExtension(p) != typeof(GeneratorTests).Assembly.GetName().Name)
             .Select(p => MetadataReference.CreateFromFile(p));
         var compilation = CSharpCompilation.Create("Shop", [CSharpSyntaxTree.ParseText(contract), CSharpSyntaxTree.ParseText(implementation)], references,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, nullableContextOptions: NullableContextOptions.Enable));
-        CSharpGeneratorDriver.Create(new ApplicationServiceGenerator()).RunGeneratorsAndUpdateCompilation(compilation, out var output, out var diagnostics, TestContext.Current.CancellationToken);
+        var options = new BuildProperties(proxies is null ? [] : new Dictionary<string, string> { ["build_property.CoworkeeServiceProxies"] = proxies });
+        CSharpGeneratorDriver.Create([new ApplicationServiceGenerator().AsSourceGenerator()], optionsProvider: options).RunGeneratorsAndUpdateCompilation(compilation, out var output, out var diagnostics, TestContext.Current.CancellationToken);
         return (output, output.SyntaxTrees.Skip(2).ToList(), diagnostics);
     }
 
@@ -126,5 +137,19 @@ public sealed class GeneratorTests
         }
 
         actual.ReplaceLineEndings().ShouldBe(File.ReadAllText(path).ReplaceLineEndings());
+    }
+
+    private sealed class BuildProperties(Dictionary<string, string> values) : AnalyzerConfigOptionsProvider
+    {
+        public override AnalyzerConfigOptions GlobalOptions { get; } = new Values(values);
+
+        public override AnalyzerConfigOptions GetOptions(SyntaxTree tree) => GlobalOptions;
+
+        public override AnalyzerConfigOptions GetOptions(AdditionalText textFile) => GlobalOptions;
+
+        private sealed class Values(Dictionary<string, string> values) : AnalyzerConfigOptions
+        {
+            public override bool TryGetValue(string key, [NotNullWhen(true)] out string? value) => values.TryGetValue(key, out value);
+        }
     }
 }
