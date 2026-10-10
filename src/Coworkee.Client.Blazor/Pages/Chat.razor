@@ -47,7 +47,13 @@
                             }
                             <MudPaper Elevation="0" Class="@($"px-3 py-2 {(mine ? "mud-theme-primary" : "mud-background-gray")}")" Style="max-width:75%;border-radius:12px;white-space:pre-wrap">
                                 <MudText Typo="Typo.body2">@message.Text</MudText>
-                                <MudText Typo="Typo.caption" Style="opacity:.7">@message.SentAt.ToLocalTime().ToString("g")</MudText>
+                                <MudText Typo="Typo.caption" Style="opacity:.7">
+                                    @message.SentAt.ToLocalTime().ToString("g")
+                                    @if (mine && message.ReadAt is not null)
+                                    {
+                                        <MudIcon Icon="@Icons.Material.Filled.DoneAll" Size="Size.Small" Style="font-size:.9rem;vertical-align:middle" Title="@L["Read"]" data-testid="chat-read" />
+                                    }
+                                </MudText>
                             </MudPaper>
                         </div>
                     }

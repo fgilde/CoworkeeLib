@@ -30,6 +30,11 @@ public partial class Chat : IAsyncDisposable
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
+    [Inject] private NavigationManager Nav { get; set; } = null!;
+
+    /// <summary>The person whose conversation is open, e.g. from the snackbar of a new message.</summary>
+    [SupplyParameterFromQuery(Name = "with")] public Guid? With { get; set; }
+
     [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
 
     private IEnumerable<ChatContactDto> Contacts =>
@@ -46,6 +51,14 @@ public partial class Chat : IAsyncDisposable
         await Snackbar.RunAsync(LoadContactsAsync);
     }
 
+    protected override async Task OnParametersSetAsync()
+    {
+        if (With is { } with && _contact?.UserId != with && _contacts.FirstOrDefault(c => c.UserId == with) is { } contact)
+        {
+            await OpenAsync(contact);
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_subscription is not null)
@@ -58,6 +71,7 @@ public partial class Chat : IAsyncDisposable
     {
         _contact = contact;
         _messages = [];
+        Nav.NavigateTo(Nav.GetUriWithQueryParameter("with", contact?.UserId), replace: true);
         if (contact is not null)
         {
             await Snackbar.RunAsync(async () =>
@@ -93,6 +107,12 @@ public partial class Chat : IAsyncDisposable
 
     private async Task ReceiveAsync(RealtimeEnvelope envelope)
     {
+        if (envelope.Type == ChatEvents.Read && envelope.Payload.Deserialize<ChatReadDto>(JsonSerializerOptions.Web) is { } read)
+        {
+            await ReadAsync(read);
+            return;
+        }
+
         if (envelope.Type != ChatEvents.Message || envelope.Payload.Deserialize<ChatMessageDto>(JsonSerializerOptions.Web) is not { } message)
         {
             return;
@@ -106,6 +126,18 @@ public partial class Chat : IAsyncDisposable
             {
                 await MarkReadAsync(_contact);
             }
+        }
+
+        await LoadContactsAsync();
+        StateHasChanged();
+    }
+
+    // read in another tab, or the open contact read what I sent
+    private async Task ReadAsync(ChatReadDto read)
+    {
+        if (read.ReaderId == _contact?.UserId)
+        {
+            _messages = [.. _messages.Select(m => m.FromUserId == _me && m.ReadAt is null ? m with { ReadAt = read.ReadAt } : m)];
         }
 
         await LoadContactsAsync();

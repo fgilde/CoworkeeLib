@@ -1,5 +1,6 @@
 using Coworkee.Application.Messaging;
 using Coworkee.Contracts.Chat;
+using Coworkee.Contracts.Realtime;
 using Coworkee.Core.Results;
 using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
@@ -79,9 +80,16 @@ internal sealed class ChatHandlers(CoworkeeDbContext db, ICurrentUser currentUse
     public async Task<Result> HandleAsync(MarkChatReadCommand command, CancellationToken cancellationToken)
     {
         var now = clock.GetUtcNow();
-        await db.Set<ChatMessage>()
+        var marked = await db.Set<ChatMessage>()
             .Where(m => m.FromUserId == command.UserId && m.ToUserId == Me && m.ReadAt == null)
             .ExecuteUpdateAsync(set => set.SetProperty(m => m.ReadAt, now), cancellationToken);
+        if (marked > 0)
+        {
+            var read = new ChatReadDto(Me, command.UserId, now);
+            await realtime.PublishAsync(currentUser.TenantId, RealtimeTopics.User(Me), ChatEvents.Read, read, cancellationToken);
+            await realtime.PublishAsync(currentUser.TenantId, RealtimeTopics.User(command.UserId), ChatEvents.Read, read, cancellationToken);
+        }
+
         return Result.Success();
     }
 
