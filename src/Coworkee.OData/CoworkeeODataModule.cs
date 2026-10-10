@@ -2,6 +2,7 @@ using Coworkee.Application.Messaging;
 using Coworkee.Application;
 using Coworkee.AspNetCore;
 using Coworkee.Core.Modularity;
+using Coworkee.OData.ClientEntities;
 using Coworkee.OData.Transfer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.OData;
@@ -28,6 +29,7 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
         services.AddTransient<IFacetBuilder, FacetBuilder>();
         services.AddODataAuto(_ => model.Value);
         services.Configure<CoworkeeODataOptions>(context.Configuration.GetSection(CoworkeeODataOptions.Section));
+        services.Configure<ClientEntityOptions>(context.Configuration.GetSection(ClientEntityOptions.Section));
         services.AddSingleton<Microsoft.Extensions.Options.IPostConfigureOptions<ODataOptions>, ODataQueryLimits>();
         services.AddSingleton<Microsoft.AspNetCore.Mvc.ApplicationModels.IApplicationModelProvider>(new EntityODataControllerNameProvider(registry));
         services.AddControllers()
@@ -39,6 +41,7 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
     {
         app.MapControllers();
         app.MapDataTransferEndpoints();
+        app.MapClientEntityEndpoints();
     }
 
     private static IEdmModel BuildModel(ODataEntityRegistry registry)

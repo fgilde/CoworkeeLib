@@ -14,6 +14,10 @@ public static class ODataServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>Lets clients mirror OData sets and query them locally, e.g. o.For&lt;Product&gt;(); entities marked [ClientEntity] need no call.</summary>
+    public static IServiceCollection AddCoworkeeClientEntities(this IServiceCollection services, Action<ClientEntityOptions> configure) =>
+        services.Configure(configure);
+
     /// <summary>Rows of an uploaded Excel sheet become <typeparamref name="TCommand"/>s: columns map to its properties by name.</summary>
     public static IServiceCollection AddODataImport<TCommand>(this IServiceCollection services, string entitySet)
     {
