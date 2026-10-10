@@ -55,7 +55,7 @@ public sealed class UiTests
         UiCommand.ToolArgs(UiCommand.Step.Install, "1.2.0", prerelease: false, source: null)
             .ShouldBe(["dotnet", "tool", "install", "-g", "Coworkee.Studio", "--version", "1.2.0"]);
         UiCommand.ToolArgs(UiCommand.Step.Update, "1.2.0-dev.1", prerelease: true, source: "feed")
-            .ShouldBe(["dotnet", "tool", "update", "-g", "Coworkee.Studio", "--version", "1.2.0-dev.1", "--prerelease", "--add-source", Path.GetFullPath("feed")]);
+            .ShouldBe(["dotnet", "tool", "update", "-g", "Coworkee.Studio", "--prerelease", "--add-source", Path.GetFullPath("feed")]);
         UiCommand.LaunchArgs("coworkee-ui", ["--spec", "app.json"]).ShouldBe(["coworkee-ui", "--spec", "app.json"]);
     }
 
