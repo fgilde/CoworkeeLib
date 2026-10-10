@@ -42,7 +42,7 @@ public sealed class TemplateTests(TemplateFixture template)
         await Dotnet.RunAsync(app, "build", "Shop.slnx");
     }
 
-    private static void ShouldHaveNoLeftovers(string app)
+    internal static void ShouldHaveNoLeftovers(string app)
     {
         foreach (var file in Directory.EnumerateFiles(app, "*", SearchOption.AllDirectories))
         {

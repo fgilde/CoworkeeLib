@@ -10,8 +10,9 @@ public sealed class CommandTests
     {
         var settings = NewCommand.Read(CliApp.Build().Parse("new Shop"));
 
-        settings.ShouldBe(new NewSettings("Shop", "Shop", Samples: true, Keycloak: false, Tests: true, Title: null, TemplateSource: null));
-        NewCommand.TemplateArgs(settings).ShouldBe(["dotnet", "new", "coworkee", "-n", "Shop", "-o", "Shop", "--samples", "true", "--keycloak", "false", "--tests", "true"]);
+        settings.Spec.Name.ShouldBe("Shop");
+        settings.Output.ShouldBe(Path.GetFullPath("Shop"));
+        NewCommand.TemplateArgs(settings).ShouldBe(["dotnet", "new", "coworkee", "-n", "Shop", "-o", Path.GetFullPath("Shop")]);
         NewCommand.InstallArgs(settings, "1.2.3").ShouldBe(["dotnet", "new", "install", "Coworkee.Templates@1.2.3"]);
     }
 
@@ -21,16 +22,19 @@ public sealed class CommandTests
         var settings = NewCommand.Read(CliApp.Build().Parse(["new", "Shop", "-o", "apps/shop", "--no-samples", "--keycloak", "--no-tests", "--title", "My Shop", "--template-source", "t.nupkg"]));
 
         NewCommand.TemplateArgs(settings).ShouldBe(
-            ["dotnet", "new", "coworkee", "-n", "Shop", "-o", "apps/shop", "--samples", "false", "--keycloak", "true", "--tests", "false", "--title", "My Shop"]);
+            ["dotnet", "new", "coworkee", "-n", "Shop", "-o", Path.GetFullPath("apps/shop"), "--title", "My Shop", "--samples", "false", "--tests", "false", "--keycloak", "true"]);
         NewCommand.InstallArgs(settings, "1.2.3").ShouldBe(["dotnet", "new", "install", Path.GetFullPath("t.nupkg"), "--force"]);
-        NewCommand.Read(CliApp.Build().Parse("new Shop --samples false")).Samples.ShouldBeFalse();
+        NewCommand.Read(CliApp.Build().Parse("new Shop --samples false")).Spec.Options["samples"]!.GetValue<bool>().ShouldBeFalse();
     }
 
     [Theory]
     [InlineData("new my.app")]
     [InlineData("new 1App")]
     [InlineData("module add Order-Lines")]
+    [InlineData("entity add Sales 1Order")]
     [InlineData("migrations add")]
+    [InlineData("new Shop --theme Pink")]
+    [InlineData("new Shop --event-bus kafka")]
     public void Invalid_input_is_rejected(string args) => CliApp.Build().Parse(args).Errors.ShouldNotBeEmpty();
 
     [Fact]
@@ -68,21 +72,5 @@ public sealed class CommandTests
         DoctorCommand.SdkSatisfies("11.0.100-preview.1", "10.0.300").ShouldBeTrue();
         DoctorCommand.SdkSatisfies("9.0.318", "10.0.300").ShouldBeFalse();
         DoctorCommand.SdkSatisfies(string.Empty, "10.0.300").ShouldBeFalse();
-    }
-
-    [Fact]
-    public void Module_scaffold_replaces_every_token_and_registers_the_module()
-    {
-        ModuleCommand.EntityName("Orders", null).ShouldBe("Order");
-        ModuleCommand.EntityName("Inventory", null).ShouldBe("InventoryItem");
-        ModuleCommand.EntityName("Orders", "Purchase").ShouldBe("Purchase");
-
-        var files = ModuleCommand.Files(ModuleCommand.Tokens("Shop", "Orders", "Order")).ToList();
-
-        files.Select(f => f.Path).ShouldContain("src/Shop.Orders/ShopOrdersModule.cs");
-        files.Select(f => f.Path).ShouldContain("src/Shop.Contracts/Orders/OrderDto.cs");
-        files.ShouldAllBe(f => !f.Path.Contains("__") && !f.Content.Contains("__"));
-        ModuleCommand.Register("[DependsOn(typeof(A))]\npublic sealed class ShopDatabaseModule;", "Shop.Orders.ShopOrdersModule")
-            .ShouldStartWith("[DependsOn(typeof(Shop.Orders.ShopOrdersModule), typeof(A))]");
     }
 }
