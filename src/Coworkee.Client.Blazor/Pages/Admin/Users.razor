@@ -2,7 +2,6 @@
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + IdentityPermissions.Users.View)]
 
 <PageHeader Title="Users" Description="Accounts of this organisation, their roles and whether they may sign in." />
-<RealtimeSubscription Topic="type:User" OnEvent="_ => _table.ReloadAsync()" />
 @if (_permissionsOf is not null)
 {
     <MudPaper Outlined="true" Class="pa-4 mb-4">
@@ -21,7 +20,7 @@
         }
     </MudPaper>
 }
-<CoworkeeDataTable @ref="_table" T="UserRow" EntitySet="Users" SearchFields="SearchFields" ExportFileName="users" OnLoaded="LoadRolesAsync"
+<CoworkeeDataTable @ref="_table" RealtimeTopic="type:User" T="UserRow" EntitySet="Users" SearchFields="SearchFields" ExportFileName="users" OnLoaded="LoadRolesAsync"
                    CreateText="New user" CreatePermission="@IdentityPermissions.Users.Manage" OnCreate="CreateAsync">
     <Columns>
         <PropertyColumn Property="u => u.Email" Title="@L["Email"]">

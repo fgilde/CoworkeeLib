@@ -127,10 +127,12 @@ internal sealed class RealtimeChangeInterceptor(IRealtimePublisher publisher, IC
     private static Guid? TenantOf(EntityEntry entry) =>
         entry.Metadata.FindProperty("TenantId") is { } property ? entry.Property(property.Name).CurrentValue as Guid? : null;
 
+    // a soft delete arrives here as an update that sets IsDeleted
     private static string Action(EntityEntry entry) => entry.State switch
     {
-        EntityState.Added => "Created",
-        EntityState.Deleted => "Deleted",
-        _ => "Updated",
+        EntityState.Added => EntityChangedPayload.Created,
+        EntityState.Deleted => EntityChangedPayload.Deleted,
+        _ when entry.Entity is ISoftDelete { IsDeleted: true } && entry.Property(nameof(ISoftDelete.IsDeleted)).IsModified => EntityChangedPayload.Deleted,
+        _ => EntityChangedPayload.Updated,
     };
 }

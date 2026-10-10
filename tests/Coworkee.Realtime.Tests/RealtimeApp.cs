@@ -144,6 +144,20 @@ public class Ticket : AggregateRoot, IMultiTenant
     public Guid TenantId { get; set; }
 }
 
+[Realtime(Ticket.ViewPermission)]
+public sealed class Memo : AggregateRoot, IMultiTenant, ISoftDelete
+{
+    public required string Text { get; set; }
+
+    public Guid TenantId { get; set; }
+
+    public bool IsDeleted { get; set; }
+
+    public DateTimeOffset? DeletedAt { get; set; }
+
+    public Guid? DeletedBy { get; set; }
+}
+
 public sealed class UrgentTicket : Ticket
 {
     public int Priority { get; set; }
@@ -158,6 +172,7 @@ internal sealed class TicketModel : IModelContributor, IPermissionDefinitionCont
     {
         modelBuilder.Entity<Ticket>().Property(t => t.Title).HasMaxLength(20);
         modelBuilder.Entity<UrgentTicket>();
+        modelBuilder.Entity<Memo>();
     }
 
     public void Define(PermissionDefinitionContext context) => context.Group("Test", "Test").Add(Ticket.ViewPermission, "View tickets");

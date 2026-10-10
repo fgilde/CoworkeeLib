@@ -4,6 +4,7 @@
 @using MudBlazor.Extensions.Components.ObjectEdit.Options
 
 <PageTitle>@(_user?.Email ?? "User")</PageTitle>
+<EntityWatch EntityType="User" EntityId="Id" ReturnHref="/admin/users" />
 <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" Href="/admin/users" Class="mb-2">@L["Users"]</MudButton>
 
 @if (_error is not null)

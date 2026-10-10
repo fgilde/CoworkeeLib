@@ -115,6 +115,29 @@ public sealed class RealtimeTests(RealtimeApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_soft_delete_is_published_as_deleted()
+    {
+        await using var admin = await app.ConnectAsync(_setup.AdminUserId, _setup.TenantId);
+        await admin.SubscribeAsync("type:Memo");
+        var id = await app.AsActorAsync(_setup.AdminUserId, _setup.TenantId, async db =>
+        {
+            var memo = new Memo { Text = "Remember" };
+            db.Add(memo);
+            await db.SaveChangesAsync(Ct);
+            return memo.Id;
+        });
+
+        await app.AsActorAsync(_setup.AdminUserId, _setup.TenantId, async db =>
+        {
+            db.Remove(await db.Set<Memo>().SingleAsync(m => m.Id == id, Ct));
+            return await db.SaveChangesAsync(Ct);
+        });
+
+        var deleted = await admin.NextAsync(e => e.Topic == "type:Memo" && EntityChangedPayload.From(e)?.IsDeleted == true);
+        EntityChangedPayload.From(deleted)!.EntityId.ShouldBe(id.ToString());
+    }
+
+    [Fact]
     public async Task Role_assignment_and_group_membership_changes_are_published()
     {
         var api = app.App.GetTestClient().AsUser(_setup.AdminUserId, _setup.TenantId);
