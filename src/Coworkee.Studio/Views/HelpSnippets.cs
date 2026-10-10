@@ -20,14 +20,21 @@ public static class HelpSnippets
     public const string ClaudeDesktop = """
         {
           "mcpServers": {
-            "coworkee": { "command": "coworkee", "args": ["mcp"] }
+            "coworkee": {
+              "command": "coworkee",
+              "args": ["mcp"]
+            }
           }
         }
         """;
     public const string VsCode = """
         {
           "servers": {
-            "coworkee": { "type": "stdio", "command": "coworkee", "args": ["mcp"] }
+            "coworkee": {
+              "type": "stdio",
+              "command": "coworkee",
+              "args": ["mcp"]
+            }
           }
         }
         """;

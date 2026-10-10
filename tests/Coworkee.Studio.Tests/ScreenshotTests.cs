@@ -33,8 +33,9 @@ public sealed class ScreenshotTests
             Localization.L.Use(language);
             foreach (var name in new[] { "Portal", "Crm", "Shop" })
             {
-                File.WriteAllText(folder.File(name.ToLowerInvariant() + ".json"), $$"""{ "name": "{{name}}" }""");
-                main.Settings.AddRecent(folder.File(name.ToLowerInvariant() + ".json"));
+                var file = Path.Combine(Directory.CreateDirectory(folder.File(name.ToLowerInvariant())).FullName, name.ToLowerInvariant() + ".json");
+                File.WriteAllText(file, $$"""{ "name": "{{name}}" }""");
+                main.Settings.AddRecent(file);
             }
 
             main.Welcome.Refresh();

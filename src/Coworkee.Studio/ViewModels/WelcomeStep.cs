@@ -6,7 +6,8 @@ public sealed record RecentSpec(string Path)
 {
     public string Name => System.IO.Path.GetFileNameWithoutExtension(Path);
 
-    public string Folder => System.IO.Path.GetDirectoryName(Path) ?? string.Empty;
+    /// <summary>The folder name and the day of the last change; the tooltip has the whole path.</summary>
+    public string Folder => $"{System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(Path))} · {File.GetLastWriteTime(Path).ToString("d", System.Globalization.CultureInfo.CurrentCulture)}";
 }
 
 public sealed partial class WelcomeStep(MainViewModel main) : StepViewModel(main)
