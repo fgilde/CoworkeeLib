@@ -154,7 +154,7 @@
                           </Panel>
                         </Border>
                         <TextBlock Grid.Column="1" Text="{Binding Title}" Margin="12,0,0,0" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" />
-                        <PathIcon Grid.Column="2" Classes="small" Data="{StaticResource Icon.AlertCircle}" Foreground="#ffd180" IsVisible="{Binding HasErrors}" />
+                        <PathIcon Grid.Column="2" Classes="small" Data="{StaticResource Icon.AlertCircle}" Foreground="#ffd180" IsVisible="{Binding ShowErrorBadge}" />
                       </Grid>
                     </Button>
                   </DataTemplate>

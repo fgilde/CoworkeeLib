@@ -16,7 +16,8 @@ public enum GenerationOutcome
 /// <summary>Creates the app through the CLI: writes the spec, coworkee spec validate, then coworkee new --spec.</summary>
 public sealed class Generator(ProcessRunner run)
 {
-    public static string SpecFile(AppSpec spec) => Path.Combine(Path.GetTempPath(), "coworkee-studio", $"{spec.Name}.json");
+    /// <summary>A folder per run, so two Studios (or tests) never write the same file.</summary>
+    public static string SpecFile(AppSpec spec) => Path.Combine(Path.GetTempPath(), "coworkee-studio", Guid.NewGuid().ToString("n")[..12], $"{spec.Name}.json");
 
     public async Task<GenerationOutcome> RunAsync(AppSpec spec, StudioSettings settings, Action<CliLine> onLine, CancellationToken cancellationToken)
     {

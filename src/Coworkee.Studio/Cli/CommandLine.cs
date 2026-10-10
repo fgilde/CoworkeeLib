@@ -33,6 +33,11 @@ public static class CommandLine
                 args.AddRange(["--sign-in-media", media]);
                 branding.SignInMedia = null;
             }
+
+            if (branding is { Title: null, Theme: null, PrimaryColor: null, SecondaryColor: null, Logo: null, SignInLayout: null, SignInMedia: null, SignInMediaSide: null })
+            {
+                copy.Branding = null;
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(templateSource))

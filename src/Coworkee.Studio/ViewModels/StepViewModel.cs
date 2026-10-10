@@ -32,17 +32,20 @@ public abstract partial class StepViewModel(MainViewModel main) : ObservableObje
     public int Number => main.Steps.ToList().IndexOf(this) + 1;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasErrors))]
+    [NotifyPropertyChangedFor(nameof(HasErrors), nameof(ShowErrorBadge))]
     public partial IReadOnlyList<string> Errors { get; set; } = [];
 
     public bool HasErrors => Errors.Count > 0;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsCurrent), nameof(IsDone))]
+    [NotifyPropertyChangedFor(nameof(IsCurrent), nameof(IsDone), nameof(ShowErrorBadge))]
     public partial StepState State { get; set; }
 
     [ObservableProperty]
     public partial bool IsReachable { get; set; }
+
+    /// <summary>Problems are flagged on pages the user has seen, not on the ones ahead.</summary>
+    public bool ShowErrorBadge => HasErrors && State != StepState.Upcoming;
 
     public bool IsCurrent => State == StepState.Current;
 

@@ -10,14 +10,16 @@ namespace Coworkee.Studio.ViewModels;
 public sealed partial class BrandingStep : StepViewModel
 {
     private static readonly string[] BrandIds = ["theme", "primaryColor", "secondaryColor", "logo"];
-    private static readonly Bitmap? DefaultLogo = Images.Asset("coworkee.png");
+    // per instance: a bitmap belongs to the thread that loaded it
+    private readonly Bitmap? _defaultLogo = Images.Asset("coworkee.png");
     private bool _syncing;
     private string? _logoPath;
-    private Bitmap? _logo = DefaultLogo;
+    private Bitmap? _logo;
 
     public BrandingStep(MainViewModel main)
         : base(main)
     {
+        _logo = _defaultLogo;
         Themes = [.. ThemeInfo.All.Select(t => new ThemeCardViewModel(t))];
         Swatches = [.. new[] { "#1565c0", "#00838f", "#2e7d32", "#c2185b", "#d4481f", "#6a1b9a", "#ef6c00", "#37474f", "#0a7d5a", "#ff8f00" }.Select(Color.Parse)];
     }
@@ -62,7 +64,7 @@ public sealed partial class BrandingStep : StepViewModel
             if (_logoPath != LogoPath)
             {
                 _logoPath = LogoPath;
-                _logo = LogoPath is null ? DefaultLogo : Images.TryLoad(LogoPath);
+                _logo = LogoPath is null ? _defaultLogo : Images.TryLoad(LogoPath);
             }
 
             return _logo;
