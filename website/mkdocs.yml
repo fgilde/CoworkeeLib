@@ -68,6 +68,7 @@ plugins:
             Modules: Module
             Messaging and pipeline: Messaging und Pipeline
             Persistence: Persistenz
+            DTOs and mapping: DTOs und Mapping
             Events and locks: Events und Sperren
             Web: Web
             HTTP APIs: HTTP-APIs
@@ -138,6 +139,7 @@ nav:
       - Modules: fundamentals/modules.md
       - Messaging and pipeline: fundamentals/messaging.md
       - Persistence: fundamentals/persistence.md
+      - DTOs and mapping: fundamentals/dtos.md
       - Events and locks: fundamentals/events.md
   - Web:
       - HTTP APIs: web/http-api.md
