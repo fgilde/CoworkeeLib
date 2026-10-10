@@ -69,6 +69,12 @@ public partial class Chat : IAsyncDisposable
 
     private async Task OpenAsync(ChatContactDto? contact)
     {
+        // the list reports "nothing selected" while it first renders; that must not drop the conversation of the address
+        if (contact is null && _contact is null)
+        {
+            return;
+        }
+
         _contact = contact;
         _messages = [];
         Nav.NavigateTo(Nav.GetUriWithQueryParameter("with", contact?.UserId), replace: true);

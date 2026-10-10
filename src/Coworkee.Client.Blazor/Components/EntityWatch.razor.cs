@@ -32,7 +32,8 @@ public partial class EntityWatch
             return;
         }
 
-        if (change.IsDeleted)
+        // rows that belong to the entry, e.g. a role of a user, arrive on its topic too
+        if (change.IsDeleted && change.EntityType == EntityType)
         {
             Snackbar.Add(L["This item was deleted in the meantime."], Severity.Warning);
             Nav.NavigateTo(ReturnHref);

@@ -97,6 +97,22 @@ public sealed class LiveUpdatesTests : ClientTestBase
     }
 
     [Fact]
+    public void A_deleted_row_that_belongs_to_the_entity_only_reloads_its_detail_page()
+    {
+        var id = Guid.CreateVersion7();
+        var changed = 0;
+        var watch = Render<EntityWatch>(p => p.Add(c => c.EntityType, "User").Add(c => c.EntityId, id).Add(c => c.ReturnHref, "/admin/users")
+            .Add(c => c.OnChanged, () => changed++));
+        var topic = RealtimeTopics.Entity("User", id);
+        watch.WaitForAssertion(() => Realtime.Invocations.ShouldContain(("Subscribe", topic)));
+
+        Realtime.Push(topic, RealtimeEventTypes.EntityChanged, new EntityChangedPayload("IdentityUserRole`1", $"{id},{Guid.CreateVersion7()}", EntityChangedPayload.Deleted, []));
+
+        watch.WaitForAssertion(() => changed.ShouldBe(1));
+        Services.GetRequiredService<NavigationManager>().Uri.ShouldNotEndWith("/admin/users");
+    }
+
+    [Fact]
     public void An_avatar_follows_a_new_picture_of_its_user()
     {
         Api.GetUserCardsAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<CancellationToken>())
