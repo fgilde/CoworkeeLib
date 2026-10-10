@@ -118,6 +118,32 @@ public sealed class McpTests : IAsyncLifetime
         DocsSearch.Offline(["entities"]).ShouldContain("ui/client-entities/");
     }
 
+    [Fact]
+    public async Task Docs_search_ranks_the_page_about_the_query_first_and_falls_back_to_titles_offline()
+    {
+        const string Index = """
+            { "docs": [
+              { "location": "reference/packages/", "title": "Packages", "text": "<code>client</code> client client entities entities entities client" },
+              { "location": "ui/client-entities/", "title": "Client entities", "text": "A client entity is an OData set the browser keeps." },
+              { "location": "de/ui/client-entities/", "title": "Client-Entities", "text": "client entities" }
+            ] }
+            """;
+        using var online = new HttpClient(new Answer(_ => new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent(Index) }));
+        using var offline = new HttpClient(new Answer(_ => throw new HttpRequestException("offline")));
+
+        var result = await DocsSearch.SearchAsync("client entities", online, Ct);
+
+        result.Split('\n')[0].ShouldBe("Client entities - https://fgilde.github.io/CoworkeeLib/ui/client-entities/");
+        result.ShouldNotContain("de/ui");
+        result.ShouldNotContain("<code>");
+        (await DocsSearch.SearchAsync("client entities", offline, Ct)).ShouldContain("pages by title");
+    }
+
+    private sealed class Answer(Func<HttpRequestMessage, HttpResponseMessage> answer) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) => Task.FromResult(answer(request));
+    }
+
     private async Task<string> CallAsync(string tool, Dictionary<string, object?>? arguments = null)
     {
         var result = await _client.CallToolAsync(tool, arguments, cancellationToken: Ct);

@@ -1,10 +1,11 @@
 using System.Net.Http.Json;
+using System.Text.RegularExpressions;
 using System.Text.Json.Serialization;
 
 namespace Coworkee.Cli.Mcp;
 
 /// <summary>Searches the published search index of the documentation; offline, the page titles.</summary>
-internal static class DocsSearch
+internal static partial class DocsSearch
 {
     public const string Site = "https://fgilde.github.io/CoworkeeLib/";
 
@@ -66,11 +67,12 @@ internal static class DocsSearch
             var index = await http.GetFromJsonAsync<SearchIndex>(Site + "search/search_index.json", cancellationToken);
             var hits = index!.Docs
                 .Where(d => !d.Location.StartsWith("de/", StringComparison.Ordinal))
-                .Select(d => (Doc: d, Score: terms.Sum(t => (Count(d.Title, t) * 5) + Count(d.Text, t))))
+                .Select(d => (Doc: d, Text: Tags().Replace(d.Text, string.Empty)))
+                .Select(d => (d.Doc, d.Text, Score: Score(d.Doc.Title, d.Text, query, terms)))
                 .Where(h => h.Score > 0)
                 .OrderByDescending(h => h.Score)
                 .Take(8)
-                .Select(h => $"{h.Doc.Title} - {Site}{h.Doc.Location}\n  {Snippet(h.Doc.Text, terms)}")
+                .Select(h => $"{h.Doc.Title} - {Site}{h.Doc.Location}\n  {Snippet(h.Text, terms)}")
                 .ToList();
             return hits.Count > 0 ? string.Join("\n", hits) : $"Nothing found for '{query}'.";
         }
@@ -86,6 +88,11 @@ internal static class DocsSearch
         return "The search index is not reachable; pages by title:\n"
             + string.Join("\n", (pages.Count > 0 ? pages : Pages).Select(p => $"{p.Title} - {Site}{p.Path}"));
     }
+
+    // the whole query in a title counts most; counts per term are capped, so long pages do not win by length
+    public static int Score(string title, string text, string query, IReadOnlyList<string> terms) =>
+        (Count(title, query) * 100) + (Math.Min(Count(text, query), 10) * 10)
+        + terms.Sum(t => (Count(title, t) * 10) + Math.Min(Count(text, t), 5));
 
     private static int Count(string text, string term)
     {
@@ -111,4 +118,7 @@ internal static class DocsSearch
         [property: JsonPropertyName("location")] string Location,
         [property: JsonPropertyName("title")] string Title,
         [property: JsonPropertyName("text")] string Text);
+
+    [GeneratedRegex("<[^>]+>")]
+    private static partial Regex Tags();
 }
