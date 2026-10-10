@@ -20,7 +20,9 @@
         color: var(--mud-palette-primary-text); background: var(--mud-palette-primary); }
     .cw-group-row th { padding: 6px 8px !important; border-bottom: none !important; }
     .cw-group-zone { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-height: 38px; padding: 2px 10px; border-radius: 10px;
-        border: 1.5px dashed var(--mud-palette-lines-default); transition: border-color 120ms ease, background-color 120ms ease; }
+        border: 1.5px dashed var(--mud-palette-lines-default); transition: border-color 120ms ease, background-color 120ms ease;
+        box-sizing: border-box; position: sticky; left: 8px; width: calc(100cqw - 16px); }
+    .mud-table-container:has(.cw-group-zone) { container-type: inline-size; }
     .cw-group-zone.grouped { border-color: color-mix(in srgb, var(--mud-palette-primary) 35%, transparent); background: color-mix(in srgb, var(--mud-palette-primary) 5%, transparent); }
     .cw-group-zone.drop-allowed { border-color: var(--mud-palette-primary); background: color-mix(in srgb, var(--mud-palette-primary) 10%, transparent); }
     .cw-group-hint { font-weight: 400; font-size: .85rem; color: var(--mud-palette-text-secondary); }
