@@ -36,6 +36,7 @@ Welches Paket wohin gehört und was in den `using`-Block kommt.
 | `Coworkee.Templates` | Ihr Rechner | | `dotnet new coworkee` |
 | `Coworkee.Client` | SDKs, other .NET apps | `Coworkee.Client` | `CoworkeeApiClient`, `CoworkeeApiException`, `BearerTokenHandler`, `ODataResult<T>` |
 | `Coworkee.Client.Blazor` | WebAssembly-Client | `Coworkee.Client.Blazor`, `.Components`, `.Components.Data`, `.Data`, `.Api`, `.Navigation`, `.Security`, `.Customization` | `AddCoworkeeClient`, `CoworkeeLayout`, `CoworkeeDataTable<T>`, `IODataClient`, `ApiClientBase`, `ReplaceComponent` |
+| `Coworkee.Client.Blazor.ClientEntities` | WebAssembly-Client: lokale Kopien von OData-Sets | `Coworkee.Client.Blazor.ClientEntities` | `AddCoworkeeClientEntities`, `ClientEntities`, `ClientEntitySet<T>`, `ClientEntityIndicator`, `ODataLinq` |
 | `Coworkee.Aspire` | AppHost | `Aspire.Hosting`, `Coworkee.Aspire.Settings` | `AddCoworkeeApp`, `CoworkeeApp`, `WithSetting` |
 | `Coworkee.Testing` | Tests | `Coworkee.Testing` | `PostgresFixture`, `PostgresWebApplicationFactory`, `AddTestAuthentication` |
 

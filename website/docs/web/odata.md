@@ -75,6 +75,10 @@ var page = await odata.QueryAsync<BrandDto>("Brands", new ODataQuery { OrderBy =
 
 The BFF forwards `/odata` to the API with the user's token.
 
+## Client entities
+
+Mark an entity `[ClientEntity]` and Blazor clients keep a copy of its set and query it locally; see [Client entities](../ui/client-entities.md).
+
 ## Excel export and import
 
 Every entity set can be exported as an Excel workbook. The export takes the same `$filter`, `$search` and `$orderby` as the list and respects permission, entity filters and hidden properties:

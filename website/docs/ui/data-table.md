@@ -34,6 +34,8 @@
 
 `ReloadAsync()` reloads from outside, for example from a `RealtimeSubscription`. `Selection` exposes the facet choices, `CurrentFilter` the OData filter the table sends.
 
+For sets marked as [client entities](client-entities.md) the table filters, searches, sorts and counts in the browser once the rows arrived.
+
 The CSV export escapes values that spreadsheet programs would run as formulas.
 
 ## Edit dialogs

@@ -10,7 +10,10 @@ public partial class ClientEntityIndicator : IDisposable
     private ClientEntitySet? _set;
     private int _revision;
 
-    [Inject] private ClientEntities Entities { get; set; } = null!;
+    // without AddCoworkeeClientEntities the indicator stays empty instead of failing the page
+    [Inject] private IServiceProvider Services { get; set; } = null!;
+
+    private ClientEntities? Entities => Services.GetService(typeof(ClientEntities)) as ClientEntities;
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
@@ -21,12 +24,23 @@ public partial class ClientEntityIndicator : IDisposable
 
     protected override void OnInitialized()
     {
-        _set = Entities.Find(EntitySet);
+        if (Entities is not { } entities)
+        {
+            return;
+        }
+
+        _set = entities.Find(EntitySet);
         _revision = _set?.Status.Revision ?? 0;
-        Entities.Changed += OnChanged;
+        entities.Changed += OnChanged;
     }
 
-    public void Dispose() => Entities.Changed -= OnChanged;
+    public void Dispose()
+    {
+        if (Entities is { } entities)
+        {
+            entities.Changed -= OnChanged;
+        }
+    }
 
     private void OnChanged(ClientEntitySet set)
     {
