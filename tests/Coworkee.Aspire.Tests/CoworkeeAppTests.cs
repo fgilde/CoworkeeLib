@@ -49,16 +49,16 @@ public sealed class CoworkeeAppTests
     public async Task Keycloak_is_imported_with_a_realm_for_the_app_and_offered_at_the_auth_server()
     {
         var builder = DistributedApplication.CreateBuilder();
-        var app = builder.AddCoworkeeApp("demo", o => o.UseKeycloak(k => k.Users.Add(new KeycloakUser("ada@demo.test", "Ada", "Lovelace"))));
+        var app = builder.AddCoworkeeApp("realm", o => o.UseKeycloak(k => k.Users.Add(new KeycloakUser("ada@demo.test", "Ada", "Lovelace"))));
 
         app.AddMigrations<FakeProjects.Migrations>();
         var auth = app.AddAuthServer<FakeProjects.Auth>();
 
         app.Keycloak.ShouldNotBeNull();
         var settings = await Environment(auth.Resource);
-        settings["Coworkee__Auth__External__Providers__keycloak__ClientId"].ShouldBe("demo-auth");
+        settings["Coworkee__Auth__External__Providers__keycloak__ClientId"].ShouldBe("realm-auth");
         settings["Coworkee__Auth__External__Mode"].ShouldBe("Both");
-        var realm = await File.ReadAllTextAsync(Path.Combine(builder.AppHostDirectory, "obj", "keycloak", "demo-realm.json"), TestContext.Current.CancellationToken);
+        var realm = await File.ReadAllTextAsync(Path.Combine(builder.AppHostDirectory, "obj", "keycloak", "realm-realm.json"), TestContext.Current.CancellationToken);
         realm.ShouldContain("ada@demo.test");
         realm.ShouldContain("${COWORKEE_KEYCLOAK_CLIENT_SECRET}");
     }
