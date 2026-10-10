@@ -69,7 +69,7 @@ public sealed class ScreenshotTests
         if (Folder is not null)
         {
             Directory.CreateDirectory(Folder);
-            frame.Save(Path.Combine(Folder, $"studio-{page}-{(dark ? "dark" : "light")}{(language == "en" ? string.Empty : "-" + language)}.png"));
+            frame.Save(Path.Combine(Folder, $"studio-{page}-{(dark ? "dark" : "light")}{(language == "en" ? string.Empty : "-" + language)}.png"), new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
         }
     });
 }
