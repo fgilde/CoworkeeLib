@@ -4,14 +4,16 @@ using Coworkee.Domain;
 namespace Coworkee.OData;
 
 /// <summary>
-/// Which OData sets clients may mirror: entities marked [ClientEntity] and those named with <see cref="For{TEntity}"/>,
-/// each with <see cref="Default"/> and its own overrides.
+/// Which OData sets clients may mirror: entities marked [ClientEntity], those named with <see cref="For{TEntity}"/> and those an
+/// application service names with <c>ClientEntity&lt;TEntity&gt;()</c>. Each starts from <see cref="Default"/>, then the attribute,
+/// then <see cref="For{TEntity}"/>, then the service apply.
 /// </summary>
 public sealed class ClientEntityOptions
 {
     public const string Section = "Coworkee:ClientEntities";
 
     private readonly Dictionary<Type, Action<ClientEntitySettings>?> _entities = [];
+    private readonly Dictionary<Type, Action<ClientEntitySettings>?> _services = [];
 
     public ClientEntitySettings Default { get; set; } = new();
 
@@ -23,10 +25,13 @@ public sealed class ClientEntityOptions
         return this;
     }
 
+    internal void ForService(Type entityType, Action<ClientEntitySettings>? configure) => _services[entityType] = configure;
+
     internal ClientEntitySettings? Resolve(Type entityType)
     {
         var attribute = entityType.GetCustomAttribute<ClientEntityAttribute>(inherit: false);
-        if (!_entities.TryGetValue(entityType, out var configure) && attribute is null)
+        var named = _entities.TryGetValue(entityType, out var configure);
+        if (!_services.TryGetValue(entityType, out var service) && !named && attribute is null)
         {
             return null;
         }
@@ -38,6 +43,7 @@ public sealed class ClientEntityOptions
         }
 
         configure?.Invoke(settings);
+        service?.Invoke(settings);
         return settings.Enabled ? settings : null;
     }
 }

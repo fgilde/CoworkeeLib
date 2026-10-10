@@ -34,10 +34,8 @@ public static class ApplicationServiceExtensions
     /// <summary>Maps the registered application services as endpoints; UseCoworkee does this.</summary>
     public static IEndpointRouteBuilder MapCoworkeeApplicationServices(this IEndpointRouteBuilder endpoints)
     {
-        var options = endpoints.ServiceProvider.GetRequiredService<IOptions<ApplicationServiceOptions>>().Value;
-        foreach (var registration in endpoints.ServiceProvider.GetServices<ApplicationServiceRegistration>())
+        foreach (var (registration, descriptor) in Describe(endpoints.ServiceProvider))
         {
-            var descriptor = options.Describe(registration);
             if (!descriptor.Enabled)
             {
                 continue;
@@ -59,5 +57,14 @@ public static class ApplicationServiceExtensions
         }
 
         return endpoints;
+    }
+
+    /// <summary>The registered application services with their settings, e.g. to read what a feature attached to <see cref="ApplicationServiceDescriptor.Properties"/>.</summary>
+    public static IEnumerable<ApplicationServiceDescriptor> GetApplicationServices(this IServiceProvider services) => Describe(services).Select(s => s.Descriptor);
+
+    private static IEnumerable<(ApplicationServiceRegistration Registration, ApplicationServiceDescriptor Descriptor)> Describe(IServiceProvider services)
+    {
+        var options = services.GetRequiredService<IOptions<ApplicationServiceOptions>>().Value;
+        return services.GetServices<ApplicationServiceRegistration>().Select(r => (r, options.Describe(r)));
     }
 }
