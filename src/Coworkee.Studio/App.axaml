@@ -12,7 +12,7 @@
         <ResourceInclude Source="avares://Coworkee.Studio/Styles/Colors.axaml" />
       </ResourceDictionary.MergedDictionaries>
       <FontFamily x:Key="StudioFont">Segoe UI, Inter, avares://Avalonia.Fonts.Inter/Assets#Inter</FontFamily>
-      <FontFamily x:Key="MonoFont">Cascadia Mono, Consolas, Menlo, DejaVu Sans Mono, monospace</FontFamily>
+      <FontFamily x:Key="MonoFont">Consolas, Menlo, DejaVu Sans Mono, Cascadia Mono, monospace</FontFamily>
       <CornerRadius x:Key="Radius">14</CornerRadius>
       <CornerRadius x:Key="SmallRadius">10</CornerRadius>
       <CornerRadius x:Key="ControlCornerRadius">10</CornerRadius>

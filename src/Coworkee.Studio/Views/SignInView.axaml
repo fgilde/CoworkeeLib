@@ -1,0 +1,95 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Coworkee.Studio.ViewModels"
+             xmlns:v="using:Coworkee.Studio.Views"
+             xmlns:l="using:Coworkee.Studio.Localization"
+             x:Class="Coworkee.Studio.Views.SignInView"
+             x:DataType="vm:SignInStep">
+  <ScrollViewer>
+    <StackPanel Margin="44,12,44,32" Spacing="18">
+      <ItemsControl ItemsSource="{Binding Layouts}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <UniformGrid Columns="3" ColumnSpacing="16" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:LayoutCardViewModel">
+            <Button Classes="tile" Classes.selected="{Binding IsSelected}"
+                    Command="{Binding $parent[ItemsControl].((vm:SignInStep)DataContext).SelectLayoutCommand}" CommandParameter="{Binding}">
+              <StackPanel Margin="12" Spacing="10">
+                <v:SignInThumb Layout="{Binding Value}" Height="150"
+                               Preview="{Binding $parent[ItemsControl].((vm:SignInStep)DataContext).Preview}"
+                               MediaRight="{Binding $parent[ItemsControl].((vm:SignInStep)DataContext).MediaRight}"
+                               Media="{Binding $parent[ItemsControl].((vm:SignInStep)DataContext).Media}" />
+                <StackPanel Spacing="2" Margin="4,0">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Classes="h3" Text="{Binding Title}" />
+                    <PathIcon Grid.Column="1" Classes="small" Data="{StaticResource Icon.CheckCircle}" Foreground="{DynamicResource Primary}" IsVisible="{Binding IsSelected}" />
+                  </Grid>
+                  <TextBlock Classes="caption" Text="{Binding Description}" />
+                </StackPanel>
+              </StackPanel>
+            </Button>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <Grid ColumnDefinitions="*,24,*">
+        <Border Classes="card">
+          <StackPanel Spacing="12">
+            <StackPanel Spacing="2">
+              <TextBlock Classes="h3" Text="{l:L 'Image or video'}" />
+              <TextBlock Classes="caption" Text="{l:L 'Next to the form with Split and Slide: a local file the CLI copies into the web client, or an http(s) address. mp4, webm and ogg play as video.'}" />
+            </StackPanel>
+            <Grid ColumnDefinitions="*,Auto,Auto">
+              <TextBox Text="{Binding MediaPath}" PlaceholderText="https://… or a file" />
+              <Button Grid.Column="1" Margin="8,0,0,0" Command="{Binding BrowseMediaCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <PathIcon Classes="small" Data="{StaticResource Icon.Image}" />
+                  <TextBlock Text="{l:L Choose}" />
+                </StackPanel>
+              </Button>
+              <Button Grid.Column="2" Classes="icon" Margin="4,0,0,0" Command="{Binding ClearMediaCommand}" IsVisible="{Binding HasMedia}" ToolTip.Tip="{l:L Remove}">
+                <PathIcon Classes="small" Data="{StaticResource Icon.Close}" />
+              </Button>
+            </Grid>
+            <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsVideo}">
+              <PathIcon Classes="small" Data="{StaticResource Icon.Play}" Foreground="{DynamicResource Secondary}" />
+              <TextBlock Classes="caption" Text="{l:L 'Plays muted in a loop. Keep it short: large videos slow the first sign-in.'}" />
+            </StackPanel>
+            <Border Classes="banner" IsVisible="{Binding HasErrors}">
+              <ItemsControl ItemsSource="{Binding Errors}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="x:String">
+                    <TextBlock Classes="error" Text="{Binding}" />
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Border>
+          </StackPanel>
+        </Border>
+        <Border Grid.Column="2" Classes="card">
+          <StackPanel Spacing="12">
+            <StackPanel Spacing="2">
+              <TextBlock Classes="h3" Text="{l:L 'Side of the media'}" />
+              <TextBlock Classes="caption" Text="{l:L 'Match the composition of your image: the form takes the other side.'}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <RadioButton GroupName="side" Content="{l:L Left}" IsChecked="{Binding MediaLeft}" />
+              <RadioButton GroupName="side" Content="{l:L Right}" IsChecked="{Binding MediaRight}" />
+            </StackPanel>
+            <Border Classes="banner info">
+              <TextBlock TextWrapping="Wrap" FontSize="12.5" Text="{l:L 'Administrators switch layout, media and side later on the Themes page of the app, without a new deployment.'}" />
+            </Border>
+          </StackPanel>
+        </Border>
+      </Grid>
+
+      <StackPanel Spacing="8">
+        <TextBlock Classes="overline" Text="{l:L 'PREVIEW'}" />
+        <v:SignInThumb Layout="{Binding Layout}" MediaRight="{Binding MediaRight}" Media="{Binding Media}" Preview="{Binding Preview}" Height="300" HorizontalAlignment="Left" />
+      </StackPanel>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

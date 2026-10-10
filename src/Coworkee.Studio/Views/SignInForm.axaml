@@ -1,0 +1,20 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Coworkee.Studio.ViewModels"
+             x:Class="Coworkee.Studio.Views.SignInForm"
+             x:DataType="vm:PreviewViewModel">
+  <StackPanel Spacing="5">
+    <StackPanel Orientation="Horizontal" Spacing="5">
+      <Image Width="12" Height="12" Source="{Binding Logo}" IsVisible="{Binding HasLogo}" />
+      <Ellipse Width="12" Height="12" Fill="{Binding Primary}" IsVisible="{Binding !HasLogo}" />
+      <TextBlock Text="{Binding Title}" Foreground="{Binding Text}" FontFamily="{Binding Font}" FontWeight="SemiBold" FontSize="10" TextTrimming="CharacterEllipsis" />
+    </StackPanel>
+    <TextBlock Text="Sign in" Foreground="{Binding Text}" FontFamily="{Binding Font}" FontWeight="Bold" FontSize="12" />
+    <Border Height="13" CornerRadius="4" BorderBrush="{Binding Lines}" BorderThickness="1" Background="{Binding Background}" />
+    <Border Height="13" CornerRadius="4" BorderBrush="{Binding Lines}" BorderThickness="1" Background="{Binding Background}" />
+    <Border Height="15" CornerRadius="{Binding SmallCorner}" Background="{Binding Primary}" Margin="0,2,0,0">
+      <TextBlock Text="Sign in" Foreground="{Binding PrimaryText}" FontSize="8.5" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+    </Border>
+    <Border Height="4" Width="50" CornerRadius="2" Background="{Binding Secondary}" Opacity="0.7" HorizontalAlignment="Center" />
+  </StackPanel>
+</UserControl>

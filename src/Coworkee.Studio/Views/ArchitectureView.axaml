@@ -1,0 +1,187 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Coworkee.Studio.ViewModels"
+             xmlns:v="using:Coworkee.Studio.Views"
+             xmlns:l="using:Coworkee.Studio.Localization"
+             x:Class="Coworkee.Studio.Views.ArchitectureView"
+             x:DataType="vm:ArchitectureStep">
+  <Grid ColumnDefinitions="*,340" Margin="44,12,0,0">
+    <ScrollViewer Padding="0,0,24,32">
+      <StackPanel Spacing="20">
+        <StackPanel Spacing="10">
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBlock Classes="overline" Text="{l:L 'APP TYPE'}" VerticalAlignment="Center" />
+            <Button Grid.Column="1" Classes="link" Content="{l:L 'Template defaults'}" Command="{Binding ResetOptionsCommand}" />
+          </Grid>
+          <ItemsControl ItemsSource="{Binding Presets}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <UniformGrid Columns="5" ColumnSpacing="10" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:PresetViewModel">
+                <Button Classes="tile" Classes.selected="{Binding IsActive}" ToolTip.Tip="{Binding Description}"
+                        Command="{Binding $parent[ItemsControl].((vm:ArchitectureStep)DataContext).ApplyPresetCommand}" CommandParameter="{Binding}">
+                  <StackPanel Margin="14,12" Spacing="6">
+                    <Border Width="34" Height="34" CornerRadius="10" Background="{DynamicResource PrimarySoft}" HorizontalAlignment="Left">
+                      <PathIcon Data="{Binding Icon, Converter={x:Static v:Converters.Icon}}" Foreground="{DynamicResource Primary}" />
+                    </Border>
+                    <TextBlock Classes="h3" Text="{Binding Name}" />
+                    <TextBlock Classes="caption" Text="{Binding Description}" MaxLines="4" TextTrimming="CharacterEllipsis" />
+                  </StackPanel>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+
+        <ItemsControl ItemsSource="{Binding Errors}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="x:String">
+              <Border Classes="banner" Margin="0,0,0,6">
+                <TextBlock Classes="error" Text="{Binding}" />
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <ItemsControl ItemsSource="{Binding Groups}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:OptionGroupViewModel">
+              <StackPanel Spacing="10" Margin="0,0,0,22">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                  <PathIcon Data="{Binding Icon, Converter={x:Static v:Converters.Icon}}" Foreground="{DynamicResource Secondary}" />
+                  <TextBlock Classes="h2" Text="{Binding Title}" />
+                </StackPanel>
+                <TextBlock Classes="muted" Text="{Binding Text}" Margin="0,-6,0,4" />
+                <ItemsControl ItemsSource="{Binding Options}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <UniformGrid Columns="2" ColumnSpacing="12" RowSpacing="12" />
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:OptionViewModel">
+                      <Border Classes="card" Padding="16" Classes.on="{Binding IsOn}">
+                        <StackPanel Spacing="8">
+                          <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Spacing="3">
+                              <TextBlock Classes="h3" Text="{Binding Title}" />
+                              <WrapPanel ItemSpacing="6">
+                                <Border Classes="chip" IsVisible="{Binding HasPackage}" Padding="8,1">
+                                  <TextBlock Text="{Binding Package}" FontSize="11" />
+                                </Border>
+                                <TextBlock Classes="mono caption" Text="{Binding Flag}" VerticalAlignment="Center" />
+                              </WrapPanel>
+                            </StackPanel>
+                            <ToggleSwitch Grid.Column="1" IsVisible="{Binding IsBool}" IsChecked="{Binding IsOn}" VerticalAlignment="Top" Margin="0,-4,0,0" />
+                          </Grid>
+                          <TextBlock Classes="body" FontSize="12.5" LineHeight="18" Text="{Binding Description}" />
+                          <ListBox Classes="segments" IsVisible="{Binding IsChoice}" ItemsSource="{Binding Choices}" SelectedItem="{Binding Choice}" HorizontalAlignment="Left">
+                            <ListBox.ItemTemplate>
+                              <DataTemplate x:DataType="vm:ChoiceViewModel">
+                                <TextBlock Text="{Binding Value}" FontSize="12.5" FontWeight="SemiBold" ToolTip.Tip="{Binding Text}" />
+                              </DataTemplate>
+                            </ListBox.ItemTemplate>
+                          </ListBox>
+                          <TextBlock Classes="caption" IsVisible="{Binding IsChoice}" Text="{Binding Choice.Text}" />
+                          <Border Classes="soft" Padding="10,8">
+                            <StackPanel Spacing="6">
+                              <Grid ColumnDefinitions="Auto,*">
+<PathIcon Margin="0,1,6,0" Classes="small" Data="{StaticResource Icon.Bulb}" Foreground="{DynamicResource Warning}" VerticalAlignment="Top" />
+<TextBlock Grid.Column="1" FontSize="12" TextWrapping="Wrap" Text="{Binding WhenToUse}" />
+</Grid>
+                              <ItemsControl ItemsSource="{Binding Pros}">
+                                <ItemsControl.ItemTemplate>
+                                  <DataTemplate x:DataType="x:String">
+                                    <Grid ColumnDefinitions="Auto,*">
+<PathIcon Margin="0,1,6,0" Classes="small" Data="{StaticResource Icon.ThumbUp}" Foreground="{DynamicResource Success}" />
+<TextBlock Grid.Column="1" FontSize="12" TextWrapping="Wrap" Text="{Binding}" />
+</Grid>
+                                  </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                              </ItemsControl>
+                              <ItemsControl ItemsSource="{Binding Cons}">
+                                <ItemsControl.ItemTemplate>
+                                  <DataTemplate x:DataType="x:String">
+                                    <Grid ColumnDefinitions="Auto,*">
+<PathIcon Margin="0,1,6,0" Classes="small" Data="{StaticResource Icon.ThumbDown}" Foreground="{DynamicResource Error}" />
+<TextBlock Grid.Column="1" FontSize="12" TextWrapping="Wrap" Text="{Binding}" />
+</Grid>
+                                  </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                              </ItemsControl>
+                            </StackPanel>
+                          </Border>
+                        </StackPanel>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </ScrollViewer>
+
+    <!-- what the solution contains -->
+    <Border Grid.Column="1" Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Lines}" BorderThickness="1,0,0,0">
+      <ScrollViewer Padding="22,4,22,24">
+        <StackPanel Spacing="16">
+          <StackPanel Spacing="4">
+            <TextBlock Classes="overline" Text="{l:L 'YOUR SOLUTION'}" />
+            <TextBlock Classes="h3" Text="{Binding SummaryHeadline}" />
+          </StackPanel>
+          <StackPanel Spacing="8">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <PathIcon Classes="small" Data="{StaticResource Icon.Container}" Foreground="{DynamicResource Secondary}" />
+              <TextBlock FontWeight="SemiBold" Text="{l:L 'Containers in the Aspire app host'}" />
+            </StackPanel>
+            <ItemsControl ItemsSource="{Binding Summary.Containers}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <WrapPanel ItemSpacing="6" LineSpacing="6" />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="x:String">
+                  <Border Classes="chip teal">
+                    <TextBlock Text="{Binding}" />
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+          <StackPanel Spacing="6">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <PathIcon Classes="small" Data="{StaticResource Icon.Cube}" Foreground="{DynamicResource Primary}" />
+              <TextBlock FontWeight="SemiBold" Text="{l:L 'Projects'}" />
+            </StackPanel>
+            <ItemsControl ItemsSource="{Binding Summary.Projects}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="x:String">
+                  <TextBlock Classes="mono" FontSize="12" Text="{Binding}" Margin="0,1" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+          <StackPanel Spacing="6">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <PathIcon Classes="small" Data="{StaticResource Icon.Package}" Foreground="{DynamicResource Primary}" />
+              <TextBlock FontWeight="SemiBold" Text="{l:L 'Coworkee packages'}" />
+            </StackPanel>
+            <ItemsControl ItemsSource="{Binding Summary.Packages}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="x:String">
+                  <TextBlock Classes="mono caption" Text="{Binding}" Margin="0,1" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </StackPanel>
+      </ScrollViewer>
+    </Border>
+  </Grid>
+</UserControl>

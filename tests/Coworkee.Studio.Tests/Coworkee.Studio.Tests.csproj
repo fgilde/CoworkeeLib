@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Headless" />
+    <PackageReference Include="Avalonia.Skia" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Coworkee.Studio\Coworkee.Studio.csproj" />
+  </ItemGroup>
+</Project>

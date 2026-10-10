@@ -252,7 +252,7 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     public async Task SaveSpecAsync()
     {
-        if (SpecPath ?? await Dialogs.SaveFile($"{(Basics.Name is { Length: > 0 } name ? name : "app")}.json") is { } path)
+        if ((SpecPath ?? await Dialogs.SaveFile($"{(Basics.Name is { Length: > 0 } name ? name : "app")}.json")) is { } path)
         {
             Save(path);
         }

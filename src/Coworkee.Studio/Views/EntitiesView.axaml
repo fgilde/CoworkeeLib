@@ -1,0 +1,251 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Coworkee.Studio.ViewModels"
+             xmlns:l="using:Coworkee.Studio.Localization"
+             x:Class="Coworkee.Studio.Views.EntitiesView"
+             x:DataType="vm:EntitiesStep">
+  <UserControl.Styles>
+    <Style Selector="Button.entity">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="Padding" Value="10,6" />
+      <Setter Property="FontWeight" Value="Normal" />
+    </Style>
+    <Style Selector="Button.entity.selected">
+      <Setter Property="Background" Value="{DynamicResource PrimarySoft}" />
+      <Setter Property="Foreground" Value="{DynamicResource Primary}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="TextBlock.head">
+      <Setter Property="FontSize" Value="11.5" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+    </Style>
+  </UserControl.Styles>
+
+  <Grid ColumnDefinitions="240,*,290" Margin="40,12,0,0">
+    <!-- modules and entities -->
+    <DockPanel Margin="0,0,20,24">
+      <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,12">
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock Classes="overline" Text="{l:L 'MODULES'}" VerticalAlignment="Center" />
+          <TextBlock Grid.Column="1" Classes="caption" Text="{Binding Counts}" />
+        </Grid>
+        <UniformGrid Columns="2" ColumnSpacing="8">
+          <Button Command="{Binding AddModuleCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <PathIcon Classes="small" Data="{StaticResource Icon.Plus}" />
+              <TextBlock Text="{l:L Module}" />
+            </StackPanel>
+          </Button>
+          <Button Command="{Binding AddExampleCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" ToolTip.Tip="{l:L 'Sales with Customer and Order'}">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <PathIcon Classes="small" Data="{StaticResource Icon.Magic}" />
+              <TextBlock Text="{l:L Example}" />
+            </StackPanel>
+          </Button>
+        </UniformGrid>
+      </StackPanel>
+      <ScrollViewer>
+        <ItemsControl ItemsSource="{Binding Modules}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:ModuleViewModel">
+              <Border Classes="card" Padding="10" Margin="0,0,0,10">
+                <StackPanel Spacing="4">
+                  <Grid ColumnDefinitions="Auto,*,Auto">
+                    <PathIcon Classes="small" Data="{StaticResource Icon.Puzzle}" Foreground="{DynamicResource Secondary}" Margin="4,0,8,0" />
+                    <TextBox Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" MinHeight="32" Padding="8,4" />
+                    <Button Grid.Column="2" Classes="icon danger" Width="30" Height="30" Padding="6" ToolTip.Tip="{l:L 'Remove module'}"
+                            Command="{Binding $parent[UserControl].((vm:EntitiesStep)DataContext).RemoveModuleCommand}" CommandParameter="{Binding}">
+                      <PathIcon Classes="small" Data="{StaticResource Icon.Delete}" />
+                    </Button>
+                  </Grid>
+                  <ItemsControl ItemsSource="{Binding Errors}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="x:String">
+                        <TextBlock Classes="error" FontSize="11.5" Text="{Binding}" Margin="4,0" />
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <ItemsControl ItemsSource="{Binding Entities}" Margin="0,4,0,0">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="vm:EntityViewModel">
+                        <Button Classes="entity" Classes.selected="{Binding IsSelected}"
+                                Command="{Binding $parent[UserControl].((vm:EntitiesStep)DataContext).SelectEntityCommand}" CommandParameter="{Binding}">
+                          <Grid ColumnDefinitions="Auto,*,Auto">
+                            <PathIcon Classes="small" Data="{StaticResource Icon.Table}" Margin="0,0,8,0" />
+                            <TextBlock Grid.Column="1" Text="{Binding Display}" VerticalAlignment="Center" />
+                            <PathIcon Grid.Column="2" Classes="small" Data="{StaticResource Icon.AlertCircle}" Foreground="{DynamicResource Error}" IsVisible="{Binding HasErrors}" />
+                          </Grid>
+                        </Button>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <Button Classes="link" Margin="10,4,0,2" Command="{Binding $parent[UserControl].((vm:EntitiesStep)DataContext).AddEntityToCommand}" CommandParameter="{Binding}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                      <PathIcon Classes="small" Data="{StaticResource Icon.Plus}" />
+                      <TextBlock Text="{l:L Entity}" />
+                    </StackPanel>
+                  </Button>
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </DockPanel>
+
+    <!-- entity editor -->
+    <ScrollViewer Grid.Column="1" Padding="0,0,20,24">
+      <Panel>
+        <Border Classes="card" Padding="36" IsVisible="{Binding !HasModules}" VerticalAlignment="Top">
+          <StackPanel Spacing="14" HorizontalAlignment="Center" MaxWidth="460">
+            <Border Width="64" Height="64" CornerRadius="18" Background="{DynamicResource PrimarySoft}" HorizontalAlignment="Center">
+              <PathIcon Classes="large" Data="{StaticResource Icon.Table}" Foreground="{DynamicResource Primary}" />
+            </Border>
+            <TextBlock Classes="h2" HorizontalAlignment="Center" TextAlignment="Center" Text="{l:L 'No entities yet'}" />
+            <TextBlock Classes="muted" TextAlignment="Center" Text="{l:L 'Optional: the app works without them. Add a module like Sales with entities like Customer and Order, and each gets its table, API, permissions and page.'}" />
+            <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+              <Button Classes="primary" Command="{Binding AddModuleCommand}" Content="{l:L 'Add a module'}" />
+              <Button Command="{Binding AddExampleCommand}" Content="{l:L 'Use the example'}" />
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <Panel IsVisible="{Binding HasEntity}">
+        <StackPanel Spacing="16" DataContext="{Binding SelectedEntity}" x:DataType="vm:EntityViewModel">
+          <Border Classes="card">
+            <StackPanel Spacing="14">
+              <Grid ColumnDefinitions="*,16,*">
+                <StackPanel Spacing="6">
+                  <TextBlock Classes="caption" Text="{l:L 'Entity name (singular)'}" />
+                  <TextBox Text="{Binding Name}" PlaceholderText="Order" FontSize="15" FontWeight="SemiBold" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Spacing="6">
+                  <TextBlock Classes="caption" Text="{l:L 'Plural (table, OData set, route)'}" />
+                  <TextBox Text="{Binding Plural}" PlaceholderText="{Binding PluralPlaceholder}" />
+                </StackPanel>
+              </Grid>
+              <Grid ColumnDefinitions="*,16,*">
+                <Border Classes="soft" Padding="12,10">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Spacing="2">
+                      <TextBlock FontWeight="SemiBold" Text="{l:L 'Client entity'}" />
+                      <TextBlock Classes="caption" Text="{l:L 'The browser keeps the rows and filters, sorts and facets them instantly.'}" />
+                    </StackPanel>
+                    <ToggleSwitch Grid.Column="1" IsChecked="{Binding ClientEntity}" VerticalAlignment="Center" Margin="12,0,0,0" />
+                  </Grid>
+                </Border>
+                <Border Grid.Column="2" Classes="soft" Padding="12,10">
+                  <StackPanel Spacing="6">
+                    <TextBlock FontWeight="SemiBold" Text="{l:L 'DTO mapping'}" />
+                    <ComboBox ItemsSource="{x:Static vm:EntityViewModel.Mappings}" SelectedItem="{Binding Mapping}" HorizontalAlignment="Stretch" />
+                  </StackPanel>
+                </Border>
+              </Grid>
+              <ItemsControl ItemsSource="{Binding Errors}" IsVisible="{Binding HasErrors}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="x:String">
+                    <Border Classes="banner" Margin="0,0,0,4" Padding="10,6">
+                      <TextBlock Classes="error" Text="{Binding}" />
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+
+          <Border Classes="card">
+            <StackPanel Spacing="8">
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Spacing="2">
+                  <TextBlock Classes="h3" Text="{l:L 'Properties'}" />
+                  <TextBlock Classes="caption" Text="{l:L 'Id, tenant and audit fields come with every entity.'}" />
+                </StackPanel>
+                <Button Grid.Column="1" Command="{Binding AddPropertyCommand}">
+                  <StackPanel Orientation="Horizontal" Spacing="6">
+                    <PathIcon Classes="small" Data="{StaticResource Icon.Plus}" />
+                    <TextBlock Text="{l:L Property}" />
+                  </StackPanel>
+                </Button>
+              </Grid>
+              <Grid ColumnDefinitions="*,10,120,10,70,10,96,6,36" Margin="0,8,0,0">
+                <TextBlock Classes="head" Text="{l:L Name}" />
+                <TextBlock Grid.Column="2" Classes="head" Text="{l:L Type}" />
+                <TextBlock Grid.Column="4" Classes="head" Text="{l:L Required}" />
+                <TextBlock Grid.Column="6" Classes="head" Text="{l:L 'Max length'}" />
+              </Grid>
+              <ItemsControl ItemsSource="{Binding Properties}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:PropertyViewModel">
+                    <Grid ColumnDefinitions="*,10,120,10,70,10,96,6,36" Margin="0,3">
+                      <TextBox Text="{Binding Name}" PlaceholderText="Number" />
+                      <ComboBox Grid.Column="2" ItemsSource="{x:Static vm:PropertyViewModel.Types}" SelectedItem="{Binding Type}" HorizontalAlignment="Stretch" />
+                      <CheckBox Grid.Column="4" IsChecked="{Binding Required}" HorizontalAlignment="Center" />
+                      <NumericUpDown Grid.Column="6" Value="{Binding MaxLength}" Minimum="1" Maximum="100000" Increment="50" FormatString="0" IsEnabled="{Binding IsText}" ShowButtonSpinner="False" PlaceholderText="text" />
+                      <Button Grid.Column="8" Classes="icon danger" Width="34" Height="34" ToolTip.Tip="{l:L 'Remove property'}"
+                              Command="{Binding $parent[ItemsControl].((vm:EntityViewModel)DataContext).RemovePropertyCommand}" CommandParameter="{Binding}">
+                        <PathIcon Classes="small" Data="{StaticResource Icon.Delete}" />
+                      </Button>
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+
+          <Button Classes="ghost danger" HorizontalAlignment="Left"
+                  Command="{Binding $parent[UserControl].((vm:EntitiesStep)DataContext).RemoveEntityCommand}" CommandParameter="{Binding}">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <PathIcon Classes="small" Data="{StaticResource Icon.Delete}" />
+              <TextBlock Text="{l:L 'Remove entity'}" />
+            </StackPanel>
+          </Button>
+        </StackPanel>
+        </Panel>
+      </Panel>
+    </ScrollViewer>
+
+    <!-- what the CLI generates -->
+    <Border Grid.Column="2" Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Lines}" BorderThickness="1,0,0,0">
+      <ScrollViewer Padding="22,4,22,24">
+        <StackPanel Spacing="14">
+          <TextBlock Classes="overline" Text="{l:L 'GENERATED FOR THIS ENTITY'}" />
+          <TextBlock Classes="caption" Text="{l:L 'Select an entity to see its routes, permissions and files.'}" IsVisible="{Binding Preview, Converter={x:Static ObjectConverters.IsNull}}" />
+          <StackPanel Spacing="14" IsVisible="{Binding Preview, Converter={x:Static ObjectConverters.IsNotNull}}">
+            <StackPanel Spacing="4">
+              <TextBlock FontWeight="SemiBold" Text="{l:L 'Page'}" />
+              <TextBlock Classes="mono" Foreground="{DynamicResource Primary}" Text="{Binding Preview.Route}" />
+            </StackPanel>
+            <StackPanel Spacing="4">
+              <TextBlock FontWeight="SemiBold" Text="{l:L 'API and OData'}" />
+              <TextBlock Classes="mono" Foreground="{DynamicResource Secondary}" Text="{Binding Preview.ApiRoute}" />
+            </StackPanel>
+            <StackPanel Spacing="4">
+              <TextBlock FontWeight="SemiBold" Text="{l:L 'Permissions'}" />
+              <ItemsControl ItemsSource="{Binding Preview.Permissions}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="x:String">
+                    <TextBlock Classes="mono caption" Text="{Binding}" />
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+            <StackPanel Spacing="4">
+              <TextBlock FontWeight="SemiBold" Text="{l:L 'Files'}" />
+              <ItemsControl ItemsSource="{Binding Preview.Files}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="x:String">
+                    <TextBlock Classes="mono caption" FontSize="11" Text="{Binding}" TextWrapping="NoWrap" TextTrimming="LeadingCharacterEllipsis" ToolTip.Tip="{Binding}" Margin="0,1" />
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </StackPanel>
+        </StackPanel>
+      </ScrollViewer>
+    </Border>
+  </Grid>
+</UserControl>

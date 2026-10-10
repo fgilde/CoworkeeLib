@@ -29,7 +29,7 @@ public sealed partial class BasicsStep(MainViewModel main) : StepViewModel(main)
         ? location
         : Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 
-    public OptionViewModel Title => Main.Option("title");
+    public OptionViewModel TitleOption => Main.Option("title");
 
     public string? Output => string.IsNullOrWhiteSpace(Name) || string.IsNullOrWhiteSpace(Location) ? null : Path.Combine(Location, Name.Trim());
 
@@ -47,7 +47,7 @@ public sealed partial class BasicsStep(MainViewModel main) : StepViewModel(main)
 
     public override bool CanContinue => NameError is null && TitleError is null && Output is not null;
 
-    public string? TitleError => Title.Value is { } title && !SpecValidator.IsSafeTitle(title) ? L.Get("No quotes, backslashes, <, >, @ or control characters: the title goes into code and HTML.") : null;
+    public string? TitleError => TitleOption.Value is { } title && !SpecValidator.IsSafeTitle(title) ? L.Get("No quotes, backslashes, <, >, @ or control characters: the title goes into code and HTML.") : null;
 
     public override bool Owns(string error) => error.StartsWith("name:", StringComparison.Ordinal) || error.StartsWith("title:", StringComparison.Ordinal);
 

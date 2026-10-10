@@ -1,0 +1,200 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Coworkee.Studio.ViewModels"
+             xmlns:v="using:Coworkee.Studio.Views"
+             xmlns:l="using:Coworkee.Studio.Localization"
+             x:Class="Coworkee.Studio.Views.HelpView"
+             x:DataType="vm:MainViewModel">
+  <Border BorderBrush="{DynamicResource Lines}" BorderThickness="1,0,0,0" BoxShadow="-8 0 24 0 #22000000">
+    <DockPanel>
+      <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="24,16,12,0">
+        <StackPanel Orientation="Horizontal" Spacing="10">
+          <PathIcon Data="{StaticResource Icon.Help}" Foreground="{DynamicResource Primary}" />
+          <TextBlock Classes="h2" Text="{l:L 'Help'}" />
+        </StackPanel>
+        <Button Grid.Column="1" Classes="icon" Command="{Binding ToggleHelpCommand}" ToolTip.Tip="{l:L 'Close (F1)'}">
+          <PathIcon Classes="small" Data="{StaticResource Icon.Close}" />
+        </Button>
+      </Grid>
+
+      <TabControl Classes="help" SelectedIndex="{Binding HelpTab}" Margin="12,4,0,0">
+        <!-- the wizard -->
+        <TabItem Header="{l:L Wizard}">
+          <ScrollViewer Padding="12,8,24,24">
+            <StackPanel Spacing="14">
+              <TextBlock Classes="body" Text="{l:L 'Coworkee Studio writes an app spec, the JSON the coworkee CLI takes, and lets the CLI create the app. Every page changes one part of the spec; the panel on the left shows where you are and takes you back to any page you have seen.'}" />
+              <ItemsControl ItemsSource="{Binding Steps}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:StepViewModel">
+                    <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,12">
+                      <Border Width="34" Height="34" CornerRadius="10" Background="{DynamicResource PrimarySoft}" VerticalAlignment="Top">
+                        <PathIcon Classes="small" Data="{Binding Icon, Converter={x:Static v:Converters.Icon}}" Foreground="{DynamicResource Primary}" />
+                      </Border>
+                      <StackPanel Grid.Column="1" Margin="12,0,0,0" Spacing="2">
+                        <TextBlock Classes="h3" Text="{Binding Title}" />
+                        <TextBlock Classes="caption" Text="{Binding Subtitle}" />
+                      </StackPanel>
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <Border Classes="soft">
+                <StackPanel Spacing="6">
+                  <TextBlock Classes="h3" Text="{l:L 'Keyboard'}" />
+                  <TextBlock Classes="caption mono" Text="Alt+→ / Alt+←   Next / Back" />
+                  <TextBlock Classes="caption mono" Text="Ctrl+N / Ctrl+O / Ctrl+S   New / Open / Save" />
+                  <TextBlock Classes="caption mono" Text="F1   Help" />
+                </StackPanel>
+              </Border>
+              <Border Classes="soft">
+                <StackPanel Spacing="6">
+                  <TextBlock Classes="h3" Text="{l:L 'Start options'}" />
+                  <TextBlock Classes="caption mono" TextWrapping="Wrap" Text="coworkee ui --spec shop.json   coworkee-ui --output C:\work --theme dark --lang de" />
+                </StackPanel>
+              </Border>
+              <Button Classes="link" Content="{l:L 'Coworkee Studio in the documentation'}" Command="{Binding OpenLinkCommand}" CommandParameter="{x:Static v:HelpSnippets.StudioDocs}" />
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
+
+        <!-- the CLI -->
+        <TabItem Header="CLI">
+          <ScrollViewer Padding="12,8,24,24">
+            <StackPanel Spacing="14">
+              <TextBlock Classes="body" Text="{l:L 'The Studio runs coworkee spec validate and coworkee new --spec. Everything it does works in a terminal as well:'}" />
+              <Border Classes="code">
+                <Grid ColumnDefinitions="*,Auto">
+                  <SelectableTextBlock Text="{x:Static v:HelpSnippets.Install}" VerticalAlignment="Center" />
+                  <Button Grid.Column="1" Classes="icon" Foreground="{DynamicResource CodeText}" Command="{Binding CopyCommand}" CommandParameter="{x:Static v:HelpSnippets.Install}">
+                    <PathIcon Classes="small" Data="{StaticResource Icon.Copy}" />
+                  </Button>
+                </Grid>
+              </Border>
+              <ItemsControl ItemsSource="{x:Static v:HelpSnippets.Commands}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="v:CliCommandHelp">
+                    <StackPanel Margin="0,0,0,10" Spacing="2">
+                      <TextBlock Classes="mono" FontWeight="SemiBold" Foreground="{DynamicResource Primary}" Text="{Binding Command}" />
+                      <TextBlock Classes="caption" Text="{Binding Text}" />
+                    </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <Button Classes="link" Content="{l:L 'All commands and switches'}" Command="{Binding OpenLinkCommand}" CommandParameter="{x:Static v:HelpSnippets.CliDocs}" />
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
+
+        <!-- MCP -->
+        <TabItem Header="MCP">
+          <ScrollViewer Padding="12,8,24,24">
+            <StackPanel Spacing="14">
+              <Border Classes="banner info">
+                <Grid ColumnDefinitions="Auto,*">
+                  <PathIcon Data="{StaticResource Icon.Robot}" Foreground="{DynamicResource Primary}" VerticalAlignment="Top" />
+                  <TextBlock Grid.Column="1" Margin="10,0,0,0" TextWrapping="Wrap" FontSize="13"
+                             Text="{l:L 'coworkee mcp runs a Model Context Protocol server over stdio. An AI agent such as Claude Code, Claude Desktop or Copilot in VS Code can then plan an app with you, write its spec, create it and add modules, entities and migrations, with the same commands as this Studio.'}" />
+                </Grid>
+              </Border>
+              <TextBlock Classes="caption" Text="{l:L 'This is the MCP server of the command line on your machine. A generated app has its own MCP endpoint under /mcp with the tools of the app (AI assistant module).'}" />
+
+              <TextBlock Classes="h3" Text="Claude Code" />
+              <Border Classes="code">
+                <Grid ColumnDefinitions="*,Auto">
+                  <SelectableTextBlock Text="{x:Static v:HelpSnippets.ClaudeCode}" VerticalAlignment="Center" />
+                  <Button Grid.Column="1" Classes="icon" Foreground="{DynamicResource CodeText}" Command="{Binding CopyCommand}" CommandParameter="{x:Static v:HelpSnippets.ClaudeCode}">
+                    <PathIcon Classes="small" Data="{StaticResource Icon.Copy}" />
+                  </Button>
+                </Grid>
+              </Border>
+
+              <TextBlock Classes="h3" Text="{l:L 'Claude Desktop (claude_desktop_config.json) and other clients with mcpServers'}" />
+              <Border Classes="code">
+                <Grid ColumnDefinitions="*,Auto">
+                  <SelectableTextBlock Text="{x:Static v:HelpSnippets.ClaudeDesktop}" TextWrapping="Wrap" />
+                  <Button Grid.Column="1" Classes="icon" VerticalAlignment="Top" Foreground="{DynamicResource CodeText}" Command="{Binding CopyCommand}" CommandParameter="{x:Static v:HelpSnippets.ClaudeDesktop}">
+                    <PathIcon Classes="small" Data="{StaticResource Icon.Copy}" />
+                  </Button>
+                </Grid>
+              </Border>
+
+              <TextBlock Classes="h3" Text="VS Code (.vscode/mcp.json)" />
+              <Border Classes="code">
+                <Grid ColumnDefinitions="*,Auto">
+                  <SelectableTextBlock Text="{x:Static v:HelpSnippets.VsCode}" TextWrapping="Wrap" />
+                  <Button Grid.Column="1" Classes="icon" VerticalAlignment="Top" Foreground="{DynamicResource CodeText}" Command="{Binding CopyCommand}" CommandParameter="{x:Static v:HelpSnippets.VsCode}">
+                    <PathIcon Classes="small" Data="{StaticResource Icon.Copy}" />
+                  </Button>
+                </Grid>
+              </Border>
+
+              <TextBlock Classes="h3" Text="{l:L 'Tools'}" />
+              <ItemsControl ItemsSource="{x:Static v:HelpSnippets.Tools}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="v:McpTool">
+                    <Grid ColumnDefinitions="150,*" Margin="0,0,0,8">
+                      <TextBlock Classes="mono" FontWeight="SemiBold" Foreground="{DynamicResource Secondary}" Text="{Binding Name}" />
+                      <TextBlock Grid.Column="1" Classes="caption" Text="{Binding Text}" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+
+              <TextBlock Classes="h3" Text="{l:L 'Try it'}" />
+              <Border Classes="soft">
+                <TextBlock Classes="body" FontStyle="Italic" Text="{x:Static v:HelpSnippets.Prompt}" />
+              </Border>
+              <TextBlock Classes="caption" Text="{l:L 'The agent reads list_options and get_spec_schema, writes a spec with a Sales module, checks it with validate_spec and calls create_app.'}" />
+              <Button Classes="link" Content="{l:L 'The MCP server in the documentation'}" Command="{Binding OpenLinkCommand}" CommandParameter="{x:Static v:HelpSnippets.McpDocs}" />
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
+
+        <!-- settings -->
+        <TabItem Header="{l:L Settings}">
+          <ScrollViewer Padding="12,8,24,24">
+            <StackPanel Spacing="16">
+              <StackPanel Spacing="6">
+                <TextBlock Classes="h3" Text="{l:L Language}" />
+                <ComboBox SelectedIndex="{Binding LanguageIndex}" MinWidth="220">
+                  <ComboBoxItem Content="{l:L 'Language of the system'}" />
+                  <ComboBoxItem Content="English" />
+                  <ComboBoxItem Content="Deutsch" />
+                </ComboBox>
+              </StackPanel>
+              <StackPanel Spacing="6">
+                <TextBlock Classes="h3" Text="{l:L Appearance}" />
+                <Button Command="{Binding ToggleThemeCommand}" Content="{Binding ThemeModeText}" />
+              </StackPanel>
+              <StackPanel Spacing="6">
+                <TextBlock Classes="h3" Text="{l:L 'coworkee CLI'}" />
+                <TextBlock Classes="caption" Text="{l:L 'Empty: the global tool. Or a coworkee executable, or Coworkee.Cli.dll of a local build (runs with dotnet).'}" />
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBox Text="{Binding CliPath}" PlaceholderText="coworkee" />
+                  <Button Grid.Column="1" Margin="8,0,0,0" Command="{Binding BrowseCliCommand}" Content="{l:L Browse}" />
+                </Grid>
+              </StackPanel>
+              <StackPanel Spacing="6">
+                <TextBlock Classes="h3" Text="{l:L 'Template source'}" />
+                <TextBlock Classes="caption" Text="{l:L 'A Coworkee.Templates .nupkg or folder instead of nuget.org (coworkee new --template-source), for local builds.'}" />
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBox Text="{Binding TemplateSource}" PlaceholderText="artifacts/nuget/Coworkee.Templates.0.1.0-dev.nupkg" />
+                  <Button Grid.Column="1" Margin="8,0,0,0" Command="{Binding BrowseTemplateCommand}" Content="{l:L Browse}" />
+                </Grid>
+              </StackPanel>
+              <StackPanel Spacing="6">
+                <TextBlock Classes="h3" Text="{l:L 'Local package feed'}" />
+                <TextBlock Classes="caption" Text="{l:L 'A folder with local Coworkee packages; the restore of the new app uses it next to nuget.org, and Install CLI looks there too.'}" />
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBox Text="{Binding PackageFeed}" PlaceholderText="artifacts/nuget" />
+                  <Button Grid.Column="1" Margin="8,0,0,0" Command="{Binding BrowseFeedCommand}" Content="{l:L Browse}" />
+                </Grid>
+              </StackPanel>
+              <TextBlock Classes="caption" Text="{l:L 'Settings and recent specs are kept per user in the application data folder (Coworkee/Studio/settings.json).'}" />
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
+      </TabControl>
+    </DockPanel>
+  </Border>
+</UserControl>

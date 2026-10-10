@@ -1,0 +1,206 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Coworkee.Studio.ViewModels"
+             xmlns:cli="using:Coworkee.Studio.Cli"
+             xmlns:v="using:Coworkee.Studio.Views"
+             xmlns:l="using:Coworkee.Studio.Localization"
+             x:Class="Coworkee.Studio.Views.GenerateView"
+             x:DataType="vm:GenerateStep">
+  <UserControl.Styles>
+    <Style Selector="PathIcon.spin">
+      <Style.Animations>
+        <Animation Duration="0:0:1" IterationCount="Infinite">
+          <KeyFrame Cue="0%"><Setter Property="RotateTransform.Angle" Value="0" /></KeyFrame>
+          <KeyFrame Cue="100%"><Setter Property="RotateTransform.Angle" Value="360" /></KeyFrame>
+        </Animation>
+      </Style.Animations>
+    </Style>
+  </UserControl.Styles>
+  <ScrollViewer>
+    <Grid ColumnDefinitions="*,24,380" Margin="44,12,44,32">
+      <StackPanel Spacing="18">
+        <!-- headline -->
+        <Border Classes="card" Padding="22">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <Border Width="56" Height="56" CornerRadius="16" Background="{DynamicResource Hero}">
+              <Panel>
+                <PathIcon Classes="large spin" Foreground="White" Data="{StaticResource Icon.Restart}" IsVisible="{Binding IsRunning}" />
+                <PathIcon Classes="large" Foreground="White" Data="{StaticResource Icon.Check}" IsVisible="{Binding IsSucceeded}" />
+                <PathIcon Classes="large" Foreground="White" Data="{StaticResource Icon.Alert}" IsVisible="{Binding IsFailed}" />
+                <PathIcon Classes="large" Foreground="White" Data="{StaticResource Icon.Console}" IsVisible="{Binding IsCliMissing}" />
+                <PathIcon Classes="large" Foreground="White" Data="{StaticResource Icon.Rocket}" IsVisible="{Binding IsReady}" />
+              </Panel>
+            </Border>
+            <StackPanel Grid.Column="1" Margin="18,0" VerticalAlignment="Center" Spacing="2">
+              <TextBlock Classes="h2" Text="{Binding Headline}" />
+              <TextBlock Classes="mono caption" Text="{Binding Output}" TextWrapping="NoWrap" TextTrimming="LeadingCharacterEllipsis" ToolTip.Tip="{Binding Output}" />
+            </StackPanel>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+              <TextBlock Classes="mono muted" Text="{Binding Elapsed}" VerticalAlignment="Center" />
+              <Button Command="{Binding CancelCommand}" IsVisible="{Binding IsRunning}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <PathIcon Classes="small" Data="{StaticResource Icon.Stop}" />
+                  <TextBlock Text="{l:L Cancel}" />
+                </StackPanel>
+              </Button>
+              <Button Classes="primary" Command="{Binding StartCommand}" IsVisible="{Binding !IsRunning}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <PathIcon Classes="small" Data="{StaticResource Icon.Play}" />
+                  <TextBlock Text="{l:L 'Create the app'}" IsVisible="{Binding !IsFinished}" />
+                  <TextBlock Text="{l:L 'Run again'}" IsVisible="{Binding IsFinished}" />
+                </StackPanel>
+              </Button>
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <!-- CLI missing -->
+        <Border Classes="card" IsVisible="{Binding IsCliMissing}">
+          <StackPanel Spacing="12">
+            <TextBlock Classes="h3" Text="{l:L 'Install the coworkee CLI'}" />
+            <TextBlock Classes="body muted" Text="{l:L 'The Studio creates apps through the coworkee command line tool, a global .NET tool. Install it with one click, or point the Studio to a local build (coworkee.exe or Coworkee.Cli.dll).'}" />
+            <Border Classes="code">
+              <SelectableTextBlock Text="dotnet tool install -g Coworkee.Cli" />
+            </Border>
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <Button Classes="primary" Command="{Binding InstallCliCommand}" Content="{l:L 'Install and continue'}" />
+              <Button Command="{Binding ChooseCliCommand}" Content="{l:L 'Choose a local CLI'}" />
+              <Button Classes="ghost" Command="{Binding Main.ShowHelpCommand}" CommandParameter="3" Content="{l:L Settings}" />
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <!-- success -->
+        <Border Classes="card" IsVisible="{Binding IsSucceeded}">
+          <StackPanel Spacing="14">
+            <TextBlock Classes="h3" Text="{l:L 'What now?'}" />
+            <UniformGrid Columns="4" ColumnSpacing="10">
+              <Button Classes="tile" Command="{Binding OpenFolderCommand}" Height="96">
+                <StackPanel Spacing="8" HorizontalAlignment="Center" VerticalAlignment="Center">
+                  <PathIcon Classes="large" Data="{StaticResource Icon.FolderOpen}" Foreground="{DynamicResource Primary}" />
+                  <TextBlock Text="{l:L 'Open folder'}" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                </StackPanel>
+              </Button>
+              <Button Classes="tile" Command="{Binding OpenInCommand}" CommandParameter="code" Height="96">
+                <StackPanel Spacing="8" HorizontalAlignment="Center" VerticalAlignment="Center">
+                  <PathIcon Classes="large" Data="{StaticResource Icon.VsCode}" Foreground="{DynamicResource Primary}" />
+                  <TextBlock Text="VS Code" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                </StackPanel>
+              </Button>
+              <Button Classes="tile" Height="96">
+                <Button.Flyout>
+                  <MenuFlyout>
+                    <MenuItem Header="{l:L 'Default program (Visual Studio)'}" Command="{Binding OpenSolutionCommand}" />
+                    <MenuItem Header="Rider" Command="{Binding OpenInCommand}" CommandParameter="rider" />
+                  </MenuFlyout>
+                </Button.Flyout>
+                <StackPanel Spacing="8" HorizontalAlignment="Center" VerticalAlignment="Center">
+                  <PathIcon Classes="large" Data="{StaticResource Icon.Code}" Foreground="{DynamicResource Primary}" />
+                  <TextBlock Text="{l:L 'Open solution'}" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                </StackPanel>
+              </Button>
+              <Button Classes="tile selected" Command="{Binding RunAppCommand}" Height="96">
+                <StackPanel Spacing="8" HorizontalAlignment="Center" VerticalAlignment="Center">
+                  <PathIcon Classes="large" Data="{StaticResource Icon.Play}" Foreground="{DynamicResource Secondary}" />
+                  <TextBlock Text="{l:L 'Run the app'}" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                </StackPanel>
+              </Button>
+            </UniformGrid>
+            <Border Classes="soft" IsVisible="{Binding NextSteps.Count, Converter={x:Static v:Converters.Positive}}">
+              <StackPanel Spacing="4">
+                <TextBlock Classes="overline" Text="{l:L 'NEXT STEPS'}" />
+                <ItemsControl ItemsSource="{Binding NextSteps}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="x:String">
+                      <SelectableTextBlock Classes="mono" Text="{Binding}" TextWrapping="Wrap" Margin="0,2" />
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </Border>
+
+        <!-- warnings -->
+        <ItemsControl ItemsSource="{Binding Warnings}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="x:String">
+              <Border Classes="banner warn" Margin="0,0,0,6">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <PathIcon Classes="small" Data="{StaticResource Icon.Alert}" Foreground="{DynamicResource Warning}" />
+                  <TextBlock Text="{Binding}" TextWrapping="Wrap" FontSize="12.5" MaxWidth="700" />
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <!-- log -->
+        <Border Classes="card" Padding="0">
+          <StackPanel>
+            <Grid ColumnDefinitions="*,Auto,Auto" Margin="16,8">
+              <ToggleButton Classes="ghost" IsChecked="{Binding ShowLog}" Background="Transparent" BorderThickness="0" Padding="4">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <PathIcon Classes="small" Data="{StaticResource Icon.Console}" />
+                  <TextBlock FontWeight="SemiBold" Text="{l:L 'CLI output'}" />
+                  <TextBlock Classes="caption" Text="{Binding Log.Count, StringFormat='({0})'}" VerticalAlignment="Center" />
+                </StackPanel>
+              </ToggleButton>
+              <Button Grid.Column="1" Classes="ghost" Command="{Binding CopyLogCommand}" Content="{l:L Copy}" />
+            </Grid>
+            <Border Classes="code" CornerRadius="0,0,14,14" Height="300" IsVisible="{Binding ShowLog}">
+              <ListBox ItemsSource="{Binding Log}" Background="Transparent" x:Name="LogList">
+                <ListBox.Styles>
+                  <Style Selector="ListBoxItem">
+                    <Setter Property="Padding" Value="0,1" />
+                    <Setter Property="MinHeight" Value="0" />
+                  </Style>
+                </ListBox.Styles>
+                <ListBox.ItemTemplate>
+                  <DataTemplate x:DataType="cli:CliLine">
+                    <TextBlock Text="{Binding Text}" FontFamily="{DynamicResource MonoFont}" FontSize="12" TextWrapping="Wrap"
+                               Classes.step="{Binding Kind, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static cli:CliLineKind.Step}}"
+                               Classes.command="{Binding Kind, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static cli:CliLineKind.Command}}"
+                               Classes.warn="{Binding Kind, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static cli:CliLineKind.Warning}}"
+                               Classes.err="{Binding Kind, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static cli:CliLineKind.Error}}">
+                      <TextBlock.Styles>
+                        <Style Selector="TextBlock"><Setter Property="Foreground" Value="#c5d5e6" /></Style>
+                        <Style Selector="TextBlock.step"><Setter Property="Foreground" Value="#64d8cb" /><Setter Property="FontWeight" Value="Bold" /></Style>
+                        <Style Selector="TextBlock.command"><Setter Property="Foreground" Value="#90caf9" /></Style>
+                        <Style Selector="TextBlock.warn"><Setter Property="Foreground" Value="#ffcc80" /></Style>
+                        <Style Selector="TextBlock.err"><Setter Property="Foreground" Value="#ef9a9a" /></Style>
+                      </TextBlock.Styles>
+                    </TextBlock>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+            </Border>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+
+      <!-- steps -->
+      <Border Grid.Column="2" Classes="card" VerticalAlignment="Top">
+        <StackPanel Spacing="12">
+          <TextBlock Classes="overline" Text="{l:L 'PROGRESS'}" />
+          <TextBlock Classes="caption" Text="{l:L 'The steps appear as the CLI reaches them.'}" IsVisible="{Binding Progress.Count, Converter={x:Static v:Converters.Zero}}" />
+          <ItemsControl ItemsSource="{Binding Progress}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:ProgressStepViewModel">
+                <Grid ColumnDefinitions="Auto,*" Margin="0,5">
+                  <Panel Width="22" Height="22">
+                    <Ellipse Fill="{DynamicResource PrimarySoft}" />
+                    <PathIcon Classes="small spin" Data="{StaticResource Icon.Restart}" Foreground="{DynamicResource Primary}" IsVisible="{Binding IsRunning}" />
+                    <PathIcon Classes="small" Data="{StaticResource Icon.Check}" Foreground="{DynamicResource Success}" IsVisible="{Binding IsDone}" />
+                    <PathIcon Classes="small" Data="{StaticResource Icon.Close}" Foreground="{DynamicResource Error}" IsVisible="{Binding IsFailed}" />
+                  </Panel>
+                  <TextBlock Grid.Column="1" Margin="12,0,0,0" Text="{Binding Text}" VerticalAlignment="Center" TextWrapping="Wrap" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+    </Grid>
+  </ScrollViewer>
+</UserControl>

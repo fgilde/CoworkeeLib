@@ -45,7 +45,7 @@
     <Setter Property="LetterSpacing" Value="1.2" />
     <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
   </Style>
-  <Style Selector="TextBlock.mono, SelectableTextBlock.mono, TextBox.mono">
+  <Style Selector="TextBlock.mono">
     <Setter Property="FontFamily" Value="{DynamicResource MonoFont}" />
     <Setter Property="FontSize" Value="12.5" />
   </Style>
@@ -207,6 +207,7 @@
   <!-- selectable tiles (themes, presets, layouts) -->
   <Style Selector="Button.tile">
     <Setter Property="Padding" Value="0" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
     <Setter Property="VerticalContentAlignment" Value="Stretch" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius}" />
@@ -257,6 +258,7 @@
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource SmallRadius}" />
     <Setter Property="Padding" Value="3" />
+    <Setter Property="AutoScrollToSelectedItem" Value="False" />
     <Setter Property="ItemsPanel">
       <ItemsPanelTemplate>
         <WrapPanel Orientation="Horizontal" />

@@ -1,0 +1,69 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Coworkee.Studio.ViewModels"
+             x:Class="Coworkee.Studio.Views.AppShellPreview"
+             x:DataType="vm:PreviewViewModel">
+  <Border Background="{Binding Background}" CornerRadius="12" ClipToBounds="True" BorderBrush="{Binding Lines}" BorderThickness="1" Height="232">
+    <Grid RowDefinitions="36,*">
+      <Border Background="{Binding AppBar}">
+        <Grid ColumnDefinitions="Auto,*,Auto" Margin="12,0">
+          <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <Border Width="18" Height="18" CornerRadius="5" Background="#33ffffff" IsVisible="{Binding !HasLogo}" />
+            <Image Width="18" Height="18" Source="{Binding Logo}" IsVisible="{Binding HasLogo}" />
+            <TextBlock Text="{Binding Title}" Foreground="{Binding AppBarText}" FontFamily="{Binding Font}" FontWeight="SemiBold" FontSize="12.5" VerticalAlignment="Center" />
+          </StackPanel>
+          <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <Ellipse Width="10" Height="10" Fill="{Binding AppBarText}" Opacity="0.6" />
+            <Ellipse Width="18" Height="18" Fill="{Binding Secondary}" />
+          </StackPanel>
+        </Grid>
+      </Border>
+      <Grid Grid.Row="1" ColumnDefinitions="96,*">
+        <Border Background="{Binding Drawer}" BorderBrush="{Binding Lines}" BorderThickness="0,0,1,0">
+          <StackPanel Margin="8,10" Spacing="5">
+            <Grid Height="20">
+              <Border Background="{Binding Primary}" Opacity="0.16" CornerRadius="{Binding SmallCorner}" />
+              <Border Height="6" Width="56" HorizontalAlignment="Left" Margin="8,0" CornerRadius="3" Background="{Binding Primary}" />
+            </Grid>
+            <Border Height="6" Width="62" HorizontalAlignment="Left" Margin="8,6" CornerRadius="3" Background="{Binding TextSecondary}" Opacity="0.55" />
+            <Border Height="6" Width="48" HorizontalAlignment="Left" Margin="8,6" CornerRadius="3" Background="{Binding TextSecondary}" Opacity="0.55" />
+            <Border Height="6" Width="58" HorizontalAlignment="Left" Margin="8,6" CornerRadius="3" Background="{Binding TextSecondary}" Opacity="0.55" />
+            <Border Height="6" Width="40" HorizontalAlignment="Left" Margin="8,6" CornerRadius="3" Background="{Binding TextSecondary}" Opacity="0.55" />
+          </StackPanel>
+        </Border>
+        <StackPanel Grid.Column="1" Margin="14,12" Spacing="10">
+          <TextBlock Text="Orders" Foreground="{Binding Text}" FontFamily="{Binding Font}" FontWeight="SemiBold" FontSize="15" />
+          <UniformGrid Columns="2" ColumnSpacing="8">
+            <Border Background="{Binding Surface}" BorderBrush="{Binding Lines}" BorderThickness="1" CornerRadius="{Binding SmallCorner}" Padding="8,6">
+              <StackPanel Spacing="2">
+                <TextBlock Text="1,284" Foreground="{Binding Primary}" FontFamily="{Binding Font}" FontWeight="Bold" FontSize="14" />
+                <Border Height="5" Width="40" HorizontalAlignment="Left" CornerRadius="3" Background="{Binding TextSecondary}" Opacity="0.5" />
+              </StackPanel>
+            </Border>
+            <Border Background="{Binding Surface}" BorderBrush="{Binding Lines}" BorderThickness="1" CornerRadius="{Binding SmallCorner}" Padding="8,6">
+              <StackPanel Spacing="2">
+                <TextBlock Text="98 %" Foreground="{Binding Secondary}" FontFamily="{Binding Font}" FontWeight="Bold" FontSize="14" />
+                <Border Height="5" Width="34" HorizontalAlignment="Left" CornerRadius="3" Background="{Binding TextSecondary}" Opacity="0.5" />
+              </StackPanel>
+            </Border>
+          </UniformGrid>
+          <Border Background="{Binding Surface}" BorderBrush="{Binding Lines}" BorderThickness="1" CornerRadius="{Binding Corner}" Padding="10">
+            <StackPanel Spacing="7">
+              <Border Height="6" Width="120" HorizontalAlignment="Left" CornerRadius="3" Background="{Binding Text}" Opacity="0.7" />
+              <Border Height="5" CornerRadius="3" Background="{Binding TextSecondary}" Opacity="0.4" />
+              <Border Height="5" Width="140" HorizontalAlignment="Left" CornerRadius="3" Background="{Binding TextSecondary}" Opacity="0.4" />
+              <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2,0,0">
+                <Border Background="{Binding Primary}" CornerRadius="{Binding SmallCorner}" Padding="10,3">
+                  <TextBlock Text="New order" Foreground="{Binding PrimaryText}" FontFamily="{Binding Font}" FontSize="10.5" FontWeight="SemiBold" />
+                </Border>
+                <Border BorderBrush="{Binding Secondary}" BorderThickness="1" CornerRadius="{Binding SmallCorner}" Padding="10,3">
+                  <TextBlock Text="Export" Foreground="{Binding Secondary}" FontFamily="{Binding Font}" FontSize="10.5" FontWeight="SemiBold" />
+                </Border>
+              </StackPanel>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </Grid>
+    </Grid>
+  </Border>
+</UserControl>

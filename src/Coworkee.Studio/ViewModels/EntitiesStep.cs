@@ -77,6 +77,13 @@ public sealed partial class EntitiesStep(MainViewModel main) : StepViewModel(mai
     }
 
     [RelayCommand]
+    public void AddEntityTo(ModuleViewModel module)
+    {
+        SelectedModule = module;
+        AddEntity();
+    }
+
+    [RelayCommand]
     public void RemoveEntity(EntityViewModel entity)
     {
         var module = Modules.First(m => m.Entities.Contains(entity));
@@ -136,6 +143,14 @@ public sealed partial class EntitiesStep(MainViewModel main) : StepViewModel(mai
         OnPropertyChanged(nameof(Preview));
         OnPropertyChanged(nameof(Counts));
         OnPropertyChanged(nameof(DefaultMapping));
+    }
+
+    partial void OnSelectedEntityChanged(EntityViewModel? value)
+    {
+        foreach (var entity in Modules.SelectMany(m => m.Entities))
+        {
+            entity.IsSelected = entity == value;
+        }
     }
 
     partial void OnSelectedModuleChanged(ModuleViewModel? value)

@@ -1,5 +1,6 @@
 using System.Globalization;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
 
@@ -14,6 +15,14 @@ public static class Converters
     public static IValueConverter Brush { get; } = new FuncValueConverter<Color, IBrush>(color => new SolidColorBrush(color));
 
     public static IValueConverter Hex { get; } = new FuncValueConverter<Color, string>(color => $"#{color.R:x2}{color.G:x2}{color.B:x2}".ToUpper(CultureInfo.InvariantCulture));
+
+    public static IValueConverter Dim { get; } = new FuncValueConverter<bool, double>(on => on ? 1 : 0.45);
+
+    public static IValueConverter Mirror { get; } = new FuncValueConverter<bool, FlowDirection>(right => right ? FlowDirection.RightToLeft : FlowDirection.LeftToRight);
+
+    public static IValueConverter Positive { get; } = new FuncValueConverter<int, bool>(count => count > 0);
+
+    public static IValueConverter Zero { get; } = new FuncValueConverter<int, bool>(count => count == 0);
 
     public static IValueConverter FileName { get; } = new FuncValueConverter<string?, string?>(path => path is null ? null : Path.GetFileName(path));
 }

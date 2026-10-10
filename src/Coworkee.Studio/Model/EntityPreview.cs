@@ -15,7 +15,7 @@ public sealed record EntityPreview(string Route, string ApiRoute, IReadOnlyList<
         return new(
             $"/{Kebab(module)}/{Kebab(plural)}",
             $"api/v1/{Kebab(plural)}",
-            ["View", "Create", "Edit", "Delete"].Select(p => $"{module}.{plural}.{p}").ToList(),
+            new[] { "View", "Create", "Edit", "Delete" }.Select(p => $"{module}.{plural}.{p}").ToList(),
             [
                 $"{contracts}/{entity.Name}Dto.cs",
                 $"{contracts}/AddEdit{entity.Name}Request.cs",

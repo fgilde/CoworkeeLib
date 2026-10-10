@@ -1,0 +1,112 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Coworkee.Studio.ViewModels"
+             xmlns:l="using:Coworkee.Studio.Localization"
+             x:Class="Coworkee.Studio.Views.ReviewView"
+             x:DataType="vm:ReviewStep">
+  <ScrollViewer>
+    <Grid ColumnDefinitions="*,24,*" Margin="44,12,44,32">
+      <StackPanel Spacing="18">
+        <Border Classes="banner ok" IsVisible="{Binding !Main.HasErrors}" Padding="16,12">
+          <Grid ColumnDefinitions="Auto,*">
+            <PathIcon Classes="large" Data="{StaticResource Icon.CheckCircle}" Foreground="{DynamicResource Success}" />
+            <StackPanel Grid.Column="1" Margin="12,0,0,0">
+              <TextBlock Classes="h3" Text="{l:L 'The spec is valid'}" />
+              <TextBlock Classes="caption" Text="{l:L 'Checked with the same rules the CLI uses. Create the app or save the spec for later.'}" />
+            </StackPanel>
+          </Grid>
+        </Border>
+        <Border Classes="banner" IsVisible="{Binding Main.HasErrors}" Padding="16,12">
+          <StackPanel Spacing="8">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <PathIcon Data="{StaticResource Icon.AlertCircle}" Foreground="{DynamicResource Error}" />
+              <TextBlock Classes="h3" Text="{Binding Main.ErrorSummary}" />
+            </StackPanel>
+            <ItemsControl ItemsSource="{Binding Main.Errors}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="x:String">
+                  <TextBlock Classes="error mono" Text="{Binding}" Margin="0,2" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
+        <Border Classes="card">
+          <StackPanel Spacing="10">
+            <TextBlock Classes="h3" Text="{l:L Summary}" />
+            <ItemsControl ItemsSource="{Binding Items}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:ReviewItem">
+                  <Grid ColumnDefinitions="120,*" Margin="0,4">
+                    <TextBlock Classes="caption" Text="{Binding Label}" />
+                    <TextBlock Grid.Column="1" Text="{Binding Value}" TextWrapping="Wrap" FontSize="13" />
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
+        <Border Classes="card">
+          <StackPanel Spacing="12">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <PathIcon Data="{StaticResource Icon.Console}" Foreground="{DynamicResource Secondary}" />
+              <TextBlock Classes="h3" Text="{l:L 'The same with the CLI'}" />
+            </StackPanel>
+            <TextBlock Classes="caption" Text="{l:L 'With the spec: everything, including modules and entities.'}" />
+            <Border Classes="code">
+              <Grid ColumnDefinitions="*,Auto">
+                <SelectableTextBlock Text="{Binding SpecCommand}" VerticalAlignment="Center" />
+                <Button Grid.Column="1" Classes="icon" Foreground="{DynamicResource CodeText}" Command="{Binding Main.CopyCommand}" CommandParameter="{Binding SpecCommand}" ToolTip.Tip="{l:L Copy}">
+                  <PathIcon Classes="small" Data="{StaticResource Icon.Copy}" />
+                </Button>
+              </Grid>
+            </Border>
+            <TextBlock Classes="caption" Text="{l:L 'Switches only: the same app without modules and entities.'}" />
+            <Border Classes="code">
+              <Grid ColumnDefinitions="*,Auto">
+                <SelectableTextBlock Text="{Binding FlagsCommand}" VerticalAlignment="Center" />
+                <Button Grid.Column="1" Classes="icon" Foreground="{DynamicResource CodeText}" Command="{Binding Main.CopyCommand}" CommandParameter="{Binding FlagsCommand}" ToolTip.Tip="{l:L Copy}">
+                  <PathIcon Classes="small" Data="{StaticResource Icon.Copy}" />
+                </Button>
+              </Grid>
+            </Border>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+
+      <Border Grid.Column="2" Classes="card" VerticalAlignment="Top">
+        <StackPanel Spacing="10">
+          <Grid ColumnDefinitions="*,Auto,Auto">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <PathIcon Data="{StaticResource Icon.FileCode}" Foreground="{DynamicResource Primary}" />
+              <TextBlock Classes="h3" Text="{l:L 'App spec'}" />
+              <Border Classes="chip" IsVisible="{Binding Main.HasSpecPath}" Padding="8,1">
+                <TextBlock Text="{Binding Main.SpecName}" FontSize="11" />
+              </Border>
+            </StackPanel>
+            <Button Grid.Column="1" Classes="ghost" Command="{Binding Main.CopyCommand}" CommandParameter="{Binding SpecText}">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <PathIcon Classes="small" Data="{StaticResource Icon.Copy}" />
+                <TextBlock Text="{l:L Copy}" />
+              </StackPanel>
+            </Button>
+            <Button Grid.Column="2" Classes="ghost" Command="{Binding Main.SaveSpecAsCommand}">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <PathIcon Classes="small" Data="{StaticResource Icon.Save}" />
+                <TextBlock Text="{l:L 'Save as'}" />
+              </StackPanel>
+            </Button>
+          </Grid>
+          <TextBlock Classes="caption" Text="{l:L 'Logo and media from other folders are copied next to the spec when you save it; the CLI only reads files from the folder of a spec.'}" />
+          <Border Classes="code" MaxHeight="560">
+            <ScrollViewer>
+              <SelectableTextBlock Text="{Binding SpecText}" TextWrapping="NoWrap" />
+            </ScrollViewer>
+          </Border>
+        </StackPanel>
+      </Border>
+    </Grid>
+  </ScrollViewer>
+</UserControl>

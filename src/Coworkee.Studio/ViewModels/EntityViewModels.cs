@@ -72,6 +72,9 @@ public sealed partial class EntityViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasErrors))]
     public partial IReadOnlyList<string> Errors { get; set; } = [];
 
+    [ObservableProperty]
+    public partial bool IsSelected { get; set; }
+
     public bool HasErrors => Errors.Count > 0;
 
     public ObservableCollection<PropertyViewModel> Properties { get; } = [];
@@ -109,7 +112,7 @@ public sealed partial class EntityViewModel : ObservableObject
     protected override void OnPropertyChanged(System.ComponentModel.PropertyChangedEventArgs e)
     {
         base.OnPropertyChanged(e);
-        if (e.PropertyName is not (nameof(Errors) or nameof(HasErrors)))
+        if (e.PropertyName is not (nameof(Errors) or nameof(HasErrors) or nameof(IsSelected)))
         {
             _changed();
         }

@@ -1,0 +1,124 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Coworkee.Studio.ViewModels"
+             xmlns:l="using:Coworkee.Studio.Localization"
+             x:Class="Coworkee.Studio.Views.WelcomeView"
+             x:DataType="vm:WelcomeStep">
+  <ScrollViewer>
+    <StackPanel Margin="56,48,56,40" Spacing="26" MaxWidth="880" HorizontalAlignment="Left">
+      <StackPanel Spacing="8">
+        <TextBlock Classes="overline" Text="{l:L 'COWORKEE STUDIO'}" Foreground="{DynamicResource Primary}" />
+        <TextBlock Classes="display" FontSize="32" Text="{l:L 'Create your next business app'}" />
+        <TextBlock Classes="body muted" FontSize="15" LineHeight="23" Text="{l:L 'Pick name, logo and colors, choose the modules and infrastructure, describe your entities, and the Coworkee CLI creates a solution with auth server, API, Blazor client, migrations, tests and an Aspire app host.'}" />
+      </StackPanel>
+
+      <UniformGrid Columns="2" ColumnSpacing="16">
+        <Button Classes="tile selected" Command="{Binding Main.NewAppCommand}" Height="132">
+          <Grid ColumnDefinitions="Auto,*" Margin="22">
+            <Border Width="52" Height="52" CornerRadius="14" Background="{DynamicResource Hero}" VerticalAlignment="Top">
+              <PathIcon Classes="large" Foreground="White" Data="{StaticResource Icon.Sparkle}" />
+            </Border>
+            <StackPanel Grid.Column="1" Margin="18,2,0,0" Spacing="6">
+              <TextBlock Classes="h2" Text="{l:L 'New app'}" />
+              <TextBlock Classes="muted" TextWrapping="Wrap" Text="{l:L 'Start the wizard with the defaults of the template.'}" />
+            </StackPanel>
+          </Grid>
+        </Button>
+        <Button Classes="tile" Command="{Binding Main.OpenSpecCommand}" Height="132">
+          <Grid ColumnDefinitions="Auto,*" Margin="22">
+            <Border Width="52" Height="52" CornerRadius="14" Background="{DynamicResource SecondarySoft}" VerticalAlignment="Top">
+              <PathIcon Classes="large" Foreground="{DynamicResource Secondary}" Data="{StaticResource Icon.FolderOpen}" />
+            </Border>
+            <StackPanel Grid.Column="1" Margin="18,2,0,0" Spacing="6">
+              <TextBlock Classes="h2" Text="{l:L 'Open a spec'}" />
+              <TextBlock Classes="muted" TextWrapping="Wrap" Text="{l:L 'Continue with an app spec (.json) from the CLI, the MCP server or an earlier session.'}" />
+            </StackPanel>
+          </Grid>
+        </Button>
+      </UniformGrid>
+
+      <StackPanel Spacing="10" IsVisible="{Binding HasRecent}">
+        <TextBlock Classes="overline" Text="{l:L 'RECENT SPECS'}" />
+        <ItemsControl ItemsSource="{Binding Recent}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <WrapPanel ItemSpacing="10" LineSpacing="10" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:RecentSpec">
+              <Button Width="270" HorizontalContentAlignment="Stretch" Padding="14,10"
+                      Command="{Binding $parent[ItemsControl].((vm:WelcomeStep)DataContext).Main.OpenCommand}" CommandParameter="{Binding Path}"
+                      ToolTip.Tip="{Binding Path}">
+                <Grid ColumnDefinitions="Auto,*">
+                  <PathIcon Data="{StaticResource Icon.File}" Foreground="{DynamicResource Primary}" VerticalAlignment="Top" Margin="0,2,0,0" />
+                  <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Classes="caption" Text="{Binding Folder}" TextTrimming="PathSegmentEllipsis" TextWrapping="NoWrap" />
+                  </StackPanel>
+                </Grid>
+              </Button>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+
+      <StackPanel Spacing="12">
+        <TextBlock Classes="overline" Text="{l:L 'WHAT THE WIZARD COVERS'}" />
+        <UniformGrid Columns="3" ColumnSpacing="12" RowSpacing="12">
+          <Border Classes="soft">
+            <StackPanel Spacing="6">
+              <PathIcon Data="{StaticResource Icon.Palette}" Foreground="{DynamicResource Primary}" HorizontalAlignment="Left" />
+              <TextBlock Classes="h3" Text="{l:L 'Branding'}" />
+              <TextBlock Classes="caption" Text="{l:L 'Logo, seven themes and brand colors with a live preview in light and dark.'}" />
+            </StackPanel>
+          </Border>
+          <Border Classes="soft">
+            <StackPanel Spacing="6">
+              <PathIcon Data="{StaticResource Icon.Login}" Foreground="{DynamicResource Primary}" HorizontalAlignment="Left" />
+              <TextBlock Classes="h3" Text="{l:L 'Sign-in'}" />
+              <TextBlock Classes="caption" Text="{l:L 'Card, split or the sliding panel, with your own image or video.'}" />
+            </StackPanel>
+          </Border>
+          <Border Classes="soft">
+            <StackPanel Spacing="6">
+              <PathIcon Data="{StaticResource Icon.Layers}" Foreground="{DynamicResource Primary}" HorizontalAlignment="Left" />
+              <TextBlock Classes="h3" Text="{l:L 'Architecture'}" />
+              <TextBlock Classes="caption" Text="{l:L 'Presets and every module with pros, cons and the containers it adds.'}" />
+            </StackPanel>
+          </Border>
+          <Border Classes="soft">
+            <StackPanel Spacing="6">
+              <PathIcon Data="{StaticResource Icon.Table}" Foreground="{DynamicResource Secondary}" HorizontalAlignment="Left" />
+              <TextBlock Classes="h3" Text="{l:L 'Entities'}" />
+              <TextBlock Classes="caption" Text="{l:L 'Modules, entities and properties; pages, API and permissions are generated.'}" />
+            </StackPanel>
+          </Border>
+          <Border Classes="soft">
+            <StackPanel Spacing="6">
+              <PathIcon Data="{StaticResource Icon.Eye}" Foreground="{DynamicResource Secondary}" HorizontalAlignment="Left" />
+              <TextBlock Classes="h3" Text="{l:L 'Review'}" />
+              <TextBlock Classes="caption" Text="{l:L 'Validation, the spec as JSON and the equivalent CLI command.'}" />
+            </StackPanel>
+          </Border>
+          <Border Classes="soft">
+            <StackPanel Spacing="6">
+              <PathIcon Data="{StaticResource Icon.Flag}" Foreground="{DynamicResource Secondary}" HorizontalAlignment="Left" />
+              <TextBlock Classes="h3" Text="{l:L 'Create'}" />
+              <TextBlock Classes="caption" Text="{l:L 'The CLI creates the app; open it in your IDE or run it with Aspire.'}" />
+            </StackPanel>
+          </Border>
+        </UniformGrid>
+      </StackPanel>
+
+      <Border Classes="banner info">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+          <PathIcon Data="{StaticResource Icon.Robot}" Foreground="{DynamicResource Primary}" VerticalAlignment="Center" />
+          <TextBlock Grid.Column="1" Margin="12,0" VerticalAlignment="Center" TextWrapping="Wrap"
+                     Text="{l:L 'Prefer an AI agent? coworkee mcp runs the same generator as an MCP server for Claude, Copilot and others.'}" />
+          <Button Grid.Column="2" Classes="link" Content="{l:L 'How to connect'}" Command="{Binding Main.ShowHelpCommand}" CommandParameter="2" />
+        </Grid>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

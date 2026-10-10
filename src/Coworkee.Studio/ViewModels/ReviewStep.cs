@@ -38,7 +38,8 @@ public sealed partial class ReviewStep(MainViewModel main) : StepViewModel(main)
     public override void Refresh()
     {
         var spec = Main.ToSpec();
-        SpecText = SpecJson.Write(Main.SpecPath is { } path ? Main.ToSpec(Path.GetDirectoryName(path)) : spec);
+        // as it is saved: next to the spec file, or, before the first save, next to the app folder
+        SpecText = SpecJson.Write(Main.ToSpec(Main.SpecPath is { } path ? Path.GetDirectoryName(path) : Main.Basics.Location));
         FlagsCommand = CommandLine.Format(CommandLine.Flags(spec));
         SpecCommand = CommandLine.Format(["coworkee", "new", "--spec", Main.SpecPath ?? $"{(spec.Name.Length > 0 ? spec.Name : "app")}.json",
             .. string.IsNullOrWhiteSpace(Main.Settings.TemplateSource) ? Array.Empty<string>() : ["--template-source", Main.Settings.TemplateSource]]);

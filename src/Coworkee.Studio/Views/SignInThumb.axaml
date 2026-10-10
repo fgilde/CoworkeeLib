@@ -1,0 +1,95 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Coworkee.Studio.ViewModels"
+             xmlns:v="using:Coworkee.Studio.Views"
+             x:Class="Coworkee.Studio.Views.SignInThumb"
+             x:DataType="vm:PreviewViewModel"
+             x:Name="Root">
+  <UserControl.Styles>
+    <!-- gentle loops: the card floats, the split media drifts, the slide panel swaps sides like the real pages -->
+    <Style Selector="Border.float">
+      <Style.Animations>
+        <Animation Duration="0:0:4" IterationCount="Infinite" PlaybackDirection="Alternate" Easing="SineEaseInOut">
+          <KeyFrame Cue="0%"><Setter Property="TranslateTransform.Y" Value="0" /></KeyFrame>
+          <KeyFrame Cue="100%"><Setter Property="TranslateTransform.Y" Value="-5" /></KeyFrame>
+        </Animation>
+      </Style.Animations>
+    </Style>
+    <Style Selector="Panel.drift">
+      <Style.Animations>
+        <Animation Duration="0:0:9" IterationCount="Infinite" PlaybackDirection="Alternate" Easing="SineEaseInOut">
+          <KeyFrame Cue="0%"><Setter Property="ScaleTransform.ScaleX" Value="1" /><Setter Property="ScaleTransform.ScaleY" Value="1" /></KeyFrame>
+          <KeyFrame Cue="100%"><Setter Property="ScaleTransform.ScaleX" Value="1.12" /><Setter Property="ScaleTransform.ScaleY" Value="1.12" /></KeyFrame>
+        </Animation>
+      </Style.Animations>
+    </Style>
+    <Style Selector="Border.slider">
+      <Style.Animations>
+        <Animation Duration="0:0:6" IterationCount="Infinite" Easing="CubicEaseInOut">
+          <KeyFrame Cue="0%"><Setter Property="TranslateTransform.X" Value="0" /></KeyFrame>
+          <KeyFrame Cue="40%"><Setter Property="TranslateTransform.X" Value="0" /></KeyFrame>
+          <KeyFrame Cue="50%"><Setter Property="TranslateTransform.X" Value="160" /></KeyFrame>
+          <KeyFrame Cue="90%"><Setter Property="TranslateTransform.X" Value="160" /></KeyFrame>
+          <KeyFrame Cue="100%"><Setter Property="TranslateTransform.X" Value="0" /></KeyFrame>
+        </Animation>
+      </Style.Animations>
+    </Style>
+  </UserControl.Styles>
+
+  <!-- drawn on a fixed 320x200 canvas, so the loops can move by fixed amounts; the viewbox scales it -->
+  <Viewbox Stretch="Uniform" DataContext="{Binding #Root.Preview}">
+  <Border Width="320" Height="200" Background="{Binding Background}" CornerRadius="12" ClipToBounds="True" BorderBrush="{Binding Lines}" BorderThickness="1">
+    <Panel>
+      <!-- Card -->
+      <Panel IsVisible="{Binding #Root.Layout, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Card}">
+        <Border Background="{Binding Gradient}" Opacity="0.12" />
+        <Border Classes="float" Background="{Binding Surface}" CornerRadius="{Binding SmallCorner}" BorderBrush="{Binding Lines}" BorderThickness="1"
+                Width="124" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="10" BoxShadow="0 4 14 0 #22000000">
+          <v:SignInForm />
+        </Border>
+      </Panel>
+
+      <!-- Split -->
+      <Grid ColumnDefinitions="*,*" IsVisible="{Binding #Root.Layout, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Split}"
+            FlowDirection="{Binding #Root.MediaRight, Converter={x:Static v:Converters.Mirror}}">
+        <Panel ClipToBounds="True">
+          <Panel Classes="drift">
+            <Border Background="{Binding Gradient}" />
+            <Path Data="M0,100 L30,55 L48,75 L72,35 L100,100 Z" Stretch="Fill" Fill="#40ffffff" VerticalAlignment="Bottom" Height="60" />
+            <Ellipse Width="22" Height="22" Fill="#66ffffff" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,16,22,0" />
+            <Image Source="{Binding #Root.Media}" Stretch="UniformToFill" />
+          </Panel>
+        </Panel>
+        <Border Grid.Column="1" Background="{Binding Surface}" FlowDirection="LeftToRight">
+          <v:SignInForm Margin="14,0" VerticalAlignment="Center" />
+        </Border>
+      </Grid>
+
+      <!-- Slide -->
+      <Grid ColumnDefinitions="*,*" IsVisible="{Binding #Root.Layout, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Slide}"
+            FlowDirection="{Binding #Root.MediaRight, Converter={x:Static v:Converters.Mirror}}">
+        <Border Grid.Column="1" Background="{Binding Surface}" FlowDirection="LeftToRight">
+          <v:SignInForm Margin="14,0" VerticalAlignment="Center" />
+        </Border>
+        <Border Grid.Column="0" Background="{Binding Surface}" FlowDirection="LeftToRight">
+          <v:SignInForm Margin="14,0" VerticalAlignment="Center" />
+        </Border>
+        <Border Grid.Column="0" Classes="slider" Background="{Binding Gradient}" CornerRadius="0,18,18,0" ClipToBounds="True">
+          <Panel>
+            <Image Source="{Binding #Root.Media}" Stretch="UniformToFill" Opacity="0.35" />
+            <Ellipse Width="70" Height="70" Fill="#1affffff" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-20,-20,0" />
+            <StackPanel VerticalAlignment="Center" Margin="14,0" Spacing="6" FlowDirection="LeftToRight">
+              <TextBlock Text="Welcome back" Foreground="{Binding PrimaryText}" FontFamily="{Binding Font}" FontWeight="Bold" FontSize="12" />
+              <Border Height="4" Width="60" HorizontalAlignment="Left" CornerRadius="2" Background="{Binding PrimaryText}" Opacity="0.6" />
+              <Border Height="4" Width="44" HorizontalAlignment="Left" CornerRadius="2" Background="{Binding PrimaryText}" Opacity="0.6" />
+              <Border BorderBrush="{Binding PrimaryText}" BorderThickness="1" CornerRadius="8" Padding="8,2" HorizontalAlignment="Left" Margin="0,4,0,0">
+                <TextBlock Text="Register" Foreground="{Binding PrimaryText}" FontSize="9" FontFamily="{Binding Font}" />
+              </Border>
+            </StackPanel>
+          </Panel>
+        </Border>
+      </Grid>
+    </Panel>
+  </Border>
+  </Viewbox>
+</UserControl>

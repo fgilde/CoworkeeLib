@@ -1,0 +1,244 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Coworkee.Studio.ViewModels"
+             xmlns:v="using:Coworkee.Studio.Views"
+             xmlns:l="using:Coworkee.Studio.Localization"
+             xmlns:chrome="using:Avalonia.Controls.Chrome"
+             x:Class="Coworkee.Studio.Views.MainView"
+             x:DataType="vm:MainViewModel"
+             Background="{DynamicResource Background}">
+  <UserControl.Styles>
+    <Style Selector="Border#Hero">
+      <Setter Property="Width" Value="300" />
+      <Setter Property="Transitions">
+        <Transitions>
+          <DoubleTransition Property="Width" Duration="0:0:0.55" Easing="CubicEaseInOut" />
+        </Transitions>
+      </Setter>
+    </Style>
+    <Style Selector="Border#Hero.wide">
+      <Setter Property="Width" Value="600" />
+    </Style>
+    <Style Selector="Button.step">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="Padding" Value="10,7" />
+      <Setter Property="Opacity" Value="0.62" />
+    </Style>
+    <Style Selector="Button.step:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#1fffffff" />
+      <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.step:disabled /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.step.done">
+      <Setter Property="Opacity" Value="0.92" />
+    </Style>
+    <Style Selector="Button.step.current">
+      <Setter Property="Opacity" Value="1" />
+      <Setter Property="Background" Value="#2effffff" />
+    </Style>
+    <Style Selector="Border.stepdot">
+      <Setter Property="Width" Value="26" />
+      <Setter Property="Height" Value="26" />
+      <Setter Property="CornerRadius" Value="13" />
+      <Setter Property="BorderBrush" Value="#99ffffff" />
+      <Setter Property="BorderThickness" Value="1.5" />
+    </Style>
+    <Style Selector="Button.step.current Border.stepdot, Button.step.done Border.stepdot">
+      <Setter Property="Background" Value="White" />
+      <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="Button.step.current Border.stepdot TextBlock">
+      <Setter Property="Foreground" Value="#1565c0" />
+    </Style>
+    <Style Selector="Button.caption">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="CornerRadius" Value="0" />
+      <Setter Property="Width" Value="46" />
+      <Setter Property="Height" Value="44" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.caption.close:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#c42b1c" />
+      <Setter Property="Foreground" Value="White" />
+    </Style>
+  </UserControl.Styles>
+
+  <Grid RowDefinitions="44,*">
+    <!-- title bar -->
+    <Border Grid.Row="0" Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Lines}" BorderThickness="0,0,0,1"
+            chrome:WindowDecorationProperties.ElementRole="TitleBar" />
+    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
+      <StackPanel Orientation="Horizontal" Spacing="10" Margin="16,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False">
+        <Image Source="/Assets/coworkee.png" Width="22" Height="22" />
+        <TextBlock Text="Coworkee Studio" FontWeight="SemiBold" FontSize="13.5" VerticalAlignment="Center" />
+        <TextBlock Text="/" Classes="muted" VerticalAlignment="Center" />
+        <TextBlock Text="{Binding AppTitle}" Classes="muted" FontSize="13.5" VerticalAlignment="Center" />
+        <Border Classes="chip teal" IsVisible="{Binding HasSpecPath}" VerticalAlignment="Center">
+          <TextBlock Text="{Binding SpecName}" />
+        </Border>
+      </StackPanel>
+      <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+        <Button Classes="icon" Command="{Binding NewAppCommand}" ToolTip.Tip="{l:L 'New app (Ctrl+N)'}" chrome:WindowDecorationProperties.ElementRole="User">
+          <PathIcon Data="{StaticResource Icon.Plus}" />
+        </Button>
+        <Button Classes="icon" Command="{Binding OpenSpecCommand}" ToolTip.Tip="{l:L 'Open a spec (Ctrl+O)'}" chrome:WindowDecorationProperties.ElementRole="User">
+          <PathIcon Data="{StaticResource Icon.FolderOpen}" />
+        </Button>
+        <Button Classes="icon" Command="{Binding SaveSpecCommand}" ToolTip.Tip="{l:L 'Save the spec (Ctrl+S)'}" chrome:WindowDecorationProperties.ElementRole="User">
+          <PathIcon Data="{StaticResource Icon.Save}" />
+        </Button>
+        <Button Classes="icon" Command="{Binding ToggleThemeCommand}" ToolTip.Tip="{Binding ThemeModeText}" chrome:WindowDecorationProperties.ElementRole="User">
+          <Panel>
+            <PathIcon Data="{StaticResource Icon.Auto}" IsVisible="{Binding ThemeMode, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=System}" />
+            <PathIcon Data="{StaticResource Icon.Sun}" IsVisible="{Binding ThemeMode, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Light}" />
+            <PathIcon Data="{StaticResource Icon.Moon}" IsVisible="{Binding ThemeMode, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Dark}" />
+          </Panel>
+        </Button>
+        <Button Classes="icon" Command="{Binding ToggleHelpCommand}" ToolTip.Tip="{l:L 'Help, CLI and MCP (F1)'}" chrome:WindowDecorationProperties.ElementRole="User">
+          <PathIcon Data="{StaticResource Icon.Help}" />
+        </Button>
+        <Border Width="1" Height="20" Background="{DynamicResource Lines}" Margin="8,0" />
+        <Button Classes="caption" Click="Minimize" chrome:WindowDecorationProperties.ElementRole="MinimizeButton">
+          <PathIcon Classes="small" Data="{StaticResource Icon.Minimize}" />
+        </Button>
+        <Button Classes="caption" Click="Maximize" chrome:WindowDecorationProperties.ElementRole="MaximizeButton">
+          <PathIcon Classes="small" Data="{StaticResource Icon.Maximize}" />
+        </Button>
+        <Button Classes="caption close" Click="Close" chrome:WindowDecorationProperties.ElementRole="CloseButton">
+          <PathIcon Classes="small" Data="{StaticResource Icon.WindowClose}" />
+        </Button>
+      </StackPanel>
+    </Grid>
+
+    <SplitView Grid.Row="1" IsPaneOpen="{Binding IsHelpOpen}" DisplayMode="Overlay" PanePlacement="Right" OpenPaneLength="560"
+               PaneBackground="{DynamicResource Surface}">
+      <SplitView.Pane>
+        <v:HelpView />
+      </SplitView.Pane>
+
+      <Grid ColumnDefinitions="Auto,*">
+        <!-- the sliding panel of the sign-in pages -->
+        <Border x:Name="Hero" Classes.wide="{Binding IsWelcome}" Background="{DynamicResource Hero}" ClipToBounds="True">
+          <Panel>
+            <Ellipse Width="420" Height="420" Fill="#14ffffff" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-170,-170,0" />
+            <Ellipse Width="260" Height="260" Fill="#0fffffff" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="-90,0,0,-60" />
+            <DockPanel Margin="30,30,30,22">
+              <StackPanel DockPanel.Dock="Bottom" Spacing="4" Margin="4,16,0,0">
+                <StackPanel Orientation="Horizontal" Spacing="14">
+                  <Button Classes="link" Foreground="#e6ffffff" Content="{l:L 'Documentation'}" Command="{Binding OpenLinkCommand}" CommandParameter="https://fgilde.github.io/CoworkeeLib/" />
+                  <Button Classes="link" Foreground="#e6ffffff" Content="{l:L 'MCP server'}" Command="{Binding ShowHelpCommand}" CommandParameter="2" />
+                </StackPanel>
+                <TextBlock Foreground="#a6ffffff" FontSize="11.5" Text="{Binding Version, StringFormat='Coworkee Studio {0}'}" />
+              </StackPanel>
+
+              <ItemsControl DockPanel.Dock="Bottom" ItemsSource="{Binding Steps}" Margin="-6,20,0,0">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:StepViewModel">
+                    <Button Classes="step" Classes.current="{Binding IsCurrent}" Classes.done="{Binding IsDone}" IsEnabled="{Binding IsReachable}"
+                            Command="{Binding $parent[ItemsControl].((vm:MainViewModel)DataContext).GoToCommand}" CommandParameter="{Binding}">
+                      <Grid ColumnDefinitions="Auto,*,Auto">
+                        <Border Classes="stepdot">
+                          <Panel>
+                            <TextBlock Text="{Binding Number}" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       IsVisible="{Binding !IsDone}" />
+                            <PathIcon Classes="small" Data="{StaticResource Icon.Check}" Foreground="#1565c0" IsVisible="{Binding IsDone}" />
+                          </Panel>
+                        </Border>
+                        <TextBlock Grid.Column="1" Text="{Binding Title}" Margin="12,0,0,0" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" />
+                        <PathIcon Grid.Column="2" Classes="small" Data="{StaticResource Icon.AlertCircle}" Foreground="#ffd180" IsVisible="{Binding HasErrors}" />
+                      </Grid>
+                    </Button>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+
+              <TransitioningContentControl Content="{Binding Current}" VerticalAlignment="Top">
+                <TransitioningContentControl.PageTransition>
+                  <CrossFade Duration="0:0:0.35" />
+                </TransitioningContentControl.PageTransition>
+                <TransitioningContentControl.ContentTemplate>
+                  <DataTemplate x:DataType="vm:StepViewModel">
+                    <StackPanel Spacing="16" Margin="4,8,0,0">
+                      <Border Width="56" Height="56" CornerRadius="16" Background="#29ffffff" HorizontalAlignment="Left">
+                        <PathIcon Width="28" Height="28" Foreground="White" Data="{Binding Icon, Converter={x:Static v:Converters.Icon}}" />
+                      </Border>
+                      <TextBlock Classes="display" Foreground="White" Text="{Binding Title}" />
+                      <TextBlock Foreground="#ebffffff" FontSize="15" LineHeight="23" TextWrapping="Wrap" Text="{Binding Pitch}" />
+                    </StackPanel>
+                  </DataTemplate>
+                </TransitioningContentControl.ContentTemplate>
+              </TransitioningContentControl>
+            </DockPanel>
+          </Panel>
+        </Border>
+
+        <!-- the page -->
+        <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
+          <StackPanel Grid.Row="0" Margin="44,26,44,10" Spacing="4" IsVisible="{Binding ShowFooter}">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Classes="overline" Text="{Binding ProgressText}" />
+              <Border Grid.Column="1" Classes="banner" Padding="10,4" Classes.ok="{Binding !HasErrors}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <PathIcon Classes="small" Data="{StaticResource Icon.CheckCircle}" Foreground="{DynamicResource Success}" IsVisible="{Binding !HasErrors}" />
+                  <PathIcon Classes="small" Data="{StaticResource Icon.AlertCircle}" Foreground="{DynamicResource Error}" IsVisible="{Binding HasErrors}" />
+                  <TextBlock Text="{Binding ErrorSummary}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                </StackPanel>
+              </Border>
+            </Grid>
+            <TextBlock Classes="h1" Text="{Binding Current.Title}" />
+            <TextBlock Classes="muted" FontSize="14" Text="{Binding Current.Subtitle}" />
+            <ProgressBar Value="{Binding Progress}" Height="4" MinHeight="4" CornerRadius="2" Margin="0,12,0,0">
+              <ProgressBar.Transitions>
+                <Transitions>
+                  <DoubleTransition Property="Value" Duration="0:0:0.4" Easing="CubicEaseOut" />
+                </Transitions>
+              </ProgressBar.Transitions>
+            </ProgressBar>
+          </StackPanel>
+
+          <TransitioningContentControl Grid.Row="1" Content="{Binding Current}" IsTransitionReversed="{Binding !IsForward}" ClipToBounds="True">
+            <TransitioningContentControl.PageTransition>
+              <CompositePageTransition>
+                <PageSlide Duration="0:0:0.42" Orientation="Horizontal" SlideInEasing="CubicEaseOut" SlideOutEasing="CubicEaseIn" />
+                <CrossFade Duration="0:0:0.42" />
+              </CompositePageTransition>
+            </TransitioningContentControl.PageTransition>
+          </TransitioningContentControl>
+
+          <Border Grid.Row="2" BorderBrush="{DynamicResource Lines}" BorderThickness="0,1,0,0" Background="{DynamicResource Surface}" Padding="44,12" IsVisible="{Binding ShowFooter}">
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+              <Button Command="{Binding BackCommand}" IsEnabled="{Binding CanGoBack}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <PathIcon Classes="small" Data="{StaticResource Icon.ChevronLeft}" />
+                  <TextBlock Text="{l:L Back}" />
+                </StackPanel>
+              </Button>
+              <TextBlock Grid.Column="1" Classes="caption" Text="{Binding Status}" VerticalAlignment="Center" Margin="16,0" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+              <Button Grid.Column="2" Classes="ghost" Command="{Binding SaveSpecCommand}" Margin="0,0,8,0">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <PathIcon Classes="small" Data="{StaticResource Icon.Save}" />
+                  <TextBlock Text="{l:L 'Save spec'}" />
+                </StackPanel>
+              </Button>
+              <Button Grid.Column="3" Classes="primary" Command="{Binding NextCommand}" IsEnabled="{Binding CanGoNext}" IsVisible="{Binding !Generate.IsCurrent}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <TextBlock Text="{Binding NextText}" />
+                  <PathIcon Classes="small" Data="{StaticResource Icon.ChevronRight}" />
+                </StackPanel>
+              </Button>
+            </Grid>
+          </Border>
+        </Grid>
+      </Grid>
+    </SplitView>
+  </Grid>
+</UserControl>

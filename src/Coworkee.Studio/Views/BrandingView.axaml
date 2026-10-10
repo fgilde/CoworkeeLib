@@ -1,0 +1,156 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Coworkee.Studio.ViewModels"
+             xmlns:v="using:Coworkee.Studio.Views"
+             xmlns:l="using:Coworkee.Studio.Localization"
+             x:Class="Coworkee.Studio.Views.BrandingView"
+             x:DataType="vm:BrandingStep">
+  <ScrollViewer>
+    <Grid ColumnDefinitions="*,24,400" Margin="44,12,44,32">
+      <StackPanel Spacing="18">
+        <!-- logo -->
+        <Border Classes="card">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <Border Width="72" Height="72" CornerRadius="16" Background="{DynamicResource SurfaceAlt}" BorderBrush="{DynamicResource Lines}" BorderThickness="1">
+              <Panel>
+                <Image Source="{Binding Logo}" Width="48" Height="48" IsVisible="{Binding HasLogoPreview}" />
+                <PathIcon Classes="large" Data="{StaticResource Icon.Image}" Foreground="{DynamicResource TextSecondary}" IsVisible="{Binding !HasLogoPreview}" />
+              </Panel>
+            </Border>
+            <StackPanel Grid.Column="1" Margin="18,0" VerticalAlignment="Center" Spacing="4">
+              <TextBlock Classes="h3" Text="{l:L 'Logo'}" />
+              <TextBlock Classes="mono caption" Text="{Binding LogoName}" />
+              <TextBlock Classes="caption" Text="{l:L 'App bar, browser tab and sign-in pages. SVG scales best (the preview shows raster images only).'}" />
+            </StackPanel>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+              <Button Command="{Binding ResetLogoCommand}" Classes="ghost" Content="{l:L Reset}" IsVisible="{Binding LogoPath, Converter={x:Static ObjectConverters.IsNotNull}}" />
+              <Button Command="{Binding BrowseLogoCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <PathIcon Classes="small" Data="{StaticResource Icon.FolderOpen}" />
+                  <TextBlock Text="{l:L 'Choose logo'}" />
+                </StackPanel>
+              </Button>
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <!-- themes -->
+        <Border Classes="card">
+          <StackPanel Spacing="12">
+            <StackPanel Spacing="2">
+              <TextBlock Classes="h3" Text="{l:L 'Theme'}" />
+              <TextBlock Classes="caption" Text="{l:L 'Default theme of the installation; every user can still pick another one.'}" />
+            </StackPanel>
+            <ItemsControl ItemsSource="{Binding Themes}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <UniformGrid Columns="4" ColumnSpacing="12" RowSpacing="12" />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:ThemeCardViewModel">
+                  <Button Classes="tile" Classes.selected="{Binding IsSelected}"
+                          Command="{Binding $parent[ItemsControl].((vm:BrandingStep)DataContext).SelectThemeCommand}" CommandParameter="{Binding}">
+                    <StackPanel>
+                      <Grid ColumnDefinitions="*,*" Height="64" ClipToBounds="True">
+                        <Border Background="{Binding Light.Background}" CornerRadius="12,0,0,0">
+                          <StackPanel>
+                            <Border Height="14" Background="{Binding Light.AppBar}" CornerRadius="12,0,0,0" />
+                            <StackPanel Orientation="Horizontal" Spacing="5" Margin="8,9">
+                              <Ellipse Width="16" Height="16" Fill="{Binding Light.Primary}" />
+                              <Ellipse Width="16" Height="16" Fill="{Binding Light.Secondary}" />
+                            </StackPanel>
+                            <Border Height="5" Width="40" Margin="8,0" HorizontalAlignment="Left" CornerRadius="3" Background="{Binding Light.Text}" Opacity="0.5" />
+                          </StackPanel>
+                        </Border>
+                        <Border Grid.Column="1" Background="{Binding Dark.Background}" CornerRadius="0,12,0,0">
+                          <StackPanel>
+                            <Border Height="14" Background="{Binding Dark.AppBar}" CornerRadius="0,12,0,0" />
+                            <StackPanel Orientation="Horizontal" Spacing="5" Margin="8,9">
+                              <Ellipse Width="16" Height="16" Fill="{Binding Dark.Primary}" />
+                              <Ellipse Width="16" Height="16" Fill="{Binding Dark.Secondary}" />
+                            </StackPanel>
+                            <Border Height="5" Width="40" Margin="8,0" HorizontalAlignment="Left" CornerRadius="3" Background="{Binding Dark.Text}" Opacity="0.5" />
+                          </StackPanel>
+                        </Border>
+                      </Grid>
+                      <StackPanel Margin="12,8,12,10" Spacing="1">
+                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontFamily="{Binding Theme.Font}" />
+                        <TextBlock Classes="caption" Text="{Binding Description}" MaxLines="2" TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                    </StackPanel>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
+        <!-- brand colors -->
+        <Border Classes="card">
+          <StackPanel Spacing="14">
+            <Grid ColumnDefinitions="*,Auto">
+              <StackPanel Spacing="2">
+                <TextBlock Classes="h3" Text="{l:L 'Brand colors'}" />
+                <TextBlock Classes="caption" Text="{l:L 'Your app gets its own theme, named like the title and based on the chosen one; contrast text is computed.'}" />
+              </StackPanel>
+              <ToggleSwitch Grid.Column="1" IsChecked="{Binding UseBrandColors}" VerticalAlignment="Center" />
+            </Grid>
+            <Grid ColumnDefinitions="*,16,*" IsEnabled="{Binding UseBrandColors}" Opacity="{Binding UseBrandColors, Converter={x:Static v:Converters.Dim}}">
+              <StackPanel Spacing="6">
+                <TextBlock Classes="caption" Text="{l:L 'Primary'}" />
+                <ColorPicker Color="{Binding PrimaryColor}" IsAlphaVisible="False" HorizontalAlignment="Stretch" />
+                <TextBlock Classes="mono caption" Text="{Binding PrimaryColor, Converter={x:Static v:Converters.Hex}}" />
+              </StackPanel>
+              <StackPanel Grid.Column="2" Spacing="6">
+                <TextBlock Classes="caption" Text="{l:L 'Secondary'}" />
+                <ColorPicker Color="{Binding SecondaryColor}" IsAlphaVisible="False" HorizontalAlignment="Stretch" />
+                <TextBlock Classes="mono caption" Text="{Binding SecondaryColor, Converter={x:Static v:Converters.Hex}}" />
+              </StackPanel>
+            </Grid>
+            <StackPanel Spacing="6">
+              <TextBlock Classes="caption" Text="{l:L 'Quick picks for the primary color'}" />
+              <ItemsControl ItemsSource="{Binding Swatches}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <WrapPanel ItemSpacing="8" LineSpacing="8" />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="Color">
+                    <Button Width="30" Height="30" Padding="0" CornerRadius="15" BorderThickness="2" BorderBrush="{DynamicResource Surface}"
+                            Background="{Binding Converter={x:Static v:Converters.Brush}}"
+                            Command="{Binding $parent[ItemsControl].((vm:BrandingStep)DataContext).UsePrimaryCommand}" CommandParameter="{Binding}" />
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <ItemsControl ItemsSource="{Binding Errors}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="x:String">
+              <Border Classes="banner" Margin="0,0,0,6">
+                <TextBlock Classes="error" Text="{Binding}" />
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+
+      <!-- live preview -->
+      <StackPanel Grid.Column="2" Spacing="12">
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <PathIcon Data="{StaticResource Icon.Eye}" Foreground="{DynamicResource Primary}" />
+          <TextBlock Classes="h3" Text="{l:L 'Live preview'}" />
+        </StackPanel>
+        <TextBlock Classes="overline" Text="{l:L 'LIGHT'}" />
+        <v:AppShellPreview DataContext="{Binding PreviewLight}" />
+        <TextBlock Classes="overline" Text="{l:L 'DARK'}" Margin="0,6,0,0" />
+        <v:AppShellPreview DataContext="{Binding PreviewDark}" />
+        <TextBlock Classes="caption" Text="{l:L 'A sketch of the app shell: app bar, navigation, cards and buttons in the colors, font and corner radius of the theme.'}" />
+      </StackPanel>
+    </Grid>
+  </ScrollViewer>
+</UserControl>
