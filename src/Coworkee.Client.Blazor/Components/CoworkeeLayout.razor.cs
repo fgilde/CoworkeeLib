@@ -31,6 +31,8 @@ public partial class CoworkeeLayout : IDisposable
 
     [Inject] private CoworkeeClientOptions Options { get; set; } = null!;
 
+    [Inject] private MudBlazor.Extensions.Options.MudExConfiguration MudEx { get; set; } = null!;
+
     [CascadingParameter] private Task<AuthenticationState> AuthenticationState { get; set; } = null!;
 
     protected override void OnInitialized()
@@ -78,6 +80,8 @@ public partial class CoworkeeLayout : IDisposable
 
         await Preferences.LoadAsync();
         await ThemeService.LoadAsync();
+        // ponytail: upload fields of the first page rendered before this keep no pickers until they render again
+        Blazor.Files.CloudFilePickers.Apply(MudEx, ThemeService.ClientSettings);
         await Data.DialogPlacement.StartAsync(JS);
         await L.InitializeAsync(ThemeService.ClientSettings.GetValueOrDefault(Contracts.Localization.LocalizationSettings.Culture));
         _systemDark = _provider is not null && await _provider.GetSystemDarkModeAsync();
