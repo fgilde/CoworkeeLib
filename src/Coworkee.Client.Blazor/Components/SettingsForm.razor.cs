@@ -1,20 +1,29 @@
 using Coworkee.Client.Blazor.Api;
+using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Settings;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using MudBlazor.Extensions.Components.ObjectEdit;
+using MudBlazor.Extensions.Components.ObjectEdit.Options;
 
 namespace Coworkee.Client.Blazor.Components;
 
+/// <summary>The settings of a scope in a MudExObjectEdit form; every defined setting of the scope shows up, grouped like its definition.</summary>
 public partial class SettingsForm
 {
+    private static readonly GlobalResetSettings NoReset = new() { AllowReset = false };
+    private static readonly PropertyResetSettings NoPropertyReset = new() { AllowReset = false };
+
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
-    private IReadOnlyList<SettingGroupDto>? _groups;
-    private Dictionary<string, SettingValueDto> _stored = [];
-    private readonly Dictionary<string, string?> _edited = new(StringComparer.Ordinal);
+    [Inject] private CoworkeeLocalizer L { get; set; } = null!;
+
+    private SettingsModel? _model;
+    private ObjectEditMeta<object>? _meta;
     private bool _saving;
+    private int _revision;
 
     [Parameter, EditorRequired] public SettingScope Scope { get; set; }
 
@@ -26,39 +35,28 @@ public partial class SettingsForm
     private async Task LoadAsync()
     {
         var definitions = await Api.GetSettingDefinitionsAsync(Scope == SettingScope.User);
-        _stored = (await Api.GetSettingsAsync(Scope)).ToDictionary(v => v.Name, StringComparer.Ordinal);
-        _groups = definitions
+        var stored = (await Api.GetSettingsAsync(Scope)).ToDictionary(v => v.Name, StringComparer.Ordinal);
+        var groups = definitions
             .Select(g => g with { Settings = g.Settings.Where(s => s.Scopes.Contains(Scope) && Hide?.Contains(s.Name) != true).ToList() })
             .Where(g => g.Settings.Count > 0)
             .ToList();
-        _edited.Clear();
+        _model = new SettingsModel(groups, stored);
+        _meta = _model.Value.ObjectEditMeta(meta => _model.Configure(meta, L)).UpdateAllConditionalSettings();
+        _revision++;
     }
 
-    private string? Current(SettingDefinitionDto setting) =>
-        _edited.TryGetValue(setting.Name, out var edited) ? edited : _stored.GetValueOrDefault(setting.Name)?.Value;
-
-    private bool IsStored(SettingDefinitionDto setting) => _stored.GetValueOrDefault(setting.Name)?.HasValue == true;
-
-    private void Set(SettingDefinitionDto setting, string? value)
+    public async Task SaveAsync()
     {
-        var normalized = string.IsNullOrEmpty(value) ? null : value;
-        if (setting.Type == SettingType.Secret ? normalized is null : normalized == _stored.GetValueOrDefault(setting.Name)?.Value)
+        if (_model?.Changes() is not { Count: > 0 } changes)
         {
-            _edited.Remove(setting.Name);
+            return;
         }
-        else
-        {
-            _edited[setting.Name] = normalized;
-        }
-    }
 
-    private async Task SaveAsync()
-    {
         _saving = true;
         try
         {
-            await Api.SetSettingsAsync(Scope, new Dictionary<string, string?>(_edited, StringComparer.Ordinal));
-            Snackbar.Add("Settings saved.", Severity.Success);
+            await Api.SetSettingsAsync(Scope, changes);
+            Snackbar.Add(L["Settings saved."], Severity.Success);
             await LoadAsync();
         }
         catch (ApiException exception)
