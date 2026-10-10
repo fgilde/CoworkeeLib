@@ -23,4 +23,11 @@
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
+  <!-- ponytail: the tool carries Skia and HarfBuzz for the common desktops only, without their native debug symbols (that alone is 200 MB); add a RID here when someone needs it -->
+  <Target Name="TrimToolNatives" AfterTargets="ComputeResolvedFilesToPublishList">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"
+                             Condition="$([System.String]::Copy('%(ResolvedFileToPublish.RelativePath)').StartsWith('runtimes')) and ('%(Extension)' == '.pdb' or !$([System.Text.RegularExpressions.Regex]::IsMatch('%(ResolvedFileToPublish.RelativePath)', '^runtimes.(win-x64|win-arm64|win-x86|linux-x64|linux-arm64|linux-musl-x64|osx).')))" />
+    </ItemGroup>
+  </Target>
 </Project>
