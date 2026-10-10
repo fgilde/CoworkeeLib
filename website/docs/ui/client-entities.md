@@ -81,7 +81,7 @@ The copy refreshes
 - when the entity has `[Realtime]` and someone else changed it,
 - every `RefreshInterval`.
 
-Signing out removes all copies from the browser storage.
+Signing out removes all copies from the browser storage. A set the user may no longer read (the server answers 403 or 404) drops its copy at the next refresh.
 
 ## Your own UI
 

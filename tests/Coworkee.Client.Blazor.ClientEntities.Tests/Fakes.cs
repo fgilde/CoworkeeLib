@@ -31,6 +31,8 @@ internal sealed class FakeServer : HttpMessageHandler, IODataClient
 
     public int MaxRows { get; set; } = 1000;
 
+    public bool Forbidden { get; set; }
+
     public IReadOnlyList<FacetGroupDto> Facets { get; set; } = [];
 
     public DateTimeOffset Now { get; set; } = DateTimeOffset.Parse("2026-10-10T10:00:00Z");
@@ -71,6 +73,11 @@ internal sealed class FakeServer : HttpMessageHandler, IODataClient
     {
         await Feed;
         var path = request.RequestUri!.AbsolutePath;
+        if (Forbidden)
+        {
+            return new HttpResponseMessage(HttpStatusCode.Forbidden);
+        }
+
         object body = path switch
         {
             "/api/v1/client-entities" => new ClientEntityManifest("p1", [Info]),

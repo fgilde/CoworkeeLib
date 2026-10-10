@@ -158,6 +158,22 @@ public sealed class ClientEntitySetTests
     }
 
     [Fact]
+    public async Task A_set_the_user_may_no_longer_read_drops_its_copy()
+    {
+        var storage = new MemoryStorage();
+        await using var set = _server.Set(storage);
+        await set.RefreshAsync(Ct);
+        _server.Forbidden = true;
+
+        await set.RefreshAsync(Ct);
+
+        set.IsLocal.ShouldBeFalse();
+        set.Items.ShouldBeEmpty();
+        storage.Saved["p1/Gadgets/Brand"].ShouldBeEmpty();
+        set.Status.Revision.ShouldBe(2);
+    }
+
+    [Fact]
     public async Task Linq_queries_wait_for_the_local_rows()
     {
         await using var set = _server.Set();

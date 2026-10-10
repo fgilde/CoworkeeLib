@@ -81,7 +81,7 @@ Die Kopie aktualisiert sich
 - wenn die Entity `[Realtime]` trägt und jemand anderes sie geändert hat,
 - alle `RefreshInterval`.
 
-Beim Abmelden werden alle Kopien aus dem Browser-Speicher entfernt.
+Beim Abmelden werden alle Kopien aus dem Browser-Speicher entfernt. Ein Set, das der Benutzer nicht mehr lesen darf (der Server antwortet 403 oder 404), verwirft seine Kopie bei der nächsten Aktualisierung.
 
 ## Eigene Oberflächen
 

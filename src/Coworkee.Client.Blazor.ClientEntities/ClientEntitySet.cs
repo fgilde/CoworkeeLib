@@ -234,6 +234,12 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
                 await UpdateAsync(cancellationToken);
             }
         }
+        catch (Api.ApiException exception) when (exception.Status is 403 or 404)
+        {
+            // the user may no longer read the set, or it is no longer mirrored: the copy goes
+            await ForgetAsync();
+            Publish(ClientEntityStatus.Initial with { State = ClientEntitySyncState.Failed, Error = exception.Message, Revision = Status.Revision + 1 });
+        }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             _logger.LogWarning(exception, "Syncing {EntitySet} failed", EntitySet);
@@ -343,6 +349,27 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
 
         Publish(new ClientEntityStatus(ClientEntitySyncState.Idle, true, rows.Count, rows.Count, version, null, revision));
         _local.TrySetResult();
+    }
+
+    private async Task ForgetAsync()
+    {
+        _rows = [];
+        _items = null;
+        _version = null;
+        _facets = null;
+        if (_local.Task.IsCompleted)
+        {
+            _local = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        }
+
+        try
+        {
+            await _storage.SaveAsync(StorageKey, []);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Dropping the kept copy of {EntitySet} failed", EntitySet);
+        }
     }
 
     private string StorageKey => $"{_partition}/{EntitySet}/{Expand}";
