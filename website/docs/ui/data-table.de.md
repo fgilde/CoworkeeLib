@@ -91,7 +91,7 @@ Alles, was der Benutzer einrichtet, gehört zum Zustand der Tabelle und lässt s
 </CoworkeeDataTable>
 
 @code {
-    private static readonly AggregateDefinition<ProductDto> AverageRate = new() { Type = AggregateType.Avg, DisplayFormat = "Ø {value:0.00}" };
+    private static readonly AggregateDefinition<ProductDto> AverageRate = new() { Type = AggregateType.Avg, DisplayFormat = "Ø {value}", NumberFormat = "0.00" };
 }
 ```
 

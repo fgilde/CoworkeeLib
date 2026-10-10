@@ -92,7 +92,7 @@ Everything the user arranges is part of the table's state and can be saved, shar
 </CoworkeeDataTable>
 
 @code {
-    private static readonly AggregateDefinition<ProductDto> AverageRate = new() { Type = AggregateType.Avg, DisplayFormat = "Ø {value:0.00}" };
+    private static readonly AggregateDefinition<ProductDto> AverageRate = new() { Type = AggregateType.Avg, DisplayFormat = "Ø {value}", NumberFormat = "0.00" };
 }
 ```
 
