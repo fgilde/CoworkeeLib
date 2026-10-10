@@ -1,6 +1,9 @@
 using Coworkee.Client.Blazor;
 using Coworkee.Client.Blazor.Navigation;
 using Coworkee.Client.Blazor.Pages;
+#if (clientEntities)
+using Coworkee.Client.Blazor.ClientEntities;
+#endif
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 #if (samples)
 using MyApp.Contracts.Documents;
@@ -33,6 +36,9 @@ builder.Services.AddSingleton<INavigationContributor, MyAppNavigation>();
 builder.Services.AddSingleton(new ProfileTab("Documents", "documents", typeof(MyDocuments), DocumentPermissions.Documents.View, MudBlazor.Icons.Material.Outlined.Description));
 #endif
 builder.Services.Configure<NavigationMenuOptions>(MyAppNavigation.Order);
+#if (clientEntities)
+builder.Services.AddCoworkeeClientEntities();
+#endif
 var host = builder.Build();
 await host.Services.InitializeCoworkeeClientAsync();
 await host.RunAsync();

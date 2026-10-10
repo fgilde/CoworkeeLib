@@ -23,5 +23,24 @@ public sealed class MyAppInfrastructureModule : CoworkeeModule
         context.Services.AddHealthChecks().AddDbContextCheck<MyAppDbContext>("database");
         context.Services.Configure<SetupGateOptions>(options => options.AllowedPrefixes.Add("/api/v1/system"));
         context.Services.PostConfigure<Coworkee.Contracts.Configuration.BackgroundJobOptions>(options => options.ConnectionStringName = ConnectionStringName);
+#if (customTheme)
+        context.Services.Configure<Coworkee.Theming.ThemingOptions>(themes =>
+        {
+#if (brandColors)
+            themes.DefaultTheme = "COWORKEE_APP_TITLE";
+            themes.Themes.Add(new Coworkee.Theming.AppTheme("COWORKEE_APP_TITLE", "COWORKEE_THEME", new Dictionary<string, string>
+            {
+#if (hasPrimary)
+                ["Primary"] = "COWORKEE_PRIMARY",
+#endif
+#if (hasSecondary)
+                ["Secondary"] = "COWORKEE_SECONDARY",
+#endif
+            }));
+#else
+            themes.DefaultTheme = "COWORKEE_THEME";
+#endif
+        });
+#endif
     }
 }

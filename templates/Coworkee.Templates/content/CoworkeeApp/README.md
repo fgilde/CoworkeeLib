@@ -9,6 +9,10 @@ coworkee module add <Name>        # new feature module
 coworkee update                   # newest Coworkee packages
 ```
 
+<!--#if (!defaultModel) -->
+The chosen modules differ from the shipped initial migration, so the solution has none yet. `coworkee new` creates it; otherwise run `coworkee migrations add Initial` once before the first start.
+
+<!--#endif -->
 Sign in as `admin@myapp.local`; the generated password is in `src/MyApp.Migrations/DemoSeed.cs`. Change it before you deploy anywhere.
 
 | Project | |

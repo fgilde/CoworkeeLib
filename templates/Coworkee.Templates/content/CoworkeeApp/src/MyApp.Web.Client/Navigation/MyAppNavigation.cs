@@ -21,10 +21,16 @@ internal sealed class MyAppNavigation : INavigationContributor
         .OrderGroup(NavigationGroups.Administration, 2)
         .OrderGroup(Communication, 3)
         .OrderGroup(CatalogManagement, 4)
+#if (auditing)
         .Place("/admin/audit", Personal, "Audit Trails", 2)
+#endif
         .Place("/admin/settings", NavigationGroups.System, "Site Settings", -1)
+#if (backup)
         .Place("/admin/backups", NavigationGroups.System, "Database Backups", 5)
+#endif
+#if (chat)
         .Place("/chat", Communication)
+#endif
         .IconForGroup(Communication, MudBlazor.Icons.Material.Outlined.Forum)
         .IconForGroup(Personal, MudBlazor.Icons.Material.Outlined.Person)
         .IconForGroup(DocumentManagement, MudBlazor.Icons.Material.Outlined.Description)

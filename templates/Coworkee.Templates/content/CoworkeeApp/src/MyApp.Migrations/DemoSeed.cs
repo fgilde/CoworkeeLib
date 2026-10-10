@@ -1,4 +1,6 @@
+#if (chat)
 using Coworkee.Contracts.Chat;
+#endif
 using Coworkee.Identity.Setup;
 #if (samples)
 using MyApp.Contracts.Catalog;
@@ -26,7 +28,9 @@ public static class DemoSeed
 
     private static string[] Shared =>
     [
+#if (chat)
         ChatPermissions.Use,
+#endif
 #if (samples)
         CatalogPermissions.Dashboards.View,
         DocumentPermissions.Documents.View, DocumentPermissions.Documents.Create, DocumentPermissions.Documents.Edit, DocumentPermissions.Documents.Delete,

@@ -1,17 +1,57 @@
+#if (auditing)
 using Coworkee.Auditing;
+#endif
 using Coworkee.AuthServer;
 using Coworkee.Core.Modularity;
 using Coworkee.Localization;
 using Coworkee.Localization.Resources;
 using Coworkee.Mailing;
+#if (notifications)
 using Coworkee.Notifications;
+#endif
 using Coworkee.Theming;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MyApp.Infrastructure;
 
-[DependsOn(typeof(MyAppInfrastructureModule), typeof(CoworkeeAuthStoreModule), typeof(CoworkeeMailingModule), typeof(CoworkeeAuditingModule), typeof(CoworkeeThemingModule),
-    typeof(CoworkeeNotificationsModule), typeof(Coworkee.Account.CoworkeeAccountModule), typeof(CoworkeeLocalizationModule), typeof(Coworkee.Backup.CoworkeeBackupModule), typeof(Coworkee.Chat.CoworkeeChatModule), typeof(Coworkee.Ai.CoworkeeAiModule)
+[DependsOn(typeof(MyAppInfrastructureModule), typeof(CoworkeeAuthStoreModule), typeof(CoworkeeMailingModule)
+#if (auditing)
+    , typeof(CoworkeeAuditingModule)
+#endif
+    , typeof(CoworkeeThemingModule)
+#if (notifications)
+    , typeof(CoworkeeNotificationsModule)
+#endif
+    , typeof(Coworkee.Account.CoworkeeAccountModule), typeof(CoworkeeLocalizationModule)
+#if (backup)
+    , typeof(Coworkee.Backup.CoworkeeBackupModule)
+#endif
+#if (chat)
+    , typeof(Coworkee.Chat.CoworkeeChatModule)
+#endif
+#if (ai)
+    , typeof(Coworkee.Ai.CoworkeeAiModule)
+#endif
+#if (files)
+    , typeof(Coworkee.Files.CoworkeeFilesModule)
+#endif
+#if (features)
+    , typeof(Coworkee.Features.CoworkeeFeaturesModule)
+#endif
+#if (social)
+    , typeof(Coworkee.Social.CoworkeeSocialModule)
+#endif
+#if (extendedAttributes)
+    , typeof(Coworkee.ExtendedAttributes.CoworkeeExtendedAttributesModule)
+#endif
+#if (search)
+    , typeof(Coworkee.Search.Elasticsearch.CoworkeeElasticsearchModule)
+#endif
+#if (eventBus == "inProcess")
+    , typeof(Coworkee.EventBus.CoworkeeEventBusModule)
+#elseif (eventBus == "rabbitMq")
+    , typeof(Coworkee.EventBus.RabbitMq.CoworkeeRabbitMqEventBusModule)
+#endif
 #if (samples)
     , typeof(MyApp.Catalog.MyAppCatalogModule), typeof(MyApp.Documents.MyAppDocumentsModule)
 #endif

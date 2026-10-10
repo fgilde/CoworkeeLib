@@ -1,22 +1,313 @@
 {
   "$schema": "http://json.schemastore.org/template",
   "author": "fgilde",
-  "classifications": ["Web", "Blazor", "Aspire", "Coworkee"],
+  "classifications": [
+    "Web",
+    "Blazor",
+    "Aspire",
+    "Coworkee"
+  ],
   "identity": "Coworkee.Templates.App",
   "groupIdentity": "Coworkee.App",
   "name": "Coworkee application",
   "description": "Aspire app host, API, auth server, Blazor WebAssembly with BFF and Postgres, built on the Coworkee packages.",
-  "shortName": ["coworkee", "coworkee-app"],
+  "shortName": [
+    "coworkee",
+    "coworkee-app"
+  ],
   "sourceName": "MyApp",
   "preferNameDirectory": true,
-  "tags": { "language": "C#", "type": "solution" },
+  "tags": {
+    "language": "C#",
+    "type": "solution"
+  },
   "symbols": {
-    "samples": { "type": "parameter", "datatype": "bool", "defaultValue": "true", "description": "Include the Catalog and Documents sample modules." },
-    "keycloak": { "type": "parameter", "datatype": "bool", "defaultValue": "false", "description": "Add a Keycloak container as external sign-in." },
-    "tests": { "type": "parameter", "datatype": "bool", "defaultValue": "true", "description": "Include the test projects." },
-    "title": { "type": "parameter", "datatype": "string", "description": "Display title of the app (default: the name)." },
-    "appTitle": { "type": "generated", "generator": "coalesce", "parameters": { "sourceVariableName": "title", "fallbackVariableName": "name" }, "replaces": "COWORKEE_APP_TITLE" },
-    "seedPassword": { "type": "generated", "generator": "guid", "parameters": { "defaultFormat": "N" }, "replaces": "SEED_PASSWORD" }
+    "samples": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Include the Catalog and Documents sample modules."
+    },
+    "keycloak": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Add a Keycloak container as external sign-in."
+    },
+    "tests": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Include the test projects."
+    },
+    "title": {
+      "type": "parameter",
+      "datatype": "string",
+      "description": "Display title of the app (default: the name)."
+    },
+    "auditing": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Audit log pages (Coworkee.Auditing)."
+    },
+    "notifications": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "In-app notifications with mail digests (Coworkee.Notifications)."
+    },
+    "chat": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Direct and group chat (Coworkee.Chat)."
+    },
+    "ai": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "AI assistant, MCP endpoint and tool call audit (Coworkee.Ai)."
+    },
+    "backup": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Database backups from the admin pages (Coworkee.Backup)."
+    },
+    "files": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Folders and files of the organisation with preview (Coworkee.Files)."
+    },
+    "features": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Features, editions and tenant administration (Coworkee.Features)."
+    },
+    "social": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Comments, tags and ratings for entities (Coworkee.Social)."
+    },
+    "extendedAttributes": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Free key/value attributes for entities (Coworkee.ExtendedAttributes); the Documents sample brings it anyway."
+    },
+    "search": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Elasticsearch index with a container in the app host (Coworkee.Search.Elasticsearch)."
+    },
+    "eventBus": {
+      "type": "parameter",
+      "datatype": "choice",
+      "defaultValue": "none",
+      "description": "Integration events between services (Coworkee.EventBus).",
+      "choices": [
+        {
+          "choice": "none",
+          "description": "No event bus."
+        },
+        {
+          "choice": "inProcess",
+          "description": "Outbox and inbox, handlers in this app."
+        },
+        {
+          "choice": "rabbitMq",
+          "description": "RabbitMQ transport with a container in the app host."
+        }
+      ]
+    },
+    "clientEntities": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Client entities: the browser keeps copies of OData sets (Coworkee.Client.Blazor.ClientEntities)."
+    },
+    "storage": {
+      "type": "parameter",
+      "datatype": "choice",
+      "defaultValue": "fileSystem",
+      "description": "Blob storage provider.",
+      "choices": [
+        {
+          "choice": "fileSystem",
+          "description": "Folder .data/blobs next to src."
+        },
+        {
+          "choice": "azureBlob",
+          "description": "Azure Blob Storage, Azurite emulator in the app host."
+        }
+      ]
+    },
+    "theme": {
+      "type": "parameter",
+      "datatype": "choice",
+      "defaultValue": "Ocean",
+      "description": "Default theme.",
+      "choices": [
+        {
+          "choice": "Ocean",
+          "description": "Blue, humanist font, rounded."
+        },
+        {
+          "choice": "Coworkee",
+          "description": "Warm orange on paper."
+        },
+        {
+          "choice": "Classic",
+          "description": "MudBlazor purple."
+        },
+        {
+          "choice": "Forest",
+          "description": "Green with serif headings."
+        },
+        {
+          "choice": "Midnight",
+          "description": "Indigo, monospace headings."
+        },
+        {
+          "choice": "Sunset",
+          "description": "Pink, rounded, roomy."
+        },
+        {
+          "choice": "HighContrast",
+          "description": "Black and white, no shadows."
+        }
+      ]
+    },
+    "primaryColor": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "",
+      "description": "Primary brand color (#rrggbb); with a brand color the app gets its own theme, based on the chosen one, as default.",
+      "replaces": "COWORKEE_PRIMARY"
+    },
+    "secondaryColor": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "",
+      "description": "Secondary brand color (#rrggbb).",
+      "replaces": "COWORKEE_SECONDARY"
+    },
+    "logo": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "coworkee-icon.svg",
+      "description": "Logo file name in the wwwroot of the web client (copy the file there; coworkee new --logo does).",
+      "replaces": "coworkee-icon.svg"
+    },
+    "signInLayout": {
+      "type": "parameter",
+      "datatype": "choice",
+      "defaultValue": "Slide",
+      "description": "Layout of the sign-in pages.",
+      "choices": [
+        {
+          "choice": "Card",
+          "description": "A centered card."
+        },
+        {
+          "choice": "Split",
+          "description": "Image or video on one side, the form on the other."
+        },
+        {
+          "choice": "Slide",
+          "description": "A colored panel next to the form."
+        }
+      ],
+      "replaces": "COWORKEE_SIGNIN_LAYOUT"
+    },
+    "signInMedia": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "",
+      "description": "Image or video of the sign-in pages: an http(s) address or a path the web app serves (/media/welcome.mp4).",
+      "replaces": "COWORKEE_SIGNIN_MEDIA"
+    },
+    "signInMediaSide": {
+      "type": "parameter",
+      "datatype": "choice",
+      "defaultValue": "Left",
+      "description": "Side of the sign-in media.",
+      "choices": [
+        {
+          "choice": "Left",
+          "description": "Media left."
+        },
+        {
+          "choice": "Right",
+          "description": "Media right."
+        }
+      ],
+      "replaces": "COWORKEE_SIGNIN_SIDE"
+    },
+    "appTitle": {
+      "type": "generated",
+      "generator": "coalesce",
+      "parameters": {
+        "sourceVariableName": "title",
+        "fallbackVariableName": "name"
+      },
+      "replaces": "COWORKEE_APP_TITLE"
+    },
+    "seedPassword": {
+      "type": "generated",
+      "generator": "guid",
+      "parameters": {
+        "defaultFormat": "N"
+      },
+      "replaces": "SEED_PASSWORD"
+    },
+    "themeName": {
+      "type": "generated",
+      "generator": "regex",
+      "parameters": {
+        "source": "theme",
+        "steps": [
+          {
+            "regex": "HighContrast",
+            "replacement": "High Contrast"
+          }
+        ]
+      },
+      "replaces": "COWORKEE_THEME"
+    },
+    "hasPrimary": {
+      "type": "computed",
+      "value": "(primaryColor != \"\")"
+    },
+    "hasSecondary": {
+      "type": "computed",
+      "value": "(secondaryColor != \"\")"
+    },
+    "brandColors": {
+      "type": "computed",
+      "value": "(primaryColor != \"\" || secondaryColor != \"\")"
+    },
+    "customTheme": {
+      "type": "computed",
+      "value": "(theme != \"Ocean\" || primaryColor != \"\" || secondaryColor != \"\")"
+    },
+    "customLogo": {
+      "type": "computed",
+      "value": "(logo != \"coworkee-icon.svg\")"
+    },
+    "customSignIn": {
+      "type": "computed",
+      "value": "(signInLayout != \"Slide\" || signInMedia != \"\" || signInMediaSide != \"Left\")"
+    },
+    "defaultModel": {
+      "type": "computed",
+      "value": "(ai && chat && backup && notifications && !files && !features && !social && eventBus == \"none\" && (samples || !extendedAttributes))"
+    }
   },
   "sources": [
     {
@@ -40,7 +331,30 @@
             "tests/MyApp.Api.Tests/AiToolTests.cs"
           ]
         },
-        { "condition": "(!tests)", "exclude": ["tests/**"] }
+        {
+          "condition": "(!tests)",
+          "exclude": [
+            "tests/**"
+          ]
+        },
+        {
+          "condition": "(!defaultModel)",
+          "exclude": [
+            "src/MyApp.Infrastructure/Migrations/**"
+          ]
+        },
+        {
+          "condition": "(!ai)",
+          "exclude": [
+            "tests/MyApp.Api.Tests/AiToolTests.cs"
+          ]
+        },
+        {
+          "condition": "(customLogo)",
+          "exclude": [
+            "src/MyApp.Web.Client/wwwroot/coworkee-icon.svg"
+          ]
+        }
       ]
     }
   ],
@@ -50,10 +364,21 @@
         {
           "type": "conditional",
           "configuration": {
-            "actionableIf": ["<!--#if"],
-            "actionableElse": ["#else", "<!--#else"],
-            "actionableElseif": ["#elseif", "<!--#elseif"],
-            "endif": ["#endif", "<!--#endif"],
+            "actionableIf": [
+              "<!--#if"
+            ],
+            "actionableElse": [
+              "#else",
+              "<!--#else"
+            ],
+            "actionableElseif": [
+              "#elseif",
+              "<!--#elseif"
+            ],
+            "endif": [
+              "#endif",
+              "<!--#endif"
+            ],
             "trim": "true",
             "wholeLine": "true",
             "evaluator": "C++"

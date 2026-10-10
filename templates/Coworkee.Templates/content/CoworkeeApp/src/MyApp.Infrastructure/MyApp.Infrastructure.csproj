@@ -11,15 +11,45 @@
     <CoworkeePackage Include="Coworkee.Identity" />
     <CoworkeePackage Include="Coworkee.AuthServer" />
     <CoworkeePackage Include="Coworkee.Mailing" />
+    <!--#if (auditing) -->
     <CoworkeePackage Include="Coworkee.Auditing" />
+    <!--#endif -->
     <CoworkeePackage Include="Coworkee.Theming" />
     <CoworkeePackage Include="Coworkee.Realtime" />
+    <!--#if (notifications) -->
     <CoworkeePackage Include="Coworkee.Notifications" />
+    <!--#endif -->
     <CoworkeePackage Include="Coworkee.Account" />
     <CoworkeePackage Include="Coworkee.Localization" />
+    <!--#if (files) -->
+    <CoworkeePackage Include="Coworkee.Files" />
+    <!--#endif -->
+    <!--#if (features) -->
+    <CoworkeePackage Include="Coworkee.Features" />
+    <!--#endif -->
+    <!--#if (social) -->
+    <CoworkeePackage Include="Coworkee.Social" />
+    <!--#endif -->
+    <!--#if (extendedAttributes) -->
+    <CoworkeePackage Include="Coworkee.ExtendedAttributes" />
+    <!--#endif -->
+    <!--#if (search) -->
+    <CoworkeePackage Include="Coworkee.Search.Elasticsearch" />
+    <!--#endif -->
+    <!--#if (eventBus == "inProcess") -->
+    <CoworkeePackage Include="Coworkee.EventBus" />
+    <!--#elseif (eventBus == "rabbitMq") -->
+    <CoworkeePackage Include="Coworkee.EventBus.RabbitMq" />
+    <!--#endif -->
+    <!--#if (backup) -->
     <CoworkeePackage Include="Coworkee.Backup" />
+    <!--#endif -->
+    <!--#if (chat) -->
     <CoworkeePackage Include="Coworkee.Chat" />
+    <!--#endif -->
+    <!--#if (ai) -->
     <CoworkeePackage Include="Coworkee.Ai" />
+    <!--#endif -->
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />

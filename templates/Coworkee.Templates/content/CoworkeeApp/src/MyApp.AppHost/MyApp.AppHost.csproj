@@ -6,6 +6,12 @@
   </PropertyGroup>
   <ItemGroup>
     <CoworkeePackage Include="Coworkee.Aspire" />
+    <!--#if (storage == "azureBlob") -->
+    <PackageReference Include="Aspire.Hosting.Azure.Storage" />
+    <!--#endif -->
+    <!--#if (eventBus == "rabbitMq") -->
+    <PackageReference Include="Aspire.Hosting.RabbitMQ" />
+    <!--#endif -->
     <ProjectReference Include="..\MyApp.Migrations\MyApp.Migrations.csproj" />
     <ProjectReference Include="..\MyApp.Api\MyApp.Api.csproj" />
     <ProjectReference Include="..\MyApp.Auth\MyApp.Auth.csproj" />
