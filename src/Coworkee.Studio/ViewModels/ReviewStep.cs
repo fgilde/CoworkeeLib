@@ -53,7 +53,7 @@ public sealed partial class ReviewStep(MainViewModel main) : StepViewModel(main)
             new(L.Get("Theme"), values["theme"] + (values["primaryColor"] is { } primary ? $" · {primary} / {values["secondaryColor"] ?? "-"}" : string.Empty)),
             new(L.Get("Logo"), values["logo"] is { } logo ? Path.GetFileName(logo) : "-"),
             new(L.Get("Sign-in"), $"{values["signInLayout"]}{(values["signInMedia"] is { } media ? $" · {Path.GetFileName(media)} ({values["signInMediaSide"]})" : string.Empty)}"),
-            new(L.Get("Modules"), string.Join(", ", OptionCatalog.All.Where(o => o.Group == OptionCatalog.Modules && o.Kind == OptionKind.Bool && values[o.Id] == "true").Select(o => o.Title)) is { Length: > 0 } on ? on : "-"),
+            new(L.Get("Modules"), string.Join(", ", OptionCatalog.All.Where(o => o.Group == OptionCatalog.Modules && o.Kind == OptionKind.Bool && values[o.Id] == "true").Select(o => L.Get(o.Title))) is { Length: > 0 } on ? on : "-"),
             new(L.Get("Event bus"), values["eventBus"] ?? "none"),
             new(L.Get("Storage"), values["storage"] ?? "fileSystem"),
             new(L.Get("Entities"), string.Join(", ", spec.Modules.Select(m => $"{m.Name} ({string.Join(", ", m.Entities.Select(e => e.Name))})")) is { Length: > 0 } entities ? entities : "-"),

@@ -3,6 +3,9 @@ using Avalonia.Headless;
 
 [assembly: AssemblyFixture(typeof(Coworkee.Studio.Tests.UiSession))]
 
+// the language of the Studio is process wide and the screenshots switch it
+[assembly: Xunit.v3.Parallelization(Mode = Xunit.Sdk.ParallelMode.None)]
+
 namespace Coworkee.Studio.Tests;
 
 /// <summary>Starts the headless app before any test, so its thread owns the dispatcher, whatever test touches Avalonia first.</summary>

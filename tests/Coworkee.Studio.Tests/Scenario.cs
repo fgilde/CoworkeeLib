@@ -6,12 +6,17 @@ namespace Coworkee.Studio.Tests;
 /// <summary>The shop the screenshots and UI tests show: a business app with a Sales module.</summary>
 internal static class Scenario
 {
-    public static MainViewModel Shop(TempFolder folder)
+    public static MainViewModel Shop(TempFolder folder, string? location = null)
     {
         var main = Studio.Create(folder);
         main.NewApp();
         main.Basics.Name = "Shop";
+        main.Basics.Location = location ?? folder.Path;
         main.Option("title").Value = "Acme Shop";
+        main.Option("theme").Value = "Forest";
+        main.Branding.UseBrandColors = true;
+        main.Option("primaryColor").Value = "#0a7d5a";
+        main.Option("secondaryColor").Value = "#ff8f00";
         main.Architecture.ApplyPreset(main.Architecture.Presets.Single(p => p.Preset.Name == "Business app"));
         main.Entities.AddExample();
         foreach (var step in main.Steps)
@@ -19,6 +24,7 @@ internal static class Scenario
             step.IsReachable = true;
         }
 
+        main.UpdateStates();
         return main;
     }
 
@@ -40,6 +46,7 @@ internal static class Scenario
         }
 
         generate.Elapsed = "1:42";
+        generate.ShowLog = true;
         generate.Finish(GenerationOutcome.Succeeded);
     }
 }
