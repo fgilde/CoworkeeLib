@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- travels inside the Coworkee.Cli tool (and the Studio tool) as project reference, not as package of its own -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+</Project>

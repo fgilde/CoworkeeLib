@@ -10,4 +10,7 @@
     <PackageReference Include="System.CommandLine" />
     <EmbeddedResource Include="Scaffold/**" LogicalName="Scaffold/%(RecursiveDir)%(Filename)%(Extension)" WithCulture="false" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Coworkee.Cli.Spec\Coworkee.Cli.Spec.csproj" />
+  </ItemGroup>
 </Project>

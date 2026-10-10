@@ -20,6 +20,7 @@
     <Project Path="src/Coworkee.Ai/Coworkee.Ai.csproj" />
     <Project Path="src/Coworkee.Backup/Coworkee.Backup.csproj" />
     <Project Path="src/Coworkee.Chat/Coworkee.Chat.csproj" />
+    <Project Path="src/Coworkee.Cli.Spec/Coworkee.Cli.Spec.csproj" />
     <Project Path="src/Coworkee.Cli/Coworkee.Cli.csproj" />
     <Project Path="src/Coworkee.Client/Coworkee.Client.csproj" />
     <Project Path="src/Coworkee.EventBus.RabbitMq/Coworkee.EventBus.RabbitMq.csproj" />
