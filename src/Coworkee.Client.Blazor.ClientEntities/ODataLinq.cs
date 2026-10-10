@@ -13,10 +13,12 @@ public static class ODataLinq
 {
     private const int MaxDepth = 100;
 
-    public static Expression<Func<T, bool>> Filter<T>(string filter)
+    public static Expression<Func<T, bool>> Filter<T>(string filter) => Filter<T>(Parse(filter));
+
+    internal static Expression<Func<T, bool>> Filter<T>(QueryToken filter)
     {
         var it = Expression.Parameter(typeof(T), "it");
-        var body = new Binder(it).Bind(Parse(filter));
+        var body = new Binder(it).Bind(filter);
         return Expression.Lambda<Func<T, bool>>(Binder.AsBool(body), it);
     }
 
@@ -61,11 +63,20 @@ public static class ODataLinq
         };
     }
 
-    private static LambdaExpression Key<T>(string path)
+    /// <summary>A typed, null safe getter for a path; values behind a reference that may be null are nullable.</summary>
+    internal static LambdaExpression Key<T>(string path)
     {
         var it = Expression.Parameter(typeof(T), "it");
         return Expression.Lambda(new Binder(it).Bind(Parse(path.Trim())), it);
     }
+
+    /// <summary>A literal as <paramref name="type"/>, the way comparisons with a property of that type read it.</summary>
+    internal static object? Literal(object? value, Type type) => Binder.ConvertValue(value, Nullable.GetUnderlyingType(type) ?? type);
+
+    /// <summary>The literals of "Path in (...)" as <paramref name="type"/>.</summary>
+    internal static object?[] Literals(InToken token, Type type) => token.Right is LiteralToken { Value: string list }
+        ? [.. Binder.Split(list).Select(item => Literal(Parse(item) is LiteralToken literal ? literal.Value : throw new NotSupportedException(item), type))]
+        : throw new NotSupportedException("Only literal lists are supported in 'in'.");
 
     /// <summary>Recognizes "Path eq literal", the shape of list facet options, so they can be counted in one pass.</summary>
     internal static bool TryEquality<T>(string filter, out string path, out object? value)
@@ -84,10 +95,10 @@ public static class ODataLinq
         return true;
     }
 
-    private static string PathText(PathToken token) =>
+    internal static string PathText(PathToken token) =>
         (token.NextToken is PathToken next ? PathText(next) + "/" : string.Empty) + token.Identifier;
 
-    private static QueryToken Parse(string text)
+    internal static QueryToken Parse(string text)
     {
         try
         {
@@ -276,15 +287,9 @@ public static class ODataLinq
         private Expression In(InToken token)
         {
             var left = Bind(token.Left);
-            if (token.Right is not LiteralToken { Value: string list })
-            {
-                throw new NotSupportedException("Only literal lists are supported in 'in'.");
-            }
-
             var type = left.Type;
             var values = Array.CreateInstance(type, 0).GetType();
-            var items = Split(list).Select(item => ConvertValue(Parse(item) is LiteralToken literal ? literal.Value : throw new NotSupportedException(item),
-                Nullable.GetUnderlyingType(type) ?? type)).ToArray();
+            var items = Literals(token, type);
             var array = Array.CreateInstance(type, items.Length);
             for (var i = 0; i < items.Length; i++)
             {
@@ -294,7 +299,7 @@ public static class ODataLinq
             return Expression.Call(typeof(Enumerable), nameof(Enumerable.Contains), [type], Expression.Constant(array, values), left);
         }
 
-        private static IEnumerable<string> Split(string list)
+        public static IEnumerable<string> Split(string list)
         {
             var text = list.Trim();
             text = text.StartsWith('(') && text.EndsWith(')') ? text[1..^1] : text;

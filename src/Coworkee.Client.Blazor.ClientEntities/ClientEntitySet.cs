@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.IO.Compression;
 using System.Reflection;
 using System.Text.Json;
@@ -40,8 +39,8 @@ public abstract class ClientEntitySet : IAsyncDisposable
 public sealed class ClientEntitySet<T> : ClientEntitySet
 {
     private const int FetchChunk = 50;
-    private const int ParallelPages = 4;
-    private const int MaxCachedFilters = 100;
+    private const int ParallelPages = 2;
+    private const int MaxViews = 16;
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     private static readonly Func<T, Guid>? IdOf = typeof(T).GetProperty("Id", BindingFlags.Public | BindingFlags.Instance) is { PropertyType: var type, GetMethod: { } getter } && type == typeof(Guid)
@@ -58,13 +57,14 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     private readonly ILogger _logger;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly CancellationTokenSource _stop = new();
-    private readonly ConcurrentDictionary<string, Func<T, bool>> _filters = new(StringComparer.Ordinal);
     private TaskCompletionSource _local = new(TaskCreationOptions.RunContinuationsAsynchronously);
-    private Dictionary<Guid, T> _rows = [];
-    private T[]? _items;
+    private LocalTable<T>? _table;
     private DateTimeOffset? _version;
     private IReadOnlyList<FacetGroupDto>? _facets;
-    private LocalView? _view;
+    private Task<IReadOnlyList<FacetGroupDto>>? _facetsLoading;
+    private bool _facetsStale;
+    private readonly Dictionary<(string? Filter, string? OrderBy), LocalView> _views = [];
+    private bool _selectRejected;
     private bool _restored;
     private int _nudged;
     private Task? _running;
@@ -82,15 +82,18 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
 
     internal static bool CanMirror => IdOf is not null;
 
+    /// <summary>Gives the browser a turn between long steps, so the page keeps rendering and the server answers meanwhile.</summary>
+    internal static Func<Task> Pause { get; set; } = () => Task.Delay(1);
+
     public override string EntitySet => _info.EntitySet;
 
     /// <summary>The navigation properties each row carries, as in $expand.</summary>
     public string? Expand { get; }
 
-    public bool IsLocal => _items is not null;
+    public bool IsLocal => _table is not null;
 
-    /// <summary>All local rows; empty until the first download completed.</summary>
-    public IReadOnlyList<T> Items => _items ?? [];
+    /// <summary>All local rows; empty until the first download completed. Rows kept as columns become objects here.</summary>
+    public IReadOnlyList<T> Items => _table?.All() ?? [];
 
     /// <summary>The local rows for LINQ or a QuickGrid's Items; empty until the first download completed.</summary>
     public IQueryable<T> Query() => Items.AsQueryable();
@@ -102,13 +105,13 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     public async Task<ODataPage<T>> QueryAsync(ODataQuery query, CancellationToken cancellationToken = default)
     {
         Start();
-        if (_items is { } items && Covers(query))
+        if (_table is { } table && Covers(query))
         {
             try
             {
-                return await LocalAsync(items, query, cancellationToken);
+                return await LocalAsync(table, query, cancellationToken);
             }
-            catch (Exception exception) when (exception is NotSupportedException or InvalidOperationException or ArgumentException or FormatException)
+            catch (Exception exception) when (exception is NotSupportedException or InvalidOperationException or ArgumentException or FormatException or InvalidCastException)
             {
                 _logger.LogDebug(exception, "{EntitySet} answers {Filter} on the server", EntitySet, query.Filter);
             }
@@ -187,47 +190,73 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     }
 
     private bool Covers(ODataQuery query) =>
-        string.IsNullOrWhiteSpace(query.Search)
+        string.IsNullOrWhiteSpace(query.Search) && string.IsNullOrWhiteSpace(query.Select)
         && (string.IsNullOrWhiteSpace(query.Expand) || Names(query.Expand).All(Names(Expand).Contains));
 
     private static HashSet<string> Names(string? expand) =>
         new((expand ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries), StringComparer.OrdinalIgnoreCase);
 
-    private async Task<ODataPage<T>> LocalAsync(T[] items, ODataQuery query, CancellationToken cancellationToken)
+    private async Task<ODataPage<T>> LocalAsync(LocalTable<T> table, ODataQuery query, CancellationToken cancellationToken)
     {
-        var view = View(items, query.Filter, query.OrderBy);
-        var facets = query.Facets ? view.Facets ??= LocalFacets.Count(await FacetsAsync(cancellationToken), view.Rows, Compile) : [];
-        var page = view.Ordered.Skip(query.Skip ?? 0);
-        return new ODataPage<T>([.. query.Top is { } top ? page.Take(top) : page], view.Rows.Length, facets);
-    }
-
-    // paging, grouping and facet clicks repeat the last filter and order: they reuse its rows instead of filtering and sorting again
-    private LocalView View(T[] items, string? filter, string? orderBy)
-    {
-        var last = _view;
-        if (last is not null && last.Source == items && last.Filter == filter)
+        var view = View(table, query.Filter, query.OrderBy);
+        var facets = query.Facets ? view.Facets ??= LocalFacets.Count(await FacetsAsync(cancellationToken), table, view.Rows) : [];
+        var skip = Math.Min(query.Skip ?? 0, view.Rows.Length);
+        var items = new T[Math.Min(query.Top ?? int.MaxValue, view.Rows.Length - skip)];
+        for (var i = 0; i < items.Length; i++)
         {
-            return last.OrderBy == orderBy ? last : _view = last with { OrderBy = orderBy, Ordered = [.. ODataLinq.OrderBy(last.Rows, orderBy)] };
+            items[i] = table.Row(view.Rows[skip + i]);
         }
 
-        var rows = string.IsNullOrWhiteSpace(filter) ? items : items.Where(Compile(filter)).ToArray();
-        return _view = new LocalView(items, filter, rows, orderBy, string.IsNullOrWhiteSpace(orderBy) ? rows : [.. ODataLinq.OrderBy(rows, orderBy)]);
+        return new ODataPage<T>(items, view.Rows.Length, facets);
     }
 
-    private Func<T, bool> Compile(string filter)
+    // paging, grouping, facet counts and going back to an earlier filter reuse the rows found before
+    private LocalView View(LocalTable<T> table, string? filter, string? orderBy)
     {
-        if (_filters.Count > MaxCachedFilters)
+        lock (_views)
         {
-            // ponytail: every search term is a new filter; dropping the cache is cheaper than tracking use
-            _filters.Clear();
+            if (_views.TryGetValue((filter, orderBy), out var known) && known.Table == table)
+            {
+                return known;
+            }
+
+            if (_views.Count >= MaxViews || _views.Values.Any(v => v.Table != table))
+            {
+                _views.Clear();
+            }
+
+            return _views[(filter, orderBy)] = new LocalView(table, table.Find(filter, orderBy));
+        }
+    }
+
+    // the server knows which facets exist and their labels; locally only the counts change, so changed rows refresh them in the background
+    private async Task<IReadOnlyList<FacetGroupDto>> FacetsAsync(CancellationToken cancellationToken)
+    {
+        if (_facets is not { } known)
+        {
+            return await (_facetsLoading ??= LoadFacetsAsync()).WaitAsync(cancellationToken);
         }
 
-        return _filters.GetOrAdd(filter, f => ODataLinq.Filter<T>(f).Compile());
+        if (_facetsStale)
+        {
+            _facetsStale = false;
+            _facetsLoading ??= LoadFacetsAsync();
+        }
+
+        return known;
     }
 
-    // the server knows which facets exist and their labels; locally only the counts change
-    private async Task<IReadOnlyList<FacetGroupDto>> FacetsAsync(CancellationToken cancellationToken) =>
-        _facets ??= (await _server.QueryAsync<T>(EntitySet, new ODataQuery { Top = 0, Count = false, Facets = true, Expand = Expand }, cancellationToken)).Facets;
+    private async Task<IReadOnlyList<FacetGroupDto>> LoadFacetsAsync()
+    {
+        try
+        {
+            return _facets = (await _server.QueryAsync<T>(EntitySet, new ODataQuery { Top = 0, Count = false, Facets = true, Expand = Expand }, _stop.Token)).Facets;
+        }
+        finally
+        {
+            _facetsLoading = null;
+        }
+    }
 
     private async Task SyncAsync(CancellationToken cancellationToken)
     {
@@ -259,7 +288,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         {
             _logger.LogWarning(exception, "Syncing {EntitySet} failed", EntitySet);
             Publish(Status with { State = ClientEntitySyncState.Failed, Error = exception.Message });
-            if (_items is null)
+            if (_table is null)
             {
                 var waiting = _local;
                 _local = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -290,7 +319,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         {
             // pages known from the count load side by side; rows added meanwhile follow one page at a time
             var pages = await Task.WhenAll(Enumerable.Range(first, first < known ? Math.Min(ParallelPages, known - first) : 1).Select(page =>
-                _server.QueryAsync<T>(EntitySet, new ODataQuery { OrderBy = "Id", Top = batch, Skip = page * batch, Expand = Expand, Count = false }, cancellationToken)));
+                RowsAsync(new ODataQuery { OrderBy = "Id", Top = batch, Skip = page * batch, Count = false }, cancellationToken)));
             foreach (var item in pages.SelectMany(p => p.Items))
             {
                 rows[IdOf!(item)] = item;
@@ -304,7 +333,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         }
 
         // rows changed meanwhile come with the next update, which starts at the version taken before the download
-        Commit(rows, start.Version, changed: true);
+        Commit(LocalTable<T>.Of(rows.Values), start.Version, changed: true);
         await SaveAsync();
     }
 
@@ -318,7 +347,14 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
             return;
         }
 
-        var rows = new Dictionary<Guid, T>(_rows);
+        var table = _table!;
+        if (changes.Changed.Count == 0 && changes.Deleted.Count == 0 && changes.Count == table.Count)
+        {
+            Commit(table, changes.Version, changed: false);
+            return;
+        }
+
+        var rows = table.All().ToDictionary(IdOf!);
         var changed = changes.Deleted.Count(rows.Remove) > 0;
         changed |= await FetchIntoAsync(rows, changes.Changed, cancellationToken);
         if (rows.Count != changes.Count)
@@ -333,7 +369,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
             changed |= await FetchIntoAsync(rows, [.. visible.Where(id => !rows.ContainsKey(id))], cancellationToken);
         }
 
-        Commit(rows, changes.Version, changed);
+        Commit(changed ? LocalTable<T>.Of(rows.Values) : table, changes.Version, changed);
         if (changed)
         {
             await SaveAsync();
@@ -344,7 +380,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     {
         foreach (var chunk in ids.Chunk(FetchChunk))
         {
-            var page = await _server.QueryAsync<T>(EntitySet, new ODataQuery { Filter = $"Id in ({string.Join(",", chunk)})", Top = chunk.Length, Expand = Expand, Count = false }, cancellationToken);
+            var page = await RowsAsync(new ODataQuery { Filter = $"Id in ({string.Join(",", chunk)})", Top = chunk.Length, Count = false }, cancellationToken);
             foreach (var item in page.Items)
             {
                 rows[IdOf!(item)] = item;
@@ -354,30 +390,76 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         return ids.Count > 0;
     }
 
-    private void Commit(Dictionary<Guid, T> rows, DateTimeOffset version, bool changed)
+    // only the properties of the row type travel; a server that rejects them sends whole rows
+    private async Task<ODataPage<T>> RowsAsync(ODataQuery query, CancellationToken cancellationToken)
     {
-        _rows = rows;
-        _version = version;
-        var revision = Status.Revision;
-        if (changed || _items is null)
+        if (_selectRejected || LocalTable<T>.Shape is not { } shape)
         {
-            _items = [.. rows.Values];
-            _facets = null;
-            _view = null;
-            revision++;
+            return await _server.QueryAsync<T>(EntitySet, query with { Expand = Expand }, cancellationToken);
         }
 
-        Publish(new ClientEntityStatus(ClientEntitySyncState.Idle, true, rows.Count, rows.Count, version, null, revision));
+        var (select, expand) = shape.Query(Expand);
+        try
+        {
+            return await _server.QueryAsync<T>(EntitySet, query with { Select = select, Expand = expand }, cancellationToken);
+        }
+        catch (Api.ApiException exception) when (exception.Status == 400)
+        {
+            _logger.LogDebug("{EntitySet} does not take the select of {Type}, rows come whole", EntitySet, typeof(T).Name);
+            _selectRejected = true;
+            return await RowsAsync(query, cancellationToken);
+        }
+    }
+
+    private void Commit(LocalTable<T> table, DateTimeOffset version, bool changed)
+    {
+        _version = version;
+        var revision = Status.Revision;
+        if (changed || _table is null)
+        {
+            _table = table;
+            _facetsStale = true;
+            revision++;
+            _ = IndexAsync(table);
+        }
+
+        Publish(new ClientEntityStatus(ClientEntitySyncState.Idle, true, table.Count, table.Count, version, null, revision));
         _local.TrySetResult();
+    }
+
+    // like database indexes: each column sorts once, between columns the page renders and queries run; the sort orders are kept with the copy
+    private async Task IndexAsync(LocalTable<T> table)
+    {
+        try
+        {
+            var sorted = false;
+            foreach (var path in table.Indexable)
+            {
+                await Pause();
+                if (_table != table || _stop.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                sorted |= table.Column(path).Index();
+            }
+
+            if (sorted && _table == table)
+            {
+                await SaveAsync();
+            }
+        }
+        catch (Exception exception)
+        {
+            _logger.LogDebug(exception, "Indexing {EntitySet} stopped", EntitySet);
+        }
     }
 
     private async Task ForgetAsync()
     {
-        _rows = [];
-        _items = null;
+        _table = null;
         _version = null;
         _facets = null;
-        _view = null;
         if (_local.Task.IsCompleted)
         {
             _local = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -395,14 +477,22 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
 
     private string StorageKey => $"{_partition}/{EntitySet}/{Expand}";
 
+    // rows whose type splits into columns are kept as columns, which come back without parsing; others as JSON
     private async Task SaveAsync()
     {
         try
         {
             using var buffer = new MemoryStream();
-            await using (var zip = new GZipStream(buffer, CompressionLevel.Fastest))
+            await using (var zip = new GZipStream(buffer, CompressionLevel.Fastest, leaveOpen: true))
             {
-                await JsonSerializer.SerializeAsync(zip, new Snapshot(_version!.Value, Schema, _items!), Json);
+                if (LocalTable<T>.Shape is not null)
+                {
+                    _table!.Write(zip, _version!.Value);
+                }
+                else
+                {
+                    await JsonSerializer.SerializeAsync(zip, new Snapshot(_version!.Value, Schema, _table!.All()), Json);
+                }
             }
 
             await _storage.SaveAsync(StorageKey, buffer.ToArray());
@@ -423,10 +513,23 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
                 return;
             }
 
-            await using var zip = new GZipStream(new MemoryStream(data), CompressionMode.Decompress);
-            if (await JsonSerializer.DeserializeAsync<Snapshot>(zip, Json) is { } snapshot && snapshot.Schema == Schema)
+            using var plain = new MemoryStream();
+            await using (var zip = new GZipStream(new MemoryStream(data), CompressionMode.Decompress))
             {
-                Commit(snapshot.Items.ToDictionary(IdOf!), snapshot.Version, changed: true);
+                await zip.CopyToAsync(plain);
+            }
+
+            plain.Position = 0;
+            if (LocalTable<T>.IsColumns(plain.GetBuffer().AsSpan(0, (int)plain.Length)))
+            {
+                if (await LocalTable<T>.ReadAsync(plain, Pause) is { } restored)
+                {
+                    Commit(restored.Table, restored.Version, changed: true);
+                }
+            }
+            else if (await JsonSerializer.DeserializeAsync<Snapshot>(plain, Json) is { } snapshot && snapshot.Schema == Schema)
+            {
+                Commit(LocalTable<T>.Of(snapshot.Items), snapshot.Version, changed: true);
             }
         }
         catch (Exception exception)
@@ -435,7 +538,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         }
     }
 
-    private sealed record LocalView(T[] Source, string? Filter, T[] Rows, string? OrderBy, T[] Ordered)
+    private sealed record LocalView(LocalTable<T> Table, int[] Rows)
     {
         public IReadOnlyList<FacetGroupDto>? Facets { get; set; }
     }

@@ -2,33 +2,33 @@ using Coworkee.Contracts.Data;
 
 namespace Coworkee.Client.Blazor.ClientEntities;
 
-/// <summary>Counts the server's facet options on local rows; "Path eq value" options of one path share a single pass.</summary>
+/// <summary>Counts the server's facet options on local rows: "Path eq value" options of one path share a single pass over the column's ranks.</summary>
 internal static class LocalFacets
 {
-    public static IReadOnlyList<FacetGroupDto> Count<T>(IReadOnlyList<FacetGroupDto> groups, IReadOnlyList<T> rows, Func<string, Func<T, bool>> compile) =>
-        [.. groups.Select(group => group with { Options = Options(group, rows, compile) })];
+    public static IReadOnlyList<FacetGroupDto> Count<T>(IReadOnlyList<FacetGroupDto> groups, LocalTable<T> table, int[] rows) =>
+        [.. groups.Select(group => group with { Options = Options(group, table, rows) })];
 
-    private static List<FacetOptionDto> Options<T>(FacetGroupDto group, IReadOnlyList<T> rows, Func<string, Func<T, bool>> compile)
+    private static List<FacetOptionDto> Options<T>(FacetGroupDto group, LocalTable<T> table, int[] rows)
     {
-        var byPath = new Dictionary<string, Dictionary<object, int>>(StringComparer.OrdinalIgnoreCase);
+        var byPath = new Dictionary<string, (Column Column, int[] Counts)>(StringComparer.OrdinalIgnoreCase);
         var options = new List<FacetOptionDto>();
         foreach (var option in group.Options)
         {
             int count;
             if (ODataLinq.TryEquality<T>(option.OData, out var path, out var value) && value is not null)
             {
-                if (!byPath.TryGetValue(path, out var counts))
+                if (!byPath.TryGetValue(path, out var counted))
                 {
-                    var getter = ODataLinq.Path<T>(path);
-                    counts = rows.Select(getter).OfType<object>().GroupBy(v => v).ToDictionary(g => g.Key, g => g.Count());
-                    byPath[path] = counts;
+                    var column = table.Column(path);
+                    byPath[path] = counted = (column, column.Count(rows));
                 }
 
-                count = counts.GetValueOrDefault(value);
+                count = counted.Column.RankOf(value) is var rank and >= 0 ? counted.Counts[rank] : 0;
             }
             else
             {
-                count = rows.Count(compile(option.OData));
+                var mask = table.Mask(option.OData);
+                count = rows.Count(row => mask[row]);
             }
 
             // the server lists the values found in the rows, but keeps every range preset

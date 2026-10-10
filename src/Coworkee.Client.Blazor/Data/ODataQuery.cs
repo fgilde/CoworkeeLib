@@ -12,6 +12,9 @@ public sealed record ODataQuery
 
     public string? Expand { get; init; }
 
+    /// <summary>The properties to return, e.g. only those the client's row type has.</summary>
+    public string? Select { get; init; }
+
     public int? Top { get; init; }
 
     public int? Skip { get; init; }
@@ -27,6 +30,7 @@ public sealed record ODataQuery
         Add(parts, "$search", Search);
         Add(parts, "$orderby", OrderBy);
         Add(parts, "$expand", Expand);
+        Add(parts, "$select", Select);
         Add(parts, "$top", Top?.ToString(CultureInfo.InvariantCulture));
         Add(parts, "$skip", Skip is > 0 ? Skip.Value.ToString(CultureInfo.InvariantCulture) : null);
         if (Count)

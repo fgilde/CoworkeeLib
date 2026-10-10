@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Contracts.Data;
 
@@ -7,8 +8,6 @@ namespace Coworkee.Client.Blazor.Data;
 
 internal sealed class ODataClient(HttpClient http) : IODataClient
 {
-    private const string FacetsAnnotation = "@cn.facets";
-
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     public async Task<ODataPage<T>> QueryAsync<T>(string entitySet, ODataQuery query, CancellationToken cancellationToken = default)
@@ -26,11 +25,9 @@ internal sealed class ODataClient(HttpClient http) : IODataClient
             throw new ApiException((int)response.StatusCode, "odata.failed", null);
         }
 
-        var page = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken);
-        var items = page.GetProperty("value").Deserialize<List<T>>(Json) ?? [];
-        long? count = page.TryGetProperty("@odata.count", out var total) ? total.GetInt64() : null;
-        var facets = page.TryGetProperty(FacetsAnnotation, out var groups) ? groups.Deserialize<List<FacetGroupDto>>(Json) ?? [] : [];
-        return new ODataPage<T>(items, count, facets);
+        // one pass over the response: large pages, such as the download of client entities, cost no extra document
+        var page = await response.Content.ReadFromJsonAsync<Response<T>>(Json, cancellationToken);
+        return new ODataPage<T>(page?.Value ?? [], page?.Count, page?.Facets ?? []);
     }
 
     public async Task<byte[]> ExportAsync(string entitySet, ODataQuery query, CancellationToken cancellationToken = default)
@@ -60,5 +57,17 @@ internal sealed class ODataClient(HttpClient http) : IODataClient
         }
 
         return (await response.Content.ReadFromJsonAsync<ImportResult>(Json, cancellationToken))!;
+    }
+
+    private sealed class Response<T>
+    {
+        [JsonPropertyName("value")]
+        public List<T>? Value { get; set; }
+
+        [JsonPropertyName("@odata.count")]
+        public long? Count { get; set; }
+
+        [JsonPropertyName("@cn.facets")]
+        public List<FacetGroupDto>? Facets { get; set; }
     }
 }
