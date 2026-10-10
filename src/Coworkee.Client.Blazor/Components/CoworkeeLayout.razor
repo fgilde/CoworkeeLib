@@ -11,8 +11,6 @@
 }
 <MudPopoverProvider />
 <MudDialogProvider />
-@* MudEx hides a closing dialog by a timer racing its reverse animation; holding the last frame keeps a late timer from flashing the dialog back *@
-<style>.mud-ex-dialog[style*="reverse"] { animation-fill-mode: forwards !important; }</style>
 <MudSnackbarProvider />
 <SessionGuard />
 

@@ -19,10 +19,9 @@ public sealed class ApiDocsTests(IdentityApp app)
         page.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await page.Content.ReadAsStringAsync(Ct)).ShouldContain("theme-toggle");
 
-        // the UI reads the interceptor as JSON inside a JS string: decoded like the browser does, it must still be the function we wrote
+        // the UI embeds the interceptors as a JSON object literal: parsed, it must still be the function we wrote
         var script = await app.As(setup.AdminUserId, setup.TenantId).GetStringAsync("/swagger/index.js", Ct);
-        var literal = System.Text.RegularExpressions.Regex.Match(script, @"var interceptors = JSON\.parse\('(.*)'\);").Groups[1].Value;
-        var json = literal.Replace(@"\\", "\u0001", StringComparison.Ordinal).Replace(@"\'", "'", StringComparison.Ordinal).Replace("\u0001", @"\", StringComparison.Ordinal);
+        var json = System.Text.RegularExpressions.Regex.Match(script, @"var interceptors = (\{.*\});").Groups[1].Value;
         var function = System.Text.Json.JsonDocument.Parse(json).RootElement.GetProperty("RequestInterceptorFunction").GetString()!;
         function.ShouldStartWith("function (request) { const url = new URL(request.url, location.href);");
         function.ShouldNotContain("\n");

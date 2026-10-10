@@ -31,6 +31,12 @@ jobs:
       - name: Build
         run: dotnet build Coworkee.slnx -c Release -p:Version=$VERSION
 
+      - name: Docker Hub mirror
+        # test containers pull through Google's Docker Hub mirror; the daemon falls back to Docker Hub, so the anonymous pull limit no longer fails a run
+        run: |
+          sudo sh -c 'f=/etc/docker/daemon.json; [ -s "$f" ] || echo "{}" > "$f"; jq ". + {\"registry-mirrors\": [\"https://mirror.gcr.io\"]}" "$f" > /tmp/daemon.json && mv /tmp/daemon.json "$f"'
+          sudo systemctl restart docker
+
       - name: Test
         run: dotnet test --solution Coworkee.slnx -c Release --no-build
 

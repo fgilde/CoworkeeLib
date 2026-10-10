@@ -74,7 +74,7 @@ public partial class UserDetail
         _permissions = await Api.GetEffectivePermissionsAsync(Id);
         _language = (await Api.GetUserLanguageAsync(Id))?.Culture;
         _form = UserForm.From(_user, _language);
-        _meta = _form.ObjectEditMeta(meta => UserFormMeta.Apply(meta, L, !_canManage));
+        _meta = _form.ObjectEditMeta(meta => UserFormMeta.Apply(meta, L, !_canManage)).UpdateAllConditionalSettings();
         _roleIds = _user.Roles.Select(r => r.Id).ToList();
         _groupIds = _user.Groups.Select(g => g.Id).ToList();
     }

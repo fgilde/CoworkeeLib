@@ -73,7 +73,7 @@ public partial class AppConfigurationEditor<T>
             _changed = section.ChangedKeys;
             _locked = section.Locked ?? [];
             _hidden = section.Hidden ?? [];
-            _meta = _value.ObjectEditMeta(Configure); // MudEx applies a MetaConfiguration only after its editors took their labels
+            _meta = _value.ObjectEditMeta(Configure).UpdateAllConditionalSettings(); // MudEx evaluates IgnoreIf/ReadOnlyIf of a passed meta only on changes
             _revision++;
         }
         catch (ApiException exception)

@@ -45,7 +45,7 @@ public partial class ProfileDetails
     {
         _profile = profile;
         _form = ProfileForm.From(profile);
-        _meta = _form.ObjectEditMeta(Configure);
+        _meta = _form.ObjectEditMeta(Configure).UpdateAllConditionalSettings();
     }
 
     private void Configure(ObjectEditMeta<ProfileForm> meta)
