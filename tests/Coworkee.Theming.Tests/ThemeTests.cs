@@ -29,12 +29,12 @@ public sealed class ThemeTests(ThemeApp app) : IAsyncLifetime
     private static readonly string[] BuiltIn = ["Classic", "Coworkee", "Forest", "High Contrast", "Midnight", "Ocean", "Sunset"];
 
     [Fact]
-    public async Task Seeds_global_themes_with_coworkee_as_default()
+    public async Task Seeds_global_themes_with_ocean_as_default()
     {
         var themes = await Admin.GetFromJsonAsync<ThemeDto[]>("/api/v1/themes", Ct);
 
         themes!.Where(t => t.IsGlobal).Select(t => t.Name).ShouldBe(BuiltIn, ignoreOrder: true);
-        (await app.Anonymous().GetFromJsonAsync<ThemeDto>("/api/v1/themes/current", Ct))!.Name.ShouldBe("Coworkee");
+        (await app.Anonymous().GetFromJsonAsync<ThemeDto>("/api/v1/themes/current", Ct))!.Name.ShouldBe("Ocean");
     }
 
     [Fact]
@@ -99,7 +99,7 @@ public sealed class ThemeTests(ThemeApp app) : IAsyncLifetime
 
         (await app.Anonymous().GetFromJsonAsync<ThemeDto>("/api/v1/themes/current", Ct))!.Name.ShouldBe("Brand");
         var (user, tenant) = await app.CreateTenantAdminAsync();
-        (await app.As(user, tenant).GetFromJsonAsync<ThemeDto>("/api/v1/themes/current", Ct))!.Name.ShouldBe("Coworkee");
+        (await app.As(user, tenant).GetFromJsonAsync<ThemeDto>("/api/v1/themes/current", Ct))!.Name.ShouldBe("Ocean");
     }
 
     [Theory]

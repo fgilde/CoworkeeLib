@@ -7,7 +7,7 @@ namespace Coworkee.Theming;
 
 internal static class ThemeSeeds
 {
-    public const string DefaultName = "Coworkee";
+    public const string DefaultName = "Ocean";
 
     private static readonly string[] Sans = ["Inter", "Segoe UI", "Helvetica Neue", "Arial", "sans-serif"];
     private static readonly string[] Humanist = ["Segoe UI", "Tahoma", "Geneva", "Verdana", "sans-serif"];
@@ -70,13 +70,13 @@ internal static class ThemeSeeds
 
     private static List<ThemeDefinition> Create() =>
     [
-        Theme(DefaultName, isDefault: true,
+        Theme("Coworkee", isDefault: false,
             light: new() { ["Primary"] = "#d4481f", ["PrimaryContrastText"] = "#ffffff", ["Secondary"] = "#16140f", ["SecondaryContrastText"] = "#ffffff", ["Background"] = "#f3efe6", ["Surface"] = "#fbf9f4", ["AppbarBackground"] = "#f3efe6", ["AppbarText"] = "#16140f", ["DrawerBackground"] = "#ebe5d8", ["TextPrimary"] = "#16140f", ["TextSecondary"] = "#4a463d", ["LinesDefault"] = "#d6cfbf" },
             dark: new() { ["Primary"] = "#f06a43", ["PrimaryContrastText"] = "#14130f", ["Secondary"] = "#efe9dc", ["SecondaryContrastText"] = "#14130f", ["Background"] = "#14130f", ["Surface"] = "#1f1d18", ["AppbarBackground"] = "#14130f", ["AppbarText"] = "#efe9dc", ["DrawerBackground"] = "#1c1a15", ["TextPrimary"] = "#efe9dc", ["TextSecondary"] = "#bdb6a6", ["LinesDefault"] = "#34312a" },
             layout: Layout("6px", "300px", "64px"),
             typography: Fonts(Sans, Sans),
             options: new() { ["ShowLogoInNav"] = true, ["ShowLogoInAppBar"] = true }),
-        Theme("Ocean", isDefault: false,
+        Theme(DefaultName, isDefault: true,
             light: new() { ["Primary"] = "#1565c0", ["PrimaryContrastText"] = "#ffffff", ["Secondary"] = "#00838f", ["SecondaryContrastText"] = "#ffffff", ["Background"] = "#f4f7fb", ["Surface"] = "#ffffff", ["AppbarBackground"] = "#1565c0", ["AppbarText"] = "#ffffff", ["DrawerBackground"] = "#eaf1f9" },
             dark: new() { ["Primary"] = "#64b5f6", ["PrimaryContrastText"] = "#0b1a2a", ["Secondary"] = "#4dd0e1", ["SecondaryContrastText"] = "#0b1a2a", ["Background"] = "#0f1722", ["Surface"] = "#16202e", ["AppbarBackground"] = "#0f1722", ["AppbarText"] = "#e3eefb", ["DrawerBackground"] = "#121b27", ["TextPrimary"] = "#e3eefb", ["TextSecondary"] = "#9fb3c8", ["LinesDefault"] = "#26364a" },
             layout: Layout("14px", "320px", "56px"),

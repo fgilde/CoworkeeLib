@@ -33,14 +33,14 @@ public sealed class AuthDesignTests(AuthApp app) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task The_account_pages_use_the_card_with_the_theme_colors_font_and_radius_and_load_their_assets()
+    public async Task The_account_pages_slide_by_default_with_the_theme_colors_font_and_radius_and_load_their_assets()
     {
         var html = await GetAsync("/Account/Login");
 
-        html.ShouldContain("data-design=\"card\"");
-        html.ShouldContain("class=\"layout-card\"");
-        html.ShouldContain("--radius:6px;");
-        html.ShouldContain("--font:Inter, \"Segoe UI\"");
+        html.ShouldContain("data-design=\"slide\"");
+        html.ShouldContain("class=\"layout-slide\"");
+        html.ShouldContain("--radius:14px;");
+        html.ShouldContain("--font:\"Segoe UI\", Tahoma");
         html.ShouldContain(":root[data-mode=dark]{");
         html.ShouldContain($"/auth-assets/auth.js?v={AuthAssets.Version}");
         html.ShouldContain("data-sign-in=\"password\"");
@@ -98,11 +98,11 @@ public sealed class AuthDesignTests(AuthApp app) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task An_unknown_layout_falls_back_to_the_card()
+    public async Task An_unknown_layout_falls_back_to_the_default()
     {
         Options.Design = new SignInDesign { Layout = "Missing" };
 
-        (await GetAsync("/Account/Login")).ShouldContain("data-design=\"card\"");
+        (await GetAsync("/Account/Login")).ShouldContain("data-design=\"slide\"");
     }
 
     [Fact]

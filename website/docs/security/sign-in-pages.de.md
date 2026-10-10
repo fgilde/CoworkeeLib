@@ -8,9 +8,9 @@ Drei Layouts kommen mit der Bibliothek:
 
 | Layout | Aussehen |
 |---|---|
-| `Card` (Standard) | eine zentrierte Karte |
+| `Card` | eine zentrierte Karte |
 | `Split` | ganze Seite: Bild oder Video auf einer Seite, das Formular auf der anderen |
-| `Slide` | eine Karte mit farbigem Feld neben dem Formular. Auf der Anmeldeseite lädt das Feld zur Registrierung ein (wenn sie erlaubt ist); auf der Registrierungsseite wechselt es auf die andere Seite und führt zurück zur Anmeldung. Browser mit dokumentübergreifenden View Transitions animieren den Wechsel. |
+| `Slide` (Standard) | eine Karte mit farbigem Feld neben dem Formular. Auf der Anmeldeseite lädt das Feld zur Registrierung ein (wenn sie erlaubt ist); auf der Registrierungsseite wechselt es auf die andere Seite und führt zurück zur Anmeldung. Browser mit dokumentübergreifenden View Transitions animieren den Wechsel. |
 
 Die Seiten funktionieren ohne Skript. Ein kleines Skript ergänzt, was ein Browser allein nicht kann: einen Knopf, der das Passwort zeigt, einen Hinweis bei aktiver Feststelltaste, ein Abzeichen *Zuletzt verwendet* an der zuletzt gewählten Anmeldeart (nur wenn es externe Anbieter gibt) und ein einziges Absenden je Formular. Animationen entfallen, wenn das System reduzierte Bewegung verlangt.
 
@@ -33,7 +33,7 @@ Das Design gilt für die ganze Installation, unabhängig davon, welches Theme St
 
 | Option | Bedeutung |
 |---|---|
-| `Design:Layout` | `Card`, `Split`, `Slide` oder der Name eines eigenen Layouts; unbekannte Namen fallen auf `Card` zurück |
+| `Design:Layout` | `Card`, `Split`, `Slide` oder der Name eines eigenen Layouts; unbekannte Namen fallen auf `Slide` zurück |
 | `Design:MediaUrl` | ein Bild, bei `.mp4`, `.webm`, `.ogg` und `.mov` ein Video; ein Pfad auf dem Auth-Server oder eine `http(s)`-Adresse, deren Origin in `img-src` und `media-src` der Content Security Policy aufgenommen wird |
 | `Design:MediaSide` | `Left` (Standard) oder `Right`; bei `Slide` liegt das Feld auf der Registrierungsseite auf der anderen Seite |
 | `AllowDesignChanges` | `true` (Standard) lässt Administratoren das Design auf der Themes-Seite ändern; `false` behält die Konfiguration. Setzen Sie es für den Dienst, der die API hostet: Dort wird die Änderung gespeichert. |

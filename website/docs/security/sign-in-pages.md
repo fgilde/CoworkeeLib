@@ -8,9 +8,9 @@ Three layouts ship with the library:
 
 | Layout | Look |
 |---|---|
-| `Card` (default) | a centered card |
+| `Card` | a centered card |
 | `Split` | full page: image or video on one side, the form on the other |
-| `Slide` | a card with a colored panel next to the form. On the sign-in page the panel invites to create an account (when registration is on); on the registration page it moves to the other side and links back to sign-in. Browsers with cross-document view transitions animate the move. |
+| `Slide` (default) | a card with a colored panel next to the form. On the sign-in page the panel invites to create an account (when registration is on); on the registration page it moves to the other side and links back to sign-in. Browsers with cross-document view transitions animate the move. |
 
 The pages work without script. A small script adds what a browser alone cannot: a button that shows the password, a hint while Caps Lock is on, a *Last used* badge on the sign-in method chosen the last time (only when there are external providers) and one submit per form. Animations stop when the system asks for reduced motion.
 
@@ -33,7 +33,7 @@ The design applies to the whole installation, whichever theme is the default. Th
 
 | Option | Meaning |
 |---|---|
-| `Design:Layout` | `Card`, `Split`, `Slide` or the name of an own layout; unknown names fall back to `Card` |
+| `Design:Layout` | `Card`, `Split`, `Slide` or the name of an own layout; unknown names fall back to `Slide` |
 | `Design:MediaUrl` | an image, or a video for `.mp4`, `.webm`, `.ogg` and `.mov`; a path on the auth server or an `http(s)` address, whose origin enters `img-src` and `media-src` of the content security policy |
 | `Design:MediaSide` | `Left` (default) or `Right`; with `Slide` the panel of the registration page sits on the other side |
 | `AllowDesignChanges` | `true` (default) lets administrators change the design on the Themes page; `false` keeps the configuration. Set it for the service that hosts the API, where the change is saved. |

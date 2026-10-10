@@ -21,11 +21,11 @@ public sealed record AuthBranding(string AppName, string? LogoUrl, string? Css, 
 {
     private static readonly string[] VideoExtensions = [".mp4", ".webm", ".ogg", ".ogv", ".mov"];
 
-    public string Layout => Design.Layout ?? SignInLayouts.Card;
+    public string Layout => Design.Layout ?? SignInLayouts.Default;
 
-    /// <summary>The Razor layout of <see cref="Layout"/>: _Design{Layout}.cshtml next to the pages, the card when there is no such view.</summary>
+    /// <summary>The Razor layout of <see cref="Layout"/>: _Design{Layout}.cshtml next to the pages, the default layout when there is no such view.</summary>
     public string LayoutView(IRazorViewEngine views, ActionContext context) =>
-        views.FindPage(context, "_Design" + Layout).Page is not null ? "_Design" + Layout : "_Design" + SignInLayouts.Card;
+        views.FindPage(context, "_Design" + Layout).Page is not null ? "_Design" + Layout : "_Design" + SignInLayouts.Default;
 
     public bool MediaIsVideo => Design.MediaUrl is { } url && VideoExtensions.Any(e => url.Split('?', '#')[0].EndsWith(e, StringComparison.OrdinalIgnoreCase));
 }

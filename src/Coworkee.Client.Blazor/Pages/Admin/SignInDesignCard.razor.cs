@@ -27,7 +27,7 @@ public partial class SignInDesignCard
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
-    private string SelectedLayout => _design?.Layout is { Length: > 0 } layout ? layout : SignInLayouts.Card;
+    private string SelectedLayout => _design?.Layout is { Length: > 0 } layout ? layout : SignInLayouts.Default;
 
     protected override async Task OnInitializedAsync()
     {
