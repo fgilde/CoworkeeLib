@@ -25,7 +25,7 @@
   "copied": ("Kopiert" if de else "Copied"),
   "cli_doc": ("Alle Befehle" if de else "All commands"),
   "studio": ("Lieber mit Oberfläche? Coworkee Studio" if de else "Prefer a UI? Coworkee Studio"),
-  "studio_t": ("<code>coworkee ui</code> installiert und startet Coworkee Studio, die Desktop-App zum CLI (Tool-Befehl <code>coworkee-ui</code>). Ein Assistent führt durch Name, Module, Datenbank, Anmeldung und Theme, legt die App an und startet sie." if de else "<code>coworkee ui</code> installs and starts Coworkee Studio, the desktop app for the CLI (tool command <code>coworkee-ui</code>). A wizard walks through name, modules, database, sign-in and theme, creates the app and runs it."),
+  "studio_t": ("<code>coworkee ui</code> installiert und startet Coworkee Studio, die Desktop-App zum CLI (Tool-Befehl <code>coworkee-ui</code>). Ein Assistent führt durch Name, Logo und Theme, Anmeldung, Module und Infrastruktur und Ihre Entities, zeigt Vor- und Nachteile jeder Wahl, legt die App an und startet sie." if de else "<code>coworkee ui</code> installs and starts Coworkee Studio, the desktop app for the CLI (tool command <code>coworkee-ui</code>). A wizard walks through name, logo and theme, sign-in, modules, infrastructure and your entities, shows what each choice brings and costs, creates the app and runs it."),
   "mcp": ("Für KI-Assistenten" if de else "For AI assistants"),
   "mcp_t": ("<code>coworkee mcp</code> startet einen MCP-Server: Claude, Copilot und andere Assistenten legen Apps, Module und Migrationen über dieselben Befehle an." if de else "<code>coworkee mcp</code> starts an MCP server: Claude, Copilot and other assistants create apps, modules and migrations through the same commands."),
   "tour": ("Ein Rundgang durch die Demo-App" if de else "A tour of the demo app"),
@@ -97,11 +97,18 @@
   ("languages-light", "Sprachen" if de else "Languages"),
   ("account-light", "Konto" if de else "Account"),
   ("swagger-light", "Swagger"),
-  ("studio-wizard", "Coworkee Studio (Vorschau)" if de else "Coworkee Studio (preview)")
+  ("studio-welcome-light", "Coworkee Studio: Start" if de else "Coworkee Studio: start"),
+  ("studio-branding-dark", "Coworkee Studio: Branding mit Live-Vorschau" if de else "Coworkee Studio: branding with live preview"),
+  ("studio-architecture-light", "Coworkee Studio: Module und Infrastruktur" if de else "Coworkee Studio: modules and infrastructure"),
+  ("studio-entities-dark", "Coworkee Studio: Entities entwerfen" if de else "Coworkee Studio: designing entities"),
+  ("studio-generate-light", "Coworkee Studio: die App wird angelegt" if de else "Coworkee Studio: the app is created")
 ] %}
 
 {% macro shot(name) -%}
-  {{ ("assets/screenshots/" ~ name ~ (".png" if name.startswith("studio-") else ".webp")) | url }}
+  {%- if name == "studio-wizard" -%}{%- set file = name ~ ".png" -%}
+  {%- elif de and name.startswith("studio-") and name.endswith("-light") -%}{%- set file = name ~ "-de.webp" -%}
+  {%- else -%}{%- set file = name ~ ".webp" -%}{%- endif -%}
+  {{ ("assets/screenshots/" ~ file) | url }}
 {%- endmacro %}
 
 {% macro code(cmd) -%}
@@ -175,7 +182,12 @@
         </ol>
         <div class="cw-studio cw-reveal">
           <a class="cw-zoom" href="{{ shot('studio-wizard') }}" data-caption="Coworkee Studio">
-            <img src="{{ shot('studio-wizard') }}" alt="Coworkee Studio" loading="lazy">
+            <div class="cw-slides">
+              {% for n in ["studio-welcome", "studio-branding", "studio-architecture", "studio-entities"] %}
+                <img class="cw-light" src="{{ shot(n ~ '-light') }}" alt="Coworkee Studio" loading="lazy">
+                <img class="cw-dark" src="{{ shot(n ~ '-dark') }}" alt="" loading="lazy">
+              {% endfor %}
+            </div>
           </a>
           <div class="cw-studio__body">
             <h3>{% include ".icons/material/monitor-dashboard.svg" %}{{ t.studio }}</h3>

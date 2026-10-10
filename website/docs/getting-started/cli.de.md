@@ -154,7 +154,7 @@ coworkee ui
 coworkee ui --spec shop.json
 ```
 
-`coworkee ui` startet Coworkee Studio, einen Desktop-Assistenten für Name, Titel, Logo, Farben, Module, Anmeldedesign, Theme und Entities; er legt die App mit dieser CLI an. Das Studio ist das globale Tool `Coworkee.Studio` (Befehl `coworkee-ui`): `coworkee ui` installiert es in der Version der CLI, wenn es fehlt, und aktualisiert es, wenn es älter ist. Weitere Argumente gehen an das Studio. Für lokale Builds: `--prerelease`, `--add-source <ordner>` und `--studio-version <version>`; eine ausdrücklich genannte Version, die älter als die installierte ist, wird ebenfalls installiert.
+`coworkee ui` startet Coworkee Studio, einen Desktop-Assistenten für Name, Titel, Logo, Farben, Module, Anmeldedesign, Theme und Entities; er legt die App mit dieser CLI an. Das Studio ist das globale Tool `Coworkee.Studio` (Befehl `coworkee-ui`): `coworkee ui` installiert es in der Version der CLI, wenn es fehlt, und aktualisiert es, wenn es älter ist. Weitere Argumente gehen an das Studio, siehe [Coworkee Studio](studio.md). Für lokale Builds: `--prerelease`, `--add-source <ordner>` und `--studio-version <version>`; eine ausdrücklich genannte Version, die älter als die installierte ist, wird ebenfalls installiert.
 
 ## Weitere Befehle
 

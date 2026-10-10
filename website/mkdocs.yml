@@ -137,6 +137,7 @@ nav:
   - Getting started:
       - Installation: getting-started/installation.md
       - Command line: getting-started/cli.md
+      - Coworkee Studio: getting-started/studio.md
       - MCP server: getting-started/mcp.md
       - Solution structure: getting-started/solution-structure.md
       - Your first feature: getting-started/first-feature.md

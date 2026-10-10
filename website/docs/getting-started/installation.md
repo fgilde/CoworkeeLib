@@ -17,7 +17,7 @@ cd Shop
 coworkee run
 ```
 
-The console prints the URL of the Aspire dashboard; open the web app from there. The [CLI page](cli.md) lists the options: modules on or off, event bus, storage, theme, brand colors, logo, sign-in design. With `coworkee new --spec app.json` the app comes with its own modules and entities, `coworkee ui` opens Coworkee Studio, a desktop wizard for the same, and `coworkee mcp` lets an AI agent do it ([MCP server](mcp.md)).
+The console prints the URL of the Aspire dashboard; open the web app from there. The [CLI page](cli.md) lists the options: modules on or off, event bus, storage, theme, brand colors, logo, sign-in design. With `coworkee new --spec app.json` the app comes with its own modules and entities, `coworkee ui` opens [Coworkee Studio](studio.md), a desktop wizard for the same, and `coworkee mcp` lets an AI agent do it ([MCP server](mcp.md)).
 
 Without the CLI, the same template works with `dotnet new`:
 
