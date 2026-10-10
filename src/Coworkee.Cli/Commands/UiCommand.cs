@@ -9,7 +9,7 @@ internal static class UiCommand
     public const string ToolCommand = "coworkee-ui";
 
     private static readonly Option<string?> ToolVersion = new("--studio-version") { Description = "Studio version to install (default: the version of this CLI)." };
-    private static readonly Option<bool> Prerelease = new("--prerelease") { Description = "Pass --prerelease to dotnet tool install and update." };
+    private static readonly Option<bool> Prerelease = new("--prerelease") { Description = "Install the newest prerelease of Coworkee Studio instead of the CLI's version; ignored with --studio-version." };
     private static readonly Option<string?> Source = new("--add-source") { Description = "Additional NuGet source for the Studio package, e.g. a folder with local packs." };
 
     public enum Step
@@ -44,11 +44,12 @@ internal static class UiCommand
         _ => Step.None,
     };
 
+    // dotnet tool refuses --version together with --prerelease: --prerelease means the newest prerelease instead of a fixed version
     public static string[] ToolArgs(Step step, string version, bool prerelease, string? source) =>
     [
-        "dotnet", "tool", step == Step.Install ? "install" : "update", "-g", Package, "--version", version,
+        "dotnet", "tool", step == Step.Install ? "install" : "update", "-g", Package,
+        .. prerelease ? new[] { "--prerelease" } : ["--version", version],
         .. step == Step.Downgrade ? new[] { "--allow-downgrade" } : [],
-        .. prerelease ? new[] { "--prerelease" } : [],
         .. source is null ? [] : new[] { "--add-source", Path.GetFullPath(source) },
     ];
 
@@ -99,7 +100,7 @@ internal static class UiCommand
         var step = Plan(Installed(list), wanted, exact: result.GetValue(ToolVersion) is not null);
         if (step != Step.None)
         {
-            var exit = await Shell.RunAsync(ToolArgs(step, wanted, result.GetValue(Prerelease), result.GetValue(Source)), cancellationToken: cancellationToken);
+            var exit = await Shell.RunAsync(ToolArgs(step, wanted, result.GetValue(Prerelease) && result.GetValue(ToolVersion) is null, result.GetValue(Source)), cancellationToken: cancellationToken);
             if (exit != 0)
             {
                 Console.Error.WriteLine($"Could not {step.ToString().ToLowerInvariant()} {Package} {wanted}. Is it published for this version? Try --prerelease or --add-source <folder>.");
