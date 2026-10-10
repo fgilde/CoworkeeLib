@@ -120,7 +120,8 @@ coworkee new --spec shop.json
 ```
 
 - `options` takes the ids of the table above; `branding` takes `title`, `theme`, `primaryColor`, `secondaryColor`, `logo`, `signInLayout`, `signInMedia` and `signInMediaSide` and wins over the same ids in `options`.
-- Files and `output` are relative to the spec file. Comments and trailing commas are allowed.
+- Files and `output` are relative to the spec file and must stay inside its folder (no absolute paths, no `..`). A logo is an image (svg, png, jpg, jpeg, webp, gif, ico), sign-in media an image, a video (mp4, webm, ogg) or an http(s) address: both end up public in the web client. A file given as switch (`--logo C:\brand\logo.svg`) may be anywhere. Comments and trailing commas are allowed.
+- The title goes into code and HTML as it is, so it must not contain `"`, `\`, `<`, `>`, `@` or control characters.
 - Property types: `string`, `int`, `long`, `decimal`, `double`, `bool`, `dateTime` (`DateTimeOffset`), `guid`. A property that is not `required` is nullable; `maxLength` is for strings.
 - `plural` names table, OData set, route and page (default: an English plural of the name). `mapping` overrides the `mapping` option.
 
@@ -153,7 +154,7 @@ coworkee ui
 coworkee ui --spec shop.json
 ```
 
-`coworkee ui` starts Coworkee Studio, a desktop wizard for name, title, logo, colors, modules, sign-in design, theme and entities; it creates the app with this CLI. The Studio is the global tool `Coworkee.Studio` (command `coworkee-ui`): `coworkee ui` installs it in the version of the CLI when it is missing and updates it when it is older. Other arguments go to the Studio. For local builds: `--prerelease`, `--add-source <folder>` and `--studio-version <version>`.
+`coworkee ui` starts Coworkee Studio, a desktop wizard for name, title, logo, colors, modules, sign-in design, theme and entities; it creates the app with this CLI. The Studio is the global tool `Coworkee.Studio` (command `coworkee-ui`): `coworkee ui` installs it in the version of the CLI when it is missing and updates it when it is older. Other arguments go to the Studio. For local builds: `--prerelease`, `--add-source <folder>` and `--studio-version <version>`; an explicit version older than the installed one is installed as well.
 
 ## Other commands
 

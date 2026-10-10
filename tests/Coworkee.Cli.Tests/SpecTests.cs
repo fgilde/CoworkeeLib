@@ -85,12 +85,86 @@ public sealed class SpecTests
         errors.ShouldContain(e => e.StartsWith("modules[1].entities[2].properties:"));
     }
 
-    [Fact]
-    public void Web_addresses_and_the_default_logo_need_no_file()
+    [Theory]
+    [InlineData("Acme \"Shop")]
+    [InlineData("Acme\\Shop")]
+    [InlineData("<script>")]
+    [InlineData("a@DateTime.Now")]
+    [InlineData("Line\nbreak")]
+    public void Titles_that_could_break_out_of_code_or_html_are_refused(string title)
     {
-        var spec = new AppSpec { Name = "Shop", Branding = new BrandingSpec { SignInMedia = "https://cdn.test/a.mp4", Logo = "coworkee-icon.svg" } };
+        SpecValidator.IsSafeTitle(title).ShouldBeFalse();
+        SpecValidator.Validate(new AppSpec { Name = "Shop", Branding = new BrandingSpec { Title = title } }).ShouldContain(e => e.StartsWith("title:"));
+        Should.Throw<CliException>(() => NewCommand.Read(CliApp.Build().Parse(["new", "Shop", "--title", title]))).Message.ShouldContain("title:");
+        SpecValidator.IsSafeTitle("Acme Shop & Co. {1}").ShouldBeTrue();
+    }
 
-        SpecValidator.Validate(spec, Path.GetTempPath()).ShouldBeEmpty();
+    [Fact]
+    public void Spec_files_and_output_stay_inside_the_folder_of_the_spec_and_files_are_images_or_videos()
+    {
+        using var folder = new TempFolder();
+        File.WriteAllText(folder.File("brand/logo.svg"), "<svg/>");
+        File.WriteAllText(folder.File("brand/run.exe"), "MZ");
+        var outside = folder.File("../coworkee-outside-" + Guid.NewGuid().ToString("N") + ".svg");
+        File.WriteAllText(outside, "<svg/>");
+        try
+        {
+            string[] Errors(BrandingSpec branding, string? output = null) =>
+                [.. SpecValidator.Validate(new AppSpec { Name = "Shop", Output = output, Branding = branding }, Path.Combine(folder.Path, "brand"))];
+
+            Errors(new BrandingSpec { Logo = "logo.svg" }).ShouldBeEmpty();
+            Errors(new BrandingSpec { Logo = "../" + Path.GetFileName(outside) }).ShouldContain(e => e.StartsWith("logo:") && e.Contains("inside the folder"));
+            Errors(new BrandingSpec { Logo = outside }).ShouldContain(e => e.StartsWith("logo:") && e.Contains("inside the folder"));
+            Errors(new BrandingSpec { Logo = "run.exe" }).ShouldContain(e => e.StartsWith("logo:") && e.Contains("no image"));
+            Errors(new BrandingSpec { Logo = "https://cdn.test/logo.svg" }).ShouldContain(e => e.StartsWith("logo:"));
+            Errors(new BrandingSpec { SignInMedia = "run.exe" }).ShouldContain(e => e.StartsWith("signInMedia:") && e.Contains("video"));
+            Errors(new BrandingSpec(), "../app").ShouldContain(e => e.StartsWith("output:"));
+            Errors(new BrandingSpec(), Path.GetFullPath("app")).ShouldContain(e => e.StartsWith("output:"));
+            Errors(new BrandingSpec(), "apps/shop").ShouldBeEmpty();
+            SpecValidator.Validate(new AppSpec { Name = "Shop", Branding = new BrandingSpec { Logo = outside } }, folder.Path, [outside]).ShouldBeEmpty();
+        }
+        finally
+        {
+            File.Delete(outside);
+        }
+    }
+
+    [Fact]
+    public void A_logo_typed_on_the_command_line_may_live_anywhere_but_one_in_a_spec_may_not()
+    {
+        using var folder = new TempFolder();
+        var logo = folder.File("logo.svg");
+        File.WriteAllText(logo, "<svg/>");
+        var spec = folder.File("spec/app.json");
+        File.WriteAllText(spec, $$"""{ "name": "Shop", "branding": { "logo": {{System.Text.Json.JsonSerializer.Serialize(logo)}} } }""");
+
+        NewCommand.Read(CliApp.Build().Parse(["new", "Shop", "--logo", logo])).TrustedFiles.ShouldBe([logo]);
+        Should.Throw<CliException>(() => NewCommand.Read(CliApp.Build().Parse(["new", "--spec", spec]))).Message.ShouldContain("logo:");
+        NewCommand.Read(CliApp.Build().Parse(["new", "--spec", spec, "--logo", logo])).Spec.Options["logo"]!.GetValue<string>().ShouldBe(logo);
+    }
+
+    [Fact]
+    public void Assets_copy_a_logo_named_like_the_default_and_refuse_files_outside_the_spec_folder()
+    {
+        using var folder = new TempFolder();
+        File.WriteAllText(folder.File("coworkee-icon.svg"), "<svg id=\"mine\"/>");
+        var output = Path.Combine(folder.Path, "out");
+        var spec = new AppSpec { Name = "Shop", Branding = new BrandingSpec { Logo = "coworkee-icon.svg" } };
+
+        Assets.Copy(new NewSettings(spec, folder.Path, output, null), SpecOptions.Resolve(spec));
+
+        File.ReadAllText(Path.Combine(output, "src/Shop.Web.Client/wwwroot/coworkee-icon.svg")).ShouldContain("mine");
+        var outside = new AppSpec { Name = "Shop", Branding = new BrandingSpec { Logo = Path.Combine(folder.Path, "coworkee-icon.svg") } };
+        Should.Throw<CliException>(() => Assets.Copy(new NewSettings(outside, Path.Combine(folder.Path, "out"), output, null), SpecOptions.Resolve(outside)));
+        Assets.Copy(new NewSettings(outside, Path.Combine(folder.Path, "out"), output, null, [Path.Combine(folder.Path, "coworkee-icon.svg")]), SpecOptions.Resolve(outside));
+    }
+
+    [Fact]
+    public void Web_addresses_need_no_file_but_a_given_logo_does_even_with_the_default_name()
+    {
+        SpecValidator.Validate(new AppSpec { Name = "Shop", Branding = new BrandingSpec { SignInMedia = "https://cdn.test/a.mp4" } }, Path.GetTempPath()).ShouldBeEmpty();
+        SpecValidator.Validate(new AppSpec { Name = "Shop", Branding = new BrandingSpec { Logo = "coworkee-icon.svg" } }, Path.GetTempPath())
+            .ShouldContain(e => e.StartsWith("logo:") && e.Contains("no existing file"));
     }
 
     [Theory]
