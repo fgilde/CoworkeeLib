@@ -31,6 +31,8 @@ var allowed = await settings.GetAsync<bool>(AccountSettings.AllowRegistration, c
 
 Defaults can also come from configuration: `Coworkee:Settings:Defaults:Mail.Smtp.Host`. The app host uses that for Mailpit.
 
+The section **Cloud file pickers** of the System tab holds the ids of Google Drive, OneDrive and Dropbox for every upload field, see [Files](files.md#cloud-file-pickers).
+
 ### Own settings in the admin page
 
 The tabs **System** (scope `Global`) and **Organisation** (scope `Tenant`) and the user's **My settings** (scope `User`) have no form code per setting. They load the definitions and render them with `MudExObjectEditForm`, so a setting of your module appears there as soon as its contributor is registered:

@@ -55,6 +55,36 @@ meta.Property(p => p.LogoId).RenderWith<CoworkeeFilePicker, Guid?>(p => p.Value)
 
 `FilePreviewDialog.ShowAsync(dialogs, file)` zeigt eine gespeicherte Datei in einem Seitenblatt; `FilePreviewDialog.ShowAsync(dialogs, url, contentType, name)` zeigt jede Inhaltsadresse der App, zum Beispiel die Dokumente eines eigenen Moduls (eine relative Adresse wird absolut gemacht).
 
+## Cloud-Dateiauswahl
+
+Jedes `MudExUploadEdit` der App kann Dateien auch aus Google Drive, OneDrive und Dropbox übernehmen: der Upload des Dateimanagers (Seite Dateien und das Seitenblatt von `CoworkeeFilePicker`), der Dokument-Upload der Vorlage und die Upload-Felder eigener Seiten. Eine Auswahl erscheint, sobald ihre Client-ID oder ihr App-Key gesetzt ist; ohne bleibt alles wie bisher.
+
+Administratoren tragen die IDs unter **Einstellungen**, Reiter **System** (nur in der Systemorganisation), Abschnitt **Cloud-Dateiauswahl** ein. Jeder Anbieter hat einen Schalter, so lässt sich eine Auswahl abschalten, ohne die ID zu verlieren. Vorgaben kommen wie bei jeder Einstellung aus der Konfiguration:
+
+```json title="appsettings.json"
+{
+  "Coworkee": {
+    "Settings": {
+      "Defaults": {
+        "FilePickers.GoogleDrive.ClientId": "1234-abc.apps.googleusercontent.com",
+        "FilePickers.OneDrive.ClientId": "00000000-0000-0000-0000-000000000000",
+        "FilePickers.Dropbox.AppKey": "abcdefghijklmno"
+      }
+    }
+  }
+}
+```
+
+Die IDs erreichen mit den Client-Einstellungen jeden angemeldeten Browser und gelten ab dem Laden der App; eine geänderte ID gilt nach dem Neuladen. Sie kennzeichnen die App beim Anbieter und sind von Natur aus öffentlich; ein Client-Secret ist weder nötig noch gespeichert.
+
+| Anbieter | Wo | Schritte |
+|---|---|---|
+| Google Drive | [Google Cloud Console](https://console.cloud.google.com/apis/credentials) | die [Google Picker API](https://console.cloud.google.com/apis/library/picker.googleapis.com) und die Google Drive API aktivieren, den OAuth-Zustimmungsbildschirm einrichten, dann **Anmeldedaten erstellen > OAuth-Client-ID** vom Typ *Webanwendung* mit der Adresse der App (`https://localhost:7300` in der Entwicklung) als autorisiertem JavaScript-Ursprung. Die Client-ID endet auf `.apps.googleusercontent.com`. [Picker-Anleitung](https://developers.google.com/drive/picker/guides/overview) |
+| OneDrive | [App-Registrierungen in Microsoft Entra](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade) | **Neue Registrierung** für Konten in beliebigen Organisationen und persönliche Microsoft-Konten, Plattform *Single-Page-Anwendung* mit der Adresse der App als Umleitungs-URI (die Auswahl kehrt zum Ursprung der Seite zurück). Die *Anwendungs-ID (Client)* ist die ID. [Anleitung zur Dateiauswahl](https://learn.microsoft.com/onedrive/developer/controls/file-pickers/) |
+| Dropbox | [Dropbox App Console](https://www.dropbox.com/developers/apps) | **Create app** mit Scoped Access, dann die Domain der App (`localhost` in der Entwicklung) unter *Chooser / Saver / Embedder domains* eintragen. Der *App key* ist der Key. [Chooser-Anleitung](https://www.dropbox.com/developers/chooser) |
+
+Die Auswahlen laden ihre Skripte von den Anbietern (`apis.google.com`, `accounts.google.com`, `js.live.net`, `login.microsoftonline.com`, `onedrive.live.com`, `www.dropbox.com`). Die Web-App setzt keine Content Security Policy; wer eine ergänzt, erlaubt diese Hosts für Skripte und Frames.
+
 ## Datenbank
 
 Die Tabellen `cw.FileFolders` und `cw.StoredFiles` kommen mit dem Modell; legen Sie in Ihrer App eine Migration an.

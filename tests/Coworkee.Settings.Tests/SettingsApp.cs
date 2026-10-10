@@ -33,6 +33,7 @@ public sealed class SettingsApp : PostgresFixture
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
         builder.Configuration["Coworkee:Settings:Defaults:Test.Configured"] = "7";
+        builder.Configuration["Coworkee:Settings:Defaults:FilePickers.GoogleDrive.ClientId"] = "google-from-config";
         builder.Configuration["TestApp:Name"] = "Default";
         builder.Configuration["TestApp:Limit"] = "10";
         builder.Configuration["TestApp:ApiKey"] = "secret-default";

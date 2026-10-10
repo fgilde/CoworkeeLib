@@ -21,6 +21,7 @@ public sealed class PageTests : BunitContext
 {
     private readonly ICatalogApi _catalog = Substitute.For<ICatalogApi>();
     private readonly FakeODataClient _odata = new();
+    private readonly IDocumentsApi _documents = Substitute.For<IDocumentsApi>();
 
     public PageTests()
     {
@@ -28,7 +29,7 @@ public sealed class PageTests : BunitContext
         Services.AddMudServices();
         MudBlazor.Extensions.ServiceCollectionExtensions.AddMudExtensions(Services);
         Services.AddSingleton(_catalog);
-        Services.AddSingleton(Substitute.For<IDocumentsApi>());
+        Services.AddSingleton(_documents);
         Services.AddSingleton<IODataClient>(_odata);
         Services.AddSingleton(Substitute.For<ICoworkeeApi>());
         Services.AddSingleton(new CoworkeeClientOptions());
@@ -92,5 +93,29 @@ public sealed class PageTests : BunitContext
         page.FindComponent<Coworkee.Client.Blazor.Components.RealtimeSubscription>().Instance.Topic.ShouldBe("type:Document");
         page.FindAll("[data-testid='delete-row']").ShouldBeEmpty();
         DocumentStore.FormatSize(2048).ShouldBe("2 KB");
+    }
+
+    [Fact]
+    public async Task A_new_document_is_uploaded_through_the_upload_field()
+    {
+        var dialogs = Render<MudDialogProvider>();
+        Render<MudPopoverProvider>();
+        _ = dialogs.InvokeAsync(() => Components.DocumentDialog.ShowAsync(Services.GetRequiredService<IDialogService>(), null));
+
+        dialogs.WaitForAssertion(() => dialogs.Find("[data-testid='upload-file'] label.mud-button").TextContent.Trim().ShouldBe("Upload"));
+        var upload = dialogs.FindComponent<MudBlazor.Extensions.Components.MudExUploadEdit<MudBlazor.Extensions.Components.UploadableFile>>();
+        await upload.InvokeAsync(() => upload.Instance.UploadRequestChanged.InvokeAsync(
+            new MudBlazor.Extensions.Components.UploadableFile { FileName = "offer.pdf", Data = [1, 2, 3] }));
+        long? sent = null;
+        _documents.UploadDocumentAsync(default!, default!, default!, default).ReturnsForAnyArgs(call =>
+        {
+            sent = call.Arg<Stream>().Length;
+            return Task.CompletedTask;
+        });
+        dialogs.Find("input[data-testid='document-title']").Change("Offer");
+        await dialogs.Find("[data-testid='save-document']").ClickAsync(new());
+
+        await _documents.Received(1).UploadDocumentAsync(Arg.Is<UpdateDocumentRequest>(r => r.Title == "Offer"), "offer.pdf", Arg.Any<Stream>(), Arg.Any<CancellationToken>());
+        sent.ShouldBe(3);
     }
 }

@@ -55,6 +55,36 @@ meta.Property(p => p.LogoId).RenderWith<CoworkeeFilePicker, Guid?>(p => p.Value)
 
 `FilePreviewDialog.ShowAsync(dialogs, file)` previews a stored file in a side sheet; `FilePreviewDialog.ShowAsync(dialogs, url, contentType, name)` previews any content address of the app, for example the documents of your own module (a relative address is made absolute).
 
+## Cloud file pickers
+
+Every `MudExUploadEdit` of the app can also take files from Google Drive, OneDrive and Dropbox: the upload of the file manager (Files page and the side sheet of `CoworkeeFilePicker`), the document upload of the template and the upload fields of your own pages. A picker shows as soon as it has its client id or app key; without one nothing changes.
+
+Administrators enter the ids under **Settings**, tab **System** (system organisation only), section **Cloud file pickers**. Each provider has a switch, so a picker can be turned off without losing its id. Defaults come from configuration like every setting:
+
+```json title="appsettings.json"
+{
+  "Coworkee": {
+    "Settings": {
+      "Defaults": {
+        "FilePickers.GoogleDrive.ClientId": "1234-abc.apps.googleusercontent.com",
+        "FilePickers.OneDrive.ClientId": "00000000-0000-0000-0000-000000000000",
+        "FilePickers.Dropbox.AppKey": "abcdefghijklmno"
+      }
+    }
+  }
+}
+```
+
+The ids reach every signed in browser with the client settings and are applied when the app loads; a changed id applies after a reload. They identify the app at the provider and are public by nature; no client secret is needed or stored.
+
+| Provider | Where | Steps |
+|---|---|---|
+| Google Drive | [Google Cloud console](https://console.cloud.google.com/apis/credentials) | enable the [Google Picker API](https://console.cloud.google.com/apis/library/picker.googleapis.com) and the Google Drive API, set up the OAuth consent screen, then **Create credentials > OAuth client ID** of type *Web application* with the address of the app (`https://localhost:7300` in development) as authorised JavaScript origin. The client id ends with `.apps.googleusercontent.com`. [Picker guide](https://developers.google.com/drive/picker/guides/overview) |
+| OneDrive | [Microsoft Entra app registrations](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade) | **New registration** for accounts in any organisation and personal Microsoft accounts, platform *Single-page application* with the address of the app as redirect URI (the picker returns to the origin of the page). The *Application (client) ID* is the id. [File picker guide](https://learn.microsoft.com/onedrive/developer/controls/file-pickers/) |
+| Dropbox | [Dropbox App Console](https://www.dropbox.com/developers/apps) | **Create app** with scoped access, then add the domain of the app (`localhost` in development) under *Chooser / Saver / Embedder domains*. The *App key* is the key. [Chooser guide](https://www.dropbox.com/developers/chooser) |
+
+The pickers load their scripts from the providers (`apis.google.com`, `accounts.google.com`, `js.live.net`, `login.microsoftonline.com`, `onedrive.live.com`, `www.dropbox.com`). The web app sets no content security policy; if you add one, allow these hosts for scripts and frames.
+
 ## Database
 
 The tables `cw.FileFolders` and `cw.StoredFiles` come with the model; add a migration in your app.

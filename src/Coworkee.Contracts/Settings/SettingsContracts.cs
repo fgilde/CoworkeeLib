@@ -27,6 +27,17 @@ public static class TableSettings
     public const string Views = "Table.Views";
 }
 
+/// <summary>The cloud pickers of every upload field; a picker shows when it is enabled and has its client id or app key.</summary>
+public static class FilePickerSettings
+{
+    public const string GoogleDriveEnabled = "FilePickers.GoogleDrive.Enabled";
+    public const string GoogleDriveClientId = "FilePickers.GoogleDrive.ClientId";
+    public const string OneDriveEnabled = "FilePickers.OneDrive.Enabled";
+    public const string OneDriveClientId = "FilePickers.OneDrive.ClientId";
+    public const string DropboxEnabled = "FilePickers.Dropbox.Enabled";
+    public const string DropboxAppKey = "FilePickers.Dropbox.AppKey";
+}
+
 public static class SettingsPermissions
 {
     public const string GroupName = "Settings";
