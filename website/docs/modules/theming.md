@@ -40,4 +40,4 @@ context.Services.Configure<ThemingOptions>(themes =>
 });
 ```
 
-An unknown `DefaultTheme` keeps Ocean. The default applies until an organisation chooses its own theme (setup or *Make default*). `coworkee new --theme Forest --primary-color "#0a7d5a"` writes this for you.
+An unknown `DefaultTheme` keeps Ocean. An app theme with the name of a built-in or another app theme, or based on an unknown theme, stops the host at start with a message. The default applies until an organisation chooses its own theme (setup or *Make default*). `coworkee new --theme Forest --primary-color "#0a7d5a"` writes this for you.
