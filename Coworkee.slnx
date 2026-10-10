@@ -33,6 +33,7 @@
     <Project Path="src/Coworkee.ResponseFilters/Coworkee.ResponseFilters.csproj" />
     <Project Path="src/Coworkee.Search.Elasticsearch/Coworkee.Search.Elasticsearch.csproj" />
     <Project Path="src/Coworkee.Settings/Coworkee.Settings.csproj" />
+    <Project Path="src/Coworkee.SourceGenerators/Coworkee.SourceGenerators.csproj" />
     <Project Path="src/Coworkee.Social/Coworkee.Social.csproj" />
     <Project Path="src/Coworkee.Storage/Coworkee.Storage.csproj" />
     <Project Path="src/Coworkee.Testing/Coworkee.Testing.csproj" />
@@ -74,6 +75,7 @@
     <Project Path="tests/Coworkee.ResponseFilters.Tests/Coworkee.ResponseFilters.Tests.csproj" />
     <Project Path="tests/Coworkee.Search.Tests/Coworkee.Search.Tests.csproj" />
     <Project Path="tests/Coworkee.Settings.Tests/Coworkee.Settings.Tests.csproj" />
+    <Project Path="tests/Coworkee.SourceGenerators.Tests/Coworkee.SourceGenerators.Tests.csproj" />
     <Project Path="tests/Coworkee.Social.Tests/Coworkee.Social.Tests.csproj" />
     <Project Path="tests/Coworkee.Storage.Tests/Coworkee.Storage.Tests.csproj" />
     <Project Path="tests/Coworkee.Theming.Tests/Coworkee.Theming.Tests.csproj" />

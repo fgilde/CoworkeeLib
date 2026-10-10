@@ -7,5 +7,7 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
     <PackageReference Include="Asp.Versioning.Http" />
+    <ProjectReference Include="..\Coworkee.SourceGenerators\Coworkee.SourceGenerators.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+    <None Include="..\Coworkee.SourceGenerators\bin\$(Configuration)\netstandard2.0\Coworkee.SourceGenerators.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
 </Project>

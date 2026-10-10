@@ -9,5 +9,7 @@
     <PackageReference Include="MudBlazor" />
     <PackageReference Include="MudBlazor.Extensions" />
     <None Include="build\Coworkee.Client.Blazor.targets" Pack="true" PackagePath="build;buildTransitive" />
+    <ProjectReference Include="..\Coworkee.SourceGenerators\Coworkee.SourceGenerators.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+    <None Include="..\Coworkee.SourceGenerators\bin\$(Configuration)\netstandard2.0\Coworkee.SourceGenerators.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
 </Project>

@@ -12,6 +12,7 @@ internal sealed class CoworkeeExceptionHandler : IExceptionHandler
     {
         var error = exception switch
         {
+            ErrorException carried => carried.Error,
             ValidationException validation => Error.Validation(validation.Errors
                 .GroupBy(f => f.PropertyName, StringComparer.Ordinal)
                 .ToDictionary(g => g.Key, g => g.Select(f => f.ErrorMessage).ToArray(), StringComparer.Ordinal)),
