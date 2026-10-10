@@ -77,7 +77,8 @@ public static class OptionCatalog
             "Content that people discuss or rate.", ["Ready-made components"], ["Each entity type has to be registered"], Package: "Coworkee.Social"),
         new("extendedAttributes", Modules, "Extended attributes", "Free key/value attributes for any entity without schema changes (the Documents sample brings it anyway).", OptionKind.Bool, "false",
             "When users need fields you cannot foresee.", ["No migration per field"], ["Values are not typed columns"], Package: "Coworkee.ExtendedAttributes"),
-        new("search", Modules, "Search", "Elasticsearch index; the app host adds an Elasticsearch container.", OptionKind.Bool, "false",
+        // not "search": dotnet new reads --search as its own command
+        new("elasticsearch", Modules, "Search", "Elasticsearch index; the app host adds an Elasticsearch container.", OptionKind.Bool, "false",
             "Full text search over many documents.", ["Facets, ranking, cursor paging"], ["Elasticsearch needs memory", "The app decides what to index"], Package: "Coworkee.Search.Elasticsearch"),
         new("eventBus", Modules, "Event bus", "Integration events through the transactional outbox.", OptionKind.Choice, "none",
             "When several apps or services react to each other's events.", ["Reliable delivery through the outbox", "Idempotent handlers through the inbox"], ["RabbitMQ is one more container"],

@@ -33,7 +33,7 @@
     <!--#if (extendedAttributes) -->
     <CoworkeePackage Include="Coworkee.ExtendedAttributes" />
     <!--#endif -->
-    <!--#if (search) -->
+    <!--#if (elasticsearch) -->
     <CoworkeePackage Include="Coworkee.Search.Elasticsearch" />
     <!--#endif -->
     <!--#if (eventBus == "inProcess") -->

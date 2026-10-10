@@ -62,7 +62,7 @@ internal static class ClientFiles
         builder.Services.AddHttpClient<{e.App}.Web.Client.Api.I{e.Plural}Api, {e.App}.Web.Client.Api.{e.Plural}Api>(client => client.BaseAddress = baseAddress);
         builder.Services.AddSingleton<INavigationContributor, {e.App}.Web.Client.Navigation.{e.Plural}Navigation>();
 
-        """;
+        """.ReplaceLineEndings("\n");
 
     private static string Page(EntityModel e) => $$"""
         @page "{{e.Route}}"

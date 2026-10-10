@@ -66,7 +66,7 @@ internal static class ServerFiles
                 context.Services.AddSingleton<IPermissionDefinitionContributor, {e.Name}PermissionDefinitions>();
                 context.Services.AddODataEntity<{e.Name}>("{e.Plural}", {e.Permissions}.View);
 
-        """;
+        """.ReplaceLineEndings("\n");
 
     public static string Endpoint(EntityModel e) => $"        app.Map{e.Name}Endpoints();\n";
 

@@ -77,17 +77,19 @@ internal static class FeatureWriter
         {
             var target = Path.Combine(solution.Root, file.Path);
             Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-            await File.WriteAllTextAsync(target, file.Content, cancellationToken);
+            await File.WriteAllTextAsync(target, file.Content.ReplaceLineEndings(), cancellationToken);
         }
     }
 
+    // edits work on LF line ends; the file keeps the ones it had
     private static async Task EditAsync(string path, Func<string, string> edit, CancellationToken cancellationToken)
     {
-        var text = AppEdits.Normalize(await File.ReadAllTextAsync(path, cancellationToken));
+        var original = await File.ReadAllTextAsync(path, cancellationToken);
+        var text = AppEdits.Normalize(original);
         var changed = edit(text);
         if (changed != text)
         {
-            await File.WriteAllTextAsync(path, changed, cancellationToken);
+            await File.WriteAllTextAsync(path, original.Contains('\r') ? changed.ReplaceLineEndings("\r\n") : changed, cancellationToken);
         }
     }
 }

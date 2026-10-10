@@ -44,7 +44,7 @@ namespace MyApp.Infrastructure;
 #if (extendedAttributes)
     , typeof(Coworkee.ExtendedAttributes.CoworkeeExtendedAttributesModule)
 #endif
-#if (search)
+#if (elasticsearch)
     , typeof(Coworkee.Search.Elasticsearch.CoworkeeElasticsearchModule)
 #endif
 #if (eventBus == "inProcess")

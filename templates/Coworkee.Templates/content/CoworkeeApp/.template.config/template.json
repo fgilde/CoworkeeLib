@@ -99,7 +99,7 @@
       "defaultValue": "false",
       "description": "Free key/value attributes for entities (Coworkee.ExtendedAttributes); the Documents sample brings it anyway."
     },
-    "search": {
+    "elasticsearch": {
       "type": "parameter",
       "datatype": "bool",
       "defaultValue": "false",

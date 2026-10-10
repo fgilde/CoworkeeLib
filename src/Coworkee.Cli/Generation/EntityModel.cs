@@ -3,7 +3,11 @@ using Coworkee.Cli.Spec;
 
 namespace Coworkee.Cli.Generation;
 
-internal sealed record GeneratedFile(string Path, string Content);
+/// <summary>A file to write; its content has LF line ends, whatever the line ends of the generator's source are.</summary>
+internal sealed record GeneratedFile(string Path, string Content)
+{
+    public string Content { get; } = Content.ReplaceLineEndings("\n");
+}
 
 /// <summary>The names one entity of a module is generated with.</summary>
 internal sealed partial record EntityModel(string App, string Module, EntitySpec Spec, MappingStrategy Mapping)
