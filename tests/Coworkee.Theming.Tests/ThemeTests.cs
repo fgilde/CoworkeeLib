@@ -42,14 +42,14 @@ public sealed class ThemeTests(ThemeApp app) : IAsyncLifetime
     {
         await app.InDbAsync(async db =>
         {
-            await ThemeSeeds.EnsureAsync(db, Ct);
+            await ThemeSeeds.EnsureAsync(db, new ThemingOptions(), Ct);
             return 0;
         });
         var before = await app.InDbAsync(db => db.Set<ThemeDefinition>().Where(t => t.TenantId == null).Select(t => t.ModifiedAt).ToListAsync(Ct));
 
         await app.InDbAsync(async db =>
         {
-            await ThemeSeeds.EnsureAsync(db, Ct);
+            await ThemeSeeds.EnsureAsync(db, new ThemingOptions(), Ct);
             return 0;
         });
 

@@ -17,11 +17,11 @@ internal static class ThemeSeeds
     private static readonly string[] Plain = ["Arial", "Helvetica", "sans-serif"];
 
     /// <summary>Built-in themes are owned by the code: missing ones are added, changed ones updated (they cannot be edited in the app).</summary>
-    public static async Task EnsureAsync(CoworkeeDbContext db, CancellationToken cancellationToken)
+    public static async Task EnsureAsync(CoworkeeDbContext db, ThemingOptions options, CancellationToken cancellationToken)
     {
         var stored = await db.Set<ThemeDefinition>().Where(t => t.TenantId == null).ToListAsync(cancellationToken);
         var changed = new List<ThemeDefinition>();
-        foreach (var seed in Create())
+        foreach (var seed in Create(options))
         {
             if (stored.FirstOrDefault(t => t.Name == seed.Name) is not { } existing)
             {
@@ -68,45 +68,102 @@ internal static class ThemeSeeds
     private static bool SameJson(string? stored, string? seed) =>
         stored == seed || (stored is not null && seed is not null && JsonNode.DeepEquals(JsonNode.Parse(stored), JsonNode.Parse(seed)));
 
-    private static List<ThemeDefinition> Create() =>
+    internal static List<ThemeDefinition> Create(ThemingOptions options)
+    {
+        var themes = BuiltIn();
+        themes.AddRange(options.Themes.Select(theme => Derived(theme, themes.FirstOrDefault(t => t.Name == theme.BasedOn) ?? themes.Single(t => t.Name == DefaultName))));
+        var defaultName = themes.Any(t => t.Name == options.DefaultTheme) ? options.DefaultTheme : DefaultName;
+        themes.ForEach(t => t.IsDefault = t.Name == defaultName);
+        return themes;
+    }
+
+    private static ThemeDefinition Derived(AppTheme theme, ThemeDefinition source) => new()
+    {
+        Name = theme.Name,
+        IsPublished = true,
+        PaletteLight = Merge(source.PaletteLight, theme.Light),
+        PaletteDark = Merge(source.PaletteDark, theme.Dark ?? theme.Light),
+        LayoutProperties = source.LayoutProperties,
+        Typography = source.Typography,
+        Shadows = source.Shadows,
+        Options = source.Options,
+    };
+
+    private static string Merge(string palette, IReadOnlyDictionary<string, string> colors)
+    {
+        var merged = JsonSerializer.Deserialize<Dictionary<string, string>>(palette)!;
+        foreach (var (key, value) in colors)
+        {
+            merged[key] = value;
+        }
+
+        foreach (var key in new[] { "Primary", "Secondary" })
+        {
+            if (colors.TryGetValue(key, out var color) && !colors.ContainsKey(key + "ContrastText") && ContrastText(color) is { } text)
+            {
+                merged[key + "ContrastText"] = text;
+            }
+        }
+
+        return JsonSerializer.Serialize(merged);
+    }
+
+    // WCAG relative luminance; only #rrggbb, other notations keep the contrast text of the base theme
+    internal static string? ContrastText(string color)
+    {
+        if (color is not ['#', _, _, _, _, _, _] || !int.TryParse(color[1..], System.Globalization.NumberStyles.HexNumber, null, out var rgb))
+        {
+            return null;
+        }
+
+        double Channel(int shift)
+        {
+            var c = ((rgb >> shift) & 0xff) / 255d;
+            return c <= 0.03928 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4);
+        }
+
+        return (0.2126 * Channel(16)) + (0.7152 * Channel(8)) + (0.0722 * Channel(0)) > 0.179 ? "#000000" : "#ffffff";
+    }
+
+    private static List<ThemeDefinition> BuiltIn() =>
     [
-        Theme("Coworkee", isDefault: false,
+        Theme("Coworkee",
             light: new() { ["Primary"] = "#d4481f", ["PrimaryContrastText"] = "#ffffff", ["Secondary"] = "#16140f", ["SecondaryContrastText"] = "#ffffff", ["Background"] = "#f3efe6", ["Surface"] = "#fbf9f4", ["AppbarBackground"] = "#f3efe6", ["AppbarText"] = "#16140f", ["DrawerBackground"] = "#ebe5d8", ["TextPrimary"] = "#16140f", ["TextSecondary"] = "#4a463d", ["LinesDefault"] = "#d6cfbf" },
             dark: new() { ["Primary"] = "#f06a43", ["PrimaryContrastText"] = "#14130f", ["Secondary"] = "#efe9dc", ["SecondaryContrastText"] = "#14130f", ["Background"] = "#14130f", ["Surface"] = "#1f1d18", ["AppbarBackground"] = "#14130f", ["AppbarText"] = "#efe9dc", ["DrawerBackground"] = "#1c1a15", ["TextPrimary"] = "#efe9dc", ["TextSecondary"] = "#bdb6a6", ["LinesDefault"] = "#34312a" },
             layout: Layout("6px", "300px", "64px"),
             typography: Fonts(Sans, Sans),
             options: new() { ["ShowLogoInNav"] = true, ["ShowLogoInAppBar"] = true }),
-        Theme(DefaultName, isDefault: true,
+        Theme(DefaultName,
             light: new() { ["Primary"] = "#1565c0", ["PrimaryContrastText"] = "#ffffff", ["Secondary"] = "#00838f", ["SecondaryContrastText"] = "#ffffff", ["Background"] = "#f4f7fb", ["Surface"] = "#ffffff", ["AppbarBackground"] = "#1565c0", ["AppbarText"] = "#ffffff", ["DrawerBackground"] = "#eaf1f9" },
             dark: new() { ["Primary"] = "#64b5f6", ["PrimaryContrastText"] = "#0b1a2a", ["Secondary"] = "#4dd0e1", ["SecondaryContrastText"] = "#0b1a2a", ["Background"] = "#0f1722", ["Surface"] = "#16202e", ["AppbarBackground"] = "#0f1722", ["AppbarText"] = "#e3eefb", ["DrawerBackground"] = "#121b27", ["TextPrimary"] = "#e3eefb", ["TextSecondary"] = "#9fb3c8", ["LinesDefault"] = "#26364a" },
             layout: Layout("14px", "320px", "56px"),
             typography: Fonts(Humanist, Humanist),
             options: new() { ["ShowLogoInNav"] = true, ["ShowLogoInAppBar"] = false, ["NavSingleExpand"] = true, ["StripedTables"] = true }),
-        Theme("Forest", isDefault: false,
+        Theme("Forest",
             light: new() { ["Primary"] = "#2e7d32", ["PrimaryContrastText"] = "#ffffff", ["Secondary"] = "#b26a00", ["SecondaryContrastText"] = "#ffffff", ["Background"] = "#f4f7f2", ["Surface"] = "#ffffff", ["AppbarBackground"] = "#2e7d32", ["AppbarText"] = "#ffffff", ["DrawerBackground"] = "#e9efe6" },
             dark: new() { ["Primary"] = "#81c784", ["PrimaryContrastText"] = "#0f1a10", ["Secondary"] = "#ffd54f", ["SecondaryContrastText"] = "#1a1405", ["Background"] = "#111a12", ["Surface"] = "#18241a", ["AppbarBackground"] = "#111a12", ["AppbarText"] = "#e6f0e6", ["DrawerBackground"] = "#142016", ["TextPrimary"] = "#e6f0e6", ["TextSecondary"] = "#a7bba8", ["LinesDefault"] = "#2a3a2c" },
             layout: Layout("4px", "290px", "64px"),
             typography: Fonts(Serif, Humanist),
             options: new() { ["ShowLogoInNav"] = true }),
-        Theme("Sunset", isDefault: false,
+        Theme("Sunset",
             light: new() { ["Primary"] = "#c2185b", ["PrimaryContrastText"] = "#ffffff", ["Secondary"] = "#e64a19", ["SecondaryContrastText"] = "#ffffff", ["Background"] = "#fdf6f4", ["Surface"] = "#ffffff", ["AppbarBackground"] = "#c2185b", ["AppbarText"] = "#ffffff", ["DrawerBackground"] = "#f9ebe7" },
             dark: new() { ["Primary"] = "#f48fb1", ["PrimaryContrastText"] = "#2a0d18", ["Secondary"] = "#ffab91", ["SecondaryContrastText"] = "#2a120a", ["Background"] = "#1d1417", ["Surface"] = "#261a1e", ["AppbarBackground"] = "#1d1417", ["AppbarText"] = "#fbe9ee", ["DrawerBackground"] = "#21171a", ["TextPrimary"] = "#fbe9ee", ["TextSecondary"] = "#c9aab3", ["LinesDefault"] = "#3d2a31" },
             layout: Layout("20px", "300px", "72px"),
             typography: Fonts(Rounded, Rounded),
             options: new() { ["ShowLogoInNav"] = true, ["NavSingleExpand"] = true, ["Dense"] = false }),
-        Theme("Midnight", isDefault: false,
+        Theme("Midnight",
             light: new() { ["Primary"] = "#3949ab", ["PrimaryContrastText"] = "#ffffff", ["Secondary"] = "#8e24aa", ["SecondaryContrastText"] = "#ffffff", ["Background"] = "#f4f5fb", ["Surface"] = "#ffffff", ["AppbarBackground"] = "#283593", ["AppbarText"] = "#ffffff", ["DrawerBackground"] = "#eceef8" },
             dark: new() { ["Primary"] = "#9fa8da", ["PrimaryContrastText"] = "#0d0f1a", ["Secondary"] = "#ce93d8", ["SecondaryContrastText"] = "#1a0d1d", ["Background"] = "#0d0f1a", ["Surface"] = "#151829", ["AppbarBackground"] = "#0d0f1a", ["AppbarText"] = "#e8eaf6", ["DrawerBackground"] = "#111421", ["TextPrimary"] = "#e8eaf6", ["TextSecondary"] = "#a9aecb", ["LinesDefault"] = "#262a42" },
             layout: Layout("8px", "340px", "52px"),
             typography: Fonts(Mono, Sans),
             options: new() { ["ShowLogoInNav"] = true, ["ShowLogoInAppBar"] = false }),
-        Theme("Classic", isDefault: false,
+        Theme("Classic",
             light: new() { ["Primary"] = "#594ae2", ["Secondary"] = "#ff4081", ["AppbarBackground"] = "#594ae2" },
             dark: new() { ["Primary"] = "#776be7", ["Secondary"] = "#ff4081", ["Background"] = "#32333d", ["Surface"] = "#373740" },
             layout: Layout("4px", "280px", "64px"),
             typography: null,
             options: new() { ["ShowLogoInNav"] = true, ["StripedTables"] = true }),
-        Theme("High Contrast", isDefault: false,
+        Theme("High Contrast",
             light: new() { ["Primary"] = "#000000", ["PrimaryContrastText"] = "#ffffff", ["Secondary"] = "#0000ee", ["Background"] = "#ffffff", ["Surface"] = "#ffffff", ["TextPrimary"] = "#000000", ["TextSecondary"] = "#000000", ["LinesDefault"] = "#000000", ["AppbarBackground"] = "#000000", ["AppbarText"] = "#ffffff" },
             dark: new() { ["Primary"] = "#ffff00", ["PrimaryContrastText"] = "#000000", ["Secondary"] = "#00ffff", ["SecondaryContrastText"] = "#000000", ["Background"] = "#000000", ["Surface"] = "#000000", ["TextPrimary"] = "#ffffff", ["TextSecondary"] = "#ffffff", ["LinesDefault"] = "#ffffff", ["AppbarBackground"] = "#000000", ["AppbarText"] = "#ffff00" },
             layout: Layout("0px", "320px", "64px"),
@@ -135,11 +192,10 @@ internal static class ThemeSeeds
     }
 
     private static ThemeDefinition Theme(
-        string name, bool isDefault, Dictionary<string, string> light, Dictionary<string, string> dark, Dictionary<string, object> layout,
+        string name, Dictionary<string, string> light, Dictionary<string, string> dark, Dictionary<string, object> layout,
         Dictionary<string, object>? typography, Dictionary<string, object> options, bool flat = false) => new()
     {
         Name = name,
-        IsDefault = isDefault,
         IsPublished = true,
         PaletteLight = JsonSerializer.Serialize(light),
         PaletteDark = JsonSerializer.Serialize(dark),

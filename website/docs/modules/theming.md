@@ -27,3 +27,17 @@ public sealed class MyThemeEditMeta : IObjectMetaConfiguration<CoworkeeTheme>
 }
 ```
 - `ThemeService` in the client applies a theme at runtime (`Apply`, `Preview`, `SetMode`).
+
+## Default theme and app themes
+
+`ThemingOptions` picks the default theme of the installation and adds themes of the app. An app theme is a built-in theme with other colors; it is seeded and kept like the built-in ones (read-only in the app, offered in setup). A changed `Primary` or `Secondary` gets a readable contrast text unless the palette names one.
+
+```csharp title="MyApp.Infrastructure/MyAppInfrastructureModule.cs"
+context.Services.Configure<ThemingOptions>(themes =>
+{
+    themes.DefaultTheme = "Shop";
+    themes.Themes.Add(new AppTheme("Shop", "Ocean", new Dictionary<string, string> { ["Primary"] = "#0a7d5a", ["Secondary"] = "#ff8f00" }));
+});
+```
+
+An unknown `DefaultTheme` keeps Ocean. The default applies until an organisation chooses its own theme (setup or *Make default*). `coworkee new --theme Forest --primary-color "#0a7d5a"` writes this for you.
