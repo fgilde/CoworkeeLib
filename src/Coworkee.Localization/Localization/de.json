@@ -703,5 +703,12 @@
   "is on or after": "am oder nach",
   "is on or before": "am oder vor",
   "is empty": "ist leer",
-  "is not empty": "ist nicht leer"
+  "is not empty": "ist nicht leer",
+  "Cloud file pickers": "Cloud-Dateiauswahl",
+  "Google Drive client id": "Google-Drive-Client-ID",
+  "OneDrive client id": "OneDrive-Client-ID",
+  "Dropbox app key": "Dropbox-App-Key",
+  "OAuth client id of type web application from the Google Cloud console.": "OAuth-Client-ID vom Typ Webanwendung aus der Google Cloud Console.",
+  "Application (client) id of the app registration in Microsoft Entra.": "Anwendungs-ID (Client) der App-Registrierung in Microsoft Entra.",
+  "App key of the Dropbox app with the Chooser.": "App-Key der Dropbox-App mit dem Chooser."
 }

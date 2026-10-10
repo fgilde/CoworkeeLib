@@ -167,6 +167,18 @@ public sealed class SettingsTests(SettingsApp app) : IAsyncLifetime
             .Single(v => v.Name == TableSettings.Views).Value.ShouldBe("""{"Products":[]}""");
     }
 
+    [Fact]
+    public async Task Cloud_file_picker_ids_reach_the_client_from_configuration_and_the_system_settings()
+    {
+        await PutAsync(Admin, "global", FilePickerSettings.OneDriveClientId, "onedrive-client");
+
+        var values = await ClientValuesAsync(Admin);
+
+        values[FilePickerSettings.GoogleDriveClientId].ShouldBe("google-from-config");
+        values[FilePickerSettings.OneDriveClientId].ShouldBe("onedrive-client");
+        values[FilePickerSettings.DropboxEnabled].ShouldBe("true");
+    }
+
     private static async Task<Dictionary<string, string?>> ClientValuesAsync(HttpClient client) =>
         (await client.GetFromJsonAsync<Dictionary<string, string?>>("/api/v1/settings/client", Ct))!;
 
