@@ -10,8 +10,14 @@ namespace Coworkee.Client.Blazor.Tests;
 
 public abstract class ClientTestBase : BunitContext
 {
-    // the solution runs all test projects at once; on a busy thread pool one second is too short for background loads
-    static ClientTestBase() => DefaultWaitTimeout = TimeSpan.FromSeconds(10);
+    // the solution runs all test projects at once; on a busy machine the thread pool adds threads only slowly, so background
+    // loads (user card batches, debounced searches) waited longer than any timeout - start with enough threads instead
+    static ClientTestBase()
+    {
+        DefaultWaitTimeout = TimeSpan.FromSeconds(10);
+        ThreadPool.GetMinThreads(out var workers, out var io);
+        ThreadPool.SetMinThreads(Math.Max(workers, 64), Math.Max(io, 64));
+    }
 
     protected ClientTestBase()
     {
