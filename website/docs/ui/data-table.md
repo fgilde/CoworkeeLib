@@ -31,6 +31,8 @@
 | `Exportable`, `ExportFileName` | CSV and JSON export of all rows of the current filter |
 | `ToolBarContent` | extra buttons in the tool bar |
 | `PageSize` | rows per page (25) |
+| `Groupable`, `ReorderableColumns`, `ResizableColumns`, `DensityToggle` | grouping, moving columns by drag and drop, resizing columns and the density button (all `true`) |
+| `DataSource` | rows from somewhere else than the OData set, see below |
 
 `ReloadAsync()` reloads from outside, for example from a `RealtimeSubscription`. `Selection` exposes the facet choices, `CurrentFilter` the OData filter the table sends.
 
@@ -69,18 +71,53 @@ await Dialogs.ShowEditAsync(L["New product"], model, saved => Api.SaveProductAsy
 
 `ShowSideSheetAsync<TDialog>` opens your own dialog component the same way, `ConfirmAsync` asks before something that cannot be undone.
 
-## Views, URL and columns
+## Columns, grouping and views
 
-- **URL**: search and chosen facets go into the query string (`?products=...`), so a filtered list can be reloaded, bookmarked and sent to a colleague. `UrlState="false"` turns it off, `StateKey` names the parameter when a page shows two tables of one set.
-- **Saved views**: the bookmark menu saves search, facets and hidden columns under a name and brings them back with one click. Views are kept per browser.
-- **Columns**: the column menu shows and hides columns.
+Everything the user arranges is part of the table's state and can be saved, shared and reset.
 
-![Column menu](../assets/screenshots/data-table-columns.png){ .shot }
-
-![Saved views](../assets/screenshots/data-table-views.png){ .shot }
+- **Columns**: the column menu shows and hides columns (with *All*, *None* and a search) and reorders them by drag and drop. Column headers can be dragged to another place too, and their right edge resizes the column.
+- **Grouping**: drag a column header onto the zone above the headers, use *Group* in the column's own menu or tick columns in the group menu. Several columns group nested, in the order of the chips; a chip's &times; removes its level. Group rows show the value and the number of rows, open and close one by one or all at once, and show the aggregates of the columns (`AggregateDefinition`, e.g. an average) below each group.
+- **Sorting**: click several headers to sort by more than one column.
+- **Density**: the density button switches between compact and comfortable rows; without a choice the theme decides.
+- **Views**: the bookmark menu saves the current state under a name: search, facets, column order, visibility and widths, grouping, sorting, page size and density. A click brings it back, the save button overwrites it with the current state, the star makes it the default that opens with the table. *Reset* returns to the declared columns without filters.
+- **Sharing**: the link button copies an address that opens the table exactly as it is, layout included. The address bar itself keeps search and facets (`?products=...`), so a filtered list can be reloaded and bookmarked. `UrlState="false"` turns that off, `StateKey` names the parameter when a page shows two tables of one set.
 
 ```razor
-<CoworkeeDataTable T="ProductDto" EntitySet="Products" UrlState="true" SavedViews="true" ColumnChooser="true" ... />
+<CoworkeeDataTable T="ProductDto" EntitySet="Products" Expand="Brand" ...>
+    <Columns>
+        <PropertyColumn Property="p => p.Name" />
+        <PropertyColumn Property="p => p.Brand!.Name" Title="Brand" />
+        <PropertyColumn Property="p => p.Rate" Format="0.00" AggregateDefinition="AverageRate" />
+    </Columns>
+</CoworkeeDataTable>
+
+@code {
+    private static readonly AggregateDefinition<ProductDto> AverageRate = new() { Type = AggregateType.Avg, DisplayFormat = "Ø {value:0.00}" };
+}
 ```
 
-`CurrentState` returns what the table shows as a `DataTableState`, for example to build your own links.
+Columns are named by their property (`Brand.Name`), template columns by their `Title`; columns without either (select, actions) stay where they are. Template columns only group with `Groupable="true"` and a `GroupBy`.
+
+**Grouping and paging**: the server pages, so a page groups the rows it holds. The table sorts by the grouping columns first, so a group continues on the next page instead of being scattered; group counts and aggregates cover the loaded page.
+
+**Where views are kept**: in the user setting `Table.Views` of the [settings module](../modules/settings.md), so they follow the user to every device. Without a signed-in user or without the settings module they stay in the browser's local storage. Replace `ITableViewStore` in DI to keep them somewhere else:
+
+```csharp
+builder.Services.AddScoped<ITableViewStore, MyTableViews>();
+```
+
+`CurrentState` returns the state as a `DataTableState` (only what differs from the declared layout), e.g. to build your own links; `DataTableState.Encode()` gives the value for the query parameter.
+
+## Other data sources
+
+By default the table queries `EntitySet` through OData. `DataSource` takes any `ITableDataSource<T>` instead, for example rows kept in the browser:
+
+```csharp
+public sealed class LocalProducts(ProductStore store) : ITableDataSource<ProductDto>
+{
+    public Task<ODataPage<ProductDto>> QueryAsync(ODataQuery query, CancellationToken cancellationToken = default) =>
+        Task.FromResult(store.Query(query));
+}
+```
+
+The query carries the OData text the table builds (filter from search and facets, order, `Top`/`Skip`), so the source answers that subset. `EntitySet` still names the views and the URL parameter. CSV and JSON export use the source; Excel export and import stay with OData sets.
