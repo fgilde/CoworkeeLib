@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Coworkee.SourceGenerators\Coworkee.SourceGenerators.csproj" OutputItemType="Analyzer" />
+    <ProjectReference Include="..\..\src\Coworkee.AspNetCore\Coworkee.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\src\Coworkee.Client.Blazor\Coworkee.Client.Blazor.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+  </ItemGroup>
+</Project>

@@ -42,6 +42,7 @@ public static class CoworkeeClientExtensions
             client.BaseAddress = baseAddress;
             client.Timeout = TimeSpan.FromMinutes(5);
         });
+        ServiceProxies.ServiceProxyRegistry.AddTo(services, baseAddress, options.ServiceProxies);
         services.AddSingleton<Localization.CoworkeeLocalizer>();
         services.AddSingleton(typeof(Microsoft.Extensions.Localization.IStringLocalizer<>), typeof(Localization.CoworkeeStringLocalizer<>));
         MudBlazor.Services.ServiceCollectionExtensions.AddLocalizationInterceptor<Localization.CoworkeeMudLocalization>(services);

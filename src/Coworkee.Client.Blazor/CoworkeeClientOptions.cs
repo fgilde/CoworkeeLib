@@ -17,6 +17,9 @@ public sealed class CoworkeeClientOptions
     /// <summary>Sections and credits of the about dialog.</summary>
     public Components.About.AboutOptions About { get; } = new();
 
+    /// <summary>The generated proxies of application services: defaults for all and settings per service.</summary>
+    public Coworkee.Client.Blazor.ServiceProxies.ServiceProxyOptions ServiceProxies { get; } = new();
+
     /// <summary>Shown on the empty assistant page; name tasks the tools of the app can do.</summary>
     public string AssistantHint { get; set; } = "Ask for something the application can do, for example to find or change records.";
 

@@ -3,4 +3,8 @@
     <!-- the localizer sets the culture at startup (InitializeCoworkeeClientAsync), which needs all ICU data -->
     <BlazorWebAssemblyLoadAllGlobalizationData Condition="'$(BlazorWebAssemblyLoadAllGlobalizationData)' == ''">true</BlazorWebAssemblyLoadAllGlobalizationData>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- false turns the generated application service proxies off -->
+    <CompilerVisibleProperty Include="CoworkeeServiceProxies" />
+  </ItemGroup>
 </Project>

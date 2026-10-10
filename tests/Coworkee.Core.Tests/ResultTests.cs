@@ -38,4 +38,14 @@ public sealed class ResultTests
     [Fact]
     public void Factory_refuses_non_result_types() =>
         ResultFactory.TryCreateFailure<string>(Error.Unexpected("x", "y"), out _).ShouldBeFalse();
+
+    [Fact]
+    public async Task OrThrow_returns_the_value_or_throws_the_error()
+    {
+        var error = Error.NotFound("x", "y");
+
+        (await Task.FromResult<Result<int>>(42).OrThrow()).ShouldBe(42);
+        (await Should.ThrowAsync<ErrorException>(() => Task.FromResult<Result<int>>(error).OrThrow())).Error.ShouldBe(error);
+        (await Should.ThrowAsync<ErrorException>(() => Task.FromResult(Result.Failure(error)).OrThrow())).Error.ShouldBe(error);
+    }
 }
