@@ -76,8 +76,9 @@ public sealed class UserAppearanceTests : ClientTestBase
         AddAuthorization().SetAuthorized("Ada");
         var page = Render<UserSettings>();
 
-        page.WaitForElement("[data-setting='Mail.Digest']");
-        page.FindAll($"[data-setting='{ThemeSettings.ThemeId}'], [data-setting='{ThemeSettings.Mode}']").ShouldBeEmpty();
+        page.WaitForAssertion(() => SettingsFormTests.Labels(page).ShouldContain("Digest"));
+        SettingsFormTests.Labels(page).ShouldNotContain("Theme");
+        SettingsFormTests.Labels(page).ShouldNotContain("Color mode");
     }
 
     [Fact]

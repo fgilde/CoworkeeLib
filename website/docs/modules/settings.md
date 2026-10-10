@@ -31,6 +31,38 @@ var allowed = await settings.GetAsync<bool>(AccountSettings.AllowRegistration, c
 
 Defaults can also come from configuration: `Coworkee:Settings:Defaults:Mail.Smtp.Host`. The app host uses that for Mailpit.
 
+### Own settings in the admin page
+
+The tabs **System** (scope `Global`) and **Organisation** (scope `Tenant`) and the user's **My settings** (scope `User`) have no form code per setting. They load the definitions and render them with `MudExObjectEditForm`, so a setting of your module appears there as soon as its contributor is registered:
+
+```csharp title="Server module"
+internal sealed class BillingSettingDefinitions : ISettingDefinitionContributor
+{
+    public void Define(SettingDefinitionContext context) =>
+        context.Group("Billing", "Billing")
+            .Add("Billing.Currency", "Currency", SettingType.Choice, [SettingScope.Tenant], "EUR", choices: ["EUR", "USD", "CHF"],
+                description: "The currency of new invoices.")
+            .Add("Billing.ApiKey", "API key", SettingType.Secret, [SettingScope.Global]);
+}
+
+context.Services.AddSingleton<ISettingDefinitionContributor, BillingSettingDefinitions>();
+```
+
+| Definition | Form |
+|---|---|
+| group | a section with the group's display name |
+| display name, `description` | label and help text (looked up in the translations, so `de.json` can translate them) |
+| `String` / `Int` | text or number field; the default value is the placeholder, an empty field falls back to the default |
+| `Text` | a text field with four lines |
+| `Bool` | a check box, showing the stored value or the default |
+| `Choice` | a select of the `choices` |
+| `Secret` | a password field that stays empty; the help text says whether a value is stored, and only a typed value is sent |
+| scopes | a setting shows in the tab of each of its scopes |
+
+Saving sends only the changed values; the server checks them (`Expected a whole number.` and so on) and the message shows in the snackbar. Who sees the tabs follows the `Settings.Manage` permission; **System** is shown in the system organisation only.
+
+Behind the form is a class built at runtime with one property per setting (`Mail.Smtp.Host` becomes `Mail_Smtp_Host`), so the form behaves like every other object form. Fields have no reset of their own: clear a text or number field to return to the default.
+
 ![Settings page](../assets/screenshots/settings.png){ .shot }
 
 ## Typed app settings
@@ -108,7 +140,7 @@ Four attributes from `Coworkee.Contracts.Configuration` pick a better editor for
 
 | Attribute | Property | Editor |
 |---|---|---|
-| `[ContentTypes]` | `List<string>` or `string[]` of MIME types | chips with readable names and icons; common types and groups (images, PDF, Office documents, videos, audio, archives) to pick, other types like `image/x-icon` typed in. Empty accepts every type |
+| `[ContentTypes]` | `List<string>` or `string[]` of MIME types | chips with readable names and icons, and a select of every MIME type Nextended's `MimeType` knows: grouped by kind (images, documents, videos, audio, archives, text, fonts, 3D models, other), each with its icon, searchable by name, file extension (`.epub`) or MIME type. The wildcards (`image/*`, `video/*`, `audio/*`, `text/*`) and common types come first; the menu next to it adds whole groups (all images, Office documents, ...). Empty accepts every type |
 | `[FileSize]` | `long?` or `long` in bytes | a number in KB, MB or GB; empty means no limit |
 | `[Cron]` | `string` with a cron expression | presets (every few minutes, hourly, daily, weekly, monthly) and the expression itself, described in words (UTC); an invalid expression is not taken |
 | `[Translations]` | `Dictionary<string, string>` of culture to text | a row per language with its name and code; the app's languages to pick, other culture codes like `fr-CA` typed in, rows removed with their button |
@@ -131,6 +163,20 @@ public sealed class ImportSettings
 ```
 
 The built-in settings use them for the registration documents (`Registration:Documents`, with their names and descriptions per language) and the digest time (`Notifications:DigestCron`). A `RenderWith` in the client `meta` still wins over the attribute.
+
+### Labels, help texts and groups from `[Display]`
+
+`[Display]` from `System.ComponentModel.DataAnnotations` describes a property where it is declared, without client code: `Name` is the label, `Description` the help text under the field and `GroupName` the section it shows in. Like every text of the form they go through the translations, so the German text belongs in `de.json`.
+
+```csharp
+public sealed class BillingSettings
+{
+    [Display(Name = "Currency", GroupName = "Invoices", Description = "The currency of new invoices.")]
+    public string Currency { get; set; } = "EUR";
+}
+```
+
+A registration document shows how that reads: its dialog has the sections *Shown to the user* (name and hint, valid in every language), *Translations (optional)* (the name and hint for single languages, each row labeled *Translation for German* and so on) and *Upload* (required, accepted file types, largest file).
 
 ### More sections
 

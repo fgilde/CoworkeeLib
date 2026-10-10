@@ -1,6 +1,7 @@
 using Bunit;
 using Coworkee.Client.Blazor.Components;
 using Coworkee.Contracts.Settings;
+using Microsoft.AspNetCore.Components;
 using NSubstitute;
 
 namespace Coworkee.Client.Blazor.Tests;
@@ -32,41 +33,58 @@ public sealed class SettingsFormTests : ClientTestBase
     }
 
     [Fact]
-    public void Renders_inputs_by_type_for_the_scope()
+    public void Renders_every_setting_of_the_scope_with_an_editor_by_type()
     {
         var form = Render<SettingsForm>(p => p.Add(f => f.Scope, SettingScope.Global));
 
-        form.WaitForElement("[data-setting='Mail.Smtp.Host'] input").GetAttribute("value").ShouldBe("smtp.acme.test");
-        form.Find("[data-setting='Mail.Smtp.Port'] input").GetAttribute("type").ShouldBe("number");
-        form.Find("[data-setting='Mail.Smtp.UseSsl'] input").GetAttribute("type").ShouldBe("checkbox");
-        form.Find("[data-setting='Mail.Smtp.Password'] input").GetAttribute("type").ShouldBe("password");
-        form.FindAll("[data-setting='Other.TenantOnly']").ShouldBeEmpty();
+        form.WaitForAssertion(() => Input(form, "Host").GetAttribute("value").ShouldBe("smtp.acme.test"));
+        Input(form, "Port").GetAttribute("placeholder").ShouldBe("25");
+        Input(form, "SSL").GetAttribute("type").ShouldBe("checkbox");
+        Input(form, "Password").GetAttribute("type").ShouldBe("password");
+        form.Find(".mud-expand-panel-text").TextContent.ShouldBe("Mail");
+        Labels(form).ShouldNotContain("Tenant only");
     }
 
     [Fact]
     public async Task Saves_only_changed_values()
     {
         var form = Render<SettingsForm>(p => p.Add(f => f.Scope, SettingScope.Global));
-        form.WaitForElement("[data-setting='Mail.Smtp.Port'] input").Change("2525");
+        form.WaitForAssertion(() => Input(form, "Port"));
+        Input(form, "Port").Change("2525");
 
-        await form.Find("[data-testid='save-settings']").ClickAsync(new());
+        await form.InvokeAsync(() => form.Instance.SaveAsync());
 
         await Api.Received(1).SetSettingsAsync(SettingScope.Global,
             Arg.Is<IReadOnlyDictionary<string, string?>>(v => v.Count == 1 && v["Mail.Smtp.Port"] == "2525"), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Stored_secret_shows_a_placeholder_and_is_sent_only_when_typed()
+    public async Task Stored_secret_shows_a_hint_and_is_sent_only_when_typed()
     {
         var form = Render<SettingsForm>(p => p.Add(f => f.Scope, SettingScope.Global));
-        var secret = form.WaitForElement("[data-setting='Mail.Smtp.Password'] input");
-        secret.GetAttribute("value").ShouldBeNullOrEmpty();
-        form.Find("[data-setting='Mail.Smtp.Password']").TextContent.ShouldContain("stored");
+        form.WaitForAssertion(() => Input(form, "Password").GetAttribute("value").ShouldBeNullOrEmpty());
+        form.Markup.ShouldContain("A value is stored");
 
-        form.Find("[data-setting='Mail.Smtp.Host'] input").Change("smtp2.acme.test");
-        await form.Find("[data-testid='save-settings']").ClickAsync(new());
+        Input(form, "Host").Change("smtp2.acme.test");
+        await form.InvokeAsync(() => form.Instance.SaveAsync());
 
         await Api.Received(1).SetSettingsAsync(SettingScope.Global,
-            Arg.Is<IReadOnlyDictionary<string, string?>>(v => !v.ContainsKey("Mail.Smtp.Password")), Arg.Any<CancellationToken>());
+            Arg.Is<IReadOnlyDictionary<string, string?>>(v => v.Count == 1 && v["Mail.Smtp.Host"] == "smtp2.acme.test"), Arg.Any<CancellationToken>());
     }
+
+    [Fact]
+    public void A_setting_name_becomes_a_property_name()
+    {
+        SettingsModel.PropertyName("Mail.Smtp.Host").ShouldBe("Mail_Smtp_Host");
+        SettingsModel.PropertyName("Ai.Open-Ai.Key").ShouldBe("Ai_Open_Ai_Key");
+    }
+
+    /// <summary>The input of the field labeled <paramref name="label"/>: text fields point at it, a check box wraps it.</summary>
+    internal static AngleSharp.Dom.IElement Input(IRenderedComponent<IComponent> cut, string label)
+    {
+        var element = cut.FindAll("label").First(l => l.TextContent.Trim() == label);
+        return element.GetAttribute("for") is { } id ? cut.Find($"#{id}") : element.QuerySelector("input")!;
+    }
+
+    internal static IReadOnlyList<string> Labels(IRenderedComponent<IComponent> cut) => [.. cut.FindAll("label").Select(l => l.TextContent.Trim())];
 }

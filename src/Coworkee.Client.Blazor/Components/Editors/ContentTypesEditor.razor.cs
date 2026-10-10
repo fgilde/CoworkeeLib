@@ -1,14 +1,12 @@
 using Coworkee.Client.Blazor.Localization;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 
 namespace Coworkee.Client.Blazor.Components.Editors;
 
-/// <summary>MIME types as chips with readable names; common types and groups to pick, others typed in. Empty means every type.</summary>
+/// <summary>MIME types as chips with readable names; every known type to pick, grouped by kind and searchable. Empty means every type.</summary>
 public partial class ContentTypesEditor
 {
-    private string? _input;
-    private string? _error;
+    private static readonly ICollection<string> Values = [.. ContentTypeCatalog.Known.Select(t => t.Value)];
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
@@ -24,56 +22,30 @@ public partial class ContentTypesEditor
 
     private IReadOnlyList<string> Selected => Value ?? [];
 
-    private Task<IEnumerable<string>> SearchAsync(string? text, CancellationToken cancellationToken)
+    private string Name(string value) => L[ContentTypeCatalog.Describe(value).Name];
+
+    private static string Detail(ContentTypeInfo type) => type.Name == type.Value ? type.Extensions : $"{type.Value}  {type.Extensions}";
+
+    private bool Matches(string value, string? text)
     {
-        var open = ContentTypeCatalog.Known.Where(t => !Selected.Contains(t.Value, StringComparer.OrdinalIgnoreCase));
-        if (!string.IsNullOrWhiteSpace(text))
+        if (string.IsNullOrWhiteSpace(text))
         {
-            open = open.Where(t => t.Value.Contains(text.Trim(), StringComparison.OrdinalIgnoreCase) || L[t.Name].Contains(text.Trim(), StringComparison.CurrentCultureIgnoreCase));
+            return true;
         }
 
-        return Task.FromResult(open.Select(t => t.Value));
+        var type = ContentTypeCatalog.Describe(value);
+        return new[] { type.Value, type.Extensions, Name(value) }.Any(s => s.Contains(text.Trim(), StringComparison.CurrentCultureIgnoreCase));
     }
 
-    // a type picked from the list goes in right away; typed ones with enter or the plus
-    private Task SelectAsync(string? value)
+    // keeps the order and the types the catalog does not know (set in the appsettings), adds new picks at the end
+    private Task SelectAsync(IEnumerable<string>? picked)
     {
-        _input = value;
-        _error = null;
-        return ContentTypeCatalog.Known.Any(t => t.Value == value) ? AddAsync([value!]) : Task.CompletedTask;
+        var values = picked?.ToList() ?? [];
+        return SetAsync([.. Selected.Where(v => values.Contains(v) || !Values.Contains(v)), .. values.Where(v => !Selected.Contains(v))]);
     }
 
-    private async Task KeyDownAsync(KeyboardEventArgs args)
-    {
-        if (args.Key == "Enter")
-        {
-            await AddInputAsync();
-        }
-    }
-
-    private async Task AddInputAsync()
-    {
-        var value = _input?.Trim().ToLowerInvariant();
-        if (string.IsNullOrEmpty(value))
-        {
-            return;
-        }
-
-        if (!ContentTypeCatalog.IsValid(value))
-        {
-            _error = L["Not a file type like image/png or image/*"];
-            return;
-        }
-
-        await AddAsync([value]);
-    }
-
-    private Task AddAsync(IReadOnlyList<string> values)
-    {
-        _input = null;
-        _error = null;
-        return SetAsync([.. Selected, .. values.Where(v => !Selected.Contains(v, StringComparer.OrdinalIgnoreCase))]);
-    }
+    private Task AddAsync(IReadOnlyList<string> values) =>
+        SetAsync([.. Selected, .. values.Where(v => !Selected.Contains(v, StringComparer.OrdinalIgnoreCase))]);
 
     private Task RemoveAsync(string value) => SetAsync([.. Selected.Where(v => v != value)]);
 

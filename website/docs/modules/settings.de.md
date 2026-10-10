@@ -31,6 +31,38 @@ var allowed = await settings.GetAsync<bool>(AccountSettings.AllowRegistration, c
 
 Standardwerte können auch aus der Konfiguration kommen: `Coworkee:Settings:Defaults:Mail.Smtp.Host`. Der AppHost nutzt das für Mailpit.
 
+### Eigene Einstellungen auf der Admin-Seite
+
+Die Tabs **System** (Bereich `Global`) und **Organisation** (Bereich `Tenant`) sowie **Meine Einstellungen** des Benutzers (Bereich `User`) haben keinen Formularcode pro Einstellung. Sie laden die Definitionen und zeigen sie mit `MudExObjectEditForm`; eine Einstellung Ihres Moduls erscheint dort, sobald ihr Contributor registriert ist:
+
+```csharp title="Server-Modul"
+internal sealed class BillingSettingDefinitions : ISettingDefinitionContributor
+{
+    public void Define(SettingDefinitionContext context) =>
+        context.Group("Billing", "Billing")
+            .Add("Billing.Currency", "Currency", SettingType.Choice, [SettingScope.Tenant], "EUR", choices: ["EUR", "USD", "CHF"],
+                description: "The currency of new invoices.")
+            .Add("Billing.ApiKey", "API key", SettingType.Secret, [SettingScope.Global]);
+}
+
+context.Services.AddSingleton<ISettingDefinitionContributor, BillingSettingDefinitions>();
+```
+
+| Definition | Formular |
+|---|---|
+| Gruppe | ein Abschnitt mit dem Anzeigenamen der Gruppe |
+| Anzeigename, `description` | Beschriftung und Hilfetext (über die Übersetzungen, `de.json` kann sie also übersetzen) |
+| `String` / `Int` | Text- oder Zahlenfeld; der Standardwert ist der Platzhalter, ein leeres Feld fällt auf den Standard zurück |
+| `Text` | ein Textfeld mit vier Zeilen |
+| `Bool` | ein Kontrollkästchen mit dem gespeicherten Wert oder dem Standard |
+| `Choice` | eine Auswahl der `choices` |
+| `Secret` | ein Passwortfeld, das leer bleibt; der Hilfetext sagt, ob ein Wert gespeichert ist, und nur ein eingetippter Wert wird gesendet |
+| Bereiche | eine Einstellung erscheint im Tab jedes ihrer Bereiche |
+
+Speichern sendet nur geänderte Werte; der Server prüft sie (`Expected a whole number.` usw.), die Meldung erscheint in der Snackbar. Wer die Tabs sieht, folgt der Berechtigung `Settings.Manage`; **System** erscheint nur in der System-Organisation.
+
+Hinter dem Formular steht eine zur Laufzeit erzeugte Klasse mit einer Eigenschaft je Einstellung (`Mail.Smtp.Host` wird `Mail_Smtp_Host`), das Formular verhält sich also wie jedes andere Objektformular. Felder haben kein eigenes Zurücksetzen: Ein geleertes Text- oder Zahlenfeld kehrt zum Standard zurück.
+
 ![Einstellungsseite](../assets/screenshots/settings.png){ .shot }
 
 ## Typisierte App-Einstellungen
@@ -108,7 +140,7 @@ Vier Attribute aus `Coworkee.Contracts.Configuration` wählen für eine Eigensch
 
 | Attribut | Eigenschaft | Editor |
 |---|---|---|
-| `[ContentTypes]` | `List<string>` oder `string[]` mit MIME-Typen | Chips mit lesbaren Namen und Symbolen; gängige Typen und Gruppen (Bilder, PDF, Office-Dokumente, Videos, Audio, Archive) zur Auswahl, andere wie `image/x-icon` werden eingetippt. Leer erlaubt jeden Typ |
+| `[ContentTypes]` | `List<string>` oder `string[]` mit MIME-Typen | Chips mit lesbaren Namen und Symbolen sowie eine Auswahl aller MIME-Typen, die `MimeType` von Nextended kennt: nach Art gruppiert (Bilder, Dokumente, Videos, Audio, Archive, Text, Schriftarten, 3D-Modelle, Sonstige), jeweils mit Symbol, durchsuchbar nach Name, Dateiendung (`.epub`) oder MIME-Typ. Platzhalter (`image/*`, `video/*`, `audio/*`, `text/*`) und gängige Typen stehen vorn; das Menü daneben fügt ganze Gruppen hinzu (alle Bilder, Office-Dokumente, ...). Leer erlaubt jeden Typ |
 | `[FileSize]` | `long?` oder `long` in Bytes | eine Zahl in KB, MB oder GB; leer heißt keine Begrenzung |
 | `[Cron]` | `string` mit einem Cron-Ausdruck | Vorlagen (alle paar Minuten, stündlich, täglich, wöchentlich, monatlich) und der Ausdruck selbst, in Worten beschrieben (UTC); ein ungültiger Ausdruck wird nicht übernommen |
 | `[Translations]` | `Dictionary<string, string>` von Kultur zu Text | eine Zeile pro Sprache mit Name und Code; die Sprachen der App zur Auswahl, andere Kulturcodes wie `fr-CA` werden eingetippt, Zeilen per Button entfernt |
@@ -131,6 +163,20 @@ public sealed class ImportSettings
 ```
 
 Die eingebauten Einstellungen nutzen sie für die Registrierungsdokumente (`Registration:Documents`, mit Namen und Beschreibungen pro Sprache) und die Uhrzeit der Zusammenfassung (`Notifications:DigestCron`). Ein `RenderWith` in der Client-`meta` hat weiterhin Vorrang vor dem Attribut.
+
+### Beschriftungen, Hilfetexte und Gruppen aus `[Display]`
+
+`[Display]` aus `System.ComponentModel.DataAnnotations` beschreibt eine Eigenschaft dort, wo sie deklariert ist, ohne Client-Code: `Name` ist die Beschriftung, `Description` der Hilfetext unter dem Feld und `GroupName` der Abschnitt, in dem sie steht. Wie jeder Text des Formulars laufen sie über die Übersetzungen; der deutsche Text gehört also in `de.json`.
+
+```csharp
+public sealed class BillingSettings
+{
+    [Display(Name = "Currency", GroupName = "Invoices", Description = "The currency of new invoices.")]
+    public string Currency { get; set; } = "EUR";
+}
+```
+
+Ein Registrierungsdokument zeigt, wie das aussieht: Sein Dialog hat die Abschnitte *Für den Benutzer sichtbar* (Name und Hinweis, gültig in jeder Sprache), *Übersetzungen (optional)* (Name und Hinweis für einzelne Sprachen, jede Zeile beschriftet mit *Übersetzung für Deutsch* usw.) und *Upload* (Pflicht, erlaubte Dateitypen, größte Datei).
 
 ### Weitere Abschnitte
 

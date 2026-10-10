@@ -50,6 +50,8 @@ Standardwerte für eine neue Installation kommen aus der Konfiguration, zum Beis
 | `RequireDocuments` | zeigt die Dokument-Uploads |
 | `Documents` | ein Slot je Dokument: `Name`, `Description`, `Required` (Standard `true`), `ContentTypes` (Platzhalter wie `image/*` oder `application/vnd.openxmlformats-officedocument.*`, leer nimmt alle), `MaxSize` in Bytes (leer oder 0 ohne Grenze); `Names` und `Descriptions` je Sprache (`de-AT` vor `de`) für das, was der Benutzer liest, `Name` und `Description` sind der Rückfall, und unter `Name` legen Stores das Dokument ab |
 
+Admins bearbeiten dieselben Werte unter **Einstellungen > App-Einstellungen > Registrierung**. Jedes Dokument öffnet sich in einem Dialog mit drei Abschnitten: *Für den Benutzer sichtbar* (Name und Hinweis, in jeder Sprache), *Übersetzungen (optional)* (nur für mehrsprachige Apps: eine Zeile je Sprache, beschriftet mit *Übersetzung für Deutsch* usw., die Benutzern dieser Sprache statt des obigen Texts angezeigt wird) und *Upload* (Pflicht, erlaubte Dateitypen aus einer gruppierten, durchsuchbaren Liste aller bekannten MIME-Typen, größte Datei).
+
 ## Rollen in der Registrierung
 
 Eine Rolle mit **In der Registrierung angeboten** (auf der Rollenseite, `RoleRequest.SelectableForRegistration`, `SeedRole(..., SelectableForRegistration: true)`) erscheint in Schritt 3. Wer eine nicht angebotene Rolle schickt, bleibt mit einem Fehler im Schritt stehen. Systemrollen werden nie angeboten.
