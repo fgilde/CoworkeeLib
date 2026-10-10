@@ -59,6 +59,23 @@ public sealed class ThemesPageTests : ClientTestBase
         dialogs.Find("[data-testid='theme-editor']").ChildElementCount.ShouldBeGreaterThan(0);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void The_editor_offers_the_sign_in_page_while_the_app_allows_it(bool allowed)
+    {
+        Services.AddSingleton(new CoworkeeClientOptions { AllowThemeSignInDesign = allowed });
+        var dialogs = Render<MudDialogProvider>();
+        Render<MudPopoverProvider>();
+        var page = Render<Themes>();
+        page.WaitForElement("[data-theme='Brand'] [data-testid='theme-edit']");
+
+        _ = page.Find("[data-theme='Brand'] [data-testid='theme-edit']").ClickAsync(new());
+
+        dialogs.WaitForElement("[data-testid='theme-editor']", TimeSpan.FromSeconds(10));
+        dialogs.FindAll("[data-testid='theme-sign-in']").Count.ShouldBe(allowed ? 1 : 0);
+    }
+
     [Fact]
     public async Task Tiles_follow_the_theme_density()
     {

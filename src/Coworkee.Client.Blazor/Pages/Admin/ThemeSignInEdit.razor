@@ -1,0 +1,25 @@
+<MudExpansionPanels Outlined="true" Class="mb-3" data-testid="theme-sign-in">
+    <MudExpansionPanel Text="@L["Sign-in page"]">
+        <MudText Typo="Typo.body2" Class="mb-2">@L["Layout, image or video of the auth server's sign-in and registration pages. Empty fields keep the configured design."]</MudText>
+        <MudGrid Spacing="2">
+            <MudItem xs="12" sm="4">
+                <MudSelect T="string" @bind-Value="Value.Layout" Label="@L["Layout"]" Clearable="true" Margin="Density.Margin" Variant="Variant.Outlined" data-testid="theme-sign-in-layout">
+                    @foreach (var name in Options.SignInLayouts)
+                    {
+                        <MudSelectItem Value="@name">@L[name]</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="5">
+                <MudTextField T="string" @bind-Value="Value.MediaUrl" Label="@L["Image or video address"]" Clearable="true" Margin="Density.Margin" Variant="Variant.Outlined"
+                              HelperText="@L["For the split and slide layouts, for example /media/welcome.mp4"]" data-testid="theme-sign-in-media" />
+            </MudItem>
+            <MudItem xs="12" sm="3">
+                <MudSelect T="SignInMediaSide?" @bind-Value="Value.MediaSide" Label="@L["Image side"]" Clearable="true" Margin="Density.Margin" Variant="Variant.Outlined">
+                    <MudSelectItem T="SignInMediaSide?" Value="SignInMediaSide.Left">@L["Left"]</MudSelectItem>
+                    <MudSelectItem T="SignInMediaSide?" Value="SignInMediaSide.Right">@L["Right"]</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+    </MudExpansionPanel>
+</MudExpansionPanels>

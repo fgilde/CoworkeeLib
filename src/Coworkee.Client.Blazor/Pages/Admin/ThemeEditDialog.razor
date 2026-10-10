@@ -4,6 +4,10 @@
     <DialogContent>
         <MudTextField T="string" @bind-Value="Name" Label="@L["Name"]" Required="true" MaxLength="100" Margin="Density.Margin" Variant="Variant.Outlined"
                       Class="mb-3" data-testid="theme-name" />
+        @if (Options.AllowThemeSignInDesign)
+        {
+            <ThemeSignInEdit Value="SignIn" />
+        }
         <div data-testid="theme-editor">
             <MudExThemeEdit TTheme="CoworkeeTheme" Theme="Theme" Presets="Presets" AllowPresetsEdit="false" AllowModeToggle="true" ShowSaveButton="true"
                             ShowCancelButton="true" AutoSaveRestoreState="false" ThemeChanged="ThemeService.Preview" ThemeSaved="SaveAsync" EditCanceled="Cancel" />

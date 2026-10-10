@@ -1,4 +1,6 @@
+using Coworkee.Contracts.Theming;
 using MudBlazor;
+using MudBlazor.Extensions.Attribute;
 
 namespace Coworkee.Client.Blazor.Theming;
 
@@ -53,6 +55,10 @@ public class CoworkeeTheme : MudTheme
     public bool Dense { get; set; } = true;
 
     public bool StripedTables { get; set; }
+
+    /// <summary>Layout and media of the auth server's account pages; edited next to the theme editor, see <see cref="CoworkeeClientOptions.AllowThemeSignInDesign"/>.</summary>
+    [IgnoreOnObjectEdit]
+    public SignInDesign SignIn { get; set; } = new();
 
     /// <summary>Users can choose the theme.</summary>
     public bool IsPublished { get; set; }

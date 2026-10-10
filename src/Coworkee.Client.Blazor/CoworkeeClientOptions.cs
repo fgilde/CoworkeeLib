@@ -20,6 +20,12 @@ public sealed class CoworkeeClientOptions
     /// <summary>Shown on the empty assistant page; name tasks the tools of the app can do.</summary>
     public string AssistantHint { get; set; } = "Ask for something the application can do, for example to find or change records.";
 
+    /// <summary>Shows the sign-in page section (layout, image or video) in the theme editor; the auth server applies it while its AllowThemeDesign is on.</summary>
+    public bool AllowThemeSignInDesign { get; set; } = true;
+
+    /// <summary>Layouts offered in the theme editor; add the names of the auth server's own _Design{Name}.cshtml layouts.</summary>
+    public List<string> SignInLayouts { get; } = [.. Contracts.Theming.SignInLayouts.All];
+
     public string LoginPath { get; set; } = "/bff/login";
 
     public string LogoutPath { get; set; } = "/bff/logout";

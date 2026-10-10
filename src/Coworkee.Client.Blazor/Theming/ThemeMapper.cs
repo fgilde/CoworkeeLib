@@ -92,6 +92,7 @@ public static class ThemeMapper
         _ when type == typeof(int) => value.GetInt32(),
         _ when type == typeof(bool) => value.GetBoolean(),
         _ when type.IsEnum => Enum.Parse(type, value.ToString()),
+        _ when Nullable.GetUnderlyingType(type) is { } underlying => Convert(underlying, value),
         _ => throw new InvalidOperationException($"Unsupported theme property type {type.Name}."),
     };
 
