@@ -9,6 +9,7 @@
     <ProjectReference Include="..\Coworkee.Theming\Coworkee.Theming.csproj" />
     <Content Remove="Texts\*.json" />
     <EmbeddedResource Include="Texts\*.json" />
+    <EmbeddedResource Include="Assets\*" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" />
     <PackageReference Include="OpenIddict.AspNetCore" />
     <PackageReference Include="OpenIddict.EntityFrameworkCore" />

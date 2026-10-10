@@ -1,1 +1,3 @@
-@{ Layout = "_Layout"; }
+@inject Coworkee.AuthServer.AuthBrandingProvider BrandingProvider
+@inject Microsoft.AspNetCore.Mvc.Razor.IRazorViewEngine Views
+@{ Layout = (await BrandingProvider.GetAsync(Context.RequestAborted)).LayoutView(Views, ViewContext); }

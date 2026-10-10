@@ -1,0 +1,19 @@
+@inject Coworkee.AuthServer.AuthBrandingProvider BrandingProvider
+@{
+  Layout = "_Layout";
+  ViewData["Design"] = Coworkee.Contracts.Theming.SignInLayouts.Split;
+  var brand = await BrandingProvider.GetAsync(Context.RequestAborted);
+  var side = brand.Design.MediaSide == Coworkee.Contracts.Theming.SignInMediaSide.Right ? "media-right" : "media-left";
+}
+<div class="split @side" data-design="split">
+  <aside class="media @(brand.Design.MediaUrl is null ? null : "has-media")">
+    <partial name="_Media" model="brand" />
+    <h2>@brand.AppName</h2>
+  </aside>
+  <div class="form">
+    <main class="panel @(ViewData["Wide"] is true ? "wide" : null)">
+      <partial name="_Brand" model="brand" />
+      @RenderBody()
+    </main>
+  </div>
+</div>

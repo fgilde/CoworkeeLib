@@ -1,0 +1,8 @@
+@model Coworkee.AuthServer.AuthBranding
+<a class="brand" href="/" data-testid="brand">
+  @if (Model.LogoUrl is { } logo)
+  {
+    <img src="@logo" alt="" />
+  }
+  <span>@Model.AppName</span>
+</a>
