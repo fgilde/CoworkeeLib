@@ -14,8 +14,8 @@ sequenceDiagram
     T->>S: Abfrage
     S->>API: OData-Abfrage (noch nicht lokal)
     S->>API: changes (Version, Zeilenzahl)
-    S->>API: Seiten von /odata/SalesOrders?$orderby=Id, vier gleichzeitig
-    Note over S: vollständig, in IndexedDB abgelegt
+    S->>API: Seiten von /odata/SalesOrders?$orderby=Id&$select=…, zwei gleichzeitig
+    Note over S: vollständig als Spalten, indiziert, in IndexedDB abgelegt
     T->>S: Abfrage
     S-->>T: lokal beantwortet
     API-->>S: Realtime-Ereignis / eigenes Speichern / Intervall
@@ -65,7 +65,7 @@ Jedes Set startet mit den Standardwerten, dann wirken das Attribut, die Optionen
 
 | Einstellung | Standard | |
 |---|---|---|
-| `BatchSize` | 1000 | Zeilen pro Seite beim Herunterladen, höchstens `Coworkee:OData:MaxTop`; der Client lädt vier Seiten gleichzeitig |
+| `BatchSize` | 1000 | Zeilen pro Seite beim Herunterladen, höchstens `Coworkee:OData:MaxTop`; der Client lädt zwei Seiten gleichzeitig |
 | `MaxRows` | 50 000 | größere Sets bleiben auf dem Server; `[ClientEntity(MaxRows = …)]` setzt den Wert pro Entity |
 | `RefreshInterval` | 5 Minuten | wie oft Clients nach Änderungen fragen |
 | `Enabled` | `true` | `false` lässt eine markierte Entity auf dem Server |
@@ -118,7 +118,7 @@ Ab jetzt fragt jede `CoworkeeDataTable` und jeder `ODataPicker` bei einem gespie
 </CoworkeeDataTable>
 ```
 
-`ClientEntityIndicator` zeigt beim Laden einen Fortschrittsring, danach, ob Abfragen lokal oder auf dem Server laufen, und ruft `DataChanged`, wenn sich die lokalen Zeilen geändert haben. Die Schaltfläche **Vergleichen** daneben führt im Template den aktuellen Filter einmal auf dem Server und einmal im Browser aus und zeigt beide Zeiten.
+`ClientEntityIndicator` zeigt beim Laden einen Fortschrittsring, danach, ob Abfragen lokal oder auf dem Server laufen, und ruft `DataChanged`, wenn sich die lokalen Zeilen geändert haben. Die Schaltfläche **Vergleichen** daneben führt im Template den aktuellen Filter je fünfmal auf dem Server und im Browser aus und zeigt jeweils den Median (siehe [Performance](#performance)).
 
 Die Kopie aktualisiert sich
 
@@ -155,7 +155,7 @@ var top = await orders!.QueryAsync(q => q.Where(o => o.Status == SalesOrderStatu
 |---|---|
 | `QueryAsync(ODataQuery)` | eine OData-Abfrage: lokal, sobald vollständig, bis dahin und für das, was lokal nicht geht, auf dem Server |
 | `QueryAsync(q => q.Where(…))` | LINQ über die lokalen Zeilen; wartet, bis sie da sind |
-| `Items`, `Query()` | die lokalen Zeilen als Liste und als `IQueryable` (leer, bis vollständig) |
+| `Items`, `Query()` | die lokalen Zeilen als Liste und als `IQueryable` (leer, bis vollständig); als Spalten gehaltene Zeilen werden beim ersten Zugriff zu Objekten, bei großen Sets also besser `QueryAsync(ODataQuery)` |
 | `Status`, `Changed` | Zustand, Fortschritt (`Loaded` von `Total`), Version und eine `Revision`, die mit jeder Änderung der Zeilen wächst |
 | `WhenLocalAsync()` | ist erledigt, wenn die Zeilen lokal sind; schlägt fehl für Sets, die auf dem Server bleiben |
 | `RefreshAsync()` | jetzt nach Änderungen fragen |
@@ -192,34 +192,56 @@ Die lokale Kopie versteht, was Tabellen, Facetten und Picker senden: `eq ne gt g
 
 ## Performance
 
-So bleibt es bei sechsstelligen Zeilenzahlen schnell:
+WebAssembly interpretiert .NET-Code; Arbeit pro Zeile ist im Browser also teuer: 35 MB JSON zu lesen dauert über 15 Sekunden, 100.000 Texte zu sortieren fast eine Sekunde. Die lokale Kopie ist deshalb wie ein kleiner Spaltenspeicher gebaut und nicht als Liste von Objekten:
 
-- **Download**: Seiten nach `Id` sortiert, vier Anfragen gleichzeitig, die Zeilen landen direkt in einem Dictionary nach Id. Ein Delta holt geänderte Zeilen per Id, 50 pro Anfrage.
-- **Filter**: OData-Text wird einmal zu einem Delegate kompiliert und zwischengespeichert (bis zu 100 Filter).
-- **Sortierung**: typisierte Schlüssel und Vergleicher ohne Boxing pro Zeile; Text vergleicht ohne Groß-/Kleinschreibung, wie der Server.
-- **Blättern, Gruppieren, Facetten**: Das letzte gefilterte und sortierte Ergebnis und seine Facettenzahlen bleiben erhalten; die nächste Seite, ein Gruppenwechsel oder dieselbe Abfrage noch einmal schneiden nur noch einen Ausschnitt.
-- **Facetten**: Die Listenoptionen einer Eigenschaft werden in einem Durchlauf gezählt.
+- **Spalten**: Jeder Eigenschaftspfad (`Number`, `Customer/Name`, …) ist ein Array von Werten. Zu Objekten werden Zeilen erst, wenn sie angezeigt werden, 25 pro Seite.
+- **Indizes**: Ist die Kopie da, sortiert sich jede Spalte einmal im Hintergrund, eine nach der anderen mit einer Pause für die Seite dazwischen. Die Zeilen tragen dann den Rang ihres Werts, wie bei einem Datenbankindex.
+- **Filter** laufen auf den Rängen: `Status eq 'Open'`, `Total gt 100` oder `contains(tolower(Number),'123')` werden einmal pro verschiedenem Wert ausgewertet und ergeben eine Maske über die Zeilen. Nur was kein Vergleich einer Eigenschaft mit einem Literal ist (`length(Name) eq 4`), läuft Zeile für Zeile.
+- **Sortierung** läuft den Index der Spalte entlang; mehrere Spalten setzen ihre Ränge zu einer Zahl pro Zeile zusammen. Ein Filter behält diese Reihenfolge, gefilterte und sortierte Zeilen entstehen in einem Durchlauf.
+- **Facetten** zählen die Ränge der gefundenen Zeilen: ein Durchlauf pro Facetten-Eigenschaft, egal wie viele Optionen.
+- **Ergebnisse** der letzten 16 Kombinationen aus Filter und Sortierung bleiben erhalten: Die nächste Seite, ein Gruppenwechsel oder die Rückkehr zu einem früheren Filter schneiden nur einen Ausschnitt.
+- **Speicher**: Spalten und ihre Sortierungen werden als Binär-Arrays (gzip) in IndexedDB geschrieben. Ein Neuladen liest sie in einigen hundert Millisekunden zurück, Spalte für Spalte mit Pausen dazwischen; bis dahin fragt die Tabelle den Server und zeigt sofort Zeilen.
+- **Download**: Nur die Eigenschaften des Zeilentyps kommen über die Leitung (`$select`, verschachteltes `$expand`), zwei Seiten gleichzeitig, in einem Durchgang gelesen.
 
-Gemessen mit 100.000 Zeilen in den Tests der Bibliothek (`LargeSetTests`, .NET auf einer Desktop-CPU):
+Gemessen in Chromium mit den 100.000 Aufträgen des Templates (Release-Build, lokaler Rechner; der Server antwortet aus Postgres auf derselben Maschine):
 
-| | erste Abfrage | nächste Seite |
+| | vorher | jetzt |
 |---|---|---|
-| erste Seite mit Facetten | 30 ms | 0,3 ms |
-| nach einer Textspalte sortiert | 90–105 ms | < 0,1 ms |
-| nach zwei Spalten sortiert (Kunde, dann Summe) | 52–57 ms | < 0,1 ms |
-| Suche in drei Textspalten (3.970 Treffer) | 14 ms | < 0,1 ms |
-| zwei Facetten gewählt (15.084 Treffer) | 7 ms | < 0,1 ms |
-| Download von 100.000 Zeilen ohne Netz | 320 ms | |
+| erster Download, bis lokal | 36 s | 14,5 s |
+| Neuladen: erste Zeilen sichtbar | 20,6 s | 2,9 s |
+| Neuladen: Abfragen lokal | (nach den 20 s) | 0,3 s nach den ersten Zeilen |
 
-WebAssembly interpretiert den größten Teil dieses Codes; im Browser dauert es also ein Mehrfaches. Die Schaltfläche **Vergleichen** im Template zeigt die Zahlen auf Ihrem Rechner. Der Server braucht für jeden Klick einen Roundtrip plus seine Datenbankzeit.
+Nur die Abfragezeit, die Schaltfläche **Vergleichen** im Template (Median aus fünf Abfragen mit Facetten und 25 Zeilen, je mit anderer Sortierung und einer Bedingung, die verhindert, dass eine Seite ein Ergebnis wiederverwendet):
+
+| aktueller Filter | Server | Browser |
+|---|---|---|
+| keiner | 87–94 ms | 27–35 ms |
+| Suche "SO-00123" (3 Textspalten) | 367 ms | 158 ms |
+| Suche "Hamburg" | 340 ms | 117 ms |
+
+Vom Klick bis zur gezeichneten Tabelle, lokale Kopie mit Indizes (die Tabelle braucht für eine Seite etwa 130 ms zum Zeichnen, egal wer antwortet):
+
+| | während des Downloads (Server) | lokal |
+|---|---|---|
+| nach Summe sortieren | 600 ms | 165 ms |
+| nach Kunde sortieren | 584 ms | 135–163 ms |
+| nächste Seite | 292 ms | 131–136 ms |
+| Suche (nach 300 ms Eingabeverzögerung) | 808 ms | 435–458 ms |
+| Suche leeren | 938 ms | 286 ms |
+
+Die erste Sortierung nach einer Spalte direkt nach dem allerersten Download kann bis zu 1,5 s dauern, solange diese Spalte noch indiziert wird; nach einem Neuladen kommen die Indizes aus dem Speicher. Die Server-Zahlen während des Downloads enthalten die Arbeit, die der Browser gleichzeitig für den Download leistet.
+
+Die Tests der Bibliothek (`LargeSetTests`, `LocalTableTests`) prüfen dasselbe mit 100.000 Zeilen in .NET.
 
 ## Speicher und Grenzen
 
-- Die Zeilen liegen im Speicher und, mit gzip komprimiert, in IndexedDB (`coworkee-client-entities`), getrennt nach der Partition des Servers (Benutzer, Mandant), dem Set und seinem Expand. Der nächste Besuch ist sofort lokal und fragt nur nach Änderungen. Ändert sich der Zeilentyp, wird die gespeicherte Kopie verworfen. Ersetzen Sie `IClientEntityStorage`, um die Kopien anderswo abzulegen, oder registrieren Sie `NoClientEntityStorage`, um zwischen Besuchen nichts zu behalten.
-- Alles ist reines .NET: kein natives SQLite, kein `wasm-tools`-Workload, keine zusätzlichen Dateien. EF Core SQLite in WebAssembly braucht in jeder konsumierenden App den `wasm-tools`-Workload und ein natives Relinken und könnte positionale Record-DTOs mit verschachtelten Objekten nicht abbilden; die Kopie im Speicher hält die Einrichtung bei einer Zeile und ist für die Abfragen einer Tabelle schnell.
-- Arbeitsspeicher: Jede Zeile ist ein .NET-Objekt im Browser-Tab. 100.000 Aufträge mit ihrem Kunden belegen einige zehn MB; halten Sie `MaxRows` im Rahmen und expandieren Sie nur, was Sie anzeigen.
-- Der Download ist so groß wie das JSON des Sets; schalten Sie Antwortkomprimierung in der API (oder im BFF) ein, wenn Sie große Sets spiegeln.
+- Die Zeilen liegen als Spalten im Speicher und, mit gzip komprimiert, in IndexedDB (`coworkee-client-entities`), getrennt nach der Partition des Servers (Benutzer, Mandant), dem Set und seinem Expand. Der nächste Besuch ist sofort lokal und fragt nur nach Änderungen. Ändert sich der Zeilentyp, wird die gespeicherte Kopie verworfen. Ersetzen Sie `IClientEntityStorage`, um die Kopien anderswo abzulegen, oder registrieren Sie `NoClientEntityStorage`, um zwischen Besuchen nichts zu behalten.
+- Zeilentypen mit Eigenschaften einfacher Typen (Text, Zahlen, Datumswerte, `Guid`, Enums, jeweils auch nullable) und verschachtelten Objekten aus solchen Eigenschaften werden als Spalten gehalten. Andere Zeilentypen (etwa mit Listen) funktionieren auch, werden aber als JSON abgelegt, langsamer wiederhergestellt und Zeile für Zeile gefiltert.
+- Alles ist reines .NET: kein natives SQLite, kein `wasm-tools`-Workload, keine zusätzlichen Dateien.
+- Arbeitsspeicher: 100.000 Aufträge belegen einige zehn MB im Browser-Tab; halten Sie `MaxRows` im Rahmen und expandieren Sie nur, was Sie anzeigen.
+- Der erste Download eines großen Sets dauert (14,5 s für 100.000 Zeilen) und beschäftigt den Browser; die Tabelle antwortet währenddessen vom Server, langsamer als sonst. Antwortkomprimierung in der API (oder im BFF) hilft bei langsamen Netzen.
 - Änderungen erkennt der Server an `IAuditable` (`CreatedAt`, `ModifiedAt`), Löschungen an `ISoftDelete` (`DeletedAt`). Stimmt die Zeilenzahl nach einem Delta nicht mit der des Servers überein, vergleicht der Client die Ids; so verschwinden auch hart gelöschte Zeilen und solche, die nicht mehr sichtbar sind. Entities ohne `IAuditable` werden bei jeder Aktualisierung neu geladen, ebenso ein Set mit mehr als `BatchSize × 10` Änderungen seit der letzten Version.
+- Text sortiert ohne Groß-/Kleinschreibung nach der Kultur des Browsers; der Server sortiert nach der Collation seiner Datenbank, Sonderzeichen können also anders einsortiert sein.
 - Clients spiegeln nur die Zeilen, die ein Benutzer sehen darf; eine Kopie enthält also nichts, was eine OData-Abfrage nicht auch liefern würde. Auf dem Gerät ist sie nicht verschlüsselt; Sets mit sensiblen Daten lassen Sie auf dem Server.
 
 ## Endpunkte

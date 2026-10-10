@@ -14,8 +14,8 @@ sequenceDiagram
     T->>S: query
     S->>API: OData query (not local yet)
     S->>API: changes (version, row count)
-    S->>API: pages of /odata/SalesOrders?$orderby=Id, four at a time
-    Note over S: complete, kept in IndexedDB
+    S->>API: pages of /odata/SalesOrders?$orderby=Id&$select=…, two at a time
+    Note over S: complete as columns, indexed, kept in IndexedDB
     T->>S: query
     S-->>T: answered locally
     API-->>S: realtime event / own write / interval
@@ -65,7 +65,7 @@ Each set starts from the defaults, then the attribute, then the options, then it
 
 | Setting | Default | |
 |---|---|---|
-| `BatchSize` | 1000 | rows per download page, at most `Coworkee:OData:MaxTop`; the client loads four pages at a time |
+| `BatchSize` | 1000 | rows per download page, at most `Coworkee:OData:MaxTop`; the client loads two pages at a time |
 | `MaxRows` | 50 000 | larger sets stay on the server; `[ClientEntity(MaxRows = …)]` sets it per entity |
 | `RefreshInterval` | 5 minutes | how often clients ask for changes |
 | `Enabled` | `true` | `false` keeps an attributed entity on the server |
@@ -118,7 +118,7 @@ From now on every `CoworkeeDataTable` and `ODataPicker` asks the local copy of a
 </CoworkeeDataTable>
 ```
 
-`ClientEntityIndicator` shows a progress ring while the rows load, then whether queries run locally or on the server, and calls `DataChanged` when the local rows changed. The **Compare** button next to it in the template runs the current filter once on the server and once in the browser and shows both times.
+`ClientEntityIndicator` shows a progress ring while the rows load, then whether queries run locally or on the server, and calls `DataChanged` when the local rows changed. The **Compare** button next to it in the template runs the current filter five times on the server and five times in the browser and shows the median of each (see [Performance](#performance)).
 
 The copy refreshes
 
@@ -155,7 +155,7 @@ var top = await orders!.QueryAsync(q => q.Where(o => o.Status == SalesOrderStatu
 |---|---|
 | `QueryAsync(ODataQuery)` | an OData query: local once complete, the server until then and for what it cannot answer locally |
 | `QueryAsync(q => q.Where(…))` | LINQ over the local rows; waits until they are here |
-| `Items`, `Query()` | the local rows as list and `IQueryable` (empty until complete) |
+| `Items`, `Query()` | the local rows as list and `IQueryable` (empty until complete); rows kept as columns become objects on first use, so prefer `QueryAsync(ODataQuery)` for large sets |
 | `Status`, `Changed` | state, progress (`Loaded` of `Total`), version and a `Revision` that grows with every change of the rows |
 | `WhenLocalAsync()` | completes when the rows are local, fails for sets that stay on the server |
 | `RefreshAsync()` | ask for changes now |
@@ -192,34 +192,56 @@ The local copy understands what tables, facets and pickers send: `eq ne gt ge lt
 
 ## Performance
 
-How it stays fast with six-digit row counts:
+WebAssembly interprets .NET code, so per row work is expensive in the browser: parsing 35 MB of JSON takes over 15 seconds, sorting 100,000 texts close to a second. The local copy is therefore built like a small column store rather than a list of objects:
 
-- **Download**: pages ordered by `Id`, four requests at a time, rows go straight into a dictionary by id. A delta fetches the changed rows by id, 50 per request.
-- **Filter**: OData text is compiled once into a delegate and cached (up to 100 filters).
-- **Sort**: typed keys and comparers without boxing per row; text compares ignoring case, like the server.
-- **Paging, grouping, facets**: the last filtered and sorted result and its facet counts are kept, so the next page, a group change or the same query again only cuts a slice.
-- **Facets**: the list options of one property are counted in a single pass.
+- **Columns**: every property path (`Number`, `Customer/Name`, …) is an array of values. Rows become objects only when they are shown, 25 per page.
+- **Indexes**: after the copy arrived, each column sorts once in the background, one column at a time with a pause for the page in between. Rows then carry the rank of their value, like a database index.
+- **Filters** run on the ranks: `Status eq 'Open'`, `Total gt 100` or `contains(tolower(Number),'123')` are evaluated once per distinct value and become a mask over the rows. Only what is not a property compared with a literal (`length(Name) eq 4`) runs row by row.
+- **Sorting** walks the index of the column; several columns combine their ranks into one number per row. A filter keeps that order, so filtered and sorted rows come out in one pass.
+- **Facets** count ranks of the found rows: one pass per facet property, whatever the number of options.
+- **Results** of the last 16 filter and sort combinations are kept: the next page, a group change or going back to an earlier filter cuts only a slice.
+- **Storage**: columns and their sort orders are written as binary arrays (gzip) to IndexedDB. A reload reads them back in a few hundred milliseconds, column by column with pauses in between; until then the table asks the server, so it shows rows at once.
+- **Download**: only the properties of the row type travel (`$select`, nested `$expand`), two pages at a time, read in one pass.
 
-Measured with 100,000 rows in the library's tests (`LargeSetTests`, .NET on a desktop CPU):
+Measured in Chromium with the 100,000 orders of the template (Release build, local machine; the server answers from Postgres in the same machine):
 
-| | first query | next page |
+| | before | now |
 |---|---|---|
-| first page with facets | 30 ms | 0.3 ms |
-| sorted by a text column | 90–105 ms | < 0.1 ms |
-| sorted by two columns (customer, then total) | 52–57 ms | < 0.1 ms |
-| search in three text columns (3,970 hits) | 14 ms | < 0.1 ms |
-| two facets selected (15,084 hits) | 7 ms | < 0.1 ms |
-| download of 100,000 rows without network | 320 ms | |
+| first download until local | 36 s | 14.5 s |
+| page reload: first rows visible | 20.6 s | 2.9 s |
+| page reload: queries local | (after the 20 s) | 0.3 s after the first rows |
 
-WebAssembly interprets most of this code, so the browser takes several times longer; the **Compare** button of the template shows the numbers on your machine. The server needs a round trip plus its database time for every click.
+Query time only, the **Compare** button of the template (median of five queries with facets and 25 rows, each with another sort order and a condition that keeps either side from reusing a result):
+
+| current filter | server | browser |
+|---|---|---|
+| none | 87–94 ms | 27–35 ms |
+| search "SO-00123" (3 text columns) | 367 ms | 158 ms |
+| search "Hamburg" | 340 ms | 117 ms |
+
+Click to rendered table, local copy with indexes (the table needs about 130 ms to render a page whatever answers):
+
+| | while downloading (server) | local |
+|---|---|---|
+| sort by total | 600 ms | 165 ms |
+| sort by customer | 584 ms | 135–163 ms |
+| next page | 292 ms | 131–136 ms |
+| search (after the 300 ms input delay) | 808 ms | 435–458 ms |
+| clear the search | 938 ms | 286 ms |
+
+The first sort on a column right after the very first download can take up to 1.5 s, while that column is still being indexed; after a reload the indexes come from the storage. Server numbers while downloading include the work the browser does for the download at the same time.
+
+The library's tests (`LargeSetTests`, `LocalTableTests`) check the same with 100,000 rows in .NET.
 
 ## Storage and limits
 
-- The rows live in memory and, gzip compressed, in IndexedDB (`coworkee-client-entities`), keyed by the server's partition (user, tenant), the set and its expand. The next visit is local at once and only asks for changes. A changed row type discards the stored copy. Replace `IClientEntityStorage` to keep the copies elsewhere, or register `NoClientEntityStorage` to keep nothing between visits.
-- Everything is plain .NET: no native SQLite, no `wasm-tools` workload, no extra files to serve. EF Core SQLite in WebAssembly needs the `wasm-tools` workload and a native relink in every consuming app and could not map positional record DTOs with nested objects; the in-memory copy keeps the setup to one line and is fast for the queries a table sends.
-- Memory: every row is a .NET object in the browser tab. 100,000 orders with their customer take some tens of MB; keep `MaxRows` in proportion and expand only what you show.
-- The download is as large as the JSON of the set; enable response compression in the API (or the BFF) when you mirror large sets.
+- The rows live in memory as columns and, gzip compressed, in IndexedDB (`coworkee-client-entities`), keyed by the server's partition (user, tenant), the set and its expand. The next visit is local at once and only asks for changes. A changed row type discards the stored copy. Replace `IClientEntityStorage` to keep the copies elsewhere, or register `NoClientEntityStorage` to keep nothing between visits.
+- Row types with properties of simple types (text, numbers, dates, `Guid`, enums, their nullable forms) and nested objects of such properties are kept as columns. Other row types (for example with lists) work too, but are kept as JSON, which is slower to restore, and filter row by row.
+- Everything is plain .NET: no native SQLite, no `wasm-tools` workload, no extra files to serve.
+- Memory: 100,000 orders take some tens of MB in the browser tab; keep `MaxRows` in proportion and expand only what you show.
+- The first download of a large set takes a while (14.5 s for 100,000 rows) and keeps the browser busy; the table answers from the server meanwhile, slower than usual. Response compression in the API (or the BFF) helps on slow networks.
 - Changes come from `IAuditable` (`CreatedAt`, `ModifiedAt`), deletions from `ISoftDelete` (`DeletedAt`). When the row count after a delta differs from the server's, the client compares ids, so hard deletes and rows that are no longer visible disappear too. Entities without `IAuditable` are downloaded again at each refresh, and so is a set with more than `BatchSize × 10` changes since the last version.
+- Text sorts ignoring case with the culture of the browser; the server sorts with the collation of its database, so the order of special characters can differ.
 - Clients mirror the rows a user may see, so a copy contains nothing an OData query would not return. It is not encrypted on the device; leave sets with sensitive data on the server.
 
 ## Endpoints
