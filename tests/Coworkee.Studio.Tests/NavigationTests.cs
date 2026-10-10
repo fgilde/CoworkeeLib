@@ -58,7 +58,7 @@ public sealed class NavigationTests
     }
 
     [Fact]
-    public void Next_on_the_review_starts_the_creation()
+    public async Task Next_on_the_review_starts_the_creation()
     {
         using var folder = new TempFolder();
         var main = Scenario.Shop(folder);
@@ -67,6 +67,12 @@ public sealed class NavigationTests
         main.Next();
 
         main.Current.ShouldBe(main.Generate);
+        // the creation runs in the background: under load the missing CLI is noticed a moment later
+        for (var i = 0; i < 100 && main.Generate.RunState == RunState.Running; i++)
+        {
+            await Task.Delay(50, TestContext.Current.CancellationToken);
+        }
+
         main.Generate.RunState.ShouldBe(RunState.CliMissing);
     }
 
