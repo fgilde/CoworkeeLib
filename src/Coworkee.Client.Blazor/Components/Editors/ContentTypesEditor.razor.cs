@@ -3,10 +3,11 @@ using Microsoft.AspNetCore.Components;
 
 namespace Coworkee.Client.Blazor.Components.Editors;
 
-/// <summary>MIME types as chips with readable names; every known type to pick, grouped by kind and searchable. Empty means every type.</summary>
+/// <summary>MIME types as chips with readable names; every known type can be found by name, extension or MIME type, a kind adds a whole group. Empty means every type.</summary>
 public partial class ContentTypesEditor
 {
-    private static readonly ICollection<string> Values = [.. ContentTypeCatalog.Known.Select(t => t.Value)];
+    // ponytail: a search instead of a list of every known type - 768 options rendered at once block WebAssembly for seconds
+    private const int MaxResults = 50;
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
@@ -22,9 +23,12 @@ public partial class ContentTypesEditor
 
     private IReadOnlyList<string> Selected => Value ?? [];
 
-    private string Name(string value) => L[ContentTypeCatalog.Describe(value).Name];
+    private string Name(string? value) => value is null ? string.Empty : L[ContentTypeCatalog.Describe(value).Name];
 
     private static string Detail(ContentTypeInfo type) => type.Name == type.Value ? type.Extensions : $"{type.Value}  {type.Extensions}";
+
+    private Task<IEnumerable<string>> SearchAsync(string? text, CancellationToken _) =>
+        Task.FromResult(ContentTypeCatalog.Known.Select(t => t.Value).Where(v => !Selected.Contains(v) && Matches(v, text)).Take(MaxResults));
 
     private bool Matches(string value, string? text)
     {
@@ -37,12 +41,7 @@ public partial class ContentTypesEditor
         return new[] { type.Value, type.Extensions, Name(value) }.Any(s => s.Contains(text.Trim(), StringComparison.CurrentCultureIgnoreCase));
     }
 
-    // keeps the order and the types the catalog does not know (set in the appsettings), adds new picks at the end
-    private Task SelectAsync(IEnumerable<string>? picked)
-    {
-        var values = picked?.ToList() ?? [];
-        return SetAsync([.. Selected.Where(v => values.Contains(v) || !Values.Contains(v)), .. values.Where(v => !Selected.Contains(v))]);
-    }
+    private Task PickAsync(string? value) => value is null ? Task.CompletedTask : AddAsync([value]);
 
     private Task AddAsync(IReadOnlyList<string> values) =>
         SetAsync([.. Selected, .. values.Where(v => !Selected.Contains(v, StringComparer.OrdinalIgnoreCase))]);

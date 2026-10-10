@@ -37,6 +37,7 @@ public sealed class SettingsItemDialogTests : ClientTestBase
         _ = add.ClickAsync(new()); // completes when the dialog closes
 
         dialogs.WaitForAssertion(() => dialogs.Find("[data-testid='translations']"));
+        dialogs.FindAll("[data-option]").ShouldBeEmpty(); // the file types are searched, not rendered all at once: hundreds of options froze WebAssembly
         dialogs.Markup.ShouldContain("Required");
         dialogs.FindAll(".mud-expand-panel-text").Select(g => g.TextContent).ShouldBe(["Shown to the user", "Translations (optional)", "Upload"]);
         dialogs.Markup.ShouldContain("Empty accepts every file type.");

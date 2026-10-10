@@ -49,10 +49,11 @@ public sealed class SettingsEditorsTests : ClientTestBase
         var editor = Render<ContentTypesEditor>(p => p.Add(e => e.Value, value).Add(e => e.ValueChanged, v => value = v));
 
         editor.Markup.ShouldContain("All images");
-        var select = editor.FindComponent<MudExSelect<string>>();
-        select.Instance.ItemCollection.Count.ShouldBe(ContentTypeCatalog.Known.Count);
+        var search = editor.FindComponent<MudAutocomplete<string>>();
+        (await search.Instance.SearchFunc!("pdf", CancellationToken.None)).ShouldContain("application/pdf");
+        (await search.Instance.SearchFunc!(null, CancellationToken.None)).ShouldNotContain("image/*"); // picked types are not offered again
 
-        await editor.InvokeAsync(() => select.Instance.SelectedValuesChanged.InvokeAsync(["image/*", "application/pdf"]));
+        await editor.InvokeAsync(() => search.Instance.ValueChanged.InvokeAsync("application/pdf"));
         value.ShouldBe(["image/*", "application/x-custom", "application/pdf"]); // types the catalog does not know stay
 
         await editor.Find("[data-type='image/*'] .mud-chip-close-button").ClickAsync(new());

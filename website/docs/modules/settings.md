@@ -140,7 +140,7 @@ Four attributes from `Coworkee.Contracts.Configuration` pick a better editor for
 
 | Attribute | Property | Editor |
 |---|---|---|
-| `[ContentTypes]` | `List<string>` or `string[]` of MIME types | chips with readable names and icons, and a select of every MIME type Nextended's `MimeType` knows: grouped by kind (images, documents, videos, audio, archives, text, fonts, 3D models, other), each with its icon, searchable by name, file extension (`.epub`) or MIME type. The wildcards (`image/*`, `video/*`, `audio/*`, `text/*`) and common types come first; the menu next to it adds whole groups (all images, Office documents, ...). Empty accepts every type |
+| `[ContentTypes]` | `List<string>` or `string[]` of MIME types | chips with readable names and icons, and a search over every MIME type Nextended's `MimeType` knows, by name, file extension (`.epub`) or MIME type, each hit with its icon and kind (images, documents, videos, audio, archives, text, fonts, 3D models, other). The wildcards (`image/*`, `video/*`, `audio/*`, `text/*`) and common types come first; the menu next to it adds whole groups (all images, Office documents, ...). It shows at most 50 hits, so the editor stays fast. Empty accepts every type |
 | `[FileSize]` | `long?` or `long` in bytes | a number in KB, MB or GB; empty means no limit |
 | `[Cron]` | `string` with a cron expression | presets (every few minutes, hourly, daily, weekly, monthly) and the expression itself, described in words (UTC); an invalid expression is not taken |
 | `[Translations]` | `Dictionary<string, string>` of culture to text | a row per language with its name and code; the app's languages to pick, other culture codes like `fr-CA` typed in, rows removed with their button |

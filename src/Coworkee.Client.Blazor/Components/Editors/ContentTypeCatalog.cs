@@ -62,6 +62,9 @@ public static class ContentTypeCatalog
         ("application/gzip", "GZip archive"),
     ];
 
+    // MimeType.IsArchive rebuilds its archive list with regular expressions on every call: once for the catalog, not once per type
+    private static readonly Lazy<HashSet<string>> Archives = new(() => new(MimeType.ArchiveTypes, StringComparer.OrdinalIgnoreCase));
+
     private static readonly Lazy<IReadOnlyList<ContentTypeInfo>> All = new(Build);
 
     private static readonly Lazy<Dictionary<string, ContentTypeInfo>> ByValue = new(() => All.Value.ToDictionary(t => t.Value, StringComparer.OrdinalIgnoreCase));
@@ -110,7 +113,7 @@ public static class ContentTypeCatalog
         "font" => ("Fonts", Font),
         "model" => ("3D models", Model),
         _ when value == "application/pdf" => ("Documents", Pdf),
-        _ when value == "application/gzip" || MimeType.IsArchive(value) => ("Archives", Archive),
+        _ when value == "application/gzip" || Archives.Value.Contains(value) => ("Archives", Archive),
         _ when value == "text/csv" || value.Contains("excel") || value.Contains("spreadsheet") => ("Documents", Table),
         _ when value.Contains("powerpoint") || value.Contains("presentation") => ("Documents", Slides),
         _ when value is "application/msword" or "application/rtf" || value.Contains("wordprocessing") || value.Contains("opendocument") => ("Documents", Document),
