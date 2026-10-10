@@ -165,6 +165,21 @@ public sealed class GenerationTests
         await Should.ThrowAsync<CliException>(() => ModuleCommand.AddAsync(solution, new ModuleSpec { Name = "Api", Entities = [Order] }, TestContext.Current.CancellationToken));
     }
 
+    [Fact]
+    public async Task A_failing_edit_leaves_the_app_untouched()
+    {
+        using var app = MinimalApp();
+        File.WriteAllText(Path.Combine(app.Path, "src/Shop.Infrastructure/ShopDatabaseModule.cs"), "public sealed class ShopDatabaseModule;\n");
+        var slnx = File.ReadAllText(Path.Combine(app.Path, "Shop.slnx"));
+
+        await Should.ThrowAsync<CliException>(() => ModuleCommand.AddAsync(Solution.Find(app.Path), ModuleCommand.Read(CliApp.Build().Parse("module add Orders --client-entity")), TestContext.Current.CancellationToken));
+
+        Directory.Exists(Path.Combine(app.Path, "src/Shop.Orders")).ShouldBeFalse();
+        Directory.Exists(Path.Combine(app.Path, "src/Shop.Contracts")).ShouldBeFalse();
+        File.ReadAllText(Path.Combine(app.Path, "Shop.slnx")).ShouldBe(slnx);
+        File.ReadAllText(Path.Combine(app.Path, "src/Shop.Web.Client/Program.cs")).ShouldNotContain("Orders");
+    }
+
     [Theory]
     [InlineData("Number", "Number", PropertyType.String, false, null)]
     [InlineData("Total:decimal:required", "Total", PropertyType.Decimal, true, null)]

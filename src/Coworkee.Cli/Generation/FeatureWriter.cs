@@ -2,7 +2,10 @@ using Coworkee.Cli.Spec;
 
 namespace Coworkee.Cli.Generation;
 
-/// <summary>Writes generated modules and entities into an app and wires them into the solution, the database module and the web client.</summary>
+/// <summary>
+/// Writes generated modules and entities into an app and wires them into the solution, the database module and the web client.
+/// Every edit is computed in memory first; files are written only when all of them worked, so a failure leaves the app as it was.
+/// </summary>
 internal static class FeatureWriter
 {
     private const string Mapperly = "    <PackageVersion Include=\"Riok.Mapperly\" Version=\"4.3.1\" />\n";
@@ -12,14 +15,14 @@ internal static class FeatureWriter
     public static async Task AddModuleAsync(Solution solution, string module, IReadOnlyList<EntityModel> entities, CancellationToken cancellationToken)
     {
         var project = $"src/{solution.Name}.{module}/{solution.Name}.{module}.csproj";
-        await WriteAsync(solution, [.. ServerFiles.Module(solution.Name, module, entities), .. entities.SelectMany(Files)], cancellationToken);
-
+        var changes = new Changes(solution, [.. ServerFiles.Module(solution.Name, module, entities), .. entities.SelectMany(Files)]);
         var infrastructure = solution.Project("Infrastructure");
         var databaseModule = Path.Combine(Path.GetDirectoryName(infrastructure)!, $"{solution.Name}DatabaseModule.cs");
-        await EditAsync(databaseModule, text => AppEdits.RegisterModule(text, $"{solution.Name}.{module}.{ServerFiles.ModuleClass(solution.Name, module)}"), cancellationToken);
-        await EditAsync(solution.SlnxPath, text => AppEdits.AddToSolution(text, project), cancellationToken);
-        await EditAsync(infrastructure, text => AppEdits.AddToItems(text, $"    <ProjectReference Include=\"..\\{solution.Name}.{module}\\{solution.Name}.{module}.csproj\" />\n"), cancellationToken);
-        await WireAsync(solution, entities, cancellationToken);
+        await changes.EditAsync(databaseModule, text => AppEdits.RegisterModule(text, $"{solution.Name}.{module}.{ServerFiles.ModuleClass(solution.Name, module)}"), cancellationToken);
+        await changes.EditAsync(solution.SlnxPath, text => AppEdits.AddToSolution(text, project), cancellationToken);
+        await changes.EditAsync(infrastructure, text => AppEdits.AddToItems(text, $"    <ProjectReference Include=\"..\\{solution.Name}.{module}\\{solution.Name}.{module}.csproj\" />\n"), cancellationToken);
+        await WireAsync(solution, changes, entities, cancellationToken);
+        await changes.WriteAsync(cancellationToken);
     }
 
     public static async Task AddEntityAsync(Solution solution, EntityModel entity, CancellationToken cancellationToken)
@@ -31,65 +34,84 @@ internal static class FeatureWriter
             throw new CliException($"{moduleClass} does not exist. Create the module with coworkee module add {entity.Module}.");
         }
 
-        await WriteAsync(solution, [.. Files(entity)], cancellationToken);
-        await EditAsync(moduleClass, text => AppEdits.AddToModule(text, ServerFiles.Services(entity), ServerFiles.Endpoint(entity)), cancellationToken);
+        var changes = new Changes(solution, [.. Files(entity)]);
+        await changes.EditAsync(moduleClass, text => AppEdits.AddToModule(text, ServerFiles.Services(entity), ServerFiles.Endpoint(entity)), cancellationToken);
         if (entity.Mapping == MappingStrategy.Mapperly)
         {
-            await EditAsync(Path.Combine(root, $"{solution.Name}.{entity.Module}.csproj"), text => AppEdits.AddToItems(text, ServerFiles.MapperlyReference), cancellationToken);
+            await changes.EditAsync(Path.Combine(root, $"{solution.Name}.{entity.Module}.csproj"), text => AppEdits.AddToItems(text, ServerFiles.MapperlyReference), cancellationToken);
         }
 
-        await WireAsync(solution, [entity], cancellationToken);
+        await WireAsync(solution, changes, [entity], cancellationToken);
+        await changes.WriteAsync(cancellationToken);
     }
 
     public static IEnumerable<GeneratedFile> Files(EntityModel entity) => ServerFiles.Entity(entity).Concat(ClientFiles.Entity(entity));
 
-    private static async Task WireAsync(Solution solution, IReadOnlyList<EntityModel> entities, CancellationToken cancellationToken)
+    private static async Task WireAsync(Solution solution, Changes changes, IReadOnlyList<EntityModel> entities, CancellationToken cancellationToken)
     {
         var client = solution.Project("Web.Client");
         var program = Path.Combine(Path.GetDirectoryName(client)!, "Program.cs");
         var packages = Path.Combine(solution.Root, "Directory.Packages.props");
         foreach (var entity in entities)
         {
-            await EditAsync(program, text => AppEdits.AddBeforeBuild(text, ClientFiles.Registration(entity)), cancellationToken);
+            await changes.EditAsync(program, text => AppEdits.AddBeforeBuild(text, ClientFiles.Registration(entity)), cancellationToken);
         }
 
         if (entities.Any(e => e.Mapping == MappingStrategy.Mapperly))
         {
-            await EditAsync(packages, text => AppEdits.AddToItems(text, Mapperly), cancellationToken);
+            await changes.EditAsync(packages, text => AppEdits.AddToItems(text, Mapperly), cancellationToken);
         }
 
         if (entities.Any(e => e.Spec.ClientEntity))
         {
-            await EditAsync(packages, text => AppEdits.AddToItems(text, ClientEntitiesVersion), cancellationToken);
-            await EditAsync(client, text => AppEdits.AddToItems(text, ClientEntitiesPackage), cancellationToken);
-            await EditAsync(program, AppEdits.EnableClientEntities, cancellationToken);
+            await changes.EditAsync(packages, text => AppEdits.AddToItems(text, ClientEntitiesVersion), cancellationToken);
+            await changes.EditAsync(client, text => AppEdits.AddToItems(text, ClientEntitiesPackage), cancellationToken);
+            await changes.EditAsync(program, AppEdits.EnableClientEntities, cancellationToken);
         }
     }
 
-    private static async Task WriteAsync(Solution solution, IReadOnlyList<GeneratedFile> files, CancellationToken cancellationToken)
+    private sealed class Changes
     {
-        if (files.Select(f => Path.Combine(solution.Root, f.Path)).FirstOrDefault(File.Exists) is { } existing)
+        private readonly Solution _solution;
+        private readonly IReadOnlyList<GeneratedFile> _files;
+        private readonly Dictionary<string, (string Original, string Text)> _edits = new(StringComparer.OrdinalIgnoreCase);
+
+        public Changes(Solution solution, IReadOnlyList<GeneratedFile> files)
         {
-            throw new CliException($"{existing} exists already.");
+            if (files.Select(f => Path.Combine(solution.Root, f.Path)).FirstOrDefault(File.Exists) is { } existing)
+            {
+                throw new CliException($"{existing} exists already.");
+            }
+
+            _solution = solution;
+            _files = files;
         }
 
-        foreach (var file in files)
+        // edits work on LF line ends; the file keeps the ones it had
+        public async Task EditAsync(string path, Func<string, string> edit, CancellationToken cancellationToken)
         {
-            var target = Path.Combine(solution.Root, file.Path);
-            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-            await File.WriteAllTextAsync(target, file.Content.ReplaceLineEndings(), cancellationToken);
-        }
-    }
+            if (!_edits.TryGetValue(path, out var staged))
+            {
+                var original = await File.ReadAllTextAsync(path, cancellationToken);
+                staged = (original, AppEdits.Normalize(original));
+            }
 
-    // edits work on LF line ends; the file keeps the ones it had
-    private static async Task EditAsync(string path, Func<string, string> edit, CancellationToken cancellationToken)
-    {
-        var original = await File.ReadAllTextAsync(path, cancellationToken);
-        var text = AppEdits.Normalize(original);
-        var changed = edit(text);
-        if (changed != text)
+            _edits[path] = (staged.Original, edit(staged.Text));
+        }
+
+        public async Task WriteAsync(CancellationToken cancellationToken)
         {
-            await File.WriteAllTextAsync(path, original.Contains('\r') ? changed.ReplaceLineEndings("\r\n") : changed, cancellationToken);
+            foreach (var file in _files)
+            {
+                var target = Path.Combine(_solution.Root, file.Path);
+                Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+                await File.WriteAllTextAsync(target, file.Content.ReplaceLineEndings(), cancellationToken);
+            }
+
+            foreach (var (path, (original, text)) in _edits.Where(e => e.Value.Text != AppEdits.Normalize(e.Value.Original)))
+            {
+                await File.WriteAllTextAsync(path, original.Contains('\r') ? text.ReplaceLineEndings("\r\n") : text, cancellationToken);
+            }
         }
     }
 }
