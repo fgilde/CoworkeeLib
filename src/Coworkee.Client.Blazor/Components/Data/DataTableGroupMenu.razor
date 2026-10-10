@@ -1,0 +1,39 @@
+@typeparam T
+
+<MudMenu Dense="Density.Dense" Icon="@Icons.Material.Outlined.Workspaces" Size="Size.Small" Class="mb-2" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight"
+         Color="@(Grouped.Count > 0 ? Color.Primary : Color.Default)" aria-label="@L["Group by"]" data-testid="grouping">
+    <div class="cw-table-panel" @onclick:stopPropagation="true">
+        <div class="cw-table-panel-head">
+            <MudText Typo="Typo.subtitle2" Class="flex-grow-1">@L["Group by"]</MudText>
+            @if (Grouped.Count > 0)
+            {
+                <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="() => GroupAsync([])" data-testid="grouping-clear">@L["Reset"]</MudButton>
+            }
+        </div>
+        <MudText Typo="Typo.caption" Class="cw-table-panel-hint">@L["Choose several columns for nested groups; drag to change their order."]</MudText>
+        <MudDropContainer T="Column<T>" Items="Ordered" ItemsSelector="@((column, zone) => zone == GroupedZone == IsGrouped(column))" ItemDropped="DroppedAsync" Class="cw-table-panel-list">
+            <ChildContent>
+                <MudDropZone T="Column<T>" Identifier="@GroupedZone" AllowReorder="true" Class="cw-group-target">
+                    @if (Grouped.Count == 0)
+                    {
+                        <MudText Typo="Typo.caption" Class="cw-table-panel-hint">@L["Drop a column here to group"]</MudText>
+                    }
+                </MudDropZone>
+                <MudDivider Class="my-1" />
+                <MudDropZone T="Column<T>" Identifier="available" />
+            </ChildContent>
+            <ItemRenderer>
+                <div class="cw-table-panel-item cw-clickable" role="menuitemcheckbox" aria-checked="@(IsGrouped(context) ? "true" : "false")" data-group="@Key(context)" @onclick="() => ToggleAsync(context)">
+                    <MudIcon Icon="@Icons.Material.Filled.DragIndicator" Size="Size.Small" Class="cw-drag" />
+                    <MudIcon Icon="@(IsGrouped(context) ? Icons.Material.Filled.CheckBox : Icons.Material.Outlined.CheckBoxOutlineBlank)" Size="Size.Small"
+                             Color="@(IsGrouped(context) ? Color.Primary : Color.Default)" />
+                    <MudText Typo="Typo.body2" Class="flex-grow-1">@Label(context)</MudText>
+                    @if (IsGrouped(context))
+                    {
+                        <span class="cw-group-order">@(Position(context) + 1)</span>
+                    }
+                </div>
+            </ItemRenderer>
+        </MudDropContainer>
+    </div>
+</MudMenu>

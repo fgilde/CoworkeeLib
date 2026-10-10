@@ -28,6 +28,7 @@ public abstract class ClientTestBase : BunitContext
         Services.AddScoped<Theming.ThemeService>();
         Services.AddScoped<Layout.LayoutPreferences>();
         Services.AddScoped<Data.FileDownloader>();
+        Services.AddScoped<Data.ITableViewStore, Data.TableViews>();
         Services.AddSingleton<FakeRealtimeConnection>();
         Services.AddSingleton<Realtime.IRealtimeConnection>(sp => sp.GetRequiredService<FakeRealtimeConnection>());
         Services.AddScoped<Realtime.RealtimeClient>();

@@ -17,6 +17,9 @@ public partial class Products
     private static readonly string[] SearchFields = [nameof(ProductDto.Name), nameof(ProductDto.Barcode), nameof(ProductDto.Description)];
     private CoworkeeDataTable<ProductDto> _table = null!;
 
+    // shown below the rows and below each group
+    private static readonly AggregateDefinition<ProductDto> AverageRate = new() { Type = AggregateType.Avg, DisplayFormat = "Ø {value:0.00}" };
+
     [Inject] private ICatalogApi Api { get; set; } = null!;
 
     [Inject] private IDialogService Dialogs { get; set; } = null!;

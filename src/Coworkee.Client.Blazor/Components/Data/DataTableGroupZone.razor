@@ -1,0 +1,42 @@
+@typeparam T
+@{
+    var grouped = Grouped;
+}
+
+@if (grouped.Count > 0 || Droppable)
+{
+    <tr class="cw-group-row">
+        <th colspan="1000">
+            <MudDropZone T="Column<T>" Identifier="@ZoneId" CanDrop="CanGroup" Class="@($"cw-group-zone {(grouped.Count > 0 ? "grouped" : string.Empty)}")" data-testid="group-zone">
+                <MudIcon Icon="@Icons.Material.Outlined.Workspaces" Size="Size.Small" Color="@(grouped.Count > 0 ? Color.Primary : Color.Default)" />
+                @if (grouped.Count == 0)
+                {
+                    <span class="cw-group-hint">@L["Drag a column header here to group"]</span>
+                }
+                else
+                {
+                    <span class="cw-group-hint">@L["Grouped by"]</span>
+                    @for (var i = 0; i < grouped.Count; i++)
+                    {
+                        var column = grouped[i];
+                        if (i > 0)
+                        {
+                            <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small" Class="cw-group-hint" />
+                        }
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Text" OnClose="() => UngroupAsync(column)" data-group-chip="@Key(column)">
+                            @Label(column)
+                        </MudChip>
+                    }
+                    <MudSpacer />
+                    <MudTooltip Text="@L["Expand all"]">
+                        <MudIconButton Icon="@Icons.Material.Outlined.UnfoldMore" Size="Size.Small" aria-label="@L["Expand all"]" OnClick="Grid.ExpandAllGroupsAsync" />
+                    </MudTooltip>
+                    <MudTooltip Text="@L["Collapse all"]">
+                        <MudIconButton Icon="@Icons.Material.Outlined.UnfoldLess" Size="Size.Small" aria-label="@L["Collapse all"]" OnClick="Grid.CollapseAllGroupsAsync" />
+                    </MudTooltip>
+                    <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="() => GroupAsync([])" data-testid="group-zone-clear">@L["Remove all"]</MudButton>
+                }
+            </MudDropZone>
+        </th>
+    </tr>
+}

@@ -1,0 +1,28 @@
+@typeparam T
+
+<MudMenu Dense="Density.Dense" Icon="@Icons.Material.Outlined.ViewColumn" Size="Size.Small" Class="mb-2" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight"
+         aria-label="@L["Columns"]" data-testid="columns">
+    <div class="cw-table-panel" @onclick:stopPropagation="true">
+        <div class="cw-table-panel-head">
+            <MudText Typo="Typo.subtitle2" Class="flex-grow-1">@L["Visible columns"]</MudText>
+            <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="() => ShowAllAsync(true)" data-testid="columns-all">@L["All"]</MudButton>
+            <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="() => ShowAllAsync(false)" data-testid="columns-none">@L["None"]</MudButton>
+        </div>
+        <MudTextField T="string" @bind-Value="_filter" Immediate="true" Placeholder="@L["Search columns"]" Variant="Variant.Outlined" Margin="Density.Margin"
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" Clearable="true" Class="px-3 pb-1" data-testid="columns-search" />
+        <MudDropContainer T="Column<T>" Items="Columns" ItemsSelector="@((column, _) => Matches(column))" ItemDropped="DroppedAsync"
+                          ItemDisabled="_ => !string.IsNullOrEmpty(_filter)" Class="cw-table-panel-list">
+            <ChildContent>
+                <MudDropZone T="Column<T>" Identifier="columns" AllowReorder="true" />
+            </ChildContent>
+            <ItemRenderer>
+                <div class="cw-table-panel-item" data-column="@Key(context)">
+                    <MudIcon Icon="@Icons.Material.Filled.DragIndicator" Size="Size.Small" Class="cw-drag" />
+                    <MudCheckBox T="bool" Value="@(!IsHidden(context))" ValueChanged="visible => SetVisibleAsync(context, visible)" Size="Size.Small" Dense="true"
+                                 Label="@Label(context)" />
+                </div>
+            </ItemRenderer>
+        </MudDropContainer>
+        <MudText Typo="Typo.caption" Class="cw-table-panel-foot">@L["Drag to reorder"]</MudText>
+    </div>
+</MudMenu>
