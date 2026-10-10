@@ -84,6 +84,8 @@ public sealed class ClientEntitySetTests
     {
         await using var set = _server.Set();
         await set.RefreshAsync(Ct);
+        var tools = new ODataQuery { Filter = "Category eq 'Tools'", OrderBy = "Name" };
+        (await set.QueryAsync(tools, Ct)).Items.Select(r => r.Name).ShouldBe(["Drill", "Hammer"]);
         var lamp = _server.Rows[2];
         var hammer = _server.Rows[1];
         _server.Rows[2] = lamp with { Price = 40 };
@@ -95,6 +97,7 @@ public sealed class ClientEntitySetTests
         await set.RefreshAsync(Ct);
 
         set.Items.OrderBy(r => r.Name).Select(r => (r.Name, r.Price)).ShouldBe([("Drill", 99m), ("Lamp", 40m), ("Saw", 25m)]);
+        (await set.QueryAsync(tools, Ct)).Items.Select(r => r.Name).ShouldBe(["Drill", "Saw"]);
         set.Status.Version.ShouldBe(_server.Now.AddMinutes(1));
         set.Status.Revision.ShouldBe(2);
         _server.Queries.Last().Filter.ShouldBe($"Id in ({lamp.Id},{saw.Id})");

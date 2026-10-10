@@ -37,6 +37,7 @@ public sealed class ODataLinqTests
     {
         ODataLinq.OrderBy(Rows, "Name").Select(r => r.Name).ShouldBe(["Drill", "hammer", "Lamp"]);
         ODataLinq.OrderBy(Rows, "Brand/Name desc, Price").Select(r => r.Name).ShouldBe(["Lamp", "Drill", "hammer"]);
+        ODataLinq.OrderBy(Rows, "Kind desc,Price desc").Select(r => r.Name).ShouldBe(["Drill", "Lamp", "hammer"]);
     }
 
     [Theory]

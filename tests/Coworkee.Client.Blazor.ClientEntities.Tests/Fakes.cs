@@ -39,7 +39,9 @@ internal sealed class FakeServer : HttpMessageHandler, IODataClient
 
     public string? RealtimeTopic { get; set; }
 
-    public ClientEntitySetInfo Info => new("Gadgets", 2, MaxRows, TimeSpan.Zero, RealtimeTopic);
+    public int BatchSize { get; set; } = 2;
+
+    public ClientEntitySetInfo Info => new("Gadgets", BatchSize, MaxRows, TimeSpan.Zero, RealtimeTopic);
 
     public ClientEntitySet<Gadget> Set(IClientEntityStorage? storage = null) =>
         new(Info, "Brand", "p1", this, new ClientEntityApi(new HttpClient(this) { BaseAddress = new Uri("http://app/") }), storage ?? new NoClientEntityStorage(), NullLogger.Instance);
