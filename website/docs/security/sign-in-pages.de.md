@@ -38,6 +38,8 @@ Das Design gilt für die ganze Installation, unabhängig davon, welches Theme St
 | `Design:MediaSide` | `Left` (Standard) oder `Right`; bei `Slide` liegt das Feld auf der Registrierungsseite auf der anderen Seite |
 | `AllowDesignChanges` | `true` (Standard) lässt Administratoren das Design auf der Themes-Seite ändern; `false` behält die Konfiguration. Setzen Sie es für den Dienst, der die API hostet: Dort wird die Änderung gespeichert. |
 
+Der Aspire-AppHost setzt dieselben Werte mit `options.SignIn` und liefert einen Pfad zum Medium von der Web-App aus, siehe [Aspire-AppHost](../hosting/aspire.md).
+
 ## Auf der Themes-Seite
 
 *Administration > Themes* beginnt mit der Karte *Anmeldeseite*: eine Vorschau je Layout zum Auswählen, die Adresse des Bildes oder Videos und seine Seite. *Speichern* legt die Werte als App-Konfigurationsabschnitt `Coworkee:Auth:Design` ab (Tabelle `cw.ConfigurationEntries`, siehe [App-Konfiguration](../modules/settings.md)); *Standardwerte wiederherstellen* verwirft sie, dann gilt wieder die Konfiguration.

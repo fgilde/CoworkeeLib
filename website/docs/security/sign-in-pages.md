@@ -38,6 +38,8 @@ The design applies to the whole installation, whichever theme is the default. Th
 | `Design:MediaSide` | `Left` (default) or `Right`; with `Slide` the panel of the registration page sits on the other side |
 | `AllowDesignChanges` | `true` (default) lets administrators change the design on the Themes page; `false` keeps the configuration. Set it for the service that hosts the API, where the change is saved. |
 
+The Aspire app host sets the same values with `options.SignIn` and serves a media path from the web app, see [Aspire app host](../hosting/aspire.md).
+
 ## On the Themes page
 
 *Administration > Themes* starts with the card *Sign-in page*: a thumbnail per layout to pick from, the image or video address and its side. *Save* stores the values as the app configuration section `Coworkee:Auth:Design` (table `cw.ConfigurationEntries`, see [App configuration](../modules/settings.md)); *Restore defaults* drops them, so the configured values apply again.

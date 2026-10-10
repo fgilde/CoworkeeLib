@@ -17,6 +17,14 @@ builder.Build().Run();
 
 `LogoUrl` ist das Logo der Anmeldeseiten, solange das Theme keines hat: Ein Pfad wird auf der Web-App genommen (`{web}/coworkee-icon.svg`), eine absolute Adresse so, wie sie ist.
 
+`options.SignIn` setzt Layout, Medium und Seite des Mediums der [Anmeldeseiten](../security/sign-in-pages.md) (`Coworkee:Auth:Design` des Auth-Servers); ein Pfad zum Medium wird wie `LogoUrl` auf der Web-App aufgelöst:
+
+```csharp
+options.SignIn.Layout = SignInLayouts.Split;
+options.SignIn.MediaUrl = "/media/welcome.mp4";
+options.SignIn.MediaSide = SignInMediaSide.Right;
+```
+
 Sharemee ergänzt danach einen Worker, dessen Name keiner Konvention folgt:
 
 ```csharp

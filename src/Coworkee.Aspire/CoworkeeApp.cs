@@ -77,6 +77,21 @@ public sealed partial class CoworkeeApp
         {
             auth.WithSetting(s => s.Coworkee.Auth.LogoUrl, Options.LogoUrl);
         }
+        if (Options.SignIn.Layout is { } layout)
+        {
+            auth.WithSetting(s => s.Coworkee.Auth.Design.Layout, layout);
+        }
+
+        if (Options.SignIn.MediaSide is { } side)
+        {
+            auth.WithSetting(s => s.Coworkee.Auth.Design.MediaSide, side.ToString());
+        }
+
+        if (Options.SignIn.MediaUrl is { } media && !media.StartsWith('/'))
+        {
+            auth.WithSetting(s => s.Coworkee.Auth.Design.MediaUrl, media);
+        }
+
         if (Builder.Environment.IsDevelopment())
         {
             // per machine certificates are fine locally; production configures SigningCertificate and EncryptionCertificate
@@ -146,6 +161,11 @@ public sealed partial class CoworkeeApp
         if (Options.LogoUrl is { } logo && logo.StartsWith('/'))
         {
             auth.WithSetting(s => s.Coworkee.Auth.LogoUrl, ReferenceExpression.Create($"{redirect}{logo}"));
+        }
+
+        if (Options.SignIn.MediaUrl is { } media && media.StartsWith('/'))
+        {
+            auth.WithSetting(s => s.Coworkee.Auth.Design.MediaUrl, ReferenceExpression.Create($"{redirect}{media}"));
         }
 
         return Added<TProject>(web, suffix);

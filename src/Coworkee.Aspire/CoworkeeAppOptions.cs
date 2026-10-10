@@ -10,6 +10,9 @@ public sealed partial class CoworkeeAppOptions
     /// <summary>Logo of the sign-in pages when the theme has none: an absolute address, or a path the web app serves (e.g. <c>/coworkee-icon.svg</c>).</summary>
     public string? LogoUrl { get; set; }
 
+    /// <summary>Layout and media of the sign-in pages; a media path the web app serves (e.g. <c>/media/welcome.mp4</c>) is resolved like <see cref="LogoUrl"/>.</summary>
+    public Coworkee.Contracts.Theming.SignInDesign SignIn { get; } = new();
+
     /// <summary>Folder for uploaded files, shared by all services; defaults to .data/blobs next to src.</summary>
     public string? BlobRoot { get; set; }
 

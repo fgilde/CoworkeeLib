@@ -46,6 +46,29 @@ public sealed class CoworkeeAppTests
     }
 
     [Fact]
+    public async Task The_sign_in_design_reaches_the_auth_server_with_media_paths_on_the_web_app()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var app = builder.AddCoworkeeApp("demo", o =>
+        {
+            o.SignIn.Layout = "Split";
+            o.SignIn.MediaUrl = "/media/welcome.mp4";
+            o.SignIn.MediaSide = Coworkee.Contracts.Theming.SignInMediaSide.Right;
+        });
+
+        app.AddMigrations<FakeProjects.Migrations>();
+        var auth = app.AddAuthServer<FakeProjects.Auth>();
+        app.AddApi<FakeProjects.Api>();
+        app.AddWeb<FakeProjects.Web>();
+
+        var settings = await Environment(auth.Resource);
+        settings["Coworkee__Auth__Design__Layout"].ShouldBe("Split");
+        settings["Coworkee__Auth__Design__MediaSide"].ShouldBe("Right");
+        settings["Coworkee__Auth__Design__MediaUrl"].ShouldStartWith("{demo-web.bindings.https.url}");
+        settings["Coworkee__Auth__Design__MediaUrl"].ShouldEndWith("/media/welcome.mp4");
+    }
+
+    [Fact]
     public async Task Keycloak_is_imported_with_a_realm_for_the_app_and_offered_at_the_auth_server()
     {
         var builder = DistributedApplication.CreateBuilder();

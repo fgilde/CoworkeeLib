@@ -17,6 +17,14 @@ builder.Build().Run();
 
 `LogoUrl` is the logo of the sign-in pages while the theme has none: a path is taken on the web app (`{web}/coworkee-icon.svg`), an absolute address as it is.
 
+`options.SignIn` sets layout, media and media side of the [sign-in pages](../security/sign-in-pages.md) (`Coworkee:Auth:Design` of the auth server); a media path is resolved on the web app like `LogoUrl`:
+
+```csharp
+options.SignIn.Layout = SignInLayouts.Split;
+options.SignIn.MediaUrl = "/media/welcome.mp4";
+options.SignIn.MediaSide = SignInMediaSide.Right;
+```
+
 Sharemee adds a worker whose name follows no convention after the others:
 
 ```csharp
