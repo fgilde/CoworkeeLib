@@ -6,16 +6,28 @@ namespace Coworkee.Client.Blazor.Components.Data;
 // ponytail: static module reference, fine for WebAssembly where one user owns the process; on Blazor Server it would need a scoped service
 public static class DialogPlacement
 {
+    // several renderers in one process (tests) share the reference: one call at a time
+    private static readonly SemaphoreSlim Gate = new(1, 1);
     private static IJSObjectReference? _module;
 
     public static async Task StartAsync(IJSRuntime js)
     {
-        _module = await js.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");
-        await _module.InvokeVoidAsync("trackPointer");
+        var module = await js.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");
+        await Gate.WaitAsync();
+        try
+        {
+            _module = module;
+            await module.InvokeVoidAsync("trackPointer");
+        }
+        finally
+        {
+            Gate.Release();
+        }
     }
 
     public static async Task<bool> ClickedLeftAsync()
     {
+        await Gate.WaitAsync();
         try
         {
             return _module is not null && await _module.InvokeAsync<bool>("pointerOnLeft");
@@ -23,6 +35,10 @@ public static class DialogPlacement
         catch (JSException)
         {
             return false;
+        }
+        finally
+        {
+            Gate.Release();
         }
     }
 }
