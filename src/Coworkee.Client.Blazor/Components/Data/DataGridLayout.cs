@@ -5,7 +5,7 @@ using MudBlazor.State;
 
 namespace Coworkee.Client.Blazor.Components.Data;
 
-/// <summary>Reads and restores what the user changed on a <see cref="MudDataGrid{T}"/>: column order, visibility, widths, grouping and sorting.</summary>
+/// <summary>Reads and restores what the user changed on a <see cref="MudDataGrid{T}"/>: column order, visibility, widths, grouping, sorting and column filters.</summary>
 // ponytail: MudBlazor 9 keeps hidden, grouping and width state internal, so it is reached by reflection; DataTableLayoutTests fail when MudBlazor renames it, switch to public API once MudBlazor has one
 internal static class DataGridLayout<T>
 {
@@ -22,6 +22,17 @@ internal static class DataGridLayout<T>
 
     public static bool IsProperty(Column<T> column) =>
         column.GetType() is { IsGenericType: true } type && type.GetGenericTypeDefinition() == typeof(PropertyColumn<,>);
+
+    /// <summary>The property type of a property column, without <c>Nullable</c>.</summary>
+    public static Type? ValueType(Column<T> column) =>
+        IsProperty(column) ? column.GetType().GetGenericArguments()[1] is var type && Nullable.GetUnderlyingType(type) is { } inner ? inner : type : null;
+
+    /// <summary>The column filters of the grid; facet markers and filters without a property are left out.</summary>
+    public static IEnumerable<IFilterDefinition<T>> Filters(MudDataGrid<T> grid) =>
+        grid.FilterDefinitions.Where(d => d.Operator != DataTableFilters.FacetMarker && d.Column is { } column && IsProperty(column));
+
+    public static IEnumerable<ColumnCondition> Conditions(MudDataGrid<T> grid) =>
+        Filters(grid).Select(d => new ColumnCondition(d.Column!.PropertyName!.Replace('.', '/'), ValueType(d.Column)!, d.Operator ?? string.Empty, d.Value));
 
     public static string Label(Column<T> column) => string.IsNullOrEmpty(column.Title) ? column.PropertyName ?? string.Empty : column.Title;
 
@@ -46,6 +57,8 @@ internal static class DataGridLayout<T>
             GroupBy = groups.Count == 0 ? null : groups,
             Sort = sorts.Count == 0 ? null : sorts,
             Widths = widths.Count == 0 ? null : widths,
+            ColumnFilters = Filters(grid).Select(d => new DataTableFilter(Key(d.Column!)!, d.Operator ?? string.Empty, DataTableFilters.Format(d.Value))).ToList() is { Count: > 0 } columnFilters
+                ? columnFilters : null,
         };
     }
 
@@ -64,7 +77,23 @@ internal static class DataGridLayout<T>
         }
 
         await GroupAsync(grid, state.GroupBy ?? []);
+        RestoreFilters(grid, state.ColumnFilters ?? []);
     }
+
+    private static void RestoreFilters(MudDataGrid<T> grid, IReadOnlyList<DataTableFilter> filters)
+    {
+        grid.FilterDefinitions.RemoveAll(d => d.Operator != DataTableFilters.FacetMarker);
+        foreach (var filter in filters)
+        {
+            if (Named(grid).FirstOrDefault(c => IsProperty(c) && Key(c) == filter.Column) is { } column)
+            {
+                grid.FilterDefinitions.Add(Definition(column, filter.Operator, DataTableFilters.Parse(filter.Value, ValueType(column)!)));
+            }
+        }
+    }
+
+    public static FilterDefinition<T> Definition(Column<T> column, string @operator, object? value) =>
+        new() { Id = Guid.NewGuid(), Column = column, Title = column.Title, Operator = @operator, Value = value };
 
     public static async Task SetHiddenAsync(Column<T> column, bool hidden) => await State<bool>(HiddenState.GetValue(column)).SetValueAsync(hidden);
 

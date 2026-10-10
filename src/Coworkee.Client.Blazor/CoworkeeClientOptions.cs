@@ -17,6 +17,9 @@ public sealed class CoworkeeClientOptions
     /// <summary>Sections and credits of the about dialog.</summary>
     public Components.About.AboutOptions About { get; } = new();
 
+    /// <summary>Defaults of the data tables, e.g. which column filters each type offers.</summary>
+    public Components.Data.DataTableOptions DataTable { get; } = new();
+
     /// <summary>The generated proxies of application services: defaults for all and settings per service.</summary>
     public Coworkee.Client.Blazor.ServiceProxies.ServiceProxyOptions ServiceProxies { get; } = new();
 

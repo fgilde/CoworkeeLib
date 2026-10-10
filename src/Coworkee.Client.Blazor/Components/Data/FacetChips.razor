@@ -1,4 +1,4 @@
-@if (!Selection.IsEmpty)
+@if (!Selection.IsEmpty || Filters.Count > 0)
 {
     <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="1" Class="mb-2" data-testid="facet-chips">
         @foreach (var facet in Selection.All)
@@ -7,6 +7,13 @@
                 <b>@L[facet.GroupLabel]:</b>&nbsp;@facet.Label
             </MudChip>
         }
-        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="Selection.Clear" data-testid="clear-facets">Clear all</MudButton>
+        @foreach (var filter in Filters)
+        {
+            <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined" Icon="@Icons.Material.Outlined.FilterAlt"
+                     OnClose="() => OnRemove.InvokeAsync(filter)" data-filter-chip="@filter.Key">
+                <b>@filter.Label:</b>&nbsp;@filter.Text
+            </MudChip>
+        }
+        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="ClearAsync" data-testid="clear-facets">@L["Clear all"]</MudButton>
     </MudStack>
 }

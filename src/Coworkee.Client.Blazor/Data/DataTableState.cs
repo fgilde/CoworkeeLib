@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Coworkee.Client.Blazor.Data;
 
-/// <summary>What a table shows: search text, chosen facets and its layout. Goes into the URL, shared links and saved views.</summary>
+/// <summary>What a table shows: search text, chosen facets, column filters and its layout. Goes into the URL, shared links and saved views.</summary>
 /// <remarks>Columns are named by their property (<c>Brand.Name</c>) or, for template columns, by their title. Layout values left <c>null</c> mean "as declared".</remarks>
 public sealed record DataTableState(string? Search, IReadOnlyList<SelectedFacet> Facets, IReadOnlyList<string> HiddenColumns)
 {
@@ -27,14 +27,17 @@ public sealed record DataTableState(string? Search, IReadOnlyList<SelectedFacet>
     /// <summary>Compact rows; <c>null</c> follows the theme.</summary>
     public bool? Dense { get; init; }
 
+    /// <summary>Filters set in the column headers.</summary>
+    public IReadOnlyList<DataTableFilter>? ColumnFilters { get; init; }
+
     [JsonIgnore]
-    public bool IsEmpty => string.IsNullOrEmpty(Search) && Facets.Count == 0 && HiddenColumns.Count == 0 && !HasLayout;
+    public bool IsEmpty => string.IsNullOrEmpty(Search) && Facets.Count == 0 && ColumnFilters is not { Count: > 0 } && HiddenColumns.Count == 0 && !HasLayout;
 
     [JsonIgnore]
     public bool HasLayout => ColumnOrder is { Count: > 0 } || GroupBy is { Count: > 0 } || Sort is { Count: > 0 } || Widths is { Count: > 0 } || PageSize is not null || Dense is not null;
 
-    /// <summary>Search and facets only, as the address bar keeps them.</summary>
-    public DataTableState Filters() => new(Search, Facets, []);
+    /// <summary>Search, facets and column filters only, as the address bar keeps them.</summary>
+    public DataTableState Filters() => new(Search, Facets, []) { ColumnFilters = ColumnFilters };
 
     public string Encode() =>
         Convert.ToBase64String(JsonSerializer.SerializeToUtf8Bytes(this, Json)).TrimEnd('=').Replace('+', '-').Replace('/', '_');

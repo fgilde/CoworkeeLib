@@ -15,6 +15,7 @@
     .cw-table-panel-item .cw-view-actions { display: flex; opacity: .55; }
     .cw-table-panel-item:hover .cw-view-actions { opacity: 1; }
     .cw-clickable { cursor: pointer; }
+    .cw-column-filter { min-width: 280px; max-width: 380px; }
     .cw-group-target { min-height: 34px; border: 1px dashed var(--mud-palette-lines-default); border-radius: 8px; margin: 0 8px 4px; }
     .cw-group-order { display: inline-grid; place-items: center; min-width: 20px; height: 20px; border-radius: 999px; font-size: .72rem; font-weight: 600;
         color: var(--mud-palette-primary-text); background: var(--mud-palette-primary); }
@@ -106,11 +107,12 @@
         </PermissionGate>
     }
 </MudStack>
-<FacetChips Selection="_selection" />
+<FacetChips Selection="_selection" Filters="FilterChips" OnRemove="RemoveFilterAsync" OnClear="ClearFilters" />
 <MudDataGrid @ref="_grid" T="T" ServerData="LoadAsync" MultiSelection="MultiSelection" SelectedItemsChanged="SelectionChangedAsync" RowsPerPage="PageSize"
              SortMode="SortMode.Multiple" Dense="Dense" Hover="true" Striped="@Theme.StripedTables" Elevation="0" Outlined="true" ChildRowContent="ChildRowContent"
              Groupable="Groupable" GroupExpanded="true" Hideable="ColumnChooser" DragDropColumnReordering="ReorderableColumns" ColumnReorderMode="DataGridDragAndDropColumnReorderMode.Insert"
-             ColumnResizeMode="@(ResizableColumns ? ResizeMode.Column : ResizeMode.None)" data-testid="data-table">
+             ColumnResizeMode="@(ResizableColumns ? ResizeMode.Column : ResizeMode.None)" Filterable="Filterable" FilterMode="DataGridFilterMode.ColumnFilterMenu"
+             FilterChanged="ColumnFiltersChanged" data-testid="data-table">
     <Header>
         @if (Groupable && _grid is not null)
         {
@@ -129,7 +131,7 @@
         @Columns
         @if (OnEdit.HasDelegate || OnDelete is not null)
         {
-            <TemplateColumn T="T" Sortable="false" Groupable="false" Hideable="false" Resizable="false" DragAndDropEnabled="false" ShowColumnOptions="false"
+            <TemplateColumn T="T" Sortable="false" Groupable="false" Filterable="false" Hideable="false" Resizable="false" DragAndDropEnabled="false" ShowColumnOptions="false"
                             CellStyle="text-align:right;white-space:nowrap">
                 <CellTemplate Context="cell">
                     @if (OnEdit.HasDelegate)

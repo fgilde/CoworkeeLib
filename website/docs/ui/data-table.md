@@ -33,12 +33,79 @@
 | `PageSize` | rows per page (25) |
 | `Groupable`, `ReorderableColumns`, `ResizableColumns`, `DensityToggle` | grouping, moving columns by drag and drop, resizing columns and the density button (all `true`) |
 | `DataSource` | rows from somewhere else than the OData set, see below |
+| `ColumnFilters` | a filter in every column header, see [column filters](#column-filters) (default `options.DataTable.ColumnFilters`, `true`) |
 
-`ReloadAsync()` reloads from outside, for example from a `RealtimeSubscription`. `Selection` exposes the facet choices, `CurrentFilter` the OData filter the table sends.
+`ReloadAsync()` reloads from outside, for example from a `RealtimeSubscription`. `Selection` exposes the facet choices, `CurrentFilter` the OData filter the table sends (fixed filter, facets, column filters and search).
 
 For sets marked as [client entities](client-entities.md) the table filters, searches, sorts and counts in the browser once the rows arrived.
 
 The CSV export escapes values that spreadsheet programs would run as formulas.
+
+## Column filters
+
+Like in QuickGrid every column can be filtered: the filter icon in the header (or *Filter* in the column menu) opens a small editor that fits the column's type. A filled icon shows that the column is filtered, and every filter appears as a chip above the table; its &times; removes it, *Clear all* removes filters and facets together.
+
+| Column type | Editor | OData |
+|---|---|---|
+| text | *contains*, *starts with*, *equals* and a value | `contains(tolower(Name),'dri')`, `startswith(...)`, `Name eq 'Drill'` |
+| numbers | *=*, *>*, *<*, *between* | `Rate gt 3`, `Rate ge 3 and Rate le 10` |
+| dates | *is*, *after*, *before*, *between* (whole days) | `Added ge 2026-02-01T00:00:00+01:00 and Added lt ...` |
+| enums, yes/no | check boxes, several are alternatives | `(Kind eq 'Hand' or Kind eq 'Power')` |
+| a column with a facet | the facet's options with their counts | the facet's own filter |
+
+**Facets and column filters are one thing.** When the set has a facet on the column's property, the column filter shows that facet's options and counts, and ticking one there or in the facet menu is the same choice (same chip, same URL). A column on a navigation property uses the facet of its key: `Brand.Name` uses a facet on `BrandId`.
+
+The filters join the table's OData filter with `and`, so the server answers them, and so does the browser for [client entities](client-entities.md): they only use what both understand (`eq`, `ne`, `gt`, `ge`, `lt`, `le`, `and`, `or`, `not`, `contains`, `startswith`, `endswith`, `tolower`). They belong to the table's state: saved views, shared links and the address bar keep them.
+
+### Turning them off and on
+
+Column filters are on by default. Each level can change that:
+
+```razor
+@* the whole table *@
+<CoworkeeDataTable T="ProductDto" EntitySet="Products" ColumnFilters="false" ...>
+    <Columns>
+        @* only this column, although the table has them off *@
+        <PropertyColumn Property="p => p.Name" Filterable="true" />
+        @* never this column *@
+        <PropertyColumn Property="p => p.Description" Filterable="false" />
+        @* only some operators *@
+        <PropertyColumn Property="p => p.Barcode" FilterOperators="@(new() { FilterOperator.String.Equal })" />
+    </Columns>
+</CoworkeeDataTable>
+```
+
+Template columns have no property and are not filterable. For the whole app, per type:
+
+```csharp
+builder.Services.AddCoworkeeClient(new Uri(builder.HostEnvironment.BaseAddress), options =>
+{
+    options.DataTable.ColumnFilters = true;   // default of every table
+    options.DataTable.FilterOperators<DateTime>(FilterOperator.DateTime.After, FilterOperator.DateTime.Before, DataTableFilters.Between);
+    options.DataTable.FilterOperators<Guid>(); // no operators: Guid columns are not filterable
+});
+```
+
+The order is: the column's `Filterable`/`FilterOperators`, then the options for the type, then the defaults above.
+
+### Your own editor
+
+`FilterTemplate` on a column replaces the editor. It gets MudBlazor's `FilterContext`; add filter definitions with the column and one of MudBlazor's `FilterOperator`s and the table turns them into OData:
+
+```razor
+<PropertyColumn Property="p => p.Rate" Title="Rate">
+    <FilterTemplate>
+        <MudButton OnClick="@(() => context.Actions.ApplyFilterAsync(new FilterDefinition<ProductDto>
+            { Id = Guid.NewGuid(), Column = context.FilterDefinition!.Column, Operator = FilterOperator.Number.GreaterThanOrEqual, Value = 4m }))">
+            Rate 4 and up
+        </MudButton>
+    </FilterTemplate>
+</PropertyColumn>
+```
+
+`DataTableFilters.ToOData(...)` turns such conditions into OData text yourself, e.g. for an `ITableDataSource`.
+
+**Limits**: one editor per column (two filters for *between*); the filter applies to the property of the column, not to what a `CellTemplate` shows. Dates are filtered by whole days in the browser's time zone.
 
 ## Edit dialogs
 
@@ -81,8 +148,8 @@ Everything the user arranges is part of the table's state and can be saved, shar
 - **Grouping**: drag a column header onto the zone above the headers, use *Group* in the column's own menu or tick columns in the group menu. Several columns group nested, in the order of the chips; a chip's &times; removes its level. Group rows show the value and the number of rows, open and close one by one or all at once, and show the aggregates of the columns (`AggregateDefinition`, e.g. an average) below each group.
 - **Sorting**: click several headers to sort by more than one column.
 - **Density**: the density button switches between compact and comfortable rows; without a choice the theme decides.
-- **Views**: the bookmark menu saves the current state under a name: search, facets, column order, visibility and widths, grouping, sorting, page size and density. A click brings it back, the save button overwrites it with the current state, the star makes it the default that opens with the table. *Reset* returns to the declared columns without filters.
-- **Sharing**: the link button copies an address that opens the table exactly as it is, layout included. The address bar itself keeps search and facets (`?products=...`), so a filtered list can be reloaded and bookmarked. `UrlState="false"` turns that off, `StateKey` names the parameter when a page shows two tables of one set.
+- **Views**: the bookmark menu saves the current state under a name: search, facets, column filters, column order, visibility and widths, grouping, sorting, page size and density. A click brings it back, the save button overwrites it with the current state, the star makes it the default that opens with the table. *Reset* returns to the declared columns without filters.
+- **Sharing**: the link button copies an address that opens the table exactly as it is, layout included. The address bar itself keeps search, facets and column filters (`?products=...`), so a filtered list can be reloaded and bookmarked. `UrlState="false"` turns that off, `StateKey` names the parameter when a page shows two tables of one set.
 
 ```razor
 <CoworkeeDataTable T="ProductDto" EntitySet="Products" Expand="Brand" ...>
