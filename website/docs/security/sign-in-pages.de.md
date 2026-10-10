@@ -16,6 +16,8 @@ Die Seiten funktionieren ohne Skript. Ein kleines Skript ergänzt, was ein Brows
 
 ## Konfiguration
 
+Das Design gilt für die ganze Installation, unabhängig davon, welches Theme Standard ist. Die Konfiguration legt den Ausgangspunkt fest:
+
 ```json
 "Coworkee": {
   "Auth": {
@@ -24,7 +26,7 @@ Die Seiten funktionieren ohne Skript. Ein kleines Skript ergänzt, was ein Brows
       "MediaUrl": "/media/welcome.mp4",
       "MediaSide": "Right"
     },
-    "AllowThemeDesign": true
+    "AllowDesignChanges": true
   }
 }
 ```
@@ -34,27 +36,33 @@ Die Seiten funktionieren ohne Skript. Ein kleines Skript ergänzt, was ein Brows
 | `Design:Layout` | `Card`, `Split`, `Slide` oder der Name eines eigenen Layouts; unbekannte Namen fallen auf `Card` zurück |
 | `Design:MediaUrl` | ein Bild, bei `.mp4`, `.webm`, `.ogg` und `.mov` ein Video; ein Pfad auf dem Auth-Server oder eine `http(s)`-Adresse, deren Origin in `img-src` und `media-src` der Content Security Policy aufgenommen wird |
 | `Design:MediaSide` | `Left` (Standard) oder `Right`; bei `Slide` liegt das Feld auf der Registrierungsseite auf der anderen Seite |
-| `AllowThemeDesign` | `true` (Standard) lässt Administratoren Layout und Medien je Theme wählen; `false` behält die Konfiguration |
+| `AllowDesignChanges` | `true` (Standard) lässt Administratoren das Design auf der Themes-Seite ändern; `false` behält die Konfiguration. Setzen Sie es für den Dienst, der die API hostet: Dort wird die Änderung gespeichert. |
 
-## Im Theme-Editor
+## Auf der Themes-Seite
 
-*Administration > Themes > Bearbeiten* zeigt über dem Theme-Editor einen Abschnitt *Anmeldeseite*: Layout, Adresse des Bildes oder Videos und Seite. Die Werte stehen in den Optionen des Themes unter `SignIn`; leere Felder behalten die Konfiguration. Es zählt das Standard-Theme der Systemorganisation. Die Client-Optionen steuern den Abschnitt:
+*Administration > Themes* beginnt mit der Karte *Anmeldeseite*: eine Vorschau je Layout zum Auswählen, die Adresse des Bildes oder Videos und seine Seite. *Speichern* legt die Werte als App-Konfigurationsabschnitt `Coworkee:Auth:Design` ab (Tabelle `cw.ConfigurationEntries`, siehe [App-Konfiguration](../modules/settings.md)); *Standardwerte wiederherstellen* verwirft sie, dann gilt wieder die Konfiguration.
+
+Die Karte sehen Administratoren der Systemorganisation, die Einstellungen verwalten dürfen (`Settings.Manage`), denn der Abschnitt gilt für alle Organisationen. Für alle anderen und solange `AllowDesignChanges` aus ist, bleibt sie verborgen.
+
+**Wie schnell der Auth-Server folgt.** Der Auth-Server liest das Design bei jeder Anfrage aus seiner Konfiguration. Eine Änderung sieht er, sobald seine Datenbank-Konfigurationsquelle neu lädt: `AddCoworkeeDatabaseConfiguration` prüft standardmäßig alle 15 Sekunden (der Auth-Host der Vorlage fügt sie hinzu). Ein Host im selben Prozess wie die API sieht die Änderung sofort. Farben, Schrift und Logo kommen aus dem Standard-Theme und werden eine Minute zwischengespeichert.
+
+Die Client-Optionen steuern die Karte:
 
 ```csharp
 builder.Services.AddCoworkeeClient(options =>
 {
-    options.AllowThemeSignInDesign = false;   // blendet den Abschnitt aus
+    options.AllowSignInDesign = false;        // blendet die Karte aus
     options.SignInLayouts.Add("Aurora");      // bietet ein eigenes Layout an
 });
 ```
 
-Schalten Sie `AllowThemeSignInDesign` zusammen mit `Coworkee:Auth:AllowThemeDesign` auf dem Auth-Server: Der Client zeigt den Abschnitt, der Auth-Server wendet ihn an.
+Ein eigenes Layout erhält eine allgemeine Vorschau mit seinem Namen. Themes, die noch den früheren Wert je Theme tragen (`SignIn` in den Theme-Optionen), werden ignoriert; legen Sie das Design einmal auf der Themes-Seite fest.
 
 ## Eigene Designs
 
 Die Layouts sind Razor-Layouts neben den Seiten der Bibliothek: `Pages/_DesignCard.cshtml`, `Pages/_DesignSplit.cshtml` und `Pages/_DesignSlide.cshtml`, alle innerhalb von `Pages/_Layout.cshtml`, das Kopf, Theme-Variablen, Stylesheet und Skript rendert. Wie bei jeder Razor-Klassenbibliothek gewinnt eine View des Auth-Hosts unter demselben Pfad:
 
-- **Eigenes Layout**: `Pages/_DesignAurora.cshtml` im Auth-Host anlegen und `Design:Layout` auf `Aurora` setzen (oder im Theme-Editor wählen).
+- **Eigenes Layout**: `Pages/_DesignAurora.cshtml` im Auth-Host anlegen und `Design:Layout` auf `Aurora` setzen (oder auf der Themes-Seite wählen).
 - **Ein mitgeliefertes ersetzen**: `Pages/_DesignCard.cshtml` im Auth-Host anlegen.
 - **Alles ersetzen**: `Pages/_Layout.cshtml` anlegen; dann gehören auch Stylesheet und Skript Ihnen.
 

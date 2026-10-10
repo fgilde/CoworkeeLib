@@ -1,11 +1,15 @@
+using System.Text.Json.Serialization;
+
 namespace Coworkee.Contracts.Theming;
 
 /// <summary>
-/// Look of the auth server's account pages. The configuration sets it (Coworkee:Auth:Design); a theme may override it in its options
-/// under "SignIn" while the auth server allows it. Empty values keep the configured ones.
+/// Look of the auth server's account pages for the whole installation, independent of the theme. The configuration sets it
+/// (<see cref="Section"/>); administrators change it on the Themes page, stored like any app configuration section.
 /// </summary>
 public sealed class SignInDesign
 {
+    public const string Section = Configuration.AuthServerOptions.Section + ":Design";
+
     /// <summary>One of <see cref="SignInLayouts"/> or the name of an app's own layout Pages/_Design{Name}.cshtml on the auth server.</summary>
     public string? Layout { get; set; }
 
@@ -13,16 +17,9 @@ public sealed class SignInDesign
     public string? MediaUrl { get; set; }
 
     public SignInMediaSide? MediaSide { get; set; }
-
-    /// <summary>The values of <paramref name="other"/> where it has some, otherwise these.</summary>
-    public SignInDesign With(SignInDesign? other) => new()
-    {
-        Layout = string.IsNullOrWhiteSpace(other?.Layout) ? Layout : other.Layout.Trim(),
-        MediaUrl = string.IsNullOrWhiteSpace(other?.MediaUrl) ? MediaUrl : other.MediaUrl.Trim(),
-        MediaSide = other?.MediaSide ?? MediaSide,
-    };
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter<SignInMediaSide>))]
 public enum SignInMediaSide
 {
     Left,

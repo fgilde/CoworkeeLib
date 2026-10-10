@@ -1,6 +1,5 @@
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Coworkee.Application.Messaging;
 using Coworkee.Contracts.Configuration;
@@ -14,7 +13,7 @@ using Microsoft.Extensions.Options;
 namespace Coworkee.AuthServer;
 
 /// <summary>
-/// Name, logo, colors, font, radius and design of the account pages: the app's display name and the default theme of the system organisation;
+/// Name, logo, colors, font, radius and design of the account pages: the app's display name, the default theme of the system organisation and the configured <see cref="AuthServerOptions.Design"/>;
 /// without a theme logo the configured <see cref="AuthServerOptions.LogoUrl"/>. <see cref="Css"/> sets the light colors on :root, the dark ones
 /// for html[data-mode=dark] and, unless the mode is light, for a dark system preference.
 /// </summary>
@@ -31,11 +30,9 @@ public sealed record AuthBranding(string AppName, string? LogoUrl, string? Css, 
     public bool MediaIsVideo => Design.MediaUrl is { } url && VideoExtensions.Any(e => url.Split('?', '#')[0].EndsWith(e, StringComparison.OrdinalIgnoreCase));
 }
 
-public sealed partial class AuthBrandingProvider(IDispatcher dispatcher, HybridCache cache, IOptions<AuthServerOptions> options, Settings.ISettingProvider settings)
+public sealed partial class AuthBrandingProvider(IDispatcher dispatcher, HybridCache cache, IOptionsMonitor<AuthServerOptions> options, Settings.ISettingProvider settings)
 {
     private static readonly HybridCacheEntryOptions Entry = new() { Expiration = TimeSpan.FromMinutes(1), LocalCacheExpiration = TimeSpan.FromMinutes(1) };
-
-    private static readonly JsonSerializerOptions Json = new() { Converters = { new JsonStringEnumConverter() } };
 
     private static readonly (string Variable, string Palette)[] Colors =
     [
@@ -43,8 +40,9 @@ public sealed partial class AuthBrandingProvider(IDispatcher dispatcher, HybridC
         ("--signal", "Primary"), ("--on-signal", "PrimaryContrastText"), ("--accent", "Secondary"), ("--error", "Error"), ("--success", "Success"),
     ];
 
-    public ValueTask<AuthBranding> GetAsync(CancellationToken cancellationToken) =>
-        cache.GetOrCreateAsync("coworkee:auth-branding", LoadAsync, Entry, cancellationToken: cancellationToken);
+    // the theme part waits for the cache; the design follows the configuration at once, which picks up changes made in the app with its next reload
+    public async ValueTask<AuthBranding> GetAsync(CancellationToken cancellationToken) =>
+        await cache.GetOrCreateAsync("coworkee:auth-branding", LoadAsync, Entry, cancellationToken: cancellationToken) with { Design = Checked(options.CurrentValue.Design) };
 
     /// <summary>"light", "dark" or "system": the color mode setting of the user, else of the installation.</summary>
     public async Task<string> ModeAsync(CancellationToken cancellationToken) =>
@@ -52,17 +50,16 @@ public sealed partial class AuthBrandingProvider(IDispatcher dispatcher, HybridC
 
     private async ValueTask<AuthBranding> LoadAsync(CancellationToken cancellationToken)
     {
-        var configured = options.Value;
+        var configured = options.CurrentValue;
         var theme = await dispatcher.SendAsync(new GetCurrentTheme(), cancellationToken);
         if (!theme.IsSuccess)
         {
-            return new AuthBranding(configured.DisplayName, configured.LogoUrl, null, Checked(configured.Design));
+            return new AuthBranding(configured.DisplayName, configured.LogoUrl, null, new SignInDesign());
         }
 
         var dto = theme.Value;
         var logo = dto.LogoSvg is { Length: > 0 } svg ? "data:image/svg+xml;base64," + Convert.ToBase64String(Encoding.UTF8.GetBytes(svg)) : configured.LogoUrl;
-        var design = configured.AllowThemeDesign ? configured.Design.With(ThemeDesign(dto.Options)) : configured.Design;
-        return new AuthBranding(configured.DisplayName, logo, Css(dto), Checked(design));
+        return new AuthBranding(configured.DisplayName, logo, Css(dto), new SignInDesign());
     }
 
     internal static string Css(ThemeDto theme)
@@ -70,23 +67,6 @@ public sealed partial class AuthBrandingProvider(IDispatcher dispatcher, HybridC
         var dark = Declarations(PaletteColors(theme.PaletteDark));
         return $":root{{{Declarations(PaletteColors(theme.PaletteLight))}{Declarations(Shape(theme))}}}:root[data-mode=dark]{{{dark}}}"
             + $"@media (prefers-color-scheme: dark){{:root:not([data-mode=light]){{{dark}}}}}";
-    }
-
-    internal static SignInDesign? ThemeDesign(JsonElement? themeOptions)
-    {
-        if (themeOptions is not { ValueKind: JsonValueKind.Object } json || !json.TryGetProperty("SignIn", out var signIn) || signIn.ValueKind != JsonValueKind.Object)
-        {
-            return null;
-        }
-
-        try
-        {
-            return signIn.Deserialize<SignInDesign>(Json);
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
     }
 
     // the layout name becomes a view path, the media address part of the page and of the content security policy

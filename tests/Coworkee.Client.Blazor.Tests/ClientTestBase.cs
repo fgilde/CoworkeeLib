@@ -19,6 +19,7 @@ public abstract class ClientTestBase : BunitContext
         Services.AddMudServicesWithExtensions();
         Components.Editors.CoworkeeEditors.Register();
         Services.AddScoped(typeof(MudBlazor.Extensions.Components.ObjectEdit.IObjectMetaConfiguration<>), typeof(Components.SettingsItemMeta<>));
+        Services.AddScoped<MudBlazor.Extensions.Components.ObjectEdit.IObjectMetaConfiguration<Theming.CoworkeeTheme>, Theming.CoworkeeThemeEditMeta>();
         Services.AddScoped<Security.PermissionStore>();
         Services.AddSingleton(FeaturesApi);
         Services.AddScoped<Features.FeatureStore>();

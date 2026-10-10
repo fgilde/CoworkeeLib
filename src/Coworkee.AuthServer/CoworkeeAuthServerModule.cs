@@ -163,7 +163,7 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
             new Microsoft.Extensions.Caching.Hybrid.HybridCacheEntryOptions { Expiration = TimeSpan.FromMinutes(1), LocalCacheExpiration = TimeSpan.FromMinutes(1) },
             cancellationToken: context.RequestAborted);
 
-    // only the account pages show the design; its media may come from the theme
+    // only the account pages show the design; administrators may change its media in the app
     private static async Task<string?> MediaUrlAsync(Microsoft.AspNetCore.Http.HttpContext context, AuthServerOptions options)
     {
         if (!context.Request.Path.StartsWithSegments("/Account"))

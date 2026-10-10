@@ -89,21 +89,6 @@ public sealed class ThemeServiceTests
         ThemeMapper.ToTheme(Theme("#123456") with { Options = request.Options }).Dense.ShouldBeFalse();
     }
 
-    [Fact]
-    public void The_sign_in_design_round_trips_in_the_options_where_the_auth_server_reads_it()
-    {
-        var theme = ThemeMapper.ToTheme(Theme("#123456"));
-        theme.SignIn = new SignInDesign { Layout = SignInLayouts.Slide, MediaSide = SignInMediaSide.Left };
-
-        var request = ThemeMapper.ToRequest("Sign-in", theme);
-        var copy = ThemeMapper.ToTheme(Theme("#123456") with { Options = request.Options });
-
-        request.Options!.Value.GetProperty("SignIn").GetProperty("MediaSide").GetString().ShouldBe("Left");
-        copy.SignIn.Layout.ShouldBe(SignInLayouts.Slide);
-        copy.SignIn.MediaSide.ShouldBe(SignInMediaSide.Left);
-        copy.SignIn.MediaUrl.ShouldBeNull();
-    }
-
     [Theory]
     [InlineData("{\"DenseTables\":false}", false)]
     [InlineData("{\"DenseTables\":false,\"Dense\":true}", true)]

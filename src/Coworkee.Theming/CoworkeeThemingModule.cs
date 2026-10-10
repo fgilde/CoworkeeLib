@@ -2,6 +2,7 @@ using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
 using Coworkee.AspNetCore;
 using Coworkee.AspNetCore.Http;
+using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Settings;
 using Coworkee.Contracts.Theming;
 using Coworkee.Core.Modularity;
@@ -10,6 +11,7 @@ using Coworkee.Infrastructure.Versioning;
 using Coworkee.Settings;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Theming;
@@ -27,6 +29,11 @@ public sealed class CoworkeeThemingModule : CoworkeeModule, IWebModule
         services.AddSingleton<IPermissionDefinitionContributor, ThemePermissionDefinitions>();
         services.AddSingleton<ISettingDefinitionContributor, ThemeSettingDefinitions>();
         services.AddScoped<Coworkee.Application.Setup.ISetupStep, ThemeSetupStep>();
+        if (context.Configuration.GetValue($"{AuthServerOptions.Section}:{nameof(AuthServerOptions.AllowDesignChanges)}", true))
+        {
+            services.AddCoworkeeAppConfiguration<SignInDesign>(context.Configuration, SignInDesign.Section, "Sign-in page");
+        }
+
         services.Configure<Coworkee.Application.Setup.SetupGateOptions>(options =>
         {
             // the setup page is themed and offers the built-in themes

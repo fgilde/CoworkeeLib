@@ -1,3 +1,4 @@
+using Coworkee.Settings;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
@@ -85,6 +86,8 @@ public sealed class AuthApp : PostgresFixture
             ["Coworkee:Registration:Documents:1:Name"] = "Certificate",
             ["Coworkee:Registration:Documents:1:Required"] = "false",
         });
+        // changes made in the app (the sign-in design) reach the options like in a real deployment
+        builder.Configuration.AddCoworkeeDatabaseConfiguration("test", TimeSpan.FromHours(1));
         builder.AddCoworkee<TestAuthModule>();
 
         // an API next to the auth server, validating its access tokens like the real API does

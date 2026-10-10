@@ -67,6 +67,7 @@ public static class CoworkeeClientExtensions
         services.AddSingleton<INavigationContributor, Navigation.ApiDocsNavigation>();
         services.AddOptions<Navigation.NavigationMenuOptions>();
         services.AddScoped(typeof(MudBlazor.Extensions.Components.ObjectEdit.IObjectMetaConfiguration<>), typeof(Components.SettingsItemMeta<>));
+        services.AddScoped<MudBlazor.Extensions.Components.ObjectEdit.IObjectMetaConfiguration<Theming.CoworkeeTheme>, Theming.CoworkeeThemeEditMeta>();
         services.AddSingleton(new ClientAppConfiguration(Contracts.Settings.CoworkeeAppSettings.Section, AppSettingsTitle, typeof(Contracts.Settings.CoworkeeAppSettings), null, IsAppSettings: true));
         Customization.ComponentReplacementExtensions.AddComponentReplacement(services);
         services.Configure<Customization.ComponentReplacementOptions>(o => o.ReplaceGeneric(typeof(MudBlazor.Extensions.Components.ObjectEdit.MudExObjectEditDialog<>), typeof(Components.SettingsItemDialog<>)));

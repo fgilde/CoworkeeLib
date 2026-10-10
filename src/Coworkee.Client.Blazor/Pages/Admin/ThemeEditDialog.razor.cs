@@ -19,8 +19,6 @@ public partial class ThemeEditDialog
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
-    [Inject] private CoworkeeClientOptions Options { get; set; } = null!;
-
     [Parameter] public string Name { get; set; } = string.Empty;
 
     [Parameter, EditorRequired] public CoworkeeTheme Theme { get; set; } = null!;
@@ -30,14 +28,8 @@ public partial class ThemeEditDialog
 
     [Parameter, EditorRequired] public Func<string, CoworkeeTheme, Task<ThemeDto>> Save { get; set; } = null!;
 
-    // outside the theme editor, which may hand back another theme instance (preset, import)
-    private SignInDesign SignIn { get; set; } = new();
-
-    protected override void OnInitialized() => SignIn = new SignInDesign().With(Theme.SignIn);
-
     private async Task SaveAsync(ThemeChangedArgs<CoworkeeTheme> args)
     {
-        args.Theme.SignIn = SignIn;
         ThemeDto? saved = null;
         if (await Snackbar.RunAsync(async () => saved = await Save(Name.Trim(), args.Theme)))
         {
