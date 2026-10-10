@@ -110,16 +110,19 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
 
     /// <summary>
     /// The account pages run no script and style inline; after sign-in the browser follows redirects to the clients, which
-    /// browsers check against form-action, so the clients' origins are allowed there. Logos from elsewhere add their origins to img-src.
+    /// browsers check against form-action, so the clients' origins are allowed there. Logos and the design's image or video from elsewhere
+    /// add their origins to img-src and media-src.
     /// </summary>
-    internal static string ContentSecurityPolicy(AuthServerOptions options, StoredClients stored)
+    internal static string ContentSecurityPolicy(AuthServerOptions options, StoredClients stored, string? mediaUrl = null)
     {
         var clients = options.Clients.SelectMany(c => c.RedirectUris.Concat(c.PostLogoutRedirectUris)).Concat(stored.Uris)
             .Select(u => Uri.TryCreate(u, UriKind.Absolute, out var uri) ? uri.GetLeftPart(UriPartial.Authority) : null)
             .OfType<string>().Concat(ExternalProviders.Origins(options.External)).Distinct(StringComparer.OrdinalIgnoreCase);
-        var logos = new[] { options.LogoUrl }.Concat(options.Clients.Select(c => c.LogoUrl)).Concat(stored.Logos)
+        var logos = new[] { options.LogoUrl, mediaUrl }.Concat(options.Clients.Select(c => c.LogoUrl)).Concat(stored.Logos)
             .Where(Clients.ClientApp.IsWebAddress).Select(u => new Uri(u!).GetLeftPart(UriPartial.Authority)).Distinct(StringComparer.OrdinalIgnoreCase);
-        return $"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src {string.Join(' ', ["'self'", "data:", .. logos])}; object-src 'none'; base-uri 'self'; "
+        var media = Clients.ClientApp.IsWebAddress(mediaUrl) ? " " + new Uri(mediaUrl!).GetLeftPart(UriPartial.Authority) : null;
+        return $"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src {string.Join(' ', ["'self'", "data:", .. logos])}; media-src 'self'{media}; "
+            + "object-src 'none'; base-uri 'self'; "
             + $"frame-ancestors 'none'; form-action {string.Join(' ', ["'self'", .. clients])}";
     }
 
@@ -160,6 +163,25 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
             new Microsoft.Extensions.Caching.Hybrid.HybridCacheEntryOptions { Expiration = TimeSpan.FromMinutes(1), LocalCacheExpiration = TimeSpan.FromMinutes(1) },
             cancellationToken: context.RequestAborted);
 
+    // only the account pages show the design; its media may come from the theme
+    private static async Task<string?> MediaUrlAsync(Microsoft.AspNetCore.Http.HttpContext context, AuthServerOptions options)
+    {
+        if (!context.Request.Path.StartsWithSegments("/Account"))
+        {
+            return null;
+        }
+
+        try
+        {
+            return (await context.RequestServices.GetRequiredService<AuthBrandingProvider>().GetAsync(context.RequestAborted)).Design.MediaUrl;
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            // before the database is migrated
+            return options.Design.MediaUrl;
+        }
+    }
+
     private static X509Certificate2 Load(CertificateOptions certificate) =>
         X509CertificateLoader.LoadPkcs12FromFile(certificate.Path, certificate.Password, X509KeyStorageFlags.EphemeralKeySet);
 
@@ -169,7 +191,7 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
         app.Use(async (context, next) =>
         {
             var headers = context.Response.Headers;
-            headers.ContentSecurityPolicy = ContentSecurityPolicy(options, await StoredClientsAsync(context));
+            headers.ContentSecurityPolicy = ContentSecurityPolicy(options, await StoredClientsAsync(context), await MediaUrlAsync(context, options));
             if (context.Request.Path.StartsWithSegments("/Account"))
             {
                 await context.RequestServices.GetRequiredService<Coworkee.Account.PasswordPolicy>()

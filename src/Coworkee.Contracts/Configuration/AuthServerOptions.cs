@@ -21,6 +21,12 @@ public sealed class AuthServerOptions
 
     public LoginOptions Login { get; set; } = new();
 
+    /// <summary>Layout and media of the account pages; without a layout the centered card.</summary>
+    public Theming.SignInDesign Design { get; set; } = new();
+
+    /// <summary>Administrators may choose layout and media per theme under Themes; false keeps <see cref="Design"/>.</summary>
+    public bool AllowThemeDesign { get; set; } = true;
+
     /// <summary>Public base address tokens name as issuer; set it when the server sits behind a proxy or runs on several instances.</summary>
     public Uri? Issuer { get; set; }
 

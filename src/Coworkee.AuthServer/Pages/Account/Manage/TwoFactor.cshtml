@@ -24,8 +24,7 @@ else
   <p style="word-break:break-all;font-size:12px"><a href="@Model.AuthenticatorUri">@Model.AuthenticatorUri</a></p>
   <form method="post" asp-page-handler="Enable">
     <label for="code">@T("Code")</label>
-    <input id="code" type="text" name="Code" autocomplete="one-time-code" inputmode="numeric" required
-           style="width:100%;padding:12px;border:1px solid var(--rule);background:transparent;color:var(--ink);font:inherit" />
+    <input id="code" type="text" name="Code" autocomplete="one-time-code" inputmode="numeric" required />
     <button type="submit" style="margin-top:18px">@T("Turn on")</button>
     @if (Model.ErrorMessage is not null)
     {

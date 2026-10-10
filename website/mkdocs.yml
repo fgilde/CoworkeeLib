@@ -78,6 +78,7 @@ plugins:
             Authentication and Keycloak: Anmeldung und Keycloak
             Clients, sessions and passwords: Clients, Sitzungen und Passwörter
             Registration and sign-in rules: Registrierung und Anmelderegeln
+            Sign-in pages and designs: Anmeldeseiten und Designs
             Privacy and personal data: Datenschutz und personenbezogene Daten
             Blazor UI: Blazor-UI
             Client and layout: Client und Layout
@@ -148,6 +149,7 @@ nav:
       - Authentication and Keycloak: security/authentication.md
       - Clients, sessions and passwords: security/clients.md
       - Registration and sign-in rules: security/registration.md
+      - Sign-in pages and designs: security/sign-in-pages.md
       - Privacy and personal data: security/privacy.md
   - Blazor UI:
       - Client and layout: ui/client.md

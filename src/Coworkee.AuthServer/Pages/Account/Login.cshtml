@@ -17,7 +17,7 @@
 {
   <p class="divider">@T("or with your password")</p>
 }
-<form method="post">
+<form method="post" data-sign-in="password">
   <label for="email">@(Model.AllowUserName ? T("Email or user name") : T("Email"))</label>
   <input id="email" type="@(Model.AllowUserName ? "text" : "email")" asp-for="Input.Email" autocomplete="username" required autofocus />
   <label for="password">@T("Password")</label>

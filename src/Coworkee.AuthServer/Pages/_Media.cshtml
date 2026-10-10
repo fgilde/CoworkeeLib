@@ -1,0 +1,12 @@
+@model Coworkee.AuthServer.AuthBranding
+@if (Model.Design.MediaUrl is { } media)
+{
+  if (Model.MediaIsVideo)
+  {
+    <video src="@media" autoplay muted loop playsinline aria-hidden="true" data-testid="design-media"></video>
+  }
+  else
+  {
+    <img src="@media" alt="" data-testid="design-media" />
+  }
+}

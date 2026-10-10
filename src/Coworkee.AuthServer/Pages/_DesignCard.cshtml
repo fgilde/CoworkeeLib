@@ -1,0 +1,10 @@
+@inject Coworkee.AuthServer.AuthBrandingProvider BrandingProvider
+@{
+  Layout = "_Layout";
+  ViewData["Design"] = Coworkee.Contracts.Theming.SignInLayouts.Card;
+  var brand = await BrandingProvider.GetAsync(Context.RequestAborted);
+}
+<main class="panel @(ViewData["Wide"] is true ? "wide" : null)" data-design="card">
+  <partial name="_Brand" model="brand" />
+  @RenderBody()
+</main>

@@ -1,0 +1,39 @@
+@inject Coworkee.AuthServer.AuthBrandingProvider BrandingProvider
+@using Coworkee.AuthServer.Pages.Account
+@{
+  Layout = "_Layout";
+  ViewData["Design"] = Coworkee.Contracts.Theming.SignInLayouts.Slide;
+  var brand = await BrandingProvider.GetAsync(Context.RequestAborted);
+  var registering = ViewContext.ViewData.Model is RegisterModel;
+  var canRegister = ViewContext.ViewData.Model is LoginModel { AllowRegistration: true };
+  // the panel moves to the other side for the registration, the browser animates the move between the pages
+  var right = brand.Design.MediaSide != Coworkee.Contracts.Theming.SignInMediaSide.Left;
+  var side = right != registering ? "media-right" : "media-left";
+}
+<div class="slide @side @(ViewData["Wide"] is true ? "wide" : null)" data-design="slide">
+  <div class="form">
+    <main class="panel">
+      <partial name="_Brand" model="brand" />
+      @RenderBody()
+    </main>
+  </div>
+  <aside class="media @(brand.Design.MediaUrl is null ? null : "has-media")">
+    <partial name="_Media" model="brand" />
+    @if (registering)
+    {
+      <h2>@T("Already registered?")</h2>
+      <p>@T("Sign in with your account.")</p>
+      <a class="cta" asp-page="/Account/Login" data-testid="slide-sign-in">@T("Sign in")</a>
+    }
+    else if (canRegister)
+    {
+      <h2>@T("New here?")</h2>
+      <p>@T("Create an account in a few steps.")</p>
+      <a class="cta" asp-page="/Account/Register" data-testid="slide-register">@T("Create an account")</a>
+    }
+    else
+    {
+      <h2>@brand.AppName</h2>
+    }
+  </aside>
+</div>
