@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+using System.Reflection;
 using MudBlazor;
 using MudBlazor.Extensions;
 using MudBlazor.Extensions.Components.ObjectEdit;
@@ -8,7 +10,7 @@ namespace Coworkee.Client.Blazor.Components;
 
 /// <summary>
 /// How a settings form and the objects edited from it (list items in their dialog) look: two columns, lists over the full width
-/// without their own search, no computed values, no reset per field.
+/// without their own search, no computed values, no reset per field; [Display] gives the help text (Description) and the group (GroupName).
 /// </summary>
 public static class SettingsFormRules
 {
@@ -25,6 +27,11 @@ public static class SettingsFormRules
         foreach (var property in meta.AllProperties)
         {
             property.WithResetOptions(NoReset);
+            if (property.PropertyInfo.GetCustomAttribute<DisplayAttribute>() is { } display)
+            {
+                Describe(property, display);
+            }
+
             if (IsList(property))
             {
                 property.WrapInMudItem(i => i.xs = 12);
@@ -39,6 +46,19 @@ public static class SettingsFormRules
         }
     }
 #pragma warning restore BL0005
+
+    private static void Describe(ObjectEditPropertyMeta property, DisplayAttribute display)
+    {
+        if (display.GetDescription() is { Length: > 0 } description)
+        {
+            property.WithDescription(description);
+        }
+
+        if (display.GetGroupName() is { Length: > 0 } group)
+        {
+            property.WithGroup(group);
+        }
+    }
 
     private static bool IsList(ObjectEditPropertyMeta property) =>
         property.PropertyInfo.PropertyType != typeof(string) && property.PropertyInfo.PropertyType.IsAssignableTo(typeof(System.Collections.IEnumerable));

@@ -38,6 +38,8 @@ public sealed class SettingsItemDialogTests : ClientTestBase
 
         dialogs.WaitForAssertion(() => dialogs.Find("[data-testid='translations']"));
         dialogs.Markup.ShouldContain("Required");
+        dialogs.FindAll(".mud-expand-panel-text").Select(g => g.TextContent).ShouldBe(["Shown to the user", "Translations (optional)", "Upload"]);
+        dialogs.Markup.ShouldContain("Empty accepts every file type.");
         dialogs.Markup.ShouldNotContain("Display name");
         dialogs.FindAll(".mud-ex-property-reset-conatiner").ShouldBeEmpty();
         dialogs.Markup.ShouldNotContain(new GlobalResetSettings().ResetIcon);

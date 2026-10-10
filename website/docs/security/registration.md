@@ -50,6 +50,8 @@ Defaults for a fresh installation come from configuration, for example `Coworkee
 | `RequireDocuments` | shows the document uploads |
 | `Documents` | one slot per document: `Name`, `Description`, `Required` (default `true`), `ContentTypes` (wildcards like `image/*` or `application/vnd.openxmlformats-officedocument.*`, empty accepts all), `MaxSize` in bytes (empty or 0 for no limit); `Names` and `Descriptions` per language (`de-AT` before `de`) for what the user reads, `Name` and `Description` are the fallback and `Name` is what stores file the document under |
 
+Admins edit the same values under **Settings > App settings > Registration**. Each document opens in a dialog with three sections: *Shown to the user* (name and hint, in every language), *Translations (optional)* (only for multilingual apps: a row per language, labeled *Translation for German* and so on, shown instead of the text above to users of that language) and *Upload* (required, accepted file types from a grouped, searchable list of every known MIME type, largest file).
+
 ## Roles offered in the registration
 
 A role with **Offered in the registration** (on the role page, `RoleRequest.SelectableForRegistration`, `SeedRole(..., SelectableForRegistration: true)`) appears in step 3. Sending a role that is not offered fails the step. System roles are never offered.

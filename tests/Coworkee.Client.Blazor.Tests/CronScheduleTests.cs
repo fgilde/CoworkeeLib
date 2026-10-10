@@ -54,21 +54,26 @@ public sealed class CronScheduleTests
     [InlineData(null, false)]
     public void Validates_expressions(string? expression, bool valid) => CronSchedule.IsValid(expression).ShouldBe(valid);
 
-    [Theory]
-    [InlineData("image/png", true)]
-    [InlineData("image/*", true)]
-    [InlineData("application/vnd.openxmlformats-officedocument.wordprocessingml.document", true)]
-    [InlineData("pdf", false)]
-    [InlineData(".pdf", false)]
-    [InlineData("*/*", false)]
-    public void Content_types_look_like_mime_types(string value, bool valid) => ContentTypeCatalog.IsValid(value).ShouldBe(valid);
+    [Fact]
+    public void The_content_type_catalog_lists_every_type_of_nextended_by_kind_with_wildcard_and_common_ones_first()
+    {
+        var known = ContentTypeCatalog.Known.Select(t => t.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        Nextended.Core.MimeType.AllTypes.ShouldAllBe(t => known.Contains(t));
+
+        var images = ContentTypeCatalog.Known.Where(t => t.Group == "Images").ToList();
+        images[0].Value.ShouldBe("image/*");
+        images[1].Name.ShouldBe("JPEG image");
+        ContentTypeCatalog.Describe("application/epub+zip").Extensions.ShouldBe(".epub");
+        ContentTypeCatalog.Describe("video/mp4").Group.ShouldBe("Videos");
+        ContentTypeCatalog.Describe("application/vnd.ms-excel").Group.ShouldBe("Documents");
+    }
 
     [Fact]
     public void Unknown_content_types_keep_their_value_and_get_the_icon_of_their_kind()
     {
         ContentTypeCatalog.Describe("application/pdf").Name.ShouldBe("PDF");
-        var icon = ContentTypeCatalog.Describe("image/x-icon");
-        icon.Name.ShouldBe("image/x-icon");
+        var icon = ContentTypeCatalog.Describe("image/x-made-up");
+        icon.Name.ShouldBe("image/x-made-up");
         icon.Icon.ShouldBe(ContentTypeCatalog.Describe("image/*").Icon);
         ContentTypeCatalog.Groups.Single(g => g.Name == "Office documents").Values.ShouldContain("application/msword");
     }

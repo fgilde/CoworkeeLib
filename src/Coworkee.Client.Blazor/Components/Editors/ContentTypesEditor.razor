@@ -1,3 +1,4 @@
+@using MudBlazor.Extensions.Components
 <MudStack Spacing="1" Class="my-2" data-testid="content-types">
     @if (Label is not null)
     {
@@ -25,18 +26,19 @@
     @if (!ReadOnly)
     {
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-            <MudAutocomplete T="string" Value="_input" ValueChanged="SelectAsync" SearchFunc="SearchAsync" CoerceValue="true" ResetValueOnEmptyText="true" Clearable="true"
-                             Placeholder="@L["Add a file type, e.g. application/pdf"]" Margin="Density.Margin" Dense="Density.Dense" Variant="Variant.Outlined"
-                             Error="_error is not null" ErrorText="@_error" OnKeyDown="KeyDownAsync" Style="max-width:420px"
-                             AdornmentIcon="@Icons.Material.Outlined.Add" OnAdornmentClick="AddInputAsync" data-testid="content-type-input">
+            <MudExSelect T="string" MultiSelection="true" SelectedValues="Selected" SelectedValuesChanged="SelectAsync" ItemCollection="Values"
+                         GroupingEnabled="true" GroupBy="@(v => L[ContentTypeCatalog.Describe(v).Group])" SearchBox="true" SearchFunc="Matches"
+                         SearchBoxPlaceholder="@L["Search by name, extension or MIME type"]" Placeholder="@L["Choose file types"]" ToStringFunc="Name"
+                         Margin="Density.Margin" Dense="Density.Dense" Variant="Variant.Outlined" Style="max-width:420px" data-testid="content-type-select">
                 <ItemTemplate>
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                        <MudIcon Icon="@ContentTypeCatalog.Describe(context).Icon" Size="Size.Small" />
-                        <MudText Typo="Typo.body2">@L[ContentTypeCatalog.Describe(context).Name]</MudText>
-                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@context</MudText>
+                    @{ var type = ContentTypeCatalog.Describe(context); }
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" data-option="@context">
+                        <MudIcon Icon="@type.Icon" Size="Size.Small" />
+                        <MudText Typo="Typo.body2">@L[type.Name]</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@Detail(type)</MudText>
                     </MudStack>
                 </ItemTemplate>
-            </MudAutocomplete>
+            </MudExSelect>
             <MudMenu Icon="@Icons.Material.Outlined.PlaylistAdd" Dense="Density.Dense" aria-label="@L["Add a group"]" data-testid="content-type-groups">
                 @foreach (var group in ContentTypeCatalog.Groups)
                 {

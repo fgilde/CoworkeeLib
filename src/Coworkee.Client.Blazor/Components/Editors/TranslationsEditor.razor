@@ -7,7 +7,7 @@
     {
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" data-culture="@culture">
             <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Class="ma-0" Style="min-width:3.5rem">@culture</MudChip>
-            <MudTextField T="string" Value="text" ValueChanged="v => SetAsync(culture, v)" Label="@LanguageName(culture)" ReadOnly="ReadOnly"
+            <MudTextField T="string" Value="text" ValueChanged="v => SetAsync(culture, v)" Label="@L["Translation for {0}", LanguageName(culture)]" ReadOnly="ReadOnly"
                           Variant="Variant.Outlined" Margin="Density.Margin" Immediate="false" Class="flex-grow-1" data-testid="translation-text" />
             @if (!ReadOnly)
             {

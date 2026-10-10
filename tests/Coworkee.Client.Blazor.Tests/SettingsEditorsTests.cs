@@ -5,6 +5,7 @@ using Coworkee.Client.Blazor.Components.Editors;
 using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Settings;
 using MudBlazor;
+using MudBlazor.Extensions.Components;
 using NSubstitute;
 
 namespace Coworkee.Client.Blazor.Tests;
@@ -41,23 +42,21 @@ public sealed class SettingsEditorsTests : ClientTestBase
     }
 
     [Fact]
-    public async Task Content_types_editor_shows_names_adds_typed_types_and_removes_chips()
+    public async Task Content_types_editor_shows_names_picks_from_the_catalog_and_removes_chips()
     {
-        IReadOnlyList<string>? value = ["image/*", "application/pdf"];
+        IReadOnlyList<string>? value = ["image/*", "application/x-custom"];
         Render<MudPopoverProvider>();
         var editor = Render<ContentTypesEditor>(p => p.Add(e => e.Value, value).Add(e => e.ValueChanged, v => value = v));
 
         editor.Markup.ShouldContain("All images");
-        editor.Markup.ShouldContain("PDF");
+        var select = editor.FindComponent<MudExSelect<string>>();
+        select.Instance.ItemCollection.Count.ShouldBe(ContentTypeCatalog.Known.Count);
 
-        await TypeAsync(editor, "Application/X-Custom");
-        editor.WaitForAssertion(() => value.ShouldBe(["image/*", "application/pdf", "application/x-custom"]));
-
-        await TypeAsync(editor, "pdf please");
-        editor.WaitForAssertion(() => editor.Markup.ShouldContain("Not a file type"));
+        await editor.InvokeAsync(() => select.Instance.SelectedValuesChanged.InvokeAsync(["image/*", "application/pdf"]));
+        value.ShouldBe(["image/*", "application/x-custom", "application/pdf"]); // types the catalog does not know stay
 
         await editor.Find("[data-type='image/*'] .mud-chip-close-button").ClickAsync(new());
-        value.ShouldBe(["application/pdf", "application/x-custom"]);
+        value.ShouldBe(["application/x-custom", "application/pdf"]);
     }
 
     [Fact]
@@ -97,12 +96,6 @@ public sealed class SettingsEditorsTests : ClientTestBase
     private static string Input(string testId) => $"input[data-testid='{testId}'], [data-testid='{testId}'] input";
 
     private static AngleSharp.Dom.IElement Expression(IRenderedComponent<CronEditor> editor) => editor.Find(Input("cron-expression"));
-
-    private static async Task TypeAsync(IRenderedComponent<ContentTypesEditor> editor, string text)
-    {
-        editor.Find(Input("content-type-input")).Input(text);
-        await editor.Find(Input("content-type-input")).KeyDownAsync(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Key = "Enter" });
-    }
 
     public sealed class MarkedConfig
     {
