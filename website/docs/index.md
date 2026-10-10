@@ -44,10 +44,10 @@ Coworkee is a modular application framework for .NET 10. It gives a Blazor and A
 | Modules | `CoworkeeModule` with `[DependsOn]`, one call `AddCoworkee<TRoot>()` per host |
 | Requests | `IDispatcher` with commands, queries, `Result`, FluentValidation, permission checks, caching, unit of work |
 | Data | `CoworkeeDbContext` with tenants, soft delete, field level audit trail, transactional outbox, realtime change events |
-| HTTP | Minimal API groups with problem details, OData sets with facets for every entity, response filters |
+| HTTP | Minimal API groups with problem details, [application services](web/application-services.md) with generated endpoints and Blazor clients, OData sets with facets for every entity, response filters |
 | Identity | Users, roles, groups, tenants, permission grants down to single resources, setup wizard or seed |
 | Sign-in | OpenIddict auth server, BFF for the Blazor client, Keycloak or any OpenID Connect provider as external login |
-| Blazor | MudBlazor shell with navigation, admin pages, data table with facets, theming, replaceable components |
+| Blazor | MudBlazor shell with navigation, admin pages, data table with facets, [client entities](ui/client-entities.md) queried in the browser, theming, replaceable components |
 | Services | Settings, typed app configuration, mail templates, Hangfire jobs, blob storage, Elasticsearch, notifications, AI assistant with MCP |
 | Hosting | `AddCoworkeeApp` for Aspire: Postgres, Redis, Mailpit, Elasticsearch and Keycloak wired from the packages each service uses |
 

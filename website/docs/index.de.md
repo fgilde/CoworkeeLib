@@ -44,10 +44,10 @@ Coworkee ist ein modulares Anwendungsframework für .NET 10. Es liefert einer Bl
 | Module | `CoworkeeModule` mit `[DependsOn]`, ein Aufruf `AddCoworkee<TRoot>()` pro Host |
 | Requests | `IDispatcher` mit Commands, Queries, `Result`, FluentValidation, Berechtigungsprüfung, Caching, Unit of Work |
 | Daten | `CoworkeeDbContext` mit Mandanten, Soft Delete, Audit auf Feldebene, transaktionaler Outbox, Realtime-Änderungen |
-| HTTP | Minimal-API-Gruppen mit Problem Details, OData-Sets mit Facetten für jede Entity, Response-Filter |
+| HTTP | Minimal-API-Gruppen mit Problem Details, [Anwendungsdienste](web/application-services.md) mit generierten Endpunkten und Blazor-Clients, OData-Sets mit Facetten für jede Entity, Response-Filter |
 | Identity | Benutzer, Rollen, Gruppen, Mandanten, Berechtigungen bis auf einzelne Ressourcen, Setup-Assistent oder Seed |
 | Anmeldung | OpenIddict-Auth-Server, BFF für den Blazor-Client, Keycloak oder jeder OpenID-Connect-Anbieter als externer Login |
-| Blazor | MudBlazor-Shell mit Navigation, Admin-Seiten, Datentabelle mit Facetten, Themes, ersetzbaren Komponenten |
+| Blazor | MudBlazor-Shell mit Navigation, Admin-Seiten, Datentabelle mit Facetten, [Client-Entities](ui/client-entities.md) mit Abfragen im Browser, Themes, ersetzbaren Komponenten |
 | Dienste | Einstellungen, typisierte App-Konfiguration, Mail-Vorlagen, Hangfire-Jobs, Dateiablage, Elasticsearch, Benachrichtigungen, KI-Assistent mit MCP |
 | Hosting | `AddCoworkeeApp` für Aspire: Postgres, Redis, Mailpit, Elasticsearch und Keycloak, verdrahtet anhand der Pakete jedes Dienstes |
 
