@@ -22,6 +22,7 @@ public static class CoworkeeApiVersions
         return services.AddOpenApi($"v{version}", options =>
         {
             ApiDocs.AddBearerScheme(options);
+            ApiDocs.RequireNonNullableProperties(options);
             var byGroup = options.ShouldInclude;
             options.ShouldInclude = description => byGroup(description) && Belongs(description, version);
         });

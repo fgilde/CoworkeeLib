@@ -39,6 +39,20 @@ internal static class ApiDocs
         </script>
         """;
 
+    // a property that can never be null is always in the payload: generated clients then type it as non-optional
+    public static void RequireNonNullableProperties(OpenApiOptions options) => options.AddSchemaTransformer((schema, context, _) =>
+    {
+        if (schema.Properties is { Count: > 0 } && context.JsonPropertyInfo is null)
+        {
+            foreach (var property in context.JsonTypeInfo.Properties.Where(p => !p.IsGetNullable && schema.Properties.ContainsKey(p.Name)))
+            {
+                (schema.Required ??= new HashSet<string>()).Add(property.Name);
+            }
+        }
+
+        return Task.CompletedTask;
+    });
+
     public static void AddBearerScheme(OpenApiOptions options) => options.AddDocumentTransformer((document, _, _) =>
     {
         document.Components ??= new OpenApiComponents();
