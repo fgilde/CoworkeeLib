@@ -33,7 +33,7 @@ Which package goes where, and what to put in the `using` block.
 | `Coworkee.ExtendedAttributes` | API | `Coworkee.ExtendedAttributes` | `CoworkeeExtendedAttributesModule`, `AddExtendedAttributes<T>` |
 | `Coworkee.Social` | API | `Coworkee.Social` | `CoworkeeSocialModule`, `AddCoworkeeSocial` |
 | `Coworkee.EventBus`, `Coworkee.EventBus.RabbitMq` | API, workers | `Coworkee.EventBus` | `IEventBus`, `IIntegrationEvent`, `IIntegrationEventHandler<T>`, `CoworkeeRabbitMqEventBusModule` |
-| `Coworkee.Cli` | your machine | | `coworkee new`, `run`, `migrations add`, `module add`, `update`, `doctor` |
+| `Coworkee.Cli` | your machine | | `coworkee new` (options or `--spec`), `options`, `spec`, `run`, `migrations add`, `module add`, `entity add`, `update`, `doctor`, `ui`, `mcp` |
 | `Coworkee.Templates` | your machine | | `dotnet new coworkee` |
 | `Coworkee.Client` | SDKs, other .NET apps | `Coworkee.Client` | `CoworkeeApiClient`, `CoworkeeApiException`, `BearerTokenHandler`, `ODataResult<T>` |
 | `Coworkee.Client.Blazor` | WebAssembly client | `Coworkee.Client.Blazor`, `.Components`, `.Components.Data`, `.Data`, `.Api`, `.Navigation`, `.Security`, `.Customization` | `AddCoworkeeClient`, `CoworkeeLayout`, `CoworkeeDataTable<T>`, `IODataClient`, `ApiClientBase`, `ReplaceComponent` |
