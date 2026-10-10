@@ -55,7 +55,6 @@ internal sealed class CoworkeeMcpTools(CliRunner run, HttpClient http)
         [Description("The app spec as JSON. Leave out to use name and options.")] string? spec = null,
         [Description("Name of the app when there is no spec.")] string? name = null,
         [Description("Option values by id (list_options), e.g. {\"chat\": \"false\", \"theme\": \"Forest\"}, used when there is no spec.")] Dictionary<string, string>? options = null,
-        [Description("Install the template from this .nupkg or folder instead of nuget.org.")] string? templateSource = null,
         CancellationToken cancellationToken = default)
     {
         AppSpec app;
@@ -78,11 +77,13 @@ internal sealed class CoworkeeMcpTools(CliRunner run, HttpClient http)
             return string.Join("\n", errors);
         }
 
-        var file = Path.Combine(Path.GetTempPath(), $"coworkee-{Guid.NewGuid():N}.json");
-        await File.WriteAllTextAsync(file, SpecJson.Write(Absolute(app, directory)), cancellationToken);
+        // the spec sits in the folder, so its files stay relative to it and are checked again by coworkee new
+        Directory.CreateDirectory(directory);
+        var file = Path.Combine(directory, $".coworkee-{Guid.NewGuid():N}.json");
+        await File.WriteAllTextAsync(file, SpecJson.Write(app), cancellationToken);
         try
         {
-            return (await run(CreateArgs(file, Path.Combine(directory, app.Output ?? app.Name), templateSource), directory, cancellationToken)).ToString();
+            return (await run(CreateArgs(file, Path.Combine(directory, app.Output ?? app.Name)), directory, cancellationToken)).ToString();
         }
         finally
         {
@@ -139,8 +140,7 @@ internal sealed class CoworkeeMcpTools(CliRunner run, HttpClient http)
     public Task<string> SearchDocsAsync([Description("Words to search for, e.g. 'client entities' or 'sign-in design'.")] string query, CancellationToken cancellationToken = default) =>
         DocsSearch.SearchAsync(query, http, cancellationToken);
 
-    public static string[] CreateArgs(string specFile, string output, string? templateSource) =>
-        ["new", "--spec", specFile, "-o", output, .. templateSource is null ? [] : new[] { "--template-source", templateSource }];
+    public static string[] CreateArgs(string specFile, string output) => ["new", "--spec", specFile, "-o", output];
 
     private static string[] Feature(string[]? properties, bool clientEntity, string? mapping) =>
     [
@@ -148,25 +148,4 @@ internal sealed class CoworkeeMcpTools(CliRunner run, HttpClient http)
         .. clientEntity ? new[] { "--client-entity" } : [],
         .. mapping is null ? [] : new[] { "--mapping", mapping },
     ];
-
-    // the spec goes to a temp file, so its relative files are made absolute first
-    private static AppSpec Absolute(AppSpec app, string directory)
-    {
-        string? Full(string? value) => value is null || SpecValidator.IsWebAddress(value) || value == OptionCatalog.Find("logo")!.Default ? value : Path.GetFullPath(Path.Combine(directory, value));
-        foreach (var id in OptionCatalog.All.Where(o => o.Kind == OptionKind.File).Select(o => o.Id))
-        {
-            if (app.Options.FirstOrDefault(o => o.Key.Equals(id, StringComparison.OrdinalIgnoreCase)) is { Key: { } key, Value: { } node })
-            {
-                app.Options[key] = Full(node.GetValue<string>());
-            }
-        }
-
-        if (app.Branding is { } branding)
-        {
-            branding.Logo = Full(branding.Logo);
-            branding.SignInMedia = Full(branding.SignInMedia);
-        }
-
-        return app;
-    }
 }

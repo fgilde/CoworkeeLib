@@ -52,7 +52,7 @@ Andere Clients nehmen denselben Befehl: `coworkee` mit dem Argument `mcp`. `cowo
 | `update_packages` | `coworkee update` |
 | `search_docs` | Durchsucht diese Dokumentation (den veröffentlichten Suchindex; offline die Seitentitel) |
 
-Die Tools, die etwas ändern, starten die CLI als Kindprozess im angegebenen Ordner und antworten mit Exit-Code und Ausgabe; sie verhalten sich also genau wie die Befehle. Eine App anzulegen dauert Minuten: Template, Restore und, wenn nötig, die erste Migration.
+Die Tools, die etwas ändern, starten die CLI als Kindprozess im angegebenen Ordner und antworten mit Exit-Code und Ausgabe; sie verhalten sich also genau wie die Befehle. Ein abgebrochener Aufruf beendet den Prozess samt allem, was er gestartet hat. `create_app` löst die Dateien einer Spezifikation im angegebenen Ordner auf und lehnt Pfade außerhalb ab. Eine App anzulegen dauert Minuten: Template, Restore und, wenn nötig, die erste Migration.
 
 ## Eine Sitzung
 

@@ -17,6 +17,9 @@ internal static class UiCommand
         None,
         Install,
         Update,
+
+        /// <summary>An exact --studio-version below the installed one.</summary>
+        Downgrade,
     }
 
     public static Command Create()
@@ -33,12 +36,18 @@ internal static class UiCommand
         .Select(line => line.Split(' ', StringSplitOptions.RemoveEmptyEntries))
         .FirstOrDefault(columns => columns.Length >= 2 && columns[0].Equals(Package, StringComparison.OrdinalIgnoreCase))?[1];
 
-    public static Step Plan(string? installed, string wanted) =>
-        installed is null ? Step.Install : Compare(installed, wanted) < 0 ? Step.Update : Step.None;
+    /// <summary>Install when missing, update when older; an <paramref name="exact"/> version (--studio-version) is also installed when the installed one is newer.</summary>
+    public static Step Plan(string? installed, string wanted, bool exact = false) => installed is null ? Step.Install : Compare(installed, wanted) switch
+    {
+        < 0 => Step.Update,
+        > 0 when exact => Step.Downgrade,
+        _ => Step.None,
+    };
 
     public static string[] ToolArgs(Step step, string version, bool prerelease, string? source) =>
     [
         "dotnet", "tool", step == Step.Install ? "install" : "update", "-g", Package, "--version", version,
+        .. step == Step.Downgrade ? new[] { "--allow-downgrade" } : [],
         .. prerelease ? new[] { "--prerelease" } : [],
         .. source is null ? [] : new[] { "--add-source", Path.GetFullPath(source) },
     ];
@@ -87,7 +96,7 @@ internal static class UiCommand
     {
         var wanted = result.GetValue(ToolVersion) ?? CliApp.Version;
         var (_, list) = await Shell.CaptureAsync("dotnet", "tool", "list", "-g");
-        var step = Plan(Installed(list), wanted);
+        var step = Plan(Installed(list), wanted, exact: result.GetValue(ToolVersion) is not null);
         if (step != Step.None)
         {
             var exit = await Shell.RunAsync(ToolArgs(step, wanted, result.GetValue(Prerelease), result.GetValue(Source)), cancellationToken: cancellationToken);

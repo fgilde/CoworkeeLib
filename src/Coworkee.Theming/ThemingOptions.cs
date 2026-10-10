@@ -9,6 +9,13 @@ public sealed class ThemingOptions
     public List<AppTheme> Themes { get; } = [];
 }
 
+/// <summary>Fails the start of a host whose app themes cannot be seeded.</summary>
+internal sealed class ThemingOptionsValidation : Microsoft.Extensions.Options.IValidateOptions<ThemingOptions>
+{
+    public Microsoft.Extensions.Options.ValidateOptionsResult Validate(string? name, ThemingOptions options) =>
+        ThemeSeeds.Problem(options) is { } problem ? Microsoft.Extensions.Options.ValidateOptionsResult.Fail(problem) : Microsoft.Extensions.Options.ValidateOptionsResult.Success;
+}
+
 /// <summary>
 /// A built-in theme (<paramref name="BasedOn"/>) with other palette colors, e.g. <c>["Primary"] = "#0a7d5a"</c>.
 /// <paramref name="Dark"/> defaults to the light colors; a changed Primary or Secondary gets a readable contrast text unless one is given.

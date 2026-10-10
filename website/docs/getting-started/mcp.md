@@ -52,7 +52,7 @@ Other clients take the same command: `coworkee` with the argument `mcp`. `cowork
 | `update_packages` | `coworkee update` |
 | `search_docs` | Searches this documentation (the published search index; offline the page titles) |
 
-The tools that change something run the CLI as a child process in the given folder and answer with its exit code and output, so they behave exactly like the commands. Creating an app takes minutes: the template, the restore and, when needed, the first migration.
+The tools that change something run the CLI as a child process in the given folder and answer with its exit code and output, so they behave exactly like the commands; cancelling a call ends the process with everything it started. `create_app` resolves the files of a spec in the given folder and refuses paths outside it. Creating an app takes minutes: the template, the restore and, when needed, the first migration.
 
 ## A session
 

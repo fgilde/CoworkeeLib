@@ -70,11 +70,37 @@ internal static class ThemeSeeds
 
     internal static List<ThemeDefinition> Create(ThemingOptions options)
     {
+        if (Problem(options) is { } problem)
+        {
+            throw new InvalidOperationException(problem);
+        }
+
         var themes = BuiltIn();
-        themes.AddRange(options.Themes.Select(theme => Derived(theme, themes.FirstOrDefault(t => t.Name == theme.BasedOn) ?? themes.Single(t => t.Name == DefaultName))));
+        themes.AddRange(options.Themes.Select(theme => Derived(theme, themes.Single(t => t.Name == theme.BasedOn))));
         var defaultName = themes.Any(t => t.Name == options.DefaultTheme) ? options.DefaultTheme : DefaultName;
         themes.ForEach(t => t.IsDefault = t.Name == defaultName);
         return themes;
+    }
+
+    /// <summary>Why the app themes cannot be seeded: a name taken twice or by a built-in theme, or an unknown base theme.</summary>
+    internal static string? Problem(ThemingOptions options)
+    {
+        var builtIn = BuiltIn().Select(t => t.Name).ToList();
+        var names = new HashSet<string>(builtIn, StringComparer.OrdinalIgnoreCase);
+        foreach (var theme in options.Themes)
+        {
+            if (!names.Add(theme.Name))
+            {
+                return $"ThemingOptions: the app theme '{theme.Name}' has the name of a built-in theme or of another app theme.";
+            }
+
+            if (!builtIn.Contains(theme.BasedOn))
+            {
+                return $"ThemingOptions: the app theme '{theme.Name}' is based on '{theme.BasedOn}', which is no built-in theme ({string.Join(", ", builtIn)}).";
+            }
+        }
+
+        return null;
     }
 
     private static ThemeDefinition Derived(AppTheme theme, ThemeDefinition source) => new()

@@ -16,19 +16,26 @@ internal static class Assets
     public static void Copy(NewSettings settings, IReadOnlyDictionary<string, string?> values)
     {
         var wwwroot = Path.Combine(settings.Output, "src", $"{settings.Spec.Name}.Web.Client", "wwwroot");
-        if (values["logo"] is { } logo && logo != OptionCatalog.Find("logo")!.Default)
+        if (SpecOptions.IsSet(settings.Spec, "logo") && values["logo"] is { } logo)
         {
-            Copy(Path.Combine(settings.BaseDirectory, logo), wwwroot);
+            Copy(settings, "logo", logo, wwwroot);
         }
 
-        if (values["signInMedia"] is { } media && !SpecValidator.IsWebAddress(media))
+        if (SpecOptions.IsSet(settings.Spec, "signInMedia") && values["signInMedia"] is { } media && !SpecValidator.IsWebAddress(media))
         {
-            Copy(Path.Combine(settings.BaseDirectory, media), Path.Combine(wwwroot, "media"));
+            Copy(settings, "signInMedia", media, Path.Combine(wwwroot, "media"));
         }
     }
 
-    private static void Copy(string file, string folder)
+    // checked again here: whatever lands in wwwroot is served to everyone
+    private static void Copy(NewSettings settings, string id, string value, string folder)
     {
+        if (SpecValidator.FileProblem(id, value, settings.BaseDirectory, settings.TrustedFiles?.Contains(value) == true) is { } problem)
+        {
+            throw new CliException($"{id}: '{value}' {problem}.");
+        }
+
+        var file = Path.Combine(settings.BaseDirectory, value);
         Directory.CreateDirectory(folder);
         File.Copy(file, Path.Combine(folder, Path.GetFileName(file)), overwrite: true);
     }

@@ -120,7 +120,8 @@ coworkee new --spec shop.json
 ```
 
 - `options` nimmt die Ids aus der Tabelle oben; `branding` nimmt `title`, `theme`, `primaryColor`, `secondaryColor`, `logo`, `signInLayout`, `signInMedia` und `signInMediaSide` und gewinnt gegen dieselben Ids in `options`.
-- Dateien und `output` sind relativ zur Spezifikation. Kommentare und abschließende Kommas sind erlaubt.
+- Dateien und `output` sind relativ zur Spezifikation und müssen in ihrem Ordner bleiben (keine absoluten Pfade, kein `..`). Ein Logo ist ein Bild (svg, png, jpg, jpeg, webp, gif, ico), das Anmeldemedium ein Bild, ein Video (mp4, webm, ogg) oder eine http(s)-Adresse: Beide liegen danach öffentlich im Web-Client. Eine als Schalter angegebene Datei (`--logo C:\brand\logo.svg`) darf überall liegen. Kommentare und abschließende Kommas sind erlaubt.
+- Der Titel landet unverändert in Code und HTML und darf daher kein `"`, `\`, `<`, `>`, `@` und keine Steuerzeichen enthalten.
 - Typen der Eigenschaften: `string`, `int`, `long`, `decimal`, `double`, `bool`, `dateTime` (`DateTimeOffset`), `guid`. Eine Eigenschaft ohne `required` ist nullable; `maxLength` gilt für Strings.
 - `plural` benennt Tabelle, OData-Set, Route und Seite (Standard: ein englischer Plural des Namens). `mapping` übersteuert die Option `mapping`.
 
@@ -153,7 +154,7 @@ coworkee ui
 coworkee ui --spec shop.json
 ```
 
-`coworkee ui` startet Coworkee Studio, einen Desktop-Assistenten für Name, Titel, Logo, Farben, Module, Anmeldedesign, Theme und Entities; er legt die App mit dieser CLI an. Das Studio ist das globale Tool `Coworkee.Studio` (Befehl `coworkee-ui`): `coworkee ui` installiert es in der Version der CLI, wenn es fehlt, und aktualisiert es, wenn es älter ist. Weitere Argumente gehen an das Studio. Für lokale Builds: `--prerelease`, `--add-source <ordner>` und `--studio-version <version>`.
+`coworkee ui` startet Coworkee Studio, einen Desktop-Assistenten für Name, Titel, Logo, Farben, Module, Anmeldedesign, Theme und Entities; er legt die App mit dieser CLI an. Das Studio ist das globale Tool `Coworkee.Studio` (Befehl `coworkee-ui`): `coworkee ui` installiert es in der Version der CLI, wenn es fehlt, und aktualisiert es, wenn es älter ist. Weitere Argumente gehen an das Studio. Für lokale Builds: `--prerelease`, `--add-source <ordner>` und `--studio-version <version>`; eine ausdrücklich genannte Version, die älter als die installierte ist, wird ebenfalls installiert.
 
 ## Weitere Befehle
 

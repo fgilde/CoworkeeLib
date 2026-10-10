@@ -34,11 +34,17 @@ internal static class NewCommand
         var spec = file is null ? new AppSpec() : ReadSpec(file.FullName);
         var baseDirectory = file?.DirectoryName ?? Environment.CurrentDirectory;
         spec.Name = result.GetValue(Name) ?? spec.Name;
+        var trusted = new List<string>();
         foreach (var (option, symbol) in Switches)
         {
             if (result.GetResult(symbol) is { Implicit: false })
             {
-                spec.Options[option.Id] = option.Kind == OptionKind.Bool ? result.GetValue((Option<bool?>)symbol) ?? true : result.GetValue((Option<string?>)symbol);
+                spec.Options[option.Id] = option.Kind switch
+                {
+                    OptionKind.Bool => result.GetValue((Option<bool?>)symbol) ?? true,
+                    OptionKind.File => Typed(result.GetValue((Option<string?>)symbol), trusted),
+                    _ => result.GetValue((Option<string?>)symbol),
+                };
             }
         }
 
@@ -52,14 +58,27 @@ internal static class NewCommand
             spec.Options["tests"] = false;
         }
 
-        var errors = SpecValidator.Validate(spec, baseDirectory);
+        var errors = SpecValidator.Validate(spec, baseDirectory, trusted);
         if (errors.Count > 0)
         {
             throw new CliException(string.Join(Environment.NewLine, errors));
         }
 
         var output = result.GetValue(Output) ?? Path.Combine(baseDirectory, spec.Output ?? spec.Name);
-        return new NewSettings(spec, baseDirectory, Path.GetFullPath(output), result.GetValue(TemplateSource));
+        return new NewSettings(spec, baseDirectory, Path.GetFullPath(output), result.GetValue(TemplateSource), trusted);
+    }
+
+    // a file typed on the command line is meant as the person wrote it, relative to the current folder and anywhere on the disk
+    private static string? Typed(string? file, List<string> trusted)
+    {
+        if (file is null || SpecValidator.IsWebAddress(file))
+        {
+            return file;
+        }
+
+        var full = Path.GetFullPath(file);
+        trusted.Add(full);
+        return full;
     }
 
     public static AppSpec ReadSpec(string path)
@@ -188,4 +207,4 @@ internal static class NewCommand
     }
 }
 
-internal sealed record NewSettings(AppSpec Spec, string BaseDirectory, string Output, string? TemplateSource);
+internal sealed record NewSettings(AppSpec Spec, string BaseDirectory, string Output, string? TemplateSource, IReadOnlyCollection<string>? TrustedFiles = null);

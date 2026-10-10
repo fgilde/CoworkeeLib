@@ -29,6 +29,8 @@ public sealed class CoworkeeThemingModule : CoworkeeModule, IWebModule
         services.AddSingleton<IPermissionDefinitionContributor, ThemePermissionDefinitions>();
         services.AddSingleton<ISettingDefinitionContributor, ThemeSettingDefinitions>();
         services.AddScoped<Coworkee.Application.Setup.ISetupStep, ThemeSetupStep>();
+        services.AddOptions<ThemingOptions>().ValidateOnStart();
+        services.AddSingleton<Microsoft.Extensions.Options.IValidateOptions<ThemingOptions>, ThemingOptionsValidation>();
         if (context.Configuration.GetValue($"{AuthServerOptions.Section}:{nameof(AuthServerOptions.AllowDesignChanges)}", true))
         {
             services.AddCoworkeeAppConfiguration<SignInDesign>(context.Configuration, SignInDesign.Section, "Sign-in page");

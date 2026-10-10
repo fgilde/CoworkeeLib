@@ -40,4 +40,4 @@ context.Services.Configure<ThemingOptions>(themes =>
 });
 ```
 
-Ein unbekannter Name in `DefaultTheme` lässt Ocean als Standard. Der Standard gilt, bis eine Organisation ein eigenes Theme wählt (Setup oder *Als Standard*). `coworkee new --theme Forest --primary-color "#0a7d5a"` schreibt das für Sie.
+Ein unbekannter Name in `DefaultTheme` lässt Ocean als Standard. Ein App-Theme mit dem Namen eines eingebauten oder eines anderen App-Themes, oder auf Basis eines unbekannten Themes, hält den Host beim Start mit einer Meldung an. Der Standard gilt, bis eine Organisation ein eigenes Theme wählt (Setup oder *Als Standard*). `coworkee new --theme Forest --primary-color "#0a7d5a"` schreibt das für Sie.

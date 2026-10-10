@@ -33,6 +33,24 @@ public sealed class ThemeSeedTests
     }
 
     [Theory]
+    [InlineData("Forest", "Ocean")]
+    [InlineData("Shop", "Ocean", "shop")]
+    [InlineData("Shop", "Nope")]
+    public void App_themes_with_a_taken_name_or_an_unknown_base_are_refused(string name, string basedOn, string? second = null)
+    {
+        var options = new ThemingOptions();
+        options.Themes.Add(new AppTheme(name, basedOn, new Dictionary<string, string>()));
+        if (second is not null)
+        {
+            options.Themes.Add(new AppTheme(second, "Forest", new Dictionary<string, string>()));
+        }
+
+        Should.Throw<InvalidOperationException>(() => ThemeSeeds.Create(options)).Message.ShouldContain("ThemingOptions");
+        new ThemingOptionsValidation().Validate(null, options).Failed.ShouldBeTrue();
+        new ThemingOptionsValidation().Validate(null, new ThemingOptions()).Succeeded.ShouldBeTrue();
+    }
+
+    [Theory]
     [InlineData("#ffffff", "#000000")]
     [InlineData("#000000", "#ffffff")]
     [InlineData("#1565c0", "#ffffff")]

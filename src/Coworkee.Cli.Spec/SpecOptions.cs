@@ -38,6 +38,11 @@ public static class SpecOptions
         return values;
     }
 
+    /// <summary>Whether the spec sets the option, in <see cref="AppSpec.Options"/> or <see cref="AppSpec.Branding"/>; a logo named like the default counts.</summary>
+    public static bool IsSet(AppSpec spec, string id) =>
+        spec.Options.Any(o => o.Key.Equals(id, StringComparison.OrdinalIgnoreCase) && o.Value is not null)
+        || (spec.Branding?.Values().Any(v => v.Id.Equals(id, StringComparison.OrdinalIgnoreCase) && v.Value is not null) ?? false);
+
     public static MappingStrategy Mapping(IReadOnlyDictionary<string, string?> values, EntitySpec entity) =>
         entity.Mapping ?? (Enum.TryParse<MappingStrategy>(values["mapping"], ignoreCase: true, out var mapping) ? mapping : MappingStrategy.Manual);
 

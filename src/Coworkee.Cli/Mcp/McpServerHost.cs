@@ -27,23 +27,43 @@ internal static class McpServerHost
     }
 
     /// <summary>Runs this CLI again as a child process and collects what it prints.</summary>
-    public static async Task<CliRun> RunSelfAsync(IReadOnlyList<string> args, string workingDirectory, CancellationToken cancellationToken)
+    public static Task<CliRun> RunSelfAsync(IReadOnlyList<string> args, string workingDirectory, CancellationToken cancellationToken)
     {
-        var start = new ProcessStartInfo(Environment.ProcessPath!) { WorkingDirectory = workingDirectory, RedirectStandardOutput = true, RedirectStandardError = true };
-        if (Path.GetFileNameWithoutExtension(Environment.ProcessPath)!.Equals("dotnet", StringComparison.OrdinalIgnoreCase))
-        {
-            start.ArgumentList.Add(typeof(McpServerHost).Assembly.Location);
-        }
+        var self = Path.GetFileNameWithoutExtension(Environment.ProcessPath)!.Equals("dotnet", StringComparison.OrdinalIgnoreCase)
+            ? [Environment.ProcessPath!, typeof(McpServerHost).Assembly.Location]
+            : new[] { Environment.ProcessPath! };
+        return RunAsync([.. self, .. args], workingDirectory, cancellationToken);
+    }
 
-        foreach (var arg in args)
+    /// <summary>
+    /// Runs a process without input (its stdin is closed, so nothing waits for the MCP client's stream) and collects what it prints;
+    /// cancelling kills it with all its children (dotnet new, restore, ef).
+    /// </summary>
+    public static async Task<CliRun> RunAsync(IReadOnlyList<string> command, string workingDirectory, CancellationToken cancellationToken)
+    {
+        var start = new ProcessStartInfo(command[0])
+        {
+            WorkingDirectory = workingDirectory, RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true,
+        };
+        foreach (var arg in command.Skip(1))
         {
             start.ArgumentList.Add(arg);
         }
 
         using var process = Process.Start(start)!;
-        var output = process.StandardOutput.ReadToEndAsync(cancellationToken);
-        var error = process.StandardError.ReadToEndAsync(cancellationToken);
-        await process.WaitForExitAsync(cancellationToken);
+        process.StandardInput.Close();
+        var output = process.StandardOutput.ReadToEndAsync(CancellationToken.None);
+        var error = process.StandardError.ReadToEndAsync(CancellationToken.None);
+        try
+        {
+            await process.WaitForExitAsync(cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            process.Kill(entireProcessTree: true);
+            throw;
+        }
+
         return new CliRun(process.ExitCode, (await output + await error).Trim());
     }
 }
