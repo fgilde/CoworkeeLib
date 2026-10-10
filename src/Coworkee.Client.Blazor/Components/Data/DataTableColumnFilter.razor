@@ -1,0 +1,71 @@
+@typeparam T
+
+<div class="cw-column-filter" data-testid="column-filter" data-column="@Column.PropertyName">
+    @if (Facet is not null)
+    {
+        <MudText Typo="Typo.subtitle2" Class="mb-1">@L[Facet.Label]</MudText>
+        <div class="cw-table-panel-list">
+            @foreach (var option in Facet.Options)
+            {
+                <div class="cw-table-panel-item" data-option="@option.OData">
+                    <MudCheckBox T="bool" Value="Selection.IsSelected(Facet, option)" ValueChanged="_ => Selection.Toggle(Facet, option)" Size="Size.Small" Dense="true"
+                                 Disabled="@(!option.Enabled && !Selection.IsSelected(Facet, option))" Label="@option.Label" />
+                    <MudSpacer />
+                    <MudChip T="int" Size="Size.Small" Variant="Variant.Text">@option.Count</MudChip>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        @if (Choices is { } choices)
+        {
+            @foreach (var choice in choices)
+            {
+                <MudCheckBox T="bool" Value="_chosen.Contains(choice)" ValueChanged="on => Choose(choice, on)" Size="Size.Small" Dense="true" Label="@ChoiceLabel(choice)"
+                             data-choice="@choice" />
+            }
+        }
+        else
+        {
+            @if (Operators.Count > 1)
+            {
+                <MudChipSet T="string" @bind-SelectedValue="_operator" SelectionMode="SelectionMode.SingleSelection" CheckMark="false" Size="Size.Small" Class="mb-2">
+                    @foreach (var op in Operators)
+                    {
+                        <MudChip T="string" Value="op" Text="@L[op]" Variant="Variant.Outlined" Color="Color.Primary" data-operator="@op" />
+                    }
+                </MudChipSet>
+            }
+            @if (NeedsValue)
+            {
+                <MudStack Row="true" Spacing="2">
+                    @if (Field.IsNumber)
+                    {
+                        <MudNumericField T="double?" @bind-Value="Number" Label="@(IsBetween ? L["From"] : L["Value"])" Variant="Variant.Outlined" Margin="Margin.Dense" data-testid="filter-value" />
+                        @if (IsBetween)
+                        {
+                            <MudNumericField T="double?" @bind-Value="NumberTo" Label="@L["To"]" Variant="Variant.Outlined" Margin="Margin.Dense" data-testid="filter-to" />
+                        }
+                    }
+                    else if (IsDate)
+                    {
+                        <MudDatePicker @bind-Date="Date" Label="@(IsBetween ? L["From"] : L["Date"])" Variant="Variant.Outlined" Margin="Margin.Dense" Editable="true" data-testid="filter-value" />
+                        @if (IsBetween)
+                        {
+                            <MudDatePicker @bind-Date="DateTo" Label="@L["To"]" Variant="Variant.Outlined" Margin="Margin.Dense" Editable="true" data-testid="filter-to" />
+                        }
+                    }
+                    else
+                    {
+                        <MudTextField T="string" @bind-Value="Text" Label="@L["Value"]" Immediate="true" Variant="Variant.Outlined" Margin="Margin.Dense" data-testid="filter-value" />
+                    }
+                </MudStack>
+            }
+        }
+        <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-3">
+            <MudButton Size="Size.Small" OnClick="ClearAsync" data-testid="filter-clear">@L["Clear"]</MudButton>
+            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="ApplyAsync" data-testid="filter-apply">@L["Filter"]</MudButton>
+        </MudStack>
+    }
+</div>

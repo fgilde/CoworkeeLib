@@ -124,7 +124,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     public FacetSelection Selection => _selection;
 
-    public string? CurrentFilter => ODataFilter.And(Filter, _selection.ToFilter(), ODataFilter.Search(_search, SearchFields));
+    public string? CurrentFilter => ODataFilter.And(Filter, _selection.ToFilter(), ColumnFilter, ODataFilter.Search(_search, SearchFields));
 
     private string? _lastFilter;
 
@@ -132,7 +132,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     private bool Dense => _dense ?? Density.Dense;
 
-    /// <summary>Search, facets and what differs from the declared layout.</summary>
+    /// <summary>Search, facets, column filters and what differs from the declared layout.</summary>
     public DataTableState CurrentState
     {
         get
@@ -200,7 +200,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
     {
         _search = state.Search;
         _selection.Restore(state.Facets);
-        _pendingLayout = state.HasLayout || state.HiddenColumns.Count > 0 ? state : null;
+        _pendingLayout = state.HasLayout || state.HiddenColumns.Count > 0 || state.ColumnFilters is { Count: > 0 } ? state : null;
     }
 
     private async Task ApplyStateAsync(DataTableState state)
@@ -228,9 +228,14 @@ public partial class CoworkeeDataTable<T> : IDisposable
     private void FitColumns()
     {
 #pragma warning disable BL0005 // only where the page left the parameter unset
-        foreach (var column in _grid!.RenderedColumns.Where(c => !DataGridLayout<T>.IsProperty(c) && c.Groupable is null))
+        foreach (var column in _grid!.RenderedColumns)
         {
-            column.Groupable = false;
+            if (!DataGridLayout<T>.IsProperty(column))
+            {
+                column.Groupable ??= false;
+            }
+
+            FitFilter(column);
         }
 #pragma warning restore BL0005
     }
@@ -384,6 +389,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
         if (Facets)
         {
             _facets = page.Facets;
+            MarkFacetColumns();
             StateHasChanged();
         }
 

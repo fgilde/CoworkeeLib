@@ -1,3 +1,6 @@
+using Coworkee.Client.Blazor.Data;
+using MudBlazor;
+
 namespace Coworkee.Client.Blazor.ClientEntities.Tests;
 
 public sealed class ODataLinqTests
@@ -38,6 +41,23 @@ public sealed class ODataLinqTests
         ODataLinq.OrderBy(Rows, "Name").Select(r => r.Name).ShouldBe(["Drill", "hammer", "Lamp"]);
         ODataLinq.OrderBy(Rows, "Brand/Name desc, Price").Select(r => r.Name).ShouldBe(["Lamp", "Drill", "hammer"]);
     }
+
+    [Fact]
+    public void Answers_the_filters_of_table_columns()
+    {
+        var day = new DateTimeOffset(2026, 1, 15, 0, 0, 0, TimeSpan.Zero);
+        Matching(new ColumnCondition("Name", typeof(string), FilterOperator.String.Contains, "AM")).ShouldBe(["hammer", "Lamp"]);
+        Matching(new ColumnCondition("Brand/Name", typeof(string), FilterOperator.String.StartsWith, "lu")).ShouldBe(["Lamp"]);
+        Matching(new ColumnCondition("Price", typeof(decimal), FilterOperator.Number.GreaterThanOrEqual, 19m), new("Price", typeof(decimal), FilterOperator.Number.LessThanOrEqual, 35m))
+            .ShouldBe(["hammer", "Lamp"]);
+        Matching(new ColumnCondition("Kind", typeof(Kind), FilterOperator.Enum.Is, Kind.Hand), new("Kind", typeof(Kind), FilterOperator.Enum.Is, Kind.Power)).Count.ShouldBe(3);
+        Matching(new ColumnCondition("Created", typeof(DateTimeOffset), FilterOperator.DateTime.Is, day)).ShouldBe(["hammer"]);
+        Matching(new ColumnCondition("Created", typeof(DateTimeOffset), FilterOperator.DateTime.Before, day.AddDays(-14))).ShouldBe(["Lamp"]);
+        Matching(new ColumnCondition("Note", typeof(string), FilterOperator.String.Empty, null)).ShouldBe(["Drill", "hammer"]);
+    }
+
+    private static List<string> Matching(params ColumnCondition[] conditions) =>
+        [.. Rows.Where(ODataLinq.Filter<Gadget>(DataTableFilters.ToOData(conditions)!).Compile()).Select(r => r.Name)];
 
     [Theory]
     [InlineData("Tags/any(t: t eq 'x')")]

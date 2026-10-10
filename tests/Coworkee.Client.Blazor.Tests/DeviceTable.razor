@@ -1,0 +1,22 @@
+@using Coworkee.Client.Blazor.Components.Data
+@using MudBlazor
+@using static Coworkee.Client.Blazor.Tests.DataTableColumnFilterTests
+
+<CoworkeeDataTable T="Device" EntitySet="Devices" ColumnFilters="ColumnFilters">
+    <Columns>
+        <PropertyColumn Property="d => d.Name" Title="Name" Filterable="NameFilterable" />
+        <PropertyColumn Property="d => d.Category" Title="Category" />
+        <PropertyColumn Property="d => d.Price" Title="Price" />
+        <PropertyColumn Property="d => d.Kind" Title="Kind" />
+        <PropertyColumn Property="d => d.Added" Title="Added" />
+        <TemplateColumn T="Device" Title="Actions">
+            <CellTemplate>-</CellTemplate>
+        </TemplateColumn>
+    </Columns>
+</CoworkeeDataTable>
+
+@code {
+    [Parameter] public bool? ColumnFilters { get; set; }
+
+    [Parameter] public bool? NameFilterable { get; set; }
+}
