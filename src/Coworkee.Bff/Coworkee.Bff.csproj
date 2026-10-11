@@ -4,6 +4,7 @@
     <ProjectReference Include="..\Coworkee.Contracts\Coworkee.Contracts.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" />
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" />
     <PackageReference Include="Microsoft.Extensions.ServiceDiscovery.Yarp" />
   </ItemGroup>
 </Project>

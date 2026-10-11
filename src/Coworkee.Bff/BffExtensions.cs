@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
@@ -112,6 +113,13 @@ public static class BffExtensions
             : new MemoryDistributedCache(Options.Create(new MemoryDistributedCacheOptions())));
         builder.Services.AddOptions<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme)
             .Configure<IServiceProvider>((cookie, services) => cookie.SessionStore = new CacheTicketStore(services.GetRequiredKeyedService<IDistributedCache>(SessionCache)));
+        if (redis is { Length: > 0 })
+        {
+            // every instance and every restart reads the session cookie with the same keys
+            var connection = new Lazy<StackExchange.Redis.IConnectionMultiplexer>(() => StackExchange.Redis.ConnectionMultiplexer.Connect(Reconnecting(redis)));
+            builder.Services.AddDataProtection().SetApplicationName("Coworkee.Bff")
+                .PersistKeysToStackExchangeRedis(() => connection.Value.GetDatabase(), "coworkee:bff:data-protection");
+        }
     }
 
     private static StackExchange.Redis.ConfigurationOptions Reconnecting(string redis)
