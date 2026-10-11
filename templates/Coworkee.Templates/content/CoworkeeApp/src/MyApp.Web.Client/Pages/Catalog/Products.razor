@@ -2,7 +2,6 @@
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + CatalogPermissions.Products.View)]
 
 <PageHeader Title="Products" Description="Manage products." />
-<RealtimeSubscription Topic="type:Product" OnEvent="_ => _table.ReloadAsync()" />
 <CoworkeeDataTable @ref="_table" T="ProductDto" EntitySet="Products" Expand="Brand" SearchFields="SearchFields" MultiSelection="true" Importable="true" ImportPermission="@CatalogPermissions.Products.Create" ExportFileName="products"
                    DescribeItem="p => p.Name" CreateText="New product"
                    CreatePermission="@CatalogPermissions.Products.Create" EditPermission="@CatalogPermissions.Products.Edit" DeletePermission="@CatalogPermissions.Products.Delete"

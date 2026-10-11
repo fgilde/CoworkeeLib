@@ -2,6 +2,7 @@ using System.ComponentModel;
 using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
 using Coworkee.Contracts.Chat;
+using Coworkee.Contracts.Notifications;
 using Coworkee.Core.Results;
 using FluentValidation;
 
@@ -10,6 +11,10 @@ namespace Coworkee.Chat;
 [RequiresPermission(ChatPermissions.Use)]
 [Description("Lists the people of the organisation to chat with, with the last message and the number of unread messages.")]
 public sealed record GetChatContactsQuery : IQuery<Result<IReadOnlyList<ChatContactDto>>>;
+
+[RequiresPermission(ChatPermissions.Use)]
+[Description("Counts the chat messages the signed-in user has not read yet.")]
+public sealed record GetChatUnreadCountQuery : IQuery<Result<UnreadCountDto>>;
 
 [RequiresPermission(ChatPermissions.Use)]
 [Description("Reads the chat with one person, newest last; Before pages back to older messages.")]

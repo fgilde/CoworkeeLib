@@ -1,6 +1,8 @@
+using System.Collections.Concurrent;
 using System.Net.Http.Json;
 using Coworkee.AspNetCore;
 using Coworkee.Contracts.Identity;
+using Coworkee.Contracts.Realtime;
 using Coworkee.Core.Modularity;
 using Coworkee.Core.Security;
 using Coworkee.Identity.Setup;
@@ -8,6 +10,8 @@ using Coworkee.Infrastructure.Persistence;
 using Coworkee.Testing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http.Connections;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -58,6 +62,25 @@ public sealed class ChatApp : PostgresFixture
     }
 
     public HttpClient As(Guid userId, Guid tenantId) => App.GetTestClient().AsUser(userId, tenantId);
+
+    /// <summary>A hub connection that follows the user's own topic.</summary>
+    public async Task<(HubConnection Connection, ConcurrentQueue<RealtimeEnvelope> Events)> ConnectAsync(Guid userId, Guid tenantId)
+    {
+        var server = App.GetTestServer();
+        var connection = new HubConnectionBuilder()
+            .WithUrl(new Uri(server.BaseAddress, "hubs/realtime"), options =>
+            {
+                options.HttpMessageHandlerFactory = _ => server.CreateHandler();
+                options.Transports = HttpTransportType.LongPolling;
+                options.Headers["Authorization"] = $"{TestAuthHandler.SchemeName} {userId};{tenantId}";
+            })
+            .Build();
+        var events = new ConcurrentQueue<RealtimeEnvelope>();
+        connection.On<RealtimeEnvelope>(RealtimeHubMethods.OnEvent, events.Enqueue);
+        await connection.StartAsync();
+        await connection.InvokeAsync(RealtimeHubMethods.Subscribe, RealtimeTopics.User(userId));
+        return (connection, events);
+    }
 }
 
 public sealed class ChatTestDbContext(DbContextOptions<ChatTestDbContext> options, ICurrentUser currentUser, IEnumerable<IModelContributor> contributors)

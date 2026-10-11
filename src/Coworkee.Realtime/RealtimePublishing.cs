@@ -24,7 +24,8 @@ internal sealed class RealtimePublisher(IHubContext<RealtimeHub> hub) : IRealtim
 }
 
 // ponytail: events are sent after commit but not persisted; a crash between commit and send drops UI refresh signals. Route through the outbox if a consumer needs delivery guarantees.
-internal sealed class RealtimeChangeInterceptor(IRealtimePublisher publisher, ICurrentUser currentUser, IEnumerable<IRealtimeTopicMapper> mappers)
+internal sealed class RealtimeChangeInterceptor(
+    IRealtimePublisher publisher, ICurrentUser currentUser, IEnumerable<IRealtimeTopicMapper> mappers, RealtimeAccessSignal access)
     : SaveChangesInterceptor, IDbTransactionInterceptor
 {
     private static readonly ConcurrentDictionary<Type, bool> RealtimeTypes = new();
@@ -120,6 +121,15 @@ internal sealed class RealtimeChangeInterceptor(IRealtimePublisher publisher, IC
         {
             await publisher.PublishAsync(tenantId, topic, RealtimeEventTypes.EntityChanged, payload);
         }
+
+        // permissions changed: connections give back the topics they may no longer follow
+        IEnumerable<Guid?> tenants = pending.Any(p => p.Topic == RealtimeTopics.GlobalPermissions)
+            ? [null]
+            : pending.Where(p => p.Topic == RealtimeTopics.TenantPermissions).Select(p => p.TenantId).Distinct();
+        foreach (var tenantId in tenants)
+        {
+            await access.PublishAsync(tenantId);
+        }
     }
 
     private static bool IsRealtime(Type type) => RealtimeTypes.GetOrAdd(type, t => t.GetCustomAttribute<RealtimeAttribute>(inherit: false) is not null);
@@ -127,10 +137,12 @@ internal sealed class RealtimeChangeInterceptor(IRealtimePublisher publisher, IC
     private static Guid? TenantOf(EntityEntry entry) =>
         entry.Metadata.FindProperty("TenantId") is { } property ? entry.Property(property.Name).CurrentValue as Guid? : null;
 
+    // a soft delete arrives here as an update that sets IsDeleted
     private static string Action(EntityEntry entry) => entry.State switch
     {
-        EntityState.Added => "Created",
-        EntityState.Deleted => "Deleted",
-        _ => "Updated",
+        EntityState.Added => EntityChangedPayload.Created,
+        EntityState.Deleted => EntityChangedPayload.Deleted,
+        _ when entry.Entity is ISoftDelete { IsDeleted: true } && entry.Property(nameof(ISoftDelete.IsDeleted)).IsModified => EntityChangedPayload.Deleted,
+        _ => EntityChangedPayload.Updated,
     };
 }

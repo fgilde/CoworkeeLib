@@ -42,22 +42,25 @@ public sealed class RealtimeHub(IEnumerable<IRealtimeTopicAuthorizer> authorizer
 
     public async Task Subscribe(string topic)
     {
-        var (userId, tenantId) = Identity(Context.User);
+        var (userId, tenantId) = RealtimeConnections.Identity(Context.User);
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(userId, tenantId));
-        var authorizer = authorizers.FirstOrDefault(a => a.Handles(topic));
-        if (authorizer is null || !await authorizer.AuthorizeAsync(topic, Context.ConnectionAborted))
+        if (!await IsAllowedAsync(authorizers, topic, Context.ConnectionAborted))
         {
             throw new HubException($"Not allowed to subscribe to '{topic}'.");
         }
 
         await Groups.AddToGroupAsync(Context.ConnectionId, RealtimeGroups.For(tenantId, topic), Context.ConnectionAborted);
+        connections.Follow(Context.ConnectionId, topic);
     }
 
-    public Task Unsubscribe(string topic) =>
-        Groups.RemoveFromGroupAsync(Context.ConnectionId, RealtimeGroups.For(Identity(Context.User).TenantId, topic), Context.ConnectionAborted);
+    public async Task Unsubscribe(string topic)
+    {
+        connections.Unfollow(Context.ConnectionId, topic);
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, RealtimeGroups.For(RealtimeConnections.Identity(Context.User).TenantId, topic), Context.ConnectionAborted);
+    }
 
-    private static (Guid? UserId, Guid? TenantId) Identity(ClaimsPrincipal? user) =>
-        (Guid.TryParse(user?.FindFirstValue("sub"), out var id) ? id : null, Guid.TryParse(user?.FindFirstValue("tenant"), out var tenant) ? tenant : null);
+    internal static async Task<bool> IsAllowedAsync(IEnumerable<IRealtimeTopicAuthorizer> authorizers, string topic, CancellationToken cancellationToken) =>
+        authorizers.FirstOrDefault(a => a.Handles(topic)) is { } authorizer && await authorizer.AuthorizeAsync(topic, cancellationToken);
 }
 
 public static class RealtimeGroups

@@ -59,6 +59,10 @@
                     <MudIcon Icon="@context.Value!.Icon" Class="ml-0 mr-2" Size="Size.Small" />
                 }
                 @context.TreeView.RenderItemContent(context)
+                @if (Badges[context.Value?.Href] is > 0 and var count)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Class="ml-auto" data-nav-badge="@context.Value!.Href">@count</MudChip>
+                }
             </div>
         </ItemContentTemplate>
     </MudExTreeView>
@@ -69,8 +73,10 @@
         @if (HasLink(context.Value))
         {
             <MudTooltip Text="@L[context.Value!.Text]" Placement="Placement.End">
-                <MudIconButton Icon="@context.Value.Icon" Size="Size.Small" Class="ml-1 mt-1" OnClick="() => SelectAsync(context.Value)" aria-label="@L[context.Value.Text]"
-                               Color="@(context.Value == _selected ? Color.Primary : Color.Default)" data-nav="@context.Value.Href" />
+                <MudBadge Content="@Badges[context.Value.Href]" Visible="@(Badges[context.Value.Href] > 0)" Color="Color.Secondary" Overlap="true" Max="99">
+                    <MudIconButton Icon="@context.Value.Icon" Size="Size.Small" Class="ml-1 mt-1" OnClick="() => SelectAsync(context.Value)" aria-label="@L[context.Value.Text]"
+                                   Color="@(context.Value == _selected ? Color.Primary : Color.Default)" data-nav="@context.Value.Href" />
+                </MudBadge>
             </MudTooltip>
         }
     </text>;

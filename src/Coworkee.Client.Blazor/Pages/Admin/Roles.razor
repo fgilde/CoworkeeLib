@@ -2,7 +2,6 @@
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + IdentityPermissions.Roles.View)]
 
 <PageHeader Title="Roles" Description="Roles bundle permissions; users and groups get roles." />
-<RealtimeSubscription Topic="type:Role" OnEvent="_ => _table.ReloadAsync()" />
 <CoworkeeDataTable @ref="_table" T="RoleDto" EntitySet="Roles" SearchFields="SearchFields" ExportFileName="roles" DescribeItem="r => r.Name"
                    CreateText="New role" CreatePermission="@IdentityPermissions.Roles.Manage" DeletePermission="@IdentityPermissions.Roles.Manage"
                    OnCreate="CreateAsync" OnDelete="DeleteAsync">

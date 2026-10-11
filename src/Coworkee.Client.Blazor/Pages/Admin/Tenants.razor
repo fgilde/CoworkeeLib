@@ -2,8 +2,7 @@
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + FeaturePermissions.Tenants)]
 
 <PageHeader Title="Tenants" Description="Organisations using this installation: their edition, features and whether they may sign in." />
-<RealtimeSubscription Topic="@FeatureTopics.Changed" OnEvent="_ => _table.ReloadAsync()" />
-<CoworkeeDataTable @ref="_table" T="TenantRow" EntitySet="Tenants" SearchFields="SearchFields" ExportFileName="tenants" OnLoaded="LoadDetailsAsync"
+<CoworkeeDataTable @ref="_table" RealtimeTopic="@FeatureTopics.Changed" T="TenantRow" EntitySet="Tenants" SearchFields="SearchFields" ExportFileName="tenants" OnLoaded="LoadDetailsAsync"
                    CreateText="New tenant" CreatePermission="@FeaturePermissions.Tenants" OnCreate="CreateAsync"
                    EditPermission="@FeaturePermissions.Tenants" OnEdit="EditAsync">
     <Columns>

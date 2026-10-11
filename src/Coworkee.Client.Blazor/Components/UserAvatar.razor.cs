@@ -9,8 +9,11 @@ namespace Coworkee.Client.Blazor.Components;
 public partial class UserAvatar : IDisposable
 {
     private UserCardDto? _card;
+    private bool _online;
 
     [Inject] private UserCards Cards { get; set; } = null!;
+
+    [Inject] private Presence Presence { get; set; } = null!;
 
     [Parameter, EditorRequired] public Guid UserId { get; set; }
 
@@ -21,13 +24,20 @@ public partial class UserAvatar : IDisposable
 
     [Parameter] public bool ShowTooltip { get; set; }
 
+    /// <summary>A green dot while the user is online.</summary>
+    [Parameter] public bool ShowPresence { get; set; } = true;
+
     private string? StyleText => Pixels is { } px ? $"width:{px}px;height:{px}px;font-size:{px / 2.5}px" : null;
 
     private string Initials => _card is null
         ? "?"
         : string.Concat(_card.Name.Split(' ', '@', '.').Where(p => p.Length > 0).Take(2).Select(p => char.ToUpperInvariant(p[0])));
 
-    protected override void OnInitialized() => Cards.Changed += Reload;
+    protected override void OnInitialized()
+    {
+        Cards.Changed += Reload;
+        Presence.Changed += PresenceChanged;
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -35,9 +45,27 @@ public partial class UserAvatar : IDisposable
         {
             _card = await Cards.GetAsync(UserId);
         }
+
+        _online = ShowPresence && await Presence.IsOnlineAsync(UserId);
     }
 
-    public void Dispose() => Cards.Changed -= Reload;
+    public void Dispose()
+    {
+        Cards.Changed -= Reload;
+        Presence.Changed -= PresenceChanged;
+    }
+
+    private void PresenceChanged(Guid userId)
+    {
+        if (userId == UserId && ShowPresence)
+        {
+            _ = InvokeAsync(async () =>
+            {
+                _online = await Presence.IsOnlineAsync(UserId);
+                StateHasChanged();
+            });
+        }
+    }
 
     private void Reload(Guid userId)
     {

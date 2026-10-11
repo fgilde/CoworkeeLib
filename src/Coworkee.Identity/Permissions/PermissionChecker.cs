@@ -2,6 +2,7 @@ using Coworkee.Application.Authorization;
 using Coworkee.Contracts.Identity;
 using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
+using Coworkee.Identity.Roles;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,7 @@ namespace Coworkee.Identity.Permissions;
 
 internal sealed class PermissionChecker(
     CoworkeeDbContext db, ICurrentUser currentUser, IPermissionDefinitionManager definitions, HybridCache cache, IEnumerable<IResourceHierarchy> hierarchies,
-    IEnumerable<IResourceRestriction> restrictions)
+    IEnumerable<IResourceRestriction> restrictions, IActiveRoleSwitch activeRoles)
     : IPermissionChecker
 {
     public async Task<IReadOnlyCollection<string>> GetGrantedAsync(CancellationToken cancellationToken)
@@ -22,12 +23,13 @@ internal sealed class PermissionChecker(
         }
 
         var tenantId = currentUser.TenantId;
+        var narrow = await activeRoles.IsEnabledAsync(cancellationToken);
         return await cache.GetOrCreateAsync(
-            $"coworkee:permissions:{tenantId}:{userId}",
+            $"coworkee:permissions:{tenantId}:{userId}:{(narrow ? "active" : "all")}",
             async ct =>
             {
                 using var actor = CurrentUserScope.Begin(new ImpersonatedUser(userId, tenantId));
-                return await LoadAsync(userId, tenantId, ct);
+                return await LoadAsync(userId, tenantId, narrow, ct);
             },
             tags: [PermissionCache.Tag],
             cancellationToken: cancellationToken);
@@ -133,7 +135,7 @@ internal sealed class PermissionChecker(
     internal async Task<string[]> GetGrantedForAsync(Guid userId, Guid? tenantId, CancellationToken cancellationToken)
     {
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(userId, tenantId));
-        return await LoadAsync(userId, tenantId, cancellationToken);
+        return await LoadAsync(userId, tenantId, await activeRoles.IsEnabledAsync(cancellationToken), cancellationToken);
     }
 
     // once per user and tenant in a scope: resource restrictions ask for every checked resource
@@ -149,9 +151,10 @@ internal sealed class PermissionChecker(
         var key = (userId, currentUser.TenantId);
         if (!_roleIds.TryGetValue(key, out var roles))
         {
-            _roleIds[key] = roles = await IsActiveMemberAsync(userId, currentUser.TenantId, cancellationToken)
-                ? await RoleIdsAsync(userId, await GroupIdsAsync(userId, cancellationToken), cancellationToken)
-                : [];
+            var all = await AllRoleIdsAsync(userId, cancellationToken);
+            _roleIds[key] = roles = await activeRoles.IsEnabledAsync(cancellationToken) && await ActiveRoleIdAsync(userId, all, cancellationToken) is { } active
+                ? [active]
+                : all;
         }
 
         return roles;
@@ -162,7 +165,25 @@ internal sealed class PermissionChecker(
             .Union(db.Set<UserGroupRole>().Where(r => groupIds.Contains(r.GroupId)).Select(r => r.RoleId))
             .ToListAsync(cancellationToken);
 
-    private async Task<string[]> LoadAsync(Guid userId, Guid? tenantId, CancellationToken cancellationToken)
+    /// <summary>Every role of the user, directly and through groups, whatever role is active.</summary>
+    internal async Task<List<Guid>> AllRoleIdsAsync(Guid userId, CancellationToken cancellationToken) =>
+        await IsActiveMemberAsync(userId, currentUser.TenantId, cancellationToken)
+            ? await RoleIdsAsync(userId, await GroupIdsAsync(userId, cancellationToken), cancellationToken)
+            : [];
+
+    internal Task<IReadOnlySet<string>> RoleGrantsAsync(Guid roleId, CancellationToken cancellationToken) =>
+        GrantsForRolesAsync([roleId], currentUser.TenantId, cancellationToken);
+
+    /// <summary>The chosen role while the user still has it; a removed role falls back to all roles.</summary>
+    internal async Task<Guid?> ActiveRoleIdAsync(Guid userId, IReadOnlyCollection<Guid> roleIds, CancellationToken cancellationToken)
+    {
+        var value = await db.Set<IdentityUserClaim<Guid>>().Where(c => c.UserId == userId && c.ClaimType == ActiveRole.ClaimType)
+            .Select(c => c.ClaimValue).FirstOrDefaultAsync(cancellationToken);
+        return Guid.TryParse(value, out var roleId) && roleIds.Contains(roleId) ? roleId : null;
+    }
+
+    // the active role narrows to that role alone, without direct grants, so it never adds to what the roles give
+    private async Task<string[]> LoadAsync(Guid userId, Guid? tenantId, bool narrow, CancellationToken cancellationToken)
     {
         if (!await IsActiveMemberAsync(userId, tenantId, cancellationToken))
         {
@@ -171,6 +192,10 @@ internal sealed class PermissionChecker(
 
         var groupIds = await GroupIdsAsync(userId, cancellationToken);
         var roleIds = await RoleIdsAsync(userId, groupIds, cancellationToken);
+        if (roleIds.Count > 1 && narrow && await ActiveRoleIdAsync(userId, roleIds, cancellationToken) is { } active)
+        {
+            return [.. definitions.Expand(await GrantsForRolesAsync([active], tenantId, cancellationToken))];
+        }
 
         var roleGrants = await GrantsForRolesAsync(roleIds, tenantId, cancellationToken);
         var direct = await db.Set<PermissionGrant>()

@@ -1,7 +1,11 @@
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Coworkee.Contracts.Chat;
 using Coworkee.Contracts.Identity;
+using Coworkee.Contracts.Notifications;
+using Coworkee.Contracts.Realtime;
 
 namespace Coworkee.Chat.Tests;
 
@@ -36,10 +40,48 @@ public sealed class ChatTests(ChatApp app) : IAsyncLifetime
         var conversation = await Bob.GetFromJsonAsync<List<ChatMessageDto>>($"/api/v1/chat/conversations/{_setup.AdminUserId}", Ct);
         conversation!.Select(m => m.Text).ShouldBe(["Hi Bob", "Lunch?"]);
 
+        (await Bob.GetFromJsonAsync<UnreadCountDto>("/api/v1/chat/unread-count", Ct))!.Count.ShouldBe(2);
+
         (await Bob.PostAsync($"/api/v1/chat/conversations/{_setup.AdminUserId}/read", null, Ct)).EnsureSuccessStatusCode();
 
+        (await Bob.GetFromJsonAsync<UnreadCountDto>("/api/v1/chat/unread-count", Ct))!.Count.ShouldBe(0);
         (await Bob.GetFromJsonAsync<List<ChatContactDto>>("/api/v1/chat/contacts", Ct))!.Single(c => c.UserId == _setup.AdminUserId).Unread.ShouldBe(0);
         (await Admin.GetFromJsonAsync<List<ChatContactDto>>("/api/v1/chat/contacts", Ct))!.Single(c => c.UserId == _bob.Id).Unread.ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task A_message_and_its_reading_reach_both_people_live()
+    {
+        var (bobConnection, bobEvents) = await app.ConnectAsync(_bob.Id, _setup.TenantId);
+        var (adaConnection, adaEvents) = await app.ConnectAsync(_setup.AdminUserId, _setup.TenantId);
+        await using var bobHub = bobConnection;
+        await using var adaHub = adaConnection;
+
+        (await Admin.PostAsJsonAsync($"/api/v1/chat/conversations/{_bob.Id}", new SendChatMessageRequest("Lunch?"), Ct)).EnsureSuccessStatusCode();
+        var message = (await NextAsync(bobEvents, ChatEvents.Message)).Deserialize<ChatMessageDto>(JsonSerializerOptions.Web)!;
+        (message.FromUserId, message.Text).ShouldBe((_setup.AdminUserId, "Lunch?"));
+        await NextAsync(adaEvents, ChatEvents.Message);
+
+        (await Bob.PostAsync($"/api/v1/chat/conversations/{_setup.AdminUserId}/read", null, Ct)).EnsureSuccessStatusCode();
+
+        var read = (await NextAsync(adaEvents, ChatEvents.Read)).Deserialize<ChatReadDto>(JsonSerializerOptions.Web)!;
+        (read.ReaderId, read.SenderId).ShouldBe((_bob.Id, _setup.AdminUserId));
+        await NextAsync(bobEvents, ChatEvents.Read);
+    }
+
+    private static async Task<JsonElement> NextAsync(ConcurrentQueue<RealtimeEnvelope> events, string type)
+    {
+        for (var i = 0; i < 150; i++)
+        {
+            if (events.FirstOrDefault(e => e.Type == type) is { } found)
+            {
+                return found.Payload;
+            }
+
+            await Task.Delay(100, Ct);
+        }
+
+        throw new TimeoutException($"No {type} event.");
     }
 
     [Fact]

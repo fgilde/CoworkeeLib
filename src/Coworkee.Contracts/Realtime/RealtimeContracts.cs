@@ -7,7 +7,19 @@ public sealed record RealtimeEnvelope(string Topic, string Type, JsonElement Pay
 /// <summary>Why the session ended: "signed-out", "locked" or "password-changed" (in another session or by an administrator).</summary>
 public sealed record SessionRevokedPayload(string Reason);
 
-public sealed record EntityChangedPayload(string EntityType, string EntityId, string Action, IReadOnlyList<string> ChangedProperties);
+public sealed record EntityChangedPayload(string EntityType, string EntityId, string Action, IReadOnlyList<string> ChangedProperties)
+{
+    public const string Created = "Created";
+    public const string Updated = "Updated";
+
+    /// <summary>Removed, also by a soft delete.</summary>
+    public const string Deleted = "Deleted";
+
+    public bool IsDeleted => Action == Deleted;
+
+    public static EntityChangedPayload? From(RealtimeEnvelope envelope) =>
+        envelope.Type == RealtimeEventTypes.EntityChanged ? envelope.Payload.Deserialize<EntityChangedPayload>(JsonSerializerOptions.Web) : null;
+}
 
 public static class RealtimeHubMethods
 {
@@ -32,4 +44,20 @@ public static class RealtimeTopics
     public static string Entity(string entityType, object id) => $"entity:{entityType}:{id}";
 
     public static string User(Guid userId) => $"user:{userId}";
+
+    /// <summary>Roles, grants, memberships or the active role changed in the organisation: every client reloads its permissions.</summary>
+    public const string TenantPermissions = "tenant:permissions";
+
+    /// <summary>A change that touches the permissions of every organisation, e.g. switching the active role setting.</summary>
+    public const string GlobalPermissions = "global:permissions";
 }
+
+/// <summary>Who of the organisation is online: <see cref="Changed"/> with a <see cref="PresenceDto"/> on <see cref="Topic"/>.</summary>
+public static class PresenceEvents
+{
+    public const string Topic = "tenant:presence";
+    public const string Changed = "presence.changed";
+    public const string Path = "/api/v1/realtime/presence";
+}
+
+public sealed record PresenceDto(Guid UserId, bool Online);

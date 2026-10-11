@@ -1,5 +1,7 @@
 using Coworkee.Application.Messaging;
 using Coworkee.Contracts.Chat;
+using Coworkee.Contracts.Notifications;
+using Coworkee.Contracts.Realtime;
 using Coworkee.Core.Results;
 using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
@@ -13,7 +15,8 @@ internal sealed class ChatHandlers(CoworkeeDbContext db, ICurrentUser currentUse
     : IHandler<GetChatContactsQuery, Result<IReadOnlyList<ChatContactDto>>>,
       IHandler<GetChatConversationQuery, Result<IReadOnlyList<ChatMessageDto>>>,
       IHandler<SendChatMessageCommand, Result<ChatMessageDto>>,
-      IHandler<MarkChatReadCommand, Result>
+      IHandler<MarkChatReadCommand, Result>,
+      IHandler<GetChatUnreadCountQuery, Result<UnreadCountDto>>
 {
     private static readonly Error UnknownPerson = Error.NotFound("chat.unknown_person", "There is no such person in the organisation.");
 
@@ -42,6 +45,9 @@ internal sealed class ChatHandlers(CoworkeeDbContext db, ICurrentUser currentUse
             .ThenBy(c => c.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
     }
+
+    public async Task<Result<UnreadCountDto>> HandleAsync(GetChatUnreadCountQuery query, CancellationToken cancellationToken) =>
+        new UnreadCountDto(await db.Set<ChatMessage>().CountAsync(m => m.ToUserId == Me && m.ReadAt == null, cancellationToken));
 
     public async Task<Result<IReadOnlyList<ChatMessageDto>>> HandleAsync(GetChatConversationQuery query, CancellationToken cancellationToken)
     {
@@ -79,9 +85,16 @@ internal sealed class ChatHandlers(CoworkeeDbContext db, ICurrentUser currentUse
     public async Task<Result> HandleAsync(MarkChatReadCommand command, CancellationToken cancellationToken)
     {
         var now = clock.GetUtcNow();
-        await db.Set<ChatMessage>()
+        var marked = await db.Set<ChatMessage>()
             .Where(m => m.FromUserId == command.UserId && m.ToUserId == Me && m.ReadAt == null)
             .ExecuteUpdateAsync(set => set.SetProperty(m => m.ReadAt, now), cancellationToken);
+        if (marked > 0)
+        {
+            var read = new ChatReadDto(Me, command.UserId, now);
+            await realtime.PublishAsync(currentUser.TenantId, RealtimeTopics.User(Me), ChatEvents.Read, read, cancellationToken);
+            await realtime.PublishAsync(currentUser.TenantId, RealtimeTopics.User(command.UserId), ChatEvents.Read, read, cancellationToken);
+        }
+
         return Result.Success();
     }
 

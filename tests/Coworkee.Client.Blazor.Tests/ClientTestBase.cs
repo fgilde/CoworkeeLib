@@ -30,6 +30,10 @@ public abstract class ClientTestBase : BunitContext
         Services.AddSingleton(FeaturesApi);
         Services.AddScoped<Features.FeatureStore>();
         Services.AddScoped<People.UserCards>();
+        Services.AddScoped<People.Presence>();
+        Services.AddScoped<Navigation.NavigationBadges>();
+        Services.AddSingleton(ChatApi);
+        Api.GetOnlineUsersAsync(default).ReturnsForAnyArgs([]);
         Services.AddSingleton(Api);
         Services.AddSingleton(new CoworkeeClientOptions());
         Services.AddScoped<Theming.ThemeService>();
@@ -46,6 +50,8 @@ public abstract class ClientTestBase : BunitContext
     }
 
     protected ICoworkeeApi Api { get; } = Substitute.For<ICoworkeeApi>();
+
+    protected Chat.IChatApi ChatApi { get; } = Substitute.For<Chat.IChatApi>();
 
     protected Features.IFeaturesApi FeaturesApi { get; } = Substitute.For<Features.IFeaturesApi>();
 

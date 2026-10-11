@@ -1,8 +1,11 @@
 using Coworkee.Application;
 using Coworkee.AspNetCore;
+using Coworkee.AspNetCore.Http;
 using Coworkee.Contracts.Realtime;
 using Coworkee.Core.Modularity;
+using Coworkee.Core.Security;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -29,6 +32,9 @@ public sealed class CoworkeeRealtimeModule : CoworkeeModule, IWebModule
 
         services.AddSingleton<IRealtimePublisher, RealtimePublisher>();
         services.AddSingleton<RealtimeConnections>();
+        services.AddSingleton<RealtimePresence>();
+        services.AddSingleton<RealtimeAccessSignal>();
+        services.AddHostedService(provider => provider.GetRequiredService<RealtimeAccessSignal>());
         services.AddScoped<IInterceptor, RealtimeChangeInterceptor>();
         services.AddScoped<IRealtimeTopicAuthorizer, UserTopicAuthorizer>();
         services.AddScoped<IRealtimeTopicAuthorizer, GlobalTopicAuthorizer>();
@@ -36,5 +42,10 @@ public sealed class CoworkeeRealtimeModule : CoworkeeModule, IWebModule
         services.AddScoped<IRealtimeTopicAuthorizer, EntityTopicAuthorizer>();
     }
 
-    public void ConfigureApplication(WebApplication app) => app.MapHub<RealtimeHub>(RealtimeHubMethods.Path);
+    public void ConfigureApplication(WebApplication app)
+    {
+        app.MapHub<RealtimeHub>(RealtimeHubMethods.Path);
+        app.MapCoworkeeApi("/api/v1/realtime").WithTags("Realtime").RequireAuthorization()
+            .MapGet("/presence", (RealtimePresence presence, ICurrentUser user) => TypedResults.Ok(presence.Online(user.TenantId)));
+    }
 }

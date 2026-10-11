@@ -1,0 +1,27 @@
+@if (_roles is { Enabled: true, Roles.Count: > 1 } roles)
+{
+    <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="Density.Dense" data-testid="active-role-menu">
+        <ActivatorContent Context="menu">
+            <MudTooltip Text="@L["Act as"]">
+                <MudButton Variant="Variant.Text" Color="Color.Inherit" Size="Size.Small" Style="text-transform:none" StartIcon="@Icons.Material.Outlined.Shield"
+                           EndIcon="@Icons.Material.Filled.ArrowDropDown" OnClick="@(() => menu.ToggleAsync())" aria-label="@L["Act as"]" data-testid="active-role">
+                    @(Active?.Name ?? L["All roles"])
+                </MudButton>
+            </MudTooltip>
+        </ActivatorContent>
+        <ChildContent>
+            <MudMenuItem OnClick="() => SwitchAsync(null)" Icon="@(roles.ActiveRoleId is null ? Icons.Material.Filled.Check : null)" data-role="all">@L["All roles"]</MudMenuItem>
+            <MudDivider />
+            @foreach (var role in roles.Roles)
+            {
+                <MudMenuItem OnClick="() => SwitchAsync(role.Id)" Icon="@(roles.ActiveRoleId == role.Id ? Icons.Material.Filled.Check : null)" data-role="@role.Id">
+                    <MudText Typo="Typo.body2">@role.Name</MudText>
+                    @if (role.Description is { Length: > 0 } description)
+                    {
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@description</MudText>
+                    }
+                </MudMenuItem>
+            }
+        </ChildContent>
+    </MudMenu>
+}

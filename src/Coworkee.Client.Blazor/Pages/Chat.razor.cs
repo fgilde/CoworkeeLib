@@ -30,6 +30,13 @@ public partial class Chat : IAsyncDisposable
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
+    [Inject] private NavigationManager Nav { get; set; } = null!;
+
+    [Inject] private People.UserCards Cards { get; set; } = null!;
+
+    /// <summary>The person whose conversation is open, e.g. from the snackbar of a new message.</summary>
+    [SupplyParameterFromQuery(Name = "with")] public Guid? With { get; set; }
+
     [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
 
     private IEnumerable<ChatContactDto> Contacts =>
@@ -37,6 +44,7 @@ public partial class Chat : IAsyncDisposable
 
     protected override async Task OnInitializedAsync()
     {
+        Cards.Changed += Renamed;
         var user = AuthenticationState is null ? null : (await AuthenticationState).User;
         if (Guid.TryParse(user?.FindFirst("sub")?.Value, out _me))
         {
@@ -46,8 +54,17 @@ public partial class Chat : IAsyncDisposable
         await Snackbar.RunAsync(LoadContactsAsync);
     }
 
+    protected override async Task OnParametersSetAsync()
+    {
+        if (With is { } with && _contact?.UserId != with && _contacts.FirstOrDefault(c => c.UserId == with) is { } contact)
+        {
+            await OpenAsync(contact);
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
+        Cards.Changed -= Renamed;
         if (_subscription is not null)
         {
             await _subscription.DisposeAsync();
@@ -56,16 +73,20 @@ public partial class Chat : IAsyncDisposable
 
     private async Task OpenAsync(ChatContactDto? contact)
     {
+        // the list reports "nothing selected" while it renders a selection it has not seen yet; that must not drop the open conversation
+        if (contact is null)
+        {
+            return;
+        }
+
         _contact = contact;
         _messages = [];
-        if (contact is not null)
+        Nav.NavigateTo(Nav.GetUriWithQueryParameter("with", contact.UserId), replace: true);
+        await Snackbar.RunAsync(async () =>
         {
-            await Snackbar.RunAsync(async () =>
-            {
-                _messages = [.. await Api.GetConversationAsync(contact.UserId)];
-                await MarkReadAsync(contact);
-            });
-        }
+            _messages = [.. await Api.GetConversationAsync(contact.UserId)];
+            await MarkReadAsync(contact);
+        });
     }
 
     private async Task SendAsync()
@@ -93,6 +114,12 @@ public partial class Chat : IAsyncDisposable
 
     private async Task ReceiveAsync(RealtimeEnvelope envelope)
     {
+        if (envelope.Type == ChatEvents.Read && envelope.Payload.Deserialize<ChatReadDto>(JsonSerializerOptions.Web) is { } read)
+        {
+            await ReadAsync(read);
+            return;
+        }
+
         if (envelope.Type != ChatEvents.Message || envelope.Payload.Deserialize<ChatMessageDto>(JsonSerializerOptions.Web) is not { } message)
         {
             return;
@@ -111,6 +138,28 @@ public partial class Chat : IAsyncDisposable
         await LoadContactsAsync();
         StateHasChanged();
     }
+
+    // read in another tab, or the open contact read what I sent
+    private async Task ReadAsync(ChatReadDto read)
+    {
+        if (read.ReaderId == _contact?.UserId)
+        {
+            _messages = [.. _messages.Select(m => m.FromUserId == _me && m.ReadAt is null ? m with { ReadAt = read.ReadAt } : m)];
+        }
+
+        await LoadContactsAsync();
+        StateHasChanged();
+    }
+
+    // a contact changed name or picture
+    private void Renamed(Guid userId) => _ = InvokeAsync(async () =>
+    {
+        if (_contacts.Any(c => c.UserId == userId))
+        {
+            await LoadContactsAsync();
+            StateHasChanged();
+        }
+    });
 
     private void Add(ChatMessageDto message)
     {

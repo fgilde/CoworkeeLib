@@ -249,6 +249,12 @@ internal sealed class UpdateUserHandler(
         }
 
         var activated = !user.IsActive && request.IsActive;
+        if (user.IsActive && !request.IsActive)
+        {
+            // ends the user's sessions, so a deactivated user is signed out at once
+            user.SecurityStamp = Guid.NewGuid().ToString();
+        }
+
         user.FirstName = request.FirstName;
         user.LastName = request.LastName;
         user.IsActive = request.IsActive;

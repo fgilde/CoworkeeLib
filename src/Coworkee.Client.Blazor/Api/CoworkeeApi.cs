@@ -102,6 +102,15 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
     public async Task<IReadOnlyCollection<string>> GetMyPermissionsAsync(CancellationToken cancellationToken = default) =>
         await GetAsync<string[]>($"{Identity}/permissions/me", cancellationToken);
 
+    public Task<MyRolesDto> GetMyRolesAsync(string? permission = null, CancellationToken cancellationToken = default) =>
+        GetAsync<MyRolesDto>($"{Identity}/roles/me{(permission is null ? string.Empty : "?permission=" + Uri.EscapeDataString(permission))}", cancellationToken);
+
+    public Task SetActiveRoleAsync(Guid? roleId, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Put, $"{Identity}/roles/me/active", new SetActiveRoleRequest(roleId), cancellationToken);
+
+    public async Task<IReadOnlyList<Guid>> GetOnlineUsersAsync(CancellationToken cancellationToken = default) =>
+        await GetAsync<Guid[]>(Contracts.Realtime.PresenceEvents.Path.TrimStart('/'), cancellationToken);
+
     public Task<PagedResult<UserDto>> GetUsersAsync(PageRequest page, CancellationToken cancellationToken = default) =>
         GetAsync<PagedResult<UserDto>>($"{Identity}/users?page={page.Page}&pageSize={page.PageSize}&search={Uri.EscapeDataString(page.Search ?? string.Empty)}", cancellationToken);
 

@@ -257,7 +257,11 @@ public partial class CoworkeeDataTable<T> : IDisposable
         }
     }
 
-    public void Dispose() => _selection.Changed -= Reload;
+    public void Dispose()
+    {
+        _selection.Changed -= Reload;
+        _live?.Cancel();
+    }
 
     public Task ReloadAsync() => _grid?.ReloadServerData() ?? Task.CompletedTask;
 

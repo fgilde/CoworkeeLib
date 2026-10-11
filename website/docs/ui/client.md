@@ -121,6 +121,9 @@ builder.Services.AddSingleton(new ProfileTab("Documents", "documents", typeof(My
 | `PageHeader` | title, description, actions on the right; sets the browser title |
 | `PermissionGate`, `PermissionView` | render content only with a permission |
 | `RealtimeSubscription` | calls back when the server publishes on a topic, e.g. `type:Brand` |
+| `EntityWatch` | keeps a detail page in step with its entry, goes back when it is deleted |
+| `NotAllowed` | what the router shows instead of a forbidden page, with a switch to a role that grants it |
+| `ActiveRoleMenu`, `ChatNotifier` | in the user menu: the [active role](../modules/realtime.md#active-role) and chat snackbars |
 | `CoworkeeDataTable<T>` | [data tables](data-table.md) |
 | `ShowEditAsync` | edit dialog generated from a model |
 | `AuditTimeline`, `VersionHistory` | change history of an entity |

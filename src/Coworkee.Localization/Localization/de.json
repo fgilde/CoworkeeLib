@@ -710,5 +710,18 @@
   "Dropbox app key": "Dropbox-App-Key",
   "OAuth client id of type web application from the Google Cloud console.": "OAuth-Client-ID vom Typ Webanwendung aus der Google Cloud Console.",
   "Application (client) id of the app registration in Microsoft Entra.": "Anwendungs-ID (Client) der App-Registrierung in Microsoft Entra.",
-  "App key of the Dropbox app with the Chooser.": "App-Key der Dropbox-App mit dem Chooser."
+  "App key of the Dropbox app with the Chooser.": "App-Key der Dropbox-App mit dem Chooser.",
+  "Act as": "Handeln als",
+  "All roles": "Alle Rollen",
+  "Open chat": "Chat öffnen",
+  "Read": "Gelesen",
+  "Someone": "Jemand",
+  "{0}: {1}": "{0}: {1}",
+  "This item was deleted in the meantime.": "Dieser Eintrag wurde inzwischen gelöscht.",
+  "You lack the permission for this page.": "Ihnen fehlt die Berechtigung für diese Seite.",
+  "You need to sign in, or you lack the permission for this page.": "Sie müssen sich anmelden, oder Ihnen fehlt die Berechtigung für diese Seite.",
+  "Another of your roles has access:": "Eine Ihrer anderen Rollen hat Zugriff:",
+  "Switch to {0}": "Zu {0} wechseln",
+  "Act within one role": "In einer Rolle handeln",
+  "Users with several roles choose one in the app bar and then have only its permissions; off, they always have all of them.": "Benutzer mit mehreren Rollen wählen in der App-Leiste eine aus und haben dann nur deren Berechtigungen; ausgeschaltet haben sie immer alle."
 }

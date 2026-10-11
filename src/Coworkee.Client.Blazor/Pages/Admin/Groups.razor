@@ -2,8 +2,7 @@
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + IdentityPermissions.Groups.View)]
 
 <PageHeader Title="Groups" Description="Groups give their members roles together." />
-<RealtimeSubscription Topic="type:UserGroup" OnEvent="_ => _table.ReloadAsync()" />
-<CoworkeeDataTable @ref="_table" T="GroupRow" EntitySet="Groups" SearchFields="SearchFields" Exportable="false" DescribeItem="g => g.Name"
+<CoworkeeDataTable @ref="_table" RealtimeTopic="type:UserGroup" T="GroupRow" EntitySet="Groups" SearchFields="SearchFields" Exportable="false" DescribeItem="g => g.Name"
                    CreateText="New group" CreatePermission="@IdentityPermissions.Groups.Manage" DeletePermission="@IdentityPermissions.Groups.Manage"
                    OnCreate="CreateAsync" OnDelete="DeleteAsync">
     <Columns>

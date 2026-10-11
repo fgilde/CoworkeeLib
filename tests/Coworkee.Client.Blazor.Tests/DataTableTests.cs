@@ -52,6 +52,32 @@ public sealed class DataTableTests : ClientTestBase
     }
 
     [Fact]
+    public void A_burst_of_changes_in_another_session_reloads_the_rows_once()
+    {
+        var realtime = Services.GetRequiredService<FakeRealtimeConnection>();
+        var table = Render<CoworkeeDataTable<Gadget>>(p => p.Add(t => t.EntitySet, "Gadgets").Add(t => t.Columns, Columns()));
+        table.WaitForAssertion(() => realtime.Invocations.ShouldContain(("Subscribe", "type:Gadget")));
+        table.WaitForAssertion(() => _odata.Loads.ShouldBe(1));
+
+        realtime.Push("type:Gadget", Contracts.Realtime.RealtimeEventTypes.EntityChanged, new Contracts.Realtime.EntityChangedPayload("Gadget", "1", "Deleted", []));
+        realtime.Push("type:Gadget", Contracts.Realtime.RealtimeEventTypes.EntityChanged, new Contracts.Realtime.EntityChangedPayload("Gadget", "2", "Deleted", []));
+
+        table.WaitForAssertion(() => _odata.Loads.ShouldBe(2));
+        Thread.Sleep(400);
+        _odata.Loads.ShouldBe(2);
+    }
+
+    [Fact]
+    public void An_empty_realtime_topic_keeps_the_table_quiet()
+    {
+        var realtime = Services.GetRequiredService<FakeRealtimeConnection>();
+        var table = Render<CoworkeeDataTable<Gadget>>(p => p.Add(t => t.EntitySet, "Gadgets").Add(t => t.RealtimeTopic, "").Add(t => t.Columns, Columns()));
+        table.WaitForAssertion(() => _odata.Loads.ShouldBe(1));
+
+        realtime.Invocations.ShouldBeEmpty();
+    }
+
+    [Fact]
     public void A_new_filter_from_the_page_reloads_the_rows()
     {
         var table = Render<CoworkeeDataTable<Gadget>>(p => p.Add(t => t.EntitySet, "Gadgets").Add(t => t.Filter, "Category eq 'Tools'").Add(t => t.Columns, Columns()));

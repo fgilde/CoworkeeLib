@@ -11,4 +11,6 @@ public interface IChatApi
     Task<ChatMessageDto> SendAsync(Guid userId, string text, CancellationToken cancellationToken = default);
 
     Task MarkReadAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    Task<int> GetUnreadCountAsync(CancellationToken cancellationToken = default);
 }

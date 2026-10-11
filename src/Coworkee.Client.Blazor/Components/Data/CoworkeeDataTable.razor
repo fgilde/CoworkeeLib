@@ -108,6 +108,7 @@
     }
 </MudStack>
 <FacetChips Selection="_selection" Filters="FilterChips" OnRemove="RemoveFilterAsync" OnClear="ClearFilters" />
+<RealtimeSubscription Topic="@LiveTopic" OnEvent="_ => LiveChangedAsync()" />
 <MudDataGrid @ref="_grid" T="T" ServerData="LoadAsync" MultiSelection="MultiSelection" SelectedItemsChanged="SelectionChangedAsync" RowsPerPage="PageSize"
              SortMode="SortMode.Multiple" Dense="Dense" Hover="true" Striped="@Theme.StripedTables" Elevation="0" Outlined="true" ChildRowContent="ChildRowContent"
              Groupable="Groupable" GroupExpanded="true" Hideable="ColumnChooser" DragDropColumnReordering="ReorderableColumns" ColumnReorderMode="DataGridDragAndDropColumnReorderMode.Insert"
