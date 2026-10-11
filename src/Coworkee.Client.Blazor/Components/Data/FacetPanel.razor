@@ -1,0 +1,41 @@
+<FacetStyles />
+<div class="cw-facet-panel" data-testid="facet-panel">
+    @if (ShowHeader)
+    {
+        <div class="cw-facet-panel-head">
+            <MudIcon Icon="@Icons.Material.Outlined.FilterAlt" Size="Size.Small" Color="Color.Primary" />
+            <span class="cw-facet-title">@L["Filters"]</span>
+            @if (!Selection.IsEmpty)
+            {
+                <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="Selection.Clear" data-testid="facet-panel-clear">@L["Clear all"]</MudButton>
+            }
+        </div>
+    }
+    @foreach (var group in Groups.OrderBy(g => g.Order))
+    {
+        var count = Selection.Of(group.Key).Count();
+        <section class="@($"cw-facet-section {(IsOpen(group) ? "open" : string.Empty)}")" data-facet="@group.Key">
+            <div class="cw-facet-section-head">
+                <button type="button" class="cw-facet-section-toggle" aria-expanded="@IsOpen(group)" @onclick="() => Toggle(group)">
+                    <MudIcon Icon="@FacetBar.Icon(group)" Size="Size.Small" Class="cw-facet-pill-icon" />
+                    <span class="cw-facet-title">@L[group.Label]</span>
+                    @if (count > 0)
+                    {
+                        <span class="cw-facet-badge">@count</span>
+                    }
+                    <MudIcon Icon="@(IsOpen(group) ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" Size="Size.Small" Class="cw-facet-chevron" />
+                </button>
+                @if (IsOpen(group))
+                {
+                    <FacetGroupHead Group="group" Selection="Selection" ShowTitle="false" View="ViewOf(group)" ViewChanged="v => SetViewAsync(group, v)" />
+                }
+            </div>
+            @if (IsOpen(group))
+            {
+                <div class="cw-facet-section-body">
+                    <FacetGroupView Group="group" Selection="Selection" ShowHeader="false" View="ViewOf(group)" ViewChanged="v => SetViewAsync(group, v)" />
+                </div>
+            }
+        </section>
+    }
+</div>

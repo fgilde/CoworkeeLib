@@ -77,7 +77,11 @@ public sealed class GadgetDbContext(DbContextOptions<GadgetDbContext> options, I
 
 internal sealed class GadgetModelContributor : IModelContributor
 {
-    public void Apply(ModelBuilder modelBuilder) => modelBuilder.Entity<Gadget>(gadget => gadget.ToTable("Gadgets"));
+    public void Apply(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Gadget>(gadget => gadget.ToTable("Gadgets"));
+        modelBuilder.Entity<Widget>(widget => widget.ToTable("Widgets"));
+    }
 }
 
 internal sealed class GadgetPermissions : Coworkee.Application.Authorization.IPermissionDefinitionContributor
@@ -97,6 +101,8 @@ public sealed class GadgetModule : CoworkeeModule
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
         context.Services.AddODataEntity<Gadget>("Gadgets", ODataApp.ViewGadgets, g => g.SerialCode);
         context.Services.AddScoped<IODataEntityFilter<Gadget>, HideSecretGadgets>();
+        context.Services.AddODataEntity<Widget>("Widgets", ODataApp.ViewGadgets);
+        context.Services.ConfigureFacet<Widget>(w => w.Color, f => f.View = Contracts.Data.FacetView.Buttons);
         context.Services.AddMessagingFromAssembly(typeof(GadgetModule).Assembly);
         context.Services.AddODataImport<AddGadgetCommand>("Gadgets");
     }

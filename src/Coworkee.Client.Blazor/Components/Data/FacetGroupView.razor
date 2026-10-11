@@ -1,0 +1,38 @@
+@inherits FacetViewBase
+
+<div class="cw-facet-group" data-facet-group="@Group.Key" data-view="@CurrentView">
+    @if (ShowHeader)
+    {
+        <FacetGroupHead Group="Group" Selection="Selection" ShowTitle="ShowTitle" View="View" ViewChanged="ViewChanged" />
+    }
+    @switch (CurrentView)
+    {
+        case FacetView.Chips:
+            <FacetChipView Group="Group" Selection="Selection" />
+            break;
+        case FacetView.Select:
+            <FacetSelectView Group="Group" Selection="Selection" />
+            break;
+        case FacetView.Buttons:
+            <FacetButtonView Group="Group" Selection="Selection" />
+            break;
+        case FacetView.Swatches:
+            <FacetSwatchView Group="Group" Selection="Selection" />
+            break;
+        case FacetView.Tree:
+            <FacetTreeView Group="Group" Selection="Selection" />
+            break;
+        case FacetView.Toggle:
+            <FacetToggleView Group="Group" Selection="Selection" />
+            break;
+        case FacetView.Range:
+            <FacetRangeView Group="Group" Selection="Selection" />
+            break;
+        case FacetView.Dates:
+            <FacetDateView Group="Group" Selection="Selection" />
+            break;
+        default:
+            <FacetCheckboxView Group="Group" Selection="Selection" />
+            break;
+    }
+</div>

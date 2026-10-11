@@ -87,6 +87,7 @@ plugins:
             Blazor UI: Blazor-UI
             Client and layout: Client und Layout
             Data tables: Datentabellen
+            Query builder: Query-Builder
             Client entities: Client-Entities
             Replacing components: Komponenten ersetzen
             Modules in detail: Module im Detail
@@ -103,6 +104,7 @@ plugins:
             Localization: Lokalisierung
             Database backups: Datenbank-Backups
             Chat: Chat
+            Reporting: Berichte
             Extended attributes: Erweiterte Attribute
             Comments, tags and ratings: Kommentare, Tags und Bewertungen
             AI assistant and MCP: KI-Assistent und MCP
@@ -164,6 +166,7 @@ nav:
   - Blazor UI:
       - Client and layout: ui/client.md
       - Data tables: ui/data-table.md
+      - Query builder: ui/query-builder.md
       - Client entities: ui/client-entities.md
       - Replacing components: ui/customizing.md
   - Modules in detail:
@@ -180,6 +183,7 @@ nav:
       - Localization: modules/localization.md
       - Database backups: modules/backups.md
       - Chat: modules/chat.md
+      - Reporting: modules/reporting.md
       - Extended attributes: modules/extended-attributes.md
       - Comments, tags and ratings: modules/social.md
       - AI assistant and MCP: modules/ai.md

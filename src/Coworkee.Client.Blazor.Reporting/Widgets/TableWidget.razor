@@ -1,0 +1,64 @@
+@inherits WidgetBase
+
+<WidgetStatus Loading="Loading" Error="@Error" Empty="@(_total == 0 && !Loading)">
+    <div class="cw-table-widget" data-testid="table-widget" data-view="@View">
+        @if (View == TableView.Table)
+        {
+            <div class="cw-table-row cw-table-head" style="@Template">
+                @foreach (var column in Columns)
+                {
+                    <button type="button" class="cw-table-cell" @onclick="() => Sort(column.Path)" data-column="@column.Path">
+                        @column.Label
+                        @if (_sort == column.Path)
+                        {
+                            <MudIcon Icon="@(_descending ? Icons.Material.Filled.ArrowDownward : Icons.Material.Filled.ArrowUpward)" Size="Size.Small" />
+                        }
+                    </button>
+                }
+            </div>
+        }
+        <div class="cw-table-scroll">
+            <Virtualize @key="_generation" TItem="IReadOnlyList<System.Text.Json.JsonElement>" ItemsProvider="ProvideAsync" ItemSize="@ItemSize" OverscanCount="6">
+                <ItemContent Context="chunk">
+                    @if (View == TableView.Cards)
+                    {
+                        <div class="cw-card-row" style="@CardColumns">
+                            @foreach (var row in chunk)
+                            {
+                                <div class="cw-row-card">
+                                    <div class="cw-row-card-title">@Text(row, Columns[0])</div>
+                                    @foreach (var column in Columns.Skip(1).Take(4))
+                                    {
+                                        <div class="cw-row-card-field"><span>@column.Label</span><strong>@Text(row, column)</strong></div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                    else if (View == TableView.List)
+                    {
+                        <div class="cw-list-row">
+                            <MudAvatar Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">@Initial(chunk[0])</MudAvatar>
+                            <div class="cw-list-text">
+                                <div class="cw-list-primary">@Text(chunk[0], Columns[0])</div>
+                                <div class="cw-list-secondary">@Secondary(chunk[0])</div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="cw-table-row" style="@Template">
+                            @foreach (var column in Columns)
+                            {
+                                <div class="@CellClass(column)">@Text(chunk[0], column)</div>
+                            }
+                        </div>
+                    }
+                </ItemContent>
+                <Placeholder>
+                    <div class="cw-table-row cw-table-placeholder"><MudSkeleton Width="100%" /></div>
+                </Placeholder>
+            </Virtualize>
+        </div>
+    </div>
+</WidgetStatus>

@@ -34,12 +34,123 @@
 | `Groupable`, `ReorderableColumns`, `ResizableColumns`, `DensityToggle` | Gruppierung, Spalten per Drag & Drop verschieben, Spaltenbreite ziehen und die Dichte-Schaltfläche (alle `true`) |
 | `DataSource` | Zeilen aus einer anderen Quelle als dem OData-Set, siehe unten |
 | `ColumnFilters` | ein Filter in jedem Spaltenkopf, siehe [Spaltenfilter](#spaltenfilter) (Standard `options.DataTable.ColumnFilters`, `true`) |
+| `FacetLayout` | `Bar` (Pillen über den Zeilen, Standard) oder `Panel` (eine Seitenleiste mit allen Facetten offen), siehe [Facetten](#facetten) |
+| `FacetSettings` | das letzte Wort der Seite je Facette: Ansicht, *eines von / alle von*, Ausschluss, Ausblenden |
+| `AdvancedFilter` | die Schaltfläche *Erweiterter Filter* mit dem [Query-Builder](query-builder.md) (Standard `options.DataTable.AdvancedFilter`, `true`) |
+| `QueryFields` | die Felder des Query-Builders; standardmäßig die Eigenschaftsspalten und die Referenz-Facetten |
 
 Die Tabelle lädt von selbst neu, wenn ihre `[Realtime]`-Entity sich ändert (`RealtimeTopic`, siehe [Realtime](../modules/realtime.md#anderungen-an-entities)). `ReloadAsync()` lädt von außen neu, etwa aus einer `RealtimeSubscription`. `Selection` liefert die Facettenauswahl, `CurrentFilter` den OData-Filter, den die Tabelle sendet (fester Filter, Facetten, Spaltenfilter und Suche).
 
 Für Sets, die als [Client-Entities](client-entities.md) markiert sind, filtert, sucht, sortiert und zählt die Tabelle im Browser, sobald die Zeilen angekommen sind.
 
 Der CSV-Export entschärft Werte, die Tabellenkalkulationen sonst als Formel ausführen würden.
+
+## Facetten
+
+Facetten kommen vom Server (`[ProvideFacet]` an der Entität, siehe [OData und Facetten](../web/odata.md#facetten)) mit ihren Werten, Anzahlen und dem OData-Filter jedes Werts. Die Tabelle zeigt jede Facette in einer Ansicht, die zu ihren Werten passt:
+
+| Ansicht | für | Standard für |
+|---|---|---|
+| `Checkbox` | eine Liste mit Anzahlen, einer Suche über langen Listen und *mehr anzeigen* | Text und Referenzen |
+| `Chips` | Chips mit Anzahlen | Enums und Flags mit bis zu 8 Werten |
+| `Select` | eine Auswahlliste, kompakt für lange Listen | |
+| `Buttons` | eine Reihe von Schaltflächen, bei Einfachauswahl mit *Alle* vorne | Radio-Facetten mit bis zu 4 Werten |
+| `Swatches` | Farbpunkte, die Farbe aus `[FacetColor]`, einem Meta-Wert `color` oder dem Wert selbst | |
+| `Tree` | Werte an einem Trenner aufgeteilt ("image/png" unter "image") | |
+| `Toggle` | alle, ja oder nein | `bool` |
+| `Range` | ein Histogramm über einem Schieberegler mit Feldern *von* und *bis* | Zahlen mit `FacetType.Range` |
+| `Dates` | Vorgaben (heute, diese Woche, letzte 30 Tage, ...), ein Histogramm nach Tagen, Monaten oder Jahren und ein eigener Zeitraum | Datumswerte |
+
+![Aufträge mit der Facetten-Leiste](../assets/screenshots/facets-panel.png){ .shot }
+
+Enum-Werte zeigen ihr `[Display(Name)]`, sonst ihre `[Description]`, sonst den Membernamen in Worten (`InTransit` wird zu *In transit*), übersetzt wie jeder andere Text. Adresse, gespeicherte Ansichten und der OData-Filter behalten den Membernamen, eine neue Beschriftung bricht also keinen Link.
+
+### Wie Werte verknüpft werden
+
+| `FacetCombine` | Bedeutung | OData |
+|---|---|---|
+| `Any` (Standard) | Zeilen mit einem der gewählten Werte | `(Status eq 'Open' or Status eq 'Shipped')` |
+| `All` | Zeilen mit allen gewählten Werten, für Werte, die zugleich gelten können, etwa `[Flags]`-Enums | `(Options has 'Express' and Options has 'Insured')` |
+| `Single` | ein Wert auf einmal | `Color eq 'Red'` |
+
+Mit `AllowExclude` lässt sich ein Wert auch ausschließen: die Schaltfläche &#8856; in Listen, ein Rechtsklick auf Chips. Ausgeschlossene Werte werden mit `not` verknüpft: `(Status eq 'Open' and not (Status eq 'Cancelled'))`. Gruppen verknüpfen sich immer mit `and`.
+
+Die Anzahlen folgen den anderen Auswahlen, lassen aber die eigene Auswahl einer Gruppe weg, wie in Shop-Filtern: nach *Offen* zeigt *Unterwegs* weiter, wie viele Zeilen es hinzufügen würde. Die Tabelle schickt die Auswahl getrennt vom übrigen Filter im Header `Coworkee-Facets`; [Client-Entities](client-entities.md) zählen im Browser genauso. Gruppen mit *alle von* zählen mit ihrer eigenen Auswahl, weil jeder weitere Wert einschränkt.
+
+### Eine Facette einstellen
+
+Auf dem Server, neben `[ProvideFacet]`:
+
+```csharp
+[ProvideFacet(Label = "Status")]
+[FacetBehavior(View = FacetView.Chips, AllowExclude = true, Switchable = true)]
+public SalesOrderStatus Status { get; set; }
+
+[ProvideFacet(Label = "Options")]
+[FacetBehavior(Combine = FacetCombine.All, Switchable = true)]
+public SalesOrderOptions Options { get; set; }   // [Flags]-Enum: jedes Flag ist ein Wert
+
+[ProvideFacet(Label = "Total", Type = FacetType.Range)]
+[FacetBehavior(Buckets = 16)]
+public decimal Total { get; set; }
+```
+
+oder ohne die Entität anzufassen:
+
+```csharp
+services.ConfigureFacet<SalesOrder>(o => o.Region, f => { f.View = FacetView.Select; f.AllowExclude = true; });
+```
+
+Mit `Switchable` wechseln Benutzer zwischen *eines von* und *alle von* (wo Werte zugleich gelten können) und zwischen den passenden Ansichten (das Regler-Menü einer Facette); ihre Wahl gehört zu gespeicherten Ansichten. Ohne Angabe bedeutet `MultiSelect = false` an `[ProvideFacet]` `Single` und `GroupOperator = And` `All`.
+
+Die Seite hat das letzte Wort:
+
+```razor
+<CoworkeeDataTable T="SalesOrderDto" EntitySet="SalesOrders" FacetLayout="FacetLayout.Panel" FacetSettings="FacetSettings" ...>
+
+@code {
+    private static readonly Dictionary<string, FacetSettings> FacetSettings = new()
+    {
+        ["region"] = new() { View = FacetView.Select, AllowExclude = true },
+        ["customer"] = new() { Hidden = true },
+    };
+}
+```
+
+Schlüssel sind die Facetten-Schlüssel: der Eigenschaftsname in camelCase (`orderDate`).
+
+**Bereiche**: Zahlen-Facetten mit `FacetType.Range` und Datums-Facetten bekommen ihren kleinsten und größten Wert und ein Histogramm, dessen Balken Optionen mit eigenem Filter sind; Client-Entities zählen sie so lokal nach. Der gewählte Bereich ist ein Wert, `(Total ge 40 and Total le 100)`. Datumsvorgaben bleiben relativ: eine gespeicherte Ansicht mit *letzte 7 Tage* meint die letzten 7 Tage, wann immer sie öffnet.
+
+### Facetten anderswo
+
+Die Facetten-Komponenten funktionieren auch ohne Tabelle, etwa neben einem Diagramm oder in einem Bericht:
+
+```razor
+<FacetPanel Groups="_groups" Selection="_selection" />           @* oder <FacetBar ... /> *@
+
+@code {
+    private readonly FacetSelection _selection = new();
+    private IReadOnlyList<FacetGroupDto> _groups = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _selection.Changed += () => InvokeAsync(LoadAsync);
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        var page = await OData.QueryAsync<OrderDto>("SalesOrders", new ODataQuery
+        {
+            Filter = _selection.ToFilter(), Top = 0, Facets = true, FacetContext = _selection.Context(null, _groups),
+        });
+        _groups = page.Facets;
+        StateHasChanged();
+    }
+}
+```
+
+`FacetGroupView` zeigt eine Gruppe (`FacetStyles` einmal rendern), `FacetSelection` hält die Auswahl und schreibt den OData-Filter (`ToFilter()`, `GroupFilter(key)`), `Facets.View(group)` und `Facets.Combine(group)` sagen, was eine Gruppe zeigt und wie sie verknüpft.
 
 ## Spaltenfilter
 
@@ -107,6 +218,28 @@ Die Reihenfolge: `Filterable`/`FilterOperators` der Spalte, dann die Optionen f�
 
 **Grenzen**: ein Editor pro Spalte (zwei Filter für *zwischen*); der Filter gilt der Eigenschaft der Spalte, nicht dem, was ein `CellTemplate` anzeigt. Datumswerte werden nach ganzen Tagen in der Zeitzone des Browsers gefiltert.
 
+## Erweiterter Filter
+
+*Erweiterter Filter* öffnet den [Query-Builder](query-builder.md) über den Zeilen: verschachtelte Gruppen *alle / eine* aus Bedingungen auf jeder Eigenschaftsspalte, mit Operatoren und Werteeditoren passend zum Typ (Enum-Werte als Auswahl, Datumswerte mit *heute*, *diese Woche* oder *in den letzten n Tagen*, Listen für *ist eines von*). Die Tabelle hängt sein OData an die übrigen Filter, zeigt es als Chip und hält es in Adresse, gespeicherten Ansichten und geteilten Links.
+
+![Erweiterter Filter](../assets/screenshots/advanced-filter.png){ .shot }
+
+Die Felder sind die Eigenschaftsspalten und jede Referenz-Facette, die keine Spalte ist (z. B. *Kunde* als Auswahl seiner Facettenwerte). `QueryFields` ersetzt sie, etwa um eine Suche in einem referenzierten Set hinzuzufügen:
+
+```razor
+<CoworkeeDataTable T="SalesOrderDto" EntitySet="SalesOrders" QueryFields="Fields" ...>
+
+@code {
+    private IReadOnlyList<QueryField> Fields => [
+        new("Number", L["Number"], QueryFieldType.Text),
+        new("Total", L["Total"], QueryFieldType.Number),
+        new("CustomerId", L["Customer"], QueryFieldType.Guid) { Lookup = SearchCustomersAsync },
+    ];
+}
+```
+
+`Advanced` gibt die Abfrage heraus (eine `QueryGroup`); `options.DataTable.AdvancedFilter = false` blendet die Schaltfläche in allen Tabellen aus.
+
 ## Bearbeitungsdialoge
 
 Für einfache Modelle reicht ein erzeugter Dialog:
@@ -148,8 +281,8 @@ Alles, was der Benutzer einrichtet, gehört zum Zustand der Tabelle und lässt s
 - **Gruppierung**: einen Spaltenkopf auf die Zone über den Köpfen ziehen, *Gruppieren* im Menü der Spalte wählen oder Spalten im Gruppier-Menü ankreuzen. Mehrere Spalten gruppieren verschachtelt, in der Reihenfolge der Chips; das &times; eines Chips entfernt seine Ebene. Gruppenzeilen zeigen den Wert und die Anzahl der Zeilen, klappen einzeln oder alle auf und zu und zeigen unter jeder Gruppe die Aggregate der Spalten (`AggregateDefinition`, z. B. einen Durchschnitt).
 - **Sortierung**: mehrere Spaltenköpfe anklicken sortiert nach mehreren Spalten.
 - **Dichte**: die Dichte-Schaltfläche wechselt zwischen kompakten und großzügigen Zeilen; ohne Wahl entscheidet das Theme.
-- **Ansichten**: das Lesezeichen-Menü speichert den aktuellen Zustand unter einem Namen: Suche, Facetten, Spaltenfilter, Reihenfolge, Sichtbarkeit und Breite der Spalten, Gruppierung, Sortierung, Seitengröße und Dichte. Ein Klick stellt ihn wieder her, die Speichern-Schaltfläche überschreibt ihn mit dem aktuellen Zustand, der Stern macht ihn zum Standard, der mit der Tabelle öffnet. *Zurücksetzen* kehrt zu den deklarierten Spalten ohne Filter zurück.
-- **Teilen**: die Link-Schaltfläche kopiert eine Adresse, die die Tabelle genau so öffnet, samt Layout. Die Adresszeile selbst hält Suche, Facetten und Spaltenfilter (`?products=...`), eine gefilterte Liste lässt sich also neu laden und als Lesezeichen speichern. `UrlState="false"` schaltet das ab, `StateKey` benennt den Parameter, wenn eine Seite zwei Tabellen desselben Sets zeigt.
+- **Ansichten**: das Lesezeichen-Menü speichert den aktuellen Zustand unter einem Namen: Suche, Facetten (mit den von Benutzern gewählten Ansichten), Spaltenfilter, den erweiterten Filter, Reihenfolge, Sichtbarkeit und Breite der Spalten, Gruppierung, Sortierung, Seitengröße und Dichte. Ein Klick stellt ihn wieder her, die Speichern-Schaltfläche überschreibt ihn mit dem aktuellen Zustand, der Stern macht ihn zum Standard, der mit der Tabelle öffnet. *Zurücksetzen* kehrt zu den deklarierten Spalten ohne Filter zurück.
+- **Teilen**: die Link-Schaltfläche kopiert eine Adresse, die die Tabelle genau so öffnet, samt Layout. Die Adresszeile selbst hält Suche, Facetten, Spaltenfilter und den erweiterten Filter (`?products=...`), eine gefilterte Liste lässt sich also neu laden und als Lesezeichen speichern. `UrlState="false"` schaltet das ab, `StateKey` benennt den Parameter, wenn eine Seite zwei Tabellen desselben Sets zeigt.
 
 ```razor
 <CoworkeeDataTable T="ProductDto" EntitySet="Products" Expand="Brand" ...>

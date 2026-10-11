@@ -1,11 +1,16 @@
 using Coworkee.Application.Authorization;
 using Coworkee.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.OData.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.OData.Edm;
+using Nextended.Web.OData;
 
 namespace Coworkee.OData;
 
-internal static class ODataEntityAccess
+/// <summary>The rows of a registered entity set the current user may read, as its OData list returns them.</summary>
+public static class ODataEntityAccess
 {
     public static async Task<bool> IsGrantedAsync(IServiceProvider services, Type entityType, CancellationToken cancellationToken) =>
         services.GetRequiredService<ODataEntityRegistry>().Find(entityType)?.Permission is not { } permission
@@ -27,5 +32,21 @@ internal static class ODataEntityAccess
         }
 
         return query;
+    }
+
+    /// <summary>Visible rows narrowed by an OData $filter, parsed against the EDM: hidden properties and unknown names fail with an ODataException.</summary>
+    public static async Task<IQueryable<TEntity>> FilteredAsync<TEntity>(IServiceProvider services, string? filter, CancellationToken cancellationToken)
+        where TEntity : class
+    {
+        var visible = await VisibleAsync<TEntity>(services, cancellationToken);
+        if (string.IsNullOrWhiteSpace(filter))
+        {
+            return visible;
+        }
+
+        var http = new DefaultHttpContext { RequestServices = services };
+        http.ODataFeature().RoutePrefix = CoworkeeODataModule.RoutePrefix;
+        http.Request.QueryString = QueryString.Create("$filter", filter);
+        return visible.ApplyODataFilter(http.Request.ODataQueryOptions<TEntity>(services.GetRequiredService<IEdmModel>()));
     }
 }

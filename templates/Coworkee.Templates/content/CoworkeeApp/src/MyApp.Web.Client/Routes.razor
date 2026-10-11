@@ -1,5 +1,9 @@
 @inject CoworkeeLocalizer L
+@*#if (reports)
+<Router AppAssembly="typeof(Program).Assembly" AdditionalAssemblies="new[] { typeof(Coworkee.Client.Blazor.CoworkeeClientOptions).Assembly, typeof(Coworkee.Client.Blazor.Reporting.ReportingOptions).Assembly }">
+#else
 <Router AppAssembly="typeof(Program).Assembly" AdditionalAssemblies="new[] { typeof(Coworkee.Client.Blazor.CoworkeeClientOptions).Assembly }">
+#endif*@
     <Found Context="routeData">
         <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(CoworkeeLayout)">
             <NotAuthorized>

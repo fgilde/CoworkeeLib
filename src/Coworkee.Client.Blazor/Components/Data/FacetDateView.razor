@@ -1,0 +1,23 @@
+@inherits FacetViewBase
+
+<div class="cw-facet-presets" role="listbox">
+    @foreach (var (key, label) in FacetPresets.All)
+    {
+        <button type="button" class="@($"cw-facet-chip {(Chosen?.Preset == key ? "selected" : string.Empty)}")" role="option" aria-selected="@(Chosen?.Preset == key)"
+                data-preset="@key" @onclick="() => Preset(key, label)">
+            @L[label]
+        </button>
+    }
+</div>
+<FacetHistogram Buckets="Group.Options" IsActive="b => Chosen?.OData == b.OData" Title="BucketTitle" OnPick="PickAsync" Label="@L[Group.Label]" />
+@if (Group.Options.Count > 0)
+{
+    <div class="cw-facet-axis"><span>@Show(Group.Options[0])</span><span>@Show(Group.Options[^1])</span></div>
+}
+<div class="cw-facet-range-inputs">
+    <MudDatePicker @bind-Date="_from" Label="@L["From"]" Variant="Variant.Outlined" Margin="Margin.Dense" Editable="true" data-testid="facet-date-from" />
+    <span class="cw-facet-range-dash">–</span>
+    <MudDatePicker @bind-Date="_to" Label="@L["Up to"]" Variant="Variant.Outlined" Margin="Margin.Dense" Editable="true" data-testid="facet-date-to" />
+</div>
+<MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Class="mt-2" Disabled="@(_from is null && _to is null)" OnClick="Custom"
+           data-testid="facet-date-apply">@L["Apply range"]</MudButton>

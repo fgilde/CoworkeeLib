@@ -23,6 +23,9 @@ public sealed record ODataQuery
 
     public bool Facets { get; init; }
 
+    /// <summary>The facet choice apart from the rest of the filter, so facet counts leave each group's own choice out.</summary>
+    public Contracts.Data.FacetContextDto? FacetContext { get; init; }
+
     public string ToQueryString()
     {
         var parts = new List<string>();

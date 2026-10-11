@@ -1,0 +1,8 @@
+<div @ref="_element" class="grid-stack cw-report-grid @(Editable ? "cw-editing" : null)" data-testid="report-grid">
+    @foreach (var widget in Widgets)
+    {
+        <div @key="widget.Id" class="grid-stack-item" gs-id="@widget.Id" gs-x="@widget.X" gs-y="@widget.Y" gs-w="@widget.W" gs-h="@widget.H" data-widget="@widget.Id">
+            <div class="grid-stack-item-content">@ItemTemplate(widget)</div>
+        </div>
+    }
+</div>

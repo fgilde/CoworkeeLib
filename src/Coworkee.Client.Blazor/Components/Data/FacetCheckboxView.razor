@@ -1,0 +1,39 @@
+@inherits FacetViewBase
+
+@if (Group.Options.Count > SearchFrom)
+{
+    <MudTextField T="string" @bind-Value="_search" Immediate="true" Placeholder="@L["Search {0}", L[Group.Label]]" Variant="Variant.Outlined" Margin="Margin.Dense"
+                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" Clearable="true" Class="cw-facet-search" data-testid="facet-search" />
+}
+<div class="cw-facet-options" role="listbox" aria-multiselectable="@(!Single)">
+    @foreach (var option in Visible)
+    {
+        <div class="@($"cw-facet-option {State(option)} {(IsDisabled(option) ? "disabled" : string.Empty)}")" role="option" aria-selected="@IsSelected(option)"
+             data-option="@option.OData" @onclick="() => Toggle(option)">
+            <MudIcon Icon="@Icon(option)" Size="Size.Small" Class="cw-facet-check" />
+            <span class="cw-facet-label">@Label(option)</span>
+            <span class="cw-facet-count">@Count(option.Count)</span>
+            @if (Group.AllowExclude)
+            {
+                <span @onclick:stopPropagation="true">
+                    <MudTooltip Text="@(IsExcluded(option) ? L["Include again"] : L["Exclude"])">
+                        <MudIconButton Icon="@Icons.Material.Outlined.Block" Size="Size.Small" Class="cw-facet-exclude" Color="@(IsExcluded(option) ? Color.Error : Color.Default)"
+                                       aria-label="@L["Exclude"]" OnClick="() => Exclude(option)" data-testid="facet-exclude" />
+                    </MudTooltip>
+                </span>
+            }
+            <span class="cw-facet-bar" style="@Share(option)"></span>
+        </div>
+    }
+    @if (Matching.Count == 0)
+    {
+        <MudText Typo="Typo.caption" Class="cw-facet-empty">@L["Nothing found."]</MudText>
+    }
+</div>
+@if (Matching.Count > ShowFirst)
+{
+    <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Primary" Class="mt-1" OnClick="() => _all = !_all" data-testid="facet-more"
+               StartIcon="@(_all ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)">
+        @(_all ? L["Show less"] : L["Show {0} more", Matching.Count - ShowFirst])
+    </MudButton>
+}

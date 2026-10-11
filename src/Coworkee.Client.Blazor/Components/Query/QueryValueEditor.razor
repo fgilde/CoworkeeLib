@@ -1,0 +1,46 @@
+@if (Rule.Operator is QueryOperator.InLast or QueryOperator.InNext)
+{
+    <MudNumericField T="int?" Value="Days" ValueChanged="DaysAsync" Min="0" Label="@T("Days")" Variant="Variant.Outlined" Margin="Margin" data-testid="query-value" />
+}
+else if (QueryOperators.IsList(Rule.Operator))
+{
+    @if (Field.Options is { Count: > 0 } options)
+    {
+        <MudSelect T="string" MultiSelection="true" SelectedValues="Rule.Values ?? []" SelectedValuesChanged="ValuesAsync" Label="@T("Values")" Variant="Variant.Outlined"
+                   Margin="Margin" Dense="true" MultiSelectionTextFunc="Joined" data-testid="query-values">
+            @foreach (var option in options)
+            {
+                <MudSelectItem T="string" Value="option.Value">@option.Label</MudSelectItem>
+            }
+        </MudSelect>
+    }
+    else
+    {
+        <div class="qb-tags" data-testid="query-values">
+            @foreach (var value in Rule.Values ?? [])
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Text" OnClose="() => RemoveAsync(value)" data-value="@value">
+                    @QueryDescriber.Show(value, Field, Rule)
+                </MudChip>
+            }
+            @if (Field.Lookup is not null)
+            {
+                <QueryValueInput @key="Rule.Values?.Count" Field="Field" Label="@T("Add value")" Dense="Dense" ValueChanged="AddAsync" OnPicked="Remember" />
+            }
+            else
+            {
+                <MudTextField T="string" @bind-Value="_entry" Label="@T("Add value")" Placeholder="@T("Type and press Enter")" Variant="Variant.Outlined" Margin="Margin"
+                              Immediate="true" OnKeyDown="EntryKeyAsync" OnBlur="EntryBlurAsync" data-testid="query-value-entry" />
+            }
+        </div>
+    }
+}
+else
+{
+    <QueryValueInput Field="Field" Value="@Rule.Value" ValueLabel="@Label(Rule.Value)" ValueChanged="ValueAsync" OnPicked="Remember" Dense="Dense"
+                     Label="@T(QueryOperators.IsRange(Rule.Operator) ? "From" : "Value")" />
+    @if (QueryOperators.IsRange(Rule.Operator))
+    {
+        <QueryValueInput Field="Field" Value="@Rule.Value2" ValueLabel="@Label(Rule.Value2)" ValueChanged="Value2Async" OnPicked="Remember" Dense="Dense" Label="@T("Up to")" />
+    }
+}

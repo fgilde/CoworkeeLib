@@ -429,6 +429,30 @@ namespace MyApp.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Reports",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    OwnerId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    Icon = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
+                    Visibility = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    RoleIds = table.Column<List<Guid>>(type: "uuid[]", nullable: false),
+                    Definition = table.Column<string>(type: "jsonb", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    ModifiedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    ModifiedBy = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Reports", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Roles",
                 schema: "cw",
                 columns: table => new
@@ -655,6 +679,26 @@ namespace MyApp.Infrastructure.Migrations
                         principalSchema: "auth",
                         principalTable: "OpenIddictApplications",
                         principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ReportFavorites",
+                schema: "cw",
+                columns: table => new
+                {
+                    ReportId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ReportFavorites", x => new { x.UserId, x.ReportId });
+                    table.ForeignKey(
+                        name: "FK_ReportFavorites_Reports_ReportId",
+                        column: x => x.ReportId,
+                        principalSchema: "cw",
+                        principalTable: "Reports",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -1160,6 +1204,18 @@ namespace MyApp.Infrastructure.Migrations
                 column: "BrandId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ReportFavorites_ReportId",
+                schema: "cw",
+                table: "ReportFavorites",
+                column: "ReportId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Reports_TenantId_OwnerId",
+                schema: "cw",
+                table: "Reports",
+                columns: new[] { "TenantId", "OwnerId" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ResourcePermissions_PrincipalType_PrincipalId",
                 schema: "cw",
                 table: "ResourcePermissions",
@@ -1361,6 +1417,10 @@ namespace MyApp.Infrastructure.Migrations
                 schema: "app");
 
             migrationBuilder.DropTable(
+                name: "ReportFavorites",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
                 name: "ResourcePermissions",
                 schema: "cw");
 
@@ -1419,6 +1479,10 @@ namespace MyApp.Infrastructure.Migrations
             migrationBuilder.DropTable(
                 name: "Brands",
                 schema: "app");
+
+            migrationBuilder.DropTable(
+                name: "Reports",
+                schema: "cw");
 
             migrationBuilder.DropTable(
                 name: "Themes",
@@ -1802,6 +1866,30 @@ namespace MyApp.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Reports",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    OwnerId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    Icon = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
+                    Visibility = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    RoleIds = table.Column<List<Guid>>(type: "uuid[]", nullable: false),
+                    Definition = table.Column<string>(type: "jsonb", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    ModifiedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    ModifiedBy = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Reports", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Roles",
                 schema: "cw",
                 columns: table => new
@@ -1965,6 +2053,26 @@ namespace MyApp.Infrastructure.Migrations
                         principalSchema: "auth",
                         principalTable: "OpenIddictApplications",
                         principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ReportFavorites",
+                schema: "cw",
+                columns: table => new
+                {
+                    ReportId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ReportFavorites", x => new { x.UserId, x.ReportId });
+                    table.ForeignKey(
+                        name: "FK_ReportFavorites_Reports_ReportId",
+                        column: x => x.ReportId,
+                        principalSchema: "cw",
+                        principalTable: "Reports",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -2431,6 +2539,18 @@ namespace MyApp.Infrastructure.Migrations
                 .Annotation("Npgsql:NullsDistinct", false);
 
             migrationBuilder.CreateIndex(
+                name: "IX_ReportFavorites_ReportId",
+                schema: "cw",
+                table: "ReportFavorites",
+                column: "ReportId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Reports_TenantId_OwnerId",
+                schema: "cw",
+                table: "Reports",
+                columns: new[] { "TenantId", "OwnerId" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ResourcePermissions_PrincipalType_PrincipalId",
                 schema: "cw",
                 table: "ResourcePermissions",
@@ -2620,6 +2740,10 @@ namespace MyApp.Infrastructure.Migrations
                 schema: "cw");
 
             migrationBuilder.DropTable(
+                name: "ReportFavorites",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
                 name: "ResourcePermissions",
                 schema: "cw");
 
@@ -2670,6 +2794,10 @@ namespace MyApp.Infrastructure.Migrations
             migrationBuilder.DropTable(
                 name: "OpenIddictAuthorizations",
                 schema: "auth");
+
+            migrationBuilder.DropTable(
+                name: "Reports",
+                schema: "cw");
 
             migrationBuilder.DropTable(
                 name: "Themes",

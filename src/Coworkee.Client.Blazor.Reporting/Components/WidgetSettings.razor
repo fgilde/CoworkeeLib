@@ -1,0 +1,182 @@
+<div class="cw-widget-settings" data-testid="widget-settings-panel">
+    <div class="cw-settings-head">
+        <MudIcon Icon="@WidgetPresets.IconFor(Widget)" Color="Color.Primary" />
+        <MudText Typo="Typo.h6">@L["Widget"]</MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" aria-label="@L["Close"]" OnClick="OnClose" data-testid="settings-close" />
+    </div>
+    <div class="cw-settings-body">
+        <MudTextField T="string" Value="Widget.Title" ValueChanged="v => Change(() => Widget.Title = v)" Label="@L["Title"]" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true" DebounceInterval="300" data-testid="widget-title" />
+        <MudTextField T="string" Value="Widget.Subtitle" ValueChanged="v => Change(() => Widget.Subtitle = v)" Label="@L["Subtitle"]" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true" DebounceInterval="300" />
+
+        @if (Widget.Type == WidgetType.Chart)
+        {
+            <MudText Typo="Typo.overline" Class="cw-settings-section">@L["Chart"]</MudText>
+            <div class="cw-chart-kinds">
+                @foreach (var preset in WidgetPresets.All.Where(p => p.Type == WidgetType.Chart))
+                {
+                    <MudTooltip Text="@L[preset.Name]">
+                        <MudIconButton Icon="@preset.Icon" Variant="@(Widget.Options.Chart == preset.Chart ? Variant.Filled : Variant.Text)" Color="@(Widget.Options.Chart == preset.Chart ? Color.Primary : Color.Default)"
+                                       Size="Size.Small" aria-label="@L[preset.Name]" OnClick="() => Change(() => Widget.Options.Chart = preset.Chart)" data-chart="@preset.Chart" />
+                    </MudTooltip>
+                }
+            </div>
+        }
+
+        @if (Query is { } query)
+        {
+            <MudText Typo="Typo.overline" Class="cw-settings-section">@L["Data"]</MudText>
+            <MudSelect T="string" Value="query.EntitySet" ValueChanged="SourceChanged" Label="@L["Data source"]" Variant="Variant.Outlined" Margin="Margin.Dense" data-testid="widget-source">
+                @foreach (var source in State.Sources)
+                {
+                    <MudSelectItem Value="source.EntitySet">@L[source.Label]</MudSelectItem>
+                }
+            </MudSelect>
+
+            @if (Widget.Type is WidgetType.Chart or WidgetType.Pivot)
+            {
+                <GroupByEditor Label="@L[Widget.Type == WidgetType.Pivot ? "Rows" : "Group by"]" Fields="Fields" Value="query.GroupBy" ValueChanged="v => Change(() => query.GroupBy = v)" />
+                <GroupByEditor Label="@L[Widget.Type == WidgetType.Pivot ? "Columns" : "Series"]" Fields="Fields" Value="query.SplitBy" ValueChanged="v => Change(() => query.SplitBy = v)" Optional="true" />
+            }
+
+            @if (Widget.Type is WidgetType.Kpi or WidgetType.Chart or WidgetType.Pivot)
+            {
+                <div class="cw-settings-label">@L[Widget.Type == WidgetType.Chart && Widget.Options.Chart == ChartKind.Scatter ? "Values (x, y)" : "Values"]</div>
+                @foreach (var (aggregate, index) in query.Aggregates.Select((a, i) => (a, i)).ToList())
+                {
+                    <div class="cw-aggregate" data-testid="aggregate">
+                        <MudSelect T="AggregateFunction" Value="aggregate.Function" ValueChanged="f => SetAggregate(index, aggregate with { Function = f, Field = f == AggregateFunction.Count ? null : aggregate.Field ?? NumberFields.FirstOrDefault()?.Path })"
+                                   Variant="Variant.Outlined" Margin="Margin.Dense" Class="cw-aggregate-function">
+                            @foreach (var function in Enum.GetValues<AggregateFunction>())
+                            {
+                                <MudSelectItem Value="function">@L[ReportFormat.Humanize(function.ToString())]</MudSelectItem>
+                            }
+                        </MudSelect>
+                        @if (aggregate.Function != AggregateFunction.Count)
+                        {
+                            <MudSelect T="string" Value="aggregate.Field" ValueChanged="f => SetAggregate(index, aggregate with { Field = f })" Variant="Variant.Outlined" Margin="Margin.Dense" Class="cw-aggregate-field">
+                                @foreach (var field in aggregate.Function == AggregateFunction.DistinctCount ? Fields : NumberFields)
+                                {
+                                    <MudSelectItem Value="field.Path">@field.Label</MudSelectItem>
+                                }
+                            </MudSelect>
+                        }
+                        @if (query.Aggregates.Count > 1)
+                        {
+                            <MudIconButton Icon="@Icons.Material.Outlined.RemoveCircleOutline" Size="Size.Small" aria-label="@L["Remove"]" OnClick="() => Change(() => query.Aggregates.RemoveAt(index))" />
+                        }
+                    </div>
+                }
+                @if (Widget.Type == WidgetType.Chart && query.Aggregates.Count < 8 && query.SplitBy is null)
+                {
+                    <MudButton StartIcon="@Icons.Material.Filled.Add" Size="Size.Small" Variant="Variant.Text" OnClick="() => Change(() => query.Aggregates.Add(new ReportAggregate()))" data-testid="add-aggregate">@L["Add value"]</MudButton>
+                }
+            }
+
+            @if (Widget.Type is WidgetType.Table or WidgetType.DataTable)
+            {
+                <MudSelect T="string" SelectedValues="query.Columns" SelectedValuesChanged="ColumnsChanged" MultiSelection="true" Label="@L["Columns"]" Variant="Variant.Outlined" Margin="Margin.Dense"
+                           MultiSelectionTextFunc="@(values => string.Join(", ", values.Select(v => Fields.FirstOrDefault(f => f.Path == v)?.Label ?? v)))" data-testid="widget-columns">
+                    @foreach (var field in Fields)
+                    {
+                        <MudSelectItem Value="field.Path">@field.Label</MudSelectItem>
+                    }
+                </MudSelect>
+                <div class="cw-settings-row">
+                    <MudSelect T="string" Value="query.OrderBy" ValueChanged="v => Change(() => query.OrderBy = v)" Label="@L["Sort by"]" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true">
+                        @foreach (var field in Fields)
+                        {
+                            <MudSelectItem Value="field.Path">@field.Label</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudSwitch T="bool" Value="query.Descending" ValueChanged="v => Change(() => query.Descending = v)" Color="Color.Primary" Label="@L["Descending"]" />
+                </div>
+            }
+
+            <MudSelect T="string" Value="query.DateField" ValueChanged="v => Change(() => query.DateField = v)" Label="@L["Date for the report's date range"]" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true">
+                @foreach (var field in Fields.Where(f => f.Kind == ReportFieldKind.Date))
+                {
+                    <MudSelectItem Value="field.Path">@field.Label</MudSelectItem>
+                }
+            </MudSelect>
+
+            @if (Widget.Type is WidgetType.Chart or WidgetType.Pivot)
+            {
+                <div class="cw-settings-row">
+                    <MudSelect T="ReportSortBy" Value="query.SortBy" ValueChanged="v => Change(() => query.SortBy = v)" Label="@L["Sort by"]" Variant="Variant.Outlined" Margin="Margin.Dense">
+                        <MudSelectItem Value="ReportSortBy.Key">@L["Category"]</MudSelectItem>
+                        <MudSelectItem Value="ReportSortBy.Value">@L["Value"]</MudSelectItem>
+                    </MudSelect>
+                    <MudNumericField T="int?" Value="query.Top" ValueChanged="v => Change(() => query.Top = v)" Label="@L["Top"]" Min="1" Max="1000" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" />
+                </div>
+                <MudSwitch T="bool" Value="query.Descending" ValueChanged="v => Change(() => query.Descending = v)" Color="Color.Primary" Label="@L["Descending"]" />
+            }
+
+            <MudText Typo="Typo.overline" Class="cw-settings-section">@L["Filter"]</MudText>
+            <WidgetFilterEditor Query="query" State="State" Changed="() => Change(() => { })" />
+        }
+
+        @if (Widget.Type is WidgetType.Kpi or WidgetType.Chart or WidgetType.Pivot)
+        {
+            <MudText Typo="Typo.overline" Class="cw-settings-section">@L["Display"]</MudText>
+            <div class="cw-settings-row">
+                <MudSelect T="NumberFormat" Value="Widget.Options.Format" ValueChanged="v => Change(() => Widget.Options.Format = v)" Label="@L["Number format"]" Variant="Variant.Outlined" Margin="Margin.Dense">
+                    @foreach (var format in Enum.GetValues<NumberFormat>())
+                    {
+                        <MudSelectItem Value="format">@L[format.ToString()]</MudSelectItem>
+                    }
+                </MudSelect>
+                @if (Widget.Options.Format == NumberFormat.Currency)
+                {
+                    <MudTextField T="string" Value="Widget.Options.Currency" ValueChanged="v => Change(() => Widget.Options.Currency = v)" Label="@L["Currency"]" MaxLength="3" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                }
+            </div>
+            <MudNumericField T="double?" Value="Widget.Options.Target" ValueChanged="v => Change(() => Widget.Options.Target = v)" Label="@L["Target"]" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" />
+        }
+
+        @if (Widget.Type == WidgetType.Kpi)
+        {
+            <MudSwitch T="bool" Value="Widget.Options.CompareToPrevious" ValueChanged="v => Change(() => Widget.Options.CompareToPrevious = v)" Color="Color.Primary" Label="@L["Compare with the period before"]" />
+            <MudSwitch T="bool" Value="Widget.Options.HigherIsBetter" ValueChanged="v => Change(() => Widget.Options.HigherIsBetter = v)" Color="Color.Primary" Label="@L["Higher is better"]" />
+            <MudSelect T="DateBucket" Value="Widget.Options.Sparkline" ValueChanged="v => Change(() => Widget.Options.Sparkline = v)" Label="@L["Curve over time"]" Variant="Variant.Outlined" Margin="Margin.Dense">
+                @foreach (var bucket in Enum.GetValues<DateBucket>())
+                {
+                    <MudSelectItem Value="bucket">@L[bucket == DateBucket.None ? "None" : "By " + bucket.ToString().ToLowerInvariant()]</MudSelectItem>
+                }
+            </MudSelect>
+        }
+
+        @if (Widget.Type == WidgetType.Chart)
+        {
+            <MudSwitch T="bool" Value="Widget.Options.ShowLegend" ValueChanged="v => Change(() => Widget.Options.ShowLegend = v)" Color="Color.Primary" Label="@L["Legend"]" />
+            <MudSwitch T="bool" Value="Widget.Options.ShowDataLabels" ValueChanged="v => Change(() => Widget.Options.ShowDataLabels = v)" Color="Color.Primary" Label="@L["Values on the chart"]" />
+        }
+
+        @if (Widget.Type is WidgetType.Chart or WidgetType.Pivot)
+        {
+            <MudSwitch T="bool" Value="Widget.Options.CrossFilter" ValueChanged="v => Change(() => Widget.Options.CrossFilter = v)" Color="Color.Primary" Label="@L["Clicks filter the other widgets"]" />
+        }
+
+        @if (Widget.Type == WidgetType.Table)
+        {
+            <MudSelect T="TableView" Value="Widget.Options.View" ValueChanged="v => Change(() => Widget.Options.View = v)" Label="@L["View"]" Variant="Variant.Outlined" Margin="Margin.Dense">
+                @foreach (var view in Enum.GetValues<TableView>())
+                {
+                    <MudSelectItem Value="view">@L[view.ToString()]</MudSelectItem>
+                }
+            </MudSelect>
+        }
+
+        @if (Widget.Type == WidgetType.Markdown)
+        {
+            <MudTextField T="string" Value="Widget.Options.Text" ValueChanged="v => Change(() => Widget.Options.Text = v)" Label="@L["Text (Markdown)"]" Lines="12" Variant="Variant.Outlined"
+                          Immediate="true" DebounceInterval="400" data-testid="widget-text" />
+        }
+
+        @if (Widget.Type is WidgetType.Image or WidgetType.Embed)
+        {
+            <MudTextField T="string" Value="Widget.Options.Url" ValueChanged="v => Change(() => Widget.Options.Url = v)" Label="@L["Address"]" Placeholder="https://"
+                          Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true" DebounceInterval="500" data-testid="widget-url" />
+        }
+    </div>
+</div>

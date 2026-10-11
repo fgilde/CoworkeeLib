@@ -31,6 +31,9 @@ internal sealed class MyAppNavigation : INavigationContributor
 #if (chat)
         .Place("/chat", Communication)
 #endif
+#if (reports)
+        .Place("/reports", Personal, order: 0)
+#endif
         .IconForGroup(Communication, MudBlazor.Icons.Material.Outlined.Forum)
         .IconForGroup(Personal, MudBlazor.Icons.Material.Outlined.Person)
         .IconForGroup(DocumentManagement, MudBlazor.Icons.Material.Outlined.Description)

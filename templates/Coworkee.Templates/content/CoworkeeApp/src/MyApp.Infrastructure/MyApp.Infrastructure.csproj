@@ -47,6 +47,9 @@
     <!--#if (chat) -->
     <CoworkeePackage Include="Coworkee.Chat" />
     <!--#endif -->
+    <!--#if (reports) -->
+    <CoworkeePackage Include="Coworkee.Reporting" />
+    <!--#endif -->
     <!--#if (ai) -->
     <CoworkeePackage Include="Coworkee.Ai" />
     <!--#endif -->

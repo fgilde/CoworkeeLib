@@ -29,6 +29,9 @@ namespace MyApp.Infrastructure;
 #if (chat)
     , typeof(Coworkee.Chat.CoworkeeChatModule)
 #endif
+#if (reports)
+    , typeof(Coworkee.Reporting.CoworkeeReportingModule)
+#endif
 #if (ai)
     , typeof(Coworkee.Ai.CoworkeeAiModule)
 #endif

@@ -1,0 +1,127 @@
+@page "/reports/{Id:guid}"
+@attribute [Authorize(Policy = Coworkee.Client.Blazor.Security.PermissionPolicy.Prefix + ReportPermissions.View)]
+
+<ReportStyles />
+<PageTitle>@(_report?.Name ?? L["Reports"])</PageTitle>
+<RealtimeSubscription Topic="@($"entity:Report:{Id}")" OnEvent="_ => ReportChangedAsync()" />
+@foreach (var topic in DataTopics)
+{
+    <RealtimeSubscription @key="topic" Topic="@topic" OnEvent="_ => DataChanged()" />
+}
+
+@if (_failed is { } failed)
+{
+    <MudAlert Severity="Severity.Warning" Class="mt-4">@failed</MudAlert>
+}
+else if (_report is null || _state is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <div class="cw-report-page @(_editing ? "cw-report-editing" : null)" data-testid="report-page">
+        <div class="cw-report-header">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="reports" aria-label="@L["Reports"]" Class="cw-no-print" />
+            <div class="cw-report-card-icon"><MudIcon Icon="@(_report.Icon ?? Icons.Material.Outlined.SpaceDashboard)" /></div>
+            <div class="cw-report-heading">
+                <div class="cw-report-name">
+                    <MudText Typo="Typo.h5" Color="Color.Primary" data-testid="report-title">@_report.Name</MudText>
+                    <MudIconButton Icon="@(_report.IsFavorite ? Icons.Material.Filled.Star : Icons.Material.Outlined.StarBorder)" Color="@(_report.IsFavorite ? Color.Warning : Color.Default)"
+                                   Size="Size.Small" aria-label="@L["Favorite"]" OnClick="FavoriteAsync" Class="cw-no-print" />
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Icon="@Reports.VisibilityIcon(_report.Visibility)" Class="cw-no-print">@L[Reports.VisibilityText(_report.Visibility)]</MudChip>
+                </div>
+                @if (_report.Description is { Length: > 0 } description)
+                {
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">@description</MudText>
+                }
+            </div>
+            <MudSpacer />
+            <div class="cw-report-actions cw-no-print">
+                @if (_editing)
+                {
+                    <MudMenu Dense="Density.Dense" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" MaxHeight="520" data-testid="widget-palette">
+                        <ActivatorContent Context="menu">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@(() => menu.ToggleAsync())" data-testid="add-widget">@L["Add widget"]</MudButton>
+                        </ActivatorContent>
+                        <ChildContent>
+                            @foreach (var preset in WidgetPresets.All)
+                            {
+                                <MudMenuItem Icon="@preset.Icon" OnClick="() => Add(preset)" data-preset="@preset.Name">@L[preset.Name]</MudMenuItem>
+                            }
+                        </ChildContent>
+                    </MudMenu>
+                    <MudTooltip Text="@L["Undo"]"><MudIconButton Icon="@Icons.Material.Outlined.Undo" Disabled="_undo.Count == 0" OnClick="Undo" data-testid="undo" /></MudTooltip>
+                    <MudTooltip Text="@L["Redo"]"><MudIconButton Icon="@Icons.Material.Outlined.Redo" Disabled="_redo.Count == 0" OnClick="Redo" data-testid="redo" /></MudTooltip>
+                    <MudTooltip Text="@L["Report settings"]"><MudIconButton Icon="@Icons.Material.Outlined.Settings" OnClick="SettingsAsync" data-testid="report-settings-open" /></MudTooltip>
+                    <MudButton Variant="Variant.Text" OnClick="CancelEdit" data-testid="edit-cancel">@L["Cancel"]</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Save" Disabled="_saving" OnClick="SaveAsync" data-testid="report-save">@L["Save"]</MudButton>
+                }
+                else
+                {
+                    @if (_definition!.RefreshSeconds > 0)
+                    {
+                        <MudTooltip Text="@L["Refreshes every {0} seconds", _definition.RefreshSeconds]">
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Icon="@Icons.Material.Outlined.Autorenew" Color="Color.Primary">@L["Live"]</MudChip>
+                        </MudTooltip>
+                    }
+                    <MudTooltip Text="@L["Refresh"]"><MudIconButton Icon="@Icons.Material.Outlined.Refresh" OnClick="_state.Refresh" data-testid="report-refresh" /></MudTooltip>
+                    <MudTooltip Text="@L["Presentation"]"><MudIconButton Icon="@Icons.Material.Outlined.Fullscreen" OnClick="PresentAsync" /></MudTooltip>
+                    <MudMenu Icon="@Icons.Material.Outlined.FileDownload" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="Density.Dense" aria-label="@L["Export"]" data-testid="report-export">
+                        <MudMenuItem Icon="@Icons.Material.Outlined.Image" OnClick="PngAsync">@L["Image (PNG)"]</MudMenuItem>
+                        <MudMenuItem Icon="@Icons.Material.Outlined.PictureAsPdf" OnClick="PrintAsync">@L["PDF or print"]</MudMenuItem>
+                        <MudMenuItem Icon="@Icons.Material.Outlined.DataObject" OnClick="ExportJsonAsync">@L["Report file (JSON)"]</MudMenuItem>
+                    </MudMenu>
+                    <PermissionGate Permission="@ReportPermissions.Manage">
+                        <MudTooltip Text="@L["Duplicate"]"><MudIconButton Icon="@Icons.Material.Outlined.ContentCopy" OnClick="DuplicateAsync" /></MudTooltip>
+                    </PermissionGate>
+                    @if (_report.CanEdit)
+                    {
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Edit" OnClick="StartEdit" data-testid="report-edit">@L["Edit"]</MudButton>
+                    }
+                }
+            </div>
+        </div>
+
+        <ReportFilterBar State="_state" />
+
+        <div class="cw-report-canvas">
+            <div class="cw-report-board" @ref="_board">
+                @if (_definition!.Widgets.Count == 0)
+                {
+                    <div class="cw-report-start" data-testid="report-empty">
+                        <MudIcon Icon="@Icons.Material.Outlined.Dashboard" Color="Color.Primary" Style="font-size:3.5rem" />
+                        <MudText Typo="Typo.h6">@L["This report has no widgets yet."]</MudText>
+                        @if (_editing)
+                        {
+                            <div class="cw-start-presets">
+                                @foreach (var preset in WidgetPresets.All.Take(8))
+                                {
+                                    <button type="button" class="cw-start-preset" @onclick="() => Add(preset)">
+                                        <MudIcon Icon="@preset.Icon" Color="Color.Primary" />
+                                        <span>@L[preset.Name]</span>
+                                    </button>
+                                }
+                            </div>
+                        }
+                        else if (_report.CanEdit)
+                        {
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Edit" OnClick="StartEdit">@L["Edit"]</MudButton>
+                        }
+                    </div>
+                }
+                <ReportGrid @ref="_grid" Widgets="_definition.Widgets" Editable="_editing" LayoutChanged="LayoutChanged">
+                    <ItemTemplate Context="widget">
+                        <WidgetFrame Widget="widget" State="_state" Editing="_editing" Selected="@(_selected == widget)" OnSettings="() => Select(widget)"
+                                     OnRemove="() => Remove(widget)" OnDuplicate="() => Duplicate(widget)" OnChanged="StateHasChanged" />
+                    </ItemTemplate>
+                </ReportGrid>
+            </div>
+            @if (_editing && _selected is not null)
+            {
+                <aside class="cw-settings-panel cw-no-print">
+                    <WidgetSettings @key="_selected.Id" Widget="_selected" State="_state" OnChanged="SettingsChanged" OnClose="() => _selected = null" />
+                </aside>
+            }
+        </div>
+    </div>
+}

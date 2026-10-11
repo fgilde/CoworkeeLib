@@ -175,6 +175,11 @@ public static class ODataLinq
                 return token.OperatorKind == BinaryOperatorKind.And ? Expression.AndAlso(AsBool(left), AsBool(right)) : Expression.OrElse(AsBool(left), AsBool(right));
             }
 
+            if (token.OperatorKind == BinaryOperatorKind.Has)
+            {
+                return Has(left, right);
+            }
+
             (left, right) = Unify(left, right);
             if (left.Type == typeof(string) && token.OperatorKind is not (BinaryOperatorKind.Equal or BinaryOperatorKind.NotEqual))
             {
@@ -243,6 +248,21 @@ public static class ODataLinq
             }
 
             return (member, Expression.Constant(ConvertValue(constant.Value, target), member.Type));
+        }
+
+        // "Flags has 'Express'": the flag's bits are all set
+        private static Expression Has(Expression left, Expression right)
+        {
+            var type = Nullable.GetUnderlyingType(left.Type) ?? left.Type;
+            if (!type.IsEnum || right is not ConstantExpression { Value: var value })
+            {
+                throw new NotSupportedException("'has' needs an enum property and a flag.");
+            }
+
+            var flag = Convert.ToInt64(ConvertValue(value is Microsoft.OData.ODataEnumValue named ? named.Value : value, type), CultureInfo.InvariantCulture);
+            var bits = Expression.Convert(left, left.Type == type ? typeof(long) : typeof(long?));
+            var mask = Expression.Constant(flag, bits.Type);
+            return Expression.Equal(Expression.And(bits, mask), mask);
         }
 
         private Expression Function(FunctionCallToken token)

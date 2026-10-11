@@ -1,0 +1,42 @@
+<div class="@(QueryOperators.IsComplete(Rule) ? "qb-rule" : "qb-rule qb-incomplete")" data-testid="query-rule" data-field="@Rule.Field">
+    <div class="qb-field">
+        <MudSelect T="string" Value="Rule.Field" ValueChanged="FieldAsync" Label="@T("Field")" Variant="Variant.Outlined" Margin="Margin" Dense="true"
+                   AnchorOrigin="Origin.BottomLeft" data-testid="query-field">
+            @foreach (var group in Fields.GroupBy(f => f.Category))
+            {
+                @if (group.Key is { } category)
+                {
+                    <MudListSubheader>@category</MudListSubheader>
+                }
+                @foreach (var field in group)
+                {
+                    <MudSelectItem T="string" Value="field.Name">
+                        <span class="d-flex align-center gap-2"><MudIcon Icon="@Icon(field)" Size="Size.Small" Color="Color.Secondary" />@field.Label</span>
+                    </MudSelectItem>
+                }
+            }
+        </MudSelect>
+    </div>
+    @if (Field is { } field)
+    {
+        <div class="qb-op">
+            <MudSelect T="QueryOperator" Value="Rule.Operator" ValueChanged="OperatorAsync" Label="@T("Operator")" Variant="Variant.Outlined" Margin="Margin" Dense="true"
+                       ToStringFunc="op => T(QueryOperators.Label(op, field.Type))" data-testid="query-operator">
+                @foreach (var op in QueryOperators.For(field))
+                {
+                    <MudSelectItem T="QueryOperator" Value="op">@T(QueryOperators.Label(op, field.Type))</MudSelectItem>
+                }
+            </MudSelect>
+        </div>
+        @if (QueryOperators.NeedsValue(Rule.Operator))
+        {
+            <div class="qb-value">
+                <QueryValueEditor @key="(Rule.Field, Rule.Operator)" Rule="Rule" Field="field" Dense="Dense" Localize="Localize" Changed="Changed" />
+            </div>
+        }
+    }
+    <div class="qb-actions">
+        <QueryMoveButtons Position="Position" Localize="Localize" OnMove="OnMove" />
+        <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small" OnClick="OnRemove" aria-label="@T("Remove condition")" data-testid="query-remove-rule" />
+    </div>
+</div>

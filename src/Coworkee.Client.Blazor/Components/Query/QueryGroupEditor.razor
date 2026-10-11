@@ -1,0 +1,48 @@
+<div class="@Class" style="@Accent" data-testid="query-group" data-depth="@Depth">
+    <div class="qb-group-head">
+        <MudToggleGroup T="QueryLogic" Value="Group.Logic" ValueChanged="LogicAsync" Size="Size.Small" Color="Color.Primary" Outlined="true" Delimiters="true"
+                        data-testid="query-logic">
+            <MudToggleItem Value="QueryLogic.And" Text="@T("All")" />
+            <MudToggleItem Value="QueryLogic.Or" Text="@T("Any")" />
+        </MudToggleGroup>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">@T(Group.Logic == QueryLogic.And ? "of these must hold" : "of these may hold")</MudText>
+        <MudSwitch T="bool" Value="Group.Not" ValueChanged="NotAsync" Color="Color.Error" Size="Size.Small" Label="@T("Not")" data-testid="query-not" />
+        <div class="qb-actions">
+            <MudButton Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Text" Color="Color.Primary" OnClick="AddRuleAsync" data-testid="query-add-rule">@T("Condition")</MudButton>
+            @if (Depth < MaxDepth)
+            {
+                <MudButton Size="Size.Small" StartIcon="@Icons.Material.Filled.AccountTree" Variant="Variant.Text" Color="Color.Secondary" OnClick="AddGroupAsync" data-testid="query-add-group">@T("Group")</MudButton>
+            }
+            <QueryMoveButtons Position="Position" Localize="Localize" OnMove="OnMove" />
+            @if (OnRemove.HasDelegate)
+            {
+                <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" OnClick="OnRemove" aria-label="@T("Remove group")" data-testid="query-remove-group" />
+            }
+        </div>
+    </div>
+    <div class="qb-children">
+        @if (Group.Children.Count == 0)
+        {
+            <div class="qb-empty">@T("No conditions yet. Add one to filter.")</div>
+        }
+        @for (var i = 0; i < Group.Children.Count; i++)
+        {
+            var index = i;
+            var child = Group.Children[i];
+            @if (i > 0)
+            {
+                <div class="qb-join">@T(Group.Logic == QueryLogic.And ? "and" : "or")</div>
+            }
+            @if (child is QueryGroup nested)
+            {
+                <QueryGroupEditor @key="child.Id" Group="nested" Fields="Fields" Depth="Depth + 1" MaxDepth="MaxDepth" Dense="Dense" Localize="Localize" Changed="Changed"
+                                  OnRemove="() => RemoveAsync(index)" Position="(index, Group.Children.Count)" OnMove="by => MoveAsync(index, by)" />
+            }
+            else
+            {
+                <QueryRuleEditor @key="child.Id" Rule="(QueryRule)child" Fields="Fields" Dense="Dense" Localize="Localize" Changed="Changed"
+                                 OnRemove="() => RemoveAsync(index)" Position="(index, Group.Children.Count)" OnMove="by => MoveAsync(index, by)" />
+            }
+        }
+    </div>
+</div>

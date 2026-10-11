@@ -72,6 +72,8 @@ public static class OptionCatalog
             "When users should hear about changes (comments, chat, own events).", ["Bell with live updates", "Digest mails"], ["Tables and a background job"], Package: "Coworkee.Notifications"),
         new("chat", Modules, "Chat", "Direct and group chat with realtime delivery.", OptionKind.Bool, "true",
             "For apps where users work together.", ["Built-in communication"], ["Not every app needs it"], Package: "Coworkee.Chat"),
+        new("reports", Modules, "Reports", "Dashboards over the OData entity sets with charts, KPIs, tables and filters, aggregated on the server.", OptionKind.Bool, "true",
+            "For apps whose users want to see their numbers.", ["Users build their own dashboards", "Shared with roles"], ["A designer page and two tables"], Package: "Coworkee.Reporting"),
         new("ai", Modules, "AI assistant", "Assistant page, MCP endpoint and tool call audit; every permitted command becomes a tool (provider and key in the settings).", OptionKind.Bool, "true",
             "When users or agents should work with the app in natural language.", ["Tools come from the existing commands", "MCP endpoint for Claude and other clients"], ["Needs an AI provider to answer"], Package: "Coworkee.Ai"),
         new("backup", Modules, "Database backups", "Backups and restore of the database from the admin pages.", OptionKind.Bool, "true",
