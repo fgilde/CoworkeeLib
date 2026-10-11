@@ -102,9 +102,10 @@ public partial class CoworkeeNavMenu : IDisposable
 
     private static bool HasLink(NavigationEntry? entry) => !string.IsNullOrWhiteSpace(entry?.Href);
 
+    // the tree reports the entry SelectCurrent chose as a selection too; going there would drop the query or leave a detail page
     private Task SelectAsync(NavigationEntry? entry)
     {
-        if (HasLink(entry))
+        if (HasLink(entry) && entry != _selected)
         {
             _selected = entry;
             Nav.NavigateTo(entry!.Href!, entry.ForceLoad);
