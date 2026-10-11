@@ -42,11 +42,18 @@ public static class DataTableQueryFields
         var underlying = Nullable.GetUnderlyingType(type) ?? type;
         var nullable = underlying != type || !type.IsValueType;
         var field = FieldType.Identify(underlying);
+        if (underlying == typeof(DateTimeOffset) || underlying == typeof(DateTime))
+        {
+            return new QueryField(path, label, QueryFieldType.DateTime) { Nullable = nullable };
+        }
+
         return field switch
         {
             { IsEnum: true } => new QueryField(path, label, QueryFieldType.Enum)
             {
-                Options = [.. Enum.GetNames(underlying).Select(n => new QueryOption(n, l[EnumLabels.Of(underlying, n)]))],
+                Options = [.. Enum.GetValues(underlying).Cast<Enum>().Where(v => !Flagged(underlying) || Convert.ToInt64(v, System.Globalization.CultureInfo.InvariantCulture) != 0)
+                    .Select(v => new QueryOption(v.ToString(), l[EnumLabels.Of(v)]))],
+                Flags = Flagged(underlying),
                 Nullable = nullable,
             },
             { IsString: true } => new QueryField(path, label, QueryFieldType.Text),
@@ -58,6 +65,8 @@ public static class DataTableQueryFields
             _ => null,
         };
     }
+
+    private static bool Flagged(Type type) => type.IsDefined(typeof(FlagsAttribute), false);
 
     // the declared type of a path such as Customer.Name, with Nullable kept (the grid's value type drops it)
     private static Type? Property(Type type, string path)

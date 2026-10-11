@@ -136,7 +136,7 @@
             <span class="cw-facet-title">@L["Advanced filter"]</span>
             @if (!_advanced.IsEmpty)
             {
-                <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="() => AdvancedChangedAsync(new())" data-testid="advanced-clear">@L["Clear"]</MudButton>
+                <MudButton Size="Size.Small" Variant="Variant.Text" Class="cw-facet-clear" OnClick="() => AdvancedChangedAsync(new())" data-testid="advanced-clear">@L["Clear"]</MudButton>
             }
             <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" aria-label="@L["Close"]" OnClick="() => _advancedOpen = false" />
         </div>

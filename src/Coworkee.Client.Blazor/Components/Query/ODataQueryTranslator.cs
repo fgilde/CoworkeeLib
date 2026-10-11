@@ -43,6 +43,13 @@ public static class ODataQueryTranslator
         }
 
         string Lit(string value) => Literal(value, type);
+        if (field.Flags && rule.Operator is QueryOperator.Equal or QueryOperator.NotEqual or QueryOperator.In or QueryOperator.NotIn)
+        {
+            var flags = QueryOperators.IsList(rule.Operator) ? rule.Values! : [rule.Value!];
+            var has = flags.Count == 1 ? $"{path} has {Lit(flags[0])}" : "(" + string.Join(" or ", flags.Select(f => $"{path} has {Lit(f)}")) + ")";
+            return rule.Operator is QueryOperator.Equal or QueryOperator.In ? has : $"not {Wrap(has)}";
+        }
+
         return rule.Operator switch
         {
             QueryOperator.IsNull => type == QueryFieldType.Text ? $"({path} eq null or {path} eq '')" : $"{path} eq null",

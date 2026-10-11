@@ -14,6 +14,9 @@ public sealed record QueryField(string Name, string Label, QueryFieldType Type)
     /// <summary>Searches choices as the user types, e.g. customers by name; the value is the option's <see cref="QueryOption.Value"/>.</summary>
     public Func<string?, CancellationToken, Task<IReadOnlyList<QueryOption>>>? Lookup { get; init; }
 
+    /// <summary>A [Flags] enum: "is" means the flag is set (<c>has</c>), so "is any of" and "is none of" test single flags.</summary>
+    public bool Flags { get; init; }
+
     /// <summary>Offers "is empty" and "is not empty".</summary>
     public bool Nullable { get; init; }
 

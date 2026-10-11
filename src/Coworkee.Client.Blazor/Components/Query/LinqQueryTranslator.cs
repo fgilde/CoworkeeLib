@@ -69,6 +69,13 @@ public static class LinqQueryTranslator
         }
 
         Expression Const(string text) => Expression.Constant(Parse(text, type), value.Type);
+        if (field.Flags && type.IsEnum && rule.Operator is QueryOperator.Equal or QueryOperator.NotEqual or QueryOperator.In or QueryOperator.NotIn)
+        {
+            var flags = QueryOperators.IsList(rule.Operator) ? rule.Values! : [rule.Value!];
+            var has = flags.Select(f => Has(value, type, f)).Aggregate(Expression.OrElse);
+            return rule.Operator is QueryOperator.Equal or QueryOperator.In ? has : Expression.Not(has);
+        }
+
         return rule.Operator switch
         {
             QueryOperator.IsTrue => Expression.Equal(value, Expression.Constant(true, value.Type)),
@@ -126,6 +133,13 @@ public static class LinqQueryTranslator
         _ when type == typeof(DateTime) => DateTime.Parse(text, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal),
         _ => Convert.ChangeType(text, type, CultureInfo.InvariantCulture),
     };
+
+    private static Expression Has(Expression value, Type type, string flag)
+    {
+        var bits = Expression.Convert(value, value.Type == type ? typeof(long) : typeof(long?));
+        var mask = Expression.Constant(Convert.ToInt64(Parse(flag, type), CultureInfo.InvariantCulture), bits.Type);
+        return Expression.Equal(Expression.And(bits, mask), mask);
+    }
 
     private static Expression IsNull(Expression value)
     {

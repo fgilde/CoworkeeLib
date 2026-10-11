@@ -39,7 +39,7 @@ public sealed class Product : AuditedEntity, IMultiTenant
 }
 ```
 
-When the request asks for them with `Prefer: odata.include-annotations="cn.facets"`, the page carries the facet groups under `@cn.facets`: every option with label, count and the OData filter fragment to apply. The counts follow the current filter, the same way shop filters do. [`CoworkeeDataTable`](../ui/data-table.md) shows them as menus with check boxes; options of one group combine with *or*, groups with *and*.
+When the request asks for them with `Prefer: odata.include-annotations="cn.facets"`, the page carries the facet groups under `@cn.facets`: every option with label, count and the OData filter fragment to apply. The counts follow the current filter, the same way shop filters do. Enum options carry the member name as value and filter (`Status eq 'Shipped'`) and their `[Display]` name as label; `[Flags]` enums list each flag (`Options has 'Express'`). Number ranges and dates come with their smallest and largest value and a histogram of buckets. `[FacetBehavior]` next to `[ProvideFacet]`, or `services.ConfigureFacet<T>(...)`, sets the view and how values combine (*any of*, *all of*, single, with exclusion). With the `Coworkee-Facets` header a group counts without its own choice. [`CoworkeeDataTable`](../ui/data-table.md#facets) shows them in views that fit their values.
 
 ![Brand facet with counts](../assets/screenshots/products.png){ .shot }
 

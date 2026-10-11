@@ -20,14 +20,15 @@ public sealed class QueryTranslationTests
         new("Due", "Due", QueryFieldType.Date) { Nullable = true },
         new("CustomerId", "Customer", QueryFieldType.Guid) { Options = [new(Acme.ToString(), "Acme")] },
         new("Customer.Name", "Customer name", QueryFieldType.Text),
+        new("Perks", "Perks", QueryFieldType.Enum) { Flags = true, Options = [new("Express", "Express"), new("Gift", "Gift")] },
     ];
 
     private static readonly Row[] Rows =
     [
-        new("Drill", 99.5m, 1, true, Status.Open, Now.AddHours(-1), new DateOnly(2026, 10, 20), Acme, new Customer("Acme")),
-        new("Hammer", 19m, 3, false, Status.Shipped, Now.AddDays(-3), null, Guid.Empty, null),
+        new("Drill", 99.5m, 1, true, Status.Open, Now.AddHours(-1), new DateOnly(2026, 10, 20), Acme, new Customer("Acme"), Perks.Express | Perks.Gift),
+        new("Hammer", 19m, 3, false, Status.Shipped, Now.AddDays(-3), null, Guid.Empty, null, Perks.Gift),
         new("O'Neil lamp", 35m, 2, true, Status.Cancelled, Now.AddDays(-40), new DateOnly(2026, 10, 11), Acme, new Customer("acme north")),
-        new(null, 1000m, 12, false, Status.Shipped, Now.AddYears(-1), new DateOnly(2025, 1, 1), Guid.Empty, new Customer("Zeta")),
+        new(null, 1000m, 12, false, Status.Shipped, Now.AddYears(-1), new DateOnly(2025, 1, 1), Guid.Empty, new Customer("Zeta"), Perks.Express),
     ];
 
     public static TheoryData<QueryRule, string, string[]> Cases => new()
@@ -81,6 +82,10 @@ public sealed class QueryTranslationTests
         { Rule("CustomerId", QueryOperator.In, values: [Acme.ToString(), Guid.Empty.ToString()]), $"CustomerId in ({Acme},{Guid.Empty})", ["Drill", "Hammer", "O'Neil lamp", "-"] },
         { Rule("Customer.Name", QueryOperator.StartsWith, "ACME"), "startswith(tolower(Customer/Name),'acme')", ["Drill", "O'Neil lamp"] },
         { Rule("Customer.Name", QueryOperator.IsNull), "(Customer/Name eq null or Customer/Name eq '')", ["Hammer"] },
+        { Rule("Perks", QueryOperator.Equal, "Gift"), "Perks has 'Gift'", ["Drill", "Hammer"] },
+        { Rule("Perks", QueryOperator.NotEqual, "Gift"), "not (Perks has 'Gift')", ["O'Neil lamp", "-"] },
+        { Rule("Perks", QueryOperator.In, values: ["Express", "Gift"]), "(Perks has 'Express' or Perks has 'Gift')", ["Drill", "Hammer", "-"] },
+        { Rule("Perks", QueryOperator.NotIn, values: ["Express", "Gift"]), "not (Perks has 'Express' or Perks has 'Gift')", ["O'Neil lamp"] },
     };
 
     [Theory]
@@ -199,5 +204,13 @@ public sealed class QueryTranslationTests
 
     public sealed record Customer(string Name);
 
-    public sealed record Row(string? Name, decimal Total, int Items, bool Paid, Status Status, DateTimeOffset At, DateOnly? Due, Guid CustomerId, Customer? Customer);
+    [Flags]
+    public enum Perks
+    {
+        None = 0,
+        Express = 1,
+        Gift = 2,
+    }
+
+    public sealed record Row(string? Name, decimal Total, int Items, bool Paid, Status Status, DateTimeOffset At, DateOnly? Due, Guid CustomerId, Customer? Customer, Perks Perks = Perks.None);
 }
