@@ -15,6 +15,12 @@ public sealed partial class CoworkeeAppOptions
 
     internal Action<IResourceBuilder<PostgresServerResource>>? Postgres { get; private set; }
 
+    internal string DatabaseProvider { get; private set; } = Coworkee.Contracts.Configuration.DatabaseProviders.Postgres;
+
+    internal Action<IResourceBuilder<SqlServerServerResource>>? SqlServerServer { get; private set; }
+
+    internal string? SqlitePath { get; private set; }
+
     internal Action<IResourceBuilder<RedisResource>>? RedisServer { get; private set; }
 
     internal Action<IResourceBuilder<MailPitContainerResource>>? MailPit { get; private set; }
@@ -27,6 +33,14 @@ public sealed partial class CoworkeeAppOptions
 
     /// <summary>The app database instead of the Postgres container, e.g. <c>builder.AddConnectionString("myapp")</c> in production; it is not awaited.</summary>
     public CoworkeeAppOptions UseDatabase(IResourceBuilder<IResourceWithConnectionString> database) => Set(() => Database = database);
+
+    /// <summary>SQL Server instead of Postgres: a SQL Server container, or the database of <see cref="UseDatabase"/>. The migrations of the app must be made for SQL Server.</summary>
+    public CoworkeeAppOptions UseSqlServer(Action<IResourceBuilder<SqlServerServerResource>>? configure = null) =>
+        Set(() => (DatabaseProvider, SqlServerServer) = (Coworkee.Contracts.Configuration.DatabaseProviders.SqlServer, SqlServerServer + configure));
+
+    /// <summary>A SQLite file instead of a database container (default .data/&lt;name&gt;.db next to src), for development and single machine installs.</summary>
+    public CoworkeeAppOptions UseSqlite(string? path = null) =>
+        Set(() => (DatabaseProvider, SqlitePath) = (Coworkee.Contracts.Configuration.DatabaseProviders.Sqlite, path));
 
     /// <summary>Redis for the SignalR backplane instead of the Redis container; it is not awaited.</summary>
     public CoworkeeAppOptions UseRedis(IResourceBuilder<IResourceWithConnectionString> redis) => Set(() => Redis = redis);

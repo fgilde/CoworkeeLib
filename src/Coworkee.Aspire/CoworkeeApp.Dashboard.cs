@@ -19,7 +19,7 @@ public sealed partial class CoworkeeApp
 
         migrations.WithCommand(RerunMigrationsCommand, "Re-run migrations", context => RunAgainAsync(context, migrations.Resource),
             new CommandOptions { Description = "Runs the migrations and the seed of the demo data again.", IconName = "ArrowClockwise" });
-        if (Options.Database is null)
+        if (Options.Database is null && Options.DatabaseProvider == Coworkee.Contracts.Configuration.DatabaseProviders.Postgres)
         {
             migrations.WithCommand(ResetDatabaseCommand, "Reset database", context => ResetDatabaseAsync(context, migrations.Resource),
                 new CommandOptions { ConfirmationMessage = $"Drop the database '{Name}' with all data and create it again?", IconName = "DatabaseArrowDown" });

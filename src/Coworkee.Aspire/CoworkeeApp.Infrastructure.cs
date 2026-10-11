@@ -1,5 +1,6 @@
 using Aspire.Hosting.ApplicationModel;
 using CommunityToolkit.Aspire.Hosting.MailPit;
+using Coworkee.Aspire.Settings;
 
 namespace Aspire.Hosting;
 
@@ -7,6 +8,8 @@ public sealed partial class CoworkeeApp
 {
     private IResourceBuilder<PostgresServerResource>? _server;
     private IResourceBuilder<PostgresDatabaseResource>? _database;
+    private IResourceBuilder<SqlServerServerResource>? _sqlServer;
+    private IResourceBuilder<SqlServerDatabaseResource>? _sqlServerDatabase;
     private IResourceBuilder<RedisResource>? _redis;
     private IResourceBuilder<MailPitContainerResource>? _mail;
     private IResourceBuilder<ElasticsearchResource>? _search;
@@ -16,17 +19,47 @@ public sealed partial class CoworkeeApp
 
     public IResourceBuilder<PostgresDatabaseResource> Database => _database ??= Server.AddDatabase(Name);
 
+    /// <summary>The SQL Server container of <see cref="CoworkeeAppOptions.UseSqlServer"/>; awaited like <see cref="Server"/>.</summary>
+    public IResourceBuilder<SqlServerServerResource> SqlServer => _sqlServer ??= Configured(Persistent ? Builder.AddSqlServer("sqlserver").WithDataVolume() : Builder.AddSqlServer("sqlserver"), Options.SqlServerServer);
+
+    public IResourceBuilder<SqlServerDatabaseResource> SqlServerDatabase => _sqlServerDatabase ??= SqlServer.AddDatabase(Name);
+
     public IResourceBuilder<RedisResource> Redis => _redis ??= AddRedis();
 
     public IResourceBuilder<MailPitContainerResource> Mail => _mail ??= AddMail();
 
     public IResourceBuilder<ElasticsearchResource> Search => _search ??= AddSearch();
 
-    private IResourceBuilder<IResourceWithConnectionString> AppDatabase => Options.Database ?? Database;
+    private string SqlitePath => Options.SqlitePath ?? (Persistent
+        ? Path.GetFullPath(Path.Combine(Builder.AppHostDirectory, "..", "..", ".data", $"{Name}.db"))
+        : Path.Combine(Path.GetTempPath(), $"coworkee-{Name}-{Environment.ProcessId}.db"));
 
     private EndpointReference Smtp => Options.Smtp ?? Mail.GetEndpoint("smtp");
 
     private string BlobRoot => Options.BlobRoot ?? Path.GetFullPath(Path.Combine(Builder.AppHostDirectory, "..", "..", ".data", "blobs"));
+
+    /// <summary>The app database, the provider setting and, for a container of this app host, the wait for its server.</summary>
+    private IResourceBuilder<ProjectResource> WithAppDatabase(IResourceBuilder<ProjectResource> service, bool awaitServer)
+    {
+        service.WithSetting(s => s.Coworkee.Database.Provider, Options.DatabaseProvider);
+        if (Options.Database is { } database)
+        {
+            return service.WithReference(database, Name);
+        }
+
+        switch (Options.DatabaseProvider)
+        {
+            case Coworkee.Contracts.Configuration.DatabaseProviders.Sqlite:
+                Directory.CreateDirectory(Path.GetDirectoryName(SqlitePath)!);
+                return service.WithEnvironment($"ConnectionStrings__{Name}", $"Data Source={SqlitePath}");
+            case Coworkee.Contracts.Configuration.DatabaseProviders.SqlServer:
+                service.WithReference(SqlServerDatabase, Name);
+                return awaitServer ? service.WaitFor(SqlServer) : service;
+            default:
+                service.WithReference(Database, Name);
+                return awaitServer ? service.WaitFor(Server) : service;
+        }
+    }
 
     private IResourceBuilder<PostgresServerResource> AddPostgres()
     {

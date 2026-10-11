@@ -20,6 +20,8 @@ public sealed class CoworkeeSection
 
     public BackgroundJobOptions Jobs { get; } = new();
 
+    public DatabaseOptions Database { get; } = new();
+
     public SettingsSection Settings { get; } = new();
 
     public CoworkeeServicesOptions Services { get; } = new();
