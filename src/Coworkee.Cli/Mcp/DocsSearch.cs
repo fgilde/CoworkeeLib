@@ -52,6 +52,7 @@ internal static partial class DocsSearch
         ("Localization", "modules/localization/"),
         ("Database backups", "modules/backups/"),
         ("Chat", "modules/chat/"),
+        ("Reporting", "modules/reporting/"),
         ("Extended attributes", "modules/extended-attributes/"),
         ("Comments, tags and ratings", "modules/social/"),
         ("AI assistant and MCP", "modules/ai/"),

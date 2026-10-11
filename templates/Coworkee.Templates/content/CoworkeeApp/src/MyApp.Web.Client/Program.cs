@@ -4,6 +4,9 @@ using Coworkee.Client.Blazor.Pages;
 #if (clientEntities)
 using Coworkee.Client.Blazor.ClientEntities;
 #endif
+#if (reports)
+using Coworkee.Client.Blazor.Reporting;
+#endif
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 #if (samples)
 using MyApp.Contracts.Documents;
@@ -38,6 +41,9 @@ builder.Services.AddSingleton(new ProfileTab("Documents", "documents", typeof(My
 builder.Services.Configure<NavigationMenuOptions>(MyAppNavigation.Order);
 #if (clientEntities)
 builder.Services.AddCoworkeeClientEntities();
+#endif
+#if (reports)
+builder.Services.AddCoworkeeReporting(baseAddress);
 #endif
 var host = builder.Build();
 await host.Services.InitializeCoworkeeClientAsync();

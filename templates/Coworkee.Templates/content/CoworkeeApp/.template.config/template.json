@@ -63,6 +63,12 @@
       "defaultValue": "true",
       "description": "Direct and group chat (Coworkee.Chat)."
     },
+    "reports": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Reports and dashboards over the OData entity sets (Coworkee.Reporting)."
+    },
     "ai": {
       "type": "parameter",
       "datatype": "bool",
@@ -306,7 +312,7 @@
     },
     "defaultModel": {
       "type": "computed",
-      "value": "(ai && chat && backup && notifications && !files && !features && !social && eventBus == \"none\" && (samples || !extendedAttributes))"
+      "value": "(ai && chat && reports && backup && notifications && !files && !features && !social && eventBus == \"none\" && (samples || !extendedAttributes))"
     }
   },
   "sources": [

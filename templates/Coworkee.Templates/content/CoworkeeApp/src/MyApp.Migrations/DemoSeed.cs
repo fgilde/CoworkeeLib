@@ -1,3 +1,6 @@
+#if (reports)
+using Coworkee.Contracts.Reporting;
+#endif
 #if (chat)
 using Coworkee.Contracts.Chat;
 #endif
@@ -30,6 +33,9 @@ public static class DemoSeed
     [
 #if (chat)
         ChatPermissions.Use,
+#endif
+#if (reports)
+        ReportPermissions.View,
 #endif
 #if (samples)
         CatalogPermissions.Dashboards.View,

@@ -9,6 +9,9 @@
     <!--#if (clientEntities) -->
     <CoworkeePackage Include="Coworkee.Client.Blazor.ClientEntities" />
     <!--#endif -->
+    <!--#if (reports) -->
+    <CoworkeePackage Include="Coworkee.Client.Blazor.Reporting" />
+    <!--#endif -->
     <InternalsVisibleTo Include="MyApp.Web.Client.Tests" />
     <ProjectReference Include="..\MyApp.Contracts\MyApp.Contracts.csproj" />
   </ItemGroup>

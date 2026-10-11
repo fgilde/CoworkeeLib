@@ -17,5 +17,9 @@ app.MapCoworkeeBff();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
+#if (reports)
+    .AddAdditionalAssemblies(typeof(MyApp.Web.Client._Imports).Assembly, typeof(Coworkee.Client.Blazor.CoworkeeClientOptions).Assembly, typeof(Coworkee.Client.Blazor.Reporting.ReportingOptions).Assembly);
+#else
     .AddAdditionalAssemblies(typeof(MyApp.Web.Client._Imports).Assembly, typeof(Coworkee.Client.Blazor.CoworkeeClientOptions).Assembly);
+#endif
 app.Run();
