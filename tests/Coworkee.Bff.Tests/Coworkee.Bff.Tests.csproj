@@ -3,5 +3,6 @@
     <ProjectReference Include="..\..\src\Coworkee.Bff\Coworkee.Bff.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Testcontainers.Redis" />
   </ItemGroup>
 </Project>

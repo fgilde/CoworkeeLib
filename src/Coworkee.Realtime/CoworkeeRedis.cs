@@ -10,7 +10,8 @@ namespace Coworkee.Realtime;
 /// <summary>
 /// With a <c>redis</c> connection string the services share one Redis connection, and HybridCache gets Redis as distributed second
 /// level for the entries that ask for it (<see cref="Shared"/>). The others stay per instance: removing by tag does not reach the
-/// second level other instances read, so tag-invalidated caches would serve stale values from it.
+/// second level other instances read, so tag-invalidated caches would serve stale values from it. Their removals go to the other
+/// instances through <see cref="RedisHybridCache"/> instead.
 /// </summary>
 public static class CoworkeeRedis
 {
@@ -30,6 +31,7 @@ public static class CoworkeeRedis
         }
 
         services.TryAddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redis));
+        DecorateHybridCache(services);
         if (!services.Any(d => d.ServiceType == typeof(IDistributedCache)))
         {
             // a cache that does not answer quickly is skipped: the entries load from the database instead
@@ -51,5 +53,21 @@ public static class CoworkeeRedis
         }
 
         return services;
+    }
+
+    private static void DecorateHybridCache(IServiceCollection services)
+    {
+        if (services.Any(d => d.ServiceType == typeof(RedisHybridCache)))
+        {
+            return;
+        }
+
+        services.AddHybridCache();
+        var inner = services.Last(d => d.ServiceType == typeof(HybridCache));
+        services.AddSingleton(provider => new RedisHybridCache(
+            (HybridCache)(inner.ImplementationInstance ?? inner.ImplementationFactory?.Invoke(provider) ?? ActivatorUtilities.CreateInstance(provider, inner.ImplementationType!)),
+            provider,
+            provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RedisHybridCache>>()));
+        services.Replace(ServiceDescriptor.Singleton<HybridCache>(provider => provider.GetRequiredService<RedisHybridCache>()));
     }
 }

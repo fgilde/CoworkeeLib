@@ -25,7 +25,9 @@ namespace Coworkee.Ai;
 public static class AiSettings
 {
     public const string Enabled = "Ai.Enabled";
+    public const string Provider = "Ai.Provider";
     public const string Model = "Ai.Model";
+    public const string Endpoint = "Ai.Endpoint";
     public const string ApiKey = "Ai.ApiKey";
     public const string MaxToolRounds = "Ai.MaxToolRounds";
     public const string DefaultModel = "claude-opus-5-5";
@@ -51,6 +53,7 @@ public sealed class CoworkeeAiModule : CoworkeeModule, IWebModule
         services.AddScoped<IODataEntityFilter<AiToolCall>, OData.AiToolCallODataFilter>();
         services.AddScoped<AiToolRunner>();
         services.AddScoped<AiChat>();
+        services.AddSingleton<IAiChatClientFactory, AiChatClientFactory>();
         services.AddScoped<Application.Privacy.IPersonalDataContributor, AiPersonalData>();
         services.AddHttpClient(AiChat.HttpClientName, client => client.Timeout = TimeSpan.FromMinutes(5));
         services.AddMcpServer(options => options.ServerInfo = new Implementation { Name = "coworkee", Version = "1.0" })
@@ -167,7 +170,10 @@ internal sealed class AiSettingDefinitions : ISettingDefinitionContributor
     public void Define(SettingDefinitionContext context) =>
         context.Group("Ai", "AI assistant")
             .Add(AiSettings.Enabled, "Assistant enabled", SettingType.Bool, Scopes, "false")
-            .Add(AiSettings.Model, "Claude model", SettingType.String, Scopes, AiSettings.DefaultModel)
-            .Add(AiSettings.ApiKey, "Anthropic API key", SettingType.Secret, Scopes)
+            .Add(AiSettings.Provider, "Provider", SettingType.Choice, Scopes, AiProviders.Anthropic, choices: AiProviders.All)
+            .Add(AiSettings.Model, "Model", SettingType.String, Scopes, description: "Empty: the provider's default (Claude Opus, GPT-5, llama3.2). Azure OpenAI: the deployment name.")
+            .Add(AiSettings.Endpoint, "Endpoint", SettingType.String, Scopes,
+                description: "Azure OpenAI resource, Ollama address (default http://localhost:11434) or the base address of an OpenAI compatible server.")
+            .Add(AiSettings.ApiKey, "API key", SettingType.Secret, Scopes)
             .Add(AiSettings.MaxToolRounds, "Maximum tool rounds per message", SettingType.Int, Scopes, "10");
 }

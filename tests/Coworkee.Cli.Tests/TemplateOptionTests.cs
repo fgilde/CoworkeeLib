@@ -56,6 +56,46 @@ public sealed class TemplateOptionTests(TemplateFixture template)
     }
 
     [Fact]
+    public async Task Ai_provider_and_redis_reach_the_app_host_and_the_service_defaults()
+    {
+        var ollama = await template.CreateAsync("ai-ollama", "--samples", "false", "--aiProvider", "ollama", "--redis", "false");
+        var appHost = Read(ollama, "src/Shop.AppHost/AppHost.cs");
+        appHost.ShouldContain("builder.AddOllama(\"ollama\")");
+        appHost.ShouldContain("Defaults[\"Ai.Provider\"], \"ollama\")");
+        appHost.ShouldContain("options.WithoutRedis();");
+        Read(ollama, "src/Shop.AppHost/Shop.AppHost.csproj").ShouldContain("CommunityToolkit.Aspire.Hosting.Ollama");
+        var defaults = Read(ollama, "src/Shop.ServiceDefaults/Extensions.cs");
+        defaults.ShouldNotContain("AddRedisClient");
+        defaults.ShouldContain("if (http.Name != \"Coworkee.Ai\")");
+        TemplateTests.ShouldHaveNoLeftovers(ollama);
+
+        var azure = await template.CreateAsync("ai-azure", "--samples", "false", "--aiProvider", "azureOpenAI");
+        appHost = Read(azure, "src/Shop.AppHost/AppHost.cs");
+        appHost.ShouldContain("Defaults[\"Ai.Provider\"], \"azureOpenAI\")");
+        appHost.ShouldNotContain("AddOllama");
+        appHost.ShouldNotContain("WithoutRedis");
+        Read(azure, "src/Shop.ServiceDefaults/Extensions.cs").ShouldContain("builder.AddRedisClient(\"redis\")");
+        Read(azure, "src/Shop.ServiceDefaults/Shop.ServiceDefaults.csproj").ShouldContain("Aspire.StackExchange.Redis");
+        TemplateTests.ShouldHaveNoLeftovers(azure);
+
+        var none = await template.CreateAsync("ai-none", "--samples", "false", "--ai", "false", "--aiProvider", "ollama");
+        Read(none, "src/Shop.AppHost/AppHost.cs").ShouldNotContain("Ai.Provider");
+        Read(none, "src/Shop.AppHost/Shop.AppHost.csproj").ShouldNotContain("Ollama");
+        Read(none, "src/Shop.ServiceDefaults/Extensions.cs").ShouldNotContain("Coworkee.Ai");
+    }
+
+    [Fact]
+    public async Task Generated_app_with_ollama_and_without_redis_builds()
+    {
+        var feed = Environment.GetEnvironmentVariable("COWORKEE_TEST_FEED");
+        Assert.SkipWhen(string.IsNullOrEmpty(feed), "Set COWORKEE_TEST_FEED to a folder with packed Coworkee packages (build/pack-local.ps1) to build a generated app.");
+        var app = await template.CreateAsync("build-ollama", "--samples", "false", "--aiProvider", "ollama", "--redis", "false");
+        await Dotnet.RunAsync(app, "nuget", "add", "source", Path.GetFullPath(feed!), "--name", "local", "--configfile", "nuget.config");
+
+        await Dotnet.RunAsync(app, "build", "Shop.slnx");
+    }
+
+    [Fact]
     public async Task Branding_reaches_the_theme_the_client_and_the_sign_in_pages()
     {
         var app = await template.CreateAsync("brand", "--title", "Acme Shop", "--theme", "HighContrast", "--primaryColor", "#0a7d5a", "--secondaryColor", "#ff8f00", "--logo", "logo.png",

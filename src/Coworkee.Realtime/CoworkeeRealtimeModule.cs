@@ -33,6 +33,7 @@ public sealed class CoworkeeRealtimeModule : CoworkeeModule, IWebModule
         services.AddSingleton<IRealtimePublisher, RealtimePublisher>();
         services.AddSingleton<RealtimeConnections>();
         services.AddSingleton<RealtimePresence>();
+        services.AddHostedService(provider => provider.GetRequiredService<RealtimePresence>());
         services.AddSingleton<RealtimeAccessSignal>();
         services.AddHostedService(provider => provider.GetRequiredService<RealtimeAccessSignal>());
         services.AddScoped<IInterceptor, RealtimeChangeInterceptor>();
@@ -46,6 +47,6 @@ public sealed class CoworkeeRealtimeModule : CoworkeeModule, IWebModule
     {
         app.MapHub<RealtimeHub>(RealtimeHubMethods.Path);
         app.MapCoworkeeApi("/api/v1/realtime").WithTags("Realtime").RequireAuthorization()
-            .MapGet("/presence", (RealtimePresence presence, ICurrentUser user) => TypedResults.Ok(presence.Online(user.TenantId)));
+            .MapGet("/presence", async (RealtimePresence presence, ICurrentUser user) => TypedResults.Ok(await presence.OnlineAsync(user.TenantId)));
     }
 }

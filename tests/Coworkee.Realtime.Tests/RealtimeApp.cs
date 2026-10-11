@@ -34,20 +34,28 @@ public sealed class RealtimeApp : PostgresFixture
     public override async ValueTask InitializeAsync()
     {
         await base.InitializeAsync();
+        App = await StartInstanceAsync(null);
+    }
+
+    /// <summary>An instance of the app on the shared database, behind <paramref name="redis"/> when given.</summary>
+    public async Task<WebApplication> StartInstanceAsync(string? redis)
+    {
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
+        builder.Configuration["ConnectionStrings:redis"] = redis;
         builder.AddCoworkee<TestRealtimeModule>();
         builder.Services.AddTestAuthentication();
-        App = builder.Build();
-        await using (var scope = App.Services.CreateAsyncScope())
+        var app = builder.Build();
+        await using (var scope = app.Services.CreateAsyncScope())
         {
             await scope.ServiceProvider.GetRequiredService<RealtimeTestDbContext>().Database.EnsureCreatedAsync();
         }
 
-        App.UseCoworkee();
-        await App.StartAsync();
+        app.UseCoworkee();
+        await app.StartAsync();
+        return app;
     }
 
     public override async ValueTask DisposeAsync()
@@ -66,9 +74,9 @@ public sealed class RealtimeApp : PostgresFixture
         return (await response.Content.ReadFromJsonAsync<SetupResultDto>())!;
     }
 
-    public async Task<Listener> ConnectAsync(Guid userId, Guid tenantId, DateTimeOffset? expires = null)
+    public async Task<Listener> ConnectAsync(Guid userId, Guid tenantId, DateTimeOffset? expires = null, WebApplication? on = null)
     {
-        var server = App.GetTestServer();
+        var server = (on ?? App).GetTestServer();
         var connection = new HubConnectionBuilder()
             .WithUrl(new Uri(server.BaseAddress, "hubs/realtime"), options =>
             {
