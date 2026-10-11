@@ -10,7 +10,7 @@
   "identity": "Coworkee.Templates.App",
   "groupIdentity": "Coworkee.App",
   "name": "Coworkee application",
-  "description": "Aspire app host, API, auth server, Blazor WebAssembly with BFF and Postgres, built on the Coworkee packages.",
+  "description": "Aspire app host, API, auth server, Blazor WebAssembly with BFF and Postgres, SQL Server or SQLite, built on the Coworkee packages.",
   "shortName": [
     "coworkee",
     "coworkee-app"
@@ -146,6 +146,30 @@
           "description": "Azure Blob Storage, Azurite emulator in the app host."
         }
       ]
+    },
+    "database": {
+      "type": "parameter",
+      "datatype": "choice",
+      "defaultValue": "postgres",
+      "description": "Database engine; the shipped migration is made for Postgres, coworkee new adds the one for the others.",
+      "choices": [
+        {
+          "choice": "postgres",
+          "description": "PostgreSQL container in the app host."
+        },
+        {
+          "choice": "sqlServer",
+          "description": "SQL Server container in the app host."
+        },
+        {
+          "choice": "sqlite",
+          "description": "SQLite file .data/<name>.db, no container."
+        }
+      ]
+    },
+    "withBackup": {
+      "type": "computed",
+      "value": "(backup && database == \"postgres\")"
     },
     "theme": {
       "type": "parameter",
@@ -306,7 +330,7 @@
     },
     "defaultModel": {
       "type": "computed",
-      "value": "(ai && chat && backup && notifications && !files && !features && !social && eventBus == \"none\" && (samples || !extendedAttributes))"
+      "value": "(database == \"postgres\" && ai && chat && backup && notifications && !files && !features && !social && eventBus == \"none\" && (samples || !extendedAttributes))"
     }
   },
   "sources": [

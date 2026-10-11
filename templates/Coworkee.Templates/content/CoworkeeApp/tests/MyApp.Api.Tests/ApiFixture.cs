@@ -10,9 +10,11 @@ using MyApp.Infrastructure;
 
 namespace MyApp.Api.Tests;
 
-public sealed class ApiFixture : PostgresFixture
+public sealed class ApiFixture : DatabaseFixture
 {
     public const string SetupToken = "myapp-test-token";
+
+    public override string Provider => MyAppInfrastructureModule.DatabaseProvider;
 
     public ApiFactory Factory { get; private set; } = null!;
 
@@ -53,7 +55,7 @@ public sealed class ApiFixture : PostgresFixture
     }
 }
 
-public sealed class ApiFactory(PostgresFixture postgres) : PostgresWebApplicationFactory<Program>(postgres, MyAppInfrastructureModule.ConnectionStringName)
+public sealed class ApiFactory(DatabaseFixture database) : DatabaseWebApplicationFactory<Program>(database, MyAppInfrastructureModule.ConnectionStringName)
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {

@@ -64,6 +64,11 @@ public static partial class SpecValidator
             errors.Add("options.clientEntities: an entity is a client entity, so the option cannot be off.");
         }
 
+        if (SpecOptions.IsSet(spec, "backup") && values["backup"] == "true" && values["database"] != "postgres")
+        {
+            errors.Add("options.backup: database backups from the admin pages need the postgres database.");
+        }
+
         Modules(errors, spec, values["samples"] == "true");
         return errors;
     }

@@ -91,6 +91,11 @@ public static class OptionCatalog
         new("storage", Infrastructure, "Blob storage", "Where uploaded files and backups go.", OptionKind.Choice, "fileSystem",
             "Azure Blob when the app will run on Azure.", ["Same code for every provider"], ["Azurite is one more container"],
             [new("fileSystem", "Folder .data/blobs next to src."), new("azureBlob", "Azure Blob Storage, Azurite emulator in the app host.")], "Coworkee.Storage"),
+        new("database", Infrastructure, "Database", "Database engine of the app; the app host starts it and the initial migration is made for it.", OptionKind.Choice, "postgres",
+            "Postgres unless the organisation runs SQL Server (or Azure SQL); SQLite for demos, prototypes and installs on one machine.",
+            ["postgres: every module, database backups from the admin pages", "sqlServer: fits Microsoft shops and Azure SQL", "sqlite: no container, the database is one file"],
+            ["sqlServer: no backups from the admin pages, a heavy container", "sqlite: one writer at a time, background jobs kept in memory, no backups from the admin pages"],
+            [new("postgres", "PostgreSQL container in the app host."), new("sqlServer", "SQL Server container in the app host."), new("sqlite", "SQLite file .data/<name>.db, no container.")]),
 
         new("theme", Branding, "Theme", "Default theme of the installation.", OptionKind.Choice, "Ocean",
             "Pick the look closest to your brand; brand colors adjust it.", ["Seven themes that differ in more than colors"], ["Organisations can still choose another"],

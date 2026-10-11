@@ -1,6 +1,6 @@
 # Coworkee.Templates
 
-`dotnet new` template for a complete Coworkee application: Aspire app host, API, OpenIddict auth server, Blazor WebAssembly with BFF, migrations worker and Postgres.
+`dotnet new` template for a complete Coworkee application: Aspire app host, API, OpenIddict auth server, Blazor WebAssembly with BFF, migrations worker and Postgres, SQL Server or SQLite.
 
 ```bash
 dotnet new install Coworkee.Templates
