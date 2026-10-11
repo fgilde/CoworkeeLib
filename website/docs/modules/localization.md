@@ -29,6 +29,20 @@ Keys are the English texts. A module embeds `Localization/{culture}.json`:
 <EmbeddedResource Include="Localization\*.json" />
 ```
 
+## Initial languages
+
+Without configuration an installation offers English plus every culture a module ships texts for (today `en` and `de`), English as default. `LocalizationOptions` (section `Coworkee:Localization`) narrow that down; setup stores exactly these languages, after that administrators change them on the *Languages* page.
+
+```json title="appsettings.json"
+{
+  "Coworkee": {
+    "Localization": { "Languages": [ "en", "de" ], "DefaultLanguage": "de" }
+  }
+}
+```
+
+The host does not start with an unknown culture or a default that is not among the languages. `coworkee new --languages en,de --default-language de` writes the same values into a new app.
+
 ## In the client
 
 `CoworkeeLocalizer` translates in pages and components; missing keys fall back to the key and are reported to the server, where they show up under *Translations*.

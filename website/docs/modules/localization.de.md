@@ -29,6 +29,20 @@ Schlüssel sind die englischen Texte. Ein Modul bettet `Localization/{culture}.j
 <EmbeddedResource Include="Localization\*.json" />
 ```
 
+## Anfangssprachen
+
+Ohne Konfiguration bietet eine Installation Englisch und jede Kultur an, für die ein Modul Texte mitbringt (derzeit `en` und `de`), Englisch als Standard. `LocalizationOptions` (Abschnitt `Coworkee:Localization`) schränken das ein; das Setup speichert genau diese Sprachen, danach ändern Administratoren sie auf der Seite *Sprachen*.
+
+```json title="appsettings.json"
+{
+  "Coworkee": {
+    "Localization": { "Languages": [ "en", "de" ], "DefaultLanguage": "de" }
+  }
+}
+```
+
+Mit einer unbekannten Kultur oder einer Standardsprache, die nicht unter den Sprachen ist, startet der Host nicht. `coworkee new --languages en,de --default-language de` schreibt dieselben Werte in eine neue App.
+
 ## Im Client
 
 `CoworkeeLocalizer` übersetzt in Seiten und Komponenten; fehlende Schlüssel fallen auf den Schlüssel zurück und werden an den Server gemeldet, wo sie unter *Übersetzungen* auftauchen.

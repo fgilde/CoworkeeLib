@@ -5,6 +5,7 @@ using Coworkee.AspNetCore;
 using Coworkee.Core.Modularity;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.Localization.Endpoints;
+using Coworkee.Localization.Languages;
 using Coworkee.Localization.Permissions;
 using Coworkee.Localization.Persistence;
 using Coworkee.Localization.Resources;
@@ -28,6 +29,9 @@ public sealed class CoworkeeLocalizationModule : CoworkeeModule, IWebModule
         services.AddSingleton<IModelContributor, LocalizationModelContributor>();
         services.AddSingleton<IPermissionDefinitionContributor, LocalizationPermissionDefinitions>();
         services.AddSingleton<ISettingDefinitionContributor, LocalizationSettingDefinitions>();
+        services.AddOptions<LocalizationOptions>().BindConfiguration(LocalizationOptions.Section).ValidateOnStart();
+        services.AddSingleton<Microsoft.Extensions.Options.IValidateOptions<LocalizationOptions>, LocalizationOptionsValidation>();
+        services.AddScoped<ISetupStep, LanguageSetupStep>();
         services.AddSingleton<ILocalizationResourceContributor, CoworkeeTexts>();
         services.AddSingleton<LocalizationResources>();
         services.AddSingleton<Application.Localization.ITextTranslator, ResourceTextTranslator>();

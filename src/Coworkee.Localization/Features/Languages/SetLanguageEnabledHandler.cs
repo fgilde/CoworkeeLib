@@ -4,15 +4,17 @@ using Coworkee.Contracts.Localization;
 using Coworkee.Core.Results;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.Localization.Domain;
+using Coworkee.Localization.Languages;
 using Coworkee.Localization.Resources;
 using Coworkee.Localization.Texts;
 using Coworkee.Localization.MachineTranslation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Coworkee.Localization.Features.Languages;
 
 internal sealed class SetLanguageEnabledHandler(
-    CoworkeeDbContext db, LocalizationResources resources, MissingTexts missing, TextTranslator translator, LocalizationChanges changes)
+    CoworkeeDbContext db, LocalizationResources resources, MissingTexts missing, TextTranslator translator, LocalizationChanges changes, IOptions<LocalizationOptions> options)
     : IHandler<SetLanguageEnabledCommand, Result<LanguageSwitchDto>>,
       IHandler<TranslateMissingCommand, Result<TranslateMissingDto>>
 {
@@ -55,7 +57,7 @@ internal sealed class SetLanguageEnabledHandler(
         return new TranslateMissingDto(translated, await translator.IsAvailableAsync(cancellationToken));
     }
 
-    // until the first switch, the shipped languages are offered without rows; keep them when the list becomes explicit
+    // until the first switch, the initial languages are offered without rows; keep them when the list becomes explicit
     private async Task EnsureStoredAsync(CancellationToken cancellationToken)
     {
         if (await db.Set<Language>().AnyAsync(cancellationToken))
@@ -63,11 +65,7 @@ internal sealed class SetLanguageEnabledHandler(
             return;
         }
 
-        foreach (var shipped in new[] { "en" }.Concat(resources.Cultures).Distinct(StringComparer.OrdinalIgnoreCase))
-        {
-            db.Add(new Language { Culture = shipped, Name = NativeName(CultureInfo.GetCultureInfo(shipped)), IsDefault = shipped == "en" });
-        }
-
+        db.AddRange(InitialLanguages.Create(options.Value, resources));
         await db.SaveChangesAsync(cancellationToken);
     }
 

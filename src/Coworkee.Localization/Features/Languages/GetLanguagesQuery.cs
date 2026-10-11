@@ -4,5 +4,5 @@ using Coworkee.Core.Results;
 
 namespace Coworkee.Localization.Features.Languages;
 
-/// <summary>Languages users can pick; without any in the database, English plus every culture a module ships texts for.</summary>
+/// <summary>Languages users can pick; without any in the database, those of LocalizationOptions (default: English plus every culture a module ships texts for).</summary>
 public sealed record GetLanguagesQuery(bool IncludeDisabled = false) : IQuery<Result<IReadOnlyList<LanguageDto>>>;
