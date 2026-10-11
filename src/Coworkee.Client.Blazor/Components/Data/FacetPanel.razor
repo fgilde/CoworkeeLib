@@ -15,19 +15,26 @@
     {
         var count = Selection.Of(group.Key).Count();
         <section class="@($"cw-facet-section {(IsOpen(group) ? "open" : string.Empty)}")" data-facet="@group.Key">
-            <button type="button" class="cw-facet-section-head" aria-expanded="@IsOpen(group)" @onclick="() => Toggle(group)">
-                <MudIcon Icon="@FacetBar.Icon(group)" Size="Size.Small" Class="cw-facet-pill-icon" />
-                <span class="cw-facet-title">@L[group.Label]</span>
-                @if (count > 0)
+            <div class="cw-facet-section-head">
+                <button type="button" class="cw-facet-section-toggle" aria-expanded="@IsOpen(group)" @onclick="() => Toggle(group)">
+                    <MudIcon Icon="@FacetBar.Icon(group)" Size="Size.Small" Class="cw-facet-pill-icon" />
+                    <span class="cw-facet-title">@L[group.Label]</span>
+                    @if (count > 0)
+                    {
+                        <span class="cw-facet-badge">@count</span>
+                    }
+                </button>
+                @if (IsOpen(group))
                 {
-                    <span class="cw-facet-badge">@count</span>
+                    <FacetGroupHead Group="group" Selection="Selection" ShowTitle="false" View="ViewOf(group)" ViewChanged="v => SetViewAsync(group, v)" />
                 }
-                <MudIcon Icon="@(IsOpen(group) ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" Size="Size.Small" />
-            </button>
+                <MudIconButton Icon="@(IsOpen(group) ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" Size="Size.Small" OnClick="() => Toggle(group)"
+                               aria-label="@L[group.Label]" />
+            </div>
             @if (IsOpen(group))
             {
                 <div class="cw-facet-section-body">
-                    <FacetGroupView Group="group" Selection="Selection" ShowTitle="false" View="ViewOf(group)" ViewChanged="v => SetViewAsync(group, v)" />
+                    <FacetGroupView Group="group" Selection="Selection" ShowHeader="false" View="ViewOf(group)" ViewChanged="v => SetViewAsync(group, v)" />
                 </div>
             }
         </section>

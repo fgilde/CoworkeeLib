@@ -15,6 +15,7 @@ public partial class FacetRangeView
     private decimal _from;
     private decimal _to;
     private string? _known;
+    private bool _loaded;
 
     private string Path => Group.ValuePath ?? Group.Field;
 
@@ -42,9 +43,9 @@ public partial class FacetRangeView
     {
         _bounds = Parse(Group.Min) is { } min && Parse(Group.Max) is { } max ? (min, max) : null;
         var chosen = Selection.Of(Group.Key).FirstOrDefault()?.OData;
-        if (_bounds is { } bounds && chosen != _known)
+        if (_bounds is { } bounds && (!_loaded || chosen != _known))
         {
-            _known = chosen;
+            (_known, _loaded) = (chosen, true);
             (_from, _to) = Bounds(chosen) ?? (bounds.Min, bounds.Max);
         }
     }
@@ -81,9 +82,11 @@ public partial class FacetRangeView
         }
     }
 
-    private Task TypeAsync(decimal value, bool lower)
+    private Task TypeAsync(decimal value, bool lower) => SlidAsync(new ChangeEventArgs { Value = Text(value) }, lower);
+
+    private Task SlidAsync(ChangeEventArgs args, bool lower)
     {
-        Slide(new ChangeEventArgs { Value = Text(value) }, lower);
+        Slide(args, lower);
         return CommitAsync();
     }
 

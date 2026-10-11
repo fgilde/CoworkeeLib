@@ -1,46 +1,9 @@
 @inherits FacetViewBase
 
 <div class="cw-facet-group" data-facet-group="@Group.Key" data-view="@CurrentView">
-    @if (ShowTitle || CanCombine || Views.Count > 1 || HasChoice)
+    @if (ShowHeader)
     {
-        <div class="cw-facet-head">
-            @if (ShowTitle)
-            {
-                <span class="cw-facet-title">@L[Group.Label]</span>
-            }
-            else
-            {
-                <MudSpacer />
-            }
-            @if (CanCombine)
-            {
-                <div class="cw-facet-segments cw-facet-combine" role="radiogroup" aria-label="@L["Combine values"]" data-testid="facet-combine">
-                    <button type="button" class="@($"cw-facet-segment {(Combine == FacetCombine.Any ? "selected" : string.Empty)}")" role="radio"
-                            aria-checked="@(Combine == FacetCombine.Any)" data-combine="any" @onclick="() => Selection.SetCombine(Group, FacetCombine.Any)">@L["any of"]</button>
-                    <button type="button" class="@($"cw-facet-segment {(Combine == FacetCombine.All ? "selected" : string.Empty)}")" role="radio"
-                            aria-checked="@(Combine == FacetCombine.All)" data-combine="all" @onclick="() => Selection.SetCombine(Group, FacetCombine.All)">@L["all of"]</button>
-                </div>
-            }
-            else if (Combine == FacetCombine.All)
-            {
-                <span class="cw-facet-caption">@L["all of"]</span>
-            }
-            @if (Views.Count > 1)
-            {
-                <MudMenu Icon="@Icons.Material.Outlined.Tune" Size="Size.Small" Dense="true" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight"
-                         aria-label="@L["Show as"]" data-testid="facet-view-menu">
-                    @foreach (var view in Views)
-                    {
-                        <MudMenuItem Icon="@ViewIcon(view)" IconColor="@(view == CurrentView ? Color.Primary : Color.Default)" OnClick="() => ViewChanged.InvokeAsync(view)"
-                                     data-view-option="@view">@L[ViewName(view)]</MudMenuItem>
-                    }
-                </MudMenu>
-            }
-            @if (HasChoice)
-            {
-                <MudButton Size="Size.Small" Variant="Variant.Text" Class="cw-facet-clear" OnClick="() => Selection.Only(Group, null)" data-testid="facet-clear">@L["Clear"]</MudButton>
-            }
-        </div>
+        <FacetGroupHead Group="Group" Selection="Selection" ShowTitle="ShowTitle" View="View" ViewChanged="ViewChanged" />
     }
     @switch (CurrentView)
     {

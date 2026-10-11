@@ -14,10 +14,10 @@
         background: var(--mud-palette-primary); color: var(--mud-palette-primary-text); }
     .cw-facet-popover { border-radius: 14px !important; overflow: hidden; }
     .cw-facet-card { width: 330px; max-width: calc(100vw - 32px); padding: 12px 12px 10px; }
-    .cw-facet-head { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; min-height: 30px; }
+    .cw-facet-head { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-bottom: 8px; min-height: 30px; }
     .cw-facet-title { flex: 1; font-weight: 650; font-size: .875rem; }
     .cw-facet-caption { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--mud-palette-secondary); }
-    .cw-facet-clear { min-width: 0 !important; }
+    .cw-facet-clear { min-width: 0 !important; text-transform: none !important; padding: 0 6px !important; }
     .cw-facet-search { margin-bottom: 6px !important; }
     .cw-facet-options { display: flex; flex-direction: column; gap: 1px; max-height: 320px; overflow-y: auto; margin: 0 -4px; padding: 0 4px; }
     .cw-facet-option { position: relative; display: flex; align-items: center; gap: 8px; min-height: 34px; padding: 3px 6px 3px 8px; border-radius: 10px; cursor: pointer;
@@ -32,8 +32,9 @@
     .cw-facet-check { flex: none; color: var(--mud-palette-text-secondary); }
     .cw-facet-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .cw-facet-count { margin-left: auto; font-size: .75rem; color: var(--mud-palette-text-secondary); font-variant-numeric: tabular-nums; }
-    .cw-facet-bar { position: absolute; left: 34px; bottom: 3px; height: 2px; max-width: calc(100% - 44px); border-radius: 2px; pointer-events: none;
-        background: color-mix(in srgb, var(--mud-palette-secondary) 40%, transparent); }
+    .cw-facet-bar { position: absolute; left: 0; top: 2px; bottom: 2px; border-radius: 10px; pointer-events: none; z-index: 0;
+        background: linear-gradient(90deg, color-mix(in srgb, var(--mud-palette-secondary) 4%, transparent), color-mix(in srgb, var(--mud-palette-secondary) 13%, transparent)); }
+    .cw-facet-option > :not(.cw-facet-bar) { position: relative; z-index: 1; }
     .cw-facet-exclude { opacity: 0; transition: opacity 120ms ease; }
     .cw-facet-option:hover .cw-facet-exclude, .cw-facet-option.excluded .cw-facet-exclude { opacity: 1; }
     .cw-facet-empty, .cw-facet-hint { display: block; padding: 6px 4px 0; color: var(--mud-palette-text-secondary); }
@@ -90,8 +91,10 @@
     .cw-facet-section { border: 1px solid var(--mud-palette-lines-default); border-radius: 14px; background: var(--mud-palette-surface); overflow: hidden;
         transition: box-shadow 140ms ease; }
     .cw-facet-section.open { box-shadow: 0 1px 6px rgba(0,0,0,.05); }
-    .cw-facet-section-head { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 12px; border: none; background: none; cursor: pointer;
-        color: var(--mud-palette-text-primary); font: inherit; text-align: left; }
-    .cw-facet-section-head:hover { background: var(--mud-palette-action-default-hover); }
+    .cw-facet-section-head { display: flex; align-items: center; gap: 4px; padding: 4px 6px 4px 0; }
+    .cw-facet-section-head .cw-facet-head { margin: 0; min-height: 0; }
+    .cw-facet-section-toggle { display: flex; flex: 1; align-items: center; gap: 8px; min-width: 0; padding: 6px 4px 6px 12px; border: none; background: none; cursor: pointer;
+        color: var(--mud-palette-text-primary); font: inherit; text-align: left; border-radius: 10px; }
+    .cw-facet-section-toggle:hover .cw-facet-title { color: var(--mud-palette-primary); }
     .cw-facet-section-body { padding: 0 12px 12px; }
 </style>

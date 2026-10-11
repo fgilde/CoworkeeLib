@@ -22,7 +22,7 @@ public partial class CoworkeeDataTable<T>
     private IReadOnlyList<FilterChip> FilterChips => _grid is null ? [] :
         [
             .. DataGridLayout<T>.Filters(_grid).GroupBy(d => d.Column!).Select(g => new FilterChip(DataGridLayout<T>.Key(g.Key)!, DataGridLayout<T>.Label(g.Key), Describe([.. g]))),
-            .. _advanced.IsEmpty ? [] : new[] { new FilterChip(AdvancedKey, L["Advanced filter"], QueryDescriber.Describe(_advanced, Fields, L10n)) },
+            .. !HasAdvanced ? [] : new[] { new FilterChip(AdvancedKey, L["Advanced filter"], QueryDescriber.Describe(_advanced, Fields, L10n)) },
         ];
 
     private string? ColumnFilter => _grid is null ? null : DataTableFilters.ToOData(DataGridLayout<T>.Conditions(_grid));

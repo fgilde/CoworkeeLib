@@ -37,6 +37,8 @@ public partial class CoworkeeDataTable<T>
 
     private string? AdvancedFilterText => _advanced.IsEmpty ? null : ODataQueryTranslator.ToFilter(_advanced, Fields);
 
+    private bool HasAdvanced => AdvancedFilterText is not null;
+
     private string? BaseFilter => ODataFilter.And(Filter, ColumnFilter, AdvancedFilterText, ODataFilter.Search(_search, SearchFields));
 
     private string L10n(string text) => L[text];

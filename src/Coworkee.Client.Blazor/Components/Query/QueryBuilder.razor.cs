@@ -45,7 +45,7 @@ public partial class QueryBuilder
     {
         QueryPreview.OData => ODataQueryTranslator.ToFilter(Value, Fields, Now?.Invoke()) ?? string.Empty,
         QueryPreview.Json => QueryJson.Serialize(Value, indented: true),
-        _ => Value.IsEmpty ? T("Everything") : QueryDescriber.Describe(Value, Fields, T),
+        _ => QueryDescriber.Describe(Value, Fields, T) is { Length: > 0 } text ? text : T("Everything"),
     };
 
     private string ExportHref => "data:application/json;charset=utf-8," + Uri.EscapeDataString(QueryJson.Serialize(Value, indented: true));

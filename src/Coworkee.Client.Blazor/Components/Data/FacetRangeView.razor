@@ -5,10 +5,11 @@
     <FacetHistogram Buckets="Group.Options" IsActive="InRange" Title="BucketTitle" OnPick="PickAsync" Label="@L[Group.Label]" />
     <div class="cw-facet-slider" style="@Track">
         <input type="range" class="cw-facet-thumb" min="@Text(bounds.Min)" max="@Text(bounds.Max)" step="@Text(Step)" value="@Text(_from)" aria-label="@L["From"]"
-               @oninput="e => Slide(e, lower: true)" @onchange="_ => CommitAsync()" data-testid="facet-range-from" />
+               @oninput="e => Slide(e, lower: true)" @onchange="e => SlidAsync(e, lower: true)" data-testid="facet-range-from" />
         <input type="range" class="cw-facet-thumb" min="@Text(bounds.Min)" max="@Text(bounds.Max)" step="@Text(Step)" value="@Text(_to)" aria-label="@L["Up to"]"
-               @oninput="e => Slide(e, lower: false)" @onchange="_ => CommitAsync()" data-testid="facet-range-to" />
+               @oninput="e => Slide(e, lower: false)" @onchange="e => SlidAsync(e, lower: false)" data-testid="facet-range-to" />
     </div>
+    <div class="cw-facet-axis"><span>@Show(bounds.Min)</span><span>@Show(bounds.Max)</span></div>
     <div class="cw-facet-range-inputs">
         <MudNumericField T="decimal" Value="_from" ValueChanged="v => TypeAsync(v, lower: true)" Min="bounds.Min" Max="_to" Label="@L["From"]" Variant="Variant.Outlined"
                          Margin="Margin.Dense" HideSpinButtons="true" data-testid="facet-range-min" />
