@@ -108,6 +108,7 @@ plugins:
             AI assistant and MCP: KI-Assistent und MCP
             Hosting: Hosting
             Aspire app host: Aspire-AppHost
+            Scaling out with Redis: Skalieren mit Redis
             Testing: Tests
             Reference: Referenz
             Packages and namespaces: Pakete und Namespaces
@@ -184,6 +185,7 @@ nav:
       - AI assistant and MCP: modules/ai.md
   - Hosting:
       - Aspire app host: hosting/aspire.md
+      - Scaling out with Redis: hosting/redis.md
   - Testing: testing.md
   - Reference:
       - Packages and namespaces: reference/packages.md

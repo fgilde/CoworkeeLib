@@ -56,6 +56,8 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--client-entities` | `clientEntities` | bool | `false` | Browser copies of OData sets marked `[ClientEntity]`; spec entities with `clientEntity` switch it on |
 | `--keycloak` | `keycloak` | bool | `false` | Keycloak container as external sign-in |
 | `--storage` | `storage` | `fileSystem`, `azureBlob` | `fileSystem` | Blob storage; `azureBlob` runs Azurite in the app host |
+| `--ai-provider` | `aiProvider` | `anthropic`, `openAI`, `azureOpenAI`, `ollama`, `openAICompatible` | `anthropic` | Model provider of the [assistant](../modules/ai.md#providers); `ollama` runs Ollama in the app host |
+| `--redis` | `redis` | bool | `true` | Redis container for backplane, presence, cache invalidation and sessions across instances ([Redis](../hosting/redis.md)) |
 | `--theme` | `theme` | `Ocean`, `Coworkee`, `Classic`, `Forest`, `Midnight`, `Sunset`, `HighContrast` | `Ocean` | Default theme |
 | `--primary-color` | `primaryColor` | `#rrggbb` | | Brand color: the app gets its own theme, based on `--theme` and named like the title, as default |
 | `--secondary-color` | `secondaryColor` | `#rrggbb` | | Second brand color |

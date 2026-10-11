@@ -75,7 +75,7 @@ Before wiring a service, Coworkee reads the service's `obj/project.assets.json` 
 | Package in the service | It gets |
 |---|---|
 | `Coworkee.Infrastructure` | connection string of the app database, waits until the migrations finished |
-| `Coworkee.Realtime` | Redis for the SignalR backplane, the session changes between instances and the shared session stamp cache |
+| `Coworkee.Realtime` | Redis for the SignalR backplane, presence, cache invalidation and session changes between instances ([Scaling out with Redis](redis.md)); `options.WithoutRedis()` leaves it out |
 | `Coworkee.Mailing` | Mailpit as default SMTP server |
 | `Coworkee.Storage` | the shared blob folder `.data/blobs` (local runs only; published containers keep their default) |
 | `Coworkee.Search.Elasticsearch` | Elasticsearch |

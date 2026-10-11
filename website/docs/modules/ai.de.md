@@ -1,6 +1,6 @@
 # KI-Assistent und MCP
 
-`Coworkee.Ai` lässt Claude mit der App über dieselben Requests arbeiten, die auch die Oberfläche nutzt. Jedes Werkzeug ist ein Dispatcher-Request; Berechtigungen, Validierung und Audit gelten für den Assistenten genau wie für einen Menschen.
+`Coworkee.Ai` lässt ein Sprachmodell (Claude, GPT, ein lokales Modell über Ollama, ...) mit der App über dieselben Requests arbeiten, die auch die Oberfläche nutzt. Jedes Werkzeug ist ein Dispatcher-Request; Berechtigungen, Validierung und Audit gelten für den Assistenten genau wie für einen Menschen.
 
 ```csharp
 services.AddAiTool<SearchAssetsQuery>("search_assets", "Finds assets by text, folder and tags.");
@@ -24,9 +24,61 @@ Der Request-Typ wird zum Eingabeschema des Werkzeugs, das `Result` zu seiner Aus
 - **Werkzeug-Audit** für Benutzer mit `Ai.Audit`: jeder Aufruf mit Eingabe, Ergebnis und Benutzer.
 - Commands, die Daten ändern, laufen nur in der ersten Runde einer Antwort. Ein Werkzeugergebnis kann das Modell so nicht dazu bringen, eigenmächtig etwas zu ändern.
 
+## Anbieter
+
+Der Assistent spricht über `IChatClient` aus `Microsoft.Extensions.AI` mit dem Modell, mit denselben Werkzeugen, Regeln und demselben Audit für jeden Anbieter. Die Einstellungen sind nur global (Host-Administratoren), der Schlüssel ist eine geheime Einstellung: Er wird verschlüsselt gespeichert und nie an den Browser geschickt.
+
 | Einstellung | |
 |---|---|
 | `Ai.Enabled` | an oder aus |
-| `Ai.ApiKey` | Anthropic-API-Schlüssel (geheim) |
-| `Ai.Model` | Standard `claude-opus-5-5` |
+| `Ai.Provider` | `anthropic` (Standard), `openAI`, `azureOpenAI`, `ollama`, `openAICompatible` |
+| `Ai.Model` | leer: der Standard des Anbieters (`claude-opus-5-5`, `gpt-5`, `llama3.2`); Azure OpenAI: der Deployment-Name |
+| `Ai.Endpoint` | Azure-OpenAI-Ressource (`https://acme.openai.azure.com`), Ollama-Adresse (Standard `http://localhost:11434`) oder die Basisadresse eines OpenAI-kompatiblen Servers (`http://localhost:1234/v1`) |
+| `Ai.ApiKey` | API-Schlüssel (geheim); Ollama und OpenAI-kompatible Server kommen ohne aus |
 | `Ai.MaxToolRounds` | wie viele Werkzeugrunden eine Antwort dauern darf |
+
+| Anbieter | Braucht | Gut für |
+|---|---|---|
+| `anthropic` | Schlüssel | die zuverlässigste Werkzeugnutzung |
+| `openAI` | Schlüssel | GPT-Modelle |
+| `azureOpenAI` | Endpunkt, Deployment, Schlüssel | Daten, die in Ihrem Azure-Mandanten bleiben müssen; nutzt die v1-API von Azure OpenAI |
+| `ollama` | nichts | lokales Ausprobieren, auch offline; kleine Modelle rufen Werkzeuge weniger zuverlässig auf |
+| `openAICompatible` | Endpunkt, Modell | Gateways, vLLM, LM Studio, LiteLLM und andere Server, die die OpenAI-Chat-API sprechen |
+
+Wie jede Einstellung haben sie Standardwerte in der Konfiguration, etwa aus dem AppHost oder aus Umgebungsvariablen:
+
+```json
+{
+  "Coworkee": {
+    "Settings": {
+      "Defaults": {
+        "Ai.Enabled": "true",
+        "Ai.Provider": "azureOpenAI",
+        "Ai.Endpoint": "https://acme.openai.azure.com",
+        "Ai.Model": "gpt-5-assistant"
+      }
+    }
+  }
+}
+```
+
+`coworkee new --ai-provider ollama` erzeugt einen AppHost mit einem Ollama-Container, der `llama3.2` lädt, und schaltet den Assistenten ein. Für die anderen Anbieter nimmt der AppHost Schlüssel, Endpunkt und Modell aus seinen User-Secrets, sofern vorhanden:
+
+```bash
+dotnet user-secrets set Parameters:ai-apikey sk-... --project src/Shop.AppHost
+dotnet user-secrets set Parameters:ai-endpoint https://acme.openai.azure.com --project src/Shop.AppHost
+dotnet user-secrets set Parameters:ai-model gpt-5-assistant --project src/Shop.AppHost
+```
+
+Ein anderer Modelldienst (Gemini, Bedrock, ein Firmen-Gateway) kommt über `IAiChatClientFactory` dazu:
+
+```csharp
+services.AddSingleton<IAiChatClientFactory, GeminiChatClients>();
+
+internal sealed class GeminiChatClients : IAiChatClientFactory
+{
+    public IChatClient Create(AiConnection connection) => new GeminiChatClient(connection.ApiKey!, connection.EffectiveModel ?? "gemini-2.5-pro");
+}
+```
+
+Die erzeugten Service-Defaults nehmen den HTTP-Client `Coworkee.Ai` aus dem Standard-Resilience-Handler: Antworten dauern oft länger als dessen Timeouts, und die Anbieter-Clients wiederholen selbst.

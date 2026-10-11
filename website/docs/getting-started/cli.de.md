@@ -56,6 +56,8 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--client-entities` | `clientEntities` | bool | `false` | Browser-Kopien von OData-Sets mit `[ClientEntity]`; Entities der Spezifikation mit `clientEntity` schalten es ein |
 | `--keycloak` | `keycloak` | bool | `false` | Keycloak-Container als externe Anmeldung |
 | `--storage` | `storage` | `fileSystem`, `azureBlob` | `fileSystem` | Blob-Speicher; `azureBlob` startet Azurite im App-Host |
+| `--ai-provider` | `aiProvider` | `anthropic`, `openAI`, `azureOpenAI`, `ollama`, `openAICompatible` | `anthropic` | Modellanbieter des [Assistenten](../modules/ai.md#anbieter); `ollama` startet Ollama im App-Host |
+| `--redis` | `redis` | bool | `true` | Redis-Container für Backplane, Anwesenheit, Cache-Invalidierung und Sitzungen über Instanzen hinweg ([Redis](../hosting/redis.md)) |
 | `--theme` | `theme` | `Ocean`, `Coworkee`, `Classic`, `Forest`, `Midnight`, `Sunset`, `HighContrast` | `Ocean` | Standard-Theme |
 | `--primary-color` | `primaryColor` | `#rrggbb` | | Markenfarbe: Die App bekommt ein eigenes Theme auf Basis von `--theme`, benannt wie der Titel, als Standard |
 | `--secondary-color` | `secondaryColor` | `#rrggbb` | | Zweite Markenfarbe |

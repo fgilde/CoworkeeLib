@@ -56,6 +56,7 @@ internal static partial class DocsSearch
         ("Comments, tags and ratings", "modules/social/"),
         ("AI assistant and MCP", "modules/ai/"),
         ("Aspire app host", "hosting/aspire/"),
+        ("Scaling out with Redis", "hosting/redis/"),
         ("Testing", "testing/"),
         ("Packages and namespaces", "reference/packages/"),
     ];

@@ -75,7 +75,7 @@ Bevor Coworkee einen Dienst verdrahtet, liest es dessen `obj/project.assets.json
 | Paket im Dienst | Er bekommt |
 |---|---|
 | `Coworkee.Infrastructure` | Connection-String der App-Datenbank, wartet, bis die Migrationen fertig sind |
-| `Coworkee.Realtime` | Redis für die SignalR-Backplane, die Sitzungsänderungen zwischen Instanzen und den gemeinsamen Cache der Sitzungs-Stamps |
+| `Coworkee.Realtime` | Redis für die SignalR-Backplane, Anwesenheit, Cache-Invalidierung und Sitzungsänderungen zwischen Instanzen ([Skalieren mit Redis](redis.md)); `options.WithoutRedis()` lässt es weg |
 | `Coworkee.Mailing` | Mailpit als Standard-SMTP-Server |
 | `Coworkee.Storage` | den gemeinsamen Blob-Ordner `.data/blobs` (nur lokal; veröffentlichte Container behalten ihren Standard) |
 | `Coworkee.Search.Elasticsearch` | Elasticsearch |
