@@ -252,7 +252,7 @@ public sealed class FacetViewTests : ClientTestBase
 
         var panel = Render<FacetPanel>(p => p.Add(b => b.Groups, [Status, Regions]).Add(b => b.Selection, _selection).Add(b => b.OpenFirst, 0));
         panel.FindAll("[data-facet-group]").Select(g => g.GetAttribute("data-facet-group")).ShouldBe(["status"], "groups with a choice open");
-        panel.Find("[data-facet='region'] .cw-facet-section-head").Click();
+        panel.Find("[data-facet='region'] .cw-facet-section-toggle").Click();
         panel.FindAll("[data-facet-group]").Count.ShouldBe(2);
     }
 
