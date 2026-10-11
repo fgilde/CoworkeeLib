@@ -136,6 +136,7 @@ await Dialogs.ShowEditAsync(L["New product"], model, saved => Api.SaveProductAsy
 | Editor | for |
 |---|---|
 | `ODataPicker` | a foreign key: searches an OData entity set by a text property |
+| `OptionalODataPicker` | an optional foreign key (`Guid?`): like `ODataPicker`, clearing it gives null |
 | `ImageDataUrlEdit` | a picture kept as data URL |
 
 `ShowSideSheetAsync<TDialog>` opens your own dialog component the same way, `ConfirmAsync` asks before something that cannot be undone.

@@ -135,6 +135,7 @@ await Dialogs.ShowEditAsync(L["New product"], model, saved => Api.SaveProductAsy
 | Editor | für |
 |---|---|
 | `ODataPicker` | einen Fremdschlüssel: sucht in einem OData-Entity-Set über eine Texteigenschaft |
+| `OptionalODataPicker` | einen optionalen Fremdschlüssel (`Guid?`): wie `ODataPicker`, Leeren ergibt null |
 | `ImageDataUrlEdit` | ein Bild, gespeichert als Data-URL |
 
 `ShowSideSheetAsync<TDialog>` öffnet eine eigene Dialogkomponente genauso, `ConfirmAsync` fragt vor etwas, das sich nicht rückgängig machen lässt.
