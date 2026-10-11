@@ -60,6 +60,7 @@ public sealed class ToolsTests
         studio["WDS_PASSWORD"].ShouldBe("{demo-admin-password.value}");
         studio["WDS_CONN_DEMO"].ShouldEndWith("Database=demo");
         studio["WDS_TITLE"].ShouldBe("demo data");
+        app.WebDataStudio.Resource.Annotations.OfType<ContainerMountAnnotation>().Single(m => m.Target == "/data").Source.ShouldBe("demo-webdatastudio-data");
     }
 
     [Fact]

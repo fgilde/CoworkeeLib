@@ -430,7 +430,7 @@
     {
       "type": "timeseries",
       "title": "Sign-ins (sessions started)",
-      "description": "Refresh tokens issued by the auth server: one per sign-in of the web app.",
+      "description": "Authorization codes issued by the auth server: one per interactive sign-in.",
       "datasource": {
         "type": "mssql",
         "uid": "app-database"
@@ -441,7 +441,7 @@
             "type": "mssql",
             "uid": "app-database"
           },
-          "rawSql": "SELECT DATEADD(hour, DATEDIFF(hour, 0, [CreationDate]), 0) AS time, COUNT(*) AS [sign-ins] FROM [auth].[OpenIddictTokens] WHERE [Type] = 'refresh_token' AND $__timeFilter([CreationDate]) GROUP BY DATEADD(hour, DATEDIFF(hour, 0, [CreationDate]), 0) ORDER BY 1",
+          "rawSql": "SELECT DATEADD(hour, DATEDIFF(hour, 0, [CreationDate]), 0) AS time, COUNT(*) AS [sign-ins] FROM [auth].[OpenIddictTokens] WHERE [Type] LIKE '%authorization_code' AND $__timeFilter([CreationDate]) GROUP BY DATEADD(hour, DATEDIFF(hour, 0, [CreationDate]), 0) ORDER BY 1",
           "format": "time_series",
           "refId": "A",
           "rawQuery": true,

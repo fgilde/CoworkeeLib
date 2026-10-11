@@ -14,6 +14,16 @@ public sealed partial class CoworkeeApp
         WebDataStudio = Builder.AddWebDataStudio()
             .WithTitle($"{Options.DisplayName ?? Name} data")
             .WithLogin(AdminUser, AdminPassword);
+        // the default volume is named after the resource only, so every app on the machine would share saved connections and queries
+        foreach (var volume in WebDataStudio.Resource.Annotations.OfType<ContainerMountAnnotation>().Where(m => m.Target == "/data").ToList())
+        {
+            WebDataStudio.Resource.Annotations.Remove(volume);
+        }
+
+        if (Persistent)
+        {
+            WebDataStudio.WithVolume($"{Name}-webdatastudio-data", "/data");
+        }
         var connection = Name.ToUpperInvariant();
         if (Options.Database is { } database)
         {

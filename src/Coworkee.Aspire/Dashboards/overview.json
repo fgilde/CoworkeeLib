@@ -329,8 +329,7 @@
           },
           "color": {
             "mode": "thresholds"
-          },
-          "decimals": 3
+          }
         },
         "overrides": []
       },
