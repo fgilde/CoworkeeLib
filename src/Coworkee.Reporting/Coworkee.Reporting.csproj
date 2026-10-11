@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Coworkee.Identity\Coworkee.Identity.csproj" />
+    <ProjectReference Include="..\Coworkee.Realtime\Coworkee.Realtime.csproj" />
+    <ProjectReference Include="..\Coworkee.OData\Coworkee.OData.csproj" />
+    <PackageReference Include="ClosedXML" />
+  </ItemGroup>
+</Project>

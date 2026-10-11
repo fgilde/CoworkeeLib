@@ -11,6 +11,8 @@
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Backup'"><Description>Database backups and restore from the admin pages.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Bff'"><Description>Backend for frontend for Blazor WebAssembly: cookie session, token handling and API forwarding.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Chat'"><Description>Direct and group chat with realtime delivery.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Reporting'"><Description>Reports and dashboards over OData entity sets: server side aggregation, sharing with roles, favorites and live updates.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Client.Blazor.Reporting'"><Description>Report designer for Blazor WebAssembly: GridStack layout, ApexCharts, KPI, tables, pivot, filters, cross filters, drill-down and export.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Client'"><Description>Typed .NET client for Coworkee APIs.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Client.Blazor'"><Description>MudBlazor shell for Blazor WebAssembly: navigation, data tables, account and admin pages, theming.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.CodeGen'"><Description>Optional DTO and mapping generation for entities with Nextended.CodeGen, mapped by extension methods or Mapperly.</Description></PropertyGroup>
