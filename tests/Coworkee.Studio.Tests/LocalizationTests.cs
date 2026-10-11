@@ -1,9 +1,13 @@
+using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using Coworkee.Cli.Spec;
 using Coworkee.Studio.Localization;
+using Coworkee.Studio.Model;
+using Coworkee.Studio.ViewModels;
 
 namespace Coworkee.Studio.Tests;
 
-public sealed class LocalizationTests
+public sealed partial class LocalizationTests
 {
     [Fact]
     public void Every_text_of_the_option_catalog_has_a_german_translation()
@@ -16,6 +20,53 @@ public sealed class LocalizationTests
     }
 
     [Fact]
+    public void Every_text_of_the_views_and_view_models_has_a_german_translation()
+    {
+        var source = Path.GetFullPath(Path.Combine(Here(), "..", "..", "..", "src", "Coworkee.Studio"));
+        var texts = Directory.EnumerateFiles(source, "*.axaml", SearchOption.AllDirectories).SelectMany(f => Markup().Matches(File.ReadAllText(f)))
+            .Concat(Directory.EnumerateFiles(source, "*.cs", SearchOption.AllDirectories).SelectMany(f => Code().Matches(File.ReadAllText(f))))
+            .Select(m => m.Groups["text"].Value)
+            .Concat(Preset.All.SelectMany(p => new[] { p.Name, p.Description }))
+            .Concat(PropertyViewModel.SearchModes).Concat(EntityViewModel.Mappings.Where(m => m != "Mapperly"));
+
+        texts.Distinct().Where(t => !German.Texts.ContainsKey(t)).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public Task Every_infrastructure_note_has_a_german_translation() => TestApp.Ui(() =>
+    {
+        using var folder = new TempFolder();
+        var main = Studio.Create(folder);
+        var notes = new HashSet<string>();
+        foreach (var database in new[] { "postgres", "sqlServer", "sqlite" })
+        {
+            foreach (var provider in OptionCatalog.Find("aiProvider")!.Choices!.Select(c => c.Value))
+            {
+                foreach (var on in new[] { "true", "false" })
+                {
+                    main.Option("database").Value = database;
+                    main.Option("aiProvider").Value = provider;
+                    main.Option("ai").Value = on;
+                    main.Option("redis").Value = on;
+                    notes.UnionWith(main.Options.Values.Select(o => o.Note).OfType<string>());
+                }
+            }
+        }
+
+        notes.Where(n => !German.Texts.ContainsKey(n)).ShouldBeEmpty();
+    });
+
+    [Fact]
     public void Texts_without_a_translation_stay_english() =>
         German.Texts.ContainsKey("Coworkee Studio").ShouldBeFalse();
+
+    private static string Here([CallerFilePath] string path = "") => path;
+
+    // {l:L 'Some text'} and {l:L Word}
+    [GeneratedRegex(@"\{l:L (?:'(?<text>[^']+)'|(?<text>[^}']+))\}")]
+    private static partial Regex Markup();
+
+    // L.Get("..."), L.Format("...") and the texts of the steps
+    [GeneratedRegex(@"(?:L\.(?:Get|Format)\(|(?:TitleText|SubtitleText|PitchText) => )""(?<text>[^""]*)""")]
+    private static partial Regex Code();
 }

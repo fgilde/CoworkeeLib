@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
+using Coworkee.Studio.Localization;
 
 namespace Coworkee.Studio.Views;
 
@@ -23,6 +24,9 @@ public static class Converters
     public static IValueConverter Positive { get; } = new FuncValueConverter<int, bool>(count => count > 0);
 
     public static IValueConverter Zero { get; } = new FuncValueConverter<int, bool>(count => count == 0);
+
+    /// <summary>A fixed English choice (Default, Yes, No) in the language of the Studio.</summary>
+    public static IValueConverter Text { get; } = new FuncValueConverter<string?, string?>(text => text is null ? null : L.Get(text));
 
     public static IValueConverter FileName { get; } = new FuncValueConverter<string?, string?>(path => path is null ? null : Path.GetFileName(path));
 }

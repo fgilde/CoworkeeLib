@@ -1,9 +1,15 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Coworkee.Studio.ViewModels"
+             xmlns:v="using:Coworkee.Studio.Views"
              xmlns:l="using:Coworkee.Studio.Localization"
              x:Class="Coworkee.Studio.Views.EntitiesView"
              x:DataType="vm:EntitiesStep">
+  <UserControl.Resources>
+    <DataTemplate x:Key="Translated" x:DataType="x:String">
+      <TextBlock Text="{Binding Converter={x:Static v:Converters.Text}}" />
+    </DataTemplate>
+  </UserControl.Resources>
   <UserControl.Styles>
     <Style Selector="Button.entity">
       <Setter Property="Background" Value="Transparent" />
@@ -187,7 +193,7 @@
                 <Border Grid.Column="2" Classes="soft" Padding="12,10">
                   <StackPanel Spacing="6">
                     <TextBlock FontWeight="SemiBold" Text="{l:L 'DTO mapping'}" />
-                    <ComboBox ItemsSource="{x:Static vm:EntityViewModel.Mappings}" SelectedItem="{Binding Mapping}" HorizontalAlignment="Stretch" />
+                    <ComboBox ItemsSource="{x:Static vm:EntityViewModel.Mappings}" SelectedItem="{Binding Mapping}" HorizontalAlignment="Stretch" ItemTemplate="{StaticResource Translated}" />
                   </StackPanel>
                 </Border>
               </Grid>
@@ -231,7 +237,7 @@
                       <TextBox Text="{Binding Name}" PlaceholderText="Number" />
                       <ComboBox Grid.Column="2" ItemsSource="{x:Static vm:PropertyViewModel.Types}" SelectedItem="{Binding Type}" HorizontalAlignment="Stretch" />
                       <CheckBox Grid.Column="4" IsChecked="{Binding Required}" HorizontalAlignment="Center" />
-                      <NumericUpDown Grid.Column="6" Value="{Binding MaxLength}" Minimum="1" Maximum="100000" Increment="50" FormatString="0" IsEnabled="{Binding IsText}" ShowButtonSpinner="False" PlaceholderText="text" />
+                      <NumericUpDown Grid.Column="6" Value="{Binding MaxLength}" Minimum="1" Maximum="100000" Increment="50" FormatString="0" IsEnabled="{Binding IsText}" ShowButtonSpinner="False" PlaceholderText="{l:L text}" />
                       <ToggleButton Grid.Column="8" Classes="icon" Width="34" Height="34" IsChecked="{Binding IsExpanded}" ToolTip.Tip="{l:L 'More: label, default, unique, facet, enum or reference'}">
                         <PathIcon Classes="small" Data="{StaticResource Icon.Cog}" />
                       </ToggleButton>
@@ -260,7 +266,7 @@
                           </StackPanel>
                           <StackPanel Grid.Column="4" Spacing="4">
                             <TextBlock Classes="head" Text="{l:L 'On delete'}" />
-                            <ComboBox ItemsSource="{x:Static vm:PropertyViewModel.DeleteBehaviors}" SelectedItem="{Binding OnDelete}" HorizontalAlignment="Stretch" />
+                            <ComboBox ItemsSource="{x:Static vm:PropertyViewModel.DeleteBehaviors}" SelectedItem="{Binding OnDelete}" HorizontalAlignment="Stretch" ItemTemplate="{StaticResource Translated}" />
                           </StackPanel>
                           <StackPanel Grid.Column="6" Spacing="4">
                             <TextBlock Classes="head" Text="{l:L 'Collection on the target'}" />
@@ -288,7 +294,7 @@
                           </StackPanel>
                           <StackPanel Grid.Column="4" Spacing="4">
                             <TextBlock Classes="head" Text="{l:L 'In the search box'}" />
-                            <ComboBox ItemsSource="{x:Static vm:PropertyViewModel.SearchModes}" SelectedItem="{Binding Searchable}" HorizontalAlignment="Stretch" />
+                            <ComboBox ItemsSource="{x:Static vm:PropertyViewModel.SearchModes}" SelectedItem="{Binding Searchable}" HorizontalAlignment="Stretch" ItemTemplate="{StaticResource Translated}" />
                           </StackPanel>
                         </Grid>
                         <WrapPanel ItemSpacing="18">

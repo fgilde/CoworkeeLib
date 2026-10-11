@@ -43,7 +43,7 @@
               <TextBlock Classes="caption" Text="{l:L 'Next to the form with Split and Slide: a local file the CLI copies into the web client, or an http(s) address. mp4, webm and ogg play as video.'}" />
             </StackPanel>
             <Grid ColumnDefinitions="*,Auto,Auto">
-              <TextBox Text="{Binding MediaPath}" PlaceholderText="https://… or a file" />
+              <TextBox Text="{Binding MediaPath}" PlaceholderText="{l:L 'https://… or a file'}" />
               <Button Grid.Column="1" Margin="8,0,0,0" Command="{Binding BrowseMediaCommand}">
                 <StackPanel Orientation="Horizontal" Spacing="6">
                   <PathIcon Classes="small" Data="{StaticResource Icon.Image}" />
