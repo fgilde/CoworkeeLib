@@ -13,7 +13,7 @@ coworkee update                   # newest Coworkee packages
 The chosen modules or database differ from the shipped initial migration (Postgres), so the solution has none yet. `coworkee new` creates it; otherwise run `coworkee migrations add Initial` once before the first start.
 
 <!--#endif -->
-Sign in as `admin@myapp.local`; the generated password is in `src/MyApp.Migrations/DemoSeed.cs`. Change it before you deploy anywhere.
+How to sign in, with the users and their generated passwords: [LOGIN.md](LOGIN.md). Change the passwords before you deploy anywhere.
 
 | Project | |
 |---|---|

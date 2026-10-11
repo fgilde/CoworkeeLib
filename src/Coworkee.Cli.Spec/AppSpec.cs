@@ -24,6 +24,40 @@ public sealed class AppSpec
 
     [Description("Enums properties of type enum use; generated into the contracts project.")]
     public List<EnumSpec> Enums { get; set; } = [];
+
+    [Description("Roles seeded with the app, besides the built-in ones (with samples: Product Manager, Brand Manager; without: User).")]
+    public List<RoleSpec> Roles { get; set; } = [];
+
+    [Description("Development users seeded with the app (and into the Keycloak realm with the same password), besides the administrator admin@<name>.local.")]
+    public List<UserSpec> Users { get; set; } = [];
+}
+
+public sealed class RoleSpec
+{
+    [Description("Role name, e.g. Sales Manager.")]
+    public string Name { get; set; } = string.Empty;
+
+    public string? Description { get; set; }
+
+    [Description("Permissions of the app's modules, e.g. Sales.Orders.View; validation names the known ones.")]
+    public List<string> Permissions { get; set; } = [];
+}
+
+public sealed class UserSpec
+{
+    public string Email { get; set; } = string.Empty;
+
+    [Description("First and last name (default: the part of the email before @).")]
+    public string? DisplayName { get; set; }
+
+    [Description("Names of roles of the spec or built-in ones.")]
+    public List<string> Roles { get; set; } = [];
+
+    [Description("Administrator with every permission.")]
+    public bool Admin { get; set; }
+
+    [Description("Development password (default: generated); at least 8 characters with upper and lower case letters, a digit and a symbol.")]
+    public string? Password { get; set; }
 }
 
 public sealed class EnumSpec

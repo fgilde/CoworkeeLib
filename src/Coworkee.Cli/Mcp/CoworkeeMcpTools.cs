@@ -24,7 +24,7 @@ internal sealed class CoworkeeMcpTools(CliRunner run, HttpClient http)
         OptionsCommand.CatalogJson(group);
 
     [McpServerTool(Name = "get_spec_schema", ReadOnly = true, Title = "JSON Schema of an app spec")]
-    [Description("JSON Schema of the app spec that create_app takes: name, options, branding and modules with entities and their properties.")]
+    [Description("JSON Schema of the app spec that create_app takes: name, options, branding, modules with entities and their properties, roles and users.")]
     public static string GetSpecSchema() => SpecJson.Schema().ToJsonString(SpecJson.Options);
 
     [McpServerTool(Name = "get_spec_example", ReadOnly = true, Title = "Example app spec")]
@@ -55,6 +55,7 @@ internal sealed class CoworkeeMcpTools(CliRunner run, HttpClient http)
         [Description("The app spec as JSON. Leave out to use name and options.")] string? spec = null,
         [Description("Name of the app when there is no spec.")] string? name = null,
         [Description("Option values by id (list_options), e.g. {\"chat\": \"false\", \"theme\": \"Forest\"}, used when there is no spec.")] Dictionary<string, string>? options = null,
+        [Description("Development users as " + UserSyntax.Format + ", added to those of the spec; each gets a generated password, the answer lists them. Roles with permissions go into the spec (roles).")] string[]? users = null,
         CancellationToken cancellationToken = default)
     {
         AppSpec app;
@@ -71,6 +72,8 @@ internal sealed class CoworkeeMcpTools(CliRunner run, HttpClient http)
         {
             app.Options[id] = JsonValue.Create(value);
         }
+
+        app.Users.AddRange((users ?? []).Select(UserSyntax.Parse));
 
         if (SpecValidator.Validate(app, directory) is { Count: > 0 } errors)
         {
