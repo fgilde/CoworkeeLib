@@ -24,7 +24,8 @@ public sealed record SolutionSummary(IReadOnlyList<string> Projects, IReadOnlyLi
             .Select(p => $"{name}.{p}")
             .ToList();
 
-        var containers = new List<string> { "PostgreSQL", "Redis", "Mailpit" };
+        // SQLite is a file, no container
+        var containers = new List<string>(values["database"] switch { "sqlServer" => ["SQL Server"], "sqlite" => [], _ => ["PostgreSQL"] }) { "Redis", "Mailpit" };
         if (On("elasticsearch"))
         {
             containers.Add("Elasticsearch");
@@ -49,6 +50,7 @@ public sealed record SolutionSummary(IReadOnlyList<string> Projects, IReadOnlyLi
                 .Where(o => o.Package is not null && (o.Kind == OptionKind.Bool ? On(o.Id) : values[o.Id] is { } v && v != "none"))
                 .Select(o => o.Package!))
             .Concat(values["eventBus"] == "rabbitMq" ? ["Coworkee.EventBus.RabbitMq"] : [])
+            .Where(p => p != "Coworkee.Backup" || values["database"] == "postgres")
             .Distinct()
             .ToList();
         return new(projects, containers, packages);

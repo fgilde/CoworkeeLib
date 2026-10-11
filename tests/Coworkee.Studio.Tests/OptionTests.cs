@@ -35,6 +35,21 @@ public sealed class OptionTests
     }
 
     [Fact]
+    public void Database_choice_replaces_the_postgres_container_and_drops_backups_off_postgres()
+    {
+        using var folder = new TempFolder();
+        var main = Studio.Create(folder);
+
+        main.Option("database").Value = "sqlServer";
+        main.Architecture.Summary.Containers.ShouldBe(["SQL Server", "Redis", "Mailpit"]);
+        main.Architecture.Summary.Packages.ShouldNotContain("Coworkee.Backup");
+
+        main.Option("database").Value = "sqlite";
+        main.Architecture.Summary.Containers.ShouldBe(["Redis", "Mailpit"]);
+        main.ToSpec().Options["database"]!.GetValue<string>().ShouldBe("sqlite");
+    }
+
+    [Fact]
     public void Only_changed_options_go_into_the_spec()
     {
         using var folder = new TempFolder();
