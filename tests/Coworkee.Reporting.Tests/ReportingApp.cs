@@ -9,6 +9,10 @@ using Coworkee.OData;
 using Coworkee.Testing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http.Connections;
+using Microsoft.AspNetCore.SignalR.Client;
+using System.Collections.Concurrent;
+using Coworkee.Contracts.Realtime;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -62,6 +66,24 @@ public sealed class ReportingApp : PostgresFixture
     }
 
     public HttpClient As(Guid userId, Guid tenantId) => App.GetTestClient().AsUser(userId, tenantId);
+
+    public async Task<(HubConnection Connection, ConcurrentQueue<RealtimeEnvelope> Events)> ConnectAsync(Guid userId, Guid tenantId, string topic)
+    {
+        var server = App.GetTestServer();
+        var connection = new HubConnectionBuilder()
+            .WithUrl(new Uri(server.BaseAddress, "hubs/realtime"), options =>
+            {
+                options.HttpMessageHandlerFactory = _ => server.CreateHandler();
+                options.Transports = HttpTransportType.LongPolling;
+                options.Headers["Authorization"] = $"{TestAuthHandler.SchemeName} {userId};{tenantId}";
+            })
+            .Build();
+        var events = new ConcurrentQueue<RealtimeEnvelope>();
+        connection.On<RealtimeEnvelope>(RealtimeHubMethods.OnEvent, events.Enqueue);
+        await connection.StartAsync();
+        await connection.InvokeAsync(RealtimeHubMethods.Subscribe, topic);
+        return (connection, events);
+    }
 
     public async Task InDbAsync(Guid? tenantId, Func<ReportingTestDbContext, Task> action)
     {

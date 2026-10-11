@@ -100,4 +100,22 @@ public sealed class SharingTests(ReportingApp app) : ReportingTestBase(app)
         var noAccess = App.As((await CreateUserAsync("x@acme.test", ReportPermissions.Manage)).Id, Setup.TenantId);
         (await noAccess.PostAsJsonAsync("/api/v1/reports", Request("Not mine"), Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
+
+    [Fact]
+    public async Task Viewers_hear_live_when_a_report_changes()
+    {
+        var bob = await CreateUserAsync("bob@acme.test", ReportPermissions.View);
+        var report = await CreateAsync(Admin, Request("Live", ReportVisibility.Organisation));
+        var (connection, events) = await App.ConnectAsync(bob.Id, Setup.TenantId, Coworkee.Contracts.Realtime.RealtimeTopics.Entity(nameof(Report), report.Id));
+        await using var hub = connection;
+
+        (await Admin.PutAsJsonAsync($"/api/v1/reports/{report.Id}", Request("Live again", ReportVisibility.Organisation) with { Definition = report.Definition }, Ct)).EnsureSuccessStatusCode();
+
+        for (var i = 0; i < 100 && events.IsEmpty; i++)
+        {
+            await Task.Delay(100, Ct);
+        }
+
+        Coworkee.Contracts.Realtime.EntityChangedPayload.From(events.ShouldHaveSingleItem())!.ChangedProperties.ShouldContain(nameof(Report.Name));
+    }
 }
