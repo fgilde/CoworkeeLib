@@ -2,5 +2,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Coworkee.Client.Blazor\Coworkee.Client.Blazor.csproj" />
     <PackageReference Include="bunit" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
   </ItemGroup>
 </Project>

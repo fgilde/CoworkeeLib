@@ -54,17 +54,23 @@ public sealed class DataTableTests : ClientTestBase
     [Fact]
     public void A_burst_of_changes_in_another_session_reloads_the_rows_once()
     {
+        var clock = new Microsoft.Extensions.Time.Testing.FakeTimeProvider();
+        Services.AddSingleton<TimeProvider>(clock);
         var realtime = Services.GetRequiredService<FakeRealtimeConnection>();
         var table = Render<CoworkeeDataTable<Gadget>>(p => p.Add(t => t.EntitySet, "Gadgets").Add(t => t.Columns, Columns()));
         table.WaitForAssertion(() => realtime.Invocations.ShouldContain(("Subscribe", "type:Gadget")));
         table.WaitForAssertion(() => _odata.Loads.ShouldBe(1));
 
         realtime.Push("type:Gadget", Contracts.Realtime.RealtimeEventTypes.EntityChanged, new Contracts.Realtime.EntityChangedPayload("Gadget", "1", "Deleted", []));
+        clock.Advance(TimeSpan.FromMilliseconds(100));
         realtime.Push("type:Gadget", Contracts.Realtime.RealtimeEventTypes.EntityChanged, new Contracts.Realtime.EntityChangedPayload("Gadget", "2", "Deleted", []));
+        clock.Advance(TimeSpan.FromMilliseconds(200));
+        _odata.Loads.ShouldBe(1, "the burst is still settling");
 
+        clock.Advance(TimeSpan.FromMilliseconds(100));
         table.WaitForAssertion(() => _odata.Loads.ShouldBe(2));
-        Thread.Sleep(400);
-        _odata.Loads.ShouldBe(2);
+        clock.Advance(TimeSpan.FromSeconds(5));
+        table.WaitForAssertion(() => _odata.Loads.ShouldBe(2));
     }
 
     [Fact]
