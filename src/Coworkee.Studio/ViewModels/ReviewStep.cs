@@ -56,7 +56,14 @@ public sealed partial class ReviewStep(MainViewModel main) : StepViewModel(main)
             new(L.Get("Modules"), string.Join(", ", OptionCatalog.All.Where(o => o.Group == OptionCatalog.Modules && o.Kind == OptionKind.Bool && values[o.Id] == "true").Select(o => L.Get(o.Title))) is { Length: > 0 } on ? on : "-"),
             new(L.Get("Event bus"), values["eventBus"] ?? "none"),
             new(L.Get("Storage"), values["storage"] ?? "fileSystem"),
+            new(L.Get("Database"), values["database"] ?? "postgres"),
+            new(L.Get("AI provider"), values["ai"] == "true" ? values["aiProvider"] ?? "anthropic" : "-"),
+            new(L.Get("Redis"), YesNo(values["redis"])),
+            new(L.Get("Containers"), string.Join(", ", Summary.Containers)),
             new(L.Get("Languages"), $"{values["languages"] ?? string.Join(",", OptionCatalog.Languages.Select(l => l.Value))} · {values["defaultLanguage"]}"),
+            new(L.Get("Color mode"), values["colorMode"] ?? "system"),
+            new(L.Get("Self registration"), YesNo(values["registration"])),
+            new(L.Get("Tooling"), string.Join(", ", OptionCatalog.All.Where(o => o.Group == OptionCatalog.Tooling && values[o.Id] == "true").Select(o => L.Get(o.Title))) is { Length: > 0 } tools ? tools : "-"),
             new(L.Get("Entities"), string.Join(", ", spec.Modules.Select(m => $"{m.Name} ({string.Join(", ", m.Entities.Select(e => e.Name))})")) is { Length: > 0 } entities ? entities : "-"),
             new(L.Get("Enums"), spec.Enums.Count > 0 ? string.Join(", ", spec.Enums.Select(e => e.Name)) : "-"),
         ];
@@ -64,4 +71,6 @@ public sealed partial class ReviewStep(MainViewModel main) : StepViewModel(main)
     }
 
     public override void OnShown() => Refresh();
+
+    private static string YesNo(string? value) => L.Get(value == "true" ? "Yes" : "No");
 }
