@@ -1,6 +1,6 @@
 # Coworkee.Testing
 
-Postgres test container fixture, test users and a web application factory for Coworkee apps.
+Database fixture (Postgres or SQL Server container, SQLite file), test users and a web application factory for Coworkee apps.
 
 Part of [Coworkee](https://fgilde.github.io/CoworkeeLib/), a modular application framework for .NET 10, Blazor and Aspire. Start a new app with the CLI:
 

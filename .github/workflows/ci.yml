@@ -45,3 +45,29 @@ jobs:
           name: coworkee-packages
           path: artifacts/nuget/*.nupkg
           retention-days: 14
+
+  providers:
+    # the persistence heavy suites again on the other database providers
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        database: [SqlServer, Sqlite]
+    env:
+      COWORKEE_TEST_DATABASE: ${{ matrix.database }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Build
+        run: dotnet build Coworkee.slnx -c Release
+
+      - name: Test
+        run: |
+          for suite in Infrastructure EventBus AuthServer Settings Localization Notifications OData Social; do
+            dotnet test --project tests/Coworkee.$suite.Tests -c Release --no-build || exit 1
+          done
