@@ -9,7 +9,7 @@ using Microsoft.OData;
 namespace Coworkee.Reporting.Querying;
 
 /// <summary>Sources the user may read and aggregates over them, with the entity set's permission, tenant and row filters.</summary>
-internal sealed class ReportQueries(IServiceProvider services, ReportSchema schema, IPermissionChecker permissions)
+internal sealed class ReportQueries(IServiceProvider services, ReportSchema schema, IPermissionChecker permissions, Infrastructure.Persistence.CoworkeeDbContext db)
 {
     private static readonly MethodInfo RunMethod = typeof(ReportQueries).GetMethod(nameof(RunTypedAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
     private static readonly MethodInfo CheckMethod = typeof(ReportQueries).GetMethod(nameof(CheckFilterAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
@@ -79,7 +79,7 @@ internal sealed class ReportQueries(IServiceProvider services, ReportSchema sche
             return (null, Error.Forbidden("reports.forbidden_set", $"You may not read {source.Registration.EntitySet}."));
         }
 
-        return (source, ReportPlan.Create(source, request, granted));
+        return (source, ReportPlan.Create(source, request, granted, Infrastructure.Persistence.CoworkeeDatabase.Provider(db.Database)));
     }
 
     private async Task<IReadOnlySet<string>> GrantedAsync(CancellationToken cancellationToken) =>

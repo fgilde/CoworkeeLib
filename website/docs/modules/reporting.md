@@ -63,6 +63,8 @@ The server checks every field against the source, builds `GroupBy` and `Select` 
 | Limits | 5,000 groups, top 1 to 1,000 |
 | Rejected | unknown or hidden fields, sums of text, buckets on non-dates, OData that does not parse |
 
+All three database providers aggregate in SQL. On SQL Server weeks are counted with `DATEDIFF` from a Monday, as its day of week depends on server settings. EF's SQLite provider stores `DateTimeOffset` as text without date parts, so SQLite rejects date buckets of `DateTimeOffset` fields (`DateTime` and `DateOnly` work); use Postgres or SQL Server for them.
+
 Measured on the demo's 100,000 sales orders (Postgres, warm): count by status 9 ms, sum by month 29 ms, count by week 55 ms, region by channel 23 ms, top 10 customers with join 30 ms, four KPI values 58 ms.
 
 ## Widgets

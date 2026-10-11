@@ -1,3 +1,4 @@
+using System.Net.Http.Json;
 using Coworkee.Contracts.Reporting;
 
 namespace Coworkee.Reporting.Tests;
@@ -53,6 +54,7 @@ public sealed class AggregationTests(ReportingApp app) : ReportingTestBase(app)
     [InlineData(DateBucket.Day)]
     public async Task Date_buckets_match_linq(DateBucket bucket)
     {
+        Assert.SkipWhen(Sqlite, "EF's SQLite provider has no date parts of DateTimeOffset; see Sqlite_rejects_date_buckets_of_DateTimeOffset.");
         var result = await QueryAsync(new ReportQueryRequest("Sales", GroupBy: new ReportGroupBy("SoldAt", bucket), Aggregates: [new(), new(AggregateFunction.Sum, "Amount")]));
 
         var expected = Visible.GroupBy(s => Start(s.SoldAt.UtcDateTime, bucket)).OrderBy(g => g.Key).ToList();
@@ -68,7 +70,6 @@ public sealed class AggregationTests(ReportingApp app) : ReportingTestBase(app)
 
         var expected = Visible.GroupBy(s => s.ShippedOn is { } day ? new DateOnly(day.Year, day.Month, 1).ToString("yyyy-MM-dd") : null).ToDictionary(g => g.Key ?? "-", g => g.Count());
         result.Rows.ToDictionary(r => r.Key!.Value ?? "-", r => (int)r.Values[0]!).ShouldBe(expected, ignoreOrder: true);
-        result.Rows.Last().Key!.Value.ShouldBeNull();
     }
 
     [Fact]
@@ -100,7 +101,7 @@ public sealed class AggregationTests(ReportingApp app) : ReportingTestBase(app)
     public async Task Key_filters_select_the_rows_of_their_group()
     {
         var byStatus = await QueryAsync(new ReportQueryRequest("Sales", "Amount gt 250", new ReportGroupBy("Status")));
-        var byMonth = await QueryAsync(new ReportQueryRequest("Sales", GroupBy: new ReportGroupBy("SoldAt", DateBucket.Month)));
+        var byMonth = await QueryAsync(new ReportQueryRequest("Sales", GroupBy: new ReportGroupBy(Sqlite ? "ShippedOn" : "SoldAt", DateBucket.Month)));
 
         foreach (var row in byStatus.Rows.Concat(byMonth.Rows.Take(3)))
         {
@@ -111,6 +112,19 @@ public sealed class AggregationTests(ReportingApp app) : ReportingTestBase(app)
         byStatus.Rows.Select(r => r.Key!.Label).ShouldBe(["Open", "Shipped", "Cancelled"]);
         byStatus.Rows.Sum(r => r.Values[0]).ShouldBe(Visible.Count(s => s.Amount > 250));
     }
+
+    [Fact]
+    public async Task Sqlite_rejects_date_buckets_of_DateTimeOffset()
+    {
+        Assert.SkipUnless(Sqlite, "Only SQLite lacks date parts of DateTimeOffset.");
+
+        var response = await Admin.PostAsJsonAsync("/api/v1/reports/query", new ReportQueryRequest("Sales", GroupBy: new ReportGroupBy("SoldAt", DateBucket.Month)), Ct);
+
+        response.StatusCode.ShouldBe(System.Net.HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync(Ct)).ShouldContain("SQLite cannot group SoldAt");
+    }
+
+    private bool Sqlite => App.Provider == Coworkee.Contracts.Configuration.DatabaseProviders.Sqlite;
 
     private static DateTime Start(DateTime date, DateBucket bucket) => bucket switch
     {

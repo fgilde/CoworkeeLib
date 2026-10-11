@@ -17,6 +17,7 @@ internal static class ReportKeys
         if (group.Field.Kind == ReportFieldKind.Date)
         {
             var key = Convert.ToInt32(value, CultureInfo.InvariantCulture);
+            key = group.WeekIndex ? DateBuckets.DayOfWeekIndex(key) : key;
             var (from, to) = DateBuckets.Range(key, group.Bucket);
             return new ReportKey(from.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), DateBuckets.Label(key, group.Bucket),
                 $"{path} ge {DateLiteral(from, group.Field.ClrType)} and {path} lt {DateLiteral(to, group.Field.ClrType)}");

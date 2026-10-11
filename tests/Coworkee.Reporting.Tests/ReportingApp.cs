@@ -23,7 +23,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Reporting.Tests;
 
-public sealed class ReportingApp : PostgresFixture
+public sealed class ReportingApp : DatabaseFixture
 {
     public const string ViewSales = "Sales.View";
     public const string ViewShoppers = "Shoppers.View";
@@ -37,6 +37,7 @@ public sealed class ReportingApp : PostgresFixture
         builder.WebHost.UseTestServer();
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
+        builder.Configuration["Coworkee:Database:Provider"] = Provider;
         builder.AddCoworkee<SalesReportingModule>();
         builder.Services.AddTestAuthentication();
         App = builder.Build();
@@ -126,7 +127,7 @@ public sealed class SalesReportingModule : CoworkeeModule
         context.Services.AddSingleton<IModelContributor, SalesModelContributor>();
         context.Services.AddSingleton<Coworkee.Application.Authorization.IPermissionDefinitionContributor, SalesPermissions>();
         context.Services.AddCoworkeeDbContext<ReportingTestDbContext>((provider, options) =>
-            options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
+            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
         context.Services.AddODataEntity<Sale>("Sales", ReportingApp.ViewSales, s => s.Secret);
         context.Services.AddODataEntity<Shopper>("Shoppers", ReportingApp.ViewShoppers);
         context.Services.AddScoped<IODataEntityFilter<Sale>, HideHiddenRegion>();

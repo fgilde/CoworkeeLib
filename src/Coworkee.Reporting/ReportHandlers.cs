@@ -175,6 +175,7 @@ internal sealed class ReportHandlers(CoworkeeDbContext db, ReportAccess access, 
             return NoShare;
         }
 
+        var sources = await queries.SourcesAsync(cancellationToken);
         foreach (var widget in request.Definition.Widgets.Where(w => w.Query is not null && w.Type is not (WidgetType.Markdown or WidgetType.Image or WidgetType.Embed)))
         {
             if (await queries.CheckAsync(ReportQueryRequest.From(widget.Query!, widget.Query!.Filter), cancellationToken) is { } error)
@@ -186,7 +187,7 @@ internal sealed class ReportHandlers(CoworkeeDbContext db, ReportAccess access, 
 
             foreach (var column in widget.Query.Columns.Concat(new[] { widget.Query.DateField, widget.Query.OrderBy }.OfType<string>()))
             {
-                if (await queries.CheckAsync(new ReportQueryRequest(widget.Query.EntitySet, GroupBy: new ReportGroupBy(column)), cancellationToken) is not null)
+                if (sources.FirstOrDefault(s => string.Equals(s.Registration.EntitySet, widget.Query.EntitySet, StringComparison.OrdinalIgnoreCase))?.Find(column) is null)
                 {
                     return Error.Validation($"Widgets[{widget.Id}].Columns", $"{widget.Query.EntitySet} has no field '{column}'.");
                 }

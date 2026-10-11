@@ -8,13 +8,21 @@ namespace Coworkee.Reporting.Querying;
 /// <remarks>ponytail: buckets follow the stored time (UTC for DateTimeOffset); a per-user time zone needs a shifted date before bucketing.</remarks>
 internal static class DateBuckets
 {
-    public static Expression Key(Expression date, DateBucket bucket)
+    /// <summary>The Monday weeks are counted from where the database has no day of week (<see cref="ReportGroup.WeekIndex"/>).</summary>
+    public static readonly DateOnly Epoch = new(2000, 1, 3);
+
+    public static Expression Key(Expression date, DateBucket bucket, bool weekIndex = false)
     {
         if (Nullable.GetUnderlyingType(date.Type) is not null)
         {
-            var value = Key(Expression.Property(date, nameof(Nullable<int>.Value)), bucket);
+            var value = Key(Expression.Property(date, nameof(Nullable<int>.Value)), bucket, weekIndex);
             return Expression.Condition(Expression.Property(date, nameof(Nullable<int>.HasValue)),
                 Expression.Convert(value, typeof(int?)), Expression.Constant(null, typeof(int?)));
+        }
+
+        if (weekIndex)
+        {
+            return Expression.Divide(DaysSinceEpoch(date), Expression.Constant(7));
         }
 
         return bucket switch
@@ -45,6 +53,23 @@ internal static class DateBuckets
         DateBucket.Week => $"{ISOWeek.GetYear(FromDay(key).ToDateTime(TimeOnly.MinValue))}-W{ISOWeek.GetWeekOfYear(FromDay(key).ToDateTime(TimeOnly.MinValue)):00}",
         _ => FromDay(key).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
     };
+
+    /// <summary>The day key (yyyymmdd) of the Monday of a week index.</summary>
+    public static int DayOfWeekIndex(int index)
+    {
+        var monday = Epoch.AddDays(index * 7);
+        return monday.Year * 10000 + monday.Month * 100 + monday.Day;
+    }
+
+    private static Expression DaysSinceEpoch(Expression date)
+    {
+        Expression epoch = date.Type == typeof(DateTimeOffset) ? Expression.Constant(new DateTimeOffset(Epoch.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero))
+            : date.Type == typeof(DateOnly) ? Expression.Constant(Epoch)
+            : Expression.Constant(Epoch.ToDateTime(TimeOnly.MinValue));
+        var method = typeof(Microsoft.EntityFrameworkCore.SqlServerDbFunctionsExtensions).GetMethod("DateDiffDay", [typeof(Microsoft.EntityFrameworkCore.DbFunctions), date.Type, date.Type])
+            ?? throw new NotSupportedException($"SQL Server cannot count days of {date.Type.Name}.");
+        return Expression.Call(method, Expression.Constant(Microsoft.EntityFrameworkCore.EF.Functions), epoch, date);
+    }
 
     private static DateOnly FromDay(int key) => new(key / 10000, key / 100 % 100, key % 100);
 
