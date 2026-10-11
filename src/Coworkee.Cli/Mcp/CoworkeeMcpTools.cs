@@ -97,11 +97,12 @@ internal sealed class CoworkeeMcpTools(CliRunner run, HttpClient http)
         [Description("A folder of the app (the .slnx is searched upwards).")] string directory,
         [Description("Module name, e.g. Sales.")] string module,
         [Description("Its first entity in singular (default: module name without trailing s).")] string? entity = null,
-        [Description("Properties as Name[:type][:required][:maxLength], e.g. Number:string:required:50, Total:decimal. Types: string, int, long, decimal, double, bool, dateTime, guid.")] string[]? properties = null,
+        [Description("Properties as " + FeatureOptions.PropertySyntax + ". Types: string, int, long, decimal, double, bool, dateTime, guid, dateOnly, timeOnly, text, email, url, money, enum, reference.")] string[]? properties = null,
         [Description("Mirror the OData set in the browser.")] bool clientEntity = false,
         [Description("Manual or Mapperly.")] string? mapping = null,
+        [Description("Enums the properties use, as Name=Value1,Value2, e.g. OrderStatus=Open,Paid.")] string[]? enums = null,
         CancellationToken cancellationToken = default) =>
-        (await run(["module", "add", module, .. entity is null ? [] : new[] { "--entity", entity }, .. Feature(properties, clientEntity, mapping)], directory, cancellationToken)).ToString();
+        (await run(["module", "add", module, .. entity is null ? [] : new[] { "--entity", entity }, .. Feature(properties, clientEntity, mapping, enums)], directory, cancellationToken)).ToString();
 
     [McpServerTool(Name = "add_entity", Title = "Add an entity")]
     [Description("Adds an entity to a module created with add_module: table, permissions, OData set, endpoints, validation and a Blazor page. Add a migration afterwards.")]
@@ -109,12 +110,13 @@ internal sealed class CoworkeeMcpTools(CliRunner run, HttpClient http)
         [Description("A folder of the app.")] string directory,
         [Description("The module, e.g. Sales.")] string module,
         [Description("Entity name in singular, e.g. Invoice.")] string entity,
-        [Description("Properties as Name[:type][:required][:maxLength].")] string[]? properties = null,
+        [Description("Properties as " + FeatureOptions.PropertySyntax + "; references may point to entities of other modules (ref=Crm.Customer).")] string[]? properties = null,
         [Description("Plural for table, OData set and route (default: name + s).")] string? plural = null,
         [Description("Mirror the OData set in the browser.")] bool clientEntity = false,
         [Description("Manual or Mapperly.")] string? mapping = null,
+        [Description("New enums the properties use, as Name=Value1,Value2.")] string[]? enums = null,
         CancellationToken cancellationToken = default) =>
-        (await run(["entity", "add", module, entity, .. plural is null ? [] : new[] { "--plural", plural }, .. Feature(properties, clientEntity, mapping)], directory, cancellationToken)).ToString();
+        (await run(["entity", "add", module, entity, .. plural is null ? [] : new[] { "--plural", plural }, .. Feature(properties, clientEntity, mapping, enums)], directory, cancellationToken)).ToString();
 
     [McpServerTool(Name = "add_migration", Title = "Add a migration")]
     [Description("Adds an EF Core migration to the infrastructure project, e.g. after add_module or add_entity.")]
@@ -142,8 +144,9 @@ internal sealed class CoworkeeMcpTools(CliRunner run, HttpClient http)
 
     public static string[] CreateArgs(string specFile, string output) => ["new", "--spec", specFile, "-o", output];
 
-    private static string[] Feature(string[]? properties, bool clientEntity, string? mapping) =>
+    private static string[] Feature(string[]? properties, bool clientEntity, string? mapping, string[]? enums) =>
     [
+        .. (enums ?? []).SelectMany(e => new[] { "--enum", e }),
         .. (properties ?? []).SelectMany(p => new[] { "--property", p }),
         .. clientEntity ? new[] { "--client-entity" } : [],
         .. mapping is null ? [] : new[] { "--mapping", mapping },

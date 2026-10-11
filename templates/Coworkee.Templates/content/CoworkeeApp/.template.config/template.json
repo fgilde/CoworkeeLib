@@ -249,6 +249,86 @@
       ],
       "replaces": "COWORKEE_SIGNIN_SIDE"
     },
+    "languages": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "",
+      "description": "Languages offered from the start, comma separated (en,de); empty offers every shipped language."
+    },
+    "defaultLanguage": {
+      "type": "parameter",
+      "datatype": "choice",
+      "defaultValue": "en",
+      "description": "Language of users who chose none.",
+      "choices": [
+        {
+          "choice": "en",
+          "description": "English."
+        },
+        {
+          "choice": "de",
+          "description": "German (Deutsch)."
+        }
+      ],
+      "replaces": "COWORKEE_DEFAULT_LANGUAGE"
+    },
+    "languageList": {
+      "type": "generated",
+      "generator": "regex",
+      "parameters": {
+        "source": "languages",
+        "steps": [
+          {
+            "regex": ",",
+            "replacement": "\", \""
+          }
+        ]
+      },
+      "replaces": "COWORKEE_LANGUAGES"
+    },
+    "customLanguages": {
+      "type": "computed",
+      "value": "(languages != \"\" || defaultLanguage != \"en\")"
+    },
+    "colorMode": {
+      "type": "parameter",
+      "datatype": "choice",
+      "defaultValue": "system",
+      "description": "Default color mode, seeded as system wide setting.",
+      "choices": [
+        {
+          "choice": "system",
+          "description": "Follow the operating system."
+        },
+        {
+          "choice": "light",
+          "description": "Always light."
+        },
+        {
+          "choice": "dark",
+          "description": "Always dark."
+        }
+      ],
+      "replaces": "COWORKEE_COLOR_MODE"
+    },
+    "registration": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Allow self registration on the sign-in page (seeded setting Account.AllowRegistration)."
+    },
+    "githubActions": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "GitHub Actions workflow that builds and tests the solution."
+    },
+    "devcontainer": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Dev container with the .NET SDK and Docker in Docker."
+    },
     "appTitle": {
       "type": "generated",
       "generator": "coalesce",
@@ -329,6 +409,18 @@
             "tests/MyApp.Web.Client.Tests/**",
             "tests/MyApp.Api.Tests/CatalogTests.cs",
             "tests/MyApp.Api.Tests/AiToolTests.cs"
+          ]
+        },
+        {
+          "condition": "(!githubActions)",
+          "exclude": [
+            ".github/**"
+          ]
+        },
+        {
+          "condition": "(!devcontainer)",
+          "exclude": [
+            ".devcontainer/**"
           ]
         },
         {

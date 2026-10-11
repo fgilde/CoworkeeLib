@@ -37,7 +37,7 @@ public sealed class OptionTests
             datatype.ShouldBe(option.Kind switch { OptionKind.Bool => "bool", OptionKind.Choice => "choice", _ => "string" }, option.Id);
             var templateDefault = parameter.Value.TryGetProperty("defaultValue", out var value) && value.GetString() is { Length: > 0 } text ? text : null;
             templateDefault.ShouldBe(option.Default, option.Id);
-            if (option.Choices is { } choices)
+            if (option is { Kind: OptionKind.Choice, Choices: { } choices })
             {
                 parameter.Value.GetProperty("choices").EnumerateArray().Select(c => c.GetProperty("choice").GetString()).ShouldBe(choices.Select(c => c.Value), option.Id);
             }
@@ -66,6 +66,7 @@ public sealed class OptionTests
             OptionKind.Bool => (option.Default == "true" ? "false" : "true", option.Default == "true" ? "false" : "true"),
             OptionKind.Choice => (option.Choices!.First(c => c.Value != option.Default).Value, option.Choices!.First(c => c.Value != option.Default).Value),
             OptionKind.Color => ("#123abc", "#123abc"),
+            OptionKind.Multi => ("en", "en"),
             OptionKind.File when id == "logo" => (folder.File("brand/logo.png"), "logo.png"),
             OptionKind.File => (folder.File("brand/welcome.mp4"), "/media/welcome.mp4"),
             _ => ("Acme Shop", "Acme Shop"),

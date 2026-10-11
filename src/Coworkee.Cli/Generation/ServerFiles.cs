@@ -10,7 +10,7 @@ internal static class ServerFiles
     public static IEnumerable<GeneratedFile> Module(string app, string module, IReadOnlyList<EntityModel> entities)
     {
         var root = $"src/{app}.{module}";
-        yield return new($"{root}/{app}.{module}.csproj", Project(app, entities.Any(e => e.Mapping == MappingStrategy.Mapperly)));
+        yield return new($"{root}/{app}.{module}.csproj", Project(app, entities.Any(e => e.Mapping == MappingStrategy.Mapperly), entities.SelectMany(e => e.ReferencedModules).Distinct()));
         yield return new($"{root}/{ModuleClass(app, module)}.cs", $$"""
             using Coworkee.Application.Authorization;
             using Coworkee.Application.Messaging;
@@ -44,19 +44,21 @@ internal static class ServerFiles
             """);
     }
 
-    public static string Project(string app, bool mapperly) => $"""
+    public static string Project(string app, bool mapperly, IEnumerable<string>? modules = null) => $"""
         <Project Sdk="Microsoft.NET.Sdk">
           <ItemGroup>
             <FrameworkReference Include="Microsoft.AspNetCore.App" />
             <ProjectReference Include="..\{app}.Contracts\{app}.Contracts.csproj" />
             <ProjectReference Include="..\{app}.Application\{app}.Application.csproj" />
-            <CoworkeePackage Include="Coworkee.AspNetCore" />
+        {string.Concat((modules ?? []).Select(m => ModuleReference(app, m)))}    <CoworkeePackage Include="Coworkee.AspNetCore" />
             <CoworkeePackage Include="Coworkee.Infrastructure" />
             <CoworkeePackage Include="Coworkee.OData" />
         {(mapperly ? MapperlyReference : string.Empty)}  </ItemGroup>
         </Project>
 
         """;
+
+    public static string ModuleReference(string app, string module) => $"    <ProjectReference Include=\"..\\{app}.{module}\\{app}.{module}.csproj\" />\n";
 
     public const string MapperlyReference = "    <PackageReference Include=\"Riok.Mapperly\" PrivateAssets=\"all\" ExcludeAssets=\"runtime\" />\n";
 
@@ -70,18 +72,26 @@ internal static class ServerFiles
 
     public static string Endpoint(EntityModel e) => $"        app.Map{e.Name}Endpoints();\n";
 
+    /// <summary>An enum of the spec in the contracts; JSON and OData carry its names.</summary>
+    public static GeneratedFile Enum(string app, EnumSpec spec) => new($"src/{app}.Contracts/Enums/{spec.Name}.cs", $$"""
+        using System.Text.Json.Serialization;
+
+        namespace {{app}}.Contracts;
+
+        [JsonConverter(typeof(JsonStringEnumConverter<{{spec.Name}}>))]
+        public enum {{spec.Name}}
+        {
+        {{string.Concat(spec.Values.Select(v => $"    {v},\n"))}}}
+
+        """);
+
     public static IEnumerable<GeneratedFile> Entity(EntityModel e)
     {
         var contracts = $"src/{e.App}.Contracts/{e.Module}";
         var root = $"src/{e.App}.{e.Module}";
         var features = $"{root}/Features/{e.Plural}";
         yield return new($"{contracts}/{e.Module}Permissions.{e.Plural}.cs", Permissions(e));
-        yield return new($"{contracts}/{e.Name}Dto.cs", $$"""
-            namespace {{e.App}}.Contracts.{{e.Module}};
-
-            public sealed record {{e.Name}}Dto(Guid Id{{string.Concat(e.Properties.Select(p => $", {EntityModel.Type(p)} {p.Name}"))}});
-
-            """);
+        yield return new($"{contracts}/{e.Name}Dto.cs", Dto(e));
         yield return new($"{contracts}/AddEdit{e.Name}Request.cs", $$"""
             namespace {{e.App}}.Contracts.{{e.Module}};
 
@@ -94,14 +104,14 @@ internal static class ServerFiles
         yield return new($"{root}/Domain/{e.Name}.cs", Domain(e));
         yield return new($"{root}/Persistence/{e.Name}ModelContributor.cs", ModelContributor(e));
         yield return new($"{root}/Permissions/{e.Name}PermissionDefinitions.cs", PermissionDefinitions(e));
-        yield return new($"{features}/AddEdit{e.Name}.cs", AddEdit(e));
-        if (Validator(e) is { } validator)
+        yield return new($"{features}/AddEdit{e.Name}.cs", CommandFiles.AddEdit(e));
+        if (CommandFiles.Validator(e) is { } validator)
         {
             yield return new($"{features}/AddEdit{e.Name}Validator.cs", validator);
         }
 
         yield return new($"{features}/Delete{e.Plural}.cs", Delete(e));
-        yield return new($"{features}/{e.Name}Mapping.cs", Mapping(e));
+        yield return new($"{features}/{e.Name}Mapping.cs", CommandFiles.Mapping(e));
         yield return new($"{root}/Endpoints/{e.Name}Endpoints.cs", Endpoints(e));
     }
 
@@ -122,19 +132,50 @@ internal static class ServerFiles
 
         """;
 
-    private static string Domain(EntityModel e) => $$"""
-        using Coworkee.Domain;
-        using {{e.App}}.Contracts.{{e.Module}};
+    private static string Dto(EntityModel e)
+    {
+        var members = e.Properties.Select(p => p.Type == PropertyType.Reference
+            ? $", {EntityModel.Type(p)} {p.Name}Id, {e.Name}Dto.{p.Name}Reference? {p.Name}"
+            : $", {EntityModel.Type(p)} {p.Name}");
+        var body = e.References.Any()
+            ? "\n{\n" + string.Join("\n", e.References.Select(p => $"    public sealed record {p.Name}Reference(Guid Id, string? {e.TargetDisplay(p)});\n")) + "}"
+            : ";";
+        return $$"""
+            namespace {{e.App}}.Contracts.{{e.Module}};
 
-        namespace {{e.App}}.{{e.Module}}.Domain;
+            public sealed record {{e.Name}}Dto(Guid Id{{string.Concat(members)}}){{body}}
 
-        [Realtime({{e.Permissions}}.View)]
-        {{(e.Spec.ClientEntity ? "[ClientEntity]\n" : string.Empty)}}public sealed class {{e.Name}} : AuditedEntity, IMultiTenant
-        {
-        {{string.Concat(e.Properties.Select(p => $"    {EntityModel.Settable(p)}\n\n"))}}    public Guid TenantId { get; set; }
-        }
+            """;
+    }
 
-        """;
+    private static string Domain(EntityModel e)
+    {
+        var usings = (e.UsesEnums ? $"using {e.App}.Contracts;\n" : string.Empty) + $"using {e.App}.Contracts.{e.Module};\n"
+            + string.Concat(e.ReferencedModules.Select(m => $"using {e.App}.{m}.Domain;\n"));
+        var inverses = string.Concat(e.Inverses.Select(i => $"    public List<{i.Source.Name}> {i.Property.Inverse} {{ get; set; }} = [];\n\n"));
+        return $$"""
+            using Coworkee.Domain;
+            {{usings}}
+            namespace {{e.App}}.{{e.Module}}.Domain;
+
+            [Realtime({{e.Permissions}}.View)]
+            {{(e.Spec.ClientEntity ? "[ClientEntity]\n" : string.Empty)}}public sealed class {{e.Name}} : AuditedEntity, IMultiTenant
+            {
+            {{string.Concat(e.Properties.Select(p => DomainMember(e, p)))}}{{inverses}}    public Guid TenantId { get; set; }
+            }
+
+            """;
+    }
+
+    private static string DomainMember(EntityModel e, PropertySpec p)
+    {
+        var facet = !p.Facet ? string.Empty
+            : p.Type == PropertyType.Reference
+                ? $"    [Nextended.Core.Facets.ProvideFacet(Label = \"{EntityModel.Label(p)}\", ValuePath = \"{p.Name}Id\", LabelPath = \"{p.Name}.{e.TargetDisplay(p)}\", ValueType = typeof(Guid))]\n"
+                : $"    [Nextended.Core.Facets.ProvideFacet(Label = \"{EntityModel.Label(p)}\")]\n";
+        var navigation = p.Type == PropertyType.Reference ? $"    public {e.Target(p).Name}? {p.Name} {{ get; set; }}\n\n" : string.Empty;
+        return $"{facet}    {EntityModel.Settable(p)}\n\n{navigation}";
+    }
 
     private static string ModelContributor(EntityModel e) => $$"""
         using Coworkee.Infrastructure.Persistence;
@@ -148,10 +189,34 @@ internal static class ServerFiles
             public void Apply(ModelBuilder modelBuilder) => modelBuilder.Entity<{{e.Name}}>(entity =>
             {
                 entity.ToTable("{{e.Plural}}", "app");
-        {{string.Concat(e.Properties.Where(p => p.MaxLength is not null).Select(p => $"        entity.Property(e => e.{p.Name}).HasMaxLength({p.MaxLength});\n"))}}    });
+        {{string.Concat(e.Properties.SelectMany(Configuration).Select(l => $"        {l}\n"))}}    });
         }
 
         """;
+
+    private static IEnumerable<string> Configuration(PropertySpec p)
+    {
+        if (EntityModel.MaxLength(p) is { } max)
+        {
+            yield return $"entity.Property(e => e.{p.Name}).HasMaxLength({max});";
+        }
+
+        if (EntityModel.Precision(p) is var (precision, scale))
+        {
+            yield return $"entity.Property(e => e.{p.Name}).HasPrecision({precision}, {scale});";
+        }
+
+        if (p.Type == PropertyType.Reference)
+        {
+            var inverse = p.Inverse is { } collection ? $"t => t.{collection}" : string.Empty;
+            yield return $"entity.HasOne(e => e.{p.Name}).WithMany({inverse}).HasForeignKey(e => e.{p.Name}Id).OnDelete(DeleteBehavior.{p.OnDelete ?? Spec.DeleteBehavior.Restrict});";
+        }
+
+        if (p.Unique)
+        {
+            yield return $"entity.HasIndex(e => new {{ e.TenantId, e.{EntityModel.Field(p)} }}).IsUnique();";
+        }
+    }
 
     private static string PermissionDefinitions(EntityModel e) => $$"""
         using Coworkee.Application.Authorization;
@@ -170,72 +235,6 @@ internal static class ServerFiles
         }
 
         """;
-
-    private static string AddEdit(EntityModel e) => $$"""
-        using System.ComponentModel;
-        using Coworkee.Application.Authorization;
-        using Coworkee.Application.Messaging;
-        using Coworkee.Core.Results;
-        using Coworkee.Infrastructure.Persistence;
-        using Microsoft.EntityFrameworkCore;
-        using {{e.App}}.{{e.Module}}.Domain;
-        using {{e.App}}.Contracts.{{e.Module}};
-
-        namespace {{e.App}}.{{e.Module}}.Features.{{e.Plural}};
-
-        [Description("Creates a {{e.Words}} or changes the one with the id.")]
-        public sealed record AddEdit{{e.Name}}Command(Guid? Id, AddEdit{{e.Name}}Request Request) : ICommand<Result<{{e.Name}}Dto>>;
-
-        internal sealed class AddEdit{{e.Name}}Handler(CoworkeeDbContext db, IPermissionChecker permissions) : IHandler<AddEdit{{e.Name}}Command, Result<{{e.Name}}Dto>>
-        {
-            public async Task<Result<{{e.Name}}Dto>> HandleAsync(AddEdit{{e.Name}}Command command, CancellationToken cancellationToken)
-            {
-                if (!await permissions.IsGrantedAsync(command.Id is null ? {{e.Permissions}}.Create : {{e.Permissions}}.Edit, cancellationToken))
-                {
-                    return Error.Forbidden("{{e.ErrorCode}}_forbidden", "You may not do this.");
-                }
-
-                var entity = command.Id is { } id ? await db.Set<{{e.Name}}>().SingleOrDefaultAsync(e => e.Id == id, cancellationToken) : Add();
-                if (entity is null)
-                {
-                    return Error.NotFound("{{e.ErrorCode}}_not_found", "The {{e.Words}} does not exist.");
-                }
-
-        {{string.Concat(e.Properties.Select(p => $"        entity.{p.Name} = command.Request.{p.Name}{Trim(p)};\n"))}}        return entity.ToDto();
-            }
-
-            private {{e.Name}} Add()
-            {
-                var entity = new {{e.Name}}();
-                db.Add(entity);
-                return entity;
-            }
-        }
-
-        """;
-
-    private static string Trim(PropertySpec property) => property.Type != PropertyType.String ? string.Empty : property.Required ? ".Trim()" : "?.Trim()";
-
-    private static string? Validator(EntityModel e)
-    {
-        var rules = e.Properties
-            .Select(p => (p.Name, Rule: (p is { Type: PropertyType.String, Required: true } ? ".NotEmpty()" : string.Empty) + (p.MaxLength is { } max ? $".MaximumLength({max})" : string.Empty)))
-            .Where(r => r.Rule.Length > 0)
-            .ToList();
-        return rules.Count == 0 ? null : $$"""
-            using FluentValidation;
-
-            namespace {{e.App}}.{{e.Module}}.Features.{{e.Plural}};
-
-            internal sealed class AddEdit{{e.Name}}Validator : AbstractValidator<AddEdit{{e.Name}}Command>
-            {
-                public AddEdit{{e.Name}}Validator()
-                {
-            {{string.Concat(rules.Select(r => $"        RuleFor(c => c.Request.{r.Name}){r.Rule};\n"))}}    }
-            }
-
-            """;
-    }
 
     private static string Delete(EntityModel e) => $$"""
         using System.ComponentModel;
@@ -269,34 +268,6 @@ internal static class ServerFiles
         }
 
         """;
-
-    private static string Mapping(EntityModel e) => e.Mapping == MappingStrategy.Mapperly
-        ? $$"""
-            using Riok.Mapperly.Abstractions;
-            using {{e.App}}.{{e.Module}}.Domain;
-            using {{e.App}}.Contracts.{{e.Module}};
-
-            namespace {{e.App}}.{{e.Module}}.Features.{{e.Plural}};
-
-            [Mapper(RequiredMappingStrategy = RequiredMappingStrategy.Target)]
-            internal static partial class {{e.Name}}Mapping
-            {
-                public static partial {{e.Name}}Dto ToDto(this {{e.Name}} entity);
-            }
-
-            """
-        : $$"""
-            using {{e.App}}.{{e.Module}}.Domain;
-            using {{e.App}}.Contracts.{{e.Module}};
-
-            namespace {{e.App}}.{{e.Module}}.Features.{{e.Plural}};
-
-            internal static class {{e.Name}}Mapping
-            {
-                public static {{e.Name}}Dto ToDto(this {{e.Name}} entity) => new(entity.Id{{string.Concat(e.Properties.Select(p => $", entity.{p.Name}"))}});
-            }
-
-            """;
 
     private static string Endpoints(EntityModel e) => $$"""
         using Coworkee.Application.Messaging;

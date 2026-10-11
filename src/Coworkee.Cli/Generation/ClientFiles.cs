@@ -64,21 +64,32 @@ internal static class ClientFiles
 
         """.ReplaceLineEndings("\n");
 
-    private static string Page(EntityModel e) => $$"""
-        @page "{{e.Route}}"
-        @using {{e.App}}.Contracts.{{e.Module}}
-        {{(e.Spec.ClientEntity ? "@using Coworkee.Client.Blazor.ClientEntities\n" : string.Empty)}}@attribute [Authorize(Policy = PermissionPolicy.Prefix + {{e.Permissions}}.View)]
+    private static string Page(EntityModel e)
+    {
+        var expand = e.References.Any() ? $" Expand=\"{string.Join(",", e.References.Select(p => p.Name))}\"" : string.Empty;
+        var toolbar = e.Spec.ClientEntity
+            ? $"    <ToolBarContent>\n        <ClientEntityIndicator EntitySet=\"{e.Plural}\" DataChanged=\"() => _table.ReloadAsync()\" />\n    </ToolBarContent>\n"
+            : string.Empty;
+        return $$"""
+            @page "{{e.Route}}"
+            @using {{e.App}}.Contracts.{{e.Module}}
+            {{(e.Spec.ClientEntity ? "@using Coworkee.Client.Blazor.ClientEntities\n" : string.Empty)}}@attribute [Authorize(Policy = PermissionPolicy.Prefix + {{e.Permissions}}.View)]
 
-        <PageHeader Title="@L["{{e.Plural}}"]" Description="@L["Manage {{e.PluralWords}}."]" />
-        <RealtimeSubscription Topic="type:{{e.Name}}" OnEvent="_ => _table.ReloadAsync()" />
-        <CoworkeeDataTable @ref="_table" T="{{e.Name}}Dto" EntitySet="{{e.Plural}}" SearchFields="SearchFields" MultiSelection="true" ExportFileName="{{e.PluralWords.Replace(' ', '-')}}" DescribeItem="e => {{e.Describe}}"
-                           CreateText="@L["New {{e.Words}}"]" CreatePermission="@{{e.Permissions}}.Create" EditPermission="@{{e.Permissions}}.Edit" DeletePermission="@{{e.Permissions}}.Delete"
-                           OnCreate="CreateAsync" OnEdit="EditAsync" OnDelete="DeleteAsync">
-        {{(e.Spec.ClientEntity ? $"    <ToolBarContent>\n        <ClientEntityIndicator EntitySet=\"{e.Plural}\" DataChanged=\"() => _table.ReloadAsync()\" />\n    </ToolBarContent>\n" : string.Empty)}}    <Columns>
-        {{string.Concat(e.Properties.Select(p => $"        <PropertyColumn Property=\"e => e.{p.Name}\" Title=\"@L[\"{EntityModel.Sentence(p.Name)}\"]\" />\n"))}}    </Columns>
-        </CoworkeeDataTable>
+            <PageHeader Title="@L["{{e.Plural}}"]" Description="@L["Manage {{e.PluralWords}}."]" />
+            <RealtimeSubscription Topic="type:{{e.Name}}" OnEvent="_ => _table.ReloadAsync()" />
+            <CoworkeeDataTable @ref="_table" T="{{e.Name}}Dto" EntitySet="{{e.Plural}}"{{expand}} SearchFields="SearchFields" MultiSelection="true" ExportFileName="{{e.PluralWords.Replace(' ', '-')}}" DescribeItem="e => {{e.Describe}}"
+                               CreateText="@L["New {{e.Words}}"]" CreatePermission="@{{e.Permissions}}.Create" EditPermission="@{{e.Permissions}}.Edit" DeletePermission="@{{e.Permissions}}.Delete"
+                               OnCreate="CreateAsync" OnEdit="EditAsync" OnDelete="DeleteAsync">
+            {{toolbar}}    <Columns>
+            {{string.Concat(e.Columns.Select(p => $"        <PropertyColumn Property=\"e => e.{Shown(e, p)}\" Title=\"@L[\"{EntityModel.Label(p)}\"]\"{Format(p)} />\n"))}}    </Columns>
+            </CoworkeeDataTable>
 
-        """;
+            """;
+    }
+
+    private static string Shown(EntityModel e, PropertySpec p) => p.Type == PropertyType.Reference ? $"{p.Name}!.{e.TargetDisplay(p)}" : p.Name;
+
+    private static string Format(PropertySpec p) => p.Type == PropertyType.Money ? $" Format=\"N{EntityModel.Precision(p)!.Value.Scale}\"" : string.Empty;
 
     private static string CodeBehind(EntityModel e) => $$"""
         using Coworkee.Client.Blazor.Api;
@@ -86,6 +97,8 @@ internal static class ClientFiles
         using Coworkee.Client.Blazor.Localization;
         using Microsoft.AspNetCore.Components;
         using MudBlazor;
+        using MudBlazor.Extensions.Components.ObjectEdit;
+        using MudBlazor.Extensions.Components.ObjectEdit.Options;
         using {{e.App}}.Contracts.{{e.Module}};
         using {{e.App}}.Web.Client.Api;
 
@@ -93,7 +106,7 @@ internal static class ClientFiles
 
         public partial class {{e.Plural}}Page
         {
-            private static readonly string[] SearchFields = [{{string.Join(", ", e.Texts.Select(p => $"nameof({e.Name}Dto.{p.Name})"))}}];
+            private static readonly string[] SearchFields = [{{string.Join(", ", e.Searchable.Select(p => $"nameof({e.Name}Dto.{p.Name})"))}}];
             private CoworkeeDataTable<{{e.Name}}Dto> _table = null!;
 
             [Inject] private CoworkeeLocalizer L { get; set; } = null!;
@@ -107,18 +120,36 @@ internal static class ClientFiles
             private Task CreateAsync() => EditAsync(null, new AddEdit{{e.Name}}Request());
 
             private Task EditAsync({{e.Name}}Dto item) =>
-                EditAsync(item.Id, new AddEdit{{e.Name}}Request { {{string.Join(", ", e.Properties.Select(p => $"{p.Name} = item.{p.Name}"))}} });
+                EditAsync(item.Id, new AddEdit{{e.Name}}Request { {{string.Join(", ", e.Properties.Select(p => $"{EntityModel.Field(p)} = item.{EntityModel.Field(p)}"))}} });
 
             private async Task EditAsync(Guid? id, AddEdit{{e.Name}}Request model)
             {
-                if (await Dialogs.ShowEditAsync(L[id is null ? "New {{e.Words}}" : "Edit {{e.Words}}"], model, saved => Api.SaveAsync(id, saved)))
+                if (await Dialogs.ShowEditAsync(L[id is null ? "New {{e.Words}}" : "Edit {{e.Words}}"], model, saved => Api.SaveAsync(id, saved), Configure))
                 {
                     Snackbar.Add(L["{{EntityModel.Sentence(e.Name)}} saved"], Severity.Success);
                 }
             }
 
+        #pragma warning disable BL0005 // MudEx configures the wrapping grid items through these instances
+            private void Configure(ObjectEditMeta<AddEdit{{e.Name}}Request> meta)
+            {
+        {{string.Concat(e.Properties.Select((p, i) => $"        meta.Property(p => p.{EntityModel.Field(p)}).WithLabel(L[\"{EntityModel.Label(p)}\"]).WithOrder({i}){Editor(e, p)};\n"))}}    }
+        #pragma warning restore BL0005
+
             private Task DeleteAsync(IReadOnlyCollection<{{e.Name}}Dto> items) => Snackbar.RunAsync(() => Api.DeleteAsync([.. items.Select(i => i.Id)]));
         }
 
         """;
+
+    private static string Editor(EntityModel e, PropertySpec p) => p.Type switch
+    {
+        PropertyType.Reference when p.Required =>
+            $"\n            .RenderWith<ODataPicker, Guid>(p => p.Value)\n            .WithAdditionalAttribute(nameof(ODataPicker.EntitySet), \"{e.Target(p).Plural}\")"
+            + $"\n            .WithAdditionalAttribute(nameof(ODataPicker.TextProperty), \"{e.TargetDisplay(p)}\")\n            .WithAdditionalAttribute(nameof(ODataPicker.Required), true)",
+        PropertyType.Reference =>
+            $"\n            .RenderWith<OptionalODataPicker, Guid?>(p => p.Value)\n            .WithAdditionalAttribute(nameof(OptionalODataPicker.EntitySet), \"{e.Target(p).Plural}\")"
+            + $"\n            .WithAdditionalAttribute(nameof(OptionalODataPicker.TextProperty), \"{e.TargetDisplay(p)}\")",
+        PropertyType.Text => ".WithAdditionalAttribute(\"Lines\", 4).WrapInMudItem(i => i.md = 12)",
+        _ => string.Empty,
+    };
 }

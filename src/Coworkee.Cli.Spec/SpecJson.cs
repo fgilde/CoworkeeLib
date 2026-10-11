@@ -52,7 +52,7 @@ public static class SpecJson
     public static AppSpec Example() => new()
     {
         Name = "Shop",
-        Options = new() { ["samples"] = false, ["chat"] = false, ["files"] = true, ["mapping"] = "manual" },
+        Options = new() { ["samples"] = false, ["chat"] = false, ["files"] = true, ["mapping"] = "manual", ["languages"] = new JsonArray("en", "de"), ["defaultLanguage"] = "de" },
         Branding = new BrandingSpec { Title = "Acme Shop", Theme = "Forest", PrimaryColor = "#0a7d5a", SecondaryColor = "#ff8f00", SignInLayout = "Card" },
         Modules =
         [
@@ -66,9 +66,9 @@ public static class SpecJson
                         Name = "Customer",
                         Properties =
                         [
-                            new PropertySpec { Name = "Name", Required = true, MaxLength = 200 },
-                            new PropertySpec { Name = "Email", MaxLength = 200 },
-                            new PropertySpec { Name = "IsActive", Type = PropertyType.Bool },
+                            new PropertySpec { Name = "Name", Required = true, MaxLength = 200, Display = true },
+                            new PropertySpec { Name = "Email", Type = PropertyType.Email, Unique = true },
+                            new PropertySpec { Name = "IsActive", Type = PropertyType.Bool, Default = "true", Facet = true },
                         ],
                     },
                     new EntitySpec
@@ -78,14 +78,18 @@ public static class SpecJson
                         Mapping = MappingStrategy.Mapperly,
                         Properties =
                         [
-                            new PropertySpec { Name = "Number", Required = true, MaxLength = 50 },
-                            new PropertySpec { Name = "Total", Type = PropertyType.Decimal, Required = true },
-                            new PropertySpec { Name = "OrderedAt", Type = PropertyType.DateTime },
+                            new PropertySpec { Name = "Number", Required = true, MaxLength = 50, Unique = true },
+                            new PropertySpec { Name = "Customer", Type = PropertyType.Reference, Reference = "Customer", Required = true, Inverse = "Orders", Facet = true },
+                            new PropertySpec { Name = "Status", Type = PropertyType.Enum, Enum = "OrderStatus", Required = true, Default = "Open", Facet = true },
+                            new PropertySpec { Name = "Total", Type = PropertyType.Money, Required = true },
+                            new PropertySpec { Name = "OrderedOn", Type = PropertyType.DateOnly, Label = "Order date" },
+                            new PropertySpec { Name = "Note", Type = PropertyType.Text },
                         ],
                     },
                 ],
             },
         ],
+        Enums = [new EnumSpec { Name = "OrderStatus", Values = ["Open", "Paid", "Shipped"] }],
     };
 
     private static JsonObject OptionsSchema()
@@ -102,6 +106,12 @@ public static class SpecJson
                 case OptionKind.Choice:
                     property["type"] = "string";
                     property["enum"] = new JsonArray([.. option.Choices!.Select(c => (JsonNode)c.Value)]);
+                    break;
+                case OptionKind.Multi:
+                    var values = new JsonArray([.. option.Choices!.Select(c => (JsonNode)c.Value)]);
+                    property["type"] = new JsonArray("array", "string");
+                    property["items"] = new JsonObject { ["enum"] = values };
+                    property["description"] = option.Description + " An array, or the values comma separated.";
                     break;
                 case OptionKind.Color:
                     property["type"] = "string";

@@ -13,7 +13,9 @@ public sealed class SpecTests
 
         SpecValidator.Validate(example).ShouldBeEmpty();
         SpecJson.Write(SpecJson.Read(SpecJson.Write(example))).ShouldBe(SpecJson.Write(example));
-        SpecJson.Write(example).ShouldContain("\"type\": \"decimal\"");
+        SpecJson.Write(example).ShouldContain("\"type\": \"money\"");
+        SpecJson.Write(example).ShouldContain("\"reference\": \"Customer\"");
+        SpecOptions.Resolve(example)["languages"].ShouldBe("en,de");
         SpecJson.Write(example).ShouldContain("\"mapping\": \"mapperly\"");
     }
 

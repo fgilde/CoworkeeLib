@@ -24,6 +24,12 @@ public static class DemoSeed
         seed.Roles.Add(new SeedRole("User", "Signed-in users", Shared));
 #endif
         seed.Users.Add(Administrator);
+#if (colorMode != "system")
+        seed.Settings["Theme.Mode"] = "COWORKEE_COLOR_MODE";
+#endif
+#if (registration)
+        seed.Settings["Account.AllowRegistration"] = "true";
+#endif
     }
 
     private static string[] Shared =>

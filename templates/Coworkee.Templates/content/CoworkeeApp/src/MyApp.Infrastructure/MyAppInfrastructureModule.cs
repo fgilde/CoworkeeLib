@@ -42,5 +42,14 @@ public sealed class MyAppInfrastructureModule : CoworkeeModule
 #endif
         });
 #endif
+#if (customLanguages)
+        context.Services.Configure<Coworkee.Localization.LocalizationOptions>(localization =>
+        {
+#if (languages != "")
+            localization.Languages = ["COWORKEE_LANGUAGES"];
+#endif
+            localization.DefaultLanguage = "COWORKEE_DEFAULT_LANGUAGE";
+        });
+#endif
     }
 }

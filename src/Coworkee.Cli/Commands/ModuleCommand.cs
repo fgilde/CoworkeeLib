@@ -13,7 +13,7 @@ internal static class ModuleCommand
     {
         var add = new Command("add", "Add a feature module with an entity: table, permissions, OData set, endpoints, validation and a Blazor page.")
         {
-            Name, Entity, FeatureOptions.Properties, FeatureOptions.Plural, FeatureOptions.ClientEntity, FeatureOptions.Mapping,
+            Name, Entity, FeatureOptions.Properties, FeatureOptions.Enums, FeatureOptions.Plural, FeatureOptions.ClientEntity, FeatureOptions.Mapping,
         }.Handle(AddAsync);
         return new Command("module", "Manage feature modules.") { add };
     }
@@ -28,15 +28,17 @@ internal static class ModuleCommand
         return new ModuleSpec { Name = module, Entities = [FeatureOptions.Entity(result, EntityName(module, result.GetValue(Entity)))] };
     }
 
-    public static async Task<int> AddAsync(Solution solution, ModuleSpec module, CancellationToken cancellationToken)
+    public static async Task<int> AddAsync(Solution solution, ModuleSpec module, CancellationToken cancellationToken, IReadOnlyList<EnumSpec>? enums = null)
     {
-        FeatureOptions.Validate(new AppSpec { Name = solution.Name, Options = { ["samples"] = solution.HasSamples }, Modules = [module] });
-        var entities = module.Entities.Select(e => new EntityModel(solution.Name, module.Name, e, e.Mapping ?? MappingStrategy.Manual)).ToList();
-        await FeatureWriter.AddModuleAsync(solution, module.Name, entities, cancellationToken);
+        var spec = new AppSpec { Name = solution.Name, Options = { ["samples"] = solution.HasSamples }, Modules = [module], Enums = [.. enums ?? []] };
+        var index = ExistingModel.Index(solution, spec);
+        FeatureOptions.Validate(spec, index);
+        var entities = module.Entities.Select(e => new EntityModel(solution.Name, module.Name, e, e.Mapping ?? MappingStrategy.Manual, index)).ToList();
+        await FeatureWriter.AddModuleAsync(solution, module.Name, entities, spec.Enums, cancellationToken);
         Console.WriteLine($"Module {module.Name} added. Next: coworkee migrations add Add{module.Name}");
         return 0;
     }
 
     private static Task<int> AddAsync(ParseResult result, CancellationToken cancellationToken) =>
-        AddAsync(Solution.Find(Environment.CurrentDirectory), Read(result), cancellationToken);
+        AddAsync(Solution.Find(Environment.CurrentDirectory), Read(result), cancellationToken, FeatureOptions.EnumSpecs(result));
 }

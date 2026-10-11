@@ -90,8 +90,8 @@ public sealed class TemplateOptionTests(TemplateFixture template)
         var solution = Solution.Find(app);
         var order = new EntitySpec { Name = "Order", ClientEntity = true, Properties = [new PropertySpec { Name = "Number", Required = true, MaxLength = 50 }] };
 
-        await FeatureWriter.AddModuleAsync(solution, "Sales", [new EntityModel("Shop", "Sales", order, MappingStrategy.Mapperly)], Ct);
-        await FeatureWriter.AddEntityAsync(solution, new EntityModel("Shop", "Sales", new EntitySpec { Name = "Invoice", Properties = [new PropertySpec { Name = "Total", Type = PropertyType.Decimal }] }, MappingStrategy.Manual), Ct);
+        await FeatureWriter.AddModuleAsync(solution, "Sales", [new EntityModel("Shop", "Sales", order, MappingStrategy.Mapperly)], [], Ct);
+        await FeatureWriter.AddEntityAsync(solution, new EntityModel("Shop", "Sales", new EntitySpec { Name = "Invoice", Properties = [new PropertySpec { Name = "Total", Type = PropertyType.Decimal }] }, MappingStrategy.Manual), [], Ct);
 
         Read(app, "Shop.slnx").ShouldContain("<Project Path=\"src/Shop.Sales/Shop.Sales.csproj\" />");
         Read(app, "src/Shop.Infrastructure/Shop.Infrastructure.csproj").ShouldContain("..\\Shop.Sales\\Shop.Sales.csproj");

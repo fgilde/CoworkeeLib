@@ -11,6 +11,9 @@ public enum OptionKind
 
     /// <summary>A local file the CLI copies into the app (an http(s) address is passed as it is where noted).</summary>
     File,
+
+    /// <summary>Several of the choices, comma separated (a JSON array in the spec).</summary>
+    Multi,
 }
 
 public sealed record OptionChoice(string Value, string Description);
@@ -45,6 +48,10 @@ public static class OptionCatalog
     public const string Branding = "Branding";
     public const string SignIn = "Sign-in";
     public const string Code = "Code";
+    public const string Tooling = "Tooling";
+
+    /// <summary>Cultures the library ships texts for (Localization/{culture}.json of its modules), English being the keys.</summary>
+    public static readonly IReadOnlyList<OptionChoice> Languages = [new("en", "English"), new("de", "German (Deutsch)")];
 
     public static readonly IReadOnlyList<string> Themes = ["Ocean", "Coworkee", "Classic", "Forest", "Midnight", "Sunset", "HighContrast"];
 
@@ -114,6 +121,21 @@ public static class OptionCatalog
         new("mapping", Code, "DTO mapping", "Default mapping of generated entities to their DTOs; an entity can choose its own.", OptionKind.Choice, "manual",
             "Mapperly for many or large entities.", ["manual: plain code you can read", "mapperly: compile-time mapper, reports unmapped members"], ["manual: one more line per property", "mapperly: one more package"],
             [new("manual", "A ToDto extension method."), new("mapperly", "A Mapperly mapper.")], TemplateSymbol: false),
+
+        // languages, color mode, registration and repository tooling
+        new("languages", General, "Languages", "Languages the app offers from the start, from those the library ships texts for; administrators add more later on the Languages page. Empty offers all of them.", OptionKind.Multi, null,
+            "When the users speak only some of the languages.", ["Users see only languages that make sense"], ["More languages later need the Languages page or a translator key"], Languages),
+        new("defaultLanguage", General, "Default language", "Language of users who chose none and whose browser asks for none of the offered ones.", OptionKind.Choice, "en",
+            "When most users speak another language than English.", ["Right language at the first visit"], ["Must be one of the languages"], Languages),
+        new("colorMode", General, "Color mode", "Light, dark or the system's mode as default of the installation; every user can switch it in the app bar.", OptionKind.Choice, "system",
+            "Dark for apps used in dim rooms or all day.", ["Seeded as system wide setting, changeable later"], ["None"],
+            [new("system", "Follow the operating system."), new("light", "Always light."), new("dark", "Always dark.")]),
+        new("registration", General, "Self registration", "Visitors can register on the sign-in page (setting Account.AllowRegistration, changeable later).", OptionKind.Bool, "false",
+            "Public apps where anyone may sign up; leave off when administrators invite users.", ["No invitation needed"], ["Anyone with the address can get an account"]),
+        new("githubActions", Tooling, "GitHub Actions", "A workflow (.github/workflows/ci.yml) that builds the solution and runs its tests on every push and pull request.", OptionKind.Bool, "false",
+            "When the app lives on GitHub.", ["Broken builds show up in pull requests", "The tests run with Docker on the runner"], ["Minutes of the GitHub plan"]),
+        new("devcontainer", Tooling, "Dev container", "A .devcontainer with the .NET SDK and Docker in Docker for GitHub Codespaces and VS Code.", OptionKind.Bool, "false",
+            "When people should start without installing anything.", ["Same tools for everyone", "Runs in GitHub Codespaces"], ["The container image is large"]),
     ];
 
     public static CliOption? Find(string id) => All.FirstOrDefault(o => string.Equals(o.Id, id, StringComparison.OrdinalIgnoreCase));

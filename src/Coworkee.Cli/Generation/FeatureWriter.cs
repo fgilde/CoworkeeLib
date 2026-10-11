@@ -12,10 +12,10 @@ internal static class FeatureWriter
     private const string ClientEntitiesVersion = "    <PackageVersion Include=\"Coworkee.Client.Blazor.ClientEntities\" Version=\"$(CoworkeeVersion)\" />\n";
     private const string ClientEntitiesPackage = "    <CoworkeePackage Include=\"Coworkee.Client.Blazor.ClientEntities\" />\n";
 
-    public static async Task AddModuleAsync(Solution solution, string module, IReadOnlyList<EntityModel> entities, CancellationToken cancellationToken)
+    public static async Task AddModuleAsync(Solution solution, string module, IReadOnlyList<EntityModel> entities, IReadOnlyList<EnumSpec> enums, CancellationToken cancellationToken)
     {
         var project = $"src/{solution.Name}.{module}/{solution.Name}.{module}.csproj";
-        var changes = new Changes(solution, [.. ServerFiles.Module(solution.Name, module, entities), .. entities.SelectMany(Files)]);
+        var changes = new Changes(solution, [.. EnumFiles(solution, enums), .. ServerFiles.Module(solution.Name, module, entities), .. entities.SelectMany(Files)]);
         var infrastructure = solution.Project("Infrastructure");
         var databaseModule = Path.Combine(Path.GetDirectoryName(infrastructure)!, $"{solution.Name}DatabaseModule.cs");
         await changes.EditAsync(databaseModule, text => AppEdits.RegisterModule(text, $"{solution.Name}.{module}.{ServerFiles.ModuleClass(solution.Name, module)}"), cancellationToken);
@@ -25,7 +25,7 @@ internal static class FeatureWriter
         await changes.WriteAsync(cancellationToken);
     }
 
-    public static async Task AddEntityAsync(Solution solution, EntityModel entity, CancellationToken cancellationToken)
+    public static async Task AddEntityAsync(Solution solution, EntityModel entity, IReadOnlyList<EnumSpec> enums, CancellationToken cancellationToken)
     {
         var root = Path.Combine(solution.Src, $"{solution.Name}.{entity.Module}");
         var moduleClass = Path.Combine(root, ServerFiles.ModuleClass(solution.Name, entity.Module) + ".cs");
@@ -34,11 +34,23 @@ internal static class FeatureWriter
             throw new CliException($"{moduleClass} does not exist. Create the module with coworkee module add {entity.Module}.");
         }
 
-        var changes = new Changes(solution, [.. Files(entity)]);
+        var changes = new Changes(solution, [.. EnumFiles(solution, enums), .. Files(entity)]);
+        var project = Path.Combine(root, $"{solution.Name}.{entity.Module}.csproj");
         await changes.EditAsync(moduleClass, text => AppEdits.AddToModule(text, ServerFiles.Services(entity), ServerFiles.Endpoint(entity)), cancellationToken);
         if (entity.Mapping == MappingStrategy.Mapperly)
         {
-            await changes.EditAsync(Path.Combine(root, $"{solution.Name}.{entity.Module}.csproj"), text => AppEdits.AddToItems(text, ServerFiles.MapperlyReference), cancellationToken);
+            await changes.EditAsync(project, text => AppEdits.AddToItems(text, ServerFiles.MapperlyReference), cancellationToken);
+        }
+
+        foreach (var module in entity.ReferencedModules)
+        {
+            var target = Path.Combine(solution.Src, $"{solution.Name}.{module}", $"{solution.Name}.{module}.csproj");
+            if (File.Exists(target) && File.ReadAllText(target).Contains($"{solution.Name}.{entity.Module}.csproj", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new CliException($"{module} references {entity.Module} already; {entity.Module} cannot reference {module} back.");
+            }
+
+            await changes.EditAsync(project, text => AppEdits.AddToItems(text, ServerFiles.ModuleReference(solution.Name, module)), cancellationToken);
         }
 
         await WireAsync(solution, changes, [entity], cancellationToken);
@@ -46,6 +58,8 @@ internal static class FeatureWriter
     }
 
     public static IEnumerable<GeneratedFile> Files(EntityModel entity) => ServerFiles.Entity(entity).Concat(ClientFiles.Entity(entity));
+
+    public static IEnumerable<GeneratedFile> EnumFiles(Solution solution, IReadOnlyList<EnumSpec> enums) => enums.Select(e => ServerFiles.Enum(solution.Name, e));
 
     private static async Task WireAsync(Solution solution, Changes changes, IReadOnlyList<EntityModel> entities, CancellationToken cancellationToken)
     {

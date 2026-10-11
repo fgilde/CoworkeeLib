@@ -119,11 +119,14 @@ internal static class NewCommand
         var values = SpecOptions.Resolve(settings.Spec);
         var solution = Solution.Find(settings.Output);
         Assets.Copy(settings, values);
+        var index = new SpecIndex(settings.Spec);
+        IReadOnlyList<EnumSpec> enums = settings.Spec.Enums;
         foreach (var module in settings.Spec.Modules)
         {
             Progress($"Generating module {module.Name}");
-            var entities = module.Entities.Select(e => new EntityModel(solution.Name, module.Name, e, SpecOptions.Mapping(values, e))).ToList();
-            await FeatureWriter.AddModuleAsync(solution, module.Name, entities, cancellationToken);
+            var entities = module.Entities.Select(e => new EntityModel(solution.Name, module.Name, e, SpecOptions.Mapping(values, e), index)).ToList();
+            await FeatureWriter.AddModuleAsync(solution, module.Name, entities, enums, cancellationToken);
+            enums = [];
         }
 
         Progress("Restoring packages");
@@ -167,8 +170,8 @@ internal static class NewCommand
             return new Option<bool?>(option.Flag) { Description = description };
         }
 
-        var text = new Option<string?>(option.Flag) { Description = description, HelpName = option.Kind switch { OptionKind.Color => "#rrggbb", OptionKind.File => "file", _ => null } };
-        if (option.Choices is { } choices)
+        var text = new Option<string?>(option.Flag) { Description = description, HelpName = option.Kind switch { OptionKind.Color => "#rrggbb", OptionKind.File => "file", OptionKind.Multi => string.Join(",", option.Choices!.Select(c => c.Value)), _ => null } };
+        if (option is { Kind: OptionKind.Choice, Choices: { } choices })
         {
             text.AcceptOnlyFromAmong([.. choices.Select(c => c.Value)]);
         }

@@ -19,7 +19,10 @@ public static partial class SpecValidator
     /// Like <see cref="Validate(AppSpec, string?)"/>; logo and media files must lie below <paramref name="baseDirectory"/>
     /// unless they are in <paramref name="trustedFiles"/> (paths a person typed on the command line).
     /// </summary>
-    public static IReadOnlyList<string> Validate(AppSpec spec, string? baseDirectory, IReadOnlyCollection<string> trustedFiles)
+    public static IReadOnlyList<string> Validate(AppSpec spec, string? baseDirectory, IReadOnlyCollection<string> trustedFiles) => Validate(spec, baseDirectory, trustedFiles, new SpecIndex(spec));
+
+    /// <summary>Like <see cref="Validate(AppSpec, string?, IReadOnlyCollection{string})"/>; references and enums may also point to what <paramref name="index"/> knows of the app.</summary>
+    public static IReadOnlyList<string> Validate(AppSpec spec, string? baseDirectory, IReadOnlyCollection<string> trustedFiles, SpecIndex index)
     {
         var errors = new List<string>();
         Name(errors, "name", spec.Name);
@@ -64,7 +67,9 @@ public static partial class SpecValidator
             errors.Add("options.clientEntities: an entity is a client entity, so the option cannot be off.");
         }
 
-        Modules(errors, spec, values["samples"] == "true");
+        Languages(errors, values);
+        Enums(errors, spec);
+        Modules(errors, spec, values["samples"] == "true", index);
         return errors;
     }
 
@@ -120,6 +125,8 @@ public static partial class SpecValidator
             OptionKind.Bool when value is not ("true" or "false") => "true or false",
             OptionKind.Choice when !option.Choices!.Any(c => c.Value == value) => string.Join(", ", option.Choices!.Select(c => c.Value)),
             OptionKind.Color when !Color().IsMatch(value) => "a color #rrggbb",
+            OptionKind.Multi when SpecOptions.List(value) is var items && (items.Count == 0 || items.Distinct().Count() != items.Count || items.Any(i => option.Choices!.All(c => c.Value != i))) =>
+                "a comma separated list without repeats of " + string.Join(", ", option.Choices!.Select(c => c.Value)),
             _ => null,
         };
         if (problem is not null)
@@ -128,87 +135,26 @@ public static partial class SpecValidator
         }
     }
 
+    private static void Languages(List<string> errors, IReadOnlyDictionary<string, string?> values)
+    {
+        if (values["languages"] is { } languages && values["defaultLanguage"] is { } language && !SpecOptions.List(languages).Contains(language))
+        {
+            errors.Add($"defaultLanguage: '{language}' is not one of the languages {languages}.");
+        }
+    }
+
     public static bool IsWebAddress(string value) =>
         Uri.TryCreate(value, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp);
-
-    private static void Modules(List<string> errors, AppSpec spec, bool samples)
-    {
-        var entities = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var (module, index) in spec.Modules.Select((m, i) => (m, i)))
-        {
-            var path = $"modules[{index}]";
-            Name(errors, path + ".name", module.Name);
-            if (Projects.Contains(module.Name, StringComparer.OrdinalIgnoreCase))
-            {
-                errors.Add($"{path}.name: '{module.Name}' is taken by a project of the app.");
-            }
-
-            if (spec.Modules.Count(m => m.Name.Equals(module.Name, StringComparison.OrdinalIgnoreCase)) > 1)
-            {
-                errors.Add($"{path}.name: '{module.Name}' appears twice.");
-            }
-
-            if (module.Entities.Count == 0)
-            {
-                errors.Add($"{path}.entities: a module needs at least one entity.");
-            }
-
-            foreach (var (entity, entityIndex) in module.Entities.Select((e, i) => (e, i)))
-            {
-                Entity(errors, $"{path}.entities[{entityIndex}]", entity, entities, samples);
-            }
-        }
-    }
-
-    private static void Entity(List<string> errors, string path, EntitySpec entity, HashSet<string> taken, bool samples)
-    {
-        Name(errors, path + ".name", entity.Name);
-        if (entity.Plural is not null)
-        {
-            Name(errors, path + ".plural", entity.Plural);
-        }
-
-        if (!taken.Add(entity.Name) | !taken.Add("plural:" + entity.PluralName))
-        {
-            errors.Add($"{path}.name: '{entity.Name}' appears twice; entity names are unique in the app.");
-        }
-
-        if (samples && SampleEntities.Contains(entity.Name, StringComparer.OrdinalIgnoreCase))
-        {
-            errors.Add($"{path}.name: '{entity.Name}' is an entity of the samples.");
-        }
-
-        if (entity.Properties.Count == 0)
-        {
-            errors.Add($"{path}.properties: an entity needs at least one property.");
-        }
-
-        foreach (var (property, index) in entity.Properties.Select((p, i) => (p, i)))
-        {
-            var at = $"{path}.properties[{index}]";
-            Name(errors, at + ".name", property.Name);
-            if (BaseProperties.Contains(property.Name, StringComparer.OrdinalIgnoreCase) || property.Name == entity.Name)
-            {
-                errors.Add($"{at}.name: '{property.Name}' is taken by the entity itself.");
-            }
-
-            if (entity.Properties.Count(p => p.Name.Equals(property.Name, StringComparison.OrdinalIgnoreCase)) > 1)
-            {
-                errors.Add($"{at}.name: '{property.Name}' appears twice.");
-            }
-
-            if (property.MaxLength is { } max && (property.Type != PropertyType.String || max < 1))
-            {
-                errors.Add($"{at}.maxLength: only strings have a maximum length, and it is at least 1.");
-            }
-        }
-    }
 
     private static void Name(List<string> errors, string path, string? name)
     {
         if (!IsSimpleName(name))
         {
             errors.Add($"{path}: '{name}' is not a simple name: start with a letter, then letters or digits only.");
+        }
+        else if (Keywords.Contains(name!))
+        {
+            errors.Add($"{path}: '{name}' is a C# keyword.");
         }
     }
 
