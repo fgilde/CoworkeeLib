@@ -8,6 +8,9 @@ internal sealed class ChatApi(HttpClient http) : ApiClientBase(http), IChatApi
 {
     private const string Root = "api/v1/chat";
 
+    public async Task<int> GetUnreadCountAsync(CancellationToken cancellationToken = default) =>
+        (await GetAsync<Contracts.Notifications.UnreadCountDto>($"{Root}/unread-count", cancellationToken)).Count;
+
     public async Task<IReadOnlyList<ChatContactDto>> GetContactsAsync(CancellationToken cancellationToken = default) =>
         await GetAsync<ChatContactDto[]>($"{Root}/contacts", cancellationToken);
 

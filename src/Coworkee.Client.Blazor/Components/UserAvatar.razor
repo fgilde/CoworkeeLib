@@ -1,13 +1,16 @@
 @if (ShowTooltip && _card is not null)
 {
-    <MudTooltip Text="@_card.Name">@Avatar</MudTooltip>
+    <MudTooltip Text="@_card.Name">@Badged</MudTooltip>
 }
 else
 {
-    @Avatar
+    @Badged
 }
 
 @code {
+    private RenderFragment Badged => @<MudBadge Dot="true" Overlap="true" Bordered="true" Color="Color.Success" Origin="Origin.BottomRight" Visible="_online"
+                                                data-online="@(_online ? "true" : "false")">@Avatar</MudBadge>;
+
     private RenderFragment Avatar => @<MudAvatar Size="Size" Style="@StyleText" Color="@(_card?.AvatarVersion is null ? Color.Primary : Color.Default)" data-user="@UserId">
         @if (_card?.AvatarVersion is not null)
         {

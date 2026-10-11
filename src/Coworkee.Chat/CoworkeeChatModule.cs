@@ -31,6 +31,7 @@ public sealed class CoworkeeChatModule : CoworkeeModule, IWebModule
     {
         var chat = app.MapCoworkeeApi("/api/v1/chat").WithTags("Chat").RequireAuthorization();
         chat.MapGet("/contacts", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetChatContactsQuery(), ct).ToHttpResult());
+        chat.MapGet("/unread-count", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetChatUnreadCountQuery(), ct).ToHttpResult());
         chat.MapGet("/conversations/{userId:guid}", (Guid userId, DateTimeOffset? before, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new GetChatConversationQuery(userId, before), ct).ToHttpResult());
         chat.MapPost("/conversations/{userId:guid}", (Guid userId, SendChatMessageRequest body, IDispatcher d, CancellationToken ct) =>

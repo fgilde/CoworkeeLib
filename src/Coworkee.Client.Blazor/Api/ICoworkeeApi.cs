@@ -79,6 +79,9 @@ public interface ICoworkeeApi
 
     Task SetActiveRoleAsync(Guid? roleId, CancellationToken cancellationToken = default);
 
+    /// <summary>The people of the own organisation with an open connection.</summary>
+    Task<IReadOnlyList<Guid>> GetOnlineUsersAsync(CancellationToken cancellationToken = default);
+
     Task<PagedResult<UserDto>> GetUsersAsync(PageRequest page, CancellationToken cancellationToken = default);
 
     Task<UserDto> CreateUserAsync(CreateUserRequest request, CancellationToken cancellationToken = default);

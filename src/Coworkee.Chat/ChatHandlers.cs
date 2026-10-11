@@ -1,5 +1,6 @@
 using Coworkee.Application.Messaging;
 using Coworkee.Contracts.Chat;
+using Coworkee.Contracts.Notifications;
 using Coworkee.Contracts.Realtime;
 using Coworkee.Core.Results;
 using Coworkee.Core.Security;
@@ -14,7 +15,8 @@ internal sealed class ChatHandlers(CoworkeeDbContext db, ICurrentUser currentUse
     : IHandler<GetChatContactsQuery, Result<IReadOnlyList<ChatContactDto>>>,
       IHandler<GetChatConversationQuery, Result<IReadOnlyList<ChatMessageDto>>>,
       IHandler<SendChatMessageCommand, Result<ChatMessageDto>>,
-      IHandler<MarkChatReadCommand, Result>
+      IHandler<MarkChatReadCommand, Result>,
+      IHandler<GetChatUnreadCountQuery, Result<UnreadCountDto>>
 {
     private static readonly Error UnknownPerson = Error.NotFound("chat.unknown_person", "There is no such person in the organisation.");
 
@@ -43,6 +45,9 @@ internal sealed class ChatHandlers(CoworkeeDbContext db, ICurrentUser currentUse
             .ThenBy(c => c.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
     }
+
+    public async Task<Result<UnreadCountDto>> HandleAsync(GetChatUnreadCountQuery query, CancellationToken cancellationToken) =>
+        new UnreadCountDto(await db.Set<ChatMessage>().CountAsync(m => m.ToUserId == Me && m.ReadAt == null, cancellationToken));
 
     public async Task<Result<IReadOnlyList<ChatMessageDto>>> HandleAsync(GetChatConversationQuery query, CancellationToken cancellationToken)
     {

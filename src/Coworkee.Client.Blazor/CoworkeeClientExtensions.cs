@@ -49,6 +49,8 @@ public static class CoworkeeClientExtensions
         services.AddScoped<Data.FileDownloader>();
         services.AddScoped<Data.ITableViewStore, Data.TableViews>();
         services.AddScoped<People.UserCards>();
+        services.AddScoped<People.Presence>();
+        services.AddScoped<Navigation.NavigationBadges>();
         services.AddScoped<PermissionStore>();
         services.AddScoped<Features.FeatureStore>();
         services.AddScoped<Theming.ThemeService>();

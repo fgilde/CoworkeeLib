@@ -27,6 +27,8 @@ public partial class CoworkeeNavMenu : IDisposable
 
     [Inject] private PermissionStore Permissions { get; set; } = null!;
 
+    [Inject] private NavigationBadges Badges { get; set; } = null!;
+
     [Inject] private Features.FeatureStore Features { get; set; } = null!;
 
     [Inject] private Microsoft.AspNetCore.Authorization.IAuthorizationService Authorization { get; set; } = null!;
@@ -60,6 +62,7 @@ public partial class CoworkeeNavMenu : IDisposable
         Permissions.Changed += Reload;
         Features.Changed += Reload;
         Nav.LocationChanged += LocationChanged;
+        Badges.Changed += Refresh;
         await BuildAsync();
     }
 
@@ -70,6 +73,7 @@ public partial class CoworkeeNavMenu : IDisposable
         Permissions.Changed -= Reload;
         Features.Changed -= Reload;
         Nav.LocationChanged -= LocationChanged;
+        Badges.Changed -= Refresh;
     }
 
     private async Task BuildAsync()

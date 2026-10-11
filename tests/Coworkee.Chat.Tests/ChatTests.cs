@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Coworkee.Contracts.Chat;
 using Coworkee.Contracts.Identity;
+using Coworkee.Contracts.Notifications;
 using Coworkee.Contracts.Realtime;
 
 namespace Coworkee.Chat.Tests;
@@ -39,8 +40,11 @@ public sealed class ChatTests(ChatApp app) : IAsyncLifetime
         var conversation = await Bob.GetFromJsonAsync<List<ChatMessageDto>>($"/api/v1/chat/conversations/{_setup.AdminUserId}", Ct);
         conversation!.Select(m => m.Text).ShouldBe(["Hi Bob", "Lunch?"]);
 
+        (await Bob.GetFromJsonAsync<UnreadCountDto>("/api/v1/chat/unread-count", Ct))!.Count.ShouldBe(2);
+
         (await Bob.PostAsync($"/api/v1/chat/conversations/{_setup.AdminUserId}/read", null, Ct)).EnsureSuccessStatusCode();
 
+        (await Bob.GetFromJsonAsync<UnreadCountDto>("/api/v1/chat/unread-count", Ct))!.Count.ShouldBe(0);
         (await Bob.GetFromJsonAsync<List<ChatContactDto>>("/api/v1/chat/contacts", Ct))!.Single(c => c.UserId == _setup.AdminUserId).Unread.ShouldBe(0);
         (await Admin.GetFromJsonAsync<List<ChatContactDto>>("/api/v1/chat/contacts", Ct))!.Single(c => c.UserId == _bob.Id).Unread.ShouldBe(0);
     }

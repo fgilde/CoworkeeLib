@@ -113,6 +113,36 @@ public sealed class LiveUpdatesTests : ClientTestBase
     }
 
     [Fact]
+    public void An_avatar_shows_whether_its_user_is_online()
+    {
+        Api.GetOnlineUsersAsync(Arg.Any<CancellationToken>()).Returns([Bob]);
+        var avatar = Render<UserAvatar>(p => p.Add(c => c.UserId, Bob));
+        avatar.WaitForAssertion(() => avatar.Find("[data-online]").GetAttribute("data-online").ShouldBe("true"));
+        avatar.WaitForAssertion(() => Realtime.Invocations.ShouldContain(("Subscribe", PresenceEvents.Topic)));
+
+        Realtime.Push(PresenceEvents.Topic, PresenceEvents.Changed, new PresenceDto(Bob, false));
+        avatar.WaitForAssertion(() => avatar.Find("[data-online]").GetAttribute("data-online").ShouldBe("false"));
+
+        Realtime.Push(PresenceEvents.Topic, PresenceEvents.Changed, new PresenceDto(Bob, true));
+        avatar.WaitForAssertion(() => avatar.Find("[data-online]").GetAttribute("data-online").ShouldBe("true"));
+    }
+
+    [Fact]
+    public void The_chat_link_counts_unread_messages_live_and_clears_when_read()
+    {
+        _chat.GetUnreadCountAsync(Arg.Any<CancellationToken>()).Returns(1, 2, 0);
+        var badges = Services.GetRequiredService<Navigation.NavigationBadges>();
+        var notifier = Render<ChatNotifier>();
+        notifier.WaitForAssertion(() => badges["/chat"].ShouldBe(1));
+
+        Realtime.Push($"user:{Me}", ChatEvents.Message, Message(Bob, Me, "Lunch?"));
+        notifier.WaitForAssertion(() => badges["/chat"].ShouldBe(2));
+
+        Realtime.Push($"user:{Me}", ChatEvents.Read, new ChatReadDto(Me, Bob, DateTimeOffset.UtcNow));
+        notifier.WaitForAssertion(() => badges["/chat"].ShouldBe(0));
+    }
+
+    [Fact]
     public void An_avatar_follows_a_new_picture_of_its_user()
     {
         Api.GetUserCardsAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<CancellationToken>())

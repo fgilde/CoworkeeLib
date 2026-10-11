@@ -35,4 +35,17 @@ public sealed class NavigationDeepLinkTests : ClientTestBase
 
         nav.ToBaseRelativePath(nav.Uri).ShouldBe(link.TrimStart('/'));
     }
+
+    [Fact]
+    public async Task A_badge_count_shows_next_to_its_link()
+    {
+        var layout = Render<CoworkeeLayout>(p => p.Add(l => l.Body, (RenderFragment)(b => b.AddContent(0, "body"))));
+        await OpenNavigationAsync(layout);
+        layout.WaitForAssertion(() => layout.FindAll("[data-nav='/chat']").ShouldNotBeEmpty());
+        layout.FindAll("[data-nav-badge='/chat']").ShouldBeEmpty();
+
+        await layout.InvokeAsync(() => Services.GetRequiredService<NavigationBadges>().Set("/chat", 3));
+
+        layout.WaitForAssertion(() => layout.Find("[data-nav-badge='/chat']").TextContent.ShouldBe("3"));
+    }
 }
