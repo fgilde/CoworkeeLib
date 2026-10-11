@@ -27,6 +27,7 @@
     <DataTemplate DataType="vm:SignInStep"><v:SignInView /></DataTemplate>
     <DataTemplate DataType="vm:ArchitectureStep"><v:ArchitectureView /></DataTemplate>
     <DataTemplate DataType="vm:EntitiesStep"><v:EntitiesView /></DataTemplate>
+    <DataTemplate DataType="vm:UsersStep"><v:UsersView /></DataTemplate>
     <DataTemplate DataType="vm:ReviewStep"><v:ReviewView /></DataTemplate>
     <DataTemplate DataType="vm:GenerateStep"><v:GenerateView /></DataTemplate>
   </Application.DataTemplates>

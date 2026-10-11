@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Coworkee.Studio.ViewModels"
              xmlns:cli="using:Coworkee.Studio.Cli"
+             xmlns:spec="using:Coworkee.Cli.Spec"
              xmlns:v="using:Coworkee.Studio.Views"
              xmlns:l="using:Coworkee.Studio.Localization"
              x:Class="Coworkee.Studio.Views.GenerateView"
@@ -67,6 +68,48 @@
               <Button Command="{Binding ChooseCliCommand}" Content="{l:L 'Choose a local CLI'}" />
               <Button Classes="ghost" Command="{Binding Main.ShowHelpCommand}" CommandParameter="3" Content="{l:L Settings}" />
             </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <!-- how to sign in -->
+        <Border Classes="card" IsVisible="{Binding HasSignIn}" BorderBrush="{DynamicResource Primary}" BorderThickness="2">
+          <StackPanel Spacing="10">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+              <PathIcon Data="{StaticResource Icon.Login}" Foreground="{DynamicResource Primary}" Margin="0,0,10,0" />
+              <TextBlock Grid.Column="1" Classes="h3" Text="{l:L 'Sign in'}" VerticalAlignment="Center" />
+              <Button Grid.Column="2" Classes="ghost" Command="{Binding Main.CopyCommand}" CommandParameter="{Binding SignInText}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <PathIcon Classes="small" Data="{StaticResource Icon.Copy}" />
+                  <TextBlock Text="{l:L 'Copy all'}" />
+                </StackPanel>
+              </Button>
+            </Grid>
+            <TextBlock Classes="body" Text="{Binding SignInHint}" TextWrapping="Wrap" />
+            <ItemsControl ItemsSource="{Binding SignIn.Users}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="spec:SignInUser">
+                  <Border Classes="code" Margin="0,0,0,6" Padding="12,6">
+                    <Grid ColumnDefinitions="Auto,Auto,*" RowDefinitions="Auto,Auto">
+                      <SelectableTextBlock Classes="mono" FontWeight="SemiBold" Text="{Binding Email}" VerticalAlignment="Center" TextWrapping="NoWrap" />
+                      <Button Grid.Column="1" Classes="icon" Foreground="{DynamicResource CodeText}" Margin="8,0" ToolTip.Tip="{l:L 'Copy email'}"
+                              Command="{Binding $parent[UserControl].((vm:GenerateStep)DataContext).Main.CopyCommand}" CommandParameter="{Binding Email}">
+                        <PathIcon Classes="small" Data="{StaticResource Icon.Copy}" />
+                      </Button>
+                      <Border Grid.Column="2" Classes="chip" HorizontalAlignment="Right" VerticalAlignment="Center" IsVisible="{Binding RoleText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                        <TextBlock Text="{Binding RoleText}" />
+                      </Border>
+                      <SelectableTextBlock Grid.Row="1" Classes="mono" Text="{Binding Password}" VerticalAlignment="Center" TextWrapping="NoWrap" />
+                      <Button Grid.Row="1" Grid.Column="1" Classes="icon" Foreground="{DynamicResource CodeText}" Margin="8,0" ToolTip.Tip="{l:L 'Copy password'}"
+                              Command="{Binding $parent[UserControl].((vm:GenerateStep)DataContext).Main.CopyCommand}" CommandParameter="{Binding Password}">
+                        <PathIcon Classes="small" Data="{StaticResource Icon.Key}" />
+                      </Button>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock Classes="caption" IsVisible="{Binding SignIn.Keycloak, FallbackValue=False}" Text="{l:L 'The Keycloak button on the sign-in page takes the same users and passwords.'}" TextWrapping="Wrap" />
+            <TextBlock Classes="caption" Text="{l:L 'Development passwords only, also in LOGIN.md of the solution; change them before you deploy.'}" TextWrapping="Wrap" />
           </StackPanel>
         </Border>
 
