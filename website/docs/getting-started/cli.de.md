@@ -64,6 +64,12 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--sign-in-media` | `signInMedia` | Datei oder http(s)-Adresse | | Bild oder Video neben dem Anmeldeformular; eine Datei wird nach `wwwroot/media` des Web-Clients kopiert |
 | `--sign-in-media-side` | `signInMediaSide` | `Left`, `Right` | `Left` | Seite des Mediums |
 | `--mapping` | `mapping` | `manual`, `mapperly` | `manual` | DTO-Mapping erzeugter Entities, siehe [DTOs und Mapping](../fundamentals/dtos.md) |
+| `--languages` | `languages` | `en`, `de`, durch Kommas getrennt (in einer Spezifikation ein Array) | alle mitgelieferten | Sprachen von Anfang an, aus denen, für die die Bibliothek Texte mitbringt; weitere fügen Administratoren auf der Seite *Sprachen* hinzu |
+| `--default-language` | `defaultLanguage` | `en`, `de` | `en` | Sprache der Benutzer, die keine gewählt haben; muss unter `languages` sein |
+| `--color-mode` | `colorMode` | `system`, `light`, `dark` | `system` | Standard-Farbmodus, angelegt als systemweite Einstellung `Theme.Mode` |
+| `--registration` | `registration` | bool | `false` | Selbstregistrierung auf der Anmeldeseite, angelegt als Einstellung `Account.AllowRegistration` |
+| `--github-actions` | `githubActions` | bool | `false` | `.github/workflows/ci.yml`: Build und Tests bei jedem Push und Pull Request |
+| `--devcontainer` | `devcontainer` | bool | `false` | `.devcontainer/devcontainer.json` mit dem .NET SDK und Docker in Docker (Codespaces, VS Code) |
 
 Ein bool-Schalter ohne Wert bedeutet `true` (`--files`), `--chat false` schaltet aus. Die mitgelieferte erste Migration deckt die Standardmodule ab (mit oder ohne Beispiele). Schalten Sie ein Modul mit Tabellen ein oder aus (Chat, KI, Backup, Benachrichtigungen, Dateien, Features, Social, Event-Bus, erweiterte Attribute ohne Beispiele), lässt das Template die Migration weg und `coworkee new` legt nach dem Restore `Initial` mit `dotnet ef` an. Mit reinem `dotnet new` führen Sie `coworkee migrations add Initial` einmal selbst aus.
 
@@ -82,7 +88,7 @@ coworkee new --spec shop.json
 {
   "name": "Shop",
   "output": "shop",
-  "options": { "samples": false, "chat": false, "files": true, "mapping": "manual" },
+  "options": { "samples": false, "chat": false, "files": true, "mapping": "manual", "languages": [ "en", "de" ], "defaultLanguage": "de" },
   "branding": {
     "title": "Acme Shop",
     "theme": "Forest",
@@ -98,9 +104,9 @@ coworkee new --spec shop.json
         {
           "name": "Customer",
           "properties": [
-            { "name": "Name", "required": true, "maxLength": 200 },
-            { "name": "Email", "maxLength": 200 },
-            { "name": "IsActive", "type": "bool" }
+            { "name": "Name", "required": true, "maxLength": 200, "display": true },
+            { "name": "Email", "type": "email", "unique": true },
+            { "name": "IsActive", "type": "bool", "default": "true", "facet": true }
           ]
         },
         {
@@ -108,21 +114,28 @@ coworkee new --spec shop.json
           "clientEntity": true,
           "mapping": "mapperly",
           "properties": [
-            { "name": "Number", "required": true, "maxLength": 50 },
-            { "name": "Total", "type": "decimal", "required": true },
-            { "name": "OrderedAt", "type": "dateTime" }
+            { "name": "Number", "required": true, "maxLength": 50, "unique": true },
+            { "name": "Customer", "type": "reference", "reference": "Customer", "required": true, "inverse": "Orders", "facet": true },
+            { "name": "Status", "type": "enum", "enum": "OrderStatus", "required": true, "default": "Open", "facet": true },
+            { "name": "Total", "type": "money", "required": true },
+            { "name": "OrderedOn", "type": "dateOnly", "label": "Order date" },
+            { "name": "Note", "type": "text" }
           ]
         }
       ]
     }
-  ]
+  ],
+  "enums": [ { "name": "OrderStatus", "values": [ "Open", "Paid", "Shipped" ] } ]
 }
 ```
 
 - `options` nimmt die Ids aus der Tabelle oben; `branding` nimmt `title`, `theme`, `primaryColor`, `secondaryColor`, `logo`, `signInLayout`, `signInMedia` und `signInMediaSide` und gewinnt gegen dieselben Ids in `options`.
 - Dateien und `output` sind relativ zur Spezifikation und müssen in ihrem Ordner bleiben (keine absoluten Pfade, kein `..`). Ein Logo ist ein Bild (svg, png, jpg, jpeg, webp, gif, ico), das Anmeldemedium ein Bild, ein Video (mp4, webm, ogg) oder eine http(s)-Adresse: Beide liegen danach öffentlich im Web-Client. Eine als Schalter angegebene Datei (`--logo C:\brand\logo.svg`) darf überall liegen. Kommentare und abschließende Kommas sind erlaubt.
 - Der Titel landet unverändert in Code und HTML und darf daher kein `"`, `\`, `<`, `>`, `@` und keine Steuerzeichen enthalten.
-- Typen der Eigenschaften: `string`, `int`, `long`, `decimal`, `double`, `bool`, `dateTime` (`DateTimeOffset`), `guid`. Eine Eigenschaft ohne `required` ist nullable; `maxLength` gilt für Strings.
+- Typen der Eigenschaften: `string`, `int`, `long`, `decimal`, `double`, `bool`, `dateTime` (`DateTimeOffset`), `guid`, `dateOnly`, `timeOnly`, `text` (langer Text, mehrzeilig im Formular, keine Listenspalte), `email` und `url` (Strings mit Prüfung, 256 und 2000 Zeichen, sofern `maxLength` nichts anderes sagt), `money` (Decimal mit `precision` 18 und `scale` 2, sofern nicht angegeben), `enum` und `reference`. Eine Eigenschaft ohne `required` ist nullable; `maxLength` gilt für Strings, E-Mails und URLs, `precision` und `scale` für Decimal und Money.
+- `enum` nennt einen Eintrag aus `enums` (Werte in ihrer Reihenfolge, der erste ist der Standard). Das Enum landet in den Contracts, reist in JSON und OData mit seinem Namen und erscheint mit seinen Namen in Liste, Formular und Facetten.
+- `reference` verweist auf eine andere Entity über ihren Namen (`Customer`) oder mit Modul (`Crm.Customer`): die Eigenschaft ist die Navigation, `<Name>Id` der Fremdschlüssel. `referenceDisplay` ist die Texteigenschaft des Ziels, die Liste und Auswahl zeigen (Standard: seine Anzeige-Eigenschaft), `onDelete` ist `restrict` (Standard), `cascade` oder `setNull` (nur für optionale Referenzen), `inverse` gibt dem Ziel eine Sammlung (nur im selben Modul). Ein Modul darf andere Module referenzieren, solange keines zurückverweist.
+- `default` setzt den Anfangswert von Zahlen, Bools, Enums und Texten; `unique` legt einen eindeutigen Index je Mandant und eine Prüfung im Command an; `label` ist die Beschriftung von Spalte und Feld; `display` markiert den Text, der eine Zeile benennt; `searchable` (Standard: true für Texte) nimmt sie ins Suchfeld; `facet` bietet sie als Facette neben der Liste an (Bools, Enums, Referenzen, ganze Zahlen, Strings).
 - `plural` benennt Tabelle, OData-Set, Route und Seite (Standard: ein englischer Plural des Namens). `mapping` übersteuert die Option `mapping`.
 
 `coworkee spec validate` und `coworkee new` melden jedes Problem mit seinem Pfad, zum Beispiel `modules[0].entities[1].properties[0].name: 'Id' is taken by the entity itself.`
@@ -134,18 +147,21 @@ Jedes Modul einer Spezifikation, und `coworkee module add`, legt das Projekt `sr
 | Wo | Was |
 |---|---|
 | Contracts | `<Entity>Dto`, `AddEdit<Entity>Request`, `<Modul>Permissions.<Plural>` (ansehen, anlegen, bearbeiten, löschen) |
-| Modul | Entity (`AuditedEntity`, `IMultiTenant`, `[Realtime]`, auf Wunsch `[ClientEntity]`), Tabelle mit Maximallängen, Rechtedefinitionen, OData-Set, Anlegen/Bearbeiten-Command mit Rechteprüfung und Validator, Lösch-Command, Mapping (`ToDto`-Methode oder Mapperly-Mapper), Endpunkte `POST`, `PUT /{id}` und `POST /delete` unter `/api/v1/<plural>` |
-| Web-Client | Seite `/<modul>/<plural>` mit Datentabelle, Anlegen, Bearbeiten und Löschen, Live-Aktualisierung, API-Client und einem Navigationseintrag in der Gruppe des Moduls |
+| Modul | Entity (`AuditedEntity`, `IMultiTenant`, `[Realtime]`, auf Wunsch `[ClientEntity]`, `[ProvideFacet]` an Facetten), Tabelle mit Maximallängen, Genauigkeiten, Fremdschlüsseln mit Löschverhalten und eindeutigen Indizes, Rechtedefinitionen, OData-Set, Anlegen/Bearbeiten-Command mit Rechteprüfung, Prüfung referenzierter Zeilen, Eindeutigkeitsprüfung und Validator (Pflicht, Längen, E-Mails, URLs, Enums), Lösch-Command, Mapping (`ToDto`-Methode oder Mapperly-Mapper; eine Referenz bringt Id und Anzeigetext ihres Ziels mit), Endpunkte `POST`, `PUT /{id}` und `POST /delete` unter `/api/v1/<plural>` |
+| Contracts, einmal je Enum | `Enums/<Enum>.cs`, mit Namen serialisiert |
+| Web-Client | Seite `/<modul>/<plural>` mit Datentabelle (Referenzen erweitert und mit ihrem Text angezeigt, Geldbeträge formatiert), Anlegen, Bearbeiten (Auswahlfelder für Referenzen, mehrzeilig für langen Text) und Löschen, Live-Aktualisierung, API-Client und einem Navigationseintrag in der Gruppe des Moduls |
 
 Das Modul kommt in die `.slnx`, das Infrastrukturprojekt verweist darauf und `<App>DatabaseModule` hängt davon ab; `Program.cs` des Web-Clients registriert die API-Clients und Navigationseinträge.
 
 ```bash
-coworkee module add Sales --entity Order --property Number:string:required:50 --property Total:decimal --client-entity
-coworkee entity add Sales Invoice -p Number:required:30 -p DueAt:dateTime -p Paid:bool --mapping Mapperly
+coworkee module add Sales --entity Order --property Number:string:required:50:unique --property Total:money --client-entity
+coworkee entity add Sales Invoice -p Number:required:30 -p Order:ref=Order:required:onDelete=cascade -p Status:enum=InvoiceStatus:default=Open:facet \
+  --enum InvoiceStatus=Open,Paid --mapping Mapperly
+coworkee entity add Sales Delivery -p Name:required:100 -p Carrier:ref=Logistics.Carrier
 coworkee migrations add AddSales
 ```
 
-`--property` liest `Name[:typ][:required][:maxLänge]` (Standard: `Name:string:required:200`). `entity add` braucht ein von der CLI angelegtes Modul.
+`--property` liest `Name[:typ][:required][:maxLänge][:flag][:schlüssel=wert]` (Standard: `Name:string:required:200`). Flags: `required`, `unique`, `display`, `facet`, `searchable`. Schlüssel wie in einer Spezifikation: `enum`, `ref` (oder `reference`), `referenceDisplay`, `onDelete`, `inverse`, `default`, `label`, `precision`, `scale`, `searchable`. `--enum Name=Wert1,Wert2` legt ein Enum in den Contracts an. Eine Referenz darf auf jede Entity der App mit OData-Set zeigen, erzeugt oder aus den Beispielen (`ref=Catalog.Brand`); das Modul verweist dann auf das Projekt des Ziels. `entity add` braucht ein von der CLI angelegtes Modul.
 
 ## Coworkee Studio
 

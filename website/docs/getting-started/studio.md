@@ -56,13 +56,13 @@ Card, Split or Slide, drawn as small animated sketches of the real [sign-in page
 
 ### Architecture
 
-Presets for the app type (Minimal, Business app, Collaboration, SaaS platform, Everything) set the modules and infrastructure; then every option of `coworkee options` can be changed: description, pros, cons, when to use it, the package and the switch of `coworkee new`. The panel on the right lists what the solution will contain: projects, the containers of the Aspire app host (Postgres, Redis, Mailpit, Elasticsearch, RabbitMQ, Azurite, Keycloak) and the Coworkee packages.
+Presets for the app type (Minimal, Business app, Collaboration, SaaS platform, Everything) set the modules and infrastructure; then every option of `coworkee options` can be changed: description, pros, cons, when to use it, the package and the switch of `coworkee new`. *General* also holds the languages (check boxes for the shipped ones, none checked offers all), the default language, the color mode and self registration; *Tooling* adds a GitHub Actions workflow and a dev container. The panel on the right lists what the solution will contain: projects, the containers of the Aspire app host (Postgres, Redis, Mailpit, Elasticsearch, RabbitMQ, Azurite, Keycloak) and the Coworkee packages.
 
 ![Architecture](../assets/screenshots/studio-architecture-dark.webp)
 
 ### Entities
 
-Feature modules with their entities: name, plural, client entity, DTO mapping and a grid of properties (name, type, required, maximum length). Problems are shown on the module or entity they concern. The panel on the right shows what the CLI generates for the selected entity: page route, API route, permission names and files. **Example** adds a Sales module with customers and orders.
+Feature modules with their entities: name, plural, client entity, DTO mapping and a grid of properties (name, type, required, maximum length). The cog of a property opens the rest: label, default value, search box, unique, display text and facet; for an enum its name, for a reference the target (`Module.Entity`, suggested from the designer), the shown text, the delete behaviour and the collection on the target; precision and scale for decimals and money. Below the modules, **Enums** holds the value lists. Problems are shown on the module, entity, property or enum they concern. The panel on the right shows what the CLI generates for the selected entity: page route, API route, permission names and files. **Example** adds a Sales module with customers and orders, a reference between them and an order status enum.
 
 ![Entities](../assets/screenshots/studio-entities-light.webp)
 

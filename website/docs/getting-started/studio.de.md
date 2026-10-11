@@ -56,13 +56,13 @@ Karte, Split oder Slide, gezeichnet als kleine animierte Skizzen der echten [Anm
 
 ### Architektur
 
-Vorlagen für den App-Typ (Minimal, Business-App, Teamarbeit, SaaS-Plattform, Alles) setzen Module und Infrastruktur; danach lässt sich jede Option von `coworkee options` ändern: Beschreibung, Vor- und Nachteile, wann sie passt, das Paket und der Schalter von `coworkee new`. Das Panel rechts zeigt, was die Solution enthalten wird: Projekte, die Container des Aspire-AppHosts (Postgres, Redis, Mailpit, Elasticsearch, RabbitMQ, Azurite, Keycloak) und die Coworkee-Pakete.
+Vorlagen für den App-Typ (Minimal, Business-App, Teamarbeit, SaaS-Plattform, Alles) setzen Module und Infrastruktur; danach lässt sich jede Option von `coworkee options` ändern: Beschreibung, Vor- und Nachteile, wann sie passt, das Paket und der Schalter von `coworkee new`. *Allgemein* enthält auch die Sprachen (Kästchen für die mitgelieferten, keines angekreuzt bietet alle an), die Standardsprache, den Farbmodus und die Selbstregistrierung; *Werkzeuge* legt einen GitHub-Actions-Workflow und einen Dev-Container an. Das Panel rechts zeigt, was die Solution enthalten wird: Projekte, die Container des Aspire-AppHosts (Postgres, Redis, Mailpit, Elasticsearch, RabbitMQ, Azurite, Keycloak) und die Coworkee-Pakete.
 
 ![Architektur](../assets/screenshots/studio-architecture-light-de.webp)
 
 ### Entities
 
-Feature-Module mit ihren Entities: Name, Plural, Client-Entity, DTO-Mapping und ein Raster der Eigenschaften (Name, Typ, Pflicht, maximale Länge). Probleme erscheinen am Modul oder an der Entity, die sie betreffen. Das Panel rechts zeigt, was die CLI für die gewählte Entity erzeugt: Route der Seite, Route der API, Namen der Berechtigungen und Dateien. **Beispiel** fügt ein Sales-Modul mit Kunden und Aufträgen hinzu.
+Feature-Module mit ihren Entities: Name, Plural, Client-Entity, DTO-Mapping und ein Raster der Eigenschaften (Name, Typ, Pflicht, maximale Länge). Das Zahnrad einer Eigenschaft öffnet den Rest: Beschriftung, Standardwert, Suchfeld, eindeutig, Anzeigetext und Facette; bei einem Enum dessen Name, bei einer Referenz das Ziel (`Modul.Entity`, aus dem Designer vorgeschlagen), der angezeigte Text, das Löschverhalten und die Sammlung am Ziel; Stellen und Nachkommastellen bei Decimal und Money. Unter den Modulen stehen unter **Enums** die Wertelisten. Probleme erscheinen am Modul, an der Entity, Eigenschaft oder dem Enum, die sie betreffen. Das Panel rechts zeigt, was die CLI für die gewählte Entity erzeugt: Route der Seite, Route der API, Namen der Berechtigungen und Dateien. **Beispiel** fügt ein Sales-Modul mit Kunden und Aufträgen hinzu, mit einer Referenz dazwischen und einem Enum für den Auftragsstatus.
 
 ![Entities](../assets/screenshots/studio-entities-light-de.webp)
 
