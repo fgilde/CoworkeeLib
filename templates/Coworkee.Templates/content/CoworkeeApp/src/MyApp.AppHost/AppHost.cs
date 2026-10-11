@@ -23,6 +23,16 @@ var app = builder.AddCoworkeeApp("myapp", options =>
 #elif (database == "sqlite")
     options.UseSqlite();
 #endif
+#if (grafana || webDataStudio)
+    // Grafana and WebDataStudio sign in with the administrator of DemoSeed.cs (and through Keycloak when it is on)
+    options.Administrator = new("admin@myapp.local", "Cw1!SEED_PASSWORD");
+#endif
+#if (grafana)
+    options.UseGrafana();
+#endif
+#if (webDataStudio)
+    options.UseWebDataStudio();
+#endif
 #if (keycloak)
     options.UseKeycloak(keycloak => keycloak.Users.Add(new KeycloakUser("admin@myapp.local", "Administrator", "COWORKEE_APP_TITLE")));
 #endif

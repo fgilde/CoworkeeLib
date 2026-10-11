@@ -188,6 +188,18 @@
       "defaultValue": "true",
       "description": "Redis container: SignalR backplane, shared presence, cache invalidation and sign-in sessions across instances."
     },
+    "grafana": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Grafana with Prometheus, Loki, Tempo and an OpenTelemetry collector: metrics, logs, traces and dashboards (development)."
+    },
+    "webDataStudio": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "WebDataStudio, a database studio in the browser connected to the app database (development)."
+    },
     "database": {
       "type": "parameter",
       "datatype": "choice",
