@@ -66,5 +66,5 @@
   "Site Settings": "Seiteneinstellungen",
   "Database Backups": "Datenbanksicherungen",
   "Audit Trails": "Änderungsprotokoll",
-  "Sign in with the seeded administrator account (see DemoSeed.cs in the migrations project), then add your first module with coworkee module add.": "Melden Sie sich mit dem angelegten Administratorkonto an (siehe DemoSeed.cs im Migrationsprojekt) und fügen Sie dann mit coworkee module add Ihr erstes Modul hinzu."
+  "Sign in with the seeded administrator account (see LOGIN.md in the solution folder), then add your first module with coworkee module add.": "Melden Sie sich mit dem angelegten Administratorkonto an (siehe LOGIN.md im Solution-Ordner) und fügen Sie dann mit coworkee module add Ihr erstes Modul hinzu."
 }

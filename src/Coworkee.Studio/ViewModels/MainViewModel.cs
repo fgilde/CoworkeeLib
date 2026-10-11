@@ -34,9 +34,10 @@ public sealed partial class MainViewModel : ObservableObject
         SignIn = new SignInStep(this);
         Architecture = new ArchitectureStep(this);
         Entities = new EntitiesStep(this);
+        Users = new UsersStep(this);
         Review = new ReviewStep(this);
         Generate = new GenerateStep(this);
-        Steps = [Welcome, Basics, Branding, SignIn, Architecture, Entities, Review, Generate];
+        Steps = [Welcome, Basics, Branding, SignIn, Architecture, Entities, Users, Review, Generate];
         Current = Welcome;
         _loading = false;
         UpdateStates();
@@ -64,6 +65,8 @@ public sealed partial class MainViewModel : ObservableObject
     public ArchitectureStep Architecture { get; }
 
     public EntitiesStep Entities { get; }
+
+    public UsersStep Users { get; }
 
     public ReviewStep Review { get; }
 
@@ -392,6 +395,8 @@ public sealed partial class MainViewModel : ObservableObject
             : branding;
         spec.Modules = Entities.ToSpec();
         spec.Enums = Entities.EnumSpecs();
+        spec.Roles = Users.RoleSpecs();
+        spec.Users = Users.UserSpecs();
         return spec;
     }
 
@@ -414,6 +419,7 @@ public sealed partial class MainViewModel : ObservableObject
             ? Basics.DefaultLocation
             : Path.GetDirectoryName(Path.GetFullPath(Path.Combine(folder, string.IsNullOrEmpty(spec.Output) ? spec.Name : spec.Output))) ?? folder;
         Entities.Load(spec.Modules, spec.Enums);
+        Users.Load(spec.Roles, spec.Users);
         _loading = false;
         Branding.Sync();
         SignIn.Sync();

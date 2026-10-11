@@ -1,0 +1,175 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Coworkee.Studio.ViewModels"
+             xmlns:l="using:Coworkee.Studio.Localization"
+             x:Class="Coworkee.Studio.Views.UsersView"
+             x:DataType="vm:UsersStep">
+  <UserControl.Resources>
+    <DataTemplate x:Key="Errors" x:DataType="x:String">
+      <TextBlock Classes="error" FontSize="11.5" Text="{Binding}" TextWrapping="Wrap" />
+    </DataTemplate>
+  </UserControl.Resources>
+  <UserControl.Styles>
+    <Style Selector="TextBlock.head">
+      <Setter Property="FontSize" Value="11.5" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+    </Style>
+    <Style Selector="CheckBox.choice">
+      <Setter Property="Margin" Value="0,0,14,0" />
+      <Setter Property="MinHeight" Value="28" />
+    </Style>
+  </UserControl.Styles>
+
+  <ScrollViewer>
+    <Grid ColumnDefinitions="*,24,*" Margin="44,12,44,32">
+      <!-- users -->
+      <StackPanel Spacing="12">
+        <Grid ColumnDefinitions="*,Auto">
+          <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <PathIcon Data="{StaticResource Icon.Account}" Foreground="{DynamicResource Secondary}" />
+            <TextBlock Classes="h3" Text="{l:L Users}" />
+            <TextBlock Classes="caption" Text="{Binding Counts}" VerticalAlignment="Center" />
+          </StackPanel>
+          <Button Grid.Column="1" Command="{Binding AddUserCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <PathIcon Classes="small" Data="{StaticResource Icon.Plus}" />
+              <TextBlock Text="{l:L User}" />
+            </StackPanel>
+          </Button>
+        </Grid>
+
+        <Border Classes="card" Padding="14,10">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <PathIcon Data="{StaticResource Icon.Shield}" Foreground="{DynamicResource Primary}" Margin="0,0,10,0" />
+            <StackPanel Grid.Column="1" Spacing="2">
+              <TextBlock Classes="mono" FontWeight="SemiBold" Text="{Binding Administrator}" />
+              <TextBlock Classes="caption" Text="{l:L 'Administrator with every permission, always seeded; its password is generated.'}" TextWrapping="Wrap" />
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <ItemsControl ItemsSource="{Binding Users}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:UserViewModel">
+              <Border Classes="card" Padding="14,12" Margin="0,0,0,10">
+                <StackPanel Spacing="8">
+                  <Grid ColumnDefinitions="*,8,*,Auto">
+                    <StackPanel Spacing="3">
+                      <TextBlock Classes="head" Text="{l:L Email}" />
+                      <TextBox Text="{Binding Email}" PlaceholderText="ada@shop.test" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Spacing="3">
+                      <TextBlock Classes="head" Text="{l:L 'Display name'}" />
+                      <TextBox Text="{Binding DisplayName}" PlaceholderText="{l:L 'From the email'}" />
+                    </StackPanel>
+                    <Button Grid.Column="3" Classes="icon danger" Width="30" Height="30" Padding="6" Margin="8,18,0,0" VerticalAlignment="Top" ToolTip.Tip="{l:L 'Remove user'}"
+                            Command="{Binding $parent[UserControl].((vm:UsersStep)DataContext).RemoveUserCommand}" CommandParameter="{Binding}">
+                      <PathIcon Classes="small" Data="{StaticResource Icon.Delete}" />
+                    </Button>
+                  </Grid>
+                  <Grid ColumnDefinitions="*,8,Auto">
+                    <StackPanel Spacing="3">
+                      <TextBlock Classes="head" Text="{l:L Password}" />
+                      <TextBox FontFamily="{DynamicResource MonoFont}" Text="{Binding Password}" PlaceholderText="{l:L 'Generated'}" />
+                    </StackPanel>
+                    <CheckBox Grid.Column="2" VerticalAlignment="Bottom" IsChecked="{Binding Admin}" Content="{l:L Administrator}" />
+                  </Grid>
+                  <TextBlock Classes="head" Text="{l:L Roles}" />
+                  <ItemsControl ItemsSource="{Binding Roles}">
+                    <ItemsControl.ItemsPanel>
+                      <ItemsPanelTemplate>
+                        <WrapPanel />
+                      </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="vm:Choice">
+                        <CheckBox Classes="choice" IsChecked="{Binding IsChecked}" Content="{Binding Name}" />
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <ItemsControl ItemsSource="{Binding Errors}" ItemTemplate="{StaticResource Errors}" />
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+
+      <!-- roles -->
+      <StackPanel Grid.Column="2" Spacing="12">
+        <Grid ColumnDefinitions="*,Auto">
+          <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <PathIcon Data="{StaticResource Icon.Key}" Foreground="{DynamicResource Secondary}" />
+            <TextBlock Classes="h3" Text="{l:L Roles}" />
+          </StackPanel>
+          <Button Grid.Column="1" Command="{Binding AddRoleCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <PathIcon Classes="small" Data="{StaticResource Icon.Plus}" />
+              <TextBlock Text="{l:L Role}" />
+            </StackPanel>
+          </Button>
+        </Grid>
+
+        <Border Classes="card" Padding="14,10">
+          <StackPanel Spacing="4">
+            <TextBlock Classes="caption" Text="{l:L 'Built-in roles of the template'}" />
+            <ItemsControl ItemsSource="{Binding BuiltInRoles}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <WrapPanel />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="x:String">
+                  <Border Classes="chip" Margin="0,0,6,0">
+                    <TextBlock Text="{Binding}" />
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
+        <ItemsControl ItemsSource="{Binding Roles}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:RoleViewModel">
+              <Border Classes="card" Padding="14,12" Margin="0,0,0,10">
+                <StackPanel Spacing="8">
+                  <Grid ColumnDefinitions="*,8,*,Auto">
+                    <StackPanel Spacing="3">
+                      <TextBlock Classes="head" Text="{l:L Name}" />
+                      <TextBox Text="{Binding Name}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Spacing="3">
+                      <TextBlock Classes="head" Text="{l:L Description}" />
+                      <TextBox Text="{Binding Description}" />
+                    </StackPanel>
+                    <Button Grid.Column="3" Classes="icon danger" Width="30" Height="30" Padding="6" Margin="8,18,0,0" VerticalAlignment="Top" ToolTip.Tip="{l:L 'Remove role'}"
+                            Command="{Binding $parent[UserControl].((vm:UsersStep)DataContext).RemoveRoleCommand}" CommandParameter="{Binding}">
+                      <PathIcon Classes="small" Data="{StaticResource Icon.Delete}" />
+                    </Button>
+                  </Grid>
+                  <TextBlock Classes="head" Text="{l:L Permissions}" />
+                  <ItemsControl ItemsSource="{Binding Permissions}">
+                    <ItemsControl.ItemsPanel>
+                      <ItemsPanelTemplate>
+                        <WrapPanel />
+                      </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="vm:Choice">
+                        <CheckBox Classes="choice" FontSize="12" IsChecked="{Binding IsChecked}" Content="{Binding Name}" />
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <ItemsControl ItemsSource="{Binding Errors}" ItemTemplate="{StaticResource Errors}" />
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Grid>
+  </ScrollViewer>
+</UserControl>

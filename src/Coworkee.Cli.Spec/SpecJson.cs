@@ -90,6 +90,12 @@ public static class SpecJson
             },
         ],
         Enums = [new EnumSpec { Name = "OrderStatus", Values = ["Open", "Paid", "Shipped"] }],
+        Roles = [new RoleSpec { Name = "Sales", Description = "Takes orders", Permissions = ["Sales.Customers.View", "Sales.Orders.View", "Sales.Orders.Create", "Sales.Orders.Edit"] }],
+        Users =
+        [
+            new UserSpec { Email = "ada@shop.test", DisplayName = "Ada Lovelace", Roles = ["Sales"] },
+            new UserSpec { Email = "grace@shop.test", Roles = ["User"], Password = "Grace-2026!" },
+        ],
     };
 
     private static JsonObject OptionsSchema()

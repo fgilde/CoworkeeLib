@@ -44,7 +44,7 @@ Other clients take the same command: `coworkee` with the argument `mcp`. `cowork
 | `get_spec_schema` | JSON Schema of an [app spec](cli.md#app-specs) |
 | `get_spec_example` | A complete example spec |
 | `validate_spec` | Checks a spec, with a folder also its logo and media files |
-| `create_app` | `coworkee new` from a spec, or from a name and options, in a folder |
+| `create_app` | `coworkee new` from a spec, or from a name and options, in a folder; `users` adds development users (`email[:role,role][:admin]`), the answer lists them with their passwords |
 | `add_module` | `coworkee module add` with entity, properties, client entity and mapping |
 | `add_entity` | `coworkee entity add` |
 | `add_migration` | `coworkee migrations add` |

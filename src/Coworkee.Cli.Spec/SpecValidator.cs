@@ -75,6 +75,7 @@ public static partial class SpecValidator
         Languages(errors, values);
         Enums(errors, spec);
         Modules(errors, spec, values["samples"] == "true", index);
+        UsersAndRoles(errors, spec);
         return errors;
     }
 

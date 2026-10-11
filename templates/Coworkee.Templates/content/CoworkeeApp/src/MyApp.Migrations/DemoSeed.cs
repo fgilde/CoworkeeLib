@@ -12,11 +12,9 @@ using MyApp.Contracts.Documents;
 
 namespace MyApp.Migrations;
 
-/// <summary>Development seed. The password was generated when the solution was created; change it before you deploy anywhere.</summary>
+/// <summary>Development seed with the users and roles of <see cref="DemoUsers"/>; change their passwords before you deploy anywhere.</summary>
 public static class DemoSeed
 {
-    public static readonly SeedUser Administrator = new("admin@myapp.local", "Cw1!SEED_PASSWORD", "Administrator", null, IsAdmin: true);
-
     public static void Configure(IdentitySeedOptions seed)
     {
         seed.TenantName = "COWORKEE_APP_TITLE";
@@ -26,7 +24,8 @@ public static class DemoSeed
 #else
         seed.Roles.Add(new SeedRole("User", "Signed-in users", Shared));
 #endif
-        seed.Users.Add(Administrator);
+        seed.Roles.AddRange(DemoUsers.Roles.Select(r => new SeedRole(r.Name, r.Description, [.. Shared.Union(r.Permissions)])));
+        seed.Users.AddRange(DemoUsers.All.Select(u => new SeedUser(u.Email, u.Password, u.FirstName, u.LastName, u.IsAdmin) { Roles = u.Roles ?? [] }));
 #if (colorMode != "system")
         seed.Settings["Theme.Mode"] = "COWORKEE_COLOR_MODE";
 #endif

@@ -11,7 +11,7 @@ public sealed class RichTemplateTests(TemplateFixture template)
     public async Task Languages_color_mode_registration_and_tooling_reach_the_app()
     {
         var app = await template.CreateAsync("rich-options", "--samples", "false", "--languages", "en,de", "--defaultLanguage", "de", "--colorMode", "dark",
-            "--registration", "true", "--githubActions", "true", "--devcontainer", "true");
+            "--githubActions", "true", "--devcontainer", "true");
 
         var infrastructure = Read(app, "src/Shop.Infrastructure/ShopInfrastructureModule.cs");
         infrastructure.ShouldContain("localization.Languages = [\"en\", \"de\"];");
@@ -31,7 +31,7 @@ public sealed class RichTemplateTests(TemplateFixture template)
         Read(german, ".github/workflows/ci.yml").ShouldNotContain("dotnet test");
         TemplateTests.ShouldHaveNoLeftovers(german);
 
-        var plain = await template.CreateAsync("plain-options", "--samples", "false");
+        var plain = await template.CreateAsync("plain-options", "--samples", "false", "--registration", "false");
         Read(plain, "src/Shop.Infrastructure/ShopInfrastructureModule.cs").ShouldNotContain("LocalizationOptions");
         Read(plain, "src/Shop.Migrations/DemoSeed.cs").ShouldNotContain("seed.Settings");
         Directory.Exists(Path.Combine(plain, ".github")).ShouldBeFalse();

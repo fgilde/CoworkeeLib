@@ -5,6 +5,7 @@ using System.Globalization;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Coworkee.Cli.Spec;
 using Coworkee.Studio.Cli;
 using Coworkee.Studio.Localization;
 
@@ -80,6 +81,18 @@ public sealed partial class GenerateStep(MainViewModel main) : StepViewModel(mai
     public ObservableCollection<string> Warnings { get; } = [];
 
     public ObservableCollection<string> NextSteps { get; } = [];
+
+    /// <summary>The users of the created app with their passwords, read from its DemoUsers.cs.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSignIn), nameof(SignInHint), nameof(SignInText))]
+    public partial SignInInfo? SignIn { get; set; }
+
+    public bool HasSignIn => SignIn is { Users.Count: > 0 };
+
+    public string SignInHint => SignIn is { } info ? L.Format("Run the app, open {0} in the Aspire dashboard and sign in with:", info.WebResource) : string.Empty;
+
+    /// <summary>All users with passwords, for the clipboard.</summary>
+    public string SignInText => SignIn is { } info ? string.Join(Environment.NewLine, info.Users.Select(u => $"{u.Email}\t{u.Password}\t{u.RoleText}")) : string.Empty;
 
     public bool IsRunning => RunState == RunState.Running;
 
@@ -221,6 +234,7 @@ public sealed partial class GenerateStep(MainViewModel main) : StepViewModel(mai
         Log.Clear();
         Warnings.Clear();
         NextSteps.Clear();
+        SignIn = null;
         _nextSteps = false;
         Elapsed = string.Empty;
         RunState = RunState.Ready;
@@ -267,6 +281,7 @@ public sealed partial class GenerateStep(MainViewModel main) : StepViewModel(mai
             _ => RunState.Failed,
         };
         ShowLog |= RunState is RunState.Failed or RunState.Invalid;
+        SignIn = RunState == RunState.Succeeded && Output is { } output ? SignInInfo.Read(output) : null;
         Main.UpdateStates();
     }
 

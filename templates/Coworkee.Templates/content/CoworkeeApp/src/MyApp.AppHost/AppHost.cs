@@ -2,6 +2,10 @@
 using Coworkee.Aspire.Settings;
 
 #endif
+#if (keycloak)
+using MyApp.Migrations;
+
+#endif
 var builder = DistributedApplication.CreateBuilder(args);
 
 var app = builder.AddCoworkeeApp("myapp", options =>
@@ -34,7 +38,8 @@ var app = builder.AddCoworkeeApp("myapp", options =>
     options.UseWebDataStudio();
 #endif
 #if (keycloak)
-    options.UseKeycloak(keycloak => keycloak.Users.Add(new KeycloakUser("admin@myapp.local", "Administrator", "COWORKEE_APP_TITLE")));
+    // the same users and passwords as the app's seed (LOGIN.md)
+    options.UseKeycloak(keycloak => keycloak.Users.AddRange(DemoUsers.All.Select(u => new KeycloakUser(u.Email, u.FirstName, u.LastName ?? "COWORKEE_APP_TITLE") { Password = u.Password })));
 #endif
 });
 #if (storage == "azureBlob")

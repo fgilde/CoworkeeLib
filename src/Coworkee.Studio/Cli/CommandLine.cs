@@ -69,6 +69,14 @@ public static class CommandLine
             }
         }
 
+        // roles of the spec need the spec, so only the built-in ones go along
+        var builtIn = PermissionCatalog.BuiltInRoles(spec);
+        foreach (var user in spec.Users)
+        {
+            var roles = user.Roles.Where(r => builtIn.Contains(r, StringComparer.OrdinalIgnoreCase)).ToList();
+            args.AddRange(["--user", string.Join(':', [user.Email, .. roles.Count > 0 ? [string.Join(',', roles)] : Array.Empty<string>(), .. user.Admin ? ["admin"] : Array.Empty<string>()])]);
+        }
+
         return [.. args];
     }
 

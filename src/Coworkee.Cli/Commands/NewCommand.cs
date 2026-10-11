@@ -14,12 +14,13 @@ internal static class NewCommand
     private static readonly Option<bool> NoSamples = new("--no-samples") { Description = "Same as --samples false." };
     private static readonly Option<bool> NoTests = new("--no-tests") { Description = "Same as --tests false." };
     private static readonly Option<string?> TemplateSource = new("--template-source") { Description = "Install the template from this .nupkg or folder instead of nuget.org." };
+    private static readonly Option<string[]> Users = new("--user") { Description = UserSyntax.Description, HelpName = UserSyntax.Format, AllowMultipleArgumentsPerToken = false };
 
     private static readonly IReadOnlyList<(CliOption Option, Option Symbol)> Switches = [.. OptionCatalog.All.Select(o => (o, Switch(o)))];
 
     public static Command Create()
     {
-        var command = new Command("new", "Create a Coworkee application; coworkee options describes every switch.") { Name, Output, SpecFile, NoSamples, NoTests, TemplateSource };
+        var command = new Command("new", "Create a Coworkee application; coworkee options describes every switch.") { Name, Output, SpecFile, NoSamples, NoTests, TemplateSource, Users };
         foreach (var (_, symbol) in Switches)
         {
             command.Options.Add(symbol);
@@ -57,6 +58,8 @@ internal static class NewCommand
         {
             spec.Options["tests"] = false;
         }
+
+        spec.Users.AddRange((result.GetValue(Users) ?? []).Select(UserSyntax.Parse));
 
         var errors = SpecValidator.Validate(spec, baseDirectory, trusted);
         if (errors.Count > 0)
@@ -119,6 +122,7 @@ internal static class NewCommand
         var values = SpecOptions.Resolve(settings.Spec);
         var solution = Solution.Find(settings.Output);
         Assets.Copy(settings, values);
+        DemoUsersWriter.Write(solution, settings.Spec);
         var index = new SpecIndex(settings.Spec);
         IReadOnlyList<EnumSpec> enums = settings.Spec.Enums;
         foreach (var module in settings.Spec.Modules)
@@ -202,10 +206,19 @@ internal static class NewCommand
         }
 
         Console.WriteLine();
+        if (SignInInfo.Read(settings.Output) is { } signIn)
+        {
+            foreach (var line in SignInBox.Lines(signIn))
+            {
+                Console.WriteLine(line);
+            }
+
+            Console.WriteLine();
+        }
+
         Console.WriteLine("Next steps:");
         Console.WriteLine($"  cd {settings.Output}");
         Console.WriteLine("  coworkee run");
-        Console.WriteLine($"Sign in as admin@{settings.Spec.Name.ToLowerInvariant()}.local, the password is in src/{settings.Spec.Name}.Migrations/DemoSeed.cs.");
         return 0;
     }
 }

@@ -17,7 +17,8 @@ public sealed class TemplateTests(TemplateFixture template)
         File.ReadAllText(Path.Combine(app, "Directory.Packages.props")).ShouldContain($"<CoworkeeVersion>{template.Version}</CoworkeeVersion>");
         File.ReadAllText(Path.Combine(app, "src", "Shop.AppHost", "AppHost.cs")).ShouldContain("options.DisplayName = \"My Shop\";");
         File.ReadAllText(Path.Combine(app, "src", "Shop.AppHost", "AppHost.cs")).ShouldNotContain("Keycloak");
-        File.ReadAllText(Path.Combine(app, "src", "Shop.Migrations", "DemoSeed.cs")).ShouldMatch("\"Cw1!(?i:[0-9a-f]{32})\"");
+        File.ReadAllText(Path.Combine(app, "src", "Shop.Migrations", "DemoUsers.cs")).ShouldMatch("\"Cw1!(?i:[0-9a-f]{32})\"");
+        File.ReadAllText(Path.Combine(app, "LOGIN.md")).ShouldMatch("`Cw1!(?i:[0-9a-f]{32})`");
         ShouldHaveNoLeftovers(app);
     }
 

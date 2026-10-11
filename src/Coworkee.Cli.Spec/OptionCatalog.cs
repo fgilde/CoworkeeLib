@@ -154,7 +154,7 @@ public static class OptionCatalog
         new("colorMode", General, "Color mode", "Light, dark or the system's mode as default of the installation; every user can switch it in the app bar.", OptionKind.Choice, "system",
             "Dark for apps used in dim rooms or all day.", ["Seeded as system wide setting, changeable later"], ["None"],
             [new("system", "Follow the operating system."), new("light", "Always light."), new("dark", "Always dark.")]),
-        new("registration", General, "Self registration", "Visitors can register on the sign-in page (setting Account.AllowRegistration, changeable later).", OptionKind.Bool, "false",
+        new("registration", General, "Self registration", "Visitors can register on the sign-in page (setting Account.AllowRegistration, changeable later).", OptionKind.Bool, "true",
             "Public apps where anyone may sign up; leave off when administrators invite users.", ["No invitation needed"], ["Anyone with the address can get an account"]),
         new("githubActions", Tooling, "GitHub Actions", "A workflow (.github/workflows/ci.yml) that builds the solution and runs its tests on every push and pull request.", OptionKind.Bool, "false",
             "When the app lives on GitHub.", ["Broken builds show up in pull requests", "The tests run with Docker on the runner"], ["Minutes of the GitHub plan"]),
