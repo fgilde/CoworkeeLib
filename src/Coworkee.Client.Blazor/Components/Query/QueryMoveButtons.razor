@@ -1,0 +1,7 @@
+@if (Position.Count > 1)
+{
+    <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" Size="Size.Small" Disabled="@(Position.Index == 0)" OnClick="() => OnMove.InvokeAsync(-1)"
+                   aria-label="@T("Move up")" data-testid="query-move-up" />
+    <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward" Size="Size.Small" Disabled="@(Position.Index == Position.Count - 1)" OnClick="() => OnMove.InvokeAsync(1)"
+                   aria-label="@T("Move down")" data-testid="query-move-down" />
+}

@@ -1,0 +1,66 @@
+<style>
+    .qb { display: flex; flex-direction: column; gap: 12px; }
+    .qb-group { border-radius: 14px; padding: 10px 12px; border: 1px solid var(--mud-palette-lines-default);
+        background: color-mix(in srgb, var(--mud-palette-primary) 3%, var(--mud-palette-surface)); }
+    .qb-group.qb-nested { border-left: 3px solid var(--qb-accent, var(--mud-palette-primary)); background: color-mix(in srgb, var(--qb-accent, var(--mud-palette-primary)) 4%, var(--mud-palette-surface)); }
+    .qb-group-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .qb-children { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+    .qb-join { font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--qb-accent, var(--mud-palette-primary)); padding-left: 6px; }
+    .qb-rule { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; padding: 6px 8px; border-radius: 12px; background: var(--mud-palette-surface);
+        border: 1px solid var(--mud-palette-lines-default); transition: border-color 120ms ease, box-shadow 120ms ease; }
+    .qb-rule:hover { border-color: color-mix(in srgb, var(--mud-palette-primary) 45%, transparent); box-shadow: 0 1px 6px rgba(0,0,0,.06); }
+    .qb-rule.qb-incomplete { border-style: dashed; }
+    .qb-field { min-width: 170px; flex: 1 1 170px; max-width: 240px; }
+    .qb-op { min-width: 150px; flex: 0 1 170px; }
+    .qb-value { min-width: 180px; flex: 2 1 220px; display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
+    .qb-value > * { flex: 1 1 140px; }
+    .qb-actions { display: flex; align-items: center; margin-left: auto; opacity: .6; }
+    .qb-rule:hover .qb-actions, .qb-group-head:hover .qb-actions { opacity: 1; }
+    .qb-empty { color: var(--mud-palette-text-secondary); font-size: .875rem; padding: 4px 6px; }
+    .qb-preview { border-radius: 14px; border: 1px solid var(--mud-palette-lines-default); overflow: hidden; }
+    .qb-preview-head { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: color-mix(in srgb, var(--mud-palette-primary) 6%, var(--mud-palette-surface)); }
+    .qb-preview pre { margin: 0; padding: 10px 12px; font-size: .8rem; white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow: auto;
+        font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .qb-tags { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+</style>
+
+<div class="qb" data-testid="query-builder">
+    <QueryGroupEditor Group="Value" Fields="Fields" Depth="0" MaxDepth="MaxDepth" Dense="Dense" Localize="T" Changed="ChangedAsync" />
+    @if (ShowPreview)
+    {
+        <div class="qb-preview" data-testid="query-preview">
+            <div class="qb-preview-head">
+                <MudToggleGroup T="QueryPreview" @bind-Value="_preview" Size="Size.Small" Color="Color.Primary" Outlined="true" Delimiters="true" data-testid="query-preview-mode">
+                    <MudToggleItem Value="QueryPreview.Text" Text="@T("Text")" />
+                    <MudToggleItem Value="QueryPreview.OData" Text="OData" />
+                    <MudToggleItem Value="QueryPreview.Json" Text="JSON" />
+                </MudToggleGroup>
+                <MudSpacer />
+                @if (ShowImportExport)
+                {
+                    <MudTooltip Text="@T("Import")">
+                        <MudIconButton Icon="@Icons.Material.Outlined.FileUpload" Size="Size.Small" OnClick="() => _importing = !_importing" aria-label="@T("Import")" data-testid="query-import" />
+                    </MudTooltip>
+                    <MudTooltip Text="@T("Download")">
+                        <MudIconButton Icon="@Icons.Material.Outlined.FileDownload" Size="Size.Small" Href="@ExportHref" download="query.json" aria-label="@T("Download")" data-testid="query-export" />
+                    </MudTooltip>
+                }
+                <MudTooltip Text="@T("Copy")">
+                    <MudIconButton Icon="@Icons.Material.Outlined.ContentCopy" Size="Size.Small" OnClick="CopyAsync" aria-label="@T("Copy")" data-testid="query-copy" />
+                </MudTooltip>
+            </div>
+            @if (_importing)
+            {
+                <div class="pa-3">
+                    <MudTextField T="string" @bind-Value="_import" Lines="4" Variant="Variant.Outlined" Label="@T("Query as JSON")" Error="_importFailed"
+                                  ErrorText="@T("This is not a query.")" data-testid="query-import-text" />
+                    <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-2">
+                        <MudButton Size="Size.Small" OnClick="() => _importing = false">@T("Cancel")</MudButton>
+                        <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="ImportAsync" data-testid="query-import-apply">@T("Load")</MudButton>
+                    </MudStack>
+                </div>
+            }
+            <pre data-testid="query-preview-text">@PreviewText</pre>
+        </div>
+    }
+</div>
