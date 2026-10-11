@@ -17,7 +17,7 @@ public static class ReportQueryFields
             _ => QueryFieldType.Text,
         })
         {
-            Options = f.Members is { Count: > 0 } members ? [.. members.Select(m => new QueryOption(m, ReportFormat.Humanize(m)))] : null,
+            Options = f.Members is { Count: > 0 } members ? [.. members.Select(m => new QueryOption(m, f.MemberLabel(m)))] : null,
             Category = f.Path.Contains('/') ? f.Path[..f.Path.IndexOf('/')] : null,
             Nullable = true,
         })];

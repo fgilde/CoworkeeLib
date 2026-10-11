@@ -40,7 +40,7 @@ public static class RowValues
             double number => number.ToString("N2", culture),
             string text when field?.Kind == ReportFieldKind.Date && DateTimeOffset.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.None, out var date) =>
                 field.DateOnly ? DateOnly.FromDateTime(date.Date).ToString("d", culture) : date.ToLocalTime().ToString("g", culture),
-            string text when field?.Kind == ReportFieldKind.Enum => localize(ReportFormat.Humanize(text)),
+            string text when field?.Kind == ReportFieldKind.Enum => localize(field.MemberLabel(text)),
             _ => value.ToString() ?? string.Empty,
         };
     }

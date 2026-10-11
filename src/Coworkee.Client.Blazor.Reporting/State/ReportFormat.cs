@@ -78,7 +78,7 @@ public static partial class ReportFormat
             return localize(key.Value == "true" ? "Yes" : "No");
         }
 
-        return field?.Kind == ReportFieldKind.Enum ? localize(Humanize(key.Label)) : key.Label;
+        return field?.Kind == ReportFieldKind.Enum ? localize(key.Label) : key.Label;
     }
 
     /// <summary>"Last12Months" becomes "Last 12 months", "InProgress" "In progress".</summary>

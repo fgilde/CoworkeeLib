@@ -31,7 +31,7 @@ internal static class ReportKeys
             IFormattable number => (number.ToString(null, CultureInfo.InvariantCulture), number.ToString(null, CultureInfo.InvariantCulture)),
             _ => (value.ToString()!, "'" + value + "'"),
         };
-        return new ReportKey(text, text, $"{path} eq {literal}");
+        return new ReportKey(text, value is Enum e ? Contracts.Data.EnumLabels.Of(e) : text, $"{path} eq {literal}");
     }
 
     private static string DateLiteral(DateOnly day, Type type) =>

@@ -24,7 +24,8 @@ internal sealed record ReportField(string Path, string Label, ReportFieldKind Ki
 
     public ReportFieldDto ToDto() =>
         new(Path, Label, Kind, Kind == ReportFieldKind.Enum ? Enum.GetNames(Nullable.GetUnderlyingType(ClrType) ?? ClrType) : null, EnumType,
-            (Nullable.GetUnderlyingType(ClrType) ?? ClrType) == typeof(DateOnly));
+            (Nullable.GetUnderlyingType(ClrType) ?? ClrType) == typeof(DateOnly),
+            Kind == ReportFieldKind.Enum ? [.. Enum.GetNames(Nullable.GetUnderlyingType(ClrType) ?? ClrType).Select(n => Contracts.Data.EnumLabels.Of(Nullable.GetUnderlyingType(ClrType) ?? ClrType, n))] : null);
 }
 
 /// <summary>Reads fields from the EDM, so properties hidden from OData stay hidden from reports.</summary>
