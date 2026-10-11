@@ -15,7 +15,7 @@ coworkee ui
 | Branding | Logo, the seven built-in themes, brand colors, with a live preview of the app shell in light and dark |
 | Sign-in | Card, Split or Slide, image or video and its side |
 | Architecture | Presets for the app type, then every module and infrastructure option with description, pros, cons, when to use it and its package; the projects, Aspire containers and packages of the solution |
-| Entities | Feature modules with entities and properties, plural, client entity and mapping; routes, permissions and files the CLI generates |
+| Entities | Feature modules with entities and properties (references, enums, flags), enums, plural, client entity and mapping; routes, permissions and files the CLI generates |
 | Review | Validation, the app spec as JSON and the equivalent `coworkee new` command |
 | Create | Runs `coworkee spec validate` and `coworkee new --spec`, shows the progress, then opens the folder, VS Code, Rider or Visual Studio, or runs the app |
 

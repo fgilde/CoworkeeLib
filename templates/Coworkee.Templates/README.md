@@ -24,6 +24,9 @@ dotnet run --project src/Shop.AppHost
 | `--primaryColor`, `--secondaryColor` | | Brand colors `#rrggbb`: an app theme as default |
 | `--logo` | `coworkee-icon.svg` | File name in `wwwroot` of the web client (copy the file there) |
 | `--signInLayout`, `--signInMedia`, `--signInMediaSide` | `Slide`, none, `Left` | Design of the sign-in pages |
+| `--languages`, `--defaultLanguage` | all shipped, `en` | Languages offered from the start (`en,de`) and the default one |
+| `--colorMode`, `--registration` | `system`, `false` | Seeded color mode and self registration |
+| `--githubActions`, `--devcontainer` | `false` | CI workflow and dev container |
 
 With other modules than the default ones the app has no migration yet: run `coworkee migrations add Initial`. The [Coworkee CLI](https://fgilde.github.io/CoworkeeLib/getting-started/cli/) does that, copies logo and media and adds generated modules with entities (`coworkee new --spec`).
 
