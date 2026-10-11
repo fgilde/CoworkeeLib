@@ -39,6 +39,9 @@ public sealed record AiConnection(string Provider, string? Model, string? Endpoi
         && EffectiveModel is not null
         && (Provider is AiProviders.Ollama or AiProviders.OpenAICompatible || !string.IsNullOrWhiteSpace(ApiKey))
         && (Provider is not (AiProviders.AzureOpenAI or AiProviders.OpenAICompatible) || Uri.TryCreate(Endpoint, UriKind.Absolute, out _));
+
+    // the key never reaches a log
+    public override string ToString() => $"{Provider} {EffectiveModel} {Endpoint}";
 }
 
 /// <summary>Creates the chat client of a connection. Replace it to bring another <see cref="IChatClient"/> (Gemini, Bedrock, a gateway).</summary>
