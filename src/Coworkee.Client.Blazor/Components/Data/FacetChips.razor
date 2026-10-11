@@ -3,8 +3,9 @@
     <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="1" Class="mb-2" data-testid="facet-chips">
         @foreach (var facet in Selection.All)
         {
-            <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined" OnClose="() => Selection.Remove(facet)" data-chip="@facet.OData">
-                <b>@L[facet.GroupLabel]:</b>&nbsp;@facet.Label
+            <MudChip T="string" Size="Size.Small" Color="@(facet.Exclude ? Color.Error : Color.Primary)" Variant="Variant.Outlined" OnClose="() => Selection.Remove(facet)"
+                     data-chip="@facet.OData">
+                <b>@L[facet.GroupLabel]:</b>&nbsp;@(facet.Exclude ? L["not"] + " " : string.Empty)@FacetLabels.Of(L, facet)
             </MudChip>
         }
         @foreach (var filter in Filters)

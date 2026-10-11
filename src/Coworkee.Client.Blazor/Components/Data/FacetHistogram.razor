@@ -1,0 +1,10 @@
+@if (Buckets.Count > 0)
+{
+    <div class="cw-facet-histogram" role="list" aria-label="@Label">
+        @foreach (var bucket in Buckets)
+        {
+            <button type="button" class="@($"cw-facet-histogram-bar {(IsActive?.Invoke(bucket) == true ? "active" : string.Empty)}")" role="listitem" title="@Title?.Invoke(bucket)"
+                    style="@Height(bucket)" disabled="@(!OnPick.HasDelegate)" data-bucket="@bucket.OData" @onclick="() => OnPick.InvokeAsync(bucket)"></button>
+        }
+    </div>
+}

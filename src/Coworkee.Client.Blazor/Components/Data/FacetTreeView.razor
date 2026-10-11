@@ -1,0 +1,8 @@
+@inherits FacetViewBase
+
+<div class="cw-facet-tree" role="tree">
+    @foreach (var node in Roots)
+    {
+        <FacetTreeNode Node="node" View="this" Depth="0" />
+    }
+</div>

@@ -30,14 +30,21 @@ public sealed record DataTableState(string? Search, IReadOnlyList<SelectedFacet>
     /// <summary>Filters set in the column headers.</summary>
     public IReadOnlyList<DataTableFilter>? ColumnFilters { get; init; }
 
-    [JsonIgnore]
-    public bool IsEmpty => string.IsNullOrEmpty(Search) && Facets.Count == 0 && ColumnFilters is not { Count: > 0 } && HiddenColumns.Count == 0 && !HasLayout;
+    /// <summary>The advanced filter built in the query builder.</summary>
+    public Components.Query.QueryGroup? Advanced { get; init; }
+
+    /// <summary>The view the user picked per facet group key.</summary>
+    public IReadOnlyDictionary<string, Contracts.Data.FacetView>? FacetViews { get; init; }
 
     [JsonIgnore]
-    public bool HasLayout => ColumnOrder is { Count: > 0 } || GroupBy is { Count: > 0 } || Sort is { Count: > 0 } || Widths is { Count: > 0 } || PageSize is not null || Dense is not null;
+    public bool IsEmpty => string.IsNullOrEmpty(Search) && Facets.Count == 0 && ColumnFilters is not { Count: > 0 } && Advanced is null && HiddenColumns.Count == 0 && !HasLayout;
 
-    /// <summary>Search, facets and column filters only, as the address bar keeps them.</summary>
-    public DataTableState Filters() => new(Search, Facets, []) { ColumnFilters = ColumnFilters };
+    [JsonIgnore]
+    public bool HasLayout => ColumnOrder is { Count: > 0 } || GroupBy is { Count: > 0 } || Sort is { Count: > 0 } || Widths is { Count: > 0 } || PageSize is not null || Dense is not null
+        || FacetViews is { Count: > 0 };
+
+    /// <summary>Search, facets, column filters and the advanced filter only, as the address bar keeps them.</summary>
+    public DataTableState Filters() => new(Search, Facets, []) { ColumnFilters = ColumnFilters, Advanced = Advanced };
 
     public string Encode() =>
         Convert.ToBase64String(JsonSerializer.SerializeToUtf8Bytes(this, Json)).TrimEnd('=').Replace('+', '-').Replace('/', '_');

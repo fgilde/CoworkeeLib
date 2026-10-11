@@ -33,7 +33,7 @@ public static class Facets
     /// <summary>The views a user may switch a group between.</summary>
     public static IReadOnlyList<FacetView> Views(FacetGroupDto group) => Kind(group) switch
     {
-        FacetValueKind.Date => [FacetView.Dates, FacetView.Range],
+        FacetValueKind.Date => [FacetView.Dates],
         FacetValueKind.Number when group.Type == FacetKind.Range => [FacetView.Range],
         FacetValueKind.Boolean => [FacetView.Toggle, FacetView.Buttons, FacetView.Chips],
         _ => group.TreeSeparator is null ? [.. Lists.Where(v => v != FacetView.Tree)] : Lists,

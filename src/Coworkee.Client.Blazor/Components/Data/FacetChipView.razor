@@ -1,0 +1,24 @@
+@inherits FacetViewBase
+
+<div class="cw-facet-chips" role="listbox" aria-multiselectable="@(!Single)">
+    @foreach (var option in Group.Options)
+    {
+        <button type="button" class="@($"cw-facet-chip {State(option)}")" disabled="@IsDisabled(option)" role="option" aria-selected="@IsSelected(option)"
+                data-option="@option.OData" @onclick="() => Toggle(option)" @oncontextmenu="() => ExcludeIfAllowed(option)" @oncontextmenu:preventDefault="Group.AllowExclude">
+            @if (IsSelected(option))
+            {
+                <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" />
+            }
+            else if (IsExcluded(option))
+            {
+                <MudIcon Icon="@Icons.Material.Outlined.Block" Size="Size.Small" />
+            }
+            <span>@Label(option)</span>
+            <span class="cw-facet-chip-count">@Count(option.Count)</span>
+        </button>
+    }
+</div>
+@if (Group.AllowExclude)
+{
+    <MudText Typo="Typo.caption" Class="cw-facet-hint">@L["Right-click a value to exclude it."]</MudText>
+}

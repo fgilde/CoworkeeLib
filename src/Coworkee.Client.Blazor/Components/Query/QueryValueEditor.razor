@@ -41,6 +41,6 @@ else
                      Label="@T(QueryOperators.IsRange(Rule.Operator) ? "From" : "Value")" />
     @if (QueryOperators.IsRange(Rule.Operator))
     {
-        <QueryValueInput Field="Field" Value="@Rule.Value2" ValueLabel="@Label(Rule.Value2)" ValueChanged="Value2Async" OnPicked="Remember" Dense="Dense" Label="@T("To")" />
+        <QueryValueInput Field="Field" Value="@Rule.Value2" ValueLabel="@Label(Rule.Value2)" ValueChanged="Value2Async" OnPicked="Remember" Dense="Dense" Label="@T("Up to")" />
     }
 }

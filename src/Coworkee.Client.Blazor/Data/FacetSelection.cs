@@ -57,6 +57,39 @@ public sealed class FacetSelection
         Changed?.Invoke();
     }
 
+    /// <summary>Chooses or unchooses several options at once, e.g. all values below a tree node.</summary>
+    public void Choose(FacetGroupDto group, IEnumerable<FacetOptionDto> options, bool chosen)
+    {
+        var selected = Group(group.Key);
+        foreach (var option in options)
+        {
+            if (chosen)
+            {
+                selected[option.OData] = new SelectedFacet(group.Key, group.Label, Operator(CombineOf(group)), option.Label, option.OData);
+            }
+            else
+            {
+                selected.Remove(option.OData);
+            }
+        }
+
+        selected.Remove(Custom);
+        Tidy(group.Key);
+        Changed?.Invoke();
+    }
+
+    /// <summary>Replaces the group's choice with <paramref name="option"/> alone, or clears it with <c>null</c>.</summary>
+    public void Only(FacetGroupDto group, FacetOptionDto? option)
+    {
+        _selected.Remove(group.Key);
+        if (option is not null)
+        {
+            Group(group.Key)[option.OData] = new SelectedFacet(group.Key, group.Label, Operator(CombineOf(group)), option.Label, option.OData);
+        }
+
+        Changed?.Invoke();
+    }
+
     /// <summary>Replaces the group's choice with one custom value, e.g. "10 – 50" or the preset "last 7 days"; <c>null</c> clears the group.</summary>
     public void Set(FacetGroupDto group, string? label, string? odata, string? preset = null)
     {

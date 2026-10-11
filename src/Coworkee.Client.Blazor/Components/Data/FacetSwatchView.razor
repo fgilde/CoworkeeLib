@@ -1,0 +1,18 @@
+@inherits FacetViewBase
+
+<div class="cw-facet-swatches" role="listbox" aria-multiselectable="@(!Single)">
+    @foreach (var option in Group.Options)
+    {
+        <button type="button" class="@($"cw-facet-swatch {State(option)}")" disabled="@IsDisabled(option)" role="option" aria-selected="@IsSelected(option)"
+                title="@($"{Label(option)} ({Count(option.Count)})")" data-option="@option.OData" @onclick="() => Toggle(option)">
+            <span class="cw-facet-swatch-dot" style="@($"background:{Color(option)}")">
+                @if (IsSelected(option))
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" />
+                }
+            </span>
+            <span class="cw-facet-swatch-label">@Label(option)</span>
+            <span class="cw-facet-chip-count">@Count(option.Count)</span>
+        </button>
+    }
+</div>

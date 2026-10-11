@@ -9,7 +9,7 @@
             {
                 <div class="cw-table-panel-item" data-option="@option.OData">
                     <MudCheckBox T="bool" Value="Selection.IsSelected(Facet, option)" ValueChanged="_ => Selection.Toggle(Facet, option)" Size="Size.Small" Dense="true"
-                                 Disabled="@(!option.Enabled && !Selection.IsSelected(Facet, option))" Label="@option.Label" />
+                                 Disabled="@(!option.Enabled && !Selection.IsSelected(Facet, option))" Label="@FacetLabels.Of(L, Facet, option)" />
                     <MudSpacer />
                     <MudChip T="int" Size="Size.Small" Variant="Variant.Text">@option.Count</MudChip>
                 </div>
@@ -45,7 +45,7 @@
                         <MudNumericField T="double?" @bind-Value="Number" Label="@(IsBetween ? L["From"] : L["Value"])" Variant="Variant.Outlined" Margin="Margin.Dense" data-testid="filter-value" />
                         @if (IsBetween)
                         {
-                            <MudNumericField T="double?" @bind-Value="NumberTo" Label="@L["To"]" Variant="Variant.Outlined" Margin="Margin.Dense" data-testid="filter-to" />
+                            <MudNumericField T="double?" @bind-Value="NumberTo" Label="@L["Up to"]" Variant="Variant.Outlined" Margin="Margin.Dense" data-testid="filter-to" />
                         }
                     }
                     else if (IsDate)
@@ -53,7 +53,7 @@
                         <MudDatePicker @bind-Date="Date" Label="@(IsBetween ? L["From"] : L["Date"])" Variant="Variant.Outlined" Margin="Margin.Dense" Editable="true" data-testid="filter-value" />
                         @if (IsBetween)
                         {
-                            <MudDatePicker @bind-Date="DateTo" Label="@L["To"]" Variant="Variant.Outlined" Margin="Margin.Dense" Editable="true" data-testid="filter-to" />
+                            <MudDatePicker @bind-Date="DateTo" Label="@L["Up to"]" Variant="Variant.Outlined" Margin="Margin.Dense" Editable="true" data-testid="filter-to" />
                         }
                     }
                     else

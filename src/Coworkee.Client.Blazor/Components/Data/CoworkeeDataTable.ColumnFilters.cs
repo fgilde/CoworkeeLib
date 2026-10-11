@@ -1,3 +1,4 @@
+using Coworkee.Client.Blazor.Components.Query;
 using Coworkee.Client.Blazor.Data;
 using Coworkee.Contracts.Data;
 using Microsoft.AspNetCore.Components;
@@ -19,7 +20,10 @@ public partial class CoworkeeDataTable<T>
     private bool Filterable => ColumnFilters ?? Options.DataTable.ColumnFilters;
 
     private IReadOnlyList<FilterChip> FilterChips => _grid is null ? [] :
-        [.. DataGridLayout<T>.Filters(_grid).GroupBy(d => d.Column!).Select(g => new FilterChip(DataGridLayout<T>.Key(g.Key)!, DataGridLayout<T>.Label(g.Key), Describe([.. g])))];
+        [
+            .. DataGridLayout<T>.Filters(_grid).GroupBy(d => d.Column!).Select(g => new FilterChip(DataGridLayout<T>.Key(g.Key)!, DataGridLayout<T>.Label(g.Key), Describe([.. g]))),
+            .. _advanced.IsEmpty ? [] : new[] { new FilterChip(AdvancedKey, L["Advanced filter"], QueryDescriber.Describe(_advanced, Fields, L10n)) },
+        ];
 
     private string? ColumnFilter => _grid is null ? null : DataTableFilters.ToOData(DataGridLayout<T>.Conditions(_grid));
 
@@ -88,7 +92,7 @@ public partial class CoworkeeDataTable<T>
         DateTime date => date.ToShortDateString(),
         DateTimeOffset offset => offset.LocalDateTime.ToShortDateString(),
         DateOnly date => date.ToShortDateString(),
-        Enum => L[value.ToString()!],
+        Enum enumValue => L[EnumLabels.Of(enumValue)],
         _ => value.ToString() ?? string.Empty,
     };
 
@@ -100,6 +104,11 @@ public partial class CoworkeeDataTable<T>
 
     private Task RemoveFilterAsync(FilterChip chip)
     {
+        if (chip.Key == AdvancedKey)
+        {
+            return AdvancedChangedAsync(new QueryGroup());
+        }
+
         _grid!.FilterDefinitions.RemoveAll(d => d.Operator != DataTableFilters.FacetMarker && d.Column is { } c && DataGridLayout<T>.Key(c) == chip.Key);
         WriteUrl();
         return ReloadAsync();
@@ -108,6 +117,7 @@ public partial class CoworkeeDataTable<T>
     private void ClearFilters()
     {
         _grid?.FilterDefinitions.RemoveAll(d => d.Operator != DataTableFilters.FacetMarker);
+        (_advanced, _lastAdvanced) = (new QueryGroup(), null);
         // reloads and writes the address once
         _selection.Clear();
     }
