@@ -1,24 +1,22 @@
 using System.Collections.Concurrent;
-using System.Text;
 using System.Text.Json;
-using Anthropic;
-using Anthropic.Models.Messages;
 using Coworkee.Application.Authorization;
 using Coworkee.Contracts.Ai;
 using Coworkee.Core.Results;
 using Coworkee.Core.Security;
 using Coworkee.Settings;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 
 namespace Coworkee.Ai;
 
 /// <summary>
-/// The assistant: a manual tool loop against the Claude API. Tools run as the current user through
+/// The assistant: a manual tool loop against the configured <see cref="IChatClient"/> (<see cref="AiProviders"/>). Tools run as the current user through
 /// <see cref="AiToolRunner"/>, so the assistant can do nothing the user could not do in the API. Tools that change data
 /// run only in the first round, straight from the user's message; afterwards the model has to ask the user to confirm.
 /// </summary>
 public sealed class AiChat(
-    AiToolRunner runner, ISettingProvider settings, IPermissionChecker permissions, ICurrentUser currentUser, IHttpClientFactory httpClients, ILogger<AiChat> logger)
+    AiToolRunner runner, ISettingProvider settings, IPermissionChecker permissions, ICurrentUser currentUser, IAiChatClientFactory clients, ILogger<AiChat> logger)
 {
     public const string HttpClientName = "Coworkee.Ai";
 
@@ -58,8 +56,12 @@ public sealed class AiChat(
             return invalid;
         }
 
-        var apiKey = await settings.GetAsync(AiSettings.ApiKey, cancellationToken);
-        if (!await settings.GetAsync<bool>(AiSettings.Enabled, cancellationToken) || string.IsNullOrWhiteSpace(apiKey))
+        var connection = new AiConnection(
+            await settings.GetAsync(AiSettings.Provider, cancellationToken) is { Length: > 0 } provider ? provider : AiProviders.Anthropic,
+            await settings.GetAsync(AiSettings.Model, cancellationToken),
+            await settings.GetAsync(AiSettings.Endpoint, cancellationToken),
+            await settings.GetAsync(AiSettings.ApiKey, cancellationToken));
+        if (!await settings.GetAsync<bool>(AiSettings.Enabled, cancellationToken) || !connection.IsComplete)
         {
             return Error.Conflict("ai.disabled", "The assistant is not configured.");
         }
@@ -73,7 +75,7 @@ public sealed class AiChat(
         {
             using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             deadline.CancelAfter(MaxDuration);
-            return await LoopAsync(request, apiKey, deadline.Token);
+            return await LoopAsync(request, connection, deadline.Token);
         }
         finally
         {
@@ -81,23 +83,25 @@ public sealed class AiChat(
         }
     }
 
-    private async Task<Result<ChatResponseDto>> LoopAsync(ChatRequest request, string apiKey, CancellationToken cancellationToken)
+    private async Task<Result<ChatResponseDto>> LoopAsync(ChatRequest request, AiConnection connection, CancellationToken cancellationToken)
     {
-        var model = await settings.GetAsync(AiSettings.Model, cancellationToken) is { Length: > 0 } configured ? configured : AiSettings.DefaultModel;
         var rounds = Math.Clamp(await settings.GetAsync<int>(AiSettings.MaxToolRounds, cancellationToken), 1, 20);
-        List<ToolUnion> tools = [.. (await runner.AvailableAsync(cancellationToken)).Select(ToTool)];
-        List<MessageParam> messages = [.. request.Messages.Select(m => new MessageParam { Role = m.Role == "assistant" ? Role.Assistant : Role.User, Content = m.Text })];
+        var options = new ChatOptions { Tools = [.. (await runner.AvailableAsync(cancellationToken)).Select(ToTool)] };
+        List<ChatMessage> messages =
+        [
+            new(ChatRole.System, SystemPrompt),
+            .. request.Messages.Select(m => new ChatMessage(m.Role == "assistant" ? ChatRole.Assistant : ChatRole.User, m.Text)),
+        ];
         var calls = new List<AiToolCallDto>();
-        var text = new StringBuilder();
-        var client = new AnthropicClient { ApiKey = apiKey, HttpClient = httpClients.CreateClient(HttpClientName) };
+        var text = string.Empty;
+        using var client = clients.Create(connection);
 
         for (var round = 0; round < rounds; round++)
         {
-            Message response;
+            ChatResponse response;
             try
             {
-                response = await client.Messages.Create(
-                    new MessageCreateParams { Model = model, MaxTokens = 16_000, System = SystemPrompt, Tools = tools, Messages = messages }, cancellationToken);
+                response = await client.GetResponseAsync(messages, options, cancellationToken);
             }
             catch (Exception exception) when (exception is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
             {
@@ -107,72 +111,58 @@ public sealed class AiChat(
                     : new ChatResponseDto("The AI provider stopped answering. The actions listed below were already carried out.", "provider_error", calls);
             }
 
-            text.Clear();
-            List<ContentBlockParam> assistant = [];
-            List<ToolUseBlock> uses = [];
-            foreach (var block in response.Content)
-            {
-                if (block.TryPickText(out var part))
-                {
-                    text.Append(part.Text);
-                    assistant.Add(new TextBlockParam { Text = part.Text });
-                }
-                else if (block.TryPickThinking(out var thinking))
-                {
-                    assistant.Add(new ThinkingBlockParam { Thinking = thinking.Thinking, Signature = thinking.Signature });
-                }
-                else if (block.TryPickRedactedThinking(out var redacted))
-                {
-                    assistant.Add(new RedactedThinkingBlockParam { Data = redacted.Data });
-                }
-                else if (block.TryPickToolUse(out var use))
-                {
-                    assistant.Add(new ToolUseBlockParam { ID = use.ID, Name = use.Name, Input = use.Input });
-                    uses.Add(use);
-                }
-            }
+            text = response.Text;
+            var uses = response.Messages.SelectMany(m => m.Contents).OfType<FunctionCallContent>().ToList();
 
-            // only a finished turn asking for tools runs them; a turn cut off at max_tokens may carry a partial call
-            var stop = response.StopReason?.Raw() ?? "end_turn";
-            if (stop != "tool_use" || uses.Count == 0)
+            // a turn cut off at the token limit may carry a partial call; some OpenAI compatible servers end tool turns with "stop"
+            var stop = StopReason(response.FinishReason, uses.Count);
+            if (uses.Count == 0 || stop is "max_tokens" or "refusal")
             {
                 if (stop == "refusal" && text.Length == 0)
                 {
-                    text.Append("The assistant declined this request.");
+                    text = "The assistant declined this request.";
                 }
 
-                return new ChatResponseDto(text.ToString(), stop, calls);
+                return new ChatResponseDto(text, stop, calls);
             }
 
-            List<ContentBlockParam> results = [];
+            List<AIContent> results = [];
             foreach (var (use, index) in uses.Select((u, i) => (u, i)))
             {
                 if (index >= MaxToolCallsPerRound || calls.Count >= MaxToolCallsPerRequest)
                 {
-                    results.Add(new ToolResultBlockParam { ToolUseID = use.ID, Content = "Too many tool calls; not run. Use fewer calls.", IsError = true });
+                    results.Add(Failed(use.CallId, "Too many tool calls; not run. Use fewer calls."));
                     continue;
                 }
 
-                var outcome = await runner.RunAsync(use.Name, JsonSerializer.SerializeToElement(use.Input), AiChannels.Chat, allowWrites: round == 0, cancellationToken);
+                var input = JsonSerializer.SerializeToElement(use.Arguments ?? new Dictionary<string, object?>());
+                var outcome = await runner.RunAsync(use.Name, input, AiChannels.Chat, allowWrites: round == 0, cancellationToken);
                 calls.Add(outcome.Call);
-                results.Add(new ToolResultBlockParam { ToolUseID = use.ID, Content = outcome.Output, IsError = !outcome.Succeeded });
+                results.Add(outcome.Succeeded ? new FunctionResultContent(use.CallId, outcome.Output) : Failed(use.CallId, outcome.Output));
             }
 
-            messages.Add(new MessageParam { Role = Role.Assistant, Content = assistant });
-            messages.Add(new MessageParam { Role = Role.User, Content = results });
+            messages.AddRange(response.Messages);
+            messages.Add(new ChatMessage(ChatRole.Tool, results));
         }
 
-        return new ChatResponseDto(text.Length > 0 ? text.ToString() : "The assistant stopped after the maximum number of tool rounds.", "max_tool_rounds", calls);
+        return new ChatResponseDto(text.Length > 0 ? text : "The assistant stopped after the maximum number of tool rounds.", "max_tool_rounds", calls);
     }
 
-    private ToolUnion ToTool(AiTool tool)
+    private static FunctionResultContent Failed(string callId, string output) => new(callId, output) { Exception = new InvalidOperationException(output) };
+
+    // the stop reasons keep the names of the Claude API the clients know
+    private static string StopReason(ChatFinishReason? reason, int calls) => reason switch
     {
-        var schema = runner.SchemaOf(tool);
-        var properties = schema["properties"]?.AsObject()
-            .ToDictionary(p => p.Key, p => JsonSerializer.SerializeToElement(p.Value)) ?? [];
-        var required = schema["required"]?.AsArray().Select(r => r!.GetValue<string>()).ToList() ?? [];
+        _ when reason == ChatFinishReason.Length => "max_tokens",
+        _ when reason == ChatFinishReason.ContentFilter => "refusal",
+        _ when reason == ChatFinishReason.ToolCalls || calls > 0 => "tool_use",
+        _ => "end_turn",
+    };
+
+    private AIFunctionDeclaration ToTool(AiTool tool)
+    {
         var description = tool.ReadOnly ? tool.Description : tool.Description + " Changes data: runs only directly on a user message.";
-        return new Tool { Name = tool.Name, Description = description, InputSchema = new() { Properties = properties, Required = required } };
+        return AIFunctionFactory.CreateDeclaration(tool.Name, description, JsonSerializer.SerializeToElement(runner.SchemaOf(tool)));
     }
 
     private static Error? Validate(ChatRequest request)

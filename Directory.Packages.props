@@ -65,6 +65,7 @@
     <PackageVersion Include="Hangfire.AspNetCore" Version="1.8.25" />
     <PackageVersion Include="Hangfire.PostgreSql" Version="1.21.1" />
     <PackageVersion Include="Anthropic" Version="12.55.0" />
+    <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="10.10.1" />
     <PackageVersion Include="ModelContextProtocol.AspNetCore" Version="2.2.0" />
     <PackageVersion Include="ModelContextProtocol" Version="2.2.0" />
     <PackageVersion Include="Scriban" Version="7.5.0" />
