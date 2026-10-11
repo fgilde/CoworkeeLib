@@ -46,6 +46,13 @@ public sealed class ScreenshotTests
             Scenario.Generated(main.Generate, main.Basics.Output!);
         }
 
+        if (page == "entities")
+        {
+            var order = main.Entities.Modules[0].Entities.Single(e => e.Name == "Order");
+            main.Entities.SelectEntity(order);
+            order.Properties.Single(p => p.Name == "Customer").IsExpanded = true;
+        }
+
         if (page == "help")
         {
             main.ShowHelp("2");

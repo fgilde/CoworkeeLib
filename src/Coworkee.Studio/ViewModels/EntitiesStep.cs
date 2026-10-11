@@ -19,6 +19,13 @@ public sealed partial class EntitiesStep(MainViewModel main) : StepViewModel(mai
 
     public ObservableCollection<ModuleViewModel> Modules { get; } = [];
 
+    public ObservableCollection<EnumViewModel> Enums { get; } = [];
+
+    /// <summary>What a reference can point to: Entity within a module, Module.Entity across modules.</summary>
+    public IReadOnlyList<string> ReferenceTargets => [.. Modules.SelectMany(m => m.Entities.Where(e => e.Name.Length > 0).Select(e => $"{m.Name}.{e.Name}"))];
+
+    public IReadOnlyList<string> EnumNames => [.. Enums.Where(e => e.Name.Length > 0).Select(e => e.Name)];
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasModule))]
     public partial ModuleViewModel? SelectedModule { get; set; }
@@ -28,6 +35,10 @@ public sealed partial class EntitiesStep(MainViewModel main) : StepViewModel(mai
     public partial EntityViewModel? SelectedEntity { get; set; }
 
     public bool HasModules => Modules.Count > 0;
+
+    /// <summary>Problems of the spec as a whole: enums without modules, modules referencing each other.</summary>
+    [ObservableProperty]
+    public partial IReadOnlyList<string> SpecErrors { get; set; } = [];
 
     public bool HasModule => SelectedModule is not null;
 
@@ -41,7 +52,22 @@ public sealed partial class EntitiesStep(MainViewModel main) : StepViewModel(mai
 
     public string Counts => L.Format("{0} modules · {1} entities", Modules.Count, Modules.Sum(m => m.Entities.Count));
 
-    public override bool Owns(string error) => error.StartsWith("modules", StringComparison.Ordinal) || error.StartsWith("options.clientEntities", StringComparison.Ordinal);
+    public override bool Owns(string error) =>
+        error.StartsWith("modules", StringComparison.Ordinal) || error.StartsWith("enums", StringComparison.Ordinal) || error.StartsWith("options.clientEntities", StringComparison.Ordinal);
+
+    [RelayCommand]
+    public void AddEnum()
+    {
+        Enums.Add(new EnumViewModel(Changed) { Name = Unique("Status", Enums.Select(e => e.Name)), Values = "Open, Done" });
+        Changed();
+    }
+
+    [RelayCommand]
+    public void RemoveEnum(EnumViewModel item)
+    {
+        Enums.Remove(item);
+        Changed();
+    }
 
     [RelayCommand]
     public void AddModule()
@@ -101,9 +127,15 @@ public sealed partial class EntitiesStep(MainViewModel main) : StepViewModel(mai
     [RelayCommand]
     public void AddExample()
     {
-        foreach (var module in SpecJson.Example().Modules.Where(m => Modules.All(x => !x.Name.Equals(m.Name, StringComparison.OrdinalIgnoreCase))))
+        var example = SpecJson.Example();
+        foreach (var module in example.Modules.Where(m => Modules.All(x => !x.Name.Equals(m.Name, StringComparison.OrdinalIgnoreCase))))
         {
             Modules.Add(ModuleViewModel.From(module, Changed));
+        }
+
+        foreach (var item in example.Enums.Where(e => Enums.All(x => !x.Name.Equals(e.Name, StringComparison.OrdinalIgnoreCase))))
+        {
+            Enums.Add(EnumViewModel.From(item, Changed));
         }
 
         SelectedModule = Modules.LastOrDefault();
@@ -113,12 +145,20 @@ public sealed partial class EntitiesStep(MainViewModel main) : StepViewModel(mai
 
     public List<ModuleSpec> ToSpec() => [.. Modules.Select(m => m.ToSpec())];
 
-    public void Load(IEnumerable<ModuleSpec> modules)
+    public List<EnumSpec> EnumSpecs() => [.. Enums.Select(e => e.ToSpec())];
+
+    public void Load(IEnumerable<ModuleSpec> modules, IEnumerable<EnumSpec> enums)
     {
         Modules.Clear();
         foreach (var module in modules)
         {
             Modules.Add(ModuleViewModel.From(module, Changed));
+        }
+
+        Enums.Clear();
+        foreach (var item in enums)
+        {
+            Enums.Add(EnumViewModel.From(item, Changed));
         }
 
         SelectedModule = Modules.FirstOrDefault();
@@ -139,6 +179,15 @@ public sealed partial class EntitiesStep(MainViewModel main) : StepViewModel(mai
             }
         }
 
+        for (var i = 0; i < Enums.Count; i++)
+        {
+            var prefix = $"enums[{i}]";
+            Enums[i].Errors = [.. Errors.Where(e => e.StartsWith(prefix, StringComparison.Ordinal)).Select(Message)];
+        }
+
+        SpecErrors = [.. Errors.Where(e => e.StartsWith("enums:", StringComparison.Ordinal) || e.StartsWith("modules:", StringComparison.Ordinal)).Select(Message)];
+        OnPropertyChanged(nameof(ReferenceTargets));
+        OnPropertyChanged(nameof(EnumNames));
         OnPropertyChanged(nameof(HasModules));
         OnPropertyChanged(nameof(Preview));
         OnPropertyChanged(nameof(Counts));

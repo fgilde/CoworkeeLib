@@ -391,6 +391,7 @@ public sealed partial class MainViewModel : ObservableObject
             ? null
             : branding;
         spec.Modules = Entities.ToSpec();
+        spec.Enums = Entities.EnumSpecs();
         return spec;
     }
 
@@ -412,7 +413,7 @@ public sealed partial class MainViewModel : ObservableObject
         Basics.Location = specFile is null && spec.Output is null
             ? Basics.DefaultLocation
             : Path.GetDirectoryName(Path.GetFullPath(Path.Combine(folder, string.IsNullOrEmpty(spec.Output) ? spec.Name : spec.Output))) ?? folder;
-        Entities.Load(spec.Modules);
+        Entities.Load(spec.Modules, spec.Enums);
         _loading = false;
         Branding.Sync();
         SignIn.Sync();

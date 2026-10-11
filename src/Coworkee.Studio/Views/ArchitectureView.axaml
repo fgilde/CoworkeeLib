@@ -86,6 +86,18 @@
                             </ListBox.ItemTemplate>
                           </ListBox>
                           <TextBlock Classes="caption" IsVisible="{Binding IsChoice}" Text="{Binding Choice.Text}" />
+                          <ItemsControl IsVisible="{Binding IsMulti}" ItemsSource="{Binding MultiChoices}">
+                            <ItemsControl.ItemsPanel>
+                              <ItemsPanelTemplate>
+                                <WrapPanel ItemSpacing="16" />
+                              </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                              <DataTemplate x:DataType="vm:MultiChoiceViewModel">
+                                <CheckBox IsChecked="{Binding IsChecked}" Content="{Binding Text}" ToolTip.Tip="{Binding Value}" />
+                              </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                          </ItemsControl>
                           <Border Classes="soft" Padding="10,8">
                             <StackPanel Spacing="6">
                               <Grid ColumnDefinitions="Auto,*">

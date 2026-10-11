@@ -49,6 +49,7 @@
         </UniformGrid>
       </StackPanel>
       <ScrollViewer>
+        <StackPanel>
         <ItemsControl ItemsSource="{Binding Modules}">
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="vm:ModuleViewModel">
@@ -94,6 +95,51 @@
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
+          <StackPanel Spacing="8" Margin="0,6,0,0">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Classes="overline" Text="{l:L 'ENUMS'}" VerticalAlignment="Center" />
+              <Button Grid.Column="1" Classes="link" Command="{Binding AddEnumCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <PathIcon Classes="small" Data="{StaticResource Icon.Plus}" />
+                  <TextBlock Text="{l:L Enum}" />
+                </StackPanel>
+              </Button>
+            </Grid>
+            <TextBlock Classes="caption" TextWrapping="Wrap" Text="{l:L 'Value lists for properties of type enum, shown with their names in lists, forms and facets.'}" />
+            <ItemsControl ItemsSource="{Binding Enums}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:EnumViewModel">
+                  <Border Classes="card" Padding="10" Margin="0,0,0,8">
+                    <StackPanel Spacing="6">
+                      <Grid ColumnDefinitions="*,Auto">
+                        <TextBox Text="{Binding Name}" FontWeight="SemiBold" MinHeight="32" Padding="8,4" PlaceholderText="OrderStatus" />
+                        <Button Grid.Column="1" Classes="icon danger" Width="30" Height="30" Padding="6" ToolTip.Tip="{l:L 'Remove enum'}"
+                                Command="{Binding $parent[UserControl].((vm:EntitiesStep)DataContext).RemoveEnumCommand}" CommandParameter="{Binding}">
+                          <PathIcon Classes="small" Data="{StaticResource Icon.Delete}" />
+                        </Button>
+                      </Grid>
+                      <TextBox Text="{Binding Values}" PlaceholderText="Open, Paid, Shipped" ToolTip.Tip="{l:L 'Values, comma separated; the first is the default.'}" />
+                      <ItemsControl ItemsSource="{Binding Errors}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="x:String">
+                            <TextBlock Classes="error" FontSize="11.5" Text="{Binding}" TextWrapping="Wrap" />
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <ItemsControl ItemsSource="{Binding SpecErrors}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="x:String">
+                  <TextBlock Classes="error" FontSize="11.5" Text="{Binding}" TextWrapping="Wrap" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </StackPanel>
       </ScrollViewer>
     </DockPanel>
 
@@ -171,7 +217,7 @@
                   </StackPanel>
                 </Button>
               </Grid>
-              <Grid ColumnDefinitions="*,10,120,10,70,10,96,6,36" Margin="0,8,0,0">
+              <Grid ColumnDefinitions="*,8,112,8,58,8,72,6,34,4,34" Margin="0,8,0,0">
                 <TextBlock Classes="head" Text="{l:L Name}" />
                 <TextBlock Grid.Column="2" Classes="head" Text="{l:L Type}" />
                 <TextBlock Grid.Column="4" Classes="head" Text="{l:L Required}" />
@@ -180,16 +226,79 @@
               <ItemsControl ItemsSource="{Binding Properties}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="vm:PropertyViewModel">
-                    <Grid ColumnDefinitions="*,10,120,10,70,10,96,6,36" Margin="0,3">
+                    <StackPanel Margin="0,3" Spacing="4">
+                    <Grid ColumnDefinitions="*,8,112,8,58,8,72,6,34,4,34">
                       <TextBox Text="{Binding Name}" PlaceholderText="Number" />
                       <ComboBox Grid.Column="2" ItemsSource="{x:Static vm:PropertyViewModel.Types}" SelectedItem="{Binding Type}" HorizontalAlignment="Stretch" />
                       <CheckBox Grid.Column="4" IsChecked="{Binding Required}" HorizontalAlignment="Center" />
                       <NumericUpDown Grid.Column="6" Value="{Binding MaxLength}" Minimum="1" Maximum="100000" Increment="50" FormatString="0" IsEnabled="{Binding IsText}" ShowButtonSpinner="False" PlaceholderText="text" />
-                      <Button Grid.Column="8" Classes="icon danger" Width="34" Height="34" ToolTip.Tip="{l:L 'Remove property'}"
+                      <ToggleButton Grid.Column="8" Classes="icon" Width="34" Height="34" IsChecked="{Binding IsExpanded}" ToolTip.Tip="{l:L 'More: label, default, unique, facet, enum or reference'}">
+                        <PathIcon Classes="small" Data="{StaticResource Icon.Cog}" />
+                      </ToggleButton>
+                      <Button Grid.Column="10" Classes="icon danger" Width="34" Height="34" ToolTip.Tip="{l:L 'Remove property'}"
                               Command="{Binding $parent[ItemsControl].((vm:EntityViewModel)DataContext).RemovePropertyCommand}" CommandParameter="{Binding}">
                         <PathIcon Classes="small" Data="{StaticResource Icon.Delete}" />
                       </Button>
                     </Grid>
+                    <TextBlock Classes="caption" Margin="4,0" Text="{Binding Summary}" IsVisible="{Binding !IsExpanded}" />
+                    <Border Classes="soft" Padding="12,10" IsVisible="{Binding IsExpanded}">
+                      <StackPanel Spacing="10">
+                        <Grid ColumnDefinitions="*,12,*" IsVisible="{Binding IsEnum}">
+                          <StackPanel Spacing="4">
+                            <TextBlock Classes="head" Text="{l:L Enum}" />
+                            <AutoCompleteBox Text="{Binding Enum}" ItemsSource="{Binding $parent[UserControl].((vm:EntitiesStep)DataContext).EnumNames}" FilterMode="Contains" MinimumPrefixLength="0" PlaceholderText="OrderStatus" />
+                          </StackPanel>
+                        </Grid>
+                        <Grid ColumnDefinitions="*,12,*,12,*,12,*" IsVisible="{Binding IsReference}">
+                          <StackPanel Spacing="4">
+                            <TextBlock Classes="head" Text="{l:L 'References'}" />
+                            <AutoCompleteBox Text="{Binding Reference}" ItemsSource="{Binding $parent[UserControl].((vm:EntitiesStep)DataContext).ReferenceTargets}" FilterMode="Contains" MinimumPrefixLength="0" PlaceholderText="Sales.Customer" />
+                          </StackPanel>
+                          <StackPanel Grid.Column="2" Spacing="4">
+                            <TextBlock Classes="head" Text="{l:L 'Shown text'}" />
+                            <TextBox Text="{Binding ReferenceDisplay}" PlaceholderText="{l:L 'its display property'}" />
+                          </StackPanel>
+                          <StackPanel Grid.Column="4" Spacing="4">
+                            <TextBlock Classes="head" Text="{l:L 'On delete'}" />
+                            <ComboBox ItemsSource="{x:Static vm:PropertyViewModel.DeleteBehaviors}" SelectedItem="{Binding OnDelete}" HorizontalAlignment="Stretch" />
+                          </StackPanel>
+                          <StackPanel Grid.Column="6" Spacing="4">
+                            <TextBlock Classes="head" Text="{l:L 'Collection on the target'}" />
+                            <TextBox Text="{Binding Inverse}" PlaceholderText="Orders" />
+                          </StackPanel>
+                        </Grid>
+                        <Grid ColumnDefinitions="*,12,*" IsVisible="{Binding IsDecimal}">
+                          <StackPanel Spacing="4">
+                            <TextBlock Classes="head" Text="{l:L Precision}" />
+                            <NumericUpDown Value="{Binding Precision}" Minimum="1" Maximum="38" FormatString="0" ShowButtonSpinner="False" PlaceholderText="18" />
+                          </StackPanel>
+                          <StackPanel Grid.Column="2" Spacing="4">
+                            <TextBlock Classes="head" Text="{l:L Scale}" />
+                            <NumericUpDown Value="{Binding Scale}" Minimum="0" Maximum="38" FormatString="0" ShowButtonSpinner="False" PlaceholderText="2" />
+                          </StackPanel>
+                        </Grid>
+                        <Grid ColumnDefinitions="*,12,*,12,*">
+                          <StackPanel Spacing="4">
+                            <TextBlock Classes="head" Text="{l:L Label}" />
+                            <TextBox Text="{Binding Label}" PlaceholderText="{l:L 'the name in words'}" />
+                          </StackPanel>
+                          <StackPanel Grid.Column="2" Spacing="4">
+                            <TextBlock Classes="head" Text="{l:L 'Default value'}" />
+                            <TextBox Text="{Binding Default}" PlaceholderText="-" />
+                          </StackPanel>
+                          <StackPanel Grid.Column="4" Spacing="4">
+                            <TextBlock Classes="head" Text="{l:L 'In the search box'}" />
+                            <ComboBox ItemsSource="{x:Static vm:PropertyViewModel.SearchModes}" SelectedItem="{Binding Searchable}" HorizontalAlignment="Stretch" />
+                          </StackPanel>
+                        </Grid>
+                        <WrapPanel ItemSpacing="18">
+                          <CheckBox IsChecked="{Binding Unique}" Content="{l:L Unique}" ToolTip.Tip="{l:L 'No two rows of a tenant share the value.'}" />
+                          <CheckBox IsChecked="{Binding Display}" Content="{l:L 'Names the row'}" ToolTip.Tip="{l:L 'Shown in delete prompts, pickers and references.'}" />
+                          <CheckBox IsChecked="{Binding Facet}" Content="{l:L Facet}" ToolTip.Tip="{l:L 'Offered as filter next to the list.'}" />
+                        </WrapPanel>
+                      </StackPanel>
+                    </Border>
+                    </StackPanel>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>

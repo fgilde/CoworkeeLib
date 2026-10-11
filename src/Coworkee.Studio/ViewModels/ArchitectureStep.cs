@@ -28,6 +28,7 @@ public sealed partial class ArchitectureStep : StepViewModel
         (OptionCatalog.Modules, "Feature modules: each is a NuGet package with its pages, permissions and tables.", "Icon.Puzzle"),
         (OptionCatalog.Infrastructure, "Containers and services the Aspire app host starts next to your app.", "Icon.Server"),
         (OptionCatalog.Code, "How the CLI generates the code of your entities.", "Icon.Code"),
+        (OptionCatalog.Tooling, "Files next to the code: a CI workflow and a dev container.", "Icon.Console"),
     ];
 
     public ArchitectureStep(MainViewModel main)

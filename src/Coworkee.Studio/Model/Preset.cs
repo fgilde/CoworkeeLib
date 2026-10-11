@@ -4,19 +4,20 @@ namespace Coworkee.Studio.Model;
 public sealed record Preset(string Name, string Description, string Icon, IReadOnlyDictionary<string, string> Values)
 {
     private static readonly string[] ModuleSwitches =
-        ["samples", "auditing", "notifications", "chat", "ai", "backup", "files", "features", "social", "extendedAttributes", "elasticsearch", "clientEntities", "keycloak"];
+        ["samples", "auditing", "notifications", "chat", "ai", "backup", "files", "features", "social", "extendedAttributes", "elasticsearch", "clientEntities", "keycloak",
+         "registration", "githubActions", "devcontainer"];
 
     public static IReadOnlyList<Preset> All { get; } =
     [
         new("Minimal", "The shell with identity, permissions, settings and theming. Add modules later.", "Icon.Feather",
             Switches([], ("eventBus", "none"), ("storage", "fileSystem"))),
-        new("Business app", "Audit log, notifications, files, backups and client entities for fast lists; events in process.", "Icon.Briefcase",
-            Switches(["auditing", "notifications", "backup", "files", "extendedAttributes", "clientEntities"], ("eventBus", "inProcess"), ("storage", "fileSystem"))),
+        new("Business app", "Audit log, notifications, files, backups and client entities for fast lists; events in process, a CI workflow.", "Icon.Briefcase",
+            Switches(["auditing", "notifications", "backup", "files", "extendedAttributes", "clientEntities", "githubActions"], ("eventBus", "inProcess"), ("storage", "fileSystem"))),
         new("Collaboration", "Chat, notifications, files, comments and ratings, and the AI assistant for teams that work together.", "Icon.AccountGroup",
             Switches(["auditing", "notifications", "chat", "ai", "files", "social", "backup"], ("eventBus", "inProcess"), ("storage", "fileSystem"))),
-        new("SaaS platform", "Tenants with features and editions, Keycloak sign-in, RabbitMQ events and Azure Blob storage.", "Icon.Cloud",
-            Switches(["auditing", "notifications", "features", "keycloak", "files", "ai"], ("eventBus", "rabbitMq"), ("storage", "azureBlob"))),
-        new("Everything", "Every module and every container: search, RabbitMQ, Azurite, Keycloak and the samples to explore.", "Icon.Rocket",
+        new("SaaS platform", "Tenants with features and editions, self registration, Keycloak sign-in, RabbitMQ events, Azure Blob storage and CI.", "Icon.Cloud",
+            Switches(["auditing", "notifications", "features", "keycloak", "files", "ai", "registration", "githubActions"], ("eventBus", "rabbitMq"), ("storage", "azureBlob"))),
+        new("Everything", "Every module and every container: search, RabbitMQ, Azurite, Keycloak, the samples, CI and a dev container.", "Icon.Rocket",
             Switches([.. ModuleSwitches], ("eventBus", "rabbitMq"), ("storage", "azureBlob"))),
     ];
 
