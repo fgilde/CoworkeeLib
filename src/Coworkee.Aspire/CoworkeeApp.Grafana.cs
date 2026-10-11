@@ -25,6 +25,8 @@ public sealed partial class CoworkeeApp
             .WithAdminUser(AdminUser, AdminPassword)
             .WithEnvironment("GF_SECURITY_ADMIN_EMAIL", AdminUser.Contains('@', StringComparison.Ordinal) ? AdminUser : $"{AdminUser}@localhost")
             .WithEnvironment("GF_AUTH_ANONYMOUS_ENABLED", "false")
+            // ponytail: root, because Docker Desktop's file sharing answered Grafana's own user with I/O errors on the provisioning folder; a published Grafana would bake it into the image instead
+            .WithContainerRuntimeArgs("--user", "0")
             .WithPrometheus(configure: p => p.WithRetention("7d"))
             .WithLoki()
             .WithTempo()
