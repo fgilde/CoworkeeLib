@@ -1,3 +1,4 @@
+using Coworkee.Client.Blazor.Components.Query;
 using Coworkee.Client.Blazor.Data;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Reporting.State;
@@ -6,13 +7,12 @@ using Microsoft.AspNetCore.Components;
 
 namespace Coworkee.Client.Blazor.Reporting.Components;
 
-/// <summary>
-/// The widget's own filter: facets through <see cref="ReportFacetFilter"/> and a typed OData filter.
-/// The second seam: a query builder replaces the text field and writes <see cref="WidgetQuery.Filter"/>.
-/// </summary>
+/// <summary>The widget's own filter: facets through <see cref="ReportFacetFilter"/> and rules of the query builder, kept as JSON with their OData.</summary>
 public partial class WidgetFilterEditor : IDisposable
 {
     private FacetSelection _selection = new();
+    private QueryGroup _rules = new();
+    private IReadOnlyList<QueryField> _fields = [];
     private string? _set;
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
@@ -25,12 +25,14 @@ public partial class WidgetFilterEditor : IDisposable
 
     protected override void OnParametersSet()
     {
-        if (_set == Query.EntitySet && _selection.All.Count() == Query.Facets.Count)
+        if (_set == Query.EntitySet)
         {
             return;
         }
 
         _set = Query.EntitySet;
+        _fields = ReportQueryFields.From(State.Source(Query.EntitySet));
+        _rules = QueryJson.Deserialize(Query.Rules) ?? new QueryGroup();
         _selection.Changed -= Store;
         _selection = ReportState.Selection(Query.Facets);
         _selection.Changed += Store;
@@ -38,9 +40,11 @@ public partial class WidgetFilterEditor : IDisposable
 
     public void Dispose() => _selection.Changed -= Store;
 
-    private Task FilterChanged(string? filter)
+    private Task RulesChanged(QueryGroup rules)
     {
-        Query.Filter = string.IsNullOrWhiteSpace(filter) ? null : filter.Trim();
+        _rules = rules;
+        Query.Filter = ODataQueryTranslator.ToFilter(rules, _fields);
+        Query.Rules = Query.Filter is null ? null : QueryJson.Serialize(rules);
         return Changed.InvokeAsync();
     }
 

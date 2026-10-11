@@ -1,6 +1,5 @@
 <div class="cw-widget-filter" data-testid="widget-filter">
     <ReportFacetFilter EntitySet="@Query.EntitySet" Selection="_selection" />
     <FacetChips Selection="_selection" />
-    <MudTextField T="string" Value="Query.Filter" ValueChanged="FilterChanged" Label="@L["OData filter"]" Placeholder="Total gt 1000 and contains(Region,'North')"
-                  Variant="Variant.Outlined" Margin="Margin.Dense" Lines="2" Immediate="false" HelperText="@L["Optional, combined with the facets."]" data-testid="widget-odata-filter" />
+    <QueryBuilder Fields="_fields" Value="_rules" ValueChanged="RulesChanged" Localize="s => L[s]" ShowImportExport="false" MaxDepth="2" />
 </div>

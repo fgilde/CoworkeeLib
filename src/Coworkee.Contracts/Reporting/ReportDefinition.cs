@@ -83,6 +83,9 @@ public sealed class WidgetQuery
     /// <summary>OData $filter of the widget itself, typed or from a query builder; <see cref="Facets"/> narrow it further.</summary>
     public string? Filter { get; set; }
 
+    /// <summary>The query builder's rules as JSON, to edit them again; <see cref="Filter"/> holds their OData.</summary>
+    public string? Rules { get; set; }
+
     /// <summary>The widget's own facets.</summary>
     public List<ReportFilterValue> Facets { get; set; } = [];
 
