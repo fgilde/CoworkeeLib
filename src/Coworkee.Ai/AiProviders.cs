@@ -24,7 +24,7 @@ public static class AiProviders
     {
         Anthropic => AiSettings.DefaultModel,
         OpenAI => "gpt-5",
-        Ollama => "qwen3",
+        Ollama => "llama3.2",
         _ => null,
     };
 }

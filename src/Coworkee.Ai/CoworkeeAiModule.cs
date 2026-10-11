@@ -171,7 +171,7 @@ internal sealed class AiSettingDefinitions : ISettingDefinitionContributor
         context.Group("Ai", "AI assistant")
             .Add(AiSettings.Enabled, "Assistant enabled", SettingType.Bool, Scopes, "false")
             .Add(AiSettings.Provider, "Provider", SettingType.Choice, Scopes, AiProviders.Anthropic, choices: AiProviders.All)
-            .Add(AiSettings.Model, "Model", SettingType.String, Scopes, description: "Empty: the provider's default (Claude Opus, GPT-5, qwen3). Azure OpenAI: the deployment name.")
+            .Add(AiSettings.Model, "Model", SettingType.String, Scopes, description: "Empty: the provider's default (Claude Opus, GPT-5, llama3.2). Azure OpenAI: the deployment name.")
             .Add(AiSettings.Endpoint, "Endpoint", SettingType.String, Scopes,
                 description: "Azure OpenAI resource, Ollama address (default http://localhost:11434) or the base address of an OpenAI compatible server.")
             .Add(AiSettings.ApiKey, "API key", SettingType.Secret, Scopes)
