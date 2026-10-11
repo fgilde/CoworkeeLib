@@ -51,6 +51,28 @@ public sealed class KeycloakRealmTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Realm_roles_follow_the_users_and_every_client_puts_them_in_the_roles_claim()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var ada = new KeycloakUser("ada@demo.test", "Ada", "Lovelace") { Password = "ada-Password1", Roles = ["Administrator"] };
+        await Reconcile([new("demo-auth", "secret", [])], [ada], ct);
+        (await RealmRolesAsync(ada.Email, ct)).ShouldContain("Administrator");
+
+        var grace = new KeycloakUser("grace@demo.test", "Grace", "Hopper") { Password = "grace-Password1", Roles = ["Administrator", "Editor"] };
+        await Reconcile([new("demo-auth", "secret", []), new("demo-grafana", "secret", [])], [ada with { Roles = [] }, grace], ct);
+
+        (await RealmRolesAsync(ada.Email, ct)).ShouldNotContain("Administrator");
+        (await RealmRolesAsync(grace.Email, ct)).ShouldBe(["Administrator", "Editor"], ignoreOrder: true);
+        using var admin = await AdminAsync(ct);
+        foreach (var clientId in new[] { "demo-auth", "demo-grafana" })
+        {
+            var client = (await admin.GetFromJsonAsync<JsonArray>($"admin/realms/demo/clients?clientId={clientId}", ct))!.Single()!;
+            var mappers = await admin.GetFromJsonAsync<JsonArray>($"admin/realms/demo/clients/{client["id"]}/protocol-mappers/models", ct);
+            mappers!.ShouldContain(m => m!["config"]!["claim.name"]!.GetValue<string>() == "roles" && m["protocolMapper"]!.GetValue<string>() == "oidc-usermodel-realm-role-mapper");
+        }
+    }
+
+    [Fact]
     public async Task Large_localhost_cookies_pass_over_http2()
     {
         using var http = new HttpClient { BaseAddress = Base };
@@ -79,14 +101,27 @@ public sealed class KeycloakRealmTests : IAsyncLifetime
         return response.StatusCode;
     }
 
-    private async Task<string> SecretAsync(string clientId, CancellationToken ct)
+    private async Task<string[]> RealmRolesAsync(string user, CancellationToken ct)
     {
-        using var http = new HttpClient { BaseAddress = Base };
+        using var http = await AdminAsync(ct);
+        var id = (await http.GetFromJsonAsync<JsonArray>($"admin/realms/demo/users?exact=true&username={user}", ct))!.Single()!["id"];
+        return [.. (await http.GetFromJsonAsync<JsonArray>($"admin/realms/demo/users/{id}/role-mappings/realm", ct))!.Select(r => r!["name"]!.GetValue<string>()).Where(r => !r.StartsWith("default-roles-", StringComparison.Ordinal))];
+    }
+
+    private async Task<HttpClient> AdminAsync(CancellationToken ct)
+    {
+        var http = new HttpClient { BaseAddress = Base };
         using var token = await http.PostAsync("realms/master/protocol/openid-connect/token", new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["grant_type"] = "password", ["client_id"] = "admin-cli", ["username"] = Admin, ["password"] = AdminPassword,
         }), ct);
         http.DefaultRequestHeaders.Authorization = new("Bearer", (await token.Content.ReadFromJsonAsync<JsonObject>(ct))!["access_token"]!.GetValue<string>());
+        return http;
+    }
+
+    private async Task<string> SecretAsync(string clientId, CancellationToken ct)
+    {
+        using var http = await AdminAsync(ct);
         var client = (await http.GetFromJsonAsync<JsonArray>($"admin/realms/demo/clients?clientId={clientId}", ct))!.Single()!;
         return (await http.GetFromJsonAsync<JsonObject>($"admin/realms/demo/clients/{client["id"]}/client-secret", ct))!["value"]!.GetValue<string>();
     }
