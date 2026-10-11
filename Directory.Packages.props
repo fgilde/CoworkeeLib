@@ -55,6 +55,8 @@
     <PackageVersion Include="Nextended.CodeGen" Version="10.1.43" />
     <PackageVersion Include="Nextended.Web" Version="10.1.43" />
     <PackageVersion Include="Nextended.ResponseFilters.AspNetCore" Version="10.1.43" />
+    <PackageVersion Include="Nextended.Aspire.Hosting.Grafana" Version="10.1.43" />
+    <PackageVersion Include="Nextended.Aspire.Hosting.WebDataStudio" Version="10.1.43" />
     <PackageVersion Include="MudBlazor" Version="9.11.0" />
     <PackageVersion Include="MudBlazor.Extensions" Version="9.11.2" />
     <PackageVersion Include="Blazor-ApexCharts" Version="7.0.0" />

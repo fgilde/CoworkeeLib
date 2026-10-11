@@ -29,6 +29,8 @@ public sealed partial class CoworkeeApp
         {
             compose(builder.AddDockerComposeEnvironment("compose"));
         }
+
+        AddTools();
     }
 
     public IDistributedApplicationBuilder Builder { get; }
@@ -60,6 +62,7 @@ public sealed partial class CoworkeeApp
         where TProject : IProjectMetadata, new()
     {
         Migrations = WithAppDatabase(Builder.AddProject<TProject>($"{Name}-{suffix}"), awaitServer: true);
+        WireGrafanaTelemetry(Migrations);
         AddDatabaseCommands(Migrations);
         return Added<TProject>(Migrations, suffix);
     }
@@ -100,6 +103,7 @@ public sealed partial class CoworkeeApp
         if (Options.Keycloak is { } keycloak)
         {
             AddKeycloak(auth, keycloak);
+            AddToolsSignIn();
         }
 
         return Added<TProject>(auth, suffix);
@@ -175,6 +179,7 @@ public sealed partial class CoworkeeApp
     {
         var service = Builder.AddProject<TProject>($"{Name}-{suffix}").WithHttpHealthCheck(Health);
         WireServices(service);
+        WireGrafanaTelemetry(service);
         var references = CoworkeeModules.References(service.Resource.GetProjectMetadata().ProjectPath);
         foreach (var (_, wire) in Modules.Where(m => references.Contains(m.Key)).ToList())
         {

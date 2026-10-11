@@ -1,0 +1,106 @@
+using Aspire.Hosting.ApplicationModel;
+using Coworkee.Contracts.Configuration;
+using Nextended.Aspire.Hosting.Grafana;
+using Nextended.Aspire.Hosting.Observability;
+
+namespace Aspire.Hosting;
+
+public sealed partial class CoworkeeApp
+{
+    /// <summary>Setting with the OTLP address of the Grafana stack; the service defaults send metrics, logs and traces there as well as to the Aspire dashboard.</summary>
+    public const string GrafanaOtlpEndpoint = "GRAFANA_OTLP_ENDPOINT";
+
+    private const string DatabaseDatasource = "App database";
+
+    /// <summary>Grafana of <see cref="CoworkeeAppOptions.UseGrafana"/>, in run mode.</summary>
+    public IResourceBuilder<GrafanaResource>? Grafana { get; private set; }
+
+    private string ObservabilityRoot => Path.Combine(Builder.AppHostDirectory, "observability");
+
+    private void AddGrafana(Action<IResourceBuilder<GrafanaResource>> configure)
+    {
+        var dashboards = Path.Combine(ObservabilityRoot, ".generated", "coworkee-dashboards");
+        // no data volume: the admin password applies on every start, datasources and dashboards are provisioned anyway
+        Grafana = Builder.AddGrafana("grafana", ObservabilityRoot)
+            .WithAdminUser(AdminUser, AdminPassword)
+            .WithEnvironment("GF_SECURITY_ADMIN_EMAIL", AdminUser.Contains('@', StringComparison.Ordinal) ? AdminUser : $"{AdminUser}@localhost")
+            .WithEnvironment("GF_AUTH_ANONYMOUS_ENABLED", "false")
+            .WithPrometheus(configure: p => p.WithRetention("7d"))
+            .WithLoki()
+            .WithTempo()
+            // the services send to the Aspire dashboard themselves
+            .WithOtelCollector(aspireDashboardOtlpEndpoint: "")
+            .WithDashboards(dashboards, Options.DisplayName ?? Name);
+        AddDatabaseDatasource(Grafana);
+        Builder.Eventing.Subscribe<BeforeStartEvent>((_, _) => WriteDashboardsAsync(dashboards));
+        configure(Grafana);
+    }
+
+    private void AddDatabaseDatasource(IResourceBuilder<GrafanaResource> grafana)
+    {
+        if (Options.Database is not null)
+        {
+            return;
+        }
+
+        switch (Options.DatabaseProvider)
+        {
+            case DatabaseProviders.Postgres:
+                grafana.WithPostgresDatasource(Server, DatabaseDatasource, Database.Resource.DatabaseName).WithPostgresExporter(Server);
+                break;
+            case DatabaseProviders.SqlServer:
+                var datasource = new GrafanaDatasource { Name = DatabaseDatasource, Uid = "app-database", Type = "mssql", Url = $"{SqlServer.Resource.Name}:1433", User = "sa" };
+                datasource.JsonData["database"] = SqlServerDatabase.Resource.DatabaseName;
+                datasource.JsonData["encrypt"] = "false";
+                datasource.SecureJsonData["password"] = "${GF_DS_APP_DATABASE_PASSWORD}";
+                grafana.WithDatasource(datasource).WithEnvironment("GF_DS_APP_DATABASE_PASSWORD", SqlServer.Resource.PasswordParameter);
+                break;
+        }
+    }
+
+    private void AddGrafanaSignIn(IResourceBuilder<GrafanaResource> grafana)
+    {
+        var options = Options.Keycloak!;
+        var client = AddKeycloakClient($"{Name}-grafana", [ReferenceExpression.Create($"{grafana.GetEndpoint(GrafanaResource.HttpEndpointName)}/login/generic_oauth")]);
+        var administrator = $"email == '{AdminUser.Replace("'", "\\'", StringComparison.Ordinal)}' && 'GrafanaAdmin'";
+        grafana.WithOAuthLogin(GrafanaOAuthOptions.Keycloak(ContainerKeycloakAuthority(), client.ClientId, ReferenceExpression.Create($"{client.Secret}"),
+                roleAttributePath: $"{administrator} || {GrafanaOAuthOptions.Roles("roles", grafanaAdmins: ["Administrator"])} || 'Viewer'", name: options.DisplayName))
+            // the browser signs in at the address it knows Keycloak by; token and user info stay on the container network
+            .WithEnvironment(context => context.EnvironmentVariables["GF_AUTH_GENERIC_OAUTH_AUTH_URL"] = $"{KeycloakBrowserAuthority}/protocol/openid-connect/auth")
+            // WithOAuthLogin allows the provider only; the local administrator signs in as well, Keycloak users with the same email are the same Grafana user
+            .WithEnvironment("GF_AUTH_DISABLE_LOGIN_FORM", "false")
+            .WithEnvironment("GF_AUTH_BASIC_ENABLED", "true")
+            .WithEnvironment("GF_SECURITY_DISABLE_INITIAL_ADMIN_CREATION", "false")
+            .WithEnvironment("GF_AUTH_OAUTH_ALLOW_INSECURE_EMAIL_LOOKUP", "true");
+    }
+
+    private void WireGrafanaTelemetry(IResourceBuilder<ProjectResource> service)
+    {
+        if (Grafana is not null && Builder.Resources.OfType<OtelCollectorResource>().FirstOrDefault() is { } collector)
+        {
+            service.WithEnvironment(GrafanaOtlpEndpoint, collector.OtlpGrpcEndpoint);
+        }
+    }
+
+    private async Task WriteDashboardsAsync(string folder)
+    {
+        Directory.CreateDirectory(folder);
+        var assembly = typeof(CoworkeeApp).Assembly;
+        var database = Options.Database is null ? Options.DatabaseProvider.ToLowerInvariant() : null;
+        foreach (var name in assembly.GetManifestResourceNames().Where(n => n.StartsWith("Dashboards.", StringComparison.Ordinal)))
+        {
+            var file = name["Dashboards.".Length..];
+            var provider = Path.GetFileNameWithoutExtension(file).Split('.').ElementAtOrDefault(1);
+            var target = Path.Combine(folder, file);
+            if (provider is not null && provider != database)
+            {
+                File.Delete(target);
+                continue;
+            }
+
+            await using var source = assembly.GetManifestResourceStream(name)!;
+            await using var stream = File.Create(target);
+            await source.CopyToAsync(stream);
+        }
+    }
+}

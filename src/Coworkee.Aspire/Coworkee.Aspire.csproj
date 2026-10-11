@@ -13,6 +13,9 @@
     <PackageReference Include="Aspire.Hosting.Keycloak" />
     <PackageReference Include="Aspire.Hosting.Docker" />
     <PackageReference Include="Npgsql" />
+    <PackageReference Include="Nextended.Aspire.Hosting.Grafana" />
+    <PackageReference Include="Nextended.Aspire.Hosting.WebDataStudio" />
     <ProjectReference Include="..\Coworkee.Contracts\Coworkee.Contracts.csproj" />
+    <EmbeddedResource Include="Dashboards\*.json" LogicalName="Dashboards.%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>
