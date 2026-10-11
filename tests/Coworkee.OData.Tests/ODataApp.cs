@@ -20,7 +20,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.OData.Tests;
 
-public sealed class ODataApp : PostgresFixture
+public sealed class ODataApp : DatabaseFixture
 {
     public const string ViewGadgets = "Gadgets.View";
 
@@ -33,6 +33,7 @@ public sealed class ODataApp : PostgresFixture
         builder.WebHost.UseTestServer();
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
+        builder.Configuration["Coworkee:Database:Provider"] = Provider;
         builder.AddCoworkee<GadgetModule>();
         builder.Services.AddTestAuthentication();
         App = builder.Build();
@@ -93,7 +94,7 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.AddSingleton<IModelContributor, GadgetModelContributor>();
         context.Services.AddSingleton<Coworkee.Application.Authorization.IPermissionDefinitionContributor, GadgetPermissions>();
         context.Services.AddCoworkeeDbContext<GadgetDbContext>((provider, options) =>
-            options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
+            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
         context.Services.AddODataEntity<Gadget>("Gadgets", ODataApp.ViewGadgets, g => g.SerialCode);
         context.Services.AddScoped<IODataEntityFilter<Gadget>, HideSecretGadgets>();
         context.Services.AddMessagingFromAssembly(typeof(GadgetModule).Assembly);

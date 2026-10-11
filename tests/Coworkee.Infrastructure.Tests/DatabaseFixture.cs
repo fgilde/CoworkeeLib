@@ -10,7 +10,7 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Coworkee.Infrastructure.Tests;
 
-public sealed class DatabaseFixture : PostgresFixture
+public sealed class DatabaseFixture : Coworkee.Testing.DatabaseFixture
 {
     public override async ValueTask InitializeAsync()
     {
@@ -27,7 +27,7 @@ public sealed class DatabaseFixture : PostgresFixture
         services.AddSingleton(user);
         services.AddSingleton(clock);
         services.AddSingleton<IModelContributor, TestModelContributor>();
-        services.AddCoworkeeDbContext<TestDbContext>((_, options) => options.UseNpgsql(ConnectionString));
+        services.AddCoworkeeDbContext<TestDbContext>((_, options) => options.UseCoworkeeDatabase(Provider, ConnectionString));
         configure?.Invoke(services);
         return services.BuildServiceProvider();
     }

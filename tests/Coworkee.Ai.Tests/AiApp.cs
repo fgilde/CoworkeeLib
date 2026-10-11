@@ -28,7 +28,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Ai.Tests;
 
-public sealed class AiApp : PostgresFixture
+public sealed class AiApp : DatabaseFixture
 {
     public WebApplication App { get; private set; } = null!;
 
@@ -43,6 +43,7 @@ public sealed class AiApp : PostgresFixture
         {
             ["Coworkee:SetupToken"] = "token",
             ["ConnectionStrings:test"] = ConnectionString,
+            ["Coworkee:Database:Provider"] = Provider,
             ["Coworkee:Settings:Defaults:Ai.Enabled"] = "true",
             ["Coworkee:Settings:Defaults:Ai.ApiKey"] = "test-key",
         });
@@ -144,7 +145,7 @@ public sealed class TestAiModule : CoworkeeModule
     public override void ConfigureServices(ModuleServiceContext context)
     {
         context.Services.AddCoworkeeDbContext<AiTestDbContext>((provider, options) =>
-            options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
+            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
         context.Services.AddCoworkeeOutboxProcessing<AiTestDbContext>();
         context.Services.AddMessagingFromAssembly(typeof(TestAiModule).Assembly);
         context.Services.AddSingleton<IModelContributor, NoteModel>();

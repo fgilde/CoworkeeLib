@@ -21,7 +21,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Coworkee.Account.Tests;
 
-public sealed class AccountApp : PostgresFixture
+public sealed class AccountApp : DatabaseFixture
 {
     public WebApplication App { get; private set; } = null!;
 
@@ -38,6 +38,7 @@ public sealed class AccountApp : PostgresFixture
         {
             ["Coworkee:SetupToken"] = "token",
             ["ConnectionStrings:test"] = ConnectionString,
+            ["Coworkee:Database:Provider"] = Provider,
             ["Coworkee:Jobs:ConnectionStringName"] = "test",
             ["Coworkee:Jobs:RunServer"] = "false",
             ["Coworkee:Account:PublicAuthUrl"] = "https://auth.test",
@@ -106,5 +107,5 @@ public sealed class TestAccountModule : CoworkeeModule
 {
     public override void ConfigureServices(ModuleServiceContext context) =>
         context.Services.AddCoworkeeDbContext<AccountTestDbContext>((provider, options) =>
-            options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
+            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
 }

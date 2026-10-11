@@ -21,7 +21,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.ExtendedAttributes.Tests;
 
-public sealed class AttributesApp : PostgresFixture
+public sealed class AttributesApp : DatabaseFixture
 {
     public const string ViewNotes = "Notes.View";
     public const string EditNotes = "Notes.Edit";
@@ -35,6 +35,7 @@ public sealed class AttributesApp : PostgresFixture
         builder.WebHost.UseTestServer();
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
+        builder.Configuration["Coworkee:Database:Provider"] = Provider;
         builder.AddCoworkee<TestAttributesModule>();
         builder.Services.AddTestAuthentication();
         App = builder.Build();
@@ -107,6 +108,6 @@ public sealed class TestAttributesModule : CoworkeeModule
         context.Services.AddSingleton<IPermissionDefinitionContributor, NotePermissions>();
         context.Services.AddExtendedAttributes<Note>("Notes", AttributesApp.ViewNotes, AttributesApp.EditNotes);
         context.Services.AddCoworkeeDbContext<AttributesTestDbContext>((provider, options) =>
-            options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
+            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
     }
 }

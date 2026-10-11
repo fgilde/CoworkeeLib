@@ -21,7 +21,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Theming.Tests;
 
-public sealed class ThemeApp : PostgresFixture
+public sealed class ThemeApp : DatabaseFixture
 {
     public WebApplication App { get; private set; } = null!;
 
@@ -32,6 +32,7 @@ public sealed class ThemeApp : PostgresFixture
         builder.WebHost.UseTestServer();
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
+        builder.Configuration["Coworkee:Database:Provider"] = Provider;
         builder.AddCoworkee<TestThemeModule>();
         builder.Services.AddTestAuthentication();
         App = builder.Build();
@@ -93,5 +94,5 @@ public sealed class TestThemeModule : CoworkeeModule
 {
     public override void ConfigureServices(ModuleServiceContext context) =>
         context.Services.AddCoworkeeDbContext<ThemeTestDbContext>((provider, options) =>
-            options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
+            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
 }

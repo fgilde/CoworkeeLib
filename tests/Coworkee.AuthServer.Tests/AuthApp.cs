@@ -24,7 +24,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Coworkee.AuthServer.Tests;
 
-public sealed class AuthApp : PostgresFixture
+public sealed class AuthApp : DatabaseFixture
 {
     public const string ClientId = "test-web";
     public const string RedirectUri = "https://client.test/signin-oidc";
@@ -46,6 +46,7 @@ public sealed class AuthApp : PostgresFixture
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["ConnectionStrings:test"] = ConnectionString,
+            ["Coworkee:Database:Provider"] = Provider,
             ["Coworkee:SetupToken"] = "token",
             ["Coworkee:RateLimiting:Policies:auth:PermitLimit"] = "100000",
             ["Coworkee:Auth:AllowHttp"] = "true",
@@ -202,7 +203,7 @@ public sealed class TestAuthModule : CoworkeeModule
 {
     public override void ConfigureServices(ModuleServiceContext context) =>
         context.Services.AddCoworkeeDbContext<AuthTestDbContext>((provider, options) =>
-            options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
+            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
 }
 
 public sealed record CapturedMail(string To, string Template, object Model);

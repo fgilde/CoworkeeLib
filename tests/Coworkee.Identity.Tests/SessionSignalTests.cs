@@ -63,7 +63,7 @@ public sealed class SessionSignalTests(IdentityApp app) : IAsyncLifetime
         services.AddHybridCache();
         services.AddCoworkeeRedis(configuration);
         services.AddSingleton<IModelContributor, IdentityModelContributor>();
-        services.AddCoworkeeDbContext<IdentityTestDbContext>((_, options) => options.UseNpgsql(app.ConnectionString));
+        services.AddCoworkeeDbContext<IdentityTestDbContext>((_, options) => options.UseCoworkeeDatabase(app.Provider, app.ConnectionString));
         services.AddSingleton<SessionStamps>();
         services.AddSingleton<SessionSignal>();
         var provider = services.BuildServiceProvider();

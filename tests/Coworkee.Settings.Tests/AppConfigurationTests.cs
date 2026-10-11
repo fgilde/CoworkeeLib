@@ -93,7 +93,7 @@ public sealed class AppConfigurationTests(SettingsApp app) : IAsyncLifetime
         await SaveAsync(new TestAppConfig { Mode = "file", Name = "Shared", Limit = 10, ApiKey = AppConfigurationMask.Value, Tags = ["a", "b"] });
 
         var other = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["ConnectionStrings:test"] = app.ConnectionString, ["TestApp:Name"] = "Default" })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["ConnectionStrings:test"] = app.ConnectionString, ["Coworkee:Database:Provider"] = app.Provider, ["TestApp:Name"] = "Default" })
             .AddCoworkeeDatabaseConfiguration("test")
             .Build();
 

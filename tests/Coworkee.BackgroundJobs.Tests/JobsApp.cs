@@ -20,7 +20,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.BackgroundJobs.Tests;
 
-public sealed class JobsApp : PostgresFixture
+public sealed class JobsApp : DatabaseFixture
 {
     public WebApplication App { get; private set; } = null!;
 
@@ -35,6 +35,7 @@ public sealed class JobsApp : PostgresFixture
         {
             ["Coworkee:SetupToken"] = "token",
             ["ConnectionStrings:test"] = ConnectionString,
+            ["Coworkee:Database:Provider"] = Provider,
             ["Coworkee:Jobs:ConnectionStringName"] = "test",
             ["Coworkee:Jobs:PollingInterval"] = "00:00:01",
             ["Coworkee:Jobs:RetryDelaysInSeconds:0"] = "1",
@@ -80,7 +81,7 @@ public sealed class TestJobsModule : CoworkeeModule
     public override void ConfigureServices(ModuleServiceContext context)
     {
         context.Services.AddCoworkeeDbContext<JobsTestDbContext>((provider, options) =>
-            options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
+            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
         context.Services.AddRecurringJob<TickJob>("tests-tick", "0 0 1 1 *");
     }
 }

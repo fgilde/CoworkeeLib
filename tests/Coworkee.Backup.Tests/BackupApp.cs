@@ -20,7 +20,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Backup.Tests;
 
-public sealed class BackupApp : PostgresFixture
+public sealed class BackupApp : DatabaseFixture
 {
     private readonly string _blobs = Path.Combine(Path.GetTempPath(), "coworkee-backup-tests", Guid.NewGuid().ToString("N"));
 
@@ -34,6 +34,7 @@ public sealed class BackupApp : PostgresFixture
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["Coworkee:Storage:FileSystem:Root"] = _blobs;
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
+        builder.Configuration["Coworkee:Database:Provider"] = Provider;
         builder.AddCoworkee<TestBackupModule>();
         builder.Services.AddTestAuthentication();
         App = builder.Build();
@@ -95,6 +96,6 @@ public sealed class TestBackupModule : CoworkeeModule
     {
         context.Services.AddSingleton<IModelContributor, NoteModelContributor>();
         context.Services.AddCoworkeeDbContext<BackupTestDbContext>((provider, options) =>
-            options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
+            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
     }
 }

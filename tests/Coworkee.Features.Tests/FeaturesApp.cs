@@ -25,7 +25,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Features.Tests;
 
-public sealed class FeaturesApp : PostgresFixture
+public sealed class FeaturesApp : DatabaseFixture
 {
     public WebApplication App { get; private set; } = null!;
 
@@ -36,6 +36,7 @@ public sealed class FeaturesApp : PostgresFixture
         builder.WebHost.UseTestServer();
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
+        builder.Configuration["Coworkee:Database:Provider"] = Provider;
         builder.AddCoworkee<TestFeaturesModule>();
         builder.Services.AddTestAuthentication();
         App = builder.Build();
@@ -118,7 +119,7 @@ public sealed class TestFeaturesModule : CoworkeeModule, IWebModule
     public override void ConfigureServices(ModuleServiceContext context)
     {
         context.Services.AddCoworkeeDbContext<FeaturesTestDbContext>((provider, options) =>
-            options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
+            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
         context.Services.AddMessagingFromAssembly(typeof(TestFeaturesModule).Assembly);
         context.Services.AddSingleton<IFeatureDefinitionContributor, TestFeatureDefinitions>();
     }
