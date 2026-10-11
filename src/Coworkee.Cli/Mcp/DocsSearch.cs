@@ -37,6 +37,7 @@ internal static partial class DocsSearch
         ("Privacy and personal data", "security/privacy/"),
         ("Client and layout", "ui/client/"),
         ("Data tables", "ui/data-table/"),
+        ("Query builder", "ui/query-builder/"),
         ("Client entities", "ui/client-entities/"),
         ("Replacing components", "ui/customizing/"),
         ("Settings and app configuration", "modules/settings/"),
