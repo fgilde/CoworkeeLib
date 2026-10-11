@@ -4,6 +4,7 @@ public sealed class ODataEntityRegistry
 {
     private readonly List<ODataEntityRegistration> _entities = [];
     private readonly List<Transfer.ODataImportRegistration> _imports = [];
+    private readonly Dictionary<(Type, string), Contracts.Data.FacetBehaviorAttribute> _facets = [];
 
     public IReadOnlyList<ODataEntityRegistration> Entities => _entities;
 
@@ -12,7 +13,14 @@ public sealed class ODataEntityRegistry
     public Transfer.ODataImportRegistration? FindImport(string entitySet) =>
         _imports.FirstOrDefault(i => string.Equals(i.EntitySet, entitySet, StringComparison.OrdinalIgnoreCase));
 
+    /// <summary>The behavior of the facet on a property: configured with ConfigureFacet, else its [FacetBehavior].</summary>
+    public Contracts.Data.FacetBehaviorAttribute? FacetBehavior(Type entityType, System.Reflection.PropertyInfo property) =>
+        _facets.TryGetValue((entityType, property.Name), out var behavior) ? behavior
+            : System.Reflection.CustomAttributeExtensions.GetCustomAttribute<Contracts.Data.FacetBehaviorAttribute>(property);
+
     internal void Add(Transfer.ODataImportRegistration import) => _imports.Add(import);
+
+    internal void Configure(Type entityType, string property, Contracts.Data.FacetBehaviorAttribute behavior) => _facets[(entityType, property)] = behavior;
 
     internal void Add(ODataEntityRegistration registration)
     {

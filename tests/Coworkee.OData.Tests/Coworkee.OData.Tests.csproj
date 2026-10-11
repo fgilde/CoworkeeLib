@@ -3,6 +3,7 @@
     <ProjectReference Include="..\..\src\Coworkee.OData\Coworkee.OData.csproj" />
     <ProjectReference Include="..\..\src\Coworkee.Identity\Coworkee.Identity.csproj" />
     <ProjectReference Include="..\..\src\Coworkee.Testing\Coworkee.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Coworkee.Client.Blazor\Coworkee.Client.Blazor.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
     <PackageReference Include="ClosedXML" />
   </ItemGroup>

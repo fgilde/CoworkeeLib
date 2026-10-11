@@ -2,11 +2,17 @@ using Coworkee.Contracts.Data;
 
 namespace Coworkee.Client.Blazor.ClientEntities;
 
-/// <summary>Counts the server's facet options on local rows: "Path eq value" options of one path share a single pass over the column's ranks.</summary>
+/// <summary>
+/// Counts the server's facet options on local rows: "Path eq value" options of one path share a single pass over the column's ranks.
+/// With a facet context an "any of" group with a choice counts on the rows of every other choice but its own, as the server does.
+/// </summary>
 internal static class LocalFacets
 {
-    public static IReadOnlyList<FacetGroupDto> Count<T>(IReadOnlyList<FacetGroupDto> groups, LocalTable<T> table, int[] rows) =>
-        [.. groups.Select(group => group with { Options = Options(group, table, rows) })];
+    public static IReadOnlyList<FacetGroupDto> Count<T>(IReadOnlyList<FacetGroupDto> groups, LocalTable<T> table, int[] rows, FacetContextDto? context = null) =>
+        [.. groups.Select(group => group with { Options = Options(group, table, Own(context, group.Key) ? table.Find(context!.Without(group.Key), null) : rows) })];
+
+    private static bool Own(FacetContextDto? context, string group) =>
+        context is not null && context.Groups.ContainsKey(group) && context.Combines?.GetValueOrDefault(group) != FacetCombine.All;
 
     private static List<FacetOptionDto> Options<T>(FacetGroupDto group, LocalTable<T> table, int[] rows)
     {
