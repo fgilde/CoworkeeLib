@@ -29,7 +29,7 @@ public sealed class OptionTests
         var main = Studio.Create(folder);
         main.Architecture.ApplyPreset(main.Architecture.Presets.Single(p => p.Preset.Name == "Everything"));
 
-        main.Architecture.Summary.Containers.ShouldBe(["PostgreSQL", "Redis", "Mailpit", "Elasticsearch", "RabbitMQ", "Azurite", "Keycloak", "Ollama"]);
+        main.Architecture.Summary.Containers.ShouldBe(["PostgreSQL", "Redis", "Mailpit", "Elasticsearch", "RabbitMQ", "Azurite", "Keycloak", "Ollama", "Grafana", "Prometheus", "Loki", "Tempo", "OpenTelemetry Collector", "postgres_exporter", "WebDataStudio"]);
         main.Architecture.Summary.Packages.ShouldContain("Coworkee.EventBus.RabbitMq");
         main.Architecture.Summary.Projects.ShouldContain("MyApp.Catalog");
     }
@@ -41,11 +41,11 @@ public sealed class OptionTests
         var main = Studio.Create(folder);
 
         main.Option("database").Value = "sqlServer";
-        main.Architecture.Summary.Containers.ShouldBe(["SQL Server", "Redis", "Mailpit"]);
+        main.Architecture.Summary.Containers.ShouldBe(["SQL Server", "Redis", "Mailpit", "Grafana", "Prometheus", "Loki", "Tempo", "OpenTelemetry Collector", "WebDataStudio"]);
         main.Architecture.Summary.Packages.ShouldNotContain("Coworkee.Backup");
 
         main.Option("database").Value = "sqlite";
-        main.Architecture.Summary.Containers.ShouldBe(["Redis", "Mailpit"]);
+        main.Architecture.Summary.Containers.ShouldBe(["Redis", "Mailpit", "Grafana", "Prometheus", "Loki", "Tempo", "OpenTelemetry Collector", "WebDataStudio"]);
         main.ToSpec().Options["database"]!.GetValue<string>().ShouldBe("sqlite");
     }
 
@@ -70,6 +70,8 @@ public sealed class OptionTests
 
         main.Option("redis").IsOn = false;
         main.Option("redis").Note!.ShouldContain("one instance");
+        main.Option("grafana").IsOn = false;
+        main.Option("webDataStudio").IsOn = false;
         main.Architecture.Summary.Containers.ShouldBe(["Mailpit"]);
     }
 

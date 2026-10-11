@@ -31,7 +31,7 @@ public sealed partial class ArchitectureStep : StepViewModel
         (OptionCatalog.Tooling, "Files next to the code: a CI workflow and a dev container.", "Icon.Console"),
     ];
 
-    private static readonly string[] Highlighted = ["database", "aiProvider", "redis"];
+    private static readonly string[] Highlighted = ["database", "aiProvider", "redis", "grafana", "webDataStudio"];
 
     public ArchitectureStep(MainViewModel main)
         : base(main)

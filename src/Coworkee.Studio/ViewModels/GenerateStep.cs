@@ -84,7 +84,7 @@ public sealed partial class GenerateStep(MainViewModel main) : StepViewModel(mai
 
     /// <summary>The users of the created app with their passwords, read from its DemoUsers.cs.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasSignIn), nameof(SignInHint), nameof(SignInText))]
+    [NotifyPropertyChangedFor(nameof(HasSignIn), nameof(SignInHint), nameof(SignInText), nameof(ToolsHint))]
     public partial SignInInfo? SignIn { get; set; }
 
     public bool HasSignIn => SignIn is { Users.Count: > 0 };
@@ -92,6 +92,10 @@ public sealed partial class GenerateStep(MainViewModel main) : StepViewModel(mai
     public string SignInHint => SignIn is { } info ? L.Format("Run the app, open {0} in the Aspire dashboard and sign in with:", info.WebResource) : string.Empty;
 
     /// <summary>All users with passwords, for the clipboard.</summary>
+    public string ToolsHint => SignIn is { Tools.Count: > 0, Administrator: { } admin } info
+        ? L.Format(info.Keycloak ? "{0} in the Aspire dashboard take {1} and the Keycloak button too." : "{0} in the Aspire dashboard take {1} too.", string.Join(", ", info.Tools), admin.Email)
+        : string.Empty;
+
     public string SignInText => SignIn is { } info ? string.Join(Environment.NewLine, info.Users.Select(u => $"{u.Email}\t{u.Password}\t{u.RoleText}")) : string.Empty;
 
     public bool IsRunning => RunState == RunState.Running;

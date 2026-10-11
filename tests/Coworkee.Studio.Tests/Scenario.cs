@@ -73,6 +73,6 @@ internal static class Scenario
             new SignInUser("admin@shop.local", "Cw1!3f9c2a7e41b84d0c9e6a15b2d8f7c403", true, []),
             new SignInUser("ada@shop.test", "Cw1!8b1e5d0c27f94a6e9d3c4b7a1f2e6d58", false, ["Sales"]),
             new SignInUser("grace@shop.test", "Cw1!c47a9e2b6d1f4038a5e9b7c2d6f1a3e0", true, []),
-        ], Keycloak: true);
+        ], Keycloak: true) { Tools = ["Grafana", "WebDataStudio"] };
     }
 }

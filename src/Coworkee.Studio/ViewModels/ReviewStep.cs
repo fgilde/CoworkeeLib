@@ -59,6 +59,8 @@ public sealed partial class ReviewStep(MainViewModel main) : StepViewModel(main)
             new(L.Get("Database"), values["database"] ?? "postgres"),
             new(L.Get("AI provider"), values["ai"] == "true" ? values["aiProvider"] ?? "anthropic" : "-"),
             new(L.Get("Redis"), YesNo(values["redis"])),
+            new(L.Get("Grafana"), YesNo(values["grafana"])),
+            new(L.Get("WebDataStudio"), YesNo(values["webDataStudio"])),
             new(L.Get("Containers"), string.Join(", ", Summary.Containers)),
             new(L.Get("Languages"), $"{values["languages"] ?? string.Join(",", OptionCatalog.Languages.Select(l => l.Value))} · {values["defaultLanguage"]}"),
             new(L.Get("Color mode"), values["colorMode"] ?? "system"),

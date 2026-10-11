@@ -61,7 +61,7 @@ public sealed class UsersTests
             new("admin@shop.local", "Administrator", null, "Cw1!0123456789abcdef0123456789abcdef", IsAdmin: true),
             new("ada@shop.test", "Ada", "Lovelace", "Ada-Pass1!", IsAdmin: false, Roles: ["Sales", "User"]),
             """);
-        File.WriteAllText(Path.Combine(output, "src", "Shop.AppHost", "AppHost.cs"), "options.UseKeycloak(k => { });");
+        File.WriteAllText(Path.Combine(output, "src", "Shop.AppHost", "AppHost.cs"), "options.UseGrafana(); options.UseWebDataStudio(); options.UseKeycloak(k => { });");
         main.Generate.Output = output;
 
         main.Generate.Finish(GenerationOutcome.Succeeded);

@@ -109,6 +109,7 @@
               </ItemsControl.ItemTemplate>
             </ItemsControl>
             <TextBlock Classes="caption" IsVisible="{Binding SignIn.Keycloak, FallbackValue=False}" Text="{l:L 'The Keycloak button on the sign-in page takes the same users and passwords.'}" TextWrapping="Wrap" />
+            <TextBlock Classes="caption" IsVisible="{Binding ToolsHint, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Text="{Binding ToolsHint}" TextWrapping="Wrap" />
             <TextBlock Classes="caption" Text="{l:L 'Development passwords only, also in LOGIN.md of the solution; change them before you deploy.'}" TextWrapping="Wrap" />
           </StackPanel>
         </Border>

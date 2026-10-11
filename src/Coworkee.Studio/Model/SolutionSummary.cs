@@ -51,6 +51,16 @@ public sealed record SolutionSummary(IReadOnlyList<string> Projects, IReadOnlyLi
             containers.Add("Ollama");
         }
 
+        if (On("grafana"))
+        {
+            containers.AddRange(["Grafana", "Prometheus", "Loki", "Tempo", "OpenTelemetry Collector", .. values["database"] == "postgres" ? new[] { "postgres_exporter" } : []]);
+        }
+
+        if (On("webDataStudio"))
+        {
+            containers.Add("WebDataStudio");
+        }
+
         var packages = BasePackages.Concat(OptionCatalog.All
                 .Where(o => o.Package is not null && (o.Kind == OptionKind.Bool ? On(o.Id) : values[o.Id] is { } v && v != "none"))
                 .Select(o => o.Package!))
