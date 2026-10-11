@@ -59,8 +59,7 @@ public sealed partial class CoworkeeApp
     public IResourceBuilder<ProjectResource> AddMigrations<TProject>(string suffix = "migrations")
         where TProject : IProjectMetadata, new()
     {
-        Migrations = Builder.AddProject<TProject>($"{Name}-{suffix}").WithReference(AppDatabase, Name);
-        _ = Options.Database is null ? Migrations.WaitFor(Server) : Migrations;
+        Migrations = WithAppDatabase(Builder.AddProject<TProject>($"{Name}-{suffix}"), awaitServer: true);
         AddDatabaseCommands(Migrations);
         return Added<TProject>(Migrations, suffix);
     }

@@ -21,7 +21,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Settings.Tests;
 
-public sealed class SettingsApp : PostgresFixture
+public sealed class SettingsApp : DatabaseFixture
 {
     public WebApplication App { get; private set; } = null!;
 
@@ -32,6 +32,7 @@ public sealed class SettingsApp : PostgresFixture
         builder.WebHost.UseTestServer();
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
+        builder.Configuration["Coworkee:Database:Provider"] = Provider;
         builder.Configuration["Coworkee:Settings:Defaults:Test.Configured"] = "7";
         builder.Configuration["Coworkee:Settings:Defaults:FilePickers.GoogleDrive.ClientId"] = "google-from-config";
         builder.Configuration["TestApp:Name"] = "Default";
@@ -134,7 +135,7 @@ public sealed class TestSettingsModule : CoworkeeModule
         context.Services.AddSingleton<ISettingDefinitionContributor, TestSettingDefinitions>();
         context.Services.AddCoworkeeAppConfiguration<TestAppConfig>(context.Configuration, "TestApp", "Test app");
         context.Services.AddCoworkeeDbContext<SettingsTestDbContext>((provider, options) =>
-            options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
+            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
     }
 }
 

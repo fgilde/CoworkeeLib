@@ -18,6 +18,11 @@ var app = builder.AddCoworkeeApp("myapp", options =>
 #if (!redis)
     options.WithoutRedis();
 #endif
+#if (database == "sqlServer")
+    options.UseSqlServer();
+#elif (database == "sqlite")
+    options.UseSqlite();
+#endif
 #if (keycloak)
     options.UseKeycloak(keycloak => keycloak.Users.Add(new KeycloakUser("admin@myapp.local", "Administrator", "COWORKEE_APP_TITLE")));
 #endif

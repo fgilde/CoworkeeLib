@@ -42,7 +42,7 @@ public static class DbContextServiceCollectionExtensions
             options.AddInterceptors(provider.GetServices<IInterceptor>());
         });
         services.AddScoped<CoworkeeDbContext>(provider => provider.GetRequiredService<TContext>());
-        services.TryAddSingleton<IDistributedLock, PostgresDistributedLock>();
+        services.TryAddSingleton<IDistributedLock, DatabaseDistributedLock>();
         services.TryAddSingleton<DbXmlRepository>();
         services.TryAddSingleton<IVersionedTypeRegistry, VersionedTypeRegistry>();
         services.AddDataProtection().SetApplicationName("Coworkee");

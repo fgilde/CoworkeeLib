@@ -8,12 +8,42 @@ public sealed class MyAppDbContext(DbContextOptions<MyAppDbContext> options, ICu
 ```
 
 ```csharp title="MyApp.Infrastructure/MyAppInfrastructureModule.cs"
-context.Services.AddCoworkeeDbContext<MyAppDbContext>((provider, options) => options.UseNpgsql(
-    provider.GetRequiredService<IConfiguration>().GetConnectionString("myapp"),
-    npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "cw")));
+context.Services.AddCoworkeeDbContext<MyAppDbContext>((provider, options) =>
+    options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "myapp"));
 ```
 
+`UseCoworkeeDatabase` wählt den EF-Core-Provider nach `Coworkee:Database:Provider` (siehe [Datenbank-Provider](#datenbank-provider)) und führt die Migrationshistorie in `cw.__EFMigrationsHistory`.
+
 Handler injizieren `CoworkeeDbContext` und arbeiten mit `db.Set<T>()`. Repositories gibt es nicht; EF Core ist bereits eines.
+
+## Datenbank-Provider
+
+| `Coworkee:Database:Provider` | EF-Core-Provider | Aspire-AppHost | Passt für |
+|---|---|---|---|
+| `Postgres` (Standard) | Npgsql | `AddCoworkeeApp` startet einen Postgres-Container | alles, Produktion |
+| `SqlServer` | Microsoft.EntityFrameworkCore.SqlServer | `options.UseSqlServer()`, ein SQL-Server-Container | Organisationen mit SQL Server oder Azure SQL |
+| `Sqlite` | Microsoft.EntityFrameworkCore.Sqlite | `options.UseSqlite()`, die Datei `.data/<name>.db` | Demos, Prototypen, ein Rechner |
+
+Der AppHost setzt die Einstellung bei jedem Dienst, neben dem Connection-String. Anderswo (Tests, eigenes Hosting) setzen Sie sie wie jeden anderen Konfigurationswert. `coworkee new --database sqlServer` schreibt den Aufruf im AppHost und legt die erste Migration für diesen Provider an.
+
+Die providerspezifischen Teile liegen hinter kleinen Nahtstellen in `Coworkee.Infrastructure`, in der App ist nichts zu tun:
+
+| Teil | Postgres | SQL Server | SQLite |
+|---|---|---|---|
+| `IHasConcurrencyToken.Version` | `xmin` | Spalte, bei jedem Update hochgezählt | Spalte, bei jedem Update hochgezählt |
+| `HasColumnType("jsonb")` | `jsonb` | `nvarchar(max)` | `TEXT` |
+| Outbox-Stapel | `FOR UPDATE SKIP LOCKED` | `UPDLOCK, READPAST` | einfache Abfrage, keine Zeilensperren |
+| `IDistributedLock` | Advisory Lock | `sp_getapplock` | Dateisperre im Temp-Ordner (ein Rechner) |
+| Hintergrundjobs | Hangfire.PostgreSql | Hangfire.SqlServer | Hangfire.InMemory, jeder Prozess hat seinen eigenen Job-Server |
+| Textvergleich | Groß-/Kleinschreibung zählt | Groß-/Kleinschreibung zählt (`Latin1_General_100_CS_AS` auf jeder Textspalte) | Groß-/Kleinschreibung zählt (`=`) |
+
+Grenzen, die man kennen sollte:
+
+- **Migrationen gehören zu einem Provider.** Eine App behält die Migrationen des Providers, mit dem sie angelegt wurde. Zum Wechseln löschen Sie `Migrations` und führen `coworkee migrations add Initial` erneut aus. Soll eine App mehrere Provider bedienen, folgen Sie der EF-Core-Anleitung [Migrations with multiple providers](https://learn.microsoft.com/ef/core/managing-schemas/migrations/providers) mit einer Migrations-Assembly pro Provider.
+- **[Datenbanksicherungen](../modules/backups.md) brauchen Postgres.** Das Template lässt das Modul bei den anderen Providern weg.
+- **SQLite** kennt nur einen Schreiber zur Zeit, hält Hintergrundjobs im Speicher (eingereihte und verzögerte Jobs gehen beim Neustart verloren), speichert `DateTimeOffset` als Zahl und `decimal` als `double`, prüft `HasMaxLength` nicht und kennt keine Schemas (Tabellen verlieren ihr `cw.`). Es ist für Entwicklung und kleine Installationen auf einem Rechner gedacht.
+- Facetten über `bool`-Spalten (`[ProvideFacet]` auf `IsActive`) scheitern auf SQL Server und SQLite, die den Wert als `1`/`0` zurückgeben; behoben im nächsten Release von Nextended.
+- MySQL und MariaDB gibt es nicht: Pomelo, der übliche Provider, hat noch kein Release für EF Core 10.
 
 ## Basisklassen und Marker
 
@@ -46,7 +76,7 @@ using (CurrentUserScope.Begin(new ImpersonatedUser(adminId, tenantId)))
 
 ## Migrationen und Seed
 
-Migrationen liegen im Infrastruktur-Projekt:
+Migrationen liegen im Infrastruktur-Projekt und sind für dessen Datenbank-Provider erstellt:
 
 ```bash
 dotnet ef migrations add AddOrders --project src/MyApp.Infrastructure

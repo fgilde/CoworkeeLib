@@ -74,7 +74,7 @@ if (held is null)
 
 | Provider | Setup | Notes |
 |---|---|---|
-| Postgres advisory lock | default with `AddCoworkeeDbContext` | holds one connection while locked; a crashed holder frees it when the connection drops |
+| Database lock | default with `AddCoworkeeDbContext` | Postgres advisory lock or SQL Server `sp_getapplock` on a connection of its own; a crashed holder frees it when the connection drops. SQLite uses a file lock, enough for the processes of one machine |
 | Redis | `Coworkee:DistributedLock:Provider = Redis` with `Coworkee.Realtime` and a `redis` connection string | expires after 30 s unless the holder is alive and extends it |
 
 The notification digest uses it, so a manual run during the scheduled one sends no second mail.

@@ -56,7 +56,7 @@ Card, Split or Slide, drawn as small animated sketches of the real [sign-in page
 
 ### Architecture
 
-Presets for the app type (Minimal, Business app, Collaboration, SaaS platform, Everything) set the modules and infrastructure; then every option of `coworkee options` can be changed: description, pros, cons, when to use it, the package and the switch of `coworkee new`. *General* also holds the languages (check boxes for the shipped ones, none checked offers all), the default language, the color mode and self registration; *Tooling* adds a GitHub Actions workflow and a dev container. The panel on the right lists what the solution will contain: projects, the containers of the Aspire app host (Postgres, Redis, Mailpit, Elasticsearch, RabbitMQ, Azurite, Keycloak, Ollama) and the Coworkee packages.
+Presets for the app type (Minimal, Business app, Collaboration, SaaS platform, Everything) set the modules and infrastructure; then every option of `coworkee options` can be changed: description, pros, cons, when to use it, the package and the switch of `coworkee new`. *General* also holds the languages (check boxes for the shipped ones, none checked offers all), the default language, the color mode and self registration; *Tooling* adds a GitHub Actions workflow and a dev container. The panel on the right lists what the solution will contain: projects, the containers of the Aspire app host (Postgres or SQL Server, Redis, Mailpit, Elasticsearch, RabbitMQ, Azurite, Keycloak, Ollama) and the Coworkee packages.
 
 ![Architecture](../assets/screenshots/studio-architecture-dark.webp)
 

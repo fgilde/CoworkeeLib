@@ -10,14 +10,14 @@ coworkee update                   # newest Coworkee packages
 ```
 
 <!--#if (!defaultModel) -->
-The chosen modules differ from the shipped initial migration, so the solution has none yet. `coworkee new` creates it; otherwise run `coworkee migrations add Initial` once before the first start.
+The chosen modules or database differ from the shipped initial migration (Postgres), so the solution has none yet. `coworkee new` creates it; otherwise run `coworkee migrations add Initial` once before the first start.
 
 <!--#endif -->
 Sign in as `admin@myapp.local`; the generated password is in `src/MyApp.Migrations/DemoSeed.cs`. Change it before you deploy anywhere.
 
 | Project | |
 |---|---|
-| `MyApp.AppHost` | Aspire topology: Postgres, Redis, Mailpit, auth server, API, web, migrations |
+| `MyApp.AppHost` | Aspire topology: database (Postgres, SQL Server or SQLite), Redis, Mailpit, auth server, API, web, migrations |
 | `MyApp.Api` | API host |
 | `MyApp.Auth` | OpenIddict auth server |
 | `MyApp.Web`, `MyApp.Web.Client` | Blazor WebAssembly with backend for frontend |

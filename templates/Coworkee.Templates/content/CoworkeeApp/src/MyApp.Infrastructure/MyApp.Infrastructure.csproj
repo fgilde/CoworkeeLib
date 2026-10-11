@@ -41,7 +41,7 @@
     <!--#elseif (eventBus == "rabbitMq") -->
     <CoworkeePackage Include="Coworkee.EventBus.RabbitMq" />
     <!--#endif -->
-    <!--#if (backup) -->
+    <!--#if (withBackup) -->
     <CoworkeePackage Include="Coworkee.Backup" />
     <!--#endif -->
     <!--#if (chat) -->

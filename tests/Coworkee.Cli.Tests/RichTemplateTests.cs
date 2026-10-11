@@ -46,6 +46,10 @@ public sealed class RichTemplateTests(TemplateFixture template)
         var spec = SpecJson.Example();
         spec.Options["registration"] = true;
         spec.Options["colorMode"] = "dark";
+        // the infrastructure choices of the other branches together: SQL Server, no Redis, Ollama
+        spec.Options["database"] = "sqlServer";
+        spec.Options["redis"] = false;
+        spec.Options["aiProvider"] = "ollama";
         spec.Modules.Insert(0, new ModuleSpec
         {
             Name = "Crm",
@@ -98,6 +102,10 @@ public sealed class RichTemplateTests(TemplateFixture template)
 
         Read(app, "src/Shop.Infrastructure/ShopInfrastructureModule.cs").ShouldContain("localization.Languages = [\"en\", \"de\"];");
         Read(app, "src/Shop.Sales/Shop.Sales.csproj").ShouldContain("Shop.Crm.csproj");
+        var appHost = Read(app, "src/Shop.AppHost/AppHost.cs");
+        appHost.ShouldContain("options.UseSqlServer();");
+        appHost.ShouldContain("options.WithoutRedis();");
+        appHost.ShouldContain("builder.AddOllama(\"ollama\")");
         await Dotnet.RunAsync(app, "build", "Shop.slnx");
         await Dotnet.RunAsync(app, "test", "--project", "tests/Shop.Migrations.Tests", "--no-build", "--filter-class", "Shop.Migrations.Tests.ModelTests");
     }

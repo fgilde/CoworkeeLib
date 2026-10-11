@@ -8,12 +8,42 @@ public sealed class MyAppDbContext(DbContextOptions<MyAppDbContext> options, ICu
 ```
 
 ```csharp title="MyApp.Infrastructure/MyAppInfrastructureModule.cs"
-context.Services.AddCoworkeeDbContext<MyAppDbContext>((provider, options) => options.UseNpgsql(
-    provider.GetRequiredService<IConfiguration>().GetConnectionString("myapp"),
-    npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "cw")));
+context.Services.AddCoworkeeDbContext<MyAppDbContext>((provider, options) =>
+    options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "myapp"));
 ```
 
+`UseCoworkeeDatabase` picks the EF Core provider from `Coworkee:Database:Provider` (see [Database providers](#database-providers)) and keeps the migration history in `cw.__EFMigrationsHistory`.
+
 Handlers inject `CoworkeeDbContext` and use `db.Set<T>()`. There are no repositories; EF Core already is one.
+
+## Database providers
+
+| `Coworkee:Database:Provider` | EF Core provider | Aspire app host | Good for |
+|---|---|---|---|
+| `Postgres` (default) | Npgsql | `AddCoworkeeApp` starts a Postgres container | everything, production |
+| `SqlServer` | Microsoft.EntityFrameworkCore.SqlServer | `options.UseSqlServer()`, a SQL Server container | organisations that run SQL Server or Azure SQL |
+| `Sqlite` | Microsoft.EntityFrameworkCore.Sqlite | `options.UseSqlite()`, the file `.data/<name>.db` | demos, prototypes, one machine |
+
+The app host sets the setting on every service, next to the connection string. Elsewhere (tests, your own hosting) set it like any other configuration value. `coworkee new --database sqlServer` writes the app host call and creates the initial migration for that provider.
+
+The provider-specific parts sit behind small seams in `Coworkee.Infrastructure`, nothing to do in an app:
+
+| Part | Postgres | SQL Server | SQLite |
+|---|---|---|---|
+| `IHasConcurrencyToken.Version` | `xmin` | column, counted up on every update | column, counted up on every update |
+| `HasColumnType("jsonb")` | `jsonb` | `nvarchar(max)` | `TEXT` |
+| Outbox batch | `FOR UPDATE SKIP LOCKED` | `UPDLOCK, READPAST` | plain query, no row locks |
+| `IDistributedLock` | advisory lock | `sp_getapplock` | file lock in the temp folder (one machine) |
+| Background jobs | Hangfire.PostgreSql | Hangfire.SqlServer | Hangfire.InMemory, every process runs its own job server |
+| Text comparison | case-sensitive | case-sensitive (`Latin1_General_100_CS_AS` on every text column) | case-sensitive (`=`) |
+
+Limits to know:
+
+- **Migrations belong to one provider.** An app keeps the migrations of the provider it was created with. To switch, delete `Migrations` and run `coworkee migrations add Initial` again. To ship one app for several providers, follow the EF Core guide [Migrations with multiple providers](https://learn.microsoft.com/ef/core/managing-schemas/migrations/providers) with one migrations assembly per provider.
+- **[Database backups](../modules/backups.md) need Postgres.** The template leaves the module out for the other providers.
+- **SQLite** has one writer at a time, keeps background jobs in memory (queued and delayed jobs are lost on restart), stores `DateTimeOffset` as a number and `decimal` as `double`, does not enforce `HasMaxLength` and knows no schemas (tables lose their `cw.` prefix). It is meant for development and small single machine installations.
+- Facets over `bool` columns (`[ProvideFacet]` on `IsActive`) fail on SQL Server and SQLite, which hand the value back as `1`/`0`; fixed in the next Nextended release.
+- MySQL and MariaDB are not offered: Pomelo, the usual provider, has no release for EF Core 10 yet.
 
 ## Base classes and markers
 
@@ -46,7 +76,7 @@ using (CurrentUserScope.Begin(new ImpersonatedUser(adminId, tenantId)))
 
 ## Migrations and seeding
 
-Migrations live in the infrastructure project:
+Migrations live in the infrastructure project and are made for its database provider:
 
 ```bash
 dotnet ef migrations add AddOrders --project src/MyApp.Infrastructure

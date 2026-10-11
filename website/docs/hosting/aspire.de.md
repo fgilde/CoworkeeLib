@@ -60,7 +60,7 @@ Explizite Aufrufe funktionieren weiter und haben Vorrang: Ein Projekt, das vor `
 
 | Methode | Ressource | Verdrahtung |
 |---|---|---|
-| `AddMigrations<T>()` | `{name}-migrations` | Datenbank, wartet auf den Postgres-Server, Dashboard-Befehle |
+| `AddMigrations<T>()` | `{name}-migrations` | Datenbank, wartet auf den Datenbankserver, Dashboard-Befehle |
 | `AddAuthServer<T>()` | `{name}-auth` | externe Endpunkte, kein Job-Server, öffentliche Auth-URL, Entwicklungszertifikate in Development, Keycloak-Anbieter |
 | `AddApi<T>()` | `{name}-api` | Token-Authority und Audience `{name}_api`, API-Scope am Auth-Server, Setup-Token aus `Coworkee:SetupToken` |
 | `AddWorker<T>(suffix)` | `{name}-{suffix}` | nur Infrastruktur, keine öffentlichen Endpunkte |
@@ -74,14 +74,14 @@ Bevor Coworkee einen Dienst verdrahtet, liest es dessen `obj/project.assets.json
 
 | Paket im Dienst | Er bekommt |
 |---|---|
-| `Coworkee.Infrastructure` | Connection-String der App-Datenbank, wartet, bis die Migrationen fertig sind |
+| `Coworkee.Infrastructure` | Connection-String der App-Datenbank und `Coworkee:Database:Provider`, wartet, bis die Migrationen fertig sind |
 | `Coworkee.Realtime` | Redis für die SignalR-Backplane, Anwesenheit, Cache-Invalidierung und Sitzungsänderungen zwischen Instanzen ([Skalieren mit Redis](redis.md)); `options.WithoutRedis()` lässt es weg |
 | `Coworkee.Mailing` | Mailpit als Standard-SMTP-Server |
 | `Coworkee.Storage` | den gemeinsamen Blob-Ordner `.data/blobs` (nur lokal; veröffentlichte Container behalten ihren Standard) |
 | `Coworkee.Search.Elasticsearch` | Elasticsearch |
 | `Coworkee.Notifications` | Links in Zusammenfassungsmails zeigen auf die Web-App |
 
-Container entstehen nur, wenn ein Dienst sie braucht. Postgres, Redis, Elasticsearch und Keycloak halten ihre Daten in Volumes; `--Coworkee:EphemeralInfrastructure=true` startet sie leer, das nutzen die Tests.
+Container entstehen nur, wenn ein Dienst sie braucht. Postgres, SQL Server, Redis, Elasticsearch und Keycloak halten ihre Daten in Volumes; `--Coworkee:EphemeralInfrastructure=true` startet sie leer, das nutzen die Tests.
 
 ### Eigene Module
 
@@ -116,11 +116,15 @@ builder.AddCoworkeeApp("myapp", options =>
 
 | Option | Statt |
 |---|---|
-| `UseDatabase(resource)` | des Postgres-Containers; jede Ressource mit Connection-String, z. B. `builder.AddConnectionString("myapp")` |
+| `UseDatabase(resource)` | des Datenbank-Containers; jede Ressource mit Connection-String, z. B. `builder.AddConnectionString("myapp")` |
+| `UseSqlServer(configure)` | von Postgres: ein SQL-Server-Container (`app.SqlServer`), oder mit `UseDatabase` ein eigener SQL Server |
+| `UseSqlite(path)` | von Postgres: eine SQLite-Datei, ohne Angabe `.data/<name>.db` neben `src`; kein Container |
 | `UseRedis(resource)` | des Redis-Containers |
 | `UseSearch(resource)` | des Elasticsearch-Containers |
 | `UseMail(endpoint)` | von Mailpit; der SMTP-Endpunkt einer anderen Ressource |
 | `UseKeycloak(resource, ...)` | des Keycloak-Containers; der Realm wird in Ihren importiert |
+
+`UseSqlServer` und `UseSqlite` setzen bei den Diensten auch `Coworkee:Database:Provider`; die Migrationen der App müssen für diesen Provider erstellt sein (siehe [Datenbank-Provider](../fundamentals/persistence.md#datenbank-provider)).
 
 Die Dienste bekommen eigene Ressourcen unter den Namen, die sie erwarten (`ConnectionStrings:myapp`, `redis`, `elasticsearch`). Coworkee wartet nicht auf sie; ergänzen Sie bei Bedarf `WaitFor` über `options.Configure`.
 
@@ -135,7 +139,7 @@ builder.AddCoworkeeApp("myapp", options => options.UseDatabase(database)).AddPro
 Läuft der AppHost lokal in Development, hat die Migrations-Ressource zwei Befehle:
 
 - **Re-run migrations** startet das Migrationsprojekt erneut: neue Migrationen und das Seeding der Demodaten.
-- **Reset database** löscht nach einer Rückfrage die App-Datenbank und führt die Migrationen erneut aus. Den Befehl gibt es nur für den eingebauten Postgres-Container, nie für eine eigene Datenbank und nie außerhalb von Development.
+- **Reset database** löscht nach einer Rückfrage die App-Datenbank und führt die Migrationen erneut aus. Den Befehl gibt es nur für den eingebauten Postgres-Container, nie für SQL Server, SQLite oder eine eigene Datenbank und nie außerhalb von Development.
 
 Die Web-Ressource verlinkt **Swagger** (`/swagger`) und, wenn eine API `Coworkee.BackgroundJobs` nutzt, das Hangfire-Dashboard (**Jobs**, `/admin/jobs`). Mailpit zeigt seinen Posteingang als **Mailpit UI**.
 

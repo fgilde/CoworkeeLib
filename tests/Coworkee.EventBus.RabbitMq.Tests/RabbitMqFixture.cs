@@ -14,7 +14,7 @@ using Testcontainers.RabbitMq;
 
 namespace Coworkee.EventBus.RabbitMq.Tests;
 
-public sealed class RabbitMqFixture : PostgresFixture
+public sealed class RabbitMqFixture : DatabaseFixture
 {
     private readonly RabbitMqContainer _rabbit = new RabbitMqBuilder("rabbitmq:4-alpine").Build();
 
@@ -46,7 +46,7 @@ public sealed class RabbitMqFixture : PostgresFixture
         services.AddLogging();
         services.AddSingleton<ICurrentUser>(new TestCurrentUser());
         services.AddSingleton<Recorder>();
-        services.AddCoworkeeDbContext<RabbitDbContext>((_, options) => options.UseNpgsql(ConnectionString));
+        services.AddCoworkeeDbContext<RabbitDbContext>((_, options) => options.UseCoworkeeDatabase(Provider, ConnectionString));
         services.AddCoworkeeOutboxProcessing<RabbitDbContext>();
         new CoworkeeEventBusModule().ConfigureServices(new ModuleServiceContext(services, configuration));
         new CoworkeeRabbitMqEventBusModule().ConfigureServices(new ModuleServiceContext(services, configuration));

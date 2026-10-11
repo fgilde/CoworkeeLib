@@ -27,7 +27,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Realtime.Tests;
 
-public sealed class RealtimeApp : PostgresFixture
+public sealed class RealtimeApp : DatabaseFixture
 {
     public WebApplication App { get; private set; } = null!;
 
@@ -45,6 +45,7 @@ public sealed class RealtimeApp : PostgresFixture
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
         builder.Configuration["ConnectionStrings:redis"] = redis;
+        builder.Configuration["Coworkee:Database:Provider"] = Provider;
         builder.AddCoworkee<TestRealtimeModule>();
         builder.Services.AddTestAuthentication();
         var app = builder.Build();
@@ -195,6 +196,6 @@ public sealed class TestRealtimeModule : CoworkeeModule
         context.Services.AddSingleton<IModelContributor>(sp => sp.GetRequiredService<TicketModel>());
         context.Services.AddSingleton<IPermissionDefinitionContributor>(sp => sp.GetRequiredService<TicketModel>());
         context.Services.AddCoworkeeDbContext<RealtimeTestDbContext>((provider, options) =>
-            options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
+            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
     }
 }

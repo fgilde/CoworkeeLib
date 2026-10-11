@@ -1,6 +1,6 @@
 # Database backups
 
-`Coworkee.Backup` saves the whole database as one zip in the [file storage](storage.md) and restores it.
+`Coworkee.Backup` saves the whole database as one zip in the [file storage](storage.md) and restores it. It needs Postgres; on SQL Server use its own backups, on SQLite copy the file.
 
 ![Backups page](../assets/screenshots/backups.png){ .shot }
 

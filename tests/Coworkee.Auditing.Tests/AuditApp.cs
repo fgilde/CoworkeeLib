@@ -24,7 +24,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Auditing.Tests;
 
-public sealed class AuditApp : PostgresFixture
+public sealed class AuditApp : DatabaseFixture
 {
     public WebApplication App { get; private set; } = null!;
 
@@ -35,6 +35,7 @@ public sealed class AuditApp : PostgresFixture
         builder.WebHost.UseTestServer();
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
+        builder.Configuration["Coworkee:Database:Provider"] = Provider;
         builder.AddCoworkee<TestAuditModule>();
         builder.Services.AddTestAuthentication();
         App = builder.Build();
@@ -131,6 +132,6 @@ public sealed class TestAuditModule : CoworkeeModule
         context.Services.AddSingleton<IVersionedTypeContributor>(sp => sp.GetRequiredService<NotesModel>());
         context.Services.AddSingleton<IPermissionDefinitionContributor>(sp => sp.GetRequiredService<NotesModel>());
         context.Services.AddCoworkeeDbContext<AuditTestDbContext>((provider, options) =>
-            options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
+            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
     }
 }

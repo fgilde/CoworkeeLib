@@ -58,6 +58,7 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--storage` | `storage` | `fileSystem`, `azureBlob` | `fileSystem` | Blob storage; `azureBlob` runs Azurite in the app host |
 | `--ai-provider` | `aiProvider` | `anthropic`, `openAI`, `azureOpenAI`, `ollama`, `openAICompatible` | `anthropic` | Model provider of the [assistant](../modules/ai.md#providers); `ollama` runs Ollama in the app host |
 | `--redis` | `redis` | bool | `true` | Redis container for backplane, presence, cache invalidation and sessions across instances ([Redis](../hosting/redis.md)) |
+| `--database` | `database` | `postgres`, `sqlServer`, `sqlite` | `postgres` | Database engine, see [Database providers](../fundamentals/persistence.md#database-providers); `sqlServer` runs a SQL Server container, `sqlite` a file without container. Backups need `postgres` |
 | `--theme` | `theme` | `Ocean`, `Coworkee`, `Classic`, `Forest`, `Midnight`, `Sunset`, `HighContrast` | `Ocean` | Default theme |
 | `--primary-color` | `primaryColor` | `#rrggbb` | | Brand color: the app gets its own theme, based on `--theme` and named like the title, as default |
 | `--secondary-color` | `secondaryColor` | `#rrggbb` | | Second brand color |
@@ -73,7 +74,7 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--github-actions` | `githubActions` | bool | `false` | `.github/workflows/ci.yml`: build and tests on every push and pull request |
 | `--devcontainer` | `devcontainer` | bool | `false` | `.devcontainer/devcontainer.json` with the .NET SDK and Docker in Docker (Codespaces, VS Code) |
 
-A boolean switch without value means `true` (`--files`), `--chat false` switches off. The shipped initial migration covers the default modules (with or without samples). When you switch a module with tables on or off (chat, AI, backup, notifications, files, features, social, event bus, extended attributes without samples), the template leaves the migration out and `coworkee new` creates `Initial` with `dotnet ef` after the restore. With plain `dotnet new`, run `coworkee migrations add Initial` once yourself.
+A boolean switch without value means `true` (`--files`), `--chat false` switches off. The shipped initial migration covers the default modules (with or without samples). When you switch a module with tables on or off (chat, AI, backup, notifications, files, features, social, event bus, extended attributes without samples) or choose another database than `postgres`, the template leaves the migration out and `coworkee new` creates `Initial` with `dotnet ef` after the restore. With plain `dotnet new`, run `coworkee migrations add Initial` once yourself.
 
 ## App specs
 

@@ -7,23 +7,25 @@
 ```csharp
 [assembly: AssemblyFixture(typeof(ApiFixture))]
 
-public sealed class ApiFixture : PostgresFixture
+public sealed class ApiFixture : DatabaseFixture
 {
-    public PostgresWebApplicationFactory<Program> Factory { get; private set; } = null!;
+    public DatabaseWebApplicationFactory<Program> Factory { get; private set; } = null!;
+
+    public override string Provider => MyAppInfrastructureModule.DatabaseProvider;
 
     protected override string[] SchemasToExclude => ["hangfire"];
 
     public override async ValueTask InitializeAsync()
     {
         await base.InitializeAsync();
-        Factory = new PostgresWebApplicationFactory<Program>(this, "myapp");
+        Factory = new DatabaseWebApplicationFactory<Program>(this, "myapp");
         await using var scope = Factory.Services.CreateAsyncScope();
         await scope.ServiceProvider.GetRequiredService<MyAppDbContext>().Database.MigrateAsync();
     }
 }
 ```
 
-`PostgresFixture` startet pro Testlauf einen Postgres-Container; `ResetAsync()` leert die Tabellen zwischen den Tests. `AddTestAuthentication()` ersetzt die Anmeldung durch einen Header, damit ein Test als beliebiger Benutzer handelt:
+`DatabaseFixture` startet pro Testlauf einen Postgres- oder SQL-Server-Container oder legt eine SQLite-Datei an; `ResetAsync()` leert die Tabellen zwischen den Tests. Die Factory reicht Connection-String und Provider an die App weiter. Ohne Override kommt `Provider` aus der Umgebungsvariable `COWORKEE_TEST_DATABASE` (`Postgres`, `SqlServer`, `Sqlite`; Standard Postgres), so laufen die Tests der Coworkee-Pakete gegen jeden Provider: `COWORKEE_TEST_DATABASE=SqlServer dotnet test`. `AddTestAuthentication()` ersetzt die Anmeldung durch einen Header, damit ein Test als beliebiger Benutzer handelt:
 
 ```csharp
 var admin = api.As(setup.AdminUserId, setup.TenantId);

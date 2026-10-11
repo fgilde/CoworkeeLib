@@ -19,7 +19,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Identity.Tests;
 
-public sealed class IdentityApp : PostgresFixture
+public sealed class IdentityApp : DatabaseFixture
 {
     public const string SetupToken = "test-setup-token";
 
@@ -33,6 +33,7 @@ public sealed class IdentityApp : PostgresFixture
         builder.Configuration["Coworkee:SetupToken"] = SetupToken;
         builder.Configuration[CoworkeeWebApplicationExtensions.OpenApiSetting] = "true";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
+        builder.Configuration["Coworkee:Database:Provider"] = Provider;
         builder.AddCoworkee<TestAppModule>();
         builder.Services.AddTestAuthentication();
         builder.Services.AddCoworkeeIdentitySeed(seed =>
@@ -100,7 +101,7 @@ public sealed class TestAppModule : CoworkeeModule
         context.Services.AddSingleton<Coworkee.Application.Authorization.IResourceHierarchy>(TestFolderHierarchy.Instance);
         context.Services.AddSingleton<Coworkee.Application.Authorization.IResourceRestriction>(TestFolderRestriction.Instance);
         context.Services.AddCoworkeeDbContext<IdentityTestDbContext>((provider, options) =>
-            options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
+            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
     }
 }
 

@@ -102,6 +102,8 @@ internal sealed class CommentHandlers(
             return error;
         }
 
+        // the replies go along; loaded, so EF removes them where the database does not cascade (SQL Server)
+        await Of(comment.EntityType, comment.EntityId).LoadAsync(cancellationToken);
         db.Remove(comment);
         return Result.Success();
     }

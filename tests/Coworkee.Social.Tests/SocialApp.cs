@@ -25,7 +25,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Social.Tests;
 
-public sealed class SocialApp : PostgresFixture
+public sealed class SocialApp : DatabaseFixture
 {
     protected override string[] SchemasToExclude => ["hangfire"];
 
@@ -41,6 +41,7 @@ public sealed class SocialApp : PostgresFixture
         builder.WebHost.UseTestServer();
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
+        builder.Configuration["Coworkee:Database:Provider"] = Provider;
         builder.Configuration["Coworkee:Jobs:ConnectionStringName"] = "test";
         builder.Configuration["Coworkee:Jobs:RunServer"] = "false";
         builder.AddCoworkee<TestSocialModule>();
@@ -137,6 +138,6 @@ public sealed class TestSocialModule : CoworkeeModule
             .Authorize(async (services, access, ct) => access.EntityId is not { } id
                 || !await services.GetRequiredService<CoworkeeDbContext>().Set<Note>().AnyAsync(n => n.Id == id && n.Text == SocialApp.Secret, ct)));
         context.Services.AddCoworkeeDbContext<SocialTestDbContext>((provider, options) =>
-            options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
+            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
     }
 }

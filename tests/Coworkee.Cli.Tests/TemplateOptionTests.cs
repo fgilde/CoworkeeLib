@@ -43,6 +43,21 @@ public sealed class TemplateOptionTests(TemplateFixture template)
         TemplateTests.ShouldHaveNoLeftovers(app);
     }
 
+    [Theory]
+    [InlineData("sqlServer", "options.UseSqlServer();", "DatabaseProviders.SqlServer")]
+    [InlineData("sqlite", "options.UseSqlite();", "DatabaseProviders.Sqlite")]
+    public async Task Database_reaches_the_app_host_and_the_infrastructure_without_the_postgres_migration_and_backups(string database, string appHostCall, string provider)
+    {
+        var app = await template.CreateAsync($"db-{database}", "--database", database);
+
+        Read(app, "src/Shop.AppHost/AppHost.cs").ShouldContain(appHostCall);
+        Read(app, "src/Shop.Infrastructure/ShopInfrastructureModule.cs").ShouldContain($"public const string DatabaseProvider = {provider};");
+        Directory.Exists(Path.Combine(app, "src/Shop.Infrastructure/Migrations")).ShouldBeFalse();
+        Read(app, "src/Shop.Infrastructure/Shop.Infrastructure.csproj").ShouldNotContain("\"Coworkee.Backup\"");
+        Read(app, "src/Shop.Web.Client/Navigation/ShopNavigation.cs").ShouldNotContain("/admin/backups");
+        TemplateTests.ShouldHaveNoLeftovers(app);
+    }
+
     [Fact]
     public async Task Samples_without_ai_leave_out_the_ai_tests_and_the_migration_stays_only_with_the_shipped_modules()
     {

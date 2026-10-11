@@ -1,6 +1,6 @@
 # Background jobs
 
-Jobs run on Hangfire with Postgres storage. A job runs as the user who enqueued it, so permissions, tenant filters and audit work as in a request.
+Jobs run on Hangfire with the storage of the [database provider](../fundamentals/persistence.md#database-providers): Postgres, SQL Server, or in memory with SQLite. A job runs as the user who enqueued it, so permissions, tenant filters and audit work as in a request.
 
 ```csharp
 public sealed record RenderPreview(Guid AssetId);

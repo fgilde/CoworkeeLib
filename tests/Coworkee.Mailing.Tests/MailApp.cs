@@ -25,7 +25,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Mailing.Tests;
 
-public sealed class MailApp : PostgresFixture
+public sealed class MailApp : DatabaseFixture
 {
     private readonly IContainer _mailpit = new ContainerBuilder("axllent/mailpit:v1.27")
         .WithPortBinding(1025, true)
@@ -49,6 +49,7 @@ public sealed class MailApp : PostgresFixture
         {
             ["Coworkee:SetupToken"] = "token",
             ["ConnectionStrings:test"] = ConnectionString,
+            ["Coworkee:Database:Provider"] = Provider,
             ["Coworkee:Jobs:ConnectionStringName"] = "test",
             ["Coworkee:Jobs:PollingInterval"] = "00:00:01",
             ["Coworkee:Jobs:RetryDelaysInSeconds:0"] = "1",
@@ -128,7 +129,7 @@ public sealed class TestMailModule : CoworkeeModule
     public override void ConfigureServices(ModuleServiceContext context)
     {
         context.Services.AddCoworkeeDbContext<MailTestDbContext>((provider, options) =>
-            options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
+            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
         context.Services.AddCoworkeeOutboxProcessing<MailTestDbContext>();
         context.Services.AddMessagingFromAssembly(typeof(TestMailModule).Assembly);
         context.Services.AddSingleton<IMailTemplateContributor, TestTemplates>();

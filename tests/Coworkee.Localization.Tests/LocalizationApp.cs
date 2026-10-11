@@ -21,7 +21,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Localization.Tests;
 
-public sealed class LocalizationApp : PostgresFixture
+public sealed class LocalizationApp : DatabaseFixture
 {
     public WebApplication App { get; private set; } = null!;
 
@@ -32,6 +32,7 @@ public sealed class LocalizationApp : PostgresFixture
         builder.WebHost.UseTestServer();
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
+        builder.Configuration["Coworkee:Database:Provider"] = Provider;
         builder.AddCoworkee<TestLocalizationModule>();
         builder.Services.AddTestAuthentication();
         App = builder.Build();
@@ -85,6 +86,6 @@ public sealed class TestLocalizationModule : CoworkeeModule
         context.Services.AddSingleton<ILocalizationResourceContributor, TestTexts>();
         context.Services.AddHttpClient(Coworkee.Localization.MachineTranslation.TextTranslator.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => new StubTranslator());
         context.Services.AddCoworkeeDbContext<LocalizationTestDbContext>((provider, options) =>
-            options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
+            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
     }
 }

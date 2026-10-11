@@ -56,7 +56,7 @@ Karte, Split oder Slide, gezeichnet als kleine animierte Skizzen der echten [Anm
 
 ### Architektur
 
-Vorlagen für den App-Typ (Minimal, Business-App, Teamarbeit, SaaS-Plattform, Alles) setzen Module und Infrastruktur; danach lässt sich jede Option von `coworkee options` ändern: Beschreibung, Vor- und Nachteile, wann sie passt, das Paket und der Schalter von `coworkee new`. *Allgemein* enthält auch die Sprachen (Kästchen für die mitgelieferten, keines angekreuzt bietet alle an), die Standardsprache, den Farbmodus und die Selbstregistrierung; *Werkzeuge* legt einen GitHub-Actions-Workflow und einen Dev-Container an. Das Panel rechts zeigt, was die Solution enthalten wird: Projekte, die Container des Aspire-AppHosts (Postgres, Redis, Mailpit, Elasticsearch, RabbitMQ, Azurite, Keycloak, Ollama) und die Coworkee-Pakete.
+Vorlagen für den App-Typ (Minimal, Business-App, Teamarbeit, SaaS-Plattform, Alles) setzen Module und Infrastruktur; danach lässt sich jede Option von `coworkee options` ändern: Beschreibung, Vor- und Nachteile, wann sie passt, das Paket und der Schalter von `coworkee new`. *Allgemein* enthält auch die Sprachen (Kästchen für die mitgelieferten, keines angekreuzt bietet alle an), die Standardsprache, den Farbmodus und die Selbstregistrierung; *Werkzeuge* legt einen GitHub-Actions-Workflow und einen Dev-Container an. Das Panel rechts zeigt, was die Solution enthalten wird: Projekte, die Container des Aspire-AppHosts (Postgres oder SQL Server, Redis, Mailpit, Elasticsearch, RabbitMQ, Azurite, Keycloak, Ollama) und die Coworkee-Pakete.
 
 ![Architektur](../assets/screenshots/studio-architecture-light-de.webp)
 

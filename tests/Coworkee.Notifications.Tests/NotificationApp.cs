@@ -23,7 +23,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Notifications.Tests;
 
-public sealed class NotificationApp : PostgresFixture
+public sealed class NotificationApp : DatabaseFixture
 {
     protected override string[] SchemasToExclude => ["hangfire"];
 
@@ -36,6 +36,7 @@ public sealed class NotificationApp : PostgresFixture
         builder.WebHost.UseTestServer();
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
+        builder.Configuration["Coworkee:Database:Provider"] = Provider;
         builder.Configuration["Coworkee:Notifications:PublicAppUrl"] = "https://app.test";
         builder.Configuration["Coworkee:Jobs:ConnectionStringName"] = "test";
 
@@ -106,5 +107,5 @@ public sealed class TestNotificationModule : CoworkeeModule
 {
     public override void ConfigureServices(ModuleServiceContext context) =>
         context.Services.AddCoworkeeDbContext<NotificationTestDbContext>((provider, options) =>
-            options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
+            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
 }

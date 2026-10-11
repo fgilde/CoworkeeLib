@@ -1,6 +1,6 @@
 # Coworkee.Infrastructure
 
-CoworkeeDbContext with tenants, soft delete, field level audit trail and transactional outbox.
+CoworkeeDbContext on Postgres, SQL Server or SQLite with tenants, soft delete, field level audit trail and transactional outbox.
 
 Part of [Coworkee](https://fgilde.github.io/CoworkeeLib/), a modular application framework for .NET 10, Blazor and Aspire. Start a new app with the CLI:
 

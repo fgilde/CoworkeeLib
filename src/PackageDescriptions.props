@@ -4,7 +4,7 @@
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Ai'"><Description>AI assistant over the tools of all modules, MCP server and tool call audit.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Application'"><Description>Dispatcher for commands and queries with logging, validation, permission, caching and unit of work middleware.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.AspNetCore'"><Description>AddCoworkee&lt;TRoot&gt;() for ASP.NET Core hosts: problem details, API groups, bearer authentication, OpenAPI and Swagger UI.</Description></PropertyGroup>
-  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Aspire'"><Description>AddCoworkeeApp() for the Aspire app host: migrations, auth server, APIs, workers and web wired with Postgres, Redis, Mailpit, Elasticsearch and Keycloak.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Aspire'"><Description>AddCoworkeeApp() for the Aspire app host: migrations, auth server, APIs, workers and web wired with Postgres (or SQL Server, SQLite), Redis, Mailpit, Elasticsearch and Keycloak.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Auditing'"><Description>Audit trail queries, entity history and restore.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.AuthServer'"><Description>OpenIddict auth server with login, registration, two factor and external sign-in.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.BackgroundJobs'"><Description>Hangfire jobs with queues, retries and delayed follow-ups.</Description></PropertyGroup>
@@ -23,7 +23,7 @@
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.ExtendedAttributes'"><Description>Extra attributes for any entity without schema changes.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Features'"><Description>Feature management with editions and per tenant overrides, tenant administration, [RequiresFeature] and feature gates for Blazor.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Identity'"><Description>Users, roles, groups, tenants and permission grants with resource level checks.</Description></PropertyGroup>
-  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Infrastructure'"><Description>CoworkeeDbContext with tenants, soft delete, field level audit trail and transactional outbox.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Infrastructure'"><Description>CoworkeeDbContext on Postgres, SQL Server or SQLite with tenants, soft delete, field level audit trail and transactional outbox.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Files'"><Description>Folders and files with preview, download, upload and per-folder permissions, kept in the blob storage.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Localization'"><Description>Languages and translations stored in the database, machine translation and live updates.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Mailing'"><Description>Scriban mail templates with overrides and queued SMTP delivery.</Description></PropertyGroup>
@@ -37,6 +37,6 @@
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Social'"><Description>Comments, tags and ratings for any entity, with realtime updates and notifications.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Storage'"><Description>Blob storage on the file system, S3 or Azure.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Studio'"><Description>Coworkee Studio, the desktop wizard for Windows, macOS and Linux: name, branding, sign-in, modules, infrastructure and entities of a new app, created with the coworkee CLI. Start it with coworkee ui.</Description></PropertyGroup>
-  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Testing'"><Description>Postgres test container fixture, test users and a web application factory for Coworkee apps.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Testing'"><Description>Database fixture (Postgres or SQL Server container, SQLite file), test users and a web application factory for Coworkee apps.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Theming'"><Description>Themes with palettes, fonts, layout and app options per tenant, editable at runtime.</Description></PropertyGroup>
 </Project>

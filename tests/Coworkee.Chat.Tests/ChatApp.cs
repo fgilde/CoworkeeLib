@@ -22,7 +22,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Chat.Tests;
 
-public sealed class ChatApp : PostgresFixture
+public sealed class ChatApp : DatabaseFixture
 {
     public WebApplication App { get; private set; } = null!;
 
@@ -33,6 +33,7 @@ public sealed class ChatApp : PostgresFixture
         builder.WebHost.UseTestServer();
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
+        builder.Configuration["Coworkee:Database:Provider"] = Provider;
         builder.AddCoworkee<TestChatModule>();
         builder.Services.AddTestAuthentication();
         App = builder.Build();
@@ -91,5 +92,5 @@ public sealed class TestChatModule : CoworkeeModule
 {
     public override void ConfigureServices(ModuleServiceContext context) =>
         context.Services.AddCoworkeeDbContext<ChatTestDbContext>((provider, options) =>
-            options.UseNpgsql(provider.GetRequiredService<IConfiguration>().GetConnectionString("test")));
+            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
 }

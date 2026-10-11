@@ -60,7 +60,7 @@ Explicit calls still work and win: a project added before `AddProjects()` is not
 
 | Method | Resource | Wiring |
 |---|---|---|
-| `AddMigrations<T>()` | `{name}-migrations` | database, waits for the Postgres server, dashboard commands |
+| `AddMigrations<T>()` | `{name}-migrations` | database, waits for the database server, dashboard commands |
 | `AddAuthServer<T>()` | `{name}-auth` | external endpoints, no job server, public auth URL, development certificates in Development, Keycloak provider |
 | `AddApi<T>()` | `{name}-api` | token authority and audience `{name}_api`, API scope at the auth server, setup token from `Coworkee:SetupToken` |
 | `AddWorker<T>(suffix)` | `{name}-{suffix}` | infrastructure only, no public endpoints |
@@ -74,14 +74,14 @@ Before wiring a service, Coworkee reads the service's `obj/project.assets.json` 
 
 | Package in the service | It gets |
 |---|---|
-| `Coworkee.Infrastructure` | connection string of the app database, waits until the migrations finished |
+| `Coworkee.Infrastructure` | connection string of the app database and `Coworkee:Database:Provider`, waits until the migrations finished |
 | `Coworkee.Realtime` | Redis for the SignalR backplane, presence, cache invalidation and session changes between instances ([Scaling out with Redis](redis.md)); `options.WithoutRedis()` leaves it out |
 | `Coworkee.Mailing` | Mailpit as default SMTP server |
 | `Coworkee.Storage` | the shared blob folder `.data/blobs` (local runs only; published containers keep their default) |
 | `Coworkee.Search.Elasticsearch` | Elasticsearch |
 | `Coworkee.Notifications` | links in digest mails point to the web app |
 
-Containers are only created when a service needs them. Postgres, Redis, Elasticsearch and Keycloak keep their data in volumes; `--Coworkee:EphemeralInfrastructure=true` starts them empty, which the tests use.
+Containers are only created when a service needs them. Postgres, SQL Server, Redis, Elasticsearch and Keycloak keep their data in volumes; `--Coworkee:EphemeralInfrastructure=true` starts them empty, which the tests use.
 
 ### Modules of your own
 
@@ -116,11 +116,15 @@ builder.AddCoworkeeApp("myapp", options =>
 
 | Option | Instead of |
 |---|---|
-| `UseDatabase(resource)` | the Postgres container; any resource with a connection string, e.g. `builder.AddConnectionString("myapp")` |
+| `UseDatabase(resource)` | the database container; any resource with a connection string, e.g. `builder.AddConnectionString("myapp")` |
+| `UseSqlServer(configure)` | Postgres: a SQL Server container (`app.SqlServer`), or with `UseDatabase` a SQL Server of your own |
+| `UseSqlite(path)` | Postgres: a SQLite file, `.data/<name>.db` next to `src` unless given; no container |
 | `UseRedis(resource)` | the Redis container |
 | `UseSearch(resource)` | the Elasticsearch container |
 | `UseMail(endpoint)` | Mailpit; the SMTP endpoint of another resource |
 | `UseKeycloak(resource, ...)` | the Keycloak container; the realm is imported into yours |
+
+`UseSqlServer` and `UseSqlite` also set `Coworkee:Database:Provider` on the services; the migrations of the app must be made for that provider (see [Database providers](../fundamentals/persistence.md#database-providers)).
 
 The services get supplied resources under the names they expect (`ConnectionStrings:myapp`, `redis`, `elasticsearch`). Coworkee does not wait for them; add `WaitFor` through `options.Configure` if you need it.
 
@@ -135,7 +139,7 @@ builder.AddCoworkeeApp("myapp", options => options.UseDatabase(database)).AddPro
 When the app host runs locally in Development, the migrations resource has two commands:
 
 - **Re-run migrations** starts the migrations project again: new migrations and the demo data seed.
-- **Reset database** drops the app database after a confirmation and runs the migrations again. It is only offered for the built-in Postgres container, never for a supplied database and never outside Development.
+- **Reset database** drops the app database after a confirmation and runs the migrations again. It is only offered for the built-in Postgres container, never for SQL Server, SQLite or a supplied database and never outside Development.
 
 The web resource links to **Swagger** (`/swagger`) and, when an API uses `Coworkee.BackgroundJobs`, to the Hangfire dashboard (**Jobs**, `/admin/jobs`). Mailpit shows its inbox as **Mailpit UI**.
 

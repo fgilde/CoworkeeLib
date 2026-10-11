@@ -81,8 +81,10 @@ internal sealed class DatabaseCopy(CoworkeeDbContext db)
 
     private async Task<NpgsqlConnection> OpenAsync(CancellationToken cancellationToken)
     {
+        var connection = db.Database.GetDbConnection() as NpgsqlConnection
+            ?? throw new NotSupportedException("Database backups need PostgreSQL; use the backups of SQL Server or copy the SQLite file.");
         await db.Database.OpenConnectionAsync(cancellationToken);
-        return (NpgsqlConnection)db.Database.GetDbConnection();
+        return connection;
     }
 
     private static async Task ExecuteAsync(NpgsqlConnection connection, string sql, CancellationToken cancellationToken)

@@ -13,7 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.EventBus.Tests;
 
-public sealed class EventBusFixture : PostgresFixture
+public sealed class EventBusFixture : DatabaseFixture
 {
     public override async ValueTask InitializeAsync()
     {
@@ -30,7 +30,7 @@ public sealed class EventBusFixture : PostgresFixture
         services.AddSingleton(clock);
         services.AddSingleton<ICurrentUser>(new TestCurrentUser());
         services.AddSingleton<Recorder>();
-        services.AddCoworkeeDbContext<EventBusDbContext>((_, options) => options.UseNpgsql(ConnectionString));
+        services.AddCoworkeeDbContext<EventBusDbContext>((_, options) => options.UseCoworkeeDatabase(Provider, ConnectionString));
         services.AddCoworkeeOutboxProcessing<EventBusDbContext>();
         new CoworkeeEventBusModule().ConfigureServices(new ModuleServiceContext(services, new ConfigurationBuilder().Build()));
         services.AddMessagingFromAssembly(typeof(EventBusFixture).Assembly);

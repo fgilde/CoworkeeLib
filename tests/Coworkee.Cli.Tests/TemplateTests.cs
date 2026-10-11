@@ -1,3 +1,6 @@
+using Coworkee.Cli.Commands;
+using Coworkee.Cli.Spec;
+
 namespace Coworkee.Cli.Tests;
 
 public sealed class TemplateTests(TemplateFixture template)
@@ -40,6 +43,27 @@ public sealed class TemplateTests(TemplateFixture template)
         await Dotnet.RunAsync(app, "nuget", "add", "source", Path.GetFullPath(feed!), "--name", "local", "--configfile", "nuget.config");
 
         await Dotnet.RunAsync(app, "build", "Shop.slnx");
+    }
+
+    [Theory]
+    [InlineData("postgres")]
+    [InlineData("sqlServer")]
+    [InlineData("sqlite")]
+    public async Task Generated_app_builds_with_each_database_and_its_migration_covers_the_model(string database)
+    {
+        var feed = Environment.GetEnvironmentVariable("COWORKEE_TEST_FEED");
+        Assert.SkipWhen(string.IsNullOrEmpty(feed), "Set COWORKEE_TEST_FEED to a folder with packed Coworkee packages (build/pack-local.ps1) to build a generated app.");
+        var app = await template.CreateAsync($"build-{database}", "--database", database);
+        await Dotnet.RunAsync(app, "nuget", "add", "source", Path.GetFullPath(feed!), "--name", "local", "--configfile", "nuget.config");
+        await Dotnet.RunAsync(app, "restore", "Shop.slnx");
+        var solution = Solution.Find(app);
+        if (NewCommand.MigrationName(solution, new AppSpec { Name = "Shop" }) is { } migration)
+        {
+            await Dotnet.RunAsync(app, MigrationsCommand.AddArgs(solution, migration)[1..]);
+        }
+
+        await Dotnet.RunAsync(app, "build", "Shop.slnx", "--no-restore");
+        await Dotnet.RunAsync(app, "test", "--project", "tests/Shop.Migrations.Tests", "--no-build");
     }
 
     internal static void ShouldHaveNoLeftovers(string app)

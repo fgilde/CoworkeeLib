@@ -19,13 +19,11 @@ public sealed partial class CoworkeeApp
 
     private void WireDatabase(IResourceBuilder<ProjectResource> service)
     {
-        service.WithReference(AppDatabase, Name);
-        _ = (Migrations, Options.Database) switch
+        WithAppDatabase(service, awaitServer: Migrations is null);
+        if (Migrations is { } migrations)
         {
-            ({ } migrations, _) => service.WaitForCompletion(migrations),
-            (null, null) => service.WaitFor(Server),
-            _ => service,
-        };
+            service.WaitForCompletion(migrations);
+        }
     }
 
     private void WireRedis(IResourceBuilder<ProjectResource> service)

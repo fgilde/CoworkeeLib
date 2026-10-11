@@ -1,6 +1,6 @@
 # Coworkee.Aspire
 
-AddCoworkeeApp() for the Aspire app host: migrations, auth server, APIs, workers and web wired with Postgres, Redis, Mailpit, Elasticsearch and Keycloak.
+AddCoworkeeApp() for the Aspire app host: migrations, auth server, APIs, workers and web wired with Postgres (or SQL Server, SQLite), Redis, Mailpit, Elasticsearch and Keycloak.
 
 Part of [Coworkee](https://fgilde.github.io/CoworkeeLib/), a modular application framework for .NET 10, Blazor and Aspire. Start a new app with the CLI:
 

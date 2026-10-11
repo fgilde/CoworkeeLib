@@ -23,7 +23,7 @@ namespace MyApp.Infrastructure;
     , typeof(CoworkeeNotificationsModule)
 #endif
     , typeof(Coworkee.Account.CoworkeeAccountModule), typeof(CoworkeeLocalizationModule)
-#if (backup)
+#if (withBackup)
     , typeof(Coworkee.Backup.CoworkeeBackupModule)
 #endif
 #if (chat)
