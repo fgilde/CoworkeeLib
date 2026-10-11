@@ -28,7 +28,7 @@ var app = builder.AddCoworkeeApp("myapp", options =>
     options.UseSqlite();
 #endif
 #if (grafana || webDataStudio)
-    // Grafana and WebDataStudio sign in with the app's administrator (LOGIN.md), and through Keycloak when it is on
+    // Grafana and WebDataStudio take the sign-in of the app's administrator (LOGIN.md)
     var administrator = DemoUsers.All.First(u => u.IsAdmin);
     options.Administrator = new(administrator.Email, administrator.Password);
 #endif

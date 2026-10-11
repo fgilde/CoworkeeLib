@@ -1,0 +1,1021 @@
+{
+  "uid": "coworkee-app-data",
+  "title": "App data",
+  "description": "Users, sign-ins, tenants, the outbox and background jobs, read from the app database.",
+  "tags": [
+    "coworkee"
+  ],
+  "editable": true,
+  "graphTooltip": 1,
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "1m",
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "fiscalYearStartMonth": 0,
+  "liveNow": false,
+  "links": [
+    {
+      "type": "dashboards",
+      "tags": [
+        "coworkee"
+      ],
+      "asDropdown": true,
+      "title": "Coworkee",
+      "includeVars": true,
+      "keepTime": true
+    }
+  ],
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "People",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Users",
+      "description": "",
+      "datasource": {
+        "type": "mssql",
+        "uid": "app-database"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "app-database"
+          },
+          "rawSql": "SELECT COUNT(*) AS users FROM [cw].[Users]",
+          "format": "table",
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      },
+      "id": 3
+    },
+    {
+      "type": "stat",
+      "title": "Active",
+      "description": "",
+      "datasource": {
+        "type": "mssql",
+        "uid": "app-database"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "app-database"
+          },
+          "rawSql": "SELECT COUNT(*) AS active FROM [cw].[Users] WHERE [IsActive] = 1",
+          "format": "table",
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 4,
+        "y": 1
+      },
+      "id": 4
+    },
+    {
+      "type": "stat",
+      "title": "Signed in today",
+      "description": "",
+      "datasource": {
+        "type": "mssql",
+        "uid": "app-database"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "app-database"
+          },
+          "rawSql": "SELECT COUNT(*) AS today FROM [cw].[Users] WHERE [LastLoginAt] > DATEADD(day, -1, SYSUTCDATETIME())",
+          "format": "table",
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 8,
+        "y": 1
+      },
+      "id": 5
+    },
+    {
+      "type": "stat",
+      "title": "Signed in this week",
+      "description": "",
+      "datasource": {
+        "type": "mssql",
+        "uid": "app-database"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "app-database"
+          },
+          "rawSql": "SELECT COUNT(*) AS week FROM [cw].[Users] WHERE [LastLoginAt] > DATEADD(day, -7, SYSUTCDATETIME())",
+          "format": "table",
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 12,
+        "y": 1
+      },
+      "id": 6
+    },
+    {
+      "type": "stat",
+      "title": "Tenants",
+      "description": "",
+      "datasource": {
+        "type": "mssql",
+        "uid": "app-database"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "app-database"
+          },
+          "rawSql": "SELECT COUNT(*) AS tenants FROM [cw].[Tenants] WHERE [IsActive] = 1",
+          "format": "table",
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 16,
+        "y": 1
+      },
+      "id": 7
+    },
+    {
+      "type": "stat",
+      "title": "Roles",
+      "description": "",
+      "datasource": {
+        "type": "mssql",
+        "uid": "app-database"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "app-database"
+          },
+          "rawSql": "SELECT COUNT(*) AS roles FROM [cw].[Roles]",
+          "format": "table",
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 20,
+        "y": 1
+      },
+      "id": 8
+    },
+    {
+      "type": "timeseries",
+      "title": "Sign-ins (sessions started)",
+      "description": "Refresh tokens issued by the auth server: one per sign-in of the web app.",
+      "datasource": {
+        "type": "mssql",
+        "uid": "app-database"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "app-database"
+          },
+          "rawSql": "SELECT DATEADD(hour, DATEDIFF(hour, 0, [CreationDate]), 0) AS time, COUNT(*) AS [sign-ins] FROM [auth].[OpenIddictTokens] WHERE [Type] = 'refresh_token' AND $__timeFilter([CreationDate]) GROUP BY DATEADD(hour, DATEDIFF(hour, 0, [CreationDate]), 0) ORDER BY 1",
+          "format": "time_series",
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 70,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": true,
+            "lineInterpolation": "smooth",
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisBorderShow": false,
+            "barAlignment": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "sum"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "id": 9
+    },
+    {
+      "type": "timeseries",
+      "title": "New users",
+      "description": "",
+      "datasource": {
+        "type": "mssql",
+        "uid": "app-database"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "app-database"
+          },
+          "rawSql": "SELECT DATEADD(day, DATEDIFF(day, 0, [CreatedAt]), 0) AS time, COUNT(*) AS [new users] FROM [cw].[Users] WHERE $__timeFilter([CreatedAt]) GROUP BY DATEADD(day, DATEDIFF(day, 0, [CreatedAt]), 0) ORDER BY 1",
+          "format": "time_series",
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 70,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": true,
+            "lineInterpolation": "smooth",
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisBorderShow": false,
+            "barAlignment": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "sum"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "id": 10
+    },
+    {
+      "type": "table",
+      "title": "Last sign-ins",
+      "description": "",
+      "datasource": {
+        "type": "mssql",
+        "uid": "app-database"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "app-database"
+          },
+          "rawSql": "SELECT TOP 15 [Email] AS [Email], CONCAT([FirstName], ' ', [LastName]) AS [Name], [LastLoginAt] AS [Last sign-in], [IsActive] AS [Active] FROM [cw].[Users] ORDER BY CASE WHEN [LastLoginAt] IS NULL THEN 1 ELSE 0 END, [LastLoginAt] DESC",
+          "format": "table",
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Last sign-in"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeFromNow"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ]
+        }
+      },
+      "transformations": [],
+      "gridPos": {
+        "h": 9,
+        "w": 14,
+        "x": 0,
+        "y": 14
+      },
+      "id": 11
+    },
+    {
+      "type": "piechart",
+      "title": "Users per role",
+      "description": "",
+      "datasource": {
+        "type": "mssql",
+        "uid": "app-database"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "app-database"
+          },
+          "rawSql": "SELECT r.[Name] AS role, COUNT(ur.[UserId]) AS users FROM [cw].[Roles] r LEFT JOIN [cw].[UserRoles] ur ON ur.[RoleId] = r.[Id] GROUP BY r.[Name] ORDER BY 2 DESC",
+          "format": "table",
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "pieType": "donut",
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "value",
+            "percent"
+          ],
+          "showLegend": true
+        },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 10,
+        "x": 14,
+        "y": 14
+      },
+      "id": 12
+    },
+    {
+      "type": "row",
+      "title": "Outbox and background jobs",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 23
+      },
+      "id": 13,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Outbox pending",
+      "description": "Domain and integration events not delivered yet.",
+      "datasource": {
+        "type": "mssql",
+        "uid": "app-database"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "app-database"
+          },
+          "rawSql": "SELECT COUNT(*) AS pending FROM [cw].[OutboxMessages] WHERE [ProcessedAt] IS NULL",
+          "format": "table",
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 500
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 24
+      },
+      "id": 14
+    },
+    {
+      "type": "stat",
+      "title": "Outbox failing",
+      "description": "Undelivered events whose last attempt failed.",
+      "datasource": {
+        "type": "mssql",
+        "uid": "app-database"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "app-database"
+          },
+          "rawSql": "SELECT COUNT(*) AS failing FROM [cw].[OutboxMessages] WHERE [ProcessedAt] IS NULL AND [Error] IS NOT NULL",
+          "format": "table",
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true,
+        "showPercentChange": false
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 24
+      },
+      "id": 15
+    },
+    {
+      "type": "piechart",
+      "title": "Background jobs by state",
+      "description": "Hangfire jobs of the app.",
+      "datasource": {
+        "type": "mssql",
+        "uid": "app-database"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "app-database"
+          },
+          "rawSql": "SELECT StateName AS state, COUNT(*) AS jobs FROM [HangFire].[Job] GROUP BY StateName ORDER BY 2 DESC",
+          "format": "table",
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "pieType": "donut",
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "value",
+            "percent"
+          ],
+          "showLegend": true
+        },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "id": 16
+    },
+    {
+      "type": "timeseries",
+      "title": "Events through the outbox",
+      "description": "Events written to the outbox per hour, by type.",
+      "datasource": {
+        "type": "mssql",
+        "uid": "app-database"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "app-database"
+          },
+          "rawSql": "SELECT DATEADD(hour, DATEDIFF(hour, 0, [OccurredAt]), 0) AS time, [Type] AS metric, COUNT(*) AS value FROM [cw].[OutboxMessages] WHERE $__timeFilter([OccurredAt]) GROUP BY DATEADD(hour, DATEDIFF(hour, 0, [OccurredAt]), 0), [Type] ORDER BY 1",
+          "format": "time_series",
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 70,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": true,
+            "lineInterpolation": "smooth",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "axisBorderShow": false,
+            "barAlignment": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "sum"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 34
+      },
+      "id": 17
+    },
+    {
+      "type": "table",
+      "title": "Open and failed jobs",
+      "description": "",
+      "datasource": {
+        "type": "mssql",
+        "uid": "app-database"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "app-database"
+          },
+          "rawSql": "SELECT TOP 15 CreatedAt AS [Created], JSON_VALUE(InvocationData, '$.Type') AS [Job], JSON_VALUE(InvocationData, '$.Method') AS [Method], StateName AS [State] FROM [HangFire].[Job] WHERE StateName IN ('Failed', 'Processing', 'Enqueued', 'Scheduled') ORDER BY CreatedAt DESC",
+          "format": "table",
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ]
+        }
+      },
+      "transformations": [],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 34
+      },
+      "id": 18
+    }
+  ]
+}
