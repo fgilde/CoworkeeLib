@@ -25,7 +25,7 @@ internal sealed class IdentitySeeder(
         var admin = _options.Users.FirstOrDefault(u => u.IsAdmin)
             ?? throw new InvalidOperationException("The identity seed needs at least one admin user.");
         var setup = await initializer.InitializeAsync(
-            new CompleteSetupRequest(string.Empty, _options.TenantName, admin.Email, admin.Password, admin.FirstName, admin.LastName), cancellationToken);
+            new CompleteSetupRequest(string.Empty, _options.TenantName, admin.Email, admin.Password, admin.FirstName, admin.LastName, _options.Settings), cancellationToken);
         if (!setup.IsSuccess)
         {
             return setup.Error!;

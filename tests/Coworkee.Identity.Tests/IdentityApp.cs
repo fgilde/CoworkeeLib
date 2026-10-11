@@ -41,7 +41,9 @@ public sealed class IdentityApp : PostgresFixture
             seed.Roles.Add(new SeedRole("Editor", "Edits things", [IdentityPermissions.Users.View]));
             seed.Users.Add(new SeedUser("root@seed.test", "Admin#12345", "Root", null, IsAdmin: true));
             seed.Users.Add(new SeedUser("editor@seed.test", "Editor#12345", "Ed") { Roles = ["Editor"] });
+            seed.Settings["Theme.Mode"] = "dark";
         });
+        builder.Services.AddScoped<Coworkee.Application.Setup.ISetupStep, RecordingSetupStep>();
         App = builder.Build();
         App.UseCoworkee();
         await using (var scope = App.Services.CreateAsyncScope())
@@ -125,4 +127,15 @@ public sealed class TestFolderHierarchy : Coworkee.Application.Authorization.IRe
 
     public Task<IReadOnlyList<Guid>> GetInheritanceChainAsync(Guid resourceId, CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<Guid>>(Chains.TryGetValue(resourceId, out var chain) ? chain : [resourceId]);
+}
+
+internal sealed class RecordingSetupStep : Coworkee.Application.Setup.ISetupStep
+{
+    public static CompleteSetupRequest? Last { get; private set; }
+
+    public Task<Coworkee.Core.Results.Error?> ApplyAsync(CompleteSetupRequest request, Guid tenantId, CancellationToken cancellationToken)
+    {
+        Last = request;
+        return Task.FromResult<Coworkee.Core.Results.Error?>(null);
+    }
 }

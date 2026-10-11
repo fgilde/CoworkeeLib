@@ -7,4 +7,7 @@ public sealed class IdentitySeedOptions
     public List<SeedRole> Roles { get; } = [];
 
     public List<SeedUser> Users { get; } = [];
+
+    /// <summary>System wide settings stored with the setup, e.g. ["Theme.Mode"] = "dark".</summary>
+    public Dictionary<string, string?> Settings { get; } = new(StringComparer.Ordinal);
 }

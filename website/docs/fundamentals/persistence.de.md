@@ -67,4 +67,4 @@ await scope.ServiceProvider.GetRequiredService<MyAppDbContext>().Database.Migrat
 await host.Services.SeedCoworkeeIdentityAsync();
 ```
 
-`AddCoworkeeIdentitySeed` ersetzt den Setup-Assistenten: Er legt einmalig den Standard-Mandanten, den Administrator, Rollen mit ihren Berechtigungen und weitere Benutzer an. `ISetupStep`-Implementierungen laufen im selben Setup als Administrator und sind der Ort für Beispieldaten. Siehe [Anmeldung](../security/authentication.md#setup-assistent-oder-seed).
+`AddCoworkeeIdentitySeed` ersetzt den Setup-Assistenten: Er legt einmalig den Standard-Mandanten, den Administrator, Rollen mit ihren Berechtigungen, weitere Benutzer und systemweite Einstellungen (`seed.Settings["Theme.Mode"] = "dark"`) an. `ISetupStep`-Implementierungen laufen im selben Setup als Administrator und sind der Ort für Beispieldaten. Siehe [Anmeldung](../security/authentication.md#setup-assistent-oder-seed).

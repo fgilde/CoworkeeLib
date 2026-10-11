@@ -28,6 +28,7 @@ public sealed class SeedTests(IdentityApp app) : IAsyncLifetime
 
         editorPermissions.ShouldBe([IdentityPermissions.Users.View]);
         rootPermissions.ShouldContain(IdentityPermissions.Permissions.Manage);
+        RecordingSetupStep.Last!.Settings!["Theme.Mode"].ShouldBe("dark");
     }
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;

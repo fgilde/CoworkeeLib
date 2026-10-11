@@ -67,4 +67,4 @@ await scope.ServiceProvider.GetRequiredService<MyAppDbContext>().Database.Migrat
 await host.Services.SeedCoworkeeIdentityAsync();
 ```
 
-`AddCoworkeeIdentitySeed` replaces the setup wizard: it creates the default tenant, the administrator, roles with their permission grants and further users, once. `ISetupStep` implementations run inside the same setup, as the administrator, and are the place for sample data. See [Authentication](../security/authentication.md#setup-wizard-or-seed).
+`AddCoworkeeIdentitySeed` replaces the setup wizard: it creates the default tenant, the administrator, roles with their permission grants, further users and system wide settings (`seed.Settings["Theme.Mode"] = "dark"`), once. `ISetupStep` implementations run inside the same setup, as the administrator, and are the place for sample data. See [Authentication](../security/authentication.md#setup-wizard-or-seed).
