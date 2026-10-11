@@ -21,6 +21,11 @@ internal static class SignInBox
             body.Add("The Keycloak button takes the same users and passwords.");
         }
 
+        if (info is { Tools.Count: > 0, Administrator: { } admin })
+        {
+            body.Add($"{string.Join(" and ", info.Tools)} (Aspire dashboard) take {admin.Email}{(info.Keycloak ? " and Keycloak" : string.Empty)} too.");
+        }
+
         body.Add("Development passwords only, also in LOGIN.md; change them before you deploy.");
         var width = body.Max(l => l.Length);
         return

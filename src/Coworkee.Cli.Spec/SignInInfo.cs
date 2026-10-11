@@ -22,8 +22,17 @@ public sealed partial record SignInInfo(string Name, IReadOnlyList<SignInUser> U
 
         var name = Path.GetFileName(Path.GetDirectoryName(users)!)[..^".Migrations".Length];
         var appHost = Path.Combine(appFolder, "src", $"{name}.AppHost", "AppHost.cs");
-        return new SignInInfo(name, Parse(File.ReadAllText(users)), File.Exists(appHost) && File.ReadAllText(appHost).Contains("UseKeycloak", StringComparison.Ordinal));
+        var code = File.Exists(appHost) ? File.ReadAllText(appHost) : string.Empty;
+        return new SignInInfo(name, Parse(File.ReadAllText(users)), code.Contains("UseKeycloak", StringComparison.Ordinal))
+        {
+            Tools = [.. new[] { ("UseGrafana", "Grafana"), ("UseWebDataStudio", "WebDataStudio") }.Where(t => code.Contains(t.Item1, StringComparison.Ordinal)).Select(t => t.Item2)],
+        };
     }
+
+    /// <summary>Development tools of the app host (Grafana, WebDataStudio); they take the administrator's sign-in.</summary>
+    public IReadOnlyList<string> Tools { get; init; } = [];
+
+    public SignInUser? Administrator => Users.FirstOrDefault(u => u.IsAdmin);
 
     public static IReadOnlyList<SignInUser> Parse(string demoUsers) =>
     [

@@ -2,7 +2,7 @@
 using Coworkee.Aspire.Settings;
 
 #endif
-#if (keycloak)
+#if (keycloak || grafana || webDataStudio)
 using MyApp.Migrations;
 
 #endif
@@ -28,8 +28,9 @@ var app = builder.AddCoworkeeApp("myapp", options =>
     options.UseSqlite();
 #endif
 #if (grafana || webDataStudio)
-    // Grafana and WebDataStudio sign in with the administrator of DemoSeed.cs (and through Keycloak when it is on)
-    options.Administrator = new("admin@myapp.local", "Cw1!SEED_PASSWORD");
+    // Grafana and WebDataStudio sign in with the app's administrator (LOGIN.md), and through Keycloak when it is on
+    var administrator = DemoUsers.All.First(u => u.IsAdmin);
+    options.Administrator = new(administrator.Email, administrator.Password);
 #endif
 #if (grafana)
     options.UseGrafana();
@@ -39,7 +40,7 @@ var app = builder.AddCoworkeeApp("myapp", options =>
 #endif
 #if (keycloak)
     // the same users and passwords as the app's seed (LOGIN.md)
-    options.UseKeycloak(keycloak => keycloak.Users.AddRange(DemoUsers.All.Select(u => new KeycloakUser(u.Email, u.FirstName, u.LastName ?? "COWORKEE_APP_TITLE") { Password = u.Password })));
+    options.UseKeycloak(keycloak => keycloak.Users.AddRange(DemoUsers.All.Select(u => new KeycloakUser(u.Email, u.FirstName, u.LastName ?? "COWORKEE_APP_TITLE") { Password = u.Password, Roles = u.IsAdmin ? ["Administrator", .. u.Roles ?? []] : u.Roles ?? [] })));
 #endif
 });
 #if (storage == "azureBlob")

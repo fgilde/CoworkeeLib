@@ -14,4 +14,21 @@ The *Keycloak* button on the sign-in page takes the same users with the same pas
 Visitors can also create an account on the sign-in page (setting `Account.AllowRegistration`).
 
 <!--#endif -->
+<!--#if (grafana || webDataStudio) -->
+## Development tools
+
+The administrator signs in with the same email and password to the tools the app host starts next to the app (open them from the Aspire dashboard):
+
+<!--#if (grafana) -->
+- *grafana*: dashboards over the metrics, logs and traces of every service and the app database (folder *COWORKEE_APP_TITLE*).
+<!--#endif -->
+<!--#if (webDataStudio) -->
+- *webdatastudio*: the app database in the browser.
+<!--#endif -->
+<!--#if (keycloak) -->
+
+Both also offer the *Keycloak* button; users with the realm role *Administrator* are administrators there, everybody else may look.
+<!--#endif -->
+
+<!--#endif -->
 The users and passwords come from `src/MyApp.Migrations/DemoUsers.cs` and are seeded on the first start of an empty database. They are for development only: change them before you deploy anywhere.

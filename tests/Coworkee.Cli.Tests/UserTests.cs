@@ -96,6 +96,9 @@ public sealed class UserTests(TemplateFixture template)
         box[0].ShouldStartWith("+-- Sign in ");
         box.ShouldContain(l => l.Contains("grace@shop.test", StringComparison.Ordinal) && l.Contains("Grace-2026!", StringComparison.Ordinal));
         box.ShouldContain(l => l.Contains("Keycloak button", StringComparison.Ordinal));
+        info.Tools.ShouldBe(["Grafana", "WebDataStudio"]);
+        box.ShouldContain(l => l.Contains("Grafana and WebDataStudio (Aspire dashboard) take admin@shop.local and Keycloak too.", StringComparison.Ordinal));
+        login.ShouldContain("*grafana*");
         box.Select(l => l.Length).Distinct().Count().ShouldBe(1);
         File.ReadAllText(Path.Combine(app, "src", "Shop.AppHost", "AppHost.cs")).ShouldContain("DemoUsers.All.Select(u => new KeycloakUser(");
     }
@@ -109,6 +112,7 @@ public sealed class UserTests(TemplateFixture template)
         login.ShouldNotContain("Keycloak");
         login.ShouldNotContain("create an account");
         SignInInfo.Read(app)!.Keycloak.ShouldBeFalse();
+        login.ShouldContain("*webdatastudio*");
         TemplateTests.ShouldHaveNoLeftovers(app);
     }
 
