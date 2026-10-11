@@ -37,14 +37,13 @@ internal static class FacetRanges
         var whole = type != typeof(decimal) && type != typeof(double) && type != typeof(float);
         // round widths up to cents, so bucket bounds read like prices instead of 28 digits
         var width = whole ? Math.Max(1, Math.Ceiling((max - min + 1) / buckets)) : Math.Max(0.01m, Math.Ceiling((max - min) / buckets * 100) / 100);
-        var counts = await values.Where(v => v != null).GroupBy(v => Math.Floor((v!.Value - min) / width)).Select(g => new { g.Key, Count = g.Count() })
-            .ToListAsync(cancellationToken);
         var path = group.ValuePath ?? group.Field;
         var last = (int)Math.Min(buckets - 1, Math.Floor((max - min) / width));
+        var counts = await CountAsync(values, [.. Enumerable.Range(1, last).Select(i => min + (i * width))], cancellationToken);
         var options = Enumerable.Range(0, last + 1).Select(i =>
         {
             var (from, to) = (min + (i * width), min + ((i + 1) * width));
-            var count = counts.Where(c => i == last ? c.Key >= i : c.Key == i).Sum(c => c.Count);
+            var count = counts[i];
             var upper = i == last ? $"{path} le {Text(max)}" : $"{path} lt {Text(to)}";
             return Bucket($"({path} ge {Text(from)} and {upper})", Text(from), Text(i == last ? max : to), count, "number");
         });
@@ -62,30 +61,48 @@ internal static class FacetRanges
 
         var (first, lastDay) = (Day(min), Day(max));
         var unit = (lastDay - first).TotalDays <= 45 ? "day" : (lastDay - first).TotalDays <= 3 * 366 ? "month" : "year";
-        var value = Expression.Parameter(typeof(TValue?), "v");
-        var date = Expression.Property(value, nameof(Nullable<int>.Value));
-        Expression key = Expression.Multiply(Expression.Property(date, "Year"), Expression.Constant(10000));
-        key = unit == "year" ? key : Expression.Add(key, Expression.Multiply(Expression.Property(date, "Month"), Expression.Constant(100)));
-        key = unit == "day" ? Expression.Add(key, Expression.Property(date, "Day")) : key;
-        var counts = await values.Where(Expression.Lambda<Func<TValue?, bool>>(Expression.NotEqual(value, Expression.Constant(null, typeof(TValue?))), value))
-            .GroupBy(Expression.Lambda<Func<TValue?, int>>(key, value))
-            .Select(g => new { g.Key, Count = g.Count() })
-            .ToListAsync(cancellationToken);
-
         var path = group.ValuePath ?? group.Field;
         var dateOnly = typeof(TValue) == typeof(DateOnly);
         var start = unit == "day" ? first : unit == "month" ? new DateTime(first.Year, first.Month, 1) : new DateTime(first.Year, 1, 1);
-        var options = new List<FacetOptionDto>();
+        var starts = new List<DateTime>();
         for (var from = start; from <= lastDay; from = Next(from, unit))
         {
-            var to = Next(from, unit);
-            var bucket = from.Year * 10000 + (unit == "year" ? 0 : from.Month * 100) + (unit == "day" ? from.Day : 0);
-            var count = counts.FirstOrDefault(c => c.Key == bucket)?.Count ?? 0;
-            options.Add(Bucket($"({path} ge {Literal(from, dateOnly)} and {path} lt {Literal(to, dateOnly)})", Iso(from), Iso(to), count, unit));
+            starts.Add(from);
         }
+
+        var counts = await CountAsync(values, [.. starts.Skip(1).Select(Value<TValue>)], cancellationToken);
+        var options = starts.Select((from, i) =>
+            Bucket($"({path} ge {Literal(from, dateOnly)} and {path} lt {Literal(Next(from, unit), dateOnly)})", Iso(from), Iso(Next(from, unit)), counts[i], unit)).ToList();
 
         return group with { Options = options, Min = Iso(first), Max = Iso(lastDay) };
     }
+
+    // buckets by comparisons only (CASE WHEN v < b1 THEN 0 WHEN v < b2 THEN 1 ...): every provider translates them, unlike FLOOR or date parts
+    private static async Task<int[]> CountAsync<TValue>(IQueryable<TValue?> values, IReadOnlyList<TValue> uppers, CancellationToken cancellationToken)
+        where TValue : struct
+    {
+        var value = Expression.Parameter(typeof(TValue?), "v");
+        Expression index = Expression.Constant(uppers.Count);
+        for (var i = uppers.Count - 1; i >= 0; i--)
+        {
+            index = Expression.Condition(Expression.LessThan(value, Expression.Constant(uppers[i], typeof(TValue?))), Expression.Constant(i), index);
+        }
+
+        var counts = await values.Where(Expression.Lambda<Func<TValue?, bool>>(Expression.NotEqual(value, Expression.Constant(null, typeof(TValue?))), value))
+            .GroupBy(Expression.Lambda<Func<TValue?, int>>(index, value))
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+        var result = new int[uppers.Count + 1];
+        foreach (var count in counts)
+        {
+            result[count.Key] = count.Count;
+        }
+
+        return result;
+    }
+
+    private static TValue Value<TValue>(DateTime day) => (TValue)(object)(typeof(TValue) == typeof(DateTimeOffset) ? new DateTimeOffset(day, TimeSpan.Zero)
+        : typeof(TValue) == typeof(DateOnly) ? DateOnly.FromDateTime(day) : DateTime.SpecifyKind(day, DateTimeKind.Utc));
 
     private static FacetOptionDto Bucket(string odata, string from, string to, int count, string unit) =>
         new(JsonSerializer.SerializeToElement(from), from, count > 0, count, odata) { Meta = new Dictionary<string, string> { ["from"] = from, ["to"] = to, ["unit"] = unit } };

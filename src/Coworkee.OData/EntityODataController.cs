@@ -33,5 +33,7 @@ public class EntityODataController<TEntity> : GenericODataController<TEntity>, I
         return rows;
     }
 
+    protected override FacetBuilderOptions GetFacetBuilderOptions() => FacetLiterals.Options();
+
     protected override IQueryable<TEntity> Queryable() => _visible ?? throw new InvalidOperationException("The query is prepared before the action runs.");
 }

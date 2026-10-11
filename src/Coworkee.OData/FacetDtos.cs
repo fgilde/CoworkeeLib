@@ -21,7 +21,11 @@ internal static class FacetDtos
         {
             FacetValueKind.Enum => group.Options.Select(o => EnumOption(group, valueType, o)),
             FacetValueKind.Flags => FlagOptions(group, valueType),
-            FacetValueKind.Boolean => group.Options.Select(o => Option(o) with { Label = bool.TryParse(o.Value, out var yes) && yes ? "Yes" : "No" }),
+            FacetValueKind.Boolean => group.Options.Select(o => Option(o) with
+            {
+                Value = JsonSerializer.SerializeToElement(FacetLiterals.Flag(o.Value) ? "true" : "false"),
+                Label = FacetLiterals.Flag(o.Value) ? "Yes" : "No",
+            }),
             _ => group.Options.Select(Option),
         };
         return new FacetGroupDto(group.Key, group.Label, group.Field, (FacetKind)(int)group.Type, (FacetOperator)(int)group.GroupOperator, [.. options], group.MultiSelect, group.Order)
