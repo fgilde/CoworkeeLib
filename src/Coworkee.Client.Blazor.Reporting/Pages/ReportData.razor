@@ -4,7 +4,7 @@
 <PageHeader Title="@(_source?.Label ?? EntitySet)" Description="Rows behind a report widget, with its filter as facet." />
 @if (_source is not null && _rows is not null)
 {
-    <CoworkeeDataTable T="DynamicRow" EntitySet="@_source.EntitySet" DataSource="_rows" Exportable="false" Filterable="false" SearchFields="SearchFields" data-testid="report-data">
+    <CoworkeeDataTable T="DynamicRow" EntitySet="@_source.EntitySet" DataSource="_rows" Exportable="false" ColumnFilters="false" SearchFields="SearchFields">
         <Columns>
             @for (var i = 0; i < Columns.Count; i++)
             {

@@ -82,6 +82,15 @@
                         <MudSelectItem Value="field.Path">@field.Label</MudSelectItem>
                     }
                 </MudSelect>
+                <div class="cw-settings-row">
+                    <MudSelect T="string" Value="query.OrderBy" ValueChanged="v => Change(() => query.OrderBy = v)" Label="@L["Sort by"]" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true">
+                        @foreach (var field in Fields)
+                        {
+                            <MudSelectItem Value="field.Path">@field.Label</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudSwitch T="bool" Value="query.Descending" ValueChanged="v => Change(() => query.Descending = v)" Color="Color.Primary" Label="@L["Descending"]" />
+                </div>
             }
 
             <MudSelect T="string" Value="query.DateField" ValueChanged="v => Change(() => query.DateField = v)" Label="@L["Date for the report's date range"]" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true">

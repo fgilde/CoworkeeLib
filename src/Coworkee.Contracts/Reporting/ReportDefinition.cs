@@ -105,6 +105,9 @@ public sealed class WidgetQuery
 
     /// <summary>Columns of tables, OData paths like "Customer/Name".</summary>
     public List<string> Columns { get; set; } = [];
+
+    /// <summary>The column tables sort by first, <see cref="Descending"/> or not.</summary>
+    public string? OrderBy { get; set; }
 }
 
 public sealed record ReportGroupBy(string Field, DateBucket Bucket = DateBucket.None);

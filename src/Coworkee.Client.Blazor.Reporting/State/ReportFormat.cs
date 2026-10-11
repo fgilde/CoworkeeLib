@@ -26,7 +26,7 @@ public static partial class ReportFormat
     }
 
     /// <summary>A JavaScript formatter for chart axes and tooltips, with Intl.NumberFormat in the user's culture.</summary>
-    public static string Script(WidgetOptions options, CultureInfo? culture = null)
+    public static string Script(WidgetOptions options, CultureInfo? culture = null, bool compact = false)
     {
         var locale = (culture ?? CultureInfo.CurrentCulture).Name is { Length: > 0 } name ? name : "en";
         var style = options.Format switch
@@ -37,6 +37,13 @@ public static partial class ReportFormat
             NumberFormat.Integer => "{maximumFractionDigits:0}",
             _ => "{maximumFractionDigits:2}",
         };
+        if (compact && options.Format != NumberFormat.Percent)
+        {
+            style = options.Format == NumberFormat.Currency
+                ? $"{{style:'currency',currency:'{Currency(options)}',notation:'compact',maximumFractionDigits:1}}"
+                : "{notation:'compact',maximumFractionDigits:1}";
+        }
+
         var value = options.Format == NumberFormat.Percent ? "v/100" : "v";
         return $"function(v){{ return v == null || isNaN(v) ? '' : new Intl.NumberFormat('{locale}',{style}).format({value}); }}";
     }
@@ -60,8 +67,8 @@ public static partial class ReportFormat
             {
                 DateBucket.Year => day.Year.ToString(culture),
                 DateBucket.Quarter => $"Q{(day.Month + 2) / 3} {day.Year}",
-                DateBucket.Month => day.ToString("MMM yyyy", culture),
-                DateBucket.Week => localize("Week") + " " + ISOWeek.GetWeekOfYear(day.ToDateTime(TimeOnly.MinValue)) + " " + ISOWeek.GetYear(day.ToDateTime(TimeOnly.MinValue)),
+                DateBucket.Month => day.ToString("MMM yy", culture),
+                DateBucket.Week => day.ToString("d MMM yy", culture),
                 _ => day.ToString("d", culture),
             };
         }
@@ -74,7 +81,12 @@ public static partial class ReportFormat
         return field?.Kind == ReportFieldKind.Enum ? localize(Humanize(key.Label)) : key.Label;
     }
 
-    public static string Humanize(string name) => Words().Replace(name, " $1").Trim();
+    /// <summary>"Last12Months" becomes "Last 12 months", "InProgress" "In progress".</summary>
+    public static string Humanize(string name)
+    {
+        var words = Words().Split(name).Where(w => w.Length > 0).ToList();
+        return string.Join(' ', words.Select((w, i) => i == 0 ? w : w.ToLowerInvariant()));
+    }
 
     // ISO 4217 codes only: the code ends up in a script string
     private static string Currency(WidgetOptions options) => CurrencyCode().IsMatch(options.Currency ?? string.Empty) ? options.Currency!.ToUpperInvariant() : "EUR";
@@ -100,7 +112,7 @@ public static partial class ReportFormat
         return suffix is null ? null : scaled.ToString(Math.Abs(scaled) >= 100 ? "N0" : "N1", culture) + suffix + (currency is null ? string.Empty : " " + currency);
     }
 
-    [GeneratedRegex("(?<=[a-z])([A-Z])")]
+    [GeneratedRegex("(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Za-z])(?=[0-9])")]
     private static partial Regex Words();
 
     [GeneratedRegex("^[A-Za-z]{3}$")]

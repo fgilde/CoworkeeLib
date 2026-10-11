@@ -40,8 +40,8 @@ else
                 @if (_editing)
                 {
                     <MudMenu Dense="Density.Dense" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" MaxHeight="520" data-testid="widget-palette">
-                        <ActivatorContent>
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">@L["Add widget"]</MudButton>
+                        <ActivatorContent Context="menu">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@(() => menu.ToggleAsync())" data-testid="add-widget">@L["Add widget"]</MudButton>
                         </ActivatorContent>
                         <ChildContent>
                             @foreach (var preset in WidgetPresets.All)

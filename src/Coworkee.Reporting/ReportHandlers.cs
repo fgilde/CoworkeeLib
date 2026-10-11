@@ -184,7 +184,7 @@ internal sealed class ReportHandlers(CoworkeeDbContext db, ReportAccess access, 
                     : error with { Message = $"{widget.Title ?? widget.Id}: {error.Message}" };
             }
 
-            foreach (var column in widget.Query.Columns.Concat(widget.Query.DateField is { } date ? [date] : []))
+            foreach (var column in widget.Query.Columns.Concat(new[] { widget.Query.DateField, widget.Query.OrderBy }.OfType<string>()))
             {
                 if (await queries.CheckAsync(new ReportQueryRequest(widget.Query.EntitySet, GroupBy: new ReportGroupBy(column)), cancellationToken) is not null)
                 {

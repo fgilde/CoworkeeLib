@@ -5,7 +5,7 @@
         @if (_source is not null)
         {
             <CoworkeeDataTable @key="_generation" T="DynamicRow" EntitySet="@Query!.EntitySet" DataSource="_source" Filter="@Filter" Facets="true" UrlState="false" SavedViews="false"
-                               Exportable="false" Filterable="false" PageSize="25" StateKey="@($"report-{Widget.Id}")" SearchFields="SearchFields">
+                               Exportable="false" ColumnFilters="false" PageSize="25" StateKey="@($"report-{Widget.Id}")" SearchFields="SearchFields">
                 <Columns>
                     @for (var i = 0; i < Columns.Count; i++)
                     {

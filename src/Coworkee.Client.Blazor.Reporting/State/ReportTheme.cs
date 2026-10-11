@@ -45,7 +45,7 @@ public sealed class ReportTheme : IDisposable
         try
         {
             await using var module = await _js.InvokeAsync<IJSObjectReference>("import", ReportGrid.Module);
-            return await module.InvokeAsync<ChartPalette>("palette");
+            return await module.InvokeAsync<ChartPalette?>("palette") ?? ChartPalette.Fallback;
         }
         catch (JSException)
         {

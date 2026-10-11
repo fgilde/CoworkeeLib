@@ -38,6 +38,12 @@ public partial class TableWidget
 
     private string? OrderBy => _sort is null ? null : $"{_sort} {(_descending ? "desc" : "asc")}";
 
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        (_sort, _descending) = (Query?.OrderBy, Query?.Descending ?? false);
+    }
+
     protected override async Task LoadAsync(CancellationToken cancellationToken)
     {
         if (Query is not { } query || Columns.Count == 0)

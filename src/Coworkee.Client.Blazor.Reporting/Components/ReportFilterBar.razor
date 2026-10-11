@@ -1,7 +1,7 @@
 <div class="cw-report-filters" data-testid="report-filters">
     <MudMenu Dense="Density.Dense" AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft" data-testid="date-range">
-        <ActivatorContent>
-            <MudButton Variant="@(State.DateRange is null ? Variant.Outlined : Variant.Filled)" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Outlined.DateRange"
+        <ActivatorContent Context="menu">
+            <MudButton Variant="@(State.DateRange is null ? Variant.Outlined : Variant.Filled)" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Outlined.DateRange" OnClick="@(() => menu.ToggleAsync())"
                        EndIcon="@Icons.Material.Filled.ArrowDropDown" Class="mr-2 mb-2">@RangeLabel</MudButton>
         </ActivatorContent>
         <ChildContent>
