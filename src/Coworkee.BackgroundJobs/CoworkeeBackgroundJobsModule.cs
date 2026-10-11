@@ -5,7 +5,9 @@ using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Jobs;
 using Coworkee.Core.Modularity;
 using Hangfire.Dashboard;
+using Hangfire.InMemory;
 using Hangfire.PostgreSql;
+using Hangfire.SqlServer;
 using Hangfire;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -21,7 +23,9 @@ public sealed class CoworkeeBackgroundJobsModule : CoworkeeModule, IWebModule
     public override void ConfigureServices(ModuleServiceContext context)
     {
         var services = context.Services;
-        var runServer = context.Configuration.GetSection(BackgroundJobOptions.Section).Get<BackgroundJobOptions>()?.RunServer ?? true;
+        var database = DatabaseProviders.Normalize(context.Configuration[DatabaseOptions.ProviderKey]);
+        // in-memory jobs (SQLite) live in the process that enqueued them, so every process runs its own server
+        var runServer = (context.Configuration.GetSection(BackgroundJobOptions.Section).Get<BackgroundJobOptions>()?.RunServer ?? true) || database == DatabaseProviders.Sqlite;
         services.Configure<BackgroundJobOptions>(context.Configuration.GetSection(BackgroundJobOptions.Section));
         services.AddSingleton<IPermissionDefinitionContributor, JobsPermissionDefinitions>();
         services.AddScoped<IBackgroundJobs, HangfireBackgroundJobs>();
@@ -32,12 +36,24 @@ public sealed class CoworkeeBackgroundJobsModule : CoworkeeModule, IWebModule
             var options = provider.GetRequiredService<IOptions<BackgroundJobOptions>>().Value;
             var connectionString = provider.GetRequiredService<IConfiguration>().GetConnectionString(options.ConnectionStringName)
                 ?? throw new InvalidOperationException($"Connection string '{options.ConnectionStringName}' for background jobs is missing.");
-            config.UseSimpleAssemblyNameTypeSerializer()
-                .UseRecommendedSerializerSettings()
-                .UsePostgreSqlStorage(
+            config.UseSimpleAssemblyNameTypeSerializer().UseRecommendedSerializerSettings();
+            if (database == DatabaseProviders.SqlServer)
+            {
+                config.UseSqlServerStorage(connectionString, new SqlServerStorageOptions { SchemaName = "hangfire", QueuePollInterval = options.PollingInterval });
+            }
+            else if (database == DatabaseProviders.Sqlite)
+            {
+                // ponytail: SQLite keeps jobs in memory, queued and delayed jobs are lost on restart; fine for development, Postgres or SQL Server for production
+                config.UseInMemoryStorage();
+            }
+            else
+            {
+                config.UsePostgreSqlStorage(
                     storage => storage.UseNpgsqlConnection(connectionString),
-                    new PostgreSqlStorageOptions { SchemaName = "hangfire", QueuePollInterval = options.PollingInterval })
-                .UseFilter(new AutomaticRetryAttribute { Attempts = Math.Max(0, options.Attempts - 1), DelaysInSeconds = options.RetryDelaysInSeconds });
+                    new PostgreSqlStorageOptions { SchemaName = "hangfire", QueuePollInterval = options.PollingInterval });
+            }
+
+            config.UseFilter(new AutomaticRetryAttribute { Attempts = Math.Max(0, options.Attempts - 1), DelaysInSeconds = options.RetryDelaysInSeconds });
         });
         GlobalJobFilters.Filters.Remove(typeof(AutomaticRetryAttribute));
 

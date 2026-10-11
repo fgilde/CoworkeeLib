@@ -12,7 +12,6 @@ using Coworkee.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Npgsql;
 
 namespace Coworkee.Settings;
 
@@ -72,11 +71,12 @@ public sealed class DatabaseConfigurationSource(string connectionStringName, Tim
         // the connection string comes from the other sources (appsettings, environment, Aspire, test hosts that add theirs later)
         if (builder is IConfiguration configured)
         {
-            return new DatabaseConfigurationProvider(() => configured.GetConnectionString(connectionStringName), reloadInterval);
+            return new DatabaseConfigurationProvider(() => (CoworkeeDatabase.Provider(configured), configured.GetConnectionString(connectionStringName)), reloadInterval);
         }
 
-        var connectionString = new ConfigurationBuilder().AddRange(builder.Sources.Where(s => s != this)).Build().GetConnectionString(connectionStringName);
-        return new DatabaseConfigurationProvider(() => connectionString, reloadInterval);
+        var others = new ConfigurationBuilder().AddRange(builder.Sources.Where(s => s != this)).Build();
+        var database = (CoworkeeDatabase.Provider(others), others.GetConnectionString(connectionStringName));
+        return new DatabaseConfigurationProvider(() => database, reloadInterval);
     }
 }
 
@@ -95,12 +95,12 @@ file static class ConfigurationBuilderRange
 
 public sealed class DatabaseConfigurationProvider : ConfigurationProvider, IDisposable
 {
-    private readonly Func<string?> _connectionString;
+    private readonly Func<(string Provider, string? ConnectionString)> _database;
     private readonly Timer _timer;
 
-    internal DatabaseConfigurationProvider(Func<string?> connectionString, TimeSpan reloadInterval)
+    internal DatabaseConfigurationProvider(Func<(string Provider, string? ConnectionString)> database, TimeSpan reloadInterval)
     {
-        _connectionString = connectionString;
+        _database = database;
         _timer = new Timer(_ => Refresh(), null, reloadInterval, reloadInterval);
     }
 
@@ -120,10 +120,11 @@ public sealed class DatabaseConfigurationProvider : ConfigurationProvider, IDisp
 
     private Dictionary<string, string?>? Read()
     {
+        string provider;
         string? connectionString;
         try
         {
-            connectionString = _connectionString();
+            (provider, connectionString) = _database();
         }
         catch (InvalidOperationException)
         {
@@ -138,9 +139,10 @@ public sealed class DatabaseConfigurationProvider : ConfigurationProvider, IDisp
         try
         {
             // never let a slow database hold up the start of a service
-            using var connection = new NpgsqlConnection(new NpgsqlConnectionStringBuilder(connectionString) { Timeout = 5, CommandTimeout = 5 }.ConnectionString);
+            using var connection = CoworkeeDatabase.CreateConnection(provider, connectionString, TimeSpan.FromSeconds(5));
             connection.Open();
-            using var command = new NpgsqlCommand("""select "Key", "Value" from cw."ConfigurationEntries" """, connection);
+            using var command = connection.CreateCommand();
+            command.CommandText = $"""select "Key", "Value" from {CoworkeeDatabase.Table(provider, "cw", "ConfigurationEntries")}""";
             using var reader = command.ExecuteReader();
             var values = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
             while (reader.Read())
@@ -150,7 +152,7 @@ public sealed class DatabaseConfigurationProvider : ConfigurationProvider, IDisp
 
             return values;
         }
-        catch (Exception exception) when (exception is NpgsqlException or InvalidOperationException or TimeoutException or ArgumentException)
+        catch (Exception exception) when (exception is System.Data.Common.DbException or InvalidOperationException or TimeoutException or ArgumentException)
         {
             // not migrated yet, or the database is away for a moment: keep what we have
             return null;

@@ -6,6 +6,8 @@
     <ProjectReference Include="..\Coworkee.AspNetCore\Coworkee.AspNetCore.csproj" />
     <PackageReference Include="Hangfire.AspNetCore" />
     <PackageReference Include="Hangfire.PostgreSql" />
+    <PackageReference Include="Hangfire.SqlServer" />
+    <PackageReference Include="Hangfire.InMemory" />
     <PackageReference Include="Newtonsoft.Json" />
   </ItemGroup>
 </Project>
