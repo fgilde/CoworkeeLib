@@ -56,7 +56,24 @@ Card, Split or Slide, drawn as small animated sketches of the real [sign-in page
 
 ### Architecture
 
-Presets for the app type (Minimal, Business app, Collaboration, SaaS platform, Everything) set the modules and infrastructure; then every option of `coworkee options` can be changed: description, pros, cons, when to use it, the package and the switch of `coworkee new`. *General* also holds the languages (check boxes for the shipped ones, none checked offers all), the default language, the color mode and self registration; *Tooling* adds a GitHub Actions workflow and a dev container. The panel on the right lists what the solution will contain: projects, the containers of the Aspire app host (Postgres or SQL Server, Redis, Mailpit, Elasticsearch, RabbitMQ, Azurite, Keycloak, Ollama) and the Coworkee packages.
+Presets for the app type set the modules and the infrastructure, each with its trade-off in the text:
+
+| Preset | Database | AI provider | Redis | For |
+|---|---|---|---|---|
+| Minimal | Postgres | (no assistant) | off | The shell, one instance; add modules later |
+| Business app | Postgres | (no assistant) | on | Audit log, files, backups, client entities, CI |
+| Collaboration | Postgres | Anthropic | on | Chat, comments and the assistant across instances |
+| SaaS platform | Postgres | Azure OpenAI | on | Tenants, editions, Keycloak, RabbitMQ, Azure Blob |
+| Local demo | SQLite | Ollama | off | Offline on one machine without keys; one writer at a time, no backups |
+| Everything | Postgres | Ollama | on | Every module and every container |
+
+**Where it runs** puts the three choices that decide how the app runs first, each with what it means right below:
+
+- **Database**: PostgreSQL (every module, backups from the admin pages), SQL Server (no backups from the admin pages, a heavy container) or SQLite (no container, one file under `.data`, one writer at a time, background jobs in memory, no backups). Off Postgres, the *Database backups* module is greyed out and left out of the app.
+- **AI provider**: Anthropic, OpenAI, Azure OpenAI, Ollama or an OpenAI compatible endpoint. It only counts with the *AI assistant* module; without it the choice is greyed out. Ollama adds a container that pulls a local model; the others take their key from the user secrets of the app host (`Parameters:ai-apikey`, plus `ai-endpoint` and `ai-model` for Azure OpenAI and compatible endpoints) or later from the AI settings of the app.
+- **Redis**: SignalR backplane, shared presence, caches and sign-in sessions across instances; without it everything stays in each process, which is fine for one instance.
+
+Then every other option of `coworkee options` can be changed: description, pros, cons, when to use it, the package and the switch of `coworkee new`. *General* also holds the languages (check boxes for the shipped ones, none checked offers all), the default language, the color mode and self registration; *Tooling* adds a GitHub Actions workflow and a dev container. The panel on the right lists what the solution will contain: projects, the containers of the Aspire app host (PostgreSQL or SQL Server, Redis, Mailpit, Elasticsearch, RabbitMQ, Azurite, Keycloak, Ollama) and the Coworkee packages.
 
 ![Architecture](../assets/screenshots/studio-architecture-dark.webp)
 
@@ -68,7 +85,7 @@ Feature modules with their entities: name, plural, client entity, DTO mapping an
 
 ### Review
 
-The summary, the validation with the rules of the CLI, the spec as JSON (copy or save it) and the equivalent command lines: `coworkee new --spec` with everything, and `coworkee new` with switches for the same app without entities. Logo and media from other folders are copied next to the spec when you save it, because the CLI reads files of a spec only from its folder.
+The summary (including database, AI provider, Redis, the containers, color mode, self registration and tooling), the validation with the rules of the CLI, the spec as JSON (copy or save it) and the equivalent command lines: `coworkee new --spec` with everything, and `coworkee new` with switches for the same app without entities. Logo and media from other folders are copied next to the spec when you save it, because the CLI reads files of a spec only from its folder.
 
 ![Review](../assets/screenshots/studio-review-light.webp)
 

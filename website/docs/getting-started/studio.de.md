@@ -56,7 +56,24 @@ Karte, Split oder Slide, gezeichnet als kleine animierte Skizzen der echten [Anm
 
 ### Architektur
 
-Vorlagen für den App-Typ (Minimal, Business-App, Teamarbeit, SaaS-Plattform, Alles) setzen Module und Infrastruktur; danach lässt sich jede Option von `coworkee options` ändern: Beschreibung, Vor- und Nachteile, wann sie passt, das Paket und der Schalter von `coworkee new`. *Allgemein* enthält auch die Sprachen (Kästchen für die mitgelieferten, keines angekreuzt bietet alle an), die Standardsprache, den Farbmodus und die Selbstregistrierung; *Werkzeuge* legt einen GitHub-Actions-Workflow und einen Dev-Container an. Das Panel rechts zeigt, was die Solution enthalten wird: Projekte, die Container des Aspire-AppHosts (Postgres oder SQL Server, Redis, Mailpit, Elasticsearch, RabbitMQ, Azurite, Keycloak, Ollama) und die Coworkee-Pakete.
+Vorlagen für den App-Typ setzen Module und Infrastruktur, jede mit ihrem Kompromiss im Text:
+
+| Vorlage | Datenbank | KI-Anbieter | Redis | Für |
+|---|---|---|---|---|
+| Minimal | Postgres | (kein Assistent) | aus | Die Oberfläche, eine Instanz; Module kommen später |
+| Business-App | Postgres | (kein Assistent) | an | Audit-Log, Dateien, Backups, Client-Entities, CI |
+| Teamarbeit | Postgres | Anthropic | an | Chat, Kommentare und der Assistent über Instanzen hinweg |
+| SaaS-Plattform | Postgres | Azure OpenAI | an | Mandanten, Editionen, Keycloak, RabbitMQ, Azure Blob |
+| Lokale Demo | SQLite | Ollama | aus | Offline auf einem Rechner ohne Schlüssel; nur ein Schreiber gleichzeitig, keine Backups |
+| Alles | Postgres | Ollama | an | Jedes Modul und jeder Container |
+
+**Wo sie läuft** stellt die drei Entscheidungen nach vorn, die bestimmen, wie die App läuft, jede mit ihrer Bedeutung direkt darunter:
+
+- **Datenbank**: PostgreSQL (jedes Modul, Backups über die Admin-Seiten), SQL Server (keine Backups über die Admin-Seiten, ein schwerer Container) oder SQLite (kein Container, eine Datei unter `.data`, nur ein Schreiber gleichzeitig, Hintergrundjobs im Speicher, keine Backups). Ohne Postgres ist das Modul *Datenbank-Backups* ausgegraut und nicht Teil der App.
+- **KI-Anbieter**: Anthropic, OpenAI, Azure OpenAI, Ollama oder ein OpenAI-kompatibler Endpunkt. Er zählt nur mit dem Modul *KI-Assistent*; ohne ist die Auswahl ausgegraut. Ollama bringt einen Container mit, der ein lokales Modell lädt; die anderen nehmen ihren Schlüssel aus den User Secrets des AppHosts (`Parameters:ai-apikey`, dazu `ai-endpoint` und `ai-model` bei Azure OpenAI und kompatiblen Endpunkten) oder später aus den KI-Einstellungen der App.
+- **Redis**: SignalR-Backplane, gemeinsame Anwesenheit, Caches und Anmeldesitzungen über Instanzen hinweg; ohne bleibt alles im jeweiligen Prozess, was für eine Instanz reicht.
+
+Danach lässt sich jede weitere Option von `coworkee options` ändern: Beschreibung, Vor- und Nachteile, wann sie passt, das Paket und der Schalter von `coworkee new`. *Allgemein* enthält auch die Sprachen (Kästchen für die mitgelieferten, keines angekreuzt bietet alle an), die Standardsprache, den Farbmodus und die Selbstregistrierung; *Werkzeuge* legt einen GitHub-Actions-Workflow und einen Dev-Container an. Das Panel rechts zeigt, was die Solution enthalten wird: Projekte, die Container des Aspire-AppHosts (PostgreSQL oder SQL Server, Redis, Mailpit, Elasticsearch, RabbitMQ, Azurite, Keycloak, Ollama) und die Coworkee-Pakete.
 
 ![Architektur](../assets/screenshots/studio-architecture-light-de.webp)
 
@@ -68,7 +85,7 @@ Feature-Module mit ihren Entities: Name, Plural, Client-Entity, DTO-Mapping und 
 
 ### Prüfen
 
-Die Zusammenfassung, die Prüfung nach den Regeln der CLI, die Spezifikation als JSON (kopieren oder speichern) und die passenden Befehlszeilen: `coworkee new --spec` mit allem und `coworkee new` mit Schaltern für dieselbe App ohne Entities. Logo und Medien aus anderen Ordnern werden beim Speichern neben die Spezifikation kopiert, denn die CLI liest Dateien einer Spezifikation nur aus deren Ordner.
+Die Zusammenfassung (mit Datenbank, KI-Anbieter, Redis, den Containern, Farbmodus, Selbstregistrierung und Werkzeugen), die Prüfung nach den Regeln der CLI, die Spezifikation als JSON (kopieren oder speichern) und die passenden Befehlszeilen: `coworkee new --spec` mit allem und `coworkee new` mit Schaltern für dieselbe App ohne Entities. Logo und Medien aus anderen Ordnern werden beim Speichern neben die Spezifikation kopiert, denn die CLI liest Dateien einer Spezifikation nur aus deren Ordner.
 
 ![Prüfen](../assets/screenshots/studio-review-light-de.webp)
 
