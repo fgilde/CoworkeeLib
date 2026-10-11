@@ -1,4 +1,8 @@
 namespace Aspire.Hosting;
 
-/// <summary>A user of the imported realm; Keycloak asks for a complete profile on first sign-in, so both names are required.</summary>
-public sealed record KeycloakUser(string Email, string FirstName, string LastName);
+/// <summary>A user of the app's realm; Keycloak asks for a complete profile on first sign-in, so both names are required.</summary>
+public sealed record KeycloakUser(string Email, string FirstName, string LastName)
+{
+    /// <summary>Development password, the same as the user's local one; without it the user gets the shared generated password (a parameter in the dashboard).</summary>
+    public string? Password { get; init; }
+}

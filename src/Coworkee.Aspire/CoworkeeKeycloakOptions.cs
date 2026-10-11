@@ -18,7 +18,7 @@ public sealed class CoworkeeKeycloakOptions
     /// <summary>Fixed host port; empty lets Aspire choose one, so several app hosts run side by side.</summary>
     public int? Port { get; set; }
 
-    /// <summary>Users of the imported realm; they share one generated password (see the parameter in the dashboard).</summary>
+    /// <summary>Users of the realm, created or updated on every start; those without a password share a generated one (a parameter in the dashboard).</summary>
     public List<KeycloakUser> Users { get; } = [];
 
     internal IResourceBuilder<KeycloakResource>? Resource { get; set; }

@@ -69,21 +69,35 @@ public sealed class CoworkeeAppTests
     }
 
     [Fact]
-    public async Task Keycloak_is_imported_with_a_realm_for_the_app_and_offered_at_the_auth_server()
+    public async Task Keycloak_gets_a_realm_for_the_app_offered_at_the_auth_server_and_room_for_large_cookies()
     {
         var builder = DistributedApplication.CreateBuilder();
-        var app = builder.AddCoworkeeApp("realm", o => o.UseKeycloak(k => k.Users.Add(new KeycloakUser("ada@demo.test", "Ada", "Lovelace"))));
+        var ada = new KeycloakUser("ada@demo.test", "Ada", "Lovelace") { Password = "Ada-Password1" };
+        var app = builder.AddCoworkeeApp("realm", o => o.UseKeycloak(k => k.Users.AddRange([ada, new KeycloakUser("bob@demo.test", "Bob", "Builder")])));
 
         app.AddMigrations<FakeProjects.Migrations>();
         var auth = app.AddAuthServer<FakeProjects.Auth>();
+        var grafana = app.AddKeycloakClient("realm-grafana", [ReferenceExpression.Create($"https://localhost:3000/login/generic_oauth")]);
 
         app.Keycloak.ShouldNotBeNull();
         var settings = await Environment(auth.Resource);
         settings["Coworkee__Auth__External__Providers__keycloak__ClientId"].ShouldBe("realm-auth");
+        settings["Coworkee__Auth__External__Providers__keycloak__Authority"].ShouldEndWith("/realms/realm");
         settings["Coworkee__Auth__External__Mode"].ShouldBe("Both");
-        var realm = await File.ReadAllTextAsync(Path.Combine(builder.AppHostDirectory, "obj", "keycloak", "realm-realm.json"), TestContext.Current.CancellationToken);
-        realm.ShouldContain("ada@demo.test");
-        realm.ShouldContain("${COWORKEE_KEYCLOAK_CLIENT_SECRET}");
+        (await Environment(app.Keycloak.Resource))[CoworkeeApp.KeycloakHeaderLimit].ShouldBe("65536");
+        app.KeycloakClients.Select(c => c.ClientId).ShouldBe(["realm-auth", "realm-grafana"]);
+        grafana.Secret.Resource.Name.ShouldBe("realm-grafana-secret");
+        (await app.KeycloakPassword(ada).GetValueAsync(TestContext.Current.CancellationToken)).ShouldBe("Ada-Password1");
+        app.KeycloakPassword(app.KeycloakUsers[1]).ValueProviders.OfType<ParameterResource>().Single().Name.ShouldBe("realm-keycloak-user-password");
+    }
+
+    [Fact]
+    public void Keycloak_clients_need_keycloak()
+    {
+        var app = DistributedApplication.CreateBuilder().AddCoworkeeApp("demo");
+        app.AddAuthServer<FakeProjects.Auth>();
+
+        Should.Throw<InvalidOperationException>(() => app.AddKeycloakClient("demo-grafana")).Message.ShouldContain("UseKeycloak");
     }
 
     [Fact]

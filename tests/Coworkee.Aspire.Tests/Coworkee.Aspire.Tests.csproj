@@ -1,5 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <ProjectReference Include="..\..\src\Coworkee.Aspire\Coworkee.Aspire.csproj" />
+    <PackageReference Include="Testcontainers" />
+    <!-- Keycloak's HTTP/2 header limit, the one browsers hit over TLS, is reachable without TLS too -->
+    <RuntimeHostConfigurationOption Include="System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport" Value="true" />
   </ItemGroup>
 </Project>

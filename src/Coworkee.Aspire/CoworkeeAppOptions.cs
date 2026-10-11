@@ -26,7 +26,7 @@ public sealed partial class CoworkeeAppOptions
         return this;
     }
 
-    /// <summary>Like <see cref="UseKeycloak(Action{CoworkeeKeycloakOptions}?)"/>, with a Keycloak resource of your own; it gets the realm import.</summary>
+    /// <summary>Like <see cref="UseKeycloak(Action{CoworkeeKeycloakOptions}?)"/>, with a Keycloak resource of your own; it gets the realm.</summary>
     public CoworkeeAppOptions UseKeycloak(IResourceBuilder<KeycloakResource> keycloak, Action<CoworkeeKeycloakOptions>? configure = null)
     {
         UseKeycloak(configure);
