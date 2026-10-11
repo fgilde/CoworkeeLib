@@ -24,7 +24,7 @@ public sealed record SolutionSummary(IReadOnlyList<string> Projects, IReadOnlyLi
             .Select(p => $"{name}.{p}")
             .ToList();
 
-        var containers = new List<string> { "PostgreSQL", "Redis", "Mailpit" };
+        List<string> containers = ["PostgreSQL", .. On("redis") ? ["Redis"] : Array.Empty<string>(), "Mailpit"];
         if (On("elasticsearch"))
         {
             containers.Add("Elasticsearch");
@@ -43,6 +43,11 @@ public sealed record SolutionSummary(IReadOnlyList<string> Projects, IReadOnlyLi
         if (On("keycloak"))
         {
             containers.Add("Keycloak");
+        }
+
+        if (On("ai") && values["aiProvider"] == "ollama")
+        {
+            containers.Add("Ollama");
         }
 
         var packages = BasePackages.Concat(OptionCatalog.All

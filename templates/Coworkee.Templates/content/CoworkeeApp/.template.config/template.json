@@ -147,6 +147,41 @@
         }
       ]
     },
+    "aiProvider": {
+      "type": "parameter",
+      "datatype": "choice",
+      "defaultValue": "anthropic",
+      "description": "Model provider of the AI assistant.",
+      "choices": [
+        {
+          "choice": "anthropic",
+          "description": "Claude through the Anthropic API."
+        },
+        {
+          "choice": "openAI",
+          "description": "GPT models through the OpenAI API."
+        },
+        {
+          "choice": "azureOpenAI",
+          "description": "A deployment of Azure OpenAI."
+        },
+        {
+          "choice": "ollama",
+          "description": "Local models, Ollama container in the app host."
+        },
+        {
+          "choice": "openAICompatible",
+          "description": "Any endpoint that speaks the OpenAI chat API."
+        }
+      ],
+      "replaces": "COWORKEE_AI_PROVIDER"
+    },
+    "redis": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Redis container: SignalR backplane, shared presence, cache invalidation and sign-in sessions across instances."
+    },
     "theme": {
       "type": "parameter",
       "datatype": "choice",

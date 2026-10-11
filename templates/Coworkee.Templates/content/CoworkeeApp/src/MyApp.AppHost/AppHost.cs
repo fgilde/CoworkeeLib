@@ -15,6 +15,9 @@ var app = builder.AddCoworkeeApp("myapp", options =>
 #if (signInMedia != "")
     options.SignIn.MediaUrl = "COWORKEE_SIGNIN_MEDIA";
 #endif
+#if (!redis)
+    options.WithoutRedis();
+#endif
 #if (keycloak)
     options.UseKeycloak(keycloak => keycloak.Users.Add(new KeycloakUser("admin@myapp.local", "Administrator", "COWORKEE_APP_TITLE")));
 #endif
@@ -30,6 +33,34 @@ app.Modules[Coworkee.Aspire.Modules.CoworkeeModules.Storage] = (_, service) => s
 
 var rabbitMq = builder.AddRabbitMQ("rabbitmq");
 app.Modules.Add("Coworkee.EventBus.RabbitMq", (_, service) => service.WithReference(rabbitMq).WaitFor(rabbitMq));
+#endif
+#if (ai)
+
+// provider defaults of the AI settings; key, endpoint and model optionally from the user secrets (Parameters:ai-apikey, ai-endpoint, ai-model)
+var aiParameters = new[] { "ApiKey", "Endpoint", "Model" }.Where(n => builder.Configuration[$"Parameters:ai-{n.ToLowerInvariant()}"] is { Length: > 0 })
+    .ToDictionary(n => n, n => builder.AddParameter($"ai-{n.ToLowerInvariant()}", secret: n == "ApiKey"));
+#if (aiProvider == "ollama")
+var ollama = builder.AddOllama("ollama").WithDataVolume();
+ollama.AddModel("llama3.2");
+#endif
+app.Modules.Add("Coworkee.Ai", (_, service) =>
+{
+    service.WithSetting(s => s.Coworkee.Settings.Defaults["Ai.Provider"], "COWORKEE_AI_PROVIDER");
+    foreach (var (name, parameter) in aiParameters)
+    {
+        service.WithSetting(s => s.Coworkee.Settings.Defaults[$"Ai.{name}"], parameter);
+    }
+#if (aiProvider == "ollama")
+    service.WithReference(ollama)
+        .WithSetting(s => s.Coworkee.Settings.Defaults["Ai.Endpoint"], ollama.GetEndpoint("http"))
+        .WithSetting(s => s.Coworkee.Settings.Defaults["Ai.Enabled"], true);
+#else
+    if (aiParameters.ContainsKey("ApiKey"))
+    {
+        service.WithSetting(s => s.Coworkee.Settings.Defaults["Ai.Enabled"], true);
+    }
+#endif
+});
 #endif
 
 app.AddMigrations<Projects.MyApp_Migrations>();

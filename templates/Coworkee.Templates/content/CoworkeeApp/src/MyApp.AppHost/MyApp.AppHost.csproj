@@ -9,6 +9,9 @@
     <!--#if (storage == "azureBlob") -->
     <PackageReference Include="Aspire.Hosting.Azure.Storage" />
     <!--#endif -->
+    <!--#if (ai && aiProvider == "ollama") -->
+    <PackageReference Include="CommunityToolkit.Aspire.Hosting.Ollama" />
+    <!--#endif -->
     <!--#if (eventBus == "rabbitMq") -->
     <PackageReference Include="Aspire.Hosting.RabbitMQ" />
     <!--#endif -->

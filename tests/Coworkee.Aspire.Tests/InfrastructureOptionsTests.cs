@@ -65,6 +65,19 @@ public sealed class InfrastructureOptionsTests
     }
 
     [Fact]
+    public async Task Without_redis_no_service_gets_a_redis_connection()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var app = builder.AddCoworkeeApp("demo", o => o.WithoutRedis());
+
+        app.AddProjects();
+
+        builder.Resources.Select(r => r.Name).ShouldNotContain("redis");
+        (await Environment(app.Apis[0].Resource)).Keys.ShouldNotContain("ConnectionStrings__redis");
+        (await Environment(app.Web!.Resource)).Keys.ShouldNotContain("ConnectionStrings__redis");
+    }
+
+    [Fact]
     public async Task App_modules_are_wired_like_the_built_in_ones()
     {
         var builder = DistributedApplication.CreateBuilder();

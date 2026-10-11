@@ -25,6 +25,18 @@ public static class Extensions
             http.AddStandardResilienceHandler();
             http.AddServiceDiscovery();
         });
+#if (ai)
+
+        // answers of the assistant take longer than the standard timeouts; the provider clients retry on their own
+        builder.Services.AddHttpClient("Coworkee.Ai").RemoveAllResilienceHandlers();
+#endif
+#if (redis)
+        if (builder.Configuration.GetConnectionString("redis") is { Length: > 0 })
+        {
+            // health check and traces for the Redis connection the Coworkee services share
+            builder.AddRedisClient("redis");
+        }
+#endif
         return builder;
     }
 

@@ -31,6 +31,9 @@ public sealed partial class CoworkeeAppOptions
     /// <summary>Redis for the SignalR backplane instead of the Redis container; it is not awaited.</summary>
     public CoworkeeAppOptions UseRedis(IResourceBuilder<IResourceWithConnectionString> redis) => Set(() => Redis = redis);
 
+    /// <summary>No Redis container: the SignalR backplane, presence, cache invalidation and sign-in sessions stay in each process (one instance per service).</summary>
+    public CoworkeeAppOptions WithoutRedis() => Without(Coworkee.Aspire.Modules.CoworkeeModules.Realtime);
+
     /// <summary>Elasticsearch instead of the Elasticsearch container; it is not awaited.</summary>
     public CoworkeeAppOptions UseSearch(IResourceBuilder<IResourceWithConnectionString> search) => Set(() => Search = search);
 
