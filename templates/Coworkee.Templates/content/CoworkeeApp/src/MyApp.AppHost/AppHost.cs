@@ -1,4 +1,4 @@
-#if (storage == "azureBlob")
+#if (storage == "azureBlob" || ai)
 using Coworkee.Aspire.Settings;
 
 #endif

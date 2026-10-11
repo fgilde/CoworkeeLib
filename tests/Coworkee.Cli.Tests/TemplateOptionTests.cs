@@ -66,7 +66,7 @@ public sealed class TemplateOptionTests(TemplateFixture template)
         Read(ollama, "src/Shop.AppHost/Shop.AppHost.csproj").ShouldContain("CommunityToolkit.Aspire.Hosting.Ollama");
         var defaults = Read(ollama, "src/Shop.ServiceDefaults/Extensions.cs");
         defaults.ShouldNotContain("AddRedisClient");
-        defaults.ShouldContain("AddHttpClient(\"Coworkee.Ai\").RemoveAllResilienceHandlers()");
+        defaults.ShouldContain("if (http.Name != \"Coworkee.Ai\")");
         TemplateTests.ShouldHaveNoLeftovers(ollama);
 
         var azure = await template.CreateAsync("ai-azure", "--samples", "false", "--aiProvider", "azureOpenAI");
