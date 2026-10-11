@@ -21,7 +21,13 @@ coworkee run
 
 `coworkee new` installs `Coworkee.Templates` in the version of the tool, creates the solution, generates the modules of a spec, restores the packages and adds the migration the chosen modules need. The generated app references the Coworkee packages of that same version. The name must be simple: a letter, then letters or digits (`Shop`, `Crm2`). It becomes the prefix of every project and namespace.
 
-The migration worker seeds an administrator `admin@<name>.local`. Its password was generated when the solution was created and is in `src/<Name>.Migrations/DemoSeed.cs`; change it before you deploy anywhere.
+The migration worker seeds an administrator `admin@<name>.local` and the users of `--user` or the spec. At the end `coworkee new` prints a **Sign in** box with every user, its password and roles; the same table is in `LOGIN.md` of the solution. With Keycloak the realm has the same users with the same passwords.
+
+```bash
+coworkee new Shop --keycloak --user "ada@shop.test:Product Manager" --user boss@shop.test:admin
+```
+
+`--user` takes `email[:role,role][:admin]` and can be repeated; the password is generated. The users live in `src/<Name>.Migrations/DemoUsers.cs`, which the seed and the app host (for Keycloak) both read. The passwords are for development only: change them before you deploy anywhere.
 
 ## Options
 
@@ -140,6 +146,19 @@ coworkee new --spec shop.json
 - `reference` points to another entity by name (`Customer`) or with its module (`Crm.Customer`): the property is the navigation, `<Name>Id` the foreign key. `referenceDisplay` is the text property of the target shown in the list and the picker (default: its display property), `onDelete` is `restrict` (default), `cascade` or `setNull` (optional references only), `inverse` gives the target a collection (same module only). A module may reference other modules as long as none references it back.
 - `default` sets the initial value of numbers, bools, enums and texts; `unique` adds a unique index per tenant and a check in the command; `label` is the column and field caption; `display` marks the text that names a row; `searchable` (default: true for texts) puts it in the search box; `facet` offers it as facet next to the list (bools, enums, references, whole numbers, strings).
 - `plural` names table, OData set, route and page (default: an English plural of the name). `mapping` overrides the `mapping` option.
+
+### Users and roles
+
+```json
+"roles": [ { "name": "Sales", "description": "Takes orders", "permissions": [ "Sales.Customers.View", "Sales.Orders.View", "Sales.Orders.Create", "Sales.Orders.Edit" ] } ],
+"users": [
+  { "email": "ada@shop.test", "displayName": "Ada Lovelace", "roles": [ "Sales" ] },
+  { "email": "grace@shop.test", "roles": [ "User" ], "admin": true, "password": "Grace-2026!" }
+]
+```
+
+- `roles` are seeded next to the template's own (with samples *Product Manager* and *Brand Manager*, without *User*). Permissions must belong to the app: those of the chosen modules (`Identity.Users.View`, `Chat.Use`, `Reports.View`, ...), of the samples and `<Module>.<Plural>.View|Create|Edit|Delete` of the spec's entities; validation lists them.
+- `users` need an email; `displayName` defaults to the part before `@`, `roles` names roles of the spec or the template, `admin` grants every permission. Without `password` one is generated; a given one needs 8 characters with upper and lower case letters, a digit and a symbol.
 
 `coworkee spec validate` and `coworkee new` report every problem with its path, for example `modules[0].entities[1].properties[0].name: 'Id' is taken by the entity itself.`
 

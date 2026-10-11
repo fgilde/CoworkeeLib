@@ -83,6 +83,12 @@ Feature-Module mit ihren Entities: Name, Plural, Client-Entity, DTO-Mapping und 
 
 ![Entities](../assets/screenshots/studio-entities-light-de.webp)
 
+### Benutzer & Rollen
+
+Benutzer und Rollen für die Entwicklung, mit denen die App angelegt wird. Jeder Benutzer hat eine E-Mail, einen Anzeigenamen (ohne Angabe aus der E-Mail), ein optionales Passwort (leer wird es erzeugt), einen Schalter für Administratoren und Kästchen für die Rollen; der Administrator `admin@<name>.local` ist immer dabei. Rollen haben einen Namen, eine Beschreibung und Kästchen für die Berechtigungen, die die App haben wird: die der gewählten Module, der Beispiele und Ihrer Entities. Mit Keycloak bekommt der Realm dieselben Benutzer mit denselben Passwörtern.
+
+![Benutzer & Rollen](../assets/screenshots/studio-users-light-de.webp)
+
 ### Prüfen
 
 Die Zusammenfassung (mit Datenbank, KI-Anbieter, Redis, den Containern, Farbmodus, Selbstregistrierung und Werkzeugen), die Prüfung nach den Regeln der CLI, die Spezifikation als JSON (kopieren oder speichern) und die passenden Befehlszeilen: `coworkee new --spec` mit allem und `coworkee new` mit Schaltern für dieselbe App ohne Entities. Logo und Medien aus anderen Ordnern werden beim Speichern neben die Spezifikation kopiert, denn die CLI liest Dateien einer Spezifikation nur aus deren Ordner.
@@ -91,7 +97,7 @@ Die Zusammenfassung (mit Datenbank, KI-Anbieter, Redis, den Containern, Farbmodu
 
 ### Anlegen
 
-Das Studio schreibt die Spezifikation, ruft `coworkee spec validate` und `coworkee new --spec` auf und zeigt jeden Schritt der CLI, sobald er beginnt, auf Wunsch mit der ganzen Ausgabe. Ausgabeordner, Logo und Medien gehen auf die Befehlszeile. Danach: Ordner öffnen, in VS Code, Rider oder Visual Studio öffnen oder die App mit `coworkee run` in einem neuen Terminal starten.
+Das Studio schreibt die Spezifikation, ruft `coworkee spec validate` und `coworkee new --spec` auf und zeigt jeden Schritt der CLI, sobald er beginnt, auf Wunsch mit der ganzen Ausgabe. Ausgabeordner, Logo und Medien gehen auf die Befehlszeile. Danach listet die Karte **Anmelden** jeden Benutzer mit Passwort und Rollen auf, mit Kopierknöpfen, und sagt, ob Keycloak sie ebenfalls annimmt (sie stehen auch in `LOGIN.md` der Solution). Dann: Ordner öffnen, in VS Code, Rider oder Visual Studio öffnen oder die App mit `coworkee run` in einem neuen Terminal starten.
 
 ![Anlegen](../assets/screenshots/studio-generate-light-de.webp)
 

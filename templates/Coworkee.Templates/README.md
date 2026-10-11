@@ -30,6 +30,6 @@ dotnet run --project src/Shop.AppHost
 
 With other modules than the default ones the app has no migration yet: run `coworkee migrations add Initial`. The [Coworkee CLI](https://fgilde.github.io/CoworkeeLib/getting-started/cli/) does that, copies logo and media and adds generated modules with entities (`coworkee new --spec`).
 
-Use a simple name (letters and digits). The generated app references the Coworkee packages of the same version as this template. The seeded administrator and its generated password are in `src/<Name>.Migrations/DemoSeed.cs`.
+Use a simple name (letters and digits). The generated app references the Coworkee packages of the same version as this template. The seeded users and their generated passwords are in `LOGIN.md` of the solution (from `src/<Name>.Migrations/DemoUsers.cs`).
 
 The [Coworkee CLI](https://www.nuget.org/packages/Coworkee.Cli) (`coworkee new`) wraps this template. Docs: https://fgilde.github.io/CoworkeeLib/

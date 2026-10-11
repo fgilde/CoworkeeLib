@@ -9,7 +9,7 @@ builder.AddCoworkeeApp("myapp", options =>
 {
     options.DisplayName = "MyApp";
     options.LogoUrl = "/coworkee-icon.svg";
-    options.UseKeycloak(keycloak => keycloak.Users.Add(new KeycloakUser("info@coworkee.de", "Administrator", "MyApp")));
+    options.UseKeycloak(keycloak => keycloak.Users.Add(new KeycloakUser("info@coworkee.de", "Administrator", "MyApp") { Password = "Dev-Passw0rd!" }));
 }).AddProjects();
 
 builder.Build().Run();
@@ -122,7 +122,7 @@ builder.AddCoworkeeApp("myapp", options =>
 | `UseRedis(resource)` | des Redis-Containers |
 | `UseSearch(resource)` | des Elasticsearch-Containers |
 | `UseMail(endpoint)` | von Mailpit; der SMTP-Endpunkt einer anderen Ressource |
-| `UseKeycloak(resource, ...)` | des Keycloak-Containers; der Realm wird in Ihren importiert |
+| `UseKeycloak(resource, ...)` | des Keycloak-Containers; Ihr Keycloak bekommt den Realm |
 
 `UseSqlServer` und `UseSqlite` setzen bei den Diensten auch `Coworkee:Database:Provider`; die Migrationen der App müssen für diesen Provider erstellt sein (siehe [Datenbank-Provider](../fundamentals/persistence.md#datenbank-provider)).
 
@@ -161,12 +161,38 @@ Aus `s => s.Coworkee.Bff.Scopes[0]` wird die Umgebungsvariable `Coworkee__Bff__S
 
 ## Keycloak
 
-`UseKeycloak` fügt einen Keycloak-Container hinzu und importiert einen Realm mit dem Namen der App mit
+`UseKeycloak` fügt einen Keycloak-Container mit einem Realm hinzu, der wie die App heißt:
 
-- einem vertraulichen Client `{name}-auth`, dessen Secret ein generierter Parameter ist (`{name}-keycloak-client-secret`),
-- den angegebenen Benutzern, alle mit einem generierten Passwort (`{name}-keycloak-user-password`, im Dashboard sichtbar und in den User-Secrets des AppHosts gespeichert).
+- ein vertraulicher Client `{name}-auth`, dessen Secret ein generierter Parameter ist (`{name}-keycloak-client-secret`),
+- die angegebenen Benutzer, jeder mit seinem `Password`; Benutzer ohne teilen sich ein generiertes Passwort (`{name}-keycloak-user-password`, im Dashboard sichtbar und in den User-Secrets des AppHosts gespeichert).
+
+Der Realm wird bei **jedem Start** auf den aktuellen Stand gebracht, sobald Keycloak bereit ist und bevor der Auth-Server startet: Ein fehlender Realm wird angelegt, ein vorhandener (im Daten-Volume) bekommt über die Admin-API die aktuellen Client-Secrets, Redirect-Adressen, Benutzer und Passwörter. Ein geänderter Secret-Parameter oder ein geändertes Passwort gilt also ab dem nächsten Start, und Benutzer oder Clients, die Sie in der Keycloak-Konsole angelegt haben, bleiben erhalten. Das Ressourcen-Log von Keycloak meldet `Realm myapp is up to date: clients ..., users ...`.
 
 Der Auth-Server bekommt die Anbieter-Einstellungen und bietet **Sign in with Keycloak** an. `LoginMode` schaltet zwischen beidem, nur extern und nur intern um; `Port` legt den Host-Port fest, wenn Sie eine feste URL wollen.
+
+Browser schicken die Cookies von `localhost` an jeden Port, also erreichen die Cookies aller lokalen Apps auch Keycloak. Über HTTPS spricht Keycloak HTTP/2 und nimmt dabei standardmäßig nur 8 KB Request-Header an; darüber antwortet es mit **431 Request Header Fields Too Large**. Der Container bekommt deshalb `QUARKUS_HTTP_LIMITS_MAX_HEADER_LIST_SIZE=65536`, die 64 KB, die er über HTTP/1.1 annimmt. Zeigt der Browser trotzdem 431, löschen Sie die `localhost`-Cookies anderer Apps; Auth-Server und Web-App (Kestrel) nehmen 32 KB an.
+
+### Weitere Clients und die Benutzer
+
+Andere Ressourcen des AppHosts können sich über denselben Realm anmelden und seine Benutzer wiederverwenden, zum Beispiel ein Dashboard mit OpenID Connect:
+
+```csharp
+var app = builder.AddCoworkeeApp("myapp", options => options.UseKeycloak(k => k.Users.AddRange(users))).AddProjects();
+var grafana = builder.AddContainer("grafana", "grafana/grafana").WithHttpEndpoint(targetPort: 3000);
+var client = app.AddKeycloakClient("myapp-grafana", [ReferenceExpression.Create($"{grafana.GetEndpoint("http")}/login/generic_oauth")]);
+grafana.WithEnvironment("GF_AUTH_GENERIC_OAUTH_CLIENT_ID", client.ClientId)
+    .WithEnvironment("GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET", client.Secret)
+    .WithEnvironment("GF_AUTH_GENERIC_OAUTH_AUTH_URL", ReferenceExpression.Create($"{app.KeycloakAuthority}/protocol/openid-connect/auth"));
+```
+
+| Member von `CoworkeeApp` | |
+|---|---|
+| `AddKeycloakClient(clientId, redirectUris?, secret?)` | ein weiterer vertraulicher Client des Realms; ohne Secret ein generiertes (`{clientId}-secret`), ohne Redirect-Adressen jede lokale Adresse |
+| `KeycloakClients` | die Clients des Realms, der des Auth-Servers zuerst |
+| `KeycloakAuthority` | Issuer-Adresse des Realms, `{keycloak}/realms/{realm}` |
+| `KeycloakUsers`, `KeycloakPassword(user)` | die Benutzer und das Passwort jedes Benutzers als Reference Expression, etwa für den lokalen Login einer anderen Ressource |
+
+Rufen Sie sie nach `UseKeycloak` und `AddAuthServer` (oder `AddProjects`) auf.
 
 ## Veröffentlichen
 

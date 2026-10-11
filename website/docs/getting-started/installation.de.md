@@ -38,7 +38,7 @@ dotnet run --project src/MyApp.AppHost
 
 ![Die Startseite der Demo-App](../assets/screenshots/home.png){ .shot }
 
-Der Migrations-Dienst spielt die Migrationen ein und legt die Benutzer an, bevor die anderen Dienste starten; ihre Passwörter stehen in `src/MyApp.Migrations/DemoSeed.cs`. Die Anmeldeseite bietet zusätzlich **Sign in with Keycloak** an; das Keycloak-Passwort ist der generierte Aspire-Parameter `myapp-keycloak-user-password` im Dashboard.
+Der Migrations-Dienst spielt die Migrationen ein und legt die Benutzer an, bevor die anderen Dienste starten; Benutzer und Passwörter stehen in `LOGIN.md` der Solution (aus `src/MyApp.Migrations/DemoUsers.cs`). Die Anmeldeseite bietet zusätzlich **Sign in with Keycloak** an, mit denselben Benutzern und Passwörtern.
 
 ![Anmeldeseite mit Keycloak](../assets/screenshots/login.png){ .shot }
 

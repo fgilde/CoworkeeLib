@@ -9,7 +9,7 @@ builder.AddCoworkeeApp("myapp", options =>
 {
     options.DisplayName = "MyApp";
     options.LogoUrl = "/coworkee-icon.svg";
-    options.UseKeycloak(keycloak => keycloak.Users.Add(new KeycloakUser("info@coworkee.de", "Administrator", "MyApp")));
+    options.UseKeycloak(keycloak => keycloak.Users.Add(new KeycloakUser("info@coworkee.de", "Administrator", "MyApp") { Password = "Dev-Passw0rd!" }));
 }).AddProjects();
 
 builder.Build().Run();
@@ -122,7 +122,7 @@ builder.AddCoworkeeApp("myapp", options =>
 | `UseRedis(resource)` | the Redis container |
 | `UseSearch(resource)` | the Elasticsearch container |
 | `UseMail(endpoint)` | Mailpit; the SMTP endpoint of another resource |
-| `UseKeycloak(resource, ...)` | the Keycloak container; the realm is imported into yours |
+| `UseKeycloak(resource, ...)` | the Keycloak container; your Keycloak gets the realm |
 
 `UseSqlServer` and `UseSqlite` also set `Coworkee:Database:Provider` on the services; the migrations of the app must be made for that provider (see [Database providers](../fundamentals/persistence.md#database-providers)).
 
@@ -161,12 +161,38 @@ api.WithSetting(s => s.Coworkee.Storage.Provider, "S3")
 
 ## Keycloak
 
-`UseKeycloak` adds a Keycloak container and imports a realm named after the app with:
+`UseKeycloak` adds a Keycloak container with a realm named after the app:
 
 - a confidential client `{name}-auth` whose secret is a generated parameter (`{name}-keycloak-client-secret`),
-- the users you list, all with one generated password (`{name}-keycloak-user-password`, shown in the dashboard and kept in the user secrets of the app host).
+- the users you list, each with its `Password`; users without one share a generated password (`{name}-keycloak-user-password`, shown in the dashboard and kept in the user secrets of the app host).
+
+The realm is brought up to date on **every start**, once Keycloak is healthy and before the auth server starts: a missing realm is created, an existing one (kept in the data volume) gets the current client secrets, redirect addresses, users and passwords through the admin API. A changed secret parameter or password therefore takes effect with the next start, and users or clients you added in the Keycloak console stay. The resource log of Keycloak says `Realm myapp is up to date: clients ..., users ...`.
 
 The auth server gets the provider settings and offers **Sign in with Keycloak**. `LoginMode` switches between both, external only and internal only; `Port` fixes the host port if you want a stable URL.
+
+Browsers send the cookies of `localhost` to every port, so the cookies of all local apps reach Keycloak too. Over HTTPS Keycloak speaks HTTP/2, which by default takes only 8 KB of request headers and answers **431 Request Header Fields Too Large** beyond that. The container therefore gets `QUARKUS_HTTP_LIMITS_MAX_HEADER_LIST_SIZE=65536`, the 64 KB it takes over HTTP/1.1. If the browser still shows 431, delete the `localhost` cookies of other apps; the auth server and the web app (Kestrel) take 32 KB.
+
+### Other clients and the users
+
+Other resources of the app host can sign in through the same realm and reuse its users, for example a dashboard with OpenID Connect:
+
+```csharp
+var app = builder.AddCoworkeeApp("myapp", options => options.UseKeycloak(k => k.Users.AddRange(users))).AddProjects();
+var grafana = builder.AddContainer("grafana", "grafana/grafana").WithHttpEndpoint(targetPort: 3000);
+var client = app.AddKeycloakClient("myapp-grafana", [ReferenceExpression.Create($"{grafana.GetEndpoint("http")}/login/generic_oauth")]);
+grafana.WithEnvironment("GF_AUTH_GENERIC_OAUTH_CLIENT_ID", client.ClientId)
+    .WithEnvironment("GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET", client.Secret)
+    .WithEnvironment("GF_AUTH_GENERIC_OAUTH_AUTH_URL", ReferenceExpression.Create($"{app.KeycloakAuthority}/protocol/openid-connect/auth"));
+```
+
+| Member of `CoworkeeApp` | |
+|---|---|
+| `AddKeycloakClient(clientId, redirectUris?, secret?)` | another confidential client of the realm; without a secret a generated one (`{clientId}-secret`), without redirect addresses any local address |
+| `KeycloakClients` | the clients of the realm, the auth server's first |
+| `KeycloakAuthority` | issuer address of the realm, `{keycloak}/realms/{realm}` |
+| `KeycloakUsers`, `KeycloakPassword(user)` | the users and each one's password as reference expression, e.g. for the local login of another resource |
+
+Call them after `UseKeycloak` and `AddAuthServer` (or `AddProjects`).
 
 ## Publishing
 

@@ -83,6 +83,12 @@ Feature modules with their entities: name, plural, client entity, DTO mapping an
 
 ![Entities](../assets/screenshots/studio-entities-light.webp)
 
+### Users & roles
+
+Development users and roles the app is seeded with. Each user has an email, a display name (default: from the email), an optional password (generated when empty), an administrator switch and check boxes for the roles; the administrator `admin@<name>.local` is always there. Roles have a name, a description and check boxes for the permissions the app will have: those of the chosen modules, of the samples and of your entities. With Keycloak the realm gets the same users with the same passwords.
+
+![Users & roles](../assets/screenshots/studio-users-light.webp)
+
 ### Review
 
 The summary (including database, AI provider, Redis, the containers, color mode, self registration and tooling), the validation with the rules of the CLI, the spec as JSON (copy or save it) and the equivalent command lines: `coworkee new --spec` with everything, and `coworkee new` with switches for the same app without entities. Logo and media from other folders are copied next to the spec when you save it, because the CLI reads files of a spec only from its folder.
@@ -91,7 +97,7 @@ The summary (including database, AI provider, Redis, the containers, color mode,
 
 ### Create
 
-The Studio writes the spec, runs `coworkee spec validate` and `coworkee new --spec`, and shows each step of the CLI as it happens, with the full output when you want it. Output folder, logo and media go on the command line. Afterwards: open the folder, open it in VS Code, Rider or Visual Studio, or run the app with `coworkee run` in a new terminal.
+The Studio writes the spec, runs `coworkee spec validate` and `coworkee new --spec`, and shows each step of the CLI as it happens, with the full output when you want it. Output folder, logo and media go on the command line. Afterwards the **Sign in** card lists every user with password and roles, with copy buttons, and says whether Keycloak takes them too (they are also in `LOGIN.md` of the solution). Then: open the folder, open it in VS Code, Rider or Visual Studio, or run the app with `coworkee run` in a new terminal.
 
 ![Create](../assets/screenshots/studio-generate-dark.webp)
 

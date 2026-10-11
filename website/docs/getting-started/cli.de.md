@@ -21,7 +21,13 @@ coworkee run
 
 `coworkee new` installiert `Coworkee.Templates` in der Version des Tools, legt die Solution an, erzeugt die Module einer Spezifikation, stellt die Pakete wieder her und legt die Migration an, die die gewählten Module brauchen. Die erzeugte App verweist auf die Coworkee-Pakete genau dieser Version. Der Name muss einfach sein: ein Buchstabe, dann Buchstaben oder Ziffern (`Shop`, `Crm2`). Er wird zum Präfix aller Projekte und Namespaces.
 
-Der Migrations-Worker legt einen Administrator `admin@<name>.local` an. Sein Passwort wurde beim Anlegen der Solution erzeugt und steht in `src/<Name>.Migrations/DemoSeed.cs`; ändern Sie es, bevor Sie irgendwohin deployen.
+Der Migrations-Worker legt einen Administrator `admin@<name>.local` und die Benutzer von `--user` oder der Spezifikation an. Am Ende zeigt `coworkee new` einen Kasten **Sign in** mit jedem Benutzer, seinem Passwort und seinen Rollen; dieselbe Tabelle steht in `LOGIN.md` der Solution. Mit Keycloak hat der Realm dieselben Benutzer mit denselben Passwörtern.
+
+```bash
+coworkee new Shop --keycloak --user "ada@shop.test:Product Manager" --user boss@shop.test:admin
+```
+
+`--user` nimmt `email[:rolle,rolle][:admin]` und lässt sich wiederholen; das Passwort wird erzeugt. Die Benutzer stehen in `src/<Name>.Migrations/DemoUsers.cs`, das der Seed und der AppHost (für Keycloak) beide lesen. Die Passwörter sind nur für die Entwicklung: Ändern Sie sie, bevor Sie irgendwohin deployen.
 
 ## Optionen
 
@@ -140,6 +146,19 @@ coworkee new --spec shop.json
 - `reference` verweist auf eine andere Entity über ihren Namen (`Customer`) oder mit Modul (`Crm.Customer`): die Eigenschaft ist die Navigation, `<Name>Id` der Fremdschlüssel. `referenceDisplay` ist die Texteigenschaft des Ziels, die Liste und Auswahl zeigen (Standard: seine Anzeige-Eigenschaft), `onDelete` ist `restrict` (Standard), `cascade` oder `setNull` (nur für optionale Referenzen), `inverse` gibt dem Ziel eine Sammlung (nur im selben Modul). Ein Modul darf andere Module referenzieren, solange keines zurückverweist.
 - `default` setzt den Anfangswert von Zahlen, Bools, Enums und Texten; `unique` legt einen eindeutigen Index je Mandant und eine Prüfung im Command an; `label` ist die Beschriftung von Spalte und Feld; `display` markiert den Text, der eine Zeile benennt; `searchable` (Standard: true für Texte) nimmt sie ins Suchfeld; `facet` bietet sie als Facette neben der Liste an (Bools, Enums, Referenzen, ganze Zahlen, Strings).
 - `plural` benennt Tabelle, OData-Set, Route und Seite (Standard: ein englischer Plural des Namens). `mapping` übersteuert die Option `mapping`.
+
+### Benutzer und Rollen
+
+```json
+"roles": [ { "name": "Sales", "description": "Takes orders", "permissions": [ "Sales.Customers.View", "Sales.Orders.View", "Sales.Orders.Create", "Sales.Orders.Edit" ] } ],
+"users": [
+  { "email": "ada@shop.test", "displayName": "Ada Lovelace", "roles": [ "Sales" ] },
+  { "email": "grace@shop.test", "roles": [ "User" ], "admin": true, "password": "Grace-2026!" }
+]
+```
+
+- `roles` werden neben den eigenen Rollen der Vorlage angelegt (mit Beispielen *Product Manager* und *Brand Manager*, ohne *User*). Die Berechtigungen müssen zur App gehören: die der gewählten Module (`Identity.Users.View`, `Chat.Use`, `Reports.View`, ...), der Beispiele und `<Modul>.<Plural>.View|Create|Edit|Delete` der Entities der Spezifikation; die Prüfung zählt sie auf.
+- `users` brauchen eine E-Mail; `displayName` ist ohne Angabe der Teil vor `@`, `roles` nennt Rollen der Spezifikation oder der Vorlage, `admin` gibt alle Berechtigungen. Ohne `password` wird eines erzeugt; ein angegebenes braucht 8 Zeichen mit Groß- und Kleinbuchstaben, einer Ziffer und einem Sonderzeichen.
 
 `coworkee spec validate` und `coworkee new` melden jedes Problem mit seinem Pfad, zum Beispiel `modules[0].entities[1].properties[0].name: 'Id' is taken by the entity itself.`
 

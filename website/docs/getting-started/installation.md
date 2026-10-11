@@ -38,7 +38,7 @@ dotnet run --project src/MyApp.AppHost
 
 ![The home page of the demo app](../assets/screenshots/home.png){ .shot }
 
-The migration service applies the migrations and seeds the users before the other services start; their passwords are in `src/MyApp.Migrations/DemoSeed.cs`. The sign-in page also offers **Sign in with Keycloak**; the Keycloak password is the generated Aspire parameter `myapp-keycloak-user-password` in the dashboard.
+The migration service applies the migrations and seeds the users before the other services start; users and passwords are in `LOGIN.md` of the solution (from `src/MyApp.Migrations/DemoUsers.cs`). The sign-in page also offers **Sign in with Keycloak**, with the same users and passwords.
 
 ![Sign-in page with Keycloak](../assets/screenshots/login.png){ .shot }
 
