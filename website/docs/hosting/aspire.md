@@ -81,6 +81,8 @@ Before wiring a service, Coworkee reads the service's `obj/project.assets.json` 
 | `Coworkee.Search.Elasticsearch` | Elasticsearch |
 | `Coworkee.Notifications` | links in digest mails point to the web app |
 
+Grafana (with Prometheus, Loki, Tempo and a collector) and WebDataStudio come with `options.UseGrafana()` and `options.UseWebDataStudio()`, see [Grafana and WebDataStudio](observability.md).
+
 Containers are only created when a service needs them. Postgres, SQL Server, Redis, Elasticsearch and Keycloak keep their data in volumes; `--Coworkee:EphemeralInfrastructure=true` starts them empty, which the tests use.
 
 ### Modules of your own

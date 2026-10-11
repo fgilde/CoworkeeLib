@@ -81,6 +81,8 @@ Bevor Coworkee einen Dienst verdrahtet, liest es dessen `obj/project.assets.json
 | `Coworkee.Search.Elasticsearch` | Elasticsearch |
 | `Coworkee.Notifications` | Links in Zusammenfassungsmails zeigen auf die Web-App |
 
+Grafana (mit Prometheus, Loki, Tempo und Collector) und WebDataStudio kommen mit `options.UseGrafana()` und `options.UseWebDataStudio()` dazu, siehe [Grafana und WebDataStudio](observability.md).
+
 Container entstehen nur, wenn ein Dienst sie braucht. Postgres, SQL Server, Redis, Elasticsearch und Keycloak halten ihre Daten in Volumes; `--Coworkee:EphemeralInfrastructure=true` startet sie leer, das nutzen die Tests.
 
 ### Eigene Module

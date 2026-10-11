@@ -111,6 +111,7 @@ plugins:
             Hosting: Hosting
             Aspire app host: Aspire-AppHost
             Scaling out with Redis: Skalieren mit Redis
+            Grafana and WebDataStudio: Grafana und WebDataStudio
             Testing: Tests
             Reference: Referenz
             Packages and namespaces: Pakete und Namespaces
@@ -190,6 +191,7 @@ nav:
   - Hosting:
       - Aspire app host: hosting/aspire.md
       - Scaling out with Redis: hosting/redis.md
+      - Grafana and WebDataStudio: hosting/observability.md
   - Testing: testing.md
   - Reference:
       - Packages and namespaces: reference/packages.md

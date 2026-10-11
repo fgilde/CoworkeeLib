@@ -64,6 +64,8 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--storage` | `storage` | `fileSystem`, `azureBlob` | `fileSystem` | Blob storage; `azureBlob` runs Azurite in the app host |
 | `--ai-provider` | `aiProvider` | `anthropic`, `openAI`, `azureOpenAI`, `ollama`, `openAICompatible` | `anthropic` | Model provider of the [assistant](../modules/ai.md#providers); `ollama` runs Ollama in the app host |
 | `--redis` | `redis` | bool | `true` | Redis container for backplane, presence, cache invalidation and sessions across instances ([Redis](../hosting/redis.md)) |
+| `--grafana` | `grafana` | bool | `true` | Grafana with Prometheus, Loki, Tempo and a collector: telemetry of every service, the app database and dashboards ([Grafana and WebDataStudio](../hosting/observability.md)) |
+| `--web-data-studio` | `webDataStudio` | bool | `true` | WebDataStudio connected to the app database ([Grafana and WebDataStudio](../hosting/observability.md)) |
 | `--database` | `database` | `postgres`, `sqlServer`, `sqlite` | `postgres` | Database engine, see [Database providers](../fundamentals/persistence.md#database-providers); `sqlServer` runs a SQL Server container, `sqlite` a file without container. Backups need `postgres` |
 | `--theme` | `theme` | `Ocean`, `Coworkee`, `Classic`, `Forest`, `Midnight`, `Sunset`, `HighContrast` | `Ocean` | Default theme |
 | `--primary-color` | `primaryColor` | `#rrggbb` | | Brand color: the app gets its own theme, based on `--theme` and named like the title, as default |

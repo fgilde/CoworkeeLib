@@ -64,6 +64,8 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--storage` | `storage` | `fileSystem`, `azureBlob` | `fileSystem` | Blob-Speicher; `azureBlob` startet Azurite im App-Host |
 | `--ai-provider` | `aiProvider` | `anthropic`, `openAI`, `azureOpenAI`, `ollama`, `openAICompatible` | `anthropic` | Modellanbieter des [Assistenten](../modules/ai.md#anbieter); `ollama` startet Ollama im App-Host |
 | `--redis` | `redis` | bool | `true` | Redis-Container für Backplane, Anwesenheit, Cache-Invalidierung und Sitzungen über Instanzen hinweg ([Redis](../hosting/redis.md)) |
+| `--grafana` | `grafana` | bool | `true` | Grafana mit Prometheus, Loki, Tempo und Collector: Telemetrie jedes Dienstes, die App-Datenbank und Dashboards ([Grafana und WebDataStudio](../hosting/observability.md)) |
+| `--web-data-studio` | `webDataStudio` | bool | `true` | WebDataStudio, verbunden mit der App-Datenbank ([Grafana und WebDataStudio](../hosting/observability.md)) |
 | `--database` | `database` | `postgres`, `sqlServer`, `sqlite` | `postgres` | Datenbank-Engine, siehe [Datenbank-Provider](../fundamentals/persistence.md#datenbank-provider); `sqlServer` startet einen SQL-Server-Container, `sqlite` eine Datei ohne Container. Sicherungen brauchen `postgres` |
 | `--theme` | `theme` | `Ocean`, `Coworkee`, `Classic`, `Forest`, `Midnight`, `Sunset`, `HighContrast` | `Ocean` | Standard-Theme |
 | `--primary-color` | `primaryColor` | `#rrggbb` | | Markenfarbe: Die App bekommt ein eigenes Theme auf Basis von `--theme`, benannt wie der Titel, als Standard |
