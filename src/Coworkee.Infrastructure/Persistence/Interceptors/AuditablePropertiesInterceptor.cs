@@ -35,5 +35,13 @@ internal sealed class AuditablePropertiesInterceptor(ICurrentUser currentUser, T
                 entry.Entity.ModifiedBy = currentUser.UserId;
             }
         }
+
+        if (context is not null && !context.Database.IsNpgsql())
+        {
+            foreach (var entry in context.ChangeTracker.Entries<IHasConcurrencyToken>().Where(e => e.State == EntityState.Modified))
+            {
+                entry.Entity.Version++;
+            }
+        }
     }
 }
