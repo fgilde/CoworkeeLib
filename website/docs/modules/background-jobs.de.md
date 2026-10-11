@@ -1,6 +1,6 @@
 # Hintergrundjobs
 
-Jobs laufen auf Hangfire mit Postgres als Speicher. Ein Job läuft als der Benutzer, der ihn eingereiht hat; Berechtigungen, Mandantenfilter und Audit funktionieren wie in einem Request.
+Jobs laufen auf Hangfire mit dem Speicher des [Datenbank-Providers](../fundamentals/persistence.md#datenbank-provider): Postgres, SQL Server oder bei SQLite im Arbeitsspeicher. Ein Job läuft als der Benutzer, der ihn eingereiht hat; Berechtigungen, Mandantenfilter und Audit funktionieren wie in einem Request.
 
 ```csharp
 public sealed record RenderPreview(Guid AssetId);

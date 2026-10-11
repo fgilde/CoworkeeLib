@@ -56,6 +56,7 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--client-entities` | `clientEntities` | bool | `false` | Browser copies of OData sets marked `[ClientEntity]`; spec entities with `clientEntity` switch it on |
 | `--keycloak` | `keycloak` | bool | `false` | Keycloak container as external sign-in |
 | `--storage` | `storage` | `fileSystem`, `azureBlob` | `fileSystem` | Blob storage; `azureBlob` runs Azurite in the app host |
+| `--database` | `database` | `postgres`, `sqlServer`, `sqlite` | `postgres` | Database engine, see [Database providers](../fundamentals/persistence.md#database-providers); `sqlServer` runs a SQL Server container, `sqlite` a file without container. Backups need `postgres` |
 | `--theme` | `theme` | `Ocean`, `Coworkee`, `Classic`, `Forest`, `Midnight`, `Sunset`, `HighContrast` | `Ocean` | Default theme |
 | `--primary-color` | `primaryColor` | `#rrggbb` | | Brand color: the app gets its own theme, based on `--theme` and named like the title, as default |
 | `--secondary-color` | `secondaryColor` | `#rrggbb` | | Second brand color |
@@ -65,7 +66,7 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--sign-in-media-side` | `signInMediaSide` | `Left`, `Right` | `Left` | Side of the media |
 | `--mapping` | `mapping` | `manual`, `mapperly` | `manual` | DTO mapping of generated entities, see [DTOs and mapping](../fundamentals/dtos.md) |
 
-A boolean switch without value means `true` (`--files`), `--chat false` switches off. The shipped initial migration covers the default modules (with or without samples). When you switch a module with tables on or off (chat, AI, backup, notifications, files, features, social, event bus, extended attributes without samples), the template leaves the migration out and `coworkee new` creates `Initial` with `dotnet ef` after the restore. With plain `dotnet new`, run `coworkee migrations add Initial` once yourself.
+A boolean switch without value means `true` (`--files`), `--chat false` switches off. The shipped initial migration covers the default modules (with or without samples). When you switch a module with tables on or off (chat, AI, backup, notifications, files, features, social, event bus, extended attributes without samples) or choose another database than `postgres`, the template leaves the migration out and `coworkee new` creates `Initial` with `dotnet ef` after the restore. With plain `dotnet new`, run `coworkee migrations add Initial` once yourself.
 
 ## App specs
 

@@ -82,9 +82,8 @@ public sealed class ShopInfrastructureModule : CoworkeeModule
     public const string ConnectionStringName = "shop";
 
     public override void ConfigureServices(ModuleServiceContext context) =>
-        context.Services.AddCoworkeeDbContext<ShopDbContext>((provider, options) => options.UseNpgsql(
-            provider.GetRequiredService<IConfiguration>().GetConnectionString(ConnectionStringName),
-            npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "cw")));
+        context.Services.AddCoworkeeDbContext<ShopDbContext>((provider, options) =>
+            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), ConnectionStringName));
 }
 
 // every module that owns tables, so the migrations cover all of them
@@ -172,7 +171,7 @@ app.AddWeb<Projects.Shop_Web>();
 builder.Build().Run();
 ```
 
-`AddCoworkeeApp` legt Postgres an und gibt jedem Dienst die Infrastruktur, die seine Coworkee-Pakete brauchen, siehe [Aspire](../hosting/aspire.md).
+`AddCoworkeeApp` legt Postgres an (oder SQL Server oder SQLite, siehe [Datenbank-Provider](../fundamentals/persistence.md#datenbank-provider)) und gibt jedem Dienst die Infrastruktur, die seine Coworkee-Pakete brauchen, siehe [Aspire](../hosting/aspire.md).
 
 [Pakete und Namespaces](../reference/packages.md) listet, was in welchem Paket steckt.
 

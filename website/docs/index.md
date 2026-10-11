@@ -20,7 +20,7 @@ Coworkee is a modular application framework for .NET 10. It gives a Blazor and A
 | Sign-in | OpenIddict auth server, BFF for the Blazor client, Keycloak or any OpenID Connect provider as external login |
 | Blazor | MudBlazor shell with navigation, admin pages, data table with facets, [client entities](ui/client-entities.md) queried in the browser, theming, replaceable components |
 | Services | Settings, typed app configuration, mail templates, Hangfire jobs, blob storage, Elasticsearch, notifications, AI assistant with MCP |
-| Hosting | `AddCoworkeeApp` for Aspire: Postgres, Redis, Mailpit, Elasticsearch and Keycloak wired from the packages each service uses |
+| Hosting | `AddCoworkeeApp` for Aspire: Postgres (or SQL Server, SQLite), Redis, Mailpit, Elasticsearch and Keycloak wired from the packages each service uses |
 
 ## A taste
 

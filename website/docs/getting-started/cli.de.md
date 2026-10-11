@@ -56,6 +56,7 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--client-entities` | `clientEntities` | bool | `false` | Browser-Kopien von OData-Sets mit `[ClientEntity]`; Entities der Spezifikation mit `clientEntity` schalten es ein |
 | `--keycloak` | `keycloak` | bool | `false` | Keycloak-Container als externe Anmeldung |
 | `--storage` | `storage` | `fileSystem`, `azureBlob` | `fileSystem` | Blob-Speicher; `azureBlob` startet Azurite im App-Host |
+| `--database` | `database` | `postgres`, `sqlServer`, `sqlite` | `postgres` | Datenbank-Engine, siehe [Datenbank-Provider](../fundamentals/persistence.md#datenbank-provider); `sqlServer` startet einen SQL-Server-Container, `sqlite` eine Datei ohne Container. Sicherungen brauchen `postgres` |
 | `--theme` | `theme` | `Ocean`, `Coworkee`, `Classic`, `Forest`, `Midnight`, `Sunset`, `HighContrast` | `Ocean` | Standard-Theme |
 | `--primary-color` | `primaryColor` | `#rrggbb` | | Markenfarbe: Die App bekommt ein eigenes Theme auf Basis von `--theme`, benannt wie der Titel, als Standard |
 | `--secondary-color` | `secondaryColor` | `#rrggbb` | | Zweite Markenfarbe |
@@ -65,7 +66,7 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--sign-in-media-side` | `signInMediaSide` | `Left`, `Right` | `Left` | Seite des Mediums |
 | `--mapping` | `mapping` | `manual`, `mapperly` | `manual` | DTO-Mapping erzeugter Entities, siehe [DTOs und Mapping](../fundamentals/dtos.md) |
 
-Ein bool-Schalter ohne Wert bedeutet `true` (`--files`), `--chat false` schaltet aus. Die mitgelieferte erste Migration deckt die Standardmodule ab (mit oder ohne Beispiele). Schalten Sie ein Modul mit Tabellen ein oder aus (Chat, KI, Backup, Benachrichtigungen, Dateien, Features, Social, Event-Bus, erweiterte Attribute ohne Beispiele), lässt das Template die Migration weg und `coworkee new` legt nach dem Restore `Initial` mit `dotnet ef` an. Mit reinem `dotnet new` führen Sie `coworkee migrations add Initial` einmal selbst aus.
+Ein bool-Schalter ohne Wert bedeutet `true` (`--files`), `--chat false` schaltet aus. Die mitgelieferte erste Migration deckt die Standardmodule ab (mit oder ohne Beispiele). Schalten Sie ein Modul mit Tabellen ein oder aus (Chat, KI, Backup, Benachrichtigungen, Dateien, Features, Social, Event-Bus, erweiterte Attribute ohne Beispiele) oder wählen eine andere Datenbank als `postgres`, lässt das Template die Migration weg und `coworkee new` legt nach dem Restore `Initial` mit `dotnet ef` an. Mit reinem `dotnet new` führen Sie `coworkee migrations add Initial` einmal selbst aus.
 
 ## App-Spezifikationen
 
