@@ -70,7 +70,7 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--languages` | `languages` | `en`, `de`, comma separated (an array in a spec) | all shipped | Languages offered from the start, from those the library ships texts for; administrators add more on the *Languages* page |
 | `--default-language` | `defaultLanguage` | `en`, `de` | `en` | Language of users who chose none; must be one of `languages` |
 | `--color-mode` | `colorMode` | `system`, `light`, `dark` | `system` | Default color mode, seeded as system wide setting `Theme.Mode` |
-| `--registration` | `registration` | bool | `false` | Self registration on the sign-in page, seeded as setting `Account.AllowRegistration` |
+| `--registration` | `registration` | bool | `true` | Self registration on the sign-in page, seeded as setting `Account.AllowRegistration` |
 | `--github-actions` | `githubActions` | bool | `false` | `.github/workflows/ci.yml`: build and tests on every push and pull request |
 | `--devcontainer` | `devcontainer` | bool | `false` | `.devcontainer/devcontainer.json` with the .NET SDK and Docker in Docker (Codespaces, VS Code) |
 
