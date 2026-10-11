@@ -50,7 +50,8 @@ public partial class FacetRangeView
         }
     }
 
-    private static decimal? Parse(string? text) => decimal.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? value : null;
+    // 6.9000 from a numeric column reads 6.9
+    private static decimal? Parse(string? text) => decimal.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? value / 1.000000000000000000000000000000000m : null;
 
     private static string Text(decimal value) => value.ToString(CultureInfo.InvariantCulture);
 

@@ -68,7 +68,7 @@
     .cw-facet-swatch-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .cw-facet-histogram { display: flex; align-items: flex-end; gap: 2px; height: 56px; margin: 10px 2px 2px; }
     .cw-facet-histogram-bar { flex: 1; min-width: 3px; padding: 0; border: none; border-radius: 4px 4px 1px 1px; cursor: pointer;
-        background: color-mix(in srgb, var(--mud-palette-secondary) 30%, transparent); transition: background-color 120ms ease; }
+        background: color-mix(in srgb, var(--mud-palette-secondary) 42%, transparent); transition: background-color 120ms ease; }
     .cw-facet-histogram-bar:hover { background: color-mix(in srgb, var(--mud-palette-secondary) 60%, transparent); }
     .cw-facet-histogram-bar.active { background: var(--mud-palette-primary); }
     .cw-facet-histogram-bar:disabled { cursor: default; }
@@ -91,12 +91,13 @@
     .cw-facet-section { border: 1px solid var(--mud-palette-lines-default); border-radius: 14px; background: var(--mud-palette-surface); overflow: hidden;
         transition: box-shadow 140ms ease; }
     .cw-facet-section.open { box-shadow: 0 1px 6px rgba(0,0,0,.05); }
-    .cw-facet-section-head { display: flex; align-items: center; gap: 4px; padding: 4px 6px 4px 0; }
-    .cw-facet-section-head .cw-facet-head { margin: 0; min-height: 0; flex: none; }
+    .cw-facet-section-head { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; padding: 4px 8px 4px 0; }
+    .cw-facet-section-head .cw-facet-head { margin: 0 0 0 auto; min-height: 0; flex: none; padding-left: 8px; }
+    .cw-facet-chevron { order: 9; color: var(--mud-palette-text-secondary); }
     .cw-facet-section-toggle .cw-facet-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .cw-facet-section-toggle > * { flex: none; }
     .cw-facet-section-toggle > .cw-facet-title { flex: 1 1 auto; min-width: 0; }
-    .cw-facet-section-toggle { display: flex; flex: 1 1 0; align-items: center; gap: 8px; min-width: 96px; overflow: hidden; padding: 6px 4px 6px 12px; border: none; background: none; cursor: pointer;
+    .cw-facet-section-toggle { display: flex; flex: 1 1 45%; align-items: center; gap: 8px; min-width: 130px; overflow: hidden; padding: 6px 4px 6px 12px; border: none; background: none; cursor: pointer;
         color: var(--mud-palette-text-primary); font: inherit; text-align: left; border-radius: 10px; }
     .cw-facet-section-toggle:hover .cw-facet-title { color: var(--mud-palette-primary); }
     .cw-facet-section-body { padding: 0 12px 12px; }

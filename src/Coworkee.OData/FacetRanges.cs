@@ -108,5 +108,5 @@ internal static class FacetRanges
 
     private static string Iso(DateTime day) => day.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
-    private static string Text(decimal value) => value.ToString(CultureInfo.InvariantCulture);
+    private static string Text(decimal value) => value.ToString("0.############", CultureInfo.InvariantCulture);
 }

@@ -23,13 +23,12 @@
                     {
                         <span class="cw-facet-badge">@count</span>
                     }
+                    <MudIcon Icon="@(IsOpen(group) ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" Size="Size.Small" Class="cw-facet-chevron" />
                 </button>
                 @if (IsOpen(group))
                 {
                     <FacetGroupHead Group="group" Selection="Selection" ShowTitle="false" View="ViewOf(group)" ViewChanged="v => SetViewAsync(group, v)" />
                 }
-                <MudIconButton Icon="@(IsOpen(group) ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" Size="Size.Small" OnClick="() => Toggle(group)"
-                               aria-label="@L[group.Label]" />
             </div>
             @if (IsOpen(group))
             {
