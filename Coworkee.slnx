@@ -69,6 +69,7 @@
     <Project Path="tests/Coworkee.Backup.Tests/Coworkee.Backup.Tests.csproj" />
     <Project Path="tests/Coworkee.Chat.Tests/Coworkee.Chat.Tests.csproj" />
     <Project Path="tests/Coworkee.Reporting.Tests/Coworkee.Reporting.Tests.csproj" />
+    <Project Path="tests/Coworkee.Client.Blazor.Reporting.Tests/Coworkee.Client.Blazor.Reporting.Tests.csproj" />
     <Project Path="tests/Coworkee.Cli.Tests/Coworkee.Cli.Tests.csproj" />
     <Project Path="tests/Coworkee.Client.Tests/Coworkee.Client.Tests.csproj" />
     <Project Path="tests/Coworkee.EventBus.RabbitMq.Tests/Coworkee.EventBus.RabbitMq.Tests.csproj" />
