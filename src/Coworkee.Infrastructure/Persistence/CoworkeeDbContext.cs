@@ -14,6 +14,8 @@ public abstract class CoworkeeDbContext(DbContextOptions options, ICurrentUser c
     public const string SoftDeleteFilter = "SoftDelete";
     public const string TenantFilter = "Tenant";
 
+    public const string SqlServerCollation = "Latin1_General_100_CS_AS";
+
     private static readonly MethodInfo ApplyFiltersMethod =
         typeof(CoworkeeDbContext).GetMethod(nameof(ApplyQueryFilters), BindingFlags.Instance | BindingFlags.NonPublic)!;
 
@@ -56,6 +58,22 @@ public abstract class CoworkeeDbContext(DbContextOptions options, ICurrentUser c
             foreach (var property in modelBuilder.Model.GetEntityTypes().SelectMany(t => t.GetProperties()).Where(p => p.GetColumnType() == "jsonb"))
             {
                 property.SetColumnType(null);
+            }
+        }
+
+        if (Database.IsSqlServer())
+        {
+            // compare text case-sensitively like Postgres: unique keys such as "System" and "system" are different rows
+            foreach (var property in modelBuilder.Model.GetEntityTypes().SelectMany(t => t.GetProperties()).Where(p => p.ClrType == typeof(string) && p.GetCollation() is null))
+            {
+                property.SetCollation(SqlServerCollation);
+            }
+
+            // ponytail: SQL Server refuses cascades on self references (comment replies); EF deletes the loaded children, a bulk delete of a parent with children fails
+            foreach (var key in modelBuilder.Model.GetEntityTypes().SelectMany(t => t.GetForeignKeys())
+                         .Where(k => k.PrincipalEntityType == k.DeclaringEntityType && k.DeleteBehavior == DeleteBehavior.Cascade))
+            {
+                key.DeleteBehavior = DeleteBehavior.ClientCascade;
             }
         }
     }

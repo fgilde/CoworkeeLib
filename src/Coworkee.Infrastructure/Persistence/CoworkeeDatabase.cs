@@ -37,7 +37,7 @@ public static class CoworkeeDatabase
     public static DbConnection CreateConnection(string provider, string connectionString, TimeSpan timeout) =>
         DatabaseProviders.Normalize(provider) switch
         {
-            DatabaseProviders.SqlServer => new SqlConnection(new SqlConnectionStringBuilder(connectionString) { ConnectTimeout = Seconds(timeout), CommandTimeout = Seconds(timeout) }.ConnectionString),
+            DatabaseProviders.SqlServer => new SqlConnection(new SqlConnectionStringBuilder(connectionString) { ConnectTimeout = Seconds(timeout), CommandTimeout = Seconds(timeout), Pooling = false }.ConnectionString),
             DatabaseProviders.Sqlite => new SqliteConnection(new SqliteConnectionStringBuilder(connectionString) { DefaultTimeout = Seconds(timeout) }.ConnectionString),
             _ => new NpgsqlConnection(new NpgsqlConnectionStringBuilder(connectionString) { Timeout = Seconds(timeout), CommandTimeout = Seconds(timeout) }.ConnectionString),
         };
