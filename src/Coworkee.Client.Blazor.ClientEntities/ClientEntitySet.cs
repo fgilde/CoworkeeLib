@@ -199,7 +199,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     private async Task<ODataPage<T>> LocalAsync(LocalTable<T> table, ODataQuery query, CancellationToken cancellationToken)
     {
         var view = View(table, query.Filter, query.OrderBy);
-        var facets = query.Facets ? view.Facets ??= LocalFacets.Count(await FacetsAsync(cancellationToken), table, view.Rows) : [];
+        var facets = query.Facets ? view.Facets ??= LocalFacets.Count(await FacetsAsync(cancellationToken), table, view.Rows, query.FacetContext) : [];
         var skip = Math.Min(query.Skip ?? 0, view.Rows.Length);
         var items = new T[Math.Min(query.Top ?? int.MaxValue, view.Rows.Length - skip)];
         for (var i = 0; i < items.Length; i++)

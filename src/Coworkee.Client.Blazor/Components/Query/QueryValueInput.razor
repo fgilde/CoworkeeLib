@@ -1,0 +1,31 @@
+@if (Field.Options is { Count: > 0 } options)
+{
+    <MudSelect T="string" Value="Value" ValueChanged="SetAsync" Label="@Label" Variant="Variant.Outlined" Margin="Margin" Dense="true" data-testid="query-value">
+        @foreach (var option in options)
+        {
+            <MudSelectItem T="string" Value="option.Value">@option.Label</MudSelectItem>
+        }
+    </MudSelect>
+}
+else if (Field.Lookup is not null)
+{
+    <MudAutocomplete T="QueryOption" Value="Selected" ValueChanged="PickAsync" SearchFunc="SearchAsync" ToStringFunc="o => o?.Label" Label="@Label" Variant="Variant.Outlined"
+                     Margin="Margin" Dense="true" DebounceInterval="250" ResetValueOnEmptyText="true" Clearable="true" data-testid="query-value" />
+}
+else
+{
+    @switch (Field.Type)
+    {
+        case QueryFieldType.Number:
+            <MudNumericField T="decimal?" Value="Number" ValueChanged="NumberAsync" Label="@Label" Variant="Variant.Outlined" Margin="Margin" HideSpinButtons="true"
+                             Culture="System.Globalization.CultureInfo.CurrentCulture" data-testid="query-value" />
+            break;
+        case QueryFieldType.Date or QueryFieldType.DateTime:
+            <MudDatePicker Date="Date" DateChanged="DateAsync" Label="@Label" Variant="Variant.Outlined" Margin="Margin" Editable="true" data-testid="query-value" />
+            break;
+        default:
+            <MudTextField T="string" Value="Value" ValueChanged="SetAsync" Label="@Label" Variant="Variant.Outlined" Margin="Margin" Immediate="true" DebounceInterval="350"
+                          data-testid="query-value" />
+            break;
+    }
+}

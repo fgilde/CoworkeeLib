@@ -1,0 +1,15 @@
+@inherits FacetViewBase
+
+<div class="cw-facet-segments" role="group" aria-label="@L[Group.Label]">
+    @if (Single)
+    {
+        <button type="button" class="@($"cw-facet-segment {(Group.Options.Any(IsSelected) ? string.Empty : "selected")}")" data-option="" @onclick="Clear">@L["All"]</button>
+    }
+    @foreach (var option in Group.Options)
+    {
+        <button type="button" class="@($"cw-facet-segment {State(option)}")" disabled="@IsDisabled(option)" aria-pressed="@IsSelected(option)" data-option="@option.OData"
+                @onclick="() => Toggle(option)">
+            @Label(option)<span class="cw-facet-chip-count">@Count(option.Count)</span>
+        </button>
+    }
+</div>

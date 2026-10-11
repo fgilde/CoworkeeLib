@@ -8,6 +8,9 @@ public sealed class DataTableOptions
     /// <summary>Filter icons in the column headers, unless a table sets <c>ColumnFilters</c> itself.</summary>
     public bool ColumnFilters { get; set; } = true;
 
+    /// <summary>The "advanced filter" button that opens the query builder above the rows, unless a table sets <c>AdvancedFilter</c> itself.</summary>
+    public bool AdvancedFilter { get; set; } = true;
+
     /// <summary>
     /// The operators column filters offer for <typeparamref name="TValue"/>: MudBlazor's <c>FilterOperator</c> names and <see cref="Blazor.Data.DataTableFilters.Between"/>.
     /// No operators turn filtering off for that type; <c>typeof(Enum)</c> stands for all enums.

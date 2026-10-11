@@ -1,0 +1,20 @@
+<div class="@($"cw-facet-option cw-facet-node {(View.StateOf(Node) == true ? "selected" : string.Empty)}")" role="treeitem" aria-expanded="@Expanded"
+     style="@($"padding-left:{8 + (Depth * 18)}px")" data-node="@Node.Name" @onclick="() => View.ToggleNode(Node)">
+    @if (Node.Children.Count > 0)
+    {
+        <span @onclick:stopPropagation="true">
+            <MudIconButton Icon="@(Expanded ? Icons.Material.Filled.ExpandMore : Icons.Material.Filled.ChevronRight)" Size="Size.Small" Class="cw-facet-twist"
+                           aria-label="@Node.Name" OnClick="() => _expanded = !Expanded" data-testid="facet-twist" />
+        </span>
+    }
+    <MudIcon Icon="@Icon" Size="Size.Small" Class="cw-facet-check" />
+    <span class="cw-facet-label">@Node.Name</span>
+    <span class="cw-facet-count">@FacetTreeView.CountOf(Node)</span>
+</div>
+@if (Expanded)
+{
+    @foreach (var child in Node.Children)
+    {
+        <FacetTreeNode Node="child" View="View" Depth="Depth + 1" />
+    }
+}

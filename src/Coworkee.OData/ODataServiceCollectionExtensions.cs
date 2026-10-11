@@ -14,6 +14,16 @@ public static class ODataServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>Sets how the facet on a property looks and combines its values, like [FacetBehavior] on the property; this call wins.</summary>
+    public static IServiceCollection ConfigureFacet<TEntity>(this IServiceCollection services, Expression<Func<TEntity, object?>> property, Action<Contracts.Data.FacetBehaviorAttribute> configure)
+        where TEntity : class
+    {
+        var behavior = new Contracts.Data.FacetBehaviorAttribute();
+        configure(behavior);
+        services.Registry().Configure(typeof(TEntity), PropertyName(property), behavior);
+        return services;
+    }
+
     /// <summary>Lets clients mirror OData sets and query them locally, e.g. o.For&lt;Product&gt;(); entities marked [ClientEntity] need no call.</summary>
     public static IServiceCollection AddCoworkeeClientEntities(this IServiceCollection services, Action<ClientEntityOptions> configure) =>
         services.Configure(configure);

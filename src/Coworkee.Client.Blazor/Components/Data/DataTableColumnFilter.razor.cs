@@ -114,7 +114,12 @@ public partial class DataTableColumnFilter<T>
         }
     }
 
-    private string ChoiceLabel(object choice) => choice is bool flag ? L[flag ? "Yes" : "No"] : L[choice.ToString()!];
+    private string ChoiceLabel(object choice) => choice switch
+    {
+        bool flag => L[flag ? "Yes" : "No"],
+        Enum value => L[EnumLabels.Of(value)],
+        _ => L[choice.ToString()!],
+    };
 
     private Task ApplyAsync()
     {

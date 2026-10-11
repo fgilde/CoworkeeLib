@@ -1,0 +1,16 @@
+@inherits FacetViewBase
+
+<div class="cw-facet-segments cw-facet-toggle" role="radiogroup" aria-label="@L[Group.Label]">
+    <button type="button" class="@($"cw-facet-segment {(Chosen is null ? "selected" : string.Empty)}")" role="radio" aria-checked="@(Chosen is null)" data-option=""
+            @onclick="() => Selection.Only(Group, null)">
+        @L["All"]<span class="cw-facet-chip-count">@Count(Group.Options.Sum(o => o.Count))</span>
+    </button>
+    @foreach (var option in Ordered)
+    {
+        <button type="button" class="@($"cw-facet-segment {(Chosen == option ? "selected" : string.Empty)}")" role="radio" aria-checked="@(Chosen == option)"
+                data-option="@option.OData" @onclick="() => Selection.Only(Group, Chosen == option ? null : option)">
+            <MudIcon Icon="@(IsYes(option) ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)" Size="Size.Small" />
+            @Label(option)<span class="cw-facet-chip-count">@Count(option.Count)</span>
+        </button>
+    }
+</div>

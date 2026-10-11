@@ -28,7 +28,15 @@
     .cw-group-zone.drop-allowed { border-color: var(--mud-palette-primary); background: color-mix(in srgb, var(--mud-palette-primary) 10%, transparent); }
     .cw-group-hint { font-weight: 400; font-size: .85rem; color: var(--mud-palette-text-secondary); }
     .cw-group-title { color: var(--mud-palette-text-secondary); }
+    .cw-table-paneled { display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: 16px; align-items: start; }
+    .cw-table-facets { position: sticky; top: 72px; max-height: calc(100vh - 96px); overflow-y: auto; padding-right: 2px; }
+    @@media (max-width: 960px) { .cw-table-paneled { grid-template-columns: 1fr; } .cw-table-facets { position: static; max-height: none; } }
+    .cw-table-main { min-width: 0; }
+    .cw-advanced { margin-bottom: 12px; padding: 12px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--mud-palette-primary) 30%, var(--mud-palette-lines-default));
+        background: color-mix(in srgb, var(--mud-palette-primary) 2%, var(--mud-palette-surface)); }
+    .cw-advanced-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
 </style>
+<FacetStyles />
 
 <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-1">
     @if (SearchFields.Count > 0)
@@ -37,9 +45,22 @@
                       Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" Clearable="true" Variant="Variant.Outlined" Margin="Density.Margin"
                       Class="mr-2 mb-2" Style="max-width:320px" data-testid="table-search" />
     }
-    @if (Facets)
+    @if (Facets && !PanelLayout)
     {
-        <FacetBar Groups="_facets" Selection="_selection" />
+        <FacetBar Groups="_facets" Selection="_selection" Views="_facetViews" ViewsChanged="FacetViewsChanged" />
+    }
+    @if (ShowAdvanced)
+    {
+        <button type="button" class="@($"cw-facet-pill cw-advanced-pill mb-2 {(HasAdvanced ? "active" : string.Empty)}")" aria-expanded="@_advancedOpen"
+                @onclick="() => _advancedOpen = !_advancedOpen" data-testid="advanced-filter">
+            <MudIcon Icon="@Icons.Material.Outlined.AccountTree" Size="Size.Small" Class="cw-facet-pill-icon" />
+            <span>@L["Advanced filter"]</span>
+            @if (HasAdvanced)
+            {
+                <span class="cw-facet-badge">@_advanced.Rules().Count(QueryOperators.IsComplete)</span>
+            }
+            <MudIcon Icon="@(_advancedOpen ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" Size="Size.Small" />
+        </button>
     }
     <MudSpacer />
     @ToolBarContent
@@ -107,8 +128,31 @@
         </PermissionGate>
     }
 </MudStack>
-<FacetChips Selection="_selection" Filters="FilterChips" OnRemove="RemoveFilterAsync" OnClear="ClearFilters" />
+@if (ShowAdvanced && _advancedOpen)
+{
+    <div class="cw-advanced" data-testid="advanced-panel">
+        <div class="cw-advanced-head">
+            <MudIcon Icon="@Icons.Material.Outlined.AccountTree" Size="Size.Small" Color="Color.Primary" />
+            <span class="cw-facet-title">@L["Advanced filter"]</span>
+            @if (!_advanced.IsEmpty)
+            {
+                <MudButton Size="Size.Small" Variant="Variant.Text" Class="cw-facet-clear" OnClick="() => AdvancedChangedAsync(new())" data-testid="advanced-clear">@L["Clear"]</MudButton>
+            }
+            <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" aria-label="@L["Close"]" OnClick="() => _advancedOpen = false" />
+        </div>
+        <QueryBuilder Fields="Fields" Value="_advanced" ValueChanged="AdvancedChangedAsync" Localize="L10n" Dense="Dense" />
+    </div>
+}
 <RealtimeSubscription Topic="@LiveTopic" OnEvent="_ => LiveChangedAsync()" />
+<div class="@(PanelLayout ? "cw-table-layout cw-table-paneled" : "cw-table-layout")">
+@if (PanelLayout)
+{
+    <aside class="cw-table-facets">
+        <FacetPanel Groups="_facets" Selection="_selection" Views="_facetViews" ViewsChanged="FacetViewsChanged" />
+    </aside>
+}
+<div class="cw-table-main">
+<FacetChips Selection="_selection" Filters="FilterChips" OnRemove="RemoveFilterAsync" OnClear="ClearFilters" />
 <MudDataGrid @ref="_grid" T="T" ServerData="LoadAsync" MultiSelection="MultiSelection" SelectedItemsChanged="SelectionChangedAsync" RowsPerPage="PageSize"
              SortMode="SortMode.Multiple" Dense="Dense" Hover="true" Striped="@Theme.StripedTables" Elevation="0" Outlined="true" ChildRowContent="ChildRowContent"
              Groupable="Groupable" GroupExpanded="true" Hideable="ColumnChooser" DragDropColumnReordering="ReorderableColumns" ColumnReorderMode="DataGridDragAndDropColumnReorderMode.Insert"
@@ -163,3 +207,5 @@
         <MudDataGridPager T="T" />
     </PagerContent>
 </MudDataGrid>
+</div>
+</div>

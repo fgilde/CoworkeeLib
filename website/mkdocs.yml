@@ -87,6 +87,7 @@ plugins:
             Blazor UI: Blazor-UI
             Client and layout: Client und Layout
             Data tables: Datentabellen
+            Query builder: Query-Builder
             Client entities: Client-Entities
             Replacing components: Komponenten ersetzen
             Modules in detail: Module im Detail
@@ -163,6 +164,7 @@ nav:
   - Blazor UI:
       - Client and layout: ui/client.md
       - Data tables: ui/data-table.md
+      - Query builder: ui/query-builder.md
       - Client entities: ui/client-entities.md
       - Replacing components: ui/customizing.md
   - Modules in detail:

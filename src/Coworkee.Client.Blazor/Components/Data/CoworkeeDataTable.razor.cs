@@ -124,7 +124,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     public FacetSelection Selection => _selection;
 
-    public string? CurrentFilter => ODataFilter.And(Filter, _selection.ToFilter(), ColumnFilter, ODataFilter.Search(_search, SearchFields));
+    public string? CurrentFilter => ODataFilter.And(Filter, _selection.ToFilter(), ColumnFilter, AdvancedFilterText, ODataFilter.Search(_search, SearchFields));
 
     private string? _lastFilter;
 
@@ -137,7 +137,11 @@ public partial class CoworkeeDataTable<T> : IDisposable
     {
         get
         {
-            var filters = new DataTableState(_search, [.. _selection.All], []);
+            var filters = new DataTableState(_search, [.. _selection.All], [])
+            {
+                Advanced = _advanced.IsEmpty ? null : _advanced,
+                FacetViews = _facetViews.Count == 0 ? null : new Dictionary<string, FacetView>(_facetViews),
+            };
             if (_grid is null)
             {
                 return filters;
@@ -199,6 +203,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
     private void ApplyFilters(DataTableState state)
     {
         _search = state.Search;
+        RestoreFacets(state);
         _selection.Restore(state.Facets);
         _pendingLayout = state.HasLayout || state.HiddenColumns.Count > 0 || state.ColumnFilters is { Count: > 0 } ? state : null;
     }
@@ -387,12 +392,13 @@ public partial class CoworkeeDataTable<T> : IDisposable
             Top = state.PageSize,
             Skip = state.Page * state.PageSize,
             Facets = Facets,
+            FacetContext = Facets ? _selection.Context(BaseFilter, _facets) : null,
         };
         var page = await QueryAsync(query, cancellationToken);
         await OnLoaded.InvokeAsync(page.Items);
         if (Facets)
         {
-            _facets = page.Facets;
+            ShowFacets(page.Facets);
             MarkFacetColumns();
             StateHasChanged();
         }

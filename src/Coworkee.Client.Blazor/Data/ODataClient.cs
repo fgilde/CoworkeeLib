@@ -17,6 +17,10 @@ internal sealed class ODataClient(HttpClient http) : IODataClient
         if (query.Facets)
         {
             request.Headers.Add("Prefer", "odata.include-annotations=\"cn.facets\"");
+            if (query.FacetContext is { } context)
+            {
+                request.Headers.Add(FacetContextDto.Header, context.Encode());
+            }
         }
 
         using var response = await http.SendAsync(request, cancellationToken);
