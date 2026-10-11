@@ -56,7 +56,7 @@ public sealed class Brand : AuditedEntity, IMultiTenant
 
 - `AuditedEntity` bringt `Id` (eine GUID Version 7), `CreatedAt`, `CreatedBy`, `ModifiedAt`, `ModifiedBy` mit. Die Werte werden beim Speichern gesetzt.
 - `IMultiTenant` filtert Abfragen auf den Mandanten des aktuellen Benutzers und setzt `TenantId` beim Anlegen.
-- `[Realtime]` meldet jede Änderung an Clients mit der Berechtigung, siehe [Realtime](../modules/realtime.md).
+- `[Realtime]` meldet jede Änderung an Clients mit der Berechtigung; Tabellen von `BrandDto` laden von selbst neu, siehe [Realtime](../modules/realtime.md).
 
 Module besitzen keinen eigenen `DbContext`. Sie tragen zu dem der App bei:
 
@@ -202,7 +202,6 @@ public sealed class MyAppCatalogModule : CoworkeeModule, IWebModule
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + CatalogPermissions.Brands.View)]
 
 <PageHeader Title="Brands" Description="Manage brands." />
-<RealtimeSubscription Topic="type:Brand" OnEvent="_ => _table.ReloadAsync()" />
 <CoworkeeDataTable @ref="_table" T="BrandDto" EntitySet="Brands" SearchFields="SearchFields" MultiSelection="true" DescribeItem="b => b.Name"
                    CreatePermission="@CatalogPermissions.Brands.Create" EditPermission="@CatalogPermissions.Brands.Edit" DeletePermission="@CatalogPermissions.Brands.Delete"
                    OnCreate="CreateAsync" OnEdit="EditAsync" OnDelete="DeleteAsync">

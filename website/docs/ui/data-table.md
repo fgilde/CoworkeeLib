@@ -35,7 +35,7 @@
 | `DataSource` | rows from somewhere else than the OData set, see below |
 | `ColumnFilters` | a filter in every column header, see [column filters](#column-filters) (default `options.DataTable.ColumnFilters`, `true`) |
 
-`ReloadAsync()` reloads from outside, for example from a `RealtimeSubscription`. `Selection` exposes the facet choices, `CurrentFilter` the OData filter the table sends (fixed filter, facets, column filters and search).
+The table reloads by itself when its `[Realtime]` entity changes (`RealtimeTopic`, see [Realtime](../modules/realtime.md#entity-changes)). `ReloadAsync()` reloads from outside, for example from a `RealtimeSubscription`. `Selection` exposes the facet choices, `CurrentFilter` the OData filter the table sends (fixed filter, facets, column filters and search).
 
 For sets marked as [client entities](client-entities.md) the table filters, searches, sorts and counts in the browser once the rows arrived.
 
