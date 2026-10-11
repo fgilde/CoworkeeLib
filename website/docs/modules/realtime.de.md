@@ -11,7 +11,8 @@ Jeder offene Tab folgt diesen Änderungen ohne Neuladen:
 | Ein Benutzer wird deaktiviert, gesperrt, abgemeldet oder ändert sein Passwort | seine Sitzungen enden (siehe [Clients und Sitzungen](../security/clients.md)) |
 | Die Einstellung zur aktiven Rolle wird umgeschaltet | jeder Client lädt seine Berechtigungen neu |
 | Jemand schickt eine Chatnachricht | der Empfänger sieht eine Snackbar mit Link zur Unterhaltung, außer sie ist offen; eine offene Unterhaltung zeigt sie sofort |
-| Eine Unterhaltung wird gelesen | die Ungelesen-Zähler folgen in jedem Tab, der Absender sieht die Lesemarke |
+| Eine Unterhaltung wird gelesen | die Ungelesen-Zähler folgen in jedem Tab (auch die Zahl am Chat-Link), der Absender sieht die Lesemarke |
+| Jemand kommt online oder geht offline | ein grüner Punkt an jedem Avatar dieses Benutzers |
 | Jemand ändert Namen oder Bild | jeder Avatar und jede Benutzerkarte dieses Benutzers aktualisiert sich |
 | Eine Benachrichtigung kommt oder ändert sich | Glocke, Zähler und Benachrichtigungsseite folgen |
 | Features, Sprachen, Themes | Feature-Schalter, Sprachmenü und Theme-Listen folgen |
@@ -62,6 +63,8 @@ Mit mehreren API-Instanzen setzen Sie den Connection-String `redis` für die Sig
 
 Das Speichern von Rollen, Rechten von Rollen oder Benutzern, Gruppenmitgliedschaften, Gruppenrollen oder der aktiven Rolle veröffentlicht auf `tenant:permissions`; die Einstellung unten veröffentlicht auf `global:permissions`. Der Server verwirft seine zwischengespeicherten Berechtigungen nach dem Commit, der `PermissionStore` des Clients lädt sie einmal je Schwall neu und meldet `Changed`, und der Authentifizierungsstatus lässt `AuthorizeView` und `AuthorizeRouteView` erneut prüfen. Keine Seite muss dafür etwas abonnieren.
 
+Themen, denen ein Benutzer nicht mehr folgen darf, nimmt der Server zurück: Nach so einer Änderung fragt jede Instanz die Themen-Autorisierer erneut für die Themen ihrer Verbindungen und nimmt die Verbindungen aus den Gruppen, denen sie nicht mehr angehören dürfen. So erreichen einen Benutzer, der die Berechtigung verloren hat, keine Änderungsmeldungen dieses Entity-Typs mehr (auch nach dem Wechsel der aktiven Rolle). Der Client abonniert seine Themen erneut, wenn seine Berechtigungen gewachsen sind.
+
 ## Aktive Rolle
 
 Ein Benutzer mit mehreren Rollen wählt in der App-Leiste eine aus („Alle Rollen“ oder eine davon). Solange eine aktiv ist, kommen seine Berechtigungen nur aus dieser Rolle: Weder seine anderen Rollen noch ihm direkt gegebene Rechte zählen. Der Server wendet das bei jeder Berechtigungsprüfung an, die API verweigert also, was die Rolle nicht erlaubt; sie gibt nie mehr als die Rollen des Benutzers. Die Wahl wird beim Benutzer gespeichert (als Benutzer-Claim) und folgt ihm auf jedes Gerät; eine ihm entzogene Rolle fällt auf alle Rollen zurück.
@@ -83,9 +86,15 @@ Ist eine Seite nicht erlaubt, listet `NotAllowed` die anderen Rollen des Benutze
 | `GET /api/v1/identity/roles/me?permission=` | eigene Rollen, die aktive, ob jede die Berechtigung gibt |
 | `PUT /api/v1/identity/roles/me/active` | `{ "roleId": null }` handelt wieder mit allen Rollen |
 
+## Anwesenheit
+
+Ein Benutzer mit mindestens einer Hub-Verbindung ist online, egal wie viele Tabs er offen hat; nach dem Schließen der letzten geht er nach ein paar Sekunden offline, sodass ein Neuladen nicht flackert. Änderungen gehen als `presence.changed` auf `tenant:presence`, `GET /api/v1/realtime/presence` listet, wer aus der Organisation online ist, und `UserAvatar` zeigt einen grünen Punkt (`ShowPresence="false"` blendet ihn aus). Mit mehreren API-Instanzen zählt ein Benutzer je Instanz.
+
 ## Chat
 
-Eine Nachricht geht als `chat.message` an die Themen `user:{id}` beider Personen, das Lesen einer Unterhaltung als `chat.read`. Der `ChatNotifier` der App-Leiste zeigt eine Snackbar mit Absender, Textanfang und Link auf `/chat?with={absender}`; die Chatseite hält die offene Unterhaltung in dieser Adresse, sodass sie still bleibt, solange Sie darin sind.
+Eine Nachricht geht als `chat.message` an die Themen `user:{id}` beider Personen, das Lesen einer Unterhaltung als `chat.read`. Der `ChatNotifier` der App-Leiste zeigt eine Snackbar mit Absender, Textanfang und Link auf `/chat?with={absender}`; die Chatseite hält die offene Unterhaltung in dieser Adresse, sodass sie still bleibt, solange Sie darin sind. Er setzt außerdem die Zahl der ungelesenen Nachrichten (`GET /api/v1/chat/unread-count`) an den Chat-Link der Navigation und hält sie in jedem Tab aktuell.
+
+Jede Seite kann so eine Zahl an ihrem Navigationslink zeigen: `NavigationBadges.Set("/orders", 3)`.
 
 ## Benachrichtigungen
 
