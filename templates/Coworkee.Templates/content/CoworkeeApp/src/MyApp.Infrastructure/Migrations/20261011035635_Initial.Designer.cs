@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20261009124527_Initial")]
+    [Migration("20261011035635_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -1071,6 +1071,78 @@ namespace MyApp.Infrastructure.Migrations
                     b.ToTable("NotificationDigests", "cw");
                 });
 
+            modelBuilder.Entity("Coworkee.Reporting.Report", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Definition")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Icon")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid");
+
+                    b.PrimitiveCollection<List<Guid>>("RoleIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Visibility")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "OwnerId");
+
+                    b.ToTable("Reports", "cw");
+                });
+
+            modelBuilder.Entity("Coworkee.Reporting.ReportFavorite", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ReportId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("UserId", "ReportId");
+
+                    b.HasIndex("ReportId");
+
+                    b.ToTable("ReportFavorites", "cw");
+                });
+
             modelBuilder.Entity("Coworkee.Settings.ConfigurationEntry", b =>
                 {
                     b.Property<string>("Key")
@@ -1824,6 +1896,15 @@ namespace MyApp.Infrastructure.Migrations
                     b.Navigation("Changes");
                 });
 
+            modelBuilder.Entity("Coworkee.Reporting.ReportFavorite", b =>
+                {
+                    b.HasOne("Coworkee.Reporting.Report", null)
+                        .WithMany()
+                        .HasForeignKey("ReportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Coworkee.Theming.TenantTheme", b =>
                 {
                     b.HasOne("Coworkee.Theming.ThemeDefinition", null)
@@ -1967,7 +2048,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20261009124527_Initial")]
+    [Migration("20261011035635_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -2950,6 +3031,78 @@ namespace MyApp.Infrastructure.Migrations
                     b.ToTable("NotificationDigests", "cw");
                 });
 
+            modelBuilder.Entity("Coworkee.Reporting.Report", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Definition")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Icon")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid");
+
+                    b.PrimitiveCollection<List<Guid>>("RoleIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Visibility")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "OwnerId");
+
+                    b.ToTable("Reports", "cw");
+                });
+
+            modelBuilder.Entity("Coworkee.Reporting.ReportFavorite", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ReportId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("UserId", "ReportId");
+
+                    b.HasIndex("ReportId");
+
+                    b.ToTable("ReportFavorites", "cw");
+                });
+
             modelBuilder.Entity("Coworkee.Settings.ConfigurationEntry", b =>
                 {
                     b.Property<string>("Key")
@@ -3504,6 +3657,15 @@ namespace MyApp.Infrastructure.Migrations
                         });
 
                     b.Navigation("Changes");
+                });
+
+            modelBuilder.Entity("Coworkee.Reporting.ReportFavorite", b =>
+                {
+                    b.HasOne("Coworkee.Reporting.Report", null)
+                        .WithMany()
+                        .HasForeignKey("ReportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Coworkee.Theming.TenantTheme", b =>
