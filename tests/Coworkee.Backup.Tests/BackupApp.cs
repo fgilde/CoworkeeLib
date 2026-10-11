@@ -26,6 +26,9 @@ public sealed class BackupApp : DatabaseFixture
 
     public WebApplication App { get; private set; } = null!;
 
+    // backups copy Postgres tables, whatever engine the rest of the run uses
+    public override string Provider => Coworkee.Contracts.Configuration.DatabaseProviders.Postgres;
+
     public override async ValueTask InitializeAsync()
     {
         await base.InitializeAsync();

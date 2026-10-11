@@ -18,7 +18,8 @@ public sealed partial class OutboxProcessor<TContext>(IServiceScopeFactory scope
     {
         await using var scope = scopes.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<TContext>();
-        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        // the transaction holds the row locks; SQLite has none and would lock the handlers' own writes out
+        await using var transaction = db.Database.IsSqlite() ? null : await db.Database.BeginTransactionAsync(cancellationToken);
 
         var messages = await Pending(db, clock.GetUtcNow(), batchSize).ToListAsync(cancellationToken);
 
@@ -52,7 +53,10 @@ public sealed partial class OutboxProcessor<TContext>(IServiceScopeFactory scope
         }
 
         await db.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+        if (transaction is not null)
+        {
+            await transaction.CommitAsync(cancellationToken);
+        }
         return messages.Count;
     }
 

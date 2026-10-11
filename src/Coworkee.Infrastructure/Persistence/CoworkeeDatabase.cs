@@ -3,6 +3,7 @@ using Coworkee.Contracts.Configuration;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
@@ -27,7 +28,8 @@ public static class CoworkeeDatabase
         DatabaseProviders.Normalize(provider) switch
         {
             DatabaseProviders.SqlServer => options.UseSqlServer(connectionString, o => o.MigrationsHistoryTable(MigrationsHistoryTable, CoworkeeModelContributor.Schema)),
-            DatabaseProviders.Sqlite => options.UseSqlite(connectionString),
+            // SQLite has no schemas; EF leaves them out, the warning per table says nothing new
+            DatabaseProviders.Sqlite => options.UseSqlite(connectionString).ConfigureWarnings(w => w.Ignore(SqliteEventId.SchemaConfiguredWarning)),
             _ => options.UseNpgsql(connectionString, o => o.MigrationsHistoryTable(MigrationsHistoryTable, CoworkeeModelContributor.Schema)),
         };
 
