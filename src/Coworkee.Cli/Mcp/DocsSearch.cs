@@ -59,6 +59,7 @@ internal static partial class DocsSearch
         ("AI assistant and MCP", "modules/ai/"),
         ("Aspire app host", "hosting/aspire/"),
         ("Scaling out with Redis", "hosting/redis/"),
+        ("Grafana and WebDataStudio", "hosting/observability/"),
         ("Testing", "testing/"),
         ("Packages and namespaces", "reference/packages/"),
     ];

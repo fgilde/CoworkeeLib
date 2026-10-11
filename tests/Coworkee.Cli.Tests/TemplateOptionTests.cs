@@ -100,6 +100,38 @@ public sealed class TemplateOptionTests(TemplateFixture template)
     }
 
     [Fact]
+    public async Task Grafana_and_webdatastudio_are_on_by_default_and_can_be_left_out()
+    {
+        var on = await template.CreateAsync("tools-on", "--samples", "false");
+        var appHost = Read(on, "src/Shop.AppHost/AppHost.cs");
+        appHost.ShouldContain("options.UseGrafana();");
+        appHost.ShouldContain("options.UseWebDataStudio();");
+        appHost.ShouldContain("options.Administrator = new(administrator.Email, administrator.Password);");
+        appHost.ShouldContain("using Shop.Migrations;");
+        Read(on, "src/Shop.ServiceDefaults/Extensions.cs").ShouldContain("GRAFANA_OTLP_ENDPOINT");
+
+        var off = await template.CreateAsync("tools-off", "--samples", "false", "--grafana", "false", "--webDataStudio", "false");
+        appHost = Read(off, "src/Shop.AppHost/AppHost.cs");
+        appHost.ShouldNotContain("UseGrafana");
+        appHost.ShouldNotContain("UseWebDataStudio");
+        appHost.ShouldNotContain("Administrator");
+        appHost.ShouldNotContain("using Shop.Migrations;");
+        Read(off, "LOGIN.md").ShouldNotContain("grafana");
+        TemplateTests.ShouldHaveNoLeftovers(off);
+    }
+
+    [Fact]
+    public async Task Generated_app_without_grafana_and_webdatastudio_builds()
+    {
+        var feed = Environment.GetEnvironmentVariable("COWORKEE_TEST_FEED");
+        Assert.SkipWhen(string.IsNullOrEmpty(feed), "Set COWORKEE_TEST_FEED to a folder with packed Coworkee packages (build/pack-local.ps1) to build a generated app.");
+        var app = await template.CreateAsync("build-no-tools", "--samples", "false", "--grafana", "false", "--webDataStudio", "false", "--keycloak", "true");
+        await Dotnet.RunAsync(app, "nuget", "add", "source", Path.GetFullPath(feed!), "--name", "local", "--configfile", "nuget.config");
+
+        await Dotnet.RunAsync(app, "build", "Shop.slnx");
+    }
+
+    [Fact]
     public async Task Generated_app_with_ollama_and_without_redis_builds()
     {
         var feed = Environment.GetEnvironmentVariable("COWORKEE_TEST_FEED");
