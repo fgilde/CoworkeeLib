@@ -14,7 +14,7 @@
                     }
                     else
                     {
-                        <ApexPointSeries TItem="ChartPoint" Items="series.Points" Name="@series.Name" SeriesType="ChartOptions.SeriesType(Widget.Options.Chart)" XValue="p => Timeline ? p.Date : p.Label" YValue="p => p.Value" />
+                        <ApexPointSeries TItem="ChartPoint" Items="series.Points" Name="@series.Name" SeriesType="ChartOptions.SeriesType(Kind)" XValue="p => Timeline ? p.Date : p.Label" YValue="p => p.Value" />
                     }
                 }
             </ApexChart>

@@ -16,6 +16,9 @@ public partial class ChartWidget
     // ApexCharts keeps markers on area and line charts whatever the options say; many points read better without
     private string Markers => Widget.Options.Chart == ChartKind.Line && _series.FirstOrDefault()?.Points.Count <= 24 ? "true" : "false";
 
+    // a line through one point is invisible: one point shows as a bar
+    private ChartKind Kind => Widget.Options.Chart is ChartKind.Line or ChartKind.Area && _series.FirstOrDefault()?.Points.Count == 1 ? ChartKind.Bar : Widget.Options.Chart;
+
     // dates on a time axis: ApexCharts spaces the ticks itself
     private bool Timeline => Widget.Options.Chart is ChartKind.Line or ChartKind.Area or ChartKind.Bar or ChartKind.StackedBar
         && FieldOf(Query?.GroupBy?.Field)?.Kind == ReportFieldKind.Date && _series.FirstOrDefault()?.Points is { Count: > 2 } points && points.All(p => p.Date is not null);
@@ -24,6 +27,9 @@ public partial class ChartWidget
 
     // pies, donuts and treemaps show one series
     private IEnumerable<ChartSeries> Shown => Widget.Options.Chart is ChartKind.Pie or ChartKind.Donut or ChartKind.Treemap ? _series.Take(1) : _series;
+
+    // the legend moves below circular charts on narrow widgets
+    protected override string LoadKey => $"{base.LoadKey}|{Widget.W}";
 
     protected override void OnInitialized()
     {
@@ -59,7 +65,7 @@ public partial class ChartWidget
 
     private ApexChartOptions<ChartPoint> Options(ChartPalette palette)
     {
-        var options = ChartOptions.For(Widget.Options, palette, _series.Count, _series.FirstOrDefault()?.Points.Count ?? 0);
+        var options = ChartOptions.For(Widget.Options, palette, _series.Count, _series.FirstOrDefault()?.Points.Count ?? 0, Widget.W);
         if (Timeline)
         {
             ChartOptions.TimeAxis(options, Query!.GroupBy!.Bucket);

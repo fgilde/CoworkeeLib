@@ -30,6 +30,7 @@ Which package goes where, and what to put in the `using` block.
 | `Coworkee.Localization` | API | `Coworkee.Localization.Resources` | `CoworkeeLocalizationModule`, `ILocalizationResourceContributor`, `AddEmbeddedJson` |
 | `Coworkee.Backup` | API | `Coworkee.Backup` | `CoworkeeBackupModule` |
 | `Coworkee.Chat` | API | `Coworkee.Chat` | `CoworkeeChatModule`, `ChatEvents` |
+| `Coworkee.Reporting` | API | `Coworkee.Reporting` | `CoworkeeReportingModule`, `RunReportQuery` |
 | `Coworkee.ExtendedAttributes` | API | `Coworkee.ExtendedAttributes` | `CoworkeeExtendedAttributesModule`, `AddExtendedAttributes<T>` |
 | `Coworkee.Social` | API | `Coworkee.Social` | `CoworkeeSocialModule`, `AddCoworkeeSocial` |
 | `Coworkee.EventBus`, `Coworkee.EventBus.RabbitMq` | API, workers | `Coworkee.EventBus` | `IEventBus`, `IIntegrationEvent`, `IIntegrationEventHandler<T>`, `CoworkeeRabbitMqEventBusModule` |
@@ -38,6 +39,7 @@ Which package goes where, and what to put in the `using` block.
 | `Coworkee.Client` | SDKs, other .NET apps | `Coworkee.Client` | `CoworkeeApiClient`, `CoworkeeApiException`, `BearerTokenHandler`, `ODataResult<T>` |
 | `Coworkee.Client.Blazor` | WebAssembly client | `Coworkee.Client.Blazor`, `.Components`, `.Components.Data`, `.Data`, `.Api`, `.Navigation`, `.Security`, `.Customization` | `AddCoworkeeClient`, `CoworkeeLayout`, `CoworkeeDataTable<T>`, `IODataClient`, `ApiClientBase`, `ReplaceComponent` |
 | `Coworkee.Client.Blazor.ClientEntities` | WebAssembly client: local copies of OData sets | `Coworkee.Client.Blazor.ClientEntities` | `AddCoworkeeClientEntities`, `ClientEntities`, `ClientEntitySet<T>`, `ClientEntityIndicator`, `ODataLinq` |
+| `Coworkee.Client.Blazor.Reporting` | WebAssembly client: reports and dashboards | `Coworkee.Client.Blazor.Reporting` | `AddCoworkeeReporting`, `ReportingOptions`, `ReportGrid`, `ReportFacetFilter` |
 | `Coworkee.Aspire` | app host | `Aspire.Hosting`, `Coworkee.Aspire.Settings` | `AddCoworkeeApp`, `CoworkeeApp`, `WithSetting` |
 | `Coworkee.Testing` | tests | `Coworkee.Testing` | `PostgresFixture`, `PostgresWebApplicationFactory`, `AddTestAuthentication` |
 

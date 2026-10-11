@@ -28,7 +28,7 @@ public static class ChartOptions
 
     public static bool IsCircular(ChartKind kind) => kind is ChartKind.Pie or ChartKind.Donut;
 
-    public static ApexChartOptions<ChartPoint> For(WidgetOptions widget, ChartPalette palette, int seriesCount, int points = 0)
+    public static ApexChartOptions<ChartPoint> For(WidgetOptions widget, ChartPalette palette, int seriesCount, int points = 0, int columns = ReportDefinition.GridColumns)
     {
         var formatter = ReportFormat.Script(widget);
         var kind = widget.Chart;
@@ -48,8 +48,8 @@ public static class ChartOptions
             Theme = new Theme { Mode = palette.Dark ? Mode.Dark : Mode.Light },
             Colors = kind == ChartKind.Heatmap ? [colors[0]] : colors,
             Grid = new Grid { BorderColor = palette.Lines, StrokeDashArray = 4, Padding = new Padding { Left = 8, Right = 8 } },
-            Legend = new Legend { Show = widget.ShowLegend && (seriesCount > 1 || IsCircular(kind)), Position = IsCircular(kind) ? LegendPosition.Right : LegendPosition.Bottom },
-            DataLabels = new DataLabels { Enabled = widget.ShowDataLabels || kind == ChartKind.Treemap || kind == ChartKind.Heatmap, Formatter = kind is ChartKind.Pie or ChartKind.Donut or ChartKind.Treemap ? null : formatter },
+            Legend = new Legend { Show = widget.ShowLegend && (seriesCount > 1 || IsCircular(kind)), Position = IsCircular(kind) && columns > 4 ? LegendPosition.Right : LegendPosition.Bottom },
+            DataLabels = new DataLabels { Enabled = widget.ShowDataLabels || kind == ChartKind.Treemap || kind == ChartKind.Heatmap, Formatter = kind switch { ChartKind.Pie or ChartKind.Donut => null, ChartKind.Treemap => $"function(text, op){{ var f = {formatter}; return [text, f(op.value)]; }}", _ => formatter } },
             Tooltip = new Tooltip { Theme = palette.Dark ? Mode.Dark : Mode.Light, Y = new TooltipY { Formatter = formatter } },
             Stroke = new Stroke { Curve = Curve.Smooth, Width = kind is ChartKind.Line ? 3 : kind is ChartKind.Area or ChartKind.Radar ? 2 : 0 },
             Fill = kind == ChartKind.Area ? new Fill { Type = FillType.Gradient, Gradient = new FillGradient { OpacityFrom = 0.45, OpacityTo = 0.05 } } : null,

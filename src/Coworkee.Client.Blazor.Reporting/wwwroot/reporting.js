@@ -46,7 +46,7 @@ export async function init(element, dotnet, editable, columns, cellHeight) {
         staticGrid: !editable,
         handle: '.cw-widget-drag',
         resizable: { handles: 'se,e,s,w' },
-        columnOpts: { breakpoints: [{ w: 720, c: 1 }] },
+        columnOpts: { breakpoints: [{ w: 560, c: 1 }] },
     }, element);
     // layouts of the one column view on phones are not saved
     grid.on('change', (_, items) => {
