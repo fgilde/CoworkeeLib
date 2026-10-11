@@ -29,7 +29,7 @@ public sealed class OptionTests
         var main = Studio.Create(folder);
         main.Architecture.ApplyPreset(main.Architecture.Presets.Single(p => p.Preset.Name == "Everything"));
 
-        main.Architecture.Summary.Containers.ShouldBe(["PostgreSQL", "Redis", "Mailpit", "Elasticsearch", "RabbitMQ", "Azurite", "Keycloak"]);
+        main.Architecture.Summary.Containers.ShouldBe(["PostgreSQL", "Redis", "Mailpit", "Elasticsearch", "RabbitMQ", "Azurite", "Keycloak", "Ollama"]);
         main.Architecture.Summary.Packages.ShouldContain("Coworkee.EventBus.RabbitMq");
         main.Architecture.Summary.Projects.ShouldContain("MyApp.Catalog");
     }
@@ -47,6 +47,30 @@ public sealed class OptionTests
         main.Option("database").Value = "sqlite";
         main.Architecture.Summary.Containers.ShouldBe(["Redis", "Mailpit"]);
         main.ToSpec().Options["database"]!.GetValue<string>().ShouldBe("sqlite");
+    }
+
+    [Fact]
+    public void Infrastructure_choices_explain_what_they_rule_out()
+    {
+        using var folder = new TempFolder();
+        var main = Studio.Create(folder);
+        main.Option("backup").IsAvailable.ShouldBeTrue();
+        main.Option("aiProvider").Note!.ShouldContain("Parameters:ai-apikey");
+
+        main.Option("database").Value = "sqlite";
+        main.Option("backup").IsAvailable.ShouldBeFalse();
+        main.Option("backup").Note!.ShouldContain("PostgreSQL");
+        main.Option("database").Note!.ShouldContain("One writer at a time");
+
+        main.Option("aiProvider").Value = "ollama";
+        main.Option("aiProvider").Note!.ShouldContain("Ollama container");
+        main.Option("ai").IsOn = false;
+        main.Option("aiProvider").IsAvailable.ShouldBeFalse();
+        main.Architecture.Summary.Containers.ShouldNotContain("Ollama");
+
+        main.Option("redis").IsOn = false;
+        main.Option("redis").Note!.ShouldContain("one instance");
+        main.Architecture.Summary.Containers.ShouldBe(["Mailpit"]);
     }
 
     [Fact]

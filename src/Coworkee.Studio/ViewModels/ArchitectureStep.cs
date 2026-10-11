@@ -31,12 +31,15 @@ public sealed partial class ArchitectureStep : StepViewModel
         (OptionCatalog.Tooling, "Files next to the code: a CI workflow and a dev container.", "Icon.Console"),
     ];
 
+    private static readonly string[] Highlighted = ["database", "aiProvider", "redis"];
+
     public ArchitectureStep(MainViewModel main)
         : base(main)
     {
         Presets = [.. Preset.All.Select(p => new PresetViewModel(p))];
+        Infrastructure = [.. Highlighted.Select(main.Option)];
         Groups = [.. GroupInfo.Select(g => new OptionGroupViewModel(g.Group, g.Description, g.Icon,
-            [.. main.Options.Values.Where(o => o.Option.Group == g.Group && o.Id != "title")]))];
+            [.. main.Options.Values.Where(o => o.Option.Group == g.Group && o.Id != "title" && !Highlighted.Contains(o.Id))]))];
     }
 
     protected override string TitleText => "Architecture";
@@ -50,6 +53,9 @@ public sealed partial class ArchitectureStep : StepViewModel
     public IReadOnlyList<PresetViewModel> Presets { get; }
 
     public IReadOnlyList<OptionGroupViewModel> Groups { get; }
+
+    /// <summary>Database, AI provider and Redis: the choices that decide how the app runs, shown first.</summary>
+    public IReadOnlyList<OptionViewModel> Infrastructure { get; }
 
     [ObservableProperty]
     public partial SolutionSummary Summary { get; set; } = new([], [], []);
@@ -81,9 +87,39 @@ public sealed partial class ArchitectureStep : StepViewModel
     {
         Summary = SolutionSummary.For(Main.ToSpec());
         OnPropertyChanged(nameof(SummaryHeadline));
+        ExplainInfrastructure();
         foreach (var preset in Presets)
         {
             preset.IsActive = preset.Preset.Values.All(v => Main.Option(v.Key).Value == v.Value);
         }
+    }
+
+    private void ExplainInfrastructure()
+    {
+        var database = Main.Option("database").Value;
+        Main.Option("database").Note = database switch
+        {
+            "sqlServer" => "SQL Server container (about 2 GB of RAM). No backups from the admin pages: use those of SQL Server or Azure SQL.",
+            "sqlite" => "No container: one file under .data. One writer at a time, background jobs kept in memory and no backups. For demos and one machine.",
+            _ => "PostgreSQL container. Every module works, backups and restore from the admin pages included.",
+        };
+
+        var backup = Main.Option("backup");
+        backup.IsAvailable = database == "postgres";
+        backup.Note = backup.IsAvailable ? null : "Not part of the app: backups from the admin pages need PostgreSQL.";
+
+        var provider = Main.Option("aiProvider");
+        provider.IsAvailable = Main.Option("ai").IsOn;
+        provider.Note = !provider.IsAvailable ? "Only used with the AI assistant module; switch it on under Modules."
+            : provider.Value switch
+            {
+                "ollama" => "Adds an Ollama container that pulls llama3.2 (several GB) on the first start; no key needed.",
+                "azureOpenAI" or "openAICompatible" => "Key, endpoint and model in the user secrets of the app host: Parameters:ai-apikey, ai-endpoint, ai-model.",
+                _ => "Key in the user secrets of the app host (Parameters:ai-apikey) or later in the AI settings of the app.",
+            };
+
+        Main.Option("redis").Note = Main.Option("redis").IsOn
+            ? "Ready to scale out: several api and web instances share realtime messages, presence, caches and sessions."
+            : "Each process keeps its own state: fine for one instance, but realtime messages and sessions do not cross instances.";
     }
 }

@@ -6,7 +6,23 @@ namespace Coworkee.Studio.ViewModels;
 
 public sealed record ChoiceViewModel(string Value, string Description)
 {
+    private static readonly Dictionary<string, (string Label, string Icon)> Looks = new()
+    {
+        ["postgres"] = ("PostgreSQL", "Icon.Database"),
+        ["sqlServer"] = ("SQL Server", "Icon.Server"),
+        ["sqlite"] = ("SQLite", "Icon.File"),
+        ["anthropic"] = ("Anthropic", "Icon.Sparkle"),
+        ["openAI"] = ("OpenAI", "Icon.Robot"),
+        ["azureOpenAI"] = ("Azure OpenAI", "Icon.Cloud"),
+        ["ollama"] = ("Ollama", "Icon.Monitor"),
+        ["openAICompatible"] = ("OpenAI compatible", "Icon.Link"),
+    };
+
     public string Text => L.Get(Description);
+
+    public string Label => Looks.TryGetValue(Value, out var look) ? L.Get(look.Label) : Value;
+
+    public string Icon => Looks.TryGetValue(Value, out var look) ? look.Icon : "Icon.Cube";
 }
 
 /// <summary>One choice of a <see cref="OptionKind.Multi"/> option as a check box; none checked is the default (all).</summary>
@@ -42,6 +58,19 @@ public sealed partial class OptionViewModel : ObservableObject
 
     [ObservableProperty]
     public partial string? Value { get; set; }
+
+    /// <summary>False while another choice rules the option out (backups off Postgres, a provider without the AI assistant).</summary>
+    [ObservableProperty]
+    public partial bool IsAvailable { get; set; } = true;
+
+    /// <summary>What the current value means for the solution (English, the key of <see cref="NoteText"/>).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasNote), nameof(NoteText))]
+    public partial string? Note { get; set; }
+
+    public bool HasNote => Note is not null;
+
+    public string? NoteText => Note is null ? null : L.Get(Note);
 
     public string Id => Option.Id;
 

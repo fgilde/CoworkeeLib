@@ -16,21 +16,75 @@
           <ItemsControl ItemsSource="{Binding Presets}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
-                <UniformGrid Columns="5" ColumnSpacing="10" />
+                <UniformGrid Columns="3" ColumnSpacing="10" RowSpacing="10" />
               </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="vm:PresetViewModel">
                 <Button Classes="tile" Classes.selected="{Binding IsActive}" ToolTip.Tip="{Binding Description}"
                         Command="{Binding $parent[ItemsControl].((vm:ArchitectureStep)DataContext).ApplyPresetCommand}" CommandParameter="{Binding}">
-                  <StackPanel Margin="14,12" Spacing="6">
-                    <Border Width="34" Height="34" CornerRadius="10" Background="{DynamicResource PrimarySoft}" HorizontalAlignment="Left">
+                  <Grid Margin="12,10" ColumnDefinitions="Auto,*">
+                    <Border Width="34" Height="34" CornerRadius="10" Background="{DynamicResource PrimarySoft}" VerticalAlignment="Top">
                       <PathIcon Data="{Binding Icon, Converter={x:Static v:Converters.Icon}}" Foreground="{DynamicResource Primary}" />
                     </Border>
-                    <TextBlock Classes="h3" Text="{Binding Name}" />
-                    <TextBlock Classes="caption" Text="{Binding Description}" MaxLines="4" TextTrimming="CharacterEllipsis" />
-                  </StackPanel>
+                    <StackPanel Grid.Column="1" Margin="10,0,0,0" Spacing="2">
+                      <TextBlock Classes="h3" Text="{Binding Name}" />
+                      <TextBlock Classes="caption" Text="{Binding Description}" MaxLines="2" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                  </Grid>
                 </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+
+
+        <StackPanel Spacing="10">
+          <TextBlock Classes="overline" Text="{l:L 'WHERE IT RUNS'}" />
+          <ItemsControl ItemsSource="{Binding Infrastructure}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <UniformGrid Columns="3" ColumnSpacing="12" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:OptionViewModel">
+                <Border Classes="card" Padding="16" Classes.on="{Binding IsOn}">
+                  <StackPanel Spacing="10">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                      <Border Width="34" Height="34" CornerRadius="10" Background="{DynamicResource SecondarySoft}" VerticalAlignment="Top" Margin="0,0,10,0">
+                        <Panel>
+                          <PathIcon IsVisible="{Binding IsChoice}" Data="{Binding Choice.Icon, Converter={x:Static v:Converters.Icon}}" Foreground="{DynamicResource Secondary}" />
+                          <PathIcon IsVisible="{Binding IsBool}" Data="{StaticResource Icon.Lightning}" Foreground="{DynamicResource Secondary}" />
+                        </Panel>
+                      </Border>
+                      <StackPanel Grid.Column="1" Spacing="2">
+                        <TextBlock Classes="h3" Text="{Binding Title}" />
+                        <TextBlock Classes="mono caption" Text="{Binding Flag}" />
+                      </StackPanel>
+                      <ToggleSwitch Grid.Column="2" IsVisible="{Binding IsBool}" IsChecked="{Binding IsOn}" VerticalAlignment="Top" Margin="0,-4,0,0" />
+                    </Grid>
+                    <ListBox Classes="segments" IsVisible="{Binding IsChoice}" IsEnabled="{Binding IsAvailable}" Opacity="{Binding IsAvailable, Converter={x:Static v:Converters.Dim}}"
+                             ItemsSource="{Binding Choices}" SelectedItem="{Binding Choice}">
+                      <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ChoiceViewModel">
+                          <StackPanel Orientation="Horizontal" Spacing="6" ToolTip.Tip="{Binding Text}">
+                            <PathIcon Classes="small" Data="{Binding Icon, Converter={x:Static v:Converters.Icon}}" />
+                            <TextBlock Text="{Binding Label}" FontSize="12.5" FontWeight="SemiBold" VerticalAlignment="Center" />
+                          </StackPanel>
+                        </DataTemplate>
+                      </ListBox.ItemTemplate>
+                    </ListBox>
+                    <TextBlock Classes="caption" IsVisible="{Binding IsBool}" Text="{Binding Description}" TextWrapping="Wrap" />
+                    <TextBlock Classes="caption" IsVisible="{Binding IsChoice}" Text="{Binding Choice.Text}" />
+                    <Border Classes="banner info" Padding="10,8">
+                      <Grid ColumnDefinitions="Auto,*">
+                        <PathIcon Margin="0,1,8,0" Classes="small" Data="{StaticResource Icon.Info}" Foreground="{DynamicResource Primary}" VerticalAlignment="Top" />
+                        <TextBlock Grid.Column="1" FontSize="12" TextWrapping="Wrap" Text="{Binding NoteText}" />
+                      </Grid>
+                    </Border>
+                  </StackPanel>
+                </Border>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
@@ -64,7 +118,7 @@
                   <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:OptionViewModel">
                       <Border Classes="card" Padding="16" Classes.on="{Binding IsOn}">
-                        <StackPanel Spacing="8">
+                        <StackPanel Spacing="8" Opacity="{Binding IsAvailable, Converter={x:Static v:Converters.Dim}}">
                           <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Spacing="3">
                               <TextBlock Classes="h3" Text="{Binding Title}" />
@@ -77,6 +131,9 @@
                             </StackPanel>
                             <ToggleSwitch Grid.Column="1" IsVisible="{Binding IsBool}" IsChecked="{Binding IsOn}" VerticalAlignment="Top" Margin="0,-4,0,0" />
                           </Grid>
+                          <Border Classes="banner warn" Padding="10,6" IsVisible="{Binding HasNote}">
+                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding NoteText}" />
+                          </Border>
                           <TextBlock Classes="body" FontSize="12.5" LineHeight="18" Text="{Binding Description}" />
                           <ListBox Classes="segments" IsVisible="{Binding IsChoice}" ItemsSource="{Binding Choices}" SelectedItem="{Binding Choice}" HorizontalAlignment="Left">
                             <ListBox.ItemTemplate>
