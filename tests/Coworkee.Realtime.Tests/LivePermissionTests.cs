@@ -107,6 +107,60 @@ public sealed class LivePermissionTests(RealtimeApp app) : IAsyncLifetime
         await listener.NextAsync(e => e.Type == RealtimeEventTypes.SessionRevoked);
     }
 
+    [Fact]
+    public async Task Losing_a_role_takes_back_the_topics_it_allowed()
+    {
+        var bob = await CreateUserAsync("bob@acme.test");
+        var readers = await CreateRoleAsync("Ticket readers", Ticket.ViewPermission);
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/users/{bob.Id}/roles", new IdListRequest([readers]), Ct)).EnsureSuccessStatusCode();
+        await using var listener = await app.ConnectAsync(bob.Id, _setup.TenantId);
+        await listener.SubscribeAsync("type:Ticket");
+        await listener.SubscribeAsync(RealtimeTopics.TenantPermissions);
+        await using var admin = await app.ConnectAsync(_setup.AdminUserId, _setup.TenantId);
+        await admin.SubscribeAsync("type:Ticket");
+
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/users/{bob.Id}/roles", new IdListRequest([]), Ct)).EnsureSuccessStatusCode();
+        await listener.NextAsync(e => e.Topic == RealtimeTopics.TenantPermissions);
+        await Task.Delay(RealtimeAccessSignal.Settle * 3, Ct);
+
+        await CreateTicketAsync("Secret");
+        await admin.NextAsync(e => e.Topic == "type:Ticket");
+        await Task.Delay(500, Ct);
+        listener.Events.ShouldNotContain(e => e.Topic == "type:Ticket");
+    }
+
+    [Fact]
+    public async Task Switching_to_a_role_without_the_permission_takes_back_the_topic_and_switching_back_allows_it_again()
+    {
+        var bob = await CreateUserAsync("bob@acme.test");
+        var readers = await CreateRoleAsync("Ticket readers", Ticket.ViewPermission);
+        var viewers = await CreateRoleAsync("User viewers", IdentityPermissions.Users.View);
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/users/{bob.Id}/roles", new IdListRequest([readers, viewers]), Ct)).EnsureSuccessStatusCode();
+        var asBob = app.App.GetTestClient().AsUser(bob.Id, _setup.TenantId);
+        await using var listener = await app.ConnectAsync(bob.Id, _setup.TenantId);
+        await listener.SubscribeAsync("type:Ticket");
+
+        (await asBob.PutAsJsonAsync("/api/v1/identity/roles/me/active", new SetActiveRoleRequest(viewers), Ct)).EnsureSuccessStatusCode();
+        await Task.Delay(RealtimeAccessSignal.Settle * 3, Ct);
+        await CreateTicketAsync("Hidden");
+        await Task.Delay(1000, Ct);
+        listener.Events.ShouldNotContain(e => e.Topic == "type:Ticket");
+        await Should.ThrowAsync<Microsoft.AspNetCore.SignalR.HubException>(() => listener.SubscribeAsync("type:Ticket"));
+
+        (await asBob.PutAsJsonAsync("/api/v1/identity/roles/me/active", new SetActiveRoleRequest(readers), Ct)).EnsureSuccessStatusCode();
+        await listener.SubscribeAsync("type:Ticket");
+        await CreateTicketAsync("Visible");
+        await listener.NextAsync(e => e.Topic == "type:Ticket");
+    }
+
+    private Task<Guid> CreateTicketAsync(string title) => app.AsActorAsync(_setup.AdminUserId, _setup.TenantId, async db =>
+    {
+        var ticket = new Ticket { Title = title };
+        db.Add(ticket);
+        await db.SaveChangesAsync(Ct);
+        return ticket.Id;
+    });
+
     private async Task<UserDto> CreateUserAsync(string email) =>
         (await (await Admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest(email, "Passw0rd!x", null, null), Ct)).Content.ReadFromJsonAsync<UserDto>(Ct))!;
 

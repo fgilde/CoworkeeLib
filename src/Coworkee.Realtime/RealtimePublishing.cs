@@ -24,7 +24,8 @@ internal sealed class RealtimePublisher(IHubContext<RealtimeHub> hub) : IRealtim
 }
 
 // ponytail: events are sent after commit but not persisted; a crash between commit and send drops UI refresh signals. Route through the outbox if a consumer needs delivery guarantees.
-internal sealed class RealtimeChangeInterceptor(IRealtimePublisher publisher, ICurrentUser currentUser, IEnumerable<IRealtimeTopicMapper> mappers)
+internal sealed class RealtimeChangeInterceptor(
+    IRealtimePublisher publisher, ICurrentUser currentUser, IEnumerable<IRealtimeTopicMapper> mappers, RealtimeAccessSignal access)
     : SaveChangesInterceptor, IDbTransactionInterceptor
 {
     private static readonly ConcurrentDictionary<Type, bool> RealtimeTypes = new();
@@ -119,6 +120,15 @@ internal sealed class RealtimeChangeInterceptor(IRealtimePublisher publisher, IC
         foreach (var (tenantId, topic, payload) in pending)
         {
             await publisher.PublishAsync(tenantId, topic, RealtimeEventTypes.EntityChanged, payload);
+        }
+
+        // permissions changed: connections give back the topics they may no longer follow
+        IEnumerable<Guid?> tenants = pending.Any(p => p.Topic == RealtimeTopics.GlobalPermissions)
+            ? [null]
+            : pending.Where(p => p.Topic == RealtimeTopics.TenantPermissions).Select(p => p.TenantId).Distinct();
+        foreach (var tenantId in tenants)
+        {
+            await access.PublishAsync(tenantId);
         }
     }
 

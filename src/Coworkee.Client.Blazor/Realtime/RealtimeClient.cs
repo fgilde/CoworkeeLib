@@ -130,7 +130,8 @@ public sealed class RealtimeClient(IRealtimeConnection connection)
         }
     }
 
-    private async Task ResubscribeAsync()
+    /// <summary>Subscribes every followed topic again, e.g. after the permissions grew: the server takes back topics, never returns them.</summary>
+    public async Task ResubscribeAsync()
     {
         string[] topics;
         lock (_lock)

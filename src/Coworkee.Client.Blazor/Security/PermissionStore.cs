@@ -71,5 +71,6 @@ public sealed class PermissionStore(ICoworkeeApi api, RealtimeClient realtime) :
         }
 
         Reset();
+        await realtime.ResubscribeAsync();
     }
 }
