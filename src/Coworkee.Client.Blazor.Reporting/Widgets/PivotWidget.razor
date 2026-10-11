@@ -1,0 +1,51 @@
+@inherits WidgetBase
+
+<WidgetStatus Loading="Loading" Error="@Error" Empty="@(_rows.Count == 0 && !Loading)" Hint="@(Query?.GroupBy is null ? L["Choose rows and columns to group by."] : null)">
+    <div class="cw-pivot" data-testid="pivot">
+        <table>
+            <thead>
+                <tr>
+                    <th>@RowLabel</th>
+                    @foreach (var column in _columns)
+                    {
+                        <th class="number">@column.Label</th>
+                    }
+                    @if (Totals)
+                    {
+                        <th class="number cw-pivot-total">@L["Total"]</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in _rows)
+                {
+                    <tr>
+                        <th>@row.Label</th>
+                        @foreach (var column in _columns)
+                        {
+                            var value = Value(row.Value, column.Value);
+                            <td class="number cw-pivot-cell" style="@Shade(value)" @onclick="() => Select(row, column)">@ReportFormat.Number(value, Widget.Options)</td>
+                        }
+                        @if (Totals)
+                        {
+                            <td class="number cw-pivot-total">@ReportFormat.Number(RowTotal(row.Value), Widget.Options)</td>
+                        }
+                    </tr>
+                }
+            </tbody>
+            @if (Totals)
+            {
+                <tfoot>
+                    <tr>
+                        <th>@L["Total"]</th>
+                        @foreach (var column in _columns)
+                        {
+                            <td class="number">@ReportFormat.Number(ColumnTotal(column.Value), Widget.Options)</td>
+                        }
+                        <td class="number">@ReportFormat.Number(_cells.Values.Sum(v => v ?? 0), Widget.Options)</td>
+                    </tr>
+                </tfoot>
+            }
+        </table>
+    </div>
+</WidgetStatus>

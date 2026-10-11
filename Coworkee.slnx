@@ -20,6 +20,8 @@
     <Project Path="src/Coworkee.Ai/Coworkee.Ai.csproj" />
     <Project Path="src/Coworkee.Backup/Coworkee.Backup.csproj" />
     <Project Path="src/Coworkee.Chat/Coworkee.Chat.csproj" />
+    <Project Path="src/Coworkee.Reporting/Coworkee.Reporting.csproj" />
+    <Project Path="src/Coworkee.Client.Blazor.Reporting/Coworkee.Client.Blazor.Reporting.csproj" />
     <Project Path="src/Coworkee.Cli.Spec/Coworkee.Cli.Spec.csproj" />
     <Project Path="src/Coworkee.Cli/Coworkee.Cli.csproj" />
     <Project Path="src/Coworkee.Client/Coworkee.Client.csproj" />
@@ -66,6 +68,7 @@
     <Project Path="tests/Coworkee.Ai.Tests/Coworkee.Ai.Tests.csproj" />
     <Project Path="tests/Coworkee.Backup.Tests/Coworkee.Backup.Tests.csproj" />
     <Project Path="tests/Coworkee.Chat.Tests/Coworkee.Chat.Tests.csproj" />
+    <Project Path="tests/Coworkee.Reporting.Tests/Coworkee.Reporting.Tests.csproj" />
     <Project Path="tests/Coworkee.Cli.Tests/Coworkee.Cli.Tests.csproj" />
     <Project Path="tests/Coworkee.Client.Tests/Coworkee.Client.Tests.csproj" />
     <Project Path="tests/Coworkee.EventBus.RabbitMq.Tests/Coworkee.EventBus.RabbitMq.Tests.csproj" />

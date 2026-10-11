@@ -1,0 +1,40 @@
+<div class="cw-report-filters" data-testid="report-filters">
+    <MudMenu Dense="Density.Dense" AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft" data-testid="date-range">
+        <ActivatorContent>
+            <MudButton Variant="@(State.DateRange is null ? Variant.Outlined : Variant.Filled)" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Outlined.DateRange"
+                       EndIcon="@Icons.Material.Filled.ArrowDropDown" Class="mr-2 mb-2">@RangeLabel</MudButton>
+        </ActivatorContent>
+        <ChildContent>
+            <MudMenuItem OnClick="() => SetRange(null)">@L["All time"]</MudMenuItem>
+            @foreach (var preset in Enum.GetValues<DateRangePreset>().Where(p => p != DateRangePreset.Custom))
+            {
+                <MudMenuItem OnClick="() => SetRange(new ReportDateRange(preset))" data-preset="@preset">@L[ReportFormat.Humanize(preset.ToString())]</MudMenuItem>
+            }
+            <MudMenuItem OnClick="Custom">@L["Custom range"]</MudMenuItem>
+        </ChildContent>
+    </MudMenu>
+    @if (State.DateRange?.Preset == DateRangePreset.Custom)
+    {
+        <MudDateRangePicker DateRange="CustomRange" DateRangeChanged="CustomChanged" Variant="Variant.Outlined" Margin="Margin.Dense" Class="cw-custom-range mr-2 mb-2"
+                            PlaceholderStart="@L["From"]" PlaceholderEnd="@L["To"]" AutoClose="true" />
+    }
+    @foreach (var set in State.EntitySets)
+    {
+        <div class="cw-filter-set">
+            @if (State.EntitySets.Skip(1).Any())
+            {
+                <span class="cw-filter-set-label">@(State.Source(set)?.Label ?? set)</span>
+            }
+            <ReportFacetFilter EntitySet="@set" Selection="State.Facets(set)" />
+        </div>
+    }
+</div>
+@if (State.CrossFilters.Count > 0 || State.EntitySets.Any(s => !State.Facets(s).IsEmpty))
+{
+    <div class="cw-report-chips">
+        @foreach (var set in State.EntitySets)
+        {
+            <FacetChips Selection="State.Facets(set)" Filters="CrossChips(set)" OnRemove="RemoveCross" OnClear="State.ClearAll" />
+        }
+    </div>
+}

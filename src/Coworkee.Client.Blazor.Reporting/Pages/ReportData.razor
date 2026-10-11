@@ -1,0 +1,23 @@
+@page "/reports/data/{EntitySet}"
+@attribute [Authorize(Policy = Coworkee.Client.Blazor.Security.PermissionPolicy.Prefix + ReportPermissions.View)]
+
+<PageHeader Title="@(_source?.Label ?? EntitySet)" Description="Rows behind a report widget, with its filter as facet." />
+@if (_source is not null && _rows is not null)
+{
+    <CoworkeeDataTable T="DynamicRow" EntitySet="@_source.EntitySet" DataSource="_rows" Exportable="false" Filterable="false" SearchFields="SearchFields" data-testid="report-data">
+        <Columns>
+            @for (var i = 0; i < Columns.Count; i++)
+            {
+                var index = i;
+                var column = Columns[i];
+                <PropertyColumn T="DynamicRow" TProperty="object" Property="DynamicRow.Column(index)" Title="@column.Label">
+                    <CellTemplate Context="cell">@RowValues.Text(typeof(DynamicRow).GetProperty($"C{index}")!.GetValue(cell.Item), column, s => L[s])</CellTemplate>
+                </PropertyColumn>
+            }
+        </Columns>
+    </CoworkeeDataTable>
+}
+else if (_missing)
+{
+    <MudAlert Severity="Severity.Warning">@L["You may not read this data."]</MudAlert>
+}

@@ -1,0 +1,32 @@
+@if (Error is { Length: > 0 })
+{
+    <div class="cw-widget-message" data-testid="widget-error">
+        <MudIcon Icon="@Icons.Material.Outlined.ErrorOutline" Color="Color.Error" />
+        <MudText Typo="Typo.body2" Color="Color.Error">@Error</MudText>
+    </div>
+}
+else if (Hint is { Length: > 0 })
+{
+    <div class="cw-widget-message">
+        <MudIcon Icon="@Icons.Material.Outlined.Tune" Color="Color.Default" />
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">@Hint</MudText>
+    </div>
+}
+else
+{
+    @if (Loading)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" Size="Size.Small" Class="cw-widget-progress" />
+    }
+    @if (Empty)
+    {
+        <div class="cw-widget-message">
+            <MudIcon Icon="@Icons.Material.Outlined.Inbox" Color="Color.Default" />
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["No data for these filters."]</MudText>
+        </div>
+    }
+    else
+    {
+        @ChildContent
+    }
+}

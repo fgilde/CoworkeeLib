@@ -1,0 +1,22 @@
+@inherits WidgetBase
+
+<WidgetStatus Error="@Error" Hint="@(Columns.Count == 0 ? L["Choose the columns."] : null)">
+    <div class="cw-datatable-widget" data-testid="datatable-widget">
+        @if (_source is not null)
+        {
+            <CoworkeeDataTable @key="_generation" T="DynamicRow" EntitySet="@Query!.EntitySet" DataSource="_source" Filter="@Filter" Facets="true" UrlState="false" SavedViews="false"
+                               Exportable="false" Filterable="false" PageSize="25" StateKey="@($"report-{Widget.Id}")" SearchFields="SearchFields">
+                <Columns>
+                    @for (var i = 0; i < Columns.Count; i++)
+                    {
+                        var index = i;
+                        var column = Columns[i];
+                        <PropertyColumn T="DynamicRow" TProperty="object" Property="DynamicRow.Column(index)" Title="@column.Label">
+                            <CellTemplate Context="cell">@Cell(cell.Item, index, column)</CellTemplate>
+                        </PropertyColumn>
+                    }
+                </Columns>
+            </CoworkeeDataTable>
+        }
+    </div>
+</WidgetStatus>

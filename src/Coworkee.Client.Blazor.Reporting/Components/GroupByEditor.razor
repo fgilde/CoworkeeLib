@@ -1,0 +1,18 @@
+<div class="cw-settings-row" data-testid="group-by">
+    <MudSelect T="string" Value="Value?.Field" ValueChanged="FieldChanged" Label="@Label" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="Optional">
+        @foreach (var field in Fields)
+        {
+            <MudSelectItem Value="field.Path">@field.Label</MudSelectItem>
+        }
+    </MudSelect>
+    @if (Fields.FirstOrDefault(f => f.Path == Value?.Field)?.Kind == ReportFieldKind.Date)
+    {
+        <MudSelect T="DateBucket" Value="Value!.Bucket == DateBucket.None ? DateBucket.Day : Value.Bucket" ValueChanged="b => ValueChanged.InvokeAsync(Value with { Bucket = b })"
+                   Label="@L["By"]" Variant="Variant.Outlined" Margin="Margin.Dense">
+            @foreach (var bucket in Enum.GetValues<DateBucket>().Where(b => b != DateBucket.None))
+            {
+                <MudSelectItem Value="bucket">@L[bucket.ToString()]</MudSelectItem>
+            }
+        </MudSelect>
+    }
+</div>

@@ -158,7 +158,8 @@ internal sealed class ReportHandlers(CoworkeeDbContext db, ReportAccess access, 
 
     public async Task<Result<IReadOnlyList<ReportSourceDto>>> HandleAsync(GetReportSourcesQuery query, CancellationToken cancellationToken) =>
         (await queries.SourcesAsync(cancellationToken))
-            .Select(s => new ReportSourceDto(s.Registration.EntitySet, s.Label, [.. s.Fields.Select(f => f.ToDto())]))
+            .Select(s => new ReportSourceDto(s.Registration.EntitySet, s.Label, [.. s.Fields.Select(f => f.ToDto())],
+                s.Registration.EntityType.IsDefined(typeof(Domain.RealtimeAttribute), false) ? Contracts.Realtime.RealtimeTopics.Type(s.Registration.EntityType.Name) : null))
             .OrderBy(s => s.Label, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
 

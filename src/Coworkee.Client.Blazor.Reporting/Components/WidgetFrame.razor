@@ -1,0 +1,56 @@
+<div class="cw-widget @(_full ? "cw-widget-full" : null) @(Selected ? "cw-widget-selected" : null)" data-testid="widget" data-type="@Widget.Type">
+    <div class="cw-widget-head @(Editing ? "cw-widget-drag" : null)">
+        @if (Editing)
+        {
+            <MudIcon Icon="@Icons.Material.Filled.DragIndicator" Size="Size.Small" Class="cw-widget-grip" />
+        }
+        <div class="cw-widget-titles">
+            <div class="cw-widget-title" title="@Title">@Title</div>
+            @if (Widget.Subtitle is { Length: > 0 } subtitle && Widget.Type != WidgetType.Kpi)
+            {
+                <div class="cw-widget-subtitle">@subtitle</div>
+            }
+        </div>
+        <div class="cw-widget-tools" @onmousedown:stopPropagation="true">
+            @if (Widget.Type == WidgetType.Table)
+            {
+                <MudToggleGroup T="TableView" Value="Widget.Options.View" ValueChanged="ViewChanged" Size="Size.Small" Outlined="false" Delimiters="false" Class="cw-view-switch" data-testid="view-switch">
+                    <MudToggleItem Value="TableView.Table" Text="@L["Table"]"><MudIcon Icon="@Icons.Material.Outlined.TableRows" Size="Size.Small" /></MudToggleItem>
+                    <MudToggleItem Value="TableView.Cards" Text="@L["Cards"]"><MudIcon Icon="@Icons.Material.Outlined.GridView" Size="Size.Small" /></MudToggleItem>
+                    <MudToggleItem Value="TableView.List" Text="@L["List"]"><MudIcon Icon="@Icons.Material.Outlined.ViewList" Size="Size.Small" /></MudToggleItem>
+                </MudToggleGroup>
+            }
+            @if (_info is { Length: > 0 })
+            {
+                <MudTooltip Text="@_info">
+                    <MudIcon Icon="@Icons.Material.Outlined.Info" Size="Size.Small" Class="cw-widget-info" />
+                </MudTooltip>
+            }
+            @if (Editing)
+            {
+                <MudIconButton Icon="@Icons.Material.Outlined.Tune" Size="Size.Small" aria-label="@L["Widget settings"]" OnClick="OnSettings" data-testid="widget-settings" />
+            }
+            <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Dense="Density.Dense" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" aria-label="@L["More"]" data-testid="widget-menu">
+                <MudMenuItem Icon="@(_full ? Icons.Material.Outlined.FullscreenExit : Icons.Material.Outlined.Fullscreen)" OnClick="() => _full = !_full">@L[_full ? "Exit full screen" : "Full screen"]</MudMenuItem>
+                @if (Widget.Query is { EntitySet.Length: > 0 })
+                {
+                    <MudMenuItem Icon="@Icons.Material.Outlined.OpenInNew" OnClick="DrillDown" data-testid="drill-down">@L["Open the data"]</MudMenuItem>
+                }
+                @if (_sheet is not null)
+                {
+                    <MudMenuItem Icon="@Icons.Material.Outlined.Description" OnClick="ExportCsvAsync">@L["Export CSV"]</MudMenuItem>
+                    <MudMenuItem Icon="@Icons.Material.Outlined.GridOn" OnClick="ExportExcelAsync">@L["Export Excel"]</MudMenuItem>
+                }
+                @if (Editing)
+                {
+                    <MudDivider />
+                    <MudMenuItem Icon="@Icons.Material.Outlined.ContentCopy" OnClick="OnDuplicate">@L["Duplicate"]</MudMenuItem>
+                    <MudMenuItem Icon="@Icons.Material.Outlined.Delete" IconColor="Color.Error" OnClick="OnRemove" data-testid="widget-remove">@L["Remove"]</MudMenuItem>
+                }
+            </MudMenu>
+        </div>
+    </div>
+    <div class="cw-widget-body">
+        <WidgetHost Widget="Widget" State="State" OnSheet="s => _sheet = s" OnInfo="i => _info = i" />
+    </div>
+</div>

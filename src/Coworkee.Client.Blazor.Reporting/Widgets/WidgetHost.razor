@@ -1,0 +1,22 @@
+@switch (Widget.Type)
+{
+    case WidgetType.Kpi:
+        <KpiWidget Widget="Widget" State="State" OnSheet="OnSheet" OnInfo="OnInfo" />
+        break;
+    case WidgetType.Chart:
+        <ChartWidget Widget="Widget" State="State" OnSheet="OnSheet" OnInfo="OnInfo" />
+        break;
+    case WidgetType.Table:
+        <TableWidget Widget="Widget" State="State" OnSheet="OnSheet" OnInfo="OnInfo" />
+        break;
+    case WidgetType.DataTable:
+        <DataTableWidget Widget="Widget" State="State" OnSheet="OnSheet" OnInfo="OnInfo" />
+        break;
+    case WidgetType.Pivot:
+        <PivotWidget Widget="Widget" State="State" OnSheet="OnSheet" OnInfo="OnInfo" />
+        break;
+    default:
+        <ContentWidget Widget="Widget" />
+        break;
+}
+

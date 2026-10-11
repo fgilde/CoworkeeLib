@@ -80,10 +80,10 @@ public sealed class WidgetQuery
 {
     public string EntitySet { get; set; } = string.Empty;
 
-    /// <summary>OData $filter of the widget itself, e.g. from its facets or text.</summary>
+    /// <summary>OData $filter of the widget itself, typed or from a query builder; <see cref="Facets"/> narrow it further.</summary>
     public string? Filter { get; set; }
 
-    /// <summary>The widget's own facets, kept to show and edit them again; <see cref="Filter"/> carries their OData.</summary>
+    /// <summary>The widget's own facets.</summary>
     public List<ReportFilterValue> Facets { get; set; } = [];
 
     /// <summary>Categories, e.g. the x axis.</summary>

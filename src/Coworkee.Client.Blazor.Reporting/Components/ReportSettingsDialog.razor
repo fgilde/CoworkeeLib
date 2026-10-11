@@ -1,0 +1,47 @@
+<MudDialog Class="@MudBlazor.Extensions.Helper.MudExCss.Classes.Dialog.Initial">
+    <DialogContent>
+        <MudStack Spacing="3" Class="pt-2" data-testid="report-settings">
+            <MudTextField T="string" @bind-Value="Model.Name" Label="@L["Name"]" Required="true" Variant="Variant.Outlined" MaxLength="200" data-testid="report-name" />
+            <MudTextField T="string" @bind-Value="Model.Description" Label="@L["Description"]" Lines="3" Variant="Variant.Outlined" MaxLength="2000" />
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="mb-1">@L["Icon"]</MudText>
+                <div class="cw-icon-choice">
+                    @foreach (var icon in Icons)
+                    {
+                        <MudIconButton Icon="@icon" Variant="@(Model.Icon == icon ? Variant.Filled : Variant.Text)" Color="@(Model.Icon == icon ? Color.Primary : Color.Default)" OnClick="() => Model.Icon = icon" />
+                    }
+                </div>
+            </div>
+            <MudSelect T="int" @bind-Value="Model.RefreshSeconds" Label="@L["Refresh automatically"]" Variant="Variant.Outlined">
+                @foreach (var (seconds, label) in Refreshes)
+                {
+                    <MudSelectItem Value="seconds">@L[label]</MudSelectItem>
+                }
+            </MudSelect>
+            <MudText Typo="Typo.subtitle2">@L["Shared with"]</MudText>
+            <MudRadioGroup T="ReportVisibility" @bind-Value="Model.Visibility" Disabled="!CanShare">
+                <MudRadio Value="ReportVisibility.Private" Color="Color.Primary">@L["Only me"]</MudRadio>
+                <MudRadio Value="ReportVisibility.Roles" Color="Color.Primary">@L["Roles"]</MudRadio>
+                <MudRadio Value="ReportVisibility.Organisation" Color="Color.Primary">@L["Everybody in the organisation"]</MudRadio>
+            </MudRadioGroup>
+            @if (Model.Visibility == ReportVisibility.Roles)
+            {
+                <MudSelect T="Guid" SelectedValues="Model.RoleIds" SelectedValuesChanged="v => Model.RoleIds = [.. v]" MultiSelection="true" Label="@L["Roles"]" Variant="Variant.Outlined"
+                           MultiSelectionTextFunc="@(ids => string.Join(", ", ids.Select(id => _roles.FirstOrDefault(r => r.Id.ToString() == id)?.Name ?? id)))" Disabled="!CanShare">
+                    @foreach (var role in _roles)
+                    {
+                        <MudSelectItem Value="role.Id">@role.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+            @if (!CanShare)
+            {
+                <MudAlert Severity="Severity.Info" Dense="true">@L["Sharing reports needs the permission Reports.Share."]</MudAlert>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog.Cancel()">@L["Cancel"]</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" Disabled="string.IsNullOrWhiteSpace(Model.Name)" OnClick="() => Dialog.Close(DialogResult.Ok(Model))" data-testid="report-settings-ok">@L["Apply"]</MudButton>
+    </DialogActions>
+</MudDialog>

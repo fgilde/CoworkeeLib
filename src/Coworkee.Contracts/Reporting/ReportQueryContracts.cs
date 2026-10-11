@@ -27,11 +27,13 @@ public sealed record ReportQueryRow(ReportKey? Key, ReportKey? Series, IReadOnly
 public sealed record ReportKey(string? Value, string Label, string Filter);
 
 /// <summary>An entity set reports can use, with the fields the signed-in user may group, aggregate and filter by.</summary>
-public sealed record ReportSourceDto(string EntitySet, string Label, IReadOnlyList<ReportFieldDto> Fields);
+/// <param name="Topic">Realtime topic announcing changes of its rows, if the entity is [Realtime].</param>
+public sealed record ReportSourceDto(string EntitySet, string Label, IReadOnlyList<ReportFieldDto> Fields, string? Topic = null);
 
 /// <param name="Path">OData path, e.g. "Status" or "Customer/Name".</param>
 /// <param name="EnumType">Qualified OData name of enum fields.</param>
-public sealed record ReportFieldDto(string Path, string Label, ReportFieldKind Kind, IReadOnlyList<string>? Members = null, string? EnumType = null);
+/// <param name="DateOnly">A date without time, filtered with literals like 2026-03-01.</param>
+public sealed record ReportFieldDto(string Path, string Label, ReportFieldKind Kind, IReadOnlyList<string>? Members = null, string? EnumType = null, bool DateOnly = false);
 
 [JsonConverter(typeof(JsonStringEnumConverter<ReportFieldKind>))]
 public enum ReportFieldKind

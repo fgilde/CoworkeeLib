@@ -1,0 +1,23 @@
+@inherits WidgetBase
+@using ApexCharts
+
+<WidgetStatus Loading="Loading" Error="@Error" Empty="@(_series.Count == 0 && !Loading)" Hint="@Hint">
+    <div class="cw-chart" data-testid="chart" data-kind="@Widget.Options.Chart">
+        @if (_options is not null && _series.Count > 0)
+        {
+            <ApexChart @key="_render" TItem="ChartPoint" Options="_options" Height="@("100%")" Width="@("100%")" OnDataPointSelection="SelectAsync">
+                @foreach (var series in Shown)
+                {
+                    @if (Widget.Options.Chart == ChartKind.Scatter)
+                    {
+                        <ApexPointSeries TItem="ChartPoint" Items="series.Points" Name="@series.Name" SeriesType="SeriesType.Scatter" XValue="p => p.X" YValue="p => p.Value" />
+                    }
+                    else
+                    {
+                        <ApexPointSeries TItem="ChartPoint" Items="series.Points" Name="@series.Name" SeriesType="ChartOptions.SeriesType(Widget.Options.Chart)" XValue="p => p.Label" YValue="p => p.Value" />
+                    }
+                }
+            </ApexChart>
+        }
+    </div>
+</WidgetStatus>

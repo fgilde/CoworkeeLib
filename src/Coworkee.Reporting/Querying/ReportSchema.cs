@@ -23,7 +23,8 @@ internal sealed record ReportField(string Path, string Label, ReportFieldKind Ki
     public bool IsNumeric => Kind is ReportFieldKind.Integer or ReportFieldKind.Number;
 
     public ReportFieldDto ToDto() =>
-        new(Path, Label, Kind, Kind == ReportFieldKind.Enum ? Enum.GetNames(Nullable.GetUnderlyingType(ClrType) ?? ClrType) : null, EnumType);
+        new(Path, Label, Kind, Kind == ReportFieldKind.Enum ? Enum.GetNames(Nullable.GetUnderlyingType(ClrType) ?? ClrType) : null, EnumType,
+            (Nullable.GetUnderlyingType(ClrType) ?? ClrType) == typeof(DateOnly));
 }
 
 /// <summary>Reads fields from the EDM, so properties hidden from OData stay hidden from reports.</summary>

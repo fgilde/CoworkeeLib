@@ -1,0 +1,39 @@
+@inherits WidgetBase
+@using ApexCharts
+
+<WidgetStatus Loading="Loading" Error="@Error">
+    <div class="cw-kpi" data-testid="kpi">
+        <div class="cw-kpi-main">
+            <div class="cw-kpi-value" data-testid="kpi-value">@ReportFormat.Number(_value, Widget.Options)</div>
+            @if (_change is { } change)
+            {
+                <div class="cw-kpi-trend @(Good(change) ? "good" : "bad")" data-testid="kpi-trend">
+                    <MudIcon Icon="@(change >= 0 ? Icons.Material.Filled.TrendingUp : Icons.Material.Filled.TrendingDown)" Size="MudBlazor.Size.Small" />
+                    <span>@change.ToString("+0.0%;-0.0%;0%", System.Globalization.CultureInfo.CurrentCulture)</span>
+                    <span class="cw-kpi-previous">@L["vs. {0}", ReportFormat.Number(_previous, Widget.Options)]</span>
+                </div>
+            }
+            else if (Widget.Subtitle is { Length: > 0 } subtitle)
+            {
+                <div class="cw-kpi-previous">@subtitle</div>
+            }
+        </div>
+        @if (Widget.Options.Target is { } target && target != 0 && _gauge is not null)
+        {
+            <div class="cw-kpi-gauge">
+                <ApexChart @key="_render" TItem="ChartPoint" Options="_gauge" Height="@("100%")">
+                    <ApexPointSeries TItem="ChartPoint" Items="GaugePoints(target)" Name="@L["Target"]"
+                                     SeriesType="SeriesType.RadialBar" XValue="p => p.Label" YValue="p => p.Value" />
+                </ApexChart>
+            </div>
+        }
+        @if (_spark is not null && _sparkline.Count > 1)
+        {
+            <div class="cw-kpi-spark">
+                <ApexChart @key="_render" TItem="ChartPoint" Options="_spark" Height="@("100%")">
+                    <ApexPointSeries TItem="ChartPoint" Items="_sparkline" Name="@(Widget.Title ?? string.Empty)" SeriesType="SeriesType.Area" XValue="p => p.Label" YValue="p => p.Value" />
+                </ApexChart>
+            </div>
+        }
+    </div>
+</WidgetStatus>

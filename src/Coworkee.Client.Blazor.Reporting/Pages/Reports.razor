@@ -1,0 +1,83 @@
+@page "/reports"
+@attribute [Authorize(Policy = Coworkee.Client.Blazor.Security.PermissionPolicy.Prefix + ReportPermissions.View)]
+
+<ReportStyles />
+<PageHeader Title="Reports" Description="Dashboards over the data of the app: arrange widgets, filter them together and share them with your team.">
+    <PermissionGate Permission="@ReportPermissions.Manage">
+        <MudFileUpload T="IBrowserFile" Accept=".json" FilesChanged="ImportAsync" data-testid="report-import">
+            <CustomContent Context="upload">
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.FileUpload" Class="mr-2" OnClick="upload.OpenFilePickerAsync">@L["Import"]</MudButton>
+            </CustomContent>
+            <SelectedTemplate />
+        </MudFileUpload>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="CreateAsync" data-testid="report-create">@L["New report"]</MudButton>
+    </PermissionGate>
+</PageHeader>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-4" Spacing="2">
+    <MudTextField T="string" @bind-Value="_search" Immediate="true" DebounceInterval="200" Placeholder="@L["Search"]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search"
+                  Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Style="max-width:320px" data-testid="report-search" />
+    <MudChipSet T="string" @bind-SelectedValue="_scope" SelectionMode="SelectionMode.SingleSelection" CheckMark="false" Color="Color.Primary" Variant="Variant.Text">
+        <MudChip Value="@("all")">@L["All"]</MudChip>
+        <MudChip Value="@("favorites")" Icon="@Icons.Material.Outlined.Star">@L["Favorites"]</MudChip>
+        <MudChip Value="@("mine")" Icon="@Icons.Material.Outlined.Person">@L["Mine"]</MudChip>
+        <MudChip Value="@("shared")" Icon="@Icons.Material.Outlined.Groups">@L["Shared with me"]</MudChip>
+    </MudChipSet>
+</MudStack>
+
+@if (_reports is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (!Shown.Any())
+{
+    <div class="cw-reports-empty">
+        <MudIcon Icon="@Icons.Material.Outlined.SpaceDashboard" Style="font-size:4rem" Color="Color.Primary" />
+        <MudText Typo="Typo.h6">@L[_reports.Count == 0 ? "No reports yet" : "Nothing found."]</MudText>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["Create a report, add widgets and arrange them by dragging."]</MudText>
+    </div>
+}
+else
+{
+    <div class="cw-report-cards" data-testid="report-list">
+        @foreach (var report in Shown)
+        {
+            <MudPaper Class="cw-report-card" Outlined="true" @onclick="() => Open(report)" data-testid="report-card" data-report="@report.Name">
+                <div class="cw-report-card-head">
+                    <div class="cw-report-card-icon"><MudIcon Icon="@(report.Icon ?? Icons.Material.Outlined.SpaceDashboard)" /></div>
+                    <div class="cw-report-card-title">
+                        <MudText Typo="Typo.subtitle1"><b>@report.Name</b></MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@Owner(report)</MudText>
+                    </div>
+                    <div @onclick:stopPropagation="true">
+                        <MudIconButton Icon="@(report.IsFavorite ? Icons.Material.Filled.Star : Icons.Material.Outlined.StarBorder)" Color="@(report.IsFavorite ? Color.Warning : Color.Default)"
+                                       Size="Size.Small" aria-label="@L["Favorite"]" OnClick="() => FavoriteAsync(report)" data-testid="report-favorite" />
+                        <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Dense="Density.Dense" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                            <MudMenuItem Icon="@Icons.Material.Outlined.OpenInNew" OnClick="() => Open(report)">@L["Open"]</MudMenuItem>
+                            <PermissionGate Permission="@ReportPermissions.Manage">
+                                <MudMenuItem Icon="@Icons.Material.Outlined.ContentCopy" OnClick="() => DuplicateAsync(report)">@L["Duplicate"]</MudMenuItem>
+                            </PermissionGate>
+                            <MudMenuItem Icon="@Icons.Material.Outlined.FileDownload" OnClick="() => ExportAsync(report)">@L["Export"]</MudMenuItem>
+                            @if (report.IsOwner)
+                            {
+                                <MudMenuItem Icon="@Icons.Material.Outlined.Delete" IconColor="Color.Error" OnClick="() => DeleteAsync(report)">@L["Delete"]</MudMenuItem>
+                            }
+                        </MudMenu>
+                    </div>
+                </div>
+                @if (report.Description is { Length: > 0 } description)
+                {
+                    <MudText Typo="Typo.body2" Class="cw-report-card-description">@description</MudText>
+                }
+                <div class="cw-report-card-foot">
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Icon="@VisibilityIcon(report.Visibility)">@L[VisibilityText(report.Visibility)]</MudChip>
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Icon="@Icons.Material.Outlined.Widgets">@L["{0} widgets", report.Widgets]</MudChip>
+                    @foreach (var set in report.EntitySets.Take(2))
+                    {
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Icon="@Icons.Material.Outlined.Storage">@set</MudChip>
+                    }
+                </div>
+            </MudPaper>
+        }
+    </div>
+}
