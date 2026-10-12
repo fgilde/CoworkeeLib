@@ -253,10 +253,48 @@ public sealed class AiToolSchemas
                     }
                 }
 
+                OpenSchemas(schema);
                 _schemas[tool.Name] = schema;
             }
 
             return (JsonObject)schema.DeepClone();
+        }
+    }
+
+    // "any value" is exported as the schema true; some providers (Ollama) accept only objects for properties and items
+    private static void OpenSchemas(JsonNode? node)
+    {
+        if (node is JsonObject obj)
+        {
+            foreach (var key in new[] { "properties", "items" })
+            {
+                if (obj[key] is JsonObject children && key == "properties")
+                {
+                    foreach (var (name, child) in children.ToList())
+                    {
+                        if (child is JsonValue)
+                        {
+                            children[name] = new JsonObject();
+                        }
+                    }
+                }
+                else if (obj[key] is JsonValue)
+                {
+                    obj[key] = new JsonObject();
+                }
+            }
+
+            foreach (var (_, child) in obj.ToList())
+            {
+                OpenSchemas(child);
+            }
+        }
+        else if (node is JsonArray array)
+        {
+            foreach (var item in array)
+            {
+                OpenSchemas(item);
+            }
         }
     }
 }

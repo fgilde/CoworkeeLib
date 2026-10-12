@@ -26,6 +26,14 @@ public sealed class ToolDiscoveryTests
         tools.Keys.ShouldNotContain("plain_notes");
         tools.Values.Count(t => t.RequestType == typeof(AddNote)).ShouldBe(1);
     }
+
+    [Fact]
+    public void Any_value_inputs_get_an_object_schema_providers_accept()
+    {
+        var schema = new AiToolSchemas().Get(new AiTool("style_notes", "Styles notes.", typeof(StyleNotesCommand), typeof(Result)), System.Text.Json.JsonSerializerOptions.Web);
+
+        schema["properties"]!["style"]!.ShouldBeOfType<System.Text.Json.Nodes.JsonObject>();
+    }
 }
 
 [RequiresPermission("Notes.Archive")]
@@ -38,5 +46,7 @@ public sealed record CountNotesQuery : IQuery<Result<int>>;
 [AiTool(Exclude = true)]
 [RequiresPermission("Notes.Archive")]
 public sealed record SecretNotesQuery : IQuery<Result<int>>;
+
+public sealed record StyleNotesCommand(object Style, IReadOnlyList<object> Palette) : ICommand<Result>;
 
 public sealed record PlainNotesQuery : IQuery<Result<int>>;
