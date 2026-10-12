@@ -1,5 +1,7 @@
 using System.Security.Claims;
 using Coworkee.AspNetCore.Security;
+using Coworkee.Contracts.Identity;
+using Coworkee.Core.Security;
 using Microsoft.AspNetCore.Http;
 
 namespace Coworkee.AspNetCore.Tests;
@@ -24,6 +26,46 @@ public sealed class HttpCurrentUserTests
         user.UserId.ShouldBe(userId);
         user.TenantId.ShouldBe(tenantId);
         user.Roles.ShouldBe(["admin"]);
+    }
+
+    [Fact]
+    public void An_api_keys_limits_stay_inside_an_ambient_user_scope()
+    {
+        var userId = Guid.CreateVersion7();
+        var keyId = Guid.CreateVersion7();
+        var context = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity(
+                [new Claim("sub", userId.ToString()), new Claim(ApiKeyDefaults.IdClaim, keyId.ToString()), new Claim(ApiKeyDefaults.ScopeClaim, "Notes.Read")], "ApiKey")),
+        };
+        var user = new HttpCurrentUser(new HttpContextAccessor { HttpContext = context });
+
+        using var ambient = CurrentUserScope.Begin(new ImpersonatedUser(userId, null));
+
+        user.ApiKeyId.ShouldBe(keyId);
+        user.PermissionScopes.ShouldBe(["Notes.Read"]);
+    }
+
+    [Theory]
+    [InlineData(null, "Bearer eyJhbGciOi", false)]
+    [InlineData("", "Bearer eyJhbGciOi", false)]
+    [InlineData("  ", null, false)]
+    [InlineData("cwk_abc", null, true)]
+    [InlineData(null, "Bearer cwk_abc", true)]
+    public void Only_a_present_key_selects_the_key_sign_in(string? header, string? authorization, bool key)
+    {
+        var context = new DefaultHttpContext();
+        if (header is not null)
+        {
+            context.Request.Headers[ApiKeyDefaults.Header] = header;
+        }
+
+        if (authorization is not null)
+        {
+            context.Request.Headers.Authorization = authorization;
+        }
+
+        Authentication.ApiKeyForwarding.HasApiKey(context.Request).ShouldBe(key);
     }
 
     [Fact]

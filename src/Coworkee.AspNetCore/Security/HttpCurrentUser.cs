@@ -27,7 +27,8 @@ public sealed class HttpCurrentUser(IHttpContextAccessor accessor) : ICurrentUse
         ? ambient.ClientPermissions
         : ServiceClient is null ? [] : Principal!.FindAll("permission").Select(c => c.Value).ToArray();
 
-    public Guid? ApiKeyId => CurrentUserScope.Current is null ? ParseGuid(Principal?.FindFirstValue(ApiKeyDefaults.IdClaim)) : null;
+    // read from the request even inside an ambient user scope: code acting for the caller must not shed the key's limits
+    public Guid? ApiKeyId => ParseGuid(Principal?.FindFirstValue(ApiKeyDefaults.IdClaim));
 
     // a key without scopes grants nothing, never everything
     public IReadOnlyCollection<string>? PermissionScopes => ApiKeyId is null ? null : Principal!.FindAll(ApiKeyDefaults.ScopeClaim).Select(c => c.Value).ToArray();
