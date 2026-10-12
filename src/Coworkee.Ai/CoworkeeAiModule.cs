@@ -25,12 +25,16 @@ namespace Coworkee.Ai;
 
 public static class AiSettings
 {
-    public const string Enabled = "Ai.Enabled";
-    public const string Provider = "Ai.Provider";
-    public const string Model = "Ai.Model";
-    public const string Endpoint = "Ai.Endpoint";
-    public const string ApiKey = "Ai.ApiKey";
-    public const string MaxToolRounds = "Ai.MaxToolRounds";
+    public const string Enabled = AiSettingNames.Enabled;
+    public const string Provider = AiSettingNames.Provider;
+    public const string Model = AiSettingNames.Model;
+    public const string Endpoint = AiSettingNames.Endpoint;
+    public const string ApiKey = AiSettingNames.ApiKey;
+    public const string Headers = AiSettingNames.Headers;
+    public const string AuthHeader = AiSettingNames.AuthHeader;
+    public const string Temperature = AiSettingNames.Temperature;
+    public const string MaxOutputTokens = AiSettingNames.MaxOutputTokens;
+    public const string MaxToolRounds = AiSettingNames.MaxToolRounds;
     public const string DefaultModel = "claude-opus-5-5";
 }
 
@@ -57,6 +61,8 @@ public sealed class CoworkeeAiModule : CoworkeeModule, IWebModule
         services.AddScoped<AiChat>();
         services.AddScoped<AiSessionChat>();
         services.AddSingleton<IAiChatClientFactory, AiChatClientFactory>();
+        services.AddScoped<AiConnections>();
+        services.AddSingleton<AiConnectionProbe>();
         services.AddScoped<Application.Privacy.IPersonalDataContributor, AiPersonalData>();
         services.AddScoped<Application.Privacy.IPersonalDataContributor, AiSessionPersonalData>();
         services.AddHttpClient(AiChat.HttpClientName, client => client.Timeout = TimeSpan.FromMinutes(5));
@@ -70,6 +76,11 @@ public sealed class CoworkeeAiModule : CoworkeeModule, IWebModule
         ai.MapGet("/status", async (AiChat chat, CancellationToken ct) => TypedResults.Ok(new AiStatusDto((await chat.ConnectAsync(ct)).IsSuccess)));
         ai.MapGet("/tools", async (AiToolRunner runner, CancellationToken ct) =>
             Results.Ok((await runner.AvailableAsync(ct)).Select(t => new AiToolDto(t.Name, t.Description))));
+        ai.MapGet("/connection", (AiConnections connections, CancellationToken ct) => connections.GetStatusAsync(ct));
+        ai.MapPost("/connection/models", (AiConnectionDraft body, IDispatcher d, CancellationToken ct) => d.SendAsync(new ListAiModels(body), ct).ToHttpResult())
+            .RequireCoworkeeRateLimit(CoworkeeRateLimitOptions.Ai);
+        ai.MapPost("/connection/test", (AiConnectionDraft body, IDispatcher d, CancellationToken ct) => d.SendAsync(new TestAiConnection(body), ct).ToHttpResult())
+            .RequireCoworkeeRateLimit(CoworkeeRateLimitOptions.Ai);
         ai.MapGet("/tool-calls", ([AsParameters] PageRequest page, string? channel, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new GetAiToolCalls(page, channel), ct).ToHttpResult());
         ai.MapGet("/sessions", (string? search, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetAiSessions(search), ct).ToHttpResult());
@@ -143,10 +154,14 @@ internal sealed class AiSettingDefinitions : ISettingDefinitionContributor
     public void Define(SettingDefinitionContext context) =>
         context.Group("Ai", "AI assistant")
             .Add(AiSettings.Enabled, "Assistant enabled", SettingType.Bool, Scopes, "false")
-            .Add(AiSettings.Provider, "Provider", SettingType.Choice, Scopes, AiProviders.Anthropic, choices: AiProviders.All)
-            .Add(AiSettings.Model, "Model", SettingType.String, Scopes, description: "Empty: the provider's default (Claude Opus, GPT-5, llama3.2). Azure OpenAI: the deployment name.")
+            .Add(AiSettings.Provider, "Provider", SettingType.Choice, Scopes, AiProviders.Anthropic, choices: [.. AiProviders.All])
+            .Add(AiSettings.Model, "Model", SettingType.String, Scopes, description: "Empty: the provider's default. Azure OpenAI: the deployment name.")
             .Add(AiSettings.Endpoint, "Endpoint", SettingType.String, Scopes,
-                description: "Azure OpenAI resource, Ollama address (default http://localhost:11434) or the base address of an OpenAI compatible server.")
+                description: "Empty: the provider's address. Azure OpenAI resource, Ollama or LM Studio address, or the base address of an OpenAI compatible server.")
             .Add(AiSettings.ApiKey, "API key", SettingType.Secret, Scopes)
+            .Add(AiSettings.Headers, "Extra headers", SettingType.Text, Scopes, description: "One \"Name: value\" per line, for example HTTP-Referer and X-Title for OpenRouter.")
+            .Add(AiSettings.AuthHeader, "Key header", SettingType.String, Scopes, description: "Empty: the key goes as bearer token. Otherwise the header that carries it, for example api-key.")
+            .Add(AiSettings.Temperature, "Temperature", SettingType.String, Scopes, description: "Empty: the model's default. 0 to 2, lower answers more predictably.")
+            .Add(AiSettings.MaxOutputTokens, "Maximum output tokens", SettingType.Int, Scopes, description: "Empty: the provider's default (16000 for Anthropic).")
             .Add(AiSettings.MaxToolRounds, "Maximum tool rounds per message", SettingType.Int, Scopes, "10");
 }

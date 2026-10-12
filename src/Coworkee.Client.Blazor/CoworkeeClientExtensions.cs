@@ -46,6 +46,11 @@ public static class CoworkeeClientExtensions
             client.Timeout = TimeSpan.FromMinutes(11);
         });
         services.AddScoped<Ai.AssistantState>();
+        services.AddHttpClient<Ai.IAiConnectionApi, Ai.AiConnectionApi>(client =>
+        {
+            client.BaseAddress = baseAddress;
+            client.Timeout = TimeSpan.FromMinutes(2);
+        });
         ServiceProxies.ServiceProxyRegistry.AddTo(services, baseAddress, options.ServiceProxies);
         services.AddSingleton<Localization.CoworkeeLocalizer>();
         services.AddSingleton(typeof(Microsoft.Extensions.Localization.IStringLocalizer<>), typeof(Localization.CoworkeeStringLocalizer<>));
@@ -135,6 +140,7 @@ internal sealed class AdminNavigation : INavigationContributor
         new("Scopes", "/admin/scopes", MudBlazor.Icons.Material.Outlined.Key, Coworkee.Contracts.Identity.IdentityPermissions.Clients.Manage, Group: Identity, Order: 4, HostOnly: true),
         new("API keys", "/admin/api-keys", MudBlazor.Icons.Material.Outlined.VpnKey, Coworkee.Contracts.Identity.ApiKeyPermissions.Manage, Group: Identity, Order: 5),
         new("Settings", "/admin/settings", MudBlazor.Icons.Material.Outlined.Tune, Coworkee.Contracts.Settings.SettingsPermissions.Manage, Group: System),
+        new("AI", "/admin/ai", MudBlazor.Icons.Material.Outlined.AutoAwesome, Coworkee.Contracts.Settings.SettingsPermissions.Manage, Group: System, Order: 6, HostOnly: true),
         new("Services", "/admin/services", MudBlazor.Icons.Material.Outlined.Hub, Coworkee.Contracts.Settings.SettingsPermissions.Manage, Group: System, Order: 1, HostOnly: true),
         new("Tenants", "/admin/tenants", MudBlazor.Icons.Material.Outlined.Domain, Coworkee.Contracts.Features.FeaturePermissions.Tenants, Group: System, Order: 2, HostOnly: true),
         new("Editions", "/admin/editions", MudBlazor.Icons.Material.Outlined.WorkspacePremium, Coworkee.Contracts.Features.FeaturePermissions.Editions, Group: System, Order: 3, HostOnly: true),

@@ -13,6 +13,12 @@ public static class Converters
     public static IValueConverter Icon { get; } = new FuncValueConverter<string?, Geometry?>(key =>
         key is not null && Application.Current?.TryFindResource(key, out var value) == true ? value as Geometry : null);
 
+    /// <summary>SVG path data (a provider logo) to a geometry.</summary>
+    public static IValueConverter PathData { get; } = new FuncValueConverter<string?, Geometry?>(data => data is null ? null : Geometry.Parse(data));
+
+    /// <summary>#rrggbb to a brush.</summary>
+    public static IValueConverter HexBrush { get; } = new FuncValueConverter<string?, IBrush?>(hex => hex is null ? null : new SolidColorBrush(Color.Parse(hex)));
+
     public static IValueConverter Brush { get; } = new FuncValueConverter<Color, IBrush>(color => new SolidColorBrush(color));
 
     public static IValueConverter Hex { get; } = new FuncValueConverter<Color, string>(color => $"#{color.R:x2}{color.G:x2}{color.B:x2}".ToUpper(CultureInfo.InvariantCulture));

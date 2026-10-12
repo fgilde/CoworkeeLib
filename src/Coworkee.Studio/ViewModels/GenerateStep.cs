@@ -153,12 +153,27 @@ public sealed partial class GenerateStep(MainViewModel main) : StepViewModel(mai
         _watch.Restart();
         using var timer = new Timer(_ => Dispatch(() => Elapsed = _watch.Elapsed.ToString(@"m\:ss", CultureInfo.InvariantCulture)), null, 0, 1000);
         var outcome = await Main.Generator.RunAsync(spec, Main.Settings, line => Dispatch(() => Add(line)), _cancel.Token);
+        if (outcome == GenerationOutcome.Succeeded && Main.AiApiKey is { } key && Main.Option("ai").IsOn && spec.Output is { } output)
+        {
+            await StoreAiKeyAsync(Path.Combine(output, "src", spec.Name + ".AppHost"), key);
+        }
+
         _watch.Stop();
         Dispatch(() => Finish(outcome));
     }
 
     [RelayCommand]
     public void Cancel() => _cancel?.Cancel();
+
+    private async Task StoreAiKeyAsync(string appHost, string key)
+    {
+        Dispatch(() => Add(new CliLine(CliLineKind.Step, L.Get("Storing the AI key in the user secrets of the app host"))));
+        if (!await Main.Generator.StoreSecretAsync(appHost, "Parameters:ai-apikey", key, line => Dispatch(() => Add(line)), CancellationToken.None))
+        {
+            Dispatch(() => Add(new CliLine(CliLineKind.Warning,
+                L.Format("The AI key could not be stored; run: dotnet user-secrets set Parameters:ai-apikey <key> --project {0}", appHost))));
+        }
+    }
 
     [RelayCommand]
     public async Task InstallCliAsync()

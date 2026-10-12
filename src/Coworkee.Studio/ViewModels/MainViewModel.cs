@@ -54,6 +54,9 @@ public sealed partial class MainViewModel : ObservableObject
 
     public IReadOnlyDictionary<string, OptionViewModel> Options { get; }
 
+    /// <summary>The key of the AI provider: never in the spec or the settings, only written to the user secrets of the created app host.</summary>
+    public string? AiApiKey { get; set; }
+
     public WelcomeStep Welcome { get; }
 
     public BasicsStep Basics { get; }
@@ -200,6 +203,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         Load(new AppSpec(), null);
         SpecPath = null;
+        AiApiKey = null;
         foreach (var step in Steps)
         {
             step.IsReachable = false;

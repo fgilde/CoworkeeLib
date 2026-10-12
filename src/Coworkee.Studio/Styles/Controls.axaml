@@ -280,6 +280,37 @@
     <Setter Property="Foreground" Value="{DynamicResource OnPrimary}" />
   </Style>
 
+  <!-- provider grid: tiles with a logo -->
+  <Style Selector="ListBox.providers">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="AutoScrollToSelectedItem" Value="False" />
+    <Setter Property="ItemsPanel">
+      <ItemsPanelTemplate>
+        <UniformGrid Columns="7" ColumnSpacing="8" RowSpacing="8" />
+      </ItemsPanelTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="ListBox.providers ListBoxItem">
+    <Setter Property="Padding" Value="8,10" />
+    <Setter Property="Margin" Value="0" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="CornerRadius" Value="{StaticResource SmallRadius}" />
+    <Setter Property="BorderThickness" Value="1.5" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Lines}" />
+    <Setter Property="Background" Value="{DynamicResource Surface}" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+  </Style>
+  <Style Selector="ListBox.providers ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource Primary}" />
+    <Setter Property="Background" Value="{DynamicResource Surface}" />
+  </Style>
+  <Style Selector="ListBox.providers ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource Primary}" />
+    <Setter Property="BorderThickness" Value="2.5" />
+    <Setter Property="Background" Value="{DynamicResource PrimarySoft}" />
+    <Setter Property="Foreground" Value="{DynamicResource Text}" />
+  </Style>
+
   <!-- plain lists -->
   <Style Selector="ListBox.plain">
     <Setter Property="Background" Value="Transparent" />

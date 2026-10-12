@@ -1,0 +1,26 @@
+<MudGrid Spacing="2" data-testid="ai-providers">
+    @foreach (var provider in AiProviderCatalog.All)
+    {
+        var selected = provider.Id == Value;
+        <MudItem xs="6" sm="4" md="3" xl="2">
+            <MudPaper Outlined="true" Class="pa-3 d-flex flex-column gap-2 cursor-pointer" Style="@CardStyle(selected)" role="button" tabindex="0" aria-pressed="@(selected ? "true" : "false")"
+                      data-provider="@provider.Id" @onclick="() => SelectAsync(provider)" @onkeydown="e => KeyAsync(e, provider)">
+                <div class="d-flex align-center gap-2">
+                    <AiProviderLogo Provider="provider" Size="32" />
+                    <MudText Typo="Typo.subtitle2" Class="text-truncate">@provider.Name</MudText>
+                    <MudSpacer />
+                    @if (selected)
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Primary" Size="Size.Small" />
+                    }
+                </div>
+                <div class="d-flex flex-wrap gap-1" style="min-height:22px">
+                    @foreach (var (text, color) in Tags(provider))
+                    {
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="color" Class="ma-0">@L[text]</MudChip>
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+    }
+</MudGrid>

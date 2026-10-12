@@ -26,26 +26,55 @@ The request type becomes the tool's input schema, the `Result` its output. Failu
 
 ## Providers
 
-The assistant talks to the model through `IChatClient` of `Microsoft.Extensions.AI`, with the same tools, rules and audit for every provider. The settings are global only (host administrators), the key is a secret setting: it is stored encrypted and never sent to the browser.
+The assistant talks to the model through `IChatClient` of `Microsoft.Extensions.AI`, with the same tools, rules and audit for every provider. Most providers speak the OpenAI chat API, so they only differ in address, key and models; the catalog (`AiProviderCatalog` in `Coworkee.Contracts.Ai`) knows them:
+
+| Provider | Id | Needs | Default model | Get a key | Notes |
+|---|---|---|---|---|---|
+| Anthropic | `anthropic` | key | `claude-opus-5-5` | [console.anthropic.com](https://console.anthropic.com/settings/keys) | the most reliable tool use |
+| OpenAI | `openAI` | key | `gpt-5` | [platform.openai.com](https://platform.openai.com/api-keys) | GPT models (ChatGPT) |
+| Azure OpenAI | `azureOpenAI` | endpoint, deployment, key | (the deployment) | [Azure portal](https://portal.azure.com/#view/Microsoft_Azure_ProjectOxford/CognitiveServicesHub/~/OpenAI) | data stays in your Azure tenant; v1 API of Azure OpenAI |
+| Google Gemini | `gemini` | key | `gemini-2.5-flash` | [aistudio.google.com](https://aistudio.google.com/apikey) | Google's OpenAI compatible API; free tier |
+| OpenRouter | `openRouter` | key | `anthropic/claude-sonnet-4.5` | [openrouter.ai/keys](https://openrouter.ai/keys) | hundreds of models behind one key, `:free` models cost nothing |
+| Mistral | `mistral` | key | `mistral-large-latest` | [console.mistral.ai](https://console.mistral.ai/api-keys) | hosted in the EU; free experiment plan |
+| Groq | `groq` | key | `openai/gpt-oss-120b` | [console.groq.com](https://console.groq.com/keys) | open models at high speed; free tier |
+| DeepSeek | `deepSeek` | key | `deepseek-chat` | [platform.deepseek.com](https://platform.deepseek.com/api_keys) | low prices; servers in China |
+| xAI Grok | `xai` | key | `grok-4` | [console.x.ai](https://console.x.ai) | Grok models |
+| Together AI | `together` | key | `meta-llama/Llama-3.3-70B-Instruct-Turbo` | [api.together.ai](https://api.together.ai/settings/api-keys) | open models in the cloud |
+| Fireworks AI | `fireworks` | key | `accounts/fireworks/models/llama-v3p3-70b-instruct` | [fireworks.ai](https://fireworks.ai/account/api-keys) | open models in the cloud |
+| Ollama | `ollama` | nothing | `llama3.2` | [ollama.com](https://ollama.com/search) | local and offline; small models call tools less reliably |
+| LM Studio | `lmStudio` | a loaded model | (the loaded model) | [lmstudio.ai](https://lmstudio.ai) | local; start the server of the LM Studio app (`http://localhost:1234/v1`) |
+| Custom | `openAICompatible` | base address, model | | | any server that speaks the OpenAI chat API: gateways, vLLM, LiteLLM, a company proxy |
+
+Providers without tool calls (Perplexity, for example) do not fit: the assistant works through tools.
+
+### The AI page
+
+Host administrators with `Settings.Manage` set it up under **Administration > System > AI** (`/admin/ai`): switch the assistant on, pick a provider card, enter address, key and model, and save. Changes apply to the next message, without a restart.
+
+![AI page](../assets/screenshots/ai-admin-light.webp){ .shot }
+
+- **Key**: stored encrypted and never sent back to the browser; the page shows it masked with *Replace* and *Remove*. When the provider or the address changes, the stored key is dropped on save, so it never reaches another server.
+- **Load models** asks the provider for its models with the entered key (`/models` of the OpenAI compatible APIs, `/v1/models` of Anthropic, `/api/tags` of Ollama); any other name can be typed.
+- **Test connection** sends a short prompt and a tool call probe and shows the latency, the answer and whether the model calls tools, or the provider's error.
+- **Advanced**: temperature, maximum output tokens, tool rounds per message, extra headers (`HTTP-Referer` and `X-Title` name your app on OpenRouter) and a key header for servers that expect the key in another header than `Authorization: Bearer` (for example `api-key`).
+
+![Connection test](../assets/screenshots/ai-admin-test-dark.webp){ .shot }
+
+### Settings
+
+The page writes the global AI settings; they also have defaults in the configuration, e.g. from the app host or environment variables:
 
 | Setting | |
 |---|---|
 | `Ai.Enabled` | on or off |
-| `Ai.Provider` | `anthropic` (default), `openAI`, `azureOpenAI`, `ollama`, `openAICompatible` |
-| `Ai.Model` | empty: the provider's default (`claude-opus-5-5`, `gpt-5`, `llama3.2`); Azure OpenAI: the deployment name |
-| `Ai.Endpoint` | Azure OpenAI resource (`https://acme.openai.azure.com`), Ollama address (default `http://localhost:11434`) or the base address of an OpenAI compatible server (`http://localhost:1234/v1`) |
-| `Ai.ApiKey` | API key (secret); Ollama and OpenAI compatible servers may go without |
+| `Ai.Provider` | a provider id of the table above, `anthropic` by default |
+| `Ai.Model` | empty: the provider's default; Azure OpenAI: the deployment name |
+| `Ai.Endpoint` | empty: the provider's address; Azure OpenAI resource (`https://acme.openai.azure.com`), Ollama or LM Studio address, or the base address of a custom server |
+| `Ai.ApiKey` | API key (secret) |
+| `Ai.Headers` | extra headers, one `Name: value` per line |
+| `Ai.AuthHeader` | header that carries the key instead of `Authorization: Bearer` |
+| `Ai.Temperature`, `Ai.MaxOutputTokens` | empty: the model's defaults |
 | `Ai.MaxToolRounds` | how many tool rounds one answer may take |
-
-| Provider | Needs | Good for |
-|---|---|---|
-| `anthropic` | key | the most reliable tool use |
-| `openAI` | key | GPT models |
-| `azureOpenAI` | endpoint, deployment, key | data that has to stay in your Azure tenant; uses the v1 API of Azure OpenAI |
-| `ollama` | nothing | trying it locally and offline; small models call tools less reliably |
-| `openAICompatible` | endpoint, model | gateways, vLLM, LM Studio, LiteLLM and other servers that speak the OpenAI chat API |
-
-Like every setting they have defaults in the configuration, e.g. from the app host or environment variables:
 
 ```json
 {
@@ -62,7 +91,9 @@ Like every setting they have defaults in the configuration, e.g. from the app ho
 }
 ```
 
-`coworkee new --ai-provider ollama` creates an app host with an Ollama container that pulls `llama3.2` and switches the assistant on. For the other providers, the app host takes key, endpoint and model from its user secrets, if there:
+### New apps
+
+`coworkee new` takes the provider, the model and the address (`--ai-provider`, `--ai-model`, `--ai-endpoint`, see [CLI](../getting-started/cli.md)); the Studio offers the same in its AI card. The key never goes into the spec or the command line: the app host reads it, and optionally endpoint and model, from its user secrets:
 
 ```bash
 dotnet user-secrets set Parameters:ai-apikey sk-... --project src/Shop.AppHost
@@ -70,14 +101,31 @@ dotnet user-secrets set Parameters:ai-endpoint https://acme.openai.azure.com --p
 dotnet user-secrets set Parameters:ai-model gpt-5-assistant --project src/Shop.AppHost
 ```
 
-Another model service (Gemini, Bedrock, a company gateway) plugs in through `IAiChatClientFactory`:
+With a key the assistant starts switched on. `--ai-provider ollama` adds an Ollama container that pulls the model; `lmStudio` switches the assistant on without a key and talks to LM Studio on the same machine.
+
+### In code
+
+`AiConnections` reads the current connection and creates chat clients on it, for features of your own (summaries, translations):
 
 ```csharp
-services.AddSingleton<IAiChatClientFactory, GeminiChatClients>();
-
-internal sealed class GeminiChatClients : IAiChatClientFactory
+public sealed class Summaries(AiConnections ai)
 {
-    public IChatClient Create(AiConnection connection) => new GeminiChatClient(connection.ApiKey!, connection.EffectiveModel ?? "gemini-2.5-pro");
+    public async Task<string?> SummarizeAsync(string text, CancellationToken ct)
+    {
+        using var client = await ai.CreateClientAsync(ct); // null while the assistant is off or incomplete
+        return client is null ? null : (await client.GetResponseAsync($"Summarize: {text}", cancellationToken: ct)).Text;
+    }
+}
+```
+
+Another model service (Bedrock, a gateway with its own SDK) plugs in through `IAiChatClientFactory`:
+
+```csharp
+services.AddSingleton<IAiChatClientFactory, BedrockChatClients>();
+
+internal sealed class BedrockChatClients : IAiChatClientFactory
+{
+    public IChatClient Create(AiConnection connection) => new BedrockChatClient(connection.EffectiveModel!);
 }
 ```
 
