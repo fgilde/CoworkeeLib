@@ -70,6 +70,21 @@ public sealed class EntityODataTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_sets_only_read()
+    {
+        foreach (var method in new[] { HttpMethod.Post, HttpMethod.Patch, HttpMethod.Put, HttpMethod.Delete })
+        {
+            var request = new HttpRequestMessage(method, method == HttpMethod.Post ? "/odata/Gadgets" : $"/odata/Gadgets({Guid.NewGuid()})")
+            {
+                Content = JsonContent.Create(new { Name = "x" }),
+            };
+            (await Admin.SendAsync(request, Ct)).IsSuccessStatusCode.ShouldBeFalse(method.Method);
+        }
+
+        (await Admin.GetStringAsync("/odata/Gadgets", Ct)).ShouldNotContain("\"x\"");
+    }
+
+    [Fact]
     public async Task Select_projects_and_top_is_capped()
     {
         var page = await Admin.GetFromJsonAsync<JsonElement>("/odata/Gadgets?$select=Name&$orderby=Name&$top=1", Ct);

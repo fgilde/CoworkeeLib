@@ -166,6 +166,17 @@ public sealed class ApiKeyTests(AiApp app) : IAsyncLifetime
         all.ShouldNotContain("SecretHash");
         all.ShouldNotContain(key.Secret[10..]);
 
+        // the set only reads: no OData write reaches a key
+        foreach (var method in new[] { HttpMethod.Post, HttpMethod.Patch, HttpMethod.Put, HttpMethod.Delete })
+        {
+            var path = method == HttpMethod.Post ? "/odata/ApiKeys" : $"/odata/ApiKeys({key.Key.Id})";
+            var response = await Admin.SendAsync(new HttpRequestMessage(method, path) { Content = JsonContent.Create(new { Name = "x", RevokedAt = (DateTimeOffset?)null, SecretHash = "00" }) }, Ct);
+            response.IsSuccessStatusCode.ShouldBeFalse($"{method} {path}");
+        }
+
+        (await KeyAsync(key.Key.Id)).ShouldSatisfyAllConditions(k => k.Name.ShouldBe("Claude Desktop"), k => k.RevokedAt.ShouldBeNull());
+        (await Admin.GetStringAsync($"/odata/ApiKeys({key.Key.Id})", Ct)).ShouldNotContain("SecretHash");
+
         // an administrator of another organisation finds nothing
         var stranger = await StrangerWithManageAsync();
         JsonNode.Parse(await stranger.GetStringAsync("/odata/ApiKeys", Ct))!["value"]!.AsArray().ShouldBeEmpty();
