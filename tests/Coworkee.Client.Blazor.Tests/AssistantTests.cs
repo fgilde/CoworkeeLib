@@ -158,6 +158,21 @@ public sealed class AssistantTests : ClientTestBase
         window.WaitForAssertion(() => _api.ReceivedWithAnyArgs().GetSessionsAsync(default, default));
     }
 
+    [Fact]
+    public void Links_of_other_sites_carry_no_data_and_show_where_they_go()
+    {
+        var text = "[report](https://attacker.test/?d=secret#more) [app](/catalog/products?x=1) [mail](mailto:a@b.test?body=secret) <https://auto.test/p?q=secret> [bad](javascript:alert(1))";
+
+        var message = Render<AssistantMessage>(p => p.Add(m => m.Message, new AiMessageDto(Guid.NewGuid(), "assistant", text, [], [], null, DateTimeOffset.Now)));
+
+        var hrefs = message.FindAll("a").Select(a => a.GetAttribute("href")).ToList();
+        hrefs.ShouldContain("https://attacker.test/");
+        hrefs.ShouldContain("/catalog/products?x=1");
+        hrefs.ShouldContain("mailto:a@b.test");
+        hrefs.ShouldNotContain(h => h != null && (h.Contains("secret") || h.StartsWith("javascript", StringComparison.OrdinalIgnoreCase)));
+        message.Markup.ShouldContain("(attacker.test)");
+    }
+
     private static async IAsyncEnumerable<AiStreamEvent> Stream(Task gate, AiStreamEvent first, params AiStreamEvent[] rest)
     {
         yield return first;
