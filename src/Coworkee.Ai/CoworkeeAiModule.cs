@@ -36,6 +36,9 @@ public static class AiSettings
     public const string MaxOutputTokens = AiSettingNames.MaxOutputTokens;
     public const string MaxToolRounds = AiSettingNames.MaxToolRounds;
     public const string DefaultModel = "claude-opus-5-5";
+
+    /// <summary>The kill switch of the MCP server at runtime; Coworkee:Mcp:Enabled decides whether it is mapped at all.</summary>
+    public const string McpEnabled = "Mcp.Enabled";
 }
 
 /// <summary>
@@ -166,5 +169,7 @@ internal sealed class AiSettingDefinitions : ISettingDefinitionContributor
             .Add(AiSettings.AuthHeader, "Key header", SettingType.String, Scopes, description: "Empty: the key goes as bearer token. Otherwise the header that carries it, for example api-key.")
             .Add(AiSettings.Temperature, "Temperature", SettingType.String, Scopes, description: "Empty: the model's default. 0 to 2, lower answers more predictably.")
             .Add(AiSettings.MaxOutputTokens, "Maximum output tokens", SettingType.Int, Scopes, description: "Empty: the provider's default (16000 for Anthropic).")
-            .Add(AiSettings.MaxToolRounds, "Maximum tool rounds per message", SettingType.Int, Scopes, "10");
+            .Add(AiSettings.MaxToolRounds, "Maximum tool rounds per message", SettingType.Int, Scopes, "10")
+            .Add(AiSettings.McpEnabled, "MCP server enabled", SettingType.Bool, Scopes, "true",
+                description: "Off: MCP clients get no tools and run nothing, also with valid keys. Needs no AI provider.");
 }

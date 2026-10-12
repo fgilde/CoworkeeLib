@@ -22,6 +22,11 @@ internal static class AiMcpServer
             .WithListToolsHandler(async (request, ct) =>
             {
                 var runner = request.Services!.GetRequiredService<AiToolRunner>();
+                if (!await IsOnAsync(request.Services!, ct))
+                {
+                    return new ListToolsResult { Tools = [] };
+                }
+
                 return new ListToolsResult
                 {
                     Tools = [.. (await runner.AvailableAsync(ct)).Select(t => new Tool
@@ -36,11 +41,19 @@ internal static class AiMcpServer
             .WithCallToolHandler(async (request, ct) =>
             {
                 // MCP clients ask their user before tools that are not read only (see the annotations above)
+                if (!await IsOnAsync(request.Services!, ct))
+                {
+                    return new CallToolResult { Content = [new TextContentBlock { Text = "The MCP server of this app is switched off." }], IsError = true };
+                }
+
                 var runner = request.Services!.GetRequiredService<AiToolRunner>();
                 var input = JsonSerializer.SerializeToElement(request.Params?.Arguments ?? new Dictionary<string, JsonElement>());
                 var outcome = await runner.RunAsync(request.Params?.Name ?? string.Empty, input, AiChannels.Mcp, allowWrites: true, ct);
                 return new CallToolResult { Content = [new TextContentBlock { Text = outcome.Output }], IsError = !outcome.Succeeded };
             });
+
+    private static Task<bool> IsOnAsync(IServiceProvider services, CancellationToken cancellationToken) =>
+        services.GetRequiredService<Settings.ISettingProvider>().GetAsync<bool>(AiSettings.McpEnabled, cancellationToken);
 
     public static void MapCoworkeeMcp(this WebApplication app, CoworkeeMcpOptions options) =>
         app.MapMcp(options.Path).RequireAuthorization().RequireCoworkeeRateLimit(CoworkeeRateLimitOptions.Ai).Add(endpoint =>

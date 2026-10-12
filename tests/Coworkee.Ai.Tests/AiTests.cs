@@ -249,6 +249,15 @@ public sealed class AiTests(AiApp app) : IAsyncLifetime
         foreign.Headers.Add("Origin", "https://evil.test");
         (await Admin.SendAsync(foreign, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
+        // the administrators' kill switch: nothing listed, nothing run
+        (await Admin.PutAsJsonAsync("/api/v1/settings/global", new Contracts.Settings.SetSettingsRequest(new Dictionary<string, string?> { [AiSettings.McpEnabled] = "false" }), Ct))
+            .EnsureSuccessStatusCode();
+        (await client.ListToolsAsync(cancellationToken: Ct)).ShouldBeEmpty();
+        (await client.CallToolAsync("list_notes", cancellationToken: Ct)).IsError.ShouldBe(true);
+        (await Admin.PutAsJsonAsync("/api/v1/settings/global", new Contracts.Settings.SetSettingsRequest(new Dictionary<string, string?> { [AiSettings.McpEnabled] = "true" }), Ct))
+            .EnsureSuccessStatusCode();
+        (await client.ListToolsAsync(cancellationToken: Ct)).ShouldNotBeEmpty();
+
         // without the assistant permission MCP offers and runs nothing, even tools the user could otherwise use
         var writer = app.As(await UserAsync(NotePermissions.Write), _setup.TenantId);
         await using var denied = await McpClient.CreateAsync(
