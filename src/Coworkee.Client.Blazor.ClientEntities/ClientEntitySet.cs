@@ -56,6 +56,9 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     private readonly IClientEntityStorage _storage;
     private readonly ILogger _logger;
     private readonly SemaphoreSlim _gate = new(1, 1);
+
+    // one write to the browser storage at a time: a copy saved late must not overwrite a dropped one
+    private readonly SemaphoreSlim _writes = new(1, 1);
     private readonly CancellationTokenSource _stop = new();
     private TaskCompletionSource _local = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private LocalTable<T>? _table;
@@ -465,6 +468,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
             _local = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         }
 
+        await _writes.WaitAsync();
         try
         {
             await _storage.SaveAsync(StorageKey, []);
@@ -473,6 +477,10 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         {
             _logger.LogWarning(exception, "Dropping the kept copy of {EntitySet} failed", EntitySet);
         }
+        finally
+        {
+            _writes.Release();
+        }
     }
 
     private string StorageKey => $"{_partition}/{EntitySet}/{Expand}";
@@ -480,6 +488,11 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     // rows whose type splits into columns are kept as columns, which come back without parsing; others as JSON
     private async Task SaveAsync()
     {
+        if (_table is not { } table || _version is not { } version)
+        {
+            return;
+        }
+
         try
         {
             using var buffer = new MemoryStream();
@@ -487,15 +500,27 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
             {
                 if (LocalTable<T>.Shape is not null)
                 {
-                    _table!.Write(zip, _version!.Value);
+                    table.Write(zip, version);
                 }
                 else
                 {
-                    await JsonSerializer.SerializeAsync(zip, new Snapshot(_version!.Value, Schema, _table!.All()), Json);
+                    await JsonSerializer.SerializeAsync(zip, new Snapshot(version, Schema, table.All()), Json);
                 }
             }
 
-            await _storage.SaveAsync(StorageKey, buffer.ToArray());
+            await _writes.WaitAsync();
+            try
+            {
+                // the copy was replaced or dropped while it was being packed
+                if (_table == table)
+                {
+                    await _storage.SaveAsync(StorageKey, buffer.ToArray());
+                }
+            }
+            finally
+            {
+                _writes.Release();
+            }
         }
         catch (Exception exception)
         {
