@@ -238,6 +238,7 @@ public partial class AssistantWindow : IAsyncDisposable
         }
 
         _scroll = true;
+        StateHasChanged();
         string? failure = null;
         try
         {
@@ -290,6 +291,7 @@ public partial class AssistantWindow : IAsyncDisposable
 
             restore();
             Snackbar.Add(failure, Severity.Error);
+            StateHasChanged();
         }
 
         await LoadSessionsAsync();
@@ -297,5 +299,8 @@ public partial class AssistantWindow : IAsyncDisposable
         {
             await SelectAsync(current);
         }
+
+        // also when Enter sent it: calls from JavaScript do not render on their own
+        StateHasChanged();
     }
 }
