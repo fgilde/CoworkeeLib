@@ -147,6 +147,17 @@ public static partial class SpecValidator
         {
             errors.Add($"defaultLanguage: '{language}' is not one of the languages {languages}.");
         }
+
+        var translated = (values["languages"] is { } list ? SpecOptions.List(list) : []).Append(values["defaultLanguage"] ?? "en").Where(l => !OptionCatalog.ShippedLanguages.Contains(l)).Distinct().ToList();
+        if (values["translationProvider"] == "none" && translated.Count > 0)
+        {
+            errors.Add($"translationProvider: {string.Join(", ", translated)} ship no texts; choose a translation service or leave them out.");
+        }
+
+        if (values["translationProvider"] == "ai" && values["ai"] == "false")
+        {
+            errors.Add("translationProvider: ai translates with the model of the AI assistant, so the option ai cannot be off.");
+        }
     }
 
     public static bool IsWebAddress(string value) =>

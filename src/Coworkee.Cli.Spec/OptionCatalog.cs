@@ -51,7 +51,21 @@ public static class OptionCatalog
     public const string Tooling = "Tooling";
 
     /// <summary>Cultures the library ships texts for (Localization/{culture}.json of its modules), English being the keys.</summary>
-    public static readonly IReadOnlyList<OptionChoice> Languages = [new("en", "English"), new("de", "German (Deutsch)")];
+    public static readonly IReadOnlyList<string> ShippedLanguages = ["en", "de"];
+
+    /// <summary>Languages to choose from, by their own name: the shipped ones and those the translation services (LibreTranslate included) translate into.</summary>
+    public static readonly IReadOnlyList<OptionChoice> Languages =
+    [
+        new("en", "English"), new("de", "Deutsch"), new("fr", "Français"), new("es", "Español"), new("it", "Italiano"), new("pt", "Português"),
+        new("pt-BR", "Português (Brasil)"), new("nl", "Nederlands"), new("pl", "Polski"), new("cs", "Čeština"), new("sk", "Slovenčina"), new("sl", "Slovenščina"),
+        new("sv", "Svenska"), new("da", "Dansk"), new("nb", "Norsk bokmål"), new("fi", "Suomi"), new("et", "Eesti"), new("lv", "Latviešu"), new("lt", "Lietuvių"),
+        new("hu", "Magyar"), new("ro", "Română"), new("bg", "Български"), new("el", "Ελληνικά"), new("tr", "Türkçe"), new("ru", "Русский"), new("uk", "Українська"),
+        new("ar", "العربية"), new("he", "עברית"), new("hi", "हिन्दी"), new("ja", "日本語"), new("ko", "한국어"), new("zh-Hans", "中文（简体）"), new("zh-Hant", "中文（繁體）"),
+        new("id", "Bahasa Indonesia"), new("vi", "Tiếng Việt"), new("th", "ไทย"),
+    ];
+
+    /// <summary>The options whose choices are <see cref="Languages"/>, named in their own language.</summary>
+    public static readonly IReadOnlyList<string> LanguageOptions = ["languages", "defaultLanguage", "translationSource"];
 
     public static readonly IReadOnlyList<string> Themes = ["Ocean", "Coworkee", "Classic", "Forest", "Midnight", "Sunset", "HighContrast"];
 
@@ -147,10 +161,19 @@ public static class OptionCatalog
             [new("manual", "A ToDto extension method."), new("mapperly", "A Mapperly mapper.")], TemplateSymbol: false),
 
         // languages, color mode, registration and repository tooling
-        new("languages", General, "Languages", "Languages the app offers from the start, from those the library ships texts for; administrators add more later on the Languages page. Empty offers all of them.", OptionKind.Multi, null,
-            "When the users speak only some of the languages.", ["Users see only languages that make sense"], ["More languages later need the Languages page or a translator key"], Languages),
+        new("languages", General, "Languages", "Languages the app offers from the start. English and German ship with the library; the others are machine translated at the first start with the translation service. Administrators switch more on later on the Languages page. Empty offers the shipped ones.", OptionKind.Multi, null,
+            "When the users speak only some of the languages, or others than English and German.", ["Users see only languages that make sense", "Any language the translation service knows"], ["Machine translations are good, not perfect: review them on the Translations page"], Languages),
         new("defaultLanguage", General, "Default language", "Language of users who chose none and whose browser asks for none of the offered ones.", OptionKind.Choice, "en",
             "When most users speak another language than English.", ["Right language at the first visit"], ["Must be one of the languages"], Languages),
+        new("translationProvider", General, "Translation service", "Translates the texts a language lacks: at the first start, when a language is switched on, or on request. Changeable later in the settings (Translation).", OptionKind.Choice, "libreTranslate",
+            "LibreTranslate to start free and without an account, DeepL or Azure for the best quality, AI when the assistant's model should do it.",
+            ["libreTranslate: free, no account, the texts stay on your machine", "myMemory: free, no container, nothing to install", "deepL, azure, google: high quality, free monthly quota with an account"],
+            ["libreTranslate: a container of about 600 MB plus about 100 MB per language, the first start waits for the download", "myMemory: 5,000 characters a day (50,000 with an email), too little for a whole language at once", "deepL, azure, google, ai: a key in the user secrets, texts leave the machine"],
+            [new("libreTranslate", "LibreTranslate container in the app host, free and without an account."), new("myMemory", "MyMemory public service, free without an account, small daily quota."),
+             new("deepL", "DeepL API, free plan up to 500,000 characters a month (key)."), new("azure", "Azure AI Translator, free tier up to 2 million characters a month (key, region)."),
+             new("google", "Google Cloud Translation, 500,000 characters a month free (key)."), new("ai", "The model of the AI assistant."), new("none", "No machine translation; missing texts show in English.")]),
+        new("translationSource", General, "Translation source", "The language translations start from. Texts are written in English; German starts from the shipped German wording where there is one.", OptionKind.Choice, "en",
+            "German when your own texts are reviewed in German first.", ["Translations from your reviewed wording"], ["Only languages with shipped texts"], [new("en", "English"), new("de", "Deutsch")]),
         new("colorMode", General, "Color mode", "Light, dark or the system's mode as default of the installation; every user can switch it in the app bar.", OptionKind.Choice, "system",
             "Dark for apps used in dim rooms or all day.", ["Seeded as system wide setting, changeable later"], ["None"],
             [new("system", "Follow the operating system."), new("light", "Always light."), new("dark", "Always dark.")]),
