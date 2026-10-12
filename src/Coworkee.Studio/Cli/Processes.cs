@@ -22,15 +22,10 @@ public static class Processes
         process.Start();
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
-        try
-        {
-            await process.WaitForExitAsync(cancellationToken);
-        }
-        catch (OperationCanceledException)
-        {
-            process.Kill(entireProcessTree: true);
-            throw;
-        }
+
+        // at once, so a Studio that closes takes the app host with it
+        using var kill = cancellationToken.Register(() => Kill(process));
+        await process.WaitForExitAsync(cancellationToken);
 
         return process.ExitCode;
 
@@ -40,6 +35,18 @@ public static class Processes
             {
                 output(line, error);
             }
+        }
+    }
+
+    private static void Kill(Process process)
+    {
+        try
+        {
+            process.Kill(entireProcessTree: true);
+        }
+        catch (InvalidOperationException)
+        {
+            // already ended
         }
     }
 

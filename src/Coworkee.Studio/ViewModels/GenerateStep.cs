@@ -44,11 +44,14 @@ public sealed partial class ProgressStepViewModel(string text) : ObservableObjec
     public bool IsFailed => State == ProgressState.Failed;
 }
 
-public sealed partial class GenerateStep(MainViewModel main) : StepViewModel(main)
+public sealed partial class GenerateStep : StepViewModel
 {
     private readonly Stopwatch _watch = new();
     private CancellationTokenSource? _cancel;
     private bool _nextSteps;
+
+    public GenerateStep(MainViewModel main)
+        : base(main) => App = new AppRunViewModel(this);
 
     protected override string TitleText => "Create";
 
@@ -73,6 +76,9 @@ public sealed partial class GenerateStep(MainViewModel main) : StepViewModel(mai
 
     [ObservableProperty]
     public partial string? Output { get; set; }
+
+    /// <summary>The created app, run from the Studio.</summary>
+    public AppRunViewModel App { get; }
 
     public ObservableCollection<ProgressStepViewModel> Progress { get; } = [];
 
@@ -225,16 +231,6 @@ public sealed partial class GenerateStep(MainViewModel main) : StepViewModel(mai
         if (Output is { } output)
         {
             TryLaunch(() => Launch.Tool(tool, tool == "rider" ? Solution() ?? output : output, output));
-        }
-    }
-
-    [RelayCommand]
-    public void RunApp()
-    {
-        if (Output is { } output)
-        {
-            var cli = CliInvocation.Resolve(Main.Settings.CliPath);
-            TryLaunch(() => Launch.Terminal(CommandLine.Format([cli.FileName, .. cli.Prefix, "run"]), output));
         }
     }
 

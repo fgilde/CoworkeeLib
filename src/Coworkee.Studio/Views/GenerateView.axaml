@@ -143,7 +143,7 @@
                   <TextBlock Text="{l:L 'Open solution'}" FontWeight="SemiBold" HorizontalAlignment="Center" />
                 </StackPanel>
               </Button>
-              <Button Classes="tile selected" Command="{Binding RunAppCommand}" Height="96">
+              <Button Classes="tile selected" Command="{Binding App.StartCommand}" IsEnabled="{Binding !App.IsBusy}" Height="96">
                 <StackPanel Spacing="8" HorizontalAlignment="Center" VerticalAlignment="Center">
                   <PathIcon Classes="large" Data="{StaticResource Icon.Play}" Foreground="{DynamicResource Secondary}" />
                   <TextBlock Text="{l:L 'Run the app'}" FontWeight="SemiBold" HorizontalAlignment="Center" />
@@ -161,6 +161,91 @@
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
               </StackPanel>
+            </Border>
+          </StackPanel>
+        </Border>
+
+        <!-- the running app -->
+        <Border Classes="card" IsVisible="{Binding App.WasStarted}" x:Name="RunCard" Padding="0">
+          <StackPanel>
+            <StackPanel Spacing="12" Margin="22,18,22,12">
+              <Grid ColumnDefinitions="Auto,*,Auto">
+                <Panel Width="22" Height="22" Margin="0,0,12,0" VerticalAlignment="Top">
+                  <PathIcon Classes="small spin" Data="{StaticResource Icon.Restart}" Foreground="{DynamicResource Primary}" IsVisible="{Binding App.IsStarting}" />
+                  <PathIcon Data="{StaticResource Icon.CheckCircle}" Foreground="{DynamicResource Success}" IsVisible="{Binding App.IsRunning}" />
+                  <PathIcon Data="{StaticResource Icon.AlertCircle}" Foreground="{DynamicResource Error}" IsVisible="{Binding App.IsFailed}" />
+                  <PathIcon Data="{StaticResource Icon.Stop}" Foreground="{DynamicResource TextSecondary}" IsVisible="{Binding App.State, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static vm:AppRunState.Stopped}}" />
+                </Panel>
+                <StackPanel Grid.Column="1" Spacing="2">
+                  <TextBlock Classes="h3" Text="{l:L 'Run the app'}" />
+                  <TextBlock Classes="body" Text="{Binding App.StatusText}" TextWrapping="Wrap" Classes.error="{Binding App.IsFailed}" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+                  <Button Command="{Binding App.StopCommand}" IsVisible="{Binding App.IsBusy}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                      <PathIcon Classes="small" Data="{StaticResource Icon.Stop}" />
+                      <TextBlock Text="{l:L Stop}" />
+                    </StackPanel>
+                  </Button>
+                  <Button Command="{Binding App.StartCommand}" IsVisible="{Binding !App.IsBusy}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                      <PathIcon Classes="small" Data="{StaticResource Icon.Play}" />
+                      <TextBlock Text="{l:L Start}" />
+                    </StackPanel>
+                  </Button>
+                </StackPanel>
+              </Grid>
+              <WrapPanel ItemSpacing="8" LineSpacing="8" IsVisible="{Binding App.IsBusy}">
+                <Button Classes="ghost" IsVisible="{Binding App.HasDashboard}" Command="{Binding App.OpenCommand}" CommandParameter="{Binding App.DashboardUrl}"
+                        ToolTip.Tip="{Binding App.DashboardUrl}">
+                  <StackPanel Orientation="Horizontal" Spacing="6">
+                    <PathIcon Classes="small" Data="{StaticResource Icon.Dashboard}" Foreground="{DynamicResource Secondary}" />
+                    <TextBlock Text="{l:L 'Aspire dashboard'}" FontWeight="SemiBold" />
+                  </StackPanel>
+                </Button>
+                <ItemsControl ItemsSource="{Binding App.Endpoints}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <WrapPanel ItemSpacing="8" LineSpacing="8" />
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="cli:AppEndpoint">
+                      <Button Classes="ghost" Command="{Binding $parent[UserControl].((vm:GenerateStep)DataContext).App.OpenCommand}" CommandParameter="{Binding Url}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                          <PathIcon Classes="small" Data="{StaticResource Icon.OpenInNew}" Foreground="{DynamicResource Primary}" />
+                          <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                          <TextBlock Classes="mono caption" Text="{Binding Url}" VerticalAlignment="Center" />
+                        </StackPanel>
+                      </Button>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </WrapPanel>
+            </StackPanel>
+            <Border BorderBrush="{DynamicResource Lines}" BorderThickness="0,1,0,0" Padding="16,6">
+              <ToggleButton Classes="ghost" IsChecked="{Binding App.ShowLog}" Background="Transparent" BorderThickness="0" Padding="4">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <PathIcon Classes="small" Data="{StaticResource Icon.Console}" />
+                  <TextBlock FontWeight="SemiBold" Text="{l:L 'App host output'}" />
+                  <TextBlock Classes="caption" Text="{Binding App.Log.Count, StringFormat='({0})'}" VerticalAlignment="Center" />
+                </StackPanel>
+              </ToggleButton>
+            </Border>
+            <Border Classes="code" CornerRadius="0,0,14,14" Height="260" IsVisible="{Binding App.ShowLog}">
+              <ListBox ItemsSource="{Binding App.Log}" Background="Transparent" x:Name="RunLog">
+                <ListBox.Styles>
+                  <Style Selector="ListBoxItem">
+                    <Setter Property="Padding" Value="0,1" />
+                    <Setter Property="MinHeight" Value="0" />
+                  </Style>
+                </ListBox.Styles>
+                <ListBox.ItemTemplate>
+                  <DataTemplate x:DataType="x:String">
+                    <TextBlock Text="{Binding}" FontFamily="{DynamicResource MonoFont}" FontSize="12" TextWrapping="Wrap" Foreground="#c5d5e6" />
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
             </Border>
           </StackPanel>
         </Border>

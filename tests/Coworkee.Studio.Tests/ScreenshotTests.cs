@@ -10,7 +10,7 @@ public sealed class ScreenshotTests
     public static TheoryData<string, bool, string> Pages()
     {
         var data = new TheoryData<string, bool, string>();
-        foreach (var page in new[] { "welcome", "basics", "branding", "signin", "architecture", "ai", "languages", "entities", "users", "review", "generate", "help" })
+        foreach (var page in new[] { "welcome", "basics", "branding", "signin", "architecture", "ai", "languages", "entities", "users", "review", "generate", "run", "help" })
         {
             data.Add(page, false, "en");
             data.Add(page, true, "en");
@@ -41,9 +41,17 @@ public sealed class ScreenshotTests
             main.Welcome.Refresh();
         }
 
-        if (page == "generate")
+        if (page is "generate" or "run")
         {
             Scenario.Generated(main.Generate, main.Basics.Output!);
+            var app = main.Generate.App;
+            app.WasStarted = true;
+            foreach (var line in new[] { "info: Aspire.Hosting.DistributedApplication[0]", "      Login to the dashboard at https://localhost:17100/login?t=3f9c2a7e41b84d0c", "      Distributed application started. Press Ctrl+C to shut down." })
+            {
+                app.Add(line, false);
+            }
+
+            app.Endpoints = [new Cli.AppEndpoint("Web", "https://localhost:7300"), new Cli.AppEndpoint("Api", "https://localhost:7301"), new Cli.AppEndpoint("Auth", "https://localhost:7302")];
         }
 
         if (page == "entities")
@@ -78,12 +86,17 @@ public sealed class ScreenshotTests
             "entities" => main.Entities,
             "users" => main.Users,
             "review" => main.Review,
-            "generate" => main.Generate,
+            "generate" or "run" => main.Generate,
             _ => main.Architecture,
         };
 
-        // the AI card sits below the fold of the architecture page
-        var frame = Render.Step(main, step, dark, page == "ai" ? window => ScrollTo(window, "AiSection") : null);
+        // the AI card and the running app sit below the fold
+        var frame = Render.Step(main, step, dark, page switch
+        {
+            "ai" => window => ScrollTo(window, "AiSection"),
+            "run" => window => ScrollTo(window, "RunCard"),
+            _ => null,
+        });
         frame.PixelSize.Width.ShouldBe(1400);
         if (Folder is not null)
         {

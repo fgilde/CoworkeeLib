@@ -87,6 +87,18 @@ public sealed class Generator(ProcessRunner run)
         }
     }
 
+    /// <summary>dotnet run of the app host, with every line of its output; canceling stops the app host and what it started.</summary>
+    public Task<int> RunAppAsync(string appHostProject, StudioSettings settings, Action<string, bool> output, CancellationToken cancellationToken)
+    {
+        var start = new System.Diagnostics.ProcessStartInfo("dotnet") { ArgumentList = { "run", "--project", appHostProject }, WorkingDirectory = Path.GetDirectoryName(appHostProject) };
+        if (!string.IsNullOrWhiteSpace(settings.PackageFeed))
+        {
+            start.Environment["RestoreAdditionalProjectSources"] = settings.PackageFeed;
+        }
+
+        return run(start, output, cancellationToken);
+    }
+
     private Task<int> RunCliAsync(CliInvocation cli, string[] args, StudioSettings settings, Action<CliLine> onLine, CancellationToken cancellationToken)
     {
         var start = cli.Start(args);
