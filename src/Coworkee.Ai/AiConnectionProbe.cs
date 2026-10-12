@@ -12,6 +12,8 @@ internal sealed class AiConnectionProbe(IHttpClientFactory httpClients, IAiChatC
 
     private static readonly TimeSpan TestTimeout = TimeSpan.FromSeconds(90);
 
+    private static readonly TimeSpan ReachTimeout = TimeSpan.FromSeconds(15);
+
     private static readonly AIFunctionDeclaration Ping = AIFunctionFactory.CreateDeclaration("ping", "Checks that tools work; returns pong.",
         JsonSerializer.SerializeToElement(new { type = "object", properties = new { text = new { type = "string" } }, required = new[] { "text" } }));
 
@@ -41,6 +43,12 @@ internal sealed class AiConnectionProbe(IHttpClientFactory httpClients, IAiChatC
 
     public async Task<AiConnectionTestDto> TestAsync(AiConnection connection, CancellationToken cancellationToken)
     {
+        // the clients retry an unreachable server for minutes; one plain request tells right away
+        if (await UnreachableAsync(connection, cancellationToken) is { } unreachable)
+        {
+            return new AiConnectionTestDto(false, 0, null, false, unreachable);
+        }
+
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(TestTimeout);
         using var client = clients.Create(connection);
@@ -65,6 +73,22 @@ internal sealed class AiConnectionProbe(IHttpClientFactory httpClients, IAiChatC
         catch (Exception exception) when (exception is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
         {
             return new AiConnectionTestDto(true, latency, Cut(reply), false, "Tool calls failed: " + Describe(connection, exception));
+        }
+    }
+
+    private async Task<string?> UnreachableAsync(AiConnection connection, CancellationToken cancellationToken)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(ReachTimeout);
+        try
+        {
+            using var request = AiEndpoints.ModelsRequest(connection);
+            using var response = await httpClients.CreateClient(AiChat.HttpClientName).SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
+            return null;
+        }
+        catch (Exception exception) when (exception is HttpRequestException { StatusCode: null } || (exception is OperationCanceledException && !cancellationToken.IsCancellationRequested))
+        {
+            return Describe(connection, exception);
         }
     }
 

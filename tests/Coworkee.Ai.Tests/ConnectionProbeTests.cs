@@ -59,5 +59,23 @@ public sealed class ConnectionProbeTests
         handler.Uri!.ToString().ShouldBe("https://api.openai.com/v1/models");
     }
 
+    [Fact]
+    public async Task An_unreachable_server_fails_at_once_without_asking_the_model()
+    {
+        var fake = new FakeChatClient();
+
+        var result = await new AiConnectionProbe(new SingleHttpClientFactory(new UnreachableHandler()), fake).TestAsync(Connection, Ct);
+
+        result.Succeeded.ShouldBeFalse();
+        result.Error!.ShouldStartWith("Could not reach the server");
+        fake.Requests.ShouldBeEmpty();
+    }
+
+    private sealed class UnreachableHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+            throw new HttpRequestException("Connection refused (localhost:11434)");
+    }
+
     private static AiConnectionProbe Probe(FakeChatClient fake) => new(new SingleHttpClientFactory(new RecordingHandler()), fake);
 }

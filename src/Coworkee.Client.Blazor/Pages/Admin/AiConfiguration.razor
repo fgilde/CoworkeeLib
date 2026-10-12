@@ -39,7 +39,7 @@ else
                 </div>
                 @if (info.KeyUrl is { } keyUrl)
                 {
-                    <MudButton Href="@keyUrl" Target="_blank" Variant="Variant.Text" Color="Color.Primary" EndIcon="@Icons.Material.Outlined.OpenInNew" data-testid="ai-key-link">
+                    <MudButton Href="@keyUrl" Target="_blank" Variant="Variant.Text" Color="Color.Primary" EndIcon="@Icons.Material.Outlined.OpenInNew" Style="flex:none;white-space:nowrap" data-testid="ai-key-link">
                         @L[info.Key == AiField.None ? "Get models" : "Get a key"]
                     </MudButton>
                 }
