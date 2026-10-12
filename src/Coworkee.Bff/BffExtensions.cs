@@ -27,6 +27,8 @@ public static class BffExtensions
 
     private const string SwaggerUi = "/swagger";
 
+    private const string Mcp = "/mcp";
+
     private const string SessionCache = "coworkee:bff:sessions";
 
     public static WebApplicationBuilder AddCoworkeeBff(this WebApplicationBuilder builder)
@@ -215,6 +217,8 @@ public static class BffExtensions
             }
         }
 
+        // MCP clients reach the API's MCP server under the app's address with their API key; the browser session never goes along
+        app.MapForwarder(Mcp + "/{**catch-all}", options.ApiAddress, longRequests);
         return app;
     }
 }
