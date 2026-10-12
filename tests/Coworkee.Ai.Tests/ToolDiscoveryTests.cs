@@ -22,6 +22,9 @@ public sealed class ToolDiscoveryTests
         tools["archive_notes"].ReadOnly.ShouldBeFalse();
         tools["count_notes"].Description.ShouldBe("Counts the notes.");
         tools["count_notes"].ReadOnly.ShouldBeTrue();
+        tools["count_notes"].Destructive.ShouldBeFalse();
+        tools["archive_notes"].Destructive.ShouldBeTrue();
+        tools["pin_notes"].ShouldSatisfyAllConditions(t => t.ReadOnly.ShouldBeFalse(), t => t.Destructive.ShouldBeFalse());
         tools.Keys.ShouldNotContain("secret_notes");
         tools.Keys.ShouldNotContain("plain_notes");
         tools.Values.Count(t => t.RequestType == typeof(AddNote)).ShouldBe(1);
@@ -48,5 +51,8 @@ public sealed record CountNotesQuery : IQuery<Result<int>>;
 public sealed record SecretNotesQuery : IQuery<Result<int>>;
 
 public sealed record StyleNotesCommand(object Style, IReadOnlyList<object> Palette) : ICommand<Result>;
+
+[AiTool("Pins notes.", NonDestructive = true)]
+public sealed record PinNotesCommand(Guid Id) : ICommand<Result>;
 
 public sealed record PlainNotesQuery : IQuery<Result<int>>;

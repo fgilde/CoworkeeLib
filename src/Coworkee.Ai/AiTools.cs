@@ -30,11 +30,8 @@ public sealed record AiTool(string Name, string Description, Type RequestType, T
     /// <summary>Queries only read; commands change data and run only on a direct user request (see <see cref="AiToolRunner.RunAsync"/>).</summary>
     public bool ReadOnly { get; } = !IsCommand(RequestType);
 
-    /// <summary>Waits for the user's confirmation in the assistant; MCP clients see it as destructive.</summary>
-    public bool Destructive { get; } = IsCommand(RequestType)
-        && (RequestType.GetCustomAttribute<AiToolAttribute>()?.Destructive == true || DestructivePrefixes.Any(p => Name.StartsWith(p, StringComparison.Ordinal)));
-
-    private static readonly string[] DestructivePrefixes = ["delete_", "remove_", "revoke_", "purge_", "erase_"];
+    /// <summary>Every command unless marked <see cref="AiToolAttribute.NonDestructive"/>; MCP clients see the hint, the assistant window highlights it.</summary>
+    public bool Destructive { get; } = IsCommand(RequestType) && RequestType.GetCustomAttribute<AiToolAttribute>()?.NonDestructive != true;
 
     private static bool IsCommand(Type type) => type.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ICommand<>));
 }

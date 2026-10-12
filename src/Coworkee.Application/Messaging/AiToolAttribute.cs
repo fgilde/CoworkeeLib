@@ -14,6 +14,9 @@ public sealed class AiToolAttribute(string? description = null) : Attribute
 
     public bool Exclude { get; init; }
 
-    /// <summary>Deletes or irreversibly changes data: the assistant runs it only after the user confirmed. Tools named delete_…, remove_…, revoke_… are destructive anyway.</summary>
-    public bool Destructive { get; init; }
+    /// <summary>
+    /// A command that only adds or repeats safely (idempotent, additive): MCP clients see it as not destructive. Every other command counts as
+    /// destructive; queries are read only.
+    /// </summary>
+    public bool NonDestructive { get; init; }
 }
