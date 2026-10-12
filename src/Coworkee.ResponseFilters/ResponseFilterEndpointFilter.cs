@@ -1,15 +1,11 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Json;
-using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Nextended.ResponseFilters;
-using Nextended.ResponseFilters.Json;
-using Nextended.ResponseFilters.Pipeline;
 
 namespace Coworkee.ResponseFilters;
 
-internal sealed class ResponseFilterEndpointFilter(IResponseFilterPipeline pipeline) : IEndpointFilter
+internal sealed class ResponseFilterEndpointFilter : IEndpointFilter
 {
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
@@ -27,15 +23,14 @@ internal sealed class ResponseFilterEndpointFilter(IResponseFilterPipeline pipel
         }
 
         var http = context.HttpContext;
-        var filterContext = new ResponseFilterContext(http.RequestServices, http.RequestAborted);
-        await pipeline.ProcessAsync(value, filterContext);
-        if (!filterContext.StructuralEdits.HasAny)
+        var json = http.RequestServices.GetService<IOptions<JsonOptions>>()?.Value.SerializerOptions;
+        var filtered = await ResponseFilterApplier.ApplyAsync(http.RequestServices, value, json, http.RequestAborted);
+        if (ReferenceEquals(filtered, value))
         {
             return result;
         }
 
-        var json = http.RequestServices.GetService<IOptions<JsonOptions>>()?.Value.SerializerOptions;
         var statusCode = (inner as IStatusCodeHttpResult)?.StatusCode;
-        return TypedResults.Json(JsonStructuralTransformer.Transform(value, filterContext.StructuralEdits, json), json, statusCode: statusCode);
+        return TypedResults.Json(filtered, json, statusCode: statusCode);
     }
 }
