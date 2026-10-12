@@ -25,6 +25,7 @@ public sealed class BffTests : IAsyncLifetime
             ["Coworkee:Bff:ApiAddress"] = "http://api.test",
             ["Coworkee:Bff:AuthorizationEndpoint"] = "https://auth.test/connect/authorize",
             ["Coworkee:Bff:ForwardedPrefixes:0"] = "/admin/jobs",
+            ["Coworkee:Mcp:Path"] = "/ai/mcp",
         });
         builder.AddCoworkeeBff();
         _app = builder.Build();
@@ -61,6 +62,13 @@ public sealed class BffTests : IAsyncLifetime
     [Fact]
     public async Task Safe_api_call_is_forwarded_without_csrf_header() =>
         (await _client.GetAsync("/api/v1/system", TestContext.Current.CancellationToken)).StatusCode.ShouldBe(HttpStatusCode.BadGateway);
+
+    [Fact]
+    public async Task Mcp_is_forwarded_under_the_configured_path_only()
+    {
+        (await _client.PostAsync("/ai/mcp", new StringContent("{}"), TestContext.Current.CancellationToken)).StatusCode.ShouldBe(HttpStatusCode.BadGateway);
+        (await _client.PostAsync("/mcp", new StringContent("{}"), TestContext.Current.CancellationToken)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
 
     [Fact]
     public async Task Configured_prefixes_are_forwarded()

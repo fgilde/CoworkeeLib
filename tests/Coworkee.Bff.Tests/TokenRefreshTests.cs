@@ -87,23 +87,52 @@ public sealed class TokenRefreshTests : IAsyncDisposable
         var api = new RecordingApi();
         var browser = await StartAsync(new StubTokenEndpoint(HttpStatusCode.OK, """{"access_token":"a","refresh_token":"r","expires_in":900}"""), api);
 
-        using var keyed = new HttpRequestMessage(HttpMethod.Post, "/mcp") { Content = new StringContent("{}") };
+        using var keyed = new HttpRequestMessage(HttpMethod.Post, "/mcp") { Content = new StringContent("{}", System.Text.Encoding.UTF8, "application/json") };
         keyed.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "cwk_key");
+        keyed.Headers.Add("Mcp-Protocol-Version", "2025-06-18");
+        keyed.Headers.Add("X-Other", "dropped");
         await browser.SendAsync(keyed, TestContext.Current.CancellationToken);
-        await browser.PostAsync("/mcp", new StringContent("{}"), TestContext.Current.CancellationToken);
+        using var token = new HttpRequestMessage(HttpMethod.Post, "/mcp") { Content = new StringContent("{}") };
+        token.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "eyJ.some.jwt");
+        await browser.SendAsync(token, TestContext.Current.CancellationToken);
 
         api.Authorizations.ShouldBe(["Bearer cwk_key", null]);
+        api.Headers[0].ShouldContain("mcp-protocol-version");
+        api.Headers[0].ShouldContain("content-type");
+        api.Headers.ShouldAllBe(h => !h.Contains("cookie") && !h.Contains("x-other") && !h.Contains("origin"));
+
+        api.Authorizations.Count.ShouldBe(2);
         // the API's 401 for the session-less call does not end the session
         (await browser.GetFromJsonAsync<BffUserDto>("/bff/user", TestContext.Current.CancellationToken))!.IsAuthenticated.ShouldBeTrue();
+    }
+
+    [Theory]
+    [InlineData("/mcp", "/mcp", true)]
+    [InlineData("/mcp/x", "/mcp/x?a=..", true)]
+    [InlineData("/mcp/../api/v1/identity/me", "/mcp/../api/v1/identity/me", false)]
+    [InlineData("/mcp/../api", "/mcp/%2e%2e/api", false)]
+    [InlineData("/mcp/x/api", "/mcp/x%2fapi", false)]
+    [InlineData("/mcp/./x", "/mcp/./x", false)]
+    [InlineData(@"/mcp\x", "/mcp%5cx", false)]
+    public void Mcp_paths_stay_inside_the_mcp_route(string path, string raw, bool plain)
+    {
+        var context = new DefaultHttpContext();
+        context.Request.Path = path;
+        context.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpRequestFeature>()!.RawTarget = raw;
+
+        McpForwarding.IsPlainPath(context).ShouldBe(plain);
     }
 
     private sealed class RecordingApi : HttpMessageHandler
     {
         public List<string?> Authorizations { get; } = [];
 
+        public List<string[]> Headers { get; } = [];
+
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Authorizations.Add(request.Headers.Authorization?.ToString());
+            Headers.Add([.. request.Headers.Concat(request.Content?.Headers ?? Enumerable.Empty<KeyValuePair<string, IEnumerable<string>>>()).Select(h => h.Key.ToLowerInvariant())]);
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.Unauthorized));
         }
     }
