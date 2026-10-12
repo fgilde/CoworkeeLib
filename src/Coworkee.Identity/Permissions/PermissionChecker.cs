@@ -34,10 +34,6 @@ internal sealed class PermissionChecker(
         return granted.Contains(ApiKeyPermissions.Create) ? [.. granted.Where(definitions.Expand(scopes).Contains)] : [];
     }
 
-    /// <summary>What the current user has through all roles: the most an API key of the user may be granted.</summary>
-    internal async Task<IReadOnlyCollection<string>> GetDelegableAsync(CancellationToken cancellationToken) =>
-        currentUser.UserId is { } userId ? await GrantedAsync(userId, narrow: false, cancellationToken) : [];
-
     private async Task<IReadOnlyCollection<string>> GrantedAsync(Guid userId, bool narrow, CancellationToken cancellationToken)
     {
         var tenantId = currentUser.TenantId;

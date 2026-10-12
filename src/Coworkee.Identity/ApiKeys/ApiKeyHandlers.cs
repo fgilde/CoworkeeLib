@@ -3,14 +3,15 @@ using Coworkee.Application.Messaging;
 using Coworkee.Contracts.Identity;
 using Coworkee.Core.Results;
 using Coworkee.Core.Security;
-using Coworkee.Identity.Permissions;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Coworkee.Identity.ApiKeys;
 
 internal sealed class ApiKeyHandlers(
-    CoworkeeDbContext db, ICurrentUser currentUser, IPermissionChecker permissions, IPermissionDefinitionManager definitions, TimeProvider clock)
+    CoworkeeDbContext db, ICurrentUser currentUser, IPermissionChecker permissions, IPermissionDefinitionManager definitions, TimeProvider clock,
+    IOptions<ApiKeyOptions> options)
     : IHandler<GetMyApiKeys, Result<IReadOnlyList<ApiKeyDto>>>, IHandler<GetApiKeyScopes, Result<IReadOnlyList<PermissionGroupDto>>>,
       IHandler<CreateApiKey, Result<CreatedApiKeyDto>>, IHandler<RevokeApiKey, Result>
 {
@@ -20,18 +21,19 @@ internal sealed class ApiKeyHandlers(
 
     private Guid Me => currentUser.UserId ?? throw new InvalidOperationException("No signed-in user.");
 
-    private PermissionChecker Checker => (PermissionChecker)permissions;
-
     public async Task<Result<IReadOnlyList<ApiKeyDto>>> HandleAsync(GetMyApiKeys query, CancellationToken cancellationToken)
     {
         var keys = await db.Set<ApiKey>().AsNoTracking().Where(k => k.UserId == Me).OrderByDescending(k => k.CreatedAt).ToListAsync(cancellationToken);
         return keys.Select(k => k.ToDto()).ToList();
     }
 
-    /// <summary>The permissions the user may give a key, grouped like the definitions; the others stay unknown to the user.</summary>
+    /// <summary>
+    /// The permissions the user may give a key: what the session has right now, within the chosen active role. Grouped like the
+    /// definitions; the others stay unknown to the user.
+    /// </summary>
     public async Task<Result<IReadOnlyList<PermissionGroupDto>>> HandleAsync(GetApiKeyScopes query, CancellationToken cancellationToken)
     {
-        var delegable = await Checker.GetDelegableAsync(cancellationToken);
+        var delegable = await permissions.GetGrantedAsync(cancellationToken);
         return definitions.Groups
             .Select(g => new PermissionGroupDto(g.Name, g.DisplayName, [.. definitions.All
                 .Where(d => d.Group == g.Name && delegable.Contains(d.Name))
@@ -54,7 +56,12 @@ internal sealed class ApiKeyHandlers(
             return Error.Validation(nameof(request.ExpiresAt), $"Pick an expiry within the next {ApiKeyDefaults.MaxLifetimeDays} days.");
         }
 
-        var delegable = await Checker.GetDelegableAsync(cancellationToken);
+        if (await db.Set<ApiKey>().CountAsync(k => k.UserId == Me && k.RevokedAt == null && k.ExpiresAt > now, cancellationToken) >= options.Value.MaxActivePerUser)
+        {
+            return Error.Conflict("api_keys.limit", $"You have {options.Value.MaxActivePerUser} active keys; revoke one first.");
+        }
+
+        var delegable = await permissions.GetGrantedAsync(cancellationToken);
         var scopes = request.Scopes.Distinct(StringComparer.Ordinal).ToList();
         if (scopes.Where(s => !delegable.Contains(s)).ToList() is { Count: > 0 } missing)
         {
