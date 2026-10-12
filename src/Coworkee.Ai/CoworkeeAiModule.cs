@@ -60,6 +60,8 @@ public sealed class CoworkeeAiModule : CoworkeeModule, IWebModule
         services.AddScoped<AiToolRunner>();
         services.AddScoped<AiChat>();
         services.AddScoped<AiSessionChat>();
+        services.AddDataProtection();
+        services.AddSingleton<AiPendingProtector>();
         services.AddSingleton<IAiChatClientFactory, AiChatClientFactory>();
         services.AddScoped<AiConnections>();
         services.AddSingleton<AiConnectionProbe>();

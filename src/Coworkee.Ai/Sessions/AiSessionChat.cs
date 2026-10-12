@@ -14,7 +14,7 @@ namespace Coworkee.Ai.Sessions;
 /// Sends messages of a session to <see cref="AiChat"/> and saves question and answer. The answer streams as it comes; it keeps running when
 /// the browser goes away, so every open tab of the user sees it once saved.
 /// </summary>
-internal sealed class AiSessionChat(AiChat chat, CoworkeeDbContext db, ICurrentUser currentUser, TimeProvider clock)
+internal sealed class AiSessionChat(AiChat chat, CoworkeeDbContext db, ICurrentUser currentUser, TimeProvider clock, AiPendingProtector protector)
 {
     private const int MaxHistory = 40;
 
@@ -80,25 +80,48 @@ internal sealed class AiSessionChat(AiChat chat, CoworkeeDbContext db, ICurrentU
         }
 
         var waiting = session.Messages.OrderBy(m => m.At).LastOrDefault();
-        if (waiting is not { Pending: not null, Decision: null })
+        if (waiting is not { Pending: { } pending } || protector.Calls(pending) is not { } calls || calls.All(c => c.Output is not null))
         {
-            return Error.Conflict("ai.nothing_to_confirm", "Nothing waits for a confirmation.").ToProblem();
+            return NothingToConfirm.ToProblem();
         }
 
-        // decided before it runs: a second click or tab finds nothing to confirm
-        waiting.Decision = request.Approve ? AiDecisions.Approved : AiDecisions.Declined;
-        await db.SaveChangesAsync(cancellationToken);
+        // decided once, atomically: of two clicks or tabs only one decision wins; the same decision again goes on where the first stopped
+        var decision = request.Approve ? AiDecisions.Approved : AiDecisions.Declined;
+        if (waiting.Decision is null)
+        {
+            await db.Set<AiChatMessage>().Where(m => m.Id == waiting.Id && m.Decision == null)
+                .ExecuteUpdateAsync(s => s.SetProperty(m => m.Decision, decision), cancellationToken);
+            await db.Entry(waiting).ReloadAsync(cancellationToken);
+        }
+
+        if (waiting.Decision != decision)
+        {
+            return Error.Conflict("ai.decided", "This was already decided otherwise.").ToProblem();
+        }
+
         return new AiStreamResult(async emit =>
         {
-            var turn = await chat.RunAsync(
-                connection.Value, History(session, before: waiting), ct => chat.DecideAsync(waiting.Text, waiting.PendingCalls, request.Approve, emit, ct), emit, CancellationToken.None);
-            if (turn.Error is { Code: "ai.busy" })
-            {
-                waiting.Decision = null;
-            }
-
+            var turn = await chat.RunAsync(connection.Value, History(session, before: waiting), ct => DecideAsync(waiting, request.Approve, emit, ct), emit, CancellationToken.None);
             return await FinishAsync(session, turn);
         });
+    }
+
+    private static readonly Error NothingToConfirm = Error.Conflict("ai.nothing_to_confirm", "Nothing waits for a confirmation.");
+
+    // under the assistant's guard: the round is read fresh, so calls a parallel confirmation already ran are not run again
+    private async Task<AiResume?> DecideAsync(AiChatMessage waiting, bool approve, Func<AiStreamEvent, Task> emit, CancellationToken cancellationToken)
+    {
+        await db.Entry(waiting).ReloadAsync(cancellationToken);
+        if (protector.Calls(waiting.Pending!) is not { } calls || calls.All(c => c.Output is not null))
+        {
+            return null;
+        }
+
+        return await chat.DecideAsync(waiting.Text, calls, approve, emit, async () =>
+        {
+            waiting.Pending = protector.Update(waiting.Pending!, calls);
+            await db.SaveChangesAsync(CancellationToken.None);
+        }, cancellationToken);
     }
 
     private static readonly Error NotFound = Error.NotFound("ai.session_not_found", "The conversation does not exist.");
@@ -119,7 +142,7 @@ internal sealed class AiSessionChat(AiChat chat, CoworkeeDbContext db, ICurrentU
         // the result stays in the audit; the conversation keeps enough of it to link to what was created
         var calls = turn.Value.Calls.Select(c => c with { Output = c.Output is { Length: > MaxStoredOutput } output ? output[..MaxStoredOutput] : c.Output }).ToList();
         answer.ToolCalls = calls.Count > 0 ? JsonSerializer.Serialize(calls, JsonSerializerOptions.Web) : null;
-        answer.Pending = turn.Value.Pending is { } pending ? JsonSerializer.Serialize(pending, JsonSerializerOptions.Web) : null;
+        answer.Pending = turn.Value.Pending is { } pending ? protector.Create(pending) : null;
         await db.SaveChangesAsync(CancellationToken.None);
         return new AiStreamEvent(AiStreamEvent.Done, Message: answer.ToDto());
     }
