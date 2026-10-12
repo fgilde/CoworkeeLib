@@ -54,6 +54,7 @@ public sealed class CoworkeeAiModule : CoworkeeModule, IWebModule
         services.AddScoped<AiToolRunner>();
         services.AddScoped<AiChat>();
         services.AddSingleton<IAiChatClientFactory, AiChatClientFactory>();
+        services.AddScoped<Application.Ai.IAiTextGenerator, AiTextGenerator>();
         services.AddScoped<Application.Privacy.IPersonalDataContributor, AiPersonalData>();
         services.AddHttpClient(AiChat.HttpClientName, client => client.Timeout = TimeSpan.FromMinutes(5));
         services.AddMcpServer(options => options.ServerInfo = new Implementation { Name = "coworkee", Version = "1.0" })
