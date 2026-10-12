@@ -248,6 +248,11 @@ public sealed class AiTests(AiApp app) : IAsyncLifetime
         var foreign = new HttpRequestMessage(HttpMethod.Post, "/mcp") { Content = JsonContent.Create(new { jsonrpc = "2.0", id = 1, method = "tools/list" }) };
         foreign.Headers.Add("Origin", "https://evil.test");
         (await Admin.SendAsync(foreign, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        // a key header alone is no key sign-in
+        var pretending = new HttpRequestMessage(HttpMethod.Post, "/mcp") { Content = JsonContent.Create(new { jsonrpc = "2.0", id = 1, method = "tools/list" }) };
+        pretending.Headers.Add("Origin", "https://evil.test");
+        pretending.Headers.TryAddWithoutValidation(ApiKeyDefaults.Header, " ");
+        (await Admin.SendAsync(pretending, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
         // the administrators' kill switch: nothing listed, nothing run
         (await Admin.PutAsJsonAsync("/api/v1/settings/global", new Contracts.Settings.SetSettingsRequest(new Dictionary<string, string?> { [AiSettings.McpEnabled] = "false" }), Ct))

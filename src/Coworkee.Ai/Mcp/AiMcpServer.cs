@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Coworkee.AspNetCore.Authentication;
+using Coworkee.Contracts.Identity;
 using Coworkee.AspNetCore.RateLimiting;
 using Coworkee.Contracts.Ai;
 using Microsoft.AspNetCore.Builder;
@@ -64,7 +64,8 @@ internal static class AiMcpServer
 
     /// <summary>
     /// JSON bodies only and no foreign browser origins: a cross site form or text/plain post must not reach the tools with the cookie of a
-    /// signed-in user. An API key is no ambient credential, so a request with one may come from any origin (browser based MCP clients).
+    /// signed-in user. A request signed in with an API key (no ambient credential) may carry another origin, e.g. from a desktop client;
+    /// browsers still get no CORS answer, so web pages of other sites cannot read the results.
     /// </summary>
     internal static bool IsAllowedMcpRequest(HttpRequest request)
     {
@@ -75,7 +76,7 @@ internal static class AiMcpServer
 
         var origin = request.Headers.Origin.ToString();
         return origin.Length == 0
-            || ApiKeyForwarding.HasApiKey(request)
+            || request.HttpContext.User.Identity is { IsAuthenticated: true, AuthenticationType: ApiKeyDefaults.Scheme }
             || (Uri.TryCreate(origin, UriKind.Absolute, out var uri) && string.Equals(uri.Authority, request.Host.Value, StringComparison.OrdinalIgnoreCase));
     }
 
