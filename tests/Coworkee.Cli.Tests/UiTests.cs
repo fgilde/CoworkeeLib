@@ -1,4 +1,5 @@
 using Coworkee.Cli.Commands;
+using Coworkee.Cli.Spec;
 
 namespace Coworkee.Cli.Tests;
 
@@ -77,5 +78,36 @@ public sealed class UiTests
 
         result.Errors.ShouldBeEmpty();
         result.UnmatchedTokens.ShouldBe(["--spec", "app.json", "C:/work"]);
+    }
+    [Theory]
+    [InlineData("1.0.0", false, "1.1.0")]
+    [InlineData("1.0.0", true, "1.2.0-preview.2")]
+    [InlineData("1.2.0-preview.1", false, "1.2.0-preview.2")]
+    [InlineData("1.1.0", false, null)]
+    [InlineData("2.0.0", true, null)]
+    public void Finds_a_newer_tool_version_with_prereleases_only_for_prereleases(string current, bool prerelease, string? newer) =>
+        ToolUpdates.Newer(["1.0.0", "1.2.0-preview.2", "1.1.0", "1.2.0-preview.1"], current, prerelease).ShouldBe(newer);
+
+    [Fact]
+    public void Self_update_updates_the_cli_and_an_installed_studio_to_the_same_version()
+    {
+        SelfUpdateCommand.Commands("1.3.0", studioInstalled: true).ShouldBe([
+            ["dotnet", "tool", "update", "-g", "Coworkee.Cli", "--version", "1.3.0"],
+            ["dotnet", "tool", "update", "-g", "Coworkee.Studio", "--version", "1.3.0"]]);
+        SelfUpdateCommand.Commands("1.3.0", studioInstalled: false).ShouldHaveSingleItem()[4].ShouldBe("Coworkee.Cli");
+        CliApp.Build().Parse(["self-update", "--version", "1.3.0", "--prerelease"]).Errors.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void The_update_helper_waits_for_the_process_then_updates_and_relaunches()
+    {
+        var helper = ToolUpdates.Helper(4242, [ToolUpdates.UpdateArgs("Coworkee.Studio", "1.3.0")], ["/tools/coworkee-ui", "--spec", "it's.json"]);
+        var script = helper.ArgumentList[^1];
+
+        script.ShouldContain("4242");
+        script.ShouldContain("Coworkee.Studio");
+        script.IndexOf("4242", StringComparison.Ordinal).ShouldBeLessThan(script.IndexOf("Coworkee.Studio", StringComparison.Ordinal));
+        script.IndexOf("Coworkee.Studio", StringComparison.Ordinal).ShouldBeLessThan(script.IndexOf("coworkee-ui", StringComparison.Ordinal));
+        script.ShouldContain(OperatingSystem.IsWindows() ? "'it''s.json'" : "'it'\\''s.json'");
     }
 }

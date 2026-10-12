@@ -31,6 +31,7 @@ internal static class CliApp
             ModuleCommand.Create(),
             EntityCommand.Create(),
             UpdateCommand.Create(),
+            SelfUpdateCommand.Create(),
             DoctorCommand.Create(),
             UiCommand.Create(),
             McpCommand.Create(),

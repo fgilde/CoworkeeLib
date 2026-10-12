@@ -15,4 +15,7 @@ public sealed class Dialogs
 
     /// <summary>Folder, file or web address.</summary>
     public Action<string> Open { get; set; } = _ => { };
+
+    /// <summary>Starts the update helper and closes the Studio.</summary>
+    public Action<System.Diagnostics.ProcessStartInfo> Restart { get; set; } = _ => { };
 }

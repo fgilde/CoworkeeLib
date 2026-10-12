@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Avalonia;
@@ -38,6 +39,7 @@ public sealed partial class MainViewModel : ObservableObject
         Users = new UsersStep(this);
         Review = new ReviewStep(this);
         Generate = new GenerateStep(this);
+        Update = new UpdateViewModel(this);
         Steps = [Welcome, Basics, Branding, SignIn, Architecture, Languages, Entities, Users, Review, Generate];
         Current = Welcome;
         _loading = false;
@@ -77,6 +79,8 @@ public sealed partial class MainViewModel : ObservableObject
     public ReviewStep Review { get; }
 
     public GenerateStep Generate { get; }
+
+    public UpdateViewModel Update { get; }
 
     public IReadOnlyList<StepViewModel> Steps { get; } = [];
 
@@ -130,7 +134,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     public bool HasSpecPath => SpecPath is not null;
 
-    public string Version { get; } = typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) ?? "0.1.0";
+    public string Version { get; } = typeof(MainViewModel).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0] ?? "0.1.0";
 
     public string ThemeMode => Settings.Theme is { Length: > 0 } theme ? theme : "System";
 
@@ -141,6 +145,8 @@ public sealed partial class MainViewModel : ObservableObject
         get => Settings.Language switch { "en" => 1, "de" => 2, _ => 0 };
         set => SetLanguage(value switch { 1 => "en", 2 => "de", _ => null });
     }
+
+    public string LanguageCode => L.IsGerman ? "DE" : "EN";
 
     public string? CliPath
     {
@@ -307,6 +313,9 @@ public sealed partial class MainViewModel : ObservableObject
             app.RequestedThemeVariant = ThemeMode switch { "Light" => ThemeVariant.Light, "Dark" => ThemeVariant.Dark, _ => ThemeVariant.Default };
         }
     }
+
+    [RelayCommand]
+    public void ToggleLanguage() => SetLanguage(L.IsGerman ? "en" : "de");
 
     [RelayCommand]
     public void ShowHelp(string? tab)

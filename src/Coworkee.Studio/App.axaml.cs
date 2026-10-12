@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Coworkee.Cli.Spec;
 using Coworkee.Studio.Cli;
 using Coworkee.Studio.Localization;
 using Coworkee.Studio.Model;
@@ -22,8 +23,15 @@ public sealed class App : Application
             var main = CreateViewModel(StudioSettings.Load(), Arguments);
             var window = new MainWindow { DataContext = main };
             main.Dialogs.Open = Processes.Open;
+            main.Dialogs.Restart = start =>
+            {
+                System.Diagnostics.Process.Start(start)?.Dispose();
+                desktop.Shutdown();
+            };
             window.Attach(main);
             desktop.MainWindow = window;
+            desktop.Exit += (_, _) => main.Generate.App.Stop();
+            _ = main.Update.CheckAsync(cancellationToken => ToolUpdates.FetchVersionsAsync(ToolUpdates.Studio, cancellationToken));
         }
 
         base.OnFrameworkInitializationCompleted();

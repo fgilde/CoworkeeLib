@@ -25,7 +25,12 @@ public sealed class WindowTests
         window.GetVisualDescendants().OfType<TextBlock>().ShouldContain(t => t.Text == "Weiter");
         main.Settings.Language.ShouldBe("de");
         main.LanguageIndex.ShouldBe(2);
-        main.SetLanguage("en");
+        main.LanguageCode.ShouldBe("DE");
+
+        // the switch in the title bar
+        main.ToggleLanguageCommand.Execute(null);
+        main.Settings.Language.ShouldBe("en");
+        main.LanguageCode.ShouldBe("EN");
         window.Close();
     });
 

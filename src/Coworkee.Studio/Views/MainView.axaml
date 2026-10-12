@@ -103,6 +103,18 @@
             <PathIcon Data="{StaticResource Icon.Moon}" IsVisible="{Binding ThemeMode, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Dark}" />
           </Panel>
         </Button>
+        <Button Classes="ghost" IsVisible="{Binding Update.HasUpdate}" Command="{Binding Update.InstallCommand}" Padding="10,4" Margin="0,0,6,0"
+                ToolTip.Tip="{l:L 'Closes the Studio, updates the coworkee CLI and the Studio, then starts it again. An opened spec is saved first.'}"
+                chrome:WindowDecorationProperties.ElementRole="User" x:Name="UpdateBadge">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <PathIcon Classes="small" Data="{StaticResource Icon.Sparkle}" Foreground="{DynamicResource Secondary}" />
+            <TextBlock Text="{Binding Update.Text}" FontSize="12.5" FontWeight="SemiBold" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+        <Button Classes="icon" Command="{Binding ToggleLanguageCommand}" ToolTip.Tip="{l:L 'Language: Deutsch / English'}" chrome:WindowDecorationProperties.ElementRole="User"
+                AutomationProperties.Name="{l:L 'Language: Deutsch / English'}">
+          <TextBlock Text="{Binding LanguageCode}" FontWeight="SemiBold" FontSize="12" />
+        </Button>
         <Button Classes="icon" Command="{Binding ToggleHelpCommand}" ToolTip.Tip="{l:L 'Help, CLI and MCP (F1)'}" chrome:WindowDecorationProperties.ElementRole="User">
           <PathIcon Data="{StaticResource Icon.Help}" />
         </Button>
