@@ -5,10 +5,122 @@
              xmlns:l="using:Coworkee.Studio.Localization"
              x:Class="Coworkee.Studio.Views.ArchitectureView"
              x:DataType="vm:ArchitectureStep">
+  <UserControl.Resources>
+    <DataTemplate x:Key="InfrastructureCard" x:DataType="vm:OptionViewModel">
+      <Border Classes="card" Padding="16" Classes.on="{Binding IsOn}">
+        <StackPanel Spacing="10">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <Border Width="34" Height="34" CornerRadius="10" Background="{DynamicResource SecondarySoft}" VerticalAlignment="Top" Margin="0,0,10,0">
+              <Panel>
+                <PathIcon IsVisible="{Binding IsChoice}" Data="{Binding Choice.Icon, Converter={x:Static v:Converters.Icon}}" Foreground="{DynamicResource Secondary}" />
+                <PathIcon IsVisible="{Binding IsBool}" Data="{StaticResource Icon.Lightning}" Foreground="{DynamicResource Secondary}" />
+              </Panel>
+            </Border>
+            <StackPanel Grid.Column="1" Spacing="2">
+              <TextBlock Classes="h3" Text="{Binding Title}" />
+              <TextBlock Classes="mono caption" Text="{Binding Flag}" />
+            </StackPanel>
+            <ToggleSwitch Grid.Column="2" IsVisible="{Binding IsBool}" IsChecked="{Binding IsOn}" VerticalAlignment="Top" Margin="0,-4,0,0" />
+          </Grid>
+          <ListBox Classes="segments" IsVisible="{Binding IsChoice}" IsEnabled="{Binding IsAvailable}" Opacity="{Binding IsAvailable, Converter={x:Static v:Converters.Dim}}"
+                   ItemsSource="{Binding Choices}" SelectedItem="{Binding Choice}">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:ChoiceViewModel">
+                <StackPanel Orientation="Horizontal" Spacing="6" ToolTip.Tip="{Binding Text}">
+                  <PathIcon Classes="small" Data="{Binding Icon, Converter={x:Static v:Converters.Icon}}" />
+                  <TextBlock Text="{Binding Label}" FontSize="12.5" FontWeight="SemiBold" VerticalAlignment="Center" />
+                </StackPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <TextBlock Classes="caption" IsVisible="{Binding IsBool}" Text="{Binding Description}" TextWrapping="Wrap" />
+          <TextBlock Classes="caption" IsVisible="{Binding IsChoice}" Text="{Binding Choice.Text}" />
+          <Border Classes="banner info" Padding="10,8" IsVisible="{Binding HasNote}">
+            <Grid ColumnDefinitions="Auto,*">
+              <PathIcon Margin="0,1,8,0" Classes="small" Data="{StaticResource Icon.Info}" Foreground="{DynamicResource Primary}" VerticalAlignment="Top" />
+              <TextBlock Grid.Column="1" FontSize="12" TextWrapping="Wrap" Text="{Binding NoteText}" />
+            </Grid>
+          </Border>
+        </StackPanel>
+      </Border>
+    </DataTemplate>
+    <DataTemplate x:Key="OptionCard" x:DataType="vm:OptionViewModel">
+      <Border Classes="card" Padding="16" Classes.on="{Binding IsOn}">
+        <StackPanel Spacing="8" Opacity="{Binding IsAvailable, Converter={x:Static v:Converters.Dim}}">
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Spacing="3">
+              <TextBlock Classes="h3" Text="{Binding Title}" />
+              <WrapPanel ItemSpacing="6">
+                <Border Classes="chip" IsVisible="{Binding HasPackage}" Padding="8,1">
+                  <TextBlock Text="{Binding Package}" FontSize="11" />
+                </Border>
+                <TextBlock Classes="mono caption" Text="{Binding Flag}" VerticalAlignment="Center" />
+              </WrapPanel>
+            </StackPanel>
+            <ToggleSwitch Grid.Column="1" IsVisible="{Binding IsBool}" IsChecked="{Binding IsOn}" VerticalAlignment="Top" Margin="0,-4,0,0" />
+          </Grid>
+          <Border Classes="banner warn" Padding="10,6" IsVisible="{Binding HasNote}">
+            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding NoteText}" />
+          </Border>
+          <TextBlock Classes="body" FontSize="12.5" LineHeight="18" Text="{Binding Description}" />
+      <TextBox IsVisible="{Binding IsText}" Text="{Binding Text}" PlaceholderText="{Binding Flag}" />
+          <ListBox Classes="segments" IsVisible="{Binding IsChoice}" ItemsSource="{Binding Choices}" SelectedItem="{Binding Choice}" HorizontalAlignment="Left">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:ChoiceViewModel">
+                <TextBlock Text="{Binding Value}" FontSize="12.5" FontWeight="SemiBold" ToolTip.Tip="{Binding Text}" />
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <TextBlock Classes="caption" IsVisible="{Binding IsChoice}" Text="{Binding Choice.Text}" />
+          <ItemsControl IsVisible="{Binding IsMulti}" ItemsSource="{Binding MultiChoices}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <WrapPanel ItemSpacing="16" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:MultiChoiceViewModel">
+                <CheckBox IsChecked="{Binding IsChecked}" Content="{Binding Text}" ToolTip.Tip="{Binding Value}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <Border Classes="soft" Padding="10,8">
+            <StackPanel Spacing="6">
+              <Grid ColumnDefinitions="Auto,*">
+<PathIcon Margin="0,1,6,0" Classes="small" Data="{StaticResource Icon.Bulb}" Foreground="{DynamicResource Warning}" VerticalAlignment="Top" />
+<TextBlock Grid.Column="1" FontSize="12" TextWrapping="Wrap" Text="{Binding WhenToUse}" />
+</Grid>
+              <ItemsControl ItemsSource="{Binding Pros}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="x:String">
+                    <Grid ColumnDefinitions="Auto,*">
+<PathIcon Margin="0,1,6,0" Classes="small" Data="{StaticResource Icon.ThumbUp}" Foreground="{DynamicResource Success}" />
+<TextBlock Grid.Column="1" FontSize="12" TextWrapping="Wrap" Text="{Binding}" />
+</Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <ItemsControl ItemsSource="{Binding Cons}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="x:String">
+                    <Grid ColumnDefinitions="Auto,*">
+<PathIcon Margin="0,1,6,0" Classes="small" Data="{StaticResource Icon.ThumbDown}" Foreground="{DynamicResource Error}" />
+<TextBlock Grid.Column="1" FontSize="12" TextWrapping="Wrap" Text="{Binding}" />
+</Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </Border>
+    </DataTemplate>
+  </UserControl.Resources>
   <Grid ColumnDefinitions="*,340" Margin="44,12,0,0">
     <ScrollViewer Padding="0,0,24,32">
-      <StackPanel Spacing="20">
-        <StackPanel Spacing="10">
+      <StackPanel Spacing="28">
+        <!-- presets: one compact row -->
+        <StackPanel Spacing="8">
           <Grid ColumnDefinitions="*,Auto">
             <TextBlock Classes="overline" Text="{l:L 'APP TYPE'}" VerticalAlignment="Center" />
             <Button Grid.Column="1" Classes="link" Content="{l:L 'Template defaults'}" Command="{Binding ResetOptionsCommand}" />
@@ -16,82 +128,62 @@
           <ItemsControl ItemsSource="{Binding Presets}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
-                <UniformGrid Columns="3" ColumnSpacing="10" RowSpacing="10" />
+                <UniformGrid Rows="1" ColumnSpacing="8" />
               </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="vm:PresetViewModel">
-                <Button Classes="tile" Classes.selected="{Binding IsActive}" ToolTip.Tip="{Binding Description}"
+                <Button Classes="tile" Classes.selected="{Binding IsActive}" ToolTip.Tip="{Binding Description}" Padding="6,10"
                         Command="{Binding $parent[ItemsControl].((vm:ArchitectureStep)DataContext).ApplyPresetCommand}" CommandParameter="{Binding}">
-                  <Grid Margin="12,10" ColumnDefinitions="Auto,*">
-                    <Border Width="34" Height="34" CornerRadius="10" Background="{DynamicResource PrimarySoft}" VerticalAlignment="Top">
-                      <PathIcon Data="{Binding Icon, Converter={x:Static v:Converters.Icon}}" Foreground="{DynamicResource Primary}" />
+                  <StackPanel Spacing="6" HorizontalAlignment="Center">
+                    <Border Width="30" Height="30" CornerRadius="9" Background="{DynamicResource PrimarySoft}" HorizontalAlignment="Center">
+                      <PathIcon Classes="small" Data="{Binding Icon, Converter={x:Static v:Converters.Icon}}" Foreground="{DynamicResource Primary}" />
                     </Border>
-                    <StackPanel Grid.Column="1" Margin="10,0,0,0" Spacing="2">
-                      <TextBlock Classes="h3" Text="{Binding Name}" />
-                      <TextBlock Classes="caption" Text="{Binding Description}" MaxLines="2" TextTrimming="CharacterEllipsis" />
-                    </StackPanel>
-                  </Grid>
+                    <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold" TextAlignment="Center" TextWrapping="Wrap" MaxLines="2" />
+                  </StackPanel>
                 </Button>
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
         </StackPanel>
 
+        <ItemsControl ItemsSource="{Binding Errors}" IsVisible="{Binding HasErrors}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="x:String">
+              <Border Classes="banner" Margin="0,0,0,6">
+                <TextBlock Classes="error" Text="{Binding}" />
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
 
-        <StackPanel Spacing="10">
-          <TextBlock Classes="overline" Text="{l:L 'WHERE IT RUNS'}" />
-          <ItemsControl ItemsSource="{Binding Infrastructure}">
+        <!-- infrastructure: where the app runs, the other services, then the AI provider -->
+        <StackPanel Spacing="12" DataContext="{Binding InfrastructureGroup}" x:DataType="vm:OptionGroupViewModel">
+          <StackPanel Spacing="4">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <PathIcon Data="{Binding Icon, Converter={x:Static v:Converters.Icon}}" Foreground="{DynamicResource Secondary}" />
+              <TextBlock Classes="h2" Text="{Binding Title}" />
+            </StackPanel>
+            <TextBlock Classes="muted" Text="{Binding Text}" TextWrapping="Wrap" />
+          </StackPanel>
+          <ItemsControl ItemsSource="{Binding $parent[UserControl].((vm:ArchitectureStep)DataContext).Infrastructure}" ItemTemplate="{StaticResource InfrastructureCard}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
                 <UniformGrid Columns="2" ColumnSpacing="12" RowSpacing="12" />
               </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-              <DataTemplate x:DataType="vm:OptionViewModel">
-                <Border Classes="card" Padding="16" Classes.on="{Binding IsOn}">
-                  <StackPanel Spacing="10">
-                    <Grid ColumnDefinitions="Auto,*,Auto">
-                      <Border Width="34" Height="34" CornerRadius="10" Background="{DynamicResource SecondarySoft}" VerticalAlignment="Top" Margin="0,0,10,0">
-                        <Panel>
-                          <PathIcon IsVisible="{Binding IsChoice}" Data="{Binding Choice.Icon, Converter={x:Static v:Converters.Icon}}" Foreground="{DynamicResource Secondary}" />
-                          <PathIcon IsVisible="{Binding IsBool}" Data="{StaticResource Icon.Lightning}" Foreground="{DynamicResource Secondary}" />
-                        </Panel>
-                      </Border>
-                      <StackPanel Grid.Column="1" Spacing="2">
-                        <TextBlock Classes="h3" Text="{Binding Title}" />
-                        <TextBlock Classes="mono caption" Text="{Binding Flag}" />
-                      </StackPanel>
-                      <ToggleSwitch Grid.Column="2" IsVisible="{Binding IsBool}" IsChecked="{Binding IsOn}" VerticalAlignment="Top" Margin="0,-4,0,0" />
-                    </Grid>
-                    <ListBox Classes="segments" IsVisible="{Binding IsChoice}" IsEnabled="{Binding IsAvailable}" Opacity="{Binding IsAvailable, Converter={x:Static v:Converters.Dim}}"
-                             ItemsSource="{Binding Choices}" SelectedItem="{Binding Choice}">
-                      <ListBox.ItemTemplate>
-                        <DataTemplate x:DataType="vm:ChoiceViewModel">
-                          <StackPanel Orientation="Horizontal" Spacing="6" ToolTip.Tip="{Binding Text}">
-                            <PathIcon Classes="small" Data="{Binding Icon, Converter={x:Static v:Converters.Icon}}" />
-                            <TextBlock Text="{Binding Label}" FontSize="12.5" FontWeight="SemiBold" VerticalAlignment="Center" />
-                          </StackPanel>
-                        </DataTemplate>
-                      </ListBox.ItemTemplate>
-                    </ListBox>
-                    <TextBlock Classes="caption" IsVisible="{Binding IsBool}" Text="{Binding Description}" TextWrapping="Wrap" />
-                    <TextBlock Classes="caption" IsVisible="{Binding IsChoice}" Text="{Binding Choice.Text}" />
-                    <Border Classes="banner info" Padding="10,8" IsVisible="{Binding HasNote}">
-                      <Grid ColumnDefinitions="Auto,*">
-                        <PathIcon Margin="0,1,8,0" Classes="small" Data="{StaticResource Icon.Info}" Foreground="{DynamicResource Primary}" VerticalAlignment="Top" />
-                        <TextBlock Grid.Column="1" FontSize="12" TextWrapping="Wrap" Text="{Binding NoteText}" />
-                      </Grid>
-                    </Border>
-                  </StackPanel>
-                </Border>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <ItemsControl ItemsSource="{Binding Options}" ItemTemplate="{StaticResource OptionCard}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <UniformGrid Columns="2" ColumnSpacing="12" RowSpacing="12" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
           </ItemsControl>
         </StackPanel>
 
         <!-- AI assistant: provider, model, endpoint, key -->
-        <StackPanel Spacing="10" x:Name="AiSection" DataContext="{Binding Ai}" x:DataType="vm:AiSetupViewModel">
+        <StackPanel Spacing="10" x:Name="AiSection" Margin="0,-16,0,0" DataContext="{Binding Ai}" x:DataType="vm:AiSetupViewModel">
           <TextBlock Classes="overline" Text="{l:L 'AI ASSISTANT'}" />
           <Border Classes="card" Padding="16">
             <StackPanel Spacing="14" IsEnabled="{Binding IsAvailable}" Opacity="{Binding IsAvailable, Converter={x:Static v:Converters.Dim}}">
@@ -150,103 +242,23 @@
           </Border>
         </StackPanel>
 
-        <ItemsControl ItemsSource="{Binding Errors}">
-          <ItemsControl.ItemTemplate>
-            <DataTemplate x:DataType="x:String">
-              <Border Classes="banner" Margin="0,0,0,6">
-                <TextBlock Classes="error" Text="{Binding}" />
-              </Border>
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-
-        <ItemsControl ItemsSource="{Binding Groups}">
+        <ItemsControl ItemsSource="{Binding OtherGroups}">
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="vm:OptionGroupViewModel">
-              <StackPanel Spacing="10" Margin="0,0,0,22">
-                <StackPanel Orientation="Horizontal" Spacing="10">
-                  <PathIcon Data="{Binding Icon, Converter={x:Static v:Converters.Icon}}" Foreground="{DynamicResource Secondary}" />
-                  <TextBlock Classes="h2" Text="{Binding Title}" />
+              <StackPanel Spacing="12" Margin="0,0,0,28">
+                <StackPanel Spacing="4">
+                  <StackPanel Orientation="Horizontal" Spacing="10">
+                    <PathIcon Data="{Binding Icon, Converter={x:Static v:Converters.Icon}}" Foreground="{DynamicResource Secondary}" />
+                    <TextBlock Classes="h2" Text="{Binding Title}" />
+                  </StackPanel>
+                  <TextBlock Classes="muted" Text="{Binding Text}" TextWrapping="Wrap" />
                 </StackPanel>
-                <TextBlock Classes="muted" Text="{Binding Text}" Margin="0,-6,0,4" />
-                <ItemsControl ItemsSource="{Binding Options}">
+                <ItemsControl ItemsSource="{Binding Options}" ItemTemplate="{StaticResource OptionCard}">
                   <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                       <UniformGrid Columns="2" ColumnSpacing="12" RowSpacing="12" />
                     </ItemsPanelTemplate>
                   </ItemsControl.ItemsPanel>
-                  <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="vm:OptionViewModel">
-                      <Border Classes="card" Padding="16" Classes.on="{Binding IsOn}">
-                        <StackPanel Spacing="8" Opacity="{Binding IsAvailable, Converter={x:Static v:Converters.Dim}}">
-                          <Grid ColumnDefinitions="*,Auto">
-                            <StackPanel Spacing="3">
-                              <TextBlock Classes="h3" Text="{Binding Title}" />
-                              <WrapPanel ItemSpacing="6">
-                                <Border Classes="chip" IsVisible="{Binding HasPackage}" Padding="8,1">
-                                  <TextBlock Text="{Binding Package}" FontSize="11" />
-                                </Border>
-                                <TextBlock Classes="mono caption" Text="{Binding Flag}" VerticalAlignment="Center" />
-                              </WrapPanel>
-                            </StackPanel>
-                            <ToggleSwitch Grid.Column="1" IsVisible="{Binding IsBool}" IsChecked="{Binding IsOn}" VerticalAlignment="Top" Margin="0,-4,0,0" />
-                          </Grid>
-                          <Border Classes="banner warn" Padding="10,6" IsVisible="{Binding HasNote}">
-                            <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding NoteText}" />
-                          </Border>
-                          <TextBlock Classes="body" FontSize="12.5" LineHeight="18" Text="{Binding Description}" />
-                          <ListBox Classes="segments" IsVisible="{Binding IsChoice}" ItemsSource="{Binding Choices}" SelectedItem="{Binding Choice}" HorizontalAlignment="Left">
-                            <ListBox.ItemTemplate>
-                              <DataTemplate x:DataType="vm:ChoiceViewModel">
-                                <TextBlock Text="{Binding Value}" FontSize="12.5" FontWeight="SemiBold" ToolTip.Tip="{Binding Text}" />
-                              </DataTemplate>
-                            </ListBox.ItemTemplate>
-                          </ListBox>
-                          <TextBlock Classes="caption" IsVisible="{Binding IsChoice}" Text="{Binding Choice.Text}" />
-                          <ItemsControl IsVisible="{Binding IsMulti}" ItemsSource="{Binding MultiChoices}">
-                            <ItemsControl.ItemsPanel>
-                              <ItemsPanelTemplate>
-                                <WrapPanel ItemSpacing="16" />
-                              </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                              <DataTemplate x:DataType="vm:MultiChoiceViewModel">
-                                <CheckBox IsChecked="{Binding IsChecked}" Content="{Binding Text}" ToolTip.Tip="{Binding Value}" />
-                              </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                          </ItemsControl>
-                          <Border Classes="soft" Padding="10,8">
-                            <StackPanel Spacing="6">
-                              <Grid ColumnDefinitions="Auto,*">
-<PathIcon Margin="0,1,6,0" Classes="small" Data="{StaticResource Icon.Bulb}" Foreground="{DynamicResource Warning}" VerticalAlignment="Top" />
-<TextBlock Grid.Column="1" FontSize="12" TextWrapping="Wrap" Text="{Binding WhenToUse}" />
-</Grid>
-                              <ItemsControl ItemsSource="{Binding Pros}">
-                                <ItemsControl.ItemTemplate>
-                                  <DataTemplate x:DataType="x:String">
-                                    <Grid ColumnDefinitions="Auto,*">
-<PathIcon Margin="0,1,6,0" Classes="small" Data="{StaticResource Icon.ThumbUp}" Foreground="{DynamicResource Success}" />
-<TextBlock Grid.Column="1" FontSize="12" TextWrapping="Wrap" Text="{Binding}" />
-</Grid>
-                                  </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                              </ItemsControl>
-                              <ItemsControl ItemsSource="{Binding Cons}">
-                                <ItemsControl.ItemTemplate>
-                                  <DataTemplate x:DataType="x:String">
-                                    <Grid ColumnDefinitions="Auto,*">
-<PathIcon Margin="0,1,6,0" Classes="small" Data="{StaticResource Icon.ThumbDown}" Foreground="{DynamicResource Error}" />
-<TextBlock Grid.Column="1" FontSize="12" TextWrapping="Wrap" Text="{Binding}" />
-</Grid>
-                                  </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                              </ItemsControl>
-                            </StackPanel>
-                          </Border>
-                        </StackPanel>
-                      </Border>
-                    </DataTemplate>
-                  </ItemsControl.ItemTemplate>
                 </ItemsControl>
               </StackPanel>
             </DataTemplate>

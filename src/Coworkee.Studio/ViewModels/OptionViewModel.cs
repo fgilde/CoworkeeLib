@@ -109,6 +109,15 @@ public sealed partial class OptionViewModel : ObservableObject
 
     public bool IsMulti => Option.Kind == OptionKind.Multi;
 
+    public bool IsText => Option.Kind == OptionKind.Text;
+
+    /// <summary>The value of a text option; empty means none.</summary>
+    public string? Text
+    {
+        get => Value;
+        set => Value = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
     public IReadOnlyList<ChoiceViewModel> Choices { get; }
 
     public IReadOnlyList<MultiChoiceViewModel> MultiChoices { get; }
@@ -146,6 +155,7 @@ public sealed partial class OptionViewModel : ObservableObject
     partial void OnValueChanged(string? value)
     {
         OnPropertyChanged(nameof(IsOn));
+        OnPropertyChanged(nameof(Text));
         OnPropertyChanged(nameof(Choice));
         OnPropertyChanged(nameof(IsChanged));
         foreach (var choice in MultiChoices)

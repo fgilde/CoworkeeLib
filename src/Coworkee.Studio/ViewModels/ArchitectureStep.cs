@@ -57,7 +57,13 @@ public sealed partial class ArchitectureStep : StepViewModel
 
     public IReadOnlyList<OptionGroupViewModel> Groups { get; }
 
-    /// <summary>Database, Redis and the monitoring tools: the choices that decide how the app runs, shown first.</summary>
+    /// <summary>The remaining infrastructure options (Keycloak, storage), shown with the highlighted ones on top of the page.</summary>
+    public OptionGroupViewModel InfrastructureGroup => Groups.Single(g => g.Name == OptionCatalog.Infrastructure);
+
+    /// <summary>The groups below the infrastructure: general, modules, code and tooling.</summary>
+    public IReadOnlyList<OptionGroupViewModel> OtherGroups => [.. Groups.Where(g => g.Name != OptionCatalog.Infrastructure)];
+
+    /// <summary>Database, Redis and the monitoring tools: the choices that decide how the app runs, shown first of the infrastructure.</summary>
     public IReadOnlyList<OptionViewModel> Infrastructure { get; }
 
     /// <summary>Provider, model, endpoint and key of the AI assistant.</summary>
