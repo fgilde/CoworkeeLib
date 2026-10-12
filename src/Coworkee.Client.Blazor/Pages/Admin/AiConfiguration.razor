@@ -1,0 +1,93 @@
+@page "/admin/ai"
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + SettingsPermissions.Manage)]
+
+<PageHeader Title="AI" Description="The model provider of the assistant and the MCP tools. Changes apply to the next message, without a restart.">
+    @if (_saved is not null)
+    {
+        <MudChip T="string" Variant="Variant.Outlined" Color="@StatusColor" Icon="@StatusIcon" data-testid="ai-status" data-status="@Status">@L[StatusText]</MudChip>
+    }
+</PageHeader>
+
+@if (_form is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    var info = _form.Info;
+    <MudStack Spacing="4" data-testid="ai-configuration">
+        <MudPaper Outlined="true" Class="pa-4 d-flex align-center gap-3">
+            <MudIcon Icon="@Icons.Material.Outlined.AutoAwesome" Color="Color.Primary" />
+            <div class="flex-grow-1">
+                <MudText Typo="Typo.subtitle1">@L["Assistant enabled"]</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["Users with the permission to chat get the assistant; MCP clients get the tools."]</MudText>
+            </div>
+            <MudSwitch T="bool" @bind-Value="_form.Enabled" Color="Color.Primary" data-testid="ai-enabled" aria-label="@L["Assistant enabled"]" />
+        </MudPaper>
+
+        <div>
+            <MudText Typo="Typo.overline" Class="mud-text-secondary">@L["Provider"]</MudText>
+            <AiProviderPicker Value="@_form.Provider" ValueChanged="SelectProvider" />
+        </div>
+
+        <MudPaper Outlined="true" Class="pa-4" data-testid="ai-connection">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Class="mb-4">
+                <AiProviderLogo Provider="info" Size="44" />
+                <div class="flex-grow-1">
+                    <MudText Typo="Typo.h6">@info.Name</MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">@L[info.Notes]</MudText>
+                </div>
+                @if (info.KeyUrl is { } keyUrl)
+                {
+                    <MudButton Href="@keyUrl" Target="_blank" Variant="Variant.Text" Color="Color.Primary" EndIcon="@Icons.Material.Outlined.OpenInNew" data-testid="ai-key-link">
+                        @L[info.Key == AiField.None ? "Get models" : "Get a key"]
+                    </MudButton>
+                }
+            </MudStack>
+
+            <MudGrid Spacing="3">
+                <MudItem xs="12" md="6">
+                    <MudTextField T="string" @bind-Value="_form.Endpoint" Label="@L[info.Protocol == AiProtocol.AzureOpenAI ? "Endpoint" : "Base address"]" Variant="Variant.Outlined"
+                                  Placeholder="@(info.BaseUrl ?? "https://")" Required="@(info.Endpoint == AiField.Required)" Clearable="true" data-testid="ai-endpoint"
+                                  HelperText="@L[info.Endpoint == AiField.Required ? "Required." : "Empty: the provider's address."]" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <AiKeyField Form="_form" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudStack Row="true" AlignItems="AlignItems.Start" Spacing="2">
+                        <MudAutocomplete T="string" @bind-Value="_form.Model" SearchFunc="SearchModels" Label="@L[info.Protocol == AiProtocol.AzureOpenAI ? "Deployment" : "Model"]"
+                                         Variant="Variant.Outlined" CoerceValue="true" Clearable="true" MaxItems="null" Placeholder="@info.DefaultModel" HelperText="@ModelHelp"
+                                         Class="flex-grow-1" data-testid="ai-model" />
+                        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.CloudDownload" OnClick="LoadModelsAsync" Disabled="_busy" Class="mt-2"
+                                   data-testid="ai-load-models">@L["Load models"]</MudButton>
+                    </MudStack>
+                    @if (_modelError is not null)
+                    {
+                        <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-2" data-testid="ai-models-error">@_modelError</MudAlert>
+                    }
+                </MudItem>
+            </MudGrid>
+
+            <AiAdvancedOptions Form="_form" />
+
+            @if (_test is not null)
+            {
+                <AiTestResult Result="_test" />
+            }
+
+            <MudStack Row="true" Spacing="2" Justify="Justify.FlexEnd" Class="mt-4">
+                <MudButton Variant="Variant.Text" OnClick="LoadAsync" Disabled="_busy" data-testid="ai-discard">@L["Discard changes"]</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.NetworkCheck" OnClick="TestAsync"
+                           Disabled="@(_busy || !_form.IsComplete)" data-testid="ai-test">
+                    @if (_testing)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    }
+                    @L["Test connection"]
+                </MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Save" OnClick="SaveAsync" Disabled="_busy" data-testid="ai-save">@L["Save"]</MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudStack>
+}

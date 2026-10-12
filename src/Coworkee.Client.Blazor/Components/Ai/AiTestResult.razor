@@ -1,0 +1,19 @@
+<MudAlert Severity="@Severity" Class="mt-4" data-testid="ai-test-result" data-succeeded="@(Result.Succeeded ? "true" : "false")">
+    @if (Result.Succeeded)
+    {
+        <MudText Typo="Typo.subtitle2">@L["Connected in {0} ms", Result.LatencyMs]</MudText>
+        @if (!string.IsNullOrWhiteSpace(Result.Reply))
+        {
+            <MudText Typo="Typo.body2">@L["Answer"]: “@Result.Reply”</MudText>
+        }
+        <MudText Typo="Typo.body2">@L[Result.CallsTools ? "Calls tools: the assistant can work with this model." : "Does not call tools."]</MudText>
+    }
+    else
+    {
+        <MudText Typo="Typo.subtitle2">@L["The connection failed"]</MudText>
+    }
+    @if (Result.Error is { } error)
+    {
+        <MudText Typo="Typo.body2" Style="overflow-wrap:anywhere">@error</MudText>
+    }
+</MudAlert>
