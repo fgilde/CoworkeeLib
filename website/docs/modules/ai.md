@@ -67,7 +67,7 @@ Providers without tool calls (Perplexity, for example) do not fit: the assistant
 
 ### The AI page
 
-Host administrators with `Settings.Manage` set it up under **Administration > System > AI** (`/admin/ai`): switch the assistant on, pick a provider card, enter address, key and model, and save. Changes apply to the next message, without a restart.
+Host administrators with `Settings.Manage` set it up under **Administration > System > AI** (`/admin/ai-settings`): switch the assistant on, pick a provider card, enter address, key and model, and save. Changes apply to the next message, without a restart.
 
 ![AI page](../assets/screenshots/ai-admin-light.webp){ .shot }
 

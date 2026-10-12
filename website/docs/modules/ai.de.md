@@ -67,7 +67,7 @@ Anbieter ohne Werkzeugaufrufe (etwa Perplexity) passen nicht: Der Assistent arbe
 
 ### Die KI-Seite
 
-Host-Administratoren mit `Settings.Manage` richten ihn unter **Administration > System > KI** (`/admin/ai`) ein: Assistent einschalten, eine Anbieter-Karte wählen, Adresse, Schlüssel und Modell eingeben und speichern. Änderungen gelten ab der nächsten Nachricht, ohne Neustart.
+Host-Administratoren mit `Settings.Manage` richten ihn unter **Administration > System > KI** (`/admin/ai-settings`) ein: Assistent einschalten, eine Anbieter-Karte wählen, Adresse, Schlüssel und Modell eingeben und speichern. Änderungen gelten ab der nächsten Nachricht, ohne Neustart.
 
 ![KI-Seite](../assets/screenshots/ai-admin-light.webp){ .shot }
 
