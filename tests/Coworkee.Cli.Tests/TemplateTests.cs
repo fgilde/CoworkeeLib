@@ -23,6 +23,7 @@ public sealed class TemplateTests(TemplateFixture template)
         File.ReadAllText(Path.Combine(app, "quickrun.yml")).ShouldContain("name: \"My Shop\"");
         File.ReadAllText(Path.Combine(app, "README.md")).ShouldContain("## QuickRun");
         File.ReadAllText(Path.Combine(app, "README.md")).ShouldNotContain("quickrun.org/badge.svg");
+        File.ReadAllText(Path.Combine(app, "src", "Shop.Web", "Program.cs")).ShouldContain("app.UseWebAssemblyDebugging();");
         ShouldHaveNoLeftovers(app);
     }
 
