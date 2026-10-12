@@ -79,6 +79,8 @@ public static class OptionCatalog
             "Almost always; leave out only for throw-away prototypes.", ["Tests that boot the real app", "A model test that catches missing migrations"], ["Need Docker to run"]),
         new("git", General, "Git repository", "Run git init in the new folder.", OptionKind.Bool, "false",
             "When the app becomes its own repository.", ["Ready for the first commit"], ["Not wanted inside an existing repository"], TemplateSymbol: false),
+        new("repository", General, "GitHub repository", "GitHub repository of the app as owner/repo, e.g. acme/shop: the README gets a QuickRun badge that starts the app from there with one click.", OptionKind.Text, null,
+            "When the app lives on GitHub and others should try it.", ["One click from the README to the running app"], ["GitHub only"]),
 
         new("auditing", Modules, "Audit log", "Pages for the audit trail, entity history and restore. The trail itself is always written.", OptionKind.Bool, "true",
             "Whenever someone needs to see who changed what.", ["History and restore per entity"], ["More admin pages"], Package: "Coworkee.Auditing"),

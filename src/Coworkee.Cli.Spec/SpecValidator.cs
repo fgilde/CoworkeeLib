@@ -73,6 +73,7 @@ public static partial class SpecValidator
         }
 
         Ai(errors, values);
+        Repository(errors, values);
         Languages(errors, values);
         Enums(errors, spec);
         Modules(errors, spec, values["samples"] == "true", index);
@@ -157,6 +158,14 @@ public static partial class SpecValidator
         }
     }
 
+    private static void Repository(List<string> errors, IReadOnlyDictionary<string, string?> values)
+    {
+        if (values["repository"] is { } repository && !GitHubRepository().IsMatch(repository))
+        {
+            errors.Add($"repository: '{repository}' is not a GitHub repository as owner/repo, e.g. acme/shop.");
+        }
+    }
+
     private static void Languages(List<string> errors, IReadOnlyDictionary<string, string?> values)
     {
         if (values["languages"] is { } languages && values["defaultLanguage"] is { } language && !SpecOptions.List(languages).Contains(language))
@@ -196,4 +205,8 @@ public static partial class SpecValidator
 
     [GeneratedRegex(ColorPattern)]
     private static partial Regex Color();
+
+    // GitHub: owner of letters, digits and single hyphens; repository of letters, digits, '.', '-' and '_', but not . or ..
+    [GeneratedRegex(@"^[A-Za-z0-9](?:-?[A-Za-z0-9]){0,38}/(?!\.{1,2}$)[A-Za-z0-9._-]{1,100}$")]
+    private static partial Regex GitHubRepository();
 }

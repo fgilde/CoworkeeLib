@@ -109,7 +109,14 @@ public sealed class SpecTests
     [InlineData("aiModel", "accounts/fireworks/models/qwen3:latest", null)]
     [InlineData("aiEndpoint", "https://acme.openai.azure.com", null)]
     [InlineData("aiProvider", "openRouter", null)]
-    public void Ai_options_go_into_code_only_when_safe(string option, string value, string? error)
+    [InlineData("repository", "acme/shop", null)]
+    [InlineData("repository", "fgilde/aspire.love", null)]
+    [InlineData("repository", "acme", "repository:")]
+    [InlineData("repository", "https://github.com/acme/shop", "repository:")]
+    [InlineData("repository", "acme/..", "repository:")]
+    [InlineData("repository", "-acme/shop", "repository:")]
+    [InlineData("repository", "acme/shop)&x=1", "repository:")]
+    public void Ai_and_repository_options_go_into_code_only_when_safe(string option, string value, string? error)
     {
         var spec = new AppSpec { Name = "Shop" };
         spec.Options[option] = value;

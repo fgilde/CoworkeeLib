@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://quickrun.org/quickrun.schema.json
+version: 1
+name: "COWORKEE_APP_TITLE"
+description: "Runs the Aspire app host of MyApp: the database and the other containers, auth server, API and web app, with the Aspire dashboard. How to sign in: LOGIN.md."
+
+requires:
+  - tool: dotnet
+    version: ">=10.0"
+    install: https://dotnet.microsoft.com/download
+  - tool: docker
+    install: https://www.docker.com/products/docker-desktop
+
+setup:
+  - run: dotnet dev-certs https --trust
+    continueOnError: true
+
+tasks:
+  - name: apphost
+    run: dotnet run --project src/MyApp.AppHost
+    readyWhen:
+      http: http://localhost:5300
+    open: https://localhost:7300

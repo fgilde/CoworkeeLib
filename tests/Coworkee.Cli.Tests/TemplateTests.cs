@@ -19,19 +19,24 @@ public sealed class TemplateTests(TemplateFixture template)
         File.ReadAllText(Path.Combine(app, "src", "Shop.AppHost", "AppHost.cs")).ShouldNotContain("Keycloak");
         File.ReadAllText(Path.Combine(app, "src", "Shop.Migrations", "DemoUsers.cs")).ShouldMatch("\"Cw1!(?i:[0-9a-f]{32})\"");
         File.ReadAllText(Path.Combine(app, "LOGIN.md")).ShouldMatch("`Cw1!(?i:[0-9a-f]{32})`");
+        File.ReadAllText(Path.Combine(app, "quickrun.yml")).ShouldContain("run: dotnet run --project src/Shop.AppHost");
+        File.ReadAllText(Path.Combine(app, "quickrun.yml")).ShouldContain("name: \"My Shop\"");
+        File.ReadAllText(Path.Combine(app, "README.md")).ShouldContain("## QuickRun");
+        File.ReadAllText(Path.Combine(app, "README.md")).ShouldNotContain("quickrun.org/badge.svg");
         ShouldHaveNoLeftovers(app);
     }
 
     [Fact]
     public async Task By_default_the_samples_and_tests_are_included()
     {
-        var app = await template.CreateAsync("full", "--keycloak", "true");
+        var app = await template.CreateAsync("full", "--keycloak", "true", "--repository", "acme/shop");
 
         File.ReadAllText(Path.Combine(app, "Shop.slnx")).ShouldContain("src/Shop.Catalog/Shop.Catalog.csproj");
         File.ReadAllText(Path.Combine(app, "Shop.slnx")).ShouldContain("tests/Shop.Api.Tests/Shop.Api.Tests.csproj");
         File.Exists(Path.Combine(app, "src", "Shop.Documents", "Shop.Documents.csproj")).ShouldBeTrue();
         File.ReadAllText(Path.Combine(app, "src", "Shop.AppHost", "AppHost.cs")).ShouldContain("options.DisplayName = \"Shop\";");
         File.ReadAllText(Path.Combine(app, "src", "Shop.AppHost", "AppHost.cs")).ShouldContain("UseKeycloak");
+        File.ReadAllText(Path.Combine(app, "README.md")).ShouldContain("[![QuickRun](https://quickrun.org/badge.svg)](https://quickrun.org/run?repo=acme/shop)");
         ShouldHaveNoLeftovers(app);
     }
 

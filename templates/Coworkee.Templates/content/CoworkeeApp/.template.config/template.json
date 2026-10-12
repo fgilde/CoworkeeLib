@@ -646,6 +646,13 @@
       "defaultValue": "false",
       "description": "Dev container with the .NET SDK and Docker in Docker."
     },
+    "repository": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "",
+      "description": "GitHub repository of the app as owner/repo; the README gets a QuickRun badge.",
+      "replaces": "COWORKEE_REPOSITORY"
+    },
     "appTitle": {
       "type": "generated",
       "generator": "coalesce",
@@ -676,6 +683,10 @@
         ]
       },
       "replaces": "COWORKEE_THEME"
+    },
+    "hasRepository": {
+      "type": "computed",
+      "value": "(repository != \"\")"
     },
     "hasPrimary": {
       "type": "computed",

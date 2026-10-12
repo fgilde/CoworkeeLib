@@ -1,5 +1,9 @@
 # COWORKEE_APP_TITLE
 
+<!--#if (hasRepository) -->
+[![QuickRun](https://quickrun.org/badge.svg)](https://quickrun.org/run?repo=COWORKEE_REPOSITORY)
+
+<!--#endif -->
 Built on [Coworkee](https://fgilde.github.io/CoworkeeLib/). Needs the .NET SDK from `global.json` and Docker.
 
 ```bash
@@ -8,6 +12,12 @@ coworkee migrations add <Name>    # after model changes
 coworkee module add <Name>        # new feature module
 coworkee update                   # newest Coworkee packages
 ```
+
+## QuickRun
+
+[QuickRun](https://quickrun.org) starts the app from `quickrun.yml` with one click: it checks the .NET SDK and Docker, trusts the development certificate, runs the app host and opens the web app once it answers.
+
+## The solution
 
 <!--#if (!defaultModel) -->
 The chosen modules or database differ from the shipped initial migration (Postgres), so the solution has none yet. `coworkee new` creates it; otherwise run `coworkee migrations add Initial` once before the first start.
