@@ -16,6 +16,7 @@
     <PackageReference Include="Microsoft.Data.Sqlite" />
     <PackageReference Include="Nextended.Aspire.Hosting.Grafana" />
     <PackageReference Include="Nextended.Aspire.Hosting.WebDataStudio" />
+    <PackageReference Include="Nextended.Aspire.Hosting.AspireUI" />
     <ProjectReference Include="..\Coworkee.Contracts\Coworkee.Contracts.csproj" />
     <EmbeddedResource Include="Dashboards\*.json" LogicalName="Dashboards.%(Filename)%(Extension)" />
   </ItemGroup>

@@ -1,5 +1,6 @@
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
+using Nextended.Aspire.Hosting.AspireUI;
 using Nextended.Aspire.Hosting.Grafana;
 using Nextended.Aspire.Hosting.WebDataStudio;
 
@@ -108,6 +109,27 @@ public sealed class ToolsTests
         studio["WDS_CONN_DEMO_ENGINE"].ShouldBe("sqlserver");
         studio["WDS_USER"].ShouldBe("admin");
         studio["WDS_PASSWORD"].ShouldBe("{demo-admin-password.value}");
+    }
+
+    [Fact]
+    public async Task Aspireui_signs_in_through_the_realm_with_the_roles_of_the_app()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var app = builder.AddCoworkeeApp("demo", o => o.UseKeycloak());
+        app.AddProjects();
+
+        var aspireUi = builder.AddAspireUI().WithCoworkeeSignOn(app);
+
+        app.KeycloakClients.Last().ClientId.ShouldBe("demo-aspireui");
+        (await Environment(Allocated(app.Keycloak!.Resource)))["KC_HOSTNAME"].ShouldBe("http://localhost:8180");
+        var env = await Environment(Allocated(aspireUi.Resource));
+        env["ASPIREUI_SET_OidcAuthority"].ShouldBe("http://keycloak:8080/realms/demo");
+        env["ASPIREUI_SET_OidcClientId"].ShouldBe("demo-aspireui");
+        env["ASPIREUI_SET_OidcClientSecret"].ShouldBe("{demo-aspireui-secret.value}");
+        env["ASPIREUI_SET_OidcGroupsClaim"].ShouldBe("roles");
+        env["ASPIREUI_SET_OidcAdminGroup"].ShouldBe("Administrator");
+        env["ASPIREUI_SET_FORCE"].ShouldBe("true");
+        (await app.KeycloakClients.Last().RedirectUris[0].GetValueAsync(TestContext.Current.CancellationToken)).ShouldBe("http://localhost:8180/api/auth/sso/callback");
     }
 
     [Fact]

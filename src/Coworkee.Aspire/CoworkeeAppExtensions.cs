@@ -1,3 +1,6 @@
+using Aspire.Hosting.ApplicationModel;
+using Nextended.Aspire.Hosting.AspireUI;
+
 namespace Aspire.Hosting;
 
 public static class CoworkeeAppExtensions
@@ -14,4 +17,11 @@ public static class CoworkeeAppExtensions
         configure?.Invoke(options);
         return new CoworkeeApp(builder, name, options);
     }
+
+    /// <summary>
+    /// Sign-in to AspireUI with the app's Keycloak: a client of the realm, the realm roles as groups, the app's administrators (role Administrator) as AspireUI admins.
+    /// Call it after <see cref="CoworkeeApp.AddAuthServer{TProject}"/> with <see cref="CoworkeeAppOptions.UseKeycloak"/>.
+    /// </summary>
+    public static IResourceBuilder<AspireUIResource> WithCoworkeeSignOn(this IResourceBuilder<AspireUIResource> aspireUi, CoworkeeApp app, string defaultPermissions = AspireUIPermissions.AppUser) =>
+        app.AddAspireUISignIn(aspireUi, defaultPermissions);
 }

@@ -196,6 +196,19 @@ grafana.WithEnvironment("GF_AUTH_GENERIC_OAUTH_CLIENT_ID", client.ClientId)
 
 Call them after `UseKeycloak` and `AddAuthServer` (or `AddProjects`).
 
+### AspireUI
+
+[AspireUI](https://github.com/fgilde/AspireUI) signs in through the realm with one call; the app's administrators (realm role `Administrator`) become AspireUI admins, everybody else gets `defaultPermissions` (default `app-user`):
+
+```csharp
+using Nextended.Aspire.Hosting.AspireUI;
+
+var app = builder.AddCoworkeeApp("myapp", options => options.UseKeycloak(...)).AddProjects();
+builder.AddAspireUI().WithCoworkeeSignOn(app);
+```
+
+It registers the client `{app}-{resource}` with the redirect address `/api/auth/sso/callback`, passes the realm as the container reaches it (Keycloak then names itself by the browser's address, `KC_HOSTNAME`) and sets the roles claim as groups. AspireUI seeds settings only while they are empty, so the call also forces the app host's settings (`ASPIREUI_SET_FORCE`): a data volume from an earlier realm would keep the old sign-in otherwise.
+
 ## Publishing
 
 `PublishToDockerCompose()` adds a Docker Compose environment. `aspire publish` then writes a `docker-compose.yaml` and an `.env` file with all services, containers, volumes and the start order (services start once the migrations completed):
