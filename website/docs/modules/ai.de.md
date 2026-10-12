@@ -15,14 +15,26 @@ Auch ohne Registrierung wird jeder Request eines Moduls zum Werkzeug, der ein `R
 public sealed record GetBrandsQuery(string? Search) : IQuery<Result<IReadOnlyList<BrandDto>>>;
 ```
 
-Mit dem OData-Modul bekommt der Assistent zusätzlich ein Werkzeug `query_data`: es listet Zeilen jedes registrierten Entity-Sets mit OData-Filter und Sortierung, mit denselben Berechtigungen, Zeilenfiltern und ausgeblendeten Eigenschaften wie die Tabellen.
+Mit dem OData-Modul bekommt der Assistent zusätzlich die Werkzeuge `list_data_sets` (die Sets, die der Benutzer lesen darf, mit ihren Feldern) und `query_data`: es listet Zeilen jedes registrierten Entity-Sets mit OData-Filter, Sortierung und ausgewählten Feldern, mit denselben Berechtigungen, Zeilenfiltern und ausgeblendeten Eigenschaften wie die Tabellen.
 
 Der Request-Typ wird zum Eingabeschema des Werkzeugs, das `Result` zu seiner Ausgabe. Fehler erreichen das Modell als Meldungen, auf die es reagieren kann.
 
-- **Assistent-Seite** für Benutzer mit `Ai.Chat`: ein Chat mit den Werkzeugen aller Module, als angemeldeter Benutzer.
-- **MCP-Server** unter `/mcp` mit denselben Werkzeugen, für Claude Desktop, Claude Code und andere MCP-Clients; er verlangt einen angemeldeten Benutzer.
-- **Werkzeug-Audit** für Benutzer mit `Ai.Audit`: jeder Aufruf mit Eingabe, Ergebnis und Benutzer.
+- **Assistent-Fenster** für Benutzer mit `Ai.Chat`: ein Knopf unten rechts (oder `Strg+I`) öffnet einen Chat mit den Werkzeugen aller Module, als angemeldeter Benutzer. Es gibt ihn klein, groß oder als Vollbild, auf Telefonen immer als Vollbild; er fehlt, solange der Assistent nicht aktiv ist oder dem Benutzer `Ai.Chat` fehlt. Die alte Route `/assistant` öffnet das Fenster.
+- **Unterhaltungen** bleiben pro Benutzer auf dem Server: benannt nach der ersten Nachricht, in der Seitenleiste umbenannt, gelöscht und durchsucht, live in jedem offenen Tab und Teil von Export und Löschung der personenbezogenen Daten.
+- **Gestreamte Antworten** erscheinen, während sie entstehen, als Markdown ohne Markup: rohes HTML erscheint als Text, Links führen nur zu `http`, `https`, `mailto` oder in die App, und Bilder werden zu Links, damit eine untergeschobene Bildadresse keine Daten ohne Klick hinausträgt.
+- **Werkzeug-Chips** unter jeder Antwort zeigen, was der Assistent getan hat; mit `AssistantLinks` verlinken sie auf das, was er angelegt oder geändert hat:
+
+    ```csharp
+    builder.Services.AddCoworkeeClient(baseAddress, options =>
+        options.AssistantLinks["add_edit_product"] = "/catalog/products/{id}");
+    ```
+
+- **[MCP-Server](mcp.md)** unter `/mcp` mit denselben Werkzeugen, für Claude Desktop, Claude Code, VS Code, Cursor und andere MCP-Clients, angemeldet mit einem [API-Schlüssel](../security/api-keys.md).
+- **Werkzeug-Audit** für Benutzer mit `Ai.Audit`: jeder Aufruf mit Eingabe, Ergebnis, Benutzer, Kanal und API-Schlüssel.
 - Commands, die Daten ändern, laufen nur in der ersten Runde einer Antwort. Ein Werkzeugergebnis kann das Modell so nicht dazu bringen, eigenmächtig etwas zu ändern.
+- Destruktive Werkzeuge (namens `delete_…`, `remove_…`, `revoke_…`, `purge_…`, `erase_…` oder mit `[AiTool(Destructive = true)]`) laufen nicht sofort: das Fenster zeigt, was der Assistent ausführen will, mit *Run* und *Cancel*, und erst der Klick des Benutzers führt es aus. Eine neue Nachricht verwirft eine wartende Bestätigung.
+
+Das Fenster spricht mit `/api/v1/ai`: `GET status`, `GET|POST sessions`, `GET|PUT|DELETE sessions/{id}` sowie `POST sessions/{id}/messages` und `POST sessions/{id}/confirm`, die mit `application/x-ndjson` antworten: ein `AiStreamEvent` pro Zeile, `delta` (Text), `tool` (ein Werkzeugaufruf), dann `done` (die gespeicherte Nachricht) oder `error`. Die Antwort läuft zu Ende und wird gespeichert, auch wenn der Browser geht.
 
 ## Anbieter
 

@@ -15,14 +15,26 @@ Without any registration, every request of a module that returns a `Result` and 
 public sealed record GetBrandsQuery(string? Search) : IQuery<Result<IReadOnlyList<BrandDto>>>;
 ```
 
-With the OData module, the assistant also gets a `query_data` tool: it lists rows of any registered entity set with an OData filter and order, with the same permissions, row filters and hidden properties as the tables.
+With the OData module, the assistant also gets the tools `list_data_sets` (the sets the user may read, with their fields) and `query_data`: it lists rows of any registered entity set with an OData filter, order and selected fields, with the same permissions, row filters and hidden properties as the tables.
 
 The request type becomes the tool's input schema, the `Result` its output. Failures reach the model as messages it can react to.
 
-- **Assistant page** for users with `Ai.Chat`: a chat with the tools of all modules, as the signed-in user.
-- **MCP server** under `/mcp` with the same tools, for Claude Desktop, Claude Code and other MCP clients; it requires a signed-in user.
-- **Tool call audit** for users with `Ai.Audit`: every call with input, result and user.
+- **Assistant window** for users with `Ai.Chat`: a button at the bottom right (or `Ctrl+I`) opens a chat with the tools of all modules, as the signed-in user. It comes small, large or full screen, and full screen on phones; it is not there while the assistant is not active or the user lacks `Ai.Chat`. The old `/assistant` route opens the window.
+- **Conversations** stay on the server per user: titled after the first message, renamed, deleted and searched in the side bar, live in every open tab, and part of the personal data export and erasure.
+- **Streamed answers** appear as they are written, as Markdown that cannot carry markup: raw HTML shows as text, links go only to `http`, `https`, `mailto` or the app, and images become links, so a planted image address cannot send data away without a click.
+- **Tool chips** under each answer show what the assistant did; with `AssistantLinks` they link to what it created or changed:
+
+    ```csharp
+    builder.Services.AddCoworkeeClient(baseAddress, options =>
+        options.AssistantLinks["add_edit_product"] = "/catalog/products/{id}");
+    ```
+
+- **[MCP server](mcp.md)** under `/mcp` with the same tools, for Claude Desktop, Claude Code, VS Code, Cursor and other MCP clients, signed in with an [API key](../security/api-keys.md).
+- **Tool call audit** for users with `Ai.Audit`: every call with input, result, user, channel and API key.
 - Commands, which change data, only run in the first round of a turn. A tool result can therefore not trick the model into changing something on its own.
+- Destructive tools (named `delete_…`, `remove_…`, `revoke_…`, `purge_…`, `erase_…` or marked `[AiTool(Destructive = true)]`) do not run at once: the window shows what the assistant wants to run with *Run* and *Cancel*, and only the user's click runs it. A new message cancels a waiting one.
+
+The window talks to `/api/v1/ai`: `GET status`, `GET|POST sessions`, `GET|PUT|DELETE sessions/{id}`, and `POST sessions/{id}/messages` and `POST sessions/{id}/confirm`, which answer with `application/x-ndjson`: one `AiStreamEvent` per line, `delta` (text), `tool` (a tool call), then `done` (the saved message) or `error`. The answer runs to its end and is saved even when the browser goes away.
 
 ## Providers
 
