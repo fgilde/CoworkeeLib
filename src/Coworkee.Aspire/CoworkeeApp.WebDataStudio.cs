@@ -1,5 +1,6 @@
 using Aspire.Hosting.ApplicationModel;
 using Coworkee.Contracts.Configuration;
+using Microsoft.Data.Sqlite;
 using Nextended.Aspire.Hosting.WebDataStudio;
 
 namespace Aspire.Hosting;
@@ -46,6 +47,7 @@ public sealed partial class CoworkeeApp
                 break;
             case DatabaseProviders.Sqlite:
                 Directory.CreateDirectory(Path.GetDirectoryName(SqlitePath)!);
+                UseRollbackJournal(SqlitePath);
                 studio.WithBindMount(Path.GetDirectoryName(SqlitePath)!, "/data/app")
                     .WithConnection(connection, $"Data Source=/data/app/{Path.GetFileName(SqlitePath)}", WebDataStudioEngine.Sqlite);
                 break;
@@ -53,6 +55,19 @@ public sealed partial class CoworkeeApp
                 studio.WithReference(Database, connection, WebDataStudioEngine.PostgreSql).WaitFor(Server);
                 break;
         }
+    }
+
+    /// <summary>
+    /// The container cannot share the memory-mapped index of a WAL database with the host over a Docker bind mount (SQLite Error 10: disk I/O error),
+    /// a rollback journal works. EF Core switches a database it creates to WAL, an existing file it leaves alone, so the file is created or switched here, before the app starts.
+    /// </summary>
+    private static void UseRollbackJournal(string path)
+    {
+        using var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ConnectionString);
+        connection.Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = "PRAGMA journal_mode=DELETE";
+        command.ExecuteNonQuery();
     }
 
     private void AddWebDataStudioSignIn(IResourceBuilder<WebDataStudioResource> studio)

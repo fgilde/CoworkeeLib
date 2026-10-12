@@ -124,6 +124,29 @@ public sealed class ToolsTests
     }
 
     [Fact]
+    public void The_sqlite_database_of_the_studio_uses_a_rollback_journal()
+    {
+        var folder = Directory.CreateTempSubdirectory().FullName;
+        var path = Path.Combine(folder, "demo.db");
+        Sql(path, "PRAGMA journal_mode=WAL; CREATE TABLE x(a)");
+        var builder = DistributedApplication.CreateBuilder();
+
+        builder.AddCoworkeeApp("demo", o => o.UseSqlite(path).UseWebDataStudio()).AddProjects();
+
+        Sql(path, "PRAGMA journal_mode").ShouldBe("delete");
+        Directory.Delete(folder, true);
+    }
+
+    private static object? Sql(string path, string sql)
+    {
+        using var connection = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={path};Pooling=False");
+        connection.Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        return command.ExecuteScalar();
+    }
+
+    [Fact]
     public void Published_apps_bring_their_own_tools()
     {
         var builder = DistributedApplication.CreateBuilder(["--operation", "publish"]);
