@@ -34,12 +34,18 @@
             <MudText Typo="Typo.body2" Class="mb-1"><b>@L[Message.Decision is null ? "Confirm to run:" : Message.Decision == AiDecisions.Approved ? "Confirmed:" : "Declined:"]</b></MudText>
             @foreach (var tool in Message.Pending)
             {
-                <MudText Typo="Typo.body2"><code>@tool.Tool</code> <span style="overflow-wrap:anywhere">@tool.Input</span></MudText>
+                <MudText Typo="Typo.body2" data-destructive="@(tool.Destructive ? "true" : "false")">
+                    @if (tool.Destructive)
+                    {
+                        <MudIcon Icon="@Icons.Material.Outlined.WarningAmber" Color="Color.Error" Size="Size.Small" Style="vertical-align:middle" />
+                    }
+                    <code>@tool.Tool</code> <span style="overflow-wrap:anywhere">@tool.Input</span>
+                </MudText>
             }
             @if (Waiting && Message.Decision is null)
             {
                 <MudStack Row="true" Spacing="2" Class="mt-2">
-                    <MudButton Variant="Variant.Filled" Color="Color.Error" Size="Size.Small" StartIcon="@Icons.Material.Outlined.PlayArrow" OnClick="() => OnDecide.InvokeAsync(true)"
+                    <MudButton Variant="Variant.Filled" Color="@(Message.Pending.Any(t => t.Destructive) ? Color.Error : Color.Primary)" Size="Size.Small" StartIcon="@Icons.Material.Outlined.PlayArrow" OnClick="() => OnDecide.InvokeAsync(true)"
                                data-testid="assistant-approve">@L["Run"]</MudButton>
                     <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="() => OnDecide.InvokeAsync(false)" data-testid="assistant-decline">@L["Cancel"]</MudButton>
                 </MudStack>

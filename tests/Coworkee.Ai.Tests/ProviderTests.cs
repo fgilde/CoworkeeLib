@@ -26,21 +26,20 @@ public sealed class ProviderTests(AiApp app) : IAsyncLifetime
         var fake = new FakeChatClient();
         // OpenAI compatible servers may end a tool turn with "stop"
         fake.Responses.Enqueue(new ChatResponse(new ChatMessage(ChatRole.Assistant,
-            [new FunctionCallContent("c1", "add_note", new Dictionary<string, object?> { ["title"] = "Milk" })])) { FinishReason = ChatFinishReason.Stop });
+            [new FunctionCallContent("c1", "list_notes", new Dictionary<string, object?> { ["contains"] = "Milk" })])) { FinishReason = ChatFinishReason.Stop });
         fake.Responses.Enqueue(new ChatResponse(new ChatMessage(ChatRole.Assistant, "Added Milk.")) { FinishReason = ChatFinishReason.Stop });
 
         var answer = await ChatAsync(fake, "Note milk");
 
         answer.Value!.Text.ShouldBe("Added Milk.");
         answer.Value.StopReason.ShouldBe("end_turn");
-        answer.Value.Calls.Single().Tool.ShouldBe("add_note");
-        (await app.InDbAsync(db => db.Set<Note>().Select(n => n.Title).ToListAsync(Ct))).ShouldBe(["Milk"]);
+        answer.Value.Calls.Single().Tool.ShouldBe("list_notes");
         fake.Connection.ShouldBe(new AiConnection(AiProviders.Anthropic, null, null, "test-key"));
         var tool = fake.Options[0].Tools!.OfType<AIFunctionDeclaration>().Single(t => t.Name == "add_note");
         tool.JsonSchema.GetProperty("properties").TryGetProperty("title", out _).ShouldBeTrue();
         var result = fake.Requests[1][^1].Contents.OfType<FunctionResultContent>().Single();
         (result.CallId, result.Exception).ShouldBe(("c1", null));
-        Guid.TryParse(JsonSerializer.Deserialize<string>((string)result.Result!), out _).ShouldBeTrue();
+        ((string)result.Result!).ShouldBe("[]");
     }
 
     [Fact]
@@ -48,7 +47,7 @@ public sealed class ProviderTests(AiApp app) : IAsyncLifetime
     {
         var fake = new FakeChatClient();
         fake.Responses.Enqueue(new ChatResponse(new ChatMessage(ChatRole.Assistant,
-            [new FunctionCallContent("c1", "fail_note", new Dictionary<string, object?> { ["title"] = "x" })])) { FinishReason = ChatFinishReason.ToolCalls });
+            [new FunctionCallContent("c1", "no_such_tool", new Dictionary<string, object?> { ["title"] = "x" })])) { FinishReason = ChatFinishReason.ToolCalls });
         fake.Responses.Enqueue(new ChatResponse(new ChatMessage(ChatRole.Assistant, "Not allowed.")));
 
         var answer = await ChatAsync(fake, "Note x");

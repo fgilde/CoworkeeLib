@@ -27,19 +27,22 @@ public sealed class AiTests(AiApp app) : IAsyncLifetime
     [Fact]
     public async Task Chat_streams_runs_tools_as_the_user_audits_them_and_keeps_the_conversation()
     {
-        app.Claude.ToolUse(("fail_note", new JsonObject { ["title"] = "bad" }), ("add_note", new JsonObject { ["title"] = "Buy milk" }));
-        app.Claude.Text("Added the note Buy milk.");
+        app.Claude.ToolUse(("list_notes", new JsonObject()), ("add_note", new JsonObject { ["title"] = "Buy milk" }));
         var session = await AiApp.NewSessionAsync(Admin);
 
-        var events = await AiApp.AskAsync(Admin, session, "Note: buy milk");
+        var waiting = Done(await AiApp.AskAsync(Admin, session, "Note: buy milk"));
+
+        // reading runs at once, changing data waits for the user's click
+        waiting.ToolCalls.Select(c => c.Tool).ShouldBe(["list_notes"]);
+        waiting.Pending.ShouldHaveSingleItem().ShouldBe(new AiPendingToolDto("add_note", """{"title":"Buy milk"}""", true));
+        (await app.InDbAsync(db => db.Set<Note>().CountAsync(Ct))).ShouldBe(0);
+
+        app.Claude.Text("Added the note Buy milk.");
+        var events = await AiApp.StreamAsync(Admin, session, new AiConfirmRequest(true), "confirm");
 
         events.Where(e => e.Type == AiStreamEvent.Delta).Select(e => e.Text).ShouldBe(["Added the no", "te Buy milk."]);
-        events.Where(e => e.Type == AiStreamEvent.Tool).Select(e => e.ToolCall!.Tool).ShouldBe(["fail_note", "add_note"]);
-        var answer = Done(events);
-        answer.Text.ShouldBe("Added the note Buy milk.");
-        answer.ToolCalls.Select(c => (c.Tool, c.Succeeded)).ShouldBe([("fail_note", false), ("add_note", true)]);
-        answer.ToolCalls[0].Error!.ShouldContain("not allowed");
-        // the failed tool's changes are never saved, the successful one runs as the user
+        events.Where(e => e.Type == AiStreamEvent.Tool).Select(e => e.ToolCall!.Tool).ShouldBe(["add_note"]);
+        Done(events).Text.ShouldBe("Added the note Buy milk.");
         (await app.InDbAsync(db => db.Set<Note>().Select(n => new { n.Title, n.CreatedBy }).ToListAsync(Ct)))
             .ShouldHaveSingleItem().ShouldBe(new { Title = "Buy milk", CreatedBy = (Guid?)_setup.AdminUserId });
 
@@ -50,17 +53,18 @@ public sealed class AiTests(AiApp app) : IAsyncLifetime
         var addNote = requests[0]["tools"]!.AsArray().Single(t => t!["name"]!.GetValue<string>() == "add_note")!;
         addNote["input_schema"]!["properties"]!["title"].ShouldNotBeNull();
         addNote["input_schema"]!["required"]!.AsArray().Select(r => r!.GetValue<string>()).ShouldBe(["title"]);
+        addNote["description"]!.GetValue<string>().ShouldContain("confirmed");
         var results = requests[1]["messages"]!.AsArray()[^1]!["content"]!.AsArray();
-        results.Select(r => r!["is_error"]?.GetValue<bool>()).ShouldBe([true, false]);
+        results.Select(r => r!["is_error"]?.GetValue<bool>()).ShouldBe([false, false]);
 
         var calls = (await Admin.GetFromJsonAsync<PagedResult<AiToolCallDto>>("/api/v1/ai/tool-calls?channel=chat", Ct))!;
-        calls.Items.Select(c => c.Tool).ShouldBe(["add_note", "fail_note"], ignoreOrder: true);
+        calls.Items.Select(c => c.Tool).ShouldBe(["add_note", "list_notes"], ignoreOrder: true);
         calls.Items.ShouldAllBe(c => c.UserId == _setup.AdminUserId && c.Channel == AiChannels.Chat && c.ApiKeyId == null);
 
         var saved = (await Admin.GetFromJsonAsync<AiSessionDetailDto>($"/api/v1/ai/sessions/{session}", Ct))!;
         saved.Title.ShouldBe("Note: buy milk");
-        saved.Messages.Select(m => (m.Role, m.Text)).ShouldBe([("user", "Note: buy milk"), ("assistant", "Added the note Buy milk.")]);
-        saved.Messages[1].ToolCalls.Count.ShouldBe(2);
+        saved.Messages.Select(m => (m.Role, m.Text)).ShouldBe([("user", "Note: buy milk"), ("assistant", ""), ("assistant", "Added the note Buy milk.")]);
+        saved.Messages[1].Decision.ShouldBe(AiDecisions.Approved);
 
         // the next question carries the conversation
         app.Claude.Text("You asked to buy milk.");
@@ -69,20 +73,21 @@ public sealed class AiTests(AiApp app) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Writes_after_tool_output_wait_for_the_user_to_confirm()
+    public async Task Planted_text_never_changes_data_without_the_users_click()
     {
-        // text planted in a note must not make the assistant change data on its own
+        // text planted in a note, then in the conversation, must not make the assistant change data on its own
+        var session = await AiApp.NewSessionAsync(Admin);
         app.Claude.ToolUse(("list_notes", new JsonObject()));
         app.Claude.ToolUse(("add_note", new JsonObject { ["title"] = "planted" }));
-        app.Claude.Text("Shall I add the note planted?");
 
-        var answer = Done(await AiApp.AskAsync(Admin, await AiApp.NewSessionAsync(Admin), "look at my notes"));
+        Done(await AiApp.AskAsync(Admin, session, "look at my notes")).Pending.Single().Tool.ShouldBe("add_note");
+        app.Claude.ToolUse(("add_note", new JsonObject { ["title"] = "planted again" }));
+        Done(await AiApp.AskAsync(Admin, session, "thanks")).Pending.Single().Tool.ShouldBe("add_note");
 
-        answer.ToolCalls.Select(c => (c.Tool, c.Succeeded)).ShouldBe([("list_notes", true), ("add_note", false)]);
-        answer.ToolCalls[1].Error.ShouldBe(AiToolRunner.WriteNeedsUser);
         (await app.InDbAsync(db => db.Set<Note>().CountAsync(Ct))).ShouldBe(0);
-        app.Claude.Requests.First()["tools"]!.AsArray().Single(t => t!["name"]!.GetValue<string>() == "list_notes")!["input_schema"]!["required"]
-            ?.AsArray().ShouldBeEmpty();
+        // a new question declined what still waited
+        (await Admin.GetFromJsonAsync<AiSessionDetailDto>($"/api/v1/ai/sessions/{session}", Ct))!.Messages
+            .Where(m => m.Pending.Count > 0).Select(m => m.Decision).ShouldBe([AiDecisions.Declined, null]);
     }
 
     [Fact]
@@ -98,23 +103,24 @@ public sealed class AiTests(AiApp app) : IAsyncLifetime
 
         var waiting = Done(await AiApp.AskAsync(Admin, session, "delete old"));
 
-        waiting.Pending.ShouldHaveSingleItem().ShouldBe(new AiPendingToolDto("delete_note", """{"title":"old"}"""));
+        waiting.Pending.ShouldHaveSingleItem().ShouldBe(new AiPendingToolDto("delete_note", """{"title":"old"}""", true));
         waiting.Decision.ShouldBeNull();
         waiting.ToolCalls.Select(c => c.Tool).ShouldBe(["list_notes"]);
         (await app.InDbAsync(db => db.Set<Note>().CountAsync(Ct))).ShouldBe(2);
-        app.Claude.Requests.First()["tools"]!.AsArray().Single(t => t!["name"]!.GetValue<string>() == "delete_note")!["description"]!
-            .GetValue<string>().ShouldContain("confirmed");
 
+        // the arguments wait encrypted; only the masked display copy is readable
+        var stored = await app.InDbAsync(db => db.Set<Sessions.AiChatMessage>().Where(m => m.Pending != null).Select(m => m.Pending!).SingleAsync(Ct));
+        Sessions.AiPendingProtector.Read(stored).Calls.ShouldNotContain("old");
+
+        // two confirmations at once: one decides and runs, the call never runs twice
         app.Claude.Text("Deleted old.");
-        var events = await AiApp.StreamAsync(Admin, session, new AiConfirmRequest(true), "confirm");
+        var first = Admin.PostAsJsonAsync($"/api/v1/ai/sessions/{session}/confirm", new AiConfirmRequest(true), Ct);
+        var second = Admin.PostAsJsonAsync($"/api/v1/ai/sessions/{session}/confirm", new AiConfirmRequest(true), Ct);
+        var bodies = await Task.WhenAll((await Task.WhenAll(first, second)).Select(r => r.Content.ReadAsStringAsync(Ct)));
 
-        events.Single(e => e.Type == AiStreamEvent.Tool).ToolCall!.Tool.ShouldBe("delete_note");
-        Done(events).Text.ShouldBe("Deleted old.");
+        bodies.Count(b => b.Contains("Deleted old.")).ShouldBe(1);
         (await app.InDbAsync(db => db.Set<Note>().Select(n => n.Title).ToListAsync(Ct))).ShouldBe(["older"]);
-        // the model sees its calls and their results; the decided round adds no writes of its own
-        var resumed = app.Claude.Requests.Last()["messages"]!.AsArray();
-        resumed[^2]!["content"]!.AsArray().Select(c => c!["name"]?.GetValue<string>()).ShouldBe(["delete_note", "list_notes"]);
-        resumed[^1]!["content"]!.AsArray().Select(c => c!["is_error"]?.GetValue<bool>()).ShouldBe([false, false]);
+        (await app.InDbAsync(db => db.Set<AiToolCall>().CountAsync(c => c.Tool == "delete_note", Ct))).ShouldBe(1);
         (await Admin.PostAsJsonAsync($"/api/v1/ai/sessions/{session}/confirm", new AiConfirmRequest(true), Ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
         (await Admin.GetFromJsonAsync<AiSessionDetailDto>($"/api/v1/ai/sessions/{session}", Ct))!.Messages[1].Decision.ShouldBe(AiDecisions.Approved);
 
@@ -124,21 +130,21 @@ public sealed class AiTests(AiApp app) : IAsyncLifetime
         await AiApp.StreamAsync(Admin, session, new AiConfirmRequest(false), "confirm");
         (await app.InDbAsync(db => db.Set<Note>().CountAsync(Ct))).ShouldBe(1);
         app.Claude.Requests.Last()["messages"]!.AsArray()[^1]!["content"]!.AsArray().Single()!["is_error"]!.GetValue<bool>().ShouldBeTrue();
+        (await Admin.PostAsJsonAsync($"/api/v1/ai/sessions/{session}/confirm", new AiConfirmRequest(true), Ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
 
     [Fact]
     public async Task Cut_off_turns_run_no_tools_and_provider_failures_keep_the_done_calls()
     {
         var session = await AiApp.NewSessionAsync(Admin);
-        app.Claude.ToolUseStopping("max_tokens", ("add_note", new JsonObject { ["title"] = "half" }));
-        Done(await AiApp.AskAsync(Admin, session, "add half")).ToolCalls.ShouldBeEmpty();
+        app.Claude.ToolUseStopping("max_tokens", ("list_notes", new JsonObject()));
+        Done(await AiApp.AskAsync(Admin, session, "list half")).ToolCalls.ShouldBeEmpty();
 
-        // the second round fails: the note is already saved and the answer says so
-        app.Claude.ToolUse(("add_note", new JsonObject { ["title"] = "kept" }));
-        var answer = Done(await AiApp.AskAsync(Admin, session, "add kept"));
+        // the second round fails: the done call is listed and the answer says so
+        app.Claude.ToolUse(("list_notes", new JsonObject()));
+        var answer = Done(await AiApp.AskAsync(Admin, session, "list them"));
         answer.Text.ShouldContain("already carried out");
         answer.ToolCalls.Single().Succeeded.ShouldBeTrue();
-        (await app.InDbAsync(db => db.Set<Note>().Select(n => n.Title).ToListAsync(Ct))).ShouldBe(["kept"]);
     }
 
     [Fact]
@@ -152,7 +158,7 @@ public sealed class AiTests(AiApp app) : IAsyncLifetime
     public async Task Tools_the_user_lacks_rights_for_are_not_offered_nor_run()
     {
         var chatter = app.As(await UserAsync(AiPermissions.Chat), _setup.TenantId);
-        (await chatter.GetFromJsonAsync<AiToolDto[]>("/api/v1/ai/tools", Ct))!.Select(t => t.Name).ShouldBe(["list_notes", "count_notes", "list_data_sets", "query_data"], ignoreOrder: true);
+        (await chatter.GetFromJsonAsync<AiToolDto[]>("/api/v1/ai/tools", Ct))!.Select(t => t.Name).ShouldBe(["list_notes", "count_notes", "pin_notes", "list_data_sets", "query_data"], ignoreOrder: true);
         app.Claude.ToolUse(("add_note", new JsonObject { ["title"] = "sneaky" }));
         app.Claude.Text("I could not add it.");
 
@@ -160,7 +166,7 @@ public sealed class AiTests(AiApp app) : IAsyncLifetime
 
         answer.ToolCalls.Single().Error!.ShouldContain("Unknown tool");
         app.Claude.Requests.First()["tools"]!.AsArray().Select(t => t!["name"]!.GetValue<string>())
-            .ShouldBe(["list_notes", "count_notes", "list_data_sets", "query_data"], ignoreOrder: true);
+            .ShouldBe(["list_notes", "count_notes", "pin_notes", "list_data_sets", "query_data"], ignoreOrder: true);
         (await app.InDbAsync(db => db.Set<Note>().CountAsync(Ct))).ShouldBe(0);
         (await chatter.GetAsync("/api/v1/ai/tool-calls", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await chatter.GetFromJsonAsync<AiStatusDto>("/api/v1/ai/status", Ct))!.Available.ShouldBeTrue();
@@ -224,7 +230,8 @@ public sealed class AiTests(AiApp app) : IAsyncLifetime
         listed.Select(t => t.Name).ShouldNotContain("set_grants");
         listed.Select(t => t.Name).ShouldNotContain("create_api_key");
         listed.Single(t => t.Name == "delete_note").ProtocolTool.Annotations!.DestructiveHint.ShouldBe(true);
-        listed.Single(t => t.Name == "add_note").ProtocolTool.Annotations!.DestructiveHint.ShouldBe(false);
+        listed.Single(t => t.Name == "add_note").ProtocolTool.Annotations!.ShouldSatisfyAllConditions(a => a.DestructiveHint.ShouldBe(true), a => a.ReadOnlyHint.ShouldBe(false));
+        listed.Single(t => t.Name == "list_notes").ProtocolTool.Annotations!.ReadOnlyHint.ShouldBe(true);
         var added = await client.CallToolAsync("add_note", new Dictionary<string, object?> { ["title"] = "From MCP" }, cancellationToken: Ct);
         added.IsError.ShouldNotBe(true);
         var failed = await client.CallToolAsync("fail_note", new Dictionary<string, object?> { ["title"] = "x" }, cancellationToken: Ct);

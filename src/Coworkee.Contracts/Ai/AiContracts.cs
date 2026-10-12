@@ -36,7 +36,8 @@ public sealed record AiSessionDetailDto(Guid Id, string Title, DateTimeOffset Up
 public sealed record AiMessageDto(
     Guid Id, string Role, string Text, IReadOnlyList<AiToolCallDto> ToolCalls, IReadOnlyList<AiPendingToolDto> Pending, string? Decision, DateTimeOffset At);
 
-public sealed record AiPendingToolDto(string Tool, string Input);
+/// <summary>A tool call waiting for the user; <see cref="Input"/> has secret looking values masked.</summary>
+public sealed record AiPendingToolDto(string Tool, string Input, bool Destructive = true);
 
 public sealed record AiSessionRequest(string? Title);
 

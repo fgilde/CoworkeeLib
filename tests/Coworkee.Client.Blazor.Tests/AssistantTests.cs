@@ -114,6 +114,7 @@ public sealed class AssistantTests : ClientTestBase
             .Returns(Stream(Task.CompletedTask, new AiStreamEvent(AiStreamEvent.Done, Message: new AiMessageDto(Guid.NewGuid(), "assistant", "Deleted.", [], [], null, DateTimeOffset.Now))));
         var window = Render<AssistantWindow>();
         window.WaitForAssertion(() => window.Find("[data-testid='assistant-confirm']").TextContent.ShouldContain("delete_note"));
+        window.Find("[data-testid='assistant-confirm'] [data-destructive='true']").ShouldNotBeNull();
 
         _api.GetSessionAsync(session.Id, default).ReturnsForAnyArgs(new AiSessionDetailDto(session.Id, session.Title, session.UpdatedAt,
             [waiting with { Decision = AiDecisions.Approved }, new AiMessageDto(Guid.NewGuid(), "assistant", "Deleted.", [], [], null, DateTimeOffset.Now)]));
