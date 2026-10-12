@@ -75,8 +75,10 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--sign-in-media` | `signInMedia` | Datei oder http(s)-Adresse | | Bild oder Video neben dem Anmeldeformular; eine Datei wird nach `wwwroot/media` des Web-Clients kopiert |
 | `--sign-in-media-side` | `signInMediaSide` | `Left`, `Right` | `Left` | Seite des Mediums |
 | `--mapping` | `mapping` | `manual`, `mapperly` | `manual` | DTO-Mapping erzeugter Entities, siehe [DTOs und Mapping](../fundamentals/dtos.md) |
-| `--languages` | `languages` | `en`, `de`, durch Kommas getrennt (in einer Spezifikation ein Array) | alle mitgelieferten | Sprachen von Anfang an, aus denen, für die die Bibliothek Texte mitbringt; weitere fügen Administratoren auf der Seite *Sprachen* hinzu |
-| `--default-language` | `defaultLanguage` | `en`, `de` | `en` | Sprache der Benutzer, die keine gewählt haben; muss unter `languages` sein |
+| `--languages` | `languages` | `en`, `de`, `fr`, `es`, `it`, `pt`, `pt-BR`, `nl`, `pl`, `ja`, `zh-Hans` und 25 weitere (`coworkee options`), durch Kommas getrennt (in einer Spezifikation ein Array) | `en`, `de` | Sprachen von Anfang an; die ohne mitgelieferte Texte werden beim ersten Start [maschinell übersetzt](../modules/localization.md#maschinelle-ubersetzung) |
+| `--default-language` | `defaultLanguage` | eine der Sprachen | `en` | Sprache der Benutzer, die keine gewählt haben; muss unter `languages` sein |
+| `--translation-provider` | `translationProvider` | `libreTranslate`, `myMemory`, `deepL`, `azure`, `google`, `ai`, `none` | `libreTranslate` | [Übersetzungsdienst](../modules/localization.md#maschinelle-ubersetzung); `libreTranslate` startet einen Container mit den Modellen der Sprachen, die mit Schlüssel lesen `Parameters:translation-key` (und `translation-region`) aus den User Secrets des AppHosts. `none` geht nur mit den mitgelieferten Sprachen, `ai` braucht den KI-Assistenten |
+| `--translation-source` | `translationSource` | `en`, `de` | `en` | Sprache, von der aus übersetzt wird |
 | `--color-mode` | `colorMode` | `system`, `light`, `dark` | `system` | Standard-Farbmodus, angelegt als systemweite Einstellung `Theme.Mode` |
 | `--registration` | `registration` | bool | `true` | Selbstregistrierung auf der Anmeldeseite, angelegt als Einstellung `Account.AllowRegistration` |
 | `--github-actions` | `githubActions` | bool | `false` | `.github/workflows/ci.yml`: Build und Tests bei jedem Push und Pull Request |

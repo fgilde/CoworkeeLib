@@ -74,9 +74,15 @@ Presets for the app type set the modules and the infrastructure, each with its t
 - **Redis**: SignalR backplane, shared presence, caches and sign-in sessions across instances; without it everything stays in each process, which is fine for one instance.
 - **Grafana** and **WebDataStudio**: dashboards over the telemetry of every service and the app database, and the database in the browser, both with the administrator's sign-in ([Grafana and WebDataStudio](../hosting/observability.md)).
 
-Then every other option of `coworkee options` can be changed: description, pros, cons, when to use it, the package and the switch of `coworkee new`. *General* also holds the languages (check boxes for the shipped ones, none checked offers all), the default language, the color mode and self registration; *Tooling* adds a GitHub Actions workflow and a dev container. The panel on the right lists what the solution will contain: projects, the containers of the Aspire app host (PostgreSQL or SQL Server, Redis, Mailpit, Elasticsearch, RabbitMQ, Azurite, Keycloak, Ollama, Grafana with Prometheus, Loki, Tempo and the collector, WebDataStudio) and the Coworkee packages.
+Then every other option of `coworkee options` can be changed: description, pros, cons, when to use it, the package and the switch of `coworkee new`. *General* also holds the color mode and self registration; *Tooling* adds a GitHub Actions workflow and a dev container. The panel on the right lists what the solution will contain: projects, the containers of the Aspire app host (PostgreSQL or SQL Server, Redis, Mailpit, Elasticsearch, RabbitMQ, Azurite, Keycloak, Ollama, LibreTranslate, Grafana with Prometheus, Loki, Tempo and the collector, WebDataStudio) and the Coworkee packages.
 
 ![Architecture](../assets/screenshots/studio-architecture-dark.webp)
+
+### Languages
+
+The languages of the app in a grid you can search by code, own or English name; English and German ship with Coworkee, every other one is [machine translated](../modules/localization.md#machine-translation) at the first start. Below: the default language (one of the chosen), the source language of the translations and the translation services as cards with what each costs, where the texts go and what it needs. LibreTranslate is free, needs no account and runs as a container of the app host; DeepL, Azure and Google take their key from the user secrets (`Parameters:translation-key`), AI uses the model of the assistant.
+
+![Languages](../assets/screenshots/studio-languages-light.webp)
 
 ### Entities
 

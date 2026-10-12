@@ -74,9 +74,15 @@ Vorlagen für den App-Typ setzen Module und Infrastruktur, jede mit ihrem Kompro
 - **Redis**: SignalR-Backplane, gemeinsame Anwesenheit, Caches und Anmeldesitzungen über Instanzen hinweg; ohne bleibt alles im jeweiligen Prozess, was für eine Instanz reicht.
 - **Grafana** und **WebDataStudio**: Dashboards über die Telemetrie jedes Dienstes und die App-Datenbank sowie die Datenbank im Browser, beide mit der Anmeldung des Administrators ([Grafana und WebDataStudio](../hosting/observability.md)).
 
-Danach lässt sich jede weitere Option von `coworkee options` ändern: Beschreibung, Vor- und Nachteile, wann sie passt, das Paket und der Schalter von `coworkee new`. *Allgemein* enthält auch die Sprachen (Kästchen für die mitgelieferten, keines angekreuzt bietet alle an), die Standardsprache, den Farbmodus und die Selbstregistrierung; *Werkzeuge* legt einen GitHub-Actions-Workflow und einen Dev-Container an. Das Panel rechts zeigt, was die Solution enthalten wird: Projekte, die Container des Aspire-AppHosts (PostgreSQL oder SQL Server, Redis, Mailpit, Elasticsearch, RabbitMQ, Azurite, Keycloak, Ollama, Grafana mit Prometheus, Loki, Tempo und Collector, WebDataStudio) und die Coworkee-Pakete.
+Danach lässt sich jede weitere Option von `coworkee options` ändern: Beschreibung, Vor- und Nachteile, wann sie passt, das Paket und der Schalter von `coworkee new`. *Allgemein* enthält auch den Farbmodus und die Selbstregistrierung; *Werkzeuge* legt einen GitHub-Actions-Workflow und einen Dev-Container an. Das Panel rechts zeigt, was die Solution enthalten wird: Projekte, die Container des Aspire-AppHosts (PostgreSQL oder SQL Server, Redis, Mailpit, Elasticsearch, RabbitMQ, Azurite, Keycloak, Ollama, LibreTranslate, Grafana mit Prometheus, Loki, Tempo und Collector, WebDataStudio) und die Coworkee-Pakete.
 
 ![Architektur](../assets/screenshots/studio-architecture-light-de.webp)
+
+### Sprachen
+
+Die Sprachen der App in einem Raster, durchsuchbar nach Code, eigenem oder englischem Namen; Englisch und Deutsch liefert Coworkee mit, jede andere wird beim ersten Start [maschinell übersetzt](../modules/localization.md#maschinelle-ubersetzung). Darunter: die Standardsprache (eine der gewählten), die Ausgangssprache der Übersetzungen und die Übersetzungsdienste als Karten mit dem, was jeder kostet, wohin die Texte gehen und was er braucht. LibreTranslate ist kostenlos, braucht kein Konto und läuft als Container des AppHosts; DeepL, Azure und Google nehmen ihren Schlüssel aus den User Secrets (`Parameters:translation-key`), KI nutzt das Modell des Assistenten.
+
+![Sprachen](../assets/screenshots/studio-languages-light-de.webp)
 
 ### Entities
 

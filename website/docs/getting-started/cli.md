@@ -75,8 +75,10 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--sign-in-media` | `signInMedia` | file or http(s) address | | Image or video next to the sign-in form; a file is copied to `wwwroot/media` of the web client |
 | `--sign-in-media-side` | `signInMediaSide` | `Left`, `Right` | `Left` | Side of the media |
 | `--mapping` | `mapping` | `manual`, `mapperly` | `manual` | DTO mapping of generated entities, see [DTOs and mapping](../fundamentals/dtos.md) |
-| `--languages` | `languages` | `en`, `de`, comma separated (an array in a spec) | all shipped | Languages offered from the start, from those the library ships texts for; administrators add more on the *Languages* page |
-| `--default-language` | `defaultLanguage` | `en`, `de` | `en` | Language of users who chose none; must be one of `languages` |
+| `--languages` | `languages` | `en`, `de`, `fr`, `es`, `it`, `pt`, `pt-BR`, `nl`, `pl`, `ja`, `zh-Hans` and 25 more (`coworkee options`), comma separated (an array in a spec) | `en`, `de` | Languages offered from the start; those without shipped texts are [machine translated](../modules/localization.md#machine-translation) at the first start |
+| `--default-language` | `defaultLanguage` | one of the languages | `en` | Language of users who chose none; must be one of `languages` |
+| `--translation-provider` | `translationProvider` | `libreTranslate`, `myMemory`, `deepL`, `azure`, `google`, `ai`, `none` | `libreTranslate` | [Translation service](../modules/localization.md#machine-translation); `libreTranslate` runs a container with the models of the languages, the keyed ones read `Parameters:translation-key` (and `translation-region`) from the user secrets of the app host. `none` needs the shipped languages only, `ai` the AI assistant |
+| `--translation-source` | `translationSource` | `en`, `de` | `en` | Language translations start from |
 | `--color-mode` | `colorMode` | `system`, `light`, `dark` | `system` | Default color mode, seeded as system wide setting `Theme.Mode` |
 | `--registration` | `registration` | bool | `true` | Self registration on the sign-in page, seeded as setting `Account.AllowRegistration` |
 | `--github-actions` | `githubActions` | bool | `false` | `.github/workflows/ci.yml`: build and tests on every push and pull request |
