@@ -61,6 +61,47 @@ public sealed class ApiKeyTests(AiApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_key_gets_at_most_what_the_session_has_now_within_its_active_role()
+    {
+        var userId = await app.UserAsync(Admin);
+        var user = app.As(userId, _setup.TenantId);
+        var writer = await AiApp.RoleAsync(Admin, ApiKeyPermissions.Create, AiPermissions.Chat, NotePermissions.Write);
+        var reader = await AiApp.RoleAsync(Admin, ApiKeyPermissions.Create, AiPermissions.Chat);
+        await AiApp.SetRolesAsync(Admin, userId, writer, reader);
+        (await user.PutAsJsonAsync("/api/v1/identity/roles/me/active", new SetActiveRoleRequest(reader), Ct)).EnsureSuccessStatusCode();
+
+        (await user.GetFromJsonAsync<PermissionGroupDto[]>("/api/v1/identity/api-keys/scopes", Ct))!.SelectMany(g => g.Permissions).Select(p => p.Name)
+            .ShouldNotContain(NotePermissions.Write);
+        (await TryCreateAsync(user, DateTimeOffset.UtcNow.AddDays(30), NotePermissions.Write)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await TryCreateAsync(user, DateTimeOffset.UtcNow.AddDays(30), AiPermissions.Chat)).StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task A_user_has_a_limited_number_of_active_keys_and_creates_them_slowly()
+    {
+        var user = app.As(await app.UserAsync(Admin, ApiKeyPermissions.Create, AiPermissions.Chat), _setup.TenantId);
+        var keys = new List<CreatedApiKeyDto>();
+        for (var i = 0; i < 4; i++)
+        {
+            keys.Add(await CreateAsync(user, AiPermissions.Chat));
+        }
+
+        (await TryCreateAsync(user, DateTimeOffset.UtcNow.AddDays(30), AiPermissions.Chat)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await user.PostAsync($"/api/v1/identity/api-keys/{keys[0].Key.Id}/revoke", null, Ct)).EnsureSuccessStatusCode();
+        await CreateAsync(user, AiPermissions.Chat);
+
+        var hasty = app.As(await app.UserAsync(Admin, ApiKeyPermissions.Create, AiPermissions.Chat), _setup.TenantId);
+        var answers = new List<HttpStatusCode>();
+        for (var i = 0; i < 9; i++)
+        {
+            answers.Add((await TryCreateAsync(hasty, DateTimeOffset.UtcNow.AddDays(-1), AiPermissions.Chat)).StatusCode);
+        }
+
+        answers[..8].ShouldAllBe(s => s == HttpStatusCode.BadRequest);
+        answers[8].ShouldBe(HttpStatusCode.TooManyRequests);
+    }
+
+    [Fact]
     public async Task Revoked_expired_unknown_and_deactivated_keys_are_refused_at_once()
     {
         var userId = await app.UserAsync(Admin, ApiKeyPermissions.Create, AiPermissions.Chat);

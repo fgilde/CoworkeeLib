@@ -11,6 +11,9 @@ public sealed class CoworkeeRateLimitOptions
     /// <summary>Assistant chat, tools and MCP.</summary>
     public const string Ai = "ai";
 
+    /// <summary>Creating API keys.</summary>
+    public const string ApiKeys = "apiKeys";
+
     /// <summary>Not applied by the built-in modules; for application endpoints that take files.</summary>
     public const string Upload = "upload";
 
@@ -24,6 +27,7 @@ public sealed class CoworkeeRateLimitOptions
     {
         [Auth] = new() { PermitLimit = 60 },
         [Ai] = new() { PermitLimit = 30 },
+        [ApiKeys] = new() { PermitLimit = 10 },
         [Upload] = new() { PermitLimit = 120 },
     };
 }

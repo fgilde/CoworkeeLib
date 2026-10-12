@@ -49,6 +49,8 @@ public sealed class AiApp : DatabaseFixture
             ["Coworkee:Database:Provider"] = Provider,
             ["Coworkee:Settings:Defaults:Ai.Enabled"] = "true",
             ["Coworkee:Settings:Defaults:Ai.ApiKey"] = "test-key",
+            ["Coworkee:ApiKeys:MaxActivePerUser"] = "4",
+            ["Coworkee:RateLimiting:Policies:apiKeys:PermitLimit"] = "8",
         });
         builder.AddCoworkee<TestAiModule>();
         builder.Services.AddTestAuthentication();

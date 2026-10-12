@@ -44,6 +44,7 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
         services.AddScoped<Users.Profile.UserChanges>();
         services.AddScoped<Application.Privacy.IPersonalDataContributor, Users.Privacy.IdentityPersonalData>();
         services.AddSingleton<IModelContributor, ApiKeys.ApiKeyModel>();
+        services.Configure<ApiKeys.ApiKeyOptions>(context.Configuration.GetSection(ApiKeys.ApiKeyOptions.Section));
         services.AddScoped<Application.Privacy.IPersonalDataContributor, ApiKeys.ApiKeyPersonalData>();
         services.AddAuthentication()
             .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, ApiKeys.ApiKeyAuthenticationHandler>(Contracts.Identity.ApiKeyDefaults.Scheme, null);
