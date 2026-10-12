@@ -57,7 +57,7 @@ public sealed partial class ReviewStep(MainViewModel main) : StepViewModel(main)
             new(L.Get("Event bus"), values["eventBus"] ?? "none"),
             new(L.Get("Storage"), values["storage"] ?? "fileSystem"),
             new(L.Get("Database"), values["database"] ?? "postgres"),
-            new(L.Get("AI provider"), values["ai"] == "true" ? values["aiProvider"] ?? "anthropic" : "-"),
+            new(L.Get("AI provider"), values["ai"] == "true" ? AiText(values) : "-"),
             new(L.Get("Redis"), YesNo(values["redis"])),
             new(L.Get("Grafana"), YesNo(values["grafana"])),
             new(L.Get("WebDataStudio"), YesNo(values["webDataStudio"])),
@@ -75,4 +75,7 @@ public sealed partial class ReviewStep(MainViewModel main) : StepViewModel(main)
     public override void OnShown() => Refresh();
 
     private static string YesNo(string? value) => L.Get(value == "true" ? "Yes" : "No");
+
+    private static string AiText(IReadOnlyDictionary<string, string?> values) =>
+        string.Join(" · ", new[] { Contracts.Ai.AiProviderCatalog.Find(values["aiProvider"])?.Name ?? values["aiProvider"], values["aiModel"], values["aiEndpoint"] }.OfType<string>());
 }

@@ -26,26 +26,55 @@ Der Request-Typ wird zum Eingabeschema des Werkzeugs, das `Result` zu seiner Aus
 
 ## Anbieter
 
-Der Assistent spricht über `IChatClient` aus `Microsoft.Extensions.AI` mit dem Modell, mit denselben Werkzeugen, Regeln und demselben Audit für jeden Anbieter. Die Einstellungen sind nur global (Host-Administratoren), der Schlüssel ist eine geheime Einstellung: Er wird verschlüsselt gespeichert und nie an den Browser geschickt.
+Der Assistent spricht über `IChatClient` aus `Microsoft.Extensions.AI` mit dem Modell, mit denselben Werkzeugen, Regeln und demselben Audit für jeden Anbieter. Die meisten Anbieter sprechen die OpenAI-Chat-API und unterscheiden sich nur in Adresse, Schlüssel und Modellen; der Katalog (`AiProviderCatalog` in `Coworkee.Contracts.Ai`) kennt sie:
+
+| Anbieter | Id | Braucht | Standardmodell | Schlüssel holen | Hinweise |
+|---|---|---|---|---|---|
+| Anthropic | `anthropic` | Schlüssel | `claude-opus-5-5` | [console.anthropic.com](https://console.anthropic.com/settings/keys) | die zuverlässigste Werkzeugnutzung |
+| OpenAI | `openAI` | Schlüssel | `gpt-5` | [platform.openai.com](https://platform.openai.com/api-keys) | GPT-Modelle (ChatGPT) |
+| Azure OpenAI | `azureOpenAI` | Endpunkt, Deployment, Schlüssel | (das Deployment) | [Azure-Portal](https://portal.azure.com/#view/Microsoft_Azure_ProjectOxford/CognitiveServicesHub/~/OpenAI) | Daten bleiben in Ihrem Azure-Mandanten; v1-API von Azure OpenAI |
+| Google Gemini | `gemini` | Schlüssel | `gemini-2.5-flash` | [aistudio.google.com](https://aistudio.google.com/apikey) | OpenAI-kompatible API von Google; Gratis-Kontingent |
+| OpenRouter | `openRouter` | Schlüssel | `anthropic/claude-sonnet-4.5` | [openrouter.ai/keys](https://openrouter.ai/keys) | Hunderte Modelle hinter einem Schlüssel, `:free`-Modelle kosten nichts |
+| Mistral | `mistral` | Schlüssel | `mistral-large-latest` | [console.mistral.ai](https://console.mistral.ai/api-keys) | gehostet in der EU; kostenloser Experiment-Plan |
+| Groq | `groq` | Schlüssel | `openai/gpt-oss-120b` | [console.groq.com](https://console.groq.com/keys) | offene Modelle mit hoher Geschwindigkeit; Gratis-Kontingent |
+| DeepSeek | `deepSeek` | Schlüssel | `deepseek-chat` | [platform.deepseek.com](https://platform.deepseek.com/api_keys) | niedrige Preise; Server in China |
+| xAI Grok | `xai` | Schlüssel | `grok-4` | [console.x.ai](https://console.x.ai) | Grok-Modelle |
+| Together AI | `together` | Schlüssel | `meta-llama/Llama-3.3-70B-Instruct-Turbo` | [api.together.ai](https://api.together.ai/settings/api-keys) | offene Modelle in der Cloud |
+| Fireworks AI | `fireworks` | Schlüssel | `accounts/fireworks/models/llama-v3p3-70b-instruct` | [fireworks.ai](https://fireworks.ai/account/api-keys) | offene Modelle in der Cloud |
+| Ollama | `ollama` | nichts | `llama3.2` | [ollama.com](https://ollama.com/search) | lokal und offline; kleine Modelle rufen Werkzeuge weniger zuverlässig auf |
+| LM Studio | `lmStudio` | ein geladenes Modell | (das geladene Modell) | [lmstudio.ai](https://lmstudio.ai) | lokal; den Server der App LM Studio starten (`http://localhost:1234/v1`) |
+| Eigener Server | `openAICompatible` | Basisadresse, Modell | | | jeder Server, der die OpenAI-Chat-API spricht: Gateways, vLLM, LiteLLM, ein Firmen-Proxy |
+
+Anbieter ohne Werkzeugaufrufe (etwa Perplexity) passen nicht: Der Assistent arbeitet über Werkzeuge.
+
+### Die KI-Seite
+
+Host-Administratoren mit `Settings.Manage` richten ihn unter **Administration > System > KI** (`/admin/ai`) ein: Assistent einschalten, eine Anbieter-Karte wählen, Adresse, Schlüssel und Modell eingeben und speichern. Änderungen gelten ab der nächsten Nachricht, ohne Neustart.
+
+![KI-Seite](../assets/screenshots/ai-admin-light.webp){ .shot }
+
+- **Schlüssel**: verschlüsselt gespeichert und nie zurück an den Browser geschickt; die Seite zeigt ihn maskiert mit *Ersetzen* und *Entfernen*. Wechseln Anbieter oder Adresse, entfällt der gespeicherte Schlüssel beim Speichern, damit er nie einen anderen Server erreicht.
+- **Modelle laden** fragt den Anbieter mit dem eingegebenen Schlüssel nach seinen Modellen (`/models` der OpenAI-kompatiblen APIs, `/v1/models` von Anthropic, `/api/tags` von Ollama); jeder andere Name lässt sich eintippen.
+- **Verbindung testen** schickt einen kurzen Prompt und eine Werkzeugprobe und zeigt Latenz, Antwort und ob das Modell Werkzeuge aufruft, oder den Fehler des Anbieters.
+- **Erweitert**: Temperatur, maximale Ausgabe-Tokens, Werkzeugrunden pro Nachricht, zusätzliche Header (`HTTP-Referer` und `X-Title` nennen Ihre App bei OpenRouter) und ein Schlüssel-Header für Server, die den Schlüssel in einem anderen Header als `Authorization: Bearer` erwarten (etwa `api-key`).
+
+![Verbindungstest](../assets/screenshots/ai-admin-test-dark.webp){ .shot }
+
+### Einstellungen
+
+Die Seite schreibt die globalen KI-Einstellungen; sie haben auch Standardwerte in der Konfiguration, etwa aus dem App-Host oder aus Umgebungsvariablen:
 
 | Einstellung | |
 |---|---|
 | `Ai.Enabled` | an oder aus |
-| `Ai.Provider` | `anthropic` (Standard), `openAI`, `azureOpenAI`, `ollama`, `openAICompatible` |
-| `Ai.Model` | leer: der Standard des Anbieters (`claude-opus-5-5`, `gpt-5`, `llama3.2`); Azure OpenAI: der Deployment-Name |
-| `Ai.Endpoint` | Azure-OpenAI-Ressource (`https://acme.openai.azure.com`), Ollama-Adresse (Standard `http://localhost:11434`) oder die Basisadresse eines OpenAI-kompatiblen Servers (`http://localhost:1234/v1`) |
-| `Ai.ApiKey` | API-Schlüssel (geheim); Ollama und OpenAI-kompatible Server kommen ohne aus |
+| `Ai.Provider` | eine Anbieter-Id der Tabelle oben, standardmäßig `anthropic` |
+| `Ai.Model` | leer: der Standard des Anbieters; Azure OpenAI: der Deployment-Name |
+| `Ai.Endpoint` | leer: die Adresse des Anbieters; Azure-OpenAI-Ressource (`https://acme.openai.azure.com`), Ollama- oder LM-Studio-Adresse oder die Basisadresse eines eigenen Servers |
+| `Ai.ApiKey` | API-Schlüssel (geheim) |
+| `Ai.Headers` | zusätzliche Header, ein `Name: Wert` pro Zeile |
+| `Ai.AuthHeader` | Header, der den Schlüssel statt `Authorization: Bearer` trägt |
+| `Ai.Temperature`, `Ai.MaxOutputTokens` | leer: die Standards des Modells |
 | `Ai.MaxToolRounds` | wie viele Werkzeugrunden eine Antwort dauern darf |
-
-| Anbieter | Braucht | Gut für |
-|---|---|---|
-| `anthropic` | Schlüssel | die zuverlässigste Werkzeugnutzung |
-| `openAI` | Schlüssel | GPT-Modelle |
-| `azureOpenAI` | Endpunkt, Deployment, Schlüssel | Daten, die in Ihrem Azure-Mandanten bleiben müssen; nutzt die v1-API von Azure OpenAI |
-| `ollama` | nichts | lokales Ausprobieren, auch offline; kleine Modelle rufen Werkzeuge weniger zuverlässig auf |
-| `openAICompatible` | Endpunkt, Modell | Gateways, vLLM, LM Studio, LiteLLM und andere Server, die die OpenAI-Chat-API sprechen |
-
-Wie jede Einstellung haben sie Standardwerte in der Konfiguration, etwa aus dem AppHost oder aus Umgebungsvariablen:
 
 ```json
 {
@@ -62,7 +91,9 @@ Wie jede Einstellung haben sie Standardwerte in der Konfiguration, etwa aus dem 
 }
 ```
 
-`coworkee new --ai-provider ollama` erzeugt einen AppHost mit einem Ollama-Container, der `llama3.2` lädt, und schaltet den Assistenten ein. Für die anderen Anbieter nimmt der AppHost Schlüssel, Endpunkt und Modell aus seinen User-Secrets, sofern vorhanden:
+### Neue Apps
+
+`coworkee new` nimmt Anbieter, Modell und Adresse (`--ai-provider`, `--ai-model`, `--ai-endpoint`, siehe [CLI](../getting-started/cli.md)); das Studio bietet dasselbe in seiner KI-Karte. Der Schlüssel kommt nie in die Spezifikation oder auf die Kommandozeile: Der App-Host liest ihn, und wahlweise Endpunkt und Modell, aus seinen User Secrets:
 
 ```bash
 dotnet user-secrets set Parameters:ai-apikey sk-... --project src/Shop.AppHost
@@ -70,15 +101,32 @@ dotnet user-secrets set Parameters:ai-endpoint https://acme.openai.azure.com --p
 dotnet user-secrets set Parameters:ai-model gpt-5-assistant --project src/Shop.AppHost
 ```
 
-Ein anderer Modelldienst (Gemini, Bedrock, ein Firmen-Gateway) kommt über `IAiChatClientFactory` dazu:
+Mit Schlüssel startet der Assistent eingeschaltet. `--ai-provider ollama` fügt einen Ollama-Container hinzu, der das Modell lädt; `lmStudio` schaltet den Assistenten ohne Schlüssel ein und spricht mit LM Studio auf demselben Rechner.
+
+### Im Code
+
+`AiConnections` liest die aktuelle Verbindung und erzeugt Chat-Clients darauf, für eigene Funktionen (Zusammenfassungen, Übersetzungen):
 
 ```csharp
-services.AddSingleton<IAiChatClientFactory, GeminiChatClients>();
-
-internal sealed class GeminiChatClients : IAiChatClientFactory
+public sealed class Summaries(AiConnections ai)
 {
-    public IChatClient Create(AiConnection connection) => new GeminiChatClient(connection.ApiKey!, connection.EffectiveModel ?? "gemini-2.5-pro");
+    public async Task<string?> SummarizeAsync(string text, CancellationToken ct)
+    {
+        using var client = await ai.CreateClientAsync(ct); // null, solange der Assistent aus oder unvollständig ist
+        return client is null ? null : (await client.GetResponseAsync($"Summarize: {text}", cancellationToken: ct)).Text;
+    }
 }
 ```
 
-Die erzeugten Service-Defaults nehmen den HTTP-Client `Coworkee.Ai` aus dem Standard-Resilience-Handler: Antworten dauern oft länger als dessen Timeouts, und die Anbieter-Clients wiederholen selbst.
+Ein anderer Modelldienst (Bedrock, ein Gateway mit eigenem SDK) kommt über `IAiChatClientFactory` hinein:
+
+```csharp
+services.AddSingleton<IAiChatClientFactory, BedrockChatClients>();
+
+internal sealed class BedrockChatClients : IAiChatClientFactory
+{
+    public IChatClient Create(AiConnection connection) => new BedrockChatClient(connection.EffectiveModel!);
+}
+```
+
+Die erzeugten Service-Defaults nehmen den HTTP-Client `Coworkee.Ai` aus dem Standard-Resilience-Handler: Antworten dauern oft länger als seine Timeouts, und die Clients der Anbieter wiederholen selbst.

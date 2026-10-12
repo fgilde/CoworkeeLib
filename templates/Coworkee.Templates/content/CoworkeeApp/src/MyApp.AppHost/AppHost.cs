@@ -78,16 +78,27 @@ app.Modules.Add("Coworkee.EventBus.RabbitMq", (_, service) => service.WithRefere
 #endif
 #if (ai)
 
-// provider defaults of the AI settings; key, endpoint and model optionally from the user secrets (Parameters:ai-apikey, ai-endpoint, ai-model)
+// the AI provider of the spec; key, endpoint and model from the user secrets (Parameters:ai-apikey, ai-endpoint, ai-model) take precedence
+string aiModel = "COWORKEE_AI_MODEL", aiEndpoint = "COWORKEE_AI_ENDPOINT";
 var aiParameters = new[] { "ApiKey", "Endpoint", "Model" }.Where(n => builder.Configuration[$"Parameters:ai-{n.ToLowerInvariant()}"] is { Length: > 0 })
     .ToDictionary(n => n, n => builder.AddParameter($"ai-{n.ToLowerInvariant()}", secret: n == "ApiKey"));
 #if (aiProvider == "ollama")
 var ollama = builder.AddOllama("ollama").WithDataVolume();
-ollama.AddModel("llama3.2");
+ollama.AddModel(aiModel.Length > 0 ? aiModel : "llama3.2");
 #endif
 app.Modules.Add("Coworkee.Ai", (_, service) =>
 {
     service.WithSetting(s => s.Coworkee.Settings.Defaults["Ai.Provider"], "COWORKEE_AI_PROVIDER");
+    if (aiModel.Length > 0)
+    {
+        service.WithSetting(s => s.Coworkee.Settings.Defaults["Ai.Model"], aiModel);
+    }
+
+    if (aiEndpoint.Length > 0)
+    {
+        service.WithSetting(s => s.Coworkee.Settings.Defaults["Ai.Endpoint"], aiEndpoint);
+    }
+
     foreach (var (name, parameter) in aiParameters)
     {
         service.WithSetting(s => s.Coworkee.Settings.Defaults[$"Ai.{name}"], parameter);
@@ -96,6 +107,14 @@ app.Modules.Add("Coworkee.Ai", (_, service) =>
     service.WithReference(ollama)
         .WithSetting(s => s.Coworkee.Settings.Defaults["Ai.Endpoint"], ollama.GetEndpoint("http"))
         .WithSetting(s => s.Coworkee.Settings.Defaults["Ai.Enabled"], true);
+#elif (aiProvider == "lmStudio")
+    // LM Studio serves the model it has loaded on this machine, without a key
+    service.WithSetting(s => s.Coworkee.Settings.Defaults["Ai.Enabled"], true);
+#elif (aiProvider == "openAICompatible")
+    if (aiParameters.ContainsKey("ApiKey") || aiParameters.ContainsKey("Endpoint") || aiEndpoint.Length > 0)
+    {
+        service.WithSetting(s => s.Coworkee.Settings.Defaults["Ai.Enabled"], true);
+    }
 #else
     if (aiParameters.ContainsKey("ApiKey"))
     {

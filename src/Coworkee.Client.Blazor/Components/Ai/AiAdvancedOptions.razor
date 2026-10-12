@@ -1,0 +1,29 @@
+<MudExpansionPanels Outlined="false" Elevation="0" Class="mt-3">
+    <MudExpansionPanel Text="@L["Advanced"]" data-testid="ai-advanced">
+        <MudGrid Spacing="3">
+            <MudItem xs="12" sm="4">
+                <MudNumericField T="double?" @bind-Value="Form.Temperature" Label="@L["Temperature"]" Min="0" Max="2" Step="0.1" Variant="Variant.Outlined"
+                                 HelperText="@L["Empty: the model's default. Lower answers more predictably."]" data-testid="ai-temperature" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudNumericField T="int?" @bind-Value="Form.MaxOutputTokens" Label="@L["Maximum output tokens"]" Min="1" Variant="Variant.Outlined"
+                                 HelperText="@L["Empty: the provider's default."]" data-testid="ai-max-tokens" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudNumericField T="int?" @bind-Value="Form.MaxToolRounds" Label="@L["Maximum tool rounds per message"]" Min="1" Max="20" Variant="Variant.Outlined"
+                                 HelperText="@L["Empty: 10."]" />
+            </MudItem>
+            @if (Form.Info.Protocol != AiProtocol.Anthropic)
+            {
+                <MudItem xs="12" md="8">
+                    <MudTextField T="string" @bind-Value="Form.Headers" Label="@L["Extra headers"]" Lines="3" Variant="Variant.Outlined" Placeholder="@HeadersExample"
+                                  HelperText="@L["One line per header: Name: value. OpenRouter shows HTTP-Referer and X-Title as your app."]" data-testid="ai-headers" />
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudTextField T="string" @bind-Value="Form.AuthHeader" Label="@L["Key header"]" Variant="Variant.Outlined" Placeholder="api-key"
+                                  HelperText="@L["Empty: the key goes as bearer token. Otherwise the header that carries it."]" data-testid="ai-auth-header" />
+                </MudItem>
+            }
+        </MudGrid>
+    </MudExpansionPanel>
+</MudExpansionPanels>

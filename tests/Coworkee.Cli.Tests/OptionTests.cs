@@ -69,6 +69,7 @@ public sealed class OptionTests
             OptionKind.Multi => ("en", "en"),
             OptionKind.File when id == "logo" => (folder.File("brand/logo.png"), "logo.png"),
             OptionKind.File => (folder.File("brand/welcome.mp4"), "/media/welcome.mp4"),
+            _ when id == "aiEndpoint" => ("https://llm.acme.test/v1", "https://llm.acme.test/v1"),
             _ => ("Acme Shop", "Acme Shop"),
         };
 

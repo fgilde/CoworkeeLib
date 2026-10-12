@@ -10,7 +10,7 @@ public sealed class ScreenshotTests
     public static TheoryData<string, bool, string> Pages()
     {
         var data = new TheoryData<string, bool, string>();
-        foreach (var page in new[] { "welcome", "basics", "branding", "signin", "architecture", "languages", "entities", "users", "review", "generate", "help" })
+        foreach (var page in new[] { "welcome", "basics", "branding", "signin", "architecture", "ai", "languages", "entities", "users", "review", "generate", "help" })
         {
             data.Add(page, false, "en");
             data.Add(page, true, "en");
@@ -58,13 +58,22 @@ public sealed class ScreenshotTests
             main.ShowHelp("2");
         }
 
+        if (page == "ai")
+        {
+            var ai = main.Architecture.Ai;
+            main.Option("ai").IsOn = true;
+            ai.Selected = ai.Providers.Single(p => p.Info.Id == Contracts.Ai.AiProviderCatalog.OpenRouter);
+            ai.Model = "anthropic/claude-sonnet-4.5";
+            ai.ApiKey = "sk-or-example";
+        }
+
         StepViewModel step = page switch
         {
             "welcome" => main.Welcome,
             "basics" => main.Basics,
             "branding" => main.Branding,
             "signin" => main.SignIn,
-            "architecture" => main.Architecture,
+            "architecture" or "ai" => main.Architecture,
             "languages" => main.Languages,
             "entities" => main.Entities,
             "users" => main.Users,
@@ -73,7 +82,8 @@ public sealed class ScreenshotTests
             _ => main.Architecture,
         };
 
-        var frame = Render.Step(main, step, dark);
+        // the AI card sits below the fold of the architecture page
+        var frame = Render.Step(main, step, dark, page == "ai" ? window => ScrollTo(window, "AiSection") : null);
         frame.PixelSize.Width.ShouldBe(1400);
         if (Folder is not null)
         {
@@ -81,4 +91,12 @@ public sealed class ScreenshotTests
             frame.Save(Path.Combine(Folder, $"studio-{page}-{(dark ? "dark" : "light")}{(language == "en" ? string.Empty : "-" + language)}.png"), new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
         }
     });
+
+    private static void ScrollTo(Avalonia.Controls.Window window, string name)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        var target = Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(window).OfType<Avalonia.Controls.Control>().First(c => c.Name == name);
+        Avalonia.Controls.ControlExtensions.BringIntoView(target);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+    }
 }

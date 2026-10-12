@@ -1,0 +1,11 @@
+<span data-provider-logo="@Provider.Id" title="@Provider.Name" aria-hidden="true"
+      style="display:inline-flex;align-items:center;justify-content:center;flex:none;width:@(Size)px;height:@(Size)px;border-radius:@(Size / 4)px;background:@Provider.Color">
+    @if (Provider.Logo is { } path)
+    {
+        <svg viewBox="0 0 24 24" width="@(Size * 3 / 5)" height="@(Size * 3 / 5)"><path d="@path" fill="#fff" /></svg>
+    }
+    else
+    {
+        <span style="color:#fff;font-weight:700;font-size:@(Size / 2)px;line-height:1">@Provider.Monogram</span>
+    }
+</span>

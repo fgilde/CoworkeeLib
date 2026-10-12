@@ -71,6 +71,7 @@ public sealed class AiApp : DatabaseFixture
         await ResetAsync();
         Claude.Reset();
         App.Services.GetRequiredService<SystemStateCache>().Reset();
+        await App.Services.GetRequiredService<Microsoft.Extensions.Caching.Hybrid.HybridCache>().RemoveByTagAsync("coworkee:settings");
         var response = await App.GetTestClient().PostAsJsonAsync("/api/v1/setup/complete",
             new CompleteSetupRequest("token", "Acme", "admin@acme.test", "Admin#12345", "Ada", "Admin"));
         response.EnsureSuccessStatusCode();
@@ -94,10 +95,20 @@ public sealed class FakeClaude : HttpMessageHandler
 
     public ConcurrentQueue<JsonObject> Requests { get; } = new();
 
+    /// <summary>Address and headers of every request, model lists included.</summary>
+    public ConcurrentQueue<(Uri Uri, Dictionary<string, string> Headers)> Calls { get; } = new();
+
+    /// <summary>The answer to GET requests (model lists).</summary>
+    public string Models { get; set; } = EmptyModels;
+
+    private const string EmptyModels = "{\"data\":[]}";
+
     public void Reset()
     {
         _responses.Clear();
         Requests.Clear();
+        Calls.Clear();
+        Models = EmptyModels;
     }
 
     public void Text(string text) => Enqueue("end_turn", new JsonObject { ["type"] = "text", ["text"] = text });
@@ -129,6 +140,12 @@ public sealed class FakeClaude : HttpMessageHandler
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
+        Calls.Enqueue((request.RequestUri!, request.Headers.ToDictionary(h => h.Key, h => string.Join(",", h.Value), StringComparer.OrdinalIgnoreCase)));
+        if (request.Method == HttpMethod.Get)
+        {
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(Models, Encoding.UTF8, "application/json") };
+        }
+
         Requests.Enqueue(JsonNode.Parse(await request.Content!.ReadAsStringAsync(cancellationToken))!.AsObject());
         return _responses.TryDequeue(out var body)
             ? new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(body, Encoding.UTF8, "application/json") }

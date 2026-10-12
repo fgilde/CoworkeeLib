@@ -92,7 +92,10 @@ public sealed class ProviderTests(AiApp app) : IAsyncLifetime
     [InlineData(AiProviders.Ollama, null, null, null, true)]
     [InlineData(AiProviders.OpenAICompatible, "model", null, null, false)]
     [InlineData(AiProviders.OpenAICompatible, "model", "http://localhost:1234/v1", null, true)]
-    [InlineData("gemini", "model", "http://localhost", "key", false)]
+    [InlineData("gemini", null, null, "key", true)]
+    [InlineData("lmStudio", null, null, null, false)]
+    [InlineData("lmStudio", "qwen3", null, null, true)]
+    [InlineData("unknown", "model", "http://localhost", "key", false)]
     public void A_connection_is_complete_with_what_its_provider_needs(string provider, string? model, string? endpoint, string? key, bool complete) =>
         new AiConnection(provider, model, endpoint, key).IsComplete.ShouldBe(complete);
 
@@ -108,6 +111,8 @@ public sealed class ProviderTests(AiApp app) : IAsyncLifetime
 public sealed class FakeChatClient : IChatClient, IAiChatClientFactory
 {
     public Queue<ChatResponse> Responses { get; } = new();
+
+    public Exception? Failure { get; init; }
 
     public List<List<ChatMessage>> Requests { get; } = [];
 
@@ -125,7 +130,7 @@ public sealed class FakeChatClient : IChatClient, IAiChatClientFactory
     {
         Requests.Add([.. messages]);
         Options.Add(options!);
-        return Task.FromResult(Responses.Dequeue());
+        return Failure is null ? Task.FromResult(Responses.Dequeue()) : Task.FromException<ChatResponse>(Failure);
     }
 
     public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) =>
@@ -149,7 +154,7 @@ internal sealed class RecordingHandler : HttpMessageHandler
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         Uri = request.RequestUri;
-        Body = await request.Content!.ReadAsStringAsync(cancellationToken);
+        Body = request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
         Headers.AddRange(request.Headers);
         return new HttpResponseMessage(HttpStatusCode.BadRequest) { Content = new StringContent("{}", Encoding.UTF8, "application/json") };
     }

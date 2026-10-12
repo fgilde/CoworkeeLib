@@ -31,15 +31,18 @@ public sealed partial class ArchitectureStep : StepViewModel
         (OptionCatalog.Tooling, "Files next to the code: a CI workflow and a dev container.", "Icon.Console"),
     ];
 
-    private static readonly string[] Highlighted = ["database", "aiProvider", "redis", "grafana", "webDataStudio"];
+    private static readonly string[] Highlighted = ["database", "redis", "grafana", "webDataStudio"];
+
+    private static readonly string[] AiOptions = ["aiProvider", "aiModel", "aiEndpoint"];
 
     public ArchitectureStep(MainViewModel main)
         : base(main)
     {
         Presets = [.. Preset.All.Select(p => new PresetViewModel(p))];
         Infrastructure = [.. Highlighted.Select(main.Option)];
+        Ai = new AiSetupViewModel(main);
         Groups = [.. GroupInfo.Select(g => new OptionGroupViewModel(g.Group, g.Description, g.Icon,
-            [.. main.Options.Values.Where(o => o.Option.Group == g.Group && o.Id != "title" && !Highlighted.Contains(o.Id) && !LanguagesStep.Ids.Contains(o.Id))]))];
+            [.. main.Options.Values.Where(o => o.Option.Group == g.Group && o.Id != "title" && !Highlighted.Contains(o.Id) && !LanguagesStep.Ids.Contains(o.Id) && !AiOptions.Contains(o.Id))]))];
     }
 
     protected override string TitleText => "Architecture";
@@ -54,8 +57,11 @@ public sealed partial class ArchitectureStep : StepViewModel
 
     public IReadOnlyList<OptionGroupViewModel> Groups { get; }
 
-    /// <summary>Database, AI provider and Redis: the choices that decide how the app runs, shown first.</summary>
+    /// <summary>Database, Redis and the monitoring tools: the choices that decide how the app runs, shown first.</summary>
     public IReadOnlyList<OptionViewModel> Infrastructure { get; }
+
+    /// <summary>Provider, model, endpoint and key of the AI assistant.</summary>
+    public AiSetupViewModel Ai { get; }
 
     [ObservableProperty]
     public partial SolutionSummary Summary { get; set; } = new([], [], []);
@@ -63,7 +69,8 @@ public sealed partial class ArchitectureStep : StepViewModel
     public string SummaryHeadline => L.Format("{0} projects · {1} containers · {2} packages", Summary.Projects.Count, Summary.Containers.Count, Summary.Packages.Count);
 
     public override bool Owns(string error) =>
-        error.StartsWith("options.", StringComparison.Ordinal) || Groups.SelectMany(g => g.Options).Any(o => error.StartsWith(o.Id + ":", StringComparison.Ordinal));
+        error.StartsWith("options.", StringComparison.Ordinal)
+        || Groups.SelectMany(g => g.Options).Select(o => o.Id).Concat(AiOptions).Any(id => error.StartsWith(id + ":", StringComparison.Ordinal));
 
     [RelayCommand]
     public void ApplyPreset(PresetViewModel preset)
@@ -88,6 +95,7 @@ public sealed partial class ArchitectureStep : StepViewModel
         Summary = SolutionSummary.For(Main.ToSpec());
         OnPropertyChanged(nameof(SummaryHeadline));
         ExplainInfrastructure();
+        Ai.Refresh();
         foreach (var preset in Presets)
         {
             preset.IsActive = preset.Preset.Values.All(v => Main.Option(v.Key).Value == v.Value);
@@ -113,9 +121,10 @@ public sealed partial class ArchitectureStep : StepViewModel
         provider.Note = !provider.IsAvailable ? "Only used with the AI assistant module; switch it on under Modules."
             : provider.Value switch
             {
-                "ollama" => "Adds an Ollama container that pulls llama3.2 (several GB) on the first start; no key needed.",
-                "azureOpenAI" or "openAICompatible" => "Key, endpoint and model in the user secrets of the app host: Parameters:ai-apikey, ai-endpoint, ai-model.",
-                _ => "Key in the user secrets of the app host (Parameters:ai-apikey) or later in the AI settings of the app.",
+                "ollama" => "Adds an Ollama container that pulls the model (several GB) on the first start; no key needed.",
+                "lmStudio" => "LM Studio runs on this machine: start its server and load a model; no key needed.",
+                "azureOpenAI" or "openAICompatible" => "Endpoint and model here or in the user secrets of the app host (Parameters:ai-endpoint, ai-model); the key in Parameters:ai-apikey.",
+                _ => "Key in the user secrets of the app host (Parameters:ai-apikey) or later on the AI page of the app.",
             };
 
         Main.Option("redis").Note = Main.Option("redis").IsOn

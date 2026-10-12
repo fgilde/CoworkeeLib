@@ -3,4 +3,8 @@
     <!-- travels inside the Coworkee.Cli tool (and the Studio tool) as project reference, not as package of its own -->
     <IsPackable>false</IsPackable>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- the AI provider catalog -->
+    <ProjectReference Include="..\Coworkee.Contracts\Coworkee.Contracts.csproj" />
+  </ItemGroup>
 </Project>
