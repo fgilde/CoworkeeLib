@@ -12,6 +12,10 @@ Users with `ApiKeys.Create` open *Account > API keys* and create a key with
 
 The key is shown once: `cwk_` and 64 hex characters (256 random bits). The server stores only its SHA-256 hash and compares hashes in fixed time; the first 10 characters stay visible so people can tell their keys apart. A lost key cannot be shown again: revoke it and create a new one.
 
+![New API key with permissions picked from your own](../assets/screenshots/mcp-api-key-dialog-light.png){ .shot }
+
+![The key is shown once, with the MCP setup](../assets/screenshots/mcp-api-keys-light.png){ .shot }
+
 ## Using a key
 
 ```bash
@@ -42,3 +46,5 @@ The list shows when and from which IP address each key was last used (updated at
 Administrators with `ApiKeys.Manage` (which includes `ApiKeys.Create`) see the keys of all users of their organisation under *Administration > Identity > API keys* (`/admin/api-keys`): owner, permissions, created, expiry, last use and status, with search, filters, export and live updates, and revoke them. Keys of other organisations stay invisible.
 
 The personal data export of a user contains the user's keys, without secrets; deleting the account deletes them.
+
+![All keys of the organisation for administrators](../assets/screenshots/mcp-admin-api-keys-dark.png){ .shot }

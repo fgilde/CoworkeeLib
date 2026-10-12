@@ -36,6 +36,12 @@ The request type becomes the tool's input schema, the `Result` its output. Failu
 
 The window talks to `/api/v1/ai`: `GET status`, `GET|POST sessions`, `GET|PUT|DELETE sessions/{id}`, and `POST sessions/{id}/messages` and `POST sessions/{id}/confirm`, which answer with `application/x-ndjson`: one `AiStreamEvent` per line, `delta` (text), `tool` (a tool call), then `done` (the saved message) or `error`. The answer runs to its end and is saved even when the browser goes away.
 
+![Assistant window with conversations](../assets/screenshots/mcp-ai-window-dark.png){ .shot }
+
+![A destructive tool waits for confirmation](../assets/screenshots/mcp-ai-confirm-light.png){ .shot }
+
+![The assistant on a phone](../assets/screenshots/mcp-ai-mobile-light.png){ .shot }
+
 ## Providers
 
 The assistant talks to the model through `IChatClient` of `Microsoft.Extensions.AI`, with the same tools, rules and audit for every provider. Most providers speak the OpenAI chat API, so they only differ in address, key and models; the catalog (`AiProviderCatalog` in `Coworkee.Contracts.Ai`) knows them:

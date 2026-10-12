@@ -138,6 +138,8 @@ foreach (var tool in await client.ListToolsAsync())
 var result = await client.CallToolAsync("query_data", new Dictionary<string, object?> { ["entitySet"] = "Products", ["top"] = 5 });
 ```
 
+![Konto > API-Schlüssel zeigt die MCP-Einrichtung mit dem neuen Schlüssel](../assets/screenshots/mcp-api-keys-light.png){ .shot }
+
 ## Sicherheit
 
 - Nur JSON-Bodies erreichen die Werkzeuge, und mit einem Cookie angemeldete Anfragen von fremden Browser-Origins werden abgewiesen: ein Formular einer fremden Seite kann keinen angemeldeten Benutzer benutzen.

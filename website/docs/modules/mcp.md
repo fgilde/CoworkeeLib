@@ -138,6 +138,8 @@ foreach (var tool in await client.ListToolsAsync())
 var result = await client.CallToolAsync("query_data", new Dictionary<string, object?> { ["entitySet"] = "Products", ["top"] = 5 });
 ```
 
+![Account > API keys shows the MCP setup with the new key](../assets/screenshots/mcp-api-keys-light.png){ .shot }
+
 ## Security
 
 - Only JSON bodies reach the tools, and requests signed in with a cookie from a foreign browser origin are refused: a cross site form cannot use a signed-in user.

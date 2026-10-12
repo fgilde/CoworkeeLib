@@ -36,6 +36,12 @@ Der Request-Typ wird zum Eingabeschema des Werkzeugs, das `Result` zu seiner Aus
 
 Das Fenster spricht mit `/api/v1/ai`: `GET status`, `GET|POST sessions`, `GET|PUT|DELETE sessions/{id}` sowie `POST sessions/{id}/messages` und `POST sessions/{id}/confirm`, die mit `application/x-ndjson` antworten: ein `AiStreamEvent` pro Zeile, `delta` (Text), `tool` (ein Werkzeugaufruf), dann `done` (die gespeicherte Nachricht) oder `error`. Die Antwort läuft zu Ende und wird gespeichert, auch wenn der Browser geht.
 
+![Assistenten-Fenster mit Unterhaltungen](../assets/screenshots/mcp-ai-window-dark.png){ .shot }
+
+![Ein löschendes Werkzeug wartet auf die Bestätigung](../assets/screenshots/mcp-ai-confirm-light.png){ .shot }
+
+![Der Assistent auf dem Telefon](../assets/screenshots/mcp-ai-mobile-light.png){ .shot }
+
 ## Anbieter
 
 Der Assistent spricht über `IChatClient` aus `Microsoft.Extensions.AI` mit dem Modell, mit denselben Werkzeugen, Regeln und demselben Audit für jeden Anbieter. Die meisten Anbieter sprechen die OpenAI-Chat-API und unterscheiden sich nur in Adresse, Schlüssel und Modellen; der Katalog (`AiProviderCatalog` in `Coworkee.Contracts.Ai`) kennt sie:

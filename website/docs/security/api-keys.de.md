@@ -12,6 +12,10 @@ Benutzer mit `ApiKeys.Create` öffnen *Konto > API-Schlüssel* und legen einen S
 
 Der Schlüssel wird einmal angezeigt: `cwk_` und 64 Hex-Zeichen (256 Zufallsbits). Der Server speichert nur seinen SHA-256-Hash und vergleicht Hashes in fester Zeit; die ersten 10 Zeichen bleiben sichtbar, damit man seine Schlüssel unterscheiden kann. Ein verlorener Schlüssel lässt sich nicht erneut anzeigen: widerrufen und einen neuen anlegen.
 
+![Neuer API-Schlüssel mit Berechtigungen aus den eigenen](../assets/screenshots/mcp-api-key-dialog-light.png){ .shot }
+
+![Der Schlüssel wird einmal angezeigt, mit der MCP-Einrichtung](../assets/screenshots/mcp-api-keys-light.png){ .shot }
+
 ## Einen Schlüssel nutzen
 
 ```bash
@@ -42,3 +46,5 @@ Die Liste zeigt, wann und von welcher IP-Adresse jeder Schlüssel zuletzt genutz
 Administratoren mit `ApiKeys.Manage` (enthält `ApiKeys.Create`) sehen die Schlüssel aller Benutzer ihrer Organisation unter *Administration > Identität > API-Schlüssel* (`/admin/api-keys`): Besitzer, Berechtigungen, angelegt, Ablauf, letzte Nutzung und Status, mit Suche, Filtern, Export und Live-Aktualisierung, und widerrufen sie. Schlüssel anderer Organisationen bleiben unsichtbar.
 
 Der Export der personenbezogenen Daten enthält die Schlüssel des Benutzers ohne Geheimnisse; das Löschen des Kontos löscht sie.
+
+![Alle Schlüssel der Organisation für Administratoren](../assets/screenshots/mcp-admin-api-keys-dark.png){ .shot }
