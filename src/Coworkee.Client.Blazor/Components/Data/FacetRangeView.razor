@@ -1,20 +1,21 @@
+@using MudBlazor.Extensions.Components
 @inherits FacetViewBase
 
 @if (_bounds is { } bounds)
 {
-    <FacetHistogram Buckets="Group.Options" IsActive="InRange" Title="BucketTitle" OnPick="PickAsync" Label="@L[Group.Label]" />
-    <div class="cw-facet-slider" style="@Track">
-        <input type="range" class="cw-facet-thumb" min="@Text(bounds.Min)" max="@Text(bounds.Max)" step="@Text(Step)" value="@Text(_from)" aria-label="@L["From"]"
-               @oninput="e => Slide(e, lower: true)" @onchange="e => SlidAsync(e, lower: true)" data-testid="facet-range-from" />
-        <input type="range" class="cw-facet-thumb" min="@Text(bounds.Min)" max="@Text(bounds.Max)" step="@Text(Step)" value="@Text(_to)" aria-label="@L["Up to"]"
-               @oninput="e => Slide(e, lower: false)" @onchange="e => SlidAsync(e, lower: false)" data-testid="facet-range-to" />
+    <FacetHistogram Buckets="Group.Options" IsActive="InRange" Title="BucketTitle" OnPick="Pick" Label="@L[Group.Label]" />
+    <div class="cw-facet-slider" data-testid="facet-range-slider">
+        <span id="@_labelId" hidden>@L[Group.Label]</span>
+        <MudExRangeSlider T="decimal" SizeRange="Whole" Value="Chosen" StepLength="StepLength"
+                          TrackColor="@("var(--mud-palette-lines-default)")" AriaLabelledBy="@_labelId"
+                          ToStartStringFunc="r => Show(r.Start)" ToEndStringFunc="r => Show(r.End)" OnInput="Slide" OnChange="Slid" />
     </div>
     <div class="cw-facet-axis"><span>@Show(bounds.Min)</span><span>@Show(bounds.Max)</span></div>
     <div class="cw-facet-range-inputs">
-        <MudNumericField T="decimal" Value="_from" ValueChanged="v => TypeAsync(v, lower: true)" Min="bounds.Min" Max="_to" Label="@L["From"]" Format="0.##" Variant="Variant.Outlined"
+        <MudNumericField T="decimal" Value="_from" ValueChanged="v => Typed(v, lower: true)" Min="bounds.Min" Max="_to" Label="@L["From"]" Format="0.##" Variant="Variant.Outlined"
                          Margin="Margin.Dense" HideSpinButtons="true" data-testid="facet-range-min" />
         <span class="cw-facet-range-dash">–</span>
-        <MudNumericField T="decimal" Value="_to" ValueChanged="v => TypeAsync(v, lower: false)" Min="_from" Max="bounds.Max" Label="@L["Up to"]" Format="0.##" Variant="Variant.Outlined"
+        <MudNumericField T="decimal" Value="_to" ValueChanged="v => Typed(v, lower: false)" Min="_from" Max="bounds.Max" Label="@L["Up to"]" Format="0.##" Variant="Variant.Outlined"
                          Margin="Margin.Dense" HideSpinButtons="true" data-testid="facet-range-max" />
     </div>
 }

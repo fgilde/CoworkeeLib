@@ -58,8 +58,8 @@ Facets come from the server (`[ProvideFacet]` on the entity, see [OData and face
 | `Swatches` | colored dots, the color from `[FacetColor]`, a `color` meta value or the value itself | |
 | `Tree` | values split at a separator ("image/png" below "image") | |
 | `Toggle` | all, yes or no | `bool` |
-| `Range` | a histogram over a slider with *from* and *to* fields | numbers with `FacetType.Range` |
-| `Dates` | presets (today, this week, last 30 days, ...), a histogram of days, months or years and a custom range | dates |
+| `Range` | a histogram over a two-thumb range slider (`MudExRangeSlider`, arrow keys, Page Up/Down, Home and End move a thumb) with *from* and *to* fields; sliding applies once the thumbs rest | numbers with `FacetType.Range` |
+| `Dates` | presets (today, this week, last 30 days, ...), a histogram of days, months or years and a custom range, typed or slid between the first and the last day | dates |
 
 ![Sales orders with the facet panel](../assets/screenshots/facets-panel.png){ .shot }
 
