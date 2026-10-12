@@ -33,11 +33,12 @@ public sealed partial class MainViewModel : ObservableObject
         Branding = new BrandingStep(this);
         SignIn = new SignInStep(this);
         Architecture = new ArchitectureStep(this);
+        Languages = new LanguagesStep(this);
         Entities = new EntitiesStep(this);
         Users = new UsersStep(this);
         Review = new ReviewStep(this);
         Generate = new GenerateStep(this);
-        Steps = [Welcome, Basics, Branding, SignIn, Architecture, Entities, Users, Review, Generate];
+        Steps = [Welcome, Basics, Branding, SignIn, Architecture, Languages, Entities, Users, Review, Generate];
         Current = Welcome;
         _loading = false;
         UpdateStates();
@@ -63,6 +64,8 @@ public sealed partial class MainViewModel : ObservableObject
     public SignInStep SignIn { get; }
 
     public ArchitectureStep Architecture { get; }
+
+    public LanguagesStep Languages { get; }
 
     public EntitiesStep Entities { get; }
 

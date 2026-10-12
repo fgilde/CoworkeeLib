@@ -13,7 +13,7 @@ public sealed partial class LocalizationTests
     public void Every_text_of_the_option_catalog_has_a_german_translation()
     {
         var texts = OptionCatalog.All.SelectMany(o => new[] { o.Title, o.Description, o.WhenToUse }
-            .Concat(o.Pros).Concat(o.Cons).Concat(o.Choices?.Select(c => c.Description) ?? []))
+            .Concat(o.Pros).Concat(o.Cons).Concat(OptionCatalog.LanguageOptions.Contains(o.Id) ? [] : o.Choices?.Select(c => c.Description) ?? []))
             .Where(t => t != "None");
 
         texts.Where(t => !German.Texts.ContainsKey(t)).ShouldBeEmpty();

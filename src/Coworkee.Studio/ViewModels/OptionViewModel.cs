@@ -16,6 +16,13 @@ public sealed record ChoiceViewModel(string Value, string Description)
         ["azureOpenAI"] = ("Azure OpenAI", "Icon.Cloud"),
         ["ollama"] = ("Ollama", "Icon.Monitor"),
         ["openAICompatible"] = ("OpenAI compatible", "Icon.Link"),
+        ["libreTranslate"] = ("LibreTranslate", "Icon.Container"),
+        ["myMemory"] = ("MyMemory", "Icon.Cloud"),
+        ["deepL"] = ("DeepL", "Icon.Translate"),
+        ["azure"] = ("Azure AI Translator", "Icon.Cloud"),
+        ["google"] = ("Google Cloud Translation", "Icon.Cloud"),
+        ["ai"] = ("AI assistant", "Icon.Sparkle"),
+        ["none"] = ("None", "Icon.Close"),
     };
 
     public string Text => L.Get(Description);

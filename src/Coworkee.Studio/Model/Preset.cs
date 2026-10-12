@@ -10,7 +10,7 @@ public sealed record Preset(string Name, string Description, string Icon, IReadO
     public static IReadOnlyList<Preset> All { get; } =
     [
         new("Minimal", "The shell with identity, permissions, settings and theming on Postgres. No Redis: fine while one instance runs. Add modules later.", "Icon.Feather",
-            Switches(["registration"], ("eventBus", "none"), ("storage", "fileSystem"))),
+            Switches(["registration"], ("eventBus", "none"), ("storage", "fileSystem"), ("translationProvider", "none"))),
         new("Business app", "Audit log, notifications, reports, files, backups and client entities for fast lists on Postgres; Redis to scale out, events in process, a CI workflow.", "Icon.Briefcase",
             Switches(["auditing", "notifications", "reports", "backup", "files", "extendedAttributes", "clientEntities", "registration", "githubActions", "redis", "grafana", "webDataStudio"], ("eventBus", "inProcess"), ("storage", "fileSystem"))),
         new("Collaboration", "Chat, notifications, files, comments and ratings, and the AI assistant with Claude; Redis carries chat and presence across instances.", "Icon.AccountGroup",
@@ -29,6 +29,7 @@ public sealed record Preset(string Name, string Description, string Icon, IReadO
         var values = ModuleSwitches.ToDictionary(id => id, id => on.Contains(id) ? "true" : "false");
         values["database"] = "postgres";
         values["aiProvider"] = "anthropic";
+        values["translationProvider"] = "libreTranslate";
         foreach (var (id, value) in choices)
         {
             values[id] = value;

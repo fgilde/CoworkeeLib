@@ -78,7 +78,7 @@ public sealed class RelationDesignerTests
 
         languages.MultiChoices.Single(c => c.Value == "de").IsChecked = false;
         main.Errors.ShouldContain(e => e.StartsWith("defaultLanguage:", StringComparison.Ordinal));
-        main.Architecture.Errors.ShouldContain(e => e.StartsWith("defaultLanguage:", StringComparison.Ordinal));
+        main.Languages.Errors.ShouldContain(e => e.StartsWith("defaultLanguage:", StringComparison.Ordinal));
         languages.MultiChoices.Single(c => c.Value == "en").IsChecked = false;
         languages.Value.ShouldBeNull();
         main.ToSpec().Options.Keys.ShouldBe(["defaultLanguage"]);
