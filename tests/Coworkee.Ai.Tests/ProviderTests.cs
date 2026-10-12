@@ -149,6 +149,46 @@ public sealed class FakeChatClient : IChatClient, IAiChatClientFactory
     }
 }
 
+public sealed class AnthropicProfileTests
+{
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
+
+    [Fact]
+    public async Task The_workspace_of_a_local_anthropic_profile_does_not_reach_the_api()
+    {
+        var directory = Directory.CreateTempSubdirectory("anthropic-profile");
+        Directory.CreateDirectory(Path.Combine(directory.FullName, "configs"));
+        await File.WriteAllTextAsync(Path.Combine(directory.FullName, "active_config"), "default", Ct);
+        await File.WriteAllTextAsync(Path.Combine(directory.FullName, "configs", "default.json"),
+            """{"version":"1.0","organization_id":"org_test","workspace_id":"wrkspc_test","authentication":{"type":"user_oauth","client_id":"test"},"created_by":"test"}""", Ct);
+        var previous = Environment.GetEnvironmentVariable("ANTHROPIC_CONFIG_DIR");
+        Environment.SetEnvironmentVariable("ANTHROPIC_CONFIG_DIR", directory.FullName);
+        try
+        {
+            // the SDK on its own sends the profile's workspace, so the check below is not vacuous
+            var raw = new RecordingHandler();
+            using (var unfiltered = new Anthropic.AnthropicClient { ApiKey = "secret", HttpClient = new HttpClient(raw), BaseUrl = "https://api.anthropic.com" }.AsIChatClient("model-x"))
+            {
+                await Should.ThrowAsync<Exception>(() => unfiltered.GetResponseAsync("hi", cancellationToken: Ct));
+            }
+
+            raw.Headers.ShouldContain(h => h.Key == AnthropicProfileFilter.WorkspaceHeader);
+
+            var handler = new RecordingHandler();
+            using var client = new AiChatClientFactory(new SingleHttpClientFactory(handler)).Create(new AiConnection(AiProviders.Anthropic, "model-x", null, "secret"));
+            await Should.ThrowAsync<Exception>(() => client.GetResponseAsync("hi", cancellationToken: Ct));
+
+            handler.Headers.ShouldNotContain(h => h.Key == AnthropicProfileFilter.WorkspaceHeader);
+            handler.Headers.ShouldContain(h => h.Key == "X-Api-Key");
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("ANTHROPIC_CONFIG_DIR", previous);
+            directory.Delete(true);
+        }
+    }
+}
+
 internal sealed class RecordingHandler : HttpMessageHandler
 {
     public Uri? Uri { get; private set; }

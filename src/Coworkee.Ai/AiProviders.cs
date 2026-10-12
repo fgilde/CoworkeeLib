@@ -67,7 +67,7 @@ internal sealed class AiChatClientFactory(IHttpClientFactory httpClients) : IAiC
         var http = httpClients.CreateClient(AiChat.HttpClientName);
         var model = connection.EffectiveModel!;
         var client = info.Protocol == AiProtocol.Anthropic
-            ? new AnthropicClient { ApiKey = connection.ApiKey!, HttpClient = http, BaseUrl = connection.EffectiveEndpoint! }
+            ? new AnthropicClient { ApiKey = connection.ApiKey!, HttpClient = http, BaseUrl = connection.EffectiveEndpoint!, Handlers = [new AnthropicProfileFilter()] }
                 .AsIChatClient(model, connection.MaxOutputTokens ?? MaxOutputTokens)
             : OpenAI(connection, model, http);
         return connection.Temperature is null && connection.MaxOutputTokens is null ? client : new AiDefaultOptionsClient(client, connection);
@@ -81,6 +81,21 @@ internal sealed class AiChatClientFactory(IHttpClientFactory httpClients) : IAiC
         // keyless local servers still get a token: the SDK requires one
         var key = connection.ApiKey is { Length: > 0 } value ? value : "none";
         return new ChatClient(model, new ApiKeyCredential(key), options).AsIChatClient();
+    }
+}
+
+/// <summary>
+/// The Anthropic SDK adds the workspace of the machine's Anthropic profile (%APPDATA%/anthropic, ANTHROPIC_CONFIG_DIR) to every request,
+/// even with an explicit key; a key of another workspace then gets "Workspace … not found". The connection settings are the only source here.
+/// </summary>
+internal sealed class AnthropicProfileFilter : DelegatingHandler
+{
+    public const string WorkspaceHeader = "anthropic-workspace-id";
+
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        request.Headers.Remove(WorkspaceHeader);
+        return base.SendAsync(request, cancellationToken);
     }
 }
 
