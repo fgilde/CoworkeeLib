@@ -12,7 +12,7 @@ namespace Coworkee.Client.Blazor.Pages.Admin;
 public partial class AiConfiguration
 {
     private AiConnectionForm? _form;
-    private AiConnectionForm? _saved;
+    private AiConnectionStatusDto? _status;
     private IReadOnlyList<AiModelDto> _models = [];
     private string? _modelError;
     private AiConnectionTestDto? _test;
@@ -27,9 +27,9 @@ public partial class AiConfiguration
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
-    private string Status => _saved switch
+    private string Status => _status switch
     {
-        { Enabled: true, IsComplete: true } => "active",
+        { Active: true } => "active",
         { Enabled: true } => "incomplete",
         _ => "off",
     };
@@ -61,8 +61,9 @@ public partial class AiConfiguration
         await Snackbar.RunAsync(async () =>
         {
             var values = await Api.GetSettingsAsync(SettingScope.Global);
-            _form = AiConnectionForm.From(values);
-            _saved = AiConnectionForm.From(values);
+            var defaults = (await Api.GetSettingDefinitionsAsync(false)).SelectMany(g => g.Settings).ToDictionary(d => d.Name, d => d.DefaultValue);
+            _status = await Connections.GetStatusAsync();
+            _form = AiConnectionForm.From(values, defaults, _status.HasKey);
         });
         _models = [];
         _modelError = null;

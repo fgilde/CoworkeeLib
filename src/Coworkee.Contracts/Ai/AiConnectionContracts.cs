@@ -26,5 +26,8 @@ public sealed record AiModelDto(string Id, string? Name = null);
 /// <summary>The models a provider lists for a key, or why it listed none.</summary>
 public sealed record AiModelListDto(IReadOnlyList<AiModelDto> Models, string? Error = null);
 
+/// <summary>Whether the assistant answers now; <see cref="HasKey"/> counts a stored key and one from the configuration (user secrets).</summary>
+public sealed record AiConnectionStatusDto(bool Enabled, bool Active, bool HasKey, string Provider, string? Model);
+
 /// <summary>Result of a short prompt and of a tool call probe against a connection.</summary>
 public sealed record AiConnectionTestDto(bool Succeeded, int LatencyMs, string? Reply, bool CallsTools, string? Error);

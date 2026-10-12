@@ -94,6 +94,7 @@ public sealed class CoworkeeAiModule : CoworkeeModule, IWebModule
         api.MapGet("/tools", async (AiToolRunner runner, CancellationToken ct) =>
             Results.Ok((await runner.AvailableAsync(ct)).Select(t => new AiToolDto(t.Name, t.Description))));
         api.MapPost("/chat", (ChatRequest body, AiChat chat, CancellationToken ct) => chat.SendAsync(body, ct).ToHttpResult());
+        api.MapGet("/connection", (AiConnections connections, CancellationToken ct) => connections.GetStatusAsync(ct));
         api.MapPost("/connection/models", (AiConnectionDraft body, IDispatcher d, CancellationToken ct) => d.SendAsync(new ListAiModels(body), ct).ToHttpResult());
         api.MapPost("/connection/test", (AiConnectionDraft body, IDispatcher d, CancellationToken ct) => d.SendAsync(new TestAiConnection(body), ct).ToHttpResult());
         api.MapGet("/tool-calls", ([AsParameters] PageRequest page, string? channel, IDispatcher d, CancellationToken ct) =>

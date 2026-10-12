@@ -30,6 +30,13 @@ public sealed class AiConnections(ISettingProvider settings, IAiChatClientFactor
             ? connection
             : null;
 
+    public async Task<AiConnectionStatusDto> GetStatusAsync(CancellationToken cancellationToken = default)
+    {
+        var saved = await GetSavedAsync(cancellationToken);
+        var enabled = await settings.GetAsync<bool>(AiSettingNames.Enabled, cancellationToken);
+        return new AiConnectionStatusDto(enabled, enabled && saved.IsComplete, !string.IsNullOrWhiteSpace(saved.ApiKey), saved.Provider, saved.EffectiveModel);
+    }
+
     /// <summary>A chat client on the active connection with its temperature and token limit; null while there is none. The caller disposes it.</summary>
     public async Task<IChatClient?> CreateClientAsync(CancellationToken cancellationToken = default) =>
         await GetActiveAsync(cancellationToken) is { } connection ? clients.Create(connection) : null;

@@ -51,9 +51,15 @@ public sealed class AiConnectionForm
 
     public bool IsComplete => Info.IsComplete(Model, Endpoint, HasKey);
 
-    public static AiConnectionForm From(IReadOnlyList<SettingValueDto> values)
+    /// <summary>
+    /// The stored values over the <paramref name="defaults"/> of the configuration; <paramref name="hasKey"/> says whether the server
+    /// has a key, stored or configured (user secrets), which never reaches the browser.
+    /// </summary>
+    public static AiConnectionForm From(IReadOnlyList<SettingValueDto> values, IReadOnlyDictionary<string, string?>? defaults = null, bool? hasKey = null)
     {
-        string? Get(string name) => values.FirstOrDefault(v => v.Name == name)?.Value is { Length: > 0 } value ? value : null;
+        string? Get(string name) => values.FirstOrDefault(v => v.Name == name) is { HasValue: true } stored
+            ? stored.Value is { Length: > 0 } value ? value : null
+            : defaults?.GetValueOrDefault(name) is { Length: > 0 } configured ? configured : null;
         var form = new AiConnectionForm
         {
             Enabled = bool.TryParse(Get(AiSettingNames.Enabled), out var enabled) && enabled,
@@ -68,7 +74,7 @@ public sealed class AiConnectionForm
         };
         form._savedProvider = form.Provider;
         form._savedEndpoint = Trim(form.Endpoint);
-        form._hasStoredKey = values.Any(v => v.Name == AiSettingNames.ApiKey && v.HasValue);
+        form._hasStoredKey = hasKey ?? values.Any(v => v.Name == AiSettingNames.ApiKey && v.HasValue);
         return form;
     }
 

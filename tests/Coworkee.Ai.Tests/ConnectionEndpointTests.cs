@@ -29,6 +29,8 @@ public sealed class ConnectionEndpointTests(AiApp app) : IAsyncLifetime
         }), Ct)).EnsureSuccessStatusCode();
         var values = (await Admin.GetFromJsonAsync<SettingValueDto[]>("/api/v1/settings/global", Ct))!;
         values.Single(v => v.Name == AiSettingNames.ApiKey).ShouldBe(new SettingValueDto(AiSettingNames.ApiKey, null, true));
+        (await Admin.GetFromJsonAsync<AiConnectionStatusDto>("/api/v1/ai/connection", Ct)).ShouldBe(
+            new AiConnectionStatusDto(true, true, true, AiProviderCatalog.OpenRouter, "anthropic/claude-sonnet-4.5"));
         app.Claude.Models = """{"data":[{"id":"openai/gpt-5"},{"id":"anthropic/claude-sonnet-4.5"}]}""";
 
         var listed = await ModelsAsync(new AiConnectionDraft(AiProviderCatalog.OpenRouter, Headers: "X-Title: Acme"));

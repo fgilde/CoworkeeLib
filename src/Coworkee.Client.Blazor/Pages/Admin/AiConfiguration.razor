@@ -2,7 +2,7 @@
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + SettingsPermissions.Manage)]
 
 <PageHeader Title="AI" Description="The model provider of the assistant and the MCP tools. Changes apply to the next message, without a restart.">
-    @if (_saved is not null)
+    @if (_status is not null)
     {
         <MudChip T="string" Variant="Variant.Outlined" Color="@StatusColor" Icon="@StatusIcon" data-testid="ai-status" data-status="@Status">@L[StatusText]</MudChip>
     }

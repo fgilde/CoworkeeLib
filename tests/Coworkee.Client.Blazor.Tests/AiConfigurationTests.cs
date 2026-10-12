@@ -15,6 +15,9 @@ public sealed class AiConfigurationTests : ClientTestBase
     public AiConfigurationTests()
     {
         Services.AddSingleton(_connections);
+        _connections.GetStatusAsync(Arg.Any<CancellationToken>()).Returns(new AiConnectionStatusDto(true, true, true, AiProviderCatalog.OpenAI, "gpt-5-mini"));
+        Api.GetSettingDefinitionsAsync(false, Arg.Any<CancellationToken>()).Returns([new SettingGroupDto("Ai", "AI",
+            [new SettingDefinitionDto(AiSettingNames.Endpoint, "Endpoint", null, SettingType.String, null, [SettingScope.Global], null)])]);
         Api.GetSettingsAsync(SettingScope.Global, Arg.Any<CancellationToken>()).Returns(
         [
             new SettingValueDto(AiSettingNames.Enabled, "true", true),
@@ -75,6 +78,14 @@ public sealed class AiConfigurationTests : ClientTestBase
         result.GetAttribute("data-succeeded").ShouldBe("true");
         result.TextContent.ShouldContain("420 ms");
         result.ClassList.ShouldContain("mud-alert-text-warning");
+    }
+
+    [Fact]
+    public void Configured_defaults_and_a_configured_key_fill_the_form()
+    {
+        var form = AiConnectionForm.From([], new Dictionary<string, string?> { [AiSettingNames.Provider] = "openRouter", [AiSettingNames.Model] = "openai/gpt-5" }, hasKey: true);
+
+        (form.Provider, form.Model, form.KeepsStoredKey, form.ToDraft().ApiKey).ShouldBe(("openRouter", "openai/gpt-5", true, null));
     }
 
     [Fact]
