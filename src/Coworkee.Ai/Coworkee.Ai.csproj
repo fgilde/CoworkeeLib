@@ -7,5 +7,6 @@
     <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
     <PackageReference Include="ModelContextProtocol.AspNetCore" />
     <ProjectReference Include="..\Coworkee.OData\Coworkee.OData.csproj" />
+    <ProjectReference Include="..\Coworkee.ResponseFilters\Coworkee.ResponseFilters.csproj" />
   </ItemGroup>
 </Project>

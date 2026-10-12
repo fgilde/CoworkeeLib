@@ -13,4 +13,7 @@ public sealed class AiToolAttribute(string? description = null) : Attribute
     public string? Name { get; init; }
 
     public bool Exclude { get; init; }
+
+    /// <summary>Deletes or irreversibly changes data: the assistant runs it only after the user confirmed. Tools named delete_…, remove_…, revoke_… are destructive anyway.</summary>
+    public bool Destructive { get; init; }
 }

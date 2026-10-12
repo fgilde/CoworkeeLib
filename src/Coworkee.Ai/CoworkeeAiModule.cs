@@ -17,8 +17,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using ModelContextProtocol.Protocol;
-using ModelContextProtocol.Server;
+using Coworkee.Ai.Mcp;
+using Coworkee.Ai.Sessions;
+using Microsoft.Extensions.Options;
 
 namespace Coworkee.Ai;
 
@@ -34,8 +35,8 @@ public static class AiSettings
 }
 
 /// <summary>
-/// Assistant chat over the tools of all modules (<see cref="AiToolServiceCollectionExtensions.AddAiTool{TRequest}"/>),
-/// the same tools as an MCP server under /mcp, and an audit of every tool call.
+/// Assistant over the tools of all modules (<see cref="AiToolServiceCollectionExtensions.AddAiTool{TRequest}"/>) with conversations kept per user,
+/// the same tools as an MCP server (<see cref="CoworkeeMcpOptions"/>), and an audit of every tool call.
 /// </summary>
 [DependsOn(typeof(CoworkeeSettingsModule))]
 public sealed class CoworkeeAiModule : CoworkeeModule, IWebModule
@@ -45,6 +46,7 @@ public sealed class CoworkeeAiModule : CoworkeeModule, IWebModule
         var services = context.Services;
         services.AddMessagingFromAssembly(typeof(CoworkeeAiModule).Assembly);
         services.AddSingleton<IModelContributor, AiModelContributor>();
+        services.AddSingleton<IModelContributor, AiSessionModel>();
         services.AddSingleton<IPermissionDefinitionContributor, AiPermissionDefinitions>();
         services.AddSingleton<ISettingDefinitionContributor, AiSettingDefinitions>();
         services.AddSingleton<AiToolSchemas>();
@@ -53,70 +55,41 @@ public sealed class CoworkeeAiModule : CoworkeeModule, IWebModule
         services.AddScoped<IODataEntityFilter<AiToolCall>, OData.AiToolCallODataFilter>();
         services.AddScoped<AiToolRunner>();
         services.AddScoped<AiChat>();
+        services.AddScoped<AiSessionChat>();
         services.AddSingleton<IAiChatClientFactory, AiChatClientFactory>();
         services.AddScoped<Application.Privacy.IPersonalDataContributor, AiPersonalData>();
+        services.AddScoped<Application.Privacy.IPersonalDataContributor, AiSessionPersonalData>();
         services.AddHttpClient(AiChat.HttpClientName, client => client.Timeout = TimeSpan.FromMinutes(5));
-        services.AddMcpServer(options => options.ServerInfo = new Implementation { Name = "coworkee", Version = "1.0" })
-            .WithHttpTransport(options => options.Stateless = true)
-            .WithListToolsHandler(async (request, ct) =>
-            {
-                var runner = request.Services!.GetRequiredService<AiToolRunner>();
-                return new ListToolsResult
-                {
-                    Tools = [.. (await runner.AvailableAsync(ct)).Select(t => new ModelContextProtocol.Protocol.Tool
-                    {
-                        Name = t.Name,
-                        Description = t.Description,
-                        InputSchema = JsonSerializer.SerializeToElement(runner.SchemaOf(t)),
-                        Annotations = new ToolAnnotations { ReadOnlyHint = t.ReadOnly, DestructiveHint = !t.ReadOnly, OpenWorldHint = false },
-                    })],
-                };
-            })
-            .WithCallToolHandler(async (request, ct) =>
-            {
-                // MCP clients ask their user before tools that are not read only (see the annotations above)
-                var runner = request.Services!.GetRequiredService<AiToolRunner>();
-                var input = JsonSerializer.SerializeToElement(request.Params?.Arguments ?? new Dictionary<string, JsonElement>());
-                var outcome = await runner.RunAsync(request.Params?.Name ?? string.Empty, input, AiChannels.Mcp, allowWrites: true, ct);
-                return new CallToolResult { Content = [new TextContentBlock { Text = outcome.Output }], IsError = !outcome.Succeeded };
-            });
+        services.Configure<CoworkeeMcpOptions>(context.Configuration.GetSection(CoworkeeMcpOptions.Section));
+        services.AddCoworkeeMcp();
     }
 
     public void ConfigureApplication(WebApplication app)
     {
-        var api = app.MapCoworkeeApi("/api/v1/ai").WithTags("AI").RequireAuthorization().RequireCoworkeeRateLimit(CoworkeeRateLimitOptions.Ai);
-        api.MapGet("/tools", async (AiToolRunner runner, CancellationToken ct) =>
+        var ai = app.MapCoworkeeApi("/api/v1/ai").WithTags("AI").RequireAuthorization();
+        ai.MapGet("/status", async (AiChat chat, CancellationToken ct) => TypedResults.Ok(new AiStatusDto((await chat.ConnectAsync(ct)).IsSuccess)));
+        ai.MapGet("/tools", async (AiToolRunner runner, CancellationToken ct) =>
             Results.Ok((await runner.AvailableAsync(ct)).Select(t => new AiToolDto(t.Name, t.Description))));
-        api.MapPost("/chat", (ChatRequest body, AiChat chat, CancellationToken ct) => chat.SendAsync(body, ct).ToHttpResult());
-        api.MapGet("/tool-calls", ([AsParameters] PageRequest page, string? channel, IDispatcher d, CancellationToken ct) =>
+        ai.MapGet("/tool-calls", ([AsParameters] PageRequest page, string? channel, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new GetAiToolCalls(page, channel), ct).ToHttpResult());
-        app.MapMcp("/mcp").RequireAuthorization().RequireCoworkeeRateLimit(CoworkeeRateLimitOptions.Ai).Add(endpoint =>
-        {
-            var next = endpoint.RequestDelegate!;
-            endpoint.RequestDelegate = context => IsAllowedMcpRequest(context.Request) ? next(context) : Reject(context);
-        });
-    }
+        ai.MapGet("/sessions", (string? search, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetAiSessions(search), ct).ToHttpResult());
+        ai.MapGet("/sessions/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetAiSession(id), ct).ToHttpResult());
+        ai.MapPost("/sessions", (AiSessionRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new CreateAiSession(body.Title), ct).ToHttpResult());
+        ai.MapPut("/sessions/{id:guid}", (Guid id, AiSessionRequest body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new RenameAiSession(id, body.Title ?? string.Empty), ct).ToHttpResult());
+        ai.MapDelete("/sessions/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteAiSession(id), ct).ToHttpResult());
 
-    /// <summary>
-    /// JSON bodies only and no foreign browser origins: a cross site form or text/plain post must not reach the tools
-    /// with the cookie of a signed-in user.
-    /// </summary>
-    internal static bool IsAllowedMcpRequest(HttpRequest request)
-    {
-        if (HttpMethods.IsPost(request.Method) && request.ContentType?.StartsWith("application/json", StringComparison.OrdinalIgnoreCase) != true)
+        // the turns call the model: rate limited, answered as a stream of JSON lines (AiStreamEvent)
+        var turns = app.MapCoworkeeApi("/api/v1/ai/sessions").WithTags("AI").RequireAuthorization().RequireCoworkeeRateLimit(CoworkeeRateLimitOptions.Ai);
+        turns.MapPost("/{id:guid}/messages", (Guid id, AiSendRequest body, AiSessionChat chat, CancellationToken ct) => chat.SendAsync(id, body, ct))
+            .Produces<AiStreamEvent>(contentType: "application/x-ndjson");
+        turns.MapPost("/{id:guid}/confirm", (Guid id, AiConfirmRequest body, AiSessionChat chat, CancellationToken ct) => chat.ConfirmAsync(id, body, ct))
+            .Produces<AiStreamEvent>(contentType: "application/x-ndjson");
+
+        if (app.Services.GetRequiredService<IOptions<CoworkeeMcpOptions>>().Value is { Enabled: true } mcp)
         {
-            return false;
+            app.MapCoworkeeMcp(mcp);
         }
-
-        var origin = request.Headers.Origin.ToString();
-        return origin.Length == 0
-            || (Uri.TryCreate(origin, UriKind.Absolute, out var uri) && string.Equals(uri.Authority, request.Host.Value, StringComparison.OrdinalIgnoreCase));
-    }
-
-    private static Task Reject(HttpContext context)
-    {
-        context.Response.StatusCode = StatusCodes.Status403Forbidden;
-        return Task.CompletedTask;
     }
 }
 
@@ -158,7 +131,7 @@ internal sealed class AiPermissionDefinitions : IPermissionDefinitionContributor
 {
     public void Define(PermissionDefinitionContext context) =>
         context.Group(AiPermissions.GroupName, "AI")
-            .Add(AiPermissions.Chat, "Use the assistant and MCP tools")
+            .Add(AiPermissions.Chat, "Use the assistant and the MCP server")
             .Add(AiPermissions.Audit, "View AI tool calls");
 }
 

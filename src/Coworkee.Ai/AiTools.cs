@@ -28,7 +28,15 @@ public sealed record AiTool(string Name, string Description, Type RequestType, T
     public IReadOnlyList<string> Permissions { get; } = RequestType.GetCustomAttributes<RequiresPermissionAttribute>().Select(a => a.Permission).ToList();
 
     /// <summary>Queries only read; commands change data and run only on a direct user request (see <see cref="AiToolRunner.RunAsync"/>).</summary>
-    public bool ReadOnly { get; } = !RequestType.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ICommand<>));
+    public bool ReadOnly { get; } = !IsCommand(RequestType);
+
+    /// <summary>Waits for the user's confirmation in the assistant; MCP clients see it as destructive.</summary>
+    public bool Destructive { get; } = IsCommand(RequestType)
+        && (RequestType.GetCustomAttribute<AiToolAttribute>()?.Destructive == true || DestructivePrefixes.Any(p => Name.StartsWith(p, StringComparison.Ordinal)));
+
+    private static readonly string[] DestructivePrefixes = ["delete_", "remove_", "revoke_", "purge_", "erase_"];
+
+    private static bool IsCommand(Type type) => type.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ICommand<>));
 }
 
 public static class AiToolServiceCollectionExtensions
@@ -55,7 +63,6 @@ public sealed record AiToolOutcome(string Output, bool Succeeded, AiToolCallDto 
 public sealed class AiToolRunner(
     AiToolCatalog catalog,
     IPermissionChecker permissions,
-    ISettingProvider settings,
     ICurrentUser currentUser,
     IServiceScopeFactory scopes,
     IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions> json,
@@ -77,7 +84,7 @@ public sealed class AiToolRunner(
 
     public JsonObject SchemaOf(AiTool tool) => schemas.Get(tool, JsonOptions);
 
-    /// <summary>The tools of the current user: none without <see cref="AiPermissions.Chat"/> or while the assistant is off.</summary>
+    /// <summary>The tools of the current user: none without <see cref="AiPermissions.Chat"/>. The assistant checks on its own whether it is switched on; MCP needs no model.</summary>
     public async Task<IReadOnlyList<AiTool>> AvailableAsync(CancellationToken cancellationToken)
     {
         if (_available is not null)
@@ -86,9 +93,7 @@ public sealed class AiToolRunner(
         }
 
         var available = new List<AiTool>();
-        if (currentUser.IsAuthenticated
-            && await settings.GetAsync<bool>(AiSettings.Enabled, cancellationToken)
-            && await permissions.IsGrantedAsync(AiPermissions.Chat, cancellationToken))
+        if (currentUser.IsAuthenticated && await permissions.IsGrantedAsync(AiPermissions.Chat, cancellationToken))
         {
             foreach (var tool in catalog.Tools)
             {
@@ -146,6 +151,7 @@ public sealed class AiToolRunner(
             {
                 TenantId = currentUser.TenantId,
                 UserId = currentUser.UserId,
+                ApiKeyId = currentUser.ApiKeyId,
                 Channel = channel,
                 Tool = Truncate(name, 100),
                 Input = Truncate(AiAuditRedaction.Redact(input), MaxAuditedInputLength),
@@ -196,9 +202,15 @@ public sealed class AiToolRunner(
                 return (message, message);
             }
 
-            return result.GetType().IsGenericType
-                ? (JsonSerializer.Serialize(result.GetType().GetProperty(nameof(Result<object>.Value))!.GetValue(result), JsonOptions), null)
-                : ("Done.", null);
+            if (!result.GetType().IsGenericType)
+            {
+                return ("Done.", null);
+            }
+
+            // the same shape as the API answers: response filters hide here what they hide there
+            var value = result.GetType().GetProperty(nameof(Result<object>.Value))!.GetValue(result);
+            var shaped = value is null ? null : await ResponseFilters.ResponseFilterApplier.ApplyAsync(scope.ServiceProvider, value, JsonOptions, cancellationToken);
+            return (JsonSerializer.Serialize(shaped, JsonOptions), null);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -302,6 +314,9 @@ public sealed class AiToolCall : AggregateRoot
 
     public Guid? UserId { get; set; }
 
+    /// <summary>The API key an MCP client called with, otherwise null.</summary>
+    public Guid? ApiKeyId { get; set; }
+
     [Nextended.Core.Facets.ProvideFacet(Label = "Channel")]
     public required string Channel { get; set; }
 
@@ -320,7 +335,7 @@ public sealed class AiToolCall : AggregateRoot
     public DateTimeOffset At { get; set; }
 
     public static AiToolCallDto ToDto(AiToolCall c, string? output = null) =>
-        new(c.Id, c.Tool, c.Channel, c.Input, c.Succeeded, c.Error, c.DurationMs, c.At, c.UserId, output);
+        new(c.Id, c.Tool, c.Channel, c.Input, c.Succeeded, c.Error, c.DurationMs, c.At, c.UserId, output, c.ApiKeyId);
 }
 
 internal sealed class AiModelContributor : IModelContributor

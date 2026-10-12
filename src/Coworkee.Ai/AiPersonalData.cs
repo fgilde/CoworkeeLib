@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Ai;
 
-/// <summary>The assistant keeps no chat history; the tool call log holds what the user had it do.</summary>
+/// <summary>The tool call log: what the user had the assistant and MCP clients do.</summary>
 internal sealed class AiPersonalData(CoworkeeDbContext db) : IPersonalDataContributor
 {
     public string Section => "aiToolCalls";
