@@ -67,12 +67,15 @@ Vorlagen für den App-Typ setzen Module und Infrastruktur, jede mit ihrem Kompro
 | Lokale Demo | SQLite | Ollama | aus | Offline auf einem Rechner ohne Schlüssel; nur ein Schreiber gleichzeitig, keine Backups |
 | Alles | Postgres | Ollama | an | Jedes Modul und jeder Container |
 
-**Wo sie läuft** stellt die drei Entscheidungen nach vorn, die bestimmen, wie die App läuft, jede mit ihrer Bedeutung direkt darunter:
+**Wo sie läuft** stellt die Entscheidungen nach vorn, die bestimmen, wie die App läuft, jede mit ihrer Bedeutung direkt darunter:
 
 - **Datenbank**: PostgreSQL (jedes Modul, Backups über die Admin-Seiten), SQL Server (keine Backups über die Admin-Seiten, ein schwerer Container) oder SQLite (kein Container, eine Datei unter `.data`, nur ein Schreiber gleichzeitig, Hintergrundjobs im Speicher, keine Backups). Ohne Postgres ist das Modul *Datenbank-Backups* ausgegraut und nicht Teil der App.
-- **KI-Anbieter**: Anthropic, OpenAI, Azure OpenAI, Ollama oder ein OpenAI-kompatibler Endpunkt. Er zählt nur mit dem Modul *KI-Assistent*; ohne ist die Auswahl ausgegraut. Ollama bringt einen Container mit, der ein lokales Modell lädt; die anderen nehmen ihren Schlüssel aus den User Secrets des AppHosts (`Parameters:ai-apikey`, dazu `ai-endpoint` und `ai-model` bei Azure OpenAI und kompatiblen Endpunkten) oder später aus den KI-Einstellungen der App.
 - **Redis**: SignalR-Backplane, gemeinsame Anwesenheit, Caches und Anmeldesitzungen über Instanzen hinweg; ohne bleibt alles im jeweiligen Prozess, was für eine Instanz reicht.
 - **Grafana** und **WebDataStudio**: Dashboards über die Telemetrie jedes Dienstes und die App-Datenbank sowie die Datenbank im Browser, beide mit der Anmeldung des Administrators ([Grafana und WebDataStudio](../hosting/observability.md)).
+
+**KI-Assistent** wählt den [Modellanbieter](../modules/ai.md#anbieter) aus einem Raster mit Logos: Anthropic, OpenAI, Azure OpenAI, Gemini, OpenRouter, Mistral, Groq, DeepSeek, xAI, Together, Fireworks, Ollama, LM Studio oder einen beliebigen OpenAI-kompatiblen Server, mit Modell und Adresse (leer: die Standards des Anbieters). Er zählt nur mit dem Modul *KI-Assistent*; ohne ist die Karte ausgegraut. Ollama bringt einen Container mit, der das Modell lädt. Ein hier eingegebener API-Schlüssel kommt nie in die Spezifikation: Nach dem Anlegen schreibt das Studio ihn in die User Secrets des AppHosts (`dotnet user-secrets set Parameters:ai-apikey`), sodass der Assistent eingeschaltet startet. Alles bleibt auf der [KI-Seite](../modules/ai.md#die-ki-seite) der App änderbar.
+
+![KI-Assistent](../assets/screenshots/studio-ai-light-de.webp)
 
 Danach lässt sich jede weitere Option von `coworkee options` ändern: Beschreibung, Vor- und Nachteile, wann sie passt, das Paket und der Schalter von `coworkee new`. *Allgemein* enthält auch die Sprachen (Kästchen für die mitgelieferten, keines angekreuzt bietet alle an), die Standardsprache, den Farbmodus und die Selbstregistrierung; *Werkzeuge* legt einen GitHub-Actions-Workflow und einen Dev-Container an. Das Panel rechts zeigt, was die Solution enthalten wird: Projekte, die Container des Aspire-AppHosts (PostgreSQL oder SQL Server, Redis, Mailpit, Elasticsearch, RabbitMQ, Azurite, Keycloak, Ollama, Grafana mit Prometheus, Loki, Tempo und Collector, WebDataStudio) und die Coworkee-Pakete.
 

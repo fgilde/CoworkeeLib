@@ -67,12 +67,15 @@ Presets for the app type set the modules and the infrastructure, each with its t
 | Local demo | SQLite | Ollama | off | Offline on one machine without keys; one writer at a time, no backups |
 | Everything | Postgres | Ollama | on | Every module and every container |
 
-**Where it runs** puts the three choices that decide how the app runs first, each with what it means right below:
+**Where it runs** puts the choices that decide how the app runs first, each with what it means right below:
 
 - **Database**: PostgreSQL (every module, backups from the admin pages), SQL Server (no backups from the admin pages, a heavy container) or SQLite (no container, one file under `.data`, one writer at a time, background jobs in memory, no backups). Off Postgres, the *Database backups* module is greyed out and left out of the app.
-- **AI provider**: Anthropic, OpenAI, Azure OpenAI, Ollama or an OpenAI compatible endpoint. It only counts with the *AI assistant* module; without it the choice is greyed out. Ollama adds a container that pulls a local model; the others take their key from the user secrets of the app host (`Parameters:ai-apikey`, plus `ai-endpoint` and `ai-model` for Azure OpenAI and compatible endpoints) or later from the AI settings of the app.
 - **Redis**: SignalR backplane, shared presence, caches and sign-in sessions across instances; without it everything stays in each process, which is fine for one instance.
 - **Grafana** and **WebDataStudio**: dashboards over the telemetry of every service and the app database, and the database in the browser, both with the administrator's sign-in ([Grafana and WebDataStudio](../hosting/observability.md)).
+
+**AI assistant** picks the [model provider](../modules/ai.md#providers) from a grid with logos: Anthropic, OpenAI, Azure OpenAI, Gemini, OpenRouter, Mistral, Groq, DeepSeek, xAI, Together, Fireworks, Ollama, LM Studio or any OpenAI compatible server, with model and address (empty: the provider's defaults). It only counts with the *AI assistant* module; without it the card is greyed out. Ollama adds a container that pulls the model. An API key typed here never goes into the spec: after creation the Studio writes it to the user secrets of the app host (`dotnet user-secrets set Parameters:ai-apikey`), so the assistant starts switched on. Everything stays changeable on the [AI page](../modules/ai.md#the-ai-page) of the app.
+
+![AI assistant](../assets/screenshots/studio-ai-light.webp)
 
 Then every other option of `coworkee options` can be changed: description, pros, cons, when to use it, the package and the switch of `coworkee new`. *General* also holds the languages (check boxes for the shipped ones, none checked offers all), the default language, the color mode and self registration; *Tooling* adds a GitHub Actions workflow and a dev container. The panel on the right lists what the solution will contain: projects, the containers of the Aspire app host (PostgreSQL or SQL Server, Redis, Mailpit, Elasticsearch, RabbitMQ, Azurite, Keycloak, Ollama, Grafana with Prometheus, Loki, Tempo and the collector, WebDataStudio) and the Coworkee packages.
 

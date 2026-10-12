@@ -62,7 +62,9 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--client-entities` | `clientEntities` | bool | `false` | Browser copies of OData sets marked `[ClientEntity]`; spec entities with `clientEntity` switch it on |
 | `--keycloak` | `keycloak` | bool | `false` | Keycloak container as external sign-in |
 | `--storage` | `storage` | `fileSystem`, `azureBlob` | `fileSystem` | Blob storage; `azureBlob` runs Azurite in the app host |
-| `--ai-provider` | `aiProvider` | `anthropic`, `openAI`, `azureOpenAI`, `ollama`, `openAICompatible` | `anthropic` | Model provider of the [assistant](../modules/ai.md#providers); `ollama` runs Ollama in the app host |
+| `--ai-provider` | `aiProvider` | `anthropic`, `openAI`, `azureOpenAI`, `gemini`, `openRouter`, `mistral`, `groq`, `deepSeek`, `xai`, `together`, `fireworks`, `ollama`, `lmStudio`, `openAICompatible` | `anthropic` | Model provider of the [assistant](../modules/ai.md#providers); `ollama` runs Ollama in the app host, `lmStudio` uses LM Studio on the same machine |
+| `--ai-model` | `aiModel` | text | | Model of the provider (Azure OpenAI: the deployment name); empty takes the provider's default |
+| `--ai-endpoint` | `aiEndpoint` | http(s) address | | Base address for Azure OpenAI, `openAICompatible` or a provider behind a proxy; the key goes to the user secrets of the app host (`Parameters:ai-apikey`), never into the spec |
 | `--redis` | `redis` | bool | `true` | Redis container for backplane, presence, cache invalidation and sessions across instances ([Redis](../hosting/redis.md)) |
 | `--grafana` | `grafana` | bool | `true` | Grafana with Prometheus, Loki, Tempo and a collector: telemetry of every service, the app database and dashboards ([Grafana and WebDataStudio](../hosting/observability.md)) |
 | `--web-data-studio` | `webDataStudio` | bool | `true` | WebDataStudio connected to the app database ([Grafana and WebDataStudio](../hosting/observability.md)) |
