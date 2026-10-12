@@ -16,7 +16,8 @@ namespace Coworkee.Ai;
 /// run only in the first round, straight from the user's message; afterwards the model has to ask the user to confirm.
 /// </summary>
 public sealed class AiChat(
-    AiToolRunner runner, ISettingProvider settings, IPermissionChecker permissions, ICurrentUser currentUser, IAiChatClientFactory clients, ILogger<AiChat> logger)
+    AiToolRunner runner, ISettingProvider settings, IPermissionChecker permissions, ICurrentUser currentUser, AiConnections connections, IAiChatClientFactory clients,
+    ILogger<AiChat> logger)
 {
     public const string HttpClientName = "Coworkee.Ai";
 
@@ -56,12 +57,7 @@ public sealed class AiChat(
             return invalid;
         }
 
-        var connection = new AiConnection(
-            await settings.GetAsync(AiSettings.Provider, cancellationToken) is { Length: > 0 } provider ? provider : AiProviders.Anthropic,
-            await settings.GetAsync(AiSettings.Model, cancellationToken),
-            await settings.GetAsync(AiSettings.Endpoint, cancellationToken),
-            await settings.GetAsync(AiSettings.ApiKey, cancellationToken));
-        if (!await settings.GetAsync<bool>(AiSettings.Enabled, cancellationToken) || !connection.IsComplete)
+        if (await connections.GetActiveAsync(cancellationToken) is not { } connection)
         {
             return Error.Conflict("ai.disabled", "The assistant is not configured.");
         }
