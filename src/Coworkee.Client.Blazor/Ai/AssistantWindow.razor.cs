@@ -37,6 +37,7 @@ public partial class AssistantWindow : IAsyncDisposable
     private bool _busy;
     private bool _showSessions;
     private bool _scroll;
+    private bool _focus;
     private ElementReference _scroller;
     private ElementReference _textarea;
     private IJSObjectReference? _module;
@@ -95,6 +96,13 @@ public partial class AssistantWindow : IAsyncDisposable
         {
             _scroll = false;
             await _module.InvokeVoidAsync("scrollToEnd", _scroller);
+        }
+
+        // the input was disabled while the answer streamed in and lost the focus
+        if (_focus && _module is not null)
+        {
+            _focus = false;
+            await _module.InvokeVoidAsync("focus", _textarea);
         }
     }
 
@@ -301,6 +309,7 @@ public partial class AssistantWindow : IAsyncDisposable
         }
 
         // also when Enter sent it: calls from JavaScript do not render on their own
+        _focus = true;
         StateHasChanged();
     }
 }

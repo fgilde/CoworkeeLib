@@ -87,6 +87,23 @@ public sealed class AssistantTests : ClientTestBase
     }
 
     [Fact]
+    public async Task The_input_keeps_the_focus_after_sending()
+    {
+        var module = JSInterop.SetupModule("./_content/Coworkee.Client.Blazor/coworkee.js");
+        var session = new AiSessionDto(Guid.NewGuid(), "Hi", DateTimeOffset.Now);
+        _api.CreateSessionAsync(default).ReturnsForAnyArgs(session);
+        _api.SendAsync(default, default!, default).ReturnsForAnyArgs(Stream(Task.CompletedTask, new AiStreamEvent(AiStreamEvent.Delta, Text: "Hello")));
+        _api.GetSessionAsync(session.Id, default).ReturnsForAnyArgs(new AiSessionDetailDto(session.Id, "Hi", DateTimeOffset.Now, []));
+        var window = Render<AssistantWindow>();
+        window.WaitForAssertion(() => module.Invocations["focus"].Count.ShouldBe(1));
+
+        window.Find("[data-testid='assistant-input']").Input("Hi");
+        await window.InvokeAsync(() => window.Instance.SubmitFromEnter());
+
+        window.WaitForAssertion(() => module.Invocations["focus"].Count.ShouldBe(2));
+    }
+
+    [Fact]
     public async Task A_failed_answer_puts_the_question_back()
     {
         var session = new AiSessionDto(Guid.NewGuid(), "Plans", DateTimeOffset.Now);
