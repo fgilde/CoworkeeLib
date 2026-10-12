@@ -1,0 +1,38 @@
+<aside class="cw-ai-sessions" aria-label="@L["Conversations"]" data-testid="assistant-sessions">
+    <div class="pa-2">
+        <MudTextField T="string" Value="_search" ValueChanged="SearchAsync" DebounceInterval="300" Placeholder="@L["Search conversations"]" Variant="Variant.Outlined"
+                      Margin="Margin.Dense" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" Clearable="true" Immediate="true"
+                      data-testid="assistant-search" />
+    </div>
+    <div style="overflow-y:auto;flex:1">
+        @if (Sessions.Count == 0)
+        {
+            <MudText Typo="Typo.body2" Class="pa-3" Color="Color.Secondary">@L["No conversations yet."]</MudText>
+        }
+        @foreach (var session in Sessions)
+        {
+            <div class="@(session.Id == Current ? "cw-ai-session active" : "cw-ai-session")" data-session="@session.Title" @key="session.Id">
+                @if (_renaming == session.Id)
+                {
+                    <MudTextField T="string" @bind-Value="_title" Variant="Variant.Text" Margin="Margin.Dense" AutoFocus="true" MaxLength="200" Class="flex-grow-1"
+                                  OnKeyDown="args => RenameKeyAsync(args, session)" data-testid="assistant-rename-input" />
+                    <MudIconButton Icon="@Icons.Material.Outlined.Check" Size="Size.Small" aria-label="@L["Save"]" OnClick="() => RenameAsync(session)" data-testid="assistant-rename-save" />
+                }
+                else
+                {
+                    <div class="flex-grow-1" style="min-width:0" @onclick="() => OnSelect.InvokeAsync(session)" role="button" tabindex="0"
+                         @onkeydown="args => SelectKeyAsync(args, session)">
+                        <MudText Typo="Typo.body2" Style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">@session.Title</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@session.UpdatedAt.ToLocalTime().ToString("g")</MudText>
+                    </div>
+                    <span class="cw-ai-session-actions">
+                        <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" aria-label="@L["Rename"]" Disabled="Disabled" OnClick="() => StartRename(session)"
+                                       data-testid="assistant-rename" />
+                        <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" aria-label="@L["Delete"]" Disabled="Disabled" OnClick="() => OnDelete.InvokeAsync(session)"
+                                       data-testid="assistant-delete" />
+                    </span>
+                }
+            </div>
+        }
+    </div>
+</aside>

@@ -23,8 +23,14 @@ public sealed class CoworkeeClientOptions
     /// <summary>The generated proxies of application services: defaults for all and settings per service.</summary>
     public Coworkee.Client.Blazor.ServiceProxies.ServiceProxyOptions ServiceProxies { get; } = new();
 
-    /// <summary>Shown on the empty assistant page; name tasks the tools of the app can do.</summary>
+    /// <summary>Shown in the empty assistant window; name tasks the tools of the app can do.</summary>
     public string AssistantHint { get; set; } = "Ask for something the application can do, for example to find or change records.";
+
+    /// <summary>
+    /// Pages of what assistant tools created or changed, by tool name, e.g. ["add_edit_product"] = "/catalog/products/{id}"; {id} comes from
+    /// the tool's result (an id, or an object with an id). The tool chips in the assistant window link there.
+    /// </summary>
+    public Dictionary<string, string> AssistantLinks { get; } = new(StringComparer.Ordinal);
 
     /// <summary>Shows the sign-in page card (layout, image or video) on the Themes page; the API accepts changes while Coworkee:Auth:AllowDesignChanges is on.</summary>
     public bool AllowSignInDesign { get; set; } = true;

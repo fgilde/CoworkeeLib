@@ -1,0 +1,53 @@
+<MudDialog data-testid="api-key-dialog">
+    <DialogContent>
+        <MudTextField T="string" @bind-Value="_name" Label="@L["Name"]" Required="true" MaxLength="100" Variant="Variant.Outlined" Margin="Margin.Dense"
+                      HelperText="@L["For example: Claude Desktop on my laptop"]" Class="mb-3" data-testid="api-key-name" />
+        <MudTextField T="string" @bind-Value="_description" Label="@L["Description"]" MaxLength="500" Lines="2" Variant="Variant.Outlined" Margin="Margin.Dense"
+                      Class="mb-3" data-testid="api-key-description" />
+        <MudSelect T="int" @bind-Value="_days" Label="@L["Expires in"]" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-4" data-testid="api-key-expiry">
+            @foreach (var days in Lifetimes)
+            {
+                <MudSelectItem T="int" Value="days">@L["{0} days", days]</MudSelectItem>
+            }
+        </MudSelect>
+        <MudStack Row="true" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.subtitle2">@L["Permissions"]</MudText>
+            <MudSpacer />
+            <MudText Typo="Typo.caption" data-testid="api-key-selected">@L["{0} selected", _selected.Count]</MudText>
+        </MudStack>
+        <MudText Typo="Typo.caption" Color="Color.Secondary">
+            @L["The key can do at most what you can do; when your permissions shrink, so do the key's. MCP clients need the assistant permission."]
+        </MudText>
+        @if (_groups is null)
+        {
+            <MudProgressLinear Indeterminate="true" Class="my-2" />
+        }
+        else
+        {
+            <div style="max-height:40vh;overflow-y:auto" class="mt-2" data-testid="api-key-scopes">
+                @foreach (var group in _groups)
+                {
+                    var all = group.Permissions.All(p => _selected.Contains(p.Name));
+                    <div data-group="@group.Name" class="mb-2">
+                        <MudCheckBox T="bool" Value="all" ValueChanged="on => ToggleGroup(group, on)" Label="@group.DisplayName" Dense="true" Color="Color.Primary"
+                                     LabelPlacement="Placement.End" Class="mud-typography-subtitle2" />
+                        <div class="ml-6">
+                            @foreach (var permission in group.Permissions)
+                            {
+                                <div data-permission="@permission.Name">
+                                    <MudCheckBox T="bool" Value="_selected.Contains(permission.Name)" ValueChanged="on => Toggle(permission.Name, on)" Label="@permission.DisplayName"
+                                                 Dense="true" Size="Size.Small" />
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">@L["Cancel"]</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateAsync" Disabled="@(_busy || string.IsNullOrWhiteSpace(_name) || _selected.Count == 0)"
+                   data-testid="api-key-create">@L["Create key"]</MudButton>
+    </DialogActions>
+</MudDialog>

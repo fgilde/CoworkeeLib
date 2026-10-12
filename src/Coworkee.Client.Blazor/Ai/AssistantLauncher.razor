@@ -1,0 +1,15 @@
+@if (_available)
+{
+    <style>@AssistantStyles.Css</style>
+    @if (State.IsOpen)
+    {
+        <AssistantWindow />
+    }
+    @if (!State.IsOpen || State.Size != AssistantSize.Full)
+    {
+        <button type="button" class="@(State.IsOpen ? "cw-ai-fab open" : "cw-ai-fab")" title="@L["Assistant (Ctrl+I)"]" aria-label="@L["Assistant"]"
+                aria-expanded="@(State.IsOpen ? "true" : "false")" @onclick="State.Toggle" data-testid="assistant-fab">
+            <MudIcon Icon="@(State.IsOpen ? Icons.Material.Outlined.Close : Icons.Material.Outlined.AutoAwesome)" />
+        </button>
+    }
+}

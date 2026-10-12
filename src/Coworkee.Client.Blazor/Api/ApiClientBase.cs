@@ -37,6 +37,24 @@ public abstract class ApiClientBase(HttpClient http)
         return response;
     }
 
+    /// <summary>Reads a response of JSON lines as they arrive (application/x-ndjson), e.g. a streamed assistant answer.</summary>
+    protected async IAsyncEnumerable<T> StreamAsync<T>(string url, object body, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, url) { Content = JsonContent.Create(body) };
+        request.Headers.Add("X-CSRF", "1");
+        request.Options.Set(new HttpRequestOptionsKey<bool>("WebAssemblyEnableStreamingResponse"), true);
+        using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        await EnsureSuccessAsync(response, cancellationToken);
+        using var reader = new StreamReader(await response.Content.ReadAsStreamAsync(cancellationToken));
+        while (await reader.ReadLineAsync(cancellationToken) is { } line)
+        {
+            if (line.Length > 0)
+            {
+                yield return JsonSerializer.Deserialize<T>(line, JsonSerializerOptions.Web)!;
+            }
+        }
+    }
+
     private static async Task EnsureSuccessAsync(HttpResponseMessage response, CancellationToken cancellationToken)
     {
         if (response.IsSuccessStatusCode)

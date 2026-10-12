@@ -33,6 +33,8 @@ public abstract class ClientTestBase : BunitContext
         Services.AddScoped<People.Presence>();
         Services.AddScoped<Navigation.NavigationBadges>();
         Services.AddSingleton(ChatApi);
+        Services.AddSingleton(Substitute.For<Ai.IAssistantApi>());
+        Services.AddScoped<Ai.AssistantState>();
         Api.GetOnlineUsersAsync(default).ReturnsForAnyArgs([]);
         Services.AddSingleton(Api);
         Services.AddSingleton(new CoworkeeClientOptions());

@@ -1,0 +1,37 @@
+@page "/admin/api-keys"
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + ApiKeyPermissions.Manage)]
+
+<PageHeader Title="API keys" Description="The personal keys of the organisation's users; revoking one stops its clients at once." />
+<CoworkeeDataTable @ref="_table" T="ApiKeyDto" EntitySet="ApiKeys" RealtimeTopic="type:ApiKey" SearchFields="SearchFields" ExportFileName="api-keys" OnLoaded="LoadNamesAsync">
+    <Columns>
+        <PropertyColumn Property="k => k.Name" Title="@L["Name"]">
+            <CellTemplate>@context.Item.Name<br /><MudText Typo="Typo.caption" Color="Color.Secondary">@context.Item.Description</MudText></CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="k => k.UserId" Title="@L["Owner"]">
+            <CellTemplate>@_names.GetValueOrDefault(context.Item.UserId, context.Item.UserId.ToString())</CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="k => k.Prefix" Title="@L["Key"]">
+            <CellTemplate><code>@context.Item.Prefix…</code></CellTemplate>
+        </PropertyColumn>
+        <TemplateColumn T="ApiKeyDto" Title="@L["Permissions"]" Sortable="false">
+            <CellTemplate>
+                <MudTooltip Text="@string.Join(", ", context.Item.Scopes)"><MudChip T="string" Size="Size.Small">@context.Item.Scopes.Count</MudChip></MudTooltip>
+            </CellTemplate>
+        </TemplateColumn>
+        <PropertyColumn Property="k => k.CreatedAt" Title="@L["Created"]" Format="d" />
+        <PropertyColumn Property="k => k.ExpiresAt" Title="@L["Expires"]" Format="d" />
+        <PropertyColumn Property="k => k.LastUsedAt" Title="@L["Last used"]" Format="g" />
+        <PropertyColumn Property="k => k.LastUsedIp" Title="@L["Last IP"]" />
+        <PropertyColumn Property="k => k.RevokedAt" Title="@L["Status"]">
+            <CellTemplate><ApiKeyStatus Key="context.Item" /></CellTemplate>
+        </PropertyColumn>
+        <TemplateColumn T="ApiKeyDto" Sortable="false">
+            <CellTemplate>
+                @if (context.Item.RevokedAt is null)
+                {
+                    <MudButton Size="Size.Small" Color="Color.Error" OnClick="() => RevokeAsync(context.Item)" data-testid="@($"revoke-{context.Item.Name}")">@L["Revoke"]</MudButton>
+                }
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+</CoworkeeDataTable>

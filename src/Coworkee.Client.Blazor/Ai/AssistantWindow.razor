@@ -1,0 +1,50 @@
+<section class="@($"cw-ai-window {State.Size.ToString().ToLowerInvariant()}")" role="dialog" aria-label="@L["Assistant"]" data-testid="assistant-window"
+         @onkeydown="Key">
+    <header class="cw-ai-header">
+        <MudIconButton Icon="@Icons.Material.Outlined.Menu" Size="Size.Small" aria-label="@L["Conversations"]" OnClick="() => _showSessions = !_showSessions" data-testid="assistant-sessions-toggle" />
+        <MudIcon Icon="@Icons.Material.Outlined.AutoAwesome" Size="Size.Small" />
+        <span class="cw-ai-title" data-testid="assistant-title">@(_session?.Title ?? L["Assistant"])</span>
+        <MudTooltip Text="@L["New conversation"]">
+            <MudIconButton Icon="@Icons.Material.Outlined.AddComment" Size="Size.Small" aria-label="@L["New conversation"]" OnClick="NewSession" Disabled="_busy" data-testid="assistant-new" />
+        </MudTooltip>
+        @foreach (var size in Sizes)
+        {
+            <MudTooltip Text="@L[size.Title]">
+                <MudIconButton Icon="@size.Icon" Size="Size.Small" aria-label="@L[size.Title]" aria-pressed="@(State.Size == size.Size ? "true" : "false")"
+                               Style="@(State.Size == size.Size ? "opacity:1" : "opacity:.7")" OnClick="() => State.Resize(size.Size)" data-testid="@($"assistant-size-{size.Size}")" />
+            </MudTooltip>
+        }
+        <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small" aria-label="@L["Close"]" OnClick="State.Close" data-testid="assistant-close" />
+    </header>
+    <div class="cw-ai-body">
+        @if (SessionsVisible)
+        {
+            <AssistantSessions Sessions="_sessions" Current="_session?.Id" Disabled="_busy" OnSelect="SelectAsync" OnRename="RenameAsync" OnDelete="DeleteAsync" OnSearch="SearchAsync" />
+        }
+        <div class="cw-ai-chat">
+            <div class="cw-ai-messages" @ref="_scroller" data-testid="assistant-messages">
+                @if (_messages.Count == 0 && _streaming is null)
+                {
+                    <div class="cw-ai-empty" data-testid="assistant-empty">
+                        <MudIcon Icon="@Icons.Material.Outlined.AutoAwesome" Size="Size.Large" Color="Color.Primary" />
+                        <MudText Typo="Typo.body2" Class="mt-2">@L[Options.AssistantHint]</MudText>
+                    </div>
+                }
+                @foreach (var message in _messages)
+                {
+                    <AssistantMessage @key="message.Id" Message="message" Waiting="@(!_busy && ReferenceEquals(message, _messages[^1]))" OnDecide="DecideAsync" />
+                }
+                @if (_streaming is not null)
+                {
+                    <AssistantMessage Message="Streamed" Streaming="true" />
+                }
+            </div>
+            <div class="cw-ai-composer">
+                <textarea class="cw-ai-input" rows="1" @ref="_textarea" @bind="_input" @bind:event="oninput" maxlength="20000" placeholder="@L["Ask the assistant…"]"
+                          aria-label="@L["Message"]" disabled="@_busy" data-testid="assistant-input"></textarea>
+                <MudIconButton Icon="@Icons.Material.Filled.Send" Color="Color.Primary" Variant="Variant.Filled" aria-label="@L["Send"]" OnClick="SendAsync"
+                               Disabled="@(_busy || string.IsNullOrWhiteSpace(_input))" data-testid="assistant-send" />
+            </div>
+        </div>
+    </div>
+</section>

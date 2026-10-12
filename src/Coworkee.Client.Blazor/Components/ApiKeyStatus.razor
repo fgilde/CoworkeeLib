@@ -1,0 +1,12 @@
+@if (Key.RevokedAt is not null)
+{
+    <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Outlined" data-status="revoked">@L["Revoked"]</MudChip>
+}
+else if (Key.ExpiresAt <= DateTimeOffset.UtcNow)
+{
+    <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined" data-status="expired">@L["Expired"]</MudChip>
+}
+else
+{
+    <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined" data-status="active">@L["Active"]</MudChip>
+}

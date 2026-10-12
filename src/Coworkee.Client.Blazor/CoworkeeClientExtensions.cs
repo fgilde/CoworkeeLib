@@ -27,6 +27,9 @@ public static class CoworkeeClientExtensions
         services.AddHttpClient<Social.ISocialApi, Social.SocialApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Features.IFeaturesApi, Features.FeaturesApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Security.IClientsApi, Security.ClientsApi>(client => client.BaseAddress = baseAddress);
+        services.AddHttpClient<Security.IApiKeysApi, Security.ApiKeysApi>(client => client.BaseAddress = baseAddress);
+        services.AddSingleton(new Pages.ProfileTab("API keys", "api-keys", typeof(Pages.ProfileApiKeys), Coworkee.Contracts.Identity.ApiKeyPermissions.Create,
+            MudBlazor.Icons.Material.Outlined.Key, Order: 100));
         services.AddHttpClient<Backup.IBackupApi, Backup.BackupApi>(client =>
         {
             client.BaseAddress = baseAddress;
@@ -40,8 +43,9 @@ public static class CoworkeeClientExtensions
         services.AddHttpClient<Ai.IAssistantApi, Ai.AssistantApi>(client =>
         {
             client.BaseAddress = baseAddress;
-            client.Timeout = TimeSpan.FromMinutes(5);
+            client.Timeout = TimeSpan.FromMinutes(11);
         });
+        services.AddScoped<Ai.AssistantState>();
         ServiceProxies.ServiceProxyRegistry.AddTo(services, baseAddress, options.ServiceProxies);
         services.AddSingleton<Localization.CoworkeeLocalizer>();
         services.AddSingleton(typeof(Microsoft.Extensions.Localization.IStringLocalizer<>), typeof(Localization.CoworkeeStringLocalizer<>));
@@ -129,6 +133,7 @@ internal sealed class AdminNavigation : INavigationContributor
         new("Roles", "/admin/roles", MudBlazor.Icons.Material.Outlined.Shield, Coworkee.Contracts.Identity.IdentityPermissions.Roles.View, Group: Identity, Order: 2),
         new("Applications", "/admin/clients", MudBlazor.Icons.Material.Outlined.Apps, Coworkee.Contracts.Identity.IdentityPermissions.Clients.Manage, Group: Identity, Order: 3, HostOnly: true),
         new("Scopes", "/admin/scopes", MudBlazor.Icons.Material.Outlined.Key, Coworkee.Contracts.Identity.IdentityPermissions.Clients.Manage, Group: Identity, Order: 4, HostOnly: true),
+        new("API keys", "/admin/api-keys", MudBlazor.Icons.Material.Outlined.VpnKey, Coworkee.Contracts.Identity.ApiKeyPermissions.Manage, Group: Identity, Order: 5),
         new("Settings", "/admin/settings", MudBlazor.Icons.Material.Outlined.Tune, Coworkee.Contracts.Settings.SettingsPermissions.Manage, Group: System),
         new("Services", "/admin/services", MudBlazor.Icons.Material.Outlined.Hub, Coworkee.Contracts.Settings.SettingsPermissions.Manage, Group: System, Order: 1, HostOnly: true),
         new("Tenants", "/admin/tenants", MudBlazor.Icons.Material.Outlined.Domain, Coworkee.Contracts.Features.FeaturePermissions.Tenants, Group: System, Order: 2, HostOnly: true),
@@ -143,6 +148,5 @@ internal sealed class AdminNavigation : INavigationContributor
         new("AI tool calls", "/admin/ai-tool-calls", MudBlazor.Icons.Material.Outlined.ManageSearch, Coworkee.Contracts.Ai.AiPermissions.Audit, Group: Monitoring, Order: 1),
         new("Files", "/files", MudBlazor.Icons.Material.Outlined.FolderOpen, Coworkee.Contracts.Files.FilePermissions.View, Order: -8),
         new("Chat", "/chat", MudBlazor.Icons.Material.Outlined.Chat, Coworkee.Contracts.Chat.ChatPermissions.Use, Order: -9),
-        new("Assistant", "/assistant", MudBlazor.Icons.Material.Outlined.AutoAwesome, Coworkee.Contracts.Ai.AiPermissions.Chat, Order: -10),
     ];
 }

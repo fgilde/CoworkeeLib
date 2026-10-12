@@ -1,0 +1,72 @@
+<MudStack Spacing="3" data-testid="api-keys">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+        <MudText Typo="Typo.body2" Class="flex-grow-1" Style="max-width:720px">
+            @L["Personal API keys let scripts and AI clients such as Claude, VS Code or Cursor work with the app as you, limited to the permissions you choose."]
+        </MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" OnClick="CreateAsync" data-testid="api-key-new">@L["New API key"]</MudButton>
+    </MudStack>
+
+    @if (_created is not null)
+    {
+        <MudAlert Severity="Severity.Success" Variant="Variant.Outlined" ShowCloseIcon="true" CloseIconClicked="() => _created = null" data-testid="api-key-created">
+            <MudText Typo="Typo.subtitle2">@L["Copy the key now: it is shown only this once."]</MudText>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="my-2">
+                <code style="overflow-wrap:anywhere" data-testid="api-key-secret">@_created.Secret</code>
+                <MudIconButton Icon="@Icons.Material.Outlined.ContentCopy" Size="Size.Small" aria-label="@L["Copy"]" OnClick="() => CopyAsync(_created.Secret)" data-testid="api-key-copy" />
+            </MudStack>
+            <MudText Typo="Typo.body2">@L["MCP server of this app:"] <code data-testid="mcp-url">@McpUrl</code></MudText>
+            <MudText Typo="Typo.caption">@L["Claude Desktop, VS Code, Cursor and other MCP clients:"]</MudText>
+            <pre style="white-space:pre-wrap;overflow-wrap:anywhere;margin:4px 0" data-testid="mcp-config">@McpConfig</pre>
+            <MudText Typo="Typo.caption">Claude Code:</MudText>
+            <pre style="white-space:pre-wrap;overflow-wrap:anywhere;margin:4px 0">@ClaudeCode</pre>
+        </MudAlert>
+    }
+
+    @if (_keys is null)
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+    else if (_keys.Count == 0)
+    {
+        <MudText Typo="Typo.body2" Color="Color.Secondary">@L["You have no API keys yet."]</MudText>
+    }
+    else
+    {
+        <MudSimpleTable Dense="true" Hover="true" Outlined="true">
+            <thead>
+                <tr>
+                    <th>@L["Name"]</th>
+                    <th>@L["Key"]</th>
+                    <th>@L["Permissions"]</th>
+                    <th>@L["Created"]</th>
+                    <th>@L["Expires"]</th>
+                    <th>@L["Last used"]</th>
+                    <th>@L["Status"]</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var key in _keys)
+                {
+                    <tr data-key="@key.Name">
+                        <td>@key.Name<br /><MudText Typo="Typo.caption" Color="Color.Secondary">@key.Description</MudText></td>
+                        <td><code>@key.Prefix…</code></td>
+                        <td>
+                            <MudTooltip Text="@string.Join(", ", key.Scopes)"><MudChip T="string" Size="Size.Small">@key.Scopes.Count</MudChip></MudTooltip>
+                        </td>
+                        <td>@key.CreatedAt.ToLocalTime().ToString("d")</td>
+                        <td>@key.ExpiresAt.ToLocalTime().ToString("d")</td>
+                        <td>@(key.LastUsedAt?.ToLocalTime().ToString("g") ?? "–") <MudText Typo="Typo.caption" Color="Color.Secondary">@key.LastUsedIp</MudText></td>
+                        <td><ApiKeyStatus Key="key" /></td>
+                        <td>
+                            @if (key.RevokedAt is null)
+                            {
+                                <MudButton Size="Size.Small" Color="Color.Error" Variant="Variant.Text" OnClick="() => RevokeAsync(key)" data-testid="api-key-revoke">@L["Revoke"]</MudButton>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </MudSimpleTable>
+    }
+</MudStack>

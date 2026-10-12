@@ -36,3 +36,37 @@ export function resizeImage(dataUrl, max) {
         image.src = dataUrl;
     });
 }
+
+export function onHotkey(dotnet, key) {
+    const handler = e => {
+        if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === key) {
+            e.preventDefault();
+            dotnet.invokeMethodAsync('ToggleFromHotkey');
+        }
+    };
+    document.addEventListener('keydown', handler);
+    return { dispose: () => document.removeEventListener('keydown', handler) };
+}
+
+export function submitOnEnter(element, dotnet) {
+    if (!element) {
+        return;
+    }
+
+    element.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+            e.preventDefault();
+            dotnet.invokeMethodAsync('SubmitFromEnter');
+        }
+    });
+}
+
+export function scrollToEnd(element) {
+    if (element) {
+        element.scrollTop = element.scrollHeight;
+    }
+}
+
+export function focus(element) {
+    element?.focus();
+}
