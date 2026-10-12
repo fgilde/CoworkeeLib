@@ -32,6 +32,6 @@ public static class ApiKeyForwarding
     }
 
     public static bool HasApiKey(HttpRequest request) =>
-        request.Headers.ContainsKey(ApiKeyDefaults.Header)
+        request.Headers[ApiKeyDefaults.Header].ToString().Trim().Length > 0
         || request.Headers.Authorization.ToString().StartsWith("Bearer " + ApiKeyDefaults.Prefix, StringComparison.Ordinal);
 }
