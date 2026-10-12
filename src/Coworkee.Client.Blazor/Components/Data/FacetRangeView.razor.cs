@@ -1,23 +1,33 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Coworkee.Contracts.Data;
-using Microsoft.AspNetCore.Components;
+using MudBlazor.Extensions.Helper;
+using Nextended.Core.Contracts;
+using Nextended.Core.Types;
 
 namespace Coworkee.Client.Blazor.Components.Data;
 
 /// <summary>
-/// A number facet as a histogram over a two-thumb slider with "from" and "to" fields. The choice is one range,
-/// <c>(Path ge from and Path le to)</c>; the whole range means no choice.
+/// A number facet as a histogram over a two-thumb range slider with "from" and "to" fields. The choice is one range,
+/// <c>(Path ge from and Path le to)</c>; the whole range means no choice. Sliding applies the filter once the thumbs rest.
 /// </summary>
-public partial class FacetRangeView
+public partial class FacetRangeView : IDisposable
 {
+    private readonly string _labelId = $"cw-facet-range-{Guid.NewGuid():N}";
     private (decimal Min, decimal Max)? _bounds;
     private decimal _from;
     private decimal _to;
     private string? _known;
     private bool _loaded;
+    private CancellationTokenSource? _settle;
 
     private string Path => Group.ValuePath ?? Group.Field;
+
+    private IRange<decimal> Whole => new MudExRange<decimal>(_bounds!.Value.Min, _bounds.Value.Max);
+
+    private IRange<decimal> Chosen => new MudExRange<decimal>(_from, _to);
+
+    private RangeLength<decimal> StepLength => new(Step);
 
     private decimal Step
     {
@@ -26,16 +36,6 @@ public partial class FacetRangeView
             var (min, max) = _bounds!.Value;
             var whole = decimal.Truncate(min) == min && decimal.Truncate(max) == max && max - min >= 20;
             return whole ? 1 : Math.Max(0.01m, Math.Round((max - min) / 100, 2));
-        }
-    }
-
-    private string Track
-    {
-        get
-        {
-            var (min, max) = _bounds!.Value;
-            var span = max == min ? 1 : max - min;
-            return FormattableString.Invariant($"--cw-from:{100 * (_from - min) / span:0.##}%;--cw-to:{100 * (_to - min) / span:0.##}%");
         }
     }
 
@@ -66,13 +66,26 @@ public partial class FacetRangeView
     private string BucketTitle(FacetOptionDto bucket) =>
         $"{Show(Parse(bucket.Meta?.GetValueOrDefault("from")) ?? 0)} – {Show(Parse(bucket.Meta?.GetValueOrDefault("to")) ?? 0)}: {Count(bucket.Count)}";
 
-    private void Slide(ChangeEventArgs args, bool lower)
-    {
-        if (Parse(args.Value?.ToString()) is not { } value)
-        {
-            return;
-        }
+    // the slider snaps through doubles: round back to the step's decimals
+    private void Slide(IRange<decimal> range) => (_from, _to) = (Math.Round(range.Start, 2), Math.Round(range.End, 2));
 
+    private void Slid(IRange<decimal> range)
+    {
+        Slide(range);
+        _settle?.Cancel();
+        _settle = new CancellationTokenSource();
+        var token = _settle.Token;
+        _ = Task.Delay(350, token).ContinueWith(_ => InvokeAsync(Settled), token, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Default);
+    }
+
+    private void Settled()
+    {
+        Commit();
+        StateHasChanged();
+    }
+
+    private void Typed(decimal value, bool lower)
+    {
         if (lower)
         {
             _from = Math.Min(value, _to);
@@ -81,28 +94,23 @@ public partial class FacetRangeView
         {
             _to = Math.Max(value, _from);
         }
+
+        Commit();
     }
 
-    private Task TypeAsync(decimal value, bool lower) => SlidAsync(new ChangeEventArgs { Value = Text(value) }, lower);
-
-    private Task SlidAsync(ChangeEventArgs args, bool lower)
-    {
-        Slide(args, lower);
-        return CommitAsync();
-    }
-
-    private Task PickAsync(FacetOptionDto bucket)
+    private void Pick(FacetOptionDto bucket)
     {
         if (Bounds(bucket.OData.Replace(" lt ", " le ", StringComparison.Ordinal)) is { } range)
         {
             (_from, _to) = range;
         }
 
-        return CommitAsync();
+        Commit();
     }
 
-    private Task CommitAsync()
+    private void Commit()
     {
+        _settle?.Cancel();
         var (min, max) = _bounds!.Value;
         if (_from <= min && _to >= max)
         {
@@ -115,9 +123,9 @@ public partial class FacetRangeView
             _known = odata;
             Selection.Set(Group, $"{Show(_from)} – {Show(_to)}", odata);
         }
-
-        return Task.CompletedTask;
     }
+
+    public void Dispose() => _settle?.Cancel();
 
     [GeneratedRegex(@"ge (-?[0-9.]+) and \S+ l[te] (-?[0-9.]+)\)")]
     private static partial Regex RangeText();

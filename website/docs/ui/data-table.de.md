@@ -58,8 +58,8 @@ Facetten kommen vom Server (`[ProvideFacet]` an der Entität, siehe [OData und F
 | `Swatches` | Farbpunkte, die Farbe aus `[FacetColor]`, einem Meta-Wert `color` oder dem Wert selbst | |
 | `Tree` | Werte an einem Trenner aufgeteilt ("image/png" unter "image") | |
 | `Toggle` | alle, ja oder nein | `bool` |
-| `Range` | ein Histogramm über einem Schieberegler mit Feldern *von* und *bis* | Zahlen mit `FacetType.Range` |
-| `Dates` | Vorgaben (heute, diese Woche, letzte 30 Tage, ...), ein Histogramm nach Tagen, Monaten oder Jahren und ein eigener Zeitraum | Datumswerte |
+| `Range` | ein Histogramm über einem Bereichsregler mit zwei Griffen (`MudExRangeSlider`, Pfeiltasten, Bild auf/ab, Pos1 und Ende bewegen einen Griff) mit Feldern *von* und *bis*; Schieben filtert, sobald die Griffe ruhen | Zahlen mit `FacetType.Range` |
+| `Dates` | Vorgaben (heute, diese Woche, letzte 30 Tage, ...), ein Histogramm nach Tagen, Monaten oder Jahren und ein eigener Zeitraum, eingetippt oder zwischen dem ersten und letzten Tag geschoben | Datumswerte |
 
 ![Aufträge mit der Facetten-Leiste](../assets/screenshots/facets-panel.png){ .shot }
 
