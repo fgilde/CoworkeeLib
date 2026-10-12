@@ -44,7 +44,7 @@
           <ItemsControl ItemsSource="{Binding Infrastructure}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
-                <UniformGrid Columns="3" ColumnSpacing="12" />
+                <UniformGrid Columns="2" ColumnSpacing="12" RowSpacing="12" />
               </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
@@ -77,7 +77,7 @@
                     </ListBox>
                     <TextBlock Classes="caption" IsVisible="{Binding IsBool}" Text="{Binding Description}" TextWrapping="Wrap" />
                     <TextBlock Classes="caption" IsVisible="{Binding IsChoice}" Text="{Binding Choice.Text}" />
-                    <Border Classes="banner info" Padding="10,8">
+                    <Border Classes="banner info" Padding="10,8" IsVisible="{Binding HasNote}">
                       <Grid ColumnDefinitions="Auto,*">
                         <PathIcon Margin="0,1,8,0" Classes="small" Data="{StaticResource Icon.Info}" Foreground="{DynamicResource Primary}" VerticalAlignment="Top" />
                         <TextBlock Grid.Column="1" FontSize="12" TextWrapping="Wrap" Text="{Binding NoteText}" />
@@ -88,6 +88,66 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
+        </StackPanel>
+
+        <!-- AI assistant: provider, model, endpoint, key -->
+        <StackPanel Spacing="10" x:Name="AiSection" DataContext="{Binding Ai}" x:DataType="vm:AiSetupViewModel">
+          <TextBlock Classes="overline" Text="{l:L 'AI ASSISTANT'}" />
+          <Border Classes="card" Padding="16">
+            <StackPanel Spacing="14" IsEnabled="{Binding IsAvailable}" Opacity="{Binding IsAvailable, Converter={x:Static v:Converters.Dim}}">
+              <ListBox Classes="providers" ItemsSource="{Binding Providers}" SelectedItem="{Binding Selected}">
+                <ListBox.ItemTemplate>
+                  <DataTemplate x:DataType="vm:AiProviderTileViewModel">
+                    <StackPanel Spacing="6" HorizontalAlignment="Center" ToolTip.Tip="{Binding Name}">
+                      <Border Width="34" Height="34" CornerRadius="9" HorizontalAlignment="Center" Background="{Binding Color, Converter={x:Static v:Converters.HexBrush}}">
+                        <Panel>
+                          <PathIcon IsVisible="{Binding HasLogo}" Width="20" Height="20" Foreground="White" Data="{Binding Logo, Converter={x:Static v:Converters.PathData}}" />
+                          <TextBlock IsVisible="{Binding !HasLogo}" Text="{Binding Monogram}" Foreground="White" FontWeight="Bold" FontSize="16"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Panel>
+                      </Border>
+                      <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" MaxLines="2" />
+                      <TextBlock Classes="caption" Text="{Binding Tag}" FontSize="11" HorizontalAlignment="Center" />
+                    </StackPanel>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Spacing="2">
+                  <TextBlock Classes="h3" Text="{Binding Info.Name}" />
+                  <TextBlock Classes="caption" Text="{Binding Notes}" TextWrapping="Wrap" />
+                </StackPanel>
+                <Button Grid.Column="1" Classes="link" IsVisible="{Binding HasKeyUrl}" Content="{Binding KeyLinkText}" Command="{Binding OpenKeyUrlCommand}" VerticalAlignment="Top" />
+              </Grid>
+
+              <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                <StackPanel Spacing="4">
+                  <TextBlock FontWeight="SemiBold" Text="{l:L 'Model'}" />
+                  <AutoCompleteBox Text="{Binding Model}" ItemsSource="{Binding Models}" FilterMode="Contains" MinimumPrefixLength="0" PlaceholderText="{Binding ModelHint}" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Spacing="4">
+                  <TextBlock FontWeight="SemiBold" Text="{l:L 'Endpoint'}" />
+                  <TextBox Text="{Binding Endpoint}" PlaceholderText="{Binding EndpointHint}" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Spacing="4" IsVisible="{Binding NeedsKey}">
+                  <TextBlock FontWeight="SemiBold" Text="{l:L 'API key (optional)'}" />
+                  <TextBox Text="{Binding ApiKey}" PasswordChar="•" PlaceholderText="{l:L 'Goes to the user secrets'}" />
+                </StackPanel>
+              </Grid>
+
+              <Border Classes="banner info" Padding="10,8">
+                <Grid ColumnDefinitions="Auto,*">
+                  <PathIcon Margin="0,1,8,0" Classes="small" Data="{StaticResource Icon.Info}" Foreground="{DynamicResource Primary}" VerticalAlignment="Top" />
+                  <StackPanel Grid.Column="1" Spacing="2">
+                    <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding Note}" />
+                    <TextBlock FontSize="12" TextWrapping="Wrap" IsVisible="{Binding NeedsKey}"
+                               Text="{l:L 'A key typed here never goes into the spec: after creation the Studio writes it to the user secrets of the app host.'}" />
+                  </StackPanel>
+                </Grid>
+              </Border>
+            </StackPanel>
+          </Border>
         </StackPanel>
 
         <ItemsControl ItemsSource="{Binding Errors}">
