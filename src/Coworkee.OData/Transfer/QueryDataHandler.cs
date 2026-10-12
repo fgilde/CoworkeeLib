@@ -12,8 +12,27 @@ using Nextended.Web.OData;
 namespace Coworkee.OData.Transfer;
 
 /// <summary>Runs an OData query the way the entity set's list does: permission, row filters and hidden properties apply.</summary>
-internal sealed class QueryDataHandler(IServiceProvider services, ODataEntityRegistry registry) : IHandler<QueryDataQuery, Result<DataPage>>
+internal sealed class QueryDataHandler(IServiceProvider services, ODataEntityRegistry registry)
+    : IHandler<QueryDataQuery, Result<DataPage>>, IHandler<ListDataSetsQuery, Result<IReadOnlyList<DataSetInfo>>>
 {
+    public async Task<Result<IReadOnlyList<DataSetInfo>>> HandleAsync(ListDataSetsQuery query, CancellationToken cancellationToken)
+    {
+        var model = services.GetRequiredService<IEdmModel>();
+        var sets = new List<DataSetInfo>();
+        foreach (var entity in registry.Entities)
+        {
+            if (await ODataEntityAccess.IsGrantedAsync(services, entity.EntityType, cancellationToken))
+            {
+                var type = (IEdmStructuredType)model.FindDeclaredType(entity.EntityType.FullName);
+                sets.Add(new DataSetInfo(entity.EntitySet, type.StructuralProperties()
+                    .Where(p => p.Type.IsPrimitive() || p.Type.IsEnum())
+                    .ToDictionary(p => p.Name, p => p.Type.IsEnum() ? string.Join("|", p.Type.AsEnum().EnumDefinition().Members.Select(m => m.Name)) : p.Type.ShortQualifiedName())));
+            }
+        }
+
+        return sets;
+    }
+
     private const int MaxRows = 50;
 
     public async Task<Result<DataPage>> HandleAsync(QueryDataQuery query, CancellationToken cancellationToken)
@@ -52,7 +71,13 @@ internal sealed class QueryDataHandler(IServiceProvider services, ODataEntityReg
         var visible = (await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken)).ApplyODataFilter(options);
         var total = await visible.LongCountAsync(cancellationToken);
         var rows = await visible.ApplyODataOrderBy(options).Skip(Math.Max(0, query.Skip)).Take(Math.Clamp(query.Top, 1, MaxRows)).ToListAsync(cancellationToken);
-        var columns = ExcelExport.Columns<TEntity>(model);
+        var fields = query.Select?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
+        var columns = ExcelExport.Columns<TEntity>(model).Where(c => fields.Length == 0 || fields.Contains(c.Name, StringComparer.OrdinalIgnoreCase)).ToList();
+        if (fields.Length > columns.Count)
+        {
+            throw new ODataException($"Unknown field in select; the fields are {string.Join(", ", ExcelExport.Columns<TEntity>(model).Select(c => c.Name))}.");
+        }
+
         return new DataPage([.. rows.Select(row => (IReadOnlyDictionary<string, object?>)columns.ToDictionary(c => c.Name, c => c.GetValue(row)))], total);
     }
 }
