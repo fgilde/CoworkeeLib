@@ -21,7 +21,7 @@ The request type becomes the tool's input schema, the `Result` its output. Failu
 
 - **Assistant window** for users with `Ai.Chat`: a button at the bottom right (or `Ctrl+I`) opens a chat with the tools of all modules, as the signed-in user. It comes small, large or full screen, and full screen on phones; it is not there while the assistant is not active or the user lacks `Ai.Chat`. The old `/assistant` route opens the window.
 - **Conversations** stay on the server per user: titled after the first message, renamed, deleted and searched in the side bar, live in every open tab, and part of the personal data export and erasure.
-- **Streamed answers** appear as they are written, as Markdown that cannot carry markup: raw HTML shows as text, links go only to `http`, `https`, `mailto` or the app, and images become links, so a planted image address cannot send data away without a click.
+- **Streamed answers** appear as they are written, as Markdown that cannot carry markup or data: raw HTML shows as text and images become links. Links to other sites lose query and fragment and show their host, app links stay as they are, mail links keep only the address, and other schemes go nowhere, so a planted link cannot carry data away.
 - **Tool chips** under each answer show what the assistant did; with `AssistantLinks` they link to what it created or changed:
 
     ```csharp
@@ -31,8 +31,8 @@ The request type becomes the tool's input schema, the `Result` its output. Failu
 
 - **[MCP server](mcp.md)** under `/mcp` with the same tools, for Claude Desktop, Claude Code, VS Code, Cursor and other MCP clients, signed in with an [API key](../security/api-keys.md).
 - **Tool call audit** for users with `Ai.Audit`: every call with input, result, user, channel and API key.
-- Commands, which change data, only run in the first round of a turn. A tool result can therefore not trick the model into changing something on its own.
-- Destructive tools (named `delete_…`, `remove_…`, `revoke_…`, `purge_…`, `erase_…` or marked `[AiTool(Destructive = true)]`) do not run at once: the window shows what the assistant wants to run with *Run* and *Cancel*, and only the user's click runs it. A new message cancels a waiting one.
+- Queries run at once. Every command, which changes data, waits: the window shows exactly what the assistant wants to run (inputs that look like secrets masked) with *Run* and *Cancel*, destructive ones highlighted, and only the user's click runs it. Creating a product by chat takes one click. Text planted in data or in the conversation can therefore never change anything on its own. A new message cancels a waiting call.
+- A waiting call is stored encrypted with ASP.NET Data Protection (share the key ring between API instances), decided once even when two tabs click at the same time, and never runs twice.
 
 The window talks to `/api/v1/ai`: `GET status`, `GET|POST sessions`, `GET|PUT|DELETE sessions/{id}`, and `POST sessions/{id}/messages` and `POST sessions/{id}/confirm`, which answer with `application/x-ndjson`: one `AiStreamEvent` per line, `delta` (text), `tool` (a tool call), then `done` (the saved message) or `error`. The answer runs to its end and is saved even when the browser goes away.
 

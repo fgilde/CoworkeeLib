@@ -21,7 +21,7 @@ Der Request-Typ wird zum Eingabeschema des Werkzeugs, das `Result` zu seiner Aus
 
 - **Assistent-Fenster** für Benutzer mit `Ai.Chat`: ein Knopf unten rechts (oder `Strg+I`) öffnet einen Chat mit den Werkzeugen aller Module, als angemeldeter Benutzer. Es gibt ihn klein, groß oder als Vollbild, auf Telefonen immer als Vollbild; er fehlt, solange der Assistent nicht aktiv ist oder dem Benutzer `Ai.Chat` fehlt. Die alte Route `/assistant` öffnet das Fenster.
 - **Unterhaltungen** bleiben pro Benutzer auf dem Server: benannt nach der ersten Nachricht, in der Seitenleiste umbenannt, gelöscht und durchsucht, live in jedem offenen Tab und Teil von Export und Löschung der personenbezogenen Daten.
-- **Gestreamte Antworten** erscheinen, während sie entstehen, als Markdown ohne Markup: rohes HTML erscheint als Text, Links führen nur zu `http`, `https`, `mailto` oder in die App, und Bilder werden zu Links, damit eine untergeschobene Bildadresse keine Daten ohne Klick hinausträgt.
+- **Gestreamte Antworten** erscheinen, während sie entstehen, als Markdown, das weder Markup noch Daten trägt: rohes HTML erscheint als Text, Bilder werden zu Links. Links zu anderen Sites verlieren Query und Fragment und zeigen ihren Host, App-Links bleiben, wie sie sind, Mail-Links behalten nur die Adresse, andere Schemata führen nirgendwohin; ein untergeschobener Link trägt so keine Daten hinaus.
 - **Werkzeug-Chips** unter jeder Antwort zeigen, was der Assistent getan hat; mit `AssistantLinks` verlinken sie auf das, was er angelegt oder geändert hat:
 
     ```csharp
@@ -31,8 +31,8 @@ Der Request-Typ wird zum Eingabeschema des Werkzeugs, das `Result` zu seiner Aus
 
 - **[MCP-Server](mcp.md)** unter `/mcp` mit denselben Werkzeugen, für Claude Desktop, Claude Code, VS Code, Cursor und andere MCP-Clients, angemeldet mit einem [API-Schlüssel](../security/api-keys.md).
 - **Werkzeug-Audit** für Benutzer mit `Ai.Audit`: jeder Aufruf mit Eingabe, Ergebnis, Benutzer, Kanal und API-Schlüssel.
-- Commands, die Daten ändern, laufen nur in der ersten Runde einer Antwort. Ein Werkzeugergebnis kann das Modell so nicht dazu bringen, eigenmächtig etwas zu ändern.
-- Destruktive Werkzeuge (namens `delete_…`, `remove_…`, `revoke_…`, `purge_…`, `erase_…` oder mit `[AiTool(Destructive = true)]`) laufen nicht sofort: das Fenster zeigt, was der Assistent ausführen will, mit *Run* und *Cancel*, und erst der Klick des Benutzers führt es aus. Eine neue Nachricht verwirft eine wartende Bestätigung.
+- Queries laufen sofort. Jedes Command, das Daten ändert, wartet: das Fenster zeigt genau, was der Assistent ausführen will (Eingaben, die nach Geheimnissen aussehen, maskiert), mit *Ausführen* und *Abbrechen*, destruktive hervorgehoben, und erst der Klick des Benutzers führt es aus. Ein Produkt per Chat anlegen kostet einen Klick. Text, der in Daten oder in der Unterhaltung untergeschoben wurde, kann so nie eigenmächtig etwas ändern. Eine neue Nachricht verwirft einen wartenden Aufruf.
+- Ein wartender Aufruf wird mit ASP.NET Data Protection verschlüsselt gespeichert (den Schlüsselbund zwischen API-Instanzen teilen), nur einmal entschieden, auch wenn zwei Tabs gleichzeitig klicken, und läuft nie zweimal.
 
 Das Fenster spricht mit `/api/v1/ai`: `GET status`, `GET|POST sessions`, `GET|PUT|DELETE sessions/{id}` sowie `POST sessions/{id}/messages` und `POST sessions/{id}/confirm`, die mit `application/x-ndjson` antworten: ein `AiStreamEvent` pro Zeile, `delta` (Text), `tool` (ein Werkzeugaufruf), dann `done` (die gespeicherte Nachricht) oder `error`. Die Antwort läuft zu Ende und wird gespeichert, auch wenn der Browser geht.
 

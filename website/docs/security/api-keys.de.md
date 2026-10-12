@@ -8,7 +8,9 @@ Benutzer mit `ApiKeys.Create` öffnen *Konto > API-Schlüssel* und legen einen S
 
 - einem Namen und optional einer Beschreibung, z. B. *Claude Desktop auf meinem Laptop*,
 - einer Laufzeit von 7 bis 365 Tagen (die API nimmt höchstens 366),
-- den Berechtigungen des Schlüssels, ausgewählt aus den eigenen Berechtigungen des Benutzers über alle seine Rollen. Andere Berechtigungen werden nicht angeboten, und die API lehnt sie ab.
+- den Berechtigungen des Schlüssels, ausgewählt aus dem, was der Benutzer gerade darf: mit einer in der App gewählten aktiven Rolle nur aus deren Berechtigungen. Andere Berechtigungen werden nicht angeboten, und die API lehnt sie ab.
+
+Ein Benutzer hat höchstens 20 Schlüssel, die weder widerrufen noch abgelaufen sind (`Coworkee:ApiKeys:MaxActivePerUser`), und das Anlegen ist in der Rate begrenzt (Policy `apiKeys`, 10 pro Minute und Benutzer).
 
 Der Schlüssel wird einmal angezeigt: `cwk_` und 64 Hex-Zeichen (256 Zufallsbits). Der Server speichert nur seinen SHA-256-Hash und vergleicht Hashes in fester Zeit; die ersten 10 Zeichen bleiben sichtbar, damit man seine Schlüssel unterscheiden kann. Ein verlorener Schlüssel lässt sich nicht erneut anzeigen: widerrufen und einen neuen anlegen.
 
@@ -23,7 +25,7 @@ curl -H "Authorization: Bearer cwk_..." https://api.myapp.example/api/v1/identit
 curl -H "X-Api-Key: cwk_..." https://api.myapp.example/odata/Products?$top=5
 ```
 
-Beide Header funktionieren gegen den API-Host. Der Web-Host leitet `/api` nur mit der Browser-Sitzung (und deren CSRF-Header) weiter, Skripte rufen also direkt die API-Adresse auf; der MCP-Server ist unter beiden Adressen erreichbar.
+Beide Header funktionieren gegen den API-Host; ein leerer `X-Api-Key`-Header wird ignoriert. Der Web-Host leitet `/api` nur mit der Browser-Sitzung (und deren CSRF-Header) weiter, Skripte rufen also direkt die API-Adresse auf; der MCP-Server ist unter beiden Adressen erreichbar.
 
 `AddCoworkeeApiAuthentication` richtet die Schlüssel im API-Host ein. Hosts mit eigener Authentifizierung und Tests fügen sie mit `services.AddCoworkeeApiKeys()` hinzu: Anfragen mit Schlüssel gehen an den Schlüssel-Handler, alle anderen behalten das Standardschema.
 
@@ -35,7 +37,7 @@ Die wirksamen Berechtigungen eines Schlüssels sind seine Berechtigungen (mit de
 - sein Benutzer deaktiviert oder gesperrt ist oder die Organisation deaktiviert ist,
 - sein Benutzer `ApiKeys.Create` verliert.
 
-Schlüssel ignorieren die aktive Rolle, die der Benutzer in der App gewählt hat, und arbeiten mit allen Rollen des Benutzers. Die aktive Rolle schränkt die Oberfläche für den Moment ein; ein Schlüssel ist für einen Zweck gemacht, und seine Berechtigungen sind schon die Einschränkung. Ein Schlüssel, der sich mit jedem Rollenwechsel im Browser ändert, würde die Skripte brechen, die ihn nutzen.
+Ein Schlüssel entsteht nie mit mehr, als die anlegende Sitzung in diesem Moment hat, aktive Rolle eingeschlossen. Danach ignorieren Schlüssel die aktive Rolle, die der Benutzer in der App wählt, und arbeiten mit allen Rollen des Benutzers: ein Schlüssel ist für einen Zweck gemacht, seine Berechtigungen sind schon die Einschränkung, und ein Schlüssel, der sich mit jedem Rollenwechsel im Browser ändert, würde die Skripte brechen, die ihn nutzen. Seine Grenzen gelten auch in Code, der in einem eigenen Benutzer-Scope für den Aufrufer handelt.
 
 Schlüssel können keine Schlüssel anlegen oder widerrufen, auch nicht mit `ApiKeys.Create` unter ihren Berechtigungen: dafür meldet sich der Benutzer in der App an. Die Requests für Schlüssel sind nie KI-Werkzeuge, ein Geheimnis erreicht also nie ein Modell.
 

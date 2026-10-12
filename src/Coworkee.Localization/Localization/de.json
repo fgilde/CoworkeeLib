@@ -913,5 +913,7 @@
   "The personal keys of the organisation's users; revoking one stops its clients at once.": "Die persönlichen Schlüssel der Benutzer der Organisation; ein widerrufener Schlüssel stoppt seine Clients sofort.",
   "Create own API keys": "Eigene API-Schlüssel erstellen",
   "Manage the API keys of all users": "API-Schlüssel aller Benutzer verwalten",
-  "Use the assistant and the MCP server": "Den Assistenten und den MCP-Server nutzen"
+  "Use the assistant and the MCP server": "Den Assistenten und den MCP-Server nutzen",
+  "MCP server enabled": "MCP-Server aktiv",
+  "Off: MCP clients get no tools and run nothing, also with valid keys. Needs no AI provider.": "Aus: MCP-Clients bekommen keine Werkzeuge und führen nichts aus, auch mit gültigen Schlüsseln. Braucht keinen KI-Anbieter."
 }
