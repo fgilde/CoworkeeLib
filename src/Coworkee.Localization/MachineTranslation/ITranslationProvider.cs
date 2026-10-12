@@ -7,7 +7,7 @@ public sealed record TranslationConnection(string Provider, string? Key, string?
     public override string ToString() => $"{Provider} {Endpoint}";
 }
 
-/// <summary>A machine translation service. Register more with <c>AddScoped&lt;ITranslationProvider, ...&gt;()</c>; the setting names it by <see cref="Name"/>.</summary>
+/// <summary>A machine translation service, one per value of <see cref="Contracts.Localization.TranslationProviders"/>; the setting picks it by <see cref="Name"/>.</summary>
 public interface ITranslationProvider
 {
     string Name { get; }
