@@ -70,6 +70,18 @@ public sealed class ResponseFilterTests : IAsyncLifetime
         (await (await _app.GetTestClient().SendAsync(granted, Ct)).Content.ReadFromJsonAsync<JsonElement>(Ct)).GetProperty("salary").GetInt32().ShouldBe(5000);
     }
 
+    [Fact]
+    public async Task Values_outside_an_endpoint_are_shaped_like_the_api_answers_them()
+    {
+        await using var scope = _app.Services.CreateAsyncScope();
+
+        var shaped = await ResponseFilterApplier.ApplyAsync(scope.ServiceProvider, new Person("Ada", "secret-token", "4111111111111111"), JsonSerializerOptions.Web, Ct);
+
+        var json = JsonSerializer.Serialize(shaped, JsonSerializerOptions.Web);
+        json.ShouldNotContain("secret-token");
+        json.ShouldContain("4111********1111");
+    }
+
     public sealed record Person(string Name, string Token, string Card);
 
     public sealed record Employee(string Name, int? Salary);

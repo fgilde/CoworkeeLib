@@ -36,6 +36,21 @@ public sealed class QueryDataTests(ODataApp app) : IAsyncLifetime
         page.Value.Rows.Single().Keys.ShouldNotContain("SerialCode");
         (await SendAsync(new QueryDataQuery("Gadgets", "Nope eq 1"))).Error!.Kind.ShouldBe(ErrorKind.Validation);
         (await SendAsync(new QueryDataQuery("Unknown"))).Error!.Message.ShouldContain("Gadgets");
+        (await SendAsync(new QueryDataQuery("Gadgets", Select: "Name, price"))).Value.Rows[0].Keys.ShouldBe(["Name", "Price"], ignoreOrder: true);
+        (await SendAsync(new QueryDataQuery("Gadgets", Select: "Name,SerialCode"))).Error!.Kind.ShouldBe(ErrorKind.Validation);
+    }
+
+    [Fact]
+    public async Task Lists_the_sets_the_user_may_read_with_their_visible_fields()
+    {
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(_setup.AdminUserId, _setup.TenantId));
+        await using var scope = app.App.Services.CreateAsyncScope();
+
+        var sets = (await scope.ServiceProvider.GetRequiredService<IDispatcher>().SendAsync(new ListDataSetsQuery(), TestContext.Current.CancellationToken)).Value;
+
+        var gadgets = sets.Single(s => s.Name == "Gadgets");
+        gadgets.Fields["Name"].ShouldBe("String");
+        gadgets.Fields.Keys.ShouldNotContain("SerialCode");
     }
 
     private async Task<Result<DataPage>> SendAsync(QueryDataQuery query)

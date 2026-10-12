@@ -33,7 +33,7 @@ public sealed class ProviderTests(AiApp app) : IAsyncLifetime
 
         answer.Value!.Text.ShouldBe("Added Milk.");
         answer.Value.StopReason.ShouldBe("end_turn");
-        answer.Value.ToolCalls.Single().Tool.ShouldBe("add_note");
+        answer.Value.Calls.Single().Tool.ShouldBe("add_note");
         (await app.InDbAsync(db => db.Set<Note>().Select(n => n.Title).ToListAsync(Ct))).ShouldBe(["Milk"]);
         fake.Connection.ShouldBe(new AiConnection(AiProviders.Anthropic, null, null, "test-key"));
         var tool = fake.Options[0].Tools!.OfType<AIFunctionDeclaration>().Single(t => t.Name == "add_note");
@@ -53,7 +53,7 @@ public sealed class ProviderTests(AiApp app) : IAsyncLifetime
 
         var answer = await ChatAsync(fake, "Note x");
 
-        answer.Value!.ToolCalls.Single().Succeeded.ShouldBeFalse();
+        answer.Value!.Calls.Single().Succeeded.ShouldBeFalse();
         fake.Requests[1][^1].Contents.OfType<FunctionResultContent>().Single().Exception.ShouldNotBeNull();
     }
 
@@ -96,12 +96,13 @@ public sealed class ProviderTests(AiApp app) : IAsyncLifetime
     public void A_connection_is_complete_with_what_its_provider_needs(string provider, string? model, string? endpoint, string? key, bool complete) =>
         new AiConnection(provider, model, endpoint, key).IsComplete.ShouldBe(complete);
 
-    private async Task<Coworkee.Core.Results.Result<ChatResponseDto>> ChatAsync(FakeChatClient fake, string text)
+    private async Task<Coworkee.Core.Results.Result<AiTurn>> ChatAsync(FakeChatClient fake, string text)
     {
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(_setup.AdminUserId, _setup.TenantId));
         await using var scope = app.App.Services.CreateAsyncScope();
         var chat = ActivatorUtilities.CreateInstance<AiChat>(scope.ServiceProvider, (IAiChatClientFactory)fake);
-        return await chat.SendAsync(new ChatRequest([new ChatMessageDto("user", text)]), Ct);
+        var connection = await chat.ConnectAsync(Ct);
+        return await chat.RunAsync(connection.Value, [new ChatMessage(ChatRole.User, text)], null, _ => Task.CompletedTask, Ct);
     }
 }
 
@@ -128,8 +129,14 @@ public sealed class FakeChatClient : IChatClient, IAiChatClientFactory
         return Task.FromResult(Responses.Dequeue());
     }
 
-    public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default) =>
-        throw new NotSupportedException();
+    public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
+        IEnumerable<ChatMessage> messages, ChatOptions? options = null, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        foreach (var update in (await GetResponseAsync(messages, options, cancellationToken)).ToChatResponseUpdates())
+        {
+            yield return update;
+        }
+    }
 
     public object? GetService(Type serviceType, object? serviceKey = null) => null;
 
