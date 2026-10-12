@@ -22,6 +22,7 @@ internal static partial class IdentityEndpoints
         MapGroups(api);
         MapResourcePermissions(api);
         MapPrivacy(api);
+        MapApiKeys(api);
     }
 
     private static void MapUsers(RouteGroupBuilder api)
@@ -86,4 +87,6 @@ internal static partial class IdentityEndpoints
     static partial void MapResourcePermissions(RouteGroupBuilder api);
 
     static partial void MapPrivacy(RouteGroupBuilder api);
+
+    static partial void MapApiKeys(RouteGroupBuilder api);
 }

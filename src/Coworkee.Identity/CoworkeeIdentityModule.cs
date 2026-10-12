@@ -43,6 +43,10 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
         services.AddScoped<IUserDirectory, Users.UserDirectory>();
         services.AddScoped<Users.Profile.UserChanges>();
         services.AddScoped<Application.Privacy.IPersonalDataContributor, Users.Privacy.IdentityPersonalData>();
+        services.AddSingleton<IModelContributor, ApiKeys.ApiKeyModel>();
+        services.AddScoped<Application.Privacy.IPersonalDataContributor, ApiKeys.ApiKeyPersonalData>();
+        services.AddAuthentication()
+            .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, ApiKeys.ApiKeyAuthenticationHandler>(Contracts.Identity.ApiKeyDefaults.Scheme, null);
         services.AddScoped<ITenantDirectory, Users.TenantDirectory>();
         services.AddSingleton<Coworkee.Domain.IRealtimeTopicMapper, IdentityRealtimeTopics>();
         services.AddSingleton<SetupToken>();

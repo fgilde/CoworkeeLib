@@ -22,8 +22,25 @@ internal sealed class PermissionChecker(
             return currentUser.ClientId is null ? [] : await GetClientGrantedAsync(cancellationToken);
         }
 
+        // an API key works within all roles of its user, whatever role the user picked in the app, and only within its scopes
+        var scopes = currentUser.PermissionScopes;
+        var granted = await GrantedAsync(userId, scopes is null && await activeRoles.IsEnabledAsync(cancellationToken), cancellationToken);
+        if (scopes is null)
+        {
+            return granted;
+        }
+
+        // a key stops working when its user may no longer have keys
+        return granted.Contains(ApiKeyPermissions.Create) ? [.. granted.Where(definitions.Expand(scopes).Contains)] : [];
+    }
+
+    /// <summary>What the current user has through all roles: the most an API key of the user may be granted.</summary>
+    internal async Task<IReadOnlyCollection<string>> GetDelegableAsync(CancellationToken cancellationToken) =>
+        currentUser.UserId is { } userId ? await GrantedAsync(userId, narrow: false, cancellationToken) : [];
+
+    private async Task<IReadOnlyCollection<string>> GrantedAsync(Guid userId, bool narrow, CancellationToken cancellationToken)
+    {
         var tenantId = currentUser.TenantId;
-        var narrow = await activeRoles.IsEnabledAsync(cancellationToken);
         return await cache.GetOrCreateAsync(
             $"coworkee:permissions:{tenantId}:{userId}:{(narrow ? "active" : "all")}",
             async ct =>
@@ -34,6 +51,10 @@ internal sealed class PermissionChecker(
             tags: [PermissionCache.Tag],
             cancellationToken: cancellationToken);
     }
+
+    private async Task<bool> InScopeAsync(Guid userId, string permission, CancellationToken cancellationToken) =>
+        currentUser.PermissionScopes is not { } scopes
+        || (definitions.Expand(scopes).Contains(permission) && (await GrantedAsync(userId, narrow: false, cancellationToken)).Contains(ApiKeyPermissions.Create));
 
     // a service client has what its roles in its organisation grant and what its token names
     private async Task<IReadOnlyCollection<string>> GetClientGrantedAsync(CancellationToken cancellationToken)
@@ -86,7 +107,7 @@ internal sealed class PermissionChecker(
             return true;
         }
 
-        if (currentUser.UserId is not { } userId || !await IsActiveMemberAsync(userId, currentUser.TenantId, cancellationToken))
+        if (currentUser.UserId is not { } userId || !await InScopeAsync(userId, permission, cancellationToken) || !await IsActiveMemberAsync(userId, currentUser.TenantId, cancellationToken))
         {
             return false;
         }
@@ -108,7 +129,7 @@ internal sealed class PermissionChecker(
 
     public async Task<IReadOnlyCollection<Guid>> GetGrantedResourcesAsync(string permission, string resourceType, CancellationToken cancellationToken)
     {
-        if (currentUser.UserId is not { } userId || !await IsActiveMemberAsync(userId, currentUser.TenantId, cancellationToken))
+        if (currentUser.UserId is not { } userId || !await InScopeAsync(userId, permission, cancellationToken) || !await IsActiveMemberAsync(userId, currentUser.TenantId, cancellationToken))
         {
             return [];
         }
@@ -152,7 +173,7 @@ internal sealed class PermissionChecker(
         if (!_roleIds.TryGetValue(key, out var roles))
         {
             var all = await AllRoleIdsAsync(userId, cancellationToken);
-            _roleIds[key] = roles = await activeRoles.IsEnabledAsync(cancellationToken) && await ActiveRoleIdAsync(userId, all, cancellationToken) is { } active
+            _roleIds[key] = roles = currentUser.PermissionScopes is null && await activeRoles.IsEnabledAsync(cancellationToken) && await ActiveRoleIdAsync(userId, all, cancellationToken) is { } active
                 ? [active]
                 : all;
         }

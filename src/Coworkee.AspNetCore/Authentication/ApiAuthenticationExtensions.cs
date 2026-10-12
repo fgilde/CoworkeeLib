@@ -7,7 +7,10 @@ namespace Coworkee.AspNetCore.Authentication;
 
 public static class ApiAuthenticationExtensions
 {
-    /// <summary>Validates bearer tokens of the Coworkee auth server (<see cref="ApiAuthenticationOptions"/>, set by the Aspire app host).</summary>
+    /// <summary>
+    /// Validates bearer tokens of the Coworkee auth server (<see cref="ApiAuthenticationOptions"/>, set by the Aspire app host)
+    /// and the users' API keys (<see cref="ApiKeyForwarding.AddCoworkeeApiKeys"/>).
+    /// </summary>
     public static IServiceCollection AddCoworkeeApiAuthentication(this IServiceCollection services, IConfiguration configuration, string audience)
     {
         var options = configuration.GetSection(ApiAuthenticationOptions.Section).Get<ApiAuthenticationOptions>() ?? new ApiAuthenticationOptions();
@@ -19,6 +22,6 @@ public static class ApiAuthenticationExtensions
                 jwt.MapInboundClaims = false;
                 jwt.RequireHttpsMetadata = !options.Authority.StartsWith("http://", StringComparison.OrdinalIgnoreCase);
             });
-        return services;
+        return services.AddCoworkeeApiKeys();
     }
 }

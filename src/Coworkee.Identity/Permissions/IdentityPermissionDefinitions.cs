@@ -5,7 +5,15 @@ namespace Coworkee.Identity.Permissions;
 
 internal sealed class IdentityPermissionDefinitions : IPermissionDefinitionContributor
 {
-    public void Define(PermissionDefinitionContext context) =>
+    public void Define(PermissionDefinitionContext context)
+    {
+        DefineIdentity(context);
+        context.Group(ApiKeyPermissions.GroupName, "API keys")
+            .Add(ApiKeyPermissions.Create, "Create own API keys")
+            .Add(ApiKeyPermissions.Manage, "Manage the API keys of all users", ApiKeyPermissions.Create);
+    }
+
+    private static void DefineIdentity(PermissionDefinitionContext context) =>
         context.Group(IdentityPermissions.GroupName, "Identity")
             .Add(IdentityPermissions.Users.View, "View users")
             .Add(IdentityPermissions.Users.Manage, "Manage users", IdentityPermissions.Users.View)
