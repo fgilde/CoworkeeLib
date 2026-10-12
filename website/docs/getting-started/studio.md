@@ -56,7 +56,7 @@ Card, Split or Slide, drawn as small animated sketches of the real [sign-in page
 
 ### Architecture
 
-Presets for the app type set the modules and the infrastructure, each with its trade-off in the text:
+A compact row of presets for the app type sets the modules and the infrastructure, each with its trade-off in the tooltip:
 
 | Preset | Database | AI provider | Redis | For |
 |---|---|---|---|---|
@@ -67,17 +67,17 @@ Presets for the app type set the modules and the infrastructure, each with its t
 | Local demo | SQLite | Ollama | off | Offline on one machine without keys; one writer at a time, no backups |
 | Everything | Postgres | Ollama | on | Every module and every container |
 
-**Where it runs** puts the choices that decide how the app runs first, each with what it means right below:
+**Infrastructure** comes next: first the choices that decide how the app runs, each with what it means right below, then Keycloak and the blob storage, then the AI provider:
 
 - **Database**: PostgreSQL (every module, backups from the admin pages), SQL Server (no backups from the admin pages, a heavy container) or SQLite (no container, one file under `.data`, one writer at a time, background jobs in memory, no backups). Off Postgres, the *Database backups* module is greyed out and left out of the app.
 - **Redis**: SignalR backplane, shared presence, caches and sign-in sessions across instances; without it everything stays in each process, which is fine for one instance.
 - **Grafana** and **WebDataStudio**: dashboards over the telemetry of every service and the app database, and the database in the browser, both with the administrator's sign-in ([Grafana and WebDataStudio](../hosting/observability.md)).
 
-**AI assistant** picks the [model provider](../modules/ai.md#providers) from a grid with logos: Anthropic, OpenAI, Azure OpenAI, Gemini, OpenRouter, Mistral, Groq, DeepSeek, xAI, Together, Fireworks, Ollama, LM Studio or any OpenAI compatible server, with model and address (empty: the provider's defaults). It only counts with the *AI assistant* module; without it the card is greyed out. Ollama adds a container that pulls the model. An API key typed here never goes into the spec: after creation the Studio writes it to the user secrets of the app host (`dotnet user-secrets set Parameters:ai-apikey`), so the assistant starts switched on. Everything stays changeable on the [AI page](../modules/ai.md#the-ai-page) of the app.
+**AI assistant**, the last card of the infrastructure, picks the [model provider](../modules/ai.md#providers) from a grid with logos: Anthropic, OpenAI, Azure OpenAI, Gemini, OpenRouter, Mistral, Groq, DeepSeek, xAI, Together, Fireworks, Ollama, LM Studio or any OpenAI compatible server, with model and address (empty: the provider's defaults). It only counts with the *AI assistant* module; without it the card is greyed out. Ollama adds a container that pulls the model. An API key typed here never goes into the spec: after creation the Studio writes it to the user secrets of the app host (`dotnet user-secrets set Parameters:ai-apikey`), so the assistant starts switched on. Everything stays changeable on the [AI page](../modules/ai.md#the-ai-page) of the app.
 
 ![AI assistant](../assets/screenshots/studio-ai-light.webp)
 
-Then every other option of `coworkee options` can be changed: description, pros, cons, when to use it, the package and the switch of `coworkee new`. *General* also holds the color mode and self registration; *Tooling* adds a GitHub Actions workflow and a dev container. The panel on the right lists what the solution will contain: projects, the containers of the Aspire app host (PostgreSQL or SQL Server, Redis, Mailpit, Elasticsearch, RabbitMQ, Azurite, Keycloak, Ollama, LibreTranslate, Grafana with Prometheus, Loki, Tempo and the collector, WebDataStudio) and the Coworkee packages.
+Below come the other groups (*General*, *Modules*, *Code*, *Tooling*) with every other option of `coworkee options`: description, pros, cons, when to use it, the package and the switch of `coworkee new`. *General* also holds the color mode, self registration and the GitHub repository (`owner/repo`, for the [QuickRun](https://quickrun.org) badge in the README); *Tooling* adds a GitHub Actions workflow and a dev container. The panel on the right lists what the solution will contain: projects, the containers of the Aspire app host (PostgreSQL or SQL Server, Redis, Mailpit, Elasticsearch, RabbitMQ, Azurite, Keycloak, Ollama, LibreTranslate, Grafana with Prometheus, Loki, Tempo and the collector, WebDataStudio) and the Coworkee packages.
 
 ![Architecture](../assets/screenshots/studio-architecture-dark.webp)
 
@@ -107,9 +107,13 @@ The summary (including database, AI provider, Redis, the containers, color mode,
 
 ### Create
 
-The Studio writes the spec, runs `coworkee spec validate` and `coworkee new --spec`, and shows each step of the CLI as it happens, with the full output when you want it. Output folder, logo and media go on the command line. Afterwards the **Sign in** card lists every user with password and roles, with copy buttons, and says whether Keycloak takes them too (they are also in `LOGIN.md` of the solution). Then: open the folder, open it in VS Code, Rider or Visual Studio, or run the app with `coworkee run` in a new terminal.
+The Studio writes the spec, runs `coworkee spec validate` and `coworkee new --spec`, and shows each step of the CLI as it happens, with the full output when you want it. Output folder, logo and media go on the command line. Afterwards the **Sign in** card lists every user with password and roles, with copy buttons, and says whether Keycloak takes them too (they are also in `LOGIN.md` of the solution). Then: open the folder, open it in VS Code, Rider or Visual Studio, or run the app.
 
 ![Create](../assets/screenshots/studio-generate-dark.webp)
+
+**Run the app** starts `dotnet run --project <app host>` inside the Studio. The card shows whether the app host is starting, running or has failed, and on failure the line that explains it (a port in use, a build error). Once it is up it links the Aspire dashboard (the login address with its token, read from the output) and the addresses of the web app, the API and the auth server (from their launch settings). The output of the app host is one click away; **Stop** ends the app host and what it started, and so does closing the Studio.
+
+![Running app](../assets/screenshots/studio-run-dark.webp)
 
 When the CLI is not installed, the Studio offers to run `dotnet tool install -g Coworkee.Cli` or to use a local CLI (`coworkee.exe` or `Coworkee.Cli.dll`).
 
@@ -118,6 +122,10 @@ When the CLI is not installed, the Studio offers to run `dotnet tool install -g 
 The help (`F1` or the question mark) explains the wizard, the CLI commands and the [MCP server](mcp.md): what `coworkee mcp` is, its tools, and the registration for Claude Code, Claude Desktop and VS Code with copy buttons.
 
 ![Help with the MCP server](../assets/screenshots/studio-help-light.webp)
+
+## Language and updates
+
+`DE`/`EN` in the title bar switches the language at once and keeps it in the settings. When nuget.org has a newer Coworkee Studio (prereleases only when the running Studio is one), the title bar shows **Update available x.y.z**. A click saves an opened spec, closes the Studio, runs `dotnet tool update -g Coworkee.Cli` and `dotnet tool update -g Coworkee.Studio` to that version (in a window of its own on Windows, because a running tool cannot replace its files) and starts the Studio again with the spec. From the command line: [`coworkee self-update`](cli.md#other-commands).
 
 ## Settings
 

@@ -48,6 +48,7 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--samples`, `--no-samples` | `samples` | bool | `true` | Catalog (products, brands, dashboard) and Documents modules with pages, tests and demo data |
 | `--tests`, `--no-tests` | `tests` | bool | `true` | API, migration, app host and page tests |
 | `--git` | `git` | bool | `false` | `git init` in the new folder |
+| `--repository` | `repository` | text | | GitHub repository as `owner/repo`: the README gets a [QuickRun](https://quickrun.org) badge. Every app has a `quickrun.yml` that starts the app host |
 | `--auditing` | `auditing` | bool | `true` | Audit log pages, entity history and restore; the trail itself is always written |
 | `--notifications` | `notifications` | bool | `true` | In-app notifications with mail digests |
 | `--chat` | `chat` | bool | `true` | Direct and group chat |
@@ -211,11 +212,14 @@ coworkee ui --spec shop.json
 | `coworkee options [--json]` | The options of `coworkee new` |
 | `coworkee spec schema`, `example`, `validate <file>` | App specs |
 | `coworkee update [--version <version>] [--prerelease]` | Sets `<CoworkeeVersion>` in `Directory.Packages.props`, by default to the newest version on nuget.org |
+| `coworkee self-update [--version <version>] [--prerelease]` | Updates this CLI and, when installed, Coworkee Studio to the same version, see below |
 | `coworkee doctor` | Checks the tools, see above |
 | `coworkee ui` | Coworkee Studio |
 | `coworkee mcp` | [MCP server](mcp.md) over stdio |
 
 After `coworkee update`, run `dotnet restore` and add a migration if a Coworkee module changed its model (`coworkee migrations add CoworkeeUpdate`).
+
+`coworkee self-update` updates the tools themselves: `dotnet tool update -g Coworkee.Cli` and, when the Studio is installed, `dotnet tool update -g Coworkee.Studio`, both to the newest version on nuget.org or to `--version`. A prerelease CLI looks at prereleases too; `--prerelease` does so for a release. On Windows the running `coworkee.exe` cannot replace itself, so the update runs in a window of its own once the command has ended.
 
 ## Output for tools
 

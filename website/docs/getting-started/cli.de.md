@@ -48,6 +48,7 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--samples`, `--no-samples` | `samples` | bool | `true` | Module Catalog (Produkte, Marken, Dashboard) und Documents mit Seiten, Tests und Demodaten |
 | `--tests`, `--no-tests` | `tests` | bool | `true` | API-, Migrations-, App-Host- und Seitentests |
 | `--git` | `git` | bool | `false` | `git init` im neuen Ordner |
+| `--repository` | `repository` | Text | | GitHub-Repository als `owner/repo`: Die README bekommt ein [QuickRun](https://quickrun.org)-Badge. Jede App hat eine `quickrun.yml`, die den App-Host startet |
 | `--auditing` | `auditing` | bool | `true` | Seiten für Audit-Log, Verlauf und Wiederherstellen; das Protokoll selbst wird immer geschrieben |
 | `--notifications` | `notifications` | bool | `true` | Benachrichtigungen in der App mit Sammel-Mails |
 | `--chat` | `chat` | bool | `true` | Direkt- und Gruppenchat |
@@ -211,11 +212,14 @@ coworkee ui --spec shop.json
 | `coworkee options [--json]` | Die Optionen von `coworkee new` |
 | `coworkee spec schema`, `example`, `validate <datei>` | App-Spezifikationen |
 | `coworkee update [--version <version>] [--prerelease]` | Setzt `<CoworkeeVersion>` in `Directory.Packages.props`, standardmäßig auf die neueste Version auf nuget.org |
+| `coworkee self-update [--version <version>] [--prerelease]` | Aktualisiert diese CLI und, falls installiert, Coworkee Studio auf dieselbe Version, siehe unten |
 | `coworkee doctor` | Prüft die Werkzeuge, siehe oben |
 | `coworkee ui` | Coworkee Studio |
 | `coworkee mcp` | [MCP-Server](mcp.md) über stdio |
 
 Nach `coworkee update` führen Sie `dotnet restore` aus und legen eine Migration an, falls ein Coworkee-Modul sein Modell geändert hat (`coworkee migrations add CoworkeeUpdate`).
+
+`coworkee self-update` aktualisiert die Werkzeuge selbst: `dotnet tool update -g Coworkee.Cli` und, wenn das Studio installiert ist, `dotnet tool update -g Coworkee.Studio`, beide auf die neueste Version auf nuget.org oder auf `--version`. Eine Vorabversion der CLI berücksichtigt auch Vorabversionen; bei einem Release tut das `--prerelease`. Unter Windows kann sich die laufende `coworkee.exe` nicht selbst ersetzen, deshalb läuft das Update in einem eigenen Fenster, sobald der Befehl beendet ist.
 
 ## Ausgabe für Werkzeuge
 
