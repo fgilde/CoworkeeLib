@@ -81,6 +81,33 @@ public sealed class TokenRefreshTests : IAsyncDisposable
         (await browser.GetFromJsonAsync<BffUserDto>("/bff/user", TestContext.Current.CancellationToken))!.IsAuthenticated.ShouldBeTrue();
     }
 
+    [Fact]
+    public async Task Mcp_is_forwarded_with_the_clients_key_but_never_with_the_browser_session()
+    {
+        var api = new RecordingApi();
+        var browser = await StartAsync(new StubTokenEndpoint(HttpStatusCode.OK, """{"access_token":"a","refresh_token":"r","expires_in":900}"""), api);
+
+        using var keyed = new HttpRequestMessage(HttpMethod.Post, "/mcp") { Content = new StringContent("{}") };
+        keyed.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "cwk_key");
+        await browser.SendAsync(keyed, TestContext.Current.CancellationToken);
+        await browser.PostAsync("/mcp", new StringContent("{}"), TestContext.Current.CancellationToken);
+
+        api.Authorizations.ShouldBe(["Bearer cwk_key", null]);
+        // the API's 401 for the session-less call does not end the session
+        (await browser.GetFromJsonAsync<BffUserDto>("/bff/user", TestContext.Current.CancellationToken))!.IsAuthenticated.ShouldBeTrue();
+    }
+
+    private sealed class RecordingApi : HttpMessageHandler
+    {
+        public List<string?> Authorizations { get; } = [];
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Authorizations.Add(request.Headers.Authorization?.ToString());
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.Unauthorized));
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_app is not null)
