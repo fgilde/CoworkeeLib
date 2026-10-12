@@ -15,7 +15,9 @@ public sealed class TranslationTests
 
         var server = app.LibreTranslate!.Resource;
         server.Annotations.OfType<ContainerImageAnnotation>().Single().Image.ShouldBe(CoworkeeApp.LibreTranslateImage);
-        (await server.GetEnvironmentVariableValuesAsync(DistributedApplicationOperation.Publish))["LT_LOAD_ONLY"].ShouldBe("en,de,fr,zh-Hant,it");
+        var environment = await server.GetEnvironmentVariableValuesAsync(DistributedApplicationOperation.Publish);
+        environment["LT_LOAD_ONLY"].ShouldBe("en,de,fr,zh-Hant,it");
+        environment["LT_UPDATE_MODELS"].ShouldBe("true");
         server.Annotations.OfType<ContainerMountAnnotation>().Single().Target.ShouldBe("/home/libretranslate/.local");
         var api = await app.Apis[0].Resource.GetEnvironmentVariableValuesAsync(DistributedApplicationOperation.Publish);
         api["Coworkee__Settings__Defaults__Localization.TranslationProvider"].ShouldBe("libreTranslate");

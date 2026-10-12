@@ -25,13 +25,13 @@ public sealed partial class CoworkeeApp
             : culture.Contains("Hant", StringComparison.OrdinalIgnoreCase) || culture.EndsWith("TW", StringComparison.OrdinalIgnoreCase) || culture.EndsWith("HK", StringComparison.OrdinalIgnoreCase) ? "zh-Hant" : "zh-Hans";
     }
 
-    // the first start downloads the models; the services wait for them, later starts find them in the volume
+    // the first start downloads the models, later starts only the missing ones (a language added to the list); the services wait for them
     private IResourceBuilder<ContainerResource> AddLibreTranslate(IReadOnlyList<string> languages)
     {
         var server = Builder.AddContainer($"{Name}-translate", LibreTranslateImage, LibreTranslateTag)
             .WithHttpEndpoint(targetPort: 5000, name: "http")
             .WithEnvironment("LT_LOAD_ONLY", string.Join(',', LibreTranslateCodes([.. languages, Options.TranslationSource ?? "en"])))
-            .WithEnvironment("LT_UPDATE_MODELS", "false")
+            .WithEnvironment("LT_UPDATE_MODELS", "true")
             .WithHttpHealthCheck("/health")
             .WithUrlForEndpoint("http", u => u.DisplayText = "LibreTranslate");
         if (Persistent)
