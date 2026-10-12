@@ -30,7 +30,7 @@ public sealed partial class CoworkeeApp
     {
         var server = Builder.AddContainer($"{Name}-translate", LibreTranslateImage, LibreTranslateTag)
             .WithHttpEndpoint(targetPort: 5000, name: "http")
-            .WithEnvironment("LT_LOAD_ONLY", string.Join(',', LibreTranslateCodes(languages)))
+            .WithEnvironment("LT_LOAD_ONLY", string.Join(',', LibreTranslateCodes([.. languages, Options.TranslationSource ?? "en"])))
             .WithEnvironment("LT_UPDATE_MODELS", "false")
             .WithHttpHealthCheck("/health")
             .WithUrlForEndpoint("http", u => u.DisplayText = "LibreTranslate");
@@ -45,13 +45,29 @@ public sealed partial class CoworkeeApp
 
     private void WireTranslation(IResourceBuilder<ProjectResource> service)
     {
-        if (LibreTranslate is not { } server)
+        if (Options.TranslationSource is { Length: > 0 } source)
+        {
+            service.WithSetting(s => s.Coworkee.Settings.Defaults["Localization.TranslationSource"], source);
+        }
+
+        if (Options.TranslationProvider is not { } provider)
         {
             return;
         }
 
-        service.WaitFor(server)
-            .WithSetting(s => s.Coworkee.Settings.Defaults["Localization.TranslationProvider"], "libreTranslate")
-            .WithSetting(s => s.Coworkee.Settings.Defaults["Localization.TranslationEndpoint"], server.GetEndpoint("http"));
+        service.WithSetting(s => s.Coworkee.Settings.Defaults["Localization.TranslationProvider"], provider);
+        if (LibreTranslate is { } server)
+        {
+            service.WaitFor(server).WithSetting(s => s.Coworkee.Settings.Defaults["Localization.TranslationEndpoint"], server.GetEndpoint("http"));
+        }
+
+        var (key, region, email) = Options.TranslationParameters;
+        foreach (var (setting, parameter) in new[] { ("Localization.TranslatorKey", key), ("Localization.TranslatorRegion", region), ("Localization.TranslationEmail", email) })
+        {
+            if (parameter is not null)
+            {
+                service.WithSetting(s => s.Coworkee.Settings.Defaults[setting], parameter);
+            }
+        }
     }
 }
