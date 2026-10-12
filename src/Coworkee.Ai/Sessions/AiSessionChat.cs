@@ -20,6 +20,8 @@ internal sealed class AiSessionChat(AiChat chat, CoworkeeDbContext db, ICurrentU
 
     private const int MaxTitleLength = 60;
 
+    private const int MaxStoredOutput = 1_000;
+
     public async Task<IResult> SendAsync(Guid sessionId, AiSendRequest request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request?.Text) || request.Text.Length > AiChat.MaxMessageLength)
@@ -114,7 +116,9 @@ internal sealed class AiSessionChat(AiChat chat, CoworkeeDbContext db, ICurrentU
         }
 
         var answer = Add(session, "assistant", turn.Value.Text);
-        answer.ToolCalls = turn.Value.Calls.Count > 0 ? JsonSerializer.Serialize(turn.Value.Calls, JsonSerializerOptions.Web) : null;
+        // the result stays in the audit; the conversation keeps enough of it to link to what was created
+        var calls = turn.Value.Calls.Select(c => c with { Output = c.Output is { Length: > MaxStoredOutput } output ? output[..MaxStoredOutput] : c.Output }).ToList();
+        answer.ToolCalls = calls.Count > 0 ? JsonSerializer.Serialize(calls, JsonSerializerOptions.Web) : null;
         answer.Pending = turn.Value.Pending is { } pending ? JsonSerializer.Serialize(pending, JsonSerializerOptions.Web) : null;
         await db.SaveChangesAsync(CancellationToken.None);
         return new AiStreamEvent(AiStreamEvent.Done, Message: answer.ToDto());
