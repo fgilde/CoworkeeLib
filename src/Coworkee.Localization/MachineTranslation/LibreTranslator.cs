@@ -17,12 +17,13 @@ internal sealed class LibreTranslator(IHttpClientFactory clients) : ITranslation
 
     public async Task<IReadOnlyList<string?>> TranslateAsync(IReadOnlyList<string> texts, string from, string to, TranslationConnection connection, CancellationToken cancellationToken)
     {
-        var body = new Body([.. texts.Select(TranslationTexts.ToHtml)], Code(from), Code(to), "html", connection.Key is { Length: > 0 } key ? key : null);
+        // ponytail: plain text keeps {0} and the punctuation around it; its html mode drops what touches a protected span. Lost placeholders are dropped by TextTranslator
+        var body = new Body([.. texts], Code(from), Code(to), "text", connection.Key is { Length: > 0 } key ? key : null);
         using var response = await clients.CreateClient(TextTranslator.HttpClientName)
             .PostAsJsonAsync($"{connection.Endpoint!.TrimEnd('/')}/translate", body, cancellationToken);
         response.EnsureSuccessStatusCode();
         var answer = await response.Content.ReadFromJsonAsync<Answer>(cancellationToken);
-        return [.. (answer?.TranslatedText ?? []).Select(t => (string?)TranslationTexts.FromHtml(t))];
+        return [.. (answer?.TranslatedText ?? []).Select(t => (string?)t)];
     }
 
     internal static string Code(string culture) => TranslationTexts.Language(culture) switch

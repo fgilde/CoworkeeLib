@@ -71,7 +71,7 @@ public sealed class TranslationProviderTests
         result.ShouldBe(["Speichern"]);
         http.Request.RequestUri!.ToString().ShouldBe("http://libre:5000/translate");
         var body = JsonNode.Parse(http.Body)!;
-        (body["source"]!.GetValue<string>(), body["target"]!.GetValue<string>(), body["format"]!.GetValue<string>()).ShouldBe(("en", "de", "html"));
+        (body["source"]!.GetValue<string>(), body["target"]!.GetValue<string>(), body["format"]!.GetValue<string>()).ShouldBe(("en", "de", "text"));
         body.AsObject().ContainsKey("api_key").ShouldBeFalse();
         (await translator.IsConfiguredAsync(connection with { Endpoint = null }, Ct)).ShouldBeFalse();
     }

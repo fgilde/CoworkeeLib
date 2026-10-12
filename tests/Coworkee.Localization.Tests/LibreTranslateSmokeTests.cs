@@ -32,11 +32,12 @@ public sealed class LibreTranslateSmokeTests : IAsyncLifetime
         };
         var translator = new TextTranslator([new LibreTranslator(services.GetRequiredService<IHttpClientFactory>())], new TranslationProviderTests.FixedSettings(settings), NullLogger<TextTranslator>.Instance);
 
-        var result = await translator.TranslateAsync(["Good morning", "{0} files were deleted.", "Users & roles"], "en", "de", TestContext.Current.CancellationToken);
+        var result = await translator.TranslateAsync(["Good morning", "{0} files were deleted.", "Users & roles", "Delete {0}? This cannot be undone."], "en", "de", TestContext.Current.CancellationToken);
 
         result["Good morning"].ShouldBe("Guten Morgen");
         result["{0} files were deleted."].ShouldContain("{0}");
         result["{0} files were deleted."].ShouldContain("gelöscht");
         result["Users & roles"].ShouldContain("&");
+        result["Delete {0}? This cannot be undone."].ShouldContain("löschen?");
     }
 }
