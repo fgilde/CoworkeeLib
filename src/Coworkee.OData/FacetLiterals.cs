@@ -4,16 +4,15 @@ using Nextended.Core.Facets;
 namespace Coworkee.OData;
 
 /// <summary>
-/// The OData literals of facet options on every database. The facet builder reads grouped values back as text, and SQLite and
-/// SQL Server answer booleans as "1"/"0", which Nextended's simple literals cannot turn into <c>true</c>/<c>false</c>
-/// (fixed in its next release); everything else stays a simple literal: quoted text and enum names, plain numbers, guids and dates.
+/// The OData literals of facet options on every database: simple literals (quoted text and enum names, plain numbers, guids and dates).
+/// Booleans read back as "1"/"0" (SQLite, SQL Server) are coerced by Nextended since 10.1.44; <see cref="Flag"/> still reads them for the option labels.
 /// </summary>
 internal sealed class FacetLiterals : IODataLiteralFormatter
 {
     public static FacetBuilderOptions Options() => new() { BuildLiterals = true };
 
     public string ToLiteral(object? value, Type type) =>
-        DefaultODataLiteralFormatter.ToSimpleLiteral(value is string text && (Nullable.GetUnderlyingType(type) ?? type) == typeof(bool) ? Flag(text) : value, type);
+        DefaultODataLiteralFormatter.ToSimpleLiteral(value, type);
 
     public string RangeClause(string field, object fromInclusive, object toExclusive, Type type) =>
         $"({field} ge {ToLiteral(fromInclusive, type)} and {field} lt {ToLiteral(toExclusive, type)})";
