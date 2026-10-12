@@ -1,3 +1,4 @@
+@using MudBlazor.Extensions.Components
 @inherits FacetViewBase
 
 <div class="cw-facet-presets" role="listbox">
@@ -10,6 +11,14 @@
     }
 </div>
 <FacetHistogram Buckets="Group.Options" IsActive="b => Chosen?.OData == b.OData" Title="BucketTitle" OnPick="PickAsync" Label="@L[Group.Label]" />
+@if (Whole is { } whole)
+{
+    <div class="cw-facet-slider" data-testid="facet-date-slider">
+        <span id="@_labelId" hidden>@L[Group.Label]</span>
+        <MudExDateRangeSlider SizeRange="whole" Value="Span(whole)" StepLength="OneDay" TrackColor="@("var(--mud-palette-lines-default)")" AriaLabelledBy="@_labelId"
+                              TrackTemplate="null" SelectionTemplate="null" ThumbStartTemplate="null" ThumbEndTemplate="null" OnInput="Slide" OnChange="Slid" />
+    </div>
+}
 @if (Group.Options.Count > 0)
 {
     <div class="cw-facet-axis"><span>@Show(Group.Options[0])</span><span>@Show(Group.Options[^1])</span></div>

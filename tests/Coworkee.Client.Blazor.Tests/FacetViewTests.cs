@@ -5,6 +5,7 @@ using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Data;
 using Coworkee.Contracts.Data;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Tests;
@@ -148,7 +149,7 @@ public sealed class FacetViewTests : ClientTestBase
     }
 
     [Fact]
-    public void The_range_slides_types_and_picks_buckets_from_the_histogram()
+    public void The_range_picks_buckets_types_and_slides()
     {
         var total = Group("total", "Total", FacetValueKind.Number,
             Bucket("(Total ge 10 and Total lt 40)", "10", "40", 5), Bucket("(Total ge 40 and Total lt 70)", "40", "70", 2), Bucket("(Total ge 70 and Total le 100)", "70", "100", 1))
@@ -156,18 +157,22 @@ public sealed class FacetViewTests : ClientTestBase
         var view = Render<FacetRangeView>(p => p.Add(v => v.Group, total).Add(v => v.Selection, _selection));
 
         view.FindAll(".cw-facet-histogram-bar").Count.ShouldBe(3);
-        view.Find("[data-testid='facet-range-from']").Input("40");
-        view.Find("[data-testid='facet-range-from']").Change("40");
-        _selection.ToFilter().ShouldBe("(Total ge 40 and Total le 100)");
-        _selection.All.Single().Label.ShouldContain("40");
-
         view.Find("[data-bucket='(Total ge 10 and Total lt 40)']").Click();
         _selection.ToFilter().ShouldBe("(Total ge 10 and Total le 40)");
         view.Find("[data-bucket='(Total ge 10 and Total lt 40)']").ClassList.ShouldContain("active");
 
-        view.Find("[data-testid='facet-range-to']").Change("100");
-        view.Find("[data-testid='facet-range-from']").Change("10");
+        view.Find("[data-testid='facet-range-max'] input, input[data-testid='facet-range-max']").Change("100");
+        view.Find("[data-testid='facet-range-min'] input, input[data-testid='facet-range-min']").Change("10");
         _selection.IsEmpty.ShouldBeTrue("the whole range is no choice");
+
+        var from = view.Find("[data-testid='facet-range-slider'] .mud-ex-range-slider-thumb.start");
+        from.GetAttribute("role").ShouldBe("slider");
+        from.KeyDown(new KeyboardEventArgs { Key = "PageUp" });
+        view.Find("[data-testid='facet-range-slider'] .mud-ex-range-slider-thumb.start").KeyDown(new KeyboardEventArgs { Key = "PageUp" });
+        view.Find("[data-testid='facet-range-slider'] .mud-ex-range-slider-thumb.start").KeyDown(new KeyboardEventArgs { Key = "PageUp" });
+        _selection.IsEmpty.ShouldBeTrue("sliding applies once the thumbs rest");
+        view.WaitForAssertion(() => _selection.ToFilter().ShouldBe("(Total ge 40 and Total le 100)"));
+        _selection.All.Single().Label.ShouldContain("40");
     }
 
     [Fact]
@@ -177,7 +182,7 @@ public sealed class FacetViewTests : ClientTestBase
         var date = Group("orderDate", "Order date", FacetValueKind.Date,
             Bucket("(OrderDate ge 2026-09-01T00:00:00Z and OrderDate lt 2026-10-01T00:00:00Z)", "2026-09-01", "2026-10-01", 3, "month"),
             Bucket("(OrderDate ge 2026-10-01T00:00:00Z and OrderDate lt 2026-11-01T00:00:00Z)", "2026-10-01", "2026-11-01", 5, "month"))
-            with { Type = FacetKind.DateRange, ValuePath = "OrderDate" };
+            with { Type = FacetKind.DateRange, ValuePath = "OrderDate", Min = "2026-09-03", Max = "2026-10-20" };
         var view = Render<FacetDateView>(p => p.Add(v => v.Group, date).Add(v => v.Selection, _selection));
 
         view.Find("[data-preset='today']").Click();
@@ -193,6 +198,12 @@ public sealed class FacetViewTests : ClientTestBase
         view.Find("input[data-testid='facet-date-to'], [data-testid='facet-date-to'] input").Change(new DateTime(2026, 10, 3).ToShortDateString());
         view.Find("[data-testid='facet-date-apply']").Click();
         view.WaitForAssertion(() => _selection.ToFilter().ShouldStartWith("(OrderDate ge 2026-10-01T00:00:00+02:00 and OrderDate lt 2026-10-04T00:00:00"));
+
+        var to = view.Find("[data-testid='facet-date-slider'] .mud-ex-range-slider-thumb.end");
+        to.GetAttribute("aria-valuenow").ShouldBe(new DateOnly(2026, 10, 3).ToString("d"));
+        to.KeyDown(new KeyboardEventArgs { Key = "ArrowRight" });
+        view.Find("[data-testid='facet-date-slider'] .mud-ex-range-slider-thumb.start").KeyDown(new KeyboardEventArgs { Key = "Home" });
+        view.WaitForAssertion(() => _selection.ToFilter().ShouldStartWith("(OrderDate ge 2026-09-03T00:00:00+02:00 and OrderDate lt 2026-10-05T00:00:00"));
     }
 
     [Fact]
