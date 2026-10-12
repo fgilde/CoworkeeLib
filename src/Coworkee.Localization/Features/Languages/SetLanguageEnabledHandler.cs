@@ -14,7 +14,8 @@ using Microsoft.Extensions.Options;
 namespace Coworkee.Localization.Features.Languages;
 
 internal sealed class SetLanguageEnabledHandler(
-    CoworkeeDbContext db, LocalizationResources resources, MissingTexts missing, TextTranslator translator, LocalizationChanges changes, IOptions<LocalizationOptions> options)
+    CoworkeeDbContext db, LocalizationResources resources, MissingTexts missing, TextTranslator translator, LocalizationChanges changes, IOptions<LocalizationOptions> options,
+    Coworkee.Settings.ISettingProvider settings)
     : IHandler<SetLanguageEnabledCommand, Result<LanguageSwitchDto>>,
       IHandler<TranslateMissingCommand, Result<TranslateMissingDto>>
 {
@@ -35,7 +36,9 @@ internal sealed class SetLanguageEnabledHandler(
 
         language.IsEnabled = command.Enabled;
         await db.SaveChangesAsync(cancellationToken);
-        var translated = command.Enabled ? await missing.TranslateAsync(culture.Name, cancellationToken) : 0;
+        var translated = command.Enabled && await settings.GetAsync<bool>(LocalizationSettings.AutoTranslate, cancellationToken)
+            ? await missing.TranslateAsync(culture.Name, cancellationToken)
+            : 0;
         await changes.NotifyAsync(cancellationToken);
         return new LanguageSwitchDto(
             new LanguageDto(language.Id, language.Culture, language.Name, language.IsEnabled, language.IsDefault), translated, await translator.IsAvailableAsync(cancellationToken));

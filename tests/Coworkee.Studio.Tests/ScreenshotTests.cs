@@ -10,7 +10,7 @@ public sealed class ScreenshotTests
     public static TheoryData<string, bool, string> Pages()
     {
         var data = new TheoryData<string, bool, string>();
-        foreach (var page in new[] { "welcome", "basics", "branding", "signin", "architecture", "ai", "entities", "users", "review", "generate", "help" })
+        foreach (var page in new[] { "welcome", "basics", "branding", "signin", "architecture", "ai", "languages", "entities", "users", "review", "generate", "help" })
         {
             data.Add(page, false, "en");
             data.Add(page, true, "en");
@@ -74,6 +74,7 @@ public sealed class ScreenshotTests
             "branding" => main.Branding,
             "signin" => main.SignIn,
             "architecture" or "ai" => main.Architecture,
+            "languages" => main.Languages,
             "entities" => main.Entities,
             "users" => main.Users,
             "review" => main.Review,

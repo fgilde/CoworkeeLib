@@ -15,6 +15,7 @@ public static class CoworkeeModules
     public const string BackgroundJobs = "Coworkee.BackgroundJobs";
     public const string Notifications = "Coworkee.Notifications";
     public const string Account = "Coworkee.Account";
+    public const string Localization = "Coworkee.Localization";
 
     public static IReadOnlySet<string> Of(ProjectResource project) => Of(project.GetProjectMetadata().ProjectPath);
 

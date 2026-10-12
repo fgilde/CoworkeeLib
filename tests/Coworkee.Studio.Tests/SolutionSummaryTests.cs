@@ -48,6 +48,7 @@ public sealed class SolutionSummaryTests
             .. redis ? ["Redis"] : Array.Empty<string>(),
             "Mailpit",
             .. ai && provider == "ollama" ? ["Ollama"] : Array.Empty<string>(),
+            "LibreTranslate",
             "Grafana", "Prometheus", "Loki", "Tempo", "OpenTelemetry Collector",
             .. database == "postgres" ? ["postgres_exporter"] : Array.Empty<string>(),
             "WebDataStudio",
@@ -68,10 +69,10 @@ public sealed class SolutionSummaryTests
 
     [Theory]
     [InlineData("Minimal", new[] { "PostgreSQL", "Mailpit" })]
-    [InlineData("Business app", new[] { "PostgreSQL", "Redis", "Mailpit", "Grafana", "Prometheus", "Loki", "Tempo", "OpenTelemetry Collector", "postgres_exporter", "WebDataStudio" })]
-    [InlineData("Collaboration", new[] { "PostgreSQL", "Redis", "Mailpit", "Grafana", "Prometheus", "Loki", "Tempo", "OpenTelemetry Collector", "postgres_exporter", "WebDataStudio" })]
-    [InlineData("SaaS platform", new[] { "PostgreSQL", "Redis", "Mailpit", "RabbitMQ", "Azurite", "Keycloak", "Grafana", "Prometheus", "Loki", "Tempo", "OpenTelemetry Collector", "postgres_exporter", "WebDataStudio" })]
-    [InlineData("Local demo", new[] { "Mailpit", "Ollama", "WebDataStudio" })]
+    [InlineData("Business app", new[] { "PostgreSQL", "Redis", "Mailpit", "LibreTranslate", "Grafana", "Prometheus", "Loki", "Tempo", "OpenTelemetry Collector", "postgres_exporter", "WebDataStudio" })]
+    [InlineData("Collaboration", new[] { "PostgreSQL", "Redis", "Mailpit", "LibreTranslate", "Grafana", "Prometheus", "Loki", "Tempo", "OpenTelemetry Collector", "postgres_exporter", "WebDataStudio" })]
+    [InlineData("SaaS platform", new[] { "PostgreSQL", "Redis", "Mailpit", "RabbitMQ", "Azurite", "Keycloak", "LibreTranslate", "Grafana", "Prometheus", "Loki", "Tempo", "OpenTelemetry Collector", "postgres_exporter", "WebDataStudio" })]
+    [InlineData("Local demo", new[] { "Mailpit", "Ollama", "LibreTranslate", "WebDataStudio" })]
     public void Every_preset_is_a_valid_spec_with_its_containers(string name, string[] containers)
     {
         var preset = Preset.All.Single(p => p.Name == name);

@@ -7,6 +7,12 @@ using MyApp.Migrations;
 
 #endif
 var builder = DistributedApplication.CreateBuilder(args);
+#if (translationProvider != "libreTranslate" && translationProvider != "none" && translationProvider != "ai")
+
+// key, Azure region and MyMemory contact of the translation service optionally from the user secrets (Parameters:translation-key, translation-region, translation-email)
+var translation = new[] { "key", "region", "email" }.Where(n => builder.Configuration[$"Parameters:translation-{n}"] is { Length: > 0 })
+    .ToDictionary(n => n, n => builder.AddParameter($"translation-{n}", secret: n == "key"));
+#endif
 
 var app = builder.AddCoworkeeApp("myapp", options =>
 {
@@ -37,6 +43,21 @@ var app = builder.AddCoworkeeApp("myapp", options =>
 #endif
 #if (webDataStudio)
     options.UseWebDataStudio();
+#endif
+#if (translationSource != "en")
+    options.TranslationSource = "COWORKEE_TRANSLATION_SOURCE";
+#endif
+#if (translationProvider == "libreTranslate")
+    // free machine translation without an account; the first start downloads the models of the app's languages
+#if (languages != "")
+    options.UseLibreTranslate(["COWORKEE_LANGUAGES", "COWORKEE_DEFAULT_LANGUAGE"]);
+#else
+    options.UseLibreTranslate(["de", "COWORKEE_DEFAULT_LANGUAGE"]);
+#endif
+#elif (translationProvider == "none" || translationProvider == "ai")
+    options.UseTranslation("COWORKEE_TRANSLATION_PROVIDER");
+#else
+    options.UseTranslation("COWORKEE_TRANSLATION_PROVIDER", translation.GetValueOrDefault("key"), translation.GetValueOrDefault("region"), translation.GetValueOrDefault("email"));
 #endif
 #if (keycloak)
     // the same users and passwords as the app's seed (LOGIN.md)

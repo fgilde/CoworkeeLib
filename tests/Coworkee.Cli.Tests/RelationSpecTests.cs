@@ -122,10 +122,26 @@ public sealed class RelationSpecTests
 
         Errors("de, en", "de").ShouldBeEmpty();
         Errors("de").ShouldContain(e => e.StartsWith("defaultLanguage:"));
-        Errors("en,fr").ShouldContain(e => e.StartsWith("languages:"));
+        Errors("en,fr,zh-Hant", "fr").ShouldBeEmpty();
+        Errors("en,xx").ShouldContain(e => e.StartsWith("languages:"));
         Errors("en,en").ShouldContain(e => e.StartsWith("languages:"));
         SpecOptions.Resolve(SpecJson.Read("""{ "name": "Shop", "options": { "languages": ["de", "en"] } }"""))["languages"].ShouldBe("de,en");
-        OptionCatalog.Languages.Select(l => l.Value).ShouldBe(ShippedCultures(), ignoreOrder: true);
+        OptionCatalog.ShippedLanguages.ShouldBe(ShippedCultures(), ignoreOrder: true);
+        OptionCatalog.ShippedLanguages.ShouldAllBe(l => OptionCatalog.Languages.Any(c => c.Value == l));
+    }
+
+    [Fact]
+    public void Languages_without_shipped_texts_need_a_translation_service_and_ai_needs_the_assistant()
+    {
+        string[] Errors(string languages, string provider, bool ai = true) =>
+            [.. SpecValidator.Validate(new AppSpec { Name = "Shop", Options = { ["languages"] = languages, ["translationProvider"] = provider, ["ai"] = ai } })];
+
+        Errors("en,de", "none").ShouldBeEmpty();
+        Errors("en,es", "none").ShouldContain(e => e.StartsWith("translationProvider:") && e.Contains("es"));
+        Errors("en,es", "myMemory").ShouldBeEmpty();
+        Errors("en,es", "ai", ai: false).ShouldContain(e => e.StartsWith("translationProvider:") && e.Contains("ai"));
+        Errors("en", "x").ShouldContain(e => e.StartsWith("translationProvider:"));
+        SpecValidator.Validate(new AppSpec { Name = "Shop", Options = { ["translationSource"] = "fr" } }).ShouldContain(e => e.StartsWith("translationSource:"));
     }
 
     [Theory]

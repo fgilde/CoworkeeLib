@@ -7,7 +7,7 @@ internal sealed class Demo_Migrations() : FakeProjects.FakeProject("Migrations",
 
 internal sealed class Demo_Auth() : FakeProjects.FakeProject("Auth", "Coworkee.Infrastructure", "Coworkee.AuthServer", "Coworkee.Mailing");
 
-internal sealed class Demo_Api() : FakeProjects.FakeProject("Api", "Coworkee.Infrastructure", "Coworkee.Realtime", "Coworkee.Search.Elasticsearch", "Coworkee.BackgroundJobs", "Demo.Billing");
+internal sealed class Demo_Api() : FakeProjects.FakeProject("Api", "Coworkee.Infrastructure", "Coworkee.Realtime", "Coworkee.Search.Elasticsearch", "Coworkee.BackgroundJobs", "Coworkee.Localization", "Demo.Billing");
 
 internal sealed class Demo_Jobs_Worker() : FakeProjects.FakeProject("Worker", "Coworkee.Infrastructure", "Coworkee.Notifications");
 

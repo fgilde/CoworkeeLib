@@ -42,7 +42,7 @@ public sealed partial class ArchitectureStep : StepViewModel
         Infrastructure = [.. Highlighted.Select(main.Option)];
         Ai = new AiSetupViewModel(main);
         Groups = [.. GroupInfo.Select(g => new OptionGroupViewModel(g.Group, g.Description, g.Icon,
-            [.. main.Options.Values.Where(o => o.Option.Group == g.Group && o.Id != "title" && !Highlighted.Contains(o.Id) && !AiOptions.Contains(o.Id))]))];
+            [.. main.Options.Values.Where(o => o.Option.Group == g.Group && o.Id != "title" && !Highlighted.Contains(o.Id) && !LanguagesStep.Ids.Contains(o.Id) && !AiOptions.Contains(o.Id))]))];
     }
 
     protected override string TitleText => "Architecture";

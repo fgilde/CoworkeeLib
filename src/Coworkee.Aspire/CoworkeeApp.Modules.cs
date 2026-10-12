@@ -15,6 +15,7 @@ public sealed partial class CoworkeeApp
             [CoworkeeModules.Storage] = (app, service) => app.WireStorage(service),
             [CoworkeeModules.Search] = (app, service) => app.WireSearch(service),
             [CoworkeeModules.Notifications] = (app, service) => app.WireNotifications(service),
+            [CoworkeeModules.Localization] = (app, service) => app.WireTranslation(service),
         };
 
     private void WireDatabase(IResourceBuilder<ProjectResource> service)

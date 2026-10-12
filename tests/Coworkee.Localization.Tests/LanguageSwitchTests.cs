@@ -48,6 +48,44 @@ public sealed class LanguageSwitchTests(LocalizationApp app) : IAsyncLifetime
         again!.Translated.ShouldBe(0);
     }
 
+    [Fact]
+    public async Task With_another_source_language_texts_start_from_its_wording_and_the_rest_from_english()
+    {
+        await SetAsync(new()
+        {
+            [LocalizationSettings.TranslationProvider] = TranslationProviders.LibreTranslate,
+            [LocalizationSettings.TranslationEndpoint] = "http://libretranslate.test",
+            [LocalizationSettings.TranslationSource] = "de",
+        });
+        (await Admin.PostAsJsonAsync("/api/v1/localization/missing", new MissingTextsRequest(["Only in English"]), Ct)).EnsureSuccessStatusCode();
+
+        var on = await SwitchAsync("fr", true);
+
+        (on.Translated > 0, on.TranslatorAvailable).ShouldBe((true, true));
+        var texts = (await app.Anonymous().GetFromJsonAsync<TextsDto>("/api/v1/localization/texts/fr", Ct))!.Texts;
+        texts["Brands"].ShouldBe("fr:de:Marken");
+        texts["Only in English"].ShouldBe("fr:en:Only in English");
+    }
+
+    [Fact]
+    public async Task Without_automatic_translation_switching_on_translates_nothing_until_asked()
+    {
+        await SetAsync(new()
+        {
+            [LocalizationSettings.TranslationProvider] = TranslationProviders.LibreTranslate,
+            [LocalizationSettings.TranslationEndpoint] = "http://libretranslate.test",
+            [LocalizationSettings.AutoTranslate] = "false",
+        });
+
+        (await SwitchAsync("it", true)).Translated.ShouldBe(0);
+
+        var asked = await (await Admin.PostAsync("/api/v1/localization/translations/it/translate", null, Ct)).Content.ReadFromJsonAsync<TranslateMissingDto>(Ct);
+        asked!.Translated.ShouldBeGreaterThan(0);
+    }
+
+    private async Task SetAsync(Dictionary<string, string?> values) =>
+        (await Admin.PutAsJsonAsync("/api/v1/settings/global", new SetSettingsRequest(values), Ct)).EnsureSuccessStatusCode();
+
     private async Task<LanguageSwitchDto> SwitchAsync(string culture, bool enabled)
     {
         var response = await Admin.PutAsJsonAsync($"/api/v1/localization/languages/{culture}/enabled", new SetLanguageEnabledRequest(enabled), Ct);

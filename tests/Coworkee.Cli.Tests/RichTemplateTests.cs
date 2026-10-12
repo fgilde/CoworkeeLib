@@ -10,12 +10,17 @@ public sealed class RichTemplateTests(TemplateFixture template)
     [Fact]
     public async Task Languages_color_mode_registration_and_tooling_reach_the_app()
     {
-        var app = await template.CreateAsync("rich-options", "--samples", "false", "--languages", "en,de", "--defaultLanguage", "de", "--colorMode", "dark",
-            "--githubActions", "true", "--devcontainer", "true");
+        var app = await template.CreateAsync("rich-options", "--samples", "false", "--languages", "en,de,fr", "--defaultLanguage", "de", "--colorMode", "dark",
+            "--githubActions", "true", "--devcontainer", "true", "--translationProvider", "deepL", "--translationSource", "de");
 
         var infrastructure = Read(app, "src/Shop.Infrastructure/ShopInfrastructureModule.cs");
-        infrastructure.ShouldContain("localization.Languages = [\"en\", \"de\"];");
+        infrastructure.ShouldContain("localization.Languages = [\"en\", \"de\", \"fr\"];");
         infrastructure.ShouldContain("localization.DefaultLanguage = \"de\";");
+        var richHost = Read(app, "src/Shop.AppHost/AppHost.cs");
+        richHost.ShouldContain("options.TranslationSource = \"de\";");
+        richHost.ShouldContain("options.UseTranslation(\"deepL\", translation.GetValueOrDefault(\"key\")");
+        richHost.ShouldContain("builder.AddParameter($\"translation-{n}\", secret: n == \"key\")");
+        richHost.ShouldNotContain("UseLibreTranslate");
         var seed = Read(app, "src/Shop.Migrations/DemoSeed.cs");
         seed.ShouldContain("seed.Settings[\"Theme.Mode\"] = \"dark\";");
         seed.ShouldContain("seed.Settings[\"Account.AllowRegistration\"] = \"true\";");
@@ -29,6 +34,10 @@ public sealed class RichTemplateTests(TemplateFixture template)
         Read(german, "src/Shop.Infrastructure/ShopInfrastructureModule.cs").ShouldNotContain("localization.Languages");
         Read(german, "src/Shop.Infrastructure/ShopInfrastructureModule.cs").ShouldContain("localization.DefaultLanguage = \"de\";");
         Read(german, ".github/workflows/ci.yml").ShouldNotContain("dotnet test");
+        var germanHost = Read(german, "src/Shop.AppHost/AppHost.cs");
+        germanHost.ShouldContain("options.UseLibreTranslate([\"de\", \"de\"]);");
+        germanHost.ShouldNotContain("TranslationSource");
+        germanHost.ShouldNotContain("translation-{n}");
         TemplateTests.ShouldHaveNoLeftovers(german);
 
         var plain = await template.CreateAsync("plain-options", "--samples", "false", "--registration", "false");
@@ -50,6 +59,7 @@ public sealed class RichTemplateTests(TemplateFixture template)
         spec.Options["database"] = "sqlServer";
         spec.Options["redis"] = false;
         spec.Options["aiProvider"] = "ollama";
+        spec.Options["languages"] = new System.Text.Json.Nodes.JsonArray("en", "de", "fr");
         spec.Modules.Insert(0, new ModuleSpec
         {
             Name = "Crm",
@@ -100,12 +110,13 @@ public sealed class RichTemplateTests(TemplateFixture template)
         (await EntityCommand.AddAsync(solution, "Sales", invoice, Ct, [FeatureOptions.EnumSpec("InvoiceKind=Draft,Final")])).ShouldBe(0);
         await Dotnet.RunAsync(app, [.. MigrationsCommand.AddArgs(solution, "AddInvoice")[1..]]);
 
-        Read(app, "src/Shop.Infrastructure/ShopInfrastructureModule.cs").ShouldContain("localization.Languages = [\"en\", \"de\"];");
+        Read(app, "src/Shop.Infrastructure/ShopInfrastructureModule.cs").ShouldContain("localization.Languages = [\"en\", \"de\", \"fr\"];");
         Read(app, "src/Shop.Sales/Shop.Sales.csproj").ShouldContain("Shop.Crm.csproj");
         var appHost = Read(app, "src/Shop.AppHost/AppHost.cs");
         appHost.ShouldContain("options.UseSqlServer();");
         appHost.ShouldContain("options.WithoutRedis();");
         appHost.ShouldContain("builder.AddOllama(\"ollama\")");
+        appHost.ShouldContain("options.UseLibreTranslate([\"en\", \"de\", \"fr\", \"de\"]);");
         await Dotnet.RunAsync(app, "build", "Shop.slnx");
         await Dotnet.RunAsync(app, "test", "--project", "tests/Shop.Migrations.Tests", "--no-build", "--filter-class", "Shop.Migrations.Tests.ModelTests");
     }

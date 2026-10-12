@@ -380,7 +380,7 @@
       "type": "parameter",
       "datatype": "string",
       "defaultValue": "",
-      "description": "Languages offered from the start, comma separated (en,de); empty offers every shipped language."
+      "description": "Languages offered from the start, comma separated (en,de,fr); empty offers the shipped ones (en, de). Languages without shipped texts are machine translated at the first start."
     },
     "defaultLanguage": {
       "type": "parameter",
@@ -394,7 +394,143 @@
         },
         {
           "choice": "de",
-          "description": "German (Deutsch)."
+          "description": "Deutsch."
+        },
+        {
+          "choice": "fr",
+          "description": "Français."
+        },
+        {
+          "choice": "es",
+          "description": "Español."
+        },
+        {
+          "choice": "it",
+          "description": "Italiano."
+        },
+        {
+          "choice": "pt",
+          "description": "Português."
+        },
+        {
+          "choice": "pt-BR",
+          "description": "Português (Brasil)."
+        },
+        {
+          "choice": "nl",
+          "description": "Nederlands."
+        },
+        {
+          "choice": "pl",
+          "description": "Polski."
+        },
+        {
+          "choice": "cs",
+          "description": "Čeština."
+        },
+        {
+          "choice": "sk",
+          "description": "Slovenčina."
+        },
+        {
+          "choice": "sl",
+          "description": "Slovenščina."
+        },
+        {
+          "choice": "sv",
+          "description": "Svenska."
+        },
+        {
+          "choice": "da",
+          "description": "Dansk."
+        },
+        {
+          "choice": "nb",
+          "description": "Norsk bokmål."
+        },
+        {
+          "choice": "fi",
+          "description": "Suomi."
+        },
+        {
+          "choice": "et",
+          "description": "Eesti."
+        },
+        {
+          "choice": "lv",
+          "description": "Latviešu."
+        },
+        {
+          "choice": "lt",
+          "description": "Lietuvių."
+        },
+        {
+          "choice": "hu",
+          "description": "Magyar."
+        },
+        {
+          "choice": "ro",
+          "description": "Română."
+        },
+        {
+          "choice": "bg",
+          "description": "Български."
+        },
+        {
+          "choice": "el",
+          "description": "Ελληνικά."
+        },
+        {
+          "choice": "tr",
+          "description": "Türkçe."
+        },
+        {
+          "choice": "ru",
+          "description": "Русский."
+        },
+        {
+          "choice": "uk",
+          "description": "Українська."
+        },
+        {
+          "choice": "ar",
+          "description": "العربية."
+        },
+        {
+          "choice": "he",
+          "description": "עברית."
+        },
+        {
+          "choice": "hi",
+          "description": "हिन्दी."
+        },
+        {
+          "choice": "ja",
+          "description": "日本語."
+        },
+        {
+          "choice": "ko",
+          "description": "한국어."
+        },
+        {
+          "choice": "zh-Hans",
+          "description": "中文（简体）."
+        },
+        {
+          "choice": "zh-Hant",
+          "description": "中文（繁體）."
+        },
+        {
+          "choice": "id",
+          "description": "Bahasa Indonesia."
+        },
+        {
+          "choice": "vi",
+          "description": "Tiếng Việt."
+        },
+        {
+          "choice": "th",
+          "description": "ไทย."
         }
       ],
       "replaces": "COWORKEE_DEFAULT_LANGUAGE"
@@ -416,6 +552,60 @@
     "customLanguages": {
       "type": "computed",
       "value": "(languages != \"\" || defaultLanguage != \"en\")"
+    },
+    "translationProvider": {
+      "type": "parameter",
+      "datatype": "choice",
+      "defaultValue": "libreTranslate",
+      "description": "Translation service for the texts a language lacks; changeable later in the settings (Translation).",
+      "choices": [
+        {
+          "choice": "libreTranslate",
+          "description": "LibreTranslate container in the app host, free and without an account."
+        },
+        {
+          "choice": "myMemory",
+          "description": "MyMemory public service, free without an account, small daily quota."
+        },
+        {
+          "choice": "deepL",
+          "description": "DeepL API (key in the user secrets: Parameters:translation-key)."
+        },
+        {
+          "choice": "azure",
+          "description": "Azure AI Translator (Parameters:translation-key and translation-region)."
+        },
+        {
+          "choice": "google",
+          "description": "Google Cloud Translation (Parameters:translation-key)."
+        },
+        {
+          "choice": "ai",
+          "description": "The model of the AI assistant."
+        },
+        {
+          "choice": "none",
+          "description": "No machine translation."
+        }
+      ],
+      "replaces": "COWORKEE_TRANSLATION_PROVIDER"
+    },
+    "translationSource": {
+      "type": "parameter",
+      "datatype": "choice",
+      "defaultValue": "en",
+      "description": "Language machine translations start from.",
+      "choices": [
+        {
+          "choice": "en",
+          "description": "English."
+        },
+        {
+          "choice": "de",
+          "description": "Deutsch."
+        }
+      ],
+      "replaces": "COWORKEE_TRANSLATION_SOURCE"
     },
     "colorMode": {
       "type": "parameter",
