@@ -82,7 +82,7 @@ public partial class Languages
             }
             else if (!result.TranslatorAvailable && !culture.Name.StartsWith(CoworkeeLocalizer.English, StringComparison.OrdinalIgnoreCase))
             {
-                Snackbar.Add(L["{0} is switched on. Without a translator key, texts nobody translated show in English.", Title(culture)], Severity.Warning);
+                Snackbar.Add(L["{0} is switched on. Without a translation service, texts nobody translated show in English.", Title(culture)], Severity.Warning);
             }
             else
             {
@@ -105,7 +105,7 @@ public partial class Languages
         {
             var result = await Api.TranslateMissingAsync(culture.Name);
             Snackbar.Add(
-                result.TranslatorAvailable ? L["{0} texts were translated.", result.Translated] : L["Set a translator key in the settings (Localization) first."],
+                result.TranslatorAvailable ? L["{0} texts were translated.", result.Translated] : L["Set up a translation service in the settings (Translation) first."],
                 result.TranslatorAvailable ? Severity.Success : Severity.Warning);
         });
 

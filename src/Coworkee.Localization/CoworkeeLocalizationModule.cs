@@ -39,11 +39,14 @@ public sealed class CoworkeeLocalizationModule : CoworkeeModule, IWebModule
         services.AddScoped<LocalizationChanges>();
         services.AddScoped<MachineTranslation.TextTranslator>();
         services.AddScoped<MachineTranslation.MissingTexts>();
-        services.AddHttpClient(MachineTranslation.TextTranslator.HttpClientName, client =>
-        {
-            client.BaseAddress = new Uri(context.Configuration["Coworkee:Localization:TranslatorEndpoint"] ?? "https://api.cognitive.microsofttranslator.com/");
-            client.Timeout = TimeSpan.FromMinutes(2);
-        });
+        services.AddScoped<MachineTranslation.ITranslationProvider, MachineTranslation.LibreTranslator>();
+        services.AddScoped<MachineTranslation.ITranslationProvider, MachineTranslation.MyMemoryTranslator>();
+        services.AddScoped<MachineTranslation.ITranslationProvider, MachineTranslation.DeepLTranslator>();
+        services.AddScoped<MachineTranslation.ITranslationProvider, MachineTranslation.AzureTranslator>();
+        services.AddScoped<MachineTranslation.ITranslationProvider, MachineTranslation.GoogleTranslator>();
+        services.AddScoped<MachineTranslation.ITranslationProvider, MachineTranslation.AiTranslator>();
+        services.AddHostedService<MachineTranslation.InitialTranslation>();
+        services.AddHttpClient(MachineTranslation.TextTranslator.HttpClientName, client => client.Timeout = TimeSpan.FromMinutes(2));
         services.AddODataEntity<Domain.Language>("Languages", Contracts.Localization.LocalizationPermissions.Manage);
         services.Configure<SetupGateOptions>(options => options.AllowedPrefixes.Add("/api/v1/localization/"));
     }

@@ -4,6 +4,7 @@
     <ProjectReference Include="..\..\src\Coworkee.Identity\Coworkee.Identity.csproj" />
     <ProjectReference Include="..\..\src\Coworkee.Testing\Coworkee.Testing.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <PackageReference Include="Testcontainers" />
     <EmbeddedResource Include="Localization\*.json" />
   </ItemGroup>
 </Project>

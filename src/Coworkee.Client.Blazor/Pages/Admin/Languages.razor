@@ -1,7 +1,7 @@
 @page "/admin/languages"
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + LocalizationPermissions.Manage)]
 
-<PageHeader Title="Languages" Description="Switch on the languages users can choose. Switching one on translates its missing texts automatically when a translator key is set in the settings (Localization). Users of a language that is switched off move to the default language right away." />
+<PageHeader Title="Languages" Description="Switch on the languages users can choose. Switching one on translates its missing texts automatically with the translation service of the settings (Translation). Users of a language that is switched off move to the default language right away." />
 
 <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-3">
     <MudTextField T="string" @bind-Value="_filter" Immediate="true" DebounceInterval="200" Placeholder="@L["Search languages"]" Clearable="true"
