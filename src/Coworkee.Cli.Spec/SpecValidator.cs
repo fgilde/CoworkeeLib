@@ -72,6 +72,7 @@ public static partial class SpecValidator
             errors.Add("options.backup: database backups from the admin pages need the postgres database.");
         }
 
+        Ai(errors, values);
         Languages(errors, values);
         Enums(errors, spec);
         Modules(errors, spec, values["samples"] == "true", index);
@@ -138,6 +139,21 @@ public static partial class SpecValidator
         if (problem is not null)
         {
             errors.Add($"{option.Id}: '{value}' is not {problem}.");
+        }
+    }
+
+    // model and endpoint go into the app host as strings
+    private static void Ai(List<string> errors, IReadOnlyDictionary<string, string?> values)
+    {
+        if (values["aiModel"] is { } model && (model.Length > 200 || !IsSafeTitle(model)))
+        {
+            errors.Add($"aiModel: '{model}' must be at most 200 characters without quotes, backslashes, <, >, @ or control characters.");
+        }
+
+        if (values["aiEndpoint"] is { } endpoint
+            && (!Uri.TryCreate(endpoint, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https") || !IsSafeTitle(endpoint)))
+        {
+            errors.Add($"aiEndpoint: '{endpoint}' is not an http or https address.");
         }
     }
 

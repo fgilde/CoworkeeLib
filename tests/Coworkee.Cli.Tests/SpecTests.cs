@@ -101,6 +101,31 @@ public sealed class SpecTests
         SpecValidator.IsSafeTitle("Acme Shop & Co. {1}").ShouldBeTrue();
     }
 
+    [Theory]
+    [InlineData("aiModel", "gpt-5\\\"); Evil(\"", "aiModel:")]
+    [InlineData("aiEndpoint", "ftp://llm.test", "aiEndpoint:")]
+    [InlineData("aiEndpoint", "https://llm.test/v1\"", "aiEndpoint:")]
+    [InlineData("aiProvider", "perplexity", "aiProvider:")]
+    [InlineData("aiModel", "accounts/fireworks/models/qwen3:latest", null)]
+    [InlineData("aiEndpoint", "https://acme.openai.azure.com", null)]
+    [InlineData("aiProvider", "openRouter", null)]
+    public void Ai_options_go_into_code_only_when_safe(string option, string value, string? error)
+    {
+        var spec = new AppSpec { Name = "Shop" };
+        spec.Options[option] = value;
+
+        var errors = SpecValidator.Validate(spec);
+
+        if (error is null)
+        {
+            errors.ShouldBeEmpty();
+        }
+        else
+        {
+            errors.ShouldContain(e => e.StartsWith(error));
+        }
+    }
+
     [Fact]
     public void Spec_files_and_output_stay_inside_the_folder_of_the_spec_and_files_are_images_or_videos()
     {

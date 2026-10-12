@@ -93,6 +93,19 @@ public sealed class TemplateOptionTests(TemplateFixture template)
         Read(azure, "src/Shop.ServiceDefaults/Shop.ServiceDefaults.csproj").ShouldContain("Aspire.StackExchange.Redis");
         TemplateTests.ShouldHaveNoLeftovers(azure);
 
+        var router = await template.CreateAsync("ai-router", "--samples", "false", "--aiProvider", "openRouter", "--aiModel", "openai/gpt-5", "--aiEndpoint", "https://proxy.acme.test/v1");
+        appHost = Read(router, "src/Shop.AppHost/AppHost.cs");
+        appHost.ShouldContain("Defaults[\"Ai.Provider\"], \"openRouter\")");
+        appHost.ShouldContain("string aiModel = \"openai/gpt-5\", aiEndpoint = \"https://proxy.acme.test/v1\";");
+        appHost.ShouldContain("if (aiParameters.ContainsKey(\"ApiKey\"))");
+        TemplateTests.ShouldHaveNoLeftovers(router);
+
+        var lmStudio = await template.CreateAsync("ai-lmstudio", "--samples", "false", "--aiProvider", "lmStudio");
+        appHost = Read(lmStudio, "src/Shop.AppHost/AppHost.cs");
+        appHost.ShouldContain("string aiModel = \"\", aiEndpoint = \"\";");
+        appHost.ShouldContain("LM Studio serves the model");
+        appHost.ShouldNotContain("AddOllama");
+
         var none = await template.CreateAsync("ai-none", "--samples", "false", "--ai", "false", "--aiProvider", "ollama");
         Read(none, "src/Shop.AppHost/AppHost.cs").ShouldNotContain("Ai.Provider");
         Read(none, "src/Shop.AppHost/Shop.AppHost.csproj").ShouldNotContain("Ollama");

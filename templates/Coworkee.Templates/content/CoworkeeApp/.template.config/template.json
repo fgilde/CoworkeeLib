@@ -172,8 +172,44 @@
           "description": "A deployment of Azure OpenAI."
         },
         {
+          "choice": "gemini",
+          "description": "Google Gemini through its OpenAI compatible API."
+        },
+        {
+          "choice": "openRouter",
+          "description": "Many models behind one OpenRouter key."
+        },
+        {
+          "choice": "mistral",
+          "description": "Mistral models, hosted in the EU."
+        },
+        {
+          "choice": "groq",
+          "description": "Open models on Groq."
+        },
+        {
+          "choice": "deepSeek",
+          "description": "DeepSeek models."
+        },
+        {
+          "choice": "xai",
+          "description": "Grok models of xAI."
+        },
+        {
+          "choice": "together",
+          "description": "Open models on Together AI."
+        },
+        {
+          "choice": "fireworks",
+          "description": "Open models on Fireworks AI."
+        },
+        {
           "choice": "ollama",
           "description": "Local models, Ollama container in the app host."
+        },
+        {
+          "choice": "lmStudio",
+          "description": "Local models of the LM Studio app on this machine."
         },
         {
           "choice": "openAICompatible",
@@ -181,6 +217,20 @@
         }
       ],
       "replaces": "COWORKEE_AI_PROVIDER"
+    },
+    "aiModel": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "",
+      "description": "Model of the AI provider (Azure OpenAI: the deployment name); empty takes the provider's default.",
+      "replaces": "COWORKEE_AI_MODEL"
+    },
+    "aiEndpoint": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "",
+      "description": "Base address of the AI provider; empty takes the provider's address.",
+      "replaces": "COWORKEE_AI_ENDPOINT"
     },
     "redis": {
       "type": "parameter",
