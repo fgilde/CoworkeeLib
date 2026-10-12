@@ -6,6 +6,8 @@
 
 <p align="center">A small, modular application framework for .NET 10.<br/>Modules, a request dispatcher, EF Core conventions with audit and outbox, ASP.NET Core and Aspire integration.</p>
 
+<p align="center"><a href="https://quickrun.org/run?repo=fgilde/CoworkeeLib"><img src="https://quickrun.org/badge.svg" alt="QuickRun" /></a></p>
+
 ---
 
 **Documentation:** [fgilde.github.io/CoworkeeLib](https://fgilde.github.io/CoworkeeLib/) (English, [Deutsch](https://fgilde.github.io/CoworkeeLib/de/)) · **Demo app:** [fgilde/Coworkee](https://github.com/fgilde/Coworkee/tree/master), a complete application on the packages
