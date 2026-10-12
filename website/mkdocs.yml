@@ -108,6 +108,8 @@ plugins:
             Extended attributes: Erweiterte Attribute
             Comments, tags and ratings: Kommentare, Tags und Bewertungen
             AI assistant and MCP: KI-Assistent und MCP
+            MCP server of the app: MCP-Server der App
+            API keys: API-Schlüssel
             Hosting: Hosting
             Aspire app host: Aspire-AppHost
             Scaling out with Redis: Skalieren mit Redis
@@ -164,6 +166,7 @@ nav:
       - Registration and sign-in rules: security/registration.md
       - Sign-in pages and designs: security/sign-in-pages.md
       - Privacy and personal data: security/privacy.md
+      - API keys: security/api-keys.md
   - Blazor UI:
       - Client and layout: ui/client.md
       - Data tables: ui/data-table.md
@@ -188,6 +191,7 @@ nav:
       - Extended attributes: modules/extended-attributes.md
       - Comments, tags and ratings: modules/social.md
       - AI assistant and MCP: modules/ai.md
+      - MCP server of the app: modules/mcp.md
   - Hosting:
       - Aspire app host: hosting/aspire.md
       - Scaling out with Redis: hosting/redis.md
