@@ -1,0 +1,3 @@
+<p>សួស្តី {{ user.first_name }},</p>
+<p>សូមបញ្ជាក់ថា {{ new_email }} គឺជាអាសយដ្ឋានថ្មីនៃគណនីរបស់អ្នក។ រហូតដល់ពេលនោះ អ្នកចូលគណនីដោយប្រើ {{ user.email }}។ ប្រសិនបើអ្នកមិនបានស្នើសុំរឿងនេះទេ អ្នកអាចមិនអើពើសារនេះបាន។</p>
+<p style="margin:24px 0;"><a href="{{ confirm_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">បញ្ជាក់អាសយដ្ឋានថ្មី</a></p>
