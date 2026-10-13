@@ -25,6 +25,15 @@ else
             <MudSwitch T="bool" @bind-Value="_form.Enabled" Color="Color.Primary" data-testid="ai-enabled" aria-label="@L["Assistant enabled"]" />
         </MudPaper>
 
+        <MudPaper Outlined="true" Class="pa-4 d-flex align-center gap-3">
+            <MudIcon Icon="@Icons.Material.Outlined.Hub" Color="Color.Primary" />
+            <div class="flex-grow-1">
+                <MudText Typo="Typo.subtitle1">@L["MCP server enabled"]</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["Off: MCP clients get no tools and run nothing, also with valid keys. Needs no AI provider."]</MudText>
+            </div>
+            <MudSwitch T="bool" @bind-Value="_form.McpEnabled" Color="Color.Primary" data-testid="ai-mcp-enabled" aria-label="@L["MCP server enabled"]" />
+        </MudPaper>
+
         <div>
             <MudText Typo="Typo.overline" Class="mud-text-secondary">@L["Provider"]</MudText>
             <AiProviderPicker Value="@_form.Provider" ValueChanged="SelectProvider" />

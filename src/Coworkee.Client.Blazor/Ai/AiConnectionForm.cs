@@ -16,6 +16,8 @@ public sealed class AiConnectionForm
 
     public bool Enabled { get; set; }
 
+    public bool McpEnabled { get; set; } = true;
+
     public string Provider { get; set; } = AiProviderCatalog.Anthropic;
 
     public string? Model { get; set; }
@@ -63,6 +65,7 @@ public sealed class AiConnectionForm
         var form = new AiConnectionForm
         {
             Enabled = bool.TryParse(Get(AiSettingNames.Enabled), out var enabled) && enabled,
+            McpEnabled = !bool.TryParse(Get(AiSettingNames.McpEnabled), out var mcp) || mcp,
             Provider = AiProviderCatalog.Find(Get(AiSettingNames.Provider))?.Id ?? AiProviderCatalog.Anthropic,
             Model = Get(AiSettingNames.Model),
             Endpoint = Get(AiSettingNames.Endpoint),
@@ -84,6 +87,7 @@ public sealed class AiConnectionForm
         var values = new Dictionary<string, string?>
         {
             [AiSettingNames.Enabled] = Enabled ? "true" : "false",
+            [AiSettingNames.McpEnabled] = McpEnabled ? "true" : "false",
             [AiSettingNames.Provider] = Provider,
             [AiSettingNames.Model] = Trim(Model),
             [AiSettingNames.Endpoint] = Trim(Endpoint),

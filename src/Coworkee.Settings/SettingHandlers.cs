@@ -41,7 +41,7 @@ internal sealed class SettingDefinitionHandlers(ISettingDefinitionManager defini
             .Select(g => new SettingGroupDto(g.Name, g.DisplayName, definitions.All
                 .Where(d => d.Group == g.Name && filter(d))
                 .Select(d => new SettingDefinitionDto(d.Name, d.DisplayName, d.Description, d.Type, d.IsEncrypted ? null : d.DefaultValue, d.Scopes, d.Choices, d.EnabledWhen))
-                .ToList()))
+                .ToList(), g.Page))
             .Where(g => g.Settings.Count > 0)
             .ToList();
         return Result<IReadOnlyList<SettingGroupDto>>.Success(groups);

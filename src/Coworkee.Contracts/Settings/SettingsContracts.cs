@@ -54,7 +54,7 @@ public sealed record SettingDefinitionDto(
     string Name, string DisplayName, string? Description, SettingType Type, string? DefaultValue, IReadOnlyList<SettingScope> Scopes, IReadOnlyList<string>? Choices,
     SettingCondition? EnabledWhen = null);
 
-public sealed record SettingGroupDto(string Name, string DisplayName, IReadOnlyList<SettingDefinitionDto> Settings);
+public sealed record SettingGroupDto(string Name, string DisplayName, IReadOnlyList<SettingDefinitionDto> Settings, string? Page = null);
 
 public sealed record SettingValueDto(string Name, string? Value, bool HasValue);
 

@@ -119,6 +119,20 @@ public sealed class SettingsFormTests : ClientTestBase
     }
 
     [Fact]
+    public void Groups_with_an_own_page_are_not_shown()
+    {
+        Api.GetSettingDefinitionsAsync(false, Arg.Any<CancellationToken>()).Returns(
+        [
+            new SettingGroupDto("Mail", "Mail", [new SettingDefinitionDto("Mail.Smtp.Host", "Host", null, SettingType.String, null, Global, null)]),
+            new SettingGroupDto("Ai", "AI", [new SettingDefinitionDto("Ai.Model", "Model", null, SettingType.String, null, Global, null)], "/admin/ai-settings"),
+        ]);
+        var form = Render<SettingsForm>(p => p.Add(f => f.Scope, SettingScope.Global));
+
+        form.WaitForAssertion(() => Input(form, "Host"));
+        Labels(form).ShouldNotContain("Model");
+    }
+
+    [Fact]
     public void A_setting_name_becomes_a_property_name()
     {
         SettingsModel.PropertyName("Mail.Smtp.Host").ShouldBe("Mail_Smtp_Host");

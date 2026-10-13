@@ -38,7 +38,7 @@ public static class AiSettings
     public const string DefaultModel = "claude-opus-5-5";
 
     /// <summary>The kill switch of the MCP server at runtime; Coworkee:Mcp:Enabled decides whether it is mapped at all.</summary>
-    public const string McpEnabled = "Mcp.Enabled";
+    public const string McpEnabled = AiSettingNames.McpEnabled;
 }
 
 /// <summary>
@@ -158,7 +158,7 @@ internal sealed class AiSettingDefinitions : ISettingDefinitionContributor
     private static readonly SettingScope[] Scopes = [SettingScope.Global];
 
     public void Define(SettingDefinitionContext context) =>
-        context.Group("Ai", "AI assistant")
+        context.Group("Ai", "AI assistant", page: "/admin/ai-settings")
             .Add(AiSettings.Enabled, "Assistant enabled", SettingType.Bool, Scopes, "false")
             .Add(AiSettings.Provider, "Provider", SettingType.Choice, Scopes, AiProviders.Anthropic, choices: [.. AiProviders.All])
             .Add(AiSettings.Model, "Model", SettingType.String, Scopes, description: "Empty: the provider's default. Azure OpenAI: the deployment name.")

@@ -29,6 +29,8 @@ public sealed record SettingDefinition(
     };
 }
 
+public sealed record SettingGroup(string Name, string DisplayName, string? Page);
+
 public interface ISettingDefinitionContributor
 {
     void Define(SettingDefinitionContext context);
@@ -36,15 +38,15 @@ public interface ISettingDefinitionContributor
 
 public sealed class SettingDefinitionContext
 {
-    internal List<(string Name, string DisplayName)> Groups { get; } = [];
+    internal List<SettingGroup> Groups { get; } = [];
 
     internal List<SettingDefinition> Definitions { get; } = [];
 
-    public SettingGroupBuilder Group(string name, string displayName)
+    public SettingGroupBuilder Group(string name, string displayName, string? page = null)
     {
         if (!Groups.Exists(g => g.Name == name))
         {
-            Groups.Add((name, displayName));
+            Groups.Add(new SettingGroup(name, displayName, page));
         }
 
         return new SettingGroupBuilder(this, name);
@@ -82,7 +84,7 @@ public interface ISettingDefinitionManager
 {
     IReadOnlyList<SettingDefinition> All { get; }
 
-    IReadOnlyList<(string Name, string DisplayName)> Groups { get; }
+    IReadOnlyList<SettingGroup> Groups { get; }
 
     SettingDefinition? Find(string name);
 }
@@ -109,7 +111,7 @@ internal sealed class SettingDefinitionManager : ISettingDefinitionManager
 
     public IReadOnlyList<SettingDefinition> All { get; }
 
-    public IReadOnlyList<(string Name, string DisplayName)> Groups { get; }
+    public IReadOnlyList<SettingGroup> Groups { get; }
 
     public SettingDefinition? Find(string name) => _byName.GetValueOrDefault(name);
 }

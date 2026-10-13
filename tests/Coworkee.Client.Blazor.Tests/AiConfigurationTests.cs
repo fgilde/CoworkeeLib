@@ -43,6 +43,18 @@ public sealed class AiConfigurationTests : ClientTestBase
     }
 
     [Fact]
+    public async Task Mcp_switch_saves_the_setting()
+    {
+        var page = Render<AiConfiguration>();
+        page.WaitForAssertion(() => page.Find("[data-testid='ai-mcp-enabled']"));
+
+        await page.Find("[data-testid='ai-mcp-enabled']").ChangeAsync(new Microsoft.AspNetCore.Components.ChangeEventArgs { Value = false });
+        await page.Find("[data-testid='ai-save']").ClickAsync(new());
+
+        await Api.Received(1).SetSettingsAsync(SettingScope.Global, Arg.Is<IReadOnlyDictionary<string, string?>>(v => v[AiSettingNames.McpEnabled] == "false"), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task Another_provider_needs_its_own_key_and_saving_drops_the_old_one()
     {
         var page = Render<AiConfiguration>();

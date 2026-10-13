@@ -12,6 +12,7 @@ public static class AiSettingNames
     public const string Temperature = "Ai.Temperature";
     public const string MaxOutputTokens = "Ai.MaxOutputTokens";
     public const string MaxToolRounds = "Ai.MaxToolRounds";
+    public const string McpEnabled = "Mcp.Enabled";
 }
 
 /// <summary>
