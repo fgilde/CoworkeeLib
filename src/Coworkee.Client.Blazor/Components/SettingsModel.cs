@@ -59,7 +59,7 @@ public sealed partial class SettingsModel
             switch (setting.Type)
             {
                 case SettingType.Secret:
-                    property.WithAdditionalAttribute(nameof(MudTextField<string>.InputType), InputType.Password);
+                    property.WithAdditionalAttribute(nameof(MudTextField<string>.InputType), InputType.Password).IgnoreOnExportAndImport();
                     break;
                 case SettingType.Text:
                     property.WithAdditionalAttribute(nameof(MudTextField<string>.Lines), 4);

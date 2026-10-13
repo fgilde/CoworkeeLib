@@ -34,9 +34,6 @@ public partial class AppConfigurationEditor<T>
     private int _revision;
     private string? _loadedSection;
 
-    // restoring goes through the toolbar (the configured values) or cancel, not per field
-    private static readonly GlobalResetSettings NoReset = new() { AllowReset = false };
-    private static readonly PropertyResetSettings NoPropertyReset = new() { AllowReset = false };
 
     protected override async Task OnParametersSetAsync()
     {

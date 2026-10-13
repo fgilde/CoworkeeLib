@@ -12,8 +12,6 @@ namespace Coworkee.Client.Blazor.Components;
 /// <summary>The settings of a scope in a MudExObjectEdit form; every defined setting of the scope shows up, grouped like its definition.</summary>
 public partial class SettingsForm
 {
-    private static readonly GlobalResetSettings NoReset = new() { AllowReset = false };
-    private static readonly PropertyResetSettings NoPropertyReset = new() { AllowReset = false };
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 

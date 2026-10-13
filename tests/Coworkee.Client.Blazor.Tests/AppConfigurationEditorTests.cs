@@ -43,6 +43,20 @@ public sealed class AppConfigurationEditorTests : ClientTestBase
     }
 
     [Fact]
+    public void Keeps_several_groups_open_and_offers_search_export_and_import()
+    {
+        var editor = Render<AppConfigurationEditor<SampleConfig>>(p => p.Add(e => e.Registration, Registration));
+        editor.WaitForAssertion(() => editor.FindAll("input").Select(i => i.GetAttribute("value")).ShouldContain("Default"));
+
+        var edit = editor.FindComponent<MudExObjectEditForm<SampleConfig>>().Instance;
+        edit.SingleExpand.ShouldBeFalse();
+        edit.StickyToolbar.ShouldBeTrue();
+        edit.AllowSearch.ShouldBeTrue();
+        edit.AllowExport.ShouldBeTrue();
+        edit.AllowImport.ShouldBeTrue();
+    }
+
+    [Fact]
     public async Task Loads_once_while_the_section_stays()
     {
         var editor = Render<AppConfigurationEditor<SampleConfig>>(p => p.Add(e => e.Registration, Registration));

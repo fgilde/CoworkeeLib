@@ -1,7 +1,7 @@
 <style>
     @@media (min-width: 600px) {
         .cw-tabs-stick-merge > .mud-tabs > .mud-tabs-tabbar { position: sticky; top: var(--mud-appbar-height); z-index: 10; }
-        .cw-tabs-stick-merge[stuck] > .mud-tabs > .mud-tabs-tabbar { width: fit-content; background: var(--mud-palette-surface); }
+        .cw-tabs-stick-merge[stuck] > .mud-tabs > .mud-tabs-tabbar { width: fit-content; box-sizing: border-box; padding-inline: 16px; background: var(--mud-palette-surface); border-bottom-right-radius: var(--mud-default-borderradius); }
     }
     .cw-tabs-sentinel { height: 1px; margin-bottom: -1px; pointer-events: none; }
 </style>

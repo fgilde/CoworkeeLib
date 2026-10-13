@@ -5,6 +5,7 @@ using Coworkee.Contracts.Localization;
 using Coworkee.Contracts.Settings;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
+using MudBlazor.Extensions.Components.ObjectEdit;
 using NSubstitute;
 
 namespace Coworkee.Client.Blazor.Tests;
@@ -46,6 +47,20 @@ public sealed class SettingsFormTests : ClientTestBase
         Input(form, "Password").GetAttribute("type").ShouldBe("password");
         form.Find(".mud-expand-panel-text").TextContent.ShouldBe("Mail");
         Labels(form).ShouldNotContain("Tenant only");
+    }
+
+    [Fact]
+    public void Keeps_several_groups_open_and_offers_search_export_and_import_like_the_app_settings()
+    {
+        var form = Render<SettingsForm>(p => p.Add(f => f.Scope, SettingScope.Global));
+        form.WaitForAssertion(() => Input(form, "Host"));
+
+        var edit = form.FindComponent<MudExObjectEditForm<object>>().Instance;
+        edit.SingleExpand.ShouldBeFalse();
+        edit.StickyToolbar.ShouldBeTrue();
+        edit.AllowSearch.ShouldBeTrue();
+        edit.AllowExport.ShouldBeTrue();
+        edit.AllowImport.ShouldBeTrue();
     }
 
     [Fact]
