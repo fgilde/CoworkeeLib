@@ -33,6 +33,16 @@ public sealed class PasswordHintTests
         PasswordRules.From(new Dictionary<string, string?> { [PasswordSettings.RequiredLength] = stored }).RequiredLength.ShouldBe(1);
 
     [Fact]
+    public void Impossible_rules_are_clamped_to_what_a_password_can_meet() =>
+        PasswordRules.From(new Dictionary<string, string?> { [PasswordSettings.RequiredLength] = "500", [PasswordSettings.RequiredUniqueChars] = "900" })
+            .ShouldBe(new PasswordRules(128, 128, true, true, true, true));
+
+    [Fact]
+    public void More_different_characters_than_the_length_count_as_the_length() =>
+        PasswordRules.From(new Dictionary<string, string?> { [PasswordSettings.RequiredLength] = "6", [PasswordSettings.RequiredUniqueChars] = "10" })
+            .ShouldBe(new PasswordRules(6, 6, true, true, true, true));
+
+    [Fact]
     public void A_value_that_is_not_a_number_or_flag_keeps_the_default() =>
         PasswordRules.From(new Dictionary<string, string?> { [PasswordSettings.RequiredLength] = "many", [PasswordSettings.RequireDigit] = "maybe" })
             .ShouldBe(new PasswordRules(8, 1, true, true, true, true));

@@ -14,36 +14,42 @@ internal sealed class SettingsPasswordValidator(ISettingProvider settings) : IPa
         var value = password ?? string.Empty;
         var errors = new List<IdentityError>();
 
-        var length = Math.Max(1, await settings.GetAsync<int>(PasswordSettings.RequiredLength));
-        if (string.IsNullOrWhiteSpace(value) || value.Length < length)
+        var rules = new PasswordRules(
+            await settings.GetAsync<int>(PasswordSettings.RequiredLength),
+            await settings.GetAsync<int>(PasswordSettings.RequiredUniqueChars),
+            await settings.GetAsync<bool>(PasswordSettings.RequireDigit),
+            await settings.GetAsync<bool>(PasswordSettings.RequireLowercase),
+            await settings.GetAsync<bool>(PasswordSettings.RequireUppercase),
+            await settings.GetAsync<bool>(PasswordSettings.RequireNonAlphanumeric)).Normalized();
+
+        if (string.IsNullOrWhiteSpace(value) || value.Length < rules.RequiredLength)
         {
-            errors.Add(describer.PasswordTooShort(length));
+            errors.Add(describer.PasswordTooShort(rules.RequiredLength));
         }
 
-        if (await settings.GetAsync<bool>(PasswordSettings.RequireNonAlphanumeric) && value.All(c => IsDigit(c) || IsLower(c) || IsUpper(c)))
+        if (rules.RequireNonAlphanumeric && value.All(c => IsDigit(c) || IsLower(c) || IsUpper(c)))
         {
             errors.Add(describer.PasswordRequiresNonAlphanumeric());
         }
 
-        if (await settings.GetAsync<bool>(PasswordSettings.RequireDigit) && !value.Any(IsDigit))
+        if (rules.RequireDigit && !value.Any(IsDigit))
         {
             errors.Add(describer.PasswordRequiresDigit());
         }
 
-        if (await settings.GetAsync<bool>(PasswordSettings.RequireLowercase) && !value.Any(IsLower))
+        if (rules.RequireLowercase && !value.Any(IsLower))
         {
             errors.Add(describer.PasswordRequiresLower());
         }
 
-        if (await settings.GetAsync<bool>(PasswordSettings.RequireUppercase) && !value.Any(IsUpper))
+        if (rules.RequireUppercase && !value.Any(IsUpper))
         {
             errors.Add(describer.PasswordRequiresUpper());
         }
 
-        var unique = await settings.GetAsync<int>(PasswordSettings.RequiredUniqueChars);
-        if (unique > 0 && value.Distinct().Count() < unique)
+        if (rules.RequiredUniqueChars > 0 && value.Distinct().Count() < rules.RequiredUniqueChars)
         {
-            errors.Add(describer.PasswordRequiresUniqueChars(unique));
+            errors.Add(describer.PasswordRequiresUniqueChars(rules.RequiredUniqueChars));
         }
 
         return errors.Count == 0 ? IdentityResult.Success : IdentityResult.Failed([.. errors]);

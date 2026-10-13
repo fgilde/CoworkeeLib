@@ -6,14 +6,23 @@ namespace Coworkee.Contracts.Configuration;
 public sealed record PasswordRules(
     int RequiredLength, int RequiredUniqueChars, bool RequireDigit, bool RequireLowercase, bool RequireUppercase, bool RequireNonAlphanumeric)
 {
-    /// <summary>The rules of the (client visible) settings; a missing or unreadable value keeps the identity default, the length at least 1 as on the server.</summary>
-    public static PasswordRules From(IReadOnlyDictionary<string, string?> values) => new(
-        Math.Max(1, Number(values, PasswordSettings.RequiredLength, 8)),
+    public const int MaxLength = 128;
+
+    /// <summary>The rules of the (client visible) settings; a missing or unreadable value keeps the identity default.</summary>
+    public static PasswordRules From(IReadOnlyDictionary<string, string?> values) => new PasswordRules(
+        Number(values, PasswordSettings.RequiredLength, 8),
         Number(values, PasswordSettings.RequiredUniqueChars, 1),
         Flag(values, PasswordSettings.RequireDigit),
         Flag(values, PasswordSettings.RequireLowercase),
         Flag(values, PasswordSettings.RequireUppercase),
-        Flag(values, PasswordSettings.RequireNonAlphanumeric));
+        Flag(values, PasswordSettings.RequireNonAlphanumeric)).Normalized();
+
+    /// <summary>Rules a password can meet: a length of 1 to <see cref="MaxLength"/>, no more different characters than that length. Server and clients both resolve through here.</summary>
+    public PasswordRules Normalized()
+    {
+        var length = Math.Clamp(RequiredLength, 1, MaxLength);
+        return this with { RequiredLength = length, RequiredUniqueChars = Math.Min(RequiredUniqueChars, length) };
+    }
 
     /// <summary>"At least 12 characters, a digit, an uppercase letter." with every part passed through <paramref name="translate"/> (English text and arguments).</summary>
     public string Describe(Func<string, object?[], string> translate)
