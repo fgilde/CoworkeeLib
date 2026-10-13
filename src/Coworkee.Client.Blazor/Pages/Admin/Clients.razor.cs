@@ -50,11 +50,32 @@ public partial class Clients
     private Task SetRightsAsync(ClientDto client, IReadOnlyList<Guid> roles, IReadOnlyList<string> permissions) =>
         RunAsync(() => Api.UpdateClientAsync(client.Id, ClientForm.From(client).ToRequest() with { Roles = roles, Permissions = permissions }));
 
-    private async Task CreateAsync()
+    private Task CreateAsync() => CreateAsync(new ClientForm());
+
+    private Task DuplicateAsync(ClientDto client)
+    {
+        var copy = ClientForm.From(client);
+        copy.ClientId = CopyId(client.ClientId);
+        copy.DisplayName = L["{0} (copy)", client.DisplayName ?? client.ClientId];
+        return CreateAsync(copy);
+    }
+
+    private string CopyId(string clientId)
+    {
+        var candidate = $"{clientId}-copy";
+        for (var n = 2; _clients.Any(c => c.ClientId == candidate); n++)
+        {
+            candidate = $"{clientId}-copy-{n}";
+        }
+
+        return candidate;
+    }
+
+    private async Task CreateAsync(ClientForm model)
     {
         ClientSecretDto? created = null;
         await LoadScopeNamesAsync();
-        if (await Dialogs.ShowEditAsync(L["New application"], new ClientForm(), async form => created = await Api.CreateClientAsync(form.ToRequest()), Meta))
+        if (await Dialogs.ShowEditAsync(L["New application"], model, async form => created = await Api.CreateClientAsync(form.ToRequest()), Meta))
         {
             await ShowSecretAsync(created);
             await RunAsync(() => Task.CompletedTask);

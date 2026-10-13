@@ -1051,5 +1051,6 @@
   "vs. {0}": "frente a {0}",
   "Widget": "Widget",
   "Widget settings": "Configuración del widget",
-  "You may not read this data.": "No tienes permiso para leer estos datos."
+  "You may not read this data.": "No tienes permiso para leer estos datos.",
+  "{0} (copy)": "{0} (copia)"
 }
