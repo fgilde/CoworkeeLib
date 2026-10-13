@@ -106,11 +106,11 @@ builder.Configuration.AddCoworkeeDatabaseConfiguration("myapp"); // Name des Con
 
 ### Eingebaute App-Einstellungen
 
-Ohne weiteren Code zeigt die Seite **App-Einstellungen**: `CoworkeeAppSettings`, gebunden an den Abschnitt `Coworkee`, mit Selbstregistrierung (`Registration`), Benachrichtigungs-Zusammenfassungen (`Notifications`) und Hintergrundjobs (`Jobs`). Verdrahtungswerte, die der AppHost setzt (`Jobs:ConnectionStringName`, `Jobs:RunServer`, `Jobs:DashboardPath`, `Notifications:PublicAppUrl`), sind gesperrt; Listen, an die der Configuration Binder nur anhängen könnte (`Jobs:Queues`, `Jobs:RetryDelaysInSeconds`), sind ausgeblendet.
+Ohne weiteren Code zeigt die Seite **App-Einstellungen**: `CoworkeeAppSettings`, gebunden an den Abschnitt `Coworkee`, mit Selbstregistrierung (`Registration`), Benachrichtigungs-Zusammenfassungen (`Notifications`) und Hintergrundjobs (`Jobs`). Verdrahtungswerte, die der AppHost üblicherweise setzt (`Jobs:ConnectionStringName`, `Jobs:RunServer`, `Jobs:DashboardPath`, `Notifications:PublicAppUrl`), sind geschützt: Sie ändern sich erst, nachdem Sie das Feld mit seinem Schloss-Button entsperrt haben, und gelten dann nach einem Neustart; Listen, an die der Configuration Binder nur anhängen könnte (`Jobs:Queues`, `Jobs:RetryDelaysInSeconds`), sind ausgeblendet.
 
 ### App-Einstellungen erweitern
 
-Leiten Sie von `CoworkeeAppSettings` ab und registrieren Sie den Typ auf beiden Seiten. Die Sperren der eingebauten Abschnitte bleiben; eigene kommen hinzu:
+Leiten Sie von `CoworkeeAppSettings` ab und registrieren Sie den Typ auf beiden Seiten. Die Regeln der eingebauten Abschnitte bleiben; eigene kommen hinzu:
 
 ```csharp title="Contracts"
 public sealed class MyAppSettings : CoworkeeAppSettings
@@ -122,13 +122,15 @@ public sealed class BillingSettings
 {
     public string Currency { get; set; } = "EUR";
     public string? ApiKey { get; set; }
+    public string? WebhookUrl { get; set; }
     public string? WebhookSecret { get; set; }
 }
 ```
 
 ```csharp title="Server-Modul"
 context.Services.AddCoworkeeSettings<MyAppSettings>(context.Configuration, rules => rules
-    .Lock(s => s.Billing.Currency)          // sichtbar, nie geändert
+    .Lock(s => s.Billing.Currency)          // deaktiviert sichtbar, nie geändert
+    .Protect(s => s.Billing.WebhookUrl)     // nach dem Entsperren des Feldes änderbar
     .Hide(s => s.Billing.WebhookSecret));   // verlässt den Server nie
 ```
 
@@ -155,7 +157,8 @@ builder.Services.AddCoworkeeSettings<ShopSettings>(section: "Shop", title: "Shop
 
 | | |
 |---|---|
-| `Lock(s => s.A.B)` | der Wert ist nur lesbar; der Server behält, was gilt, egal was kommt. Ein gesperrtes Objekt sperrt alle seine Eigenschaften |
+| `Lock(s => s.A.B)` | der Wert erscheint deaktiviert mit Schloss-Symbol („In der Konfiguration festgelegt“); der Server behält, was gilt, egal was kommt. Für Werte, die nur der Host setzt. Ein gesperrtes Objekt sperrt alle seine Eigenschaften |
+| `Protect(s => s.A.B)` | der Wert ist änderbar, aber riskant: Das Feld bleibt deaktiviert, bis Sie seinen Schloss-Button drücken, und ist nach dem Speichern oder Neuladen wieder geschützt. Nur das Formular schützt, der Server speichert, was ankommt |
 | `Hide(s => s.A.B)` | der Wert wird weder an den Browser geschickt noch geändert |
 | Geheimnisse | Eigenschaften, die wie Passwort, Secret, API-Key, Token oder Connection String heißen, kommen maskiert; die Maske zurückzuschicken behält den gespeicherten Wert |
 | Meta | das `meta` des Clients gruppiert, beschriftet, sortiert oder rendert Eigenschaften wie in jedem `MudExObjectEditForm`; Sperren und Ausblendungen des Servers gelten zusätzlich. Das Formular zeigt jeden Abschnitt unter seiner Überschrift in zwei Spalten (Listen über die volle Breite); `WrapInMudItem(i => i.md = 12)` verbreitert ein einzelnes Feld. Berechnete Eigenschaften (ohne Setter) entfallen, Felder haben kein eigenes Zurücksetzen; ein Listeneintrag in seinem Dialog (etwa ein Registrierungsdokument) folgt denselben Regeln |

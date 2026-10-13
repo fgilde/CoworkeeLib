@@ -28,15 +28,12 @@ public partial class AppConfigurationEditor<T>
     private ObjectEditMeta<T>? _meta;
     private IReadOnlyList<string> _changed = [];
     private IReadOnlyList<string> _locked = [];
+    private IReadOnlyList<string> _protected = [];
     private IReadOnlyList<string> _hidden = [];
     private string? _error;
     private bool _busy;
     private int _revision;
     private string? _loadedSection;
-
-    // restoring goes through the toolbar (the configured values) or cancel, not per field
-    private static readonly GlobalResetSettings NoReset = new() { AllowReset = false };
-    private static readonly PropertyResetSettings NoPropertyReset = new() { AllowReset = false };
 
     protected override async Task OnParametersSetAsync()
     {
@@ -47,22 +44,53 @@ public partial class AppConfigurationEditor<T>
         }
     }
 
-    /// <summary>The meta of the registration, then what the server locks or hides (a locked object locks all its properties).</summary>
+    /// <summary>The meta of the registration, then what the server locks, protects or hides (a locked object locks all its properties).</summary>
     private void Configure(ObjectEditMeta<T> meta)
     {
         SettingsFormRules.Apply(meta);
         (Registration.Meta as Action<ObjectEditMeta<T>>)?.Invoke(meta);
         SettingsFormRules.WrapInColumns(meta);
-        foreach (var property in Properties(meta, _locked))
+        var locked = Properties(meta, _locked).ToList();
+        var guarded = Properties(meta, _protected).ToList();
+        foreach (var property in locked)
         {
-            property.AsReadOnly();
+            Lock(property);
+        }
+
+        var lockedNames = locked.Select(p => p.PropertyName).ToHashSet();
+        foreach (var property in guarded.Where(p => p.Children?.Any() != true && !lockedNames.Contains(p.PropertyName)))
+        {
+            property.WithEditConfirmation(ConfirmationProtection.ToggleButton(L["Unlock to change; applies after a restart."]));
+        }
+
+        // an import must not reach around the lock and the unlock button
+        foreach (var property in locked.Concat(guarded))
+        {
+            property.IgnoreOnImport();
         }
 
         foreach (var property in Properties(meta, _hidden))
         {
-            property.Ignore();
+            property.Ignore().IgnoreOnExportAndImport();
         }
     }
+
+#pragma warning disable BL0005 // MudEx configures the lock icon through these instances
+    private void Lock(ObjectEditPropertyMeta property)
+    {
+        property.AsReadOnly().WithAdditionalAttribute(nameof(MudBaseInput<string>.Disabled), true);
+        if (property.Children?.Any() != true)
+        {
+            property.RenderData.WithAdditionalComponent<MudIcon>(AdditionalComponentRenderPosition.After, icon =>
+            {
+                icon.Icon = Icons.Material.Filled.Lock;
+                icon.Size = Size.Small;
+                icon.Title = L["Set in the configuration"];
+                icon.Style = "margin: 20px 0 0 10px";
+            });
+        }
+    }
+#pragma warning restore BL0005
 
     // the server names properties like configuration keys ("Jobs:WorkerCount"), the form with dots
     private static IEnumerable<ObjectEditPropertyMeta> Properties(ObjectEditMeta<T> meta, IReadOnlyList<string> paths) =>
@@ -70,6 +98,8 @@ public partial class AppConfigurationEditor<T>
 
     private static IEnumerable<ObjectEditPropertyMeta> WithChildren(ObjectEditPropertyMeta property) =>
         [property, .. property.Children?.SelectMany(WithChildren) ?? []];
+
+    private void Imported(ImportedData<T> imported) => _value = imported.Value;
 
     private async Task LoadAsync(Func<Task<AppConfigurationValuesDto>> call)
     {
@@ -81,6 +111,7 @@ public partial class AppConfigurationEditor<T>
             _value = section.Values.Deserialize<T>(JsonSerializerOptions.Web) ?? new T();
             _changed = section.ChangedKeys;
             _locked = section.Locked ?? [];
+            _protected = section.Protected ?? [];
             _hidden = section.Hidden ?? [];
             _meta = _value.ObjectEditMeta(Configure);
             _revision++;

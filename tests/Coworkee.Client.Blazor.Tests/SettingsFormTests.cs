@@ -5,6 +5,7 @@ using Coworkee.Contracts.Localization;
 using Coworkee.Contracts.Settings;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
+using MudBlazor.Extensions.Components.ObjectEdit;
 using NSubstitute;
 
 namespace Coworkee.Client.Blazor.Tests;
@@ -46,6 +47,43 @@ public sealed class SettingsFormTests : ClientTestBase
         Input(form, "Password").GetAttribute("type").ShouldBe("password");
         form.Find(".mud-expand-panel-text").TextContent.ShouldBe("Mail");
         Labels(form).ShouldNotContain("Tenant only");
+    }
+
+    [Fact]
+    public void Keeps_several_groups_open_and_offers_search_export_and_import_like_the_app_settings()
+    {
+        var form = Render<SettingsForm>(p => p.Add(f => f.Scope, SettingScope.Global));
+        form.WaitForAssertion(() => Input(form, "Host"));
+
+        var edit = form.FindComponent<MudExObjectEditForm<object>>().Instance;
+        edit.SingleExpand.ShouldBeFalse();
+        edit.StickyToolbar.ShouldBeTrue();
+        edit.AllowSearch.ShouldBeTrue();
+        edit.AllowExport.ShouldBeTrue();
+        edit.AllowImport.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Secrets_are_not_exported_and_an_import_leaves_them_alone()
+    {
+        var form = Render<SettingsForm>(p => p.Add(f => f.Scope, SettingScope.Global));
+        form.WaitForAssertion(() => Input(form, "Host"));
+        Input(form, "Password").Change("typed-secret");
+        var edit = form.FindComponent<MudExObjectEditForm<object>>().Instance;
+
+        var json = edit.ToJson();
+
+        json.ShouldContain("smtp.acme.test");
+        json.ShouldNotContain("typed-secret");
+        json.ShouldNotContain("Mail_Smtp_Password");
+
+        const string file = """{"Mail_Smtp_Host": "imported.test", "Mail_Smtp_Password": "injected"}""";
+        await form.InvokeAsync(() => edit.LoadFromJson(file, true));
+        await form.InvokeAsync(() => edit.AfterImport.InvokeAsync(new ImportedData<object> { Json = file, Value = edit.Value }));
+        await form.InvokeAsync(() => form.Instance.SaveAsync());
+
+        await Api.Received(1).SetSettingsAsync(SettingScope.Global,
+            Arg.Is<IReadOnlyDictionary<string, string?>>(v => v["Mail.Smtp.Host"] == "imported.test" && v["Mail.Smtp.Password"] == "typed-secret" && v.Count == 2), Arg.Any<CancellationToken>());
     }
 
     [Fact]

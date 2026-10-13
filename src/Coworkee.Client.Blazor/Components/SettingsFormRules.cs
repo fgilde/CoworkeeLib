@@ -4,6 +4,7 @@ using MudBlazor;
 using MudBlazor.Extensions;
 using MudBlazor.Extensions.Components.ObjectEdit;
 using MudBlazor.Extensions.Components.ObjectEdit.Options;
+using MudBlazor.Extensions.Core;
 using MudBlazor.Extensions.Options;
 
 namespace Coworkee.Client.Blazor.Components;
@@ -15,6 +16,26 @@ namespace Coworkee.Client.Blazor.Components;
 public static class SettingsFormRules
 {
     private static readonly PropertyResetSettings NoReset = new() { AllowReset = false };
+
+    /// <summary>The setup every settings form shares (as <c>@attributes</c> of the MudExObjectEditForm): sticky toolbar with search, export and import, several groups open, no reset per field (restoring goes through the toolbar or cancel).</summary>
+    public static readonly IReadOnlyDictionary<string, object> FormAttributes = new Dictionary<string, object>
+    {
+        [nameof(MudExObjectEditForm<object>.SingleExpand)] = false,
+        [nameof(MudExObjectEditForm<object>.StickyToolbar)] = true,
+        [nameof(MudExObjectEditForm<object>.StickyActionBar)] = true,
+        [nameof(MudExObjectEditForm<object>.AllowExport)] = true,
+        [nameof(MudExObjectEditForm<object>.AllowImport)] = true,
+        [nameof(MudExObjectEditForm<object>.ImportNeedsConfirmation)] = true,
+        [nameof(MudExObjectEditForm<object>.ToolbarColor)] = new MudExColor(Color.Surface),
+        [nameof(MudExObjectEditForm<object>.ActionBarColor)] = new MudExColor(Color.Surface),
+        [nameof(MudExObjectEditForm<object>.ActionBarClass)] = "border-t border-solid mud-border-lines-default",
+        [nameof(MudExObjectEditForm<object>.ToolBarActionAlignment)] = ActionAlignment.Left,
+        [nameof(MudExObjectEditForm<object>.GroupingStyle)] = GroupingStyle.Flat,
+        [nameof(MudExObjectEditForm<object>.GroupLineColor)] = new MudExColor("--mud-palette-lines-default"),
+        [nameof(MudExObjectEditForm<object>.PathDisplayMode)] = PathDisplayMode.None,
+        [nameof(MudExObjectEditForm<object>.GlobalResetSettings)] = new GlobalResetSettings { AllowReset = false },
+        [nameof(MudExObjectEditForm<object>.DefaultPropertyResetSettings)] = NoReset,
+    };
 
 #pragma warning disable BL0005 // MudEx configures the wrapping grid items through these instances
     /// <summary>Two columns; call again after RenderWith, which drops the wrapper of the property.</summary>

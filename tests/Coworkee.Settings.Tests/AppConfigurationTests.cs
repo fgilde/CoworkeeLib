@@ -42,7 +42,7 @@ public sealed class AppConfigurationTests(SettingsApp app) : IAsyncLifetime
     [Fact]
     public async Task Lists_the_registered_sections() =>
         (await Admin.GetFromJsonAsync<AppConfigurationDto[]>("/api/v1/configuration", Ct))!.ShouldBe(
-            [new AppConfigurationDto("TestApp", "Test app"), new AppConfigurationDto("Masked", "Masked"), new AppConfigurationDto(CoworkeeAppSettings.Section, "App settings")], ignoreOrder: true);
+            [new AppConfigurationDto("TestApp", "Test app"), new AppConfigurationDto("Masked", "Masked"), new AppConfigurationDto("Rules", "Rules"), new AppConfigurationDto(CoworkeeAppSettings.Section, "App settings")], ignoreOrder: true);
 
     [Fact]
     public async Task Shows_the_section_typed_with_secrets_masked()
@@ -52,6 +52,20 @@ public sealed class AppConfigurationTests(SettingsApp app) : IAsyncLifetime
         var values = section.Values.Deserialize<TestAppConfig>(JsonSerializerOptions.Web)!;
         (values.Name, values.Limit, values.ApiKey, string.Join(",", values.Tags)).ShouldBe(("Default", 10, AppConfigurationMask.Value, "a,b"));
         section.ChangedKeys.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task A_locked_value_is_refused_a_protected_one_is_saved_and_both_are_listed()
+    {
+        var shown = (await Admin.GetFromJsonAsync<AppConfigurationValuesDto>("/api/v1/configuration/Rules", Ct))!;
+        shown.Locked.ShouldBe(["Fixed"]);
+        shown.Protected.ShouldBe(["Guarded"]);
+
+        var response = await Admin.PutAsJsonAsync("/api/v1/configuration/Rules", new RulesConfig { Fixed = "other", Guarded = "changed", Free = "changed" }, Ct);
+        response.EnsureSuccessStatusCode();
+
+        var options = app.App.Services.GetRequiredService<IOptionsMonitor<RulesConfig>>().CurrentValue;
+        (options.Fixed, options.Guarded, options.Free).ShouldBe(("fixed", "changed", "changed"));
     }
 
     [Fact]

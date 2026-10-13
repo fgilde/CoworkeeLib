@@ -7,11 +7,14 @@ namespace Coworkee.Settings;
 
 /// <summary>
 /// A typed section admins may edit; the type binds the section (usually generated from a JSON file with Nextended.CodeGen).
-/// <see cref="Locked"/> and <see cref="Hidden"/> are property paths below the section; locked values show but never change, hidden ones never leave the server.
+/// <see cref="Locked"/>, <see cref="Protected"/> and <see cref="Hidden"/> are property paths below the section; locked values show but never change, protected ones
+/// change only after the form unlocks them (the server saves them), hidden ones never leave the server.
 /// </summary>
 public sealed record AppConfigurationRegistration(string Section, string Title, Type Type)
 {
     public IReadOnlyList<string> Locked { get; init; } = [];
+
+    public IReadOnlyList<string> Protected { get; init; } = [];
 
     public IReadOnlyList<string> Hidden { get; init; } = [];
 
@@ -19,16 +22,26 @@ public sealed record AppConfigurationRegistration(string Section, string Title, 
     public bool IsAppSettings { get; init; }
 }
 
-/// <summary>Which properties of <typeparamref name="T"/> admins may not change (<see cref="Lock"/>) or not even see (<see cref="Hide"/>).</summary>
+/// <summary>Which properties of <typeparamref name="T"/> admins may not change (<see cref="Lock"/>), change only after unlocking them (<see cref="Protect"/>) or not even see (<see cref="Hide"/>).</summary>
 public sealed class AppConfigurationRules<T>
 {
     internal List<string> Locked { get; } = [];
 
+    internal List<string> Protected { get; } = [];
+
     internal List<string> Hidden { get; } = [];
 
+    /// <summary>Shown disabled; the server keeps what applies whatever comes in (values the host sets).</summary>
     public AppConfigurationRules<T> Lock(params Expression<Func<T, object?>>[] properties)
     {
         Locked.AddRange(properties.Select(PathOf));
+        return this;
+    }
+
+    /// <summary>Changeable, but risky: the form asks to unlock the field first. Only the form protects, the server saves what comes in.</summary>
+    public AppConfigurationRules<T> Protect(params Expression<Func<T, object?>>[] properties)
+    {
+        Protected.AddRange(properties.Select(PathOf));
         return this;
     }
 
@@ -55,7 +68,7 @@ public sealed class AppConfigurationRules<T>
 public static class AppConfigurationRegistrationExtensions
 {
     private static readonly AppConfigurationRules<CoworkeeAppSettings> AppSettingsRules = new AppConfigurationRules<CoworkeeAppSettings>()
-        .Lock(s => s.Jobs.ConnectionStringName, s => s.Jobs.RunServer, s => s.Jobs.DashboardPath, s => s.Notifications.PublicAppUrl)
+        .Protect(s => s.Jobs.ConnectionStringName, s => s.Jobs.RunServer, s => s.Jobs.DashboardPath, s => s.Notifications.PublicAppUrl)
         // the configuration binder appends to collections that start with items, so these could never be edited
         .Hide(s => s.Jobs.Queues, s => s.Jobs.RetryDelaysInSeconds);
 
@@ -87,7 +100,9 @@ public static class AppConfigurationRegistrationExtensions
         {
             registration = registration with
             {
-                Locked = [.. AppSettingsRules.Locked, .. registration.Locked], Hidden = [.. AppSettingsRules.Hidden, .. registration.Hidden],
+                Locked = [.. AppSettingsRules.Locked, .. registration.Locked],
+                Protected = [.. AppSettingsRules.Protected, .. registration.Protected],
+                Hidden = [.. AppSettingsRules.Hidden, .. registration.Hidden],
             };
         }
 
@@ -104,6 +119,6 @@ public static class AppConfigurationRegistrationExtensions
     {
         var rules = new AppConfigurationRules<T>();
         configure?.Invoke(rules);
-        return new AppConfigurationRegistration(section, title, typeof(T)) { Locked = rules.Locked, Hidden = rules.Hidden };
+        return new AppConfigurationRegistration(section, title, typeof(T)) { Locked = rules.Locked, Protected = rules.Protected, Hidden = rules.Hidden };
     }
 }

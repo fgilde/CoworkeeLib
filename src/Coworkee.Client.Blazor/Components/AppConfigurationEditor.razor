@@ -1,6 +1,5 @@
 @typeparam T where T : class, new()
 @using MudBlazor.Extensions.Components.ObjectEdit
-@using MudBlazor.Extensions.Components.ObjectEdit.Options
 
 @if (_error is not null)
 {
@@ -13,13 +12,9 @@
 }
 else
 {
-    <MudExObjectEditForm @key="_revision" Value="_value" IsLoading="_busy"
-                         StickyToolbar="true" StickyActionBar="true" AllowExport="true" AllowImport="true" ImportNeedsConfirmation="true"
-                         ToolbarColor="Color.Surface" ActionBarColor="Color.Surface" ActionBarClass="border-t border-solid mud-border-lines-default"
-                         ToolBarActionAlignment="ActionAlignment.Left"
-                         GroupingStyle="GroupingStyle.Flat" GroupLineColor="@("--mud-palette-lines-default")" PathDisplayMode="PathDisplayMode.None"
-                         GlobalResetSettings="NoReset" DefaultPropertyResetSettings="NoPropertyReset" DefaultGroupName="@L["General"]"
-                         MetaInformation="_meta"
+    <MudExObjectEditForm T="T" @key="_revision" Value="_value" IsLoading="_busy"
+                         @attributes="SettingsFormRules.FormAttributes" DefaultGroupName="@L["General"]"
+                         MetaInformation="_meta" AfterImport="Imported"
                          OnValidSubmit="SaveAsync">
         <ToolBarContent>
             <MudSpacer />

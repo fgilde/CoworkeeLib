@@ -232,8 +232,8 @@ internal sealed partial class AppConfigurationHandlers(
         var current = JsonFlattening.Flatten(registration.Section, JsonSerializer.SerializeToElement(Current(registration), registration.Type, Stored));
         var defaults = JsonFlattening.Flatten(registration.Section, JsonSerializer.SerializeToElement(Defaults(registration), registration.Type, Stored));
         var wanted = JsonFlattening.Flatten(registration.Section, JsonSerializer.SerializeToElement(typed, registration.Type, Stored))
-            .Where(w => !IsProtected(registration, w.Key))
-            .Concat(current.Where(c => IsProtected(registration, c.Key)))
+            .Where(w => !IsFixed(registration, w.Key))
+            .Concat(current.Where(c => IsFixed(registration, c.Key)))
             .ToDictionary(StringComparer.OrdinalIgnoreCase);
         var entries = new List<ConfigurationEntry>();
         foreach (var (key, value) in wanted)
@@ -271,7 +271,7 @@ internal sealed partial class AppConfigurationHandlers(
     private Task<bool> IsSystemAsync(CancellationToken cancellationToken) => currentUser.IsInSystemTenantAsync(services, cancellationToken);
 
     // locked and hidden values keep what applies now, whatever comes in
-    private static bool IsProtected(AppConfigurationRegistration registration, string key) =>
+    private static bool IsFixed(AppConfigurationRegistration registration, string key) =>
         registration.Locked.Concat(registration.Hidden).Select(p => $"{registration.Section}:{p}")
             .Any(p => key.Equals(p, StringComparison.OrdinalIgnoreCase) || key.StartsWith(p + ":", StringComparison.OrdinalIgnoreCase));
 
@@ -309,7 +309,7 @@ internal sealed partial class AppConfigurationHandlers(
             ? configuration.GetSection(registration.Section).AsEnumerable().Select(p => p.Key).Where(k => provider.TryGet(k, out _)).Order().ToList()
             : [];
         return new AppConfigurationValuesDto(registration.Section, JsonSerializer.SerializeToElement(current), JsonSerializer.SerializeToElement(defaults), changed,
-            registration.Locked, registration.Hidden);
+            registration.Locked, registration.Hidden, registration.Protected);
     }
 
     private object Current(AppConfigurationRegistration registration) =>

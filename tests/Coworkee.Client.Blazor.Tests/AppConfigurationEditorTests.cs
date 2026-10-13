@@ -22,11 +22,11 @@ public sealed class AppConfigurationEditorTests : ClientTestBase
         Api.SaveAppConfigurationAsync("Sample", Arg.Any<JsonElement>(), Arg.Any<CancellationToken>()).Returns(Values("Changed", 10, ["Sample:Name"]));
     }
 
-    private static AppConfigurationValuesDto Values(string name, int limit, IReadOnlyList<string> changed, IReadOnlyList<string>? locked = null, IReadOnlyList<string>? hidden = null) => new(
+    private static AppConfigurationValuesDto Values(string name, int limit, IReadOnlyList<string> changed, IReadOnlyList<string>? locked = null, IReadOnlyList<string>? hidden = null, IReadOnlyList<string>? guarded = null) => new(
         "Sample",
         JsonSerializer.SerializeToElement(new SampleConfig { Name = name, Limit = limit }, JsonSerializerOptions.Web),
         JsonSerializer.SerializeToElement(new SampleConfig { Name = "Default", Limit = 10 }, JsonSerializerOptions.Web),
-        changed, locked, hidden);
+        changed, locked, hidden, guarded);
 
     [Fact]
     public async Task Edits_the_typed_section_and_saves_it()
@@ -43,6 +43,20 @@ public sealed class AppConfigurationEditorTests : ClientTestBase
     }
 
     [Fact]
+    public void Keeps_several_groups_open_and_offers_search_export_and_import()
+    {
+        var editor = Render<AppConfigurationEditor<SampleConfig>>(p => p.Add(e => e.Registration, Registration));
+        editor.WaitForAssertion(() => editor.FindAll("input").Select(i => i.GetAttribute("value")).ShouldContain("Default"));
+
+        var edit = editor.FindComponent<MudExObjectEditForm<SampleConfig>>().Instance;
+        edit.SingleExpand.ShouldBeFalse();
+        edit.StickyToolbar.ShouldBeTrue();
+        edit.AllowSearch.ShouldBeTrue();
+        edit.AllowExport.ShouldBeTrue();
+        edit.AllowImport.ShouldBeTrue();
+    }
+
+    [Fact]
     public async Task Loads_once_while_the_section_stays()
     {
         var editor = Render<AppConfigurationEditor<SampleConfig>>(p => p.Add(e => e.Registration, Registration));
@@ -55,17 +69,76 @@ public sealed class AppConfigurationEditorTests : ClientTestBase
     }
 
     [Fact]
-    public void Locked_values_show_read_only_and_hidden_ones_not_at_all()
+    public void Locked_values_show_disabled_with_a_hint_and_hidden_ones_not_at_all()
     {
         Api.GetAppConfigurationAsync("Sample", Arg.Any<CancellationToken>()).Returns(Values("Default", 10, [], locked: ["Name"], hidden: ["Inner:Secret"]));
 
         var editor = Render<AppConfigurationEditor<SampleConfig>>(p => p.Add(e => e.Registration, Registration));
 
-        editor.WaitForAssertion(() => editor.FindAll("input").Single(i => i.GetAttribute("value") == "Default").HasAttribute("readonly").ShouldBeTrue());
-        editor.FindAll("input").Single(i => i.GetAttribute("value") == "10").HasAttribute("readonly").ShouldBeFalse();
+        editor.WaitForAssertion(() => editor.FindAll("input").Single(i => i.GetAttribute("value") == "Default").HasAttribute("disabled").ShouldBeTrue());
+        editor.FindAll("input").Single(i => i.GetAttribute("value") == "10").HasAttribute("disabled").ShouldBeFalse();
+        editor.FindAll("title").Count(t => t.TextContent == "Set in the configuration").ShouldBe(1);
         editor.Markup.ShouldNotContain("Secret");
         editor.Markup.ShouldContain("Note");
     }
+
+    [Fact]
+    public void A_locked_object_disables_all_its_properties()
+    {
+        Api.GetAppConfigurationAsync("Sample", Arg.Any<CancellationToken>()).Returns(Values("Default", 10, [], locked: ["Inner"]));
+
+        var editor = Render<AppConfigurationEditor<SampleConfig>>(p => p.Add(e => e.Registration, Registration));
+
+        editor.WaitForAssertion(() => editor.FindAll("input").Count(i => i.HasAttribute("disabled")).ShouldBe(2));
+        editor.FindAll("input").Single(i => i.GetAttribute("value") == "10").HasAttribute("disabled").ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task A_protected_value_is_edited_after_unlocking_and_protected_again_after_saving()
+    {
+        Api.GetAppConfigurationAsync("Sample", Arg.Any<CancellationToken>()).Returns(Values("Default", 10, [], guarded: ["Name"]));
+        Api.SaveAppConfigurationAsync("Sample", Arg.Any<JsonElement>(), Arg.Any<CancellationToken>()).Returns(Values("Default", 10, [], guarded: ["Name"]));
+        var editor = Render<AppConfigurationEditor<SampleConfig>>(p => p.Add(e => e.Registration, Registration));
+        editor.WaitForAssertion(() => Name(editor).HasAttribute("disabled").ShouldBeTrue());
+
+        await editor.Find("button[aria-pressed]").ClickAsync(new());
+
+        editor.WaitForAssertion(() => Name(editor).HasAttribute("disabled").ShouldBeFalse());
+        await editor.InvokeAsync(() => editor.Instance.SaveAsync());
+        editor.WaitForAssertion(() => Name(editor).HasAttribute("disabled").ShouldBeTrue());
+    }
+
+    [Fact]
+    public async Task An_import_changes_neither_locked_nor_protected_values_and_hidden_ones_are_not_exported()
+    {
+        Api.GetAppConfigurationAsync("Sample", Arg.Any<CancellationToken>()).Returns(Values("Default", 10, [], locked: ["Name"], hidden: ["Inner:Secret"], guarded: ["Limit"]));
+        var editor = Render<AppConfigurationEditor<SampleConfig>>(p => p.Add(e => e.Registration, Registration));
+        editor.WaitForAssertion(() => Name(editor));
+        var edit = editor.FindComponent<MudExObjectEditForm<SampleConfig>>().Instance;
+        edit.ToJson().ShouldNotContain("Secret");
+        const string file = """{"Name": "imported", "Limit": 99, "Inner": {"Note": "imported note", "Secret": "injected"}}""";
+
+        await editor.InvokeAsync(() => edit.LoadFromJson(file, true));
+        await editor.InvokeAsync(() => edit.AfterImport.InvokeAsync(new ImportedData<SampleConfig> { Json = file, Value = edit.Value }));
+        await editor.InvokeAsync(() => editor.Instance.SaveAsync());
+
+        await Api.Received(1).SaveAppConfigurationAsync("Sample", Arg.Is<JsonElement>(v =>
+            v.GetProperty("name").GetString() == "Default" && v.GetProperty("limit").GetInt32() == 10
+            && v.GetProperty("inner").GetProperty("note").GetString() == "imported note" && v.GetProperty("inner").GetProperty("secret").GetString() != "injected"), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public void A_protected_property_inside_a_locked_object_gets_no_unlock_button()
+    {
+        Api.GetAppConfigurationAsync("Sample", Arg.Any<CancellationToken>()).Returns(Values("Default", 10, [], locked: ["Inner"], guarded: ["Inner:Note", "Limit"]));
+
+        var editor = Render<AppConfigurationEditor<SampleConfig>>(p => p.Add(e => e.Registration, Registration));
+
+        editor.WaitForAssertion(() => editor.FindAll("button[aria-pressed]").Count.ShouldBe(1));
+    }
+
+    private static AngleSharp.Dom.IElement Name(IRenderedComponent<AppConfigurationEditor<SampleConfig>> editor) =>
+        editor.FindAll("input").Single(i => i.GetAttribute("value") == "Default");
 
     [Fact]
     public void A_property_the_registration_renders_with_another_component_keeps_its_grid_column()

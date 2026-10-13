@@ -12,8 +12,6 @@ namespace Coworkee.Client.Blazor.Components;
 /// <summary>The settings of a scope in a MudExObjectEdit form; every defined setting of the scope shows up, grouped like its definition.</summary>
 public partial class SettingsForm
 {
-    private static readonly GlobalResetSettings NoReset = new() { AllowReset = false };
-    private static readonly PropertyResetSettings NoPropertyReset = new() { AllowReset = false };
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
@@ -53,8 +51,20 @@ public partial class SettingsForm
             .Where(g => g.Settings.Count > 0)
             .ToList();
         _model = new SettingsModel(groups, stored);
-        _meta = _model.Value.ObjectEditMeta(meta => _model.Configure(meta, L, Scope));
+        Rebuild();
+    }
+
+    private void Rebuild()
+    {
+        _meta = _model!.Value.ObjectEditMeta(meta => _model.Configure(meta, L, Scope));
         _revision++;
+    }
+
+    // MudEx swaps its value for the parsed file; the model keeps the edited object
+    private void Imported(ImportedData<object> imported)
+    {
+        _model?.Import(imported.Json);
+        Rebuild();
     }
 
     public async Task SaveAsync()

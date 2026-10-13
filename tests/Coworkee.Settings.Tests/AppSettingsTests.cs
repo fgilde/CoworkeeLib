@@ -27,18 +27,19 @@ public sealed class AppSettingsTests(SettingsApp app) : IAsyncLifetime
     private HttpClient Admin => app.As(_setup.AdminUserId, _setup.TenantId);
 
     [Fact]
-    public async Task The_built_in_settings_come_with_locked_and_hidden_values()
+    public async Task The_built_in_settings_come_with_protected_and_hidden_values()
     {
         var section = (await Admin.GetFromJsonAsync<AppConfigurationValuesDto>(Url, Ct))!;
 
-        section.Locked!.ShouldContain("Jobs:DashboardPath");
+        section.Protected!.ShouldBe(["Jobs:ConnectionStringName", "Jobs:RunServer", "Jobs:DashboardPath", "Notifications:PublicAppUrl"], ignoreOrder: true);
+        section.Locked.ShouldBeEmpty();
         section.Hidden!.ShouldContain("Jobs:Queues");
         section.Values.GetProperty("jobs").TryGetProperty("queues", out _).ShouldBeFalse();
         section.Values.GetProperty("jobs").GetProperty("workerCount").GetInt32().ShouldBe(5);
     }
 
     [Fact]
-    public async Task Locked_and_hidden_values_keep_what_applies_while_the_rest_is_saved()
+    public async Task Protected_values_are_saved_hidden_ones_keep_what_applies()
     {
         var values = (await Admin.GetFromJsonAsync<JsonObject>(Url, Ct))!["values"]!.AsObject();
         values["jobs"]!["workerCount"] = 9;
@@ -48,7 +49,7 @@ public sealed class AppSettingsTests(SettingsApp app) : IAsyncLifetime
         (await Admin.PutAsJsonAsync(Url, values, Ct)).EnsureSuccessStatusCode();
 
         var jobs = app.App.Services.GetRequiredService<IOptionsMonitor<CoworkeeAppSettings>>().CurrentValue.Jobs;
-        (jobs.WorkerCount, jobs.DashboardPath, string.Join(",", jobs.Queues)).ShouldBe((9, "/admin/jobs", "default,mail"));
+        (jobs.WorkerCount, jobs.DashboardPath, string.Join(",", jobs.Queues)).ShouldBe((9, "/elsewhere", "default,mail"));
     }
 
     [Fact]
@@ -58,12 +59,13 @@ public sealed class AppSettingsTests(SettingsApp app) : IAsyncLifetime
         var configuration = new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build();
         services.AddCoworkeeSettings<CoworkeeAppSettings>(configuration);
 
-        services.AddCoworkeeSettings<MyAppSettings>(configuration, rules => rules.Lock(s => s.Billing.Currency).Hide(s => s.Billing.ApiKey));
+        services.AddCoworkeeSettings<MyAppSettings>(configuration, rules => rules.Lock(s => s.Billing.Currency).Protect(s => s.Billing.Region).Hide(s => s.Billing.ApiKey));
 
         var registration = services.BuildServiceProvider().GetServices<AppConfigurationRegistration>().ShouldHaveSingleItem();
         (registration.Type, registration.Section, registration.IsAppSettings).ShouldBe((typeof(MyAppSettings), CoworkeeAppSettings.Section, true));
-        registration.Locked.ShouldContain("Jobs:DashboardPath");
-        registration.Locked.ShouldContain("Billing:Currency");
+        registration.Protected.ShouldContain("Jobs:DashboardPath");
+        registration.Protected.ShouldContain("Billing:Region");
+        registration.Locked.ShouldBe(["Billing:Currency"]);
         registration.Hidden.ShouldContain("Billing:ApiKey");
     }
 
@@ -114,6 +116,8 @@ public sealed class AppSettingsTests(SettingsApp app) : IAsyncLifetime
     public sealed class BillingSettings
     {
         public string Currency { get; set; } = "EUR";
+
+        public string Region { get; set; } = "EU";
 
         public string? ApiKey { get; set; }
     }
