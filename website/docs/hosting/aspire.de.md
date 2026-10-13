@@ -170,7 +170,9 @@ Aus `s => s.Coworkee.Bff.Scopes[0]` wird die Umgebungsvariable `Coworkee__Bff__S
 
 Der Realm wird bei **jedem Start** auf den aktuellen Stand gebracht, sobald Keycloak bereit ist und bevor der Auth-Server startet: Ein fehlender Realm wird angelegt, ein vorhandener (im Daten-Volume) bekommt über die Admin-API die aktuellen Client-Secrets, Redirect-Adressen, Benutzer und Passwörter. Ein geänderter Secret-Parameter oder ein geändertes Passwort gilt also ab dem nächsten Start, und Benutzer oder Clients, die Sie in der Keycloak-Konsole angelegt haben, bleiben erhalten. Das Ressourcen-Log von Keycloak meldet `Realm myapp is up to date: clients ..., users ...`.
 
-Der Auth-Server bekommt die Anbieter-Einstellungen und bietet **Sign in with Keycloak** an. `LoginMode` schaltet zwischen beidem, nur extern und nur intern um; `Port` legt den Host-Port fest, wenn Sie eine feste URL wollen.
+Der Auth-Server bekommt die Anbieter-Einstellungen und bietet **Sign in with Keycloak** an. `LoginMode` schaltet zwischen beidem, nur extern und nur intern um und ist der Standard der Einstellung *Anmeldemethoden* (`Auth.LoginMode`), die Administratoren zur Laufzeit ändern (siehe [Anmelderegeln](../security/registration.md#anmelderegeln)); `Port` legt den Host-Port fest, wenn Sie eine feste URL wollen.
+
+Die Api-Hosts liefern die Einstellungen, also bekommen auch sie `Coworkee:Auth:External:Mode` und den Anzeigenamen des Anbieters, damit die Einstellung dort definiert ist; das Client-Secret und die übrigen Anbieter-Einstellungen bleiben beim Auth-Server.
 
 Browser schicken die Cookies von `localhost` an jeden Port, also erreichen die Cookies aller lokalen Apps auch Keycloak. Über HTTPS spricht Keycloak HTTP/2 und nimmt dabei standardmäßig nur 8 KB Request-Header an; darüber antwortet es mit **431 Request Header Fields Too Large**. Der Container bekommt deshalb `QUARKUS_HTTP_LIMITS_MAX_HEADER_LIST_SIZE=65536`, die 64 KB, die er über HTTP/1.1 annimmt. Zeigt der Browser trotzdem 431, löschen Sie die `localhost`-Cookies anderer Apps; Auth-Server und Web-App (Kestrel) nehmen 32 KB an.
 

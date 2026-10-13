@@ -57,7 +57,7 @@ context.Services.AddSingleton<ISettingDefinitionContributor, BillingSettingDefin
 | `String` / `Int` | text or number field; the default value is the placeholder, an empty field falls back to the default |
 | `Text` | a text field with four lines |
 | `Bool` | a check box, showing the stored value or the default |
-| `Choice` | a select of the `choices` |
+| `Choice` | a select of the `choices`; each value is shown translated when the translations have an entry for it, else as is |
 | `Language` | a select of the app's languages; empty means inherit, shown as *Configured default* in the System tab and *Inherited* in Organisation and My settings (labelled *Language* in My settings) |
 | `Secret` | a password field that stays empty; the help text says whether a value is stored, and only a typed value is sent |
 | `enabledWhen` | the field is disabled while the other setting's value is not in the condition's values |

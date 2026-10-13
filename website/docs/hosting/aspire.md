@@ -170,7 +170,9 @@ api.WithSetting(s => s.Coworkee.Storage.Provider, "S3")
 
 The realm is brought up to date on **every start**, once Keycloak is healthy and before the auth server starts: a missing realm is created, an existing one (kept in the data volume) gets the current client secrets, redirect addresses, users and passwords through the admin API. A changed secret parameter or password therefore takes effect with the next start, and users or clients you added in the Keycloak console stay. The resource log of Keycloak says `Realm myapp is up to date: clients ..., users ...`.
 
-The auth server gets the provider settings and offers **Sign in with Keycloak**. `LoginMode` switches between both, external only and internal only; `Port` fixes the host port if you want a stable URL.
+The auth server gets the provider settings and offers **Sign in with Keycloak**. `LoginMode` switches between both, external only and internal only and is the default of the setting *Sign-in methods* (`Auth.LoginMode`), which administrators change at runtime (see [Sign-in rules](../security/registration.md#sign-in-rules)); `Port` fixes the host port if you want a stable URL.
+
+The api hosts serve the settings, so they get `Coworkee:Auth:External:Mode` and the display name of the provider too, so that the setting is defined there; the client secret and the other provider settings stay with the auth server.
 
 Browsers send the cookies of `localhost` to every port, so the cookies of all local apps reach Keycloak too. Over HTTPS Keycloak speaks HTTP/2, which by default takes only 8 KB of request headers and answers **431 Request Header Fields Too Large** beyond that. The container therefore gets `QUARKUS_HTTP_LIMITS_MAX_HEADER_LIST_SIZE=65536`, the 64 KB it takes over HTTP/1.1. If the browser still shows 431, delete the `localhost` cookies of other apps; the auth server and the web app (Kestrel) take 32 KB.
 

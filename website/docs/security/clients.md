@@ -104,10 +104,20 @@ The messages of ASP.NET Core Identity (password rules, taken e-mail address or u
 
 | Setting | Default | Meaning |
 |---|---|---|
+| `Account.Password.RequiredLength` | 8 | shortest password, at least 1 |
+| `Account.Password.RequiredUniqueChars` | 1 | a password needs so many different characters |
+| `Account.Password.RequireDigit` | on | a password needs a digit |
+| `Account.Password.RequireLowercase` | on | a password needs a lowercase letter |
+| `Account.Password.RequireUppercase` | on | a password needs an uppercase letter |
+| `Account.Password.RequireNonAlphanumeric` | on | a password needs a special character |
 | `Account.Lockout.MaxFailedAttempts` | 10 | wrong passwords or codes in a row before the lockout |
 | `Account.Lockout.Minutes` | 15 | how long that lockout lasts |
 | `Account.Password.ExpiryDays` | 0 | after so many days the sign-in asks for a new password; 0 never |
 | `Account.Password.History` | 0 | a new password may not be one of the last so many (up to 24 are kept) |
+
+The defaults of the six password rules come from the configured Identity options, so `Coworkee:Registration:Password` stays the starting point of a deployment; what administrators save wins. They are `Global` settings, visible to the clients. `SettingsPasswordValidator` enforces them for every way a password is set: registration, reset, change, setting one as administrator and the first administrator at setup. A host that loads only the Identity module, without the Account module, keeps Identity's default validator and its configured options.
+
+Next to every password field (registration, reset, change, new password at sign-in, the administrator's dialog, the setup wizard) a hint names the rules in force, e.g. *At least 12 characters, a digit, an uppercase letter.* `PasswordRules.Describe` builds it from the settings and a translation function. Before the first administrator exists nobody can read settings, so the setup status (`SetupStatusDto.PasswordRules`) carries the rules for the setup page.
 
 Administrators tick **Change password at first sign-in** when they create a user, or **Change password at next sign-in** on the user detail page. After the sign-in, before the client gets tokens, the auth server shows **Choose a new password**; the same happens when the password expired. Users who sign in only with an external provider have no password and are never asked.
 

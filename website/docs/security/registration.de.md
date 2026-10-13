@@ -46,7 +46,7 @@ Standardwerte für eine neue Installation kommen aus der Konfiguration, zum Beis
 |---|---|
 | `RequireAddress` | Straße, PLZ, Ort und Land sind in Schritt 2 Pflicht |
 | `AllowedEmails` | Muster mit `*`, zu denen eine Adresse passen muss, um sich zu registrieren; leer erlaubt alle |
-| `Password` | die `PasswordOptions` von ASP.NET Core Identity; sie gelten für jedes Passwort, auch für die von Admins gesetzten |
+| `Password` | die `PasswordOptions` von ASP.NET Core Identity; die Standards der [Passwortregel-Einstellungen](clients.md#passwortregeln-und-sperre), die für jedes Passwort gelten, auch für die von Admins gesetzten |
 | `RequireDocuments` | zeigt die Dokument-Uploads |
 | `Documents` | ein Slot je Dokument: `Name`, `Description`, `Required` (Standard `true`), `ContentTypes` (Platzhalter wie `image/*` oder `application/vnd.openxmlformats-officedocument.*`, leer nimmt alle), `MaxSize` in Bytes (leer oder 0 ohne Grenze); `Names` und `Descriptions` je Sprache (`de-AT` vor `de`) für das, was der Benutzer liest, `Name` und `Description` sind der Rückfall, und unter `Name` legen Stores das Dokument ab |
 
@@ -89,11 +89,15 @@ Konfigurierte Dokumente ohne jeden Store halten den Auth-Server schon beim Start
 
 | Einstellung | Bedeutung |
 |---|---|
-| `External:Mode` | `Internal` zeigt nur das Passwortformular, `External` nur die Anbieter-Buttons (und blendet die Registrierung aus), `Both` beides |
+| `External:Mode` | `Internal` zeigt nur das Passwortformular, `External` nur die Anbieter-Buttons (und blendet die Registrierung aus), `Both` beides; der Standard der Einstellung `Auth.LoginMode` |
 | `Login:AllowUserName` | das Passwortformular nimmt neben der E-Mail auch den Benutzernamen |
 | `Login:AllowedEmails` | Muster, zu denen eine Adresse passen muss, um sich anzumelden, mit Passwort oder extern; leer erlaubt alle |
 
 Konten mit unbestätigter E-Mail können sich nicht mit Passwort anmelden.
+
+### Anmeldemethoden zur Laufzeit
+
+Ist mindestens ein externer Anbieter konfiguriert, gibt es unter **Administration > Einstellungen > Anmeldesicherheit** die Einstellung **Anmeldemethoden** (`Auth.LoginMode`, Geltungsbereich `Global`): *Nur Passwort* (`Internal`), *Nur externe Anbieter* (`External`) oder *Passwort und externe Anbieter* (`Both`). `External:Mode` ist ihr Standard; ein gespeicherter Wert, der kein Modusname ist, fällt darauf zurück. Ohne Anbieter ist die Einstellung nicht definiert, und der Auth-Server zeigt immer das Passwortformular, damit sich niemand aussperrt. Der Host der Einstellungs-API muss nicht der Auth-Server sein: Er liest `External:Mode` und die Anzeigenamen der Anbieter aus seiner Konfiguration, nie deren Secrets (der Aspire-App-Host gibt beides weiter, siehe [Keycloak](../hosting/aspire.md#keycloak)).
 
 ## Externe Anmeldung und bestehende Konten
 

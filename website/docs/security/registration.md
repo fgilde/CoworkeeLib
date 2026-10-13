@@ -46,7 +46,7 @@ Defaults for a fresh installation come from configuration, for example `Coworkee
 |---|---|
 | `RequireAddress` | street, zip code, city and country are required in step 2 |
 | `AllowedEmails` | patterns with `*` an address must match to register; empty allows all |
-| `Password` | ASP.NET Core Identity's `PasswordOptions`; they apply to every password, also the ones admins set |
+| `Password` | ASP.NET Core Identity's `PasswordOptions`; the defaults of the [password rule settings](clients.md#password-rules-and-lockout), which apply to every password, also the ones admins set |
 | `RequireDocuments` | shows the document uploads |
 | `Documents` | one slot per document: `Name`, `Description`, `Required` (default `true`), `ContentTypes` (wildcards like `image/*` or `application/vnd.openxmlformats-officedocument.*`, empty accepts all), `MaxSize` in bytes (empty or 0 for no limit); `Names` and `Descriptions` per language (`de-AT` before `de`) for what the user reads, `Name` and `Description` are the fallback and `Name` is what stores file the document under |
 
@@ -89,11 +89,15 @@ Configured documents without any store stop the auth server at startup with an `
 
 | Setting | Meaning |
 |---|---|
-| `External:Mode` | `Internal` shows only the password form, `External` only the provider buttons (and hides the registration), `Both` shows both |
+| `External:Mode` | `Internal` shows only the password form, `External` only the provider buttons (and hides the registration), `Both` shows both; the default of the setting `Auth.LoginMode` |
 | `Login:AllowUserName` | the password form takes the user name as well as the email |
 | `Login:AllowedEmails` | patterns an address must match to sign in, with a password or externally; empty allows all |
 
 Accounts whose email is not confirmed cannot sign in with a password.
+
+### Sign-in methods at runtime
+
+With at least one external provider configured, **Administration > Settings > Sign-in security** has the setting **Sign-in methods** (`Auth.LoginMode`, scope `Global`): *Password only* (`Internal`), *External providers only* (`External`) or *Password and external providers* (`Both`). `External:Mode` is its default; a stored value that is no mode name falls back to it. Without a provider the setting is not defined and the auth server always shows the password form, so nobody is locked out. The host of the settings API need not be the auth server: it reads `External:Mode` and the display names of the providers from its configuration, never their secrets (the Aspire app host passes both, see [Keycloak](../hosting/aspire.md#keycloak)).
 
 ## External sign-in and existing accounts
 

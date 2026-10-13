@@ -104,10 +104,20 @@ Die Meldungen von ASP.NET Core Identity (Passwortregeln, vergebene E-Mail-Adress
 
 | Einstellung | Standard | Bedeutung |
 |---|---|---|
+| `Account.Password.RequiredLength` | 8 | kürzestes Passwort, mindestens 1 |
+| `Account.Password.RequiredUniqueChars` | 1 | ein Passwort braucht so viele verschiedene Zeichen |
+| `Account.Password.RequireDigit` | an | ein Passwort braucht eine Ziffer |
+| `Account.Password.RequireLowercase` | an | ein Passwort braucht einen Kleinbuchstaben |
+| `Account.Password.RequireUppercase` | an | ein Passwort braucht einen Großbuchstaben |
+| `Account.Password.RequireNonAlphanumeric` | an | ein Passwort braucht ein Sonderzeichen |
 | `Account.Lockout.MaxFailedAttempts` | 10 | falsche Passwörter oder Codes in Folge bis zur Sperre |
 | `Account.Lockout.Minutes` | 15 | wie lange diese Sperre dauert |
 | `Account.Password.ExpiryDays` | 0 | nach so vielen Tagen verlangt die Anmeldung ein neues Passwort; 0 nie |
 | `Account.Password.History` | 0 | ein neues Passwort darf keines der letzten so vielen sein (bis zu 24 werden behalten) |
+
+Die Standards der sechs Passwortregeln kommen aus den konfigurierten Identity-Optionen, `Coworkee:Registration:Password` bleibt also der Ausgangspunkt einer Installation; was Administratoren speichern, gilt. Es sind `Global`-Einstellungen, die für die Clients sichtbar sind. `SettingsPasswordValidator` setzt sie bei jedem Weg durch, ein Passwort zu setzen: Registrierung, Zurücksetzen, Ändern, Setzen durch Administratoren und der erste Administrator im Setup. Ein Host, der nur das Identity-Modul lädt, ohne das Account-Modul, behält den Standard-Validator von Identity und dessen konfigurierte Optionen.
+
+Neben jedem Passwortfeld (Registrierung, Zurücksetzen, Ändern, neues Passwort bei der Anmeldung, Dialog der Administratoren, Setup-Assistent) nennt ein Hinweis die geltenden Regeln, z. B. *Mindestens 12 Zeichen, eine Ziffer, ein Großbuchstabe.* `PasswordRules.Describe` baut ihn aus den Einstellungen und einer Übersetzungsfunktion. Solange es keinen ersten Administrator gibt, kann niemand Einstellungen lesen, deshalb trägt der Setup-Status (`SetupStatusDto.PasswordRules`) die Regeln für die Setup-Seite.
 
 Administratoren setzen beim Anlegen eines Benutzers **Passwort bei der ersten Anmeldung ändern** oder auf der Benutzerdetailseite **Passwort bei der nächsten Anmeldung ändern**. Nach der Anmeldung und bevor der Client Tokens bekommt, zeigt der Auth-Server **Neues Passwort wählen**; dasselbe passiert, wenn das Passwort abgelaufen ist. Wer sich nur über einen externen Anbieter anmeldet, hat kein Passwort und wird nie gefragt.
 

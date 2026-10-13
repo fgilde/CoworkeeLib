@@ -57,7 +57,7 @@ context.Services.AddSingleton<ISettingDefinitionContributor, BillingSettingDefin
 | `String` / `Int` | Text- oder Zahlenfeld; der Standardwert ist der Platzhalter, ein leeres Feld fällt auf den Standard zurück |
 | `Text` | ein Textfeld mit vier Zeilen |
 | `Bool` | ein Kontrollkästchen mit dem gespeicherten Wert oder dem Standard |
-| `Choice` | eine Auswahl der `choices` |
+| `Choice` | eine Auswahl der `choices`; jeder Wert erscheint übersetzt, wenn die Übersetzungen einen Eintrag dafür haben, sonst unverändert |
 | `Language` | eine Auswahl der Sprachen der App; leer heißt erben, angezeigt als *Configured default* im Tab System und *Inherited* in Organisation und Meine Einstellungen (dort beschriftet mit *Language*) |
 | `Secret` | ein Passwortfeld, das leer bleibt; der Hilfetext sagt, ob ein Wert gespeichert ist, und nur ein eingetippter Wert wird gesendet |
 | `enabledWhen` | das Feld ist deaktiviert, solange der Wert der anderen Einstellung nicht in den Werten der Bedingung liegt |
