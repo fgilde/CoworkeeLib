@@ -1,6 +1,6 @@
 <p>Hallo {{ user.first_name }},</p>
 {{ if pending }}
-<p>Für Ihr Konto wurde eine neue E-Mail-Adresse angefordert: {{ new_email }}. Sie ersetzt diese Adresse, sobald der dorthin gesendete Link geöffnet wird.</p>
+<p>Für Ihr Konto wurde eine neue E-Mail-Adresse angefordert: {{ new_email }}. Die neue Adresse ersetzt diese, sobald der dorthin gesendete Link geöffnet wird.</p>
 {{ else }}
 <p>Die E-Mail-Adresse Ihres Kontos wurde auf {{ new_email }} geändert. Ab jetzt melden Sie sich mit der neuen Adresse an.</p>
 {{ end }}
