@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text.Json;
+using Coworkee.Contracts.Localization;
 
 namespace Coworkee.AuthServer;
 
@@ -12,7 +13,7 @@ public static class AuthTexts
     public static string T(string text) => Find(text, CultureInfo.CurrentUICulture) ?? text;
 
     public static string? Find(string text, CultureInfo culture) =>
-        Languages.GetOrAdd(culture.TwoLetterISOLanguageName, Load).TryGetValue(text, out var translated) ? translated : null;
+        ShippedCultures.Files(culture.Name).Select(file => Languages.GetOrAdd(file, Load)).FirstOrDefault(texts => texts.ContainsKey(text))?[text];
 
     public static string T(string text, params object?[] arguments) => string.Format(CultureInfo.CurrentCulture, T(text), arguments);
 

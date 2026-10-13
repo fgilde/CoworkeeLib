@@ -1,3 +1,5 @@
+using Coworkee.Contracts.Localization;
+
 namespace Coworkee.Localization.Resources;
 
 /// <summary>The texts of all module resources, built once.</summary>
@@ -20,7 +22,7 @@ public sealed class LocalizationResources
 
     public IEnumerable<string> Keys => _texts.Values.SelectMany(t => t.Keys).Distinct(StringComparer.Ordinal);
 
-    /// <summary>Texts of the culture and its parent ("de-AT" falls back to "de").</summary>
+    /// <summary>Texts of the culture and its parent ("de-AT" falls back to "de", "zh-Hant" does not to "zh").</summary>
     public IReadOnlyDictionary<string, string> For(string culture)
     {
         var result = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -38,12 +40,5 @@ public sealed class LocalizationResources
         return result;
     }
 
-    internal static IEnumerable<string> CultureChain(string culture)
-    {
-        yield return culture;
-        if (culture.IndexOf('-') is var dash and > 0)
-        {
-            yield return culture[..dash];
-        }
-    }
+    internal static IEnumerable<string> CultureChain(string culture) => ShippedCultures.Files(culture);
 }

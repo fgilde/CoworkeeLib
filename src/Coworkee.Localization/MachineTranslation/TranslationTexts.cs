@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Net;
 using System.Text.RegularExpressions;
+using Coworkee.Contracts.Localization;
 
 namespace Coworkee.Localization.MachineTranslation;
 
@@ -23,9 +24,7 @@ public static partial class TranslationTexts
     /// <summary>The ISO 639-1 code of a culture, e.g. "fr" for fr-CH.</summary>
     public static string Language(string culture) => CultureInfo.GetCultureInfo(culture).TwoLetterISOLanguageName;
 
-    public static bool IsTraditionalChinese(string culture) =>
-        Language(culture) == "zh" && (culture.Contains("Hant", StringComparison.OrdinalIgnoreCase) || culture.EndsWith("TW", StringComparison.OrdinalIgnoreCase)
-            || culture.EndsWith("HK", StringComparison.OrdinalIgnoreCase) || culture.EndsWith("MO", StringComparison.OrdinalIgnoreCase));
+    public static bool IsTraditionalChinese(string culture) => ShippedCultures.IsTraditionalChinese(culture);
 
     private static IEnumerable<string> Placeholders(string text) => Placeholder().Matches(text).Select(m => m.Value).Order(StringComparer.Ordinal);
 

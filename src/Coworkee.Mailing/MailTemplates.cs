@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Coworkee.Contracts.Localization;
 
 namespace Coworkee.Mailing;
 
@@ -63,11 +64,7 @@ public static class MailCultures
         var candidates = new List<string>();
         if (!string.IsNullOrWhiteSpace(culture))
         {
-            candidates.Add(culture);
-            if (culture.IndexOf('-', StringComparison.Ordinal) is > 0 and var dash)
-            {
-                candidates.Add(culture[..dash]);
-            }
+            candidates.AddRange(ShippedCultures.Files(culture));
         }
 
         candidates.Add(Fallback);

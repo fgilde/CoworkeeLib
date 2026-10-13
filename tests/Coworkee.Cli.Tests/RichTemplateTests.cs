@@ -55,6 +55,9 @@ public sealed class RichTemplateTests(TemplateFixture template)
         Texts(await template.CreateAsync("texts-default", "--samples", "false", "--tests", "false")).ShouldBe(["de.json"]);
         Texts(await template.CreateAsync("texts-english", "--samples", "false", "--tests", "false", "--languages", "en")).ShouldBeEmpty();
         Texts(await template.CreateAsync("texts-regional", "--samples", "false", "--tests", "false", "--languages", "en,de-AT")).ShouldBe(["de.json"]);
+        Texts(await template.CreateAsync("texts-chosen", "--samples", "false", "--tests", "false", "--languages", "en,fr,pt-BR")).Order().ShouldBe(["fr.json", "pt.json"]);
+        Texts(await template.CreateAsync("texts-simplified", "--samples", "false", "--tests", "false", "--languages", "en,zh-CN")).ShouldBe(["zh.json"]);
+        Texts(await template.CreateAsync("texts-traditional", "--samples", "false", "--tests", "false", "--languages", "en,zh-Hant,zh-TW")).ShouldBeEmpty();
     }
 
     [Fact]

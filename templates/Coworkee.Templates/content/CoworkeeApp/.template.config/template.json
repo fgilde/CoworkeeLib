@@ -756,7 +756,7 @@
       "datatype": "bool",
       "parameters": {
         "source": "languages",
-        "pattern": "(^|,)\\s*zh(-[A-Za-z]+)?\\s*(,|$)"
+        "pattern": "(^|,)\\s*zh(-(Hans(-CN|-SG)?|CN|SG))?\\s*(,|$)"
       }
     },
     "customLanguages": {
