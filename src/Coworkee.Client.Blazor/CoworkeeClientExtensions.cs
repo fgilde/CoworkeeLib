@@ -146,7 +146,7 @@ internal sealed class AdminNavigation : INavigationContributor
         new("API keys", "/admin/api-keys", MudBlazor.Icons.Material.Outlined.VpnKey, Coworkee.Contracts.Identity.ApiKeyPermissions.Manage, Group: Identity, Order: 5),
         new("Settings", "/admin/settings", MudBlazor.Icons.Material.Outlined.Tune, Coworkee.Contracts.Settings.SettingsPermissions.Manage, Group: System),
         new("AI", "/admin/ai-settings", MudBlazor.Icons.Material.Outlined.AutoAwesome, Coworkee.Contracts.Settings.SettingsPermissions.Manage, Group: System, Order: 6, HostOnly: true),
-        new("Mail settings", "/admin/mail-settings", MudBlazor.Icons.Material.Outlined.MarkEmailRead, Coworkee.Contracts.Settings.SettingsPermissions.Manage, Group: System, Order: 7),
+        new("Mail settings", "/admin/mail-settings", MudBlazor.Icons.Material.Outlined.MarkEmailRead, Coworkee.Contracts.Settings.SettingsPermissions.Manage, Group: Communication, Order: 2),
         new("Services", "/admin/services", MudBlazor.Icons.Material.Outlined.Hub, Coworkee.Contracts.Settings.SettingsPermissions.Manage, Group: System, Order: 1, HostOnly: true),
         new("Tenants", "/admin/tenants", MudBlazor.Icons.Material.Outlined.Domain, Coworkee.Contracts.Features.FeaturePermissions.Tenants, Group: System, Order: 2, HostOnly: true),
         new("Editions", "/admin/editions", MudBlazor.Icons.Material.Outlined.WorkspacePremium, Coworkee.Contracts.Features.FeaturePermissions.Editions, Group: System, Order: 3, HostOnly: true),

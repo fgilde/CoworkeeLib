@@ -35,4 +35,15 @@ public sealed class NavigationEntryTests
         admin.Children!.Single(e => e.Text == "System").Children!.Select(e => e.Href).ShouldContain("/admin/services");
         new AdminNavigation().Items.Select(i => i.Href).ShouldNotContain("/admin/jobs");
     }
+
+    [Fact]
+    public void Mail_settings_sit_with_the_other_mail_pages_in_communication()
+    {
+        var tree = NavigationEntry.Build([.. new AdminNavigation().Items], new NavigationMenuOptions(), null);
+
+        var admin = tree.Single(e => e.Text == NavigationGroups.Administration);
+        admin.Children!.Single(e => e.Text == "Communication").Children!.Select(e => e.Href)
+            .ShouldBe(["/admin/mail/templates", "/admin/mail/log", "/admin/mail-settings"]);
+        admin.Children!.Single(e => e.Text == "System").Children!.Select(e => e.Href).ShouldNotContain("/admin/mail-settings");
+    }
 }
