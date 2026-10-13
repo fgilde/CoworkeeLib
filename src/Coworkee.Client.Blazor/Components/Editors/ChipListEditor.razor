@@ -6,20 +6,13 @@
     <MudStack Row="true" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Spacing="1">
         @foreach (var item in Value)
         {
-            @if (ReadOnly || IsFixed(item))
-            {
-                <MudChip T="string" Size="Density.Size" Color="ChipColor(item)" data-chip="@item">@item</MudChip>
-            }
-            else
-            {
-                <MudChip T="string" Size="Density.Size" Color="ChipColor(item)" OnClose="_ => RemoveAsync(item)" data-chip="@item">@item</MudChip>
-            }
+            <MudChip T="string" Size="Density.Size" Color="ChipColor(item)" OnClose="CloseOf(item)" data-chip="@item">@item</MudChip>
         }
     </MudStack>
     @if (!ReadOnly)
     {
         <MudAutocomplete @ref="_input" T="string" Value="@null" ValueChanged="PickAsync" Text="@_text" TextChanged="TypeAsync" SearchFunc="SearchAsync"
-                         ReturnedItemsCountChanged="n => _suggested = n" OpenChanged="OpenChangedAsync" OnBlur="BlurAsync" OnKeyUp="OnEnterAsync" CoerceText="false"
+                         ReturnedItemsCountChanged="n => _suggested = n" OpenChanged="OpenChangedAsync" OnBlur="BlurAsync" OnKeyUp="OnEnterAsync" OnKeyDown="OnEscapeAsync" CoerceText="false"
                          Adornment="@(Suggestions is null ? Adornment.None : Adornment.End)" Placeholder="@Placeholder" Error="@(_error is not null)" ErrorText="@_error"
                          Margin="Density.Margin" Dense="Density.Dense" Variant="Variant.Outlined" Style="max-width:420px" data-testid="chip-list-input" />
     }

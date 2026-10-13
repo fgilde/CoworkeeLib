@@ -35,7 +35,8 @@ public partial class ChipListEditor
     /// <summary>Values whose chip cannot be removed.</summary>
     [Parameter] public IReadOnlyCollection<string>? Fixed { get; set; }
 
-    private bool IsFixed(string item) => Fixed?.Contains(item) == true;
+    private EventCallback<MudChip<string>> CloseOf(string item) =>
+        ReadOnly || Fixed?.Contains(item) == true ? default : EventCallback.Factory.Create<MudChip<string>>(this, () => RemoveAsync(item));
 
     private Color ChipColor(string item) => Validate?.Invoke(item) is null ? Color.Default : Color.Error;
 
@@ -74,6 +75,17 @@ public partial class ChipListEditor
 
     private Task OnEnterAsync(KeyboardEventArgs args) => args.Key is "Enter" or "NumpadEnter" ? CommitAsync() : Task.CompletedTask;
 
+    // on key down: the key up of Escape already closes the list, and closing the list commits the text
+    private async Task OnEscapeAsync(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape" && _input is not null)
+        {
+            _text = string.Empty;
+            _error = null;
+            await _input.ClearAsync();
+        }
+    }
+
     private async Task CommitAsync()
     {
         var tokens = _text.Split(Separators, StringSplitOptions.RemoveEmptyEntries);
@@ -90,7 +102,11 @@ public partial class ChipListEditor
             var error = Validate?.Invoke(token);
             if (error is not null)
             {
-                rejected.Add(token);
+                if (!rejected.Contains(token))
+                {
+                    rejected.Add(token);
+                }
+
                 _error ??= error;
             }
             else if (!Value.Contains(token) && !added.Contains(token))

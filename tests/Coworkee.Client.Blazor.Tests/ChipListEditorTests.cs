@@ -11,6 +11,7 @@ public sealed class ChipListEditorTests : ClientTestBase
 
     private IReadOnlyList<string> _value = [];
     private int _changes;
+    private IRenderedComponent<MudPopoverProvider> _popovers = null!;
 
     private IRenderedComponent<ChipListEditor> Open(
         IReadOnlyList<string>? value = null,
@@ -19,7 +20,7 @@ public sealed class ChipListEditorTests : ClientTestBase
         IReadOnlyCollection<string>? fixedValues = null)
     {
         _value = value ?? [];
-        Render<MudPopoverProvider>();
+        _popovers = Render<MudPopoverProvider>();
         return Render<ChipListEditor>(p => p
             .Add(e => e.Value, _value)
             .Add(e => e.ValueChanged, v => { _value = v; _changes++; })
@@ -167,5 +168,85 @@ public sealed class ChipListEditorTests : ClientTestBase
 
         _changes.ShouldBe(0);
         editor.Markup.ShouldContain("No slashes");
+    }
+
+    private static Task<IEnumerable<string>> Offer(string text, CancellationToken _) => Task.FromResult(Standard.Where(s => s.Contains(text)).AsEnumerable());
+
+    private async Task<MudAutocomplete<string>> OpenListAsync(IRenderedComponent<ChipListEditor> editor, string text)
+    {
+        var search = editor.FindComponent<MudAutocomplete<string>>().Instance;
+        Input(editor).Input(text);
+        await editor.InvokeAsync(search.OpenMenuAsync);
+        search.Open.ShouldBeTrue();
+        return search;
+    }
+
+    [Fact]
+    public async Task Blur_with_the_list_open_waits_and_the_closing_click_outside_takes_the_text()
+    {
+        var editor = Open(suggestions: Offer);
+        await OpenListAsync(editor, "pro");
+
+        Input(editor).Blur();
+        _changes.ShouldBe(0);
+
+        await _popovers.Find(".mud-overlay").ClickAsync(new());
+
+        _value.ShouldBe(["pro"]);
+        _changes.ShouldBe(1);
+        Input(editor).GetAttribute("value").ShouldBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task Picking_a_suggestion_while_text_is_typed_adds_only_the_suggestion()
+    {
+        var editor = Open(suggestions: Offer);
+        var search = await OpenListAsync(editor, "pro");
+
+        Input(editor).Blur(); // the mousedown on the list item blurs the field before the click
+        await editor.InvokeAsync(() => search.SelectOptionAsync("profile"));
+
+        _value.ShouldBe(["profile"]);
+        _changes.ShouldBe(1);
+        search.Open.ShouldBeFalse();
+        Input(editor).GetAttribute("value").ShouldBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task Enter_on_a_highlighted_suggestion_adds_only_the_suggestion()
+    {
+        var editor = Open(suggestions: Offer);
+        await OpenListAsync(editor, "pro");
+
+        await EnterAsync(editor);
+
+        _value.ShouldBe(["profile"]);
+        _changes.ShouldBe(1);
+        Input(editor).GetAttribute("value").ShouldBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task Escape_discards_the_typed_text()
+    {
+        var editor = Open(suggestions: Offer);
+        await OpenListAsync(editor, "pro");
+
+        await Input(editor).KeyDownAsync(new KeyboardEventArgs { Key = "Escape" });
+        await Input(editor).KeyUpAsync(new KeyboardEventArgs { Key = "Escape" });
+
+        _changes.ShouldBe(0);
+        editor.FindAll("[data-chip]").ShouldBeEmpty();
+        Input(editor).GetAttribute("value").ShouldBeNullOrEmpty();
+    }
+
+    [Fact]
+    public void Rejected_tokens_are_not_repeated_in_the_field()
+    {
+        var editor = Open(validate: v => v.Contains('!') ? "No special characters" : null);
+
+        Input(editor).Input("bad! bad! ok");
+
+        _value.ShouldBe(["ok"]);
+        Input(editor).GetAttribute("value").ShouldBe("bad!");
     }
 }
