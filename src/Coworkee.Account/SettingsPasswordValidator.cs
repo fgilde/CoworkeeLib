@@ -15,7 +15,7 @@ internal sealed class SettingsPasswordValidator(ISettingProvider settings) : IPa
         var errors = new List<IdentityError>();
 
         var length = Math.Max(1, await settings.GetAsync<int>(PasswordSettings.RequiredLength));
-        if (value.Length < length)
+        if (string.IsNullOrWhiteSpace(value) || value.Length < length)
         {
             errors.Add(describer.PasswordTooShort(length));
         }

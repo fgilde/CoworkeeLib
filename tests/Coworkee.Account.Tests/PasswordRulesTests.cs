@@ -42,6 +42,18 @@ public sealed class PasswordRulesTests(AccountApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_whitespace_only_password_is_too_short()
+    {
+        await app.SetSettingAsync(PasswordSettings.RequiredLength, "1");
+        await app.SetSettingAsync(PasswordSettings.RequireDigit, "false");
+        await app.SetSettingAsync(PasswordSettings.RequireLowercase, "false");
+        await app.SetSettingAsync(PasswordSettings.RequireUppercase, "false");
+        await app.SetSettingAsync(PasswordSettings.RequireNonAlphanumeric, "false");
+
+        (await ValidateAsync("   ")).Errors.Select(e => e.Code).ShouldBe(["PasswordTooShort"]);
+    }
+
+    [Fact]
     public async Task Admin_set_password_follows_the_settings()
     {
         await app.SetSettingAsync(PasswordSettings.RequiredLength, "12");
