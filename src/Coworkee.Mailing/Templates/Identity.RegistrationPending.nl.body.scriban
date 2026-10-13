@@ -1,0 +1,2 @@
+<p>Hallo {{ user.first_name }},</p>
+<p>Bedankt voor uw registratie. Een beheerder beoordeelt uw account binnenkort.</p>

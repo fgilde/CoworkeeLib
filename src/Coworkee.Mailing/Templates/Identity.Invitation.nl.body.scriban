@@ -1,0 +1,3 @@
+<p>Hallo {{ user.first_name }},</p>
+<p>er is een account voor u aangemaakt: {{ user.email }}. Kies uw wachtwoord om in te loggen.</p>
+<p style="margin:24px 0;"><a href="{{ invitation_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">Wachtwoord kiezen</a></p>

@@ -1,0 +1,3 @@
+<p>Hallo {{ user.first_name }},</p>
+<p>bevestig dat {{ new_email }} het nieuwe adres van uw account is. Tot dan logt u in met {{ user.email }}. Als u hier niet om hebt gevraagd, kunt u dit bericht negeren.</p>
+<p style="margin:24px 0;"><a href="{{ confirm_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">Nieuw adres bevestigen</a></p>
