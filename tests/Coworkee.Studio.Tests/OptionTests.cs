@@ -29,9 +29,24 @@ public sealed class OptionTests
         var main = Studio.Create(folder);
         main.Architecture.ApplyPreset(main.Architecture.Presets.Single(p => p.Preset.Name == "Everything"));
 
-        main.Architecture.Summary.Containers.ShouldBe(["PostgreSQL", "Redis", "Mailpit", "Elasticsearch", "RabbitMQ", "Azurite", "Keycloak", "Ollama", "LibreTranslate", "Grafana", "Prometheus", "Loki", "Tempo", "OpenTelemetry Collector", "postgres_exporter", "WebDataStudio"]);
+        main.Architecture.Summary.Containers.ShouldBe(["PostgreSQL", "Redis", "Mailpit", "Elasticsearch", "RabbitMQ", "Azurite", "Keycloak", "Ollama", "LibreTranslate", "Grafana", "Prometheus", "Loki", "Tempo", "OpenTelemetry Collector", "postgres_exporter", "WebDataStudio", "AspireUI"]);
         main.Architecture.Summary.Packages.ShouldContain("Coworkee.EventBus.RabbitMq");
         main.Architecture.Summary.Projects.ShouldContain("MyApp.Catalog");
+    }
+
+    [Fact]
+    public void AspireUI_is_a_highlighted_option_that_is_off_until_chosen_and_adds_its_container()
+    {
+        using var folder = new TempFolder();
+        var main = Studio.Create(folder);
+
+        main.Architecture.Infrastructure.Select(o => o.Id).ShouldBe(["database", "redis", "grafana", "webDataStudio", "aspireUI"]);
+        main.Option("aspireUI").IsOn.ShouldBeFalse();
+        main.Architecture.Summary.Containers.ShouldNotContain("AspireUI");
+
+        main.Option("aspireUI").IsOn = true;
+        main.Architecture.Summary.Containers.ShouldContain("AspireUI");
+        main.ToSpec().Options["aspireUI"]!.GetValue<bool>().ShouldBeTrue();
     }
 
     [Fact]

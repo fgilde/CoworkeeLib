@@ -20,6 +20,13 @@ public sealed class OptionTests
     }
 
     [Fact]
+    public void Flags_are_kebab_case_with_acronyms_kept_together()
+    {
+        OptionCatalog.Find("aspireUI")!.Flag.ShouldBe("--aspire-ui");
+        OptionCatalog.Find("webDataStudio")!.Flag.ShouldBe("--web-data-studio");
+    }
+
+    [Fact]
     public void No_option_shadows_a_switch_of_dotnet_new()
     {
         string[] reserved = ["name", "output", "search", "list", "install", "uninstall", "update", "force", "language", "lang", "type", "project", "help", "verbosity", "diagnostics", "dry-run", "no-update-check"];

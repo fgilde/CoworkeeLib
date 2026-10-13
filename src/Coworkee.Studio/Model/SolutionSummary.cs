@@ -66,6 +66,11 @@ public sealed record SolutionSummary(IReadOnlyList<string> Projects, IReadOnlyLi
             containers.Add("WebDataStudio");
         }
 
+        if (On("aspireUI"))
+        {
+            containers.Add("AspireUI");
+        }
+
         var packages = BasePackages.Concat(OptionCatalog.All
                 .Where(o => o.Package is not null && (o.Kind == OptionKind.Bool ? On(o.Id) : values[o.Id] is { } v && v != "none"))
                 .Select(o => o.Package!))

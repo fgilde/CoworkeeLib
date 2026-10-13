@@ -2,11 +2,20 @@
 using Coworkee.Aspire.Settings;
 
 #endif
-#if (keycloak || grafana || webDataStudio)
+#if (keycloak || grafana || webDataStudio || aspireUI)
 using MyApp.Migrations;
+#endif
+#if (aspireUI)
+using Nextended.Aspire.Hosting.AspireUI;
+#endif
+#if (keycloak || grafana || webDataStudio || aspireUI)
 
 #endif
 var builder = DistributedApplication.CreateBuilder(args);
+#if (grafana || webDataStudio || aspireUI)
+
+var administrator = DemoUsers.All.First(u => u.IsAdmin);
+#endif
 #if (translationProvider != "libreTranslate" && translationProvider != "none" && translationProvider != "ai")
 
 // key, Azure region and MyMemory contact of the translation service optionally from the user secrets (Parameters:translation-key, translation-region, translation-email)
@@ -35,7 +44,6 @@ var app = builder.AddCoworkeeApp("myapp", options =>
 #endif
 #if (grafana || webDataStudio)
     // Grafana and WebDataStudio take the sign-in of the app's administrator (LOGIN.md)
-    var administrator = DemoUsers.All.First(u => u.IsAdmin);
     options.Administrator = new(administrator.Email, administrator.Password);
 #endif
 #if (grafana)
@@ -128,5 +136,20 @@ app.AddMigrations<Projects.MyApp_Migrations>();
 app.AddAuthServer<Projects.MyApp_Auth>();
 app.AddApi<Projects.MyApp_Api>();
 app.AddWeb<Projects.MyApp_Web>();
+#if (aspireUI)
+
+#if (keycloak)
+// the apps and stacks hosted with AspireUI show up under Services; the administrator signs in locally or through Keycloak (LOGIN.md)
+#else
+// the apps and stacks hosted with AspireUI show up under Services; the administrator signs in locally (LOGIN.md)
+#endif
+builder.AddAspireUI()
+    .WithAdminUser(administrator.Email, administrator.Password)
+    .WithSeedFromDirectory(builder.AppHostDirectory)
+#if (keycloak)
+    .WithCoworkeeSignOn(app)
+#endif
+    .WithRetrieveApi();
+#endif
 
 builder.Build().Run();

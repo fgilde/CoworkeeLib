@@ -134,6 +134,38 @@ public sealed class TemplateOptionTests(TemplateFixture template)
     }
 
     [Fact]
+    public async Task AspireUI_is_off_by_default_and_adds_the_host_the_package_and_the_sign_on_with_keycloak()
+    {
+        var off = await template.CreateAsync("aspireui-off", "--samples", "false", "--keycloak", "true");
+        Read(off, "src/Shop.AppHost/AppHost.cs").ShouldNotContain("AddAspireUI");
+        Read(off, "src/Shop.AppHost/Shop.AppHost.csproj").ShouldNotContain("AspireUI");
+        Read(off, "LOGIN.md").ShouldNotContain("aspireui");
+        TemplateTests.ShouldHaveNoLeftovers(off);
+
+        var plain = await template.CreateAsync("aspireui-plain", "--samples", "false", "--aspireUI", "true", "--grafana", "false", "--webDataStudio", "false");
+        var appHost = Read(plain, "src/Shop.AppHost/AppHost.cs");
+        appHost.ShouldContain("using Nextended.Aspire.Hosting.AspireUI;");
+        appHost.ShouldContain("var administrator = DemoUsers.All.First(u => u.IsAdmin);");
+        appHost.ShouldContain("builder.AddAspireUI()");
+        appHost.ShouldContain(".WithAdminUser(administrator.Email, administrator.Password)");
+        appHost.ShouldContain(".WithSeedFromDirectory(builder.AppHostDirectory)");
+        appHost.ShouldContain(".WithRetrieveApi();");
+        appHost.ShouldNotContain("WithCoworkeeSignOn");
+        Read(plain, "src/Shop.AppHost/Shop.AppHost.csproj").ShouldContain("<PackageReference Include=\"Nextended.Aspire.Hosting.AspireUI\" />");
+        Read(plain, "Directory.Packages.props").ShouldContain("Nextended.Aspire.Hosting.AspireUI");
+        Read(plain, "LOGIN.md").ShouldContain("*aspireui*");
+        SignInInfo.Read(plain)!.Tools.ShouldBe(["AspireUI"]);
+        TemplateTests.ShouldHaveNoLeftovers(plain);
+
+        var keycloak = await template.CreateAsync("aspireui-keycloak", "--samples", "false", "--aspireUI", "true", "--keycloak", "true");
+        appHost = Read(keycloak, "src/Shop.AppHost/AppHost.cs");
+        appHost.ShouldContain(".WithCoworkeeSignOn(app)");
+        appHost.ShouldContain("options.UseGrafana();");
+        SignInInfo.Read(keycloak)!.Tools.ShouldBe(["Grafana", "WebDataStudio", "AspireUI"]);
+        TemplateTests.ShouldHaveNoLeftovers(keycloak);
+    }
+
+    [Fact]
     public async Task Generated_app_without_grafana_and_webdatastudio_builds()
     {
         var feed = Environment.GetEnvironmentVariable("COWORKEE_TEST_FEED");

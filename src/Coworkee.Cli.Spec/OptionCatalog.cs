@@ -37,7 +37,7 @@ public sealed record CliOption(
     bool TemplateSymbol = true)
 {
     /// <summary>The flag of <c>coworkee new</c>: the id in kebab case, e.g. <c>--event-bus</c>.</summary>
-    public string Flag => "--" + string.Concat(Id.Select(c => char.IsUpper(c) ? "-" + char.ToLowerInvariant(c) : c.ToString()));
+    public string Flag => "--" + string.Concat(Id.Select((c, i) => char.IsUpper(c) ? (i > 0 && char.IsLower(Id[i - 1]) ? "-" : "") + char.ToLowerInvariant(c) : c.ToString()));
 }
 
 public static class OptionCatalog
@@ -140,6 +140,10 @@ public static class OptionCatalog
             "Whenever you want to look into the app database, run SQL or fix data while developing.",
             ["Tables, queries, charts and exports without a local database tool", "Same sign-in as the app"],
             ["One more container", "Development only: it has full access to the database"]),
+        new("aspireUI", Infrastructure, "AspireUI", "AspireUI, a web UI to host and try more apps and stacks next to the app, in the app host. Its apps show up on the admin page Services. Sign-in with the app's administrator, and Keycloak when it is on.", OptionKind.Bool, "false",
+            "When the app should be tried next to other apps or stacks (a second service, a database tool, a sample), or the Services page should list them.",
+            ["Start and stop more apps and stacks from one web UI", "The hosted apps show up on the admin page Services", "Same sign-in as the app"],
+            ["One more container", "Development only: it hosts whatever you give it"]),
         new("database", Infrastructure, "Database", "Database engine of the app; the app host starts it and the initial migration is made for it.", OptionKind.Choice, "postgres",
             "Postgres unless the organisation runs SQL Server (or Azure SQL); SQLite for demos, prototypes and installs on one machine.",
             ["postgres: every module, database backups from the admin pages", "sqlServer: fits Microsoft shops and Azure SQL", "sqlite: no container, the database is one file"],

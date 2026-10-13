@@ -5,7 +5,7 @@ public sealed record Preset(string Name, string Description, string Icon, IReadO
 {
     private static readonly string[] ModuleSwitches =
         ["samples", "auditing", "notifications", "chat", "reports", "ai", "backup", "files", "features", "social", "extendedAttributes", "elasticsearch", "clientEntities", "keycloak",
-         "registration", "githubActions", "devcontainer", "redis", "grafana", "webDataStudio"];
+         "registration", "githubActions", "devcontainer", "redis", "grafana", "webDataStudio", "aspireUI"];
 
     public static IReadOnlyList<Preset> All { get; } =
     [

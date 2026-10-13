@@ -250,6 +250,12 @@
       "defaultValue": "true",
       "description": "WebDataStudio, a database studio in the browser connected to the app database (development)."
     },
+    "aspireUI": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "AspireUI, a web UI to host and try more apps and stacks next to the app; with Keycloak it signs in through the app's realm (development)."
+    },
     "database": {
       "type": "parameter",
       "datatype": "choice",

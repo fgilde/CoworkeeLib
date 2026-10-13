@@ -14,7 +14,7 @@ The *Keycloak* button on the sign-in page takes the same users with the same pas
 Visitors can also create an account on the sign-in page (setting `Account.AllowRegistration`).
 
 <!--#endif -->
-<!--#if (grafana || webDataStudio) -->
+<!--#if (grafana || webDataStudio || aspireUI) -->
 ## Development tools
 
 The administrator signs in with the same email and password to the tools the app host starts next to the app (open them from the Aspire dashboard):
@@ -25,9 +25,15 @@ The administrator signs in with the same email and password to the tools the app
 <!--#if (webDataStudio) -->
 - *webdatastudio*: the app database in the browser.
 <!--#endif -->
+<!--#if (aspireUI) -->
+- *aspireui*: host and try more apps and stacks next to COWORKEE_APP_TITLE; what you host there also shows up on the admin page *Services* of the app. Its data lives in the volume `aspireui-data-aspireui`.
+<!--#endif -->
 <!--#if (keycloak) -->
 
-Both also offer the *Keycloak* button; users with the realm role *Administrator* are administrators there, everybody else may look.
+They also offer the *Keycloak* button; users with the realm role *Administrator* are administrators there, everybody else may look.
+<!--#if (aspireUI) -->
+In AspireUI, everybody else gets the app-user permissions.
+<!--#endif -->
 <!--#endif -->
 
 <!--#endif -->

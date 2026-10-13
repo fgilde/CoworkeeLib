@@ -23,7 +23,7 @@ internal static class SignInBox
 
         if (info is { Tools.Count: > 0, Administrator: { } admin })
         {
-            body.Add($"{string.Join(" and ", info.Tools)} (Aspire dashboard) take {admin.Email}{(info.Keycloak ? " and Keycloak" : string.Empty)} too.");
+            body.Add($"{Names(info.Tools)} (Aspire dashboard) take {admin.Email}{(info.Keycloak ? " and Keycloak" : string.Empty)} too.");
         }
 
         body.Add("Development passwords only, also in LOGIN.md; change them before you deploy.");
@@ -35,4 +35,7 @@ internal static class SignInBox
             "+" + new string('-', width + 2) + "+",
         ];
     }
+
+    private static string Names(IReadOnlyList<string> tools) =>
+        tools.Count > 1 ? $"{string.Join(", ", tools.Take(tools.Count - 1))} and {tools[^1]}" : tools[0];
 }

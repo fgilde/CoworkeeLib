@@ -12,6 +12,9 @@
     <!--#if (ai && aiProvider == "ollama") -->
     <PackageReference Include="CommunityToolkit.Aspire.Hosting.Ollama" />
     <!--#endif -->
+    <!--#if (aspireUI) -->
+    <PackageReference Include="Nextended.Aspire.Hosting.AspireUI" />
+    <!--#endif -->
     <!--#if (eventBus == "rabbitMq") -->
     <PackageReference Include="Aspire.Hosting.RabbitMQ" />
     <!--#endif -->

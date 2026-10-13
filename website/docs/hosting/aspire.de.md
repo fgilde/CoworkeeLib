@@ -213,6 +213,17 @@ builder.AddAspireUI().WithCoworkeeSignOn(app);
 
 Der Aufruf registriert den Client `{app}-{resource}` mit der Redirect-Adresse `/api/auth/sso/callback`, übergibt den Realm so, wie der Container ihn erreicht (Keycloak nennt sich dann nach der Adresse des Browsers, `KC_HOSTNAME`), und setzt den Rollen-Claim als Gruppen. AspireUI übernimmt Einstellungen nur, solange sie leer sind; deshalb erzwingt der Aufruf die Einstellungen des App-Hosts (`ASPIREUI_SET_FORCE`), sonst behielte ein Daten-Volume aus einem früheren Realm die alte Anmeldung.
 
+### AspireUI in einer generierten App
+
+`coworkee new --aspire-ui` (Template-Option `aspireUI`, standardmäßig aus) fügt dieselben Zeilen in `src/MyApp.AppHost/AppHost.cs` ein, dazu den Paketverweis `Nextended.Aspire.Hosting.AspireUI` im AppHost und einen Abschnitt in `LOGIN.md`: Der Administrator meldet sich lokal mit E-Mail und Passwort der App an. Mit Keycloak gehört `WithCoworkeeSignOn(app)` zum Aufruf, und die Administratoren des Realms melden sich mit dem Keycloak-Knopf an. Das Studio zeigt die Option neben Grafana und WebDataStudio; die Vorlage *Everything* schaltet sie ein.
+
+```csharp
+builder.AddAspireUI()
+    .WithAdminUser(administrator.Email, administrator.Password)
+    .WithSeedFromDirectory(builder.AppHostDirectory)
+    .WithCoworkeeSignOn(app) // nur mit Keycloak
+    .WithRetrieveApi();
+```n
 ## Veröffentlichen
 
 `PublishToDockerCompose()` fügt eine Docker-Compose-Umgebung hinzu. `aspire publish` schreibt dann eine `docker-compose.yaml` und eine `.env`-Datei mit allen Diensten, Containern, Volumes und der Startreihenfolge (Dienste starten, sobald die Migrationen abgeschlossen sind):
