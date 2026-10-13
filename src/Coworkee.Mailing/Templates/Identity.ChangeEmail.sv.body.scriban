@@ -1,0 +1,3 @@
+<p>Hej {{ user.first_name }},</p>
+<p>bekräfta att {{ new_email }} är den nya adressen för ditt konto. Tills dess loggar du in med {{ user.email }}. Om du inte har begärt detta kan du bortse från det här meddelandet.</p>
+<p style="margin:24px 0;"><a href="{{ confirm_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">Bekräfta ny adress</a></p>

@@ -1,0 +1,2 @@
+<p>Hej {{ user.first_name }},</p>
+<p>Tack för din registrering. En administratör granskar ditt konto inom kort.</p>

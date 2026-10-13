@@ -1,0 +1,7 @@
+<p>Hej {{ user.first_name }},</p>
+{{ if pending }}
+<p>En ny e-postadress har begärts för ditt konto: {{ new_email }}. Den ersätter den här adressen när länken som skickats dit har öppnats.</p>
+{{ else }}
+<p>E-postadressen för ditt konto har ändrats till {{ new_email }}. Från och med nu loggar du in med den nya adressen.</p>
+{{ end }}
+<p>Om du inte har begärt detta, byt lösenord direkt och kontakta din administratör.</p>
