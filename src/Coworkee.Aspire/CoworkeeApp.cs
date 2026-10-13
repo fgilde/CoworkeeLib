@@ -160,11 +160,11 @@ public sealed partial class CoworkeeApp
             {
                 service.WithSetting(s => s.Coworkee.Auth.Design.MediaUrl, ReferenceExpression.Create($"{redirect}{media}"));
             }
+        }
 
-            if (_loginTheme is not null && service != auth)
-            {
-                service.WithSetting(s => s.Coworkee.Keycloak.BaseUrl, redirect);
-            }
+        foreach (var service in _loginTheme is null ? [] : _apis)
+        {
+            service.WithSetting(s => s.Coworkee.Keycloak.BaseUrl, redirect);
         }
 
         return Added<TProject>(web, suffix);

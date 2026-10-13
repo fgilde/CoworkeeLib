@@ -59,9 +59,11 @@ public sealed class CoworkeeAppTests
 
         app.AddMigrations<FakeProjects.Migrations>();
         var auth = app.AddAuthServer<FakeProjects.Auth>();
-        app.AddApi<FakeProjects.Api>();
+        var api = app.AddApi<FakeProjects.Api>();
         app.AddWeb<FakeProjects.Web>();
 
+        // the api hosts the setting administrators change, so it starts from the same design
+        (await Environment(api.Resource))["Coworkee__Auth__Design__MediaUrl"].ShouldBe((await Environment(auth.Resource))["Coworkee__Auth__Design__MediaUrl"]);
         var settings = await Environment(auth.Resource);
         settings["Coworkee__Auth__Design__Layout"].ShouldBe("Split");
         settings["Coworkee__Auth__Design__MediaSide"].ShouldBe("Right");
