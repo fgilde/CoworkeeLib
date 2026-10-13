@@ -1,6 +1,7 @@
 using Aspire.Hosting.ApplicationModel;
 using Coworkee.Aspire.Modules;
 using Coworkee.Aspire.Settings;
+using Nextended.Aspire.Hosting.AspireUI;
 
 namespace Aspire.Hosting;
 
@@ -20,7 +21,7 @@ public sealed partial class CoworkeeApp
         }
 
         // read when the service starts, so resources added after the app count too
-        service.WithEnvironment(context =>
+        service.WithEnvironment(async context =>
         {
             foreach (var (name, url, health) in ServiceUrls())
             {
@@ -30,7 +31,36 @@ public sealed partial class CoworkeeApp
                     context.EnvironmentVariables[SettingPath.Of(s => s.Coworkee.Services[name].HealthPath)] = health;
                 }
             }
+
+            await AddAspireUIAsync(context);
         });
+    }
+
+    // ponytail: the first AspireUI with the retrieve API wins
+    private async Task AddAspireUIAsync(EnvironmentCallbackContext context)
+    {
+        foreach (var aspireUi in Builder.Resources.OfType<AspireUIResource>())
+        {
+            var env = new Dictionary<string, object>();
+            var aspireUiContext = new EnvironmentCallbackContext(context.ExecutionContext, env, context.CancellationToken);
+            foreach (var callback in aspireUi.Annotations.OfType<EnvironmentCallbackAnnotation>())
+            {
+                await callback.Callback(aspireUiContext);
+            }
+
+            if (env.GetValueOrDefault("ASPIREUI_RETRIEVE_API") is not "true")
+            {
+                continue;
+            }
+
+            context.EnvironmentVariables[SettingPath.Of(s => s.Coworkee.AspireUI.Url)] = aspireUi.GetEndpoint(AspireUIResource.HttpEndpointName);
+            if (env.TryGetValue("ASPIREUI_RETRIEVE_API_KEY", out var key))
+            {
+                context.EnvironmentVariables[SettingPath.Of(s => s.Coworkee.AspireUI.ApiKey)] = key;
+            }
+
+            return;
+        }
     }
 
     private IEnumerable<(string Name, object Url, string? Health)> ServiceUrls()

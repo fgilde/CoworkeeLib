@@ -1,5 +1,6 @@
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
+using Nextended.Aspire.Hosting.AspireUI;
 
 namespace Coworkee.Aspire.Tests;
 
@@ -66,6 +67,77 @@ public sealed class DashboardTests
         env.Keys.ShouldContain("Coworkee__Services__pgadmin__Url");
         env.Keys.ShouldNotContain("Coworkee__Services__mail__HealthPath");
         env.Keys.ShouldNotContain("Coworkee__Services__postgres__Url");
+    }
+
+    [Fact]
+    public async Task An_aspireui_with_the_retrieve_api_is_the_source_of_the_service_directory()
+    {
+        var builder = DistributedApplication.CreateBuilder(["--environment", "Development"]);
+        var app = builder.AddCoworkeeApp("demo").AddProjects();
+        builder.AddAspireUI().WithRetrieveApi();
+
+        var env = await ApiEnvironment(builder, app);
+
+        env["Coworkee__AspireUI__Url"].ShouldBeOfType<EndpointReference>().EndpointName.ShouldBe("http");
+        env.Keys.ShouldNotContain("Coworkee__AspireUI__ApiKey");
+    }
+
+    [Fact]
+    public async Task The_key_of_the_retrieve_api_stays_a_parameter_reference()
+    {
+        var builder = DistributedApplication.CreateBuilder(["--environment", "Development"]);
+        var app = builder.AddCoworkeeApp("demo").AddProjects();
+        var key = builder.AddParameter("aspireui-key", secret: true);
+        builder.AddAspireUI().WithRetrieveApi(key);
+
+        var env = await ApiEnvironment(builder, app);
+
+        env["Coworkee__AspireUI__ApiKey"].ShouldBe(key.Resource);
+    }
+
+    [Fact]
+    public async Task An_aspireui_without_the_retrieve_api_is_left_out()
+    {
+        var builder = DistributedApplication.CreateBuilder(["--environment", "Development"]);
+        var app = builder.AddCoworkeeApp("demo").AddProjects();
+        builder.AddAspireUI();
+
+        (await ApiEnvironment(builder, app)).Keys.ShouldNotContain("Coworkee__AspireUI__Url");
+    }
+
+    [Fact]
+    public async Task The_first_aspireui_with_the_retrieve_api_wins()
+    {
+        var builder = DistributedApplication.CreateBuilder(["--environment", "Development"]);
+        var app = builder.AddCoworkeeApp("demo").AddProjects();
+        var first = builder.AddAspireUI("first").WithRetrieveApi();
+        builder.AddAspireUI("second").WithRetrieveApi("secret");
+
+        var env = await ApiEnvironment(builder, app);
+
+        env["Coworkee__AspireUI__Url"].ShouldBeOfType<EndpointReference>().Resource.ShouldBe(first.Resource);
+        env.Keys.ShouldNotContain("Coworkee__AspireUI__ApiKey");
+    }
+
+    [Fact]
+    public async Task Published_apps_get_no_aspireui()
+    {
+        var builder = DistributedApplication.CreateBuilder(["--operation", "publish"]);
+        var app = builder.AddCoworkeeApp("demo").AddProjects();
+        builder.AddAspireUI().WithRetrieveApi();
+
+        (await ApiEnvironment(builder, app)).Keys.ShouldNotContain("Coworkee__AspireUI__Url");
+    }
+
+    private static async Task<Dictionary<string, object>> ApiEnvironment(IDistributedApplicationBuilder builder, CoworkeeApp app)
+    {
+        var env = new Dictionary<string, object>();
+        foreach (var callback in app.Apis[0].Resource.Annotations.OfType<EnvironmentCallbackAnnotation>())
+        {
+            await callback.Callback(new EnvironmentCallbackContext(builder.ExecutionContext, env, TestContext.Current.CancellationToken));
+        }
+
+        return env;
     }
 
     private static IEnumerable<string> Commands(IDistributedApplicationBuilder builder, Action<CoworkeeAppOptions>? configure = null) =>
