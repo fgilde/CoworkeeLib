@@ -10,6 +10,7 @@ using NSubstitute;
 
 namespace Coworkee.Client.Blazor.Tests;
 
+[Collection(nameof(LocalizationTests))]
 public sealed class SettingsFormTests : ClientTestBase
 {
     private static readonly SettingScope[] Global = [SettingScope.Global];
