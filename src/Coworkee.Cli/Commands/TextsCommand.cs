@@ -20,26 +20,39 @@ internal static class TextsCommand
         {
             var language = result.GetValue(Lang)!;
             var output = result.GetValue(Out) ?? DefaultOutput(Solution.Find(Environment.CurrentDirectory), language);
-            var count = Export(output, language, result.GetValue(Keys));
-            Console.WriteLine($"{count} texts written to {output}.");
+            var (added, present) = Export(output, language, result.GetValue(Keys));
+            Console.WriteLine($"{added} texts added to {output}, {present} were already there.");
             return Task.FromResult(0);
         });
         return new Command("texts", "Work with the texts of the library.") { export };
     }
 
     public static string DefaultOutput(Solution solution, string language) =>
-        Path.Combine(solution.Src, $"{solution.Name}.Contracts", "Localization", language + ".json");
+        Path.Combine(Path.GetDirectoryName(solution.Project("Contracts"))!, "Localization", language + ".json");
 
-    public static int Export(string output, string language, string? keys)
+    public static (int Added, int Present) Export(string output, string language, string? keys)
     {
-        var pattern = keys is null ? null : Pattern(keys);
-        var texts = LibraryTexts.Load(language).Where(t => pattern?.IsMatch(t.Key) != false).ToList();
+        var texts = Select(LibraryTexts.Load(language), keys);
         var merged = Existing(output);
         var present = merged.Select(t => t.Key).ToHashSet(StringComparer.Ordinal);
-        merged.AddRange(texts.Where(t => !present.Contains(t.Key)));
+        var added = texts.Where(t => !present.Contains(t.Key)).ToList();
+        merged.AddRange(added);
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(output))!);
         File.WriteAllText(output, Write(merged));
-        return texts.Count;
+        return (added.Count, texts.Count - added.Count);
+    }
+
+    private static List<KeyValuePair<string, string>> Select(IEnumerable<KeyValuePair<string, string>> texts, string? keys)
+    {
+        var pattern = keys is null ? null : Pattern(keys);
+        try
+        {
+            return [.. texts.Where(t => pattern?.IsMatch(t.Key) != false)];
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            throw new CliException($"--keys '{keys}' takes too long to match; use a simpler pattern.");
+        }
     }
 
     public static bool Matches(string pattern, string key) => Pattern(pattern).IsMatch(key);

@@ -94,14 +94,47 @@ public sealed class TextsTests
     {
         using var folder = new TempFolder();
         folder.File("Shop.slnx");
+        folder.File("src/Shop.Contracts/Shop.Contracts.csproj");
 
         TextsCommand.DefaultOutput(Solution.Find(folder.Path), "fr").ShouldBe(Path.Combine(folder.Path, "src", "Shop.Contracts", "Localization", "fr.json"));
     }
 
     [Fact]
+    public void Export_without_out_needs_the_contracts_project()
+    {
+        using var folder = new TempFolder();
+        folder.File("Shop.slnx");
+        Directory.CreateDirectory(Path.Combine(folder.Path, "src"));
+
+        Should.Throw<CliException>(() => TextsCommand.DefaultOutput(Solution.Find(folder.Path), "fr")).Message.ShouldContain("Contracts.csproj");
+    }
+
+    [Fact]
+    public void Export_counts_the_new_texts_and_the_ones_already_there()
+    {
+        using var folder = new TempFolder();
+        var output = Path.Combine(folder.Path, "de.json");
+        File.WriteAllText(output, "{\r\n  \"Home\": \"Mein Start\"\r\n}\r\n");
+
+        TextsCommand.Export(output, "de", "/^(Home|Filter)$/").ShouldBe((1, 1));
+        TextsCommand.Export(output, "de", "/^(Home|Filter)$/").ShouldBe((0, 2));
+    }
+
+    [Fact]
     public void Export_rejects_a_broken_regex_and_a_language_that_is_no_code()
     {
-        Should.Throw<CliException>(() => TextsCommand.Export(Path.GetTempFileName(), "de", "/(/"));
-        Should.Throw<CliException>(() => TextsCommand.Export("x.json", "../de", keys: null));
+        using var folder = new TempFolder();
+
+        Should.Throw<CliException>(() => TextsCommand.Export(Path.Combine(folder.Path, "a.json"), "de", "/(/"));
+        Should.Throw<CliException>(() => TextsCommand.Export(Path.Combine(folder.Path, "b.json"), "../de", keys: null));
+    }
+
+    [Fact]
+    public void Export_reports_a_pattern_that_takes_too_long()
+    {
+        using var folder = new TempFolder();
+
+        Should.Throw<CliException>(() => TextsCommand.Export(Path.Combine(folder.Path, "a.json"), "de", "/^(\\w+\\s?)*\\d$/")).Message.ShouldContain("too long");
+        File.Exists(Path.Combine(folder.Path, "a.json")).ShouldBeFalse();
     }
 }
