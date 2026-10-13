@@ -177,6 +177,69 @@ public sealed class ServiceDirectoryTests
     }
 
     [Fact]
+    public async Task A_source_that_ignores_cancellation_is_unavailable_after_three_seconds()
+    {
+        using var provider = Build(new FakeHandler(_ => Json(Apps)), aspire: o => o.Url = "http://aspire.test", configure: s => s.AddSingleton<IServiceSource, HangingSource>());
+        var directory = Dir(provider);
+
+        var started = DateTime.UtcNow;
+        var all = await directory.GetAllAsync(Ct);
+        var hung = await directory.ResolveAsync("hanging:x", Ct);
+
+        all.Services.Select(s => s.Name).ShouldBe(["billing", "shop"]);
+        all.UnavailableSources.ShouldBe(["hanging"]);
+        hung.ShouldBeNull();
+        (DateTime.UtcNow - started).ShouldBeLessThan(TimeSpan.FromSeconds(9));
+    }
+
+    [Fact]
+    public async Task Every_entry_carries_the_name_of_its_source()
+    {
+        using var provider = Build(new FakeHandler(_ => Json(Apps)), configure: s => s.AddSingleton<IServiceSource, MislabelingSource>());
+        var directory = Dir(provider);
+
+        var all = await directory.GetAllAsync(Ct);
+        var resolved = await directory.ResolveAsync("mislabeled", Ct);
+
+        all.Services.ShouldHaveSingleItem().Source.ShouldBe("mislabeling");
+        resolved!.Source.ShouldBe("mislabeling");
+    }
+
+    [Fact]
+    public async Task A_qualified_name_asks_that_source_only()
+    {
+        var handler = new FakeHandler(request => request.RequestUri!.AbsolutePath == "/api/retrieve/apps" ? Json(Apps) : new HttpResponseMessage(HttpStatusCode.OK));
+        using var provider = Build(
+            handler,
+            aspire: o => o.Url = "http://aspire.test",
+            services: o => o["billing"] = new CoworkeeServiceOptions { Url = "http://configured.test" });
+        var directory = Dir(provider);
+
+        var plain = await directory.ResolveAsync("billing", Ct);
+        var app = await directory.ResolveAsync("app:billing", Ct);
+        var aspire = await directory.ResolveAsync("AspireUI:Billing", Ct);
+
+        (plain!.Source, plain.Url).ShouldBe(("app", "http://configured.test"));
+        (app!.Source, app.Url).ShouldBe(("app", "http://configured.test"));
+        (aspire!.Source, aspire.Url).ShouldBe(("aspireui", "http://localhost:5001"));
+        (await directory.ResolveAsync("aspireui:mail", Ct)).ShouldBeNull();
+        (await directory.ResolveAsync("nope:billing", Ct)).ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task A_failure_the_source_already_logged_is_not_logged_again_and_the_user_info_stays_out_of_the_log()
+    {
+        var log = new ListLoggerProvider();
+        var handler = new FakeHandler(_ => new HttpResponseMessage(HttpStatusCode.InternalServerError));
+        using var provider = Build(handler, log, o => o.Url = "http://name:pw0rd@aspire.test");
+
+        await Dir(provider).GetAllAsync(Ct);
+
+        log.Messages.ShouldHaveSingleItem().ShouldNotContain("pw0rd");
+        handler.Requests.ShouldHaveSingleItem().RequestUri!.UserInfo.ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task Without_an_AspireUI_address_nothing_is_requested()
     {
         var handler = new FakeHandler(_ => Json(Apps));
@@ -280,6 +343,22 @@ public sealed class ServiceDirectoryTests
 
         public Task<IReadOnlyList<ServiceDto>> GetAsync(CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<ServiceDto>>([new ServiceDto("own", "own", "http://own.test", ServiceHealth.Healthy, "own")]);
+    }
+
+    private sealed class HangingSource : IServiceSource
+    {
+        public string Name => "hanging";
+
+        public async Task<IReadOnlyList<ServiceDto>> GetAsync(CancellationToken cancellationToken) =>
+            await new TaskCompletionSource<IReadOnlyList<ServiceDto>>().Task;
+    }
+
+    private sealed class MislabelingSource : IServiceSource
+    {
+        public string Name => "mislabeling";
+
+        public Task<IReadOnlyList<ServiceDto>> GetAsync(CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<ServiceDto>>([new ServiceDto("mislabeled", "mislabeled", "http://m.test", ServiceHealth.Healthy, "other")]);
     }
 
     private sealed class ThrowingSource : IServiceSource

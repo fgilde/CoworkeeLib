@@ -20,10 +20,12 @@ internal sealed partial class AspireUIServiceSource(
     public async Task<IReadOnlyList<ServiceDto>> GetAsync(CancellationToken cancellationToken)
     {
         var current = options.CurrentValue;
-        if (!Uri.TryCreate(current.Url, UriKind.Absolute, out var url))
+        if (!Uri.TryCreate(current.Url, UriKind.Absolute, out var configured))
         {
             return [];
         }
+
+        var url = new UriBuilder(configured) { UserName = "", Password = "" }.Uri;
 
         var fetched = await cache.GetOrCreateAsync("coworkee:aspireui:" + url, async token => await FetchAsync(url, current.ApiKey, token), Entry, cancellationToken: cancellationToken);
         return fetched.Unavailable ? throw new ServiceSourceUnavailableException(Name) : fetched.Services;

@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Coworkee.Settings;
 
-/// <summary>A place the service directory learns services from; register your own with <c>TryAddEnumerable</c>. Throw when the source cannot be asked: the directory leaves it out and reports it as unavailable.</summary>
+/// <summary>A place the service directory learns services from; register your own with <c>TryAddEnumerable</c>. Throw when the source cannot be asked, or take longer than three seconds: the directory leaves it out and reports it as unavailable.</summary>
 public interface IServiceSource
 {
     string Name { get; }
@@ -25,39 +25,54 @@ public interface IServiceDirectory
     /// <summary>Every service of every source, the configured ones with their live health; a source that fails is named in <c>UnavailableSources</c>.</summary>
     Task<ServiceDirectoryResult> GetAllAsync(CancellationToken cancellationToken);
 
-    /// <summary>The service by name, case-insensitive; the first source in registration order that knows it wins, and the configured services are registered first. Fast: the health of a configured service is not probed and stays <see cref="ServiceHealth.Unknown"/>.</summary>
+    /// <summary>The service by name, case-insensitive; the first source in registration order that knows it wins, and the configured services are registered first. <c>"source:name"</c> (e.g. <c>aspireui:billing</c>) asks that source only. Null when no source knows it or the source is unavailable. Fast: the health of a configured service is not probed and stays <see cref="ServiceHealth.Unknown"/>.</summary>
     Task<ServiceDto?> ResolveAsync(string name, CancellationToken cancellationToken);
 }
 
 internal sealed partial class ServiceDirectory(IEnumerable<IServiceSource> sources, ILogger<ServiceDirectory> logger) : IServiceDirectory
 {
+    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(3);
+
     public async Task<ServiceDirectoryResult> GetAllAsync(CancellationToken cancellationToken)
     {
-        var results = await Task.WhenAll(sources.Select(async source => (source.Name, Services: await AskAsync(source, s => s.GetAsync(cancellationToken), cancellationToken))));
+        var results = await Task.WhenAll(sources.Select(async source => (source.Name, Services: await AskAsync(source, (s, token) => s.GetAsync(token), cancellationToken))));
         return new ServiceDirectoryResult(
-            results.SelectMany(r => r.Services ?? []).ToList(),
+            results.SelectMany(r => (r.Services ?? []).Select(s => s with { Source = r.Name })).ToList(),
             results.Where(r => r.Services is null).Select(r => r.Name).ToList());
     }
 
     public async Task<ServiceDto?> ResolveAsync(string name, CancellationToken cancellationToken)
     {
-        foreach (var source in sources)
+        var plain = name;
+        var candidates = sources.ToList();
+        if (name.Split(':', 2) is [var qualifier, var rest] && candidates.Where(s => string.Equals(s.Name, qualifier, StringComparison.OrdinalIgnoreCase)).ToList() is { Count: > 0 } qualified)
         {
-            var found = await AskAsync(source, s => s.FindAsync(name, cancellationToken), cancellationToken);
-            if (found is not null)
+            (plain, candidates) = (rest, qualified);
+        }
+
+        foreach (var source in candidates)
+        {
+            if (await AskAsync(source, (s, token) => s.FindAsync(plain, token), cancellationToken) is { } found)
             {
-                return found;
+                return found with { Source = source.Name };
             }
         }
 
         return null;
     }
 
-    private async Task<T?> AskAsync<T>(IServiceSource source, Func<IServiceSource, Task<T>> ask, CancellationToken cancellationToken)
+    private async Task<T?> AskAsync<T>(IServiceSource source, Func<IServiceSource, CancellationToken, Task<T>> ask, CancellationToken cancellationToken)
     {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(Timeout);
         try
         {
-            return await ask(source);
+            return await ask(source, timeout.Token).WaitAsync(timeout.Token);
+        }
+        catch (ServiceSourceUnavailableException) when (!cancellationToken.IsCancellationRequested)
+        {
+            LogUnavailableAlreadyReported(source.Name);
+            return default;
         }
         catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
         {
@@ -68,6 +83,9 @@ internal sealed partial class ServiceDirectory(IEnumerable<IServiceSource> sourc
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "The service source {Source} is unavailable ({Reason})")]
     private partial void LogUnavailable(string source, string reason);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "The service source {Source} is unavailable, the source logged why")]
+    private partial void LogUnavailableAlreadyReported(string source);
 }
 
 [RequiresPermission(SettingsPermissions.Manage)]
