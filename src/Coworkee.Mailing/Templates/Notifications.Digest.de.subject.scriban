@@ -1,1 +1,1 @@
-Du hast {{ notifications.size }} neue Benachrichtigungen
+Sie haben {{ notifications.size }} neue Benachrichtigungen

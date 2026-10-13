@@ -1,2 +1,2 @@
 <p>Hallo {{ user.first_name }},</p>
-<p>danke für deine Registrierung. Ein Administrator prüft dein Konto in Kürze.</p>
+<p>vielen Dank für Ihre Registrierung. Ein Administrator prüft Ihr Konto in Kürze.</p>

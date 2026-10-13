@@ -1,1 +1,1 @@
-Du bist eingeladen, {{ user.first_name }}
+Sie sind eingeladen, {{ user.first_name }}

@@ -58,13 +58,13 @@
   "Getting started": "Erste Schritte",
   "Important links": "Wichtige Links",
   "Sign in with one of the seeded accounts, then open the dashboard, the catalog or the document store. Every table loads through OData and offers facets, search, sorting, export and multi-select.": "Melden Sie sich mit einem der angelegten Konten an und öffnen Sie dann das Dashboard, den Katalog oder die Dokumentenablage. Jede Tabelle lädt über OData und bietet Facetten, Suche, Sortierung, Export und Mehrfachauswahl.",
-  "Template repository": "Repository des Templates",
+  "Template repository": "Template-Repository",
   "Coworkee developer documentation": "Coworkee-Entwicklerdokumentation",
   "public": "öffentlich",
   "private": "privat",
   "Communication": "Kommunikation",
-  "Site Settings": "Seiteneinstellungen",
-  "Database Backups": "Datenbanksicherungen",
-  "Audit Trails": "Änderungsprotokoll",
+  "Site Settings": "App-Einstellungen",
+  "Database Backups": "Datenbank-Backups",
+  "Audit Trails": "Audit-Log",
   "Sign in with the seeded administrator account (see LOGIN.md in the solution folder), then add your first module with coworkee module add.": "Melden Sie sich mit dem angelegten Administratorkonto an (siehe LOGIN.md im Solution-Ordner) und fügen Sie dann mit coworkee module add Ihr erstes Modul hinzu."
 }
