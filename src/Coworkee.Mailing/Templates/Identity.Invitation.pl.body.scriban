@@ -1,0 +1,3 @@
+<p>Dzień dobry, {{ user.first_name }}!</p>
+<p>Dla Ciebie utworzono konto: {{ user.email }}. Wybierz hasło, aby się zalogować.</p>
+<p style="margin:24px 0;"><a href="{{ invitation_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">Wybierz hasło</a></p>

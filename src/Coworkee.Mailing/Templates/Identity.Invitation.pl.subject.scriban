@@ -1,0 +1,1 @@
+Zaproszenie dla Ciebie, {{ user.first_name }}

@@ -1,0 +1,2 @@
+<p>Dzień dobry, {{ user.first_name }}!</p>
+<p>Dziękujemy za rejestrację. Administrator wkrótce sprawdzi Twoje konto.</p>

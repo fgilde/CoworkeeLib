@@ -1,0 +1,7 @@
+<p>Dzień dobry, {{ user.first_name }}!</p>
+{{ if pending }}
+<p>Dla Twojego konta zażądano nowego adresu e-mail: {{ new_email }}. Zastąpi on obecny adres po otwarciu linku wysłanego na ten nowy adres.</p>
+{{ else }}
+<p>Adres e-mail Twojego konta został zmieniony na {{ new_email }}. Od teraz logujesz się za pomocą nowego adresu.</p>
+{{ end }}
+<p>Jeśli to nie Twoja prośba, natychmiast zmień hasło i powiadom administratora.</p>

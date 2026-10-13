@@ -1,0 +1,3 @@
+<p>Dzień dobry, {{ user.first_name }}!</p>
+<p>Twoje konto {{ user.email }} zostało utworzone.</p>
+<p style="margin:24px 0;"><a href="{{ login_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">Zaloguj się</a></p>
