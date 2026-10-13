@@ -44,3 +44,11 @@ context.Services.Configure<ThemingOptions>(themes =>
 ```
 
 An unknown `DefaultTheme` keeps Ocean. An app theme with the name of a built-in or another app theme, or based on an unknown theme, stops the host at start with a message. The default applies until an organisation chooses its own theme (setup or *Make default*). `coworkee new --theme Forest --primary-color "#0a7d5a"` writes this for you.
+
+## Keycloak sign-in page
+
+With `Coworkee:Keycloak:ThemeDirectory` (Keycloak's themes folder) and `ThemeName` the API keeps a Keycloak login theme in the app's design: the colors of the system organisation's default theme for light and dark mode, its logo as file next to the stylesheet (without one `LogoUrl`), `AppName` above the form and the layout and media of the *Sign-in page* design. Relative paths (`/media/welcome.mp4`) are resolved against `BaseUrl`. The API writes the theme at start and a second after the default theme or the sign-in design is saved; each file is written next to the old one and then moved over it, so Keycloak never reads half a file. The Aspire app host fills these settings and mounts the folder (see [Aspire app host](../hosting/aspire.md#sign-in-page-in-the-apps-design)).
+
+The card *Keycloak sign-in page* on *Administration > Themes* shows when the theme was written last (or why it failed) and writes it at once with *Apply to Keycloak*; it only shows when the API has a theme folder. The endpoints are `GET /api/v1/themes/keycloak` and `POST /api/v1/themes/keycloak/apply` (`Themes.Manage`). The writer itself is `KeycloakLoginTheme.Write` in `Coworkee.Contracts.Theming`.
+
+In production Keycloak caches themes. Share a volume between the API and Keycloak (the API's `ThemeDirectory`, Keycloak's `/opt/keycloak/themes`), set the realm's login theme to the `ThemeName` once, and restart Keycloak after a change of the design, or start it with `--spi-theme--cache-themes=false --spi-theme--cache-templates=false` if a few milliseconds per page are fine. Without `ThemeDirectory` nothing is written.

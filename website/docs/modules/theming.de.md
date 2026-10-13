@@ -44,3 +44,11 @@ context.Services.Configure<ThemingOptions>(themes =>
 ```
 
 Ein unbekannter Name in `DefaultTheme` lässt Ocean als Standard. Ein App-Theme mit dem Namen eines eingebauten oder eines anderen App-Themes, oder auf Basis eines unbekannten Themes, hält den Host beim Start mit einer Meldung an. Der Standard gilt, bis eine Organisation ein eigenes Theme wählt (Setup oder *Als Standard*). `coworkee new --theme Forest --primary-color "#0a7d5a"` schreibt das für Sie.
+
+## Keycloak-Anmeldeseite
+
+Mit `Coworkee:Keycloak:ThemeDirectory` (dem Themes-Ordner von Keycloak) und `ThemeName` hält die API ein Keycloak-Login-Theme im Design der App: die Farben des Standard-Themes der System-Organisation für hellen und dunklen Modus, sein Logo als Datei neben dem Stylesheet (ohne Logo `LogoUrl`), `AppName` über dem Formular sowie Layout und Medien aus dem Design der *Anmeldeseite*. Relative Pfade (`/media/welcome.mp4`) werden gegen `BaseUrl` aufgelöst. Die API schreibt das Theme beim Start und eine Sekunde nachdem das Standard-Theme oder das Anmelde-Design gespeichert wurde; jede Datei entsteht neben der alten und wird dann darüber verschoben, Keycloak liest also nie eine halbe Datei. Der Aspire-AppHost füllt diese Einstellungen und mountet den Ordner (siehe [Aspire-AppHost](../hosting/aspire.md#anmeldeseite-im-design-der-app)).
+
+Die Karte *Keycloak-Anmeldeseite* unter *Administration > Themes* zeigt, wann das Theme zuletzt geschrieben wurde (oder warum es scheiterte), und schreibt es mit *Nach Keycloak übernehmen* sofort; sie erscheint nur, wenn die API einen Theme-Ordner hat. Die Endpunkte sind `GET /api/v1/themes/keycloak` und `POST /api/v1/themes/keycloak/apply` (`Themes.Manage`). Der Schreiber selbst ist `KeycloakLoginTheme.Write` in `Coworkee.Contracts.Theming`.
+
+In Produktion cacht Keycloak Themes. Teilen Sie ein Volume zwischen API und Keycloak (`ThemeDirectory` der API, `/opt/keycloak/themes` bei Keycloak), setzen Sie das Login-Theme des Realms einmal auf den `ThemeName` und starten Sie Keycloak nach einer Änderung des Designs neu, oder starten Sie es mit `--spi-theme--cache-themes=false --spi-theme--cache-templates=false`, wenn ein paar Millisekunden pro Seite in Ordnung sind. Ohne `ThemeDirectory` wird nichts geschrieben.
