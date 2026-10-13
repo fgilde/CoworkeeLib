@@ -3,6 +3,8 @@ using Coworkee.Client.Blazor.Components.Editors;
 using Coworkee.Client.Blazor.Pages.Admin;
 using Coworkee.Client.Blazor.Security;
 using Coworkee.Contracts.Identity;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
 using NSubstitute;
@@ -32,10 +34,10 @@ public sealed class ClientsPagesTests : ClientTestBase
     private static ClientDto App(string[] scopes) =>
         new(AppId, "app", "App", "public", "implicit", ["https://app.test/cb"], [], [ClientGrantTypes.AuthorizationCode], scopes, false, [], []);
 
-    private static void Type(IRenderedComponent<ChipListEditor> list, string text)
+    private static async Task Type(IRenderedComponent<ChipListEditor> list, string text)
     {
-        list.Find("input").Input(text);
-        list.Find("input").Blur();
+        await list.Find("input").InputAsync(new ChangeEventArgs { Value = text });
+        await list.Find("input").BlurAsync(new FocusEventArgs());
     }
 
     private (Task Editing, IReadOnlyList<IRenderedComponent<ChipListEditor>> Lists) EditApp()
@@ -52,8 +54,8 @@ public sealed class ClientsPagesTests : ClientTestBase
     {
         var (editing, lists) = EditApp();
 
-        Type(lists[1], "https://app.test/out");
-        Type(lists[2], "email orders:read");
+        await Type(lists[1], "https://app.test/out");
+        await Type(lists[2], "email orders:read");
         await _dialogs.Find("form").SubmitAsync();
         await editing;
 
@@ -110,16 +112,16 @@ public sealed class ClientsPagesTests : ClientTestBase
     {
         var (editing, lists) = EditApp();
 
-        Type(lists[1], "/out");
-        Type(lists[2], "bad/scope");
+        await Type(lists[1], "/out");
+        await Type(lists[2], "bad/scope");
 
+        lists[1].WaitForAssertion(() => lists[1].Markup.ShouldContain("Not an absolute address"));
         lists[1].FindAll("[data-chip]").ShouldBeEmpty();
-        lists[1].Markup.ShouldContain("Not an absolute address");
+        lists[2].WaitForAssertion(() => lists[2].Markup.ShouldContain("Letters, digits and . _ : - only"));
         lists[2].FindAll("[data-chip='bad/scope']").ShouldBeEmpty();
-        lists[2].Markup.ShouldContain("Letters, digits and . _ : - only");
 
-        lists[1].Find("input").Input(string.Empty);
-        lists[2].Find("input").Input(string.Empty);
+        await lists[1].Find("input").InputAsync(new ChangeEventArgs { Value = string.Empty });
+        await lists[2].Find("input").InputAsync(new ChangeEventArgs { Value = string.Empty });
         await _dialogs.Find("form").SubmitAsync();
         await editing;
     }
@@ -137,7 +139,7 @@ public sealed class ClientsPagesTests : ClientTestBase
 
         resources.Find("[data-chip='https://orders.test']");
         (await resources.Instance.Suggestions!(string.Empty, Xunit.TestContext.Current.CancellationToken)).ShouldBe(["https://stock.test"]);
-        Type(resources, "https://billing.test");
+        await Type(resources, "https://billing.test");
         await _dialogs.Find("form").SubmitAsync();
         await editing;
 

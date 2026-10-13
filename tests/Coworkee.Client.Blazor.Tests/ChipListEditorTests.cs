@@ -1,5 +1,6 @@
 using Bunit;
 using Coworkee.Client.Blazor.Components.Editors;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
@@ -35,6 +36,10 @@ public sealed class ChipListEditorTests : ClientTestBase
 
     private static AngleSharp.Dom.IElement Input(IRenderedComponent<ChipListEditor> editor) => editor.Find("input");
 
+    private static Task TypeAsync(IRenderedComponent<ChipListEditor> editor, string text) => Input(editor).InputAsync(new ChangeEventArgs { Value = text });
+
+    private static Task BlurAsync(IRenderedComponent<ChipListEditor> editor) => Input(editor).BlurAsync(new FocusEventArgs());
+
     private static Task EnterAsync(IRenderedComponent<ChipListEditor> editor) => Input(editor).KeyUpAsync(new KeyboardEventArgs { Key = "Enter" });
 
     [Fact]
@@ -42,7 +47,7 @@ public sealed class ChipListEditorTests : ClientTestBase
     {
         var editor = Open();
 
-        Input(editor).Input("profile");
+        await TypeAsync(editor, "profile");
         await EnterAsync(editor);
 
         _value.ShouldBe(["profile"]);
@@ -51,22 +56,22 @@ public sealed class ChipListEditorTests : ClientTestBase
     }
 
     [Fact]
-    public void Pasted_list_becomes_several_chips()
+    public async Task Pasted_list_becomes_several_chips()
     {
         var editor = Open();
 
-        Input(editor).Input("openid profile\nemail,phone");
+        await TypeAsync(editor, "openid profile\nemail,phone");
 
         _value.ShouldBe(["openid", "profile", "email", "phone"]);
         editor.FindAll("[data-chip]").Count.ShouldBe(4);
     }
 
     [Fact]
-    public void Duplicates_are_ignored()
+    public async Task Duplicates_are_ignored()
     {
         var editor = Open(["a"]);
 
-        Input(editor).Input("a b a B ");
+        await TypeAsync(editor, "a b a B ");
 
         _value.ShouldBe(["a", "b", "B"]);
     }
@@ -76,7 +81,7 @@ public sealed class ChipListEditorTests : ClientTestBase
     {
         var editor = Open(validate: v => Uri.IsWellFormedUriString(v, UriKind.Absolute) ? null : "Not an absolute address");
 
-        Input(editor).Input("/callback");
+        await TypeAsync(editor, "/callback");
         await EnterAsync(editor);
 
         _changes.ShouldBe(0);
@@ -86,11 +91,11 @@ public sealed class ChipListEditorTests : ClientTestBase
     }
 
     [Fact]
-    public void Valid_tokens_of_a_mixed_paste_are_added_and_the_invalid_ones_stay_in_the_field()
+    public async Task Valid_tokens_of_a_mixed_paste_are_added_and_the_invalid_ones_stay_in_the_field()
     {
         var editor = Open(validate: v => v.Contains('!') ? "No special characters" : null);
 
-        Input(editor).Input("ok bad! fine");
+        await TypeAsync(editor, "ok bad! fine");
 
         _value.ShouldBe(["ok", "fine"]);
         Input(editor).GetAttribute("value").ShouldBe("bad!");
@@ -143,7 +148,7 @@ public sealed class ChipListEditorTests : ClientTestBase
         var editor = Open(suggestions: (text, _) => Task.FromResult(Standard.Where(s => s.Contains(text)).AsEnumerable()));
         var search = editor.FindComponent<MudAutocomplete<string>>();
 
-        Input(editor).Input("pro");
+        await TypeAsync(editor, "pro");
         await editor.InvokeAsync(() => search.Instance.SelectOptionAsync("profile"));
 
         _value.ShouldBe(["profile"]);
@@ -151,24 +156,24 @@ public sealed class ChipListEditorTests : ClientTestBase
     }
 
     [Fact]
-    public void Leaving_the_field_keeps_typed_text()
+    public async Task Leaving_the_field_keeps_typed_text()
     {
         var editor = Open();
 
-        Input(editor).Input("custom.scope");
-        Input(editor).Blur();
+        await TypeAsync(editor, "custom.scope");
+        await BlurAsync(editor);
 
         _value.ShouldBe(["custom.scope"]);
         Input(editor).GetAttribute("value").ShouldBeNullOrEmpty();
     }
 
     [Fact]
-    public void Leaving_the_field_with_invalid_text_adds_nothing()
+    public async Task Leaving_the_field_with_invalid_text_adds_nothing()
     {
         var editor = Open(validate: v => v.Contains('/') ? "No slashes" : null);
 
-        Input(editor).Input("a/b");
-        Input(editor).Blur();
+        await TypeAsync(editor, "a/b");
+        await BlurAsync(editor);
 
         _changes.ShouldBe(0);
         editor.Markup.ShouldContain("No slashes");
@@ -179,7 +184,7 @@ public sealed class ChipListEditorTests : ClientTestBase
     private async Task<MudAutocomplete<string>> OpenListAsync(IRenderedComponent<ChipListEditor> editor, string text)
     {
         var search = editor.FindComponent<MudAutocomplete<string>>().Instance;
-        Input(editor).Input(text);
+        await TypeAsync(editor, text);
         await editor.InvokeAsync(search.OpenMenuAsync);
         search.Open.ShouldBeTrue();
         return search;
@@ -191,7 +196,7 @@ public sealed class ChipListEditorTests : ClientTestBase
         var editor = Open(suggestions: Offer);
         await OpenListAsync(editor, "pro");
 
-        Input(editor).Blur();
+        await BlurAsync(editor);
         _changes.ShouldBe(0);
 
         await _popovers.Find(".mud-overlay").ClickAsync(new());
@@ -207,7 +212,7 @@ public sealed class ChipListEditorTests : ClientTestBase
         var editor = Open(suggestions: Offer);
         var search = await OpenListAsync(editor, "pro");
 
-        Input(editor).Blur(); // the mousedown on the list item blurs the field before the click
+        await BlurAsync(editor); // the mousedown on the list item blurs the field before the click
         await editor.InvokeAsync(() => search.SelectOptionAsync("profile"));
 
         _value.ShouldBe(["profile"]);
@@ -244,11 +249,11 @@ public sealed class ChipListEditorTests : ClientTestBase
     }
 
     [Fact]
-    public void Rejected_tokens_are_not_repeated_in_the_field()
+    public async Task Rejected_tokens_are_not_repeated_in_the_field()
     {
         var editor = Open(validate: v => v.Contains('!') ? "No special characters" : null);
 
-        Input(editor).Input("bad! bad! ok");
+        await TypeAsync(editor, "bad! bad! ok");
 
         _value.ShouldBe(["ok"]);
         Input(editor).GetAttribute("value").ShouldBe("bad!");
@@ -260,14 +265,14 @@ public sealed class ChipListEditorTests : ClientTestBase
         var editor = Open(suggestions: Offer);
         var search = await OpenListAsync(editor, "pr");
 
-        Input(editor).Input("prx");
+        await TypeAsync(editor, "prx");
         await editor.InvokeAsync(search.OpenMenuAsync);
 
         search.Open.ShouldBeFalse();
         _changes.ShouldBe(0);
         Input(editor).GetAttribute("value").ShouldBe("prx");
 
-        Input(editor).Input("prxy");
+        await TypeAsync(editor, "prxy");
         await EnterAsync(editor);
         _value.ShouldBe(["prxy"]);
     }
@@ -278,7 +283,7 @@ public sealed class ChipListEditorTests : ClientTestBase
         var editor = Open(["profile"], suggestions: Offer);
         var search = await OpenListAsync(editor, "p");
 
-        Input(editor).Input("pro");
+        await TypeAsync(editor, "pro");
         await editor.InvokeAsync(search.OpenMenuAsync);
 
         search.Open.ShouldBeFalse();
@@ -292,10 +297,10 @@ public sealed class ChipListEditorTests : ClientTestBase
     {
         var editor = Open(suggestions: Offer);
         var search = await OpenListAsync(editor, "pr");
-        Input(editor).Input("prx");
+        await TypeAsync(editor, "prx");
         await editor.InvokeAsync(search.OpenMenuAsync);
 
-        Input(editor).Blur();
+        await BlurAsync(editor);
 
         _value.ShouldBe(["prx"]);
     }
@@ -307,7 +312,7 @@ public sealed class ChipListEditorTests : ClientTestBase
         await OpenListAsync(editor, "pro");
 
         await Input(editor).KeyDownAsync(new KeyboardEventArgs { Key = "Tab" });
-        Input(editor).Blur();
+        await BlurAsync(editor);
 
         _value.ShouldBe(["pro"]);
     }
