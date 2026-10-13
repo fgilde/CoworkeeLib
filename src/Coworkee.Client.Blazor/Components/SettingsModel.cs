@@ -49,7 +49,7 @@ public sealed partial class SettingsModel
         foreach (var (group, setting) in _settings)
         {
             var property = meta.Property(PropertyName(setting.Name))!
-                .WithLabel(l[setting.DisplayName])
+                .WithLabel(l[Label(setting, scope)])
                 .WithGroup(l[group.DisplayName]);
             if (Description(setting, l) is { Length: > 0 } description)
             {
@@ -68,6 +68,7 @@ public sealed partial class SettingsModel
                     property.RenderWith<MudExSelect<string>, string?>(s => s.Value, s => s.ItemCollection = [.. setting.Choices ?? []]);
                     break;
                 case SettingType.Language:
+                {
                     var empty = l[scope == SettingScope.Global ? "Configured default" : "Inherited"];
                     property.RenderWith<MudExSelect<string>, string?>(s => s.Value, s =>
                     {
@@ -75,6 +76,7 @@ public sealed partial class SettingsModel
                         s.ToStringFunc = culture => string.IsNullOrEmpty(culture) ? empty : l.Languages.FirstOrDefault(c => c.Culture == culture)?.Name ?? culture!;
                     });
                     break;
+                }
             }
 
             if (setting.DefaultValue is { Length: > 0 } fallback && setting.Type is SettingType.String or SettingType.Int)
@@ -92,6 +94,9 @@ public sealed partial class SettingsModel
         }
     }
 #pragma warning restore BL0005
+
+    private static string Label(SettingDefinitionDto setting, SettingScope scope) =>
+        setting.Type == SettingType.Language && scope == SettingScope.User ? "Language" : setting.DisplayName;
 
     private string? Description(SettingDefinitionDto setting, CoworkeeLocalizer l)
     {
@@ -131,6 +136,7 @@ public sealed partial class SettingsModel
         {
             SettingType.Secret => null,
             SettingType.Bool or SettingType.Choice => stored ?? setting.DefaultValue, // a box or select cannot show "not set"
+            SettingType.Language => stored ?? string.Empty, // the select lists the empty option as "", not null
             _ => stored,
         };
     }

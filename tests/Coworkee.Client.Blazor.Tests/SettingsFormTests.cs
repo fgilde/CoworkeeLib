@@ -140,21 +140,60 @@ public sealed class SettingsFormTests : ClientTestBase
     [InlineData(SettingScope.Tenant, "Inherited")]
     public async Task A_language_setting_is_a_select_of_the_languages(SettingScope scope, string emptyOption)
     {
+        var form = await RenderLanguageAsync(scope, "de");
+
+        form.WaitForAssertion(() => SelectedText(form).ShouldBe("Deutsch"));
+        form.FindAll(".mud-ex-list-item-text").Select(i => i.TextContent.Trim()).ShouldBe([emptyOption, "English", "Deutsch"]);
+    }
+
+    [Theory]
+    [InlineData(SettingScope.Global, "Configured default")]
+    [InlineData(SettingScope.Tenant, "Inherited")]
+    [InlineData(SettingScope.User, "Inherited")]
+    public async Task An_unset_language_shows_the_empty_option(SettingScope scope, string emptyOption)
+    {
+        var form = await RenderLanguageAsync(scope, null);
+
+        form.WaitForAssertion(() => SelectedText(form).ShouldBe(emptyOption));
+    }
+
+    [Fact]
+    public async Task Choosing_the_empty_language_clears_the_stored_one()
+    {
+        var form = await RenderLanguageAsync(SettingScope.Tenant, "de");
+        form.WaitForAssertion(() => SelectedText(form).ShouldBe("Deutsch"));
+
+        await form.FindAll(".mud-ex-list-item").First().ClickAsync(new());
+        await form.InvokeAsync(() => form.Instance.SaveAsync());
+
+        await Api.Received(1).SetSettingsAsync(SettingScope.Tenant,
+            Arg.Is<IReadOnlyDictionary<string, string?>>(v => v.Count == 1 && v["Localization.Culture"] == null), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task The_language_of_a_user_is_labeled_Language()
+    {
+        var form = await RenderLanguageAsync(SettingScope.User, null);
+
+        form.WaitForAssertion(() => Labels(form).ShouldContain("Language"));
+        Labels(form).ShouldNotContain("Default language");
+    }
+
+    private async Task<IRenderedComponent<SettingsForm>> RenderLanguageAsync(SettingScope scope, string? stored)
+    {
         Localization.GetLanguagesAsync(Arg.Any<bool>(), Arg.Any<CancellationToken>())
             .Returns([new LanguageDto(null, "en", "English", true, true), new LanguageDto(null, "de", "Deutsch", true, false)]);
         await Services.GetRequiredService<CoworkeeLocalizer>().InitializeAsync(null);
         SettingScope[] scopes = [scope];
-        Api.GetSettingDefinitionsAsync(false, Arg.Any<CancellationToken>()).Returns(
+        Api.GetSettingDefinitionsAsync(scope == SettingScope.User, Arg.Any<CancellationToken>()).Returns(
         [
             new SettingGroupDto("Localization", "Localization", [new SettingDefinitionDto("Localization.Culture", "Default language", null, SettingType.Language, null, scopes, null)]),
         ]);
-        Api.GetSettingsAsync(scope, Arg.Any<CancellationToken>()).Returns([new SettingValueDto("Localization.Culture", "de", true)]);
-
-        var form = Render<SettingsForm>(p => p.Add(f => f.Scope, scope));
-
-        form.WaitForAssertion(() => form.Find("div.mud-input-root.mud-ex-select-input").TextContent.Trim().ShouldBe("Deutsch"));
-        form.FindAll(".mud-ex-list-item-text").Select(i => i.TextContent.Trim()).ShouldBe([emptyOption, "English", "Deutsch"]);
+        Api.GetSettingsAsync(scope, Arg.Any<CancellationToken>()).Returns([new SettingValueDto("Localization.Culture", stored, stored is not null)]);
+        return Render<SettingsForm>(p => p.Add(f => f.Scope, scope));
     }
+
+    private static string SelectedText(IRenderedComponent<SettingsForm> form) => form.Find("div.mud-input-root.mud-ex-select-input").TextContent.Trim();
     [Fact]
     public void A_setting_name_becomes_a_property_name()
     {
