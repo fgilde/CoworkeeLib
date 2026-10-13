@@ -9,6 +9,8 @@ public sealed partial class CoworkeeApp
 {
     internal const string KeycloakHeaderLimit = "QUARKUS_HTTP_LIMITS_MAX_HEADER_LIST_SIZE";
 
+    private const string Provider = "keycloak";
+
     private readonly List<KeycloakClient> _keycloakClients = [];
     private IResourceBuilder<ParameterResource>? _keycloakPassword;
     private string? _realm;
@@ -61,7 +63,6 @@ public sealed partial class CoworkeeApp
             .WithEnvironment(KeycloakHeaderLimit, "65536")
             .OnResourceReady((keycloak, ready, cancellationToken) => ReconcileRealmAsync(keycloak, ready.Services, options, cancellationToken));
 
-        const string Provider = "keycloak";
         auth.WaitFor(Keycloak)
             .WithSetting(s => s.Coworkee.Auth.External.Mode, options.LoginMode.ToString())
             .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].DisplayName, options.DisplayName)
@@ -70,6 +71,19 @@ public sealed partial class CoworkeeApp
             .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].ClientSecret, authClient.Secret)
             .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].RequireHttpsMetadata, false)
             .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].TrustEmail, options.TrustEmail);
+    }
+
+    /// <summary>
+    /// The api serves the settings, so it needs the mode and the provider names to define the sign-in methods setting. The auth server
+    /// alone registers the providers (with their secrets), so nothing else of them goes here.
+    /// </summary>
+    private void AddKeycloakSignInSettings(IResourceBuilder<ProjectResource> api)
+    {
+        if (Options.Keycloak is { } options)
+        {
+            api.WithSetting(s => s.Coworkee.Auth.External.Mode, options.LoginMode.ToString())
+                .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].DisplayName, options.DisplayName);
+        }
     }
 
     private IResourceBuilder<KeycloakResource> RequireKeycloak(string caller) =>

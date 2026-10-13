@@ -166,6 +166,7 @@ public sealed class CoworkeeAccountModule : CoworkeeModule, IWebModule
         context.Services.AddSingleton<ISettingDefinitionContributor, AccountSettingDefinitions>();
         context.Services.AddSingleton<ISettingDefinitionContributor, SecuritySettingDefinitions>();
         context.Services.AddSingleton<ISettingDefinitionContributor, ActiveRoleSettingDefinitions>();
+        context.Services.AddSingleton<ISettingDefinitionContributor, LoginModeSettingDefinitions>();
         context.Services.AddScoped<Coworkee.Identity.Roles.IActiveRoleSwitch, ActiveRoleSetting>();
         context.Services.AddSingleton<Coworkee.Domain.IRealtimeTopicMapper, ActiveRoleSettingTopics>();
         context.Services.AddScoped<PasswordPolicy>();

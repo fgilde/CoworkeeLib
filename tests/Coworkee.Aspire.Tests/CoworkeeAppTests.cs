@@ -1,6 +1,7 @@
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Coworkee.Aspire.Settings;
+using Coworkee.Contracts.Configuration;
 
 namespace Coworkee.Aspire.Tests;
 
@@ -89,6 +90,23 @@ public sealed class CoworkeeAppTests
         grafana.Secret.Resource.Name.ShouldBe("realm-grafana-secret");
         (await app.KeycloakPassword(ada).GetValueAsync(TestContext.Current.CancellationToken)).ShouldBe("Ada-Password1");
         app.KeycloakPassword(app.KeycloakUsers[1]).ValueProviders.OfType<ParameterResource>().Single().Name.ShouldBe("realm-keycloak-user-password");
+    }
+
+    [Fact]
+    public async Task The_api_hosting_the_settings_gets_the_sign_in_mode_and_provider_names_but_no_secrets()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var app = builder.AddCoworkeeApp("realm", o => o.UseKeycloak(k => k.LoginMode = LoginMode.External));
+
+        app.AddMigrations<FakeProjects.Migrations>();
+        app.AddAuthServer<FakeProjects.Auth>();
+        var api = app.AddApi<FakeProjects.Api>();
+
+        var settings = await Environment(api.Resource);
+        settings["Coworkee__Auth__External__Mode"].ShouldBe("External");
+        settings["Coworkee__Auth__External__Providers__keycloak__DisplayName"].ShouldBe("Keycloak");
+        settings.Keys.Where(k => k.StartsWith("Coworkee__Auth__External__")).ShouldBe(
+            ["Coworkee__Auth__External__Mode", "Coworkee__Auth__External__Providers__keycloak__DisplayName"], ignoreOrder: true);
     }
 
     [Fact]

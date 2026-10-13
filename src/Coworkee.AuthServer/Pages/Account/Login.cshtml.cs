@@ -22,7 +22,7 @@ public sealed class LoginModel(
 
     public bool AllowRegistration { get; private set; }
 
-    public LoginMode Mode => Providers.Count == 0 ? LoginMode.Internal : options.Value.External.Mode;
+    public LoginMode Mode { get; private set; } = LoginMode.Internal;
 
     public bool ShowsPasswordForm => Mode != LoginMode.External;
 
@@ -31,8 +31,9 @@ public sealed class LoginModel(
     public IReadOnlyList<(string Scheme, string DisplayName)> Providers =>
         [.. options.Value.External.Providers.Select(p => (p.Key, p.Value.DisplayName ?? p.Key))];
 
-    public IActionResult OnPostExternal(string provider, string? returnUrl)
+    public async Task<IActionResult> OnPostExternalAsync(string provider, string? returnUrl)
     {
+        Mode = await LoginModes.ResolveAsync(settings, options.Value, HttpContext.RequestAborted);
         if (Mode == LoginMode.Internal || !options.Value.External.Providers.ContainsKey(provider))
         {
             return NotFound();
@@ -44,6 +45,7 @@ public sealed class LoginModel(
 
     public async Task OnGetAsync(string? returnUrl)
     {
+        Mode = await LoginModes.ResolveAsync(settings, options.Value, HttpContext.RequestAborted);
         AllowRegistration = (await RegistrationPolicy.LoadAsync(settings, HttpContext.RequestAborted)).Enabled && ShowsPasswordForm;
 
         // the authorization request carries the client's login_hint (the address entered in setup, for example)
@@ -56,6 +58,7 @@ public sealed class LoginModel(
 
     public async Task<IActionResult> OnPostAsync(string? returnUrl)
     {
+        Mode = await LoginModes.ResolveAsync(settings, options.Value, HttpContext.RequestAborted);
         if (!ShowsPasswordForm)
         {
             return NotFound();

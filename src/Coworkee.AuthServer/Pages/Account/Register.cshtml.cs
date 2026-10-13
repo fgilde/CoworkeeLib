@@ -111,7 +111,7 @@ public sealed class RegisterModel(
     private async Task<bool> LoadAsync(bool external = false)
     {
         var policy = await RegistrationPolicy.LoadAsync(settings, HttpContext.RequestAborted);
-        if (!policy.Enabled || (!external && auth.Value.External.Mode == LoginMode.External && auth.Value.External.Providers.Count > 0)
+        if (!policy.Enabled || (!external && await LoginModes.ResolveAsync(settings, auth.Value, HttpContext.RequestAborted) == LoginMode.External)
             || await tenants.GetSystemTenantIdAsync(HttpContext.RequestAborted) is not { } tenantId)
         {
             return false;

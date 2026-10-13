@@ -122,6 +122,7 @@ public sealed partial class CoworkeeApp
             api.WithSetting(s => s.Coworkee.SetupToken, setupToken);
         }
 
+        AddKeycloakSignInSettings(api);
         auth.WithSetting(s => s.Coworkee.Auth.ApiScopes[ApiAudience], ApiAudience);
         _apis.Add(api);
         return Added<TProject>(api, suffix);
