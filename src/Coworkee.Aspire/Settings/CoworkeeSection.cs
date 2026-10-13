@@ -26,5 +26,7 @@ public sealed class CoworkeeSection
 
     public CoworkeeServicesOptions Services { get; } = new();
 
+    public CoworkeeAspireUIOptions AspireUI { get; } = new();
+
     public string? SetupToken { get; set; }
 }

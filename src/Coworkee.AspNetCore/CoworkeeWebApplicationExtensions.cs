@@ -31,6 +31,7 @@ public static class CoworkeeWebApplicationExtensions
         builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
         builder.Services.Configure<CoworkeeRateLimitOptions>(builder.Configuration.GetSection(CoworkeeRateLimitOptions.Section));
         builder.Services.Configure<Contracts.Configuration.CoworkeeServicesOptions>(builder.Configuration.GetSection(Contracts.Configuration.CoworkeeServicesOptions.Section));
+        builder.Services.Configure<Contracts.Configuration.CoworkeeAspireUIOptions>(builder.Configuration.GetSection(Contracts.Configuration.CoworkeeAspireUIOptions.Section));
         builder.Services.AddRateLimiter(_ => { });
         builder.Services.AddOptions<RateLimiterOptions>().Configure<IOptions<CoworkeeRateLimitOptions>>(CoworkeeRateLimiter.Configure);
         var modules = builder.Services.AddCoworkeeModules<TRoot>(builder.Configuration);

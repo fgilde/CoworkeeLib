@@ -83,10 +83,18 @@ public sealed class AppSettingsTests(SettingsApp app) : IAsyncLifetime
     [Fact]
     public async Task Services_show_with_their_live_status()
     {
-        var services = (await Admin.GetFromJsonAsync<ServiceDto[]>("/api/v1/services", Ct))!;
+        var result = (await Admin.GetFromJsonAsync<ServiceDirectoryResult>("/api/v1/services", Ct))!;
+        var services = result.Services;
 
-        services.Select(s => (s.Name, s.Title, s.Health)).ShouldBe(
-            [("probed", "probed", ServiceHealth.Healthy), ("self", "Self", ServiceHealth.Healthy), ("sick", "sick", ServiceHealth.Unhealthy)]);
+        services.Select(s => (s.Name, s.Title, s.Health, s.Source)).ShouldBe(
+        [
+            ("probed", "probed", ServiceHealth.Healthy, "app"),
+            ("self", "Self", ServiceHealth.Healthy, "app"),
+            ("sick", "sick", ServiceHealth.Unhealthy, "app"),
+            ("billing", "billing", ServiceHealth.Healthy, "aspireui"),
+        ]);
+        services.Last().Urls.ShouldBe(["http://localhost:5001"]);
+        result.UnavailableSources.ShouldBeEmpty();
         app.App.Services.GetRequiredService<IOptions<CoworkeeServicesOptions>>().Value["SELF"].Url.ShouldBe("http://localhost/");
     }
 
