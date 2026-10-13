@@ -6,7 +6,7 @@
 }
 else
 {
-    <MudExObjectEditForm @key="_revision" Value="_model.Value" MetaInformation="_meta" IsLoading="_saving"
+    <MudExObjectEditForm T="object" @key="_revision" Value="_model.Value" MetaInformation="_meta" IsLoading="_saving" AfterImport="Imported"
                          @attributes="SettingsFormRules.FormAttributes" DefaultGroupName="@L["General"]"
                          OnValidSubmit="SaveAsync" />
 }

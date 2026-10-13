@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Reflection;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Settings;
@@ -114,6 +115,25 @@ public sealed partial class SettingsModel
 
         var stored = l[_stored.GetValueOrDefault(setting.Name)?.HasValue == true ? "A value is stored. Type to replace it." : "No value stored."];
         return description is null ? stored : $"{description} {stored}";
+    }
+
+    /// <summary>Takes the values of an exported file; secrets are never imported, and settings the file lacks stay as they are.</summary>
+    public void Import(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+        if (document.RootElement.ValueKind != JsonValueKind.Object)
+        {
+            return;
+        }
+
+        foreach (var (_, setting) in _settings.Where(s => s.Setting.Type != SettingType.Secret))
+        {
+            if (document.RootElement.TryGetProperty(PropertyName(setting.Name), out var element))
+            {
+                var text = element.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined ? null : element.ValueKind == JsonValueKind.String ? element.GetString() : element.GetRawText();
+                Property(setting).SetValue(Value, Parse(setting, text));
+            }
+        }
     }
 
     /// <summary>What changed since loading, as the API stores it: invariant text, null to fall back to the default; secrets only when typed.</summary>

@@ -100,7 +100,9 @@ public static class AppConfigurationRegistrationExtensions
         {
             registration = registration with
             {
-                Locked = [.. AppSettingsRules.Locked, .. registration.Locked], Protected = [.. AppSettingsRules.Protected, .. registration.Protected], Hidden = [.. AppSettingsRules.Hidden, .. registration.Hidden],
+                Locked = [.. AppSettingsRules.Locked, .. registration.Locked],
+                Protected = [.. AppSettingsRules.Protected, .. registration.Protected],
+                Hidden = [.. AppSettingsRules.Hidden, .. registration.Hidden],
             };
         }
 

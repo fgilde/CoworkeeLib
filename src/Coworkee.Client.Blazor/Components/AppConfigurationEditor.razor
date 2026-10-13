@@ -12,9 +12,9 @@
 }
 else
 {
-    <MudExObjectEditForm @key="_revision" Value="_value" IsLoading="_busy"
+    <MudExObjectEditForm T="T" @key="_revision" Value="_value" IsLoading="_busy"
                          @attributes="SettingsFormRules.FormAttributes" DefaultGroupName="@L["General"]"
-                         MetaInformation="_meta"
+                         MetaInformation="_meta" AfterImport="Imported"
                          OnValidSubmit="SaveAsync">
         <ToolBarContent>
             <MudSpacer />

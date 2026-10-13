@@ -110,7 +110,7 @@ Ohne weiteren Code zeigt die Seite **App-Einstellungen**: `CoworkeeAppSettings`,
 
 ### App-Einstellungen erweitern
 
-Leiten Sie von `CoworkeeAppSettings` ab und registrieren Sie den Typ auf beiden Seiten. Die Sperren der eingebauten Abschnitte bleiben; eigene kommen hinzu:
+Leiten Sie von `CoworkeeAppSettings` ab und registrieren Sie den Typ auf beiden Seiten. Die Regeln der eingebauten Abschnitte bleiben; eigene kommen hinzu:
 
 ```csharp title="Contracts"
 public sealed class MyAppSettings : CoworkeeAppSettings

@@ -110,7 +110,7 @@ Without further code the page shows **App settings**: `CoworkeeAppSettings`, bou
 
 ### Extend the app settings
 
-Derive from `CoworkeeAppSettings` and register the type on both sides. The locks of the built-in sections stay; add your own:
+Derive from `CoworkeeAppSettings` and register the type on both sides. The rules of the built-in sections stay; add your own:
 
 ```csharp title="Contracts"
 public sealed class MyAppSettings : CoworkeeAppSettings

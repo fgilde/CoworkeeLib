@@ -64,6 +64,29 @@ public sealed class SettingsFormTests : ClientTestBase
     }
 
     [Fact]
+    public async Task Secrets_are_not_exported_and_an_import_leaves_them_alone()
+    {
+        var form = Render<SettingsForm>(p => p.Add(f => f.Scope, SettingScope.Global));
+        form.WaitForAssertion(() => Input(form, "Host"));
+        Input(form, "Password").Change("typed-secret");
+        var edit = form.FindComponent<MudExObjectEditForm<object>>().Instance;
+
+        var json = edit.ToJson();
+
+        json.ShouldContain("smtp.acme.test");
+        json.ShouldNotContain("typed-secret");
+        json.ShouldNotContain("Mail_Smtp_Password");
+
+        const string file = """{"Mail_Smtp_Host": "imported.test", "Mail_Smtp_Password": "injected"}""";
+        await form.InvokeAsync(() => edit.LoadFromJson(file, true));
+        await form.InvokeAsync(() => edit.AfterImport.InvokeAsync(new ImportedData<object> { Json = file, Value = edit.Value }));
+        await form.InvokeAsync(() => form.Instance.SaveAsync());
+
+        await Api.Received(1).SetSettingsAsync(SettingScope.Global,
+            Arg.Is<IReadOnlyDictionary<string, string?>>(v => v["Mail.Smtp.Host"] == "imported.test" && v["Mail.Smtp.Password"] == "typed-secret" && v.Count == 2), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task Loads_once_while_the_scope_stays()
     {
         var form = Render<SettingsForm>(p => p.Add(f => f.Scope, SettingScope.Global));

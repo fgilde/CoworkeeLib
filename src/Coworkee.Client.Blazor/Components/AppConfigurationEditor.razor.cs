@@ -35,7 +35,6 @@ public partial class AppConfigurationEditor<T>
     private int _revision;
     private string? _loadedSection;
 
-
     protected override async Task OnParametersSetAsync()
     {
         if (_loadedSection != Registration.Section)
@@ -51,22 +50,30 @@ public partial class AppConfigurationEditor<T>
         SettingsFormRules.Apply(meta);
         (Registration.Meta as Action<ObjectEditMeta<T>>)?.Invoke(meta);
         SettingsFormRules.WrapInColumns(meta);
-        foreach (var property in Properties(meta, _locked))
+        var locked = Properties(meta, _locked).ToList();
+        var guarded = Properties(meta, _protected).ToList();
+        foreach (var property in locked)
         {
             Lock(property);
         }
 
-        foreach (var property in Properties(meta, _protected.Except(_locked).ToList()).Where(p => p.Children?.Any() != true))
+        var lockedNames = locked.Select(p => p.PropertyName).ToHashSet();
+        foreach (var property in guarded.Where(p => p.Children?.Any() != true && !lockedNames.Contains(p.PropertyName)))
         {
             property.WithEditConfirmation(ConfirmationProtection.ToggleButton(L["Unlock to change; applies after a restart."]));
         }
 
+        // an import must not reach around the lock and the unlock button
+        foreach (var property in locked.Concat(guarded))
+        {
+            property.IgnoreOnImport();
+        }
+
         foreach (var property in Properties(meta, _hidden))
         {
-            property.Ignore();
+            property.Ignore().IgnoreOnExportAndImport();
         }
     }
-
 
 #pragma warning disable BL0005 // MudEx configures the lock icon through these instances
     private void Lock(ObjectEditPropertyMeta property)
@@ -91,6 +98,8 @@ public partial class AppConfigurationEditor<T>
 
     private static IEnumerable<ObjectEditPropertyMeta> WithChildren(ObjectEditPropertyMeta property) =>
         [property, .. property.Children?.SelectMany(WithChildren) ?? []];
+
+    private void Imported(ImportedData<T> imported) => _value = imported.Value;
 
     private async Task LoadAsync(Func<Task<AppConfigurationValuesDto>> call)
     {

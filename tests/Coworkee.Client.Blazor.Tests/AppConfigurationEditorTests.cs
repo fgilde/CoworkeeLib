@@ -108,6 +108,35 @@ public sealed class AppConfigurationEditorTests : ClientTestBase
         editor.WaitForAssertion(() => Name(editor).HasAttribute("disabled").ShouldBeTrue());
     }
 
+    [Fact]
+    public async Task An_import_changes_neither_locked_nor_protected_values_and_hidden_ones_are_not_exported()
+    {
+        Api.GetAppConfigurationAsync("Sample", Arg.Any<CancellationToken>()).Returns(Values("Default", 10, [], locked: ["Name"], hidden: ["Inner:Secret"], guarded: ["Limit"]));
+        var editor = Render<AppConfigurationEditor<SampleConfig>>(p => p.Add(e => e.Registration, Registration));
+        editor.WaitForAssertion(() => Name(editor));
+        var edit = editor.FindComponent<MudExObjectEditForm<SampleConfig>>().Instance;
+        edit.ToJson().ShouldNotContain("Secret");
+        const string file = """{"Name": "imported", "Limit": 99, "Inner": {"Note": "imported note", "Secret": "injected"}}""";
+
+        await editor.InvokeAsync(() => edit.LoadFromJson(file, true));
+        await editor.InvokeAsync(() => edit.AfterImport.InvokeAsync(new ImportedData<SampleConfig> { Json = file, Value = edit.Value }));
+        await editor.InvokeAsync(() => editor.Instance.SaveAsync());
+
+        await Api.Received(1).SaveAppConfigurationAsync("Sample", Arg.Is<JsonElement>(v =>
+            v.GetProperty("name").GetString() == "Default" && v.GetProperty("limit").GetInt32() == 10
+            && v.GetProperty("inner").GetProperty("note").GetString() == "imported note" && v.GetProperty("inner").GetProperty("secret").GetString() != "injected"), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public void A_protected_property_inside_a_locked_object_gets_no_unlock_button()
+    {
+        Api.GetAppConfigurationAsync("Sample", Arg.Any<CancellationToken>()).Returns(Values("Default", 10, [], locked: ["Inner"], guarded: ["Inner:Note", "Limit"]));
+
+        var editor = Render<AppConfigurationEditor<SampleConfig>>(p => p.Add(e => e.Registration, Registration));
+
+        editor.WaitForAssertion(() => editor.FindAll("button[aria-pressed]").Count.ShouldBe(1));
+    }
+
     private static AngleSharp.Dom.IElement Name(IRenderedComponent<AppConfigurationEditor<SampleConfig>> editor) =>
         editor.FindAll("input").Single(i => i.GetAttribute("value") == "Default");
 

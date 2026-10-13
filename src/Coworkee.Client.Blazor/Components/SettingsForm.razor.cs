@@ -51,8 +51,20 @@ public partial class SettingsForm
             .Where(g => g.Settings.Count > 0)
             .ToList();
         _model = new SettingsModel(groups, stored);
-        _meta = _model.Value.ObjectEditMeta(meta => _model.Configure(meta, L, Scope));
+        Rebuild();
+    }
+
+    private void Rebuild()
+    {
+        _meta = _model!.Value.ObjectEditMeta(meta => _model.Configure(meta, L, Scope));
         _revision++;
+    }
+
+    // MudEx swaps its value for the parsed file; the model keeps the edited object
+    private void Imported(ImportedData<object> imported)
+    {
+        _model?.Import(imported.Json);
+        Rebuild();
     }
 
     public async Task SaveAsync()
