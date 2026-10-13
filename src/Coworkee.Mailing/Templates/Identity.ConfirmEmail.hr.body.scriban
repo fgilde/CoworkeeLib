@@ -1,0 +1,3 @@
+<p>Pozdrav {{ user.first_name }},</p>
+<p>Potvrdite svoju adresu e-pošte.</p>
+<p style="margin:24px 0;"><a href="{{ confirm_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">Potvrdi e-poštu</a></p>

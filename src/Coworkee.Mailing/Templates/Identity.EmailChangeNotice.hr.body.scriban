@@ -1,0 +1,7 @@
+<p>Pozdrav {{ user.first_name }},</p>
+{{ if pending }}
+<p>Za vaš korisnički račun zatražena je nova adresa e-pošte: {{ new_email }}. Zamijenit će ovu adresu nakon što se otvori poveznica poslana na nju.</p>
+{{ else }}
+<p>Adresa e-pošte vašeg korisničkog računa promijenjena je u {{ new_email }}. Od sada se prijavljujete novom adresom.</p>
+{{ end }}
+<p>Ako to niste zatražili, odmah promijenite lozinku i obavijestite svog administratora.</p>

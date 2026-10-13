@@ -1,0 +1,1 @@
+Dobro došli, {{ user.first_name }}

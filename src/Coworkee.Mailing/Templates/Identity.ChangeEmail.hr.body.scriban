@@ -1,0 +1,3 @@
+<p>Pozdrav {{ user.first_name }},</p>
+<p>Potvrdite da je {{ new_email }} nova adresa vašeg korisničkog računa. Do tada se prijavljujete adresom {{ user.email }}. Ako to niste zatražili, ovu poruku možete zanemariti.</p>
+<p style="margin:24px 0;"><a href="{{ confirm_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">Potvrdi novu adresu</a></p>

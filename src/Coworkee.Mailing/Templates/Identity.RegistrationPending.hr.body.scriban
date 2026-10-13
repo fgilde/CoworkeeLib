@@ -1,0 +1,2 @@
+<p>Pozdrav {{ user.first_name }},</p>
+<p>Hvala na registraciji. Administrator će uskoro pregledati vaš korisnički račun.</p>
