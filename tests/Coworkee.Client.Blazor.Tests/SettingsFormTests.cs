@@ -194,6 +194,7 @@ public sealed class SettingsFormTests : ClientTestBase
     }
 
     private static string SelectedText(IRenderedComponent<SettingsForm> form) => form.Find("div.mud-input-root.mud-ex-select-input").TextContent.Trim();
+
     [Fact]
     public void A_setting_name_becomes_a_property_name()
     {

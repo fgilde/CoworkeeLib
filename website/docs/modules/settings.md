@@ -23,7 +23,7 @@ internal sealed class MailSettingDefinitions : ISettingDefinitionContributor
 }
 ```
 
-Types are `String`, `Text`, `Bool`, `Int`, `Secret` and `Choice`; scopes are `Global`, `Tenant` and `User`. The most specific value wins. Secrets are encrypted with ASP.NET Core data protection and never sent to the client; settings with `visibleToClient: true` are.
+Types are `String`, `Text`, `Bool`, `Int`, `Secret`, `Choice` and `Language`; scopes are `Global`, `Tenant` and `User`. The most specific value wins. Secrets are encrypted with ASP.NET Core data protection and never sent to the client; settings with `visibleToClient: true` are.
 
 ```csharp
 var allowed = await settings.GetAsync<bool>(AccountSettings.AllowRegistration, ct);
@@ -58,12 +58,39 @@ context.Services.AddSingleton<ISettingDefinitionContributor, BillingSettingDefin
 | `Text` | a text field with four lines |
 | `Bool` | a check box, showing the stored value or the default |
 | `Choice` | a select of the `choices` |
+| `Language` | a select of the app's languages; empty means inherit, shown as *Configured default* in the System tab and *Inherited* in Organisation and My settings (labelled *Language* in My settings) |
 | `Secret` | a password field that stays empty; the help text says whether a value is stored, and only a typed value is sent |
+| `enabledWhen` | the field is disabled while the other setting's value is not in the condition's values |
+| group with a `page` | not shown on the settings tabs; see below |
 | scopes | a setting shows in the tab of each of its scopes |
 
 Saving sends only the changed values; the server checks them (`Expected a whole number.` and so on) and the message shows in the snackbar. Who sees the tabs follows the `Settings.Manage` permission; **System** is shown in the system organisation only.
 
 Behind the form is a class built at runtime with one property per setting (`Mail.Smtp.Host` becomes `Mail_Smtp_Host`), so the form behaves like every other object form. Fields have no reset of their own: clear a text or number field to return to the default.
+
+### Dependent settings
+
+`enabledWhen` ties a field to another setting: it is disabled while that setting's value is not among the listed values. `SettingCondition.IsTrue` covers the common case of a switch:
+
+```csharp
+context.Group("FilePickers", "Cloud file pickers")
+    .Add("FilePickers.GoogleDrive.Enabled", "Google Drive", SettingType.Bool, [SettingScope.Global])
+    .Add("FilePickers.GoogleDrive.ClientId", "Google Drive client id", SettingType.String, [SettingScope.Global],
+        enabledWhen: SettingCondition.IsTrue("FilePickers.GoogleDrive.Enabled"));
+
+// several values: the translation fields depend on the provider
+enabledWhen: new SettingCondition("Translation.Provider", ["DeepL", "Azure"])
+```
+
+This is a convenience of the form only; the server does not enforce it. A condition on a setting that is not part of the form (another scope, for example) leaves the field enabled.
+
+### Groups on their own page
+
+`context.Group(name, displayName, page: "/admin/ai-settings")` marks a group as maintained on its own admin page. The settings tabs skip it, and the user's **My settings** keep every group that has no page. The AI group works this way: its settings, including the MCP switch, live on `/admin/ai-settings`.
+
+### Language settings
+
+`SettingType.Language` fits settings that hold a culture. `Localization.Culture` (**Default language**) is the language the app starts in: an organisation overrides the system value, and a user overrides both. An empty value inherits.
 
 ![Settings page](../assets/screenshots/settings.png){ .shot }
 

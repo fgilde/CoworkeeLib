@@ -23,7 +23,7 @@ internal sealed class MailSettingDefinitions : ISettingDefinitionContributor
 }
 ```
 
-Typen sind `String`, `Text`, `Bool`, `Int`, `Secret` und `Choice`; Gültigkeitsbereiche `Global`, `Tenant` und `User`. Der spezifischste Wert gewinnt. Geheimnisse werden mit ASP.NET Core Data Protection verschlüsselt und nie an den Client geschickt; Einstellungen mit `visibleToClient: true` schon.
+Typen sind `String`, `Text`, `Bool`, `Int`, `Secret`, `Choice` und `Language`; Gültigkeitsbereiche `Global`, `Tenant` und `User`. Der spezifischste Wert gewinnt. Geheimnisse werden mit ASP.NET Core Data Protection verschlüsselt und nie an den Client geschickt; Einstellungen mit `visibleToClient: true` schon.
 
 ```csharp
 var allowed = await settings.GetAsync<bool>(AccountSettings.AllowRegistration, ct);
@@ -58,12 +58,39 @@ context.Services.AddSingleton<ISettingDefinitionContributor, BillingSettingDefin
 | `Text` | ein Textfeld mit vier Zeilen |
 | `Bool` | ein Kontrollkästchen mit dem gespeicherten Wert oder dem Standard |
 | `Choice` | eine Auswahl der `choices` |
+| `Language` | eine Auswahl der Sprachen der App; leer heißt erben, angezeigt als *Configured default* im Tab System und *Inherited* in Organisation und Meine Einstellungen (dort beschriftet mit *Language*) |
 | `Secret` | ein Passwortfeld, das leer bleibt; der Hilfetext sagt, ob ein Wert gespeichert ist, und nur ein eingetippter Wert wird gesendet |
+| `enabledWhen` | das Feld ist deaktiviert, solange der Wert der anderen Einstellung nicht in den Werten der Bedingung liegt |
+| Gruppe mit `page` | erscheint nicht in den Einstellungs-Tabs; siehe unten |
 | Bereiche | eine Einstellung erscheint im Tab jedes ihrer Bereiche |
 
 Speichern sendet nur geänderte Werte; der Server prüft sie (`Expected a whole number.` usw.), die Meldung erscheint in der Snackbar. Wer die Tabs sieht, folgt der Berechtigung `Settings.Manage`; **System** erscheint nur in der System-Organisation.
 
 Hinter dem Formular steht eine zur Laufzeit erzeugte Klasse mit einer Eigenschaft je Einstellung (`Mail.Smtp.Host` wird `Mail_Smtp_Host`), das Formular verhält sich also wie jedes andere Objektformular. Felder haben kein eigenes Zurücksetzen: Ein geleertes Text- oder Zahlenfeld kehrt zum Standard zurück.
+
+### Abhängige Einstellungen
+
+`enabledWhen` bindet ein Feld an eine andere Einstellung: Es ist deaktiviert, solange deren Wert nicht unter den genannten Werten ist. `SettingCondition.IsTrue` deckt den häufigen Fall eines Schalters ab:
+
+```csharp
+context.Group("FilePickers", "Cloud file pickers")
+    .Add("FilePickers.GoogleDrive.Enabled", "Google Drive", SettingType.Bool, [SettingScope.Global])
+    .Add("FilePickers.GoogleDrive.ClientId", "Google Drive client id", SettingType.String, [SettingScope.Global],
+        enabledWhen: SettingCondition.IsTrue("FilePickers.GoogleDrive.Enabled"));
+
+// mehrere Werte: die Übersetzungsfelder hängen vom Anbieter ab
+enabledWhen: new SettingCondition("Translation.Provider", ["DeepL", "Azure"])
+```
+
+Das ist nur eine Erleichterung im Formular; der Server erzwingt sie nicht. Eine Bedingung auf eine Einstellung, die nicht im Formular steht (etwa in einem anderen Bereich), lässt das Feld aktiv.
+
+### Gruppen auf eigener Seite
+
+`context.Group(name, displayName, page: "/admin/ai-settings")` markiert eine Gruppe als auf einer eigenen Admin-Seite gepflegt. Die Einstellungs-Tabs überspringen sie, **Meine Einstellungen** des Benutzers zeigen weiter jede Gruppe ohne `page`. So arbeitet die KI-Gruppe: Ihre Einstellungen, auch der MCP-Schalter, liegen auf `/admin/ai-settings`.
+
+### Spracheinstellungen
+
+`SettingType.Language` passt für Einstellungen, die eine Kultur halten. `Localization.Culture` (**Default language**) ist die Sprache, in der die App startet: Eine Organisation überschreibt den Systemwert, ein Benutzer überschreibt beide. Ein leerer Wert erbt.
 
 ![Einstellungsseite](../assets/screenshots/settings.png){ .shot }
 
