@@ -1,0 +1,3 @@
+<p>Γεια σας {{ user.first_name }},</p>
+<p>επιβεβαιώστε ότι η διεύθυνση {{ new_email }} είναι η νέα διεύθυνση του λογαριασμού σας. Μέχρι τότε συνδέεστε με τη διεύθυνση {{ user.email }}. Αν δεν το ζητήσατε εσείς, μπορείτε να αγνοήσετε αυτό το μήνυμα.</p>
+<p style="margin:24px 0;"><a href="{{ confirm_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">Επιβεβαίωση νέας διεύθυνσης</a></p>

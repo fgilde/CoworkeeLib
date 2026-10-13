@@ -1,0 +1,3 @@
+<p>Γεια σας {{ user.first_name }},</p>
+<p>δημιουργήθηκε ένας λογαριασμός για εσάς: {{ user.email }}. Επιλέξτε τον κωδικό πρόσβασής σας για να συνδεθείτε.</p>
+<p style="margin:24px 0;"><a href="{{ invitation_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">Επιλογή κωδικού πρόσβασης</a></p>
