@@ -10,18 +10,17 @@ internal static class TextsCommand
     private static readonly Option<string> Lang = new("--lang") { Description = "Language code of the library texts, for example fr (en exports the keys as texts).", Required = true };
     private static readonly Option<string?> Keys = new("--keys") { Description = "Only the keys that match: a glob with * and ?, or a regular expression between slashes, for example \"Filter*\" or \"/^Sign/\"." };
     private static readonly Option<string?> Out = new("--out") { Description = "Target file (default: src/<App>.Contracts/Localization/<lang>.json of the solution here)." };
-    private static readonly Option<bool> Auth = new("--auth") { Description = "Also export the texts of the account pages (sign-in, registration, password)." };
 
     public static Command Create()
     {
         var export = new Command("export", "Copy the library texts of a language into the app's translation file so you can change them. Existing keys keep their text, new keys are added at the end.")
         {
-            Lang, Keys, Out, Auth,
+            Lang, Keys, Out,
         }.Handle((result, _) =>
         {
             var language = result.GetValue(Lang)!;
             var output = result.GetValue(Out) ?? DefaultOutput(Solution.Find(Environment.CurrentDirectory), language);
-            var count = Export(output, language, result.GetValue(Keys), result.GetValue(Auth));
+            var count = Export(output, language, result.GetValue(Keys));
             Console.WriteLine($"{count} texts written to {output}.");
             return Task.FromResult(0);
         });
@@ -31,10 +30,10 @@ internal static class TextsCommand
     public static string DefaultOutput(Solution solution, string language) =>
         Path.Combine(solution.Src, $"{solution.Name}.Contracts", "Localization", language + ".json");
 
-    public static int Export(string output, string language, string? keys, bool auth)
+    public static int Export(string output, string language, string? keys)
     {
         var pattern = keys is null ? null : Pattern(keys);
-        var texts = LibraryTexts.Load(language, auth).Where(t => pattern?.IsMatch(t.Key) != false).ToList();
+        var texts = LibraryTexts.Load(language).Where(t => pattern?.IsMatch(t.Key) != false).ToList();
         var merged = Existing(output);
         var present = merged.Select(t => t.Key).ToHashSet(StringComparer.Ordinal);
         merged.AddRange(texts.Where(t => !present.Contains(t.Key)));

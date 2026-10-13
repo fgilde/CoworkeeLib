@@ -209,7 +209,7 @@ coworkee ui --spec shop.json
 | `coworkee migrations add <name>` | `dotnet ef migrations add <name>` with the `*.Infrastructure` project as project and startup project |
 | `coworkee module add <name>` | A feature module with its first entity, see above |
 | `coworkee entity add <module> <name>` | Another entity in a module, see above |
-| `coworkee texts export --lang <code> [--keys <glob>] [--out <file>] [--auth]` | Copies the library texts of a language into `src/<App>.Contracts/Localization/<code>.json` to change them, merging with what is there, see [Localization](../modules/localization.md#changing-library-texts) |
+| `coworkee texts export --lang <code> [--keys <glob>] [--out <file>]` | Copies the library texts of a language into `src/<App>.Contracts/Localization/<code>.json` to change them, merging with what is there, see [Localization](../modules/localization.md#changing-library-texts) |
 | `coworkee options [--json]` | The options of `coworkee new` |
 | `coworkee spec schema`, `example`, `validate <file>` | App specs |
 | `coworkee update [--version <version>] [--prerelease]` | Sets `<CoworkeeVersion>` in `Directory.Packages.props`, by default to the newest version on nuget.org |

@@ -75,7 +75,6 @@ Drei Ebenen bestimmen, welchen Text ein Benutzer sieht, die letzte gewinnt:
 coworkee texts export --lang fr
 coworkee texts export --lang de --keys "Filter*" --out src/Shop.Contracts/Localization/de.json
 coworkee texts export --lang en --keys "/^Delete/"
-coworkee texts export --lang fr --auth
 ```
 
 | Schalter | |
@@ -83,11 +82,10 @@ coworkee texts export --lang fr --auth
 | `--lang <code>` | Eine der oben genannten Sprachen. `en` schreibt jeden Schlüssel als eigenen Text, der Ausgangspunkt, um englische Texte umzuformulieren. Ein unbekannter Code listet die mitgelieferten auf |
 | `--keys <muster>` | Nur passende Schlüssel: ein Glob mit `*` und `?` (Groß-/Kleinschreibung zählt, der ganze Schlüssel) oder ein regulärer Ausdruck zwischen Schrägstrichen |
 | `--out <datei>` | Zieldatei; Standard `src/<App>.Contracts/Localization/<code>.json` der Solution, in der Sie sind |
-| `--auth` | Zusätzlich die Texte der Kontoseiten |
 
 Der Export führt zusammen: Texte, die die Datei schon hat, bleiben unverändert und in ihrer Reihenfolge, fehlende Schlüssel werden angehängt. Nach einem Update läuft er erneut, um neue Texte zu holen, ohne Ihre Formulierungen zu verlieren. Die Datei wird als UTF-8 mit echten Zeichen (ohne `\u`-Escapes) und den `\r\n`-Zeilenumbrüchen der übrigen Texte geschrieben. Behalten Sie in der Datei nur, was Sie ändern, und löschen Sie den Rest: Jeder kopierte Schlüssel friert seinen Wortlaut ein und folgt Updates der Bibliothek nicht mehr.
 
-Die Kontoseiten und Mails lesen ihre eigenen eingebetteten Texte und Vorlagen, nicht die JSON der App: Die exportierten Kontotexte sind eine Vorlage zum Übersetzen, sie ändern die Anmeldeseiten nicht.
+Die Kontoseiten und Mails lesen ihre eigenen eingebetteten Texte und Vorlagen, nicht die JSON der App, der Export deckt deshalb nur die Texte der eigenen Seiten und Komponenten der App ab.
 
 ## In einer neuen App
 

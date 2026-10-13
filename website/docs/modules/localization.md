@@ -75,7 +75,6 @@ Three layers decide which text a user sees, the last one wins:
 coworkee texts export --lang fr
 coworkee texts export --lang de --keys "Filter*" --out src/Shop.Contracts/Localization/de.json
 coworkee texts export --lang en --keys "/^Delete/"
-coworkee texts export --lang fr --auth
 ```
 
 | Switch | |
@@ -83,11 +82,10 @@ coworkee texts export --lang fr --auth
 | `--lang <code>` | One of the shipped languages above. `en` writes every key as its own text, the starting point for rewording English. An unknown code lists the shipped ones |
 | `--keys <pattern>` | Only keys that match: a glob with `*` and `?` (case sensitive, the whole key), or a regular expression between slashes |
 | `--out <file>` | Target file; default `src/<App>.Contracts/Localization/<code>.json` of the solution you are in |
-| `--auth` | Also the texts of the account pages |
 
 The export merges: texts the file already has stay as they are, in their order, and missing keys are appended. Run it again after an update to get the new texts without losing your wording. The file is written as UTF-8 with real characters (no `\u` escapes) and the `\r\n` line breaks of the other texts. Keep what you change in the file and delete the rest, because every copied key freezes that wording and stops it from following library updates.
 
-The account pages and mails read their own embedded texts and templates, not the app's JSON: the exported account texts are a reference for translating, they do not change the sign-in pages.
+The account pages and mails read their own embedded texts and templates, not the app's JSON, so the export covers the texts of the app's own pages and components only.
 
 ## In a new app
 
