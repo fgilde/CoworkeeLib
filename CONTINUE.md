@@ -38,9 +38,24 @@ Modules (identity, OpenIddict auth server with Card/Split/Slide sign-in, setting
 3. **AspireUI + Keycloak**: `aspireUi.WithCoworkeeSignOn(app)` (branch `feat/aspireui-signon`, docs in hosting/aspire.md) registers `{app}-{resource}` with `/api/auth/sso/callback`, uses the container authority + `KC_HOSTNAME`, `roles` as groups, `Administrator` as admin group and forces the seeded settings. Works with released Nextended 10.1.44; verified (Keycloak sign-in, admin). The owner's own volume `aspireui-data-aspireui` holds `OidcAuthority={keycloak.bindings.http.url}/realms/gildestore` (a ReferenceExpression passed as string; AspireUI seeds only empty settings) - clear it or use `WithCoworkeeSignOn`. Nextended main has a new `WithSingleSignOn(ReferenceExpression authority, …)` overload (unreleased, not needed by the lib).
    - Later: `options.UseAspireUI()` like Grafana/WebDataStudio (own volume per app).
 
+## Owner round 2026-10-13 (all on main, not released yet)
+Spec `docs/superpowers/specs/2026-10-13-settings-cleanup-and-extensions-design.md`, plans `docs/superpowers/plans/2026-10-13-p1..p9-*.md`.
+- Settings: no reload loop, mask only names ending in a secret word, `EnabledWhen` conditions, groups with an own `page` (AI, Mail) leave the tabs, `SettingType.Language` select, choices translated, one shared ObjectEdit setup (`SettingsFormRules.FormAttributes`, multi expand), `Lock` (disabled + lock icon) vs new `Protect` (MudEx edit confirmation), import ignores locked/protected/secret values, `StickyMergeTabs` (tab bar + toolbar merge while scrolling).
+- Auth: setting `Auth.LoginMode` (only with an external provider; operator escape hatch `Coworkee:Auth:External:ModeOverride`), password rules as Global settings enforced by `SettingsPasswordValidator`, hints on all password fields, setup status carries the rules.
+- OAuth apps: `ChipListEditor` (free text + suggestions) for scopes/redirects/resources.
+- Mail: `IMailTransport` (SMTP, SendGrid, Mailgun, Mailchimp Transactional) replaces `ISmtpTransport` (breaking), `Mail.UseOwnServer` per organisation, page `/admin/mail-settings` with test mail.
+- Services: public `IServiceDirectory` + `IServiceSource`, AspireUI source (`Coworkee:AspireUI:Url/ApiKey`, injected by Aspire for `WithRetrieveApi`), `GET /api/v1/services` returns `{ services, unavailableSources }` (breaking). Nextended 10.1.45.
+- Languages: 23 shipped (lib, auth pages, mails, template app), `ShippedLanguagesTests` + literal-key test, `build/localization-check.ps1 -Lang xx`, template copies only the chosen languages, `coworkee texts export`. Default active languages stay en,de. zh-Hant does not fall back to zh.
+- Client.Blazor tests: flaky culture/timing causes fixed (`TestCulture`, serial culture tests).
+- Demo (master): currency select + Protect, AspireUI in the app host with `WithRetrieveApi`, OpenAPI snapshot + TS SDK regenerated.
+- MudEx local branch `feat/coworkee-p4` (not pushed): `MudExCronEdit` + sample `/cron-edit`, `RenderWith` keeps the wrapper, conditional attributes reset. CSS of the cron edit was appended by hand to `mudBlazorExtensions(.min).css` (no sass here) - recompile.
+
 ## Known follow-ups
+- After the MudEx release with `feat/coworkee-p4`: lib `[Cron]` → `MudExCronEdit`, delete `CronEditor`/`CronSchedule`; `SettingsModel` two `WithAttributesIf` → `AsDisabledIf`; drop the `WrapInColumns`/`RenderAsChips` re-wraps after `RenderWith`.
+- Own `IMailTransport` with a new provider name is only selectable via `Coworkee:Settings:Defaults:Mail.Provider` (choices are the four built-ins).
+- Translations of the 21 new languages were checked by sample, not by native speakers (km, ar least certain).
 - MudEx 9.11.2: `MudExDateRangeSlider` Day mode default step ≈ 0 (arrow keys dead; lib passes `StepLength`), no per-thumb aria-label. MudEx dialog conditions fix is local branch `fix/passed-meta-conditions-in-form` (ccc2486b); after a MudEx release remove `.UpdateAllConditionalSettings()` in `EditDialogExtensions`.
 - Multi-instance: shared Data Protection key ring needed for pending assistant tool calls; assistant "busy" guard is per instance.
 - Lib pages live under generic `/admin/...` routes; an app page with the same route breaks Blazor routing (`AppShellTests` covers `/admin/ai`). Consider a prefix.
 - Not built: MySQL (no EF Core 10 Pomelo), many-to-many in specs, report versioning/public link/map widget, QueryBuilder OData-text import and drag reorder, deploy story (aspire publish) not verified.
-- Flaky under load: Keycloak container start in Aspire tests, `LiveUpdatesTests` avatar test.
+- Flaky under load: Keycloak container start in Aspire tests.
