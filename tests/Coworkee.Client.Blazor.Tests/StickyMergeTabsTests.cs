@@ -45,6 +45,16 @@ public sealed class StickyMergeTabsTests : ClientTestBase
     }
 
     [Fact]
+    public void Tab_bar_and_panels_form_one_outlined_unit_with_the_stuck_bar_as_high_as_the_toolbar()
+    {
+        var css = RenderTabs().Find("style").TextContent;
+
+        css.ShouldContain(".mud-tabs-tabbar { border-radius: var(--mud-default-borderradius) var(--mud-default-borderradius) 0 0; }");
+        css.ShouldContain(".mud-tabs-panels { border: 1px solid var(--mud-palette-lines-default); border-top: 0;");
+        css.ShouldContain("min-height: var(--cw-stuck-height");
+    }
+
+    [Fact]
     public async Task Leaving_the_page_disconnects_the_observer_once()
     {
         var tabs = RenderTabs();

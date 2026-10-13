@@ -53,7 +53,10 @@ export function observeStuck(sentinel, root) {
     const observer = new IntersectionObserver(([entry]) => root.toggleAttribute('stuck', entry.boundingClientRect.top < entry.rootBounds.top),
         { threshold: 1, rootMargin: `-${appbar}px 0px 0px 0px` });
     observer.observe(sentinel);
-    return { dispose: () => observer.disconnect() };
+    const matchToolbar = () => root.style.setProperty('--cw-stuck-height', `${root.querySelector('.mud-ex-toolbar-sticky')?.offsetHeight ?? 0}px`);
+    const resize = new ResizeObserver(matchToolbar);
+    resize.observe(root);
+    return { dispose: () => { observer.disconnect(); resize.disconnect(); } };
 }
 
 export function submitOnEnter(element, dotnet) {
