@@ -65,6 +65,43 @@ public sealed class ClientsPagesTests : ClientTestBase
             && r.Scopes.SequenceEqual(new[] { "openid", "profile", "email", "orders:read" })), Arg.Any<CancellationToken>());
     }
 
+    private Task Duplicate(string clientId)
+    {
+        var page = Render<Clients>();
+        var duplicating = page.WaitForElement($"[data-testid='duplicate-client-{clientId}']").ClickAsync(new());
+        _dialogs.WaitForElement("form");
+        return duplicating;
+    }
+
+    [Fact]
+    public async Task Duplicating_an_application_creates_a_copy_with_a_free_id_and_the_settings_of_the_original()
+    {
+        _clients.GetClientsAsync(default).ReturnsForAnyArgs([App(["profile"]), App(["profile"]) with { Id = Guid.CreateVersion7(), ClientId = "app-copy" }]);
+        _clients.CreateClientAsync(default!, default).ReturnsForAnyArgs(new ClientSecretDto(Guid.CreateVersion7(), null));
+
+        var duplicating = Duplicate("app");
+        await _dialogs.Find("form").SubmitAsync();
+        await duplicating;
+
+        await _clients.Received(1).CreateClientAsync(Arg.Is<ClientRequest>(r =>
+            r.ClientId == "app-copy-2" && r.DisplayName == "App (copy)" && r.ClientType == "public"
+            && r.RedirectUris.SequenceEqual(new[] { "https://app.test/cb" }) && r.Scopes.SequenceEqual(new[] { "openid", "profile" })), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Duplicating_a_configured_confidential_application_shows_the_new_secret()
+    {
+        _clients.GetClientsAsync(default).ReturnsForAnyArgs([App(["profile"]) with { ClientId = "svc", ClientType = "confidential", Managed = true }]);
+        _clients.CreateClientAsync(default!, default).ReturnsForAnyArgs(new ClientSecretDto(Guid.CreateVersion7(), "s3cret"));
+
+        var duplicating = Duplicate("svc");
+        await _dialogs.Find("form").SubmitAsync();
+
+        _dialogs.WaitForAssertion(() => _dialogs.Find("[data-testid='client-secret']").TextContent.ShouldBe("s3cret"));
+        await _clients.Received(1).CreateClientAsync(Arg.Is<ClientRequest>(r => r.ClientId == "svc-copy" && r.ClientType == "confidential"), Arg.Any<CancellationToken>());
+        duplicating.IsCompleted.ShouldBeFalse();
+    }
+
     [Fact]
     public async Task The_chip_lists_use_the_full_width_of_the_form()
     {

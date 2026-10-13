@@ -1051,5 +1051,6 @@
   "vs. {0}": "与 {0} 相比",
   "Widget": "小组件",
   "Widget settings": "小组件设置",
-  "You may not read this data.": "您无权读取这些数据。"
+  "You may not read this data.": "您无权读取这些数据。",
+  "{0} (copy)": "{0} (副本)"
 }

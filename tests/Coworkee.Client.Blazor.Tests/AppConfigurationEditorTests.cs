@@ -169,6 +169,19 @@ public sealed class AppConfigurationEditorTests : ClientTestBase
         page.Markup.ShouldNotContain("Mine");
     }
 
+    [Fact]
+    public void The_settings_panels_are_flush_with_the_tab_bar_without_padding_of_their_own()
+    {
+        Api.GetSettingDefinitionsAsync(Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns([]);
+        Api.GetSettingsAsync(Arg.Any<SettingScope>(), Arg.Any<CancellationToken>()).Returns([]);
+        Authorize();
+
+        var page = Render<Settings>();
+
+        page.WaitForElement(".mud-tabs-panels > .mud-tab-panel-active > form.mud-ex-object-edit-form");
+        page.FindAll(".mud-tabs-panels .pa-4").ShouldBeEmpty();
+    }
+
     private void Authorize()
     {
         var auth = AddAuthorization();

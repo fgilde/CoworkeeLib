@@ -1051,5 +1051,6 @@
   "vs. {0}": "{0} 대비",
   "Widget": "위젯",
   "Widget settings": "위젯 설정",
-  "You may not read this data.": "이 데이터를 읽을 권한이 없습니다."
+  "You may not read this data.": "이 데이터를 읽을 권한이 없습니다.",
+  "{0} (copy)": "{0} (복사본)"
 }

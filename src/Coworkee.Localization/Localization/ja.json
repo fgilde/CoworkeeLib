@@ -1051,5 +1051,6 @@
     "vs. {0}": "{0}との比較",
     "Widget": "ウィジェット",
     "Widget settings": "ウィジェットの設定",
-    "You may not read this data.": "このデータを読み取る権限がありません。"
+    "You may not read this data.": "このデータを読み取る権限がありません。",
+  "{0} (copy)": "{0} (コピー)"
 }

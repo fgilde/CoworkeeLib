@@ -51,6 +51,15 @@ public sealed class SettingsFormTests : ClientTestBase
     }
 
     [Fact]
+    public void The_toolbar_tools_sit_on_the_right_behind_a_spacer()
+    {
+        var form = Render<SettingsForm>(p => p.Add(f => f.Scope, SettingScope.Global));
+        form.WaitForAssertion(() => Input(form, "Host"));
+
+        form.Find("[role='toolbar']").FirstElementChild!.ClassList.ShouldContain("flex-grow-1");
+    }
+
+    [Fact]
     public void Keeps_several_groups_open_and_offers_search_export_and_import_like_the_app_settings()
     {
         var form = Render<SettingsForm>(p => p.Add(f => f.Scope, SettingScope.Global));

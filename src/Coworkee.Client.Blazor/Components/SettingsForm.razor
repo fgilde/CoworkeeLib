@@ -8,5 +8,7 @@ else
 {
     <MudExObjectEditForm T="object" @key="_revision" Value="_model.Value" MetaInformation="_meta" IsLoading="_saving" AfterImport="Imported"
                          @attributes="SettingsFormRules.FormAttributes" DefaultGroupName="@L["General"]"
-                         OnValidSubmit="SaveAsync" />
+                         OnValidSubmit="SaveAsync">
+        <ToolBarContent><MudSpacer /></ToolBarContent>
+    </MudExObjectEditForm>
 }
