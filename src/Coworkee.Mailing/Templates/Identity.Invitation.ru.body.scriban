@@ -1,0 +1,3 @@
+<p>Здравствуйте, {{ user.first_name }}!</p>
+<p>Для вас создана учётная запись: {{ user.email }}. Выберите пароль, чтобы войти.</p>
+<p style="margin:24px 0;"><a href="{{ invitation_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">Выбрать пароль</a></p>
