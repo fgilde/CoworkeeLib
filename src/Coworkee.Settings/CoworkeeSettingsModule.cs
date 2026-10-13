@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Coworkee.Settings;
 
@@ -35,7 +36,10 @@ public sealed class CoworkeeSettingsModule : CoworkeeModule, IWebModule
         services.AddScoped<Coworkee.Application.Setup.ISetupStep, SettingsSetupStep>();
         services.AddScoped<IInterceptor, SettingCacheInterceptor>();
         services.AddHybridCache();
-        services.AddHttpClient(ServiceDirectoryHandler.Client).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+        services.AddHttpClient(ConfiguredServiceSource.Client).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IServiceSource, ConfiguredServiceSource>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IServiceSource, AspireUIServiceSource>());
+        services.TryAddSingleton<IServiceDirectory, ServiceDirectory>();
         if (!services.HasAppSettings())
         {
             services.AddCoworkeeSettings<CoworkeeAppSettings>(context.Configuration);

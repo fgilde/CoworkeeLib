@@ -52,16 +52,18 @@ public sealed class SettingsApp : DatabaseFixture
         builder.Configuration["Coworkee:Services:sick:HealthPath"] = "/sick";
         builder.Configuration["Coworkee:Services:probed:Url"] = "http://localhost/";
         builder.Configuration["Coworkee:Services:probed:HealthPath"] = "/probe";
+        builder.Configuration["Coworkee:AspireUI:Url"] = "http://localhost/";
         builder.Configuration.AddCoworkeeAppConfigurationDefaults(
             new MemoryStream("""{ "Name": "FromFile", "Mode": "file" /* comments are fine */ }"""u8.ToArray()), "TestApp");
         builder.Configuration.AddCoworkeeDatabaseConfiguration("test", TimeSpan.FromHours(1));
         builder.AddCoworkee<TestSettingsModule>();
         builder.Services.AddTestAuthentication();
-        builder.Services.AddHttpClient(ServiceDirectoryHandler.Client).ConfigurePrimaryHttpMessageHandler(provider => provider.GetRequiredService<Microsoft.AspNetCore.Hosting.Server.IServer>() is TestServer server ? server.CreateHandler() : new HttpClientHandler());
+        builder.Services.AddHttpClient(ConfiguredServiceSource.Client).ConfigurePrimaryHttpMessageHandler(provider => provider.GetRequiredService<Microsoft.AspNetCore.Hosting.Server.IServer>() is TestServer server ? server.CreateHandler() : new HttpClientHandler());
         App = builder.Build();
         App.UseCoworkee();
         App.MapGet("/probe", () => "ok");
         App.MapGet("/sick", () => Results.StatusCode(503));
+        App.MapGet("/api/retrieve/apps", () => new[] { new { name = "billing", kind = "hosted", healthy = true, urls = new[] { "http://localhost:5001" } } });
         await using (var scope = App.Services.CreateAsyncScope())
         {
             await scope.ServiceProvider.GetRequiredService<SettingsTestDbContext>().Database.EnsureCreatedAsync();
