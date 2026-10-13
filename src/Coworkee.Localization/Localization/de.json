@@ -813,7 +813,7 @@
   "Incomplete": "Unvollständig",
   "Off": "Aus",
   "Assistant enabled": "Assistent eingeschaltet",
-  "Users with the permission to chat get the assistant; MCP clients get the tools.": "Benutzer mit dem Recht zu chatten bekommen den Assistenten, MCP-Clients die Werkzeuge.",
+  "Users with the permission to chat get the assistant.": "Benutzer mit dem Recht zu chatten bekommen den Assistenten.",
   "Provider": "Anbieter",
   "Local": "Lokal",
   "Free tier": "Gratis-Kontingent",
