@@ -71,13 +71,16 @@ public sealed partial class ShippedLanguagesTests
         JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(path)) ?? [];
 
     private static List<string> Tokens(Regex token, string text) =>
-        [.. token.Matches(text).Select(m => Whitespace().Replace(m.Value, " ")).Order(StringComparer.Ordinal)];
+        [.. token.Matches(text).Select(m => HtmlLang().Replace(Whitespace().Replace(m.Value, " "), "lang=\"\"")).Order(StringComparer.Ordinal)];
 
     [GeneratedRegex(@"\{\d[^{}]*\}")]
     private static partial Regex Placeholder();
 
     [GeneratedRegex(@"\{\{.*?\}\}|</?[A-Za-z][^>]*>", RegexOptions.Singleline)]
     private static partial Regex Markup();
+
+    [GeneratedRegex("\\blang=\"[^\"]*\"")]
+    private static partial Regex HtmlLang();
 
     [GeneratedRegex(@"\s+")]
     private static partial Regex Whitespace();
