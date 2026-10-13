@@ -19,31 +19,31 @@ public sealed class QueryBuilderTests : ClientTestBase
     ];
 
     [Fact]
-    public void Rules_and_groups_are_added_edited_moved_and_removed()
+    public async Task Rules_and_groups_are_added_edited_moved_and_removed()
     {
         var popovers = Render<MudPopoverProvider>();
         var query = new QueryGroup();
         var changes = 0;
         var builder = Render<QueryBuilder>(p => p.Add(b => b.Fields, Fields).Add(b => b.Value, query).Add(b => b.ValueChanged, _ => changes++));
 
-        builder.Find("[data-testid='query-add-rule']").Click();
-        builder.Find("[data-testid='query-value'] input, input[data-testid='query-value']").Input("dri");
+        await builder.Find("[data-testid='query-add-rule']").ClickAsync(new());
+        await builder.Find("[data-testid='query-value'] input, input[data-testid='query-value']").InputAsync(new ChangeEventArgs { Value = "dri" });
         builder.WaitForAssertion(() => ODataQueryTranslator.ToFilter(query, Fields).ShouldBe("contains(tolower(Name),'dri')"));
 
-        builder.Find("[data-testid='query-add-group']").Click();
+        await builder.Find("[data-testid='query-add-group']").ClickAsync(new());
         var nested = (QueryGroup)query.Children[1];
         nested.Logic.ShouldBe(QueryLogic.Or);
         ((QueryRule)nested.Children[0]).Operator = QueryOperator.LessThan;
         ((QueryRule)nested.Children[0]).Field = "Price";
         ((QueryRule)nested.Children[0]).Value = "5";
-        builder.Find("[data-depth='0'] input[data-testid='query-not'], [data-depth='0'] [data-testid='query-not'] input").Change(true);
+        await builder.Find("[data-depth='0'] input[data-testid='query-not'], [data-depth='0'] [data-testid='query-not'] input").ChangeAsync(new ChangeEventArgs { Value = true });
         ODataQueryTranslator.ToFilter(query, Fields).ShouldBe("not (contains(tolower(Name),'dri') and Price lt 5)");
 
-        builder.FindAll("[data-testid='query-move-down']")[0].Click();
+        await builder.FindAll("[data-testid='query-move-down']")[0].ClickAsync(new());
         query.Children[0].ShouldBeOfType<QueryGroup>();
-        builder.FindAll("[data-testid='query-remove-group']")[0].Click();
+        await builder.FindAll("[data-testid='query-remove-group']")[0].ClickAsync(new());
         query.Children.Count.ShouldBe(1);
-        builder.Find("[data-testid='query-remove-rule']").Click();
+        await builder.Find("[data-testid='query-remove-rule']").ClickAsync(new());
         query.IsEmpty.ShouldBeTrue();
         changes.ShouldBeGreaterThan(5);
         popovers.Markup.ShouldNotBeNull();
@@ -67,25 +67,25 @@ public sealed class QueryBuilderTests : ClientTestBase
     }
 
     [Fact]
-    public void The_preview_reads_as_text_odata_and_json_and_json_imports()
+    public async Task The_preview_reads_as_text_odata_and_json_and_json_imports()
     {
         var query = new QueryGroup { Children = [new QueryRule { Field = "Kind", Operator = QueryOperator.In, Values = ["Hand", "Power"] }] };
         var builder = Render<QueryBuilder>(p => p.Add(b => b.Fields, Fields).Add(b => b.Value, query));
 
         builder.Find("[data-testid='query-preview-text']").TextContent.ShouldBe("Kind is any of Hand tool, Power tool");
-        builder.FindAll("[data-testid='query-preview-mode'] .mud-toggle-item")[1].Click();
+        await builder.FindAll("[data-testid='query-preview-mode'] .mud-toggle-item")[1].ClickAsync(new());
         builder.Find("[data-testid='query-preview-text']").TextContent.ShouldBe("(Kind eq 'Hand' or Kind eq 'Power')");
         builder.Find("[data-testid='query-export']").GetAttribute("href")!.ShouldStartWith("data:application/json");
 
-        builder.Find("[data-testid='query-import']").Click();
-        builder.Find("textarea[data-testid='query-import-text'], [data-testid='query-import-text'] textarea").Change("""{"logic":"Or","children":[{"kind":"rule","field":"Price","operator":"GreaterThan","value":"10"}]}""");
-        builder.Find("[data-testid='query-import-apply']").Click();
+        await builder.Find("[data-testid='query-import']").ClickAsync(new());
+        await builder.Find("textarea[data-testid='query-import-text'], [data-testid='query-import-text'] textarea").ChangeAsync(new ChangeEventArgs { Value = """{"logic":"Or","children":[{"kind":"rule","field":"Price","operator":"GreaterThan","value":"10"}]}""" });
+        await builder.Find("[data-testid='query-import-apply']").ClickAsync(new());
 
         query.Logic.ShouldBe(QueryLogic.Or);
         ODataQueryTranslator.ToFilter(query, Fields).ShouldBe("Price gt 10");
-        builder.Find("[data-testid='query-import']").Click();
-        builder.Find("textarea[data-testid='query-import-text'], [data-testid='query-import-text'] textarea").Change("nope");
-        builder.Find("[data-testid='query-import-apply']").Click();
+        await builder.Find("[data-testid='query-import']").ClickAsync(new());
+        await builder.Find("textarea[data-testid='query-import-text'], [data-testid='query-import-text'] textarea").ChangeAsync(new ChangeEventArgs { Value = "nope" });
+        await builder.Find("[data-testid='query-import-apply']").ClickAsync(new());
         builder.Markup.ShouldContain("This is not a query.");
     }
 
