@@ -16,18 +16,6 @@ public static class SecuritySettings
     public const string PasswordExpiryDays = "Account.Password.ExpiryDays";
 
     public const string PasswordHistory = "Account.Password.History";
-
-    public const string PasswordRequiredLength = PasswordSettings.RequiredLength;
-
-    public const string PasswordRequiredUniqueChars = PasswordSettings.RequiredUniqueChars;
-
-    public const string PasswordRequireDigit = PasswordSettings.RequireDigit;
-
-    public const string PasswordRequireLowercase = PasswordSettings.RequireLowercase;
-
-    public const string PasswordRequireUppercase = PasswordSettings.RequireUppercase;
-
-    public const string PasswordRequireNonAlphanumeric = PasswordSettings.RequireNonAlphanumeric;
 }
 
 /// <summary>Lockout and password rules from the settings, so administrators change them at runtime.</summary>
@@ -97,14 +85,14 @@ internal sealed class SecuritySettingDefinitions(IOptions<IdentityOptions> ident
     {
         var password = identity.Value.Password;
         context.Group("Security", "Sign-in security")
-            .Add(SecuritySettings.PasswordRequiredLength, "Minimum password length", SettingType.Int, [SettingScope.Global], password.RequiredLength.ToString(),
+            .Add(PasswordSettings.RequiredLength, "Minimum password length", SettingType.Int, [SettingScope.Global], password.RequiredLength.ToString(),
                 visibleToClient: true, description: "Shortest password allowed; at least 1.")
-            .Add(SecuritySettings.PasswordRequiredUniqueChars, "Different characters in a password", SettingType.Int, [SettingScope.Global], password.RequiredUniqueChars.ToString(),
+            .Add(PasswordSettings.RequiredUniqueChars, "Different characters in a password", SettingType.Int, [SettingScope.Global], password.RequiredUniqueChars.ToString(),
                 visibleToClient: true, description: "A password needs at least so many different characters.")
-            .Add(SecuritySettings.PasswordRequireDigit, "Password needs a digit", SettingType.Bool, [SettingScope.Global], Flag(password.RequireDigit), visibleToClient: true)
-            .Add(SecuritySettings.PasswordRequireLowercase, "Password needs a lowercase letter", SettingType.Bool, [SettingScope.Global], Flag(password.RequireLowercase), visibleToClient: true)
-            .Add(SecuritySettings.PasswordRequireUppercase, "Password needs an uppercase letter", SettingType.Bool, [SettingScope.Global], Flag(password.RequireUppercase), visibleToClient: true)
-            .Add(SecuritySettings.PasswordRequireNonAlphanumeric, "Password needs a special character", SettingType.Bool, [SettingScope.Global], Flag(password.RequireNonAlphanumeric), visibleToClient: true)
+            .Add(PasswordSettings.RequireDigit, "Password needs a digit", SettingType.Bool, [SettingScope.Global], Flag(password.RequireDigit), visibleToClient: true)
+            .Add(PasswordSettings.RequireLowercase, "Password needs a lowercase letter", SettingType.Bool, [SettingScope.Global], Flag(password.RequireLowercase), visibleToClient: true)
+            .Add(PasswordSettings.RequireUppercase, "Password needs an uppercase letter", SettingType.Bool, [SettingScope.Global], Flag(password.RequireUppercase), visibleToClient: true)
+            .Add(PasswordSettings.RequireNonAlphanumeric, "Password needs a special character", SettingType.Bool, [SettingScope.Global], Flag(password.RequireNonAlphanumeric), visibleToClient: true)
             .Add(SecuritySettings.MaxFailedAttempts, "Failed sign-ins before lockout", SettingType.Int, [SettingScope.Global], "10",
                 description: "Wrong passwords or codes in a row that lock the account for a while.")
             .Add(SecuritySettings.LockoutMinutes, "Lockout minutes", SettingType.Int, [SettingScope.Global], "15",
