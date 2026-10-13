@@ -1057,5 +1057,11 @@
   "App logo": "Logo aplikasi",
   "The logo may have at most {0} KB.": "Ukuran logo maksimal {0} KB.",
   "Choose a PNG, JPEG, WebP or SVG image.": "Pilih gambar PNG, JPEG, WebP, atau SVG.",
-  "The image could not be read.": "Gambar tidak dapat dibaca."
+  "The image could not be read.": "Gambar tidak dapat dibaca.",
+  "Keycloak sign-in page": "Halaman masuk Keycloak",
+  "Keycloak's sign-in page follows the default theme and the sign-in page design on its own. Apply it again after Keycloak lost its themes.": "Halaman masuk Keycloak otomatis mengikuti tema default dan desain halaman masuk. Terapkan lagi jika Keycloak kehilangan temanya.",
+  "Last written {0}": "Terakhir ditulis {0}",
+  "Not written yet": "Belum ditulis",
+  "Apply to Keycloak": "Terapkan ke Keycloak",
+  "Keycloak sign-in page updated": "Halaman masuk Keycloak diperbarui"
 }

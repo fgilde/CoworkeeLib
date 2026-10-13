@@ -1057,5 +1057,11 @@
   "App logo": "앱 로고",
   "The logo may have at most {0} KB.": "로고는 최대 {0}KB까지 가능합니다.",
   "Choose a PNG, JPEG, WebP or SVG image.": "PNG, JPEG, WebP 또는 SVG 이미지를 선택하세요.",
-  "The image could not be read.": "이미지를 읽을 수 없습니다."
+  "The image could not be read.": "이미지를 읽을 수 없습니다.",
+  "Keycloak sign-in page": "Keycloak 로그인 페이지",
+  "Keycloak's sign-in page follows the default theme and the sign-in page design on its own. Apply it again after Keycloak lost its themes.": "Keycloak 로그인 페이지는 기본 테마와 로그인 페이지 디자인을 자동으로 따릅니다. Keycloak이 테마를 잃어버렸다면 다시 적용하세요.",
+  "Last written {0}": "마지막 기록 {0}",
+  "Not written yet": "아직 기록되지 않음",
+  "Apply to Keycloak": "Keycloak에 적용",
+  "Keycloak sign-in page updated": "Keycloak 로그인 페이지가 업데이트되었습니다"
 }

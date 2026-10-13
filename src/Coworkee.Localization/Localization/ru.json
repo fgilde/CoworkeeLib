@@ -1057,5 +1057,11 @@
   "App logo": "Логотип приложения",
   "The logo may have at most {0} KB.": "Размер логотипа не должен превышать {0} КБ.",
   "Choose a PNG, JPEG, WebP or SVG image.": "Выберите изображение PNG, JPEG, WebP или SVG.",
-  "The image could not be read.": "Не удалось прочитать изображение."
+  "The image could not be read.": "Не удалось прочитать изображение.",
+  "Keycloak sign-in page": "Страница входа Keycloak",
+  "Keycloak's sign-in page follows the default theme and the sign-in page design on its own. Apply it again after Keycloak lost its themes.": "Страница входа Keycloak сама следует теме по умолчанию и оформлению страницы входа. Примените её снова, если Keycloak потерял свои темы.",
+  "Last written {0}": "Последняя запись {0}",
+  "Not written yet": "Ещё не записана",
+  "Apply to Keycloak": "Применить в Keycloak",
+  "Keycloak sign-in page updated": "Страница входа Keycloak обновлена"
 }

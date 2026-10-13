@@ -1057,5 +1057,11 @@
   "App logo": "Uygulama logosu",
   "The logo may have at most {0} KB.": "Logo en fazla {0} KB olabilir.",
   "Choose a PNG, JPEG, WebP or SVG image.": "PNG, JPEG, WebP veya SVG görseli seçin.",
-  "The image could not be read.": "Görsel okunamadı."
+  "The image could not be read.": "Görsel okunamadı.",
+  "Keycloak sign-in page": "Keycloak oturum açma sayfası",
+  "Keycloak's sign-in page follows the default theme and the sign-in page design on its own. Apply it again after Keycloak lost its themes.": "Keycloak oturum açma sayfası varsayılan temayı ve oturum açma sayfası tasarımını kendiliğinden izler. Keycloak temalarını kaybettiyse yeniden uygulayın.",
+  "Last written {0}": "Son yazılma {0}",
+  "Not written yet": "Henüz yazılmadı",
+  "Apply to Keycloak": "Keycloak'a uygula",
+  "Keycloak sign-in page updated": "Keycloak oturum açma sayfası güncellendi"
 }

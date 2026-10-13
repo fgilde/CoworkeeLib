@@ -1057,5 +1057,11 @@
   "App logo": "شعار التطبيق",
   "The logo may have at most {0} KB.": "يجب ألا يتجاوز حجم الشعار {0} كيلوبايت.",
   "Choose a PNG, JPEG, WebP or SVG image.": "اختر صورة بصيغة PNG أو JPEG أو WebP أو SVG.",
-  "The image could not be read.": "تعذرت قراءة الصورة."
+  "The image could not be read.": "تعذرت قراءة الصورة.",
+  "Keycloak sign-in page": "صفحة تسجيل الدخول في Keycloak",
+  "Keycloak's sign-in page follows the default theme and the sign-in page design on its own. Apply it again after Keycloak lost its themes.": "تتبع صفحة تسجيل الدخول في Keycloak السمة الافتراضية وتصميم صفحة تسجيل الدخول تلقائيًا. طبّقها مرة أخرى إذا فقد Keycloak سماته.",
+  "Last written {0}": "آخر كتابة {0}",
+  "Not written yet": "لم تُكتب بعد",
+  "Apply to Keycloak": "تطبيق على Keycloak",
+  "Keycloak sign-in page updated": "تم تحديث صفحة تسجيل الدخول في Keycloak"
 }

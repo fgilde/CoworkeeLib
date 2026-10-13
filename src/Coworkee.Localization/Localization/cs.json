@@ -1057,5 +1057,11 @@
   "App logo": "Logo aplikace",
   "The logo may have at most {0} KB.": "Logo smí mít nejvýše {0} KB.",
   "Choose a PNG, JPEG, WebP or SVG image.": "Vyberte obrázek PNG, JPEG, WebP nebo SVG.",
-  "The image could not be read.": "Obrázek se nepodařilo načíst."
+  "The image could not be read.": "Obrázek se nepodařilo načíst.",
+  "Keycloak sign-in page": "Přihlašovací stránka Keycloak",
+  "Keycloak's sign-in page follows the default theme and the sign-in page design on its own. Apply it again after Keycloak lost its themes.": "Přihlašovací stránka Keycloak se sama řídí výchozím motivem a vzhledem přihlašovací stránky. Použijte ji znovu, pokud Keycloak přišel o své motivy.",
+  "Last written {0}": "Naposledy zapsáno {0}",
+  "Not written yet": "Zatím nezapsáno",
+  "Apply to Keycloak": "Použít v Keycloak",
+  "Keycloak sign-in page updated": "Přihlašovací stránka Keycloak byla aktualizována"
 }

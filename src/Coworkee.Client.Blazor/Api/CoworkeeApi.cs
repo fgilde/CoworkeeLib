@@ -243,6 +243,12 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
 
     public Task SetDefaultThemeAsync(Guid id, CancellationToken cancellationToken = default) => SendAsync(HttpMethod.Post, $"{Themes}/{id}/default", null, cancellationToken);
 
+    public Task<KeycloakThemeStatusDto> GetKeycloakThemeStatusAsync(CancellationToken cancellationToken = default) =>
+        GetAsync<KeycloakThemeStatusDto>($"{Themes}/keycloak", cancellationToken);
+
+    public Task<KeycloakThemeStatusDto> ApplyKeycloakThemeAsync(CancellationToken cancellationToken = default) =>
+        SendAsync<KeycloakThemeStatusDto>(HttpMethod.Post, $"{Themes}/keycloak/apply", null, cancellationToken);
+
     public Task<PagedResult<AuditEntryDto>> GetAuditAsync(AuditQuery query, CancellationToken cancellationToken = default)
     {
         var parameters = new List<string> { $"page={query.Page}", $"pageSize={query.PageSize}" };

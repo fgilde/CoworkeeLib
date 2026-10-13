@@ -1057,5 +1057,11 @@
   "App logo": "应用徽标",
   "The logo may have at most {0} KB.": "徽标最大为 {0} KB。",
   "Choose a PNG, JPEG, WebP or SVG image.": "请选择 PNG、JPEG、WebP 或 SVG 图片。",
-  "The image could not be read.": "无法读取图片。"
+  "The image could not be read.": "无法读取图片。",
+  "Keycloak sign-in page": "Keycloak 登录页面",
+  "Keycloak's sign-in page follows the default theme and the sign-in page design on its own. Apply it again after Keycloak lost its themes.": "Keycloak 登录页面会自动跟随默认主题和登录页面设计。如果 Keycloak 丢失了主题，请重新应用。",
+  "Last written {0}": "上次写入 {0}",
+  "Not written yet": "尚未写入",
+  "Apply to Keycloak": "应用到 Keycloak",
+  "Keycloak sign-in page updated": "Keycloak 登录页面已更新"
 }

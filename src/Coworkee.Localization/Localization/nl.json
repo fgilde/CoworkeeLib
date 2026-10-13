@@ -1057,5 +1057,11 @@
   "App logo": "App-logo",
   "The logo may have at most {0} KB.": "Het logo mag maximaal {0} KB groot zijn.",
   "Choose a PNG, JPEG, WebP or SVG image.": "Kies een PNG-, JPEG-, WebP- of SVG-afbeelding.",
-  "The image could not be read.": "De afbeelding kon niet worden gelezen."
+  "The image could not be read.": "De afbeelding kon niet worden gelezen.",
+  "Keycloak sign-in page": "Keycloak-aanmeldpagina",
+  "Keycloak's sign-in page follows the default theme and the sign-in page design on its own. Apply it again after Keycloak lost its themes.": "De aanmeldpagina van Keycloak volgt vanzelf het standaardthema en het ontwerp van de aanmeldpagina. Pas deze opnieuw toe als Keycloak zijn thema's kwijt is.",
+  "Last written {0}": "Laatst geschreven {0}",
+  "Not written yet": "Nog niet geschreven",
+  "Apply to Keycloak": "Toepassen op Keycloak",
+  "Keycloak sign-in page updated": "Keycloak-aanmeldpagina bijgewerkt"
 }

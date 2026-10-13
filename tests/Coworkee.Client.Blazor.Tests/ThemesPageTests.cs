@@ -102,6 +102,41 @@ public sealed class ThemesPageTests : ClientTestBase
     }
 
     [Fact]
+    public async Task The_keycloak_card_shows_when_the_api_keeps_a_login_theme_and_applies_it_on_request()
+    {
+        Api.GetKeycloakThemeStatusAsync(Arg.Any<CancellationToken>()).Returns(new KeycloakThemeStatusDto(true, "coworkee-demo", null, null));
+        Api.ApplyKeycloakThemeAsync(Arg.Any<CancellationToken>()).Returns(new KeycloakThemeStatusDto(true, "coworkee-demo", DateTimeOffset.UtcNow, null));
+        var page = Render<Themes>();
+        page.WaitForAssertion(() => page.Find("[data-testid='keycloak-theme-written']").TextContent.Trim().ShouldBe("Not written yet"));
+
+        await page.Find("[data-testid='keycloak-theme-apply']").ClickAsync(new());
+
+        await Api.Received(1).ApplyKeycloakThemeAsync(Arg.Any<CancellationToken>());
+        page.WaitForAssertion(() => page.Find("[data-testid='keycloak-theme-written']").TextContent.Trim().ShouldStartWith("Last written"));
+    }
+
+    [Fact]
+    public void The_keycloak_card_shows_why_writing_failed()
+    {
+        Api.GetKeycloakThemeStatusAsync(Arg.Any<CancellationToken>()).Returns(new KeycloakThemeStatusDto(true, "coworkee-demo", null, "Access denied"));
+
+        var page = Render<Themes>();
+
+        page.WaitForAssertion(() => page.Find("[data-testid='keycloak-theme-error']").TextContent.ShouldContain("Access denied"));
+    }
+
+    [Fact]
+    public void The_keycloak_card_stays_hidden_without_a_theme_folder()
+    {
+        Api.GetKeycloakThemeStatusAsync(Arg.Any<CancellationToken>()).Returns(new KeycloakThemeStatusDto(false, null, null, null));
+
+        var page = Render<Themes>();
+
+        page.WaitForAssertion(() => page.FindAll("[data-testid='theme-tile']").Count.ShouldBe(2));
+        page.FindAll("[data-testid='keycloak-theme']").ShouldBeEmpty();
+    }
+
+    [Fact]
     public void The_theme_editor_edits_the_custom_css_as_multiline_text()
     {
         Api.GetThemesAsync(Arg.Any<CancellationToken>()).Returns([BuiltIn, Own with { CustomCss = ".brand { color: red; }" }]);

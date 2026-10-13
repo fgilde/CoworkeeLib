@@ -1057,5 +1057,11 @@
   "App logo": "Лого на приложението",
   "The logo may have at most {0} KB.": "Логото може да е най-много {0} KB.",
   "Choose a PNG, JPEG, WebP or SVG image.": "Изберете изображение във формат PNG, JPEG, WebP или SVG.",
-  "The image could not be read.": "Изображението не можа да бъде прочетено."
+  "The image could not be read.": "Изображението не можа да бъде прочетено.",
+  "Keycloak sign-in page": "Страница за вход в Keycloak",
+  "Keycloak's sign-in page follows the default theme and the sign-in page design on its own. Apply it again after Keycloak lost its themes.": "Страницата за вход в Keycloak следва автоматично темата по подразбиране и дизайна на страницата за вход. Приложете я отново, ако Keycloak е загубил темите си.",
+  "Last written {0}": "Последно записано {0}",
+  "Not written yet": "Още не е записано",
+  "Apply to Keycloak": "Приложи в Keycloak",
+  "Keycloak sign-in page updated": "Страницата за вход в Keycloak е обновена"
 }
