@@ -170,7 +170,7 @@ public sealed class TemplateOptionTests(TemplateFixture template)
     {
         var feed = Environment.GetEnvironmentVariable("COWORKEE_TEST_FEED");
         Assert.SkipWhen(string.IsNullOrEmpty(feed), "Set COWORKEE_TEST_FEED to a folder with packed Coworkee packages (build/pack-local.ps1) to build a generated app.");
-        var app = await template.CreateAsync("build-no-tools", "--samples", "false", "--grafana", "false", "--webDataStudio", "false", "--keycloak", "true");
+        var app = await template.CreateAsync("build-no-tools", "--samples", "false", "--grafana", "false", "--webDataStudio", "false", "--keycloak", "true", "--aspireUI", "true");
         await Dotnet.RunAsync(app, "nuget", "add", "source", Path.GetFullPath(feed!), "--name", "local", "--configfile", "nuget.config");
 
         await Dotnet.RunAsync(app, "build", "Shop.slnx");
