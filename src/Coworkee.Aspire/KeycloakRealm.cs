@@ -12,8 +12,12 @@ internal static class KeycloakRealm
 {
     public sealed record Client(string ClientId, string Secret, IReadOnlyList<string> RedirectUris);
 
+    /// <summary>The realm's name above the sign-in form and its login theme; without one the realm keeps the theme it has.</summary>
+    public sealed record Look(string DisplayName, string? LoginTheme);
+
     /// <summary>Users must carry their <see cref="KeycloakUser.Password"/>.</summary>
-    public static async Task ReconcileAsync(HttpClient http, string admin, string adminPassword, string realm, IReadOnlyList<Client> clients, IReadOnlyList<KeycloakUser> users, CancellationToken cancellationToken)
+    public static async Task ReconcileAsync(HttpClient http, string admin, string adminPassword, string realm, Look look, IReadOnlyList<Client> clients, IReadOnlyList<KeycloakUser> users,
+        CancellationToken cancellationToken)
     {
         http.DefaultRequestHeaders.Authorization = new("Bearer", await TokenAsync(http, admin, adminPassword, cancellationToken));
         var root = $"admin/realms/{Uri.EscapeDataString(realm)}";
@@ -26,6 +30,8 @@ internal static class KeycloakRealm
                     ["realm"] = realm,
                     ["enabled"] = true,
                     ["loginWithEmailAllowed"] = true,
+                    ["displayName"] = look.DisplayName,
+                    ["loginTheme"] = look.LoginTheme,
                     ["clients"] = new JsonArray([.. clients.Select(ClientJson)]),
                     ["roles"] = new JsonObject { ["realm"] = new JsonArray([.. users.SelectMany(u => u.Roles).Distinct().Select(r => new JsonObject { ["name"] = r })]) },
                     ["users"] = new JsonArray([.. users.Select(u => UserJson(u, withCredentials: true))]),
@@ -36,6 +42,9 @@ internal static class KeycloakRealm
 
             await Ensure(existing);
         }
+
+        // a partial representation changes only the fields it carries
+        await SendAsync(http.PutAsJsonAsync(root, new JsonObject { ["displayName"] = look.DisplayName, ["loginTheme"] = look.LoginTheme }, cancellationToken));
 
         foreach (var client in clients)
         {

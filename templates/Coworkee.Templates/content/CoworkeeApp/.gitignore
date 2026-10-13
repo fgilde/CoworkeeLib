@@ -6,3 +6,4 @@ obj/
 TestResults/
 artifacts/
 **/observability/.generated/
+**/.coworkee/

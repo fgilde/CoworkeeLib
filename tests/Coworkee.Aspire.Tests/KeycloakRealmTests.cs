@@ -1,7 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using Aspire.Hosting;
+using Coworkee.Contracts.Theming;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 
@@ -12,6 +14,7 @@ public sealed class KeycloakRealmTests : IAsyncLifetime
 {
     private const string Admin = "admin";
     private const string AdminPassword = "admin-password";
+    private static readonly string Themes = Directory.CreateTempSubdirectory("keycloak-themes-").FullName;
 
     private readonly IContainer _keycloak = new ContainerBuilder("quay.io/keycloak/keycloak:26.6")
         .WithCommand("start-dev")
@@ -21,6 +24,7 @@ public sealed class KeycloakRealmTests : IAsyncLifetime
         .WithEnvironment(CoworkeeApp.KeycloakHeaderLimit, "65536")
         .WithPortBinding(8080, true)
         .WithPortBinding(9000, true)
+        .WithBindMount(Themes, "/opt/keycloak/themes")
         .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(r => r.ForPort(9000).ForPath("/health/ready")))
         .Build();
 
@@ -73,6 +77,35 @@ public sealed class KeycloakRealmTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_sign_in_page_shows_the_app_name_and_the_login_theme_from_the_mounted_folder()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        KeycloakLoginTheme.Write(Themes, "coworkee-demo", new("Demo App", KeycloakLoginTheme.DefaultLight, KeycloakLoginTheme.DefaultDark)
+        {
+            Logo = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1 1\"><rect width=\"1\" height=\"1\"/></svg>",
+            Design = new() { Layout = "Split" },
+        });
+
+        await Reconcile([new("demo-auth", "secret", [])], [], ct, new("Demo App", "coworkee-demo"));
+
+        using var http = new HttpClient { BaseAddress = Base };
+        var page = await http.GetStringAsync("realms/demo/protocol/openid-connect/auth?client_id=demo-auth&response_type=code&scope=openid&redirect_uri=http%3A%2F%2Flocalhost%2Fcallback", ct);
+        page.ShouldContain("Demo App");
+        var css = Regex.Match(page, "href=\"([^\"]+/login/coworkee-demo/css/coworkee.css)\"").Groups[1].Value;
+        css.ShouldNotBeEmpty();
+        page.ShouldContain("/login/coworkee-demo/js/coworkee.js");
+        page.ShouldContain("/login/coworkee-demo/css/styles.css");
+        (await http.GetStringAsync(css, ct)).ShouldContain("--cw-primary:#1565c0");
+        (await http.GetAsync(css.Replace("css/coworkee.css", "img/logo.svg"), ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await Reconcile([new("demo-auth", "secret", [])], [], ct, new("Renamed", null));
+        using var admin = await AdminAsync(ct);
+        var realm = await admin.GetFromJsonAsync<JsonObject>("admin/realms/demo", ct);
+        realm!["displayName"]!.GetValue<string>().ShouldBe("Renamed");
+        realm["loginTheme"]!.GetValue<string>().ShouldBe("coworkee-demo");
+    }
+
+    [Fact]
     public async Task Large_localhost_cookies_pass_over_http2()
     {
         using var http = new HttpClient { BaseAddress = Base };
@@ -85,10 +118,10 @@ public sealed class KeycloakRealmTests : IAsyncLifetime
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
-    private async Task Reconcile(KeycloakRealm.Client[] clients, KeycloakUser[] users, CancellationToken ct)
+    private async Task Reconcile(KeycloakRealm.Client[] clients, KeycloakUser[] users, CancellationToken ct, KeycloakRealm.Look? look = null)
     {
         using var http = new HttpClient { BaseAddress = Base };
-        await KeycloakRealm.ReconcileAsync(http, Admin, AdminPassword, "demo", clients, users, ct);
+        await KeycloakRealm.ReconcileAsync(http, Admin, AdminPassword, "demo", look ?? new("Demo", null), clients, users, ct);
     }
 
     private async Task<HttpStatusCode> SignInAsync(string user, string password, CancellationToken ct)

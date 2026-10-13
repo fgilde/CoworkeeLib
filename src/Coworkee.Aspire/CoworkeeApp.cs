@@ -79,21 +79,7 @@ public sealed partial class CoworkeeApp
         {
             auth.WithSetting(s => s.Coworkee.Auth.LogoUrl, Options.LogoUrl);
         }
-        if (Options.SignIn.Layout is { } layout)
-        {
-            auth.WithSetting(s => s.Coworkee.Auth.Design.Layout, layout);
-        }
-
-        if (Options.SignIn.MediaSide is { } side)
-        {
-            auth.WithSetting(s => s.Coworkee.Auth.Design.MediaSide, side.ToString());
-        }
-
-        if (Options.SignIn.MediaUrl is { } media && !media.StartsWith('/'))
-        {
-            auth.WithSetting(s => s.Coworkee.Auth.Design.MediaUrl, media);
-        }
-
+        WithSignInDesign(auth);
         if (Builder.Environment.IsDevelopment())
         {
             // per machine certificates are fine locally; production configures SigningCertificate and EncryptionCertificate
@@ -123,6 +109,7 @@ public sealed partial class CoworkeeApp
         }
 
         AddKeycloakSignInSettings(api);
+        WithSignInDesign(api);
         auth.WithSetting(s => s.Coworkee.Auth.ApiScopes[ApiAudience], ApiAudience);
         _apis.Add(api);
         return Added<TProject>(api, suffix);
@@ -167,12 +154,39 @@ public sealed partial class CoworkeeApp
             auth.WithSetting(s => s.Coworkee.Auth.LogoUrl, ReferenceExpression.Create($"{redirect}{logo}"));
         }
 
-        if (Options.SignIn.MediaUrl is { } media && media.StartsWith('/'))
+        foreach (var service in _apis.Prepend(auth))
         {
-            auth.WithSetting(s => s.Coworkee.Auth.Design.MediaUrl, ReferenceExpression.Create($"{redirect}{media}"));
+            if (Options.SignIn.MediaUrl is { } media && media.StartsWith('/'))
+            {
+                service.WithSetting(s => s.Coworkee.Auth.Design.MediaUrl, ReferenceExpression.Create($"{redirect}{media}"));
+            }
+
+            if (_loginTheme is not null && service != auth)
+            {
+                service.WithSetting(s => s.Coworkee.Keycloak.BaseUrl, redirect);
+            }
         }
 
         return Added<TProject>(web, suffix);
+    }
+
+    /// <summary>The auth server shows the design, the api hosts the settings that change it (and rewrites Keycloak's login theme from it).</summary>
+    private void WithSignInDesign(IResourceBuilder<ProjectResource> service)
+    {
+        if (Options.SignIn.Layout is { } layout)
+        {
+            service.WithSetting(s => s.Coworkee.Auth.Design.Layout, layout);
+        }
+
+        if (Options.SignIn.MediaSide is { } side)
+        {
+            service.WithSetting(s => s.Coworkee.Auth.Design.MediaSide, side.ToString());
+        }
+
+        if (Options.SignIn.MediaUrl is { } media && !media.StartsWith('/'))
+        {
+            service.WithSetting(s => s.Coworkee.Auth.Design.MediaUrl, media);
+        }
     }
 
     private IResourceBuilder<ProjectResource> Service<TProject>(string suffix)
