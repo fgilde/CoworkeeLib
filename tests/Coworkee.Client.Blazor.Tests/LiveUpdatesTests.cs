@@ -148,7 +148,8 @@ public sealed class LiveUpdatesTests : ClientTestBase
         Api.GetUserCardsAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<CancellationToken>())
             .Returns([new UserCardDto(Bob, "Bob Builder", null)], [new UserCardDto(Bob, "Bob Builder", "42")]);
         var avatar = Render<UserAvatar>(p => p.Add(c => c.UserId, Bob));
-        avatar.WaitForAssertion(() => avatar.Markup.ShouldContain("BB"));
+        // the markup also holds the user id, whose hex digits may contain "bb"
+        avatar.WaitForAssertion(() => avatar.Find("[data-user]").TextContent.Trim().ShouldBe("BB"));
 
         Realtime.Push(UserEvents.Topic, UserEvents.Changed, new { userId = Bob });
 
