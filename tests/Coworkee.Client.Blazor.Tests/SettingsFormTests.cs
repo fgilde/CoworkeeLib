@@ -198,6 +198,28 @@ public sealed class SettingsFormTests : ClientTestBase
         selects.ShouldAllBe(s => s.Closest(".mud-grid-item") != null);
     }
 
+    [Fact]
+    public async Task A_choice_shows_the_translated_text_and_saves_the_raw_value()
+    {
+        Localization.GetLanguagesAsync(Arg.Any<bool>(), Arg.Any<CancellationToken>()).Returns([new LanguageDto(null, "de", "Deutsch", true, true)]);
+        Localization.GetTextsAsync("de", Arg.Any<CancellationToken>()).Returns(new TextsDto("de", new Dictionary<string, string> { ["Internal"] = "Nur Passwort", ["External"] = "Nur externe Anbieter" }));
+        await Services.GetRequiredService<CoworkeeLocalizer>().InitializeAsync(null);
+        Api.GetSettingDefinitionsAsync(false, Arg.Any<CancellationToken>()).Returns(
+        [
+            new SettingGroupDto("Auth", "Auth", [new SettingDefinitionDto("Auth.LoginMode", "Sign-in methods", null, SettingType.Choice, "Internal", Global, ["Internal", "External"])]),
+        ]);
+        Api.GetSettingsAsync(SettingScope.Global, Arg.Any<CancellationToken>()).Returns([new SettingValueDto("Auth.LoginMode", null, false)]);
+        var form = Render<SettingsForm>(p => p.Add(f => f.Scope, SettingScope.Global));
+        form.WaitForAssertion(() => SelectedText(form).ShouldBe("Nur Passwort"));
+
+        await form.FindAll(".mud-ex-list-item")[1].ClickAsync(new());
+        await form.InvokeAsync(() => form.Instance.SaveAsync());
+
+        form.FindAll(".mud-ex-list-item-text").Select(i => i.TextContent.Trim()).ShouldBe(["Nur Passwort", "Nur externe Anbieter"]);
+        await Api.Received(1).SetSettingsAsync(SettingScope.Global,
+            Arg.Is<IReadOnlyDictionary<string, string?>>(v => v.Count == 1 && v["Auth.LoginMode"] == "External"), Arg.Any<CancellationToken>());
+    }
+
     private async Task<IRenderedComponent<SettingsForm>> RenderLanguageAsync(SettingScope scope, string? stored)
     {
         Localization.GetLanguagesAsync(Arg.Any<bool>(), Arg.Any<CancellationToken>())

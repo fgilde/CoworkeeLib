@@ -65,7 +65,11 @@ public sealed partial class SettingsModel
                     property.WithAdditionalAttribute(nameof(MudTextField<string>.Lines), 4);
                     break;
                 case SettingType.Choice:
-                    property.RenderWith<MudExSelect<string>, string?>(s => s.Value, s => s.ItemCollection = [.. setting.Choices ?? []]);
+                    property.RenderWith<MudExSelect<string>, string?>(s => s.Value, s =>
+                    {
+                        s.ItemCollection = [.. setting.Choices ?? []];
+                        s.ToStringFunc = choice => choice is null ? string.Empty : l[choice];
+                    });
                     break;
                 case SettingType.Language:
                 {
