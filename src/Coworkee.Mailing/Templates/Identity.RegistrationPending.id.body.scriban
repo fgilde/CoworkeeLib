@@ -1,0 +1,2 @@
+<p>Halo {{ user.first_name }},</p>
+<p>Terima kasih telah mendaftar. Administrator akan segera meninjau akun Anda.</p>

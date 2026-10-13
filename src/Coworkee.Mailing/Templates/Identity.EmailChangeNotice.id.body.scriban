@@ -1,0 +1,7 @@
+<p>Halo {{ user.first_name }},</p>
+{{ if pending }}
+<p>Alamat email baru diminta untuk akun Anda: {{ new_email }}. Alamat ini akan menggantikan alamat saat ini setelah tautan yang dikirim ke sana dibuka.</p>
+{{ else }}
+<p>Alamat email akun Anda telah diubah menjadi {{ new_email }}. Mulai sekarang Anda masuk dengan alamat baru.</p>
+{{ end }}
+<p>Jika Anda tidak memintanya, segera ubah kata sandi Anda dan beri tahu administrator.</p>

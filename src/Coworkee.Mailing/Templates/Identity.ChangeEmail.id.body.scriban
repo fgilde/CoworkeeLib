@@ -1,0 +1,3 @@
+<p>Halo {{ user.first_name }},</p>
+<p>mohon konfirmasi bahwa {{ new_email }} adalah alamat baru akun Anda. Sampai saat itu, Anda masuk dengan {{ user.email }}. Jika Anda tidak memintanya, abaikan saja pesan ini.</p>
+<p style="margin:24px 0;"><a href="{{ confirm_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">Konfirmasi alamat baru</a></p>
