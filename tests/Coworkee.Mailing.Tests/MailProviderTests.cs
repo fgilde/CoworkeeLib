@@ -93,15 +93,39 @@ public sealed class MailProviderTests(MailApp app) : IAsyncLifetime
         error.Message.ShouldBe("Mailgun domain is not configured.");
     }
 
+    [Fact]
+    public async Task Own_server_without_stored_values_does_not_pass_on_deployment_defaults()
+    {
+        await PutOtherAsync((MailSettings.UseOwnServer, "true"));
+
+        var error = await Should.ThrowAsync<InvalidOperationException>(() => ResolveAsync(_otherUser, _otherTenant));
+
+        error.Message.ShouldBe("SMTP host is not configured.");
+        (await ResolveAsync(_setup.AdminUserId, _setup.TenantId))[MailSettings.Host].ShouldNotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
+    public async Task Setup_check_warns_when_no_transport_serves_the_provider()
+    {
+        await PutGlobalAsync((MailSettings.Provider, MailProviders.SendGrid), (MailSettings.ApiKey, "global-key"));
+
+        var none = await RunSetupCheckAsync();
+        var all = await app.AsActorAsync(null, null, sp => sp.GetRequiredService<Coworkee.Application.Setup.ISetupCheck>().RunAsync(Ct));
+
+        none.Status.ShouldBe(SetupCheckStatus.Warning);
+        none.Message.ShouldContain("sendGrid");
+        all.Status.ShouldBe(SetupCheckStatus.Ok);
+    }
+
     [Theory]
-    [InlineData(MailProviders.SendGrid, "Mail API key is not configured.")]
-    [InlineData(MailProviders.Mailchimp, "Mail API key is not configured.")]
-    [InlineData(MailProviders.Mailgun, "Mail API key is not configured.")]
-    public async Task Provider_without_its_credentials_is_not_configured(string provider, string message)
+    [InlineData(MailProviders.SendGrid)]
+    [InlineData(MailProviders.Mailchimp)]
+    [InlineData(MailProviders.Mailgun)]
+    public async Task Provider_without_its_credentials_is_not_configured(string provider)
     {
         await PutGlobalAsync((MailSettings.Provider, provider));
 
-        (await Should.ThrowAsync<InvalidOperationException>(() => ResolveAsync(_setup.AdminUserId, _setup.TenantId))).Message.ShouldBe(message);
+        (await Should.ThrowAsync<InvalidOperationException>(() => ResolveAsync(_setup.AdminUserId, _setup.TenantId))).Message.ShouldBe("Mail API key is not configured.");
     }
 
     [Fact]
@@ -155,6 +179,9 @@ public sealed class MailProviderTests(MailApp app) : IAsyncLifetime
 
         (await app.InDbAsync(db => db.Set<OutgoingMail>().SingleAsync(m => m.Id == id, Ct))).LastError.ShouldBe("Mailgun domain is not configured.");
     }
+
+    private Task<SetupCheckDto> RunSetupCheckAsync() =>
+        app.AsActorAsync(null, null, sp => ActivatorUtilities.CreateInstance<MailSetupCheck>(sp, (IEnumerable<IMailTransport>)[]).RunAsync(Ct));
 
     private Task<Guid> QueueAsync(string to) => app.InDbAsync(async db =>
     {

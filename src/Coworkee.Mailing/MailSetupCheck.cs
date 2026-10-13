@@ -5,7 +5,7 @@ using Coworkee.Contracts.Mailing;
 
 namespace Coworkee.Mailing;
 
-internal sealed class MailSetupCheck(MailConnectionResolver resolver) : ISetupCheck
+internal sealed class MailSetupCheck(MailConnectionResolver resolver, IEnumerable<IMailTransport> transports) : ISetupCheck
 {
     public string Name => "Mail";
 
@@ -19,6 +19,11 @@ internal sealed class MailSetupCheck(MailConnectionResolver resolver) : ISetupCh
         catch (InvalidOperationException)
         {
             return new SetupCheckDto(Name, SetupCheckStatus.Warning, "No mail server is configured yet. You can enter one in the next steps.");
+        }
+
+        if (!transports.Any(t => t.Provider == connection.Provider))
+        {
+            return new SetupCheckDto(Name, SetupCheckStatus.Warning, $"No mail transport is registered for provider '{connection.Provider}'.");
         }
 
         if (connection.Provider != MailProviders.Smtp)

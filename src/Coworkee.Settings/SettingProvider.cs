@@ -14,8 +14,8 @@ public interface ISettingProvider
 
     Task<T> GetAsync<T>(string name, CancellationToken cancellationToken = default);
 
-    /// <summary>The value stored at exactly this scope (of the current tenant for <see cref="SettingScope.Tenant"/>), else the default; no fallback to other scopes.</summary>
-    Task<string?> GetForScopeAsync(string name, SettingScope scope, CancellationToken cancellationToken = default);
+    /// <summary>The value stored at exactly this scope (of the current tenant for <see cref="SettingScope.Tenant"/>), else the default (null with <paramref name="storedOnly"/> when nothing is stored); no fallback to other scopes.</summary>
+    Task<string?> GetForScopeAsync(string name, SettingScope scope, bool storedOnly = false, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyDictionary<string, string?>> GetClientValuesAsync(CancellationToken cancellationToken = default);
 }
@@ -43,10 +43,10 @@ internal sealed class SettingProvider(
         return value is null ? default! : (T)Convert.ChangeType(value, Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T), CultureInfo.InvariantCulture);
     }
 
-    public async Task<string?> GetForScopeAsync(string name, SettingScope scope, CancellationToken cancellationToken = default)
+    public async Task<string?> GetForScopeAsync(string name, SettingScope scope, bool storedOnly = false, CancellationToken cancellationToken = default)
     {
         var definition = definitions.Find(name) ?? throw new ArgumentException($"Setting '{name}' is not defined.", nameof(name));
-        return Resolve(definition, await LoadAsync(cancellationToken), scope);
+        return Find(definition, await LoadAsync(cancellationToken), scope) is { } row ? Read(definition, row) : storedOnly ? null : definition.DefaultValue;
     }
 
     public async Task<IReadOnlyDictionary<string, string?>> GetClientValuesAsync(CancellationToken cancellationToken = default)
@@ -58,18 +58,13 @@ internal sealed class SettingProvider(
     private string? Resolve(SettingDefinition definition, IReadOnlyList<StoredSetting> stored) =>
         Resolve(definition, stored, SettingScope.User, SettingScope.Tenant, SettingScope.Global);
 
-    private string? Resolve(SettingDefinition definition, IReadOnlyList<StoredSetting> stored, params SettingScope[] scopes)
-    {
-        foreach (var scope in scopes)
-        {
-            if (definition.Scopes.Contains(scope) && stored.FirstOrDefault(s => s.Name == definition.Name && s.Scope == scope) is { } value)
-            {
-                return definition.IsEncrypted ? protector.Unprotect(value.Value) : value.Value;
-            }
-        }
+    private string? Resolve(SettingDefinition definition, IReadOnlyList<StoredSetting> stored, params SettingScope[] scopes) =>
+        Find(definition, stored, scopes) is { } row ? Read(definition, row) : definition.DefaultValue;
 
-        return definition.DefaultValue;
-    }
+    private static StoredSetting? Find(SettingDefinition definition, IReadOnlyList<StoredSetting> stored, params SettingScope[] scopes) =>
+        scopes.Where(definition.Scopes.Contains).Select(scope => stored.FirstOrDefault(s => s.Name == definition.Name && s.Scope == scope)).FirstOrDefault(row => row is not null);
+
+    private string? Read(SettingDefinition definition, StoredSetting row) => definition.IsEncrypted ? protector.Unprotect(row.Value) : row.Value;
 
     private async Task<IReadOnlyList<StoredSetting>> LoadAsync(CancellationToken cancellationToken)
     {

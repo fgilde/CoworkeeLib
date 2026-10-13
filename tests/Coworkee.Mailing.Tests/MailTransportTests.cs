@@ -108,6 +108,39 @@ public sealed class MailTransportTests
         error.Message.ShouldNotContain(ApiKey);
     }
 
+    [Theory]
+    [InlineData("""{"status":"error","message":"x"}""")]
+    [InlineData("[]")]
+    [InlineData("[1]")]
+    [InlineData("""[{"email":"ada@acme.test"}]""")]
+    [InlineData("not json")]
+    public async Task Mailchimp_unexpected_success_response_is_an_error(string response)
+    {
+        var http = new FakeHttp(HttpStatusCode.OK, response);
+
+        var error = await Should.ThrowAsync<InvalidOperationException>(() =>
+            new MailchimpMailTransport(http).SendAsync(Mail, Connection(MailProviders.Mailchimp, (MailSettings.ApiKey, ApiKey)), Ct));
+
+        error.Message.ShouldBe("Mailchimp returned an unexpected response.");
+    }
+
+    [Theory]
+    [InlineData("""{"message":"bad key sec\"ret+key/1&x"}""")]
+    [InlineData("error=sec%22ret%2Bkey%2F1%26x")]
+    [InlineData("error=sec%22ret%2bkey%2f1%26x")]
+    public async Task Error_response_redacts_the_key_also_encoded(string response)
+    {
+        var http = new FakeHttp(HttpStatusCode.BadRequest, response);
+        var key = "sec\"ret+key/1&x";
+
+        var error = await Should.ThrowAsync<InvalidOperationException>(() =>
+            new SendGridMailTransport(http).SendAsync(Mail, Connection(MailProviders.SendGrid, (MailSettings.ApiKey, key)), Ct));
+
+        error.Message.ShouldContain("400");
+        error.Message.ShouldContain("***");
+        error.Message.ShouldNotContain("ret");
+    }
+
     private sealed class FakeHttp(HttpStatusCode status, string response) : HttpMessageHandler, IHttpClientFactory
     {
         public string Url { get; private set; } = string.Empty;

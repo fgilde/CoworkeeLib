@@ -43,12 +43,14 @@ public sealed class SettingsTests(SettingsApp app) : IAsyncLifetime
     {
         await PutAsync(Admin, "global", "Test.Text", "g");
 
-        async Task<string?> ReadAsync(SettingScope scope) => await app.AsActorAsync(_setup.AdminUserId, _setup.TenantId,
-            sp => sp.GetRequiredService<ISettingProvider>().GetForScopeAsync("Test.Text", scope, Ct));
+        async Task<string?> ReadAsync(SettingScope scope, bool storedOnly = false) => await app.AsActorAsync(_setup.AdminUserId, _setup.TenantId,
+            sp => sp.GetRequiredService<ISettingProvider>().GetForScopeAsync("Test.Text", scope, storedOnly, Ct));
 
         (await ReadAsync(SettingScope.Tenant)).ShouldBe("fallback");
+        (await ReadAsync(SettingScope.Tenant, storedOnly: true)).ShouldBeNull();
         await PutAsync(Admin, "tenant", "Test.Text", "t");
         (await ReadAsync(SettingScope.Tenant)).ShouldBe("t");
+        (await ReadAsync(SettingScope.Tenant, storedOnly: true)).ShouldBe("t");
         (await ReadAsync(SettingScope.Global)).ShouldBe("g");
     }
 

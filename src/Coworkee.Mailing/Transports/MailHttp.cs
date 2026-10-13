@@ -1,3 +1,5 @@
+using System.Net;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using MimeKit;
@@ -22,11 +24,22 @@ internal static class MailHttp
         }
 
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
-        if (!string.IsNullOrEmpty(secret))
+        foreach (var form in Forms(secret))
         {
-            body = body.Replace(secret, "***", StringComparison.Ordinal);
+            body = body.Replace(form, "***", StringComparison.OrdinalIgnoreCase);
         }
 
         throw new InvalidOperationException($"{provider} rejected the mail with {(int)response.StatusCode} {response.ReasonPhrase}: {(body.Length > 500 ? body[..500] : body)}");
     }
+
+    private static IEnumerable<string> Forms(string? secret) => string.IsNullOrEmpty(secret)
+        ? []
+        : new[]
+        {
+            secret,
+            JsonEncodedText.Encode(secret).ToString(),
+            JsonEncodedText.Encode(secret, JavaScriptEncoder.UnsafeRelaxedJsonEscaping).ToString(),
+            Uri.EscapeDataString(secret),
+            WebUtility.UrlEncode(secret),
+        }.Distinct();
 }

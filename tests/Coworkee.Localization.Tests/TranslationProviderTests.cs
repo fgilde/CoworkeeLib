@@ -152,7 +152,7 @@ public sealed class TranslationProviderTests
 
         public Task<T> GetAsync<T>(string name, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 
-        public Task<string?> GetForScopeAsync(string name, Coworkee.Contracts.Settings.SettingScope scope, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<string?> GetForScopeAsync(string name, Coworkee.Contracts.Settings.SettingScope scope, bool storedOnly = false, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 
         public Task<IReadOnlyDictionary<string, string?>> GetClientValuesAsync(CancellationToken cancellationToken = default) => throw new NotSupportedException();
     }
