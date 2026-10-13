@@ -1,5 +1,7 @@
 using Coworkee.Client.Blazor.Api;
+using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Theming;
+using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Theming;
 using Microsoft.AspNetCore.Components;
@@ -14,6 +16,8 @@ public partial class Setup
     [Inject] private CoworkeeClientOptions Options { get; set; } = null!;
 
     [Inject] private ThemeService ThemeService { get; set; } = null!;
+
+    [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
     private const int LastStep = 5;
     private const int LookStep = 3;
@@ -43,6 +47,8 @@ public partial class Setup
     private IReadOnlyDictionary<string, string[]>? _errors;
 
     private bool BlockedByChecks => _step == 1 && (_checks is null || _checks.Any(c => c.Status == SetupCheckStatus.Error));
+
+    private string PasswordHint => PasswordRules.From(ThemeService.ClientSettings).Describe((text, arguments) => L[text, arguments]);
 
     private InputType PasswordInput => _showPassword ? InputType.Text : InputType.Password;
 

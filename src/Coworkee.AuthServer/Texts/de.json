@@ -139,5 +139,11 @@
   "Already registered?": "Schon registriert?",
   "Sign in with your account.": "Melden Sie sich mit Ihrem Konto an.",
   "New here?": "Neu hier?",
-  "Create an account in a few steps.": "Erstellen Sie in wenigen Schritten ein Konto."
+  "Create an account in a few steps.": "Erstellen Sie in wenigen Schritten ein Konto.",
+  "At least {0} characters": "Mindestens {0} Zeichen",
+  "{0} different characters": "{0} verschiedene Zeichen",
+  "a digit": "eine Ziffer",
+  "a lowercase letter": "ein Kleinbuchstabe",
+  "an uppercase letter": "ein Großbuchstabe",
+  "a special character": "ein Sonderzeichen"
 }

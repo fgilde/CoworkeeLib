@@ -1,6 +1,8 @@
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Localization;
+using Coworkee.Client.Blazor.Theming;
+using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Identity;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -26,6 +28,8 @@ public partial class UserSignIn
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
+
+    [Inject] private ThemeService ThemeService { get; set; } = null!;
 
     private IReadOnlyList<UserLoginDto> Logins => User.Logins ?? [];
 
@@ -75,7 +79,8 @@ public partial class UserSignIn
 
     private void PasswordMeta(ObjectEditMeta<UserPasswordForm> meta)
     {
-        meta.Property(f => f.Password).WithLabel(L["New password"]).WithAdditionalAttribute(nameof(MudTextField<string>.InputType), InputType.Password);
+        meta.Property(f => f.Password).WithLabel(L["New password"]).WithDescription(PasswordRules.From(ThemeService.ClientSettings).Describe((text, arguments) => L[text, arguments]))
+            .WithAdditionalAttribute(nameof(MudTextField<string>.InputType), InputType.Password);
         meta.Property(f => f.MustChangePassword).WithLabel(L["Change password at next sign-in"]);
     }
 

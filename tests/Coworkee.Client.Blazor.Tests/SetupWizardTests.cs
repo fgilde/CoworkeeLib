@@ -4,6 +4,7 @@ using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Components;
 using Coworkee.Client.Blazor.Pages;
 using Coworkee.Client.Blazor.Theming;
+using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Theming;
 using Microsoft.AspNetCore.Components;
@@ -82,6 +83,32 @@ public sealed class SetupWizardTests : ClientTestBase
 
         wizard.Find("[data-testid='setup-error']").TextContent.ShouldContain("do not match");
         wizard.FindAll("input[data-testid='admin-password'], [data-testid='admin-password'] input").ShouldNotBeEmpty();
+    }
+
+    [Fact]
+    public async Task The_administrator_password_shows_the_rules_that_apply()
+    {
+        Api.GetClientSettingsAsync(Arg.Any<CancellationToken>()).Returns(new Dictionary<string, string?>
+        {
+            [PasswordSettings.RequiredLength] = "12", [PasswordSettings.RequiredUniqueChars] = "1", [PasswordSettings.RequireDigit] = "true",
+            [PasswordSettings.RequireLowercase] = "false", [PasswordSettings.RequireUppercase] = "true", [PasswordSettings.RequireNonAlphanumeric] = "false",
+        });
+        await Services.GetRequiredService<ThemeService>().LoadAsync();
+        var wizard = Render<Setup>();
+
+        await ToAdministratorAsync(wizard, "token-123");
+
+        wizard.Markup.ShouldContain("At least 12 characters, a digit, an uppercase letter.");
+    }
+
+    [Fact]
+    public async Task Without_readable_settings_the_administrator_password_shows_the_default_rules()
+    {
+        var wizard = Render<Setup>();
+
+        await ToAdministratorAsync(wizard, "token-123");
+
+        wizard.Markup.ShouldContain("At least 8 characters, a digit, a lowercase letter, an uppercase letter, a special character.");
     }
 
     [Fact]

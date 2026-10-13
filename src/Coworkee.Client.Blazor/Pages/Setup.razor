@@ -89,7 +89,7 @@
                             <MudTextField Margin="Density.Margin" @bind-Value="_request.AdminFirstName" Label="First name" Variant="Variant.Outlined" data-testid="admin-first" Immediate="true" />
                             <MudTextField Margin="Density.Margin" @bind-Value="_request.AdminLastName" Label="Last name" Variant="Variant.Outlined" data-testid="admin-last" Immediate="true" />
                         </MudStack>
-                        <MudTextField Margin="Density.Margin" @bind-Value="_request.AdminPassword" Label="Password" Variant="Variant.Outlined" InputType="@PasswordInput" data-testid="admin-password" Required="true" Immediate="true"
+                        <MudTextField Margin="Density.Margin" @bind-Value="_request.AdminPassword" Label="Password" Variant="Variant.Outlined" InputType="@PasswordInput" data-testid="admin-password" Required="true" Immediate="true" HelperText="@PasswordHint"
                                       Adornment="Adornment.End" AdornmentIcon="@(_showPassword ? Icons.Material.Outlined.VisibilityOff : Icons.Material.Outlined.Visibility)"
                                       OnAdornmentClick="() => _showPassword = !_showPassword" AdornmentAriaLabel="Show password"
                                       Error="@HasError("Password")" ErrorText="@ErrorFor("Password")" />

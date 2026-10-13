@@ -4,6 +4,8 @@ using Coworkee.Client.Blazor.Data;
 using Coworkee.Client.Blazor.Data.Admin;
 using Coworkee.Client.Blazor.Pages;
 using Coworkee.Client.Blazor.Pages.Admin;
+using Coworkee.Client.Blazor.Theming;
+using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
@@ -99,6 +101,24 @@ public sealed class UserAdministrationTests : ClientTestBase
 
         await Api.Received(1).ResetUserTwoFactorAsync(_bob, Arg.Any<CancellationToken>());
         await Api.Received(1).RemoveUserLoginAsync(_bob, google, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task The_password_dialog_shows_the_rules_that_apply()
+    {
+        Api.GetClientSettingsAsync(Arg.Any<CancellationToken>()).Returns(new Dictionary<string, string?>
+        {
+            [PasswordSettings.RequiredLength] = "12", [PasswordSettings.RequiredUniqueChars] = "1", [PasswordSettings.RequireDigit] = "true",
+            [PasswordSettings.RequireLowercase] = "false", [PasswordSettings.RequireUppercase] = "true", [PasswordSettings.RequireNonAlphanumeric] = "false",
+        });
+        await Services.GetRequiredService<ThemeService>().LoadAsync();
+        var user = new UserDetailDto(_bob, "bob@acme.test", "bob@acme.test", null, null, true, true, true, null, null, [], []);
+        var dialogs = Render<MudDialogProvider>();
+        var panel = Render<UserSignIn>(p => p.Add(s => s.User, user).Add(s => s.CanManage, true));
+
+        _ = panel.Find("[data-testid='set-password']").ClickAsync(new());
+
+        dialogs.WaitForAssertion(() => dialogs.Markup.ShouldContain("At least 12 characters, a digit, an uppercase letter."));
     }
 
     [Fact]

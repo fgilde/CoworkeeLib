@@ -1,5 +1,6 @@
 using System.Net;
 using Coworkee.Account;
+using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Identity;
 using Coworkee.Identity.Domain;
 using Coworkee.Identity.Users;
@@ -81,7 +82,27 @@ public sealed class PasswordPolicyTests(AuthApp app) : IAsyncLifetime
 
         html.ShouldContain("Passwörter müssen mindestens 8 Zeichen lang sein.");
         html.ShouldContain("Passwörter müssen mindestens eine Ziffer");
+        html.ShouldContain("Mindestens 8 Zeichen, eine Ziffer, ein Kleinbuchstabe, ein Großbuchstabe, ein Sonderzeichen.");
         System.Net.WebUtility.HtmlDecode((await ChangeAsync(flow, "/Account/Manage/ChangePassword", "falsch", NewPassword)).Html).ShouldContain("Das aktuelle Passwort");
+    }
+
+    [Fact]
+    public async Task Password_fields_show_the_rules_that_apply()
+    {
+        await CreateUserAsync("bob@acme.test");
+        await app.SetSettingAsync(AccountSettings.AllowRegistration, "true");
+        await app.SetSettingAsync(PasswordSettings.RequiredLength, "14");
+        await app.SetSettingAsync(PasswordSettings.RequireNonAlphanumeric, "false");
+        var flow = new OidcFlow(app);
+        await flow.LoginAsync("bob@acme.test", Password);
+
+        var register = await app.Browser().GetStringAsync("/Account/Register", TestContext.Current.CancellationToken);
+        var change = await flow.Browser.GetStringAsync("/Account/Manage/ChangePassword", TestContext.Current.CancellationToken);
+
+        foreach (var html in new[] { register, change })
+        {
+            html.ShouldContain("At least 14 characters, a digit, a lowercase letter, an uppercase letter.");
+        }
     }
 
     [Fact]
