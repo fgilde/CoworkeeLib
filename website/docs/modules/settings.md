@@ -249,24 +249,72 @@ public sealed class Links(IOptionsMonitor<CoworkeeServicesOptions> services)
 }
 ```
 
-**Administration > System > Services** shows them as tiles with icon, address and live state, grouped by source (**App** for `Coworkee:Services`, **AspireUI** for the apps of an AspireUI); a click opens the service in a new tab, services with several addresses list all of them as links. A source that could not be asked shows a hint, the other sources still appear. The browser asks the api (`GET /api/v1/services`, settings permission, system organisation), which probes every service every ten seconds: with `HealthPath` a success status counts as running, without it any answer below 500.
+**Administration > System > Services** shows them as tiles with icon, address and live state, grouped by source (**App** for `Coworkee:Services`, **AspireUI** for the apps of an AspireUI); a click opens the service in a new tab, services with several addresses list all of them as links. A source that could not be asked shows a hint, the other sources still appear. The browser asks the api (`GET /api/v1/services`, settings permission, system organisation, answers `{ services, unavailableSources }`), which probes every service every ten seconds: with `HealthPath` a success status counts as running, without it any answer below 500.
 
 ### Service directory
 
-`IServiceDirectory` (scoped, backend code, no user check) combines the configured services with those of other sources:
+`IServiceDirectory` combines the configured services (`Coworkee:Services`) with those of other sources, so backend code can look up a service by name without knowing where it is listed. It lives in the namespace `Coworkee.Settings` and is registered by the settings module: every host that adds the module can inject it. It is *scoped*, like the other settings services; a singleton or a hosted service creates a scope first. There is no user check, it is backend code.
 
 ```csharp
-public sealed class Invoices(IServiceDirectory directory)
+using Coworkee.Contracts.Settings;
+using Coworkee.Settings;
+
+public sealed class BillingClient(IServiceDirectory directory, IHttpClientFactory clients)
 {
-    public async Task<Uri?> BillingAsync(CancellationToken cancellationToken) =>
-        await directory.ResolveAsync("billing", cancellationToken) is { Url.Length: > 0 } billing ? new Uri(billing.Url) : null;
+    public async Task<string?> StatusAsync(CancellationToken cancellationToken)
+    {
+        if (await directory.ResolveAsync("billing", cancellationToken) is not { } billing)
+        {
+            return null;   // unknown name, or the source that knows it is unavailable
+        }
+
+        var address = billing.Urls?.FirstOrDefault(u => u.StartsWith("https:", StringComparison.OrdinalIgnoreCase)) ?? billing.Url;
+        if (address.Length == 0)
+        {
+            return null;   // listed, but without an address
+        }
+
+        using var client = clients.CreateClient();
+        client.BaseAddress = new Uri(address);
+        return await client.GetStringAsync("status", cancellationToken);
+    }
+}
+```
+
+In a singleton or a hosted service, create the scope yourself:
+
+```csharp
+public sealed class BillingPoller(IServiceScopeFactory scopes) : BackgroundService
+{
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        using var scope = scopes.CreateScope();
+        var directory = scope.ServiceProvider.GetRequiredService<IServiceDirectory>();
+        var billing = await directory.ResolveAsync("billing", stoppingToken);
+        // ...
+    }
 }
 ```
 
 - `ResolveAsync(name)` finds a service by name, case-insensitive. The configured services come first, so a configured service wins over an AspireUI app of the same name. It is fast: the health of a configured service is not probed and stays `Unknown`.
+- `ResolveAsync("aspireui:billing")` asks only the source named before the colon (`app` for `Coworkee:Services`, `aspireui`, or the name of your own source). Use it when two sources know the same name and you need a specific one. A prefix that is no source name is part of the name.
 - `GetAllAsync()` lists every service of every source with the sources that failed in `UnavailableSources`. It is what the admin page and `GET /api/v1/services` show.
 
-A source that fails or takes longer than three seconds is left out, logs a warning and is reported as unavailable; it never breaks the others.
+**When `ResolveAsync` returns `null`:** no source knows the name, or the only source that knows it is unavailable (it failed, or did not answer within three seconds). The caller cannot tell the two cases apart; `GetAllAsync` does, through `UnavailableSources`. Always handle `null`: a service can be missing at any time.
+
+**`Url` or `Urls`:** `Url` is the first address, `Urls` lists every address when a source knows several. Configured services have exactly one `Url` and no `Urls`. An AspireUI app lists all its endpoints in `Urls`, http endpoints can come first, and an app without endpoints has an *empty* `Url`. Pick from `Urls` when you care for https (see the example) and check for an empty result.
+
+**`IServiceDirectory`, `IOptionsMonitor<CoworkeeServicesOptions>` or Aspire service discovery?**
+
+| Need | Use |
+|---|---|
+| The address of a service you configure yourself (a link, a redirect), synchronous, no I/O | `IOptionsMonitor<CoworkeeServicesOptions>` |
+| A service that may come from an AspireUI app or your own source, or a list of all services | `IServiceDirectory` |
+| Calls between the resources of one app host (api to auth server, worker to api) | Aspire service discovery: `WithReference` in the app host and `https+http://name` as the base address of the `HttpClient` |
+
+The directory is for finding and showing services, discovery is for calling resources the app host wires together.
+
+A source that fails or takes longer than three seconds is left out, is reported as unavailable and never breaks the others. A failure the source already logged is not logged a second time by the directory.
 
 **AspireUI** lists the apps and stacks you host yourself with an AspireUI (`Source` = `aspireui`, all addresses in `Urls`). The app host connects it with `WithRetrieveApi()` and nothing else:
 
@@ -280,20 +328,32 @@ Without Aspire, or for a deployed app, set the address and the key of the retrie
 { "Coworkee": { "AspireUI": { "Url": "https://aspireui.example.com", "ApiKey": "..." } } }
 ```
 
-Without `Url` the source stays inactive. The list is cached for 15 seconds; the key is only sent to the AspireUI as `X-Api-Key` and never logged or returned by the api.
+Without `Url` the source stays inactive. The list is cached for 15 seconds; the key is only sent to the AspireUI as `X-Api-Key` and never logged or returned by the api. User information in the address is dropped before it is logged or cached.
 
-**Your own source:** implement `IServiceSource` and register it next to the built-in ones.
+**Your own source:** implement `IServiceSource` and register it next to the built-in ones. This one reads a JSON list `[{ "name": "...", "url": "..." }]` from a registry:
 
 ```csharp
-public sealed class ConsulServiceSource(IConsul consul) : IServiceSource
-{
-    public string Name => "consul";
+using System.Net.Http.Json;
+using Coworkee.Contracts.Settings;
+using Coworkee.Settings;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
-    public async Task<IReadOnlyList<ServiceDto>> GetAsync(CancellationToken cancellationToken) =>
-        [.. (await consul.ServicesAsync(cancellationToken)).Select(s => new ServiceDto(s.Name, s.Name, s.Address, ServiceHealth.Unknown, "consul"))];
+public sealed class RegistryServiceSource(IHttpClientFactory clients) : IServiceSource
+{
+    public string Name => "registry";
+
+    public async Task<IReadOnlyList<ServiceDto>> GetAsync(CancellationToken cancellationToken)
+    {
+        var entries = await clients.CreateClient().GetFromJsonAsync<List<RegistryEntry>>("https://registry.example.com/services.json", cancellationToken) ?? [];
+        return [.. entries.Select(e => new ServiceDto(e.Name, e.Name, e.Url, ServiceHealth.Unknown, Name))];
+    }
+
+    private sealed record RegistryEntry(string Name, string Url);
 }
 
-services.TryAddEnumerable(ServiceDescriptor.Singleton<IServiceSource, ConsulServiceSource>());
+// in ConfigureServices
+services.TryAddEnumerable(ServiceDescriptor.Singleton<IServiceSource, RegistryServiceSource>());
 ```
 
-Throw when the source cannot be asked. Override `FindAsync` if a single service can be answered cheaper than listing all.
+Throw when the source cannot be asked, the directory then reports it as unavailable. Override `FindAsync` if a single service can be answered cheaper than listing all. The directory sets `Source` of every entry to the `Name` of its source.

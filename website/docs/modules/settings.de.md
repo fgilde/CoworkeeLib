@@ -249,24 +249,72 @@ public sealed class Links(IOptionsMonitor<CoworkeeServicesOptions> services)
 }
 ```
 
-**Administration > System > Dienste** zeigt sie als Kacheln mit Symbol, Adresse und aktuellem Zustand, gruppiert nach Quelle (**App** für `Coworkee:Services`, **AspireUI** für die Apps eines AspireUI); ein Klick öffnet den Dienst in einem neuen Tab, Dienste mit mehreren Adressen listen alle als Links. Eine Quelle, die nicht erreichbar war, zeigt einen Hinweis, die anderen Quellen erscheinen trotzdem. Der Browser fragt die API (`GET /api/v1/services`, Einstellungs-Berechtigung, System-Organisation), die jeden Dienst alle zehn Sekunden prüft: Mit `HealthPath` zählt ein Erfolgsstatus als läuft, ohne jede Antwort unter 500.
+**Administration > System > Dienste** zeigt sie als Kacheln mit Symbol, Adresse und aktuellem Zustand, gruppiert nach Quelle (**App** für `Coworkee:Services`, **AspireUI** für die Apps eines AspireUI); ein Klick öffnet den Dienst in einem neuen Tab, Dienste mit mehreren Adressen listen alle als Links. Eine Quelle, die nicht erreichbar war, zeigt einen Hinweis, die anderen Quellen erscheinen trotzdem. Der Browser fragt die API (`GET /api/v1/services`, Einstellungs-Berechtigung, System-Organisation, Antwort `{ services, unavailableSources }`), die jeden Dienst alle zehn Sekunden prüft: Mit `HealthPath` zählt ein Erfolgsstatus als läuft, ohne jede Antwort unter 500.
 
 ### Dienstverzeichnis
 
-`IServiceDirectory` (scoped, Backend-Code, ohne Benutzerprüfung) verbindet die konfigurierten Dienste mit denen weiterer Quellen:
+`IServiceDirectory` verbindet die konfigurierten Dienste (`Coworkee:Services`) mit denen weiterer Quellen, sodass Backend-Code einen Dienst über den Namen findet, ohne zu wissen, wo er eingetragen ist. Es liegt im Namespace `Coworkee.Settings` und wird vom Settings-Modul registriert: Jeder Host, der das Modul einbindet, kann es injizieren. Es ist *scoped*, wie die anderen Settings-Dienste; ein Singleton oder ein Hosted Service legt zuerst einen Scope an. Es gibt keine Benutzerprüfung, es ist Backend-Code.
 
 ```csharp
-public sealed class Invoices(IServiceDirectory directory)
+using Coworkee.Contracts.Settings;
+using Coworkee.Settings;
+
+public sealed class BillingClient(IServiceDirectory directory, IHttpClientFactory clients)
 {
-    public async Task<Uri?> BillingAsync(CancellationToken cancellationToken) =>
-        await directory.ResolveAsync("billing", cancellationToken) is { Url.Length: > 0 } billing ? new Uri(billing.Url) : null;
+    public async Task<string?> StatusAsync(CancellationToken cancellationToken)
+    {
+        if (await directory.ResolveAsync("billing", cancellationToken) is not { } billing)
+        {
+            return null;   // unbekannter Name, oder die Quelle, die ihn kennt, ist nicht erreichbar
+        }
+
+        var address = billing.Urls?.FirstOrDefault(u => u.StartsWith("https:", StringComparison.OrdinalIgnoreCase)) ?? billing.Url;
+        if (address.Length == 0)
+        {
+            return null;   // aufgelistet, aber ohne Adresse
+        }
+
+        using var client = clients.CreateClient();
+        client.BaseAddress = new Uri(address);
+        return await client.GetStringAsync("status", cancellationToken);
+    }
+}
+```
+
+In einem Singleton oder Hosted Service legen Sie den Scope selbst an:
+
+```csharp
+public sealed class BillingPoller(IServiceScopeFactory scopes) : BackgroundService
+{
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        using var scope = scopes.CreateScope();
+        var directory = scope.ServiceProvider.GetRequiredService<IServiceDirectory>();
+        var billing = await directory.ResolveAsync("billing", stoppingToken);
+        // ...
+    }
 }
 ```
 
 - `ResolveAsync(name)` findet einen Dienst über den Namen, ohne Beachtung der Groß-/Kleinschreibung. Die konfigurierten Dienste kommen zuerst, ein konfigurierter Dienst gewinnt also gegen eine gleichnamige AspireUI-App. Der Aufruf ist schnell: Der Zustand eines konfigurierten Dienstes wird nicht geprüft und bleibt `Unknown`.
+- `ResolveAsync("aspireui:billing")` fragt nur die Quelle vor dem Doppelpunkt (`app` für `Coworkee:Services`, `aspireui` oder den Namen Ihrer eigenen Quelle). Nutzen Sie es, wenn zwei Quellen denselben Namen kennen und Sie eine bestimmte brauchen. Ein Präfix, das kein Quellenname ist, gehört zum Namen.
 - `GetAllAsync()` listet jeden Dienst jeder Quelle, ausgefallene Quellen stehen in `UnavailableSources`. Das zeigen die Admin-Seite und `GET /api/v1/services`.
 
-Eine Quelle, die fehlschlägt oder länger als drei Sekunden braucht, wird ausgelassen, schreibt eine Warnung ins Log und wird als nicht erreichbar gemeldet; die anderen Quellen stört sie nicht.
+**Wann `ResolveAsync` `null` liefert:** Keine Quelle kennt den Namen, oder die einzige Quelle, die ihn kennt, ist nicht erreichbar (sie ist ausgefallen oder hat nicht innerhalb von drei Sekunden geantwortet). Der Aufrufer kann beide Fälle nicht unterscheiden; `GetAllAsync` kann es über `UnavailableSources`. Behandeln Sie `null` immer: Ein Dienst kann jederzeit fehlen.
+
+**`Url` oder `Urls`:** `Url` ist die erste Adresse, `Urls` listet alle Adressen, wenn eine Quelle mehrere kennt. Konfigurierte Dienste haben genau eine `Url` und keine `Urls`. Eine AspireUI-App listet alle ihre Endpunkte in `Urls`, http-Endpunkte können vorn stehen, und eine App ohne Endpunkte hat eine *leere* `Url`. Wählen Sie aus `Urls`, wenn Ihnen https wichtig ist (siehe Beispiel), und prüfen Sie auf ein leeres Ergebnis.
+
+**`IServiceDirectory`, `IOptionsMonitor<CoworkeeServicesOptions>` oder Aspire Service Discovery?**
+
+| Bedarf | Verwenden |
+|---|---|
+| Die Adresse eines Dienstes, den Sie selbst konfigurieren (ein Link, eine Weiterleitung), synchron, ohne I/O | `IOptionsMonitor<CoworkeeServicesOptions>` |
+| Ein Dienst, der aus einer AspireUI-App oder Ihrer eigenen Quelle stammen kann, oder eine Liste aller Dienste | `IServiceDirectory` |
+| Aufrufe zwischen den Ressourcen eines AppHosts (API zum Auth-Server, Worker zur API) | Aspire Service Discovery: `WithReference` im AppHost und `https+http://name` als Basisadresse des `HttpClient` |
+
+Das Verzeichnis dient dem Finden und Anzeigen von Diensten, Discovery dem Aufrufen von Ressourcen, die der AppHost verdrahtet.
+
+Eine Quelle, die fehlschlägt oder länger als drei Sekunden braucht, wird ausgelassen, als nicht erreichbar gemeldet und stört die anderen Quellen nicht. Einen Fehler, den die Quelle schon geloggt hat, loggt das Verzeichnis nicht noch einmal.
 
 **AspireUI** listet die Apps und Stacks, die Sie selbst mit einem AspireUI hosten (`Source` = `aspireui`, alle Adressen in `Urls`). Der AppHost verbindet es mit `WithRetrieveApi()`, mehr ist nicht nötig:
 
@@ -280,20 +328,32 @@ Ohne Aspire oder für eine veröffentlichte App tragen Sie Adresse und Schlüsse
 { "Coworkee": { "AspireUI": { "Url": "https://aspireui.example.com", "ApiKey": "..." } } }
 ```
 
-Ohne `Url` bleibt die Quelle inaktiv. Die Liste wird 15 Sekunden zwischengespeichert; der Schlüssel geht nur als `X-Api-Key` an das AspireUI und wird weder geloggt noch von der API zurückgegeben.
+Ohne `Url` bleibt die Quelle inaktiv. Die Liste wird 15 Sekunden zwischengespeichert; der Schlüssel geht nur als `X-Api-Key` an das AspireUI und wird weder geloggt noch von der API zurückgegeben. Benutzerinformationen in der Adresse werden vor dem Loggen und Zwischenspeichern entfernt.
 
-**Eigene Quelle:** Implementieren Sie `IServiceSource` und registrieren Sie sie neben den eingebauten.
+**Eigene Quelle:** Implementieren Sie `IServiceSource` und registrieren Sie sie neben den eingebauten. Diese liest eine JSON-Liste `[{ "name": "...", "url": "..." }]` aus einer Registry:
 
 ```csharp
-public sealed class ConsulServiceSource(IConsul consul) : IServiceSource
-{
-    public string Name => "consul";
+using System.Net.Http.Json;
+using Coworkee.Contracts.Settings;
+using Coworkee.Settings;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
-    public async Task<IReadOnlyList<ServiceDto>> GetAsync(CancellationToken cancellationToken) =>
-        [.. (await consul.ServicesAsync(cancellationToken)).Select(s => new ServiceDto(s.Name, s.Name, s.Address, ServiceHealth.Unknown, "consul"))];
+public sealed class RegistryServiceSource(IHttpClientFactory clients) : IServiceSource
+{
+    public string Name => "registry";
+
+    public async Task<IReadOnlyList<ServiceDto>> GetAsync(CancellationToken cancellationToken)
+    {
+        var entries = await clients.CreateClient().GetFromJsonAsync<List<RegistryEntry>>("https://registry.example.com/services.json", cancellationToken) ?? [];
+        return [.. entries.Select(e => new ServiceDto(e.Name, e.Name, e.Url, ServiceHealth.Unknown, Name))];
+    }
+
+    private sealed record RegistryEntry(string Name, string Url);
 }
 
-services.TryAddEnumerable(ServiceDescriptor.Singleton<IServiceSource, ConsulServiceSource>());
+// in ConfigureServices
+services.TryAddEnumerable(ServiceDescriptor.Singleton<IServiceSource, RegistryServiceSource>());
 ```
 
-Werfen Sie eine Ausnahme, wenn die Quelle nicht gefragt werden kann. Überschreiben Sie `FindAsync`, wenn sich ein einzelner Dienst günstiger beantworten lässt als durch Auflisten aller.
+Werfen Sie eine Ausnahme, wenn die Quelle nicht gefragt werden kann; das Verzeichnis meldet sie dann als nicht erreichbar. Überschreiben Sie `FindAsync`, wenn sich ein einzelner Dienst günstiger beantworten lässt als durch Auflisten aller. Das Verzeichnis setzt `Source` jedes Eintrags auf den `Name` seiner Quelle.
