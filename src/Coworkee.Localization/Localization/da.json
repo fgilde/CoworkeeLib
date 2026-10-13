@@ -1051,5 +1051,11 @@
   "vs. {0}": "mod {0}",
   "Widget": "Widget",
   "Widget settings": "Widget-indstillinger",
-  "You may not read this data.": "Du må ikke læse disse data."
+  "You may not read this data.": "Du må ikke læse disse data.",
+  "Choose logo": "Vælg logo",
+  "Use app logo": "Brug appens logo",
+  "App logo": "Appens logo",
+  "The logo may have at most {0} KB.": "Logoet må højst fylde {0} KB.",
+  "Choose a PNG, JPEG, WebP or SVG image.": "Vælg et PNG-, JPEG-, WebP- eller SVG-billede.",
+  "The image could not be read.": "Billedet kunne ikke læses."
 }

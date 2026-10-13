@@ -1051,5 +1051,11 @@
     "vs. {0}": "u odnosu na {0}",
     "Widget": "Widget",
     "Widget settings": "Postavke widgeta",
-    "You may not read this data.": "Nemate pravo čitati ove podatke."
+    "You may not read this data.": "Nemate pravo čitati ove podatke.",
+  "Choose logo": "Odaberi logotip",
+  "Use app logo": "Koristi logotip aplikacije",
+  "App logo": "Logotip aplikacije",
+  "The logo may have at most {0} KB.": "Logotip smije imati najviše {0} KB.",
+  "Choose a PNG, JPEG, WebP or SVG image.": "Odaberite sliku u formatu PNG, JPEG, WebP ili SVG.",
+  "The image could not be read.": "Slika se nije mogla pročitati."
 }

@@ -1051,5 +1051,11 @@
   "vs. {0}": "ggü. {0}",
   "Widget": "Widget",
   "Widget settings": "Widget-Einstellungen",
-  "You may not read this data.": "Sie dürfen diese Daten nicht lesen."
+  "You may not read this data.": "Sie dürfen diese Daten nicht lesen.",
+  "Choose logo": "Logo wählen",
+  "Use app logo": "App-Logo verwenden",
+  "App logo": "App-Logo",
+  "The logo may have at most {0} KB.": "Das Logo darf höchstens {0} KB groß sein.",
+  "Choose a PNG, JPEG, WebP or SVG image.": "Wählen Sie ein PNG-, JPEG-, WebP- oder SVG-Bild.",
+  "The image could not be read.": "Das Bild konnte nicht gelesen werden."
 }

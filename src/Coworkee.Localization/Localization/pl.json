@@ -1051,5 +1051,11 @@
   "vs. {0}": "w porównaniu z {0}",
   "Widget": "iidżet",
   "Widget settings": "Ustawienia widżetu",
-  "You may not read this data.": "Nie masz uprawnień do odczytu tych danych."
+  "You may not read this data.": "Nie masz uprawnień do odczytu tych danych.",
+  "Choose logo": "Wybierz logo",
+  "Use app logo": "Użyj logo aplikacji",
+  "App logo": "Logo aplikacji",
+  "The logo may have at most {0} KB.": "Logo może mieć maksymalnie {0} KB.",
+  "Choose a PNG, JPEG, WebP or SVG image.": "Wybierz obraz PNG, JPEG, WebP lub SVG.",
+  "The image could not be read.": "Nie udało się odczytać obrazu."
 }

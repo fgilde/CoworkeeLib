@@ -1051,5 +1051,11 @@
   "vs. {0}": "по сравнению с {0}",
   "Widget": "Виджет",
   "Widget settings": "Настройки виджета",
-  "You may not read this data.": "У вас нет права читать эти данные."
+  "You may not read this data.": "У вас нет права читать эти данные.",
+  "Choose logo": "Выбрать логотип",
+  "Use app logo": "Использовать логотип приложения",
+  "App logo": "Логотип приложения",
+  "The logo may have at most {0} KB.": "Размер логотипа не должен превышать {0} КБ.",
+  "Choose a PNG, JPEG, WebP or SVG image.": "Выберите изображение PNG, JPEG, WebP или SVG.",
+  "The image could not be read.": "Не удалось прочитать изображение."
 }

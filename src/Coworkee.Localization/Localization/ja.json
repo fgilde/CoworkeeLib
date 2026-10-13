@@ -1051,5 +1051,11 @@
     "vs. {0}": "{0}との比較",
     "Widget": "ウィジェット",
     "Widget settings": "ウィジェットの設定",
-    "You may not read this data.": "このデータを読み取る権限がありません。"
+    "You may not read this data.": "このデータを読み取る権限がありません。",
+  "Choose logo": "ロゴを選択",
+  "Use app logo": "アプリのロゴを使用",
+  "App logo": "アプリのロゴ",
+  "The logo may have at most {0} KB.": "ロゴのサイズは最大 {0} KB です。",
+  "Choose a PNG, JPEG, WebP or SVG image.": "PNG、JPEG、WebP、SVG のいずれかの画像を選択してください。",
+  "The image could not be read.": "画像を読み込めませんでした。"
 }

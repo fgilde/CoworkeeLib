@@ -63,6 +63,7 @@ public sealed class ThemesPageTests : ClientTestBase
 
         dialogs.WaitForAssertion(() => dialogs.Find("input[data-testid='theme-name'], [data-testid='theme-name'] input").GetAttribute("value").ShouldBe("Coworkee copy"), TimeSpan.FromSeconds(10));
         dialogs.Find("[data-testid='theme-editor']").ChildElementCount.ShouldBeGreaterThan(0);
+        dialogs.WaitForAssertion(() => dialogs.Find("[data-testid='theme-logo']").QuerySelector("[data-testid='theme-logo-choose']").ShouldNotBeNull());
     }
 
     [Fact]

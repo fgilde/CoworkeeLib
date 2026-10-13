@@ -1051,5 +1051,11 @@
   "vs. {0}": "έναντι {0}",
   "Widget": "Widget",
   "Widget settings": "Ρυθμίσεις widget",
-  "You may not read this data.": "Δεν επιτρέπεται να διαβάσετε αυτά τα δεδομένα."
+  "You may not read this data.": "Δεν επιτρέπεται να διαβάσετε αυτά τα δεδομένα.",
+  "Choose logo": "Επιλογή λογοτύπου",
+  "Use app logo": "Χρήση λογοτύπου εφαρμογής",
+  "App logo": "Λογότυπο εφαρμογής",
+  "The logo may have at most {0} KB.": "Το λογότυπο μπορεί να είναι έως {0} KB.",
+  "Choose a PNG, JPEG, WebP or SVG image.": "Επιλέξτε εικόνα PNG, JPEG, WebP ή SVG.",
+  "The image could not be read.": "Δεν ήταν δυνατή η ανάγνωση της εικόνας."
 }

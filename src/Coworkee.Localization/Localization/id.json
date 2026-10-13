@@ -1051,5 +1051,11 @@
     "vs. {0}": "vs. {0}",
     "Widget": "Widget",
     "Widget settings": "Pengaturan widget",
-    "You may not read this data.": "Anda tidak diizinkan membaca data ini."
+    "You may not read this data.": "Anda tidak diizinkan membaca data ini.",
+  "Choose logo": "Pilih logo",
+  "Use app logo": "Gunakan logo aplikasi",
+  "App logo": "Logo aplikasi",
+  "The logo may have at most {0} KB.": "Ukuran logo maksimal {0} KB.",
+  "Choose a PNG, JPEG, WebP or SVG image.": "Pilih gambar PNG, JPEG, WebP, atau SVG.",
+  "The image could not be read.": "Gambar tidak dapat dibaca."
 }

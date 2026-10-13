@@ -1051,5 +1051,11 @@
   "vs. {0}": "{0} 대비",
   "Widget": "위젯",
   "Widget settings": "위젯 설정",
-  "You may not read this data.": "이 데이터를 읽을 권한이 없습니다."
+  "You may not read this data.": "이 데이터를 읽을 권한이 없습니다.",
+  "Choose logo": "로고 선택",
+  "Use app logo": "앱 로고 사용",
+  "App logo": "앱 로고",
+  "The logo may have at most {0} KB.": "로고는 최대 {0}KB까지 가능합니다.",
+  "Choose a PNG, JPEG, WebP or SVG image.": "PNG, JPEG, WebP 또는 SVG 이미지를 선택하세요.",
+  "The image could not be read.": "이미지를 읽을 수 없습니다."
 }

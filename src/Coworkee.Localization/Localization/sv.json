@@ -1051,5 +1051,11 @@
   "vs. {0}": "jmf. med {0}",
   "Widget": "Widget",
   "Widget settings": "Widgetinställningar",
-  "You may not read this data.": "Du får inte läsa dessa data."
+  "You may not read this data.": "Du får inte läsa dessa data.",
+  "Choose logo": "Välj logotyp",
+  "Use app logo": "Använd appens logotyp",
+  "App logo": "Appens logotyp",
+  "The logo may have at most {0} KB.": "Logotypen får vara högst {0} KB.",
+  "Choose a PNG, JPEG, WebP or SVG image.": "Välj en PNG-, JPEG-, WebP- eller SVG-bild.",
+  "The image could not be read.": "Bilden kunde inte läsas."
 }

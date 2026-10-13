@@ -1051,5 +1051,11 @@
   "vs. {0}": "与 {0} 相比",
   "Widget": "小组件",
   "Widget settings": "小组件设置",
-  "You may not read this data.": "您无权读取这些数据。"
+  "You may not read this data.": "您无权读取这些数据。",
+  "Choose logo": "选择徽标",
+  "Use app logo": "使用应用徽标",
+  "App logo": "应用徽标",
+  "The logo may have at most {0} KB.": "徽标最大为 {0} KB。",
+  "Choose a PNG, JPEG, WebP or SVG image.": "请选择 PNG、JPEG、WebP 或 SVG 图片。",
+  "The image could not be read.": "无法读取图片。"
 }

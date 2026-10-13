@@ -1051,5 +1051,11 @@
   "vs. {0}": "спрямо {0}",
   "Widget": "Уиджет",
   "Widget settings": "Настройки на уиджета",
-  "You may not read this data.": "Нямате право да четете тези данни."
+  "You may not read this data.": "Нямате право да четете тези данни.",
+  "Choose logo": "Избор на лого",
+  "Use app logo": "Използване на логото на приложението",
+  "App logo": "Лого на приложението",
+  "The logo may have at most {0} KB.": "Логото може да е най-много {0} KB.",
+  "Choose a PNG, JPEG, WebP or SVG image.": "Изберете изображение във формат PNG, JPEG, WebP или SVG.",
+  "The image could not be read.": "Изображението не можа да бъде прочетено."
 }

@@ -1051,5 +1051,11 @@
   "vs. {0}": "t.o.v. {0}",
   "Widget": "Widget",
   "Widget settings": "Widgetinstellingen",
-  "You may not read this data.": "U mag deze gegevens niet lezen."
+  "You may not read this data.": "U mag deze gegevens niet lezen.",
+  "Choose logo": "Logo kiezen",
+  "Use app logo": "App-logo gebruiken",
+  "App logo": "App-logo",
+  "The logo may have at most {0} KB.": "Het logo mag maximaal {0} KB groot zijn.",
+  "Choose a PNG, JPEG, WebP or SVG image.": "Kies een PNG-, JPEG-, WebP- of SVG-afbeelding.",
+  "The image could not be read.": "De afbeelding kon niet worden gelezen."
 }

@@ -1051,5 +1051,11 @@
     "vs. {0}": "vs {0}",
     "Widget": "Widget",
     "Widget settings": "Paramètres du widget",
-    "You may not read this data.": "Vous n’avez pas le droit de lire ces données."
+    "You may not read this data.": "Vous n’avez pas le droit de lire ces données.",
+  "Choose logo": "Choisir le logo",
+  "Use app logo": "Utiliser le logo de l’application",
+  "App logo": "Logo de l’application",
+  "The logo may have at most {0} KB.": "Le logo ne doit pas dépasser {0} Ko.",
+  "Choose a PNG, JPEG, WebP or SVG image.": "Choisissez une image PNG, JPEG, WebP ou SVG.",
+  "The image could not be read.": "L’image n’a pas pu être lue."
 }

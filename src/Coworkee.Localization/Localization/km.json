@@ -1051,5 +1051,11 @@
   "vs. {0}": "ធៀបនឹង {0}",
   "Widget": "Widget",
   "Widget settings": "ការកំណត់ Widget",
-  "You may not read this data.": "អ្នកមិនត្រូវបានអនុញ្ញាតឱ្យអានទិន្នន័យនេះទេ។"
+  "You may not read this data.": "អ្នកមិនត្រូវបានអនុញ្ញាតឱ្យអានទិន្នន័យនេះទេ។",
+  "Choose logo": "ជ្រើសរើសឡូហ្គោ",
+  "Use app logo": "ប្រើឡូហ្គោកម្មវិធី",
+  "App logo": "ឡូហ្គោកម្មវិធី",
+  "The logo may have at most {0} KB.": "ឡូហ្គោអាចមានទំហំអតិបរមា {0} KB។",
+  "Choose a PNG, JPEG, WebP or SVG image.": "សូមជ្រើសរើសរូបភាព PNG, JPEG, WebP ឬ SVG។",
+  "The image could not be read.": "មិនអាចអានរូបភាពបានទេ។"
 }

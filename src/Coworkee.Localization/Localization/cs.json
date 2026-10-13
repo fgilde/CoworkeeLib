@@ -1051,5 +1051,11 @@
   "vs. {0}": "oproti {0}",
   "Widget": "Widget",
   "Widget settings": "Nastavení widgetu",
-  "You may not read this data.": "Nemáte oprávnění číst tato data."
+  "You may not read this data.": "Nemáte oprávnění číst tato data.",
+  "Choose logo": "Vybrat logo",
+  "Use app logo": "Použít logo aplikace",
+  "App logo": "Logo aplikace",
+  "The logo may have at most {0} KB.": "Logo smí mít nejvýše {0} KB.",
+  "Choose a PNG, JPEG, WebP or SVG image.": "Vyberte obrázek PNG, JPEG, WebP nebo SVG.",
+  "The image could not be read.": "Obrázek se nepodařilo načíst."
 }

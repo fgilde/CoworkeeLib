@@ -1051,5 +1051,11 @@
   "vs. {0}": "{0} ile karşılaştırıldığında",
   "Widget": "Widget",
   "Widget settings": "Widget ayarları",
-  "You may not read this data.": "Bu verileri okuma izniniz yok."
+  "You may not read this data.": "Bu verileri okuma izniniz yok.",
+  "Choose logo": "Logo seç",
+  "Use app logo": "Uygulama logosunu kullan",
+  "App logo": "Uygulama logosu",
+  "The logo may have at most {0} KB.": "Logo en fazla {0} KB olabilir.",
+  "Choose a PNG, JPEG, WebP or SVG image.": "PNG, JPEG, WebP veya SVG görseli seçin.",
+  "The image could not be read.": "Görsel okunamadı."
 }
