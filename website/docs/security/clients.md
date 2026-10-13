@@ -17,6 +17,8 @@ The auth server is a full OpenID Connect provider. Besides the clients from the 
 | Scopes | `openid profile email roles offline_access` plus API scopes |
 | Service client | adds the `client_credentials` grant (see below); without redirect addresses the client signs nobody in |
 
+Scopes, redirect addresses and addresses after sign-out are chip lists ([`ChipListEditor`](../ui/data-table.md#chip-lists)): type a value and press Enter, or paste a list, which splits into chips at spaces, commas and line breaks. Scopes suggest the standard scopes (`openid`, `profile`, `email`, `roles`, `offline_access`, `phone`, `address`) and the scopes defined on **Administration › Scopes**, but take any name; `openid` is always there and cannot be removed. Values are checked like the server does: addresses have to be absolute, scope names may hold only letters, digits and `. _ : -`. Invalid values stay in the field with the error. The resources of a scope are a chip list too, with the resources of the other scopes as suggestions.
+
 A confidential client gets a generated secret. It is shown once, right after creating it or after **New secret**; the database keeps only its hash.
 
 Clients and API scopes from `Coworkee:Auth` are written to the OpenIddict tables on every start and marked as coming from the configuration. The pages show them with a lock and do not change them; change them in the configuration. Marked clients and scopes the configuration no longer names are removed at the start; those created in the pages stay. A scope's resources become the audiences of the access token, so a scope `reports` with the resource `reports_api` gives tokens an API with the audience `reports_api` accepts.

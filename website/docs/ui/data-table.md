@@ -271,6 +271,34 @@ await Dialogs.ShowEditAsync(L["New product"], model, saved => Api.SaveProductAsy
 | `ODataPicker` | a foreign key: searches an OData entity set by a text property |
 | `OptionalODataPicker` | an optional foreign key (`Guid?`): like `ODataPicker`, clearing it gives null |
 | `ImageDataUrlEdit` | a picture kept as data URL |
+| `ChipListEditor` | an `IReadOnlyList<string>` as chips (see below) |
+
+### Chip lists
+
+`ChipListEditor` edits a list of free-text values as chips: Enter, a space, comma or line break, a paste (a pasted list splits into chips) or leaving the field adds them; the &times; of a chip removes it. Values already in the list are skipped.
+
+| Parameter | Meaning |
+|---|---|
+| `Value`, `ValueChanged` | the list (`IReadOnlyList<string>`) |
+| `Label`, `HelperText`, `Placeholder` | texts around the field |
+| `ReadOnly` | shows the chips without input and without &times; |
+| `Suggestions` | `Func<string, CancellationToken, Task<IEnumerable<string>>>`: gets the typed text, returns suggestions; values already in the list are not offered |
+| `Validate` | `Func<string, string?>`: the error text of an invalid value, `null` for a valid one; invalid values are not added and stay in the field with the error |
+| `Fixed` | values whose chip cannot be removed |
+
+In an `ObjectEdit` meta, `ChipListMeta.RenderAsChips` renders a property as chips over the full width of the form (it calls `RenderWith` and wraps the property in a full-width `MudItem`):
+
+```csharp
+meta.Property(f => f.Scopes).RenderAsChips(e =>
+{
+    e.Label = L["Scopes"];
+    e.Suggestions = (text, _) => Task.FromResult(known.Where(s => s.Contains(text, StringComparison.OrdinalIgnoreCase)));
+    e.Validate = s => ScopePattern().IsMatch(s) ? null : L["Letters, digits and . _ : - only"];
+    e.Fixed = ["openid"];
+});
+```
+
+The property has to be an `IReadOnlyList<string>`. The configuring action sets component parameters directly, so the call sits between `#pragma warning disable BL0005` and `restore`.
 
 `ShowSideSheetAsync<TDialog>` opens your own dialog component the same way, `ConfirmAsync` asks before something that cannot be undone.
 
