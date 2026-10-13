@@ -1,0 +1,2 @@
+<p>Merhaba {{ user.first_name }},</p>
+<p>Kaydolduğunuz için teşekkürler. Bir yönetici hesabınızı kısa süre içinde inceleyecek.</p>

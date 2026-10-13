@@ -1,0 +1,3 @@
+<p>Merhaba {{ user.first_name }},</p>
+<p>sizin için bir hesap oluşturuldu: {{ user.email }}. Oturum açmak için parolanızı belirleyin.</p>
+<p style="margin:24px 0;"><a href="{{ invitation_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">Parola belirle</a></p>

@@ -1,0 +1,7 @@
+<p>Merhaba {{ user.first_name }},</p>
+{{ if pending }}
+<p>Hesabınız için yeni bir e-posta adresi istendi: {{ new_email }}. Oraya gönderilen bağlantı açıldığında bu adresin yerini alır.</p>
+{{ else }}
+<p>Hesabınızın e-posta adresi {{ new_email }} olarak değiştirildi. Bundan sonra yeni adresle oturum açarsınız.</p>
+{{ end }}
+<p>Bunu siz istemediyseniz hemen parolanızı değiştirin ve yöneticinize bildirin.</p>

@@ -1,0 +1,1 @@
+Davet edildiniz, {{ user.first_name }}
