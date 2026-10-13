@@ -1,0 +1,2 @@
+<p>Hej {{ user.first_name }},</p>
+<p>Tak, fordi du har registreret dig. En administrator gennemgår snart din konto.</p>

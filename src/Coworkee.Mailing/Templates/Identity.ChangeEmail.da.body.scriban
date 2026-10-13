@@ -1,0 +1,3 @@
+<p>Hej {{ user.first_name }},</p>
+<p>bekræft venligst, at {{ new_email }} er den nye adresse til din konto. Indtil da logger du ind med {{ user.email }}. Hvis du ikke har bedt om dette, kan du ignorere denne besked.</p>
+<p style="margin:24px 0;"><a href="{{ confirm_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">Bekræft ny adresse</a></p>

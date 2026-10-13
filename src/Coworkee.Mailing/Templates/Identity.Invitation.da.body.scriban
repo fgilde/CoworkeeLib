@@ -1,0 +1,3 @@
+<p>Hej {{ user.first_name }},</p>
+<p>der er oprettet en konto til dig: {{ user.email }}. Vælg din adgangskode for at logge ind.</p>
+<p style="margin:24px 0;"><a href="{{ invitation_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">Vælg adgangskode</a></p>
