@@ -1,0 +1,1 @@
+Te damos la bienvenida, {{ user.first_name }}

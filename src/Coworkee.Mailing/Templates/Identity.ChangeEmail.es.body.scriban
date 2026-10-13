@@ -1,0 +1,3 @@
+<p>Hola, {{ user.first_name }}:</p>
+<p>confirma que {{ new_email }} es la nueva dirección de tu cuenta. Hasta entonces, inicias sesión con {{ user.email }}. Si no lo has solicitado, puedes ignorar este mensaje.</p>
+<p style="margin:24px 0;"><a href="{{ confirm_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">Confirmar nueva dirección</a></p>
