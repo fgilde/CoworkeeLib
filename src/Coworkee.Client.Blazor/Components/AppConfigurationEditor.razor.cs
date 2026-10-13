@@ -32,12 +32,20 @@ public partial class AppConfigurationEditor<T>
     private string? _error;
     private bool _busy;
     private int _revision;
+    private string? _loadedSection;
 
     // restoring goes through the toolbar (the configured values) or cancel, not per field
     private static readonly GlobalResetSettings NoReset = new() { AllowReset = false };
     private static readonly PropertyResetSettings NoPropertyReset = new() { AllowReset = false };
 
-    protected override async Task OnParametersSetAsync() => await LoadAsync(() => Api.GetAppConfigurationAsync(Registration.Section));
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_loadedSection != Registration.Section)
+        {
+            _loadedSection = Registration.Section;
+            await LoadAsync(() => Api.GetAppConfigurationAsync(Registration.Section));
+        }
+    }
 
     /// <summary>The meta of the registration, then what the server locks or hides (a locked object locks all its properties).</summary>
     private void Configure(ObjectEditMeta<T> meta)

@@ -39,6 +39,18 @@ public sealed class AppConfigurationEditorTests : ClientTestBase
     }
 
     [Fact]
+    public async Task Loads_once_while_the_section_stays()
+    {
+        var editor = Render<AppConfigurationEditor<SampleConfig>>(p => p.Add(e => e.Registration, Registration));
+        editor.WaitForAssertion(() => editor.FindAll("input").Select(i => i.GetAttribute("value")).ShouldContain("Default"));
+
+        editor.Render(p => p.Add(e => e.Registration, Registration with { }));
+        editor.Render(p => p.Add(e => e.Registration, Registration with { }));
+
+        await Api.Received(1).GetAppConfigurationAsync(Registration.Section, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public void Locked_values_show_read_only_and_hidden_ones_not_at_all()
     {
         Api.GetAppConfigurationAsync("Sample", Arg.Any<CancellationToken>()).Returns(Values("Default", 10, [], locked: ["Name"], hidden: ["Inner:Secret"]));

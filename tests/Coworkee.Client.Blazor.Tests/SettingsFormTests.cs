@@ -46,6 +46,18 @@ public sealed class SettingsFormTests : ClientTestBase
     }
 
     [Fact]
+    public async Task Loads_once_while_the_scope_stays()
+    {
+        var form = Render<SettingsForm>(p => p.Add(f => f.Scope, SettingScope.Global));
+        form.WaitForAssertion(() => Input(form, "Host"));
+
+        form.Render(p => p.Add(f => f.Scope, SettingScope.Global));
+        form.Render(p => p.Add(f => f.Scope, SettingScope.Global));
+
+        await Api.Received(1).GetSettingsAsync(SettingScope.Global, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task Saves_only_changed_values()
     {
         var form = Render<SettingsForm>(p => p.Add(f => f.Scope, SettingScope.Global));

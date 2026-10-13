@@ -24,13 +24,21 @@ public partial class SettingsForm
     private ObjectEditMeta<object>? _meta;
     private bool _saving;
     private int _revision;
+    private SettingScope? _loadedScope;
 
     [Parameter, EditorRequired] public SettingScope Scope { get; set; }
 
     /// <summary>Settings the page offers in its own way (e.g. the theme as cards).</summary>
     [Parameter] public IReadOnlySet<string>? Hide { get; set; }
 
-    protected override async Task OnParametersSetAsync() => await LoadAsync();
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_loadedScope != Scope)
+        {
+            _loadedScope = Scope;
+            await LoadAsync();
+        }
+    }
 
     private async Task LoadAsync()
     {
