@@ -1,0 +1,3 @@
+<p>{{ user.first_name }}님, 안녕하세요.</p>
+<p>{{ new_email }}이(가) 회원님 계정의 새 주소가 맞는지 확인해 주세요. 확인하기 전까지는 {{ user.email }}(으)로 로그인합니다. 직접 요청하지 않으셨다면 이 메시지를 무시하셔도 됩니다.</p>
+<p style="margin:24px 0;"><a href="{{ confirm_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">새 주소 확인</a></p>

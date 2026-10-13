@@ -1,0 +1,3 @@
+<p>{{ user.first_name }}님, 안녕하세요.</p>
+<p>이메일 주소를 확인해 주세요.</p>
+<p style="margin:24px 0;"><a href="{{ confirm_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">이메일 확인</a></p>
