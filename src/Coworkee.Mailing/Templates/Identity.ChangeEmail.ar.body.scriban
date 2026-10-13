@@ -1,0 +1,3 @@
+<p>مرحبًا {{ user.first_name }}،</p>
+<p>يرجى تأكيد أن {{ new_email }} هو العنوان الجديد لحسابك. إلى ذلك الحين تسجّل الدخول باستخدام {{ user.email }}. إذا لم تطلب ذلك، يمكنك تجاهل هذه الرسالة.</p>
+<p style="margin:24px 0;"><a href="{{ confirm_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">تأكيد العنوان الجديد</a></p>
