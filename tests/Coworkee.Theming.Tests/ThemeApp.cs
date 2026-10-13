@@ -7,6 +7,7 @@ using Coworkee.Identity;
 using Coworkee.Identity.Domain;
 using Coworkee.Identity.Setup;
 using Coworkee.Infrastructure.Persistence;
+using Coworkee.Settings;
 using Coworkee.Testing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -25,6 +26,9 @@ public sealed class ThemeApp : DatabaseFixture
 {
     public WebApplication App { get; private set; } = null!;
 
+    /// <summary>Keycloak's themes folder; the API keeps the login theme coworkee-test in it.</summary>
+    public string KeycloakThemes { get; } = Directory.CreateTempSubdirectory("keycloak-themes-").FullName;
+
     public override async ValueTask InitializeAsync()
     {
         await base.InitializeAsync();
@@ -33,6 +37,11 @@ public sealed class ThemeApp : DatabaseFixture
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
         builder.Configuration["Coworkee:Database:Provider"] = Provider;
+        builder.Configuration["Coworkee:Keycloak:ThemeDirectory"] = KeycloakThemes;
+        builder.Configuration["Coworkee:Keycloak:ThemeName"] = "coworkee-test";
+        builder.Configuration["Coworkee:Keycloak:AppName"] = "Acme App";
+        builder.Configuration["Coworkee:Keycloak:BaseUrl"] = "https://web.test";
+        builder.Configuration.AddCoworkeeDatabaseConfiguration("test", TimeSpan.FromHours(1));
         builder.AddCoworkee<TestThemeModule>();
         builder.Services.AddTestAuthentication();
         App = builder.Build();
@@ -48,6 +57,7 @@ public sealed class ThemeApp : DatabaseFixture
     public override async ValueTask DisposeAsync()
     {
         await App.DisposeAsync();
+        Directory.Delete(KeycloakThemes, recursive: true);
         await base.DisposeAsync();
     }
 

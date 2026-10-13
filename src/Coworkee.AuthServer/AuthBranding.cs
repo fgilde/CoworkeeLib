@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Coworkee.Application.Messaging;
@@ -58,7 +57,7 @@ public sealed partial class AuthBrandingProvider(IDispatcher dispatcher, HybridC
         }
 
         var dto = theme.Value;
-        var logo = dto.LogoSvg is { Length: > 0 } svg ? "data:image/svg+xml;base64," + Convert.ToBase64String(Encoding.UTF8.GetBytes(svg)) : configured.LogoUrl;
+        var logo = ThemeLogo.ToDataUrl(dto.Logo) ?? configured.LogoUrl;
         return new AuthBranding(configured.DisplayName, logo, Css(dto), new SignInDesign());
     }
 

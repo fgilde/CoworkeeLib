@@ -178,6 +178,17 @@ The api hosts serve the settings, so they get `Coworkee:Auth:External:Mode` and 
 
 Browsers send the cookies of `localhost` to every port, so the cookies of all local apps reach Keycloak too. Over HTTPS Keycloak speaks HTTP/2, which by default takes only 8 KB of request headers and answers **431 Request Header Fields Too Large** beyond that. The container therefore gets `QUARKUS_HTTP_LIMITS_MAX_HEADER_LIST_SIZE=65536`, the 64 KB it takes over HTTP/1.1. If the browser still shows 431, delete the `localhost` cookies of other apps; the auth server and the web app (Kestrel) take 32 KB.
 
+### Sign-in page in the app's design
+
+Keycloak's own sign-in page looks like the app: the colors of the default theme (light and dark), its logo (or `LogoUrl`), the app's `DisplayName` above the form and the layout and media of `SignIn` (card, split or slide). Coworkee writes a login theme `coworkee-{name}` for it, a child of Keycloak's `keycloak.v2` theme with a stylesheet, a small script and the title message, no templates of its own, so it keeps working with newer Keycloak versions.
+
+- The app host mounts `src/MyApp.AppHost/.coworkee/keycloak-themes` as `/opt/keycloak/themes` into the Keycloak container (the template's `.gitignore` leaves `.coworkee/` out) and writes the theme there on the first start (a folder that cannot be written is logged as warning and does not stop the realm), with the Ocean colors and the options of `AddCoworkeeApp`; paths like `/logo.svg` or `/media/welcome.mp4` become addresses of the web app.
+- The realm reconcile sets the realm's `loginTheme`, `displayName` and `displayNameHtml` on every start, for a new realm and for one kept in the data volume.
+- The api hosts get `Coworkee:Keycloak:ThemeDirectory`, `ThemeName`, `AppName`, `LogoUrl` and `BaseUrl` (the web app) and rewrite the theme at start, a second after a theme change is committed (saving a theme, making another one the default) or an administrator saves the *Sign-in page* design, and on *Apply to Keycloak* (see [Theming](../modules/theming.md#keycloak-sign-in-page)).
+- `start-dev` does not cache themes, so a change shows with the next page load.
+
+Turn it off with `options.UseKeycloak(k => k.LoginTheme = false)`: no mount, no theme, the realm keeps the theme it has (Keycloak falls back to its own when the folder is gone). A Keycloak of your own (`UseKeycloak(resource, ...)`) gets the realm's display name but no theme; mount the folder yourself if you want it.
+
 ### Other clients and the users
 
 Other resources of the app host can sign in through the same realm and reuse its users, for example a dashboard with OpenID Connect:

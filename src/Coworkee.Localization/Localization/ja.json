@@ -1052,5 +1052,18 @@
     "Widget": "ウィジェット",
     "Widget settings": "ウィジェットの設定",
     "You may not read this data.": "このデータを読み取る権限がありません。",
-  "{0} (copy)": "{0} (コピー)"
+  "{0} (copy)": "{0} (コピー)",
+  "Choose logo": "ロゴを選択",
+  "Use app logo": "アプリのロゴを使用",
+  "App logo": "アプリのロゴ",
+  "The logo may have at most {0} KB.": "ロゴのサイズは最大 {0} KB です。",
+  "Choose a PNG, JPEG, WebP or SVG image.": "PNG、JPEG、WebP、SVG のいずれかの画像を選択してください。",
+  "The image could not be read.": "画像を読み込めませんでした。",
+  "Keycloak sign-in page": "Keycloak のサインインページ",
+  "Keycloak's sign-in page follows the default theme and the sign-in page design on its own. Apply it again after Keycloak lost its themes.": "Keycloak のサインインページは、既定のテーマとサインインページのデザインに自動で追従します。Keycloak がテーマを失った場合は、もう一度適用してください。",
+  "Last written {0}": "最終書き込み {0}",
+  "Not written yet": "まだ書き込まれていません",
+  "Apply to Keycloak": "Keycloak に適用",
+  "Keycloak sign-in page updated": "Keycloak のサインインページを更新しました",
+  "The Keycloak sign-in page could not be written. See the log of the API.": "Keycloak のサインインページを書き込めませんでした。API のログを確認してください。"
 }

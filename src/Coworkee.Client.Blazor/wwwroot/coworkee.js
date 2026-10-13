@@ -37,6 +37,23 @@ export function resizeImage(dataUrl, max) {
     });
 }
 
+// null brings back the icon the page came with
+export function setFavicon(href) {
+    let links = [...document.querySelectorAll('link[rel~="icon"]')];
+    if (!links.length) {
+        if (!href) {
+            return;
+        }
+        links = [document.head.appendChild(Object.assign(document.createElement('link'), { rel: 'icon' }))];
+    }
+    for (const link of links) {
+        link.dataset.cwHref ??= link.getAttribute('href') ?? '';
+        link.dataset.cwType ??= link.getAttribute('type') ?? '';
+        link.setAttribute('href', href ?? link.dataset.cwHref);
+        link.setAttribute('type', href ? '' : link.dataset.cwType);
+    }
+}
+
 export function onHotkey(dotnet, key) {
     const handler = e => {
         if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === key) {

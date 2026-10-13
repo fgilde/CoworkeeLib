@@ -35,6 +35,15 @@ public sealed class CoworkeeThemingModule : CoworkeeModule, IWebModule
         {
             services.AddCoworkeeAppConfiguration<SignInDesign>(context.Configuration, SignInDesign.Section, "Sign-in page");
         }
+        else
+        {
+            services.Configure<SignInDesign>(context.Configuration.GetSection(SignInDesign.Section));
+        }
+
+        services.Configure<KeycloakThemeOptions>(context.Configuration.GetSection(KeycloakThemeOptions.Section));
+        services.AddSingleton<KeycloakThemeSync>();
+        services.AddHostedService(provider => provider.GetRequiredService<KeycloakThemeSync>());
+        services.AddScoped<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, KeycloakThemeInterceptor>();
 
         services.Configure<Coworkee.Application.Setup.SetupGateOptions>(options =>
         {
@@ -55,6 +64,8 @@ public sealed class CoworkeeThemingModule : CoworkeeModule, IWebModule
         managed.MapPut("/{id:guid}", (Guid id, ThemeRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new UpdateTheme(id, body), ct).ToHttpResult());
         managed.MapDelete("/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteTheme(id), ct).ToHttpResult());
         managed.MapPost("/{id:guid}/default", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new SetDefaultTheme(id), ct).ToHttpResult());
+        managed.MapGet("/keycloak", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetKeycloakThemeStatus(), ct).ToHttpResult());
+        managed.MapPost("/keycloak/apply", (IDispatcher d, CancellationToken ct) => d.SendAsync(new ApplyKeycloakTheme(), ct).ToHttpResult());
     }
 }
 

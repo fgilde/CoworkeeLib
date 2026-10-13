@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Coworkee.Contracts.Theming;
 
 namespace Coworkee.Theming.Tests;
 
@@ -9,6 +10,20 @@ public sealed class ThemeSeedTests
     {
         ThemeSeeds.Create(new ThemingOptions { DefaultTheme = "Forest" }).Single(t => t.IsDefault).Name.ShouldBe("Forest");
         ThemeSeeds.Create(new ThemingOptions { DefaultTheme = "Nope" }).Single(t => t.IsDefault).Name.ShouldBe("Ocean");
+    }
+
+    [Fact]
+    public void The_keycloak_login_theme_defaults_are_the_ocean_colors()
+    {
+        var ocean = ThemeSeeds.Create(new ThemingOptions()).Single(t => t.Name == "Ocean");
+
+        foreach (var (palette, defaults) in new[] { (ocean.PaletteLight, KeycloakLoginTheme.DefaultLight), (ocean.PaletteDark, KeycloakLoginTheme.DefaultDark) })
+        {
+            foreach (var (key, color) in JsonSerializer.Deserialize<Dictionary<string, string>>(palette)!.Where(c => defaults.ContainsKey(c.Key)))
+            {
+                defaults[key].ShouldBe(color, key);
+            }
+        }
     }
 
     [Fact]

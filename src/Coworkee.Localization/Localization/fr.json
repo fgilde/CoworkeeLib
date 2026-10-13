@@ -1052,5 +1052,18 @@
     "Widget": "Widget",
     "Widget settings": "Paramètres du widget",
     "You may not read this data.": "Vous n’avez pas le droit de lire ces données.",
-  "{0} (copy)": "{0} (copie)"
+  "{0} (copy)": "{0} (copie)",
+  "Choose logo": "Choisir le logo",
+  "Use app logo": "Utiliser le logo de l’application",
+  "App logo": "Logo de l’application",
+  "The logo may have at most {0} KB.": "Le logo ne doit pas dépasser {0} Ko.",
+  "Choose a PNG, JPEG, WebP or SVG image.": "Choisissez une image PNG, JPEG, WebP ou SVG.",
+  "The image could not be read.": "L’image n’a pas pu être lue.",
+  "Keycloak sign-in page": "Page de connexion Keycloak",
+  "Keycloak's sign-in page follows the default theme and the sign-in page design on its own. Apply it again after Keycloak lost its themes.": "La page de connexion de Keycloak suit d'elle-même le thème par défaut et le design de la page de connexion. Appliquez-la à nouveau si Keycloak a perdu ses thèmes.",
+  "Last written {0}": "Dernière écriture {0}",
+  "Not written yet": "Pas encore écrite",
+  "Apply to Keycloak": "Appliquer à Keycloak",
+  "Keycloak sign-in page updated": "Page de connexion Keycloak mise à jour",
+  "The Keycloak sign-in page could not be written. See the log of the API.": "La page de connexion Keycloak n'a pas pu être écrite. Consultez le journal de l'API."
 }

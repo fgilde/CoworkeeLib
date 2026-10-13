@@ -178,6 +178,17 @@ Die Api-Hosts liefern die Einstellungen, also bekommen auch sie `Coworkee:Auth:E
 
 Browser schicken die Cookies von `localhost` an jeden Port, also erreichen die Cookies aller lokalen Apps auch Keycloak. Über HTTPS spricht Keycloak HTTP/2 und nimmt dabei standardmäßig nur 8 KB Request-Header an; darüber antwortet es mit **431 Request Header Fields Too Large**. Der Container bekommt deshalb `QUARKUS_HTTP_LIMITS_MAX_HEADER_LIST_SIZE=65536`, die 64 KB, die er über HTTP/1.1 annimmt. Zeigt der Browser trotzdem 431, löschen Sie die `localhost`-Cookies anderer Apps; Auth-Server und Web-App (Kestrel) nehmen 32 KB an.
 
+### Anmeldeseite im Design der App
+
+Die Anmeldeseite von Keycloak sieht aus wie die App: die Farben des Standard-Themes (hell und dunkel), sein Logo (oder `LogoUrl`), der `DisplayName` der App über dem Formular sowie Layout und Medien aus `SignIn` (Karte, geteilt oder Slide). Coworkee schreibt dafür ein Login-Theme `coworkee-{name}`, ein Kind des Keycloak-Themes `keycloak.v2` mit einem Stylesheet, einem kleinen Skript und der Titel-Meldung, ohne eigene Templates, damit es auch mit neueren Keycloak-Versionen funktioniert.
+
+- Der AppHost mountet `src/MyApp.AppHost/.coworkee/keycloak-themes` als `/opt/keycloak/themes` in den Keycloak-Container (die `.gitignore` des Templates lässt `.coworkee/` aus) und schreibt das Theme beim ersten Start dorthin (ein nicht beschreibbarer Ordner wird als Warnung geloggt und hält den Realm nicht auf), mit den Ocean-Farben und den Optionen aus `AddCoworkeeApp`; Pfade wie `/logo.svg` oder `/media/welcome.mp4` werden zu Adressen der Web-App.
+- Der Realm-Abgleich setzt bei jedem Start `loginTheme`, `displayName` und `displayNameHtml` des Realms, für einen neuen Realm und für einen aus dem Daten-Volume.
+- Die Api-Hosts bekommen `Coworkee:Keycloak:ThemeDirectory`, `ThemeName`, `AppName`, `LogoUrl` und `BaseUrl` (die Web-App) und schreiben das Theme neu: beim Start, eine Sekunde nachdem eine Theme-Änderung gespeichert ist (Theme speichern, anderes Theme zum Standard machen) oder ein Administrator das Design der *Anmeldeseite* speichert, und mit *Nach Keycloak übernehmen* (siehe [Theming](../modules/theming.md#keycloak-anmeldeseite)).
+- `start-dev` cacht keine Themes, eine Änderung erscheint also beim nächsten Seitenaufruf.
+
+Abschalten mit `options.UseKeycloak(k => k.LoginTheme = false)`: kein Mount, kein Theme, der Realm behält sein Theme (fehlt der Ordner, nimmt Keycloak sein eigenes). Ein eigener Keycloak (`UseKeycloak(resource, ...)`) bekommt den Anzeigenamen des Realms, aber kein Theme; mounten Sie den Ordner selbst, wenn Sie es wollen.
+
 ### Weitere Clients und die Benutzer
 
 Andere Ressourcen des AppHosts können sich über denselben Realm anmelden und seine Benutzer wiederverwenden, zum Beispiel ein Dashboard mit OpenID Connect:

@@ -2,11 +2,24 @@ using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Coworkee.Aspire.Settings;
 using Coworkee.Contracts.Configuration;
+using Coworkee.Contracts.Theming;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Coworkee.Aspire.Tests;
 
-public sealed class CoworkeeAppTests
+public sealed class CoworkeeAppTests : IDisposable
 {
+    private readonly List<string> _folders = [];
+
+    public void Dispose() => _folders.ForEach(f => Directory.Delete(f, recursive: true));
+
+    private string Folder()
+    {
+        var folder = Directory.CreateTempSubdirectory("coworkee-aspire-").FullName;
+        _folders.Add(folder);
+        return folder;
+    }
+
     [Fact]
     public void Setting_paths_follow_the_configuration_tree()
     {
@@ -59,9 +72,11 @@ public sealed class CoworkeeAppTests
 
         app.AddMigrations<FakeProjects.Migrations>();
         var auth = app.AddAuthServer<FakeProjects.Auth>();
-        app.AddApi<FakeProjects.Api>();
+        var api = app.AddApi<FakeProjects.Api>();
         app.AddWeb<FakeProjects.Web>();
 
+        // the api hosts the setting administrators change, so it starts from the same design
+        (await Environment(api.Resource))["Coworkee__Auth__Design__MediaUrl"].ShouldBe((await Environment(auth.Resource))["Coworkee__Auth__Design__MediaUrl"]);
         var settings = await Environment(auth.Resource);
         settings["Coworkee__Auth__Design__Layout"].ShouldBe("Split");
         settings["Coworkee__Auth__Design__MediaSide"].ShouldBe("Right");
@@ -107,6 +122,100 @@ public sealed class CoworkeeAppTests
         settings["Coworkee__Auth__External__Providers__keycloak__DisplayName"].ShouldBe("Keycloak");
         settings.Keys.Where(k => k.StartsWith("Coworkee__Auth__External__")).ShouldBe(
             ["Coworkee__Auth__External__Mode", "Coworkee__Auth__External__Providers__keycloak__DisplayName"], ignoreOrder: true);
+    }
+
+    [Fact]
+    public async Task Keycloak_gets_the_login_theme_folder_and_the_api_what_it_needs_to_rewrite_the_theme()
+    {
+        var folder = Folder();
+        var builder = DistributedApplication.CreateBuilder(new DistributedApplicationOptions { ProjectDirectory = folder });
+        var app = builder.AddCoworkeeApp("realm", o =>
+        {
+            o.DisplayName = "Realm App";
+            o.LogoUrl = "/logo.svg";
+            o.SignIn.Layout = "Split";
+            o.UseKeycloak();
+        });
+
+        app.AddMigrations<FakeProjects.Migrations>();
+        app.AddAuthServer<FakeProjects.Auth>();
+        var api = app.AddApi<FakeProjects.Api>();
+        app.AddWeb<FakeProjects.Web>();
+
+        var themes = Path.Combine(folder, ".coworkee", "keycloak-themes");
+        app.KeycloakThemes.ShouldBe(themes);
+        Directory.Exists(themes).ShouldBeTrue();
+        var mount = app.Keycloak!.Resource.Annotations.OfType<ContainerMountAnnotation>().Single(m => m.Target == "/opt/keycloak/themes");
+        mount.Source.ShouldBe(themes);
+        mount.IsReadOnly.ShouldBeTrue();
+        var settings = await Environment(api.Resource);
+        settings["Coworkee__Keycloak__ThemeDirectory"].ShouldBe(themes);
+        settings["Coworkee__Keycloak__ThemeName"].ShouldBe("coworkee-realm");
+        settings["Coworkee__Keycloak__AppName"].ShouldBe("Realm App");
+        settings["Coworkee__Keycloak__LogoUrl"].ShouldBe("/logo.svg");
+        settings["Coworkee__Keycloak__BaseUrl"].ShouldBe("{realm-web.bindings.https.url}");
+        settings["Coworkee__Auth__Design__Layout"].ShouldBe("Split");
+    }
+
+    [Fact]
+    public async Task The_login_theme_is_written_once_from_the_options_with_paths_on_the_web_app()
+    {
+        var folder = Folder();
+        var builder = DistributedApplication.CreateBuilder(new DistributedApplicationOptions { ProjectDirectory = folder });
+        var app = builder.AddCoworkeeApp("realm", o =>
+        {
+            o.DisplayName = "Realm App";
+            o.LogoUrl = "/logo.svg";
+            o.SignIn.MediaUrl = "/media/welcome.mp4";
+            o.UseKeycloak();
+        });
+        app.AddMigrations<FakeProjects.Migrations>();
+        app.AddAuthServer<FakeProjects.Auth>();
+        app.AddApi<FakeProjects.Api>();
+        var web = app.AddWeb<FakeProjects.Web>();
+        foreach (var endpoint in web.Resource.Annotations.OfType<EndpointAnnotation>())
+        {
+            endpoint.AllocatedEndpoint = new AllocatedEndpoint(endpoint, "localhost", 7001);
+        }
+
+        await app.WriteLoginThemeAsync(TestContext.Current.CancellationToken);
+
+        var login = Path.Combine(app.KeycloakThemes, "coworkee-realm", "login");
+        File.ReadAllText(Path.Combine(login, "resources", "css", "coworkee.css")).ShouldContain("url(\"https://localhost:7001/logo.svg\")");
+        File.ReadAllText(Path.Combine(login, "resources", "js", "coworkee.js")).ShouldContain("\"media\":\"https://localhost:7001/media/welcome.mp4\"");
+        File.ReadAllText(Path.Combine(login, "messages", "messages_en.properties")).ShouldContain("Realm App");
+
+        File.WriteAllText(Path.Combine(login, "messages", "messages_en.properties"), "loginTitleHtml=Changed by the api");
+        await app.WriteLoginThemeAsync(TestContext.Current.CancellationToken);
+        File.ReadAllText(Path.Combine(login, "messages", "messages_en.properties")).ShouldBe("loginTitleHtml=Changed by the api");
+    }
+
+    [Fact]
+    public async Task A_login_theme_that_cannot_be_written_is_logged_and_does_not_stop_the_realm()
+    {
+        var builder = DistributedApplication.CreateBuilder(new DistributedApplicationOptions { ProjectDirectory = Folder() });
+        var app = builder.AddCoworkeeApp("realm", o => o.UseKeycloak());
+        app.AddMigrations<FakeProjects.Migrations>();
+        app.AddAuthServer<FakeProjects.Auth>();
+        File.WriteAllText(Path.Combine(app.KeycloakThemes, "coworkee-realm"), "in the way");
+
+        await app.TryWriteLoginThemeAsync(NullLogger.Instance, TestContext.Current.CancellationToken);
+
+        KeycloakLoginTheme.Exists(app.KeycloakThemes, "coworkee-realm").ShouldBeFalse();
+    }
+    [Fact]
+    public async Task Without_the_login_theme_keycloak_mounts_nothing_and_the_api_gets_no_theme_folder()
+    {
+        var builder = DistributedApplication.CreateBuilder(new DistributedApplicationOptions { ProjectDirectory = Folder() });
+        var app = builder.AddCoworkeeApp("realm", o => o.UseKeycloak(k => k.LoginTheme = false));
+        app.AddMigrations<FakeProjects.Migrations>();
+        app.AddAuthServer<FakeProjects.Auth>();
+        var api = app.AddApi<FakeProjects.Api>();
+
+        app.Keycloak!.Resource.Annotations.OfType<ContainerMountAnnotation>().ShouldNotContain(m => m.Target == "/opt/keycloak/themes");
+        (await Environment(api.Resource)).Keys.ShouldNotContain(k => k.StartsWith("Coworkee__Keycloak__"));
+        await app.WriteLoginThemeAsync(TestContext.Current.CancellationToken);
+        Directory.Exists(app.KeycloakThemes).ShouldBeFalse();
     }
 
     [Fact]

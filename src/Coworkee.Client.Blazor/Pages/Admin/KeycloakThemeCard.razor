@@ -1,0 +1,24 @@
+@if (_status is { Configured: true } status)
+{
+    <MudCard Outlined="true" Class="mb-4" data-testid="keycloak-theme">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">@L["Keycloak sign-in page"]</MudText>
+                <MudText Typo="Typo.body2">@L["Keycloak's sign-in page follows the default theme and the sign-in page design on its own. Apply it again after Keycloak lost its themes."]</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudText Typo="Typo.body2" data-testid="keycloak-theme-written">
+                @(status.WrittenAt is { } written ? L["Last written {0}", written.ToLocalTime().ToString("g")] : L["Not written yet"])
+            </MudText>
+            @if (status.Error is not null)
+            {
+                <MudAlert Severity="Severity.Error" Dense="true" Class="mt-2" data-testid="keycloak-theme-error">@L["The Keycloak sign-in page could not be written. See the log of the API."]</MudAlert>
+            }
+        </MudCardContent>
+        <MudCardActions>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Sync" OnClick="ApplyAsync" Disabled="_applying"
+                       data-testid="keycloak-theme-apply">@L["Apply to Keycloak"]</MudButton>
+        </MudCardActions>
+    </MudCard>
+}

@@ -174,6 +174,12 @@ public interface ICoworkeeApi
 
     Task SetDefaultThemeAsync(Guid id, CancellationToken cancellationToken = default);
 
+    /// <summary>The Keycloak login theme the API keeps in the app's design.</summary>
+    Task<KeycloakThemeStatusDto> GetKeycloakThemeStatusAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Writes the Keycloak login theme now.</summary>
+    Task<KeycloakThemeStatusDto> ApplyKeycloakThemeAsync(CancellationToken cancellationToken = default);
+
     Task<PagedResult<AuditEntryDto>> GetAuditAsync(AuditQuery query, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<EntityVersionDto>> GetVersionsAsync(string type, Guid id, CancellationToken cancellationToken = default);

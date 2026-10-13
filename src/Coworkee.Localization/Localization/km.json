@@ -1052,5 +1052,18 @@
   "Widget": "Widget",
   "Widget settings": "ការកំណត់ Widget",
   "You may not read this data.": "អ្នកមិនត្រូវបានអនុញ្ញាតឱ្យអានទិន្នន័យនេះទេ។",
-  "{0} (copy)": "{0} (ច្បាប់ចម្លង)"
+  "{0} (copy)": "{0} (ច្បាប់ចម្លង)",
+  "Choose logo": "ជ្រើសរើសឡូហ្គោ",
+  "Use app logo": "ប្រើឡូហ្គោកម្មវិធី",
+  "App logo": "ឡូហ្គោកម្មវិធី",
+  "The logo may have at most {0} KB.": "ឡូហ្គោអាចមានទំហំអតិបរមា {0} KB។",
+  "Choose a PNG, JPEG, WebP or SVG image.": "សូមជ្រើសរើសរូបភាព PNG, JPEG, WebP ឬ SVG។",
+  "The image could not be read.": "មិនអាចអានរូបភាពបានទេ។",
+  "Keycloak sign-in page": "ទំព័រចូល Keycloak",
+  "Keycloak's sign-in page follows the default theme and the sign-in page design on its own. Apply it again after Keycloak lost its themes.": "ទំព័រចូលរបស់ Keycloak ធ្វើតាមរចនាប័ទ្មលំនាំដើម និងការរចនាទំព័រចូលដោយស្វ័យប្រវត្តិ។ សូមអនុវត្តម្តងទៀត ប្រសិនបើ Keycloak បាត់រចនាប័ទ្មរបស់វា។",
+  "Last written {0}": "បានសរសេរចុងក្រោយ {0}",
+  "Not written yet": "មិនទាន់បានសរសេរ",
+  "Apply to Keycloak": "អនុវត្តទៅ Keycloak",
+  "Keycloak sign-in page updated": "ទំព័រចូល Keycloak ត្រូវបានធ្វើបច្ចុប្បន្នភាព",
+  "The Keycloak sign-in page could not be written. See the log of the API.": "មិនអាចសរសេរទំព័រចូល Keycloak បានទេ។ សូមមើលកំណត់ហេតុរបស់ API។"
 }

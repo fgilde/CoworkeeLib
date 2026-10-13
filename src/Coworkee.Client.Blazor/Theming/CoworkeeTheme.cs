@@ -57,8 +57,8 @@ public class CoworkeeTheme : MudTheme
     /// <summary>Users can choose the theme.</summary>
     public bool IsPublished { get; set; }
 
-    /// <summary>Plain SVG markup shown as logo instead of the app's.</summary>
-    public string? LogoSvg { get; set; }
+    /// <summary>SVG markup or an image data URL shown as logo, also as favicon, instead of the app's.</summary>
+    public string? Logo { get; set; }
 
     public string? CustomCss { get; set; }
 }

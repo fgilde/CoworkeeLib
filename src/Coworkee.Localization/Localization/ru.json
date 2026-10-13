@@ -1052,5 +1052,18 @@
   "Widget": "Виджет",
   "Widget settings": "Настройки виджета",
   "You may not read this data.": "У вас нет права читать эти данные.",
-  "{0} (copy)": "{0} (копия)"
+  "{0} (copy)": "{0} (копия)",
+  "Choose logo": "Выбрать логотип",
+  "Use app logo": "Использовать логотип приложения",
+  "App logo": "Логотип приложения",
+  "The logo may have at most {0} KB.": "Размер логотипа не должен превышать {0} КБ.",
+  "Choose a PNG, JPEG, WebP or SVG image.": "Выберите изображение PNG, JPEG, WebP или SVG.",
+  "The image could not be read.": "Не удалось прочитать изображение.",
+  "Keycloak sign-in page": "Страница входа Keycloak",
+  "Keycloak's sign-in page follows the default theme and the sign-in page design on its own. Apply it again after Keycloak lost its themes.": "Страница входа Keycloak сама следует теме по умолчанию и оформлению страницы входа. Примените её снова, если Keycloak потерял свои темы.",
+  "Last written {0}": "Последняя запись {0}",
+  "Not written yet": "Ещё не записана",
+  "Apply to Keycloak": "Применить в Keycloak",
+  "Keycloak sign-in page updated": "Страница входа Keycloak обновлена",
+  "The Keycloak sign-in page could not be written. See the log of the API.": "Не удалось записать страницу входа Keycloak. Смотрите журнал API."
 }

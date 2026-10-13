@@ -1052,5 +1052,19 @@
   "Widget": "Widget",
   "Widget settings": "Widget-indstillinger",
   "You may not read this data.": "Du må ikke læse disse data.",
-  "{0} (copy)": "{0} (kopi)"
-}
+  "{0} (copy)": "{0} (kopi)",
+  "Choose logo": "Vælg logo",
+  "Use app logo": "Brug appens logo",
+  "App logo": "Appens logo",
+  "The logo may have at most {0} KB.": "Logoet må højst fylde {0} KB.",
+  "Choose a PNG, JPEG, WebP or SVG image.": "Vælg et PNG-, JPEG-, WebP- eller SVG-billede.",
+  "The image could not be read.": "Billedet kunne ikke læses.",
+  "Keycloak sign-in page": "Keycloak-loginside",
+  "Keycloak's sign-in page follows the default theme and the sign-in page design on its own. Apply it again after Keycloak lost its themes.": "Keycloaks loginside følger automatisk standardtemaet og loginsidens design. Anvend den igen, hvis Keycloak har mistet sine temaer.",
+  "Last written {0}": "Sidst skrevet {0}",
+  "Not written yet": "Endnu ikke skrevet",
+  "Apply to Keycloak": "Anvend i Keycloak",
+  "Keycloak sign-in page updated": "Keycloak-loginsiden er opdateret",
+  "The Keycloak sign-in page could not be written. See the log of the API.": "Keycloak-loginsiden kunne ikke skrives. Se API'ens log."
+}
+

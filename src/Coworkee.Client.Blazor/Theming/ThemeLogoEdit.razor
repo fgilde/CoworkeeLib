@@ -1,0 +1,12 @@
+<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Class="my-2" data-testid="theme-logo">
+    @if (Source is { } source)
+    {
+        <img src="@source" alt="@Label" style="height:48px;max-width:160px" data-testid="theme-logo-preview" />
+    }
+    <MudText Typo="Typo.caption" Color="Color.Secondary">@(string.IsNullOrWhiteSpace(Value) ? L["App logo"] : Label)</MudText>
+    @if (!ReadOnly)
+    {
+        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Outlined.Image" OnClick="ChooseAsync" data-testid="theme-logo-choose">@L["Choose logo"]</MudButton>
+        <MudButton Variant="Variant.Text" Size="Size.Small" Disabled="string.IsNullOrWhiteSpace(Value)" OnClick="() => SetAsync(null)" data-testid="theme-logo-reset">@L["Use app logo"]</MudButton>
+    }
+</MudStack>

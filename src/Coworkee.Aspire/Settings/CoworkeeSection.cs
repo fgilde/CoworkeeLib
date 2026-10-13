@@ -28,5 +28,7 @@ public sealed class CoworkeeSection
 
     public CoworkeeAspireUIOptions AspireUI { get; } = new();
 
+    public KeycloakThemeOptions Keycloak { get; } = new();
+
     public string? SetupToken { get; set; }
 }

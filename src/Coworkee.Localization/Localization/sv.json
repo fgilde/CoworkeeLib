@@ -1052,5 +1052,18 @@
   "Widget": "Widget",
   "Widget settings": "Widgetinställningar",
   "You may not read this data.": "Du får inte läsa dessa data.",
-  "{0} (copy)": "{0} (kopia)"
+  "{0} (copy)": "{0} (kopia)",
+  "Choose logo": "Välj logotyp",
+  "Use app logo": "Använd appens logotyp",
+  "App logo": "Appens logotyp",
+  "The logo may have at most {0} KB.": "Logotypen får vara högst {0} KB.",
+  "Choose a PNG, JPEG, WebP or SVG image.": "Välj en PNG-, JPEG-, WebP- eller SVG-bild.",
+  "The image could not be read.": "Bilden kunde inte läsas.",
+  "Keycloak sign-in page": "Keycloaks inloggningssida",
+  "Keycloak's sign-in page follows the default theme and the sign-in page design on its own. Apply it again after Keycloak lost its themes.": "Keycloaks inloggningssida följer automatiskt standardtemat och inloggningssidans design. Tillämpa den igen om Keycloak har förlorat sina teman.",
+  "Last written {0}": "Senast skriven {0}",
+  "Not written yet": "Inte skriven än",
+  "Apply to Keycloak": "Tillämpa i Keycloak",
+  "Keycloak sign-in page updated": "Keycloaks inloggningssida uppdaterad",
+  "The Keycloak sign-in page could not be written. See the log of the API.": "Keycloaks inloggningssida kunde inte skrivas. Se API:ets logg."
 }

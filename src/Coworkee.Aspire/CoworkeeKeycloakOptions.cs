@@ -21,5 +21,11 @@ public sealed class CoworkeeKeycloakOptions
     /// <summary>Users of the realm, created or updated on every start; those without a password share a generated one (a parameter in the dashboard).</summary>
     public List<KeycloakUser> Users { get; } = [];
 
+    /// <summary>
+    /// Keycloak's sign-in page in the app's design while developing: a login theme in .coworkee/keycloak-themes next to the app host, mounted into
+    /// the Keycloak container the app host adds and rewritten by the API when the default theme or the sign-in design changes.
+    /// </summary>
+    public bool LoginTheme { get; set; } = true;
+
     internal IResourceBuilder<KeycloakResource>? Resource { get; set; }
 }

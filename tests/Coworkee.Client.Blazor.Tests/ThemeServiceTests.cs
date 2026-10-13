@@ -63,7 +63,7 @@ public sealed class ThemeServiceTests
 
         var request = ThemeMapper.ToRequest("Copy", theme);
         var copy = ThemeMapper.ToTheme(new ThemeDto(Guid.Empty, "Copy", false, false, request.PaletteLight, request.PaletteDark, request.Typography,
-            request.LayoutProperties, request.LogoSvg, request.CustomCss, 1, request.Shadows, request.Options, request.IsPublished));
+            request.LayoutProperties, request.Logo, request.CustomCss, 1, request.Shadows, request.Options, request.IsPublished));
 
         copy.PaletteLight.Primary.ToString(MudColorOutputFormats.Hex).ShouldBe("#123456");
         copy.Typography.H1.FontFamily.ShouldBe(["Georgia", "serif"]);
@@ -74,6 +74,29 @@ public sealed class ThemeServiceTests
         copy.IsPublished.ShouldBeTrue();
         copy.CustomCss.ShouldBe(".x{}");
         request.Options!.Value.TryGetProperty(nameof(CoworkeeTheme.CustomCss), out _).ShouldBeFalse();
+    }
+
+    [Theory]
+    [InlineData("<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>")]
+    [InlineData("data:image/png;base64,AQID")]
+    public void The_logo_round_trips_unchanged(string logo)
+    {
+        var theme = ThemeMapper.ToTheme(Theme("#123456") with { Logo = logo });
+
+        var request = ThemeMapper.ToRequest("Copy", theme);
+
+        theme.Logo.ShouldBe(logo);
+        request.Logo.ShouldBe(logo);
+        request.Options!.Value.TryGetProperty(nameof(CoworkeeTheme.Logo), out _).ShouldBeFalse();
+    }
+
+    [Fact]
+    public void A_blank_logo_is_sent_as_none()
+    {
+        var theme = ThemeMapper.ToTheme(Theme("#123456"));
+        theme.Logo = "  ";
+
+        ThemeMapper.ToRequest("Copy", theme).Logo.ShouldBeNull();
     }
 
     [Fact]

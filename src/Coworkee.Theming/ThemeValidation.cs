@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Coworkee.Contracts.Theming;
@@ -7,7 +8,6 @@ namespace Coworkee.Theming;
 public static partial class ThemeValidation
 {
     private const int MaxCss = 20_000;
-    private const int MaxSvg = 100_000;
 
     private static readonly string[] ForbiddenCss = ["</style", "<script", "@import", "expression(", "javascript:", "behavior:", "-moz-binding"];
     private static readonly string[] ForbiddenSvg =
@@ -30,7 +30,7 @@ public static partial class ThemeValidation
             ?? Tokens(request.Shadows, "Shadows")
             ?? Tokens(request.Options, "Options")
             ?? Css(request.CustomCss)
-            ?? Svg(request.LogoSvg);
+            ?? Logo(request.Logo);
     }
 
     private static string? Palette(JsonElement palette, string field)
@@ -97,25 +97,43 @@ public static partial class ThemeValidation
             : null;
     }
 
-    private static string? Svg(string? svg)
+    private static string? Logo(string? logo)
     {
-        if (string.IsNullOrEmpty(svg))
+        if (string.IsNullOrWhiteSpace(logo))
         {
             return null;
         }
 
-        var trimmed = svg.Trim();
-        var valid = trimmed.Length <= MaxSvg
-            && trimmed.StartsWith("<svg", StringComparison.OrdinalIgnoreCase)
-            && trimmed.EndsWith("</svg>", StringComparison.OrdinalIgnoreCase)
-            && !ForbiddenSvg.Any(f => trimmed.Contains(f, StringComparison.OrdinalIgnoreCase))
-            && !EventAttribute().IsMatch(trimmed)
-            && !ExternalReference().IsMatch(trimmed);
-        return valid ? null : "LogoSvg must be a plain SVG without scripts, event handlers or embedded documents.";
+        if (!ThemeLogo.TryRead(logo, out var bytes, out var contentType))
+        {
+            return $"Logo must be SVG markup or a base64 data URL of an image ({string.Join(", ", ThemeLogo.ContentTypes)}).";
+        }
+
+        if (bytes.Length > ThemeLogo.MaxBytes)
+        {
+            return $"Logo must not exceed {ThemeLogo.MaxBytes / 1024} KB.";
+        }
+
+        return !ThemeLogo.IsSvg(contentType) || PlainSvg(Encoding.UTF8.GetString(bytes))
+            ? null
+            : "Logo must be a plain SVG without scripts, event handlers or embedded documents.";
+    }
+
+    private static bool PlainSvg(string svg)
+    {
+        var markup = XmlDeclaration().Replace(svg.Trim(), string.Empty);
+        return markup.StartsWith("<svg", StringComparison.OrdinalIgnoreCase)
+            && markup.EndsWith("</svg>", StringComparison.OrdinalIgnoreCase)
+            && !ForbiddenSvg.Any(f => markup.Contains(f, StringComparison.OrdinalIgnoreCase))
+            && !EventAttribute().IsMatch(markup)
+            && !ExternalReference().IsMatch(markup);
     }
 
     [GeneratedRegex(@"^(#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})|(rgb|rgba|hsl|hsla)\(\s*[0-9.]+%?\s*(,\s*[0-9.]+%?\s*){2,3}\)|transparent)$")]
     private static partial Regex Color();
+
+    [GeneratedRegex(@"^<\?xml[^>]*\?>\s*", RegexOptions.IgnoreCase)]
+    private static partial Regex XmlDeclaration();
 
     [GeneratedRegex(@"[\s/""']on[a-z]+\s*=", RegexOptions.IgnoreCase)]
     private static partial Regex EventAttribute();

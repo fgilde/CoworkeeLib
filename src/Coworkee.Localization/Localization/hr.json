@@ -1052,5 +1052,18 @@
     "Widget": "Widget",
     "Widget settings": "Postavke widgeta",
     "You may not read this data.": "Nemate pravo čitati ove podatke.",
-  "{0} (copy)": "{0} (kopija)"
+  "{0} (copy)": "{0} (kopija)",
+  "Choose logo": "Odaberi logotip",
+  "Use app logo": "Koristi logotip aplikacije",
+  "App logo": "Logotip aplikacije",
+  "The logo may have at most {0} KB.": "Logotip smije imati najviše {0} KB.",
+  "Choose a PNG, JPEG, WebP or SVG image.": "Odaberite sliku u formatu PNG, JPEG, WebP ili SVG.",
+  "The image could not be read.": "Slika se nije mogla pročitati.",
+  "Keycloak sign-in page": "Stranica za prijavu u Keycloak",
+  "Keycloak's sign-in page follows the default theme and the sign-in page design on its own. Apply it again after Keycloak lost its themes.": "Stranica za prijavu u Keycloak sama prati zadanu temu i dizajn stranice za prijavu. Primijenite je ponovno ako je Keycloak izgubio svoje teme.",
+  "Last written {0}": "Posljednji put zapisano {0}",
+  "Not written yet": "Još nije zapisano",
+  "Apply to Keycloak": "Primijeni na Keycloak",
+  "Keycloak sign-in page updated": "Stranica za prijavu u Keycloak ažurirana",
+  "The Keycloak sign-in page could not be written. See the log of the API.": "Stranicu za prijavu u Keycloak nije bilo moguće zapisati. Pogledajte zapisnik API-ja."
 }

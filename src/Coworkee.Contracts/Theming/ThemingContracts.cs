@@ -23,12 +23,15 @@ public sealed record ThemeDto(
     JsonElement PaletteDark,
     JsonElement? Typography,
     JsonElement? LayoutProperties,
-    string? LogoSvg,
+    string? Logo,
     string? CustomCss,
     int Revision,
     JsonElement? Shadows = null,
     JsonElement? Options = null,
     bool IsPublished = true);
+
+/// <summary>The Keycloak login theme the API keeps in the app's design; <see cref="Configured"/> is false without a theme folder.</summary>
+public sealed record KeycloakThemeStatusDto(bool Configured, string? ThemeName, DateTimeOffset? WrittenAt, string? Error);
 
 public sealed record ThemeRequest(
     string Name,
@@ -36,7 +39,7 @@ public sealed record ThemeRequest(
     JsonElement PaletteDark,
     JsonElement? Typography,
     JsonElement? LayoutProperties,
-    string? LogoSvg,
+    string? Logo,
     string? CustomCss,
     JsonElement? Shadows = null,
     JsonElement? Options = null,

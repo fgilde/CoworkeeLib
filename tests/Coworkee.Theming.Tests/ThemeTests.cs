@@ -129,6 +129,41 @@ public sealed class ThemeTests(ThemeApp app) : IAsyncLifetime
     public async Task Unsafe_css_and_svg_are_rejected(string? css, string? logo) =>
         (await Admin.PostAsJsonAsync("/api/v1/themes", Brand(css: css, logo: logo), Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
+    [Theory]
+    [InlineData("<svg xmlns=\"http://www.w3.org/2000/svg\"><circle r=\"4\"/></svg>")]
+    [InlineData("<?xml version=\"1.0\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\"><circle r=\"4\"/></svg>")]
+    [InlineData("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==")]
+    [InlineData("data:image/png;base64,iVBORw0KGgo=")]
+    [InlineData("data:image/jpeg;base64,/9j/4AAQ")]
+    [InlineData("data:image/webp;base64,UklGRg==")]
+    public async Task A_logo_is_svg_markup_or_an_image_data_url(string logo)
+    {
+        var response = await Admin.PostAsJsonAsync("/api/v1/themes", Brand(logo: logo), Ct);
+
+        response.EnsureSuccessStatusCode();
+        (await response.Content.ReadFromJsonAsync<ThemeDto>(Ct))!.Logo.ShouldBe(logo.Trim());
+    }
+
+    [Fact]
+    public async Task A_logo_may_have_at_most_512_kb()
+    {
+        string Png(int bytes) => "data:image/png;base64," + Convert.ToBase64String(new byte[bytes]);
+
+        (await Admin.PostAsJsonAsync("/api/v1/themes", Brand(logo: Png(ThemeLogo.MaxBytes)), Ct)).EnsureSuccessStatusCode();
+        (await Admin.PostAsJsonAsync("/api/v1/themes", Brand("Big", logo: Png(ThemeLogo.MaxBytes + 1)), Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Theory]
+    [InlineData("data:image/gif;base64,R0lGODlh")]
+    [InlineData("data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==")]
+    [InlineData("data:image/png;charset=utf-8,abc")]
+    [InlineData("data:image/png;base64,***")]
+    [InlineData("https://evil.test/logo.png")]
+    [InlineData("data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9ImFsZXJ0KDEpIj48L3N2Zz4=")]
+    [InlineData("data:image/svg+xml;base64,PHN2Zz48c2NyaXB0PmFsZXJ0KDEpPC9zY3JpcHQ+PC9zdmc+")]
+    public async Task Other_logos_and_unsafe_svg_data_urls_are_rejected(string logo) =>
+        (await Admin.PostAsJsonAsync("/api/v1/themes", Brand(logo: logo), Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
     [Fact]
     public async Task Global_themes_are_read_only()
     {

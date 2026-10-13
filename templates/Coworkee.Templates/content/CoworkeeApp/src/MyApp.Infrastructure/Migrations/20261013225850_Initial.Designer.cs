@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20261012130503_Initial")]
+    [Migration("20261013225850_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -1394,7 +1394,7 @@ namespace MyApp.Infrastructure.Migrations
                     b.Property<string>("LayoutProperties")
                         .HasColumnType("jsonb");
 
-                    b.Property<string>("LogoSvg")
+                    b.Property<string>("Logo")
                         .HasColumnType("text");
 
                     b.Property<DateTimeOffset?>("ModifiedAt")
@@ -2207,7 +2207,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20261012130503_Initial")]
+    [Migration("20261013225850_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -3513,7 +3513,7 @@ namespace MyApp.Infrastructure.Migrations
                     b.Property<string>("LayoutProperties")
                         .HasColumnType("jsonb");
 
-                    b.Property<string>("LogoSvg")
+                    b.Property<string>("Logo")
                         .HasColumnType("text");
 
                     b.Property<DateTimeOffset?>("ModifiedAt")

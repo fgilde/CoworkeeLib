@@ -1,0 +1,16 @@
+@using MudBlazor.Extensions.Components
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">@L["Choose logo"]</MudText>
+    </TitleContent>
+    <DialogContent>
+        <div data-testid="logo-upload">
+            <MudExUploadEdit T="UploadableFile" UploadRequestChanged="LoadAsync" AllowMultiple="false" AllowFolderUpload="false" AllowExternalUrl="false"
+                             MimeTypes="@_mimeTypes" MaxFileSize="@_maxUpload" TextUploadFile="@L["Choose logo"]" ButtonVariant="Variant.Outlined" ButtonColor="Color.Default"
+                             ExternalProviderRendering="ExternalProviderRendering.Images" ExternalPickerImageSize="@("30px")" />
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">@L["Cancel"]</MudButton>
+    </DialogActions>
+</MudDialog>

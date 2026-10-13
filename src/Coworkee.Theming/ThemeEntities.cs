@@ -30,7 +30,8 @@ public sealed class ThemeDefinition : AuditedAggregateRoot, IVersioned
     /// <summary>Users can choose it; built-in themes always can.</summary>
     public bool IsPublished { get; set; }
 
-    public string? LogoSvg { get; set; }
+    /// <summary>SVG markup or an image data URL; empty means the app's logo.</summary>
+    public string? Logo { get; set; }
 
     public string? CustomCss { get; set; }
 

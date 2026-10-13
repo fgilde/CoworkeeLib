@@ -1052,5 +1052,18 @@
   "Widget": "iidżet",
   "Widget settings": "Ustawienia widżetu",
   "You may not read this data.": "Nie masz uprawnień do odczytu tych danych.",
-  "{0} (copy)": "{0} (kopia)"
+  "{0} (copy)": "{0} (kopia)",
+  "Choose logo": "Wybierz logo",
+  "Use app logo": "Użyj logo aplikacji",
+  "App logo": "Logo aplikacji",
+  "The logo may have at most {0} KB.": "Logo może mieć maksymalnie {0} KB.",
+  "Choose a PNG, JPEG, WebP or SVG image.": "Wybierz obraz PNG, JPEG, WebP lub SVG.",
+  "The image could not be read.": "Nie udało się odczytać obrazu.",
+  "Keycloak sign-in page": "Strona logowania Keycloak",
+  "Keycloak's sign-in page follows the default theme and the sign-in page design on its own. Apply it again after Keycloak lost its themes.": "Strona logowania Keycloak sama podąża za domyślnym motywem i wyglądem strony logowania. Zastosuj ją ponownie, jeśli Keycloak utracił swoje motywy.",
+  "Last written {0}": "Ostatni zapis {0}",
+  "Not written yet": "Jeszcze nie zapisano",
+  "Apply to Keycloak": "Zastosuj w Keycloak",
+  "Keycloak sign-in page updated": "Strona logowania Keycloak zaktualizowana",
+  "The Keycloak sign-in page could not be written. See the log of the API.": "Nie udało się zapisać strony logowania Keycloak. Sprawdź dziennik API."
 }

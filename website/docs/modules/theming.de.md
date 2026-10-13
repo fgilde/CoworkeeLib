@@ -6,13 +6,16 @@ Themes sind Daten: Paletten für hellen und dunklen Modus, Typografie, Eckenradi
 
 - *Administration > Themes* (`Themes.Manage`) zeigt je Theme eine Kachel: helle und dunkle Farben, Name, Veröffentlichungsstatus, *Bearbeiten*, *Als Standard festlegen* und *Löschen* (nur eigene Themes, nach Rückfrage). *Bearbeiten* und *Neues Theme* öffnen einen `MudExThemeEdit<CoworkeeTheme>` mit Live-Vorschau; ein neues Theme startet von einem der vorhandenen. Eingebaute Themes bleiben unverändert, Speichern legt eine Kopie an.
 - Alle Benutzer können die eingebauten und die *veröffentlichten* Themes wählen; der Standard des Mandanten gilt, bis ein Benutzer in den Kontoeinstellungen oder über die Palette in der App-Leiste ein anderes Theme (und hellen, dunklen oder System-Modus) wählt.
-- `CoworkeeTheme` erbt von `MudTheme` und ergänzt: `ShowLogoInNav`, `ShowLogoInAppBar`, `ShowNavFilter`, `CanPinNav`, `CanChangeNavExpandMode`, `NavSingleExpand` (bis der Benutzer wählt), `Dense`, `StripedTables`, `IsPublished`, `LogoSvg`, `CustomCss`. Alle sind Felder im Editor. `CustomCss` ist ein Stylesheet für die ganze App (nach dem Theme gerendert) und wird in einem mitwachsenden mehrzeiligen Feld bearbeitet.
+- `CoworkeeTheme` erbt von `MudTheme` und ergänzt: `ShowLogoInNav`, `ShowLogoInAppBar`, `ShowNavFilter`, `CanPinNav`, `CanChangeNavExpandMode`, `NavSingleExpand` (bis der Benutzer wählt), `Dense`, `StripedTables`, `IsPublished`, `Logo`, `CustomCss`. Alle sind Felder im Editor. `CustomCss` ist ein Stylesheet für die ganze App (nach dem Theme gerendert) und wird in einem mitwachsenden mehrzeiligen Feld bearbeitet.
 - `Dense` (standardmäßig an) macht die ganze Oberfläche kompakt: Tabellen, Listen, Menüs, Baumansichten, Hinweise, Ausklappbereiche und Checkboxen werden `Dense` dargestellt, Eingabefelder und Auswahllisten mit `Margin.Dense`, Chips mit `Size.Small`. Formulare (`MudExObjectEdit`) und das Navigationsmenü behalten ihre normale Größe. Themes, die mit der früheren Option `DenseTables` gespeichert wurden, behalten ihren Wert.
 - Die Komponenten der Bibliothek erben von `CoworkeeComponentBase`, das die `Density` des Themes als Cascading Value erhält (`Density.Dense`, `Density.Margin`, `Density.Size`). Eigene Komponenten können das genauso nutzen: `@inherits CoworkeeComponentBase` oder `[CascadingParameter] Density Density { get; set; } = Density.Default;`. Eine eigene `IObjectMetaConfiguration<T>` eines Modells ersetzt die kompakte Formular-Konfiguration für dieses Modell.
-- Ohne Logo im Theme erscheint das Logo der App: `options.AppLogo = "logo.svg"` in `AddCoworkeeClient`.
+- `Logo` ist SVG-Markup oder eine Bild-Data-URL (PNG, JPEG, WebP oder SVG, höchstens 512 KB; SVG mit Skripten, Event-Handlern oder eingebetteten Dokumenten wird abgelehnt). Der Editor zeigt es mit `ThemeLogoEdit`: Vorschau, *Logo wählen* (Upload oder die konfigurierten Cloud-Laufwerke) und *App-Logo verwenden*. Rasterbilder über 512 px werden vorher im Browser verkleinert. Das Logo erscheint in der App-Leiste, der Navigation, im Setup, im Über-Dialog und auf den Kontoseiten und ist, solange es gesetzt ist, das Favicon.
+- Ohne Logo im Theme erscheint das Logo der App: `options.AppLogo = "logo.svg"` in `AddCoworkeeClient` (`Coworkee:Auth:LogoUrl` für die Kontoseiten).
+- Auf dem Server macht `ThemeLogo.TryRead(theme.Logo, out var bytes, out var contentType)` (`Coworkee.Contracts.Theming`) aus beiden Formen Bytes und Content-Type, etwa um das Logo in eine Datei zu schreiben.
+- Die Spalte `LogoSvg` der Theme-Tabelle heißt jetzt `Logo`: Eine bestehende App braucht eine Migration (EF Core benennt die Spalte um, wenn Sie die erzeugte Migration auf `RenameColumn` ändern).
 - Das Setup bietet das Theme als eigenen Schritt an.
 - Die Kontoseiten des Auth-Servers übernehmen Farben, Schrift und Logo des Standard-Themes. Layout und Medien sind eine Einstellung für die ganze Installation: die Karte *Anmeldeseite* oben auf *Administration > Themes*, siehe [Anmeldeseiten und Designs](../security/sign-in-pages.md).
-- Die Felder des Theme-Editors kommen aus MudEx-Metadaten für Objektformulare. Die Bibliothek registriert `CoworkeeThemeEditMeta` als `IObjectMetaConfiguration<CoworkeeTheme>` (das Feld `CustomCss`); registrieren Sie nach `AddCoworkeeClient` eine eigene, um Felder anders darzustellen (sie ersetzt die der Bibliothek):
+- Die Felder des Theme-Editors kommen aus MudEx-Metadaten für Objektformulare. Die Bibliothek registriert `CoworkeeThemeEditMeta` als `IObjectMetaConfiguration<CoworkeeTheme>` (die Felder `Logo` und `CustomCss`); registrieren Sie nach `AddCoworkeeClient` eine eigene, um Felder anders darzustellen (sie ersetzt die der Bibliothek):
 
 ```csharp
 builder.Services.AddScoped<IObjectMetaConfiguration<CoworkeeTheme>, MyThemeEditMeta>();
@@ -21,7 +24,7 @@ public sealed class MyThemeEditMeta : IObjectMetaConfiguration<CoworkeeTheme>
 {
     public Task ConfigureAsync(ObjectEditMeta<CoworkeeTheme> meta)
     {
-        meta.Property(t => t.LogoSvg).WithLabel("Logo (SVG-Markup)");
+        meta.Property(t => t.Logo).WithLabel("Firmenlogo");
         return Task.CompletedTask;
     }
 }
@@ -41,3 +44,11 @@ context.Services.Configure<ThemingOptions>(themes =>
 ```
 
 Ein unbekannter Name in `DefaultTheme` lässt Ocean als Standard. Ein App-Theme mit dem Namen eines eingebauten oder eines anderen App-Themes, oder auf Basis eines unbekannten Themes, hält den Host beim Start mit einer Meldung an. Der Standard gilt, bis eine Organisation ein eigenes Theme wählt (Setup oder *Als Standard*). `coworkee new --theme Forest --primary-color "#0a7d5a"` schreibt das für Sie.
+
+## Keycloak-Anmeldeseite
+
+Mit `Coworkee:Keycloak:ThemeDirectory` (dem Themes-Ordner von Keycloak) und `ThemeName` hält die API ein Keycloak-Login-Theme im Design der App: die Farben des Standard-Themes der System-Organisation für hellen und dunklen Modus, sein Logo (ein Rasterbild als Datei neben dem Stylesheet, SVG darin eingebettet; ohne Logo `LogoUrl`), `AppName` über dem Formular sowie Layout und Medien aus dem Design der *Anmeldeseite*. Relative Pfade (`/media/welcome.mp4`) werden gegen `BaseUrl` aufgelöst. Die API schreibt das Theme beim Start und eine Sekunde nachdem eine Theme-Änderung gespeichert oder das Anmelde-Design gespeichert wurde; jede Datei entsteht neben der alten und wird dann darüber verschoben, Keycloak liest also nie eine halbe Datei. Der Aspire-AppHost füllt diese Einstellungen und mountet den Ordner (siehe [Aspire-AppHost](../hosting/aspire.md#anmeldeseite-im-design-der-app)).
+
+Die Karte *Keycloak-Anmeldeseite* unter *Administration > Themes* zeigt, wann das Theme zuletzt geschrieben wurde (oder warum es scheiterte), und schreibt es mit *Nach Keycloak übernehmen* sofort; sie erscheint nur, wenn die API einen Theme-Ordner hat, und nur für die System-Organisation (andere Organisationen bekommen `Configured: false` und beim Übernehmen 403). Schreibfehler stehen im Log der API; die Karte meldet nur, dass das Schreiben fehlschlug. Die Endpunkte sind `GET /api/v1/themes/keycloak` und `POST /api/v1/themes/keycloak/apply` (`Themes.Manage`). Der Schreiber selbst ist `KeycloakLoginTheme.Write` in `Coworkee.Contracts.Theming`.
+
+In Produktion cacht Keycloak Themes. Teilen Sie ein Volume zwischen API und Keycloak (`ThemeDirectory` der API, `/opt/keycloak/themes` bei Keycloak), setzen Sie das Login-Theme des Realms einmal auf den `ThemeName` und starten Sie Keycloak nach einer Änderung des Designs neu, oder starten Sie es mit `--spi-theme--cache-themes=false --spi-theme--cache-templates=false`, wenn ein paar Millisekunden pro Seite in Ordnung sind. Ohne `ThemeDirectory` wird nichts geschrieben.

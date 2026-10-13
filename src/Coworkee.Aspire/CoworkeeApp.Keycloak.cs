@@ -1,5 +1,6 @@
 using Aspire.Hosting.ApplicationModel;
 using Coworkee.Aspire.Settings;
+using Coworkee.Contracts.Theming;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -14,6 +15,10 @@ public sealed partial class CoworkeeApp
     private readonly List<KeycloakClient> _keycloakClients = [];
     private IResourceBuilder<ParameterResource>? _keycloakPassword;
     private string? _realm;
+    private string? _loginTheme;
+
+    /// <summary>The folder mounted as Keycloak's themes folder (see <see cref="CoworkeeKeycloakOptions.LoginTheme"/>).</summary>
+    public string KeycloakThemes => Path.Combine(Builder.AppHostDirectory, ".coworkee", "keycloak-themes");
 
     /// <summary>The users of the app's realm (<see cref="CoworkeeKeycloakOptions.Users"/>); <see cref="KeycloakPassword"/> gives each one's password.</summary>
     public IReadOnlyList<KeycloakUser> KeycloakUsers => Options.Keycloak?.Users ?? [];
@@ -58,6 +63,13 @@ public sealed partial class CoworkeeApp
             Keycloak.WithDataVolume();
         }
 
+        if (options.LoginTheme && options.Resource is null && Builder.ExecutionContext.IsRunMode)
+        {
+            _loginTheme = KeycloakLoginTheme.NameFor(Name);
+            Directory.CreateDirectory(KeycloakThemes);
+            Keycloak.WithBindMount(KeycloakThemes, "/opt/keycloak/themes", isReadOnly: true);
+        }
+
         // every local app's localhost cookies reach Keycloak too; over HTTP/2 it took 8 KB of headers and answered 431, now the 64 KB it takes over HTTP/1.1
         Configured(Keycloak, Options.KeycloakServer)
             .WithEnvironment(KeycloakHeaderLimit, "65536")
@@ -84,7 +96,53 @@ public sealed partial class CoworkeeApp
             api.WithSetting(s => s.Coworkee.Auth.External.Mode, options.LoginMode.ToString())
                 .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].DisplayName, options.DisplayName);
         }
+
+        // the api rewrites the login theme when the default theme or the sign-in design changes
+        if (_loginTheme is { } theme)
+        {
+            api.WithSetting(s => s.Coworkee.Keycloak.ThemeDirectory, KeycloakThemes)
+                .WithSetting(s => s.Coworkee.Keycloak.ThemeName, theme)
+                .WithSetting(s => s.Coworkee.Keycloak.AppName, Title);
+            if (Options.LogoUrl is { } logo)
+            {
+                api.WithSetting(s => s.Coworkee.Keycloak.LogoUrl, logo);
+            }
+        }
     }
+
+    /// <summary>Writes the login theme from the app host's options unless it exists; from then on the api keeps it.</summary>
+    internal async Task WriteLoginThemeAsync(CancellationToken cancellationToken)
+    {
+        if (_loginTheme is not { } theme || KeycloakLoginTheme.Exists(KeycloakThemes, theme))
+        {
+            return;
+        }
+
+        KeycloakLoginTheme.Write(KeycloakThemes, theme, new(Title, KeycloakLoginTheme.DefaultLight, KeycloakLoginTheme.DefaultDark)
+        {
+            LogoUrl = await OnWebAsync(Options.LogoUrl, cancellationToken),
+            Design = new() { Layout = Options.SignIn.Layout, MediaSide = Options.SignIn.MediaSide, MediaUrl = await OnWebAsync(Options.SignIn.MediaUrl, cancellationToken) },
+        });
+    }
+
+    // the theme is a nicety: a folder that cannot be written must not keep the realm, and with it the sign-in, from coming up
+    internal async Task TryWriteLoginThemeAsync(ILogger logger, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await WriteLoginThemeAsync(cancellationToken);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException)
+        {
+            logger.LogWarning(exception, "The Keycloak login theme {Theme} could not be written to {Folder}", _loginTheme, KeycloakThemes);
+        }
+    }
+
+    private async Task<string?> OnWebAsync(string? url, CancellationToken cancellationToken) => url is not null && url.StartsWith('/') && Web is { } web
+        ? await ReferenceExpression.Create($"{web.GetEndpoint("https")}{url}").GetValueAsync(cancellationToken)
+        : url;
+
+    private string Title => Options.DisplayName ?? Name;
 
     private IResourceBuilder<KeycloakResource> RequireKeycloak(string caller) =>
         Require(Keycloak, $"{nameof(CoworkeeAppOptions.UseKeycloak)} and {nameof(AddAuthServer)}", caller);
@@ -120,9 +178,10 @@ public sealed partial class CoworkeeApp
         {
             BaseAddress = new Uri(keycloak.GetEndpoint("http").Url + "/"),
         };
+        await TryWriteLoginThemeAsync(logger, cancellationToken);
         try
         {
-            await KeycloakRealm.ReconcileAsync(http, admin!, adminPassword!, _realm!, clients, users, cancellationToken);
+            await KeycloakRealm.ReconcileAsync(http, admin!, adminPassword!, _realm!, new(Title, _loginTheme), clients, users, cancellationToken);
             logger.LogInformation("Realm {Realm} is up to date: clients {Clients}, users {Users}", _realm, string.Join(", ", clients.Select(c => c.ClientId)), string.Join(", ", users.Select(u => u.Email)));
         }
         catch (Exception exception) when (exception is HttpRequestException or InvalidOperationException)

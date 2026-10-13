@@ -5,19 +5,22 @@ using Coworkee.Contracts.Settings;
 using Coworkee.Contracts.Theming;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Components;
 
-public partial class CoworkeeLayout : IDisposable
+public partial class CoworkeeLayout : IAsyncDisposable
 {
+    private IJSObjectReference? _module;
     private bool _drawer = true;
     private bool _dark;
     private bool _visible;
     private bool _systemDark;
     private MudThemeProvider? _provider;
+    private string? _logo;
 
-    [Inject] private Microsoft.JSInterop.IJSRuntime JS { get; set; } = null!;
+    [Inject] private IJSRuntime JS { get; set; } = null!;
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
@@ -73,11 +76,16 @@ public partial class CoworkeeLayout : IDisposable
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender)
+        if (firstRender)
         {
-            return;
+            await StartAsync();
         }
 
+        await ApplyFaviconAsync();
+    }
+
+    private async Task StartAsync()
+    {
         await Preferences.LoadAsync();
         await ThemeService.LoadAsync();
         // ponytail: upload fields of the first page rendered before this keep no pickers until they render again
@@ -88,11 +96,41 @@ public partial class CoworkeeLayout : IDisposable
         Refresh();
     }
 
-    public void Dispose()
+    // the favicon follows the theme logo; without one the page keeps its own icon
+    private async Task ApplyFaviconAsync()
+    {
+        if (ThemeService.Logo == _logo)
+        {
+            return;
+        }
+
+        var logo = ThemeService.Logo;
+        try
+        {
+            _module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");
+            await _module.InvokeVoidAsync("setFavicon", ThemeLogo.ToDataUrl(logo));
+            _logo = logo;
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
+
+    public async ValueTask DisposeAsync()
     {
         ThemeService.Changed -= Refresh;
         Preferences.Changed -= FollowPin;
         L.Changed -= Refresh;
+        try
+        {
+            if (_module is not null)
+            {
+                await _module.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
     }
 
     private void FollowPin() => InvokeAsync(() =>

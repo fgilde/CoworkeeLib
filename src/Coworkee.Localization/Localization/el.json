@@ -1052,5 +1052,18 @@
   "Widget": "Widget",
   "Widget settings": "Ρυθμίσεις widget",
   "You may not read this data.": "Δεν επιτρέπεται να διαβάσετε αυτά τα δεδομένα.",
-  "{0} (copy)": "{0} (αντίγραφο)"
+  "{0} (copy)": "{0} (αντίγραφο)",
+  "Choose logo": "Επιλογή λογοτύπου",
+  "Use app logo": "Χρήση λογοτύπου εφαρμογής",
+  "App logo": "Λογότυπο εφαρμογής",
+  "The logo may have at most {0} KB.": "Το λογότυπο μπορεί να είναι έως {0} KB.",
+  "Choose a PNG, JPEG, WebP or SVG image.": "Επιλέξτε εικόνα PNG, JPEG, WebP ή SVG.",
+  "The image could not be read.": "Δεν ήταν δυνατή η ανάγνωση της εικόνας.",
+  "Keycloak sign-in page": "Σελίδα σύνδεσης Keycloak",
+  "Keycloak's sign-in page follows the default theme and the sign-in page design on its own. Apply it again after Keycloak lost its themes.": "Η σελίδα σύνδεσης του Keycloak ακολουθεί αυτόματα το προεπιλεγμένο θέμα και τη σχεδίαση της σελίδας σύνδεσης. Εφαρμόστε την ξανά αν το Keycloak έχασε τα θέματά του.",
+  "Last written {0}": "Τελευταία εγγραφή {0}",
+  "Not written yet": "Δεν έχει γραφτεί ακόμη",
+  "Apply to Keycloak": "Εφαρμογή στο Keycloak",
+  "Keycloak sign-in page updated": "Η σελίδα σύνδεσης Keycloak ενημερώθηκε",
+  "The Keycloak sign-in page could not be written. See the log of the API.": "Η σελίδα σύνδεσης Keycloak δεν μπόρεσε να γραφτεί. Δείτε το αρχείο καταγραφής του API."
 }
