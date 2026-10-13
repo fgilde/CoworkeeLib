@@ -125,6 +125,19 @@ public sealed partial class CoworkeeApp
         });
     }
 
+    // the theme is a nicety: a folder that cannot be written must not keep the realm, and with it the sign-in, from coming up
+    internal async Task TryWriteLoginThemeAsync(ILogger logger, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await WriteLoginThemeAsync(cancellationToken);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException)
+        {
+            logger.LogWarning(exception, "The Keycloak login theme {Theme} could not be written to {Folder}", _loginTheme, KeycloakThemes);
+        }
+    }
+
     private async Task<string?> OnWebAsync(string? url, CancellationToken cancellationToken) => url is not null && url.StartsWith('/') && Web is { } web
         ? await ReferenceExpression.Create($"{web.GetEndpoint("https")}{url}").GetValueAsync(cancellationToken)
         : url;
@@ -165,13 +178,13 @@ public sealed partial class CoworkeeApp
         {
             BaseAddress = new Uri(keycloak.GetEndpoint("http").Url + "/"),
         };
+        await TryWriteLoginThemeAsync(logger, cancellationToken);
         try
         {
-            await WriteLoginThemeAsync(cancellationToken);
             await KeycloakRealm.ReconcileAsync(http, admin!, adminPassword!, _realm!, new(Title, _loginTheme), clients, users, cancellationToken);
             logger.LogInformation("Realm {Realm} is up to date: clients {Clients}, users {Users}", _realm, string.Join(", ", clients.Select(c => c.ClientId)), string.Join(", ", users.Select(u => u.Email)));
         }
-        catch (Exception exception) when (exception is HttpRequestException or InvalidOperationException or IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is HttpRequestException or InvalidOperationException)
         {
             logger.LogError(exception, "Realm {Realm} could not be brought up to date", _realm);
             throw;

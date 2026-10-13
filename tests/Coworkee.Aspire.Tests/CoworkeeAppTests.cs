@@ -2,11 +2,24 @@ using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Coworkee.Aspire.Settings;
 using Coworkee.Contracts.Configuration;
+using Coworkee.Contracts.Theming;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Coworkee.Aspire.Tests;
 
-public sealed class CoworkeeAppTests
+public sealed class CoworkeeAppTests : IDisposable
 {
+    private readonly List<string> _folders = [];
+
+    public void Dispose() => _folders.ForEach(f => Directory.Delete(f, recursive: true));
+
+    private string Folder()
+    {
+        var folder = Directory.CreateTempSubdirectory("coworkee-aspire-").FullName;
+        _folders.Add(folder);
+        return folder;
+    }
+
     [Fact]
     public void Setting_paths_follow_the_configuration_tree()
     {
@@ -114,7 +127,7 @@ public sealed class CoworkeeAppTests
     [Fact]
     public async Task Keycloak_gets_the_login_theme_folder_and_the_api_what_it_needs_to_rewrite_the_theme()
     {
-        var folder = Directory.CreateTempSubdirectory().FullName;
+        var folder = Folder();
         var builder = DistributedApplication.CreateBuilder(new DistributedApplicationOptions { ProjectDirectory = folder });
         var app = builder.AddCoworkeeApp("realm", o =>
         {
@@ -147,7 +160,7 @@ public sealed class CoworkeeAppTests
     [Fact]
     public async Task The_login_theme_is_written_once_from_the_options_with_paths_on_the_web_app()
     {
-        var folder = Directory.CreateTempSubdirectory().FullName;
+        var folder = Folder();
         var builder = DistributedApplication.CreateBuilder(new DistributedApplicationOptions { ProjectDirectory = folder });
         var app = builder.AddCoworkeeApp("realm", o =>
         {
@@ -178,9 +191,22 @@ public sealed class CoworkeeAppTests
     }
 
     [Fact]
+    public async Task A_login_theme_that_cannot_be_written_is_logged_and_does_not_stop_the_realm()
+    {
+        var builder = DistributedApplication.CreateBuilder(new DistributedApplicationOptions { ProjectDirectory = Folder() });
+        var app = builder.AddCoworkeeApp("realm", o => o.UseKeycloak());
+        app.AddMigrations<FakeProjects.Migrations>();
+        app.AddAuthServer<FakeProjects.Auth>();
+        File.WriteAllText(Path.Combine(app.KeycloakThemes, "coworkee-realm"), "in the way");
+
+        await app.TryWriteLoginThemeAsync(NullLogger.Instance, TestContext.Current.CancellationToken);
+
+        KeycloakLoginTheme.Exists(app.KeycloakThemes, "coworkee-realm").ShouldBeFalse();
+    }
+    [Fact]
     public async Task Without_the_login_theme_keycloak_mounts_nothing_and_the_api_gets_no_theme_folder()
     {
-        var builder = DistributedApplication.CreateBuilder(new DistributedApplicationOptions { ProjectDirectory = Directory.CreateTempSubdirectory().FullName });
+        var builder = DistributedApplication.CreateBuilder(new DistributedApplicationOptions { ProjectDirectory = Folder() });
         var app = builder.AddCoworkeeApp("realm", o => o.UseKeycloak(k => k.LoginTheme = false));
         app.AddMigrations<FakeProjects.Migrations>();
         app.AddAuthServer<FakeProjects.Auth>();
