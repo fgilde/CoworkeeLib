@@ -48,6 +48,16 @@ public sealed class RichTemplateTests(TemplateFixture template)
     }
 
     [Fact]
+    public async Task Apps_get_the_texts_of_their_languages_only()
+    {
+        string[] Texts(string app) => Directory.Exists(Path.Combine(app, "src/Shop.Contracts/Localization")) ? [.. Directory.GetFiles(Path.Combine(app, "src/Shop.Contracts/Localization")).Select(Path.GetFileName).OfType<string>()] : [];
+
+        Texts(await template.CreateAsync("texts-default", "--samples", "false", "--tests", "false")).ShouldBe(["de.json"]);
+        Texts(await template.CreateAsync("texts-english", "--samples", "false", "--tests", "false", "--languages", "en")).ShouldBeEmpty();
+        Texts(await template.CreateAsync("texts-regional", "--samples", "false", "--tests", "false", "--languages", "en,de-AT")).ShouldBe(["de.json"]);
+    }
+
+    [Fact]
     public async Task Generated_app_with_relations_enums_new_types_and_languages_builds_and_its_migrations_cover_the_model()
     {
         var feed = Environment.GetEnvironmentVariable("COWORKEE_TEST_FEED");

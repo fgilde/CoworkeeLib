@@ -380,7 +380,7 @@
       "type": "parameter",
       "datatype": "string",
       "defaultValue": "",
-      "description": "Languages offered from the start, comma separated (en,de,fr); empty offers the shipped ones (en, de). Languages without shipped texts are machine translated at the first start."
+      "description": "Languages offered from the start, comma separated (en,de,fr); empty offers en and de. The texts of the chosen shipped languages go into the app (Contracts/Localization); languages without shipped texts are machine translated at the first start."
     },
     "defaultLanguage": {
       "type": "parameter",
@@ -513,6 +513,10 @@
           "description": "한국어."
         },
         {
+          "choice": "zh",
+          "description": "中文."
+        },
+        {
           "choice": "zh-Hans",
           "description": "中文（简体）."
         },
@@ -531,6 +535,14 @@
         {
           "choice": "th",
           "description": "ไทย."
+        },
+        {
+          "choice": "hr",
+          "description": "Hrvatski."
+        },
+        {
+          "choice": "km",
+          "description": "ភាសាខ្មែរ."
         }
       ],
       "replaces": "COWORKEE_DEFAULT_LANGUAGE"
@@ -548,6 +560,204 @@
         ]
       },
       "replaces": "COWORKEE_LANGUAGES"
+    },
+    "langAr": {
+      "type": "generated",
+      "generator": "regexMatch",
+      "datatype": "bool",
+      "parameters": {
+        "source": "languages",
+        "pattern": "(^|,)\\s*ar(-[A-Za-z]+)?\\s*(,|$)"
+      }
+    },
+    "langBg": {
+      "type": "generated",
+      "generator": "regexMatch",
+      "datatype": "bool",
+      "parameters": {
+        "source": "languages",
+        "pattern": "(^|,)\\s*bg(-[A-Za-z]+)?\\s*(,|$)"
+      }
+    },
+    "langCs": {
+      "type": "generated",
+      "generator": "regexMatch",
+      "datatype": "bool",
+      "parameters": {
+        "source": "languages",
+        "pattern": "(^|,)\\s*cs(-[A-Za-z]+)?\\s*(,|$)"
+      }
+    },
+    "langDa": {
+      "type": "generated",
+      "generator": "regexMatch",
+      "datatype": "bool",
+      "parameters": {
+        "source": "languages",
+        "pattern": "(^|,)\\s*da(-[A-Za-z]+)?\\s*(,|$)"
+      }
+    },
+    "langDe": {
+      "type": "generated",
+      "generator": "regexMatch",
+      "datatype": "bool",
+      "parameters": {
+        "source": "languages",
+        "pattern": "^$|(^|,)\\s*de(-[A-Za-z]+)?\\s*(,|$)"
+      }
+    },
+    "langEl": {
+      "type": "generated",
+      "generator": "regexMatch",
+      "datatype": "bool",
+      "parameters": {
+        "source": "languages",
+        "pattern": "(^|,)\\s*el(-[A-Za-z]+)?\\s*(,|$)"
+      }
+    },
+    "langEs": {
+      "type": "generated",
+      "generator": "regexMatch",
+      "datatype": "bool",
+      "parameters": {
+        "source": "languages",
+        "pattern": "(^|,)\\s*es(-[A-Za-z]+)?\\s*(,|$)"
+      }
+    },
+    "langFr": {
+      "type": "generated",
+      "generator": "regexMatch",
+      "datatype": "bool",
+      "parameters": {
+        "source": "languages",
+        "pattern": "(^|,)\\s*fr(-[A-Za-z]+)?\\s*(,|$)"
+      }
+    },
+    "langHr": {
+      "type": "generated",
+      "generator": "regexMatch",
+      "datatype": "bool",
+      "parameters": {
+        "source": "languages",
+        "pattern": "(^|,)\\s*hr(-[A-Za-z]+)?\\s*(,|$)"
+      }
+    },
+    "langId": {
+      "type": "generated",
+      "generator": "regexMatch",
+      "datatype": "bool",
+      "parameters": {
+        "source": "languages",
+        "pattern": "(^|,)\\s*id(-[A-Za-z]+)?\\s*(,|$)"
+      }
+    },
+    "langIt": {
+      "type": "generated",
+      "generator": "regexMatch",
+      "datatype": "bool",
+      "parameters": {
+        "source": "languages",
+        "pattern": "(^|,)\\s*it(-[A-Za-z]+)?\\s*(,|$)"
+      }
+    },
+    "langJa": {
+      "type": "generated",
+      "generator": "regexMatch",
+      "datatype": "bool",
+      "parameters": {
+        "source": "languages",
+        "pattern": "(^|,)\\s*ja(-[A-Za-z]+)?\\s*(,|$)"
+      }
+    },
+    "langKm": {
+      "type": "generated",
+      "generator": "regexMatch",
+      "datatype": "bool",
+      "parameters": {
+        "source": "languages",
+        "pattern": "(^|,)\\s*km(-[A-Za-z]+)?\\s*(,|$)"
+      }
+    },
+    "langKo": {
+      "type": "generated",
+      "generator": "regexMatch",
+      "datatype": "bool",
+      "parameters": {
+        "source": "languages",
+        "pattern": "(^|,)\\s*ko(-[A-Za-z]+)?\\s*(,|$)"
+      }
+    },
+    "langNl": {
+      "type": "generated",
+      "generator": "regexMatch",
+      "datatype": "bool",
+      "parameters": {
+        "source": "languages",
+        "pattern": "(^|,)\\s*nl(-[A-Za-z]+)?\\s*(,|$)"
+      }
+    },
+    "langPl": {
+      "type": "generated",
+      "generator": "regexMatch",
+      "datatype": "bool",
+      "parameters": {
+        "source": "languages",
+        "pattern": "(^|,)\\s*pl(-[A-Za-z]+)?\\s*(,|$)"
+      }
+    },
+    "langPt": {
+      "type": "generated",
+      "generator": "regexMatch",
+      "datatype": "bool",
+      "parameters": {
+        "source": "languages",
+        "pattern": "(^|,)\\s*pt(-[A-Za-z]+)?\\s*(,|$)"
+      }
+    },
+    "langRu": {
+      "type": "generated",
+      "generator": "regexMatch",
+      "datatype": "bool",
+      "parameters": {
+        "source": "languages",
+        "pattern": "(^|,)\\s*ru(-[A-Za-z]+)?\\s*(,|$)"
+      }
+    },
+    "langSv": {
+      "type": "generated",
+      "generator": "regexMatch",
+      "datatype": "bool",
+      "parameters": {
+        "source": "languages",
+        "pattern": "(^|,)\\s*sv(-[A-Za-z]+)?\\s*(,|$)"
+      }
+    },
+    "langTr": {
+      "type": "generated",
+      "generator": "regexMatch",
+      "datatype": "bool",
+      "parameters": {
+        "source": "languages",
+        "pattern": "(^|,)\\s*tr(-[A-Za-z]+)?\\s*(,|$)"
+      }
+    },
+    "langUk": {
+      "type": "generated",
+      "generator": "regexMatch",
+      "datatype": "bool",
+      "parameters": {
+        "source": "languages",
+        "pattern": "(^|,)\\s*uk(-[A-Za-z]+)?\\s*(,|$)"
+      }
+    },
+    "langZh": {
+      "type": "generated",
+      "generator": "regexMatch",
+      "datatype": "bool",
+      "parameters": {
+        "source": "languages",
+        "pattern": "(^|,)\\s*zh(-[A-Za-z]+)?\\s*(,|$)"
+      }
     },
     "customLanguages": {
       "type": "computed",
@@ -720,6 +930,138 @@
   "sources": [
     {
       "modifiers": [
+        {
+          "condition": "(!langAr)",
+          "exclude": [
+            "src/MyApp.Contracts/Localization/ar.json"
+          ]
+        },
+        {
+          "condition": "(!langBg)",
+          "exclude": [
+            "src/MyApp.Contracts/Localization/bg.json"
+          ]
+        },
+        {
+          "condition": "(!langCs)",
+          "exclude": [
+            "src/MyApp.Contracts/Localization/cs.json"
+          ]
+        },
+        {
+          "condition": "(!langDa)",
+          "exclude": [
+            "src/MyApp.Contracts/Localization/da.json"
+          ]
+        },
+        {
+          "condition": "(!langDe)",
+          "exclude": [
+            "src/MyApp.Contracts/Localization/de.json"
+          ]
+        },
+        {
+          "condition": "(!langEl)",
+          "exclude": [
+            "src/MyApp.Contracts/Localization/el.json"
+          ]
+        },
+        {
+          "condition": "(!langEs)",
+          "exclude": [
+            "src/MyApp.Contracts/Localization/es.json"
+          ]
+        },
+        {
+          "condition": "(!langFr)",
+          "exclude": [
+            "src/MyApp.Contracts/Localization/fr.json"
+          ]
+        },
+        {
+          "condition": "(!langHr)",
+          "exclude": [
+            "src/MyApp.Contracts/Localization/hr.json"
+          ]
+        },
+        {
+          "condition": "(!langId)",
+          "exclude": [
+            "src/MyApp.Contracts/Localization/id.json"
+          ]
+        },
+        {
+          "condition": "(!langIt)",
+          "exclude": [
+            "src/MyApp.Contracts/Localization/it.json"
+          ]
+        },
+        {
+          "condition": "(!langJa)",
+          "exclude": [
+            "src/MyApp.Contracts/Localization/ja.json"
+          ]
+        },
+        {
+          "condition": "(!langKm)",
+          "exclude": [
+            "src/MyApp.Contracts/Localization/km.json"
+          ]
+        },
+        {
+          "condition": "(!langKo)",
+          "exclude": [
+            "src/MyApp.Contracts/Localization/ko.json"
+          ]
+        },
+        {
+          "condition": "(!langNl)",
+          "exclude": [
+            "src/MyApp.Contracts/Localization/nl.json"
+          ]
+        },
+        {
+          "condition": "(!langPl)",
+          "exclude": [
+            "src/MyApp.Contracts/Localization/pl.json"
+          ]
+        },
+        {
+          "condition": "(!langPt)",
+          "exclude": [
+            "src/MyApp.Contracts/Localization/pt.json"
+          ]
+        },
+        {
+          "condition": "(!langRu)",
+          "exclude": [
+            "src/MyApp.Contracts/Localization/ru.json"
+          ]
+        },
+        {
+          "condition": "(!langSv)",
+          "exclude": [
+            "src/MyApp.Contracts/Localization/sv.json"
+          ]
+        },
+        {
+          "condition": "(!langTr)",
+          "exclude": [
+            "src/MyApp.Contracts/Localization/tr.json"
+          ]
+        },
+        {
+          "condition": "(!langUk)",
+          "exclude": [
+            "src/MyApp.Contracts/Localization/uk.json"
+          ]
+        },
+        {
+          "condition": "(!langZh)",
+          "exclude": [
+            "src/MyApp.Contracts/Localization/zh.json"
+          ]
+        },
         {
           "condition": "(!samples)",
           "exclude": [
