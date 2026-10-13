@@ -86,7 +86,7 @@ Das ist nur eine Erleichterung im Formular; der Server erzwingt sie nicht. Eine 
 
 ### Gruppen auf eigener Seite
 
-`context.Group(name, displayName, page: "/admin/ai-settings")` markiert eine Gruppe als auf einer eigenen Admin-Seite gepflegt. Die Einstellungs-Tabs überspringen sie, **Meine Einstellungen** des Benutzers zeigen weiter jede Gruppe ohne `page`. So arbeitet die KI-Gruppe: Ihre Einstellungen, auch der MCP-Schalter, liegen auf `/admin/ai-settings`.
+`context.Group(name, displayName, page: "/admin/ai-settings")` markiert eine Gruppe als auf einer eigenen Admin-Seite gepflegt. Die Einstellungs-Tabs überspringen sie, **Meine Einstellungen** des Benutzers zeigen weiter jede Gruppe ohne `page`. So arbeitet die KI-Gruppe: Ihre Einstellungen, auch der MCP-Schalter, liegen auf `/admin/ai-settings`. Ebenso Mail: Anbieter, Zugangsdaten und der Schalter für den eigenen Server einer Organisation liegen auf `/admin/mail-settings`, siehe [Mailversand](mailing.md#die-seite-mail-einstellungen).
 
 ### Spracheinstellungen
 

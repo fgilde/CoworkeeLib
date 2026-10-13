@@ -58,7 +58,7 @@ internal sealed class MyAppNavigation : INavigationContributor
 | `IconForGroup(name, icon)` | the icon of a group node |
 | `Place(href, group, title?, order?)` | moves a link of the library into another group; a group path like `Administration/Localization` nests |
 
-The admin pages of the library sit in groups below **Administration**: `NavigationGroups.Identity` (users, groups, roles, applications, scopes), `NavigationGroups.System` (settings, services, tenants, editions, themes, backups), `NavigationGroups.Communication` (mail templates, mail log), `NavigationGroups.Localization` (languages, translations) and `NavigationGroups.Monitoring` (audit log, AI tool calls). Nested groups sort within their top level group, which keeps the place `OrderGroup` gives it.
+The admin pages of the library sit in groups below **Administration**: `NavigationGroups.Identity` (users, groups, roles, applications, scopes), `NavigationGroups.System` (settings, mail settings, services, tenants, editions, themes, backups), `NavigationGroups.Communication` (mail templates, mail log), `NavigationGroups.Localization` (languages, translations) and `NavigationGroups.Monitoring` (audit log, AI tool calls). Nested groups sort within their top level group, which keeps the place `OrderGroup` gives it.
 
 The menu is a `MudExTreeView`: groups are nodes, the filter box highlights matches and opens their groups, and the view can switch between tree, list and flat list. Pinned, the drawer stays as an icon strip under the app bar and the menu button widens it; unpinned, it opens as an overlay and hides again. Whether one group or several stay open is a second toggle. Both choices are stored in the browser.
 

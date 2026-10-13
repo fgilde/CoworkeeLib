@@ -86,7 +86,7 @@ This is a convenience of the form only; the server does not enforce it. A condit
 
 ### Groups on their own page
 
-`context.Group(name, displayName, page: "/admin/ai-settings")` marks a group as maintained on its own admin page. The settings tabs skip it, and the user's **My settings** keep every group that has no page. The AI group works this way: its settings, including the MCP switch, live on `/admin/ai-settings`.
+`context.Group(name, displayName, page: "/admin/ai-settings")` marks a group as maintained on its own admin page. The settings tabs skip it, and the user's **My settings** keep every group that has no page. The AI group works this way: its settings, including the MCP switch, live on `/admin/ai-settings`. So does Mail: provider, credentials and the own-server switch of an organisation live on `/admin/mail-settings`, see [Mailing](mailing.md#the-mail-settings-page).
 
 ### Language settings
 
