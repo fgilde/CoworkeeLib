@@ -74,6 +74,16 @@ public sealed class AccountApp : DatabaseFixture
         return (await response.Content.ReadFromJsonAsync<SetupResultDto>())!;
     }
 
+    public async Task SetSettingAsync(string name, string value)
+    {
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
+        await using var scope = App.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AccountTestDbContext>();
+        db.Add(new Coworkee.Settings.SettingValue { Name = name, Scope = Coworkee.Contracts.Settings.SettingScope.Global, Value = value });
+        await db.SaveChangesAsync();
+        await App.Services.GetRequiredService<Microsoft.Extensions.Caching.Hybrid.HybridCache>().RemoveByTagAsync("coworkee:settings");
+    }
+
     public HttpClient As(Guid userId, Guid tenantId) => App.GetTestClient().AsUser(userId, tenantId);
 
     public async Task<T> InScopeAsync<T>(Guid? userId, Guid? tenantId, Func<IServiceProvider, Task<T>> action)
