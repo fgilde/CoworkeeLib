@@ -31,7 +31,7 @@ Schlüssel sind die englischen Texte. Ein Modul bettet `Localization/{culture}.j
 
 ## Anfangssprachen
 
-Die Bibliothek bringt 23 Sprachen mit (`ar`, `bg`, `cs`, `da`, `de`, `el`, `en`, `es`, `fr`, `hr`, `id`, `it`, `ja`, `km`, `ko`, `nl`, `pl`, `pt`, `ru`, `sv`, `tr`, `uk`, `zh`), Englisch sind die Schlüssel. Ohne Konfiguration bietet eine Installation Englisch und Deutsch an, Englisch als Standard; die übrigen mitgelieferten Sprachen schalten Administratoren auf der Seite *Sprachen* ein. `LocalizationOptions` (Abschnitt `Coworkee:Localization`) schränken das ein; das Setup speichert genau diese Sprachen, danach ändern Administratoren sie auf der Seite *Sprachen*.
+Die Bibliothek bringt 23 Sprachen mit (`ar`, `bg`, `cs`, `da`, `de`, `el`, `en`, `es`, `fr`, `hr`, `id`, `it`, `ja`, `km`, `ko`, `nl`, `pl`, `pt`, `ru`, `sv`, `tr`, `uk`, `zh`), Englisch dient als Schlüssel. Ohne Konfiguration bietet eine Installation Englisch und Deutsch an, Englisch als Standard; die übrigen mitgelieferten Sprachen schalten Administratoren auf der Seite *Sprachen* ein. `LocalizationOptions` (Abschnitt `Coworkee:Localization`) schränken das ein; das Setup speichert genau diese Sprachen, danach ändern Administratoren sie auf der Seite *Sprachen*.
 
 ```json title="appsettings.json"
 {
@@ -58,6 +58,8 @@ Die Bibliothek liefert ihre Texte in 23 Sprachen mit: die Seiten und Komponenten
 | `en` | Englisch | `nl` | Niederländisch | | |
 | `es` | Spanisch | `pl` | Polnisch | | |
 | `fr` | Französisch | | | | |
+
+Die chinesischen Texte sind vereinfacht: `zh`, `zh-CN`, `zh-Hans` und `zh-SG` verwenden sie, Traditionelles Chinesisch (`zh-Hant`, `zh-TW`, `zh-HK`, `zh-MO`) nicht; es wird wie jede Sprache ohne mitgelieferte Texte maschinell übersetzt.
 
 Standardmäßig sind nur Englisch und Deutsch eingeschaltet, egal wie viele Texte mitkommen: Eine App bietet die Sprachen aus `LocalizationOptions` an, weitere schalten Administratoren auf der Seite *Sprachen* ein (siehe [Anfangssprachen](#anfangssprachen)). Eine mitgelieferte Sprache, die ausgeschaltet bleibt, kostet nur ihre eingebettete Datei.
 

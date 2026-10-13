@@ -31,7 +31,7 @@ Keys are the English texts. A module embeds `Localization/{culture}.json`:
 
 ## Initial languages
 
-The library ships 23 languages (`ar`, `bg`, `cs`, `da`, `de`, `el`, `en`, `es`, `fr`, `hr`, `id`, `it`, `ja`, `km`, `ko`, `nl`, `pl`, `pt`, `ru`, `sv`, `tr`, `uk`, `zh`), English being the keys. Without configuration an installation offers English and German, English as default; administrators switch the other shipped languages on on the *Languages* page. `LocalizationOptions` (section `Coworkee:Localization`) narrow that down; setup stores exactly these languages, after that administrators change them on the *Languages* page.
+The library ships 23 languages (`ar`, `bg`, `cs`, `da`, `de`, `el`, `en`, `es`, `fr`, `hr`, `id`, `it`, `ja`, `km`, `ko`, `nl`, `pl`, `pt`, `ru`, `sv`, `tr`, `uk`, `zh`), English being the keys. Without configuration an installation offers English and German, English as default; administrators enable the other shipped languages on the *Languages* page. `LocalizationOptions` (section `Coworkee:Localization`) narrow that down; setup stores exactly these languages, after that administrators change them on the *Languages* page.
 
 ```json title="appsettings.json"
 {
@@ -58,6 +58,8 @@ The library ships its texts in 23 languages: the pages and components of the mod
 | `en` | English | `nl` | Dutch | | |
 | `es` | Spanish | `pl` | Polish | | |
 | `fr` | French | | | | |
+
+The Chinese texts are Simplified: `zh`, `zh-CN`, `zh-Hans` and `zh-SG` use them, Traditional Chinese (`zh-Hant`, `zh-TW`, `zh-HK`, `zh-MO`) does not and is machine translated like any language without shipped texts.
 
 Only English and German are switched on by default, however many texts ship: an app offers the languages of `LocalizationOptions`, and administrators switch more on the *Languages* page (see [Initial languages](#initial-languages)). A shipped language that is switched off costs nothing but its embedded file.
 
@@ -89,7 +91,7 @@ The account pages and mails read their own embedded texts and templates, not the
 
 ## In a new app
 
-`coworkee new --languages en,de,fr` puts `Localization/de.json` and `Localization/fr.json` into `src/<App>.Contracts` with the translations of the app's own texts (navigation, sample pages) and nothing for languages you did not choose; without the switch it is English and German. The library texts of all 23 languages come with the packages either way. To add a language later, switch it on on the *Languages* page; add `src/<App>.Contracts/Localization/<code>.json` (`coworkee texts export --lang <code>` creates it) only to translate or reword texts yourself, the `Localization\*.json` pattern of the project embeds it.
+`coworkee new --languages en,de,fr` puts `Localization/de.json` and `Localization/fr.json` into `src/<App>.Contracts` with the translations of the app's own texts (navigation, sample pages) and nothing for languages you did not choose; without the switch it is English and German. The library texts of all 23 languages come with the packages either way. To add a language later, enable it on the *Languages* page; add `src/<App>.Contracts/Localization/<code>.json` (`coworkee texts export --lang <code>` creates it) only to translate or reword texts yourself, the `Localization\*.json` pattern of the project embeds it.
 
 ## In the client
 
