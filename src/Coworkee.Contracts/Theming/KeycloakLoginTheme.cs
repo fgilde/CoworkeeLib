@@ -151,7 +151,24 @@ public static partial class KeycloakLoginTheme
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         var temp = $"{path}.{Guid.NewGuid():N}.tmp";
         File.WriteAllBytes(temp, bytes);
-        File.Move(temp, path, overwrite: true);
+        // on Windows a reader of the old file (Keycloak through the bind mount) blocks the replace for a moment
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                File.Move(temp, path, overwrite: true);
+                return;
+            }
+            catch (IOException) when (attempt < 5)
+            {
+                Thread.Sleep(50 * attempt);
+            }
+            catch
+            {
+                File.Delete(temp);
+                throw;
+            }
+        }
     }
 
     private const string StaticCss = """
