@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Bunit;
+using Coworkee.Client.Blazor.Components;
 using Coworkee.Client.Blazor.Data;
 using Coworkee.Client.Blazor.Data.Admin;
 using Coworkee.Client.Blazor.Pages;
@@ -7,6 +8,7 @@ using Coworkee.Client.Blazor.Pages.Admin;
 using Coworkee.Client.Blazor.Theming;
 using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Identity;
+using Coworkee.Contracts.Settings;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
 using NSubstitute;
@@ -119,6 +121,31 @@ public sealed class UserAdministrationTests : ClientTestBase
         _ = panel.Find("[data-testid='set-password']").ClickAsync(new());
 
         dialogs.WaitForAssertion(() => dialogs.Markup.ShouldContain("At least 12 characters, a digit, an uppercase letter."));
+    }
+
+    [Fact]
+    public async Task Rules_changed_in_the_settings_show_in_the_password_dialog_at_once()
+    {
+        var length = "8";
+        Api.GetClientSettingsAsync(Arg.Any<CancellationToken>()).Returns(_ => new Dictionary<string, string?> { [PasswordSettings.RequiredLength] = length });
+        Api.When(a => a.SetSettingsAsync(SettingScope.Global, Arg.Any<IReadOnlyDictionary<string, string?>>(), Arg.Any<CancellationToken>())).Do(_ => length = "12");
+        Api.GetSettingDefinitionsAsync(false, Arg.Any<CancellationToken>()).Returns(
+        [
+            new SettingGroupDto("Security", "Security", [new SettingDefinitionDto(PasswordSettings.RequiredLength, "Minimum password length", null, SettingType.Int, "8", [SettingScope.Global], null)]),
+        ]);
+        Api.GetSettingsAsync(SettingScope.Global, Arg.Any<CancellationToken>()).Returns([new SettingValueDto(PasswordSettings.RequiredLength, "8", true)]);
+        await Services.GetRequiredService<ThemeService>().LoadAsync();
+        var settings = Render<SettingsForm>(p => p.Add(f => f.Scope, SettingScope.Global));
+        settings.WaitForAssertion(() => SettingsFormTests.Input(settings, "Minimum password length"));
+        SettingsFormTests.Input(settings, "Minimum password length").Change("12");
+        await settings.InvokeAsync(() => settings.Instance.SaveAsync());
+        var user = new UserDetailDto(_bob, "bob@acme.test", "bob@acme.test", null, null, true, true, true, null, null, [], []);
+        var dialogs = Render<MudDialogProvider>();
+        var panel = Render<UserSignIn>(p => p.Add(s => s.User, user).Add(s => s.CanManage, true));
+
+        _ = panel.Find("[data-testid='set-password']").ClickAsync(new());
+
+        dialogs.WaitForAssertion(() => dialogs.Markup.ShouldContain("At least 12 characters"));
     }
 
     [Fact]

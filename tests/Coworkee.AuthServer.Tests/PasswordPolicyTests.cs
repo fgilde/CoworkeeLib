@@ -106,6 +106,25 @@ public sealed class PasswordPolicyTests(AuthApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_reset_and_the_forced_change_page_show_the_rules_too()
+    {
+        await CreateUserAsync("bob@acme.test", mustChange: true);
+        await CreateUserAsync("eve@acme.test");
+        await app.SetSettingAsync(PasswordSettings.RequiredLength, "14");
+        await app.SetSettingAsync(PasswordSettings.RequireNonAlphanumeric, "false");
+        var flow = new OidcFlow(app);
+        await flow.PostFormAsync("/Account/ForgotPassword", new() { ["Input.Email"] = "eve@acme.test" });
+        var reset = await flow.Browser.GetStringAsync(new Uri(app.Mails.LinkFor("Identity.ResetPassword", "reset_url")).PathAndQuery, TestContext.Current.CancellationToken);
+        await flow.LoginAsync("bob@acme.test", Password, flow.AuthorizeUrl);
+        var forced = await flow.FollowAsync(await flow.AuthorizeAsync());
+
+        foreach (var html in new[] { reset, await forced.Content.ReadAsStringAsync(TestContext.Current.CancellationToken) })
+        {
+            html.ShouldContain("At least 14 characters, a digit, a lowercase letter, an uppercase letter.");
+        }
+    }
+
+    [Fact]
     public async Task The_lockout_follows_the_settings()
     {
         await CreateUserAsync("bob@acme.test");

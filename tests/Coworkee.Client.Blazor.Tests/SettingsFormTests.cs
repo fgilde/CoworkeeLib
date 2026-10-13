@@ -206,7 +206,7 @@ public sealed class SettingsFormTests : ClientTestBase
         await Services.GetRequiredService<CoworkeeLocalizer>().InitializeAsync(null);
         Api.GetSettingDefinitionsAsync(false, Arg.Any<CancellationToken>()).Returns(
         [
-            new SettingGroupDto("Auth", "Auth", [new SettingDefinitionDto("Auth.LoginMode", "Sign-in methods", null, SettingType.Choice, "Internal", Global, ["Internal", "External"])]),
+            new SettingGroupDto("Auth", "Auth", [new SettingDefinitionDto("Auth.LoginMode", "Sign-in methods", null, SettingType.Choice, "Internal", Global, ["Internal", "External", "libreTranslate"])]),
         ]);
         Api.GetSettingsAsync(SettingScope.Global, Arg.Any<CancellationToken>()).Returns([new SettingValueDto("Auth.LoginMode", null, false)]);
         var form = Render<SettingsForm>(p => p.Add(f => f.Scope, SettingScope.Global));
@@ -215,7 +215,7 @@ public sealed class SettingsFormTests : ClientTestBase
         await form.FindAll(".mud-ex-list-item")[1].ClickAsync(new());
         await form.InvokeAsync(() => form.Instance.SaveAsync());
 
-        form.FindAll(".mud-ex-list-item-text").Select(i => i.TextContent.Trim()).ShouldBe(["Nur Passwort", "Nur externe Anbieter"]);
+        form.FindAll(".mud-ex-list-item-text").Select(i => i.TextContent.Trim()).ShouldBe(["Nur Passwort", "Nur externe Anbieter", "libreTranslate"]);
         await Api.Received(1).SetSettingsAsync(SettingScope.Global,
             Arg.Is<IReadOnlyDictionary<string, string?>>(v => v.Count == 1 && v["Auth.LoginMode"] == "External"), Arg.Any<CancellationToken>());
     }

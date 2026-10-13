@@ -68,7 +68,7 @@ public sealed partial class SettingsModel
                     property.RenderWith<MudExSelect<string>, string?>(s => s.Value, s =>
                     {
                         s.ItemCollection = [.. setting.Choices ?? []];
-                        s.ToStringFunc = choice => choice is null ? string.Empty : l[choice];
+                        s.ToStringFunc = choice => choice is null ? string.Empty : l.Find(choice) ?? choice;
                     });
                     break;
                 case SettingType.Language:

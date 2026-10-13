@@ -1,5 +1,6 @@
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Localization;
+using Coworkee.Client.Blazor.Theming;
 using Coworkee.Contracts.Settings;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -19,6 +20,8 @@ public partial class SettingsForm
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
+
+    [Inject] private ThemeService ThemeService { get; set; } = null!;
 
     private SettingsModel? _model;
     private ObjectEditMeta<object>? _meta;
@@ -66,6 +69,7 @@ public partial class SettingsForm
         {
             await Api.SetSettingsAsync(Scope, changes);
             Snackbar.Add(L["Settings saved."], Severity.Success);
+            await ThemeService.LoadAsync();
             await LoadAsync();
         }
         catch (ApiException exception)

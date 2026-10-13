@@ -85,6 +85,11 @@ internal sealed class PasswordHistoryValidator(ISettingProvider settings) : IPas
     }
 }
 
+internal sealed class SettingsSetupPasswordRules(ISettingProvider settings) : Application.Setup.ISetupPasswordRules
+{
+    public async Task<PasswordRules> GetAsync(CancellationToken cancellationToken) => PasswordRules.From(await settings.GetClientValuesAsync(cancellationToken));
+}
+
 /// <summary>Defaults of the password rules come from the configured identity options, so a deployment's configuration stays the starting point.</summary>
 internal sealed class SecuritySettingDefinitions(IOptions<IdentityOptions> identity) : ISettingDefinitionContributor
 {

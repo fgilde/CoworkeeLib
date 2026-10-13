@@ -88,12 +88,7 @@ public sealed class SetupWizardTests : ClientTestBase
     [Fact]
     public async Task The_administrator_password_shows_the_rules_that_apply()
     {
-        Api.GetClientSettingsAsync(Arg.Any<CancellationToken>()).Returns(new Dictionary<string, string?>
-        {
-            [PasswordSettings.RequiredLength] = "12", [PasswordSettings.RequiredUniqueChars] = "1", [PasswordSettings.RequireDigit] = "true",
-            [PasswordSettings.RequireLowercase] = "false", [PasswordSettings.RequireUppercase] = "true", [PasswordSettings.RequireNonAlphanumeric] = "false",
-        });
-        await Services.GetRequiredService<ThemeService>().LoadAsync();
+        Api.GetSetupStatusAsync(Arg.Any<CancellationToken>()).Returns(new SetupStatusDto(false, new PasswordRules(12, 1, true, false, true, false)));
         var wizard = Render<Setup>();
 
         await ToAdministratorAsync(wizard, "token-123");

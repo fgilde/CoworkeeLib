@@ -170,6 +170,7 @@ public sealed class CoworkeeAccountModule : CoworkeeModule, IWebModule
         context.Services.AddScoped<Coworkee.Identity.Roles.IActiveRoleSwitch, ActiveRoleSetting>();
         context.Services.AddSingleton<Coworkee.Domain.IRealtimeTopicMapper, ActiveRoleSettingTopics>();
         context.Services.AddScoped<PasswordPolicy>();
+        context.Services.AddScoped<Application.Setup.ISetupPasswordRules, SettingsSetupPasswordRules>();
         context.Services.Remove(context.Services.Single(d => d.ServiceType == typeof(IPasswordValidator<User>) && d.ImplementationType == typeof(PasswordValidator<User>)));
         context.Services.AddScoped<IPasswordValidator<User>, SettingsPasswordValidator>();
         context.Services.AddScoped<IPasswordValidator<User>, PasswordHistoryValidator>();

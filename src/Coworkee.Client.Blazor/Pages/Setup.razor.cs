@@ -35,6 +35,7 @@ public partial class Setup
 
     private readonly SetupInput _request = new();
     private readonly MailInput _mail = new();
+    private PasswordRules? _rules;
     private IReadOnlyList<SetupCheckDto>? _checks;
     private IReadOnlyList<ThemeDto>? _themes;
     private Guid? _themeId;
@@ -48,7 +49,18 @@ public partial class Setup
 
     private bool BlockedByChecks => _step == 1 && (_checks is null || _checks.Any(c => c.Status == SetupCheckStatus.Error));
 
-    private string PasswordHint => PasswordRules.From(ThemeService.ClientSettings).Describe((text, arguments) => L[text, arguments]);
+    private string PasswordHint => (_rules ?? PasswordRules.From(new Dictionary<string, string?>())).Describe((text, arguments) => L[text, arguments]);
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _rules = (await Api.GetSetupStatusAsync())?.PasswordRules;
+        }
+        catch (Exception exception) when (exception is ApiException or HttpRequestException)
+        {
+        }
+    }
 
     private InputType PasswordInput => _showPassword ? InputType.Text : InputType.Password;
 

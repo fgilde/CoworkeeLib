@@ -28,10 +28,18 @@ internal sealed class CompleteSetupValidator : AbstractValidator<CompleteSetup>
     }
 }
 
-internal sealed class GetSetupStatusHandler(SystemStateCache state) : IHandler<GetSetupStatus, Result<SetupStatusDto>>
+internal sealed class GetSetupStatusHandler(SystemStateCache state, IEnumerable<ISetupPasswordRules> rules) : IHandler<GetSetupStatus, Result<SetupStatusDto>>
 {
-    public async Task<Result<SetupStatusDto>> HandleAsync(GetSetupStatus request, CancellationToken cancellationToken) =>
-        new SetupStatusDto(await state.IsInitializedAsync(cancellationToken));
+    public async Task<Result<SetupStatusDto>> HandleAsync(GetSetupStatus request, CancellationToken cancellationToken)
+    {
+        if (await state.IsInitializedAsync(cancellationToken))
+        {
+            return new SetupStatusDto(true);
+        }
+
+        var source = rules.FirstOrDefault();
+        return new SetupStatusDto(false, source is null ? null : await source.GetAsync(cancellationToken));
+    }
 }
 
 internal sealed class GetSetupChecksHandler(SystemStateCache state, IEnumerable<ISetupCheck> checks) : IHandler<GetSetupChecks, Result<IReadOnlyList<SetupCheckDto>>>

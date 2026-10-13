@@ -55,7 +55,8 @@ public sealed record ResourcePermissionDto(Guid Id, PrincipalType PrincipalType,
 
 public sealed record GrantResourcePermissionRequest(PrincipalType PrincipalType, Guid PrincipalId, Guid RoleId);
 
-public sealed record SetupStatusDto(bool IsInitialized);
+/// <summary>Whether the system is set up; before that the password rules the setup page shows next to the administrator password.</summary>
+public sealed record SetupStatusDto(bool IsInitialized, Configuration.PasswordRules? PasswordRules = null);
 
 public sealed record CompleteSetupRequest(
     string SetupToken, string TenantName, string AdminEmail, string AdminPassword, string? AdminFirstName, string? AdminLastName,
