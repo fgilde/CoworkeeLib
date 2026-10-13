@@ -1,0 +1,2 @@
+<p>Bonjour {{ user.first_name }},</p>
+<p>merci de votre inscription. Un administrateur examinera bientôt votre compte.</p>
