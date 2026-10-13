@@ -6,13 +6,16 @@ Themes sind Daten: Paletten für hellen und dunklen Modus, Typografie, Eckenradi
 
 - *Administration > Themes* (`Themes.Manage`) zeigt je Theme eine Kachel: helle und dunkle Farben, Name, Veröffentlichungsstatus, *Bearbeiten*, *Als Standard festlegen* und *Löschen* (nur eigene Themes, nach Rückfrage). *Bearbeiten* und *Neues Theme* öffnen einen `MudExThemeEdit<CoworkeeTheme>` mit Live-Vorschau; ein neues Theme startet von einem der vorhandenen. Eingebaute Themes bleiben unverändert, Speichern legt eine Kopie an.
 - Alle Benutzer können die eingebauten und die *veröffentlichten* Themes wählen; der Standard des Mandanten gilt, bis ein Benutzer in den Kontoeinstellungen oder über die Palette in der App-Leiste ein anderes Theme (und hellen, dunklen oder System-Modus) wählt.
-- `CoworkeeTheme` erbt von `MudTheme` und ergänzt: `ShowLogoInNav`, `ShowLogoInAppBar`, `ShowNavFilter`, `CanPinNav`, `CanChangeNavExpandMode`, `NavSingleExpand` (bis der Benutzer wählt), `Dense`, `StripedTables`, `IsPublished`, `LogoSvg`, `CustomCss`. Alle sind Felder im Editor. `CustomCss` ist ein Stylesheet für die ganze App (nach dem Theme gerendert) und wird in einem mitwachsenden mehrzeiligen Feld bearbeitet.
+- `CoworkeeTheme` erbt von `MudTheme` und ergänzt: `ShowLogoInNav`, `ShowLogoInAppBar`, `ShowNavFilter`, `CanPinNav`, `CanChangeNavExpandMode`, `NavSingleExpand` (bis der Benutzer wählt), `Dense`, `StripedTables`, `IsPublished`, `Logo`, `CustomCss`. Alle sind Felder im Editor. `CustomCss` ist ein Stylesheet für die ganze App (nach dem Theme gerendert) und wird in einem mitwachsenden mehrzeiligen Feld bearbeitet.
 - `Dense` (standardmäßig an) macht die ganze Oberfläche kompakt: Tabellen, Listen, Menüs, Baumansichten, Hinweise, Ausklappbereiche und Checkboxen werden `Dense` dargestellt, Eingabefelder und Auswahllisten mit `Margin.Dense`, Chips mit `Size.Small`. Formulare (`MudExObjectEdit`) und das Navigationsmenü behalten ihre normale Größe. Themes, die mit der früheren Option `DenseTables` gespeichert wurden, behalten ihren Wert.
 - Die Komponenten der Bibliothek erben von `CoworkeeComponentBase`, das die `Density` des Themes als Cascading Value erhält (`Density.Dense`, `Density.Margin`, `Density.Size`). Eigene Komponenten können das genauso nutzen: `@inherits CoworkeeComponentBase` oder `[CascadingParameter] Density Density { get; set; } = Density.Default;`. Eine eigene `IObjectMetaConfiguration<T>` eines Modells ersetzt die kompakte Formular-Konfiguration für dieses Modell.
-- Ohne Logo im Theme erscheint das Logo der App: `options.AppLogo = "logo.svg"` in `AddCoworkeeClient`.
+- `Logo` ist SVG-Markup oder eine Bild-Data-URL (PNG, JPEG, WebP oder SVG, höchstens 512 KB; SVG mit Skripten, Event-Handlern oder eingebetteten Dokumenten wird abgelehnt). Der Editor zeigt es mit `ThemeLogoEdit`: Vorschau, *Logo wählen* (Upload oder die konfigurierten Cloud-Laufwerke) und *App-Logo verwenden*. Rasterbilder über 512 px werden vorher im Browser verkleinert. Das Logo erscheint in der App-Leiste, der Navigation, im Setup, im Über-Dialog und auf den Kontoseiten und ist, solange es gesetzt ist, das Favicon.
+- Ohne Logo im Theme erscheint das Logo der App: `options.AppLogo = "logo.svg"` in `AddCoworkeeClient` (`Coworkee:Auth:LogoUrl` für die Kontoseiten).
+- Auf dem Server macht `ThemeLogo.TryRead(theme.Logo, out var bytes, out var contentType)` (`Coworkee.Contracts.Theming`) aus beiden Formen Bytes und Content-Type, etwa um das Logo in eine Datei zu schreiben.
+- Die Spalte `LogoSvg` der Theme-Tabelle heißt jetzt `Logo`: Eine bestehende App braucht eine Migration (EF Core benennt die Spalte um, wenn Sie die erzeugte Migration auf `RenameColumn` ändern).
 - Das Setup bietet das Theme als eigenen Schritt an.
 - Die Kontoseiten des Auth-Servers übernehmen Farben, Schrift und Logo des Standard-Themes. Layout und Medien sind eine Einstellung für die ganze Installation: die Karte *Anmeldeseite* oben auf *Administration > Themes*, siehe [Anmeldeseiten und Designs](../security/sign-in-pages.md).
-- Die Felder des Theme-Editors kommen aus MudEx-Metadaten für Objektformulare. Die Bibliothek registriert `CoworkeeThemeEditMeta` als `IObjectMetaConfiguration<CoworkeeTheme>` (das Feld `CustomCss`); registrieren Sie nach `AddCoworkeeClient` eine eigene, um Felder anders darzustellen (sie ersetzt die der Bibliothek):
+- Die Felder des Theme-Editors kommen aus MudEx-Metadaten für Objektformulare. Die Bibliothek registriert `CoworkeeThemeEditMeta` als `IObjectMetaConfiguration<CoworkeeTheme>` (die Felder `Logo` und `CustomCss`); registrieren Sie nach `AddCoworkeeClient` eine eigene, um Felder anders darzustellen (sie ersetzt die der Bibliothek):
 
 ```csharp
 builder.Services.AddScoped<IObjectMetaConfiguration<CoworkeeTheme>, MyThemeEditMeta>();
@@ -21,7 +24,7 @@ public sealed class MyThemeEditMeta : IObjectMetaConfiguration<CoworkeeTheme>
 {
     public Task ConfigureAsync(ObjectEditMeta<CoworkeeTheme> meta)
     {
-        meta.Property(t => t.LogoSvg).WithLabel("Logo (SVG-Markup)");
+        meta.Property(t => t.Logo).WithLabel("Firmenlogo");
         return Task.CompletedTask;
     }
 }
