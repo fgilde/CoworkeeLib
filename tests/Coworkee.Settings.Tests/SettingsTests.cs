@@ -39,6 +39,20 @@ public sealed class SettingsTests(SettingsApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Scope_read_returns_the_value_of_exactly_that_scope_else_the_default()
+    {
+        await PutAsync(Admin, "global", "Test.Text", "g");
+
+        async Task<string?> ReadAsync(SettingScope scope) => await app.AsActorAsync(_setup.AdminUserId, _setup.TenantId,
+            sp => sp.GetRequiredService<ISettingProvider>().GetForScopeAsync("Test.Text", scope, Ct));
+
+        (await ReadAsync(SettingScope.Tenant)).ShouldBe("fallback");
+        await PutAsync(Admin, "tenant", "Test.Text", "t");
+        (await ReadAsync(SettingScope.Tenant)).ShouldBe("t");
+        (await ReadAsync(SettingScope.Global)).ShouldBe("g");
+    }
+
+    [Fact]
     public async Task Other_tenant_does_not_see_tenant_value()
     {
         await PutAsync(Admin, "global", "Test.Text", "g");

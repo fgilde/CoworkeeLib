@@ -17,17 +17,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Mailing;
 
-public static class MailSettings
-{
-    public const string Host = "Mail.Smtp.Host";
-    public const string Port = "Mail.Smtp.Port";
-    public const string UseSsl = "Mail.Smtp.UseSsl";
-    public const string UserName = "Mail.Smtp.UserName";
-    public const string Password = "Mail.Smtp.Password";
-    public const string From = "Mail.From";
-    public const string Whitelist = "Mail.Whitelist";
-}
-
 [DependsOn(typeof(CoworkeeSettingsModule), typeof(CoworkeeBackgroundJobsModule))]
 public sealed class CoworkeeMailingModule : CoworkeeModule, IWebModule
 {
@@ -47,7 +36,12 @@ public sealed class CoworkeeMailingModule : CoworkeeModule, IWebModule
         services.AddScoped<IMailSender, MailSender>();
         services.AddScoped<Application.Privacy.IPersonalDataContributor, MailPersonalData>();
         services.AddScoped<Coworkee.Application.Setup.ISetupCheck, MailSetupCheck>();
-        services.TryAddSingleton<ISmtpTransport, MailKitSmtpTransport>();
+        services.AddHttpClient();
+        services.AddScoped<MailConnectionResolver>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IMailTransport, SmtpMailTransport>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IMailTransport, SendGridMailTransport>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IMailTransport, MailgunMailTransport>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IMailTransport, MailchimpMailTransport>());
         services.TryAddSingleton(TimeProvider.System);
     }
 
@@ -82,13 +76,22 @@ internal sealed class MailSettingDefinitions : ISettingDefinitionContributor
 {
     private static readonly SettingScope[] Scopes = [SettingScope.Global, SettingScope.Tenant];
 
+    private static SettingCondition Provider(params string[] providers) => new(MailSettings.Provider, providers);
+
     public void Define(SettingDefinitionContext context) =>
-        context.Group("Mail", "Mail")
-            .Add(MailSettings.Host, "SMTP host", SettingType.String, Scopes)
-            .Add(MailSettings.Port, "SMTP port", SettingType.Int, Scopes, "25")
-            .Add(MailSettings.UseSsl, "Use SSL", SettingType.Bool, Scopes, "false")
-            .Add(MailSettings.UserName, "SMTP user name", SettingType.String, Scopes)
-            .Add(MailSettings.Password, "SMTP password", SettingType.Secret, Scopes)
+        context.Group("Mail", "Mail", page: "/admin/mail-settings")
+            .Add(MailSettings.UseOwnServer, "Own mail server", SettingType.Bool, [SettingScope.Tenant], "false",
+                description: "On: this organisation sends with the settings below. Off: mails go through the system's server.")
+            .Add(MailSettings.Provider, "Provider", SettingType.Choice, Scopes, MailProviders.Smtp, choices: [.. MailProviders.All])
+            .Add(MailSettings.Host, "SMTP host", SettingType.String, Scopes, enabledWhen: Provider(MailProviders.Smtp))
+            .Add(MailSettings.Port, "SMTP port", SettingType.Int, Scopes, "25", enabledWhen: Provider(MailProviders.Smtp))
+            .Add(MailSettings.UseSsl, "Use SSL", SettingType.Bool, Scopes, "false", enabledWhen: Provider(MailProviders.Smtp))
+            .Add(MailSettings.UserName, "SMTP user name", SettingType.String, Scopes, enabledWhen: Provider(MailProviders.Smtp))
+            .Add(MailSettings.Password, "SMTP password", SettingType.Secret, Scopes, enabledWhen: Provider(MailProviders.Smtp))
+            .Add(MailSettings.ApiKey, "API key", SettingType.Secret, Scopes,
+                enabledWhen: Provider(MailProviders.SendGrid, MailProviders.Mailgun, MailProviders.Mailchimp))
+            .Add(MailSettings.MailgunDomain, "Mailgun domain", SettingType.String, Scopes, enabledWhen: Provider(MailProviders.Mailgun))
+            .Add(MailSettings.MailgunRegion, "Mailgun region", SettingType.Choice, Scopes, "us", choices: ["us", "eu"], enabledWhen: Provider(MailProviders.Mailgun))
             .Add(MailSettings.From, "Sender address", SettingType.String, Scopes, "noreply@localhost")
             .Add(MailSettings.Whitelist, "Recipient whitelist", SettingType.Text, Scopes,
                 description: "Leave empty to allow all recipients. One address or @domain per line.");

@@ -100,6 +100,19 @@ public sealed class MailApp : DatabaseFixture
     public Task<T> InDbAsync<T>(Func<MailTestDbContext, Task<T>> action) =>
         AsActorAsync(null, null, sp => action(sp.GetRequiredService<MailTestDbContext>()));
 
+    public Task<(Guid UserId, Guid TenantId)> CreateTenantAdminAsync() => InDbAsync(async db =>
+    {
+        var tenant = new Coworkee.Identity.Domain.Tenant { Name = "Other", Identifier = "other-" + Guid.NewGuid().ToString("N")[..8] };
+        var email = $"admin-{Guid.NewGuid():N}@other.test";
+        var user = new Coworkee.Identity.Domain.User { TenantId = tenant.Id, UserName = email, NormalizedUserName = email.ToUpperInvariant(), Email = email, NormalizedEmail = email.ToUpperInvariant() };
+        var adminRole = await db.Set<Coworkee.Identity.Domain.Role>().Where(r => r.IsSystem && r.Name == Coworkee.Identity.Domain.SystemRoles.Admin).Select(r => r.Id).SingleAsync();
+        db.Add(tenant);
+        db.Add(user);
+        db.Add(new Microsoft.AspNetCore.Identity.IdentityUserRole<Guid> { UserId = user.Id, RoleId = adminRole });
+        await db.SaveChangesAsync();
+        return (user.Id, tenant.Id);
+    });
+
     public async Task<IReadOnlyList<(string To, string Subject)>> MessagesToAsync(string address)
     {
         var json = await Mailpit.GetFromJsonAsync<JsonElement>("/api/v1/messages");

@@ -4,12 +4,8 @@ using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Mailing;
 using Coworkee.Core.Security;
 using Coworkee.Infrastructure.Persistence;
-using Coworkee.Settings;
-using MailKit.Net.Smtp;
-using MailKit.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using MimeKit;
 
 namespace Coworkee.Mailing;
 
@@ -38,30 +34,21 @@ internal sealed class MailQueuedHandler(IBackgroundJobs jobs) : IDomainEventHand
     }
 }
 
-public sealed record SmtpSettings(string Host, int Port, bool UseSsl, string? UserName, string? Password, string From);
+public sealed record MailEnvelope(string From, string To, string Subject, string HtmlBody);
 
-public interface ISmtpTransport
+public sealed record MailConnection(string Provider, IReadOnlyDictionary<string, string?> Values)
 {
-    Task SendAsync(SmtpSettings settings, MimeMessage message, CancellationToken cancellationToken);
+    public string? this[string name] => Values.GetValueOrDefault(name);
 }
 
-internal sealed class MailKitSmtpTransport : ISmtpTransport
+public interface IMailTransport
 {
-    public async Task SendAsync(SmtpSettings settings, MimeMessage message, CancellationToken cancellationToken)
-    {
-        using var client = new SmtpClient();
-        await client.ConnectAsync(settings.Host, settings.Port, settings.UseSsl ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTlsWhenAvailable, cancellationToken);
-        if (!string.IsNullOrEmpty(settings.UserName))
-        {
-            await client.AuthenticateAsync(settings.UserName, settings.Password ?? string.Empty, cancellationToken);
-        }
+    string Provider { get; }
 
-        await client.SendAsync(message, cancellationToken);
-        await client.DisconnectAsync(true, cancellationToken);
-    }
+    Task SendAsync(MailEnvelope mail, MailConnection connection, CancellationToken cancellationToken);
 }
 
-internal sealed class SendMailJob(CoworkeeDbContext db, ISettingProvider settings, ISmtpTransport transport, TimeProvider clock, IOptions<BackgroundJobOptions> options)
+internal sealed class SendMailJob(CoworkeeDbContext db, MailConnectionResolver resolver, IEnumerable<IMailTransport> transports, TimeProvider clock, IOptions<BackgroundJobOptions> options)
     : IBackgroundJob<Guid>
 {
     public async Task ExecuteAsync(Guid mailId, CancellationToken cancellationToken)
@@ -77,21 +64,21 @@ internal sealed class SendMailJob(CoworkeeDbContext db, ISettingProvider setting
         }
 
         var mail = await db.Set<OutgoingMail>().SingleAsync(m => m.Id == mailId, cancellationToken);
-        if (!MailWhitelist.Allows(await settings.GetAsync(MailSettings.Whitelist, cancellationToken), mail.To))
-        {
-            mail.Status = OutgoingMailStatus.Skipped;
-            mail.LastError = "Recipient is not on the whitelist.";
-            await db.SaveChangesAsync(CancellationToken.None);
-            return;
-        }
 
         try
         {
-            var smtp = await SmtpSettingsAsync(cancellationToken);
-            var message = new MimeMessage { Subject = mail.Subject, Body = new BodyBuilder { HtmlBody = mail.HtmlBody }.ToMessageBody() };
-            message.From.Add(MailboxAddress.Parse(smtp.From));
-            message.To.Add(MailboxAddress.Parse(mail.To));
-            await transport.SendAsync(smtp, message, cancellationToken);
+            var connection = await resolver.ResolveAsync(cancellationToken);
+            if (!MailWhitelist.Allows(connection[MailSettings.Whitelist], mail.To))
+            {
+                mail.Status = OutgoingMailStatus.Skipped;
+                mail.LastError = "Recipient is not on the whitelist.";
+                await db.SaveChangesAsync(CancellationToken.None);
+                return;
+            }
+
+            var transport = transports.FirstOrDefault(t => t.Provider == connection.Provider)
+                ?? throw new InvalidOperationException($"No mail transport is registered for provider '{connection.Provider}'.");
+            await transport.SendAsync(new MailEnvelope(connection[MailSettings.From] ?? "noreply@localhost", mail.To, mail.Subject, mail.HtmlBody), connection, cancellationToken);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -111,23 +98,6 @@ internal sealed class SendMailJob(CoworkeeDbContext db, ISettingProvider setting
         mail.SentAt = clock.GetUtcNow();
         mail.LastError = null;
         await db.SaveChangesAsync(CancellationToken.None);
-    }
-
-    private async Task<SmtpSettings> SmtpSettingsAsync(CancellationToken cancellationToken)
-    {
-        var host = await settings.GetAsync(MailSettings.Host, cancellationToken);
-        if (string.IsNullOrWhiteSpace(host))
-        {
-            throw new InvalidOperationException("SMTP host is not configured.");
-        }
-
-        return new SmtpSettings(
-            host,
-            await settings.GetAsync<int>(MailSettings.Port, cancellationToken),
-            await settings.GetAsync<bool>(MailSettings.UseSsl, cancellationToken),
-            await settings.GetAsync(MailSettings.UserName, cancellationToken),
-            await settings.GetAsync(MailSettings.Password, cancellationToken),
-            await settings.GetAsync(MailSettings.From, cancellationToken) ?? "noreply@localhost");
     }
 }
 

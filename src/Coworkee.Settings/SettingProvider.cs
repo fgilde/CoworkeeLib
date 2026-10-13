@@ -14,6 +14,9 @@ public interface ISettingProvider
 
     Task<T> GetAsync<T>(string name, CancellationToken cancellationToken = default);
 
+    /// <summary>The value stored at exactly this scope (of the current tenant for <see cref="SettingScope.Tenant"/>), else the default; no fallback to other scopes.</summary>
+    Task<string?> GetForScopeAsync(string name, SettingScope scope, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyDictionary<string, string?>> GetClientValuesAsync(CancellationToken cancellationToken = default);
 }
 
@@ -40,15 +43,24 @@ internal sealed class SettingProvider(
         return value is null ? default! : (T)Convert.ChangeType(value, Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T), CultureInfo.InvariantCulture);
     }
 
+    public async Task<string?> GetForScopeAsync(string name, SettingScope scope, CancellationToken cancellationToken = default)
+    {
+        var definition = definitions.Find(name) ?? throw new ArgumentException($"Setting '{name}' is not defined.", nameof(name));
+        return Resolve(definition, await LoadAsync(cancellationToken), scope);
+    }
+
     public async Task<IReadOnlyDictionary<string, string?>> GetClientValuesAsync(CancellationToken cancellationToken = default)
     {
         var stored = await LoadAsync(cancellationToken);
         return definitions.All.Where(d => d.IsClientVisible).ToDictionary(d => d.Name, d => Resolve(d, stored), StringComparer.Ordinal);
     }
 
-    private string? Resolve(SettingDefinition definition, IReadOnlyList<StoredSetting> stored)
+    private string? Resolve(SettingDefinition definition, IReadOnlyList<StoredSetting> stored) =>
+        Resolve(definition, stored, SettingScope.User, SettingScope.Tenant, SettingScope.Global);
+
+    private string? Resolve(SettingDefinition definition, IReadOnlyList<StoredSetting> stored, params SettingScope[] scopes)
     {
-        foreach (var scope in new[] { SettingScope.User, SettingScope.Tenant, SettingScope.Global })
+        foreach (var scope in scopes)
         {
             if (definition.Scopes.Contains(scope) && stored.FirstOrDefault(s => s.Name == definition.Name && s.Scope == scope) is { } value)
             {
