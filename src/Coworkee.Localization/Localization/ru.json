@@ -586,7 +586,7 @@
   "Every {0} minutes": "Каждые {0} мин.",
   "Every hour at minute {0}": "Каждый час на минуте {0}",
   "Every day at {0} UTC": "Каждый день в {0} UTC",
-  "Every {0} at {1} UTC": "Каждый {0} в {1} UTC",
+  "Every {0} at {1} UTC": "Еженедельно: {0}, в {1} UTC",
   "Every month on day {0} at {1} UTC": "Каждый месяц {0}-го числа в {1} UTC",
   "Custom schedule": "Собственное расписание",
   "Add": "Добавить",

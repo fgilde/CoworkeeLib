@@ -106,7 +106,7 @@
   "An unknown failure has occurred.": "កំហុសមិនស្គាល់មួយបានកើតឡើង។",
   "Optimistic concurrency failure, object has been modified.": "កំណត់ត្រាត្រូវបានផ្លាស់ប្តូរក្នុងពេលនេះ។ សូមផ្ទុកវាឡើងវិញ។",
   "Incorrect password.": "ពាក្យសម្ងាត់មិនត្រឹមត្រូវ។",
-  "Invalid token.": "ថូខឹនមិនត្រឹមត្រូវ ឬបានផុតកំណត់។",
+  "Invalid token.": "កូដ ឬតំណមិនត្រឹមត្រូវ ឬបានផុតកំណត់។",
   "Recovery code redemption failed.": "មិនអាចប្រើកូដស្ដារឡើងវិញបានទេ។",
   "A user with this login already exists.": "មានអ្នកប្រើប្រាស់ដែលមានការចូលគណនីនេះរួចហើយ។",
   "Username '{0}' is invalid, can only contain letters or digits.": "ឈ្មោះអ្នកប្រើ “{0}” មិនត្រឹមត្រូវ; វាអាចមានតែអក្សរ ឬលេខប៉ុណ្ណោះ។",

@@ -586,7 +586,7 @@
   "Every {0} minutes": "Každých {0} minut",
   "Every hour at minute {0}": "Každou hodinu v minutě {0}",
   "Every day at {0} UTC": "Každý den v {0} UTC",
-  "Every {0} at {1} UTC": "Každý {0} v {1} UTC",
+  "Every {0} at {1} UTC": "Každý týden: {0} v {1} UTC",
   "Every month on day {0} at {1} UTC": "Každý měsíc {0}. dne v {1} UTC",
   "Custom schedule": "Vlastní plán",
   "Add": "Přidat",
