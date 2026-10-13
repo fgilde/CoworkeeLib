@@ -547,8 +547,8 @@ public static class German
         ["mapperly: one more package"] = "mapperly: ein Paket mehr",
         ["A ToDto extension method."] = "Eine ToDto-Erweiterungsmethode.",
         ["A Mapperly mapper."] = "Ein Mapperly-Mapper.",
-        ["Languages the app offers from the start. English and German ship with the library; the others are machine translated at the first start with the translation service. Administrators switch more on later on the Languages page. Empty offers the shipped ones."] = "Sprachen, die die App von Anfang an anbietet. Englisch und Deutsch bringt die Bibliothek mit; die anderen werden beim ersten Start mit dem Übersetzungsdienst maschinell übersetzt. Weitere schalten Administratoren später auf der Seite Sprachen ein. Leer bietet die mitgelieferten an.",
-        ["When the users speak only some of the languages, or others than English and German."] = "Wenn die Benutzer nur einige der Sprachen sprechen oder andere als Englisch und Deutsch.",
+        ["Languages the app offers from the start. 23 languages ship with the library; the others are machine translated at the first start with the translation service. Administrators switch more on later on the Languages page. Empty offers English and German."] = "Sprachen, die die App von Anfang an anbietet. 23 Sprachen bringt die Bibliothek mit; die anderen werden beim ersten Start mit dem Übersetzungsdienst maschinell übersetzt. Weitere schalten Administratoren später auf der Seite Sprachen ein. Leer bietet Englisch und Deutsch an.",
+        ["When the users speak only some of the languages, or languages other than English and German."] = "Wenn die Benutzer nur einige der Sprachen sprechen oder andere Sprachen als Englisch und Deutsch.",
         ["Users see only languages that make sense"] = "Benutzer sehen nur sinnvolle Sprachen",
         ["Any language the translation service knows"] = "Jede Sprache, die der Übersetzungsdienst kennt",
         ["Machine translations are good, not perfect: review them on the Translations page"] = "Maschinelle Übersetzungen sind gut, nicht perfekt: prüfen Sie sie auf der Seite Übersetzungen",
@@ -582,7 +582,7 @@ public static class German
 
         // languages step
         ["Which languages the app speaks and who translates them."] = "Welche Sprachen die App spricht und wer sie übersetzt.",
-        ["English and German ship with Coworkee. Every other language is machine translated at the first start, and administrators review the texts on the Translations page."] = "Englisch und Deutsch liefert Coworkee mit. Jede andere Sprache wird beim ersten Start maschinell übersetzt, und Administratoren prüfen die Texte auf der Seite Übersetzungen.",
+        ["23 languages ship with Coworkee, English and German are on from the start. Every other language is machine translated at the first start, and administrators review the texts on the Translations page."] = "23 Sprachen liefert Coworkee mit, Englisch und Deutsch sind von Anfang an aktiv. Jede andere Sprache wird beim ersten Start maschinell übersetzt, und Administratoren prüfen die Texte auf der Seite Übersetzungen.",
         ["LANGUAGES"] = "SPRACHEN",
         ["TRANSLATION SERVICE"] = "ÜBERSETZUNGSDIENST",
         ["Search: French, fr, Français"] = "Suche: French, fr, Français",

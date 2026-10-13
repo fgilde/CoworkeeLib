@@ -3,6 +3,7 @@
     <ProjectReference Include="..\..\src\Coworkee.Localization\Coworkee.Localization.csproj" />
     <ProjectReference Include="..\..\src\Coworkee.Identity\Coworkee.Identity.csproj" />
     <ProjectReference Include="..\..\src\Coworkee.Testing\Coworkee.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Coworkee.Cli.Spec\Coworkee.Cli.Spec.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
     <PackageReference Include="Testcontainers" />
     <EmbeddedResource Include="Localization\*.json" />

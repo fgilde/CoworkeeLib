@@ -10,11 +10,11 @@ public sealed class LanguageOptionsTests(LocalizationApp app)
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     [Fact]
-    public void Without_languages_english_and_the_shipped_cultures_start_and_english_is_the_default()
+    public void Without_languages_english_and_german_start_and_english_is_the_default()
     {
-        new LocalizationOptions().Initial(["de"]).ShouldBe([("en", true), ("de", false)]);
-        new LocalizationOptions { Languages = ["de", "fr", "de"] }.Initial(["de"]).ShouldBe([("de", true), ("fr", false)]);
-        new LocalizationOptions { Languages = ["en", "de"], DefaultLanguage = "de" }.Initial([]).ShouldBe([("en", false), ("de", true)]);
+        new LocalizationOptions().Initial().ShouldBe([("en", true), ("de", false)]);
+        new LocalizationOptions { Languages = ["de", "fr", "de"] }.Initial().ShouldBe([("de", true), ("fr", false)]);
+        new LocalizationOptions { Languages = ["en", "de"], DefaultLanguage = "de" }.Initial().ShouldBe([("en", false), ("de", true)]);
     }
 
     [Fact]

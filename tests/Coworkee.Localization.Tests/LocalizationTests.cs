@@ -18,7 +18,7 @@ public sealed class LocalizationTests(LocalizationApp app) : IAsyncLifetime
     private HttpClient Admin => app.As(_setup.AdminUserId, _setup.TenantId);
 
     [Fact]
-    public async Task Without_stored_languages_english_and_every_shipped_culture_are_offered()
+    public async Task Without_stored_languages_english_and_german_are_offered()
     {
         var languages = (await app.Anonymous().GetFromJsonAsync<LanguageDto[]>("/api/v1/localization/languages", Ct))!;
 

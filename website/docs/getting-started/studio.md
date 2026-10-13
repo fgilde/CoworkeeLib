@@ -83,7 +83,7 @@ Below come the other groups (*General*, *Modules*, *Code*, *Tooling*) with every
 
 ### Languages
 
-The languages of the app in a grid you can search by code, own or English name; English and German ship with Coworkee, every other one is [machine translated](../modules/localization.md#machine-translation) at the first start. Below: the default language (one of the chosen), the source language of the translations and the translation services as cards with what each costs, where the texts go and what it needs. LibreTranslate is free, needs no account and runs as a container of the app host; DeepL, Azure and Google take their key from the user secrets (`Parameters:translation-key`), AI uses the model of the assistant.
+The languages of the app in a grid you can search by code, own or English name; 23 languages ship with Coworkee (English and German are on from the start), every other one is [machine translated](../modules/localization.md#machine-translation) at the first start. Below: the default language (one of the chosen), the source language of the translations and the translation services as cards with what each costs, where the texts go and what it needs. LibreTranslate is free, needs no account and runs as a container of the app host; DeepL, Azure and Google take their key from the user secrets (`Parameters:translation-key`), AI uses the model of the assistant.
 
 ![Languages](../assets/screenshots/studio-languages-light.webp)
 

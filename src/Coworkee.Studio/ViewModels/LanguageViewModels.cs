@@ -20,15 +20,15 @@ public sealed partial class LanguageItemViewModel(OptionViewModel languages, Opt
 
     public string Caption => IsShipped ? $"{EnglishName} · {L.Get("shipped")}" : EnglishName;
 
-    /// <summary>Checked when chosen; while nothing is chosen the shipped languages are.</summary>
+    /// <summary>Checked when chosen; while nothing is chosen the default languages are.</summary>
     public bool IsChecked
     {
-        get => languages.Value is { } value ? SpecOptions.List(value).Contains(Code) : IsShipped;
+        get => languages.Value is { } value ? SpecOptions.List(value).Contains(Code) : OptionCatalog.DefaultLanguages.Contains(Code);
         set
         {
             if (languages.Value is null)
             {
-                languages.Value = string.Join(",", OptionCatalog.ShippedLanguages);
+                languages.Value = string.Join(",", OptionCatalog.DefaultLanguages);
             }
 
             languages.Toggle(Code, value);

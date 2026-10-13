@@ -50,8 +50,12 @@ public static class OptionCatalog
     public const string Code = "Code";
     public const string Tooling = "Tooling";
 
-    /// <summary>Cultures the library ships texts for (Localization/{culture}.json of its modules), English being the keys.</summary>
-    public static readonly IReadOnlyList<string> ShippedLanguages = ["en", "de"];
+    /// <summary>Cultures the library ships texts for (Localization/{culture}.json of its modules), English being the keys; apps start with <see cref="DefaultLanguages"/>.</summary>
+    public static readonly IReadOnlyList<string> ShippedLanguages =
+        ["en", "ar", "bg", "cs", "da", "de", "el", "es", "fr", "hr", "id", "it", "ja", "km", "ko", "nl", "pl", "pt", "ru", "sv", "tr", "uk", "zh"];
+
+    /// <summary>The languages an app offers when none are chosen; administrators switch on the other shipped ones later.</summary>
+    public static readonly IReadOnlyList<string> DefaultLanguages = ["en", "de"];
 
     /// <summary>Languages to choose from, by their own name: the shipped ones and those the translation services (LibreTranslate included) translate into.</summary>
     public static readonly IReadOnlyList<OptionChoice> Languages =
@@ -60,8 +64,8 @@ public static class OptionCatalog
         new("pt-BR", "Português (Brasil)"), new("nl", "Nederlands"), new("pl", "Polski"), new("cs", "Čeština"), new("sk", "Slovenčina"), new("sl", "Slovenščina"),
         new("sv", "Svenska"), new("da", "Dansk"), new("nb", "Norsk bokmål"), new("fi", "Suomi"), new("et", "Eesti"), new("lv", "Latviešu"), new("lt", "Lietuvių"),
         new("hu", "Magyar"), new("ro", "Română"), new("bg", "Български"), new("el", "Ελληνικά"), new("tr", "Türkçe"), new("ru", "Русский"), new("uk", "Українська"),
-        new("ar", "العربية"), new("he", "עברית"), new("hi", "हिन्दी"), new("ja", "日本語"), new("ko", "한국어"), new("zh-Hans", "中文（简体）"), new("zh-Hant", "中文（繁體）"),
-        new("id", "Bahasa Indonesia"), new("vi", "Tiếng Việt"), new("th", "ไทย"),
+        new("ar", "العربية"), new("he", "עברית"), new("hi", "हिन्दी"), new("ja", "日本語"), new("ko", "한국어"), new("zh", "中文"), new("zh-Hans", "中文（简体）"), new("zh-Hant", "中文（繁體）"),
+        new("id", "Bahasa Indonesia"), new("vi", "Tiếng Việt"), new("th", "ไทย"), new("hr", "Hrvatski"), new("km", "ភាសាខ្មែរ"),
     ];
 
     /// <summary>The options whose choices are <see cref="Languages"/>, named in their own language.</summary>
@@ -166,8 +170,8 @@ public static class OptionCatalog
             [new("manual", "A ToDto extension method."), new("mapperly", "A Mapperly mapper.")], TemplateSymbol: false),
 
         // languages, color mode, registration and repository tooling
-        new("languages", General, "Languages", "Languages the app offers from the start. English and German ship with the library; the others are machine translated at the first start with the translation service. Administrators switch more on later on the Languages page. Empty offers the shipped ones.", OptionKind.Multi, null,
-            "When the users speak only some of the languages, or others than English and German.", ["Users see only languages that make sense", "Any language the translation service knows"], ["Machine translations are good, not perfect: review them on the Translations page"], Languages),
+        new("languages", General, "Languages", "Languages the app offers from the start. 23 languages ship with the library; the others are machine translated at the first start with the translation service. Administrators switch more on later on the Languages page. Empty offers English and German.", OptionKind.Multi, null,
+            "When the users speak only some of the languages, or languages other than English and German.", ["Users see only languages that make sense", "Any language the translation service knows"], ["Machine translations are good, not perfect: review them on the Translations page"], Languages),
         new("defaultLanguage", General, "Default language", "Language of users who chose none and whose browser asks for none of the offered ones.", OptionKind.Choice, "en",
             "When most users speak another language than English.", ["Right language at the first visit"], ["Must be one of the languages"], Languages),
         new("translationProvider", General, "Translation service", "Translates the texts a language lacks: at the first start, when a language is switched on, or on request. Changeable later in the settings (Translation).", OptionKind.Choice, "libreTranslate",

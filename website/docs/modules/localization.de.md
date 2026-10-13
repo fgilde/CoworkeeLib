@@ -31,7 +31,7 @@ Schlüssel sind die englischen Texte. Ein Modul bettet `Localization/{culture}.j
 
 ## Anfangssprachen
 
-Ohne Konfiguration bietet eine Installation Englisch und jede Kultur an, für die ein Modul Texte mitbringt (derzeit `en` und `de`), Englisch als Standard. `LocalizationOptions` (Abschnitt `Coworkee:Localization`) schränken das ein; das Setup speichert genau diese Sprachen, danach ändern Administratoren sie auf der Seite *Sprachen*.
+Die Bibliothek bringt 23 Sprachen mit (`ar`, `bg`, `cs`, `da`, `de`, `el`, `en`, `es`, `fr`, `hr`, `id`, `it`, `ja`, `km`, `ko`, `nl`, `pl`, `pt`, `ru`, `sv`, `tr`, `uk`, `zh`), Englisch sind die Schlüssel. Ohne Konfiguration bietet eine Installation Englisch und Deutsch an, Englisch als Standard; die übrigen mitgelieferten Sprachen schalten Administratoren auf der Seite *Sprachen* ein. `LocalizationOptions` (Abschnitt `Coworkee:Localization`) schränken das ein; das Setup speichert genau diese Sprachen, danach ändern Administratoren sie auf der Seite *Sprachen*.
 
 ```json title="appsettings.json"
 {
@@ -74,7 +74,7 @@ Jede Änderung erreicht alle Clients sofort (Realtime-Topic `global:localization
 
 ## Maschinelle Übersetzung
 
-Texte, die einer Sprache fehlen, werden maschinell übersetzt: wenn ein Administrator die Sprache einschaltet, mit dem Knopf auf der Seite *Sprachen* und nach jedem Start für die eingeschalteten Sprachen (eine Sprache aus `LocalizationOptions` ohne mitgelieferte Texte oder die neuen Texte eines Updates). Übersetzungen werden wie Bearbeitungen gespeichert, die Seite *Übersetzungen* zeigt und korrigiert sie also; die mitgelieferten Texte (`en`, `de`) bleiben maßgeblich. Platzhalter wie `{0}` bleiben von der Übersetzung ausgenommen, und eine Übersetzung, die einen verloren hat, wird verworfen. Ein Dienst, der scheitert (aufgebrauchtes Kontingent, Server nicht erreichbar), beendet den Lauf mit dem, was er bis dahin übersetzt hat; der Rest folgt beim nächsten Start oder mit dem Knopf.
+Texte, die einer Sprache fehlen, werden maschinell übersetzt: wenn ein Administrator die Sprache einschaltet, mit dem Knopf auf der Seite *Sprachen* und nach jedem Start für die eingeschalteten Sprachen (eine Sprache aus `LocalizationOptions` ohne mitgelieferte Texte oder die neuen Texte eines Updates). Übersetzungen werden wie Bearbeitungen gespeichert, die Seite *Übersetzungen* zeigt und korrigiert sie also; die mitgelieferten Texte bleiben maßgeblich. Platzhalter wie `{0}` bleiben von der Übersetzung ausgenommen, und eine Übersetzung, die einen verloren hat, wird verworfen. Ein Dienst, der scheitert (aufgebrauchtes Kontingent, Server nicht erreichbar), beendet den Lauf mit dem, was er bis dahin übersetzt hat; der Rest folgt beim nächsten Start oder mit dem Knopf.
 
 | Dienst | Kosten | Konto | Wohin die Texte gehen | Gut zu wissen |
 |---|---|---|---|---|

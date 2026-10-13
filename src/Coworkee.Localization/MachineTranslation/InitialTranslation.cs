@@ -3,7 +3,6 @@ using Coworkee.Contracts.Localization;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.Localization.Domain;
 using Coworkee.Localization.Languages;
-using Coworkee.Localization.Resources;
 using Coworkee.Localization.Texts;
 using Coworkee.Settings;
 using Microsoft.EntityFrameworkCore;
@@ -76,7 +75,7 @@ internal sealed partial class InitialTranslation(IServiceScopeFactory scopes, IH
             .Where(l => l.IsEnabled).Select(l => l.Culture).ToListAsync(cancellationToken);
         return stored.Count > 0
             ? stored
-            : [.. InitialLanguages.Create(services.GetRequiredService<IOptions<LocalizationOptions>>().Value, services.GetRequiredService<LocalizationResources>()).Select(l => l.Culture)];
+            : [.. InitialLanguages.Create(services.GetRequiredService<IOptions<LocalizationOptions>>().Value).Select(l => l.Culture)];
     }
 
     [LoggerMessage(LogLevel.Information, "Translated {Count} missing texts of the switched on languages.")]

@@ -3,7 +3,7 @@ namespace Coworkee.Studio.Tests;
 public sealed class LanguagesStepTests
 {
     [Fact]
-    public void Choosing_a_language_keeps_the_shipped_ones_and_search_finds_it_by_any_name()
+    public void Choosing_a_language_keeps_the_default_ones_and_search_finds_it_by_any_name()
     {
         using var folder = new TempFolder();
         var main = Studio.Create(folder);
@@ -20,7 +20,7 @@ public sealed class LanguagesStepTests
         main.Option("languages").Value.ShouldBe("en,de,fr");
         step.Default = step.Chosen.Single(l => l.Code == "fr");
         main.Option("defaultLanguage").Value.ShouldBe("fr");
-        step.ChosenText.ShouldBe("3 languages, 1 machine translated");
+        step.ChosenText.ShouldBe("3 languages, 0 machine translated");
         main.Errors.ShouldBeEmpty();
         main.Steps.ToList().IndexOf(step).ShouldBe(main.Steps.ToList().IndexOf(main.Architecture) + 1);
     }
@@ -43,7 +43,7 @@ public sealed class LanguagesStepTests
         main.Architecture.Summary.Containers.ShouldNotContain("LibreTranslate");
         step.Services.Single(s => s.Value == "myMemory").Cons.ShouldContain(c => c.Contains("5,000"));
 
-        step.Languages.Single(l => l.Code == "es").IsChecked = true;
+        step.Languages.Single(l => l.Code == "fi").IsChecked = true;
         step.SelectServiceCommand.Execute(step.Services.Single(s => s.Value == "none"));
         step.Errors.ShouldContain(e => e.StartsWith("translationProvider:", StringComparison.Ordinal));
         main.Architecture.Groups.SelectMany(g => g.Options).Select(o => o.Id).ShouldNotContain("translationProvider");

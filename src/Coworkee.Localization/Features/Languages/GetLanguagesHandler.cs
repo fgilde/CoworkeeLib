@@ -4,13 +4,12 @@ using Coworkee.Core.Results;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.Localization.Domain;
 using Coworkee.Localization.Languages;
-using Coworkee.Localization.Resources;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace Coworkee.Localization.Features.Languages;
 
-internal sealed class GetLanguagesHandler(CoworkeeDbContext db, LocalizationResources resources, IOptions<LocalizationOptions> options) : IHandler<GetLanguagesQuery, Result<IReadOnlyList<LanguageDto>>>
+internal sealed class GetLanguagesHandler(CoworkeeDbContext db, IOptions<LocalizationOptions> options) : IHandler<GetLanguagesQuery, Result<IReadOnlyList<LanguageDto>>>
 {
     public async Task<Result<IReadOnlyList<LanguageDto>>> HandleAsync(GetLanguagesQuery query, CancellationToken cancellationToken)
     {
@@ -26,7 +25,7 @@ internal sealed class GetLanguagesHandler(CoworkeeDbContext db, LocalizationReso
     }
 
     private IEnumerable<LanguageDto> ShippedLanguages() =>
-        InitialLanguages.Create(options.Value, resources)
+        InitialLanguages.Create(options.Value)
             .Select(l => new LanguageDto(null, l.Culture, l.Name, true, l.IsDefault))
             .OrderBy(l => l.Name, StringComparer.CurrentCulture);
 }

@@ -31,7 +31,7 @@ Keys are the English texts. A module embeds `Localization/{culture}.json`:
 
 ## Initial languages
 
-Without configuration an installation offers English plus every culture a module ships texts for (today `en` and `de`), English as default. `LocalizationOptions` (section `Coworkee:Localization`) narrow that down; setup stores exactly these languages, after that administrators change them on the *Languages* page.
+The library ships 23 languages (`ar`, `bg`, `cs`, `da`, `de`, `el`, `en`, `es`, `fr`, `hr`, `id`, `it`, `ja`, `km`, `ko`, `nl`, `pl`, `pt`, `ru`, `sv`, `tr`, `uk`, `zh`), English being the keys. Without configuration an installation offers English and German, English as default; administrators switch the other shipped languages on on the *Languages* page. `LocalizationOptions` (section `Coworkee:Localization`) narrow that down; setup stores exactly these languages, after that administrators change them on the *Languages* page.
 
 ```json title="appsettings.json"
 {
@@ -74,7 +74,7 @@ Every change reaches all clients at once (`global:localization` realtime topic):
 
 ## Machine translation
 
-Texts a language lacks are machine translated: when an administrator switches the language on, with the button on the *Languages* page, and after every start for the switched on languages (a language from `LocalizationOptions` without shipped texts, or the new texts of an update). Translations are stored like edits, so the *Translations* page shows and corrects them; the shipped texts (`en`, `de`) stay the source of truth. Placeholders like `{0}` are kept out of the translation, and a translation that lost one is dropped. A service that fails (a used up quota, a server that is down) ends the run with what it translated so far; the rest follows on the next start or with the button.
+Texts a language lacks are machine translated: when an administrator switches the language on, with the button on the *Languages* page, and after every start for the switched on languages (a language from `LocalizationOptions` without shipped texts, or the new texts of an update). Translations are stored like edits, so the *Translations* page shows and corrects them; the shipped texts stay the source of truth. Placeholders like `{0}` are kept out of the translation, and a translation that lost one is dropped. A service that fails (a used up quota, a server that is down) ends the run with what it translated so far; the rest follows on the next start or with the button.
 
 | Service | Cost | Account | Where the texts go | Good to know |
 |---|---|---|---|---|

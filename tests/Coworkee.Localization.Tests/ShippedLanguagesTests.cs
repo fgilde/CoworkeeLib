@@ -1,0 +1,95 @@
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using Coworkee.Cli.Spec;
+
+namespace Coworkee.Localization.Tests;
+
+/// <summary>Every shipped language has all texts of the German files: library UI, account pages, the template app and the mails.</summary>
+public sealed partial class ShippedLanguagesTests
+{
+    private static readonly string Root = RepositoryRoot();
+
+    private static readonly string[] TextFolders =
+    [
+        Path.Combine("src", "Coworkee.Localization", "Localization"),
+        Path.Combine("src", "Coworkee.AuthServer", "Texts"),
+        Path.Combine("templates", "Coworkee.Templates", "content", "CoworkeeApp", "src", "MyApp.Contracts", "Localization"),
+    ];
+
+    private static readonly string MailFolder = Path.Combine(Root, "src", "Coworkee.Mailing", "Templates");
+
+    private static IEnumerable<string> Languages => OptionCatalog.ShippedLanguages.Where(l => l != "en");
+
+    public static TheoryData<string, string> Texts => [.. TextFolders.SelectMany(folder => Languages.Select(language => (folder, language)))];
+
+    public static TheoryData<string> MailLanguages => [.. Languages];
+
+    [Theory]
+    [MemberData(nameof(Texts))]
+    public void Texts_have_the_keys_of_the_German_file_and_keep_their_placeholders(string folder, string language)
+    {
+        var path = TextFile(folder, language);
+        File.Exists(path).ShouldBeTrue($"{path} is missing");
+
+        var german = Read(TextFile(folder, "de"));
+        var texts = Read(path);
+        var wrong = texts.Where(t => !Tokens(Placeholder(), Source(german, t.Key)).SequenceEqual(Tokens(Placeholder(), t.Value))).Select(t => t.Key);
+
+        german.Keys.Except(texts.Keys, StringComparer.Ordinal).ShouldBeEmpty($"{language}: missing keys");
+        texts.Keys.Except(german.Keys, StringComparer.Ordinal).ShouldBeEmpty($"{language}: keys the German file lacks");
+        wrong.ShouldBeEmpty($"{language}: placeholders differ from the key");
+    }
+
+    [Theory]
+    [MemberData(nameof(MailLanguages))]
+    public void Mail_templates_exist_for_every_German_one_with_its_expressions_and_tags(string language)
+    {
+        var problems = new List<string>();
+        foreach (var german in Directory.GetFiles(MailFolder, "*.de.*.scriban"))
+        {
+            var name = Path.GetFileName(german);
+            var path = Path.Combine(MailFolder, name.Replace(".de.", $".{language}.", StringComparison.Ordinal));
+            if (!File.Exists(path))
+            {
+                problems.Add($"{Path.GetFileName(path)} is missing");
+            }
+            else if (!Tokens(Markup(), File.ReadAllText(german)).SequenceEqual(Tokens(Markup(), File.ReadAllText(path))))
+            {
+                problems.Add($"{Path.GetFileName(path)}: expressions or tags differ from {name}");
+            }
+        }
+
+        problems.ShouldBeEmpty();
+    }
+
+    // keys that are no English sentence (MudBlazor ones such as MudDataGridPager_InfoFormat) take their placeholders from the German text
+    private static string Source(Dictionary<string, string> german, string key) => key.Contains(' ') ? key : german.GetValueOrDefault(key, key);
+
+    private static string TextFile(string folder, string language) => Path.Combine(Root, folder, $"{language}.json");
+
+    private static Dictionary<string, string> Read(string path) =>
+        JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(path)) ?? [];
+
+    private static List<string> Tokens(Regex token, string text) =>
+        [.. token.Matches(text).Select(m => Whitespace().Replace(m.Value, " ")).Order(StringComparer.Ordinal)];
+
+    [GeneratedRegex(@"\{\d[^{}]*\}")]
+    private static partial Regex Placeholder();
+
+    [GeneratedRegex(@"\{\{.*?\}\}|</?[A-Za-z][^>]*>", RegexOptions.Singleline)]
+    private static partial Regex Markup();
+
+    [GeneratedRegex(@"\s+")]
+    private static partial Regex Whitespace();
+
+    private static string RepositoryRoot()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "Coworkee.slnx")))
+        {
+            directory = directory.Parent;
+        }
+
+        return directory?.FullName ?? throw new InvalidOperationException("Coworkee.slnx not found above the test output.");
+    }
+}

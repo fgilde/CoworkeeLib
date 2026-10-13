@@ -137,9 +137,10 @@ public sealed class RelationSpecTests
             [.. SpecValidator.Validate(new AppSpec { Name = "Shop", Options = { ["languages"] = languages, ["translationProvider"] = provider, ["ai"] = ai } })];
 
         Errors("en,de", "none").ShouldBeEmpty();
-        Errors("en,es", "none").ShouldContain(e => e.StartsWith("translationProvider:") && e.Contains("es"));
-        Errors("en,es", "myMemory").ShouldBeEmpty();
-        Errors("en,es", "ai", ai: false).ShouldContain(e => e.StartsWith("translationProvider:") && e.Contains("ai"));
+        Errors("en,fr,ja", "none").ShouldBeEmpty();
+        Errors("en,fi", "none").ShouldContain(e => e.StartsWith("translationProvider:") && e.Contains("fi"));
+        Errors("en,fi", "myMemory").ShouldBeEmpty();
+        Errors("en,fi", "ai", ai: false).ShouldContain(e => e.StartsWith("translationProvider:") && e.Contains("ai"));
         Errors("en", "x").ShouldContain(e => e.StartsWith("translationProvider:"));
         SpecValidator.Validate(new AppSpec { Name = "Shop", Options = { ["translationSource"] = "fr" } }).ShouldContain(e => e.StartsWith("translationSource:"));
     }

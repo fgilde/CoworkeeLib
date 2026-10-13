@@ -34,7 +34,7 @@ public sealed partial class LanguagesStep : StepViewModel
 
     protected override string SubtitleText => "Which languages the app speaks and who translates them.";
 
-    protected override string PitchText => "English and German ship with Coworkee. Every other language is machine translated at the first start, and administrators review the texts on the Translations page.";
+    protected override string PitchText => "23 languages ship with Coworkee, English and German are on from the start. Every other language is machine translated at the first start, and administrators review the texts on the Translations page.";
 
     public override string Icon => "Icon.Translate";
 
@@ -64,7 +64,7 @@ public sealed partial class LanguagesStep : StepViewModel
 
     public IReadOnlyList<LanguageItemViewModel> VisibleLanguages => [.. Languages.Where(l => l.Matches(Search))];
 
-    /// <summary>The checked languages; while none is checked the app offers the shipped ones.</summary>
+    /// <summary>The checked languages; while none is checked the app offers English and German.</summary>
     public IReadOnlyList<LanguageItemViewModel> Chosen => [.. Languages.Where(l => l.IsChecked)];
 
     public LanguageItemViewModel? Default
@@ -107,7 +107,7 @@ public sealed partial class LanguagesStep : StepViewModel
     {
         var region = code switch
         {
-            "en" => "GB", "pt-BR" => "BR", "zh-Hans" => "CN", "zh-Hant" => "TW", "ar" => "SA", "he" => "IL", "hi" => "IN", "ja" => "JP", "ko" => "KR",
+            "en" => "GB", "pt-BR" => "BR", "zh" => "CN", "zh-Hans" => "CN", "km" => "KH", "zh-Hant" => "TW", "ar" => "SA", "he" => "IL", "hi" => "IN", "ja" => "JP", "ko" => "KR",
             "sv" => "SE", "da" => "DK", "nb" => "NO", "et" => "EE", "el" => "GR", "uk" => "UA", "cs" => "CZ", "sl" => "SI", "vi" => "VN",
             _ => code[..2].ToUpperInvariant(),
         };

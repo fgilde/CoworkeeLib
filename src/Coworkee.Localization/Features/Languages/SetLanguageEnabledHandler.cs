@@ -5,7 +5,6 @@ using Coworkee.Core.Results;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.Localization.Domain;
 using Coworkee.Localization.Languages;
-using Coworkee.Localization.Resources;
 using Coworkee.Localization.Texts;
 using Coworkee.Localization.MachineTranslation;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +13,7 @@ using Microsoft.Extensions.Options;
 namespace Coworkee.Localization.Features.Languages;
 
 internal sealed class SetLanguageEnabledHandler(
-    CoworkeeDbContext db, LocalizationResources resources, MissingTexts missing, TextTranslator translator, LocalizationChanges changes, IOptions<LocalizationOptions> options,
+    CoworkeeDbContext db, MissingTexts missing, TextTranslator translator, LocalizationChanges changes, IOptions<LocalizationOptions> options,
     Coworkee.Settings.ISettingProvider settings)
     : IHandler<SetLanguageEnabledCommand, Result<LanguageSwitchDto>>,
       IHandler<TranslateMissingCommand, Result<TranslateMissingDto>>
@@ -68,7 +67,7 @@ internal sealed class SetLanguageEnabledHandler(
             return;
         }
 
-        db.AddRange(InitialLanguages.Create(options.Value, resources));
+        db.AddRange(InitialLanguages.Create(options.Value));
         await db.SaveChangesAsync(cancellationToken);
     }
 

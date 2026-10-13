@@ -83,7 +83,7 @@ Darunter folgen die übrigen Gruppen (*Allgemein*, *Module*, *Code*, *Werkzeuge*
 
 ### Sprachen
 
-Die Sprachen der App in einem Raster, durchsuchbar nach Code, eigenem oder englischem Namen; Englisch und Deutsch liefert Coworkee mit, jede andere wird beim ersten Start [maschinell übersetzt](../modules/localization.md#maschinelle-ubersetzung). Darunter: die Standardsprache (eine der gewählten), die Ausgangssprache der Übersetzungen und die Übersetzungsdienste als Karten mit dem, was jeder kostet, wohin die Texte gehen und was er braucht. LibreTranslate ist kostenlos, braucht kein Konto und läuft als Container des AppHosts; DeepL, Azure und Google nehmen ihren Schlüssel aus den User Secrets (`Parameters:translation-key`), KI nutzt das Modell des Assistenten.
+Die Sprachen der App in einem Raster, durchsuchbar nach Code, eigenem oder englischem Namen; 23 Sprachen liefert Coworkee mit (Englisch und Deutsch sind von Anfang an aktiv), jede andere wird beim ersten Start [maschinell übersetzt](../modules/localization.md#maschinelle-ubersetzung). Darunter: die Standardsprache (eine der gewählten), die Ausgangssprache der Übersetzungen und die Übersetzungsdienste als Karten mit dem, was jeder kostet, wohin die Texte gehen und was er braucht. LibreTranslate ist kostenlos, braucht kein Konto und läuft als Container des AppHosts; DeepL, Azure und Google nehmen ihren Schlüssel aus den User Secrets (`Parameters:translation-key`), KI nutzt das Modell des Assistenten.
 
 ![Sprachen](../assets/screenshots/studio-languages-light-de.webp)
 
