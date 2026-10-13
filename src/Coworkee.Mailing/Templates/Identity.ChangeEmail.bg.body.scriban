@@ -1,0 +1,3 @@
+<p>Здравейте, {{ user.first_name }},</p>
+<p>моля, потвърдете, че {{ new_email }} е новият адрес на вашия акаунт. Дотогава влизате с {{ user.email }}. Ако не сте поискали това, можете да игнорирате това съобщение.</p>
+<p style="margin:24px 0;"><a href="{{ confirm_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">Потвърждаване на новия адрес</a></p>
