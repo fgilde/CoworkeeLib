@@ -82,6 +82,38 @@ public sealed class LayoutTests : ClientTestBase
         layout.Markup.ShouldNotContain("<circle");
     }
 
+    [Theory]
+    [InlineData("data:image/png;base64,AQID")]
+    [InlineData("data:image/webp;base64,AQID")]
+    public void An_image_logo_is_shown_and_becomes_the_favicon(string logo)
+    {
+        var module = JSInterop.SetupModule("./_content/Coworkee.Client.Blazor/coworkee.js");
+        Api.GetCurrentThemeAsync(Arg.Any<CancellationToken>()).Returns(Theme(logo));
+        AddAuthorization();
+
+        var layout = Render<CoworkeeLayout>(p => p.Add(l => l.Body, (RenderFragment)(b => b.AddContent(0, "body"))));
+
+        layout.WaitForAssertion(() => layout.Find("img[data-testid='logo']").GetAttribute("src").ShouldBe(logo));
+        layout.WaitForAssertion(() => module.Invocations["setFavicon"].Single().Arguments.ShouldBe([logo]));
+    }
+
+    [Fact]
+    public void Without_a_theme_logo_the_page_keeps_its_favicon()
+    {
+        var module = JSInterop.SetupModule("./_content/Coworkee.Client.Blazor/coworkee.js");
+        Api.GetCurrentThemeAsync(Arg.Any<CancellationToken>()).Returns(Theme(null));
+        AddAuthorization();
+
+        var layout = Render<CoworkeeLayout>(p => p.Add(l => l.Body, (RenderFragment)(b => b.AddContent(0, "body"))));
+
+        layout.WaitForAssertion(() => layout.Markup.ShouldContain("body"));
+        module.Invocations["setFavicon"].ShouldBeEmpty();
+    }
+
+    private static Coworkee.Contracts.Theming.ThemeDto Theme(string? logo) => new(
+        Guid.CreateVersion7(), "Brand", false, true, System.Text.Json.JsonSerializer.SerializeToElement(new { }), System.Text.Json.JsonSerializer.SerializeToElement(new { }),
+        null, null, logo, null, 1);
+
     [Fact]
     public void Uninitialized_system_redirects_to_setup()
     {
