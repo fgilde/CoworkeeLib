@@ -63,6 +63,27 @@ public sealed class ServicesPageTests : ClientTestBase
         page.WaitForAssertion(() => page.Find("[data-source-unavailable='aspireui']").TextContent.ShouldContain("AspireUI"));
         page.Find("[data-source='app'] [data-service='billing']").ShouldNotBeNull();
     }
+
+    [Fact]
+    public void A_service_without_an_address_looks_and_acts_like_no_link()
+    {
+        Api.GetServicesAsync(Arg.Any<CancellationToken>()).Returns(new ServiceDirectoryResult(
+        [
+            new ServiceDto("shop", "shop", "", ServiceHealth.Unhealthy, "aspireui", []),
+            new ServiceDto("billing", "billing", "https://billing", ServiceHealth.Healthy, "aspireui", ["https://billing"]),
+        ], []));
+        var auth = AddAuthorization();
+        auth.SetAuthorized("admin");
+        auth.SetPolicies("perm:" + SettingsPermissions.Manage);
+
+        var page = Render<Services>();
+
+        page.WaitForAssertion(() => page.FindAll("[data-service]").Count.ShouldBe(2));
+        page.Find("[data-service='shop']").ClassList.ShouldNotContain("cursor-pointer");
+        page.FindAll("[data-service='shop'] a").ShouldBeEmpty();
+        page.Find("[data-service='billing']").ClassList.ShouldContain("cursor-pointer");
+    }
+
     [Theory]
     [InlineData("myapp-api", "Api")]
     [InlineData("pgadmin", "Storage")]

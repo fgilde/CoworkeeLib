@@ -32,7 +32,7 @@ else
                 @foreach (var service in group)
                 {
                     <MudItem xs="12" sm="6" md="4" lg="3">
-                        <MudCard Outlined="true" Class="cursor-pointer" Style="height:100%" data-service="@service.Name" @onclick="() => Open(service)">
+                        <MudCard Outlined="true" Class="@(Urls(service).Any() ? "cursor-pointer" : null)" Style="height:100%" data-service="@service.Name" @onclick="() => Open(service)">
                             <MudCardHeader>
                                 <CardHeaderAvatar>
                                     <MudAvatar Color="Color.Primary" Variant="Variant.Outlined"><MudIcon Icon="@ServiceIcons.For(service.Name)" /></MudAvatar>
