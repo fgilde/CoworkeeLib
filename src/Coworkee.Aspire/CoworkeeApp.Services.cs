@@ -2,6 +2,7 @@ using Aspire.Hosting.ApplicationModel;
 using Coworkee.Aspire.Modules;
 using Coworkee.Aspire.Settings;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Nextended.Aspire.Hosting.AspireUI;
 
 namespace Aspire.Hosting;
@@ -43,7 +44,7 @@ public sealed partial class CoworkeeApp
         foreach (var aspireUi in Builder.Resources.OfType<AspireUIResource>())
         {
             var env = new Dictionary<string, object>();
-            var aspireUiContext = new EnvironmentCallbackContext(context.ExecutionContext, env, context.CancellationToken);
+            var aspireUiContext = new EnvironmentCallbackContext(context.ExecutionContext, aspireUi, env, context.CancellationToken) { Logger = context.Logger ?? NullLogger.Instance };
             try
             {
                 foreach (var callback in aspireUi.Annotations.OfType<EnvironmentCallbackAnnotation>())

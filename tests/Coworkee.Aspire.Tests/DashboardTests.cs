@@ -120,6 +120,25 @@ public sealed class DashboardTests
     }
 
     [Fact]
+    public async Task An_aspireui_with_the_sign_on_of_the_app_is_still_the_source_of_the_service_directory()
+    {
+        var builder = DistributedApplication.CreateBuilder(["--environment", "Development"]);
+        var app = builder.AddCoworkeeApp("demo", o => o.UseKeycloak()).AddProjects();
+        foreach (var endpoint in app.Keycloak!.Resource.Annotations.OfType<EndpointAnnotation>())
+        {
+            endpoint.AllocatedEndpoint ??= new AllocatedEndpoint(endpoint, "localhost", 8180);
+        }
+
+        IResource? seen = null;
+        var aspireUi = builder.AddAspireUI().WithCoworkeeSignOn(app).WithRetrieveApi().WithEnvironment(context => seen = context.Resource);
+
+        var env = await ApiEnvironment(builder, app);
+
+        env["Coworkee__AspireUI__Url"].ShouldBeOfType<EndpointReference>().EndpointName.ShouldBe("http");
+        seen.ShouldBe(aspireUi.Resource);
+    }
+
+    [Fact]
     public async Task A_throwing_callback_of_an_aspireui_does_not_break_the_environment_of_the_app()
     {
         var builder = DistributedApplication.CreateBuilder(["--environment", "Development"]);
