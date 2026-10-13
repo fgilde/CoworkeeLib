@@ -15,7 +15,7 @@ function Read-Texts([string]$path) {
 }
 
 function Tokens([string]$pattern, [string]$text) {
-    ([regex]::Matches($text, $pattern, 'Singleline') | ForEach-Object { ($_.Value -replace '\s+', ' ') -replace '\blang="[^"]*"', 'lang=""' } | Sort-Object { $_ } -CaseSensitive) -join "`n"
+    ([regex]::Matches($text, $pattern, 'Singleline') | ForEach-Object { ($_.Value -replace '\s+', ' ') -replace '\blang="[^"]*"( dir="[^"]*")?', 'lang=""' } | Sort-Object { $_ } -CaseSensitive) -join "`n"
 }
 
 function Report([string]$source, [string]$message) {

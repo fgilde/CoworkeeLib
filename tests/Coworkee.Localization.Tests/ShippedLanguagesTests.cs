@@ -79,7 +79,8 @@ public sealed partial class ShippedLanguagesTests
     [GeneratedRegex(@"\{\{.*?\}\}|</?[A-Za-z][^>]*>", RegexOptions.Singleline)]
     private static partial Regex Markup();
 
-    [GeneratedRegex("\\blang=\"[^\"]*\"")]
+    // the lang value differs per language; right-to-left languages add dir="rtl"
+    [GeneratedRegex("\\blang=\"[^\"]*\"( dir=\"[^\"]*\")?")]
     private static partial Regex HtmlLang();
 
     [GeneratedRegex(@"\s+")]
