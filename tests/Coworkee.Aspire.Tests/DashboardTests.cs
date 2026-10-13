@@ -120,6 +120,19 @@ public sealed class DashboardTests
     }
 
     [Fact]
+    public async Task A_throwing_callback_of_an_aspireui_does_not_break_the_environment_of_the_app()
+    {
+        var builder = DistributedApplication.CreateBuilder(["--environment", "Development"]);
+        var app = builder.AddCoworkeeApp("demo").AddProjects();
+        builder.AddAspireUI().WithRetrieveApi().WithEnvironment(_ => throw new InvalidOperationException("foreign callback"));
+
+        var env = await ApiEnvironment(builder, app);
+
+        env.Keys.ShouldContain("Coworkee__Services__jobs__Url");
+        env.Keys.ShouldNotContain("Coworkee__AspireUI__Url");
+    }
+
+    [Fact]
     public async Task Published_apps_get_no_aspireui()
     {
         var builder = DistributedApplication.CreateBuilder(["--operation", "publish"]);

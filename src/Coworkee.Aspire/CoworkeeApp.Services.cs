@@ -1,6 +1,7 @@
 using Aspire.Hosting.ApplicationModel;
 using Coworkee.Aspire.Modules;
 using Coworkee.Aspire.Settings;
+using Microsoft.Extensions.Logging;
 using Nextended.Aspire.Hosting.AspireUI;
 
 namespace Aspire.Hosting;
@@ -43,9 +44,17 @@ public sealed partial class CoworkeeApp
         {
             var env = new Dictionary<string, object>();
             var aspireUiContext = new EnvironmentCallbackContext(context.ExecutionContext, env, context.CancellationToken);
-            foreach (var callback in aspireUi.Annotations.OfType<EnvironmentCallbackAnnotation>())
+            try
             {
-                await callback.Callback(aspireUiContext);
+                foreach (var callback in aspireUi.Annotations.OfType<EnvironmentCallbackAnnotation>())
+                {
+                    await callback.Callback(aspireUiContext);
+                }
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                context.Logger?.LogWarning(exception, "The AspireUI {Name} could not be read, it is left out of the service directory", aspireUi.Name);
+                continue;
             }
 
             if (env.GetValueOrDefault("ASPIREUI_RETRIEVE_API") is not "true")
