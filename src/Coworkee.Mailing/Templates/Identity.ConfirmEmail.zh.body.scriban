@@ -1,0 +1,3 @@
+<p>{{ user.first_name }}，您好：</p>
+<p>请确认您的电子邮件地址。</p>
+<p style="margin:24px 0;"><a href="{{ confirm_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">确认电子邮件</a></p>

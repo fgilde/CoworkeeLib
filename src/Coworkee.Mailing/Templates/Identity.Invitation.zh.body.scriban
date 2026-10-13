@@ -1,0 +1,3 @@
+<p>{{ user.first_name }}，您好：</p>
+<p>已为您创建账户：{{ user.email }}。请设置密码以登录。</p>
+<p style="margin:24px 0;"><a href="{{ invitation_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">设置密码</a></p>
