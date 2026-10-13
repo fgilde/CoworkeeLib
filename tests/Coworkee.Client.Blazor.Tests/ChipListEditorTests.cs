@@ -249,4 +249,62 @@ public sealed class ChipListEditorTests : ClientTestBase
         _value.ShouldBe(["ok"]);
         Input(editor).GetAttribute("value").ShouldBe("bad!");
     }
+
+    [Fact]
+    public async Task Typing_on_after_the_list_closed_for_lack_of_matches_keeps_the_text()
+    {
+        var editor = Open(suggestions: Offer);
+        var search = await OpenListAsync(editor, "pr");
+
+        Input(editor).Input("prx");
+        await editor.InvokeAsync(search.OpenMenuAsync);
+
+        search.Open.ShouldBeFalse();
+        _changes.ShouldBe(0);
+        Input(editor).GetAttribute("value").ShouldBe("prx");
+
+        Input(editor).Input("prxy");
+        await EnterAsync(editor);
+        _value.ShouldBe(["prxy"]);
+    }
+
+    [Fact]
+    public async Task Text_whose_only_match_is_already_chosen_is_not_committed_while_typing()
+    {
+        var editor = Open(["profile"], suggestions: Offer);
+        var search = await OpenListAsync(editor, "p");
+
+        Input(editor).Input("pro");
+        await editor.InvokeAsync(search.OpenMenuAsync);
+
+        search.Open.ShouldBeFalse();
+        _value.ShouldBe(["profile"]);
+        _changes.ShouldBe(0);
+        Input(editor).GetAttribute("value").ShouldBe("pro");
+    }
+
+    [Fact]
+    public async Task Leaving_the_field_after_the_list_closed_for_lack_of_matches_keeps_the_text()
+    {
+        var editor = Open(suggestions: Offer);
+        var search = await OpenListAsync(editor, "pr");
+        Input(editor).Input("prx");
+        await editor.InvokeAsync(search.OpenMenuAsync);
+
+        Input(editor).Blur();
+
+        _value.ShouldBe(["prx"]);
+    }
+
+    [Fact]
+    public async Task Tab_commits_the_typed_text()
+    {
+        var editor = Open(suggestions: Offer);
+        await OpenListAsync(editor, "pro");
+
+        await Input(editor).KeyDownAsync(new KeyboardEventArgs { Key = "Tab" });
+        Input(editor).Blur();
+
+        _value.ShouldBe(["pro"]);
+    }
 }

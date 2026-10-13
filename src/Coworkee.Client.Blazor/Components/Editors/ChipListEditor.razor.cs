@@ -13,6 +13,7 @@ public partial class ChipListEditor
     private string _text = string.Empty;
     private string? _error;
     private int _suggested;
+    private bool _left;
 
     [Parameter] public IReadOnlyList<string> Value { get; set; } = [];
 
@@ -47,6 +48,7 @@ public partial class ChipListEditor
     {
         _text = text ?? string.Empty;
         _error = null;
+        _left = false;
         if (_text.IndexOfAny(Separators) >= 0)
         {
             await CommitAsync();
@@ -69,9 +71,14 @@ public partial class ChipListEditor
     }
 
     // a blur with the suggestion list open is the click on a suggestion, so the text is taken when the list closes
-    private Task BlurAsync(FocusEventArgs _) => _input is { Open: true } && _suggested > 0 ? Task.CompletedTask : CommitAsync();
+    private Task BlurAsync(FocusEventArgs _)
+    {
+        _left = true;
+        return _input is { Open: true } && _suggested > 0 ? Task.CompletedTask : CommitAsync();
+    }
 
-    private Task OpenChangedAsync(bool open) => open ? Task.CompletedTask : CommitAsync();
+    // a list that closes while the field has focus ran out of matches, the user is still typing
+    private Task OpenChangedAsync(bool open) => open || !_left ? Task.CompletedTask : CommitAsync();
 
     private Task OnEnterAsync(KeyboardEventArgs args) => args.Key is "Enter" or "NumpadEnter" ? CommitAsync() : Task.CompletedTask;
 
