@@ -514,6 +514,8 @@
   "{0} changed in the app": "{0} změněno v aplikaci",
   "Restore the configured values (appsettings and environment)": "Obnovit nakonfigurované hodnoty (appsettings a prostředí)",
   "Restore defaults": "Obnovit výchozí hodnoty",
+  "Set in the configuration": "Nastaveno v konfiguraci",
+  "Unlock to change; applies after a restart.": "Odemkněte pro změnu; projeví se po restartu.",
   "All changes made here go away; the configured values apply again.": "Všechny zde provedené změny zaniknou; znovu se použijí nakonfigurované hodnoty.",
   "{0} saved. Some values only apply after the services restart.": "{0} uloženo. Některé hodnoty se projeví až po restartu služeb.",
   "The app configuration is managed from the system organisation.": "Konfigurace aplikace se spravuje ze systémové organizace.",

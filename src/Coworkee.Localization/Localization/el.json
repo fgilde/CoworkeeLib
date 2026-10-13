@@ -514,6 +514,8 @@
   "{0} changed in the app": "{0} άλλαξε στην εφαρμογή",
   "Restore the configured values (appsettings and environment)": "Επαναφορά των διαμορφωμένων τιμών (appsettings και περιβάλλον)",
   "Restore defaults": "Επαναφορά προεπιλογών",
+  "Set in the configuration": "Ορίζεται στη διαμόρφωση",
+  "Unlock to change; applies after a restart.": "Ξεκλειδώστε για αλλαγή· ισχύει μετά από επανεκκίνηση.",
   "All changes made here go away; the configured values apply again.": "Όλες οι αλλαγές που έγιναν εδώ χάνονται· ισχύουν ξανά οι διαμορφωμένες τιμές.",
   "{0} saved. Some values only apply after the services restart.": "Το {0} αποθηκεύτηκε. Ορισμένες τιμές ισχύουν μόνο μετά την επανεκκίνηση των υπηρεσιών.",
   "The app configuration is managed from the system organisation.": "Η διαμόρφωση της εφαρμογής διαχειρίζεται από τον οργανισμό συστήματος.",

@@ -514,6 +514,8 @@
   "{0} changed in the app": "{0} ändrades i appen",
   "Restore the configured values (appsettings and environment)": "Återställ de konfigurerade värdena (appsettings och miljö)",
   "Restore defaults": "Återställ standardvärden",
+  "Set in the configuration": "Anges i konfigurationen",
+  "Unlock to change; applies after a restart.": "Lås upp för att ändra; gäller efter en omstart.",
   "All changes made here go away; the configured values apply again.": "Alla ändringar som gjorts här försvinner; de konfigurerade värdena gäller igen.",
   "{0} saved. Some values only apply after the services restart.": "{0} sparades. Vissa värden gäller först efter att tjänsterna har startats om.",
   "The app configuration is managed from the system organisation.": "Appkonfigurationen hanteras från systemorganisationen.",

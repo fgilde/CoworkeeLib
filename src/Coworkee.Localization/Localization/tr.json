@@ -514,6 +514,8 @@
   "{0} changed in the app": "{0} uygulamada değiştirildi",
   "Restore the configured values (appsettings and environment)": "Yapılandırılmış değerleri geri yükle (appsettings ve ortam)",
   "Restore defaults": "Varsayılanları geri yükle",
+  "Set in the configuration": "Yapılandırmada ayarlandı",
+  "Unlock to change; applies after a restart.": "Değiştirmek için kilidi açın; yeniden başlatmadan sonra geçerli olur.",
   "All changes made here go away; the configured values apply again.": "Burada yapılan tüm değişiklikler silinir; yapılandırılmış değerler yeniden geçerli olur.",
   "{0} saved. Some values only apply after the services restart.": "{0} kaydedildi. Bazı değerler yalnızca hizmetler yeniden başlatıldıktan sonra geçerli olur.",
   "The app configuration is managed from the system organisation.": "Uygulama yapılandırması sistem kuruluşundan yönetilir.",

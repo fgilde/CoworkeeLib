@@ -514,6 +514,8 @@
   "{0} changed in the app": "{0} diubah di aplikasi",
   "Restore the configured values (appsettings and environment)": "Pulihkan nilai terkonfigurasi (appsettings dan environment)",
   "Restore defaults": "Pulihkan nilai default",
+  "Set in the configuration": "Ditetapkan dalam konfigurasi",
+  "Unlock to change; applies after a restart.": "Buka kunci untuk mengubah; berlaku setelah dimulai ulang.",
   "All changes made here go away; the configured values apply again.": "Semua perubahan yang dibuat di sini akan hilang; nilai terkonfigurasi berlaku kembali.",
   "{0} saved. Some values only apply after the services restart.": "{0} disimpan. Beberapa nilai baru berlaku setelah layanan dimulai ulang.",
   "The app configuration is managed from the system organisation.": "Konfigurasi aplikasi dikelola dari organisasi sistem.",

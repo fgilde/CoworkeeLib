@@ -514,6 +514,8 @@
   "{0} changed in the app": "{0}をアプリで変更済み",
   "Restore the configured values (appsettings and environment)": "構成された値（appsettings と環境）に戻す",
   "Restore defaults": "デフォルトに戻す",
+  "Set in the configuration": "構成で設定済み",
+  "Unlock to change; applies after a restart.": "変更するにはロックを解除してください。再起動後に反映されます。",
   "All changes made here go away; the configured values apply again.": "ここで行ったすべての変更が破棄され、構成された値が再び適用されます。",
   "{0} saved. Some values only apply after the services restart.": "{0}を保存しました。一部の値は、サービスの再起動後に反映されます。",
   "The app configuration is managed from the system organisation.": "アプリの構成は、システム組織で管理されます。",

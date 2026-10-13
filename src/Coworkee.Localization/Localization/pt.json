@@ -514,6 +514,8 @@
   "{0} changed in the app": "{0} alterado no aplicativo",
   "Restore the configured values (appsettings and environment)": "Restaurar os valores configurados (appsettings e ambiente)",
   "Restore defaults": "Restaurar padrões",
+  "Set in the configuration": "Definido na configuração",
+  "Unlock to change; applies after a restart.": "Desbloqueie para alterar; aplica-se após reiniciar.",
   "All changes made here go away; the configured values apply again.": "Todas as alterações feitas aqui serão descartadas; os valores configurados voltam a valer.",
   "{0} saved. Some values only apply after the services restart.": "{0} salvo. Alguns valores só entram em vigor após a reinicialização dos serviços.",
   "The app configuration is managed from the system organisation.": "A configuração do aplicativo é gerenciada na organização do sistema.",

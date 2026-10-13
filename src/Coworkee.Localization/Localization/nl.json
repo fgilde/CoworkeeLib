@@ -514,6 +514,8 @@
   "{0} changed in the app": "{0} gewijzigd in de app",
   "Restore the configured values (appsettings and environment)": "De geconfigureerde waarden herstellen (appsettings en omgeving)",
   "Restore defaults": "Standaardwaarden herstellen",
+  "Set in the configuration": "Ingesteld in de configuratie",
+  "Unlock to change; applies after a restart.": "Ontgrendel om te wijzigen; geldt na een herstart.",
   "All changes made here go away; the configured values apply again.": "Alle hier gemaakte wijzigingen gaan verloren; de geconfigureerde waarden gelden weer.",
   "{0} saved. Some values only apply after the services restart.": "{0} opgeslagen. Sommige waarden gelden pas nadat de services opnieuw zijn gestart.",
   "The app configuration is managed from the system organisation.": "De app-configuratie wordt beheerd vanuit de systeemorganisatie.",

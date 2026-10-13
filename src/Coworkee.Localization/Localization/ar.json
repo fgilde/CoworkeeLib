@@ -514,6 +514,8 @@
   "{0} changed in the app": "تم تغيير {0} في التطبيق",
   "Restore the configured values (appsettings and environment)": "استعادة القيم المكوَّنة (appsettings والبيئة)",
   "Restore defaults": "استعادة القيم الافتراضية",
+  "Set in the configuration": "محدَّد في الإعدادات",
+  "Unlock to change; applies after a restart.": "ألغِ القفل للتغيير؛ يُطبَّق بعد إعادة التشغيل.",
   "All changes made here go away; the configured values apply again.": "ستُفقد كل التغييرات المُجراة هنا؛ وتُطبَّق القيم المكوَّنة مرة أخرى.",
   "{0} saved. Some values only apply after the services restart.": "تم حفظ {0}. بعض القيم لا تسري إلا بعد إعادة تشغيل الخدمات.",
   "The app configuration is managed from the system organisation.": "تتم إدارة تكوين التطبيق من مؤسسة النظام.",

@@ -514,6 +514,8 @@
   "{0} changed in the app": "앱에서 {0}이(가) 변경됨",
   "Restore the configured values (appsettings and environment)": "구성된 값 복원(appsettings 및 환경)",
   "Restore defaults": "기본값 복원",
+  "Set in the configuration": "구성에서 설정됨",
+  "Unlock to change; applies after a restart.": "변경하려면 잠금을 해제하세요. 다시 시작한 후에 적용됩니다.",
   "All changes made here go away; the configured values apply again.": "여기에서 변경한 내용이 모두 사라지고 구성된 값이 다시 적용됩니다.",
   "{0} saved. Some values only apply after the services restart.": "{0}을(를) 저장했습니다. 일부 값은 서비스를 다시 시작한 후에 적용됩니다.",
   "The app configuration is managed from the system organisation.": "앱 구성은 시스템 조직에서 관리합니다.",

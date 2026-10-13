@@ -514,6 +514,8 @@
   "{0} changed in the app": "{0} promijenjeno u aplikaciji",
   "Restore the configured values (appsettings and environment)": "Vrati konfigurirane vrijednosti (appsettings i okruženje)",
   "Restore defaults": "Vrati zadane vrijednosti",
+  "Set in the configuration": "Postavljeno u konfiguraciji",
+  "Unlock to change; applies after a restart.": "Otključajte za promjenu; vrijedi nakon ponovnog pokretanja.",
   "All changes made here go away; the configured values apply again.": "Sve ovdje napravljene izmjene nestaju; ponovno vrijede konfigurirane vrijednosti.",
   "{0} saved. Some values only apply after the services restart.": "{0} je spremljeno. Neke vrijednosti vrijede tek nakon ponovnog pokretanja usluga.",
   "The app configuration is managed from the system organisation.": "Konfiguracijom aplikacije upravlja se iz sustavne organizacije.",

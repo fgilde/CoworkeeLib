@@ -514,6 +514,8 @@
   "{0} changed in the app": "{0} змінено в застосунку",
   "Restore the configured values (appsettings and environment)": "Відновити налаштовані значення (appsettings і середовище)",
   "Restore defaults": "Відновити типові значення",
+  "Set in the configuration": "Задано в конфігурації",
+  "Unlock to change; applies after a restart.": "Розблокуйте, щоб змінити; набуде чинності після перезапуску.",
   "All changes made here go away; the configured values apply again.": "Усі внесені тут зміни буде скасовано; знову діятимуть налаштовані значення.",
   "{0} saved. Some values only apply after the services restart.": "{0} збережено. Деякі значення набувають чинності лише після перезапуску служб.",
   "The app configuration is managed from the system organisation.": "Конфігурацією застосунку керують із системної організації.",

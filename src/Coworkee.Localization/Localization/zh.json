@@ -514,6 +514,8 @@
   "{0} changed in the app": "{0} 已在应用中更改",
   "Restore the configured values (appsettings and environment)": "恢复已配置的值（appsettings 和环境变量）",
   "Restore defaults": "恢复默认值",
+  "Set in the configuration": "已在配置中设置",
+  "Unlock to change; applies after a restart.": "解锁后可更改；重启后生效。",
   "All changes made here go away; the configured values apply again.": "在此所做的所有更改都将丢失；将重新采用已配置的值。",
   "{0} saved. Some values only apply after the services restart.": "{0} 已保存。部分值需在服务重启后才会生效。",
   "The app configuration is managed from the system organisation.": "应用配置在系统组织中管理。",
