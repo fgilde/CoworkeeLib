@@ -48,6 +48,14 @@ export function onHotkey(dotnet, key) {
     return { dispose: () => document.removeEventListener('keydown', handler) };
 }
 
+export function observeStuck(sentinel, root) {
+    const appbar = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mud-appbar-height')) || 0;
+    const observer = new IntersectionObserver(([entry]) => root.toggleAttribute('stuck', entry.intersectionRatio < 1),
+        { threshold: 1, rootMargin: `-${appbar}px 0px 0px 0px` });
+    observer.observe(sentinel);
+    return { dispose: () => observer.disconnect() };
+}
+
 export function submitOnEnter(element, dotnet) {
     if (!element) {
         return;

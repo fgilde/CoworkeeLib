@@ -1,0 +1,12 @@
+<style>
+    @@media (min-width: 600px) {
+        .cw-tabs-stick-merge .mud-tabs-tabbar { position: sticky; top: var(--mud-appbar-height); z-index: 10; }
+        .cw-tabs-stick-merge[stuck] .mud-tabs-tabbar { width: fit-content; background: var(--mud-palette-surface); }
+    }
+    .cw-tabs-sentinel { height: 1px; margin-bottom: -1px; pointer-events: none; }
+</style>
+
+<div @ref="_root" class="cw-tabs-stick-merge">
+    <div @ref="_sentinel" class="cw-tabs-sentinel"></div>
+    <MudTabs Class="@Class" @attributes="Attributes">@ChildContent</MudTabs>
+</div>

@@ -3,7 +3,7 @@
 @attribute [Authorize(Policy = "perm:" + SettingsPermissions.Manage)]
 
 <PageHeader Title="Settings" />
-<MudTabs Elevation="0" Outlined="true">
+<StickyMergeTabs Elevation="@(0)" Outlined="@(true)">
     @if (_system)
     {
         @foreach (var registration in Sections)
@@ -20,4 +20,4 @@
     <MudTabPanel Text="@L["Organisation"]">
         <div class="pa-4"><SettingsForm Scope="SettingScope.Tenant" /></div>
     </MudTabPanel>
-</MudTabs>
+</StickyMergeTabs>
