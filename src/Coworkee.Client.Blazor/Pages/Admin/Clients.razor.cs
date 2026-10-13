@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Components.Data;
+using Coworkee.Client.Blazor.Components.Editors;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Security;
 using Coworkee.Contracts.Identity;
@@ -13,9 +15,13 @@ namespace Coworkee.Client.Blazor.Pages.Admin;
 
 public partial class Clients
 {
+    private static readonly string[] StandardScopes = ["openid", "profile", "email", "roles", "offline_access", "phone", "address"];
+    private static readonly string[] Required = ["openid"];
+
     private IReadOnlyList<ClientDto> _clients = [];
     private IReadOnlyList<RoleDto> _roles = [];
     private IReadOnlyList<string> _permissions = [];
+    private IReadOnlyList<string> _scopeNames = StandardScopes;
     private bool _busy;
 
     [Inject] private IClientsApi Api { get; set; } = null!;
@@ -34,6 +40,9 @@ public partial class Clients
         _permissions = [.. (await Identity.GetPermissionDefinitionsAsync()).SelectMany(g => g.Permissions).Select(p => p.Name)];
     });
 
+    [GeneratedRegex("^[A-Za-z0-9._:-]+$")]
+    private static partial Regex ScopePattern();
+
     private static bool IsService(ClientDto client) => client.GrantTypes.Contains(ClientGrantTypes.ClientCredentials);
 
     private string RoleName(Guid id) => _roles.FirstOrDefault(r => r.Id == id)?.Name ?? string.Empty;
@@ -44,6 +53,7 @@ public partial class Clients
     private async Task CreateAsync()
     {
         ClientSecretDto? created = null;
+        await LoadScopeNamesAsync();
         if (await Dialogs.ShowEditAsync(L["New application"], new ClientForm(), async form => created = await Api.CreateClientAsync(form.ToRequest()), Meta))
         {
             await ShowSecretAsync(created);
@@ -54,6 +64,7 @@ public partial class Clients
     private async Task EditAsync(ClientDto client)
     {
         ClientSecretDto? updated = null;
+        await LoadScopeNamesAsync();
         if (await Dialogs.ShowEditAsync(L["Edit application"], ClientForm.From(client), async form => updated = await Api.UpdateClientAsync(client.Id, form.ToRequest()), Meta))
         {
             await ShowSecretAsync(updated);
@@ -90,18 +101,42 @@ public partial class Clients
         }
     }
 
+    private Task LoadScopeNamesAsync() =>
+        Snackbar.RunAsync(async () => _scopeNames = [.. StandardScopes.Union((await Api.GetScopesAsync()).Select(s => s.Name))]);
+
+    private Task<IEnumerable<string>> SuggestScopes(string text, CancellationToken _) =>
+        Task.FromResult(_scopeNames.Where(s => s.Contains(text, StringComparison.OrdinalIgnoreCase)));
+
+    private string? AbsoluteAddress(string value) => Uri.TryCreate(value, UriKind.Absolute, out _) ? null : L["Not an absolute address"];
+
+    private string? ScopeName(string value) => ScopePattern().IsMatch(value) ? null : L["Letters, digits and . _ : - only"];
+
+#pragma warning disable BL0005 // MudEx configures the rendered editors through these instances
     private void Meta(ObjectEditMeta<ClientForm> meta)
     {
-        foreach (var lines in new[] { meta.Property(f => f.RedirectUris), meta.Property(f => f.PostLogoutRedirectUris) })
+        meta.Property(f => f.RedirectUris).RenderAsChips(e =>
         {
-            lines.WithAdditionalAttribute(nameof(MudTextField<string>.Lines), 3)
-                .WithAdditionalAttribute(nameof(MudTextField<string>.HelperText), L["One address per line"]);
-        }
-
-        meta.Property(f => f.Scopes).WithAdditionalAttribute(nameof(MudTextField<string>.HelperText), L["Separated by spaces, e.g. openid profile email offline_access"]);
+            e.Label = L["Redirect addresses"];
+            e.HelperText = L["Full addresses like https://app.example/callback"];
+            e.Validate = AbsoluteAddress;
+        });
+        meta.Property(f => f.PostLogoutRedirectUris).RenderAsChips(e =>
+        {
+            e.Label = L["Addresses after sign-out"];
+            e.Validate = AbsoluteAddress;
+        });
+        meta.Property(f => f.Scopes).RenderAsChips(e =>
+        {
+            e.Label = L["Scopes"];
+            e.HelperText = L["Pick a suggestion or type your own"];
+            e.Suggestions = SuggestScopes;
+            e.Validate = ScopeName;
+            e.Fixed = Required;
+        });
         meta.Property(f => f.ClientUri).WithAdditionalAttribute(nameof(MudTextField<string>.HelperText), L["The app launcher of the sign-in server links here"]);
         meta.Property(f => f.Description).WithAdditionalAttribute(nameof(MudTextField<string>.Lines), 2);
     }
+#pragma warning restore BL0005
 
     private async Task RunAsync(Func<Task> action, string? success = null)
     {
@@ -140,12 +175,12 @@ public partial class Clients
         public ConsentKind Consent { get; set; }
 
         [Display(Name = "Redirect addresses")]
-        public string RedirectUris { get; set; } = string.Empty;
+        public IReadOnlyList<string> RedirectUris { get; set; } = [];
 
         [Display(Name = "Addresses after sign-out")]
-        public string PostLogoutRedirectUris { get; set; } = string.Empty;
+        public IReadOnlyList<string> PostLogoutRedirectUris { get; set; } = [];
 
-        public string Scopes { get; set; } = "openid profile email roles offline_access";
+        public IReadOnlyList<string> Scopes { get; set; } = ["openid", "profile", "email", "roles", "offline_access"];
 
         [Display(Name = "Allow refresh tokens")]
         public bool RefreshTokens { get; set; } = true;
@@ -174,9 +209,9 @@ public partial class Clients
             DisplayName = client.DisplayName,
             Type = client.ClientType == "confidential" ? ClientKind.Confidential : ClientKind.Public,
             Consent = client.ConsentType == "explicit" ? ConsentKind.Explicit : ConsentKind.Implicit,
-            RedirectUris = string.Join(Environment.NewLine, client.RedirectUris),
-            PostLogoutRedirectUris = string.Join(Environment.NewLine, client.PostLogoutRedirectUris),
-            Scopes = string.Join(' ', client.Scopes.Prepend("openid").Distinct()),
+            RedirectUris = client.RedirectUris,
+            PostLogoutRedirectUris = client.PostLogoutRedirectUris,
+            Scopes = [.. client.Scopes.Prepend("openid").Distinct()],
             RefreshTokens = client.GrantTypes.Contains(ClientGrantTypes.RefreshToken),
             ServiceClient = IsService(client),
             ClientUri = client.ClientUri,
@@ -192,10 +227,10 @@ public partial class Clients
             DisplayName,
             Type.ToString().ToLowerInvariant(),
             Consent.ToString().ToLowerInvariant(),
-            Split(RedirectUris),
-            Split(PostLogoutRedirectUris),
+            RedirectUris,
+            PostLogoutRedirectUris,
             GrantTypes(),
-            [.. Scopes.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Distinct()],
+            Scopes,
             _roles,
             _permissions,
             ClientUri,
@@ -207,7 +242,7 @@ public partial class Clients
         private List<string> GrantTypes()
         {
             var grants = new List<string>();
-            if (!ServiceClient || Split(RedirectUris).Length > 0)
+            if (!ServiceClient || RedirectUris.Count > 0)
             {
                 grants.Add(ClientGrantTypes.AuthorizationCode);
                 if (RefreshTokens)
@@ -223,7 +258,5 @@ public partial class Clients
 
             return grants;
         }
-
-        private static string[] Split(string lines) => lines.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
     }
 }
