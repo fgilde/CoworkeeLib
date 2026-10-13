@@ -27,8 +27,10 @@
                     <MudNumericField T="int" Value="_schedule.DayOfMonth" ValueChanged="d => UpdateAsync(_schedule with { DayOfMonth = d })" Min="1" Max="31" Label="@L["Day of the month"]"
                                      ReadOnly="ReadOnly" Margin="Density.Margin" Style="max-width:140px" data-testid="cron-day" />
                 }
-                <MudTimePicker Time="new TimeSpan(_schedule.Hour, _schedule.Minute, 0)" TimeChanged="SetTimeAsync" AmPm="false" Label="@L["Time (UTC)"]"
-                               ReadOnly="ReadOnly" Margin="Density.Margin" Style="max-width:140px" data-testid="cron-time" />
+                <div style="max-width:140px">
+                    <MudTimePicker Time="new TimeSpan(_schedule.Hour, _schedule.Minute, 0)" TimeChanged="SetTimeAsync" AmPm="false" Label="@L["Time (UTC)"]"
+                                   ReadOnly="ReadOnly" Margin="Density.Margin" data-testid="cron-time" />
+                </div>
                 break;
         }
     </MudStack>
