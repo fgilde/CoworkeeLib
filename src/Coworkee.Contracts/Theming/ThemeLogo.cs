@@ -7,6 +7,8 @@ public static class ThemeLogo
 {
     public const int MaxBytes = 512 * 1024;
 
+    private const int MaxBase64Length = (MaxBytes + 2) / 3 * 4;
+
     public const string Svg = "image/svg+xml";
 
     public static readonly IReadOnlyList<string> ContentTypes = ["image/png", "image/jpeg", "image/webp", Svg];
@@ -40,8 +42,13 @@ public static class ThemeLogo
 
         var type = text[Prefix.Length..split].ToLowerInvariant();
         var payload = text[(split + Base64.Length)..];
+        if (payload.Length > MaxBase64Length || !ContentTypes.Contains(type))
+        {
+            return false;
+        }
+
         var buffer = new byte[payload.Length * 3 / 4 + 3];
-        if (!ContentTypes.Contains(type) || !Convert.TryFromBase64String(payload, buffer, out var written))
+        if (!Convert.TryFromBase64String(payload, buffer, out var written))
         {
             return false;
         }

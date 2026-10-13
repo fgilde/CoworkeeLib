@@ -10,8 +10,9 @@ using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Components;
 
-public partial class CoworkeeLayout : IDisposable
+public partial class CoworkeeLayout : IAsyncDisposable
 {
+    private IJSObjectReference? _module;
     private bool _drawer = true;
     private bool _dark;
     private bool _visible;
@@ -103,22 +104,33 @@ public partial class CoworkeeLayout : IDisposable
             return;
         }
 
-        _logo = ThemeService.Logo;
+        var logo = ThemeService.Logo;
         try
         {
-            var module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");
-            await module.InvokeVoidAsync("setFavicon", ThemeLogo.ToDataUrl(_logo));
+            _module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");
+            await _module.InvokeVoidAsync("setFavicon", ThemeLogo.ToDataUrl(logo));
+            _logo = logo;
         }
         catch (JSDisconnectedException)
         {
         }
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         ThemeService.Changed -= Refresh;
         Preferences.Changed -= FollowPin;
         L.Changed -= Refresh;
+        try
+        {
+            if (_module is not null)
+            {
+                await _module.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
     }
 
     private void FollowPin() => InvokeAsync(() =>

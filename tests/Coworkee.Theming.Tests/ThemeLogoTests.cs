@@ -36,6 +36,15 @@ public sealed class ThemeLogoTests
     }
 
     [Fact]
+    public void A_payload_longer_than_the_base64_of_the_maximum_does_not_read()
+    {
+        var payload = Convert.ToBase64String(new byte[ThemeLogo.MaxBytes]);
+
+        ThemeLogo.TryRead("data:image/png;base64," + payload, out _, out _).ShouldBeTrue();
+        ThemeLogo.TryRead("data:image/png;base64," + payload + "AAAA", out _, out _).ShouldBeFalse();
+    }
+
+    [Fact]
     public void Svg_markup_becomes_a_base64_data_url()
     {
         ThemeLogo.ToDataUrl("<svg/>").ShouldBe("data:image/svg+xml;base64," + Convert.ToBase64String("<svg/>"u8));

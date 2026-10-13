@@ -8,8 +8,10 @@ using MudBlazor.Extensions.Components;
 namespace Coworkee.Client.Blazor.Theming;
 
 /// <summary>Lets the user upload or pick an image (drive pickers included); closes with it as data URL, raster images shrunk to <see cref="Pixels"/>.</summary>
-public partial class ThemeLogoDialog
+public partial class ThemeLogoDialog : IAsyncDisposable
 {
+    private IJSObjectReference? _module;
+
     private const int Pixels = 512;
 
     // bigger than a logo may be so that a large photo can still be shrunk; the size check follows the shrinking
@@ -49,8 +51,8 @@ public partial class ThemeLogoDialog
         var logo = $"data:{file.ContentType};base64,{Convert.ToBase64String(data)}";
         if (!ThemeLogo.IsSvg(file.ContentType!))
         {
-            var module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");
-            logo = await module.InvokeAsync<string?>("resizeImage", logo, Pixels) ?? string.Empty;
+            _module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");
+            logo = await _module.InvokeAsync<string?>("resizeImage", logo, Pixels) ?? string.Empty;
         }
 
         if (!ThemeLogo.TryRead(logo, out var bytes, out _))
@@ -68,4 +70,18 @@ public partial class ThemeLogoDialog
     }
 
     private void Cancel() => Dialog.Cancel();
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (_module is not null)
+            {
+                await _module.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
 }

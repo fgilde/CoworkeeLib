@@ -39,17 +39,19 @@ export function resizeImage(dataUrl, max) {
 
 // null brings back the icon the page came with
 export function setFavicon(href) {
-    let link = document.querySelector('link[rel~="icon"]');
-    if (!link) {
+    let links = [...document.querySelectorAll('link[rel~="icon"]')];
+    if (!links.length) {
         if (!href) {
             return;
         }
-        link = document.head.appendChild(Object.assign(document.createElement('link'), { rel: 'icon' }));
+        links = [document.head.appendChild(Object.assign(document.createElement('link'), { rel: 'icon' }))];
     }
-    link.dataset.cwHref ??= link.getAttribute('href') ?? '';
-    link.dataset.cwType ??= link.getAttribute('type') ?? '';
-    link.setAttribute('href', href ?? link.dataset.cwHref);
-    link.setAttribute('type', href ? '' : link.dataset.cwType);
+    for (const link of links) {
+        link.dataset.cwHref ??= link.getAttribute('href') ?? '';
+        link.dataset.cwType ??= link.getAttribute('type') ?? '';
+        link.setAttribute('href', href ?? link.dataset.cwHref);
+        link.setAttribute('type', href ? '' : link.dataset.cwType);
+    }
 }
 
 export function onHotkey(dotnet, key) {
