@@ -52,6 +52,7 @@ public partial class AppConfigurationEditor<T>
     {
         SettingsFormRules.Apply(meta);
         (Registration.Meta as Action<ObjectEditMeta<T>>)?.Invoke(meta);
+        SettingsFormRules.WrapInColumns(meta);
         foreach (var property in Properties(meta, _locked))
         {
             property.AsReadOnly();

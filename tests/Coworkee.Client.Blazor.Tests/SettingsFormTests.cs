@@ -179,6 +179,25 @@ public sealed class SettingsFormTests : ClientTestBase
         Labels(form).ShouldNotContain("Default language");
     }
 
+    [Fact]
+    public void A_choice_setting_sits_in_its_grid_column()
+    {
+        Api.GetSettingDefinitionsAsync(false, Arg.Any<CancellationToken>()).Returns(
+        [
+            new SettingGroupDto("Translation", "Translation",
+            [
+                new SettingDefinitionDto("Translation.Note", "Note", null, SettingType.String, null, Global, null),
+                new SettingDefinitionDto("Translation.Service", "Service", "Which service translates", SettingType.Choice, "a", Global, ["a", "b"]),
+            ]),
+        ]);
+        var form = Render<SettingsForm>(p => p.Add(f => f.Scope, SettingScope.Global));
+
+        form.WaitForAssertion(() => Input(form, "Note"));
+        var selects = form.FindAll(".mud-ex-select");
+        selects.ShouldNotBeEmpty();
+        selects.ShouldAllBe(s => s.Closest(".mud-grid-item") != null);
+    }
+
     private async Task<IRenderedComponent<SettingsForm>> RenderLanguageAsync(SettingScope scope, string? stored)
     {
         Localization.GetLanguagesAsync(Arg.Any<bool>(), Arg.Any<CancellationToken>())

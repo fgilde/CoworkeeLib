@@ -92,6 +92,8 @@ public sealed partial class SettingsModel
                     .WithAttributesIf<object>(m => !Disabled(m), new KeyValuePair<string, object>(nameof(MudBaseInput<string>.Disabled), false));
             }
         }
+
+        SettingsFormRules.WrapInColumns(meta);
     }
 #pragma warning restore BL0005
 

@@ -17,13 +17,17 @@ public static class SettingsFormRules
     private static readonly PropertyResetSettings NoReset = new() { AllowReset = false };
 
 #pragma warning disable BL0005 // MudEx configures the wrapping grid items through these instances
-    public static void Apply<T>(ObjectEditMeta<T> meta)
-    {
+    /// <summary>Two columns; call again after RenderWith, which drops the wrapper of the property.</summary>
+    public static void WrapInColumns<T>(ObjectEditMeta<T> meta) =>
         meta.WrapEachInMudItem(i =>
         {
             i.xs = 12;
             i.md = 6;
         });
+
+    public static void Apply<T>(ObjectEditMeta<T> meta)
+    {
+        WrapInColumns(meta);
         foreach (var property in meta.AllProperties)
         {
             property.WithResetOptions(NoReset);

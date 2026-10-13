@@ -4,6 +4,10 @@ using Coworkee.Client.Blazor.Components;
 using Coworkee.Client.Blazor.Pages.Admin;
 using Coworkee.Contracts.Settings;
 using Microsoft.Extensions.DependencyInjection;
+using MudBlazor.Extensions;
+using MudBlazor.Extensions.Components;
+using MudBlazor.Extensions.Components.ObjectEdit;
+using MudBlazor.Extensions.Components.ObjectEdit.Options;
 using NSubstitute;
 
 namespace Coworkee.Client.Blazor.Tests;
@@ -61,6 +65,18 @@ public sealed class AppConfigurationEditorTests : ClientTestBase
         editor.FindAll("input").Single(i => i.GetAttribute("value") == "10").HasAttribute("readonly").ShouldBeFalse();
         editor.Markup.ShouldNotContain("Secret");
         editor.Markup.ShouldContain("Note");
+    }
+
+    [Fact]
+    public void A_property_the_registration_renders_with_another_component_keeps_its_grid_column()
+    {
+        Action<ObjectEditMeta<SampleConfig>> meta = m => m.Property(nameof(SampleConfig.Name))!.RenderWith<MudExSelect<string>, string?>(s => s.Value, s => s.ItemCollection = ["Default", "Other"]);
+        var registration = Registration with { Meta = meta };
+
+        var editor = Render<AppConfigurationEditor<SampleConfig>>(p => p.Add(e => e.Registration, registration));
+
+        editor.WaitForAssertion(() => editor.FindAll(".mud-ex-select").ShouldNotBeEmpty());
+        editor.FindAll(".mud-ex-select").ShouldAllBe(s => s.Closest(".mud-grid-item") != null);
     }
 
     [Fact]
