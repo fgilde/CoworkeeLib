@@ -1,0 +1,3 @@
+<p>{{ user.first_name }}様</p>
+<p>{{ new_email }} がアカウントの新しいメールアドレスであることを確認してください。確認が完了するまでは、{{ user.email }} でログインしてください。お心当たりがない場合は、このメッセージを無視してください。</p>
+<p style="margin:24px 0;"><a href="{{ confirm_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">新しいアドレスを確認</a></p>
