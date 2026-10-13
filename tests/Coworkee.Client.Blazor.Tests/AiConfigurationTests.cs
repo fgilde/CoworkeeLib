@@ -101,6 +101,14 @@ public sealed class AiConfigurationTests : ClientTestBase
     }
 
     [Fact]
+    public void A_stored_false_turns_the_mcp_switch_off()
+    {
+        var form = AiConnectionForm.From([new SettingValueDto(AiSettingNames.McpEnabled, "false", true)]);
+
+        form.McpEnabled.ShouldBeFalse();
+    }
+
+    [Fact]
     public void The_form_keeps_the_stored_key_only_for_its_provider_and_address()
     {
         var form = AiConnectionForm.From([new SettingValueDto(AiSettingNames.Provider, "azureOpenAI", true),

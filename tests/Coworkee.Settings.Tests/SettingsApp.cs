@@ -126,7 +126,7 @@ public sealed class SettingsTestDbContext(DbContextOptions<SettingsTestDbContext
 internal sealed class TestSettingDefinitions : ISettingDefinitionContributor
 {
     public void Define(SettingDefinitionContext context) =>
-        context.Group("Test", "Test")
+        context.Group("Test", "Test", page: "/admin/test-settings")
             .Add("Test.Text", "Text", SettingType.String, [SettingScope.Global, SettingScope.Tenant, SettingScope.User], "fallback", visibleToClient: true)
             .Add("Test.GlobalOnly", "Global only", SettingType.Int, [SettingScope.Global], "5")
             .Add("Test.Configured", "Configured", SettingType.Int, [SettingScope.Global], "1")

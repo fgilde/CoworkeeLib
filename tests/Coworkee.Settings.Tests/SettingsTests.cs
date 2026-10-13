@@ -154,6 +154,11 @@ public sealed class SettingsTests(SettingsApp app) : IAsyncLifetime
             .Single(g => g.Name == "Test").Settings.Select(s => s.Name).ShouldContain("Test.Secret");
 
     [Fact]
+    public async Task Definitions_carry_the_page_a_group_is_edited_on() =>
+        (await Admin.GetFromJsonAsync<SettingGroupDto[]>("/api/v1/settings/definitions", Ct))!
+            .Single(g => g.Name == "Test").Page.ShouldBe("/admin/test-settings");
+
+    [Fact]
     public async Task Definitions_carry_the_setting_another_one_depends_on()
     {
         var condition = (await Admin.GetFromJsonAsync<SettingGroupDto[]>("/api/v1/settings/definitions", Ct))!
