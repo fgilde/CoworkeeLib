@@ -27,8 +27,11 @@ public sealed class MailConnectionTestTests(MailApp app) : IAsyncLifetime
         client.PutAsJsonAsync($"/api/v1/settings/{scope}", new SetSettingsRequest(values.ToDictionary(v => v.Name, v => (string?)v.Value)), Ct);
 
     private Task<Result<MailConnectionTestDto>> TestAsync(Guid userId, Guid tenantId, Dictionary<string, string?> draft, params IMailTransport[] transports) =>
+        TestRequestAsync(userId, tenantId, new MailConnectionTestRequest(draft), transports);
+
+    private Task<Result<MailConnectionTestDto>> TestRequestAsync(Guid userId, Guid tenantId, MailConnectionTestRequest request, params IMailTransport[] transports) =>
         app.AsActorAsync(userId, tenantId, sp => ActivatorUtilities.CreateInstance<TestMailConnectionHandler>(sp, (IEnumerable<IMailTransport>)transports)
-            .HandleAsync(new TestMailConnection(new MailConnectionTestRequest(draft)), Ct));
+            .HandleAsync(new TestMailConnection(request), Ct));
 
     [Fact]
     public async Task Empty_secret_in_the_draft_uses_the_stored_key_and_mail_goes_to_the_current_user_immediately()
@@ -81,6 +84,40 @@ public sealed class MailConnectionTestTests(MailApp app) : IAsyncLifetime
         var result = await TestAsync(_setup.AdminUserId, _setup.TenantId, new() { [MailSettings.Provider] = MailProviders.SendGrid, [MailSettings.ApiKey] = "typed-key" }, transport);
 
         result.Value.ShouldBe(new MailConnectionTestDto(false, "401 for key ***"));
+    }
+
+    [Fact]
+    public async Task Stored_secrets_are_redacted_from_the_error()
+    {
+        await PutAsync(app.As(_setup.AdminUserId, _setup.TenantId), "global", (MailSettings.ApiKey, "stored-key"), (MailSettings.Password, "stored-pw"));
+        var transport = new RecordingTransport(MailProviders.SendGrid) { Failure = new InvalidOperationException("rejected stored-key and stored-pw") };
+
+        var result = await TestAsync(_setup.AdminUserId, _setup.TenantId, new() { [MailSettings.Provider] = MailProviders.SendGrid, [MailSettings.ApiKey] = "" }, transport);
+
+        result.Value.ShouldBe(new MailConnectionTestDto(false, "rejected *** and ***"));
+    }
+
+    [Fact]
+    public async Task A_cleared_secret_does_not_fall_back_to_the_stored_one()
+    {
+        await PutAsync(app.As(_otherUser, _otherTenant), "tenant", (MailSettings.ApiKey, "tenant-key"));
+        var transport = new RecordingTransport(MailProviders.SendGrid);
+
+        var result = await TestRequestAsync(_otherUser, _otherTenant,
+            new MailConnectionTestRequest(new Dictionary<string, string?> { [MailSettings.Provider] = MailProviders.SendGrid, [MailSettings.ApiKey] = "" }, [MailSettings.ApiKey]), transport);
+
+        result.Value.ShouldBe(new MailConnectionTestDto(false, "Mail API key is not configured."));
+        transport.Sent.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Organisations_get_only_the_exception_type_of_a_send_failure()
+    {
+        var transport = new RecordingTransport(MailProviders.SendGrid) { Failure = new InvalidOperationException("connect to 10.0.0.5:25 refused") };
+
+        var result = await TestAsync(_otherUser, _otherTenant, new() { [MailSettings.Provider] = MailProviders.SendGrid, [MailSettings.ApiKey] = "typed-key" }, transport);
+
+        result.Value.ShouldBe(new MailConnectionTestDto(false, "The test mail could not be sent. (InvalidOperationException)"));
     }
 
     [Fact]

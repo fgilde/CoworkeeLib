@@ -10,6 +10,7 @@ namespace Coworkee.Client.Blazor.Mail;
 /// </summary>
 public sealed class MailConfigurationForm
 {
+    private string _savedProvider = MailProviders.Smtp;
     private bool _hasApiKey;
     private bool _hasPassword;
 
@@ -45,7 +46,11 @@ public sealed class MailConfigurationForm
 
     public bool KeepsPassword => _hasPassword && !RemovePassword && string.IsNullOrWhiteSpace(NewPassword);
 
-    public bool KeepsApiKey => _hasApiKey && !RemoveApiKey && string.IsNullOrWhiteSpace(NewApiKey);
+    /// <summary>The stored key applies: nothing typed, not removed, same provider (a key is only valid for the provider it was saved for).</summary>
+    public bool KeepsApiKey => _hasApiKey && !RemoveApiKey && string.IsNullOrWhiteSpace(NewApiKey) && Provider == _savedProvider;
+
+    /// <summary>A stored key that will be dropped on save because the provider changed.</summary>
+    public bool DropsApiKey => _hasApiKey && !RemoveApiKey && string.IsNullOrWhiteSpace(NewApiKey) && Provider != _savedProvider;
 
     public bool UsesApiKey => Provider != MailProviders.Smtp;
 
@@ -69,11 +74,13 @@ public sealed class MailConfigurationForm
         string? Get(string name) => values.FirstOrDefault(v => v.Name == name) is { HasValue: true } stored
             ? stored.Value is { Length: > 0 } value ? value : null
             : defaults?.GetValueOrDefault(name) is { Length: > 0 } configured ? configured : null;
+        var provider = Get(MailSettings.Provider) is { } stored && MailProviders.All.Contains(stored) ? stored : MailProviders.Smtp;
         return new MailConfigurationForm
         {
             Tenant = tenant,
             OwnServer = bool.TryParse(Get(MailSettings.UseOwnServer), out var own) && own,
-            Provider = Get(MailSettings.Provider) is { } provider && MailProviders.All.Contains(provider) ? provider : MailProviders.Smtp,
+            Provider = provider,
+            _savedProvider = provider,
             Host = Get(MailSettings.Host),
             Port = int.TryParse(Get(MailSettings.Port), CultureInfo.InvariantCulture, out var port) ? port : 25,
             UseSsl = bool.TryParse(Get(MailSettings.UseSsl), out var ssl) && ssl,
@@ -103,17 +110,28 @@ public sealed class MailConfigurationForm
 
         values[MailSettings.Whitelist] = Trim(Whitelist);
         AddSecret(values, MailSettings.Password, NewPassword, _hasPassword, RemovePassword);
-        AddSecret(values, MailSettings.ApiKey, NewApiKey, _hasApiKey, RemoveApiKey);
+        AddSecret(values, MailSettings.ApiKey, NewApiKey, _hasApiKey, RemoveApiKey || DropsApiKey);
         return values;
     }
 
-    /// <summary>The draft for the test mail: a missing secret lets the server take the stored one.</summary>
+    /// <summary>The draft for the test mail: a missing secret lets the server take the stored one, unless it is removed or dropped.</summary>
     public MailConnectionTestRequest ToRequest()
     {
         var values = Values();
         values[MailSettings.Password] = Trim(NewPassword);
         values[MailSettings.ApiKey] = Trim(NewApiKey);
-        return new MailConnectionTestRequest(values);
+        List<string> cleared = [];
+        if (_hasPassword && !KeepsPassword)
+        {
+            cleared.Add(MailSettings.Password);
+        }
+
+        if (_hasApiKey && !KeepsApiKey)
+        {
+            cleared.Add(MailSettings.ApiKey);
+        }
+
+        return new MailConnectionTestRequest(values, cleared);
     }
 
     private Dictionary<string, string?> Values() => new()

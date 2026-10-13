@@ -24,12 +24,22 @@ internal sealed class TestMailConnectionHandler(
             return Error.Validation("User", "The current user has no email address.");
         }
 
-        var draft = command.Request.Values;
+        var request = command.Request;
+        MailConnection? connection = null;
+        IMailTransport transport;
         try
         {
-            var connection = await resolver.ResolveDraftAsync(draft, cancellationToken);
-            var transport = transports.FirstOrDefault(t => t.Provider == connection.Provider)
+            connection = await resolver.ResolveDraftAsync(request, cancellationToken);
+            transport = transports.FirstOrDefault(t => t.Provider == connection.Provider)
                 ?? throw new InvalidOperationException($"No mail transport is registered for provider '{connection.Provider}'.");
+        }
+        catch (InvalidOperationException exception)
+        {
+            return new MailConnectionTestDto(false, Redact(exception.Message, request, connection));
+        }
+
+        try
+        {
             await transport.SendAsync(
                 new MailEnvelope(connection[MailSettings.From] ?? "noreply@localhost", email, "Coworkee test mail", "<p>This is a test mail from Coworkee. Your mail settings work.</p>"),
                 connection,
@@ -38,18 +48,25 @@ internal sealed class TestMailConnectionHandler(
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            return new MailConnectionTestDto(false, Redact(exception.Message, draft));
+            // an organisation chooses its SMTP host: its admins must not read network errors of the server (a probe of the internal network)
+            var error = await resolver.IsSystemAsync(cancellationToken)
+                ? Redact(exception.Message, request, connection)
+                : $"The test mail could not be sent. ({exception.GetType().Name})";
+            return new MailConnectionTestDto(false, error);
         }
     }
 
-    // the transports already hide the key they used; this also covers a typed one that never got that far
-    private static string Redact(string message, IReadOnlyDictionary<string, string?> draft)
+    // transports hide the key they send with; this covers every secret of the form and of the stored settings
+    private static string Redact(string message, MailConnectionTestRequest request, MailConnection? connection)
     {
         foreach (var name in SecretNames)
         {
-            if (draft.GetValueOrDefault(name) is { Length: > 0 } secret)
+            foreach (var secret in new[] { request.Values.GetValueOrDefault(name), connection?[name] })
             {
-                message = message.Replace(secret, "***", StringComparison.OrdinalIgnoreCase);
+                if (secret is { Length: > 0 })
+                {
+                    message = message.Replace(secret, "***", StringComparison.OrdinalIgnoreCase);
+                }
             }
         }
 

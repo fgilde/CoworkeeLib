@@ -47,6 +47,10 @@ public partial class MailConfiguration
 
     private string SecretHelp(bool removed) => L[removed ? "The stored key is removed on save." : "Stored encrypted; it is never shown again."];
 
+    private string ApiKeyHelp => _form!.DropsApiKey
+        ? L["The stored key belongs to the previous provider and is removed on save; enter the key for this one."]
+        : SecretHelp(_form.RemoveApiKey);
+
     private async Task LoadAsync()
     {
         await Snackbar.RunAsync(async () =>

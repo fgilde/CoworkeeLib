@@ -141,6 +141,17 @@ public sealed class MailTransportTests
         error.Message.ShouldNotContain("ret");
     }
 
+    [Fact]
+    public async Task Error_response_redacts_the_basic_auth_form_of_the_key()
+    {
+        var http = new FakeHttp(HttpStatusCode.Unauthorized, "echo " + Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes($"api:{ApiKey}")));
+
+        var error = await Should.ThrowAsync<InvalidOperationException>(() =>
+            new MailgunMailTransport(http).SendAsync(Mail, Connection(MailProviders.Mailgun, (MailSettings.ApiKey, ApiKey), (MailSettings.MailgunDomain, "mg.acme.test")), Ct));
+
+        error.Message.ShouldBe("Mailgun rejected the mail with 401 Unauthorized: echo ***");
+    }
+
     private sealed class FakeHttp(HttpStatusCode status, string response) : HttpMessageHandler, IHttpClientFactory
     {
         public string Url { get; private set; } = string.Empty;

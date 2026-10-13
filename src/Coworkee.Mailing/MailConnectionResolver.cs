@@ -19,17 +19,23 @@ internal sealed class MailConnectionResolver(ISettingProvider settings, ICurrent
     public async Task<MailConnection> ResolveAsync(CancellationToken cancellationToken) =>
         await ResolveAsync(await ScopeAsync(cancellationToken), null, cancellationToken);
 
-    /// <summary>The unsaved form of the current scope (system organisation: Global, else the organisation's own); an empty secret keeps the stored one.</summary>
-    public async Task<MailConnection> ResolveDraftAsync(IReadOnlyDictionary<string, string?> draft, CancellationToken cancellationToken) =>
-        await ResolveAsync(await IsSystemAsync(cancellationToken) ? SettingScope.Global : SettingScope.Tenant, draft, cancellationToken);
+    /// <summary>The unsaved form of the current scope (system organisation: Global, else the organisation's own); an empty secret keeps the stored one unless it is listed as cleared.</summary>
+    public async Task<MailConnection> ResolveDraftAsync(MailConnectionTestRequest request, CancellationToken cancellationToken) =>
+        await ResolveAsync(await IsSystemAsync(cancellationToken) ? SettingScope.Global : SettingScope.Tenant, request, cancellationToken);
 
-    private async Task<MailConnection> ResolveAsync(SettingScope scope, IReadOnlyDictionary<string, string?>? draft, CancellationToken cancellationToken)
+    private async Task<MailConnection> ResolveAsync(SettingScope scope, MailConnectionTestRequest? request, CancellationToken cancellationToken)
     {
+        var draft = request?.Values;
         async Task<string?> GetAsync(string name, bool storedOnly = false)
         {
             if (draft is not null && draft.TryGetValue(name, out var typed) && (!Secrets.Contains(name) || !string.IsNullOrWhiteSpace(typed)))
             {
                 return string.IsNullOrWhiteSpace(typed) ? null : typed.Trim();
+            }
+
+            if (request?.Cleared?.Contains(name) == true)
+            {
+                return null;
             }
 
             return await settings.GetForScopeAsync(name, scope, storedOnly, cancellationToken);
@@ -62,7 +68,7 @@ internal sealed class MailConnectionResolver(ISettingProvider settings, ICurrent
         return new MailConnection(provider, values);
     }
 
-    private async Task<bool> IsSystemAsync(CancellationToken cancellationToken) =>
+    public async Task<bool> IsSystemAsync(CancellationToken cancellationToken) =>
         currentUser.TenantId is not { } tenantId
         || (services.GetService<ITenantDirectory>() is { } tenants && await tenants.IsSystemTenantAsync(tenantId, cancellationToken));
 

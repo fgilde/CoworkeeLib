@@ -941,6 +941,7 @@
   "Use the assistant and the MCP server": "Den Assistenten und den MCP-Server nutzen",
   "MCP server enabled": "MCP-Server aktiv",
   "Off: MCP clients get no tools and run nothing, also with valid keys. Needs no AI provider.": "Aus: MCP-Clients bekommen keine Werkzeuge und führen nichts aus, auch mit gültigen Schlüsseln. Braucht keinen KI-Anbieter.",
+  "The stored key belongs to the previous provider and is removed on save; enter the key for this one.": "Der gespeicherte Schlüssel gehört zum vorherigen Anbieter und wird beim Speichern entfernt; geben Sie den Schlüssel für diesen ein.",
   "Mail settings": "Mail-Einstellungen",
   "How the application sends mail. Changes apply to the next mail, without a restart.": "Wie die Anwendung Mails versendet. Änderungen gelten ab der nächsten Mail, ohne Neustart.",
   "Own mail server": "Eigener Mailserver",

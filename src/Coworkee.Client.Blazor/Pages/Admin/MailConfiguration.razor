@@ -60,15 +60,15 @@ else
                             <MudTextField T="string" @bind-Value="_form.UserName" Label="@L["SMTP user name"]" Variant="Variant.Outlined" Clearable="true" data-testid="mail-user" />
                         </MudItem>
                         <MudItem xs="12" md="6">
-                            <SecretField Label="@L["SMTP password"]" Stored="_form.KeepsPassword" @bind-Value="_form.NewPassword" Removed="() => _form.RemovePassword = true"
+                            <SecretField @key="_form" Label="@L["SMTP password"]" Stored="_form.KeepsPassword" @bind-Value="_form.NewPassword" Removed="() => _form.RemovePassword = true"
                                          Help="@SecretHelp(_form.RemovePassword)" TestId="mail-smtp-password" />
                         </MudItem>
                     }
                     else
                     {
                         <MudItem xs="12" md="@(_form.Provider == MailProviders.Mailgun ? 6 : 12)">
-                            <SecretField Label="@L["API key"]" Stored="_form.KeepsApiKey" @bind-Value="_form.NewApiKey" Removed="() => _form.RemoveApiKey = true"
-                                         Required="true" Help="@SecretHelp(_form.RemoveApiKey)" TestId="mail-key" />
+                            <SecretField @key="_form" Label="@L["API key"]" Stored="_form.KeepsApiKey" @bind-Value="_form.NewApiKey" Removed="() => _form.RemoveApiKey = true"
+                                         Required="true" Help="@ApiKeyHelp" TestId="mail-key" />
                         </MudItem>
                     }
                     @if (_form.Provider == MailProviders.Mailgun)

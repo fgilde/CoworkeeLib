@@ -131,6 +131,65 @@ public sealed class MailConfigurationTests : ClientTestBase
     }
 
     [Fact]
+    public async Task Another_provider_drops_the_stored_key_and_going_back_keeps_it()
+    {
+        var page = RenderPage();
+        page.WaitForAssertion(() => page.Find("[data-testid='mail-key-stored']"));
+
+        await page.Find("[data-mail-provider='mailchimp']").ClickAsync(new());
+
+        page.FindAll("[data-testid='mail-key-stored']").ShouldBeEmpty();
+        page.Find("[data-testid='mail-key']");
+        page.Markup.ShouldContain("previous provider");
+        page.Find("[data-testid='mail-test']").HasAttribute("disabled").ShouldBeTrue();
+        await page.Find("[data-testid='mail-save']").ClickAsync(new());
+        await Api.Received(1).SetSettingsAsync(SettingScope.Global, Arg.Is<IReadOnlyDictionary<string, string?>>(v =>
+            v[MailSettings.Provider] == MailProviders.Mailchimp && v.ContainsKey(MailSettings.ApiKey) && v[MailSettings.ApiKey] == null), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Going_back_to_the_loaded_provider_keeps_the_stored_key()
+    {
+        var page = RenderPage();
+        page.WaitForAssertion(() => page.Find("[data-testid='mail-key-stored']"));
+
+        await page.Find("[data-mail-provider='mailchimp']").ClickAsync(new());
+        await page.Find("[data-mail-provider='sendGrid']").ClickAsync(new());
+        page.Find("[data-testid='mail-key-stored']");
+        await page.Find("[data-testid='mail-save']").ClickAsync(new());
+
+        await Api.Received(1).SetSettingsAsync(SettingScope.Global, Arg.Is<IReadOnlyDictionary<string, string?>>(v => !v.ContainsKey(MailSettings.ApiKey)), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Discard_returns_a_replaced_secret_to_its_stored_view()
+    {
+        var page = RenderPage();
+        page.WaitForAssertion(() => page.Find("[data-testid='mail-key-stored']"));
+        await page.Find("[data-testid='mail-key-replace']").ClickAsync(new());
+        page.FindAll("[data-testid='mail-key-stored']").ShouldBeEmpty();
+
+        await page.Find("[data-testid='mail-discard']").ClickAsync(new());
+
+        page.WaitForAssertion(() => page.Find("[data-testid='mail-key-stored']"));
+    }
+
+    [Fact]
+    public void Test_request_lists_the_secrets_the_form_removes_or_drops()
+    {
+        var form = MailConfigurationForm.Load([new SettingValueDto(MailSettings.Provider, MailProviders.SendGrid, true), new SettingValueDto(MailSettings.ApiKey, null, true),
+            new SettingValueDto(MailSettings.Password, null, true)], null, tenant: false);
+
+        form.ToRequest().Cleared.ShouldBeEmpty();
+        form.RemovePassword = true;
+        form.ToRequest().Cleared.ShouldBe([MailSettings.Password]);
+        form.Provider = MailProviders.Mailgun;
+        form.ToRequest().Cleared.ShouldBe([MailSettings.Password, MailSettings.ApiKey], ignoreOrder: true);
+        form.Provider = MailProviders.SendGrid;
+        form.ToRequest().Cleared.ShouldBe([MailSettings.Password]);
+    }
+
+    [Fact]
     public void Form_keeps_a_stored_secret_until_one_is_typed_or_removed()
     {
         var form = MailConfigurationForm.Load([new SettingValueDto(MailSettings.ApiKey, null, true), new SettingValueDto(MailSettings.Password, null, true)], null, tenant: false);

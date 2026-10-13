@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -41,5 +42,7 @@ internal static class MailHttp
             JsonEncodedText.Encode(secret, JavaScriptEncoder.UnsafeRelaxedJsonEscaping).ToString(),
             Uri.EscapeDataString(secret),
             WebUtility.UrlEncode(secret),
+            Convert.ToBase64String(Encoding.UTF8.GetBytes(secret)),
+            Convert.ToBase64String(Encoding.UTF8.GetBytes($"api:{secret}")),
         }.Distinct();
 }
