@@ -50,7 +50,7 @@ public partial class SettingsForm
             .Where(g => g.Settings.Count > 0)
             .ToList();
         _model = new SettingsModel(groups, stored);
-        _meta = _model.Value.ObjectEditMeta(meta => _model.Configure(meta, L));
+        _meta = _model.Value.ObjectEditMeta(meta => _model.Configure(meta, L, Scope));
         _revision++;
     }
 

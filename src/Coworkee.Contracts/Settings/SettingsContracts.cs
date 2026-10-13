@@ -19,6 +19,7 @@ public enum SettingType
     Int,
     Secret,
     Choice,
+    Language,
 }
 
 public static class TableSettings

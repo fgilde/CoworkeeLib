@@ -1,7 +1,10 @@
 using Bunit;
 using Coworkee.Client.Blazor.Components;
+using Coworkee.Client.Blazor.Localization;
+using Coworkee.Contracts.Localization;
 using Coworkee.Contracts.Settings;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 
 namespace Coworkee.Client.Blazor.Tests;
@@ -132,6 +135,26 @@ public sealed class SettingsFormTests : ClientTestBase
         Labels(form).ShouldNotContain("Model");
     }
 
+    [Theory]
+    [InlineData(SettingScope.Global, "Configured default")]
+    [InlineData(SettingScope.Tenant, "Inherited")]
+    public async Task A_language_setting_is_a_select_of_the_languages(SettingScope scope, string emptyOption)
+    {
+        Localization.GetLanguagesAsync(Arg.Any<bool>(), Arg.Any<CancellationToken>())
+            .Returns([new LanguageDto(null, "en", "English", true, true), new LanguageDto(null, "de", "Deutsch", true, false)]);
+        await Services.GetRequiredService<CoworkeeLocalizer>().InitializeAsync(null);
+        SettingScope[] scopes = [scope];
+        Api.GetSettingDefinitionsAsync(false, Arg.Any<CancellationToken>()).Returns(
+        [
+            new SettingGroupDto("Localization", "Localization", [new SettingDefinitionDto("Localization.Culture", "Default language", null, SettingType.Language, null, scopes, null)]),
+        ]);
+        Api.GetSettingsAsync(scope, Arg.Any<CancellationToken>()).Returns([new SettingValueDto("Localization.Culture", "de", true)]);
+
+        var form = Render<SettingsForm>(p => p.Add(f => f.Scope, scope));
+
+        form.WaitForAssertion(() => form.Find("div.mud-input-root.mud-ex-select-input").TextContent.Trim().ShouldBe("Deutsch"));
+        form.FindAll(".mud-ex-list-item-text").Select(i => i.TextContent.Trim()).ShouldBe([emptyOption, "English", "Deutsch"]);
+    }
     [Fact]
     public void A_setting_name_becomes_a_property_name()
     {

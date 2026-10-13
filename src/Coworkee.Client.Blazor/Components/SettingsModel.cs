@@ -41,9 +41,9 @@ public sealed partial class SettingsModel
     /// <summary>The object the form edits.</summary>
     public object Value { get; }
 
-    /// <summary>Label, help text, group and editor of every setting; secrets as password, choices as select.</summary>
+    /// <summary>Label, help text, group and editor of every setting; secrets as password, choices and languages as select.</summary>
 #pragma warning disable BL0005 // MudEx configures the rendered editors through these instances
-    public void Configure(ObjectEditMeta<object> meta, CoworkeeLocalizer l)
+    public void Configure(ObjectEditMeta<object> meta, CoworkeeLocalizer l, SettingScope scope)
     {
         SettingsFormRules.Apply(meta);
         foreach (var (group, setting) in _settings)
@@ -66,6 +66,14 @@ public sealed partial class SettingsModel
                     break;
                 case SettingType.Choice:
                     property.RenderWith<MudExSelect<string>, string?>(s => s.Value, s => s.ItemCollection = [.. setting.Choices ?? []]);
+                    break;
+                case SettingType.Language:
+                    var empty = l[scope == SettingScope.Global ? "Configured default" : "Inherited"];
+                    property.RenderWith<MudExSelect<string>, string?>(s => s.Value, s =>
+                    {
+                        s.ItemCollection = [string.Empty, .. l.Languages.Select(c => c.Culture)];
+                        s.ToStringFunc = culture => string.IsNullOrEmpty(culture) ? empty : l.Languages.FirstOrDefault(c => c.Culture == culture)?.Name ?? culture!;
+                    });
                     break;
             }
 

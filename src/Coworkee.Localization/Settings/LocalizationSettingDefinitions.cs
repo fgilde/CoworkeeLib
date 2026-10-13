@@ -13,7 +13,8 @@ internal sealed class LocalizationSettingDefinitions : ISettingDefinitionContrib
     public void Define(SettingDefinitionContext context)
     {
         context.Group("Localization", "Localization")
-            .Add(LocalizationSettings.Culture, "Language", SettingType.String, [SettingScope.Global, SettingScope.Tenant, SettingScope.User], visibleToClient: true);
+            .Add(LocalizationSettings.Culture, "Default language", SettingType.Language, [SettingScope.Global, SettingScope.Tenant, SettingScope.User], visibleToClient: true,
+                description: "The language the app starts in. An organisation overrides the system, a user overrides both; empty inherits.");
         context.Group("Translation", "Translation")
             .Add(LocalizationSettings.TranslationProvider, "Translation service", SettingType.Choice, Global, TranslationProviders.Azure, choices: TranslationProviders.All,
                 description: "Translates the texts a language lacks. libreTranslate: free, self-hosted, no account. myMemory: free public service, 5,000 characters a day (50,000 with an email). deepL, azure, google: an API key. ai: the model of the AI assistant.")
