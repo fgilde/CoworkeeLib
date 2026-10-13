@@ -9,11 +9,11 @@ namespace Coworkee.Client.Blazor.Theming;
 /// <summary>Maps the stored theme sections (palettes, typography, layout, shadows, options) to a <see cref="CoworkeeTheme"/> and back.</summary>
 public static class ThemeMapper
 {
-    private static readonly string[] Meta = [nameof(CoworkeeTheme.IsPublished), nameof(CoworkeeTheme.LogoSvg), nameof(CoworkeeTheme.CustomCss)];
+    private static readonly string[] Meta = [nameof(CoworkeeTheme.IsPublished), nameof(CoworkeeTheme.Logo), nameof(CoworkeeTheme.CustomCss)];
 
     public static CoworkeeTheme ToTheme(ThemeDto dto)
     {
-        var theme = new CoworkeeTheme { IsPublished = dto.IsPublished, LogoSvg = dto.LogoSvg, CustomCss = dto.CustomCss };
+        var theme = new CoworkeeTheme { IsPublished = dto.IsPublished, Logo = dto.Logo, CustomCss = dto.CustomCss };
         Fill(theme.PaletteLight, dto.PaletteLight);
         Fill(theme.PaletteDark, dto.PaletteDark);
         Fill(theme.Typography, dto.Typography);
@@ -38,7 +38,7 @@ public static class ThemeMapper
         Json(theme.PaletteDark),
         Json(theme.Typography),
         Json(theme.LayoutProperties),
-        string.IsNullOrWhiteSpace(theme.LogoSvg) ? null : theme.LogoSvg,
+        string.IsNullOrWhiteSpace(theme.Logo) ? null : theme.Logo,
         string.IsNullOrWhiteSpace(theme.CustomCss) ? null : theme.CustomCss,
         Json(theme.Shadows),
         JsonSerializer.SerializeToElement(Values(theme, Options)),

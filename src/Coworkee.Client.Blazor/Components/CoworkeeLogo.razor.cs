@@ -1,10 +1,10 @@
-using System.Text;
 using Coworkee.Client.Blazor.Theming;
+using Coworkee.Contracts.Theming;
 using Microsoft.AspNetCore.Components;
 
 namespace Coworkee.Client.Blazor.Components;
 
-/// <summary>The theme's logo, or the app's (<see cref="CoworkeeClientOptions.AppLogo"/>) when the theme has none.</summary>
+/// <summary>The theme's logo (SVG markup or an image data URL), or the app's (<see cref="CoworkeeClientOptions.AppLogo"/>) when the theme has none.</summary>
 public partial class CoworkeeLogo : IDisposable
 {
     [Parameter] public int Height { get; set; } = 28;
@@ -18,9 +18,7 @@ public partial class CoworkeeLogo : IDisposable
 
     [Inject] private ThemeService ThemeService { get; set; } = null!;
 
-    private string? Source => ThemeService.LogoSvg is { Length: > 0 } svg
-        ? $"data:image/svg+xml;base64,{Convert.ToBase64String(Encoding.UTF8.GetBytes(svg))}"
-        : Options.AppLogo;
+    private string? Source => ThemeLogo.ToDataUrl(ThemeService.Logo) ?? Options.AppLogo;
 
     protected override void OnInitialized() => ThemeService.Changed += Refresh;
 

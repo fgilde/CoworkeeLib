@@ -185,7 +185,7 @@ internal sealed class ThemeHandlers(CoworkeeDbContext db, ICurrentUser currentUs
         theme.Shadows = Raw(request.Shadows);
         theme.Options = Raw(request.Options);
         theme.IsPublished = request.IsPublished;
-        theme.LogoSvg = string.IsNullOrWhiteSpace(request.LogoSvg) ? null : request.LogoSvg.Trim();
+        theme.Logo = string.IsNullOrWhiteSpace(request.Logo) ? null : request.Logo.Trim();
         theme.CustomCss = string.IsNullOrWhiteSpace(request.CustomCss) ? null : request.CustomCss;
     }
 
@@ -201,7 +201,7 @@ internal sealed class ThemeHandlers(CoworkeeDbContext db, ICurrentUser currentUs
         Parse(theme.PaletteDark)!.Value,
         Parse(theme.Typography),
         Parse(theme.LayoutProperties),
-        theme.LogoSvg,
+        theme.Logo,
         theme.CustomCss,
         theme.Revision,
         Parse(theme.Shadows),

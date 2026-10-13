@@ -16,7 +16,7 @@ public sealed class ThemeService(Api.ICoworkeeApi api)
 
     public string? CustomCss => Theme.CustomCss;
 
-    public string? LogoSvg => Theme.LogoSvg;
+    public string? Logo => Theme.Logo;
 
     /// <summary>The settings the server shares with the client, read once with the theme.</summary>
     public IReadOnlyDictionary<string, string?> ClientSettings { get; private set; } = new Dictionary<string, string?>();

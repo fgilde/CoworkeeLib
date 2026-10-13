@@ -116,6 +116,19 @@ public sealed class AuthDesignTests(AuthApp app) : IAsyncLifetime
         new AuthBranding("App", null, null, new SignInDesign { MediaUrl = "/v/intro.webm?x=1" }).MediaIsVideo.ShouldBeTrue();
     }
 
+    [Theory]
+    [InlineData("data:image/png;base64,iVBORw0KGgo=", "data:image/png;base64,iVBORw0KGgo=")]
+    [InlineData("<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>", "data:image/svg&#x2B;xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==")]
+    public async Task The_account_pages_show_the_logo_of_the_default_theme_as_data_url(string logo, string shown)
+    {
+        var palette = JsonSerializer.SerializeToElement(new { Primary = "#123456" });
+        var created = await OidcFlow.SendAsync(app, _setup.AdminUserId, _setup.TenantId, new CreateTheme(new ThemeRequest("Logo", palette, palette, null, null, logo, null)));
+        (await OidcFlow.SendAsync(app, _setup.AdminUserId, _setup.TenantId, new SetDefaultTheme(created.Value.Id))).IsSuccess.ShouldBeTrue();
+        await ForgetBrandingAsync();
+
+        (await GetAsync("/Account/Login")).ShouldContain($"<img src=\"{shown}\"");
+    }
+
     // a theme that still carries the former per theme design: it no longer counts
     private async Task UseThemeAsync()
     {
