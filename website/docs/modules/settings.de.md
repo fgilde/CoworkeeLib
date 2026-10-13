@@ -79,7 +79,7 @@ context.Group("FilePickers", "Cloud file pickers")
         enabledWhen: SettingCondition.IsTrue("FilePickers.GoogleDrive.Enabled"));
 
 // mehrere Werte: die Übersetzungsfelder hängen vom Anbieter ab
-enabledWhen: new SettingCondition("Translation.Provider", ["DeepL", "Azure"])
+enabledWhen: new SettingCondition(LocalizationSettings.TranslationProvider, [TranslationProviders.DeepL, TranslationProviders.Azure])
 ```
 
 Das ist nur eine Erleichterung im Formular; der Server erzwingt sie nicht. Eine Bedingung auf eine Einstellung, die nicht im Formular steht (etwa in einem anderen Bereich), lässt das Feld aktiv.

@@ -79,7 +79,7 @@ context.Group("FilePickers", "Cloud file pickers")
         enabledWhen: SettingCondition.IsTrue("FilePickers.GoogleDrive.Enabled"));
 
 // several values: the translation fields depend on the provider
-enabledWhen: new SettingCondition("Translation.Provider", ["DeepL", "Azure"])
+enabledWhen: new SettingCondition(LocalizationSettings.TranslationProvider, [TranslationProviders.DeepL, TranslationProviders.Azure])
 ```
 
 This is a convenience of the form only; the server does not enforce it. A condition on a setting that is not part of the form (another scope, for example) leaves the field enabled.
