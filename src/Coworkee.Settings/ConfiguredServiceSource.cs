@@ -21,11 +21,11 @@ internal sealed class ConfiguredServiceSource(IOptionsMonitor<CoworkeeServicesOp
         return await Task.WhenAll(probes);
     }
 
-    public ServiceDto? Find(string name) =>
-        options.CurrentValue
+    public Task<ServiceDto?> FindAsync(string name, CancellationToken cancellationToken) =>
+        Task.FromResult(options.CurrentValue
             .Where(s => string.Equals(s.Key, name, StringComparison.OrdinalIgnoreCase) && Uri.TryCreate(s.Value.Url, UriKind.Absolute, out _))
-            .Select(s => ToDto(s.Key, s.Value, ServiceHealth.Healthy))
-            .FirstOrDefault();
+            .Select(s => ToDto(s.Key, s.Value, ServiceHealth.Unknown))
+            .FirstOrDefault());
 
     private static ServiceDto ToDto(string name, CoworkeeServiceOptions service, ServiceHealth health) =>
         new(name, service.Title ?? name, service.Url!, health);

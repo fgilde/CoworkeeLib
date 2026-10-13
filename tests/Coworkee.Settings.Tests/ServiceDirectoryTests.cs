@@ -24,7 +24,7 @@ public sealed class ServiceDirectoryTests
     {
         using var provider = Build(new FakeHandler(_ => Json(Apps)), aspire: o => o.Url = "http://aspire.test");
 
-        var services = await provider.GetRequiredService<IServiceDirectory>().GetAllAsync(Ct);
+        var services = (await Dir(provider).GetAllAsync(Ct)).Services;
 
         services.Select(s => (s.Name, s.Title, s.Url, s.Health, s.Source, Urls: string.Join(" ", s.Urls!))).ShouldBe(
         [
@@ -41,12 +41,12 @@ public sealed class ServiceDirectoryTests
 
         using (var provider = Build(withKey, aspire: o => (o.Url, o.ApiKey) = ("http://aspire.test", "s3cret")))
         {
-            await provider.GetRequiredService<IServiceDirectory>().GetAllAsync(Ct);
+            await Dir(provider).GetAllAsync(Ct);
         }
 
         using (var provider = Build(withoutKey, aspire: o => o.Url = "http://aspire.test"))
         {
-            await provider.GetRequiredService<IServiceDirectory>().GetAllAsync(Ct);
+            await Dir(provider).GetAllAsync(Ct);
         }
 
         withKey.Requests.ShouldHaveSingleItem().Headers.GetValues("X-Api-Key").ShouldBe(["s3cret"]);
@@ -63,10 +63,96 @@ public sealed class ServiceDirectoryTests
         var log = new ListLoggerProvider();
         using var provider = Build(new FakeHandler(_ => new HttpResponseMessage(status)), log, o => (o.Url, o.ApiKey) = ("http://aspire.test", "s3cret"));
 
-        var services = await provider.GetRequiredService<IServiceDirectory>().GetAllAsync(Ct);
+        var result = await Dir(provider).GetAllAsync(Ct);
 
-        services.ShouldBeEmpty();
-        log.Messages.ShouldHaveSingleItem().ShouldNotContain("s3cret");
+        result.Services.ShouldBeEmpty();
+        result.UnavailableSources.ShouldBe(["aspireui"]);
+        log.Messages.ShouldNotBeEmpty();
+        log.Messages.ShouldAllBe(m => !m.Contains("s3cret"));
+    }
+
+    [Fact]
+    public async Task A_failed_request_is_cached_like_an_answer()
+    {
+        var handler = new FakeHandler(_ => new HttpResponseMessage(HttpStatusCode.InternalServerError));
+        using var provider = Build(handler, aspire: o => o.Url = "http://aspire.test");
+
+        await Dir(provider).GetAllAsync(Ct);
+        await Dir(provider).GetAllAsync(Ct);
+
+        handler.Requests.Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task An_answer_that_is_not_the_app_list_marks_the_AspireUI_unavailable()
+    {
+        var html = new FakeHandler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("<html></html>", Encoding.UTF8, "text/html") });
+        var broken = new FakeHandler(_ => Json("{ not json"));
+        using var htmlProvider = Build(html, aspire: o => o.Url = "http://aspire.test");
+        using var brokenProvider = Build(broken, aspire: o => o.Url = "http://aspire.test");
+
+        var htmlResult = await Dir(htmlProvider).GetAllAsync(Ct);
+        var brokenResult = await Dir(brokenProvider).GetAllAsync(Ct);
+
+        htmlResult.Services.ShouldBeEmpty();
+        htmlResult.UnavailableSources.ShouldBe(["aspireui"]);
+        brokenResult.UnavailableSources.ShouldBe(["aspireui"]);
+    }
+
+    [Fact]
+    public async Task Null_and_nameless_entries_of_the_app_list_are_skipped()
+    {
+        using var provider = Build(new FakeHandler(_ => Json("""[null, {"healthy": true}, {"name": "ok", "healthy": true, "urls": [null, "", "http://ok.test"]}]""")), aspire: o => o.Url = "http://aspire.test");
+
+        var result = await Dir(provider).GetAllAsync(Ct);
+
+        result.Services.Select(s => (s.Name, s.Url, string.Join(" ", s.Urls!))).ShouldBe([("ok", "http://ok.test", "http://ok.test")]);
+        result.UnavailableSources.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task A_path_in_the_AspireUI_address_is_kept()
+    {
+        var handler = new FakeHandler(_ => Json(Apps));
+        using var provider = Build(handler, aspire: o => o.Url = "http://aspire.test/ui/");
+
+        await Dir(provider).GetAllAsync(Ct);
+
+        handler.Requests.ShouldHaveSingleItem().RequestUri!.AbsoluteUri.ShouldBe("http://aspire.test/ui/api/retrieve/apps");
+    }
+
+    [Fact]
+    public async Task A_failing_source_is_left_out_and_named_while_the_others_still_answer()
+    {
+        using var provider = Build(new FakeHandler(_ => Json(Apps)), aspire: o => o.Url = "http://aspire.test", configure: s => s.AddSingleton<IServiceSource, ThrowingSource>());
+        var directory = Dir(provider);
+
+        var all = await directory.GetAllAsync(Ct);
+        var shop = await directory.ResolveAsync("shop", Ct);
+
+        all.Services.Select(s => s.Name).ShouldBe(["billing", "shop"]);
+        all.UnavailableSources.ShouldBe(["broken"]);
+        shop!.Source.ShouldBe("aspireui");
+    }
+
+    [Fact]
+    public async Task A_cancelled_caller_is_not_taken_for_a_failing_source()
+    {
+        using var provider = Build(new FakeHandler(_ => Json(Apps)), configure: s => s.AddSingleton<IServiceSource, ThrowingSource>());
+        using var cancelled = new CancellationTokenSource();
+        await cancelled.CancelAsync();
+
+        await Should.ThrowAsync<OperationCanceledException>(() => Dir(provider).GetAllAsync(cancelled.Token));
+    }
+
+    [Fact]
+    public async Task A_scoped_source_can_be_registered()
+    {
+        using var provider = Build(new FakeHandler(_ => Json(Apps)), configure: s => s.AddScoped<ScopedMarker>().AddScoped<IServiceSource, ScopedSource>());
+
+        var all = await Dir(provider).GetAllAsync(Ct);
+
+        all.Services.Select(s => s.Name).ShouldBe(["scoped"]);
     }
 
     [Fact]
@@ -84,7 +170,7 @@ public sealed class ServiceDirectoryTests
         using var provider = Build(handler, aspire: o => o.Url = "http://aspire.test", services: o => o["self"] = new CoworkeeServiceOptions { Url = "http://self.test" });
 
         var started = DateTime.UtcNow;
-        var services = await provider.GetRequiredService<IServiceDirectory>().GetAllAsync(Ct);
+        var services = (await Dir(provider).GetAllAsync(Ct)).Services;
 
         services.Select(s => s.Name).ShouldBe(["self"]);
         (DateTime.UtcNow - started).ShouldBeLessThan(TimeSpan.FromSeconds(10));
@@ -96,8 +182,10 @@ public sealed class ServiceDirectoryTests
         var handler = new FakeHandler(_ => Json(Apps));
         using var provider = Build(handler);
 
-        (await provider.GetRequiredService<IServiceDirectory>().GetAllAsync(Ct)).ShouldBeEmpty();
+        var result = await Dir(provider).GetAllAsync(Ct);
 
+        result.Services.ShouldBeEmpty();
+        result.UnavailableSources.ShouldBeEmpty();
         handler.Requests.ShouldBeEmpty();
     }
 
@@ -110,7 +198,7 @@ public sealed class ServiceDirectoryTests
             return Json(Apps);
         });
         using var provider = Build(handler, aspire: o => o.Url = "http://aspire.test");
-        var directory = provider.GetRequiredService<IServiceDirectory>();
+        var directory = Dir(provider);
 
         await Task.WhenAll(directory.GetAllAsync(Ct), directory.GetAllAsync(Ct), directory.GetAllAsync(Ct));
         await directory.GetAllAsync(Ct);
@@ -130,9 +218,9 @@ public sealed class ServiceDirectoryTests
                 o["Billing"] = new CoworkeeServiceOptions { Url = "http://configured.test", Title = "Configured billing" };
                 o["mail"] = new CoworkeeServiceOptions { Url = "http://mail.test" };
             });
-        var directory = provider.GetRequiredService<IServiceDirectory>();
+        var directory = Dir(provider);
 
-        var all = await directory.GetAllAsync(Ct);
+        var all = (await directory.GetAllAsync(Ct)).Services;
         var billing = await directory.ResolveAsync("BILLING", Ct);
         var shop = await directory.ResolveAsync("Shop", Ct);
         var unknown = await directory.ResolveAsync("nope", Ct);
@@ -149,7 +237,9 @@ public sealed class ServiceDirectoryTests
         var handler = new FakeHandler(_ => new HttpResponseMessage(HttpStatusCode.OK));
         using var provider = Build(handler, services: o => o["self"] = new CoworkeeServiceOptions { Url = "http://self.test" });
 
-        (await provider.GetRequiredService<IServiceDirectory>().ResolveAsync("self", Ct))!.Url.ShouldBe("http://self.test");
+        var self = await Dir(provider).ResolveAsync("self", Ct);
+
+        (self!.Url, self.Health).ShouldBe(("http://self.test", ServiceHealth.Unknown));
 
         handler.Requests.ShouldBeEmpty();
     }
@@ -159,10 +249,12 @@ public sealed class ServiceDirectoryTests
     {
         using var provider = Build(new FakeHandler(_ => Json(Apps)), configure: s => s.AddSingleton<IServiceSource, OwnSource>());
 
-        var other = await provider.GetRequiredService<IServiceDirectory>().ResolveAsync("own", Ct);
+        var other = await Dir(provider).ResolveAsync("own", Ct);
 
         other!.Url.ShouldBe("http://own.test");
     }
+
+    private static IServiceDirectory Dir(ServiceProvider provider) => provider.CreateScope().ServiceProvider.GetRequiredService<IServiceDirectory>();
 
     private static HttpResponseMessage Json(string json) => new(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
 
@@ -177,9 +269,9 @@ public sealed class ServiceDirectoryTests
         collection.AddSingleton<IHttpClientFactory>(new FakeFactory(handler));
         collection.TryAddEnumerable(ServiceDescriptor.Singleton<IServiceSource, ConfiguredServiceSource>());
         collection.TryAddEnumerable(ServiceDescriptor.Singleton<IServiceSource, AspireUIServiceSource>());
-        collection.TryAddSingleton<IServiceDirectory, ServiceDirectory>();
+        collection.TryAddScoped<IServiceDirectory, ServiceDirectory>();
         configure?.Invoke(collection);
-        return collection.BuildServiceProvider();
+        return collection.BuildServiceProvider(validateScopes: true);
     }
 
     private sealed class OwnSource : IServiceSource
@@ -188,6 +280,28 @@ public sealed class ServiceDirectoryTests
 
         public Task<IReadOnlyList<ServiceDto>> GetAsync(CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<ServiceDto>>([new ServiceDto("own", "own", "http://own.test", ServiceHealth.Healthy, "own")]);
+    }
+
+    private sealed class ThrowingSource : IServiceSource
+    {
+        public string Name => "broken";
+
+        public async Task<IReadOnlyList<ServiceDto>> GetAsync(CancellationToken cancellationToken)
+        {
+            await Task.Yield();
+            cancellationToken.ThrowIfCancellationRequested();
+            throw new InvalidOperationException("boom");
+        }
+    }
+
+    private sealed class ScopedMarker;
+
+    private sealed class ScopedSource(ScopedMarker marker) : IServiceSource
+    {
+        public string Name => marker.GetType().Name;
+
+        public Task<IReadOnlyList<ServiceDto>> GetAsync(CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<ServiceDto>>([new ServiceDto("scoped", "scoped", "http://scoped.test", ServiceHealth.Healthy, "scoped")]);
     }
 
     private sealed class FakeHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> respond) : HttpMessageHandler

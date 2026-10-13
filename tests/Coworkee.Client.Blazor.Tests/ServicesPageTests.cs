@@ -11,11 +11,11 @@ public sealed class ServicesPageTests : ClientTestBase
     [Fact]
     public void Shows_a_tile_per_service_with_its_health_and_link()
     {
-        Api.GetServicesAsync(Arg.Any<CancellationToken>()).Returns(
+        Api.GetServicesAsync(Arg.Any<CancellationToken>()).Returns(new ServiceDirectoryResult(
         [
             new ServiceDto("dashboard", "dashboard", "https://localhost:17001", ServiceHealth.Healthy),
             new ServiceDto("mail", "mail", "http://localhost:8025", ServiceHealth.Unreachable),
-        ]);
+        ], []));
         var auth = AddAuthorization();
         auth.SetAuthorized("admin");
         auth.SetPolicies("perm:" + SettingsPermissions.Manage);

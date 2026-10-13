@@ -524,6 +524,7 @@
   "Healthy": "Läuft",
   "Unhealthy": "Gestört",
   "Unreachable": "Nicht erreichbar",
+  "Unknown": "Unbekannt",
   "Require address": "Adresse verlangen",
   "Allowed emails": "Erlaubte E-Mails",
   "Require documents": "Dokumente verlangen",

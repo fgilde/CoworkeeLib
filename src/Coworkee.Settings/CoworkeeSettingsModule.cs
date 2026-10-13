@@ -39,7 +39,7 @@ public sealed class CoworkeeSettingsModule : CoworkeeModule, IWebModule
         services.AddHttpClient(ConfiguredServiceSource.Client).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IServiceSource, ConfiguredServiceSource>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IServiceSource, AspireUIServiceSource>());
-        services.TryAddSingleton<IServiceDirectory, ServiceDirectory>();
+        services.TryAddScoped<IServiceDirectory, ServiceDirectory>();
         if (!services.HasAppSettings())
         {
             services.AddCoworkeeSettings<CoworkeeAppSettings>(context.Configuration);

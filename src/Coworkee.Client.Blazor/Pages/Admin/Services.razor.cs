@@ -48,7 +48,7 @@ public partial class Services : IDisposable
         _busy = true;
         try
         {
-            _services = await Api.GetServicesAsync(_stop.Token);
+            _services = (await Api.GetServicesAsync(_stop.Token)).Services;
             _error = null;
         }
         catch (ApiException exception)
@@ -68,6 +68,7 @@ public partial class Services : IDisposable
     {
         ServiceHealth.Healthy => Color.Success,
         ServiceHealth.Unhealthy => Color.Warning,
+        ServiceHealth.Unknown => Color.Default,
         _ => Color.Error,
     };
 
