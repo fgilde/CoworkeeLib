@@ -149,6 +149,8 @@ The web resource links to **Swagger** (`/swagger`) and, when an API uses `Cowork
 
 Every service of the app gets the addresses of the others under `Coworkee:Services:<resource>`: the Aspire dashboard (`dashboard`), the Hangfire dashboard (`jobs`), each project (`myapp-api`, `myapp-auth`, `myapp-web`, with `HealthPath` `/health`) and every container with an http endpoint (`mail`, `pgadmin`, `keycloak`, ...), also resources added after `AddCoworkeeApp`. Inject them as `IOptionsMonitor<CoworkeeServicesOptions>`; the admin page **Services** shows them with their live state (see [Settings](../modules/settings.md#services)). Only the local run fills them; a published app lists its public addresses in appsettings.
 
+An AspireUI in the app host adds the apps and stacks you host *yourself* with it to the same page. `builder.AddAspireUI().WithRetrieveApi()` is all it takes: the app host passes the address (and with `WithRetrieveApi(keyParameter)` the key as a parameter reference, never as a resolved string) to every service as `Coworkee:AspireUI:Url` and `ApiKey`. The first AspireUI with the retrieve API is used; one without it is ignored, and a published app gets nothing (set `Coworkee:AspireUI` in appsettings). Services find them through `IServiceDirectory` (see [Settings](../modules/settings.md#service-directory)).
+
 ## Typed settings
 
 Settings are set through the configuration tree, not through strings:

@@ -249,4 +249,51 @@ public sealed class Links(IOptionsMonitor<CoworkeeServicesOptions> services)
 }
 ```
 
-**Administration > System > Services** shows them as tiles with icon, address and live state; a click opens the service in a new tab. The browser asks the api (`GET /api/v1/services`, settings permission, system organisation), which probes every service every ten seconds: with `HealthPath` a success status counts as running, without it any answer below 500.
+**Administration > System > Services** shows them as tiles with icon, address and live state, grouped by source (**App** for `Coworkee:Services`, **AspireUI** for the apps of an AspireUI); a click opens the service in a new tab, services with several addresses list all of them as links. A source that could not be asked shows a hint, the other sources still appear. The browser asks the api (`GET /api/v1/services`, settings permission, system organisation), which probes every service every ten seconds: with `HealthPath` a success status counts as running, without it any answer below 500.
+
+### Service directory
+
+`IServiceDirectory` (scoped, backend code, no user check) combines the configured services with those of other sources:
+
+```csharp
+public sealed class Invoices(IServiceDirectory directory)
+{
+    public async Task<Uri?> BillingAsync(CancellationToken cancellationToken) =>
+        await directory.ResolveAsync("billing", cancellationToken) is { Url.Length: > 0 } billing ? new Uri(billing.Url) : null;
+}
+```
+
+- `ResolveAsync(name)` finds a service by name, case-insensitive. The configured services come first, so a configured service wins over an AspireUI app of the same name. It is fast: the health of a configured service is not probed and stays `Unknown`.
+- `GetAllAsync()` lists every service of every source with the sources that failed in `UnavailableSources`. It is what the admin page and `GET /api/v1/services` show.
+
+A source that fails or takes longer than three seconds is left out, logs a warning and is reported as unavailable; it never breaks the others.
+
+**AspireUI** lists the apps and stacks you host yourself with an AspireUI (`Source` = `aspireui`, all addresses in `Urls`). The app host connects it with `WithRetrieveApi()` and nothing else:
+
+```csharp
+builder.AddAspireUI().WithRetrieveApi();   // or WithRetrieveApi(key) with a parameter
+```
+
+Without Aspire, or for a deployed app, set the address and the key of the retrieve API yourself:
+
+```json
+{ "Coworkee": { "AspireUI": { "Url": "https://aspireui.example.com", "ApiKey": "..." } } }
+```
+
+Without `Url` the source stays inactive. The list is cached for 15 seconds; the key is only sent to the AspireUI as `X-Api-Key` and never logged or returned by the api.
+
+**Your own source:** implement `IServiceSource` and register it next to the built-in ones.
+
+```csharp
+public sealed class ConsulServiceSource(IConsul consul) : IServiceSource
+{
+    public string Name => "consul";
+
+    public async Task<IReadOnlyList<ServiceDto>> GetAsync(CancellationToken cancellationToken) =>
+        [.. (await consul.ServicesAsync(cancellationToken)).Select(s => new ServiceDto(s.Name, s.Name, s.Address, ServiceHealth.Unknown, "consul"))];
+}
+
+services.TryAddEnumerable(ServiceDescriptor.Singleton<IServiceSource, ConsulServiceSource>());
+```
+
+Throw when the source cannot be asked. Override `FindAsync` if a single service can be answered cheaper than listing all.
