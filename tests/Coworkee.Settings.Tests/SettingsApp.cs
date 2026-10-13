@@ -143,6 +143,7 @@ public sealed class TestSettingsModule : CoworkeeModule
         context.Services.AddSingleton<ISettingDefinitionContributor, TestSettingDefinitions>();
         context.Services.AddCoworkeeAppConfiguration<TestAppConfig>(context.Configuration, "TestApp", "Test app");
         context.Services.AddCoworkeeAppConfiguration<MaskedConfig>(context.Configuration, "Masked", "Masked");
+        context.Services.AddCoworkeeAppConfiguration<RulesConfig>(context.Configuration, "Rules", "Rules", rules => rules.Lock(c => c.Fixed).Protect(c => c.Guarded));
         context.Services.AddCoworkeeDbContext<SettingsTestDbContext>((provider, options) =>
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
     }
@@ -159,6 +160,15 @@ public sealed class TestAppConfig
     public List<string> Tags { get; set; } = [];
 
     public string? Mode { get; set; }
+}
+
+public sealed class RulesConfig
+{
+    public string Fixed { get; set; } = "fixed";
+
+    public string Guarded { get; set; } = "guarded";
+
+    public string Free { get; set; } = "free";
 }
 
 public sealed class MaskedConfig

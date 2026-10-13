@@ -22,11 +22,11 @@ public sealed class AppConfigurationEditorTests : ClientTestBase
         Api.SaveAppConfigurationAsync("Sample", Arg.Any<JsonElement>(), Arg.Any<CancellationToken>()).Returns(Values("Changed", 10, ["Sample:Name"]));
     }
 
-    private static AppConfigurationValuesDto Values(string name, int limit, IReadOnlyList<string> changed, IReadOnlyList<string>? locked = null, IReadOnlyList<string>? hidden = null) => new(
+    private static AppConfigurationValuesDto Values(string name, int limit, IReadOnlyList<string> changed, IReadOnlyList<string>? locked = null, IReadOnlyList<string>? hidden = null, IReadOnlyList<string>? guarded = null) => new(
         "Sample",
         JsonSerializer.SerializeToElement(new SampleConfig { Name = name, Limit = limit }, JsonSerializerOptions.Web),
         JsonSerializer.SerializeToElement(new SampleConfig { Name = "Default", Limit = 10 }, JsonSerializerOptions.Web),
-        changed, locked, hidden);
+        changed, locked, hidden, guarded);
 
     [Fact]
     public async Task Edits_the_typed_section_and_saves_it()
@@ -69,17 +69,47 @@ public sealed class AppConfigurationEditorTests : ClientTestBase
     }
 
     [Fact]
-    public void Locked_values_show_read_only_and_hidden_ones_not_at_all()
+    public void Locked_values_show_disabled_with_a_hint_and_hidden_ones_not_at_all()
     {
         Api.GetAppConfigurationAsync("Sample", Arg.Any<CancellationToken>()).Returns(Values("Default", 10, [], locked: ["Name"], hidden: ["Inner:Secret"]));
 
         var editor = Render<AppConfigurationEditor<SampleConfig>>(p => p.Add(e => e.Registration, Registration));
 
-        editor.WaitForAssertion(() => editor.FindAll("input").Single(i => i.GetAttribute("value") == "Default").HasAttribute("readonly").ShouldBeTrue());
-        editor.FindAll("input").Single(i => i.GetAttribute("value") == "10").HasAttribute("readonly").ShouldBeFalse();
+        editor.WaitForAssertion(() => editor.FindAll("input").Single(i => i.GetAttribute("value") == "Default").HasAttribute("disabled").ShouldBeTrue());
+        editor.FindAll("input").Single(i => i.GetAttribute("value") == "10").HasAttribute("disabled").ShouldBeFalse();
+        editor.FindAll("title").Count(t => t.TextContent == "Set in the configuration").ShouldBe(1);
         editor.Markup.ShouldNotContain("Secret");
         editor.Markup.ShouldContain("Note");
     }
+
+    [Fact]
+    public void A_locked_object_disables_all_its_properties()
+    {
+        Api.GetAppConfigurationAsync("Sample", Arg.Any<CancellationToken>()).Returns(Values("Default", 10, [], locked: ["Inner"]));
+
+        var editor = Render<AppConfigurationEditor<SampleConfig>>(p => p.Add(e => e.Registration, Registration));
+
+        editor.WaitForAssertion(() => editor.FindAll("input").Count(i => i.HasAttribute("disabled")).ShouldBe(2));
+        editor.FindAll("input").Single(i => i.GetAttribute("value") == "10").HasAttribute("disabled").ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task A_protected_value_is_edited_after_unlocking_and_protected_again_after_saving()
+    {
+        Api.GetAppConfigurationAsync("Sample", Arg.Any<CancellationToken>()).Returns(Values("Default", 10, [], guarded: ["Name"]));
+        Api.SaveAppConfigurationAsync("Sample", Arg.Any<JsonElement>(), Arg.Any<CancellationToken>()).Returns(Values("Default", 10, [], guarded: ["Name"]));
+        var editor = Render<AppConfigurationEditor<SampleConfig>>(p => p.Add(e => e.Registration, Registration));
+        editor.WaitForAssertion(() => Name(editor).HasAttribute("disabled").ShouldBeTrue());
+
+        await editor.Find("button[aria-pressed]").ClickAsync(new());
+
+        editor.WaitForAssertion(() => Name(editor).HasAttribute("disabled").ShouldBeFalse());
+        await editor.InvokeAsync(() => editor.Instance.SaveAsync());
+        editor.WaitForAssertion(() => Name(editor).HasAttribute("disabled").ShouldBeTrue());
+    }
+
+    private static AngleSharp.Dom.IElement Name(IRenderedComponent<AppConfigurationEditor<SampleConfig>> editor) =>
+        editor.FindAll("input").Single(i => i.GetAttribute("value") == "Default");
 
     [Fact]
     public void A_property_the_registration_renders_with_another_component_keeps_its_grid_column()

@@ -309,7 +309,7 @@ internal sealed partial class AppConfigurationHandlers(
             ? configuration.GetSection(registration.Section).AsEnumerable().Select(p => p.Key).Where(k => provider.TryGet(k, out _)).Order().ToList()
             : [];
         return new AppConfigurationValuesDto(registration.Section, JsonSerializer.SerializeToElement(current), JsonSerializer.SerializeToElement(defaults), changed,
-            registration.Locked, registration.Hidden);
+            registration.Locked, registration.Hidden, registration.Protected);
     }
 
     private object Current(AppConfigurationRegistration registration) =>

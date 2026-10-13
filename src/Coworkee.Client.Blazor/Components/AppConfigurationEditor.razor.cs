@@ -28,6 +28,7 @@ public partial class AppConfigurationEditor<T>
     private ObjectEditMeta<T>? _meta;
     private IReadOnlyList<string> _changed = [];
     private IReadOnlyList<string> _locked = [];
+    private IReadOnlyList<string> _protected = [];
     private IReadOnlyList<string> _hidden = [];
     private string? _error;
     private bool _busy;
@@ -44,7 +45,7 @@ public partial class AppConfigurationEditor<T>
         }
     }
 
-    /// <summary>The meta of the registration, then what the server locks or hides (a locked object locks all its properties).</summary>
+    /// <summary>The meta of the registration, then what the server locks, protects or hides (a locked object locks all its properties).</summary>
     private void Configure(ObjectEditMeta<T> meta)
     {
         SettingsFormRules.Apply(meta);
@@ -52,7 +53,12 @@ public partial class AppConfigurationEditor<T>
         SettingsFormRules.WrapInColumns(meta);
         foreach (var property in Properties(meta, _locked))
         {
-            property.AsReadOnly();
+            Lock(property);
+        }
+
+        foreach (var property in Properties(meta, _protected.Except(_locked).ToList()).Where(p => p.Children?.Any() != true))
+        {
+            property.WithEditConfirmation(ConfirmationProtection.ToggleButton(L["Unlock to change; applies after a restart."]));
         }
 
         foreach (var property in Properties(meta, _hidden))
@@ -60,6 +66,24 @@ public partial class AppConfigurationEditor<T>
             property.Ignore();
         }
     }
+
+
+#pragma warning disable BL0005 // MudEx configures the lock icon through these instances
+    private void Lock(ObjectEditPropertyMeta property)
+    {
+        property.AsReadOnly().WithAdditionalAttribute(nameof(MudBaseInput<string>.Disabled), true);
+        if (property.Children?.Any() != true)
+        {
+            property.RenderData.WithAdditionalComponent<MudIcon>(AdditionalComponentRenderPosition.After, icon =>
+            {
+                icon.Icon = Icons.Material.Filled.Lock;
+                icon.Size = Size.Small;
+                icon.Title = L["Set in the configuration"];
+                icon.Style = "margin: 20px 0 0 10px";
+            });
+        }
+    }
+#pragma warning restore BL0005
 
     // the server names properties like configuration keys ("Jobs:WorkerCount"), the form with dots
     private static IEnumerable<ObjectEditPropertyMeta> Properties(ObjectEditMeta<T> meta, IReadOnlyList<string> paths) =>
@@ -78,6 +102,7 @@ public partial class AppConfigurationEditor<T>
             _value = section.Values.Deserialize<T>(JsonSerializerOptions.Web) ?? new T();
             _changed = section.ChangedKeys;
             _locked = section.Locked ?? [];
+            _protected = section.Protected ?? [];
             _hidden = section.Hidden ?? [];
             _meta = _value.ObjectEditMeta(Configure);
             _revision++;

@@ -106,7 +106,7 @@ builder.Configuration.AddCoworkeeDatabaseConfiguration("myapp"); // the connecti
 
 ### Built-in app settings
 
-Without further code the page shows **App settings**: `CoworkeeAppSettings`, bound to the section `Coworkee`, with self registration (`Registration`), notification digests (`Notifications`) and background jobs (`Jobs`). Wiring values the app host sets (`Jobs:ConnectionStringName`, `Jobs:RunServer`, `Jobs:DashboardPath`, `Notifications:PublicAppUrl`) are locked; lists the configuration binder could only append to (`Jobs:Queues`, `Jobs:RetryDelaysInSeconds`) are hidden.
+Without further code the page shows **App settings**: `CoworkeeAppSettings`, bound to the section `Coworkee`, with self registration (`Registration`), notification digests (`Notifications`) and background jobs (`Jobs`). Wiring values the app host usually sets (`Jobs:ConnectionStringName`, `Jobs:RunServer`, `Jobs:DashboardPath`, `Notifications:PublicAppUrl`) are protected: they change only after you unlock the field with its lock button, and then apply after a restart; lists the configuration binder could only append to (`Jobs:Queues`, `Jobs:RetryDelaysInSeconds`) are hidden.
 
 ### Extend the app settings
 
@@ -122,13 +122,15 @@ public sealed class BillingSettings
 {
     public string Currency { get; set; } = "EUR";
     public string? ApiKey { get; set; }
+    public string? WebhookUrl { get; set; }
     public string? WebhookSecret { get; set; }
 }
 ```
 
 ```csharp title="Server module"
 context.Services.AddCoworkeeSettings<MyAppSettings>(context.Configuration, rules => rules
-    .Lock(s => s.Billing.Currency)          // shown, never changed
+    .Lock(s => s.Billing.Currency)          // shown disabled, never changed
+    .Protect(s => s.Billing.WebhookUrl)     // changeable after unlocking the field
     .Hide(s => s.Billing.WebhookSecret));   // never leaves the server
 ```
 
@@ -155,7 +157,8 @@ builder.Services.AddCoworkeeSettings<ShopSettings>(section: "Shop", title: "Shop
 
 | | |
 |---|---|
-| `Lock(s => s.A.B)` | the value shows read only; the server keeps what applies whatever comes in. Locking an object locks all its properties |
+| `Lock(s => s.A.B)` | the value shows disabled with a lock icon ("Set in the configuration"); the server keeps what applies whatever comes in. Use it for values only the host may set. Locking an object locks all its properties |
+| `Protect(s => s.A.B)` | the value is changeable but risky: the field is disabled until you press its lock button, and protected again after saving or reloading. Only the form protects, the server saves what comes in |
 | `Hide(s => s.A.B)` | the value is neither sent to the browser nor changed |
 | secrets | properties named like password, secret, api key, token or connection string come masked; sending the mask back keeps the stored value |
 | meta | the client `meta` groups, labels, orders or renders properties like any `MudExObjectEditForm`; locks and hides from the server apply on top. The form shows each section under its heading in two columns (lists over the full width); `WrapInMudItem(i => i.md = 12)` widens a single field. Computed properties (no setter) are left out and fields have no reset of their own; a list item opened in its dialog (like a registration document) follows the same rules |
