@@ -1,6 +1,8 @@
 using Bunit;
 using Coworkee.Client.Blazor.Components.Editors;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Time.Testing;
 using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Tests;
@@ -20,6 +22,8 @@ public sealed class ChipListEditorTests : ClientTestBase
         IReadOnlyCollection<string>? fixedValues = null)
     {
         _value = value ?? [];
+        // the tests open the list themselves; the autocomplete's own debounced search must not reopen it in the middle of a pick on a busy machine
+        Services.AddSingleton<TimeProvider>(new FakeTimeProvider());
         _popovers = Render<MudPopoverProvider>();
         return Render<ChipListEditor>(p => p
             .Add(e => e.Value, _value)
