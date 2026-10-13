@@ -1,6 +1,6 @@
 using System.Net;
 using System.Text;
-using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 
 namespace Coworkee.Contracts.Theming;
@@ -115,15 +115,15 @@ public static partial class KeycloakLoginTheme
         var layout = design.Layout is { } named && SignInLayouts.All.FirstOrDefault(l => l.Equals(named, StringComparison.OrdinalIgnoreCase)) is { } known ? known : SignInLayouts.Default;
         var side = design.MediaSide ?? (layout == SignInLayouts.Slide ? SignInMediaSide.Right : SignInMediaSide.Left);
         var media = WebAddress(design.MediaUrl);
-        var config = JsonSerializer.Serialize(new
+        var config = new JsonObject
         {
-            layout = layout.ToLowerInvariant(),
-            side = side.ToString().ToLowerInvariant(),
-            media,
-            video = media is not null && VideoExtensions.Any(e => media.Split('?', '#')[0].EndsWith(e, StringComparison.OrdinalIgnoreCase)),
-            appName = content.AppName,
-        });
-        return $"var coworkee = {config};\n{StaticScript}";
+            ["layout"] = layout.ToLowerInvariant(),
+            ["side"] = side.ToString().ToLowerInvariant(),
+            ["media"] = media,
+            ["video"] = media is not null && VideoExtensions.Any(e => media.Split('?', '#')[0].EndsWith(e, StringComparison.OrdinalIgnoreCase)),
+            ["appName"] = content.AppName,
+        };
+        return $"var coworkee = {config.ToJsonString()};\n{StaticScript}";
     }
 
     private static string Declarations(IReadOnlyDictionary<string, string> palette, IReadOnlyDictionary<string, string> defaults) => string.Concat(Colors.Select(c =>
@@ -189,6 +189,7 @@ public static partial class KeycloakLoginTheme
         .cw-side-right .cw-media{inset:0 0 0 auto}
         .cw-media video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
         .cw-media h2{position:relative;font-size:2.5rem;padding:2rem;text-align:center}
+        .cw-media.cw-has-media h2{color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.6)}
         .cw-layout-split .pf-v5-c-login,.cw-layout-slide .pf-v5-c-login{margin-left:50vw}
         .cw-side-right.cw-layout-split .pf-v5-c-login,.cw-side-right.cw-layout-slide .pf-v5-c-login{margin-left:0;margin-right:50vw}
         }
@@ -210,7 +211,7 @@ public static partial class KeycloakLoginTheme
             }
 
             var aside = document.createElement("aside");
-            aside.className = "cw-media";
+            aside.className = coworkee.media ? "cw-media cw-has-media" : "cw-media";
             aside.setAttribute("aria-hidden", "true");
             if (coworkee.media && coworkee.video) {
               var video = document.createElement("video");
