@@ -1,0 +1,2 @@
+<p>Olá, {{ user.first_name }},</p>
+<p>Obrigado por se cadastrar. Um administrador analisará sua conta em breve.</p>
