@@ -8,7 +8,7 @@ namespace Coworkee.Contracts.Theming;
 /// <summary>What the Keycloak login theme shows; <see cref="LogoUrl"/> and the design's media address must be absolute web addresses, others are left out.</summary>
 public sealed record KeycloakLoginThemeContent(string AppName, IReadOnlyDictionary<string, string> Light, IReadOnlyDictionary<string, string> Dark)
 {
-    /// <summary>The theme's logo (SVG markup or image data URL), written as file next to the styles.</summary>
+    /// <summary>The theme's logo (SVG markup or image data URL), a raster image is written as file next to the styles, SVG is embedded in them.</summary>
     public string? Logo { get; init; }
 
     /// <summary>The logo when <see cref="Logo"/> is empty.</summary>
@@ -65,26 +65,37 @@ public static partial class KeycloakLoginTheme
 
         var login = Path.Combine(themesDirectory, name, "login");
         var images = Path.Combine(login, "resources", "img");
-        string? logo = null;
+        // a raster logo is a file next to the styles; an SVG is embedded in them, so Keycloak never serves it as a document of its own origin
+        string? file = null;
+        string? logoAddress;
         if (ThemeLogo.TryRead(content.Logo, out var bytes, out var contentType))
         {
-            logo = "logo." + Extensions[contentType];
-            Save(Path.Combine(images, logo), bytes);
-        }
-
-        if (Directory.Exists(images))
-        {
-            foreach (var stale in Directory.GetFiles(images, "logo.*").Where(f => Path.GetFileName(f) != logo))
+            if (ThemeLogo.IsSvg(contentType))
             {
-                File.Delete(stale);
+                logoAddress = ThemeLogo.ToDataUrl(content.Logo);
+            }
+            else
+            {
+                file = "logo." + Extensions[contentType];
+                Save(Path.Combine(images, file), bytes);
+                logoAddress = $"../img/{file}";
             }
         }
+        else
+        {
+            logoAddress = WebAddress(content.LogoUrl);
+        }
 
-        var logoAddress = logo is null ? WebAddress(content.LogoUrl) : $"../img/{logo}";
         Save(Path.Combine(login, "theme.properties"), Properties);
         Save(Path.Combine(login, "resources", "css", "coworkee.css"), Css(content, logoAddress));
         Save(Path.Combine(login, "resources", "js", "coworkee.js"), Script(content));
         Save(Path.Combine(login, "messages", "messages_en.properties"), $"loginTitleHtml={MessageText(content.AppName)}\n");
+
+        // only after the styles stopped pointing at them
+        foreach (var extension in Extensions.Values.Where(e => Directory.Exists(images) && $"logo.{e}" != file))
+        {
+            File.Delete(Path.Combine(images, $"logo.{extension}"));
+        }
     }
 
     private const string Properties = """
@@ -159,7 +170,7 @@ public static partial class KeycloakLoginTheme
                 File.Move(temp, path, overwrite: true);
                 return;
             }
-            catch (IOException) when (attempt < 5)
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException && attempt < 5)
             {
                 Thread.Sleep(50 * attempt);
             }
@@ -234,7 +245,7 @@ public static partial class KeycloakLoginTheme
 
         """;
 
-    [GeneratedRegex(@"^(#[0-9a-fA-F]{3,8}|rgba?\([0-9.,%\s]+\))$")]
+    [GeneratedRegex(@"^(#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})|(rgb|rgba|hsl|hsla)\(\s*[0-9.]+%?\s*(,\s*[0-9.]+%?\s*){2,3}\)|transparent)$")]
     private static partial Regex Color();
 
     [GeneratedRegex("[^a-z0-9-]+")]

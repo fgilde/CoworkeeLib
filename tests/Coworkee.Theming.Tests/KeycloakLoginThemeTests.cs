@@ -27,38 +27,47 @@ public sealed class KeycloakLoginThemeTests : IDisposable
         Write(Content() with
         {
             Light = new Dictionary<string, string> { ["Primary"] = "#0a7d5a", ["Surface"] = "red;}body{x:y" },
-            Dark = new Dictionary<string, string> { ["Primary"] = "#81c784", ["Background"] = "rgba(1, 2, 3, 0.5)" },
+            Dark = new Dictionary<string, string> { ["Primary"] = "hsl(120, 40%, 60%)", ["Background"] = "rgba(1, 2, 3, 0.5)", ["Surface"] = "transparent" },
         });
 
         var css = Read("resources/css/coworkee.css");
         css.ShouldContain(":root{--cw-primary:#0a7d5a;--cw-on-primary:#ffffff;--cw-background:#f4f7fb;--cw-surface:#ffffff;");
-        css.ShouldContain(":root.pf-v5-theme-dark{--cw-primary:#81c784;--cw-on-primary:#0b1a2a;--cw-background:rgba(1, 2, 3, 0.5);");
+        css.ShouldContain(":root.pf-v5-theme-dark{--cw-primary:hsl(120, 40%, 60%);--cw-on-primary:#0b1a2a;--cw-background:rgba(1, 2, 3, 0.5);--cw-surface:transparent;");
         css.ShouldContain("--pf-v5-global--primary-color--100:var(--cw-primary)");
         css.ShouldNotContain("body{x:y");
     }
 
-    [Theory]
-    [InlineData("<svg viewBox=\"0 0 1 1\"></svg>", "logo.svg")]
-    [InlineData("data:image/png;base64,AQID", "logo.png")]
-    public void A_theme_logo_becomes_a_file_the_styles_show_in_the_header(string logo, string file)
+    [Fact]
+    public void A_raster_logo_becomes_a_file_the_styles_show_in_the_header()
     {
-        Write(Content() with { Logo = logo, LogoUrl = "https://app.example/logo.svg" });
+        Write(Content() with { Logo = "data:image/png;base64,AQID", LogoUrl = "https://app.example/logo.svg" });
 
-        File.Exists(Path.Combine(Login, "resources", "img", file)).ShouldBeTrue();
-        Read("resources/css/coworkee.css").ShouldContain($"#kc-header-wrapper::before{{content:\"\";width:100%;height:4rem;background:url(\"../img/{file}\")");
+        File.ReadAllBytes(Path.Combine(Login, "resources", "img", "logo.png")).ShouldBe([1, 2, 3]);
+        Read("resources/css/coworkee.css").ShouldContain("#kc-header-wrapper::before{content:\"\";width:100%;height:4rem;background:url(\"../img/logo.png\")");
     }
 
     [Fact]
-    public void Without_a_theme_logo_the_logo_address_shows_and_an_older_logo_file_goes()
+    public void An_svg_logo_is_embedded_in_the_styles_and_not_served_as_file()
+    {
+        Write(Content() with { Logo = "<svg viewBox=\"0 0 1 1\"></svg>" });
+
+        Directory.Exists(Path.Combine(Login, "resources", "img")).ShouldBeFalse();
+        Read("resources/css/coworkee.css").ShouldContain($"background:url(\"{ThemeLogo.ToDataUrl("<svg viewBox=\"0 0 1 1\"></svg>")}\")");
+    }
+
+    [Fact]
+    public void Without_a_theme_logo_the_logo_address_shows_and_older_logo_files_go_but_other_files_stay()
     {
         Write(Content() with { Logo = "data:image/png;base64,AQID" });
+        var images = Path.Combine(Login, "resources", "img");
+        File.WriteAllText(Path.Combine(images, "logo.webp"), "old");
+        File.WriteAllText(Path.Combine(images, "logo.backup.txt"), "mine");
 
         Write(Content() with { LogoUrl = "https://app.example/logo.svg" });
 
-        Directory.GetFiles(Path.Combine(Login, "resources", "img")).ShouldBeEmpty();
+        Directory.GetFiles(images).Select(Path.GetFileName).ShouldBe(["logo.backup.txt"]);
         Read("resources/css/coworkee.css").ShouldContain("url(\"https://app.example/logo.svg\")");
     }
-
     [Fact]
     public void A_logo_address_that_is_no_web_address_is_left_out()
     {

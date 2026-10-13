@@ -1063,5 +1063,6 @@
   "Last written {0}": "Senast skriven {0}",
   "Not written yet": "Inte skriven än",
   "Apply to Keycloak": "Tillämpa i Keycloak",
-  "Keycloak sign-in page updated": "Keycloaks inloggningssida uppdaterad"
+  "Keycloak sign-in page updated": "Keycloaks inloggningssida uppdaterad",
+  "The Keycloak sign-in page could not be written. See the log of the API.": "Keycloaks inloggningssida kunde inte skrivas. Se API:ets logg."
 }

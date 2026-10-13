@@ -30,8 +30,7 @@ public sealed record DeleteTheme(Guid Id) : ICommand<Result>;
 [RequiresPermission(ThemePermissions.Manage)]
 public sealed record SetDefaultTheme(Guid Id) : ICommand<Result>;
 
-internal sealed class ThemeHandlers(CoworkeeDbContext db, ICurrentUser currentUser, IPermissionChecker permissions, IServiceProvider services, IOptions<ThemingOptions> options,
-    KeycloakThemeSync keycloak)
+internal sealed class ThemeHandlers(CoworkeeDbContext db, ICurrentUser currentUser, IPermissionChecker permissions, IServiceProvider services, IOptions<ThemingOptions> options)
     : IHandler<GetThemes, Result<IReadOnlyList<ThemeDto>>>,
       IHandler<GetCurrentTheme, Result<ThemeDto>>,
       IHandler<GetBuiltInThemes, Result<IReadOnlyList<ThemeDto>>>,
@@ -114,7 +113,6 @@ internal sealed class ThemeHandlers(CoworkeeDbContext db, ICurrentUser currentUs
         }
 
         Apply(theme, command.Theme);
-        keycloak.Schedule();
         return ToDto(theme, false);
     }
 
@@ -132,7 +130,6 @@ internal sealed class ThemeHandlers(CoworkeeDbContext db, ICurrentUser currentUs
         }
 
         db.Remove(theme);
-        keycloak.Schedule();
         return Result.Success();
     }
 
@@ -152,7 +149,6 @@ internal sealed class ThemeHandlers(CoworkeeDbContext db, ICurrentUser currentUs
             db.Add(new TenantTheme { TenantId = tenantId, ThemeId = command.Id });
         }
 
-        keycloak.Schedule();
         return Result.Success();
     }
 
@@ -216,7 +212,7 @@ internal sealed class ThemeHandlers(CoworkeeDbContext db, ICurrentUser currentUs
 }
 
 /// <summary>Makes the theme chosen in setup the organisation's default; only a built-in one, there is nothing else yet.</summary>
-internal sealed class ThemeSetupStep(CoworkeeDbContext db, IOptions<ThemingOptions> options, KeycloakThemeSync keycloak) : Coworkee.Application.Setup.ISetupStep
+internal sealed class ThemeSetupStep(CoworkeeDbContext db, IOptions<ThemingOptions> options) : Coworkee.Application.Setup.ISetupStep
 {
     public async Task<Error?> ApplyAsync(Coworkee.Contracts.Identity.CompleteSetupRequest request, Guid tenantId, CancellationToken cancellationToken)
     {
@@ -232,7 +228,6 @@ internal sealed class ThemeSetupStep(CoworkeeDbContext db, IOptions<ThemingOptio
         }
 
         db.Add(new TenantTheme { TenantId = tenantId, ThemeId = themeId });
-        keycloak.Schedule();
         return null;
     }
 }

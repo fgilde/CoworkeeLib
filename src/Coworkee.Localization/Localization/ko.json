@@ -1063,5 +1063,6 @@
   "Last written {0}": "마지막 기록 {0}",
   "Not written yet": "아직 기록되지 않음",
   "Apply to Keycloak": "Keycloak에 적용",
-  "Keycloak sign-in page updated": "Keycloak 로그인 페이지가 업데이트되었습니다"
+  "Keycloak sign-in page updated": "Keycloak 로그인 페이지가 업데이트되었습니다",
+  "The Keycloak sign-in page could not be written. See the log of the API.": "Keycloak 로그인 페이지를 기록하지 못했습니다. API 로그를 확인하세요."
 }

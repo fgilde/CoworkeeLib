@@ -11,9 +11,9 @@
             <MudText Typo="Typo.body2" data-testid="keycloak-theme-written">
                 @(status.WrittenAt is { } written ? L["Last written {0}", written.ToLocalTime().ToString("g")] : L["Not written yet"])
             </MudText>
-            @if (status.Error is { } error)
+            @if (status.Error is not null)
             {
-                <MudAlert Severity="Severity.Error" Dense="true" Class="mt-2" data-testid="keycloak-theme-error">@error</MudAlert>
+                <MudAlert Severity="Severity.Error" Dense="true" Class="mt-2" data-testid="keycloak-theme-error">@L["The Keycloak sign-in page could not be written. See the log of the API."]</MudAlert>
             }
         </MudCardContent>
         <MudCardActions>

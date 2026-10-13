@@ -1063,5 +1063,6 @@
   "Last written {0}": "Останній запис {0}",
   "Not written yet": "Ще не записано",
   "Apply to Keycloak": "Застосувати в Keycloak",
-  "Keycloak sign-in page updated": "Сторінку входу Keycloak оновлено"
+  "Keycloak sign-in page updated": "Сторінку входу Keycloak оновлено",
+  "The Keycloak sign-in page could not be written. See the log of the API.": "Не вдалося записати сторінку входу Keycloak. Дивіться журнал API."
 }

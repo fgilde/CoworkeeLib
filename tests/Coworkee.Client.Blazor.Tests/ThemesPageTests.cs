@@ -118,11 +118,11 @@ public sealed class ThemesPageTests : ClientTestBase
     [Fact]
     public void The_keycloak_card_shows_why_writing_failed()
     {
-        Api.GetKeycloakThemeStatusAsync(Arg.Any<CancellationToken>()).Returns(new KeycloakThemeStatusDto(true, "coworkee-demo", null, "Access denied"));
+        Api.GetKeycloakThemeStatusAsync(Arg.Any<CancellationToken>()).Returns(new KeycloakThemeStatusDto(true, "coworkee-demo", null, "The Keycloak login theme could not be written; see the log of the API."));
 
         var page = Render<Themes>();
 
-        page.WaitForAssertion(() => page.Find("[data-testid='keycloak-theme-error']").TextContent.ShouldContain("Access denied"));
+        page.WaitForAssertion(() => page.Find("[data-testid='keycloak-theme-error']").TextContent.ShouldBe("The Keycloak sign-in page could not be written. See the log of the API."));
     }
 
     [Fact]

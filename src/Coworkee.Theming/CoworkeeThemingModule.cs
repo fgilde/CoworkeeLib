@@ -43,6 +43,7 @@ public sealed class CoworkeeThemingModule : CoworkeeModule, IWebModule
         services.Configure<KeycloakThemeOptions>(context.Configuration.GetSection(KeycloakThemeOptions.Section));
         services.AddSingleton<KeycloakThemeSync>();
         services.AddHostedService(provider => provider.GetRequiredService<KeycloakThemeSync>());
+        services.AddScoped<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, KeycloakThemeInterceptor>();
 
         services.Configure<Coworkee.Application.Setup.SetupGateOptions>(options =>
         {

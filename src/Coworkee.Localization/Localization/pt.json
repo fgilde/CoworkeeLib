@@ -1063,5 +1063,6 @@
   "Last written {0}": "Escrita pela última vez {0}",
   "Not written yet": "Ainda não escrita",
   "Apply to Keycloak": "Aplicar ao Keycloak",
-  "Keycloak sign-in page updated": "Página de início de sessão do Keycloak atualizada"
+  "Keycloak sign-in page updated": "Página de início de sessão do Keycloak atualizada",
+  "The Keycloak sign-in page could not be written. See the log of the API.": "Não foi possível escrever a página de início de sessão do Keycloak. Consulte o registo da API."
 }

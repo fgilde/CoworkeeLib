@@ -1063,5 +1063,6 @@
   "Last written {0}": "Terakhir ditulis {0}",
   "Not written yet": "Belum ditulis",
   "Apply to Keycloak": "Terapkan ke Keycloak",
-  "Keycloak sign-in page updated": "Halaman masuk Keycloak diperbarui"
+  "Keycloak sign-in page updated": "Halaman masuk Keycloak diperbarui",
+  "The Keycloak sign-in page could not be written. See the log of the API.": "Halaman masuk Keycloak tidak dapat ditulis. Lihat log API."
 }
