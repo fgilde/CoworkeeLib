@@ -24,6 +24,18 @@ public sealed partial class ShippedLanguagesTests
 
     public static TheoryData<string> MailLanguages => [.. Languages];
 
+    [Fact]
+    public void The_library_default_languages_are_the_ones_the_templates_start_with()
+    {
+        LocalizationOptions.Default.ShouldBe(OptionCatalog.DefaultLanguages);
+    }
+
+    [Fact]
+    public void Texts_and_docs_name_23_shipped_languages_so_a_change_updates_them()
+    {
+        OptionCatalog.ShippedLanguages.Count.ShouldBe(23, "update the \"23 languages\" in OptionCatalog, LanguagesStep, German.cs of the Studio and the website docs");
+    }
+
     [Theory]
     [MemberData(nameof(Texts))]
     public void Texts_have_the_keys_of_the_German_file_and_keep_their_placeholders(string folder, string language)
