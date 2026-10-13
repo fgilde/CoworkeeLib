@@ -42,7 +42,7 @@ public sealed class AppConfigurationTests(SettingsApp app) : IAsyncLifetime
     [Fact]
     public async Task Lists_the_registered_sections() =>
         (await Admin.GetFromJsonAsync<AppConfigurationDto[]>("/api/v1/configuration", Ct))!.ShouldBe(
-            [new AppConfigurationDto("TestApp", "Test app"), new AppConfigurationDto(CoworkeeAppSettings.Section, "App settings")], ignoreOrder: true);
+            [new AppConfigurationDto("TestApp", "Test app"), new AppConfigurationDto("Masked", "Masked"), new AppConfigurationDto(CoworkeeAppSettings.Section, "App settings")], ignoreOrder: true);
 
     [Fact]
     public async Task Shows_the_section_typed_with_secrets_masked()
@@ -52,6 +52,16 @@ public sealed class AppConfigurationTests(SettingsApp app) : IAsyncLifetime
         var values = section.Values.Deserialize<TestAppConfig>(JsonSerializerOptions.Web)!;
         (values.Name, values.Limit, values.ApiKey, string.Join(",", values.Tags)).ShouldBe(("Default", 10, AppConfigurationMask.Value, "a,b"));
         section.ChangedKeys.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Masks_secret_names_only()
+    {
+        var section = (await Admin.GetFromJsonAsync<AppConfigurationValuesDto>("/api/v1/configuration/Masked", Ct))!;
+
+        var values = section.Values.Deserialize<MaskedConfig>(JsonSerializerOptions.Web)!;
+        (values.Jobs.ConnectionStringName, values.Ai.MaxOutputTokens).ShouldBe(("default", "100"));
+        new[] { values.Db.ConnectionString, values.Mail.Password, values.Ai.ApiKey, values.Auth.ClientSecret }.ShouldAllBe(v => v == AppConfigurationMask.Value);
     }
 
     [Fact]

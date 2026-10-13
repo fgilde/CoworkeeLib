@@ -40,6 +40,12 @@ public sealed class SettingsApp : DatabaseFixture
         builder.Configuration["TestApp:ApiKey"] = "secret-default";
         builder.Configuration["TestApp:Tags:0"] = "a";
         builder.Configuration["TestApp:Tags:1"] = "b";
+        builder.Configuration["Masked:Jobs:ConnectionStringName"] = "default";
+        builder.Configuration["Masked:Db:ConnectionString"] = "Host=x";
+        builder.Configuration["Masked:Mail:Password"] = "p";
+        builder.Configuration["Masked:Ai:ApiKey"] = "k";
+        builder.Configuration["Masked:Ai:MaxOutputTokens"] = "100";
+        builder.Configuration["Masked:Auth:ClientSecret"] = "s";
         builder.Configuration["Coworkee:Services:self:Url"] = "http://localhost/";
         builder.Configuration["Coworkee:Services:self:Title"] = "Self";
         builder.Configuration["Coworkee:Services:sick:Url"] = "http://localhost/";
@@ -134,6 +140,7 @@ public sealed class TestSettingsModule : CoworkeeModule
     {
         context.Services.AddSingleton<ISettingDefinitionContributor, TestSettingDefinitions>();
         context.Services.AddCoworkeeAppConfiguration<TestAppConfig>(context.Configuration, "TestApp", "Test app");
+        context.Services.AddCoworkeeAppConfiguration<MaskedConfig>(context.Configuration, "Masked", "Masked");
         context.Services.AddCoworkeeDbContext<SettingsTestDbContext>((provider, options) =>
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
     }
@@ -150,4 +157,44 @@ public sealed class TestAppConfig
     public List<string> Tags { get; set; } = [];
 
     public string? Mode { get; set; }
+}
+
+public sealed class MaskedConfig
+{
+    public JobsPart Jobs { get; set; } = new();
+
+    public DbPart Db { get; set; } = new();
+
+    public MailPart Mail { get; set; } = new();
+
+    public AiPart Ai { get; set; } = new();
+
+    public AuthPart Auth { get; set; } = new();
+
+    public sealed class JobsPart
+    {
+        public string? ConnectionStringName { get; set; }
+    }
+
+    public sealed class DbPart
+    {
+        public string? ConnectionString { get; set; }
+    }
+
+    public sealed class MailPart
+    {
+        public string? Password { get; set; }
+    }
+
+    public sealed class AiPart
+    {
+        public string? ApiKey { get; set; }
+
+        public string? MaxOutputTokens { get; set; }
+    }
+
+    public sealed class AuthPart
+    {
+        public string? ClientSecret { get; set; }
+    }
 }

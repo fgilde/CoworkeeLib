@@ -389,7 +389,7 @@ internal sealed partial class AppConfigurationHandlers(
         }
     }
 
-    [GeneratedRegex("password|secret|apikey|api_key|token|connectionstring", RegexOptions.IgnoreCase)]
+    [GeneratedRegex("(password|secret|apikey|api_key|token|connectionstring)$", RegexOptions.IgnoreCase)]
     private static partial Regex SecretName();
 }
 
