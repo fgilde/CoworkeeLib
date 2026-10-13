@@ -167,29 +167,59 @@ public sealed class ServiceDirectoryTests
 
             return new HttpResponseMessage(HttpStatusCode.OK);
         });
-        using var provider = Build(handler, aspire: o => o.Url = "http://aspire.test", services: o => o["self"] = new CoworkeeServiceOptions { Url = "http://self.test" });
+        using var provider = Build(handler, aspire: o => o.Url = "http://aspire.test", services: o => o["self"] = new CoworkeeServiceOptions { Url = "http://self.test" }, time: new FastTime());
 
-        var started = DateTime.UtcNow;
-        var services = (await Dir(provider).GetAllAsync(Ct)).Services;
+        var result = await Dir(provider).GetAllAsync(Ct);
 
-        services.Select(s => s.Name).ShouldBe(["self"]);
-        (DateTime.UtcNow - started).ShouldBeLessThan(TimeSpan.FromSeconds(10));
+        result.Services.Select(s => s.Name).ShouldBe(["self"]);
+        result.UnavailableSources.ShouldBe(["aspireui"]);
     }
 
     [Fact]
-    public async Task A_source_that_ignores_cancellation_is_unavailable_after_three_seconds()
+    public async Task A_service_that_never_answers_is_unreachable_while_the_app_source_stays_available()
     {
-        using var provider = Build(new FakeHandler(_ => Json(Apps)), aspire: o => o.Url = "http://aspire.test", configure: s => s.AddSingleton<IServiceSource, HangingSource>());
+        var handler = new FakeHandler(async (request, token) =>
+        {
+            if (request.RequestUri!.Host == "slow.test")
+            {
+                await Task.Delay(Timeout.InfiniteTimeSpan, token);
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.OK);
+        });
+        using var provider = Build(
+            handler,
+            services: o =>
+            {
+                o["fast"] = new CoworkeeServiceOptions { Url = "http://fast.test" };
+                o["slow"] = new CoworkeeServiceOptions { Url = "http://slow.test" };
+            },
+            time: new FastTime());
+
+        var result = await Dir(provider).GetAllAsync(Ct);
+
+        result.UnavailableSources.ShouldBeEmpty();
+        result.Services.Select(s => (s.Name, s.Health)).ShouldBe([("fast", ServiceHealth.Healthy), ("slow", ServiceHealth.Unreachable)]);
+    }
+
+    [Fact]
+    public void The_directory_guard_is_longer_than_the_timeout_of_the_built_in_sources()
+    {
+        ServiceSourceTimeouts.Guard.ShouldBeGreaterThan(ServiceSourceTimeouts.Request);
+    }
+
+    [Fact]
+    public async Task A_source_that_ignores_cancellation_is_unavailable_after_the_guard_time()
+    {
+        using var provider = Build(new FakeHandler(_ => Json(Apps)), aspire: o => o.Url = "http://aspire.test", configure: s => s.AddSingleton<IServiceSource, HangingSource>(), time: new FastTime());
         var directory = Dir(provider);
 
-        var started = DateTime.UtcNow;
         var all = await directory.GetAllAsync(Ct);
         var hung = await directory.ResolveAsync("hanging:x", Ct);
 
         all.Services.Select(s => s.Name).ShouldBe(["billing", "shop"]);
         all.UnavailableSources.ShouldBe(["hanging"]);
         hung.ShouldBeNull();
-        (DateTime.UtcNow - started).ShouldBeLessThan(TimeSpan.FromSeconds(9));
     }
 
     [Fact]
@@ -322,9 +352,10 @@ public sealed class ServiceDirectoryTests
     private static HttpResponseMessage Json(string json) => new(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
 
     private static ServiceProvider Build(
-        FakeHandler handler, ILoggerProvider? log = null, Action<CoworkeeAspireUIOptions>? aspire = null, Action<CoworkeeServicesOptions>? services = null, Action<IServiceCollection>? configure = null)
+        FakeHandler handler, ILoggerProvider? log = null, Action<CoworkeeAspireUIOptions>? aspire = null, Action<CoworkeeServicesOptions>? services = null, Action<IServiceCollection>? configure = null, TimeProvider? time = null)
     {
         var collection = new ServiceCollection();
+        collection.AddSingleton(time ?? TimeProvider.System);
         collection.AddHybridCache();
         collection.AddLogging(logging => logging.AddProvider(log ?? new ListLoggerProvider()));
         collection.Configure<CoworkeeAspireUIOptions>(o => aspire?.Invoke(o));
@@ -335,6 +366,12 @@ public sealed class ServiceDirectoryTests
         collection.TryAddScoped<IServiceDirectory, ServiceDirectory>();
         configure?.Invoke(collection);
         return collection.BuildServiceProvider(validateScopes: true);
+    }
+
+    private sealed class FastTime : TimeProvider
+    {
+        public override ITimer CreateTimer(TimerCallback callback, object? state, TimeSpan dueTime, TimeSpan period) =>
+            base.CreateTimer(callback, state, dueTime / 100, period);
     }
 
     private sealed class OwnSource : IServiceSource

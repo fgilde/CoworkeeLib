@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Coworkee.Settings;
 
-/// <summary>A place the service directory learns services from; register your own with <c>TryAddEnumerable</c>. Throw when the source cannot be asked, or take longer than three seconds: the directory leaves it out and reports it as unavailable.</summary>
+/// <summary>A place the service directory learns services from; register your own with <c>TryAddEnumerable</c>. Throw when the source cannot be asked, or take longer than ten seconds: the directory leaves it out and reports it as unavailable.</summary>
 public interface IServiceSource
 {
     string Name { get; }
@@ -29,10 +29,8 @@ public interface IServiceDirectory
     Task<ServiceDto?> ResolveAsync(string name, CancellationToken cancellationToken);
 }
 
-internal sealed partial class ServiceDirectory(IEnumerable<IServiceSource> sources, ILogger<ServiceDirectory> logger) : IServiceDirectory
+internal sealed partial class ServiceDirectory(IEnumerable<IServiceSource> sources, TimeProvider time, ILogger<ServiceDirectory> logger) : IServiceDirectory
 {
-    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(3);
-
     public async Task<ServiceDirectoryResult> GetAllAsync(CancellationToken cancellationToken)
     {
         var results = await Task.WhenAll(sources.Select(async source => (source.Name, Services: await AskAsync(source, (s, token) => s.GetAsync(token), cancellationToken))));
@@ -63,8 +61,7 @@ internal sealed partial class ServiceDirectory(IEnumerable<IServiceSource> sourc
 
     private async Task<T?> AskAsync<T>(IServiceSource source, Func<IServiceSource, CancellationToken, Task<T>> ask, CancellationToken cancellationToken)
     {
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(Timeout);
+        using var timeout = ServiceSourceTimeouts.Limit(ServiceSourceTimeouts.Guard, time, cancellationToken);
         try
         {
             return await ask(source, timeout.Token).WaitAsync(timeout.Token);

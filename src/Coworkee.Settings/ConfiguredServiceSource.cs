@@ -4,11 +4,9 @@ using Microsoft.Extensions.Options;
 
 namespace Coworkee.Settings;
 
-internal sealed class ConfiguredServiceSource(IOptionsMonitor<CoworkeeServicesOptions> options, IHttpClientFactory clients) : IServiceSource
+internal sealed class ConfiguredServiceSource(IOptionsMonitor<CoworkeeServicesOptions> options, IHttpClientFactory clients, TimeProvider time) : IServiceSource
 {
     public const string Client = "Coworkee.Services";
-
-    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(3);
 
     public string Name => "app";
 
@@ -32,8 +30,7 @@ internal sealed class ConfiguredServiceSource(IOptionsMonitor<CoworkeeServicesOp
 
     private async Task<ServiceHealth> ProbeAsync(CoworkeeServiceOptions service, CancellationToken cancellationToken)
     {
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(Timeout);
+        using var timeout = ServiceSourceTimeouts.Limit(ServiceSourceTimeouts.Request, time, cancellationToken);
         var url = service.HealthPath is { Length: > 0 } path ? new Uri(new Uri(service.Url!), path) : new Uri(service.Url!);
         try
         {

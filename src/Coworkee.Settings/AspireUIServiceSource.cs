@@ -9,10 +9,8 @@ using Microsoft.Extensions.Options;
 namespace Coworkee.Settings;
 
 internal sealed partial class AspireUIServiceSource(
-    IOptionsMonitor<CoworkeeAspireUIOptions> options, IHttpClientFactory clients, HybridCache cache, ILogger<AspireUIServiceSource> logger) : IServiceSource
+    IOptionsMonitor<CoworkeeAspireUIOptions> options, IHttpClientFactory clients, HybridCache cache, TimeProvider time, ILogger<AspireUIServiceSource> logger) : IServiceSource
 {
-    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(3);
-
     private static readonly HybridCacheEntryOptions Entry = new() { Expiration = TimeSpan.FromSeconds(15), LocalCacheExpiration = TimeSpan.FromSeconds(15) };
 
     public string Name => "aspireui";
@@ -33,8 +31,7 @@ internal sealed partial class AspireUIServiceSource(
 
     private async Task<FetchedApps> FetchAsync(Uri url, string? apiKey, CancellationToken cancellationToken)
     {
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(Timeout);
+        using var timeout = ServiceSourceTimeouts.Limit(ServiceSourceTimeouts.Request, time, cancellationToken);
         using var request = new HttpRequestMessage(HttpMethod.Get, url.AbsoluteUri.TrimEnd('/') + "/api/retrieve/apps");
         if (!string.IsNullOrEmpty(apiKey))
         {
