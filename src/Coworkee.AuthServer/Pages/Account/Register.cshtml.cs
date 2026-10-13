@@ -20,7 +20,7 @@ using static Coworkee.AuthServer.AuthTexts;
 namespace Coworkee.AuthServer.Pages.Account;
 
 public sealed class RegisterModel(
-    AccountRegistration registration, UserManager<User> users, SignInManager<User> signIn, ExternalSignIn external, CoworkeeDbContext db, ISettingProvider settings,
+    AccountRegistration registration, UserManager<User> users, SignInManager<User> signIn, ExternalSignIn external, CoworkeeDbContext db, ISettingProvider settings, ISettingDefinitionManager definitions,
     ITenantDirectory tenants, IOptions<RegistrationOptions> options, IOptions<AuthServerOptions> auth, IDataProtectionProvider protection,
     IEnumerable<IRegistrationDocumentStore> stores) : PageModel
 {
@@ -111,7 +111,7 @@ public sealed class RegisterModel(
     private async Task<bool> LoadAsync(bool external = false)
     {
         var policy = await RegistrationPolicy.LoadAsync(settings, HttpContext.RequestAborted);
-        if (!policy.Enabled || (!external && await LoginModes.ResolveAsync(settings, auth.Value, HttpContext.RequestAborted) == LoginMode.External)
+        if (!policy.Enabled || (!external && await LoginModes.ResolveAsync(settings, definitions, auth.Value, HttpContext.RequestAborted) == LoginMode.External)
             || await tenants.GetSystemTenantIdAsync(HttpContext.RequestAborted) is not { } tenantId)
         {
             return false;

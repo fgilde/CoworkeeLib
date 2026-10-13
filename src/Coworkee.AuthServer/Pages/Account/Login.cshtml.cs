@@ -13,7 +13,8 @@ using static Coworkee.AuthServer.AuthTexts;
 namespace Coworkee.AuthServer.Pages.Account;
 
 public sealed class LoginModel(
-    SignInManager<User> signIn, UserManager<User> users, CoworkeeDbContext db, ISettingProvider settings, IOptions<AuthServerOptions> options) : PageModel
+    SignInManager<User> signIn, UserManager<User> users, CoworkeeDbContext db, ISettingProvider settings,
+    ISettingDefinitionManager definitions, IOptions<AuthServerOptions> options) : PageModel
 {
     [BindProperty]
     public LoginInput Input { get; set; } = new();
@@ -33,7 +34,7 @@ public sealed class LoginModel(
 
     public async Task<IActionResult> OnPostExternalAsync(string provider, string? returnUrl)
     {
-        Mode = await LoginModes.ResolveAsync(settings, options.Value, HttpContext.RequestAborted);
+        Mode = await LoginModes.ResolveAsync(settings, definitions, options.Value, HttpContext.RequestAborted);
         if (Mode == LoginMode.Internal || !options.Value.External.Providers.ContainsKey(provider))
         {
             return NotFound();
@@ -45,7 +46,7 @@ public sealed class LoginModel(
 
     public async Task OnGetAsync(string? returnUrl)
     {
-        Mode = await LoginModes.ResolveAsync(settings, options.Value, HttpContext.RequestAborted);
+        Mode = await LoginModes.ResolveAsync(settings, definitions, options.Value, HttpContext.RequestAborted);
         AllowRegistration = (await RegistrationPolicy.LoadAsync(settings, HttpContext.RequestAborted)).Enabled && ShowsPasswordForm;
 
         // the authorization request carries the client's login_hint (the address entered in setup, for example)
@@ -58,7 +59,7 @@ public sealed class LoginModel(
 
     public async Task<IActionResult> OnPostAsync(string? returnUrl)
     {
-        Mode = await LoginModes.ResolveAsync(settings, options.Value, HttpContext.RequestAborted);
+        Mode = await LoginModes.ResolveAsync(settings, definitions, options.Value, HttpContext.RequestAborted);
         if (!ShowsPasswordForm)
         {
             return NotFound();
