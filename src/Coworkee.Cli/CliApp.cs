@@ -30,6 +30,7 @@ internal static class CliApp
             MigrationsCommand.Create(),
             ModuleCommand.Create(),
             EntityCommand.Create(),
+            TextsCommand.Create(),
             UpdateCommand.Create(),
             SelfUpdateCommand.Create(),
             DoctorCommand.Create(),

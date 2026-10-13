@@ -12,6 +12,11 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" />
   </ItemGroup>
   <ItemGroup>
+    <!-- the library texts travel inside the tool for coworkee texts export; the tool must not reference the library -->
+    <EmbeddedResource Include="..\Coworkee.Localization\Localization\*.json" LogicalName="Texts.Ui.%(Filename).json" Link="Texts\Ui\%(Filename).json" />
+    <EmbeddedResource Include="..\Coworkee.AuthServer\Texts\*.json" LogicalName="Texts.Account.%(Filename).json" Link="Texts\Account\%(Filename).json" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Coworkee.Cli.Spec\Coworkee.Cli.Spec.csproj" />
   </ItemGroup>
 </Project>

@@ -43,6 +43,56 @@ The library ships 23 languages (`ar`, `bg`, `cs`, `da`, `de`, `el`, `en`, `es`, 
 
 Any culture works, not only the shipped ones: languages without shipped texts are [machine translated](#machine-translation). The host does not start with an unknown culture or a default that is not among the languages. `coworkee new --languages en,de,fr --default-language de` writes the same values into a new app.
 
+## Shipped languages
+
+The library ships its texts in 23 languages: the pages and components of the modules (`Coworkee.Localization/Localization/{code}.json`), the account pages of the auth server (`Coworkee.AuthServer/Texts/{code}.json`) and the mails (`Coworkee.Mailing/Templates/*.{code}.*.scriban`). English is the key of every text and needs no file.
+
+| Code | Language | Code | Language | Code | Language |
+|---|---|---|---|---|---|
+| `ar` | Arabic | `hr` | Croatian | `pt` | Portuguese (Brazil) |
+| `bg` | Bulgarian | `id` | Indonesian | `ru` | Russian |
+| `cs` | Czech | `it` | Italian | `sv` | Swedish |
+| `da` | Danish | `ja` | Japanese | `tr` | Turkish |
+| `de` | German | `km` | Khmer | `uk` | Ukrainian |
+| `el` | Greek | `ko` | Korean | `zh` | Chinese (Simplified) |
+| `en` | English | `nl` | Dutch | | |
+| `es` | Spanish | `pl` | Polish | | |
+| `fr` | French | | | | |
+
+Only English and German are switched on by default, however many texts ship: an app offers the languages of `LocalizationOptions`, and administrators switch more on the *Languages* page (see [Initial languages](#initial-languages)). A shipped language that is switched off costs nothing but its embedded file.
+
+## Changing library texts
+
+Three layers decide which text a user sees, the last one wins:
+
+1. The shipped text of the library.
+2. The same key in a `Localization/{culture}.json` of the app: the app's resources are defined after those of the modules, so its text replaces the library's. A key the library does not know is simply added.
+3. An edit on *Translations* (`/admin/translations`), which works at runtime without a deployment and beats both.
+
+`coworkee texts export` copies library texts into the app's JSON so you do not have to look the keys up:
+
+```bash
+coworkee texts export --lang fr
+coworkee texts export --lang de --keys "Filter*" --out src/Shop.Contracts/Localization/de.json
+coworkee texts export --lang en --keys "/^Delete/"
+coworkee texts export --lang fr --auth
+```
+
+| Switch | |
+|---|---|
+| `--lang <code>` | One of the shipped languages above. `en` writes every key as its own text, the starting point for rewording English. An unknown code lists the shipped ones |
+| `--keys <pattern>` | Only keys that match: a glob with `*` and `?` (case sensitive, the whole key), or a regular expression between slashes |
+| `--out <file>` | Target file; default `src/<App>.Contracts/Localization/<code>.json` of the solution you are in |
+| `--auth` | Also the texts of the account pages |
+
+The export merges: texts the file already has stay as they are, in their order, and missing keys are appended. Run it again after an update to get the new texts without losing your wording. The file is written as UTF-8 with real characters (no `\u` escapes) and the `\r\n` line breaks of the other texts. Keep what you change in the file and delete the rest, because every copied key freezes that wording and stops it from following library updates.
+
+The account pages and mails read their own embedded texts and templates, not the app's JSON: the exported account texts are a reference for translating, they do not change the sign-in pages.
+
+## In a new app
+
+`coworkee new --languages en,de,fr` puts `Localization/de.json` and `Localization/fr.json` into `src/<App>.Contracts` with the translations of the app's own texts (navigation, sample pages) and nothing for languages you did not choose; without the switch it is English and German. The library texts of all 23 languages come with the packages either way. To add a language later, switch it on on the *Languages* page; add `src/<App>.Contracts/Localization/<code>.json` (`coworkee texts export --lang <code>` creates it) only to translate or reword texts yourself, the `Localization\*.json` pattern of the project embeds it.
+
 ## In the client
 
 `CoworkeeLocalizer` translates in pages and components; missing keys fall back to the key and are reported to the server, where they show up under *Translations*.

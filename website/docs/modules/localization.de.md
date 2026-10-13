@@ -43,6 +43,56 @@ Die Bibliothek bringt 23 Sprachen mit (`ar`, `bg`, `cs`, `da`, `de`, `el`, `en`,
 
 Jede Kultur geht, nicht nur die mitgelieferten: Sprachen ohne mitgelieferte Texte werden [maschinell übersetzt](#maschinelle-ubersetzung). Mit einer unbekannten Kultur oder einer Standardsprache, die nicht unter den Sprachen ist, startet der Host nicht. `coworkee new --languages en,de,fr --default-language de` schreibt dieselben Werte in eine neue App.
 
+## Mitgelieferte Sprachen
+
+Die Bibliothek liefert ihre Texte in 23 Sprachen mit: die Seiten und Komponenten der Module (`Coworkee.Localization/Localization/{code}.json`), die Kontoseiten des Auth-Servers (`Coworkee.AuthServer/Texts/{code}.json`) und die Mails (`Coworkee.Mailing/Templates/*.{code}.*.scriban`). Englisch ist der Schlüssel jedes Textes und braucht keine Datei.
+
+| Code | Sprache | Code | Sprache | Code | Sprache |
+|---|---|---|---|---|---|
+| `ar` | Arabisch | `hr` | Kroatisch | `pt` | Portugiesisch (Brasilien) |
+| `bg` | Bulgarisch | `id` | Indonesisch | `ru` | Russisch |
+| `cs` | Tschechisch | `it` | Italienisch | `sv` | Schwedisch |
+| `da` | Dänisch | `ja` | Japanisch | `tr` | Türkisch |
+| `de` | Deutsch | `km` | Khmer | `uk` | Ukrainisch |
+| `el` | Griechisch | `ko` | Koreanisch | `zh` | Chinesisch (vereinfacht) |
+| `en` | Englisch | `nl` | Niederländisch | | |
+| `es` | Spanisch | `pl` | Polnisch | | |
+| `fr` | Französisch | | | | |
+
+Standardmäßig sind nur Englisch und Deutsch eingeschaltet, egal wie viele Texte mitkommen: Eine App bietet die Sprachen aus `LocalizationOptions` an, weitere schalten Administratoren auf der Seite *Sprachen* ein (siehe [Anfangssprachen](#anfangssprachen)). Eine mitgelieferte Sprache, die ausgeschaltet bleibt, kostet nur ihre eingebettete Datei.
+
+## Bibliothekstexte ändern
+
+Drei Ebenen bestimmen, welchen Text ein Benutzer sieht, die letzte gewinnt:
+
+1. Der mitgelieferte Text der Bibliothek.
+2. Derselbe Schlüssel in einer `Localization/{culture}.json` der App: Die Ressourcen der App werden nach denen der Module definiert, ihr Text ersetzt also den der Bibliothek. Ein Schlüssel, den die Bibliothek nicht kennt, kommt einfach dazu.
+3. Eine Bearbeitung unter *Übersetzungen* (`/admin/translations`), die zur Laufzeit ohne Deployment wirkt und beide schlägt.
+
+`coworkee texts export` kopiert Bibliothekstexte in die JSON der App, damit Sie die Schlüssel nicht suchen müssen:
+
+```bash
+coworkee texts export --lang fr
+coworkee texts export --lang de --keys "Filter*" --out src/Shop.Contracts/Localization/de.json
+coworkee texts export --lang en --keys "/^Delete/"
+coworkee texts export --lang fr --auth
+```
+
+| Schalter | |
+|---|---|
+| `--lang <code>` | Eine der oben genannten Sprachen. `en` schreibt jeden Schlüssel als eigenen Text, der Ausgangspunkt, um englische Texte umzuformulieren. Ein unbekannter Code listet die mitgelieferten auf |
+| `--keys <muster>` | Nur passende Schlüssel: ein Glob mit `*` und `?` (Groß-/Kleinschreibung zählt, der ganze Schlüssel) oder ein regulärer Ausdruck zwischen Schrägstrichen |
+| `--out <datei>` | Zieldatei; Standard `src/<App>.Contracts/Localization/<code>.json` der Solution, in der Sie sind |
+| `--auth` | Zusätzlich die Texte der Kontoseiten |
+
+Der Export führt zusammen: Texte, die die Datei schon hat, bleiben unverändert und in ihrer Reihenfolge, fehlende Schlüssel werden angehängt. Nach einem Update läuft er erneut, um neue Texte zu holen, ohne Ihre Formulierungen zu verlieren. Die Datei wird als UTF-8 mit echten Zeichen (ohne `\u`-Escapes) und den `\r\n`-Zeilenumbrüchen der übrigen Texte geschrieben. Behalten Sie in der Datei nur, was Sie ändern, und löschen Sie den Rest: Jeder kopierte Schlüssel friert seinen Wortlaut ein und folgt Updates der Bibliothek nicht mehr.
+
+Die Kontoseiten und Mails lesen ihre eigenen eingebetteten Texte und Vorlagen, nicht die JSON der App: Die exportierten Kontotexte sind eine Vorlage zum Übersetzen, sie ändern die Anmeldeseiten nicht.
+
+## In einer neuen App
+
+`coworkee new --languages en,de,fr` legt `Localization/de.json` und `Localization/fr.json` in `src/<App>.Contracts` an, mit den Übersetzungen der eigenen Texte der App (Navigation, Beispielseiten), und nichts für Sprachen, die Sie nicht gewählt haben; ohne den Schalter sind es Englisch und Deutsch. Die Bibliothekstexte aller 23 Sprachen kommen in jedem Fall mit den Paketen. Um später eine Sprache zu ergänzen, schalten Sie sie auf der Seite *Sprachen* ein; eine Datei `src/<App>.Contracts/Localization/<code>.json` (`coworkee texts export --lang <code>` legt sie an) brauchen Sie nur, um Texte selbst zu übersetzen oder umzuformulieren, das Muster `Localization\*.json` des Projekts bettet sie ein.
+
 ## Im Client
 
 `CoworkeeLocalizer` übersetzt in Seiten und Komponenten; fehlende Schlüssel fallen auf den Schlüssel zurück und werden an den Server gemeldet, wo sie unter *Übersetzungen* auftauchen.
