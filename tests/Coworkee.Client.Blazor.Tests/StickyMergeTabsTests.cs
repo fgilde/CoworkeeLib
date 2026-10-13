@@ -16,33 +16,41 @@ public sealed class StickyMergeTabsTests : ClientTestBase
         _observer = _module.SetupModule(invocation => invocation.Identifier == "observeStuck");
     }
 
-    [Fact]
-    public void It_renders_the_tab_panels_and_observes_the_tab_bar_once()
-    {
-        var tabs = Render<StickyMergeTabs>(parameters => parameters
-            .Add(p => p.ChildContent, (RenderFragment)(builder =>
+    private IRenderedComponent<StickyMergeTabs> RenderTabs() => Render<StickyMergeTabs>(parameters => parameters
+        .Add(p => p.ChildContent, (RenderFragment)(builder =>
+        {
+            builder.OpenComponent<MudTabs>(0);
+            builder.AddAttribute(1, nameof(MudTabs.ChildContent), (RenderFragment)(panels =>
             {
-                builder.OpenComponent<MudTabPanel>(0);
-                builder.AddAttribute(1, nameof(MudTabPanel.Text), "First");
-                builder.CloseComponent();
-                builder.OpenComponent<MudTabPanel>(2);
-                builder.AddAttribute(3, nameof(MudTabPanel.Text), "Second");
-                builder.CloseComponent();
-            })));
+                panels.OpenComponent<MudTabPanel>(0);
+                panels.AddAttribute(1, nameof(MudTabPanel.Text), "First");
+                panels.CloseComponent();
+                panels.OpenComponent<MudTabPanel>(2);
+                panels.AddAttribute(3, nameof(MudTabPanel.Text), "Second");
+                panels.CloseComponent();
+            }));
+            builder.CloseComponent();
+        })));
+
+    [Fact]
+    public void It_renders_the_given_tabs_behind_the_sentinel_and_observes_once()
+    {
+        var tabs = RenderTabs();
 
         tabs.FindAll(".mud-tab").Count.ShouldBe(2);
-        tabs.Find(".cw-tabs-stick-merge .cw-tabs-sentinel").ShouldNotBeNull();
+        tabs.Find(".cw-tabs-stick-merge > .cw-tabs-sentinel + .mud-tabs > .mud-tabs-tabbar").ShouldNotBeNull();
         tabs.WaitForAssertion(() => _module.Invocations["observeStuck"].Count.ShouldBe(1));
         tabs.Render();
         _module.Invocations["observeStuck"].Count.ShouldBe(1);
     }
 
     [Fact]
-    public async Task Leaving_the_page_disconnects_the_observer()
+    public async Task Leaving_the_page_disconnects_the_observer_once()
     {
-        var tabs = Render<StickyMergeTabs>();
+        var tabs = RenderTabs();
         tabs.WaitForAssertion(() => _module.Invocations["observeStuck"].Count.ShouldBe(1));
 
+        await tabs.Instance.DisposeAsync();
         await tabs.Instance.DisposeAsync();
 
         _observer.Invocations["dispose"].Count.ShouldBe(1);

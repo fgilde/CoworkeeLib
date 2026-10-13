@@ -119,7 +119,7 @@ builder.Services.AddSingleton(new ProfileTab("Documents", "documents", typeof(My
 | Komponente | Zweck |
 |---|---|
 | `PageHeader` | Titel, Beschreibung, Aktionen rechts; setzt den Browsertitel |
-| `StickyMergeTabs` | `MudTabs` (gleiche Parameter), dessen Tab-Leiste unter der App-Leiste kleben bleibt und auf die Breite der Tabs schrumpft, sodass eine klebende `MudExObjectEditForm`-Toolbar im Panel daneben sichtbar wird; nicht auf schmalen Bildschirmen |
+| `StickyMergeTabs` | umschließt ein `<MudTabs>`: dessen Tab-Leiste klebt unter der App-Leiste und schrumpft auf die Breite der Tabs schrumpft, sodass eine klebende `MudExObjectEditForm`-Toolbar im Panel daneben sichtbar wird; nicht auf schmalen Bildschirmen |
 | `PermissionGate`, `PermissionView` | rendern Inhalt nur mit einer Berechtigung |
 | `RealtimeSubscription` | ruft zurück, wenn der Server auf einem Thema veröffentlicht, z. B. `type:Brand` |
 | `EntityWatch` | hält eine Detailseite mit ihrem Eintrag gleich, geht zurück, wenn er gelöscht wird |

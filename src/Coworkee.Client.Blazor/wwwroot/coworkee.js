@@ -50,7 +50,7 @@ export function onHotkey(dotnet, key) {
 
 export function observeStuck(sentinel, root) {
     const appbar = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mud-appbar-height')) || 0;
-    const observer = new IntersectionObserver(([entry]) => root.toggleAttribute('stuck', entry.intersectionRatio < 1),
+    const observer = new IntersectionObserver(([entry]) => root.toggleAttribute('stuck', entry.boundingClientRect.top < entry.rootBounds.top),
         { threshold: 1, rootMargin: `-${appbar}px 0px 0px 0px` });
     observer.observe(sentinel);
     return { dispose: () => observer.disconnect() };
