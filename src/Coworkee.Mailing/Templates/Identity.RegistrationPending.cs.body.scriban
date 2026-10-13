@@ -1,0 +1,2 @@
+<p>Dobrý den, {{ user.first_name }},</p>
+<p>děkujeme za registraci. Správce váš účet brzy zkontroluje.</p>

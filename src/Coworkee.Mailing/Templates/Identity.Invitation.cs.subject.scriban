@@ -1,0 +1,1 @@
+Jste pozváni, {{ user.first_name }}

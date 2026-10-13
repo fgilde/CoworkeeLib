@@ -1,0 +1,7 @@
+<p>Dobrý den, {{ user.first_name }},</p>
+{{ if pending }}
+<p>Pro váš účet byla vyžádána nová e-mailová adresa: {{ new_email }}. Nahradí tuto adresu, jakmile bude otevřen odkaz odeslaný na ni.</p>
+{{ else }}
+<p>E-mailová adresa vašeho účtu byla změněna na {{ new_email }}. Od nynějška se přihlašujete pomocí nové adresy.</p>
+{{ end }}
+<p>Pokud jste o to nežádali, ihned změňte své heslo a informujte svého správce.</p>

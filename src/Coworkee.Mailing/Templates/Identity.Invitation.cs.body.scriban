@@ -1,0 +1,3 @@
+<p>Dobrý den, {{ user.first_name }},</p>
+<p>byl pro vás vytvořen účet: {{ user.email }}. Zvolte si heslo, abyste se mohli přihlásit.</p>
+<p style="margin:24px 0;"><a href="{{ invitation_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">Zvolit heslo</a></p>

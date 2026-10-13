@@ -1,0 +1,1 @@
+Vítejte, {{ user.first_name }}
