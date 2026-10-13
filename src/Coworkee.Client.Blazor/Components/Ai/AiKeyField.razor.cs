@@ -4,16 +4,9 @@ using Microsoft.AspNetCore.Components;
 
 namespace Coworkee.Client.Blazor.Components.Ai;
 
-/// <summary>The key of a connection: masked while stored, with replace and remove; never read back from the server.</summary>
+/// <summary>The key of an AI connection: none for local providers, else a <see cref="SecretField"/> that drops the key of another provider or address.</summary>
 public partial class AiKeyField
 {
-    private const string Mask = "••••••••••••";
-
-    private static readonly Dictionary<string, object> KeyAttributes = new() { ["autocomplete"] = "new-password", ["data-testid"] = "ai-key" };
-
-    private bool _replacing;
-    private bool _visible;
-
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
     [Parameter, EditorRequired] public AiConnectionForm Form { get; set; } = null!;

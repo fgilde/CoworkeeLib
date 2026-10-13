@@ -4,21 +4,8 @@
         @L["No key needed: the model runs on your machine."]
     </MudAlert>
 }
-else if (Form.KeepsStoredKey && !_replacing)
-{
-    <MudStack Row="true" AlignItems="AlignItems.Start" Spacing="2" data-testid="ai-key-stored">
-        <MudTextField T="string" Value="@Mask" ReadOnly="true" Label="@L["API key"]" Variant="Variant.Outlined" Adornment="Adornment.Start"
-                      AdornmentIcon="@Icons.Material.Outlined.Lock" HelperText="@L["Stored encrypted; it is never shown again."]" Class="flex-grow-1" />
-        <MudButton Variant="Variant.Outlined" OnClick="() => _replacing = true" Class="mt-2" data-testid="ai-key-replace">@L["Replace"]</MudButton>
-        <MudTooltip Text="@L["Remove key"]">
-            <MudIconButton Icon="@Icons.Material.Outlined.Delete" Color="Color.Error" OnClick="() => Form.RemoveKey = true" Class="mt-1" aria-label="@L["Remove key"]" data-testid="ai-key-remove" />
-        </MudTooltip>
-    </MudStack>
-}
 else
 {
-    <MudTextField T="string" @bind-Value="Form.NewKey" Label="@L["API key"]" Variant="Variant.Outlined" InputType="@(_visible ? InputType.Text : InputType.Password)"
-                  Required="@(Form.Info.Key == AiField.Required)" Adornment="Adornment.End"
-                  AdornmentIcon="@(_visible ? Icons.Material.Outlined.VisibilityOff : Icons.Material.Outlined.Visibility)" OnAdornmentClick="() => _visible = !_visible"
-                  AdornmentAriaLabel="@L["Show key"]" UserAttributes="@KeyAttributes" HelperText="@Help" />
+    <SecretField Label="@L["API key"]" Stored="Form.KeepsStoredKey" @bind-Value="Form.NewKey" Removed="() => Form.RemoveKey = true"
+                 Required="@(Form.Info.Key == AiField.Required)" Help="@Help" TestId="ai-key" />
 }

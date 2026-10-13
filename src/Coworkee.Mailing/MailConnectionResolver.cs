@@ -14,16 +14,34 @@ internal sealed class MailConnectionResolver(ISettingProvider settings, ICurrent
         MailSettings.ApiKey, MailSettings.MailgunDomain, MailSettings.MailgunRegion, MailSettings.From, MailSettings.Whitelist,
     ];
 
-    public async Task<MailConnection> ResolveAsync(CancellationToken cancellationToken)
+    private static readonly HashSet<string> Secrets = [MailSettings.Password, MailSettings.ApiKey];
+
+    public async Task<MailConnection> ResolveAsync(CancellationToken cancellationToken) =>
+        await ResolveAsync(await ScopeAsync(cancellationToken), null, cancellationToken);
+
+    /// <summary>The unsaved form of the current scope (system organisation: Global, else the organisation's own); an empty secret keeps the stored one.</summary>
+    public async Task<MailConnection> ResolveDraftAsync(IReadOnlyDictionary<string, string?> draft, CancellationToken cancellationToken) =>
+        await ResolveAsync(await IsSystemAsync(cancellationToken) ? SettingScope.Global : SettingScope.Tenant, draft, cancellationToken);
+
+    private async Task<MailConnection> ResolveAsync(SettingScope scope, IReadOnlyDictionary<string, string?>? draft, CancellationToken cancellationToken)
     {
-        var scope = await ScopeAsync(cancellationToken);
+        async Task<string?> GetAsync(string name, bool storedOnly = false)
+        {
+            if (draft is not null && draft.TryGetValue(name, out var typed) && (!Secrets.Contains(name) || !string.IsNullOrWhiteSpace(typed)))
+            {
+                return string.IsNullOrWhiteSpace(typed) ? null : typed.Trim();
+            }
+
+            return await settings.GetForScopeAsync(name, scope, storedOnly, cancellationToken);
+        }
+
         var values = new Dictionary<string, string?>(StringComparer.Ordinal);
         foreach (var name in Names)
         {
-            values[name] = await settings.GetForScopeAsync(name, scope, cancellationToken: cancellationToken);
+            values[name] = await GetAsync(name);
         }
 
-        var provider = await settings.GetForScopeAsync(MailSettings.Provider, scope, cancellationToken: cancellationToken) ?? MailProviders.Smtp;
+        var provider = await GetAsync(MailSettings.Provider) ?? MailProviders.Smtp;
         (string Name, string Label)[] required = provider switch
         {
             MailProviders.Smtp => [(MailSettings.Host, "SMTP host")],
@@ -34,7 +52,7 @@ internal sealed class MailConnectionResolver(ISettingProvider settings, ICurrent
         foreach (var (name, label) in required)
         {
             // an organisation's own server must be entered explicitly, deployment defaults would send through the system's server
-            var value = scope == SettingScope.Tenant ? await settings.GetForScopeAsync(name, scope, storedOnly: true, cancellationToken) : values[name];
+            var value = scope == SettingScope.Tenant ? await GetAsync(name, storedOnly: true) : values[name];
             if (string.IsNullOrWhiteSpace(value))
             {
                 throw new InvalidOperationException($"{label} is not configured.");
@@ -44,10 +62,13 @@ internal sealed class MailConnectionResolver(ISettingProvider settings, ICurrent
         return new MailConnection(provider, values);
     }
 
+    private async Task<bool> IsSystemAsync(CancellationToken cancellationToken) =>
+        currentUser.TenantId is not { } tenantId
+        || (services.GetService<ITenantDirectory>() is { } tenants && await tenants.IsSystemTenantAsync(tenantId, cancellationToken));
+
     private async Task<SettingScope> ScopeAsync(CancellationToken cancellationToken)
     {
-        if (currentUser.TenantId is not { } tenantId
-            || (services.GetService<ITenantDirectory>() is { } tenants && await tenants.IsSystemTenantAsync(tenantId, cancellationToken)))
+        if (await IsSystemAsync(cancellationToken))
         {
             return SettingScope.Global;
         }

@@ -33,6 +33,11 @@ public sealed record MailTemplateDto(string Name, string Culture, string Subject
 
 public sealed record SaveMailTemplateRequest(string Subject, string Body);
 
+/// <summary>The mail settings as typed in the form; an empty secret stands for the stored one.</summary>
+public sealed record MailConnectionTestRequest(IReadOnlyDictionary<string, string?> Values);
+
+public sealed record MailConnectionTestDto(bool Success, string? Error);
+
 public sealed record RenderedMailDto(string Subject, string HtmlBody);
 
 public sealed record OutgoingMailDto(
