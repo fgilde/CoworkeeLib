@@ -85,6 +85,40 @@ public sealed class SettingsFormTests : ClientTestBase
     }
 
     [Fact]
+    public void A_setting_is_disabled_while_its_condition_fails()
+    {
+        Api.GetSettingDefinitionsAsync(false, Arg.Any<CancellationToken>()).Returns(
+        [
+            new SettingGroupDto("Feature", "Feature",
+            [
+                new SettingDefinitionDto("Feature.On", "On", null, SettingType.Bool, "false", Global, null),
+                new SettingDefinitionDto("Feature.Key", "Key", null, SettingType.String, null, Global, null, SettingCondition.IsTrue("Feature.On")),
+            ]),
+        ]);
+        var form = Render<SettingsForm>(p => p.Add(f => f.Scope, SettingScope.Global));
+        form.WaitForAssertion(() => Input(form, "Key").HasAttribute("disabled").ShouldBeTrue());
+
+        Input(form, "On").Change(true);
+
+        form.WaitForAssertion(() => Input(form, "Key").HasAttribute("disabled").ShouldBeFalse());
+    }
+
+    [Fact]
+    public void A_condition_on_a_missing_setting_keeps_the_field_enabled()
+    {
+        Api.GetSettingDefinitionsAsync(false, Arg.Any<CancellationToken>()).Returns(
+        [
+            new SettingGroupDto("Feature", "Feature",
+            [
+                new SettingDefinitionDto("Feature.Key", "Key", null, SettingType.String, null, Global, null, SettingCondition.IsTrue("Feature.On")),
+            ]),
+        ]);
+        var form = Render<SettingsForm>(p => p.Add(f => f.Scope, SettingScope.Global));
+
+        form.WaitForAssertion(() => Input(form, "Key").HasAttribute("disabled").ShouldBeFalse());
+    }
+
+    [Fact]
     public void A_setting_name_becomes_a_property_name()
     {
         SettingsModel.PropertyName("Mail.Smtp.Host").ShouldBe("Mail_Smtp_Host");

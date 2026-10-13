@@ -154,6 +154,16 @@ public sealed class SettingsTests(SettingsApp app) : IAsyncLifetime
             .Single(g => g.Name == "Test").Settings.Select(s => s.Name).ShouldContain("Test.Secret");
 
     [Fact]
+    public async Task Definitions_carry_the_setting_another_one_depends_on()
+    {
+        var condition = (await Admin.GetFromJsonAsync<SettingGroupDto[]>("/api/v1/settings/definitions", Ct))!
+            .SelectMany(g => g.Settings).Single(s => s.Name == FilePickerSettings.GoogleDriveClientId).EnabledWhen!;
+
+        condition.Setting.ShouldBe(FilePickerSettings.GoogleDriveEnabled);
+        condition.Values.ShouldBe(["true"]);
+    }
+
+    [Fact]
     public async Task User_definitions_list_only_user_scoped_settings() =>
         (await Admin.GetFromJsonAsync<SettingGroupDto[]>("/api/v1/settings/definitions/user", Ct))!
             .SelectMany(g => g.Settings).Select(s => s.Name).ShouldBe(["Test.Text", TableSettings.Views], ignoreOrder: true);

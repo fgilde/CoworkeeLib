@@ -13,7 +13,8 @@ public sealed record SettingDefinition(
     string? DefaultValue,
     bool VisibleToClient,
     string? Description,
-    IReadOnlyList<string>? Choices)
+    IReadOnlyList<string>? Choices,
+    SettingCondition? EnabledWhen = null)
 {
     public bool IsEncrypted => Type == SettingType.Secret;
 
@@ -69,9 +70,10 @@ public sealed class SettingGroupBuilder
         string? defaultValue = null,
         bool visibleToClient = false,
         string? description = null,
-        string[]? choices = null)
+        string[]? choices = null,
+        SettingCondition? enabledWhen = null)
     {
-        _context.Definitions.Add(new SettingDefinition(name, _group, displayName, type, scopes, defaultValue, visibleToClient, description, choices));
+        _context.Definitions.Add(new SettingDefinition(name, _group, displayName, type, scopes, defaultValue, visibleToClient, description, choices, enabledWhen));
         return this;
     }
 }

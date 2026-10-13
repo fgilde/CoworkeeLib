@@ -44,8 +44,15 @@ public static class SettingsPermissions
     public const string Manage = "Settings.Manage";
 }
 
+/// <summary>A setting applies only while <see cref="Setting"/> holds one of <see cref="Values"/> (bool as true/false); otherwise its field is disabled.</summary>
+public sealed record SettingCondition(string Setting, IReadOnlyList<string> Values)
+{
+    public static SettingCondition IsTrue(string setting) => new(setting, ["true"]);
+}
+
 public sealed record SettingDefinitionDto(
-    string Name, string DisplayName, string? Description, SettingType Type, string? DefaultValue, IReadOnlyList<SettingScope> Scopes, IReadOnlyList<string>? Choices);
+    string Name, string DisplayName, string? Description, SettingType Type, string? DefaultValue, IReadOnlyList<SettingScope> Scopes, IReadOnlyList<string>? Choices,
+    SettingCondition? EnabledWhen = null);
 
 public sealed record SettingGroupDto(string Name, string DisplayName, IReadOnlyList<SettingDefinitionDto> Settings);
 
