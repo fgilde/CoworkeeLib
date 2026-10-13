@@ -1,0 +1,3 @@
+<p>Ciao {{ user.first_name }},</p>
+<p>conferma che {{ new_email }} è il nuovo indirizzo del tuo account. Fino ad allora accedi con {{ user.email }}. Se non l'hai richiesto, puoi ignorare questo messaggio.</p>
+<p style="margin:24px 0;"><a href="{{ confirm_url }}" style="background:#16140f;color:#f3efe6;padding:12px 20px;text-decoration:none;display:inline-block;">Conferma il nuovo indirizzo</a></p>

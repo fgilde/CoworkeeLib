@@ -1,0 +1,7 @@
+<p>Ciao {{ user.first_name }},</p>
+{{ if pending }}
+<p>per il tuo account è stato richiesto un nuovo indirizzo e-mail: {{ new_email }}. Sostituirà questo indirizzo non appena verrà aperto il link inviato lì.</p>
+{{ else }}
+<p>l'indirizzo e-mail del tuo account è stato modificato in {{ new_email }}. D'ora in poi accedi con il nuovo indirizzo.</p>
+{{ end }}
+<p>Se non l'hai richiesto, cambia subito la password e informa il tuo amministratore.</p>

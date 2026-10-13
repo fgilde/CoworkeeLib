@@ -1,0 +1,2 @@
+<p>Ciao {{ user.first_name }},</p>
+<p>grazie per la registrazione. Un amministratore verificherà presto il tuo account.</p>

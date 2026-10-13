@@ -1,0 +1,1 @@
+Hai ricevuto un invito, {{ user.first_name }}
