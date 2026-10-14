@@ -4,6 +4,7 @@ using Coworkee.Contracts.Theming;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using MudBlazor;
+using MudBlazor.Extensions;
 using MudBlazor.Extensions.Components;
 
 namespace Coworkee.Client.Blazor.Theming;
@@ -31,7 +32,8 @@ public partial class ThemeLogoDialog : IAsyncDisposable
 
     public static async Task<string?> ShowAsync(IDialogService dialogs)
     {
-        var dialog = await dialogs.ShowAsync<ThemeLogoDialog>(string.Empty, new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true });
+        // a MudEx dialog: the file picker opened from here is one too, and MudEx would otherwise take this dialog for it
+        var dialog = await dialogs.ShowExAsync<ThemeLogoDialog>(string.Empty, new DialogParameters(), new MudBlazor.Extensions.Options.DialogOptionsEx { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true });
         return await dialog.Result is { Canceled: false, Data: string logo } ? logo : null;
     }
 

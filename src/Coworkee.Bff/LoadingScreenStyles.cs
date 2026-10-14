@@ -35,15 +35,16 @@ internal static class LoadingScreenStyles
         #coworkee-loading.cwl-indeterminate .cwl-ring::before{background:conic-gradient(var(--cwl-primary) 0 30%,color-mix(in srgb,var(--cwl-ink) 14%,transparent) 0)}}
         """;
 
-    // shortcut: an app whose layout never calls hide() (own layout, failed start) loses the screen after 30 s; a start error UI would need Blazor's error event
+    // shortcut: an app whose layout never calls hide() (own layout, failed start) loses the screen 30 s after the download finished (or after start without
+    // progress); a start error UI would need Blazor's error event
     public const string Script = """
-        (()=>{const el=document.getElementById('coworkee-loading');if(!el)return;const root=document.documentElement,start=Date.now();let timer;
+        (()=>{const el=document.getElementById('coworkee-loading');if(!el)return;const root=document.documentElement;let since=Date.now(),timer;
         const video=el.querySelector('video');if(video&&!matchMedia('(prefers-reduced-motion: reduce)').matches)video.play().catch(()=>{});
         const hide=()=>{clearInterval(timer);if(el.classList.contains('cwl-done'))return;el.classList.add('cwl-done');setTimeout(()=>el.remove(),600);};
         window.coworkeeLoadingScreen={hide};
         const tick=()=>{const p=parseFloat(getComputedStyle(root).getPropertyValue('--blazor-load-percentage'));
-        if(isNaN(p)){el.classList.add('cwl-indeterminate');el.removeAttribute('aria-valuenow');}else{el.classList.remove('cwl-indeterminate');el.setAttribute('aria-valuenow',String(Math.round(p)));}
-        if(Date.now()-start>30000)hide();};
+        if(isNaN(p)){el.classList.add('cwl-indeterminate');el.removeAttribute('aria-valuenow');}else{el.classList.remove('cwl-indeterminate');el.setAttribute('aria-valuenow',String(Math.round(p)));if(p<100)since=Date.now();}
+        if(Date.now()-since>30000)hide();};
         timer=setInterval(tick,100);tick();})();
         """;
 }
