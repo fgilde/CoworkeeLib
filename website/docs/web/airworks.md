@@ -58,7 +58,7 @@ document.body.append(document.createElement('air-desktop'));
 | File preview with the MudEx file display (pdf, images, office, archives, markdown, audio, video) | `coworkee.file-preview` | opened from Files |
 | Data: every OData entity set as a paged, sortable and searchable table | `coworkee.data` | the app has OData |
 | Chat: people of the organisation with presence and unread counts, messages arrive live | `coworkee.chat` | `Chat.Use` and the Chat module |
-| Reports: list, favourites, duplicate, delete; a report opens with its KPIs, charts and tables | `coworkee.reports`, `coworkee.report` | `Reports.View` and the Reporting module |
+| Reports: list, favourites, duplicate, delete, a report with its KPIs, charts and tables, and the report designer | `coworkee.reports`, `coworkee.report`, `coworkee.report-designer` | `Reports.View` and the Reporting module |
 | Assistant: conversations, answers streamed as they arrive, confirmation of tools that change data | `coworkee.assistant` | `Ai.Chat` and the AI module |
 | Notifications: read, mark read, delete; new ones also pop up as a toast | `coworkee.notifications` | the app has the Notifications module |
 | API documentation (Swagger UI) | `coworkee.api-docs` | `ApiDocs.View` |
@@ -101,23 +101,29 @@ const stop = coworkee.realtime.subscribe('type:Order', ({ type, payload }) => re
 
 The desktop itself follows the user's topic (new notifications pop up, a session ended elsewhere signs out) and the permission topics (changed roles or grants show and hide apps at once). Chat and presence, the notifications app and `entityApp({ liveType })` follow their topics while their window is open.
 
+### Report designer
+
+*New report* in Reports and *Edit* in an open report (for those who may change it, `Reports.Manage`) open the designer: the widget palette of the web app (KPI, bar, horizontal, stacked, line, area, pie, donut, scatter, radar, treemap, heatmap, table, data table, pivot, text, image, web page), widgets on the 12 column grid (drag the title to move, the corner to resize), a side panel per widget with data source, grouping and series (with date buckets), values (count, sum, average, min, max, distinct count), columns and sorting, top, the date field of the report's date range, an OData filter, and the display (number format, currency, target, comparison, curve over time, legend, values on the chart, cross filter, table view, markdown text, address of images and web pages). The report settings hold name, description, icon, automatic refresh and sharing (only me, roles, organisation; with `Reports.Share`); undo and redo cover every change. The viewer and the designer apply the report's date range to every widget with a date field.
+
+### Pickers
+
+Fields that pick users or groups (group members, a user's groups, the users of a mail campaign) search on the server and page through the results (`type: 'lookup'` in `formDialog`, `userLookup`/`groupLookup`), so they work with any number of users.
+
 ### File preview
 
-The file preview uses the [MudBlazor.Extensions web components](https://www.mudex.org). The template hosts the bundle itself: `mudex-webcomponents` is a dev dependency of `ClientApp`, the vite build copies it to `wwwroot/mudex`, and the host serves the `.dat` files of the .NET runtime. Without `mudExUrl`, `useCoworkee` loads it from unpkg.
+The file preview uses the [MudBlazor.Extensions web components](https://www.mudex.org) in a frame of its own (`mudExFrame`): MudBlazor's page styles stay inside the frame, the desktop and your apps keep theirs, and closing the window drops the .NET runtime of the preview. The frame has the page's origin, so the component reads the file with the session cookie. The template hosts the bundle itself: `mudex-webcomponents` is a dev dependency of `ClientApp`, the vite build copies it to `wwwroot/mudex`, and the host serves the `.dat` files of the .NET runtime. Without `mudExUrl`, `useCoworkee` loads it from unpkg.
+
+The AirWorks desktop (shortcuts, open windows, wallpaper) is kept per browser in local storage, as AirWorks does it.
 
 ## The packages
 
 | Package | Content |
 |---|---|
 | `@coworkee/client` | Types of the library API generated from its OpenAPI description, `createCoworkeeClient()` (openapi-fetch with the session cookie and the CSRF header, or a bearer token), `apiRequest`, `ApiError` with the problem details, `createRealtime()` (SignalR), `postNdjson` for streamed answers, BFF helpers, theme, texts and OData helpers. Framework free, see [SDKs](sdk.md). |
-| `@coworkee/airworks` | `useCoworkee`, the apps above, `crudApp`, the dialogs, `renderEntityTable`, `loadMudEx`, the styles. Needs `@fgilde/airworks`. |
+| `@coworkee/airworks` | `useCoworkee`, the apps above, `crudApp`, the dialogs and lookups, `renderEntityTable`, `renderWidget`, `mudExFrame`, the styles. Needs `@fgilde/airworks`. |
 
-Their sources live in `typescript/` of the library. Every release publishes them to npm in the version of the release: `a.b.c` stays, `a.b.c.d` becomes `a.b.(c*1000+d)` because npm knows no fourth part (release `0.0.1.21` is `0.0.1021` on npm). The generated `ClientApp/package.json` references exactly the version of the template it was made with. AirWorks itself comes from GitHub at a fixed commit.
+Their sources live in `typescript/` of the library. The template ships both as tarballs, and a generated app takes them from `ClientApp/vendor` (`file:vendor/*.tgz`): `npm install` needs no npm registry for them, so an app works right after a release and offline from the template. AirWorks itself comes from GitHub at a fixed commit.
 
-### Local template builds
+Every release also publishes them to npm in the version of the release: `a.b.c` stays, `a.b.c.d` becomes `a.b.(c*1000+d)` because npm knows no fourth part (release `0.0.1.21` is `0.0.1021` on npm). To take them from npm, create the app with `coworkee new --airworks --airworks-packages npm` (Studio: *AirWorks packages*, `dotnet new coworkee --airworksPackages npm`); `ClientApp/package.json` then references exactly the version of the template. An existing app switches by putting that version into `ClientApp/package.json` and deleting `ClientApp/vendor`.
 
-A template packed from a local checkout (`pwsh build/pack-local.ps1`) has no matching npm release. It ships the two packages as tarballs, and `coworkee new --template-source <nupkg>` makes the client use them (template parameter `npmPackages=vendor`, `file:vendor/*.tgz`). With `dotnet new coworkee` directly, pass `--npmPackages vendor` yourself. To switch an app to the published packages later, put the npm version into `ClientApp/package.json` and delete `ClientApp/vendor`.
-
-## Limits
-
-Reports are viewed, not designed: the report designer, the dashboard filters and the drill-down stay in the Blazor app. The AirWorks desktop (shortcuts, open windows, wallpaper) is kept in the browser's local storage. The MudEx bundle brings MudBlazor's page styles; `@coworkee/airworks/style.css` keeps the desktop's typography, other MudBlazor styles may still show in your own apps once a preview was open.
+`coworkee new --template-source <nupkg>` with a local build (`pwsh build/pack-local.ps1`) adds the folder of the template as package source `coworkee-local` to the app's `nuget.config`, so the app restores the Coworkee packages of the same build.

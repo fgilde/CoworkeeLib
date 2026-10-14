@@ -13,7 +13,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### New
 
-- AirWorks client: chat, reports, assistant, the administration apps (`adminApps`) and realtime, see [AirWorks client](../web/airworks.md). `@coworkee/client` and `@coworkee/airworks` are published to npm with every release; generated apps reference the npm version, local template builds the tarballs (`npmPackages=vendor`). Apps made with the first AirWorks version: add `...adminApps` to `ClientApp/src/main.ts` and, for the file preview, the MudEx hosting of the template (`mudex-webcomponents`, `vite.config.ts`, `.dat` content type in `Program.cs`).
+- AirWorks client: chat, reports with their designer, assistant, the administration apps (`adminApps`) and realtime, see [AirWorks client](../web/airworks.md). Generated apps take `@coworkee/client` and `@coworkee/airworks` from the tarballs inside the template; every release also publishes them to npm (`--airworks-packages npm`). `coworkee new --template-source` adds the local package folder to the app's `nuget.config`. Apps made with the first AirWorks version: add `...adminApps` to `ClientApp/src/main.ts` and, for the file preview, the MudEx hosting of the template (`mudex-webcomponents`, `vite.config.ts`, `.dat` content type in `Program.cs`).
 - Mail campaigns with recipient presets, saved queries and manual selection, scheduled sending and an unsubscribe confirmation page, see [Mailing](../modules/mailing.md).
 - Own mail templates with a visual and a source editor, and a Monaco based `CodeEditor` component.
 - Entity model changes for campaigns, recipient lists and own templates: add a migration to your app.
