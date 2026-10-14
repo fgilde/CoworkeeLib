@@ -57,13 +57,13 @@ internal sealed class MailTemplateRenderer(CoworkeeDbContext db, ICurrentUser cu
         var custom = catalog.IsCustom(definition);
         var candidates = MailCultures.Candidates(culture);
         var tenantId = currentUser.TenantId;
-        var overrides = (await db.Set<MailTemplateOverride>().AsNoTracking()
-            .Where(o => o.Name == name && (o.TenantId == null || o.TenantId == tenantId))
-            .ToListAsync(cancellationToken)).OrderBy(o => o.CreatedAt).ToList();
+        var stored = db.Set<MailTemplateOverride>().AsNoTracking().Where(o => o.Name == name && (o.TenantId == null || o.TenantId == tenantId));
         if (!custom)
         {
-            overrides = overrides.Where(o => candidates.Contains(o.Culture)).ToList();
+            stored = stored.Where(o => candidates.Contains(o.Culture));
         }
+
+        var overrides = (await stored.ToListAsync(cancellationToken)).OrderBy(o => o.CreatedAt).ToList();
 
         foreach (var candidate in candidates)
         {

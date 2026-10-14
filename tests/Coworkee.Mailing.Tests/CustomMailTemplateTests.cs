@@ -49,10 +49,28 @@ public sealed class CustomMailTemplateTests(MailApp app) : IAsyncLifetime
     {
         (await CreateAsync(Admin, new("Dup.1", "Dup", null))).EnsureSuccessStatusCode();
 
-        foreach (var name in new[] { "bad name", "Identity.ResetPassword", "Dup.1", "", new string('a', 129) })
+        foreach (var name in new[] { "bad name", "Identity.ResetPassword", "identity.resetpassword", "Dup.1", "DUP.1", "..", ".", "", new string('a', 129) })
         {
             (await CreateAsync(Admin, new(name, "X", null))).StatusCode.ShouldBe(HttpStatusCode.BadRequest, name);
         }
+    }
+
+    [Fact]
+    public async Task A_description_over_1000_characters_is_a_validation_error() =>
+        (await CreateAsync(Admin, new("Long.1", "Long", new string('d', 1001)))).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+    [Fact]
+    public async Task A_draft_campaign_of_another_tenant_does_not_block_the_delete()
+    {
+        var other = await app.CreateTenantAdminAsync();
+        var tenantB = app.As(other.UserId, other.TenantId);
+        (await CreateAsync(Admin, new("Same.1", "Same", null))).EnsureSuccessStatusCode();
+        (await CreateAsync(tenantB, new("Same.1", "Same", null))).EnsureSuccessStatusCode();
+        (await tenantB.PutAsJsonAsync("/api/v1/mail/templates/Same.1/en", new SaveMailTemplateRequest("Hi", "<p>b</p>"), Ct)).EnsureSuccessStatusCode();
+        (await tenantB.PostAsJsonAsync("/api/v1/mail/campaigns", new SaveMailCampaignRequest("B", "Same.1", new(RecipientSourceKind.Manual, UserIds: [other.UserId])), Ct)).EnsureSuccessStatusCode();
+
+        (await Admin.DeleteAsync("/api/v1/mail/templates/Same.1", Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await tenantB.DeleteAsync("/api/v1/mail/templates/Same.1", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     [Fact]
@@ -68,6 +86,33 @@ public sealed class CustomMailTemplateTests(MailApp app) : IAsyncLifetime
         (await tenantB.GetAsync("/api/v1/mail/templates/Mine.1/en", Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
         (await tenantB.DeleteAsync("/api/v1/mail/templates/Mine.1", Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
         (await Admin.GetAsync("/api/v1/mail/templates/Mine.1/en", Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task Another_tenant_can_neither_render_preview_nor_test_send_the_template()
+    {
+        (await CreateAsync(Admin, new("Secret.1", "Secret", null))).EnsureSuccessStatusCode();
+        (await SaveAsync("Secret.1", "en", "Top secret", "<p>classified</p>")).EnsureSuccessStatusCode();
+        var other = await app.CreateTenantAdminAsync();
+        var tenantB = app.As(other.UserId, other.TenantId);
+
+        (await tenantB.PostAsJsonAsync("/api/v1/mail/templates/Secret.1/en/preview", new SaveMailTemplateRequest("S", "B"), Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await tenantB.PostAsync("/api/v1/mail/templates/Secret.1/en/test", null, Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        await Should.ThrowAsync<ArgumentException>(() => app.AsActorAsync(other.UserId, other.TenantId, sp =>
+            sp.GetRequiredService<IMailTemplateRenderer>().RenderAsync("Secret.1", MailRecipientModel.Sample, "en", Ct)));
+    }
+
+    [Fact]
+    public async Task The_test_mail_of_a_custom_template_links_the_real_unsubscribe_page()
+    {
+        (await CreateAsync(Admin, new("Tested.1", "Tested", null))).EnsureSuccessStatusCode();
+        (await SaveAsync("Tested.1", "en", "Subject", "<p>body</p>")).EnsureSuccessStatusCode();
+
+        (await Admin.PostAsync("/api/v1/mail/templates/Tested.1/en/test", null, Ct)).EnsureSuccessStatusCode();
+
+        var html = (await app.InDbAsync(db => db.Set<OutgoingMail>().Where(m => m.TemplateName == "Tested.1").Select(m => m.HtmlBody).SingleAsync(Ct)));
+        html.ShouldContain("https://app.test/api/v1/mail/unsubscribe?token=");
+        html.ShouldNotContain("app.example.com/unsubscribe");
     }
 
     [Fact]

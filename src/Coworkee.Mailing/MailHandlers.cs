@@ -61,7 +61,8 @@ internal sealed class MailTemplateHandlers(
     IMailTemplateRenderer renderer,
     IMailSender sender,
     IUserDirectory users,
-    MailConnectionResolver resolver)
+    MailConnectionResolver resolver,
+    IMailUnsubscribeLinks unsubscribeLinks)
     : IHandler<GetMailTemplates, Result<IReadOnlyList<MailTemplateSummaryDto>>>,
       IHandler<GetMailTemplate, Result<MailTemplateDto>>,
       IHandler<SaveMailTemplate, Result>,
@@ -204,7 +205,9 @@ internal sealed class MailTemplateHandlers(
             return Error.Validation("User", "The current user has no email address.");
         }
 
-        await sender.QueueAsync(email, command.Name, definition.SampleModel, command.Culture, cancellationToken);
+        // a custom template is a newsletter: its footer links the real opt-out of the tester, not the sample address
+        var model = catalog.IsCustom(definition) ? MailRecipientModel.SampleFor(unsubscribeLinks.Create(userId, currentUser.TenantId)) : definition.SampleModel;
+        await sender.QueueAsync(email, command.Name, model, command.Culture, cancellationToken);
         return Result.Success();
     }
 

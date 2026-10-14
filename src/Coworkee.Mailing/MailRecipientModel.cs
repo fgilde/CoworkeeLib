@@ -4,12 +4,15 @@ public sealed record MailRecipient(Guid Id, string Email, string? FirstName, str
 
 public static class MailRecipientModel
 {
-    public static object Sample { get; } = For(
+    public static object Sample { get; } = SampleFor("https://app.example.com/unsubscribe");
+
+    /// <summary>The sample model with another unsubscribe link, empty for none.</summary>
+    public static object SampleFor(string? unsubscribeUrl) => For(
         new MailRecipient(Guid.Empty, "ada@example.com", "Ada", "Lovelace", "en"),
         "Coworkee",
         "https://app.example.com",
         "Example Inc.",
-        "https://app.example.com/unsubscribe",
+        unsubscribeUrl,
         "Spring news");
 
     public static object For(MailRecipient recipient, string? appName, string? appUrl, string? organisationName, string? unsubscribeUrl, string? campaignName)

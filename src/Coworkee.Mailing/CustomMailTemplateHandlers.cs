@@ -31,6 +31,7 @@ internal sealed class CustomMailTemplateHandlers(
     CoworkeeDbContext db,
     ICurrentUser currentUser,
     IMailTemplateCatalog catalog,
+    IMailTemplateDefinitionManager registered,
     IMailTemplateRenderer renderer,
     MailConnectionResolver resolver)
     : IHandler<CreateMailTemplate, Result>,
@@ -40,7 +41,7 @@ internal sealed class CustomMailTemplateHandlers(
     {
         var request = command.Request;
         var name = request.Name?.Trim() ?? string.Empty;
-        if (CheckInput(name, request.DisplayName) is { } invalid)
+        if (CheckInput(name, request.DisplayName, request.Description) is { } invalid)
         {
             return invalid;
         }
@@ -50,7 +51,12 @@ internal sealed class CustomMailTemplateHandlers(
             return CustomMailTemplates.SystemOnly;
         }
 
-        if (await catalog.FindAsync(name, cancellationToken) is not null || (request.Global && await db.Set<CustomMailTemplate>().AnyAsync(t => t.Name == name, cancellationToken)))
+        // names compare without case: SQL Server collations do, and a registered template must not be shadowed
+        var lower = name.ToLowerInvariant();
+        var global = request.Global;
+        var tenant = currentUser.TenantId;
+        if (registered.All.Any(d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase))
+            || await db.Set<CustomMailTemplate>().AnyAsync(t => t.Name.ToLower() == lower && (global || t.TenantId == null || t.TenantId == tenant), cancellationToken))
         {
             return Error.Validation("Name", $"A mail template named '{name}' already exists.");
         }
@@ -88,7 +94,7 @@ internal sealed class CustomMailTemplateHandlers(
             return CustomMailTemplates.SystemOnly;
         }
 
-        if (await db.Set<MailCampaign>().AnyAsync(c => c.TemplateName == command.Name
+        if (await db.Set<MailCampaign>().AnyAsync(c => c.TemplateName == command.Name && (template.TenantId == null || c.TenantId == template.TenantId)
                 && (c.Status == MailCampaignStatus.Draft || c.Status == MailCampaignStatus.Scheduled || c.Status == MailCampaignStatus.Sending), cancellationToken))
         {
             return Error.Validation("Name", "The template is used by a campaign that is not finished yet.");
@@ -100,12 +106,14 @@ internal sealed class CustomMailTemplateHandlers(
         return Result.Success();
     }
 
-    private static Error? CheckInput(string name, string? displayName) =>
-        name.Length is 0 or > 128 || !CustomMailTemplates.NamePattern().IsMatch(name)
+    private static Error? CheckInput(string name, string? displayName, string? description) =>
+        name.Length is 0 or > 128 || !CustomMailTemplates.NamePattern().IsMatch(name) || name.All(character => character == '.')
             ? Error.Validation("Name", "Use 1-128 letters, digits, '.', '_' or '-'.")
             : string.IsNullOrWhiteSpace(displayName) || displayName.Length > 256
                 ? Error.Validation("DisplayName", "A display name of up to 256 characters is required.")
-                : null;
+                : description is { Length: > 1000 }
+                    ? Error.Validation("Description", "A description of up to 1000 characters.")
+                    : null;
 
     private async Task<bool> CopyAsync(string source, string name, Guid? tenantId, CancellationToken cancellationToken)
     {
