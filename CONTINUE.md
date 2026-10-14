@@ -50,7 +50,16 @@ Spec `docs/superpowers/specs/2026-10-13-settings-cleanup-and-extensions-design.m
 - Demo (master): currency select + Protect, AspireUI in the app host with `WithRetrieveApi`, OpenAPI snapshot + TS SDK regenerated.
 - MudEx local branch `feat/coworkee-p4` (not pushed): `MudExCronEdit` + sample `/cron-edit`, `RenderWith` keeps the wrapper, conditional attributes reset. CSS of the cron edit was appended by hand to `mudBlazorExtensions(.min).css` (no sass here) - recompile.
 
+## Owner round 2026-10-14 (on main, not released)
+Spec `docs/superpowers/specs/2026-10-14-round2-design.md`.
+- CLI/Studio option `aspireUI` (template only, no lib API): inserts the demo's `AddAspireUI()...WithCoworkeeSignOn(app).WithRetrieveApi()` block + package ref.
+- Theme `Logo` (was `LogoSvg`, EF rename; SVG or png/jpeg/webp data URL, 512 KB), picked via `ThemeLogoEdit` (MudExUploadEdit dialog), also favicon. Demo migration `ThemeLogo`.
+- Keycloak login theme `coworkee-{app}` (KeycloakLoginTheme writer, CSS+JS over keycloak.v2): Aspire bind-mounts `{AppHost}/.coworkee/keycloak-themes`, writes it at start, realm gets `loginTheme`/`displayName(Html)`; API rewrites it after the default theme or sign-in design changes (system organisation only), card on Admin → Themes. Production: shared volume + Keycloak restart.
+- OAuth apps: Duplicate action. Mail settings under Communication. Settings tabs flush with the content card, tools right-aligned.
+- MudEx: cron branch merged by the owner; new local branch `feat/tagfield-suggestions` (worktree `C:\dev\privat\github\wt\mudex-tags`, not pushed): `MudExTagField` `SearchFunc`, `ValidateChip`, `IsChipClosable`, `CommitOnBlur`, changelog 9.11.3.
+
 ## Known follow-ups
+- After the MudEx release with `feat/tagfield-suggestions`: replace the lib `ChipListEditor` with `MudExTagField` (set `CommitOnBlur=true`).
 - After the MudEx release with `feat/coworkee-p4`: lib `[Cron]` → `MudExCronEdit`, delete `CronEditor`/`CronSchedule`; `SettingsModel` two `WithAttributesIf` → `AsDisabledIf`; drop the `WrapInColumns`/`RenderAsChips` re-wraps after `RenderWith`.
 - Own `IMailTransport` with a new provider name is only selectable via `Coworkee:Settings:Defaults:Mail.Provider` (choices are the four built-ins).
 - Translations of the 21 new languages were checked by sample, not by native speakers (km, ar least certain).
