@@ -22,6 +22,8 @@ public sealed class LoadingScreenTests(ThemeApp app) : IAsyncLifetime
         screen!.Theme!.Name.ShouldBe("Ocean");
         screen.Background.ShouldBe(LoadingScreenBackground.Animated);
         screen.MediaUrl.ShouldBeNull();
+        screen.SignedIn.ShouldBeFalse();
+        (await app.As(_setup.AdminUserId, _setup.TenantId).GetFromJsonAsync<LoadingScreenDto>("/api/v1/themes/loading-screen", Ct))!.SignedIn.ShouldBeTrue();
     }
 
     [Fact]
