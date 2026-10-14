@@ -1133,5 +1133,6 @@
   "Draft": "Черновик",
   "Scheduled": "Запланирована",
   "Cancelled": "Отменена",
-  "One campaign only": "Только одна рассылка"
+  "One campaign only": "Только одна рассылка",
+  "API documentation": "Документация API"
 }

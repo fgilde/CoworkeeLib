@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Coworkee.Cli.Spec;
 using Coworkee.Studio.Localization;
 
@@ -96,6 +97,22 @@ public sealed partial class OptionViewModel : ObservableObject
     public bool HasCons => Cons.Count > 0;
 
     public string Flag => Option.Flag;
+
+    /// <summary>Opens an address in the browser (the info link of the option).</summary>
+    public Action<string>? Open { get; init; }
+
+    public bool HasInfo => Option.InfoUrl is not null;
+
+    public string InfoText => L.Format("More about {0}", Title);
+
+    [RelayCommand]
+    public void OpenInfo()
+    {
+        if (Option.InfoUrl is { } url)
+        {
+            Open?.Invoke(url);
+        }
+    }
 
     public string? Package => Option.Package;
 

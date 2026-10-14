@@ -6,9 +6,12 @@ public static class AboutVersion
 {
     /// <summary>
     /// The highest version the assembly states (informational without the '+' metadata, file or assembly version), the informational one on ties
-    /// so prerelease tags stay; null when it states none.
+    /// so prerelease tags stay; for an assembly that states none (Nextended), the package version this library was built with; else null.
     /// </summary>
-    public static string? Of(Assembly assembly) =>
+    public static string? Of(Assembly assembly) => Stated(assembly) ?? typeof(AboutVersion).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
+        .FirstOrDefault(a => a.Key == "PackageVersion:" + assembly.GetName().Name)?.Value;
+
+    private static string? Stated(Assembly assembly) =>
         new[]
             {
                 assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0],

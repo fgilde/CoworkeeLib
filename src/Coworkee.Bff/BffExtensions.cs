@@ -45,6 +45,11 @@ public static class BffExtensions
             })
             .AddCookie(cookie =>
             {
+                if (options.CookieName is { Length: > 0 } name)
+                {
+                    cookie.Cookie.Name = name;
+                }
+
                 cookie.Cookie.SameSite = SameSiteMode.Strict;
                 cookie.Cookie.HttpOnly = true;
                 cookie.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;

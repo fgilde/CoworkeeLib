@@ -1133,5 +1133,6 @@
   "Draft": "Taslak",
   "Scheduled": "Zamanlandı",
   "Cancelled": "İptal edildi",
-  "One campaign only": "Yalnızca bir kampanya"
+  "One campaign only": "Yalnızca bir kampanya",
+  "API documentation": "API belgeleri"
 }

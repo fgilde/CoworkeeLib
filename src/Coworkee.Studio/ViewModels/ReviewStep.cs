@@ -62,6 +62,7 @@ public sealed partial class ReviewStep(MainViewModel main) : StepViewModel(main)
             new(L.Get("Grafana"), YesNo(values["grafana"])),
             new(L.Get("WebDataStudio"), YesNo(values["webDataStudio"])),
             new(L.Get("AspireUI"), YesNo(values["aspireUI"])),
+            new(L.Get("AirWorks client"), YesNo(values["airworks"])),
             new(L.Get("Containers"), string.Join(", ", Summary.Containers)),
             new(L.Get("Languages"), $"{values["languages"] ?? string.Join(",", OptionCatalog.DefaultLanguages)} · {values["defaultLanguage"]} · {values["translationProvider"]}"),
             new(L.Get("Color mode"), values["colorMode"] ?? "system"),

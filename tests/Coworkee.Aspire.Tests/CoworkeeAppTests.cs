@@ -60,6 +60,45 @@ public sealed class CoworkeeAppTests : IDisposable
     }
 
     [Fact]
+    public async Task The_airworks_client_is_a_second_bff_client_of_the_auth_server_with_its_own_cookie()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var app = builder.AddCoworkeeApp("demo", o => o.DisplayName = "Demo");
+
+        app.AddMigrations<FakeProjects.Migrations>();
+        var auth = app.AddAuthServer<FakeProjects.Auth>();
+        app.AddApi<FakeProjects.Api>();
+        app.AddWeb<FakeProjects.Web>();
+        var airWorks = app.AddAirWorks<FakeProjects.Web>();
+
+        airWorks.Resource.Name.ShouldBe("demo-airworks");
+        app.AirWorks.ShouldBe(airWorks);
+        var settings = await Environment(auth.Resource);
+        settings["Coworkee__Auth__Clients__0__ClientId"].ShouldBe("demo-web");
+        settings["Coworkee__Auth__Clients__1__ClientId"].ShouldBe("demo-airworks");
+        settings["Coworkee__Auth__Clients__1__DisplayName"].ShouldBe("Demo (AirWorks)");
+        settings["Coworkee__Auth__Clients__1__Scopes__0"].ShouldBe("demo_api");
+        settings["Coworkee__Auth__Clients__1__RedirectUris__0"].ShouldBe("{demo-airworks.bindings.https.url}/signin-oidc");
+        settings["Coworkee__Auth__Clients__1__PostLogoutRedirectUris__0"].ShouldBe("{demo-airworks.bindings.https.url}/signout-callback-oidc");
+        var bff = await Environment(airWorks.Resource);
+        bff["Coworkee__Bff__ClientId"].ShouldBe("demo-airworks");
+        bff["Coworkee__Bff__ApiAddress"].ShouldBe("https+http://demo-api");
+        bff["Coworkee__Bff__Scopes__0"].ShouldBe("demo_api");
+        bff["Coworkee__Bff__CookieName"].ShouldBe("demo-airworks");
+        bff["ConnectionStrings__redis"].ShouldNotBeNullOrEmpty();
+        (await Environment(app.Web!.Resource)).Keys.ShouldNotContain("Coworkee__Bff__CookieName");
+    }
+
+    [Fact]
+    public void The_airworks_client_needs_the_api()
+    {
+        var app = DistributedApplication.CreateBuilder().AddCoworkeeApp("demo");
+        app.AddAuthServer<FakeProjects.Auth>();
+
+        Should.Throw<InvalidOperationException>(() => app.AddAirWorks<FakeProjects.Web>()).Message.ShouldContain("AddApi");
+    }
+
+    [Fact]
     public async Task The_sign_in_design_reaches_the_auth_server_with_media_paths_on_the_web_app()
     {
         var builder = DistributedApplication.CreateBuilder();

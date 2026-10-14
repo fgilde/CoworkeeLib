@@ -29,6 +29,9 @@ builder.Services.AddCoworkeeClient(baseAddress, options =>
     options.AppDescription = "Clean Architecture starter for Blazor, built on Coworkee modules.";
     options.AboutLinks.Add(new AboutLink("Project page", "https://github.com/fgilde/CoworkeeLib"));
     options.AboutLinks.Add(new AboutLink("Documentation", "https://fgilde.github.io/CoworkeeLib/"));
+#if (airworks)
+    options.About.Credits.Add(Coworkee.Client.Blazor.Components.About.AboutCredit.AirWorks("0.4.0"));
+#endif
 });
 #if (samples)
 builder.Services.AddHttpClient<ICatalogApi, CatalogApi>(client => client.BaseAddress = baseAddress);

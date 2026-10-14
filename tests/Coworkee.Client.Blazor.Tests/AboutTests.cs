@@ -33,6 +33,9 @@ public sealed class AboutTests : ClientTestBase
         about.Find("[data-testid='about-monogram']").TextContent.ShouldBe("DA");
         about.FindAll("[data-credit]").Select(c => c.GetAttribute("data-credit")).ShouldBe(["Coworkee", "Nextended", "MudBlazor.Extensions"]);
         about.Find("[data-credit='MudBlazor.Extensions'] .cw-about-credit-version").TextContent.ShouldBe(AboutVersion.Of(typeof(MudBlazor.Extensions.Options.DialogOptionsEx).Assembly));
+        about.Find("[data-credit='Nextended'] .cw-about-credit-version").TextContent.ShouldMatch(@"^\d+\.\d+\.\d+");
+        about.FindAll(".cw-about-credit-url").ShouldBeEmpty();
+        about.Find("[data-credit='Nextended']").TextContent.ShouldNotContain("github.io");
         about.Find("[data-testid='about-links'] a").GetAttribute("href").ShouldBe("https://example.org/docs");
         about.Find("[data-testid='about-runtime']").TextContent.ShouldStartWith(".NET");
         about.Find("[data-testid='gilde']").GetAttribute("href").ShouldBe("https://gilde.org");
@@ -77,6 +80,23 @@ public sealed class AboutTests : ClientTestBase
         about.WaitForAssertion(() => about.Find("[data-testid='plain-about']").TextContent.ShouldBe("Demo App"));
         about.FindAll("[data-testid='about-header']").ShouldBeEmpty();
     }
+
+    [Fact]
+    public async Task The_airworks_credit_shows_its_logo_on_its_backdrop()
+    {
+        _options.About.Credits.Add(AboutCredit.AirWorks("0.4.0"));
+
+        var about = await ShowAsync();
+
+        about.WaitForAssertion(() => about.Find("[data-credit='AirWorks']").GetAttribute("href").ShouldBe("https://fgilde.github.io/AirWorks/"));
+        about.Find("[data-credit='AirWorks'] img").GetAttribute("src").ShouldBe("https://fgilde.github.io/AirWorks/icons/logo-air.png");
+        about.Find("[data-credit='AirWorks'] .cw-about-credit-icon").GetAttribute("style")!.ShouldContain("background: #35496b");
+        about.Find("[data-credit='AirWorks'] .cw-about-credit-version").TextContent.ShouldBe("0.4.0");
+    }
+
+    [Fact]
+    public void Assemblies_without_a_version_take_the_package_version_recorded_at_build_time() =>
+        AboutVersion.Of(typeof(Nextended.Core.Extensions.ObjectExtensions).Assembly).ShouldNotBeNull();
 
     [Fact]
     public void Versions_drop_the_build_metadata() =>

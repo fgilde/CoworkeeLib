@@ -166,6 +166,51 @@ public sealed class TemplateOptionTests(TemplateFixture template)
     }
 
     [Fact]
+    public async Task AirWorks_is_off_by_default_and_adds_the_client_project_its_app_host_line_and_the_about_credit()
+    {
+        var off = await template.CreateAsync("airworks-off", "--samples", "false");
+        Directory.Exists(Path.Combine(off, "src", "Shop.AirWorks")).ShouldBeFalse();
+        Read(off, "Shop.slnx").ShouldNotContain("AirWorks");
+        Read(off, "src/Shop.AppHost/AppHost.cs").ShouldNotContain("AirWorks");
+        Read(off, "src/Shop.Web.Client/Program.cs").ShouldNotContain("AirWorks");
+        TemplateTests.ShouldHaveNoLeftovers(off);
+
+        var on = await template.CreateAsync("airworks-on", "--airworks", "true", "--logo", "brand.png");
+        Read(on, "Shop.slnx").ShouldContain("src/Shop.AirWorks/Shop.AirWorks.csproj");
+        Read(on, "src/Shop.AppHost/AppHost.cs").ShouldContain("app.AddAirWorks<Projects.Shop_AirWorks>();");
+        Read(on, "src/Shop.AppHost/Shop.AppHost.csproj").ShouldContain("..\\Shop.AirWorks\\Shop.AirWorks.csproj");
+        Read(on, "src/Shop.Web.Client/Program.cs").ShouldContain("AboutCredit.AirWorks(");
+        Read(on, "src/Shop.AirWorks/Shop.AirWorks.csproj").ShouldContain("<CoworkeePackage Include=\"Coworkee.Bff\" />");
+        var main = Read(on, "src/Shop.AirWorks/ClientApp/src/main.ts");
+        main.ShouldContain("'../../../Shop.Web.Client/wwwroot/brand.png?url'");
+        main.ShouldContain("entityApp({ entitySet: 'Products'");
+        main.ShouldNotContain("#if");
+        var package = Read(on, "src/Shop.AirWorks/ClientApp/package.json");
+        package.ShouldContain("\"name\": \"shop-airworks\"");
+        package.ShouldContain("file:vendor/coworkee-airworks.tgz");
+        File.Exists(Path.Combine(on, "src", "Shop.AirWorks", "ClientApp", "vendor", "coworkee-client.tgz")).ShouldBeTrue();
+        Read(on, "LOGIN.md").ShouldContain("*shop-airworks*");
+        TemplateTests.ShouldHaveNoLeftovers(on);
+
+        var plain = await template.CreateAsync("airworks-plain", "--airworks", "true", "--samples", "false");
+        Read(plain, "src/Shop.AirWorks/ClientApp/src/main.ts").ShouldNotContain("entityApp({");
+    }
+
+    [Fact]
+    public async Task Generated_app_with_airworks_builds_its_client()
+    {
+        var feed = Environment.GetEnvironmentVariable("COWORKEE_TEST_FEED");
+        Assert.SkipWhen(string.IsNullOrEmpty(feed), "Set COWORKEE_TEST_FEED to a folder with packed Coworkee packages (build/pack-local.ps1) to build a generated app.");
+        var app = await template.CreateAsync("build-airworks", "--airworks", "true", "--keycloak", "true", "--grafana", "false", "--webDataStudio", "false");
+        await Dotnet.RunAsync(app, "nuget", "add", "source", Path.GetFullPath(feed!), "--name", "local", "--configfile", "nuget.config");
+
+        await Dotnet.RunAsync(app, "build", "Shop.slnx");
+
+        File.ReadAllText(Path.Combine(app, "src", "Shop.AirWorks", "wwwroot", "index.html")).ShouldContain("<title>Shop</title>");
+        Directory.GetFiles(Path.Combine(app, "src", "Shop.AirWorks", "wwwroot", "icons"), "logo-air.png").ShouldNotBeEmpty();
+    }
+
+    [Fact]
     public async Task Generated_app_without_grafana_and_webdatastudio_builds()
     {
         var feed = Environment.GetEnvironmentVariable("COWORKEE_TEST_FEED");

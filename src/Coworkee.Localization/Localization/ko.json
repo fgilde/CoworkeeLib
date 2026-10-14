@@ -1133,5 +1133,6 @@
   "Draft": "초안",
   "Scheduled": "예약됨",
   "Cancelled": "취소됨",
-  "One campaign only": "캠페인 하나만"
+  "One campaign only": "캠페인 하나만",
+  "API documentation": "API 문서"
 }

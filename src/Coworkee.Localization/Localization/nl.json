@@ -1133,5 +1133,6 @@
   "Draft": "Concept",
   "Scheduled": "Gepland",
   "Cancelled": "Geannuleerd",
-  "One campaign only": "Slechts één campagne"
+  "One campaign only": "Slechts één campagne",
+  "API documentation": "API-documentatie"
 }

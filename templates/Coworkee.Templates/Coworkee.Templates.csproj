@@ -18,7 +18,7 @@
     <NoWarn>$(NoWarn);NU5128</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="content/**" Exclude="content/**/bin/**;content/**/obj/**;content/CoworkeeApp/Directory.Packages.props" Pack="true" PackagePath="content/%(RecursiveDir)%(Filename)%(Extension)" />
+    <None Include="content/**" Exclude="content/**/bin/**;content/**/obj/**;content/**/node_modules/**;content/**/MyApp.AirWorks/wwwroot/**;content/**/vendor/*.tgz;content/CoworkeeApp/Directory.Packages.props" Pack="true" PackagePath="content/%(RecursiveDir)%(Filename)%(Extension)" />
     <None Include="../../assets/icon.png" Pack="true" PackagePath="/" Visible="false" />
     <None Include="README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
@@ -30,6 +30,22 @@
     <WriteLinesToFile File="$(_CoworkeePackagesProps)" Lines="$([MSBuild]::Escape($([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/content/CoworkeeApp/Directory.Packages.props').Replace('COWORKEE_VERSION', '$(PackageVersion)'))))" Overwrite="true" />
     <ItemGroup>
       <None Include="$(_CoworkeePackagesProps)" Pack="true" PackagePath="content/CoworkeeApp/Directory.Packages.props" />
+    </ItemGroup>
+  </Target>
+  <!-- shortcut: the AirWorks client takes @coworkee/client and @coworkee/airworks as tarballs inside the template until they are on npm -->
+  <PropertyGroup>
+    <_TypeScriptRoot>$(MSBuildProjectDirectory)/../../typescript/</_TypeScriptRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <_TypeScriptSource Include="$(_TypeScriptRoot)*/src/**;$(_TypeScriptRoot)*/package.json;$(_TypeScriptRoot)package-lock.json" />
+  </ItemGroup>
+  <Target Name="PackTypeScript" BeforeTargets="_GetPackageFiles" Inputs="@(_TypeScriptSource)" Outputs="$(BaseIntermediateOutputPath)npm/coworkee-client.tgz;$(BaseIntermediateOutputPath)npm/coworkee-airworks.tgz">
+    <Exec Command="node scripts/pack-template.mjs &quot;$([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)', '$(BaseIntermediateOutputPath)', 'npm').TrimEnd('\'))&quot;" WorkingDirectory="$(_TypeScriptRoot)" />
+  </Target>
+  <Target Name="IncludeTypeScript" BeforeTargets="_GetPackageFiles" AfterTargets="PackTypeScript">
+    <ItemGroup>
+      <None Include="$(BaseIntermediateOutputPath)npm/coworkee-client.tgz" Pack="true" PackagePath="content/CoworkeeApp/src/MyApp.AirWorks/ClientApp/vendor/coworkee-client.tgz" />
+      <None Include="$(BaseIntermediateOutputPath)npm/coworkee-airworks.tgz" Pack="true" PackagePath="content/CoworkeeApp/src/MyApp.AirWorks/ClientApp/vendor/coworkee-airworks.tgz" />
     </ItemGroup>
   </Target>
 </Project>

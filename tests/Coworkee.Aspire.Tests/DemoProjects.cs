@@ -14,3 +14,5 @@ internal sealed class Demo_Jobs_Worker() : FakeProjects.FakeProject("Worker", "C
 internal sealed class Demo_Web() : FakeProjects.FakeProject("Web", "Coworkee.Bff");
 
 internal sealed class Demo_Tools() : FakeProjects.FakeProject("Tools");
+
+internal sealed class Demo_AirWorks() : FakeProjects.FakeProject("AirWorks", "Coworkee.Bff");

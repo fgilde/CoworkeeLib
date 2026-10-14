@@ -1133,5 +1133,6 @@
   "Draft": "مسودة",
   "Scheduled": "مجدولة",
   "Cancelled": "ملغاة",
-  "One campaign only": "حملة واحدة فقط"
+  "One campaign only": "حملة واحدة فقط",
+  "API documentation": "وثائق API"
 }

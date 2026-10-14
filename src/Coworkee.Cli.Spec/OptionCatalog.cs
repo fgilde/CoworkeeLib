@@ -20,7 +20,7 @@ public sealed record OptionChoice(string Value, string Description);
 
 /// <summary>
 /// One switch of <c>coworkee new</c>. <see cref="TemplateSymbol"/> options go to <c>dotnet new coworkee</c> as <c>--{Id}</c>;
-/// the others are handled by the CLI itself.
+/// the others are handled by the CLI itself. <see cref="InfoUrl"/> links to more about what the option brings.
 /// </summary>
 public sealed record CliOption(
     string Id,
@@ -34,7 +34,8 @@ public sealed record CliOption(
     IReadOnlyList<string> Cons,
     IReadOnlyList<OptionChoice>? Choices = null,
     string? Package = null,
-    bool TemplateSymbol = true)
+    bool TemplateSymbol = true,
+    string? InfoUrl = null)
 {
     /// <summary>The flag of <c>coworkee new</c>: the id in kebab case, e.g. <c>--event-bus</c>.</summary>
     public string Flag => "--" + string.Concat(Id.Select((c, i) => char.IsUpper(c) ? (i > 0 && char.IsLower(Id[i - 1]) ? "-" : "") + char.ToLowerInvariant(c) : c.ToString()));
@@ -83,6 +84,10 @@ public static class OptionCatalog
             "Almost always; leave out only for throw-away prototypes.", ["Tests that boot the real app", "A model test that catches missing migrations"], ["Need Docker to run"]),
         new("git", General, "Git repository", "Run git init in the new folder.", OptionKind.Bool, "false",
             "When the app becomes its own repository.", ["Ready for the first commit"], ["Not wanted inside an existing repository"], TemplateSymbol: false),
+        new("airworks", General, "AirWorks client", "A second client next to the Blazor app: the AirWorks web desktop (TypeScript) with windows, taskbar and apps for settings, profile, files, data and notifications. Same sign-in (and Keycloak), same api, theme and logo of the app; runs in the Aspire app host.", OptionKind.Bool, "false",
+            "When users want a desktop-like workspace with several windows side by side, or the app needs a TypeScript client to extend.",
+            ["Library apps for settings, files with preview, data tables and notifications", "Your own apps in TypeScript next to them", "Same users, permissions and data as the Blazor app"],
+            ["Needs Node.js to build", "Fewer pages than the Blazor app: chat, reports, the assistant and the administration stay there"], InfoUrl: "https://fgilde.github.io/AirWorks/"),
         new("repository", General, "GitHub repository", "GitHub repository of the app as owner/repo, e.g. acme/shop: the README gets a QuickRun badge that starts the app from there with one click.", OptionKind.Text, null,
             "When the app lives on GitHub and others should try it.", ["One click from the README to the running app"], ["GitHub only"]),
 

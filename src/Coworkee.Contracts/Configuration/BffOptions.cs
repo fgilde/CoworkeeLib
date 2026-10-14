@@ -17,4 +17,7 @@ public sealed class BffOptions
     public List<string> ForwardedPrefixes { get; set; } = [];
 
     public string? AuthorizationEndpoint { get; set; }
+
+    /// <summary>Name of the session cookie; browsers send cookies to every port of a host, so a second client on the same host needs its own.</summary>
+    public string? CookieName { get; set; }
 }

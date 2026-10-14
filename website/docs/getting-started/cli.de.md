@@ -48,6 +48,7 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--samples`, `--no-samples` | `samples` | bool | `true` | Module Catalog (Produkte, Marken, Dashboard) und Documents mit Seiten, Tests und Demodaten |
 | `--tests`, `--no-tests` | `tests` | bool | `true` | API-, Migrations-, App-Host- und Seitentests |
 | `--git` | `git` | bool | `false` | `git init` im neuen Ordner |
+| `--airworks` | `airworks` | bool | `false` | [AirWorks-Client](../web/airworks.md): ein Web-Desktop neben der Blazor-App mit derselben Anmeldung und API, Apps für Einstellungen, Dateien, Daten und Benachrichtigungen; braucht Node.js |
 | `--repository` | `repository` | Text | | GitHub-Repository als `owner/repo`: Die README bekommt ein [QuickRun](https://quickrun.org)-Badge. Jede App hat eine `quickrun.yml`, die den App-Host startet |
 | `--auditing` | `auditing` | bool | `true` | Seiten für Audit-Log, Verlauf und Wiederherstellen; das Protokoll selbst wird immer geschrieben |
 | `--notifications` | `notifications` | bool | `true` | Benachrichtigungen in der App mit Sammel-Mails |

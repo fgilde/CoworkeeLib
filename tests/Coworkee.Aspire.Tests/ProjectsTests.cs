@@ -12,7 +12,7 @@ public sealed class ProjectsTests
 
         var app = builder.AddCoworkeeApp("demo").AddProjects();
 
-        Projects(builder).ShouldBe(["demo-migrations", "demo-auth", "demo-api", "demo-jobs-worker", "demo-web"]);
+        Projects(builder).ShouldBe(["demo-migrations", "demo-auth", "demo-api", "demo-jobs-worker", "demo-web", "demo-airworks"]);
         app.Migrations!.Resource.Name.ShouldBe("demo-migrations");
         app.Web!.Resource.Name.ShouldBe("demo-web");
         app.Apis.ShouldHaveSingleItem().Resource.Name.ShouldBe("demo-api");
@@ -22,7 +22,7 @@ public sealed class ProjectsTests
     public void Skipped_projects_and_projects_added_before_are_left_out()
     {
         var builder = DistributedApplication.CreateBuilder();
-        var app = builder.AddCoworkeeApp("demo", o => o.Skip("jobs-worker", "Demo_Web"));
+        var app = builder.AddCoworkeeApp("demo", o => o.Skip("jobs-worker", "Demo_Web", "airworks"));
 
         app.AddMigrations<global::Projects.Demo_Migrations>("db");
         app.AddProjects();

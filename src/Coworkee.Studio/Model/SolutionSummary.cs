@@ -19,6 +19,7 @@ public sealed record SolutionSummary(IReadOnlyList<string> Projects, IReadOnlyLi
 
         var projects = BaseProjects
             .Concat(On("samples") ? ["Catalog", "Documents"] : [])
+            .Concat(On("airworks") ? ["AirWorks"] : [])
             .Concat(spec.Modules.Select(m => m.Name).Where(n => n.Length > 0))
             .Concat(On("tests") ? TestProjects : [])
             .Select(p => $"{name}.{p}")

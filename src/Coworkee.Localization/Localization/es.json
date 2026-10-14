@@ -1133,5 +1133,6 @@
   "Draft": "Borrador",
   "Scheduled": "Programada",
   "Cancelled": "Cancelada",
-  "One campaign only": "Solo una campaña"
+  "One campaign only": "Solo una campaña",
+  "API documentation": "Documentación de la API"
 }

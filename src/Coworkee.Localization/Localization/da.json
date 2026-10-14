@@ -1133,5 +1133,6 @@
   "Draft": "Kladde",
   "Scheduled": "Planlagt",
   "Cancelled": "Annulleret",
-  "One campaign only": "Kun én kampagne"
+  "One campaign only": "Kun én kampagne",
+  "API documentation": "API-dokumentation"
 }

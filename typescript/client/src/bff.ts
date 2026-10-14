@@ -1,0 +1,28 @@
+import { apiRequest, type CoworkeeClientOptions } from './client.ts';
+
+/** The signed-in user as the BFF of a Coworkee app reports it (GET /bff/user). */
+export type BffUser = {
+  isAuthenticated: boolean;
+  name?: string | null;
+  email?: string | null;
+  userId?: string | null;
+  tenantId?: string | null;
+  roles: string[];
+  manageUrl?: string | null;
+  systemTenant?: boolean | null;
+};
+
+export const getUser = (options?: CoworkeeClientOptions) => apiRequest<BffUser>('/bff/user', {}, options);
+
+/** The address that starts the sign-in at the auth server and comes back to returnUrl (a local path). */
+export function loginUrl(returnUrl = '/', loginHint?: string): string {
+  const query = new URLSearchParams({ returnUrl: returnUrl.startsWith('/') && !returnUrl.startsWith('//') ? returnUrl : '/' });
+  if (loginHint) query.set('loginHint', loginHint);
+  return `/bff/login?${query}`;
+}
+
+/** Ends the session and returns where the browser goes next (the end-session page of the auth server). */
+export async function logout(options?: CoworkeeClientOptions): Promise<string> {
+  const result = await apiRequest<{ redirect?: string }>('/bff/logout', { method: 'POST' }, options);
+  return result?.redirect || '/';
+}

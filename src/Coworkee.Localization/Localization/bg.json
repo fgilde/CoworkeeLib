@@ -1133,5 +1133,6 @@
   "Draft": "Чернова",
   "Scheduled": "Насрочена",
   "Cancelled": "Отказана",
-  "One campaign only": "Само една кампания"
+  "One campaign only": "Само една кампания",
+  "API documentation": "API документация"
 }

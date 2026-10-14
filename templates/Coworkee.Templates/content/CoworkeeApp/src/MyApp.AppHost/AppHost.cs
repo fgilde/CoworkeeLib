@@ -136,6 +136,11 @@ app.AddMigrations<Projects.MyApp_Migrations>();
 app.AddAuthServer<Projects.MyApp_Auth>();
 app.AddApi<Projects.MyApp_Api>();
 app.AddWeb<Projects.MyApp_Web>();
+#if (airworks)
+
+// the AirWorks web desktop: a second client of the same auth server and api (LOGIN.md)
+app.AddAirWorks<Projects.MyApp_AirWorks>();
+#endif
 #if (aspireUI)
 
 #if (keycloak)

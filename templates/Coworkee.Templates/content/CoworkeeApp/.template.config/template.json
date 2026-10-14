@@ -256,6 +256,12 @@
       "defaultValue": "false",
       "description": "AspireUI, a web UI to host and try more apps and stacks next to the app; with Keycloak it signs in through the app's realm (development)."
     },
+    "airworks": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "AirWorks web desktop as a second client next to the Blazor app: same sign-in, same api, apps for settings, files, data and notifications (needs Node.js)."
+    },
     "database": {
       "type": "parameter",
       "datatype": "choice",
@@ -935,6 +941,9 @@
   },
   "sources": [
     {
+      "copyOnly": [
+        "**/*.tgz"
+      ],
       "modifiers": [
         {
           "condition": "(!langAr)",
@@ -1088,6 +1097,12 @@
           ]
         },
         {
+          "condition": "(!airworks)",
+          "exclude": [
+            "src/MyApp.AirWorks/**"
+          ]
+        },
+        {
           "condition": "(!githubActions)",
           "exclude": [
             ".github/**"
@@ -1127,6 +1142,30 @@
     }
   ],
   "specialCustomOperations": {
+    "**/*.ts": {
+      "operations": [
+        {
+          "type": "conditional",
+          "configuration": {
+            "actionableIf": [
+              "//#if"
+            ],
+            "actionableElse": [
+              "//#else"
+            ],
+            "actionableElseif": [
+              "//#elseif"
+            ],
+            "endif": [
+              "//#endif"
+            ],
+            "trim": "true",
+            "wholeLine": "true",
+            "evaluator": "C++"
+          }
+        }
+      ]
+    },
     "**/*.slnx": {
       "operations": [
         {

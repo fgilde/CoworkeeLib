@@ -1133,5 +1133,6 @@
   "Draft": "草稿",
   "Scheduled": "已安排",
   "Cancelled": "已取消",
-  "One campaign only": "仅一个活动"
+  "One campaign only": "仅一个活动",
+  "API documentation": "API 文档"
 }

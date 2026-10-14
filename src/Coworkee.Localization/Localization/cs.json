@@ -1133,5 +1133,6 @@
   "Draft": "Koncept",
   "Scheduled": "Naplánováno",
   "Cancelled": "Zrušeno",
-  "One campaign only": "Pouze jedna kampaň"
+  "One campaign only": "Pouze jedna kampaň",
+  "API documentation": "Dokumentace API"
 }

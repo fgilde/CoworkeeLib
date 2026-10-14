@@ -1133,5 +1133,6 @@
   "Draft": "Entwurf",
   "Scheduled": "Geplant",
   "Cancelled": "Abgebrochen",
-  "One campaign only": "Nur eine Kampagne"
+  "One campaign only": "Nur eine Kampagne",
+  "API documentation": "API-Dokumentation"
 }

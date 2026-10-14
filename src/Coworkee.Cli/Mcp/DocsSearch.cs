@@ -29,6 +29,7 @@ internal static partial class DocsSearch
         ("OData and facets", "web/odata/"),
         ("Response filters", "web/response-filters/"),
         ("SDKs", "web/sdk/"),
+        ("AirWorks client", "web/airworks/"),
         ("Permissions", "security/permissions/"),
         ("Authentication and Keycloak", "security/authentication/"),
         ("Clients, sessions and passwords", "security/clients/"),

@@ -1133,5 +1133,6 @@
   "Draft": "Чернетка",
   "Scheduled": "Запланована",
   "Cancelled": "Скасована",
-  "One campaign only": "Лише одна розсилка"
+  "One campaign only": "Лише одна розсилка",
+  "API documentation": "Документація API"
 }

@@ -43,6 +43,7 @@ app.AddWorker<Projects.Shareme_Processing_Host>("processing");
 | `*_Api` | `AddApi` | `{name}-api` |
 | `*_Worker*`, `*Worker` | `AddWorker` | `{name}-worker` |
 | `*_Web` | `AddWeb` | `{name}-web` |
+| `*_AirWorks` | `AddAirWorks` | `{name}-airworks` |
 
 Das Suffix ist der Teil nach dem ersten Unterstrich, kleingeschrieben mit Bindestrichen: Aus `MyApp_Jobs_Worker` wird `myapp-jobs-worker`. Andere Projekte bleiben unberührt.
 
@@ -65,6 +66,7 @@ Explizite Aufrufe funktionieren weiter und haben Vorrang: Ein Projekt, das vor `
 | `AddApi<T>()` | `{name}-api` | Token-Authority und Audience `{name}_api`, API-Scope am Auth-Server, Setup-Token aus `Coworkee:SetupToken` |
 | `AddWorker<T>(suffix)` | `{name}-{suffix}` | nur Infrastruktur, keine öffentlichen Endpunkte |
 | `AddWeb<T>()` | `{name}-web` | BFF-Einstellungen, OIDC-Client am Auth-Server mit Redirect-URIs, Referenz auf die API, Links zu Swagger und zum Job-Dashboard |
+| `AddAirWorks<T>()` | `{name}-airworks` | wie `AddWeb`: BFF-Einstellungen, der nächste OIDC-Client am Auth-Server, ein eigener Name des Sitzungs-Cookies; für den [AirWorks-Client](../web/airworks.md) |
 
 Rufen Sie sie in dieser Reihenfolge auf (`AddProjects()` tut das). `AddWeb` vor `AddAuthServer` wirft eine Exception, die genau das sagt.
 

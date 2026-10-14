@@ -11,5 +11,6 @@ public partial class AboutCredits
 
     private static bool IsImage(string icon) => !icon.TrimStart().StartsWith('<');
 
-    private static string Host(string url) => Uri.TryCreate(url, UriKind.Absolute, out var uri) ? uri.Host + uri.AbsolutePath.TrimEnd('/') : url;
+    private static string? IconStyle(AboutCredit credit) =>
+        credit.IconBackground is { Length: > 0 } background ? $"background: {background}; border-radius: 10px; padding: 6px" : null;
 }

@@ -1133,5 +1133,6 @@
   "Draft": "Szkic",
   "Scheduled": "Zaplanowana",
   "Cancelled": "Anulowana",
-  "One campaign only": "Tylko jedna kampania"
+  "One campaign only": "Tylko jedna kampania",
+  "API documentation": "Dokumentacja API"
 }

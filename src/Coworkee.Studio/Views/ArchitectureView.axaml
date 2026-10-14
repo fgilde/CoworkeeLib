@@ -63,6 +63,7 @@
             <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding NoteText}" />
           </Border>
           <TextBlock Classes="body" FontSize="12.5" LineHeight="18" Text="{Binding Description}" />
+          <Button Classes="link" IsVisible="{Binding HasInfo}" Content="{Binding InfoText}" Command="{Binding OpenInfoCommand}" HorizontalAlignment="Left" Padding="0" />
       <TextBox IsVisible="{Binding IsText}" Text="{Binding Text}" PlaceholderText="{Binding Flag}" />
           <ListBox Classes="segments" IsVisible="{Binding IsChoice}" ItemsSource="{Binding Choices}" SelectedItem="{Binding Choice}" HorizontalAlignment="Left">
             <ListBox.ItemTemplate>
