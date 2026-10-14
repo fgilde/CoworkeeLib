@@ -5,6 +5,7 @@ import { choices, crudApp, renderCrud } from '../../crud.ts';
 import { display, errorText, esc } from '../../dom.ts';
 import { confirmDialog, formDialog, infoDialog, type Field, type Values } from '../../form.ts';
 import { settingsPageApp } from '../settings.ts';
+import { userLookup } from './identity.ts';
 
 type Template = Schemas['MailTemplateSummaryDto'];
 type Campaign = Schemas['MailCampaignDto'];
@@ -26,17 +27,14 @@ const presetLabels: Record<string, string> = {
 /** The fields that describe who gets a mail: a preset (with days or roles), an OData filter over the users or picked users. */
 async function sourceFields(coworkee: Coworkee): Promise<Field[]> {
   const { t, request } = coworkee;
-  const [roles, users] = await Promise.all([
-    quiet(request<Schemas['RoleDto'][]>('/api/v1/identity/roles'), []),
-    quiet(request<{ items: Schemas['UserDto'][] }>('/api/v1/identity/users?Page=1&PageSize=200'), { items: [] }),
-  ]);
+  const roles = await quiet(request<Schemas['RoleDto'][]>('/api/v1/identity/roles'), []);
   return [
     { name: 'kind', label: 'Recipients', type: 'select', options: [{ value: 'Preset', label: t('Smart list') }, { value: 'Query', label: t('Custom query') }, { value: 'Manual', label: t('Manual selection') }] },
     { name: 'preset', label: 'Smart list', type: 'select', options: presets.map((value) => ({ value, label: t(presetLabels[value]) })) },
     { name: 'days', label: 'Days', type: 'number' },
     { name: 'roleIds', label: 'Roles', type: 'multi', options: choices(roles, (role) => role.id, (role) => role.name) },
     { name: 'filter', label: 'Custom query', hint: 'Filter' },
-    { name: 'userIds', label: 'Users', type: 'multi', options: choices(users.items, (user) => user.id, (user) => user.email) },
+    { name: 'userIds', label: 'Users', type: 'lookup', lookup: userLookup(coworkee) },
   ];
 }
 

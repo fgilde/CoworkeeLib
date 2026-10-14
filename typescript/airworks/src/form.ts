@@ -1,9 +1,10 @@
 import type { Coworkee } from './coworkee.ts';
 import { errorText, esc } from './dom.ts';
+import { lookupHtml, lookupValues, wireLookup, type LookupSource } from './lookup.ts';
 
-export type FieldType = 'text' | 'textarea' | 'number' | 'bool' | 'select' | 'multi' | 'date' | 'password' | 'list' | 'email';
+export type FieldType = 'text' | 'textarea' | 'number' | 'bool' | 'select' | 'multi' | 'date' | 'password' | 'list' | 'email' | 'lookup';
 
-/** A field of a form: list holds one text per line, multi several options, date a date and time. */
+/** A field of a form: list holds one text per line, multi several options, lookup several items searched on the server, date a date and time. */
 export type Field = {
   name: string;
   label: string;
@@ -13,6 +14,7 @@ export type Field = {
   hint?: string;
   readOnly?: boolean;
   rows?: number;
+  lookup?: LookupSource;
 };
 
 export type Values = Record<string, unknown>;
@@ -39,6 +41,8 @@ export function fieldHtml(field: Field, value: unknown, t: Coworkee['t']): strin
   const hint = field.hint ? `<small>${esc(t(field.hint))}</small>` : '';
   const text = value === null || value === undefined ? '' : String(value);
   switch (field.type) {
+    case 'lookup':
+      return lookupHtml(field.name, field.label, Array.isArray(value) ? value.map((item) => item && typeof item === 'object' ? item : String(item)) : [], t);
     case 'bool':
       return `<div class="cw-field cw-check"><input type="checkbox" ${common} ${value ? 'checked' : ''}/>${label}${hint}</div>`;
     case 'textarea':
@@ -71,6 +75,10 @@ export function fieldHtml(field: Field, value: unknown, t: Coworkee['t']): strin
 export function readFields(root: ParentNode, fields: readonly Field[]): Values {
   const values: Values = {};
   for (const field of fields) {
+    if (field.type === 'lookup') {
+      values[field.name] = lookupValues(root, field.name);
+      continue;
+    }
     if (field.type === 'multi') {
       values[field.name] = [...root.querySelectorAll<HTMLInputElement>(`[data-multi="${CSS.escape(field.name)}"] input:checked`)].map((input) => input.value);
       continue;
@@ -108,6 +116,7 @@ export function formDialog(coworkee: Coworkee, options: FormOptions): Promise<Va
     let result: Values | undefined;
     dialog.addEventListener('close', () => resolve(result));
     dialog.querySelector('[data-cancel]')!.addEventListener('click', () => dialog.close());
+    for (const field of options.fields) if (field.type === 'lookup' && field.lookup) wireLookup(dialog, field.name, field.lookup, t);
     const form = dialog.querySelector('form')!;
     form.addEventListener('submit', async (event) => {
       event.preventDefault();

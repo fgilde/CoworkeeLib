@@ -3,6 +3,7 @@ import type { Coworkee } from '../../coworkee.ts';
 import { choices, crudApp } from '../../crud.ts';
 import { display, esc } from '../../dom.ts';
 import { formDialog, infoDialog, type Field, type Values } from '../../form.ts';
+import type { LookupSource } from '../../lookup.ts';
 
 type User = Schemas['UserDto'];
 type Role = Schemas['RoleDto'];
@@ -17,9 +18,24 @@ const quiet = <T>(promise: Promise<T>, fallback: T) => promise.catch(() => fallb
 const check = (value: unknown) => value ? '&#x2713;' : '';
 
 const roleChoices = async (coworkee: Coworkee) => choices(await quiet(coworkee.request<Role[]>(`${identity}/roles`), []), (role) => role.id, (role) => role.name);
-// shortcut: pickers offer the first 200 groups and users (the API's largest page), page through them when apps get bigger
-const groupChoices = async (coworkee: Coworkee) =>
-  choices((await quiet(coworkee.request<{ items: Group[] }>(`${identity}/groups?Page=1&PageSize=200`), { items: [] })).items, (group) => group.id, (group) => group.name);
+const pageOf = (page: number, text: string) => new URLSearchParams({ Page: String(page), PageSize: '20', Search: text });
+
+/** Users searched and paged on the server, for pickers. */
+export const userLookup = ({ request }: Coworkee): LookupSource => ({
+  search: async (text, page) => {
+    const result = await request<Schemas['PagedResultOfUserDto']>(`${identity}/users?${pageOf(page, text)}`);
+    return { items: result.items.map((user) => ({ value: user.id, label: user.email })), total: Number(result.totalCount) };
+  },
+  resolve: (ids) => request<Record<string, string>>(`${identity}/users/names`, json('POST', { ids })),
+});
+
+/** Groups searched and paged on the server, for pickers. */
+export const groupLookup = ({ request }: Coworkee): LookupSource => ({
+  search: async (text, page) => {
+    const result = await request<Schemas['PagedResultOfGroupDto']>(`${identity}/groups?${pageOf(page, text)}`);
+    return { items: result.items.map((group) => ({ value: group.id, label: group.name })), total: Number(result.totalCount) };
+  },
+});
 
 /** The permissions of a role, user or group as one checkbox list per permission group. */
 export async function editGrants(coworkee: Coworkee, providerType: 'Role' | 'User' | 'Group', key: string, title: string) {
@@ -69,11 +85,11 @@ export const usersApp = crudApp<User>({
       { name: 'isActive', label: 'Active', type: 'bool' }, { name: 'emailConfirmed', label: 'Email confirmed', type: 'bool' },
       { name: 'mustChangePassword', label: 'Must change password', type: 'bool' },
       { name: 'roleIds', label: 'Roles', type: 'multi', options: await roleChoices(coworkee) },
-      ...(coworkee.can('Identity.Groups.View') ? [{ name: 'groupIds', label: 'Groups', type: 'multi', options: await groupChoices(coworkee) } as Field] : []),
+      ...(coworkee.can('Identity.Groups.View') ? [{ name: 'groupIds', label: 'Groups', type: 'lookup', lookup: groupLookup(coworkee) } as Field] : []),
     ],
     values: async (user, { request }) => {
       const detail = await request<Schemas['UserDetailDto']>(`${identity}/users/${user.id}`);
-      return { ...detail, roleIds: detail.roles.map((role) => role.id), groupIds: detail.groups.map((group) => group.id) };
+      return { ...detail, roleIds: detail.roles.map((role) => role.id), groupIds: detail.groups.map((group) => ({ value: group.id, label: group.name })) };
     },
     save: async (user, values, coworkee) => {
       const detail = await coworkee.request<Schemas['UserDetailDto']>(`${identity}/users/${user.id}`);
@@ -132,14 +148,11 @@ export const groupsApp = crudApp<Group>({
   },
   edit: {
     permission: 'Identity.Groups.Manage',
-    fields: async (coworkee) => {
-      const users = await quiet(coworkee.request<{ items: User[] }>(`${identity}/users?Page=1&PageSize=200`), { items: [] });
-      return [
-        { name: 'name', label: 'Name', required: true }, { name: 'description', label: 'Description', type: 'textarea' },
-        { name: 'memberIds', label: 'Members', type: 'multi', options: choices(users.items, (user) => user.id, (user) => user.email) },
-        { name: 'roleIds', label: 'Roles', type: 'multi', options: await roleChoices(coworkee) },
-      ];
-    },
+    fields: async (coworkee) => [
+      { name: 'name', label: 'Name', required: true }, { name: 'description', label: 'Description', type: 'textarea' },
+      { name: 'memberIds', label: 'Members', type: 'lookup', lookup: userLookup(coworkee) },
+      { name: 'roleIds', label: 'Roles', type: 'multi', options: await roleChoices(coworkee) },
+    ],
     save: async (group, values, { request }) => {
       await request(`${identity}/groups/${group.id}`, json('PUT', { name: values.name, description: values.description }));
       await request(`${identity}/groups/${group.id}/members`, json('PUT', { ids: values.memberIds }));
