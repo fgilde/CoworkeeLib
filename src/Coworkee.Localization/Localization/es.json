@@ -1074,5 +1074,20 @@
   "Global": "Global",
   "New template": "Nueva plantilla",
   "New mail template": "Nueva plantilla de correo",
-  "custom": "personalizada"
+  "custom": "personalizada",
+  "Send test to me": "Enviarme un correo de prueba",
+  "Reset to default": "Restablecer a los valores predeterminados",
+  "customized": "modificada",
+  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "Los marcadores tienen el aspecto {{ user.first_name }} y se escapan como HTML. El cuerpo se inserta en la plantilla de diseño.",
+  "Template saved.": "Plantilla guardada.",
+  "Test mail queued.": "Correo de prueba puesto en cola.",
+  "Preview: {0}": "Vista previa: {0}",
+  "Visual": "Visual",
+  "Source": "Código fuente",
+  "Body": "Cuerpo",
+  "Placeholders": "Marcadores",
+  "This template uses layout or logic the visual editor would change": "Esta plantilla usa un diseño o una lógica que el editor visual modificaría",
+  "Type { to insert a placeholder": "Escribe { para insertar un marcador",
+  "Insert placeholder": "Insertar marcador",
+  "default": "predeterminado"
 }

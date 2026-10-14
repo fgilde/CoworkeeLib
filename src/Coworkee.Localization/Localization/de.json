@@ -1074,5 +1074,20 @@
   "Global": "Global",
   "New template": "Neue Vorlage",
   "New mail template": "Neue Mail-Vorlage",
-  "custom": "eigene"
+  "custom": "eigene",
+  "Send test to me": "Testmail an mich senden",
+  "Reset to default": "Auf Standard zurücksetzen",
+  "customized": "angepasst",
+  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "Platzhalter sehen aus wie {{ user.first_name }} und werden HTML-escaped. Der Inhalt wird in die Layout-Vorlage eingesetzt.",
+  "Template saved.": "Vorlage gespeichert.",
+  "Test mail queued.": "Testmail in die Warteschlange gestellt.",
+  "Preview: {0}": "Vorschau: {0}",
+  "Visual": "Visuell",
+  "Source": "Quelltext",
+  "Body": "Inhalt",
+  "Placeholders": "Platzhalter",
+  "This template uses layout or logic the visual editor would change": "Diese Vorlage enthält Layout oder Logik, die der visuelle Editor verändern würde",
+  "Type { to insert a placeholder": "Mit { einen Platzhalter einfügen",
+  "Insert placeholder": "Platzhalter einfügen",
+  "default": "Standard"
 }

@@ -1074,5 +1074,20 @@
   "Global": "Глобальний",
   "New template": "Новий шаблон",
   "New mail template": "Новий шаблон листа",
-  "custom": "власний"
+  "custom": "власний",
+  "Send test to me": "Надіслати мені тестовий лист",
+  "Reset to default": "Скинути до типових",
+  "customized": "змінений",
+  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "Плейсхолдери виглядають як {{ user.first_name }} і екрануються як HTML. Тіло листа вставляється в шаблон макета.",
+  "Template saved.": "Шаблон збережено.",
+  "Test mail queued.": "Тестовий лист поставлено в чергу.",
+  "Preview: {0}": "Попередній перегляд: {0}",
+  "Visual": "Візуальний",
+  "Source": "Вихідний код",
+  "Body": "Тіло",
+  "Placeholders": "Плейсхолдери",
+  "This template uses layout or logic the visual editor would change": "Цей шаблон містить макет або логіку, які візуальний редактор змінив би",
+  "Type { to insert a placeholder": "Введіть {, щоб вставити плейсхолдер",
+  "Insert placeholder": "Вставити плейсхолдер",
+  "default": "типово"
 }

@@ -22,6 +22,18 @@ Templates use [Scriban](https://github.com/scriban/scriban). The sample model fi
 ## Own templates
 
 Besides the templates of the modules, administrators create their own under **Administration > Communication > Mail templates** (/admin/mail/templates, permission Mail.Templates.Manage). **New template** asks for a name (letters, digits, ., _ and -; it cannot change later and cannot repeat a template of the system or of the organisation), a display name and a description; the editor opens right after. The copy button next to a template creates a custom template from its text in all languages, under a free name like Identity.Welcome.copy. Own templates are marked *custom*; only they can be deleted, which also removes their texts. Users of the system organisation can tick **Global**: the template is then available to every organisation.
+
+### Editing a template
+
+The body has two modes, switched above the editor. **Visual** is a rich text editor: type `{` and pick a placeholder from the list (it filters while you type), and it appears as a chip. **Source** is a code editor for the HTML and Scriban text, with suggestions after `{{`. The stored body is always plain Scriban text, a chip is saved as `{{ user.first_name }}`.
+
+The visual editor rewrites markup, so it is only offered for simple bodies. A body with Scriban statements (`if`, `for`, `while`, `case`, `capture`, `with`, `func`, `tablerow`) or a `<table` opens in Source and the Visual button stays disabled; switching from Visual to Source is always possible. Placeholders the template does not know stay plain text in the visual editor.
+
+Next to the editor the **Placeholders** list shows every variable of the template with its type and a sample value. A click inserts it at the cursor: as a chip in Visual, as `{{ name }}` in Source. A list (for example the notifications of a digest) inserts a loop skeleton `{{ for item in list }} ... {{ end }}` in Source; its members (listed as list[].title) insert as {{ item.title }}. In Visual both are added at the end of the source, because loops cannot be built visually. The button next to the subject appends a placeholder to the subject. Own templates use the recipient model (`user.first_name`, `user.display_name`, `app.name` and the other values of the list); a *Reset to default* button exists for the templates of modules only, own templates have no default.
+
+!!! note
+    The mention list of the visual editor only searches letters, so type a part of the name such as `first` and not `user.first`.
+
 ## Providers
 
 Mails leave through one *provider*. `Mail.Provider` picks it, the other settings belong to the provider and sit in the same group. Every provider needs a sender address (`Mail.From`); the optional whitelist (`Mail.Whitelist`, one address or `@domain` per line, empty allows everyone) applies to all of them.

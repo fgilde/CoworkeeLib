@@ -40,7 +40,8 @@ public sealed class CustomMailTemplateTests(MailApp app) : IAsyncLifetime
 
         mail.Subject.ShouldBe("Hallo Ada");
         mail.HtmlBody.ShouldContain("Ada Lovelace");
-        (await Admin.GetFromJsonAsync<MailTemplateDto>("/api/v1/mail/templates/News.1/de", Ct))!.Variables.ShouldContain(v => v.Name == "user.first_name");
+        (await Admin.GetFromJsonAsync<MailTemplateDto>("/api/v1/mail/templates/News.1/de", Ct))!.ShouldSatisfyAllConditions(
+            t => t.Variables.ShouldContain(v => v.Name == "user.first_name"), t => t.IsCustom.ShouldBeTrue());
     }
 
     [Fact]

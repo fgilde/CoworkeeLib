@@ -1074,5 +1074,20 @@
   "Global": "Global",
   "New template": "Novo modelo",
   "New mail template": "Novo modelo de e-mail",
-  "custom": "personalizado"
+  "custom": "personalizado",
+  "Send test to me": "Enviar e-mail de teste para mim",
+  "Reset to default": "Redefinir para o padrão",
+  "customized": "modificado",
+  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "Os marcadores têm a aparência {{ user.first_name }} e passam por escape de HTML. O corpo é colocado dentro do modelo de layout.",
+  "Template saved.": "Modelo salvo.",
+  "Test mail queued.": "E-mail de teste adicionado à fila.",
+  "Preview: {0}": "Pré-visualização: {0}",
+  "Visual": "Visual",
+  "Source": "Código-fonte",
+  "Body": "Corpo",
+  "Placeholders": "Marcadores",
+  "This template uses layout or logic the visual editor would change": "Este modelo usa layout ou lógica que o editor visual alteraria",
+  "Type { to insert a placeholder": "Digite { para inserir um marcador",
+  "Insert placeholder": "Inserir marcador",
+  "default": "padrão"
 }

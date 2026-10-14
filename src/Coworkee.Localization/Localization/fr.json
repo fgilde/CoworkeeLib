@@ -1074,5 +1074,20 @@
   "Global": "Global",
   "New template": "Nouveau modèle",
   "New mail template": "Nouveau modèle d'e-mail",
-  "custom": "personnalisé"
+  "custom": "personnalisé",
+  "Send test to me": "M'envoyer un e-mail de test",
+  "Reset to default": "Rétablir les valeurs par défaut",
+  "customized": "personnalisé",
+  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "Les espaces réservés ressemblent à {{ user.first_name }} et sont échappés en HTML. Le corps est placé dans le modèle de mise en page.",
+  "Template saved.": "Modèle enregistré.",
+  "Test mail queued.": "E-mail de test mis en file d'attente.",
+  "Preview: {0}": "Aperçu : {0}",
+  "Visual": "Visuel",
+  "Source": "Source",
+  "Body": "Corps",
+  "Placeholders": "Espaces réservés",
+  "This template uses layout or logic the visual editor would change": "Ce modèle contient une mise en page ou une logique que l'éditeur visuel modifierait",
+  "Type { to insert a placeholder": "Tapez { pour insérer un espace réservé",
+  "Insert placeholder": "Insérer un espace réservé",
+  "default": "par défaut"
 }

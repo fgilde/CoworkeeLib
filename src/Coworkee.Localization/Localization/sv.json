@@ -1074,5 +1074,20 @@
   "Global": "Global",
   "New template": "Ny mall",
   "New mail template": "Ny e-postmall",
-  "custom": "egen"
+  "custom": "egen",
+  "Send test to me": "Skicka testmejl till mig",
+  "Reset to default": "Återställ till standard",
+  "customized": "anpassad",
+  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "Platshållare ser ut som {{ user.first_name }} och HTML-kodas. Innehållet placeras i layoutmallen.",
+  "Template saved.": "Mallen sparades.",
+  "Test mail queued.": "Testmejlet har lagts i kö.",
+  "Preview: {0}": "Förhandsvisning: {0}",
+  "Visual": "Visuell",
+  "Source": "Källa",
+  "Body": "Innehåll",
+  "Placeholders": "Platshållare",
+  "This template uses layout or logic the visual editor would change": "Den här mallen använder layout eller logik som den visuella redigeraren skulle ändra",
+  "Type { to insert a placeholder": "Skriv { för att infoga en platshållare",
+  "Insert placeholder": "Infoga platshållare",
+  "default": "standard"
 }

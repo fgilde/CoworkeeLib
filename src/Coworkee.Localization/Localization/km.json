@@ -1074,5 +1074,20 @@
   "Global": "សកល",
   "New template": "គំរូថ្មី",
   "New mail template": "គំរូអ៊ីមែលថ្មី",
-  "custom": "ផ្ទាល់ខ្លួន"
+  "custom": "ផ្ទាល់ខ្លួន",
+  "Send test to me": "ផ្ញើអ៊ីមែលសាកល្បងមកខ្ញុំ",
+  "Reset to default": "កំណត់ឡើងវិញទៅលំនាំដើម",
+  "customized": "បានកែប្រែ",
+  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "កន្លែងទុកជាមុនមើលទៅដូច {{ user.first_name }} ហើយត្រូវបាន escape ជា HTML។ ខ្លឹមសារត្រូវបានដាក់ក្នុងគំរូប្លង់។",
+  "Template saved.": "បានរក្សាទុកគំរូ។",
+  "Test mail queued.": "អ៊ីមែលសាកល្បងត្រូវបានដាក់ក្នុងជួរ។",
+  "Preview: {0}": "មើលជាមុន៖ {0}",
+  "Visual": "មើលឃើញ",
+  "Source": "ប្រភព",
+  "Body": "ខ្លឹមសារ",
+  "Placeholders": "កន្លែងទុកជាមុន",
+  "This template uses layout or logic the visual editor would change": "គំរូនេះប្រើប្លង់ ឬតក្កវិជ្ជាដែលកម្មវិធីនិពន្ធមើលឃើញនឹងផ្លាស់ប្តូរ",
+  "Type { to insert a placeholder": "វាយ { ដើម្បីបញ្ចូលកន្លែងទុកជាមុន",
+  "Insert placeholder": "បញ្ចូលកន្លែងទុកជាមុន",
+  "default": "លំនាំដើម"
 }

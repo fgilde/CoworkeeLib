@@ -1074,5 +1074,20 @@
   "Global": "Globale",
   "New template": "Nuovo modello",
   "New mail template": "Nuovo modello e-mail",
-  "custom": "personalizzato"
+  "custom": "personalizzato",
+  "Send test to me": "Inviami un'e-mail di prova",
+  "Reset to default": "Ripristina predefinito",
+  "customized": "modificato",
+  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "I segnaposto hanno l'aspetto {{ user.first_name }} e vengono sottoposti a escape HTML. Il corpo viene inserito nel modello di layout.",
+  "Template saved.": "Modello salvato.",
+  "Test mail queued.": "E-mail di prova messa in coda.",
+  "Preview: {0}": "Anteprima: {0}",
+  "Visual": "Visuale",
+  "Source": "Sorgente",
+  "Body": "Corpo",
+  "Placeholders": "Segnaposto",
+  "This template uses layout or logic the visual editor would change": "Questo modello usa un layout o una logica che l'editor visuale modificherebbe",
+  "Type { to insert a placeholder": "Digita { per inserire un segnaposto",
+  "Insert placeholder": "Inserisci segnaposto",
+  "default": "predefinito"
 }

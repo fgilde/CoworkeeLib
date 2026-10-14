@@ -1074,5 +1074,20 @@
   "Global": "Global",
   "New template": "Templat baru",
   "New mail template": "Templat email baru",
-  "custom": "kustom"
+  "custom": "kustom",
+  "Send test to me": "Kirim email uji ke saya",
+  "Reset to default": "Setel ulang ke default",
+  "customized": "dimodifikasi",
+  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "Placeholder terlihat seperti {{ user.first_name }} dan di-escape sebagai HTML. Isi ditempatkan di dalam templat Layout.",
+  "Template saved.": "Templat disimpan.",
+  "Test mail queued.": "Email uji dimasukkan ke antrean.",
+  "Preview: {0}": "Pratinjau: {0}",
+  "Visual": "Visual",
+  "Source": "Sumber",
+  "Body": "Isi",
+  "Placeholders": "Placeholder",
+  "This template uses layout or logic the visual editor would change": "Templat ini menggunakan tata letak atau logika yang akan diubah oleh editor visual",
+  "Type { to insert a placeholder": "Ketik { untuk menyisipkan placeholder",
+  "Insert placeholder": "Sisipkan placeholder",
+  "default": "default"
 }

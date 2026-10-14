@@ -1,0 +1,33 @@
+@using Coworkee.Client.Blazor.Components.Editors
+@using MudExRichTextEditor
+<MudGrid Spacing="2">
+    <MudItem xs="12" md="9">
+        <MudStack Spacing="1">
+            <MudStack Row="true" AlignItems="AlignItems.Center">
+                <MudToggleGroup T="EditorMode" Value="_mode" ValueChanged="SetModeAsync" Size="Size.Small" Color="Color.Primary" Outlined="true" Delimiters="false">
+                    <MudToggleItem Value="EditorMode.Visual" Text="@L["Visual"]" Disabled="!VisualAllowed" data-testid="mail-mode-visual" />
+                    <MudToggleItem Value="EditorMode.Source" Text="@L["Source"]" data-testid="mail-mode-source" />
+                </MudToggleGroup>
+                @if (_mode == EditorMode.Visual)
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">@L["Type { to insert a placeholder"]</MudText>
+                }
+                else if (!VisualAllowed)
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" data-testid="mail-visual-hint">@L["This template uses layout or logic the visual editor would change"]</MudText>
+                }
+            </MudStack>
+            @if (_mode == EditorMode.Visual)
+            {
+                <MudExRichTextEdit @ref="_visual" Value="@_html" ValueChanged="VisualChangedAsync" Modules="_modules" Immediate="true" Height="320" />
+            }
+            else
+            {
+                <CodeEditor @ref="_source" Value="@Value" ValueChanged="SourceChangedAsync" Language="html" Label="@L["Body"]" Completions="_completions" CompletionTrigger="{{" />
+            }
+        </MudStack>
+    </MudItem>
+    <MudItem xs="12" md="3">
+        <MailVariablesPanel Variables="Variables" OnPick="InsertVariableAsync" />
+    </MudItem>
+</MudGrid>

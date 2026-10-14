@@ -1074,5 +1074,20 @@
   "Global": "Globalny",
   "New template": "Nowy szablon",
   "New mail template": "Nowy szablon e-mail",
-  "custom": "własny"
+  "custom": "własny",
+  "Send test to me": "Wyślij mi testową wiadomość",
+  "Reset to default": "Przywróć domyślne",
+  "customized": "dostosowany",
+  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "Symbole zastępcze wyglądają jak {{ user.first_name }} i są escapowane jako HTML. Treść jest umieszczana w szablonie układu.",
+  "Template saved.": "Szablon zapisany.",
+  "Test mail queued.": "Wiadomość testowa dodana do kolejki.",
+  "Preview: {0}": "Podgląd: {0}",
+  "Visual": "Wizualny",
+  "Source": "Źródło",
+  "Body": "Treść",
+  "Placeholders": "Symbole zastępcze",
+  "This template uses layout or logic the visual editor would change": "Ten szablon używa układu lub logiki, które edytor wizualny by zmienił",
+  "Type { to insert a placeholder": "Wpisz {, aby wstawić symbol zastępczy",
+  "Insert placeholder": "Wstaw symbol zastępczy",
+  "default": "domyślny"
 }

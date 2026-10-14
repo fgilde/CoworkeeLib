@@ -1074,5 +1074,20 @@
   "Global": "Global",
   "New template": "Ny skabelon",
   "New mail template": "Ny mailskabelon",
-  "custom": "tilpasset"
+  "custom": "tilpasset",
+  "Send test to me": "Send testmail til mig",
+  "Reset to default": "Nulstil til standard",
+  "customized": "ændret",
+  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "Pladsholdere ser ud som {{ user.first_name }} og HTML-escapes. Indholdet placeres i layoutskabelonen.",
+  "Template saved.": "Skabelon gemt.",
+  "Test mail queued.": "Testmail sat i kø.",
+  "Preview: {0}": "Forhåndsvisning: {0}",
+  "Visual": "Visuel",
+  "Source": "Kilde",
+  "Body": "Indhold",
+  "Placeholders": "Pladsholdere",
+  "This template uses layout or logic the visual editor would change": "Denne skabelon bruger layout eller logik, som den visuelle editor ville ændre",
+  "Type { to insert a placeholder": "Skriv { for at indsætte en pladsholder",
+  "Insert placeholder": "Indsæt pladsholder",
+  "default": "standard"
 }

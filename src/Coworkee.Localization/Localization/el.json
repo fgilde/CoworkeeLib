@@ -1074,5 +1074,20 @@
   "Global": "Καθολικό",
   "New template": "Νέο πρότυπο",
   "New mail template": "Νέο πρότυπο email",
-  "custom": "προσαρμοσμένο"
+  "custom": "προσαρμοσμένο",
+  "Send test to me": "Αποστολή δοκιμαστικού email σε εμένα",
+  "Reset to default": "Επαναφορά στις προεπιλογές",
+  "customized": "προσαρμοσμένο",
+  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "Τα σύμβολα κράτησης θέσης μοιάζουν με {{ user.first_name }} και διαφεύγονται ως HTML. Το σώμα τοποθετείται μέσα στο πρότυπο διάταξης.",
+  "Template saved.": "Το πρότυπο αποθηκεύτηκε.",
+  "Test mail queued.": "Το δοκιμαστικό email μπήκε στην ουρά.",
+  "Preview: {0}": "Προεπισκόπηση: {0}",
+  "Visual": "Οπτικός",
+  "Source": "Πηγαίος κώδικας",
+  "Body": "Σώμα",
+  "Placeholders": "Σύμβολα κράτησης θέσης",
+  "This template uses layout or logic the visual editor would change": "Αυτό το πρότυπο χρησιμοποιεί διάταξη ή λογική που ο οπτικός επεξεργαστής θα άλλαζε",
+  "Type { to insert a placeholder": "Πληκτρολογήστε { για να εισαγάγετε σύμβολο κράτησης θέσης",
+  "Insert placeholder": "Εισαγωγή συμβόλου κράτησης θέσης",
+  "default": "προεπιλογή"
 }

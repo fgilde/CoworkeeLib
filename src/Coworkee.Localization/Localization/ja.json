@@ -1074,5 +1074,20 @@
   "Global": "グローバル",
   "New template": "新しいテンプレート",
   "New mail template": "新しいメールテンプレート",
-  "custom": "カスタム"
+  "custom": "カスタム",
+  "Send test to me": "自分にテストメールを送信",
+  "Reset to default": "デフォルトに戻す",
+  "customized": "カスタマイズ済み",
+  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "プレースホルダーは {{ user.first_name }} のように表記され、HTMLエスケープされます。本文はレイアウトテンプレートの中に配置されます。",
+  "Template saved.": "テンプレートを保存しました。",
+  "Test mail queued.": "テストメールをキューに追加しました。",
+  "Preview: {0}": "プレビュー: {0}",
+  "Visual": "ビジュアル",
+  "Source": "ソース",
+  "Body": "本文",
+  "Placeholders": "プレースホルダー",
+  "This template uses layout or logic the visual editor would change": "このテンプレートには、ビジュアルエディターが変更してしまうレイアウトまたはロジックが含まれています",
+  "Type { to insert a placeholder": "{ を入力するとプレースホルダーを挿入できます",
+  "Insert placeholder": "プレースホルダーを挿入",
+  "default": "デフォルト"
 }

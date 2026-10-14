@@ -1074,5 +1074,20 @@
   "Global": "Глобален",
   "New template": "Нов шаблон",
   "New mail template": "Нов шаблон за имейл",
-  "custom": "персонализиран"
+  "custom": "персонализиран",
+  "Send test to me": "Изпрати ми тестов имейл",
+  "Reset to default": "Върни към стандартното",
+  "customized": "променен",
+  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "Заместителите изглеждат като {{ user.first_name }} и се екранират като HTML. Съдържанието се поставя в шаблона за оформление.",
+  "Template saved.": "Шаблонът е запазен.",
+  "Test mail queued.": "Тестовият имейл е добавен в опашката.",
+  "Preview: {0}": "Преглед: {0}",
+  "Visual": "Визуален",
+  "Source": "Код",
+  "Body": "Съдържание",
+  "Placeholders": "Заместители",
+  "This template uses layout or logic the visual editor would change": "Този шаблон използва оформление или логика, които визуалният редактор би променил",
+  "Type { to insert a placeholder": "Въведете {, за да вмъкнете заместител",
+  "Insert placeholder": "Вмъкни заместител",
+  "default": "по подразбиране"
 }

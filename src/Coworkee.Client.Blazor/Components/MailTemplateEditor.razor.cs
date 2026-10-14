@@ -1,4 +1,5 @@
 using Coworkee.Client.Blazor.Api;
+using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Mailing;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -10,6 +11,8 @@ public partial class MailTemplateEditor
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
+
+    [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
     private MailTemplateDto? _template;
     private string _subject = string.Empty;
@@ -31,6 +34,8 @@ public partial class MailTemplateEditor
         _errors = [];
     }
 
+    private void AddToSubject(MailVariableDto variable) => _subject += $"{{{{ {variable.Name} }}}}";
+
     private SaveMailTemplateRequest Content => new(_subject, _body);
 
     private Task PreviewAsync() => RunAsync(async () => _preview = await Api.PreviewMailTemplateAsync(Name, Culture, Content));
@@ -38,7 +43,7 @@ public partial class MailTemplateEditor
     private Task SaveAsync() => RunAsync(async () =>
     {
         await Api.SaveMailTemplateAsync(Name, Culture, Content);
-        Snackbar.Add("Template saved.", Severity.Success);
+        Snackbar.Add(L["Template saved."], Severity.Success);
         await LoadAsync();
     });
 
@@ -51,7 +56,7 @@ public partial class MailTemplateEditor
     private Task SendTestAsync() => RunAsync(async () =>
     {
         await Api.SendTestMailAsync(Name, Culture);
-        Snackbar.Add("Test mail queued.", Severity.Info);
+        Snackbar.Add(L["Test mail queued."], Severity.Info);
     });
 
     private async Task RunAsync(Func<Task> action)

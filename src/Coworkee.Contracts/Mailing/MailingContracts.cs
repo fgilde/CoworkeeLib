@@ -35,7 +35,7 @@ public sealed record CreateMailTemplateRequest(string Name, string DisplayName, 
 public sealed record MailVariableDto(string Name, string Type, string? Sample, bool IsList);
 
 public sealed record MailTemplateDto(
-    string Name, string Culture, string Subject, string Body, string DefaultSubject, string DefaultBody, bool IsOverridden, IReadOnlyList<MailVariableDto> Variables);
+    string Name, string Culture, string Subject, string Body, string DefaultSubject, string DefaultBody, bool IsOverridden, IReadOnlyList<MailVariableDto> Variables, bool IsCustom);
 
 public sealed record SaveMailTemplateRequest(string Subject, string Body);
 

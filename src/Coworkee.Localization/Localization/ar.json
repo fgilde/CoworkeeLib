@@ -1074,5 +1074,20 @@
   "Global": "عام",
   "New template": "قالب جديد",
   "New mail template": "قالب بريد جديد",
-  "custom": "مخصص"
+  "custom": "مخصص",
+  "Send test to me": "أرسل لي رسالة اختبار",
+  "Reset to default": "إعادة التعيين إلى الافتراضي",
+  "customized": "مخصّص",
+  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "تبدو العناصر النائبة مثل {{ user.first_name }} ويتم تهريب أحرفها الخاصة في HTML. يوضع المحتوى داخل قالب التخطيط.",
+  "Template saved.": "تم حفظ القالب.",
+  "Test mail queued.": "تمت إضافة رسالة الاختبار إلى قائمة الانتظار.",
+  "Preview: {0}": "معاينة: {0}",
+  "Visual": "مرئي",
+  "Source": "المصدر",
+  "Body": "المحتوى",
+  "Placeholders": "العناصر النائبة",
+  "This template uses layout or logic the visual editor would change": "يستخدم هذا القالب تخطيطًا أو منطقًا كان المحرر المرئي سيغيّره",
+  "Type { to insert a placeholder": "اكتب { لإدراج عنصر نائب",
+  "Insert placeholder": "إدراج عنصر نائب",
+  "default": "افتراضي"
 }

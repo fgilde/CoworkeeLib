@@ -22,6 +22,18 @@ Vorlagen nutzen [Scriban](https://github.com/scriban/scriban). Das Beispielmodel
 ## Eigene Vorlagen
 
 Neben den Vorlagen der Module legen Administratoren unter **Administration > Communication > Mail templates** (/admin/mail/templates, Berechtigung Mail.Templates.Manage) eigene an. **Neue Vorlage** fragt nach einem Namen (Buchstaben, Ziffern, ., _ und -; er lässt sich später nicht ändern und darf keine Vorlage des Systems oder der Organisation wiederholen), einem Anzeigenamen und einer Beschreibung; danach öffnet sich der Editor. Die Kopieren-Schaltfläche neben einer Vorlage legt aus ihrem Text in allen Sprachen eine eigene Vorlage an, unter einem freien Namen wie Identity.Welcome.copy. Eigene Vorlagen tragen die Markierung *custom*; nur sie lassen sich löschen, dabei entfallen auch ihre Texte. Benutzer der Systemorganisation können **Global** ankreuzen: Die Vorlage steht dann jeder Organisation zur Verfügung.
+
+### Vorlage bearbeiten
+
+Der Inhalt hat zwei Modi, die über dem Editor umgeschaltet werden. **Visuell** ist ein Rich-Text-Editor: Mit `{` öffnet sich die Liste der Platzhalter (sie filtert beim Tippen), der gewählte erscheint als Chip. **Quelltext** ist ein Code-Editor für das HTML und den Scriban-Text, mit Vorschlägen nach `{{`. Gespeichert wird immer reiner Scriban-Text, ein Chip wird als `{{ user.first_name }}` abgelegt.
+
+Der visuelle Editor schreibt das Markup um und wird deshalb nur für einfache Inhalte angeboten. Ein Inhalt mit Scriban-Anweisungen (`if`, `for`, `while`, `case`, `capture`, `with`, `func`, `tablerow`) oder einem `<table` öffnet sich im Quelltext, die Schaltfläche Visuell bleibt deaktiviert; von Visuell nach Quelltext lässt sich immer wechseln. Platzhalter, die die Vorlage nicht kennt, bleiben im visuellen Editor einfacher Text.
+
+Neben dem Editor listet **Platzhalter** alle Variablen der Vorlage mit Typ und Beispielwert. Ein Klick fügt sie an der Cursorposition ein: als Chip im Visuell-Modus, als `{{ name }}` im Quelltext. Eine Liste (etwa die Benachrichtigungen eines Digests) fügt im Quelltext ein Schleifengerüst `{{ for item in liste }} ... {{ end }}` ein; ihre Mitglieder (aufgelistet als liste[].title) werden als {{ item.title }} eingefügt. Im Visuell-Modus kommen beide ans Ende des Quelltexts, weil sich Schleifen nicht visuell bauen lassen. Die Schaltfläche neben dem Betreff hängt einen Platzhalter an den Betreff an. Eigene Vorlagen verwenden das Empfängermodell (`user.first_name`, `user.display_name`, `app.name` und die weiteren Werte der Liste); *Auf Standard zurücksetzen* gibt es nur für Vorlagen der Module, eigene Vorlagen haben keinen Standard.
+
+!!! note
+    Die Platzhalterliste des visuellen Editors durchsucht nur Buchstaben; tippen Sie also einen Teil des Namens wie `first` und nicht `user.first`.
+
 ## Anbieter
 
 Mails verlassen das System über genau einen *Anbieter*. `Mail.Provider` wählt ihn, die übrigen Einstellungen gehören zum Anbieter und stehen in derselben Gruppe. Jeder Anbieter braucht eine Absenderadresse (`Mail.From`); die optionale Whitelist (`Mail.Whitelist`, eine Adresse oder `@domain` je Zeile, leer erlaubt alle) gilt für alle.

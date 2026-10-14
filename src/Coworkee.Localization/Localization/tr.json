@@ -1074,5 +1074,20 @@
   "Global": "Genel",
   "New template": "Yeni şablon",
   "New mail template": "Yeni e-posta şablonu",
-  "custom": "özel"
+  "custom": "özel",
+  "Send test to me": "Bana test e-postası gönder",
+  "Reset to default": "Varsayılana sıfırla",
+  "customized": "özelleştirilmiş",
+  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "Yer tutucular {{ user.first_name }} gibi görünür ve HTML olarak kaçırılır (escape edilir). Gövde, Düzen şablonunun içine yerleştirilir.",
+  "Template saved.": "Şablon kaydedildi.",
+  "Test mail queued.": "Test e-postası kuyruğa alındı.",
+  "Preview: {0}": "Önizleme: {0}",
+  "Visual": "Görsel",
+  "Source": "Kaynak",
+  "Body": "Gövde",
+  "Placeholders": "Yer tutucular",
+  "This template uses layout or logic the visual editor would change": "Bu şablon, görsel düzenleyicinin değiştireceği bir düzen veya mantık içeriyor",
+  "Type { to insert a placeholder": "Yer tutucu eklemek için { yazın",
+  "Insert placeholder": "Yer tutucu ekle",
+  "default": "varsayılan"
 }

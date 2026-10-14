@@ -1074,5 +1074,20 @@
   "Global": "Глобальный",
   "New template": "Новый шаблон",
   "New mail template": "Новый шаблон письма",
-  "custom": "собственный"
+  "custom": "собственный",
+  "Send test to me": "Отправить мне тестовое письмо",
+  "Reset to default": "Сбросить до значений по умолчанию",
+  "customized": "изменён",
+  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "Плейсхолдеры выглядят как {{ user.first_name }} и экранируются как HTML. Тело письма помещается в шаблон макета.",
+  "Template saved.": "Шаблон сохранён.",
+  "Test mail queued.": "Тестовое письмо поставлено в очередь.",
+  "Preview: {0}": "Предпросмотр: {0}",
+  "Visual": "Визуальный",
+  "Source": "Исходный код",
+  "Body": "Тело",
+  "Placeholders": "Плейсхолдеры",
+  "This template uses layout or logic the visual editor would change": "В этом шаблоне есть макет или логика, которые визуальный редактор изменил бы",
+  "Type { to insert a placeholder": "Введите {, чтобы вставить плейсхолдер",
+  "Insert placeholder": "Вставить плейсхолдер",
+  "default": "по умолчанию"
 }

@@ -1074,5 +1074,20 @@
   "Global": "全局",
   "New template": "新建模板",
   "New mail template": "新建邮件模板",
-  "custom": "自定义"
+  "custom": "自定义",
+  "Send test to me": "向我发送测试邮件",
+  "Reset to default": "重置为默认",
+  "customized": "已自定义",
+  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "占位符形如 {{ user.first_name }}，并会进行 HTML 转义。正文会放入布局模板中。",
+  "Template saved.": "模板已保存。",
+  "Test mail queued.": "测试邮件已加入队列。",
+  "Preview: {0}": "预览：{0}",
+  "Visual": "可视化",
+  "Source": "源代码",
+  "Body": "正文",
+  "Placeholders": "占位符",
+  "This template uses layout or logic the visual editor would change": "此模板使用了可视化编辑器会更改的布局或逻辑",
+  "Type { to insert a placeholder": "输入 { 以插入占位符",
+  "Insert placeholder": "插入占位符",
+  "default": "默认"
 }

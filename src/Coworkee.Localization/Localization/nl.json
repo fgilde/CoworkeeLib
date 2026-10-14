@@ -1074,5 +1074,20 @@
   "Global": "Globaal",
   "New template": "Nieuwe sjabloon",
   "New mail template": "Nieuwe e-mailsjabloon",
-  "custom": "eigen"
+  "custom": "eigen",
+  "Send test to me": "Testmail naar mij verzenden",
+  "Reset to default": "Standaardwaarden herstellen",
+  "customized": "aangepast",
+  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "Tijdelijke aanduidingen zien eruit als {{ user.first_name }} en worden HTML-geëscaped. De inhoud wordt in de lay-outsjabloon geplaatst.",
+  "Template saved.": "Sjabloon opgeslagen.",
+  "Test mail queued.": "Testmail in de wachtrij geplaatst.",
+  "Preview: {0}": "Voorbeeld: {0}",
+  "Visual": "Visueel",
+  "Source": "Bron",
+  "Body": "Inhoud",
+  "Placeholders": "Tijdelijke aanduidingen",
+  "This template uses layout or logic the visual editor would change": "Deze sjabloon gebruikt lay-out of logica die de visuele editor zou wijzigen",
+  "Type { to insert a placeholder": "Typ { om een tijdelijke aanduiding in te voegen",
+  "Insert placeholder": "Tijdelijke aanduiding invoegen",
+  "default": "standaard"
 }

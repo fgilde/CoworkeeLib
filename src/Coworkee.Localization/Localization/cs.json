@@ -1074,5 +1074,20 @@
   "Global": "Globální",
   "New template": "Nová šablona",
   "New mail template": "Nová šablona e-mailu",
-  "custom": "vlastní"
+  "custom": "vlastní",
+  "Send test to me": "Odeslat zkušební e-mail mně",
+  "Reset to default": "Obnovit výchozí",
+  "customized": "upravená",
+  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "Zástupné symboly vypadají jako {{ user.first_name }} a jsou escapovány jako HTML. Tělo se vloží do šablony rozvržení.",
+  "Template saved.": "Šablona uložena.",
+  "Test mail queued.": "Zkušební e-mail zařazen do fronty.",
+  "Preview: {0}": "Náhled: {0}",
+  "Visual": "Vizuální",
+  "Source": "Zdroj",
+  "Body": "Tělo",
+  "Placeholders": "Zástupné symboly",
+  "This template uses layout or logic the visual editor would change": "Tato šablona používá rozvržení nebo logiku, které by vizuální editor změnil",
+  "Type { to insert a placeholder": "Zadáním { vložíte zástupný symbol",
+  "Insert placeholder": "Vložit zástupný symbol",
+  "default": "výchozí"
 }
