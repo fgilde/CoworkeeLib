@@ -15,7 +15,7 @@ internal static class OptionsCommand
             return Task.FromResult(0);
         });
 
-    public static string CatalogJson(string? group = null) => JsonSerializer.Serialize(OptionCatalog.All.Where(o => group is null || o.Group.Equals(group, StringComparison.OrdinalIgnoreCase)).Select(o => new { o.Id, o.Flag, o.Group, o.Title, o.Description, o.Kind, o.Default, o.Choices, o.WhenToUse, o.Pros, o.Cons, o.Package, o.TemplateSymbol }), SpecJson.Options);
+    public static string CatalogJson(string? group = null) => JsonSerializer.Serialize(OptionCatalog.All.Where(o => group is null || o.Group.Equals(group, StringComparison.OrdinalIgnoreCase)).Select(o => new { o.Id, o.Flag, o.Group, o.Title, o.Description, o.Kind, o.Default, o.Choices, o.WhenToUse, o.Pros, o.Cons, o.Package, o.TemplateSymbol, o.InfoUrl }), SpecJson.Options);
 
     public static string Text()
     {
@@ -29,6 +29,10 @@ internal static class OptionsCommand
                 lines.Add($"  {option.Flag,-24} {values,-34} default {option.Default ?? "-"}");
                 lines.Add($"  {string.Empty,-24} {option.Description}");
                 lines.Add($"  {string.Empty,-24} When: {option.WhenToUse}");
+                if (option.InfoUrl is { } info)
+                {
+                    lines.Add($"  {string.Empty,-24} More: {info}");
+                }
             }
 
             lines.Add(string.Empty);

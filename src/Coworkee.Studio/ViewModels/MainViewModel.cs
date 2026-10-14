@@ -23,7 +23,7 @@ public sealed partial class MainViewModel : ObservableObject
         Generator = generator;
         Dialogs = dialogs ?? new Dialogs();
         _settingsFile = settingsFile;
-        Options = OptionCatalog.All.ToDictionary(o => o.Id, o => new OptionViewModel(o));
+        Options = OptionCatalog.All.ToDictionary(o => o.Id, o => new OptionViewModel(o) { Open = url => Dialogs.Open(url) });
         foreach (var option in Options.Values)
         {
             option.Changed += SpecChanged;

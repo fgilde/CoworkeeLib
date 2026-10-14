@@ -27,6 +27,18 @@ public sealed class OptionTests
     }
 
     [Fact]
+    public void The_airworks_option_is_off_by_default_and_links_to_airworks()
+    {
+        var option = OptionCatalog.Find("airworks")!;
+
+        option.Flag.ShouldBe("--airworks");
+        option.Default.ShouldBe("false");
+        option.InfoUrl.ShouldBe("https://fgilde.github.io/AirWorks/");
+        OptionsCommand.Text().ShouldContain("More: https://fgilde.github.io/AirWorks/");
+        OptionsCommand.CatalogJson().ShouldContain("\"infoUrl\": \"https://fgilde.github.io/AirWorks/\"");
+    }
+
+    [Fact]
     public void No_option_shadows_a_switch_of_dotnet_new()
     {
         string[] reserved = ["name", "output", "search", "list", "install", "uninstall", "update", "force", "language", "lang", "type", "project", "help", "verbosity", "diagnostics", "dry-run", "no-update-check"];

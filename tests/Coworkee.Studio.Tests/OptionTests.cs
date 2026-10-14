@@ -35,6 +35,27 @@ public sealed class OptionTests
     }
 
     [Fact]
+    public void The_airworks_card_links_to_airworks_and_adds_its_project()
+    {
+        using var folder = new TempFolder();
+        var main = Studio.Create(folder);
+        string? opened = null;
+        main.Dialogs.Open = url => opened = url;
+        var airWorks = main.Option("airworks");
+
+        airWorks.IsOn.ShouldBeFalse();
+        airWorks.HasInfo.ShouldBeTrue();
+        main.Architecture.Summary.Projects.ShouldNotContain("MyApp.AirWorks");
+        airWorks.OpenInfoCommand.Execute(null);
+        opened.ShouldBe("https://fgilde.github.io/AirWorks/");
+
+        airWorks.IsOn = true;
+        main.Architecture.Summary.Projects.ShouldContain("MyApp.AirWorks");
+        main.ToSpec().Options["airworks"]!.GetValue<bool>().ShouldBeTrue();
+        main.Option("auditing").HasInfo.ShouldBeFalse();
+    }
+
+    [Fact]
     public void AspireUI_is_a_highlighted_option_that_is_off_until_chosen_and_adds_its_container()
     {
         using var folder = new TempFolder();
