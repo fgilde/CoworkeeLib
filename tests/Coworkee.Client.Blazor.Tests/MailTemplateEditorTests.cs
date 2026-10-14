@@ -11,7 +11,7 @@ public sealed class MailTemplateEditorTests : ClientTestBase
 {
     public MailTemplateEditorTests() =>
         Api.GetMailTemplateAsync("Identity.Welcome", "en", Arg.Any<CancellationToken>()).Returns(
-            new MailTemplateDto("Identity.Welcome", "en", "Custom", "<p>custom</p>", "Welcome", "<p>default</p>", true));
+            new MailTemplateDto("Identity.Welcome", "en", "Custom", "<p>custom</p>", "Welcome", "<p>default</p>", true, []));
 
     [Fact]
     public async Task Preview_shows_html_rendered_by_the_api()

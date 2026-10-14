@@ -29,7 +29,10 @@ public enum OutgoingMailStatus
 
 public sealed record MailTemplateSummaryDto(string Name, string DisplayName, IReadOnlyList<string> Cultures, IReadOnlyList<string> OverriddenCultures);
 
-public sealed record MailTemplateDto(string Name, string Culture, string Subject, string Body, string DefaultSubject, string DefaultBody, bool IsOverridden);
+public sealed record MailVariableDto(string Name, string Type, string? Sample, bool IsList);
+
+public sealed record MailTemplateDto(
+    string Name, string Culture, string Subject, string Body, string DefaultSubject, string DefaultBody, bool IsOverridden, IReadOnlyList<MailVariableDto> Variables);
 
 public sealed record SaveMailTemplateRequest(string Subject, string Body);
 

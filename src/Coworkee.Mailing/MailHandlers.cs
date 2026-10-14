@@ -98,7 +98,8 @@ internal sealed class MailTemplateHandlers(
             existing?.Body ?? fallback.Body,
             fallback.Subject,
             fallback.Body,
-            existing is not null);
+            existing is not null,
+            MailTemplateVariables.From(definition.SampleModel));
     }
 
     public async Task<Result> HandleAsync(SaveMailTemplate command, CancellationToken cancellationToken)
