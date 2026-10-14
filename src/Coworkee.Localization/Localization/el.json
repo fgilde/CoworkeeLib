@@ -1089,5 +1089,6 @@
   "This template uses layout or logic the visual editor would change": "Αυτό το πρότυπο χρησιμοποιεί διάταξη ή λογική που ο οπτικός επεξεργαστής θα άλλαζε",
   "Type { to insert a placeholder": "Πληκτρολογήστε { για να εισαγάγετε σύμβολο κράτησης θέσης",
   "Insert placeholder": "Εισαγωγή συμβόλου κράτησης θέσης",
-  "default": "προεπιλογή"
+  "default": "προεπιλογή",
+  "Receive newsletters": "Λήψη ενημερωτικών δελτίων"
 }

@@ -11,15 +11,18 @@ namespace Coworkee.Mailing;
 
 public interface IMailSender
 {
-    Task<Guid> QueueAsync(string to, string template, object model, string? culture, CancellationToken cancellationToken);
+    Task<Guid> QueueAsync(string to, string template, object model, string? culture, Guid? campaignId, CancellationToken cancellationToken);
+
+    Task<Guid> QueueAsync(string to, string template, object model, string? culture, CancellationToken cancellationToken) =>
+        QueueAsync(to, template, model, culture, null, cancellationToken);
 }
 
 internal sealed class MailSender(CoworkeeDbContext db, IMailTemplateRenderer renderer, ICurrentUser currentUser, TimeProvider clock) : IMailSender
 {
-    public async Task<Guid> QueueAsync(string to, string template, object model, string? culture, CancellationToken cancellationToken)
+    public async Task<Guid> QueueAsync(string to, string template, object model, string? culture, Guid? campaignId, CancellationToken cancellationToken)
     {
         var rendered = await renderer.RenderAsync(template, model, culture, cancellationToken);
-        var mail = OutgoingMail.Queue(to, rendered, template, currentUser.TenantId, clock.GetUtcNow());
+        var mail = OutgoingMail.Queue(to, rendered, template, currentUser.TenantId, clock.GetUtcNow(), campaignId);
         db.Add(mail);
         return mail.Id;
     }

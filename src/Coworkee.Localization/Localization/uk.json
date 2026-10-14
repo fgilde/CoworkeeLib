@@ -1089,5 +1089,6 @@
   "This template uses layout or logic the visual editor would change": "Цей шаблон містить макет або логіку, які візуальний редактор змінив би",
   "Type { to insert a placeholder": "Введіть {, щоб вставити плейсхолдер",
   "Insert placeholder": "Вставити плейсхолдер",
-  "default": "типово"
+  "default": "типово",
+  "Receive newsletters": "Отримувати розсилки"
 }

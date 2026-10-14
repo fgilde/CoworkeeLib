@@ -1089,5 +1089,6 @@
   "This template uses layout or logic the visual editor would change": "此模板使用了可视化编辑器会更改的布局或逻辑",
   "Type { to insert a placeholder": "输入 { 以插入占位符",
   "Insert placeholder": "插入占位符",
-  "default": "默认"
+  "default": "默认",
+  "Receive newsletters": "接收新闻通讯"
 }

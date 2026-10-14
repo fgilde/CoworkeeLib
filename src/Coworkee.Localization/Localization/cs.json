@@ -1089,5 +1089,6 @@
   "This template uses layout or logic the visual editor would change": "Tato šablona používá rozvržení nebo logiku, které by vizuální editor změnil",
   "Type { to insert a placeholder": "Zadáním { vložíte zástupný symbol",
   "Insert placeholder": "Vložit zástupný symbol",
-  "default": "výchozí"
+  "default": "výchozí",
+  "Receive newsletters": "Dostávat newslettery"
 }

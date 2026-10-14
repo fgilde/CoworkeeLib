@@ -1089,5 +1089,6 @@
   "This template uses layout or logic the visual editor would change": "Denne skabelon bruger layout eller logik, som den visuelle editor ville ændre",
   "Type { to insert a placeholder": "Skriv { for at indsætte en pladsholder",
   "Insert placeholder": "Indsæt pladsholder",
-  "default": "standard"
+  "default": "standard",
+  "Receive newsletters": "Modtag nyhedsbreve"
 }

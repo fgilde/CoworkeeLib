@@ -1089,5 +1089,6 @@
   "This template uses layout or logic the visual editor would change": "គំរូនេះប្រើប្លង់ ឬតក្កវិជ្ជាដែលកម្មវិធីនិពន្ធមើលឃើញនឹងផ្លាស់ប្តូរ",
   "Type { to insert a placeholder": "វាយ { ដើម្បីបញ្ចូលកន្លែងទុកជាមុន",
   "Insert placeholder": "បញ្ចូលកន្លែងទុកជាមុន",
-  "default": "លំនាំដើម"
+  "default": "លំនាំដើម",
+  "Receive newsletters": "ទទួលព្រឹត្តិបត្រព័ត៌មាន"
 }

@@ -1089,5 +1089,6 @@
   "This template uses layout or logic the visual editor would change": "Esta plantilla usa un diseño o una lógica que el editor visual modificaría",
   "Type { to insert a placeholder": "Escribe { para insertar un marcador",
   "Insert placeholder": "Insertar marcador",
-  "default": "predeterminado"
+  "default": "predeterminado",
+  "Receive newsletters": "Recibir boletines"
 }

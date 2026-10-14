@@ -1089,5 +1089,6 @@
   "This template uses layout or logic the visual editor would change": "Ten szablon używa układu lub logiki, które edytor wizualny by zmienił",
   "Type { to insert a placeholder": "Wpisz {, aby wstawić symbol zastępczy",
   "Insert placeholder": "Wstaw symbol zastępczy",
-  "default": "domyślny"
+  "default": "domyślny",
+  "Receive newsletters": "Otrzymuj newslettery"
 }

@@ -1089,5 +1089,6 @@
   "This template uses layout or logic the visual editor would change": "يستخدم هذا القالب تخطيطًا أو منطقًا كان المحرر المرئي سيغيّره",
   "Type { to insert a placeholder": "اكتب { لإدراج عنصر نائب",
   "Insert placeholder": "إدراج عنصر نائب",
-  "default": "افتراضي"
+  "default": "افتراضي",
+  "Receive newsletters": "تلقي النشرات الإخبارية"
 }

@@ -1089,5 +1089,6 @@
   "This template uses layout or logic the visual editor would change": "Bu şablon, görsel düzenleyicinin değiştireceği bir düzen veya mantık içeriyor",
   "Type { to insert a placeholder": "Yer tutucu eklemek için { yazın",
   "Insert placeholder": "Yer tutucu ekle",
-  "default": "varsayılan"
+  "default": "varsayılan",
+  "Receive newsletters": "Bültenleri al"
 }

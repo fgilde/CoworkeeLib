@@ -15,6 +15,11 @@ public static class MailPermissions
     {
         public const string View = "Mail.Log.View";
     }
+
+    public static class Campaigns
+    {
+        public const string Send = "Mail.Campaigns.Send";
+    }
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter<OutgoingMailStatus>))]

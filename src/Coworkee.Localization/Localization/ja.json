@@ -1089,5 +1089,6 @@
   "This template uses layout or logic the visual editor would change": "このテンプレートには、ビジュアルエディターが変更してしまうレイアウトまたはロジックが含まれています",
   "Type { to insert a placeholder": "{ を入力するとプレースホルダーを挿入できます",
   "Insert placeholder": "プレースホルダーを挿入",
-  "default": "デフォルト"
+  "default": "デフォルト",
+  "Receive newsletters": "ニュースレターを受け取る"
 }

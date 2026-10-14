@@ -1089,5 +1089,6 @@
   "This template uses layout or logic the visual editor would change": "Този шаблон използва оформление или логика, които визуалният редактор би променил",
   "Type { to insert a placeholder": "Въведете {, за да вмъкнете заместител",
   "Insert placeholder": "Вмъкни заместител",
-  "default": "по подразбиране"
+  "default": "по подразбиране",
+  "Receive newsletters": "Получаване на бюлетини"
 }

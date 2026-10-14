@@ -1089,5 +1089,6 @@
   "This template uses layout or logic the visual editor would change": "Este modelo usa layout ou lógica que o editor visual alteraria",
   "Type { to insert a placeholder": "Digite { para inserir um marcador",
   "Insert placeholder": "Inserir marcador",
-  "default": "padrão"
+  "default": "padrão",
+  "Receive newsletters": "Receber newsletters"
 }

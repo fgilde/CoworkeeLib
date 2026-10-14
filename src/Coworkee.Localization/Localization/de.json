@@ -1089,5 +1089,6 @@
   "This template uses layout or logic the visual editor would change": "Diese Vorlage enthält Layout oder Logik, die der visuelle Editor verändern würde",
   "Type { to insert a placeholder": "Mit { einen Platzhalter einfügen",
   "Insert placeholder": "Platzhalter einfügen",
-  "default": "Standard"
+  "default": "Standard",
+  "Receive newsletters": "Newsletter erhalten"
 }

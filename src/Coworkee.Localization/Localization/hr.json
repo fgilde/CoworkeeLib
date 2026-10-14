@@ -1089,5 +1089,6 @@
   "This template uses layout or logic the visual editor would change": "Ovaj predložak koristi izgled ili logiku koje bi vizualni uređivač promijenio",
   "Type { to insert a placeholder": "Upišite { za umetanje rezerviranog mjesta",
   "Insert placeholder": "Umetni rezervirano mjesto",
-  "default": "zadano"
+  "default": "zadano",
+  "Receive newsletters": "Primaj newslettere"
 }

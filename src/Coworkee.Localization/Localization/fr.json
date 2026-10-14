@@ -1089,5 +1089,6 @@
   "This template uses layout or logic the visual editor would change": "Ce modèle contient une mise en page ou une logique que l'éditeur visuel modifierait",
   "Type { to insert a placeholder": "Tapez { pour insérer un espace réservé",
   "Insert placeholder": "Insérer un espace réservé",
-  "default": "par défaut"
+  "default": "par défaut",
+  "Receive newsletters": "Recevoir les newsletters"
 }

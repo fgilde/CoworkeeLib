@@ -1089,5 +1089,6 @@
   "This template uses layout or logic the visual editor would change": "Deze sjabloon gebruikt lay-out of logica die de visuele editor zou wijzigen",
   "Type { to insert a placeholder": "Typ { om een tijdelijke aanduiding in te voegen",
   "Insert placeholder": "Tijdelijke aanduiding invoegen",
-  "default": "standaard"
+  "default": "standaard",
+  "Receive newsletters": "Nieuwsbrieven ontvangen"
 }

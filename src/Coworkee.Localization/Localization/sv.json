@@ -1089,5 +1089,6 @@
   "This template uses layout or logic the visual editor would change": "Den här mallen använder layout eller logik som den visuella redigeraren skulle ändra",
   "Type { to insert a placeholder": "Skriv { för att infoga en platshållare",
   "Insert placeholder": "Infoga platshållare",
-  "default": "standard"
+  "default": "standard",
+  "Receive newsletters": "Ta emot nyhetsbrev"
 }

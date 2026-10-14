@@ -1089,5 +1089,6 @@
   "This template uses layout or logic the visual editor would change": "Templat ini menggunakan tata letak atau logika yang akan diubah oleh editor visual",
   "Type { to insert a placeholder": "Ketik { untuk menyisipkan placeholder",
   "Insert placeholder": "Sisipkan placeholder",
-  "default": "default"
+  "default": "default",
+  "Receive newsletters": "Terima buletin"
 }

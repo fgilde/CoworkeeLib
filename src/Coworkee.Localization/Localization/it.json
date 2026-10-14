@@ -1089,5 +1089,6 @@
   "This template uses layout or logic the visual editor would change": "Questo modello usa un layout o una logica che l'editor visuale modificherebbe",
   "Type { to insert a placeholder": "Digita { per inserire un segnaposto",
   "Insert placeholder": "Inserisci segnaposto",
-  "default": "predefinito"
+  "default": "predefinito",
+  "Receive newsletters": "Ricevi newsletter"
 }

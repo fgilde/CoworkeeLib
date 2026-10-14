@@ -76,7 +76,8 @@ internal sealed class MailPermissionDefinitions : IPermissionDefinitionContribut
     public void Define(PermissionDefinitionContext context) =>
         context.Group(MailPermissions.GroupName, "Mail")
             .Add(MailPermissions.Templates.Manage, "Manage mail templates")
-            .Add(MailPermissions.Log.View, "View mail log");
+            .Add(MailPermissions.Log.View, "View mail log")
+            .Add(MailPermissions.Campaigns.Send, "Send mail campaigns");
 }
 
 internal sealed class MailSettingDefinitions : ISettingDefinitionContributor
@@ -101,5 +102,6 @@ internal sealed class MailSettingDefinitions : ISettingDefinitionContributor
             .Add(MailSettings.MailgunRegion, "Mailgun region", SettingType.Choice, Scopes, "us", choices: ["us", "eu"], enabledWhen: Provider(MailProviders.Mailgun))
             .Add(MailSettings.From, "Sender address", SettingType.String, Scopes, "noreply@localhost")
             .Add(MailSettings.Whitelist, "Recipient whitelist", SettingType.Text, Scopes,
-                description: "Leave empty to allow all recipients. One address or @domain per line.");
+                description: "Leave empty to allow all recipients. One address or @domain per line.")
+            .Add(MailSettings.Newsletters, "Receive newsletters", SettingType.Bool, [SettingScope.Global, SettingScope.User], "true", visibleToClient: true);
 }
