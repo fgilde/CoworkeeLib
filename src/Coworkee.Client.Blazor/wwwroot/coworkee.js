@@ -54,6 +54,14 @@ export function setFavicon(href) {
     }
 }
 
+// the server-rendered loading screen of Coworkee.Bff (absent in apps without it); the mode cookie lets the next one use the user's colours
+export function hideLoadingScreen(mode) {
+    if (mode) {
+        document.cookie = `coworkee-theme-mode=${encodeURIComponent(mode)}; path=/; max-age=31536000; samesite=lax`;
+    }
+    window.coworkeeLoadingScreen?.hide();
+}
+
 export function onHotkey(dotnet, key) {
     const handler = e => {
         if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === key) {

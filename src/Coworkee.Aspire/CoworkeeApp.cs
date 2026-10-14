@@ -212,6 +212,11 @@ public sealed partial class CoworkeeApp
             service.WithSetting(s => s.Coworkee.Auth.Design.MediaSide, side.ToString());
         }
 
+        if (Options.SignIn.LoadingScreen is { } loading)
+        {
+            service.WithSetting(s => s.Coworkee.Auth.Design.LoadingScreen, loading.ToString());
+        }
+
         if (Options.SignIn.MediaUrl is { } media && !media.StartsWith('/'))
         {
             service.WithSetting(s => s.Coworkee.Auth.Design.MediaUrl, media);

@@ -19,6 +19,8 @@ public partial class CoworkeeLayout : IAsyncDisposable
     private bool _systemDark;
     private MudThemeProvider? _provider;
     private string? _logo;
+    private bool _started;
+    private string? _shownMode;
 
     [Inject] private IJSRuntime JS { get; set; } = null!;
 
@@ -82,6 +84,11 @@ public partial class CoworkeeLayout : IAsyncDisposable
         }
 
         await ApplyFaviconAsync();
+        if (_visible && _started && ThemeService.Mode != _shownMode)
+        {
+            _shownMode = ThemeService.Mode;
+            await JS.HideLoadingScreenAsync(_shownMode);
+        }
     }
 
     private async Task StartAsync()
@@ -93,6 +100,7 @@ public partial class CoworkeeLayout : IAsyncDisposable
         await Data.DialogPlacement.StartAsync(JS);
         await L.InitializeAsync(ThemeService.ClientSettings.GetValueOrDefault(Contracts.Localization.LocalizationSettings.Culture));
         _systemDark = _provider is not null && await _provider.GetSystemDarkModeAsync();
+        _started = true;
         Refresh();
     }
 
