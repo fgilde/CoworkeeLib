@@ -17,6 +17,7 @@ public partial class ClientEntitySwitch : IDisposable
     private int _revision;
     private ClientEntityMode _mode;
     private bool _comparing;
+    private bool _menuOpen;
 
     // without AddCoworkeeClientEntities the switch stays empty instead of failing the page
     [Inject] private IServiceProvider Services { get; set; } = null!;

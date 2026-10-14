@@ -12,9 +12,10 @@
 </style>
 @if (_set is { } set)
 {
-    <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="Density.Dense" Class="mb-2" data-testid="client-entity-switch">
+    <MudMenu @bind-Open="_menuOpen" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="Density.Dense" Class="mb-2" data-testid="client-entity-switch">
         <ActivatorContent Context="menu">
-            <MudTooltip Text="@Describe(set)">
+            @* the open menu repeats the status in its header, so the tooltip would only cover the first item *@
+            <MudTooltip Text="@Describe(set)" Disabled="@_menuOpen">
                 <button type="button" class="@($"cw-ce-switch {(SearchesLocally(set) ? "local" : "server")}")" aria-label="@L["Where searching runs: {0}", Describe(set)]"
                         data-mode="@set.Mode" data-state="@State(set.Status)" data-testid="client-entity-state" @onclick="() => menu.ToggleAsync()">
                     <MudProgressCircular Class="cw-ce-ring" Size="Size.Small" StrokeWidth="3" Color="@RingColor(set.Status)" Value="@RingValue(set.Status)"
