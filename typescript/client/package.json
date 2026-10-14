@@ -24,6 +24,7 @@
     "test": "node --test \"test/**/*.test.ts\""
   },
   "dependencies": {
+    "@microsoft/signalr": "^10.0.11",
     "openapi-fetch": "^0.14.1"
   },
   "devDependencies": {
