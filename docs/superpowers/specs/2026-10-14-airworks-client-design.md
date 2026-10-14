@@ -105,3 +105,11 @@ scopes, forwarded prefixes `/hubs`, cookie name), Redis wiring, the next auth cl
 ## Out of scope / follow-ups
 Publishing the npm packages; realtime (SignalR) in the AirWorks client; chat, reports, AI assistant, admin apps; AirWorks desktop profile on the server
 (stays in localStorage); vite dev server with HMR inside Aspire; AirWorks chrome texts beyond en/de.
+
+## Status (end of the session)
+
+Done: everything of phase 1 and phase 2 above (apps profile, settings, files + MudEx preview, data, entityApp, notifications, API docs), About fixes, CLI/Studio option with info link, Aspire `AddAirWorks`, BFF cookie name, packages with tests, template with build, docs EN/DE.
+
+Changed on the way **[call]**: the AirWorks desktop profile stays in localStorage (no server setting); the data app reads OData directly instead of the client-entity cache of the Blazor app; files dialogs use the browser's prompt/confirm (shortcut).
+
+Follow-ups: see Out of scope, plus a browser test of the desktop (no browser automation was available for this work).
