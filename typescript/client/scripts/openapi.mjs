@@ -4,17 +4,26 @@ import { readFile, writeFile } from 'node:fs/promises';
 
 const source = process.argv[2];
 if (!source) {
-  console.error('usage: npm run openapi -- <url or file of /openapi/v1.json>');
+  console.error('usage: npm run openapi -- <url or file of /openapi/v1.json> [more documents for modules the first lacks]');
   process.exit(1);
 }
 
 // endpoints of the template app and its samples, not of the library
 const appPaths = [/^\/api\/v1\/system\//, /^\/api\/v1\/(brands|products|dashboard|documents|document-types|sales-orders)(\/|$)/];
 
-const text = /^https?:/.test(source)
-  ? await (await fetch(source)).text()
-  : await readFile(source, 'utf8');
-const document = JSON.parse(text);
+const load = async (from) => JSON.parse(/^https?:/.test(from) ? await (await fetch(from)).text() : await readFile(from, 'utf8'));
+const document = await load(source);
+
+// further documents (apps with other modules) add the modules the first one lacks: /api/v1/<module> prefixes it has no path for
+const moduleOf = (path) => path.split('/').slice(0, 4).join('/');
+for (const extra of process.argv.slice(3)) {
+  const other = await load(extra);
+  const known = new Set(Object.keys(document.paths).map(moduleOf));
+  for (const [path, item] of Object.entries(other.paths)) {
+    if (!known.has(moduleOf(path))) document.paths[path] = item;
+  }
+  for (const [name, schema] of Object.entries(other.components?.schemas ?? {})) document.components.schemas[name] ??= schema;
+}
 
 document.paths = Object.fromEntries(Object.entries(document.paths).filter(([path]) => !appPaths.some((pattern) => pattern.test(path))));
 
