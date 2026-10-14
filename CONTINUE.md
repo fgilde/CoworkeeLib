@@ -63,7 +63,7 @@ Spec `docs/superpowers/specs/2026-10-14-round2-design.md`.
 - `[Cron]` renders `MudExCronEdit`; `CronEditor`/`CronSchedule` deleted.
 - `SettingsModel` uses `AsDisabledIf`; `SettingsFormRules.WrapInColumns` and the re-wraps after `RenderWith` are gone; `EditDialogExtensions` no longer calls `UpdateAllConditionalSettings()`.
 
-## AirWorks client (branch `feat/airworks`, worktree `C:\dev\privat\github\wt\airworks\coworkee`, not merged)
+## AirWorks client (phase 1, merged on main)
 Spec `docs/superpowers/specs/2026-10-14-airworks-client-design.md`, plan `docs/superpowers/plans/2026-10-14-airworks-client.md`, report `docs/superpowers/airworks-report.md`.
 - Option `airworks` (CLI `--airworks`, Studio card under General with a link to the AirWorks docs, `CliOption.InfoUrl`): project `MyApp.AirWorks` (ASP.NET host with Coworkee.Bff + `ClientApp` built by vite into wwwroot, `-p:SkipClientBuild=true`), `app.AddAirWorks<...>()`, About credit `AboutCredit.AirWorks("0.4.0")`, LOGIN/README/CI (setup-node).
 - Sign-in: the host is a second BFF client of the auth server (`{app}-airworks`), so Keycloak works through the auth server exactly like for the Blazor app. `BffOptions.CookieName` (Aspire sets `{app}-airworks`) because localhost cookies ignore ports.
@@ -72,6 +72,15 @@ Spec `docs/superpowers/specs/2026-10-14-airworks-client-design.md`, plan `docs/s
 - Verified: generated app in Aspire, sign-in with the password and through Keycloak into the AirWorks host, files/OData/settings/notifications/swagger through its BFF (HTTP script, no browser).
 - Also on the branch: .NET packages 10.0.13 + System.Security.Cryptography.Pkcs/Xml 10.0.13 (advisories of 2026-10-13 broke every build with NU1903; main needs the same).
 - Follow-ups: publish the npm packages, realtime/chat/reports/assistant/admin apps in AirWorks, desktop profile on the server, vite dev server with HMR in Aspire, `coworkee doctor` Node check, a browser test of the desktop.
+
+## AirWorks client phase 2 (branch `feat/airworks-2`, worktree `C:\dev\privat\github\wt\airworks2\coworkee`, not merged)
+Report `docs/superpowers/airworks-report-2.md` (phase 1 is merged on main).
+- `@coworkee/airworks`: chat, reports (viewer), assistant (streamed), `adminApps` (Administration hub + users, groups, roles/grants, applications, scopes, API keys, themes, languages, translations, mail templates/editor, campaigns, recipient lists, mail log, mail/AI settings, backups, services, editions, tenants, audit, AI tool calls), built on `crudApp` + `<dialog>` forms; realtime via `coworkee.realtime` (`@coworkee/client` `createRealtime`, SignalR through the BFF); permissions like the Blazor nav (`requiredPermissions`, `hostOnly`, `probe`).
+- MudEx bundle is hosted by the generated app (`/mudex/`, `mudex-webcomponents` dev dependency, vite copy plugin, `.dat` content type): jsDelivr answers 502 for parts of it.
+- npm: `release.yml` job `npm` publishes `@coworkee/client` and `@coworkee/airworks` (trusted publishing, `NPM_TOKEN` fallback, never fails the release). Version: `typescript/scripts/npm-version.mjs` (`a.b.c.d` -> `a.b.(c*1000+d)`). Template parameter `npmPackages` (`registry` = npm version of the template, `vendor` = tarballs; `coworkee new --template-source` picks vendor; tests pass `--npmPackages vendor`).
+- **Owner, once:** create npm org `coworkee`; first publish with a granular token as secret `NPM_TOKEN` (or by hand, steps in the report); then add a trusted publisher (GitHub Actions, `fgilde/CoworkeeLib`, `release.yml`) to both packages and delete the token.
+- Browser test (Playwright) of a generated app: scripts in `%TEMP%\opencode\pw`, screenshots in `%TEMP%\opencode\airworks-shots`.
+- Open: report designer in AirWorks, MudBlazor CSS from the MudEx bundle in own apps after a preview, `coworkee new --template-source` does not add the local NuGet feed, `@fgilde/airworks` not on npm.
 
 ## Known follow-ups
 - Own `IMailTransport` with a new provider name is only selectable via `Coworkee:Settings:Defaults:Mail.Provider` (choices are the four built-ins).
