@@ -153,7 +153,7 @@ internal sealed class AccountSettingDefinitions : ISettingDefinitionContributor
                 description: "Signing in waits until the link in the confirmation mail was opened.");
 }
 
-[DependsOn(typeof(CoworkeeIdentityModule), typeof(CoworkeeMailingModule))]
+[DependsOn(typeof(CoworkeeIdentityModule), typeof(CoworkeeMailingModule), typeof(Coworkee.OData.CoworkeeODataModule))]
 public sealed class CoworkeeAccountModule : CoworkeeModule, IWebModule
 {
     public override void ConfigureServices(ModuleServiceContext context)
@@ -162,6 +162,7 @@ public sealed class CoworkeeAccountModule : CoworkeeModule, IWebModule
         context.Services.Configure<IdentityOptions>(identity => context.Configuration.GetSection(RegistrationOptions.PasswordSection).Bind(identity.Password));
         context.Services.AddMessagingFromAssembly(typeof(CoworkeeAccountModule).Assembly);
         context.Services.AddScoped<IAccountMailer, AccountMailer>();
+        context.Services.AddScoped<IMailRecipientDirectory, MailRecipientDirectory>();
         context.Services.AddScoped<Coworkee.Identity.Users.IUserActivationListener, RegistrationApprovedMail>();
         context.Services.AddSingleton<ISettingDefinitionContributor, AccountSettingDefinitions>();
         context.Services.AddSingleton<ISettingDefinitionContributor, SecuritySettingDefinitions>();

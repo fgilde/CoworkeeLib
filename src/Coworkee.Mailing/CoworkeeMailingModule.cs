@@ -68,6 +68,15 @@ public sealed class CoworkeeMailingModule : CoworkeeModule, IWebModule
             d.SendAsync(new TestMailConnection(body), ct).ToHttpResult());
         api.MapGet("/outgoing", ([AsParameters] PageRequest page, OutgoingMailStatus? status, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new GetOutgoingMails(page, status), ct).ToHttpResult());
+        api.MapPost("/recipients/preview", (RecipientSourceDto body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new PreviewRecipients(body), ct).ToHttpResult());
+        api.MapGet("/recipient-lists", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetRecipientLists(), ct).ToHttpResult());
+        api.MapPost("/recipient-lists", (SaveRecipientListRequest body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new CreateRecipientList(body), ct).ToHttpResult());
+        api.MapPut("/recipient-lists/{id:guid}", (Guid id, SaveRecipientListRequest body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new UpdateRecipientList(id, body), ct).ToHttpResult());
+        api.MapDelete("/recipient-lists/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new DeleteRecipientList(id), ct).ToHttpResult());
     }
 }
 
