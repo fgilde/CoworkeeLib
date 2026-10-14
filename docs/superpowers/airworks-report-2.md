@@ -22,11 +22,11 @@ AirWorks repo: no change needed (everything works with the public API of `d295c6
 ## Decisions (owner opted out of questions)
 1. Generic `crudApp` for the administration instead of one hand-written app per page: ~1 config per page, same behaviour everywhere. Dialogs are native `<dialog>` (top layer, accessible, no dependency) instead of MudEx dialogs (MudEx needs the 60 MB .NET runtime; it stays for the file preview only).
 2. Administration apps are registered individually (start menu, search, permissions) but get no desktop shortcut; one *Administration* hub shortcut groups them like the Blazor nav.
-3. Reports: viewer only (designer, dashboard filters, drill-down stay in Blazor) - the designer is a GridStack editor that would be a project of its own.
+3. Reports: replaced in round 3 by a full designer in AirWorks (see below).
 4. Theme editing: palettes as JSON text fields (no color pickers).
-5. npm: mapping for four-part versions instead of changing the release scheme; template default = exact npm version of the template; `vendor` mode for local builds, chosen automatically by the CLI.
-6. MudEx bundle hosted by the app (CDNs proved unreliable: jsDelivr 502, unpkg intermittent CORS failures); the library default stays a CDN URL (unpkg) for apps that pass nothing.
-7. Pickers (users/groups in forms) read the first 200 entries (`shortcut:` comment in `identity.ts`).
+5. npm: mapping for four-part versions instead of changing the release scheme; since round 3 the template defaults to the bundled tarballs, npm is the option `airworksPackages=npm`.
+6. MudEx bundle hosted by the app (CDNs proved unreliable: jsDelivr 502, unpkg intermittent CORS failures); since round 3 previews run in a frame page next to the bundle.
+7. Pickers: since round 3 server-side search with paging (`lookup.ts`).
 
 ## Verification
 - `typescript`: `npm run build` clean; `npm test`: scripts 1/1, client 15/15, airworks 8/8 (incl. the texts check over 22 languages).
@@ -40,15 +40,26 @@ AirWorks repo: no change needed (everything works with the public API of `d295c6
   - Screenshots: `C:\Users\User\AppData\Local\Temp\opencode\airworks-shots\00-signin.png` ... `32-chat-live.png` (`04-file-preview.png`, `07-chat.png`, `08-administration.png`, `10-admin-user-edit.png`, `13-campaign-recipients.png`, `15-mail-template-editor.png`, `32-chat-live.png` are the interesting ones), `leak.png` = desktop after a preview. Scripts: `C:\Users\User\AppData\Local\Temp\opencode\pw\*.mjs`.
   - Remaining console noise: MudEx logs `Cannot read properties of null (reading 'viewport')` when its preview window is closed while rendering.
 
-## Not done / open
-- Report designer, dashboard filters and drill-down in AirWorks; colour pickers for themes; user/group pickers beyond 200 entries.
-- MudBlazor's global CSS (from the MudEx bundle) can still affect own apps after a preview; the desktop chrome is protected. A cleaner way would be MudEx rendering into a shadow root or iframe (MudEx change).
-- `coworkee new --template-source` with a dev version does not add the local NuGet feed to the app's `nuget.config` (restore fails until `dotnet nuget add source <feed>`; existed before, unrelated to AirWorks).
-- `@fgilde/airworks` is not on npm; apps take it from GitHub at a pinned commit (works, needs git and network to GitHub).
-- Desktop profile on the server, vite dev server with HMR in Aspire, `coworkee doctor` Node.js check (from report 1).
+## Round 3 (zero open points)
+Commits `b291b0b..HEAD` (merge of main incl. `feat/final-polish`; localization JSONs merged as union of keys, values of main kept).
+1. **Bundled packages are the default**: template parameter / catalog option `airworksPackages` (`bundled` default, `npm`; CLI `--airworks-packages npm`, Studio card *AirWorks packages*, German texts). Default `ClientApp/package.json` uses `file:vendor/*.tgz` shipped in the template, so `npm install` never needs the npm registry for `@coworkee/*`; `npm` writes the release version (`scripts/npm-version.mjs --template` at pack time). The CLI's automatic `vendor` switch is gone (not needed any more). Tests: template content for both modes, real app build with the default.
+2. **Report designer** (`coworkee.report-designer`, `report-designer.ts` + pure `report-model.ts`): palette of the web app (18 presets), 12 column grid with drag to move and corner resize, side panel with the settings of the Blazor `WidgetSettings` (source, group by/series with date buckets, values with all aggregate functions, columns, sort, top, date field, filter as OData, number format, currency, target, KPI comparison/higher-is-better/curve, legend, data labels, cross filter, table view, markdown, image/web address), duplicate/delete widget, undo/redo, report settings (name, description, the 9 icons of the web app, refresh, sharing with roles when `Reports.Share`), date range of the report, save (POST/PUT), open. Viewer: Edit button, date range select applied to every widget's date field, line/area/pie/donut rendering besides bars. Facet filters and QueryBuilder rules saved by the web app are kept as they are (the OData filter field edits the query's filter).
+3. **MudBlazor CSS isolated**: the preview runs in `mudExFrame()` - an iframe on `/mudex/coworkee-frame.html` (shipped as `@coworkee/airworks/mudex-frame.html`, copied next to the bundle by the template; only `mudex-*` tags, the script is always the `mudex.js` next to the page). The earlier global CSS overrides are removed. Verified: no MudBlazor stylesheet in the top document before/after a preview, body typography, desktop icons and app buttons unchanged.
+4. **Pickers**: `type: 'lookup'` fields (`lookup.ts`: search as you type, pages of 20 with *More*, chips, names of existing ids via `/identity/users/names`), used for a user's groups, group members and campaign/recipient-list users.
+5. **Local feed**: `coworkee new --template-source <nupkg|folder>` adds the template's folder as `coworkee-local` to the app's `nuget.config` when it holds Coworkee packages (`LocalFeed`, unit test); verified with a real `coworkee new` (restore + migration without manual steps).
+- Localization: 45 reporting texts the web app also uses (presets, aggregate functions, buckets, refresh intervals, date ranges, formats) added in all 22 languages; the node texts check now covers the dynamic keys of the designer.
 
-## What the owner must do once (npm)
+### Verification of round 3
+- TS: scripts 1/1, client 15/15, airworks 10/10 (designer model, setPath, texts over 22 languages incl. the dynamic report keys).
+- `pwsh build/pack-local.ps1` (`0.1.0-dev` of round 3), CLI tests with the feed **193/193**, Studio 277 (276 passed, 1 skipped), Localization 129/129, `build/localization-check.ps1` clean for all languages, mkdocs strict clean.
+- Generated app `coworkee new Shop --template-source ... --airworks --keycloak --files --features --social` (`...\aw2\Shop4`, ports +1000 because the owner's demo app host used the defaults): HTTP checks all 200 (`http-checks.txt`, incl. `/mudex/coworkee-frame.html`, report sources); `browser-run.txt` (30 apps, realtime chat live) and `designer-run.txt`: designer created a report with KPI, pie and data table, moved and resized the KPI (saved as `4,0 4x4`), saved with name and icon, viewer shows KPI 11 and the pie; member picker found a user by server search and saved him; preview rendered 80 MudEx elements inside the frame, top page unchanged. No console errors.
+- Screenshots: `C:\Users\User\AppData\Local\Temp\opencode\airworks-shots\` `00`-`32` (apps), `40-report-designer.png`, `41-report-viewer.png`, `42-member-picker.png`, `43-preview-frame.png`, `44-after-preview.png`.
+
+## Open
+Nothing in the code. The AirWorks desktop profile (shortcuts, open windows) stays in the browser's local storage by AirWorks' design; `@fgilde/airworks` comes from GitHub at a pinned commit.
+
+## What the owner must do once (npm, optional)
+Nothing blocks without it: generated apps use the bundled tarballs. To also have the packages on npm (for `--airworks-packages npm` and other TypeScript clients):
 1. Create the npm organisation **`coworkee`** on npmjs.com (scope `@coworkee`), with 2FA.
-2. First publish (trusted publishers can only be added to existing packages): either create a granular access token with read/write for `@coworkee/*` and store it as repository secret **`NPM_TOKEN`** in fgilde/CoworkeeLib, then cut a release (the `npm` job publishes); or publish once by hand from `typescript/`: `npm ci && node scripts/npm-version.mjs --set <version> && npm run build && npm publish --workspace client --access public && npm publish --workspace airworks --access public` (do not commit the changed package.json versions).
-3. On npmjs.com, for both packages: *Settings -> Trusted publishing -> GitHub Actions*, repository `fgilde/CoworkeeLib`, workflow `release.yml` (no environment). Afterwards the token can be deleted; the job publishes with OIDC and provenance.
-4. Until then releases keep working: the npm job only posts a notice. Generated apps of a release whose npm packages are missing fail `npm install` - create such apps with `--template-source` (vendor) or publish first.
+2. First publish (trusted publishers can only be added to existing packages): a granular access token with read/write for `@coworkee/*` as repository secret **`NPM_TOKEN`** in fgilde/CoworkeeLib, then cut a release (the `npm` job publishes); or once by hand from `typescript/`: `npm ci && node scripts/npm-version.mjs --set <version> && npm run build && npm publish --workspace client --access public && npm publish --workspace airworks --access public` (do not commit the changed versions).
+3. On npmjs.com for both packages: *Settings -> Trusted publishing -> GitHub Actions*, repository `fgilde/CoworkeeLib`, workflow `release.yml`. Then delete the token; the job publishes with OIDC and provenance. Until then the job only posts a notice.
