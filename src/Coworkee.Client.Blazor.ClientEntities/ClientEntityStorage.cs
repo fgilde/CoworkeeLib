@@ -21,7 +21,8 @@ public sealed class NoClientEntityStorage : IClientEntityStorage
     public Task ClearAsync() => Task.CompletedTask;
 }
 
-internal sealed class IndexedDbClientEntityStorage(IJSRuntime js) : IClientEntityStorage, IAsyncDisposable
+// IDisposable too: the HttpClientFactory disposes the scope of its handlers (ClientEntityHttpHandler) synchronously
+internal sealed class IndexedDbClientEntityStorage(IJSRuntime js) : IClientEntityStorage, IAsyncDisposable, IDisposable
 {
     private IJSObjectReference? _module;
 
@@ -39,6 +40,30 @@ internal sealed class IndexedDbClientEntityStorage(IJSRuntime js) : IClientEntit
         if (_module is not null)
         {
             await _module.DisposeAsync();
+        }
+    }
+
+    // WebAssembly modules are in-process and dispose synchronously; elsewhere the release finishes in the background
+    public void Dispose()
+    {
+        if (_module is IDisposable module)
+        {
+            module.Dispose();
+        }
+        else
+        {
+            _ = Release();
+        }
+    }
+
+    private async Task Release()
+    {
+        try
+        {
+            await DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
         }
     }
 }
