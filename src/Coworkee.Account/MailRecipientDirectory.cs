@@ -17,12 +17,13 @@ internal sealed class MailRecipientDirectory(IServiceProvider services, Coworkee
 {
     public async Task<Result<RecipientPage>> PageAsync(RecipientSourceDto source, Guid? after, int size, CancellationToken cancellationToken)
     {
-        if (await EligibleAsync(source, cancellationToken) is { Error: { } error })
+        var resolved = await EligibleAsync(source, cancellationToken);
+        if (!resolved.IsSuccess)
         {
-            return error;
+            return resolved.Error;
         }
 
-        var (_, eligible) = (await EligibleAsync(source, cancellationToken)).Value;
+        var (_, eligible) = resolved.Value;
         var rows = await eligible.Where(u => after == null || u.Id.CompareTo(after.Value) > 0).OrderBy(u => u.Id).Take(size + 1)
             .Select(u => new { u.Id, u.Email, u.FirstName, u.LastName, u.TenantId }).ToListAsync(cancellationToken);
         var page = rows.Take(size).ToList();
@@ -43,7 +44,9 @@ internal sealed class MailRecipientDirectory(IServiceProvider services, Coworkee
         var (selected, eligible) = resolved.Value;
         var count = await eligible.CountAsync(cancellationToken);
         var excluded = await selected.CountAsync(cancellationToken) - count;
-        var rows = await eligible.OrderBy(u => u.Email).ThenBy(u => u.Id).Take(first)
+        // without the right to read users the counts stay, the names do not
+        var visibleRows = await ODataEntityAccess.IsGrantedAsync(services, typeof(User), cancellationToken) ? first : 0;
+        var rows = await eligible.OrderBy(u => u.Email).ThenBy(u => u.Id).Take(visibleRows)
             .Select(u => new { u.Id, u.Email, u.FirstName, u.LastName, u.LastLoginAt }).ToListAsync(cancellationToken);
         return new RecipientPreviewDto(count, excluded,
             [.. rows.Select(u => new RecipientRowDto(u.Id, u.Email!, $"{u.FirstName} {u.LastName}".Trim() is { Length: > 0 } name ? name : null, u.LastLoginAt))]);
@@ -69,6 +72,11 @@ internal sealed class MailRecipientDirectory(IServiceProvider services, Coworkee
 
     private async Task<Result<IQueryable<User>>> SelectAsync(RecipientSourceDto source, CancellationToken cancellationToken)
     {
+        if (source.Kind is RecipientSourceKind.Query or RecipientSourceKind.Manual && !await ODataEntityAccess.IsGrantedAsync(services, typeof(User), cancellationToken))
+        {
+            return Error.Forbidden("mail.recipients_forbidden", "Choosing recipients by filter or by hand requires the right to view users.");
+        }
+
         switch (source.Kind)
         {
             case RecipientSourceKind.Preset:
@@ -83,9 +91,11 @@ internal sealed class MailRecipientDirectory(IServiceProvider services, Coworkee
                     return Error.Validation(nameof(RecipientSourceDto.Filter), exception.Message);
                 }
 
-            default:
+            case RecipientSourceKind.Manual:
                 var ids = source.UserIds?.ToList() ?? [];
                 return Result<IQueryable<User>>.Success((await ODataEntityAccess.VisibleAsync<User>(services, cancellationToken)).Where(u => ids.Contains(u.Id)));
+            default:
+                return Error.Validation(nameof(RecipientSourceDto.Kind), "Choose a recipient source.");
         }
     }
 

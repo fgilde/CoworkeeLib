@@ -100,7 +100,7 @@ public sealed class MailRecipientDirectoryTests(AccountApp app) : IAsyncLifetime
     }
 
     private Task<T> InDirectoryAsync<T>(Func<IMailRecipientDirectory, Task<T>> action) =>
-        app.InScopeAsync(null, _setup.TenantId, sp => action(sp.GetRequiredService<IMailRecipientDirectory>()));
+        app.InScopeAsync(_setup.AdminUserId, _setup.TenantId, sp => action(sp.GetRequiredService<IMailRecipientDirectory>()));
 
     private async Task<string[]> SeededEmailsAsync(RecipientSourceDto source)
     {
@@ -299,5 +299,57 @@ public sealed class MailRecipientDirectoryTests(AccountApp app) : IAsyncLifetime
         (await ok.Content.ReadFromJsonAsync<RecipientPreviewDto>(Ct))!.Count.ShouldBe(5);
         (await admin.PostAsJsonAsync("/api/v1/mail/recipients/preview", new RecipientSourceDto(RecipientSourceKind.Query, Filter: "nope eq"), Ct))
             .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    private async Task<HttpClient> SenderWithoutUsersRightAsync()
+    {
+        var userId = await app.InScopeAsync(null, _setup.TenantId, async sp =>
+        {
+            var db = sp.GetRequiredService<CoworkeeDbContext>();
+            var sender = Seed("sender@seed.test", _setup.TenantId);
+            db.Add(sender);
+            db.Add(new PermissionGrant { TenantId = _setup.TenantId, Name = MailPermissions.Campaigns.Send, ProviderType = PermissionProviderType.User, ProviderKey = sender.Id });
+            await db.SaveChangesAsync(Ct);
+            return sender.Id;
+        });
+        return app.As(userId, _setup.TenantId);
+    }
+
+    [Fact]
+    public async Task Choosing_by_filter_or_by_hand_needs_the_right_to_view_users()
+    {
+        var users = await SeedMixedAsync();
+        var sender = await SenderWithoutUsersRightAsync();
+
+        foreach (var source in new[]
+        {
+            new RecipientSourceDto(RecipientSourceKind.Query, Filter: "startswith(Email,'a')"),
+            new RecipientSourceDto(RecipientSourceKind.Manual, UserIds: [users["recent"]]),
+        })
+        {
+            (await sender.PostAsJsonAsync("/api/v1/mail/recipients/preview", source, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden, source.Kind.ToString());
+        }
+    }
+
+    [Fact]
+    public async Task A_preset_preview_without_the_right_to_view_users_has_counts_but_no_rows()
+    {
+        await SeedMixedAsync();
+        var sender = await SenderWithoutUsersRightAsync();
+
+        var response = await sender.PostAsJsonAsync("/api/v1/mail/recipients/preview", new RecipientSourceDto(RecipientSourceKind.Preset, RecipientPreset.AllActive), Ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var preview = (await response.Content.ReadFromJsonAsync<RecipientPreviewDto>(Ct))!;
+        preview.Count.ShouldBeGreaterThan(0);
+        preview.First.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task An_undefined_source_kind_is_a_validation_error()
+    {
+        var result = await InDirectoryAsync(d => d.PreviewAsync(new RecipientSourceDto((RecipientSourceKind)99), 5, Ct));
+
+        result.Error!.Details!.ShouldContainKey("Kind");
     }
 }
