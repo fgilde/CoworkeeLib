@@ -43,7 +43,7 @@ Andere Clients nehmen denselben Befehl: `coworkee` mit dem Argument `mcp`. `cowo
 | `list_options` | Die [Optionen](cli.md#optionen) mit Id, Art, Standard, Auswahl, Vor- und Nachteilen und wann man sie wählt; auf Wunsch eine Gruppe |
 | `get_spec_schema` | JSON Schema einer [App-Spezifikation](cli.md#app-spezifikationen) |
 | `get_spec_example` | Eine vollständige Beispiel-Spezifikation |
-| `validate_spec` | Prüft eine Spezifikation, mit Ordner auch ihre Logo- und Mediendateien |
+| `validate_spec` | Prüft eine Spezifikation, mit Ordner auch ihre Logo- und Mediendateien; `warn`-Zeilen nennen Optionen, die ignoriert werden, weil die Option fehlt, die sie braucht |
 | `create_app` | `coworkee new` aus einer Spezifikation oder aus Name und Optionen, in einem Ordner; `users` fügt Benutzer für die Entwicklung hinzu (`email[:rolle,rolle][:admin]`), die Antwort listet sie mit ihren Passwörtern |
 | `add_module` | `coworkee module add` mit Entity, Eigenschaften, Client-Entity und Mapping |
 | `add_entity` | `coworkee entity add` |

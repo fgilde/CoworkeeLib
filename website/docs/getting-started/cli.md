@@ -90,7 +90,13 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--github-actions` | `githubActions` | bool | `false` | `.github/workflows/ci.yml`: build and tests on every push and pull request |
 | `--devcontainer` | `devcontainer` | bool | `false` | `.devcontainer/devcontainer.json` with the .NET SDK and Docker in Docker (Codespaces, VS Code) |
 
-A boolean switch without value means `true` (`--files`), `--chat false` switches off. The shipped initial migration covers the default modules (with or without samples). When you switch a module with tables on or off (chat, AI, backup, notifications, files, features, social, event bus, extended attributes without samples) or choose another database than `postgres`, the template leaves the migration out and `coworkee new` creates `Initial` with `dotnet ef` after the restore. With plain `dotnet new`, run `coworkee migrations add Initial` once yourself.
+A boolean switch without value means `true` (`--files`), `--chat false` switches off.
+
+**Options that need another one.** Some options only matter with another: `--airworks-packages` with `--airworks`, `--ai-provider`, `--ai-model` and `--ai-endpoint` with the AI assistant (`--ai`), `--backup` with `--database postgres`, `--sign-in-media` with the layout `Split` or `Slide` and `--sign-in-media-side` with a sign-in media. Without it the CLI does not ask for them (there are no prompts, every value is a switch or a spec key), does not pass them on, so the app is the one without the switch, and warns: `warn  airworksPackages: ignored, it only matters with airworks (coworkee options).` `coworkee spec validate` prints the same warnings after `ok`. `coworkee options` names the need (`Needs: airworks`), `--json` has it as `dependsOn`, and the Studio hides the card until the other option is on. `--backup true` with another database than `postgres` stays an error.
+
+**Links.** `coworkee options` prints the website of what an option brings (`More:`): AirWorks, AspireUI, WebDataStudio, Grafana, Keycloak, Redis, Elasticsearch, GitHub Actions and the dev container; for choices one line per product (`More (postgres):`): PostgreSQL, SQL Server, SQLite, RabbitMQ, Azure Blob Storage, Mapperly, Ollama, LM Studio, LibreTranslate, MyMemory, DeepL, Azure AI Translator and Google Cloud Translation. `--json` has them as `infoUrl` of the option and of the choice. The Studio shows them as an open button on the card.
+
+The shipped initial migration covers the default modules (with or without samples). When you switch a module with tables on or off (chat, AI, backup, notifications, files, features, social, event bus, extended attributes without samples) or choose another database than `postgres`, the template leaves the migration out and `coworkee new` creates `Initial` with `dotnet ef` after the restore. With plain `dotnet new`, run `coworkee migrations add Initial` once yourself.
 
 ## App specs
 
@@ -100,6 +106,7 @@ A spec describes the whole app as JSON: name, options, branding and feature modu
 coworkee spec example > shop.json    # a complete example
 coworkee spec schema > spec.schema.json
 coworkee spec validate shop.json
+coworkee spec show shop.json         # what the spec creates: library modules on and off, options, your own modules
 coworkee new --spec shop.json
 ```
 
@@ -148,6 +155,7 @@ coworkee new --spec shop.json
 }
 ```
 
+- `modules` are the modules of your own with their entities. The modules of the library (audit log, chat, files, ...) are options under `options`, and a spec you write lists only what differs from the defaults: without `"chat": false` the app has the chat, so a spec of the defaults has no module in it. The Studio therefore writes every library module with `true` or `false`; `coworkee spec show` prints the same for any spec (`Library modules on:` / `off:`, then every other option with its value, `(unused)` where it is ignored, and your own modules).
 - `options` takes the ids of the table above; `branding` takes `title`, `theme`, `primaryColor`, `secondaryColor`, `logo`, `signInLayout`, `signInMedia` and `signInMediaSide` and wins over the same ids in `options`.
 - Files and `output` are relative to the spec file and must stay inside its folder (no absolute paths, no `..`). A logo is an image (svg, png, jpg, jpeg, webp, gif, ico), sign-in media an image, a video (mp4, webm, ogg) or an http(s) address: both end up public in the web client. A file given as switch (`--logo C:\brand\logo.svg`) may be anywhere. Comments and trailing commas are allowed.
 - The title goes into code and HTML as it is, so it must not contain `"`, `\`, `<`, `>`, `@` or control characters.
