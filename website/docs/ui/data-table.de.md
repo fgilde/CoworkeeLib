@@ -270,30 +270,18 @@ await Dialogs.ShowEditAsync(L["New product"], model, saved => Api.SaveProductAsy
 | `ODataPicker` | einen Fremdschlüssel: sucht in einem OData-Entity-Set über eine Texteigenschaft |
 | `OptionalODataPicker` | einen optionalen Fremdschlüssel (`Guid?`): wie `ODataPicker`, Leeren ergibt null |
 | `ImageDataUrlEdit` | ein Bild, gespeichert als Data-URL |
-| `ChipListEditor` | eine `IReadOnlyList<string>` als Chips (siehe unten) |
 
 ### Chip-Listen
 
-`ChipListEditor` bearbeitet eine Liste freier Textwerte als Chips: Enter, Leerzeichen, Komma oder Zeilenumbruch, Einfügen (eine eingefügte Liste wird in Chips zerlegt) oder das Verlassen des Felds fügen sie hinzu; das &times; eines Chips entfernt ihn. Werte, die schon in der Liste stehen, werden übersprungen.
-
-| Parameter | Bedeutung |
-|---|---|
-| `Value`, `ValueChanged` | die Liste (`IReadOnlyList<string>`) |
-| `Label`, `HelperText`, `Placeholder` | Texte rund um das Feld |
-| `ReadOnly` | zeigt die Chips ohne Eingabe und ohne &times; |
-| `Suggestions` | `Func<string, CancellationToken, Task<IEnumerable<string>>>`: bekommt den getippten Text und liefert Vorschläge; Werte, die schon in der Liste stehen, werden nicht angeboten |
-| `Validate` | `Func<string, string?>`: der Fehlertext eines ungültigen Werts, `null` bei einem gültigen; ungültige Werte werden nicht hinzugefügt und bleiben mit dem Fehler im Feld |
-| `Fixed` | Werte, deren Chip sich nicht entfernen lässt |
-
-In einer `ObjectEdit`-Meta rendert `ChipListMeta.RenderAsChips` eine Eigenschaft als Chips über die volle Breite des Formulars (es ruft `RenderWith` auf und legt die Eigenschaft in ein `MudItem` voller Breite):
+In einer `ObjectEdit`-Meta rendert `ChipListMeta.RenderAsChips` eine `IReadOnlyList<string>`-Eigenschaft als Chips über die volle Breite des Formulars, mit MudEx' `MudExTagField<string>`: Enter, Leerzeichen, Komma oder Zeilenumbruch, Einfügen (eine eingefügte Liste wird in Chips zerlegt) oder das Verlassen des Felds fügen sie hinzu; das &times; eines Chips entfernt ihn. Die Aktion konfiguriert das Tag-Feld, z. B. `SearchFunc` (Vorschläge), `ValidateChip` (Fehlertext eines ungültigen Werts, `null` bei einem gültigen) und `IsChipClosable` (Chips, die sich nicht entfernen lassen):
 
 ```csharp
 meta.Property(f => f.Scopes).RenderAsChips(e =>
 {
     e.Label = L["Scopes"];
-    e.Suggestions = (text, _) => Task.FromResult(known.Where(s => s.Contains(text, StringComparison.OrdinalIgnoreCase)));
-    e.Validate = s => ScopePattern().IsMatch(s) ? null : L["Letters, digits and . _ : - only"];
-    e.Fixed = ["openid"];
+    e.SearchFunc = (text, _) => Task.FromResult(known.Where(s => s.Contains(text, StringComparison.OrdinalIgnoreCase)));
+    e.ValidateChip = s => ScopePattern().IsMatch(s) ? null : L["Letters, digits and . _ : - only"];
+    e.IsChipClosable = s => s != "openid";
 });
 ```
 

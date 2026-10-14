@@ -49,7 +49,6 @@ public partial class AppConfigurationEditor<T>
     {
         SettingsFormRules.Apply(meta);
         (Registration.Meta as Action<ObjectEditMeta<T>>)?.Invoke(meta);
-        SettingsFormRules.WrapInColumns(meta);
         var locked = Properties(meta, _locked).ToList();
         var guarded = Properties(meta, _protected).ToList();
         foreach (var property in locked)

@@ -91,14 +91,9 @@ public sealed partial class SettingsModel
 
             if (setting.EnabledWhen is { } condition && Value.GetType().GetProperty(PropertyName(condition.Setting)) is { } dependency)
             {
-                bool Disabled(object m) => !condition.Values.Contains(Format(dependency.GetValue(m)));
-                // MudEx's AsDisabledIf only drops the attribute again, which leaves the field disabled: Blazor keeps a parameter that is no longer passed
-                property.WithAttributesIf<object>(Disabled, new KeyValuePair<string, object>(nameof(MudBaseInput<string>.Disabled), true))
-                    .WithAttributesIf<object>(m => !Disabled(m), new KeyValuePair<string, object>(nameof(MudBaseInput<string>.Disabled), false));
+                property.AsDisabledIf<object>(m => !condition.Values.Contains(Format(dependency.GetValue(m))));
             }
         }
-
-        SettingsFormRules.WrapInColumns(meta);
     }
 #pragma warning restore BL0005
 

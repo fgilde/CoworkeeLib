@@ -1,5 +1,6 @@
 using System.Reflection;
 using Coworkee.Contracts.Configuration;
+using MudBlazor.Extensions.Components;
 using MudBlazor.Extensions.Components.ObjectEdit;
 using MudBlazor.Extensions.Components.ObjectEdit.Options;
 
@@ -28,7 +29,7 @@ public sealed class CoworkeeEditors : IDefaultRenderDataProvider
         var type = property.PropertyType;
         if (property.IsDefined(typeof(CronAttribute)) && type == typeof(string))
         {
-            return new RenderData<string, string?>(nameof(CronEditor.Value), typeof(CronEditor));
+            return new RenderData<string, string?>(nameof(MudExCronEdit.Value), typeof(MudExCronEdit));
         }
 
         if (property.IsDefined(typeof(ContentTypesAttribute)))

@@ -13,35 +13,6 @@ namespace Coworkee.Client.Blazor.Tests;
 public sealed class SettingsEditorsTests : ClientTestBase
 {
     [Fact]
-    public void Cron_editor_describes_the_value_and_takes_valid_expressions_only()
-    {
-        string? value = "0 6 * * *";
-        var editor = Render<CronEditor>(p => p.Add(e => e.Value, value).Add(e => e.ValueChanged, v => value = v));
-
-        editor.Markup.ShouldContain("Every day at 06:00 UTC");
-        Expression(editor).Change("*/5 * * * *");
-        value.ShouldBe("*/5 * * * *");
-        editor.Markup.ShouldContain("Every 5 minutes");
-        editor.Find(Input("cron-interval")).GetAttribute("value").ShouldBe("5");
-
-        Expression(editor).Change("every day");
-        value.ShouldBe("*/5 * * * *");
-        editor.Markup.ShouldContain("Not a valid cron expression");
-    }
-
-    [Fact]
-    public void Cron_editor_builds_the_expression_from_the_preset_fields()
-    {
-        string? value = "15 * * * *";
-        var editor = Render<CronEditor>(p => p.Add(e => e.Value, value).Add(e => e.ValueChanged, v => value = v));
-
-        editor.Find(Input("cron-minute")).Change("45");
-
-        value.ShouldBe("45 * * * *");
-        editor.Markup.ShouldContain("Every hour at minute 45");
-    }
-
-    [Fact]
     public async Task Content_types_editor_shows_names_picks_from_the_catalog_and_removes_chips()
     {
         IReadOnlyList<string>? value = ["image/*", "application/x-custom"];
@@ -82,11 +53,11 @@ public sealed class SettingsEditorsTests : ClientTestBase
 
         var editor = Render<AppConfigurationEditor<MarkedConfig>>(p => p.Add(e => e.Registration, new ClientAppConfiguration("Marked", "Marked", typeof(MarkedConfig), null)));
 
-        editor.WaitForAssertion(() => editor.Find("[data-testid='cron']"));
+        editor.WaitForAssertion(() => editor.FindComponent<MudExCronEdit>());
         editor.Find("[data-testid='content-types']").InnerHtml.ShouldContain("All images");
         editor.Find("[data-testid='file-size']");
 
-        editor.Find(Input("cron-expression")).Change("*/10 * * * *");
+        editor.FindComponent<MudExCronEdit>().FindComponents<MudTextField<string>>()[^1].Find("input").Change("*/10 * * * *");
         await editor.Find("[data-type='image/*'] .mud-chip-close-button").ClickAsync(new());
         await editor.InvokeAsync(() => editor.Instance.SaveAsync());
 
@@ -95,8 +66,6 @@ public sealed class SettingsEditorsTests : ClientTestBase
     }
 
     private static string Input(string testId) => $"input[data-testid='{testId}'], [data-testid='{testId}'] input";
-
-    private static AngleSharp.Dom.IElement Expression(IRenderedComponent<CronEditor> editor) => editor.Find(Input("cron-expression"));
 
     public sealed class MarkedConfig
     {

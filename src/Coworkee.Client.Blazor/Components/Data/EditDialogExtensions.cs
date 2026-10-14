@@ -108,7 +108,7 @@ public static class EditDialogExtensions
         var parameters = new DialogParameters
         {
             { nameof(MudExObjectEditDialog<TModel>.DialogIcon), existing ? Icons.Material.Filled.Edit : Icons.Material.Filled.Add },
-            { nameof(MudExObjectEditDialog<TModel>.MetaInformation), model.ObjectEditMeta(Grid(meta, existing)).UpdateAllConditionalSettings() }, // ponytail: until MudEx 9.11.3 re-renders a dialog after reconfiguring a passed meta
+            { nameof(MudExObjectEditDialog<TModel>.MetaInformation), model.ObjectEditMeta(Grid(meta, existing)) },
         };
         if (!existing)
         {

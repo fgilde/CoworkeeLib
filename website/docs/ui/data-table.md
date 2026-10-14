@@ -271,30 +271,18 @@ await Dialogs.ShowEditAsync(L["New product"], model, saved => Api.SaveProductAsy
 | `ODataPicker` | a foreign key: searches an OData entity set by a text property |
 | `OptionalODataPicker` | an optional foreign key (`Guid?`): like `ODataPicker`, clearing it gives null |
 | `ImageDataUrlEdit` | a picture kept as data URL |
-| `ChipListEditor` | an `IReadOnlyList<string>` as chips (see below) |
 
 ### Chip lists
 
-`ChipListEditor` edits a list of free-text values as chips: Enter, a space, comma or line break, a paste (a pasted list splits into chips) or leaving the field adds them; the &times; of a chip removes it. Values already in the list are skipped.
-
-| Parameter | Meaning |
-|---|---|
-| `Value`, `ValueChanged` | the list (`IReadOnlyList<string>`) |
-| `Label`, `HelperText`, `Placeholder` | texts around the field |
-| `ReadOnly` | shows the chips without input and without &times; |
-| `Suggestions` | `Func<string, CancellationToken, Task<IEnumerable<string>>>`: gets the typed text, returns suggestions; values already in the list are not offered |
-| `Validate` | `Func<string, string?>`: the error text of an invalid value, `null` for a valid one; invalid values are not added and stay in the field with the error |
-| `Fixed` | values whose chip cannot be removed |
-
-In an `ObjectEdit` meta, `ChipListMeta.RenderAsChips` renders a property as chips over the full width of the form (it calls `RenderWith` and wraps the property in a full-width `MudItem`):
+In an `ObjectEdit` meta, `ChipListMeta.RenderAsChips` renders an `IReadOnlyList<string>` property as chips over the full width of the form, with MudEx's `MudExTagField<string>`: Enter, a space, comma or line break, a paste (a pasted list splits into chips) or leaving the field adds them; the &times; of a chip removes it. The action configures the tag field, e.g. `SearchFunc` (suggestions), `ValidateChip` (error text of an invalid value, `null` for a valid one) and `IsChipClosable` (chips that cannot be removed):
 
 ```csharp
 meta.Property(f => f.Scopes).RenderAsChips(e =>
 {
     e.Label = L["Scopes"];
-    e.Suggestions = (text, _) => Task.FromResult(known.Where(s => s.Contains(text, StringComparison.OrdinalIgnoreCase)));
-    e.Validate = s => ScopePattern().IsMatch(s) ? null : L["Letters, digits and . _ : - only"];
-    e.Fixed = ["openid"];
+    e.SearchFunc = (text, _) => Task.FromResult(known.Where(s => s.Contains(text, StringComparison.OrdinalIgnoreCase)));
+    e.ValidateChip = s => ScopePattern().IsMatch(s) ? null : L["Letters, digits and . _ : - only"];
+    e.IsChipClosable = s => s != "openid";
 });
 ```
 

@@ -139,20 +139,20 @@ public partial class Clients
         {
             e.Label = L["Redirect addresses"];
             e.HelperText = L["Full addresses like https://app.example/callback"];
-            e.Validate = AbsoluteAddress;
+            e.ValidateChip = AbsoluteAddress;
         });
         meta.Property(f => f.PostLogoutRedirectUris).RenderAsChips(e =>
         {
             e.Label = L["Addresses after sign-out"];
-            e.Validate = AbsoluteAddress;
+            e.ValidateChip = AbsoluteAddress;
         });
         meta.Property(f => f.Scopes).RenderAsChips(e =>
         {
             e.Label = L["Scopes"];
             e.HelperText = L["Pick a suggestion or type your own"];
-            e.Suggestions = SuggestScopes;
-            e.Validate = ScopeName;
-            e.Fixed = Required;
+            e.SearchFunc = SuggestScopes;
+            e.ValidateChip = ScopeName;
+            e.IsChipClosable = scope => !Required.Contains(scope);
         });
         meta.Property(f => f.ClientUri).WithAdditionalAttribute(nameof(MudTextField<string>.HelperText), L["The app launcher of the sign-in server links here"]);
         meta.Property(f => f.Description).WithAdditionalAttribute(nameof(MudTextField<string>.Lines), 2);

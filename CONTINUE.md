@@ -58,12 +58,15 @@ Spec `docs/superpowers/specs/2026-10-14-round2-design.md`.
 - OAuth apps: Duplicate action. Mail settings under Communication. Settings tabs flush with the content card, tools right-aligned.
 - MudEx: cron branch merged by the owner; new local branch `feat/tagfield-suggestions` (worktree `C:\dev\privat\github\wt\mudex-tags`, not pushed): `MudExTagField` `SearchFunc`, `ValidateChip`, `IsChipClosable`, `CommitOnBlur`, changelog 9.11.3.
 
+## MudEx 9.11.3 adopted (on main, not released)
+- `RenderAsChips` renders `MudExTagField<string>` (`CommitOnBlur`, `SearchFunc`, `ValidateChip`, `IsChipClosable`); `ChipListEditor` deleted (breaking for apps that used it directly).
+- `[Cron]` renders `MudExCronEdit`; `CronEditor`/`CronSchedule` deleted.
+- `SettingsModel` uses `AsDisabledIf`; `SettingsFormRules.WrapInColumns` and the re-wraps after `RenderWith` are gone; `EditDialogExtensions` no longer calls `UpdateAllConditionalSettings()`.
+
 ## Known follow-ups
-- After the MudEx release with `feat/tagfield-suggestions`: replace the lib `ChipListEditor` with `MudExTagField` (set `CommitOnBlur=true`).
-- After the MudEx release with `feat/coworkee-p4`: lib `[Cron]` → `MudExCronEdit`, delete `CronEditor`/`CronSchedule`; `SettingsModel` two `WithAttributesIf` → `AsDisabledIf`; drop the `WrapInColumns`/`RenderAsChips` re-wraps after `RenderWith`.
 - Own `IMailTransport` with a new provider name is only selectable via `Coworkee:Settings:Defaults:Mail.Provider` (choices are the four built-ins).
 - Translations of the 21 new languages were checked by sample, not by native speakers (km, ar least certain).
-- MudEx 9.11.2: `MudExDateRangeSlider` Day mode default step ≈ 0 (arrow keys dead; lib passes `StepLength`), no per-thumb aria-label. MudEx dialog conditions fix is local branch `fix/passed-meta-conditions-in-form` (ccc2486b); after a MudEx release remove `.UpdateAllConditionalSettings()` in `EditDialogExtensions`.
+- MudEx: `MudExDateRangeSlider` Day mode default step ≈ 0 (arrow keys dead; lib passes `StepLength`), no per-thumb aria-label.
 - Multi-instance: shared Data Protection key ring needed for pending assistant tool calls; assistant "busy" guard is per instance.
 - Lib pages live under generic `/admin/...` routes; an app page with the same route breaks Blazor routing (`AppShellTests` covers `/admin/ai`). Consider a prefix.
 - Not built: MySQL (no EF Core 10 Pomelo), many-to-many in specs, report versioning/public link/map widget, QueryBuilder OData-text import and drag reorder, deploy story (aspire publish) not verified.

@@ -49,7 +49,7 @@ public partial class Scopes
         {
             e.Label = L["Resources"];
             e.HelperText = L["Audiences of the access token, e.g. https://api.example"];
-            e.Suggestions = (text, _) => Task.FromResult(_scopes.Where(s => s.Id != editing).SelectMany(s => s.Resources).Distinct()
+            e.SearchFunc = (text, _) => Task.FromResult(_scopes.Where(s => s.Id != editing).SelectMany(s => s.Resources).Distinct()
                 .Where(r => r.Contains(text, StringComparison.OrdinalIgnoreCase)));
         });
 #pragma warning restore BL0005

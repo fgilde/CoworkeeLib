@@ -1,5 +1,4 @@
 using Bunit;
-using Coworkee.Client.Blazor.Components.Editors;
 using Coworkee.Client.Blazor.Pages.Admin;
 using Coworkee.Client.Blazor.Security;
 using Coworkee.Contracts.Identity;
@@ -7,6 +6,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
+using MudBlazor.Extensions.Components;
 using NSubstitute;
 
 namespace Coworkee.Client.Blazor.Tests;
@@ -34,19 +34,19 @@ public sealed class ClientsPagesTests : ClientTestBase
     private static ClientDto App(string[] scopes) =>
         new(AppId, "app", "App", "public", "implicit", ["https://app.test/cb"], [], [ClientGrantTypes.AuthorizationCode], scopes, false, [], []);
 
-    private static async Task Type(IRenderedComponent<ChipListEditor> list, string text)
+    private static async Task Type(IRenderedComponent<MudExTagField<string>> list, string text)
     {
         await list.Find("input").InputAsync(new ChangeEventArgs { Value = text });
         await list.Find("input").BlurAsync(new FocusEventArgs());
     }
 
-    private (Task Editing, IReadOnlyList<IRenderedComponent<ChipListEditor>> Lists) EditApp()
+    private (Task Editing, IReadOnlyList<IRenderedComponent<MudExTagField<string>>> Lists) EditApp()
     {
         var page = Render<Clients>();
         var edit = page.WaitForElement("[data-testid='edit-client-app']");
         var editing = edit.ClickAsync(new());
-        _dialogs.WaitForAssertion(() => _dialogs.FindComponents<ChipListEditor>().Count.ShouldBe(3));
-        return (editing, _dialogs.FindComponents<ChipListEditor>());
+        _dialogs.WaitForAssertion(() => _dialogs.FindComponents<MudExTagField<string>>().Count.ShouldBe(3));
+        return (editing, _dialogs.FindComponents<MudExTagField<string>>());
     }
 
     [Fact]
@@ -107,9 +107,9 @@ public sealed class ClientsPagesTests : ClientTestBase
     {
         var (editing, lists) = EditApp();
 
-        foreach (var list in _dialogs.FindAll("[data-testid='chip-list']"))
+        foreach (var list in lists)
         {
-            list.Closest(".mud-grid-item")!.ClassList.ShouldBe(["mud-grid-item", "mud-grid-item-xs-12"], true);
+            _dialogs.Find($"label[for='{list.Find("label").GetAttribute("for")}']").Closest(".mud-grid-item")!.ClassList.ShouldBe(["mud-grid-item", "mud-grid-item-xs-12"], true);
         }
 
         await _dialogs.Find("form").SubmitAsync();
@@ -120,7 +120,7 @@ public sealed class ClientsPagesTests : ClientTestBase
     public async Task Scope_suggestions_include_the_standard_and_the_defined_scopes()
     {
         var (editing, lists) = EditApp();
-        var suggestions = lists[2].Instance.Suggestions!;
+        var suggestions = lists[2].Instance.SearchFunc!;
 
         var all = (await suggestions(string.Empty, Xunit.TestContext.Current.CancellationToken)).ToList();
 
@@ -171,11 +171,11 @@ public sealed class ClientsPagesTests : ClientTestBase
             new ScopeDto(Guid.CreateVersion7(), "stock:read", null, null, ["https://stock.test"])]);
         var page = Render<Scopes>();
         var editing = page.WaitForElements("[aria-label='Edit']")[0].ClickAsync(new());
-        _dialogs.WaitForAssertion(() => _dialogs.FindComponents<ChipListEditor>().Count.ShouldBe(1));
-        var resources = _dialogs.FindComponent<ChipListEditor>();
+        _dialogs.WaitForAssertion(() => _dialogs.FindComponents<MudExTagField<string>>().Count.ShouldBe(1));
+        var resources = _dialogs.FindComponent<MudExTagField<string>>();
 
         resources.Find("[data-chip='https://orders.test']");
-        (await resources.Instance.Suggestions!(string.Empty, Xunit.TestContext.Current.CancellationToken)).ShouldBe(["https://stock.test"]);
+        (await resources.Instance.SearchFunc!(string.Empty, Xunit.TestContext.Current.CancellationToken)).ShouldBe(["https://stock.test"]);
         await Type(resources, "https://billing.test");
         await _dialogs.Find("form").SubmitAsync();
         await editing;
