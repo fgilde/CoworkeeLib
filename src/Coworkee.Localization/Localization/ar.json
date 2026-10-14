@@ -1138,5 +1138,6 @@
   "A rule without a selector is not saved yet": "لم تُحفظ بعد قاعدة بلا محدِّد.",
   "The saved recipients are kept until you change the selection.": "يبقى المستلمون المحفوظون كما هم حتى تغيّر التحديد.",
   "Not started yet. Check that the background worker is running.": "لم تبدأ بعد. تحقق من أن خدمة الخلفية تعمل.",
-  "Edit campaign": "تعديل الحملة"
+  "Edit campaign": "تعديل الحملة",
+  "Custom CSS": "CSS مخصص"
 }

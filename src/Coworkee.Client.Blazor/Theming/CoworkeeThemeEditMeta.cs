@@ -14,7 +14,7 @@ public sealed class CoworkeeThemeEditMeta(CoworkeeLocalizer l) : IObjectMetaConf
     public Task ConfigureAsync(ObjectEditMeta<CoworkeeTheme> meta)
     {
         meta.Property(t => t.Logo).RenderWith<ThemeLogoEdit, string?>(f => f.Value).WrapInMudItem(i => i.md = 12);
-        meta.Property(t => t.CustomCss).RenderWith<CssRulesEditor, string?>(f => f.Value, f => f.HelperText = l["Plain CSS for the whole app, applied after the theme"]).WrapInMudItem(i => i.md = 12);
+        meta.Property(t => t.CustomCss).WithLabel(l["Custom CSS"]).RenderWith<CssRulesEditor, string?>(f => f.Value, f => f.HelperText = l["Plain CSS for the whole app, applied after the theme"]).WrapInMudItem(i => i.md = 12);
         return Task.CompletedTask;
     }
 #pragma warning restore BL0005, MUD0012

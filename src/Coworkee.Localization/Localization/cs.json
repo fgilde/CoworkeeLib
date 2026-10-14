@@ -1138,5 +1138,6 @@
   "A rule without a selector is not saved yet": "Pravidlo bez selektoru zatím není uloženo.",
   "The saved recipients are kept until you change the selection.": "Uložení příjemci zůstanou zachováni, dokud nezměníte výběr.",
   "Not started yet. Check that the background worker is running.": "Ještě nezačala. Zkontrolujte, zda běží služba na pozadí.",
-  "Edit campaign": "Upravit kampaň"
+  "Edit campaign": "Upravit kampaň",
+  "Custom CSS": "Vlastní CSS"
 }

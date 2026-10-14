@@ -1138,5 +1138,6 @@
   "A rule without a selector is not saved yet": "Een regel zonder selector is nog niet opgeslagen.",
   "The saved recipients are kept until you change the selection.": "De opgeslagen ontvangers blijven behouden totdat u de selectie wijzigt.",
   "Not started yet. Check that the background worker is running.": "Nog niet gestart. Controleer of de achtergrondservice draait.",
-  "Edit campaign": "Campagne bewerken"
+  "Edit campaign": "Campagne bewerken",
+  "Custom CSS": "Eigen CSS"
 }

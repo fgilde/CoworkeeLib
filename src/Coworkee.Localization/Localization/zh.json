@@ -1138,5 +1138,6 @@
   "A rule without a selector is not saved yet": "没有选择器的规则尚未保存。",
   "The saved recipients are kept until you change the selection.": "在您更改选择之前，将保留已保存的收件人。",
   "Not started yet. Check that the background worker is running.": "尚未开始。请检查后台服务是否正在运行。",
-  "Edit campaign": "编辑活动"
+  "Edit campaign": "编辑活动",
+  "Custom CSS": "自定义 CSS"
 }

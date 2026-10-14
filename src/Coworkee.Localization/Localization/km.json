@@ -1138,5 +1138,6 @@
   "A rule without a selector is not saved yet": "ច្បាប់ដែលគ្មានឧបករណ៍ជ្រើសរើសមិនទាន់ត្រូវបានរក្សាទុកទេ។",
   "The saved recipients are kept until you change the selection.": "អ្នកទទួលដែលបានរក្សាទុកនឹងនៅដដែល រហូតដល់អ្នកផ្លាស់ប្តូរការជ្រើសរើស។",
   "Not started yet. Check that the background worker is running.": "មិនទាន់ចាប់ផ្តើមទេ។ សូមពិនិត្យថាសេវាកម្មផ្ទៃខាងក្រោយកំពុងដំណើរការ។",
-  "Edit campaign": "កែសម្រួលយុទ្ធនាការ"
+  "Edit campaign": "កែសម្រួលយុទ្ធនាការ",
+  "Custom CSS": "CSS ផ្ទាល់ខ្លួន"
 }

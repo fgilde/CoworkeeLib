@@ -1138,5 +1138,6 @@
   "A rule without a selector is not saved yet": "선택자가 없는 규칙은 아직 저장되지 않았습니다.",
   "The saved recipients are kept until you change the selection.": "선택을 변경할 때까지 저장된 수신자가 유지됩니다.",
   "Not started yet. Check that the background worker is running.": "아직 시작되지 않았습니다. 백그라운드 서비스가 실행 중인지 확인하세요.",
-  "Edit campaign": "캠페인 편집"
+  "Edit campaign": "캠페인 편집",
+  "Custom CSS": "사용자 지정 CSS"
 }

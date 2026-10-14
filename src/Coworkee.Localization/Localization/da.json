@@ -1138,5 +1138,6 @@
   "A rule without a selector is not saved yet": "En regel uden selektor er endnu ikke gemt.",
   "The saved recipients are kept until you change the selection.": "De gemte modtagere bevares, indtil du ændrer valget.",
   "Not started yet. Check that the background worker is running.": "Endnu ikke startet. Kontrollér, at baggrundstjenesten kører.",
-  "Edit campaign": "Rediger kampagne"
+  "Edit campaign": "Rediger kampagne",
+  "Custom CSS": "Brugerdefineret CSS"
 }

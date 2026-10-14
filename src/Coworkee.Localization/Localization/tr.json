@@ -1138,5 +1138,6 @@
   "A rule without a selector is not saved yet": "Seçicisi olmayan bir kural henüz kaydedilmedi.",
   "The saved recipients are kept until you change the selection.": "Kayıtlı alıcılar, seçimi değiştirene kadar korunur.",
   "Not started yet. Check that the background worker is running.": "Henüz başlamadı. Arka plan hizmetinin çalıştığından emin olun.",
-  "Edit campaign": "Kampanyayı düzenle"
+  "Edit campaign": "Kampanyayı düzenle",
+  "Custom CSS": "Özel CSS"
 }

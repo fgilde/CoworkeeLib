@@ -1138,5 +1138,6 @@
   "A rule without a selector is not saved yet": "Ένας κανόνας χωρίς επιλογέα δεν έχει αποθηκευτεί ακόμη.",
   "The saved recipients are kept until you change the selection.": "Οι αποθηκευμένοι παραλήπτες διατηρούνται μέχρι να αλλάξετε την επιλογή.",
   "Not started yet. Check that the background worker is running.": "Δεν έχει ξεκινήσει ακόμη. Ελέγξτε ότι η υπηρεσία παρασκηνίου εκτελείται.",
-  "Edit campaign": "Επεξεργασία καμπάνιας"
+  "Edit campaign": "Επεξεργασία καμπάνιας",
+  "Custom CSS": "Προσαρμοσμένο CSS"
 }

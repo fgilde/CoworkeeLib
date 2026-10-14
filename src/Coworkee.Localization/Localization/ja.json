@@ -1138,5 +1138,6 @@
   "A rule without a selector is not saved yet": "セレクターのないルールはまだ保存されていません。",
   "The saved recipients are kept until you change the selection.": "選択を変更するまで、保存済みの受信者がそのまま使われます。",
   "Not started yet. Check that the background worker is running.": "まだ開始されていません。バックグラウンドサービスが実行中か確認してください。",
-  "Edit campaign": "キャンペーンを編集"
+  "Edit campaign": "キャンペーンを編集",
+  "Custom CSS": "カスタム CSS"
 }

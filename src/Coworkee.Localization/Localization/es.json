@@ -1138,5 +1138,6 @@
   "A rule without a selector is not saved yet": "Una regla sin selector todavía no se ha guardado.",
   "The saved recipients are kept until you change the selection.": "Los destinatarios guardados se mantienen hasta que cambies la selección.",
   "Not started yet. Check that the background worker is running.": "Aún no ha empezado. Comprueba que el servicio en segundo plano se esté ejecutando.",
-  "Edit campaign": "Editar campaña"
+  "Edit campaign": "Editar campaña",
+  "Custom CSS": "CSS personalizado"
 }

@@ -1138,5 +1138,6 @@
   "A rule without a selector is not saved yet": "Правило без селектора ще не збережено.",
   "The saved recipients are kept until you change the selection.": "Збережені одержувачі залишаються, доки ви не зміните вибір.",
   "Not started yet. Check that the background worker is running.": "Ще не запущено. Перевірте, чи працює фонова служба.",
-  "Edit campaign": "Редагувати розсилку"
+  "Edit campaign": "Редагувати розсилку",
+  "Custom CSS": "Власний CSS"
 }

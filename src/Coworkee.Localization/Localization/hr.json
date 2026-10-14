@@ -1138,5 +1138,6 @@
   "A rule without a selector is not saved yet": "Pravilo bez selektora još nije spremljeno.",
   "The saved recipients are kept until you change the selection.": "Spremljeni primatelji ostaju dok ne promijenite odabir.",
   "Not started yet. Check that the background worker is running.": "Još nije pokrenuto. Provjerite radi li pozadinska usluga.",
-  "Edit campaign": "Uredi kampanju"
+  "Edit campaign": "Uredi kampanju",
+  "Custom CSS": "Prilagođeni CSS"
 }
