@@ -1,6 +1,6 @@
 # Coworkee.Bff
 
-Backend for frontend for Blazor WebAssembly: cookie session, token handling and API forwarding.
+Backend for frontend for Blazor WebAssembly: cookie session, token handling, API forwarding and the loading screen in the theme's colours.
 
 Part of [Coworkee](https://fgilde.github.io/CoworkeeLib/), a modular application framework for .NET 10, Blazor and Aspire. Start a new app with the CLI:
 

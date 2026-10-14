@@ -35,7 +35,7 @@ Die Inline-Antwort trägt `Content-Security-Policy: sandbox; default-src 'none';
 return new BlobContentResult(content.Stream, content.ContentType, content.FileName, download: download == true);
 ```
 
-Es streamt mit Range-Unterstützung, setzt inline die Sandbox-Policy und immer `nosniff` sowie `Cache-Control: private, no-store`.
+Es streamt mit Range-Unterstützung, setzt inline die Sandbox-Policy und immer `nosniff` sowie `Cache-Control: private, no-store` (öffentliche Dateien: siehe unten).
 
 ## Dateien in Formularen auswählen
 
@@ -54,6 +54,14 @@ meta.Property(p => p.LogoId).RenderWith<CoworkeeFilePicker, Guid?>(p => p.Value)
 `IFilesApi` ist der typisierte Client, `FileUrls.FileUrl(navigation, id)` die absolute Adresse für `MudExFileDisplay` (es lädt mit einem eigenen `HttpClient`, eine relative Adresse funktioniert dort nicht).
 
 `FilePreviewDialog.ShowAsync(dialogs, file)` zeigt eine gespeicherte Datei in einem Seitenblatt; `FilePreviewDialog.ShowAsync(dialogs, url, contentType, name)` zeigt jede Inhaltsadresse der App, zum Beispiel die Dokumente eines eigenen Moduls (eine relative Adresse wird absolut gemacht).
+
+## Öffentliche Dateien
+
+Eine Datei kann öffentlich sein: `PUT /api/v1/files/{id}/public` mit `{ "isPublic": true }` (braucht `Files.Manage` auf ihrem Ordner, auch für den Hochladenden, weil sie danach jeder lesen kann). Öffentliche Dateien werden ohne Anmeldung unter `GET /api/v1/files/public/{id}/{name}` ausgeliefert (`FileLinks.Public(id, name)`, auch über `/api` der Web-App), mit Range-Unterstützung und `Cache-Control: public, max-age=300`, sodass eine wieder private Datei innerhalb von fünf Minuten aus den Browsern verschwindet. `StoredFileDto.IsPublic` zeigt, welche Dateien öffentlich sind; die Vorschau einer öffentlichen Datei sagt es und bietet *Privat machen* an.
+
+Auf der Seite *Dateien* teilt die Leiste über dem Datei-Manager die ausgewählte Datei: *Öffentlich machen* (nach der Rückfrage; nur mit `Files.Manage` auf dem Ordner) oder *Privat machen* und *Öffentlichen Link kopieren*. Öffentliche Dateien tragen im Dateibereich einen Globus und in der Leiste einen Chip *Öffentlich*. Ordner haben keinen öffentlichen Zustand; jede Datei wird einzeln veröffentlicht. `FilePublishing.SetPublicAsync`, `PublicLink` und `CopyPublicLinkAsync` tun dasselbe in eigenen Seiten.
+
+`PublicFileChooser.ChooseAsync(...)` wählt eine Datei für Seiten, die jeder sieht: Es öffnet die Dateiauswahl, fragt nach, bevor es eine private Datei öffentlich macht, und gibt die absolute öffentliche Adresse zurück. Das Anmeldedesign nutzt es für sein Bild oder Video.
 
 ## Cloud-Dateiauswahl
 

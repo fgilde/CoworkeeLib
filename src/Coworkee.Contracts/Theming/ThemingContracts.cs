@@ -30,6 +30,9 @@ public sealed record ThemeDto(
     JsonElement? Options = null,
     bool IsPublished = true);
 
+/// <summary>What the web app's loading screen shows before the app runs: the default theme (none before setup), background and the sign-in page's media.</summary>
+public sealed record LoadingScreenDto(ThemeDto? Theme, LoadingScreenBackground Background, string? MediaUrl);
+
 /// <summary>The Keycloak login theme the API keeps in the app's design; <see cref="Configured"/> is false without a theme folder.</summary>
 public sealed record KeycloakThemeStatusDto(bool Configured, string? ThemeName, DateTimeOffset? WrittenAt, string? Error);
 

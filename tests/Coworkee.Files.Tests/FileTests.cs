@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using Coworkee.Contracts.Files;
 using Coworkee.Contracts.Identity;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -38,6 +39,39 @@ public sealed class FileTests(FilesApp app) : IAsyncLifetime
         using var download = await Admin.GetAsync($"/api/v1/files/{file.Id}/content?download=true", Ct);
         download.Content.Headers.ContentDisposition!.DispositionType.ShouldBe("attachment");
         download.Content.Headers.ContentDisposition.FileNameStar.ShouldBe("page.html");
+    }
+
+    [Fact]
+    public async Task A_public_file_is_served_anonymously_until_it_is_private_again()
+    {
+        var file = await UploadAsync(Admin, null, "welcome.mp4", "video", "video/mp4");
+        var link = "/" + FileLinks.Public(file.Id, file.Name);
+        var anonymous = app.App.GetTestClient();
+        (await anonymous.GetAsync(link, Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        var published = await (await Admin.PutAsJsonAsync($"/api/v1/files/{file.Id}/public", new FilePublicRequest(true), Ct)).Content.ReadFromJsonAsync<StoredFileDto>(Ct);
+
+        published!.IsPublic.ShouldBeTrue();
+        using var served = await anonymous.GetAsync(link, Ct);
+        served.StatusCode.ShouldBe(HttpStatusCode.OK);
+        served.Content.Headers.ContentType!.MediaType.ShouldBe("video/mp4");
+        served.Headers.CacheControl!.Public.ShouldBeTrue();
+        (await served.Content.ReadAsStringAsync(Ct)).ShouldBe("video");
+        (await Admin.PutAsJsonAsync($"/api/v1/files/{file.Id}/public", new FilePublicRequest(false), Ct)).EnsureSuccessStatusCode();
+        (await anonymous.GetAsync(link, Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Only_managers_publish_files()
+    {
+        var user = await PostAsync<UserDto>("/api/v1/identity/users", new CreateUserRequest("up@acme.test", "Passw0rd!x", null, null));
+        var role = await PostAsync<Guid>("/api/v1/identity/roles", new RoleRequest("Uploader", null));
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{role}", new NameListRequest([FilePermissions.View, FilePermissions.Upload]), Ct)).EnsureSuccessStatusCode();
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/users/{user.Id}/roles", new IdListRequest([role]), Ct)).EnsureSuccessStatusCode();
+        var uploader = app.As(user.Id, _setup.TenantId);
+        var file = await UploadAsync(uploader, null, "mine.png", "png", "image/png");
+
+        (await uploader.PutAsJsonAsync($"/api/v1/files/{file.Id}/public", new FilePublicRequest(true), Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
     [Fact]

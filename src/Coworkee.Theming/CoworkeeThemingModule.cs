@@ -50,6 +50,7 @@ public sealed class CoworkeeThemingModule : CoworkeeModule, IWebModule
             // the setup page is themed and offers the built-in themes
             options.AllowedPrefixes.Add("/api/v1/themes/current");
             options.AllowedPrefixes.Add("/api/v1/themes/built-in");
+            options.AllowedPrefixes.Add("/api/v1/themes/loading-screen");
         });
     }
 
@@ -57,6 +58,7 @@ public sealed class CoworkeeThemingModule : CoworkeeModule, IWebModule
     {
         var themes = app.MapCoworkeeApi("/api/v1/themes").WithTags("Themes");
         themes.MapGet("/current", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetCurrentTheme(), ct).ToHttpResult()).AllowAnonymous();
+        themes.MapGet("/loading-screen", (Guid? themeId, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetLoadingScreen(themeId), ct).ToHttpResult()).AllowAnonymous();
         themes.MapGet("/built-in", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetBuiltInThemes(), ct).ToHttpResult()).AllowAnonymous();
         var managed = themes.MapGroup(string.Empty).RequireAuthorization();
         managed.MapGet("/", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetThemes(), ct).ToHttpResult());

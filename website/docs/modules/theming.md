@@ -9,7 +9,7 @@ Themes are data: palettes for light and dark mode, typography, border radius, dr
 - `CoworkeeTheme` derives from `MudTheme` and adds: `ShowLogoInNav`, `ShowLogoInAppBar`, `ShowNavFilter`, `CanPinNav`, `CanChangeNavExpandMode`, `NavSingleExpand` (until the user chooses), `Dense`, `StripedTables`, `IsPublished`, `Logo`, `CustomCss`. All of them are fields in the editor. `CustomCss` is a stylesheet for the whole app (rendered after the theme), edited with the CssRulesEditor: in *Rules* mode a list of rules (a selector and a style editor each, with move and delete buttons) and *Add rule*; in *Raw* mode the whole stylesheet in a Monaco code editor (also full screen). At-rules, comments and nested CSS stay raw blocks in the rules list. The mode is remembered per browser; saving from the rules list normalises the CSS (one declaration per line), an empty stylesheet is stored as nothing. CssRulesEditor is also usable on its own (Value, ValueChanged, Label, HelperText, ReadOnly).
 - `Dense` (on by default) makes the whole UI compact: tables, lists, menus, tree views, alerts, expansion panels and checkboxes render `Dense`, inputs and selects use `Margin.Dense`, chips `Size.Small`. Forms (`MudExObjectEdit`) and the navigation menu keep their normal size. Themes saved with the former `DenseTables` option keep their value.
 - The library's components inherit `CoworkeeComponentBase`, which receives the theme's `Density` as cascading value (`Density.Dense`, `Density.Margin`, `Density.Size`). Own components can do the same: `@inherits CoworkeeComponentBase` or `[CascadingParameter] Density Density { get; set; } = Density.Default;`. A model's own `IObjectMetaConfiguration<T>` replaces the dense object edit configuration for that model.
-- `Logo` is SVG markup or an image data URL (PNG, JPEG, WebP or SVG, at most 512 KB; SVG is rejected when it contains scripts, event handlers or embedded documents). The editor shows it with `ThemeLogoEdit`: a preview, *Choose logo* (upload, or the configured cloud drives) and *Use app logo*. Raster images larger than 512 px are shrunk in the browser first. The logo appears in the app bar, the navigation, setup, the about dialog and the account pages, and is the favicon while it is set.
+- `Logo` is SVG markup or an image data URL (PNG, JPEG, WebP or SVG, at most 512 KB; SVG is rejected when it contains scripts, event handlers or embedded documents). The editor shows it with `ThemeLogoEdit`: a preview, *Choose logo* (upload, the configured cloud drives, or *Choose from files* with the app's files) and *Use app logo*. Raster images larger than 512 px are shrunk in the browser first. The logo appears in the app bar, the navigation, setup, the about dialog and the account pages, and is the favicon while it is set.
 - Without a theme logo the app's own logo shows: `options.AppLogo = "logo.svg"` in `AddCoworkeeClient` (`Coworkee:Auth:LogoUrl` for the account pages).
 - On the server `ThemeLogo.TryRead(theme.Logo, out var bytes, out var contentType)` (`Coworkee.Contracts.Theming`) turns either form into bytes and content type, for example to write the logo to a file.
 - The column `LogoSvg` of the theme table is now `Logo`: add a migration to an existing app (EF Core renames the column when you edit the generated migration to use `RenameColumn`).
@@ -30,6 +30,22 @@ public sealed class MyThemeEditMeta : IObjectMetaConfiguration<CoworkeeTheme>
 }
 ```
 - `ThemeService` in the client applies a theme at runtime (`Apply`, `Preview`, `SetMode`).
+
+## Loading screen
+
+While the WebAssembly app loads, the web host shows a loading screen in the colours and with the logo of the organisation's default theme (the installation's default before sign-in). The template's `App.razor` places it at the start of the body:
+
+```razor
+<Coworkee.Bff.CoworkeeLoadingScreen Logo="coworkee-icon.svg" />
+```
+
+- The server renders it (static, from `GET /api/v1/themes/loading-screen`, which anyone may call; cached per organisation for 30 seconds, at most 2 seconds of waiting, neutral colours when the API does not answer), so the first paint already has the right colours. The layout remembers the user's colour mode, the theme they applied and their language in the cookie `coworkee-loading` (`mode`, `theme`, `culture`): light or dark follow it, else the system preference. A signed-in visitor gets the theme they chose (`?themeId=`, checked by the API: only a built-in or published theme of their own organisation, the same answer for everyone there; anything else, and every anonymous visitor, gets the default). The texts come in the cookie's language, else the browser's (`Accept-Language`), from `/api/v1/localization/texts/{culture}` (English when the API has none).
+- The ring around the logo shows Blazor's real download progress (`--blazor-load-percentage`); while there is none (runtime from the cache, start-up) it spins. `CoworkeeLayout` and `SetupLayout` fade it out once the theme is applied; an app with its own layout calls `window.coworkeeLoadingScreen.hide()` (30 seconds after the download finished it hides itself).
+- When the start fails (Blazor shows its error UI after a download or boot error, an unhandled exception or a circuit failure; a framework script does not load; an error or rejected promise of the framework goes unhandled) the screen at once becomes a message in the same design: *The app could not start.*, a hint, *Reload* and *Details* with the error (the last console error). Blazor's own `#blazor-error-ui` stays hidden while the message shows; an app's code can call `window.coworkeeLoadingScreen.fail(detail)` itself.
+- Background: the setting *Loading screen* on the card *Sign-in page* (*Administration > Themes*): *Animated background* (default, soft moving shapes in the theme's colours), *Image or video of the sign-in page* (under a veil in the theme's colours; without media, or when it fails to load, the animation shows) or *Plain background*. It is stored with the sign-in design (`Coworkee:Auth:Design:LoadingScreen`, `Animated`, `SignInMedia`, `Plain`); Aspire sets it with `options.SignIn.LoadingScreen`.
+- With `prefers-reduced-motion` nothing moves: no shapes, no pulse, a still video frame.
+- `Logo` is shown when the theme has none.
+- Apps created before this version add the line above to `MyApp.Web/App.razor`.
 
 ## Default theme and app themes
 

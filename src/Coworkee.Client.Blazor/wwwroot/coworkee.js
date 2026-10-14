@@ -54,6 +54,13 @@ export function setFavicon(href) {
     }
 }
 
+// the server-rendered loading screen of Coworkee.Bff (absent in apps without it); the cookie lets the next one use the user's mode, theme and language
+export function hideLoadingScreen(mode, theme, culture) {
+    const values = Object.entries({ mode, theme, culture }).filter(([, value]) => value).map(([key, value]) => `${key}=${encodeURIComponent(value)}`);
+    document.cookie = `coworkee-loading=${values.join('&')}; path=/; max-age=31536000; samesite=lax`;
+    window.coworkeeLoadingScreen?.hide();
+}
+
 export function onHotkey(dotnet, key) {
     const handler = e => {
         if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === key) {

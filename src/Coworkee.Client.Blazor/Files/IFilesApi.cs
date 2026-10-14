@@ -15,6 +15,9 @@ public interface IFilesApi
 
     Task<StoredFileDto> RenameFileAsync(Guid id, string name, CancellationToken cancellationToken = default);
 
+    /// <summary>Public files are served to anyone under <see cref="FileLinks.Public"/>.</summary>
+    Task<StoredFileDto> SetPublicAsync(Guid id, bool isPublic, CancellationToken cancellationToken = default);
+
     Task MoveAsync(MoveRequest request, CancellationToken cancellationToken = default);
 
     Task DeleteAsync(FileSelectionRequest request, CancellationToken cancellationToken = default);

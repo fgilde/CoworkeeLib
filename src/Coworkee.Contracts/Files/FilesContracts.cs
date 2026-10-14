@@ -16,7 +16,16 @@ public static class FilePermissions
 
 public sealed record FolderDto(Guid Id, Guid? ParentId, string Name, DateTimeOffset CreatedAt, Guid? CreatedBy);
 
-public sealed record StoredFileDto(Guid Id, Guid? FolderId, string Name, string ContentType, long Size, DateTimeOffset CreatedAt, Guid? CreatedBy);
+/// <summary>A stored file; <see cref="IsPublic"/> files are served to anyone under <see cref="FileLinks.Public"/>.</summary>
+public sealed record StoredFileDto(Guid Id, Guid? FolderId, string Name, string ContentType, long Size, DateTimeOffset CreatedAt, Guid? CreatedBy, bool IsPublic = false);
+
+public sealed record FilePublicRequest(bool IsPublic);
+
+public static class FileLinks
+{
+    /// <summary>The anonymous address of a public file, relative to the API (or the web app that forwards /api); ends with the file name so its type shows.</summary>
+    public static string Public(Guid id, string name) => $"api/v1/files/public/{id}/{Uri.EscapeDataString(name)}";
+}
 
 /// <summary>A folder's direct children and what the current user may do in it; the root has no folder id.</summary>
 public sealed record FolderContentDto(IReadOnlyList<FolderDto> Folders, IReadOnlyList<StoredFileDto> Files, bool CanUpload, bool CanManage);

@@ -39,6 +39,7 @@ public abstract class ClientTestBase : BunitContext
         Services.AddScoped<Ai.AssistantState>();
         Api.GetOnlineUsersAsync(default).ReturnsForAnyArgs([]);
         Services.AddSingleton(Api);
+        Services.AddSingleton(Substitute.For<Files.IFilesApi>());
         Services.AddSingleton(new CoworkeeClientOptions());
         Services.AddScoped<Theming.ThemeService>();
         Services.AddScoped<Layout.LayoutPreferences>();

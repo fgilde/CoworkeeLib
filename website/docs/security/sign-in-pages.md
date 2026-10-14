@@ -42,7 +42,7 @@ The Aspire app host sets the same values with `options.SignIn` and serves a medi
 
 ## On the Themes page
 
-*Administration > Themes* starts with the card *Sign-in page*: a thumbnail per layout to pick from, the image or video address and its side. *Save* stores the values as the app configuration section `Coworkee:Auth:Design` (table `cw.ConfigurationEntries`, see [App configuration](../modules/settings.md)); *Restore defaults* drops them, so the configured values apply again.
+*Administration > Themes* starts with the card *Sign-in page*: a thumbnail per layout to pick from, the image or video address and its side, and the background of the app's [loading screen](../modules/theming.md#loading-screen). The folder button in the address field picks the image or video from the app's files; a private file is made public first (after a question), and the field gets its absolute public address, which the auth server, Keycloak and the loading screen can load without sign-in. *Save* stores the values as the app configuration section `Coworkee:Auth:Design` (table `cw.ConfigurationEntries`, see [App configuration](../modules/settings.md)); *Restore defaults* drops them, so the configured values apply again.
 
 The card shows for administrators of the system organisation who may manage settings (`Settings.Manage`), because the section applies to every organisation. It stays hidden for everyone else and while `AllowDesignChanges` is off.
 

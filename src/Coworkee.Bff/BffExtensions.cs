@@ -35,6 +35,14 @@ public static class BffExtensions
         builder.Services.Configure<BffOptions>(builder.Configuration.GetSection(BffOptions.Section));
         builder.Services.AddHttpClient(nameof(TokenRefresher));
         builder.Services.AddScoped<TokenRefresher>();
+        builder.Services.AddMemoryCache();
+        builder.Services.AddSingleton<LoadingScreenSource>();
+        builder.Services.AddHttpClient(LoadingScreenSource.Client, client =>
+            {
+                client.BaseAddress = Uri.TryCreate(options.ApiAddress.TrimEnd('/') + "/", UriKind.Absolute, out var api) ? api : null;
+                client.Timeout = LoadingScreenSource.Timeout;
+            })
+            .AddServiceDiscovery();
         builder.Services.AddServiceDiscovery();
         builder.Services.AddHttpForwarderWithServiceDiscovery();
 
