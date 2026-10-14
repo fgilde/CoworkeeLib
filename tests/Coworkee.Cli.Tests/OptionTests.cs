@@ -93,12 +93,17 @@ public sealed class OptionTests
             _ => ("Acme Shop", "Acme Shop"),
         };
 
-        var settings = NewCommand.Read(CliApp.Build().Parse(["new", "Shop", option.Flag, given]));
+        var settings = NewCommand.Read(CliApp.Build().Parse(["new", "Shop", .. Needs(option), option.Flag, given]));
 
         NewCommand.TemplateArgs(settings).ShouldContain($"--{id}");
         var args = NewCommand.TemplateArgs(settings);
         args[Array.IndexOf(args, $"--{id}") + 1].ShouldBe(expected);
     }
+
+    // the switches that make an option matter: its dependency, and that one's own
+    private static string[] Needs(CliOption option) => option.DependsOn is { } need && OptionCatalog.Find(need.Option) is { } parent
+        ? [.. Needs(parent), parent.Flag, parent.Kind == OptionKind.File ? "https://cdn.test/welcome.mp4" : need.Values.FirstOrDefault() ?? "true"]
+        : [];
 
     [Fact]
     public void A_web_address_as_sign_in_media_is_passed_as_it_is()

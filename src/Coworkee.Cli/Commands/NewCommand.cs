@@ -107,7 +107,7 @@ internal static class NewCommand
         var args = new List<string> { "dotnet", "new", "coworkee", "-n", settings.Spec.Name, "-o", settings.Output };
         foreach (var option in OptionCatalog.All.Where(o => o.TemplateSymbol))
         {
-            if (values[option.Id] is { } value && value != option.Default)
+            if (values[option.Id] is { } value && value != option.Default && OptionCatalog.IsActive(option, values))
             {
                 args.AddRange([$"--{option.Id}", Assets.TemplateValue(option.Id, value)]);
             }
@@ -173,7 +173,7 @@ internal static class NewCommand
 
     private static Option Switch(CliOption option)
     {
-        var description = option.Default is null ? option.Description : $"{option.Description} (default: {option.Default})";
+        var description = (option.Default is null ? option.Description : $"{option.Description} (default: {option.Default})") + (option.DependsOn is { } need ? $" Only used with {need}." : string.Empty);
         if (option.Kind == OptionKind.Bool)
         {
             return new Option<bool?>(option.Flag) { Description = description };
@@ -191,6 +191,11 @@ internal static class NewCommand
     private static async Task<int> RunAsync(ParseResult result, CancellationToken cancellationToken)
     {
         var settings = Read(result);
+        foreach (var warning in SpecValidator.Warnings(settings.Spec))
+        {
+            Console.WriteLine($"warn  {warning}");
+        }
+
         Progress("Installing the template");
         var installed = await Shell.RunAsync(InstallArgs(settings, CliApp.Version), cancellationToken: cancellationToken);
         if (installed != 0 && installed != AlreadyInstalled)

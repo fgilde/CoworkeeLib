@@ -14,9 +14,20 @@ internal static class SpecCommand
         new Command("validate", "Check a spec; prints the problems and exits with 1 when there are any.") { File }.Handle((result, _) =>
         {
             var file = result.GetValue(File)!;
-            var errors = SpecValidator.Validate(NewCommand.ReadSpec(file.FullName), file.DirectoryName);
+            var spec = NewCommand.ReadSpec(file.FullName);
+            var errors = SpecValidator.Validate(spec, file.DirectoryName);
             Console.WriteLine(errors.Count == 0 ? "ok" : string.Join(Environment.NewLine, errors));
+            foreach (var warning in SpecValidator.Warnings(spec))
+            {
+                Console.WriteLine($"warn  {warning}");
+            }
+
             return Task.FromResult(errors.Count == 0 ? 0 : 1);
+        }),
+        new Command("show", "Print what a spec creates: the library modules on and off, every other option with its value and your own modules. A spec lists only what differs from the defaults.") { File }.Handle((result, _) =>
+        {
+            Console.WriteLine(string.Join(Environment.NewLine, SpecSummary.Lines(NewCommand.ReadSpec(result.GetValue(File)!.FullName))));
+            return Task.FromResult(0);
         }),
     };
 

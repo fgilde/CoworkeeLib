@@ -21,7 +21,7 @@ internal static class Assets
             Copy(settings, "logo", logo, wwwroot);
         }
 
-        if (SpecOptions.IsSet(settings.Spec, "signInMedia") && values["signInMedia"] is { } media && !SpecValidator.IsWebAddress(media))
+        if (SpecOptions.IsSet(settings.Spec, "signInMedia") && OptionCatalog.IsActive(OptionCatalog.Find("signInMedia")!, values) && values["signInMedia"] is { } media && !SpecValidator.IsWebAddress(media))
         {
             Copy(settings, "signInMedia", media, Path.Combine(wwwroot, "media"));
         }
