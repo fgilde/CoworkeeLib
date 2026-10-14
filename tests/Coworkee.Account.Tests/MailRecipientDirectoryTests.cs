@@ -346,6 +346,15 @@ public sealed class MailRecipientDirectoryTests(AccountApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_recipient_list_without_a_valid_source_is_a_bad_request()
+    {
+        var admin = app.As(_setup.AdminUserId, _setup.TenantId);
+
+        (await admin.PostAsJsonAsync("/api/v1/mail/recipient-lists", new { name = "Nobody", source = (object?)null }, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await admin.PostAsJsonAsync("/api/v1/mail/recipient-lists", new { name = "Odd", source = new { kind = 99 } }, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
     public async Task An_undefined_source_kind_is_a_validation_error()
     {
         var result = await InDirectoryAsync(d => d.PreviewAsync(new RecipientSourceDto((RecipientSourceKind)99), 5, Ct));

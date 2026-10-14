@@ -59,6 +59,14 @@ public sealed class MailMentionHtmlTests
     }
 
     [Fact]
+    public void A_data_class_attribute_is_not_a_mention()
+    {
+        const string html = "<span data-class=\"mention\" data-value=\"user.first_name\">hi</span>";
+
+        MailMentionHtml.ToScriban(html, Known).ShouldBe(html);
+    }
+
+    [Fact]
     public void Other_spans_are_kept()
     {
         const string html = "<p><span style=\"color:red\">hi</span></p>";
@@ -70,6 +78,7 @@ public sealed class MailMentionHtmlTests
     [InlineData("<p>{{ user.first_name }}</p>", true)]
     [InlineData("{{ for n in notifications }}…{{ end }}", false)]
     [InlineData("{{- if user }}x{{ end }}", false)]
+    [InlineData("{{~ if user }}x{{ end }}", false)]
     [InlineData("<TABLE>", false)]
     public void Visual_mode_is_only_allowed_for_simple_bodies(string body, bool allowed) =>
         MailVisualMode.Allowed(body).ShouldBe(allowed);

@@ -7,6 +7,6 @@ public static partial class MailVisualMode
 {
     public static bool Allowed(string body) => !Logic().IsMatch(body) && !body.Contains("<table", StringComparison.OrdinalIgnoreCase);
 
-    [GeneratedRegex(@"\{\{-?\s*(if|for|while|case|capture|with|func|tablerow)\b")]
+    [GeneratedRegex(@"\{\{[-~]?\s*(if|for|while|case|capture|with|func|tablerow)\b")]
     private static partial Regex Logic();
 }

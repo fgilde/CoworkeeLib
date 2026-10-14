@@ -97,7 +97,7 @@ internal sealed class RecipientHandlers(CoworkeeDbContext db, ICurrentUser curre
         return Result.Success();
     }
 
-    private async Task<Error?> CheckAsync(Guid? id, string name, RecipientSourceDto source, CancellationToken cancellationToken)
+    private async Task<Error?> CheckAsync(Guid? id, string name, RecipientSourceDto? source, CancellationToken cancellationToken)
     {
         if (name.Length is 0 or > 256)
         {
@@ -110,6 +110,8 @@ internal sealed class RecipientHandlers(CoworkeeDbContext db, ICurrentUser curre
             return Error.Validation("Name", $"A recipient list named '{name}' already exists.");
         }
 
-        return (await directory.PreviewAsync(source, 0, cancellationToken)).Error;
+        return source is null
+            ? Error.Validation(nameof(SaveRecipientListRequest.Source), "Choose the recipients.")
+            : (await directory.PreviewAsync(source, 0, cancellationToken)).Error;
     }
 }

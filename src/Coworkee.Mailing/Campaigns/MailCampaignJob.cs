@@ -76,6 +76,7 @@ internal sealed class MailCampaignJob(
                 {
                     try
                     {
+                        // shortcut: the sender resolves template content and layout from the database per recipient, cache them once per run when campaigns reach tens of thousands
                         await sender.QueueAsync(recipient.Email, campaign.TemplateName, model(recipient), recipient.Culture, campaign.Id, cancellationToken);
                         queued++;
                     }

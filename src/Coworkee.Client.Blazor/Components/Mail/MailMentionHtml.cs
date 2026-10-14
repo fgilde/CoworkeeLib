@@ -59,7 +59,7 @@ public static partial class MailMentionHtml
         return text.Replace("<", "&lt;").Replace(">", "&gt;").Replace("{", "&#123;").Replace("}", "&#125;");
     }
 
-    [GeneratedRegex("""<span\b[^>]*\bclass="mention"[^>]*>""", RegexOptions.IgnoreCase)]
+    [GeneratedRegex("""<span\b[^>]*\sclass="mention"[^>]*>""", RegexOptions.IgnoreCase)]
     private static partial Regex MentionStart();
 
     [GeneratedRegex(@"\bdata-value=""([^""]*)""")]
