@@ -37,14 +37,14 @@ MyApp.Api
   `logout()` → `POST /bff/logout` and follow the end-session address. Permissions come from `GET /api/v1/identity/permissions/me` (`accessProvider`).
 
 ### Packages **[call]**
-Folder `packages/` in this repo, npm workspaces, TypeScript, ES modules, built with `tsc`, tests with `node --test` (Node ≥ 22.18 strips types).
+Folder `typescript/` in this repo (`packages/` is ignored by the NuGet rules of .gitignore), npm workspaces, TypeScript, ES modules, built with `tsc`, tests with `node --test` (Node ≥ 22.18 strips types).
 
 | Package | Content |
 |---|---|
 | `@coworkee/client` | `openapi.json` snapshot of the library API + types generated with `openapi-typescript` (`src/schema.ts`); `createCoworkeeClient()` (openapi-fetch, same-origin cookie + `X-CSRF` or a bearer token); `bff` helpers (user, login, logout); `ApiError` with problem details; `theme` helpers (palette → CSS variables, logo → image address); `texts` (server texts per culture with English fallback); `odata` (query string builder, service document, page fetch). Framework free, usable from any TS app. |
 | `@coworkee/airworks` | `useCoworkee(AirWorks, options)`: auth provider, permissions, brand (title/logo/favicon), theme (desktop system color, CSS variables, color mode), texts, search provider; app factories `settingsApp`, `profileApp`, `filesApp`, `dataApp`, `entityApp`, `notificationsApp`, `apiDocsApp`; MudEx web components loader for file previews (`<mudex-file-display>`). Styles in `style.css`. Peer dependency `@fgilde/airworks`. |
 
-- Snapshot source **[call]**: the OpenAPI document of a generated app with every library module and no samples (`packages/client/openapi.json`).
+- Snapshot source **[call]**: the OpenAPI document of a generated app with every library module and no samples (`typescript/client/openapi.json`).
   `npm run openapi -- <url>` refreshes it from a running API, `npm run generate` rebuilds `schema.ts`.
 - Distribution **[call]**: nothing is published. `dotnet pack` of `Coworkee.Templates` runs `npm pack` for both packages and puts the tarballs into
   the template (`src/MyApp.AirWorks/ClientApp/vendor/*.tgz`); the generated `package.json` references them with `file:`.

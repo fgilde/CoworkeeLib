@@ -1,0 +1,33 @@
+{
+  "name": "@coworkee/client",
+  "version": "0.1.0",
+  "description": "Typed client for the API of Coworkee apps: OpenAPI types, BFF session, theme, texts and OData helpers",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./openapi.json": "./openapi.json"
+  },
+  "files": [
+    "dist",
+    "openapi.json"
+  ],
+  "scripts": {
+    "openapi": "node scripts/openapi.mjs",
+    "generate": "openapi-typescript openapi.json -o src/schema.ts",
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test \"test/**/*.test.ts\""
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.14.1"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.8.0",
+    "typescript": "^5.9.3"
+  }
+}

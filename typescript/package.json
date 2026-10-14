@@ -1,0 +1,16 @@
+{
+  "name": "coworkee-packages",
+  "private": true,
+  "workspaces": [
+    "client",
+    "airworks"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm test --workspaces",
+    "pack:template": "node scripts/pack-template.mjs"
+  },
+  "engines": {
+    "node": ">=22.18"
+  }
+}
