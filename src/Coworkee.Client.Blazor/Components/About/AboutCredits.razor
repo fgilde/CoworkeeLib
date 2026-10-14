@@ -5,10 +5,9 @@
         transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease; }
     .cw-about-credit:hover, .cw-about-credit:focus-visible { transform: translateY(-2px); border-color: var(--mud-palette-primary); outline: none;
         box-shadow: 0 8px 22px color-mix(in srgb, var(--mud-palette-primary) 22%, transparent); }
-    .cw-about-credit-icon { width: 40px; height: 40px; flex: none; display: grid; place-items: center; }
-    .cw-about-credit-icon img { width: 40px; height: 40px; object-fit: contain; }
+    .cw-about-credit-icon { width: 40px; height: 40px; flex: none; display: grid; place-items: center; box-sizing: border-box; }
+    .cw-about-credit-icon img { width: 100%; height: 100%; object-fit: contain; }
     .cw-about-credit-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-    .cw-about-credit-url { font-size: .75rem; color: var(--mud-palette-text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .cw-about-credit-version { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .75rem; padding: 2px 8px; border-radius: 999px;
         background: var(--mud-palette-action-default-hover); color: var(--mud-palette-text-secondary); }
     .cw-about-credit .cw-about-credit-go { color: var(--mud-palette-text-secondary); transition: transform 160ms ease, color 160ms ease; }
@@ -23,7 +22,7 @@
         @foreach (var credit in Options.About.Credits)
         {
             <a class="cw-about-credit" href="@credit.Url" target="_blank" rel="noopener" data-credit="@credit.Title">
-                <span class="cw-about-credit-icon">
+                <span class="cw-about-credit-icon" style="@IconStyle(credit)">
                     @if (IsImage(credit.Icon))
                     {
                         <img src="@credit.Icon" alt="" loading="lazy" />
@@ -35,7 +34,6 @@
                 </span>
                 <span class="cw-about-credit-text">
                     <MudText Typo="Typo.subtitle1">@credit.Title</MudText>
-                    <span class="cw-about-credit-url">@Host(credit.Url)</span>
                 </span>
                 @if (credit.Version is { } version)
                 {

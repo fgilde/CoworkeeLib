@@ -12,4 +12,14 @@
     <ProjectReference Include="..\Coworkee.SourceGenerators\Coworkee.SourceGenerators.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
     <None Include="..\Coworkee.SourceGenerators\bin\$(Configuration)\netstandard2.0\Coworkee.SourceGenerators.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
+  <!-- Nextended's assemblies state no version: the About dialog shows the package version resolved here -->
+  <Target Name="RecordUnversionedPackages" BeforeTargets="GetAssemblyAttributes" DependsOnTargets="ResolveAssemblyReferences">
+    <ItemGroup>
+      <_UnversionedPackage Include="@(ReferencePath->WithMetadataValue('NuGetPackageId','Nextended.Core'))" />
+      <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute" Condition="'@(_UnversionedPackage)' != ''">
+        <_Parameter1>PackageVersion:%(_UnversionedPackage.Filename)</_Parameter1>
+        <_Parameter2>%(_UnversionedPackage.NuGetPackageVersion)</_Parameter2>
+      </AssemblyAttribute>
+    </ItemGroup>
+  </Target>
 </Project>
