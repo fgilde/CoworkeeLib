@@ -1134,5 +1134,11 @@
   "Scheduled": "Προγραμματισμένη",
   "Cancelled": "Ακυρώθηκε",
   "One campaign only": "Μόνο μία καμπάνια",
-  "API documentation": "Τεκμηρίωση API"
+  "API documentation": "Τεκμηρίωση API",
+  "Online": "Συνδεδεμένος",
+  "Offline": "Αποσυνδεδεμένος",
+  "The assistant is not set up yet.": "Ο βοηθός δεν έχει ρυθμιστεί ακόμη.",
+  "Recipient lists": "Λίστες παραληπτών",
+  "Light palette": "Φωτεινή παλέτα",
+  "Dark palette": "Σκοτεινή παλέτα"
 }

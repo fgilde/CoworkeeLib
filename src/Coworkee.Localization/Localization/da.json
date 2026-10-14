@@ -1134,5 +1134,11 @@
   "Scheduled": "Planlagt",
   "Cancelled": "Annulleret",
   "One campaign only": "Kun én kampagne",
-  "API documentation": "API-dokumentation"
+  "API documentation": "API-dokumentation",
+  "Online": "Online",
+  "Offline": "Offline",
+  "The assistant is not set up yet.": "Assistenten er ikke sat op endnu.",
+  "Recipient lists": "Modtagerlister",
+  "Light palette": "Lys palet",
+  "Dark palette": "Mørk palet"
 }

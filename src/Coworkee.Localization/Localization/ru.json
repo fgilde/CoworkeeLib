@@ -1134,5 +1134,11 @@
   "Scheduled": "Запланирована",
   "Cancelled": "Отменена",
   "One campaign only": "Только одна рассылка",
-  "API documentation": "Документация API"
+  "API documentation": "Документация API",
+  "Online": "В сети",
+  "Offline": "Не в сети",
+  "The assistant is not set up yet.": "Ассистент ещё не настроен.",
+  "Recipient lists": "Списки получателей",
+  "Light palette": "Светлая палитра",
+  "Dark palette": "Тёмная палитра"
 }

@@ -1134,5 +1134,11 @@
   "Scheduled": "Programada",
   "Cancelled": "Cancelada",
   "One campaign only": "Solo una campaña",
-  "API documentation": "Documentación de la API"
+  "API documentation": "Documentación de la API",
+  "Online": "En línea",
+  "Offline": "Desconectado",
+  "The assistant is not set up yet.": "El asistente aún no está configurado.",
+  "Recipient lists": "Listas de destinatarios",
+  "Light palette": "Paleta clara",
+  "Dark palette": "Paleta oscura"
 }

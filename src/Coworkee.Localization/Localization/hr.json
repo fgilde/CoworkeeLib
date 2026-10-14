@@ -1134,5 +1134,11 @@
   "Scheduled": "Zakazano",
   "Cancelled": "Otkazano",
   "One campaign only": "Samo jedna kampanja",
-  "API documentation": "API dokumentacija"
+  "API documentation": "API dokumentacija",
+  "Online": "Na mreži",
+  "Offline": "Izvan mreže",
+  "The assistant is not set up yet.": "Asistent još nije postavljen.",
+  "Recipient lists": "Popisi primatelja",
+  "Light palette": "Svijetla paleta",
+  "Dark palette": "Tamna paleta"
 }

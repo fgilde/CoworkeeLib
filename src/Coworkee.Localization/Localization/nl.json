@@ -1134,5 +1134,11 @@
   "Scheduled": "Gepland",
   "Cancelled": "Geannuleerd",
   "One campaign only": "Slechts één campagne",
-  "API documentation": "API-documentatie"
+  "API documentation": "API-documentatie",
+  "Online": "Online",
+  "Offline": "Offline",
+  "The assistant is not set up yet.": "De assistent is nog niet ingesteld.",
+  "Recipient lists": "Ontvangerslijsten",
+  "Light palette": "Licht palet",
+  "Dark palette": "Donker palet"
 }

@@ -1134,5 +1134,11 @@
   "Scheduled": "Schemalagd",
   "Cancelled": "Avbruten",
   "One campaign only": "Endast en kampanj",
-  "API documentation": "API-dokumentation"
+  "API documentation": "API-dokumentation",
+  "Online": "Online",
+  "Offline": "Offline",
+  "The assistant is not set up yet.": "Assistenten är inte konfigurerad ännu.",
+  "Recipient lists": "Mottagarlistor",
+  "Light palette": "Ljus palett",
+  "Dark palette": "Mörk palett"
 }

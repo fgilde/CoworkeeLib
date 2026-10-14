@@ -1134,5 +1134,11 @@
   "Scheduled": "مجدولة",
   "Cancelled": "ملغاة",
   "One campaign only": "حملة واحدة فقط",
-  "API documentation": "وثائق API"
+  "API documentation": "وثائق API",
+  "Online": "متصل",
+  "Offline": "غير متصل",
+  "The assistant is not set up yet.": "لم يتم إعداد المساعد بعد.",
+  "Recipient lists": "قوائم المستلمين",
+  "Light palette": "لوحة الألوان الفاتحة",
+  "Dark palette": "لوحة الألوان الداكنة"
 }

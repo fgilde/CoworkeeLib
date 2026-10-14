@@ -1134,5 +1134,11 @@
   "Scheduled": "Zamanlandı",
   "Cancelled": "İptal edildi",
   "One campaign only": "Yalnızca bir kampanya",
-  "API documentation": "API belgeleri"
+  "API documentation": "API belgeleri",
+  "Online": "Çevrimiçi",
+  "Offline": "Çevrimdışı",
+  "The assistant is not set up yet.": "Asistan henüz ayarlanmadı.",
+  "Recipient lists": "Alıcı listeleri",
+  "Light palette": "Açık palet",
+  "Dark palette": "Koyu palet"
 }

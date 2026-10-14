@@ -1134,5 +1134,11 @@
   "Scheduled": "Naplánováno",
   "Cancelled": "Zrušeno",
   "One campaign only": "Pouze jedna kampaň",
-  "API documentation": "Dokumentace API"
+  "API documentation": "Dokumentace API",
+  "Online": "Online",
+  "Offline": "Offline",
+  "The assistant is not set up yet.": "Asistent zatím není nastaven.",
+  "Recipient lists": "Seznamy příjemců",
+  "Light palette": "Světlá paleta",
+  "Dark palette": "Tmavá paleta"
 }

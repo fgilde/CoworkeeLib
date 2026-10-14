@@ -1134,5 +1134,11 @@
   "Scheduled": "Terjadwal",
   "Cancelled": "Dibatalkan",
   "One campaign only": "Hanya satu kampanye",
-  "API documentation": "Dokumentasi API"
+  "API documentation": "Dokumentasi API",
+  "Online": "Daring",
+  "Offline": "Luring",
+  "The assistant is not set up yet.": "Asisten belum disiapkan.",
+  "Recipient lists": "Daftar penerima",
+  "Light palette": "Palet terang",
+  "Dark palette": "Palet gelap"
 }

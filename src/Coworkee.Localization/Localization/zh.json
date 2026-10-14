@@ -1134,5 +1134,11 @@
   "Scheduled": "已安排",
   "Cancelled": "已取消",
   "One campaign only": "仅一个活动",
-  "API documentation": "API 文档"
+  "API documentation": "API 文档",
+  "Online": "在线",
+  "Offline": "离线",
+  "The assistant is not set up yet.": "助手尚未设置。",
+  "Recipient lists": "收件人列表",
+  "Light palette": "浅色调色板",
+  "Dark palette": "深色调色板"
 }

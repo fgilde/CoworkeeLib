@@ -1134,5 +1134,11 @@
   "Scheduled": "បានកំណត់ពេល",
   "Cancelled": "បានបោះបង់",
   "One campaign only": "យុទ្ធនាការតែមួយ",
-  "API documentation": "ឯកសារ API"
+  "API documentation": "ឯកសារ API",
+  "Online": "លើបណ្ដាញ",
+  "Offline": "ក្រៅបណ្ដាញ",
+  "The assistant is not set up yet.": "ជំនួយការមិនទាន់បានរៀបចំនៅឡើយទេ។",
+  "Recipient lists": "បញ្ជីអ្នកទទួល",
+  "Light palette": "ក្ដារលាយពណ៌ភ្លឺ",
+  "Dark palette": "ក្ដារលាយពណ៌ងងឹត"
 }

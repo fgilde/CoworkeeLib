@@ -1134,5 +1134,11 @@
   "Scheduled": "예약됨",
   "Cancelled": "취소됨",
   "One campaign only": "캠페인 하나만",
-  "API documentation": "API 문서"
+  "API documentation": "API 문서",
+  "Online": "온라인",
+  "Offline": "오프라인",
+  "The assistant is not set up yet.": "어시스턴트가 아직 설정되지 않았습니다.",
+  "Recipient lists": "수신자 목록",
+  "Light palette": "밝은 팔레트",
+  "Dark palette": "어두운 팔레트"
 }

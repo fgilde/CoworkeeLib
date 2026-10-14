@@ -1134,5 +1134,11 @@
   "Scheduled": "予約済み",
   "Cancelled": "キャンセル済み",
   "One campaign only": "1 つのキャンペーンのみ",
-  "API documentation": "API ドキュメント"
+  "API documentation": "API ドキュメント",
+  "Online": "オンライン",
+  "Offline": "オフライン",
+  "The assistant is not set up yet.": "アシスタントはまだ設定されていません。",
+  "Recipient lists": "受信者リスト",
+  "Light palette": "ライトパレット",
+  "Dark palette": "ダークパレット"
 }
