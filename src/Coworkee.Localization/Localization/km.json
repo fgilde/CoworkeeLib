@@ -1090,5 +1090,6 @@
   "Type { to insert a placeholder": "វាយ { ដើម្បីបញ្ចូលកន្លែងទុកជាមុន",
   "Insert placeholder": "បញ្ចូលកន្លែងទុកជាមុន",
   "default": "លំនាំដើម",
-  "Receive newsletters": "ទទួលព្រឹត្តិបត្រព័ត៌មាន"
+  "Receive newsletters": "ទទួលព្រឹត្តិបត្រព័ត៌មាន",
+  "You will no longer receive newsletters.": "អ្នកនឹងមិនទទួលបានព្រឹត្តិបត្រព័ត៌មានទៀតទេ។"
 }

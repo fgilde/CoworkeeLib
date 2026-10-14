@@ -1090,5 +1090,6 @@
   "Type { to insert a placeholder": "Введите {, чтобы вставить плейсхолдер",
   "Insert placeholder": "Вставить плейсхолдер",
   "default": "по умолчанию",
-  "Receive newsletters": "Получать рассылки"
+  "Receive newsletters": "Получать рассылки",
+  "You will no longer receive newsletters.": "Вы больше не будете получать рассылку."
 }

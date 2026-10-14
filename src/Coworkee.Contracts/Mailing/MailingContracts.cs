@@ -52,4 +52,4 @@ public sealed record MailConnectionTestDto(bool Success, string? Error);
 public sealed record RenderedMailDto(string Subject, string HtmlBody);
 
 public sealed record OutgoingMailDto(
-    Guid Id, string To, string Subject, string TemplateName, OutgoingMailStatus Status, int Attempts, string? LastError, DateTimeOffset QueuedAt, DateTimeOffset? SentAt);
+    Guid Id, string To, string Subject, string TemplateName, OutgoingMailStatus Status, int Attempts, string? LastError, DateTimeOffset QueuedAt, DateTimeOffset? SentAt, Guid? CampaignId = null);

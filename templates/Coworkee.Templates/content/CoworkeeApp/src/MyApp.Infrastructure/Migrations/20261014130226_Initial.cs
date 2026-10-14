@@ -327,6 +327,46 @@ namespace MyApp.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "MailCampaigns",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    TemplateName = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    RecipientSource = table.Column<string>(type: "text", nullable: false),
+                    Status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    ScheduledFor = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    Total = table.Column<int>(type: "integer", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    StartedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    FinishedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    Error = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MailCampaigns", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "MailRecipientLists",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    Source = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MailRecipientLists", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "MailTemplateOverrides",
                 schema: "cw",
                 columns: table => new
@@ -466,6 +506,7 @@ namespace MyApp.Infrastructure.Migrations
                     Status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     Attempts = table.Column<int>(type: "integer", nullable: false),
                     LastError = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    CampaignId = table.Column<Guid>(type: "uuid", nullable: true),
                     QueuedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     SentAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
                 },
@@ -1231,6 +1272,20 @@ namespace MyApp.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_MailCampaigns_TenantId_CreatedAt",
+                schema: "cw",
+                table: "MailCampaigns",
+                columns: new[] { "TenantId", "CreatedAt" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MailRecipientLists_TenantId_Name",
+                schema: "cw",
+                table: "MailRecipientLists",
+                columns: new[] { "TenantId", "Name" },
+                unique: true)
+                .Annotation("Npgsql:NullsDistinct", false);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_MailTemplateOverrides_Name_TenantId_Culture",
                 schema: "cw",
                 table: "MailTemplateOverrides",
@@ -1301,6 +1356,12 @@ namespace MyApp.Infrastructure.Migrations
                 schema: "cw",
                 table: "OutboxMessages",
                 columns: new[] { "ProcessedAt", "NextAttemptAt", "OccurredAt" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OutgoingMails_CampaignId",
+                schema: "cw",
+                table: "OutgoingMails",
+                column: "CampaignId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OutgoingMails_TenantId_QueuedAt",
@@ -1515,6 +1576,14 @@ namespace MyApp.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Languages",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "MailCampaigns",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "MailRecipientLists",
                 schema: "cw");
 
             migrationBuilder.DropTable(
@@ -1905,6 +1974,46 @@ namespace MyApp.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "MailCampaigns",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    TemplateName = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    RecipientSource = table.Column<string>(type: "text", nullable: false),
+                    Status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    ScheduledFor = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    Total = table.Column<int>(type: "integer", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    StartedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    FinishedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    Error = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MailCampaigns", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "MailRecipientLists",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    Source = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MailRecipientLists", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "MailTemplateOverrides",
                 schema: "cw",
                 columns: table => new
@@ -2044,6 +2153,7 @@ namespace MyApp.Infrastructure.Migrations
                     Status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     Attempts = table.Column<int>(type: "integer", nullable: false),
                     LastError = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    CampaignId = table.Column<Guid>(type: "uuid", nullable: true),
                     QueuedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     SentAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
                 },
@@ -2713,6 +2823,20 @@ namespace MyApp.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_MailCampaigns_TenantId_CreatedAt",
+                schema: "cw",
+                table: "MailCampaigns",
+                columns: new[] { "TenantId", "CreatedAt" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MailRecipientLists_TenantId_Name",
+                schema: "cw",
+                table: "MailRecipientLists",
+                columns: new[] { "TenantId", "Name" },
+                unique: true)
+                .Annotation("Npgsql:NullsDistinct", false);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_MailTemplateOverrides_Name_TenantId_Culture",
                 schema: "cw",
                 table: "MailTemplateOverrides",
@@ -2783,6 +2907,12 @@ namespace MyApp.Infrastructure.Migrations
                 schema: "cw",
                 table: "OutboxMessages",
                 columns: new[] { "ProcessedAt", "NextAttemptAt", "OccurredAt" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OutgoingMails_CampaignId",
+                schema: "cw",
+                table: "OutgoingMails",
+                column: "CampaignId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OutgoingMails_TenantId_QueuedAt",
@@ -2983,6 +3113,14 @@ namespace MyApp.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Languages",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "MailCampaigns",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "MailRecipientLists",
                 schema: "cw");
 
             migrationBuilder.DropTable(

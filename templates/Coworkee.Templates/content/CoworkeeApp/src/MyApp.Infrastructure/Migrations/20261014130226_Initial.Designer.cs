@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20261014113017_Initial")]
+    [Migration("20261014130226_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -1088,6 +1088,63 @@ namespace MyApp.Infrastructure.Migrations
                     b.ToTable("CustomMailTemplates", "cw");
                 });
 
+            modelBuilder.Entity("Coworkee.Mailing.MailCampaign", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset?>("FinishedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("RecipientSource")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ScheduledFor")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("TemplateName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Total")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "CreatedAt");
+
+                    b.ToTable("MailCampaigns", "cw");
+                });
+
             modelBuilder.Entity("Coworkee.Mailing.MailTemplateOverride", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1150,6 +1207,9 @@ namespace MyApp.Infrastructure.Migrations
                     b.Property<int>("Attempts")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("CampaignId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("HtmlBody")
                         .IsRequired()
                         .HasColumnType("text");
@@ -1189,9 +1249,42 @@ namespace MyApp.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CampaignId");
+
                     b.HasIndex("TenantId", "QueuedAt");
 
                     b.ToTable("OutgoingMails", "cw");
+                });
+
+            modelBuilder.Entity("Coworkee.Mailing.RecipientList", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Name")
+                        .IsUnique();
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("TenantId", "Name"), false);
+
+                    b.ToTable("MailRecipientLists", "cw");
                 });
 
             modelBuilder.Entity("Coworkee.Notifications.Notification", b =>
@@ -2252,7 +2345,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20261014113017_Initial")]
+    [Migration("20261014130226_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -3252,6 +3345,63 @@ namespace MyApp.Infrastructure.Migrations
                     b.ToTable("CustomMailTemplates", "cw");
                 });
 
+            modelBuilder.Entity("Coworkee.Mailing.MailCampaign", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset?>("FinishedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("RecipientSource")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ScheduledFor")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("TemplateName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Total")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "CreatedAt");
+
+                    b.ToTable("MailCampaigns", "cw");
+                });
+
             modelBuilder.Entity("Coworkee.Mailing.MailTemplateOverride", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3314,6 +3464,9 @@ namespace MyApp.Infrastructure.Migrations
                     b.Property<int>("Attempts")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("CampaignId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("HtmlBody")
                         .IsRequired()
                         .HasColumnType("text");
@@ -3353,9 +3506,42 @@ namespace MyApp.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CampaignId");
+
                     b.HasIndex("TenantId", "QueuedAt");
 
                     b.ToTable("OutgoingMails", "cw");
+                });
+
+            modelBuilder.Entity("Coworkee.Mailing.RecipientList", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Name")
+                        .IsUnique();
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("TenantId", "Name"), false);
+
+                    b.ToTable("MailRecipientLists", "cw");
                 });
 
             modelBuilder.Entity("Coworkee.Notifications.Notification", b =>

@@ -1090,5 +1090,6 @@
   "Type { to insert a placeholder": "Tapez { pour insérer un espace réservé",
   "Insert placeholder": "Insérer un espace réservé",
   "default": "par défaut",
-  "Receive newsletters": "Recevoir les newsletters"
+  "Receive newsletters": "Recevoir les newsletters",
+  "You will no longer receive newsletters.": "Vous ne recevrez plus de newsletters."
 }

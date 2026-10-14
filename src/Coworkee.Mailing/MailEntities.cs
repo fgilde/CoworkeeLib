@@ -31,6 +31,7 @@ public sealed class CustomMailTemplate : AuditedEntity
     public string? Description { get; set; }
 }
 
+[NotAudited]
 public sealed class MailCampaign : AggregateRoot
 {
     public Guid? TenantId { get; set; }
@@ -56,7 +57,16 @@ public sealed class MailCampaign : AggregateRoot
     public DateTimeOffset? FinishedAt { get; set; }
 
     public string? Error { get; set; }
+
+    public void Schedule(DateTimeOffset? at)
+    {
+        Status = MailCampaignStatus.Scheduled;
+        ScheduledFor = at;
+        Raise(new MailCampaignScheduled(Id, at));
+    }
 }
+
+public sealed record MailCampaignScheduled(Guid CampaignId, DateTimeOffset? At) : IDomainEvent;
 
 public sealed class RecipientList : Entity
 {

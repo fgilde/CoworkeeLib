@@ -38,10 +38,16 @@ internal sealed class MailTemplateRenderer(CoworkeeDbContext db, ICurrentUser cu
 
     public async Task<RenderedMail> RenderContentAsync(MailTemplateContent content, object model, string? culture, CancellationToken cancellationToken)
     {
-        var subject = (await RenderAsync(content.Subject, ToScript(model, escape: false))).Trim();
+        var plain = ToScript(model, escape: false);
+        var subject = (await RenderAsync(content.Subject, plain)).Trim();
         var body = await RenderAsync(content.Body, ToScript(model, escape: true));
         var layout = await ResolveAsync(CoreMailTemplates.Layout, culture, cancellationToken);
         var layoutModel = new ScriptObject { ["subject"] = WebUtility.HtmlEncode(subject), ["content"] = body };
+        if (plain.TryGetValue("unsubscribe_url", out var unsubscribe) && unsubscribe is string { Length: > 0 } link)
+        {
+            layoutModel["unsubscribe_url"] = WebUtility.HtmlEncode(link);
+        }
+
         return new RenderedMail(subject, await RenderAsync(layout.Body, layoutModel));
     }
 

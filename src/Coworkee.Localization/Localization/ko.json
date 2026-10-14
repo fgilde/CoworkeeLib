@@ -1090,5 +1090,6 @@
   "Type { to insert a placeholder": "{를 입력하여 자리 표시자 삽입",
   "Insert placeholder": "자리 표시자 삽입",
   "default": "기본",
-  "Receive newsletters": "뉴스레터 수신"
+  "Receive newsletters": "뉴스레터 수신",
+  "You will no longer receive newsletters.": "더 이상 뉴스레터를 받지 않습니다."
 }

@@ -1090,5 +1090,6 @@
   "Type { to insert a placeholder": "Въведете {, за да вмъкнете заместител",
   "Insert placeholder": "Вмъкни заместител",
   "default": "по подразбиране",
-  "Receive newsletters": "Получаване на бюлетини"
+  "Receive newsletters": "Получаване на бюлетини",
+  "You will no longer receive newsletters.": "Вече няма да получавате бюлетини."
 }

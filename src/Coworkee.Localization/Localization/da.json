@@ -1090,5 +1090,6 @@
   "Type { to insert a placeholder": "Skriv { for at indsætte en pladsholder",
   "Insert placeholder": "Indsæt pladsholder",
   "default": "standard",
-  "Receive newsletters": "Modtag nyhedsbreve"
+  "Receive newsletters": "Modtag nyhedsbreve",
+  "You will no longer receive newsletters.": "Du modtager ikke længere nyhedsbreve."
 }

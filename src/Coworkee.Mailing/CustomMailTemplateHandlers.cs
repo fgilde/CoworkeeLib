@@ -88,6 +88,12 @@ internal sealed class CustomMailTemplateHandlers(
             return CustomMailTemplates.SystemOnly;
         }
 
+        if (await db.Set<MailCampaign>().AnyAsync(c => c.TemplateName == command.Name
+                && (c.Status == MailCampaignStatus.Draft || c.Status == MailCampaignStatus.Scheduled || c.Status == MailCampaignStatus.Sending), cancellationToken))
+        {
+            return Error.Validation("Name", "The template is used by a campaign that is not finished yet.");
+        }
+
         var tenantId = template.TenantId;
         db.RemoveRange(await db.Set<MailTemplateOverride>().Where(o => o.Name == command.Name && o.TenantId == tenantId).ToListAsync(cancellationToken));
         db.Remove(template);

@@ -29,7 +29,7 @@ public sealed record PreviewMailTemplate(string Name, string Culture, SaveMailTe
 public sealed record SendTestMail(string Name, string Culture) : ICommand<Result>;
 
 [RequiresPermission(MailPermissions.Log.View)]
-public sealed record GetOutgoingMails(PageRequest Page, OutgoingMailStatus? Status) : IQuery<Result<PagedResult<OutgoingMailDto>>>;
+public sealed record GetOutgoingMails(PageRequest Page, OutgoingMailStatus? Status, Guid? CampaignId = null) : IQuery<Result<PagedResult<OutgoingMailDto>>>;
 
 internal static class MailErrors
 {
@@ -236,6 +236,11 @@ internal sealed class OutgoingMailHandler(CoworkeeDbContext db, ICurrentUser cur
             mails = mails.Where(m => m.Status == status);
         }
 
+        if (query.CampaignId is { } campaignId)
+        {
+            mails = mails.Where(m => m.CampaignId == campaignId);
+        }
+
         if (!string.IsNullOrWhiteSpace(query.Page.Search))
         {
             var search = query.Page.Search.Trim();
@@ -246,7 +251,7 @@ internal sealed class OutgoingMailHandler(CoworkeeDbContext db, ICurrentUser cur
         var items = await mails.OrderByDescending(m => m.QueuedAt)
             .Skip((query.Page.Page - 1) * query.Page.PageSize)
             .Take(query.Page.PageSize)
-            .Select(m => new OutgoingMailDto(m.Id, m.To, m.Subject, m.TemplateName, m.Status, m.Attempts, m.LastError, m.QueuedAt, m.SentAt))
+            .Select(m => new OutgoingMailDto(m.Id, m.To, m.Subject, m.TemplateName, m.Status, m.Attempts, m.LastError, m.QueuedAt, m.SentAt, m.CampaignId))
             .ToListAsync(cancellationToken);
         return new PagedResult<OutgoingMailDto>(items, total, query.Page.Page, query.Page.PageSize);
     }

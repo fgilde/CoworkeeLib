@@ -1090,5 +1090,6 @@
   "Type { to insert a placeholder": "Skriv { för att infoga en platshållare",
   "Insert placeholder": "Infoga platshållare",
   "default": "standard",
-  "Receive newsletters": "Ta emot nyhetsbrev"
+  "Receive newsletters": "Ta emot nyhetsbrev",
+  "You will no longer receive newsletters.": "Du kommer inte längre att få nyhetsbrev."
 }

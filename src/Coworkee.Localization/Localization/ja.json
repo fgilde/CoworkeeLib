@@ -1090,5 +1090,6 @@
   "Type { to insert a placeholder": "{ を入力するとプレースホルダーを挿入できます",
   "Insert placeholder": "プレースホルダーを挿入",
   "default": "デフォルト",
-  "Receive newsletters": "ニュースレターを受け取る"
+  "Receive newsletters": "ニュースレターを受け取る",
+  "You will no longer receive newsletters.": "ニュースレターは今後届きません。"
 }

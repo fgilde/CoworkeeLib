@@ -37,6 +37,23 @@ internal sealed class MailQueuedHandler(IBackgroundJobs jobs) : IDomainEventHand
     }
 }
 
+internal sealed class MailCampaignScheduledHandler(IBackgroundJobs jobs, TimeProvider clock) : IDomainEventHandler<MailCampaignScheduled>
+{
+    public Task HandleAsync(MailCampaignScheduled domainEvent, CancellationToken cancellationToken)
+    {
+        if (domainEvent.At is { } at && at - clock.GetUtcNow() is { } delay && delay > TimeSpan.Zero)
+        {
+            jobs.Schedule<MailCampaignJob, Guid>(domainEvent.CampaignId, delay);
+        }
+        else
+        {
+            jobs.Enqueue<MailCampaignJob, Guid>(domainEvent.CampaignId);
+        }
+
+        return Task.CompletedTask;
+    }
+}
+
 public sealed record MailEnvelope(string From, string To, string Subject, string HtmlBody);
 
 public sealed record MailConnection(string Provider, IReadOnlyDictionary<string, string?> Values)

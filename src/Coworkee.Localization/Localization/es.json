@@ -1090,5 +1090,6 @@
   "Type { to insert a placeholder": "Escribe { para insertar un marcador",
   "Insert placeholder": "Insertar marcador",
   "default": "predeterminado",
-  "Receive newsletters": "Recibir boletines"
+  "Receive newsletters": "Recibir boletines",
+  "You will no longer receive newsletters.": "Ya no recibirá boletines."
 }

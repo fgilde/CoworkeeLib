@@ -1090,5 +1090,6 @@
   "Type { to insert a placeholder": "输入 { 以插入占位符",
   "Insert placeholder": "插入占位符",
   "default": "默认",
-  "Receive newsletters": "接收新闻通讯"
+  "Receive newsletters": "接收新闻通讯",
+  "You will no longer receive newsletters.": "您将不再收到新闻通讯。"
 }
