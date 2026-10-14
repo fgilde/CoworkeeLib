@@ -77,6 +77,7 @@ plugins:
             Application services: Anwendungsdienste
             OData and facets: OData und Facetten
             Response filters: Response-Filter
+            AirWorks client: AirWorks-Client
             Security: Sicherheit
             Permissions: Berechtigungen
             Authentication and Keycloak: Anmeldung und Keycloak
@@ -159,6 +160,7 @@ nav:
       - OData and facets: web/odata.md
       - Response filters: web/response-filters.md
       - SDKs: web/sdk.md
+      - AirWorks client: web/airworks.md
   - Security:
       - Permissions: security/permissions.md
       - Authentication and Keycloak: security/authentication.md

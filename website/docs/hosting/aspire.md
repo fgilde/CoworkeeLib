@@ -43,6 +43,7 @@ app.AddWorker<Projects.Shareme_Processing_Host>("processing");
 | `*_Api` | `AddApi` | `{name}-api` |
 | `*_Worker*`, `*Worker` | `AddWorker` | `{name}-worker` |
 | `*_Web` | `AddWeb` | `{name}-web` |
+| `*_AirWorks` | `AddAirWorks` | `{name}-airworks` |
 
 The suffix is the part after the first underscore, lower case with dashes: `MyApp_Jobs_Worker` becomes `myapp-jobs-worker`. Other projects are left alone.
 
@@ -65,6 +66,7 @@ Explicit calls still work and win: a project added before `AddProjects()` is not
 | `AddApi<T>()` | `{name}-api` | token authority and audience `{name}_api`, API scope at the auth server, setup token from `Coworkee:SetupToken` |
 | `AddWorker<T>(suffix)` | `{name}-{suffix}` | infrastructure only, no public endpoints |
 | `AddWeb<T>()` | `{name}-web` | BFF settings, OIDC client at the auth server with redirect URIs, reference to the API, links to Swagger and the jobs dashboard |
+| `AddAirWorks<T>()` | `{name}-airworks` | like `AddWeb`: BFF settings, the next OIDC client at the auth server, its own session cookie name; for the [AirWorks client](../web/airworks.md) |
 
 Call them in this order (`AddProjects()` does). Calling `AddWeb` before `AddAuthServer` throws and says so.
 

@@ -53,3 +53,17 @@ cd sdk/typescript && npm install && npm run generate && npm run build
 const api = createMyAppClient("https://myapp.example", () => getToken());
 const { data: brand } = await api.GET("/api/v1/brands/{id}", { params: { path: { id } } });
 ```
+
+## `@coworkee/client`
+
+The library brings a TypeScript client of its own API: types generated from the OpenAPI description of the library endpoints, a typed `createCoworkeeClient()`, `apiRequest` for any other endpoint, `ApiError` with the problem details, and helpers for the BFF session, the theme, the texts and OData. Inside a page served by the app's BFF it uses the session cookie and the CSRF header; elsewhere give it a token (an [API key](../security/api-keys.md)):
+
+```ts
+import { createCoworkeeClient, unwrap, odataPage } from '@coworkee/client';
+
+const api = createCoworkeeClient({ baseUrl: 'https://myapp.example', token: () => apiKey });
+const folder = unwrap(await api.GET('/api/v1/files/folders/content', { params: { query: {} } }));
+const products = await odataPage('Products', { top: 20, orderBy: 'Name', count: true }, { baseUrl: 'https://myapp.example', token: () => apiKey });
+```
+
+The [AirWorks client](airworks.md) is built on it. The sources live in `typescript/client`; `npm run openapi -- <url of /openapi/v1.json>` refreshes the description from a running app and `npm run generate` the types.
