@@ -15,7 +15,7 @@ public partial class UserSettings : IDisposable
 
     [Inject] private ThemeService ThemeService { get; set; } = null!;
 
-    private static readonly IReadOnlySet<string> Hidden = new HashSet<string>(StringComparer.Ordinal) { ThemeSettings.Mode, ThemeSettings.ThemeId, TableSettings.Views };
+    private static readonly IReadOnlySet<string> Hidden = new HashSet<string>(StringComparer.Ordinal) { ThemeSettings.Mode, ThemeSettings.ThemeId, TableSettings.Views, TableSettings.ClientEntityModes };
 
     private IReadOnlyList<ThemeDto>? _themes;
 

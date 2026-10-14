@@ -26,7 +26,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     [Inject] private IServiceProvider Services { get; set; } = null!;
 
-    private Theming.CoworkeeTheme Theme => Services.GetService(typeof(Theming.ThemeService)) is Theming.ThemeService themes ? themes.Theme : Theming.CoworkeeTheme.Default;
+    private Theming.CoworkeeTheme Theme => Themes?.Theme ?? Theming.CoworkeeTheme.Default;
 
     [Inject] private IDialogService Dialogs { get; set; } = null!;
 
@@ -181,6 +181,10 @@ public partial class CoworkeeDataTable<T> : IDisposable
         }
 
         _selection.Changed += Reload;
+        if (Themes is { } themes)
+        {
+            themes.Changed += FollowSettings;
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -198,6 +202,8 @@ public partial class CoworkeeDataTable<T> : IDisposable
             _pendingLayout = null;
             await ApplyLayoutAsync(layout);
         }
+
+        await FollowPageModeAsync();
     }
 
     private void ApplyFilters(DataTableState state)
@@ -266,9 +272,17 @@ public partial class CoworkeeDataTable<T> : IDisposable
     {
         _selection.Changed -= Reload;
         _live?.Cancel();
+        if (Themes is { } themes)
+        {
+            themes.Changed -= FollowSettings;
+        }
     }
 
-    public Task ReloadAsync() => _grid?.ReloadServerData() ?? Task.CompletedTask;
+    public Task ReloadAsync()
+    {
+        _pages?.Clear();
+        return _grid?.ReloadServerData() ?? Task.CompletedTask;
+    }
 
     private void Reload() => InvokeAsync(() =>
     {
@@ -383,7 +397,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     private async Task<GridData<T>> LoadAsync(GridState<T> state, CancellationToken cancellationToken)
     {
-        _orderBy = OrderBy(state);
+        _orderBy = OrderBy(state.SortDefinitions);
         var query = new ODataQuery
         {
             Filter = CurrentFilter,
@@ -407,9 +421,9 @@ public partial class CoworkeeDataTable<T> : IDisposable
     }
 
     // grouping columns sort first, so a group stays together across pages
-    private string? OrderBy(GridState<T> state)
+    private string? OrderBy(IEnumerable<SortDefinition<T>> sortDefinitions)
     {
-        var sorts = state.SortDefinitions.ToList();
+        var sorts = sortDefinitions.ToList();
         var groups = _grid is null ? [] : DataGridLayout<T>.Grouped(_grid).Select(c => c.PropertyName!).ToList();
         var parts = groups.Select(g => sorts.FirstOrDefault(s => s.SortBy == g) is { } sort ? sort : new SortDefinition<T>(g, false, -1, _ => null))
             .Concat(sorts.Where(s => !groups.Contains(s.SortBy)))
