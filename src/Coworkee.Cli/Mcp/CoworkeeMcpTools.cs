@@ -32,15 +32,16 @@ internal sealed class CoworkeeMcpTools(CliRunner run, HttpClient http)
     public static string GetSpecExample() => SpecJson.Write(SpecJson.Example());
 
     [McpServerTool(Name = "validate_spec", ReadOnly = true, Title = "Validate an app spec")]
-    [Description("Checks an app spec; returns ok or the list of problems.")]
+    [Description("Checks an app spec; returns ok or the list of problems, then a warn line for every option that is ignored because the option it depends on is off.")]
     public static string ValidateSpec(
         [Description("The app spec as JSON.")] string spec,
         [Description("Folder that relative logo and media files are resolved against; without it files are not checked.")] string? directory = null)
     {
         try
         {
-            var errors = SpecValidator.Validate(SpecJson.Read(spec), directory);
-            return errors.Count == 0 ? "ok" : string.Join("\n", errors);
+            var app = SpecJson.Read(spec);
+            var errors = SpecValidator.Validate(app, directory);
+            return string.Join("\n", (errors.Count == 0 ? ["ok"] : errors).Concat(SpecValidator.Warnings(app).Select(w => $"warn  {w}")));
         }
         catch (System.Text.Json.JsonException exception)
         {

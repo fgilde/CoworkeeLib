@@ -19,7 +19,7 @@ public sealed class AppSpec
     [Description("Title, theme, colors, logo and sign-in design; the same ids as in options, kept apart for readability.")]
     public BrandingSpec? Branding { get; set; }
 
-    [Description("Feature modules of the app with their entities.")]
+    [Description("Modules of your own with their entities (generated code). The modules of the library (chat, files, ...) are options; a spec lists the ones that differ from the defaults.")]
     public List<ModuleSpec> Modules { get; set; } = [];
 
     [Description("Enums properties of type enum use; generated into the contracts project.")]

@@ -13,14 +13,19 @@
             <Border Width="34" Height="34" CornerRadius="10" Background="{DynamicResource SecondarySoft}" VerticalAlignment="Top" Margin="0,0,10,0">
               <Panel>
                 <PathIcon IsVisible="{Binding IsChoice}" Data="{Binding Choice.Icon, Converter={x:Static v:Converters.Icon}}" Foreground="{DynamicResource Secondary}" />
-                <PathIcon IsVisible="{Binding IsBool}" Data="{StaticResource Icon.Lightning}" Foreground="{DynamicResource Secondary}" />
+                <PathIcon IsVisible="{Binding IsBool}" Data="{Binding Icon, Converter={x:Static v:Converters.Icon}}" Foreground="{DynamicResource Secondary}" />
               </Panel>
             </Border>
             <StackPanel Grid.Column="1" Spacing="2">
               <TextBlock Classes="h3" Text="{Binding Title}" />
               <TextBlock Classes="mono caption" Text="{Binding Flag}" />
             </StackPanel>
-            <ToggleSwitch Grid.Column="2" IsVisible="{Binding IsBool}" IsChecked="{Binding IsOn}" VerticalAlignment="Top" Margin="0,-4,0,0" />
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Top" Margin="0,-4,0,0">
+              <Button Classes="icon" IsVisible="{Binding HasInfo}" Command="{Binding OpenInfoCommand}" ToolTip.Tip="{Binding InfoText}">
+                <PathIcon Classes="small" Data="{StaticResource Icon.OpenInNew}" />
+              </Button>
+              <ToggleSwitch IsVisible="{Binding IsBool}" IsChecked="{Binding IsOn}" />
+            </StackPanel>
           </Grid>
           <ListBox Classes="segments" IsVisible="{Binding IsChoice}" IsEnabled="{Binding IsAvailable}" Opacity="{Binding IsAvailable, Converter={x:Static v:Converters.Dim}}"
                    ItemsSource="{Binding Choices}" SelectedItem="{Binding Choice}">
@@ -47,8 +52,11 @@
     <DataTemplate x:Key="OptionCard" x:DataType="vm:OptionViewModel">
       <Border Classes="card" Padding="16" Classes.on="{Binding IsOn}">
         <StackPanel Spacing="8" Opacity="{Binding IsAvailable, Converter={x:Static v:Converters.Dim}}">
-          <Grid ColumnDefinitions="*,Auto">
-            <StackPanel Spacing="3">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <Border Width="34" Height="34" CornerRadius="10" Background="{DynamicResource PrimarySoft}" VerticalAlignment="Top" Margin="0,0,10,0">
+              <PathIcon Data="{Binding Icon, Converter={x:Static v:Converters.Icon}}" Foreground="{DynamicResource Primary}" />
+            </Border>
+            <StackPanel Grid.Column="1" Spacing="3">
               <TextBlock Classes="h3" Text="{Binding Title}" />
               <WrapPanel ItemSpacing="6">
                 <Border Classes="chip" IsVisible="{Binding HasPackage}" Padding="8,1">
@@ -57,14 +65,18 @@
                 <TextBlock Classes="mono caption" Text="{Binding Flag}" VerticalAlignment="Center" />
               </WrapPanel>
             </StackPanel>
-            <ToggleSwitch Grid.Column="1" IsVisible="{Binding IsBool}" IsChecked="{Binding IsOn}" VerticalAlignment="Top" Margin="0,-4,0,0" />
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Top" Margin="0,-4,0,0">
+              <Button Classes="icon" IsVisible="{Binding HasInfo}" Command="{Binding OpenInfoCommand}" ToolTip.Tip="{Binding InfoText}">
+                <PathIcon Classes="small" Data="{StaticResource Icon.OpenInNew}" />
+              </Button>
+              <ToggleSwitch IsVisible="{Binding IsBool}" IsChecked="{Binding IsOn}" />
+            </StackPanel>
           </Grid>
           <Border Classes="banner warn" Padding="10,6" IsVisible="{Binding HasNote}">
             <TextBlock FontSize="12" TextWrapping="Wrap" Text="{Binding NoteText}" />
           </Border>
           <TextBlock Classes="body" FontSize="12.5" LineHeight="18" Text="{Binding Description}" />
-          <Button Classes="link" IsVisible="{Binding HasInfo}" Content="{Binding InfoText}" Command="{Binding OpenInfoCommand}" HorizontalAlignment="Left" Padding="0" />
-      <TextBox IsVisible="{Binding IsText}" Text="{Binding Text}" PlaceholderText="{Binding Flag}" />
+          <TextBox IsVisible="{Binding IsText}" Text="{Binding Text}" PlaceholderText="{Binding Flag}" />
           <ListBox Classes="segments" IsVisible="{Binding IsChoice}" ItemsSource="{Binding Choices}" SelectedItem="{Binding Choice}" HorizontalAlignment="Left">
             <ListBox.ItemTemplate>
               <DataTemplate x:DataType="vm:ChoiceViewModel">
@@ -174,7 +186,7 @@
               </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
           </ItemsControl>
-          <ItemsControl ItemsSource="{Binding Options}" ItemTemplate="{StaticResource OptionCard}">
+          <ItemsControl ItemsSource="{Binding Shown}" ItemTemplate="{StaticResource OptionCard}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
                 <UniformGrid Columns="2" ColumnSpacing="12" RowSpacing="12" />
@@ -184,7 +196,7 @@
         </StackPanel>
 
         <!-- AI assistant: provider, model, endpoint, key -->
-        <StackPanel Spacing="10" x:Name="AiSection" Margin="0,-16,0,0" DataContext="{Binding Ai}" x:DataType="vm:AiSetupViewModel">
+        <StackPanel Spacing="10" x:Name="AiSection" Margin="0,-16,0,0" DataContext="{Binding Ai}" x:DataType="vm:AiSetupViewModel" IsVisible="{Binding IsAvailable}">
           <TextBlock Classes="overline" Text="{l:L 'AI ASSISTANT'}" />
           <Border Classes="card" Padding="16">
             <StackPanel Spacing="14" IsEnabled="{Binding IsAvailable}" Opacity="{Binding IsAvailable, Converter={x:Static v:Converters.Dim}}">
@@ -254,7 +266,7 @@
                   </StackPanel>
                   <TextBlock Classes="muted" Text="{Binding Text}" TextWrapping="Wrap" />
                 </StackPanel>
-                <ItemsControl ItemsSource="{Binding Options}" ItemTemplate="{StaticResource OptionCard}">
+                <ItemsControl ItemsSource="{Binding Shown}" ItemTemplate="{StaticResource OptionCard}">
                   <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                       <UniformGrid Columns="2" ColumnSpacing="12" RowSpacing="12" />

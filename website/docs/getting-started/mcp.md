@@ -43,7 +43,7 @@ Other clients take the same command: `coworkee` with the argument `mcp`. `cowork
 | `list_options` | The [options](cli.md#options) with id, kind, default, choices, pros, cons and when to use them; optionally one group |
 | `get_spec_schema` | JSON Schema of an [app spec](cli.md#app-specs) |
 | `get_spec_example` | A complete example spec |
-| `validate_spec` | Checks a spec, with a folder also its logo and media files |
+| `validate_spec` | Checks a spec, with a folder also its logo and media files; `warn` lines name options that are ignored because the option they need is off |
 | `create_app` | `coworkee new` from a spec, or from a name and options, in a folder; `users` adds development users (`email[:role,role][:admin]`), the answer lists them with their passwords |
 | `add_module` | `coworkee module add` with entity, properties, client entity and mapping |
 | `add_entity` | `coworkee entity add` |

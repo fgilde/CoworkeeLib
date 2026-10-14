@@ -90,7 +90,13 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--github-actions` | `githubActions` | bool | `false` | `.github/workflows/ci.yml`: Build und Tests bei jedem Push und Pull Request |
 | `--devcontainer` | `devcontainer` | bool | `false` | `.devcontainer/devcontainer.json` mit dem .NET SDK und Docker in Docker (Codespaces, VS Code) |
 
-Ein bool-Schalter ohne Wert bedeutet `true` (`--files`), `--chat false` schaltet aus. Die mitgelieferte erste Migration deckt die Standardmodule ab (mit oder ohne Beispiele). Schalten Sie ein Modul mit Tabellen ein oder aus (Chat, KI, Backup, Benachrichtigungen, Dateien, Features, Social, Event-Bus, erweiterte Attribute ohne Beispiele) oder wählen eine andere Datenbank als `postgres`, lässt das Template die Migration weg und `coworkee new` legt nach dem Restore `Initial` mit `dotnet ef` an. Mit reinem `dotnet new` führen Sie `coworkee migrations add Initial` einmal selbst aus.
+Ein bool-Schalter ohne Wert bedeutet `true` (`--files`), `--chat false` schaltet aus.
+
+**Optionen, die eine andere brauchen.** Manche Optionen gelten nur mit einer anderen: `--airworks-packages` mit `--airworks`, `--ai-provider`, `--ai-model` und `--ai-endpoint` mit dem KI-Assistenten (`--ai`), `--backup` mit `--database postgres`, `--sign-in-media` mit dem Layout `Split` oder `Slide` und `--sign-in-media-side` mit einem Anmeldemedium. Ohne sie fragt die CLI nicht danach (es gibt keine Rückfragen, jeder Wert ist ein Schalter oder ein Schlüssel der Spezifikation), gibt sie nicht weiter, die App ist also die ohne den Schalter, und warnt: `warn  airworksPackages: ignored, it only matters with airworks (coworkee options).` `coworkee spec validate` gibt dieselben Warnungen nach `ok` aus. `coworkee options` nennt die Voraussetzung (`Needs: airworks`), `--json` als `dependsOn`, und das Studio blendet die Karte aus, bis die andere Option an ist. `--backup true` mit einer anderen Datenbank als `postgres` bleibt ein Fehler.
+
+**Links.** `coworkee options` gibt die Webseite dessen aus, was eine Option mitbringt (`More:`): AirWorks, AspireUI, WebDataStudio, Grafana, Keycloak, Redis, Elasticsearch, GitHub Actions und den Dev-Container; bei Auswahlen eine Zeile je Produkt (`More (postgres):`): PostgreSQL, SQL Server, SQLite, RabbitMQ, Azure Blob Storage, Mapperly, Ollama, LM Studio, LibreTranslate, MyMemory, DeepL, Azure AI Translator und Google Cloud Translation. `--json` enthält sie als `infoUrl` der Option und der Auswahl. Das Studio zeigt sie als Öffnen-Knopf auf der Karte.
+
+Die mitgelieferte erste Migration deckt die Standardmodule ab (mit oder ohne Beispiele). Schalten Sie ein Modul mit Tabellen ein oder aus (Chat, KI, Backup, Benachrichtigungen, Dateien, Features, Social, Event-Bus, erweiterte Attribute ohne Beispiele) oder wählen eine andere Datenbank als `postgres`, lässt das Template die Migration weg und `coworkee new` legt nach dem Restore `Initial` mit `dotnet ef` an. Mit reinem `dotnet new` führen Sie `coworkee migrations add Initial` einmal selbst aus.
 
 ## App-Spezifikationen
 
@@ -100,6 +106,7 @@ Eine Spezifikation beschreibt die ganze App als JSON: Name, Optionen, Branding u
 coworkee spec example > shop.json    # ein vollständiges Beispiel
 coworkee spec schema > spec.schema.json
 coworkee spec validate shop.json
+coworkee spec show shop.json         # was die Spezifikation erzeugt: Bibliotheksmodule an und aus, Optionen, eigene Module
 coworkee new --spec shop.json
 ```
 
@@ -148,6 +155,7 @@ coworkee new --spec shop.json
 }
 ```
 
+- `modules` sind Ihre eigenen Module mit ihren Entitäten. Die Module der Bibliothek (Audit-Log, Chat, Dateien, ...) sind Optionen unter `options`, und eine selbst geschriebene Spezifikation nennt nur, was von den Standardwerten abweicht: ohne `"chat": false` hat die App den Chat, eine Spezifikation der Standardwerte enthält also kein Modul. Das Studio schreibt deshalb jedes Bibliotheksmodul mit `true` oder `false`; `coworkee spec show` gibt dasselbe für jede Spezifikation aus (`Library modules on:` / `off:`, dann jede andere Option mit ihrem Wert, `(unused)` wo sie ignoriert wird, und Ihre eigenen Module).
 - `options` nimmt die Ids aus der Tabelle oben; `branding` nimmt `title`, `theme`, `primaryColor`, `secondaryColor`, `logo`, `signInLayout`, `signInMedia` und `signInMediaSide` und gewinnt gegen dieselben Ids in `options`.
 - Dateien und `output` sind relativ zur Spezifikation und müssen in ihrem Ordner bleiben (keine absoluten Pfade, kein `..`). Ein Logo ist ein Bild (svg, png, jpg, jpeg, webp, gif, ico), das Anmeldemedium ein Bild, ein Video (mp4, webm, ogg) oder eine http(s)-Adresse: Beide liegen danach öffentlich im Web-Client. Eine als Schalter angegebene Datei (`--logo C:\brand\logo.svg`) darf überall liegen. Kommentare und abschließende Kommas sind erlaubt.
 - Der Titel landet unverändert in Code und HTML und darf daher kein `"`, `\`, `<`, `>`, `@` und keine Steuerzeichen enthalten.

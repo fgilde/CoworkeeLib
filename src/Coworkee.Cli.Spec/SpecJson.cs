@@ -103,7 +103,7 @@ public static class SpecJson
         var properties = new JsonObject();
         foreach (var option in OptionCatalog.All)
         {
-            var property = new JsonObject { ["description"] = option.Description };
+            var property = new JsonObject { ["description"] = option.Description + (option.DependsOn is { } need ? $" Only used with {need}." : string.Empty) };
             switch (option.Kind)
             {
                 case OptionKind.Bool:
@@ -117,7 +117,7 @@ public static class SpecJson
                     var values = new JsonArray([.. option.Choices!.Select(c => (JsonNode)c.Value)]);
                     property["type"] = new JsonArray("array", "string");
                     property["items"] = new JsonObject { ["enum"] = values };
-                    property["description"] = option.Description + " An array, or the values comma separated.";
+                    property["description"] = $"{property["description"]} An array, or the values comma separated.";
                     break;
                 case OptionKind.Color:
                     property["type"] = "string";

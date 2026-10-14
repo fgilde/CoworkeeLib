@@ -63,7 +63,7 @@ public static class CommandLine
 
         foreach (var option in OptionCatalog.All)
         {
-            if (values[option.Id] is { } value && value != option.Default)
+            if (values[option.Id] is { } value && value != option.Default && OptionCatalog.IsActive(option, values))
             {
                 args.AddRange([option.Flag, value]);
             }

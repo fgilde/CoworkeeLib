@@ -118,10 +118,6 @@ public sealed partial class ArchitectureStep : StepViewModel
             _ => "PostgreSQL container. Every module works, backups and restore from the admin pages included.",
         };
 
-        var backup = Main.Option("backup");
-        backup.IsAvailable = database == "postgres";
-        backup.Note = backup.IsAvailable ? null : "Not part of the app: backups from the admin pages need PostgreSQL.";
-
         var provider = Main.Option("aiProvider");
         provider.IsAvailable = Main.Option("ai").IsOn;
         provider.Note = !provider.IsAvailable ? "Only used with the AI assistant module; switch it on under Modules."

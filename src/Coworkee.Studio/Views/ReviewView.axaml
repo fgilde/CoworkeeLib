@@ -100,6 +100,7 @@
             </Button>
           </Grid>
           <TextBlock Classes="caption" Text="{l:L 'Logo and media from other folders are copied next to the spec when you save it; the CLI only reads files from the folder of a spec.'}" />
+          <TextBlock Classes="caption" Text="{l:L 'The modules of the library are under options, each switched on or off. Your own modules and entities are under modules.'}" />
           <Border Classes="code" MaxHeight="560">
             <ScrollViewer>
               <SelectableTextBlock Text="{Binding SpecText}" TextWrapping="NoWrap" />
