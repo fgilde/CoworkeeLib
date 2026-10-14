@@ -228,6 +228,7 @@ internal sealed class Column<TValue>(TValue[] values, int[]? order) : Column
     private Sorted? _sorted;
     private string?[]? _lower;
     private string?[]? _upper;
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, Joined> _joined = new();
 
     public override Type ValueType => typeof(TValue);
 
@@ -321,30 +322,72 @@ internal sealed class Column<TValue>(TValue[] values, int[]? order) : Column
             throw new NotSupportedException("String functions need text.");
         }
 
-        // contains(tolower(Path),'abc') matches like an ignore-case search, without lowering every value
-        var ignoreCase = (casing == "tolower" && literal == literal.ToLowerInvariant()) || (casing == "toupper" && literal == literal.ToUpperInvariant());
-        var comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
         var texts = casing switch
         {
-            _ when ignoreCase => distinct,
             "tolower" => _lower ??= [.. distinct.Select(t => t?.ToLowerInvariant())],
             "toupper" => _upper ??= [.. distinct.Select(t => t?.ToUpperInvariant())],
             _ => distinct,
         };
+        if (function == "contains")
+        {
+            return Contains(_joined.GetOrAdd(casing ?? string.Empty, _ => Join(texts)), literal);
+        }
+
         var result = new bool[texts.Length];
         for (var rank = 0; rank < texts.Length; rank++)
         {
             // OData string functions read null as empty text
             var text = texts[rank] ?? string.Empty;
-            result[rank] = function switch
-            {
-                "contains" => text.Contains(literal, comparison),
-                "startswith" => text.StartsWith(literal, comparison),
-                _ => text.EndsWith(literal, comparison),
-            };
+            result[rank] = function == "startswith" ? text.StartsWith(literal, StringComparison.Ordinal) : text.EndsWith(literal, StringComparison.Ordinal);
         }
 
         return result;
+    }
+
+    // one search through all values joined by '\0' instead of a call per value: WebAssembly interprets each call, the search itself runs vectorized
+    private static bool[] Contains(Joined joined, string literal)
+    {
+        var starts = joined.Starts;
+        var result = new bool[starts.Length - 1];
+        if (literal.Length == 0)
+        {
+            Array.Fill(result, true);
+            return result;
+        }
+
+        for (var at = joined.Text.IndexOf(literal, StringComparison.Ordinal); at >= 0;)
+        {
+            var rank = Array.BinarySearch(starts, at);
+            rank = rank >= 0 ? rank : ~rank - 1;
+            // a match across the separator into the next value does not count
+            if (at + literal.Length < starts[rank + 1])
+            {
+                result[rank] = true;
+                at = starts[rank + 1];
+            }
+            else
+            {
+                at++;
+            }
+
+            at = at < joined.Text.Length ? joined.Text.IndexOf(literal, at, StringComparison.Ordinal) : -1;
+        }
+
+        return result;
+    }
+
+    private static Joined Join(string?[] texts)
+    {
+        var starts = new int[texts.Length + 1];
+        var builder = new System.Text.StringBuilder();
+        for (var rank = 0; rank < texts.Length; rank++)
+        {
+            starts[rank] = builder.Length;
+            builder.Append(texts[rank]).Append('\0');
+        }
+
+        starts[^1] = builder.Length;
+        return new Joined(builder.ToString(), starts);
     }
 
     public override int RankOf(object? value)
@@ -406,6 +449,8 @@ internal sealed class Column<TValue>(TValue[] values, int[]? order) : Column
     }
 
     private sealed record Sorted(int[] Order, int[] Ranks, TValue[] Values, int[] Starts);
+
+    private sealed record Joined(string Text, int[] Starts);
 }
 
 /// <summary>Text sorts ignoring case like the server; values that differ only in case stay apart, so equality remains exact.</summary>
