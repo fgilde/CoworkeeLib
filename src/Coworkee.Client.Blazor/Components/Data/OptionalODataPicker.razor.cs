@@ -22,7 +22,7 @@ public partial class OptionalODataPicker
 
     [Parameter] public Variant Variant { get; set; } = Variant.Text;
 
-    [Parameter] public Margin Margin { get; set; } = Margin.None;
+    [Parameter] public Margin? Margin { get; set; }
 
     private Task ChangeAsync(Guid id) => ValueChanged.InvokeAsync(id == Guid.Empty ? null : id);
 }

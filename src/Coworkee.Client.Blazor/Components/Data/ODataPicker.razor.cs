@@ -35,7 +35,7 @@ public partial class ODataPicker
 
     [Parameter] public Variant Variant { get; set; } = Variant.Text;
 
-    [Parameter] public Margin Margin { get; set; } = Margin.None;
+    [Parameter] public Margin? Margin { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {
