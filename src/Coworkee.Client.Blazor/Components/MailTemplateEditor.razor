@@ -7,7 +7,7 @@
 else
 {
     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
-        <MudChip T="string" Size="Size.Small" Color="@(_template.IsOverridden ? Color.Secondary : Color.Default)">@(_template.IsOverridden ? L["customized"] : L["default"])</MudChip>
+        <MudChip T="string" Size="Size.Small" Color="@(_template.IsOverridden ? Color.Secondary : Color.Default)" data-testid="template-state">@(_template.IsCustom ? L["custom"] : _template.IsOverridden ? L["customized"] : L["default"])</MudChip>
         <MudSpacer />
         <MudButton OnClick="PreviewAsync" data-testid="preview">@L["Preview"]</MudButton>
         <MudButton OnClick="SendTestAsync" data-testid="send-test">@L["Send test to me"]</MudButton>
@@ -21,7 +21,7 @@ else
     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
         <MudTextField Margin="Density.Margin" @bind-Value="_subject" Label="@L["Subject"]" Immediate="true" />
         <MudMenu Icon="@Icons.Material.Outlined.DataObject" Size="Size.Small" AriaLabel="@L["Insert placeholder"]" data-testid="subject-placeholders">
-            @foreach (var variable in _template.Variables.Where(v => !v.IsList && !v.Name.Contains("[]")))
+            @foreach (var variable in _template.Variables.Where(v => !v.IsList && !v.IsItem()))
             {
                 <MudMenuItem OnClick="() => AddToSubject(variable)" data-testid="@($"subject-variable-{variable.Name}")">@variable.Name</MudMenuItem>
             }

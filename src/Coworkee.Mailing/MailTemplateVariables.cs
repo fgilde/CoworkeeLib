@@ -12,27 +12,28 @@ public static class MailTemplateVariables
     public static IReadOnlyList<MailVariableDto> From(object sample)
     {
         var result = new List<MailVariableDto>();
-        Walk(sample, null, result, 1);
+        Walk(sample, sample.GetType(), null, result, 1);
         return result;
     }
 
-    private static void Walk(object value, string? prefix, List<MailVariableDto> result, int depth)
+    // a null member of a declared type still lists that type's members, so a model without a campaign shows campaign.name as well
+    private static void Walk(object? value, Type valueType, string? prefix, List<MailVariableDto> result, int depth)
     {
-        foreach (var (name, member, declared) in Members(value))
+        foreach (var (name, member, declared) in Members(value, valueType))
         {
             var path = prefix is null ? name : $"{prefix}.{name}";
             var type = member?.GetType() ?? declared;
-            if (type != typeof(string) && type.IsAssignableTo(typeof(IEnumerable)))
+            if (member is not ScriptObject && type != typeof(string) && type.IsAssignableTo(typeof(IEnumerable)))
             {
                 result.Add(new MailVariableDto(path, "list", null, true));
                 if (depth < MaxDepth && member is IEnumerable items && items.Cast<object?>().FirstOrDefault() is { } first && Kind(first.GetType()) == "object")
                 {
-                    Walk(first, path + "[]", result, depth + 1);
+                    Walk(first, first.GetType(), path + "[]", result, depth + 1);
                 }
             }
-            else if (member is not null && Kind(type) == "object" && depth < MaxDepth)
+            else if (Kind(type) == "object" && type != typeof(object) && depth < MaxDepth)
             {
-                Walk(member, path, result, depth + 1);
+                Walk(member, type, path, result, depth + 1);
             }
             else
             {
@@ -41,10 +42,10 @@ public static class MailTemplateVariables
         }
     }
 
-    private static IEnumerable<(string Name, object? Value, Type Declared)> Members(object value) =>
+    private static IEnumerable<(string Name, object? Value, Type Declared)> Members(object? value, Type type) =>
         value is ScriptObject script
             ? script.Keys.Select(key => (key, script[key], typeof(object)))
-            : value.GetType().GetProperties().Select(p => (StandardMemberRenamer.Default(p), p.GetValue(value), p.PropertyType));
+            : type.GetProperties().Where(p => p.GetIndexParameters().Length == 0).Select(p => (StandardMemberRenamer.Default(p), value is null ? null : p.GetValue(value), p.PropertyType));
 
     private static string Kind(Type type)
     {

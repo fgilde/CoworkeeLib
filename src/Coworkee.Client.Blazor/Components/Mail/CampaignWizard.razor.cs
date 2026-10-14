@@ -27,6 +27,9 @@ public partial class CampaignWizard
 
     [CascadingParameter] private IMudDialogInstance Dialog { get; set; } = null!;
 
+    /// <summary>A draft to continue; without one the wizard starts a new campaign.</summary>
+    [Parameter] public MailCampaignDto? Campaign { get; set; }
+
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
@@ -46,8 +49,15 @@ public partial class CampaignWizard
         _ => false,
     };
 
-    protected override Task OnInitializedAsync() =>
-        Snackbar.RunAsync(async () => _templates = [.. (await Api.GetMailTemplatesAsync()).Where(t => t.IsCustom)]);
+    protected override Task OnInitializedAsync()
+    {
+        if (Campaign is { } draft)
+        {
+            (_id, _name, _template, _source) = (draft.Id, draft.Name, draft.TemplateName, draft.Recipients);
+        }
+
+        return Snackbar.RunAsync(async () => _templates = [.. (await Api.GetMailTemplatesAsync()).Where(t => t.IsCustom)]);
+    }
 
     private void TemplateChanged(string template)
     {

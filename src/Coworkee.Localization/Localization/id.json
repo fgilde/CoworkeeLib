@@ -1134,5 +1134,9 @@
   "Scheduled": "Terjadwal",
   "Cancelled": "Dibatalkan",
   "One campaign only": "Hanya satu kampanye",
-  "API documentation": "Dokumentasi API"
+  "API documentation": "Dokumentasi API",
+  "A rule without a selector is not saved yet": "Aturan tanpa selektor belum disimpan.",
+  "The saved recipients are kept until you change the selection.": "Penerima yang tersimpan dipertahankan sampai Anda mengubah pilihan.",
+  "Not started yet. Check that the background worker is running.": "Belum dimulai. Periksa apakah layanan latar belakang berjalan.",
+  "Edit campaign": "Edit kampanye"
 }

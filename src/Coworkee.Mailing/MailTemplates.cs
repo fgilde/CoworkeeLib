@@ -101,6 +101,9 @@ public static class MailCultures
 {
     public const string Fallback = "en";
 
+    /// <summary>Sort key that puts the fallback culture first, so the fallback among several cultures is the same everywhere.</summary>
+    public static int FallbackOrder(string culture) => string.Equals(culture, Fallback, StringComparison.OrdinalIgnoreCase) ? 0 : 1;
+
     public static IReadOnlyList<string> Candidates(string? culture)
     {
         var candidates = new List<string>();

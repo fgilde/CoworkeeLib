@@ -1134,5 +1134,9 @@
   "Scheduled": "Schemalagd",
   "Cancelled": "Avbruten",
   "One campaign only": "Endast en kampanj",
-  "API documentation": "API-dokumentation"
+  "API documentation": "API-dokumentation",
+  "A rule without a selector is not saved yet": "En regel utan väljare har inte sparats ännu.",
+  "The saved recipients are kept until you change the selection.": "De sparade mottagarna behålls tills du ändrar urvalet.",
+  "Not started yet. Check that the background worker is running.": "Har inte startat ännu. Kontrollera att bakgrundstjänsten körs.",
+  "Edit campaign": "Redigera kampanj"
 }

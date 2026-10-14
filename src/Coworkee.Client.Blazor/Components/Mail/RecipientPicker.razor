@@ -45,7 +45,7 @@
     <MudTabPanel Text="@L["Manual selection"]" data-testid="tab-manual">
         <div class="pa-4">
             <CoworkeeDataTable @ref="_table" T="UserRow" EntitySet="Users" StateKey="campaign-users" UrlState="false" SavedViews="false" MultiSelection="true"
-                               SearchFields="SearchFields" Exportable="false" Groupable="false" SelectedItemsChanged="SelectionChangedAsync">
+                               SearchFields="SearchFields" Exportable="false" Groupable="false" SelectedItemsChanged="SelectionChangedAsync" OnLoaded="TableLoadedAsync">
                 <ToolBarContent>
                     <MudButton Variant="Variant.Outlined" Size="Size.Small" Class="mb-2 mr-2" OnClick="SelectAllMatchingAsync" data-testid="select-all-matching">@L["Select all matching"]</MudButton>
                 </ToolBarContent>
@@ -60,6 +60,10 @@
                     <PropertyColumn Property="u => u.LastLoginAt" Title="@L["Last sign-in"]" Format="g" />
                 </Columns>
             </CoworkeeDataTable>
+            @if (_kept is not null)
+            {
+                <MudAlert Severity="Severity.Info" Dense="true" Class="mt-2" data-testid="kept-recipients">@L["The saved recipients are kept until you change the selection."]</MudAlert>
+            }
             @if (_matching)
             {
                 <MudAlert Severity="Severity.Info" Dense="true" Class="mt-2" data-testid="all-matching">@L["All users matching the current filter are selected."]</MudAlert>

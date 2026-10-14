@@ -1067,7 +1067,7 @@
   "Keycloak sign-in page updated": "Страница входа Keycloak обновлена",
   "The Keycloak sign-in page could not be written. See the log of the API.": "Не удалось записать страницу входа Keycloak. Смотрите журнал API.",
   "Rules": "Правила",
-  "Raw": "Исходный",
+  "Raw": "Необработанный",
   "Add rule": "Добавить правило",
   "Selector": "Селектор",
   "Selector required": "Требуется селектор",
@@ -1134,5 +1134,9 @@
   "Scheduled": "Запланирована",
   "Cancelled": "Отменена",
   "One campaign only": "Только одна рассылка",
-  "API documentation": "Документация API"
+  "API documentation": "Документация API",
+  "A rule without a selector is not saved yet": "Правило без селектора ещё не сохранено.",
+  "The saved recipients are kept until you change the selection.": "Сохранённые получатели остаются, пока вы не измените выбор.",
+  "Not started yet. Check that the background worker is running.": "Ещё не запущена. Проверьте, работает ли фоновая служба.",
+  "Edit campaign": "Редактировать рассылку"
 }

@@ -1077,8 +1077,8 @@
   "custom": "مخصص",
   "Send test to me": "أرسل لي رسالة اختبار",
   "Reset to default": "إعادة التعيين إلى الافتراضي",
-  "customized": "مخصّص",
-  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "تبدو العناصر النائبة مثل {{ user.first_name }} ويتم تهريب أحرفها الخاصة في HTML. يوضع المحتوى داخل قالب التخطيط.",
+  "customized": "معدّل",
+  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "تبدو العناصر النائبة مثل {{ user.first_name }} ويتم تحويل أحرفها الخاصة إلى كيانات HTML. يوضع المحتوى داخل قالب التخطيط.",
   "Template saved.": "تم حفظ القالب.",
   "Test mail queued.": "تمت إضافة رسالة الاختبار إلى قائمة الانتظار.",
   "Preview: {0}": "معاينة: {0}",
@@ -1134,5 +1134,9 @@
   "Scheduled": "مجدولة",
   "Cancelled": "ملغاة",
   "One campaign only": "حملة واحدة فقط",
-  "API documentation": "وثائق API"
+  "API documentation": "وثائق API",
+  "A rule without a selector is not saved yet": "لم تُحفظ بعد قاعدة بلا محدِّد.",
+  "The saved recipients are kept until you change the selection.": "يبقى المستلمون المحفوظون كما هم حتى تغيّر التحديد.",
+  "Not started yet. Check that the background worker is running.": "لم تبدأ بعد. تحقق من أن خدمة الخلفية تعمل.",
+  "Edit campaign": "تعديل الحملة"
 }

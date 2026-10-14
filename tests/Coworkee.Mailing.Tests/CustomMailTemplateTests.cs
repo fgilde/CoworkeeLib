@@ -56,6 +56,28 @@ public sealed class CustomMailTemplateTests(MailApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Creating_the_same_name_concurrently_gives_one_template_and_validation_errors()
+    {
+        var responses = await Task.WhenAll(Enumerable.Range(0, 8).Select(_ => CreateAsync(Admin, new("Race.1", "Race", null))));
+
+        responses.Count(r => r.IsSuccessStatusCode).ShouldBe(1);
+        responses.Where(r => !r.IsSuccessStatusCode).ShouldAllBe(r => r.StatusCode == HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task A_copy_falls_back_to_the_same_culture_every_time()
+    {
+        (await CreateAsync(Admin, new("Src.1", "Src", null))).EnsureSuccessStatusCode();
+        (await SaveAsync("Src.1", "fr", "Bonjour", "<p>fr</p>")).EnsureSuccessStatusCode();
+        (await SaveAsync("Src.1", "de", "Hallo", "<p>de</p>")).EnsureSuccessStatusCode();
+        (await CreateAsync(Admin, new("Copy.1", "Copy", null, CopyFrom: "Src.1"))).EnsureSuccessStatusCode();
+
+        var fallback = await app.AsActorAsync(_setup.AdminUserId, _setup.TenantId, sp => sp.GetRequiredService<IMailTemplateRenderer>().ResolveAsync("Copy.1", "es", Ct));
+
+        fallback.Subject.ShouldBe("Hallo");
+    }
+
+    [Fact]
     public async Task A_description_over_1000_characters_is_a_validation_error() =>
         (await CreateAsync(Admin, new("Long.1", "Long", new string('d', 1001)))).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 

@@ -21,6 +21,8 @@ public abstract class ClientTestBase : BunitContext
 
     protected ClientTestBase()
     {
+        // a layout rendered by a test in parallel can switch the process-wide culture (CoworkeeLocalizer.UseAsync); every test starts in English
+        TestCulture.Pin();
         JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddMudServicesWithExtensions();
         Components.Editors.CoworkeeEditors.Register();
@@ -50,6 +52,10 @@ public abstract class ClientTestBase : BunitContext
         Services.AddSingleton(Localization);
         Services.AddSingleton<Localization.CoworkeeLocalizer>();
     }
+
+    /// <summary>The input of a form field found by its visible label, which survives changes of the markup MudBlazor puts around it.</summary>
+    protected static AngleSharp.Dom.IElement InputByLabel(AngleSharp.Dom.IElement scope, string label) =>
+        scope.QuerySelector($"input[id='{scope.QuerySelectorAll("label").First(l => l.TextContent.Replace("*", string.Empty).Trim() == label).GetAttribute("for")}']")!;
 
     protected ICoworkeeApi Api { get; } = Substitute.For<ICoworkeeApi>();
 

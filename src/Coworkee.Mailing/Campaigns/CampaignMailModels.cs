@@ -12,10 +12,23 @@ internal sealed class CampaignMailModels(
     /// <summary>Campaign mails link back to the app (unsubscribe), so they need its absolute address.</summary>
     public bool HasPublicUrl => !string.IsNullOrWhiteSpace(notifications.Value.PublicAppUrl);
 
-    public async Task<Func<MailRecipient, object>> ForAsync(MailCampaign campaign, CancellationToken cancellationToken)
+    /// <param name="requireUnsubscribeLink">When false and no absolute address can be built, the model has no unsubscribe link and the layout shows no footer.</param>
+    public async Task<Func<MailRecipient, object>> ForAsync(MailCampaign campaign, CancellationToken cancellationToken, bool requireUnsubscribeLink = true)
     {
         var tenantId = currentUser.TenantId;
         var organisation = tenantId is { } id && services.GetService<ITenantDirectory>() is { } tenants ? await tenants.GetNameAsync(id, cancellationToken) : null;
-        return recipient => MailRecipientModel.For(recipient, theme.Value.AppName, notifications.Value.PublicAppUrl, organisation, links.Create(recipient.Id, tenantId), campaign.Name);
+        return recipient => MailRecipientModel.For(recipient, theme.Value.AppName, notifications.Value.PublicAppUrl, organisation, UnsubscribeUrl(recipient.Id, tenantId, requireUnsubscribeLink), campaign.Name);
+    }
+
+    private string? UnsubscribeUrl(Guid userId, Guid? tenantId, bool required)
+    {
+        try
+        {
+            return links.Create(userId, tenantId);
+        }
+        catch (InvalidOperationException) when (!required)
+        {
+            return null;
+        }
     }
 }

@@ -27,7 +27,7 @@
         <div hidden="@(_step != 1)">
             @if (_recipientsVisited)
             {
-                <RecipientPicker SourceChanged="source => _source = source" PreviewChanged="preview => _preview = preview" />
+                <RecipientPicker Initial="Campaign?.Recipients" SourceChanged="source => _source = source" PreviewChanged="preview => _preview = preview" />
             }
         </div>
         <div hidden="@(_step != 2)">
