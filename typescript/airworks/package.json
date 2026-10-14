@@ -1,8 +1,22 @@
 {
   "name": "@coworkee/airworks",
   "version": "0.1.0",
-  "description": "AirWorks web desktop for Coworkee apps: sign-in through the app's BFF, theme, texts and apps for settings, profile, files, data and notifications",
+  "description": "AirWorks web desktop for Coworkee apps: sign-in through the app's BFF, theme, texts, realtime and apps for settings, files, data, chat, reports, the assistant and the administration",
   "license": "MIT",
+  "homepage": "https://fgilde.github.io/CoworkeeLib/web/airworks/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fgilde/CoworkeeLib.git",
+    "directory": "typescript/airworks"
+  },
+  "keywords": [
+    "coworkee",
+    "airworks",
+    "web-desktop"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -34,3 +48,4 @@
     "typescript": "^5.9.3"
   }
 }
+
