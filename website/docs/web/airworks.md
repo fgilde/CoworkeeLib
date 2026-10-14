@@ -15,7 +15,7 @@ app.AddWeb<Projects.Shop_Web>();
 app.AddAirWorks<Projects.Shop_AirWorks>();
 ```
 
-Start the app host as usual and open *shop-airworks* from the Aspire dashboard. Building the project needs Node.js 22.18 or newer: `dotnet build` runs `npm install` and `npm run build` in `ClientApp` (skip it with `-p:SkipClientBuild=true`).
+Start the app host as usual and open *shop-airworks* from the Aspire dashboard. Building the project needs Node.js 22.18 or newer: `dotnet build` runs `npm install` and `npm run build` in `ClientApp` (skip it with `-p:SkipClientBuild=true`). AirWorks itself is installed from GitHub; `ClientApp/.npmrc` allows that git dependency (`allow-git=root`), which npm 12 and later refuse otherwise.
 
 ## How it signs in
 
