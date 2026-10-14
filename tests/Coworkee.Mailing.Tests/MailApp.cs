@@ -61,6 +61,7 @@ public sealed class MailApp : DatabaseFixture
             ["Coworkee:Settings:Defaults:Mail.Smtp.Host"] = _mailpit.Hostname,
             ["Coworkee:Settings:Defaults:Mail.Smtp.Port"] = _mailpit.GetMappedPublicPort(1025).ToString(System.Globalization.CultureInfo.InvariantCulture),
             ["Coworkee:Settings:Defaults:Mail.From"] = "noreply@coworkee.test",
+            ["Coworkee:Notifications:PublicAppUrl"] = "https://app.test",
         });
         builder.AddCoworkee<TestMailModule>();
         var directory = builder.Services.Single(d => d.ServiceType == typeof(IMailRecipientDirectory));

@@ -1091,5 +1091,7 @@
   "Insert placeholder": "자리 표시자 삽입",
   "default": "기본",
   "Receive newsletters": "뉴스레터 수신",
-  "You will no longer receive newsletters.": "더 이상 뉴스레터를 받지 않습니다."
+  "You will no longer receive newsletters.": "더 이상 뉴스레터를 받지 않습니다.",
+  "Do you want to stop receiving newsletters?": "뉴스레터 수신을 중단하시겠습니까?",
+  "Unsubscribe from newsletters": "뉴스레터 수신 거부"
 }

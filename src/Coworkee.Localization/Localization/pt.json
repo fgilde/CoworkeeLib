@@ -1091,5 +1091,7 @@
   "Insert placeholder": "Inserir marcador",
   "default": "padrão",
   "Receive newsletters": "Receber newsletters",
-  "You will no longer receive newsletters.": "Já não irá receber newsletters."
+  "You will no longer receive newsletters.": "Já não irá receber newsletters.",
+  "Do you want to stop receiving newsletters?": "Pretende deixar de receber newsletters?",
+  "Unsubscribe from newsletters": "Cancelar a subscrição das newsletters"
 }

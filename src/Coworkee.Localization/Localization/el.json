@@ -1091,5 +1091,7 @@
   "Insert placeholder": "Εισαγωγή συμβόλου κράτησης θέσης",
   "default": "προεπιλογή",
   "Receive newsletters": "Λήψη ενημερωτικών δελτίων",
-  "You will no longer receive newsletters.": "Δεν θα λαμβάνετε πλέον ενημερωτικά δελτία."
+  "You will no longer receive newsletters.": "Δεν θα λαμβάνετε πλέον ενημερωτικά δελτία.",
+  "Do you want to stop receiving newsletters?": "Θέλετε να σταματήσετε να λαμβάνετε ενημερωτικά δελτία;",
+  "Unsubscribe from newsletters": "Διαγραφή από τα ενημερωτικά δελτία"
 }

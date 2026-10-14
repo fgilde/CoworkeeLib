@@ -9,6 +9,9 @@ namespace Coworkee.Mailing;
 internal sealed class CampaignMailModels(
     IOptions<NotificationOptions> notifications, IOptions<KeycloakThemeOptions> theme, ICurrentUser currentUser, IServiceProvider services, IMailUnsubscribeLinks links)
 {
+    /// <summary>Campaign mails link back to the app (unsubscribe), so they need its absolute address.</summary>
+    public bool HasPublicUrl => !string.IsNullOrWhiteSpace(notifications.Value.PublicAppUrl);
+
     public async Task<Func<MailRecipient, object>> ForAsync(MailCampaign campaign, CancellationToken cancellationToken)
     {
         var tenantId = currentUser.TenantId;

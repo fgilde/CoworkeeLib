@@ -1091,5 +1091,7 @@
   "Insert placeholder": "Infoga platshållare",
   "default": "standard",
   "Receive newsletters": "Ta emot nyhetsbrev",
-  "You will no longer receive newsletters.": "Du kommer inte längre att få nyhetsbrev."
+  "You will no longer receive newsletters.": "Du kommer inte längre att få nyhetsbrev.",
+  "Do you want to stop receiving newsletters?": "Vill du sluta få nyhetsbrev?",
+  "Unsubscribe from newsletters": "Avsluta prenumerationen på nyhetsbrev"
 }

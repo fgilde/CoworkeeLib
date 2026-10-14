@@ -1091,5 +1091,7 @@
   "Insert placeholder": "Вмъкни заместител",
   "default": "по подразбиране",
   "Receive newsletters": "Получаване на бюлетини",
-  "You will no longer receive newsletters.": "Вече няма да получавате бюлетини."
+  "You will no longer receive newsletters.": "Вече няма да получавате бюлетини.",
+  "Do you want to stop receiving newsletters?": "Искате ли да спрете да получавате бюлетини?",
+  "Unsubscribe from newsletters": "Отписване от бюлетините"
 }

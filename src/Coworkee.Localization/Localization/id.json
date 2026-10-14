@@ -1091,5 +1091,7 @@
   "Insert placeholder": "Sisipkan placeholder",
   "default": "default",
   "Receive newsletters": "Terima buletin",
-  "You will no longer receive newsletters.": "Anda tidak akan lagi menerima buletin."
+  "You will no longer receive newsletters.": "Anda tidak akan lagi menerima buletin.",
+  "Do you want to stop receiving newsletters?": "Apakah Anda ingin berhenti menerima buletin?",
+  "Unsubscribe from newsletters": "Berhenti berlangganan buletin"
 }

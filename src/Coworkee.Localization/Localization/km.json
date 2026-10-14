@@ -1091,5 +1091,7 @@
   "Insert placeholder": "បញ្ចូលកន្លែងទុកជាមុន",
   "default": "លំនាំដើម",
   "Receive newsletters": "ទទួលព្រឹត្តិបត្រព័ត៌មាន",
-  "You will no longer receive newsletters.": "អ្នកនឹងមិនទទួលបានព្រឹត្តិបត្រព័ត៌មានទៀតទេ។"
+  "You will no longer receive newsletters.": "អ្នកនឹងមិនទទួលបានព្រឹត្តិបត្រព័ត៌មានទៀតទេ។",
+  "Do you want to stop receiving newsletters?": "តើអ្នកចង់ឈប់ទទួលព្រឹត្តិបត្រព័ត៌មានឬទេ?",
+  "Unsubscribe from newsletters": "ឈប់ទទួលព្រឹត្តិបត្រព័ត៌មាន"
 }

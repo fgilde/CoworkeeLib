@@ -1091,5 +1091,7 @@
   "Insert placeholder": "Umetni rezervirano mjesto",
   "default": "zadano",
   "Receive newsletters": "Primaj newslettere",
-  "You will no longer receive newsletters.": "Više nećete primati newslettere."
+  "You will no longer receive newsletters.": "Više nećete primati newslettere.",
+  "Do you want to stop receiving newsletters?": "Želite li prestati primati newslettere?",
+  "Unsubscribe from newsletters": "Odjava s newslettera"
 }

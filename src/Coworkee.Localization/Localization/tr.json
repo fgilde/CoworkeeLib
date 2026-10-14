@@ -1091,5 +1091,7 @@
   "Insert placeholder": "Yer tutucu ekle",
   "default": "varsayılan",
   "Receive newsletters": "Bültenleri al",
-  "You will no longer receive newsletters.": "Artık bültenleri almayacaksınız."
+  "You will no longer receive newsletters.": "Artık bültenleri almayacaksınız.",
+  "Do you want to stop receiving newsletters?": "Bültenleri almayı bırakmak istiyor musunuz?",
+  "Unsubscribe from newsletters": "Bültenlerden çık"
 }

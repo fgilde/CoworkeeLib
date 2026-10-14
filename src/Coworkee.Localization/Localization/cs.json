@@ -1091,5 +1091,7 @@
   "Insert placeholder": "Vložit zástupný symbol",
   "default": "výchozí",
   "Receive newsletters": "Dostávat newslettery",
-  "You will no longer receive newsletters.": "Newslettery vám již nebudou chodit."
+  "You will no longer receive newsletters.": "Newslettery vám již nebudou chodit.",
+  "Do you want to stop receiving newsletters?": "Chcete přestat dostávat newslettery?",
+  "Unsubscribe from newsletters": "Odhlásit odběr newsletterů"
 }

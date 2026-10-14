@@ -30,7 +30,7 @@ internal sealed class MailCampaignJob(
             return;
         }
 
-        var error = await QueueAsync(await campaigns.AsNoTracking().SingleAsync(cancellationToken), campaigns, cancellationToken);
+        var error = await QueueAsync(campaignId, campaigns, cancellationToken);
         var finished = await campaigns.Where(c => c.Status == MailCampaignStatus.Sending).ExecuteUpdateAsync(update => update
             .SetProperty(c => c.Status, error is null ? MailCampaignStatus.Sent : MailCampaignStatus.Failed)
             .SetProperty(c => c.FinishedAt, (DateTimeOffset?)clock.GetUtcNow())
@@ -43,10 +43,16 @@ internal sealed class MailCampaignJob(
     }
 
     /// <returns>The error that ended the run, null when it ended normally or because the campaign was cancelled.</returns>
-    private async Task<string?> QueueAsync(MailCampaign campaign, IQueryable<MailCampaign> campaigns, CancellationToken cancellationToken)
+    private async Task<string?> QueueAsync(Guid campaignId, IQueryable<MailCampaign> campaigns, CancellationToken cancellationToken)
     {
         try
         {
+            if (!models.HasPublicUrl)
+            {
+                return MailCampaigns.Describe(MailCampaigns.PublicUrlRequired);
+            }
+
+            var campaign = await campaigns.AsNoTracking().SingleAsync(cancellationToken);
             var source = RecipientSourceJson.Read(campaign.RecipientSource);
             var model = await models.ForAsync(campaign, cancellationToken);
             Guid? after = null;
@@ -61,7 +67,7 @@ internal sealed class MailCampaignJob(
                 var page = await directory.PageAsync(source, after, PageSize, cancellationToken);
                 if (!page.IsSuccess)
                 {
-                    return Shorten(page.Error!.Message);
+                    return Shorten(MailCampaigns.Describe(page.Error!));
                 }
 
                 string? failure = null;
@@ -86,6 +92,7 @@ internal sealed class MailCampaignJob(
                 }
 
                 await db.SaveChangesAsync(cancellationToken);
+                db.ChangeTracker.Clear();
                 total += queued;
                 await campaigns.ExecuteUpdateAsync(update => update.SetProperty(c => c.Total, total), cancellationToken);
                 after = page.Value.Next;
@@ -96,7 +103,7 @@ internal sealed class MailCampaignJob(
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            logger.LogError(exception, "Campaign {CampaignId} failed.", campaign.Id);
+            logger.LogError(exception, "Campaign {CampaignId} failed.", campaignId);
             return Shorten(exception.Message);
         }
     }

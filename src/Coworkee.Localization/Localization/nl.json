@@ -1091,5 +1091,7 @@
   "Insert placeholder": "Tijdelijke aanduiding invoegen",
   "default": "standaard",
   "Receive newsletters": "Nieuwsbrieven ontvangen",
-  "You will no longer receive newsletters.": "U ontvangt geen nieuwsbrieven meer."
+  "You will no longer receive newsletters.": "U ontvangt geen nieuwsbrieven meer.",
+  "Do you want to stop receiving newsletters?": "Wilt u stoppen met het ontvangen van nieuwsbrieven?",
+  "Unsubscribe from newsletters": "Uitschrijven voor nieuwsbrieven"
 }

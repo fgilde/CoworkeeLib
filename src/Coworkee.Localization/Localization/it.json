@@ -1091,5 +1091,7 @@
   "Insert placeholder": "Inserisci segnaposto",
   "default": "predefinito",
   "Receive newsletters": "Ricevi newsletter",
-  "You will no longer receive newsletters.": "Non riceverà più newsletter."
+  "You will no longer receive newsletters.": "Non riceverà più newsletter.",
+  "Do you want to stop receiving newsletters?": "Desidera smettere di ricevere le newsletter?",
+  "Unsubscribe from newsletters": "Annulla l'iscrizione alle newsletter"
 }

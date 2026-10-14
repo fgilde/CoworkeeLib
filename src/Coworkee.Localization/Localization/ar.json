@@ -1091,5 +1091,7 @@
   "Insert placeholder": "إدراج عنصر نائب",
   "default": "افتراضي",
   "Receive newsletters": "تلقي النشرات الإخبارية",
-  "You will no longer receive newsletters.": "لن تتلقى النشرات الإخبارية بعد الآن."
+  "You will no longer receive newsletters.": "لن تتلقى النشرات الإخبارية بعد الآن.",
+  "Do you want to stop receiving newsletters?": "هل تريد التوقف عن تلقي النشرات الإخبارية؟",
+  "Unsubscribe from newsletters": "إلغاء الاشتراك في النشرات الإخبارية"
 }

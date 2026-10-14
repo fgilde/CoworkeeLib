@@ -1091,5 +1091,7 @@
   "Insert placeholder": "Wstaw symbol zastępczy",
   "default": "domyślny",
   "Receive newsletters": "Otrzymuj newslettery",
-  "You will no longer receive newsletters.": "Nie będziesz już otrzymywać newsletterów."
+  "You will no longer receive newsletters.": "Nie będziesz już otrzymywać newsletterów.",
+  "Do you want to stop receiving newsletters?": "Czy chcesz przestać otrzymywać newslettery?",
+  "Unsubscribe from newsletters": "Wypisz się z newsletterów"
 }

@@ -36,6 +36,11 @@ internal static class MailCampaigns
 {
     public static readonly Error NotFound = Error.NotFound("mail.campaign_not_found", "The campaign does not exist.");
 
+    public static readonly Error PublicUrlRequired = Error.Validation("PublicAppUrl", "Set Coworkee:Notifications:PublicAppUrl so mails can link back to the app.");
+
+    public static string Describe(Error error) =>
+        error.Details is { Count: > 0 } details ? string.Join(" ", details.Values.SelectMany(messages => messages)) : error.Message;
+
     public static Error WrongState(string action, MailCampaignStatus status) =>
         Error.Conflict("mail.campaign_state", $"A campaign that is {status.ToString().ToLowerInvariant()} cannot be {action}.");
 
@@ -48,7 +53,7 @@ internal static class MailCampaigns
             : Error.Validation(nameof(SaveMailCampaignRequest.TemplateName), "Choose one of your own mail templates.");
 }
 
-internal sealed class MailCampaignHandlers(CoworkeeDbContext db, ICurrentUser currentUser, IMailTemplateCatalog catalog, IMailRecipientDirectory directory, TimeProvider clock)
+internal sealed class MailCampaignHandlers(CoworkeeDbContext db, ICurrentUser currentUser, IMailTemplateCatalog catalog, IMailRecipientDirectory directory, CampaignMailModels models, TimeProvider clock)
     : IHandler<GetMailCampaigns, Result<IReadOnlyList<MailCampaignDto>>>,
       IHandler<GetMailCampaign, Result<MailCampaignDto>>,
       IHandler<CreateMailCampaign, Result<MailCampaignDto>>,
@@ -139,6 +144,11 @@ internal sealed class MailCampaignHandlers(CoworkeeDbContext db, ICurrentUser cu
         if (campaign.Status != MailCampaignStatus.Draft)
         {
             return MailCampaigns.WrongState("scheduled", campaign.Status);
+        }
+
+        if (!models.HasPublicUrl)
+        {
+            return MailCampaigns.PublicUrlRequired;
         }
 
         if (await CheckAsync(new SaveMailCampaignRequest(campaign.Name, campaign.TemplateName, RecipientSourceJson.Read(campaign.RecipientSource)), cancellationToken) is { } invalid)

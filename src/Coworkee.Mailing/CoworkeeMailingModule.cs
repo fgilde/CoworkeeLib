@@ -95,7 +95,10 @@ public sealed class CoworkeeMailingModule : CoworkeeModule, IWebModule
         api.MapPost("/campaigns/{id:guid}/schedule", (Guid id, ScheduleMailCampaignRequest body, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new ScheduleMailCampaign(id, body), ct).ToHttpResult());
         api.MapPost("/campaigns/{id:guid}/cancel", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new CancelMailCampaign(id), ct).ToHttpResult());
-        api.MapGet("/unsubscribe", (string? token, MailUnsubscribe unsubscribe, CancellationToken ct) => unsubscribe.RunAsync(token, ct)).AllowAnonymous().ExcludeFromDescription();
+        api.MapGet("/unsubscribe", (HttpContext http, string? token, MailUnsubscribe unsubscribe, CancellationToken ct) => unsubscribe.ConfirmAsync(http, token, ct))
+            .AllowAnonymous().ExcludeFromDescription();
+        api.MapPost("/unsubscribe", (HttpContext http, MailUnsubscribe unsubscribe, CancellationToken ct) => unsubscribe.UnsubscribeAsync(http, ct))
+            .AllowAnonymous().DisableAntiforgery().ExcludeFromDescription();
     }
 }
 

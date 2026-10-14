@@ -1091,5 +1091,7 @@
   "Insert placeholder": "Platzhalter einfügen",
   "default": "Standard",
   "Receive newsletters": "Newsletter erhalten",
-  "You will no longer receive newsletters.": "Sie erhalten keine Newsletter mehr."
+  "You will no longer receive newsletters.": "Sie erhalten keine Newsletter mehr.",
+  "Do you want to stop receiving newsletters?": "Möchten Sie keine Newsletter mehr erhalten?",
+  "Unsubscribe from newsletters": "Newsletter abbestellen"
 }

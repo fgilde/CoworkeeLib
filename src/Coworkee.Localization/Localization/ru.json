@@ -1091,5 +1091,7 @@
   "Insert placeholder": "Вставить плейсхолдер",
   "default": "по умолчанию",
   "Receive newsletters": "Получать рассылки",
-  "You will no longer receive newsletters.": "Вы больше не будете получать рассылку."
+  "You will no longer receive newsletters.": "Вы больше не будете получать рассылку.",
+  "Do you want to stop receiving newsletters?": "Хотите перестать получать рассылку?",
+  "Unsubscribe from newsletters": "Отписаться от рассылки"
 }

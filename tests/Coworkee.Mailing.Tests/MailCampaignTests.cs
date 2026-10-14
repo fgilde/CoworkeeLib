@@ -34,6 +34,9 @@ public sealed partial class MailCampaignTests(MailApp app) : IAsyncLifetime
     [GeneratedRegex("href=\"([^\"]*/api/v1/mail/unsubscribe\\?token=[^\"]*)\"")]
     private static partial Regex UnsubscribeLink();
 
+    [GeneratedRegex("name=\"token\" value=\"([^\"]*)\"")]
+    private static partial Regex ConfirmToken();
+
     private static RecipientSourceDto Manual(params Guid[] ids) => new(RecipientSourceKind.Manual, UserIds: ids);
 
     private async Task<Guid> SeedUserAsync(string? email = null)
@@ -121,20 +124,97 @@ public sealed partial class MailCampaignTests(MailApp app) : IAsyncLifetime
         await SetStatusAsync(campaign.Id, MailCampaignStatus.Scheduled);
         await RunAsync(campaign.Id);
         var html = (await MailsAsync(campaign.Id)).Single().HtmlBody;
+        var client = app.App.GetTestClient();
+        var link = new Uri(WebUtility.HtmlDecode(UnsubscribeLink().Match(html).Groups[1].Value)).PathAndQuery;
+        Task<bool> OptedOutAsync() => app.InDbAsync(db => db.Set<SettingValue>().AnyAsync(v => v.Name == MailSettings.Newsletters && v.ScopeKey == user, Ct));
 
-        var link = WebUtility.HtmlDecode(UnsubscribeLink().Match(html).Groups[1].Value);
-        var response = await app.App.GetTestClient().GetAsync(link, Ct);
+        var page = await client.GetAsync(link, Ct);
 
-        link.ShouldContain("/api/v1/mail/unsubscribe?token=");
-        response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        response.Content.Headers.ContentType!.MediaType.ShouldBe("text/html");
-        (await response.Content.ReadAsStringAsync(Ct)).ShouldContain("You will no longer receive newsletters.");
-        var stored = await app.InDbAsync(db => db.Set<SettingValue>().Where(v => v.Name == MailSettings.Newsletters && v.ScopeKey == user).Select(v => v.Value).SingleAsync(Ct));
-        stored.ShouldBe("false");
+        page.StatusCode.ShouldBe(HttpStatusCode.OK);
+        page.Content.Headers.ContentType!.MediaType.ShouldBe("text/html");
+        page.Headers.CacheControl!.NoStore.ShouldBeTrue();
+        page.Headers.GetValues("Referrer-Policy").ShouldBe(["no-referrer"]);
+        var confirm = await page.Content.ReadAsStringAsync(Ct);
+        confirm.ShouldContain("Do you want to stop receiving newsletters?");
+        (await OptedOutAsync()).ShouldBeFalse("opening the link must not change anything");
+        var token = WebUtility.HtmlDecode(ConfirmToken().Match(confirm).Groups[1].Value);
+
+        var done = await client.PostAsync("/api/v1/mail/unsubscribe", new FormUrlEncodedContent([new("token", token)]), Ct);
+
+        done.StatusCode.ShouldBe(HttpStatusCode.OK);
+        done.Headers.CacheControl!.NoStore.ShouldBeTrue();
+        (await done.Content.ReadAsStringAsync(Ct)).ShouldContain("You will no longer receive newsletters.");
+        (await app.InDbAsync(db => db.Set<SettingValue>().Where(v => v.Name == MailSettings.Newsletters && v.ScopeKey == user).Select(v => v.Value).SingleAsync(Ct))).ShouldBe("false");
         var second = await CreateAsync(Manual(user));
         await SetStatusAsync(second.Id, MailCampaignStatus.Scheduled);
         (await RunAsync(second.Id)).Total.ShouldBe(0);
         (await MailsAsync(second.Id)).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Mail_links_are_absolute_from_the_public_app_url()
+    {
+        var campaign = await CreateAsync(Manual(await SeedUserAsync()));
+        await SetStatusAsync(campaign.Id, MailCampaignStatus.Scheduled);
+        await RunAsync(campaign.Id);
+
+        var link = WebUtility.HtmlDecode(UnsubscribeLink().Match((await MailsAsync(campaign.Id)).Single().HtmlBody).Groups[1].Value);
+
+        link.ShouldStartWith("https://app.test/api/v1/mail/unsubscribe?token=");
+    }
+
+    [Fact]
+    public async Task Scheduling_is_refused_and_the_job_fails_without_the_public_app_url()
+    {
+        var options = app.App.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<Coworkee.Contracts.Configuration.NotificationOptions>>().Value;
+        var campaign = await CreateAsync(Manual(await SeedUserAsync()));
+        var queued = await CreateAsync(Manual(await SeedUserAsync()));
+        await SetStatusAsync(queued.Id, MailCampaignStatus.Scheduled);
+        options.PublicAppUrl = null;
+        try
+        {
+            var response = await Admin.PostAsJsonAsync($"/api/v1/mail/campaigns/{campaign.Id}/schedule", new ScheduleMailCampaignRequest(null), Ct);
+            var failed = await RunAsync(queued.Id);
+
+            response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+            (await response.Content.ReadAsStringAsync(Ct)).ShouldContain("Coworkee:Notifications:PublicAppUrl");
+            (await CampaignAsync(campaign.Id)).Status.ShouldBe(MailCampaignStatus.Draft);
+            failed.ShouldSatisfyAllConditions(c => c.Status.ShouldBe(MailCampaignStatus.Failed), c => c.Error!.ShouldContain("PublicAppUrl"));
+            (await MailsAsync(queued.Id)).ShouldBeEmpty();
+        }
+        finally
+        {
+            options.PublicAppUrl = "https://app.test";
+        }
+    }
+
+    [Fact]
+    public async Task All_pages_are_queued()
+    {
+        var users = new[] { await SeedUserAsync(), await SeedUserAsync(), await SeedUserAsync() };
+        var campaign = await CreateAsync(Manual(users));
+        await SetStatusAsync(campaign.Id, MailCampaignStatus.Scheduled);
+
+        var finished = await RunAsync(campaign.Id, pageSize: 1);
+
+        finished.ShouldSatisfyAllConditions(c => c.Status.ShouldBe(MailCampaignStatus.Sent), c => c.Total.ShouldBe(3));
+        (await MailsAsync(campaign.Id)).Count.ShouldBe(3);
+    }
+
+    [Fact]
+    public async Task Unreadable_source_marks_the_campaign_failed()
+    {
+        var id = await app.InDbAsync(async db =>
+        {
+            var created = new MailCampaign { TenantId = _setup.TenantId, Name = "Broken", TemplateName = "News.1", RecipientSource = "not json", Status = MailCampaignStatus.Scheduled, CreatedBy = _setup.AdminUserId, CreatedAt = DateTimeOffset.UtcNow };
+            db.Add(created);
+            await db.SaveChangesAsync(Ct);
+            return created.Id;
+        });
+
+        var finished = await RunAsync(id);
+
+        finished.ShouldSatisfyAllConditions(c => c.Status.ShouldBe(MailCampaignStatus.Failed), c => c.Error.ShouldNotBeNullOrWhiteSpace());
     }
 
     [Fact]
@@ -143,17 +223,20 @@ public sealed partial class MailCampaignTests(MailApp app) : IAsyncLifetime
         var user = await SeedUserAsync();
         var token = app.App.Services.GetRequiredService<IDataProtectionProvider>().CreateProtector("Another.Purpose").Protect($"{user:N}:{_setup.TenantId:N}");
         var valid = await app.AsActorAsync(null, null, sp => Task.FromResult(sp.GetRequiredService<IMailUnsubscribeLinks>().Create(user, _setup.TenantId)));
-        var broken = valid[..^3] + (valid[^3] == 'A' ? "B" : "A") + valid[^2..];
+        var good = Uri.UnescapeDataString(valid[(valid.IndexOf("token=", StringComparison.Ordinal) + 6)..]);
+        var broken = good[..^3] + (good[^3] == 'A' ? "B" : "A") + good[^2..];
         var client = app.App.GetTestClient();
 
-        foreach (var url in new[] { $"/api/v1/mail/unsubscribe?token={Uri.EscapeDataString(token)}", broken, "/api/v1/mail/unsubscribe?token=", "/api/v1/mail/unsubscribe" })
+        foreach (var bad in new[] { token, broken, string.Empty })
         {
-            (await client.GetAsync(url, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest, url);
+            (await client.GetAsync($"/api/v1/mail/unsubscribe?token={Uri.EscapeDataString(bad)}", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest, "GET " + bad);
+            (await client.PostAsync("/api/v1/mail/unsubscribe", new FormUrlEncodedContent([new("token", bad)]), Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest, "POST " + bad);
         }
 
+        (await client.GetAsync("/api/v1/mail/unsubscribe", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await client.PostAsync("/api/v1/mail/unsubscribe", JsonContent.Create(new { token = good }), Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await app.InDbAsync(db => db.Set<SettingValue>().AnyAsync(v => v.Name == MailSettings.Newsletters && v.ScopeKey == user, Ct))).ShouldBeFalse();
     }
-
     [Fact]
     public async Task Only_custom_templates_can_be_sent()
     {
@@ -222,6 +305,7 @@ public sealed partial class MailCampaignTests(MailApp app) : IAsyncLifetime
 
             finished.Status.ShouldBe(MailCampaignStatus.Failed, filter);
             finished.Error.ShouldNotBeNullOrWhiteSpace();
+            finished.Error.ShouldNotBe("One or more validation errors occurred.");
             finished.FinishedAt.ShouldNotBeNull();
         }
     }

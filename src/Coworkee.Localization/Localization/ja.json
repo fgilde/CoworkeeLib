@@ -1091,5 +1091,7 @@
   "Insert placeholder": "プレースホルダーを挿入",
   "default": "デフォルト",
   "Receive newsletters": "ニュースレターを受け取る",
-  "You will no longer receive newsletters.": "ニュースレターは今後届きません。"
+  "You will no longer receive newsletters.": "ニュースレターは今後届きません。",
+  "Do you want to stop receiving newsletters?": "ニュースレターの受信を停止しますか？",
+  "Unsubscribe from newsletters": "ニュースレターの配信を停止する"
 }

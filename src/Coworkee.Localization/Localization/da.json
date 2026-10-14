@@ -1091,5 +1091,7 @@
   "Insert placeholder": "Indsæt pladsholder",
   "default": "standard",
   "Receive newsletters": "Modtag nyhedsbreve",
-  "You will no longer receive newsletters.": "Du modtager ikke længere nyhedsbreve."
+  "You will no longer receive newsletters.": "Du modtager ikke længere nyhedsbreve.",
+  "Do you want to stop receiving newsletters?": "Vil du stoppe med at modtage nyhedsbreve?",
+  "Unsubscribe from newsletters": "Afmeld nyhedsbreve"
 }

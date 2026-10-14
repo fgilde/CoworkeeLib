@@ -1091,5 +1091,7 @@
   "Insert placeholder": "Insérer un espace réservé",
   "default": "par défaut",
   "Receive newsletters": "Recevoir les newsletters",
-  "You will no longer receive newsletters.": "Vous ne recevrez plus de newsletters."
+  "You will no longer receive newsletters.": "Vous ne recevrez plus de newsletters.",
+  "Do you want to stop receiving newsletters?": "Voulez-vous ne plus recevoir de newsletters ?",
+  "Unsubscribe from newsletters": "Se désabonner des newsletters"
 }
