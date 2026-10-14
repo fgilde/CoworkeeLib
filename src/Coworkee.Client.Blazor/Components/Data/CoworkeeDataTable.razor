@@ -66,6 +66,10 @@
     }
     <MudSpacer />
     @ToolBarContent
+    @foreach (var item in ToolbarItems)
+    {
+        <DynamicComponent Type="item.Component" Parameters="ToolbarParameters" />
+    }
     @if (_grid is not null)
     {
         @if (Groupable)

@@ -11,6 +11,16 @@ public enum ClientEntitySyncState
     Failed,
 }
 
+/// <summary>Where the queries of a mirrored set run once its copy is complete.</summary>
+public enum ClientEntityMode
+{
+    /// <summary>In the browser, on the local copy (the default).</summary>
+    Client,
+
+    /// <summary>On the server; the copy keeps syncing, so switching back is instant.</summary>
+    Server,
+}
+
 /// <param name="IsLocal">Queries run on the local copy; before that, and for queries it cannot answer, they go to the server.</param>
 /// <param name="Revision">Grows whenever the local rows change, e.g. to reload a view.</param>
 public sealed record ClientEntityStatus(ClientEntitySyncState State, bool IsLocal, int Loaded, long Total, DateTimeOffset? Version, string? Error, int Revision)

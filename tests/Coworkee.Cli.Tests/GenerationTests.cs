@@ -63,7 +63,7 @@ public sealed class GenerationTests
         Content(files, "OrderEndpoints.cs").ShouldContain("app.MapCoworkeeApi(\"/api/v1/orders\")");
         Content(files, "SalesPermissions.Orders.cs").ShouldContain("public const string Delete = \"Sales.Orders.Delete\";");
         Content(files, "OrdersPage.razor").ShouldContain("@page \"/sales/orders\"");
-        Content(files, "OrdersPage.razor").ShouldContain("<ClientEntityIndicator EntitySet=\"Orders\"");
+        Content(files, "OrdersPage.razor").ShouldNotContain("ToolBarContent", customMessage: "the table brings the client entity switch itself");
         Content(files, "OrdersPage.razor").ShouldContain("<PropertyColumn Property=\"e => e.ShippedAt\" Title=\"@L[\"Shipped at\"]\" />");
         Content(files, "OrdersPage.razor.cs").ShouldContain("[nameof(OrderDto.Number), nameof(OrderDto.Note)]");
         Content(files, "OrdersNavigation.cs").ShouldContain("Group: \"Sales\"");

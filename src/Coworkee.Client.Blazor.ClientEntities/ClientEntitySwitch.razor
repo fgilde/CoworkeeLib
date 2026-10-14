@@ -1,0 +1,52 @@
+<style>
+    .cw-ce-switch { position: relative; display: inline-grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%;
+        background: transparent; color: var(--mud-palette-action-default); cursor: pointer; }
+    .cw-ce-switch:hover { background: var(--mud-palette-action-default-hover); }
+    .cw-ce-switch:focus-visible { outline: 2px solid var(--mud-palette-primary); outline-offset: 1px; }
+    .cw-ce-switch > * { grid-area: 1 / 1; }
+    .cw-ce-switch .cw-ce-ring { width: 32px !important; height: 32px !important; }
+    .cw-ce-switch.local .cw-ce-icon { color: var(--mud-palette-primary); }
+    .cw-ce-status { display: block; max-width: 300px; padding: 8px 16px 4px; color: var(--mud-palette-text-secondary); }
+    .cw-ce-item { display: flex; align-items: center; gap: 8px; width: 100%; }
+    .cw-ce-item .cw-ce-check { margin-left: auto; }
+</style>
+@if (_set is { } set)
+{
+    <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="Density.Dense" Class="mb-2" data-testid="client-entity-switch">
+        <ActivatorContent Context="menu">
+            <MudTooltip Text="@Describe(set)">
+                <button type="button" class="@($"cw-ce-switch {(SearchesLocally(set) ? "local" : "server")}")" aria-label="@L["Where searching runs: {0}", Describe(set)]"
+                        data-mode="@set.Mode" data-state="@State(set.Status)" data-testid="client-entity-state" @onclick="() => menu.ToggleAsync()">
+                    <MudProgressCircular Class="cw-ce-ring" Size="Size.Small" StrokeWidth="3" Color="@RingColor(set.Status)" Value="@RingValue(set.Status)"
+                                         Indeterminate="@(set.Status.State == ClientEntitySyncState.Updating)" />
+                    <MudIcon Class="cw-ce-icon" Icon="@(SearchesLocally(set) ? Icons.Material.Outlined.Computer : Icons.Material.Outlined.Cloud)" Size="Size.Small" />
+                </button>
+            </MudTooltip>
+        </ActivatorContent>
+        <ChildContent>
+            <MudText Typo="Typo.caption" Class="cw-ce-status">@Describe(set)</MudText>
+            <MudMenuItem OnClick="() => ChooseAsync(ClientEntityMode.Client)" Disabled="@(!set.Status.IsLocal)" data-choice="Client">
+                <span class="cw-ce-item">
+                    <MudIcon Icon="@Icons.Material.Outlined.Computer" Size="Size.Small" />@L["Search in the browser"]
+                    @if (set.Mode == ClientEntityMode.Client)
+                    {
+                        <MudIcon Class="cw-ce-check" Icon="@Icons.Material.Filled.Check" Size="Size.Small" Color="Color.Primary" />
+                    }
+                </span>
+            </MudMenuItem>
+            <MudMenuItem OnClick="() => ChooseAsync(ClientEntityMode.Server)" data-choice="Server">
+                <span class="cw-ce-item">
+                    <MudIcon Icon="@Icons.Material.Outlined.Cloud" Size="Size.Small" />@L["Search on the server"]
+                    @if (set.Mode == ClientEntityMode.Server)
+                    {
+                        <MudIcon Class="cw-ce-check" Icon="@Icons.Material.Filled.Check" Size="Size.Small" Color="Color.Primary" />
+                    }
+                </span>
+            </MudMenuItem>
+            <MudDivider Class="my-1" />
+            <MudMenuItem OnClick="CompareAsync" Disabled="@(!set.Status.IsLocal || _comparing)" data-testid="client-entity-compare">
+                <span class="cw-ce-item"><MudIcon Icon="@Icons.Material.Outlined.Speed" Size="Size.Small" />@L["Compare and choose the faster"]</span>
+            </MudMenuItem>
+        </ChildContent>
+    </MudMenu>
+}

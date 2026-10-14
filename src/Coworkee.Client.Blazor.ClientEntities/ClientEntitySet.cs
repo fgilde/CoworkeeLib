@@ -14,11 +14,28 @@ public abstract class ClientEntitySet : IAsyncDisposable
 
     public ClientEntityStatus Status { get; private set; } = ClientEntityStatus.Initial;
 
-    /// <summary>The status or the rows changed.</summary>
+    /// <summary>The status, the mode or the rows changed.</summary>
     public event Action<ClientEntitySet>? Changed;
+
+    /// <summary>Where OData queries run once the copy is complete; <see cref="ClientEntities.SetModeAsync"/> also remembers it for the user.</summary>
+    public ClientEntityMode Mode
+    {
+        get;
+        set
+        {
+            if (field != value)
+            {
+                field = value;
+                Changed?.Invoke(this);
+            }
+        }
+    }
 
     /// <summary>Asks the server for changes now instead of at the next interval.</summary>
     public abstract Task RefreshAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Runs <paramref name="query"/> on one side, whatever the mode, and tells how long it took and how many rows matched; the local side needs the complete copy.</summary>
+    public abstract Task<(TimeSpan Elapsed, long? Count)> MeasureAsync(ODataQuery query, ClientEntityMode side, CancellationToken cancellationToken = default);
 
     public abstract ValueTask DisposeAsync();
 
@@ -108,7 +125,7 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
     public async Task<ODataPage<T>> QueryAsync(ODataQuery query, CancellationToken cancellationToken = default)
     {
         Start();
-        if (_table is { } table && Covers(query))
+        if (Mode == ClientEntityMode.Client && _table is { } table && Covers(query))
         {
             try
             {
@@ -129,6 +146,15 @@ public sealed class ClientEntitySet<T> : ClientEntitySet
         Start();
         await WhenLocalAsync(cancellationToken);
         return [.. query(Query())];
+    }
+
+    public override async Task<(TimeSpan Elapsed, long? Count)> MeasureAsync(ODataQuery query, ClientEntityMode side, CancellationToken cancellationToken = default)
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        var page = side == ClientEntityMode.Client
+            ? await LocalAsync(_table ?? throw new InvalidOperationException($"{EntitySet} is not local yet."), query, cancellationToken)
+            : await _server.QueryAsync<T>(EntitySet, query, cancellationToken);
+        return (watch.Elapsed, page.Count);
     }
 
     public override Task RefreshAsync(CancellationToken cancellationToken = default)
