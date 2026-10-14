@@ -232,8 +232,9 @@ public sealed class MailCampaignsPageTests : ClientTestBase
     }
 
     [Fact]
-    public async Task Schedule_sends_the_chosen_time()
+    public async Task Schedule_sends_the_chosen_time_of_the_browser_zone_as_utc()
     {
+        JSInterop.SetupModule("./_content/Coworkee.Client.Blazor/coworkee.js").Setup<int>("utcOffsetMinutes", _ => true).SetResult(-300);
         OpenWizard();
         await ToSendStepAsync();
         var date = new DateTime(2027, 1, 5);
@@ -248,7 +249,7 @@ public sealed class MailCampaignsPageTests : ClientTestBase
         await Button("Confirm").ClickAsync(new());
         await scheduling;
 
-        await Api.Received(1).ScheduleMailCampaignAsync(Draft, new DateTimeOffset(new DateTime(2027, 1, 5, 9, 30, 0)), Arg.Any<CancellationToken>());
+        await Api.Received(1).ScheduleMailCampaignAsync(Draft, new DateTimeOffset(2027, 1, 5, 14, 30, 0, TimeSpan.Zero), Arg.Any<CancellationToken>());
     }
 
     [Fact]

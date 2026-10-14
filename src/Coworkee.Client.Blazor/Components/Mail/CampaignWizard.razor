@@ -46,7 +46,7 @@
             <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
                 <MudDatePicker Date="_date" DateChanged="date => _date = date" Label="@L["Date"]" Variant="Variant.Outlined" Margin="Density.Margin" Style="max-width:200px" data-testid="schedule-date" />
                 <MudTimePicker Time="_time" TimeChanged="time => _time = time" Label="@L["Time"]" Variant="Variant.Outlined" Margin="Density.Margin" Style="max-width:160px" data-testid="schedule-time" />
-                <MudButton Variant="Variant.Filled" Color="Color.Secondary" Disabled="@(_busy || _date is null || _time is null)" OnClick="() => StartAsync(ScheduledAt())"
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" Disabled="@(_busy || _date is null || _time is null)" OnClick="ScheduleAsync"
                            data-testid="schedule">@L["Schedule"]</MudButton>
             </MudStack>
         </div>

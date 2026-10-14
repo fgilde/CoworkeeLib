@@ -156,7 +156,13 @@ internal sealed class MailCampaignHandlers(CoworkeeDbContext db, ICurrentUser cu
             return invalid;
         }
 
-        campaign.Schedule(command.Request.At is { } at && at > clock.GetUtcNow() ? at : null);
+        var now = clock.GetUtcNow();
+        if (command.Request.At is { } past && past < now.AddMinutes(-1))
+        {
+            return Error.Validation(nameof(ScheduleMailCampaignRequest.At), "The time to send must not be in the past.");
+        }
+
+        campaign.Schedule(command.Request.At is { } at && at > now ? at : null);
         return await DtoAsync(campaign, cancellationToken);
     }
 

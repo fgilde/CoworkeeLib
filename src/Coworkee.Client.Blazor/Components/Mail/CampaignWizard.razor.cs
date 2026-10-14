@@ -3,6 +3,7 @@ using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Mailing;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Components.Mail;
@@ -34,6 +35,8 @@ public partial class CampaignWizard
 
     [Inject] private IDialogService Dialogs { get; set; } = null!;
 
+    [Inject] private IJSRuntime JS { get; set; } = null!;
+
     private string? TemplateTitle => _templates.FirstOrDefault(t => t.Name == _template)?.DisplayName ?? _template;
 
     private bool CanContinue => _step switch
@@ -63,7 +66,16 @@ public partial class CampaignWizard
 
     private void Back() => _step--;
 
-    private DateTimeOffset ScheduledAt() => new(DateTime.SpecifyKind(_date!.Value.Date + _time!.Value, DateTimeKind.Unspecified));
+    private async Task ScheduleAsync() => await StartAsync(await ScheduledAtAsync());
+
+    // the picked time is wall clock time of the browser, not of the server that renders the page
+    private async Task<DateTimeOffset> ScheduledAtAsync()
+    {
+        var local = DateTime.SpecifyKind(_date!.Value.Date + _time!.Value, DateTimeKind.Unspecified);
+        await using var module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");
+        var minutes = await module.InvokeAsync<int>("utcOffsetMinutes", local.Year, local.Month, local.Day, local.Hour, local.Minute);
+        return new DateTimeOffset(local, TimeSpan.FromMinutes(minutes));
+    }
 
     private async Task<bool> SaveDraftAsync()
     {
@@ -105,7 +117,7 @@ public partial class CampaignWizard
         _busy = true;
         try
         {
-            if (await SaveDraftAsync() && await Snackbar.RunAsync(() => Api.ScheduleMailCampaignAsync(_id!.Value, at), L[at is null ? "Campaign started." : "Campaign scheduled."]))
+            if (await SaveDraftAsync() && await Snackbar.RunAsync(() => Api.ScheduleMailCampaignAsync(_id!.Value, at?.ToUniversalTime()), L[at is null ? "Campaign started." : "Campaign scheduled."]))
             {
                 Dialog.Close(DialogResult.Ok(true));
             }

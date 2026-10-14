@@ -125,3 +125,7 @@ export function loadMonaco() {
 export function prefersDark() {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
 }
+
+export function utcOffsetMinutes(year, month, day, hour, minute) {
+    return -new Date(year, month - 1, day, hour, minute).getTimezoneOffset();
+}
