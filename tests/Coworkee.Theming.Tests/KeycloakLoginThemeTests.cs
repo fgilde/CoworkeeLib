@@ -112,6 +112,19 @@ public sealed class KeycloakLoginThemeTests : IDisposable
         Directory.GetFiles(_root, "*.tmp", SearchOption.AllDirectories).ShouldBeEmpty();
     }
 
+    [Fact]
+    public void Keycloak_running_as_another_user_can_read_the_theme_even_from_a_private_folder()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "Unix file modes only.");
+        File.SetUnixFileMode(_root, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+
+        Write(Content());
+
+        File.GetUnixFileMode(_root).HasFlag(UnixFileMode.OtherRead | UnixFileMode.OtherExecute).ShouldBeTrue();
+        File.GetUnixFileMode(Path.Combine(Login, "resources", "css")).HasFlag(UnixFileMode.OtherRead | UnixFileMode.OtherExecute).ShouldBeTrue();
+        File.GetUnixFileMode(Path.Combine(Login, "resources", "css", "coworkee.css")).HasFlag(UnixFileMode.OtherRead).ShouldBeTrue();
+    }
+
     [Theory]
     [InlineData("../evil")]
     [InlineData("Upper")]

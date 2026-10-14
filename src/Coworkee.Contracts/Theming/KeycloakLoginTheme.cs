@@ -96,6 +96,24 @@ public static partial class KeycloakLoginTheme
         {
             File.Delete(Path.Combine(images, $"logo.{extension}"));
         }
+
+        foreach (var directory in Directory.EnumerateDirectories(Path.Combine(themesDirectory, name), "*", SearchOption.AllDirectories).Prepend(Path.Combine(themesDirectory, name)).Prepend(themesDirectory))
+        {
+            Readable(directory, ReadableDirectory);
+        }
+    }
+
+    private const UnixFileMode ReadableFile = UnixFileMode.GroupRead | UnixFileMode.OtherRead;
+
+    private const UnixFileMode ReadableDirectory = ReadableFile | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute;
+
+    // Keycloak reads the mounted folder as its own user (uid 1000): outside Windows a 0700 temp folder or a strict umask would hide the theme
+    private static void Readable(string path, UnixFileMode mode)
+    {
+        if (!OperatingSystem.IsWindows() && (File.GetUnixFileMode(path) & mode) != mode)
+        {
+            File.SetUnixFileMode(path, File.GetUnixFileMode(path) | mode);
+        }
     }
 
     private const string Properties = """
@@ -162,6 +180,7 @@ public static partial class KeycloakLoginTheme
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         var temp = $"{path}.{Guid.NewGuid():N}.tmp";
         File.WriteAllBytes(temp, bytes);
+        Readable(temp, ReadableFile);
         // on Windows a reader of the old file (Keycloak through the bind mount) blocks the replace for a moment
         for (var attempt = 1; ; attempt++)
         {
