@@ -1,11 +1,11 @@
 import type { AppContext, Intent } from '@fgilde/airworks';
 import type { Coworkee, CoworkeeApp } from '../coworkee.ts';
-import { errorText, esc } from '../dom.ts';
-import { loadMudEx } from '../mudex.ts';
+import { esc } from '../dom.ts';
+import { mudExFrame } from '../mudex.ts';
 
 export const filePreviewAppId = 'coworkee.file-preview';
 
-/** One file in a window, shown by MudEx's file display (pdf, images, office documents, archives, markdown, audio, video). */
+/** One file in a window, shown by MudEx's file display (pdf, images, office documents, archives, markdown, audio, video) in its own frame. */
 export const filePreviewApp = (coworkee: Coworkee): CoworkeeApp => ({
   id: filePreviewAppId,
   title: coworkee.t('Preview'),
@@ -18,24 +18,16 @@ export const filePreviewApp = (coworkee: Coworkee): CoworkeeApp => ({
   render: ({ host, intent, onIntent, setTitle, setState }: AppContext) => {
     host.classList.add('cw-host');
     host.innerHTML = `<div class="cw-app cw-preview"><p class="cw-muted">${esc(coworkee.t('MudDataGrid_Loading'))}</p></div>`;
-    const show = async (file?: Intent) => {
+    const show = (file?: Intent) => {
       if (!file?.id) return;
       setTitle(file.name || coworkee.t('Preview'));
       setState(file, file.name);
-      try {
-        await loadMudEx(coworkee.mudExUrl, coworkee.mode === 'dark');
-        const display = document.createElement('mudex-file-display');
-        display.className = 'cw-file-display';
-        display.setAttribute('url', `/api/v1/files/${encodeURIComponent(file.id)}/content`);
-        if (file.contentType) display.setAttribute('content-type', file.contentType);
-        if (file.name) display.setAttribute('file-name', file.name);
-        display.setAttribute('show-file-name', 'false');
-        host.querySelector('.cw-preview')!.replaceChildren(display);
-      } catch (error) {
-        host.querySelector('.cw-preview')!.innerHTML = `<p class="cw-error">${esc(errorText(error))}</p>`;
-      }
+      const attributes: Record<string, string> = { url: `/api/v1/files/${encodeURIComponent(file.id)}/content`, 'show-file-name': 'false' };
+      if (file.contentType) attributes['content-type'] = file.contentType;
+      if (file.name) attributes['file-name'] = file.name;
+      host.querySelector('.cw-preview')!.replaceChildren(mudExFrame('mudex-file-display', attributes, { url: coworkee.mudExUrl, dark: coworkee.mode === 'dark', title: file.name }));
     };
-    onIntent((next) => void show(next));
-    void show(intent);
+    onIntent(show);
+    show(intent);
   },
 });
