@@ -79,3 +79,43 @@ test('a recipient source keeps only the fields of its kind', async () => {
   assert.deepEqual(sourceOf({ ...values, kind: 'Manual' }), { kind: 'Manual', preset: null, days: null, roleIds: null, filter: null, userIds: ['u1'] });
   assert.deepEqual(sourceOf({ ...values, kind: 'Query' }).filter, 'x');
 });
+
+test('report widgets: palette defaults, placement on the 12 column grid and the date range filter', async () => {
+  const { createWidget, place, presets, resolveRange, widgetFilter } = await import('../src/apps/report-model.ts');
+  const sources = [{ entitySet: 'Orders', label: 'Orders', topic: null, fields: [
+    { path: 'Status', label: 'Status', kind: 'Enum' }, { path: 'Placed', label: 'Placed', kind: 'Date' }, { path: 'Total', label: 'Total', kind: 'Number' }] }] as never;
+  const line = createWidget(presets.find((preset) => preset.chart === 'Line')!, sources, []);
+  assert.deepEqual(line.query?.groupBy, { field: 'Placed', bucket: 'Month' });
+  const kpi = createWidget(presets[0], sources, [line]);
+  assert.equal(kpi.y, 5);
+  assert.equal(kpi.query?.groupBy, null);
+  assert.equal(createWidget(presets.find((preset) => preset.type === 'Markdown')!, sources, []).query, null);
+  assert.deepEqual(place({ x: 10, y: 0, w: 4, h: 3 }, {}), { x: 8, y: 0, w: 4, h: 3 });
+  assert.deepEqual(place({ x: 0, y: 0, w: 4, h: 3 }, { x: -2.4, y: 1.6, w: 20 }), { x: 0, y: 2, w: 12, h: 3 });
+  const today = new Date(2026, 9, 14);
+  assert.deepEqual(resolveRange({ preset: 'Last7Days' } as never, today), { from: '2026-10-08', to: '2026-10-15' });
+  assert.deepEqual(resolveRange({ preset: 'ThisQuarter' } as never, today), { from: '2026-10-01', to: '2027-01-01' });
+  assert.deepEqual(resolveRange({ preset: 'Custom', from: '2026-01-01', to: '2026-01-31' } as never, today), { from: '2026-01-01', to: '2026-02-01' });
+  assert.equal(widgetFilter({ ...line.query!, filter: "Status eq 'Open'" }, { preset: 'Today' } as never, today),
+    "(Status eq 'Open') and (Placed ge 2026-10-14T00:00:00Z and Placed lt 2026-10-15T00:00:00Z)");
+  assert.equal(widgetFilter({ ...kpi.query!, dateField: null }, null), null);
+});
+
+test('the designer sets values at their paths and clears a grouping with its field', async () => {
+  const { createWidget, presets } = await import('../src/apps/report-model.ts');
+  const { setPath } = await import('../src/apps/report-designer.ts');
+  const widget = createWidget(presets[1], [{ entitySet: 'Orders', label: 'Orders', fields: [{ path: 'Status', label: 'Status', kind: 'Enum' }, { path: 'Total', label: 'Total', kind: 'Number' }] }] as never, []);
+  setPath(widget, 'options.chart', 'Pie');
+  setPath(widget, 'query.aggregates.0.function', 'Sum');
+  setPath(widget, 'query.aggregates.0.field', 'Total');
+  setPath(widget, 'query.splitBy.field', 'Total');
+  setPath(widget, 'query.groupBy.field', '');
+  setPath(widget, 'title', '');
+  assert.equal(widget.options.chart, 'Pie');
+  assert.deepEqual(widget.query?.aggregates?.[0], { function: 'Sum', field: 'Total', label: null });
+  assert.deepEqual(widget.query?.splitBy, { field: 'Total', bucket: 'None' });
+  assert.equal(widget.query?.groupBy, null);
+  assert.equal(widget.title, null);
+  setPath(widget, 'query.aggregates.0.function', 'Count');
+  assert.equal(widget.query?.aggregates?.[0].field, null);
+});

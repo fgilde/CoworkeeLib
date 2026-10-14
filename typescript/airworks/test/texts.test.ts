@@ -13,6 +13,17 @@ const dynamic = [
   'Identity', 'System', 'Communication', 'Localization', 'Monitoring', 'Online', 'Offline', 'Confirm to run:', 'Confirmed:', 'Declined:',
 ];
 
+async function reportKeys(): Promise<string[]> {
+  const { presets } = await import('../src/apps/report-model.ts');
+  const { datePresets, humanize } = await import('../src/apps/reports.ts');
+  const buckets = ['Day', 'Week', 'Month', 'Quarter', 'Year'];
+  return [
+    ...presets.map((preset) => preset.name), ...datePresets.map(humanize), ...['Count', 'Sum', 'Average', 'Min', 'Max', 'DistinctCount'].map(humanize),
+    ...buckets, ...buckets.map((bucket) => `By ${bucket.toLowerCase()}`), 'Number', 'Integer', 'Compact', 'Currency', 'Percent', 'Table', 'Cards', 'List',
+    'Never', 'Every 30 seconds', 'Every minute', 'Every 5 minutes', 'Every 15 minutes', 'Every hour', 'Only me', 'Everybody in the organisation', 'Category', 'Value',
+  ];
+}
+
 function literalKeys(): Set<string> {
   const keys = new Set(dynamic);
   const files = readdirSync(source, { recursive: true, encoding: 'utf8' }).filter((file) => file.endsWith('.ts'));
@@ -24,8 +35,9 @@ function literalKeys(): Set<string> {
   return keys;
 }
 
-test('every text of the apps is translated in every shipped language of the library', () => {
+test('every text of the apps is translated in every shipped language of the library', async () => {
   const keys = literalKeys();
+  for (const key of await reportKeys()) keys.add(key);
   const missing: string[] = [];
   for (const file of readdirSync(languages).filter((name) => name.endsWith('.json'))) {
     const texts = JSON.parse(readFileSync(join(languages, file), 'utf8')) as Record<string, string>;

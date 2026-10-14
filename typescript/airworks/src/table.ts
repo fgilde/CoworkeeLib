@@ -11,6 +11,10 @@ export type EntityTableOptions = {
   /** Fields the search box looks in; without them the text columns. */
   searchFields?: string[];
   pageSize?: number;
+  /** OData filter every page keeps, e.g. a report widget's; the search narrows it further. */
+  filter?: string;
+  /** Sorting at the start, e.g. 'Name desc'. */
+  orderBy?: string;
   /** Entity type whose changes (realtime topic type:{name}, the entity needs [Realtime]) reload the table, e.g. Product. */
   liveType?: string;
 };
@@ -41,7 +45,7 @@ export function renderEntityTable(coworkee: Coworkee, host: HTMLElement, options
   const { t, culture } = coworkee;
   const pageSize = options.pageSize ?? 25;
   let page = 0;
-  let orderBy: string | undefined;
+  let orderBy: string | undefined = options.orderBy;
   let search = '';
   let columns = options.columns;
   let searchFields = options.searchFields;
@@ -58,7 +62,8 @@ export function renderEntityTable(coworkee: Coworkee, host: HTMLElement, options
 
   const load = async () => {
     try {
-      const filter = search && searchFields ? searchFilter(searchFields, search) : undefined;
+      const searched = search && searchFields ? searchFilter(searchFields, search) : undefined;
+      const filter = [options.filter, searched].filter(Boolean).map((part) => `(${part})`).join(' and ') || undefined;
       const result = await odataPage<Row>(options.entitySet, { top: pageSize, skip: page * pageSize, orderBy, filter, count: true });
       columns ??= columnsOf(result.items);
       searchFields ??= textFields(result.items, columns);
