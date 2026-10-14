@@ -1,21 +1,41 @@
 @page "/admin/mail/templates"
 @attribute [Authorize(Policy = "perm:" + MailPermissions.Templates.Manage)]
 
-<PageTitle>Mail templates</PageTitle>
-<MudText Typo="Typo.h4" Class="mb-4">Mail templates</MudText>
+<PageTitle>@L["Mail templates"]</PageTitle>
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+    <MudText Typo="Typo.h4">@L["Mail templates"]</MudText>
+    <MudSpacer />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" Size="Size.Small" Disabled="_busy"
+               OnClick="CreateAsync" data-testid="new-mail-template">@L["New template"]</MudButton>
+</MudStack>
 <MudSimpleTable Dense="Density.Dense" Hover="true">
-    <thead><tr><th>Template</th><th>Name</th><th>Languages</th></tr></thead>
+    <thead><tr><th>@L["Template"]</th><th>@L["Name"]</th><th>@L["Languages"]</th><th></th></tr></thead>
     <tbody>
         @foreach (var template in _templates)
         {
             <tr>
-                <td>@template.DisplayName</td>
+                <td>
+                    @template.DisplayName
+                    @if (template.IsCustom)
+                    {
+                        <MudChip T="string" Size="Size.Small" data-testid="@($"custom-template-{template.Name}")">@L["custom"]</MudChip>
+                    }
+                </td>
                 <td><MudText Typo="Typo.caption">@template.Name</MudText></td>
                 <td>
                     @foreach (var culture in template.Cultures)
                     {
                         <MudChip T="string" Size="Size.Small" Href="@($"/admin/mail/templates/{Uri.EscapeDataString(template.Name)}/{culture}")"
                                  Color="@(template.OverriddenCultures.Contains(culture) ? Color.Secondary : Color.Default)">@culture</MudChip>
+                    }
+                </td>
+                <td style="text-align:right;white-space:nowrap">
+                    <MudIconButton Icon="@Icons.Material.Outlined.ContentCopy" Size="Size.Small" aria-label="@L["Duplicate"]" Disabled="_busy"
+                                   OnClick="() => DuplicateAsync(template)" data-testid="@($"duplicate-template-{template.Name}")" />
+                    @if (template.IsCustom)
+                    {
+                        <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" aria-label="@L["Delete"]" Disabled="_busy"
+                                       OnClick="() => DeleteAsync(template)" data-testid="@($"delete-template-{template.Name}")" />
                     }
                 </td>
             </tr>

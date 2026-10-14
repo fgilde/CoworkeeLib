@@ -1,0 +1,136 @@
+using System.Text.RegularExpressions;
+using Coworkee.Application.Authorization;
+using Coworkee.Application.Messaging;
+using Coworkee.Contracts.Mailing;
+using Coworkee.Core.Results;
+using Coworkee.Core.Security;
+using Coworkee.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+namespace Coworkee.Mailing;
+
+[RequiresPermission(MailPermissions.Templates.Manage)]
+public sealed record CreateMailTemplate(CreateMailTemplateRequest Request) : ICommand<Result>;
+
+[RequiresPermission(MailPermissions.Templates.Manage)]
+public sealed record DeleteMailTemplate(string Name) : ICommand<Result>;
+
+internal static partial class CustomMailTemplates
+{
+    public static readonly Error SystemOnly = Error.Forbidden("mail.template_global_system_only", "Only the system organisation manages global mail templates.");
+
+    [GeneratedRegex("^[A-Za-z0-9._-]+$")]
+    public static partial Regex NamePattern();
+
+    public static async Task<CustomMailTemplate?> FindCustomAsync(this CoworkeeDbContext db, Guid? tenantId, string name, CancellationToken cancellationToken) =>
+        (await db.Set<CustomMailTemplate>().Where(t => t.Name == name && (t.TenantId == null || t.TenantId == tenantId)).ToListAsync(cancellationToken))
+            .OrderByDescending(t => t.TenantId != null).FirstOrDefault();
+}
+
+internal sealed class CustomMailTemplateHandlers(
+    CoworkeeDbContext db,
+    ICurrentUser currentUser,
+    IMailTemplateCatalog catalog,
+    IMailTemplateDefinitionManager registered,
+    IMailTemplateRenderer renderer,
+    MailConnectionResolver resolver)
+    : IHandler<CreateMailTemplate, Result>,
+      IHandler<DeleteMailTemplate, Result>
+{
+    public async Task<Result> HandleAsync(CreateMailTemplate command, CancellationToken cancellationToken)
+    {
+        var request = command.Request;
+        var name = request.Name?.Trim() ?? string.Empty;
+        if (CheckInput(name, request.DisplayName, request.Description) is { } invalid)
+        {
+            return invalid;
+        }
+
+        if (request.Global && !await resolver.IsSystemAsync(cancellationToken))
+        {
+            return CustomMailTemplates.SystemOnly;
+        }
+
+        // names compare without case: SQL Server collations do, and a registered template must not be shadowed
+        var lower = name.ToLowerInvariant();
+        var global = request.Global;
+        var tenant = currentUser.TenantId;
+        if (registered.All.Any(d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase))
+            || await db.Set<CustomMailTemplate>().AnyAsync(t => t.Name.ToLower() == lower && (global || t.TenantId == null || t.TenantId == tenant), cancellationToken))
+        {
+            return Error.Validation("Name", $"A mail template named '{name}' already exists.");
+        }
+
+        var tenantId = request.Global ? null : currentUser.TenantId;
+        if (request.CopyFrom is { Length: > 0 } source && !await CopyAsync(source, name, tenantId, cancellationToken))
+        {
+            return MailErrors.UnknownTemplate;
+        }
+
+        db.Add(new CustomMailTemplate { Name = name, DisplayName = request.DisplayName.Trim(), Description = request.Description, TenantId = tenantId });
+        return Result.Success();
+    }
+
+    public async Task<Result> HandleAsync(DeleteMailTemplate command, CancellationToken cancellationToken)
+    {
+        if (await catalog.FindAsync(command.Name, cancellationToken) is not { } definition)
+        {
+            return MailErrors.UnknownTemplate;
+        }
+
+        if (!catalog.IsCustom(definition))
+        {
+            return Error.Validation("Name", "Registered mail templates cannot be deleted.");
+        }
+
+        var template = await db.FindCustomAsync(currentUser.TenantId, command.Name, cancellationToken);
+        if (template is null)
+        {
+            return MailErrors.UnknownTemplate;
+        }
+
+        if (template.TenantId is null && !await resolver.IsSystemAsync(cancellationToken))
+        {
+            return CustomMailTemplates.SystemOnly;
+        }
+
+        if (await db.Set<MailCampaign>().AnyAsync(c => c.TemplateName == command.Name && (template.TenantId == null || c.TenantId == template.TenantId)
+                && (c.Status == MailCampaignStatus.Draft || c.Status == MailCampaignStatus.Scheduled || c.Status == MailCampaignStatus.Sending), cancellationToken))
+        {
+            return Error.Validation("Name", "The template is used by a campaign that is not finished yet.");
+        }
+
+        var tenantId = template.TenantId;
+        db.RemoveRange(await db.Set<MailTemplateOverride>().Where(o => o.Name == command.Name && o.TenantId == tenantId).ToListAsync(cancellationToken));
+        db.Remove(template);
+        return Result.Success();
+    }
+
+    private static Error? CheckInput(string name, string? displayName, string? description) =>
+        name.Length is 0 or > 128 || !CustomMailTemplates.NamePattern().IsMatch(name) || name.All(character => character == '.')
+            ? Error.Validation("Name", "Use 1-128 letters, digits, '.', '_' or '-'.")
+            : string.IsNullOrWhiteSpace(displayName) || displayName.Length > 256
+                ? Error.Validation("DisplayName", "A display name of up to 256 characters is required.")
+                : description is { Length: > 1000 }
+                    ? Error.Validation("Description", "A description of up to 1000 characters.")
+                    : null;
+
+    private async Task<bool> CopyAsync(string source, string name, Guid? tenantId, CancellationToken cancellationToken)
+    {
+        if (await catalog.FindAsync(source, cancellationToken) is not { } definition)
+        {
+            return false;
+        }
+
+        var tenant = currentUser.TenantId;
+        var stored = await db.Set<MailTemplateOverride>().Where(o => o.Name == source && (o.TenantId == null || o.TenantId == tenant))
+            .Select(o => o.Culture).ToListAsync(cancellationToken);
+        foreach (var culture in definition.Defaults.Keys.Concat(stored).Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            var content = await renderer.ResolveAsync(source, culture, cancellationToken);
+            db.Add(new MailTemplateOverride { Name = name, Culture = culture, TenantId = tenantId, Subject = content.Subject, Body = content.Body });
+        }
+
+        return true;
+    }
+}

@@ -15,6 +15,11 @@ public static class MailPermissions
     {
         public const string View = "Mail.Log.View";
     }
+
+    public static class Campaigns
+    {
+        public const string Send = "Mail.Campaigns.Send";
+    }
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter<OutgoingMailStatus>))]
@@ -27,9 +32,15 @@ public enum OutgoingMailStatus
     Skipped,
 }
 
-public sealed record MailTemplateSummaryDto(string Name, string DisplayName, IReadOnlyList<string> Cultures, IReadOnlyList<string> OverriddenCultures);
+public sealed record MailTemplateSummaryDto(
+    string Name, string DisplayName, IReadOnlyList<string> Cultures, IReadOnlyList<string> OverriddenCultures, bool IsCustom, string? Description);
 
-public sealed record MailTemplateDto(string Name, string Culture, string Subject, string Body, string DefaultSubject, string DefaultBody, bool IsOverridden);
+public sealed record CreateMailTemplateRequest(string Name, string DisplayName, string? Description, bool Global = false, string? CopyFrom = null);
+
+public sealed record MailVariableDto(string Name, string Type, string? Sample, bool IsList);
+
+public sealed record MailTemplateDto(
+    string Name, string Culture, string Subject, string Body, string DefaultSubject, string DefaultBody, bool IsOverridden, IReadOnlyList<MailVariableDto> Variables, bool IsCustom);
 
 public sealed record SaveMailTemplateRequest(string Subject, string Body);
 
@@ -41,4 +52,4 @@ public sealed record MailConnectionTestDto(bool Success, string? Error);
 public sealed record RenderedMailDto(string Subject, string HtmlBody);
 
 public sealed record OutgoingMailDto(
-    Guid Id, string To, string Subject, string TemplateName, OutgoingMailStatus Status, int Attempts, string? LastError, DateTimeOffset QueuedAt, DateTimeOffset? SentAt);
+    Guid Id, string To, string Subject, string TemplateName, OutgoingMailStatus Status, int Attempts, string? LastError, DateTimeOffset QueuedAt, DateTimeOffset? SentAt, Guid? CampaignId = null);

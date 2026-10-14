@@ -11,7 +11,7 @@ public sealed class MailTemplateEditorTests : ClientTestBase
 {
     public MailTemplateEditorTests() =>
         Api.GetMailTemplateAsync("Identity.Welcome", "en", Arg.Any<CancellationToken>()).Returns(
-            new MailTemplateDto("Identity.Welcome", "en", "Custom", "<p>custom</p>", "Welcome", "<p>default</p>", true));
+            new MailTemplateDto("Identity.Welcome", "en", "Custom", "<p>custom</p>", "Welcome", "<p>default</p>", true, [], false));
 
     [Fact]
     public async Task Preview_shows_html_rendered_by_the_api()
@@ -35,6 +35,19 @@ public sealed class MailTemplateEditorTests : ClientTestBase
         await editor.WaitForElement("[data-testid='save-template']").ClickAsync(new());
 
         editor.WaitForAssertion(() => editor.Find("[data-testid='template-errors']").TextContent.ShouldContain("(1,4)"));
+    }
+
+    [Fact]
+    public void Custom_templates_have_no_default_to_reset_to()
+    {
+        Api.GetMailTemplateAsync("News.1", "en", Arg.Any<CancellationToken>()).Returns(
+            new MailTemplateDto("News.1", "en", "Hi", "<p>hi</p>", "Hi", "<p>hi</p>", true, [new("user.first_name", "string", "Ada", false)], true));
+
+        var editor = Render<MailTemplateEditor>(p => p.Add(e => e.Name, "News.1").Add(e => e.Culture, "en"));
+
+        editor.WaitForElement("[data-testid='save-template']");
+        editor.FindAll("[data-testid='reset-template']").ShouldBeEmpty();
+        editor.FindAll("[data-testid='mail-variable-user.first_name']").Count.ShouldBe(1);
     }
 
     [Fact]

@@ -2,7 +2,11 @@
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + MailPermissions.Log.View)]
 
 <PageHeader Title="Mail log" Description="Mails the application queued and whether they went out." />
-<CoworkeeDataTable T="OutgoingMailDto" EntitySet="Mails" SearchFields="SearchFields" ExportFileName="mails">
+@if (Campaign is not null)
+{
+    <MudChip T="string" Size="Size.Small" OnClose="ClearCampaign" data-testid="campaign-filter">@L["One campaign only"]</MudChip>
+}
+<CoworkeeDataTable T="OutgoingMailDto" EntitySet="Mails" SearchFields="SearchFields" ExportFileName="mails" Filter="@(Campaign is { } id ? $"CampaignId eq {id}" : null)">
     <Columns>
         <PropertyColumn Property="m => m.QueuedAt" Title="@L["Queued"]" Format="g" />
         <PropertyColumn Property="m => m.To" Title="@L["To"]" />

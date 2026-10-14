@@ -37,6 +37,9 @@ public sealed class MailApp : DatabaseFixture
 
     public HttpClient Mailpit { get; private set; } = null!;
 
+    /// <summary>Runs once after the next recipient page was read, then clears itself.</summary>
+    public Func<Task>? AfterPage { get; set; }
+
     protected override string[] SchemasToExclude => ["hangfire"];
 
     public override async ValueTask InitializeAsync()
@@ -58,8 +61,13 @@ public sealed class MailApp : DatabaseFixture
             ["Coworkee:Settings:Defaults:Mail.Smtp.Host"] = _mailpit.Hostname,
             ["Coworkee:Settings:Defaults:Mail.Smtp.Port"] = _mailpit.GetMappedPublicPort(1025).ToString(System.Globalization.CultureInfo.InvariantCulture),
             ["Coworkee:Settings:Defaults:Mail.From"] = "noreply@coworkee.test",
+            ["Coworkee:Notifications:PublicAppUrl"] = "https://app.test",
         });
         builder.AddCoworkee<TestMailModule>();
+        var directory = builder.Services.Single(d => d.ServiceType == typeof(IMailRecipientDirectory));
+        builder.Services.Remove(directory);
+        builder.Services.AddScoped<IMailRecipientDirectory>(sp => new HookedRecipientDirectory(
+            (IMailRecipientDirectory)ActivatorUtilities.CreateInstance(sp, directory.ImplementationType!), () => { var action = AfterPage; AfterPage = null; return action; }));
         builder.Services.AddTestAuthentication();
         App = builder.Build();
         await using (var scope = App.Services.CreateAsyncScope())
@@ -136,7 +144,7 @@ public sealed class MailApp : DatabaseFixture
 public sealed class MailTestDbContext(DbContextOptions<MailTestDbContext> options, ICurrentUser currentUser, IEnumerable<IModelContributor> contributors)
     : CoworkeeDbContext(options, currentUser, contributors);
 
-[DependsOn(typeof(CoworkeeMailingModule), typeof(CoworkeeIdentityModule))]
+[DependsOn(typeof(CoworkeeMailingModule), typeof(CoworkeeIdentityModule), typeof(Coworkee.Account.CoworkeeAccountModule))]
 public sealed class TestMailModule : CoworkeeModule
 {
     public override void ConfigureServices(ModuleServiceContext context)
@@ -168,4 +176,21 @@ internal sealed class QueueTestMailHandler(IMailSender sender) : IHandler<QueueT
         await sender.QueueAsync(command.To, "Test.Hello", new { user = new { first_name = "Ada" } }, "en", cancellationToken);
         return command.Fail ? Error.Conflict("test.fail", "Rolled back on purpose.") : Result.Success();
     }
+}
+
+internal sealed class HookedRecipientDirectory(IMailRecipientDirectory inner, Func<Func<Task>?> hook) : IMailRecipientDirectory
+{
+    public async Task<Result<RecipientPage>> PageAsync(Coworkee.Contracts.Mailing.RecipientSourceDto source, Guid? after, int size, CancellationToken cancellationToken)
+    {
+        var page = await inner.PageAsync(source, after, size, cancellationToken);
+        if (hook() is { } action)
+        {
+            await action();
+        }
+
+        return page;
+    }
+
+    public Task<Result<Coworkee.Contracts.Mailing.RecipientPreviewDto>> PreviewAsync(Coworkee.Contracts.Mailing.RecipientSourceDto source, int first, CancellationToken cancellationToken) =>
+        inner.PreviewAsync(source, first, cancellationToken);
 }

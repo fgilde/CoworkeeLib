@@ -178,7 +178,7 @@ public sealed class MailTests(MailApp app) : IAsyncLifetime
     {
         (await Admin.PutAsJsonAsync("/api/v1/mail/templates/Test.Hello/en", new SaveMailTemplateRequest("Custom", "<b>custom</b>"), Ct)).EnsureSuccessStatusCode();
         (await Admin.GetFromJsonAsync<MailTemplateDto>("/api/v1/mail/templates/Test.Hello/en", Ct))!.ShouldSatisfyAllConditions(
-            t => t.IsOverridden.ShouldBeTrue(), t => t.Subject.ShouldBe("Custom"), t => t.DefaultSubject.ShouldBe("Hi {{ user.first_name }}"));
+            t => t.IsOverridden.ShouldBeTrue(), t => t.IsCustom.ShouldBeFalse(), t => t.Subject.ShouldBe("Custom"), t => t.DefaultSubject.ShouldBe("Hi {{ user.first_name }}"));
 
         (await Admin.DeleteAsync("/api/v1/mail/templates/Test.Hello/en", Ct)).EnsureSuccessStatusCode();
 

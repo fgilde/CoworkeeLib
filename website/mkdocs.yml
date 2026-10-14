@@ -117,6 +117,7 @@ plugins:
             Testing: Tests
             Reference: Referenz
             Packages and namespaces: Pakete und Namespaces
+            Changelog: Änderungsprotokoll
 
 markdown_extensions:
   - admonition
@@ -199,3 +200,4 @@ nav:
   - Testing: testing.md
   - Reference:
       - Packages and namespaces: reference/packages.md
+      - Changelog: reference/changelog.md

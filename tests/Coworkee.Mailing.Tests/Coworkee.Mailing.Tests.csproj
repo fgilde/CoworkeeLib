@@ -2,6 +2,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Coworkee.Mailing\Coworkee.Mailing.csproj" />
     <ProjectReference Include="..\..\src\Coworkee.Identity\Coworkee.Identity.csproj" />
+    <ProjectReference Include="..\..\src\Coworkee.Account\Coworkee.Account.csproj" />
     <ProjectReference Include="..\..\src\Coworkee.Testing\Coworkee.Testing.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
   </ItemGroup>

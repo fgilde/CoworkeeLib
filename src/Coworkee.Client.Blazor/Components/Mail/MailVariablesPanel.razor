@@ -1,0 +1,14 @@
+<MudExpansionPanels Elevation="0" Class="cw-mail-variables">
+    <MudExpansionPanel Text="@L["Placeholders"]" Expanded="true" Dense="true">
+        <MudStack Spacing="0">
+            @foreach (var variable in Variables)
+            {
+                <div>
+                    <MudButton Size="Size.Small" Variant="Variant.Text" Style="text-transform:none;justify-content:flex-start;padding:0 4px"
+                               OnClick="() => OnPick.InvokeAsync(variable)" data-testid="@($"mail-variable-{variable.Name}")">@variable.Name</MudButton>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="d-block pl-1">@variable.Type@(variable.Sample is null ? null : $" · {variable.Sample}")</MudText>
+                </div>
+            }
+        </MudStack>
+    </MudExpansionPanel>
+</MudExpansionPanels>

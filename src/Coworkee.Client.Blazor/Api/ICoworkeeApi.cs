@@ -136,6 +136,10 @@ public interface ICoworkeeApi
 
     Task<MailTemplateDto> GetMailTemplateAsync(string name, string culture, CancellationToken cancellationToken = default);
 
+    Task CreateMailTemplateAsync(CreateMailTemplateRequest request, CancellationToken cancellationToken = default);
+
+    Task DeleteMailTemplateAsync(string name, CancellationToken cancellationToken = default);
+
     Task SaveMailTemplateAsync(string name, string culture, SaveMailTemplateRequest request, CancellationToken cancellationToken = default);
 
     Task ResetMailTemplateAsync(string name, string culture, CancellationToken cancellationToken = default);
@@ -145,6 +149,32 @@ public interface ICoworkeeApi
     Task SendTestMailAsync(string name, string culture, CancellationToken cancellationToken = default);
 
     Task<PagedResult<OutgoingMailDto>> GetOutgoingMailsAsync(PageRequest page, OutgoingMailStatus? status, CancellationToken cancellationToken = default);
+
+    Task<RecipientPreviewDto> PreviewRecipientsAsync(RecipientSourceDto source, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<RecipientListDto>> GetRecipientListsAsync(CancellationToken cancellationToken = default);
+
+    Task<RecipientListDto> SaveRecipientListAsync(SaveRecipientListRequest request, CancellationToken cancellationToken = default);
+
+    Task UpdateRecipientListAsync(Guid id, SaveRecipientListRequest request, CancellationToken cancellationToken = default);
+
+    Task DeleteRecipientListAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<MailCampaignDto>> GetMailCampaignsAsync(CancellationToken cancellationToken = default);
+
+    Task<MailCampaignDto> GetMailCampaignAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>Creates the campaign, or changes a draft when <paramref name="id"/> is set.</summary>
+    Task<MailCampaignDto> SaveMailCampaignAsync(Guid? id, SaveMailCampaignRequest request, CancellationToken cancellationToken = default);
+
+    Task DeleteMailCampaignAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task SendMailCampaignTestAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>Starts the campaign at <paramref name="at"/>, now when <c>null</c>.</summary>
+    Task<MailCampaignDto> ScheduleMailCampaignAsync(Guid id, DateTimeOffset? at, CancellationToken cancellationToken = default);
+
+    Task CancelMailCampaignAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyDictionary<string, string?>> GetClientSettingsAsync(CancellationToken cancellationToken = default);
 

@@ -80,7 +80,7 @@ public sealed class NotificationDigestJob(
         var emails = await users.GetActiveEmailsAsync(userIds, cancellationToken);
         var names = await users.GetDisplayNamesAsync(userIds, cancellationToken);
         var pending = (await unread.Where(n => userIds.Contains(n.UserId)).OrderByDescending(n => n.CreatedAt).ToListAsync(cancellationToken)).ToLookup(n => n.UserId);
-        var cultures = await CulturesAsync(userIds, pending, cancellationToken);
+        var cultures = await RecipientCultures.ForAsync(db, userIds.ToDictionary(id => id, id => pending[id].FirstOrDefault()?.TenantId), cancellationToken);
         foreach (var userId in userIds)
         {
             var last = states.TryGetValue(userId, out var state) && state.LastSentAt > since ? state.LastSentAt : since;
@@ -123,33 +123,6 @@ public sealed class NotificationDigestJob(
         }
 
         await db.SaveChangesAsync(cancellationToken);
-    }
-
-    /// <summary>Each reader's language: his own setting, else the one of his organisation, else the system's; none leaves the default.</summary>
-    private async Task<Dictionary<Guid, CultureInfo?>> CulturesAsync(List<Guid> userIds, ILookup<Guid, Notification> pending, CancellationToken cancellationToken)
-    {
-        var tenantIds = pending.SelectMany(g => g).Select(n => n.TenantId).OfType<Guid>().Distinct().ToList();
-        var values = await db.Set<SettingValue>().AsNoTracking()
-            .Where(v => v.Name == LocalizationSettings.Culture && v.Value != null && v.Value != string.Empty)
-            .Where(v => v.Scope == SettingScope.Global
-                        || (v.Scope == SettingScope.Tenant && tenantIds.Contains(v.ScopeKey!.Value))
-                        || (v.Scope == SettingScope.User && userIds.Contains(v.ScopeKey!.Value)))
-            .ToListAsync(cancellationToken);
-        string? Of(SettingScope scope, Guid? key) => values.FirstOrDefault(v => v.Scope == scope && v.ScopeKey == key)?.Value;
-        return userIds.ToDictionary(id => id, id => Culture(
-            Of(SettingScope.User, id) ?? Of(SettingScope.Tenant, pending[id].FirstOrDefault()?.TenantId) ?? Of(SettingScope.Global, null)));
-    }
-
-    private static CultureInfo? Culture(string? name)
-    {
-        try
-        {
-            return name is null ? null : CultureInfo.GetCultureInfo(name);
-        }
-        catch (CultureNotFoundException)
-        {
-            return null;
-        }
     }
 
     /// <summary>Localizable notifications (with arguments) in the reader's language, the others as written.</summary>

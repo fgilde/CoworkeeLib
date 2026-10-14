@@ -100,7 +100,7 @@ public sealed class CapturingMailSender : IMailSender
 {
     public ConcurrentQueue<CapturedMail> Sent { get; } = new();
 
-    public Task<Guid> QueueAsync(string to, string template, object model, string? culture, CancellationToken cancellationToken)
+    public Task<Guid> QueueAsync(string to, string template, object model, string? culture, Guid? campaignId, CancellationToken cancellationToken)
     {
         Sent.Enqueue(new CapturedMail(to, template, model));
         return Task.FromResult(Guid.CreateVersion7());

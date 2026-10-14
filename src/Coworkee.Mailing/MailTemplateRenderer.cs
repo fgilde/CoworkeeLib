@@ -31,28 +31,40 @@ public static class MailTemplateValidation
     }
 }
 
-internal sealed class MailTemplateRenderer(CoworkeeDbContext db, ICurrentUser currentUser, IMailTemplateDefinitionManager definitions) : IMailTemplateRenderer
+internal sealed class MailTemplateRenderer(CoworkeeDbContext db, ICurrentUser currentUser, IMailTemplateCatalog catalog) : IMailTemplateRenderer
 {
     public async Task<RenderedMail> RenderAsync(string name, object model, string? culture, CancellationToken cancellationToken) =>
         await RenderContentAsync(await ResolveAsync(name, culture, cancellationToken), model, culture, cancellationToken);
 
     public async Task<RenderedMail> RenderContentAsync(MailTemplateContent content, object model, string? culture, CancellationToken cancellationToken)
     {
-        var subject = (await RenderAsync(content.Subject, ToScript(model, escape: false))).Trim();
+        var plain = ToScript(model, escape: false);
+        var subject = (await RenderAsync(content.Subject, plain)).Trim();
         var body = await RenderAsync(content.Body, ToScript(model, escape: true));
         var layout = await ResolveAsync(CoreMailTemplates.Layout, culture, cancellationToken);
         var layoutModel = new ScriptObject { ["subject"] = WebUtility.HtmlEncode(subject), ["content"] = body };
+        if (plain.TryGetValue("unsubscribe_url", out var unsubscribe) && unsubscribe is string { Length: > 0 } link)
+        {
+            layoutModel["unsubscribe_url"] = WebUtility.HtmlEncode(link);
+        }
+
         return new RenderedMail(subject, await RenderAsync(layout.Body, layoutModel));
     }
 
     public async Task<MailTemplateContent> ResolveAsync(string name, string? culture, CancellationToken cancellationToken)
     {
-        var definition = definitions.Find(name) ?? throw new ArgumentException($"Mail template '{name}' is not defined.", nameof(name));
+        var definition = await catalog.FindAsync(name, cancellationToken) ?? throw new ArgumentException($"Mail template '{name}' is not defined.", nameof(name));
+        var custom = catalog.IsCustom(definition);
         var candidates = MailCultures.Candidates(culture);
         var tenantId = currentUser.TenantId;
-        var overrides = await db.Set<MailTemplateOverride>().AsNoTracking()
-            .Where(o => o.Name == name && candidates.Contains(o.Culture) && (o.TenantId == null || o.TenantId == tenantId))
-            .ToListAsync(cancellationToken);
+        var stored = db.Set<MailTemplateOverride>().AsNoTracking().Where(o => o.Name == name && (o.TenantId == null || o.TenantId == tenantId));
+        if (!custom)
+        {
+            stored = stored.Where(o => candidates.Contains(o.Culture));
+        }
+
+        var overrides = (await stored.ToListAsync(cancellationToken)).OrderBy(o => o.CreatedAt).ToList();
+
         foreach (var candidate in candidates)
         {
             var match = overrides.FirstOrDefault(o => o.TenantId != null && Same(o.Culture, candidate))
@@ -66,6 +78,11 @@ internal sealed class MailTemplateRenderer(CoworkeeDbContext db, ICurrentUser cu
             {
                 return content;
             }
+        }
+
+        if (custom)
+        {
+            return overrides.FirstOrDefault() is { } any ? new MailTemplateContent(any.Subject, any.Body) : new MailTemplateContent(string.Empty, string.Empty);
         }
 
         return definition.Defaults[MailCultures.Fallback];

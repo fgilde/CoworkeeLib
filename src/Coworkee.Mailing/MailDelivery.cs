@@ -11,15 +11,18 @@ namespace Coworkee.Mailing;
 
 public interface IMailSender
 {
-    Task<Guid> QueueAsync(string to, string template, object model, string? culture, CancellationToken cancellationToken);
+    Task<Guid> QueueAsync(string to, string template, object model, string? culture, Guid? campaignId, CancellationToken cancellationToken);
+
+    Task<Guid> QueueAsync(string to, string template, object model, string? culture, CancellationToken cancellationToken) =>
+        QueueAsync(to, template, model, culture, null, cancellationToken);
 }
 
 internal sealed class MailSender(CoworkeeDbContext db, IMailTemplateRenderer renderer, ICurrentUser currentUser, TimeProvider clock) : IMailSender
 {
-    public async Task<Guid> QueueAsync(string to, string template, object model, string? culture, CancellationToken cancellationToken)
+    public async Task<Guid> QueueAsync(string to, string template, object model, string? culture, Guid? campaignId, CancellationToken cancellationToken)
     {
         var rendered = await renderer.RenderAsync(template, model, culture, cancellationToken);
-        var mail = OutgoingMail.Queue(to, rendered, template, currentUser.TenantId, clock.GetUtcNow());
+        var mail = OutgoingMail.Queue(to, rendered, template, currentUser.TenantId, clock.GetUtcNow(), campaignId);
         db.Add(mail);
         return mail.Id;
     }
@@ -30,6 +33,23 @@ internal sealed class MailQueuedHandler(IBackgroundJobs jobs) : IDomainEventHand
     public Task HandleAsync(MailQueued domainEvent, CancellationToken cancellationToken)
     {
         jobs.Enqueue<SendMailJob, Guid>(domainEvent.MailId, "mail");
+        return Task.CompletedTask;
+    }
+}
+
+internal sealed class MailCampaignScheduledHandler(IBackgroundJobs jobs, TimeProvider clock) : IDomainEventHandler<MailCampaignScheduled>
+{
+    public Task HandleAsync(MailCampaignScheduled domainEvent, CancellationToken cancellationToken)
+    {
+        if (domainEvent.At is { } at && at - clock.GetUtcNow() is { } delay && delay > TimeSpan.Zero)
+        {
+            jobs.Schedule<MailCampaignJob, Guid>(domainEvent.CampaignId, delay);
+        }
+        else
+        {
+            jobs.Enqueue<MailCampaignJob, Guid>(domainEvent.CampaignId);
+        }
+
         return Task.CompletedTask;
     }
 }

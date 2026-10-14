@@ -20,6 +20,65 @@ public sealed class MailTemplateOverride : AuditedAggregateRoot, IVersioned
     public int Revision { get; set; }
 }
 
+public sealed class CustomMailTemplate : AuditedEntity
+{
+    public Guid? TenantId { get; set; }
+
+    public required string Name { get; set; }
+
+    public required string DisplayName { get; set; }
+
+    public string? Description { get; set; }
+}
+
+[NotAudited]
+public sealed class MailCampaign : AggregateRoot
+{
+    public Guid? TenantId { get; set; }
+
+    public required string Name { get; set; }
+
+    public required string TemplateName { get; set; }
+
+    public required string RecipientSource { get; set; }
+
+    public MailCampaignStatus Status { get; set; }
+
+    public DateTimeOffset? ScheduledFor { get; set; }
+
+    public int Total { get; set; }
+
+    public Guid CreatedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset? StartedAt { get; set; }
+
+    public DateTimeOffset? FinishedAt { get; set; }
+
+    public string? Error { get; set; }
+
+    public void Schedule(DateTimeOffset? at)
+    {
+        Status = MailCampaignStatus.Scheduled;
+        ScheduledFor = at;
+        Raise(new MailCampaignScheduled(Id, at));
+    }
+}
+
+public sealed record MailCampaignScheduled(Guid CampaignId, DateTimeOffset? At) : IDomainEvent;
+
+public sealed class RecipientList : Entity
+{
+    public Guid? TenantId { get; set; }
+
+    public required string Name { get; set; }
+
+    public required string Source { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
 internal sealed class MailVersionedTypes : Coworkee.Infrastructure.Versioning.IVersionedTypeContributor
 {
     public void Define(Coworkee.Infrastructure.Versioning.VersionedTypeContext context) =>
@@ -53,11 +112,13 @@ public sealed class OutgoingMail : AggregateRoot
 
     public string? LastError { get; set; }
 
+    public Guid? CampaignId { get; private set; }
+
     public DateTimeOffset QueuedAt { get; private set; }
 
     public DateTimeOffset? SentAt { get; set; }
 
-    public static OutgoingMail Queue(string to, RenderedMail mail, string templateName, Guid? tenantId, DateTimeOffset now)
+    public static OutgoingMail Queue(string to, RenderedMail mail, string templateName, Guid? tenantId, DateTimeOffset now, Guid? campaignId = null)
     {
         var outgoing = new OutgoingMail
         {
@@ -68,6 +129,7 @@ public sealed class OutgoingMail : AggregateRoot
             TenantId = tenantId,
             Status = OutgoingMailStatus.Queued,
             QueuedAt = now,
+            CampaignId = campaignId,
         };
         outgoing.Raise(new MailQueued(outgoing.Id));
         return outgoing;
@@ -87,6 +149,15 @@ internal sealed class MailModelContributor : IModelContributor
             template.HasIndex(t => new { t.Name, t.TenantId, t.Culture }).IsUnique().AreNullsDistinct(false);
         });
 
+        modelBuilder.Entity<CustomMailTemplate>(template =>
+        {
+            template.ToTable("CustomMailTemplates", "cw");
+            template.Property(t => t.Name).HasMaxLength(128);
+            template.Property(t => t.DisplayName).HasMaxLength(256);
+            template.Property(t => t.Description).HasMaxLength(1000);
+            template.HasIndex(t => new { t.TenantId, t.Name }).IsUnique().AreNullsDistinct(false);
+        });
+
         modelBuilder.Entity<OutgoingMail>(mail =>
         {
             mail.ToTable("OutgoingMails", "cw");
@@ -96,6 +167,24 @@ internal sealed class MailModelContributor : IModelContributor
             mail.Property(m => m.Status).HasConversion<string>().HasMaxLength(20);
             mail.Property(m => m.LastError).HasMaxLength(2000);
             mail.HasIndex(m => new { m.TenantId, m.QueuedAt });
+            mail.HasIndex(m => m.CampaignId);
+        });
+
+        modelBuilder.Entity<MailCampaign>(campaign =>
+        {
+            campaign.ToTable("MailCampaigns", "cw");
+            campaign.Property(c => c.Name).HasMaxLength(256);
+            campaign.Property(c => c.TemplateName).HasMaxLength(128);
+            campaign.Property(c => c.Status).HasConversion<string>().HasMaxLength(20);
+            campaign.Property(c => c.Error).HasMaxLength(2000);
+            campaign.HasIndex(c => new { c.TenantId, c.CreatedAt });
+        });
+
+        modelBuilder.Entity<RecipientList>(list =>
+        {
+            list.ToTable("MailRecipientLists", "cw");
+            list.Property(l => l.Name).HasMaxLength(256);
+            list.HasIndex(l => new { l.TenantId, l.Name }).IsUnique().AreNullsDistinct(false);
         });
     }
 }

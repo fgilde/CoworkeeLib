@@ -4,6 +4,7 @@ using Coworkee.AspNetCore.Http;
 using Coworkee.AspNetCore;
 using Coworkee.BackgroundJobs;
 using Coworkee.Contracts.Mailing;
+using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Settings;
 using Coworkee.Contracts;
 using Coworkee.Core.Modularity;
@@ -32,6 +33,7 @@ public sealed class CoworkeeMailingModule : CoworkeeModule, IWebModule
         services.AddSingleton<ISettingDefinitionContributor, MailSettingDefinitions>();
         services.AddSingleton<IMailTemplateContributor, CoreMailTemplates>();
         services.AddSingleton<IMailTemplateDefinitionManager, MailTemplateDefinitionManager>();
+        services.AddScoped<IMailTemplateCatalog, MailTemplateCatalog>();
         services.AddScoped<IMailTemplateRenderer, MailTemplateRenderer>();
         services.AddScoped<IMailSender, MailSender>();
         services.AddScoped<Application.Privacy.IPersonalDataContributor, MailPersonalData>();
@@ -43,12 +45,23 @@ public sealed class CoworkeeMailingModule : CoworkeeModule, IWebModule
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IMailTransport, MailgunMailTransport>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IMailTransport, MailchimpMailTransport>());
         services.TryAddSingleton(TimeProvider.System);
+        services.AddHttpContextAccessor();
+        services.AddOptions<NotificationOptions>().BindConfiguration(NotificationOptions.Section);
+        services.AddOptions<KeycloakThemeOptions>().BindConfiguration(KeycloakThemeOptions.Section);
+        services.AddScoped<IMailUnsubscribeLinks, MailUnsubscribeLinks>();
+        services.AddScoped<MailUnsubscribe>();
+        services.AddScoped<CampaignMailModels>();
+        services.AddScoped<MailCampaignJob>();
     }
 
     public void ConfigureApplication(WebApplication app)
     {
         var api = app.MapCoworkeeApi("/api/v1/mail").WithTags("Mail").RequireAuthorization();
         api.MapGet("/templates", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetMailTemplates(), ct).ToHttpResult());
+        api.MapPost("/templates", (CreateMailTemplateRequest body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new CreateMailTemplate(body), ct).ToHttpResult());
+        api.MapDelete("/templates/{name}", (string name, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new DeleteMailTemplate(name), ct).ToHttpResult());
         api.MapGet("/templates/{name}/{culture}", (string name, string culture, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new GetMailTemplate(name, culture), ct).ToHttpResult());
         api.MapPut("/templates/{name}/{culture}", (string name, string culture, SaveMailTemplateRequest body, IDispatcher d, CancellationToken ct) =>
@@ -61,8 +74,31 @@ public sealed class CoworkeeMailingModule : CoworkeeModule, IWebModule
             d.SendAsync(new SendTestMail(name, culture), ct).ToHttpResult());
         api.MapPost("/connection/test", (MailConnectionTestRequest body, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new TestMailConnection(body), ct).ToHttpResult());
-        api.MapGet("/outgoing", ([AsParameters] PageRequest page, OutgoingMailStatus? status, IDispatcher d, CancellationToken ct) =>
-            d.SendAsync(new GetOutgoingMails(page, status), ct).ToHttpResult());
+        api.MapGet("/outgoing", ([AsParameters] PageRequest page, OutgoingMailStatus? status, Guid? campaignId, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new GetOutgoingMails(page, status, campaignId), ct).ToHttpResult());
+        api.MapPost("/recipients/preview", (RecipientSourceDto body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new PreviewRecipients(body), ct).ToHttpResult());
+        api.MapGet("/recipient-lists", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetRecipientLists(), ct).ToHttpResult());
+        api.MapPost("/recipient-lists", (SaveRecipientListRequest body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new CreateRecipientList(body), ct).ToHttpResult());
+        api.MapPut("/recipient-lists/{id:guid}", (Guid id, SaveRecipientListRequest body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new UpdateRecipientList(id, body), ct).ToHttpResult());
+        api.MapDelete("/recipient-lists/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new DeleteRecipientList(id), ct).ToHttpResult());
+        api.MapGet("/campaigns", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetMailCampaigns(), ct).ToHttpResult());
+        api.MapGet("/campaigns/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetMailCampaign(id), ct).ToHttpResult());
+        api.MapPost("/campaigns", (SaveMailCampaignRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new CreateMailCampaign(body), ct).ToHttpResult());
+        api.MapPut("/campaigns/{id:guid}", (Guid id, SaveMailCampaignRequest body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new UpdateMailCampaign(id, body), ct).ToHttpResult());
+        api.MapDelete("/campaigns/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteMailCampaign(id), ct).ToHttpResult());
+        api.MapPost("/campaigns/{id:guid}/test", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new SendMailCampaignTest(id), ct).ToHttpResult());
+        api.MapPost("/campaigns/{id:guid}/schedule", (Guid id, ScheduleMailCampaignRequest body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new ScheduleMailCampaign(id, body), ct).ToHttpResult());
+        api.MapPost("/campaigns/{id:guid}/cancel", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new CancelMailCampaign(id), ct).ToHttpResult());
+        api.MapGet("/unsubscribe", (HttpContext http, string? token, MailUnsubscribe unsubscribe, CancellationToken ct) => unsubscribe.ConfirmAsync(http, token, ct))
+            .AllowAnonymous().ExcludeFromDescription();
+        api.MapPost("/unsubscribe", (HttpContext http, MailUnsubscribe unsubscribe, CancellationToken ct) => unsubscribe.UnsubscribeAsync(http, ct))
+            .AllowAnonymous().DisableAntiforgery().ExcludeFromDescription();
     }
 }
 
@@ -71,7 +107,8 @@ internal sealed class MailPermissionDefinitions : IPermissionDefinitionContribut
     public void Define(PermissionDefinitionContext context) =>
         context.Group(MailPermissions.GroupName, "Mail")
             .Add(MailPermissions.Templates.Manage, "Manage mail templates")
-            .Add(MailPermissions.Log.View, "View mail log");
+            .Add(MailPermissions.Log.View, "View mail log")
+            .Add(MailPermissions.Campaigns.Send, "Send mail campaigns");
 }
 
 internal sealed class MailSettingDefinitions : ISettingDefinitionContributor
@@ -96,5 +133,6 @@ internal sealed class MailSettingDefinitions : ISettingDefinitionContributor
             .Add(MailSettings.MailgunRegion, "Mailgun region", SettingType.Choice, Scopes, "us", choices: ["us", "eu"], enabledWhen: Provider(MailProviders.Mailgun))
             .Add(MailSettings.From, "Sender address", SettingType.String, Scopes, "noreply@localhost")
             .Add(MailSettings.Whitelist, "Recipient whitelist", SettingType.Text, Scopes,
-                description: "Leave empty to allow all recipients. One address or @domain per line.");
+                description: "Leave empty to allow all recipients. One address or @domain per line.")
+            .Add(MailSettings.Newsletters, "Receive newsletters", SettingType.Bool, [SettingScope.Global, SettingScope.User], "true", visibleToClient: true);
 }

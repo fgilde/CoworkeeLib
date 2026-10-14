@@ -14,6 +14,7 @@ public static class MailSettings
     public const string From = "Mail.From";
     public const string Whitelist = "Mail.Whitelist";
     public const string UseOwnServer = "Mail.UseOwnServer";
+    public const string Newsletters = "Mail.Newsletters";
 }
 
 public static class MailProviders

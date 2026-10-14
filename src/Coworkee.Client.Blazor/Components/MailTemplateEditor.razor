@@ -1,3 +1,4 @@
+@using Coworkee.Client.Blazor.Components.Mail
 
 @if (_template is null)
 {
@@ -6,17 +7,28 @@
 else
 {
     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
-        <MudChip T="string" Size="Size.Small" Color="@(_template.IsOverridden ? Color.Secondary : Color.Default)">@(_template.IsOverridden ? "customized" : "default")</MudChip>
+        <MudChip T="string" Size="Size.Small" Color="@(_template.IsOverridden ? Color.Secondary : Color.Default)">@(_template.IsOverridden ? L["customized"] : L["default"])</MudChip>
         <MudSpacer />
-        <MudButton OnClick="PreviewAsync" data-testid="preview">Preview</MudButton>
-        <MudButton OnClick="SendTestAsync" data-testid="send-test">Send test to me</MudButton>
-        <MudButton OnClick="ResetAsync" Disabled="@(!_template.IsOverridden)" data-testid="reset-template">Reset to default</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" data-testid="save-template">Save</MudButton>
+        <MudButton OnClick="PreviewAsync" data-testid="preview">@L["Preview"]</MudButton>
+        <MudButton OnClick="SendTestAsync" data-testid="send-test">@L["Send test to me"]</MudButton>
+        @if (!_template.IsCustom)
+        {
+            <MudButton OnClick="ResetAsync" Disabled="@(!_template.IsOverridden)" data-testid="reset-template">@L["Reset to default"]</MudButton>
+        }
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" data-testid="save-template">@L["Save"]</MudButton>
     </MudStack>
 
-    <MudTextField Margin="Density.Margin" @bind-Value="_subject" Label="Subject" />
-    <MudTextField Margin="Density.Margin" @bind-Value="_body" Label="Body (Scriban, HTML)" Lines="16" Class="mt-2" Style="font-family:monospace" />
-    <MudText Typo="Typo.caption">Model values are available as {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.</MudText>
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+        <MudTextField Margin="Density.Margin" @bind-Value="_subject" Label="@L["Subject"]" Immediate="true" />
+        <MudMenu Icon="@Icons.Material.Outlined.DataObject" Size="Size.Small" AriaLabel="@L["Insert placeholder"]" data-testid="subject-placeholders">
+            @foreach (var variable in _template.Variables.Where(v => !v.IsList && !v.Name.Contains("[]")))
+            {
+                <MudMenuItem OnClick="() => AddToSubject(variable)" data-testid="@($"subject-variable-{variable.Name}")">@variable.Name</MudMenuItem>
+            }
+        </MudMenu>
+    </MudStack>
+    <MailBodyEditor @bind-Value="_body" Variables="_template.Variables" />
+    <MudText Typo="Typo.caption">@L["Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template."]</MudText>
 
     @if (_errors.Count > 0)
     {
@@ -30,7 +42,7 @@ else
 
     @if (_preview is not null)
     {
-        <MudText Typo="Typo.overline" Class="mt-4 d-block">Preview: @_preview.Subject</MudText>
-        <iframe data-testid="preview-frame" sandbox="" srcdoc="@_preview.HtmlBody" title="Mail preview" style="width:100%;height:480px;border:1px solid var(--mud-palette-lines-default);background:#fff"></iframe>
+        <MudText Typo="Typo.overline" Class="mt-4 d-block">@L["Preview: {0}", _preview.Subject]</MudText>
+        <iframe data-testid="preview-frame" sandbox="" srcdoc="@_preview.HtmlBody" title="@L["Preview"]" style="width:100%;height:480px;border:1px solid var(--mud-palette-lines-default);background:#fff"></iframe>
     }
 }
