@@ -25,7 +25,7 @@ export const filePreviewApp = (coworkee: Coworkee): CoworkeeApp => ({
       const attributes: Record<string, string> = { url: `/api/v1/files/${encodeURIComponent(file.id)}/content`, 'show-file-name': 'false' };
       if (file.contentType) attributes['content-type'] = file.contentType;
       if (file.name) attributes['file-name'] = file.name;
-      host.querySelector('.cw-preview')!.replaceChildren(mudExFrame('mudex-file-display', attributes, { url: coworkee.mudExUrl, dark: coworkee.mode === 'dark', title: file.name }));
+      host.querySelector('.cw-preview')!.replaceChildren(mudExFrame('mudex-file-display', attributes, { frameUrl: coworkee.mudExFrameUrl, dark: coworkee.mode === 'dark', title: file.name }));
     };
     onIntent(show);
     show(intent);

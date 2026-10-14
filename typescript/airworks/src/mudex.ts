@@ -27,20 +27,18 @@ export function loadMudEx(url = defaultMudExUrl, dark?: boolean): Promise<MudExR
   return loading;
 }
 
+/** Where mudExFrame finds the frame page: next to the self-hosted bundle (the template copies dist/mudex-frame.html there). */
+export const defaultMudExFrameUrl = '/mudex/coworkee-frame.html';
+
 /**
  * A MudEx web component in its own frame: the bundle brings MudBlazor's page styles, which would otherwise reach the desktop and every app
- * after the first preview. The frame shares the page's origin (srcdoc), so the component reads the app's files with the session cookie;
- * closing the window drops the runtime with the frame.
+ * after the first preview. The frame page lives on the app's origin next to mudex.js, so the component reads the app's files with the session
+ * cookie; closing the window drops the runtime with the frame.
  */
-export function mudExFrame(tag: string, attributes: Record<string, string>, options: { url?: string; dark?: boolean; title?: string } = {}): HTMLIFrameElement {
-  const attribute = (value: string) => value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
-  const element = `<${tag} ${Object.entries(attributes).map(([name, value]) => `${name}="${attribute(value)}"`).join(' ')}></${tag}>`;
+export function mudExFrame(tag: string, attributes: Record<string, string>, options: { frameUrl?: string; dark?: boolean; title?: string } = {}): HTMLIFrameElement {
   const frame = document.createElement('iframe');
   frame.className = 'cw-mudex-frame';
   frame.title = options.title ?? tag;
-  frame.srcdoc = `<!doctype html><html><head><meta charset="utf-8"><base href="${attribute(location.href)}">
-<style>html,body{margin:0;height:100%;overflow:hidden}${tag}{display:block;width:100%;height:100%}</style>
-<script src="${attribute(options.url ?? defaultMudExUrl)}"></script></head><body>${element}
-<script>window.MudEx && window.MudEx.ready.then(function () { if (window.MudEx.setDarkMode) window.MudEx.setDarkMode(${options.dark ? 'true' : 'false'}); });</script></body></html>`;
+  frame.src = `${options.frameUrl ?? defaultMudExFrameUrl}#${encodeURIComponent(JSON.stringify({ tag, attributes, dark: !!options.dark }))}`;
   return frame;
 }

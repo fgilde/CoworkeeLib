@@ -214,6 +214,7 @@ public sealed class TemplateOptionTests(TemplateFixture template)
         File.ReadAllText(Path.Combine(app, "src", "Shop.AirWorks", "wwwroot", "index.html")).ShouldContain("<title>Shop</title>");
         Directory.GetFiles(Path.Combine(app, "src", "Shop.AirWorks", "wwwroot", "icons"), "logo-air.png").ShouldNotBeEmpty();
         File.Exists(Path.Combine(app, "src", "Shop.AirWorks", "wwwroot", "mudex", "mudex.js")).ShouldBeTrue();
+        File.Exists(Path.Combine(app, "src", "Shop.AirWorks", "wwwroot", "mudex", "coworkee-frame.html")).ShouldBeTrue();
     }
 
     [Fact]

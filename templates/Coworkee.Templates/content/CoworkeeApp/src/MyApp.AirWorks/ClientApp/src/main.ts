@@ -6,7 +6,7 @@ import './styles.css';
 import logo from '../../../MyApp.Web.Client/wwwroot/coworkee-icon.svg?url';
 
 // sign-in, theme, logo and texts of the app; AirWorks options (wallpapers, initialShortcuts, ...) go to airWorks: { ... }
-const coworkee = await useCoworkee(AirWorks, { title: 'COWORKEE_APP_TITLE', logo, mudExUrl: '/mudex/mudex.js' });
+const coworkee = await useCoworkee(AirWorks, { title: 'COWORKEE_APP_TITLE', logo });
 
 // the library's apps and your own: leave some out, replace them or add more (https://fgilde.github.io/AirWorks/)
 await coworkee.register(

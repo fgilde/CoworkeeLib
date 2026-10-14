@@ -5,7 +5,7 @@ import {
 import type { AirWorks, AirWorksOptions, AppDefinition } from '@fgilde/airworks';
 import { bffAuthProvider } from './auth.ts';
 import { toast } from './dom.ts';
-import { defaultMudExUrl } from './mudex.ts';
+import { defaultMudExFrameUrl, defaultMudExUrl } from './mudex.ts';
 
 export type AirWorksApi = typeof AirWorks;
 
@@ -33,8 +33,10 @@ export type CoworkeeOptions = {
   version?: string;
   /** Where the AirWorks icons are served (the template copies them to /icons/). */
   assetBase?: string;
-  /** Address of the MudEx web components bundle for file previews. */
+  /** Address of the MudEx web components bundle for loadMudEx (components in the page itself). */
   mudExUrl?: string;
+  /** The frame page next to the self-hosted MudEx bundle that file previews open (default /mudex/coworkee-frame.html). */
+  mudExFrameUrl?: string;
   /** Further AirWorks options; they win over the ones derived here. */
   airWorks?: AirWorksOptions;
 };
@@ -57,6 +59,7 @@ export type Coworkee = {
   title: string;
   logo: string;
   mudExUrl: string;
+  mudExFrameUrl: string;
   can: (permission: string) => boolean;
   notify: (message: string, kind?: 'info' | 'error') => void;
   /** The apps registered so far that the user may have (probes and host checks passed). */
@@ -127,6 +130,7 @@ export async function useCoworkee(airWorks: AirWorksApi, options: CoworkeeOption
     title: options.title,
     logo,
     mudExUrl: options.mudExUrl ?? defaultMudExUrl,
+    mudExFrameUrl: options.mudExFrameUrl ?? defaultMudExFrameUrl,
     can: (permission) => airWorks.can(permission),
     notify: toast,
     apps: [],

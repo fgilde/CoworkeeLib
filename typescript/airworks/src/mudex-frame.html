@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MudEx</title>
+  <!-- hosted next to mudex.js (the template copies it to wwwroot/mudex); mudExFrame() opens it with the component in the hash -->
+  <style>html, body { margin: 0; height: 100%; overflow: hidden; } body > [data-mudex] { display: block; width: 100%; height: 100%; }</style>
+</head>
+<body>
+<script>
+  (function () {
+    var data = {};
+    try { data = JSON.parse(decodeURIComponent(location.hash.slice(1))); } catch (e) { return; }
+    // only MudEx components, and only the bundle next to this page: the hash must not decide which script runs
+    if (!/^mudex(-[a-z]+)+$/.test(data.tag || '')) return;
+    var element = document.createElement(data.tag);
+    element.setAttribute('data-mudex', '');
+    var attributes = data.attributes || {};
+    Object.keys(attributes).forEach(function (name) { if (/^[a-z][a-z-]*$/.test(name)) element.setAttribute(name, String(attributes[name])); });
+    document.body.appendChild(element);
+    var script = document.createElement('script');
+    script.src = 'mudex.js';
+    script.onload = function () {
+      if (window.MudEx) window.MudEx.ready.then(function () { if (window.MudEx.setDarkMode) window.MudEx.setDarkMode(!!data.dark); });
+    };
+    document.head.appendChild(script);
+  })();
+</script>
+</body>
+</html>

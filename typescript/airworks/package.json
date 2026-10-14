@@ -25,7 +25,8 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./style.css": "./dist/style.css"
+    "./style.css": "./dist/style.css",
+    "./mudex-frame.html": "./dist/mudex-frame.html"
   },
   "files": [
     "dist"
@@ -34,7 +35,7 @@
     "*.css"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json && node -e \"require('node:fs').copyFileSync('src/style.css','dist/style.css')\"",
+    "build": "tsc -p tsconfig.json && node -e \"for (const f of ['style.css','mudex-frame.html']) require('node:fs').copyFileSync('src/'+f,'dist/'+f)\"",
     "test": "node --test \"test/**/*.test.ts\""
   },
   "dependencies": {

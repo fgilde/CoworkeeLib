@@ -176,3 +176,5 @@ dialog.cw-dialog h2 { margin: 0 0 10px; font-size: 18px; }
 .cw-editing .cw-widget.cw-selected { outline: 2px solid var(--cw-primary, #594ae2); }
 .cw-resize { position: absolute; right: 2px; bottom: 2px; width: 14px; height: 14px; cursor: nwse-resize; touch-action: none;
   background: linear-gradient(135deg, transparent 50%, var(--cw-primary, #594ae2) 50%); border-radius: 0 0 4px 0; }
+.cw-toolbar select { width: auto; max-width: 220px; }
+.cw-app [hidden], dialog.cw-dialog [hidden] { display: none !important; }
