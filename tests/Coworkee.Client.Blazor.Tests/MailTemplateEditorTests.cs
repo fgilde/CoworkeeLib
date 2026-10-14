@@ -47,6 +47,7 @@ public sealed class MailTemplateEditorTests : ClientTestBase
 
         editor.WaitForElement("[data-testid='save-template']");
         editor.FindAll("[data-testid='reset-template']").ShouldBeEmpty();
+        editor.Find("[data-testid='template-state']").TextContent.ShouldBe("custom");
         editor.FindAll("[data-testid='mail-variable-user.first_name']").Count.ShouldBe(1);
     }
 

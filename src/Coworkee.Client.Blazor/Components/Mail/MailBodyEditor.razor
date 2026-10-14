@@ -19,7 +19,9 @@
             </MudStack>
             @if (_mode == EditorMode.Visual)
             {
-                <MudExRichTextEdit @ref="_visual" Value="@_html" ValueChanged="VisualChangedAsync" Modules="_modules" Immediate="true" Height="320" />
+                <div @ref="_visualHost">
+                    <MudExRichTextEdit @ref="_visual" Value="@_html" ValueChanged="VisualChangedAsync" Modules="_modules" Immediate="true" Height="320" />
+                </div>
             }
             else
             {

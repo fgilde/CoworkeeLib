@@ -25,14 +25,11 @@ Neben den Vorlagen der Module legen Administratoren unter **Administration > Com
 
 ### Vorlage bearbeiten
 
-Der Inhalt hat zwei Modi, die über dem Editor umgeschaltet werden. **Visuell** ist ein Rich-Text-Editor: Mit `{` öffnet sich die Liste der Platzhalter (sie filtert beim Tippen), der gewählte erscheint als Chip. **Quelltext** ist ein Code-Editor für das HTML und den Scriban-Text, mit Vorschlägen nach `{{`. Gespeichert wird immer reiner Scriban-Text, ein Chip wird als `{{ user.first_name }}` abgelegt.
+Der Inhalt hat zwei Modi, die über dem Editor umgeschaltet werden. **Visuell** ist ein Rich-Text-Editor: Mit `{` öffnet sich die Liste der Platzhalter (sie filtert beim Tippen, auch für `user.first`), der gewählte erscheint als Chip. **Quelltext** ist ein Code-Editor für das HTML und den Scriban-Text, mit Vorschlägen nach `{{`. Gespeichert wird immer reiner Scriban-Text, ein Chip wird als `{{ user.first_name }}` abgelegt.
 
 Der visuelle Editor schreibt das Markup um und wird deshalb nur für einfache Inhalte angeboten. Ein Inhalt mit Scriban-Anweisungen (`if`, `for`, `while`, `case`, `capture`, `with`, `func`, `tablerow`) oder einem `<table` öffnet sich im Quelltext, die Schaltfläche Visuell bleibt deaktiviert; von Visuell nach Quelltext lässt sich immer wechseln. Platzhalter, die die Vorlage nicht kennt, bleiben im visuellen Editor einfacher Text.
 
 Neben dem Editor listet **Platzhalter** alle Variablen der Vorlage mit Typ und Beispielwert. Ein Klick fügt sie an der Cursorposition ein: als Chip im Visuell-Modus, als `{{ name }}` im Quelltext. Eine Liste (etwa die Benachrichtigungen eines Digests) fügt im Quelltext ein Schleifengerüst `{{ for item in liste }} ... {{ end }}` ein; ihre Mitglieder (aufgelistet als liste[].title) werden als {{ item.title }} eingefügt. Im Visuell-Modus kommen beide ans Ende des Quelltexts, weil sich Schleifen nicht visuell bauen lassen. Die Schaltfläche neben dem Betreff hängt einen Platzhalter an den Betreff an. Eigene Vorlagen verwenden das Empfängermodell (`user.first_name`, `user.display_name`, `app.name` und die weiteren Werte der Liste); *Auf Standard zurücksetzen* gibt es nur für Vorlagen der Module, eigene Vorlagen haben keinen Standard.
-
-!!! note
-    Die Platzhalterliste des visuellen Editors durchsucht nur Buchstaben; tippen Sie also einen Teil des Namens wie `first` und nicht `user.first`.
 
 ## Kampagnen
 

@@ -79,6 +79,31 @@ public sealed class MailBodyEditorTests : ClientTestBase
     }
 
     [Fact]
+    public async Task Picking_a_list_variable_in_visual_mode_switches_to_the_source()
+    {
+        string? received = null;
+        var cut = Render("<p>Hi</p>", v => received = v);
+        cut.FindComponents<MudExRichTextEdit>().Count.ShouldBe(1);
+
+        await cut.Find("[data-testid='mail-variable-notifications']").ClickAsync(new());
+
+        cut.FindComponents<MudExRichTextEdit>().ShouldBeEmpty();
+        cut.FindComponent<CodeEditor>().Instance.Value.ShouldBe("<p>Hi</p>{{ for item in notifications }}\n{{ end }}");
+        received.ShouldBe("<p>Hi</p>{{ for item in notifications }}\n{{ end }}");
+    }
+
+    [Fact]
+    public void The_visual_editor_widens_the_characters_the_mention_list_accepts()
+    {
+        var module = JSInterop.SetupModule("./_content/Coworkee.Client.Blazor/coworkee.js");
+        module.Mode = JSRuntimeMode.Loose;
+
+        var cut = Render("<p>Hi</p>");
+
+        cut.WaitForAssertion(() => module.VerifyInvoke("widenMentionChars"));
+    }
+
+    [Fact]
     public async Task Members_of_list_items_are_written_for_the_loop_variable()
     {
         string? received = null;

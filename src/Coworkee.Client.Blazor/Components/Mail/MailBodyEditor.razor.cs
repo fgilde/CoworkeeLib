@@ -2,13 +2,14 @@ using Coworkee.Client.Blazor.Components.Editors;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Mailing;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using MudExRichTextEditor;
 using MudExRichTextEditor.Extensibility;
 
 namespace Coworkee.Client.Blazor.Components.Mail;
 
 /// <summary>Edits a mail body visually (placeholders as <c>{</c> mentions) or as source; the value is always plain Scriban/HTML.</summary>
-public partial class MailBodyEditor
+public partial class MailBodyEditor : IAsyncDisposable
 {
     private const int MaxSuggestions = 20;
 
@@ -31,12 +32,18 @@ public partial class MailBodyEditor
     private string? _seen;
     private IReadOnlyList<string> _known = [];
     private IReadOnlyList<CodeCompletion> _completions = [];
+    private IReadOnlyList<MailVariableDto>? _variables;
     private MudExRichTextEdit? _visual;
     private CodeEditor? _source;
+    private ElementReference _visualHost;
+    private IJSObjectReference? _module;
+    private bool _widened;
 
     public MailBodyEditor() => _modules = [new QuillMentionModule<Placeholder>(SearchAsync, '{')];
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
+
+    [Inject] private IJSRuntime JS { get; set; } = null!;
 
     [Parameter] public string Value { get; set; } = string.Empty;
 
@@ -48,16 +55,21 @@ public partial class MailBodyEditor
 
     protected override void OnParametersSet()
     {
-        _known = [.. Variables.Where(v => !v.IsList && !IsItem(v)).Select(v => v.Name)];
-        _completions =
-        [
-            .. Variables.Where(v => !v.IsList).Select(v => new CodeCompletion(v.Name, $" {Expression(v)} }}}}", v.Type)),
-            // shortcut: the cursor lands after the closing braces, not inside the statement
-            new("if", " if  }}"),
-            new("else", " else }}"),
-            new("end", " end }}"),
-            new("for", " for item in  }}"),
-        ];
+        if (!ReferenceEquals(Variables, _variables))
+        {
+            _variables = Variables;
+            _known = [.. Variables.Where(v => !v.IsList && !v.IsItem()).Select(v => v.Name)];
+            _completions =
+            [
+                .. Variables.Where(v => !v.IsList).Select(v => new CodeCompletion(v.Name, $" {v.Expression()} }}}}", v.Type)),
+                // shortcut: the cursor lands after the closing braces, not inside the statement
+                new("if", " if  }}"),
+                new("else", " else }}"),
+                new("end", " end }}"),
+                new("for", " for item in  }}"),
+            ];
+        }
+
         if (!_modeChosen)
         {
             _modeChosen = true;
@@ -77,12 +89,12 @@ public partial class MailBodyEditor
 
     public async Task InsertVariableAsync(MailVariableDto variable)
     {
-        var snippet = variable.IsList ? $"{{{{ for item in {variable.Name} }}}}\n{{{{ end }}}}" : $"{{{{ {Expression(variable)} }}}}";
+        var snippet = variable.IsList ? $"{{{{ for item in {variable.Name} }}}}\n{{{{ end }}}}" : $"{{{{ {variable.Expression()} }}}}";
         if (_mode == EditorMode.Source && _source is not null)
         {
             await _source.InsertAsync(snippet);
         }
-        else if (variable.IsList || IsItem(variable) || _visual is null)
+        else if (variable.IsList || variable.IsItem() || _visual is null)
         {
             // loops and their items cannot be built visually, so they go to the end of the source
             _mode = EditorMode.Source;
@@ -93,11 +105,6 @@ public partial class MailBodyEditor
             await _visual.InsertHtmlAsync(MailMentionHtml.ToMentions(snippet, _known));
         }
     }
-
-    private static bool IsItem(MailVariableDto variable) => variable.Name.Contains("[]", StringComparison.Ordinal);
-
-    // a member of a list element is written as a member of the loop variable of the skeleton
-    private static string Expression(MailVariableDto variable) => IsItem(variable) ? "item" + variable.Name[(variable.Name.IndexOf("[]", StringComparison.Ordinal) + 2)..] : variable.Name;
 
     private Task<IEnumerable<Placeholder>> SearchAsync(char denotation, string term) => Task.FromResult(
         _known.Where(name => name.Contains(term, StringComparison.OrdinalIgnoreCase)).Take(MaxSuggestions).Select(name => new Placeholder(name)));
@@ -122,6 +129,44 @@ public partial class MailBodyEditor
     {
         _html = html;
         return EmitAsync(MailMentionHtml.ToScriban(html, _known));
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_mode != EditorMode.Visual)
+        {
+            _widened = false;
+            return;
+        }
+
+        if (_widened)
+        {
+            return;
+        }
+
+        _widened = true;
+        try
+        {
+            _module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");
+            await _module.InvokeVoidAsync("widenMentionChars", _visualHost);
+        }
+        catch (Exception e) when (e is JSException or JSDisconnectedException)
+        {
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (_module is not null)
+            {
+                await _module.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
     }
 
     private Task SourceChangedAsync(string? value) => EmitAsync(value ?? string.Empty);

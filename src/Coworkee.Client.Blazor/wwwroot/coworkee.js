@@ -129,3 +129,19 @@ export function prefersDark() {
 export function utcOffsetMinutes(year, month, day, hour, minute) {
     return -new Date(year, month - 1, day, hour, minute).getTimezoneOffset();
 }
+
+// the Quill mention module only accepts letters while typing, placeholders also contain dots, digits and underscores
+export async function widenMentionChars(root) {
+    for (let attempt = 0; attempt < 50; attempt++) {
+        const container = root?.querySelector('.ql-container');
+        const mention = container && window.Quill?.find(container)?.getModule('mention');
+        if (mention?.options) {
+            mention.options.allowedChars = /^[\p{L}\p{N}._\s]*$/u;
+            return true;
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    return false;
+}
