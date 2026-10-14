@@ -1,4 +1,6 @@
+using Avalonia.Controls;
 using Avalonia.Media;
+using Coworkee.Cli.Spec;
 using Coworkee.Studio.Model;
 
 namespace Coworkee.Studio.Tests;
@@ -90,12 +92,12 @@ public sealed class OptionTests
     {
         using var folder = new TempFolder();
         var main = Studio.Create(folder);
-        main.Option("backup").IsAvailable.ShouldBeTrue();
+        main.Option("backup").IsRelevant.ShouldBeTrue();
         main.Option("aiProvider").Note!.ShouldContain("Parameters:ai-apikey");
 
         main.Option("database").Value = "sqlite";
-        main.Option("backup").IsAvailable.ShouldBeFalse();
-        main.Option("backup").Note!.ShouldContain("PostgreSQL");
+        main.Option("backup").IsRelevant.ShouldBeFalse();
+        main.ToSpec().Options.ShouldNotContainKey("backup");
         main.Option("database").Note!.ShouldContain("One writer at a time");
 
         main.Option("aiProvider").Value = "ollama";
@@ -113,20 +115,159 @@ public sealed class OptionTests
     }
 
     [Fact]
-    public void Only_changed_options_go_into_the_spec()
+    public void Only_changed_options_go_into_the_spec_but_every_module_is_listed()
     {
         using var folder = new TempFolder();
         var main = Studio.Create(folder);
         main.Basics.Name = "Shop";
+        var modules = OptionCatalog.All.Where(o => o.Group == OptionCatalog.Modules).Select(o => o.Id).ToList();
 
-        main.ToSpec().Options.ShouldBeEmpty();
+        main.ToSpec().Options.Keys.ShouldBe(modules);
+        main.ToSpec().Options["chat"]!.GetValue<bool>().ShouldBeTrue();
+        main.ToSpec().Options["files"]!.GetValue<bool>().ShouldBeFalse();
         main.ToSpec().Branding.ShouldBeNull();
 
         main.Option("storage").Value = "azureBlob";
         main.Option("theme").Value = "Forest";
         var spec = main.ToSpec();
-        spec.Options.Keys.ShouldBe(["storage"]);
+        spec.Options.Keys.ShouldBe([.. modules, "storage"]);
         spec.Branding!.Theme.ShouldBe("Forest");
+    }
+
+    [Fact]
+    public void With_every_module_on_the_spec_at_the_end_names_them_all()
+    {
+        using var folder = new TempFolder();
+        var main = Studio.Create(folder);
+        main.Basics.Name = "Shop";
+        main.Architecture.ApplyPreset(main.Architecture.Presets.Single(p => p.Preset.Name == "Everything"));
+
+        main.Review.Refresh();
+
+        var options = main.ToSpec().Options;
+        foreach (var module in OptionCatalog.All.Where(o => o.Group == OptionCatalog.Modules && o.Kind == OptionKind.Bool))
+        {
+            options[module.Id]!.GetValue<bool>().ShouldBeTrue(module.Id);
+            main.Review.SpecText.ShouldContain($"\"{module.Id}\": true");
+        }
+
+        main.Review.SpecText.ShouldContain("\"eventBus\": \"rabbitMq\"");
+        main.Review.Items.Single(i => i.Label == "Modules").Value.ShouldContain("Audit log");
+        main.Errors.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void A_module_entity_marked_client_entity_still_switches_client_entities_on_in_the_listed_modules()
+    {
+        using var folder = new TempFolder();
+        var main = Studio.Create(folder);
+        main.Basics.Name = "Shop";
+        main.Entities.AddModule();
+        main.Entities.SelectedEntity!.ClientEntity = true;
+
+        main.ToSpec().Options["clientEntities"]!.GetValue<bool>().ShouldBeTrue();
+        main.Errors.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void The_airworks_packages_are_not_shown_nor_written_unless_airworks_is_on()
+    {
+        using var folder = new TempFolder();
+        var main = Studio.Create(folder);
+        main.Basics.Name = "Shop";
+        var packages = main.Option("airworksPackages");
+        var general = main.Architecture.Groups.Single(g => g.Name == OptionCatalog.General);
+
+        packages.IsRelevant.ShouldBeFalse();
+        general.Shown.ShouldNotContain(packages);
+        general.Shown.ShouldContain(main.Option("airworks"));
+
+        packages.Value = "npm";
+        main.ToSpec().Options.ShouldNotContainKey("airworksPackages");
+        Coworkee.Studio.Cli.CommandLine.Flags(main.ToSpec()).ShouldNotContain("--airworks-packages");
+
+        main.Option("airworks").IsOn = true;
+        packages.IsRelevant.ShouldBeTrue();
+        general.Shown.ShouldContain(packages);
+        general.Shown.ShouldBe(general.Options.Where(o => o.IsRelevant));
+        main.ToSpec().Options["airworksPackages"]!.GetValue<string>().ShouldBe("npm");
+        Coworkee.Studio.Cli.CommandLine.Flags(main.ToSpec()).ShouldContain("--airworks-packages");
+
+        main.Option("airworks").IsOn = false;
+        general.Shown.ShouldNotContain(packages);
+        packages.Value.ShouldBe("npm");
+    }
+
+    [Fact]
+    public void Options_that_need_another_one_follow_it_in_the_spec()
+    {
+        using var folder = new TempFolder();
+        var main = Studio.Create(folder);
+        main.Basics.Name = "Shop";
+        main.Option("aiModel").Value = "gpt-5";
+        main.Option("signInMedia").Value = "https://cdn.test/a.mp4";
+        main.Option("signInMediaSide").Value = "Right";
+
+        main.ToSpec().Options["aiModel"]!.GetValue<string>().ShouldBe("gpt-5");
+        main.ToSpec().Branding!.SignInMedia.ShouldBe("https://cdn.test/a.mp4");
+        main.ToSpec().Branding!.SignInMediaSide.ShouldBe("Right");
+
+        main.Option("ai").IsOn = false;
+        main.Option("signInLayout").Value = "Card";
+        main.Option("aiModel").IsRelevant.ShouldBeFalse();
+        main.ToSpec().Options.ShouldNotContainKey("aiModel");
+        main.ToSpec().Branding!.SignInMedia.ShouldBeNull();
+        main.ToSpec().Branding!.SignInMediaSide.ShouldBeNull();
+        main.Errors.ShouldBeEmpty();
+
+        main.Option("signInLayout").Value = "Split";
+        main.ToSpec().Branding!.SignInMedia.ShouldBe("https://cdn.test/a.mp4");
+    }
+
+    [Fact]
+    public Task Every_option_has_an_icon_that_exists() => TestApp.Ui(() =>
+    {
+        OptionLooks.Ids.ShouldBe(OptionCatalog.All.Select(o => o.Id), ignoreOrder: true);
+        foreach (var option in OptionCatalog.All)
+        {
+            Avalonia.Application.Current!.TryFindResource(OptionLooks.Icon(option.Id), out var icon).ShouldBeTrue(option.Id);
+            icon.ShouldBeOfType<Avalonia.Media.StreamGeometry>();
+        }
+    });
+
+    [Fact]
+    public void Cards_of_products_open_their_website_and_choices_open_the_one_chosen()
+    {
+        using var folder = new TempFolder();
+        var main = Studio.Create(folder);
+        var opened = new List<string>();
+        main.Dialogs.Open = opened.Add;
+
+        var expected = new Dictionary<string, string>
+        {
+            ["airworks"] = "https://fgilde.github.io/AirWorks/", ["aspireUI"] = "https://github.com/fgilde/AspireUI", ["webDataStudio"] = "https://github.com/fgilde/WebDataStudio",
+            ["grafana"] = "https://grafana.com/", ["keycloak"] = "https://www.keycloak.org/", ["redis"] = "https://redis.io/", ["elasticsearch"] = "https://www.elastic.co/elasticsearch",
+        };
+        foreach (var (id, url) in expected)
+        {
+            main.Option(id).HasInfo.ShouldBeTrue(id);
+            main.Option(id).OpenInfoCommand.Execute(null);
+            opened[^1].ShouldBe(url);
+        }
+
+        var database = main.Option("database");
+        database.InfoText.ShouldBe("More about PostgreSQL");
+        database.OpenInfoCommand.Execute(null);
+        opened[^1].ShouldBe("https://www.postgresql.org/");
+        database.Value = "sqlite";
+        database.InfoText.ShouldBe("More about SQLite");
+        database.OpenInfoCommand.Execute(null);
+        opened[^1].ShouldBe("https://sqlite.org/");
+
+        main.Option("eventBus").HasInfo.ShouldBeFalse();
+        main.Option("eventBus").Value = "rabbitMq";
+        main.Option("eventBus").HasInfo.ShouldBeTrue();
+        main.Option("chat").HasInfo.ShouldBeFalse();
     }
 
     [Fact]

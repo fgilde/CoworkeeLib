@@ -387,7 +387,7 @@ public sealed partial class MainViewModel : ObservableObject
         // a saved spec keeps the output folder only below its own folder; the Studio passes it as -o anyway
         var output = Relative(Basics.Output);
         var spec = new AppSpec { Name = Basics.Name.Trim(), Output = relativeTo is not null && output is not null && Path.IsPathRooted(output) ? null : output };
-        foreach (var option in Options.Values.Where(o => o.Option.Group is not (OptionCatalog.Branding or OptionCatalog.SignIn) && o.Id != "title"))
+        foreach (var option in Options.Values.Where(o => o.Option.Group is not (OptionCatalog.Branding or OptionCatalog.SignIn) && o.Id != "title" && o.IsRelevant))
         {
             if (option is { IsChanged: true, Value: not null })
             {
@@ -413,7 +413,17 @@ public sealed partial class MainViewModel : ObservableObject
         spec.Enums = Entities.EnumSpecs();
         spec.Roles = Users.RoleSpecs();
         spec.Users = Users.UserSpecs();
+        ListModules(spec);
         return spec;
+    }
+
+    // a spec of the defaults would show no module at all: every module of the library is listed with its effective value, in catalog order
+    private static void ListModules(AppSpec spec)
+    {
+        var values = SpecOptions.Resolve(spec);
+        spec.Options = OptionCatalog.All
+            .Where(o => spec.Options.ContainsKey(o.Id) || (o.Group == OptionCatalog.Modules && OptionCatalog.IsActive(o, values)))
+            .ToDictionary(o => o.Id, o => spec.Options.TryGetValue(o.Id, out var set) ? set : o.Kind == OptionKind.Bool ? (JsonNode?)JsonValue.Create(values[o.Id] == "true") : JsonValue.Create(values[o.Id]));
     }
 
     /// <summary>Takes over a spec; relative paths are resolved against the folder of <paramref name="specFile"/>.</summary>
@@ -447,6 +457,11 @@ public sealed partial class MainViewModel : ObservableObject
         if (_loading)
         {
             return;
+        }
+
+        foreach (var option in Options.Values.Where(o => o.Option.DependsOn is not null))
+        {
+            option.IsRelevant = OptionCatalog.IsActive(option.Option, id => Options[id].Value);
         }
 
         Errors = Validate();
@@ -526,7 +541,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    private string? Changed(string id) => Options[id] is { IsChanged: true, Value: { Length: > 0 } value } ? value : null;
+    private string? Changed(string id) => Options[id] is { IsChanged: true, IsRelevant: true, Value: { Length: > 0 } value } ? value : null;
 
     private void UpdateSetting(Action change)
     {

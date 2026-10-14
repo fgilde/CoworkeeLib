@@ -1,11 +1,13 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Coworkee.Cli.Spec;
 using Coworkee.Studio.Localization;
+using Coworkee.Studio.Model;
 
 namespace Coworkee.Studio.ViewModels;
 
-public sealed record ChoiceViewModel(string Value, string Description)
+public sealed record ChoiceViewModel(string Value, string Description, string? InfoUrl = null)
 {
     private static readonly Dictionary<string, (string Label, string Icon)> Looks = new()
     {
@@ -24,6 +26,10 @@ public sealed record ChoiceViewModel(string Value, string Description)
         ["google"] = ("Google Cloud Translation", "Icon.Cloud"),
         ["ai"] = ("AI assistant", "Icon.Sparkle"),
         ["none"] = ("None", "Icon.Close"),
+        ["rabbitMq"] = ("RabbitMQ", "Icon.Broadcast"),
+        ["azureBlob"] = ("Azure Blob Storage", "Icon.Cloud"),
+        ["mapperly"] = ("Mapperly", "Icon.SwapHorizontal"),
+        ["npm"] = ("npm", "Icon.Package"),
     };
 
     public string Text => L.Get(Description);
@@ -55,7 +61,7 @@ public sealed partial class OptionViewModel : ObservableObject
     public OptionViewModel(CliOption option)
     {
         Option = option;
-        Choices = option.Choices?.Select(c => new ChoiceViewModel(c.Value, c.Description)).ToList() ?? [];
+        Choices = option.Choices?.Select(c => new ChoiceViewModel(c.Value, c.Description, c.InfoUrl)).ToList() ?? [];
         MultiChoices = option.Kind == OptionKind.Multi ? [.. Choices.Select(c => new MultiChoiceViewModel(this, c))] : [];
         Value = option.Default;
     }
@@ -70,6 +76,10 @@ public sealed partial class OptionViewModel : ObservableObject
     /// <summary>False while another choice rules the option out (backups off Postgres, a provider without the AI assistant).</summary>
     [ObservableProperty]
     public partial bool IsAvailable { get; set; } = true;
+
+    /// <summary>False while the option it depends on rules it out (the AirWorks packages without AirWorks): the card is not shown and the option stays out of the spec.</summary>
+    [ObservableProperty]
+    public partial bool IsRelevant { get; set; } = true;
 
     /// <summary>What the current value means for the solution (English, the key of <see cref="NoteText"/>).</summary>
     [ObservableProperty]
@@ -101,14 +111,19 @@ public sealed partial class OptionViewModel : ObservableObject
     /// <summary>Opens an address in the browser (the info link of the option).</summary>
     public Action<string>? Open { get; init; }
 
-    public bool HasInfo => Option.InfoUrl is not null;
+    public string Icon => OptionLooks.Icon(Id);
 
-    public string InfoText => L.Format("More about {0}", Title);
+    /// <summary>The website of the option, or of the product of the chosen choice (PostgreSQL, RabbitMQ).</summary>
+    public string? InfoUrl => (IsChoice ? Choice?.InfoUrl : null) ?? Option.InfoUrl;
+
+    public bool HasInfo => InfoUrl is not null;
+
+    public string InfoText => L.Format("More about {0}", IsChoice && Choice is { InfoUrl: not null } choice ? choice.Label : Title);
 
     [RelayCommand]
     public void OpenInfo()
     {
-        if (Option.InfoUrl is { } url)
+        if (InfoUrl is { } url)
         {
             Open?.Invoke(url);
         }
@@ -175,6 +190,9 @@ public sealed partial class OptionViewModel : ObservableObject
         OnPropertyChanged(nameof(Text));
         OnPropertyChanged(nameof(Choice));
         OnPropertyChanged(nameof(IsChanged));
+        OnPropertyChanged(nameof(InfoUrl));
+        OnPropertyChanged(nameof(HasInfo));
+        OnPropertyChanged(nameof(InfoText));
         foreach (var choice in MultiChoices)
         {
             choice.Refresh();
@@ -186,7 +204,36 @@ public sealed partial class OptionViewModel : ObservableObject
 
 public sealed record OptionGroupViewModel(string Name, string Description, string Icon, IReadOnlyList<OptionViewModel> Options)
 {
+    /// <summary>The options that matter right now: one that depends on another is not shown while that one rules it out.</summary>
+    public ObservableCollection<OptionViewModel> Shown { get; } = Track(Options);
+
     public string Title => L.Get(Name);
 
     public string Text => L.Get(Description);
+
+    private static ObservableCollection<OptionViewModel> Track(IReadOnlyList<OptionViewModel> options)
+    {
+        var shown = new ObservableCollection<OptionViewModel>(options.Where(o => o.IsRelevant));
+        foreach (var option in options)
+        {
+            option.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName != nameof(OptionViewModel.IsRelevant))
+                {
+                    return;
+                }
+
+                if (!option.IsRelevant)
+                {
+                    shown.Remove(option);
+                }
+                else if (!shown.Contains(option))
+                {
+                    shown.Insert(options.TakeWhile(o => o != option).Count(shown.Contains), option);
+                }
+            };
+        }
+
+        return shown;
+    }
 }

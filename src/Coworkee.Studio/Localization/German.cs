@@ -164,7 +164,6 @@ public static class German
         ["PostgreSQL container. Every module works, backups and restore from the admin pages included."] = "PostgreSQL-Container. Jedes Modul funktioniert, Backups und Wiederherstellung über die Admin-Seiten inklusive.",
         ["SQL Server container (about 2 GB of RAM). No backups from the admin pages: use those of SQL Server or Azure SQL."] = "SQL-Server-Container (etwa 2 GB RAM). Keine Backups über die Admin-Seiten: dafür die von SQL Server oder Azure SQL nutzen.",
         ["No container: one file under .data. One writer at a time, background jobs kept in memory and no backups. For demos and one machine."] = "Kein Container: eine Datei unter .data. Nur ein Schreiber gleichzeitig, Hintergrundjobs im Speicher und keine Backups. Für Demos und einen Rechner.",
-        ["Not part of the app: backups from the admin pages need PostgreSQL."] = "Nicht Teil der App: Backups über die Admin-Seiten brauchen PostgreSQL.",
         ["Only used with the AI assistant module; switch it on under Modules."] = "Nur mit dem Modul KI-Assistent genutzt; unter Module einschalten.",
         ["Adds an Ollama container that pulls the model (several GB) on the first start; no key needed."] = "Fügt einen Ollama-Container hinzu, der beim ersten Start das Modell lädt (mehrere GB); kein Schlüssel nötig.",
         ["Endpoint and model here or in the user secrets of the app host (Parameters:ai-endpoint, ai-model); the key in Parameters:ai-apikey."] = "Endpunkt und Modell hier oder in den User Secrets des AppHosts (Parameters:ai-endpoint, ai-model); der Schlüssel in Parameters:ai-apikey.",
@@ -259,6 +258,7 @@ public static class German
         ["App spec"] = "App-Spezifikation",
         ["Copy"] = "Kopieren",
         ["Save as"] = "Speichern unter",
+        ["The modules of the library are under options, each switched on or off. Your own modules and entities are under modules."] = "Die Module der Bibliothek stehen unter options, jedes ein- oder ausgeschaltet. Eigene Module und Entitäten stehen unter modules.",
         ["Logo and media from other folders are copied next to the spec when you save it; the CLI only reads files from the folder of a spec."] = "Logo und Medien aus anderen Ordnern werden beim Speichern neben die Spezifikation kopiert; die CLI liest nur Dateien aus dem Ordner einer Spezifikation.",
 
         // create
