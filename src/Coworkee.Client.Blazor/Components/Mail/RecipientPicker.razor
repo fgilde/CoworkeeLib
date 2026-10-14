@@ -71,10 +71,7 @@
 {
     <MudPaper Outlined="true" Class="pa-3 mt-3" data-testid="recipient-preview">
         <MudText Typo="Typo.subtitle1" data-testid="recipient-count">@L["{0} recipients", preview.Count]</MudText>
-        @if (preview.Excluded > 0)
-        {
-            <MudText Typo="Typo.caption" Class="mud-text-secondary" data-testid="recipient-excluded">@L["{0} users excluded (no e-mail, locked, deactivated or unsubscribed)", preview.Excluded]</MudText>
-        }
+        <MudText Typo="Typo.caption" Class="mud-text-secondary" data-testid="recipient-excluded">@L["{0} users excluded (no e-mail, locked, deactivated or unsubscribed)", preview.Excluded]</MudText>
         @if (preview.First.Count > 0)
         {
             <MudSimpleTable Dense="true" Class="mt-2">

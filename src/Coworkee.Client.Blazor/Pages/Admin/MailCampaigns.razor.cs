@@ -13,6 +13,8 @@ public partial class MailCampaigns : IDisposable
     private IReadOnlyList<MailCampaignDto> _campaigns = [];
     private Timer? _timer;
     private bool _busy;
+    private bool _disposed;
+    private bool _polling;
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
@@ -28,7 +30,10 @@ public partial class MailCampaigns : IDisposable
     protected override async Task OnInitializedAsync()
     {
         await LoadAsync();
-        _timer = new Timer(_ => _ = InvokeAsync(PollAsync), null, PollInterval, PollInterval);
+        if (!_disposed)
+        {
+            _timer = new Timer(_ => _ = InvokeAsync(PollAsync), null, PollInterval, PollInterval);
+        }
     }
 
     private static Color ColorFor(MailCampaignStatus status) => status switch
@@ -44,12 +49,31 @@ public partial class MailCampaigns : IDisposable
 
     private Task LoadAsync() => Snackbar.RunAsync(async () => _campaigns = await Api.GetMailCampaignsAsync());
 
+    // a campaign started now stays Scheduled until the job claims it
+    private bool NeedsPolling(MailCampaignDto campaign) =>
+        campaign.Status == MailCampaignStatus.Sending
+        || (campaign.Status == MailCampaignStatus.Scheduled && (campaign.ScheduledFor is null || campaign.ScheduledFor <= DateTimeOffset.UtcNow + PollInterval));
+
     private async Task PollAsync()
     {
-        if (_campaigns.Any(c => c.Status == MailCampaignStatus.Sending))
+        if (_disposed || _polling || !_campaigns.Any(NeedsPolling))
+        {
+            return;
+        }
+
+        _polling = true;
+        try
         {
             await LoadAsync();
             StateHasChanged();
+        }
+        catch (Exception exception) when (exception is not ObjectDisposedException)
+        {
+            Snackbar.Add(exception.Message, Severity.Error);
+        }
+        finally
+        {
+            _polling = false;
         }
     }
 
@@ -90,5 +114,9 @@ public partial class MailCampaigns : IDisposable
         }
     }
 
-    public void Dispose() => _timer?.Dispose();
+    public void Dispose()
+    {
+        _disposed = true;
+        _timer?.Dispose();
+    }
 }

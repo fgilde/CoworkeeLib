@@ -57,6 +57,7 @@ Die Liste zeigt jede Kampagne mit Status, `Gesendet/Gesamt` und einer roten Zahl
 
 !!! warning
     Links in Kampagnenmails brauchen eine absolute Adresse. Setzen Sie `Coworkee:Notifications:PublicAppUrl` (zum Beispiel `https://app.example.com`); ohne sie lässt sich keine Kampagne starten oder planen. Das Abmelde-Token ist mit ASP.NET Core Data Protection geschützt: Läuft der Kampagnen-Job in einem anderen Host als die Web-App, müssen beide denselben Data-Protection-Schlüsselring teilen, sonst öffnen sich die Links nicht.
+
 ## Anbieter
 
 Mails verlassen das System über genau einen *Anbieter*. `Mail.Provider` wählt ihn, die übrigen Einstellungen gehören zum Anbieter und stehen in derselben Gruppe. Jeder Anbieter braucht eine Absenderadresse (`Mail.From`); die optionale Whitelist (`Mail.Whitelist`, eine Adresse oder `@domain` je Zeile, leer erlaubt alle) gilt für alle.

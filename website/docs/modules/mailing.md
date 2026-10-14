@@ -57,6 +57,7 @@ The list shows each campaign with its status, `Sent/Total`, and a red *failed* c
 
 !!! warning
     Links in campaign mails need an absolute address. Set `Coworkee:Notifications:PublicAppUrl` (for example `https://app.example.com`); without it a campaign cannot be started or scheduled. The unsubscribe token is protected with ASP.NET Core Data Protection: when the campaign job runs in another host than the web app, both must share the same Data Protection key ring, otherwise links do not open.
+
 ## Providers
 
 Mails leave through one *provider*. `Mail.Provider` picks it, the other settings belong to the provider and sit in the same group. Every provider needs a sender address (`Mail.From`); the optional whitelist (`Mail.Whitelist`, one address or `@domain` per line, empty allows everyone) applies to all of them.

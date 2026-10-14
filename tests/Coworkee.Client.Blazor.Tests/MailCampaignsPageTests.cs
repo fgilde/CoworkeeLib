@@ -272,4 +272,39 @@ public sealed class MailCampaignsPageTests : ClientTestBase
         page.WaitForElement("[data-testid='campaign-filter']");
         _filters.ShouldContain($"CampaignId eq {Sending}");
     }
+
+    [Fact]
+    public void A_campaign_started_now_is_followed_from_scheduled_to_sending()
+    {
+        _campaigns = [Campaign(Planned, "Autumn news", MailCampaignStatus.Scheduled)];
+        var page = Render<MailCampaigns>(p => p.Add(c => c.PollInterval, TimeSpan.FromMilliseconds(50)));
+        page.WaitForAssertion(() => page.Find($"[data-testid='campaign-{Planned}'] .mud-chip").TextContent.ShouldBe("Scheduled"));
+
+        _campaigns = [Campaign(Planned, "Autumn news", MailCampaignStatus.Sending, total: 4, sent: 1)];
+
+        page.WaitForAssertion(() => page.Find($"[data-testid='campaign-{Planned}'] .mud-chip").TextContent.ShouldBe("Sending"));
+    }
+
+    [Fact]
+    public void A_campaign_scheduled_far_ahead_is_not_polled()
+    {
+        _campaigns = [Campaign(Planned, "Autumn news", MailCampaignStatus.Scheduled, scheduledFor: DateTimeOffset.UtcNow.AddDays(1))];
+        var page = Render<MailCampaigns>(p => p.Add(c => c.PollInterval, TimeSpan.FromMilliseconds(30)));
+        page.WaitForElement($"[data-testid='campaign-{Planned}']");
+        Api.ClearReceivedCalls();
+
+        Thread.Sleep(300);
+
+        Api.ReceivedCalls().ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Excluded_users_are_shown_also_when_there_are_none()
+    {
+        Api.PreviewRecipientsAsync(default!, default).ReturnsForAnyArgs(new RecipientPreviewDto(3, 0, []));
+        OpenWizard();
+        await ChooseTemplateAndContinueAsync();
+
+        _dialogs.WaitForAssertion(() => _dialogs.Find("[data-testid='recipient-excluded']").TextContent.ShouldStartWith("0 "));
+    }
 }
