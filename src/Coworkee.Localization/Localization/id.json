@@ -1070,5 +1070,9 @@
   "Raw": "Mentah",
   "Add rule": "Tambah aturan",
   "Selector": "Selektor",
-  "Selector required": "Selektor wajib diisi"
+  "Selector required": "Selektor wajib diisi",
+  "Global": "Global",
+  "New template": "Templat baru",
+  "New mail template": "Templat email baru",
+  "custom": "kustom"
 }

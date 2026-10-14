@@ -1070,5 +1070,9 @@
   "Raw": "خام",
   "Add rule": "إضافة قاعدة",
   "Selector": "المحدد",
-  "Selector required": "المحدد مطلوب"
+  "Selector required": "المحدد مطلوب",
+  "Global": "عام",
+  "New template": "قالب جديد",
+  "New mail template": "قالب بريد جديد",
+  "custom": "مخصص"
 }

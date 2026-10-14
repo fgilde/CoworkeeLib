@@ -1070,5 +1070,9 @@
   "Raw": "Ham",
   "Add rule": "Kural ekle",
   "Selector": "Seçici",
-  "Selector required": "Seçici gerekli"
+  "Selector required": "Seçici gerekli",
+  "Global": "Genel",
+  "New template": "Yeni şablon",
+  "New mail template": "Yeni e-posta şablonu",
+  "custom": "özel"
 }

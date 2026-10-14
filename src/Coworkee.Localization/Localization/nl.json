@@ -1070,5 +1070,9 @@
   "Raw": "Ruw",
   "Add rule": "Regel toevoegen",
   "Selector": "Selector",
-  "Selector required": "Selector is verplicht"
+  "Selector required": "Selector is verplicht",
+  "Global": "Globaal",
+  "New template": "Nieuwe sjabloon",
+  "New mail template": "Nieuwe e-mailsjabloon",
+  "custom": "eigen"
 }

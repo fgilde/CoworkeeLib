@@ -1070,5 +1070,9 @@
   "Raw": "원본",
   "Add rule": "규칙 추가",
   "Selector": "선택자",
-  "Selector required": "선택자가 필요합니다"
+  "Selector required": "선택자가 필요합니다",
+  "Global": "전역",
+  "New template": "새 템플릿",
+  "New mail template": "새 메일 템플릿",
+  "custom": "사용자 지정"
 }

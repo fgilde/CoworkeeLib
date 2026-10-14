@@ -1070,5 +1070,9 @@
   "Raw": "原始",
   "Add rule": "添加规则",
   "Selector": "选择器",
-  "Selector required": "需要选择器"
+  "Selector required": "需要选择器",
+  "Global": "全局",
+  "New template": "新建模板",
+  "New mail template": "新建邮件模板",
+  "custom": "自定义"
 }

@@ -1070,5 +1070,9 @@
   "Raw": "生",
   "Add rule": "ルールを追加",
   "Selector": "セレクター",
-  "Selector required": "セレクターは必須です"
+  "Selector required": "セレクターは必須です",
+  "Global": "グローバル",
+  "New template": "新しいテンプレート",
+  "New mail template": "新しいメールテンプレート",
+  "custom": "カスタム"
 }

@@ -1070,5 +1070,9 @@
   "Raw": "Izvorno",
   "Add rule": "Dodaj pravilo",
   "Selector": "Selektor",
-  "Selector required": "Selektor je obavezan"
+  "Selector required": "Selektor je obavezan",
+  "Global": "Globalni",
+  "New template": "Novi predložak",
+  "New mail template": "Novi predložak e-pošte",
+  "custom": "prilagođeni"
 }

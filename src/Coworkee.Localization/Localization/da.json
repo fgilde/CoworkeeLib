@@ -1070,5 +1070,9 @@
   "Raw": "Rå",
   "Add rule": "Tilføj regel",
   "Selector": "Selektor",
-  "Selector required": "Selektor er påkrævet"
+  "Selector required": "Selektor er påkrævet",
+  "Global": "Global",
+  "New template": "Ny skabelon",
+  "New mail template": "Ny mailskabelon",
+  "custom": "tilpasset"
 }

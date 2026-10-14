@@ -1070,5 +1070,9 @@
   "Raw": "ដើម",
   "Add rule": "បន្ថែមច្បាប់",
   "Selector": "ឧបករណ៍ជ្រើសរើស",
-  "Selector required": "ត្រូវការឧបករណ៍ជ្រើសរើស"
+  "Selector required": "ត្រូវការឧបករណ៍ជ្រើសរើស",
+  "Global": "សកល",
+  "New template": "គំរូថ្មី",
+  "New mail template": "គំរូអ៊ីមែលថ្មី",
+  "custom": "ផ្ទាល់ខ្លួន"
 }

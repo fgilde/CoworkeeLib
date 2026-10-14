@@ -1070,5 +1070,9 @@
   "Raw": "Zdroj",
   "Add rule": "Přidat pravidlo",
   "Selector": "Selektor",
-  "Selector required": "Selektor je povinný"
+  "Selector required": "Selektor je povinný",
+  "Global": "Globální",
+  "New template": "Nová šablona",
+  "New mail template": "Nová šablona e-mailu",
+  "custom": "vlastní"
 }

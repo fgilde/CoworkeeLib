@@ -1070,5 +1070,9 @@
   "Raw": "Grezzo",
   "Add rule": "Aggiungi regola",
   "Selector": "Selettore",
-  "Selector required": "Selettore obbligatorio"
+  "Selector required": "Selettore obbligatorio",
+  "Global": "Globale",
+  "New template": "Nuovo modello",
+  "New mail template": "Nuovo modello e-mail",
+  "custom": "personalizzato"
 }

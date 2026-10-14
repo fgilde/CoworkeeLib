@@ -1070,5 +1070,9 @@
   "Raw": "Суров",
   "Add rule": "Добавяне на правило",
   "Selector": "Селектор",
-  "Selector required": "Селекторът е задължителен"
+  "Selector required": "Селекторът е задължителен",
+  "Global": "Глобален",
+  "New template": "Нов шаблон",
+  "New mail template": "Нов шаблон за имейл",
+  "custom": "персонализиран"
 }

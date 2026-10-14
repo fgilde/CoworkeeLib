@@ -136,6 +136,10 @@ public interface ICoworkeeApi
 
     Task<MailTemplateDto> GetMailTemplateAsync(string name, string culture, CancellationToken cancellationToken = default);
 
+    Task CreateMailTemplateAsync(CreateMailTemplateRequest request, CancellationToken cancellationToken = default);
+
+    Task DeleteMailTemplateAsync(string name, CancellationToken cancellationToken = default);
+
     Task SaveMailTemplateAsync(string name, string culture, SaveMailTemplateRequest request, CancellationToken cancellationToken = default);
 
     Task ResetMailTemplateAsync(string name, string culture, CancellationToken cancellationToken = default);

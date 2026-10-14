@@ -1070,5 +1070,9 @@
   "Raw": "Вихідний",
   "Add rule": "Додати правило",
   "Selector": "Селектор",
-  "Selector required": "Потрібен селектор"
+  "Selector required": "Потрібен селектор",
+  "Global": "Глобальний",
+  "New template": "Новий шаблон",
+  "New mail template": "Новий шаблон листа",
+  "custom": "власний"
 }

@@ -1070,5 +1070,9 @@
   "Raw": "Roh",
   "Add rule": "Regel hinzufügen",
   "Selector": "Selektor",
-  "Selector required": "Selektor erforderlich"
+  "Selector required": "Selektor erforderlich",
+  "Global": "Global",
+  "New template": "Neue Vorlage",
+  "New mail template": "Neue Mail-Vorlage",
+  "custom": "eigene"
 }

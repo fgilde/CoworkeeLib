@@ -1070,5 +1070,9 @@
   "Raw": "Ακατέργαστο",
   "Add rule": "Προσθήκη κανόνα",
   "Selector": "Επιλογέας",
-  "Selector required": "Απαιτείται επιλογέας"
+  "Selector required": "Απαιτείται επιλογέας",
+  "Global": "Καθολικό",
+  "New template": "Νέο πρότυπο",
+  "New mail template": "Νέο πρότυπο email",
+  "custom": "προσαρμοσμένο"
 }

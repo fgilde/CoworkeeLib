@@ -1070,5 +1070,9 @@
   "Raw": "Bruto",
   "Add rule": "Adicionar regra",
   "Selector": "Seletor",
-  "Selector required": "Seletor obrigatório"
+  "Selector required": "Seletor obrigatório",
+  "Global": "Global",
+  "New template": "Novo modelo",
+  "New mail template": "Novo modelo de e-mail",
+  "custom": "personalizado"
 }

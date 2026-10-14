@@ -1070,5 +1070,9 @@
   "Raw": "Surowy",
   "Add rule": "Dodaj regułę",
   "Selector": "Selektor",
-  "Selector required": "Selektor jest wymagany"
+  "Selector required": "Selektor jest wymagany",
+  "Global": "Globalny",
+  "New template": "Nowy szablon",
+  "New mail template": "Nowy szablon e-mail",
+  "custom": "własny"
 }

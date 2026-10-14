@@ -1070,5 +1070,9 @@
   "Raw": "Sin formato",
   "Add rule": "Añadir regla",
   "Selector": "Selector",
-  "Selector required": "Selector obligatorio"
+  "Selector required": "Selector obligatorio",
+  "Global": "Global",
+  "New template": "Nueva plantilla",
+  "New mail template": "Nueva plantilla de correo",
+  "custom": "personalizada"
 }

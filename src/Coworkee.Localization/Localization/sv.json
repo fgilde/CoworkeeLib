@@ -1070,5 +1070,9 @@
   "Raw": "Rå",
   "Add rule": "Lägg till regel",
   "Selector": "Väljare",
-  "Selector required": "Väljare krävs"
+  "Selector required": "Väljare krävs",
+  "Global": "Global",
+  "New template": "Ny mall",
+  "New mail template": "Ny e-postmall",
+  "custom": "egen"
 }
