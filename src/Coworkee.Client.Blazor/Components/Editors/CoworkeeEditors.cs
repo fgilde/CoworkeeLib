@@ -7,7 +7,7 @@ using MudBlazor.Extensions.Components.ObjectEdit.Options;
 namespace Coworkee.Client.Blazor.Components.Editors;
 
 /// <summary>
-/// Renders properties marked with [ContentTypes], [Cron], [FileSize] or [Translations] with the editors here, in every MudExObjectEdit of the app.
+/// Renders properties marked with [ContentTypes], [Cron], [FileSize] or [Translations] and every enum with the editors here, in every MudExObjectEdit of the app.
 /// AddCoworkeeClient registers it; a meta's RenderWith still wins.
 /// </summary>
 public sealed class CoworkeeEditors : IDefaultRenderDataProvider
@@ -55,8 +55,15 @@ public sealed class CoworkeeEditors : IDefaultRenderDataProvider
             };
         }
 
-        return null;
+        return type.IsEnum ? Enum(type) : null;
     }
+
+    private static IRenderData Enum(Type type) =>
+        (IRenderData)typeof(CoworkeeEditors).GetMethod(nameof(EnumEditorData), BindingFlags.NonPublic | BindingFlags.Static)!.MakeGenericMethod(type).Invoke(null, null)!;
+
+    private static RenderData<T, T> EnumEditorData<T>()
+        where T : struct, Enum =>
+        new(nameof(EnumEditor<T>.Value), typeof(EnumEditor<T>));
 
     private static RenderData<T, IReadOnlyList<string>> ContentTypes<T>(Func<IReadOnlyList<string>, T> toProperty)
         where T : IReadOnlyList<string> =>

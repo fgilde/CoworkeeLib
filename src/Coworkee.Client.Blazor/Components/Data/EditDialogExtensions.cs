@@ -81,13 +81,15 @@ public static class EditDialogExtensions
 
     // two columns on wider screens like the classic forms; a page's meta can widen single fields with WrapInMudItem(i => i.md = 12)
 #pragma warning disable BL0005 // MudEx configures the wrapping grid items through these instances
+    private static void Column(MudItem item)
+    {
+        item.xs = 12;
+        item.md = 6;
+    }
+
     private static Action<ObjectEditMeta<TModel>> Grid<TModel>(Action<ObjectEditMeta<TModel>>? meta, bool existing) => m =>
     {
-        m.WrapEachInMudItem(i =>
-        {
-            i.xs = 12;
-            i.md = 6;
-        });
+        m.WrapEachInMudItem(Column);
         if (!existing)
         {
             foreach (var property in m.AllProperties)
@@ -97,6 +99,12 @@ public static class EditDialogExtensions
         }
 
         meta?.Invoke(m);
+
+        // RenderWith drops the grid item of a property, which would put its editor outside the grid, next to the first field
+        foreach (var property in m.AllProperties.Where(p => p.RenderData?.Wrapper is null))
+        {
+            property.WrapInMudItem(Column);
+        }
     };
 #pragma warning restore BL0005
 

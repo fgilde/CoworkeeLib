@@ -1,0 +1,21 @@
+@typeparam TEnum where TEnum : struct, Enum
+@if (_flags)
+{
+    <MudSelect T="TEnum" MultiSelection="true" SelectedValues="Selected" SelectedValuesChanged="SetFlagsAsync" MultiSelectionTextFunc="FlagsText" ToStringFunc="Text" Label="@Label" HelperText="@HelperText"
+               ReadOnly="ReadOnly" Disabled="Disabled" Variant="Variant.Text" Margin="Density.Margin" Dense="Density.Dense" data-testid="enum-editor">
+        @foreach (var item in _items)
+        {
+            <MudSelectItem T="TEnum" Value="item">@Text(item)</MudSelectItem>
+        }
+    </MudSelect>
+}
+else
+{
+    <MudSelect T="TEnum" Value="Value" ValueChanged="SetAsync" ToStringFunc="Text" Label="@Label" HelperText="@HelperText"
+               ReadOnly="ReadOnly" Disabled="Disabled" Variant="Variant.Text" Margin="Density.Margin" Dense="Density.Dense" data-testid="enum-editor">
+        @foreach (var item in _items)
+        {
+            <MudSelectItem T="TEnum" Value="item">@Text(item)</MudSelectItem>
+        }
+    </MudSelect>
+}
