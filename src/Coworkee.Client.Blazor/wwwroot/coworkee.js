@@ -125,6 +125,13 @@ export function loadMonaco() {
             await loadScript(`${base}/lib/monaco-editor/min/vs/loader.js`);
             await loadScript(`${base}/lib/monaco-editor/min/vs/editor/editor.main.js`);
         }
+        // editor.main.js defines window.monaco asynchronously after its script has loaded
+        for (let i = 0; !window.monaco && i < 200; i++) {
+            await new Promise(r => setTimeout(r, 50));
+        }
+        if (!window.monaco) {
+            monacoLoading = null;
+        }
         return !!window.monaco;
     })().catch(() => (monacoLoading = null, false));
     return monacoLoading;
