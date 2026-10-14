@@ -11,6 +11,7 @@
     "@fgilde/airworks": "git+https://github.com/fgilde/AirWorks.git#d295c659dc4267a05f8d2a530fda5861fb5d8120"
   },
   "devDependencies": {
+    "mudex-webcomponents": "9.11.3",
     "typescript": "^5.9.3",
     "vite": "^7.1.9"
   }
