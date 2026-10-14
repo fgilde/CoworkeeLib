@@ -12,6 +12,8 @@ namespace Coworkee.Client.Blazor.ClientEntities;
 public static class ODataLinq
 {
     private const int MaxDepth = 100;
+    private const int MaxParsed = 1024;
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, QueryToken> Parsed = new(StringComparer.Ordinal);
 
     public static Expression<Func<T, bool>> Filter<T>(string filter) => Filter<T>(Parse(filter));
 
@@ -78,31 +80,25 @@ public static class ODataLinq
         ? [.. Binder.Split(list).Select(item => Literal(Parse(item) is LiteralToken literal ? literal.Value : throw new NotSupportedException(item), type))]
         : throw new NotSupportedException("Only literal lists are supported in 'in'.");
 
-    /// <summary>Recognizes "Path eq literal", the shape of list facet options, so they can be counted in one pass.</summary>
-    internal static bool TryEquality<T>(string filter, out string path, out object? value)
-    {
-        path = string.Empty;
-        value = null;
-        if (Parse(filter) is not BinaryOperatorToken { OperatorKind: BinaryOperatorKind.Equal, Left: EndPathToken left, Right: LiteralToken literal })
-        {
-            return false;
-        }
-
-        var it = Expression.Parameter(typeof(T), "it");
-        var member = new Binder(it).Bind(left);
-        path = PathText(left);
-        value = Binder.ConvertValue(literal.Value, Nullable.GetUnderlyingType(member.Type) ?? member.Type);
-        return true;
-    }
-
     internal static string PathText(PathToken token) =>
         (token.NextToken is PathToken next ? PathText(next) + "/" : string.Empty) + token.Identifier;
 
+    // facet options and filters come again with every query; the tokens do not change
     internal static QueryToken Parse(string text)
     {
+        if (Parsed.TryGetValue(text, out var known))
+        {
+            return known;
+        }
+
         try
         {
-            return new UriQueryExpressionParser(MaxDepth).ParseFilter(text);
+            if (Parsed.Count >= MaxParsed)
+            {
+                Parsed.Clear();
+            }
+
+            return Parsed[text] = new UriQueryExpressionParser(MaxDepth).ParseFilter(text);
         }
         catch (Microsoft.OData.ODataException exception)
         {
