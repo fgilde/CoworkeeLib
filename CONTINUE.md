@@ -1,6 +1,6 @@
 # CONTINUE – handover for the next agent
 
-State of the Coworkee library as of 2026-10-12, release **0.0.1.20** (main `e4c6665`, CI green on Postgres, SQL Server and SQLite).
+State of the Coworkee library as of 2026-10-14: everything below is merged on `main` and pushed; the next release is **0.0.1.22** (0.0.1.21 is the latest on nuget.org). Demo and Sharemee are on the same state (`master`, pushed).
 
 ## Repositories
 | Repo | Local path | Remote / branch |
@@ -32,13 +32,13 @@ Old worktrees under `C:\dev\privat\github\wt\` are disposable.
 ## What exists (short)
 Modules (identity, OpenIddict auth server with Card/Split/Slide sign-in, settings, theming (Ocean default), localization + machine translation (LibreTranslate default, MyMemory, DeepL, Azure, Google, AI), realtime incl. presence/active role, chat, files, reporting (GridStack), facets + generic QueryBuilder, client entities, AI (14 providers, admin page `/admin/ai-settings`), MCP server `/mcp`, personal API keys, assistant window), DB providers Postgres/SQL Server/SQLite, optional Redis, Aspire integration (Keycloak with realm reconcile, Grafana, WebDataStudio, LibreTranslate, Ollama), CLI `coworkee` (new/spec/options/module/entity/ui/mcp/self-update), desktop wizard Coworkee Studio (Avalonia, `coworkee-ui`), website with landing page.
 
-## Owner issues 1-3 (fixed, branches not merged yet)
+## Owner issues 1-3 (fixed, on main)
 1. **VS debug of a generated app** ("Unable to launch browser: Could not open wss://…/_framework/debug/ws-proxy"): the web host lacked `app.UseWebAssemblyDebugging()` in Development, so the `inspectUri` of the web launch profile hit a 404. Template, demo (branch `fix/debug-sqlite-aspireui`, demo commit on master) and Sharemee (`8c99fdf`, master) fixed; verified with a generated app: CDP through `/_framework/debug/ws-proxy` works.
 2. **WebDataStudio + SQLite `disk I/O error`**: EF Core creates SQLite databases in WAL mode, and WAL's shared-memory index does not work across the Docker Desktop bind mount. With `UseWebDataStudio` the app host now switches/creates the file with `journal_mode=DELETE` before the app starts (EF leaves existing files alone). Verified: generated sqlite app, studio browses `Users`.
 3. **AspireUI + Keycloak**: `aspireUi.WithCoworkeeSignOn(app)` (branch `feat/aspireui-signon`, docs in hosting/aspire.md) registers `{app}-{resource}` with `/api/auth/sso/callback`, uses the container authority + `KC_HOSTNAME`, `roles` as groups, `Administrator` as admin group and forces the seeded settings. Works with released Nextended 10.1.44; verified (Keycloak sign-in, admin). The owner's own volume `aspireui-data-aspireui` holds `OidcAuthority={keycloak.bindings.http.url}/realms/gildestore` (a ReferenceExpression passed as string; AspireUI seeds only empty settings) - clear it or use `WithCoworkeeSignOn`. Nextended main has a new `WithSingleSignOn(ReferenceExpression authority, …)` overload (unreleased, not needed by the lib).
    - Later: `options.UseAspireUI()` like Grafana/WebDataStudio (own volume per app).
 
-## Owner round 2026-10-13 (all on main, not released yet)
+## Owner round 2026-10-13 (on main)
 Spec `docs/superpowers/specs/2026-10-13-settings-cleanup-and-extensions-design.md`, plans `docs/superpowers/plans/2026-10-13-p1..p9-*.md`.
 - Settings: no reload loop, mask only names ending in a secret word, `EnabledWhen` conditions, groups with an own `page` (AI, Mail) leave the tabs, `SettingType.Language` select, choices translated, one shared ObjectEdit setup (`SettingsFormRules.FormAttributes`, multi expand), `Lock` (disabled + lock icon) vs new `Protect` (MudEx edit confirmation), import ignores locked/protected/secret values, `StickyMergeTabs` (tab bar + toolbar merge while scrolling).
 - Auth: setting `Auth.LoginMode` (only with an external provider; operator escape hatch `Coworkee:Auth:External:ModeOverride`), password rules as Global settings enforced by `SettingsPasswordValidator`, hints on all password fields, setup status carries the rules.
@@ -50,7 +50,7 @@ Spec `docs/superpowers/specs/2026-10-13-settings-cleanup-and-extensions-design.m
 - Demo (master): currency select + Protect, AspireUI in the app host with `WithRetrieveApi`, OpenAPI snapshot + TS SDK regenerated.
 - MudEx local branch `feat/coworkee-p4` (not pushed): `MudExCronEdit` + sample `/cron-edit`, `RenderWith` keeps the wrapper, conditional attributes reset. CSS of the cron edit was appended by hand to `mudBlazorExtensions(.min).css` (no sass here) - recompile.
 
-## Owner round 2026-10-14 (on main, not released)
+## Owner round 2026-10-14 (on main)
 Spec `docs/superpowers/specs/2026-10-14-round2-design.md`.
 - CLI/Studio option `aspireUI` (template only, no lib API): inserts the demo's `AddAspireUI()...WithCoworkeeSignOn(app).WithRetrieveApi()` block + package ref.
 - Theme `Logo` (was `LogoSvg`, EF rename; SVG or png/jpeg/webp data URL, 512 KB), picked via `ThemeLogoEdit` (MudExUploadEdit dialog), also favicon. Demo migration `ThemeLogo`.
@@ -58,38 +58,40 @@ Spec `docs/superpowers/specs/2026-10-14-round2-design.md`.
 - OAuth apps: Duplicate action. Mail settings under Communication. Settings tabs flush with the content card, tools right-aligned.
 - MudEx: cron branch merged by the owner; new local branch `feat/tagfield-suggestions` (worktree `C:\dev\privat\github\wt\mudex-tags`, not pushed): `MudExTagField` `SearchFunc`, `ValidateChip`, `IsChipClosable`, `CommitOnBlur`, changelog 9.11.3.
 
-## MudEx 9.11.3 adopted (on main, not released)
+## MudEx 9.11.3 adopted (on main)
 - `RenderAsChips` renders `MudExTagField<string>` (`CommitOnBlur`, `SearchFunc`, `ValidateChip`, `IsChipClosable`); `ChipListEditor` deleted (breaking for apps that used it directly).
 - `[Cron]` renders `MudExCronEdit`; `CronEditor`/`CronSchedule` deleted.
 - `SettingsModel` uses `AsDisabledIf`; `SettingsFormRules.WrapInColumns` and the re-wraps after `RenderWith` are gone; `EditDialogExtensions` no longer calls `UpdateAllConditionalSettings()`.
 
-## AirWorks client (phase 1, merged on main)
+## AirWorks client (phase 1, on main)
 Spec `docs/superpowers/specs/2026-10-14-airworks-client-design.md`, plan `docs/superpowers/plans/2026-10-14-airworks-client.md`, report `docs/superpowers/airworks-report.md`.
 - Option `airworks` (CLI `--airworks`, Studio card under General with a link to the AirWorks docs, `CliOption.InfoUrl`): project `MyApp.AirWorks` (ASP.NET host with Coworkee.Bff + `ClientApp` built by vite into wwwroot, `-p:SkipClientBuild=true`), `app.AddAirWorks<...>()`, About credit `AboutCredit.AirWorks("0.4.0")`, LOGIN/README/CI (setup-node).
 - Sign-in: the host is a second BFF client of the auth server (`{app}-airworks`), so Keycloak works through the auth server exactly like for the Blazor app. `BffOptions.CookieName` (Aspire sets `{app}-airworks`) because localhost cookies ignore ports.
 - npm packages in `typescript/` (workspaces; `packages/` is ignored by the NuGet rules of .gitignore): `@coworkee/client` (OpenAPI types from `openapi.json`, `npm run openapi -- <url> [more]`, `npm run generate`), `@coworkee/airworks` (useCoworkee, apps profile/settings/files/file-preview (MudEx web components from jsDelivr)/data/entityApp/notifications/api-docs). `npm test` (node --test), `npm run build`. Not published: `Coworkee.Templates.csproj` runs `typescript/scripts/pack-template.mjs` and ships the tarballs in `ClientApp/vendor` (shortcut). AirWorks itself: `git+https://github.com/fgilde/AirWorks.git#d295c65`; no AirWorks change was needed.
 - About (independent of the option): Nextended version via build-time `AssemblyMetadata("PackageVersion:Nextended.Core")`, no URL text in the credit tiles, `AboutCredit.IconBackground`.
 - Verified: generated app in Aspire, sign-in with the password and through Keycloak into the AirWorks host, files/OData/settings/notifications/swagger through its BFF (HTTP script, no browser).
-- Also on the branch: .NET packages 10.0.13 + System.Security.Cryptography.Pkcs/Xml 10.0.13 (advisories of 2026-10-13 broke every build with NU1903; main needs the same).
-- Follow-ups: publish the npm packages, realtime/chat/reports/assistant/admin apps in AirWorks, desktop profile on the server, vite dev server with HMR in Aspire, `coworkee doctor` Node check, a browser test of the desktop.
+- .NET packages 10.0.13 + System.Security.Cryptography.Pkcs/Xml 10.0.13 (advisories of 2026-10-13 broke every build with NU1903); demo and Sharemee bumped too.
 
-## AirWorks client phase 2 (branch `feat/airworks-2`, worktree `C:\dev\privat\github\wt\airworks2\coworkee`, not merged; contains main incl. feat/final-polish)
-Report `docs/superpowers/airworks-report-2.md` (phase 1 is merged on main).
+## AirWorks client phase 2 (on main)
+Report `docs/superpowers/airworks-report-2.md`.
 - `@coworkee/airworks`: chat, reports with viewer and full designer (grid, all widget types, data/filter/display, undo/redo, settings, date range), assistant (streamed), `adminApps` (Administration hub + users, groups, roles/grants, applications, scopes, API keys, themes, languages, translations, mail templates/editor, campaigns, recipient lists, mail log, mail/AI settings, backups, services, editions, tenants, audit, AI tool calls), built on `crudApp` + `<dialog>` forms + server-side `lookup` pickers; realtime via `coworkee.realtime`; permissions like the Blazor nav.
 - File preview runs in `mudExFrame()` (iframe on `/mudex/coworkee-frame.html` next to the self-hosted MudEx bundle): MudBlazor CSS never reaches the desktop.
 - Packages: template default `airworksPackages=bundled` (tarballs in `ClientApp/vendor`, no npm registry needed); `--airworks-packages npm` takes the release version from npm (`typescript/scripts/npm-version.mjs`, `a.b.c.d` -> `a.b.(c*1000+d)`). `release.yml` job `npm` publishes both packages (trusted publishing, `NPM_TOKEN` fallback, never fails the release).
 - `coworkee new --template-source` adds the template's folder as `coworkee-local` to the app's `nuget.config`.
 - **Owner, once (optional, blocks nothing):** npm org `coworkee`, first publish with secret `NPM_TOKEN` (or by hand), then trusted publisher (GitHub Actions, `fgilde/CoworkeeLib`, `release.yml`) for both packages; steps in the report.
 - Browser test (Playwright) of a generated app: scripts in `%TEMP%\opencode\pw` (`apps.mjs`, `designer.mjs`, `http.mjs`), screenshots in `%TEMP%\opencode\airworks-shots`.
-## Mail campaigns, own mail templates and editors (branch `feat/final-polish`, not merged)
+- `typescript/scripts/pack-template.mjs` reinstalls the packages when `package-lock.json` is newer than the last install.
+
+## Mail campaigns, own mail templates and editors (on main)
 Spec `docs/superpowers/specs/2026-10-14-mail-campaigns-and-editors-design.md`, plans `docs/superpowers/plans/2026-10-14-{a,b,c}-*.md`, polish report in the owner's `wt/polish/polish-report.md`.
 - Own templates (`CustomMailTemplate`, content per culture in `MailTemplateOverride`), `IMailTemplateCatalog`, variables derived from the sample model (`MailTemplateVariables`, skips indexers, lists `campaign.name` also without a campaign), page `/admin/mail/templates`. Body editor `MailBodyEditor`: Visual (MudExRichTextEditor, `{` mentions, stored as plain Scriban) or Source (`CodeEditor`, Monaco, completions after `{{`). The mention list accepts letters, digits, `.` and `_` through `widenMentionChars` in `coworkee.js` (the package only allows letters); no change to MudExRichTextEditor.
 - `CodeEditor` (Monaco loaded on demand, falls back to a read-only `pre`), applies Language/ReadOnly changes, one completion provider per language and trigger; `CssRulesEditor`/`CssStylesheet` (rules or raw CSS; the parser knows no escaped braces or `<!--`, see its `shortcut:` comment).
 - Campaigns: wizard (template, recipients, send/schedule), recipient presets/saved lists/queries/manual selection, `MailCampaignJob` (claims `Scheduled`, queues one mail per recipient page by page, resolves template and layout once per culture, retries the final status write once, then marks the campaign `Failed`), unsubscribe page, drafts can be reopened, the list stops polling an unclaimed campaign after `ClaimTimeout` (10 min) and shows a warning.
 - Limits kept on purpose: a worker shutdown mid-run leaves the campaign in `Sending` (no resume); the opt-out lists are subqueries of every recipient page query (`shortcut:` in `MailRecipientDirectory`); campaign mails need `Coworkee:Notifications:PublicAppUrl`; web and worker must share the Data Protection key ring (unsubscribe tokens); a saved campaign with ticked users keeps them as saved when reopened (the table cannot show them again).
-- Demo repo: add a migration and regenerate its OpenAPI snapshot and TS SDK when it takes this branch (`MailTemplateDto.isCustom`, campaign DTOs); Sharemee already has both.
+- Demo and Sharemee: migrations, OpenAPI snapshots and TS SDKs are current.
+- Browser-verified in the demo (Playwright): own template, `{` mention, Source mode with Monaco + completions, CSS rules/raw editor, campaign wizard sending 3/3 (Mailpit), unsubscribe confirm page + POST through the web app. Two bugs found and fixed there: Monaco defines `window.monaco` asynchronously (`loadMonaco` waits now), and the BFF rejected the unsubscribe form post without `X-CSRF` (`BffOptions.CsrfExemptPaths`, default `/api/v1/mail/unsubscribe`).
 
-## Known follow-ups
+## Product backlog (older ideas, not part of the 0.0.1.22 work)
 - Own `IMailTransport` with a new provider name is only selectable via `Coworkee:Settings:Defaults:Mail.Provider` (choices are the four built-ins).
 - Translations of the 21 new languages were checked by sample, not by native speakers (km, ar least certain).
 - MudEx: `MudExDateRangeSlider` Day mode default step ≈ 0 (arrow keys dead; lib passes `StepLength`), no per-thumb aria-label.
