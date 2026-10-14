@@ -1,6 +1,6 @@
 # AirWorks-Client
 
-Eine Coworkee-App kann neben der Blazor-App einen zweiten Client haben: einen Web-Desktop auf Basis von [AirWorks](https://fgilde.github.io/AirWorks/de.html), mit Fenstern, Taskleiste, mehreren Desktops, Ordnern, Suche und Pop-outs. Er meldet sich über denselben Auth-Server an (und damit über denselben Keycloak-Realm), spricht mit derselben API, zeigt Logo und Theme der App und bringt Apps für Einstellungen, Profil, Dateien, Daten und Benachrichtigungen mit. Die Bibliothek liefert die Apps als npm-Pakete; die App setzt sie zusammen und ergänzt eigene.
+Eine Coworkee-App kann neben der Blazor-App einen zweiten Client haben: einen Web-Desktop auf Basis von [AirWorks](https://fgilde.github.io/AirWorks/de.html), mit Fenstern, Taskleiste, mehreren Desktops, Ordnern, Suche und Pop-outs. Er meldet sich über denselben Auth-Server an (und damit über denselben Keycloak-Realm), spricht mit derselben API, zeigt Logo und Theme der App und bringt fast alles mit, was die Blazor-App bietet: Einstellungen, Profil, Dateien mit Vorschau, Datentabellen, Chat, Berichte, den KI-Assistenten, Benachrichtigungen und die Administration (Benutzer, Gruppen, Rollen, Anwendungen, Scopes, API-Schlüssel, Themes, Sprachen, Übersetzungen, Mail-Vorlagen, Kampagnen, Empfängerlisten, Mail-Protokoll, Mail- und KI-Einstellungen, Backups, Mandanten, Editionen, Audit-Log). Die Bibliothek liefert die Apps als npm-Pakete; die App setzt sie zusammen und ergänzt eigene.
 
 ## Eine App damit erstellen
 
@@ -15,7 +15,7 @@ app.AddWeb<Projects.Shop_Web>();
 app.AddAirWorks<Projects.Shop_AirWorks>();
 ```
 
-Starten Sie den AppHost wie gewohnt und öffnen Sie *shop-airworks* aus dem Aspire-Dashboard. Zum Bauen braucht das Projekt Node.js 22 oder neuer: `dotnet build` führt `npm install` und `npm run build` in `ClientApp` aus (überspringen mit `-p:SkipClientBuild=true`).
+Starten Sie den AppHost wie gewohnt und öffnen Sie *shop-airworks* aus dem Aspire-Dashboard. Zum Bauen braucht das Projekt Node.js 22.18 oder neuer: `dotnet build` führt `npm install` und `npm run build` in `ClientApp` aus (überspringen mit `-p:SkipClientBuild=true`).
 
 ## So meldet er sich an
 
@@ -24,41 +24,59 @@ Starten Sie den AppHost wie gewohnt und öffnen Sie *shop-airworks* aus dem Aspi
 - `AddAirWorks` registriert ihn als zweiten Client am Auth-Server (`shop-airworks`, Redirect `/signin-oidc`, Scope `shop_api`) und richtet sein BFF auf die erste API aus.
 - Die Anmeldung geht zum Auth-Server, der sein eigenes Formular und Keycloak anbietet, wie es der [Anmeldemodus](../security/authentication.md) vorgibt. Benutzer, Rollen und Berechtigungen sind die der Blazor-App.
 - Die Tokens bleiben auf dem Server. Der Browser hält ein Sitzungs-Cookie namens `shop-airworks` (Browser senden Cookies an jeden Port von `localhost`, deshalb brauchen die beiden Clients verschiedene Namen) und schickt bei jeder Änderung `X-CSRF: 1` mit.
-- `/api`, `/odata`, `/hubs`, `/openapi` und `/swagger` werden mit dem Access-Token an die API weitergeleitet.
+- `/api`, `/odata`, `/hubs`, `/openapi` und `/swagger` werden mit dem Access-Token an die API weitergeleitet; so läuft auch der Realtime-Hub über dieselbe Sitzung.
 
 ## Die Client-App
 
 `ClientApp/src/main.ts` gehört der App:
 
 ```ts
-import { defaultApps, entityApp, useCoworkee } from '@coworkee/airworks';
+import { adminApps, defaultApps, entityApp, useCoworkee } from '@coworkee/airworks';
 import { AirWorks } from '@fgilde/airworks';
 import '@fgilde/airworks/style.css';
 import '@coworkee/airworks/style.css';
 import logo from '../../../Shop.Web.Client/wwwroot/coworkee-icon.svg?url';
 
-const coworkee = await useCoworkee(AirWorks, { title: 'Shop', logo });
+const coworkee = await useCoworkee(AirWorks, { title: 'Shop', logo, mudExUrl: '/mudex/mudex.js' });
 await coworkee.register(
   ...defaultApps,
-  entityApp({ entitySet: 'Products', icon: 'ratio-product.png', requiredPermissions: ['Catalog.Products.View'] }),
+  ...adminApps,
+  entityApp({ entitySet: 'Products', liveType: 'Product', icon: 'ratio-product.png', requiredPermissions: ['Catalog.Products.View'] }),
 );
 document.body.append(document.createElement('air-desktop'));
 ```
 
-`useCoworkee` liest den Benutzer aus dem BFF, das Theme aus `/api/v1/themes/current` (Farben des Farbmodus des Benutzers als CSS-Variablen `--cw-primary`, `--cw-surface`, `--cw-text`, ..., die Primärfarbe als Systemfarbe von AirWorks, das Logo des Themes oder das übergebene), die Client-Einstellungen und die Texte der Sprache des Benutzers, meldet Anmeldung und Berechtigungen (`/api/v1/identity/permissions/me`) bei AirWorks an und konfiguriert es. Optionen von AirWorks selbst (Hintergründe, `initialShortcuts`, `initialApps`, ...) gehen an `airWorks: { ... }`.
+`useCoworkee` liest den Benutzer vom BFF, das Theme von `/api/v1/themes/current` (Farben des Farbmodus des Benutzers als CSS-Variablen `--cw-primary`, `--cw-surface`, `--cw-text`, ..., die Primärfarbe als Systemfarbe von AirWorks, das Logo des Themes oder das übergebene), die Client-Einstellungen und die Texte der Sprache des Benutzers, registriert Anmeldung und Berechtigungen (`/api/v1/identity/permissions/me`) bei AirWorks und konfiguriert es. Optionen von AirWorks selbst (Hintergründe, `initialShortcuts`, `initialApps`, ...) gehören in `airWorks: { ... }`.
+
+### Apps für alle Benutzer (`defaultApps`)
 
 | App | Id | Sichtbar, wenn |
 |---|---|---|
 | Profil: Name, Telefon, Kontoseiten, Abmelden | `coworkee.profile` | immer |
-| Einstellungen: die des Benutzers, der Organisation und des Systems, aus den Einstellungsdefinitionen gebaut | `coworkee.settings` | immer; Organisation und System mit `Settings.Manage` |
+| Einstellungen: die des Benutzers, der Organisation und des Systems, aus den Einstellungsdefinitionen | `coworkee.settings` | immer; Organisation und System mit `Settings.Manage` |
 | Dateien: Ordner, Hochladen (auch per Drag & Drop), Umbenennen, Löschen, Herunterladen | `coworkee.files` | `Files.View` |
 | Dateivorschau mit der MudEx-Dateianzeige (PDF, Bilder, Office, Archive, Markdown, Audio, Video) | `coworkee.file-preview` | aus Dateien geöffnet |
 | Daten: jedes OData-Entity-Set als blätterbare, sortierbare und durchsuchbare Tabelle | `coworkee.data` | die App hat OData |
-| Benachrichtigungen: lesen, als gelesen markieren, löschen | `coworkee.notifications` | die App hat das Modul Notifications |
+| Chat: Personen der Organisation mit Anwesenheit und ungelesenen Nachrichten, Nachrichten kommen live an | `coworkee.chat` | `Chat.Use` und das Chat-Modul |
+| Berichte: Liste, Favoriten, Duplizieren, Löschen; ein Bericht öffnet sich mit seinen KPIs, Diagrammen und Tabellen | `coworkee.reports`, `coworkee.report` | `Reports.View` und das Reporting-Modul |
+| Assistent: Unterhaltungen, Antworten erscheinen beim Schreiben, Bestätigung von Tools, die Daten ändern | `coworkee.assistant` | `Ai.Chat` und das KI-Modul |
+| Benachrichtigungen: lesen, als gelesen markieren, löschen; neue erscheinen zusätzlich als Hinweis | `coworkee.notifications` | die App hat das Notifications-Modul |
 | API-Dokumentation (Swagger UI) | `coworkee.api-docs` | `ApiDocs.View` |
-| `entityApp({ entitySet, ... })`: ein Entity-Set als eigene App | `coworkee.entity.{set}` | seine `requiredPermissions` |
+| `entityApp({ entitySet, ... })`: ein Entity-Set als eigene App; `liveType` lädt bei Änderungen neu | `coworkee.entity.{set}` | ihre `requiredPermissions` |
 
-Lassen Sie Apps weg, indem Sie nur die gewünschten registrieren, oder ersetzen Sie eine, indem Sie nach `defaultApps` eine eigene App mit derselben Id registrieren. Eigene Apps sind normale AirWorks-Apps (siehe [AirWorks-Dokumentation](https://fgilde.github.io/AirWorks/de.html)); eine Factory bekommt das `coworkee`-Objekt mit dem typisierten API-Client, `request`, der Übersetzungsfunktion `t`, dem Benutzer, dem Theme und `notify`:
+### Administration (`adminApps`)
+
+Die Administrations-Apps bekommen keine eigene Desktop-Verknüpfung: Die App *Administration* listet sie gruppiert wie das Administrationsmenü der Web-App und erscheint nur, wenn der Benutzer mindestens eine davon öffnen darf. Jede braucht die Berechtigung ihrer Seite in der Blazor-App; Apps mit *System* erscheinen nur für Benutzer der System-Organisation, wie die Host-Seiten.
+
+| Bereich | Apps (Berechtigung) |
+|---|---|
+| Identität | Benutzer (`Identity.Users.View`; bearbeiten, Rollen, Gruppen, Berechtigungen, Passwort, sperren, Reset-Mail, überall abmelden), Gruppen (`Identity.Groups.View`), Rollen mit ihren Berechtigungen (`Identity.Roles.View`), Anwendungen und Scopes (`Identity.Clients.Manage`, System), API-Schlüssel (`ApiKeys.Manage`) |
+| System | Themes (`Themes.Manage`; neu aus einem eingebauten Theme, Paletten, Logo, CSS, Standard, Keycloak-Anmeldeseite), Backups, Dienste, Editionen, Mandanten mit ihren Features (System), KI-Einstellungen mit Verbindungstest (System) |
+| Kommunikation | Mail-Vorlagen mit Live-Vorschau und Testmail (`Mail.Templates.Manage`), Mail-Kampagnen mit Empfängervorschau, Test, Planen und Abbrechen, Empfängerlisten (`Mail.Campaigns.Send`), Mail-Protokoll (`Mail.Log.View`), Mail-Einstellungen mit Verbindungstest (`Settings.Manage`) |
+| Lokalisierung | Sprachen (ein-/ausschalten, Standard), Übersetzungen mit maschineller Übersetzung der fehlenden Texte (`Localization.Manage`) |
+| Überwachung | Audit-Log mit den geänderten Feldern (`Audit.View`), KI-Tool-Aufrufe (`Ai.Audit`) |
+
+Apps lassen Sie weg, indem Sie nur die gewünschten registrieren; ersetzen Sie eine, indem Sie nach `defaultApps` eine eigene App mit derselben Id registrieren. Eigene Apps sind normale AirWorks-Apps (siehe [AirWorks-Dokumentation](https://fgilde.github.io/AirWorks/de.html)); eine Factory bekommt das `coworkee`-Objekt mit dem typisierten API-Client, `request`, dem Realtime-Hub, der Übersetzungsfunktion `t`, dem Benutzer, dem Theme und `notify`:
 
 ```ts
 const ordersApp = (coworkee: Coworkee): CoworkeeApp => ({
@@ -71,17 +89,35 @@ const ordersApp = (coworkee: Coworkee): CoworkeeApp => ({
 await coworkee.register(...defaultApps, ordersApp);
 ```
 
-Die Dateivorschau lädt die [Web Components von MudBlazor.Extensions](https://www.mudex.org) beim ersten Gebrauch von jsDelivr; übergeben Sie `mudExUrl` an `useCoworkee`, um das Bundle selbst zu hosten.
+Listen mit Anlegen, Bearbeiten, Löschen und Zeilenaktionen sind ein Aufruf: `crudApp({ id, title, icon, permissions, load, columns, create, edit, remove, actions })` (die Administrations-Apps sind damit gebaut); `formDialog`, `confirmDialog` und `infoDialog` sind die Dialoge dazu.
+
+### Realtime
+
+`coworkee.realtime` verbindet sich beim ersten Abonnement mit dem Realtime-Hub der App (SignalR über das BFF) und abonniert nach einem Wiederverbinden alle gefolgten Topics erneut:
+
+```ts
+const stop = coworkee.realtime.subscribe('type:Order', ({ type, payload }) => reload());
+```
+
+Der Desktop selbst folgt dem Topic des Benutzers (neue Benachrichtigungen erscheinen als Hinweis, eine anderswo beendete Sitzung meldet ab) und den Berechtigungs-Topics (geänderte Rollen oder Rechte blenden Apps sofort ein und aus). Chat und Anwesenheit, die Benachrichtigungs-App und `entityApp({ liveType })` folgen ihren Topics, solange ihr Fenster offen ist.
+
+### Dateivorschau
+
+Die Dateivorschau nutzt die [Web-Komponenten von MudBlazor.Extensions](https://www.mudex.org). Das Template hostet das Bundle selbst: `mudex-webcomponents` ist eine Dev-Abhängigkeit von `ClientApp`, der Vite-Build kopiert es nach `wwwroot/mudex`, und der Host liefert die `.dat`-Dateien der .NET-Laufzeit aus. Ohne `mudExUrl` lädt `useCoworkee` es von unpkg.
 
 ## Die Pakete
 
 | Paket | Inhalt |
 |---|---|
-| `@coworkee/client` | Aus der OpenAPI-Beschreibung erzeugte Typen der Bibliotheks-API, `createCoworkeeClient()` (openapi-fetch mit Sitzungs-Cookie und CSRF-Header oder einem Bearer-Token), `apiRequest`, `ApiError` mit den Problem Details, BFF-Helfer, Theme-, Text- und OData-Helfer. Ohne Framework, siehe [SDKs](sdk.md). |
-| `@coworkee/airworks` | `useCoworkee`, die Apps oben, `renderEntityTable`, `loadMudEx`, die Styles. Braucht `@fgilde/airworks`. |
+| `@coworkee/client` | Aus der OpenAPI-Beschreibung erzeugte Typen der Bibliotheks-API, `createCoworkeeClient()` (openapi-fetch mit Sitzungs-Cookie und CSRF-Header oder mit Bearer-Token), `apiRequest`, `ApiError` mit den Problem Details, `createRealtime()` (SignalR), `postNdjson` für gestreamte Antworten, BFF-Helfer, Theme, Texte und OData-Helfer. Ohne Framework, siehe [SDKs](sdk.md). |
+| `@coworkee/airworks` | `useCoworkee`, die Apps oben, `crudApp`, die Dialoge, `renderEntityTable`, `loadMudEx`, die Styles. Braucht `@fgilde/airworks`. |
 
-Ihre Quellen liegen in `typescript/` der Bibliothek. Bis sie auf npm veröffentlicht sind, liefert das Template sie als Tarballs in `ClientApp/vendor` mit; AirWorks selbst kommt in einem festen Commit von GitHub.
+Die Quellen liegen in `typescript/` der Bibliothek. Jedes Release veröffentlicht sie auf npm in der Version des Releases: `a.b.c` bleibt, `a.b.c.d` wird zu `a.b.(c*1000+d)`, weil npm keinen vierten Teil kennt (Release `0.0.1.21` ist auf npm `0.0.1021`). Die erzeugte `ClientApp/package.json` verweist genau auf die Version des Templates, mit dem sie erstellt wurde. AirWorks selbst kommt von GitHub mit einem festen Commit.
+
+### Lokale Template-Builds
+
+Ein aus einem lokalen Checkout gepacktes Template (`pwsh build/pack-local.ps1`) hat kein passendes npm-Release. Es liefert die beiden Pakete als Tarballs mit, und `coworkee new --template-source <nupkg>` lässt den Client sie verwenden (Template-Parameter `npmPackages=vendor`, `file:vendor/*.tgz`). Mit `dotnet new coworkee` direkt geben Sie `--npmPackages vendor` selbst an. Um eine App später auf die veröffentlichten Pakete umzustellen, tragen Sie die npm-Version in `ClientApp/package.json` ein und löschen `ClientApp/vendor`.
 
 ## Grenzen
 
-Chat, Berichte, der KI-Assistent und die Verwaltungsseiten (Benutzer, Rollen, Themes, Sprachen) bleiben in der Blazor-App. Der AirWorks-Desktop (Verknüpfungen, offene Fenster, Hintergrund) liegt im lokalen Speicher des Browsers, und der Client nutzt noch kein Realtime.
+Berichte werden angezeigt, nicht entworfen: Berichtsdesigner, Dashboard-Filter und Drill-down bleiben in der Blazor-App. Der AirWorks-Desktop (Verknüpfungen, offene Fenster, Hintergrund) liegt im Local Storage des Browsers. Das MudEx-Bundle bringt die Seitenstyles von MudBlazor mit; `@coworkee/airworks/style.css` hält die Typografie des Desktops, andere MudBlazor-Styles können in eigenen Apps sichtbar werden, sobald eine Vorschau offen war.
