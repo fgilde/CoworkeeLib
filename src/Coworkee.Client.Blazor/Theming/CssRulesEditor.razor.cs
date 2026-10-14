@@ -12,7 +12,7 @@ public partial class CssRulesEditor
 {
     private const string ModeKey = "coworkee.cssEditorMode";
 
-    private List<CssBlock> _blocks = [];
+    private List<Entry> _blocks = [];
     private string? _value;
     private bool _raw;
 
@@ -30,14 +30,14 @@ public partial class CssRulesEditor
 
     [Parameter] public bool ReadOnly { get; set; }
 
-    protected override void OnInitialized() => _blocks = [.. CssStylesheet.Parse(Value)];
+    protected override void OnInitialized() => _blocks = Parse(Value);
 
     protected override void OnParametersSet()
     {
         if (Value != _value)
         {
             _value = Value;
-            _blocks = [.. CssStylesheet.Parse(Value)];
+            _blocks = Parse(Value);
         }
     }
 
@@ -75,24 +75,25 @@ public partial class CssRulesEditor
 
     private Task RawChangedAsync(string? css)
     {
-        _blocks = [.. CssStylesheet.Parse(css)];
+        css = string.IsNullOrWhiteSpace(css) ? null : css;
+        _blocks = Parse(css);
         return EmitAsync(css);
     }
 
     private Task AddAsync()
     {
-        _blocks.Add(new CssRule(string.Empty, string.Empty));
+        _blocks.Add(new Entry(new CssRule(string.Empty, string.Empty)));
         return Task.CompletedTask;
     }
 
     private Task SetBlockAsync(int index, CssBlock block)
     {
-        if (_blocks[index] == block)
+        if (ReadOnly || _blocks[index].Block == block)
         {
             return Task.CompletedTask;
         }
 
-        _blocks[index] = block;
+        _blocks[index].Block = block;
         return EmitBlocksAsync();
     }
 
@@ -108,17 +109,34 @@ public partial class CssRulesEditor
         return EmitBlocksAsync();
     }
 
-    // a rule without a selector (just added, still being typed) is not written yet
-    private Task EmitBlocksAsync() => EmitAsync(CssStylesheet.Serialize(_blocks.Where(b => b switch
+    // a rule with declarations but no selector is invalid CSS: keep the last written value until the selector is filled in
+    private Task EmitBlocksAsync()
     {
-        CssRule r => !string.IsNullOrWhiteSpace(r.Selector),
-        CssRawBlock raw => !string.IsNullOrWhiteSpace(raw.Text),
-        _ => false,
-    })));
+        var blocks = _blocks.Select(e => e.Block).ToList();
+        if (blocks.Any(b => b is CssRule { Selector: var s, Declarations: var d } && string.IsNullOrWhiteSpace(s) && !string.IsNullOrWhiteSpace(d)))
+        {
+            return Task.CompletedTask;
+        }
 
+        return EmitAsync(CssStylesheet.Serialize(blocks.Where(b => b switch
+        {
+            CssRule r => !string.IsNullOrWhiteSpace(r.Selector),
+            CssRawBlock raw => !string.IsNullOrWhiteSpace(raw.Text),
+            _ => false,
+        })));
+    }
     private Task EmitAsync(string? css)
     {
         Value = _value = css;
         return ValueChanged.InvokeAsync(css);
+    }
+
+    private static List<Entry> Parse(string? css) => [.. CssStylesheet.Parse(css).Select(b => new Entry(b))];
+
+    private sealed class Entry(CssBlock block)
+    {
+        public Guid Id { get; } = Guid.NewGuid();
+
+        public CssBlock Block { get; set; } = block;
     }
 }
