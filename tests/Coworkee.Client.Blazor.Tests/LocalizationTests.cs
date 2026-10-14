@@ -96,12 +96,13 @@ public sealed class LocalizationTests : ClientTestBase
         var editor = Render<TranslationsEditor>(p => p.Add(e => e.Value, value).Add(e => e.ValueChanged, v => value = v));
 
         editor.Find("[data-culture='de']").TextContent.ShouldContain("Deutsch");
-        editor.Find("[data-culture='de'] input").Change("Pass");
+        // the sync Change only queues the event while the autocomplete's debounce timer renders; find and act on the renderer, awaited
+        await editor.InvokeAsync(() => editor.Find("[data-culture='de'] input").ChangeAsync("Pass"));
         value.ShouldBe(new Dictionary<string, string> { ["de"] = "Pass" });
 
         await AddLanguageAsync(editor, "fr-CA");
         editor.WaitForAssertion(() => value.Keys.ShouldBe(["de", "fr-CA"]));
-        editor.Find("[data-culture='fr-CA'] input").Change("Passeport");
+        await editor.InvokeAsync(() => editor.Find("[data-culture='fr-CA'] input").ChangeAsync("Passeport"));
         value["fr-CA"].ShouldBe("Passeport");
 
         await AddLanguageAsync(editor, "not a language");
@@ -114,7 +115,7 @@ public sealed class LocalizationTests : ClientTestBase
     private static async Task AddLanguageAsync(IRenderedComponent<TranslationsEditor> editor, string text)
     {
         const string input = "input[data-testid='translation-language'], [data-testid='translation-language'] input";
-        editor.Find(input).Input(text);
-        await editor.Find(input).KeyDownAsync(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Key = "Enter" });
+        await editor.InvokeAsync(() => editor.Find(input).InputAsync(text));
+        await editor.InvokeAsync(() => editor.Find(input).KeyDownAsync(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Key = "Enter" }));
     }
 }
