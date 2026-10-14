@@ -51,8 +51,10 @@ public sealed class LoadingScreenAndPublicMediaTests : ClientTestBase
         Api.GetCurrentThemeAsync(default).ReturnsForAnyArgs(Theme);
         AddAuthorization().SetAuthorized("Ada");
 
-        Render<CoworkeeLayout>(p => p.Add(l => l.Body, (RenderFragment)(b => b.AddContent(0, "body"))));
+        var layout = Render<CoworkeeLayout>(p => p.Add(l => l.Body, (RenderFragment)(b => b.AddContent(0, "body"))));
 
+        // the loading screen leaves the hiding to this layout instead of going with the first content
+        layout.FindAll("[data-coworkee-loading-claim]").ShouldHaveSingleItem();
         WaitForAssertion(() => _module.Invocations["hideLoadingScreen"].ShouldHaveSingleItem().Arguments.ShouldBe(["dark", Theme.Id.ToString(), "en"]));
     }
 

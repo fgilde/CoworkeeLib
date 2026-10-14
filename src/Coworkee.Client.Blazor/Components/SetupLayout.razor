@@ -1,6 +1,7 @@
 @inherits LayoutComponentBase
 
 @* first run: no navigation and no account menu, only the app's name, the theme being chosen and the wizard *@
+<span data-coworkee-loading-claim hidden></span>
 <MudThemeProvider @ref="_provider" Theme="ThemeService.Theme" IsDarkMode="_dark" />
 @if (ThemeService.CustomCss is { Length: > 0 } css)
 {

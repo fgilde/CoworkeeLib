@@ -1,5 +1,7 @@
 @inherits LayoutComponentBase
 
+@* the loading screen waits for this layout to hide it once the theme is applied *@
+<span data-coworkee-loading-claim hidden></span>
 @if (!_visible)
 {
     return;
