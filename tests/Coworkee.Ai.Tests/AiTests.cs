@@ -110,7 +110,10 @@ public sealed class AiTests(AiApp app) : IAsyncLifetime
 
         // the arguments wait encrypted; only the masked display copy is readable
         var stored = await app.InDbAsync(db => db.Set<Sessions.AiChatMessage>().Where(m => m.Pending != null).Select(m => m.Pending!).SingleAsync(Ct));
-        Sessions.AiPendingProtector.Read(stored).Calls.ShouldNotContain("old");
+        // Data Protection payload (CfDJ8 header, base64url): plain JSON arguments would carry quotes; random base64 may spell "old"
+        var calls = Sessions.AiPendingProtector.Read(stored).Calls;
+        calls.ShouldStartWith("CfDJ8");
+        calls.ShouldNotContain("\"");
 
         // two confirmations at once: one decides and runs, the call never runs twice
         app.Claude.Text("Deleted old.");
