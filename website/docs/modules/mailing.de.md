@@ -42,16 +42,18 @@ Neben dem Editor listet **Platzhalter** alle Variablen der Vorlage mit Typ und B
 
 1. **Vorlage**: eine eigene Vorlage wählen und die Kampagne benennen.
 2. **Empfänger**: festlegen, wer sie erhält, siehe unten. Das Feld unter der Auswahl zeigt immer, wie viele Benutzer das sind, wie viele ausgeschlossen wurden und die ersten Empfänger.
-3. **Senden**: Zusammenfassung, **Testmail an mich senden** (schickt die Vorlage an Ihre eigene Adresse), **Jetzt senden** oder **Planen** mit Datum und Uhrzeit. Beides fragt noch einmal mit der Anzahl der Empfänger nach.
+3. **Senden**: Zusammenfassung, **Testmail an mich senden** (schickt die Vorlage an Ihre eigene Adresse, ihre Fußzeile verlinkt Ihre echte Abmeldeseite), **Jetzt senden** oder **Planen** mit Datum und Uhrzeit. Beides fragt noch einmal mit der Anzahl der Empfänger nach. Die Zeit ist die Uhrzeit Ihres Browsers; eine Zeit, die mehr als eine Minute in der Vergangenheit liegt, wird abgelehnt.
 
 Empfänger stammen aus einer dieser Quellen:
 
 - **Intelligente Liste**: eine Voreinstellung (alle aktiven Benutzer; seit mehr als N Tagen nicht angemeldet, Standard 30; noch nie angemeldet; in den letzten N Tagen registriert; E-Mail nicht bestätigt; Mitglieder von Rollen; deaktivierte Benutzer), eine **gespeicherte Liste** oder eine **eigene Abfrage**, gebaut mit demselben Abfrage-Editor wie der erweiterte Filter der Benutzertabelle. **Als Liste speichern** legt eine Abfrage unter einem Namen für spätere Kampagnen ab; eine gespeicherte Liste wird in die Kampagne kopiert, spätere Änderungen oder das Löschen der Liste ändern eine bereits geplante Kampagne also nicht.
 - **Manuelle Auswahl**: die Benutzertabelle mit Kontrollkästchen. Suche, Facetten und der erweiterte Filter grenzen sie vorab ein. **Alle Treffer auswählen** wechselt von den angekreuzten Zeilen zu allen Benutzern, die dem aktuellen Filter entsprechen, auch auf anderen Seiten.
 
+Eine eigene Abfrage und eine manuelle Auswahl brauchen zusätzlich das Recht, Benutzer anzuzeigen (`Identity.Users.View`), weil sie Personen nach Namen auswählen lassen. Mit nur `Mail.Campaigns.Send` funktionieren die Voreinstellungen, die Vorschau zeigt dann die Zahlen ohne die Namen.
+
 Benutzer ohne E-Mail-Adresse, gesperrte Benutzer und Benutzer, die **Newsletter erhalten** abgeschaltet haben, werden nie angeschrieben; deaktivierte Benutzer nur mit der Voreinstellung *Deaktivierte Benutzer*. Sie werden als ausgeschlossen gezählt. Die Empfänger werden beim Start der Kampagne aufgelöst, nicht bei der Auswahl; eine geplante Kampagne erreicht also die Benutzer dieses Zeitpunkts. Jede Mail wird in der Sprache des Empfängers erzeugt: der des Benutzers, sonst der der Organisation, sonst der Standardsprache.
 
-Jede Kampagnenmail endet mit einem Abmeldelink. Er öffnet ohne Anmeldung eine Bestätigungsseite; die Bestätigung schaltet die Einstellung **Newsletter erhalten** (`Mail.Newsletters`, standardmäßig an) für diesen Benutzer ab. Benutzer können sie in ihren eigenen Einstellungen wieder einschalten. Der Link trägt ein signiertes Token und läuft nicht ab.
+Jede Kampagnenmail endet mit einem Abmeldelink. Er öffnet ohne Anmeldung eine Bestätigungsseite; die Bestätigung schaltet die Einstellung **Newsletter erhalten** (`Mail.Newsletters`, standardmäßig an) für diesen Benutzer ab. Benutzer können sie in ihren eigenen Einstellungen wieder einschalten. Der Link trägt ein signiertes Token und läuft nicht ab; das Token wird mit dem gemeinsamen Data-Protection-Schlüsselring in der Datenbank geschützt, die Links funktionieren also über Neustarts und Hosts hinweg.
 
 Die Liste zeigt jede Kampagne mit Status, `Gesendet/Gesamt` und einer roten Zahl *fehlgeschlagen*, wenn Mails nicht zugestellt werden konnten; sie aktualisiert sich alle fünf Sekunden, solange eine Kampagne sendet. Die Log-Schaltfläche öffnet das Mail-Log gefiltert auf diese Kampagne (`/admin/mail/log?campaign=<id>`). **Kampagne abbrechen** gibt es für geplante und sendende Kampagnen: Es werden keine weiteren Empfänger eingereiht, noch wartende Mails werden aus der Warteschlange entfernt; bereits gesendete bleiben gesendet. Andere Kampagnen lassen sich löschen.
 
@@ -86,7 +88,7 @@ Organisationen versenden standardmäßig über den Server des Systems. Die Einst
 
 ## Versand und eigene Transporte
 
-`IMailSender.QueueAsync` ist unverändert. Ein Hintergrundjob nimmt die eingereihte Mail, ermittelt die Verbindung (Anbieter und Werte) für die Organisation der Mail und übergibt sie dem `IMailTransport`, dessen `Provider` passt.
+Ein Hintergrundjob nimmt die eingereihte Mail, ermittelt die Verbindung (Anbieter und Werte) für die Organisation der Mail und übergibt sie dem `IMailTransport`, dessen `Provider` passt.
 
 !!! warning "Breaking Change"
     `ISmtpTransport` entfällt und wird durch `IMailTransport` ersetzt, eine Implementierung je Anbieter. Es gibt keinen Obsolete-Shim. Die Schlüssel `Mail.Smtp.*`, `Mail.From` und `Mail.Whitelist` bleiben unverändert, gespeicherte Werte gelten also weiter. Code, der `ISmtpTransport` implementiert oder ersetzt hat, implementiert stattdessen `IMailTransport`.

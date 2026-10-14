@@ -42,16 +42,18 @@ Next to the editor the **Placeholders** list shows every variable of the templat
 
 1. **Template**: choose an own template and name the campaign.
 2. **Recipients**: choose who gets it, see below. The box under the choice always shows how many users that is, how many were excluded, and the first ones.
-3. **Send**: summary, **Send test to me** (sends the template to your own address), **Send now** or **Schedule** with a date and time. Both ask once more with the number of recipients.
+3. **Send**: summary, **Send test to me** (sends the template to your own address, its footer links your real unsubscribe page), **Send now** or **Schedule** with a date and time. Both ask once more with the number of recipients. The time is the wall clock time of your browser; a time more than a minute in the past is refused.
 
 Recipients come from one of these sources:
 
 - **Smart list**: a preset (all active users; not signed in for more than N days, default 30; never signed in; signed up in the last N days; e-mail not confirmed; members of roles; deactivated users), a **saved list**, or a **custom query** built with the same query builder as the advanced filter of the user table. **Save as list** stores a query under a name for later campaigns; a saved list is copied into a campaign, so editing or deleting it later does not change a campaign that is already scheduled.
 - **Manual selection**: the user table with checkboxes. Search, facets and the advanced filter narrow it first. **Select all matching** switches from the ticked rows to every user matching the current filter, also those on other pages.
 
+A custom query and a manual selection also need the right to view users (`Identity.Users.View`), because they let you pick people by name. With only `Mail.Campaigns.Send` the presets work, and the preview shows the counts without the names.
+
 Users without an e-mail address, locked users and users who turned off **Receive newsletters** are never mailed; deactivated users only with the preset *Deactivated users*. They are counted as excluded. Recipients are resolved when the campaign starts, not when you choose them, so a scheduled campaign reaches the users of that moment. Each mail is rendered in the recipient's language: the user's, else the organisation's, else the default.
 
-Every campaign mail ends with an unsubscribe link. It opens a confirmation page without sign-in; confirming turns off the setting **Receive newsletters** (`Mail.Newsletters`, on by default) for that user. Users can switch the setting back on in their own settings. The link carries a signed token and does not expire.
+Every campaign mail ends with an unsubscribe link. It opens a confirmation page without sign-in; confirming turns off the setting **Receive newsletters** (`Mail.Newsletters`, on by default) for that user. Users can switch the setting back on in their own settings. The link carries a signed token and does not expire; the token is protected with the shared Data Protection key ring in the database, so links keep working across redeploys and hosts.
 
 The list shows each campaign with its status, `Sent/Total`, and a red *failed* count when some mails could not be delivered, and refreshes every five seconds while one is sending. The log button opens the mail log filtered to that campaign (`/admin/mail/log?campaign=<id>`). **Cancel** is offered for scheduled and sending campaigns: no further recipients are queued and mails still waiting in the queue are removed; mails already sent stay sent. Other campaigns can be deleted.
 
@@ -86,7 +88,7 @@ Organisations send through the system's server by default. The setting `Mail.Use
 
 ## Sending and own transports
 
-`IMailSender.QueueAsync` is unchanged. A background job takes the queued mail, resolves the connection (provider and values) for the mail's organisation and hands it to the `IMailTransport` whose `Provider` matches.
+A background job takes the queued mail, resolves the connection (provider and values) for the mail's organisation and hands it to the `IMailTransport` whose `Provider` matches.
 
 !!! warning "Breaking change"
     `ISmtpTransport` is gone, replaced by `IMailTransport`, one implementation per provider. There is no obsolete shim. The settings keys `Mail.Smtp.*`, `Mail.From` and `Mail.Whitelist` are unchanged, so stored values keep working. Code that implemented or replaced `ISmtpTransport` implements `IMailTransport` instead.
