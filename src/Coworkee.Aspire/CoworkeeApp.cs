@@ -15,6 +15,7 @@ public sealed partial class CoworkeeApp
     private const string Health = "/health";
     private readonly List<IResourceBuilder<ProjectResource>> _apis = [];
     private readonly HashSet<Type> _added = [];
+    private int _bffClients;
 
     internal CoworkeeApp(IDistributedApplicationBuilder builder, string name, CoworkeeAppOptions options)
     {
@@ -47,6 +48,8 @@ public sealed partial class CoworkeeApp
     public IResourceBuilder<ProjectResource>? AuthServer { get; private set; }
 
     public IResourceBuilder<ProjectResource>? Web { get; private set; }
+
+    public IResourceBuilder<ProjectResource>? AirWorks { get; private set; }
 
     public IResourceBuilder<KeycloakResource>? Keycloak { get; private set; }
 
@@ -123,32 +126,12 @@ public sealed partial class CoworkeeApp
         where TProject : IProjectMetadata, new()
     {
         var auth = Require(AuthServer, nameof(AddAuthServer), nameof(AddWeb));
-        var api = Require(_apis.FirstOrDefault(), nameof(AddApi), nameof(AddWeb));
-        var clientId = $"{Name}-{suffix}";
-        var web = Service<TProject>(suffix).WithExternalHttpEndpoints()
-            .WithReference(api)
-            .WaitFor(auth)
-            .WithSetting(s => s.Coworkee.Bff.Authority, auth.GetEndpoint("https"))
-            .WithSetting(s => s.Coworkee.Bff.ClientId, clientId)
-            .WithSetting(s => s.Coworkee.Bff.ApiAddress, $"https+http://{api.Resource.Name}")
-            .WithSettings(s => s.Coworkee.Bff.Scopes, ApiAudience)
+        var web = BffClient<TProject>(suffix, Title, nameof(AddWeb))
             .WithSettings(s => s.Coworkee.Bff.ForwardedPrefixes, "/admin/jobs", "/hubs");
         Web = web;
-        if (_redis is not null || Options.Redis is not null)
-        {
-            // the sign-in sessions survive a restart of the web app and are shared between its instances
-            WireRedis(web);
-        }
-
         AddWebUrls(web);
 
         var redirect = web.GetEndpoint("https");
-        auth.WithSetting(s => s.Coworkee.Auth.Clients[0].ClientId, clientId)
-            .WithSetting(s => s.Coworkee.Auth.Clients[0].DisplayName, Options.DisplayName ?? Name)
-            .WithSettings(s => s.Coworkee.Auth.Clients[0].Scopes, ApiAudience)
-            .WithSetting(s => s.Coworkee.Auth.Clients[0].ClientUri, redirect)
-            .WithSetting(s => s.Coworkee.Auth.Clients[0].RedirectUris[0], ReferenceExpression.Create($"{redirect}/signin-oidc"))
-            .WithSetting(s => s.Coworkee.Auth.Clients[0].PostLogoutRedirectUris[0], ReferenceExpression.Create($"{redirect}/signout-callback-oidc"));
         if (Options.LogoUrl is { } logo && logo.StartsWith('/'))
         {
             auth.WithSetting(s => s.Coworkee.Auth.LogoUrl, ReferenceExpression.Create($"{redirect}{logo}"));
@@ -168,6 +151,51 @@ public sealed partial class CoworkeeApp
         }
 
         return Added<TProject>(web, suffix);
+    }
+
+    /// <summary>
+    /// The AirWorks web desktop (<c>MyApp.AirWorks</c>): a second client of the same auth server and api, with its own session cookie because
+    /// browsers send cookies to every port of localhost. Add it after the api.
+    /// </summary>
+    public IResourceBuilder<ProjectResource> AddAirWorks<TProject>(string suffix = "airworks")
+        where TProject : IProjectMetadata, new()
+    {
+        var airWorks = BffClient<TProject>(suffix, $"{Title} (AirWorks)", nameof(AddAirWorks))
+            .WithSettings(s => s.Coworkee.Bff.ForwardedPrefixes, "/hubs")
+            .WithSetting(s => s.Coworkee.Bff.CookieName, $"{Name}-{suffix}");
+        AirWorks = airWorks;
+        return Added<TProject>(airWorks, suffix);
+    }
+
+    /// <summary>A host with Coworkee.Bff: signs in at the auth server as the next of its clients and forwards to the first api.</summary>
+    private IResourceBuilder<ProjectResource> BffClient<TProject>(string suffix, string displayName, string caller)
+        where TProject : IProjectMetadata, new()
+    {
+        var auth = Require(AuthServer, nameof(AddAuthServer), caller);
+        var api = Require(_apis.FirstOrDefault(), nameof(AddApi), caller);
+        var clientId = $"{Name}-{suffix}";
+        var host = Service<TProject>(suffix).WithExternalHttpEndpoints()
+            .WithReference(api)
+            .WaitFor(auth)
+            .WithSetting(s => s.Coworkee.Bff.Authority, auth.GetEndpoint("https"))
+            .WithSetting(s => s.Coworkee.Bff.ClientId, clientId)
+            .WithSetting(s => s.Coworkee.Bff.ApiAddress, $"https+http://{api.Resource.Name}")
+            .WithSettings(s => s.Coworkee.Bff.Scopes, ApiAudience);
+        if (_redis is not null || Options.Redis is not null)
+        {
+            // the sign-in sessions survive a restart of the host and are shared between its instances
+            WireRedis(host);
+        }
+
+        var redirect = host.GetEndpoint("https");
+        var index = _bffClients++;
+        auth.WithSetting(s => s.Coworkee.Auth.Clients[index].ClientId, clientId)
+            .WithSetting(s => s.Coworkee.Auth.Clients[index].DisplayName, displayName)
+            .WithSettings(s => s.Coworkee.Auth.Clients[index].Scopes, ApiAudience)
+            .WithSetting(s => s.Coworkee.Auth.Clients[index].ClientUri, redirect)
+            .WithSetting(s => s.Coworkee.Auth.Clients[index].RedirectUris[0], ReferenceExpression.Create($"{redirect}/signin-oidc"))
+            .WithSetting(s => s.Coworkee.Auth.Clients[index].PostLogoutRedirectUris[0], ReferenceExpression.Create($"{redirect}/signout-callback-oidc"));
+        return host;
     }
 
     /// <summary>The auth server shows the design, the api hosts the settings that change it (and rewrites Keycloak's login theme from it).</summary>

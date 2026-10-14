@@ -11,10 +11,11 @@ public sealed partial class CoworkeeApp
         (nameof(AddApi), n => n.EndsWith("_Api", StringComparison.Ordinal)),
         (nameof(AddWorker), n => n.Contains("_Worker", StringComparison.Ordinal) || n.EndsWith("Worker", StringComparison.Ordinal)),
         (nameof(AddWeb), n => n.EndsWith("_Web", StringComparison.Ordinal)),
+        (nameof(AddAirWorks), n => n.EndsWith("_AirWorks", StringComparison.Ordinal)),
     ];
 
     /// <summary>
-    /// Adds the projects the app host references (<c>Projects.MyApp_Migrations</c>, <c>_Auth</c>, <c>_Api</c>, <c>_Worker</c>, <c>_Web</c>) in that order;
+    /// Adds the projects the app host references (<c>Projects.MyApp_Migrations</c>, <c>_Auth</c>, <c>_Api</c>, <c>_Worker</c>, <c>_Web</c>, <c>_AirWorks</c>) in that order;
     /// the suffix is the name after the first underscore (<c>MyApp_Jobs_Worker</c> becomes <c>myapp-jobs-worker</c>). Projects added before are left alone.
     /// </summary>
     public CoworkeeApp AddProjects()
