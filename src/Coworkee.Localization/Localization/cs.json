@@ -1069,5 +1069,6 @@
   "Rules": "Pravidla",
   "Raw": "Zdroj",
   "Add rule": "Přidat pravidlo",
-  "Selector": "Selektor"
+  "Selector": "Selektor",
+  "Selector required": "Selektor je povinný"
 }

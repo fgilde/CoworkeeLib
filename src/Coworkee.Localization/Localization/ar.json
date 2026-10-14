@@ -1069,5 +1069,6 @@
   "Rules": "القواعد",
   "Raw": "خام",
   "Add rule": "إضافة قاعدة",
-  "Selector": "المحدد"
+  "Selector": "المحدد",
+  "Selector required": "المحدد مطلوب"
 }

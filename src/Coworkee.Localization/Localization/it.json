@@ -1069,5 +1069,6 @@
   "Rules": "Regole",
   "Raw": "Grezzo",
   "Add rule": "Aggiungi regola",
-  "Selector": "Selettore"
+  "Selector": "Selettore",
+  "Selector required": "Selettore obbligatorio"
 }

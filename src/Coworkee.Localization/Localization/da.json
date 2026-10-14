@@ -1069,5 +1069,6 @@
   "Rules": "Regler",
   "Raw": "Rå",
   "Add rule": "Tilføj regel",
-  "Selector": "Selektor"
+  "Selector": "Selektor",
+  "Selector required": "Selektor er påkrævet"
 }

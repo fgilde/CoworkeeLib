@@ -1069,5 +1069,6 @@
   "Rules": "Regels",
   "Raw": "Ruw",
   "Add rule": "Regel toevoegen",
-  "Selector": "Selector"
+  "Selector": "Selector",
+  "Selector required": "Selector is verplicht"
 }

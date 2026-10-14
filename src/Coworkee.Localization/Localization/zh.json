@@ -1069,5 +1069,6 @@
   "Rules": "规则",
   "Raw": "原始",
   "Add rule": "添加规则",
-  "Selector": "选择器"
+  "Selector": "选择器",
+  "Selector required": "需要选择器"
 }

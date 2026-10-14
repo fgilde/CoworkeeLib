@@ -1069,5 +1069,6 @@
   "Rules": "Pravila",
   "Raw": "Izvorno",
   "Add rule": "Dodaj pravilo",
-  "Selector": "Selektor"
+  "Selector": "Selektor",
+  "Selector required": "Selektor je obavezan"
 }

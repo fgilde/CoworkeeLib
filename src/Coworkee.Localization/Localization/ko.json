@@ -1069,5 +1069,6 @@
   "Rules": "규칙",
   "Raw": "원본",
   "Add rule": "규칙 추가",
-  "Selector": "선택자"
+  "Selector": "선택자",
+  "Selector required": "선택자가 필요합니다"
 }

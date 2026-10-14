@@ -1069,5 +1069,6 @@
   "Rules": "Kurallar",
   "Raw": "Ham",
   "Add rule": "Kural ekle",
-  "Selector": "Seçici"
+  "Selector": "Seçici",
+  "Selector required": "Seçici gerekli"
 }

@@ -1069,5 +1069,6 @@
   "Rules": "Regeln",
   "Raw": "Roh",
   "Add rule": "Regel hinzufügen",
-  "Selector": "Selektor"
+  "Selector": "Selektor",
+  "Selector required": "Selektor erforderlich"
 }

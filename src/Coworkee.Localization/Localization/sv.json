@@ -1069,5 +1069,6 @@
   "Rules": "Regler",
   "Raw": "Rå",
   "Add rule": "Lägg till regel",
-  "Selector": "Väljare"
+  "Selector": "Väljare",
+  "Selector required": "Väljare krävs"
 }

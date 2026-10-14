@@ -1069,5 +1069,6 @@
   "Rules": "Aturan",
   "Raw": "Mentah",
   "Add rule": "Tambah aturan",
-  "Selector": "Selektor"
+  "Selector": "Selektor",
+  "Selector required": "Selektor wajib diisi"
 }

@@ -1069,5 +1069,6 @@
   "Rules": "ルール",
   "Raw": "生",
   "Add rule": "ルールを追加",
-  "Selector": "セレクター"
+  "Selector": "セレクター",
+  "Selector required": "セレクターは必須です"
 }
