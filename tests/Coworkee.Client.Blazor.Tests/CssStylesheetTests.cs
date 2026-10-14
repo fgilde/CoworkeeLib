@@ -63,6 +63,20 @@ public sealed class CssStylesheetTests
     }
 
     [Fact]
+    public void Braces_comments_and_semicolons_in_values_survive_a_round_trip()
+    {
+        const string css = "a::after { content: \"}{;\"; background: url(\"data:image/svg+xml;utf8,<svg/>\"); /* c; } */ color: red }\n/* { */\n.b { x: '}'; y: z }";
+
+        var blocks = CssStylesheet.Parse(css);
+
+        blocks.Count.ShouldBe(3);
+        blocks[0].ShouldBe(new CssRule("a::after", "content: \"}{;\"; background: url(\"data:image/svg+xml;utf8,<svg/>\"); /* c; } */ color: red"));
+        var serialized = CssStylesheet.Serialize(blocks)!;
+        serialized.ShouldBe("a::after {\n  content: \"}{;\";\n  background: url(\"data:image/svg+xml;utf8,<svg/>\");\n  /* c; } */ color: red;\n}\n\n/* { */\n\n.b {\n  x: '}';\n  y: z;\n}");
+        CssStylesheet.Serialize(CssStylesheet.Parse(serialized)).ShouldBe(serialized);
+    }
+
+    [Fact]
     public void Empty_input()
     {
         CssStylesheet.Parse(null).ShouldBeEmpty();

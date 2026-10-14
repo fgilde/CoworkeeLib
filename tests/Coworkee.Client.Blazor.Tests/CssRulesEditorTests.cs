@@ -151,6 +151,42 @@ public sealed class CssRulesEditorTests : ClientTestBase
     }
 
     [Fact]
+    public async Task Whitespace_typed_into_the_raw_editor_stays_in_the_editor()
+    {
+        var cut = Open("a { color: red; }", _ => { });
+        await cut.Find("[data-testid='css-mode-raw']").ClickAsync(new());
+
+        await cut.InvokeAsync(() => cut.FindComponent<CodeEditor>().Instance.SetFromEditorAsync("  \n "));
+
+        cut.FindComponent<CodeEditor>().Instance.Value.ShouldBe("  \n ");
+    }
+
+    [Fact]
+    public async Task Switching_to_raw_with_a_pending_rule_shows_a_hint()
+    {
+        var cut = Open("a { color: red; }", v => { });
+        await cut.Find("input[data-testid='css-selector']").InputAsync(new() { Value = "" });
+        cut.FindAll("[data-testid='css-pending-rule']").ShouldBeEmpty();
+
+        await cut.Find("[data-testid='css-mode-raw']").ClickAsync(new());
+
+        cut.Find("[data-testid='css-pending-rule']").TextContent.ShouldContain("not saved yet");
+    }
+
+    [Fact]
+    public async Task Filling_a_blank_selector_emits_again()
+    {
+        string? received = "unset";
+        var cut = Open("a { color: red; }", v => received = v);
+        await cut.Find("input[data-testid='css-selector']").InputAsync(new() { Value = "" });
+        received.ShouldBe("unset");
+
+        await cut.Find("input[data-testid='css-selector']").InputAsync(new() { Value = "b" });
+
+        received.ShouldBe("b {\n  color: red;\n}");
+    }
+
+    [Fact]
     public async Task Read_only_hides_the_buttons_and_ignores_the_style_editor()
     {
         string? received = "unset";

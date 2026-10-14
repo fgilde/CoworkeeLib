@@ -10,7 +10,11 @@
     </MudStack>
     @if (_raw)
     {
-        <CodeEditor Value="@Value" ValueChanged="RawChangedAsync" Language="css" ReadOnly="ReadOnly" Height="360px" AllowFullscreen="true" />
+        @if (HasPendingRule)
+        {
+            <MudAlert Dense="true" Severity="Severity.Warning" data-testid="css-pending-rule">@L["A rule without a selector is not saved yet"]</MudAlert>
+        }
+        <CodeEditor Value="@_rawText" ValueChanged="RawChangedAsync" Language="css" ReadOnly="ReadOnly" Height="360px" AllowFullscreen="true" />
     }
     else
     {
