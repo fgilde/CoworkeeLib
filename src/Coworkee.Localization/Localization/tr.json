@@ -1190,5 +1190,21 @@
   "Treemap": "Ağaç haritası",
   "Web page": "Web sayfası",
   "Week": "Hafta",
-  "Year": "Yıl"
+  "Year": "Yıl",
+  "Table rows": "Tablo satırları",
+  "Pages with a pager, or endless scrolling that loads more rows while scrolling.": "Sayfalamalı sayfalar veya kaydırırken daha fazla satır yükleyen sonsuz kaydırma.",
+  "Pager": "Sayfalar",
+  "EndlessScroll": "Sonsuz kaydırma",
+  "Grouped rows are shown in pages.": "Gruplanmış satırlar sayfa sayfa gösterilir.",
+  "Where searching runs: {0}": "Aramanın yapıldığı yer: {0}",
+  "Search in the browser": "Tarayıcıda ara",
+  "Search on the server": "Sunucuda ara",
+  "Compare and choose the faster": "Karşılaştır ve daha hızlı olanı seç",
+  "Browser {0} ms, server {1} ms.": "Tarayıcı {0} ms, sunucu {1} ms.",
+  "Both found {0} rows.": "İkisi de {0} satır buldu.",
+  "The row counts differ: browser {0}, server {1}.": "Satır sayıları farklı: tarayıcı {0}, sunucu {1}.",
+  "Searching in the browser from now on.": "Bundan sonra arama tarayıcıda yapılır.",
+  "Searching on the server from now on.": "Bundan sonra arama sunucuda yapılır.",
+  "Comparing failed: {0}": "Karşılaştırma başarısız oldu: {0}",
+  "Searching on the server by choice, local copy updated {0:t}": "Sunucuda arama (seçildi), yerel kopya güncellendi {0:t}"
 }

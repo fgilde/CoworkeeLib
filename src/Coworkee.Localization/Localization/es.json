@@ -1190,5 +1190,21 @@
   "Treemap": "Mapa de árbol",
   "Web page": "Página web",
   "Week": "Semana",
-  "Year": "Año"
+  "Year": "Año",
+  "Table rows": "Filas de la tabla",
+  "Pages with a pager, or endless scrolling that loads more rows while scrolling.": "Páginas con paginador o desplazamiento infinito que carga más filas al desplazarse.",
+  "Pager": "Páginas",
+  "EndlessScroll": "Desplazamiento infinito",
+  "Grouped rows are shown in pages.": "Las filas agrupadas se muestran por páginas.",
+  "Where searching runs: {0}": "Dónde se busca: {0}",
+  "Search in the browser": "Buscar en el navegador",
+  "Search on the server": "Buscar en el servidor",
+  "Compare and choose the faster": "Comparar y elegir el más rápido",
+  "Browser {0} ms, server {1} ms.": "Navegador {0} ms, servidor {1} ms.",
+  "Both found {0} rows.": "Ambos encontraron {0} filas.",
+  "The row counts differ: browser {0}, server {1}.": "El número de filas difiere: navegador {0}, servidor {1}.",
+  "Searching in the browser from now on.": "A partir de ahora se busca en el navegador.",
+  "Searching on the server from now on.": "A partir de ahora se busca en el servidor.",
+  "Comparing failed: {0}": "La comparación falló: {0}",
+  "Searching on the server by choice, local copy updated {0:t}": "Búsqueda en el servidor (elegida), copia local actualizada {0:t}"
 }

@@ -1190,5 +1190,21 @@
   "Treemap": "Peta pohon",
   "Web page": "Halaman web",
   "Week": "Minggu",
-  "Year": "Tahun"
+  "Year": "Tahun",
+  "Table rows": "Baris tabel",
+  "Pages with a pager, or endless scrolling that loads more rows while scrolling.": "Halaman dengan penomoran, atau gulir tanpa akhir yang memuat baris lain saat menggulir.",
+  "Pager": "Halaman",
+  "EndlessScroll": "Gulir tanpa akhir",
+  "Grouped rows are shown in pages.": "Baris yang dikelompokkan ditampilkan per halaman.",
+  "Where searching runs: {0}": "Tempat pencarian dijalankan: {0}",
+  "Search in the browser": "Cari di peramban",
+  "Search on the server": "Cari di server",
+  "Compare and choose the faster": "Bandingkan dan pilih yang lebih cepat",
+  "Browser {0} ms, server {1} ms.": "Peramban {0} ms, server {1} ms.",
+  "Both found {0} rows.": "Keduanya menemukan {0} baris.",
+  "The row counts differ: browser {0}, server {1}.": "Jumlah baris berbeda: peramban {0}, server {1}.",
+  "Searching in the browser from now on.": "Mulai sekarang pencarian dijalankan di peramban.",
+  "Searching on the server from now on.": "Mulai sekarang pencarian dijalankan di server.",
+  "Comparing failed: {0}": "Perbandingan gagal: {0}",
+  "Searching on the server by choice, local copy updated {0:t}": "Pencarian di server (dipilih), salinan lokal diperbarui {0:t}"
 }

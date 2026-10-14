@@ -1190,5 +1190,21 @@
   "Treemap": "ផែនទីមែកធាង",
   "Web page": "ទំព័របណ្ដាញ",
   "Week": "សប្ដាហ៍",
-  "Year": "ឆ្នាំ"
+  "Year": "ឆ្នាំ",
+  "Table rows": "ជួរដេកតារាង",
+  "Pages with a pager, or endless scrolling that loads more rows while scrolling.": "ទំព័រដែលមានឧបករណ៍ប្ដូរទំព័រ ឬការរំកិលគ្មានទីបញ្ចប់ដែលផ្ទុកជួរដេកបន្ថែមពេលរំកិល។",
+  "Pager": "ទំព័រ",
+  "EndlessScroll": "ការរំកិលគ្មានទីបញ្ចប់",
+  "Grouped rows are shown in pages.": "ជួរដេកដែលបានដាក់ជាក្រុមត្រូវបានបង្ហាញជាទំព័រ។",
+  "Where searching runs: {0}": "កន្លែងដែលការស្វែងរកដំណើរការ៖ {0}",
+  "Search in the browser": "ស្វែងរកក្នុងកម្មវិធីរុករក",
+  "Search on the server": "ស្វែងរកលើម៉ាស៊ីនមេ",
+  "Compare and choose the faster": "ប្រៀបធៀប ហើយជ្រើសរើសមួយដែលលឿនជាង",
+  "Browser {0} ms, server {1} ms.": "កម្មវិធីរុករក {0} ms ម៉ាស៊ីនមេ {1} ms។",
+  "Both found {0} rows.": "ទាំងពីររកឃើញ {0} ជួរដេក។",
+  "The row counts differ: browser {0}, server {1}.": "ចំនួនជួរដេកខុសគ្នា៖ កម្មវិធីរុករក {0} ម៉ាស៊ីនមេ {1}។",
+  "Searching in the browser from now on.": "ចាប់ពីពេលនេះ ការស្វែងរកដំណើរការក្នុងកម្មវិធីរុករក។",
+  "Searching on the server from now on.": "ចាប់ពីពេលនេះ ការស្វែងរកដំណើរការលើម៉ាស៊ីនមេ។",
+  "Comparing failed: {0}": "ការប្រៀបធៀបបានបរាជ័យ៖ {0}",
+  "Searching on the server by choice, local copy updated {0:t}": "ស្វែងរកលើម៉ាស៊ីនមេ (បានជ្រើសរើស) ច្បាប់ចម្លងមូលដ្ឋានបានធ្វើបច្ចុប្បន្នភាព {0:t}"
 }

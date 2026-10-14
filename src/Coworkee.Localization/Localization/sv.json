@@ -1190,5 +1190,21 @@
   "Treemap": "Trädkarta",
   "Web page": "Webbsida",
   "Week": "Vecka",
-  "Year": "År"
+  "Year": "År",
+  "Table rows": "Tabellrader",
+  "Pages with a pager, or endless scrolling that loads more rows while scrolling.": "Sidor med bläddring eller oändlig rullning som läser in fler rader medan du rullar.",
+  "Pager": "Sidor",
+  "EndlessScroll": "Oändlig rullning",
+  "Grouped rows are shown in pages.": "Grupperade rader visas sida för sida.",
+  "Where searching runs: {0}": "Här söks det: {0}",
+  "Search in the browser": "Sök i webbläsaren",
+  "Search on the server": "Sök på servern",
+  "Compare and choose the faster": "Jämför och välj den snabbaste",
+  "Browser {0} ms, server {1} ms.": "Webbläsare {0} ms, server {1} ms.",
+  "Both found {0} rows.": "Båda hittade {0} rader.",
+  "The row counts differ: browser {0}, server {1}.": "Antalet rader skiljer sig: webbläsare {0}, server {1}.",
+  "Searching in the browser from now on.": "Från och med nu söks det i webbläsaren.",
+  "Searching on the server from now on.": "Från och med nu söks det på servern.",
+  "Comparing failed: {0}": "Jämförelsen misslyckades: {0}",
+  "Searching on the server by choice, local copy updated {0:t}": "Sökning på servern (vald), lokal kopia uppdaterad {0:t}"
 }
