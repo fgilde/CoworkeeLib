@@ -41,7 +41,8 @@ public sealed class UserAdministrationTests : ClientTestBase
         dialogs.WaitForAssertion(() => dialogs.Find("input[type='email']"));
         dialogs.Markup.ShouldContain("First sign-in");
         dialogs.Markup.ShouldContain("Send invitation");
-        dialogs.FindAll("input[type='password']").ShouldBeEmpty();
+        // the dialog applies the SendInvitation condition a moment after its first render (debounced), so wait for it
+        dialogs.WaitForAssertion(() => dialogs.FindAll("input[type='password']").ShouldBeEmpty());
         dialogs.Find("input[type='email']").Change("bob@acme.test");
         await dialogs.Find("form").SubmitAsync();
         await creating;

@@ -7,6 +7,7 @@
 ### Breaking Changes
 
 - **`IMailSender`**: Die Schnittstelle verlangt jetzt `QueueAsync(to, template, model, culture, campaignId, cancellationToken)` mit sechs Parametern. Die Überladung mit fünf Parametern ist eine Default-Methode, die `null` als Kampagne übergibt. Eigene Implementierungen (Testdoubles, Wrapper) implementieren die Methode mit sechs Parametern; Aufrufer bleiben unverändert.
+- **`IMailTemplateRenderer`**: hat `RenderContentAsync(content, layout, model, cancellationToken)` dazubekommen, das mit einem bereits aufgelösten Layout rendert (der Kampagnen-Job löst damit Vorlage und Layout einmal pro Lauf auf). Eigene Implementierungen ergänzen die Methode; Aufrufer bleiben unverändert.
 - **Positionale Records haben Parameter dazubekommen**: `MailTemplateSummaryDto` (`IsCustom`, `Description`), `MailTemplateDto` (`IsCustom`) und `OutgoingMailDto` (`CampaignId`). Code, der sie positional erzeugt oder dekonstruiert, und generierte Clients brauchen die neuen Parameter. OpenAPI-Snapshots und SDKs neu erzeugen.
 - **Entfernt mit der Übernahme von MudEx 9.11.3**: `ChipListEditor`, `CronEditor`, `CronSchedule` und `SettingsFormRules.WrapInColumns`. String-Listen werden als `MudExTagField<string>` dargestellt, `[Cron]` als `MudExCronEdit`; verwenden Sie diese direkt.
 

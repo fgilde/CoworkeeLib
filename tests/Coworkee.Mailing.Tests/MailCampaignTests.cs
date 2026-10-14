@@ -202,6 +202,106 @@ public sealed partial class MailCampaignTests(MailApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Template_and_layout_are_resolved_once_per_campaign_and_culture()
+    {
+        var campaign = await CreateAsync(Manual(await SeedUserAsync(), await SeedUserAsync(), await SeedUserAsync()));
+        await SetStatusAsync(campaign.Id, MailCampaignStatus.Scheduled);
+        var renderer = default(CountingRenderer);
+
+        await app.AsActorAsync(_setup.AdminUserId, _setup.TenantId, async sp =>
+        {
+            renderer = new CountingRenderer(sp.GetRequiredService<IMailTemplateRenderer>());
+            await ActivatorUtilities.CreateInstance<MailCampaignJob>(sp, renderer).ExecuteAsync(campaign.Id, Ct);
+            return 0;
+        });
+
+        renderer!.Resolved.ShouldBe(2);
+        (await MailsAsync(campaign.Id)).Count.ShouldBe(3);
+    }
+
+    [Fact]
+    public async Task A_transient_failure_saving_the_final_status_is_retried()
+    {
+        var campaign = await CreateAsync(Manual(await SeedUserAsync()));
+        await SetStatusAsync(campaign.Id, MailCampaignStatus.Scheduled);
+
+        // clock calls: claim, one mail, final status
+        await RunWithClockAsync(campaign.Id, new FlakyClock(failOn: [3]));
+
+        (await CampaignAsync(campaign.Id)).ShouldSatisfyAllConditions(c => c.Status.ShouldBe(MailCampaignStatus.Sent), c => c.Error.ShouldBeNull());
+    }
+
+    [Fact]
+    public async Task A_persistent_failure_saving_the_final_status_marks_the_campaign_failed()
+    {
+        var campaign = await CreateAsync(Manual(await SeedUserAsync()));
+        await SetStatusAsync(campaign.Id, MailCampaignStatus.Scheduled);
+
+        await RunWithClockAsync(campaign.Id, new FlakyClock(failOn: [3, 4]));
+
+        (await CampaignAsync(campaign.Id)).ShouldSatisfyAllConditions(
+            c => c.Status.ShouldBe(MailCampaignStatus.Failed), c => c.Error!.ShouldContain("final status"), c => c.FinishedAt.ShouldNotBeNull());
+    }
+
+    [Fact]
+    public async Task The_test_mail_renders_without_a_footer_when_no_absolute_address_exists()
+    {
+        var campaign = await CreateAsync(Manual(await SeedUserAsync()));
+        var options = app.App.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<Coworkee.Contracts.Configuration.NotificationOptions>>().Value;
+        options.PublicAppUrl = null;
+        try
+        {
+            var result = await app.AsActorAsync(_setup.AdminUserId, _setup.TenantId, async sp =>
+            {
+                var handled = await ActivatorUtilities.CreateInstance<MailCampaignTestHandler>(sp).HandleAsync(new SendMailCampaignTest(campaign.Id), Ct);
+                await sp.GetRequiredService<MailTestDbContext>().SaveChangesAsync(Ct);
+                return handled;
+            });
+
+            result.IsSuccess.ShouldBeTrue();
+            var mail = await app.InDbAsync(db => db.Set<OutgoingMail>().AsNoTracking().SingleAsync(m => m.To == "admin@acme.test" && m.TemplateName == "News.1" && m.CampaignId == null, Ct));
+            mail.HtmlBody.ShouldNotContain("unsubscribe");
+        }
+        finally
+        {
+            options.PublicAppUrl = "https://app.test";
+        }
+    }
+
+    private Task RunWithClockAsync(Guid id, TimeProvider clock) => app.AsActorAsync(_setup.AdminUserId, _setup.TenantId, async sp =>
+    {
+        await ActivatorUtilities.CreateInstance<MailCampaignJob>(sp, clock).ExecuteAsync(id, Ct);
+        return 0;
+    });
+
+    private sealed class FlakyClock(int[] failOn) : TimeProvider
+    {
+        private int _calls;
+
+        public override DateTimeOffset GetUtcNow() =>
+            failOn.Contains(Interlocked.Increment(ref _calls)) ? throw new InvalidOperationException("transient failure") : DateTimeOffset.UtcNow;
+    }
+
+    private sealed class CountingRenderer(IMailTemplateRenderer inner) : IMailTemplateRenderer
+    {
+        public int Resolved { get; private set; }
+
+        public Task<RenderedMail> RenderAsync(string name, object model, string? culture, CancellationToken cancellationToken) => inner.RenderAsync(name, model, culture, cancellationToken);
+
+        public Task<RenderedMail> RenderContentAsync(MailTemplateContent content, object model, string? culture, CancellationToken cancellationToken) =>
+            inner.RenderContentAsync(content, model, culture, cancellationToken);
+
+        public Task<RenderedMail> RenderContentAsync(MailTemplateContent content, MailTemplateContent layout, object model, CancellationToken cancellationToken) =>
+            inner.RenderContentAsync(content, layout, model, cancellationToken);
+
+        public Task<MailTemplateContent> ResolveAsync(string name, string? culture, CancellationToken cancellationToken)
+        {
+            Resolved++;
+            return inner.ResolveAsync(name, culture, cancellationToken);
+        }
+    }
+
+    [Fact]
     public async Task Unreadable_source_marks_the_campaign_failed()
     {
         var id = await app.InDbAsync(async db =>

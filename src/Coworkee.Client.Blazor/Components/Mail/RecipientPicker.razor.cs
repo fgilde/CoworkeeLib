@@ -28,6 +28,7 @@ public partial class RecipientPicker
     private IReadOnlyList<QueryField>? _fields;
     private CoworkeeDataTable<UserRow>? _table;
     private RecipientSourceDto? _source;
+    private RecipientSourceDto? _kept;
     private RecipientPreviewDto? _preview;
     private string _choice = $"preset:{RecipientPreset.AllActive}";
     private int _tab;
@@ -43,6 +44,9 @@ public partial class RecipientPicker
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
     [Inject] private IDialogService Dialogs { get; set; } = null!;
+
+    /// <summary>The recipients of a saved campaign; what the controls cannot show (ticked users, a filter of the table) stays until the selection is changed.</summary>
+    [Parameter] public RecipientSourceDto? Initial { get; set; }
 
     [Parameter] public EventCallback<RecipientSourceDto?> SourceChanged { get; set; }
 
@@ -69,7 +73,29 @@ public partial class RecipientPicker
             _lists = await Api.GetRecipientListsAsync();
             _roles = await Api.GetRolesAsync();
         });
-        await SetSourceAsync(SmartSource());
+        if (Initial is not null)
+        {
+            Restore(Initial);
+        }
+
+        await SetSourceAsync(_kept ?? SmartSource());
+    }
+
+    private void Restore(RecipientSourceDto source)
+    {
+        if (source is { Kind: RecipientSourceKind.Preset, Preset: { } preset })
+        {
+            (_choice, _days) = ($"preset:{preset}", source.Days ?? _days);
+            _roleIds.UnionWith(source.RoleIds ?? []);
+        }
+        else if (source.Kind == RecipientSourceKind.Query && QueryJson.Deserialize(source.QueryJson) is { } query && ODataQueryTranslator.ToFilter(query, Fields) == source.Filter)
+        {
+            (_query.Logic, _query.Not, _query.Children, _choice) = (query.Logic, query.Not, query.Children, QueryChoice);
+        }
+        else
+        {
+            (_kept, _tab, _matching) = (source, 1, source.Kind == RecipientSourceKind.Query);
+        }
     }
 
     private static string PresetLabel(RecipientPreset preset) => preset switch
@@ -103,6 +129,11 @@ public partial class RecipientPicker
     private async Task SetSourceAsync(RecipientSourceDto? source)
     {
         _source = source;
+        if (!ReferenceEquals(source, _kept))
+        {
+            _kept = null;
+        }
+
         await SourceChanged.InvokeAsync(source);
         var version = ++_version;
         RecipientPreviewDto? preview = null;
@@ -151,6 +182,10 @@ public partial class RecipientPicker
         _matching = false;
         return SetSourceAsync(rows.Count == 0 ? null : new(RecipientSourceKind.Manual, UserIds: [.. rows.Select(r => r.Id)]));
     }
+
+    // "all matching" follows the filter of the table until the selection is changed
+    private Task TableLoadedAsync(IReadOnlyList<UserRow> _) =>
+        _matching && _kept is null && _table is { } table && table.CurrentFilter != _source?.Filter ? SelectAllMatchingAsync() : Task.CompletedTask;
 
     private Task SelectAllMatchingAsync()
     {

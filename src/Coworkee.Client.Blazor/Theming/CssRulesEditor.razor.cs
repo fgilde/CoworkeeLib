@@ -14,6 +14,7 @@ public partial class CssRulesEditor
 
     private List<Entry> _blocks = [];
     private string? _value;
+    private string? _rawText;
     private bool _raw;
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
@@ -30,13 +31,16 @@ public partial class CssRulesEditor
 
     [Parameter] public bool ReadOnly { get; set; }
 
-    protected override void OnInitialized() => _blocks = Parse(Value);
+    private bool HasPendingRule => _blocks.Any(e => IsPending(e.Block));
+
+    protected override void OnInitialized() => _blocks = Parse(_rawText = Value);
 
     protected override void OnParametersSet()
     {
         if (Value != _value)
         {
             _value = Value;
+            _rawText = Value;
             _blocks = Parse(Value);
         }
     }
@@ -73,8 +77,10 @@ public partial class CssRulesEditor
         }
     }
 
+    // the raw editor keeps the text as typed, only the emitted value is normalised, so typed whitespace is not wiped
     private Task RawChangedAsync(string? css)
     {
+        _rawText = css;
         css = string.IsNullOrWhiteSpace(css) ? null : css;
         _blocks = Parse(css);
         return EmitAsync(css);
@@ -112,24 +118,30 @@ public partial class CssRulesEditor
     // a rule with declarations but no selector is invalid CSS: keep the last written value until the selector is filled in
     private Task EmitBlocksAsync()
     {
-        var blocks = _blocks.Select(e => e.Block).ToList();
-        if (blocks.Any(b => b is CssRule { Selector: var s, Declarations: var d } && string.IsNullOrWhiteSpace(s) && !string.IsNullOrWhiteSpace(d)))
+        if (HasPendingRule)
         {
             return Task.CompletedTask;
         }
 
-        return EmitAsync(CssStylesheet.Serialize(blocks.Where(b => b switch
+        var blocks = _blocks.Select(e => e.Block).ToList();
+
+        _rawText = CssStylesheet.Serialize(blocks.Where(b => b switch
         {
             CssRule r => !string.IsNullOrWhiteSpace(r.Selector),
             CssRawBlock raw => !string.IsNullOrWhiteSpace(raw.Text),
             _ => false,
-        })));
+        }));
+        return EmitAsync(_rawText);
     }
+
     private Task EmitAsync(string? css)
     {
         Value = _value = css;
         return ValueChanged.InvokeAsync(css);
     }
+
+    private static bool IsPending(CssBlock block) =>
+        block is CssRule { Selector: var s, Declarations: var d } && string.IsNullOrWhiteSpace(s) && !string.IsNullOrWhiteSpace(d);
 
     private static List<Entry> Parse(string? css) => [.. CssStylesheet.Parse(css).Select(b => new Entry(b))];
 

@@ -29,7 +29,20 @@ internal static class CodeCompletionRegistry
                 [trigger],
                 (uri, _, _) => Task.FromResult(Suggest(state, key, uri)),
                 item => Task.FromResult(item));
-            await BlazorMonaco.Languages.Global.RegisterCompletionItemProvider(js, language, provider);
+            try
+            {
+                await BlazorMonaco.Languages.Global.RegisterCompletionItemProvider(js, language, provider);
+            }
+            catch
+            {
+                lock (state)
+                {
+                    state.Providers.Remove(key);
+                    state.Editors.Remove((key, modelUri));
+                }
+
+                throw;
+            }
         }
     }
 

@@ -37,7 +37,7 @@ public static partial class MailMentionHtml
         return $"<span class=\"mention\" data-denotation-char=\"{{\" data-id=\"{encoded}\" data-value=\"{encoded}\"><span contenteditable=\"false\"><span class=\"ql-mention-denotation-char\">{{</span>{encoded}</span></span>";
     }
 
-    // index after the closing </span> of the span whose opening tag ended at <paramref name="from"/>
+    // index after the closing </span> of the span whose opening tag ended at <paramref name="from"/>; an unclosed span ends with its opening tag, so it cannot swallow the rest
     private static int EndOfSpan(string html, int from)
     {
         var depth = 1;
@@ -50,7 +50,7 @@ public static partial class MailMentionHtml
             }
         }
 
-        return html.Length;
+        return from;
     }
 
     private static string Inert(string innerWithClosingTags)

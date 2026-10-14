@@ -1,4 +1,6 @@
+using System.Collections;
 using Coworkee.Contracts.Mailing;
+using Scriban.Runtime;
 
 namespace Coworkee.Mailing.Tests;
 
@@ -49,6 +51,46 @@ public sealed class MailTemplateVariablesTests
             "app.name", "app.url", "organisation.name", "unsubscribe_url", "campaign.name",
         ],
         ignoreOrder: true);
+    }
+
+    [Fact]
+    public void Indexers_are_not_variables()
+    {
+        MailTemplateVariables.From(new { map = new Indexed(), name = "x" }).Select(v => v.Name).ShouldBe(["map.label", "name"]);
+    }
+
+    [Fact]
+    public void Script_objects_list_their_members()
+    {
+        var sample = new ScriptObject { ["user"] = new ScriptObject { ["first_name"] = "Ada" }, ["count"] = 3, ["items"] = new ScriptArray { new ScriptObject { ["title"] = "T" } } };
+
+        var variables = MailTemplateVariables.From(sample);
+
+        variables.Select(v => v.Name).ShouldBe(["user.first_name", "count", "items", "items[].title"]);
+        variables.Single(v => v.Name == "count").Type.ShouldBe("number");
+    }
+
+    [Fact]
+    public void Nesting_stops_at_the_maximum_depth()
+    {
+        var variables = MailTemplateVariables.From(new { a = new { b = new { c = new { d = new { e = "deep" } } } } });
+
+        variables.Select(v => (v.Name, v.Type)).ShouldBe([("a.b.c.d", "object")]);
+    }
+
+    [Fact]
+    public void A_null_campaign_still_lists_its_members()
+    {
+        var model = MailRecipientModel.For(new MailRecipient(Guid.NewGuid(), "a@x", "Ada", null, null), null, null, null, null, null);
+
+        MailTemplateVariables.From(model).ShouldContain(v => v.Name == "campaign.name" && v.Type == "text" && v.Sample == null);
+    }
+
+    private sealed class Indexed
+    {
+        public string Label => "l";
+
+        public string this[int index] => index.ToString();
     }
 
     [Fact]

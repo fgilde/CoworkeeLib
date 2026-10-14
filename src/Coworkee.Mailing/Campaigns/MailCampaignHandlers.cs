@@ -250,7 +250,7 @@ internal sealed class MailCampaignTestHandler(
         var name = (await users.GetDisplayNamesAsync([userId], cancellationToken)).GetValueOrDefault(userId);
         var culture = (await RecipientCultures.ForAsync(db, new Dictionary<Guid, Guid?> { [userId] = tenantId }, cancellationToken))[userId]?.Name;
         var recipient = new MailRecipient(userId, email, name, null, culture);
-        await sender.QueueAsync(email, campaign.TemplateName, (await models.ForAsync(campaign, cancellationToken))(recipient), culture, cancellationToken);
+        await sender.QueueAsync(email, campaign.TemplateName, (await models.ForAsync(campaign, cancellationToken, requireUnsubscribeLink: false))(recipient), culture, cancellationToken);
         return Result.Success();
     }
 }

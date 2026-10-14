@@ -67,6 +67,15 @@ public sealed class MailMentionHtmlTests
     }
 
     [Fact]
+    public void An_unclosed_mention_span_does_not_swallow_the_rest()
+    {
+        MailMentionHtml.ToScriban("<p>Hi <span class=\"mention\" data-value=\"user.first_name\">x</p><p>Bye</p>", Known)
+            .ShouldBe("<p>Hi {{ user.first_name }}x</p><p>Bye</p>");
+        MailMentionHtml.ToScriban("<p>Hi <span class=\"mention\" data-value=\"nope\">x</p><p>Bye</p>", Known)
+            .ShouldBe("<p>Hi x</p><p>Bye</p>");
+    }
+
+    [Fact]
     public void Other_spans_are_kept()
     {
         const string html = "<p><span style=\"color:red\">hi</span></p>";

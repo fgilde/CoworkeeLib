@@ -8,6 +8,7 @@ public sealed record CssRule(string Selector, string Declarations) : CssBlock;
 /// <summary>Anything the rules editor does not edit (at-rules, comments, nested or unparseable CSS), kept verbatim.</summary>
 public sealed record CssRawBlock(string Text) : CssBlock;
 
+// shortcut: no real CSS grammar. Escaped braces outside strings, <!-- --> tokens and braces inside unquoted url() make the parser see unbalanced or odd rules; such CSS ends up as one raw block. Use a CSS parser when that matters.
 public static class CssStylesheet
 {
     public static IReadOnlyList<CssBlock> Parse(string? css)
@@ -48,11 +49,10 @@ public static class CssStylesheet
     private static CssBlock? ReadBlock(string css, ref int i)
     {
         var start = i;
-        if (css.AsSpan(i).StartsWith("/*"))
+        if (css[i] == '/' && Skip(css, i) is var comment && comment != i)
         {
-            var end = Skip(css, i);
-            if (end < 0) return null;
-            i = end;
+            if (comment < 0) return null;
+            i = comment;
             return new CssRawBlock(css[start..i]);
         }
 

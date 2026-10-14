@@ -33,7 +33,7 @@ public sealed class LiveUpdatesTests : ClientTestBase
     private static ChatMessageDto Message(Guid from, Guid to, string text) => new(Guid.CreateVersion7(), from, to, text, DateTimeOffset.UtcNow, null);
 
     [Fact]
-    public void A_chat_message_outside_its_conversation_shows_a_snackbar_that_opens_it()
+    public async Task A_chat_message_outside_its_conversation_shows_a_snackbar_that_opens_it()
     {
         var snackbar = Render<MudSnackbarProvider>();
         Render<ChatNotifier>();
@@ -42,8 +42,8 @@ public sealed class LiveUpdatesTests : ClientTestBase
         Realtime.Push($"user:{Me}", ChatEvents.Message, Message(Bob, Me, "Lunch?"));
 
         snackbar.WaitForAssertion(() => snackbar.Markup.ShouldContain("Bob Builder: Lunch?"));
-        snackbar.Find(".mud-snackbar-content-action button").Click();
-        Services.GetRequiredService<NavigationManager>().Uri.ShouldEndWith($"/chat?with={Bob}");
+        await snackbar.InvokeAsync(() => snackbar.Find(".mud-snackbar-content-action button").ClickAsync(new()));
+        snackbar.WaitForAssertion(() => Services.GetRequiredService<NavigationManager>().Uri.ShouldEndWith($"/chat?with={Bob}"));
     }
 
     [Fact]

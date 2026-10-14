@@ -31,7 +31,9 @@ public static class MailRecipientModel
             app = new { name = appName, url = appUrl },
             organisation = new { name = organisationName },
             unsubscribe_url = unsubscribeUrl,
-            campaign = campaignName is null ? null : (object)new { name = campaignName },
+            campaign = campaignName is null ? null : new CampaignModel(campaignName),
         };
     }
+
+    private sealed record CampaignModel(string Name);
 }

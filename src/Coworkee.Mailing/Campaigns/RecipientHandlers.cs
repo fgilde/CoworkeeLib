@@ -63,6 +63,11 @@ internal sealed class RecipientHandlers(CoworkeeDbContext db, ICurrentUser curre
 
         var list = new RecipientList { TenantId = currentUser.TenantId, Name = name, Source = RecipientSourceJson.Write(request.Source), CreatedAt = clock.GetUtcNow() };
         db.Add(list);
+        if (await SaveAsync(name, list.Id, cancellationToken) is { } taken)
+        {
+            return taken;
+        }
+
         return new RecipientListDto(list.Id, name, request.Source);
     }
 
@@ -82,7 +87,7 @@ internal sealed class RecipientHandlers(CoworkeeDbContext db, ICurrentUser curre
 
         list.Name = name;
         list.Source = RecipientSourceJson.Write(command.Request.Source);
-        return Result.Success();
+        return await SaveAsync(name, list.Id, cancellationToken) is { } taken ? taken : Result.Success();
     }
 
     public async Task<Result> HandleAsync(DeleteRecipientList command, CancellationToken cancellationToken)
@@ -97,6 +102,34 @@ internal sealed class RecipientHandlers(CoworkeeDbContext db, ICurrentUser curre
         return Result.Success();
     }
 
+    // the unique (tenant, name) index decides when two requests race past the name check
+    private async Task<Error?> SaveAsync(string name, Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+            return null;
+        }
+        catch (DbUpdateException)
+        {
+            db.ChangeTracker.Clear();
+            if (await NameTakenAsync(id, name, cancellationToken))
+            {
+                return Taken(name);
+            }
+
+            throw;
+        }
+    }
+
+    private static Error Taken(string name) => Error.Validation("Name", $"A recipient list named '{name}' already exists.");
+
+    private Task<bool> NameTakenAsync(Guid? id, string name, CancellationToken cancellationToken)
+    {
+        var tenantId = currentUser.TenantId;
+        return db.Set<RecipientList>().AnyAsync(l => l.TenantId == tenantId && l.Name == name && l.Id != id, cancellationToken);
+    }
+
     private async Task<Error?> CheckAsync(Guid? id, string name, RecipientSourceDto? source, CancellationToken cancellationToken)
     {
         if (name.Length is 0 or > 256)
@@ -104,10 +137,9 @@ internal sealed class RecipientHandlers(CoworkeeDbContext db, ICurrentUser curre
             return Error.Validation("Name", "A name of up to 256 characters is required.");
         }
 
-        var tenantId = currentUser.TenantId;
-        if (await db.Set<RecipientList>().AnyAsync(l => l.TenantId == tenantId && l.Name == name && l.Id != id, cancellationToken))
+        if (await NameTakenAsync(id, name, cancellationToken))
         {
-            return Error.Validation("Name", $"A recipient list named '{name}' already exists.");
+            return Taken(name);
         }
 
         return source is null

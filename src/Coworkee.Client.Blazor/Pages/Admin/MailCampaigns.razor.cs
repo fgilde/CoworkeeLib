@@ -15,6 +15,7 @@ public partial class MailCampaigns : IDisposable
     private bool _busy;
     private bool _disposed;
     private bool _polling;
+    private readonly Dictionary<Guid, DateTimeOffset> _unclaimedSince = [];
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
@@ -26,6 +27,9 @@ public partial class MailCampaigns : IDisposable
 
     /// <summary>How often the list reloads while a campaign is sending.</summary>
     [Parameter] public TimeSpan PollInterval { get; set; } = TimeSpan.FromSeconds(5);
+
+    /// <summary>How long a campaign that is due may stay scheduled before the list stops waiting for it and points at the background worker.</summary>
+    [Parameter] public TimeSpan ClaimTimeout { get; set; } = TimeSpan.FromMinutes(10);
 
     protected override async Task OnInitializedAsync()
     {
@@ -47,12 +51,24 @@ public partial class MailCampaigns : IDisposable
     private static DateTimeOffset? When(MailCampaignDto campaign) =>
         campaign.Status == MailCampaignStatus.Scheduled ? campaign.ScheduledFor : campaign.FinishedAt ?? campaign.StartedAt ?? campaign.CreatedAt;
 
-    private Task LoadAsync() => Snackbar.RunAsync(async () => _campaigns = await Api.GetMailCampaignsAsync());
+    private Task LoadAsync() => Snackbar.RunAsync(async () =>
+    {
+        _campaigns = await Api.GetMailCampaignsAsync();
+        foreach (var campaign in _campaigns.Where(c => c.Status == MailCampaignStatus.Scheduled && c.ScheduledFor is null))
+        {
+            _unclaimedSince.TryAdd(campaign.Id, DateTimeOffset.UtcNow);
+        }
+    });
 
-    // a campaign started now stays Scheduled until the job claims it
+    // a campaign started now stays Scheduled until the job claims it; one that is never claimed is not polled for ever
     private bool NeedsPolling(MailCampaignDto campaign) =>
         campaign.Status == MailCampaignStatus.Sending
-        || (campaign.Status == MailCampaignStatus.Scheduled && (campaign.ScheduledFor is null || campaign.ScheduledFor <= DateTimeOffset.UtcNow + PollInterval));
+        || (campaign.Status == MailCampaignStatus.Scheduled && !IsOverdue(campaign) && (campaign.ScheduledFor is null || campaign.ScheduledFor <= DateTimeOffset.UtcNow + PollInterval));
+
+    // without a time the campaign is due when this page first saw it scheduled
+    private bool IsOverdue(MailCampaignDto campaign) =>
+        campaign.Status == MailCampaignStatus.Scheduled
+        && (campaign.ScheduledFor ?? _unclaimedSince.GetValueOrDefault(campaign.Id, DateTimeOffset.MaxValue)) + ClaimTimeout < DateTimeOffset.UtcNow;
 
     private async Task PollAsync()
     {
@@ -65,7 +81,10 @@ public partial class MailCampaigns : IDisposable
         try
         {
             await LoadAsync();
-            StateHasChanged();
+            if (!_disposed)
+            {
+                StateHasChanged();
+            }
         }
         catch (Exception exception) when (exception is not ObjectDisposedException)
         {
@@ -80,6 +99,14 @@ public partial class MailCampaigns : IDisposable
     private async Task CreateAsync()
     {
         var dialog = await Dialogs.ShowSideSheetAsync<CampaignWizard>(L["New campaign"], new DialogParameters(), o => o.MaxWidth = MaxWidth.Large);
+        await dialog.Result;
+        await LoadAsync();
+    }
+
+    private async Task EditAsync(MailCampaignDto campaign)
+    {
+        var parameters = new DialogParameters<CampaignWizard> { { w => w.Campaign, campaign } };
+        var dialog = await Dialogs.ShowSideSheetAsync<CampaignWizard>(L["Edit campaign"], parameters, o => o.MaxWidth = MaxWidth.Large);
         await dialog.Result;
         await LoadAsync();
     }
