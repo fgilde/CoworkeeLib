@@ -20,6 +20,17 @@ public sealed class MailTemplateOverride : AuditedAggregateRoot, IVersioned
     public int Revision { get; set; }
 }
 
+public sealed class CustomMailTemplate : AuditedEntity
+{
+    public Guid? TenantId { get; set; }
+
+    public required string Name { get; set; }
+
+    public required string DisplayName { get; set; }
+
+    public string? Description { get; set; }
+}
+
 internal sealed class MailVersionedTypes : Coworkee.Infrastructure.Versioning.IVersionedTypeContributor
 {
     public void Define(Coworkee.Infrastructure.Versioning.VersionedTypeContext context) =>
@@ -85,6 +96,15 @@ internal sealed class MailModelContributor : IModelContributor
             template.Property(t => t.Culture).HasMaxLength(20);
             template.Property(t => t.Subject).HasMaxLength(500);
             template.HasIndex(t => new { t.Name, t.TenantId, t.Culture }).IsUnique().AreNullsDistinct(false);
+        });
+
+        modelBuilder.Entity<CustomMailTemplate>(template =>
+        {
+            template.ToTable("CustomMailTemplates", "cw");
+            template.Property(t => t.Name).HasMaxLength(128);
+            template.Property(t => t.DisplayName).HasMaxLength(256);
+            template.Property(t => t.Description).HasMaxLength(1000);
+            template.HasIndex(t => new { t.TenantId, t.Name }).IsUnique().AreNullsDistinct(false);
         });
 
         modelBuilder.Entity<OutgoingMail>(mail =>

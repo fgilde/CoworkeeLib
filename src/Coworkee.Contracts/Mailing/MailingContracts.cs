@@ -27,7 +27,10 @@ public enum OutgoingMailStatus
     Skipped,
 }
 
-public sealed record MailTemplateSummaryDto(string Name, string DisplayName, IReadOnlyList<string> Cultures, IReadOnlyList<string> OverriddenCultures);
+public sealed record MailTemplateSummaryDto(
+    string Name, string DisplayName, IReadOnlyList<string> Cultures, IReadOnlyList<string> OverriddenCultures, bool IsCustom, string? Description);
+
+public sealed record CreateMailTemplateRequest(string Name, string DisplayName, string? Description, bool Global = false, string? CopyFrom = null);
 
 public sealed record MailVariableDto(string Name, string Type, string? Sample, bool IsList);
 

@@ -164,6 +164,26 @@ namespace MyApp.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "CustomMailTemplates",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Name = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    DisplayName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    Description = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    ModifiedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    ModifiedBy = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CustomMailTemplates", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "DatabaseBackups",
                 schema: "cw",
                 columns: table => new
@@ -1144,6 +1164,14 @@ namespace MyApp.Infrastructure.Migrations
                 columns: new[] { "TenantId", "ToUserId", "ReadAt" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_CustomMailTemplates_TenantId_Name",
+                schema: "cw",
+                table: "CustomMailTemplates",
+                columns: new[] { "TenantId", "Name" },
+                unique: true)
+                .Annotation("Npgsql:NullsDistinct", false);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Documents_DocumentTypeId",
                 schema: "app",
                 table: "Documents",
@@ -1454,6 +1482,10 @@ namespace MyApp.Infrastructure.Migrations
                 schema: "cw");
 
             migrationBuilder.DropTable(
+                name: "CustomMailTemplates",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
                 name: "DatabaseBackups",
                 schema: "cw");
 
@@ -1755,6 +1787,26 @@ namespace MyApp.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ConfigurationEntries", x => x.Key);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CustomMailTemplates",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Name = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    DisplayName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    Description = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    ModifiedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    ModifiedBy = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CustomMailTemplates", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -2620,6 +2672,14 @@ namespace MyApp.Infrastructure.Migrations
                 columns: new[] { "TenantId", "ToUserId", "ReadAt" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_CustomMailTemplates_TenantId_Name",
+                schema: "cw",
+                table: "CustomMailTemplates",
+                columns: new[] { "TenantId", "Name" },
+                unique: true)
+                .Annotation("Npgsql:NullsDistinct", false);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_EntitySnapshots_EntityType_EntityId_Revision",
                 schema: "cw",
                 table: "EntitySnapshots",
@@ -2895,6 +2955,10 @@ namespace MyApp.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "ConfigurationEntries",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "CustomMailTemplates",
                 schema: "cw");
 
             migrationBuilder.DropTable(

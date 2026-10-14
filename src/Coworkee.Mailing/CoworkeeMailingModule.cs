@@ -32,6 +32,7 @@ public sealed class CoworkeeMailingModule : CoworkeeModule, IWebModule
         services.AddSingleton<ISettingDefinitionContributor, MailSettingDefinitions>();
         services.AddSingleton<IMailTemplateContributor, CoreMailTemplates>();
         services.AddSingleton<IMailTemplateDefinitionManager, MailTemplateDefinitionManager>();
+        services.AddScoped<IMailTemplateCatalog, MailTemplateCatalog>();
         services.AddScoped<IMailTemplateRenderer, MailTemplateRenderer>();
         services.AddScoped<IMailSender, MailSender>();
         services.AddScoped<Application.Privacy.IPersonalDataContributor, MailPersonalData>();
@@ -49,6 +50,10 @@ public sealed class CoworkeeMailingModule : CoworkeeModule, IWebModule
     {
         var api = app.MapCoworkeeApi("/api/v1/mail").WithTags("Mail").RequireAuthorization();
         api.MapGet("/templates", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetMailTemplates(), ct).ToHttpResult());
+        api.MapPost("/templates", (CreateMailTemplateRequest body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new CreateMailTemplate(body), ct).ToHttpResult());
+        api.MapDelete("/templates/{name}", (string name, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new DeleteMailTemplate(name), ct).ToHttpResult());
         api.MapGet("/templates/{name}/{culture}", (string name, string culture, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new GetMailTemplate(name, culture), ct).ToHttpResult());
         api.MapPut("/templates/{name}/{culture}", (string name, string culture, SaveMailTemplateRequest body, IDispatcher d, CancellationToken ct) =>
