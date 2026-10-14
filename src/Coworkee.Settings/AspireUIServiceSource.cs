@@ -18,7 +18,7 @@ internal sealed partial class AspireUIServiceSource(
     public async Task<IReadOnlyList<ServiceDto>> GetAsync(CancellationToken cancellationToken)
     {
         var current = options.CurrentValue;
-        if (!Uri.TryCreate(current.Url, UriKind.Absolute, out var configured))
+        if (!Contracts.WebAddress.IsWeb(current.Url) || !Uri.TryCreate(current.Url, UriKind.Absolute, out var configured))
         {
             return [];
         }

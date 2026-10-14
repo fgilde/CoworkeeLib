@@ -43,7 +43,7 @@ public sealed record AiProviderInfo(
     public bool IsComplete(string? model, string? endpoint, bool hasKey) =>
         (DefaultModel is not null || !string.IsNullOrWhiteSpace(model))
         && (Key != AiField.Required || hasKey)
-        && (Endpoint != AiField.Required || Uri.TryCreate(endpoint, UriKind.Absolute, out _));
+        && (Endpoint != AiField.Required || WebAddress.IsWeb(endpoint));
 }
 
 /// <summary>The providers the AI settings, the CLI and the Studio offer, in the order they show.</summary>

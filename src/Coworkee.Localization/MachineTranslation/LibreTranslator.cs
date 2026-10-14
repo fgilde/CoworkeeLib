@@ -13,7 +13,7 @@ internal sealed class LibreTranslator(IHttpClientFactory clients) : ITranslation
     public (int Texts, int Characters) BatchLimit => (25, 5_000);
 
     public Task<bool> IsConfiguredAsync(TranslationConnection connection, CancellationToken cancellationToken) =>
-        Task.FromResult(Uri.TryCreate(connection.Endpoint, UriKind.Absolute, out _));
+        Task.FromResult(Contracts.WebAddress.IsWeb(connection.Endpoint));
 
     public async Task<IReadOnlyList<string?>> TranslateAsync(IReadOnlyList<string> texts, string from, string to, TranslationConnection connection, CancellationToken cancellationToken)
     {

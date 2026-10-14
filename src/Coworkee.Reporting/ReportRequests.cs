@@ -86,6 +86,5 @@ internal sealed class SaveReportValidator : AbstractValidator<SaveReportRequest>
 
     // images and embedded pages must not run script through javascript: or data: addresses
     internal static bool SafeUrl(string? url) =>
-        string.IsNullOrWhiteSpace(url)
-        || (Uri.TryCreate(url, UriKind.Absolute, out var absolute) ? absolute.Scheme is "https" or "http" : url.StartsWith('/') && !url.StartsWith("//", StringComparison.Ordinal));
+        string.IsNullOrWhiteSpace(url) || Contracts.WebAddress.IsWebOrLocalPath(url);
 }

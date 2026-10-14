@@ -78,9 +78,10 @@ public sealed partial class CoworkeeApp
         auth.WithSetting(s => s.Coworkee.Jobs.RunServer, false)
             .WithSetting(s => s.Coworkee.Account.PublicAuthUrl, auth.GetEndpoint("https"))
             .WithSetting(s => s.Coworkee.Auth.DisplayName, Options.DisplayName ?? Name);
-        if (Uri.TryCreate(Options.LogoUrl, UriKind.Absolute, out _))
+        // a path is a file address on Linux, only http(s) logos reach the auth server
+        if (Uri.TryCreate(Options.LogoUrl, UriKind.Absolute, out var logo) && logo.Scheme is "https" or "http")
         {
-            auth.WithSetting(s => s.Coworkee.Auth.LogoUrl, Options.LogoUrl);
+            auth.WithSetting(s => s.Coworkee.Auth.LogoUrl, Options.LogoUrl!);
         }
         WithSignInDesign(auth);
         if (Builder.Environment.IsDevelopment())

@@ -13,7 +13,7 @@ internal sealed class ConfiguredServiceSource(IOptionsMonitor<CoworkeeServicesOp
     public async Task<IReadOnlyList<ServiceDto>> GetAsync(CancellationToken cancellationToken)
     {
         var probes = options.CurrentValue
-            .Where(s => Uri.TryCreate(s.Value.Url, UriKind.Absolute, out _))
+            .Where(s => Contracts.WebAddress.IsWeb(s.Value.Url))
             .OrderBy(s => s.Key, StringComparer.OrdinalIgnoreCase)
             .Select(async s => ToDto(s.Key, s.Value, await ProbeAsync(s.Value, cancellationToken)));
         return await Task.WhenAll(probes);
@@ -21,7 +21,7 @@ internal sealed class ConfiguredServiceSource(IOptionsMonitor<CoworkeeServicesOp
 
     public Task<ServiceDto?> FindAsync(string name, CancellationToken cancellationToken) =>
         Task.FromResult(options.CurrentValue
-            .Where(s => string.Equals(s.Key, name, StringComparison.OrdinalIgnoreCase) && Uri.TryCreate(s.Value.Url, UriKind.Absolute, out _))
+            .Where(s => string.Equals(s.Key, name, StringComparison.OrdinalIgnoreCase) && Contracts.WebAddress.IsWeb(s.Value.Url))
             .Select(s => ToDto(s.Key, s.Value, ServiceHealth.Unknown))
             .FirstOrDefault());
 
