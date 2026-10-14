@@ -98,13 +98,17 @@ public static class DataTableFilters
         {
             { IsString: true } => [Op.String.Contains, Op.String.StartsWith, Op.String.Equal],
             { IsNumber: true } => [Op.Number.Equal, Op.Number.GreaterThan, Op.Number.LessThan, Between],
-            { IsDateTime: true } or { IsDateOnly: true } => [Op.DateTime.Is, Op.DateTime.After, Op.DateTime.Before, Between],
+            _ when IsDate(type) => [Op.DateTime.Is, Op.DateTime.After, Op.DateTime.Before, Between],
             { IsEnum: true } => [Op.Enum.Is],
             { IsBoolean: true } => [Op.Boolean.Is],
             { IsGuid: true } => [Op.Guid.Equal],
             _ => [],
         };
     }
+
+    /// <summary>DateTime, DateOnly and DateTimeOffset (which MudBlazor's FieldType does not count as a date), nullable or not.</summary>
+    public static bool IsDate(Type type) =>
+        FieldType.Identify(type) is { IsDateTime: true } or { IsDateOnly: true } || (Nullable.GetUnderlyingType(type) ?? type) == typeof(DateTimeOffset);
 
     /// <summary>The two operators "between" stands for.</summary>
     public static (string From, string To) Range(Type type) =>
