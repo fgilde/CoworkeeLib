@@ -98,3 +98,30 @@ export function scrollToEnd(element) {
 export function focus(element) {
     element?.focus();
 }
+
+let monacoLoading = null;
+
+function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        const script = Object.assign(document.createElement('script'), { src, onload: resolve, onerror: () => reject(new Error(`Cannot load ${src}`)) });
+        document.head.appendChild(script);
+    });
+}
+
+// BlazorMonaco's own scripts, loaded once and in this order, so host apps need no script tags
+export function loadMonaco() {
+    monacoLoading ??= (async () => {
+        if (!window.monaco) {
+            const base = '_content/BlazorMonaco';
+            await loadScript(`${base}/jsInterop.js`);
+            await loadScript(`${base}/lib/monaco-editor/min/vs/loader.js`);
+            await loadScript(`${base}/lib/monaco-editor/min/vs/editor/editor.main.js`);
+        }
+        return !!window.monaco;
+    })().catch(() => (monacoLoading = null, false));
+    return monacoLoading;
+}
+
+export function prefersDark() {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
