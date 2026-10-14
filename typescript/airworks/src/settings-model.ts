@@ -12,9 +12,10 @@ export const scopePaths: Record<SettingScope, { definitions: string; values: str
   Global: { definitions: '/api/v1/settings/definitions', values: '/api/v1/settings/global' },
 };
 
-/** The groups with the settings that can be set in the scope; empty groups are left out. */
-export function groupsFor(groups: readonly SettingGroup[], scope: SettingScope): SettingGroup[] {
+/** The groups with the settings that can be set in the scope; empty groups are left out, groups with an own page (AI, Mail) appear only there. */
+export function groupsFor(groups: readonly SettingGroup[], scope: SettingScope, page?: string): SettingGroup[] {
   return groups
+    .filter((group) => (group.page ?? undefined) === page)
     .map((group) => ({ ...group, settings: group.settings.filter((setting) => (setting.scopes as readonly string[]).includes(scope)) }))
     .filter((group) => group.settings.length > 0);
 }

@@ -27,6 +27,13 @@ public sealed class CommandTests
         NewCommand.Read(CliApp.Build().Parse("new Shop --samples false")).Spec.Options["samples"]!.GetValue<bool>().ShouldBeFalse();
     }
 
+    [Fact]
+    public void The_AirWorks_client_takes_the_bundled_packages_unless_npm_is_chosen()
+    {
+        NewCommand.TemplateArgs(NewCommand.Read(CliApp.Build().Parse("new Shop --airworks"))).ShouldNotContain("--airworksPackages");
+        NewCommand.TemplateArgs(NewCommand.Read(CliApp.Build().Parse("new Shop --airworks --airworks-packages npm")))[^2..].ShouldBe(["--airworksPackages", "npm"]);
+    }
+
     [Theory]
     [InlineData("new my.app")]
     [InlineData("new 1App")]

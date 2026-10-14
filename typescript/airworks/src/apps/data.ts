@@ -50,9 +50,9 @@ export const entityApp = (options: EntityAppOptions) => (coworkee: Coworkee): Co
   width: 900,
   height: 580,
   requiredPermissions: options.requiredPermissions,
-  render: ({ host }: AppContext) => {
+  render: ({ host, onClose }: AppContext) => {
     host.classList.add('cw-host');
     host.innerHTML = '<div class="cw-app"></div>';
-    renderEntityTable(coworkee, host.firstElementChild as HTMLElement, options);
+    renderEntityTable(coworkee, host.firstElementChild as HTMLElement, options, onClose);
   },
 });

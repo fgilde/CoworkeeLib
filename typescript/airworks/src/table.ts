@@ -1,4 +1,4 @@
-import { odataPage, searchFilter } from '@coworkee/client';
+import { odataPage, realtimeTopics, searchFilter } from '@coworkee/client';
 import type { Coworkee } from './coworkee.ts';
 import { display, errorText, esc } from './dom.ts';
 
@@ -11,6 +11,12 @@ export type EntityTableOptions = {
   /** Fields the search box looks in; without them the text columns. */
   searchFields?: string[];
   pageSize?: number;
+  /** OData filter every page keeps, e.g. a report widget's; the search narrows it further. */
+  filter?: string;
+  /** Sorting at the start, e.g. 'Name desc'. */
+  orderBy?: string;
+  /** Entity type whose changes (realtime topic type:{name}, the entity needs [Realtime]) reload the table, e.g. Product. */
+  liveType?: string;
 };
 
 type Row = Record<string, unknown>;
@@ -35,11 +41,11 @@ export function nextOrder(current: string | undefined, field: string): string | 
 }
 
 /** A paged, sortable and searchable table of an OData entity set. */
-export function renderEntityTable(coworkee: Coworkee, host: HTMLElement, options: EntityTableOptions) {
+export function renderEntityTable(coworkee: Coworkee, host: HTMLElement, options: EntityTableOptions, onClose?: (callback: () => void) => void) {
   const { t, culture } = coworkee;
   const pageSize = options.pageSize ?? 25;
   let page = 0;
-  let orderBy: string | undefined;
+  let orderBy: string | undefined = options.orderBy;
   let search = '';
   let columns = options.columns;
   let searchFields = options.searchFields;
@@ -56,7 +62,8 @@ export function renderEntityTable(coworkee: Coworkee, host: HTMLElement, options
 
   const load = async () => {
     try {
-      const filter = search && searchFields ? searchFilter(searchFields, search) : undefined;
+      const searched = search && searchFields ? searchFilter(searchFields, search) : undefined;
+      const filter = [options.filter, searched].filter(Boolean).map((part) => `(${part})`).join(' and ') || undefined;
       const result = await odataPage<Row>(options.entitySet, { top: pageSize, skip: page * pageSize, orderBy, filter, count: true });
       columns ??= columnsOf(result.items);
       searchFields ??= textFields(result.items, columns);
@@ -91,5 +98,9 @@ export function renderEntityTable(coworkee: Coworkee, host: HTMLElement, options
     clearTimeout(timer);
     timer = setTimeout(() => { search = (event.target as HTMLInputElement).value; page = 0; void load(); }, 300);
   });
+  if (options.liveType) {
+    const stop = coworkee.realtime.subscribe(realtimeTopics.type(options.liveType), () => void load());
+    onClose?.(stop);
+  }
   void load();
 }

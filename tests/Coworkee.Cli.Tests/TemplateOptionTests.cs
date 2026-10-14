@@ -192,6 +192,11 @@ public sealed class TemplateOptionTests(TemplateFixture template)
         Read(on, "LOGIN.md").ShouldContain("*shop-airworks*");
         TemplateTests.ShouldHaveNoLeftovers(on);
 
+        var npm = await template.CreateAsync("airworks-npm", "--airworks", "true", "--airworksPackages", "npm");
+        Read(npm, "src/Shop.AirWorks/ClientApp/package.json").ShouldContain($"\"@coworkee/airworks\": \"{template.Version}\"");
+        Directory.Exists(Path.Combine(npm, "src", "Shop.AirWorks", "ClientApp", "vendor")).ShouldBeFalse();
+        TemplateTests.ShouldHaveNoLeftovers(npm);
+
         var plain = await template.CreateAsync("airworks-plain", "--airworks", "true", "--samples", "false");
         Read(plain, "src/Shop.AirWorks/ClientApp/src/main.ts").ShouldNotContain("entityApp({");
     }
@@ -208,6 +213,8 @@ public sealed class TemplateOptionTests(TemplateFixture template)
 
         File.ReadAllText(Path.Combine(app, "src", "Shop.AirWorks", "wwwroot", "index.html")).ShouldContain("<title>Shop</title>");
         Directory.GetFiles(Path.Combine(app, "src", "Shop.AirWorks", "wwwroot", "icons"), "logo-air.png").ShouldNotBeEmpty();
+        File.Exists(Path.Combine(app, "src", "Shop.AirWorks", "wwwroot", "mudex", "mudex.js")).ShouldBeTrue();
+        File.Exists(Path.Combine(app, "src", "Shop.AirWorks", "wwwroot", "mudex", "coworkee-frame.html")).ShouldBeTrue();
     }
 
     [Fact]

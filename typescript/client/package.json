@@ -3,6 +3,21 @@
   "version": "0.1.0",
   "description": "Typed client for the API of Coworkee apps: OpenAPI types, BFF session, theme, texts and OData helpers",
   "license": "MIT",
+  "homepage": "https://fgilde.github.io/CoworkeeLib/web/airworks/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fgilde/CoworkeeLib.git",
+    "directory": "typescript/client"
+  },
+  "keywords": [
+    "coworkee",
+    "openapi",
+    "client",
+    "signalr"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -24,6 +39,7 @@
     "test": "node --test \"test/**/*.test.ts\""
   },
   "dependencies": {
+    "@microsoft/signalr": "^10.0.11",
     "openapi-fetch": "^0.14.1"
   },
   "devDependencies": {

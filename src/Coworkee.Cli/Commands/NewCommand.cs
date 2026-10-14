@@ -133,6 +133,11 @@ internal static class NewCommand
             enums = [];
         }
 
+        if (LocalFeed.Of(settings.TemplateSource) is { } feed)
+        {
+            LocalFeed.Add(settings.Output, feed);
+        }
+
         Progress("Restoring packages");
         var exit = await Shell.RunAsync(["dotnet", "restore"], settings.Output, cancellationToken);
         if (exit != 0)

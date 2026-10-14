@@ -63,7 +63,7 @@ Spec `docs/superpowers/specs/2026-10-14-round2-design.md`.
 - `[Cron]` renders `MudExCronEdit`; `CronEditor`/`CronSchedule` deleted.
 - `SettingsModel` uses `AsDisabledIf`; `SettingsFormRules.WrapInColumns` and the re-wraps after `RenderWith` are gone; `EditDialogExtensions` no longer calls `UpdateAllConditionalSettings()`.
 
-## AirWorks client (branch `feat/airworks`, worktree `C:\dev\privat\github\wt\airworks\coworkee`, not merged)
+## AirWorks client (phase 1, merged on main)
 Spec `docs/superpowers/specs/2026-10-14-airworks-client-design.md`, plan `docs/superpowers/plans/2026-10-14-airworks-client.md`, report `docs/superpowers/airworks-report.md`.
 - Option `airworks` (CLI `--airworks`, Studio card under General with a link to the AirWorks docs, `CliOption.InfoUrl`): project `MyApp.AirWorks` (ASP.NET host with Coworkee.Bff + `ClientApp` built by vite into wwwroot, `-p:SkipClientBuild=true`), `app.AddAirWorks<...>()`, About credit `AboutCredit.AirWorks("0.4.0")`, LOGIN/README/CI (setup-node).
 - Sign-in: the host is a second BFF client of the auth server (`{app}-airworks`), so Keycloak works through the auth server exactly like for the Blazor app. `BffOptions.CookieName` (Aspire sets `{app}-airworks`) because localhost cookies ignore ports.
@@ -73,6 +73,14 @@ Spec `docs/superpowers/specs/2026-10-14-airworks-client-design.md`, plan `docs/s
 - Also on the branch: .NET packages 10.0.13 + System.Security.Cryptography.Pkcs/Xml 10.0.13 (advisories of 2026-10-13 broke every build with NU1903; main needs the same).
 - Follow-ups: publish the npm packages, realtime/chat/reports/assistant/admin apps in AirWorks, desktop profile on the server, vite dev server with HMR in Aspire, `coworkee doctor` Node check, a browser test of the desktop.
 
+## AirWorks client phase 2 (branch `feat/airworks-2`, worktree `C:\dev\privat\github\wt\airworks2\coworkee`, not merged; contains main incl. feat/final-polish)
+Report `docs/superpowers/airworks-report-2.md` (phase 1 is merged on main).
+- `@coworkee/airworks`: chat, reports with viewer and full designer (grid, all widget types, data/filter/display, undo/redo, settings, date range), assistant (streamed), `adminApps` (Administration hub + users, groups, roles/grants, applications, scopes, API keys, themes, languages, translations, mail templates/editor, campaigns, recipient lists, mail log, mail/AI settings, backups, services, editions, tenants, audit, AI tool calls), built on `crudApp` + `<dialog>` forms + server-side `lookup` pickers; realtime via `coworkee.realtime`; permissions like the Blazor nav.
+- File preview runs in `mudExFrame()` (iframe on `/mudex/coworkee-frame.html` next to the self-hosted MudEx bundle): MudBlazor CSS never reaches the desktop.
+- Packages: template default `airworksPackages=bundled` (tarballs in `ClientApp/vendor`, no npm registry needed); `--airworks-packages npm` takes the release version from npm (`typescript/scripts/npm-version.mjs`, `a.b.c.d` -> `a.b.(c*1000+d)`). `release.yml` job `npm` publishes both packages (trusted publishing, `NPM_TOKEN` fallback, never fails the release).
+- `coworkee new --template-source` adds the template's folder as `coworkee-local` to the app's `nuget.config`.
+- **Owner, once (optional, blocks nothing):** npm org `coworkee`, first publish with secret `NPM_TOKEN` (or by hand), then trusted publisher (GitHub Actions, `fgilde/CoworkeeLib`, `release.yml`) for both packages; steps in the report.
+- Browser test (Playwright) of a generated app: scripts in `%TEMP%\opencode\pw` (`apps.mjs`, `designer.mjs`, `http.mjs`), screenshots in `%TEMP%\opencode\airworks-shots`.
 ## Mail campaigns, own mail templates and editors (branch `feat/final-polish`, not merged)
 Spec `docs/superpowers/specs/2026-10-14-mail-campaigns-and-editors-design.md`, plans `docs/superpowers/plans/2026-10-14-{a,b,c}-*.md`, polish report in the owner's `wt/polish/polish-report.md`.
 - Own templates (`CustomMailTemplate`, content per culture in `MailTemplateOverride`), `IMailTemplateCatalog`, variables derived from the sample model (`MailTemplateVariables`, skips indexers, lists `campaign.name` also without a campaign), page `/admin/mail/templates`. Body editor `MailBodyEditor`: Visual (MudExRichTextEditor, `{` mentions, stored as plain Scriban) or Source (`CodeEditor`, Monaco, completions after `{{`). The mention list accepts letters, digits, `.` and `_` through `widenMentionChars` in `coworkee.js` (the package only allows letters); no change to MudExRichTextEditor.

@@ -51,3 +51,53 @@ jobs:
 
       - name: Publish
         run: dotnet nuget push "artifacts/release/*.nupkg" --api-key "${{ steps.nuget.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+  npm:
+    # @coworkee/client and @coworkee/airworks in the npm version of the release (scripts/npm-version.mjs); a failure here never fails the NuGet release
+    needs: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    permissions:
+      contents: read
+      # npm trusted publishing exchanges the GitHub OIDC token for a publish token and signs the provenance
+      id-token: write
+    defaults:
+      run:
+        working-directory: typescript
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: npm with trusted publishing
+        # OIDC publishing needs npm 11.5.1 or later
+        run: npm install -g npm@latest
+
+      - name: Version from tag
+        run: echo "NPM_VERSION=$(node scripts/npm-version.mjs "${GITHUB_REF_NAME#v}")" >> "$GITHUB_ENV"
+
+      - name: Build and test
+        run: |
+          npm ci --no-audit --no-fund
+          node scripts/npm-version.mjs --set "$NPM_VERSION"
+          npm run build
+          npm test
+
+      - name: Publish
+        env:
+          # fallback when no trusted publisher is set up on npmjs.com for the packages
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          for workspace in client airworks; do
+            name=$(node -p "require('./$workspace/package.json').name")
+            if npm view "$name@$NPM_VERSION" version >/dev/null 2>&1; then
+              echo "$name@$NPM_VERSION is on npm already"
+            elif ! npm publish --workspace "$workspace" --provenance --access public; then
+              echo "::notice title=npm::$name@$NPM_VERSION was not published: set up npm trusted publishing for this workflow or the NPM_TOKEN secret (see CONTINUE.md)."
+              exit 0
+            fi
+          done

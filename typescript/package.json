@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces",
-    "test": "npm test --workspaces",
+    "test": "node --test \"scripts/*.test.mjs\" && npm test --workspaces",
     "pack:template": "node scripts/pack-template.mjs"
   },
   "engines": {

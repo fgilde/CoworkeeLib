@@ -1,4 +1,4 @@
-import { defaultApps, entityApp, useCoworkee } from '@coworkee/airworks';
+import { adminApps, defaultApps, entityApp, useCoworkee } from '@coworkee/airworks';
 import { AirWorks } from '@fgilde/airworks';
 import '@fgilde/airworks/style.css';
 import '@coworkee/airworks/style.css';
@@ -11,9 +11,10 @@ const coworkee = await useCoworkee(AirWorks, { title: 'COWORKEE_APP_TITLE', logo
 // the library's apps and your own: leave some out, replace them or add more (https://fgilde.github.io/AirWorks/)
 await coworkee.register(
   ...defaultApps,
+  ...adminApps,
 //#if (samples)
-  entityApp({ entitySet: 'Products', icon: 'ratio-product.png', requiredPermissions: ['Catalog.Products.View'] }),
-  entityApp({ entitySet: 'Brands', icon: 'ratio-shoppingCart.png', requiredPermissions: ['Catalog.Brands.View'] }),
+  entityApp({ entitySet: 'Products', liveType: 'Product', icon: 'ratio-product.png', requiredPermissions: ['Catalog.Products.View'] }),
+  entityApp({ entitySet: 'Brands', liveType: 'Brand', icon: 'ratio-shoppingCart.png', requiredPermissions: ['Catalog.Brands.View'] }),
 //#endif
 );
 

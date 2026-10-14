@@ -47,7 +47,10 @@ function field(coworkee: Coworkee, setting: SettingDefinition, value: string, la
   return `<div class="cw-field">${label}${input}${hint}</div>`;
 }
 
-async function renderScope(coworkee: Coworkee, panel: HTMLElement, scope: SettingScope) {
+/** A button next to Save that checks the values on the form before they are saved, e.g. a test mail or a call to the AI model. */
+export type SettingsTest = { title: string; run: (coworkee: Coworkee, values: Record<string, string>, changed: Record<string, string>) => Promise<string> };
+
+async function renderScope(coworkee: Coworkee, panel: HTMLElement, scope: SettingScope, page?: string, test?: SettingsTest) {
   const { t, request } = coworkee;
   panel.innerHTML = `<p class="cw-muted">${esc(t('MudDataGrid_Loading'))}</p>`;
   const [groups, stored, languages] = await Promise.all([
@@ -55,13 +58,14 @@ async function renderScope(coworkee: Coworkee, panel: HTMLElement, scope: Settin
     request<SettingValue[]>(scopePaths[scope].values),
     request<Schemas['LanguageDto'][]>('/api/v1/localization/languages').catch(() => []),
   ]);
-  const visible = groupsFor(groups, scope);
+  const visible = groupsFor(groups, scope, page);
   const definitions = visible.flatMap((group) => group.settings);
   const original = valuesOf(definitions, stored);
   const current = { ...original };
   panel.innerHTML = `<form class="cw-settings-form">${visible.map((group) => `<fieldset><legend>${esc(t(group.displayName))}</legend>
-      ${group.settings.map((setting) => field(coworkee, setting, original[setting.name], languages)).join('')}</fieldset>`).join('')}
-    <div class="cw-actions"><button type="submit" class="cw-primary">${esc(t('Save'))}</button></div></form>`;
+      ${group.settings.map((setting) => field(coworkee, setting, original[setting.name], languages)).join('')}</fieldset>`).join('')
+      || `<p class="cw-muted">${esc(t('Nothing found.'))}</p>`}
+    <div class="cw-actions">${test ? `<button type="button" data-test>${esc(t(test.title))}</button>` : ''}<button type="submit" class="cw-primary">${esc(t('Save'))}</button></div></form>`;
   const form = panel.querySelector('form')!;
   const inputs = [...form.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('[data-setting]')];
   const sync = () => {
@@ -70,6 +74,9 @@ async function renderScope(coworkee: Coworkee, panel: HTMLElement, scope: Settin
   };
   sync();
   form.addEventListener('input', sync);
+  form.querySelector('[data-test]')?.addEventListener('click', async () => {
+    try { coworkee.notify(await test!.run(coworkee, current, changes(original, current))); } catch (error) { coworkee.notify(errorText(error), 'error'); }
+  });
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const changed = changes(original, current);
@@ -85,6 +92,23 @@ async function renderScope(coworkee: Coworkee, panel: HTMLElement, scope: Settin
   });
 }
 
+/** Tabs per scope over one settings form. */
+export function renderSettings(coworkee: Coworkee, host: HTMLElement, tabs: Array<[SettingScope, string]>, page?: string, test?: SettingsTest) {
+  host.classList.add('cw-host');
+  host.innerHTML = `<div class="cw-app cw-settings"><nav class="cw-tabs" role="tablist">${tabs.map(([scope, title], index) =>
+    `<button role="tab" data-scope="${scope}" aria-selected="${index === 0}">${esc(title)}</button>`).join('')}</nav><section class="cw-panel"></section></div>`;
+  const panel = host.querySelector<HTMLElement>('.cw-panel')!;
+  const show = (scope: SettingScope) => {
+    host.querySelectorAll<HTMLElement>('[data-scope]').forEach((tab) => tab.setAttribute('aria-selected', String(tab.dataset.scope === scope)));
+    renderScope(coworkee, panel, scope, page, test).catch((error) => { panel.innerHTML = `<p class="cw-error">${esc(errorText(error))}</p>`; });
+  };
+  host.querySelector('nav')!.addEventListener('click', (event) => {
+    const tab = (event.target as Element).closest<HTMLElement>('[data-scope]');
+    if (tab) show(tab.dataset.scope as SettingScope);
+  });
+  if (tabs[0]) show(tabs[0][0]);
+}
+
 /** The settings of the user and, for administrators, of the organisation and the system, built from the setting definitions. */
 export const settingsApp = (coworkee: Coworkee): CoworkeeApp => ({
   id: 'coworkee.settings',
@@ -94,20 +118,27 @@ export const settingsApp = (coworkee: Coworkee): CoworkeeApp => ({
   width: 760,
   height: 620,
   singleInstance: true,
-  render: ({ host }: AppContext) => {
-    host.classList.add('cw-host');
-    const tabs = scopes(coworkee);
-    host.innerHTML = `<div class="cw-app cw-settings"><nav class="cw-tabs" role="tablist">${tabs.map(([scope, title], index) =>
-      `<button role="tab" data-scope="${scope}" aria-selected="${index === 0}">${esc(title)}</button>`).join('')}</nav><section class="cw-panel"></section></div>`;
-    const panel = host.querySelector<HTMLElement>('.cw-panel')!;
-    const show = (scope: SettingScope) => {
-      host.querySelectorAll<HTMLElement>('[data-scope]').forEach((tab) => tab.setAttribute('aria-selected', String(tab.dataset.scope === scope)));
-      renderScope(coworkee, panel, scope).catch((error) => { panel.innerHTML = `<p class="cw-error">${esc(errorText(error))}</p>`; });
-    };
-    host.querySelector('nav')!.addEventListener('click', (event) => {
-      const tab = (event.target as Element).closest<HTMLElement>('[data-scope]');
-      if (tab) show(tab.dataset.scope as SettingScope);
-    });
-    show('User');
-  },
+  render: ({ host }: AppContext) => renderSettings(coworkee, host, scopes(coworkee)),
+});
+
+export type SettingsPageOptions = {
+  id: string; title: string; icon: string; accent?: string; page: string; group?: string; hostOnly?: boolean; probe?: string; test?: SettingsTest;
+  /** Scopes the page offers, of those the user may manage (default: organisation and system). */
+  scopes?: SettingScope[];
+};
+
+/** The settings groups that have an own page (AI, mail) as an app for administrators: organisation and, for the system organisation, system values. */
+export const settingsPageApp = (options: SettingsPageOptions) => (coworkee: Coworkee): CoworkeeApp => ({
+  id: options.id,
+  title: coworkee.t(options.title),
+  icon: options.icon,
+  accent: options.accent ?? '#555b66',
+  width: 760,
+  height: 640,
+  singleInstance: true,
+  requiredPermissions: [manage],
+  hostOnly: options.hostOnly,
+  probe: options.probe,
+  group: options.group,
+  render: ({ host }: AppContext) => renderSettings(coworkee, host, scopes(coworkee).filter(([scope]) => (options.scopes ?? ['Tenant', 'Global']).includes(scope)), options.page, options.test),
 });

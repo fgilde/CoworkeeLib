@@ -66,4 +66,6 @@ const folder = unwrap(await api.GET('/api/v1/files/folders/content', { params: {
 const products = await odataPage('Products', { top: 20, orderBy: 'Name', count: true }, { baseUrl: 'https://myapp.example', token: () => apiKey });
 ```
 
-The [AirWorks client](airworks.md) is built on it. The sources live in `typescript/client`; `npm run openapi -- <url of /openapi/v1.json>` refreshes the description from a running app and `npm run generate` the types.
+`createRealtime()` follows topics of the realtime hub (SignalR through the BFF, e.g. `coworkee.realtime.subscribe('type:Order', ...)`), `postNdjson()` reads streamed answers like those of the assistant.
+
+Install it with `npm install @coworkee/client`; every release publishes it in the version of the release (`a.b.c.d` becomes `a.b.(c*1000+d)`, see [AirWorks client](airworks.md#the-packages)). The [AirWorks client](airworks.md) is built on it. The sources live in `typescript/client`; `npm run openapi -- <url of /openapi/v1.json>` refreshes the description from a running app and `npm run generate` the types.

@@ -13,6 +13,7 @@
 
 ### Neu
 
+- AirWorks-Client: Chat, Berichte mit Designer, Assistent, die Administrations-Apps (`adminApps`) und Realtime, siehe [AirWorks-Client](../web/airworks.md). Erzeugte Apps nehmen `@coworkee/client` und `@coworkee/airworks` aus den Tarballs im Template; jedes Release veröffentlicht sie zusätzlich auf npm (`--airworks-packages npm`). `coworkee new --template-source` trägt den lokalen Paketordner in die `nuget.config` der App ein. Apps aus der ersten AirWorks-Version: `...adminApps` in `ClientApp/src/main.ts` ergänzen und für die Dateivorschau das MudEx-Hosting des Templates übernehmen (`mudex-webcomponents`, `vite.config.ts`, `.dat`-Content-Type in `Program.cs`).
 - Mail-Kampagnen mit Empfänger-Voreinstellungen, gespeicherten Abfragen und manueller Auswahl, geplantem Versand und einer Bestätigungsseite für die Abmeldung, siehe [Mailing](../modules/mailing.md).
 - Eigene Mail-Vorlagen mit visuellem und Quelltext-Editor sowie eine `CodeEditor`-Komponente auf Basis von Monaco.
 - Änderungen am Entitätsmodell für Kampagnen, Empfängerlisten und eigene Vorlagen: Fügen Sie Ihrer App eine Migration hinzu.
