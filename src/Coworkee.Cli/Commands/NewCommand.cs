@@ -113,12 +113,6 @@ internal static class NewCommand
             }
         }
 
-        // a local template build has no matching npm release: the AirWorks client takes the tarballs inside the template
-        if (settings.TemplateSource is not null && values["airworks"] == "true")
-        {
-            args.AddRange(["--npmPackages", "vendor"]);
-        }
-
         return [.. args];
     }
 
@@ -137,6 +131,11 @@ internal static class NewCommand
             var entities = module.Entities.Select(e => new EntityModel(solution.Name, module.Name, e, SpecOptions.Mapping(values, e), index)).ToList();
             await FeatureWriter.AddModuleAsync(solution, module.Name, entities, enums, cancellationToken);
             enums = [];
+        }
+
+        if (LocalFeed.Of(settings.TemplateSource) is { } feed)
+        {
+            LocalFeed.Add(settings.Output, feed);
         }
 
         Progress("Restoring packages");

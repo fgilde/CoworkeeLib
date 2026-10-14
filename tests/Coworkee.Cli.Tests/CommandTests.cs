@@ -28,11 +28,10 @@ public sealed class CommandTests
     }
 
     [Fact]
-    public void A_local_template_gives_the_AirWorks_client_the_packages_inside_the_template()
+    public void The_AirWorks_client_takes_the_bundled_packages_unless_npm_is_chosen()
     {
-        NewCommand.TemplateArgs(NewCommand.Read(CliApp.Build().Parse("new Shop --airworks --template-source t.nupkg")))[^2..].ShouldBe(["--npmPackages", "vendor"]);
-        NewCommand.TemplateArgs(NewCommand.Read(CliApp.Build().Parse("new Shop --airworks"))).ShouldNotContain("--npmPackages");
-        NewCommand.TemplateArgs(NewCommand.Read(CliApp.Build().Parse("new Shop --template-source t.nupkg"))).ShouldNotContain("--npmPackages");
+        NewCommand.TemplateArgs(NewCommand.Read(CliApp.Build().Parse("new Shop --airworks"))).ShouldNotContain("--airworksPackages");
+        NewCommand.TemplateArgs(NewCommand.Read(CliApp.Build().Parse("new Shop --airworks --airworks-packages npm")))[^2..].ShouldBe(["--airworksPackages", "npm"]);
     }
 
     [Theory]

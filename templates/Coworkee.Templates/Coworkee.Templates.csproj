@@ -32,8 +32,8 @@
       <None Include="$(_CoworkeePackagesProps)" Pack="true" PackagePath="content/CoworkeeApp/Directory.Packages.props" />
     </ItemGroup>
   </Target>
-  <!-- the AirWorks client takes @coworkee/client and @coworkee/airworks from npm in the version of this release (npmPackages=registry)
-       or from the tarballs packed here (npmPackages=vendor, local template builds) -->
+  <!-- the AirWorks client takes @coworkee/client and @coworkee/airworks from the tarballs packed here (airworksPackages=bundled, the default)
+       or from npm in the version of this release (airworksPackages=npm) -->
   <PropertyGroup>
     <_TypeScriptRoot>$(MSBuildProjectDirectory)/../../typescript/</_TypeScriptRoot>
   </PropertyGroup>
