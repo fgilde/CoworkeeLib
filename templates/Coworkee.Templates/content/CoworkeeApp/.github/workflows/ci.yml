@@ -13,6 +13,11 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           global-json-file: global.json
+#if (airworks)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+#endif
       - run: dotnet build MyApp.slnx -c Release
 #if (tests)
       # the API and migration tests start Postgres in Docker, which the runner has

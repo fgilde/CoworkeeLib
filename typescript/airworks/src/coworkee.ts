@@ -93,13 +93,21 @@ export async function useCoworkee(airWorks: AirWorksApi, options: CoworkeeOption
     mudExUrl: options.mudExUrl ?? defaultMudExUrl,
     can: (permission) => airWorks.can(permission),
     notify: toast,
-    register: (...factories) => factories.flatMap((factory) => [factory(coworkee)].flat()).forEach((app) => void add(app)),
+    register: async (...factories) => {
+      const added = await Promise.all(factories.flatMap((factory) => [factory(coworkee)].flat()).map(add));
+      if (!options.airWorks?.initialShortcuts) {
+        shortcuts.push(...added.filter((app): app is AppDefinition => !!app && !app.hidden).map((app) => app.id));
+        airWorks.configure({ initialShortcuts: shortcuts });
+      }
+    },
   };
 
-  async function add({ probe, ...app }: CoworkeeApp) {
-    if (probe && !(user.isAuthenticated && await quietly(() => apiRequest(probe).then(() => true), false))) return;
+  const shortcuts: string[] = [];
+  async function add({ probe, ...app }: CoworkeeApp): Promise<AppDefinition | undefined> {
+    if (probe && !(user.isAuthenticated && await quietly(() => apiRequest(probe).then(() => true), false))) return undefined;
     airWorks.unregisterApp(app.id);
     airWorks.registerApp(app);
+    return app;
   }
 
   airWorks.registerAuthProvider(bffAuthProvider({ title: options.title, icon: logo, user }));

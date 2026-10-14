@@ -1,5 +1,8 @@
 <Solution>
   <Folder Name="/src/">
+<!--#if (airworks) -->
+    <Project Path="src/MyApp.AirWorks/MyApp.AirWorks.csproj" />
+<!--#endif -->
     <Project Path="src/MyApp.Api/MyApp.Api.csproj" />
     <Project Path="src/MyApp.AppHost/MyApp.AppHost.csproj" />
     <Project Path="src/MyApp.Application/MyApp.Application.csproj" />

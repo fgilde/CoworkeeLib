@@ -10,6 +10,10 @@ Start the app with `coworkee run` (or `dotnet run --project src/MyApp.AppHost`),
 The *Keycloak* button on the sign-in page takes the same users with the same passwords (realm `myapp`); the app host brings the realm up to date on every start.
 
 <!--#endif -->
+<!--#if (airworks) -->
+The AirWorks web desktop *myapp-airworks* signs in the same way (it is a second client of the same sign-in) and works on the same data.
+
+<!--#endif -->
 <!--#if (registration) -->
 Visitors can also create an account on the sign-in page (setting `Account.AllowRegistration`).
 

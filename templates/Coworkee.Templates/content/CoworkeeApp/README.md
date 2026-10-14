@@ -31,6 +31,9 @@ How to sign in, with the users and their generated passwords: [LOGIN.md](LOGIN.m
 | `MyApp.Api` | API host |
 | `MyApp.Auth` | OpenIddict auth server |
 | `MyApp.Web`, `MyApp.Web.Client` | Blazor WebAssembly with backend for frontend |
+<!--#if (airworks) -->
+| `MyApp.AirWorks` | [AirWorks](https://fgilde.github.io/AirWorks/) web desktop on the same api (TypeScript in `ClientApp`, built with Node.js) |
+<!--#endif -->
 | `MyApp.Infrastructure` | DbContext, migrations, module composition |
 | `MyApp.Migrations` | Applies migrations and the seed before the hosts start |
 | `MyApp.Contracts` | DTOs, permission names, texts |
