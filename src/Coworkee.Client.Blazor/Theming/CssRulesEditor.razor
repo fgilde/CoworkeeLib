@@ -1,0 +1,62 @@
+@using Coworkee.Client.Blazor.Components.Editors
+@using MudBlazor.Extensions.Components
+<MudStack Spacing="2" Class="my-2" data-testid="css-editor">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+        <MudText Typo="Typo.caption" Color="Color.Secondary">@Label</MudText>
+        <MudToggleGroup T="bool" Value="_raw" ValueChanged="SetModeAsync" Size="Size.Small" Color="Color.Primary" Outlined="true" Delimiters="true" data-testid="css-mode">
+            <MudToggleItem Value="false" Text="@L["Rules"]" data-testid="css-mode-rules" />
+            <MudToggleItem Value="true" Text="@L["Raw"]" data-testid="css-mode-raw" />
+        </MudToggleGroup>
+    </MudStack>
+    @if (_raw)
+    {
+        <CodeEditor Value="@Value" ValueChanged="RawChangedAsync" Language="css" ReadOnly="ReadOnly" Height="360px" AllowFullscreen="true" />
+    }
+    else
+    {
+        <MudStack Spacing="2" data-testid="css-rules">
+            @for (var i = 0; i < _blocks.Count; i++)
+            {
+                var index = i;
+                <MudPaper Outlined="true" Class="pa-2">
+                    <MudStack Spacing="1">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            @if (_blocks[index] is CssRule rule)
+                            {
+                                <MudTextField T="string" Value="@rule.Selector" ValueChanged="s => SetBlockAsync(index, rule with { Selector = s })" Immediate="true" Label="@L["Selector"]" Variant="Variant.Outlined" Margin="Margin.Dense" ReadOnly="ReadOnly" Class="flex-grow-1" data-testid="css-selector" />
+                            }
+                            else
+                            {
+                                <span class="flex-grow-1"></span>
+                            }
+                            @if (!ReadOnly)
+                            {
+                                <MudIconButton Icon="@Icons.Material.Outlined.ArrowUpward" Size="Size.Small" Disabled="index == 0" OnClick="() => MoveAsync(index, -1)" aria-label="@L["Move up"]" data-testid="css-move-up" />
+                                <MudIconButton Icon="@Icons.Material.Outlined.ArrowDownward" Size="Size.Small" Disabled="index == _blocks.Count - 1" OnClick="() => MoveAsync(index, 1)" aria-label="@L["Move down"]" data-testid="css-move-down" />
+                                <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => DeleteAsync(index)" aria-label="@L["Delete"]" data-testid="css-delete-rule" />
+                            }
+                        </MudStack>
+                        @if (_blocks[index] is CssRule current)
+                        {
+                            <MudExStyleEditor Value="@current.Declarations" ValueChanged="d => SetBlockAsync(index, current with { Declarations = d })" ViewMode="MudBlazor.Extensions.Core.Css.MudExStyleEditViewMode.DevTools" ShowCatalogSuggestions="true" Dense="true" />
+                        }
+                        else if (_blocks[index] is CssRawBlock raw)
+                        {
+                            <CodeEditor Value="@raw.Text" ValueChanged="t => SetBlockAsync(index, new CssRawBlock(t ?? string.Empty))" Language="css" ReadOnly="ReadOnly" Height="120px" AllowFullscreen="false" />
+                        }
+                    </MudStack>
+                </MudPaper>
+            }
+            @if (!ReadOnly)
+            {
+                <div>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" OnClick="AddAsync" data-testid="css-add-rule">@L["Add rule"]</MudButton>
+                </div>
+            }
+        </MudStack>
+    }
+    @if (!string.IsNullOrEmpty(HelperText))
+    {
+        <MudText Typo="Typo.caption" Color="Color.Secondary">@HelperText</MudText>
+    }
+</MudStack>

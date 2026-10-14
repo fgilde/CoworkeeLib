@@ -1065,5 +1065,9 @@
   "Not written yet": "Još nije zapisano",
   "Apply to Keycloak": "Primijeni na Keycloak",
   "Keycloak sign-in page updated": "Stranica za prijavu u Keycloak ažurirana",
-  "The Keycloak sign-in page could not be written. See the log of the API.": "Stranicu za prijavu u Keycloak nije bilo moguće zapisati. Pogledajte zapisnik API-ja."
+  "The Keycloak sign-in page could not be written. See the log of the API.": "Stranicu za prijavu u Keycloak nije bilo moguće zapisati. Pogledajte zapisnik API-ja.",
+  "Rules": "Pravila",
+  "Raw": "Izvorno",
+  "Add rule": "Dodaj pravilo",
+  "Selector": "Selektor"
 }

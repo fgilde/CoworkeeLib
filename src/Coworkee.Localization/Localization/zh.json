@@ -1065,5 +1065,9 @@
   "Not written yet": "尚未写入",
   "Apply to Keycloak": "应用到 Keycloak",
   "Keycloak sign-in page updated": "Keycloak 登录页面已更新",
-  "The Keycloak sign-in page could not be written. See the log of the API.": "无法写入 Keycloak 登录页面。请查看 API 日志。"
+  "The Keycloak sign-in page could not be written. See the log of the API.": "无法写入 Keycloak 登录页面。请查看 API 日志。",
+  "Rules": "规则",
+  "Raw": "原始",
+  "Add rule": "添加规则",
+  "Selector": "选择器"
 }

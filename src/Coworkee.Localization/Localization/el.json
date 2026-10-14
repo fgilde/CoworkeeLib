@@ -1065,5 +1065,9 @@
   "Not written yet": "Δεν έχει γραφτεί ακόμη",
   "Apply to Keycloak": "Εφαρμογή στο Keycloak",
   "Keycloak sign-in page updated": "Η σελίδα σύνδεσης Keycloak ενημερώθηκε",
-  "The Keycloak sign-in page could not be written. See the log of the API.": "Η σελίδα σύνδεσης Keycloak δεν μπόρεσε να γραφτεί. Δείτε το αρχείο καταγραφής του API."
+  "The Keycloak sign-in page could not be written. See the log of the API.": "Η σελίδα σύνδεσης Keycloak δεν μπόρεσε να γραφτεί. Δείτε το αρχείο καταγραφής του API.",
+  "Rules": "Κανόνες",
+  "Raw": "Ακατέργαστο",
+  "Add rule": "Προσθήκη κανόνα",
+  "Selector": "Επιλογέας"
 }

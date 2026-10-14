@@ -1065,5 +1065,9 @@
   "Not written yet": "لم تُكتب بعد",
   "Apply to Keycloak": "تطبيق على Keycloak",
   "Keycloak sign-in page updated": "تم تحديث صفحة تسجيل الدخول في Keycloak",
-  "The Keycloak sign-in page could not be written. See the log of the API.": "تعذّرت كتابة صفحة تسجيل الدخول في Keycloak. راجع سجل واجهة API."
+  "The Keycloak sign-in page could not be written. See the log of the API.": "تعذّرت كتابة صفحة تسجيل الدخول في Keycloak. راجع سجل واجهة API.",
+  "Rules": "القواعد",
+  "Raw": "خام",
+  "Add rule": "إضافة قاعدة",
+  "Selector": "المحدد"
 }

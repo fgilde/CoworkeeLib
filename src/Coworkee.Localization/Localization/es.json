@@ -1065,5 +1065,9 @@
   "Not written yet": "Aún no escrita",
   "Apply to Keycloak": "Aplicar a Keycloak",
   "Keycloak sign-in page updated": "Página de inicio de sesión de Keycloak actualizada",
-  "The Keycloak sign-in page could not be written. See the log of the API.": "No se pudo escribir la página de inicio de sesión de Keycloak. Consulte el registro de la API."
+  "The Keycloak sign-in page could not be written. See the log of the API.": "No se pudo escribir la página de inicio de sesión de Keycloak. Consulte el registro de la API.",
+  "Rules": "Reglas",
+  "Raw": "Sin formato",
+  "Add rule": "Añadir regla",
+  "Selector": "Selector"
 }

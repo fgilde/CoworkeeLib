@@ -1065,5 +1065,9 @@
   "Not written yet": "Nog niet geschreven",
   "Apply to Keycloak": "Toepassen op Keycloak",
   "Keycloak sign-in page updated": "Keycloak-aanmeldpagina bijgewerkt",
-  "The Keycloak sign-in page could not be written. See the log of the API.": "De Keycloak-aanmeldpagina kon niet worden geschreven. Zie het log van de API."
+  "The Keycloak sign-in page could not be written. See the log of the API.": "De Keycloak-aanmeldpagina kon niet worden geschreven. Zie het log van de API.",
+  "Rules": "Regels",
+  "Raw": "Ruw",
+  "Add rule": "Regel toevoegen",
+  "Selector": "Selector"
 }

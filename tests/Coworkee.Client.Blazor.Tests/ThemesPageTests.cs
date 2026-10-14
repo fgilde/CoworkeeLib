@@ -137,7 +137,7 @@ public sealed class ThemesPageTests : ClientTestBase
     }
 
     [Fact]
-    public void The_theme_editor_edits_the_custom_css_as_multiline_text()
+    public void The_theme_editor_edits_the_custom_css_as_rules()
     {
         Api.GetThemesAsync(Arg.Any<CancellationToken>()).Returns([BuiltIn, Own with { CustomCss = ".brand { color: red; }" }]);
         var dialogs = Render<MudDialogProvider>();
@@ -147,8 +147,7 @@ public sealed class ThemesPageTests : ClientTestBase
 
         _ = page.Find("[data-theme='Brand'] [data-testid='theme-edit']").ClickAsync(new());
 
-        dialogs.WaitForAssertion(() => dialogs.FindAll("textarea").Any(t => t.TextContent.Contains(".brand { color: red; }") || t.GetAttribute("value") == ".brand { color: red; }")
-            .ShouldBeTrue(), TimeSpan.FromSeconds(10));
+        dialogs.WaitForAssertion(() => dialogs.Find("input[data-testid='css-selector']").GetAttribute("value").ShouldBe(".brand"), TimeSpan.FromSeconds(10));
     }
 
     [Fact]

@@ -1065,5 +1065,9 @@
   "Not written yet": "Henüz yazılmadı",
   "Apply to Keycloak": "Keycloak'a uygula",
   "Keycloak sign-in page updated": "Keycloak oturum açma sayfası güncellendi",
-  "The Keycloak sign-in page could not be written. See the log of the API.": "Keycloak oturum açma sayfası yazılamadı. API günlüğüne bakın."
+  "The Keycloak sign-in page could not be written. See the log of the API.": "Keycloak oturum açma sayfası yazılamadı. API günlüğüne bakın.",
+  "Rules": "Kurallar",
+  "Raw": "Ham",
+  "Add rule": "Kural ekle",
+  "Selector": "Seçici"
 }
