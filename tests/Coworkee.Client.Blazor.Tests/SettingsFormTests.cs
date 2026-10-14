@@ -268,6 +268,27 @@ public sealed class SettingsFormTests : ClientTestBase
             Arg.Is<IReadOnlyDictionary<string, string?>>(v => v.Count == 1 && v["Auth.LoginMode"] == "External"), Arg.Any<CancellationToken>());
     }
 
+    // a user who wants the pager while the system default is endless scrolling must be able to choose the default value itself
+    [Fact]
+    public async Task A_choice_a_user_inherits_starts_as_inherited_and_any_value_can_be_chosen()
+    {
+        Api.GetSettingDefinitionsAsync(true, Arg.Any<CancellationToken>()).Returns(
+        [
+            new SettingGroupDto("Appearance", "Appearance",
+                [new SettingDefinitionDto("DataTable.DefaultPageMode", "Table rows", null, SettingType.Choice, "Pager", [SettingScope.Global, SettingScope.User], ["Pager", "EndlessScroll"])]),
+        ]);
+        Api.GetSettingsAsync(SettingScope.User, Arg.Any<CancellationToken>()).Returns([new SettingValueDto("DataTable.DefaultPageMode", null, false)]);
+        var form = Render<SettingsForm>(p => p.Add(f => f.Scope, SettingScope.User));
+        form.WaitForAssertion(() => SelectedText(form).ShouldBe("Inherited"));
+
+        form.FindAll(".mud-ex-list-item-text").Select(i => i.TextContent.Trim()).ShouldBe(["Inherited", "Pager", "EndlessScroll"]);
+        await form.FindAll(".mud-ex-list-item")[1].ClickAsync(new());
+        await form.InvokeAsync(() => form.Instance.SaveAsync());
+
+        await Api.Received(1).SetSettingsAsync(SettingScope.User,
+            Arg.Is<IReadOnlyDictionary<string, string?>>(v => v.Count == 1 && v["DataTable.DefaultPageMode"] == "Pager"), Arg.Any<CancellationToken>());
+    }
+
     private async Task<IRenderedComponent<SettingsForm>> RenderLanguageAsync(SettingScope scope, string? stored)
     {
         Localization.GetLanguagesAsync(Arg.Any<bool>(), Arg.Any<CancellationToken>())

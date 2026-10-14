@@ -61,8 +61,10 @@ public partial class CoworkeeDataTable<T>
         var filter = CurrentFilter;
         var context = Facets ? _selection.Context(BaseFilter, _facets) : null;
         var key = string.Join('\n', filter, _orderBy, Expand, System.Text.Json.JsonSerializer.Serialize(context));
+        var fresh = false;
         var items = await Pages.GetAsync(key, state.StartIndex, state.Count, async (skip, top, first) =>
         {
+            fresh |= first;
             var page = await QueryAsync(new ODataQuery
             {
                 Filter = filter, OrderBy = _orderBy, Expand = Expand, Top = top, Skip = skip, Count = first, Facets = Facets && first, FacetContext = first ? context : null,
@@ -74,14 +76,14 @@ public partial class CoworkeeDataTable<T>
                 MarkFacetColumns();
             }
 
-            if (first)
-            {
-                // the total below the rows
-                StateHasChanged();
-            }
-
             return page;
         });
+        if (fresh)
+        {
+            // the total below the rows and the facets of the new query
+            StateHasChanged();
+        }
+
         return new GridData<T> { Items = items, TotalItems = (int)Pages.Total };
     }
 }

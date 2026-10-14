@@ -25,8 +25,11 @@ public sealed partial class SettingsModel
     private readonly IReadOnlyDictionary<string, SettingValueDto> _stored;
     private readonly Dictionary<string, string?> _initial = new(StringComparer.Ordinal);
 
-    public SettingsModel(IReadOnlyList<SettingGroupDto> groups, IReadOnlyDictionary<string, SettingValueDto> stored)
+    private readonly SettingScope _scope;
+
+    public SettingsModel(IReadOnlyList<SettingGroupDto> groups, IReadOnlyDictionary<string, SettingValueDto> stored, SettingScope scope = SettingScope.Global)
     {
+        _scope = scope;
         _settings = [.. groups.SelectMany(g => g.Settings.Select(s => (g, s)))];
         _stored = stored;
         var type = Types.GetOrAdd(string.Join('|', _settings.Select(s => $"{s.Setting.Name}:{s.Setting.Type}")), _ => BuildType(_settings.Select(s => s.Setting)));
@@ -68,8 +71,13 @@ public sealed partial class SettingsModel
                 case SettingType.Choice:
                     property.RenderWith<MudExSelect<string>, string?>(s => s.Value, s =>
                     {
-                        s.ItemCollection = [.. setting.Choices ?? []];
-                        s.ToStringFunc = choice => choice is null ? string.Empty : l.Find(choice) ?? choice;
+                        s.ItemCollection = [.. Inherits(setting) ? [string.Empty] : Array.Empty<string>(), .. setting.Choices ?? []];
+                        s.ToStringFunc = choice => choice switch
+                        {
+                            null => string.Empty,
+                            "" => l["Inherited"],
+                            _ => l.Find(choice) ?? choice,
+                        };
                     });
                     break;
                 case SettingType.Language:
@@ -156,11 +164,15 @@ public sealed partial class SettingsModel
         return setting.Type switch
         {
             SettingType.Secret => null,
+            SettingType.Choice when Inherits(setting) => stored ?? string.Empty, // listed as "Inherited", so the default value can be chosen as well
             SettingType.Bool or SettingType.Choice => stored ?? setting.DefaultValue, // a box or select cannot show "not set"
             SettingType.Language => stored ?? string.Empty, // the select lists the empty option as "", not null
             _ => stored,
         };
     }
+
+    // a user or organisation value of a setting that also has a broader scope falls back to it
+    private bool Inherits(SettingDefinitionDto setting) => _scope != SettingScope.Global && setting.Scopes.Any(s => s < _scope);
 
     private PropertyInfo Property(SettingDefinitionDto setting) => Value.GetType().GetProperty(PropertyName(setting.Name))!;
 
