@@ -1190,5 +1190,18 @@
   "Treemap": "Trækort",
   "Web page": "Webside",
   "Week": "Uge",
-  "Year": "År"
+  "Year": "År",
+  "Choose from files": "Vælg fra filer",
+  "Make the file public?": "Gør filen offentlig?",
+  "Anyone can open \"{0}\" without signing in.": "Alle kan åbne \"{0}\" uden at logge ind.",
+  "Make public": "Gør offentlig",
+  "Loading screen": "Indlæsningsskærm",
+  "Shown while the app loads, in the colours and with the logo of the default theme.": "Vises, mens appen indlæses, i farverne og med logoet fra standardtemaet.",
+  "Animated background": "Animeret baggrund",
+  "Image or video of the sign-in page": "Billede eller video fra login-siden",
+  "Plain background": "Enkel baggrund",
+  "The image is too large.": "Billedet er for stort.",
+  "Anyone can open this file without signing in.": "Alle kan åbne denne fil uden at logge ind.",
+  "Make private": "Gør privat",
+  "The file is private again.": "Filen er privat igen."
 }

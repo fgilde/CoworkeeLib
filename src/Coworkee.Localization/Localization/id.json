@@ -1190,5 +1190,18 @@
   "Treemap": "Peta pohon",
   "Web page": "Halaman web",
   "Week": "Minggu",
-  "Year": "Tahun"
+  "Year": "Tahun",
+  "Choose from files": "Pilih dari file",
+  "Make the file public?": "Jadikan file publik?",
+  "Anyone can open \"{0}\" without signing in.": "Siapa pun dapat membuka \"{0}\" tanpa masuk.",
+  "Make public": "Jadikan publik",
+  "Loading screen": "Layar pemuatan",
+  "Shown while the app loads, in the colours and with the logo of the default theme.": "Ditampilkan saat aplikasi dimuat, dengan warna dan logo tema bawaan.",
+  "Animated background": "Latar animasi",
+  "Image or video of the sign-in page": "Gambar atau video halaman masuk",
+  "Plain background": "Latar polos",
+  "The image is too large.": "Gambar terlalu besar.",
+  "Anyone can open this file without signing in.": "Siapa pun dapat membuka file ini tanpa masuk.",
+  "Make private": "Jadikan pribadi",
+  "The file is private again.": "File kembali pribadi."
 }

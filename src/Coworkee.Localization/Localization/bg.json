@@ -1190,5 +1190,18 @@
   "Treemap": "Дървовидна карта",
   "Web page": "Уеб страница",
   "Week": "Седмица",
-  "Year": "Година"
+  "Year": "Година",
+  "Choose from files": "Избор от файловете",
+  "Make the file public?": "Да се направи ли файлът публичен?",
+  "Anyone can open \"{0}\" without signing in.": "Всеки може да отвори „{0}“ без вход.",
+  "Make public": "Направи публичен",
+  "Loading screen": "Екран за зареждане",
+  "Shown while the app loads, in the colours and with the logo of the default theme.": "Показва се, докато приложението се зарежда, в цветовете и с логото на темата по подразбиране.",
+  "Animated background": "Анимиран фон",
+  "Image or video of the sign-in page": "Изображение или видео от страницата за вход",
+  "Plain background": "Обикновен фон",
+  "The image is too large.": "Изображението е твърде голямо.",
+  "Anyone can open this file without signing in.": "Всеки може да отвори този файл без вход.",
+  "Make private": "Направи личен",
+  "The file is private again.": "Файлът отново е личен."
 }

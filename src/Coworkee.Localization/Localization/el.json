@@ -1190,5 +1190,18 @@
   "Treemap": "Χάρτης δέντρου",
   "Web page": "Ιστοσελίδα",
   "Week": "Εβδομάδα",
-  "Year": "Έτος"
+  "Year": "Έτος",
+  "Choose from files": "Επιλογή από τα αρχεία",
+  "Make the file public?": "Να γίνει δημόσιο το αρχείο;",
+  "Anyone can open \"{0}\" without signing in.": "Οποιοσδήποτε μπορεί να ανοίξει το «{0}» χωρίς σύνδεση.",
+  "Make public": "Δημοσιοποίηση",
+  "Loading screen": "Οθόνη φόρτωσης",
+  "Shown while the app loads, in the colours and with the logo of the default theme.": "Εμφανίζεται όσο φορτώνει η εφαρμογή, με τα χρώματα και το λογότυπο του προεπιλεγμένου θέματος.",
+  "Animated background": "Κινούμενο φόντο",
+  "Image or video of the sign-in page": "Εικόνα ή βίντεο της σελίδας σύνδεσης",
+  "Plain background": "Απλό φόντο",
+  "The image is too large.": "Η εικόνα είναι πολύ μεγάλη.",
+  "Anyone can open this file without signing in.": "Οποιοσδήποτε μπορεί να ανοίξει αυτό το αρχείο χωρίς σύνδεση.",
+  "Make private": "Να γίνει ιδιωτικό",
+  "The file is private again.": "Το αρχείο είναι ξανά ιδιωτικό."
 }

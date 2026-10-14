@@ -1190,5 +1190,18 @@
   "Treemap": "Mapa de árbol",
   "Web page": "Página web",
   "Week": "Semana",
-  "Year": "Año"
+  "Year": "Año",
+  "Choose from files": "Elegir de los archivos",
+  "Make the file public?": "¿Hacer público el archivo?",
+  "Anyone can open \"{0}\" without signing in.": "Cualquiera puede abrir «{0}» sin iniciar sesión.",
+  "Make public": "Hacer público",
+  "Loading screen": "Pantalla de carga",
+  "Shown while the app loads, in the colours and with the logo of the default theme.": "Se muestra mientras se carga la aplicación, con los colores y el logotipo del tema predeterminado.",
+  "Animated background": "Fondo animado",
+  "Image or video of the sign-in page": "Imagen o vídeo de la página de inicio de sesión",
+  "Plain background": "Fondo liso",
+  "The image is too large.": "La imagen es demasiado grande.",
+  "Anyone can open this file without signing in.": "Cualquiera puede abrir este archivo sin iniciar sesión.",
+  "Make private": "Hacer privado",
+  "The file is private again.": "El archivo vuelve a ser privado."
 }

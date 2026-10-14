@@ -1190,5 +1190,18 @@
   "Treemap": "Trädkarta",
   "Web page": "Webbsida",
   "Week": "Vecka",
-  "Year": "År"
+  "Year": "År",
+  "Choose from files": "Välj från filer",
+  "Make the file public?": "Gör filen offentlig?",
+  "Anyone can open \"{0}\" without signing in.": "Vem som helst kan öppna \"{0}\" utan att logga in.",
+  "Make public": "Gör offentlig",
+  "Loading screen": "Laddningsskärm",
+  "Shown while the app loads, in the colours and with the logo of the default theme.": "Visas medan appen laddas, i färgerna och med logotypen från standardtemat.",
+  "Animated background": "Animerad bakgrund",
+  "Image or video of the sign-in page": "Bild eller video från inloggningssidan",
+  "Plain background": "Enkel bakgrund",
+  "The image is too large.": "Bilden är för stor.",
+  "Anyone can open this file without signing in.": "Vem som helst kan öppna den här filen utan att logga in.",
+  "Make private": "Gör privat",
+  "The file is private again.": "Filen är privat igen."
 }

@@ -9,6 +9,10 @@
                              MimeTypes="@_mimeTypes" MaxFileSize="@_maxUpload" TextUploadFile="@L["Choose logo"]" ButtonVariant="Variant.Outlined" ButtonColor="Color.Default"
                              ExternalProviderRendering="ExternalProviderRendering.Images" ExternalPickerImageSize="@("30px")" />
         </div>
+        @if (_canPickFiles)
+        {
+            <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.FolderOpen" OnClick="FromFilesAsync" Class="mt-2" data-testid="logo-from-files">@L["Choose from files"]</MudButton>
+        }
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">@L["Cancel"]</MudButton>

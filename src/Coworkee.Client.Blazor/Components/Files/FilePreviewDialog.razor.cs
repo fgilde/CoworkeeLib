@@ -1,3 +1,4 @@
+using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Files;
 using Coworkee.Contracts.Files;
@@ -18,13 +19,25 @@ public partial class FilePreviewDialog
 
     [Parameter, EditorRequired] public string Name { get; set; } = string.Empty;
 
-    public static Task ShowAsync(IDialogService dialogs, string url, string contentType, string name) =>
+    /// <summary>The stored file behind <see cref="Url"/>; a public one can be made private here.</summary>
+    [Parameter] public StoredFileDto? File { get; set; }
+
+    [Inject] private IFilesApi Files { get; set; } = null!;
+
+    [Inject] private ISnackbar Snackbar { get; set; } = null!;
+
+    [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
+
+    public static Task ShowAsync(IDialogService dialogs, string url, string contentType, string name, StoredFileDto? file = null) =>
         dialogs.ShowSideSheetAsync<FilePreviewDialog>(string.Empty, new DialogParameters<FilePreviewDialog>
         {
             { d => d.Url, url },
             { d => d.ContentType, contentType },
             { d => d.Name, name },
+            { d => d.File, file },
         });
 
-    public static Task ShowAsync(IDialogService dialogs, StoredFileDto file) => ShowAsync(dialogs, FileUrls.Content(file.Id), file.ContentType, file.Name);
+    public static Task ShowAsync(IDialogService dialogs, StoredFileDto file) => ShowAsync(dialogs, FileUrls.Content(file.Id), file.ContentType, file.Name, file);
+
+    private Task MakePrivateAsync() => Snackbar.RunAsync(async () => File = await Files.SetPublicAsync(File!.Id, false), L["The file is private again."]);
 }

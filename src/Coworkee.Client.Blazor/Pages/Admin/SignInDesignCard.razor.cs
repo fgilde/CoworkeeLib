@@ -1,6 +1,8 @@
 using System.Text.Json;
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Components.Data;
+using Coworkee.Client.Blazor.Components.Files;
+using Coworkee.Contracts.Files;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Settings;
 using Coworkee.Contracts.Theming;
@@ -27,10 +29,27 @@ public partial class SignInDesignCard
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
+    [Inject] private Blazor.Files.IFilesApi Files { get; set; } = null!;
+
+    [Inject] private Security.PermissionStore Permissions { get; set; } = null!;
+
+    [Inject] private NavigationManager Navigation { get; set; } = null!;
+
+    private bool _canPickFiles;
+
     private string SelectedLayout => _design?.Layout is { Length: > 0 } layout ? layout : SignInLayouts.Default;
+
+    private LoadingScreenBackground LoadingScreen
+    {
+        get => _design?.LoadingScreen ?? LoadingScreenBackground.Animated;
+        set => _design!.LoadingScreen = value;
+    }
+
+    private bool UsesMedia => HasMedia(SelectedLayout) || LoadingScreen == LoadingScreenBackground.SignInMedia;
 
     protected override async Task OnInitializedAsync()
     {
+        _canPickFiles = await Permissions.HasAsync(FilePermissions.View);
         try
         {
             _design = Read(await Api.GetAppConfigurationAsync(SignInDesign.Section));
@@ -47,6 +66,14 @@ public partial class SignInDesignCard
     {
         var values = JsonSerializer.SerializeToElement(_design, JsonSerializerOptions.Web);
         await Snackbar.RunAsync(async () => _design = Read(await Api.SaveAppConfigurationAsync(SignInDesign.Section, values)), L["Sign-in page saved"]);
+    }
+
+    private async Task ChooseMediaAsync()
+    {
+        if (await PublicFileChooser.ChooseAsync(Dialogs, Files, Snackbar, L, Navigation, "image/*,video/*") is { } url)
+        {
+            _design!.MediaUrl = url;
+        }
     }
 
     private async Task ResetAsync()

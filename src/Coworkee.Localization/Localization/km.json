@@ -1190,5 +1190,18 @@
   "Treemap": "ផែនទីមែកធាង",
   "Web page": "ទំព័របណ្ដាញ",
   "Week": "សប្ដាហ៍",
-  "Year": "ឆ្នាំ"
+  "Year": "ឆ្នាំ",
+  "Choose from files": "ជ្រើសពីឯកសារ",
+  "Make the file public?": "ធ្វើឱ្យឯកសារជាសាធារណៈ?",
+  "Anyone can open \"{0}\" without signing in.": "អ្នកណាក៏អាចបើក \"{0}\" ដោយមិនចាំបាច់ចូលគណនី។",
+  "Make public": "ធ្វើជាសាធារណៈ",
+  "Loading screen": "អេក្រង់កំពុងផ្ទុក",
+  "Shown while the app loads, in the colours and with the logo of the default theme.": "បង្ហាញខណៈពេលកម្មវិធីកំពុងផ្ទុក ក្នុងពណ៌ និងជាមួយឡូហ្គោនៃរចនាប័ទ្មលំនាំដើម។",
+  "Animated background": "ផ្ទៃខាងក្រោយមានចលនា",
+  "Image or video of the sign-in page": "រូបភាព ឬវីដេអូនៃទំព័រចូល",
+  "Plain background": "ផ្ទៃខាងក្រោយធម្មតា",
+  "The image is too large.": "រូបភាពធំពេក។",
+  "Anyone can open this file without signing in.": "អ្នកណាក៏អាចបើកឯកសារនេះដោយមិនចាំបាច់ចូលគណនី។",
+  "Make private": "ធ្វើជាឯកជន",
+  "The file is private again.": "ឯកសារជាឯកជនវិញហើយ។"
 }

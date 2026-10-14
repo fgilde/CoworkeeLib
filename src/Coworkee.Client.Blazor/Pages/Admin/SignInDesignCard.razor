@@ -28,14 +28,23 @@
             <MudGrid Spacing="2">
                 <MudItem xs="12" sm="8">
                     <MudTextField T="string" @bind-Value="_design.MediaUrl" Label="@L["Image or video address"]" Clearable="true" Margin="Density.Margin"
-                                  Variant="Variant.Outlined" Disabled="!HasMedia(SelectedLayout)" HelperText="@L["For the split and slide layouts, for example /media/welcome.mp4"]"
-                                  data-testid="sign-in-media" />
+                                  Variant="Variant.Outlined" Disabled="!UsesMedia" HelperText="@L["For the split and slide layouts, for example /media/welcome.mp4"]"
+                                  Adornment="@(_canPickFiles ? Adornment.End : Adornment.None)" AdornmentIcon="@Icons.Material.Outlined.FolderOpen"
+                                  AdornmentAriaLabel="@L["Choose from files"]" OnAdornmentClick="ChooseMediaAsync" data-testid="sign-in-media" />
                 </MudItem>
                 <MudItem xs="12" sm="4">
                     <MudSelect T="SignInMediaSide?" @bind-Value="_design.MediaSide" Label="@L["Image side"]" Clearable="true" Margin="Density.Margin"
                                Variant="Variant.Outlined" Disabled="!HasMedia(SelectedLayout)">
                         <MudSelectItem T="SignInMediaSide?" Value="SignInMediaSide.Left">@L["Left"]</MudSelectItem>
                         <MudSelectItem T="SignInMediaSide?" Value="SignInMediaSide.Right">@L["Right"]</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="8">
+                    <MudSelect T="LoadingScreenBackground" @bind-Value="LoadingScreen" Label="@L["Loading screen"]" Margin="Density.Margin" Variant="Variant.Outlined"
+                               HelperText="@L["Shown while the app loads, in the colours and with the logo of the default theme."]" data-testid="loading-screen">
+                        <MudSelectItem T="LoadingScreenBackground" Value="LoadingScreenBackground.Animated">@L["Animated background"]</MudSelectItem>
+                        <MudSelectItem T="LoadingScreenBackground" Value="LoadingScreenBackground.SignInMedia">@L["Image or video of the sign-in page"]</MudSelectItem>
+                        <MudSelectItem T="LoadingScreenBackground" Value="LoadingScreenBackground.Plain">@L["Plain background"]</MudSelectItem>
                     </MudSelect>
                 </MudItem>
             </MudGrid>

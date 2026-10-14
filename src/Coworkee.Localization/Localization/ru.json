@@ -1190,5 +1190,18 @@
   "Treemap": "Древовидная карта",
   "Web page": "Веб-страница",
   "Week": "Неделя",
-  "Year": "Год"
+  "Year": "Год",
+  "Choose from files": "Выбрать из файлов",
+  "Make the file public?": "Сделать файл общедоступным?",
+  "Anyone can open \"{0}\" without signing in.": "Любой может открыть «{0}» без входа.",
+  "Make public": "Сделать общедоступным",
+  "Loading screen": "Экран загрузки",
+  "Shown while the app loads, in the colours and with the logo of the default theme.": "Показывается во время загрузки приложения, в цветах и с логотипом темы по умолчанию.",
+  "Animated background": "Анимированный фон",
+  "Image or video of the sign-in page": "Изображение или видео страницы входа",
+  "Plain background": "Простой фон",
+  "The image is too large.": "Изображение слишком большое.",
+  "Anyone can open this file without signing in.": "Любой может открыть этот файл без входа.",
+  "Make private": "Сделать личным",
+  "The file is private again.": "Файл снова личный."
 }

@@ -4,6 +4,15 @@
         <MudText Typo="Typo.h6">@Name</MudText>
     </TitleContent>
     <DialogContent>
+        @if (File is { IsPublic: true })
+        {
+            <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2" data-testid="file-public">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <span>@L["Anyone can open this file without signing in."]</span>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="MakePrivateAsync" data-testid="file-make-private">@L["Make private"]</MudButton>
+                </MudStack>
+            </MudAlert>
+        }
         <div style="flex:1 1 auto;min-height:360px" data-testid="file-preview">
             <MudExFileDisplay Dense="Density.Dense" Url="@Navigation.ToAbsoluteUri(Url).ToString()" ContentType="@ContentType" FileName="@Name" ShowFileName="false" Style="height:100%" />
         </div>

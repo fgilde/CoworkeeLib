@@ -1190,5 +1190,18 @@
   "Treemap": "트리맵",
   "Web page": "웹 페이지",
   "Week": "주",
-  "Year": "연"
+  "Year": "연",
+  "Choose from files": "파일에서 선택",
+  "Make the file public?": "파일을 공개하시겠습니까?",
+  "Anyone can open \"{0}\" without signing in.": "로그인하지 않아도 누구나 \"{0}\"을(를) 열 수 있습니다.",
+  "Make public": "공개",
+  "Loading screen": "로딩 화면",
+  "Shown while the app loads, in the colours and with the logo of the default theme.": "앱이 로드되는 동안 기본 테마의 색상과 로고로 표시됩니다.",
+  "Animated background": "애니메이션 배경",
+  "Image or video of the sign-in page": "로그인 페이지의 이미지 또는 동영상",
+  "Plain background": "단색 배경",
+  "The image is too large.": "이미지가 너무 큽니다.",
+  "Anyone can open this file without signing in.": "로그인하지 않아도 누구나 이 파일을 열 수 있습니다.",
+  "Make private": "비공개로 전환",
+  "The file is private again.": "파일이 다시 비공개가 되었습니다."
 }

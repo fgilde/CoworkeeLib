@@ -1190,5 +1190,18 @@
   "Treemap": "Деревоподібна карта",
   "Web page": "Вебсторінка",
   "Week": "Тиждень",
-  "Year": "Рік"
+  "Year": "Рік",
+  "Choose from files": "Вибрати з файлів",
+  "Make the file public?": "Зробити файл загальнодоступним?",
+  "Anyone can open \"{0}\" without signing in.": "Будь-хто може відкрити «{0}» без входу.",
+  "Make public": "Зробити загальнодоступним",
+  "Loading screen": "Екран завантаження",
+  "Shown while the app loads, in the colours and with the logo of the default theme.": "Показується під час завантаження застосунку, у кольорах і з логотипом стандартної теми.",
+  "Animated background": "Анімований фон",
+  "Image or video of the sign-in page": "Зображення або відео сторінки входу",
+  "Plain background": "Простий фон",
+  "The image is too large.": "Зображення завелике.",
+  "Anyone can open this file without signing in.": "Будь-хто може відкрити цей файл без входу.",
+  "Make private": "Зробити приватним",
+  "The file is private again.": "Файл знову приватний."
 }

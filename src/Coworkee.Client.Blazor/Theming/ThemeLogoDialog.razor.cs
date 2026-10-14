@@ -1,3 +1,4 @@
+using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Theming;
 using Microsoft.AspNetCore.Components;
@@ -34,6 +35,16 @@ public partial class ThemeLogoDialog : IAsyncDisposable
         return await dialog.Result is { Canceled: false, Data: string logo } ? logo : null;
     }
 
+    [Inject] private IDialogService Dialogs { get; set; } = null!;
+
+    [Inject] private Blazor.Files.IFilesApi Files { get; set; } = null!;
+
+    [Inject] private Security.PermissionStore Permissions { get; set; } = null!;
+
+    private bool _canPickFiles;
+
+    protected override async Task OnInitializedAsync() => _canPickFiles = await Permissions.HasAsync(Contracts.Files.FilePermissions.View);
+
     private async Task LoadAsync(UploadableFile? file)
     {
         if (file is null)
@@ -42,14 +53,45 @@ public partial class ThemeLogoDialog : IAsyncDisposable
         }
 
         await file.EnsureDataLoadedAsync();
-        if (file.Data is not { Length: > 0 } data || !ThemeLogo.ContentTypes.Contains(file.ContentType ?? string.Empty))
+        await UseAsync(file.ContentType, file.Data);
+    }
+
+    private async Task FromFilesAsync()
+    {
+        if (await Components.Files.FilePickerDialog.ShowAsync(Dialogs, false, string.Join(',', ThemeLogo.ContentTypes)) is not [var file])
+        {
+            return;
+        }
+
+        if (file.Size > MaxUploadBytes)
+        {
+            Snackbar.Add(L["The image is too large."], Severity.Warning);
+            return;
+        }
+
+        byte[]? data = null;
+        if (await Snackbar.RunAsync(async () =>
+            {
+                await using var content = await Files.OpenReadAsync(file.Id);
+                using var copy = new MemoryStream();
+                await content.CopyToAsync(copy);
+                data = copy.ToArray();
+            }))
+        {
+            await UseAsync(file.ContentType, data);
+        }
+    }
+
+    private async Task UseAsync(string? contentType, byte[]? data)
+    {
+        if (data is not { Length: > 0 } || !ThemeLogo.ContentTypes.Contains(contentType ?? string.Empty))
         {
             Snackbar.Add(L["Choose a PNG, JPEG, WebP or SVG image."], Severity.Warning);
             return;
         }
 
-        var logo = $"data:{file.ContentType};base64,{Convert.ToBase64String(data)}";
-        if (!ThemeLogo.IsSvg(file.ContentType!))
+        var logo = $"data:{contentType};base64,{Convert.ToBase64String(data)}";
+        if (!ThemeLogo.IsSvg(contentType!))
         {
             _module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");
             logo = await _module.InvokeAsync<string?>("resizeImage", logo, Pixels) ?? string.Empty;

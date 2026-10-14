@@ -1190,5 +1190,18 @@
   "Treemap": "Ağaç haritası",
   "Web page": "Web sayfası",
   "Week": "Hafta",
-  "Year": "Yıl"
+  "Year": "Yıl",
+  "Choose from files": "Dosyalardan seç",
+  "Make the file public?": "Dosya herkese açık yapılsın mı?",
+  "Anyone can open \"{0}\" without signing in.": "Herkes \"{0}\" dosyasını oturum açmadan açabilir.",
+  "Make public": "Herkese açık yap",
+  "Loading screen": "Yükleme ekranı",
+  "Shown while the app loads, in the colours and with the logo of the default theme.": "Uygulama yüklenirken varsayılan temanın renkleri ve logosuyla gösterilir.",
+  "Animated background": "Hareketli arka plan",
+  "Image or video of the sign-in page": "Oturum açma sayfasının resmi veya videosu",
+  "Plain background": "Düz arka plan",
+  "The image is too large.": "Resim çok büyük.",
+  "Anyone can open this file without signing in.": "Herkes bu dosyayı oturum açmadan açabilir.",
+  "Make private": "Özel yap",
+  "The file is private again.": "Dosya yeniden özel."
 }

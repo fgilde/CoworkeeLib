@@ -1190,5 +1190,18 @@
   "Treemap": "树状图",
   "Web page": "网页",
   "Week": "周",
-  "Year": "年"
+  "Year": "年",
+  "Choose from files": "从文件中选择",
+  "Make the file public?": "公开此文件?",
+  "Anyone can open \"{0}\" without signing in.": "任何人无需登录即可打开“{0}”。",
+  "Make public": "公开",
+  "Loading screen": "加载界面",
+  "Shown while the app loads, in the colours and with the logo of the default theme.": "应用加载时显示,使用默认主题的颜色和徽标。",
+  "Animated background": "动画背景",
+  "Image or video of the sign-in page": "登录页面的图片或视频",
+  "Plain background": "纯色背景",
+  "The image is too large.": "图片太大。",
+  "Anyone can open this file without signing in.": "任何人无需登录即可打开此文件。",
+  "Make private": "设为私有",
+  "The file is private again.": "文件已重新设为私有。"
 }

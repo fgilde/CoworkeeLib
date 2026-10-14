@@ -1190,5 +1190,18 @@
   "Treemap": "خريطة شجرية",
   "Web page": "صفحة ويب",
   "Week": "أسبوع",
-  "Year": "سنة"
+  "Year": "سنة",
+  "Choose from files": "اختيار من الملفات",
+  "Make the file public?": "هل تريد جعل الملف عامًا؟",
+  "Anyone can open \"{0}\" without signing in.": "يمكن لأي شخص فتح \"{0}\" دون تسجيل الدخول.",
+  "Make public": "جعله عامًا",
+  "Loading screen": "شاشة التحميل",
+  "Shown while the app loads, in the colours and with the logo of the default theme.": "تُعرض أثناء تحميل التطبيق بألوان السمة الافتراضية وشعارها.",
+  "Animated background": "خلفية متحركة",
+  "Image or video of the sign-in page": "صورة أو فيديو صفحة تسجيل الدخول",
+  "Plain background": "خلفية بسيطة",
+  "The image is too large.": "الصورة كبيرة جدًا.",
+  "Anyone can open this file without signing in.": "يمكن لأي شخص فتح هذا الملف دون تسجيل الدخول.",
+  "Make private": "جعله خاصًا",
+  "The file is private again.": "أصبح الملف خاصًا مرة أخرى."
 }

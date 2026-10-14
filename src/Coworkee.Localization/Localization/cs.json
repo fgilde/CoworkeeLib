@@ -1190,5 +1190,18 @@
   "Treemap": "Stromová mapa",
   "Web page": "Webová stránka",
   "Week": "Týden",
-  "Year": "Rok"
+  "Year": "Rok",
+  "Choose from files": "Vybrat ze souborů",
+  "Make the file public?": "Zveřejnit soubor?",
+  "Anyone can open \"{0}\" without signing in.": "Kdokoli může otevřít „{0}“ bez přihlášení.",
+  "Make public": "Zveřejnit",
+  "Loading screen": "Načítací obrazovka",
+  "Shown while the app loads, in the colours and with the logo of the default theme.": "Zobrazuje se během načítání aplikace v barvách a s logem výchozího motivu.",
+  "Animated background": "Animované pozadí",
+  "Image or video of the sign-in page": "Obrázek nebo video přihlašovací stránky",
+  "Plain background": "Jednoduché pozadí",
+  "The image is too large.": "Obrázek je příliš velký.",
+  "Anyone can open this file without signing in.": "Kdokoli může tento soubor otevřít bez přihlášení.",
+  "Make private": "Nastavit jako soukromý",
+  "The file is private again.": "Soubor je opět soukromý."
 }
