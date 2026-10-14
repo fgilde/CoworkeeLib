@@ -17,4 +17,12 @@
     <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-jjfr-hcj7-qf5w" />
     <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-wmxv-xphr-5c9g" />
   </ItemGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0' And '$(PackageType)' != 'Template'">
+    <NoWarn>$(NoWarn);NU1510</NoWarn>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0' And '$(PackageType)' != 'Template'">
+    <!-- advisories of 2026-10-13: lifts the transitive System.Security.Cryptography packages to the fixed version, also for the apps -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
+    <PackageReference Include="System.Security.Cryptography.Xml" />
+  </ItemGroup>
 </Project>
