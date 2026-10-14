@@ -101,11 +101,19 @@ export function focus(element) {
 
 let monacoLoading = null;
 
-function loadScript(src) {
-    return new Promise((resolve, reject) => {
-        const script = Object.assign(document.createElement('script'), { src, onload: resolve, onerror: () => reject(new Error(`Cannot load ${src}`)) });
+const loadedScripts = new Set();
+
+// a failed tag is removed and a loaded one is remembered, so a retry never adds a script twice
+async function loadScript(src) {
+    if (loadedScripts.has(src)) {
+        return;
+    }
+
+    await new Promise((resolve, reject) => {
+        const script = Object.assign(document.createElement('script'), { src, onload: resolve, onerror: () => (script.remove(), reject(new Error(`Cannot load ${src}`))) });
         document.head.appendChild(script);
     });
+    loadedScripts.add(src);
 }
 
 // BlazorMonaco's own scripts, loaded once and in this order, so host apps need no script tags

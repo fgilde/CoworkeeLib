@@ -12,7 +12,7 @@ namespace Coworkee.Client.Blazor.Components.Editors;
 
 /// <summary>
 /// A Monaco code editor. Monaco is loaded on demand; until then, and when it cannot be loaded, the value is shown read-only.
-/// Language, read-only state and dark mode are read when Monaco creates the editor.
+/// Dark mode is read when Monaco creates the editor; language and read-only state follow later changes.
 /// </summary>
 public partial class CodeEditor : IAsyncDisposable
 {
@@ -26,6 +26,9 @@ public partial class CodeEditor : IAsyncDisposable
     private bool _dark;
     private string _content = string.Empty;
     private (string Language, string Trigger, string ModelUri)? _registered;
+    private string? _modelUri;
+    private string _language = string.Empty;
+    private bool _readOnly;
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
@@ -88,6 +91,7 @@ public partial class CodeEditor : IAsyncDisposable
 
         if (_initialized)
         {
+            await ApplyAsync();
             await RegisterCompletionsAsync();
         }
     }
@@ -119,32 +123,77 @@ public partial class CodeEditor : IAsyncDisposable
         }
     }
 
-    private StandaloneEditorConstructionOptions Options(StandaloneCodeEditor _) => new()
+    private StandaloneEditorConstructionOptions Options(StandaloneCodeEditor _)
     {
-        Language = Language,
-        Value = Value ?? string.Empty,
-        ReadOnly = ReadOnly,
-        AutomaticLayout = true,
-        Minimap = new EditorMinimapOptions { Enabled = false },
-        Theme = _dark ? "vs-dark" : "vs",
-    };
+        _language = Language;
+        _readOnly = ReadOnly;
+        return new()
+        {
+            Language = Language,
+            Value = Value ?? string.Empty,
+            ReadOnly = ReadOnly,
+            AutomaticLayout = true,
+            Minimap = new EditorMinimapOptions { Enabled = false },
+            Theme = _dark ? "vs-dark" : "vs",
+        };
+    }
 
-    private async Task InitAsync()
+    internal async Task InitAsync()
     {
         _initialized = true;
+        await ApplyAsync();
         await RegisterCompletionsAsync();
+    }
+
+    private async Task ApplyAsync()
+    {
+        try
+        {
+            if (Language != _language)
+            {
+                _language = Language;
+                await BlazorMonaco.Editor.Global.SetModelLanguage(JS, await _editor!.GetModel(), Language);
+            }
+
+            if (ReadOnly != _readOnly)
+            {
+                _readOnly = ReadOnly;
+                await _editor!.UpdateOptions(new EditorUpdateOptions { ReadOnly = ReadOnly });
+            }
+        }
+        catch (Exception e) when (e is JSException or JSDisconnectedException)
+        {
+        }
     }
 
     private async Task RegisterCompletionsAsync()
     {
-        if (_registered is not null || Completions is null || string.IsNullOrEmpty(CompletionTrigger) || _editor is null)
+        if (Completions is null || string.IsNullOrEmpty(CompletionTrigger) || _editor is null)
         {
             return;
         }
 
-        var registration = (Language, CompletionTrigger[^1..], (await _editor.GetModel()).Uri);
-        _registered = registration;
-        await CodeCompletionRegistry.AddAsync(JS, registration.Language, registration.Item2, registration.Uri, () => Completions);
+        try
+        {
+            _modelUri ??= (await _editor.GetModel()).Uri;
+            var registration = (Language, CompletionTrigger[^1..], _modelUri);
+            if (registration == _registered)
+            {
+                return;
+            }
+
+            if (_registered is { } previous)
+            {
+                CodeCompletionRegistry.Remove(JS, previous.Language, previous.Trigger, previous.ModelUri);
+                _registered = null;
+            }
+
+            await CodeCompletionRegistry.AddAsync(JS, registration.Language, registration.Item2, registration.Item3, () => Completions);
+            _registered = registration;
+        }
+        catch (Exception e) when (e is JSException or JSDisconnectedException)
+        {
+        }
     }
 
     private async Task ChangedAsync(ModelContentChangedEvent _)
@@ -162,7 +211,7 @@ public partial class CodeEditor : IAsyncDisposable
                 await SetFromEditorAsync(text);
             }
         }
-        catch (OperationCanceledException)
+        catch (Exception e) when (e is OperationCanceledException or JSException or JSDisconnectedException)
         {
         }
     }
