@@ -35,7 +35,7 @@ The inline answer carries `Content-Security-Policy: sandbox; default-src 'none';
 return new BlobContentResult(content.Stream, content.ContentType, content.FileName, download: download == true);
 ```
 
-It streams with range support, sets the sandbox policy when inline and `nosniff` plus `Cache-Control: private, no-store` always.
+It streams with range support, sets the sandbox policy when inline and `nosniff` plus `Cache-Control: private, no-store` always (public files: see below).
 
 ## Choosing files in a form
 
@@ -54,6 +54,12 @@ meta.Property(p => p.LogoId).RenderWith<CoworkeeFilePicker, Guid?>(p => p.Value)
 `IFilesApi` is the typed client, `FileUrls.FileUrl(navigation, id)` the absolute address for `MudExFileDisplay` (it loads with its own `HttpClient`, a relative address does not work).
 
 `FilePreviewDialog.ShowAsync(dialogs, file)` previews a stored file in a side sheet; `FilePreviewDialog.ShowAsync(dialogs, url, contentType, name)` previews any content address of the app, for example the documents of your own module (a relative address is made absolute).
+
+## Public files
+
+A file can be public: `PUT /api/v1/files/{id}/public` with `{ "isPublic": true }` (needs `Files.Manage` on its folder, also for the uploader, because anyone can then read it). Public files are served without sign-in under `GET /api/v1/files/public/{id}/{name}` (`FileLinks.Public(id, name)`, through the web app's `/api` as well), with range support and `Cache-Control: public, max-age=300`, so a file made private again disappears from browsers within five minutes. `StoredFileDto.IsPublic` tells which files are public; the preview of a public file says so and offers *Make private*.
+
+`PublicFileChooser.ChooseAsync(...)` picks a file for pages anyone sees: it opens the file picker, asks before it makes a private file public and returns the absolute public address. The sign-in design uses it for its image or video.
 
 ## Cloud file pickers
 

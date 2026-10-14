@@ -42,7 +42,7 @@ Der Aspire-AppHost setzt dieselben Werte mit `options.SignIn` und liefert einen 
 
 ## Auf der Themes-Seite
 
-*Administration > Themes* beginnt mit der Karte *Anmeldeseite*: eine Vorschau je Layout zum Auswählen, die Adresse des Bildes oder Videos und seine Seite. *Speichern* legt die Werte als App-Konfigurationsabschnitt `Coworkee:Auth:Design` ab (Tabelle `cw.ConfigurationEntries`, siehe [App-Konfiguration](../modules/settings.md)); *Standardwerte wiederherstellen* verwirft sie, dann gilt wieder die Konfiguration.
+*Administration > Themes* beginnt mit der Karte *Anmeldeseite*: eine Vorschau je Layout zum Auswählen, die Adresse des Bildes oder Videos und seine Seite sowie der Hintergrund des [Ladebildschirms](../modules/theming.md#ladebildschirm) der App. Der Ordner-Knopf im Adressfeld wählt das Bild oder Video aus den Dateien der App; eine private Datei wird vorher (nach Rückfrage) öffentlich gemacht, und das Feld erhält ihre absolute öffentliche Adresse, die Auth-Server, Keycloak und Ladebildschirm ohne Anmeldung laden können. *Speichern* legt die Werte als App-Konfigurationsabschnitt `Coworkee:Auth:Design` ab (Tabelle `cw.ConfigurationEntries`, siehe [App-Konfiguration](../modules/settings.md)); *Standardwerte wiederherstellen* verwirft sie, dann gilt wieder die Konfiguration.
 
 Die Karte sehen Administratoren der Systemorganisation, die Einstellungen verwalten dürfen (`Settings.Manage`), denn der Abschnitt gilt für alle Organisationen. Für alle anderen und solange `AllowDesignChanges` aus ist, bleibt sie verborgen.
 
