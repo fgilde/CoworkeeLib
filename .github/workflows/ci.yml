@@ -46,6 +46,26 @@ jobs:
           path: artifacts/nuget/*.nupkg
           retention-days: 14
 
+  typescript:
+    # @coworkee/client and @coworkee/airworks: build and node tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: typescript
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: typescript/package-lock.json
+
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - run: npm test
+
   providers:
     # the persistence heavy suites again on the other database providers
     runs-on: ubuntu-latest
