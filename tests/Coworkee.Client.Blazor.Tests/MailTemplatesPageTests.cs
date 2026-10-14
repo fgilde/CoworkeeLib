@@ -30,9 +30,8 @@ public sealed class MailTemplatesPageTests : ClientTestBase
 
     private async Task FillAndSubmit(string name, string displayName)
     {
-        var inputs = _dialogs.FindAll("input[aria-describedby]");
-        inputs[0].Change(name);
-        inputs[1].Change(displayName);
+        InputByLabel(_dialogs.Find("form"), "Name").Change(name);
+        InputByLabel(_dialogs.Find("form"), "Display name").Change(displayName);
         await _dialogs.Find("form").SubmitAsync();
     }
 

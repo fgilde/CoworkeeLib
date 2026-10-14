@@ -56,8 +56,8 @@ public sealed class MailCampaignsPageTests : ClientTestBase
         _dialogs = Render<MudDialogProvider>();
     }
 
-    private static MailCampaignDto Campaign(Guid id, string name, MailCampaignStatus status, int total = 0, int sent = 0, int failed = 0, DateTimeOffset? scheduledFor = null) =>
-        new(id, name, "News.1", new RecipientSourceDto(RecipientSourceKind.Preset, RecipientPreset.AllActive), status, scheduledFor, total, sent, failed, 0,
+    private static MailCampaignDto Campaign(Guid id, string name, MailCampaignStatus status, int total = 0, int sent = 0, int failed = 0, DateTimeOffset? scheduledFor = null, RecipientSourceDto? source = null) =>
+        new(id, name, "News.1", source ?? new RecipientSourceDto(RecipientSourceKind.Preset, RecipientPreset.AllActive), status, scheduledFor, total, sent, failed, 0,
             DateTimeOffset.UtcNow, null, null, null);
 
     private async Task PickAsync(string testId, string text)
@@ -181,7 +181,7 @@ public sealed class MailCampaignsPageTests : ClientTestBase
 
         var saving = _dialogs.Find("[data-testid='save-list']").ClickAsync(new());
         _dialogs.WaitForElement("form");
-        _dialogs.FindAll("input[aria-describedby]")[0].Change("Gmail users");
+        InputByLabel(_dialogs.Find("form"), "Name").Change("Gmail users");
         await _dialogs.Find("form").SubmitAsync();
         await saving;
 
@@ -297,6 +297,83 @@ public sealed class MailCampaignsPageTests : ClientTestBase
         Thread.Sleep(300);
 
         Api.ReceivedCalls().ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task A_scheduled_campaign_that_is_never_claimed_stops_being_polled_and_shows_a_hint()
+    {
+        _campaigns = [Campaign(Planned, "Autumn news", MailCampaignStatus.Scheduled, scheduledFor: DateTimeOffset.UtcNow.AddHours(-1))];
+        var page = Render<MailCampaigns>(p => p.Add(c => c.PollInterval, TimeSpan.FromMilliseconds(30)));
+        page.WaitForElement($"[data-testid='campaign-overdue-{Planned}']");
+        Api.ClearReceivedCalls();
+
+        await Task.Delay(300, Xunit.TestContext.Current.CancellationToken);
+
+        Api.ReceivedCalls().ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task A_due_campaign_within_the_timeout_is_still_polled()
+    {
+        _campaigns = [Campaign(Planned, "Autumn news", MailCampaignStatus.Scheduled, scheduledFor: DateTimeOffset.UtcNow.AddMinutes(-1))];
+        var page = Render<MailCampaigns>(p => p.Add(c => c.PollInterval, TimeSpan.FromMilliseconds(30)));
+        page.WaitForElement($"[data-testid='campaign-{Planned}']");
+        page.FindAll($"[data-testid='campaign-overdue-{Planned}']").ShouldBeEmpty();
+
+        _campaigns = [Campaign(Planned, "Autumn news", MailCampaignStatus.Sending, total: 2)];
+
+        page.WaitForAssertion(() => page.Find($"[data-testid='campaign-{Planned}'] .mud-chip").TextContent.ShouldBe("Sending"));
+    }
+
+    [Fact]
+    public async Task Drafts_can_be_reopened_and_continued()
+    {
+        var page = Render<MailCampaigns>();
+        page.FindAll($"[data-testid='edit-campaign-{Sending}']").ShouldBeEmpty();
+        page.FindAll($"[data-testid='edit-campaign-{Planned}']").ShouldBeEmpty();
+
+        _ = page.WaitForElement($"[data-testid='edit-campaign-{Draft}']").ClickAsync(new());
+        _dialogs.WaitForAssertion(() => _dialogs.Find("input[data-testid='campaign-name'], [data-testid='campaign-name'] input").GetAttribute("value").ShouldBe("Old draft"));
+        await _dialogs.Find("[data-testid='wizard-next']").ClickAsync(new());
+        _dialogs.WaitForAssertion(() => _dialogs.Find("[data-testid='recipient-count']"));
+        await _dialogs.WaitForElement("[data-testid='wizard-next']:not([disabled])").ClickAsync(new());
+        var sending = _dialogs.Find("[data-testid='send-now']").ClickAsync(new());
+        await Button("Confirm").ClickAsync(new());
+        await sending;
+
+        await Api.Received(1).SaveMailCampaignAsync(Draft, Arg.Is<SaveMailCampaignRequest>(r => r.Name == "Old draft" && r.TemplateName == "News.1" && r.Recipients.Preset == RecipientPreset.AllActive), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task A_draft_with_ticked_users_keeps_them_until_the_selection_changes()
+    {
+        var ticked = new RecipientSourceDto(RecipientSourceKind.Manual, UserIds: [Ada.Id]);
+        _campaigns = [Campaign(Draft, "Old draft", MailCampaignStatus.Draft, source: ticked)];
+        var page = Render<MailCampaigns>();
+
+        _ = page.WaitForElement($"[data-testid='edit-campaign-{Draft}']").ClickAsync(new());
+        await _dialogs.WaitForElement("[data-testid='wizard-next']").ClickAsync(new());
+
+        _dialogs.WaitForAssertion(() => _dialogs.Find("[data-testid='kept-recipients']"));
+        _previews.ShouldContain(s => s.Kind == RecipientSourceKind.Manual && s.UserIds!.SequenceEqual(new[] { Ada.Id }));
+        await _dialogs.WaitForElements(".mud-tab").First(t => t.TextContent.Contains("Smart list", StringComparison.Ordinal)).ClickAsync(new());
+        _dialogs.WaitForAssertion(() => _dialogs.FindAll("[data-testid='kept-recipients']").ShouldBeEmpty());
+    }
+
+    [Fact]
+    public async Task Select_all_matching_follows_later_filter_changes_until_the_selection_changes()
+    {
+        OpenWizard();
+        await ChooseTemplateAndContinueAsync();
+        await _dialogs.WaitForElements(".mud-tab").First(t => t.TextContent.Contains("Manual selection", StringComparison.Ordinal)).ClickAsync(new());
+        await _dialogs.WaitForElement("[data-testid='select-all-matching']").ClickAsync(new());
+        _dialogs.WaitForAssertion(() => _previews.ShouldContain(s => s.Kind == RecipientSourceKind.Query));
+        _previews.Clear();
+
+        await _dialogs.Find("input[data-testid='table-search'], [data-testid='table-search'] input").InputAsync(new ChangeEventArgs { Value = "bob" });
+
+        _dialogs.WaitForAssertion(() => _previews.ShouldContain(s => s.Kind == RecipientSourceKind.Query && s.Filter != null && s.Filter.Contains("bob", StringComparison.Ordinal)));
+        _dialogs.Find("[data-testid='all-matching']");
     }
 
     [Fact]

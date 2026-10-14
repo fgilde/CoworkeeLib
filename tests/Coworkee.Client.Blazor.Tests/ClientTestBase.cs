@@ -51,6 +51,10 @@ public abstract class ClientTestBase : BunitContext
         Services.AddSingleton<Localization.CoworkeeLocalizer>();
     }
 
+    /// <summary>The input of a form field found by its visible label, which survives changes of the markup MudBlazor puts around it.</summary>
+    protected static AngleSharp.Dom.IElement InputByLabel(AngleSharp.Dom.IElement scope, string label) =>
+        scope.QuerySelector($"input[id='{scope.QuerySelectorAll("label").First(l => l.TextContent.Replace("*", string.Empty).Trim() == label).GetAttribute("for")}']")!;
+
     protected ICoworkeeApi Api { get; } = Substitute.For<ICoworkeeApi>();
 
     protected Chat.IChatApi ChatApi { get; } = Substitute.For<Chat.IChatApi>();

@@ -16,6 +16,12 @@
                     {
                         <MudTooltip Text="@error"><MudIcon Icon="@Icons.Material.Outlined.Info" Size="Size.Small" Color="Color.Error" /></MudTooltip>
                     }
+                    @if (IsOverdue(campaign))
+                    {
+                        <MudTooltip Text="@L["Not started yet. Check that the background worker is running."]">
+                            <MudIcon Icon="@Icons.Material.Outlined.WarningAmber" Size="Size.Small" Color="Color.Warning" data-testid="@($"campaign-overdue-{campaign.Id}")" />
+                        </MudTooltip>
+                    }
                 </td>
                 <td><MudText Typo="Typo.caption">@campaign.TemplateName</MudText></td>
                 <td><MudChip T="string" Size="Size.Small" Color="@ColorFor(campaign.Status)">@L[campaign.Status.ToString()]</MudChip></td>
@@ -41,6 +47,11 @@
                     }
                     else
                     {
+                        @if (campaign.Status == MailCampaignStatus.Draft)
+                        {
+                            <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" aria-label="@L["Edit"]" Disabled="_busy"
+                                           OnClick="() => EditAsync(campaign)" data-testid="@($"edit-campaign-{campaign.Id}")" />
+                        }
                         <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" aria-label="@L["Delete"]" Disabled="_busy"
                                        OnClick="() => DeleteAsync(campaign)" data-testid="@($"delete-campaign-{campaign.Id}")" />
                     }
