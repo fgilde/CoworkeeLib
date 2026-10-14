@@ -37,7 +37,7 @@ import '@fgilde/airworks/style.css';
 import '@coworkee/airworks/style.css';
 import logo from '../../../Shop.Web.Client/wwwroot/coworkee-icon.svg?url';
 
-const coworkee = await useCoworkee(AirWorks, { title: 'Shop', logo, mudExUrl: '/mudex/mudex.js' });
+const coworkee = await useCoworkee(AirWorks, { title: 'Shop', logo });
 await coworkee.register(
   ...defaultApps,
   ...adminApps,
@@ -111,7 +111,7 @@ Felder, die Benutzer oder Gruppen auswählen (Gruppenmitglieder, die Gruppen ein
 
 ### Dateivorschau
 
-Die Dateivorschau nutzt die [Web-Komponenten von MudBlazor.Extensions](https://www.mudex.org) in einem eigenen Frame (`mudExFrame`): Die Seitenstyles von MudBlazor bleiben im Frame, Desktop und eigene Apps behalten ihre, und das Schließen des Fensters gibt die .NET-Laufzeit der Vorschau frei. Der Frame hat den Origin der Seite, die Komponente liest die Datei also mit dem Sitzungs-Cookie. Das Template hostet das Bundle selbst: `mudex-webcomponents` ist eine Dev-Abhängigkeit von `ClientApp`, der Vite-Build kopiert es nach `wwwroot/mudex`, und der Host liefert die `.dat`-Dateien der .NET-Laufzeit aus. Ohne `mudExUrl` lädt `useCoworkee` es von unpkg.
+Die Dateivorschau nutzt die [Web-Komponenten von MudBlazor.Extensions](https://www.mudex.org) in einem eigenen Frame (`mudExFrame`): Die Seitenstyles von MudBlazor bleiben im Frame, Desktop und eigene Apps behalten ihre, und das Schließen des Fensters gibt die .NET-Laufzeit der Vorschau frei. Die Frame-Seite (`@coworkee/airworks/mudex-frame.html`) liegt auf dem Origin der App neben dem Bundle, die Komponente liest die Datei also mit dem Sitzungs-Cookie. Das Template hostet beides: `mudex-webcomponents` ist eine Dev-Abhängigkeit von `ClientApp`, der Vite-Build kopiert es und die Frame-Seite (als `coworkee-frame.html`) nach `wwwroot/mudex`, und der Host liefert die `.dat`-Dateien der .NET-Laufzeit aus. Anderswo übergeben Sie `mudExFrameUrl` an `useCoworkee`.
 
 Der AirWorks-Desktop (Verknüpfungen, offene Fenster, Hintergrund) liegt je Browser im Local Storage, so wie AirWorks es vorsieht.
 

@@ -37,7 +37,7 @@ import '@fgilde/airworks/style.css';
 import '@coworkee/airworks/style.css';
 import logo from '../../../Shop.Web.Client/wwwroot/coworkee-icon.svg?url';
 
-const coworkee = await useCoworkee(AirWorks, { title: 'Shop', logo, mudExUrl: '/mudex/mudex.js' });
+const coworkee = await useCoworkee(AirWorks, { title: 'Shop', logo });
 await coworkee.register(
   ...defaultApps,
   ...adminApps,
@@ -111,7 +111,7 @@ Fields that pick users or groups (group members, a user's groups, the users of a
 
 ### File preview
 
-The file preview uses the [MudBlazor.Extensions web components](https://www.mudex.org) in a frame of its own (`mudExFrame`): MudBlazor's page styles stay inside the frame, the desktop and your apps keep theirs, and closing the window drops the .NET runtime of the preview. The frame has the page's origin, so the component reads the file with the session cookie. The template hosts the bundle itself: `mudex-webcomponents` is a dev dependency of `ClientApp`, the vite build copies it to `wwwroot/mudex`, and the host serves the `.dat` files of the .NET runtime. Without `mudExUrl`, `useCoworkee` loads it from unpkg.
+The file preview uses the [MudBlazor.Extensions web components](https://www.mudex.org) in a frame of its own (`mudExFrame`): MudBlazor's page styles stay inside the frame, the desktop and your apps keep theirs, and closing the window drops the .NET runtime of the preview. The frame page (`@coworkee/airworks/mudex-frame.html`) lives on the app's origin next to the bundle, so the component reads the file with the session cookie. The template hosts both: `mudex-webcomponents` is a dev dependency of `ClientApp`, the vite build copies it and the frame page (as `coworkee-frame.html`) to `wwwroot/mudex`, and the host serves the `.dat` files of the .NET runtime. Elsewhere pass `mudExFrameUrl` to `useCoworkee`.
 
 The AirWorks desktop (shortcuts, open windows, wallpaper) is kept per browser in local storage, as AirWorks does it.
 
