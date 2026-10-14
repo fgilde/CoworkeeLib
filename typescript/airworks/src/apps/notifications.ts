@@ -26,7 +26,7 @@ export const notificationsApp = (coworkee: Coworkee): CoworkeeApp => ({
             <div><strong>${esc(t(item.title, ...(item.arguments ?? [])))}</strong>${item.body ? `<p>${esc(t(item.body, ...(item.arguments ?? [])))}</p>` : ''}
             <small class="cw-muted">${esc(display(item.createdAt, culture))}</small></div>
             <span class="cw-row-actions">${item.readAt ? '' : `<button data-read title="${esc(t('Mark as read'))}">✓</button>`}<button data-delete title="${esc(t('Delete'))}">🗑</button></span></li>`).join('')
-          || `<li class="cw-muted">${esc(t('No notifications'))}</li>`;
+          || `<li class="cw-muted">${esc(t('No notifications yet.'))}</li>`;
       } catch (error) {
         list.innerHTML = `<li class="cw-error">${esc(errorText(error))}</li>`;
       }

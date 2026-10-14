@@ -1065,5 +1065,6 @@
   "Not written yet": "Zatím nezapsáno",
   "Apply to Keycloak": "Použít v Keycloak",
   "Keycloak sign-in page updated": "Přihlašovací stránka Keycloak byla aktualizována",
-  "The Keycloak sign-in page could not be written. See the log of the API.": "Přihlašovací stránku Keycloak se nepodařilo zapsat. Podívejte se do logu API."
+  "The Keycloak sign-in page could not be written. See the log of the API.": "Přihlašovací stránku Keycloak se nepodařilo zapsat. Podívejte se do logu API.",
+  "API documentation": "Dokumentace API"
 }

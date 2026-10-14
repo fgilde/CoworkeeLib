@@ -18,7 +18,7 @@ export const dataApp = (coworkee: Coworkee): CoworkeeApp => ({
     host.classList.add('cw-host');
     const sets = (await entitySets()).sort((a, b) => a.name.localeCompare(b.name));
     host.innerHTML = `<div class="cw-app cw-data"><nav class="cw-list">${sets.map((set) =>
-      `<button data-set="${esc(set.name)}">${esc(t(set.name))}</button>`).join('') || `<p class="cw-muted">${esc(t('No entries'))}</p>`}</nav><section class="cw-panel"></section></div>`;
+      `<button data-set="${esc(set.name)}">${esc(t(set.name))}</button>`).join('') || `<p class="cw-muted">${esc(t('Nothing found.'))}</p>`}</nav><section class="cw-panel"></section></div>`;
     const panel = host.querySelector<HTMLElement>('.cw-panel')!;
     const open = (name: string) => {
       host.querySelectorAll<HTMLElement>('[data-set]').forEach((button) => button.setAttribute('aria-current', String(button.dataset.set === name)));

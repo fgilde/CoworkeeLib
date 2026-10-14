@@ -1065,6 +1065,6 @@
   "Not written yet": "Endnu ikke skrevet",
   "Apply to Keycloak": "Anvend i Keycloak",
   "Keycloak sign-in page updated": "Keycloak-loginsiden er opdateret",
-  "The Keycloak sign-in page could not be written. See the log of the API.": "Keycloak-loginsiden kunne ikke skrives. Se API'ens log."
+  "The Keycloak sign-in page could not be written. See the log of the API.": "Keycloak-loginsiden kunne ikke skrives. Se API'ens log.",
+  "API documentation": "API-dokumentation"
 }
-

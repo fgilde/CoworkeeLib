@@ -1065,5 +1065,6 @@
   "Not written yet": "まだ書き込まれていません",
   "Apply to Keycloak": "Keycloak に適用",
   "Keycloak sign-in page updated": "Keycloak のサインインページを更新しました",
-  "The Keycloak sign-in page could not be written. See the log of the API.": "Keycloak のサインインページを書き込めませんでした。API のログを確認してください。"
+  "The Keycloak sign-in page could not be written. See the log of the API.": "Keycloak のサインインページを書き込めませんでした。API のログを確認してください。",
+  "API documentation": "API ドキュメント"
 }

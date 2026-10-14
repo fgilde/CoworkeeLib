@@ -1065,5 +1065,6 @@
   "Not written yet": "មិនទាន់បានសរសេរ",
   "Apply to Keycloak": "អនុវត្តទៅ Keycloak",
   "Keycloak sign-in page updated": "ទំព័រចូល Keycloak ត្រូវបានធ្វើបច្ចុប្បន្នភាព",
-  "The Keycloak sign-in page could not be written. See the log of the API.": "មិនអាចសរសេរទំព័រចូល Keycloak បានទេ។ សូមមើលកំណត់ហេតុរបស់ API។"
+  "The Keycloak sign-in page could not be written. See the log of the API.": "មិនអាចសរសេរទំព័រចូល Keycloak បានទេ។ សូមមើលកំណត់ហេតុរបស់ API។",
+  "API documentation": "ឯកសារ API"
 }

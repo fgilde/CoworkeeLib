@@ -61,7 +61,7 @@ export const filesApp = (coworkee: Coworkee): CoworkeeApp => ({
         ...content.folders.map((folder) => `<tr data-folder="${esc(folder.id)}" data-name="${esc(folder.name)}"><td><span class="cw-icon">📁</span>${esc(folder.name)}</td><td></td><td>${esc(display(folder.createdAt, culture))}</td>${actions('folder', folder.id)}</tr>`),
         ...content.files.map((file) => `<tr data-file="${esc(file.id)}" data-name="${esc(file.name)}" data-type="${esc(file.contentType)}"><td><span class="cw-icon">📄</span>${esc(file.name)}</td><td>${esc(bytes(file.size, culture))}</td><td>${esc(display(file.createdAt, culture))}</td>${actions('file', file.id)}</tr>`),
       ];
-      body.innerHTML = rows.join('') || `<tr><td colspan="4" class="cw-muted">${esc(t('No files yet'))}</td></tr>`;
+      body.innerHTML = rows.join('') || `<tr><td colspan="4" class="cw-muted">${esc(t('(empty)'))}</td></tr>`;
     };
 
     const run = async (work: () => Promise<unknown>) => {
@@ -94,7 +94,8 @@ export const filesApp = (coworkee: Coworkee): CoworkeeApp => ({
         }
       } else if (remove) {
         const [kind, id] = remove.split(':');
-        if (confirm(t('Delete {0}?', target.closest<HTMLElement>('tr')!.dataset.name))) {
+        const name = target.closest<HTMLElement>('tr')!.dataset.name;
+        if (confirm(kind === 'folder' ? t("Delete the folder '{0}' and everything in it?", name) : t("Delete the file '{0}'?", name))) {
           void run(() => api.POST('/api/v1/files/delete', { body: kind === 'folder' ? { fileIds: [], folderIds: [id] } : { fileIds: [id], folderIds: [] } }).then(unwrap));
         }
       } else if (!target.closest('a, button')) {

@@ -47,7 +47,7 @@ export function renderEntityTable(coworkee: Coworkee, host: HTMLElement, options
     <div class="cw-toolbar"><input type="search" placeholder="${esc(t('Search'))}" aria-label="${esc(t('Search'))}"/><span class="cw-spacer"></span>
       <button data-action="refresh" title="${esc(t('Refresh'))}">⟳</button></div>
     <div class="cw-scroll"><table class="cw-table"><thead></thead><tbody></tbody></table></div>
-    <footer class="cw-pager"><button data-action="previous" aria-label="${esc(t('Back'))}">‹</button><span></span><button data-action="next" aria-label="${esc(t('Next'))}">›</button></footer>
+    <footer class="cw-pager"><button data-action="previous" aria-label="${esc(t('MudTablePager_PreviousPage'))}">‹</button><span></span><button data-action="next" aria-label="${esc(t('MudTablePager_NextPage'))}">›</button></footer>
   </div>`;
   const head = host.querySelector('thead')!;
   const body = host.querySelector('tbody')!;
@@ -66,9 +66,9 @@ export function renderEntityTable(coworkee: Coworkee, host: HTMLElement, options
         return `<th><button data-sort="${esc(column.field)}">${esc(t(column.title ?? column.field))}${sort}</button></th>`;
       }).join('')}</tr>`;
       body.innerHTML = result.items.map((row) => `<tr>${columns!.map((column) => `<td>${esc(display(row[column.field], culture))}</td>`).join('')}</tr>`).join('')
-        || `<tr><td colspan="${columns.length || 1}" class="cw-muted">${esc(t('No entries'))}</td></tr>`;
+        || `<tr><td colspan="${columns.length || 1}" class="cw-muted">${esc(t('Nothing found.'))}</td></tr>`;
       const pages = Math.max(1, Math.ceil(total / pageSize));
-      pager.textContent = t('Page {0} of {1}', page + 1, pages);
+      pager.textContent = t('MudDataGridPager_InfoFormat', total === 0 ? 0 : page * pageSize + 1, Math.min(total, (page + 1) * pageSize), total);
       host.querySelector<HTMLButtonElement>('[data-action="previous"]')!.disabled = page === 0;
       host.querySelector<HTMLButtonElement>('[data-action="next"]')!.disabled = page + 1 >= pages;
     } catch (error) {

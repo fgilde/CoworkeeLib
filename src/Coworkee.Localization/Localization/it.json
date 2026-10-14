@@ -1065,5 +1065,6 @@
   "Not written yet": "Non ancora scritta",
   "Apply to Keycloak": "Applica a Keycloak",
   "Keycloak sign-in page updated": "Pagina di accesso di Keycloak aggiornata",
-  "The Keycloak sign-in page could not be written. See the log of the API.": "Impossibile scrivere la pagina di accesso di Keycloak. Consulta il log dell'API."
+  "The Keycloak sign-in page could not be written. See the log of the API.": "Impossibile scrivere la pagina di accesso di Keycloak. Consulta il log dell'API.",
+  "API documentation": "Documentazione API"
 }

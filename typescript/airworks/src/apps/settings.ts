@@ -49,7 +49,7 @@ function field(coworkee: Coworkee, setting: SettingDefinition, value: string, la
 
 async function renderScope(coworkee: Coworkee, panel: HTMLElement, scope: SettingScope) {
   const { t, request } = coworkee;
-  panel.innerHTML = `<p class="cw-muted">${esc(t('Loading'))}</p>`;
+  panel.innerHTML = `<p class="cw-muted">${esc(t('MudDataGrid_Loading'))}</p>`;
   const [groups, stored, languages] = await Promise.all([
     request<SettingGroup[]>(scopePaths[scope].definitions),
     request<SettingValue[]>(scopePaths[scope].values),

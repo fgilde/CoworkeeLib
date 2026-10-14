@@ -17,7 +17,7 @@ export const filePreviewApp = (coworkee: Coworkee): CoworkeeApp => ({
   requiredPermissions: ['Files.View'],
   render: ({ host, intent, onIntent, setTitle, setState }: AppContext) => {
     host.classList.add('cw-host');
-    host.innerHTML = `<div class="cw-app cw-preview"><p class="cw-muted">${esc(coworkee.t('Loading'))}</p></div>`;
+    host.innerHTML = `<div class="cw-app cw-preview"><p class="cw-muted">${esc(coworkee.t('MudDataGrid_Loading'))}</p></div>`;
     const show = async (file?: Intent) => {
       if (!file?.id) return;
       setTitle(file.name || coworkee.t('Preview'));
