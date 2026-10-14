@@ -15,6 +15,9 @@ AirWorks repo: no change needed, so no `feat/coworkee` branch was created. MudBl
 - **Localization**: the apps reuse library keys; one new key ("API documentation") in all 22 languages (`build/localization-check.ps1` clean for all).
 - **Docs** EN/DE: new page *Web → AirWorks client*, rows/sections in CLI, Studio, Aspire (roles + conventions), SDKs (`@coworkee/client`), nav translation.
 
+## Dependency fix (not AirWorks specific, needed for green builds)
+All Microsoft 10.0.12 packages to 10.0.13 in the library and the template; Directory.Build.props references System.Security.Cryptography.Pkcs/Xml 10.0.13 in every net10.0 project (NoWarn NU1510) so the packages lift the transitive versions for the apps too. main has the same problem; merge this commit (or redo it) there.
+
 ## Decisions (owner opted out of questions)
 1. AirWorks host = BFF like the Blazor web host, registered at the Coworkee auth server; Keycloak is reached through the auth server (same realm, users, sign-in mode). No tokens in the browser, no CORS needed.
 2. Packages live in this repo under `typescript/`; not published, shipped as tarballs inside the template; AirWorks from GitHub at a pinned commit.
@@ -23,9 +26,9 @@ AirWorks repo: no change needed, so no `feat/coworkee` branch was created. MudBl
 5. Desktop profile stays in localStorage; data app reads OData directly (no client-entity cache).
 
 ## Verification
-- Unit/component tests: Client.Blazor 305/305, Bff 30/30, Aspire 57/57, Studio 276 passed (1 skipped), Localization 129/129, `typescript` node tests 16/16, `tsc` builds of both packages.
+- Unit/component tests: Client.Blazor 305/305, Bff 30/30, Aspire 57/57, Studio 277/277, Localization 129/129, `typescript` node tests 16/16, `tsc` builds of both packages.
 - `dotnet build Coworkee.slnx -c Release`: 0 errors.
-- CLI tests with `COWORKEE_TEST_FEED` (real app builds incl. `Generated_app_with_airworks_builds_its_client`): 190 tests, 189 passed on the first run; the one failure was the offline docs page list of the MCP docs search missing the new page (fixed, `McpTests` 7/7 again). `Generated_app_with_airworks_builds_its_client` and the template content tests pass.
+- CLI tests with `COWORKEE_TEST_FEED` (real app builds incl. `Generated_app_with_airworks_builds_its_client`): **190/190** in the final run. Before that: one failure (offline docs page list of the MCP docs search lacked the new page, fixed), then every app build failed with NU1903 because Microsoft published advisories on 2026-10-13 for ASP.NET Core and System.Security.Cryptography.Pkcs/Xml up to 10.0.12 – fixed by the dependency commit below (10.0.13), packed again, all green. AuthServer tests 101/101 after the bump.
 - Generated app (`--airworks --keycloak --files`, Postgres, Redis) in Aspire, HTTP script through the AirWorks host (https://localhost:7403 in the run, ports shifted because another app host used the defaults):
   - anonymous: `/` 200, `/bff/user` anonymous, `/api/v1/themes/current` 200, texts 200, `/icons/logo-air.png` 200, `/health` 200;
   - `/bff/login` → auth server `connect/authorize?client_id=shop-airworks` → login page with Keycloak button;

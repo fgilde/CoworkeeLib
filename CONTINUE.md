@@ -70,6 +70,7 @@ Spec `docs/superpowers/specs/2026-10-14-airworks-client-design.md`, plan `docs/s
 - npm packages in `typescript/` (workspaces; `packages/` is ignored by the NuGet rules of .gitignore): `@coworkee/client` (OpenAPI types from `openapi.json`, `npm run openapi -- <url> [more]`, `npm run generate`), `@coworkee/airworks` (useCoworkee, apps profile/settings/files/file-preview (MudEx web components from jsDelivr)/data/entityApp/notifications/api-docs). `npm test` (node --test), `npm run build`. Not published: `Coworkee.Templates.csproj` runs `typescript/scripts/pack-template.mjs` and ships the tarballs in `ClientApp/vendor` (shortcut). AirWorks itself: `git+https://github.com/fgilde/AirWorks.git#d295c65`; no AirWorks change was needed.
 - About (independent of the option): Nextended version via build-time `AssemblyMetadata("PackageVersion:Nextended.Core")`, no URL text in the credit tiles, `AboutCredit.IconBackground`.
 - Verified: generated app in Aspire, sign-in with the password and through Keycloak into the AirWorks host, files/OData/settings/notifications/swagger through its BFF (HTTP script, no browser).
+- Also on the branch: .NET packages 10.0.13 + System.Security.Cryptography.Pkcs/Xml 10.0.13 (advisories of 2026-10-13 broke every build with NU1903; main needs the same).
 - Follow-ups: publish the npm packages, realtime/chat/reports/assistant/admin apps in AirWorks, desktop profile on the server, vite dev server with HMR in Aspire, `coworkee doctor` Node check, a browser test of the desktop.
 
 ## Known follow-ups
