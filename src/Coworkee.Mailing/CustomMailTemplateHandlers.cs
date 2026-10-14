@@ -51,14 +51,10 @@ internal sealed class CustomMailTemplateHandlers(
             return CustomMailTemplates.SystemOnly;
         }
 
-        // names compare without case: SQL Server collations do, and a registered template must not be shadowed
-        var lower = name.ToLowerInvariant();
-        var global = request.Global;
-        var tenant = currentUser.TenantId;
-        if (registered.All.Any(d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase))
-            || await db.Set<CustomMailTemplate>().AnyAsync(t => t.Name.ToLower() == lower && (global || t.TenantId == null || t.TenantId == tenant), cancellationToken))
+        var taken = Error.Validation("Name", $"A mail template named '{name}' already exists.");
+        if (await NameTakenAsync(name, request.Global, cancellationToken))
         {
-            return Error.Validation("Name", $"A mail template named '{name}' already exists.");
+            return taken;
         }
 
         var tenantId = request.Global ? null : currentUser.TenantId;
@@ -68,6 +64,22 @@ internal sealed class CustomMailTemplateHandlers(
         }
 
         db.Add(new CustomMailTemplate { Name = name, DisplayName = request.DisplayName.Trim(), Description = request.Description, TenantId = tenantId });
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            // a concurrent request created the name between the check and the insert (unique index)
+            db.ChangeTracker.Clear();
+            if (await NameTakenAsync(name, request.Global, cancellationToken))
+            {
+                return taken;
+            }
+
+            throw;
+        }
+
         return Result.Success();
     }
 
@@ -106,6 +118,15 @@ internal sealed class CustomMailTemplateHandlers(
         return Result.Success();
     }
 
+    // names compare without case: SQL Server collations do, and a registered template must not be shadowed
+    private async Task<bool> NameTakenAsync(string name, bool global, CancellationToken cancellationToken)
+    {
+        var lower = name.ToLowerInvariant();
+        var tenant = currentUser.TenantId;
+        return registered.All.Any(d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase))
+            || await db.Set<CustomMailTemplate>().AnyAsync(t => t.Name.ToLower() == lower && (global || t.TenantId == null || t.TenantId == tenant), cancellationToken);
+    }
+
     private static Error? CheckInput(string name, string? displayName, string? description) =>
         name.Length is 0 or > 128 || !CustomMailTemplates.NamePattern().IsMatch(name) || name.All(character => character == '.')
             ? Error.Validation("Name", "Use 1-128 letters, digits, '.', '_' or '-'.")
@@ -125,7 +146,7 @@ internal sealed class CustomMailTemplateHandlers(
         var tenant = currentUser.TenantId;
         var stored = await db.Set<MailTemplateOverride>().Where(o => o.Name == source && (o.TenantId == null || o.TenantId == tenant))
             .Select(o => o.Culture).ToListAsync(cancellationToken);
-        foreach (var culture in definition.Defaults.Keys.Concat(stored).Distinct(StringComparer.OrdinalIgnoreCase))
+        foreach (var culture in definition.Defaults.Keys.Concat(stored).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(MailCultures.FallbackOrder).ThenBy(c => c, StringComparer.Ordinal))
         {
             var content = await renderer.ResolveAsync(source, culture, cancellationToken);
             db.Add(new MailTemplateOverride { Name = name, Culture = culture, TenantId = tenantId, Subject = content.Subject, Body = content.Body });

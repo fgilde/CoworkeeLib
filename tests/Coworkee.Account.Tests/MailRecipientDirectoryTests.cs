@@ -290,6 +290,37 @@ public sealed class MailRecipientDirectoryTests(AccountApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_unique_index_allows_a_name_once_per_tenant()
+    {
+        var otherTenant = (await SeedOtherTenantAsync()).TenantId;
+        Task<int> AddAsync(Guid? tenantId, string name) => app.InScopeAsync(null, _setup.TenantId, async sp =>
+        {
+            var db = sp.GetRequiredService<CoworkeeDbContext>();
+            db.Add(new RecipientList { TenantId = tenantId, Name = name, Source = "{}", CreatedAt = Now });
+            return await db.SaveChangesAsync(Ct);
+        });
+
+        await AddAsync(_setup.TenantId, "Index");
+        await AddAsync(otherTenant, "Index");
+        await Should.ThrowAsync<DbUpdateException>(() => AddAsync(_setup.TenantId, "Index"));
+        await AddAsync(null, "Global");
+        await Should.ThrowAsync<DbUpdateException>(() => AddAsync(null, "Global"));
+    }
+
+    [Fact]
+    public async Task Creating_the_same_name_concurrently_gives_one_list_and_validation_errors()
+    {
+        var admin = app.As(_setup.AdminUserId, _setup.TenantId);
+        var source = new RecipientSourceDto(RecipientSourceKind.Preset, RecipientPreset.AllActive);
+
+        var responses = await Task.WhenAll(Enumerable.Range(0, 8).Select(_ =>
+            admin.PostAsJsonAsync("/api/v1/mail/recipient-lists", new SaveRecipientListRequest("Race", source), Ct)));
+
+        responses.Count(r => r.StatusCode == HttpStatusCode.OK).ShouldBe(1);
+        responses.Where(r => r.StatusCode != HttpStatusCode.OK).ShouldAllBe(r => r.StatusCode == HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
     public async Task The_preview_endpoint_answers_with_counts_and_a_bad_filter_with_400()
     {
         await SeedMixedAsync();

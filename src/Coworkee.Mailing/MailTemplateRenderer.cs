@@ -63,7 +63,7 @@ internal sealed class MailTemplateRenderer(CoworkeeDbContext db, ICurrentUser cu
             stored = stored.Where(o => candidates.Contains(o.Culture));
         }
 
-        var overrides = (await stored.ToListAsync(cancellationToken)).OrderBy(o => o.CreatedAt).ToList();
+        var overrides = (await stored.ToListAsync(cancellationToken)).OrderBy(o => o.CreatedAt).ThenBy(o => MailCultures.FallbackOrder(o.Culture)).ThenBy(o => o.Culture, StringComparer.Ordinal).ToList();
 
         foreach (var candidate in candidates)
         {

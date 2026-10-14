@@ -144,6 +144,7 @@ internal sealed class MailRecipientDirectory(IServiceProvider services, Coworkee
     private async Task<IQueryable<User>> WithoutOptedOutAsync(IQueryable<User> users, CancellationToken cancellationToken)
     {
         // bool settings may be stored in any casing
+        // shortcut: the opt-out lists are subqueries of every page query; materialise or join them once if recipient pages get slow with many opt-outs
         var name = MailSettings.Newsletters;
         var globallyOff = await db.Set<SettingValue>().AnyAsync(v => v.Name == name && v.Scope == SettingScope.Global && v.Value!.ToLower() == "false", cancellationToken);
         var optedIn = db.Set<SettingValue>().Where(v => v.Name == name && v.Scope == SettingScope.User && v.Value!.ToLower() == "true").Select(v => v.ScopeKey!.Value);
