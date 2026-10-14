@@ -9,7 +9,7 @@ namespace Coworkee.Mailing;
 
 /// <summary>Queues one mail per eligible recipient of a scheduled campaign, page by page, as the user who scheduled it; delivery stays with <see cref="SendMailJob"/>.</summary>
 internal sealed class MailCampaignJob(
-    CoworkeeDbContext db, IMailRecipientDirectory directory, IMailSender sender, CampaignMailModels models, ICurrentUser currentUser, TimeProvider clock, ILogger<MailCampaignJob> logger)
+    CoworkeeDbContext db, IMailRecipientDirectory directory, IMailTemplateRenderer renderer, CampaignMailModels models, ICurrentUser currentUser, TimeProvider clock, ILogger<MailCampaignJob> logger)
     : IBackgroundJob<Guid>
 {
     private const int MaxError = 2000;
@@ -31,14 +31,34 @@ internal sealed class MailCampaignJob(
         }
 
         var error = await QueueAsync(campaignId, campaigns, cancellationToken);
-        var finished = await campaigns.Where(c => c.Status == MailCampaignStatus.Sending).ExecuteUpdateAsync(update => update
-            .SetProperty(c => c.Status, error is null ? MailCampaignStatus.Sent : MailCampaignStatus.Failed)
-            .SetProperty(c => c.FinishedAt, (DateTimeOffset?)clock.GetUtcNow())
-            .SetProperty(c => c.Error, error), cancellationToken);
+        var finished = await FinishAsync(campaigns, error, cancellationToken);
         if (finished == 0)
         {
             // cancelled while the last page was being queued
             await db.Set<OutgoingMail>().Where(m => m.CampaignId == campaignId && m.Status == OutgoingMailStatus.Queued).ExecuteDeleteAsync(cancellationToken);
+        }
+    }
+
+    // a transient database failure must not leave the campaign in Sending: retry once, then record the failure
+    private async Task<int> FinishAsync(IQueryable<MailCampaign> campaigns, string? error, CancellationToken cancellationToken)
+    {
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                return await campaigns.Where(c => c.Status == MailCampaignStatus.Sending).ExecuteUpdateAsync(update => update
+                    .SetProperty(c => c.Status, error is null ? MailCampaignStatus.Sent : MailCampaignStatus.Failed)
+                    .SetProperty(c => c.FinishedAt, (DateTimeOffset?)clock.GetUtcNow())
+                    .SetProperty(c => c.Error, error), cancellationToken);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException && attempt <= 2)
+            {
+                logger.LogWarning(exception, "The final status of the campaign could not be saved (attempt {Attempt}).", attempt);
+                if (attempt == 2)
+                {
+                    error = Shorten($"The final status could not be saved: {exception.Message}");
+                }
+            }
         }
     }
 
@@ -55,6 +75,7 @@ internal sealed class MailCampaignJob(
             var campaign = await campaigns.AsNoTracking().SingleAsync(cancellationToken);
             var source = RecipientSourceJson.Read(campaign.RecipientSource);
             var model = await models.ForAsync(campaign, cancellationToken);
+            var templates = new Dictionary<string, (MailTemplateContent Content, MailTemplateContent Layout)>(StringComparer.OrdinalIgnoreCase);
             Guid? after = null;
             var total = 0;
             do
@@ -76,8 +97,15 @@ internal sealed class MailCampaignJob(
                 {
                     try
                     {
-                        // shortcut: the sender resolves template content and layout from the database per recipient, cache them once per run when campaigns reach tens of thousands
-                        await sender.QueueAsync(recipient.Email, campaign.TemplateName, model(recipient), recipient.Culture, campaign.Id, cancellationToken);
+                        var key = recipient.Culture ?? string.Empty;
+                        if (!templates.TryGetValue(key, out var resolved))
+                        {
+                            resolved = templates[key] = (await renderer.ResolveAsync(campaign.TemplateName, recipient.Culture, cancellationToken),
+                                await renderer.ResolveAsync(CoreMailTemplates.Layout, recipient.Culture, cancellationToken));
+                        }
+
+                        var rendered = await renderer.RenderContentAsync(resolved.Content, resolved.Layout, model(recipient), cancellationToken);
+                        db.Add(OutgoingMail.Queue(recipient.Email, rendered, campaign.TemplateName, currentUser.TenantId, clock.GetUtcNow(), campaign.Id));
                         queued++;
                     }
                     catch (Exception exception) when (exception is not OperationCanceledException)

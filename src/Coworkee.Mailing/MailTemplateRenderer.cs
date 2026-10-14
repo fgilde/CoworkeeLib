@@ -16,6 +16,9 @@ public interface IMailTemplateRenderer
 
     Task<RenderedMail> RenderContentAsync(MailTemplateContent content, object model, string? culture, CancellationToken cancellationToken);
 
+    /// <summary>Renders with an already resolved layout, for senders that render many mails of one template.</summary>
+    Task<RenderedMail> RenderContentAsync(MailTemplateContent content, MailTemplateContent layout, object model, CancellationToken cancellationToken);
+
     Task<MailTemplateContent> ResolveAsync(string name, string? culture, CancellationToken cancellationToken);
 }
 
@@ -36,12 +39,14 @@ internal sealed class MailTemplateRenderer(CoworkeeDbContext db, ICurrentUser cu
     public async Task<RenderedMail> RenderAsync(string name, object model, string? culture, CancellationToken cancellationToken) =>
         await RenderContentAsync(await ResolveAsync(name, culture, cancellationToken), model, culture, cancellationToken);
 
-    public async Task<RenderedMail> RenderContentAsync(MailTemplateContent content, object model, string? culture, CancellationToken cancellationToken)
+    public async Task<RenderedMail> RenderContentAsync(MailTemplateContent content, object model, string? culture, CancellationToken cancellationToken) =>
+        await RenderContentAsync(content, await ResolveAsync(CoreMailTemplates.Layout, culture, cancellationToken), model, cancellationToken);
+
+    public async Task<RenderedMail> RenderContentAsync(MailTemplateContent content, MailTemplateContent layout, object model, CancellationToken cancellationToken)
     {
         var plain = ToScript(model, escape: false);
         var subject = (await RenderAsync(content.Subject, plain)).Trim();
         var body = await RenderAsync(content.Body, ToScript(model, escape: true));
-        var layout = await ResolveAsync(CoreMailTemplates.Layout, culture, cancellationToken);
         var layoutModel = new ScriptObject { ["subject"] = WebUtility.HtmlEncode(subject), ["content"] = body };
         if (plain.TryGetValue("unsubscribe_url", out var unsubscribe) && unsubscribe is string { Length: > 0 } link)
         {
