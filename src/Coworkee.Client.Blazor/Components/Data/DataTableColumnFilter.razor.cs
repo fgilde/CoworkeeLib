@@ -36,7 +36,7 @@ public partial class DataTableColumnFilter<T>
 
     private FieldType Field => FieldType.Identify(Type);
 
-    private bool IsDate => Field.IsDateTime || Field.IsDateOnly;
+    private bool IsDate => DataTableFilters.IsDate(Type);
 
     private bool IsBetween => _operator == DataTableFilters.Between;
 

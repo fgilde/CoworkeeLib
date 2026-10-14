@@ -17,12 +17,15 @@ public sealed class ClientEntities : IAsyncDisposable
     private readonly RealtimeClient? _realtime;
     private readonly ClientEntitySignal _signal;
     private readonly ILogger<ClientEntities> _logger;
+    private readonly ClientEntityModes? _modes;
     private readonly Dictionary<string, ClientEntitySet> _sets = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<Task<IAsyncDisposable>> _subscriptions = [];
     private Task<ClientEntityManifest?>? _manifest;
 
-    internal ClientEntities(ClientEntityApi api, IODataClient server, IClientEntityStorage storage, RealtimeClient? realtime, ClientEntitySignal signal, ILogger<ClientEntities> logger)
+    internal ClientEntities(ClientEntityApi api, IODataClient server, IClientEntityStorage storage, RealtimeClient? realtime, ClientEntitySignal signal, ILogger<ClientEntities> logger,
+        ClientEntityModes? modes = null)
     {
+        _modes = modes;
         _api = api;
         _server = server;
         _storage = storage;
@@ -65,6 +68,7 @@ public sealed class ClientEntities : IAsyncDisposable
         _sets[entitySet] = set;
         set.Changed += s => Changed?.Invoke(s);
         set.Start();
+        _ = ApplyModeAsync(set);
         if (info.RealtimeTopic is { } topic && _realtime is not null)
         {
             // connecting to the hub must not hold back the first query
@@ -76,6 +80,20 @@ public sealed class ClientEntities : IAsyncDisposable
         }
 
         return set;
+    }
+
+    /// <summary>Runs the queries of <paramref name="entitySet"/> in the browser or on the server and remembers the choice for the user.</summary>
+    public async Task SetModeAsync(string entitySet, ClientEntityMode mode)
+    {
+        if (Find(entitySet) is { } set)
+        {
+            set.Mode = mode;
+        }
+
+        if (_modes is not null)
+        {
+            await _modes.SetAsync(entitySet, mode);
+        }
     }
 
     /// <summary>Drops every local copy, here and in the browser storage.</summary>
@@ -97,6 +115,15 @@ public sealed class ClientEntities : IAsyncDisposable
         foreach (var set in _sets.Values)
         {
             set.Nudge();
+        }
+    }
+
+    // the copy downloads meanwhile, so the stored choice is there before the first local query
+    private async Task ApplyModeAsync(ClientEntitySet set)
+    {
+        if (_modes is not null)
+        {
+            set.Mode = await _modes.GetAsync(set.EntitySet);
         }
     }
 

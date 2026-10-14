@@ -27,6 +27,20 @@ public sealed class LocalTableTests
     }
 
     [Theory]
+    [InlineData("ab", new[] { "abc", "xab" })]
+    [InlineData("b", new[] { "abc", "b", "xab" })]
+    [InlineData("cx", new string[0])]
+    [InlineData("", new[] { null, "abc", "b", "xab" })]
+    public void Contains_searches_all_values_at_once_without_matching_across_two(string literal, string?[] expected)
+    {
+        var column = Column.Create(typeof(string), new[] { "abc", null, "xab", "b" });
+
+        var ranks = column.Text("contains", null, literal);
+
+        column.Rows(ranks).Select((hit, row) => hit ? column.Value(row) as string : "-").Where(v => v != "-").Order().ShouldBe(expected.Order());
+    }
+
+    [Theory]
     [InlineData("Category eq 'Tools' and Price gt 20", "Drill")]
     [InlineData("Price ge 19.5 and Price lt 99.5", "Lamp")]
     [InlineData("Brand/Name eq null", "hammer")]

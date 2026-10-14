@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Microsoft.OData.UriParser;
@@ -31,9 +32,12 @@ internal abstract class Column
     public abstract object? Value(int row);
 
     /// <summary>Which ranks satisfy "value op literal"; the literal has the column's type.</summary>
-    public abstract bool[] Compare(BinaryOperatorKind op, object? literal);
+    public abstract RankSet Compare(BinaryOperatorKind op, object? literal);
 
     public abstract bool[] In(IEnumerable<object?> literals);
+
+    /// <summary>Which ranks of an enum column have every bit of <paramref name="flag"/>.</summary>
+    public abstract bool[] Has(object flag);
 
     /// <summary>contains, startswith or endswith on the text, first lowered or uppered when <paramref name="casing"/> says so.</summary>
     public abstract bool[] Text(string function, string? casing, string literal);
@@ -65,16 +69,40 @@ internal abstract class Column
         return rows;
     }
 
-    public int[] Count(int[] rows)
+    public bool[] Rows(RankSet ranks)
     {
-        var ranks = Ranks;
-        var counts = new int[Distinct];
-        foreach (var row in rows)
+        if (ranks.Set is { } set)
         {
-            counts[ranks[row]]++;
+            return Rows(set);
         }
 
-        return counts;
+        var order = Order;
+        var starts = Starts;
+        var rows = new bool[order.Length];
+        for (var at = starts[ranks.From]; at < starts[ranks.To]; at++)
+        {
+            rows[order[at]] = true;
+        }
+
+        return rows;
+    }
+
+    /// <summary>How many of <paramref name="rows"/> lie below each rank: entry r is the count of ranks 0..r-1, the last one all of them.</summary>
+    public int[] Prefix(int[] rows)
+    {
+        var ranks = Ranks;
+        var prefix = new int[Distinct + 1];
+        foreach (var row in rows)
+        {
+            prefix[ranks[row] + 1]++;
+        }
+
+        for (var rank = 1; rank < prefix.Length; rank++)
+        {
+            prefix[rank] += prefix[rank - 1];
+        }
+
+        return prefix;
     }
 
     public static Column Create(Type type, Array values, int[]? order = null) =>
@@ -200,6 +228,7 @@ internal sealed class Column<TValue>(TValue[] values, int[]? order) : Column
     private Sorted? _sorted;
     private string?[]? _lower;
     private string?[]? _upper;
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, Joined> _joined = new();
 
     public override Type ValueType => typeof(TValue);
 
@@ -225,44 +254,33 @@ internal sealed class Column<TValue>(TValue[] values, int[]? order) : Column
         return sorts;
     }
 
-    public override bool[] Compare(BinaryOperatorKind op, object? literal)
+    public override RankSet Compare(BinaryOperatorKind op, object? literal)
     {
         var distinct = Indexed.Values;
         var first = HasNull ? 1 : 0;
-        var result = new bool[distinct.Length];
         if (literal is null)
         {
-            for (var rank = 0; rank < result.Length; rank++)
+            return op switch
             {
-                result[rank] = op switch
-                {
-                    BinaryOperatorKind.Equal => rank < first,
-                    BinaryOperatorKind.NotEqual => rank >= first,
-                    _ => false,
-                };
-            }
-
-            return result;
+                BinaryOperatorKind.Equal => RankSet.Range(0, first),
+                BinaryOperatorKind.NotEqual => RankSet.Range(first, distinct.Length),
+                _ => RankSet.Range(0, 0),
+            };
         }
 
         var at = Array.BinarySearch(distinct, first, distinct.Length - first, (TValue)literal, Sorter);
         var from = at >= 0 ? at : ~at;
         var above = at >= 0 ? at + 1 : ~at;
-        for (var rank = 0; rank < result.Length; rank++)
+        return op switch
         {
-            result[rank] = op switch
-            {
-                BinaryOperatorKind.Equal => rank == at,
-                BinaryOperatorKind.NotEqual => rank != at,
-                BinaryOperatorKind.GreaterThan => rank >= above,
-                BinaryOperatorKind.GreaterThanOrEqual => rank >= from,
-                BinaryOperatorKind.LessThan => rank >= first && rank < from,
-                BinaryOperatorKind.LessThanOrEqual => rank >= first && rank < above,
-                _ => throw new NotSupportedException($"{op} is not supported on a column."),
-            };
-        }
-
-        return result;
+            BinaryOperatorKind.Equal => RankSet.Range(from, above),
+            BinaryOperatorKind.NotEqual => RankSet.Range(from, above).Not(distinct.Length),
+            BinaryOperatorKind.GreaterThan => RankSet.Range(above, distinct.Length),
+            BinaryOperatorKind.GreaterThanOrEqual => RankSet.Range(from, distinct.Length),
+            BinaryOperatorKind.LessThan => RankSet.Range(first, from),
+            BinaryOperatorKind.LessThanOrEqual => RankSet.Range(first, above),
+            _ => throw new NotSupportedException($"{op} is not supported on a column."),
+        };
     }
 
     public override bool[] In(IEnumerable<object?> literals)
@@ -279,6 +297,24 @@ internal sealed class Column<TValue>(TValue[] values, int[]? order) : Column
         return result;
     }
 
+    public override bool[] Has(object flag)
+    {
+        if (!(Nullable.GetUnderlyingType(typeof(TValue)) ?? typeof(TValue)).IsEnum)
+        {
+            throw new NotSupportedException("'has' needs an enum property and a flag.");
+        }
+
+        var bits = Convert.ToInt64(flag, CultureInfo.InvariantCulture);
+        var distinct = Indexed.Values;
+        var result = new bool[distinct.Length];
+        for (var rank = 0; rank < result.Length; rank++)
+        {
+            result[rank] = distinct[rank] is { } value && (Convert.ToInt64(value, CultureInfo.InvariantCulture) & bits) == bits;
+        }
+
+        return result;
+    }
+
     public override bool[] Text(string function, string? casing, string literal)
     {
         if (Indexed.Values is not string?[] distinct)
@@ -286,30 +322,72 @@ internal sealed class Column<TValue>(TValue[] values, int[]? order) : Column
             throw new NotSupportedException("String functions need text.");
         }
 
-        // contains(tolower(Path),'abc') matches like an ignore-case search, without lowering every value
-        var ignoreCase = (casing == "tolower" && literal == literal.ToLowerInvariant()) || (casing == "toupper" && literal == literal.ToUpperInvariant());
-        var comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
         var texts = casing switch
         {
-            _ when ignoreCase => distinct,
             "tolower" => _lower ??= [.. distinct.Select(t => t?.ToLowerInvariant())],
             "toupper" => _upper ??= [.. distinct.Select(t => t?.ToUpperInvariant())],
             _ => distinct,
         };
+        if (function == "contains")
+        {
+            return Contains(_joined.GetOrAdd(casing ?? string.Empty, _ => Join(texts)), literal);
+        }
+
         var result = new bool[texts.Length];
         for (var rank = 0; rank < texts.Length; rank++)
         {
             // OData string functions read null as empty text
             var text = texts[rank] ?? string.Empty;
-            result[rank] = function switch
-            {
-                "contains" => text.Contains(literal, comparison),
-                "startswith" => text.StartsWith(literal, comparison),
-                _ => text.EndsWith(literal, comparison),
-            };
+            result[rank] = function == "startswith" ? text.StartsWith(literal, StringComparison.Ordinal) : text.EndsWith(literal, StringComparison.Ordinal);
         }
 
         return result;
+    }
+
+    // one search through all values joined by '\0' instead of a call per value: WebAssembly interprets each call, the search itself runs vectorized
+    private static bool[] Contains(Joined joined, string literal)
+    {
+        var starts = joined.Starts;
+        var result = new bool[starts.Length - 1];
+        if (literal.Length == 0)
+        {
+            Array.Fill(result, true);
+            return result;
+        }
+
+        for (var at = joined.Text.IndexOf(literal, StringComparison.Ordinal); at >= 0;)
+        {
+            var rank = Array.BinarySearch(starts, at);
+            rank = rank >= 0 ? rank : ~rank - 1;
+            // a match across the separator into the next value does not count
+            if (at + literal.Length < starts[rank + 1])
+            {
+                result[rank] = true;
+                at = starts[rank + 1];
+            }
+            else
+            {
+                at++;
+            }
+
+            at = at < joined.Text.Length ? joined.Text.IndexOf(literal, at, StringComparison.Ordinal) : -1;
+        }
+
+        return result;
+    }
+
+    private static Joined Join(string?[] texts)
+    {
+        var starts = new int[texts.Length + 1];
+        var builder = new System.Text.StringBuilder();
+        for (var rank = 0; rank < texts.Length; rank++)
+        {
+            starts[rank] = builder.Length;
+            builder.Append(texts[rank]).Append('\0');
+        }
+
+        starts[^1] = builder.Length;
+        return new Joined(builder.ToString(), starts);
     }
 
     public override int RankOf(object? value)
@@ -371,6 +449,8 @@ internal sealed class Column<TValue>(TValue[] values, int[]? order) : Column
     }
 
     private sealed record Sorted(int[] Order, int[] Ranks, TValue[] Values, int[] Starts);
+
+    private sealed record Joined(string Text, int[] Starts);
 }
 
 /// <summary>Text sorts ignoring case like the server; values that differ only in case stay apart, so equality remains exact.</summary>

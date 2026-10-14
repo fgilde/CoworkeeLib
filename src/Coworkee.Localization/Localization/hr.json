@@ -1210,5 +1210,21 @@
   "Copy public link": "Kopiraj javnu poveznicu",
   "Select a file to share it.": "Odaberite datoteku da biste je podijelili.",
   "The app could not start.": "Aplikacija se nije mogla pokrenuti.",
-  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "Provjerite vezu i ponovno učitajte stranicu. Ako se ponovi, obratite se administratoru."
+  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "Provjerite vezu i ponovno učitajte stranicu. Ako se ponovi, obratite se administratoru.",
+  "Table rows": "Retci tablice",
+  "Pages with a pager, or endless scrolling that loads more rows while scrolling.": "Stranice s numeracijom ili beskonačno pomicanje koje tijekom pomicanja učitava još redaka.",
+  "Pager": "Stranice",
+  "EndlessScroll": "Beskonačno pomicanje",
+  "Grouped rows are shown in pages.": "Grupirani retci prikazuju se po stranicama.",
+  "Where searching runs: {0}": "Gdje se pretražuje: {0}",
+  "Search in the browser": "Pretraži u pregledniku",
+  "Search on the server": "Pretraži na poslužitelju",
+  "Compare and choose the faster": "Usporedi i odaberi brže",
+  "Browser {0} ms, server {1} ms.": "Preglednik {0} ms, poslužitelj {1} ms.",
+  "Both found {0} rows.": "Oba su pronašla {0} redaka.",
+  "The row counts differ: browser {0}, server {1}.": "Broj redaka se razlikuje: preglednik {0}, poslužitelj {1}.",
+  "Searching in the browser from now on.": "Od sada se pretražuje u pregledniku.",
+  "Searching on the server from now on.": "Od sada se pretražuje na poslužitelju.",
+  "Comparing failed: {0}": "Usporedba nije uspjela: {0}",
+  "Searching on the server by choice, local copy updated {0:t}": "Pretraživanje na poslužitelju (odabrano), lokalna kopija ažurirana {0:t}"
 }

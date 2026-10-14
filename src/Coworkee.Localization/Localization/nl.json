@@ -1210,5 +1210,21 @@
   "Copy public link": "Openbare link kopiëren",
   "Select a file to share it.": "Selecteer een bestand om het te delen.",
   "The app could not start.": "De app kon niet starten.",
-  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "Controleer uw verbinding en laad de pagina opnieuw. Als het opnieuw gebeurt, neem dan contact op met uw beheerder."
+  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "Controleer uw verbinding en laad de pagina opnieuw. Als het opnieuw gebeurt, neem dan contact op met uw beheerder.",
+  "Table rows": "Tabelrijen",
+  "Pages with a pager, or endless scrolling that loads more rows while scrolling.": "Pagina’s met een paginering, of eindeloos scrollen dat tijdens het scrollen meer rijen laadt.",
+  "Pager": "Pagina’s",
+  "EndlessScroll": "Eindeloos scrollen",
+  "Grouped rows are shown in pages.": "Gegroepeerde rijen worden per pagina getoond.",
+  "Where searching runs: {0}": "Waar gezocht wordt: {0}",
+  "Search in the browser": "Zoeken in de browser",
+  "Search on the server": "Zoeken op de server",
+  "Compare and choose the faster": "Vergelijken en de snelste kiezen",
+  "Browser {0} ms, server {1} ms.": "Browser {0} ms, server {1} ms.",
+  "Both found {0} rows.": "Beide vonden {0} rijen.",
+  "The row counts differ: browser {0}, server {1}.": "Het aantal rijen verschilt: browser {0}, server {1}.",
+  "Searching in the browser from now on.": "Vanaf nu wordt in de browser gezocht.",
+  "Searching on the server from now on.": "Vanaf nu wordt op de server gezocht.",
+  "Comparing failed: {0}": "Vergelijken mislukt: {0}",
+  "Searching on the server by choice, local copy updated {0:t}": "Zoeken op de server (gekozen), lokale kopie bijgewerkt {0:t}"
 }

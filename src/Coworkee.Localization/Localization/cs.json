@@ -1210,5 +1210,21 @@
   "Copy public link": "Kopírovat veřejný odkaz",
   "Select a file to share it.": "Vyberte soubor, který chcete sdílet.",
   "The app could not start.": "Aplikaci se nepodařilo spustit.",
-  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "Zkontrolujte připojení a načtěte stránku znovu. Pokud se to stane znovu, obraťte se na správce."
+  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "Zkontrolujte připojení a načtěte stránku znovu. Pokud se to stane znovu, obraťte se na správce.",
+  "Table rows": "Řádky tabulky",
+  "Pages with a pager, or endless scrolling that loads more rows while scrolling.": "Stránky se stránkováním, nebo nekonečné posouvání, které při posouvání načítá další řádky.",
+  "Pager": "Stránky",
+  "EndlessScroll": "Nekonečné posouvání",
+  "Grouped rows are shown in pages.": "Seskupené řádky se zobrazují po stránkách.",
+  "Where searching runs: {0}": "Kde se vyhledává: {0}",
+  "Search in the browser": "Hledat v prohlížeči",
+  "Search on the server": "Hledat na serveru",
+  "Compare and choose the faster": "Porovnat a zvolit rychlejší",
+  "Browser {0} ms, server {1} ms.": "Prohlížeč {0} ms, server {1} ms.",
+  "Both found {0} rows.": "Oba našly {0} řádků.",
+  "The row counts differ: browser {0}, server {1}.": "Počty řádků se liší: prohlížeč {0}, server {1}.",
+  "Searching in the browser from now on.": "Od nynějška se vyhledává v prohlížeči.",
+  "Searching on the server from now on.": "Od nynějška se vyhledává na serveru.",
+  "Comparing failed: {0}": "Porovnání se nezdařilo: {0}",
+  "Searching on the server by choice, local copy updated {0:t}": "Vyhledávání na serveru (zvoleno), místní kopie aktualizována {0:t}"
 }

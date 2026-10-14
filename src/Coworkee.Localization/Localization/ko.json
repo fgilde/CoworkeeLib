@@ -1210,5 +1210,21 @@
   "Copy public link": "공개 링크 복사",
   "Select a file to share it.": "공유할 파일을 선택하세요.",
   "The app could not start.": "앱을 시작할 수 없습니다.",
-  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "연결을 확인하고 페이지를 새로 고치세요. 다시 발생하면 관리자에게 문의하세요."
+  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "연결을 확인하고 페이지를 새로 고치세요. 다시 발생하면 관리자에게 문의하세요.",
+  "Table rows": "표의 행",
+  "Pages with a pager, or endless scrolling that loads more rows while scrolling.": "페이지 넘김이 있는 페이지 또는 스크롤할 때 행을 더 불러오는 무한 스크롤.",
+  "Pager": "페이지",
+  "EndlessScroll": "무한 스크롤",
+  "Grouped rows are shown in pages.": "그룹화된 행은 페이지별로 표시됩니다.",
+  "Where searching runs: {0}": "검색 실행 위치: {0}",
+  "Search in the browser": "브라우저에서 검색",
+  "Search on the server": "서버에서 검색",
+  "Compare and choose the faster": "비교하여 더 빠른 쪽 선택",
+  "Browser {0} ms, server {1} ms.": "브라우저 {0} ms, 서버 {1} ms.",
+  "Both found {0} rows.": "둘 다 {0}개 행을 찾았습니다.",
+  "The row counts differ: browser {0}, server {1}.": "행 수가 다릅니다: 브라우저 {0}, 서버 {1}.",
+  "Searching in the browser from now on.": "이제부터 브라우저에서 검색합니다.",
+  "Searching on the server from now on.": "이제부터 서버에서 검색합니다.",
+  "Comparing failed: {0}": "비교 실패: {0}",
+  "Searching on the server by choice, local copy updated {0:t}": "서버에서 검색 중(선택됨), 로컬 사본 업데이트 {0:t}"
 }

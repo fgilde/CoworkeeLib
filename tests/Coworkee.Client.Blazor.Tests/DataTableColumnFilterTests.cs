@@ -57,6 +57,14 @@ public sealed class DataTableColumnFilterTests : ClientTestBase
         Table(table).CurrentState.ColumnFilters.ShouldBeNull();
     }
 
+    [Theory]
+    [InlineData(typeof(DateTimeOffset))]
+    [InlineData(typeof(DateTimeOffset?))]
+    [InlineData(typeof(DateTime))]
+    [InlineData(typeof(DateOnly))]
+    public void Dates_of_every_kind_get_date_operators(Type type) =>
+        DataTableFilters.DefaultOperators(type).ShouldBe([FilterOperator.DateTime.Is, FilterOperator.DateTime.After, FilterOperator.DateTime.Before, DataTableFilters.Between]);
+
     [Fact]
     public async Task Numbers_filter_between_two_values_and_enums_by_several_choices()
     {

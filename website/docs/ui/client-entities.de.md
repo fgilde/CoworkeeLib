@@ -103,13 +103,10 @@ builder.Services.AddCoworkeeClient(baseAddress, ...);
 builder.Services.AddCoworkeeClientEntities();
 ```
 
-Ab jetzt fragt jede `CoworkeeDataTable` und jeder `ODataPicker` bei einem gespiegelten Set die lokale Kopie, sobald sie vollständig ist. Die Seite im Template ist eine gewöhnliche Datentabelle; neu ist nur der Indikator:
+Ab jetzt fragt jede `CoworkeeDataTable` und jeder `ODataPicker` bei einem gespiegelten Set die lokale Kopie, sobald sie vollständig ist. Die Seite im Template ist eine gewöhnliche Datentabelle, nichts darauf handelt von Client-Entities:
 
 ```razor title="MyApp.Web.Client/Pages/Sales/SalesOrders.razor"
 <CoworkeeDataTable @ref="_table" T="SalesOrderDto" EntitySet="SalesOrders" Expand="Customer" SearchFields="SearchFields" ...>
-    <ToolBarContent>
-        <ClientEntityIndicator EntitySet="SalesOrders" DataChanged="() => _table.ReloadAsync()" />
-    </ToolBarContent>
     <Columns>
         <PropertyColumn Property="o => o.Number" />
         <PropertyColumn Property="o => o.Customer!.Name" />
@@ -118,7 +115,15 @@ Ab jetzt fragt jede `CoworkeeDataTable` und jeder `ODataPicker` bei einem gespie
 </CoworkeeDataTable>
 ```
 
-`ClientEntityIndicator` zeigt beim Laden einen Fortschrittsring, danach, ob Abfragen lokal oder auf dem Server laufen, und ruft `DataChanged`, wenn sich die lokalen Zeilen geändert haben. Die Schaltfläche **Vergleichen** daneben führt im Template den aktuellen Filter je fünfmal auf dem Server und im Browser aus und zeigt jeweils den Median (siehe [Performance](#performance)).
+### Der Schalter in der Tabelle
+
+Jede Tabelle über einem gespiegelten Set bekommt ein Bedienelement in ihrer Werkzeugleiste (`ClientEntitySwitch`, von `AddCoworkeeClientEntities` hinzugefügt):
+
+- **Symbol**: ein Computer, solange im Browser gesucht wird, eine Wolke, solange auf dem Server gesucht wird.
+- **Ring** darum: der Fortschritt des Downloads, drehend, während die Kopie sich aktualisiert, grün, wenn die Kopie aktuell ist, orange für ein Set, das zu groß zum Spiegeln ist, rot, wenn der Abgleich fehlschlug. Der Tooltip sagt dasselbe in Worten.
+- **Menü**: *Im Browser suchen* (sobald die Kopie vollständig ist), *Auf dem Server suchen* und *Vergleichen und das Schnellere wählen*: Die aktuelle Abfrage der Tabelle (Filter, Suche, Facetten, Sortierung, eine Seite) läuft auf jeder Seite dreimal; eine Meldung zeigt die Medianzeiten und ob beide gleich viele Zeilen fanden, danach wird die schnellere Seite gewählt.
+
+Die Wahl bleibt je Set in der Benutzereinstellung `Table.ClientEntityModes` und folgt dem Benutzer so auf jedes Gerät. Auch bei der Suche auf dem Server gleicht die Kopie weiter ab, der Wechsel zurück geht also sofort. Ändern sich die lokalen Zeilen, lädt der Schalter seine Tabelle neu. Auch Code kann wählen: `ClientEntities.SetModeAsync("SalesOrders", ClientEntityMode.Server)`.
 
 Die Kopie aktualisiert sich
 
@@ -159,6 +164,8 @@ var top = await orders!.QueryAsync(q => q.Where(o => o.Status == SalesOrderStatu
 | `Status`, `Changed` | Zustand, Fortschritt (`Loaded` von `Total`), Version und eine `Revision`, die mit jeder Änderung der Zeilen wächst |
 | `WhenLocalAsync()` | ist erledigt, wenn die Zeilen lokal sind; schlägt fehl für Sets, die auf dem Server bleiben |
 | `RefreshAsync()` | jetzt nach Änderungen fragen |
+| `Mode` | `Client` oder `Server`: wo OData-Abfragen laufen, sobald die Kopie vollständig ist (`ClientEntities.SetModeAsync` merkt es sich auch für den Benutzer) |
+| `MeasureAsync(query, side)` | führt eine Abfrage unabhängig vom Modus auf einer Seite aus und liefert Zeit und Zeilenzahl |
 
 Der OData-Client, der an den Kopien vorbeigeht, ist unter einem Schlüssel registriert, etwa zum Vergleichen:
 
@@ -196,9 +203,9 @@ WebAssembly interpretiert .NET-Code; Arbeit pro Zeile ist im Browser also teuer:
 
 - **Spalten**: Jeder Eigenschaftspfad (`Number`, `Customer/Name`, …) ist ein Array von Werten. Zu Objekten werden Zeilen erst, wenn sie angezeigt werden, 25 pro Seite.
 - **Indizes**: Ist die Kopie da, sortiert sich jede Spalte einmal im Hintergrund, eine nach der anderen mit einer Pause für die Seite dazwischen. Die Zeilen tragen dann den Rang ihres Werts, wie bei einem Datenbankindex.
-- **Filter** laufen auf den Rängen: `Status eq 'Open'`, `Total gt 100` oder `contains(tolower(Number),'123')` werden einmal pro verschiedenem Wert ausgewertet und ergeben eine Maske über die Zeilen. Nur was kein Vergleich einer Eigenschaft mit einem Literal ist (`length(Name) eq 4`), läuft Zeile für Zeile.
+- **Filter** laufen auf den Rängen: `Status eq 'Open'`, `(Total ge 5 and Total lt 10)`, `Options has 'Express'` oder `contains(tolower(Number),'123')` werden einmal pro verschiedenem Wert ausgewertet und ergeben eine Maske über die Zeilen. Vergleiche behalten einen Bereich von Rängen; `contains` durchsucht alle verschiedenen Werte einer Spalte in einem Durchgang statt mit einem Aufruf pro Wert. Nur was kein Vergleich einer Eigenschaft mit einem Literal ist (`length(Name) eq 4`), läuft Zeile für Zeile.
 - **Sortierung** läuft den Index der Spalte entlang; mehrere Spalten setzen ihre Ränge zu einer Zahl pro Zeile zusammen. Ein Filter behält diese Reihenfolge, gefilterte und sortierte Zeilen entstehen in einem Durchlauf.
-- **Facetten** zählen die Ränge der gefundenen Zeilen: ein Durchlauf pro Facetten-Eigenschaft, egal wie viele Optionen.
+- **Facetten** zählen die Ränge der gefundenen Zeilen: ein Durchlauf pro Facetten-Eigenschaft, egal wie viele Optionen. Wert-, Bereichs- und Flag-Optionen addieren dann die Anzahlen der Ränge, die sie annehmen (Bereiche über Präfixsummen); 35 Monatsbereiche über 100.000 verschiedene Auftragsdaten kosten so nicht mehr als eine Werteliste.
 - **Ergebnisse** der letzten 16 Kombinationen aus Filter und Sortierung bleiben erhalten: Die nächste Seite, ein Gruppenwechsel oder die Rückkehr zu einem früheren Filter schneiden nur einen Ausschnitt.
 - **Speicher**: Spalten und ihre Sortierungen werden als Binär-Arrays (gzip) in IndexedDB geschrieben. Ein Neuladen liest sie in einigen hundert Millisekunden zurück, Spalte für Spalte mit Pausen dazwischen; bis dahin fragt die Tabelle den Server und zeigt sofort Zeilen.
 - **Download**: Nur die Eigenschaften des Zeilentyps kommen über die Leitung (`$select`, verschachteltes `$expand`), zwei Seiten gleichzeitig, in einem Durchgang gelesen.
@@ -211,13 +218,22 @@ Gemessen in Chromium mit den 100.000 Aufträgen des Templates (Release-Build, lo
 | Neuladen: erste Zeilen sichtbar | 20,6 s | 2,9 s |
 | Neuladen: Abfragen lokal | (nach den 20 s) | 0,3 s nach den ersten Zeilen |
 
-Nur die Abfragezeit, die Schaltfläche **Vergleichen** im Template (Median aus fünf Abfragen mit Facetten und 25 Zeilen, je mit anderer Sortierung und einer Bedingung, die verhindert, dass eine Seite ein Ergebnis wiederverwendet):
+Nur die Abfragezeit, *Vergleichen und das Schnellere wählen* des [Schalters](#der-schalter-in-der-tabelle) (Median aus drei Läufen der Tabellenabfrage mit ihren Facetten und 25 Zeilen, je mit einer Bedingung, die verhindert, dass eine Seite ein Ergebnis wiederverwendet). Gemessen am 15.10.2026 mit den Facetten des Templates (Status, Kanal, Flags, Region, Kunde, 35 Monate Auftragsdatum, 16 Summenbereiche, Positionen, bezahlt):
 
-| aktueller Filter | Server | Browser |
+| aktueller Filter | Server | Browser vorher | Browser jetzt |
+|---|---|---|---|
+| keiner | 216–236 ms | 1.035 ms | 39–56 ms |
+| Suche "Hamburg" (3 Textspalten) | 638–661 ms | 516 ms | 152 ms |
+
+"Vorher" ist der Stand vor dem 15.10.2026: Optionsfilter, die kein einfacher Wert sind (`Options has 'Express'`, Bereiche), liefen Zeile für Zeile auf Objekten, und ihre Masken passten nicht in den Zwischenspeicher von 64, sodass jeder neue Filter sie alle erneut bezahlte.
+
+Klick auf eine Option im Spaltenfilter, bis die Tabelle das Ergebnis zeigt (Chromium, 15.10.2026):
+
+| Spalte | Browser | Server |
 |---|---|---|
-| keiner | 87–94 ms | 27–35 ms |
-| Suche "SO-00123" (3 Textspalten) | 367 ms | 158 ms |
-| Suche "Hamburg" | 340 ms | 117 ms |
+| Status, Kanal, Region, Optionen, Bezahlt, Summe | 240–310 ms | 500–600 ms |
+| Auftragsdatum (Monat) | 369 ms | 527 ms |
+| Nummer (enthält) | 500–680 ms | 835–897 ms |
 
 Vom Klick bis zur gezeichneten Tabelle, lokale Kopie mit Indizes (die Tabelle braucht für eine Seite etwa 130 ms zum Zeichnen, egal wer antwortet):
 
@@ -260,4 +276,4 @@ Die Tests der Bibliothek (`LargeSetTests`, `LocalTableTests`) prüfen dasselbe m
 | `MyApp.Sales/SalesModule.cs` | OData-Sets und die Client-Entity-Einstellungen des Dienstes |
 | `MyApp.Contracts/Sales/ISalesOrderAppService.cs` | das Schreiben, siehe [Anwendungsdienste](../web/application-services.md) |
 | `MyApp.Migrations/DemoSales.cs` | 100.000 Aufträge, von Postgres in einer Anweisung erzeugt |
-| `MyApp.Web.Client/Pages/Sales/SalesOrders.razor(.cs)` | Tabelle, Indikator und der Vergleich von Server und Browser |
+| `MyApp.Web.Client/Pages/Sales/SalesOrders.razor(.cs)` | die Tabelle; der Schalter kommt mit ihr |

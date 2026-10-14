@@ -26,6 +26,16 @@ public static class TableSettings
 {
     /// <summary>The user's saved table views as JSON, keyed by table.</summary>
     public const string Views = "Table.Views";
+
+    /// <summary>How tables without their own page mode show many rows: <see cref="Pager"/> or <see cref="EndlessScroll"/>.</summary>
+    public const string DefaultPageMode = "DataTable.DefaultPageMode";
+
+    public const string Pager = "Pager";
+
+    public const string EndlessScroll = "EndlessScroll";
+
+    /// <summary>The user's choice per table with a local copy, "Client" or "Server", as JSON keyed by table.</summary>
+    public const string ClientEntityModes = "Table.ClientEntityModes";
 }
 
 /// <summary>The cloud pickers of every upload field; a picker shows when it is enabled and has its client id or app key.</summary>

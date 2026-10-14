@@ -103,13 +103,10 @@ builder.Services.AddCoworkeeClient(baseAddress, ...);
 builder.Services.AddCoworkeeClientEntities();
 ```
 
-From now on every `CoworkeeDataTable` and `ODataPicker` asks the local copy of a mirrored set as soon as it is complete. The page of the template is an ordinary data table; only the indicator is new:
+From now on every `CoworkeeDataTable` and `ODataPicker` asks the local copy of a mirrored set as soon as it is complete. The page of the template is an ordinary data table, nothing on it is about client entities:
 
 ```razor title="MyApp.Web.Client/Pages/Sales/SalesOrders.razor"
 <CoworkeeDataTable @ref="_table" T="SalesOrderDto" EntitySet="SalesOrders" Expand="Customer" SearchFields="SearchFields" ...>
-    <ToolBarContent>
-        <ClientEntityIndicator EntitySet="SalesOrders" DataChanged="() => _table.ReloadAsync()" />
-    </ToolBarContent>
     <Columns>
         <PropertyColumn Property="o => o.Number" />
         <PropertyColumn Property="o => o.Customer!.Name" />
@@ -118,7 +115,15 @@ From now on every `CoworkeeDataTable` and `ODataPicker` asks the local copy of a
 </CoworkeeDataTable>
 ```
 
-`ClientEntityIndicator` shows a progress ring while the rows load, then whether queries run locally or on the server, and calls `DataChanged` when the local rows changed. The **Compare** button next to it in the template runs the current filter five times on the server and five times in the browser and shows the median of each (see [Performance](#performance)).
+### The switch in the table
+
+Every table over a mirrored set gets one control in its tool bar (`ClientEntitySwitch`, added by `AddCoworkeeClientEntities`):
+
+- **Icon**: a computer while searching runs in the browser, a cloud while it runs on the server.
+- **Ring** around it: the download progress, turning while the copy updates, green when the copy is current, orange for a set too large to mirror, red when syncing failed. The tooltip says the same in words.
+- **Menu**: *Search in the browser* (once the copy is complete), *Search on the server*, and *Compare and choose the faster*: the current query of the table (filter, search, facets, order, one page) runs three times on each side; a message shows the median times and whether both found the same number of rows, then the faster side is chosen.
+
+The choice is kept per set in the user setting `Table.ClientEntityModes`, so it follows the user to every device. On the server side the copy keeps syncing, so switching back is instant. When the local rows change, the switch reloads its table. Code can choose as well: `ClientEntities.SetModeAsync("SalesOrders", ClientEntityMode.Server)`.
 
 The copy refreshes
 
@@ -159,6 +164,8 @@ var top = await orders!.QueryAsync(q => q.Where(o => o.Status == SalesOrderStatu
 | `Status`, `Changed` | state, progress (`Loaded` of `Total`), version and a `Revision` that grows with every change of the rows |
 | `WhenLocalAsync()` | completes when the rows are local, fails for sets that stay on the server |
 | `RefreshAsync()` | ask for changes now |
+| `Mode` | `Client` or `Server`: where OData queries run once the copy is complete (`ClientEntities.SetModeAsync` also keeps it for the user) |
+| `MeasureAsync(query, side)` | runs a query on one side whatever the mode and returns the time and the row count |
 
 The OData client that bypasses the copies is registered under a key, for example to compare:
 
@@ -196,9 +203,9 @@ WebAssembly interprets .NET code, so per row work is expensive in the browser: p
 
 - **Columns**: every property path (`Number`, `Customer/Name`, …) is an array of values. Rows become objects only when they are shown, 25 per page.
 - **Indexes**: after the copy arrived, each column sorts once in the background, one column at a time with a pause for the page in between. Rows then carry the rank of their value, like a database index.
-- **Filters** run on the ranks: `Status eq 'Open'`, `Total gt 100` or `contains(tolower(Number),'123')` are evaluated once per distinct value and become a mask over the rows. Only what is not a property compared with a literal (`length(Name) eq 4`) runs row by row.
+- **Filters** run on the ranks: `Status eq 'Open'`, `(Total ge 5 and Total lt 10)`, `Options has 'Express'` or `contains(tolower(Number),'123')` are evaluated once per distinct value and become a mask over the rows. Comparisons keep a range of ranks; `contains` searches all distinct values of a column in one pass instead of one call per value. Only what is not a property compared with a literal (`length(Name) eq 4`) runs row by row.
 - **Sorting** walks the index of the column; several columns combine their ranks into one number per row. A filter keeps that order, so filtered and sorted rows come out in one pass.
-- **Facets** count ranks of the found rows: one pass per facet property, whatever the number of options.
+- **Facets** count ranks of the found rows: one pass per facet property, whatever the number of options. Value, range and flag options then add up the counts of the ranks they accept (ranges with prefix sums), so 35 month ranges over 100,000 distinct order dates cost no more than one value list.
 - **Results** of the last 16 filter and sort combinations are kept: the next page, a group change or going back to an earlier filter cuts only a slice.
 - **Storage**: columns and their sort orders are written as binary arrays (gzip) to IndexedDB. A reload reads them back in a few hundred milliseconds, column by column with pauses in between; until then the table asks the server, so it shows rows at once.
 - **Download**: only the properties of the row type travel (`$select`, nested `$expand`), two pages at a time, read in one pass.
@@ -211,13 +218,22 @@ Measured in Chromium with the 100,000 orders of the template (Release build, loc
 | page reload: first rows visible | 20.6 s | 2.9 s |
 | page reload: queries local | (after the 20 s) | 0.3 s after the first rows |
 
-Query time only, the **Compare** button of the template (median of five queries with facets and 25 rows, each with another sort order and a condition that keeps either side from reusing a result):
+Query time only, *Compare and choose the faster* of the [switch](#the-switch-in-the-table) (median of three runs of the table's query with its facets and 25 rows, each with a condition that keeps either side from reusing a result). Measured on 2026-10-15 with the template's facets (status, channel, flags, region, customer, 35 order date months, 16 total ranges, items, paid):
 
-| current filter | server | browser |
+| current filter | server | browser before | browser now |
+|---|---|---|---|
+| none | 216-236 ms | 1,035 ms | 39-56 ms |
+| search "Hamburg" (3 text columns) | 638-661 ms | 516 ms | 152 ms |
+
+"Before" is the release before 2026-10-15: option filters that are no plain value (`Options has 'Express'`, ranges) ran row by row on objects and their masks did not fit the cache of 64, so every new filter paid for all of them again.
+
+Click on a column filter option until the table shows the result (Chromium, 2026-10-15):
+
+| column | browser | server |
 |---|---|---|
-| none | 87–94 ms | 27–35 ms |
-| search "SO-00123" (3 text columns) | 367 ms | 158 ms |
-| search "Hamburg" | 340 ms | 117 ms |
+| Status, Channel, Region, Options, Paid, Total | 240-310 ms | 500-600 ms |
+| Order date (month) | 369 ms | 527 ms |
+| Number (contains) | 500-680 ms | 835-897 ms |
 
 Click to rendered table, local copy with indexes (the table needs about 130 ms to render a page whatever answers):
 
@@ -260,4 +276,4 @@ The library's tests (`LargeSetTests`, `LocalTableTests`) check the same with 100
 | `MyApp.Sales/SalesModule.cs` | OData sets and the client entity settings of the service |
 | `MyApp.Contracts/Sales/ISalesOrderAppService.cs` | the writes, see [Application services](../web/application-services.md) |
 | `MyApp.Migrations/DemoSales.cs` | 100,000 orders generated by Postgres in one statement |
-| `MyApp.Web.Client/Pages/Sales/SalesOrders.razor(.cs)` | table, indicator and the comparison of server and browser |
+| `MyApp.Web.Client/Pages/Sales/SalesOrders.razor(.cs)` | the table; the switch comes with it |

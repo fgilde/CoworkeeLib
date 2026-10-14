@@ -1210,5 +1210,21 @@
   "Copy public link": "复制公开链接",
   "Select a file to share it.": "选择要共享的文件。",
   "The app could not start.": "应用无法启动。",
-  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "请检查网络连接并重新加载页面。如果问题再次出现,请联系管理员。"
+  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "请检查网络连接并重新加载页面。如果问题再次出现,请联系管理员。",
+  "Table rows": "表格行",
+  "Pages with a pager, or endless scrolling that loads more rows while scrolling.": "带分页器的分页，或在滚动时加载更多行的无限滚动。",
+  "Pager": "分页",
+  "EndlessScroll": "无限滚动",
+  "Grouped rows are shown in pages.": "分组的行按页显示。",
+  "Where searching runs: {0}": "搜索运行位置：{0}",
+  "Search in the browser": "在浏览器中搜索",
+  "Search on the server": "在服务器上搜索",
+  "Compare and choose the faster": "比较并选择更快的一方",
+  "Browser {0} ms, server {1} ms.": "浏览器 {0} 毫秒，服务器 {1} 毫秒。",
+  "Both found {0} rows.": "两者都找到 {0} 行。",
+  "The row counts differ: browser {0}, server {1}.": "行数不同：浏览器 {0}，服务器 {1}。",
+  "Searching in the browser from now on.": "从现在起在浏览器中搜索。",
+  "Searching on the server from now on.": "从现在起在服务器上搜索。",
+  "Comparing failed: {0}": "比较失败：{0}",
+  "Searching on the server by choice, local copy updated {0:t}": "在服务器上搜索（已选择），本地副本更新于 {0:t}"
 }

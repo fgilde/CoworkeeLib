@@ -1210,5 +1210,21 @@
   "Copy public link": "Kopiér offentligt link",
   "Select a file to share it.": "Vælg en fil for at dele den.",
   "The app could not start.": "Appen kunne ikke starte.",
-  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "Kontrollér din forbindelse, og genindlæs siden. Hvis det sker igen, så kontakt din administrator."
+  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "Kontrollér din forbindelse, og genindlæs siden. Hvis det sker igen, så kontakt din administrator.",
+  "Table rows": "Tabelrækker",
+  "Pages with a pager, or endless scrolling that loads more rows while scrolling.": "Sider med sideskift eller uendelig rulning, der indlæser flere rækker, mens du ruller.",
+  "Pager": "Sider",
+  "EndlessScroll": "Uendelig rulning",
+  "Grouped rows are shown in pages.": "Grupperede rækker vises side for side.",
+  "Where searching runs: {0}": "Her søges der: {0}",
+  "Search in the browser": "Søg i browseren",
+  "Search on the server": "Søg på serveren",
+  "Compare and choose the faster": "Sammenlign og vælg den hurtigste",
+  "Browser {0} ms, server {1} ms.": "Browser {0} ms, server {1} ms.",
+  "Both found {0} rows.": "Begge fandt {0} rækker.",
+  "The row counts differ: browser {0}, server {1}.": "Antallet af rækker er forskelligt: browser {0}, server {1}.",
+  "Searching in the browser from now on.": "Fra nu af søges der i browseren.",
+  "Searching on the server from now on.": "Fra nu af søges der på serveren.",
+  "Comparing failed: {0}": "Sammenligningen mislykkedes: {0}",
+  "Searching on the server by choice, local copy updated {0:t}": "Søgning på serveren (valgt), lokal kopi opdateret {0:t}"
 }

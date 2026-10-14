@@ -3,7 +3,8 @@ using Coworkee.Contracts.Data;
 namespace Coworkee.Client.Blazor.ClientEntities;
 
 /// <summary>
-/// Counts the server's facet options on local rows: "Path eq value" options of one path share a single pass over the column's ranks.
+/// Counts the server's facet options on local rows. Options on one property (values, ranges, flags) share one pass over the column's ranks:
+/// the rows are counted per distinct value once, each option adds up the values it accepts.
 /// With a facet context an "any of" group with a choice counts on the rows of every other choice but its own, as the server does.
 /// </summary>
 internal static class LocalFacets
@@ -16,26 +17,13 @@ internal static class LocalFacets
 
     private static List<FacetOptionDto> Options<T>(FacetGroupDto group, LocalTable<T> table, int[] rows)
     {
-        var byPath = new Dictionary<string, (Column Column, int[] Counts)>(StringComparer.OrdinalIgnoreCase);
+        var counted = new Dictionary<Column, int[]>();
         var options = new List<FacetOptionDto>();
         foreach (var option in group.Options)
         {
-            int count;
-            if (ODataLinq.TryEquality<T>(option.OData, out var path, out var value) && value is not null)
-            {
-                if (!byPath.TryGetValue(path, out var counted))
-                {
-                    var column = table.Column(path);
-                    byPath[path] = counted = (column, column.Count(rows));
-                }
-
-                count = counted.Column.RankOf(value) is var rank and >= 0 ? counted.Counts[rank] : 0;
-            }
-            else
-            {
-                var mask = table.Mask(option.OData);
-                count = rows.Count(row => mask[row]);
-            }
+            var count = LocalFilter.OnColumn(table, ODataLinq.Parse(option.OData)) is { } single
+                ? single.Ranks.Sum(counted.TryGetValue(single.Column, out var known) ? known : counted[single.Column] = single.Column.Prefix(rows))
+                : Matching(table.Mask(option.OData), rows);
 
             // the server lists the values found in the rows, but keeps every range preset
             if (count > 0 || group.Type is FacetKind.Range or FacetKind.DateRange)
@@ -45,5 +33,19 @@ internal static class LocalFacets
         }
 
         return options;
+    }
+
+    private static int Matching(bool[] mask, int[] rows)
+    {
+        var count = 0;
+        foreach (var row in rows)
+        {
+            if (mask[row])
+            {
+                count++;
+            }
+        }
+
+        return count;
     }
 }

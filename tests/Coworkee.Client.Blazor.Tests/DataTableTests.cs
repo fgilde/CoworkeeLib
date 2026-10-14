@@ -84,6 +84,29 @@ public sealed class DataTableTests : ClientTestBase
     }
 
     [Fact]
+    public void Registered_toolbar_items_get_the_table()
+    {
+        Services.AddSingleton(new DataTableToolbarItem(typeof(ToolbarProbe)));
+
+        var table = Render<CoworkeeDataTable<Gadget>>(p => p.Add(t => t.EntitySet, "Gadgets").Add(t => t.Filter, "Category eq 'Tools'").Add(t => t.Columns, Columns()));
+
+        table.WaitForAssertion(() => table.Find("[data-testid='probe']").TextContent.ShouldBe("Gadgets: Category eq 'Tools'"));
+    }
+
+    private sealed class ToolbarProbe : ComponentBase
+    {
+        [Parameter] public IDataTable Table { get; set; } = null!;
+
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder)
+        {
+            builder.OpenElement(0, "span");
+            builder.AddAttribute(1, "data-testid", "probe");
+            builder.AddContent(2, $"{Table.EntitySet}: {Table.CurrentQuery.Filter}");
+            builder.CloseElement();
+        }
+    }
+
+    [Fact]
     public void A_new_filter_from_the_page_reloads_the_rows()
     {
         var table = Render<CoworkeeDataTable<Gadget>>(p => p.Add(t => t.EntitySet, "Gadgets").Add(t => t.Filter, "Category eq 'Tools'").Add(t => t.Columns, Columns()));

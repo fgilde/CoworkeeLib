@@ -1210,5 +1210,21 @@
   "Copy public link": "Copiar ligação pública",
   "Select a file to share it.": "Selecione um ficheiro para o partilhar.",
   "The app could not start.": "Não foi possível iniciar a aplicação.",
-  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "Verifique a sua ligação e recarregue a página. Se voltar a acontecer, contacte o seu administrador."
+  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "Verifique a sua ligação e recarregue a página. Se voltar a acontecer, contacte o seu administrador.",
+  "Table rows": "Linhas da tabela",
+  "Pages with a pager, or endless scrolling that loads more rows while scrolling.": "Páginas com paginação ou rolagem infinita que carrega mais linhas durante a rolagem.",
+  "Pager": "Páginas",
+  "EndlessScroll": "Rolagem infinita",
+  "Grouped rows are shown in pages.": "As linhas agrupadas são mostradas em páginas.",
+  "Where searching runs: {0}": "Onde a pesquisa é feita: {0}",
+  "Search in the browser": "Pesquisar no navegador",
+  "Search on the server": "Pesquisar no servidor",
+  "Compare and choose the faster": "Comparar e escolher o mais rápido",
+  "Browser {0} ms, server {1} ms.": "Navegador {0} ms, servidor {1} ms.",
+  "Both found {0} rows.": "Ambos encontraram {0} linhas.",
+  "The row counts differ: browser {0}, server {1}.": "O número de linhas difere: navegador {0}, servidor {1}.",
+  "Searching in the browser from now on.": "A partir de agora a pesquisa é feita no navegador.",
+  "Searching on the server from now on.": "A partir de agora a pesquisa é feita no servidor.",
+  "Comparing failed: {0}": "A comparação falhou: {0}",
+  "Searching on the server by choice, local copy updated {0:t}": "Pesquisa no servidor (escolhida), cópia local atualizada {0:t}"
 }

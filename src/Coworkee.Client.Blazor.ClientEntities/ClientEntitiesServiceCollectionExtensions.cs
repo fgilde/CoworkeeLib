@@ -1,3 +1,4 @@
+using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Data;
 using Coworkee.Client.Blazor.Realtime;
 using Microsoft.AspNetCore.Components;
@@ -35,7 +36,9 @@ public static class ClientEntitiesServiceCollectionExtensions
             provider.GetRequiredService<IClientEntityStorage>(),
             provider.GetService<RealtimeClient>(),
             provider.GetRequiredService<ClientEntitySignal>(),
-            provider.GetRequiredService<ILogger<ClientEntities>>()));
+            provider.GetRequiredService<ILogger<ClientEntities>>(),
+            provider.GetService<Api.ICoworkeeApi>() is { } api ? new ClientEntityModes(api, provider.GetRequiredService<ILogger<ClientEntityModes>>()) : null));
+        services.AddSingleton(new DataTableToolbarItem(typeof(ClientEntitySwitch)));
         return services;
     }
 

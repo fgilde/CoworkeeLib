@@ -1210,5 +1210,21 @@
   "Copy public link": "公開リンクをコピー",
   "Select a file to share it.": "共有するファイルを選択してください。",
   "The app could not start.": "アプリを起動できませんでした。",
-  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "接続を確認してページを再読み込みしてください。再び発生する場合は管理者に連絡してください。"
+  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "接続を確認してページを再読み込みしてください。再び発生する場合は管理者に連絡してください。",
+  "Table rows": "テーブルの行",
+  "Pages with a pager, or endless scrolling that loads more rows while scrolling.": "ページャー付きのページ、またはスクロール中に次の行を読み込む無限スクロール。",
+  "Pager": "ページ",
+  "EndlessScroll": "無限スクロール",
+  "Grouped rows are shown in pages.": "グループ化された行はページごとに表示されます。",
+  "Where searching runs: {0}": "検索の実行場所: {0}",
+  "Search in the browser": "ブラウザーで検索",
+  "Search on the server": "サーバーで検索",
+  "Compare and choose the faster": "比較して速い方を選ぶ",
+  "Browser {0} ms, server {1} ms.": "ブラウザー {0} ms、サーバー {1} ms。",
+  "Both found {0} rows.": "どちらも {0} 行を見つけました。",
+  "The row counts differ: browser {0}, server {1}.": "行数が異なります: ブラウザー {0}、サーバー {1}。",
+  "Searching in the browser from now on.": "今後はブラウザーで検索します。",
+  "Searching on the server from now on.": "今後はサーバーで検索します。",
+  "Comparing failed: {0}": "比較に失敗しました: {0}",
+  "Searching on the server by choice, local copy updated {0:t}": "サーバーで検索中 (選択済み)、ローカルコピーの更新 {0:t}"
 }

@@ -67,20 +67,17 @@ internal static class ClientFiles
     private static string Page(EntityModel e)
     {
         var expand = e.References.Any() ? $" Expand=\"{string.Join(",", e.References.Select(p => p.Name))}\"" : string.Empty;
-        var toolbar = e.Spec.ClientEntity
-            ? $"    <ToolBarContent>\n        <ClientEntityIndicator EntitySet=\"{e.Plural}\" DataChanged=\"() => _table.ReloadAsync()\" />\n    </ToolBarContent>\n"
-            : string.Empty;
         return $$"""
             @page "{{e.Route}}"
             @using {{e.App}}.Contracts.{{e.Module}}
-            {{(e.Spec.ClientEntity ? "@using Coworkee.Client.Blazor.ClientEntities\n" : string.Empty)}}@attribute [Authorize(Policy = PermissionPolicy.Prefix + {{e.Permissions}}.View)]
+            @attribute [Authorize(Policy = PermissionPolicy.Prefix + {{e.Permissions}}.View)]
 
             <PageHeader Title="@L["{{e.Plural}}"]" Description="@L["Manage {{e.PluralWords}}."]" />
             <RealtimeSubscription Topic="type:{{e.Name}}" OnEvent="_ => _table.ReloadAsync()" />
             <CoworkeeDataTable @ref="_table" T="{{e.Name}}Dto" EntitySet="{{e.Plural}}"{{expand}} SearchFields="SearchFields" MultiSelection="true" ExportFileName="{{e.PluralWords.Replace(' ', '-')}}" DescribeItem="e => {{e.Describe}}"
                                CreateText="@L["New {{e.Words}}"]" CreatePermission="@{{e.Permissions}}.Create" EditPermission="@{{e.Permissions}}.Edit" DeletePermission="@{{e.Permissions}}.Delete"
                                OnCreate="CreateAsync" OnEdit="EditAsync" OnDelete="DeleteAsync">
-            {{toolbar}}    <Columns>
+                <Columns>
             {{string.Concat(e.Columns.Select(p => $"        <PropertyColumn Property=\"e => e.{Shown(e, p)}\" Title=\"@L[\"{EntityModel.Label(p)}\"]\"{Format(p)} />\n"))}}    </Columns>
             </CoworkeeDataTable>
 

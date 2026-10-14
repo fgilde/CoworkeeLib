@@ -1,8 +1,7 @@
 @inherits FacetViewBase
 
-<MudSelect T="string" MultiSelection="@(!Single)" SelectedValues="Chosen" SelectedValuesChanged="Choose" Value="@(Single ? Chosen.FirstOrDefault() : null)"
-           ValueChanged="v => Choose(v is null ? [] : [v])" Placeholder="@L["Choose"]" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" Clearable="true"
-           MultiSelectionTextFunc="Text" data-testid="facet-select">
+<MudSelect T="string" @attributes="Binding" Placeholder="@L["Choose"]" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" Clearable="true"
+           data-testid="facet-select">
     @foreach (var option in Group.Options)
     {
         <MudSelectItem T="string" Value="option.OData" Disabled="IsDisabled(option)">

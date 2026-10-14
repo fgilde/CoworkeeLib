@@ -187,7 +187,7 @@ public sealed class SettingsTests(SettingsApp app) : IAsyncLifetime
     [Fact]
     public async Task User_definitions_list_only_user_scoped_settings() =>
         (await Admin.GetFromJsonAsync<SettingGroupDto[]>("/api/v1/settings/definitions/user", Ct))!
-            .SelectMany(g => g.Settings).Select(s => s.Name).ShouldBe(["Test.Text", TableSettings.Views], ignoreOrder: true);
+            .SelectMany(g => g.Settings).Select(s => s.Name).ShouldBe(["Test.Text", TableSettings.Views, TableSettings.DefaultPageMode, TableSettings.ClientEntityModes], ignoreOrder: true);
 
     [Fact]
     public async Task Users_keep_their_table_views_in_a_user_setting()
@@ -208,6 +208,20 @@ public sealed class SettingsTests(SettingsApp app) : IAsyncLifetime
         values[FilePickerSettings.GoogleDriveClientId].ShouldBe("google-from-config");
         values[FilePickerSettings.OneDriveClientId].ShouldBe("onedrive-client");
         values[FilePickerSettings.DropboxEnabled].ShouldBe("true");
+    }
+
+    [Fact]
+    public async Task The_table_page_mode_reaches_the_client_and_a_user_overrides_the_system()
+    {
+        (await ClientValuesAsync(Admin))[TableSettings.DefaultPageMode].ShouldBe(TableSettings.Pager);
+
+        await PutAsync(Admin, "global", TableSettings.DefaultPageMode, TableSettings.EndlessScroll);
+        (await ClientValuesAsync(Admin))[TableSettings.DefaultPageMode].ShouldBe(TableSettings.EndlessScroll);
+
+        await PutAsync(Admin, "user", TableSettings.DefaultPageMode, TableSettings.Pager);
+        (await ClientValuesAsync(Admin))[TableSettings.DefaultPageMode].ShouldBe(TableSettings.Pager);
+        await PutAsync(Admin, "user", TableSettings.DefaultPageMode, null);
+        await PutAsync(Admin, "global", TableSettings.DefaultPageMode, null);
     }
 
     private static async Task<Dictionary<string, string?>> ClientValuesAsync(HttpClient client) =>

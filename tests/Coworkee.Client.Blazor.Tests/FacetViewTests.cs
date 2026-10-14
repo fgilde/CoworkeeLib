@@ -85,6 +85,22 @@ public sealed class FacetViewTests : ClientTestBase
         view.WaitForAssertion(() => _selection.ToFilter().ShouldBe("(Status eq 'Open' or Status eq 'Shipped')"));
     }
 
+    // the column filter of the same facet changes the selection while the dropdown shows it
+    [Fact]
+    public void The_dropdown_keeps_a_choice_made_elsewhere()
+    {
+        Render<MudPopoverProvider>();
+        var view = Render<FacetSelectView>(p => p.Add(v => v.Group, Regions).Add(v => v.Selection, _selection));
+        _selection.Changed += () => view.Render();
+
+        view.InvokeAsync(() => _selection.Toggle(Regions, Regions.Options[2]));
+        view.InvokeAsync(() => _selection.Toggle(Regions, Regions.Options[4]));
+
+        view.WaitForAssertion(() => _selection.ToFilter().ShouldBe("(Region eq 'R03' or Region eq 'R05')"));
+        Thread.Sleep(200);
+        _selection.ToFilter().ShouldBe("(Region eq 'R03' or Region eq 'R05')");
+    }
+
     [Fact]
     public void Buttons_of_a_single_choice_offer_all_and_one_value()
     {

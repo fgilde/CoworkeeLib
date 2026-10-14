@@ -50,7 +50,7 @@ public partial class SettingsForm
             .Select(g => g with { Settings = g.Settings.Where(s => s.Scopes.Contains(Scope) && Hide?.Contains(s.Name) != true).ToList() })
             .Where(g => g.Settings.Count > 0)
             .ToList();
-        _model = new SettingsModel(groups, stored);
+        _model = new SettingsModel(groups, stored, Scope);
         Rebuild();
     }
 

@@ -1210,5 +1210,21 @@
   "Copy public link": "Копировать общедоступную ссылку",
   "Select a file to share it.": "Выберите файл, чтобы поделиться им.",
   "The app could not start.": "Не удалось запустить приложение.",
-  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "Проверьте подключение и перезагрузите страницу. Если это повторится, обратитесь к администратору."
+  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "Проверьте подключение и перезагрузите страницу. Если это повторится, обратитесь к администратору.",
+  "Table rows": "Строки таблицы",
+  "Pages with a pager, or endless scrolling that loads more rows while scrolling.": "Страницы с пагинацией или бесконечная прокрутка, которая подгружает строки при прокрутке.",
+  "Pager": "Страницы",
+  "EndlessScroll": "Бесконечная прокрутка",
+  "Grouped rows are shown in pages.": "Сгруппированные строки показываются по страницам.",
+  "Where searching runs: {0}": "Где выполняется поиск: {0}",
+  "Search in the browser": "Искать в браузере",
+  "Search on the server": "Искать на сервере",
+  "Compare and choose the faster": "Сравнить и выбрать более быстрый",
+  "Browser {0} ms, server {1} ms.": "Браузер {0} мс, сервер {1} мс.",
+  "Both found {0} rows.": "Оба нашли {0} строк.",
+  "The row counts differ: browser {0}, server {1}.": "Число строк различается: браузер {0}, сервер {1}.",
+  "Searching in the browser from now on.": "Теперь поиск выполняется в браузере.",
+  "Searching on the server from now on.": "Теперь поиск выполняется на сервере.",
+  "Comparing failed: {0}": "Сравнение не удалось: {0}",
+  "Searching on the server by choice, local copy updated {0:t}": "Поиск на сервере (выбран), локальная копия обновлена {0:t}"
 }

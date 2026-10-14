@@ -34,6 +34,8 @@
     .cw-table-main { min-width: 0; }
     .cw-advanced { margin-bottom: 12px; padding: 12px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--mud-palette-primary) 30%, var(--mud-palette-lines-default));
         background: color-mix(in srgb, var(--mud-palette-primary) 2%, var(--mud-palette-surface)); }
+    .cw-table-total { padding: 10px 16px; text-align: right; color: var(--mud-palette-text-secondary); font-size: .875rem; }
+    .cw-table-hint { display: block; padding: 8px 16px 0; color: var(--mud-palette-text-secondary); }
     .cw-advanced-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
 </style>
 <FacetStyles />
@@ -64,6 +66,10 @@
     }
     <MudSpacer />
     @ToolBarContent
+    @foreach (var item in ToolbarItems)
+    {
+        <DynamicComponent Type="item.Component" Parameters="ToolbarParameters" />
+    }
     @if (_grid is not null)
     {
         @if (Groupable)
@@ -153,7 +159,8 @@
 }
 <div class="cw-table-main">
 <FacetChips Selection="_selection" Filters="FilterChips" OnRemove="RemoveFilterAsync" OnClear="ClearFilters" />
-<MudDataGrid @ref="_grid" T="T" ServerData="LoadAsync" MultiSelection="MultiSelection" SelectedItemsChanged="SelectionChangedAsync" RowsPerPage="PageSize"
+<MudDataGrid @ref="_grid" T="T" ServerData="PagedLoader" VirtualizeServerData="EndlessLoader" Virtualize="Endless" Height="@(Endless ? EndlessHeight : null)"
+             FixedHeader="Endless" ItemSize="RowHeight" OverscanCount="10" MultiSelection="MultiSelection" SelectedItemsChanged="SelectionChangedAsync" RowsPerPage="PageSize"
              SortMode="SortMode.Multiple" Dense="Dense" Hover="true" Striped="@Theme.StripedTables" Elevation="0" Outlined="true" ChildRowContent="ChildRowContent"
              Groupable="Groupable" GroupExpanded="true" Hideable="ColumnChooser" DragDropColumnReordering="ReorderableColumns" ColumnReorderMode="DataGridDragAndDropColumnReorderMode.Insert"
              ColumnResizeMode="@(ResizableColumns ? ResizeMode.Column : ResizeMode.None)" Filterable="Filterable" FilterMode="DataGridFilterMode.ColumnFilterMenu"
@@ -204,7 +211,18 @@
         <MudText Class="mud-text-secondary pa-4">@L[NoRecordsText]</MudText>
     </NoRecordsContent>
     <PagerContent>
-        <MudDataGridPager T="T" />
+        @if (Endless)
+        {
+            <div class="cw-table-total" data-testid="table-total">@L["{0} rows", Pages.Total.ToString("N0", System.Globalization.CultureInfo.CurrentCulture)]</div>
+        }
+        else
+        {
+            @if (GroupedInPages)
+            {
+                <MudText Typo="Typo.caption" Class="cw-table-hint" data-testid="grouped-pages">@L["Grouped rows are shown in pages."]</MudText>
+            }
+            <MudDataGridPager T="T" />
+        }
     </PagerContent>
 </MudDataGrid>
 </div>
