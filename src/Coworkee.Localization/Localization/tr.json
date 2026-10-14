@@ -1078,7 +1078,7 @@
   "Send test to me": "Bana test e-postası gönder",
   "Reset to default": "Varsayılana sıfırla",
   "customized": "özelleştirilmiş",
-  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "Yer tutucular {{ user.first_name }} gibi görünür ve HTML olarak kaçırılır (escape edilir). Gövde, Düzen şablonunun içine yerleştirilir.",
+  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "Yer tutucular {{ user.first_name }} gibi görünür ve HTML olarak kodlanır (escape edilir). Gövde, Düzen şablonunun içine yerleştirilir.",
   "Template saved.": "Şablon kaydedildi.",
   "Test mail queued.": "Test e-postası kuyruğa alındı.",
   "Preview: {0}": "Önizleme: {0}",
@@ -1134,5 +1134,9 @@
   "Scheduled": "Zamanlandı",
   "Cancelled": "İptal edildi",
   "One campaign only": "Yalnızca bir kampanya",
-  "API documentation": "API belgeleri"
+  "API documentation": "API belgeleri",
+  "A rule without a selector is not saved yet": "Seçicisi olmayan bir kural henüz kaydedilmedi.",
+  "The saved recipients are kept until you change the selection.": "Kayıtlı alıcılar, seçimi değiştirene kadar korunur.",
+  "Not started yet. Check that the background worker is running.": "Henüz başlamadı. Arka plan hizmetinin çalıştığından emin olun.",
+  "Edit campaign": "Kampanyayı düzenle"
 }

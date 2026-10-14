@@ -1106,7 +1106,7 @@
   "{0} recipients": "អ្នកទទួល {0} នាក់",
   "{0} users excluded (no e-mail, locked, deactivated or unsubscribed)": "បានដកអ្នកប្រើប្រាស់ {0} នាក់ចេញ (គ្មានអ៊ីមែល ជាប់ចាក់សោ បានបិទដំណើរការ ឬបានឈប់ជាវ)",
   "All active users": "អ្នកប្រើប្រាស់សកម្មទាំងអស់",
-  "Not signed in for more than N days": "មិនបានចូលលើសពី N ថ្ងៃ",
+  "Not signed in for more than N days": "មិនបានចូលអស់រយៈពេលលើសពី N ថ្ងៃ",
   "Never signed in": "មិនធ្លាប់ចូលប្រើ",
   "Signed up in the last N days": "បានចុះឈ្មោះក្នុងរយៈពេល N ថ្ងៃចុងក្រោយ",
   "E-mail not confirmed": "អ៊ីមែលមិនទាន់បានបញ្ជាក់",
@@ -1127,12 +1127,16 @@
   "Mail campaigns": "យុទ្ធនាការអ៊ីមែល",
   "Send one of your mail templates to many users of this organisation, now or at a chosen time.": "ផ្ញើគំរូអ៊ីមែលមួយរបស់អ្នកទៅកាន់អ្នកប្រើប្រាស់ជាច្រើននៃអង្គភាពនេះ ភ្លាមៗ ឬនៅពេលដែលអ្នកជ្រើសរើស។",
   "New campaign": "យុទ្ធនាការថ្មី",
-  "{0} failed": "បរាជ័យ {0}",
+  "{0} failed": "{0} បរាជ័យ",
   "Cancel campaign": "បោះបង់យុទ្ធនាការ",
   "Cancel {0}? Mails not sent yet will not go out.": "បោះបង់ {0}? អ៊ីមែលដែលមិនទាន់បានផ្ញើនឹងមិនត្រូវបានផ្ញើទេ។",
   "Draft": "សេចក្តីព្រាង",
   "Scheduled": "បានកំណត់ពេល",
   "Cancelled": "បានបោះបង់",
   "One campaign only": "យុទ្ធនាការតែមួយ",
-  "API documentation": "ឯកសារ API"
+  "API documentation": "ឯកសារ API",
+  "A rule without a selector is not saved yet": "ច្បាប់ដែលគ្មានឧបករណ៍ជ្រើសរើសមិនទាន់ត្រូវបានរក្សាទុកទេ។",
+  "The saved recipients are kept until you change the selection.": "អ្នកទទួលដែលបានរក្សាទុកនឹងនៅដដែល រហូតដល់អ្នកផ្លាស់ប្តូរការជ្រើសរើស។",
+  "Not started yet. Check that the background worker is running.": "មិនទាន់ចាប់ផ្តើមទេ។ សូមពិនិត្យថាសេវាកម្មផ្ទៃខាងក្រោយកំពុងដំណើរការ។",
+  "Edit campaign": "កែសម្រួលយុទ្ធនាការ"
 }

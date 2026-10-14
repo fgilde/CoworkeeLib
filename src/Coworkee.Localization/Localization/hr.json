@@ -1067,7 +1067,7 @@
   "Keycloak sign-in page updated": "Stranica za prijavu u Keycloak ažurirana",
   "The Keycloak sign-in page could not be written. See the log of the API.": "Stranicu za prijavu u Keycloak nije bilo moguće zapisati. Pogledajte zapisnik API-ja.",
   "Rules": "Pravila",
-  "Raw": "Izvorno",
+  "Raw": "Neobrađeno",
   "Add rule": "Dodaj pravilo",
   "Selector": "Selektor",
   "Selector required": "Selektor je obavezan",
@@ -1078,7 +1078,7 @@
   "Send test to me": "Pošalji mi probnu e-poruku",
   "Reset to default": "Vrati na zadano",
   "customized": "prilagođen",
-  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "Rezervirana mjesta izgledaju kao {{ user.first_name }} i HTML-escapeaju se. Sadržaj se umeće u predložak izgleda.",
+  "Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template.": "Rezervirana mjesta izgledaju kao {{ user.first_name }}, a posebni znakovi u njima se escapeaju za HTML. Sadržaj se umeće u predložak izgleda.",
   "Template saved.": "Predložak je spremljen.",
   "Test mail queued.": "Probna e-poruka stavljena je u red.",
   "Preview: {0}": "Pregled: {0}",
@@ -1134,5 +1134,9 @@
   "Scheduled": "Zakazano",
   "Cancelled": "Otkazano",
   "One campaign only": "Samo jedna kampanja",
-  "API documentation": "API dokumentacija"
+  "API documentation": "API dokumentacija",
+  "A rule without a selector is not saved yet": "Pravilo bez selektora još nije spremljeno.",
+  "The saved recipients are kept until you change the selection.": "Spremljeni primatelji ostaju dok ne promijenite odabir.",
+  "Not started yet. Check that the background worker is running.": "Još nije pokrenuto. Provjerite radi li pozadinska usluga.",
+  "Edit campaign": "Uredi kampanju"
 }

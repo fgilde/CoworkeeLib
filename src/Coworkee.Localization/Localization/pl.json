@@ -968,7 +968,7 @@
   "{0} imported.": "Zaimportowano: {0}.",
   "{0} ms": "{0} ms",
   "{0} rows": "iiersze: {0}",
-  "{0} rows · {1} ms": "iiersze: {0} · {1} ms",
+  "{0} rows · {1} ms": "{0} wierszy · {1} ms",
   "{0} widgets": "iidżety: {0}",
   "Add widget": "Dodaj widżet",
   "All time": "Cały okres",
@@ -1134,5 +1134,9 @@
   "Scheduled": "Zaplanowana",
   "Cancelled": "Anulowana",
   "One campaign only": "Tylko jedna kampania",
-  "API documentation": "Dokumentacja API"
+  "API documentation": "Dokumentacja API",
+  "A rule without a selector is not saved yet": "Reguła bez selektora nie została jeszcze zapisana.",
+  "The saved recipients are kept until you change the selection.": "Zapisani odbiorcy pozostają, dopóki nie zmienisz wyboru.",
+  "Not started yet. Check that the background worker is running.": "Jeszcze nie rozpoczęto. Sprawdź, czy usługa w tle działa.",
+  "Edit campaign": "Edytuj kampanię"
 }

@@ -1067,7 +1067,7 @@
   "Keycloak sign-in page updated": "Keycloak 로그인 페이지가 업데이트되었습니다",
   "The Keycloak sign-in page could not be written. See the log of the API.": "Keycloak 로그인 페이지를 기록하지 못했습니다. API 로그를 확인하세요.",
   "Rules": "규칙",
-  "Raw": "원본",
+  "Raw": "원시",
   "Add rule": "규칙 추가",
   "Selector": "선택자",
   "Selector required": "선택자가 필요합니다",
@@ -1134,5 +1134,9 @@
   "Scheduled": "예약됨",
   "Cancelled": "취소됨",
   "One campaign only": "캠페인 하나만",
-  "API documentation": "API 문서"
+  "API documentation": "API 문서",
+  "A rule without a selector is not saved yet": "선택자가 없는 규칙은 아직 저장되지 않았습니다.",
+  "The saved recipients are kept until you change the selection.": "선택을 변경할 때까지 저장된 수신자가 유지됩니다.",
+  "Not started yet. Check that the background worker is running.": "아직 시작되지 않았습니다. 백그라운드 서비스가 실행 중인지 확인하세요.",
+  "Edit campaign": "캠페인 편집"
 }
