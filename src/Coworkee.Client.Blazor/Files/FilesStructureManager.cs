@@ -27,6 +27,9 @@ public sealed class FilesStructureManager(IFilesApi api, string? accept = null) 
         }
     }
 
+    /// <summary>Whether the user may change the entries of the current folder (rename, move, delete, make public).</summary>
+    public bool CanManage => _contents.GetValueOrDefault(CurrentFolderId ?? Guid.Empty)?.CanManage == true;
+
     public static Guid? IdOf(MudExFileStructureNode? node) => node is null ? null : Guid.Parse(node.FullPath);
 
     public Task<HashSet<MudExFileStructureNode>> GetRootAsync(CancellationToken ct = default) => LoadAsync(null, ct);

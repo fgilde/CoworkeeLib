@@ -39,5 +39,7 @@ public partial class FilePreviewDialog
 
     public static Task ShowAsync(IDialogService dialogs, StoredFileDto file) => ShowAsync(dialogs, FileUrls.Content(file.Id), file.ContentType, file.Name, file);
 
-    private Task MakePrivateAsync() => Snackbar.RunAsync(async () => File = await Files.SetPublicAsync(File!.Id, false), L["The file is private again."]);
+    [Inject] private IDialogService Dialogs { get; set; } = null!;
+
+    private async Task MakePrivateAsync() => File = await FilePublishing.SetPublicAsync(Dialogs, Files, Snackbar, L, File!, false) ?? File;
 }

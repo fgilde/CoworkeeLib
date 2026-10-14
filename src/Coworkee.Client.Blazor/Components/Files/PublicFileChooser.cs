@@ -1,8 +1,5 @@
-using Coworkee.Client.Blazor.Api;
-using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Files;
 using Coworkee.Client.Blazor.Localization;
-using Coworkee.Contracts.Files;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
@@ -19,16 +16,7 @@ public static class PublicFileChooser
             return null;
         }
 
-        if (!file.IsPublic)
-        {
-            if (!await dialogs.ConfirmAsync(l["Make the file public?"], l["Anyone can open \"{0}\" without signing in.", file.Name], l["Make public"], l["Cancel"],
-                    Icons.Material.Outlined.Public)
-                || !await snackbar.RunAsync(async () => file = await files.SetPublicAsync(file.Id, true)))
-            {
-                return null;
-            }
-        }
-
-        return navigation.ToAbsoluteUri(FileLinks.Public(file.Id, file.Name)).ToString();
+        var published = file.IsPublic ? file : await FilePublishing.SetPublicAsync(dialogs, files, snackbar, l, file, true);
+        return published is null ? null : FilePublishing.PublicLink(navigation, published);
     }
 }
