@@ -30,7 +30,9 @@
 | `DescribeItem` | text for the delete confirmation |
 | `Exportable`, `ExportFileName` | CSV and JSON export of all rows of the current filter |
 | `ToolBarContent` | extra buttons in the tool bar |
-| `PageSize` | rows per page (25) |
+| `PageSize` | rows per page (25); in endless mode rows load in chunks of at least 50 |
+| `PageMode` | `FromSettings` (default), `Pager` or `EndlessScroll`, see [pages or endless scrolling](#pages-or-endless-scrolling) |
+| `EndlessHeight` | height of the scrolling rows in endless mode, any CSS length (`calc(100vh - 300px)`) |
 | `Groupable`, `ReorderableColumns`, `ResizableColumns`, `DensityToggle` | grouping, moving columns by drag and drop, resizing columns and the density button (all `true`) |
 | `DataSource` | rows from somewhere else than the OData set, see below |
 | `ColumnFilters` | a filter in every column header, see [column filters](#column-filters) (default `options.DataTable.ColumnFilters`, `true`) |
@@ -41,7 +43,23 @@
 
 The table reloads by itself when its `[Realtime]` entity changes (`RealtimeTopic`, see [Realtime](../modules/realtime.md#entity-changes)). `ReloadAsync()` reloads from outside, for example from a `RealtimeSubscription`. `Selection` exposes the facet choices, `CurrentFilter` the OData filter the table sends (fixed filter, facets, column filters and search).
 
-For sets marked as [client entities](client-entities.md) the table filters, searches, sorts and counts in the browser once the rows arrived.
+For sets marked as [client entities](client-entities.md) the table filters, searches, sorts and counts in the browser once the rows arrived; a switch in its tool bar shows where searching runs and lets the user choose.
+
+## Pages or endless scrolling
+
+With `PageMode="FromSettings"` (the default) a table follows the setting **Table rows** (`DataTable.DefaultPageMode`): `Pager` (default) or `EndlessScroll`. Administrators set it for everyone under *Settings → System*, each user can override it under *My settings*; open tables switch as soon as it is saved. `PageMode="Pager"` or `PageMode="EndlessScroll"` fixes it for one table.
+
+Endless scrolling shows one list with a fixed header (`EndlessHeight`) and the total below it. Only the visible rows are rendered; the rows come in chunks of `PageSize` (at least 50) while scrolling and stay until the query changes, so scrolling back needs no request. Only the first chunk of a query asks for the count and the facets. Sorting, search, facets, column filters, selection, realtime reloads, export (always the whole filtered result) and client entities work as with pages.
+
+MudBlazor cannot virtualize grouped rows: while the table is grouped it shows pages with the hint *Grouped rows are shown in pages.* and goes back to scrolling when the grouping is removed.
+
+```razor
+<CoworkeeDataTable T="SalesOrderDto" EntitySet="SalesOrders" PageMode="DataTablePageMode.EndlessScroll" EndlessHeight="70vh" ...>
+```
+
+## Tool bar items
+
+A package can put a component into the tool bar of every table over an OData set: register `new DataTableToolbarItem(typeof(MyComponent))` in DI. The component gets the table as parameter `Table` (`IDataTable`: `EntitySet`, `Expand`, `CurrentQuery`, `ReloadAsync()`). The [client entity switch](client-entities.md#the-switch-in-the-table) is added this way.
 
 The CSV export escapes values that spreadsheet programs would run as formulas.
 

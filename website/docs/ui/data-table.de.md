@@ -30,7 +30,9 @@
 | `DescribeItem` | Text für die Löschbestätigung |
 | `Exportable`, `ExportFileName` | CSV- und JSON-Export aller Zeilen des aktuellen Filters |
 | `ToolBarContent` | zusätzliche Schaltflächen in der Werkzeugleiste |
-| `PageSize` | Zeilen pro Seite (25) |
+| `PageSize` | Zeilen pro Seite (25); beim endlosen Scrollen kommen die Zeilen in Blöcken von mindestens 50 |
+| `PageMode` | `FromSettings` (Standard), `Pager` oder `EndlessScroll`, siehe [Seiten oder endloses Scrollen](#seiten-oder-endloses-scrollen) |
+| `EndlessHeight` | Höhe der scrollenden Zeilen beim endlosen Scrollen, jede CSS-Länge (`calc(100vh - 300px)`) |
 | `Groupable`, `ReorderableColumns`, `ResizableColumns`, `DensityToggle` | Gruppierung, Spalten per Drag & Drop verschieben, Spaltenbreite ziehen und die Dichte-Schaltfläche (alle `true`) |
 | `DataSource` | Zeilen aus einer anderen Quelle als dem OData-Set, siehe unten |
 | `ColumnFilters` | ein Filter in jedem Spaltenkopf, siehe [Spaltenfilter](#spaltenfilter) (Standard `options.DataTable.ColumnFilters`, `true`) |
@@ -41,7 +43,23 @@
 
 Die Tabelle lädt von selbst neu, wenn ihre `[Realtime]`-Entity sich ändert (`RealtimeTopic`, siehe [Realtime](../modules/realtime.md#anderungen-an-entities)). `ReloadAsync()` lädt von außen neu, etwa aus einer `RealtimeSubscription`. `Selection` liefert die Facettenauswahl, `CurrentFilter` den OData-Filter, den die Tabelle sendet (fester Filter, Facetten, Spaltenfilter und Suche).
 
-Für Sets, die als [Client-Entities](client-entities.md) markiert sind, filtert, sucht, sortiert und zählt die Tabelle im Browser, sobald die Zeilen angekommen sind.
+Für Sets, die als [Client-Entities](client-entities.md) markiert sind, filtert, sucht, sortiert und zählt die Tabelle im Browser, sobald die Zeilen angekommen sind; ein Schalter in ihrer Werkzeugleiste zeigt, wo gesucht wird, und lässt die Wahl.
+
+## Seiten oder endloses Scrollen
+
+Mit `PageMode="FromSettings"` (Standard) folgt eine Tabelle der Einstellung **Tabellenzeilen** (`DataTable.DefaultPageMode`): `Pager` (Standard) oder `EndlessScroll`. Administratoren legen sie unter *Einstellungen → System* für alle fest, jeder Benutzer kann sie unter *Meine Einstellungen* überschreiben; offene Tabellen wechseln, sobald gespeichert ist. `PageMode="Pager"` oder `PageMode="EndlessScroll"` legt es für eine Tabelle fest.
+
+Endloses Scrollen zeigt eine Liste mit festem Kopf (`EndlessHeight`) und der Gesamtzahl darunter. Gerendert werden nur die sichtbaren Zeilen; die Zeilen kommen beim Scrollen in Blöcken von `PageSize` (mindestens 50) und bleiben, bis sich die Abfrage ändert, Zurückscrollen braucht also keine Anfrage. Nur der erste Block einer Abfrage fragt nach Anzahl und Facetten. Sortieren, Suche, Facetten, Spaltenfilter, Auswahl, Realtime-Neuladen, Export (immer das ganze gefilterte Ergebnis) und Client-Entities funktionieren wie mit Seiten.
+
+MudBlazor kann gruppierte Zeilen nicht virtualisieren: Solange die Tabelle gruppiert ist, zeigt sie Seiten mit dem Hinweis *Gruppierte Zeilen werden seitenweise angezeigt.* und scrollt wieder, sobald die Gruppierung entfernt ist.
+
+```razor
+<CoworkeeDataTable T="SalesOrderDto" EntitySet="SalesOrders" PageMode="DataTablePageMode.EndlessScroll" EndlessHeight="70vh" ...>
+```
+
+## Einträge der Werkzeugleiste
+
+Ein Paket kann eine Komponente in die Werkzeugleiste jeder Tabelle über einem OData-Set legen: `new DataTableToolbarItem(typeof(MyComponent))` in DI registrieren. Die Komponente bekommt die Tabelle als Parameter `Table` (`IDataTable`: `EntitySet`, `Expand`, `CurrentQuery`, `ReloadAsync()`). Der [Client-Entity-Schalter](client-entities.md#der-schalter-in-der-tabelle) kommt so in die Tabelle.
 
 Der CSV-Export entschärft Werte, die Tabellenkalkulationen sonst als Formel ausführen würden.
 
