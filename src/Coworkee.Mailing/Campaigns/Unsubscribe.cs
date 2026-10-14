@@ -88,7 +88,7 @@ internal sealed class MailUnsubscribe(IMailUnsubscribeLinks links, IDispatcher d
         }
 
         var culture = await CultureAsync(userId, tenantId, cancellationToken);
-        var form = $"<p style=\"font-size:18px\">{Text(Ask, culture)}</p><form method=\"post\" action=\"{MailUnsubscribeLinks.Route}\">"
+        var form = $"<p style=\"font-size:18px\">{Text(Ask, culture)}</p><form method=\"post\" action=\"{WebUtility.HtmlEncode(http.Request.PathBase + MailUnsubscribeLinks.Route)}\">"
             + $"<input type=\"hidden\" name=\"token\" value=\"{WebUtility.HtmlEncode(token)}\">"
             + $"<button type=\"submit\" style=\"font-size:16px;padding:10px 24px;cursor:pointer\">{Text(Button, culture)}</button></form>";
         return Page(culture, Text(Ask, culture), form);
@@ -97,7 +97,16 @@ internal sealed class MailUnsubscribe(IMailUnsubscribeLinks links, IDispatcher d
     public async Task<IResult> UnsubscribeAsync(HttpContext http, CancellationToken cancellationToken)
     {
         Harden(http);
-        var token = http.Request.HasFormContentType ? (await http.Request.ReadFormAsync(cancellationToken))["token"].ToString() : null;
+        string? token = null;
+        try
+        {
+            token = http.Request.HasFormContentType ? (await http.Request.ReadFormAsync(cancellationToken))["token"].ToString() : null;
+        }
+        catch (InvalidDataException)
+        {
+            // a malformed form carries no token and ends in the 400 below
+        }
+
         if (!links.TryRead(token, out var userId, out var tenantId))
         {
             return Results.BadRequest();

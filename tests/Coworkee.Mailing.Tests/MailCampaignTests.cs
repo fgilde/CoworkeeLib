@@ -237,6 +237,34 @@ public sealed partial class MailCampaignTests(MailApp app) : IAsyncLifetime
         (await client.PostAsync("/api/v1/mail/unsubscribe", JsonContent.Create(new { token = good }), Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await app.InDbAsync(db => db.Set<SettingValue>().AnyAsync(v => v.Name == MailSettings.Newsletters && v.ScopeKey == user, Ct))).ShouldBeFalse();
     }
+
+    [Fact]
+    public async Task A_malformed_form_is_a_bad_request()
+    {
+        var content = new StringContent("--x\r\nbroken", System.Text.Encoding.UTF8, "multipart/form-data");
+
+        (await app.App.GetTestClient().PostAsync("/api/v1/mail/unsubscribe", content, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task The_confirm_form_posts_below_the_path_base()
+    {
+        var user = await SeedUserAsync();
+        var link = await app.AsActorAsync(null, null, sp => Task.FromResult(sp.GetRequiredService<IMailUnsubscribeLinks>().Create(user, _setup.TenantId)));
+
+        var html = await app.AsActorAsync(null, null, async sp =>
+        {
+            var http = new Microsoft.AspNetCore.Http.DefaultHttpContext { RequestServices = sp };
+            http.Request.PathBase = "/app";
+            http.Response.Body = new MemoryStream();
+            var result = await sp.GetRequiredService<MailUnsubscribe>().ConfirmAsync(http, Uri.UnescapeDataString(link[(link.IndexOf("token=", StringComparison.Ordinal) + 6)..]), Ct);
+            await result.ExecuteAsync(http);
+            return System.Text.Encoding.UTF8.GetString(((MemoryStream)http.Response.Body).ToArray());
+        });
+
+        html.ShouldContain("action=\"/app/api/v1/mail/unsubscribe\"");
+    }
+
     [Fact]
     public async Task Only_custom_templates_can_be_sent()
     {
@@ -370,6 +398,17 @@ public sealed partial class MailCampaignTests(MailApp app) : IAsyncLifetime
         (await Admin.PutAsJsonAsync($"/api/v1/mail/campaigns/{campaign.Id}", change, Ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
         (await Admin.DeleteAsync($"/api/v1/mail/campaigns/{campaign.Id}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
         (await MailsAsync(campaign.Id)).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task A_time_in_the_past_is_a_validation_error()
+    {
+        var campaign = await CreateAsync(Manual(await SeedUserAsync()));
+
+        var response = await Admin.PostAsJsonAsync($"/api/v1/mail/campaigns/{campaign.Id}/schedule", new ScheduleMailCampaignRequest(DateTimeOffset.UtcNow.AddHours(-2)), Ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await CampaignAsync(campaign.Id)).Status.ShouldBe(MailCampaignStatus.Draft);
     }
 
     [Fact]
