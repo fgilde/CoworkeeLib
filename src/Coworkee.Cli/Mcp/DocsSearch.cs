@@ -65,6 +65,7 @@ internal static partial class DocsSearch
         ("Grafana and WebDataStudio", "hosting/observability/"),
         ("Testing", "testing/"),
         ("Packages and namespaces", "reference/packages/"),
+        ("Changelog", "reference/changelog/"),
     ];
 
     public static async Task<string> SearchAsync(string query, HttpClient http, CancellationToken cancellationToken)
