@@ -1,5 +1,6 @@
 /** The MudBlazor.Extensions web components (mudex-webcomponents on npm); host the bundle yourself by passing another address to useCoworkee. */
-export const defaultMudExUrl = 'https://cdn.jsdelivr.net/npm/mudex-webcomponents@9.11.3/mudex.js';
+// unpkg: jsDelivr answers 502 for parts of this package (the .NET runtime files)
+export const defaultMudExUrl = 'https://unpkg.com/mudex-webcomponents@9.11.3/mudex.js';
 
 type MudExRuntime = { ready: Promise<unknown>; setDarkMode?: (dark: boolean) => void };
 

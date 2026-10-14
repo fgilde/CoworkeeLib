@@ -23,6 +23,10 @@ test('settings groups keep the settings of the scope, values fall back to the de
     { name: 'Mail', displayName: 'Mail', settings: [setting('Mail.Host', ['Global'])] },
   ] as unknown as SettingGroup[];
 
+  const paged = [...groups, { name: 'Ai', displayName: 'AI', page: 'AI', settings: [setting('Ai.Model', ['Global'])] }] as unknown as SettingGroup[];
+  assert.deepEqual(groupsFor(paged, 'Global').map((group) => group.name), ['Mail']);
+  assert.deepEqual(groupsFor(paged, 'Global', 'AI').map((group) => group.name), ['Ai']);
+
   const user = groupsFor(groups, 'User');
   assert.deepEqual(user.map((group) => group.settings.map((s) => s.name)), [['Theme.Mode']]);
   assert.deepEqual(valuesOf(user[0].settings, []), { 'Theme.Mode': 'system' });
@@ -57,4 +61,21 @@ test('values are shown for people', () => {
   assert.equal(display(null), '');
   assert.equal(display('2026-10-14', 'en-US'), '10/14/2026');
   assert.equal(display({ a: 1 }), '{"a":1}');
+});
+
+test('numbers of report widgets follow the widget format', async () => {
+  const { formatNumber } = await import('../src/apps/reports.ts');
+  assert.equal(formatNumber(1234.567, 'Integer', 'en'), '1,235');
+  assert.equal(formatNumber(0.256, 'Percent', 'en'), '25.6%');
+  assert.equal(formatNumber(12, 'Currency', 'en', 'USD'), '$12.00');
+  assert.equal(formatNumber(1500, 'Compact', 'en'), '1.5K');
+  assert.equal(formatNumber(null, undefined, 'en'), '0');
+});
+
+test('a recipient source keeps only the fields of its kind', async () => {
+  const { sourceOf } = await import('../src/apps/admin/mail.ts');
+  const values = { kind: 'Preset', preset: 'InRoles', days: null, roleIds: ['r1'], filter: 'x', userIds: ['u1'] };
+  assert.deepEqual(sourceOf(values), { kind: 'Preset', preset: 'InRoles', days: null, roleIds: ['r1'], filter: null, userIds: null });
+  assert.deepEqual(sourceOf({ ...values, kind: 'Manual' }), { kind: 'Manual', preset: null, days: null, roleIds: null, filter: null, userIds: ['u1'] });
+  assert.deepEqual(sourceOf({ ...values, kind: 'Query' }).filter, 'x');
 });

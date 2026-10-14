@@ -1,4 +1,4 @@
-import { odataPage, searchFilter } from '@coworkee/client';
+import { odataPage, realtimeTopics, searchFilter } from '@coworkee/client';
 import type { Coworkee } from './coworkee.ts';
 import { display, errorText, esc } from './dom.ts';
 
@@ -11,6 +11,8 @@ export type EntityTableOptions = {
   /** Fields the search box looks in; without them the text columns. */
   searchFields?: string[];
   pageSize?: number;
+  /** Entity type whose changes (realtime topic type:{name}, the entity needs [Realtime]) reload the table, e.g. Product. */
+  liveType?: string;
 };
 
 type Row = Record<string, unknown>;
@@ -35,7 +37,7 @@ export function nextOrder(current: string | undefined, field: string): string | 
 }
 
 /** A paged, sortable and searchable table of an OData entity set. */
-export function renderEntityTable(coworkee: Coworkee, host: HTMLElement, options: EntityTableOptions) {
+export function renderEntityTable(coworkee: Coworkee, host: HTMLElement, options: EntityTableOptions, onClose?: (callback: () => void) => void) {
   const { t, culture } = coworkee;
   const pageSize = options.pageSize ?? 25;
   let page = 0;
@@ -91,5 +93,9 @@ export function renderEntityTable(coworkee: Coworkee, host: HTMLElement, options
     clearTimeout(timer);
     timer = setTimeout(() => { search = (event.target as HTMLInputElement).value; page = 0; void load(); }, 300);
   });
+  if (options.liveType) {
+    const stop = coworkee.realtime.subscribe(realtimeTopics.type(options.liveType), () => void load());
+    onClose?.(stop);
+  }
   void load();
 }

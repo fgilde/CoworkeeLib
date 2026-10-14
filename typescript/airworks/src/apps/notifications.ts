@@ -1,4 +1,4 @@
-import { unwrap } from '@coworkee/client';
+import { realtimeEvents, realtimeTopics, unwrap } from '@coworkee/client';
 import type { AppContext } from '@fgilde/airworks';
 import type { Coworkee, CoworkeeApp } from '../coworkee.ts';
 import { display, errorText, esc } from '../dom.ts';
@@ -13,7 +13,7 @@ export const notificationsApp = (coworkee: Coworkee): CoworkeeApp => ({
   height: 600,
   singleInstance: true,
   probe: '/api/v1/notifications/unread-count',
-  render: ({ host }: AppContext) => {
+  render: ({ host, onClose }: AppContext) => {
     const { t, api, culture } = coworkee;
     host.classList.add('cw-host');
     host.innerHTML = `<div class="cw-app cw-notifications"><div class="cw-toolbar"><span class="cw-spacer"></span>
@@ -44,6 +44,10 @@ export const notificationsApp = (coworkee: Coworkee): CoworkeeApp => ({
       else if (id && target.closest('[data-read]')) void run(() => api.POST('/api/v1/notifications/{id}/read', { params: { path: { id } } }));
       else if (id && target.closest('[data-delete]')) void run(() => api.DELETE('/api/v1/notifications/{id}', { params: { path: { id } } }));
     });
+    const stop = coworkee.user.userId ? coworkee.realtime.subscribe(realtimeTopics.user(coworkee.user.userId), ({ type, payload }) => {
+      if (type === realtimeEvents.entityChanged && (payload as { entityType?: string }).entityType === 'Notification') void load();
+    }) : undefined;
+    onClose(() => stop?.());
     void load();
   },
 });
