@@ -28,7 +28,7 @@ async function sourceFields(coworkee: Coworkee): Promise<Field[]> {
   const { t, request } = coworkee;
   const [roles, users] = await Promise.all([
     quiet(request<Schemas['RoleDto'][]>('/api/v1/identity/roles'), []),
-    quiet(request<{ items: Schemas['UserDto'][] }>('/api/v1/identity/users?Page=1&PageSize=500'), { items: [] }),
+    quiet(request<{ items: Schemas['UserDto'][] }>('/api/v1/identity/users?Page=1&PageSize=200'), { items: [] }),
   ]);
   return [
     { name: 'kind', label: 'Recipients', type: 'select', options: [{ value: 'Preset', label: t('Smart list') }, { value: 'Query', label: t('Custom query') }, { value: 'Manual', label: t('Manual selection') }] },

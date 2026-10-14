@@ -17,8 +17,9 @@ const quiet = <T>(promise: Promise<T>, fallback: T) => promise.catch(() => fallb
 const check = (value: unknown) => value ? '&#x2713;' : '';
 
 const roleChoices = async (coworkee: Coworkee) => choices(await quiet(coworkee.request<Role[]>(`${identity}/roles`), []), (role) => role.id, (role) => role.name);
+// shortcut: pickers offer the first 200 groups and users (the API's largest page), page through them when apps get bigger
 const groupChoices = async (coworkee: Coworkee) =>
-  choices((await quiet(coworkee.request<{ items: Group[] }>(`${identity}/groups?Page=1&PageSize=500`), { items: [] })).items, (group) => group.id, (group) => group.name);
+  choices((await quiet(coworkee.request<{ items: Group[] }>(`${identity}/groups?Page=1&PageSize=200`), { items: [] })).items, (group) => group.id, (group) => group.name);
 
 /** The permissions of a role, user or group as one checkbox list per permission group. */
 export async function editGrants(coworkee: Coworkee, providerType: 'Role' | 'User' | 'Group', key: string, title: string) {
@@ -132,7 +133,7 @@ export const groupsApp = crudApp<Group>({
   edit: {
     permission: 'Identity.Groups.Manage',
     fields: async (coworkee) => {
-      const users = await quiet(coworkee.request<{ items: User[] }>(`${identity}/users?Page=1&PageSize=500`), { items: [] });
+      const users = await quiet(coworkee.request<{ items: User[] }>(`${identity}/users?Page=1&PageSize=200`), { items: [] });
       return [
         { name: 'name', label: 'Name', required: true }, { name: 'description', label: 'Description', type: 'textarea' },
         { name: 'memberIds', label: 'Members', type: 'multi', options: choices(users.items, (user) => user.id, (user) => user.email) },

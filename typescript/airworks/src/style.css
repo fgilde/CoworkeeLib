@@ -148,4 +148,6 @@ dialog.cw-dialog h2 { margin: 0 0 10px; font-size: 18px; }
 .cw-tiles img { width: 44px; height: 44px; padding: 6px; object-fit: contain; border-radius: 6px; background: var(--cw-tile, #35496b); }
 
 /* the MudEx web components (file previews) load MudBlazor's page styles; the desktop keeps the typography AirWorks gives it */
+html button { display: inline-block; align-items: normal; }
+dialog.cw-dialog { margin: auto; }
 html body { font-family: inherit; font-size: 16px; line-height: normal; letter-spacing: normal; color: inherit; background-color: transparent; -webkit-font-smoothing: auto; }
