@@ -47,7 +47,8 @@ internal sealed class ClientRequestValidator : AbstractValidator<ClientRequest>
         RuleFor(c => c.Description).MaximumLength(500);
     }
 
-    private static bool BeAbsolute(string uri) => Uri.TryCreate(uri, UriKind.Absolute, out _);
+    // outside Windows "/out" parses as an absolute file path (file:///out)
+    private static bool BeAbsolute(string uri) => Uri.TryCreate(uri, UriKind.Absolute, out var address) && !address.IsFile;
 }
 
 internal sealed class CreateClientValidator : AbstractValidator<CreateClient>

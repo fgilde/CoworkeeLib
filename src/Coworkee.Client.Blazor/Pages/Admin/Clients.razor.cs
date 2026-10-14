@@ -128,7 +128,8 @@ public partial class Clients
     private Task<IEnumerable<string>> SuggestScopes(string text, CancellationToken _) =>
         Task.FromResult(_scopeNames.Where(s => s.Contains(text, StringComparison.OrdinalIgnoreCase)));
 
-    private string? AbsoluteAddress(string value) => Uri.TryCreate(value, UriKind.Absolute, out _) ? null : L["Not an absolute address"];
+    // outside Windows "/out" parses as an absolute file path (file:///out)
+    private string? AbsoluteAddress(string value) => Uri.TryCreate(value, UriKind.Absolute, out var uri) && !uri.IsFile ? null : L["Not an absolute address"];
 
     private string? ScopeName(string value) => ScopePattern().IsMatch(value) ? null : L["Letters, digits and . _ : - only"];
 
