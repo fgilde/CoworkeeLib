@@ -28,7 +28,7 @@ dotnet new coworkee -n Shop
 
 ## The demo application
 
-The [Coworkee demo app](https://github.com/fgilde/Coworkee/tree/master) is the full sample: catalog, documents, dashboard, administration, seeded users and Keycloak.
+The [Coworkee demo app](https://github.com/fgilde/Coworkee/tree/master) is the full sample: catalog, documents, dashboard, administration, seeded users and Keycloak, plus an [AirWorks client](../web/airworks.md#write-your-own-airworks-app) with hand-written apps (*myapp-airworks* in the Aspire dashboard; building it needs Node.js).
 
 ```bash
 git clone https://github.com/fgilde/Coworkee coworkee-demo

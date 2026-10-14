@@ -17,6 +17,8 @@ app.AddAirWorks<Projects.Shop_AirWorks>();
 
 Start the app host as usual and open *shop-airworks* from the Aspire dashboard. Building the project needs Node.js 22.18 or newer: `dotnet build` runs `npm install` and `npm run build` in `ClientApp` (skip it with `-p:SkipClientBuild=true`). AirWorks itself is installed from GitHub; `ClientApp/.npmrc` allows that git dependency (`allow-git=root`), which npm 12 and later refuse otherwise.
 
+The [demo app](https://github.com/fgilde/Coworkee/tree/master) has such a client with apps of its own; [Write your own AirWorks app](#write-your-own-airworks-app) walks through them.
+
 ## How it signs in
 
 `Shop.AirWorks` is a small ASP.NET Core host with [Coworkee.Bff](../security/clients.md), exactly like the web host of the Blazor app:
@@ -114,6 +116,176 @@ Fields that pick users or groups (group members, a user's groups, the users of a
 The file preview uses the [MudBlazor.Extensions web components](https://www.mudex.org) in a frame of its own (`mudExFrame`): MudBlazor's page styles stay inside the frame, the desktop and your apps keep theirs, and closing the window drops the .NET runtime of the preview. The frame page (`@coworkee/airworks/mudex-frame.html`) lives on the app's origin next to the bundle, so the component reads the file with the session cookie. The template hosts both: `mudex-webcomponents` is a dev dependency of `ClientApp`, the vite build copies it and the frame page (as `coworkee-frame.html`) to `wwwroot/mudex`, and the host serves the `.dat` files of the .NET runtime. Elsewhere pass `mudExFrameUrl` to `useCoworkee`.
 
 The AirWorks desktop (shortcuts, open windows, wallpaper) is kept per browser in local storage, as AirWorks does it.
+
+## Write your own AirWorks app
+
+The [demo app](https://github.com/fgilde/Coworkee/tree/master) has an AirWorks client next to its Blazor app, [`src/MyApp.AirWorks`](https://github.com/fgilde/Coworkee/tree/master/src/MyApp.AirWorks), set up exactly as `--airworks` generates it. Next to the library's apps it brings three hand-written ones in [`ClientApp/src/apps`](https://github.com/fgilde/Coworkee/tree/master/src/MyApp.AirWorks/ClientApp/src/apps), built on the demo's own catalog and sales data:
+
+| File | App | Shows |
+|---|---|---|
+| [`catalog.ts`](https://github.com/fgilde/Coworkee/blob/master/src/MyApp.AirWorks/ClientApp/src/apps/catalog.ts) | *Catalog*: products as cards with image, brand and price | OData with `odataPage`, permission, desktop search, opening another app, realtime refresh |
+| [`product.ts`](https://github.com/fgilde/Coworkee/blob/master/src/MyApp.AirWorks/ClientApp/src/apps/product.ts) | Product window: image, details, *Change image* | the app's own REST endpoint typed with its SDK, intents, `coworkee.can`, a MudEx web component, a write |
+| [`sales-dashboard.ts`](https://github.com/fgilde/Coworkee/blob/master/src/MyApp.AirWorks/ClientApp/src/apps/sales-dashboard.ts) | *Sales dashboard*: 100,000 orders per status and region | counts on the server (facets), realtime refresh with a pause |
+
+![The catalog and a product window with the MudEx image preview](../assets/screenshots/airworks-catalog-product-dark.webp){ .shot }
+
+### 1. Write the app
+
+An app is a function that gets the `coworkee` object and returns an AirWorks app definition. The demo keeps each app in a file of its own:
+
+```ts
+import { esc, type Coworkee, type CoworkeeApp } from '@coworkee/airworks';
+import type { AppContext } from '@fgilde/airworks';
+
+export const catalogApp = (coworkee: Coworkee): CoworkeeApp => ({
+  id: 'myapp.catalog',
+  title: coworkee.t('Catalog'),
+  icon: 'ratio-product.png',
+  accent: '#6a3fb5',
+  width: 960,
+  height: 640,
+  requiredPermissions: ['Catalog.Products.View'],
+  render: ({ host, intent, onIntent, onClose }: AppContext) => {
+    host.classList.add('cw-host');
+    host.innerHTML = `<div class="cw-app myapp-catalog">...</div>`;
+    // ...
+  },
+});
+```
+
+`render` gets the window's element (`host`) and the window's context: `onClose` for cleaning up, `setTitle`, `intent`/`onIntent`/`setState` for data passed to the window. Icons are file names of the AirWorks icon set, which the template serves under `/icons/` (`ratio-product.png`, `ratio-graph.png`, `fn-dashboard.png`, ...). The classes `cw-host`, `cw-app`, `cw-toolbar`, `cw-muted` and `cw-error` give your app the look of the library's apps; your own styles go to `ClientApp/src/styles.css` and use the theme's CSS variables (`--cw-primary`, `--cw-surface`, `--cw-text`, ...).
+
+### 2. Register it
+
+In `ClientApp/src/main.ts` the apps go to `register` after the library's:
+
+```ts
+await coworkee.register(
+  ...defaultApps,
+  ...adminApps,
+  catalogApp,
+  productApp,
+  salesDashboardApp,
+  entityApp({ entitySet: 'Brands', liveType: 'Brand', icon: 'ratio-shoppingCart.png', requiredPermissions: ['Catalog.Brands.View'] }),
+);
+```
+
+Every visible app gets a desktop shortcut; `hidden: true` keeps one out of the start menu (the product window, which only opens with a product).
+
+### 3. Read data
+
+OData entity sets go through `odataPage` of `@coworkee/client`; the rows carry the property names of the entity:
+
+```ts
+import { odataPage, searchFilter } from '@coworkee/client';
+
+type ProductRow = { Id: string; Name: string; Rate: number; ImageDataUrl?: string | null; Brand?: { Name: string } | null };
+
+const loadProducts = (text: string, top: number) => odataPage<ProductRow>('Products', {
+  select: ['Id', 'Name', 'Rate', 'ImageDataUrl'],
+  expand: 'Brand($select=Name)',
+  filter: searchFilter(['Name', 'Brand/Name'], text),
+  orderBy: 'Name',
+  top,
+});
+```
+
+The app's own endpoints go through `coworkee.request`, which sends the session cookie and the CSRF header through the BFF. The demo types them with the DTOs of its generated TypeScript SDK (`sdk/typescript`), imported as types only:
+
+```ts
+import type { components } from '../../../../../sdk/typescript/src/schema';
+
+type Product = components['schemas']['ProductDto'];
+
+const product = await coworkee.request<Product>(`/api/v1/products/${encodeURIComponent(id)}`);
+```
+
+The library's own endpoints are typed already: `coworkee.api.GET('/api/v1/...')`.
+
+### 4. Permissions
+
+`requiredPermissions` hides an app from users without them: no shortcut, no start menu entry, no search hits. When a grant changes, the desktop shows or hides the app at once. Parts of an app check `coworkee.can`; the API checks the permission again on every call:
+
+```ts
+${coworkee.can('Catalog.Products.Edit')
+  ? `<label class="myapp-upload"><span>${esc(t('Change image'))}</span><input type="file" accept="image/*" hidden/></label>` : ''}
+```
+
+Signed in as the demo user without roles, the desktop shows neither *Catalog* nor *Sales dashboard*.
+
+### 5. Open another app with data
+
+An app opens another with an intent; the opened app reads it in `render` and in `onIntent` (the window is already open) and keeps it with `setState`, so it comes back after a reload:
+
+```ts
+// catalog.ts
+const open = (id?: string) => id && coworkee.airWorks.openApp(productAppId, { id });
+
+// product.ts
+onIntent(show);
+void show(intent);
+// in show: setTitle(product.name); setState({ id: product.id }, product.name);
+```
+
+### 6. Desktop search
+
+`search` adds hits to the search of the desktop; choosing one opens the app with the hit's intent:
+
+```ts
+search: async (query) => (await loadProducts(query, 8)).items.map((product) => ({
+  title: product.Name, description: product.Brand?.Name ?? '', icon: 'ratio-product.png', intent: { id: product.Id },
+})),
+```
+
+### 7. A MudEx web component
+
+`mudExFrame` puts a [MudBlazor.Extensions web component](https://www.mudex.org) into a frame of its own (see [File preview](#file-preview)). The product window shows the product image in the file display, which takes data URLs as well:
+
+```ts
+image.append(mudExFrame('mudex-file-display',
+  { url: item.imageDataUrl, 'content-type': contentType, 'file-name': item.name, 'show-file-name': 'false' },
+  { frameUrl: coworkee.mudExFrameUrl, dark: coworkee.mode === 'dark', title: item.name }));
+```
+
+### 8. Realtime
+
+Entities with `[Realtime]` announce their changes on the topic `type:{Entity}` to everybody who may read them. Follow the topic while the window is open; `subscribe` returns the function that stops it:
+
+```ts
+onClose(coworkee.realtime.subscribe(realtimeTopics.type('Product'), () => void show()));
+```
+
+A new image saved in the product window shows up in the catalog's card that way, also in other browsers.
+
+### 9. Count on the server
+
+The sales dashboard reads no rows: OData answers `$top=0&$count=true` with the total and, with the `Prefer` header, the facets the entity declares with `[ProvideFacet]`, counted on the server over all 100,000 orders:
+
+```ts
+const page = await coworkee.request<FacetPage>('/odata/SalesOrders?$top=0&$count=true',
+  { headers: { Prefer: 'odata.include-annotations="cn.facets"' } });
+// page['@odata.count'], page['@cn.facets']: [{ field: 'Status', options: [{ label, count, meta: { color } }] }, ...]
+```
+
+![The sales dashboard of the demo app](../assets/screenshots/airworks-sales-dashboard-dark.webp){ .shot }
+
+### 10. Texts
+
+`coworkee.t` looks the English text up in the texts the API serves for the user's language: those of the library, the app's own (`Localization/*.json` embedded in a project of the app, in the demo `src/MyApp.Contracts/Localization/de.json`) and translations made under *Translations*. Placeholders work like in .NET:
+
+```json
+"Catalog": "Katalog",
+"Sales dashboard": "Verkaufsübersicht",
+"The image must be smaller than {0}.": "Das Bild muss kleiner als {0} sein."
+```
+
+```ts
+coworkee.notify(t('The image must be smaller than {0}.', '1.5 MB'), 'error');
+```
+
+### 11. Build and run
+
+`dotnet build` builds the client with npm (`tsc --noEmit` checks the types first). Start the app host and open *myapp-airworks* from the Aspire dashboard; while the host runs, `npm run build` in `ClientApp` is enough for a change, the host serves `wwwroot` as it is. The demo takes `@coworkee/client` and `@coworkee/airworks` from npm in the version of the release it is built against (`0.0.1023`), not from the template's tarballs.
 
 ## The packages
 

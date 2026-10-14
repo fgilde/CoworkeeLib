@@ -81,6 +81,7 @@ Report `docs/superpowers/airworks-report-2.md`.
 - **Owner, once (optional, blocks nothing):** npm org `coworkee`, first publish with secret `NPM_TOKEN` (or by hand), then trusted publisher (GitHub Actions, `fgilde/CoworkeeLib`, `release.yml`) for both packages; steps in the report.
 - Browser test (Playwright) of a generated app: scripts in `%TEMP%\opencode\pw` (`apps.mjs`, `designer.mjs`, `http.mjs`), screenshots in `%TEMP%\opencode\airworks-shots`.
 - `typescript/scripts/pack-template.mjs` reinstalls the packages when `package-lock.json` is newer than the last install.
+- Demo: `src/MyApp.AirWorks` (packages from npm `0.0.1023`, no lock file: npm writes the AirWorks git dependency as `git+ssh`), own apps in `ClientApp/src/apps` (catalog, product window, sales dashboard via OData facets); docs section "Write your own AirWorks app" in `web/airworks*.md` quotes them, keep both in step.
 
 ## Mail campaigns, own mail templates and editors (on main)
 Spec `docs/superpowers/specs/2026-10-14-mail-campaigns-and-editors-design.md`, plans `docs/superpowers/plans/2026-10-14-{a,b,c}-*.md`, polish report in the owner's `wt/polish/polish-report.md`.
