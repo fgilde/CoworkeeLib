@@ -1,0 +1,36 @@
+{
+  "name": "@coworkee/airworks",
+  "version": "0.1.0",
+  "description": "AirWorks web desktop for Coworkee apps: sign-in through the app's BFF, theme, texts and apps for settings, profile, files, data and notifications",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "*.css"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node -e \"require('node:fs').copyFileSync('src/style.css','dist/style.css')\"",
+    "test": "node --test \"test/**/*.test.ts\""
+  },
+  "dependencies": {
+    "@coworkee/client": "^0.1.0"
+  },
+  "peerDependencies": {
+    "@fgilde/airworks": ">=0.4.0"
+  },
+  "devDependencies": {
+    "@fgilde/airworks": "git+https://github.com/fgilde/AirWorks.git#d295c659dc4267a05f8d2a530fda5861fb5d8120",
+    "typescript": "^5.9.3"
+  }
+}
