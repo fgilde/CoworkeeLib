@@ -189,6 +189,7 @@ public sealed class TemplateOptionTests(TemplateFixture template)
         package.ShouldContain("\"name\": \"shop-airworks\"");
         package.ShouldContain("file:vendor/coworkee-airworks.tgz");
         File.Exists(Path.Combine(on, "src", "Shop.AirWorks", "ClientApp", "vendor", "coworkee-client.tgz")).ShouldBeTrue();
+        Read(on, "src/Shop.AirWorks/ClientApp/.npmrc").ShouldContain("allow-git=root");
         Read(on, "LOGIN.md").ShouldContain("*shop-airworks*");
         TemplateTests.ShouldHaveNoLeftovers(on);
 
