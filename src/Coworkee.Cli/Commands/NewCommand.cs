@@ -113,6 +113,12 @@ internal static class NewCommand
             }
         }
 
+        // a local template build has no matching npm release: the AirWorks client takes the tarballs inside the template
+        if (settings.TemplateSource is not null && values["airworks"] == "true")
+        {
+            args.AddRange(["--npmPackages", "vendor"]);
+        }
+
         return [.. args];
     }
 

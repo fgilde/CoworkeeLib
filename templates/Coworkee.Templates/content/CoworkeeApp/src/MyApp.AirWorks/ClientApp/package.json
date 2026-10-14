@@ -6,8 +6,13 @@
     "build": "tsc --noEmit && vite build"
   },
   "dependencies": {
+//#if (npmPackages == "vendor")
     "@coworkee/airworks": "file:vendor/coworkee-airworks.tgz",
     "@coworkee/client": "file:vendor/coworkee-client.tgz",
+//#else
+    "@coworkee/airworks": "COWORKEE_NPM_VERSION",
+    "@coworkee/client": "COWORKEE_NPM_VERSION",
+//#endif
     "@fgilde/airworks": "git+https://github.com/fgilde/AirWorks.git#d295c659dc4267a05f8d2a530fda5861fb5d8120"
   },
   "devDependencies": {

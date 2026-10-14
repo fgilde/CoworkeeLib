@@ -9,7 +9,10 @@ public sealed class OptionTests
     private static readonly JsonElement Symbols = JsonDocument.Parse(File.ReadAllText(Path.Combine(
         Dotnet.RepositoryRoot(), "templates", "Coworkee.Templates", "content", "CoworkeeApp", ".template.config", "template.json"))).RootElement.GetProperty("symbols");
 
-    private static IEnumerable<JsonProperty> Parameters => Symbols.EnumerateObject().Where(s => s.Value.GetProperty("type").GetString() == "parameter");
+    // set by coworkee new itself, not an option of the user: npmPackages=vendor for local template builds
+    private static readonly string[] Internal = ["npmPackages"];
+
+    private static IEnumerable<JsonProperty> Parameters => Symbols.EnumerateObject().Where(s => s.Value.GetProperty("type").GetString() == "parameter" && !Internal.Contains(s.Name));
 
     [Fact]
     public void Every_template_parameter_has_a_catalog_entry_and_the_other_way_round()

@@ -262,6 +262,16 @@
       "defaultValue": "false",
       "description": "AirWorks web desktop as a second client next to the Blazor app: same sign-in, same api, apps for settings, files, data and notifications (needs Node.js)."
     },
+    "npmPackages": {
+      "type": "parameter",
+      "datatype": "choice",
+      "defaultValue": "registry",
+      "description": "Where the AirWorks client takes @coworkee/client and @coworkee/airworks from: npm in the version of this template, or the tarballs inside the template (local template builds; coworkee new --template-source picks it).",
+      "choices": [
+        { "choice": "registry", "description": "npm, the version of this template." },
+        { "choice": "vendor", "description": "The tarballs inside the template." }
+      ]
+    },
     "database": {
       "type": "parameter",
       "datatype": "choice",
@@ -1100,6 +1110,12 @@
           "condition": "(!airworks)",
           "exclude": [
             "src/MyApp.AirWorks/**"
+          ]
+        },
+        {
+          "condition": "(npmPackages != \"vendor\")",
+          "exclude": [
+            "src/MyApp.AirWorks/ClientApp/vendor/**"
           ]
         },
         {

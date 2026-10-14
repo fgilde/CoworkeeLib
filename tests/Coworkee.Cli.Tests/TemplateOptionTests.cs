@@ -187,10 +187,15 @@ public sealed class TemplateOptionTests(TemplateFixture template)
         main.ShouldNotContain("#if");
         var package = Read(on, "src/Shop.AirWorks/ClientApp/package.json");
         package.ShouldContain("\"name\": \"shop-airworks\"");
-        package.ShouldContain("file:vendor/coworkee-airworks.tgz");
-        File.Exists(Path.Combine(on, "src", "Shop.AirWorks", "ClientApp", "vendor", "coworkee-client.tgz")).ShouldBeTrue();
+        package.ShouldContain($"\"@coworkee/airworks\": \"{template.Version}\"");
+        Directory.Exists(Path.Combine(on, "src", "Shop.AirWorks", "ClientApp", "vendor")).ShouldBeFalse();
         Read(on, "LOGIN.md").ShouldContain("*shop-airworks*");
         TemplateTests.ShouldHaveNoLeftovers(on);
+
+        var vendor = await template.CreateAsync("airworks-vendor", "--airworks", "true", "--npmPackages", "vendor");
+        Read(vendor, "src/Shop.AirWorks/ClientApp/package.json").ShouldContain("file:vendor/coworkee-airworks.tgz");
+        File.Exists(Path.Combine(vendor, "src", "Shop.AirWorks", "ClientApp", "vendor", "coworkee-client.tgz")).ShouldBeTrue();
+        TemplateTests.ShouldHaveNoLeftovers(vendor);
 
         var plain = await template.CreateAsync("airworks-plain", "--airworks", "true", "--samples", "false");
         Read(plain, "src/Shop.AirWorks/ClientApp/src/main.ts").ShouldNotContain("entityApp({");
@@ -201,13 +206,14 @@ public sealed class TemplateOptionTests(TemplateFixture template)
     {
         var feed = Environment.GetEnvironmentVariable("COWORKEE_TEST_FEED");
         Assert.SkipWhen(string.IsNullOrEmpty(feed), "Set COWORKEE_TEST_FEED to a folder with packed Coworkee packages (build/pack-local.ps1) to build a generated app.");
-        var app = await template.CreateAsync("build-airworks", "--airworks", "true", "--keycloak", "true", "--grafana", "false", "--webDataStudio", "false");
+        var app = await template.CreateAsync("build-airworks", "--airworks", "true", "--npmPackages", "vendor", "--keycloak", "true", "--grafana", "false", "--webDataStudio", "false");
         await Dotnet.RunAsync(app, "nuget", "add", "source", Path.GetFullPath(feed!), "--name", "local", "--configfile", "nuget.config");
 
         await Dotnet.RunAsync(app, "build", "Shop.slnx");
 
         File.ReadAllText(Path.Combine(app, "src", "Shop.AirWorks", "wwwroot", "index.html")).ShouldContain("<title>Shop</title>");
         Directory.GetFiles(Path.Combine(app, "src", "Shop.AirWorks", "wwwroot", "icons"), "logo-air.png").ShouldNotBeEmpty();
+        File.Exists(Path.Combine(app, "src", "Shop.AirWorks", "wwwroot", "mudex", "mudex.js")).ShouldBeTrue();
     }
 
     [Fact]
