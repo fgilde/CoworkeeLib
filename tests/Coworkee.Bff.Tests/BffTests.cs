@@ -118,6 +118,26 @@ public sealed class BffTests : IAsyncLifetime
     }
 
     [Fact]
+    public void Session_cookie_keeps_the_default_name_unless_one_is_configured()
+    {
+        CookieName(_app.Services).ShouldBe(".AspNetCore.Cookies");
+
+        var builder = WebApplication.CreateBuilder();
+        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Coworkee:Bff:Authority"] = "https://auth.test",
+            ["Coworkee:Bff:ClientId"] = "airworks",
+            ["Coworkee:Bff:CookieName"] = "shop-airworks",
+        });
+        builder.AddCoworkeeBff();
+
+        CookieName(builder.Build().Services).ShouldBe("shop-airworks");
+    }
+
+    private static string? CookieName(IServiceProvider services) =>
+        services.GetRequiredService<Microsoft.Extensions.Options.IOptionsMonitor<Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationOptions>>().Get("Cookies").Cookie.Name;
+
+    [Fact]
     public async Task Login_passes_the_login_hint_to_the_identity_provider()
     {
         var response = await _client.GetAsync("/bff/login?returnUrl=/admin&loginHint=" + Uri.EscapeDataString("ada@acme.test"), TestContext.Current.CancellationToken);
