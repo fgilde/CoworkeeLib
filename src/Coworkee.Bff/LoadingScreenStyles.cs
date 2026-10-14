@@ -1,6 +1,6 @@
 namespace Coworkee.Bff;
 
-/// <summary>Style and script of <see cref="LoadingScreenMarkup"/>; both scoped to <c>#coworkee-loading</c>.</summary>
+/// <summary>Style of <see cref="LoadingScreenMarkup"/>, scoped to <c>#coworkee-loading</c>.</summary>
 internal static class LoadingScreenStyles
 {
     public const string Css = """
@@ -33,18 +33,19 @@ internal static class LoadingScreenStyles
         @keyframes cwl-pulse{50%{transform:scale(1.07);opacity:.82}}
         @media (prefers-reduced-motion:reduce){#coworkee-loading *,#coworkee-loading *::before{animation:none!important}#coworkee-loading{transition:none}
         #coworkee-loading.cwl-indeterminate .cwl-ring::before{background:conic-gradient(var(--cwl-primary) 0 30%,color-mix(in srgb,var(--cwl-ink) 14%,transparent) 0)}}
-        """;
-
-    // shortcut: an app whose layout never calls hide() (own layout, failed start) loses the screen 30 s after the download finished (or after start without
-    // progress); a start error UI would need Blazor's error event
-    public const string Script = """
-        (()=>{const el=document.getElementById('coworkee-loading');if(!el)return;const root=document.documentElement;let since=Date.now(),timer;
-        const video=el.querySelector('video');if(video&&!matchMedia('(prefers-reduced-motion: reduce)').matches)video.play().catch(()=>{});
-        const hide=()=>{clearInterval(timer);if(el.classList.contains('cwl-done'))return;el.classList.add('cwl-done');setTimeout(()=>el.remove(),600);};
-        window.coworkeeLoadingScreen={hide};
-        const tick=()=>{const p=parseFloat(getComputedStyle(root).getPropertyValue('--blazor-load-percentage'));
-        if(isNaN(p)){el.classList.add('cwl-indeterminate');el.removeAttribute('aria-valuenow');}else{el.classList.remove('cwl-indeterminate');el.setAttribute('aria-valuenow',String(Math.round(p)));if(p<100)since=Date.now();}
-        if(Date.now()-since>30000)hide();};
-        timer=setInterval(tick,100);tick();})();
+        #coworkee-loading .cwl-error{display:none;position:relative;flex-direction:column;align-items:center;gap:12px;box-sizing:border-box;width:min(520px,calc(100vw - 32px));
+        padding:28px 32px;border-radius:18px;text-align:center;background:color-mix(in srgb,var(--cwl-bg) 84%,transparent);backdrop-filter:blur(10px);
+        box-shadow:0 16px 56px color-mix(in srgb,var(--cwl-primary) 24%,transparent)}
+        #coworkee-loading.cwl-failed .cwl-center{display:none}
+        #coworkee-loading.cwl-failed .cwl-error{display:flex}
+        #coworkee-loading .cwl-error-title{font-size:20px;font-weight:600}
+        #coworkee-loading .cwl-error-text{margin:0;opacity:.85}
+        #coworkee-loading .cwl-reload{font:inherit;font-weight:600;padding:9px 26px;border:0;border-radius:999px;background:var(--cwl-primary);color:var(--cwl-on-primary);cursor:pointer}
+        #coworkee-loading .cwl-reload:focus-visible{outline:3px solid color-mix(in srgb,var(--cwl-primary) 45%,transparent);outline-offset:3px}
+        #coworkee-loading .cwl-details{align-self:stretch;font-size:12px;opacity:.8}
+        #coworkee-loading .cwl-details summary{cursor:pointer}
+        #coworkee-loading .cwl-detail{text-align:start;white-space:pre-wrap;word-break:break-word;max-height:160px;overflow:auto;margin:8px 0 0;padding:8px;border-radius:8px;
+        background:color-mix(in srgb,var(--cwl-ink) 8%,transparent)}
+        #coworkee-loading #blazor-error-ui,body:has(#coworkee-loading.cwl-failed) #blazor-error-ui{display:none!important}
         """;
 }

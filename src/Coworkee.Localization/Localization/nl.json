@@ -1203,5 +1203,12 @@
   "The image is too large.": "De afbeelding is te groot.",
   "Anyone can open this file without signing in.": "Iedereen kan dit bestand openen zonder aan te melden.",
   "Make private": "Privé maken",
-  "The file is private again.": "Het bestand is weer privé."
+  "The file is private again.": "Het bestand is weer privé.",
+  "Loading": "Laden",
+  "Reload": "Opnieuw laden",
+  "Public": "Openbaar",
+  "Copy public link": "Openbare link kopiëren",
+  "Select a file to share it.": "Selecteer een bestand om het te delen.",
+  "The app could not start.": "De app kon niet starten.",
+  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "Controleer uw verbinding en laad de pagina opnieuw. Als het opnieuw gebeurt, neem dan contact op met uw beheerder."
 }

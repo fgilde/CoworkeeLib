@@ -1203,5 +1203,12 @@
   "The image is too large.": "Billedet er for stort.",
   "Anyone can open this file without signing in.": "Alle kan åbne denne fil uden at logge ind.",
   "Make private": "Gør privat",
-  "The file is private again.": "Filen er privat igen."
+  "The file is private again.": "Filen er privat igen.",
+  "Loading": "Indlæser",
+  "Reload": "Genindlæs",
+  "Public": "Offentlig",
+  "Copy public link": "Kopiér offentligt link",
+  "Select a file to share it.": "Vælg en fil for at dele den.",
+  "The app could not start.": "Appen kunne ikke starte.",
+  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "Kontrollér din forbindelse, og genindlæs siden. Hvis det sker igen, så kontakt din administrator."
 }

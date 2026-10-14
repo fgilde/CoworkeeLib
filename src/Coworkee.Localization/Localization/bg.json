@@ -1203,5 +1203,12 @@
   "The image is too large.": "Изображението е твърде голямо.",
   "Anyone can open this file without signing in.": "Всеки може да отвори този файл без вход.",
   "Make private": "Направи личен",
-  "The file is private again.": "Файлът отново е личен."
+  "The file is private again.": "Файлът отново е личен.",
+  "Loading": "Зареждане",
+  "Reload": "Презареди",
+  "Public": "Публичен",
+  "Copy public link": "Копирай публичната връзка",
+  "Select a file to share it.": "Изберете файл, за да го споделите.",
+  "The app could not start.": "Приложението не можа да стартира.",
+  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "Проверете връзката си и презаредете страницата. Ако се случи отново, свържете се с администратора си."
 }

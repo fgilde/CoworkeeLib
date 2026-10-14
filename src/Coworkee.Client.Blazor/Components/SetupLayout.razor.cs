@@ -27,7 +27,7 @@ public partial class SetupLayout : IDisposable
             await ThemeService.LoadAsync();
             _systemDark = _provider is not null && await _provider.GetSystemDarkModeAsync();
             Refresh();
-            await JS.HideLoadingScreenAsync(ThemeService.Mode);
+            await JS.HideLoadingScreenAsync(ThemeService.Mode, null, System.Globalization.CultureInfo.CurrentUICulture.Name);
         }
     }
 

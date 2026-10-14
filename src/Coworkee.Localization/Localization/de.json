@@ -1196,12 +1196,19 @@
   "Anyone can open \"{0}\" without signing in.": "Jeder kann „{0}“ ohne Anmeldung öffnen.",
   "Make public": "Öffentlich machen",
   "Loading screen": "Ladebildschirm",
-  "Shown while the app loads, in the colours and with the logo of the default theme.": "Wird angezeigt, während die App lädt, in den Farben und mit dem Logo des Standarddesigns.",
+  "Shown while the app loads, in the colours and with the logo of the default theme.": "Wird angezeigt, während die App lädt, in den Farben und mit dem Logo des Standard-Themes.",
   "Animated background": "Animierter Hintergrund",
   "Image or video of the sign-in page": "Bild oder Video der Anmeldeseite",
   "Plain background": "Schlichter Hintergrund",
   "The image is too large.": "Das Bild ist zu groß.",
   "Anyone can open this file without signing in.": "Jeder kann diese Datei ohne Anmeldung öffnen.",
   "Make private": "Privat machen",
-  "The file is private again.": "Die Datei ist wieder privat."
+  "The file is private again.": "Die Datei ist wieder privat.",
+  "Loading": "Wird geladen",
+  "Reload": "Neu laden",
+  "Public": "Öffentlich",
+  "Copy public link": "Öffentlichen Link kopieren",
+  "Select a file to share it.": "Wählen Sie eine Datei aus, um sie zu teilen.",
+  "The app could not start.": "Die App konnte nicht starten.",
+  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "Prüfen Sie Ihre Verbindung und laden Sie die Seite neu. Wenn es wieder passiert, wenden Sie sich an Ihren Administrator."
 }

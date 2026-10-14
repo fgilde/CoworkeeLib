@@ -6,7 +6,8 @@ namespace Coworkee.Bff;
 
 /// <summary>
 /// The app's loading screen, rendered by the server into App.razor's body (static, before the WebAssembly app runs) from
-/// <see cref="LoadingScreenSource"/>; the app's layout hides it once the theme is applied.
+/// <see cref="LoadingScreenSource"/> and the visitor's <see cref="LoadingScreenPreferences"/>; the app's layout hides it once the theme is applied,
+/// a failed start turns it into an error message with a reload button.
 /// </summary>
 public sealed class CoworkeeLoadingScreen : ComponentBase
 {
@@ -19,14 +20,14 @@ public sealed class CoworkeeLoadingScreen : ComponentBase
     /// <summary>Shown when the theme has no logo, e.g. the app's icon.</summary>
     [Parameter] public string? Logo { get; set; }
 
-    // shortcut: read by screen readers only and the server knows no language before the app runs, so it stays English
-    [Parameter] public string Label { get; set; } = "Loading";
-
     protected override async Task OnInitializedAsync()
     {
         if (HttpContext is not null)
         {
-            _markup = LoadingScreenMarkup.Render(await Source.GetAsync(HttpContext), HttpContext.Request.Cookies[LoadingScreenMarkup.ModeCookie], Logo, Label);
+            var preferences = LoadingScreenPreferences.Read(HttpContext.Request);
+            var screen = Source.GetAsync(HttpContext, preferences.ThemeId);
+            var texts = Source.TextsAsync(HttpContext, preferences.Culture);
+            _markup = LoadingScreenMarkup.Render(await screen, preferences.Mode, Logo, await texts);
         }
     }
 

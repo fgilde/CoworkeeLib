@@ -1203,5 +1203,12 @@
   "The image is too large.": "Obrázek je příliš velký.",
   "Anyone can open this file without signing in.": "Kdokoli může tento soubor otevřít bez přihlášení.",
   "Make private": "Nastavit jako soukromý",
-  "The file is private again.": "Soubor je opět soukromý."
+  "The file is private again.": "Soubor je opět soukromý.",
+  "Loading": "Načítání",
+  "Reload": "Znovu načíst",
+  "Public": "Veřejný",
+  "Copy public link": "Kopírovat veřejný odkaz",
+  "Select a file to share it.": "Vyberte soubor, který chcete sdílet.",
+  "The app could not start.": "Aplikaci se nepodařilo spustit.",
+  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "Zkontrolujte připojení a načtěte stránku znovu. Pokud se to stane znovu, obraťte se na správce."
 }

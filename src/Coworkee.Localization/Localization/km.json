@@ -1203,5 +1203,12 @@
   "The image is too large.": "រូបភាពធំពេក។",
   "Anyone can open this file without signing in.": "អ្នកណាក៏អាចបើកឯកសារនេះដោយមិនចាំបាច់ចូលគណនី។",
   "Make private": "ធ្វើជាឯកជន",
-  "The file is private again.": "ឯកសារជាឯកជនវិញហើយ។"
+  "The file is private again.": "ឯកសារជាឯកជនវិញហើយ។",
+  "Loading": "កំពុងផ្ទុក",
+  "Reload": "ផ្ទុកឡើងវិញ",
+  "Public": "សាធារណៈ",
+  "Copy public link": "ចម្លងតំណសាធារណៈ",
+  "Select a file to share it.": "ជ្រើសឯកសារដើម្បីចែករំលែក។",
+  "The app could not start.": "កម្មវិធីមិនអាចចាប់ផ្តើមបានទេ។",
+  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "សូមពិនិត្យការតភ្ជាប់ ហើយផ្ទុកទំព័រឡើងវិញ។ ប្រសិនបើវាកើតឡើងម្តងទៀត សូមទាក់ទងអ្នកគ្រប់គ្រង។"
 }

@@ -117,18 +117,91 @@ public sealed class LoadingScreenTests
     }
 
     [Fact]
-    public async Task The_component_renders_the_screen_into_the_page()
+    public async Task The_component_renders_the_screen_in_the_remembered_mode_and_language()
     {
-        await using var app = await StartAsync(new Answering(HttpStatusCode.OK, JsonSerializer.Serialize(Screen(), JsonSerializerOptions.Web)));
+        var handler = new Answering(HttpStatusCode.OK, JsonSerializer.Serialize(Screen(), JsonSerializerOptions.Web), German);
+        await using var app = await StartAsync(handler);
         var context = new DefaultHttpContext { RequestServices = app.Services };
-        context.Request.Headers.Cookie = $"{LoadingScreenMarkup.ModeCookie}=dark";
-        await using var renderer = new HtmlRenderer(app.Services, NullLoggerFactory.Instance);
+        context.Request.Headers.Cookie = $"{LoadingScreenPreferences.Cookie}=mode=dark&theme={Guid.NewGuid()}&culture=de";
 
-        var html = await renderer.Dispatcher.InvokeAsync(async () =>
-            (await renderer.RenderComponentAsync<Host>(ParameterView.FromDictionary(new Dictionary<string, object?> { [nameof(Host.Context)] = context }))).ToHtmlString());
+        var html = await RenderAsync(app, context);
 
         html.ShouldContain("id=\"coworkee-loading\"");
         html.ShouldContain("--cwl-primary:#abcdef;");
+        html.ShouldContain("lang=\"de\"");
+        html.ShouldContain("aria-label=\"Wird geladen\"");
+        html.ShouldContain(">Neu laden</button>");
+        html.ShouldContain("id=\"blazor-error-ui\"");
+        // anonymous: the chosen theme is not asked for
+        handler.Requests.ShouldContain("http://api.test/api/v1/themes/loading-screen");
+    }
+
+    [Fact]
+    public async Task A_signed_in_visitor_asks_for_the_chosen_theme_and_the_answers_are_cached_per_organisation_and_theme()
+    {
+        var handler = new Answering(HttpStatusCode.OK, JsonSerializer.Serialize(Screen(), JsonSerializerOptions.Web), German);
+        await using var app = await StartAsync(handler);
+        var source = app.Services.GetRequiredService<LoadingScreenSource>();
+        var theme = Guid.NewGuid();
+        HttpContext SignedIn(string tenant) => new DefaultHttpContext
+        {
+            RequestServices = app.Services,
+            User = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity([new("tenant", tenant)], "test")),
+        };
+
+        await source.GetAsync(SignedIn("a"), theme);
+        await source.GetAsync(SignedIn("a"), theme);
+        await source.GetAsync(SignedIn("b"), theme);
+        await source.GetAsync(new DefaultHttpContext { RequestServices = app.Services }, theme);
+
+        handler.Requests.Count(r => r.EndsWith($"?themeId={theme}", StringComparison.Ordinal)).ShouldBe(2);
+        handler.Requests.ShouldContain("http://api.test/api/v1/themes/loading-screen");
+    }
+
+    [Theory]
+    [InlineData(null, "fr-CH,fr;q=0.9,en;q=0.5", "fr-CH")]
+    [InlineData("mode=light&culture=<script>", "de", "de")]
+    [InlineData(null, null, "en")]
+    public void The_language_comes_from_the_cookie_else_from_the_browser(string? cookie, string? acceptLanguage, string culture)
+    {
+        var context = new DefaultHttpContext();
+        if (cookie is not null)
+        {
+            context.Request.Headers.Cookie = $"{LoadingScreenPreferences.Cookie}={cookie}";
+        }
+
+        if (acceptLanguage is not null)
+        {
+            context.Request.Headers.AcceptLanguage = acceptLanguage;
+        }
+
+        LoadingScreenPreferences.Read(context.Request).Culture.ShouldBe(culture);
+    }
+
+    [Fact]
+    public void A_failed_start_has_a_reload_button_and_details_in_the_same_screen()
+    {
+        var html = LoadingScreenMarkup.Render(Screen(), null, null, LoadingScreenTexts.From("de", German));
+
+        html.ShouldContain("class=\"cwl-error\"");
+        html.ShouldContain(">Die App konnte nicht starten.</div>");
+        html.ShouldContain("<summary>Details</summary>");
+        html.ShouldContain("onclick=\"location.reload()\"");
+        html.ShouldContain("fail(");
+    }
+
+    private static readonly Dictionary<string, string> German = new()
+    {
+        ["Loading"] = "Wird geladen",
+        ["The app could not start."] = "Die App konnte nicht starten.",
+        ["Reload"] = "Neu laden",
+    };
+
+    private static async Task<string> RenderAsync(WebApplication app, HttpContext context)
+    {
+        await using var renderer = new HtmlRenderer(app.Services, NullLoggerFactory.Instance);
+        return await renderer.Dispatcher.InvokeAsync(async () =>
+            (await renderer.RenderComponentAsync<Host>(ParameterView.FromDictionary(new Dictionary<string, object?> { [nameof(Host.Context)] = context }))).ToHtmlString());
     }
 
     private static async Task<WebApplication> StartAsync(HttpMessageHandler handler)
@@ -144,14 +217,22 @@ public sealed class LoadingScreenTests
         return app;
     }
 
-    private sealed class Answering(HttpStatusCode status, string body) : HttpMessageHandler
+    private sealed class Answering(HttpStatusCode status, string body, Dictionary<string, string>? texts = null) : HttpMessageHandler
     {
         public List<string> Requests { get; } = [];
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            Requests.Add(request.RequestUri!.ToString());
-            return Task.FromResult(new HttpResponseMessage(status) { Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json") });
+            var url = request.RequestUri!.ToString();
+            lock (Requests)
+            {
+                Requests.Add(url);
+            }
+
+            var json = url.Contains("/localization/texts/", StringComparison.Ordinal)
+                ? JsonSerializer.Serialize(new Contracts.Localization.TextsDto("de", texts ?? []), JsonSerializerOptions.Web)
+                : body;
+            return Task.FromResult(new HttpResponseMessage(status) { Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json") });
         }
     }
 

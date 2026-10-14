@@ -1203,5 +1203,12 @@
   "The image is too large.": "Resim çok büyük.",
   "Anyone can open this file without signing in.": "Herkes bu dosyayı oturum açmadan açabilir.",
   "Make private": "Özel yap",
-  "The file is private again.": "Dosya yeniden özel."
+  "The file is private again.": "Dosya yeniden özel.",
+  "Loading": "Yükleniyor",
+  "Reload": "Yeniden yükle",
+  "Public": "Herkese açık",
+  "Copy public link": "Herkese açık bağlantıyı kopyala",
+  "Select a file to share it.": "Paylaşmak için bir dosya seçin.",
+  "The app could not start.": "Uygulama başlatılamadı.",
+  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "Bağlantınızı kontrol edip sayfayı yeniden yükleyin. Tekrar olursa yöneticinize başvurun."
 }

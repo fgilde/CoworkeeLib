@@ -1203,5 +1203,12 @@
   "The image is too large.": "Slika je prevelika.",
   "Anyone can open this file without signing in.": "Svatko može otvoriti ovu datoteku bez prijave.",
   "Make private": "Učini privatnim",
-  "The file is private again.": "Datoteka je ponovno privatna."
+  "The file is private again.": "Datoteka je ponovno privatna.",
+  "Loading": "Učitavanje",
+  "Reload": "Ponovno učitaj",
+  "Public": "Javno",
+  "Copy public link": "Kopiraj javnu poveznicu",
+  "Select a file to share it.": "Odaberite datoteku da biste je podijelili.",
+  "The app could not start.": "Aplikacija se nije mogla pokrenuti.",
+  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "Provjerite vezu i ponovno učitajte stranicu. Ako se ponovi, obratite se administratoru."
 }

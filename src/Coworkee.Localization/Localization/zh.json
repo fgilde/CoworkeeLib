@@ -1203,5 +1203,12 @@
   "The image is too large.": "图片太大。",
   "Anyone can open this file without signing in.": "任何人无需登录即可打开此文件。",
   "Make private": "设为私有",
-  "The file is private again.": "文件已重新设为私有。"
+  "The file is private again.": "文件已重新设为私有。",
+  "Loading": "正在加载",
+  "Reload": "重新加载",
+  "Public": "公开",
+  "Copy public link": "复制公开链接",
+  "Select a file to share it.": "选择要共享的文件。",
+  "The app could not start.": "应用无法启动。",
+  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "请检查网络连接并重新加载页面。如果问题再次出现,请联系管理员。"
 }

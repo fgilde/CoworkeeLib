@@ -59,6 +59,8 @@ meta.Property(p => p.LogoId).RenderWith<CoworkeeFilePicker, Guid?>(p => p.Value)
 
 A file can be public: `PUT /api/v1/files/{id}/public` with `{ "isPublic": true }` (needs `Files.Manage` on its folder, also for the uploader, because anyone can then read it). Public files are served without sign-in under `GET /api/v1/files/public/{id}/{name}` (`FileLinks.Public(id, name)`, through the web app's `/api` as well), with range support and `Cache-Control: public, max-age=300`, so a file made private again disappears from browsers within five minutes. `StoredFileDto.IsPublic` tells which files are public; the preview of a public file says so and offers *Make private*.
 
+On the *Files* page the bar above the file manager shares the selected file: *Make public* (after the question; only with `Files.Manage` on the folder) or *Make private*, and *Copy public link*. Public files carry a globe in the file area and a *Public* chip in the bar. Folders have no public state; every file is published on its own. `FilePublishing.SetPublicAsync`, `PublicLink` and `CopyPublicLinkAsync` do the same in your own pages.
+
 `PublicFileChooser.ChooseAsync(...)` picks a file for pages anyone sees: it opens the file picker, asks before it makes a private file public and returns the absolute public address. The sign-in design uses it for its image or video.
 
 ## Cloud file pickers

@@ -58,7 +58,7 @@ public sealed class CoworkeeThemingModule : CoworkeeModule, IWebModule
     {
         var themes = app.MapCoworkeeApi("/api/v1/themes").WithTags("Themes");
         themes.MapGet("/current", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetCurrentTheme(), ct).ToHttpResult()).AllowAnonymous();
-        themes.MapGet("/loading-screen", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetLoadingScreen(), ct).ToHttpResult()).AllowAnonymous();
+        themes.MapGet("/loading-screen", (Guid? themeId, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetLoadingScreen(themeId), ct).ToHttpResult()).AllowAnonymous();
         themes.MapGet("/built-in", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetBuiltInThemes(), ct).ToHttpResult()).AllowAnonymous();
         var managed = themes.MapGroup(string.Empty).RequireAuthorization();
         managed.MapGet("/", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetThemes(), ct).ToHttpResult());

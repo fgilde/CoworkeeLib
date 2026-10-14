@@ -1203,5 +1203,12 @@
   "The image is too large.": "Изображение слишком большое.",
   "Anyone can open this file without signing in.": "Любой может открыть этот файл без входа.",
   "Make private": "Сделать личным",
-  "The file is private again.": "Файл снова личный."
+  "The file is private again.": "Файл снова личный.",
+  "Loading": "Загрузка",
+  "Reload": "Перезагрузить",
+  "Public": "Общедоступный",
+  "Copy public link": "Копировать общедоступную ссылку",
+  "Select a file to share it.": "Выберите файл, чтобы поделиться им.",
+  "The app could not start.": "Не удалось запустить приложение.",
+  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "Проверьте подключение и перезагрузите страницу. Если это повторится, обратитесь к администратору."
 }

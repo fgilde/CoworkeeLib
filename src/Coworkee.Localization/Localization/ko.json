@@ -1203,5 +1203,12 @@
   "The image is too large.": "이미지가 너무 큽니다.",
   "Anyone can open this file without signing in.": "로그인하지 않아도 누구나 이 파일을 열 수 있습니다.",
   "Make private": "비공개로 전환",
-  "The file is private again.": "파일이 다시 비공개가 되었습니다."
+  "The file is private again.": "파일이 다시 비공개가 되었습니다.",
+  "Loading": "로드 중",
+  "Reload": "새로 고침",
+  "Public": "공개",
+  "Copy public link": "공개 링크 복사",
+  "Select a file to share it.": "공유할 파일을 선택하세요.",
+  "The app could not start.": "앱을 시작할 수 없습니다.",
+  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "연결을 확인하고 페이지를 새로 고치세요. 다시 발생하면 관리자에게 문의하세요."
 }

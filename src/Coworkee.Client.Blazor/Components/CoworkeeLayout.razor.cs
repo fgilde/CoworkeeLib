@@ -20,7 +20,7 @@ public partial class CoworkeeLayout : IAsyncDisposable
     private MudThemeProvider? _provider;
     private string? _logo;
     private bool _started;
-    private string? _shownMode;
+    private (string Mode, Guid? Id, string Culture)? _shown;
 
     [Inject] private IJSRuntime JS { get; set; } = null!;
 
@@ -84,10 +84,11 @@ public partial class CoworkeeLayout : IAsyncDisposable
         }
 
         await ApplyFaviconAsync();
-        if (_visible && _started && ThemeService.Mode != _shownMode)
+        var shown = (ThemeService.Mode, ThemeService.Current?.Id, L.Culture);
+        if (_visible && _started && shown != _shown)
         {
-            _shownMode = ThemeService.Mode;
-            await JS.HideLoadingScreenAsync(_shownMode);
+            _shown = shown;
+            await JS.HideLoadingScreenAsync(shown.Mode, shown.Id, shown.Culture);
         }
     }
 

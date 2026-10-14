@@ -1203,5 +1203,12 @@
   "The image is too large.": "La imagen es demasiado grande.",
   "Anyone can open this file without signing in.": "Cualquiera puede abrir este archivo sin iniciar sesión.",
   "Make private": "Hacer privado",
-  "The file is private again.": "El archivo vuelve a ser privado."
+  "The file is private again.": "El archivo vuelve a ser privado.",
+  "Loading": "Cargando",
+  "Reload": "Recargar",
+  "Public": "Público",
+  "Copy public link": "Copiar enlace público",
+  "Select a file to share it.": "Seleccione un archivo para compartirlo.",
+  "The app could not start.": "La aplicación no pudo iniciarse.",
+  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "Compruebe su conexión y vuelva a cargar la página. Si vuelve a ocurrir, póngase en contacto con su administrador."
 }

@@ -1203,5 +1203,12 @@
   "The image is too large.": "Gambar terlalu besar.",
   "Anyone can open this file without signing in.": "Siapa pun dapat membuka file ini tanpa masuk.",
   "Make private": "Jadikan pribadi",
-  "The file is private again.": "File kembali pribadi."
+  "The file is private again.": "File kembali pribadi.",
+  "Loading": "Memuat",
+  "Reload": "Muat ulang",
+  "Public": "Publik",
+  "Copy public link": "Salin tautan publik",
+  "Select a file to share it.": "Pilih file untuk membagikannya.",
+  "The app could not start.": "Aplikasi tidak dapat dimulai.",
+  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "Periksa koneksi Anda dan muat ulang halaman. Jika terjadi lagi, hubungi administrator Anda."
 }

@@ -20,6 +20,9 @@ public sealed class LoadingScreenAndPublicMediaTests : ClientTestBase
 {
     private const string Svg = "<svg xmlns=\"http://www.w3.org/2000/svg\"/>";
 
+    private static readonly ThemeDto Theme = new(Guid.NewGuid(), "Brand", false, true, JsonSerializer.SerializeToElement(new { }), JsonSerializer.SerializeToElement(new { }),
+        null, null, null, null, 1);
+
     private readonly IFilesApi _files = Substitute.For<IFilesApi>();
     private readonly BunitJSModuleInterop _module;
     private readonly StoredFileDto _video = new(Guid.CreateVersion7(), null, "welcome.mp4", "video/mp4", 2048, DateTimeOffset.UtcNow, null);
@@ -45,11 +48,12 @@ public sealed class LoadingScreenAndPublicMediaTests : ClientTestBase
     public void The_layout_hides_the_loading_screen_with_the_users_colour_mode_once_the_theme_is_applied()
     {
         Api.GetSetupStatusAsync(Arg.Any<CancellationToken>()).Returns(new SetupStatusDto(true));
+        Api.GetCurrentThemeAsync(default).ReturnsForAnyArgs(Theme);
         AddAuthorization().SetAuthorized("Ada");
 
         Render<CoworkeeLayout>(p => p.Add(l => l.Body, (RenderFragment)(b => b.AddContent(0, "body"))));
 
-        WaitForAssertion(() => _module.Invocations["hideLoadingScreen"].ShouldHaveSingleItem().Arguments.ShouldBe(["dark"]));
+        WaitForAssertion(() => _module.Invocations["hideLoadingScreen"].ShouldHaveSingleItem().Arguments.ShouldBe(["dark", Theme.Id.ToString(), "en"]));
     }
 
     [Fact]

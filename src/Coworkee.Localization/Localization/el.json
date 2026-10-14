@@ -1203,5 +1203,12 @@
   "The image is too large.": "Η εικόνα είναι πολύ μεγάλη.",
   "Anyone can open this file without signing in.": "Οποιοσδήποτε μπορεί να ανοίξει αυτό το αρχείο χωρίς σύνδεση.",
   "Make private": "Να γίνει ιδιωτικό",
-  "The file is private again.": "Το αρχείο είναι ξανά ιδιωτικό."
+  "The file is private again.": "Το αρχείο είναι ξανά ιδιωτικό.",
+  "Loading": "Φόρτωση",
+  "Reload": "Επαναφόρτωση",
+  "Public": "Δημόσιο",
+  "Copy public link": "Αντιγραφή δημόσιου συνδέσμου",
+  "Select a file to share it.": "Επιλέξτε ένα αρχείο για να το μοιραστείτε.",
+  "The app could not start.": "Η εφαρμογή δεν μπόρεσε να ξεκινήσει.",
+  "Check your connection and reload the page. If it keeps happening, contact your administrator.": "Ελέγξτε τη σύνδεσή σας και φορτώστε ξανά τη σελίδα. Αν συμβεί ξανά, επικοινωνήστε με τον διαχειριστή σας."
 }

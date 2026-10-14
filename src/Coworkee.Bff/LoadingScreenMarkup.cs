@@ -8,30 +8,29 @@ namespace Coworkee.Bff;
 
 /// <summary>
 /// The loading screen as HTML with inline style and script (no other request, no flash of wrong colours): the theme's colours for the
-/// remembered colour mode (<see cref="ModeCookie"/>) or the system preference, the logo in a ring that follows Blazor's
-/// <c>--blazor-load-percentage</c>, and the chosen background. The app removes it through <c>window.coworkeeLoadingScreen.hide()</c>.
+/// remembered colour mode or the system preference, the logo in a ring that follows Blazor's <c>--blazor-load-percentage</c>, the chosen
+/// background and, hidden until the start fails, an error message with a reload button. The app removes it through <c>window.coworkeeLoadingScreen.hide()</c>.
 /// </summary>
 public static partial class LoadingScreenMarkup
 {
-    /// <summary>"light", "dark" or "system", written by the app's layout.</summary>
-    public const string ModeCookie = "coworkee-theme-mode";
-
     private static readonly string[] VideoExtensions = [".mp4", ".webm", ".ogg", ".ogv", ".mov"];
 
     private static readonly (string Variable, string Palette, string Light, string Dark)[] Colors =
     [
         ("--cwl-primary", "Primary", "#594ae2", "#776be7"), ("--cwl-secondary", "Secondary", "#ff4081", "#ff4081"),
         ("--cwl-tertiary", "Tertiary", "#1ec8a5", "#1ec8a5"), ("--cwl-bg", "Background", "#ffffff", "#1a1a27"), ("--cwl-ink", "TextPrimary", "#424242", "#ffffffb3"),
+        ("--cwl-on-primary", "PrimaryContrastText", "#ffffff", "#ffffff"),
     ];
 
-    public static string Render(LoadingScreenDto? screen, string? mode, string? fallbackLogo, string label = "Loading")
+    public static string Render(LoadingScreenDto? screen, string? mode, string? fallbackLogo, LoadingScreenTexts? texts = null)
     {
+        texts ??= LoadingScreenTexts.English;
         var theme = screen?.Theme;
         var media = screen?.Background == LoadingScreenBackground.SignInMedia ? SafeUrl(screen.MediaUrl) : null;
         var background = screen?.Background == LoadingScreenBackground.Plain ? "plain" : media is null ? "animated" : "media";
         var logo = ThemeLogo.ToDataUrl(theme?.Logo) ?? SafeUrl(fallbackLogo);
         var html = new StringBuilder(8 * 1024);
-        html.Append($"<div id=\"coworkee-loading\" class=\"cwl-indeterminate\" data-background=\"{background}\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-label=\"{Encode(label)}\">");
+        html.Append($"<div id=\"coworkee-loading\" class=\"cwl-indeterminate\" data-background=\"{background}\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-label=\"{Encode(texts.Loading)}\" lang=\"{Encode(texts.Culture)}\">");
         html.Append("<style>").Append(Variables(theme, mode)).Append(LoadingScreenStyles.Css).Append("</style>");
         if (background != "plain")
         {
@@ -51,7 +50,13 @@ public static partial class LoadingScreenMarkup
         html.Append("<div class=\"cwl-center\"><div class=\"cwl-ring\">");
         html.Append(logo is null ? "<span class=\"cwl-mark\"></span>" : $"<img class=\"cwl-logo\" src=\"{Encode(logo)}\" alt=\"\">");
         html.Append("</div><div class=\"cwl-text\" aria-hidden=\"true\"></div></div>");
-        html.Append("<script>").Append(LoadingScreenStyles.Script).Append("</script></div>");
+        html.Append($"<div class=\"cwl-error\" dir=\"auto\"><div class=\"cwl-error-title\">{Encode(texts.Title)}</div><p class=\"cwl-error-text\">{Encode(texts.Message)}</p>");
+        html.Append($"<button type=\"button\" class=\"cwl-reload\" onclick=\"location.reload()\">{Encode(texts.Reload)}</button>");
+        html.Append($"<details class=\"cwl-details\"><summary>{Encode(texts.Details)}</summary><pre class=\"cwl-detail\"></pre></details></div>");
+
+        // Blazor shows the first #blazor-error-ui of the page when the start fails: this hidden one tells the script (an app's own one comes later)
+        html.Append("<div id=\"blazor-error-ui\" class=\"cwl-blazor-error\"></div>");
+        html.Append("<script>").Append(LoadingScreenScript.Source).Append("</script></div>");
         return html.ToString();
     }
 

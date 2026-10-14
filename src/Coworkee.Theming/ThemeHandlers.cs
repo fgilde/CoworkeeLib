@@ -15,6 +15,9 @@ public sealed record GetThemes : IQuery<Result<IReadOnlyList<ThemeDto>>>;
 
 public sealed record GetCurrentTheme : IQuery<Result<ThemeDto>>;
 
+/// <summary>A theme every member of the signed-in user's organisation may choose (built-in or published), whoever asks; not found otherwise.</summary>
+public sealed record GetChoosableTheme(Guid Id) : IQuery<Result<ThemeDto>>;
+
 /// <summary>The themes that ship with the app, for anyone (setup offers them before there is an organisation).</summary>
 public sealed record GetBuiltInThemes : IQuery<Result<IReadOnlyList<ThemeDto>>>;
 
@@ -33,6 +36,7 @@ public sealed record SetDefaultTheme(Guid Id) : ICommand<Result>;
 internal sealed class ThemeHandlers(CoworkeeDbContext db, ICurrentUser currentUser, IPermissionChecker permissions, IServiceProvider services, IOptions<ThemingOptions> options)
     : IHandler<GetThemes, Result<IReadOnlyList<ThemeDto>>>,
       IHandler<GetCurrentTheme, Result<ThemeDto>>,
+      IHandler<GetChoosableTheme, Result<ThemeDto>>,
       IHandler<GetBuiltInThemes, Result<IReadOnlyList<ThemeDto>>>,
       IHandler<CreateTheme, Result<ThemeDto>>,
       IHandler<UpdateTheme, Result<ThemeDto>>,
@@ -69,6 +73,18 @@ internal sealed class ThemeHandlers(CoworkeeDbContext db, ICurrentUser currentUs
         await ThemeSeeds.EnsureAsync(db, options.Value, cancellationToken);
         var tenantId = currentUser.TenantId ?? await SystemTenantIdAsync(cancellationToken);
         return await EffectiveAsync(tenantId, cancellationToken) is { } theme ? ToDto(theme, true) : NotFound;
+    }
+
+    // independent of the caller's permissions, so the answer is the same for everyone in the organisation (the web app caches it per organisation)
+    public async Task<Result<ThemeDto>> HandleAsync(GetChoosableTheme query, CancellationToken cancellationToken)
+    {
+        if (!currentUser.IsAuthenticated || currentUser.TenantId is null)
+        {
+            return NotFound;
+        }
+
+        var theme = await Visible().AsNoTracking().SingleOrDefaultAsync(t => t.Id == query.Id && (t.TenantId == null || t.IsPublished), cancellationToken);
+        return theme is null ? NotFound : ToDto(theme, false);
     }
 
     public async Task<Result<ThemeDto>> HandleAsync(CreateTheme command, CancellationToken cancellationToken)
