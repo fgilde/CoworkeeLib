@@ -71,6 +71,7 @@ export const filesApp = (coworkee: Coworkee): CoworkeeApp => ({
 
     const upload = (files: FileList | File[]) => run(async () => { for (const file of [...files]) await uploadFile(file, folderId()); });
 
+    // shortcut: names and confirmations through the browser's prompt/confirm, an AirWorks dialog once one is wanted
     host.addEventListener('click', (event) => {
       const target = event.target as Element;
       const action = target.closest<HTMLElement>('[data-action]')?.dataset.action;
