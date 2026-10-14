@@ -215,6 +215,44 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
             $"{Mail}/outgoing?page={page.Page}&pageSize={page.PageSize}&search={Uri.EscapeDataString(page.Search ?? string.Empty)}{(status is null ? string.Empty : "&status=" + status)}",
             cancellationToken);
 
+    public Task<RecipientPreviewDto> PreviewRecipientsAsync(RecipientSourceDto source, CancellationToken cancellationToken = default) =>
+        SendAsync<RecipientPreviewDto>(HttpMethod.Post, $"{Mail}/recipients/preview", source, cancellationToken);
+
+    public async Task<IReadOnlyList<RecipientListDto>> GetRecipientListsAsync(CancellationToken cancellationToken = default) =>
+        await GetAsync<RecipientListDto[]>($"{Mail}/recipient-lists", cancellationToken);
+
+    public Task<RecipientListDto> SaveRecipientListAsync(SaveRecipientListRequest request, CancellationToken cancellationToken = default) =>
+        SendAsync<RecipientListDto>(HttpMethod.Post, $"{Mail}/recipient-lists", request, cancellationToken);
+
+    public Task UpdateRecipientListAsync(Guid id, SaveRecipientListRequest request, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Put, $"{Mail}/recipient-lists/{id}", request, cancellationToken);
+
+    public Task DeleteRecipientListAsync(Guid id, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Delete, $"{Mail}/recipient-lists/{id}", null, cancellationToken);
+
+    public async Task<IReadOnlyList<MailCampaignDto>> GetMailCampaignsAsync(CancellationToken cancellationToken = default) =>
+        await GetAsync<MailCampaignDto[]>($"{Mail}/campaigns", cancellationToken);
+
+    public Task<MailCampaignDto> GetMailCampaignAsync(Guid id, CancellationToken cancellationToken = default) =>
+        GetAsync<MailCampaignDto>($"{Mail}/campaigns/{id}", cancellationToken);
+
+    public Task<MailCampaignDto> SaveMailCampaignAsync(Guid? id, SaveMailCampaignRequest request, CancellationToken cancellationToken = default) =>
+        id is { } existing
+            ? SendAsync<MailCampaignDto>(HttpMethod.Put, $"{Mail}/campaigns/{existing}", request, cancellationToken)
+            : SendAsync<MailCampaignDto>(HttpMethod.Post, $"{Mail}/campaigns", request, cancellationToken);
+
+    public Task DeleteMailCampaignAsync(Guid id, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Delete, $"{Mail}/campaigns/{id}", null, cancellationToken);
+
+    public Task SendMailCampaignTestAsync(Guid id, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Post, $"{Mail}/campaigns/{id}/test", null, cancellationToken);
+
+    public Task<MailCampaignDto> ScheduleMailCampaignAsync(Guid id, DateTimeOffset? at, CancellationToken cancellationToken = default) =>
+        SendAsync<MailCampaignDto>(HttpMethod.Post, $"{Mail}/campaigns/{id}/schedule", new ScheduleMailCampaignRequest(at), cancellationToken);
+
+    public Task CancelMailCampaignAsync(Guid id, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Post, $"{Mail}/campaigns/{id}/cancel", null, cancellationToken);
+
     public async Task<IReadOnlyDictionary<string, string?>> GetClientSettingsAsync(CancellationToken cancellationToken = default) =>
         await GetAsync<Dictionary<string, string?>>($"{Settings}/client", cancellationToken);
 

@@ -34,6 +34,29 @@ Neben dem Editor listet **Platzhalter** alle Variablen der Vorlage mit Typ und B
 !!! note
     Die Platzhalterliste des visuellen Editors durchsucht nur Buchstaben; tippen Sie also einen Teil des Namens wie `first` und nicht `user.first`.
 
+## Kampagnen
+
+**Administration > Communication > Mail campaigns** (/admin/mail/campaigns, Berechtigung Mail.Campaigns.Send) versendet eine eigene Vorlage an viele Benutzer Ihrer Organisation. Eine Kampagne erreicht immer nur Benutzer der Organisation dessen, der sie versendet, auch bei der Systemorganisation. Eingebaute Vorlagen lassen sich nicht versenden, sie brauchen ein eigenes Modell; kopieren Sie eine, um zuerst eine eigene Vorlage zu erhalten.
+
+**Neue Kampagne** öffnet einen Assistenten mit drei Schritten:
+
+1. **Vorlage**: eine eigene Vorlage wählen und die Kampagne benennen.
+2. **Empfänger**: festlegen, wer sie erhält, siehe unten. Das Feld unter der Auswahl zeigt immer, wie viele Benutzer das sind, wie viele ausgeschlossen wurden und die ersten Empfänger.
+3. **Senden**: Zusammenfassung, **Testmail an mich senden** (schickt die Vorlage an Ihre eigene Adresse), **Jetzt senden** oder **Planen** mit Datum und Uhrzeit. Beides fragt noch einmal mit der Anzahl der Empfänger nach.
+
+Empfänger stammen aus einer dieser Quellen:
+
+- **Intelligente Liste**: eine Voreinstellung (alle aktiven Benutzer; seit mehr als N Tagen nicht angemeldet, Standard 30; noch nie angemeldet; in den letzten N Tagen registriert; E-Mail nicht bestätigt; Mitglieder von Rollen; deaktivierte Benutzer), eine **gespeicherte Liste** oder eine **eigene Abfrage**, gebaut mit demselben Abfrage-Editor wie der erweiterte Filter der Benutzertabelle. **Als Liste speichern** legt eine Abfrage unter einem Namen für spätere Kampagnen ab; eine gespeicherte Liste wird in die Kampagne kopiert, spätere Änderungen oder das Löschen der Liste ändern eine bereits geplante Kampagne also nicht.
+- **Manuelle Auswahl**: die Benutzertabelle mit Kontrollkästchen. Suche, Facetten und der erweiterte Filter grenzen sie vorab ein. **Alle Treffer auswählen** wechselt von den angekreuzten Zeilen zu allen Benutzern, die dem aktuellen Filter entsprechen, auch auf anderen Seiten.
+
+Benutzer ohne E-Mail-Adresse, gesperrte Benutzer und Benutzer, die **Newsletter erhalten** abgeschaltet haben, werden nie angeschrieben; deaktivierte Benutzer nur mit der Voreinstellung *Deaktivierte Benutzer*. Sie werden als ausgeschlossen gezählt. Die Empfänger werden beim Start der Kampagne aufgelöst, nicht bei der Auswahl; eine geplante Kampagne erreicht also die Benutzer dieses Zeitpunkts. Jede Mail wird in der Sprache des Empfängers erzeugt: der des Benutzers, sonst der der Organisation, sonst der Standardsprache.
+
+Jede Kampagnenmail endet mit einem Abmeldelink. Er öffnet ohne Anmeldung eine Bestätigungsseite; die Bestätigung schaltet die Einstellung **Newsletter erhalten** (`Mail.Newsletters`, standardmäßig an) für diesen Benutzer ab. Benutzer können sie in ihren eigenen Einstellungen wieder einschalten. Der Link trägt ein signiertes Token und läuft nicht ab.
+
+Die Liste zeigt jede Kampagne mit Status, `Gesendet/Gesamt` und einer roten Zahl *fehlgeschlagen*, wenn Mails nicht zugestellt werden konnten; sie aktualisiert sich alle fünf Sekunden, solange eine Kampagne sendet. Die Log-Schaltfläche öffnet das Mail-Log gefiltert auf diese Kampagne (`/admin/mail/log?campaign=<id>`). **Kampagne abbrechen** gibt es für geplante und sendende Kampagnen: Es werden keine weiteren Empfänger eingereiht, noch wartende Mails werden aus der Warteschlange entfernt; bereits gesendete bleiben gesendet. Andere Kampagnen lassen sich löschen.
+
+!!! warning
+    Links in Kampagnenmails brauchen eine absolute Adresse. Setzen Sie `Coworkee:Notifications:PublicAppUrl` (zum Beispiel `https://app.example.com`); ohne sie lässt sich keine Kampagne starten oder planen. Das Abmelde-Token ist mit ASP.NET Core Data Protection geschützt: Läuft der Kampagnen-Job in einem anderen Host als die Web-App, müssen beide denselben Data-Protection-Schlüsselring teilen, sonst öffnen sich die Links nicht.
 ## Anbieter
 
 Mails verlassen das System über genau einen *Anbieter*. `Mail.Provider` wählt ihn, die übrigen Einstellungen gehören zum Anbieter und stehen in derselben Gruppe. Jeder Anbieter braucht eine Absenderadresse (`Mail.From`); die optionale Whitelist (`Mail.Whitelist`, eine Adresse oder `@domain` je Zeile, leer erlaubt alle) gilt für alle.

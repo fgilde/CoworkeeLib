@@ -1,0 +1,51 @@
+@page "/admin/mail/campaigns"
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + MailPermissions.Campaigns.Send)]
+
+<PageHeader Title="Mail campaigns" Description="Send one of your mail templates to many users of this organisation, now or at a chosen time.">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" OnClick="CreateAsync" data-testid="new-campaign">@L["New campaign"]</MudButton>
+</PageHeader>
+<MudSimpleTable Dense="Density.Dense" Hover="true">
+    <thead><tr><th>@L["Name"]</th><th>@L["Template"]</th><th>@L["Status"]</th><th>@L["Sent"]</th><th>@L["Date"]</th><th></th></tr></thead>
+    <tbody>
+        @foreach (var campaign in _campaigns)
+        {
+            <tr data-testid="@($"campaign-{campaign.Id}")">
+                <td>
+                    @campaign.Name
+                    @if (campaign.Error is { } error)
+                    {
+                        <MudTooltip Text="@error"><MudIcon Icon="@Icons.Material.Outlined.Info" Size="Size.Small" Color="Color.Error" /></MudTooltip>
+                    }
+                </td>
+                <td><MudText Typo="Typo.caption">@campaign.TemplateName</MudText></td>
+                <td><MudChip T="string" Size="Size.Small" Color="@ColorFor(campaign.Status)">@L[campaign.Status.ToString()]</MudChip></td>
+                <td>
+                    <span data-testid="@($"campaign-progress-{campaign.Id}")">@campaign.Sent/@campaign.Total</span>
+                    @if (campaign.Failed > 0)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Error" data-testid="@($"campaign-failed-{campaign.Id}")">@L["{0} failed", campaign.Failed]</MudChip>
+                    }
+                    @if (campaign.Status == MailCampaignStatus.Sending && campaign.Total > 0)
+                    {
+                        <MudProgressLinear Value="@((campaign.Sent + campaign.Failed) * 100.0 / campaign.Total)" Size="Size.Small" Color="Color.Primary" />
+                    }
+                </td>
+                <td>@(When(campaign)?.ToLocalTime().ToString("g"))</td>
+                <td style="text-align:right;white-space:nowrap">
+                    <MudIconButton Icon="@Icons.Material.Outlined.ListAlt" Size="Size.Small" Href="@($"/admin/mail/log?campaign={campaign.Id}")" aria-label="@L["Mail log"]"
+                                   data-testid="@($"campaign-log-{campaign.Id}")" />
+                    @if (campaign.Status is MailCampaignStatus.Scheduled or MailCampaignStatus.Sending)
+                    {
+                        <MudIconButton Icon="@Icons.Material.Outlined.Cancel" Size="Size.Small" Color="Color.Warning" aria-label="@L["Cancel campaign"]" Disabled="_busy"
+                                       OnClick="() => CancelAsync(campaign)" data-testid="@($"cancel-campaign-{campaign.Id}")" />
+                    }
+                    else
+                    {
+                        <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" aria-label="@L["Delete"]" Disabled="_busy"
+                                       OnClick="() => DeleteAsync(campaign)" data-testid="@($"delete-campaign-{campaign.Id}")" />
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</MudSimpleTable>

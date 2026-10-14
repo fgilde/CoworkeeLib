@@ -150,6 +150,32 @@ public interface ICoworkeeApi
 
     Task<PagedResult<OutgoingMailDto>> GetOutgoingMailsAsync(PageRequest page, OutgoingMailStatus? status, CancellationToken cancellationToken = default);
 
+    Task<RecipientPreviewDto> PreviewRecipientsAsync(RecipientSourceDto source, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<RecipientListDto>> GetRecipientListsAsync(CancellationToken cancellationToken = default);
+
+    Task<RecipientListDto> SaveRecipientListAsync(SaveRecipientListRequest request, CancellationToken cancellationToken = default);
+
+    Task UpdateRecipientListAsync(Guid id, SaveRecipientListRequest request, CancellationToken cancellationToken = default);
+
+    Task DeleteRecipientListAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<MailCampaignDto>> GetMailCampaignsAsync(CancellationToken cancellationToken = default);
+
+    Task<MailCampaignDto> GetMailCampaignAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>Creates the campaign, or changes a draft when <paramref name="id"/> is set.</summary>
+    Task<MailCampaignDto> SaveMailCampaignAsync(Guid? id, SaveMailCampaignRequest request, CancellationToken cancellationToken = default);
+
+    Task DeleteMailCampaignAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task SendMailCampaignTestAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>Starts the campaign at <paramref name="at"/>, now when <c>null</c>.</summary>
+    Task<MailCampaignDto> ScheduleMailCampaignAsync(Guid id, DateTimeOffset? at, CancellationToken cancellationToken = default);
+
+    Task CancelMailCampaignAsync(Guid id, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyDictionary<string, string?>> GetClientSettingsAsync(CancellationToken cancellationToken = default);
 
     Task<ThemeDto> GetCurrentThemeAsync(CancellationToken cancellationToken = default);

@@ -1,0 +1,66 @@
+<MudDialog>
+    <DialogContent>
+        <MudStack Row="true" Spacing="2" Class="mb-4">
+            @for (var i = 0; i < Steps.Length; i++)
+            {
+                var step = i;
+                <MudChip T="string" Size="Size.Small" Color="@(step == _step ? Color.Primary : Color.Default)" Variant="@(step <= _step ? Variant.Filled : Variant.Outlined)"
+                         data-testid="@($"wizard-step-{step}")">@(step + 1). @L[Steps[step]]</MudChip>
+            }
+        </MudStack>
+        <div hidden="@(_step != 0)">
+            @if (_templates.Count == 0)
+            {
+                <MudAlert Severity="Severity.Info" Class="mb-3" data-testid="no-templates">@L["There are no own mail templates yet. Create one first."]</MudAlert>
+            }
+            <MudSelect T="string" Value="_template" ValueChanged="TemplateChanged" Label="@L["Template"]" Required="true" Variant="Variant.Outlined" Margin="Density.Margin"
+                       data-testid="campaign-template">
+                @foreach (var template in _templates)
+                {
+                    <MudSelectItem T="string" Value="@template.Name">@template.DisplayName</MudSelectItem>
+                }
+            </MudSelect>
+            <MudLink Href="/admin/mail/templates" Target="_blank" Typo="Typo.caption">@L["New template"]</MudLink>
+            <MudTextField T="string" @bind-Value="_name" Immediate="true" Label="@L["Name"]" Required="true" MaxLength="256" Variant="Variant.Outlined" Margin="Density.Margin"
+                          Class="mt-3" data-testid="campaign-name" />
+        </div>
+        <div hidden="@(_step != 1)">
+            @if (_recipientsVisited)
+            {
+                <RecipientPicker SourceChanged="source => _source = source" PreviewChanged="preview => _preview = preview" />
+            }
+        </div>
+        <div hidden="@(_step != 2)">
+            <MudSimpleTable Dense="true" Class="mb-3">
+                <tbody>
+                    <tr><th>@L["Name"]</th><td>@_name</td></tr>
+                    <tr><th>@L["Template"]</th><td>@TemplateTitle</td></tr>
+                    <tr><th>@L["Recipients"]</th><td data-testid="summary-count">@L["{0} recipients", _preview?.Count ?? 0]</td></tr>
+                </tbody>
+            </MudSimpleTable>
+            <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3">@L["Each recipient gets the mail in their own language: the user's, else the organisation's, else the default."]</MudAlert>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Send" Disabled="_busy" OnClick="SendTestAsync" data-testid="send-test">@L["Send test to me"]</MudButton>
+            <MudDivider Class="my-4" />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_busy" OnClick="() => StartAsync(null)" data-testid="send-now">@L["Send now"]</MudButton>
+            <MudText Typo="Typo.subtitle2" Class="mt-4">@L["Schedule"]</MudText>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                <MudDatePicker Date="_date" DateChanged="date => _date = date" Label="@L["Date"]" Variant="Variant.Outlined" Margin="Density.Margin" Style="max-width:200px" data-testid="schedule-date" />
+                <MudTimePicker Time="_time" TimeChanged="time => _time = time" Label="@L["Time"]" Variant="Variant.Outlined" Margin="Density.Margin" Style="max-width:160px" data-testid="schedule-time" />
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" Disabled="@(_busy || _date is null || _time is null)" OnClick="() => StartAsync(ScheduledAt())"
+                           data-testid="schedule">@L["Schedule"]</MudButton>
+            </MudStack>
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog.Cancel()">@L["Cancel"]</MudButton>
+        <MudSpacer />
+        @if (_step > 0)
+        {
+            <MudButton OnClick="Back" data-testid="wizard-back">@L["Back"]</MudButton>
+        }
+        @if (_step < Steps.Length - 1)
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="!CanContinue" OnClick="Next" data-testid="wizard-next">@L["Next"]</MudButton>
+        }
+    </DialogActions>
+</MudDialog>

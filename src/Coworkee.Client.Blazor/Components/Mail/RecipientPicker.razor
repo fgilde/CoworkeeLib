@@ -1,0 +1,91 @@
+<MudTabs ActivePanelIndex="_tab" ActivePanelIndexChanged="TabChangedAsync" Elevation="0">
+    <MudTabPanel Text="@L["Smart list"]" data-testid="tab-smart">
+        <div class="pa-4">
+            <MudSelect T="string" Value="_choice" ValueChanged="ChooseAsync" Label="@L["Recipients"]" Variant="Variant.Outlined" Margin="Density.Margin" data-testid="smart-choice">
+                @foreach (var preset in Presets)
+                {
+                    <MudSelectItem T="string" Value="@($"preset:{preset}")">@L[PresetLabel(preset)]</MudSelectItem>
+                }
+                @foreach (var list in _lists)
+                {
+                    <MudSelectItem T="string" Value="@($"list:{list.Id}")">@L["List: {0}", list.Name]</MudSelectItem>
+                }
+                <MudSelectItem T="string" Value="@QueryChoice">@L["Custom query"]</MudSelectItem>
+            </MudSelect>
+            @if (Preset is RecipientPreset.NotSignedInSince or RecipientPreset.SignedUpWithin)
+            {
+                <MudNumericField T="int" Value="_days" ValueChanged="DaysChangedAsync" Min="1" Max="3650" Label="@L["Days"]" Variant="Variant.Outlined" Margin="Density.Margin"
+                                 Class="mt-3" data-testid="preset-days" />
+            }
+            @if (Preset is RecipientPreset.InRoles)
+            {
+                <MudSelect T="Guid" MultiSelection="true" SelectedValues="_roleIds" SelectedValuesChanged="RolesChangedAsync" ToStringFunc="RoleName" Label="@L["Roles"]"
+                           Variant="Variant.Outlined" Margin="Density.Margin" Class="mt-3" data-testid="preset-roles">
+                    @foreach (var role in _roles)
+                    {
+                        <MudSelectItem T="Guid" Value="@role.Id">@role.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+            @if (List is { } saved)
+            {
+                <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" StartIcon="@Icons.Material.Outlined.Delete" Class="mt-2" Disabled="_busy"
+                           OnClick="() => DeleteListAsync(saved)" data-testid="delete-list">@L["Delete list"]</MudButton>
+            }
+            @if (_choice == QueryChoice)
+            {
+                <div class="mt-3">
+                    <QueryBuilder Fields="Fields" Value="_query" ValueChanged="QueryChangedAsync" Localize="Translate" />
+                </div>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Outlined.Save" Class="mt-2" Disabled="@(_busy || _source is not { Kind: RecipientSourceKind.Query })"
+                           OnClick="SaveListAsync" data-testid="save-list">@L["Save as list"]</MudButton>
+            }
+        </div>
+    </MudTabPanel>
+    <MudTabPanel Text="@L["Manual selection"]" data-testid="tab-manual">
+        <div class="pa-4">
+            <CoworkeeDataTable @ref="_table" T="UserRow" EntitySet="Users" StateKey="campaign-users" UrlState="false" SavedViews="false" MultiSelection="true"
+                               SearchFields="SearchFields" Exportable="false" Groupable="false" SelectedItemsChanged="SelectionChangedAsync">
+                <ToolBarContent>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small" Class="mb-2 mr-2" OnClick="SelectAllMatchingAsync" data-testid="select-all-matching">@L["Select all matching"]</MudButton>
+                </ToolBarContent>
+                <Columns>
+                    <PropertyColumn Property="u => u.Email" Title="@L["Email"]" />
+                    <PropertyColumn Property="u => u.LastName" Title="@L["Name"]">
+                        <CellTemplate>@context.Item.Name</CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="u => u.IsActive" Title="@L["Active"]">
+                        <CellTemplate>@L[context.Item.IsActive ? "yes" : "no"]</CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="u => u.LastLoginAt" Title="@L["Last sign-in"]" Format="g" />
+                </Columns>
+            </CoworkeeDataTable>
+            @if (_matching)
+            {
+                <MudAlert Severity="Severity.Info" Dense="true" Class="mt-2" data-testid="all-matching">@L["All users matching the current filter are selected."]</MudAlert>
+            }
+        </div>
+    </MudTabPanel>
+</MudTabs>
+@if (_preview is { } preview)
+{
+    <MudPaper Outlined="true" Class="pa-3 mt-3" data-testid="recipient-preview">
+        <MudText Typo="Typo.subtitle1" data-testid="recipient-count">@L["{0} recipients", preview.Count]</MudText>
+        @if (preview.Excluded > 0)
+        {
+            <MudText Typo="Typo.caption" Class="mud-text-secondary" data-testid="recipient-excluded">@L["{0} users excluded (no e-mail, locked, deactivated or unsubscribed)", preview.Excluded]</MudText>
+        }
+        @if (preview.First.Count > 0)
+        {
+            <MudSimpleTable Dense="true" Class="mt-2">
+                <thead><tr><th>@L["Email"]</th><th>@L["Name"]</th><th>@L["Last sign-in"]</th></tr></thead>
+                <tbody>
+                    @foreach (var row in preview.First)
+                    {
+                        <tr><td>@row.Email</td><td>@row.DisplayName</td><td>@row.LastLoginAt?.ToLocalTime().ToString("g")</td></tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        }
+    </MudPaper>
+}
