@@ -19,6 +19,8 @@ public sealed record MoveEntries(MoveRequest Move) : ICommand<Result>;
 
 public sealed record DeleteEntries(FileSelectionRequest Selection) : ICommand<Result>;
 
+public sealed record SetFilePublic(Guid Id, bool IsPublic) : ICommand<Result<StoredFileDto>>;
+
 /// <summary>Streams <paramref name="Content"/> into the blob storage; read only after the permission check.</summary>
 public sealed record UploadFile(Guid? FolderId, string Name, string? ContentType, Stream Content) : ICommand<Result<StoredFileDto>>;
 
@@ -28,6 +30,7 @@ internal sealed class FileCommandHandlers(CoworkeeDbContext db, FolderAccess acc
       IHandler<RenameFile, Result<StoredFileDto>>,
       IHandler<MoveEntries, Result>,
       IHandler<DeleteEntries, Result>,
+      IHandler<SetFilePublic, Result<StoredFileDto>>,
       IHandler<UploadFile, Result<StoredFileDto>>
 {
     private const string FallbackContentType = "application/octet-stream";
@@ -163,6 +166,24 @@ internal sealed class FileCommandHandlers(CoworkeeDbContext db, FolderAccess acc
         db.RemoveRange(await db.Set<FileFolder>().Where(f => ids.Contains(f.Id)).ToListAsync(cancellationToken));
         db.RemoveRange(await db.Set<StoredFile>().Where(f => f.FolderId != null && ids.Contains(f.FolderId.Value)).ToListAsync(cancellationToken));
         return Result.Success();
+    }
+
+    // publishing exposes the content to anyone, so it takes the manage permission, also for the uploader
+    public async Task<Result<StoredFileDto>> HandleAsync(SetFilePublic command, CancellationToken cancellationToken)
+    {
+        var file = await db.Set<StoredFile>().SingleOrDefaultAsync(f => f.Id == command.Id, cancellationToken);
+        if (file is null)
+        {
+            return FileErrors.FileNotFound;
+        }
+
+        if (!await access.CanAsync(FilePermissions.Manage, file.FolderId, cancellationToken))
+        {
+            return FileErrors.Forbidden;
+        }
+
+        file.IsPublic = command.IsPublic;
+        return FileMapping.ToDto(file);
     }
 
     public async Task<Result<StoredFileDto>> HandleAsync(UploadFile command, CancellationToken cancellationToken)

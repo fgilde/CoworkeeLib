@@ -14,12 +14,16 @@ public sealed record GetFile(Guid Id) : IQuery<Result<StoredFileDto>>;
 
 public sealed record OpenFile(Guid Id) : IQuery<Result<FileContent>>;
 
+/// <summary>A public file for anyone, whichever organisation it belongs to.</summary>
+public sealed record OpenPublicFile(Guid Id) : IQuery<Result<FileContent>>;
+
 public sealed record FileContent(string Name, string ContentType, Stream Content);
 
 internal sealed class FileQueryHandlers(CoworkeeDbContext db, FolderAccess access, IPermissionChecker permissions, IBlobStorage storage, RegistrationFolders registrations)
     : IHandler<GetFolderContent, Result<FolderContentDto>>,
       IHandler<GetFile, Result<StoredFileDto>>,
-      IHandler<OpenFile, Result<FileContent>>
+      IHandler<OpenFile, Result<FileContent>>,
+      IHandler<OpenPublicFile, Result<FileContent>>
 {
     public async Task<Result<FolderContentDto>> HandleAsync(GetFolderContent query, CancellationToken cancellationToken)
     {
@@ -88,6 +92,15 @@ internal sealed class FileQueryHandlers(CoworkeeDbContext db, FolderAccess acces
 
         var file = found.Value;
         return await storage.OpenReadAsync(file.BlobKey, cancellationToken) is { } content
+            ? new FileContent(file.Name, file.ContentType, content)
+            : FileErrors.FileNotFound;
+    }
+
+    public async Task<Result<FileContent>> HandleAsync(OpenPublicFile query, CancellationToken cancellationToken)
+    {
+        var file = await db.Set<StoredFile>().IgnoreQueryFilters([CoworkeeDbContext.TenantFilter]).AsNoTracking()
+            .SingleOrDefaultAsync(f => f.Id == query.Id && f.IsPublic, cancellationToken);
+        return file is not null && await storage.OpenReadAsync(file.BlobKey, cancellationToken) is { } content
             ? new FileContent(file.Name, file.ContentType, content)
             : FileErrors.FileNotFound;
     }

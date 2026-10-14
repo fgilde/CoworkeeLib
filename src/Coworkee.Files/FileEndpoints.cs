@@ -23,6 +23,17 @@ internal static class FileEndpoints
         files.MapPost("/delete", (FileSelectionRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteEntries(body), ct).ToHttpResult());
         files.MapPost("/", UploadAsync).WithMetadata(new RequestSizeLimitAttribute(options.MaxFileSize));
         files.MapGet("/{id:guid}/content", ContentAsync);
+        files.MapPut("/{id:guid}/public", (Guid id, FilePublicRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SetFilePublic(id, body.IsPublic), ct).ToHttpResult());
+        files.MapGet("/public/{id:guid}/{name}", PublicContentAsync).AllowAnonymous();
+    }
+
+    // the name in the address is for the reader (and the video check of the sign-in page); the id decides
+    private static async Task<IResult> PublicContentAsync(Guid id, string name, IDispatcher dispatcher, CancellationToken cancellationToken)
+    {
+        var result = await dispatcher.SendAsync(new OpenPublicFile(id), cancellationToken);
+        return result.IsSuccess
+            ? new BlobContentResult(result.Value.Content, result.Value.ContentType, result.Value.Name, false, BlobContentResult.PublicCache)
+            : result.Error!.ToProblem();
     }
 
     /// <summary>The body is the file itself, its Content-Type the file's type; nothing is buffered in memory.</summary>
