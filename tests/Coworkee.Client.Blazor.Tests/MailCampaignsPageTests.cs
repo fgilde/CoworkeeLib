@@ -179,10 +179,10 @@ public sealed class MailCampaignsPageTests : ClientTestBase
 
         _dialogs.WaitForAssertion(() => _previews.ShouldContain(s => s.Kind == RecipientSourceKind.Query && !string.IsNullOrEmpty(s.Filter) && !string.IsNullOrEmpty(s.QueryJson)));
 
-        var saving = _dialogs.Find("[data-testid='save-list']").ClickAsync(new());
+        var saving = _dialogs.InvokeAsync(() => _dialogs.Find("[data-testid='save-list']").ClickAsync(new()));
         _dialogs.WaitForElement("form");
-        InputByLabel(_dialogs.Find("form"), "Name").Change("Gmail users");
-        await _dialogs.Find("form").SubmitAsync();
+        await _dialogs.InvokeAsync(() => InputByLabel(_dialogs.Find("form"), "Name").Change("Gmail users"));
+        await _dialogs.InvokeAsync(() => _dialogs.Find("form").SubmitAsync());
         await saving;
 
         await Api.Received(1).SaveRecipientListAsync(Arg.Is<SaveRecipientListRequest>(r => r.Name == "Gmail users" && r.Source.Kind == RecipientSourceKind.Query && r.Source.Filter != null), Arg.Any<CancellationToken>());

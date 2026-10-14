@@ -30,9 +30,10 @@ public sealed class MailTemplatesPageTests : ClientTestBase
 
     private async Task FillAndSubmit(string name, string displayName)
     {
-        InputByLabel(_dialogs.Find("form"), "Name").Change(name);
-        InputByLabel(_dialogs.Find("form"), "Display name").Change(displayName);
-        await _dialogs.Find("form").SubmitAsync();
+        // the form re-renders a moment after each change, so finding and acting happen in one step on the renderer thread
+        await _dialogs.InvokeAsync(() => InputByLabel(_dialogs.Find("form"), "Name").Change(name));
+        await _dialogs.InvokeAsync(() => InputByLabel(_dialogs.Find("form"), "Display name").Change(displayName));
+        await _dialogs.InvokeAsync(() => _dialogs.Find("form").SubmitAsync());
     }
 
     [Fact]

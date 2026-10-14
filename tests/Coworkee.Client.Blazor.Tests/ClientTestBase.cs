@@ -21,6 +21,8 @@ public abstract class ClientTestBase : BunitContext
 
     protected ClientTestBase()
     {
+        // a layout rendered by a test in parallel can switch the process-wide culture (CoworkeeLocalizer.UseAsync); every test starts in English
+        TestCulture.Pin();
         JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddMudServicesWithExtensions();
         Components.Editors.CoworkeeEditors.Register();
