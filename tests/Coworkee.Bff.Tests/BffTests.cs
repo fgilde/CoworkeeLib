@@ -60,6 +60,11 @@ public sealed class BffTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Unsubscribe_form_post_is_forwarded_without_csrf_header() =>
+        (await _client.PostAsync("/api/v1/mail/unsubscribe", new FormUrlEncodedContent([new("token", "x")]), TestContext.Current.CancellationToken))
+            .StatusCode.ShouldBe(HttpStatusCode.BadGateway);
+
+    [Fact]
     public async Task Safe_api_call_is_forwarded_without_csrf_header() =>
         (await _client.GetAsync("/api/v1/system", TestContext.Current.CancellationToken)).StatusCode.ShouldBe(HttpStatusCode.BadGateway);
 

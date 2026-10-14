@@ -155,7 +155,8 @@ public static class BffExtensions
             var unsafeMethod = !HttpMethods.IsGet(context.Request.Method) && !HttpMethods.IsHead(context.Request.Method) && !HttpMethods.IsOptions(context.Request.Method);
             if (unsafeMethod
                 && (context.Request.Path.StartsWithSegments("/api") || context.Request.Path.StartsWithSegments("/bff/logout"))
-                && context.Request.Headers[CsrfHeader] != "1")
+                && context.Request.Headers[CsrfHeader] != "1"
+                && !options.CsrfExemptPaths.Any(p => context.Request.Path.Equals(p, StringComparison.OrdinalIgnoreCase)))
             {
                 context.Response.StatusCode = StatusCodes.Status400BadRequest;
                 return;
