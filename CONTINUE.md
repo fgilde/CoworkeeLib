@@ -106,6 +106,14 @@ Spec `docs/superpowers/specs/2026-10-15-loading-tables-demo-design.md`, reports 
 - The demo's AirWorks client uses `@coworkee/client`/`@coworkee/airworks` `0.0.1024`; bump it after each release (`src/MyApp.AirWorks/ClientApp/package.json`).
 - Verified in the browser (demo): loading screen with progress, product and order dialogs aligned, Region filter, client switch compare toast, endless scroll, logo upload and pick from files, translated upload texts, AirWorks desktop with the demo apps.
 
+## Workflows (branch `feat/workflows`, not merged)
+Docs `modules/workflows.md`, `modules/workflows-elsa.md`.
+- `Coworkee.Workflows`: state machine per entity type declared in code (`AddCoworkeeWorkflows(w => w.Entity<T>(...))`), guards (permission, role, condition, comment), actions (`Then`, `OnEnter/OnExit`, `Set`, `NotifyRole`), approvals (roles/users, any/all, four eyes, `DueIn`, `RemindAfter`, `EscalateTo`, `OnTimeout`) via the recurring job `workflow-deadlines`, history table, domain events `WorkflowTransitioned`/`ApprovalStarted`/`ApprovalDecided` (outbox). Tables `cw.Workflow*` (apps need a migration).
+- Client: `CoworkeeWorkflow`, `CoworkeeWorkflowActions` (row; one GET per row, `ponytail:`), `CoworkeeWorkflowTimeline`, page `/workflows/approvals`, nav entries Approvals and Workflow designer.
+- `Coworkee.Workflows.Elsa`: Elsa 3.9.0 (MIT, net10 builds) in the API host, tables in the app database (Elsa's own migrations), API `/api/elsa` behind a gate for `Workflows.Elsa.Manage` (Elsa's endpoint security disabled), activities SendCommand/RunTransition/WaitForApproval/Notify/QueryOData, triggers WorkflowStateReached/EntityChangedTrigger (`AddCoworkeeElsa(e => e.Watch<T>(...))`). Elsa Studio is not embedded and no host ships yet (see the docs page for why and the plan); `Coworkee:Workflows:Elsa:StudioUrl` feeds the designer link.
+- Template/CLI/Studio options `workflows` and `elsa` (off); with samples: product approval (`ProductApproval.cs`, products column) and `ProductApprovedWorkflow` in the API. A generated app with both builds (`COWORKEE_TEST_FEED`); not run in Aspire or a browser yet.
+- Not done: personal data export of approver comments, batch status endpoint for rows, Elsa tests on SQL Server.
+
 ## Product backlog (older ideas, not part of the recent rounds)
 - Own `IMailTransport` with a new provider name is only selectable via `Coworkee:Settings:Defaults:Mail.Provider` (choices are the four built-ins).
 - Translations of the 21 new languages were checked by sample, not by native speakers (km, ar least certain).
