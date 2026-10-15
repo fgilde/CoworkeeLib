@@ -3,11 +3,11 @@ title: "Features des Anwendungsframeworks für .NET"
 description: "Was Coworkee einer Blazor- und ASP.NET-Core-App mitbringt: Module, Identity, Mandanten, Daten, Admin-Oberfläche, Realtime, KI, Berichte, Sprachen und Aspire."
 ---
 
-# Features des Anwendungsframeworks Coworkee für .NET
+# Features
 
-Die meisten Geschäftsanwendungen auf .NET beginnen gleich. Jemand richtet die Anmeldung ein, eine Benutzerliste, Rollen, eine Einstellungsseite, ein Audit-Log, eine Tabelle mit Filtern, Mail-Vorlagen und einen Weg, das Ganze lokal mit Datenbank und Mail-Catcher zu starten. Monate später beginnt das eigentliche Produkt.
+Anmeldung, Benutzerliste, Rollen, Einstellungsseite, Audit-Log, eine Tabelle mit Filtern. Coworkee liefert das als NuGet-Pakete für ASP.NET Core und Blazor, und ein Aspire-AppHost startet alles zusammen.
 
-Coworkee liefert diese Teile als NuGet-Pakete für ASP.NET Core und Blazor, miteinander verdrahtet und von einem Aspire-AppHost gestartet. Ihre Solution enthält nur noch die eigene Fachlichkeit: die Entities, die Regeln und die Seiten, die Ihre App ausmachen. Die folgenden Seiten beschreiben jeden Bereich mit Code aus den echten APIs und Screenshots aus der Demo-App.
+Die Seiten unten gehen Bereich für Bereich durch, mit Code aus den echten APIs und Screenshots aus der Demo-App (Katalog, Dokumente und 100.000 Aufträge).
 
 <div class="grid cards" markdown>
 
@@ -41,7 +41,7 @@ Coworkee liefert diese Teile als NuGet-Pakete für ASP.NET Core und Blazor, mite
 
 -   **[Berichte und Dashboards](reporting.md)**
 
-    Dashboards, im Browser auf Ihren OData-Sets gebaut und von der Datenbank in Millisekunden aggregiert.
+    Dashboards, im Browser auf deinen OData-Sets gebaut und von der Datenbank in Millisekunden aggregiert.
 
 -   **[Lokalisierung](localization.md)**
 
@@ -57,8 +57,8 @@ Coworkee liefert diese Teile als NuGet-Pakete für ASP.NET Core und Blazor, mite
 
 -   **[Einsatzbeispiele](use-cases.md)**
 
-    Interne Admin-Werkzeuge, B2B-SaaS, Kundenportale und eine Plattform für digitale Assets: was jede davon vom Framework nimmt.
+    Backoffice, B2B-SaaS, Kundenportal und Sharemee, die Asset-Plattform, für die das Framework herausgelöst wurde.
 
 </div>
 
-Lohnt sich ein Framework gegenüber einer schlichten ASP.NET-Core-Vorlage? [Warum Coworkee](why-coworkee.md) stellt beides nebeneinander.
+Lohnt sich ein Framework überhaupt, verglichen mit einer schlichten ASP.NET-Core-Vorlage? [Warum Coworkee](why-coworkee.md) stellt beides nebeneinander, auch da, wo die Vorlage gewinnt.

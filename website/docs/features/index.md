@@ -3,11 +3,11 @@ title: "Features of the .NET application framework"
 description: "What Coworkee brings to a Blazor and ASP.NET Core app: modules, identity, multi-tenancy, data, admin UI, realtime, AI, reporting, localization and Aspire hosting."
 ---
 
-# Features of the Coworkee .NET application framework
+# Features
 
-Most business applications on .NET start the same way. Someone sets up sign-in, a user list, roles, a settings page, an audit log, a table with filters, mail templates and a way to run the whole thing locally with a database and a mail catcher. Months later the actual product begins.
+Sign-in, a user list, roles, a settings page, an audit log, a table with filters. Coworkee ships these as NuGet packages for ASP.NET Core and Blazor, and one Aspire app host starts them together.
 
-Coworkee ships those parts as NuGet packages for ASP.NET Core and Blazor, wired together and started by one Aspire app host. Your solution keeps only its own domain: the entities, the rules and the screens that make your app different. The pages below describe each area with code from the real APIs and screenshots from the demo app.
+The pages below go through it area by area, with code from the real APIs and screenshots from the demo app (catalog, documents and 100,000 sales orders).
 
 <div class="grid cards" markdown>
 
@@ -57,8 +57,8 @@ Coworkee ships those parts as NuGet packages for ASP.NET Core and Blazor, wired 
 
 -   **[Use cases](use-cases.md)**
 
-    Internal admin tools, B2B SaaS, customer portals and a digital asset platform: what each one takes from the framework.
+    Back office, B2B SaaS, customer portal and Sharemee, the asset platform this framework was extracted for.
 
 </div>
 
-Wondering whether a framework is worth it compared with a plain ASP.NET Core template? [Why Coworkee](why-coworkee.md) puts the two side by side.
+Is a framework worth it at all, compared with a plain ASP.NET Core template? [Why Coworkee](why-coworkee.md) puts the two side by side, including where the template wins.

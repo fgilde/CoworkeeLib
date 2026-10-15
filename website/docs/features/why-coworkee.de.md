@@ -1,59 +1,47 @@
 ---
 title: "Warum ein Anwendungsframework für .NET?"
-description: "Coworkee im Vergleich mit einem selbst gebauten ASP.NET-Core-Projekt und einer kopierten Projektvorlage: was Sie selbst bauen, was Sie pflegen, was es kostet."
+description: "Coworkee im Vergleich mit einem selbst gebauten ASP.NET-Core-Projekt und einer kopierten Projektvorlage: was du selbst baust, was du pflegst und wo welcher Weg gewinnt."
 ---
 
-# Warum Coworkee: Framework, Vorlage oder bei null anfangen
+# Warum Coworkee
 
-Für eine Geschäftsanwendung auf ASP.NET Core und Blazor gibt es drei übliche Starts. Sie schreiben die gemeinsamen Teile selbst. Sie kopieren eine Projektvorlage, die sie schon enthält. Oder Sie nehmen sie als Pakete aus einem Framework und behalten in der Solution nur Ihre Fachlichkeit. Coworkee ist der dritte Weg und ist aus dem zweiten entstanden: Es begann als meine eigene Blazor-Vorlage, die ich in jede neue App kopiert habe, bis das Abgleichen der Kopien mehr kostete als die Apps selbst.
+Die gemeinsamen Teile einer App mit ASP.NET Core und Blazor kannst du selbst schreiben, aus einer Projektvorlage kopieren oder als Pakete einbinden. Coworkee ist der dritte Weg und aus dem zweiten entstanden: Am Anfang stand meine eigene Blazor-Vorlage, die ich in jede neue App kopiert habe, bis mich das Abgleichen der Kopien mehr Zeit gekostet hat als die Apps selbst.
 
-Diese Seite vergleicht die drei Wege, ohne so zu tun, als hätte das Framework keinen Preis.
+## Im Vergleich
 
-## Nebeneinander
-
-| | Selbst gebautes ASP.NET Core | Kopierte Projektvorlage | Coworkee-Pakete |
+| | Selbst gebaut mit ASP.NET Core | Kopierte Projektvorlage | Coworkee-Pakete |
 |---|---|---|---|
-| Anmeldung, Benutzer, Rollen, Berechtigungen | Sie schreiben und sichern es | in der Kopie, eingefroren am Tag des Kopierens | [Pakete](identity.md), aktualisiert per Versionssprung |
-| Auth-Server und externe Anbieter | Sie binden OpenIddict, Keycloak oder einen anderen IdP an | oft nur einer davon | OpenIddict-Auth-Server plus Keycloak oder jeder OIDC-Anbieter, Anmelde-Designs inklusive |
-| Mandanten | Abfragefilter und Mandantenerkennung von Hand | hängt von der Vorlage ab | [Mandanten, Features und Editionen](multi-tenancy.md) |
-| Admin-Oberfläche | Sie bauen jede Seite | Seiten in der Kopie, von Ihnen zu pflegen | Benutzer, Rollen, Einstellungen, Themes, Sprachen, Mail, Audit, Backups, KI und mehr fertig dabei |
-| Datentabellen mit Filtern und Export | pro Entity oder eine Grid-Bibliothek, die Sie verdrahten | eine generische Tabelle, wenn überhaupt | [Facetten, Spaltenfilter, Gruppierung, Ansichten, Export und Import](blazor-ui.md) über OData für jede Entity |
-| Audit-Trail | Interceptoren, die Sie schreiben | vielleicht | [auf Feldebene, mit Zeitleiste pro Datensatz](data.md) |
-| Realtime | SignalR-Hubs, die Sie entwerfen | selten | [Entity-Änderungen, Benachrichtigungen, Präsenz, Chat](realtime.md) |
-| Lokale Umgebung | Docker-Compose-Dateien, die Sie aktuell halten | was beim Kopieren dabei war | ein [Aspire-AppHost](observability.md) mit Datenbank, Redis, Mailpit, Keycloak, Grafana |
-| Sicherheitskorrekturen und Verbesserungen | Ihre Sache | von Hand in jede Kopie | `dotnet add package` bzw. ein Versionssprung |
-| Zeit bis zum ersten fachlichen Feature | Wochen | Tage, danach Auseinanderdriften | `coworkee new` und eine Entity |
+| Anmeldung, Benutzer, Rollen, Berechtigungen | schreibst und sicherst du selbst | in der Kopie, Stand vom Tag des Kopierens | [Pakete](identity.md), aktuell mit der Paketversion |
+| Mandanten | Abfragefilter und Mandantenerkennung von Hand | je nach Vorlage | [Mandanten, Features und Editionen](multi-tenancy.md) |
+| Admin-Seiten | baust du alle selbst | in der Kopie, pflegst du weiter | Benutzer, Rollen, Einstellungen, Themes, Sprachen, Mail, Audit, Backups und mehr |
+| Tabellen mit Filtern und Export | pro Entity | eine generische Tabelle, wenn überhaupt | [Facetten, Spaltenfilter, Gruppierung, Ansichten, Export](blazor-ui.md) über OData |
+| Lokale Umgebung | Compose-Dateien, die du aktuell hältst | was beim Kopieren dabei war | ein [Aspire-AppHost](observability.md) |
+| Korrekturen im gemeinsamen Code | deine Sache | von Hand in jede Kopie | mit der nächsten Paketversion |
+| Kontrolle über jede Zeile | vollständig | vollständig, nach dem Kopieren | über [austauschbare Komponenten](../ui/customizing.md) und Schnittstellen, nicht überall |
+| Einarbeitung | nichts über ASP.NET Core hinaus | die Konventionen der Vorlage | Module, Dispatcher, Einstellungsmodell |
+| Laufzeit | jede, auch .NET 8 LTS | was die Vorlage vorgibt | nur .NET 10 |
+| Abhängigkeit | keine | nach dem Kopieren keine | ein 0.0.x-Projekt mit einem Maintainer |
 
-## Was Sie gewinnen
+Die letzten vier Zeilen gehen an das selbst gebaute Projekt, und das ist auch so gemeint. Wenn du auf .NET 8 LTS angewiesen bist oder dein Team keine Zeit für noch ein Regelwerk hat, fang bei null an.
 
-**Weniger Code, der nicht Ihr Produkt ist.** In der Demo-App besteht der Code der Solution aus Katalog, Dokumenten und Aufträgen. Alles andere auf den Screenshots kommt aus Paketen. Dasselbe gilt für Sharemee, eine Plattform für digitale Assets: Ihre eigenen Projekte handeln von Assets, Metadaten und Verarbeitung.
+## Was du dafür bekommst
 
-**Updates statt Auseinanderdriften.** Eine Vorlage ist ein Schnappschuss. Eine Korrektur im Anmeldeablauf, eine neue Sprache oder eine schnellere Abfrage in der Datentabelle erreicht jede App auf Coworkee mit der nächsten Paketversion. Breaking Changes stehen im [Änderungsprotokoll](../reference/changelog.md).
+Am besten sieht man es an der Demo-App. Ihr eigener Code besteht aus Produktkatalog, Dokumenten und Aufträgen. Alles andere auf den Screenshots dieser Seite, von der Anmeldung bis zum Audit-Log, kommt aus den Paketen. Bei Sharemee, der zweiten App auf der Bibliothek, ist es genauso: Sharemees eigener Code dreht sich um Assets und Metadaten, nicht um Benutzerverwaltung.
 
-**Entscheidungen, die schon getroffen und getestet sind.** Rund 1.500 automatisierte Tests laufen gegen PostgreSQL, SQL Server und SQLite. Die Template-Tests des CLI bauen echte generierte Apps. Ihre fachlichen Tests bleiben Ihre, die für Passwortregeln, Berechtigungsprüfungen oder Mandantenfilter nicht.
+Eine Vorlage ist ein Schnappschuss. Wenn ich die Anmeldung repariere, eine Sprache ergänze oder die Datentabelle schneller mache, bekommt das jede App auf Coworkee mit der nächsten Version. Was du dabei anpassen musst, steht im [Änderungsprotokoll](../reference/changelog.md). Rund 1.500 automatisierte Tests laufen gegen PostgreSQL, SQL Server und SQLite, und die Template-Tests des CLI bauen echte generierte Apps.
 
-**Ein Weg, Dinge zu tun.** Jeder Request läuft durch dieselbe Pipeline mit Validierung, Berechtigungsprüfung, Caching und Unit of Work. Neue Entwickler lernen sie einmal und finden sie in jedem Modul wieder.
+Jeder Request läuft durch dieselbe Pipeline (Validierung, Berechtigungsprüfung, Caching, Unit of Work). Wer sie in einem Modul gesehen hat, kennt sie in allen.
 
 ## Was es kostet
 
-**Coworkee hat eine Meinung.** Es nutzt EF Core, MudBlazor und MudBlazor.Extensions, OpenIddict, FluentValidation und Aspire. Hat sich Ihr Team auf eine andere UI-Bibliothek oder ein anderes ORM festgelegt, arbeiten Sie gegen das Framework statt mit ihm.
+- Coworkee legt sich fest: EF Core, MudBlazor mit MudBlazor.Extensions, OpenIddict, FluentValidation, Aspire. Mit einer anderen UI-Bibliothek oder einem anderen ORM arbeitest du gegen das Framework.
+- Nur .NET 10.
+- Konventionen, die man lernen muss. [Das erste Feature](../getting-started/first-feature.md) zeigt sie an einer Entity.
+- Eine junge API. Die Pakete stehen bei 0.0.1.x und ändern sich noch zwischen den Releases; pinne die Versionen und lies vor jedem Update das Änderungsprotokoll.
 
-**Es setzt .NET 10 voraus.** Apps, die auf einer älteren Laufzeit bleiben müssen, können es nicht nutzen.
+## Wo du drumherum kommst
 
-**Sie lernen seine Konventionen.** Module, `[DependsOn]`, der Dispatcher und das Einstellungsmodell wollen verstanden sein, bevor Sie schnell werden. Die Anleitung [Das erste Feature](../getting-started/first-feature.md) zeigt sie alle an einer Entity.
-
-**Es ist ein junges Projekt.** Die Pakete stehen auf Version 0.0.1.x, und die API bewegt sich noch zwischen Releases. Pinnen Sie Versionen und lesen Sie vor einem Update das Änderungsprotokoll.
-
-## Notausgänge
-
-Ein Framework ist nur annehmbar, wenn Sie dort an ihm vorbeikommen, wo es nicht passt:
-
-- Jede Blazor-Komponente der Bibliothek lässt sich über `ReplaceComponent` durch eine eigene [ersetzen](../ui/customizing.md).
-- Module sind optional. Lassen Sie Chat, Berichte oder KI weg, bleiben auch deren Tabellen, Endpunkte und Seiten draußen.
-- Ihre Endpunkte sind normale Minimal-APIs von ASP.NET Core; nichts hindert Sie, neben den generierten einen von Hand zu schreiben.
-- Mail-Transporte, Übersetzungsanbieter, Blob-Storage und Suche stecken hinter Schnittstellen, die Sie selbst implementieren können.
-
-## Ausprobieren
+Jede Blazor-Komponente der Bibliothek lässt sich über `ReplaceComponent` austauschen. Module sind optional: Lässt du Chat oder Berichte weg, bleiben auch ihre Tabellen, Endpunkte und Seiten draußen. Deine Endpunkte sind normale Minimal-APIs, ein handgeschriebener neben den generierten ist also kein Problem. Mail-Versand, maschinelle Übersetzung, Blob-Storage und Suche hängen an Schnittstellen, die du selbst implementieren kannst.
 
 ```bash
 dotnet tool install -g Coworkee.Cli
@@ -61,4 +49,4 @@ coworkee new Shop
 cd Shop && coworkee run
 ```
 
-Oder starten Sie mit `coworkee ui` den Desktop-Assistenten. Die [Installationsanleitung](../getting-started/installation.md) erklärt jeden Schritt, und die [Einsatzbeispiele](use-cases.md) zeigen, für welche Apps das Framework gedacht ist.
+Oder `coworkee ui` für den Desktop-Assistenten. Die [Einsatzbeispiele](use-cases.md) zeigen, wofür das Framework gedacht ist.
