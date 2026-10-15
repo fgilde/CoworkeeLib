@@ -35,32 +35,34 @@ internal sealed class IndexedDbClientEntityStorage(IJSRuntime js) : IClientEntit
     private async Task<IJSObjectReference> ModuleAsync() =>
         _module ??= await js.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor.ClientEntities/client-entities.js");
 
+    // each module is released once, whichever of the two disposals comes first
     public async ValueTask DisposeAsync()
     {
-        if (_module is not null)
+        if (Interlocked.Exchange(ref _module, null) is { } module)
         {
-            await _module.DisposeAsync();
+            await module.DisposeAsync();
         }
     }
 
     // WebAssembly modules are in-process and dispose synchronously; elsewhere the release finishes in the background
     public void Dispose()
     {
-        if (_module is IDisposable module)
+        switch (Interlocked.Exchange(ref _module, null))
         {
-            module.Dispose();
-        }
-        else
-        {
-            _ = Release();
+            case IDisposable module:
+                module.Dispose();
+                break;
+            case { } module:
+                _ = Release(module);
+                break;
         }
     }
 
-    private async Task Release()
+    private static async Task Release(IJSObjectReference module)
     {
         try
         {
-            await DisposeAsync();
+            await module.DisposeAsync();
         }
         catch (JSDisconnectedException)
         {
