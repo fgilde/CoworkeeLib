@@ -1,0 +1,102 @@
+{
+  "$comment": "What coworkee update knows about each Coworkee version: breaking changes of website/docs/reference/changelog.md, automatic renames and package bumps, manual steps with the code they concern. A version's rules apply when an app moves past it.",
+  "versions": [
+    {
+      "version": "0.0.1.15",
+      "breaking": [
+        "Coworkee.Testing: PostgresFixture is now DatabaseFixture (Postgres, SQL Server or SQLite through COWORKEE_TEST_DATABASE) and PostgresWebApplicationFactory is now DatabaseWebApplicationFactory."
+      ],
+      "renames": [
+        { "find": "\\bPostgresFixture\\b", "replace": "DatabaseFixture", "files": [ "tests/**/*.cs" ] },
+        { "find": "\\bPostgresWebApplicationFactory\\b", "replace": "DatabaseWebApplicationFactory", "files": [ "tests/**/*.cs" ] }
+      ],
+      "manual": [
+        { "text": "DatabaseFixture.ConnectionString is set in InitializeAsync; fixtures that passed the connection string themselves use fixture.Settings(connectionStringName) now.", "find": "\\.ConnectionString\\b", "files": [ "tests/**/*Fixture.cs", "tests/**/*App.cs" ] }
+      ]
+    },
+    {
+      "version": "0.0.1.16",
+      "breaking": [
+        "Aspire 13.6.1: the app host SDK and Aspire.Hosting.Testing move to 13.6.1."
+      ],
+      "packages": [
+        { "id": "Aspire.AppHost.Sdk", "version": "13.6.1" },
+        { "id": "Aspire.Hosting.Testing", "version": "13.6.1" }
+      ]
+    },
+    {
+      "version": "0.0.1.21",
+      "breaking": [
+        "The web host needs app.UseWebAssemblyDebugging() in Development, otherwise Visual Studio cannot attach to the browser (wss://.../_framework/debug/ws-proxy)."
+      ],
+      "manual": [
+        { "text": "Add `if (app.Environment.IsDevelopment()) { app.UseWebAssemblyDebugging(); }` before the app is mapped in the web host.", "find": "var app = builder\\.Build\\(\\);", "files": [ "src/*.Web/Program.cs" ], "unless": "UseWebAssemblyDebugging" }
+      ]
+    },
+    {
+      "version": "0.0.1.22",
+      "breaking": [
+        "Mail: IMailTransport (SMTP, SendGrid, Mailgun, Mailchimp Transactional) replaces ISmtpTransport.",
+        "GET /api/v1/services returns { services, unavailableSources } instead of a list.",
+        "Theming: the theme property LogoSvg is now Logo (SVG markup or an image data URL); the column is renamed, add a migration.",
+        "Removed with MudBlazor.Extensions 9.11.3: ChipListEditor, CronEditor, CronSchedule and SettingsFormRules.WrapInColumns; lists of strings render as MudExTagField<string>, [Cron] renders MudExCronEdit.",
+        ".NET packages 10.0.13 (the advisories of 2026-10-13 fail builds with NU1903 on 10.0.12)."
+      ],
+      "needsMigration": true,
+      "renames": [
+        { "find": "\\bLogoSvg\\b", "replace": "Logo", "files": [ "src/**/*.cs", "src/**/*.razor", "tests/**/*.cs" ] }
+      ],
+      "packages": [
+        { "id": "Microsoft.AspNetCore.Components.WebAssembly", "version": "10.0.13" },
+        { "id": "Microsoft.AspNetCore.Components.WebAssembly.Server", "version": "10.0.13" },
+        { "id": "Microsoft.AspNetCore.Authentication.JwtBearer", "version": "10.0.13" },
+        { "id": "Microsoft.EntityFrameworkCore.Design", "version": "10.0.13" },
+        { "id": "Microsoft.Extensions.Configuration", "version": "10.0.13" },
+        { "id": "Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore", "version": "10.0.13" },
+        { "id": "Microsoft.Extensions.Hosting", "version": "10.0.13" },
+        { "id": "Microsoft.AspNetCore.Mvc.Testing", "version": "10.0.13" }
+      ],
+      "manual": [
+        { "text": "Implement IMailTransport instead of ISmtpTransport (SendAsync gets the whole message and the transport settings).", "find": "\\bISmtpTransport\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] },
+        { "text": "GET /api/v1/services answers { services, unavailableSources }; read .services.", "find": "api/v1/services", "files": [ "src/**/*.cs", "src/**/*.ts", "tests/**/*.cs" ] },
+        { "text": "ChipListEditor, CronEditor and CronSchedule are gone: use MudExTagField<string> (or RenderAsChips) and MudExCronEdit ([Cron]).", "find": "\\b(ChipListEditor|CronEditor|CronSchedule|WrapInColumns)\\b", "files": [ "src/**/*.cs", "src/**/*.razor" ] }
+      ]
+    },
+    {
+      "version": "0.0.1.23",
+      "breaking": [
+        "IMailSender requires the six-parameter QueueAsync(to, template, model, culture, campaignId, cancellationToken).",
+        "IMailTemplateRenderer gained RenderContentAsync(content, layout, model, cancellationToken).",
+        "Positional records gained parameters: MailTemplateSummaryDto (IsCustom, Description), MailTemplateDto (IsCustom), OutgoingMailDto (CampaignId); regenerate OpenAPI snapshots and SDKs.",
+        "Mail campaigns, recipient lists and own templates change the model: add a migration."
+      ],
+      "needsMigration": true,
+      "manual": [
+        { "text": "Own IMailSender implementations implement the six-parameter QueueAsync (with campaignId).", "find": ":\\s*IMailSender\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] },
+        { "text": "Own IMailTemplateRenderer implementations add RenderContentAsync.", "find": ":\\s*IMailTemplateRenderer\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] },
+        { "text": "Pass the new positional parameters (IsCustom, Description, CampaignId).", "find": "new (MailTemplateSummaryDto|MailTemplateDto|OutgoingMailDto)\\(", "files": [ "src/**/*.cs", "tests/**/*.cs" ] }
+      ]
+    },
+    {
+      "version": "0.0.1.24",
+      "breaking": [
+        "ClientEntityIndicator removed: mirrored tables show the ClientEntitySwitch in their tool bar.",
+        "ODataPicker.Margin and OptionalODataPicker.Margin are Margin? now.",
+        "CliOption gained DependsOn and OptionDependency gained Or (binary incompatible for tools compiled against an older Coworkee.Cli.Spec).",
+        "LoadingScreenDto gained the positional parameter SignedIn; regenerate OpenAPI snapshots and SDKs.",
+        "Enums in every MudExObjectEdit render with the EnumEditor.",
+        "Every app shows the loading screen: one line as the first line of <body> in App.razor of the web host.",
+        "Public files: StoredFile.IsPublic; apps with the Files module add a migration."
+      ],
+      "needsMigration": true,
+      "renames": [
+        { "find": "<body>(\\r?\\n)", "replace": "<body>$1    <Coworkee.Bff.CoworkeeLoadingScreen Logo=\"coworkee-icon.svg\" />$1", "files": [ "src/*.Web/App.razor" ], "unless": "CoworkeeLoadingScreen", "description": "loading screen in App.razor" }
+      ],
+      "manual": [
+        { "text": "Delete <ClientEntityIndicator> and an own Compare button: the ClientEntitySwitch is in the tool bar.", "find": "ClientEntityIndicator", "files": [ "src/**/*.razor", "src/**/*.cs" ] },
+        { "text": "ODataPicker.Margin is Margin? now: add ?? Margin.Dense where it is read as Margin.", "find": "ODataPicker[^>]*Margin", "files": [ "src/**/*.cs", "src/**/*.razor" ] },
+        { "text": "Pass SignedIn to LoadingScreenDto.", "find": "new LoadingScreenDto\\(", "files": [ "src/**/*.cs", "tests/**/*.cs" ] }
+      ]
+    }
+  ]
+}

@@ -12,7 +12,7 @@
         <TextBlock Classes="body muted" FontSize="15" LineHeight="23" Text="{l:L 'Pick name, logo and colors, choose the modules and infrastructure, describe your entities, and the Coworkee CLI creates a solution with auth server, API, Blazor client, migrations, tests and an Aspire app host.'}" />
       </StackPanel>
 
-      <UniformGrid Columns="2" ColumnSpacing="16">
+      <UniformGrid Columns="3" ColumnSpacing="16">
         <Button Classes="tile selected" Command="{Binding Main.NewAppCommand}" Height="132">
           <Grid ColumnDefinitions="Auto,*" Margin="22">
             <Border Width="52" Height="52" CornerRadius="14" Background="{DynamicResource Hero}" VerticalAlignment="Top">
@@ -32,6 +32,17 @@
             <StackPanel Grid.Column="1" Margin="18,2,0,0" Spacing="6">
               <TextBlock Classes="h2" Text="{l:L 'Open a spec'}" />
               <TextBlock Classes="muted" TextWrapping="Wrap" Text="{l:L 'Continue with an app spec (.json) from the CLI, the MCP server or an earlier session.'}" />
+            </StackPanel>
+          </Grid>
+        </Button>
+        <Button Classes="tile" Command="{Binding Main.OpenAppCommand}" Height="132">
+          <Grid ColumnDefinitions="Auto,*" Margin="22">
+            <Border Width="52" Height="52" CornerRadius="14" Background="{DynamicResource SecondarySoft}" VerticalAlignment="Top">
+              <PathIcon Classes="large" Foreground="{DynamicResource Secondary}" Data="{StaticResource Icon.Layers}" />
+            </Border>
+            <StackPanel Grid.Column="1" Margin="18,2,0,0" Spacing="6">
+              <TextBlock Classes="h2" Text="{l:L 'Open existing app'}" />
+              <TextBlock Classes="muted" TextWrapping="Wrap" Text="{l:L 'Add modules, options and entities to an app created with Coworkee.'}" />
             </StackPanel>
           </Grid>
         </Button>

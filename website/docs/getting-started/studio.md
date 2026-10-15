@@ -32,7 +32,7 @@ The panel on the left shows where you are; every page you have seen is one click
 
 ### Welcome
 
-Start a new app, open a spec (`.json` from the CLI, the [MCP server](mcp.md) or an earlier session) or pick one of the recent specs.
+Start a new app, open a spec (`.json` from the CLI, the [MCP server](mcp.md) or an earlier session), open an existing app or pick one of the recent specs.
 
 ![Welcome](../assets/screenshots/studio-welcome-light.webp)
 
@@ -115,6 +115,10 @@ The Studio writes the spec, runs `coworkee spec validate` and `coworkee new --sp
 **Run the app** starts `dotnet run --project <app host>` inside the Studio. The card shows whether the app host is starting, running or has failed, and on failure the line that explains it (a port in use, a build error). Once it is up it links the Aspire dashboard (the login address with its token, read from the output) and the addresses of the web app, the API and the auth server (from their launch settings). The output of the app host is one click away; **Stop** ends the app host and what it started, and so does closing the Studio.
 
 ![Running app](../assets/screenshots/studio-run-dark.webp)
+
+### Open existing app
+
+*Open existing app* on the welcome page takes the folder of an app created with Coworkee. The wizard opens on *Review* with the app's state: its `.coworkee/app.json`, or for older apps the options its files show. Switch modules and options on, add languages, modules and entities, then **Show the changes**: the Studio runs `coworkee add --spec ... --dry-run` in the app's folder and shows the plan (options, files to add, update, merge or delete, conflicts, modules and entities to generate). **Apply the changes** runs it for real, with the same live log as *Create*; files whose changes did not merge are listed as `.rej` files afterwards, see [Changing an existing app](cli.md#changing-an-existing-app).
 
 When the CLI is not installed, the Studio offers to run `dotnet tool install -g Coworkee.Cli` or to use a local CLI (`coworkee.exe` or `Coworkee.Cli.dll`).
 

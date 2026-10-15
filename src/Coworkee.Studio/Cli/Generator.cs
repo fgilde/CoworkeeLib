@@ -48,6 +48,31 @@ public sealed class Generator(ProcessRunner run)
         }
     }
 
+    /// <summary>
+    /// Brings an existing app to the spec with coworkee add --spec in the app's folder: new options are merged into its files,
+    /// new modules and entities generated; <paramref name="dryRun"/> only prints the plan.
+    /// </summary>
+    public async Task<GenerationOutcome> ApplyAsync(string appRoot, AppSpec spec, bool dryRun, StudioSettings settings, Action<CliLine> onLine, CancellationToken cancellationToken)
+    {
+        var file = SpecFile(spec);
+        Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+        await File.WriteAllTextAsync(file, SpecJson.Write(spec), cancellationToken);
+        try
+        {
+            return await RunCliAsync(CliInvocation.Resolve(settings.CliPath), CommandLine.Add(file, dryRun, settings.TemplateSource), settings, onLine, cancellationToken, appRoot) == 0
+                ? GenerationOutcome.Succeeded
+                : GenerationOutcome.Failed;
+        }
+        catch (Win32Exception)
+        {
+            return GenerationOutcome.CliNotFound;
+        }
+        catch (OperationCanceledException)
+        {
+            return GenerationOutcome.Canceled;
+        }
+    }
+
     public async Task<bool> InstallCliAsync(StudioSettings settings, Action<CliLine> onLine, CancellationToken cancellationToken)
     {
         var args = CommandLine.InstallCli(settings.PackageFeed);
@@ -99,9 +124,9 @@ public sealed class Generator(ProcessRunner run)
         return run(start, output, cancellationToken);
     }
 
-    private Task<int> RunCliAsync(CliInvocation cli, string[] args, StudioSettings settings, Action<CliLine> onLine, CancellationToken cancellationToken)
+    private Task<int> RunCliAsync(CliInvocation cli, string[] args, StudioSettings settings, Action<CliLine> onLine, CancellationToken cancellationToken, string? workingDirectory = null)
     {
-        var start = cli.Start(args);
+        var start = cli.Start(args, workingDirectory);
         if (!string.IsNullOrWhiteSpace(settings.PackageFeed))
         {
             // MSBuild reads environment variables as properties: every restore of the new app also uses the feed

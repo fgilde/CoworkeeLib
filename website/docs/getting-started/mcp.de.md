@@ -48,6 +48,7 @@ Andere Clients nehmen denselben Befehl: `coworkee` mit dem Argument `mcp`. `cowo
 | `add_module` | `coworkee module add` mit Entity, Eigenschaften, Client-Entity und Mapping |
 | `add_entity` | `coworkee entity add` |
 | `add_migration` | `coworkee migrations add` |
+| `add_option` | `coworkee add` oder, mit `remove`, `coworkee remove`: Optionen einer bestehenden App wie `reports`, `eventBus rabbitMq` oder `languages=fr,it`; `dryRun` liefert den Plan |
 | `run_doctor` | `coworkee doctor` |
 | `update_packages` | `coworkee update` |
 | `search_docs` | Durchsucht diese Dokumentation (den veröffentlichten Suchindex; offline die Seitentitel) |

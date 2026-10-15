@@ -102,6 +102,13 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial string? Status { get; set; }
 
+    /// <summary>The folder of the existing app the wizard changes (Open existing app); null while it designs a new one.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsExistingApp), nameof(NextText))]
+    public partial string? ExistingApp { get; set; }
+
+    public bool IsExistingApp => ExistingApp is not null;
+
     [ObservableProperty]
     public partial bool IsHelpOpen { get; set; }
 
@@ -118,7 +125,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     public bool CanGoNext => CurrentIndex < Steps.Count - 1 && Current.CanContinue && !Generate.IsRunning;
 
-    public string NextText => L.Get(Current == Review ? "Create the app" : "Next");
+    public string NextText => L.Get(Current != Review ? "Next" : IsExistingApp ? "Show the changes" : "Create the app");
 
     public string ProgressText => L.Format("Step {0} of {1}", CurrentIndex + 1, Steps.Count);
 
@@ -212,6 +219,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         Load(new AppSpec(), null);
         SpecPath = null;
+        ExistingApp = null;
         AiApiKey = null;
         foreach (var step in Steps)
         {
@@ -247,6 +255,7 @@ public sealed partial class MainViewModel : ObservableObject
             var full = Path.GetFullPath(path);
             Load(SpecJson.Read(File.ReadAllText(full)), full);
             SpecPath = full;
+            ExistingApp = null;
             Settings.AddRecent(full);
             SaveSettings();
             Welcome.Refresh();
@@ -263,6 +272,43 @@ public sealed partial class MainViewModel : ObservableObject
         {
             Status = L.Format("Cannot open {0}: {1}", path, exception.Message);
         }
+    }
+
+    [RelayCommand]
+    public async Task OpenAppAsync()
+    {
+        if (await Dialogs.PickFolder(L.Get("Open an existing app")) is { } folder)
+        {
+            OpenApp(folder);
+        }
+    }
+
+    /// <summary>
+    /// Shows the wizard with the state of the app in <paramref name="folder"/> (its .coworkee/app.json, or what its files show);
+    /// on the last step the changes go to the app with coworkee add.
+    /// </summary>
+    public void OpenApp(string folder)
+    {
+        if (Coworkee.Cli.Spec.ExistingApp.Root(folder) is not { } root)
+        {
+            Status = L.Format("No Coworkee app in {0}", folder);
+            return;
+        }
+
+        var (spec, inferred) = Coworkee.Cli.Spec.ExistingApp.Read(root);
+        spec.Output = null;
+        Load(spec, null);
+        Basics.Location = Path.GetDirectoryName(root) ?? root;
+        SpecPath = null;
+        ExistingApp = root;
+        Status = L.Format(inferred ? "Read the options of {0} from its files" : "Opened {0}", spec.Name);
+        foreach (var step in Steps.Take(Steps.Count - 1))
+        {
+            step.IsReachable = true;
+        }
+
+        Generate.Reset();
+        GoTo(Review);
     }
 
     [RelayCommand]

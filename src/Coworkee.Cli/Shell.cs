@@ -5,10 +5,41 @@ namespace Coworkee.Cli;
 
 internal static class Shell
 {
-    public static async Task<int> RunAsync(IReadOnlyList<string> args, string? workingDirectory = null, CancellationToken cancellationToken = default)
+    /// <summary>Runs a command with the console's output; the environment is never printed (it may hold passwords).</summary>
+    public static async Task<int> RunAsync(IReadOnlyList<string> args, string? workingDirectory = null, CancellationToken cancellationToken = default, IReadOnlyDictionary<string, string>? environment = null)
     {
         Console.WriteLine($"> {string.Join(' ', args)}");
-        using var process = Process.Start(Start(args, workingDirectory))!;
+        var start = Start(args, workingDirectory);
+        foreach (var (name, value) in environment ?? new Dictionary<string, string>())
+        {
+            start.Environment[name] = value;
+        }
+
+        using var process = Process.Start(start)!;
+        await process.WaitForExitAsync(cancellationToken);
+        return process.ExitCode;
+    }
+
+    /// <summary>Runs a command with its standard input from a file and/or its standard output into a file (binary, e.g. pg_dump).</summary>
+    public static async Task<int> PipeAsync(IReadOnlyList<string> args, string? input, string? output, CancellationToken cancellationToken = default)
+    {
+        Console.WriteLine($"> {string.Join(' ', args)}{(input is null ? string.Empty : " < " + input)}{(output is null ? string.Empty : " > " + output)}");
+        var start = Start(args, null);
+        start.RedirectStandardInput = input is not null;
+        start.RedirectStandardOutput = output is not null;
+        using var process = Process.Start(start)!;
+        var reading = output is null ? Task.CompletedTask : CopyAsync(process.StandardOutput.BaseStream, output, cancellationToken);
+        if (input is not null)
+        {
+            await using (var file = File.OpenRead(input))
+            {
+                await file.CopyToAsync(process.StandardInput.BaseStream, cancellationToken);
+            }
+
+            process.StandardInput.Close();
+        }
+
+        await reading;
         await process.WaitForExitAsync(cancellationToken);
         return process.ExitCode;
     }
@@ -30,6 +61,12 @@ internal static class Shell
         {
             return (-1, string.Empty);
         }
+    }
+
+    private static async Task CopyAsync(Stream source, string path, CancellationToken cancellationToken)
+    {
+        await using var file = File.Create(path);
+        await source.CopyToAsync(file, cancellationToken);
     }
 
     private static ProcessStartInfo Start(IReadOnlyList<string> args, string? workingDirectory)

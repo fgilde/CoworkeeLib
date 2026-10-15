@@ -32,7 +32,7 @@ Das Panel links zeigt, wo du bist; jede Seite, die du schon gesehen hast, ist ei
 
 ### Willkommen
 
-Eine neue App beginnen, eine Spezifikation öffnen (`.json` aus der CLI, dem [MCP-Server](mcp.md) oder einer früheren Sitzung) oder eine der zuletzt geöffneten wählen.
+Eine neue App beginnen, eine Spezifikation öffnen (`.json` aus der CLI, dem [MCP-Server](mcp.md) oder einer früheren Sitzung), eine bestehende App öffnen oder eine der zuletzt geöffneten Spezifikationen wählen.
 
 ![Willkommen](../assets/screenshots/studio-welcome-light-de.webp)
 
@@ -115,6 +115,10 @@ Das Studio schreibt die Spezifikation, ruft `coworkee spec validate` und `cowork
 **App starten** führt `dotnet run --project <App-Host>` im Studio aus. Die Karte zeigt, ob der App-Host startet, läuft oder gescheitert ist, und im Fehlerfall die Zeile, die es erklärt (ein belegter Port, ein Build-Fehler). Sobald er läuft, verlinkt sie das Aspire-Dashboard (die Anmeldeadresse mit Token, aus der Ausgabe gelesen) und die Adressen von Web-App, API und Auth-Server (aus ihren Launch Settings). Die Ausgabe des App-Hosts ist einen Klick entfernt; **Stoppen** beendet den App-Host und alles, was er gestartet hat, ebenso das Schließen des Studios.
 
 ![Laufende App](../assets/screenshots/studio-run-light-de.webp)
+
+### Bestehende App öffnen
+
+*Bestehende App öffnen* auf der Willkommensseite nimmt den Ordner einer mit Coworkee angelegten App. Der Assistent öffnet sich auf *Prüfen* mit dem Stand der App: ihrer `.coworkee/app.json` oder, bei älteren Apps, den Optionen, die ihre Dateien zeigen. Schalte Module und Optionen ein, ergänze Sprachen, Module und Entities, dann **Änderungen anzeigen**: Das Studio ruft `coworkee add --spec ... --dry-run` im Ordner der App auf und zeigt den Plan (Optionen, Dateien zum Hinzufügen, Aktualisieren, Zusammenführen oder Löschen, Konflikte, zu erzeugende Module und Entities). **Änderungen übernehmen** führt ihn wirklich aus, mit derselben Live-Ausgabe wie *Anlegen*; Dateien, deren Änderungen sich nicht zusammenführen ließen, stehen danach als `.rej`-Dateien in der Liste, siehe [Eine bestehende App ändern](cli.md#eine-bestehende-app-andern).
 
 Ist die CLI nicht installiert, bietet das Studio an, `dotnet tool install -g Coworkee.Cli` auszuführen oder eine lokale CLI zu verwenden (`coworkee.exe` oder `Coworkee.Cli.dll`).
 

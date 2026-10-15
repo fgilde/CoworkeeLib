@@ -48,6 +48,10 @@ public static class CommandLine
         return (copy, [.. args]);
     }
 
+    /// <summary><c>coworkee add --spec</c> for an existing app, run in its folder.</summary>
+    public static string[] Add(string specFile, bool dryRun, string? templateSource) =>
+        ["add", "--spec", specFile, .. dryRun ? new[] { "--dry-run" } : [], .. string.IsNullOrWhiteSpace(templateSource) ? [] : new[] { "--template-source", templateSource }];
+
     public static string[] InstallCli(string? feed) =>
         ["tool", "install", "-g", "Coworkee.Cli", .. string.IsNullOrWhiteSpace(feed) ? Array.Empty<string>() : ["--add-source", feed, "--prerelease"]];
 

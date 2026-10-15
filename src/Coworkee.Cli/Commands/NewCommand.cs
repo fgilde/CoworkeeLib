@@ -123,6 +123,7 @@ internal static class NewCommand
         var solution = Solution.Find(settings.Output);
         Assets.Copy(settings, values);
         DemoUsersWriter.Write(solution, settings.Spec);
+        Apps.AppState.Write(settings.Output, settings.Spec);
         var index = new SpecIndex(settings.Spec);
         IReadOnlyList<EnumSpec> enums = settings.Spec.Enums;
         foreach (var module in settings.Spec.Modules)

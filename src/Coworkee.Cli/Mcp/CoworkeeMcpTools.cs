@@ -127,6 +127,16 @@ internal sealed class CoworkeeMcpTools(CliRunner run, HttpClient http)
     public async Task<string> AddMigrationAsync([Description("A folder of the app.")] string directory, [Description("Migration name, e.g. AddSales.")] string name, CancellationToken cancellationToken = default) =>
         (await run(["migrations", "add", name], directory, cancellationToken)).ToString();
 
+    [McpServerTool(Name = "add_option", OpenWorld = true, Title = "Turn options of an existing app on or off")]
+    [Description("Turns options of an existing app on (or off with remove): modules like reports or chat, infrastructure like redis or keycloak, eventBus rabbitMq, languages fr,it, ai openAI. Merges the template's changes into the app's files (conflicts become .rej files, listed in the answer) and adds a migration when the model changed. Use dryRun first to see the plan.")]
+    public async Task<string> AddOptionAsync(
+        [Description("A folder of the app.")] string directory,
+        [Description("Option ids, each optionally followed by its value, e.g. [\"reports\"], [\"eventBus\", \"rabbitMq\"] or [\"languages=fr,it\"] (list_options).")] string[] options,
+        [Description("Turn the options off instead; skipped when a touched file conflicts with the app's changes.")] bool remove = false,
+        [Description("Only print the plan.")] bool dryRun = false,
+        CancellationToken cancellationToken = default) =>
+        (await run([remove ? "remove" : "add", .. options, .. dryRun ? new[] { "--dry-run" } : []], directory, cancellationToken)).ToString();
+
     [McpServerTool(Name = "run_doctor", ReadOnly = true, Title = "Check the tools")]
     [Description("Checks the .NET SDK, Docker and dotnet-ef that a Coworkee app needs.")]
     public async Task<string> RunDoctorAsync([Description("Folder whose global.json sets the SDK (optional).")] string? directory = null, CancellationToken cancellationToken = default) =>

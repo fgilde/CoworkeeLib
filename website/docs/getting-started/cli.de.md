@@ -208,6 +208,49 @@ coworkee migrations add AddSales
 
 `--property` liest `Name[:typ][:required][:maxLänge][:flag][:schlüssel=wert]` (Standard: `Name:string:required:200`). Flags: `required`, `unique`, `display`, `facet`, `searchable`. Schlüssel wie in einer Spezifikation: `enum`, `ref` (oder `reference`), `referenceDisplay`, `onDelete`, `inverse`, `default`, `label`, `precision`, `scale`, `searchable`. `--enum Name=Wert1,Wert2` legt ein Enum in den Contracts an. Eine Referenz darf auf jede Entity der App mit OData-Set zeigen, erzeugt oder aus den Beispielen (`ref=Catalog.Brand`); das Modul verweist dann auf das Projekt des Ziels. `entity add` braucht ein von der CLI angelegtes Modul.
 
+## Eine bestehende App ändern
+
+Optionen gibt es nicht nur bei `coworkee new`. `coworkee add` schaltet sie in einer App ein, an der du schon arbeitest, `coworkee remove` schaltet sie aus:
+
+```bash
+coworkee add reports --dry-run       # den Plan zeigen, nichts ändern
+coworkee add reports
+coworkee add eventBus rabbitMq       # oder eventBus=rabbitMq
+coworkee add ai openAI               # schaltet ai ein und setzt aiProvider
+coworkee add languages fr,it         # ergänzt die Sprachen der App
+coworkee remove chat
+coworkee add --spec shop.json        # Optionen, Module und Entities einer Spezifikation
+```
+
+Die CLI muss wissen, womit die App angelegt wurde. `coworkee new` hält das in `.coworkee/app.json` fest (jede Option, die vom Standard abweicht, deine Module und Entities, keine Passwörter); `coworkee add` schreibt die Datei fort. Bei Apps, die älter als diese Datei sind, liest die CLI die Optionen aus dem, was das Template geschrieben hat: Paketreferenzen, App-Host, Infrastrukturmodul und Seed. `coworkee spec current` zeigt, was sie sieht.
+
+Dann legt sie das Template in der Coworkee-Version der App zweimal in einem temporären Ordner an, einmal mit den bisherigen und einmal mit den neuen Optionen, und führt den Unterschied in deine Dateien zusammen:
+
+| Fall | Was passiert |
+|---|---|
+| Eine neue Datei des Templates | Sie kommt dazu |
+| Eine Datei, die du nie angefasst hast | Sie wird zur neuen Fassung des Templates |
+| Eine Datei, die du geändert hast, und die Änderung des Templates passt dazu | Beides wird zusammengeführt (`git merge-file`) |
+| Eine Datei, bei der sich beide Änderungen in die Quere kommen | Deine Datei bleibt; `<datei>.rej` enthält die Zusammenführung mit Konfliktmarkern, die CLI listet sie auf |
+| Eine Datei, die das Template nicht mehr hat | Gelöscht, wenn du sie nie angefasst hast, sonst aufgelistet |
+
+Übernimm jede `.rej` von Hand in ihre Datei und lösche sie dann. Migrationen bleiben unberührt: Nach dem Zusammenführen stellt die CLI die Pakete wieder her und legt die Migration `Add<Option>` an (zum Beispiel `AddReports`), wenn sich das Datenbankmodell geändert hat, mit dem Provider der App. `--no-migration` lässt das aus, `--template-source` nimmt ein lokales `Coworkee.Templates`-Paket (eine App mit dem Feed `coworkee-local` in ihrer `nuget.config` findet es dort von selbst).
+
+`coworkee remove` macht nur weiter, wenn sich jede betroffene Datei sauber zusammenführen lässt; sonst ändert es nichts und listet die Dateien auf. Wer ein Modul mit eigenen Tabellen entfernt, bekommt eine Migration, die sie samt Daten löscht.
+
+Mit `--spec` werden Module und Entities der Spezifikation, die die App noch nicht hat, wie mit `coworkee module add` und `coworkee entity add` erzeugt; das nutzt Coworkee Studio für *Bestehende App öffnen*.
+
+## Die lokale Datenbank
+
+| Befehl | Was er tut |
+|---|---|
+| `coworkee db reset [--yes]` | Löscht die Datenbank: das Daten-Volume des App-Hosts (`<app>.apphost-<hash>-postgres-data` bzw. `-sqlserver-data`) oder die SQLite-Datei `.data/<name>.db`. Stoppe vorher den App-Host; der nächste Start migriert und befüllt sie neu |
+| `coworkee db seed` | Führt das Migrationsprojekt gegen die laufende Datenbank aus: Migrationen, Demo-Benutzer und Rollen |
+| `coworkee db backup [datei]` | `pg_dump` im laufenden Postgres-Container, `BACKUP DATABASE` mit `sqlcmd` im SQL-Server-Container oder eine Kopie der SQLite-Datei; standardmäßig nach `.data/backups/` |
+| `coworkee db restore <datei> [--yes]` | Der umgekehrte Weg: `pg_restore --clean`, `RESTORE DATABASE ... WITH REPLACE` oder die Kopie zurück |
+
+`reset` und `restore` fragen nach, bevor sie etwas löschen; `--yes` überspringt die Frage (Skripte). Apps, die aus mehreren Ordnern gestartet wurden, haben mehrere Volumes; wähle eines mit `--volume <name>`. Bei Postgres und SQL Server muss die App für `seed`, `backup` und `restore` laufen (`coworkee run`); bei SQLite und SQL Server stoppst du sie vor einem Restore.
+
 ## Coworkee Studio
 
 ```bash
@@ -228,13 +271,16 @@ coworkee ui --spec shop.json
 | `coworkee texts export --lang <code> [--keys <glob>] [--out <datei>]` | Kopiert die Bibliothekstexte einer Sprache zum Ändern nach `src/<App>.Contracts/Localization/<code>.json` und führt sie mit dem Vorhandenen zusammen, siehe [Lokalisierung](../modules/localization.md#bibliothekstexte-andern) |
 | `coworkee options [--json]` | Die Optionen von `coworkee new` |
 | `coworkee spec schema`, `example`, `validate <datei>` | App-Spezifikationen |
-| `coworkee update [--version <version>] [--prerelease]` | Setzt `<CoworkeeVersion>` in `Directory.Packages.props`, standardmäßig auf die neueste Version auf nuget.org |
+| `coworkee add <option> [wert]`, `coworkee remove <option>` | Optionen einer bestehenden App, siehe oben |
+| `coworkee db reset`, `seed`, `backup`, `restore` | Die lokale Datenbank, siehe oben |
+| `coworkee spec current` | Die Optionen der App in diesem Ordner |
+| `coworkee update [--version <version>] [--prerelease] [--dry-run]` | Setzt `<CoworkeeVersion>` in `Directory.Packages.props`, standardmäßig auf die neueste Version auf nuget.org, und wendet die Upgrade-Regeln an, siehe unten |
 | `coworkee self-update [--version <version>] [--prerelease]` | Aktualisiert diese CLI und, falls installiert, Coworkee Studio auf dieselbe Version, siehe unten |
 | `coworkee doctor` | Prüft die Werkzeuge, siehe oben |
 | `coworkee ui` | Coworkee Studio |
 | `coworkee mcp` | [MCP-Server](mcp.md) über stdio |
 
-Nach `coworkee update` führst du `dotnet restore` aus und legst eine Migration an, falls ein Coworkee-Modul sein Modell geändert hat (`coworkee migrations add CoworkeeUpdate`).
+`coworkee update` setzt nicht nur die Version. Die CLI bringt die Upgrade-Regeln jeder Coworkee-Version mit (`upgrade-rules.json`, aus dem [Changelog](../reference/changelog.md)): Für jede Version zwischen der der App und der neuen zeigt sie die Breaking Changes, erledigt, was sich automatisch erledigen lässt (Umbenennungen wie `PostgresFixture` zu `DatabaseFixture`, Paket- und SDK-Versionen, die älter sind, als die Version braucht, die Zeile für den Ladebildschirm in `App.razor`), und listet die Handarbeit mit jeder betroffenen Stelle als `datei:zeile` auf. `--dry-run` zeigt all das und ändert nichts. Danach führst du `dotnet restore` aus; die CLI sagt dir, wenn sich das Modell der Bibliothek geändert hat und eine Migration fällig ist (`coworkee migrations add CoworkeeUpdate`).
 
 `coworkee self-update` aktualisiert die Werkzeuge selbst: `dotnet tool update -g Coworkee.Cli` und, wenn das Studio installiert ist, `dotnet tool update -g Coworkee.Studio`, beide auf die neueste Version auf nuget.org oder auf `--version`. Eine Vorabversion der CLI berücksichtigt auch Vorabversionen; bei einem Release tut das `--prerelease`. Unter Windows kann sich die laufende `coworkee.exe` nicht selbst ersetzen, deshalb läuft das Update in einem eigenen Fenster, sobald der Befehl beendet ist.
 

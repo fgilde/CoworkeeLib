@@ -24,6 +24,12 @@ internal static class SpecCommand
 
             return Task.FromResult(errors.Count == 0 ? 0 : 1);
         }),
+        new Command("current", "Print the spec of the app in this folder: .coworkee/app.json, or for older apps the options its files show.").Handle((_, _) =>
+        {
+            var root = ExistingApp.Root(Environment.CurrentDirectory) ?? throw new CliException($"No .slnx file in {Environment.CurrentDirectory} or above.");
+            Console.WriteLine(SpecJson.Write(ExistingApp.Read(root).Spec));
+            return Task.FromResult(0);
+        }),
         new Command("show", "Print what a spec creates: the library modules on and off, every other option with its value and your own modules. A spec lists only what differs from the defaults.") { File }.Handle((result, _) =>
         {
             Console.WriteLine(string.Join(Environment.NewLine, SpecSummary.Lines(NewCommand.ReadSpec(result.GetValue(File)!.FullName))));

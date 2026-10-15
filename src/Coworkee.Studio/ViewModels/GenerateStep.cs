@@ -15,6 +15,9 @@ public enum RunState
 {
     Ready,
     Running,
+
+    /// <summary>The plan of the changes to an existing app is shown; Apply carries it out.</summary>
+    PlanReady,
     Succeeded,
     Failed,
     Invalid,
@@ -65,7 +68,7 @@ public sealed partial class GenerateStep : StepViewModel
     public Action<Action> Dispatch { get; set; } = action => Dispatcher.UIThread.Post(action);
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsRunning), nameof(IsReady), nameof(IsSucceeded), nameof(IsFailed), nameof(IsCliMissing), nameof(IsFinished), nameof(Headline))]
+    [NotifyPropertyChangedFor(nameof(IsRunning), nameof(IsReady), nameof(IsPlanReady), nameof(IsSucceeded), nameof(IsFailed), nameof(IsCliMissing), nameof(IsFinished), nameof(Headline), nameof(StartText))]
     public partial RunState RunState { get; set; }
 
     [ObservableProperty]
@@ -88,6 +91,9 @@ public sealed partial class GenerateStep : StepViewModel
 
     public ObservableCollection<string> NextSteps { get; } = [];
 
+    /// <summary>The .rej files coworkee add wrote next to files whose changes it could not merge.</summary>
+    public ObservableCollection<string> Conflicts { get; } = [];
+
     /// <summary>The users of the created app with their passwords, read from its DemoUsers.cs.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSignIn), nameof(SignInHint), nameof(SignInText), nameof(ToolsHint))]
@@ -108,6 +114,12 @@ public sealed partial class GenerateStep : StepViewModel
 
     public bool IsReady => RunState == RunState.Ready;
 
+    public bool IsPlanReady => RunState == RunState.PlanReady;
+
+    public bool HasConflicts => Conflicts.Count > 0;
+
+    public string StartText => L.Get(IsFinished ? "Run again" : Main.IsExistingApp ? "Show the changes" : "Create the app");
+
     public bool IsSucceeded => RunState == RunState.Succeeded;
 
     public bool IsFailed => RunState is RunState.Failed or RunState.Invalid or RunState.Canceled;
@@ -118,8 +130,9 @@ public sealed partial class GenerateStep : StepViewModel
 
     public string Headline => L.Get(RunState switch
     {
-        RunState.Running => "Creating your app",
-        RunState.Succeeded => "Your app is ready",
+        RunState.Running => Main.IsExistingApp ? "Updating your app" : "Creating your app",
+        RunState.PlanReady => "Check the plan, then apply it",
+        RunState.Succeeded => Main.IsExistingApp ? "Your app is updated" : "Your app is ready",
         RunState.Invalid => "The spec has problems",
         RunState.CliMissing => "The coworkee CLI was not found",
         RunState.Canceled => "Canceled",
@@ -151,7 +164,13 @@ public sealed partial class GenerateStep : StepViewModel
         }
 
         var spec = Main.ToSpec();
-        Output = spec.Output;
+        Output = Main.ExistingApp ?? spec.Output;
+        if (Main.ExistingApp is { } app)
+        {
+            await RunAddAsync(app, spec, dryRun: true);
+            return;
+        }
+
         RunState = RunState.Running;
         Main.SaveSettings();
         Main.UpdateStates();
@@ -168,8 +187,41 @@ public sealed partial class GenerateStep : StepViewModel
         Dispatch(() => Finish(outcome));
     }
 
+    /// <summary>Carries out the plan shown after the dry run.</summary>
+    [RelayCommand]
+    public async Task ApplyAsync()
+    {
+        if (IsPlanReady && Main.ExistingApp is { } app)
+        {
+            var spec = Main.ToSpec();
+            Reset();
+            await RunAddAsync(app, spec, dryRun: false);
+        }
+    }
+
     [RelayCommand]
     public void Cancel() => _cancel?.Cancel();
+
+    private async Task RunAddAsync(string app, AppSpec spec, bool dryRun)
+    {
+        RunState = RunState.Running;
+        Main.UpdateStates();
+        _cancel = new CancellationTokenSource();
+        _watch.Restart();
+        using var timer = new Timer(_ => Dispatch(() => Elapsed = _watch.Elapsed.ToString(@"m\:ss", CultureInfo.InvariantCulture)), null, 0, 1000);
+        spec.Output = null;
+        var outcome = await Main.Generator.ApplyAsync(app, spec, dryRun, Main.Settings, line => Dispatch(() => Add(line)), _cancel.Token);
+        _watch.Stop();
+        Dispatch(() =>
+        {
+            Finish(outcome);
+            if (dryRun && outcome == GenerationOutcome.Succeeded)
+            {
+                RunState = RunState.PlanReady;
+                ShowLog = true;
+            }
+        });
+    }
 
     private async Task StoreAiKeyAsync(string appHost, string key)
     {
@@ -249,6 +301,8 @@ public sealed partial class GenerateStep : StepViewModel
         Log.Clear();
         Warnings.Clear();
         NextSteps.Clear();
+        Conflicts.Clear();
+        OnPropertyChanged(nameof(HasConflicts));
         SignIn = null;
         _nextSteps = false;
         Elapsed = string.Empty;
@@ -274,6 +328,10 @@ public sealed partial class GenerateStep : StepViewModel
             case CliLineKind.NextSteps:
                 _nextSteps = true;
                 break;
+            case CliLineKind.Text when line.Text.StartsWith("conflict ", StringComparison.Ordinal):
+                Conflicts.Add(line.Text["conflict ".Length..].Trim());
+                OnPropertyChanged(nameof(HasConflicts));
+                break;
             case CliLineKind.Text when _nextSteps && line.Text.Trim().Length > 0:
                 NextSteps.Add(line.Text.Trim());
                 break;
@@ -297,6 +355,7 @@ public sealed partial class GenerateStep : StepViewModel
         };
         ShowLog |= RunState is RunState.Failed or RunState.Invalid;
         SignIn = RunState == RunState.Succeeded && Output is { } output ? SignInInfo.Read(output) : null;
+        ShowLog |= Conflicts.Count > 0;
         Main.UpdateStates();
     }
 
