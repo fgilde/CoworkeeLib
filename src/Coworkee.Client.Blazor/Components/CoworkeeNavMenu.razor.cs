@@ -80,16 +80,7 @@ public partial class CoworkeeNavMenu : IDisposable
     {
         var options = MenuOptions.Value;
         var user = AuthenticationState is null ? new System.Security.Claims.ClaimsPrincipal() : (await AuthenticationState).User;
-        var allowed = new List<CoworkeeNavItem>();
-        foreach (var item in Contributors.SelectMany(c => c.Items))
-        {
-            if (!(item.HostOnly && SystemTenant.IsOutside(user))
-                && (item.Permission is null || (await Authorization.AuthorizeAsync(user, PermissionPolicy.For(item.Permission))).Succeeded)
-                && (item.Feature is null || await Features.IsEnabledAsync(item.Feature)))
-            {
-                allowed.Add(item);
-            }
-        }
+        var allowed = await NavigationAccess.AllowedAsync(Contributors.SelectMany(c => c.Items), user, Authorization, Features);
 
         _entries = NavigationEntry.Build(allowed, options, options.ShowHome ? options.HomeTitle : null);
         SelectCurrent();

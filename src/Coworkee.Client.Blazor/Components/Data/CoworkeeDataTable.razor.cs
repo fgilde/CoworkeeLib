@@ -195,6 +195,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
             FitColumns();
             // the menus list the grid's columns, which exist only after the first render
             StateHasChanged();
+            _ = InvokeAsync(CreateFromUrlAsync);
         }
 
         if (_pendingLayout is { } layout && _grid is not null)
