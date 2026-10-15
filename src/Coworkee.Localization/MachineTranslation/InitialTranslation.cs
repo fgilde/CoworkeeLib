@@ -14,8 +14,9 @@ using Microsoft.Extensions.Options;
 namespace Coworkee.Localization.MachineTranslation;
 
 /// <summary>
-/// After the start, translates what the switched on languages lack, e.g. a configured language without shipped texts or the texts of a new version.
-/// Runs when <see cref="LocalizationSettings.AutoTranslate"/> is on and a translation service is configured.
+/// After the start, drops stored machine translations of texts this version ships (<see cref="PromotedTexts"/>), then translates what the switched on
+/// languages lack, e.g. a configured language without shipped texts or the texts of a new version; that part runs when
+/// <see cref="LocalizationSettings.AutoTranslate"/> is on and a translation service is configured.
 /// </summary>
 internal sealed partial class InitialTranslation(IServiceScopeFactory scopes, IHostApplicationLifetime lifetime, ILogger<InitialTranslation> logger) : BackgroundService
 {
@@ -30,15 +31,22 @@ internal sealed partial class InitialTranslation(IServiceScopeFactory scopes, IH
         {
             await using var scope = scopes.CreateAsyncScope();
             var services = scope.ServiceProvider;
-            if (!await services.GetRequiredService<ISettingProvider>().GetAsync<bool>(LocalizationSettings.AutoTranslate, stoppingToken)
-                || !await services.GetRequiredService<TextTranslator>().IsAvailableAsync(stoppingToken))
-            {
-                return;
-            }
 
             // ponytail: one instance translates, the others skip; the next start catches up what failed
             await using var held = await services.GetRequiredService<IDistributedLock>().AcquireAsync("coworkee:localization:initial-translation", TimeSpan.Zero, stoppingToken);
             if (held is null)
+            {
+                return;
+            }
+
+            // texts a new version ships replace their machine translations, with or without a translation service
+            if (await services.GetRequiredService<PromotedTexts>().ApplyAsync(stoppingToken) is > 0 and var promoted)
+            {
+                LogPromoted(promoted);
+            }
+
+            if (!await services.GetRequiredService<ISettingProvider>().GetAsync<bool>(LocalizationSettings.AutoTranslate, stoppingToken)
+                || !await services.GetRequiredService<TextTranslator>().IsAvailableAsync(stoppingToken))
             {
                 return;
             }
@@ -80,6 +88,9 @@ internal sealed partial class InitialTranslation(IServiceScopeFactory scopes, IH
 
     [LoggerMessage(LogLevel.Information, "Translated {Count} missing texts of the switched on languages.")]
     private partial void LogTranslated(int count);
+
+    [LoggerMessage(LogLevel.Information, "Replaced {Count} stored machine translations with texts this version ships.")]
+    private partial void LogPromoted(int count);
 
     [LoggerMessage(LogLevel.Warning, "Translating the missing texts after the start failed.")]
     private partial void LogFailed(Exception exception);
