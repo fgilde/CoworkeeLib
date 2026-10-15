@@ -102,6 +102,37 @@ public sealed class InfrastructureOptionsTests
         (await Environment(worker))["Coworkee__Notifications__PublicAppUrl"].ShouldBe("{demo-web.bindings.https.url}");
     }
 
+    [Fact]
+    public async Task Push_gives_every_notification_service_one_vapid_pair_and_the_web_app_its_name_and_icon()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+
+        var app = builder.AddCoworkeeApp("demo", o =>
+        {
+            o.DisplayName = "Demo Shop";
+            o.LogoUrl = "/logo.svg";
+            o.UsePush();
+        });
+        app.AddProjects();
+
+        var worker = await Environment(builder.Resources.OfType<ProjectResource>().Single(p => p.Name == "demo-jobs-worker"));
+        worker["Coworkee__Notifications__Push__PublicKey"].ShouldBe("{demo-push-public-key.value}");
+        worker["Coworkee__Notifications__Push__PrivateKey"].ShouldBe("{demo-push-private-key.value}");
+        var web = await Environment(app.Web!.Resource);
+        web["Coworkee__Bff__Pwa__Name"].ShouldBe("Demo Shop");
+        web["Coworkee__Bff__Pwa__Icon"].ShouldBe("/logo.svg");
+        web.Keys.ShouldNotContain("Coworkee__Notifications__Push__PrivateKey");
+    }
+
+    [Fact]
+    public void Vapid_keys_are_an_uncompressed_P256_point_and_a_32_byte_scalar()
+    {
+        var (publicKey, privateKey) = VapidKeyDefault.Create();
+
+        System.Buffers.Text.Base64Url.DecodeFromChars(publicKey).Length.ShouldBe(65);
+        System.Buffers.Text.Base64Url.DecodeFromChars(privateKey).Length.ShouldBe(32);
+    }
+
     private static async Task<Dictionary<string, string>> Environment(IResourceWithEnvironment resource) =>
         await resource.GetEnvironmentVariableValuesAsync(DistributedApplicationOperation.Publish);
 }

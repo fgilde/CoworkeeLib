@@ -18,6 +18,19 @@ public sealed partial class CoworkeeAppOptions
 
     public CoworkeeKeycloakOptions? Keycloak { get; private set; }
 
+    /// <summary>True after <see cref="UsePush"/>.</summary>
+    public bool Push { get; private set; }
+
+    /// <summary>
+    /// Web Push for the notifications: a VAPID key pair made at the first start and kept in the app host's user secrets
+    /// (Parameters:{name}-push-public-key and -push-private-key); a deployment passes its own pair.
+    /// </summary>
+    public CoworkeeAppOptions UsePush()
+    {
+        Push = true;
+        return this;
+    }
+
     /// <summary>Adds a Keycloak container with a realm for the app and offers it as external sign-in at the auth server.</summary>
     public CoworkeeAppOptions UseKeycloak(Action<CoworkeeKeycloakOptions>? configure = null)
     {

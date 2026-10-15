@@ -6,6 +6,8 @@ namespace Aspire.Hosting;
 
 public sealed partial class CoworkeeApp
 {
+    private (IResourceBuilder<ParameterResource> Public, IResourceBuilder<ParameterResource> Private)? _pushKeys;
+
     private static OrderedDictionary<string, Action<CoworkeeApp, IResourceBuilder<ProjectResource>>> BuiltInModules() =>
         new(StringComparer.OrdinalIgnoreCase)
         {
@@ -63,7 +65,8 @@ public sealed partial class CoworkeeApp
         service.WithReference(Options.Search ?? Search, "elasticsearch");
 
     // links in digest mails lead to the web app, which is added last
-    private void WireNotifications(IResourceBuilder<ProjectResource> service) =>
+    private void WireNotifications(IResourceBuilder<ProjectResource> service)
+    {
         service.WithEnvironment(context =>
         {
             if (Web is { } web)
@@ -71,4 +74,19 @@ public sealed partial class CoworkeeApp
                 context.EnvironmentVariables[SettingPath.Of(s => s.Coworkee.Notifications.PublicAppUrl)] = web.GetEndpoint("https");
             }
         });
+        if (Options.Push)
+        {
+            var (publicKey, privateKey) = _pushKeys ??= PushKeys();
+            service.WithSetting(s => s.Coworkee.Notifications.Push.PublicKey, publicKey)
+                .WithSetting(s => s.Coworkee.Notifications.Push.PrivateKey, privateKey);
+        }
+    }
+
+    // one VAPID key pair for every service, made at the first start and kept in the app host's user secrets
+    private (IResourceBuilder<ParameterResource> Public, IResourceBuilder<ParameterResource> Private) PushKeys()
+    {
+        var pair = new Lazy<(string Public, string Private)>(VapidKeyDefault.Create);
+        return (Builder.AddParameter($"{Name}-push-public-key", new VapidKeyDefault(pair, false), secret: false, persist: true),
+            Builder.AddParameter($"{Name}-push-private-key", new VapidKeyDefault(pair, true), secret: true, persist: true));
+    }
 }
