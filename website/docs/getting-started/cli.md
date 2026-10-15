@@ -27,7 +27,7 @@ The migration worker seeds an administrator `admin@<name>.local` and the users o
 coworkee new Shop --keycloak --user "ada@shop.test:Product Manager" --user boss@shop.test:admin
 ```
 
-`--user` takes `email[:role,role][:admin]` and can be repeated; the password is generated. The users live in `src/<Name>.Migrations/DemoUsers.cs`, which the seed and the app host (for Keycloak) both read. The passwords are for development only: change them before you deploy anywhere.
+`--user` takes `email[:role,role][:admin]` and can be repeated; the password is generated. The users live in `src/<Name>.Migrations/DemoUsers.cs`, which the seed and the app host (for Keycloak) both read. The seed runs only in the Development environment; a deployment starts without users and is set up in the browser (see [Deployment](../hosting/deployment.md)).
 
 ## Options
 
@@ -226,6 +226,7 @@ coworkee ui --spec shop.json
 | `coworkee spec schema`, `example`, `validate <file>` | App specs |
 | `coworkee update [--version <version>] [--prerelease]` | Sets `<CoworkeeVersion>` in `Directory.Packages.props`, by default to the newest version on nuget.org |
 | `coworkee self-update [--version <version>] [--prerelease]` | Updates this CLI and, when installed, Coworkee Studio to the same version, see below |
+| `coworkee deploy [compose\|azure\|k8s] [-o <folder>] [--no-build]` | Publishes the app host for Docker Compose (with a filled `.env` and the images), Azure Container Apps or Kubernetes, see [Deployment](../hosting/deployment.md) |
 | `coworkee doctor` | Checks the tools, see above |
 | `coworkee ui` | Coworkee Studio |
 | `coworkee mcp` | [MCP server](mcp.md) over stdio |

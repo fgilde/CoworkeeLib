@@ -27,7 +27,7 @@ Der Migrations-Worker legt einen Administrator `admin@<name>.local` und die Benu
 coworkee new Shop --keycloak --user "ada@shop.test:Product Manager" --user boss@shop.test:admin
 ```
 
-`--user` nimmt `email[:rolle,rolle][:admin]` und lässt sich wiederholen; das Passwort wird erzeugt. Die Benutzer stehen in `src/<Name>.Migrations/DemoUsers.cs`, das der Seed und der AppHost (für Keycloak) beide lesen. Die Passwörter sind nur für die Entwicklung: Ändere sie, bevor du irgendwohin deployst.
+`--user` nimmt `email[:rolle,rolle][:admin]` und lässt sich wiederholen; das Passwort wird erzeugt. Die Benutzer stehen in `src/<Name>.Migrations/DemoUsers.cs`, das der Seed und der AppHost (für Keycloak) beide lesen. Der Seed läuft nur in der Umgebung Development; ein Deployment startet ohne Benutzer und wird im Browser eingerichtet (siehe [Deployment](../hosting/deployment.md)).
 
 ## Optionen
 
@@ -226,6 +226,7 @@ coworkee ui --spec shop.json
 | `coworkee spec schema`, `example`, `validate <datei>` | App-Spezifikationen |
 | `coworkee update [--version <version>] [--prerelease]` | Setzt `<CoworkeeVersion>` in `Directory.Packages.props`, standardmäßig auf die neueste Version auf nuget.org |
 | `coworkee self-update [--version <version>] [--prerelease]` | Aktualisiert diese CLI und, falls installiert, Coworkee Studio auf dieselbe Version, siehe unten |
+| `coworkee deploy [compose\|azure\|k8s] [-o <ordner>] [--no-build]` | Veröffentlicht den App-Host für Docker Compose (mit ausgefüllter `.env` und den Images), Azure Container Apps oder Kubernetes, siehe [Deployment](../hosting/deployment.md) |
 | `coworkee doctor` | Prüft die Werkzeuge, siehe oben |
 | `coworkee ui` | Coworkee Studio |
 | `coworkee mcp` | [MCP-Server](mcp.md) über stdio |

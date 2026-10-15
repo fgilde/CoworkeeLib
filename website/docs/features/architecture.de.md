@@ -66,6 +66,6 @@ Wer lieber klickt, öffnet mit `coworkee ui` Coworkee Studio, einen Desktop-Assi
 
 Für Agenten gibt es `coworkee mcp`, einen Model-Context-Protocol-Server über stdio. In Claude Code trägst du ihn mit `claude mcp add coworkee -- coworkee mcp` ein; der Agent liest dann die Optionen, schreibt eine Spec, prüft sie und ruft dieselben Befehle auf, die du sonst tippst.
 
-**Stand:** Coworkee ist bei Version 0.0.1.x. Many-to-many-Beziehungen kennen die Entity-Specs noch nicht, und ein Deployment mit `aspire publish` ist bisher nicht geprüft.
+**Stand:** Coworkee ist bei Version 0.0.1.x. Many-to-many-Beziehungen kennen die Entity-Specs noch nicht, und von den Deployment-Zielen ist bisher nur Docker Compose durchgehend geprüft (siehe [Deployment](../hosting/deployment.md)).
 
 Referenz: [Module](../fundamentals/modules.md), [Messaging und Pipeline](../fundamentals/messaging.md), [Events und Sperren](../fundamentals/events.md), [Kommandozeile](../getting-started/cli.md), [Coworkee Studio](../getting-started/studio.md), [MCP-Server der CLI](../getting-started/mcp.md).
