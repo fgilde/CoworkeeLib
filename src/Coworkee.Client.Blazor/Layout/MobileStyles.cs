@@ -25,7 +25,7 @@ internal static class MobileStyles
 
         @media (max-width: 599.98px) {
           .mud-main-content > .mud-container { padding-left: 12px; padding-right: 12px; }
-          .cw-user-name { display: none; }
+          .cw-user-name, .mud-drawer [data-testid='nav-pin'] { display: none; }
           .cw-page-header { flex-wrap: wrap; row-gap: 8px; }
           .cw-page-header > :first-child { flex: 1 1 100%; }
           .cw-table-search { flex: 1 1 100%; max-width: none !important; margin-right: 0 !important; }
