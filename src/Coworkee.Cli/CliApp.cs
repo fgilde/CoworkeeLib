@@ -36,6 +36,7 @@ internal static class CliApp
             TextsCommand.Create(),
             UpdateCommand.Create(),
             SelfUpdateCommand.Create(),
+            DeployCommand.Create(),
             DoctorCommand.Create(),
             UiCommand.Create(),
             McpCommand.Create(),

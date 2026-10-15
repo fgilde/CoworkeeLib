@@ -11,8 +11,8 @@ public sealed partial class CoworkeeApp
 
     private IResourceBuilder<ContainerResource>? _libreTranslate;
 
-    /// <summary>LibreTranslate of <see cref="CoworkeeAppOptions.UseLibreTranslate"/>, added with the first service that has the localization module.</summary>
-    public IResourceBuilder<ContainerResource>? LibreTranslate => Options.LibreTranslateLanguages is { } languages ? _libreTranslate ??= AddLibreTranslate(languages) : null;
+    /// <summary>LibreTranslate of <see cref="CoworkeeAppOptions.UseLibreTranslate"/>, added with the first service that has the localization module; development only, a deployment sets the endpoint in the settings.</summary>
+    public IResourceBuilder<ContainerResource>? LibreTranslate => Options.LibreTranslateLanguages is { } languages && !Publishing ? _libreTranslate ??= AddLibreTranslate(languages) : null;
 
     /// <summary>The language codes LibreTranslate loads for <paramref name="cultures"/>: English and the language of each culture.</summary>
     public static IReadOnlyList<string> LibreTranslateCodes(IEnumerable<string> cultures) =>

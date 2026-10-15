@@ -88,6 +88,37 @@ public sealed class TemplateTests(TemplateFixture template)
         await Dotnet.RunAsync(app, "test", "--project", "tests/Shop.Migrations.Tests", "--no-build");
     }
 
+    [Fact]
+    public async Task Generated_app_publishes_a_compose_deployment_without_development_tools()
+    {
+        var feed = Environment.GetEnvironmentVariable("COWORKEE_TEST_FEED");
+        Assert.SkipWhen(string.IsNullOrEmpty(feed), "Set COWORKEE_TEST_FEED to a folder with packed Coworkee packages (build/pack-local.ps1) to publish a generated app.");
+        var app = await template.CreateAsync("deploy", "--samples", "false", "--keycloak", "true");
+        await Dotnet.RunAsync(app, "nuget", "add", "source", Path.GetFullPath(feed!), "--name", "local", "--configfile", "nuget.config");
+        var solution = Solution.Find(app);
+        var output = DeployCommand.OutputFolder(solution, "compose", null);
+
+        await Dotnet.RunAsync(app, DeployCommand.PublishArgs(solution, "compose", output)[1..]);
+
+        var compose = await File.ReadAllTextAsync(Path.Combine(output, "docker-compose.yaml"), TestContext.Current.CancellationToken);
+        foreach (var service in new[] { "shop-migrations:", "shop-auth:", "shop-api:", "shop-web:", "postgres:", "redis:" })
+        {
+            compose.ShouldContain(service);
+        }
+
+        compose.ShouldContain("Coworkee__Bff__Authority: \"${SHOP_AUTH_URL}\"");
+        compose.ShouldContain("condition: \"service_completed_successfully\"");
+        compose.ShouldNotContain("keycloak");
+        compose.ShouldNotContain("axllent/mailpit");
+        compose.ShouldNotContain("libretranslate/libretranslate");
+        compose.ShouldNotContain("DevelopmentCertificates");
+        var env = ComposeEnv.Values(ComposeEnv.Fill(await File.ReadAllTextAsync(Path.Combine(output, ".env"), TestContext.Current.CancellationToken), new Dictionary<string, string>(), "Shop"));
+        env.Keys.ShouldBe(["POSTGRES_PASSWORD", "REDIS_PASSWORD", "SHOP_API_IMAGE", "SHOP_AUTH_IMAGE", "SHOP_AUTH_URL", "SHOP_ENCRYPTION_CERTIFICATE",
+            "SHOP_MIGRATIONS_IMAGE", "SHOP_SETUP_TOKEN", "SHOP_SIGNING_CERTIFICATE", "SHOP_WEB_IMAGE", "SHOP_WEB_URL"], ignoreOrder: true);
+        ComposeEnv.Images(await File.ReadAllTextAsync(Path.Combine(output, ".env"), TestContext.Current.CancellationToken))
+            .Select(i => DeployCommand.BuildImageArgs(solution, i)[2]).ShouldAllBe(p => File.Exists(p));
+    }
+
     internal static void ShouldHaveNoLeftovers(string app)
     {
         foreach (var file in Directory.EnumerateFiles(app, "*", SearchOption.AllDirectories))

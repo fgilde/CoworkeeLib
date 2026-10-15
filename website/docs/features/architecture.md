@@ -66,6 +66,6 @@ For people who would rather click, `coworkee ui` installs and opens Coworkee Stu
 
 Agents get `coworkee mcp`, a Model Context Protocol server over stdio. Claude Code registers it with `claude mcp add coworkee -- coworkee mcp`; the agent then reads the options, writes and validates a spec and calls the same commands you would type.
 
-**Status:** Coworkee is at version 0.0.1.x. Entity specs have no many-to-many relations yet, and deployment with `aspire publish` has not been verified.
+**Status:** Coworkee is at version 0.0.1.x. Entity specs have no many-to-many relations yet, and of the deployment targets only Docker Compose has been run end to end (see [Deployment](../hosting/deployment.md)).
 
 Reference: [modules](../fundamentals/modules.md), [messaging and pipeline](../fundamentals/messaging.md), [events and locks](../fundamentals/events.md), [command line](../getting-started/cli.md), [Coworkee Studio](../getting-started/studio.md), [MCP server of the CLI](../getting-started/mcp.md).

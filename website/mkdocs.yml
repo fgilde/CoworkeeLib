@@ -135,6 +135,7 @@ plugins:
             API keys: API-Schlüssel
             Hosting: Hosting
             Aspire app host: Aspire-AppHost
+            Deployment: Deployment
             Scaling out with Redis: Skalieren mit Redis
             Grafana and WebDataStudio: Grafana und WebDataStudio
             Testing: Tests
@@ -241,6 +242,7 @@ nav:
       - MCP server of the app: modules/mcp.md
   - Hosting:
       - Aspire app host: hosting/aspire.md
+      - Deployment: hosting/deployment.md
       - Scaling out with Redis: hosting/redis.md
       - Grafana and WebDataStudio: hosting/observability.md
   - Testing: testing.md

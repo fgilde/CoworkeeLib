@@ -91,7 +91,7 @@ public sealed partial class CoworkeeApp
     /// </summary>
     private void AddKeycloakSignInSettings(IResourceBuilder<ProjectResource> api)
     {
-        if (Options.Keycloak is { } options)
+        if (Options.Keycloak is { } options && Keycloak is not null)
         {
             api.WithSetting(s => s.Coworkee.Auth.External.Mode, options.LoginMode.ToString())
                 .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].DisplayName, options.DisplayName);

@@ -98,8 +98,9 @@ string aiModel = "COWORKEE_AI_MODEL", aiEndpoint = "COWORKEE_AI_ENDPOINT";
 var aiParameters = new[] { "ApiKey", "Endpoint", "Model" }.Where(n => builder.Configuration[$"Parameters:ai-{n.ToLowerInvariant()}"] is { Length: > 0 })
     .ToDictionary(n => n, n => builder.AddParameter($"ai-{n.ToLowerInvariant()}", secret: n == "ApiKey"));
 #if (aiProvider == "ollama")
-var ollama = builder.AddOllama("ollama").WithDataVolume();
-ollama.AddModel(aiModel.Length > 0 ? aiModel : "llama3.2");
+// Ollama runs next to the app only locally; a deployment sets Ai.Endpoint to its own model server
+var ollama = builder.ExecutionContext.IsRunMode ? builder.AddOllama("ollama").WithDataVolume() : null;
+ollama?.AddModel(aiModel.Length > 0 ? aiModel : "llama3.2");
 #endif
 app.Modules.Add("Coworkee.Ai", (_, service) =>
 {
@@ -119,9 +120,12 @@ app.Modules.Add("Coworkee.Ai", (_, service) =>
         service.WithSetting(s => s.Coworkee.Settings.Defaults[$"Ai.{name}"], parameter);
     }
 #if (aiProvider == "ollama")
-    service.WithReference(ollama)
-        .WithSetting(s => s.Coworkee.Settings.Defaults["Ai.Endpoint"], ollama.GetEndpoint("http"))
-        .WithSetting(s => s.Coworkee.Settings.Defaults["Ai.Enabled"], true);
+    if (ollama is not null)
+    {
+        service.WithReference(ollama)
+            .WithSetting(s => s.Coworkee.Settings.Defaults["Ai.Endpoint"], ollama.GetEndpoint("http"))
+            .WithSetting(s => s.Coworkee.Settings.Defaults["Ai.Enabled"], true);
+    }
 #elif (aiProvider == "lmStudio")
     // LM Studio serves the model it has loaded on this machine, without a key
     service.WithSetting(s => s.Coworkee.Settings.Defaults["Ai.Enabled"], true);
@@ -155,13 +159,16 @@ app.AddAirWorks<Projects.MyApp_AirWorks>();
 #else
 // the apps and stacks hosted with AspireUI show up under Services; the administrator signs in locally (LOGIN.md)
 #endif
-builder.AddAspireUI()
-    .WithAdminUser(administrator.Email, administrator.Password)
-    .WithSeedFromDirectory(builder.AppHostDirectory)
+if (builder.ExecutionContext.IsRunMode)
+{
+    builder.AddAspireUI()
+        .WithAdminUser(administrator.Email, administrator.Password)
+        .WithSeedFromDirectory(builder.AppHostDirectory)
 #if (keycloak)
-    .WithCoworkeeSignOn(app)
+        .WithCoworkeeSignOn(app)
 #endif
-    .WithRetrieveApi();
+        .WithRetrieveApi();
+}
 #endif
 
 builder.Build().Run();

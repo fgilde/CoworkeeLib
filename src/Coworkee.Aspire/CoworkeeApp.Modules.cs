@@ -40,8 +40,14 @@ public sealed partial class CoworkeeApp
         service.WithReference(Redis).WaitFor(Redis);
     }
 
+    // Mailpit is a development tool; without UseMail a deployment sets its mail server on the mail settings page
     private void WireMail(IResourceBuilder<ProjectResource> service)
     {
+        if (Publishing && Options.Smtp is null)
+        {
+            return;
+        }
+
         var smtp = Smtp;
         service.WithSetting(s => s.Coworkee.Settings.Defaults["Mail.Smtp.Host"], ReferenceExpression.Create($"{smtp.Property(EndpointProperty.Host)}"))
             .WithSetting(s => s.Coworkee.Settings.Defaults["Mail.Smtp.Port"], ReferenceExpression.Create($"{smtp.Property(EndpointProperty.Port)}"));
@@ -51,12 +57,16 @@ public sealed partial class CoworkeeApp
         }
     }
 
-    // a host path means nothing inside a published container; there the service keeps its own default
+    // a host path means nothing inside a published container; there the files go to a volume shared by the services
     private void WireStorage(IResourceBuilder<ProjectResource> service)
     {
         if (Builder.ExecutionContext.IsRunMode)
         {
             service.WithSetting(s => s.Coworkee.Storage.FileSystem.Root, BlobRoot);
+        }
+        else
+        {
+            WithFileVolume(service);
         }
     }
 
@@ -71,7 +81,7 @@ public sealed partial class CoworkeeApp
         {
             if (Web is { } web)
             {
-                context.EnvironmentVariables[SettingPath.Of(s => s.Coworkee.Notifications.PublicAppUrl)] = web.GetEndpoint("https");
+                context.EnvironmentVariables[SettingPath.Of(s => s.Coworkee.Notifications.PublicAppUrl)] = PublicUrl(web);
             }
         });
         if (Options.Push)

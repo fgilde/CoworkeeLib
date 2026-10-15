@@ -41,4 +41,4 @@ In AspireUI, everybody else gets the app-user permissions.
 <!--#endif -->
 
 <!--#endif -->
-The users and passwords come from `src/MyApp.Migrations/DemoUsers.cs` and are seeded on the first start of an empty database. They are for development only: change them before you deploy anywhere.
+The users and passwords come from `src/MyApp.Migrations/DemoUsers.cs` and are seeded on the first start of an empty database, in the Development environment only. A deployment (`coworkee deploy`) starts without users and is set up in the browser with its setup token.

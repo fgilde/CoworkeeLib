@@ -2,7 +2,7 @@ namespace MyApp.Migrations;
 
 /// <summary>
 /// Development users and roles, generated with the solution: seeded into the app and, with Keycloak, into its realm with the same password (see LOGIN.md).
-/// The passwords are for development only; change them before you deploy anywhere.
+/// The passwords are for development only; a deployment starts without them.
 /// </summary>
 public static class DemoUsers
 {

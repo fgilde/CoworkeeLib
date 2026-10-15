@@ -18,6 +18,21 @@ public sealed class CertificateTests
         Configure(new() { ["ASPNETCORE_ENVIRONMENT"] = "Development" });
     }
 
+    [Fact]
+    public void Certificates_come_from_a_file_or_as_Base64_from_a_secret()
+    {
+        var path = TestCertificates.Write("signing", X509KeyUsageFlags.DigitalSignature);
+        var base64 = Convert.ToBase64String(File.ReadAllBytes(path));
+
+        using var fromFile = CoworkeeAuthServerModule.Load(new() { Path = path });
+        using var fromSecret = CoworkeeAuthServerModule.Load(new() { Base64 = base64 });
+
+        fromSecret.Thumbprint.ShouldBe(fromFile.Thumbprint);
+        fromSecret.HasPrivateKey.ShouldBeTrue();
+        var encryption = Convert.ToBase64String(File.ReadAllBytes(TestCertificates.Write("encryption", X509KeyUsageFlags.KeyEncipherment)));
+        Configure(new() { ["Coworkee:Auth:SigningCertificate:Base64"] = base64, ["Coworkee:Auth:EncryptionCertificate:Base64"] = encryption });
+    }
+
     private static void Configure(Dictionary<string, string?> values) =>
         new CoworkeeAuthServerModule().ConfigureServices(new ModuleServiceContext(new ServiceCollection(), new ConfigurationBuilder().AddInMemoryCollection(values).Build()));
 }

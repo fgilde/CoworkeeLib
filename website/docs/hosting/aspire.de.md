@@ -238,28 +238,8 @@ builder.AddAspireUI()
     .WithSeedFromDirectory(builder.AppHostDirectory)
     .WithCoworkeeSignOn(app) // nur mit Keycloak
     .WithRetrieveApi();
-```n
+```
+
 ## Veröffentlichen
 
-`PublishToDockerCompose()` fügt eine Docker-Compose-Umgebung hinzu. `aspire publish` schreibt dann eine `docker-compose.yaml` und eine `.env`-Datei mit allen Diensten, Containern, Volumes und der Startreihenfolge (Dienste starten, sobald die Migrationen abgeschlossen sind):
-
-```csharp
-builder.AddCoworkeeApp("myapp", options => options.PublishToDockerCompose(compose => compose.WithDashboard(false)))
-    .AddProjects();
-```
-
-```bash
-aspire publish -o deploy
-```
-
-Azure Container Apps funktioniert über die austauschbare Infrastruktur; nimm `Aspire.Hosting.Azure.AppContainers` und `Aspire.Hosting.Azure.PostgreSQL` in den AppHost auf:
-
-```csharp
-builder.AddAzureContainerAppEnvironment("aca");
-var database = builder.AddAzurePostgresFlexibleServer("postgres").RunAsContainer().AddDatabase("myapp");
-builder.AddCoworkeeApp("myapp", options => options.UseDatabase(database)).AddProjects();
-```
-
-## Produktion
-
-Der AppHost beschreibt die Entwicklung. Für die Produktion konfigurierst du zusätzlich echte Zertifikate (`Coworkee:Auth:SigningCertificate`, `EncryptionCertificate`), die öffentlichen URLs hinter deinem Reverse Proxy, einen echten SMTP-Server, Speicher und Keycloak. Das Dashboard eines lokalen Laufs listet die Einstellungen, die jeder Dienst braucht.
+`coworkee deploy compose|azure|k8s` veröffentlicht den AppHost für Docker Compose, Azure Container Apps oder Kubernetes: öffentliche Adressen und Token-Zertifikate als Parameter, keine Demo-Benutzer und keine Entwicklungswerkzeuge. `PublishToDockerCompose(configure)` konfiguriert weiterhin die Compose-Umgebung (`compose => compose.WithDashboard(false)`); eine Umgebung, die der AppHost vor `AddCoworkeeApp` selbst hinzufügt, ersetzt die von `Coworkee:Deploy:Target`. Alles Weitere, auch was geprüft ist, steht unter [Deployment](deployment.md).

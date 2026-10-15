@@ -37,9 +37,10 @@ public sealed class CoworkeeBackgroundJobsModule : CoworkeeModule, IWebModule
             var connectionString = provider.GetRequiredService<IConfiguration>().GetConnectionString(options.ConnectionStringName)
                 ?? throw new InvalidOperationException($"Connection string '{options.ConnectionStringName}' for background jobs is missing.");
             config.UseSimpleAssemblyNameTypeSerializer().UseRecommendedSerializerSettings();
+            // only the services that process jobs create the schema; two services starting at once raced over it
             if (database == DatabaseProviders.SqlServer)
             {
-                config.UseSqlServerStorage(connectionString, new SqlServerStorageOptions { SchemaName = "hangfire", QueuePollInterval = options.PollingInterval });
+                config.UseSqlServerStorage(connectionString, new SqlServerStorageOptions { SchemaName = "hangfire", QueuePollInterval = options.PollingInterval, PrepareSchemaIfNecessary = runServer });
             }
             else if (database == DatabaseProviders.Sqlite)
             {
@@ -50,7 +51,7 @@ public sealed class CoworkeeBackgroundJobsModule : CoworkeeModule, IWebModule
             {
                 config.UsePostgreSqlStorage(
                     storage => storage.UseNpgsqlConnection(connectionString),
-                    new PostgreSqlStorageOptions { SchemaName = "hangfire", QueuePollInterval = options.PollingInterval });
+                    new PostgreSqlStorageOptions { SchemaName = "hangfire", QueuePollInterval = options.PollingInterval, PrepareSchemaIfNecessary = runServer });
             }
 
             config.UseFilter(new AutomaticRetryAttribute { Attempts = Math.Max(0, options.Attempts - 1), DelaysInSeconds = options.RetryDelaysInSeconds });
