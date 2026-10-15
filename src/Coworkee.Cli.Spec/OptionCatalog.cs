@@ -137,6 +137,8 @@ public static class OptionCatalog
         new("elsa", Modules, "Elsa workflows", "Elsa Workflows 3 in the api: its tables in the app's database, its api under /api/elsa for the permission Workflows.Elsa.Manage, activities and triggers for Coworkee workflows. Elsa Studio runs as its own app.", OptionKind.Bool, "false",
             "When administrators should build long running processes themselves, beyond the states declared in code.", ["Visual designer (Elsa Studio)", "Starts from transitions, decisions and entity changes"], ["Elsa brings many packages and its own tables", "Elsa Studio is a separate app to run"],
             Package: "Coworkee.Workflows.Elsa", InfoUrl: "https://elsa-workflows.github.io/elsa-documentation/", DependsOn: new("workflows")),
+        new("webhooks", Modules, "Webhooks", "Outgoing webhooks: admins register endpoints that get signed events about entity changes, workflow transitions and the app's own events, with retries and a delivery log. With the samples, products send events.", OptionKind.Bool, "false",
+            "When other systems (an ERP, n8n, Zapier) should hear about changes without polling.", ["Signed like the Standard Webhooks spec", "Retries, delivery log and redelivery"], ["Entity sets have to be opted in", "Receivers must be reachable over https"], Package: "Coworkee.Webhooks"),
         new("extendedAttributes", Modules, "Extended attributes", "Free key/value attributes for any entity without schema changes (the Documents sample brings it anyway).", OptionKind.Bool, "false",
             "When users need fields you cannot foresee.", ["No migration per field"], ["Values are not typed columns"], Package: "Coworkee.ExtendedAttributes"),
         // not "search": dotnet new reads --search as its own command

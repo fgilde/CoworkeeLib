@@ -46,6 +46,7 @@
     <Project Path="src/Coworkee.Theming/Coworkee.Theming.csproj" />
     <Project Path="src/Coworkee.Workflows/Coworkee.Workflows.csproj" />
     <Project Path="src/Coworkee.Workflows.Elsa/Coworkee.Workflows.Elsa.csproj" />
+    <Project Path="src/Coworkee.Webhooks/Coworkee.Webhooks.csproj" />
   </Folder>
   <Folder Name="/templates/">
     <Project Path="templates/Coworkee.Templates/Coworkee.Templates.csproj" />
@@ -93,5 +94,6 @@
     <Project Path="tests/Coworkee.Theming.Tests/Coworkee.Theming.Tests.csproj" />
     <Project Path="tests/Coworkee.Workflows.Tests/Coworkee.Workflows.Tests.csproj" />
     <Project Path="tests/Coworkee.Workflows.Elsa.Tests/Coworkee.Workflows.Elsa.Tests.csproj" />
+    <Project Path="tests/Coworkee.Webhooks.Tests/Coworkee.Webhooks.Tests.csproj" />
   </Folder>
 </Solution>

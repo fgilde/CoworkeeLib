@@ -23,6 +23,7 @@ public static class PermissionCatalog
         ]),
         ("workflows", ["Workflows.View", "Workflows.Transition"]),
         ("elsa", ["Workflows.Elsa.Manage"]),
+        ("webhooks", ["Webhooks.Manage"]),
         ("samples", [
             "Catalog.Products.View", "Catalog.Products.Create", "Catalog.Products.Edit", "Catalog.Products.Delete", "Catalog.Products.Export",
             "Catalog.Brands.View", "Catalog.Brands.Create", "Catalog.Brands.Edit", "Catalog.Brands.Delete", "Catalog.Brands.Export", "Dashboards.View",

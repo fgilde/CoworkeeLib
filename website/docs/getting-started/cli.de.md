@@ -62,6 +62,7 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--social` | `social` | bool | `false` | Kommentare, Tags und Bewertungen |
 | `--workflows` | `workflows` | bool | `false` | Zustände, Übergänge und Genehmigungen für Entities; mit den Beispielen durchlaufen Produkte eine Freigabe |
 | `--elsa` | `elsa` | bool | `false` | Elsa Workflows 3 in der API (braucht `--workflows`) |
+| `--webhooks` | `webhooks` | bool | `false` | Ausgehende Webhooks mit signierter Zustellung, Wiederholungen und Zustellprotokoll; mit den Beispielen senden Produkte Ereignisse |
 | `--extended-attributes` | `extendedAttributes` | bool | `false` | Schlüssel/Wert-Attribute für beliebige Entities (das Documents-Beispiel bringt sie ohnehin mit) |
 | `--elasticsearch` | `elasticsearch` | bool | `false` | Elasticsearch-Index; der App-Host ergänzt den Container |
 | `--event-bus` | `eventBus` | `none`, `inProcess`, `rabbitMq` | `none` | Integrationsereignisse über die Outbox; `rabbitMq` ergänzt den Transport und einen RabbitMQ-Container |
@@ -100,7 +101,7 @@ Ein bool-Schalter ohne Wert bedeutet `true` (`--files`), `--chat false` schaltet
 
 **Links.** `coworkee options` gibt die Webseite dessen aus, was eine Option mitbringt (`More:`): AirWorks, AspireUI, WebDataStudio, Grafana, Keycloak, Redis, Elasticsearch, GitHub Actions und den Dev-Container; bei Auswahlen eine Zeile je Produkt (`More (postgres):`): PostgreSQL, SQL Server, SQLite, RabbitMQ, Azure Blob Storage, Mapperly, Ollama, LM Studio, LibreTranslate, MyMemory, DeepL, Azure AI Translator und Google Cloud Translation. `--json` enthält sie als `infoUrl` der Option und der Auswahl. Das Studio zeigt sie als Öffnen-Knopf auf der Karte.
 
-Die mitgelieferte erste Migration deckt die Standardmodule ab (mit oder ohne Beispiele). Schaltest du ein Modul mit Tabellen ein oder aus (Chat, KI, Backup, Benachrichtigungen, Dateien, Features, Social, Workflows, Event-Bus, erweiterte Attribute ohne Beispiele) oder wählst eine andere Datenbank als `postgres`, lässt das Template die Migration weg und `coworkee new` legt nach dem Restore `Initial` mit `dotnet ef` an. Mit reinem `dotnet new` führst du `coworkee migrations add Initial` einmal selbst aus.
+Die mitgelieferte erste Migration deckt die Standardmodule ab (mit oder ohne Beispiele). Schaltest du ein Modul mit Tabellen ein oder aus (Chat, KI, Backup, Benachrichtigungen, Dateien, Features, Social, Workflows, Webhooks, Event-Bus, erweiterte Attribute ohne Beispiele) oder wählst eine andere Datenbank als `postgres`, lässt das Template die Migration weg und `coworkee new` legt nach dem Restore `Initial` mit `dotnet ef` an. Mit reinem `dotnet new` führst du `coworkee migrations add Initial` einmal selbst aus.
 
 ## App-Spezifikationen
 

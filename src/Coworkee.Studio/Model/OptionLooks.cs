@@ -24,6 +24,7 @@ public static class OptionLooks
         ["social"] = "Icon.Forum",
         ["workflows"] = "Icon.Sitemap",
         ["elsa"] = "Icon.CogPlay",
+        ["webhooks"] = "Icon.Webhook",
         ["extendedAttributes"] = "Icon.TagPlus",
         ["elasticsearch"] = "Icon.DatabaseSearch",
         ["eventBus"] = "Icon.Broadcast",

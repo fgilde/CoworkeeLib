@@ -38,6 +38,9 @@
 - **Import-Assistent** pro Entity-Set: CSV, Excel und JSON, erkannte Kodierung, Trennzeichen und Kopfzeile, Spaltenzuordnung mit Vorschlägen und gespeicherten Zuordnungen, Umwandlung in der Sprache der Datei, Vorschau mit der Validierung der Commands, Anlegen, Ändern per Schlüssel oder beides, Probelauf, Hintergrundjob mit Live-Fortschritt, Datei der fehlerhaften Zeilen und Rückgängig für den letzten Import, siehe [Import und Export](../web/import-export.md). `AddODataImport` nimmt dafür `(Guid? id, row) => command` und optional einen Lösch-Command.
 - **Admin-Seite** *Import und Export* (`/admin/data-transfer`, Berechtigung `DataTransfer.Use`; gib sie den Rollen, die sie sehen sollen).
 - **Exporte** der aktuellen Ansicht als Excel, CSV oder JSON (`format`, `columns`); mehr als `Coworkee:OData:BackgroundExportRows` Zeilen (10 000) laufen als Job mit Download-Hinweis.
+### Neu
+
+- **Webhooks** (`Coworkee.Webhooks`, CLI `--webhooks`, Karte im Studio): Endpunkte pro Organisation bekommen signierte Ereignisse (im Stil von Standard Webhooks) zu Änderungen freigeschalteter Entity-Sets, Workflow-Übergängen und eigenen Ereignissen der App, beschränkt auf das, was der Besitzer des Endpunkts lesen darf; Wiederholungen mit Backoff, Abschalten nach wiederholten Fehlern, Zustellprotokoll, Testereignisse und erneute Zustellung unter `/admin/webhooks`, Schutz vor SSRF. Siehe [Webhooks](../modules/webhooks.md). Das Modul hat Tabellen: leg beim Einschalten eine Migration an.
 
 ## 0.0.1.25 (2026-10-15)
 

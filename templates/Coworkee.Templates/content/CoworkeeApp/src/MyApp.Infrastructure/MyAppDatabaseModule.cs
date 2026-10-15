@@ -47,6 +47,9 @@ namespace MyApp.Infrastructure;
 #if (workflows)
     , typeof(Coworkee.Workflows.CoworkeeWorkflowsModule)
 #endif
+#if (webhooks)
+    , typeof(Coworkee.Webhooks.CoworkeeWebhooksModule)
+#endif
 #if (extendedAttributes)
     , typeof(Coworkee.ExtendedAttributes.CoworkeeExtendedAttributesModule)
 #endif

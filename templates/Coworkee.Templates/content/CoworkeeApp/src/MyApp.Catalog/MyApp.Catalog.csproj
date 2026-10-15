@@ -11,6 +11,9 @@
     <!--#if (workflows) -->
     <CoworkeePackage Include="Coworkee.Workflows" />
     <!--#endif -->
+    <!--#if (webhooks) -->
+    <CoworkeePackage Include="Coworkee.Webhooks" />
+    <!--#endif -->
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
 </Project>

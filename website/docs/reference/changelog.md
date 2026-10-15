@@ -36,6 +36,9 @@ Changes that need action in apps built on Coworkee. Newest first.
 - **Import wizard** per entity set: CSV, Excel and JSON, detected encoding, separator and header, column mapping with suggestions and saved mappings, conversion with the file's language, preview with the validation of the commands, add, update by key or both, dry run, background job with live progress, file of the failed rows and undo of the last import, see [Import and export](../web/import-export.md). `AddODataImport` takes `(Guid? id, row) => command` and an optional delete command for that.
 - **Admin page** *Import and export* (`/admin/data-transfer`, permission `DataTransfer.Use`; grant it to the roles that should see it).
 - **Exports** of the current view as Excel, CSV or JSON (`format`, `columns`); more than `Coworkee:OData:BackgroundExportRows` rows (10 000) run as a job with a download notice.
+### New
+
+- **Webhooks** (`Coworkee.Webhooks`, CLI `--webhooks`, Studio card): endpoints per organisation get signed events (Standard Webhooks style) about changes of opted-in entity sets, workflow transitions and the app's own events, shaped by what the endpoint's owner may read; retries with backoff, switch-off after repeated failures, delivery log, test events and redelivery on `/admin/webhooks`, SSRF protection. See [Webhooks](../modules/webhooks.md). The module has tables: add a migration when you switch it on.
 
 ## 0.0.1.25 (2026-10-15)
 

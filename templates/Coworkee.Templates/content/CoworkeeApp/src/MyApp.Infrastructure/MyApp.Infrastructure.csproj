@@ -33,6 +33,9 @@
     <!--#if (workflows) -->
     <CoworkeePackage Include="Coworkee.Workflows" />
     <!--#endif -->
+    <!--#if (webhooks) -->
+    <CoworkeePackage Include="Coworkee.Webhooks" />
+    <!--#endif -->
     <!--#if (extendedAttributes) -->
     <CoworkeePackage Include="Coworkee.ExtendedAttributes" />
     <!--#endif -->

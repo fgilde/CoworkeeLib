@@ -4,6 +4,9 @@ using Coworkee.AspNetCore;
 using Coworkee.Core.Modularity;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.OData;
+#if (webhooks)
+using Coworkee.Webhooks;
+#endif
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using MyApp.Catalog.Domain;
@@ -31,6 +34,9 @@ public sealed class MyAppCatalogModule : CoworkeeModule, IWebModule
         context.Services.AddSingleton<IPermissionDefinitionContributor, CatalogPermissionDefinitions>();
         context.Services.AddODataEntity<Brand>("Brands", CatalogPermissions.Brands.View);
         context.Services.AddODataEntity<Product>("Products", CatalogPermissions.Products.View);
+#if (webhooks)
+        context.Services.AddCoworkeeWebhooks(webhooks => webhooks.Entity<Product>());
+#endif
         context.Services.AddODataImport("Brands", (Guid? id, AddEditBrandRequest row) => new AddEditBrandCommand(id, row), id => new DeleteBrandsCommand([id]));
         context.Services.AddODataImport("Products", (Guid? id, AddEditProductRequest row) => new AddEditProductCommand(id, row), id => new DeleteProductsCommand([id]));
 #if (workflows)

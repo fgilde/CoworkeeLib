@@ -129,6 +129,7 @@ plugins:
             Comments, tags and ratings: Kommentare, Tags und Bewertungen
             Workflows and approvals: Workflows und Genehmigungen
             Elsa workflows: Elsa-Workflows
+            Webhooks: Webhooks
             AI assistant and MCP: KI-Assistent und MCP
             MCP server of the app: MCP-Server der App
             API keys: API-Schlüssel
@@ -235,6 +236,7 @@ nav:
       - Comments, tags and ratings: modules/social.md
       - Workflows and approvals: modules/workflows.md
       - Elsa workflows: modules/workflows-elsa.md
+      - Webhooks: modules/webhooks.md
       - AI assistant and MCP: modules/ai.md
       - MCP server of the app: modules/mcp.md
   - Hosting:

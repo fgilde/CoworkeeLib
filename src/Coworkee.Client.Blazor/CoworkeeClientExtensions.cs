@@ -33,6 +33,7 @@ public static class CoworkeeClientExtensions
         services.AddHttpClient<Security.IApiKeysApi, Security.ApiKeysApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<History.IEntityHistoryApi, History.EntityHistoryApi>(client => client.BaseAddress = baseAddress);
         CommandPalette.CommandPaletteServiceCollectionExtensions.AddCommandPalette(services);
+        services.AddHttpClient<Webhooks.IWebhooksApi, Webhooks.WebhooksApi>(client => client.BaseAddress = baseAddress);
         services.AddSingleton(new Pages.ProfileTab("API keys", "api-keys", typeof(Pages.ProfileApiKeys), Coworkee.Contracts.Identity.ApiKeyPermissions.Create,
             MudBlazor.Icons.Material.Outlined.Key, Order: 100));
         services.AddHttpClient<Backup.IBackupApi, Backup.BackupApi>(client =>
@@ -160,6 +161,7 @@ internal sealed class AdminNavigation : INavigationContributor
         new("Themes", "/admin/themes", MudBlazor.Icons.Material.Outlined.Palette, Coworkee.Contracts.Theming.ThemePermissions.Manage, Group: System, Order: 4),
         new("Import and export", "/admin/data-transfer", MudBlazor.Icons.Material.Outlined.ImportExport, Coworkee.Contracts.Data.DataTransferPermissions.Use, Group: System, Order: 7),
         new("Backups", "/admin/backups", MudBlazor.Icons.Material.Outlined.Backup, Coworkee.Contracts.Backup.BackupPermissions.Manage, Group: System, Order: 5, HostOnly: true),
+        new("Webhooks", "/admin/webhooks", MudBlazor.Icons.Material.Outlined.Webhook, Coworkee.Contracts.Webhooks.WebhookPermissions.Manage, Group: System, Order: 7),
         new("Mail templates", "/admin/mail/templates", MudBlazor.Icons.Material.Outlined.Email, Coworkee.Contracts.Mailing.MailPermissions.Templates.Manage, Group: Communication),
         new("Mail campaigns", "/admin/mail/campaigns", MudBlazor.Icons.Material.Outlined.Campaign, Coworkee.Contracts.Mailing.MailPermissions.Campaigns.Send, Group: Communication, Order: 3),
         new("Mail log", "/admin/mail/log", MudBlazor.Icons.Material.Outlined.Outbox, Coworkee.Contracts.Mailing.MailPermissions.Log.View, Group: Communication, Order: 1),

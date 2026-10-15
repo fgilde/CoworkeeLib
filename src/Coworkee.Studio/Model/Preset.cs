@@ -4,7 +4,7 @@ namespace Coworkee.Studio.Model;
 public sealed record Preset(string Name, string Description, string Icon, IReadOnlyDictionary<string, string> Values)
 {
     private static readonly string[] ModuleSwitches =
-        ["samples", "auditing", "notifications", "chat", "reports", "ai", "backup", "files", "features", "social", "workflows", "elsa", "extendedAttributes", "elasticsearch", "clientEntities", "keycloak",
+        ["samples", "auditing", "notifications", "chat", "reports", "ai", "backup", "files", "features", "social", "workflows", "elsa", "webhooks", "extendedAttributes", "elasticsearch", "clientEntities", "keycloak",
          "registration", "githubActions", "devcontainer", "redis", "grafana", "webDataStudio", "aspireUI", "airworks"];
 
     public static IReadOnlyList<Preset> All { get; } =
