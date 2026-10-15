@@ -56,7 +56,7 @@ internal sealed class EntityHistoryTexts(CoworkeeDbContext db, IServiceProvider 
         {
             if (clr is { IsEnum: true })
             {
-                return JsonSerializer.Deserialize(json, clr)!.ToString();
+                return Contracts.Data.EnumLabels.Of((Enum)JsonSerializer.Deserialize(json, clr)!);
             }
 
             var element = JsonSerializer.Deserialize<JsonElement>(json);

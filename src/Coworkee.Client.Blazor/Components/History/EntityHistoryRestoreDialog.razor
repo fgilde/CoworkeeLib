@@ -1,0 +1,29 @@
+@namespace Coworkee.Client.Blazor.Components
+<MudDialog Class="@MudBlazor.Extensions.Helper.MudExCss.Classes.Dialog.Initial">
+    <DialogContent>
+        @if (Preview.Undeletes)
+        {
+            <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">@L["The deleted record comes back."]</MudAlert>
+        }
+        @if (Preview.Fields.Count > 0)
+        {
+            <MudSimpleTable Dense="true" Elevation="0" data-testid="restore-preview">
+                <thead><tr><th>@L["Field"]</th><th>@L["Now"]</th><th>@L["After the restore"]</th></tr></thead>
+                <tbody>
+                    @foreach (var field in Preview.Fields)
+                    {
+                        <tr data-field="@field.Property">
+                            <td>@Label(field.Property)</td>
+                            <td class="mud-text-secondary" style="white-space:pre-wrap">@(field.CurrentText ?? "–")</td>
+                            <td style="white-space:pre-wrap">@(field.RestoredText ?? "–")</td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog.Cancel()">@L["Cancel"]</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => Dialog.Close(DialogResult.Ok(true))" data-testid="confirm-restore">@L["Restore"]</MudButton>
+    </DialogActions>
+</MudDialog>
