@@ -33,6 +33,37 @@ public sealed class DataTablePagesTests
     }
 
     [Fact]
+    public async Task A_page_of_an_older_query_that_arrives_late_is_not_kept()
+    {
+        var pages = new DataTablePages<int>(25);
+        var late = new TaskCompletionSource<ODataPage<int>>();
+
+        var older = pages.GetAsync("a", 0, 10, (_, _, _) => late.Task);
+        (await pages.GetAsync("b", 0, 10, Load)).ShouldBe(Enumerable.Range(0, 10));
+        late.SetResult(new ODataPage<int>([.. Enumerable.Range(1000, 25)], 1000, []));
+        (await older).ShouldBe(Enumerable.Range(1000, 10));
+
+        pages.Total.ShouldBe(95);
+        (await pages.GetAsync("b", 0, 10, Load)).ShouldBe(Enumerable.Range(0, 10));
+        _loads.Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task A_new_query_keeps_the_previous_total_until_its_own_arrives()
+    {
+        var pages = new DataTablePages<int>(25);
+        await pages.GetAsync("a", 0, 1, Load);
+        var waiting = new TaskCompletionSource<ODataPage<int>>();
+
+        var loading = pages.GetAsync("b", 0, 1, (_, _, _) => waiting.Task);
+
+        pages.Total.ShouldBe(95);
+        waiting.SetResult(new ODataPage<int>([1], 1, []));
+        await loading;
+        pages.Total.ShouldBe(1);
+    }
+
+    [Fact]
     public async Task A_cleared_cache_loads_again_and_asks_for_the_count()
     {
         var pages = new DataTablePages<int>(25);

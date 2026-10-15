@@ -10,14 +10,18 @@ public sealed class DataTablePages<T>(int size)
 {
     private readonly Dictionary<int, IReadOnlyList<T>> _pages = [];
     private string? _query;
+    private int _generation;
 
+    public int Size => size;
+
+    /// <summary>The count of the current query; after <see cref="Clear"/> the previous one until the new one arrives (no "0 rows" while loading).</summary>
     public long Total { get; private set; }
 
     public void Clear()
     {
         _pages.Clear();
         _query = null;
-        Total = 0;
+        _generation++;
     }
 
     /// <param name="query">Filter, order and everything else that changes the rows; a new one drops the kept pages.</param>
@@ -53,12 +57,19 @@ public sealed class DataTablePages<T>(int size)
         }
 
         var first = _pages.Count == 0;
+        var generation = _generation;
         var result = await load(page * size, size, first);
+        if (generation != _generation)
+        {
+            // the query changed while this page loaded (local queries ignore the cancellation): its rows belong to no current query
+            return result.Items;
+        }
+
         if (result.Count is { } total)
         {
             Total = total;
         }
-        else if (result.Items.Count < size)
+        else if (first || result.Items.Count < size)
         {
             Total = page * size + result.Items.Count;
         }
