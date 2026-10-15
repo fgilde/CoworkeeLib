@@ -1,0 +1,755 @@
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "description": "Name of the app: a letter, then letters or digits. Prefix of every project and namespace.",
+      "type": "string"
+    },
+    "output": {
+      "description": "Target folder, relative to the spec file (default: ./<name> next to it).",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "options": {
+      "description": "Template options by id (coworkee options).",
+      "type": "object",
+      "properties": {
+        "title": {
+          "description": "Display title in the browser, the app bar, the sign-in pages and the Aspire dashboard (default: the name).",
+          "type": "string"
+        },
+        "samples": {
+          "description": "Catalog (products, brands, dashboard) and Documents modules with their pages, tests and demo data.",
+          "type": "boolean",
+          "default": true
+        },
+        "tests": {
+          "description": "API, migration, app host and page tests.",
+          "type": "boolean",
+          "default": true
+        },
+        "git": {
+          "description": "Run git init in the new folder.",
+          "type": "boolean",
+          "default": false
+        },
+        "airworks": {
+          "description": "A second client next to the Blazor app: the AirWorks web desktop (TypeScript) with windows, taskbar and apps for nearly everything the Blazor app offers: settings, files, data, chat, reports with their designer, the assistant and the administration. Same sign-in (and Keycloak), same api, theme and logo of the app; runs in the Aspire app host.",
+          "type": "boolean",
+          "default": false
+        },
+        "airworksPackages": {
+          "description": "Where the AirWorks client takes @coworkee/client and @coworkee/airworks from: the tarballs inside the template (no npm registry needed for them) or npm in the version of the template. Only used with airworks.",
+          "type": "string",
+          "enum": [
+            "bundled",
+            "npm"
+          ],
+          "default": "bundled"
+        },
+        "repository": {
+          "description": "GitHub repository of the app as owner/repo, e.g. acme/shop: the README gets a QuickRun badge that starts the app from there with one click.",
+          "type": "string"
+        },
+        "auditing": {
+          "description": "Pages for the audit trail, entity history and restore. The trail itself is always written.",
+          "type": "boolean",
+          "default": true
+        },
+        "notifications": {
+          "description": "In-app notifications with mail digests.",
+          "type": "boolean",
+          "default": true
+        },
+        "chat": {
+          "description": "Direct and group chat with realtime delivery.",
+          "type": "boolean",
+          "default": true
+        },
+        "reports": {
+          "description": "Dashboards over the OData entity sets with charts, KPIs, tables and filters, aggregated on the server.",
+          "type": "boolean",
+          "default": true
+        },
+        "ai": {
+          "description": "Assistant page, MCP endpoint and tool call audit; every permitted command becomes a tool (provider and key in the settings).",
+          "type": "boolean",
+          "default": true
+        },
+        "backup": {
+          "description": "Backups and restore of the database from the admin pages. Only used with database = postgres.",
+          "type": "boolean",
+          "default": true
+        },
+        "files": {
+          "description": "Folders and files of the organisation with preview, upload and per-folder permissions.",
+          "type": "boolean",
+          "default": false
+        },
+        "features": {
+          "description": "Features switched per tenant, editions and the tenant administration of the host.",
+          "type": "boolean",
+          "default": false
+        },
+        "social": {
+          "description": "Comments, tags and star ratings for any entity, opted in per entity type.",
+          "type": "boolean",
+          "default": false
+        },
+        "extendedAttributes": {
+          "description": "Free key/value attributes for any entity without schema changes (the Documents sample brings it anyway).",
+          "type": "boolean",
+          "default": false
+        },
+        "elasticsearch": {
+          "description": "Elasticsearch index; the app host adds an Elasticsearch container.",
+          "type": "boolean",
+          "default": false
+        },
+        "eventBus": {
+          "description": "Integration events through the transactional outbox.",
+          "type": "string",
+          "enum": [
+            "none",
+            "inProcess",
+            "rabbitMq"
+          ],
+          "default": "none"
+        },
+        "clientEntities": {
+          "description": "The browser keeps copies of OData sets marked [ClientEntity] and filters them locally. Entities of the spec with clientEntity switch it on.",
+          "type": "boolean",
+          "default": false
+        },
+        "keycloak": {
+          "description": "Keycloak container as external sign-in, with a realm for the app.",
+          "type": "boolean",
+          "default": false
+        },
+        "storage": {
+          "description": "Where uploaded files and backups go.",
+          "type": "string",
+          "enum": [
+            "fileSystem",
+            "azureBlob"
+          ],
+          "default": "fileSystem"
+        },
+        "aiProvider": {
+          "description": "Model provider of the assistant (with the AI assistant); changeable later on the AI page of the app. Only used with ai.",
+          "type": "string",
+          "enum": [
+            "anthropic",
+            "openAI",
+            "azureOpenAI",
+            "gemini",
+            "openRouter",
+            "mistral",
+            "groq",
+            "deepSeek",
+            "xai",
+            "together",
+            "fireworks",
+            "ollama",
+            "lmStudio",
+            "openAICompatible"
+          ],
+          "default": "anthropic"
+        },
+        "aiModel": {
+          "description": "Model of the AI provider (Azure OpenAI: the deployment name); empty takes the provider's default. The key never goes into the spec: user secrets of the app host, Parameters:ai-apikey. Only used with ai.",
+          "type": "string"
+        },
+        "aiEndpoint": {
+          "description": "Base address of the AI provider, for Azure OpenAI, openAICompatible or a provider behind a proxy; empty takes the provider's address. Only used with ai.",
+          "type": "string"
+        },
+        "redis": {
+          "description": "Redis container in the app host: SignalR backplane, shared presence, cache invalidation and sign-in sessions across instances.",
+          "type": "boolean",
+          "default": true
+        },
+        "grafana": {
+          "description": "Grafana with Prometheus, Loki, Tempo and an OpenTelemetry collector in the app host: metrics, logs and traces of every service, the app database and ready dashboards. Sign-in with the app's administrator, and Keycloak when it is on.",
+          "type": "boolean",
+          "default": true
+        },
+        "webDataStudio": {
+          "description": "WebDataStudio, a database studio in the browser, connected to the app database. Sign-in with the app's administrator, and Keycloak when it is on.",
+          "type": "boolean",
+          "default": true
+        },
+        "aspireUI": {
+          "description": "AspireUI, a web UI to host and try more apps and stacks next to the app, in the app host. Its apps show up on the admin page Services. Sign-in with the app's administrator, and Keycloak when it is on.",
+          "type": "boolean",
+          "default": false
+        },
+        "database": {
+          "description": "Database engine of the app; the app host starts it and the initial migration is made for it.",
+          "type": "string",
+          "enum": [
+            "postgres",
+            "sqlServer",
+            "sqlite"
+          ],
+          "default": "postgres"
+        },
+        "theme": {
+          "description": "Default theme of the installation.",
+          "type": "string",
+          "enum": [
+            "Ocean",
+            "Coworkee",
+            "Classic",
+            "Forest",
+            "Midnight",
+            "Sunset",
+            "HighContrast"
+          ],
+          "default": "Ocean"
+        },
+        "primaryColor": {
+          "description": "Primary brand color #rrggbb. With a brand color the app gets its own theme (named like the title), based on the chosen theme, as default.",
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "secondaryColor": {
+          "description": "Secondary brand color #rrggbb.",
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "logo": {
+          "description": "Logo file (svg, png, ...); the CLI copies it into the web client. It shows in the app bar, the browser tab and on the sign-in pages.",
+          "type": "string",
+          "default": "coworkee-icon.svg"
+        },
+        "signInLayout": {
+          "description": "Layout of the sign-in pages.",
+          "type": "string",
+          "enum": [
+            "Card",
+            "Split",
+            "Slide"
+          ],
+          "default": "Slide"
+        },
+        "signInMedia": {
+          "description": "Image or video next to the sign-in form: a local file (copied into the web client) or an http(s) address. Only used with signInLayout = Split or Slide, or loadingScreen = SignInMedia.",
+          "type": "string"
+        },
+        "signInMediaSide": {
+          "description": "Side of the sign-in media. Only used with signInMedia.",
+          "type": "string",
+          "enum": [
+            "Left",
+            "Right"
+          ],
+          "default": "Left"
+        },
+        "loadingScreen": {
+          "description": "Background of the app's loading screen while the WebAssembly app loads.",
+          "type": "string",
+          "enum": [
+            "Animated",
+            "SignInMedia",
+            "Plain"
+          ],
+          "default": "Animated"
+        },
+        "mapping": {
+          "description": "Default mapping of generated entities to their DTOs; an entity can choose its own.",
+          "type": "string",
+          "enum": [
+            "manual",
+            "mapperly"
+          ],
+          "default": "manual"
+        },
+        "languages": {
+          "description": "Languages the app offers from the start. 23 languages ship with the library; the others are machine translated at the first start with the translation service. Administrators switch more on later on the Languages page. Empty offers English and German. An array, or the values comma separated.",
+          "type": [
+            "array",
+            "string"
+          ],
+          "items": {
+            "enum": [
+              "en",
+              "de",
+              "fr",
+              "es",
+              "it",
+              "pt",
+              "pt-BR",
+              "nl",
+              "pl",
+              "cs",
+              "sk",
+              "sl",
+              "sv",
+              "da",
+              "nb",
+              "fi",
+              "et",
+              "lv",
+              "lt",
+              "hu",
+              "ro",
+              "bg",
+              "el",
+              "tr",
+              "ru",
+              "uk",
+              "ar",
+              "he",
+              "hi",
+              "ja",
+              "ko",
+              "zh",
+              "zh-Hans",
+              "zh-Hant",
+              "id",
+              "vi",
+              "th",
+              "hr",
+              "km"
+            ]
+          }
+        },
+        "defaultLanguage": {
+          "description": "Language of users who chose none and whose browser asks for none of the offered ones.",
+          "type": "string",
+          "enum": [
+            "en",
+            "de",
+            "fr",
+            "es",
+            "it",
+            "pt",
+            "pt-BR",
+            "nl",
+            "pl",
+            "cs",
+            "sk",
+            "sl",
+            "sv",
+            "da",
+            "nb",
+            "fi",
+            "et",
+            "lv",
+            "lt",
+            "hu",
+            "ro",
+            "bg",
+            "el",
+            "tr",
+            "ru",
+            "uk",
+            "ar",
+            "he",
+            "hi",
+            "ja",
+            "ko",
+            "zh",
+            "zh-Hans",
+            "zh-Hant",
+            "id",
+            "vi",
+            "th",
+            "hr",
+            "km"
+          ],
+          "default": "en"
+        },
+        "translationProvider": {
+          "description": "Translates the texts a language lacks: at the first start, when a language is switched on, or on request. Changeable later in the settings (Translation).",
+          "type": "string",
+          "enum": [
+            "libreTranslate",
+            "myMemory",
+            "deepL",
+            "azure",
+            "google",
+            "ai",
+            "none"
+          ],
+          "default": "libreTranslate"
+        },
+        "translationSource": {
+          "description": "The language translations start from. Texts are written in English; German starts from the shipped German wording where there is one.",
+          "type": "string",
+          "enum": [
+            "en",
+            "de"
+          ],
+          "default": "en"
+        },
+        "colorMode": {
+          "description": "Light, dark or the system's mode as default of the installation; every user can switch it in the app bar.",
+          "type": "string",
+          "enum": [
+            "system",
+            "light",
+            "dark"
+          ],
+          "default": "system"
+        },
+        "registration": {
+          "description": "Visitors can register on the sign-in page (setting Account.AllowRegistration, changeable later).",
+          "type": "boolean",
+          "default": true
+        },
+        "githubActions": {
+          "description": "A workflow (.github/workflows/ci.yml) that builds the solution and runs its tests on every push and pull request.",
+          "type": "boolean",
+          "default": false
+        },
+        "devcontainer": {
+          "description": "A .devcontainer with the .NET SDK and Docker in Docker for GitHub Codespaces and VS Code.",
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "branding": {
+      "description": "Title, theme, colors, logo and sign-in design; the same ids as in options, kept apart for readability.",
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "title": {
+          "description": "Display title (default: the name).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "theme": {
+          "description": "Built-in theme: Ocean, Coworkee, Classic, Forest, Midnight, Sunset or HighContrast.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "primaryColor": {
+          "description": "Primary brand color #rrggbb; the app gets its own theme, based on the chosen one, as default.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "secondaryColor": {
+          "description": "Secondary brand color #rrggbb.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "logo": {
+          "description": "Logo file (svg, png, ...) relative to the spec file; copied into the web client.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "signInLayout": {
+          "description": "Card, Split or Slide.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "signInMedia": {
+          "description": "Image or video of the sign-in pages: a file relative to the spec file (copied into the web client) or an http(s) address.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "signInMediaSide": {
+          "description": "Left or Right.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "loadingScreen": {
+          "description": "Background of the loading screen: Animated, SignInMedia or Plain.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "modules": {
+      "description": "Modules of your own with their entities (generated code). The modules of the library (chat, files, ...) are options; a spec lists the ones that differ from the defaults.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "Module name, e.g. Sales; becomes the project <App>.Sales.",
+            "type": "string"
+          },
+          "entities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "description": "Entity name in singular, e.g. Order.",
+                  "type": "string"
+                },
+                "plural": {
+                  "description": "Plural for table, OData set, route and page (default: naive English plural of the name).",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "clientEntity": {
+                  "description": "Mirror the OData set in the browser (client entities); switches the clientEntities option on.",
+                  "type": "boolean"
+                },
+                "mapping": {
+                  "description": "How the DTO is mapped (default: the mapping option).",
+                  "enum": [
+                    "manual",
+                    "mapperly",
+                    null
+                  ]
+                },
+                "properties": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "description": "Property name; for a reference the navigation, its foreign key is <name>Id.",
+                        "type": "string"
+                      },
+                      "type": {
+                        "enum": [
+                          "string",
+                          "int",
+                          "long",
+                          "decimal",
+                          "double",
+                          "bool",
+                          "dateTime",
+                          "guid",
+                          "dateOnly",
+                          "timeOnly",
+                          "text",
+                          "email",
+                          "url",
+                          "money",
+                          "enum",
+                          "reference"
+                        ]
+                      },
+                      "required": {
+                        "description": "Must be set; strings must not be empty.",
+                        "type": "boolean"
+                      },
+                      "maxLength": {
+                        "description": "Maximum length of a string, email or url (column and validation); without it a string column is text.",
+                        "type": [
+                          "string",
+                          "integer",
+                          "null"
+                        ],
+                        "pattern": "^-?(?:0|[1-9]\\d*)$"
+                      },
+                      "precision": {
+                        "description": "Total digits of a decimal or money (default for money: 18).",
+                        "type": [
+                          "string",
+                          "integer",
+                          "null"
+                        ],
+                        "pattern": "^-?(?:0|[1-9]\\d*)$"
+                      },
+                      "scale": {
+                        "description": "Digits after the point of a decimal or money (default for money: 2).",
+                        "type": [
+                          "string",
+                          "integer",
+                          "null"
+                        ],
+                        "pattern": "^-?(?:0|[1-9]\\d*)$"
+                      },
+                      "enum": {
+                        "description": "Type enum: name of an enum of the spec.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "reference": {
+                        "description": "Type reference: the referenced entity, by name (Customer) or with its module (Crm.Customer).",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "referenceDisplay": {
+                        "description": "Type reference: text property of the referenced entity shown in lists and pickers (default: its display property).",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "onDelete": {
+                        "description": "Type reference: what deleting the referenced row does (default: restrict).",
+                        "enum": [
+                          "restrict",
+                          "cascade",
+                          "setNull",
+                          null
+                        ]
+                      },
+                      "inverse": {
+                        "description": "Type reference: name of the collection the referenced entity gets (same module only), e.g. Orders on Customer.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "default": {
+                        "description": "Initial value of new rows: a number, true/false, an enum value or a text.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "unique": {
+                        "description": "No two rows of a tenant share the value (unique index and check).",
+                        "type": "boolean"
+                      },
+                      "label": {
+                        "description": "Label in lists and forms (default: the name in words).",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "display": {
+                        "description": "The text that names a row: in delete prompts, pickers and references (default: the first text property).",
+                        "type": "boolean"
+                      },
+                      "searchable": {
+                        "description": "Part of the search box (default: true for texts, emails and urls).",
+                        "type": [
+                          "boolean",
+                          "null"
+                        ]
+                      },
+                      "facet": {
+                        "description": "Offered as facet next to the list (bool, enum, reference, number or string).",
+                        "type": "boolean"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "enums": {
+      "description": "Enums properties of type enum use; generated into the contracts project.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "Enum name, e.g. OrderStatus.",
+            "type": "string"
+          },
+          "values": {
+            "description": "Values in their order, e.g. [\"Open\", \"Paid\", \"Shipped\"]; the first is the default.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "roles": {
+      "description": "Roles seeded with the app, besides the built-in ones (with samples: Product Manager, Brand Manager; without: User).",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "Role name, e.g. Sales Manager.",
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "permissions": {
+            "description": "Permissions of the app's modules, e.g. Sales.Orders.View; validation names the known ones.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "users": {
+      "description": "Development users seeded with the app (and into the Keycloak realm with the same password), besides the administrator admin@<name>.local.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "displayName": {
+            "description": "First and last name (default: the part of the email before @).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "roles": {
+            "description": "Names of roles of the spec or built-in ones.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "admin": {
+            "description": "Administrator with every permission.",
+            "type": "boolean"
+          },
+          "password": {
+            "description": "Development password (default: generated); at least 8 characters with upper and lower case letters, a digit and a symbol.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Coworkee app spec",
+  "required": [
+    "name"
+  ]
+}

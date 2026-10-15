@@ -11,6 +11,7 @@ internal static class NewCommand
     private static readonly Argument<string?> Name = Names.Optional("name", "Name of the app, used for projects and namespaces (default: the name in the spec).");
     private static readonly Option<string?> Output = new("--output", "-o") { Description = "Target folder (default: ./<name>, next to the spec with --spec)." };
     private static readonly Option<FileInfo?> SpecFile = new("--spec") { Description = "Create the app from a JSON spec (coworkee spec example); switches given here win over the spec." };
+    private static readonly Option<string?> TemplateSpec = new("--template-spec") { Description = "Start from a starter spec of the gallery (coworkee specs list); switches given here win over it.", HelpName = "id" };
     private static readonly Option<bool> NoSamples = new("--no-samples") { Description = "Same as --samples false." };
     private static readonly Option<bool> NoTests = new("--no-tests") { Description = "Same as --tests false." };
     private static readonly Option<string?> TemplateSource = new("--template-source") { Description = "Install the template from this .nupkg or folder instead of nuget.org." };
@@ -20,7 +21,7 @@ internal static class NewCommand
 
     public static Command Create()
     {
-        var command = new Command("new", "Create a Coworkee application; coworkee options describes every switch.") { Name, Output, SpecFile, NoSamples, NoTests, TemplateSource, Users };
+        var command = new Command("new", "Create a Coworkee application; coworkee options describes every switch.") { Name, Output, SpecFile, TemplateSpec, NoSamples, NoTests, TemplateSource, Users };
         foreach (var (_, symbol) in Switches)
         {
             command.Options.Add(symbol);
@@ -32,7 +33,13 @@ internal static class NewCommand
     public static NewSettings Read(ParseResult result)
     {
         var file = result.GetValue(SpecFile);
-        var spec = file is null ? new AppSpec() : ReadSpec(file.FullName);
+        var starter = result.GetValue(TemplateSpec);
+        if (file is not null && starter is not null)
+        {
+            throw new CliException("Use --spec or --template-spec, not both.");
+        }
+
+        var spec = file is not null ? ReadSpec(file.FullName) : starter is not null ? SpecsCommand.Read(starter) : new AppSpec();
         var baseDirectory = file?.DirectoryName ?? Environment.CurrentDirectory;
         spec.Name = result.GetValue(Name) ?? spec.Name;
         var trusted = new List<string>();

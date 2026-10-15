@@ -1,0 +1,76 @@
+{
+  "name": "Shop",
+  "options": {
+    "samples": false,
+    "reports": true,
+    "files": true,
+    "mapping": "mapperly"
+  },
+  "branding": {
+    "title": "Corner Shop",
+    "theme": "Forest",
+    "primaryColor": "#2e7d32",
+    "secondaryColor": "#ff8f00",
+    "signInLayout": "Split"
+  },
+  "modules": [
+    {
+      "name": "Inventory",
+      "entities": [
+        {
+          "name": "Brand",
+          "properties": [
+            { "name": "Name", "required": true, "maxLength": 120, "display": true, "unique": true },
+            { "name": "Website", "type": "url", "maxLength": 300 }
+          ]
+        },
+        {
+          "name": "Product",
+          "clientEntity": true,
+          "properties": [
+            { "name": "Sku", "required": true, "maxLength": 40, "unique": true, "label": "SKU" },
+            { "name": "Name", "required": true, "maxLength": 200, "display": true },
+            { "name": "Brand", "type": "reference", "reference": "Brand", "inverse": "Products", "onDelete": "setNull", "facet": true },
+            { "name": "Price", "type": "money", "required": true },
+            { "name": "InStock", "type": "int", "default": "0", "label": "In stock" },
+            { "name": "Active", "type": "bool", "default": "true", "facet": true }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Sales",
+      "entities": [
+        {
+          "name": "Order",
+          "properties": [
+            { "name": "Number", "required": true, "maxLength": 30, "unique": true, "display": true },
+            { "name": "CustomerEmail", "type": "email", "required": true, "maxLength": 250, "label": "Customer" },
+            { "name": "Status", "type": "enum", "enum": "OrderStatus", "required": true, "default": "Open", "facet": true },
+            { "name": "OrderedOn", "type": "dateOnly", "required": true, "label": "Order date" },
+            { "name": "Total", "type": "money" }
+          ]
+        },
+        {
+          "name": "OrderLine",
+          "properties": [
+            { "name": "Order", "type": "reference", "reference": "Order", "required": true, "inverse": "Lines", "onDelete": "cascade" },
+            { "name": "Product", "type": "reference", "reference": "Inventory.Product", "required": true },
+            { "name": "Quantity", "type": "int", "required": true, "default": "1" },
+            { "name": "UnitPrice", "type": "money", "required": true, "label": "Unit price" }
+          ]
+        }
+      ]
+    }
+  ],
+  "enums": [
+    { "name": "OrderStatus", "values": ["Open", "Paid", "Shipped", "Cancelled"] }
+  ],
+  "roles": [
+    {
+      "name": "Shop Staff",
+      "description": "Packs and ships orders",
+      "permissions": ["Inventory.Products.View", "Sales.Orders.View", "Sales.Orders.Edit", "Sales.OrderLines.View"]
+    }
+  ]
+}

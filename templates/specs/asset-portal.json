@@ -1,0 +1,52 @@
+{
+  "name": "AssetPortal",
+  "options": {
+    "samples": false,
+    "files": true,
+    "social": true,
+    "extendedAttributes": true,
+    "elasticsearch": true
+  },
+  "branding": {
+    "title": "Asset Portal",
+    "theme": "Midnight",
+    "signInLayout": "Slide"
+  },
+  "modules": [
+    {
+      "name": "Media",
+      "entities": [
+        {
+          "name": "Collection",
+          "properties": [
+            { "name": "Name", "required": true, "maxLength": 150, "display": true, "unique": true },
+            { "name": "Description", "type": "text" },
+            { "name": "IsPublic", "type": "bool", "default": "false", "label": "Public", "facet": true }
+          ]
+        },
+        {
+          "name": "Asset",
+          "clientEntity": true,
+          "properties": [
+            { "name": "Title", "required": true, "maxLength": 250, "display": true },
+            { "name": "Kind", "type": "enum", "enum": "AssetKind", "required": true, "default": "Image", "facet": true },
+            { "name": "Collection", "type": "reference", "reference": "Collection", "inverse": "Assets", "onDelete": "setNull", "facet": true },
+            { "name": "SourceUrl", "type": "url", "maxLength": 500, "label": "Source" },
+            { "name": "Copyright", "maxLength": 200 },
+            { "name": "LicenseEnds", "type": "dateOnly", "label": "License ends" }
+          ]
+        },
+        {
+          "name": "Tag",
+          "properties": [
+            { "name": "Name", "required": true, "maxLength": 60, "display": true, "unique": true },
+            { "name": "Color", "maxLength": 7 }
+          ]
+        }
+      ]
+    }
+  ],
+  "enums": [
+    { "name": "AssetKind", "values": ["Image", "Video", "Document", "Audio", "Font"] }
+  ]
+}
