@@ -1,5 +1,6 @@
 using System.Globalization;
 using Coworkee.Application.Authorization;
+using Coworkee.Application.Localization;
 using Coworkee.Application.Messaging;
 using Coworkee.Contracts;
 using Coworkee.Contracts.Mailing;
@@ -18,6 +19,9 @@ public sealed record GetMailTemplate(string Name, string Culture) : IQuery<Resul
 
 [RequiresPermission(MailPermissions.Templates.Manage)]
 public sealed record SaveMailTemplate(string Name, string Culture, SaveMailTemplateRequest Content) : ICommand<Result>;
+
+[RequiresPermission(MailPermissions.Templates.Manage)]
+public sealed record AddMailTemplateLanguage(string Name, string Culture, AddMailTemplateLanguageRequest Request) : ICommand<Result<MailTemplateLanguageAddedDto>>;
 
 [RequiresPermission(MailPermissions.Templates.Manage)]
 public sealed record ResetMailTemplate(string Name, string Culture) : ICommand<Result>;
@@ -62,10 +66,13 @@ internal sealed class MailTemplateHandlers(
     IMailSender sender,
     IUserDirectory users,
     MailConnectionResolver resolver,
-    IMailUnsubscribeLinks unsubscribeLinks)
+    IMailUnsubscribeLinks unsubscribeLinks,
+    IEnumerable<IDefaultLanguage> defaultLanguages,
+    IEnumerable<IMachineTranslator> translators)
     : IHandler<GetMailTemplates, Result<IReadOnlyList<MailTemplateSummaryDto>>>,
       IHandler<GetMailTemplate, Result<MailTemplateDto>>,
       IHandler<SaveMailTemplate, Result>,
+      IHandler<AddMailTemplateLanguage, Result<MailTemplateLanguageAddedDto>>,
       IHandler<ResetMailTemplate, Result>,
       IHandler<PreviewMailTemplate, Result<RenderedMailDto>>,
       IHandler<SendTestMail, Result>
@@ -82,13 +89,15 @@ internal sealed class MailTemplateHandlers(
             var custom = catalog.IsCustom(d) ? customs.OrderByDescending(t => t.TenantId != null).FirstOrDefault(t => t.Name == d.Name) : null;
             var owner = custom is null ? tenantId : custom.TenantId;
             var cultures = overridden.Where(o => o.Name == d.Name && o.TenantId == owner).Select(o => o.Culture).ToList();
+            var defaults = custom is null ? d.Defaults.Keys.ToList() : [];
             summaries.Add(new MailTemplateSummaryDto(
                 d.Name,
                 d.DisplayName,
-                custom is null ? d.Defaults.Keys.Order(StringComparer.Ordinal).ToList() : cultures.Order(StringComparer.Ordinal).ToList(),
+                defaults.Concat(cultures).Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.Ordinal).ToList(),
                 cultures,
                 custom is not null,
-                custom?.Description));
+                custom?.Description,
+                defaults.Order(StringComparer.Ordinal).ToList()));
         }
 
         return Result<IReadOnlyList<MailTemplateSummaryDto>>.Success(summaries);
@@ -105,7 +114,7 @@ internal sealed class MailTemplateHandlers(
         var existing = await FindOverrideAsync(query.Name, query.Culture, owner, cancellationToken);
         var fallback = catalog.IsCustom(definition)
             ? await OtherCultureAsync(query.Name, query.Culture, owner, cancellationToken)
-            : MailCultures.Candidates(query.Culture).Select(c => definition.Defaults.GetValueOrDefault(c)).First(c => c is not null)!;
+            : MailCultures.Candidates(query.Culture, await defaultLanguages.GetAsync(cancellationToken)).Select(c => definition.Defaults.GetValueOrDefault(c)).First(c => c is not null)!;
         return new MailTemplateDto(
             query.Name,
             query.Culture,
@@ -156,6 +165,39 @@ internal sealed class MailTemplateHandlers(
         return Result.Success();
     }
 
+    public async Task<Result<MailTemplateLanguageAddedDto>> HandleAsync(AddMailTemplateLanguage command, CancellationToken cancellationToken)
+    {
+        if (await catalog.FindAsync(command.Name, cancellationToken) is not { } definition)
+        {
+            return MailErrors.UnknownTemplate;
+        }
+
+        var (culture, from) = (command.Culture, command.Request.From);
+        if ((MailErrors.CheckCulture(culture) ?? MailErrors.CheckCulture(from)) is { } error)
+        {
+            return error;
+        }
+
+        var owner = await OwnerAsync(definition, cancellationToken);
+        if (await CheckWriteAsync(definition, owner, cancellationToken) is { } forbidden)
+        {
+            return forbidden;
+        }
+
+        if (definition.Defaults.Keys.Contains(culture, StringComparer.OrdinalIgnoreCase) || await FindOverrideAsync(command.Name, culture, owner, cancellationToken) is not null)
+        {
+            return Error.Validation("Culture", $"The template already has the language '{culture}'.");
+        }
+
+        var source = await renderer.ResolveAsync(command.Name, from, cancellationToken);
+        var translated = command.Request.Translate && translators.FirstOrDefault() is { } translator
+            ? await MailTemplateTranslation.TranslateAsync(source, from, culture, translator, cancellationToken)
+            : null;
+        var content = translated ?? source;
+        db.Add(new MailTemplateOverride { Name = command.Name, Culture = culture, TenantId = owner, Subject = content.Subject, Body = content.Body });
+        return new MailTemplateLanguageAddedDto(culture, from, translated is not null);
+    }
+
     public async Task<Result> HandleAsync(ResetMailTemplate command, CancellationToken cancellationToken)
     {
         if (await catalog.FindAsync(command.Name, cancellationToken) is not { } definition)
@@ -169,11 +211,17 @@ internal sealed class MailTemplateHandlers(
             return forbidden;
         }
 
-        if (await FindOverrideAsync(command.Name, command.Culture, owner, cancellationToken) is { } existing)
+        if (await FindOverrideAsync(command.Name, command.Culture, owner, cancellationToken) is not { } existing)
         {
-            db.Remove(existing);
+            return Result.Success();
         }
 
+        if (catalog.IsCustom(definition) && await db.Set<MailTemplateOverride>().CountAsync(o => o.Name == command.Name && o.TenantId == owner, cancellationToken) == 1)
+        {
+            return Error.Validation("Culture", "A custom template keeps at least one language.");
+        }
+
+        db.Remove(existing);
         return Result.Success();
     }
 

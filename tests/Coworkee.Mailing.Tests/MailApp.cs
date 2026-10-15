@@ -154,7 +154,24 @@ public sealed class TestMailModule : CoworkeeModule
         context.Services.AddCoworkeeOutboxProcessing<MailTestDbContext>();
         context.Services.AddMessagingFromAssembly(typeof(TestMailModule).Assembly);
         context.Services.AddSingleton<IMailTemplateContributor, TestTemplates>();
+        context.Services.AddScoped<Coworkee.Application.Localization.IMachineTranslator, PrefixTranslator>();
+        context.Services.AddSingleton<TestDefaultLanguage>();
+        context.Services.AddScoped<Coworkee.Application.Localization.IDefaultLanguage>(sp => sp.GetRequiredService<TestDefaultLanguage>());
     }
+}
+
+/// <summary>"Translates" by putting the target culture in front, so a test sees which texts went to the service.</summary>
+internal sealed class PrefixTranslator : Coworkee.Application.Localization.IMachineTranslator
+{
+    public Task<IReadOnlyDictionary<string, string>> TranslateAsync(IReadOnlyCollection<string> texts, string from, string to, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyDictionary<string, string>>(texts.ToDictionary(t => t, t => $"{to}:{t}"));
+}
+
+public sealed class TestDefaultLanguage : Coworkee.Application.Localization.IDefaultLanguage
+{
+    public string? Culture { get; set; }
+
+    public Task<string?> GetAsync(CancellationToken cancellationToken) => Task.FromResult(Culture);
 }
 
 internal sealed class TestTemplates : IMailTemplateContributor

@@ -32,8 +32,16 @@ public enum OutgoingMailStatus
     Skipped,
 }
 
+/// <param name="Cultures">Every language variant: the shipped defaults and the added ones.</param>
+/// <param name="DefaultCultures">The shipped defaults of a registered template; only these can be reset, the others removed.</param>
 public sealed record MailTemplateSummaryDto(
-    string Name, string DisplayName, IReadOnlyList<string> Cultures, IReadOnlyList<string> OverriddenCultures, bool IsCustom, string? Description);
+    string Name, string DisplayName, IReadOnlyList<string> Cultures, IReadOnlyList<string> OverriddenCultures, bool IsCustom, string? Description,
+    IReadOnlyList<string>? DefaultCultures = null);
+
+/// <summary>Adds a language variant prefilled from <paramref name="From"/>; <paramref name="Translate"/> machine translates it when a translation service is configured.</summary>
+public sealed record AddMailTemplateLanguageRequest(string From, bool Translate = false);
+
+public sealed record MailTemplateLanguageAddedDto(string Culture, string From, bool Translated);
 
 public sealed record CreateMailTemplateRequest(string Name, string DisplayName, string? Description, bool Global = false, string? CopyFrom = null);
 

@@ -13,4 +13,10 @@ public sealed class MailCulturesTests
     {
         MailCultures.Candidates(culture).ShouldBe(candidates.Split(','));
     }
+
+    [Fact]
+    public void The_default_language_comes_before_English()
+    {
+        MailCultures.Candidates("fr-CA", "de-AT").ShouldBe(["fr-CA", "fr", "de-AT", "de", "en"]);
+    }
 }
