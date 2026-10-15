@@ -21,6 +21,7 @@ public static class OptionLooks
         ["files"] = "Icon.Folder",
         ["features"] = "Icon.ToggleSwitch",
         ["social"] = "Icon.Forum",
+        ["webhooks"] = "Icon.Webhook",
         ["extendedAttributes"] = "Icon.TagPlus",
         ["elasticsearch"] = "Icon.DatabaseSearch",
         ["eventBus"] = "Icon.Broadcast",

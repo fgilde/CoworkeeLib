@@ -129,6 +129,8 @@ public static class OptionCatalog
             "Multi-tenant SaaS with plans.", ["[RequiresFeature] and feature gates"], ["Only useful with several tenants"], Package: "Coworkee.Features"),
         new("social", Modules, "Comments, tags and ratings", "Comments, tags and star ratings for any entity, opted in per entity type.", OptionKind.Bool, "false",
             "Content that people discuss or rate.", ["Ready-made components"], ["Each entity type has to be registered"], Package: "Coworkee.Social"),
+        new("webhooks", Modules, "Webhooks", "Outgoing webhooks: admins register endpoints that get signed events about entity changes, workflow transitions and the app's own events, with retries and a delivery log. With the samples, products send events.", OptionKind.Bool, "false",
+            "When other systems (an ERP, n8n, Zapier) should hear about changes without polling.", ["Signed like the Standard Webhooks spec", "Retries, delivery log and redelivery"], ["Entity sets have to be opted in", "Receivers must be reachable over https"], Package: "Coworkee.Webhooks"),
         new("extendedAttributes", Modules, "Extended attributes", "Free key/value attributes for any entity without schema changes (the Documents sample brings it anyway).", OptionKind.Bool, "false",
             "When users need fields you cannot foresee.", ["No migration per field"], ["Values are not typed columns"], Package: "Coworkee.ExtendedAttributes"),
         // not "search": dotnet new reads --search as its own command

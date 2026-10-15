@@ -8,6 +8,9 @@
     <CoworkeePackage Include="Coworkee.OData" />
     <CoworkeePackage Include="Coworkee.ResponseFilters" />
     <CoworkeePackage Include="Coworkee.Identity" />
+    <!--#if (webhooks) -->
+    <CoworkeePackage Include="Coworkee.Webhooks" />
+    <!--#endif -->
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
 </Project>

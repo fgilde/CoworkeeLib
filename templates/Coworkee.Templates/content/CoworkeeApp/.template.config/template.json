@@ -99,6 +99,12 @@
       "defaultValue": "false",
       "description": "Comments, tags and ratings for entities (Coworkee.Social)."
     },
+    "webhooks": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Outgoing webhooks with signed deliveries, retries and a delivery log (Coworkee.Webhooks); with the samples, products send events."
+    },
     "extendedAttributes": {
       "type": "parameter",
       "datatype": "bool",
@@ -967,7 +973,7 @@
     },
     "defaultModel": {
       "type": "computed",
-      "value": "(database == \"postgres\" && ai && chat && reports && backup && notifications && !files && !features && !social && eventBus == \"none\" && (samples || !extendedAttributes))"
+      "value": "(database == \"postgres\" && ai && chat && reports && backup && notifications && !files && !features && !social && !webhooks && eventBus == \"none\" && (samples || !extendedAttributes))"
     }
   },
   "sources": [

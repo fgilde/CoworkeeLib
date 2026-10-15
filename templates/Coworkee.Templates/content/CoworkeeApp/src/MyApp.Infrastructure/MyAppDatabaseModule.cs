@@ -44,6 +44,9 @@ namespace MyApp.Infrastructure;
 #if (social)
     , typeof(Coworkee.Social.CoworkeeSocialModule)
 #endif
+#if (webhooks)
+    , typeof(Coworkee.Webhooks.CoworkeeWebhooksModule)
+#endif
 #if (extendedAttributes)
     , typeof(Coworkee.ExtendedAttributes.CoworkeeExtendedAttributesModule)
 #endif

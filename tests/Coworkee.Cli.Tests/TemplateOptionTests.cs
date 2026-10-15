@@ -9,6 +9,19 @@ public sealed class TemplateOptionTests(TemplateFixture template)
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     [Fact]
+    public async Task Webhooks_bring_their_module_and_let_the_sample_products_send_events()
+    {
+        var app = await template.CreateAsync("webhooks", "--webhooks", "true");
+        var plain = await template.CreateAsync("no-webhooks");
+
+        Read(app, "src/Shop.Infrastructure/Shop.Infrastructure.csproj").ShouldContain("\"Coworkee.Webhooks\"");
+        Read(app, "src/Shop.Infrastructure/ShopDatabaseModule.cs").ShouldContain("typeof(Coworkee.Webhooks.CoworkeeWebhooksModule)");
+        Read(app, "src/Shop.Catalog/CatalogModule.cs").ShouldContain("webhooks.Entity<Product>()");
+        Read(plain, "src/Shop.Catalog/CatalogModule.cs").ShouldNotContain("Webhooks");
+        Read(plain, "src/Shop.Infrastructure/Shop.Infrastructure.csproj").ShouldNotContain("Coworkee.Webhooks");
+    }
+
+    [Fact]
     public async Task Modules_switch_off_and_on_with_their_packages_wiring_and_app_host_resources()
     {
         var app = await template.CreateAsync("modules", "--samples", "false", "--chat", "false", "--ai", "false", "--backup", "false", "--notifications", "false", "--auditing", "false",
