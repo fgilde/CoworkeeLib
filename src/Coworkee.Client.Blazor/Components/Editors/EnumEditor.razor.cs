@@ -4,13 +4,18 @@ using Microsoft.AspNetCore.Components;
 
 namespace Coworkee.Client.Blazor.Components.Editors;
 
-/// <summary>Picks an enum member by its localized label (see <see cref="EnumLabels"/>); a [Flags] enum takes several, none meaning 0.</summary>
+/// <summary>
+/// Picks an enum member by its localized label (see <see cref="EnumLabels"/>); a [Flags] enum takes several of its single-bit members, none meaning 0
+/// (combined members such as <c>All = A | B</c> are not offered: choosing all their bits is the same).
+/// </summary>
 public partial class EnumEditor<TEnum> where TEnum : struct, Enum
 {
-    private static readonly bool Flagged = typeof(TEnum).IsDefined(typeof(FlagsAttribute), false);
+    internal static readonly bool Flagged = typeof(TEnum).IsDefined(typeof(FlagsAttribute), false);
+
+    internal static readonly TEnum[] Items = [.. Enum.GetValues<TEnum>().Where(v => !Flagged || (Bits(v) != 0 && (Bits(v) & (Bits(v) - 1)) == 0))];
 
     private readonly bool _flags = Flagged;
-    private readonly TEnum[] _items = [.. Enum.GetValues<TEnum>().Where(v => !Flagged || Bits(v) != 0)];
+    private readonly TEnum[] _items = Items;
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 

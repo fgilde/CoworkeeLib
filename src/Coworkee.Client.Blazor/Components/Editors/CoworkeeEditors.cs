@@ -7,7 +7,7 @@ using MudBlazor.Extensions.Components.ObjectEdit.Options;
 namespace Coworkee.Client.Blazor.Components.Editors;
 
 /// <summary>
-/// Renders properties marked with [ContentTypes], [Cron], [FileSize] or [Translations] and every enum with the editors here, in every MudExObjectEdit of the app.
+/// Renders properties marked with [ContentTypes], [Cron], [FileSize] or [Translations] and every enum (nullable ones too) with the editors here, in every MudExObjectEdit of the app.
 /// AddCoworkeeClient registers it; a meta's RenderWith still wins.
 /// </summary>
 public sealed class CoworkeeEditors : IDefaultRenderDataProvider
@@ -55,15 +55,24 @@ public sealed class CoworkeeEditors : IDefaultRenderDataProvider
             };
         }
 
-        return type.IsEnum ? Enum(type) : null;
+        return type.IsEnum ? Enum(nameof(EnumEditorData), type)
+            : Nullable.GetUnderlyingType(type) is { IsEnum: true } underlying ? Enum(nameof(NullableEnumEditorData), underlying)
+            : null;
     }
 
-    private static IRenderData Enum(Type type) =>
-        (IRenderData)typeof(CoworkeeEditors).GetMethod(nameof(EnumEditorData), BindingFlags.NonPublic | BindingFlags.Static)!.MakeGenericMethod(type).Invoke(null, null)!;
+    private static IRenderData Enum(string factory, Type type) =>
+        (IRenderData)typeof(CoworkeeEditors).GetMethod(factory, BindingFlags.NonPublic | BindingFlags.Static)!.MakeGenericMethod(type).Invoke(null, null)!;
 
     private static RenderData<T, T> EnumEditorData<T>()
         where T : struct, Enum =>
         new(nameof(EnumEditor<T>.Value), typeof(EnumEditor<T>));
+
+    // a nullable [Flags] enum keeps the several-member editor, null reading as none
+    private static IRenderData NullableEnumEditorData<T>()
+        where T : struct, Enum =>
+        EnumEditor<T>.Flagged
+            ? new RenderData<T?, T>(nameof(EnumEditor<T>.Value), typeof(EnumEditor<T>)) { ToFieldTypeConverterFn = v => v ?? default, ToPropertyTypeConverterFn = v => v }
+            : new RenderData<T?, T?>(nameof(NullableEnumEditor<T>.Value), typeof(NullableEnumEditor<T>));
 
     private static RenderData<T, IReadOnlyList<string>> ContentTypes<T>(Func<IReadOnlyList<string>, T> toProperty)
         where T : IReadOnlyList<string> =>
