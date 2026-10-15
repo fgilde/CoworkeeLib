@@ -12,7 +12,7 @@ public sealed class DbTests(TemplateFixture template)
     [InlineData("sqlServer", "sqlserver", "Server=localhost,5000;User ID=sa;Password=pw;Database=shop;TrustServerCertificate=true")]
     public async Task The_database_of_an_app_is_found_with_its_volumes_and_connection(string provider, string resource, string connection)
     {
-        var database = LocalDatabase.Of(Solution.Find(await template.CreateAsync($"db-{provider}", "--samples", "false", "--tests", "false", "--database", provider)));
+        var database = LocalDatabase.Of(Solution.Find(await template.CreateAsync($"dbcmd-{provider}", "--samples", "false", "--tests", "false", "--database", provider)));
 
         database.Provider.ShouldBe(provider);
         database.Name.ShouldBe("shop");
@@ -25,7 +25,7 @@ public sealed class DbTests(TemplateFixture template)
     [Fact]
     public async Task Sqlite_backup_and_restore_copy_the_file()
     {
-        var database = LocalDatabase.Of(Solution.Find(await template.CreateAsync("db-sqlite", "--samples", "false", "--tests", "false", "--database", "sqlite")));
+        var database = LocalDatabase.Of(Solution.Find(await template.CreateAsync("dbcmd-sqlite", "--samples", "false", "--tests", "false", "--database", "sqlite")));
         database.SqliteFile.ShouldEndWith(Path.Combine(".data", "shop.db"));
         Directory.CreateDirectory(Path.GetDirectoryName(database.SqliteFile)!);
         File.WriteAllText(database.SqliteFile, "before");
