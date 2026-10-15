@@ -106,6 +106,14 @@ Spec `docs/superpowers/specs/2026-10-15-loading-tables-demo-design.md`, reports 
 - The demo's AirWorks client uses `@coworkee/client`/`@coworkee/airworks` `0.0.1024`; bump it after each release (`src/MyApp.AirWorks/ClientApp/package.json`).
 - Verified in the browser (demo): loading screen with progress, product and order dialogs aligned, Region filter, client switch compare toast, endless scroll, logo upload and pick from files, translated upload texts, AirWorks desktop with the demo apps.
 
+## Import and export (branch `feat/import-export`, not merged)
+Docs `website/docs/web/import-export*.md`, changelog section *Unreleased*.
+- Server in `Coworkee.OData/Transfer` (+ `Import/`): `ImportFileReader`/`CsvFile` (CSV/TSV/XLSX/JSON, encoding/separator/header detection), `ImportField` (writable simple properties of the row type, `XxxId` + navigation `Xxx` of a registered set = lookup by display text), `ImportValueConverter` (culture, ISO dates, enum labels and translations, yes/no words), `ImportColumnMatcher`, `ImportPlanner` (key lookup, updates start from the stored row, FluentValidation of the commands, permission of the command type), `ImportService` (draft job holds the upload), `ImportJob` (one scope per row, never rethrows, undo deletes created ids), `DataExport(s)`/`ExportJob` (xlsx/csv/json, `columns`, job above `BackgroundExportRows`), `ImportProfiles`, `DataTransferJobs`. Entities `DataTransferJob` (IHasRealtimeTopics -> user topic = live progress) and `ImportProfile`, schema `cw`.
+- `CoworkeeODataModule` now DependsOn `CoworkeeBackgroundJobsModule`. Test hosts with OData need `Coworkee:Jobs:ConnectionStringName`/`RunServer=false` and EnsureCreated before `UseCoworkee()` (Hangfire's schema made EnsureCreated skip). OData tests run jobs inline (`InlineBackgroundJobs`).
+- `AddODataImport(set, (Guid? id, TRow row) => cmd, id => deleteCmd)` enables update/upsert/undo; template sample sets use it. `IODataClient.Export/ImportAsync` removed (breaking), client `IDataTransferApi` + `DataTransferWatcher`, wizard `Components/Data/Import`, page `/admin/data-transfer` (permission `DataTransfer.Use`).
+- Template initial migration regenerated. **Demo and Sharemee need a migration** (`cw.DataTransferJobs`, `cw.ImportProfiles`) and new OpenAPI snapshots/SDKs.
+- Limits (`ponytail:`): uploads/results in the job row; one query per key and lookup text; undo only deletes created rows; preview checks the first 200 rows (dry run checks all); no persistent notification (Notifications module is above OData), only the realtime snackbar.
+
 ## Product backlog (older ideas, not part of the recent rounds)
 - Own `IMailTransport` with a new provider name is only selectable via `Coworkee:Settings:Defaults:Mail.Provider` (choices are the four built-ins).
 - Translations of the 21 new languages were checked by sample, not by native speakers (km, ar least certain).
