@@ -2,6 +2,21 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Breaking changes
+
+- **`ICoworkeeApi`** gained `GetPushSettingsAsync`, `SavePushSubscriptionAsync` and `DeletePushSubscriptionAsync`; own implementations add them.
+- **`Notification`** derives from `AggregateRoot` now (it raises `NotificationCreated` while push is configured). No schema change from that.
+- **The model gained `PushSubscription`** (table `cw.PushSubscriptions`): apps with the Notifications module add a migration.
+- **New endpoints** `GET`/`PUT /api/v1/notifications/push` and `DELETE /api/v1/notifications/push/{id}`; regenerate OpenAPI snapshots and SDKs.
+
+### New
+
+- **Phone layout** of the Blazor shell and the sign-in pages: overflow menu in the app bar, navigation as overlay that closes after a click, full-screen edit sheets, facet menus as bottom sheets, page headers that wrap, sticky row actions, 44 px touch targets and safe areas, see [Phones, installable app and push](../ui/phones-and-pwa.md). Apps add `viewport-fit=cover` to the viewport tag of `App.razor`.
+- **Installable app**: `<Coworkee.Bff.Pwa.CoworkeePwa />` in the head of `App.razor` links the web manifest in the theme's colours; `Coworkee.Bff` serves manifest, service worker (static files only), icon and offline page. Update and install prompts in the app. Template option `pwa` (on by default).
+- **Web Push** for the notifications: `options.UsePush()` in Aspire, or `Coworkee:Notifications:Push:PublicKey`/`PrivateKey`; users switch it on per device on the notifications page.
+
 ## 0.0.1.25 (2026-10-15)
 
 Fixes only: the loading screen script is its own file, so a strict CSP runs it, and app pages are sent with `Cache-Control: no-cache, no-store`. Nothing to change in apps.

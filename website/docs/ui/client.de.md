@@ -68,7 +68,7 @@ Einträge mit `HostOnly: true` dienen der ganzen Installation und erscheinen nur
 
 ## App-Leiste
 
-Die App-Leiste zeigt Theme-Menü, Rechts-nach-links-Schalter, Dunkelmodus, Benachrichtigungen, Benutzermenü und den Info-Dialog. Eigene Komponenten kommen so dazu:
+Die App-Leiste zeigt Theme-Menü, Rechts-nach-links-Schalter, Dunkelmodus, Benachrichtigungen, Benutzermenü und den Info-Dialog; auf dem Smartphone teilen sich die Nebeneinträge ein Menü, siehe [Smartphones, installierbare App und Push](phones-and-pwa.md). Eigene Komponenten kommen so dazu:
 
 ```csharp
 internal sealed class LanguageBar : IAppBarContributor

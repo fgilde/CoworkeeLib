@@ -50,6 +50,7 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--git` | `git` | bool | `false` | `git init` im neuen Ordner |
 | `--airworks` | `airworks` | bool | `false` | [AirWorks-Client](../web/airworks.md): ein Web-Desktop neben der Blazor-App mit derselben Anmeldung und API, Apps für fast alles, was die Blazor-App bietet (Einstellungen, Dateien, Daten, Chat, Berichte mit Designer, Assistent, Verwaltung); braucht Node.js |
 | `--airworks-packages` | `airworksPackages` | `bundled`, `npm` | `bundled` | Woher der AirWorks-Client `@coworkee/client` und `@coworkee/airworks` nimmt: aus den Tarballs im Template oder von npm in der Version des Templates |
+| `--pwa` | `pwa` | bool | `true` | [Installierbare App](../ui/phones-and-pwa.md) mit Service Worker und Offline-Seite; mit `--notifications` auch Web-Push pro Gerät (`options.UsePush()` im App-Host) |
 | `--repository` | `repository` | Text | | GitHub-Repository als `owner/repo`: Die README bekommt ein [QuickRun](https://quickrun.org)-Badge. Jede App hat eine `quickrun.yml`, die den App-Host startet |
 | `--auditing` | `auditing` | bool | `true` | Seiten für Audit-Log, Verlauf und Wiederherstellen; das Protokoll selbst wird immer geschrieben |
 | `--notifications` | `notifications` | bool | `true` | Benachrichtigungen in der App mit Sammel-Mails |

@@ -2,6 +2,21 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Breaking Changes
+
+- **`ICoworkeeApi`** hat `GetPushSettingsAsync`, `SavePushSubscriptionAsync` und `DeletePushSubscriptionAsync` dazubekommen; eigene Implementierungen ergänzen sie.
+- **`Notification`** erbt jetzt von `AggregateRoot` (sie löst `NotificationCreated` aus, solange Push eingerichtet ist). Das Schema ändert sich dadurch nicht.
+- **Das Modell hat `PushSubscription` dazubekommen** (Tabelle `cw.PushSubscriptions`): Apps mit dem Notifications-Modul fügen eine Migration hinzu.
+- **Neue Endpunkte** `GET`/`PUT /api/v1/notifications/push` und `DELETE /api/v1/notifications/push/{id}`; OpenAPI-Snapshots und SDKs neu erzeugen.
+
+### Neu
+
+- **Smartphone-Layout** der Blazor-Shell und der Anmeldeseiten: Überlaufmenü in der App-Leiste, Navigation als Overlay, das sich nach einem Klick schließt, Bearbeitungsblätter im Vollbild, Facetten-Menüs als Sheets von unten, umbrechende Seitenköpfe, fixierte Zeilenaktionen, 44-px-Touchziele und Safe Areas, siehe [Smartphones, installierbare App und Push](../ui/phones-and-pwa.md). Apps ergänzen `viewport-fit=cover` im Viewport-Tag von `App.razor`.
+- **Installierbare App**: `<Coworkee.Bff.Pwa.CoworkeePwa />` im Head von `App.razor` verlinkt das Web-Manifest in den Farben des Themes; `Coworkee.Bff` liefert Manifest, Service Worker (nur statische Dateien), Icon und Offline-Seite. Update- und Installationshinweise in der App. Vorlagen-Option `pwa` (standardmäßig an).
+- **Web-Push** für die Benachrichtigungen: `options.UsePush()` in Aspire oder `Coworkee:Notifications:Push:PublicKey`/`PrivateKey`; Benutzer schalten es pro Gerät auf der Benachrichtigungsseite ein.
+
 ## 0.0.1.25 (2026-10-15)
 
 Nur Korrekturen: Das Skript des Ladebildschirms ist eine eigene Datei, damit eine strikte CSP es ausführt, und App-Seiten gehen mit `Cache-Control: no-cache, no-store` raus. In Apps ist nichts zu ändern.

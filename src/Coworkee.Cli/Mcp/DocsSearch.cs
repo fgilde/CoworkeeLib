@@ -56,6 +56,7 @@ internal static partial class DocsSearch
         ("Query builder", "ui/query-builder/"),
         ("Client entities", "ui/client-entities/"),
         ("Replacing components", "ui/customizing/"),
+        ("Phones, installable app and push", "ui/phones-and-pwa/"),
         ("Settings and app configuration", "modules/settings/"),
         ("Features and editions", "modules/features/"),
         ("Mailing", "modules/mailing/"),
