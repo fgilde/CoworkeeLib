@@ -2,6 +2,22 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Breaking Changes
+
+- **Neue Tabellen `cw.DataTransferJobs` und `cw.ImportProfiles`** (Coworkee.OData): Jede App ergänzt eine Migration.
+- **`CoworkeeODataModule` hängt von `CoworkeeBackgroundJobsModule` ab**: Importe und große Exporte laufen als Jobs. Apps aus dem Template haben es bereits (Mailing); Test-Hosts setzen `Coworkee:Jobs:ConnectionStringName` und legen ihre Tabellen vor `UseCoworkee()` an.
+- **`IODataClient.ExportAsync` und `ImportAsync` entfernt**: Nutze `IDataTransferApi` (Export der aktuellen Ansicht in drei Formaten, der Import-Assistent). Eigene `IODataClient`-Fakes streichen die beiden Methoden.
+- **`ODataImportRegistration`** hat `Create`, `Update` und `Delete` statt `Send`.
+- Der *Import*-Button von `CoworkeeDataTable` öffnet den Import-Assistenten, statt sofort eine Excel-Datei hochzuladen; Excel-, CSV- und JSON-Exporte von OData-Sets kommen mit den sichtbaren Spalten vom Server.
+
+### Neu
+
+- **Import-Assistent** pro Entity-Set: CSV, Excel und JSON, erkannte Kodierung, Trennzeichen und Kopfzeile, Spaltenzuordnung mit Vorschlägen und gespeicherten Zuordnungen, Umwandlung in der Sprache der Datei, Vorschau mit der Validierung der Commands, Anlegen, Ändern per Schlüssel oder beides, Probelauf, Hintergrundjob mit Live-Fortschritt, Datei der fehlerhaften Zeilen und Rückgängig für den letzten Import, siehe [Import und Export](../web/import-export.md). `AddODataImport` nimmt dafür `(Guid? id, row) => command` und optional einen Lösch-Command.
+- **Admin-Seite** *Import und Export* (`/admin/data-transfer`, Berechtigung `DataTransfer.Use`; gib sie den Rollen, die sie sehen sollen).
+- **Exporte** der aktuellen Ansicht als Excel, CSV oder JSON (`format`, `columns`); mehr als `Coworkee:OData:BackgroundExportRows` Zeilen (10 000) laufen als Job mit Download-Hinweis.
+
 ## 0.0.1.25 (2026-10-15)
 
 Nur Korrekturen: Das Skript des Ladebildschirms ist eine eigene Datei, damit eine strikte CSP es ausführt, und App-Seiten gehen mit `Cache-Control: no-cache, no-store` raus. In Apps ist nichts zu ändern.
