@@ -15,6 +15,7 @@ coworkee run
 | `coworkee new --spec app.json` | The same from a JSON spec with name, options, branding and feature modules with entities and properties |
 | `coworkee options [--json]` | Every switch with default, choices, pros, cons and when to use it |
 | `coworkee spec schema`, `spec example`, `spec validate <file>` | JSON Schema, an example and the check of a spec |
+| `coworkee specs list`, `specs show <id>`, `new <name> --template-spec <id>` | The starter specs that come with the tool (CRM, helpdesk, asset portal, shop, events, approvals) and an app made from one |
 | `coworkee run` | Runs the `*.AppHost` project of the solution |
 | `coworkee migrations add <name>` | `dotnet ef migrations add` against the `*.Infrastructure` project |
 | `coworkee module add <name> [--entity <name>] [--property Name:type:required:max:key=value]... [--enum Name=A,B]` | Feature module with an entity (references, enums, money, dates, email, url, unique, facets): table, permissions, OData set, endpoints, validation, Blazor page and navigation |

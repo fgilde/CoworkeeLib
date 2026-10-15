@@ -32,9 +32,21 @@ Das Panel links zeigt, wo du bist; jede Seite, die du schon gesehen hast, ist ei
 
 ### Willkommen
 
-Eine neue App beginnen, eine Spezifikation öffnen (`.json` aus der CLI, dem [MCP-Server](mcp.md) oder einer früheren Sitzung) oder eine der zuletzt geöffneten wählen.
+Eine neue App beginnen, eine Spezifikation öffnen (`.json` aus der CLI, dem [MCP-Server](mcp.md) oder einer früheren Sitzung) oder eine der zuletzt geöffneten wählen. Darunter: **Mit einer Vorlage starten** und **Meine Apps**.
 
 ![Willkommen](../assets/screenshots/studio-welcome-light-de.webp)
+
+#### Mit einer Vorlage starten
+
+Die [Startvorlagen](gallery.md) (CRM, Helpdesk, Asset-Portal, kleiner Shop, Events, Anträge mit Freigabe) als Karten mit Suchfeld und Tag-Filter. Ein Klick füllt jede Seite des Assistenten mit dieser Spezifikation und öffnet *Grundlagen*; ab da ist es deine App, benenn sie um und ändere, was du willst.
+
+![Mit einer Vorlage starten](../assets/screenshots/studio-gallery-light-de.webp)
+
+#### Meine Apps
+
+Jede App, die das Studio angelegt hat, landet in dieser Liste, mit Ordner, Datum und den Optionen, die von der Vorlage abweichen. Über **Ordner hinzufügen** sagst du dem Studio, wo deine Apps liegen; es sucht dort bis zu drei Ebenen tief nach `.coworkee/app.json` (schreibt die CLI) oder einer Solution mit `*.AppHost`-Projekt. So tauchen auch Apps auf, die mit `coworkee new` entstanden sind.
+
+Zu jeder App siehst du, ob sie läuft. Das Studio schaut nach dem Prozess des AppHosts (`Shop.AppHost`), eine App aus Visual Studio oder `coworkee run` zählt also mit, und es warnt, wenn ein anderes Programm den Dashboard-Port belegt. **Starten** und **Stoppen** nutzen denselben Runner wie die Seite *Anlegen*. Solange sie läuft, öffnen die Links das Aspire-Dashboard (mit Login-Token, wenn das Studio sie gestartet hat), Web-App und API sowie Grafana und WebDataStudio. Die beiden bekommen ihre Ports erst beim Start von Aspire, ihre Links führen deshalb ins Dashboard, wo die Adresse bei der Ressource steht. Darunter stehen die letzte Zeile der Ausgabe und Links zu Ordner, Solution und VS Code.
 
 ### Grundlagen
 
@@ -130,4 +142,4 @@ Die Hilfe (`F1` oder das Fragezeichen) erklärt den Assistenten, die Befehle der
 
 ## Einstellungen
 
-Die Einstellungen in der Hilfe: Sprache (System, Englisch, Deutsch), Farbmodus, die zu verwendende CLI (leer für das globale Tool, eine Programmdatei oder `Coworkee.Cli.dll`), eine Quelle der Vorlage (`.nupkg` oder Ordner, als `--template-source` übergeben) und ein lokaler Paket-Feed, den das Restore der neuen App neben nuget.org nutzt. Sie liegen pro Benutzer zusammen mit den zuletzt geöffneten Spezifikationen im Anwendungsdatenordner unter `Coworkee/Studio/settings.json`.
+Die Einstellungen in der Hilfe: Sprache (System, Englisch, Deutsch), Farbmodus, die zu verwendende CLI (leer für das globale Tool, eine Programmdatei oder `Coworkee.Cli.dll`), eine Quelle der Vorlage (`.nupkg` oder Ordner, als `--template-source` übergeben) und ein lokaler Paket-Feed, den das Restore der neuen App neben nuget.org nutzt. Sie liegen pro Benutzer zusammen mit den zuletzt geöffneten Spezifikationen, der Liste *Meine Apps* und ihren Ordnern im Anwendungsdatenordner unter `Coworkee/Studio/settings.json`.

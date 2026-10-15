@@ -111,6 +111,8 @@ coworkee spec show shop.json         # what the spec creates: library modules on
 coworkee new --spec shop.json
 ```
 
+Six starter specs come with the CLI (CRM, helpdesk, asset portal, small shop, events, approval requests): `coworkee specs list` names them, `coworkee new Sales --template-spec crm` creates one, `coworkee specs show crm > crm.json` prints it to change first. The [starter specs page](gallery.md) has them as downloads and a small wizard that writes a spec in the browser.
+
 ```json title="shop.json"
 {
   "name": "Shop",

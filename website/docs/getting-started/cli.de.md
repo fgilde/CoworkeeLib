@@ -111,6 +111,8 @@ coworkee spec show shop.json         # was die Spezifikation erzeugt: Bibliothek
 coworkee new --spec shop.json
 ```
 
+Mit der CLI kommen sechs Startvorlagen (CRM, Helpdesk, Asset-Portal, kleiner Shop, Events, Anträge mit Freigabe): `coworkee specs list` zählt sie auf, `coworkee new Sales --template-spec crm` legt eine an, `coworkee specs show crm > crm.json` gibt sie aus, damit du sie vorher anpassen kannst. Auf der Seite [Startvorlagen](gallery.md) gibt es sie zum Herunterladen, dazu einen kleinen Assistenten, der eine Spezifikation im Browser schreibt.
+
 ```json title="shop.json"
 {
   "name": "Shop",
