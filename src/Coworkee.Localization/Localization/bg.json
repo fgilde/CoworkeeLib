@@ -1354,5 +1354,13 @@
   "Run workflow transitions": "Изпълнение на преходи в работни процеси",
   "Workflow designer": "Дизайнер на работни процеси",
   "Elsa workflows": "Работни процеси Elsa",
-  "Design and run Elsa workflows": "Проектиране и изпълнение на работни процеси Elsa"
+  "Design and run Elsa workflows": "Проектиране и изпълнение на работни процеси Elsa",
+  "A new version of the app is available.": "Налична е нова версия на приложението.",
+  "Install app": "Инсталиране на приложението",
+  "Install the app on this device to open it like any other app.": "Инсталирайте приложението на това устройство, за да го отваряте като всяко друго приложение.",
+  "Push notifications on this device": "Push известия на това устройство",
+  "Push notifications are blocked in the settings of this browser.": "Push известията са блокирани в настройките на този браузър.",
+  "This browser cannot receive push notifications.": "Този браузър не може да получава push известия.",
+  "Devices with push notifications": "Устройства с push известия",
+  "This device": "Това устройство"
 }

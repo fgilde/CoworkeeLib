@@ -125,9 +125,7 @@ public sealed class NotificationDigestJob(
         await db.SaveChangesAsync(cancellationToken);
     }
 
-    /// <summary>Localizable notifications (with arguments) in the reader's language, the others as written.</summary>
-    private string? Text(string? text, IReadOnlyList<string>? arguments, CultureInfo? culture) =>
-        text is null || arguments is null || culture is null ? Notification.Format(text, arguments) : Notification.Format(translators.Translate(text, culture), arguments);
+    private string? Text(string? text, IReadOnlyList<string>? arguments, CultureInfo? culture) => NotificationText.In(text, arguments, culture, translators);
 
     /// <summary>Server-made links are relative paths; they are made absolute, anything that is not a path or http(s) is dropped.</summary>
     private string? Absolute(string? link) => link switch

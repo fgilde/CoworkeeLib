@@ -1354,5 +1354,13 @@
   "Run workflow transitions": "İş akışı geçişlerini çalıştırma",
   "Workflow designer": "İş akışı tasarımcısı",
   "Elsa workflows": "Elsa iş akışları",
-  "Design and run Elsa workflows": "Elsa iş akışlarını tasarlama ve çalıştırma"
+  "Design and run Elsa workflows": "Elsa iş akışlarını tasarlama ve çalıştırma",
+  "A new version of the app is available.": "Uygulamanın yeni bir sürümü mevcut.",
+  "Install app": "Uygulamayı yükle",
+  "Install the app on this device to open it like any other app.": "Uygulamayı diğer uygulamalar gibi açmak için bu cihaza yükleyin.",
+  "Push notifications on this device": "Bu cihazda anlık bildirimler",
+  "Push notifications are blocked in the settings of this browser.": "Anlık bildirimler bu tarayıcının ayarlarında engellendi.",
+  "This browser cannot receive push notifications.": "Bu tarayıcı anlık bildirim alamıyor.",
+  "Devices with push notifications": "Anlık bildirim alan cihazlar",
+  "This device": "Bu cihaz"
 }

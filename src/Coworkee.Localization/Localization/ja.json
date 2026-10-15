@@ -1354,5 +1354,13 @@
   "Run workflow transitions": "ワークフローの遷移を実行",
   "Workflow designer": "ワークフローデザイナー",
   "Elsa workflows": "Elsa ワークフロー",
-  "Design and run Elsa workflows": "Elsa ワークフローの設計と実行"
+  "Design and run Elsa workflows": "Elsa ワークフローの設計と実行",
+  "A new version of the app is available.": "アプリの新しいバージョンがあります。",
+  "Install app": "アプリをインストール",
+  "Install the app on this device to open it like any other app.": "このデバイスにアプリをインストールすると、他のアプリと同じように開けます。",
+  "Push notifications on this device": "このデバイスのプッシュ通知",
+  "Push notifications are blocked in the settings of this browser.": "このブラウザーの設定でプッシュ通知がブロックされています。",
+  "This browser cannot receive push notifications.": "このブラウザーはプッシュ通知を受け取れません。",
+  "Devices with push notifications": "プッシュ通知を受け取るデバイス",
+  "This device": "このデバイス"
 }

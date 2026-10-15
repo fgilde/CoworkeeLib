@@ -536,6 +536,24 @@ namespace MyApp.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "PushSubscriptions",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Endpoint = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: false),
+                    P256dh = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Auth = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Device = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PushSubscriptions", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Reports",
                 schema: "cw",
                 columns: table => new
@@ -1390,6 +1408,19 @@ namespace MyApp.Infrastructure.Migrations
                 column: "BrandId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_PushSubscriptions_Endpoint",
+                schema: "cw",
+                table: "PushSubscriptions",
+                column: "Endpoint",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PushSubscriptions_UserId",
+                schema: "cw",
+                table: "PushSubscriptions",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ReportFavorites_ReportId",
                 schema: "cw",
                 table: "ReportFavorites",
@@ -1621,6 +1652,10 @@ namespace MyApp.Infrastructure.Migrations
             migrationBuilder.DropTable(
                 name: "Products",
                 schema: "app");
+
+            migrationBuilder.DropTable(
+                name: "PushSubscriptions",
+                schema: "cw");
 
             migrationBuilder.DropTable(
                 name: "ReportFavorites",
@@ -2180,6 +2215,24 @@ namespace MyApp.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_PermissionGrants", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PushSubscriptions",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Endpoint = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: false),
+                    P256dh = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Auth = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Device = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PushSubscriptions", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -2935,6 +2988,19 @@ namespace MyApp.Infrastructure.Migrations
                 .Annotation("Npgsql:NullsDistinct", false);
 
             migrationBuilder.CreateIndex(
+                name: "IX_PushSubscriptions_Endpoint",
+                schema: "cw",
+                table: "PushSubscriptions",
+                column: "Endpoint",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PushSubscriptions_UserId",
+                schema: "cw",
+                table: "PushSubscriptions",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ReportFavorites_ReportId",
                 schema: "cw",
                 table: "ReportFavorites",
@@ -3153,6 +3219,10 @@ namespace MyApp.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "PermissionGrants",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "PushSubscriptions",
                 schema: "cw");
 
             migrationBuilder.DropTable(

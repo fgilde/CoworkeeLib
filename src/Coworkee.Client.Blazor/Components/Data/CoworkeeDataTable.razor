@@ -45,7 +45,7 @@
     {
         <MudTextField T="string" Value="_search" ValueChanged="SearchAsync" Immediate="true" DebounceInterval="300" Placeholder="@L[SearchPlaceholder]"
                       Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" Clearable="true" Variant="Variant.Outlined" Margin="Density.Margin"
-                      Class="mr-2 mb-2" Style="max-width:320px" data-testid="table-search" />
+                      Class="mr-2 mb-2 cw-table-search" Style="max-width:320px" data-testid="table-search" />
     }
     @if (Facets && !PanelLayout)
     {
@@ -184,7 +184,7 @@
         @if (OnEdit.HasDelegate || OnDelete is not null)
         {
             <TemplateColumn T="T" Sortable="false" Groupable="false" Filterable="false" Hideable="false" Resizable="false" DragAndDropEnabled="false" ShowColumnOptions="false"
-                            CellStyle="text-align:right;white-space:nowrap">
+                            CellClass="cw-row-actions" HeaderClass="cw-row-actions" CellStyle="text-align:right;white-space:nowrap">
                 <CellTemplate Context="cell">
                     @if (OnEdit.HasDelegate)
                     {

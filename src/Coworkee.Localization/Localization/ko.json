@@ -1354,5 +1354,13 @@
   "Run workflow transitions": "워크플로 전환 실행",
   "Workflow designer": "워크플로 디자이너",
   "Elsa workflows": "Elsa 워크플로",
-  "Design and run Elsa workflows": "Elsa 워크플로 설계 및 실행"
+  "Design and run Elsa workflows": "Elsa 워크플로 설계 및 실행",
+  "A new version of the app is available.": "앱의 새 버전을 사용할 수 있습니다.",
+  "Install app": "앱 설치",
+  "Install the app on this device to open it like any other app.": "이 기기에 앱을 설치하면 다른 앱처럼 열 수 있습니다.",
+  "Push notifications on this device": "이 기기의 푸시 알림",
+  "Push notifications are blocked in the settings of this browser.": "이 브라우저의 설정에서 푸시 알림이 차단되어 있습니다.",
+  "This browser cannot receive push notifications.": "이 브라우저는 푸시 알림을 받을 수 없습니다.",
+  "Devices with push notifications": "푸시 알림을 받는 기기",
+  "This device": "이 기기"
 }

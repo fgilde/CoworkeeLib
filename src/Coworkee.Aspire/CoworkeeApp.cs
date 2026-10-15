@@ -128,7 +128,13 @@ public sealed partial class CoworkeeApp
     {
         var auth = Require(AuthServer, nameof(AddAuthServer), nameof(AddWeb));
         var web = BffClient<TProject>(suffix, Title, nameof(AddWeb))
-            .WithSettings(s => s.Coworkee.Bff.ForwardedPrefixes, "/admin/jobs", "/hubs");
+            .WithSettings(s => s.Coworkee.Bff.ForwardedPrefixes, "/admin/jobs", "/hubs")
+            .WithSetting(s => s.Coworkee.Bff.Pwa.Name, Title);
+        if (Options.LogoUrl is { } icon && icon.StartsWith('/'))
+        {
+            web.WithSetting(s => s.Coworkee.Bff.Pwa.Icon, icon);
+        }
+
         Web = web;
         AddWebUrls(web);
 

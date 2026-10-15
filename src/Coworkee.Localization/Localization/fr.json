@@ -1354,5 +1354,13 @@
   "Run workflow transitions": "Exécuter des transitions de workflow",
   "Workflow designer": "Concepteur de workflows",
   "Elsa workflows": "Workflows Elsa",
-  "Design and run Elsa workflows": "Concevoir et exécuter des workflows Elsa"
+  "Design and run Elsa workflows": "Concevoir et exécuter des workflows Elsa",
+  "A new version of the app is available.": "Une nouvelle version de l'application est disponible.",
+  "Install app": "Installer l'application",
+  "Install the app on this device to open it like any other app.": "Installez l'application sur cet appareil pour l'ouvrir comme n'importe quelle autre application.",
+  "Push notifications on this device": "Notifications push sur cet appareil",
+  "Push notifications are blocked in the settings of this browser.": "Les notifications push sont bloquées dans les paramètres de ce navigateur.",
+  "This browser cannot receive push notifications.": "Ce navigateur ne peut pas recevoir de notifications push.",
+  "Devices with push notifications": "Appareils avec notifications push",
+  "This device": "Cet appareil"
 }

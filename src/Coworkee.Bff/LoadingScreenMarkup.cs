@@ -72,9 +72,13 @@ public static partial class LoadingScreenMarkup
         };
     }
 
-    private static string Declarations(JsonElement? palette, bool dark) => string.Concat(Colors.Select(c =>
-        $"{c.Variable}:{(palette is { ValueKind: JsonValueKind.Object } p && p.TryGetProperty(c.Palette, out var value) && value.ValueKind == JsonValueKind.String
-            && Color().IsMatch(value.GetString()!) ? value.GetString() : dark ? c.Dark : c.Light)};"));
+    private static string Declarations(JsonElement? palette, bool dark) =>
+        string.Concat(Colors.Select(c => $"{c.Variable}:{PaletteColor(palette, c.Palette) ?? (dark ? c.Dark : c.Light)};"));
+
+    /// <summary>A colour of the palette when it is a plain CSS colour, else null.</summary>
+    internal static string? PaletteColor(JsonElement? palette, string name) =>
+        palette is { ValueKind: JsonValueKind.Object } p && p.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String
+        && Color().IsMatch(value.GetString()!) ? value.GetString() : null;
 
     // a path of this site or a web address, nothing that could run script or leave for another host unnoticed
     private static string? SafeUrl(string? url) =>

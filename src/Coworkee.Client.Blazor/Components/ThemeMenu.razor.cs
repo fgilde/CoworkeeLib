@@ -8,6 +8,9 @@ namespace Coworkee.Client.Blazor.Components;
 
 public partial class ThemeMenu
 {
+    /// <summary>Shown as submenu of the app bar's overflow menu on phones.</summary>
+    [Parameter] public bool Nested { get; set; }
+
     private IReadOnlyList<ThemeDto> _themes = [];
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;

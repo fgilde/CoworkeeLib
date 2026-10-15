@@ -29,6 +29,9 @@ public sealed class NotificationApp : DatabaseFixture
 
     public WebApplication App { get; private set; } = null!;
 
+    /// <summary>Takes the pushes instead of the push services.</summary>
+    public FakePushSender PushSender { get; } = new();
+
     public override async ValueTask InitializeAsync()
     {
         await base.InitializeAsync();
@@ -42,8 +45,12 @@ public sealed class NotificationApp : DatabaseFixture
 
         // mails stay queued in the database; no job server sends them
         builder.Configuration["Coworkee:Jobs:RunServer"] = "false";
+        var (publicKey, privateKey) = Push.WebPushSender.CreateKeys();
+        builder.Configuration["Coworkee:Notifications:Push:PublicKey"] = publicKey;
+        builder.Configuration["Coworkee:Notifications:Push:PrivateKey"] = privateKey;
         builder.AddCoworkee<TestNotificationModule>();
         builder.Services.AddTestAuthentication();
+        builder.Services.AddSingleton<Push.IPushSender>(PushSender);
         App = builder.Build();
         await using (var scope = App.Services.CreateAsyncScope())
         {
@@ -96,6 +103,19 @@ public sealed class NotificationApp : DatabaseFixture
         await connection.StartAsync();
         await connection.InvokeAsync(RealtimeHubMethods.Subscribe, RealtimeTopics.User(userId));
         return (connection, events);
+    }
+}
+
+public sealed class FakePushSender : Push.IPushSender
+{
+    public ConcurrentQueue<(Push.PushSubscription Device, string Payload)> Sent { get; } = new();
+
+    public Push.PushResult Answer { get; set; } = Push.PushResult.Sent;
+
+    public Task<Push.PushResult> SendAsync(Push.PushSubscription subscription, string payload, CancellationToken cancellationToken)
+    {
+        Sent.Enqueue((subscription, payload));
+        return Task.FromResult(Answer);
     }
 }
 

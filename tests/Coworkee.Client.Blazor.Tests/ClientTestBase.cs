@@ -43,6 +43,7 @@ public abstract class ClientTestBase : BunitContext
         Services.AddSingleton(new CoworkeeClientOptions());
         Services.AddScoped<Theming.ThemeService>();
         Services.AddScoped<Layout.LayoutPreferences>();
+        Services.AddScoped<Layout.PwaService>();
         Services.AddScoped<Data.FileDownloader>();
         Services.AddScoped<Data.ITableViewStore, Data.TableViews>();
         Services.AddSingleton<FakeRealtimeConnection>();

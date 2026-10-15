@@ -72,6 +72,7 @@ public static class CoworkeeClientExtensions
         services.AddScoped<Theming.ThemeService>();
         services.AddCascadingValue(sp => sp.GetRequiredService<Theming.ThemeService>().DensitySource);
         services.AddScoped<Layout.LayoutPreferences>();
+        services.AddScoped<Layout.PwaService>();
         services.AddScoped<Realtime.IRealtimeConnection, Realtime.SignalRRealtimeConnection>();
         services.AddScoped<Realtime.RealtimeClient>();
         services.AddScoped<Realtime.NotificationCenter>();

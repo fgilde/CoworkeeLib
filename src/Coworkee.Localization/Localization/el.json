@@ -1354,5 +1354,13 @@
   "Run workflow transitions": "Εκτέλεση μεταβάσεων ροών εργασίας",
   "Workflow designer": "Σχεδιαστής ροών εργασίας",
   "Elsa workflows": "Ροές εργασίας Elsa",
-  "Design and run Elsa workflows": "Σχεδίαση και εκτέλεση ροών εργασίας Elsa"
+  "Design and run Elsa workflows": "Σχεδίαση και εκτέλεση ροών εργασίας Elsa",
+  "A new version of the app is available.": "Μια νέα έκδοση της εφαρμογής είναι διαθέσιμη.",
+  "Install app": "Εγκατάσταση εφαρμογής",
+  "Install the app on this device to open it like any other app.": "Εγκαταστήστε την εφαρμογή σε αυτή τη συσκευή για να την ανοίγετε όπως κάθε άλλη εφαρμογή.",
+  "Push notifications on this device": "Ειδοποιήσεις push σε αυτή τη συσκευή",
+  "Push notifications are blocked in the settings of this browser.": "Οι ειδοποιήσεις push είναι αποκλεισμένες στις ρυθμίσεις αυτού του προγράμματος περιήγησης.",
+  "This browser cannot receive push notifications.": "Αυτό το πρόγραμμα περιήγησης δεν μπορεί να λάβει ειδοποιήσεις push.",
+  "Devices with push notifications": "Συσκευές με ειδοποιήσεις push",
+  "This device": "Αυτή η συσκευή"
 }

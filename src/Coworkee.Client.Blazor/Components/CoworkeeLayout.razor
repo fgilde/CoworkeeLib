@@ -11,18 +11,20 @@
 {
     <style>@css</style>
 }
+<style>@Layout.MobileStyles.Css</style>
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 <SessionGuard />
+<PwaPrompts />
 
 <MudRTLProvider RightToLeft="Preferences.RightToLeft">
     <MudLayout @key="L.Culture">
-        <CoworkeeAppBar Dark="_dark" ToggleDrawer="() => _drawer = !_drawer" ToggleDark="ToggleDarkAsync" />
-        @* pinned: a mini icon strip under the app bar that the toggle widens; unpinned: an overlay that hides when closed *@
-        <MudDrawer @bind-Open="_drawer" Elevation="1" Variant="@(Preferences.Pinned ? DrawerVariant.Mini : DrawerVariant.Temporary)"
-                   ClipMode="@(Preferences.Pinned ? DrawerClipMode.Always : DrawerClipMode.Never)" data-testid="nav-drawer">
-            <CoworkeeNavMenu Mini="@(Preferences.Pinned && !_drawer)" />
+        <CoworkeeAppBar Dark="_dark" Compact="_phone" ToggleDrawer="() => _drawer = !_drawer" ToggleDark="ToggleDarkAsync" />
+        @* pinned: a mini icon strip under the app bar that the toggle widens; unpinned and on phones: an overlay that hides when closed *@
+        <MudDrawer @bind-Open="_drawer" Elevation="1" Variant="@(Pinned ? DrawerVariant.Mini : DrawerVariant.Temporary)"
+                   ClipMode="@(Pinned ? DrawerClipMode.Always : DrawerClipMode.Never)" data-testid="nav-drawer">
+            <CoworkeeNavMenu Mini="@(Pinned && !_drawer)" />
         </MudDrawer>
         <MudMainContent>
             <MudContainer MaxWidth="MaxWidth.False" Class="pt-4 pb-6">@Body</MudContainer>

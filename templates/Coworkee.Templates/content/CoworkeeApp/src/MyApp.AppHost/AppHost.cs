@@ -37,6 +37,10 @@ var app = builder.AddCoworkeeApp("myapp", options =>
 #if (loadingScreen != "Animated")
     options.SignIn.LoadingScreen = Coworkee.Contracts.Theming.LoadingScreenBackground.COWORKEE_LOADING_SCREEN;
 #endif
+#if (pwa && notifications)
+    // Web Push for the notifications: the VAPID key pair is made at the first start and kept in the user secrets
+    options.UsePush();
+#endif
 #if (!redis)
     options.WithoutRedis();
 #endif

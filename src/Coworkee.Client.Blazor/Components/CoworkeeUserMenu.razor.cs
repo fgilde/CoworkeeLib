@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Components;
 
 namespace Coworkee.Client.Blazor.Components;
 
-public partial class CoworkeeUserMenu
+public partial class CoworkeeUserMenu : IDisposable
 {
+    [Inject] private Layout.PwaService Pwa { get; set; } = null!;
+
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
     [Inject] private CoworkeeClientOptions Options { get; set; } = null!;
@@ -12,6 +14,12 @@ public partial class CoworkeeUserMenu
     [Inject] private NavigationManager Nav { get; set; } = null!;
 
     [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
+
+    protected override void OnInitialized() => Pwa.Changed += Refresh;
+
+    public void Dispose() => Pwa.Changed -= Refresh;
+
+    private void Refresh() => InvokeAsync(StateHasChanged);
 
     private string SignInHref => Options.SignInHref(Nav.ToBaseRelativePath(Nav.Uri));
 

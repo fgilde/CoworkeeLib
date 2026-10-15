@@ -1354,5 +1354,13 @@
   "Run workflow transitions": "ដំណើរការការផ្លាស់ប្តូរលំហូរការងារ",
   "Workflow designer": "អ្នករចនាលំហូរការងារ",
   "Elsa workflows": "លំហូរការងារ Elsa",
-  "Design and run Elsa workflows": "រចនា និងដំណើរការលំហូរការងារ Elsa"
+  "Design and run Elsa workflows": "រចនា និងដំណើរការលំហូរការងារ Elsa",
+  "A new version of the app is available.": "មានកំណែថ្មីនៃកម្មវិធី។",
+  "Install app": "ដំឡើងកម្មវិធី",
+  "Install the app on this device to open it like any other app.": "ដំឡើងកម្មវិធីនៅលើឧបករណ៍នេះ ដើម្បីបើកវាដូចកម្មវិធីផ្សេងទៀត។",
+  "Push notifications on this device": "ការជូនដំណឹងរុញនៅលើឧបករណ៍នេះ",
+  "Push notifications are blocked in the settings of this browser.": "ការជូនដំណឹងរុញត្រូវបានរារាំងនៅក្នុងការកំណត់របស់កម្មវិធីរុករកនេះ។",
+  "This browser cannot receive push notifications.": "កម្មវិធីរុករកនេះមិនអាចទទួលការជូនដំណឹងរុញបានទេ។",
+  "Devices with push notifications": "ឧបករណ៍ដែលទទួលការជូនដំណឹងរុញ",
+  "This device": "ឧបករណ៍នេះ"
 }

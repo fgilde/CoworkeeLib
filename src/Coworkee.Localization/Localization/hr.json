@@ -1354,5 +1354,13 @@
   "Run workflow transitions": "Izvršavanje prijelaza tijeka rada",
   "Workflow designer": "Dizajner tijeka rada",
   "Elsa workflows": "Elsa tijekovi rada",
-  "Design and run Elsa workflows": "Dizajniranje i pokretanje Elsa tijekova rada"
+  "Design and run Elsa workflows": "Dizajniranje i pokretanje Elsa tijekova rada",
+  "A new version of the app is available.": "Dostupna je nova verzija aplikacije.",
+  "Install app": "Instaliraj aplikaciju",
+  "Install the app on this device to open it like any other app.": "Instalirajte aplikaciju na ovaj uređaj kako biste je otvarali kao svaku drugu aplikaciju.",
+  "Push notifications on this device": "Push obavijesti na ovom uređaju",
+  "Push notifications are blocked in the settings of this browser.": "Push obavijesti blokirane su u postavkama ovog preglednika.",
+  "This browser cannot receive push notifications.": "Ovaj preglednik ne može primati push obavijesti.",
+  "Devices with push notifications": "Uređaji s push obavijestima",
+  "This device": "Ovaj uređaj"
 }

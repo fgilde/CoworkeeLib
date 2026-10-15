@@ -1,0 +1,41 @@
+@if (_settings?.PublicKey is not null)
+{
+    <MudPaper Outlined="true" Class="pa-3 mb-4" data-testid="push-settings">
+        <MudStack Row="true" AlignItems="AlignItems.Center">
+            <MudIcon Icon="@Icons.Material.Outlined.NotificationsActive" Color="Color.Primary" />
+            <MudText Typo="Typo.subtitle1" Class="flex-grow-1">@L["Push notifications on this device"]</MudText>
+            <MudSwitch T="bool" Value="On" ValueChanged="ToggleAsync" Disabled="@(_busy || !Possible)" Color="Color.Primary"
+                       aria-label="@L["Push notifications on this device"]" data-testid="push-toggle" />
+        </MudStack>
+        @if (_state.Permission == "denied")
+        {
+            <MudText Typo="Typo.caption" Color="Color.Error">@L["Push notifications are blocked in the settings of this browser."]</MudText>
+        }
+        else if (!Possible)
+        {
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["This browser cannot receive push notifications."]</MudText>
+        }
+        @if (_settings.Devices.Count > 0)
+        {
+            <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mt-2">@L["Devices with push notifications"]</MudText>
+            <MudList T="string" Dense="Density.Dense" Padding="false">
+                @foreach (var device in _settings.Devices)
+                {
+                    <MudListItem T="string" Icon="@Icons.Material.Outlined.Devices" data-device="@device.Id">
+                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                            <span class="flex-grow-1">
+                                @(device.Device ?? device.Endpoint)
+                                @if (device.Endpoint == _state.Endpoint)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Text">@L["This device"]</MudChip>
+                                }
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">@device.CreatedAt.ToLocalTime().ToString("g")</MudText>
+                            </span>
+                            <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" aria-label="@L["Remove"]" Disabled="_busy" OnClick="() => RemoveAsync(device)" />
+                        </MudStack>
+                    </MudListItem>
+                }
+            </MudList>
+        }
+    </MudPaper>
+}

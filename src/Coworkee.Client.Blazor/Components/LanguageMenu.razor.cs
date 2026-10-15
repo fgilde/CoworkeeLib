@@ -9,6 +9,9 @@ namespace Coworkee.Client.Blazor.Components;
 
 public partial class LanguageMenu : IDisposable
 {
+    /// <summary>Shown as submenu of the app bar's overflow menu on phones.</summary>
+    [Parameter] public bool Nested { get; set; }
+
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;

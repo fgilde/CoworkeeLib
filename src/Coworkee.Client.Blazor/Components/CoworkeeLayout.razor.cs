@@ -21,6 +21,10 @@ public partial class CoworkeeLayout : IAsyncDisposable
     private string? _logo;
     private bool _started;
     private (string Mode, Guid? Id, string Culture)? _shown;
+    private readonly Guid _viewport = Guid.NewGuid();
+    private bool _phone;
+
+    [Inject] private IBrowserViewportService Viewport { get; set; } = null!;
 
     [Inject] private IJSRuntime JS { get; set; } = null!;
 
@@ -45,7 +49,11 @@ public partial class CoworkeeLayout : IAsyncDisposable
         ThemeService.Changed += Refresh;
         Preferences.Changed += FollowPin;
         L.Changed += Refresh;
+        Nav.LocationChanged += CloseOnPhone;
     }
+
+    // phones have no room for the mini strip: the menu is an overlay that closes after each navigation
+    private bool Pinned => Preferences.Pinned && !_phone;
 
     protected override async Task OnInitializedAsync()
     {
@@ -99,6 +107,7 @@ public partial class CoworkeeLayout : IAsyncDisposable
         // ponytail: upload fields of the first page rendered before this keep no pickers until they render again
         Blazor.Files.CloudFilePickers.Apply(MudEx, ThemeService.ClientSettings);
         await Data.DialogPlacement.StartAsync(JS);
+        await Viewport.SubscribeAsync(_viewport, FollowViewport, new MudBlazor.Services.ResizeOptions { NotifyOnBreakpointOnly = true }, fireImmediately: true);
         await L.InitializeAsync(ThemeService.ClientSettings.GetValueOrDefault(Contracts.Localization.LocalizationSettings.Culture));
         _systemDark = _provider is not null && await _provider.GetSystemDarkModeAsync();
         _started = true;
@@ -130,8 +139,10 @@ public partial class CoworkeeLayout : IAsyncDisposable
         ThemeService.Changed -= Refresh;
         Preferences.Changed -= FollowPin;
         L.Changed -= Refresh;
+        Nav.LocationChanged -= CloseOnPhone;
         try
         {
+            await Viewport.UnsubscribeAsync(_viewport);
             if (_module is not null)
             {
                 await _module.DisposeAsync();
@@ -139,6 +150,29 @@ public partial class CoworkeeLayout : IAsyncDisposable
         }
         catch (JSDisconnectedException)
         {
+        }
+    }
+
+    private void FollowViewport(BrowserViewportEventArgs args)
+    {
+        // an unknown window size (no browser to measure) counts as wide
+        var phone = args.Breakpoint == Breakpoint.Xs && args.BrowserWindowSize?.Width > 0;
+        if (phone == _phone)
+        {
+            return;
+        }
+
+        _phone = phone;
+        _drawer = !phone;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void CloseOnPhone(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs args)
+    {
+        if (_phone && _drawer)
+        {
+            _drawer = false;
+            InvokeAsync(StateHasChanged);
         }
     }
 

@@ -108,6 +108,9 @@ public static class OptionCatalog
             "npm once the packages of the release are on npm and the app should update them like any other npm dependency.",
             ["Bundled: works offline and right after a release", "npm: updates like other npm dependencies"], ["Bundled: the tarballs live in the app's repository", "npm: needs the release on npmjs.com"],
             [new("bundled", "The tarballs inside the template, in ClientApp/vendor."), new("npm", "npm, the version of this template.", "https://www.npmjs.com/")], DependsOn: new("airworks")),
+        new("pwa", General, "Installable app", "Web manifest, service worker and offline page: the app installs on phones and desktops and opens without the browser bar. With notifications users switch on Web Push per device.", OptionKind.Bool, "true",
+            "Almost always; off only when the app must not run as installed app.", ["Installs from the browser like a native app", "Push notifications on phones and desktops", "Asks to reload after each deployment"],
+            ["A deployment needs its own VAPID key pair for push"], InfoUrl: "https://web.dev/explore/progressive-web-apps"),
         new("repository", General, "GitHub repository", "GitHub repository of the app as owner/repo, e.g. acme/shop: the README gets a QuickRun badge that starts the app from there with one click.", OptionKind.Text, null,
             "When the app lives on GitHub and others should try it.", ["One click from the README to the running app"], ["GitHub only"], InfoUrl: "https://github.com/"),
 

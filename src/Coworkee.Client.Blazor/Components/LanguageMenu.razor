@@ -5,7 +5,7 @@
 </AuthorizeView>
 @if (L.Languages.Count > 1)
 {
-    <MudMenu Icon="@Icons.Material.Outlined.Translate" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="Density.Dense"
+    <MudMenu Icon="@(Nested ? null : Icons.Material.Outlined.Translate)" StartIcon="@(Nested ? Icons.Material.Outlined.Translate : null)" Label="@(Nested ? L["Language"] : null)" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="Density.Dense"
              aria-label="@L["Language"]" data-testid="language-menu">
         @foreach (var language in L.Languages)
         {

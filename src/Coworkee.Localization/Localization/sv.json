@@ -1354,5 +1354,13 @@
   "Run workflow transitions": "Utföra övergångar i arbetsflöden",
   "Workflow designer": "Arbetsflödesdesigner",
   "Elsa workflows": "Elsa-arbetsflöden",
-  "Design and run Elsa workflows": "Utforma och köra Elsa-arbetsflöden"
+  "Design and run Elsa workflows": "Utforma och köra Elsa-arbetsflöden",
+  "A new version of the app is available.": "En ny version av appen finns tillgänglig.",
+  "Install app": "Installera appen",
+  "Install the app on this device to open it like any other app.": "Installera appen på den här enheten för att öppna den som vilken annan app som helst.",
+  "Push notifications on this device": "Pushnotiser på den här enheten",
+  "Push notifications are blocked in the settings of this browser.": "Pushnotiser är blockerade i den här webbläsarens inställningar.",
+  "This browser cannot receive push notifications.": "Den här webbläsaren kan inte ta emot pushnotiser.",
+  "Devices with push notifications": "Enheter med pushnotiser",
+  "This device": "Den här enheten"
 }

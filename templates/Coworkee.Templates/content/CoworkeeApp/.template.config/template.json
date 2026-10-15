@@ -57,6 +57,12 @@
       "defaultValue": "true",
       "description": "In-app notifications with mail digests (Coworkee.Notifications)."
     },
+    "pwa": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Installable app (web manifest, service worker, offline page); with notifications also Web Push to the users' devices."
+    },
     "chat": {
       "type": "parameter",
       "datatype": "bool",

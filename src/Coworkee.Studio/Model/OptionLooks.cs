@@ -14,6 +14,7 @@ public static class OptionLooks
         ["repository"] = "Icon.Github",
         ["auditing"] = "Icon.History",
         ["notifications"] = "Icon.Bell",
+        ["pwa"] = "Icon.Cellphone",
         ["chat"] = "Icon.Chat",
         ["reports"] = "Icon.ChartBox",
         ["ai"] = "Icon.Robot",

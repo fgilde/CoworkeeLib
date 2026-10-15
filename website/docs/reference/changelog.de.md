@@ -13,6 +13,18 @@
 - **Workflows und Genehmigungen** (`Coworkee.Workflows`, optional): Zustände und abgesicherte Übergänge pro Entitätstyp, Genehmigungen durch Rollen oder Benutzer mit Frist, Erinnerung und Eskalation, eine Historie, die Komponenten `CoworkeeWorkflow`, `CoworkeeWorkflowActions` und `CoworkeeWorkflowTimeline` und die Seite *Genehmigungen*, siehe [Workflows und Genehmigungen](../modules/workflows.md). Das Modul hat Tabellen: Apps, die es aufnehmen, legen eine Migration an.
 - **Elsa-Workflows** (`Coworkee.Workflows.Elsa`, optional): Elsa Workflows 3 in der API mit Coworkee-Aktivitäten und -Triggern, siehe [Elsa-Workflows](../modules/workflows-elsa.md).
 - CLI und Studio: `--workflows` und `--elsa`.
+### Breaking Changes
+
+- **`ICoworkeeApi`** hat `GetPushSettingsAsync`, `SavePushSubscriptionAsync` und `DeletePushSubscriptionAsync` dazubekommen; eigene Implementierungen ergänzen sie.
+- **`Notification`** erbt jetzt von `AggregateRoot` (sie löst `NotificationCreated` aus, solange Push eingerichtet ist). Das Schema ändert sich dadurch nicht.
+- **Das Modell hat `PushSubscription` dazubekommen** (Tabelle `cw.PushSubscriptions`): Apps mit dem Notifications-Modul fügen eine Migration hinzu.
+- **Neue Endpunkte** `GET`/`PUT /api/v1/notifications/push` und `DELETE /api/v1/notifications/push/{id}`; OpenAPI-Snapshots und SDKs neu erzeugen.
+
+### Neu
+
+- **Smartphone-Layout** der Blazor-Shell und der Anmeldeseiten: Überlaufmenü in der App-Leiste, Navigation als Overlay, das sich nach einem Klick schließt, Bearbeitungsblätter im Vollbild, Facetten-Menüs als Sheets von unten, umbrechende Seitenköpfe, fixierte Zeilenaktionen, 44-px-Touchziele und Safe Areas, siehe [Smartphones, installierbare App und Push](../ui/phones-and-pwa.md). Apps ergänzen `viewport-fit=cover` im Viewport-Tag von `App.razor`.
+- **Installierbare App**: `<Coworkee.Bff.Pwa.CoworkeePwa />` im Head von `App.razor` verlinkt das Web-Manifest in den Farben des Themes; `Coworkee.Bff` liefert Manifest, Service Worker (er speichert nur die Offline-Seite), Icon und Offline-Seite. Update- und Installationshinweise in der App. Vorlagen-Option `pwa` (standardmäßig an).
+- **Web-Push** für die Benachrichtigungen: `options.UsePush()` in Aspire oder `Coworkee:Notifications:Push:PublicKey`/`PrivateKey`; Benutzer schalten es pro Gerät auf der Benachrichtigungsseite ein.
 
 ## 0.0.1.25 (2026-10-15)
 

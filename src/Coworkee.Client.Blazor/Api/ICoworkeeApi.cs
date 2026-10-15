@@ -233,6 +233,12 @@ public interface ICoworkeeApi
     Task DeleteNotificationAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task DeleteAllNotificationsAsync(CancellationToken cancellationToken = default);
+
+    Task<PushSettingsDto> GetPushSettingsAsync(CancellationToken cancellationToken = default);
+
+    Task<PushDeviceDto> SavePushSubscriptionAsync(PushSubscriptionRequest subscription, CancellationToken cancellationToken = default);
+
+    Task DeletePushSubscriptionAsync(Guid id, CancellationToken cancellationToken = default);
 }
 
 public sealed class ApiException(int status, string? code, IReadOnlyDictionary<string, string[]>? errors)
