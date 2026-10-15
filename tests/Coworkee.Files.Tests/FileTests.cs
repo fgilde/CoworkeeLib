@@ -62,6 +62,20 @@ public sealed class FileTests(FilesApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_deleted_public_file_is_no_longer_served()
+    {
+        var file = await UploadAsync(Admin, null, "hero.png", "png", "image/png");
+        var link = "/" + FileLinks.Public(file.Id, file.Name);
+        var anonymous = app.App.GetTestClient();
+        (await Admin.PutAsJsonAsync($"/api/v1/files/{file.Id}/public", new FilePublicRequest(true), Ct)).EnsureSuccessStatusCode();
+        (await anonymous.GetAsync(link, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        (await Admin.PostAsJsonAsync("/api/v1/files/delete", new FileSelectionRequest([file.Id], []), Ct)).EnsureSuccessStatusCode();
+
+        (await anonymous.GetAsync(link, Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
     public async Task Only_managers_publish_files()
     {
         var user = await PostAsync<UserDto>("/api/v1/identity/users", new CreateUserRequest("up@acme.test", "Passw0rd!x", null, null));
