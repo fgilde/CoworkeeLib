@@ -71,7 +71,7 @@ Drei Ebenen bestimmen, welchen Text ein Benutzer sieht, die letzte gewinnt:
 2. Derselbe Schlüssel in einer `Localization/{culture}.json` der App: Die Ressourcen der App werden nach denen der Module definiert, ihr Text ersetzt also den der Bibliothek. Ein Schlüssel, den die Bibliothek nicht kennt, kommt einfach dazu.
 3. Eine Bearbeitung unter *Übersetzungen* (`/admin/translations`), die zur Laufzeit ohne Deployment wirkt und beide schlägt.
 
-`coworkee texts export` kopiert Bibliothekstexte in die JSON der App, damit Sie die Schlüssel nicht suchen müssen:
+`coworkee texts export` kopiert Bibliothekstexte in die JSON der App, damit du die Schlüssel nicht suchen musst:
 
 ```bash
 coworkee texts export --lang fr
@@ -83,15 +83,15 @@ coworkee texts export --lang en --keys "/^Delete/"
 |---|---|
 | `--lang <code>` | Eine der oben genannten Sprachen. `en` schreibt jeden Schlüssel als eigenen Text, der Ausgangspunkt, um englische Texte umzuformulieren. Ein unbekannter Code listet die mitgelieferten auf |
 | `--keys <muster>` | Nur passende Schlüssel: ein Glob mit `*` und `?` (Groß-/Kleinschreibung zählt, der ganze Schlüssel) oder ein regulärer Ausdruck zwischen Schrägstrichen |
-| `--out <datei>` | Zieldatei; Standard `src/<App>.Contracts/Localization/<code>.json` der Solution, in der Sie sind |
+| `--out <datei>` | Zieldatei; Standard `src/<App>.Contracts/Localization/<code>.json` der Solution, in der du bist |
 
-Der Export führt zusammen: Texte, die die Datei schon hat, bleiben unverändert und in ihrer Reihenfolge, fehlende Schlüssel werden angehängt. Nach einem Update läuft er erneut, um neue Texte zu holen, ohne Ihre Formulierungen zu verlieren. Die Datei wird als UTF-8 mit echten Zeichen (ohne `\u`-Escapes) und den `\r\n`-Zeilenumbrüchen der übrigen Texte geschrieben. Behalten Sie in der Datei nur, was Sie ändern, und löschen Sie den Rest: Jeder kopierte Schlüssel friert seinen Wortlaut ein und folgt Updates der Bibliothek nicht mehr.
+Der Export führt zusammen: Texte, die die Datei schon hat, bleiben unverändert und in ihrer Reihenfolge, fehlende Schlüssel werden angehängt. Nach einem Update läuft er erneut, um neue Texte zu holen, ohne deine Formulierungen zu verlieren. Die Datei wird als UTF-8 mit echten Zeichen (ohne `\u`-Escapes) und den `\r\n`-Zeilenumbrüchen der übrigen Texte geschrieben. Behalte in der Datei nur, was du änderst, und lösch den Rest: Jeder kopierte Schlüssel friert seinen Wortlaut ein und folgt Updates der Bibliothek nicht mehr.
 
 Die Kontoseiten und Mails lesen ihre eigenen eingebetteten Texte und Vorlagen, nicht die JSON der App, der Export deckt deshalb nur die Texte der eigenen Seiten und Komponenten der App ab.
 
 ## In einer neuen App
 
-`coworkee new --languages en,de,fr` legt `Localization/de.json` und `Localization/fr.json` in `src/<App>.Contracts` an, mit den Übersetzungen der eigenen Texte der App (Navigation, Beispielseiten), und nichts für Sprachen, die Sie nicht gewählt haben; ohne den Schalter sind es Englisch und Deutsch. Die Bibliothekstexte aller 23 Sprachen kommen in jedem Fall mit den Paketen. Um später eine Sprache zu ergänzen, schalten Sie sie auf der Seite *Sprachen* ein; eine Datei `src/<App>.Contracts/Localization/<code>.json` (`coworkee texts export --lang <code>` legt sie an) brauchen Sie nur, um Texte selbst zu übersetzen oder umzuformulieren, das Muster `Localization\*.json` des Projekts bettet sie ein.
+`coworkee new --languages en,de,fr` legt `Localization/de.json` und `Localization/fr.json` in `src/<App>.Contracts` an, mit den Übersetzungen der eigenen Texte der App (Navigation, Beispielseiten), und nichts für Sprachen, die du nicht gewählt hast; ohne den Schalter sind es Englisch und Deutsch. Die Bibliothekstexte aller 23 Sprachen kommen in jedem Fall mit den Paketen. Um später eine Sprache zu ergänzen, schalte sie auf der Seite *Sprachen* ein; eine Datei `src/<App>.Contracts/Localization/<code>.json` (`coworkee texts export --lang <code>` legt sie an) brauchst du nur, um Texte selbst zu übersetzen oder umzuformulieren, das Muster `Localization\*.json` des Projekts bettet sie ein.
 
 ## Im Client
 
@@ -164,7 +164,7 @@ Texte sind nach ihrem englischen Wortlaut geschlüsselt, Englisch ist also die n
 builder.AddCoworkeeApp("myapp", options => options.UseLibreTranslate(["en", "de", "fr", "es", "it"]));
 ```
 
-Eine später eingeschaltete Sprache, die nicht in der Liste steht, wird nicht geladen: ergänzen Sie sie und starten Sie den AppHost neu. Einen anderen Dienst setzt `UseTranslation`, seinen Schlüssel aus einem Parameter:
+Eine später eingeschaltete Sprache, die nicht in der Liste steht, wird nicht geladen: ergänze sie und starte den AppHost neu. Einen anderen Dienst setzt `UseTranslation`, seinen Schlüssel aus einem Parameter:
 
 ```csharp title="AppHost.cs"
 var key = builder.AddParameter("translation-key", secret: true);
@@ -177,7 +177,7 @@ Apps von `coworkee new` lesen `Parameters:translation-key`, `translation-region`
 dotnet user-secrets --project src/MyApp.AppHost set Parameters:translation-key "<key>"
 ```
 
-Außerhalb des AppHosts setzen Sie die Einstellungen auf der Seite *Einstellungen* oder als Standardwerte in der Konfiguration (`Coworkee:Settings:Defaults:Localization.TranslationProvider`). Ein LibreTranslate für den Betrieb läuft wie jeder Container (`libretranslate/libretranslate`); `TranslationEndpoint` zeigt darauf.
+Außerhalb des AppHosts setzt du die Einstellungen auf der Seite *Einstellungen* oder als Standardwerte in der Konfiguration (`Coworkee:Settings:Defaults:Localization.TranslationProvider`). Ein LibreTranslate für den Betrieb läuft wie jeder Container (`libretranslate/libretranslate`); `TranslationEndpoint` zeigt darauf.
 
 ### CLI und Studio
 

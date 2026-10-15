@@ -1,6 +1,6 @@
 # Berichte
 
-`Coworkee.Reporting` (Server) und `Coworkee.Client.Blazor.Reporting` (Client) ergänzen Dashboards über die OData-Entitätsmengen Ihrer App. Benutzer ordnen Widgets auf einem Raster an, filtern sie gemeinsam, klicken auf einen Balken, um die übrigen einzugrenzen, und teilen das Ergebnis mit Rollen oder der ganzen Organisation. Jede Zahl aggregiert die Datenbank, ein Dashboard über 100.000 Zeilen antwortet in wenigen Millisekunden.
+`Coworkee.Reporting` (Server) und `Coworkee.Client.Blazor.Reporting` (Client) ergänzen Dashboards über die OData-Entitätsmengen deiner App. Benutzer ordnen Widgets auf einem Raster an, filtern sie gemeinsam, klicken auf einen Balken, um die übrigen einzugrenzen, und teilen das Ergebnis mit Rollen oder der ganzen Organisation. Jede Zahl aggregiert die Datenbank, ein Dashboard über 100.000 Zeilen antwortet in wenigen Millisekunden.
 
 ![Ein Vertriebs-Dashboard mit Kennzahlen, Diagrammen, Pivot und Tabelle](../assets/screenshots/reporting-dashboard.png){ .shot }
 
@@ -15,15 +15,15 @@ public sealed class MyAppDatabaseModule : CoworkeeModule;
 ```csharp
 // WebAssembly-Client: Seiten unter /reports und der Navigationseintrag "Reports"
 builder.Services.AddCoworkeeReporting(baseAddress, reports => reports
-    .DrillDown("SalesOrders", "sales/orders")      // "Daten öffnen" führt mit dem Filter des Widgets auf Ihre Seite
+    .DrillDown("SalesOrders", "sales/orders")      // "Daten öffnen" führt mit dem Filter des Widgets auf deine Seite
     .DrillDown("Products", "catalog/products"));
 ```
 
-Nehmen Sie `typeof(Coworkee.Client.Blazor.Reporting.ReportingOptions).Assembly` in die `AdditionalAssemblies` des Routers auf (in `Routes.razor` und in `AddAdditionalAssemblies` des Web-Hosts) und erzeugen Sie eine Migration für die Tabellen `cw.Reports` und `cw.ReportFavorites`. Neue Apps bekommen das alles mit der Template-Option `--reports` (standardmäßig an).
+Nimm `typeof(Coworkee.Client.Blazor.Reporting.ReportingOptions).Assembly` in die `AdditionalAssemblies` des Routers auf (in `Routes.razor` und in `AddAdditionalAssemblies` des Web-Hosts) und erzeuge eine Migration für die Tabellen `cw.Reports` und `cw.ReportFavorites`. Neue Apps bekommen das alles mit der Template-Option `--reports` (standardmäßig an).
 
-## Ihre Entitätsmengen als Datenquellen
+## Deine Entitätsmengen als Datenquellen
 
-Berichte nutzen, was Sie ohnehin für OData registriert haben, sonst nichts:
+Berichte nutzen, was du ohnehin für OData registriert hast, sonst nichts:
 
 ```csharp
 services.AddODataEntity<SalesOrder>("SalesOrders", SalesPermissions.Orders.View);
@@ -87,7 +87,7 @@ Diagramme nutzen [Blazor-ApexCharts](https://github.com/apexcharts/Blazor-ApexCh
 ![Designer mit dem Widget-Bereich](../assets/screenshots/reporting-designer.png){ .shot }
 
 - **Bearbeiten** schaltet das Raster in den Bearbeitungsmodus: Widgets am Titel ziehen, an den Rändern in der Größe ändern, neue über *Widget hinzufügen* anlegen. Das Layout nutzt [GridStack](https://gridstackjs.com/) mit 12 Spalten und fällt auf Telefonen auf eine Spalte zurück.
-- Der **Widget-Bereich** bearbeitet Datenquelle, Gruppierung, Reihen, Werte, Sortierung, Top, das Datumsfeld für den Zeitraum des Berichts, Facetten und Regeln des [Query Builders](../ui/query-builder.md), Zahlenformat, Ziel, Legende und mehr; das Widget zeichnet sich neu, während Sie es ändern.
+- Der **Widget-Bereich** bearbeitet Datenquelle, Gruppierung, Reihen, Werte, Sortierung, Top, das Datumsfeld für den Zeitraum des Berichts, Facetten und Regeln des [Query Builders](../ui/query-builder.md), Zahlenformat, Ziel, Legende und mehr; das Widget zeichnet sich neu, während du es änderst.
 - **Rückgängig** und **Wiederholen** decken jede Änderung bis zum Speichern ab. Die *Berichtseinstellungen* enthalten Name, Beschreibung, Symbol, Freigabe und das Aktualisierungsintervall.
 - **Ansicht**: Zeitraum für alle Widgets, Facetten je Entitätsmenge, Kreuzfilter per Klick auf Balken, Tortenstück oder Pivot-Zelle, *Daten öffnen* an jedem Widget, Vollbild je Widget, Präsentationsmodus, Aktualisieren, Export.
 
@@ -101,7 +101,7 @@ Die Zeilen eines Widgets grenzen in dieser Reihenfolge ein: seine eigenen Query-
 
 | Berechtigung | Erlaubt |
 |---|---|
-| `Reports.View` | mit Ihnen geteilte Berichte öffnen, Favoriten |
+| `Reports.View` | mit dir geteilte Berichte öffnen, Favoriten |
 | `Reports.Manage` | Berichte anlegen, eigene ändern und löschen, jeden sichtbaren duplizieren |
 | `Reports.Share` | mit Rollen oder der Organisation teilen |
 
@@ -116,7 +116,7 @@ Ein Bericht ist *privat*, mit *Rollen* geteilt (Inhaber einer davon, direkt oder
 
 | Endpunkt | |
 |---|---|
-| `GET /api/v1/reports` | Berichte, die Sie öffnen können, Favoriten zuerst |
+| `GET /api/v1/reports` | Berichte, die du öffnen kannst, Favoriten zuerst |
 | `POST /api/v1/reports`, `PUT /api/v1/reports/{id}`, `DELETE /api/v1/reports/{id}` | anlegen, ändern, löschen |
 | `POST /api/v1/reports/{id}/duplicate`, `PUT /api/v1/reports/{id}/favorite` | kopieren, Favorit |
 | `GET /api/v1/reports/sources`, `GET /api/v1/reports/roles` | Felder je Menge, Rollen zum Teilen |

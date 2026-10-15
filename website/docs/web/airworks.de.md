@@ -17,7 +17,7 @@ app.AddWeb<Projects.Shop_Web>();
 app.AddAirWorks<Projects.Shop_AirWorks>();
 ```
 
-Starten Sie den AppHost wie gewohnt und öffnen Sie *shop-airworks* aus dem Aspire-Dashboard. Zum Bauen braucht das Projekt Node.js 22.18 oder neuer: `dotnet build` führt `npm install` und `npm run build` in `ClientApp` aus (überspringen mit `-p:SkipClientBuild=true`). AirWorks selbst wird von GitHub installiert; `ClientApp/.npmrc` erlaubt diese Git-Abhängigkeit (`allow-git=root`), die npm ab Version 12 sonst ablehnt.
+Starte den AppHost wie gewohnt und öffne *shop-airworks* aus dem Aspire-Dashboard. Zum Bauen braucht das Projekt Node.js 22.18 oder neuer: `dotnet build` führt `npm install` und `npm run build` in `ClientApp` aus (überspringen mit `-p:SkipClientBuild=true`). AirWorks selbst wird von GitHub installiert; `ClientApp/.npmrc` erlaubt diese Git-Abhängigkeit (`allow-git=root`), die npm ab Version 12 sonst ablehnt.
 
 Die [Demo-App](https://github.com/fgilde/Coworkee/tree/master) hat einen solchen Client mit eigenen Apps; [Eine eigene AirWorks-App schreiben](#eine-eigene-airworks-app-schreiben) geht sie Schritt für Schritt durch.
 
@@ -80,7 +80,7 @@ Die Administrations-Apps bekommen keine eigene Desktop-Verknüpfung: Die App *Ad
 | Lokalisierung | Sprachen (ein-/ausschalten, Standard), Übersetzungen mit maschineller Übersetzung der fehlenden Texte (`Localization.Manage`) |
 | Überwachung | Audit-Log mit den geänderten Feldern (`Audit.View`), KI-Tool-Aufrufe (`Ai.Audit`) |
 
-Apps lassen Sie weg, indem Sie nur die gewünschten registrieren; ersetzen Sie eine, indem Sie nach `defaultApps` eine eigene App mit derselben Id registrieren. Eigene Apps sind normale AirWorks-Apps (siehe [AirWorks-Dokumentation](https://fgilde.github.io/AirWorks/de.html)); eine Factory bekommt das `coworkee`-Objekt mit dem typisierten API-Client, `request`, dem Realtime-Hub, der Übersetzungsfunktion `t`, dem Benutzer, dem Theme und `notify`:
+Apps lässt du weg, indem du nur die gewünschten registrierst; ersetze eine, indem du nach `defaultApps` eine eigene App mit derselben Id registrierst. Eigene Apps sind normale AirWorks-Apps (siehe [AirWorks-Dokumentation](https://fgilde.github.io/AirWorks/de.html)); eine Factory bekommt das `coworkee`-Objekt mit dem typisierten API-Client, `request`, dem Realtime-Hub, der Übersetzungsfunktion `t`, dem Benutzer, dem Theme und `notify`:
 
 ```ts
 const ordersApp = (coworkee: Coworkee): CoworkeeApp => ({
@@ -130,7 +130,7 @@ Felder, die Benutzer oder Gruppen auswählen (Gruppenmitglieder, die Gruppen ein
 
 ### Dateivorschau
 
-Die Dateivorschau nutzt die [Web-Komponenten von MudBlazor.Extensions](https://www.mudex.org) in einem eigenen Frame (`mudExFrame`): Die Seitenstyles von MudBlazor bleiben im Frame, Desktop und eigene Apps behalten ihre, und das Schließen des Fensters gibt die .NET-Laufzeit der Vorschau frei. Die Frame-Seite (`@coworkee/airworks/mudex-frame.html`) liegt auf dem Origin der App neben dem Bundle, die Komponente liest die Datei also mit dem Sitzungs-Cookie. Das Template hostet beides: `mudex-webcomponents` ist eine Dev-Abhängigkeit von `ClientApp`, der Vite-Build kopiert es und die Frame-Seite (als `coworkee-frame.html`) nach `wwwroot/mudex`, und der Host liefert die `.dat`-Dateien der .NET-Laufzeit aus. Anderswo übergeben Sie `mudExFrameUrl` an `useCoworkee`.
+Die Dateivorschau nutzt die [Web-Komponenten von MudBlazor.Extensions](https://www.mudex.org) in einem eigenen Frame (`mudExFrame`): Die Seitenstyles von MudBlazor bleiben im Frame, Desktop und eigene Apps behalten ihre, und das Schließen des Fensters gibt die .NET-Laufzeit der Vorschau frei. Die Frame-Seite (`@coworkee/airworks/mudex-frame.html`) liegt auf dem Origin der App neben dem Bundle, die Komponente liest die Datei also mit dem Sitzungs-Cookie. Das Template hostet beides: `mudex-webcomponents` ist eine Dev-Abhängigkeit von `ClientApp`, der Vite-Build kopiert es und die Frame-Seite (als `coworkee-frame.html`) nach `wwwroot/mudex`, und der Host liefert die `.dat`-Dateien der .NET-Laufzeit aus. Anderswo übergibst du `mudExFrameUrl` an `useCoworkee`.
 
 Der AirWorks-Desktop (Verknüpfungen, offene Fenster, Hintergrund) liegt je Browser im Local Storage, so wie AirWorks es vorsieht.
 
@@ -266,7 +266,7 @@ image.append(mudExFrame('mudex-file-display',
 
 ### 8. Realtime
 
-Entities mit `[Realtime]` melden ihre Änderungen auf dem Topic `type:{Entity}` an alle, die sie lesen dürfen. Folgen Sie dem Topic, solange das Fenster offen ist; `subscribe` gibt die Funktion zurück, die es beendet:
+Entities mit `[Realtime]` melden ihre Änderungen auf dem Topic `type:{Entity}` an alle, die sie lesen dürfen. Folge dem Topic, solange das Fenster offen ist; `subscribe` gibt die Funktion zurück, die es beendet:
 
 ```ts
 onClose(coworkee.realtime.subscribe(realtimeTopics.type('Product'), () => void show()));
@@ -302,7 +302,7 @@ coworkee.notify(t('The image must be smaller than {0}.', '1.5 MB'), 'error');
 
 ### 11. Bauen und starten
 
-`dotnet build` baut den Client mit npm (`tsc --noEmit` prüft vorher die Typen). Starten Sie den AppHost und öffnen Sie *myapp-airworks* aus dem Aspire-Dashboard; solange der Host läuft, reicht für eine Änderung `npm run build` in `ClientApp`, der Host liefert `wwwroot` so aus, wie es ist. Die Demo nimmt `@coworkee/client` und `@coworkee/airworks` von npm in der Version des Releases, gegen das sie gebaut ist (`0.0.1023`), nicht aus den Tarballs des Templates.
+`dotnet build` baut den Client mit npm (`tsc --noEmit` prüft vorher die Typen). Starte den AppHost und öffne *myapp-airworks* aus dem Aspire-Dashboard; solange der Host läuft, reicht für eine Änderung `npm run build` in `ClientApp`, der Host liefert `wwwroot` so aus, wie es ist. Die Demo nimmt `@coworkee/client` und `@coworkee/airworks` von npm in der Version des Releases, gegen das sie gebaut ist (`0.0.1023`), nicht aus den Tarballs des Templates.
 
 ## Die Pakete
 
@@ -313,6 +313,6 @@ coworkee.notify(t('The image must be smaller than {0}.', '1.5 MB'), 'error');
 
 Die Quellen liegen in `typescript/` der Bibliothek. Das Template liefert beide als Tarballs mit, und eine erzeugte App nimmt sie aus `ClientApp/vendor` (`file:vendor/*.tgz`): `npm install` braucht dafür keine npm-Registry, eine App funktioniert also direkt nach einem Release und offline aus dem Template. AirWorks selbst kommt von GitHub mit einem festen Commit.
 
-Jedes Release veröffentlicht sie zusätzlich auf npm in der Version des Releases: `a.b.c` bleibt, `a.b.c.d` wird zu `a.b.(c*1000+d)`, weil npm keinen vierten Teil kennt (Release `0.0.1.21` ist auf npm `0.0.1021`). Um sie von npm zu nehmen, erstellen Sie die App mit `coworkee new --airworks --airworks-packages npm` (Studio: *AirWorks-Pakete*, `dotnet new coworkee --airworksPackages npm`); `ClientApp/package.json` verweist dann genau auf die Version des Templates. Eine bestehende App stellen Sie um, indem Sie diese Version in `ClientApp/package.json` eintragen und `ClientApp/vendor` löschen.
+Jedes Release veröffentlicht sie zusätzlich auf npm in der Version des Releases: `a.b.c` bleibt, `a.b.c.d` wird zu `a.b.(c*1000+d)`, weil npm keinen vierten Teil kennt (Release `0.0.1.21` ist auf npm `0.0.1021`). Um sie von npm zu nehmen, erstell die App mit `coworkee new --airworks --airworks-packages npm` (Studio: *AirWorks-Pakete*, `dotnet new coworkee --airworksPackages npm`); `ClientApp/package.json` verweist dann genau auf die Version des Templates. Eine bestehende App stellst du um, indem du diese Version in `ClientApp/package.json` einträgst und `ClientApp/vendor` löschst.
 
 `coworkee new --template-source <nupkg>` mit einem lokalen Build (`pwsh build/pack-local.ps1`) trägt den Ordner des Templates als Paketquelle `coworkee-local` in die `nuget.config` der App ein; so stellt die App die Coworkee-Pakete desselben Builds wieder her.

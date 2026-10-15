@@ -35,7 +35,7 @@ Der Abschnitt **Cloud-Dateiauswahl** im Reiter System enthält die IDs von Googl
 
 ### Eigene Einstellungen auf der Admin-Seite
 
-Die Tabs **System** (Bereich `Global`) und **Organisation** (Bereich `Tenant`) sowie **Meine Einstellungen** des Benutzers (Bereich `User`) haben keinen Formularcode pro Einstellung. Sie laden die Definitionen und zeigen sie mit `MudExObjectEditForm`; eine Einstellung Ihres Moduls erscheint dort, sobald ihr Contributor registriert ist:
+Die Tabs **System** (Bereich `Global`) und **Organisation** (Bereich `Tenant`) sowie **Meine Einstellungen** des Benutzers (Bereich `User`) haben keinen Formularcode pro Einstellung. Sie laden die Definitionen und zeigen sie mit `MudExObjectEditForm`; eine Einstellung deines Moduls erscheint dort, sobald ihr Contributor registriert ist:
 
 ```csharp title="Server-Modul"
 internal sealed class BillingSettingDefinitions : ISettingDefinitionContributor
@@ -106,11 +106,11 @@ builder.Configuration.AddCoworkeeDatabaseConfiguration("myapp"); // Name des Con
 
 ### Eingebaute App-Einstellungen
 
-Ohne weiteren Code zeigt die Seite **App-Einstellungen**: `CoworkeeAppSettings`, gebunden an den Abschnitt `Coworkee`, mit Selbstregistrierung (`Registration`), Benachrichtigungs-Zusammenfassungen (`Notifications`) und Hintergrundjobs (`Jobs`). Verdrahtungswerte, die der AppHost üblicherweise setzt (`Jobs:ConnectionStringName`, `Jobs:RunServer`, `Jobs:DashboardPath`, `Notifications:PublicAppUrl`), sind geschützt: Sie ändern sich erst, nachdem Sie das Feld mit seinem Schloss-Button entsperrt haben, und gelten dann nach einem Neustart; Listen, an die der Configuration Binder nur anhängen könnte (`Jobs:Queues`, `Jobs:RetryDelaysInSeconds`), sind ausgeblendet.
+Ohne weiteren Code zeigt die Seite **App-Einstellungen**: `CoworkeeAppSettings`, gebunden an den Abschnitt `Coworkee`, mit Selbstregistrierung (`Registration`), Benachrichtigungs-Zusammenfassungen (`Notifications`) und Hintergrundjobs (`Jobs`). Verdrahtungswerte, die der AppHost üblicherweise setzt (`Jobs:ConnectionStringName`, `Jobs:RunServer`, `Jobs:DashboardPath`, `Notifications:PublicAppUrl`), sind geschützt: Sie ändern sich erst, nachdem du das Feld mit seinem Schloss-Button entsperrt hast, und gelten dann nach einem Neustart; Listen, an die der Configuration Binder nur anhängen könnte (`Jobs:Queues`, `Jobs:RetryDelaysInSeconds`), sind ausgeblendet.
 
 ### App-Einstellungen erweitern
 
-Leiten Sie von `CoworkeeAppSettings` ab und registrieren Sie den Typ auf beiden Seiten. Die Regeln der eingebauten Abschnitte bleiben; eigene kommen hinzu:
+Leite von `CoworkeeAppSettings` ab und registriere den Typ auf beiden Seiten. Die Regeln der eingebauten Abschnitte bleiben; eigene kommen hinzu:
 
 ```csharp title="Contracts"
 public sealed class MyAppSettings : CoworkeeAppSettings
@@ -158,7 +158,7 @@ builder.Services.AddCoworkeeSettings<ShopSettings>(section: "Shop", title: "Shop
 | | |
 |---|---|
 | `Lock(s => s.A.B)` | der Wert erscheint deaktiviert mit Schloss-Symbol („In der Konfiguration festgelegt“); der Server behält, was gilt, egal was kommt. Für Werte, die nur der Host setzt. Ein gesperrtes Objekt sperrt alle seine Eigenschaften |
-| `Protect(s => s.A.B)` | der Wert ist änderbar, aber riskant: Das Feld bleibt deaktiviert, bis Sie seinen Schloss-Button drücken, und ist nach dem Speichern oder Neuladen wieder geschützt. Nur das Formular schützt, der Server speichert, was ankommt |
+| `Protect(s => s.A.B)` | der Wert ist änderbar, aber riskant: Das Feld bleibt deaktiviert, bis du seinen Schloss-Button drückst, und ist nach dem Speichern oder Neuladen wieder geschützt. Nur das Formular schützt, der Server speichert, was ankommt |
 | `Hide(s => s.A.B)` | der Wert wird weder an den Browser geschickt noch geändert |
 | Geheimnisse | Eigenschaften, die wie Passwort, Secret, API-Key, Token oder Connection String heißen, kommen maskiert; die Maske zurückzuschicken behält den gespeicherten Wert |
 | Meta | das `meta` des Clients gruppiert, beschriftet, sortiert oder rendert Eigenschaften wie in jedem `MudExObjectEditForm`; Sperren und Ausblendungen des Servers gelten zusätzlich. Das Formular zeigt jeden Abschnitt unter seiner Überschrift in zwei Spalten (Listen über die volle Breite); `WrapInMudItem(i => i.md = 12)` verbreitert ein einzelnes Feld. Berechnete Eigenschaften (ohne Setter) entfallen, Felder haben kein eigenes Zurücksetzen; ein Listeneintrag in seinem Dialog (etwa ein Registrierungsdokument) folgt denselben Regeln |
@@ -284,7 +284,7 @@ public sealed class BillingClient(IServiceDirectory directory, IHttpClientFactor
 }
 ```
 
-In einem Singleton oder Hosted Service legen Sie den Scope selbst an:
+In einem Singleton oder Hosted Service legst du den Scope selbst an:
 
 ```csharp
 public sealed class BillingPoller(IServiceScopeFactory scopes) : BackgroundService
@@ -300,32 +300,32 @@ public sealed class BillingPoller(IServiceScopeFactory scopes) : BackgroundServi
 ```
 
 - `ResolveAsync(name)` findet einen Dienst über den Namen, ohne Beachtung der Groß-/Kleinschreibung. Die konfigurierten Dienste kommen zuerst, ein konfigurierter Dienst gewinnt also gegen eine gleichnamige AspireUI-App. Der Aufruf ist schnell: Der Zustand eines konfigurierten Dienstes wird nicht geprüft und bleibt `Unknown`.
-- `ResolveAsync("aspireui:billing")` fragt nur die Quelle vor dem Doppelpunkt (`app` für `Coworkee:Services`, `aspireui` oder den Namen Ihrer eigenen Quelle). Nutzen Sie es, wenn zwei Quellen denselben Namen kennen und Sie eine bestimmte brauchen. Ein Präfix, das kein Quellenname ist, gehört zum Namen.
+- `ResolveAsync("aspireui:billing")` fragt nur die Quelle vor dem Doppelpunkt (`app` für `Coworkee:Services`, `aspireui` oder den Namen deiner eigenen Quelle). Nutz es, wenn zwei Quellen denselben Namen kennen und du eine bestimmte brauchst. Ein Präfix, das kein Quellenname ist, gehört zum Namen.
 - `GetAllAsync()` listet jeden Dienst jeder Quelle, ausgefallene Quellen stehen in `UnavailableSources`. Das zeigen die Admin-Seite und `GET /api/v1/services`.
 
-**Wann `ResolveAsync` `null` liefert:** Keine Quelle kennt den Namen, oder die einzige Quelle, die ihn kennt, ist nicht erreichbar (sie ist ausgefallen oder hat nicht innerhalb von drei Sekunden geantwortet). Der Aufrufer kann beide Fälle nicht unterscheiden; `GetAllAsync` kann es über `UnavailableSources`. Behandeln Sie `null` immer: Ein Dienst kann jederzeit fehlen.
+**Wann `ResolveAsync` `null` liefert:** Keine Quelle kennt den Namen, oder die einzige Quelle, die ihn kennt, ist nicht erreichbar (sie ist ausgefallen oder hat nicht innerhalb von drei Sekunden geantwortet). Der Aufrufer kann beide Fälle nicht unterscheiden; `GetAllAsync` kann es über `UnavailableSources`. Behandle `null` immer: Ein Dienst kann jederzeit fehlen.
 
-**`Url` oder `Urls`:** `Url` ist die erste Adresse, `Urls` listet alle Adressen, wenn eine Quelle mehrere kennt. Konfigurierte Dienste haben genau eine `Url` und keine `Urls`. Eine AspireUI-App listet alle ihre Endpunkte in `Urls`, http-Endpunkte können vorn stehen, und eine App ohne Endpunkte hat eine *leere* `Url`. Wählen Sie aus `Urls`, wenn Ihnen https wichtig ist (siehe Beispiel), und prüfen Sie auf ein leeres Ergebnis.
+**`Url` oder `Urls`:** `Url` ist die erste Adresse, `Urls` listet alle Adressen, wenn eine Quelle mehrere kennt. Konfigurierte Dienste haben genau eine `Url` und keine `Urls`. Eine AspireUI-App listet alle ihre Endpunkte in `Urls`, http-Endpunkte können vorn stehen, und eine App ohne Endpunkte hat eine *leere* `Url`. Wähl aus `Urls`, wenn dir https wichtig ist (siehe Beispiel), und prüf auf ein leeres Ergebnis.
 
 **`IServiceDirectory`, `IOptionsMonitor<CoworkeeServicesOptions>` oder Aspire Service Discovery?**
 
 | Bedarf | Verwenden |
 |---|---|
-| Die Adresse eines Dienstes, den Sie selbst konfigurieren (ein Link, eine Weiterleitung), synchron, ohne I/O | `IOptionsMonitor<CoworkeeServicesOptions>` |
-| Ein Dienst, der aus einer AspireUI-App oder Ihrer eigenen Quelle stammen kann, oder eine Liste aller Dienste | `IServiceDirectory` |
+| Die Adresse eines Dienstes, den du selbst konfigurierst (ein Link, eine Weiterleitung), synchron, ohne I/O | `IOptionsMonitor<CoworkeeServicesOptions>` |
+| Ein Dienst, der aus einer AspireUI-App oder deiner eigenen Quelle stammen kann, oder eine Liste aller Dienste | `IServiceDirectory` |
 | Aufrufe zwischen den Ressourcen eines AppHosts (API zum Auth-Server, Worker zur API) | Aspire Service Discovery: `WithReference` im AppHost und `https+http://name` als Basisadresse des `HttpClient` |
 
 Das Verzeichnis dient dem Finden und Anzeigen von Diensten, Discovery dem Aufrufen von Ressourcen, die der AppHost verdrahtet.
 
 Eine Quelle, die fehlschlägt oder länger als drei Sekunden braucht, wird ausgelassen, als nicht erreichbar gemeldet und stört die anderen Quellen nicht. Einen Fehler, den die Quelle schon geloggt hat, loggt das Verzeichnis nicht noch einmal.
 
-**AspireUI** listet die Apps und Stacks, die Sie selbst mit einem AspireUI hosten (`Source` = `aspireui`, alle Adressen in `Urls`). Der AppHost verbindet es mit `WithRetrieveApi()`, mehr ist nicht nötig:
+**AspireUI** listet die Apps und Stacks, die du selbst mit einem AspireUI hostest (`Source` = `aspireui`, alle Adressen in `Urls`). Der AppHost verbindet es mit `WithRetrieveApi()`, mehr ist nicht nötig:
 
 ```csharp
 builder.AddAspireUI().WithRetrieveApi();   // oder WithRetrieveApi(key) mit einem Parameter
 ```
 
-Ohne Aspire oder für eine veröffentlichte App tragen Sie Adresse und Schlüssel der Retrieve-API selbst ein:
+Ohne Aspire oder für eine veröffentlichte App trägst du Adresse und Schlüssel der Retrieve-API selbst ein:
 
 ```json
 { "Coworkee": { "AspireUI": { "Url": "https://aspireui.example.com", "ApiKey": "..." } } }
@@ -333,7 +333,7 @@ Ohne Aspire oder für eine veröffentlichte App tragen Sie Adresse und Schlüsse
 
 Ohne `Url` bleibt die Quelle inaktiv. Die Liste wird 15 Sekunden zwischengespeichert; der Schlüssel geht nur als `X-Api-Key` an das AspireUI und wird weder geloggt noch von der API zurückgegeben. Benutzerinformationen in der Adresse werden vor dem Loggen und Zwischenspeichern entfernt.
 
-**Eigene Quelle:** Implementieren Sie `IServiceSource` und registrieren Sie sie neben den eingebauten. Diese liest eine JSON-Liste `[{ "name": "...", "url": "..." }]` aus einer Registry:
+**Eigene Quelle:** Implementiere `IServiceSource` und registriere sie neben den eingebauten. Diese liest eine JSON-Liste `[{ "name": "...", "url": "..." }]` aus einer Registry:
 
 ```csharp
 using System.Net.Http.Json;
@@ -359,4 +359,4 @@ public sealed class RegistryServiceSource(IHttpClientFactory clients) : IService
 services.TryAddEnumerable(ServiceDescriptor.Singleton<IServiceSource, RegistryServiceSource>());
 ```
 
-Werfen Sie eine Ausnahme, wenn die Quelle nicht gefragt werden kann; das Verzeichnis meldet sie dann als nicht erreichbar. Überschreiben Sie `FindAsync`, wenn sich ein einzelner Dienst günstiger beantworten lässt als durch Auflisten aller. Das Verzeichnis setzt `Source` jedes Eintrags auf den `Name` seiner Quelle.
+Wirf eine Ausnahme, wenn die Quelle nicht gefragt werden kann; das Verzeichnis meldet sie dann als nicht erreichbar. Überschreib `FindAsync`, wenn sich ein einzelner Dienst günstiger beantworten lässt als durch Auflisten aller. Das Verzeichnis setzt `Source` jedes Eintrags auf den `Name` seiner Quelle.

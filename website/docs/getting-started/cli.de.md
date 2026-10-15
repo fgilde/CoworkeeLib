@@ -1,6 +1,6 @@
 # Kommandozeile
 
-Das Tool `coworkee` legt eine Coworkee-Anwendung aus dem Paket `Coworkee.Templates` an, mit den Modulen, dem Branding und den Entities Ihrer Wahl, und übernimmt die alltäglichen Befehle: starten, Migrationen, neue Module und Entities, Paket-Updates. Außerdem startet es einen [MCP-Server](mcp.md) für KI-Agenten und öffnet Coworkee Studio, einen Desktop-Assistenten.
+Das Tool `coworkee` legt eine Coworkee-Anwendung aus dem Paket `Coworkee.Templates` an, mit den Modulen, dem Branding und den Entities deiner Wahl, und übernimmt die alltäglichen Befehle: starten, Migrationen, neue Module und Entities, Paket-Updates. Außerdem startet es einen [MCP-Server](mcp.md) für KI-Agenten und öffnet Coworkee Studio, einen Desktop-Assistenten.
 
 ## Installation
 
@@ -27,7 +27,7 @@ Der Migrations-Worker legt einen Administrator `admin@<name>.local` und die Benu
 coworkee new Shop --keycloak --user "ada@shop.test:Product Manager" --user boss@shop.test:admin
 ```
 
-`--user` nimmt `email[:rolle,rolle][:admin]` und lässt sich wiederholen; das Passwort wird erzeugt. Die Benutzer stehen in `src/<Name>.Migrations/DemoUsers.cs`, das der Seed und der AppHost (für Keycloak) beide lesen. Die Passwörter sind nur für die Entwicklung: Ändern Sie sie, bevor Sie irgendwohin deployen.
+`--user` nimmt `email[:rolle,rolle][:admin]` und lässt sich wiederholen; das Passwort wird erzeugt. Die Benutzer stehen in `src/<Name>.Migrations/DemoUsers.cs`, das der Seed und der AppHost (für Keycloak) beide lesen. Die Passwörter sind nur für die Entwicklung: Ändere sie, bevor du irgendwohin deployst.
 
 ## Optionen
 
@@ -97,7 +97,7 @@ Ein bool-Schalter ohne Wert bedeutet `true` (`--files`), `--chat false` schaltet
 
 **Links.** `coworkee options` gibt die Webseite dessen aus, was eine Option mitbringt (`More:`): AirWorks, AspireUI, WebDataStudio, Grafana, Keycloak, Redis, Elasticsearch, GitHub Actions und den Dev-Container; bei Auswahlen eine Zeile je Produkt (`More (postgres):`): PostgreSQL, SQL Server, SQLite, RabbitMQ, Azure Blob Storage, Mapperly, Ollama, LM Studio, LibreTranslate, MyMemory, DeepL, Azure AI Translator und Google Cloud Translation. `--json` enthält sie als `infoUrl` der Option und der Auswahl. Das Studio zeigt sie als Öffnen-Knopf auf der Karte.
 
-Die mitgelieferte erste Migration deckt die Standardmodule ab (mit oder ohne Beispiele). Schalten Sie ein Modul mit Tabellen ein oder aus (Chat, KI, Backup, Benachrichtigungen, Dateien, Features, Social, Event-Bus, erweiterte Attribute ohne Beispiele) oder wählen eine andere Datenbank als `postgres`, lässt das Template die Migration weg und `coworkee new` legt nach dem Restore `Initial` mit `dotnet ef` an. Mit reinem `dotnet new` führen Sie `coworkee migrations add Initial` einmal selbst aus.
+Die mitgelieferte erste Migration deckt die Standardmodule ab (mit oder ohne Beispiele). Schaltest du ein Modul mit Tabellen ein oder aus (Chat, KI, Backup, Benachrichtigungen, Dateien, Features, Social, Event-Bus, erweiterte Attribute ohne Beispiele) oder wählst eine andere Datenbank als `postgres`, lässt das Template die Migration weg und `coworkee new` legt nach dem Restore `Initial` mit `dotnet ef` an. Mit reinem `dotnet new` führst du `coworkee migrations add Initial` einmal selbst aus.
 
 ## App-Spezifikationen
 
@@ -156,7 +156,7 @@ coworkee new --spec shop.json
 }
 ```
 
-- `modules` sind Ihre eigenen Module mit ihren Entitäten. Die Module der Bibliothek (Audit-Log, Chat, Dateien, ...) sind Optionen unter `options`, und eine selbst geschriebene Spezifikation nennt nur, was von den Standardwerten abweicht: ohne `"chat": false` hat die App den Chat, eine Spezifikation der Standardwerte enthält also kein Modul. Das Studio schreibt deshalb jedes Bibliotheksmodul mit `true` oder `false`; `coworkee spec show` gibt dasselbe für jede Spezifikation aus (`Library modules on:` / `off:`, dann jede andere Option mit ihrem Wert, `(unused)` wo sie ignoriert wird, und Ihre eigenen Module).
+- `modules` sind deine eigenen Module mit ihren Entitäten. Die Module der Bibliothek (Audit-Log, Chat, Dateien, ...) sind Optionen unter `options`, und eine selbst geschriebene Spezifikation nennt nur, was von den Standardwerten abweicht: ohne `"chat": false` hat die App den Chat, eine Spezifikation der Standardwerte enthält also kein Modul. Das Studio schreibt deshalb jedes Bibliotheksmodul mit `true` oder `false`; `coworkee spec show` gibt dasselbe für jede Spezifikation aus (`Library modules on:` / `off:`, dann jede andere Option mit ihrem Wert, `(unused)` wo sie ignoriert wird, und deine eigenen Module).
 - `options` nimmt die Ids aus der Tabelle oben; `branding` nimmt `title`, `theme`, `primaryColor`, `secondaryColor`, `logo`, `signInLayout`, `signInMedia`, `signInMediaSide` und `loadingScreen` und gewinnt gegen dieselben Ids in `options`.
 - Dateien und `output` sind relativ zur Spezifikation und müssen in ihrem Ordner bleiben (keine absoluten Pfade, kein `..`). Ein Logo ist ein Bild (svg, png, jpg, jpeg, webp, gif, ico), das Anmeldemedium ein Bild, ein Video (mp4, webm, ogg) oder eine http(s)-Adresse: Beide liegen danach öffentlich im Web-Client. Eine als Schalter angegebene Datei (`--logo C:\brand\logo.svg`) darf überall liegen. Kommentare und abschließende Kommas sind erlaubt.
 - Der Titel landet unverändert in Code und HTML und darf daher kein `"`, `\`, `<`, `>`, `@` und keine Steuerzeichen enthalten.
@@ -230,7 +230,7 @@ coworkee ui --spec shop.json
 | `coworkee ui` | Coworkee Studio |
 | `coworkee mcp` | [MCP-Server](mcp.md) über stdio |
 
-Nach `coworkee update` führen Sie `dotnet restore` aus und legen eine Migration an, falls ein Coworkee-Modul sein Modell geändert hat (`coworkee migrations add CoworkeeUpdate`).
+Nach `coworkee update` führst du `dotnet restore` aus und legst eine Migration an, falls ein Coworkee-Modul sein Modell geändert hat (`coworkee migrations add CoworkeeUpdate`).
 
 `coworkee self-update` aktualisiert die Werkzeuge selbst: `dotnet tool update -g Coworkee.Cli` und, wenn das Studio installiert ist, `dotnet tool update -g Coworkee.Studio`, beide auf die neueste Version auf nuget.org oder auf `--version`. Eine Vorabversion der CLI berücksichtigt auch Vorabversionen; bei einem Release tut das `--prerelease`. Unter Windows kann sich die laufende `coworkee.exe` nicht selbst ersetzen, deshalb läuft das Update in einem eigenen Fenster, sobald der Befehl beendet ist.
 
@@ -248,4 +248,4 @@ dotnet new coworkee -n Shop --samples false --keycloak true --title "My Shop" --
 dotnet run --project Shop/src/Shop.AppHost
 ```
 
-`dotnet new coworkee --help` listet sie auf. Kopieren Sie ein Logo selbst nach `src/<Name>.Web.Client/wwwroot`, bevor Sie `--logo <dateiname>` angeben.
+`dotnet new coworkee --help` listet sie auf. Kopiere ein Logo selbst nach `src/<Name>.Web.Client/wwwroot`, bevor du `--logo <dateiname>` angeben.

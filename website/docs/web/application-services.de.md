@@ -2,7 +2,7 @@
 
 Ein Anwendungsdienst ist ein Interface in den Contracts. Der Server stellt seine Implementierung per Konvention als HTTP-Endpunkte bereit, und der Blazor-Client bekommt eine Implementierung desselben Interfaces, die diese Endpunkte aufruft. Keine Seite schreibt HTTP-Code: Ein Source Generator, der mit `Coworkee.AspNetCore` und `Coworkee.Client.Blazor` kommt, schreibt Endpunkte und Client-Proxies beim Build (keine Reflection zur Laufzeit, Trimming und AOT in WebAssembly funktionieren also).
 
-**Wozu**: Ein Interface ist der ganze API-Vertrag. Die Seite ruft `Orders.CancelAsync(id)` wie einen lokalen Dienst, der Server bekommt eine gewöhnliche Minimal-API mit Berechtigungen, Validierung und Unit of Work, und OpenAPI-Dokument und SDKs sehen dieselben Endpunkte. **Im Vergleich** zu [handgeschriebenen Endpunkten](http-api.md) und dem [Dispatcher](../fundamentals/messaging.md): Nehmen Sie einen Dienst für die Operationen, die ein Client aufruft; Commands bleiben für Arbeit, die auch aus Jobs, Importen oder dem KI-Assistenten läuft (eine Dienstmethode kann einfach den Command senden).
+**Wozu**: Ein Interface ist der ganze API-Vertrag. Die Seite ruft `Orders.CancelAsync(id)` wie einen lokalen Dienst, der Server bekommt eine gewöhnliche Minimal-API mit Berechtigungen, Validierung und Unit of Work, und OpenAPI-Dokument und SDKs sehen dieselben Endpunkte. **Im Vergleich** zu [handgeschriebenen Endpunkten](http-api.md) und dem [Dispatcher](../fundamentals/messaging.md): Nimm einen Dienst für die Operationen, die ein Client aufruft; Commands bleiben für Arbeit, die auch aus Jobs, Importen oder dem KI-Assistenten läuft (eine Dienstmethode kann einfach den Command senden).
 
 Das Template hat zwei: `IDocumentTypeAppService` (Dokumente) und `ISalesOrderAppService` (Vertrieb). Diese Seite baut den zweiten Schritt für Schritt auf.
 
@@ -108,7 +108,7 @@ Fehler sind Exceptions: `ErrorException` trägt einen `Error` und wird zu densel
 
 ## Schritt 5: der Client
 
-`AddCoworkeeClient` registriert für jeden Anwendungsdienst, den das Client-Projekt sieht, einen Proxy als typisierten `HttpClient` mit der Basisadresse der App. Injizieren Sie das Interface:
+`AddCoworkeeClient` registriert für jeden Anwendungsdienst, den das Client-Projekt sieht, einen Proxy als typisierten `HttpClient` mit der Basisadresse der App. Injiziere das Interface:
 
 ```csharp title="MyApp.Web.Client/Pages/Sales/SalesOrders.razor.cs"
 [Inject] private ISalesOrderAppService Orders { get; set; } = null!;

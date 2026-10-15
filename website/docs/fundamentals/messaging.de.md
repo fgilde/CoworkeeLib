@@ -53,7 +53,7 @@ public sealed record DeleteBrandsCommand(IReadOnlyList<Guid> Ids) : ICommand<Res
 
 ### Eigene Middleware und Behaviors
 
-Middleware gilt für jeden Request; wählen Sie eine `Order` zwischen den eingebauten.
+Middleware gilt für jeden Request; wähle eine `Order` zwischen den eingebauten.
 
 ```csharp
 internal sealed class TimingMiddleware(ILogger<TimingMiddleware> logger) : IRequestMiddleware

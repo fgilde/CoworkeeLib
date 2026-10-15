@@ -1,8 +1,8 @@
 # MCP-Server der CLI
 
-`coworkee mcp` startet einen [Model-Context-Protocol](https://modelcontextprotocol.io)-Server über stdio. Ein KI-Agent wie Claude Code oder Claude Desktop kann dann mit Ihnen eine App planen, ihre Spezifikation schreiben, sie anlegen und Module und Entities ergänzen, mit denselben Befehlen, die Sie tippen würden.
+`coworkee mcp` startet einen [Model-Context-Protocol](https://modelcontextprotocol.io)-Server über stdio. Ein KI-Agent wie Claude Code oder Claude Desktop kann dann mit dir eine App planen, ihre Spezifikation schreiben, sie anlegen und Module und Entities ergänzen, mit denselben Befehlen, die du tippen würdest.
 
-Das ist der MCP-Server der Kommandozeile auf Ihrem Rechner. Eine erzeugte App hat einen eigenen MCP-Endpunkt unter `/mcp` mit den Tools der App, siehe [KI-Assistent und MCP](../modules/ai.md).
+Das ist der MCP-Server der Kommandozeile auf deinem Rechner. Eine erzeugte App hat einen eigenen MCP-Endpunkt unter `/mcp` mit den Tools der App, siehe [KI-Assistent und MCP](../modules/ai.md).
 
 ## Registrieren
 

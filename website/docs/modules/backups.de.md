@@ -1,6 +1,6 @@
 # Datenbank-Backups
 
-`Coworkee.Backup` sichert die ganze Datenbank als ein Zip im [Dateispeicher](storage.md) und stellt sie wieder her. Das Modul braucht Postgres; bei SQL Server nutzen Sie dessen eigene Sicherungen, bei SQLite kopieren Sie die Datei.
+`Coworkee.Backup` sichert die ganze Datenbank als ein Zip im [Dateispeicher](storage.md) und stellt sie wieder her. Das Modul braucht Postgres; bei SQL Server nutzt du dessen eigene Sicherungen, bei SQLite kopierst du die Datei.
 
 ![Backup-Seite](../assets/screenshots/backups.png){ .shot }
 

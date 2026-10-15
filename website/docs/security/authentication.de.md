@@ -29,7 +29,7 @@ Der Browser sieht nie ein Access-Token. Die Anmeldung samt Tokens liegt in einem
 
 ## Clients und Scopes
 
-Der Auth-Server legt seine OpenID-Connect-Clients beim Start aus der Konfiguration an. Mit dem [AppHost](../hosting/aspire.md) setzen Sie nichts davon; von Hand sieht es so aus:
+Der Auth-Server legt seine OpenID-Connect-Clients beim Start aus der Konfiguration an. Mit dem [AppHost](../hosting/aspire.md) setzt du nichts davon; von Hand sieht es so aus:
 
 ```json
 "Coworkee": {
@@ -46,7 +46,7 @@ Der Auth-Server legt seine OpenID-Connect-Clients beim Start aus der Konfigurati
 }
 ```
 
-Außerhalb der Entwicklung konfigurieren Sie `SigningCertificate` und `EncryptionCertificate` (Pfad und Passwort einer PKCS#12-Datei).
+Außerhalb der Entwicklung konfigurierst du `SigningCertificate` und `EncryptionCertificate` (Pfad und Passwort einer PKCS#12-Datei).
 
 ## Externer Login mit Keycloak
 

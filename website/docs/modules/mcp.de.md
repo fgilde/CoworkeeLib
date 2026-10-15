@@ -18,7 +18,7 @@ Jede Coworkee-App ist ein [MCP](https://modelcontextprotocol.io)-Server: Claude 
 }
 ```
 
-`Enabled` ist standardmäßig an; mit `false` gibt es keinen MCP-Endpunkt. Setzen Sie beide Werte für die API und den Web-Host, der denselben Pfad weiterleitet.
+`Enabled` ist standardmäßig an; mit `false` gibt es keinen MCP-Endpunkt. Setz beide Werte für die API und den Web-Host, der denselben Pfad weiterleitet.
 
 Zur Laufzeit schalten Administratoren den Server mit der globalen Einstellung `Mcp.Enabled` ab (*Einstellungen > AI assistant > MCP server enabled*, standardmäßig an): dann ist `tools/list` leer und `tools/call` führt nichts aus, auch mit gültigen Schlüsseln. Sie hängt nicht an `Ai.Enabled`: MCP braucht kein Modell.
 

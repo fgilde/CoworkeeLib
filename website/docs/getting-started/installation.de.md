@@ -17,7 +17,7 @@ cd Shop
 coworkee run
 ```
 
-Die Konsole zeigt die Adresse des Aspire-Dashboards; von dort öffnen Sie die Web-App. Die [CLI-Seite](cli.md) beschreibt die Optionen: Module an oder aus, Event-Bus, Speicher, Theme, Markenfarben, Logo, Anmeldedesign. Mit `coworkee new --spec app.json` kommt die App gleich mit eigenen Modulen und Entities, `coworkee ui` öffnet [Coworkee Studio](studio.md), einen Desktop-Assistenten dafür, und mit `coworkee mcp` erledigt das ein KI-Agent ([MCP-Server](mcp.md)).
+Die Konsole zeigt die Adresse des Aspire-Dashboards; von dort öffnest du die Web-App. Die [CLI-Seite](cli.md) beschreibt die Optionen: Module an oder aus, Event-Bus, Speicher, Theme, Markenfarben, Logo, Anmeldedesign. Mit `coworkee new --spec app.json` kommt die App gleich mit eigenen Modulen und Entities, `coworkee ui` öffnet [Coworkee Studio](studio.md), einen Desktop-Assistenten dafür, und mit `coworkee mcp` erledigt das ein KI-Agent ([MCP-Server](mcp.md)).
 
 Ohne CLI funktioniert dasselbe Template mit `dotnet new`:
 
@@ -44,7 +44,7 @@ Der Migrations-Dienst spielt die Migrationen ein und legt die Benutzer an, bevor
 
 ## Von Grund auf mit NuGet
 
-Was das Template anlegt, Schritt für Schritt. Alle Pakete beginnen mit `Coworkee.`; das Modulsystem zieht die Abhängigkeiten dessen nach, was Sie referenzieren. Halten Sie eine Version für alle in `Directory.Packages.props`:
+Was das Template anlegt, Schritt für Schritt. Alle Pakete beginnen mit `Coworkee.`; das Modulsystem zieht die Abhängigkeiten dessen nach, was du referenzierst. Halte eine Version für alle in `Directory.Packages.props`:
 
 ```xml title="Directory.Packages.props"
 <PropertyGroup>

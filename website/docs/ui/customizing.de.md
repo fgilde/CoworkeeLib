@@ -1,6 +1,6 @@
 # Komponenten ersetzen
 
-Jede Komponente der Shell lässt sich durch eine eigene ersetzen: Ersatz registrieren, und überall, wo das Original gerendert würde, erscheint Ihre. Kein Fork, kein kopiertes Layout.
+Jede Komponente der Shell lässt sich durch eine eigene ersetzen: Ersatz registrieren, und überall, wo das Original gerendert würde, erscheint deine. Kein Fork, kein kopiertes Layout.
 
 ```csharp
 builder.Services.ReplaceComponent<CoworkeeUserMenu, MyUserMenu>();
@@ -18,7 +18,7 @@ Der Ersatz bekommt die Parameter, die das Original bekäme, und muss sie deshalb
 
 ## Teile des Layouts
 
-Das Layout ist aufgeteilt, damit Sie einen Teil statt des Ganzen ersetzen:
+Das Layout ist aufgeteilt, damit du einen Teil statt des Ganzen ersetzt:
 
 | Komponente | Teil |
 |---|---|
@@ -32,11 +32,11 @@ Das Layout ist aufgeteilt, damit Sie einen Teil statt des Ganzen ersetzen:
 | `ThemeMenu` | Schnellwahl für Themes |
 | `AboutDialog` | Info-Dialog |
 
-Seiten funktionieren genauso: Ersetzen Sie `Profile` durch eine eigene Profilseite, und jeder Link dorthin öffnet Ihre.
+Seiten funktionieren genauso: Ersetze `Profile` durch eine eigene Profilseite, und jeder Link dorthin öffnet deine.
 
 ## Info-Dialog
 
-Der Info-Dialog fährt von rechts herein und zeigt die Abschnitte aus `options.About.Sections` der Reihe nach: `AboutHeader` (Logo oder Monogramm, Titel, Version), `AboutCredits` (die Bibliotheken mit Logo und laufender Version), `AboutLinks` (die `AboutLinks` der App) und `AboutFooter` (Runtime und gilde.org-Zeichen). Abschnitte sind normale Komponenten: entfernen, einfügen oder tauschen Sie sie; die Credits sind ebenfalls eine Liste.
+Der Info-Dialog fährt von rechts herein und zeigt die Abschnitte aus `options.About.Sections` der Reihe nach: `AboutHeader` (Logo oder Monogramm, Titel, Version), `AboutCredits` (die Bibliotheken mit Logo und laufender Version), `AboutLinks` (die `AboutLinks` der App) und `AboutFooter` (Runtime und gilde.org-Zeichen). Abschnitte sind normale Komponenten: du kannst sie entfernen, einfügen oder tauschen; die Credits sind ebenfalls eine Liste.
 
 ```csharp
 builder.Services.AddCoworkeeClient(baseAddress, options =>
@@ -47,8 +47,8 @@ builder.Services.AddCoworkeeClient(baseAddress, options =>
 });
 ```
 
-Für einen ganz anderen Dialog ersetzen Sie ihn: `builder.Services.ReplaceComponent<AboutDialog, MyAbout>();`. `MyAbout` ist ein normaler `MudDialog`.
+Für einen ganz anderen Dialog ersetzt du ihn: `builder.Services.ReplaceComponent<AboutDialog, MyAbout>();`. `MyAbout` ist ein normaler `MudDialog`.
 
 ## Ersetzen oder beitragen
 
-Nehmen Sie die Erweiterungspunkte, wenn sie passen: `INavigationContributor` für Menüeinträge, `IAppBarContributor` für die obere Leiste, `NavigationMenuOptions` zum Ausblenden und Sortieren. Ersetzen Sie eine Komponente, wenn Sie anderes Markup oder Verhalten brauchen.
+Nimm die Erweiterungspunkte, wenn sie passen: `INavigationContributor` für Menüeinträge, `IAppBarContributor` für die obere Leiste, `NavigationMenuOptions` zum Ausblenden und Sortieren. Ersetze eine Komponente, wenn du anderes Markup oder Verhalten brauchst.

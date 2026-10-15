@@ -34,4 +34,4 @@ context.Services.AddCoworkeeResponseFilters([typeof(MyAppCatalogModule).Assembly
 Jede Regel endet mit einer Bedingung: `.Always()`, `.When(...)`, `.Unless(...)` oder den Coworkee-Kurzformen `.WhenGranted(permission)` und `.UnlessGranted(permission)`.
 
 !!! info "OData"
-    OData serialisiert seine Ergebnisse selbst. Die Filter lassen sie aus; blenden Sie interne Eigenschaften im Modell aus (`AddODataEntity<T>(set, permission, x => x.Secret)`) und schränken Sie Zeilen mit einem [Entity-Filter](odata.md#regeln-pro-zeile) ein.
+    OData serialisiert seine Ergebnisse selbst. Die Filter lassen sie aus; blende interne Eigenschaften im Modell aus (`AddODataEntity<T>(set, permission, x => x.Secret)`) und schränke Zeilen mit einem [Entity-Filter](odata.md#regeln-pro-zeile) ein.

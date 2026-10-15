@@ -11,7 +11,7 @@ Beide melden sich mit dem Administrator der App an (dieselbe E-Mail und dasselbe
 
 ![Grafana-Übersichtsdashboard](../assets/screenshots/grafana-overview-dark.webp)
 
-## Was Sie bekommen
+## Was du bekommst
 
 | Ressource | Aufgabe |
 |---|---|
@@ -36,7 +36,7 @@ Die Dienste senden weiter an das Aspire-Dashboard; die generierten Service-Defau
 | App data | Benutzer, aktive Benutzer, Anmeldungen heute und in dieser Woche, Mandanten, Rollen, Anmeldungen und neue Benutzer im Zeitverlauf, letzte Anmeldungen, Benutzer je Rolle, offene und fehlschlagende Outbox-Nachrichten, Ereignisse durch die Outbox, Hintergrundjobs nach Status, offene und fehlgeschlagene Jobs (Postgres und SQL Server) |
 | Logs and traces | alle Logs mit Filtern für Dienst, Level und Text, Log-Volumen je Dienst, Traces mit Fehlern, langsamste Traces |
 
-Jedes Dashboard filtert nach Dienst und verweist auf die anderen. Sie werden bei jedem Start bereitgestellt: Speichern Sie eine Kopie (*Save as*), wenn Sie eine eigene Fassung behalten wollen.
+Jedes Dashboard filtert nach Dienst und verweist auf die anderen. Sie werden bei jedem Start bereitgestellt: Speichere eine Kopie (*Save as*), wenn du eine eigene Fassung behalten willst.
 
 ![Dashboard App data](../assets/screenshots/grafana-app-data-light.webp)
 
@@ -98,7 +98,7 @@ coworkee new Shop --grafana false --web-data-studio false
 
 ### AppHost
 
-In einer bestehenden App schalten die Zeilen in `src/MyApp.AppHost/AppHost.cs` die Werkzeuge; löschen Sie eine Zeile (oder rufen Sie `WithoutGrafana()` / `WithoutWebDataStudio()` auf), um das Werkzeug abzuschalten, und fügen Sie sie hinzu, um es einzuschalten:
+In einer bestehenden App schalten die Zeilen in `src/MyApp.AppHost/AppHost.cs` die Werkzeuge; lösch eine Zeile (oder ruf `WithoutGrafana()` / `WithoutWebDataStudio()` auf), um das Werkzeug abzuschalten, und füg sie hinzu, um es einzuschalten:
 
 ```csharp
 var app = builder.AddCoworkeeApp("myapp", options =>

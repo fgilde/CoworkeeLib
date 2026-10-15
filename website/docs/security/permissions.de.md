@@ -30,7 +30,7 @@ Aus den Definitionen entsteht die Berechtigungsmatrix im Rolleneditor: gruppiert
 | Eine Endpunktgruppe | `.RequireAuthorization()` plus das Attribut am Request |
 | Ein OData-Set | die Berechtigung, die `AddODataEntity` mitbekommt |
 
-Berechtigungen auf Ressourcen vererben sich entlang einer Hierarchie, die Sie mit `IResourceHierarchy` beschreiben (etwa Ordner in Ordnern). `IResourceRestriction` entzieht bestimmten Rollen den Zugriff wieder, auch Inhabern einer globalen Berechtigung.
+Berechtigungen auf Ressourcen vererben sich entlang einer Hierarchie, die du mit `IResourceHierarchy` beschreibst (etwa Ordner in Ordnern). `IResourceRestriction` entzieht bestimmten Rollen den Zugriff wieder, auch Inhabern einer globalen Berechtigung.
 
 ## Prüfen in der Oberfläche
 

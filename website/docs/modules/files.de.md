@@ -95,4 +95,4 @@ Die Auswahlen laden ihre Skripte von den Anbietern (`apis.google.com`, `accounts
 
 ## Datenbank
 
-Die Tabellen `cw.FileFolders` und `cw.StoredFiles` kommen mit dem Modell; legen Sie in Ihrer App eine Migration an.
+Die Tabellen `cw.FileFolders` und `cw.StoredFiles` kommen mit dem Modell; leg in deiner App eine Migration an.

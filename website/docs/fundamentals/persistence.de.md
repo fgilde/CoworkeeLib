@@ -24,7 +24,7 @@ Handler injizieren `CoworkeeDbContext` und arbeiten mit `db.Set<T>()`. Repositor
 | `SqlServer` | Microsoft.EntityFrameworkCore.SqlServer | `options.UseSqlServer()`, ein SQL-Server-Container | Organisationen mit SQL Server oder Azure SQL |
 | `Sqlite` | Microsoft.EntityFrameworkCore.Sqlite | `options.UseSqlite()`, die Datei `.data/<name>.db` | Demos, Prototypen, ein Rechner |
 
-Der AppHost setzt die Einstellung bei jedem Dienst, neben dem Connection-String. Anderswo (Tests, eigenes Hosting) setzen Sie sie wie jeden anderen Konfigurationswert. `coworkee new --database sqlServer` schreibt den Aufruf im AppHost und legt die erste Migration für diesen Provider an.
+Der AppHost setzt die Einstellung bei jedem Dienst, neben dem Connection-String. Anderswo (Tests, eigenes Hosting) setzt du sie wie jeden anderen Konfigurationswert. `coworkee new --database sqlServer` schreibt den Aufruf im AppHost und legt die erste Migration für diesen Provider an.
 
 Die providerspezifischen Teile liegen hinter kleinen Nahtstellen in `Coworkee.Infrastructure`, in der App ist nichts zu tun:
 
@@ -39,7 +39,7 @@ Die providerspezifischen Teile liegen hinter kleinen Nahtstellen in `Coworkee.In
 
 Grenzen, die man kennen sollte:
 
-- **Migrationen gehören zu einem Provider.** Eine App behält die Migrationen des Providers, mit dem sie angelegt wurde. Zum Wechseln löschen Sie `Migrations` und führen `coworkee migrations add Initial` erneut aus. Soll eine App mehrere Provider bedienen, folgen Sie der EF-Core-Anleitung [Migrations with multiple providers](https://learn.microsoft.com/ef/core/managing-schemas/migrations/providers) mit einer Migrations-Assembly pro Provider.
+- **Migrationen gehören zu einem Provider.** Eine App behält die Migrationen des Providers, mit dem sie angelegt wurde. Zum Wechseln löschst du `Migrations` und führst `coworkee migrations add Initial` erneut aus. Soll eine App mehrere Provider bedienen, folge der EF-Core-Anleitung [Migrations with multiple providers](https://learn.microsoft.com/ef/core/managing-schemas/migrations/providers) mit einer Migrations-Assembly pro Provider.
 - **[Datenbanksicherungen](../modules/backups.md) brauchen Postgres.** Das Template lässt das Modul bei den anderen Providern weg.
 - **SQLite** kennt nur einen Schreiber zur Zeit, hält Hintergrundjobs im Speicher (eingereihte und verzögerte Jobs gehen beim Neustart verloren), speichert `DateTimeOffset` als Zahl und `decimal` als `double`, prüft `HasMaxLength` nicht und kennt keine Schemas (Tabellen verlieren ihr `cw.`). Es ist für Entwicklung und kleine Installationen auf einem Rechner gedacht.
 - Facetten über `bool`-Spalten (`[ProvideFacet]` auf `IsActive`) scheitern auf SQL Server und SQLite, die den Wert als `1`/`0` zurückgeben; behoben im nächsten Release von Nextended.

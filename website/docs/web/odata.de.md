@@ -1,6 +1,6 @@
 # OData und Facetten
 
-Jede Entity wird mit einer Zeile zu einem OData-Set. Tabellen, Exporte und externe Werkzeuge lesen darüber; Listenabfragen schreiben Sie nicht.
+Jede Entity wird mit einer Zeile zu einem OData-Set. Tabellen, Exporte und externe Werkzeuge lesen darüber; Listenabfragen schreibst du nicht.
 
 ```csharp
 [DependsOn(typeof(CoworkeeODataModule))]
@@ -25,7 +25,7 @@ Die Berechtigung des Sets wird bei jedem Aufruf geprüft, Mandanten- und Soft-De
 
 ## Facetten
 
-Markieren Sie die Eigenschaften, nach denen Benutzer filtern sollen:
+Markiere die Eigenschaften, nach denen Benutzer filtern sollen:
 
 ```csharp
 using Nextended.Core.Facets;
@@ -77,7 +77,7 @@ Der BFF leitet `/odata` mit dem Token des Benutzers an die API weiter.
 
 ## Client-Entities
 
-Markieren Sie eine Entity mit `[ClientEntity]`, und Blazor-Clients halten eine Kopie ihres Sets und fragen sie lokal ab; siehe [Client-Entities](../ui/client-entities.md).
+Markiere eine Entity mit `[ClientEntity]`, und Blazor-Clients halten eine Kopie ihres Sets und fragen sie lokal ab; siehe [Client-Entities](../ui/client-entities.md).
 
 ## Excel-Export und -Import
 

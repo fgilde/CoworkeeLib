@@ -36,7 +36,7 @@ Das Design gilt für die ganze Installation, unabhängig davon, welches Theme St
 | `Design:Layout` | `Card`, `Split`, `Slide` oder der Name eines eigenen Layouts; unbekannte Namen fallen auf `Slide` zurück |
 | `Design:MediaUrl` | ein Bild, bei `.mp4`, `.webm`, `.ogg` und `.mov` ein Video; ein Pfad auf dem Auth-Server oder eine `http(s)`-Adresse, deren Origin in `img-src` und `media-src` der Content Security Policy aufgenommen wird |
 | `Design:MediaSide` | `Left` (Standard) oder `Right`; bei `Slide` liegt das Feld auf der Registrierungsseite auf der anderen Seite |
-| `AllowDesignChanges` | `true` (Standard) lässt Administratoren das Design auf der Themes-Seite ändern; `false` behält die Konfiguration. Setzen Sie es für den Dienst, der die API hostet: Dort wird die Änderung gespeichert. |
+| `AllowDesignChanges` | `true` (Standard) lässt Administratoren das Design auf der Themes-Seite ändern; `false` behält die Konfiguration. Setz es für den Dienst, der die API hostet: Dort wird die Änderung gespeichert. |
 
 Der Aspire-AppHost setzt dieselben Werte mit `options.SignIn` und liefert einen Pfad zum Medium von der Web-App aus, siehe [Aspire-AppHost](../hosting/aspire.md).
 
@@ -58,7 +58,7 @@ builder.Services.AddCoworkeeClient(options =>
 });
 ```
 
-Ein eigenes Layout erhält eine allgemeine Vorschau mit seinem Namen. Themes, die noch den früheren Wert je Theme tragen (`SignIn` in den Theme-Optionen), werden ignoriert; legen Sie das Design einmal auf der Themes-Seite fest.
+Ein eigenes Layout erhält eine allgemeine Vorschau mit seinem Namen. Themes, die noch den früheren Wert je Theme tragen (`SignIn` in den Theme-Optionen), werden ignoriert; leg das Design einmal auf der Themes-Seite fest.
 
 ## Eigene Designs
 
@@ -66,7 +66,7 @@ Die Layouts sind Razor-Layouts neben den Seiten der Bibliothek: `Pages/_DesignCa
 
 - **Eigenes Layout**: `Pages/_DesignAurora.cshtml` im Auth-Host anlegen und `Design:Layout` auf `Aurora` setzen (oder auf der Themes-Seite wählen).
 - **Ein mitgeliefertes ersetzen**: `Pages/_DesignCard.cshtml` im Auth-Host anlegen.
-- **Alles ersetzen**: `Pages/_Layout.cshtml` anlegen; dann gehören auch Stylesheet und Skript Ihnen.
+- **Alles ersetzen**: `Pages/_Layout.cshtml` anlegen; dann gehören auch Stylesheet und Skript dir.
 
 ```cshtml
 @* Pages/_DesignAurora.cshtml im Auth-Host *@

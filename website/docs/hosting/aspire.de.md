@@ -1,6 +1,6 @@
 # Aspire-AppHost
 
-`Coworkee.Aspire` macht aus dem AppHost wenige Zeilen. Sie nennen die App; Coworkee findet ihre Dienste, ergänzt die Infrastruktur, die jeder braucht, und die Einstellungen, die sie verbinden.
+`Coworkee.Aspire` macht aus dem AppHost wenige Zeilen. Du nennst die App; Coworkee findet ihre Dienste, ergänzt die Infrastruktur, die jeder braucht, und die Einstellungen, die sie verbinden.
 
 ```csharp title="MyApp.AppHost/AppHost.cs"
 var builder = DistributedApplication.CreateBuilder(args);
@@ -55,7 +55,7 @@ builder.AddCoworkeeApp("myapp", options =>
 }).AddProjects();
 ```
 
-Explizite Aufrufe funktionieren weiter und haben Vorrang: Ein Projekt, das vor `AddProjects()` hinzugefügt wurde, kommt nicht doppelt hinzu. Soll ein gefundenes Projekt eine andere Rolle oder ein anderes Suffix bekommen, überspringen Sie es und fügen es danach selbst hinzu.
+Explizite Aufrufe funktionieren weiter und haben Vorrang: Ein Projekt, das vor `AddProjects()` hinzugefügt wurde, kommt nicht doppelt hinzu. Soll ein gefundenes Projekt eine andere Rolle oder ein anderes Suffix bekommen, überspringst du es und fügst es danach selbst hinzu.
 
 ## Rollen
 
@@ -68,7 +68,7 @@ Explizite Aufrufe funktionieren weiter und haben Vorrang: Ein Projekt, das vor `
 | `AddWeb<T>()` | `{name}-web` | BFF-Einstellungen, OIDC-Client am Auth-Server mit Redirect-URIs, Referenz auf die API, Links zu Swagger und zum Job-Dashboard |
 | `AddAirWorks<T>()` | `{name}-airworks` | wie `AddWeb`: BFF-Einstellungen, der nächste OIDC-Client am Auth-Server, ein eigener Name des Sitzungs-Cookies; für den [AirWorks-Client](../web/airworks.md) |
 
-Rufen Sie sie in dieser Reihenfolge auf (`AddProjects()` tut das). `AddWeb` vor `AddAuthServer` wirft eine Exception, die genau das sagt.
+Ruf sie in dieser Reihenfolge auf (`AddProjects()` tut das). `AddWeb` vor `AddAuthServer` wirft eine Exception, die genau das sagt.
 
 ## Infrastruktur aus den Paketen
 
@@ -98,7 +98,7 @@ app.Modules.Add("MyApp.Billing", (app, service) => service.WithReference(stripe)
 app.AddProjects();
 ```
 
-Registrieren Sie Module, bevor Sie die Dienste hinzufügen. `app.Modules[CoworkeeModules.Search] = ...` ersetzt eine eingebaute Verdrahtung, `app.Modules.Remove(...)` entfernt sie.
+Registriere Module, bevor du die Dienste hinzufügst. `app.Modules[CoworkeeModules.Search] = ...` ersetzt eine eingebaute Verdrahtung, `app.Modules.Remove(...)` entfernt sie.
 
 ## Eigene Infrastruktur
 
@@ -126,11 +126,11 @@ builder.AddCoworkeeApp("myapp", options =>
 | `UseRedis(resource)` | des Redis-Containers |
 | `UseSearch(resource)` | des Elasticsearch-Containers |
 | `UseMail(endpoint)` | von Mailpit; der SMTP-Endpunkt einer anderen Ressource |
-| `UseKeycloak(resource, ...)` | des Keycloak-Containers; Ihr Keycloak bekommt den Realm |
+| `UseKeycloak(resource, ...)` | des Keycloak-Containers; dein Keycloak bekommt den Realm |
 
 `UseSqlServer` und `UseSqlite` setzen bei den Diensten auch `Coworkee:Database:Provider`; die Migrationen der App müssen für diesen Provider erstellt sein (siehe [Datenbank-Provider](../fundamentals/persistence.md#datenbank-provider)).
 
-Die Dienste bekommen eigene Ressourcen unter den Namen, die sie erwarten (`ConnectionStrings:myapp`, `redis`, `elasticsearch`). Coworkee wartet nicht auf sie; ergänzen Sie bei Bedarf `WaitFor` über `options.Configure`.
+Die Dienste bekommen eigene Ressourcen unter den Namen, die sie erwarten (`ConnectionStrings:myapp`, `redis`, `elasticsearch`). Coworkee wartet nicht auf sie; ergänze bei Bedarf `WaitFor` über `options.Configure`.
 
 ```csharp
 // Produktion: der Connection-String kommt aus der Konfiguration (ConnectionStrings:myapp) oder wird beim Deployment abgefragt
@@ -151,7 +151,7 @@ Die Web-Ressource verlinkt **Swagger** (`/swagger`) und, wenn eine API `Coworkee
 
 Jeder Dienst der App bekommt die Adressen der anderen unter `Coworkee:Services:<Ressource>`: das Aspire-Dashboard (`dashboard`), das Hangfire-Dashboard (`jobs`), jedes Projekt (`myapp-api`, `myapp-auth`, `myapp-web`, mit `HealthPath` `/health`) und jeden Container mit http-Endpunkt (`mail`, `pgadmin`, `keycloak`, ...), auch Ressourcen, die nach `AddCoworkeeApp` hinzukommen. Injiziert werden sie als `IOptionsMonitor<CoworkeeServicesOptions>`; die Admin-Seite **Dienste** zeigt sie mit ihrem aktuellen Zustand (siehe [Einstellungen](../modules/settings.md#dienste)). Nur der lokale Lauf füllt sie; eine veröffentlichte App trägt ihre öffentlichen Adressen in appsettings ein.
 
-Ein AspireUI im AppHost bringt die Apps und Stacks, die Sie *selbst* damit hosten, auf dieselbe Seite. `builder.AddAspireUI().WithRetrieveApi()` genügt: Der AppHost gibt die Adresse (und den Schlüssel aus `WithRetrieveApi(...)`: Ein Parameter bleibt eine Referenz, nie ein aufgelöster String; ein Klartext-Schlüssel wird als Text weitergegeben) als `Coworkee:AspireUI:Url` und `ApiKey` an jeden Dienst weiter. Das erste AspireUI mit Retrieve-API wird verwendet; eines ohne wird ignoriert, und eine veröffentlichte App bekommt nichts (`Coworkee:AspireUI` dann in appsettings setzen). Dienste finden sie über `IServiceDirectory` (siehe [Einstellungen](../modules/settings.md#dienstverzeichnis)).
+Ein AspireUI im AppHost bringt die Apps und Stacks, die du *selbst* damit hostest, auf dieselbe Seite. `builder.AddAspireUI().WithRetrieveApi()` genügt: Der AppHost gibt die Adresse (und den Schlüssel aus `WithRetrieveApi(...)`: Ein Parameter bleibt eine Referenz, nie ein aufgelöster String; ein Klartext-Schlüssel wird als Text weitergegeben) als `Coworkee:AspireUI:Url` und `ApiKey` an jeden Dienst weiter. Das erste AspireUI mit Retrieve-API wird verwendet; eines ohne wird ignoriert, und eine veröffentlichte App bekommt nichts (`Coworkee:AspireUI` dann in appsettings setzen). Dienste finden sie über `IServiceDirectory` (siehe [Einstellungen](../modules/settings.md#dienstverzeichnis)).
 
 ## Typisierte Einstellungen
 
@@ -172,13 +172,13 @@ Aus `s => s.Coworkee.Bff.Scopes[0]` wird die Umgebungsvariable `Coworkee__Bff__S
 - ein vertraulicher Client `{name}-auth`, dessen Secret ein generierter Parameter ist (`{name}-keycloak-client-secret`),
 - die angegebenen Benutzer, jeder mit seinem `Password`; Benutzer ohne teilen sich ein generiertes Passwort (`{name}-keycloak-user-password`, im Dashboard sichtbar und in den User-Secrets des AppHosts gespeichert).
 
-Der Realm wird bei **jedem Start** auf den aktuellen Stand gebracht, sobald Keycloak bereit ist und bevor der Auth-Server startet: Ein fehlender Realm wird angelegt, ein vorhandener (im Daten-Volume) bekommt über die Admin-API die aktuellen Client-Secrets, Redirect-Adressen, Benutzer und Passwörter. Ein geänderter Secret-Parameter oder ein geändertes Passwort gilt also ab dem nächsten Start, und Benutzer oder Clients, die Sie in der Keycloak-Konsole angelegt haben, bleiben erhalten. Das Ressourcen-Log von Keycloak meldet `Realm myapp is up to date: clients ..., users ...`.
+Der Realm wird bei **jedem Start** auf den aktuellen Stand gebracht, sobald Keycloak bereit ist und bevor der Auth-Server startet: Ein fehlender Realm wird angelegt, ein vorhandener (im Daten-Volume) bekommt über die Admin-API die aktuellen Client-Secrets, Redirect-Adressen, Benutzer und Passwörter. Ein geänderter Secret-Parameter oder ein geändertes Passwort gilt also ab dem nächsten Start, und Benutzer oder Clients, die du in der Keycloak-Konsole angelegt hast, bleiben erhalten. Das Ressourcen-Log von Keycloak meldet `Realm myapp is up to date: clients ..., users ...`.
 
-Der Auth-Server bekommt die Anbieter-Einstellungen und bietet **Sign in with Keycloak** an. `LoginMode` schaltet zwischen beidem, nur extern und nur intern um und ist der Standard der Einstellung *Anmeldemethoden* (`Auth.LoginMode`), die Administratoren zur Laufzeit ändern (siehe [Anmelderegeln](../security/registration.md#anmelderegeln)); `Port` legt den Host-Port fest, wenn Sie eine feste URL wollen.
+Der Auth-Server bekommt die Anbieter-Einstellungen und bietet **Sign in with Keycloak** an. `LoginMode` schaltet zwischen beidem, nur extern und nur intern um und ist der Standard der Einstellung *Anmeldemethoden* (`Auth.LoginMode`), die Administratoren zur Laufzeit ändern (siehe [Anmelderegeln](../security/registration.md#anmelderegeln)); `Port` legt den Host-Port fest, wenn du eine feste URL willst.
 
 Die Api-Hosts liefern die Einstellungen, also bekommen auch sie `Coworkee:Auth:External:Mode` und den Anzeigenamen des Anbieters, damit die Einstellung dort definiert ist; das Client-Secret und die übrigen Anbieter-Einstellungen bleiben beim Auth-Server.
 
-Browser schicken die Cookies von `localhost` an jeden Port, also erreichen die Cookies aller lokalen Apps auch Keycloak. Über HTTPS spricht Keycloak HTTP/2 und nimmt dabei standardmäßig nur 8 KB Request-Header an; darüber antwortet es mit **431 Request Header Fields Too Large**. Der Container bekommt deshalb `QUARKUS_HTTP_LIMITS_MAX_HEADER_LIST_SIZE=65536`, die 64 KB, die er über HTTP/1.1 annimmt. Zeigt der Browser trotzdem 431, löschen Sie die `localhost`-Cookies anderer Apps; Auth-Server und Web-App (Kestrel) nehmen 32 KB an.
+Browser schicken die Cookies von `localhost` an jeden Port, also erreichen die Cookies aller lokalen Apps auch Keycloak. Über HTTPS spricht Keycloak HTTP/2 und nimmt dabei standardmäßig nur 8 KB Request-Header an; darüber antwortet es mit **431 Request Header Fields Too Large**. Der Container bekommt deshalb `QUARKUS_HTTP_LIMITS_MAX_HEADER_LIST_SIZE=65536`, die 64 KB, die er über HTTP/1.1 annimmt. Zeigt der Browser trotzdem 431, lösch die `localhost`-Cookies anderer Apps; Auth-Server und Web-App (Kestrel) nehmen 32 KB an.
 
 ### Anmeldeseite im Design der App
 
@@ -189,7 +189,7 @@ Die Anmeldeseite von Keycloak sieht aus wie die App: die Farben des Standard-The
 - Die Api-Hosts bekommen `Coworkee:Keycloak:ThemeDirectory`, `ThemeName`, `AppName`, `LogoUrl` und `BaseUrl` (die Web-App) und schreiben das Theme neu: beim Start, eine Sekunde nachdem eine Theme-Änderung gespeichert ist (Theme speichern, anderes Theme zum Standard machen) oder ein Administrator das Design der *Anmeldeseite* speichert, und mit *Nach Keycloak übernehmen* (siehe [Theming](../modules/theming.md#keycloak-anmeldeseite)).
 - `start-dev` cacht keine Themes, eine Änderung erscheint also beim nächsten Seitenaufruf.
 
-Abschalten mit `options.UseKeycloak(k => k.LoginTheme = false)`: kein Mount, kein Theme, der Realm behält sein Theme (fehlt der Ordner, nimmt Keycloak sein eigenes). Ein eigener Keycloak (`UseKeycloak(resource, ...)`) bekommt den Anzeigenamen des Realms, aber kein Theme; mounten Sie den Ordner selbst, wenn Sie es wollen.
+Abschalten mit `options.UseKeycloak(k => k.LoginTheme = false)`: kein Mount, kein Theme, der Realm behält sein Theme (fehlt der Ordner, nimmt Keycloak sein eigenes). Ein eigener Keycloak (`UseKeycloak(resource, ...)`) bekommt den Anzeigenamen des Realms, aber kein Theme; mounte den Ordner selbst, wenn du es willst.
 
 ### Weitere Clients und die Benutzer
 
@@ -211,7 +211,7 @@ grafana.WithEnvironment("GF_AUTH_GENERIC_OAUTH_CLIENT_ID", client.ClientId)
 | `KeycloakAuthority` | Issuer-Adresse des Realms, `{keycloak}/realms/{realm}` |
 | `KeycloakUsers`, `KeycloakPassword(user)` | die Benutzer und das Passwort jedes Benutzers als Reference Expression, etwa für den lokalen Login einer anderen Ressource |
 
-Rufen Sie sie nach `UseKeycloak` und `AddAuthServer` (oder `AddProjects`) auf.
+Ruf sie nach `UseKeycloak` und `AddAuthServer` (oder `AddProjects`) auf.
 
 ### AspireUI
 
@@ -252,7 +252,7 @@ builder.AddCoworkeeApp("myapp", options => options.PublishToDockerCompose(compos
 aspire publish -o deploy
 ```
 
-Azure Container Apps funktioniert über die austauschbare Infrastruktur; nehmen Sie `Aspire.Hosting.Azure.AppContainers` und `Aspire.Hosting.Azure.PostgreSQL` in den AppHost auf:
+Azure Container Apps funktioniert über die austauschbare Infrastruktur; nimm `Aspire.Hosting.Azure.AppContainers` und `Aspire.Hosting.Azure.PostgreSQL` in den AppHost auf:
 
 ```csharp
 builder.AddAzureContainerAppEnvironment("aca");
@@ -262,4 +262,4 @@ builder.AddCoworkeeApp("myapp", options => options.UseDatabase(database)).AddPro
 
 ## Produktion
 
-Der AppHost beschreibt die Entwicklung. Für die Produktion konfigurieren Sie zusätzlich echte Zertifikate (`Coworkee:Auth:SigningCertificate`, `EncryptionCertificate`), die öffentlichen URLs hinter Ihrem Reverse Proxy, einen echten SMTP-Server, Speicher und Keycloak. Das Dashboard eines lokalen Laufs listet die Einstellungen, die jeder Dienst braucht.
+Der AppHost beschreibt die Entwicklung. Für die Produktion konfigurierst du zusätzlich echte Zertifikate (`Coworkee:Auth:SigningCertificate`, `EncryptionCertificate`), die öffentlichen URLs hinter deinem Reverse Proxy, einen echten SMTP-Server, Speicher und Keycloak. Das Dashboard eines lokalen Laufs listet die Einstellungen, die jeder Dienst braucht.

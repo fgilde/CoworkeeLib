@@ -175,7 +175,7 @@ internal static class BrandEndpoints
 
 `ToHttpResult` macht aus einem `Result` ein `200`, `204` oder eine Problem-Details-Antwort mit passendem Status (`400` bei Validierung, `403`, `404`, `409`).
 
-Fürs Lesen braucht es keinen Endpunkt. Registrieren Sie die Entity als OData-Set, und jede Tabelle bekommt Blättern, Sortieren, Filtern, Suche, Export und Facetten:
+Fürs Lesen braucht es keinen Endpunkt. Registriere die Entity als OData-Set, und jede Tabelle bekommt Blättern, Sortieren, Filtern, Suche, Export und Facetten:
 
 ```csharp title="MyApp.Catalog/CatalogModule.cs"
 [DependsOn(typeof(CoworkeeODataModule))]
@@ -244,7 +244,7 @@ public partial class Brands
 
 ![Aus dem Request erzeugter Dialog](../assets/screenshots/brand-dialog.png){ .shot }
 
-Schaltflächen, für die die Berechtigung fehlt, werden nicht gerendert. `ShowEditAsync` baut das Formular mit MudBlazor.Extensions aus dem Request-Typ; für Besonderes schreiben Sie einen eigenen Dialog wie `ProductDialog` im Template.
+Schaltflächen, für die die Berechtigung fehlt, werden nicht gerendert. `ShowEditAsync` baut das Formular mit MudBlazor.Extensions aus dem Request-Typ; für Besonderes schreibst du einen eigenen Dialog wie `ProductDialog` im Template.
 
 Zum Schluss der Navigationseintrag:
 
@@ -258,11 +258,11 @@ internal sealed class MyAppNavigation : INavigationContributor
 }
 ```
 
-## Was Sie nicht schreiben mussten
+## Was du nicht schreiben musstest
 
 Logging, Transaktionen, Antworten bei Validierungsfehlern, die Berechtigungsprüfung der Liste, Blättern und Filtern auf dem Server, CSV-Export, die Löschbestätigung, das Neuladen, wenn jemand anderes eine Marke ändert, das Audit. Das kommt aus den Paketen.
 
 ## Wie es weitergeht
 
-- [Anwendungsdienste](../web/application-services.md): Statt Endpunkte zu mappen und einen API-Client zu schreiben, deklarieren Sie ein Interface in den Contracts; Server-Endpunkte und Blazor-Client werden generiert. Die *Aufträge* des Templates sind so gebaut.
-- [Client-Entities](../ui/client-entities.md): Markieren Sie eine Entity mit `[ClientEntity]`, und der Browser hält ihre Zeilen vor; die Tabelle filtert, sortiert und gruppiert ohne Roundtrip. Das Template macht es mit 100.000 Aufträgen.
+- [Anwendungsdienste](../web/application-services.md): Statt Endpunkte zu mappen und einen API-Client zu schreiben, deklarierst du ein Interface in den Contracts; Server-Endpunkte und Blazor-Client werden generiert. Die *Aufträge* des Templates sind so gebaut.
+- [Client-Entities](../ui/client-entities.md): Markiere eine Entity mit `[ClientEntity]`, und der Browser hält ihre Zeilen vor; die Tabelle filtert, sortiert und gruppiert ohne Roundtrip. Das Template macht es mit 100.000 Aufträgen.

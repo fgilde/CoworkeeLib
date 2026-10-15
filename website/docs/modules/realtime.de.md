@@ -19,14 +19,14 @@ Jeder offene Tab folgt diesen Änderungen ohne Neuladen:
 
 ## Änderungen an Entities
 
-Markieren Sie eine Entity, und jedes festgeschriebene Anlegen, Ändern und Löschen geht per SignalR an die Benutzer des Mandanten, die die Berechtigung haben. Ein weiches Löschen wird als Löschen gemeldet:
+Markiere eine Entity, und jedes festgeschriebene Anlegen, Ändern und Löschen geht per SignalR an die Benutzer des Mandanten, die die Berechtigung haben. Ein weiches Löschen wird als Löschen gemeldet:
 
 ```csharp
 [Realtime(CatalogPermissions.Brands.View)]
 public sealed class Brand : AuditedEntity, IMultiTenant { }
 ```
 
-Eine `CoworkeeDataTable` folgt ihrer Entity von selbst: Das Thema ist `type:` plus der Zeilentyp ohne `Dto`, eine Tabelle von `BrandDto` lädt also bei jeder Änderung an `Brand` neu, einmal je Schwall (ein Massenlöschen schickt ein Ereignis je Zeile). Setzen Sie `RealtimeTopic`, wenn der Zeilentyp anders heißt, oder einen leeren Text, um es abzuschalten:
+Eine `CoworkeeDataTable` folgt ihrer Entity von selbst: Das Thema ist `type:` plus der Zeilentyp ohne `Dto`, eine Tabelle von `BrandDto` lädt also bei jeder Änderung an `Brand` neu, einmal je Schwall (ein Massenlöschen schickt ein Ereignis je Zeile). Setz `RealtimeTopic`, wenn der Zeilentyp anders heißt, oder einen leeren Text, um es abzuschalten:
 
 ```razor
 <CoworkeeDataTable T="UserRow" EntitySet="Users" RealtimeTopic="type:User" ... />
@@ -44,20 +44,20 @@ Alles andere abonniert ein Thema mit `RealtimeSubscription`; es folgt einem geä
 <RealtimeSubscription Topic="type:Brand" OnEvent="_ => LoadAsync()" />
 ```
 
-`ExecuteUpdate` und `ExecuteDelete` umgehen den Change Tracker, dafür wird nichts veröffentlicht. Sagen Sie es den Clients nach so einer Massenänderung selbst:
+`ExecuteUpdate` und `ExecuteDelete` umgehen den Change Tracker, dafür wird nichts veröffentlicht. Sag es den Clients nach so einer Massenänderung selbst:
 
 ```csharp
 await publisher.PublishAsync(tenantId, RealtimeTopics.Type(nameof(Brand)), RealtimeEventTypes.EntityChanged,
     new EntityChangedPayload(nameof(Brand), "*", EntityChangedPayload.Deleted, []), ct);
 ```
 
-Private Daten brauchen mehr Sorgfalt: Entities, die nur manche Benutzer sehen dürfen, sollten das Typ-Thema nicht nutzen. Veröffentlichen Sie dann eigene Themen:
+Private Daten brauchen mehr Sorgfalt: Entities, die nur manche Benutzer sehen dürfen, sollten das Typ-Thema nicht nutzen. Veröffentliche dann eigene Themen:
 
 ```csharp
 await publisher.PublishAsync(tenantId, $"folder:{folder.Id}", "AssetAdded", new { asset.Id }, ct);
 ```
 
-Mit mehreren API-Instanzen setzen Sie den Connection-String `redis` für die SignalR-Backplane. Der AppHost macht das für jeden Dienst, der `Coworkee.Realtime` referenziert. Dieselbe Verbindung trägt die Sitzungsänderungen zwischen den Instanzen (siehe [Clients und Sitzungen](../security/clients.md)): Jede Instanz beendet die Hub-Verbindungen einer beendeten Sitzung, egal welche Instanz sie hält.
+Mit mehreren API-Instanzen setzt du den Connection-String `redis` für die SignalR-Backplane. Der AppHost macht das für jeden Dienst, der `Coworkee.Realtime` referenziert. Dieselbe Verbindung trägt die Sitzungsänderungen zwischen den Instanzen (siehe [Clients und Sitzungen](../security/clients.md)): Jede Instanz beendet die Hub-Verbindungen einer beendeten Sitzung, egal welche Instanz sie hält.
 
 ## Berechtigungen
 
@@ -92,7 +92,7 @@ Ein Benutzer mit mindestens einer Hub-Verbindung ist online, egal wie viele Tabs
 
 ## Chat
 
-Eine Nachricht geht als `chat.message` an die Themen `user:{id}` beider Personen, das Lesen einer Unterhaltung als `chat.read`. Der `ChatNotifier` der App-Leiste zeigt eine Snackbar mit Absender, Textanfang und Link auf `/chat?with={absender}`; die Chatseite hält die offene Unterhaltung in dieser Adresse, sodass sie still bleibt, solange Sie darin sind. Er setzt außerdem die Zahl der ungelesenen Nachrichten (`GET /api/v1/chat/unread-count`) an den Chat-Link der Navigation und hält sie in jedem Tab aktuell.
+Eine Nachricht geht als `chat.message` an die Themen `user:{id}` beider Personen, das Lesen einer Unterhaltung als `chat.read`. Der `ChatNotifier` der App-Leiste zeigt eine Snackbar mit Absender, Textanfang und Link auf `/chat?with={absender}`; die Chatseite hält die offene Unterhaltung in dieser Adresse, sodass sie still bleibt, solange du darin bist. Er setzt außerdem die Zahl der ungelesenen Nachrichten (`GET /api/v1/chat/unread-count`) an den Chat-Link der Navigation und hält sie in jedem Tab aktuell.
 
 Jede Seite kann so eine Zahl an ihrem Navigationslink zeigen: `NavigationBadges.Set("/orders", 3)`.
 
