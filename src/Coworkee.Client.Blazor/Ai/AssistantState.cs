@@ -14,7 +14,23 @@ public sealed class AssistantState
 
     public AssistantSize Size { get; private set; } = AssistantSize.Small;
 
+    /// <summary>Text the window puts into its input when it shows, e.g. a question from the command palette.</summary>
+    public string? Draft { get; private set; }
+
     public event Action? Changed;
+
+    public void Ask(string text)
+    {
+        Draft = text;
+        Open();
+    }
+
+    public string? TakeDraft()
+    {
+        var draft = Draft;
+        Draft = null;
+        return draft;
+    }
 
     public void Open(AssistantSize? size = null)
     {

@@ -1,0 +1,33 @@
+@namespace Coworkee.Client.Blazor.Components
+@if (_records is null)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else if (_records.Count == 0)
+{
+    <MudText Typo="Typo.body2" data-testid="no-deleted">@L["Nothing was deleted."]</MudText>
+}
+else
+{
+    <MudList T="string" Dense="true" data-testid="deleted-records">
+        @foreach (var record in _records)
+        {
+            <MudListItem T="string" Icon="@Icons.Material.Outlined.DeleteOutline" data-record="@record.EntityId">
+                <div class="d-flex align-center flex-wrap" style="gap:8px">
+                    <div>
+                        <MudText Typo="Typo.body2">@(record.Title ?? record.EntityId)</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["Deleted {0} by {1}", record.DeletedAt.ToLocalTime().ToString("g"), record.DeletedByName ?? L["system"]]</MudText>
+                    </div>
+                    <MudSpacer />
+                    <MudButton Size="Size.Small" StartIcon="@Icons.Material.Outlined.History" OnClick="() => _open = _open == record.EntityId ? null : record.EntityId">@L["History"]</MudButton>
+                    <MudButton Size="Size.Small" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.RestoreFromTrash" OnClick="() => RestoreAsync(record)"
+                               data-testid="restore-deleted">@L["Restore"]</MudButton>
+                </div>
+                @if (_open == record.EntityId)
+                {
+                    <CoworkeeEntityHistory EntitySet="@EntitySet" Id="Guid.Parse(record.EntityId)" FieldLabel="FieldLabel" OnRestored="RestoredAsync" />
+                }
+            </MudListItem>
+        }
+    </MudList>
+}

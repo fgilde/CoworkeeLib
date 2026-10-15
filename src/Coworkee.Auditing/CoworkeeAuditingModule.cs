@@ -36,6 +36,16 @@ public sealed class CoworkeeAuditingModule : CoworkeeModule, IWebModule
             d.SendAsync(new GetEntityVersion(type, id, revision), ct).ToHttpResult());
         versions.MapPost("/{type}/{id:guid}/{revision:int}/restore", (string type, Guid id, int revision, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new RestoreEntityVersion(type, id, revision), ct).ToHttpResult());
+
+        var history = app.MapCoworkeeApi("/api/v1/history").WithTags("History").RequireAuthorization();
+        history.MapGet("/{entitySet}/deleted", (string entitySet, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new History.GetDeletedRecords(entitySet), ct).ToHttpResult());
+        history.MapGet("/{entitySet}/{id:guid}", (string entitySet, Guid id, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new History.GetEntityHistory(entitySet, id), ct).ToHttpResult());
+        history.MapPost("/{entitySet}/{id:guid}/preview", (string entitySet, Guid id, EntityHistoryRestoreRequest request, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new History.PreviewEntityRestore(entitySet, id, request), ct).ToHttpResult());
+        history.MapPost("/{entitySet}/{id:guid}/restore", (string entitySet, Guid id, EntityHistoryRestoreRequest request, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new History.RestoreEntity(entitySet, id, request), ct).ToHttpResult());
     }
 }
 

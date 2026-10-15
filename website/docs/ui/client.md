@@ -68,7 +68,7 @@ Entries with `HostOnly: true` serve the whole installation and show only to user
 
 ## App bar
 
-The app bar shows the theme menu, right to left switch, dark mode, notifications, user menu and the about dialog; on phones the secondary entries share one menu, see [Phones, installable app and push](phones-and-pwa.md). Add your own components:
+The app bar shows the search button of the [command palette](command-palette.md) (Ctrl+K), the theme menu, right to left switch, dark mode, notifications, user menu and the about dialog; on phones the secondary entries share one menu, see [Phones, installable app and push](phones-and-pwa.md). Add your own components:
 
 ```csharp
 internal sealed class LanguageBar : IAppBarContributor

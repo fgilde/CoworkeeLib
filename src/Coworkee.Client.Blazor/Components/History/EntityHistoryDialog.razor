@@ -1,0 +1,13 @@
+@namespace Coworkee.Client.Blazor.Components
+<MudDialog Class="@MudBlazor.Extensions.Helper.MudExCss.Classes.Dialog.Initial">
+    <DialogContent>
+        @if (Id is { } id)
+        {
+            <CoworkeeEntityHistory EntitySet="@EntitySet" Id="id" OnRestored="OnRestored" />
+        }
+        else
+        {
+            <CoworkeeDeletedRecords EntitySet="@EntitySet" OnRestored="OnRestored" />
+        }
+    </DialogContent>
+</MudDialog>

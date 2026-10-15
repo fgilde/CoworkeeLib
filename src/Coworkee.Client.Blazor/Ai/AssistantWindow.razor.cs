@@ -69,6 +69,8 @@ public partial class AssistantWindow : IAsyncDisposable
 
     protected override async Task OnInitializedAsync()
     {
+        _input = State.TakeDraft();
+        State.Changed += TakeDraft;
         await LoadSessionsAsync();
         if (_sessions.Count > 0)
         {
@@ -111,6 +113,7 @@ public partial class AssistantWindow : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        State.Changed -= TakeDraft;
         await _closed.CancelAsync();
         _closed.Dispose();
         if (_subscription is not null)
@@ -119,6 +122,17 @@ public partial class AssistantWindow : IAsyncDisposable
         }
 
         _self?.Dispose();
+    }
+
+    // the window may already be open when the palette hands over a question
+    private void TakeDraft()
+    {
+        if (State.TakeDraft() is { } draft)
+        {
+            _input = draft;
+            _focus = true;
+            InvokeAsync(StateHasChanged);
+        }
     }
 
     private void Key(KeyboardEventArgs args)

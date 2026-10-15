@@ -39,6 +39,7 @@
 | `ColumnFilters` | ein Filter in jedem Spaltenkopf, siehe [Spaltenfilter](#spaltenfilter) (Standard `options.DataTable.ColumnFilters`, `true`) |
 | `FacetLayout` | `Bar` (Pillen über den Zeilen, Standard) oder `Panel` (eine Seitenleiste mit allen Facetten offen), siehe [Facetten](#facetten) |
 | `FacetSettings` | das letzte Wort der Seite je Facette: Ansicht, *eines von / alle von*, Ausschluss, Ausblenden |
+| `History`, `ItemId` | eine Verlaufsaktion je Zeile und ein Knopf *Gelöschte Datensätze*, siehe [Verlauf eines Datensatzes](../modules/auditing.md#verlauf-eines-datensatzes-und-wiederherstellen); `ItemId` wählt die Id (sonst die Eigenschaft `Id`) |
 | `AdvancedFilter` | die Schaltfläche *Erweiterter Filter* mit dem [Query-Builder](query-builder.md) (Standard `options.DataTable.AdvancedFilter`, `true`) |
 | `QueryFields` | die Felder des Query-Builders; standardmäßig die Eigenschaftsspalten und die Referenz-Facetten |
 

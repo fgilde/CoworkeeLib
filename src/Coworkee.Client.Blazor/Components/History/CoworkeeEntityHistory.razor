@@ -1,0 +1,98 @@
+@namespace Coworkee.Client.Blazor.Components
+@using Coworkee.Client.Blazor.History
+
+<style>
+    .cw-history-change { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; padding: 2px 0; }
+    .cw-history-field { font-weight: 500; margin-right: 4px; }
+    .cw-history-old { text-decoration: line-through; color: var(--mud-palette-text-secondary); }
+    .cw-history-diff { white-space: pre-wrap; font-size: .875rem; padding: 6px 8px; border-radius: 8px; background: var(--mud-palette-background-gray); width: 100%; }
+    .cw-history-diff del { background: color-mix(in srgb, var(--mud-palette-error) 18%, transparent); }
+    .cw-history-diff ins { background: color-mix(in srgb, var(--mud-palette-success) 22%, transparent); text-decoration: none; }
+</style>
+
+@if (_history is null)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else if (_history.Entries.Count == 0)
+{
+    <MudText Typo="Typo.body2">@L["No changes recorded yet."]</MudText>
+}
+else
+{
+    @if (_history.IsDeleted)
+    {
+        <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-2" data-testid="history-deleted">@L["This record was deleted. Restoring a state brings it back."]</MudAlert>
+    }
+    <MudTimeline TimelinePosition="TimelinePosition.Start" Class="pt-0" data-testid="entity-history">
+        @foreach (var (entry, index) in _history.Entries.Select((e, i) => (e, i)))
+        {
+            <MudTimelineItem Size="Size.Small" Color="@ActionColor(entry.Action)" data-entry="@entry.Id">
+                <div class="d-flex align-center flex-wrap" style="gap:8px">
+                    <MudText Typo="Typo.body2"><b>@L[entry.Action]</b> · @(entry.ActorName ?? L["system"]) · @entry.OccurredAt.ToLocalTime().ToString("g")</MudText>
+                    <MudSpacer />
+                    @if (_history.CanRestore && (index > 0 || _history.IsDeleted))
+                    {
+                        <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.SettingsBackupRestore"
+                                   OnClick="() => RestoreAsync(entry, null)" data-testid="restore-point">@L["Restore this state"]</MudButton>
+                    }
+                </div>
+                @foreach (var change in entry.Changes)
+                {
+                    <div class="cw-history-change" data-change="@change.Property">
+                        <span class="cw-history-field">@Label(change.Property)</span>
+                        @if (TextDiff.IsLong(change.OldText) || TextDiff.IsLong(change.NewText))
+                        {
+                            <div class="cw-history-diff" data-testid="history-diff">
+                                @if (TextDiff.Compute(change.OldText, change.NewText) is { } parts)
+                                {
+                                    @foreach (var part in parts)
+                                    {
+                                        if (part.Kind == DiffKind.Removed)
+                                        {
+                                            <del>@part.Text</del>
+                                        }
+                                        else if (part.Kind == DiffKind.Added)
+                                        {
+                                            <ins>@part.Text</ins>
+                                        }
+                                        else
+                                        {
+                                            @part.Text
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    <del>@change.OldText</del><br /><ins>@change.NewText</ins>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            @if (change.OldText is not null)
+                            {
+                                <span class="cw-history-old">@change.OldText</span>
+                            }
+                            @if (change.OldText is not null && change.NewText is not null)
+                            {
+                                <MudIcon Icon="@Icons.Material.Outlined.ArrowForward" Size="Size.Small" Class="mud-text-secondary" />
+                            }
+                            @if (change.NewText is not null)
+                            {
+                                <span>@change.NewText</span>
+                            }
+                        }
+                        @if (change.Restorable)
+                        {
+                            <MudTooltip Text="@L["Undo this change"]">
+                                <MudIconButton Icon="@Icons.Material.Outlined.Undo" Size="Size.Small" aria-label="@L["Undo this change"]"
+                                               OnClick="() => RestoreAsync(entry, change.Property)" data-testid="undo-change" />
+                            </MudTooltip>
+                        }
+                    </div>
+                }
+            </MudTimelineItem>
+        }
+    </MudTimeline>
+}

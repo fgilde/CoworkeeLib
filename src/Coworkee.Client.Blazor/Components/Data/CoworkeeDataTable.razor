@@ -105,6 +105,14 @@
             </MudTooltip>
         </PermissionGate>
     }
+    @if (History)
+    {
+        <PermissionGate Permission="@AuditPermissions.View">
+            <MudTooltip Text="@L["Deleted records"]">
+                <MudIconButton Icon="@Icons.Material.Outlined.RestoreFromTrash" Size="Size.Small" Class="mb-2" aria-label="@L["Deleted records"]" OnClick="ShowDeletedAsync" data-testid="deleted-records-button" />
+            </MudTooltip>
+        </PermissionGate>
+    }
     @if (Exportable)
     {
         <MudMenu Dense="Density.Dense" Icon="@Icons.Material.Outlined.FileDownload" Size="Size.Small" Class="mb-2" aria-label="@L["Export"]" data-testid="export">
@@ -178,11 +186,17 @@
             <SelectColumn T="T" />
         }
         @Columns
-        @if (OnEdit.HasDelegate || OnDelete is not null)
+        @if (OnEdit.HasDelegate || OnDelete is not null || History)
         {
             <TemplateColumn T="T" Sortable="false" Groupable="false" Filterable="false" Hideable="false" Resizable="false" DragAndDropEnabled="false" ShowColumnOptions="false"
                             CellClass="cw-row-actions" HeaderClass="cw-row-actions" CellStyle="text-align:right;white-space:nowrap">
                 <CellTemplate Context="cell">
+                    @if (History)
+                    {
+                        <PermissionGate Permission="@AuditPermissions.View">
+                            <MudIconButton Icon="@Icons.Material.Outlined.History" Size="Size.Small" aria-label="@L["History"]" OnClick="() => ShowHistoryAsync(cell.Item)" data-testid="history-row" />
+                        </PermissionGate>
+                    }
                     @if (OnEdit.HasDelegate)
                     {
                         <PermissionGate Permission="@EditPermission">

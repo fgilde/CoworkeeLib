@@ -39,6 +39,7 @@
 | `ColumnFilters` | a filter in every column header, see [column filters](#column-filters) (default `options.DataTable.ColumnFilters`, `true`) |
 | `FacetLayout` | `Bar` (pills above the rows, default) or `Panel` (a side panel with every facet open), see [facets](#facets) |
 | `FacetSettings` | the page's say per facet: view, *any of / all of*, exclusion, hiding |
+| `History`, `ItemId` | a history action per row and a *Deleted records* button, see [record history](../modules/auditing.md#record-history-and-restore); `ItemId` picks the id (default the `Id` property) |
 | `AdvancedFilter` | the *Advanced filter* button with the [query builder](query-builder.md) (default `options.DataTable.AdvancedFilter`, `true`) |
 | `QueryFields` | the fields of the query builder; by default the property columns and the reference facets |
 
