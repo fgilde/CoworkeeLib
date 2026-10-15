@@ -1,3 +1,4 @@
+using System.Buffers.Text;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
@@ -18,12 +19,17 @@ internal static class ComposeEnv
     public static IEnumerable<string> Images(string env) =>
         Lines(env).Where(l => l.Comment?.StartsWith(ImageComment, StringComparison.Ordinal) == true && l.Key is not null).Select(l => l.Comment![ImageComment.Length..].Trim());
 
-    public static string Fill(string env, IReadOnlyDictionary<string, string> previous, string appName) =>
-        string.Join('\n', Lines(env).Select(l => l.Key is null || l.Value!.Length > 0 ? l.Text
-            : $"{l.Key}={(previous.GetValueOrDefault(l.Key) is { Length: > 0 } kept ? kept : Default(l.Key, l.Comment, appName))}"));
-
-    private static string Default(string key, string? comment, string appName) => key switch
+    public static string Fill(string env, IReadOnlyDictionary<string, string> previous, string appName)
     {
+        var vapid = new Lazy<(string Public, string Private)>(VapidKeys);
+        return string.Join('\n', Lines(env).Select(l => l.Key is null || l.Value!.Length > 0 ? l.Text
+            : $"{l.Key}={(previous.GetValueOrDefault(l.Key) is { Length: > 0 } kept ? kept : Default(l.Key, l.Comment, appName, vapid))}"));
+    }
+
+    private static string Default(string key, string? comment, string appName, Lazy<(string Public, string Private)> vapid) => key switch
+    {
+        _ when key.EndsWith("_PUSH_PUBLIC_KEY", StringComparison.Ordinal) => vapid.Value.Public,
+        _ when key.EndsWith("_PUSH_PRIVATE_KEY", StringComparison.Ordinal) => vapid.Value.Private,
         _ when comment?.StartsWith(ImageComment, StringComparison.Ordinal) == true => $"{comment[ImageComment.Length..].Trim()}:latest",
         _ when key.EndsWith("_PORT", StringComparison.Ordinal) => "8080",
         _ when key.EndsWith("_SIGNING_CERTIFICATE", StringComparison.Ordinal) => Certificate($"{appName} token signing", X509KeyUsageFlags.DigitalSignature),
@@ -32,6 +38,14 @@ internal static class ComposeEnv
             Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(20)),
         _ => string.Empty,
     };
+
+    /// <summary>A Web Push (VAPID) pair as base64url: the uncompressed P-256 public point and the private scalar.</summary>
+    private static (string Public, string Private) VapidKeys()
+    {
+        using var key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var parameters = key.ExportParameters(true);
+        return (Base64Url.EncodeToString([4, .. parameters.Q.X!, .. parameters.Q.Y!]), Base64Url.EncodeToString(parameters.D));
+    }
 
     /// <summary>A self-signed PKCS#12 certificate as Base64, what the auth server signs or encrypts its tokens with.</summary>
     public static string Certificate(string name, X509KeyUsageFlags usage)

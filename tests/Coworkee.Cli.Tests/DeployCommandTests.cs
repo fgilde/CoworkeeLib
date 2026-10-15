@@ -1,3 +1,4 @@
+using System.Buffers.Text;
 using System.Security.Cryptography.X509Certificates;
 using Coworkee.Cli.Commands;
 
@@ -23,6 +24,12 @@ public sealed class DeployCommandTests
 
         # Parameter shop-web-url
         SHOP_WEB_URL=
+
+        # Parameter shop-push-public-key
+        SHOP_PUSH_PUBLIC_KEY=
+
+        # Parameter shop-push-private-key
+        SHOP_PUSH_PRIVATE_KEY=
         """;
 
     [Fact]
@@ -71,6 +78,8 @@ public sealed class DeployCommandTests
         using var certificate = X509CertificateLoader.LoadPkcs12(Convert.FromBase64String(values["SHOP_SIGNING_CERTIFICATE"]), null);
         certificate.HasPrivateKey.ShouldBeTrue();
         ComposeEnv.Images(Env).ShouldBe(["shop-api"]);
+        Base64Url.DecodeFromChars(values["SHOP_PUSH_PUBLIC_KEY"]).Length.ShouldBe(65);
+        Base64Url.DecodeFromChars(values["SHOP_PUSH_PRIVATE_KEY"]).Length.ShouldBe(32);
     }
 
     [Fact]

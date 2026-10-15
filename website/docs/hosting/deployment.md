@@ -32,7 +32,7 @@ coworkee deploy compose
 writes `deploy/compose` in the solution (`-o` for another folder):
 
 - `docker-compose.yaml`: Postgres or SQL Server, Redis, the migrations, auth server, api, web app, and the Aspire dashboard for logs and traces.
-- `.env`: every parameter. The tool fills what it can: random passwords and the setup token, the two token certificates, the images and the ports. It keeps the values of an earlier run, so a second `coworkee deploy` does not change passwords or certificates.
+- `.env`: every parameter. The tool fills what it can: random passwords and the setup token, the two token certificates, the Web Push key pair (with notifications and `pwa`), the images and the ports. It keeps the values of an earlier run, so a second `coworkee deploy` does not change passwords or certificates.
 - the images `<app>-migrations`, `<app>-auth`, `<app>-api`, `<app>-web` in your local Docker (`dotnet publish -t:PublishContainer`; `--no-build` skips that).
 
 You set the public addresses in `.env`:

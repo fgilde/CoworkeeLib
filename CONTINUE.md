@@ -110,6 +110,7 @@ Spec `docs/superpowers/specs/2026-10-15-loading-tables-demo-design.md`, reports 
 Branches merged: mail-langs, workflows, mobile-pwa, import-export, history-palette, webhooks, cli-add, deploy, gallery, entity-import. Changelog *Unreleased* is one list (breaking first); `upgrade-rules.json` has them as `0.0.1.26` (rename the changelog heading to the release version). Template initial migration regenerated with everything in; `defaultModel` excludes workflows and webhooks (pwa/elsa need no change: push table comes with notifications, elsa needs workflows).
 - **Demo and Sharemee need**: a migration (`cw.PushSubscriptions`, `cw.DataTransferJobs`, `cw.ImportProfiles`), `viewport-fit=cover` in `App.razor`, OpenAPI snapshots/SDKs.
 - Template samples: products are `ISoftDelete` and, with `auditing`, registered with `AddEntityHistory` (`MyAppDatabaseModule`) and `History` on the products table; brand delete counts soft deleted products. Dashboard groups months in memory (SQLite could not translate `DateTimeOffset.Year`, was 500).
+- Known: a second `coworkee new --template-source <same .nupkg>` in the same template hive fails (`dotnet new install --force` of the same version leaves "Sequence contains more than one matching element"); a fresh `DOTNET_CLI_HOME` works. `Coworkee.Cli.Spec` now pulls Npgsql/SqlClient/Sqlite (entity import): about 40 of the 113 MB unpacked CLI tool.
 - Starter specs do not turn on `workflows`: the spec cannot declare workflows, the module alone would be empty.
 
 ### Workflows

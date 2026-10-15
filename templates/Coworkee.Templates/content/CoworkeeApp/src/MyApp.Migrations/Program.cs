@@ -9,6 +9,7 @@ builder.AddServiceDefaults();
 builder.Services.AddCoworkeeModules<MyAppDatabaseModule>(builder.Configuration);
 // the development users only where the app host runs locally; a deployment is set up in the browser with the setup token
 var seed = builder.Environment.IsDevelopment();
+var attempts = builder.Configuration.GetValue("Migrations:Attempts", 20);
 builder.Services.AddCoworkeeIdentitySeed(DemoSeed.Configure);
 #if (samples)
 builder.Services.AddScoped<Coworkee.Application.Setup.ISetupStep, DemoData>();
@@ -18,7 +19,7 @@ using var host = builder.Build();
 await using var scope = host.Services.CreateAsyncScope();
 try
 {
-    await MigrateAsync(scope.ServiceProvider);
+    await MigrateAsync(scope.ServiceProvider, attempts);
     if (seed)
     {
         await host.Services.SeedCoworkeeIdentityAsync();
@@ -33,7 +34,7 @@ catch (Exception exception)
 }
 
 // a database server started next to the app (Docker Compose, Kubernetes) may not accept connections yet
-static async Task MigrateAsync(IServiceProvider services)
+static async Task MigrateAsync(IServiceProvider services, int attempts)
 {
     for (var attempt = 1; ; attempt++)
     {
@@ -42,7 +43,7 @@ static async Task MigrateAsync(IServiceProvider services)
             await services.GetRequiredService<MyAppDbContext>().Database.MigrateAsync();
             return;
         }
-        catch (Exception exception) when (attempt < 20)
+        catch (Exception exception) when (attempt < attempts)
         {
             services.GetRequiredService<ILogger<Program>>().LogWarning("Database not reachable yet ({Message}), attempt {Attempt}", exception.Message, attempt);
             await Task.Delay(TimeSpan.FromSeconds(3));

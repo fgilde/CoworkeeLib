@@ -114,7 +114,7 @@ public sealed class TemplateTests(TemplateFixture template)
         compose.ShouldNotContain("DevelopmentCertificates");
         var env = ComposeEnv.Values(ComposeEnv.Fill(await File.ReadAllTextAsync(Path.Combine(output, ".env"), TestContext.Current.CancellationToken), new Dictionary<string, string>(), "Shop"));
         env.Keys.ShouldBe(["POSTGRES_PASSWORD", "REDIS_PASSWORD", "SHOP_API_IMAGE", "SHOP_AUTH_IMAGE", "SHOP_AUTH_URL", "SHOP_ENCRYPTION_CERTIFICATE",
-            "SHOP_MIGRATIONS_IMAGE", "SHOP_SETUP_TOKEN", "SHOP_SIGNING_CERTIFICATE", "SHOP_WEB_IMAGE", "SHOP_WEB_URL"], ignoreOrder: true);
+            "SHOP_MIGRATIONS_IMAGE", "SHOP_PUSH_PRIVATE_KEY", "SHOP_PUSH_PUBLIC_KEY", "SHOP_SETUP_TOKEN", "SHOP_SIGNING_CERTIFICATE", "SHOP_WEB_IMAGE", "SHOP_WEB_URL"], ignoreOrder: true);
         ComposeEnv.Images(await File.ReadAllTextAsync(Path.Combine(output, ".env"), TestContext.Current.CancellationToken))
             .Select(i => DeployCommand.BuildImageArgs(solution, i)[2]).ShouldAllBe(p => File.Exists(p));
     }
