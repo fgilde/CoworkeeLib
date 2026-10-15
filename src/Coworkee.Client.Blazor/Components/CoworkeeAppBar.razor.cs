@@ -15,12 +15,16 @@ public partial class CoworkeeAppBar : IDisposable
     [Inject] private IDialogService Dialogs { get; set; } = null!;
     [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
 
-
     [Parameter] public bool Dark { get; set; }
 
     [Parameter] public EventCallback ToggleDrawer { get; set; }
 
     [Parameter] public EventCallback ToggleDark { get; set; }
+
+    /// <summary>Phone width: the secondary actions sit in one overflow menu.</summary>
+    [Parameter] public bool Compact { get; set; }
+
+    private Task ToggleRightToLeftAsync() => Preferences.SetRightToLeftAsync(!Preferences.RightToLeft);
 
     private IEnumerable<AppBarItem> Items => Contributors.SelectMany(c => c.Items).OrderBy(i => i.Order);
 

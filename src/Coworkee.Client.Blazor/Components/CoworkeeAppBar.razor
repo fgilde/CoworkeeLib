@@ -6,13 +6,29 @@
     {
         <DynamicComponent Type="item.Component" Parameters="item.Parameters" />
     }
-    <LanguageMenu />
-    <ThemeMenu />
-    <MudTooltip Text="@L["Right to left"]">
-        <MudIconButton Icon="@Icons.Material.Outlined.FormatTextdirectionRToL" Color="@(Preferences.RightToLeft ? Color.Warning : Color.Inherit)"
-                       OnClick="() => Preferences.SetRightToLeftAsync(!Preferences.RightToLeft)" aria-label="@L["Right to left"]" data-testid="rtl-toggle" />
-    </MudTooltip>
-    <MudIconButton Icon="@(Dark ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" Color="Color.Inherit" OnClick="ToggleDark" aria-label="@L["Dark mode"]" />
-    <CoworkeeUserMenu />
-    <MudIconButton Icon="@Icons.Material.Outlined.Info" Color="Color.Inherit" Size="Size.Small" OnClick="ShowAboutAsync" aria-label="@L["About"]" data-testid="about-button" />
+    @if (Compact)
+    {
+        <CoworkeeUserMenu />
+        @* phones: language, theme, direction, colour mode and about move into one menu so the bar keeps its width *@
+        <MudMenu Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="Density.Dense"
+                 aria-label="@L["More"]" data-testid="app-bar-more">
+            <LanguageMenu Nested="true" />
+            <ThemeMenu Nested="true" />
+            <MudMenuItem Icon="@Icons.Material.Outlined.FormatTextdirectionRToL" OnClick="ToggleRightToLeftAsync" data-testid="rtl-toggle">@L["Right to left"]</MudMenuItem>
+            <MudMenuItem Icon="@(Dark ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" OnClick="ToggleDark">@L["Dark mode"]</MudMenuItem>
+            <MudMenuItem Icon="@Icons.Material.Outlined.Info" OnClick="ShowAboutAsync" data-testid="about-button">@L["About"]</MudMenuItem>
+        </MudMenu>
+    }
+    else
+    {
+        <LanguageMenu />
+        <ThemeMenu />
+        <MudTooltip Text="@L["Right to left"]">
+            <MudIconButton Icon="@Icons.Material.Outlined.FormatTextdirectionRToL" Color="@(Preferences.RightToLeft ? Color.Warning : Color.Inherit)"
+                           OnClick="ToggleRightToLeftAsync" aria-label="@L["Right to left"]" data-testid="rtl-toggle" />
+        </MudTooltip>
+        <MudIconButton Icon="@(Dark ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" Color="Color.Inherit" OnClick="ToggleDark" aria-label="@L["Dark mode"]" />
+        <CoworkeeUserMenu />
+        <MudIconButton Icon="@Icons.Material.Outlined.Info" Color="Color.Inherit" Size="Size.Small" OnClick="ShowAboutAsync" aria-label="@L["About"]" data-testid="about-button" />
+    }
 </MudAppBar>
