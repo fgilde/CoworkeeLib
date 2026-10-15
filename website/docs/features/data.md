@@ -3,17 +3,17 @@ title: "EF Core data layer and OData for .NET apps"
 description: "Coworkee's EF Core data layer: PostgreSQL, SQL Server or SQLite, field-level audit, outbox, OData sets with facets, browser-side queries and Excel import."
 ---
 
-# EF Core data layer with OData, audit trail and browser-side queries
-
-Most business apps spend a surprising share of their code on plumbing around the database: list endpoints with paging and filters, an audit table someone forgot to fill, soft delete flags that leak into half the queries, an export button that ignores the user's filter. Coworkee does this once, in the library, so the app's code is the domain model and the commands that change it.
-
-The data layer is plain EF Core. There are no repositories and no custom query language: handlers inject `CoworkeeDbContext` and call `db.Set<T>()`. What the library adds sits around that context: conventions for tenants, soft delete and auditing, an outbox, and a way to expose every entity as a filterable OData set.
+# Data and queries
 
 ![Sales orders table with 100,000 rows and the measured median times of server and browser](../assets/screenshots/orders-compare-light.webp){ .shot loading=lazy }
 
-## One DbContext for the whole modular monolith
+That is the demo's sales order list: 100,000 rows, and the line under the facets is the table timing its own query on both sides. In this shot: server 141 ms, browser 58 ms. The browser wins because the rows are already there.
 
-The app derives one `DbContext` from `CoworkeeDbContext`. Modules contribute their entities; the library contributes identity, settings, audit and outbox tables.
+Underneath sits plain EF Core. Handlers inject `CoworkeeDbContext` and call `db.Set<T>()`, with no repository layer in between (EF Core already is one).
+
+## One DbContext, markers on the entities
+
+The app derives a single context. Modules contribute their entities, the library adds identity, settings, audit and outbox tables.
 
 ```csharp
 public sealed class MyAppDbContext(DbContextOptions<MyAppDbContext> options, ICurrentUser currentUser, IEnumerable<IModelContributor> contributors)
@@ -23,73 +23,42 @@ context.Services.AddCoworkeeDbContext<MyAppDbContext>((provider, options) =>
     options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "myapp"));
 ```
 
-Behaviour comes from base classes and markers on the entity:
+What an entity gets depends on what it implements. `IMultiTenant` adds a query filter on the current tenant and fills `TenantId` on insert. `ISoftDelete` turns `Remove` into a flag that queries hide. `AuditedEntity` fills the created/modified columns, and `[Realtime(permission)]` pushes every committed change to SignalR clients holding that permission.
 
-| Marker | Effect |
-|---|---|
-| `AuditedEntity` | `CreatedAt`, `CreatedBy`, `ModifiedAt`, `ModifiedBy` filled on save |
-| `IMultiTenant` | query filter on the current tenant, `TenantId` set on insert |
-| `ISoftDelete` | `Remove` marks the row deleted, queries hide it |
-| `IHasConcurrencyToken` | optimistic concurrency with a `Version` column |
-| `IVersioned` | a snapshot per revision for the version history view |
-| `[Realtime(permission)]` | inserts, updates and deletes are pushed to SignalR clients with that permission |
+Changes to audited entities are also written field by field, with user, time, old and new value, in the same transaction. The admin UI shows them as a global *Audit log* and per record with `AuditTimeline`. `[Sensitive]` keeps the fact of a change but not the value.
 
-Domain events raised with `Raise(...)` on an `AggregateRoot` and integration events published through `IEventBus` go into the outbox of the same transaction. `AddCoworkeeOutboxProcessing<TContext>()` sends them after the save and retries failures, so an event never goes out for a change that was rolled back.
+Domain events (`Raise(...)` on an `AggregateRoot`) and integration events go through an outbox in that transaction too, so nothing is sent for a change that rolled back.
 
-## PostgreSQL, SQL Server or SQLite
+`Coworkee:Database:Provider` picks PostgreSQL (the default), SQL Server or SQLite. The provider-specific bits, such as outbox row locks or where Hangfire keeps its jobs, live behind small seams in the library. SQLite is for demos and one-machine setups: one writer at a time, background jobs in memory.
 
-`Coworkee:Database:Provider` picks one of three databases. PostgreSQL is the default and the choice for production. SQL Server fits organisations that already run it or Azure SQL. SQLite keeps everything in one file and is meant for demos, prototypes and single-machine installations. The provider-specific parts (concurrency tokens, JSON columns, outbox row locking, distributed locks, background job storage) sit behind small seams in the library; the app does not change.
-
-```bash
-coworkee new Shop --database sqlServer
-```
-
-Migrations belong to the provider the app was created with. Database backups need PostgreSQL.
-
-## Field-level audit trail
-
-Every change to an audited entity is written field by field: who, when, old value, new value. It is stored in the same transaction as the change itself. The admin UI has a global *Audit log* page and an `AuditTimeline` component for the history of a single entity. `[NotAudited]` leaves a type or property out, `[Sensitive]` records that a property changed without storing its value.
-
-![Audit log with entity, action and user filters and the changed fields per row](../assets/screenshots/audit-log-dark.webp){ .shot loading=lazy }
-
-## OData sets with facets for every entity
-
-One line turns an entity into an OData set with its permission:
+## OData sets with facets
 
 ```csharp
 context.Services.AddODataEntity<Product>("Products", CatalogPermissions.Products.View);
 ```
 
-Tables, exports and external tools read through it: `$filter`, `$orderby`, `$select`, `$expand`, paging and counts. The permission is checked on every call, and tenant and soft delete filters apply as everywhere else. Row-level rules go into an `IODataEntityFilter<T>`, which narrows lists, counts, facets and single reads alike. Internal fields can be left out of the model completely.
+That line gives the entity a set with `$filter`, `$orderby`, `$expand`, paging and counts. The permission is checked on every call, and tenant and soft delete filters apply as everywhere. Rows that only some users may see go through an `IODataEntityFilter<T>`, which narrows lists, counts and facets alike.
 
-Properties marked with `[ProvideFacet]` come back as facet groups on request: every option with label, count and the OData filter to apply. Counts follow the current filter the way shop filters do. Enums, `[Flags]` enums, number ranges with histograms and date ranges are covered; `[FacetBehavior]` sets how values combine and which view the table shows.
+Properties marked `[ProvideFacet]` come back as facet groups: each option with label, count and the filter fragment that applies it. Counts follow the current filter, the way a shop sidebar does. Number and date facets carry a histogram.
 
-## A query builder that speaks OData and LINQ
+The same sets serve Excel. The export uses the list's filter and sort (capped at 100,000 rows by `Coworkee:OData:MaxExportRows`), and `AddODataImport` turns each uploaded row into a command, so validation runs per row and failures come back with their row number.
 
-`QueryBuilder` lets users build nested *all / any* groups of conditions with operators that fit each field type. The query is a plain model: `ODataQueryTranslator.ToFilter` turns it into an OData `$filter`, `LinqQueryTranslator.ToExpression<T>` into a LINQ expression that EF Core translates, and `QueryJson` saves it. Both translators are tested against each other and return the same rows.
+For conditions users assemble themselves, `QueryBuilder` produces nested *all / any* groups. `ODataQueryTranslator.ToFilter` turns the result into `$filter` text, `LinqQueryTranslator.ToExpression<T>` into an expression EF Core can run, and the tests make sure both return the same rows.
 
-## Client entities: 100,000 rows answered in the browser
+## Client entities: the browser answers
 
-Mark an entity `[ClientEntity]` and the Blazor client keeps a copy of its OData set in the browser. Until the copy is complete, queries go to the server; after that, filtering, search, sorting, grouping, paging and facet counts run locally, and changes arrive as small deltas. The copy is a small column store with indexes, kept in IndexedDB, so a reload is local again within a few hundred milliseconds.
+Put `[ClientEntity]` on an entity and the Blazor client keeps a copy of its OData set. While the copy downloads, queries go to the server. Once it is complete, filters, search, sorting and facet counts run locally, and changes arrive as deltas.
 
-The template shows it with 100,000 sales orders. Every table over such a set gets a switch with *Compare and choose the faster*: it runs the table's current query three times on each side, shows the median times and picks the faster one. With no filter, the measured median was 216-236 ms on the server and 39-56 ms in the browser. The copy contains only rows the user may read through OData, so permissions, tenants and row filters apply to it as well.
+The copy is a small column store with per-column indexes, persisted to IndexedDB. For the 100,000 orders the first download takes about 14.5 s; after a page reload, queries are local again 0.3 s after the first rows show. With no filter, the table query measured 216-236 ms on the server and 39-56 ms in the browser.
 
-## Extended attributes, Excel import and export
+Each table over such a set has a switch with *Compare and choose the faster*, which runs the current query three times on each side and keeps the winner. The copy only holds what the user could read through OData anyway. It is not encrypted on the device, though, so sets with sensitive data should stay on the server.
 
-`AddExtendedAttributes<T>` lets users attach key/value pairs (text, decimal, date or JSON) to an entity without a schema change, edited with `ExtendedAttributesEditor` or a dialog from a table row.
+## Attributes and backups
 
-Every OData set exports to Excel with the same filter and sort as the list, capped by `Coworkee:OData:MaxExportRows` (100,000 by default). `AddODataImport` turns each row of an uploaded sheet into a command, so validation and permissions run per row, and failed rows come back with their row number.
+`AddExtendedAttributes<T>` lets users hang key/value pairs (text, decimal, date or JSON) on any entity without a migration. `CoworkeeBackupModule` writes the whole database as one zip to the file storage and restores it in one transaction, refusing a backup from another migration.
 
-## Database backups
+**Status:** backups need PostgreSQL. MySQL and MariaDB are not offered, because Pomelo has no EF Core 10 release yet. Facets over `bool` columns fail on SQL Server and SQLite until the next Nextended release. The query builder cannot import OData text yet, and its rules cannot be reordered by drag and drop.
 
-With PostgreSQL, `CoworkeeBackupModule` saves the whole database as one zip in the file storage and restores it in one transaction. A restore refuses a backup made at another migration. Backups hold every organisation, so only users of the system organisation with `Backups.Manage` see the page.
-
-## Where to go next
-
-- [Persistence](../fundamentals/persistence.md): DbContext, database providers, base classes, migrations and seeding
-- [OData and facets](../web/odata.md): entity sets, row-level rules, Excel export and import
-- [Query builder](../ui/query-builder.md): fields, operators, translators and saved queries
-- [Client entities](../ui/client-entities.md): settings, the switch, performance measurements and limits
-- [Auditing](../modules/auditing.md): audit log, timelines and version history
-- [Extended attributes](../modules/extended-attributes.md): endpoints and client components
-- [Database backups](../modules/backups.md): what a backup contains and the database rights a restore needs
+- [Persistence](../fundamentals/persistence.md): providers, base classes, migrations and seeding
+- [OData and facets](../web/odata.md), [query builder](../ui/query-builder.md) and [client entities](../ui/client-entities.md) with the full measurements
+- [Auditing](../modules/auditing.md), [extended attributes](../modules/extended-attributes.md) and [database backups](../modules/backups.md)

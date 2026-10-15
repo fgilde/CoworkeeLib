@@ -3,15 +3,7 @@ title: ".NET Aspire hosting with Grafana and dev tools"
 description: "One AddCoworkeeApp call wires databases, Redis, Mailpit, Elasticsearch and Keycloak in the .NET Aspire app host, with Grafana dashboards and a database browser."
 ---
 
-# Developer tooling and hosting on .NET Aspire
-
-Before a business app does anything useful, someone has to start a database, a cache, a mail server for the password reset, maybe a search engine and an identity provider, and then copy connection strings into four `appsettings.json` files. When something is slow, the next question is where to look: logs in one console, traces in another, the database in a third tool.
-
-Coworkee builds on the .NET Aspire app host and does that wiring for you. You name the app; Coworkee finds its services, reads which packages each one uses and adds the containers and settings they need. Grafana with metrics, logs and traces and a browser-based database studio come along in development, both signed in with the app's own administrator.
-
-![Grafana overview dashboard with requests per second, errors, latency and log volume per service](../assets/screenshots/grafana-overview-dark.webp){ .shot loading=lazy }
-
-## One call in the Aspire app host
+# Hosting and developer tools
 
 ```csharp title="MyApp.AppHost/AppHost.cs"
 var builder = DistributedApplication.CreateBuilder(args);
@@ -26,65 +18,55 @@ builder.AddCoworkeeApp("myapp", options =>
 builder.Build().Run();
 ```
 
-`AddProjects()` adds the projects the app host references by naming convention: `*_Migrations`, `*_Auth`, `*_Api`, `*_Worker`, `*_Web`. Each gets its role: the API learns its token authority, the web app gets its OIDC client at the auth server, the migrations run before anything that needs the database.
+That is the core of the app host in a generated app. `AddProjects()` finds the referenced projects by name (`*_Migrations`, `*_Auth`, `*_Api`, `*_Worker`, `*_Web`) and wires each in its role: the API gets its token authority, the web app its OIDC client at the auth server, and the migrations run before anything touches the database. Sharemee adds its processing worker, whose name fits no convention, with one more line: `app.AddWorker<Projects.Shareme_Processing_Host>("processing")`.
 
-## Infrastructure from the packages a service uses
+## Containers from the packages
 
-Coworkee looks at the packages of each service, directly or through other projects, and adds only what is needed:
+Coworkee reads which packages each service uses and starts only the containers they need:
 
 | Package in the service | It gets |
 |---|---|
-| `Coworkee.Infrastructure` | the app database, and waits until the migrations finished |
-| `Coworkee.Realtime` | Redis as SignalR backplane and for cache invalidation between instances |
-| `Coworkee.Mailing` | Mailpit as local SMTP server with a web inbox |
-| `Coworkee.Storage` | a shared blob folder `.data/blobs` |
+| `Coworkee.Infrastructure` | the app database; waits for the migrations |
+| `Coworkee.Realtime` | Redis as SignalR backplane and for cache invalidation |
+| `Coworkee.Mailing` | Mailpit with a web inbox |
+| `Coworkee.Storage` | the shared folder `.data/blobs` |
 | `Coworkee.Search.Elasticsearch` | Elasticsearch |
 
-The database is PostgreSQL by default. `UseSqlServer()` swaps in a SQL Server container and `UseSqlite()` a file next to `src`, without any container; both set the database provider on every service. `UseKeycloak(...)` adds Keycloak with a realm named after the app, the users you list and a sign-in page in the app's colors. Any piece can be configured (`ConfigurePostgres`, `ConfigureRedis`, ...) or replaced with a resource of your own (`UseDatabase`, `UseRedis`, `UseSearch`).
+PostgreSQL is the default. `UseSqlServer()` swaps in SQL Server, `UseSqlite()` a file next to `src` and no container at all. `UseKeycloak(...)` adds Keycloak with a realm named after the app and a sign-in page in its colors. Anything can be tuned (`ConfigurePostgres`, `ConfigureRedis`) or replaced with your own resource (`UseDatabase`, `UseRedis`, `UseSearch`).
 
-## Grafana with Prometheus, Loki and Tempo
+Two optional containers: `UseLibreTranslate([...])` for [machine translation](localization.md), and `coworkee new --ai-provider ollama` puts an Ollama container into the app host that pulls the model for the [assistant](../modules/ai.md). No API key needed.
 
-`options.UseGrafana()` adds Grafana, Prometheus, Loki, Tempo and an OpenTelemetry collector. The services keep sending to the Aspire dashboard and send the same metrics, logs and traces to the collector as well. Six dashboards are provisioned on every start:
+## Grafana and WebDataStudio
 
-- **Overview**: requests per second, errors, p95 latency, SignalR connections, busiest and slowest endpoints
-- **.NET runtime**: CPU, memory, GC, thread pool, exceptions by type
-- **Database access**: Entity Framework Core queries, SaveChanges, connection pool, slowest database spans
-- **PostgreSQL server**: connections, cache hit ratio, deadlocks (Postgres only)
-- **App data**: users, sign-ins, tenants, outbox and background jobs
-- **Logs and traces**: every log line with filters, traces linked to their logs
+![Grafana overview dashboard with requests per second, errors, latency and log volume per service](../assets/screenshots/grafana-overview-dark.webp){ .shot loading=lazy }
 
-Every dashboard filters by service and links to the others.
-
-## WebDataStudio: the database in the browser
+`UseGrafana()` brings Grafana with Prometheus, Loki, Tempo and an OpenTelemetry collector. The services keep reporting to the Aspire dashboard and send the same telemetry to the collector too. Six dashboards are provisioned on each start: Overview, .NET runtime, Database access (Entity Framework Core queries, connection pool, slowest spans), PostgreSQL server, App data (users, sign-ins, outbox, background jobs) and Logs and traces.
 
 [![WebDataStudio](../assets/brands/webdatastudio.svg){ .cw-product-logo }](https://fgilde.github.io/WebDataStudio/)
 
-`options.UseWebDataStudio()` adds a database studio with a ready connection to the app database: tables, SQL, charts and exports. With SQLite it opens the database file. Like Grafana it signs in with the administrator's email and password, and with the Keycloak button when Keycloak is on. Both tools are added in run mode only; `aspire publish` leaves them out.
+`UseWebDataStudio()` opens the app database in the browser, with tables, SQL, charts and exports. On SQLite it mounts the database file.
 
-![WebDataStudio showing a table of the app database](../assets/screenshots/webdatastudio-dark.webp){ .shot loading=lazy }
+Both sign in with the app's administrator, and with the Keycloak button when Keycloak is on. Neither ends up in `aspire publish`, which is the point: a deployment should not ship a database studio holding the admin password.
 
 ## AspireUI and the Services page
 
 [![AspireUI](../assets/brands/aspireui.svg){ .cw-product-logo }](https://fgilde.github.io/AspireUI/)
 
-AspireUI hosts more apps and stacks next to yours. With Keycloak, one call lets the app's administrators sign in there as admins:
+AspireUI hosts further apps and stacks next to yours. With Keycloak, the app's administrators become AspireUI admins through one call:
 
 ```csharp
 builder.AddAspireUI().WithCoworkeeSignOn(app).WithRetrieveApi();
 ```
 
-Every service learns the addresses of the others, the Aspire dashboard, the Hangfire dashboard, Mailpit and every container with a web endpoint. The admin page *Services* shows them as tiles with their live state, probed every ten seconds, and with `WithRetrieveApi()` the apps of AspireUI appear there too.
+Every service knows the addresses of the others, plus the Aspire and Hangfire dashboards, Mailpit and any container with a web endpoint. The admin page *Services* shows them as tiles and probes them every ten seconds; with `WithRetrieveApi()` the AspireUI apps join the list.
 
 ![The Services admin page with tiles for each service, its address and whether it is running](../assets/screenshots/services-dark.webp){ .shot loading=lazy }
 
-## LibreTranslate and Ollama containers
-
-Two more containers are one option away. `UseLibreTranslate([...])` runs a LibreTranslate server for [machine translation](localization.md) with only the language models you need, kept in a volume shared by all apps on the machine. `coworkee new --ai-provider ollama` adds an Ollama container that pulls the model for the [AI assistant](../modules/ai.md), so the app runs offline without any key.
+**Status:** publishing with `aspire publish` to Docker Compose or Azure Container Apps is wired but not yet verified end to end. Running more than one instance needs Redis and a shared Data Protection key ring.
 
 ## Where to go next
 
-- [Aspire app host](../hosting/aspire.md): roles, conventions, own infrastructure, Keycloak and publishing to Docker Compose or Azure
-- [Grafana and WebDataStudio](../hosting/observability.md): every resource and dashboard, sign-in and switching them on and off
-- [Scaling out with Redis](../hosting/redis.md): what Redis carries between instances
-- [Service addresses](../hosting/aspire.md#service-addresses) and the [Services page](../modules/settings.md#services)
-- [AspireUI](../hosting/aspire.md#aspireui): single sign-on through the app's Keycloak realm
+- [Aspire app host](../hosting/aspire.md): roles, conventions, own infrastructure, Keycloak, publishing
+- [Grafana and WebDataStudio](../hosting/observability.md): every dashboard, sign-in, switching them off
+- [Scaling out with Redis](../hosting/redis.md)
+- [Services page](../modules/settings.md#services) and [AspireUI](../hosting/aspire.md#aspireui)

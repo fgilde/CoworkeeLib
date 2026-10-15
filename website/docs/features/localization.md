@@ -3,45 +3,33 @@ title: "Localization and machine translation for Blazor"
 description: "Coworkee ships its UI, account pages and mails in 23 languages, lets administrators switch languages on at runtime and machine translates the rest."
 ---
 
-# Localization and machine translation for .NET and Blazor apps
+# Languages and translation
 
-A business app rarely stays in one language. The sales office in Lyon wants French, the warehouse in Gdańsk wants Polish, and nobody wants to wait for a release because a button label is wrong. Translating your own pages is half the work; the other half is every text you did not write yourself: the data grid, the filters, the sign-in pages, the password reset mail.
+Translating your own pages is the smaller part of the job. The larger part is everything you did not write: the data grid, its filters, the sign-in pages, the mail with the password reset link.
 
-Coworkee takes care of that second half. The library ships its texts in 23 languages, keeps languages and translations in the database, and lets administrators switch a language on, correct a translation or fill the gaps with a translation service while the app is running.
+Coworkee ships those texts in 23 languages. Languages and translations live in the database, so an administrator can switch a language on or fix a wording while the app is running, and a translation service fills whatever is still missing.
 
-![The Languages page with cultures grouped by language, each with a switch and the default marked with a star](../assets/screenshots/languages-light.webp){ .shot loading=lazy }
+## 23 languages in the box
 
-## 23 shipped languages
+Arabic, Bulgarian, Chinese (Simplified), Croatian, Czech, Danish, Dutch, English, French, German, Greek, Indonesian, Italian, Japanese, Khmer, Korean, Polish, Portuguese (Brazil), Russian, Spanish, Swedish, Turkish and Ukrainian. That covers the module pages and components, the account pages of the auth server and the mail templates.
 
-The texts of the module pages and components, the account pages of the auth server and the mail templates come in Arabic, Bulgarian, Chinese (Simplified), Croatian, Czech, Danish, Dutch, English, French, German, Greek, Indonesian, Italian, Japanese, Khmer, Korean, Polish, Portuguese (Brazil), Russian, Spanish, Swedish, Turkish and Ukrainian.
-
-English is the key of every text, so a new app needs no English file. Out of the box an installation offers English and German; the other shipped languages are one switch away. You can narrow the list in `appsettings.json` or when you create the app:
-
-```json title="appsettings.json"
-{
-  "Coworkee": {
-    "Localization": { "Languages": [ "en", "de" ], "DefaultLanguage": "de" }
-  }
-}
-```
+English is the key of every text, so there is no English file to maintain. A fresh installation offers English and German; the rest is one switch away on the *Languages* page. To start with a different set, pass it to the CLI:
 
 ```bash
 coworkee new Shop --languages en,de,fr --default-language de
 ```
 
-Any culture works, not only the shipped 23. A language without shipped texts is machine translated on the first start.
+The same values end up in `Coworkee:Localization` in `appsettings.json`. Any culture works there, not only the 23. One without shipped texts gets machine translated on the first start.
 
-## Live language management
+## Changing texts at runtime
 
-The *Languages* page lists every culture, grouped by language, with a switch. Turning a language on translates the texts it is missing; turning it off moves its users to the default language with a short notice. The change reaches every open browser right away over the realtime connection, so nobody has to reload.
+![The Languages page with cultures grouped by language, each with a switch and the default marked with a star](../assets/screenshots/languages-light.webp){ .shot loading=lazy }
 
-The *Translations* page shows every key with the shipped text and the edited text per language. An edit there wins over the library and over the app's own JSON files, and it needs no deployment. Texts that a page asked for but nobody translated are reported by the client and show up on the same page. Both pages need the `Localization.Manage` permission.
+*Languages* lists every culture, grouped by language. Switch one on and its missing texts are translated; switch it off and its users move to the default language with a short notice. Open browsers pick the change up over the realtime connection.
 
-![The Translations page listing keys with their module text and edited text per language](../assets/screenshots/translations-light.webp){ .shot loading=lazy }
+*Translations* shows every key with the shipped text and the edited one per language. An edit there beats both the library and your app's JSON files and needs no deployment. Keys a page asked for that nobody translated are reported by the client and land on the same page, which is handy after adding a screen in a hurry. Both pages need `Localization.Manage`.
 
-## Texts in your own pages
-
-Your module embeds `Localization/{culture}.json` with the English text as key and registers it once. In Razor you inject `CoworkeeLocalizer`:
+In your own Razor components you inject `CoworkeeLocalizer` and use the English text as key:
 
 ```razor
 @inject CoworkeeLocalizer L
@@ -49,43 +37,31 @@ Your module embeds `Localization/{culture}.json` with the English text as key an
 <MudText>@L["Delete {0}? This cannot be undone.", brand.Name]</MudText>
 ```
 
-MudBlazor's own texts (pager, filters, dialogs) are translated too. When you want different wording for a library text, `coworkee texts export` copies it into your app's JSON so you do not have to look up keys:
+To reword a library text in the app itself, `coworkee texts export --lang de --keys "Filter*"` copies the matching keys into your app's `Localization/de.json`. It merges, so running it again after an update keeps your wording.
 
-```bash
-coworkee texts export --lang de --keys "Filter*"
-coworkee texts export --lang en --keys "/^Delete/"
-```
+## Machine translation
 
-The export merges with what the file already has, so you can run it again after an update and keep your wording.
+A missing text goes to a translation service when the language is switched on, after each start, or when an administrator presses the button on *Languages*. Placeholders such as `{0}` are protected; a result that lost one is dropped. The output is stored like a manual edit, so *Translations* shows it and anyone with the permission can correct it.
 
-## Machine translation providers
-
-Texts a language lacks are filled by a translation service: when an administrator switches the language on, with a button on the *Languages* page, and after each start. Placeholders such as `{0}` are protected, and a result that lost one is thrown away. Machine translations are stored like edits, so the *Translations* page shows and corrects them.
-
-| Service | Cost | Notes |
+| Service | Cost | Note |
 |---|---|---|
-| LibreTranslate | free, open source | runs as a container next to your app; default of new apps |
+| LibreTranslate | free, open source | runs as a container; default of new apps |
 | MyMemory | free | 5,000 characters a day, 50,000 with a contact email |
-| DeepL | free plan with 500,000 characters a month | strong for European languages |
-| Azure AI Translator | free tier with 2 million characters a month | over 100 languages |
-| Google Cloud Translation | about 500,000 characters a month free | Basic (v2) API |
-| AI | per token | uses the provider and model of the [AI assistant](../modules/ai.md) |
+| DeepL | 500,000 characters a month free | keys ending in `:fx` use the free API |
+| Azure AI Translator | 2 million characters a month free | over 100 languages |
+| Google Cloud Translation | about 500,000 characters a month free | Basic (v2) |
+| AI | per token | provider and model of the [AI assistant](../modules/ai.md) |
 
-In the Aspire app host, LibreTranslate is one line. It loads only the models of the languages you list and keeps them in a volume that all apps on the machine share:
+In the Aspire app host LibreTranslate takes one line. It loads only the models of the listed languages and keeps them in a volume shared by every app on the machine (the first start downloads them, so give it a minute):
 
 ```csharp title="AppHost.cs"
 builder.AddCoworkeeApp("myapp", options => options.UseLibreTranslate(["en", "de", "fr", "es", "it"]));
 ```
 
-Another service is seeded with `UseTranslation`, its key coming from an Aspire parameter. Outside the app host the same values are ordinary settings (`Localization.TranslationProvider`, `Localization.TranslatorKey` and friends) on the *Settings* page.
+For the keyed services there is `UseTranslation`. Outside the app host they are plain settings such as `Localization.TranslationProvider` and `Localization.TranslatorKey`.
 
-## Checking a language
+Contributors adding a language to the library run `build/localization-check.ps1 -Lang fr`. It compares the language with the German files, down to placeholders and the tags in mail templates, and exits non-zero when something is off.
 
-When you add or edit a shipped language in the repository, `build/localization-check.ps1 -Lang fr` compares it with the German files of every text source: missing and extra keys, `{0}` placeholders, and the expressions and tags of the mail templates. It ends with an exit code other than 0 when something is off, so it fits into a build.
+**Status:** 21 of the 23 languages are recent and were checked by sample, not by native speakers; Khmer and Arabic are the least certain. A language switched on later that is not in the `UseLibreTranslate` list needs the list extended and the app host restarted.
 
-## Where to go next
-
-- [Localization](../modules/localization.md): resource registration, the three text layers, client setup and every translation setting
-- [Machine translation](../modules/localization.md#machine-translation): the services in detail, quotas and the app host options
-- [Changing library texts](../modules/localization.md#changing-library-texts): `coworkee texts export` with all switches
-- [CLI](../getting-started/cli.md): `--languages`, `--default-language` and `--translation-provider` of `coworkee new`
+Reference: [Localization](../modules/localization.md), [machine translation settings](../modules/localization.md#machine-translation), [`coworkee texts export`](../modules/localization.md#changing-library-texts).

@@ -3,17 +3,7 @@ title: "Modularer Monolith mit ASP.NET Core"
 description: "Coworkee baut .NET-Geschäftsanwendungen als modularen Monolithen auf ASP.NET Core: Module mit [DependsOn], eine Request-Pipeline, Outbox und eine CLI, die alles anlegt."
 ---
 
-# Ein modularer Monolith für ASP.NET Core, samt Werkzeug zum Anlegen
-
-Die meisten Geschäftsanwendungen beginnen als ein Projekt und enden als Knäuel: Jedes neue Feature ändert dieselbe Startup-Datei, denselben `DbContext` und dasselbe Menü. Coworkee teilt eine Anwendung vom ersten Tag an in Module, hält sie aber in einer auslieferbaren Einheit mit einer Datenbank. Sie bekommen die Grenzen von Services ohne Netzwerkaufrufe, verteilte Transaktionen und den Aufwand vieler Deployments.
-
-Die zweite Hälfte des Problems ist der Start. Eine neue Solution mit API, Auth-Server, Blazor-Client, Migrationen und Aspire-App-Host ist ein Tag Verdrahtung, bevor die erste Entität existiert. Die Kommandozeile `coworkee`, ihr Desktop-Assistent Coworkee Studio und ein MCP-Server für KI-Agenten legen diese Solution in Minuten an, mit Ihren eigenen Modulen und Entitäten.
-
-![Coworkee Studio auf der Seite Architektur, mit Vorlagen für den Anwendungstyp und den Infrastruktur-Optionen](../assets/screenshots/studio-architecture-light-de.webp){ .shot loading=lazy }
-
-## Module mit `[DependsOn]`
-
-Ein Modul ist eine Klasse, die ihre Services registriert und in Web-Hosts ihre Endpunkte einhängt. Mit `[DependsOn]` nennt es die Module, die es braucht; Coworkee lädt den ganzen Graphen einmal, in Abhängigkeitsreihenfolge:
+# Module und Werkzeuge
 
 ```csharp
 [DependsOn(typeof(CoworkeeODataModule), typeof(CoworkeeStorageModule))]
@@ -29,89 +19,60 @@ public sealed class MyAppDocumentsModule : CoworkeeModule, IWebModule
 }
 ```
 
-Module ändern nie eine zentrale Liste. Entity-Mappings, Berechtigungen, Einstellungen, Mailvorlagen und Menüeinträge kommen über Contributors (`IModelContributor`, `IPermissionDefinitionContributor`, `ISettingDefinitionContributor`, `INavigationContributor` und einige mehr), die das zuständige Paket einsammelt. Ein Modul hinzuzufügen oder zu entfernen berührt nichts anderes.
-
-## Ein Root-Modul pro Host
-
-Jeder Server-Host im Template besteht aus denselben wenigen Zeilen. Das Root-Modul entscheidet, was der Host enthält:
-
 ```csharp
-var builder = WebApplication.CreateBuilder(args);
-builder.AddServiceDefaults();
-builder.AddCoworkee<MyAppApiModule>();
-
+builder.AddCoworkee<MyAppApiModule>();   // the root module; the rest follows from [DependsOn]
 var app = builder.Build();
-app.MapDefaultEndpoints();
 app.UseCoworkee();
-app.Run();
 ```
 
-API, Auth-Server und Migrationsdienst setzen aus denselben Modulen unterschiedliche Graphen zusammen. Der Auth-Host lädt nur Infrastruktur und das Auth-Server-Modul; ein Modul außerhalb des Graphen kostet den Host nichts. Hosts ohne HTTP rufen stattdessen `services.AddCoworkeeModules<TRoot>(configuration)` auf.
+Das ist das Dokumentenmodul aus dem Template (die Demo-App nutzt genau dieses), dazu die Zeilen, mit denen es im API-Host landet. Ein Modul registriert seine Services, hängt seine Endpunkte ein und sagt, welche Module es braucht. Coworkee lädt den Graphen einmal, in der Reihenfolge der Abhängigkeiten.
 
-## Eine Request-Pipeline für jeden Anwendungsfall
+So entsteht ein modularer Monolith auf ASP.NET Core: ein Prozess pro Host, eine Datenbank, der Code nach Features geschnitten. API, Auth-Server und Migrationsdienst haben jeweils ihr eigenes Root-Modul und bekommen aus denselben Paketen verschiedene Graphen. Der Auth-Host lädt das Dokumentenmodul gar nicht und zahlt deshalb auch nichts dafür.
 
-Jeder Anwendungsfall ist ein Command oder eine Query, die über `IDispatcher` läuft. HTTP-Endpunkte, Hintergrundjobs, der KI-Assistent und Tests senden dieselben Requests, also gelten überall dieselben Regeln. Middleware umschließt jeden Request in fester Reihenfolge:
+An zentrale Listen geht ein Modul auch nicht ran. Entity-Mappings kommen über `IModelContributor`, Menüeinträge über `INavigationContributor`. Fliegt ein Modul raus, verschwinden seine Beiträge mit, mehr ist nicht zu tun.
 
-| Reihenfolge | Schritt | Was er tut |
+## Eine Pipeline für jeden Request
+
+Jeder Anwendungsfall ist ein Command oder eine Query über `IDispatcher`. Endpunkte, Hintergrundjobs und der KI-Assistent schicken dieselben Requests, an Validierung und Berechtigungsprüfung führt also kein Seiteneingang vorbei.
+
+| Reihenfolge | Schritt | |
 |---|---|---|
-| 100 | Logging | protokolliert den Request, warnt ab 500 ms |
-| 200 | Autorisierung | prüft `[RequiresPermission]` am Request-Typ |
-| 300 | Validierung | führt die FluentValidation-Validatoren aus, liefert Feldmeldungen |
-| 350 | Caching | beantwortet `ICachedQuery` aus dem HybridCache, leert Tags nach `IInvalidatesCache` |
+| 100 | Logging | warnt, wenn ein Request länger als 500 ms dauert |
+| 200 | Autorisierung | `[RequiresPermission]` am Request-Typ |
+| 300 | Validierung | FluentValidation, mit Feldmeldungen |
+| 350 | Caching | `ICachedQuery` aus dem HybridCache, `IInvalidatesCache` leert Tags |
 | 400 | Unit of Work | speichert den `DbContext` einmal nach einem erfolgreichen Command |
 
-```csharp
-[RequiresPermission(CatalogPermissions.Brands.Delete)]
-public sealed record DeleteBrandsCommand(IReadOnlyList<Guid> Ids) : ICommand<Result>, IInvalidatesCache
-{
-    public IReadOnlyList<string> CacheTags => [DashboardCache.Tag];
-}
-```
+Bei erwarteten Fehlern geben Handler ein `Result` zurück, und `ToHttpResult` macht daraus 400, 404, 403 oder 409. Eigenen übergreifenden Code hängst du als `IRequestMiddleware` ein, oder als typisiertes `IRequestBehavior`, wenn er nur einen Request betrifft.
 
-Handler geben bei erwarteten Fehlern ein `Result` zurück, statt eine Exception zu werfen, und `ToHttpResult` macht aus Validierungs-, Nicht-gefunden-, Verboten- und Konfliktfehlern 400, 404, 403 und 409. Eigener übergreifender Code klinkt sich über `IRequestMiddleware` oder ein typisiertes `IRequestBehavior` ein.
+Aggregate lösen Domain Events aus; die Handler laufen nach dem Commit über die Outbox, im Namen des Benutzers, der sie ausgelöst hat. Integration Events gehen über `IEventBus` durch dieselbe Outbox. Ohne Transport bleiben sie in der Anwendung. Mit `Coworkee.EventBus.RabbitMq` laufen sie über RabbitMQ, und eine Inbox-Tabelle sorgt dafür, dass kein Handler eine Nachricht zweimal verarbeitet.
 
-## Domain Events, Integration Events und die Outbox
+Ausgeliefert wird alles als NuGet-Pakete mit dem Präfix `Coworkee.`, festgezurrt über eine `<CoworkeeVersion>` in `Directory.Packages.props`. `coworkee update` ändert diese eine Zahl.
 
-Aggregate lösen Domain Events aus; deren Handler laufen nach dem Commit über die Outbox, als der Benutzer, der sie verursacht hat. Integration Events überschreiten mit `IEventBus` die Grenzen einer Anwendung und nutzen dieselbe Outbox, ein Event geht also erst raus, wenn die Änderung dahinter gespeichert ist. Ohne Transport bekommen die Handler derselben Anwendung es direkt; mit `Coworkee.EventBus.RabbitMq` läuft es über RabbitMQ, mit Wiederholungen und Dead-Letter-Queue. Eine Inbox-Tabelle macht die Handler idempotent, und `IDistributedLock` verhindert, dass ein Job auf mehreren Instanzen gleichzeitig läuft.
-
-## NuGet-Pakete statt kopierter Codebasis
-
-Coworkee kommt als NuGet-Pakete, die alle mit `Coworkee.` beginnen: `Coworkee.Core`, `Coworkee.Application`, `Coworkee.Infrastructure`, `Coworkee.AspNetCore`, `Coworkee.Client.Blazor`, `Coworkee.Aspire` und darauf die Feature-Module. Eine erzeugte Anwendung referenziert sie mit einer Version in `Directory.Packages.props`, und `coworkee update` hebt diese Version an. Ihr Code bleibt in Ihren Projekten, der Framework-Code in Paketen, die Sie aktualisieren können.
-
-## Die Kommandozeile `coworkee`
+## CLI, Studio und MCP-Server
 
 ```bash
 dotnet tool install -g Coworkee.Cli
-coworkee new Shop --no-samples --files --theme Forest --primary-color "#0a7d5a"
+coworkee new Shop --no-samples --files --theme Forest
 cd Shop
 coworkee run
 ```
 
-`coworkee new` legt die Solution an (App-Host, API, Auth-Server, Blazor-Web-App, Migrationen), stellt die Pakete wieder her und erzeugt die erste Migration, wenn die gewählten Module eine brauchen. Eine JSON-Spec beschreibt die ganze Anwendung, inklusive eigener Module, Entitäten, Enums, Rollen und Entwicklungsbenutzer: `coworkee spec example`, `coworkee spec validate`, `coworkee new --spec shop.json`. Später erzeugen `coworkee module add` und `coworkee entity add` ein Feature-Modul oder eine Entität von vorn bis hinten: Contracts, Entität, Tabelle, Berechtigungen, OData-Set, Commands mit Validatoren, Endpunkte und eine Blazor-Seite mit Datentabelle. `coworkee doctor` prüft SDK, Docker und `dotnet-ef`.
+`coworkee new` legt die Solution an (Aspire-App-Host, API, Auth-Server, Blazor-Web-App, Migrationen), stellt die Pakete wieder her und erzeugt die erste Migration, falls die gewählten Module eine brauchen. Mit einer JSON-Spec kannst du die ganze Anwendung vorab beschreiben, eigene Module und Entitäten inklusive: `coworkee new --spec shop.json`. Später erzeugt `coworkee entity add` ein Feature von der Entität bis zur Blazor-Seite mit Datentabelle.
 
-## Coworkee Studio, der Desktop-Assistent
-
-`coworkee ui` installiert und öffnet Coworkee Studio, das unter Windows, macOS und Linux läuft. Es führt Seite für Seite durch Grunddaten, Branding, Anmeldedesign, Architektur, Sprachen, Entitäten und Benutzer, erklärt, was jede Option bringt und kostet, und lässt die CLI die Solution anlegen. Die Seite Architektur bietet Vorlagen von *Minimal* bis *SaaS-Plattform*; die Seite Entitäten zeigt, was die CLI für jede Entität erzeugt. Nach dem Anlegen startet das Studio auf Wunsch den App-Host und verlinkt das Aspire-Dashboard und die Anwendung.
+Wer lieber klickt, öffnet mit `coworkee ui` Coworkee Studio, einen Desktop-Assistenten für Windows, macOS und Linux. Zu jeder Option steht dort, was sie bringt und was sie kostet (die Seite Architektur fängt mit Vorlagen von *Minimal* bis *SaaS-Plattform* an). Außerdem zeigt das Studio, was aus einer Entität wird, und startet die neue Anwendung danach auf Wunsch.
 
 ![Entitäten-Designer in Coworkee Studio mit Eigenschaftsraster und Vorschau der erzeugten Routen und Dateien](../assets/screenshots/studio-entities-light-de.webp){ .shot loading=lazy }
 
-## Ein MCP-Server für KI-Agenten
+Für Agenten gibt es `coworkee mcp`, einen Model-Context-Protocol-Server über stdio. In Claude Code trägst du ihn mit `claude mcp add coworkee -- coworkee mcp` ein; der Agent liest dann die Optionen, schreibt eine Spec, prüft sie und ruft dieselben Befehle auf, die du sonst tippst.
 
-`coworkee mcp` startet einen Model-Context-Protocol-Server über stdio. Claude Code, Claude Desktop oder VS Code können dann die Optionen und das Spec-Schema lesen, eine Spec schreiben und prüfen, die Anwendung anlegen und Module, Entitäten und Migrationen hinzufügen, mit denselben Befehlen, die Sie tippen würden:
-
-```bash
-claude mcp add coworkee -- coworkee mcp
-```
-
-Dieser Server läuft auf Ihrem Rechner. Eine erzeugte Anwendung hat ihren eigenen MCP-Endpunkt mit den Tools der Anwendung.
+**Stand:** Coworkee ist bei Version 0.0.1.x. Many-to-many-Beziehungen kennen die Entity-Specs noch nicht, und ein Deployment mit `aspire publish` ist bisher nicht geprüft.
 
 ## Weiterlesen
 
-- [Module](../fundamentals/modules.md): Lebenszyklus, Root-Module und Contributors
-- [Messaging und Pipeline](../fundamentals/messaging.md): Commands, Queries, Results, Middleware und Caching
-- [Events und Sperren](../fundamentals/events.md): Integration Events, RabbitMQ und verteilte Sperren
-- [Aufbau der Solution](../getting-started/solution-structure.md): die Projekte einer erzeugten Anwendung
-- [Kommandozeile](../getting-started/cli.md): alle Optionen von `coworkee new` und das Spec-Format
-- [Coworkee Studio](../getting-started/studio.md): der Assistent Seite für Seite
-- [MCP-Server der CLI](../getting-started/mcp.md): Registrierung und Tools
-- [Pakete und Namespaces](../reference/packages.md): welches Paket wohin gehört
+- [Module](../fundamentals/modules.md): Lebenszyklus, Root-Module, Contributors
+- [Messaging und Pipeline](../fundamentals/messaging.md): Commands, Queries, Middleware, Caching
+- [Events und Sperren](../fundamentals/events.md): Integration Events, RabbitMQ, verteilte Sperren
+- [Kommandozeile](../getting-started/cli.md): Optionen von `coworkee new` und das Spec-Format
+- [Coworkee Studio](../getting-started/studio.md) und der [MCP-Server der CLI](../getting-started/mcp.md)
+- [Pakete und Namespaces](../reference/packages.md)

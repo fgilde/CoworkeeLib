@@ -3,89 +3,71 @@ title: "Echtzeit und Zusammenarbeit in Blazor-Apps"
 description: "SignalR-Echtzeit für ASP.NET Core und Blazor: Tabellen und Detailseiten live, Präsenz, Benachrichtigungen, Chat, Kommentare, Hintergrundjobs und Redis-Backplane."
 ---
 
-# Echtzeit-Zusammenarbeit mit ASP.NET Core und Blazor
+# Echtzeit und Zusammenarbeit
 
-Geschäftsanwendungen werden von mehreren Menschen gleichzeitig benutzt. Eine Kollegin ändert einen Auftrag, während Sie ihn ansehen, ein Administrator entzieht eine Rolle, ein Prüfer wartet auf eine Datei. Zeigt jede Seite nur den Stand beim Laden, arbeiten alle mit veralteten Daten, überschreiben sich gegenseitig und drücken ständig F5.
+Eine Coworkee-App hält pro Tab eine SignalR-Verbindung, und das meiste, was andere tun, kommt darüber an. Eine Tabelle lädt neu, wenn sich ihre Entity ändert. Eine Detailseite merkt, dass ihr Datensatz gelöscht wurde, und springt zurück zur Liste. Nimmt ein Admin eine Rolle weg, schrumpft die Navigation, während der Benutzer noch draufschaut.
 
-In einer Coworkee-App folgt jeder offene Tab diesen Änderungen über einen SignalR-Hub. Tabellen laden neu, wenn sich ihre Entity ändert, eine Detailseite bemerkt, dass ihr Eintrag gelöscht wurde, die Navigation passt sich an geänderte Berechtigungen an, und Nachrichten und Benachrichtigungen kommen an, während der Benutzer noch auf der Seite ist. Meist genügt dafür ein Attribut an der Entity, in der Seite ist nichts zu tun.
+Meist reicht dafür ein Attribut an der Entity, in der Seite ist nichts zu tun.
 
-![Chatseite mit den Personen der Organisation und einer offenen Unterhaltung](../assets/screenshots/chat.png){ .shot loading=lazy }
-
-## Entity-Änderungen per SignalR in der Oberfläche
-
-Markieren Sie eine Entity mit `[Realtime]` und der Berechtigung, die zum Ansehen nötig ist. Jedes gespeicherte Anlegen, Ändern und Löschen (weiches Löschen zählt als Löschen) geht an die Benutzer des Mandanten, die diese Berechtigung haben:
+## Entity-Änderungen in der Oberfläche
 
 ```csharp
 [Realtime(CatalogPermissions.Brands.View)]
 public sealed class Brand : AuditedEntity, IMultiTenant { }
 ```
 
-Eine `CoworkeeDataTable` von `BrandDto` folgt `Brand` von selbst und lädt einmal je Änderungsschub neu. Eine Detailseite beobachtet ihren Eintrag mit einer Komponente, alles andere abonniert ein Topic:
+Jedes gespeicherte Anlegen, Ändern und Löschen von `Brand` geht jetzt an die Benutzer des Mandanten, die `Brands.View` haben (weiches Löschen zählt als Löschen). Eine `CoworkeeDataTable` von `BrandDto` folgt dem von selbst und lädt einmal pro Schub neu, 200 gelöschte Zeilen bedeuten also nicht 200 Neuladevorgänge. Detailseiten und alles andere abonnieren ausdrücklich:
 
 ```razor
 <EntityWatch EntityType="Brand" EntityId="Id" ReturnHref="/catalog/brands" OnChanged="LoadAsync" />
 <RealtimeSubscription Topic="type:Brand" OnEvent="_ => LoadAsync()" />
 ```
 
-Daten, die nur manche Benutzer sehen dürfen, bekommen eigene Topics, veröffentlicht mit `PublishAsync` des `IRealtimePublisher`. Massenänderungen über `ExecuteUpdate` oder `ExecuteDelete` umgehen den Change Tracker, auch die melden Sie selbst.
+Zwei Dinge bleiben bei dir. Datensätze, die nur manche sehen dürfen, schickst du über eigene Topics mit `IRealtimePublisher.PublishAsync`. Und `ExecuteUpdate`/`ExecuteDelete` laufen am Change Tracker vorbei, dafür wird nichts veröffentlicht, solange du es nicht selbst tust.
 
-## Berechtigungen, die sich während der Anmeldung ändern
-
-Das Speichern einer Rolle, eines Rechts oder einer Gruppenmitgliedschaft meldet eine Berechtigungsänderung. Der Server verwirft nach dem Commit seine zwischengespeicherten Berechtigungen, der Client lädt sie neu, und Navigation, `AuthorizeView` und Seitenschutz prüfen erneut. Eine Seite, die der Benutzer nicht mehr öffnen darf, wird ohne Neuladen zu „nicht erlaubt“. Außerdem nimmt der Server Topic-Abonnements zurück, denen ein Benutzer nicht mehr folgen darf: Wer das Recht zum Ansehen eines Entity-Typs verliert, bekommt auch keine Änderungsmeldungen dazu mehr.
-
-## Aktive Rolle
-
-Ein Benutzer mit mehreren Rollen kann in der App-Leiste eine davon wählen und nur in ihr handeln. Solange eine aktiv ist, zählen nur ihre Rechte, in der Oberfläche und bei jeder Berechtigungsprüfung der API. Ist eine Seite nicht erlaubt, listet die Komponente `NotAllowed` die anderen Rollen des Benutzers, die sie erlauben würden, und wechselt per Klick.
+Berechtigungsänderungen nehmen denselben Weg. Wird eine Rolle, ein Recht oder eine Gruppenmitgliedschaft gespeichert, lädt der Client seine Rechte neu, `AuthorizeView` und der Seitenschutz prüfen erneut, und der Server nimmt den Benutzer aus Topics, denen er nicht mehr folgen darf. Wer mehrere Rollen hat, wählt in der App-Leiste eine aus und handelt nur in ihr; die Komponente `NotAllowed` bietet den Wechsel in eine Rolle an, mit der die Seite aufgeht.
 
 ## Präsenz, Benachrichtigungen und Chat
 
-- **Präsenz**: Wer mindestens eine offene Verbindung hat, ist online, sichtbar als grüner Punkt an jedem `UserAvatar`. Nach dem letzten geschlossenen Tab geht der Benutzer nach einigen Sekunden offline, ein Neuladen flackert also nicht.
-- **Benachrichtigungen**: Module senden sie mit `NotifyAsync` oder, für jeden Leser übersetzt, mit `NotifyLocalizedAsync`. Sie erscheinen in der Glocke der App-Leiste und unter `/notifications`, live in jedem Tab, und eine tägliche Zusammenfassung verschickt die ungelesenen per Mail.
-- **Chat**: `Coworkee.Chat` ergänzt Direktnachrichten zwischen den Personen einer Organisation. Eine neue Nachricht zeigt eine Snackbar mit Link, außer die Unterhaltung ist offen, und die Ungelesen-Zähler bleiben in allen Tabs gleich.
+Wer mindestens eine offene Verbindung hat, ist online und bekommt einen grünen Punkt am `UserAvatar`. Nach dem letzten geschlossenen Tab dauert es ein paar Sekunden bis „offline“, damit ein Neuladen nicht flackert.
+
+Benachrichtigungen landen in der Glocke der App-Leiste und unter `/notifications`, live in jedem Tab, die ungelesenen zusätzlich einmal am Tag als Mail:
 
 ```csharp
 await notifier.NotifyAsync([reviewerId], "review.requested", "Review requested",
     $"{asset.Name} waits for you", link: $"/assets/{asset.Id}", ct);
 ```
 
-## Kommentare, Tags und Bewertungen an jeder Entity
+`NotifyLocalizedAsync` macht dasselbe mit englischen Texten als Schlüssel, jeder Leser bekommt dann seine Sprache. `Coworkee.Chat` bringt Direktnachrichten innerhalb einer Organisation; eine neue Nachricht erscheint als Snackbar, außer die Unterhaltung ist schon offen.
 
-`Coworkee.Social` hängt Kommentare mit Antworten, Tags und Bewertungen von 1 bis 5 Sternen an Entities, die Sie dafür freischalten. Jeder Baustein hat eigene Rechte zum Ansehen, Anlegen und Moderieren, Kommentar-Threads laden live über den Hub neu, und die Beteiligten werden bei einer Antwort benachrichtigt.
+## Kommentare, Tags und Bewertungen
+
+`Coworkee.Social` hängt Kommentare mit Antworten, Tags und Bewertungen von 1 bis 5 Sternen an Entities, die du dafür freigibst:
 
 ```csharp
 context.Services.AddCoworkeeSocial(social => social
     .Comments<Product>("Products", id => $"/products/{id}")
-    .Tags<Product>("Products")
-    .Ratings<Product>("Products"));
+    .Tags<Product>("Products"));
 ```
 
-In der Seite nehmen `CoworkeeComments`, `CoworkeeTags` und `CoworkeeRating` Entity-Typ und Id entgegen und blenden aus, was der Benutzer nicht darf. `CoworkeeTagCloud` macht aus einem gewählten Tag einen OData-Filter für eine Datentabelle.
+Jeder Baustein hat eigene Rechte zum Ansehen, Anlegen und Moderieren. `CoworkeeComments`, `CoworkeeTags` und `CoworkeeRating` bekommen Entity-Typ und Id und blenden aus, was der Benutzer nicht darf; Kommentar-Threads laden live nach.
 
-## Mailing und Kampagnen
+## Mails, Jobs und die Redis-Backplane
 
-Mails sind Scriban-Vorlagen mit einem Modell und Vorgaben je Sprache. Administratoren überschreiben Betreff und Text im visuellen oder im Quelltext-Editor, legen eigene Vorlagen an und verschicken Kampagnen an intelligente Listen oder eine manuelle Auswahl von Benutzern, sofort oder geplant. Der Versand läuft über eine Warteschlange, wird wiederholt und protokolliert. Mails gehen über SMTP oder einen der HTTP-Anbieter hinaus, und eine Organisation kann ihren eigenen Server nutzen.
+Mails sind Scriban-Vorlagen mit Vorgaben je Sprache, die Admins überschreiben können. Eigene Vorlagen gehen auch als Kampagne an intelligente Benutzerlisten. Verschickt wird über eine Warteschlange, ein Hintergrundjob wiederholt Fehlschläge.
 
-## Hintergrundjobs
-
-Jobs laufen auf Hangfire mit dem Speicher des Datenbank-Providers. Ein eingereihter Job läuft als der Benutzer, der ihn eingereiht hat, Berechtigungen, Mandantenfilter und Audit greifen also wie in einer Anfrage. Wiederkehrende Jobs bekommen einen Cron-Ausdruck:
+Jobs laufen auf Hangfire, und zwar als der Benutzer, der sie eingereiht hat, Mandantenfilter und Audit verhalten sich also wie in einer Anfrage:
 
 ```csharp
 jobs.Enqueue<RenderPreviewJob, RenderPreview>(new RenderPreview(asset.Id), queue: "processing");
 services.AddRecurringJob<CleanupJob>("cleanup", "0 3 * * *");
 ```
 
-Benutzer mit dem Job-Recht finden das Hangfire-Dashboard unter `/admin/jobs`.
+Eine Instanz braucht nichts weiter. Bei mehreren API-Instanzen schaltet ein Connection String `redis` die SignalR-Backplane ein und teilt Präsenz und Cache-Invalidierung zwischen ihnen. Den Redis-Container legt der Aspire-App-Host selbst an; `UseRedis(...)` zeigt auf einen vorhandenen Server, `WithoutRedis()` lässt ihn weg. Antwortet Redis nicht mehr, schreiben die Dienste eine Warnung ins Log und arbeiten mit dem lokalen Stand weiter.
 
-## Skalierung mit Redis-Backplane
+**Stand:** Fährt der Worker mitten in einer Kampagne herunter, bleibt sie auf `Sending` stehen und wird nicht fortgesetzt. Die Präsenzabfrage liest einen Redis-Hash pro Instanz und ist damit für eine Handvoll Instanzen gedacht.
 
-Eine einzelne Instanz braucht nichts weiter. Bei mehreren API-Instanzen schaltet ein Connection String `redis` die SignalR-Backplane ein, ein Ereignis erreicht dann die Verbindungen jeder Instanz. Dieselbe Verbindung sorgt dafür, dass die Präsenz einen Benutzer nur einmal zählt, dass Caches für Berechtigungen, Einstellungen und Texte auf allen Instanzen verworfen werden, und sie trägt Sitzungsänderungen weiter. Der Aspire-App-Host gibt jedem Dienst mit Realtime einen Redis-Container; `UseRedis(...)` verweist auf einen vorhandenen Server, `WithoutRedis()` lässt ihn weg. Antwortet Redis nicht, ist das nicht fatal: Die Dienste protokollieren eine Warnung und arbeiten mit dem lokalen Stand weiter.
-
-## Weiterlesen
-
-- [Realtime und Benachrichtigungen](../modules/realtime.md): Topics, aktive Rolle, Präsenz und die Endpunkte für Benachrichtigungen
-- [Chat](../modules/chat.md): die Chatseite, ihre Endpunkte und Live-Nachrichten in eigenen Komponenten
-- [Kommentare, Tags und Bewertungen](../modules/social.md): Registrierung, Berechtigungen und Client-Komponenten
-- [Mailing](../modules/mailing.md): Vorlagen, Kampagnen und Mail-Anbieter
-- [Hintergrundjobs](../modules/background-jobs.md): Jobs, Warteschlangen und wiederkehrende Jobs
-- [Skalierung mit Redis](../hosting/redis.md): was Redis zwischen den Instanzen teilt
-- [Clients und Sitzungen](../security/clients.md): wie beendete Sitzungen jeden Tab erreichen
+- [Realtime und Benachrichtigungen](../modules/realtime.md): Topics, aktive Rolle, Präsenz, Endpunkte für Benachrichtigungen
+- [Chat](../modules/chat.md) und [Kommentare, Tags und Bewertungen](../modules/social.md)
+- [Mailing](../modules/mailing.md): Vorlagen, Kampagnen, Mail-Anbieter
+- [Hintergrundjobs](../modules/background-jobs.md) und [Skalierung mit Redis](../hosting/redis.md)

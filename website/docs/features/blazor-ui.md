@@ -3,56 +3,41 @@ title: "Blazor admin UI with MudBlazor and data tables"
 description: "A complete Blazor WebAssembly admin UI on MudBlazor: navigation, admin pages, data tables with facets, grouping and saved views, themes and sign-in designs."
 ---
 
-# Blazor admin UI on MudBlazor
-
-The first months of a business app often go into the frame around the actual features: a layout, a menu that respects permissions, user and role pages, settings, a table that can filter and export, a login page that does not look like a default template. None of it is the reason the app exists, and all of it has to work before the first customer sees anything.
-
-`Coworkee.Client.Blazor` is that frame as a package. It is a Blazor WebAssembly shell built on MudBlazor and MudBlazor.Extensions, with the admin pages already in place. The app registers its own pages and menu entries and replaces what it wants to look different.
+# Admin UI
 
 ![Products table grouped by brand with the average rate per group](../assets/screenshots/products-grouped-light.webp){ .shot loading=lazy }
 
-## A Blazor WebAssembly shell in a few lines
+The demo's product list, grouped by brand with an average below each group. Grouping is on by default; the average is the only part the page declares, as an aggregate on the rate column.
+
+`Coworkee.Client.Blazor` is a Blazor WebAssembly shell on MudBlazor and MudBlazor.Extensions. It brings the layout, a permission-aware menu and the admin pages (users, roles, settings, themes, translations, audit log and a few more). Your app adds its own pages next to them.
 
 ```csharp
-var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.Services.AddCoworkeeClient(new Uri(builder.HostEnvironment.BaseAddress), options =>
 {
     options.AppTitle = "MyApp";
     options.AppLogo = "logo.svg";
 });
 builder.Services.AddSingleton<INavigationContributor, MyAppNavigation>();
-var host = builder.Build();
-await host.Services.InitializeCoworkeeClientAsync();
-await host.RunAsync();
 ```
 
-The router uses `CoworkeeLayout` as default layout. With that, the app has an app bar with theme menu, dark mode, right-to-left switch, notifications and user menu, a profile page, and admin pages for users, groups, roles, settings, services, themes, mail templates, languages, translations and the audit log.
+## Menu and edit forms
 
-## Navigation that follows permissions
-
-Menu entries come from `INavigationContributor` implementations. Each entry names its permission, so the menu shows only what the user may open; `NavigationMenuOptions` orders groups, hides entries or moves a built-in admin page into another group.
+Each `CoworkeeNavItem` from an `INavigationContributor` names its permission, so the menu only shows what the user may open. When a role changes, the client reloads its permissions and the menu follows without a page reload.
 
 ```csharp
 public IEnumerable<CoworkeeNavItem> Items =>
 [
     new("Products", "/catalog/products", Icons.Material.Outlined.ViewCarousel, CatalogPermissions.Products.View, Group: "Catalog"),
-    new("Brands", "/catalog/brands", Icons.Material.Outlined.Sell, CatalogPermissions.Brands.View, Group: "Catalog", Order: 1),
 ];
 ```
 
-The menu is a `MudExTreeView` with a filter box that highlights matches. Users switch between tree, list and flat list, and pin the drawer as an icon strip or let it open as an overlay. When roles or grants change, the client reloads its permissions and the menu follows without a page reload.
+The menu itself is a `MudExTreeView` with a filter box. Users can pin it as an icon strip.
 
-## A data table for OData sets
+Forms for plain models come from `Dialogs.ShowEditAsync(title, model, save)`, which renders a `MudExObjectEditForm` in a full-height side sheet. It slides in from the side the user clicked on. If the API rejects the save, the dialog stays open and shows its validation messages; a foreign key gets an `ODataPicker` with one line of meta configuration.
 
-`CoworkeeDataTable<T>` is a MudBlazor data grid on top of an [OData set](data.md). The server pages, sorts, filters and counts. The table adds what users of list screens ask for:
+## The data table
 
-- **Facets** from `[ProvideFacet]` on the entity, as pills above the rows or in a side panel, with views that fit the values: check lists, chips, range sliders over a histogram, date presets.
-- **Column filters** in every header, with editors for text, numbers, dates and enums. A column with a facet shows the facet's options and counts.
-- **Advanced filter** with the query builder: nested *all / any* groups.
-- **Grouping** by dragging a header onto the group zone, nested over several columns, with aggregates per group.
-- **Saved views**: search, facets, filters, column order and widths, grouping, sorting and density under a name, stored in the user's settings so they follow the user to every device. A link button copies an address that opens the table exactly as it is.
-- **Pager or endless scrolling**, chosen per table or by a setting that administrators set for everyone and users can override.
-- **Export** as CSV, JSON and Excel of all rows of the current filter, and Excel import with `Importable="true"`.
+`CoworkeeDataTable<T>` is a MudBlazor grid over an [OData set](data.md). The server pages, sorts and counts.
 
 ```razor
 <CoworkeeDataTable T="ProductDto" EntitySet="Products" Expand="Brand" SearchFields="SearchFields"
@@ -64,15 +49,17 @@ The menu is a `MudExTreeView` with a filter box that highlights matches. Users s
 </CoworkeeDataTable>
 ```
 
-Tables over `[Realtime]` entities reload when someone else changes a row.
+From that markup users get facets (as pills above the rows or in a side panel), a filter in every column header, the query builder as *Advanced filter* and grouping by dragging a header. A column with a facet shows the facet's options and counts in its filter, so the two never disagree.
 
-## Edit forms with MudEx object edit and slide-in dialogs
+Saved views keep the whole arrangement under a name: filters, column order and widths, grouping, sorting. They are stored in the user's settings and follow the user to another device. The link button copies an address that opens the table exactly as it looks.
 
-For plain models, `Dialogs.ShowEditAsync(title, model, save)` generates the form with `MudExObjectEditForm`. It opens as a full-height side sheet that slides in from the side the user clicked on, with two columns on wide screens. With a save function the dialog stays open and shows the API's validation messages when saving fails. Editors such as `ODataPicker` for a foreign key are set per property in the meta configuration.
+Paging is either a pager or endless scrolling; administrators set the default, users override it. Export covers CSV, JSON and Excel of the full filtered result. Tables over `[Realtime]` entities reload when someone else changes a row, which is mostly useful and occasionally startling.
 
-## Themes: Ocean by default, per user, with your logo
+## Themes, sign-in and loading screen
 
-Themes are data: palettes for light and dark mode, typography, radius, navigation width, density, logo and custom CSS. Seven themes ship with the package, Ocean is the default. Administrators edit them with a live preview, publish them and choose the organisation's default; each user picks a published theme and light, dark or system mode in the account settings. An app adds its own colors with `ThemingOptions`:
+![Themes page with the sign-in page layouts Card, Split and Slide and a tile per theme](../assets/screenshots/themes-light.webp){ .shot loading=lazy }
+
+Seven themes ship, Ocean is the default. Administrators edit them with a live preview and publish them; each user then picks one, plus light or dark mode. An app brings its own colors:
 
 ```csharp
 context.Services.Configure<ThemingOptions>(themes =>
@@ -82,35 +69,14 @@ context.Services.Configure<ThemingOptions>(themes =>
 });
 ```
 
-![Themes page with the sign-in page layouts Card, Split and Slide and a tile per theme](../assets/screenshots/themes-light.webp){ .shot loading=lazy }
+The sign-in pages of the auth server take colors, font and logo from the default theme. Layouts are `Card`, `Split` (image or video beside the form) and `Slide`, where a colored panel moves across between sign-in and registration. An own layout is one Razor file in the auth host.
 
-While the WebAssembly app downloads, `CoworkeeLoadingScreen` shows a server-rendered screen in the colors and with the logo of the default theme. The ring around the logo shows the real download progress; if the start fails, the screen turns into an error message with *Reload*.
+While WebAssembly downloads, `CoworkeeLoadingScreen` shows a server-rendered screen in the theme's colors, with the real download progress in a ring around the logo. If the start fails, it turns into an error message with *Reload*.
 
-## Sign-in designs: Card, Split and Slide
+Anything in the shell can be swapped with `builder.Services.ReplaceComponent<CoworkeeUserMenu, MyUserMenu>()`. The layout is split into parts such as `CoworkeeAppBar` and `CoworkeeNavMenu`, so a change replaces one piece.
 
-The account pages of the auth server follow the default theme's colors, font and logo. Three layouts ship: `Card`, `Split` with an image or video beside the form, and `Slide`, the default, where a colored panel moves to the other side between sign-in and registration. Administrators of the system organisation pick the layout on the Themes page; an own layout is a Razor file in the auth host.
+The same apps can also run in a web desktop: `coworkee new Shop --airworks` adds an [AirWorks](../web/airworks.md) client with windows and a taskbar, signed in through the same auth server and talking to the same API.
 
-![Slide layout halfway through the move from sign-in to registration](../assets/screenshots/signin-sliding-light.webp){ .shot loading=lazy }
+**Status:** the library's pages live under generic `/admin/...` routes, and an app page with the same route breaks Blazor routing. Grouped rows cannot be virtualized, so a grouped table falls back to the pager.
 
-## Replace any component
-
-Every component of the shell can be swapped without forking the layout:
-
-```csharp
-builder.Services.ReplaceComponent<CoworkeeUserMenu, MyUserMenu>();
-```
-
-The layout is split into parts (`CoworkeeAppBar`, `CoworkeeBrand`, `CoworkeeNavMenu`, `CoworkeeUserMenu`, `NotificationBell`, ...), so a change replaces one part instead of the whole frame. For menu entries and app bar items the contribution points (`INavigationContributor`, `IAppBarContributor`) are usually enough.
-
-## AirWorks: a web desktop as second client
-
-Next to the Blazor app, `coworkee new Shop --airworks` adds a web desktop client built on AirWorks, with windows, a taskbar and several desktops. It signs in through the same auth server, talks to the same API and brings most of the Blazor app's features: settings, files, data tables, chat, reports, the AI assistant and the administration.
-
-## Where to go next
-
-- [Client and layout](../ui/client.md): setup, navigation, app bar, building blocks
-- [Data tables](../ui/data-table.md): parameters, facets, column filters, views and edit dialogs
-- [Replacing components](../ui/customizing.md): layout parts and the about dialog
-- [Theming](../modules/theming.md): built-in themes, app themes, logo and loading screen
-- [Sign-in pages and designs](../security/sign-in-pages.md): layouts, configuration and own designs
-- [AirWorks client](../web/airworks.md): the web desktop and writing your own AirWorks apps
+Reference: [client and layout](../ui/client.md), [data tables](../ui/data-table.md), [replacing components](../ui/customizing.md), [theming](../modules/theming.md), [sign-in pages](../security/sign-in-pages.md).
