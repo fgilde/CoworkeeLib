@@ -1,6 +1,6 @@
 # CONTINUE – handover for the next agent
 
-State of the Coworkee library as of 2026-10-14: everything below is merged on `main` and pushed; the next release is **0.0.1.22** (0.0.1.21 is the latest on nuget.org). Demo and Sharemee are on the same state (`master`, pushed).
+State of the Coworkee library as of 2026-10-15: everything below is merged on `main` and pushed. Released: **0.0.1.23** on nuget.org and `@coworkee/client` / `@coworkee/airworks` `0.0.1023` on npm (release workflow with `NPM_TOKEN`; the owner rotates the token or switches to trusted publishing). The round of 2026-10-15 is not released yet. Demo and Sharemee are on the same state (`master`, pushed).
 
 ## Repositories
 | Repo | Local path | Remote / branch |
@@ -92,7 +92,21 @@ Spec `docs/superpowers/specs/2026-10-14-mail-campaigns-and-editors-design.md`, p
 - Demo and Sharemee: migrations, OpenAPI snapshots and TS SDKs are current.
 - Browser-verified in the demo (Playwright): own template, `{` mention, Source mode with Monaco + completions, CSS rules/raw editor, campaign wizard sending 3/3 (Mailpit), unsubscribe confirm page + POST through the web app. Two bugs found and fixed there: Monaco defines `window.monaco` asynchronously (`loadMonaco` waits now), and the BFF rejected the unsubscribe form post without `X-CSRF` (`BffOptions.CsrfExemptPaths`, default `/api/v1/mail/unsubscribe`).
 
-## Product backlog (older ideas, not part of the 0.0.1.22 work)
+## Owner round 2026-10-15 (on main, not released)
+Spec `docs/superpowers/specs/2026-10-15-loading-tables-demo-design.md`, reports `docs/superpowers/r15-loading-report.md`, `r15-tables-report.md`, `r15-studio-report.md`.
+- Loading screen (`Coworkee.Bff.CoworkeeLoadingScreen`, one line in every app's `App.razor`): server-rendered in the theme (user's own theme/mode/language via cookie for signed-in users, default theme for anonymous), real WebAssembly progress, animated / sign-in media / plain background (`SignInDesign.LoadingScreen`, CLI `--loading-screen`), reduced motion, immediate error state on a failed start, logo from `/bff/loading-screen/logo` (cacheable), app page `no-store`; hides when a layout claims it (`[data-coworkee-loading-claim]`) after the theme, otherwise after the first render.
+- Public files: `StoredFile.IsPublic` (EF change, migration in apps with the Files module), toggle + badge + copy link in the file manager, anonymous `GET /api/v1/files/public/{id}/{name}`; logo and sign-in media can be picked from the files.
+- Data tables: `PageMode` (`FromSettings`/`Pager`/`EndlessScroll`, virtualized), setting `DataTable.DefaultPageMode` (Global + User), grouping falls back to the pager.
+- Client entities: `ClientEntitySwitch` (icon + sync ring, browser/server, compare -> toast -> faster mode, per user) replaces `ClientEntityIndicator` (breaking); faster local queries, dropdown facets keep column filter choices, `DateTimeOffset` column filters, synchronous dispose of the IndexedDB storage.
+- Edit dialogs keep `RenderWith` editors (e.g. `ODataPicker`) in the grid; enums render through `EnumEditor` with localized labels; product images through `ImageDataUrlEdit` (`MudExUploadEdit`); theme logo dialog takes `UploadRequestDataLoaded`.
+- MudEx texts (upload, style editor, cron, ...) ship in all 22 languages; at start-up never-edited stored machine translations of keys that are now shipped are removed.
+- CLI/Studio: `CliOption.DependsOn` (e.g. `airworksPackages` only with `airworks`), icons and product links on every card, the final spec lists every library module, `coworkee spec show`.
+- AirWorks: own Material glyph icons (`icons` export of `@coworkee/airworks`); the demo has `src/MyApp.AirWorks` with three hand-written apps (catalog, product window, sales overview) and the docs a "Write your own AirWorks app" section.
+- Demo: migration `PublicFiles`, loading screen line, client entity switch, OpenAPI/SDK; Sharemee: loading screen line, OpenAPI/SDK (Sharemee does not use the Files module, no migration).
+- After the next release: bump `@coworkee/client`/`@coworkee/airworks` in the demo's `src/MyApp.AirWorks/ClientApp/package.json` from `0.0.1023` to the new npm version (new icons, loading/theme changes).
+- Verified in the browser (demo): loading screen with progress, product and order dialogs aligned, Region filter, client switch compare toast, endless scroll, logo upload and pick from files, translated upload texts, AirWorks desktop with the demo apps.
+
+## Product backlog (older ideas, not part of the recent rounds)
 - Own `IMailTransport` with a new provider name is only selectable via `Coworkee:Settings:Defaults:Mail.Provider` (choices are the four built-ins).
 - Translations of the 21 new languages were checked by sample, not by native speakers (km, ar least certain).
 - MudEx: `MudExDateRangeSlider` Day mode default step ≈ 0 (arrow keys dead; lib passes `StepLength`), no per-thumb aria-label.
