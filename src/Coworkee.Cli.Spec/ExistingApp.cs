@@ -1,34 +1,57 @@
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
-using Coworkee.Cli.Spec;
 
-namespace Coworkee.Cli.Apps;
+namespace Coworkee.Cli.Spec;
 
 /// <summary>
-/// The options of an app created before <c>.coworkee/app.json</c> existed, read from what the template wrote:
+/// An app created with <c>coworkee new</c>: its options from <c>.coworkee/app.json</c>, or for apps created before that file existed, read from what the template wrote:
 /// package references, the app host, the infrastructure module and the seed. Options it cannot see keep their default.
 /// </summary>
 // ponytail: regexes over the template's own lines; an app that rewrote them reads as the defaults, the 3-way merge then lists the conflicts
-internal static class AppInference
+public static class ExistingApp
 {
-    public static AppSpec Infer(Solution solution)
+    public static string StatePath(string root) => Path.Combine(root, ".coworkee", "app.json");
+
+    /// <summary>The folder with the .slnx at or above <paramref name="directory"/>, or null.</summary>
+    public static string? Root(string directory)
     {
-        var src = solution.Src;
-        var name = solution.Name;
-        var appHost = Read(Path.Combine(src, $"{name}.AppHost", "AppHost.cs"));
-        var infrastructure = Read(Path.Combine(src, $"{name}.Infrastructure", $"{name}InfrastructureModule.cs"));
-        var seed = Read(Path.Combine(src, $"{name}.Migrations", "DemoSeed.cs"));
+        for (var current = new DirectoryInfo(directory); current is not null; current = current.Parent)
+        {
+            if (current.Exists && current.GetFiles("*.slnx").Length > 0)
+            {
+                return current.FullName;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>The stored spec of the app in <paramref name="root"/>, or the one read from its files.</summary>
+    public static (AppSpec Spec, bool Inferred) Read(string root)
+    {
+        var file = StatePath(root);
+        return File.Exists(file) ? (SpecJson.Read(File.ReadAllText(file)), false) : (Infer(root), true);
+    }
+
+    public static AppSpec Infer(string root)
+    {
+        var name = Path.GetFileNameWithoutExtension(Directory.GetFiles(root, "*.slnx").First());
+        var src = Path.Combine(root, "src");
+        var hasSamples = Directory.Exists(Path.Combine(src, name + ".Catalog"));
+        var appHost = Text(Path.Combine(src, $"{name}.AppHost", "AppHost.cs"));
+        var infrastructure = Text(Path.Combine(src, $"{name}.Infrastructure", $"{name}InfrastructureModule.cs"));
+        var seed = Text(Path.Combine(src, $"{name}.Migrations", "DemoSeed.cs"));
         var projects = Directory.Exists(src)
             ? string.Concat(Directory.EnumerateFiles(src, "*.csproj", SearchOption.AllDirectories).Select(File.ReadAllText))
             : string.Empty;
 
         var values = new Dictionary<string, string?>
         {
-            ["samples"] = Flag(solution.HasSamples),
-            ["tests"] = Flag(Directory.Exists(Path.Combine(solution.Root, "tests"))),
-            ["githubActions"] = Flag(File.Exists(Path.Combine(solution.Root, ".github", "workflows", "ci.yml"))),
-            ["devcontainer"] = Flag(Directory.Exists(Path.Combine(solution.Root, ".devcontainer"))),
-            ["git"] = Flag(Directory.Exists(Path.Combine(solution.Root, ".git"))),
+            ["samples"] = Flag(hasSamples),
+            ["tests"] = Flag(Directory.Exists(Path.Combine(root, "tests"))),
+            ["githubActions"] = Flag(File.Exists(Path.Combine(root, ".github", "workflows", "ci.yml"))),
+            ["devcontainer"] = Flag(Directory.Exists(Path.Combine(root, ".devcontainer"))),
+            ["git"] = Flag(Directory.Exists(Path.Combine(root, ".git"))),
             ["airworks"] = Flag(appHost.Contains("AddAirWorks<", StringComparison.Ordinal)),
             ["airworksPackages"] = Directory.Exists(Path.Combine(src, $"{name}.AirWorks", "ClientApp", "vendor")) ? "bundled" : "npm",
             ["eventBus"] = Has(projects, "Coworkee.EventBus.RabbitMq") ? "rabbitMq" : Has(projects, "Coworkee.EventBus") ? "inProcess" : "none",
@@ -57,7 +80,7 @@ internal static class AppInference
             ["defaultLanguage"] = Match(infrastructure, @"localization\.DefaultLanguage = ""([^""]*)"";"),
             ["colorMode"] = Match(seed, @"Settings\[""Theme\.Mode""\] = ""(\w+)"";"),
             ["registration"] = Flag(seed.Contains("Account.AllowRegistration", StringComparison.Ordinal)),
-            ["repository"] = Match(Read(Path.Combine(solution.Root, "README.md")), @"quickrun\.org/run\?repo=([^)\s]+)\)"),
+            ["repository"] = Match(Text(Path.Combine(root, "README.md")), @"quickrun\.org/run\?repo=([^)\s]+)\)"),
         };
 
         foreach (var option in OptionCatalog.All.Where(o => o is { Kind: OptionKind.Bool, Package: not null } && !values.ContainsKey(o.Id)))
@@ -66,7 +89,7 @@ internal static class AppInference
         }
 
         // the samples bring the extended attributes anyway, so their package says nothing then
-        if (solution.HasSamples)
+        if (hasSamples)
         {
             values["extendedAttributes"] = "false";
         }
@@ -95,5 +118,5 @@ internal static class AppInference
 
     private static string? Match(string text, string pattern) => Regex.Match(text, pattern) is { Success: true } match && match.Groups[1].Length > 0 ? match.Groups[1].Value : null;
 
-    private static string Read(string path) => File.Exists(path) ? File.ReadAllText(path) : string.Empty;
+    private static string Text(string path) => File.Exists(path) ? File.ReadAllText(path) : string.Empty;
 }

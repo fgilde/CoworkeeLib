@@ -19,7 +19,7 @@ public sealed class AddTemplateTests(TemplateFixture template)
         ];
         var app = await template.CreateAsync("infer", options);
 
-        var inferred = SpecOptions.Resolve(AppInference.Infer(Solution.Find(app)));
+        var inferred = SpecOptions.Resolve(ExistingApp.Infer(app));
 
         for (var i = 0; i < options.Length; i += 2)
         {

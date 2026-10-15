@@ -9,14 +9,10 @@ namespace Coworkee.Cli.Apps;
 /// </summary>
 internal static class AppState
 {
-    public static string PathOf(string root) => Path.Combine(root, ".coworkee", "app.json");
+    public static string PathOf(string root) => ExistingApp.StatePath(root);
 
-    /// <summary>The stored spec, or the one <see cref="AppInference"/> reads from the files of an older app.</summary>
-    public static (AppSpec Spec, bool Inferred) Read(Solution solution)
-    {
-        var file = PathOf(solution.Root);
-        return File.Exists(file) ? (SpecJson.Read(File.ReadAllText(file)), false) : (AppInference.Infer(solution), true);
-    }
+    /// <summary>The stored spec, or the one <see cref="ExistingApp"/> reads from the files of an older app.</summary>
+    public static (AppSpec Spec, bool Inferred) Read(Solution solution) => ExistingApp.Read(solution.Root);
 
     public static void Write(string root, AppSpec spec)
     {
