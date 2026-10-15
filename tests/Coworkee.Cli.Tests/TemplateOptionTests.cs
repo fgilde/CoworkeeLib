@@ -257,6 +257,17 @@ public sealed class TemplateOptionTests(TemplateFixture template)
     }
 
     [Fact]
+    public async Task Generated_app_with_workflows_elsa_and_the_samples_builds()
+    {
+        var feed = Environment.GetEnvironmentVariable("COWORKEE_TEST_FEED");
+        Assert.SkipWhen(string.IsNullOrEmpty(feed), "Set COWORKEE_TEST_FEED to a folder with packed Coworkee packages (build/pack-local.ps1) to build a generated app.");
+        var app = await template.CreateAsync("build-workflows", "--workflows", "true", "--elsa", "true", "--grafana", "false", "--webDataStudio", "false");
+        await Dotnet.RunAsync(app, "nuget", "add", "source", Path.GetFullPath(feed!), "--name", "local", "--configfile", "nuget.config");
+
+        await Dotnet.RunAsync(app, "build", "Shop.slnx");
+    }
+
+    [Fact]
     public async Task Generated_app_with_ollama_and_without_redis_builds()
     {
         var feed = Environment.GetEnvironmentVariable("COWORKEE_TEST_FEED");
