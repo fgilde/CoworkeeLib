@@ -63,6 +63,20 @@ plugins:
           site_description: Coworkee ist ein quelloffenes Anwendungsframework für .NET, Blazor, ASP.NET Core und Aspire, mit Identity, Mandanten, Admin-Oberfläche und KI.
           nav_translations:
             Home: Start
+            Features: Features
+            Modular architecture: Modulare Architektur
+            Identity and security: Identity und Sicherheit
+            Multi-tenancy and settings: Mandanten und Einstellungen
+            Data and queries: Daten und Abfragen
+            Blazor admin UI: Blazor-Admin-Oberfläche
+            Realtime and collaboration: Realtime und Zusammenarbeit
+            AI assistant: KI-Assistent
+            Reporting and dashboards: Berichte und Dashboards
+            Localization and translation: Lokalisierung und Übersetzung
+            Aspire and observability: Aspire und Observability
+            Files and search: Dateien und Suche
+            Use cases: Einsatzbeispiele
+            Why Coworkee: Warum Coworkee
             Getting started: Erste Schritte
             Installation: Installation
             Command line: Kommandozeile
@@ -145,6 +159,21 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Features:
+      - features/index.md
+      - Modular architecture: features/architecture.md
+      - Identity and security: features/identity.md
+      - Multi-tenancy and settings: features/multi-tenancy.md
+      - Data and queries: features/data.md
+      - Blazor admin UI: features/blazor-ui.md
+      - Realtime and collaboration: features/realtime.md
+      - AI assistant: features/ai.md
+      - Reporting and dashboards: features/reporting.md
+      - Localization and translation: features/localization.md
+      - Aspire and observability: features/observability.md
+      - Files and search: features/files.md
+      - Use cases: features/use-cases.md
+      - Why Coworkee: features/why-coworkee.md
   - Getting started:
       - Installation: getting-started/installation.md
       - Command line: getting-started/cli.md
