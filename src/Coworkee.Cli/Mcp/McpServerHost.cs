@@ -9,7 +9,7 @@ internal static class McpServerHost
     public const string Instructions =
         "Creates and extends Coworkee applications (.NET 10, Aspire, Blazor WebAssembly, OpenIddict, Postgres). "
         + "To create an app: list_options and get_spec_schema (or get_spec_example), write a spec with the user's choices and entities, validate_spec, then create_app. "
-        + "To extend an app: add_module, add_entity, then add_migration. search_docs answers questions about the library.";
+        + "To extend an app: add_module, add_entity or import_entities (from a database, OpenAPI or CSV), then add_migration. search_docs answers questions about the library.";
 
     /// <summary>The MCP server over stdio, or over the given streams (tests).</summary>
     public static IHost Build(CliRunner runner, Stream? input = null, Stream? output = null)

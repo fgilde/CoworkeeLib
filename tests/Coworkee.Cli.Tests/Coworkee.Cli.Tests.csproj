@@ -1,5 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <PackageReference Include="Testcontainers.PostgreSql" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\src\Coworkee.Cli\Coworkee.Cli.csproj" />
   </ItemGroup>
 </Project>

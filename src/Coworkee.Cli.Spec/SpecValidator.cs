@@ -8,7 +8,7 @@ public static partial class SpecValidator
 
     private static readonly string[] Projects = ["Api", "AppHost", "Application", "Auth", "Contracts", "Infrastructure", "Migrations", "ServiceDefaults", "Web", "Catalog", "Documents"];
     private static readonly string[] SampleEntities = ["Brand", "Product", "Document", "DocumentType"];
-    private static readonly string[] BaseProperties = ["Id", "TenantId", "CreatedAt", "CreatedBy", "ModifiedAt", "ModifiedBy"];
+    internal static readonly string[] BaseProperties = ["Id", "TenantId", "CreatedAt", "CreatedBy", "ModifiedAt", "ModifiedBy"];
     private static readonly string[] Images = [".svg", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".ico"];
     private static readonly string[] Videos = [".mp4", ".webm", ".ogg"];
 
