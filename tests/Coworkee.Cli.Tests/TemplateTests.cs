@@ -52,6 +52,21 @@ public sealed class TemplateTests(TemplateFixture template)
         await Dotnet.RunAsync(app, "build", "Shop.slnx");
     }
 
+    [Fact]
+    public async Task Generated_app_with_webhooks_and_samples_builds_and_its_migration_covers_the_model()
+    {
+        var feed = Environment.GetEnvironmentVariable("COWORKEE_TEST_FEED");
+        Assert.SkipWhen(string.IsNullOrEmpty(feed), "Set COWORKEE_TEST_FEED to a folder with packed Coworkee packages (build/pack-local.ps1) to build a generated app.");
+        var app = await template.CreateAsync("build-webhooks", "--webhooks", "true");
+        await Dotnet.RunAsync(app, "nuget", "add", "source", Path.GetFullPath(feed!), "--name", "local", "--configfile", "nuget.config");
+        await Dotnet.RunAsync(app, "restore", "Shop.slnx");
+        var solution = Solution.Find(app);
+        await Dotnet.RunAsync(app, MigrationsCommand.AddArgs(solution, NewCommand.MigrationName(solution, new AppSpec { Name = "Shop" })!)[1..]);
+
+        await Dotnet.RunAsync(app, "build", "Shop.slnx", "--no-restore");
+        await Dotnet.RunAsync(app, "test", "--project", "tests/Shop.Migrations.Tests", "--no-build");
+    }
+
     [Theory]
     [InlineData("postgres")]
     [InlineData("sqlServer")]
