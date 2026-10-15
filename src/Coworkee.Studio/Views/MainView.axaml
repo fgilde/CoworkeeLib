@@ -93,6 +93,9 @@
         <Button Classes="icon" Command="{Binding OpenSpecCommand}" ToolTip.Tip="{l:L 'Open a spec (Ctrl+O)'}" chrome:WindowDecorationProperties.ElementRole="User">
           <PathIcon Data="{StaticResource Icon.FolderOpen}" />
         </Button>
+        <Button Classes="icon" Command="{Binding ShowAppsCommand}" ToolTip.Tip="{l:L 'My apps'}" chrome:WindowDecorationProperties.ElementRole="User">
+          <PathIcon Data="{StaticResource Icon.Apps}" />
+        </Button>
         <Button Classes="icon" Command="{Binding SaveSpecCommand}" ToolTip.Tip="{l:L 'Save the spec (Ctrl+S)'}" chrome:WindowDecorationProperties.ElementRole="User">
           <PathIcon Data="{StaticResource Icon.Save}" />
         </Button>
@@ -139,7 +142,7 @@
 
       <Grid ColumnDefinitions="Auto,*">
         <!-- the sliding panel of the sign-in pages -->
-        <Border x:Name="Hero" Classes.wide="{Binding IsWelcome}" Background="{DynamicResource Hero}" ClipToBounds="True">
+        <Border x:Name="Hero" Classes.wide="{Binding WideHero}" Background="{DynamicResource Hero}" ClipToBounds="True">
           <Panel>
             <Ellipse Width="420" Height="420" Fill="#14ffffff" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-170,-170,0" />
             <Ellipse Width="260" Height="260" Fill="#0fffffff" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="-90,0,0,-60" />
@@ -225,6 +228,9 @@
               </CompositePageTransition>
             </TransitioningContentControl.PageTransition>
           </TransitioningContentControl>
+
+          <!-- My apps and the gallery cover the wizard -->
+          <ContentControl Grid.Row="0" Grid.RowSpan="3" Content="{Binding Page}" IsVisible="{Binding HasPage}" Background="{DynamicResource Background}" ZIndex="1" />
 
           <Border Grid.Row="2" BorderBrush="{DynamicResource Lines}" BorderThickness="0,1,0,0" Background="{DynamicResource Surface}" Padding="44,12" IsVisible="{Binding ShowFooter}">
             <Grid ColumnDefinitions="Auto,*,Auto,Auto">

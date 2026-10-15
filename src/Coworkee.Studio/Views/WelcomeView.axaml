@@ -37,6 +37,27 @@
         </Button>
       </UniformGrid>
 
+      <UniformGrid Columns="2" ColumnSpacing="16">
+        <Button Classes="tile" Command="{Binding Main.ShowGalleryCommand}" Height="96">
+          <Grid ColumnDefinitions="Auto,*" Margin="18,16">
+            <PathIcon Classes="large" Foreground="{DynamicResource Primary}" Data="{StaticResource Icon.Apps}" VerticalAlignment="Top" />
+            <StackPanel Grid.Column="1" Margin="14,0,0,0" Spacing="4">
+              <TextBlock Classes="h3" Text="{l:L 'Start from a template'}" />
+              <TextBlock Classes="caption" TextWrapping="Wrap" Text="{l:L 'A CRM, a helpdesk, a small shop and more, ready to adjust.'}" />
+            </StackPanel>
+          </Grid>
+        </Button>
+        <Button Classes="tile" Command="{Binding Main.ShowAppsCommand}" Height="96">
+          <Grid ColumnDefinitions="Auto,*" Margin="18,16">
+            <PathIcon Classes="large" Foreground="{DynamicResource Secondary}" Data="{StaticResource Icon.Play}" VerticalAlignment="Top" />
+            <StackPanel Grid.Column="1" Margin="14,0,0,0" Spacing="4">
+              <TextBlock Classes="h3" Text="{l:L 'My apps'}" />
+              <TextBlock Classes="caption" TextWrapping="Wrap" Text="{l:L 'Start, stop and open the apps you made.'}" />
+            </StackPanel>
+          </Grid>
+        </Button>
+      </UniformGrid>
+
       <StackPanel Spacing="10" IsVisible="{Binding HasRecent}">
         <TextBlock Classes="overline" Text="{l:L 'RECENT SPECS'}" />
         <ItemsControl ItemsSource="{Binding Recent}">

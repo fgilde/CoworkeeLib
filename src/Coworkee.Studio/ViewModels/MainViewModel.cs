@@ -40,6 +40,8 @@ public sealed partial class MainViewModel : ObservableObject
         Review = new ReviewStep(this);
         Generate = new GenerateStep(this);
         Update = new UpdateViewModel(this);
+        Apps = new MyAppsViewModel(this);
+        Gallery = new GalleryViewModel(this);
         Steps = [Welcome, Basics, Branding, SignIn, Architecture, Languages, Entities, Users, Review, Generate];
         Current = Welcome;
         _loading = false;
@@ -82,10 +84,23 @@ public sealed partial class MainViewModel : ObservableObject
 
     public UpdateViewModel Update { get; }
 
+    public MyAppsViewModel Apps { get; }
+
+    public GalleryViewModel Gallery { get; }
+
+    /// <summary>My apps or the gallery over the wizard; null shows the wizard.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasPage), nameof(WideHero))]
+    public partial object? Page { get; set; }
+
+    public bool HasPage => Page is not null;
+
+    public bool WideHero => IsWelcome && !HasPage;
+
     public IReadOnlyList<StepViewModel> Steps { get; } = [];
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CurrentIndex), nameof(IsWelcome), nameof(CanGoBack), nameof(CanGoNext), nameof(NextText), nameof(ProgressText), nameof(Progress), nameof(ShowFooter))]
+    [NotifyPropertyChangedFor(nameof(CurrentIndex), nameof(IsWelcome), nameof(CanGoBack), nameof(CanGoNext), nameof(NextText), nameof(ProgressText), nameof(Progress), nameof(ShowFooter), nameof(WideHero))]
     public partial StepViewModel Current { get; set; }
 
     [ObservableProperty]
@@ -208,8 +223,23 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    public void ShowApps()
+    {
+        Apps.Scan();
+        Apps.Refresh();
+        Page = Apps;
+    }
+
+    [RelayCommand]
+    public void ShowGallery() => Page = Gallery;
+
+    [RelayCommand]
+    public void ClosePage() => Page = null;
+
+    [RelayCommand]
     public void NewApp()
     {
+        Page = null;
         Load(new AppSpec(), null);
         SpecPath = null;
         AiApiKey = null;
@@ -226,6 +256,7 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     public void Continue()
     {
+        Page = null;
         Basics.IsReachable = true;
         GoTo(Basics);
     }
@@ -257,6 +288,7 @@ public sealed partial class MainViewModel : ObservableObject
             }
 
             Generate.Reset();
+            Page = null;
             GoTo(Review);
         }
         catch (Exception exception) when (exception is IOException or JsonException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
@@ -510,6 +542,7 @@ public sealed partial class MainViewModel : ObservableObject
             step.RefreshTexts();
         }
 
+        Gallery.RefreshTexts();
         OnPropertyChanged(string.Empty);
         LanguageChanged?.Invoke();
     }

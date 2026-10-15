@@ -51,7 +51,7 @@ public sealed partial class GenerateStep : StepViewModel
     private bool _nextSteps;
 
     public GenerateStep(MainViewModel main)
-        : base(main) => App = new AppRunViewModel(this);
+        : base(main) => App = new AppRunViewModel(main, () => Output, action => Dispatch(action));
 
     protected override string TitleText => "Create";
 
@@ -297,6 +297,11 @@ public sealed partial class GenerateStep : StepViewModel
         };
         ShowLog |= RunState is RunState.Failed or RunState.Invalid;
         SignIn = RunState == RunState.Succeeded && Output is { } output ? SignInInfo.Read(output) : null;
+        if (RunState == RunState.Succeeded && Output is { } created)
+        {
+            Main.Apps.Remember(created, Main.ToSpec());
+        }
+
         Main.UpdateStates();
     }
 

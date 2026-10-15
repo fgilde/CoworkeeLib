@@ -1,0 +1,66 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Coworkee.Studio.ViewModels"
+             xmlns:v="using:Coworkee.Studio.Views"
+             xmlns:l="using:Coworkee.Studio.Localization"
+             x:Class="Coworkee.Studio.Views.GalleryView"
+             x:DataType="vm:GalleryViewModel">
+  <ScrollViewer>
+    <StackPanel Margin="44,26,44,40" Spacing="18" MaxWidth="980" HorizontalAlignment="Left">
+      <Grid ColumnDefinitions="Auto,*">
+        <Button Classes="icon" Command="{Binding Main.ClosePageCommand}" ToolTip.Tip="{l:L Back}" VerticalAlignment="Top">
+          <PathIcon Data="{StaticResource Icon.ChevronLeft}" />
+        </Button>
+        <StackPanel Grid.Column="1" Margin="8,0,0,0" Spacing="4">
+          <TextBlock Classes="h1" Text="{l:L 'Start from a template'}" />
+          <TextBlock Classes="muted" FontSize="14" TextWrapping="Wrap"
+                     Text="{l:L 'A starter spec fills every step of the wizard: modules, entities, roles and a few options that suit it. Change whatever you like before you create the app.'}" />
+        </StackPanel>
+      </Grid>
+
+      <TextBox Watermark="{l:L 'Search the templates'}" Text="{Binding Search}" Width="420" HorizontalAlignment="Left" x:Name="SearchBox">
+        <TextBox.InnerLeftContent>
+          <PathIcon Classes="small" Data="{StaticResource Icon.Search}" Margin="10,0,0,0" Foreground="{DynamicResource TextSecondary}" />
+        </TextBox.InnerLeftContent>
+      </TextBox>
+
+      <ListBox Classes="segments" ItemsSource="{Binding Tags}" SelectedItem="{Binding Tag}" SelectionMode="Single,Toggle" HorizontalAlignment="Left">
+        <ListBox.ItemsPanel>
+          <ItemsPanelTemplate>
+            <WrapPanel />
+          </ItemsPanelTemplate>
+        </ListBox.ItemsPanel>
+        <ListBox.ItemTemplate>
+          <DataTemplate x:DataType="x:String">
+            <TextBlock Text="{Binding StringFormat='#{0}'}" />
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+
+      <TextBlock Classes="muted" IsVisible="{Binding IsEmpty}" Text="{l:L 'No template matches. Clear the search or the tag.'}" />
+
+      <ItemsControl ItemsSource="{Binding Items}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <WrapPanel ItemSpacing="14" LineSpacing="14" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:GalleryItem">
+            <Button Classes="tile" Width="300" Height="214" VerticalContentAlignment="Top"
+                    Command="{Binding $parent[ItemsControl].((vm:GalleryViewModel)DataContext).PickCommand}" CommandParameter="{Binding}">
+              <StackPanel Margin="18" Spacing="8">
+                <Border Width="44" Height="44" CornerRadius="12" Background="{DynamicResource SecondarySoft}" HorizontalAlignment="Left">
+                  <PathIcon Foreground="{DynamicResource Secondary}" Data="{Binding Icon, Converter={x:Static v:Converters.PathData}}" />
+                </Border>
+                <TextBlock Classes="h3" Text="{Binding Title}" />
+                <TextBlock Classes="caption" TextWrapping="Wrap" Text="{Binding Description}" />
+                <TextBlock Classes="caption" Foreground="{DynamicResource Primary}" Text="{Binding Tags}" />
+              </StackPanel>
+            </Button>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
