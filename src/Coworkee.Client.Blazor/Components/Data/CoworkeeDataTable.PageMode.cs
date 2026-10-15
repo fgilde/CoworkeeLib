@@ -29,7 +29,8 @@ public partial class CoworkeeDataTable<T>
 
     private bool GroupedInPages => ResolvedPageMode == DataTablePageMode.EndlessScroll && IsGrouped;
 
-    private DataTablePages<T> Pages => _pages ??= new DataTablePages<T>(Math.Max(PageSize, 50));
+    // a changed PageSize starts over with pages of the new size
+    private DataTablePages<T> Pages => _pages is { } pages && pages.Size == Math.Max(PageSize, 50) ? pages : _pages = new DataTablePages<T>(Math.Max(PageSize, 50));
 
     private Func<GridState<T>, CancellationToken, Task<GridData<T>>>? PagedLoader => Endless ? null : LoadAsync;
 
@@ -62,7 +63,8 @@ public partial class CoworkeeDataTable<T>
         var context = Facets ? _selection.Context(BaseFilter, _facets) : null;
         var key = string.Join('\n', filter, _orderBy, Expand, System.Text.Json.JsonSerializer.Serialize(context));
         var fresh = false;
-        var items = await Pages.GetAsync(key, state.StartIndex, state.Count, async (skip, top, first) =>
+        var pages = Pages;
+        var items = await pages.GetAsync(key, state.StartIndex, state.Count, async (skip, top, first) =>
         {
             fresh |= first;
             var page = await QueryAsync(new ODataQuery
@@ -70,7 +72,8 @@ public partial class CoworkeeDataTable<T>
                 Filter = filter, OrderBy = _orderBy, Expand = Expand, Top = top, Skip = skip, Count = first, Facets = Facets && first, FacetContext = first ? context : null,
             }, cancellationToken);
             await OnLoaded.InvokeAsync(page.Items);
-            if (Facets && first)
+            // a load the grid gave up on (newer query) leaves the facets alone
+            if (Facets && first && !cancellationToken.IsCancellationRequested)
             {
                 ShowFacets(page.Facets);
                 MarkFacetColumns();
@@ -84,6 +87,6 @@ public partial class CoworkeeDataTable<T>
             StateHasChanged();
         }
 
-        return new GridData<T> { Items = items, TotalItems = (int)Pages.Total };
+        return new GridData<T> { Items = items, TotalItems = (int)pages.Total };
     }
 }

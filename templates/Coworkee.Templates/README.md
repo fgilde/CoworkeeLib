@@ -24,6 +24,7 @@ dotnet run --project src/Shop.AppHost
 | `--primaryColor`, `--secondaryColor` | | Brand colors `#rrggbb`: an app theme as default |
 | `--logo` | `coworkee-icon.svg` | File name in `wwwroot` of the web client (copy the file there) |
 | `--signInLayout`, `--signInMedia`, `--signInMediaSide` | `Slide`, none, `Left` | Design of the sign-in pages |
+| `--loadingScreen` | `Animated` | Background of the loading screen: `Animated`, `SignInMedia` (the sign-in media, with every layout) or `Plain` |
 | `--languages`, `--defaultLanguage` | all shipped, `en` | Languages offered from the start (`en,de`) and the default one |
 | `--colorMode`, `--registration` | `system`, `false` | Seeded color mode and self registration |
 | `--githubActions`, `--devcontainer` | `false` | CI workflow and dev container |

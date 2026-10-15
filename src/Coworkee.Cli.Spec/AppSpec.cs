@@ -95,10 +95,13 @@ public sealed class BrandingSpec
     [Description("Left or Right.")]
     public string? SignInMediaSide { get; set; }
 
+    [Description("Background of the loading screen: Animated, SignInMedia or Plain.")]
+    public string? LoadingScreen { get; set; }
+
     internal IEnumerable<(string Id, string? Value)> Values() =>
     [
         ("title", Title), ("theme", Theme), ("primaryColor", PrimaryColor), ("secondaryColor", SecondaryColor), ("logo", Logo),
-        ("signInLayout", SignInLayout), ("signInMedia", SignInMedia), ("signInMediaSide", SignInMediaSide),
+        ("signInLayout", SignInLayout), ("signInMedia", SignInMedia), ("signInMediaSide", SignInMediaSide), ("loadingScreen", LoadingScreen),
     ];
 }
 

@@ -405,8 +405,9 @@ public sealed partial class MainViewModel : ObservableObject
             SignInLayout = Changed("signInLayout"),
             SignInMedia = Relative(Changed("signInMedia")),
             SignInMediaSide = Changed("signInMediaSide"),
+            LoadingScreen = Changed("loadingScreen"),
         };
-        spec.Branding = branding is { Title: null, Theme: null, PrimaryColor: null, SecondaryColor: null, Logo: null, SignInLayout: null, SignInMedia: null, SignInMediaSide: null }
+        spec.Branding = branding is { Title: null, Theme: null, PrimaryColor: null, SecondaryColor: null, Logo: null, SignInLayout: null, SignInMedia: null, SignInMediaSide: null, LoadingScreen: null }
             ? null
             : branding;
         spec.Modules = Entities.ToSpec();

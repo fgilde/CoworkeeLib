@@ -77,7 +77,8 @@ public partial class ClientEntitySwitch : IDisposable
 
     private Task ChooseAsync(ClientEntityMode mode) => Entities!.SetModeAsync(Table.EntitySet, mode);
 
-    // the same query on both sides, each round with a condition every row meets, so neither answers from a result it kept
+    // the same query on both sides, each round with a condition every row meets, so neither answers from a result it kept;
+    // only sets keyed by a Guid Id are mirrored (ClientEntities.SetAsync, the sync's "Id in (...)"), so the condition fits every set that shows the switch
     private async Task CompareAsync()
     {
         if (_set is not { } set)

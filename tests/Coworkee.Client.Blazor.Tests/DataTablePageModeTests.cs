@@ -34,6 +34,18 @@ public sealed class DataTablePageModeTests : ClientTestBase
     }
 
     [Fact]
+    public void A_changed_page_size_loads_chunks_of_the_new_size()
+    {
+        var table = Render<CoworkeeDataTable<Row>>(p => p.Add(t => t.EntitySet, "Rows").Add(t => t.PageMode, DataTablePageMode.EndlessScroll).Add(t => t.PageSize, 100).Add(t => t.Columns, Columns()));
+        table.WaitForAssertion(() => _odata.Queries.ShouldContain(q => q.Top == 100));
+
+        table.Render(p => p.Add(t => t.PageSize, 200));
+        table.InvokeAsync(table.Instance.ReloadAsync);
+
+        table.WaitForAssertion(() => _odata.Queries.ShouldContain(q => q.Skip == 0 && q.Top == 200 && q.Count));
+    }
+
+    [Fact]
     public void The_pager_is_the_default_and_the_setting_switches_to_endless_scrolling()
     {
         var table = Render<CoworkeeDataTable<Row>>(p => p.Add(t => t.EntitySet, "Rows").Add(t => t.Columns, Columns()));

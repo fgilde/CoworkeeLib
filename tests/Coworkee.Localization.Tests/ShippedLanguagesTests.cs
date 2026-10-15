@@ -52,6 +52,21 @@ public sealed partial class ShippedLanguagesTests
         wrong.ShouldBeEmpty($"{language}: placeholders differ from the key");
     }
 
+    // MudBlazor.Extensions localizes its own English texts through the app's texts; unshipped ones get machine translated ("Drop Dateien hier")
+    [Fact]
+    public void The_library_ships_the_texts_of_the_MudBlazor_Extensions_components_it_shows()
+    {
+        var german = Read(TextFile(TextFolders[0], "de"));
+
+        new[]
+        {
+            "Drop files here", "Drop/Paste files or folders here", "Drop/Paste files here", "Drop/Paste folders here", "Drop/Paste is not allowed", "Upload Files",
+            "A maximum of {0} files are allowed", "No declarations yet. Click + to add one.", "Add property", "Filter properties...", "Preview text — Aa Bb Cc 123",
+            "Categorized", "Repeats", "Every few minutes", "Every day at {0} UTC", "This folder is empty.", "Select a file to preview it.",
+        }.Where(k => !german.ContainsKey(k)).ShouldBeEmpty();
+        german["Drop files here"].ShouldBe("Dateien hier ablegen");
+    }
+
     [Theory]
     [MemberData(nameof(MailLanguages))]
     public void Mail_templates_exist_for_every_German_one_with_its_expressions_and_tags(string language)

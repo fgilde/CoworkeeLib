@@ -126,6 +126,8 @@ Jede Änderung erreicht alle Clients sofort (Realtime-Topic `global:localization
 
 Texte, die einer Sprache fehlen, werden maschinell übersetzt: wenn ein Administrator die Sprache einschaltet, mit dem Knopf auf der Seite *Sprachen* und nach jedem Start für die eingeschalteten Sprachen (eine Sprache aus `LocalizationOptions` ohne mitgelieferte Texte oder die neuen Texte eines Updates). Übersetzungen werden wie Bearbeitungen gespeichert, die Seite *Übersetzungen* zeigt und korrigiert sie also; die mitgelieferten Texte bleiben maßgeblich. Platzhalter wie `{0}` bleiben von der Übersetzung ausgenommen, und eine Übersetzung, die einen verloren hat, wird verworfen. Ein Dienst, der scheitert (aufgebrauchtes Kontingent, Server nicht erreichbar), beendet den Lauf mit dem, was er bis dahin übersetzt hat; der Rest folgt beim nächsten Start oder mit dem Knopf.
 
+Liefert ein Update einen Text mit, den Clients als fehlend gemeldet hatten (etwa einen Standardtext einer Komponente von MudBlazor.Extensions), verwirft der nächste Start seine gespeicherten maschinellen Übersetzungen in den Sprachen, die ihn jetzt mitliefern, sodass der mitgelieferte Text erscheint; eine Übersetzung, die ein Administrator auf der Seite *Übersetzungen* bearbeitet hat, bleibt.
+
 | Dienst | Kosten | Konto | Wohin die Texte gehen | Gut zu wissen |
 |---|---|---|---|---|
 | `libreTranslate` | kostenlos, Open Source (AGPL) | keines | eigener Server oder Container | Image von etwa 600 MB plus etwa 100 MB je Sprache; gute Qualität für die großen Sprachen; Standard neuer Apps |

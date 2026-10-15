@@ -7,8 +7,8 @@ using Coworkee.Contracts.Theming;
 namespace Coworkee.Bff;
 
 /// <summary>
-/// The loading screen as HTML with inline style and script (no other request, no flash of wrong colours): the theme's colours for the
-/// remembered colour mode or the system preference, the logo in a ring that follows Blazor's <c>--blazor-load-percentage</c>, the chosen
+/// The loading screen as HTML with inline style and script (no flash of wrong colours; only the logo is its own, cacheable request): the theme's
+/// colours for the remembered colour mode or the system preference, the logo in a ring that follows Blazor's <c>--blazor-load-percentage</c>, the chosen
 /// background and, hidden until the start fails, an error message with a reload button. The app removes it through <c>window.coworkeeLoadingScreen.hide()</c>.
 /// </summary>
 public static partial class LoadingScreenMarkup
@@ -28,7 +28,7 @@ public static partial class LoadingScreenMarkup
         var theme = screen?.Theme;
         var media = screen?.Background == LoadingScreenBackground.SignInMedia ? SafeUrl(screen.MediaUrl) : null;
         var background = screen?.Background == LoadingScreenBackground.Plain ? "plain" : media is null ? "animated" : "media";
-        var logo = ThemeLogo.ToDataUrl(theme?.Logo) ?? SafeUrl(fallbackLogo);
+        var logo = LoadingScreenLogo.Url(theme) ?? SafeUrl(fallbackLogo);
         var html = new StringBuilder(8 * 1024);
         html.Append($"<div id=\"coworkee-loading\" class=\"cwl-indeterminate\" data-background=\"{background}\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-label=\"{Encode(texts.Loading)}\" lang=\"{Encode(texts.Culture)}\">");
         html.Append("<style>").Append(Variables(theme, mode)).Append(LoadingScreenStyles.Css).Append("</style>");

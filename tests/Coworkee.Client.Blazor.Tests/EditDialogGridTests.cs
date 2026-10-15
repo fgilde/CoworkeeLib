@@ -45,6 +45,24 @@ public sealed class EditDialogGridTests : ClientTestBase
         provider.FindAll(".mud-grid-item").Count.ShouldBeGreaterThanOrEqualTo(3);
 
         provider.WaitForAssertion(() => provider.FindComponent<EnumEditor<ProductKind>>().Find("input").GetAttribute("value").ShouldBe("Gift wrap"));
+        provider.FindComponent<NullableEnumEditor<ProductKind>>().Find("input").GetAttribute("value").ShouldBe("Hardware");
+    }
+
+    [Fact]
+    public void A_flags_editor_offers_single_members_only()
+    {
+        var editor = Render<EnumEditor<Channels>>(p => p.Add(e => e.Value, Channels.All));
+
+        editor.Find("input").GetAttribute("value").ShouldBe("Email, Sms");
+    }
+
+    [Flags]
+    private enum Channels
+    {
+        None = 0,
+        Email = 1,
+        Sms = 2,
+        All = Email | Sms,
     }
 
     private static FakeODataClient Brands() => new FakeODataClient().With("Brands", JsonSerializer.SerializeToElement(new { Id = Contoso, Name = "Contoso" }));
@@ -63,5 +81,7 @@ public sealed class EditDialogGridTests : ClientTestBase
         public Guid BrandId { get; set; }
 
         public ProductKind Kind { get; set; }
+
+        public ProductKind? Fallback { get; set; } = ProductKind.Hardware;
     }
 }

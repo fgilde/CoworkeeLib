@@ -101,6 +101,7 @@ public sealed class ClientEntities : IAsyncDisposable
     {
         await DisposeSetsAsync();
         _manifest = null;
+        _modes?.Clear();
         await _storage.ClearAsync();
     }
 

@@ -1,0 +1,8 @@
+@typeparam TEnum where TEnum : struct, Enum
+<MudSelect T="TEnum?" Value="Value" ValueChanged="SetAsync" ToStringFunc="Text" Label="@Label" HelperText="@HelperText" Clearable="@(!ReadOnly && !Disabled)"
+           ReadOnly="ReadOnly" Disabled="Disabled" Variant="Variant.Text" Margin="Density.Margin" Dense="Density.Dense" data-testid="enum-editor">
+    @foreach (var item in EnumEditor<TEnum>.Items)
+    {
+        <MudSelectItem T="TEnum?" Value="item">@Text(item)</MudSelectItem>
+    }
+</MudSelect>

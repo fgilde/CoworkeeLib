@@ -398,6 +398,27 @@
       ],
       "replaces": "COWORKEE_SIGNIN_SIDE"
     },
+    "loadingScreen": {
+      "type": "parameter",
+      "datatype": "choice",
+      "defaultValue": "Animated",
+      "description": "Background of the app's loading screen.",
+      "choices": [
+        {
+          "choice": "Animated",
+          "description": "Soft moving shapes in the theme's colours."
+        },
+        {
+          "choice": "SignInMedia",
+          "description": "The image or video of the sign-in pages."
+        },
+        {
+          "choice": "Plain",
+          "description": "The theme's background colour only."
+        }
+      ],
+      "replaces": "COWORKEE_LOADING_SCREEN"
+    },
     "languages": {
       "type": "parameter",
       "datatype": "string",

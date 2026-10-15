@@ -17,10 +17,11 @@ public sealed class LoadingScreenTests
 {
     private static readonly string Logo = "<svg xmlns=\"http://www.w3.org/2000/svg\"/>";
 
-    private static LoadingScreenDto Screen(LoadingScreenBackground background = LoadingScreenBackground.Animated, string? media = null, string primary = "#123456") => new(
+    private static LoadingScreenDto Screen(LoadingScreenBackground background = LoadingScreenBackground.Animated, string? media = null, string primary = "#123456", bool signedIn = false) => new(
         new ThemeDto(Guid.NewGuid(), "Brand", false, true, Palette(primary, "#fafafa"), Palette("#abcdef", "#101010"), null, null, Logo, null, 1),
         background,
-        media);
+        media,
+        signedIn);
 
     private static JsonElement Palette(string primary, string background) =>
         JsonSerializer.SerializeToElement(new Dictionary<string, string> { ["Primary"] = primary, ["Background"] = background });
@@ -33,7 +34,7 @@ public sealed class LoadingScreenTests
         html.ShouldContain("#coworkee-loading{--cwl-primary:#123456;");
         html.ShouldContain("--cwl-bg:#fafafa;");
         html.ShouldContain("@media (prefers-color-scheme: dark){#coworkee-loading{--cwl-primary:#abcdef;");
-        html.ShouldContain("src=\"data:image/svg+xml;base64,");
+        html.ShouldContain("src=\"/bff/loading-screen/logo?v=");
         html.ShouldContain("data-background=\"animated\"");
         html.ShouldContain("class=\"cwl-blob");
     }
@@ -139,7 +140,7 @@ public sealed class LoadingScreenTests
     [Fact]
     public async Task A_signed_in_visitor_asks_for_the_chosen_theme_and_the_answers_are_cached_per_organisation_and_theme()
     {
-        var handler = new Answering(HttpStatusCode.OK, JsonSerializer.Serialize(Screen(), JsonSerializerOptions.Web), German);
+        var handler = new Answering(HttpStatusCode.OK, JsonSerializer.Serialize(Screen(signedIn: true), JsonSerializerOptions.Web), German);
         await using var app = await StartAsync(handler);
         var source = app.Services.GetRequiredService<LoadingScreenSource>();
         var theme = Guid.NewGuid();
@@ -190,6 +191,98 @@ public sealed class LoadingScreenTests
         html.ShouldContain("fail(");
     }
 
+    [Fact]
+    public async Task Any_number_of_browser_languages_maps_to_the_active_languages_with_a_bounded_number_of_api_calls()
+    {
+        var handler = new Answering(HttpStatusCode.OK, "{}", German);
+        await using var app = await StartAsync(handler);
+        var source = app.Services.GetRequiredService<LoadingScreenSource>();
+
+        for (var i = 0; i < 1000; i++)
+        {
+            var texts = await source.TextsAsync(new DefaultHttpContext { RequestServices = app.Services }, i % 2 == 0 ? $"de-X{i}" : $"xx-Y{i}");
+            texts.Culture.ShouldBe(i % 2 == 0 ? "de" : "en");
+        }
+
+        handler.Requests.Count.ShouldBe(2);
+        handler.Requests.ShouldBe(["http://api.test/api/v1/localization/languages", "http://api.test/api/v1/localization/texts/de"], ignoreOrder: true);
+    }
+
+    [Theory]
+    [InlineData("zh-Hant-TW", "zh-Hant")]
+    [InlineData("ZH-hant", "zh-Hant")]
+    [InlineData("zh-CN", "zh")]
+    [InlineData("fr", null)]
+    public void The_language_is_the_active_one_or_its_parent(string culture, string? active) =>
+        LoadingScreenSource.Active([new(null, "zh", "中文", true, false), new(null, "zh-Hant", "繁體中文", true, false)], culture).ShouldBe(active);
+
+    [Fact]
+    public async Task A_visitor_who_leaves_does_not_spoil_the_shared_answer()
+    {
+        var handler = new Answering(HttpStatusCode.OK, JsonSerializer.Serialize(Screen(), JsonSerializerOptions.Web));
+        await using var app = await StartAsync(handler);
+        var source = app.Services.GetRequiredService<LoadingScreenSource>();
+        using var aborted = new CancellationTokenSource();
+        await aborted.CancelAsync();
+
+        (await source.GetAsync(new DefaultHttpContext { RequestServices = app.Services, RequestAborted = aborted.Token })).ShouldNotBeNull();
+        (await source.GetAsync(new DefaultHttpContext { RequestServices = app.Services }))!.Theme!.Name.ShouldBe("Brand");
+        handler.Requests.ShouldHaveSingleItem();
+    }
+
+    [Fact]
+    public async Task An_answer_for_a_token_the_api_did_not_accept_is_not_cached_for_the_organisation()
+    {
+        var handler = new Answering(HttpStatusCode.OK, JsonSerializer.Serialize(Screen(signedIn: false), JsonSerializerOptions.Web));
+        await using var app = await StartAsync(handler);
+        var source = app.Services.GetRequiredService<LoadingScreenSource>();
+        HttpContext SignedIn() => new DefaultHttpContext
+        {
+            RequestServices = app.Services,
+            User = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity([new("tenant", "a")], "test")),
+        };
+
+        await source.GetAsync(SignedIn());
+        await source.GetAsync(SignedIn());
+
+        handler.Requests.Count.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task The_logo_is_its_own_cacheable_response_that_runs_no_script()
+    {
+        await using var app = await StartAsync(new Answering(HttpStatusCode.OK, JsonSerializer.Serialize(Screen(), JsonSerializerOptions.Web)));
+        var client = app.GetTestClient();
+        var page = LoadingScreenMarkup.Render(await app.Services.GetRequiredService<LoadingScreenSource>().GetAsync(new DefaultHttpContext { RequestServices = app.Services }), null, null);
+        var url = System.Text.RegularExpressions.Regex.Match(page, "src=\"(/bff/loading-screen/logo[^\"]+)\"").Groups[1].Value;
+
+        using var response = await client.GetAsync(url, TestContext.Current.CancellationToken);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)).ShouldBe(Logo);
+        response.Content.Headers.ContentType!.MediaType.ShouldBe("image/svg+xml");
+        response.Headers.CacheControl!.ToString().ShouldContain("immutable");
+        response.Headers.GetValues("Content-Security-Policy").Single().ShouldContain("sandbox");
+        page.ShouldNotContain("base64");
+
+        using var conditional = new HttpRequestMessage(HttpMethod.Get, url);
+        conditional.Headers.IfNoneMatch.Add(response.Headers.ETag!);
+        (await client.SendAsync(conditional, TestContext.Current.CancellationToken)).StatusCode.ShouldBe(HttpStatusCode.NotModified);
+    }
+
+    [Fact]
+    public async Task The_page_with_the_loading_screen_is_not_kept_by_shared_caches()
+    {
+        await using var app = await StartAsync(new Answering(HttpStatusCode.OK, JsonSerializer.Serialize(Screen(), JsonSerializerOptions.Web)));
+        var context = new DefaultHttpContext { RequestServices = app.Services };
+
+        await RenderAsync(app, context);
+
+        context.Response.Headers.CacheControl.ToString().ShouldBe("no-store");
+    }
+
+    private static readonly Contracts.Localization.LanguageDto[] Languages = [new(null, "en", "English", true, true), new(null, "de", "Deutsch", true, false)];
+
     private static readonly Dictionary<string, string> German = new()
     {
         ["Loading"] = "Wird geladen",
@@ -210,9 +303,11 @@ public sealed class LoadingScreenTests
         builder.WebHost.UseTestServer();
         builder.Configuration["Coworkee:Bff:Authority"] = "https://auth.test";
         builder.Configuration["Coworkee:Bff:ApiAddress"] = "http://api.test";
+        builder.Configuration["Coworkee:Bff:ClientId"] = "web";
         builder.AddCoworkeeBff();
         builder.Services.AddHttpClient(LoadingScreenSource.Client).ConfigurePrimaryHttpMessageHandler(() => handler);
         var app = builder.Build();
+        app.MapCoworkeeBff();
         await app.StartAsync();
         return app;
     }
@@ -229,9 +324,12 @@ public sealed class LoadingScreenTests
                 Requests.Add(url);
             }
 
+            cancellationToken.ThrowIfCancellationRequested();
             var json = url.Contains("/localization/texts/", StringComparison.Ordinal)
                 ? JsonSerializer.Serialize(new Contracts.Localization.TextsDto("de", texts ?? []), JsonSerializerOptions.Web)
-                : body;
+                : url.EndsWith("/localization/languages", StringComparison.Ordinal)
+                    ? JsonSerializer.Serialize(Languages, JsonSerializerOptions.Web)
+                    : body;
             return Task.FromResult(new HttpResponseMessage(status) { Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json") });
         }
     }

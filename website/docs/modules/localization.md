@@ -126,6 +126,8 @@ Every change reaches all clients at once (`global:localization` realtime topic):
 
 Texts a language lacks are machine translated: when an administrator switches the language on, with the button on the *Languages* page, and after every start for the switched on languages (a language from `LocalizationOptions` without shipped texts, or the new texts of an update). Translations are stored like edits, so the *Translations* page shows and corrects them; the shipped texts stay the source of truth. Placeholders like `{0}` are kept out of the translation, and a translation that lost one is dropped. A service that fails (a used up quota, a server that is down) ends the run with what it translated so far; the rest follows on the next start or with the button.
 
+When an update ships a text that clients had reported as missing (for example a default text of a MudBlazor.Extensions component), the next start drops its stored machine translations in the languages that now ship it, so the shipped text shows; a translation an administrator edited on the *Translations* page stays.
+
 | Service | Cost | Account | Where the texts go | Good to know |
 |---|---|---|---|---|
 | `libreTranslate` | free, open source (AGPL) | none | your own server or container | about 600 MB image plus about 100 MB per language; good quality for the big languages; default of new apps |

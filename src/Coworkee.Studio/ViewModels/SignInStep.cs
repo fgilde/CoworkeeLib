@@ -66,6 +66,26 @@ public sealed partial class SignInStep : StepViewModel
         set => MediaLeft = !value;
     }
 
+    public bool LoadingAnimated
+    {
+        get => LoadingScreen == "Animated";
+        set => SetLoadingScreen(value, "Animated");
+    }
+
+    public bool LoadingMedia
+    {
+        get => LoadingScreen == "SignInMedia";
+        set => SetLoadingScreen(value, "SignInMedia");
+    }
+
+    public bool LoadingPlain
+    {
+        get => LoadingScreen == "Plain";
+        set => SetLoadingScreen(value, "Plain");
+    }
+
+    private string LoadingScreen => Main.Option("loadingScreen").Value ?? "Animated";
+
     public string? MediaPath
     {
         get => Main.Option("signInMedia").Value;
@@ -112,6 +132,14 @@ public sealed partial class SignInStep : StepViewModel
     public void ClearMedia() => MediaPath = null;
 
     public void Sync() => Refresh();
+
+    private void SetLoadingScreen(bool chosen, string value)
+    {
+        if (chosen)
+        {
+            Main.Option("loadingScreen").Value = value;
+        }
+    }
 
     public override void Refresh()
     {

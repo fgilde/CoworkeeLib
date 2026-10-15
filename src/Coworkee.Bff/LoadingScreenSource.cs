@@ -12,9 +12,10 @@ using Microsoft.Extensions.Logging;
 namespace Coworkee.Bff;
 
 /// <summary>
-/// Reads what the server renders into the loading screen from the API: the theme (the one a signed-in user chose when the organisation allows it,
-/// else the organisation's default, the installation's for anonymous visitors) and its texts in the visitor's language. Cached per organisation
-/// and theme, texts per language; never slower than <see cref="Timeout"/>: without an answer the screen uses neutral colours and English.
+/// Reads what the server renders into the loading screen from the API: the theme (the one a signed-in user chose when every member of the
+/// organisation may choose it, else the organisation's default, the installation's for anonymous visitors) and its texts in the visitor's language,
+/// mapped to one of the app's active languages. Cached per organisation and theme, texts per active language; never slower than <see cref="Timeout"/>:
+/// without an answer the screen uses neutral colours and English.
 /// </summary>
 public sealed partial class LoadingScreenSource(IHttpClientFactory http, IMemoryCache cache, ILogger<LoadingScreenSource> logger)
 {
@@ -34,9 +35,28 @@ public sealed partial class LoadingScreenSource(IHttpClientFactory http, IMemory
     {
         var signedIn = context.User.Identity?.IsAuthenticated == true;
         var theme = signedIn ? themeId : null;
+        var path = "api/v1/themes/loading-screen" + (theme is { } id ? $"?themeId={id}" : string.Empty);
+
         // the API's answer depends on the organisation and the theme only, never on the user's own rights
-        return await CachedAsync($"coworkee:loading-screen:{context.User.FindFirstValue("tenant")}:{theme}", Fresh,
-            () => LoadAsync<LoadingScreenDto>(context, "api/v1/themes/loading-screen" + (theme is { } id ? $"?themeId={id}" : string.Empty), signedIn));
+        var key = $"coworkee:loading-screen:{context.User.FindFirstValue("tenant")}:{theme}";
+        if (!signedIn)
+        {
+            return await CachedAsync(key, Fresh, () => LoadAsync<LoadingScreenDto>(context, path, false));
+        }
+
+        if (cache.TryGetValue(key, out LoadingScreenDto? cached))
+        {
+            return cached;
+        }
+
+        // an expired or revoked token is answered as anonymous: that answer must not stand for the organisation
+        var screen = await LoadAsync<LoadingScreenDto>(context, path, true);
+        if (screen is { SignedIn: true })
+        {
+            cache.Set(key, screen, Fresh);
+        }
+
+        return screen;
     }
 
     public async Task<LoadingScreenTexts> TextsAsync(HttpContext context, string culture)
@@ -46,19 +66,30 @@ public sealed partial class LoadingScreenSource(IHttpClientFactory http, IMemory
             return LoadingScreenTexts.English;
         }
 
-        var texts = await CachedAsync("coworkee:loading-screen-texts:" + culture, Texts, async () =>
+        // only active languages become cache keys: any Accept-Language variant maps to one of them or to English
+        var languages = await CachedAsync("coworkee:loading-screen-languages", Texts, () => LoadAsync<LanguageDto[]>(context, "api/v1/localization/languages", false));
+        if (Active(languages, culture) is not { } active || active.StartsWith("en", StringComparison.OrdinalIgnoreCase))
         {
-            var found = await LoadAsync<TextsDto>(context, "api/v1/localization/texts/" + Uri.EscapeDataString(culture), false);
-            var translated = found is null ? null : LoadingScreenTexts.From(culture, found.Texts);
-            if (translated is not { IsTranslated: true } && culture.Split('-') is [var neutral, ..] && neutral != culture)
-            {
-                found = await LoadAsync<TextsDto>(context, "api/v1/localization/texts/" + Uri.EscapeDataString(neutral), false);
-                translated = found is null ? null : LoadingScreenTexts.From(neutral, found.Texts);
-            }
+            return LoadingScreenTexts.English;
+        }
 
-            return translated;
-        });
+        var texts = await CachedAsync("coworkee:loading-screen-texts:" + active, Texts, async () =>
+            await LoadAsync<TextsDto>(context, "api/v1/localization/texts/" + Uri.EscapeDataString(active), false) is { } found ? LoadingScreenTexts.From(active, found.Texts) : null);
         return texts ?? LoadingScreenTexts.English;
+    }
+
+    /// <summary>The active language for <paramref name="culture"/>: itself, else its parents (zh-Hant-TW, zh-Hant, zh); null without one.</summary>
+    internal static string? Active(IReadOnlyList<LanguageDto>? languages, string culture)
+    {
+        for (var name = culture; name.Length > 0; name = name.LastIndexOf('-') is var dash and > 0 ? name[..dash] : string.Empty)
+        {
+            if (languages?.FirstOrDefault(l => string.Equals(l.Culture, name, StringComparison.OrdinalIgnoreCase)) is { } language)
+            {
+                return language.Culture;
+            }
+        }
+
+        return null;
     }
 
     private async Task<T?> CachedAsync<T>(string key, TimeSpan fresh, Func<Task<T?>> load)
@@ -80,8 +111,9 @@ public sealed partial class LoadingScreenSource(IHttpClientFactory http, IMemory
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
             }
 
-            using var response = await http.CreateClient(Client).SendAsync(request, context.RequestAborted);
-            return response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<T>(JsonSerializerOptions.Web, context.RequestAborted) : default;
+            // shared answers: only the client's timeout ends the call, never one visitor leaving
+            using var response = await http.CreateClient(Client).SendAsync(request, CancellationToken.None);
+            return response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<T>(JsonSerializerOptions.Web, CancellationToken.None) : default;
         }
         catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException or JsonException or InvalidOperationException)
         {

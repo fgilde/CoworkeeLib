@@ -42,6 +42,7 @@ public static class OptionLooks
         ["signInLayout"] = "Icon.PageLayoutSidebarLeft",
         ["signInMedia"] = "Icon.VideoImage",
         ["signInMediaSide"] = "Icon.FlipHorizontal",
+        ["loadingScreen"] = "Icon.VideoImage",
         ["mapping"] = "Icon.SwapHorizontal",
         ["languages"] = "Icon.Translate",
         ["defaultLanguage"] = "Icon.Web",

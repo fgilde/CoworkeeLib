@@ -24,6 +24,12 @@ public sealed class CoworkeeLoadingScreen : ComponentBase
     {
         if (HttpContext is not null)
         {
+            // the page now carries the visitor's theme and language: no shared cache may keep it
+            if (!HttpContext.Response.HasStarted)
+            {
+                HttpContext.Response.Headers.CacheControl = "no-store";
+            }
+
             var preferences = LoadingScreenPreferences.Read(HttpContext.Request);
             var screen = Source.GetAsync(HttpContext, preferences.ThemeId);
             var texts = Source.TextsAsync(HttpContext, preferences.Culture);
