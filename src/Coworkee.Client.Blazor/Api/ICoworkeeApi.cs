@@ -142,6 +142,8 @@ public interface ICoworkeeApi
 
     Task SaveMailTemplateAsync(string name, string culture, SaveMailTemplateRequest request, CancellationToken cancellationToken = default);
 
+    Task<MailTemplateLanguageAddedDto> AddMailTemplateLanguageAsync(string name, string culture, AddMailTemplateLanguageRequest request, CancellationToken cancellationToken = default);
+
     Task ResetMailTemplateAsync(string name, string culture, CancellationToken cancellationToken = default);
 
     Task<RenderedMailDto> PreviewMailTemplateAsync(string name, string culture, SaveMailTemplateRequest request, CancellationToken cancellationToken = default);

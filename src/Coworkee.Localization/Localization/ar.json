@@ -1310,5 +1310,15 @@
   "FlexGrid": "Flex/Grid",
   "Every day at {0}": "كل يوم في {0}",
   "Every {0} at {1}": "أسبوعيًا: {0} الساعة {1}",
-  "Every month on day {0} at {1}": "كل شهر في اليوم {0} في {1}"
+  "Every month on day {0} at {1}": "كل شهر في اليوم {0} في {1}",
+  "Each template has one variant per language. A language switched on later needs its own variant: add it with the translate button. Until then its mails use the default language, then English.": "لكل قالب نسخة واحدة لكل لغة. اللغة التي تُفعَّل لاحقًا تحتاج إلى نسختها الخاصة: أضفها بزر الترجمة. حتى ذلك الحين تستخدم رسائلها اللغة الافتراضية ثم الإنجليزية.",
+  "No language yet: add one to write the mail.": "لا توجد لغة بعد: أضف لغة لكتابة الرسالة.",
+  "Add language": "إضافة لغة",
+  "Every active language has a variant": "لكل لغة نشطة نسخة",
+  "Add language to {0}": "إضافة لغة إلى {0}",
+  "Machine translated from {0}. Please check the text.": "تُرجم آليًا من {0}. يرجى مراجعة النص.",
+  "Copied from {0}. Translate the text, or set up a translation service to have it translated.": "نُسخ من {0}. ترجم النص أو اضبط خدمة ترجمة لتترجمه.",
+  "Remove the {0} variant of {1}? Its mails then use the default language.": "إزالة النسخة {0} من {1}؟ ستستخدم رسائلها حينئذٍ اللغة الافتراضية.",
+  "Start from": "البدء من",
+  "Machine translate (when a translation service is set up)": "ترجمة آلية (عند ضبط خدمة ترجمة)"
 }

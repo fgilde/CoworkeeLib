@@ -1310,5 +1310,15 @@
   "FlexGrid": "Flex/Grid",
   "Every day at {0}": "រាល់ថ្ងៃនៅម៉ោង {0}",
   "Every {0} at {1}": "រាល់ {0} នៅម៉ោង {1}",
-  "Every month on day {0} at {1}": "រាល់ខែនៅថ្ងៃទី {0} ម៉ោង {1}"
+  "Every month on day {0} at {1}": "រាល់ខែនៅថ្ងៃទី {0} ម៉ោង {1}",
+  "Each template has one variant per language. A language switched on later needs its own variant: add it with the translate button. Until then its mails use the default language, then English.": "គំរូនីមួយៗមានវ៉ារ្យ៉ង់មួយក្នុងមួយភាសា។ ភាសាដែលបើកនៅពេលក្រោយត្រូវការវ៉ារ្យ៉ង់ផ្ទាល់ខ្លួន៖ បន្ថែមវាដោយប្រើប៊ូតុងបកប្រែ។ រហូតដល់ពេលនោះ សំបុត្ររបស់វាប្រើភាសាលំនាំដើម បន្ទាប់មកភាសាអង់គ្លេស។",
+  "No language yet: add one to write the mail.": "មិនទាន់មានភាសានៅឡើយ៖ បន្ថែមមួយដើម្បីសរសេរសំបុត្រ។",
+  "Add language": "បន្ថែមភាសា",
+  "Every active language has a variant": "ភាសាសកម្មនីមួយៗមានវ៉ារ្យ៉ង់",
+  "Add language to {0}": "បន្ថែមភាសាទៅ {0}",
+  "Machine translated from {0}. Please check the text.": "បានបកប្រែដោយម៉ាស៊ីនពី {0}។ សូមពិនិត្យអត្ថបទ។",
+  "Copied from {0}. Translate the text, or set up a translation service to have it translated.": "បានចម្លងពី {0}។ បកប្រែអត្ថបទ ឬរៀបចំសេវាបកប្រែដើម្បីបកប្រែវា។",
+  "Remove the {0} variant of {1}? Its mails then use the default language.": "លុបវ៉ារ្យ៉ង់ {0} នៃ {1}? បន្ទាប់មកសំបុត្ររបស់វានឹងប្រើភាសាលំនាំដើម។",
+  "Start from": "ចាប់ផ្ដើមពី",
+  "Machine translate (when a translation service is set up)": "បកប្រែដោយម៉ាស៊ីន (នៅពេលបានរៀបចំសេវាបកប្រែ)"
 }

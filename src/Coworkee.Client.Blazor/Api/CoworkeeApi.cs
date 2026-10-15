@@ -201,6 +201,9 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
     public Task SaveMailTemplateAsync(string name, string culture, SaveMailTemplateRequest request, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Put, Template(name, culture), request, cancellationToken);
 
+    public Task<MailTemplateLanguageAddedDto> AddMailTemplateLanguageAsync(string name, string culture, AddMailTemplateLanguageRequest request, CancellationToken cancellationToken = default) =>
+        SendAsync<MailTemplateLanguageAddedDto>(HttpMethod.Post, Template(name, culture), request, cancellationToken);
+
     public Task ResetMailTemplateAsync(string name, string culture, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Delete, Template(name, culture), null, cancellationToken);
 

@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Bunit;
 using Coworkee.Client.Blazor.Pages.Admin;
 using Coworkee.Client.Blazor.Security;
+using Coworkee.Contracts.Localization;
 using Coworkee.Contracts.Mailing;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -20,6 +21,8 @@ public sealed class MailTemplatesPageTests : ClientTestBase
         Api.GetMailTemplatesAsync(default).ReturnsForAnyArgs([
             new MailTemplateSummaryDto("Identity.Welcome", "Welcome", ["en", "de"], [], false, "Greets new users"),
             new MailTemplateSummaryDto("News.1", "News", ["en"], ["en"], true, null)]);
+        Localization.GetLanguagesAsync(default, default).ReturnsForAnyArgs([
+            new LanguageDto(null, "en", "English", true, true), new LanguageDto(null, "de", "Deutsch", true, false), new LanguageDto(null, "fr", "Français", true, false)]);
         Render<MudPopoverProvider>();
         _dialogs = Render<MudDialogProvider>();
     }
@@ -94,5 +97,54 @@ public sealed class MailTemplatesPageTests : ClientTestBase
         _dialogs.FindAll("input[type='checkbox']").Count.ShouldBe(expected);
         await _dialogs.Find("button[aria-label='Close']").ClickAsync(new());
         await creating;
+    }
+
+    [Fact]
+    public async Task Add_language_copies_or_translates_from_the_default_language_and_opens_the_new_variant()
+    {
+        Api.AddMailTemplateLanguageAsync(default!, default!, default!, default).ReturnsForAnyArgs(new MailTemplateLanguageAddedDto("fr", "en", true));
+        var page = RenderPage();
+
+        var adding = page.WaitForElement("[data-testid='add-language-Identity.Welcome']").ClickAsync(new());
+        _dialogs.WaitForElement("form");
+        await _dialogs.InvokeAsync(() => _dialogs.Find("form").SubmitAsync());
+        await adding;
+
+        await Api.Received(1).AddMailTemplateLanguageAsync("Identity.Welcome", "fr", new AddMailTemplateLanguageRequest("en", true), Arg.Any<CancellationToken>());
+        Services.GetRequiredService<NavigationManager>().Uri.ShouldEndWith("/admin/mail/templates/Identity.Welcome/fr");
+    }
+
+    [Fact]
+    public void Add_language_is_off_when_every_active_language_has_a_variant_and_an_empty_template_says_so()
+    {
+        Localization.GetLanguagesAsync(default, default).ReturnsForAnyArgs([new LanguageDto(null, "en", "English", true, true), new LanguageDto(null, "de", "Deutsch", true, false)]);
+        Api.GetMailTemplatesAsync(default).ReturnsForAnyArgs([
+            new MailTemplateSummaryDto("Identity.Welcome", "Welcome", ["de", "en"], [], false, null, ["de", "en"]),
+            new MailTemplateSummaryDto("News.2", "News", [], [], true, null, [])]);
+
+        var page = RenderPage();
+
+        page.WaitForElement("[data-testid='add-language-Identity.Welcome']").HasAttribute("disabled").ShouldBeTrue();
+        page.Find("[data-testid='add-language-News.2']").HasAttribute("disabled").ShouldBeFalse();
+        page.Find("[data-testid='no-languages-News.2']");
+        page.Find("[data-testid='languages-hint']");
+    }
+
+    [Fact]
+    public async Task Only_added_languages_can_be_removed_from_the_list()
+    {
+        Api.GetMailTemplatesAsync(default).ReturnsForAnyArgs([
+            new MailTemplateSummaryDto("Identity.Welcome", "Welcome", ["de", "en", "fr"], ["de", "fr"], false, null, ["de", "en"])]);
+        var page = RenderPage();
+
+        page.WaitForElement("[data-testid='language-Identity.Welcome-fr'] + .mud-chip-close-button");
+        page.FindAll("[data-testid='language-Identity.Welcome-de'] + .mud-chip-close-button").ShouldBeEmpty();
+
+        var removing = page.Find("[data-testid='language-Identity.Welcome-fr'] + .mud-chip-close-button").ClickAsync(new());
+        _dialogs.WaitForAssertion(() => _dialogs.FindAll("button").ShouldContain(b => b.TextContent.Trim() == "Remove"));
+        await _dialogs.FindAll("button").First(b => b.TextContent.Trim() == "Remove").ClickAsync(new());
+        await removing;
+
+        await Api.Received(1).ResetMailTemplateAsync("Identity.Welcome", "fr", Arg.Any<CancellationToken>());
     }
 }

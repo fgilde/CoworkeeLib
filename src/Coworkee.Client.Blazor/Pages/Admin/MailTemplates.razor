@@ -8,6 +8,9 @@
     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" Size="Size.Small" Disabled="_busy"
                OnClick="CreateAsync" data-testid="new-mail-template">@L["New template"]</MudButton>
 </MudStack>
+<MudAlert Severity="Severity.Info" Dense="Density.Dense" Class="mb-3" data-testid="languages-hint">
+    @L["Each template has one variant per language. A language switched on later needs its own variant: add it with the translate button. Until then its mails use the default language, then English."]
+</MudAlert>
 <MudSimpleTable Dense="Density.Dense" Hover="true">
     <thead><tr><th>@L["Template"]</th><th>@L["Name"]</th><th>@L["Languages"]</th><th></th></tr></thead>
     <tbody>
@@ -22,14 +25,23 @@
                     }
                 </td>
                 <td><MudText Typo="Typo.caption">@template.Name</MudText></td>
-                <td>
+                <td data-testid="@($"languages-{template.Name}")">
                     @foreach (var culture in template.Cultures)
                     {
-                        <MudChip T="string" Size="Size.Small" Href="@($"/admin/mail/templates/{Uri.EscapeDataString(template.Name)}/{culture}")"
-                                 Color="@(template.OverriddenCultures.Contains(culture) ? Color.Secondary : Color.Default)">@culture</MudChip>
+                        <MudChip T="string" Size="Size.Small" OnClick="() => Open(template, culture)" title="@LanguageName(culture)"
+                                 Color="@(template.OverriddenCultures.Contains(culture) ? Color.Secondary : Color.Default)" data-testid="@($"language-{template.Name}-{culture}")"
+                                 OnClose="RemoveHandler(template, culture)">@LanguageFlags.For(culture) @culture</MudChip>
+                    }
+                    @if (template.Cultures.Count == 0)
+                    {
+                        <MudText Typo="Typo.caption" data-testid="@($"no-languages-{template.Name}")">@L["No language yet: add one to write the mail."]</MudText>
                     }
                 </td>
                 <td style="text-align:right;white-space:nowrap">
+                    <MudTooltip Text="@(Missing(template).Count > 0 ? L["Add language"] : L["Every active language has a variant"])">
+                        <MudIconButton Icon="@Icons.Material.Outlined.Translate" Size="Size.Small" aria-label="@L["Add language"]" Disabled="@(_busy || Missing(template).Count == 0)"
+                                       OnClick="() => AddLanguageAsync(template)" data-testid="@($"add-language-{template.Name}")" />
+                    </MudTooltip>
                     <MudIconButton Icon="@Icons.Material.Outlined.ContentCopy" Size="Size.Small" aria-label="@L["Duplicate"]" Disabled="_busy"
                                    OnClick="() => DuplicateAsync(template)" data-testid="@($"duplicate-template-{template.Name}")" />
                     @if (template.IsCustom)
