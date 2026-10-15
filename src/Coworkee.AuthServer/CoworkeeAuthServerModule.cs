@@ -99,7 +99,7 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
         else
         {
             throw new InvalidOperationException(
-                $"Configure {AuthServerOptions.Section}:SigningCertificate and :EncryptionCertificate (Path, Password) for the auth server, or set {AuthServerOptions.Section}:DevelopmentCertificates for tests and demos.");
+                $"Configure {AuthServerOptions.Section}:SigningCertificate and :EncryptionCertificate (Path or Base64, Password) for the auth server, or set {AuthServerOptions.Section}:DevelopmentCertificates for tests and demos.");
         }
 
         if (options.Issuer is { } issuer)
@@ -182,8 +182,12 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
         }
     }
 
-    private static X509Certificate2 Load(CertificateOptions certificate) =>
-        X509CertificateLoader.LoadPkcs12FromFile(certificate.Path, certificate.Password, X509KeyStorageFlags.EphemeralKeySet);
+    internal static X509Certificate2 Load(CertificateOptions certificate) => certificate switch
+    {
+        { Base64: { Length: > 0 } base64 } => X509CertificateLoader.LoadPkcs12(Convert.FromBase64String(base64), certificate.Password, X509KeyStorageFlags.EphemeralKeySet),
+        { Path: { Length: > 0 } path } => X509CertificateLoader.LoadPkcs12FromFile(path, certificate.Password, X509KeyStorageFlags.EphemeralKeySet),
+        _ => throw new InvalidOperationException("A certificate needs a Path or Base64."),
+    };
 
     public void ConfigureApplication(WebApplication app)
     {
