@@ -2,6 +2,14 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Noch nicht veröffentlicht
+
+### Neu
+
+- **Workflows und Genehmigungen** (`Coworkee.Workflows`, optional): Zustände und abgesicherte Übergänge pro Entitätstyp, Genehmigungen durch Rollen oder Benutzer mit Frist, Erinnerung und Eskalation, eine Historie, die Komponenten `CoworkeeWorkflow`, `CoworkeeWorkflowActions` und `CoworkeeWorkflowTimeline` und die Seite *Genehmigungen*, siehe [Workflows und Genehmigungen](../modules/workflows.md). Das Modul hat Tabellen: Apps, die es aufnehmen, legen eine Migration an.
+- **Elsa-Workflows** (`Coworkee.Workflows.Elsa`, optional): Elsa Workflows 3 in der API mit Coworkee-Aktivitäten und -Triggern, siehe [Elsa-Workflows](../modules/workflows-elsa.md).
+- CLI und Studio: `--workflows` und `--elsa`.
+
 ## 0.0.1.25 (2026-10-15)
 
 Nur Korrekturen: Das Skript des Ladebildschirms ist eine eigene Datei, damit eine strikte CSP es ausführt, und App-Seiten gehen mit `Cache-Control: no-cache, no-store` raus. In Apps ist nichts zu ändern.

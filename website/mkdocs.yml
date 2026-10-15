@@ -124,6 +124,8 @@ plugins:
             Reporting: Berichte
             Extended attributes: Erweiterte Attribute
             Comments, tags and ratings: Kommentare, Tags und Bewertungen
+            Workflows and approvals: Workflows und Genehmigungen
+            Elsa workflows: Elsa-Workflows
             AI assistant and MCP: KI-Assistent und MCP
             MCP server of the app: MCP-Server der App
             API keys: API-Schlüssel
@@ -225,6 +227,8 @@ nav:
       - Reporting: modules/reporting.md
       - Extended attributes: modules/extended-attributes.md
       - Comments, tags and ratings: modules/social.md
+      - Workflows and approvals: modules/workflows.md
+      - Elsa workflows: modules/workflows-elsa.md
       - AI assistant and MCP: modules/ai.md
       - MCP server of the app: modules/mcp.md
   - Hosting:
