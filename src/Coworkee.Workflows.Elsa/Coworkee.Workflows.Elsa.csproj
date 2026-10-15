@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Coworkee.Workflows\Coworkee.Workflows.csproj" />
+    <PackageReference Include="Elsa" />
+    <PackageReference Include="Elsa.Workflows.Api" />
+    <PackageReference Include="Elsa.Persistence.EFCore.PostgreSql" />
+    <PackageReference Include="Elsa.Persistence.EFCore.SqlServer" />
+    <PackageReference Include="Elsa.Persistence.EFCore.Sqlite" />
+  </ItemGroup>
+</Project>
