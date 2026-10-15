@@ -244,8 +244,10 @@
 .cw-overview h2 { font-size: 1.1rem !important; margin-top: 1.6rem !important; }
 .cw-overview h2:first-child { margin-top: 0 !important; }
 
-.cw-connect { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem; align-items: start; }
-.cw-widget { display: block; min-width: 0; max-width: 100%; }
+.cw-connect { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.6rem; }
+.cw-widget { display: block; min-width: 0; max-width: 100%; font-family: var(--md-text-font-family); transition: opacity .7s ease, transform .7s cubic-bezier(.2, .8, .2, 1); }
+.cw-widget + .cw-widget { transition-delay: .12s; }
+.cw-connect.is-waiting .cw-widget { opacity: 0; transform: translateY(18px); }
 
 .cw-lightbox { max-width: min(94vw, 1440px); max-height: 94vh; padding: 0; border: 0; border-radius: var(--cw-radius); background: var(--cw-surface); color: var(--cw-text); overflow: visible; }
 .cw-lightbox::backdrop { background: rgba(8, 14, 22, .82); backdrop-filter: blur(3px); }

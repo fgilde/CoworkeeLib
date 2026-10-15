@@ -300,7 +300,7 @@
       <h2>{{ t.connect }}</h2>
       <p class="cw-section__lead">{{ t.connect_lead }}</p>
       <div class="cw-connect">
-        {% set common = 'project="fgilde/CoworkeeLib" inline language="' ~ config.theme.language ~ '" width="560" radius="14" padding="28" show-logo="true" show-description="false" show-homepage="true" show-preview-notice="false" show-footer="false" footer-brand="Coworkee" footer-tagline="gilde.org"' %}
+        {% set common = 'project="fgilde/CoworkeeLib" inline language="' ~ config.theme.language ~ '" width="560" radius="14" padding="28" show-logo="true" show-description="false" show-homepage="false" show-preview-notice="false" show-footer="false" footer-brand="Coworkee" footer-tagline="gilde.org"' %}
         <gilde-contact class="cw-widget" widget="contact" {{ common }}>{{ ("Kontakt" if de else "Contact") }}</gilde-contact>
         <gilde-support class="cw-widget" widget="support" {{ common }} support-layout="rows" show-support-icons="true" show-support-qr="true">Support</gilde-support>
       </div>
@@ -371,6 +371,24 @@
       box.querySelector(".cw-lightbox__prev").addEventListener("click", () => show(index - 1));
       box.querySelector(".cw-lightbox__next").addEventListener("click", () => show(index + 1));
       box.addEventListener("click", e => { if (e.target === box) box.close(); });
+      // the contact widgets take the Ocean colors and fade in once when they come into view
+      const connect = document.querySelector(".cw-connect");
+      const ocean = new CSSStyleSheet();
+      ocean.replaceSync(`
+        .surface, .surface[data-theme] { --bg: var(--cw-surface); --raised: var(--cw-drawer); --text: var(--cw-text); --muted: var(--cw-text-2); --line: var(--cw-line); --input: var(--cw-bg); height: 100%; }
+        .card { display: flex; flex-direction: column; height: 100%; max-width: none; box-shadow: var(--cw-shadow); }
+        .content { flex: 1; display: flex; flex-direction: column; }
+        .hint { margin-top: auto; padding-top: 1rem; }
+        .surface[data-theme=dark] img[src*="github.com"] { filter: invert(1); }`);
+      for (const tag of ["gilde-contact", "gilde-support"])
+        customElements.whenDefined(tag).then(() => connect.querySelectorAll(tag).forEach(el => el.shadowRoot.adoptedStyleSheets = [...el.shadowRoot.adoptedStyleSheets, ocean]));
+      if ("IntersectionObserver" in window && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        connect.classList.add("is-waiting");
+        new IntersectionObserver((entries, io) => {
+          if (entries.some(entry => entry.isIntersecting)) { connect.classList.remove("is-waiting"); io.disconnect(); }
+        }, { threshold: .15 }).observe(connect);
+      }
+
       box.addEventListener("keydown", e => {
         if (e.key === "ArrowLeft") show(index - 1);
         if (e.key === "ArrowRight") show(index + 1);
