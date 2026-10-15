@@ -124,6 +124,7 @@ plugins:
             Reporting: Berichte
             Extended attributes: Erweiterte Attribute
             Comments, tags and ratings: Kommentare, Tags und Bewertungen
+            Webhooks: Webhooks
             AI assistant and MCP: KI-Assistent und MCP
             MCP server of the app: MCP-Server der App
             API keys: API-Schlüssel
@@ -225,6 +226,7 @@ nav:
       - Reporting: modules/reporting.md
       - Extended attributes: modules/extended-attributes.md
       - Comments, tags and ratings: modules/social.md
+      - Webhooks: modules/webhooks.md
       - AI assistant and MCP: modules/ai.md
       - MCP server of the app: modules/mcp.md
   - Hosting:

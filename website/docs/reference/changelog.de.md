@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Neu
+
+- **Webhooks** (`Coworkee.Webhooks`, CLI `--webhooks`, Karte im Studio): Endpunkte pro Organisation bekommen signierte Ereignisse (im Stil von Standard Webhooks) zu Änderungen freigeschalteter Entity-Sets, Workflow-Übergängen und eigenen Ereignissen der App, beschränkt auf das, was der Besitzer des Endpunkts lesen darf; Wiederholungen mit Backoff, Abschalten nach wiederholten Fehlern, Zustellprotokoll, Testereignisse und erneute Zustellung unter `/admin/webhooks`, Schutz vor SSRF. Siehe [Webhooks](../modules/webhooks.md). Das Modul hat Tabellen: leg beim Einschalten eine Migration an.
+
 ## 0.0.1.25 (2026-10-15)
 
 Nur Korrekturen: Das Skript des Ladebildschirms ist eine eigene Datei, damit eine strikte CSP es ausführt, und App-Seiten gehen mit `Cache-Control: no-cache, no-store` raus. In Apps ist nichts zu ändern.

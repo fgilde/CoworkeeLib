@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### New
+
+- **Webhooks** (`Coworkee.Webhooks`, CLI `--webhooks`, Studio card): endpoints per organisation get signed events (Standard Webhooks style) about changes of opted-in entity sets, workflow transitions and the app's own events, shaped by what the endpoint's owner may read; retries with backoff, switch-off after repeated failures, delivery log, test events and redelivery on `/admin/webhooks`, SSRF protection. See [Webhooks](../modules/webhooks.md). The module has tables: add a migration when you switch it on.
+
 ## 0.0.1.25 (2026-10-15)
 
 Fixes only: the loading screen script is its own file, so a strict CSP runs it, and app pages are sent with `Cache-Control: no-cache, no-store`. Nothing to change in apps.

@@ -33,6 +33,7 @@ Which package goes where, and what to put in the `using` block.
 | `Coworkee.Reporting` | API | `Coworkee.Reporting` | `CoworkeeReportingModule`, `RunReportQuery` |
 | `Coworkee.ExtendedAttributes` | API | `Coworkee.ExtendedAttributes` | `CoworkeeExtendedAttributesModule`, `AddExtendedAttributes<T>` |
 | `Coworkee.Social` | API | `Coworkee.Social` | `CoworkeeSocialModule`, `AddCoworkeeSocial` |
+| `Coworkee.Webhooks` | API, workers | `Coworkee.Webhooks` | `CoworkeeWebhooksModule`, `AddCoworkeeWebhooks`, `IWebhookPublisher`, `WebhookSignature` |
 | `Coworkee.EventBus`, `Coworkee.EventBus.RabbitMq` | API, workers | `Coworkee.EventBus` | `IEventBus`, `IIntegrationEvent`, `IIntegrationEventHandler<T>`, `CoworkeeRabbitMqEventBusModule` |
 | `Coworkee.Cli` | your machine | | `coworkee new` (options or `--spec`), `options`, `spec`, `run`, `migrations add`, `module add`, `entity add`, `update`, `doctor`, `ui`, `mcp` |
 | `Coworkee.Templates` | your machine | | `dotnet new coworkee` |
