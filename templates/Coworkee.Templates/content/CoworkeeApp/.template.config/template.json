@@ -99,6 +99,22 @@
       "defaultValue": "false",
       "description": "Comments, tags and ratings for entities (Coworkee.Social)."
     },
+    "workflows": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "States, transitions and approvals for entities (Coworkee.Workflows); with the samples, products go through an approval."
+    },
+    "elsa": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Elsa Workflows 3 in the api (Coworkee.Workflows.Elsa); needs --workflows."
+    },
+    "withElsa": {
+      "type": "computed",
+      "value": "(workflows && elsa)"
+    },
     "extendedAttributes": {
       "type": "parameter",
       "datatype": "bool",
@@ -967,7 +983,7 @@
     },
     "defaultModel": {
       "type": "computed",
-      "value": "(database == \"postgres\" && ai && chat && reports && backup && notifications && !files && !features && !social && eventBus == \"none\" && (samples || !extendedAttributes))"
+      "value": "(database == \"postgres\" && ai && chat && reports && backup && notifications && !files && !features && !social && !workflows && eventBus == \"none\" && (samples || !extendedAttributes))"
     }
   },
   "sources": [
@@ -1155,6 +1171,18 @@
           "condition": "(!tests)",
           "exclude": [
             "tests/**"
+          ]
+        },
+        {
+          "condition": "(!workflows || !samples)",
+          "exclude": [
+            "src/MyApp.Catalog/Features/Products/ProductApproval.cs"
+          ]
+        },
+        {
+          "condition": "(!withElsa || !samples)",
+          "exclude": [
+            "src/MyApp.Api/Workflows/**"
           ]
         },
         {

@@ -16,7 +16,7 @@ dotnet run --project src/Shop.AppHost
 | `--tests` | `true` | API, migration, app host and page tests |
 | `--title` | name | Display title of the app |
 | `--auditing`, `--notifications`, `--chat`, `--ai`, `--backup` | `true` | Modules of the default app |
-| `--files`, `--features`, `--social`, `--extendedAttributes`, `--elasticsearch` | `false` | Optional modules |
+| `--files`, `--features`, `--social`, `--workflows`, `--elsa`, `--extendedAttributes`, `--elasticsearch` | `false` | Optional modules (`--elsa` needs `--workflows`) |
 | `--eventBus` | `none` | `inProcess` or `rabbitMq` (with a RabbitMQ container) |
 | `--clientEntities` | `false` | Browser copies of OData sets |
 | `--storage` | `fileSystem` | `azureBlob` with Azurite in the app host |

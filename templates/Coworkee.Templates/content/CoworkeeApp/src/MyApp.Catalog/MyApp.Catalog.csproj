@@ -8,6 +8,9 @@
     <CoworkeePackage Include="Coworkee.OData" />
     <CoworkeePackage Include="Coworkee.ResponseFilters" />
     <CoworkeePackage Include="Coworkee.Identity" />
+    <!--#if (workflows) -->
+    <CoworkeePackage Include="Coworkee.Workflows" />
+    <!--#endif -->
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
 </Project>

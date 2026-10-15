@@ -30,6 +30,9 @@
     <!--#if (social) -->
     <CoworkeePackage Include="Coworkee.Social" />
     <!--#endif -->
+    <!--#if (workflows) -->
+    <CoworkeePackage Include="Coworkee.Workflows" />
+    <!--#endif -->
     <!--#if (extendedAttributes) -->
     <CoworkeePackage Include="Coworkee.ExtendedAttributes" />
     <!--#endif -->
