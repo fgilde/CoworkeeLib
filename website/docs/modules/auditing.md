@@ -6,3 +6,35 @@ The audit trail records every change of audited entities field by field: who, wh
 - `<AuditTimeline EntityType="Brand" EntityId="@brand.Id.ToString()" />` shows the history of one entity on its own page.
 - `[NotAudited]` excludes a type or property, `[Sensitive]` records that a property changed without its value.
 - Entities with `IVersioned` also keep full snapshots; `<VersionHistory Type="..." Id="..." />` lists them and restores an older revision.
+
+## Record history and restore
+
+The audit already knows every field change, so it can show a record's history and put it back. You opt in per entity set: the history then runs restores through your own update command, with its permissions, validation and audit.
+
+```csharp
+context.Services.AddODataEntity<Product>("Products", CatalogPermissions.Products.View);
+context.Services.AddEntityHistory("Products", CatalogPermissions.Products.Edit, (Product p) => new AddEditProductCommand(p.Id, new AddEditProductRequest
+{
+    Name = p.Name, Barcode = p.Barcode, Description = p.Description, ImageDataUrl = p.ImageDataUrl, Rate = p.Rate, BrandId = p.BrandId,
+}));
+```
+
+The second argument is the permission to restore. The lambda turns a record into the update command; a restore fills the record with the earlier values and sends it, so every field the command leaves out stays as it is.
+
+In the client, either turn on the row action of a table or put the timeline on a detail page:
+
+```razor
+<CoworkeeDataTable T="ProductDto" EntitySet="Products" History="true" ... />
+
+<CoworkeeEntityHistory EntitySet="Products" Id="product.Id" OnRestored="ReloadAsync" />
+```
+
+- The timeline shows who changed what and when, with field labels (`BrandId` reads *Brand*), enum names and the name of a referenced record. Long texts show a word diff.
+- **Restore this state** puts the record back to how it was right after that entry; the undo button next to a field undoes just that change. Both show a preview of the resulting values and ask first.
+- Records with `ISoftDelete` can come back too: the table's **Deleted records** button lists them, and restoring any state undeletes the record first.
+- Seeing the history needs `Audit.View` and the read permission of the entity set; restoring needs the permission you registered. Everything stays in the user's tenant.
+- `[Sensitive]` fields show as `***` and are never restored; properties hidden from the OData set stay out of the history.
+
+The endpoints live under `/api/v1/history/{entitySet}`: `GET /{id}`, `POST /{id}/preview`, `POST /{id}/restore` and `GET /deleted`.
+
+Records that were hard deleted are gone from the table, so there is nothing to update; use `ISoftDelete` for anything people might want back.

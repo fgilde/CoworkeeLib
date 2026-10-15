@@ -68,7 +68,7 @@ Einträge mit `HostOnly: true` dienen der ganzen Installation und erscheinen nur
 
 ## App-Leiste
 
-Die App-Leiste zeigt Theme-Menü, Rechts-nach-links-Schalter, Dunkelmodus, Benachrichtigungen, Benutzermenü und den Info-Dialog. Eigene Komponenten kommen so dazu:
+Die App-Leiste zeigt den Suchknopf der [Befehlspalette](command-palette.md) (Strg+K), Theme-Menü, Rechts-nach-links-Schalter, Dunkelmodus, Benachrichtigungen, Benutzermenü und den Info-Dialog. Eigene Komponenten kommen so dazu:
 
 ```csharp
 internal sealed class LanguageBar : IAppBarContributor
