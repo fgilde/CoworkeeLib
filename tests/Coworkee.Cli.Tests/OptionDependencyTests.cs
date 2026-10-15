@@ -107,7 +107,7 @@ public sealed class OptionDependencyTests
         text.ShouldContain("Needs: database = postgres (otherwise ignored)");
         foreach (var (id, url) in new Dictionary<string, string>
         {
-            ["airworks"] = "https://fgilde.github.io/AirWorks/", ["aspireUI"] = "https://github.com/fgilde/AspireUI", ["webDataStudio"] = "https://github.com/fgilde/WebDataStudio",
+            ["airworks"] = "https://fgilde.github.io/AirWorks/", ["aspireUI"] = "https://fgilde.github.io/AspireUI/", ["webDataStudio"] = "https://fgilde.github.io/WebDataStudio/",
             ["grafana"] = "https://grafana.com/", ["keycloak"] = "https://www.keycloak.org/", ["redis"] = "https://redis.io/", ["elasticsearch"] = "https://www.elastic.co/elasticsearch",
         })
         {

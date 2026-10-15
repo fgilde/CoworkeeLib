@@ -215,7 +215,7 @@ Rufen Sie sie nach `UseKeycloak` und `AddAuthServer` (oder `AddProjects`) auf.
 
 ### AspireUI
 
-[AspireUI](https://github.com/fgilde/AspireUI) meldet sich mit einem Aufruf über den Realm an; die Administratoren der App (Realm-Rolle `Administrator`) werden AspireUI-Admins, alle anderen bekommen `defaultPermissions` (Standard `app-user`):
+[AspireUI](https://fgilde.github.io/AspireUI/) meldet sich mit einem Aufruf über den Realm an; die Administratoren der App (Realm-Rolle `Administrator`) werden AspireUI-Admins, alle anderen bekommen `defaultPermissions` (Standard `app-user`):
 
 ```csharp
 using Nextended.Aspire.Hosting.AspireUI;
