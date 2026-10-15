@@ -5,13 +5,17 @@
 {% set t = {
   "eyebrow": ".NET 10 · Blazor · Aspire",
   "title": ("Geschäftsanwendungen ohne das Drumherum" if de else "Business apps without the boilerplate"),
-  "lead": ("Coworkee ist ein modulares Anwendungsframework: Identity, Berechtigungen, Auth-Server, Blazor-Oberfläche, Datentabellen, Themes und ein Aspire-AppHost kommen als NuGet-Pakete. Deine App enthält nur noch ihre Fachlichkeit." if de else "Coworkee is a modular application framework: identity, permissions, an auth server, a Blazor shell, data tables, theming and an Aspire app host come as NuGet packages. Your app only holds its own domain."),
+  "lead": ("Coworkee ist ein modulares Anwendungsframework für .NET, Blazor und ASP.NET Core: Identity, Berechtigungen, Auth-Server, Blazor-Oberfläche, Datentabellen, Themes und ein Aspire-AppHost kommen als NuGet-Pakete. Deine App enthält nur noch ihre Fachlichkeit." if de else "Coworkee is a modular .NET application framework for Blazor and ASP.NET Core: identity, permissions, an auth server, a Blazor shell, data tables, theming and an Aspire app host come as NuGet packages. Your app only holds its own domain."),
   "search": ("Dokumentation durchsuchen" if de else "Search the documentation"),
   "topics": ("Direkt zu" if de else "Jump to"),
   "start": ("Loslegen" if de else "Get started"),
   "docs": ("Dokumentation" if de else "Documentation"),
-  "features": ("Was drin ist" if de else "What you get"),
-  "features_lead": ("Die Teile, die jede Geschäftsanwendung braucht, fertig verdrahtet und einzeln ersetzbar." if de else "The parts every business app needs, wired up and replaceable one by one."),
+  "features": ("Was das Framework abdeckt" if de else "What the framework covers"),
+  "features_lead": ("Die Teile, die jede Geschäftsanwendung auf .NET braucht, fertig verdrahtet und einzeln ersetzbar. Jede Karte führt zu einer Seite mit Beispielen." if de else "The parts every business application on .NET needs, wired up and replaceable one by one. Each card leads to a page with examples."),
+  "all_features": ("Alle Features" if de else "All features"),
+  "why": ("Warum Coworkee" if de else "Why Coworkee"),
+  "brands": ("Arbeitet mit Werkzeugen, die Sie kennen" if de else "Works with the tools you already know"),
+  "brands_lead": ("Der Aspire-AppHost startet sie mit, oder die App spricht sie über Einstellungen an. Jedes Logo führt zu der Seite, die erklärt, wie." if de else "The Aspire app host starts them for you, or the app talks to them through settings. Each logo leads to the page that explains how."),
   "more": ("Mehr" if de else "Read more"),
   "gs": ("In drei Befehlen zur eigenen App" if de else "Your own app in three commands"),
   "gs_lead": ("Das CLI-Tool legt die Solution an, startet den Aspire-AppHost und hilft bei Migrationen, Modulen und Updates." if de else "The CLI creates the solution, starts the Aspire app host and helps with migrations, modules and updates."),
@@ -56,15 +60,46 @@
 ] %}
 
 {% set cw_features = [
-  ("material/puzzle-outline", ("Module und Pipeline" if de else "Modules and pipeline"), ("Module mit Abhängigkeiten, ein Dispatcher mit Validierung, Berechtigungen, Caching und Unit of Work." if de else "Modules with dependencies, a dispatcher with validation, permissions, caching and unit of work."), "fundamentals/modules/"),
-  ("material/database-outline", ("Daten mit Gedächtnis" if de else "Data with a memory"), ("EF Core mit Mandanten, Soft Delete, Audit auf Feldebene, Outbox und Realtime-Änderungen." if de else "EF Core with tenants, soft delete, field level audit, outbox and realtime change events."), "fundamentals/persistence/"),
-  ("material/shield-lock-outline", ("Auth-Server und Anmeldung" if de else "Auth server and sign-in"), ("OpenIddict, BFF, Keycloak oder jeder OIDC-Anbieter und umschaltbare Anmelde-Designs: Karte, Split, Slide." if de else "OpenIddict, BFF, Keycloak or any OIDC provider, and switchable sign-in designs: card, split, slide."), "security/sign-in-pages/"),
-  ("material/table-large", ("Datentabellen" if de else "Data tables"), ("Facetten, Spaltenfilter, Gruppierung, Ansichten, Export und Import für jede Entity über OData." if de else "Facets, column filters, grouping, views, export and import for every entity through OData."), "ui/data-table/"),
-  ("material/lightning-bolt-outline", ("Client-Entities" if de else "Client entities"), ("Der Browser hält 100.000 Zeilen und beantwortet Suche, Facetten und Sortierung selbst." if de else "The browser keeps 100,000 rows and answers search, facets and sorting itself."), "ui/client-entities/"),
-  ("material/palette-outline", ("Themes" if de else "Theming"), ("Farben, Schrift, Radius, Dichte und Logo. Admins legen den Standard fest, jeder wählt sein Theme." if de else "Colors, fonts, radius, density and logo. Admins set the default, everyone picks their own."), "modules/theming/"),
-  ("material/cog-outline", ("Dienste" if de else "Services"), ("Einstellungen, App-Konfiguration, Mail-Vorlagen, Jobs, Dateien, Suche, Chat, Benachrichtigungen." if de else "Settings, app configuration, mail templates, jobs, files, search, chat, notifications."), "modules/settings/"),
-  ("material/robot-outline", ("KI-Assistent und MCP" if de else "AI assistant and MCP"), ("Ein Assistent, der die Berechtigungen des Benutzers respektiert, und MCP für externe Werkzeuge." if de else "An assistant that respects the user's permissions, and MCP for external tools."), "modules/ai/"),
-  ("simple/dotnet", ("Aspire-Hosting" if de else "Aspire hosting"), ("Postgres, Redis, Mailpit, Elasticsearch und Keycloak, verdrahtet anhand der Pakete jedes Dienstes." if de else "Postgres, Redis, Mailpit, Elasticsearch and Keycloak, wired from the packages each service uses."), "hosting/aspire/")
+  ("material/puzzle-outline", ("Modulare Architektur" if de else "Modular architecture"), ("Module mit Abhängigkeiten, ein Dispatcher mit Validierung, Berechtigungen und Caching, dazu CLI und Coworkee Studio." if de else "Modules with dependencies, a dispatcher with validation, permissions and caching, plus the CLI and Coworkee Studio."), "features/architecture/"),
+  ("material/shield-lock-outline", ("Identity und Anmeldung" if de else "Identity and sign-in"), ("Benutzer, Rollen, Gruppen, Berechtigungen bis auf einzelne Ressourcen, OpenIddict-Auth-Server, Keycloak und API-Schlüssel." if de else "Users, roles, groups, permissions down to single resources, an OpenIddict auth server, Keycloak and API keys."), "features/identity/"),
+  ("material/domain", ("Mandanten und Einstellungen" if de else "Multi-tenancy and settings"), ("Organisationen mit eigenen Daten, Einstellungen auf mehreren Ebenen, Features und Editionen für SaaS." if de else "Organisations with their own data, settings on several levels, features and editions for SaaS."), "features/multi-tenancy/"),
+  ("material/database-outline", ("Daten und Abfragen" if de else "Data and queries"), ("EF Core auf PostgreSQL, SQL Server oder SQLite, OData mit Facetten, Query-Builder und Client-Entities." if de else "EF Core on PostgreSQL, SQL Server or SQLite, OData with facets, a query builder and client entities."), "features/data/"),
+  ("material/view-dashboard-outline", ("Blazor-Admin-Oberfläche" if de else "Blazor admin UI"), ("MudBlazor-Shell mit Datentabellen, Formularen aus dem Modell, Themes und drei Anmelde-Designs." if de else "A MudBlazor shell with data tables, forms from the model, theming and three sign-in designs."), "features/blazor-ui/"),
+  ("material/access-point", ("Realtime und Zusammenarbeit" if de else "Realtime and collaboration"), ("Live-Änderungen, Benachrichtigungen, Chat, Präsenz, Kommentare und Mail-Kampagnen." if de else "Live changes, notifications, chat, presence, comments and mail campaigns."), "features/realtime/"),
+  ("material/robot-outline", ("KI-Assistent und MCP" if de else "AI assistant and MCP"), ("Ein Assistent mit den Rechten des Benutzers, 14 Anbieter von Anthropic bis Ollama und ein MCP-Server pro App." if de else "An assistant with the user's permissions, 14 providers from Anthropic to Ollama and an MCP server per app."), "features/ai/"),
+  ("material/chart-box-outline", ("Berichte und Dashboards" if de else "Reporting and dashboards"), ("Dashboards im Browser entwerfen, die Datenbank rechnet: 9 bis 58 ms auf 100.000 Aufträgen." if de else "Design dashboards in the browser, the database does the math: 9 to 58 ms on 100,000 orders."), "features/reporting/"),
+  ("material/translate", ("Lokalisierung" if de else "Localization"), ("23 mitgelieferte Sprachen, Texte zur Laufzeit pflegen, maschinelle Übersetzung mit LibreTranslate, DeepL und mehr." if de else "23 shipped languages, texts edited at runtime, machine translation with LibreTranslate, DeepL and more."), "features/localization/"),
+  ("material/chart-timeline-variant", ("Aspire und Observability" if de else "Aspire and observability"), ("Ein AppHost startet Datenbank, Redis, Keycloak, Grafana mit Logs, Metriken und Traces, WebDataStudio und AspireUI." if de else "One app host starts the database, Redis, Keycloak, Grafana with logs, metrics and traces, WebDataStudio and AspireUI."), "features/observability/"),
+  ("material/folder-multiple-outline", ("Dateien und Suche" if de else "Files and search"), ("Dateiablage mit Vorschau, öffentliche Links, Blob-Storage und Volltextsuche." if de else "A file manager with previews, public links, blob storage and full text search."), "features/files/"),
+  ("material/lightbulb-on-outline", ("Beispiele und Vergleich" if de else "Use cases and comparison"), ("Wofür sich Coworkee eignet und was es gegenüber einem selbst gebauten ASP.NET-Core-Projekt spart." if de else "What Coworkee is good for and what it saves compared with a hand-rolled ASP.NET Core project."), "features/use-cases/")
+] %}
+
+{% set cw_brands = [
+  ("simple/dotnet", None, ".NET Aspire", "features/observability/"),
+  ("simple/postgresql", None, "PostgreSQL", "features/data/"),
+  ("material/database", None, "SQL Server", "features/data/"),
+  ("simple/sqlite", None, "SQLite", "features/data/"),
+  ("simple/redis", None, "Redis", "features/realtime/"),
+  ("simple/keycloak", None, "Keycloak", "features/identity/"),
+  ("simple/grafana", None, "Grafana", "features/observability/"),
+  ("simple/prometheus", None, "Prometheus", "features/observability/"),
+  ("material/text-box-search-outline", None, "Loki", "features/observability/"),
+  ("material/transit-connection-variant", None, "Tempo", "features/observability/"),
+  ("simple/opentelemetry", None, "OpenTelemetry", "features/observability/"),
+  (None, "webdatastudio.svg", "WebDataStudio", "features/observability/"),
+  (None, "aspireui.svg", "AspireUI", "features/observability/"),
+  ("simple/elasticsearch", None, "Elasticsearch", "features/files/"),
+  ("simple/libretranslate", None, "LibreTranslate", "features/localization/"),
+  ("simple/deepl", None, "DeepL", "features/localization/"),
+  ("simple/ollama", None, "Ollama", "features/ai/"),
+  ("simple/openai", None, "OpenAI", "features/ai/"),
+  ("simple/anthropic", None, "Anthropic", "features/ai/"),
+  ("simple/googlegemini", None, "Gemini", "features/ai/"),
+  ("simple/mistralai", None, "Mistral", "features/ai/"),
+  ("simple/blazor", None, "MudBlazor", "features/blazor-ui/"),
+  (None, "mudex.png", "MudBlazor.Extensions", "features/blazor-ui/"),
+  (None, "nextended.png", "Nextended", "features/data/"),
+  (None, "airworks.png", "AirWorks", "features/blazor-ui/")
 ] %}
 
 {% set tour = [
@@ -166,10 +201,28 @@
           </a>
         {% endfor %}
       </div>
+      <div class="cw-ctas cw-features__more cw-reveal">
+        <a class="cw-btn" href="{{ (base ~ 'features/') | url }}">{% include ".icons/material/view-grid-outline.svg" %}{{ t.all_features }}</a>
+        <a class="cw-btn" href="{{ (base ~ 'features/why-coworkee/') | url }}">{% include ".icons/material/scale-balance.svg" %}{{ t.why }}</a>
+      </div>
     </div>
   </section>
 
-  <section class="cw-section cw-section--alt md-typeset" id="get-started">
+  <section class="cw-section cw-section--alt md-typeset" id="integrations">
+    <div class="md-grid">
+      <h2 class="cw-reveal">{{ t.brands }}</h2>
+      <p class="cw-section__lead cw-reveal">{{ t.brands_lead }}</p>
+      <ul class="cw-brands cw-reveal">
+        {% for icon, img, name, href in cw_brands %}
+          <li><a href="{{ (base ~ href) | url }}">
+            {%- if icon %}{% include ".icons/" ~ icon ~ ".svg" %}{% else %}<img src="{{ ('assets/brands/' ~ img) | url }}" alt="" width="28" height="28" loading="lazy">{% endif -%}
+            <span>{{ name }}</span></a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+
+  <section class="cw-section md-typeset" id="get-started">
     <div class="md-grid">
       <h2 class="cw-reveal">{{ t.gs }}</h2>
       <p class="cw-section__lead cw-reveal">{{ t.gs_lead }}</p>
@@ -202,7 +255,7 @@
     </div>
   </section>
 
-  <section class="cw-section md-typeset">
+  <section class="cw-section cw-section--alt md-typeset">
     <div class="md-grid">
       <h2 class="cw-reveal">{{ t.tour }}</h2>
       <p class="cw-section__lead cw-reveal">{{ t.tour_lead }}</p>
@@ -222,7 +275,7 @@
     </div>
   </section>
 
-  <section class="cw-section cw-section--alt md-typeset" id="gallery">
+  <section class="cw-section md-typeset" id="gallery">
     <div class="md-grid">
       <h2 class="cw-reveal">{{ t.gallery }}</h2>
       <p class="cw-section__lead cw-reveal">{{ t.gallery_lead }}</p>
@@ -237,7 +290,7 @@
     </div>
   </section>
 
-  <section class="cw-section md-typeset">
+  <section class="cw-section cw-section--alt md-typeset">
     <div class="md-grid">
       <h2 class="cw-reveal">{{ t.overview }}</h2>
       <div class="md-content cw-overview" data-md-component="content">
@@ -246,7 +299,7 @@
     </div>
   </section>
 
-  <section class="cw-section cw-section--alt md-typeset" id="contact">
+  <section class="cw-section md-typeset" id="contact">
     <div class="md-grid">
       <h2 class="cw-reveal">{{ t.connect }}</h2>
       <p class="cw-section__lead cw-reveal">{{ t.connect_lead }}</p>
