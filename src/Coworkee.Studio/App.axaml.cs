@@ -30,7 +30,11 @@ public sealed class App : Application
             };
             window.Attach(main);
             desktop.MainWindow = window;
-            desktop.Exit += (_, _) => main.Generate.App.Stop();
+            desktop.Exit += (_, _) =>
+            {
+                main.Generate.App.Stop();
+                main.Apps.StopAll();
+            };
             _ = main.Update.CheckAsync(cancellationToken => ToolUpdates.FetchVersionsAsync(ToolUpdates.Studio, cancellationToken));
         }
 

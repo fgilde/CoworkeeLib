@@ -10,7 +10,7 @@ public sealed class ScreenshotTests
     public static TheoryData<string, bool, string> Pages()
     {
         var data = new TheoryData<string, bool, string>();
-        foreach (var page in new[] { "welcome", "basics", "branding", "signin", "architecture", "ai", "languages", "entities", "users", "review", "generate", "run", "help" })
+        foreach (var page in new[] { "welcome", "basics", "branding", "signin", "architecture", "ai", "languages", "entities", "users", "review", "generate", "run", "help", "gallery", "apps" })
         {
             data.Add(page, false, "en");
             data.Add(page, true, "en");
@@ -59,6 +59,25 @@ public sealed class ScreenshotTests
             var order = main.Entities.Modules[0].Entities.Single(e => e.Name == "Order");
             main.Entities.SelectEntity(order);
             order.Properties.Single(p => p.Name == "Customer").IsExpanded = true;
+        }
+
+        if (page == "gallery")
+        {
+            main.ShowGalleryCommand.Execute(null);
+        }
+
+        if (page == "apps")
+        {
+            main.Apps.Probe = new Cli.AppProbe { HasProcess = name => name == "Shop.AppHost", IsListening = _ => false };
+            foreach (var name in new[] { "Shop", "Crm" })
+            {
+                var appHost = Directory.CreateDirectory(folder.File($"apps/{name}/src/{name}.AppHost/Properties")).Parent!.FullName;
+                File.WriteAllText(Path.Combine(appHost, $"{name}.AppHost.csproj"), "<Project />");
+                File.WriteAllText(Path.Combine(appHost, "Properties", "launchSettings.json"), """{ "profiles": { "https": { "applicationUrl": "https://localhost:17100" } } }""");
+                main.Apps.Remember(folder.File($"apps/{name}"), new Coworkee.Cli.Spec.AppSpec { Name = name, Options = { ["database"] = name == "Crm" ? "sqlite" : "postgres", ["keycloak"] = name == "Shop" } });
+            }
+
+            main.Page = main.Apps;
         }
 
         if (page == "help")

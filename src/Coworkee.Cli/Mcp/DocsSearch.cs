@@ -30,6 +30,7 @@ internal static partial class DocsSearch
         ("Installation", "getting-started/installation/"),
         ("Command line", "getting-started/cli/"),
         ("Coworkee Studio", "getting-started/studio/"),
+        ("Starter specs", "getting-started/gallery/"),
         ("MCP server of the CLI", "getting-started/mcp/"),
         ("Solution structure", "getting-started/solution-structure/"),
         ("Your first feature", "getting-started/first-feature/"),

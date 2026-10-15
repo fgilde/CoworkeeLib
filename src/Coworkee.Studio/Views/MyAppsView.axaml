@@ -1,0 +1,144 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Coworkee.Studio.ViewModels"
+             xmlns:cli="using:Coworkee.Studio.Cli"
+             xmlns:l="using:Coworkee.Studio.Localization"
+             x:Class="Coworkee.Studio.Views.MyAppsView"
+             x:DataType="vm:MyAppsViewModel">
+  <ScrollViewer>
+    <StackPanel Margin="44,26,44,40" Spacing="18" MaxWidth="980" HorizontalAlignment="Left">
+      <Grid ColumnDefinitions="Auto,*,Auto">
+        <Button Classes="icon" Command="{Binding Main.ClosePageCommand}" ToolTip.Tip="{l:L Back}" VerticalAlignment="Top">
+          <PathIcon Data="{StaticResource Icon.ChevronLeft}" />
+        </Button>
+        <StackPanel Grid.Column="1" Margin="8,0,16,0" Spacing="4">
+          <TextBlock Classes="h1" Text="{l:L 'My apps'}" />
+          <TextBlock Classes="muted" FontSize="14" TextWrapping="Wrap"
+                     Text="{l:L 'Apps you created here, and the ones the CLI made in folders you add. Start them, open the dashboard or jump into the code.'}" />
+        </StackPanel>
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+          <Button Classes="ghost" Command="{Binding RefreshCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <PathIcon Classes="small" Data="{StaticResource Icon.Restart}" />
+              <TextBlock Text="{l:L 'Refresh'}" />
+            </StackPanel>
+          </Button>
+          <Button Command="{Binding AddFolderCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <PathIcon Classes="small" Data="{StaticResource Icon.FolderOpen}" />
+              <TextBlock Text="{l:L 'Add a folder'}" />
+            </StackPanel>
+          </Button>
+        </StackPanel>
+      </Grid>
+
+      <ItemsControl ItemsSource="{Binding Folders}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <WrapPanel ItemSpacing="6" LineSpacing="6" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="x:String">
+            <Border Classes="chip">
+              <StackPanel Orientation="Horizontal" Spacing="4">
+                <TextBlock Text="{Binding}" />
+                <Button Classes="icon" Padding="2" MinHeight="0" ToolTip.Tip="{l:L 'Stop searching this folder'}"
+                        Command="{Binding $parent[ItemsControl].((vm:MyAppsViewModel)DataContext).RemoveFolderCommand}" CommandParameter="{Binding}">
+                  <PathIcon Width="10" Height="10" Data="{StaticResource Icon.Close}" />
+                </Button>
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <Border Classes="soft" IsVisible="{Binding IsEmpty}" Padding="22">
+        <StackPanel Spacing="6">
+          <TextBlock Classes="h3" Text="{l:L 'No apps yet'}" />
+          <TextBlock Classes="caption" TextWrapping="Wrap"
+                     Text="{l:L 'Create one with the wizard, or add the folder where your Coworkee apps live; the Studio looks for .coworkee/app.json and app host projects there.'}" />
+        </StackPanel>
+      </Border>
+
+      <ItemsControl ItemsSource="{Binding Apps}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Spacing="12" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:MyAppViewModel">
+            <Border Classes="card" Padding="20,16">
+              <StackPanel Spacing="10">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                  <Border Width="40" Height="40" CornerRadius="12" Background="{DynamicResource Hero}" VerticalAlignment="Top">
+                    <PathIcon Foreground="White" Data="{StaticResource Icon.Apps}" />
+                  </Border>
+                  <StackPanel Grid.Column="1" Margin="14,0" Spacing="2">
+                    <TextBlock Classes="h3" Text="{Binding Name}" />
+                    <TextBlock Classes="mono caption" Text="{Binding Path}" TextTrimming="LeadingCharacterEllipsis" TextWrapping="NoWrap" ToolTip.Tip="{Binding Path}" />
+                    <TextBlock Classes="caption" TextWrapping="Wrap">
+                      <Run Text="{Binding Created}" />
+                      <Run Text="  " />
+                      <Run Text="{Binding OptionsText}" />
+                    </TextBlock>
+                  </StackPanel>
+                  <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+                    <Button Classes="primary" Command="{Binding StartCommand}" IsVisible="{Binding IsStopped}">
+                      <StackPanel Orientation="Horizontal" Spacing="6">
+                        <PathIcon Classes="small" Data="{StaticResource Icon.Play}" />
+                        <TextBlock Text="{l:L 'Start'}" />
+                      </StackPanel>
+                    </Button>
+                    <Button Command="{Binding StopCommand}" IsVisible="{Binding IsRunning}">
+                      <StackPanel Orientation="Horizontal" Spacing="6">
+                        <PathIcon Classes="small" Data="{StaticResource Icon.Stop}" />
+                        <TextBlock Text="{l:L 'Stop'}" />
+                      </StackPanel>
+                    </Button>
+                  </StackPanel>
+                </Grid>
+
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <PathIcon Classes="small" Data="{StaticResource Icon.CheckCircle}" Foreground="{DynamicResource Success}" IsVisible="{Binding IsRunning}" />
+                  <PathIcon Classes="small" Data="{StaticResource Icon.Stop}" Foreground="{DynamicResource TextSecondary}" IsVisible="{Binding IsStopped}" />
+                  <TextBlock Classes="body" Text="{Binding StatusText}" TextWrapping="Wrap" />
+                </StackPanel>
+
+                <ItemsControl ItemsSource="{Binding Links}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <WrapPanel ItemSpacing="8" LineSpacing="8" />
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="cli:AppEndpoint">
+                      <Button Classes="ghost" Command="{Binding $parent[ItemsControl].((vm:MyAppViewModel)DataContext).OpenCommand}" CommandParameter="{Binding Url}" ToolTip.Tip="{Binding Url}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                          <PathIcon Classes="small" Data="{StaticResource Icon.OpenInNew}" />
+                          <TextBlock Text="{Binding Name}" />
+                        </StackPanel>
+                      </Button>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Classes="mono caption" Text="{Binding LastLog}" IsVisible="{Binding LastLog, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                           TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" ToolTip.Tip="{Binding LastLog}" />
+
+                <WrapPanel ItemSpacing="18">
+                  <Button Classes="link" Content="{l:L 'Open folder'}" Command="{Binding OpenFolderCommand}" />
+                  <Button Classes="link" Content="{l:L 'Open solution'}" Command="{Binding OpenSolutionCommand}" />
+                  <Button Classes="link" Content="{l:L 'VS Code'}" Command="{Binding OpenInCodeCommand}" />
+                  <Button Classes="link" Content="{l:L 'Remove from the list'}"
+                          Command="{Binding $parent[ItemsControl].((vm:MyAppsViewModel)DataContext).ForgetCommand}" CommandParameter="{Binding}" />
+                </WrapPanel>
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

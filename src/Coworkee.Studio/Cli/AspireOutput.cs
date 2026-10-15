@@ -43,6 +43,17 @@ public static partial class AspireOutput
         return [.. endpoints.OrderBy(e => e.Name == "Web" ? 0 : 1)];
     }
 
+    /// <summary>The project file of the app host below <paramref name="solutionFolder"/>/src, or null.</summary>
+    public static string? AppHost(string solutionFolder) => Directory.Exists(Path.Combine(solutionFolder, "src"))
+        ? Directory.GetFiles(Path.Combine(solutionFolder, "src"), "*.AppHost.csproj", SearchOption.AllDirectories).FirstOrDefault()
+        : null;
+
+    /// <summary>The address of the Aspire dashboard from the launch settings of the app host (without the login token).</summary>
+    public static string? Dashboard(string solutionFolder) =>
+        AppHost(solutionFolder) is { } project && Path.Combine(Path.GetDirectoryName(project)!, "Properties", "launchSettings.json") is var settings && File.Exists(settings)
+            ? Url(File.ReadAllText(settings))
+            : null;
+
     private static string? Url(string launchSettings)
     {
         try

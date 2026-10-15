@@ -1,0 +1,57 @@
+{
+  "name": "Approvals",
+  "options": {
+    "samples": false,
+    "chat": false,
+    "ai": false,
+    "keycloak": true
+  },
+  "branding": {
+    "title": "Requests",
+    "theme": "Classic",
+    "signInLayout": "Card"
+  },
+  "modules": [
+    {
+      "name": "Desk",
+      "entities": [
+        {
+          "name": "Category",
+          "plural": "Categories",
+          "properties": [
+            { "name": "Name", "required": true, "maxLength": 100, "display": true, "unique": true },
+            { "name": "ApprovalLimit", "type": "money", "label": "Approval needed above" }
+          ]
+        },
+        {
+          "name": "Request",
+          "properties": [
+            { "name": "Title", "required": true, "maxLength": 200, "display": true },
+            { "name": "Category", "type": "reference", "reference": "Category", "required": true, "inverse": "Requests", "facet": true },
+            { "name": "Reason", "type": "text", "required": true },
+            { "name": "Amount", "type": "money" },
+            { "name": "NeededBy", "type": "dateOnly", "label": "Needed by" },
+            { "name": "Status", "type": "enum", "enum": "ApprovalStatus", "required": true, "default": "Draft", "facet": true },
+            { "name": "DecidedOn", "type": "dateTime", "label": "Decided on" },
+            { "name": "Decision", "type": "text", "label": "Comment of the approver" }
+          ]
+        }
+      ]
+    }
+  ],
+  "enums": [
+    { "name": "ApprovalStatus", "values": ["Draft", "Submitted", "Approved", "Rejected", "Withdrawn"] }
+  ],
+  "roles": [
+    {
+      "name": "Requester",
+      "description": "Files requests",
+      "permissions": ["Desk.Categories.View", "Desk.Requests.View", "Desk.Requests.Create", "Desk.Requests.Edit"]
+    },
+    {
+      "name": "Approver",
+      "description": "Decides on requests",
+      "permissions": ["Desk.Categories.View", "Desk.Categories.Edit", "Desk.Requests.View", "Desk.Requests.Edit"]
+    }
+  ]
+}

@@ -15,8 +15,8 @@ public enum AppRunState
     Failed,
 }
 
-/// <summary>The created app, run from the Studio: dotnet run of its app host with the output, the dashboard login and the addresses of the app.</summary>
-public sealed partial class AppRunViewModel(GenerateStep step) : ObservableObject
+/// <summary>An app run from the Studio: dotnet run of its app host with the output, the dashboard login and the addresses of the app.</summary>
+public sealed partial class AppRunViewModel(MainViewModel main, Func<string?> output, Action<Action> dispatch) : ObservableObject
 {
     private const int MaxLines = 2000;
     private CancellationTokenSource? _cancel;
@@ -67,12 +67,12 @@ public sealed partial class AppRunViewModel(GenerateStep step) : ObservableObjec
     [RelayCommand]
     public async Task StartAsync()
     {
-        if (IsBusy || step.Output is not { } output)
+        if (IsBusy || output() is not { } folder)
         {
             return;
         }
 
-        var appHost = Directory.Exists(Path.Combine(output, "src")) ? Directory.GetFiles(Path.Combine(output, "src"), "*.AppHost.csproj", SearchOption.AllDirectories).FirstOrDefault() : null;
+        var appHost = AspireOutput.AppHost(folder);
         Log.Clear();
         Error = null;
         DashboardUrl = null;
@@ -80,18 +80,18 @@ public sealed partial class AppRunViewModel(GenerateStep step) : ObservableObjec
         WasStarted = true;
         if (appHost is null)
         {
-            Fail(L.Format("No app host project below {0}", output));
+            Fail(L.Format("No app host project below {0}", folder));
             return;
         }
 
-        Endpoints = AspireOutput.Endpoints(output);
+        Endpoints = AspireOutput.Endpoints(folder);
         State = AppRunState.Starting;
         Add("> dotnet run --project " + appHost, false);
         _cancel = new CancellationTokenSource();
         try
         {
-            var exit = await step.Main.Generator.RunAppAsync(appHost, step.Main.Settings, (line, error) => step.Dispatch(() => Add(line, error)), _cancel.Token);
-            step.Dispatch(() =>
+            var exit = await main.Generator.RunAppAsync(appHost, main.Settings, (line, error) => dispatch(() => Add(line, error)), _cancel.Token);
+            dispatch(() =>
             {
                 if (exit == 0)
                 {
@@ -105,11 +105,11 @@ public sealed partial class AppRunViewModel(GenerateStep step) : ObservableObjec
         }
         catch (OperationCanceledException)
         {
-            step.Dispatch(() => State = AppRunState.Stopped);
+            dispatch(() => State = AppRunState.Stopped);
         }
         catch (Win32Exception exception)
         {
-            step.Dispatch(() => Fail(exception.Message));
+            dispatch(() => Fail(exception.Message));
         }
     }
 
@@ -117,7 +117,7 @@ public sealed partial class AppRunViewModel(GenerateStep step) : ObservableObjec
     public void Stop() => _cancel?.Cancel();
 
     [RelayCommand]
-    public void Open(string url) => step.Main.Dialogs.Open(url);
+    public void Open(string url) => main.Dialogs.Open(url);
 
     public void Add(string line, bool error)
     {

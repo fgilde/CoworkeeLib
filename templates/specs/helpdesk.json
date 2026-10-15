@@ -1,0 +1,53 @@
+{
+  "name": "Helpdesk",
+  "options": {
+    "samples": false,
+    "files": true,
+    "chat": true
+  },
+  "branding": {
+    "title": "Helpdesk",
+    "theme": "Coworkee",
+    "signInLayout": "Card"
+  },
+  "modules": [
+    {
+      "name": "Support",
+      "entities": [
+        {
+          "name": "Ticket",
+          "clientEntity": true,
+          "properties": [
+            { "name": "Number", "required": true, "maxLength": 20, "unique": true },
+            { "name": "Subject", "required": true, "maxLength": 250, "display": true },
+            { "name": "Description", "type": "text" },
+            { "name": "RequesterEmail", "type": "email", "required": true, "maxLength": 250, "label": "Requester" },
+            { "name": "Status", "type": "enum", "enum": "TicketStatus", "required": true, "default": "New", "facet": true },
+            { "name": "Priority", "type": "enum", "enum": "TicketPriority", "required": true, "default": "Normal", "facet": true },
+            { "name": "RespondBy", "type": "dateTime", "label": "First response due" },
+            { "name": "ResolveBy", "type": "dateTime", "label": "Resolution due" }
+          ]
+        },
+        {
+          "name": "TicketComment",
+          "properties": [
+            { "name": "Ticket", "type": "reference", "reference": "Ticket", "required": true, "inverse": "Comments", "onDelete": "cascade" },
+            { "name": "Body", "type": "text", "required": true },
+            { "name": "Internal", "type": "bool", "default": "false", "facet": true }
+          ]
+        }
+      ]
+    }
+  ],
+  "enums": [
+    { "name": "TicketStatus", "values": ["New", "Open", "Waiting", "Resolved", "Closed"] },
+    { "name": "TicketPriority", "values": ["Normal", "Low", "High", "Urgent"] }
+  ],
+  "roles": [
+    {
+      "name": "Agent",
+      "description": "Answers tickets",
+      "permissions": ["Support.Tickets.View", "Support.Tickets.Create", "Support.Tickets.Edit", "Support.TicketComments.View", "Support.TicketComments.Create", "Chat.Use"]
+    }
+  ]
+}

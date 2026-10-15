@@ -31,6 +31,8 @@
     <DataTemplate DataType="vm:UsersStep"><v:UsersView /></DataTemplate>
     <DataTemplate DataType="vm:ReviewStep"><v:ReviewView /></DataTemplate>
     <DataTemplate DataType="vm:GenerateStep"><v:GenerateView /></DataTemplate>
+    <DataTemplate DataType="vm:MyAppsViewModel"><v:MyAppsView /></DataTemplate>
+    <DataTemplate DataType="vm:GalleryViewModel"><v:GalleryView /></DataTemplate>
   </Application.DataTemplates>
 
   <Application.Styles>

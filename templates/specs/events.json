@@ -1,0 +1,54 @@
+{
+  "name": "EventDesk",
+  "options": {
+    "samples": false,
+    "reports": true,
+    "database": "sqlite",
+    "redis": false
+  },
+  "branding": {
+    "title": "Event Desk",
+    "theme": "Sunset",
+    "signInLayout": "Slide"
+  },
+  "modules": [
+    {
+      "name": "Booking",
+      "entities": [
+        {
+          "name": "Venue",
+          "properties": [
+            { "name": "Name", "required": true, "maxLength": 150, "display": true, "unique": true },
+            { "name": "City", "maxLength": 100, "facet": true },
+            { "name": "Capacity", "type": "int", "required": true }
+          ]
+        },
+        {
+          "name": "Event",
+          "properties": [
+            { "name": "Title", "required": true, "maxLength": 200, "display": true },
+            { "name": "Venue", "type": "reference", "reference": "Venue", "required": true, "inverse": "Events", "facet": true },
+            { "name": "StartsAt", "type": "dateTime", "required": true, "label": "Starts" },
+            { "name": "EndsAt", "type": "dateTime", "label": "Ends" },
+            { "name": "Seats", "type": "int", "required": true },
+            { "name": "Price", "type": "money" },
+            { "name": "Published", "type": "bool", "default": "false", "facet": true }
+          ]
+        },
+        {
+          "name": "Reservation",
+          "properties": [
+            { "name": "Event", "type": "reference", "reference": "Event", "required": true, "inverse": "Reservations", "onDelete": "cascade", "facet": true },
+            { "name": "GuestName", "required": true, "maxLength": 150, "display": true, "label": "Guest" },
+            { "name": "GuestEmail", "type": "email", "required": true, "maxLength": 250, "label": "Email" },
+            { "name": "Tickets", "type": "int", "required": true, "default": "1" },
+            { "name": "State", "type": "enum", "enum": "ReservationState", "required": true, "default": "Requested", "facet": true }
+          ]
+        }
+      ]
+    }
+  ],
+  "enums": [
+    { "name": "ReservationState", "values": ["Requested", "Confirmed", "CheckedIn", "Cancelled"] }
+  ]
+}

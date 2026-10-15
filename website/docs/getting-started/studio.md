@@ -32,9 +32,21 @@ The panel on the left shows where you are; every page you have seen is one click
 
 ### Welcome
 
-Start a new app, open a spec (`.json` from the CLI, the [MCP server](mcp.md) or an earlier session), open an existing app or pick one of the recent specs.
+Start a new app, open a spec (`.json` from the CLI, the [MCP server](mcp.md) or an earlier session), open an existing app or pick one of the recent specs. Below those: **Start from a template** and **My apps**.
 
 ![Welcome](../assets/screenshots/studio-welcome-light.webp)
+
+#### Start from a template
+
+The [starter specs](gallery.md) (CRM, helpdesk, asset portal, small shop, events, approval requests) as cards with a search box and tag filter. A click fills every page of the wizard with that spec and opens *Basics*; from there it is your app, rename it and change what you like.
+
+![Start from a template](../assets/screenshots/studio-gallery-light.webp)
+
+#### My apps
+
+Every app the Studio created lands in this list, with its folder, the day it was made and the options that differ from the template. **Add a folder** points the Studio at the place where your apps live; it looks up to three levels down for `.coworkee/app.json` (written by the CLI) or a solution with an `*.AppHost` project, so apps made with `coworkee new` show up too.
+
+For each app you see whether it runs. The Studio checks for the app host process (`Shop.AppHost`), so an app started from Visual Studio or `coworkee run` counts as well, and it warns when another program sits on the dashboard port. **Start** and **Stop** use the same runner as the *Create* page. While it runs, the links open the Aspire dashboard (with the login token when the Studio started it), the web app and API, and Grafana and WebDataStudio. Those two get their ports from Aspire at start-up, so their links open the dashboard, where the address is listed next to the resource. Below that sit the last line of the output and links to the folder, the solution and VS Code.
 
 ### Basics
 
@@ -134,4 +146,4 @@ The help (`F1` or the question mark) explains the wizard, the CLI commands and t
 
 ## Settings
 
-The settings in the help drawer: language (system, English, German), color mode, the CLI to use (empty for the global tool, an executable or `Coworkee.Cli.dll`), a template source (`.nupkg` or folder, passed as `--template-source`) and a local package feed that the restore of the new app uses next to nuget.org. They are kept per user with the recent specs in the application data folder under `Coworkee/Studio/settings.json`.
+The settings in the help drawer: language (system, English, German), color mode, the CLI to use (empty for the global tool, an executable or `Coworkee.Cli.dll`), a template source (`.nupkg` or folder, passed as `--template-source`) and a local package feed that the restore of the new app uses next to nuget.org. They are kept per user with the recent specs, the list of *My apps* and its folders in the application data folder under `Coworkee/Studio/settings.json`.

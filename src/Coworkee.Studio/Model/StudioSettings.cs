@@ -2,7 +2,10 @@ using System.Text.Json;
 
 namespace Coworkee.Studio.Model;
 
-/// <summary>Per user, in the application data folder: recent specs, how to start the CLI, template source, package feed, language and theme.</summary>
+/// <summary>An app of My apps: its solution folder, name, when it was created and the options that differ from the defaults.</summary>
+public sealed record KnownApp(string Path, string Name, DateTimeOffset Created, Dictionary<string, string?> Options);
+
+/// <summary>Per user, in the application data folder: recent specs, my apps, how to start the CLI, template source, package feed, language and theme.</summary>
 public sealed class StudioSettings
 {
     private const int MaxRecent = 8;
@@ -29,6 +32,12 @@ public sealed class StudioSettings
 
     /// <summary>Light, Dark or empty to follow the system.</summary>
     public string? Theme { get; set; }
+
+    /// <summary>Apps created with the Studio or found in <see cref="AppFolders"/>, for My apps.</summary>
+    public List<KnownApp> Apps { get; set; } = [];
+
+    /// <summary>Folders My apps searches for apps created with the CLI.</summary>
+    public List<string> AppFolders { get; set; } = [];
 
     public static StudioSettings Load(string? file = null)
     {

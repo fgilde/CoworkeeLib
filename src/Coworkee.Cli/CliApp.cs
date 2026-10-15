@@ -26,6 +26,7 @@ internal static class CliApp
             NewCommand.Create(),
             OptionsCommand.Create(),
             SpecCommand.Create(),
+            SpecsCommand.Create(),
             RunCommand.Create(),
             MigrationsCommand.Create(),
             DbCommand.Create(),

@@ -37,6 +37,7 @@
   "copy_label": ("Kopieren" if de else "Copy"),
   "copied": ("Kopiert" if de else "Copied"),
   "cli_doc": ("Alle Befehle" if de else "All commands"),
+  "gallery_doc": ("Startvorlagen und Mini-Assistent" if de else "Starter specs and a mini wizard"),
   "studio": ("Lieber mit Oberfläche? Coworkee Studio" if de else "Prefer a UI? Coworkee Studio"),
   "studio_t": ("<code>coworkee ui</code> installiert und startet Coworkee Studio, die Desktop-App zum CLI (Tool-Befehl <code>coworkee-ui</code>). Ein Assistent führt durch Name, Logo und Theme, Anmeldung, Module und Infrastruktur und deine Entities, zeigt Vor- und Nachteile jeder Wahl, legt die App an und startet sie." if de else "<code>coworkee ui</code> installs and starts Coworkee Studio, the desktop app for the CLI (tool command <code>coworkee-ui</code>). A wizard walks through name, logo and theme, sign-in, modules, infrastructure and your entities, shows what each choice brings and costs, creates the app and runs it."),
   "mcp": ("Für KI-Assistenten" if de else "For AI assistants"),
@@ -227,7 +228,7 @@
           <li ><strong>{{ t.step1 }}</strong><span>{{ t.step1_t }}</span>{{ code("dotnet tool install -g Coworkee.Cli") }}</li>
           <li ><strong>{{ t.step2 }}</strong><span>{{ t.step2_t }}</span>{{ code("coworkee new Shop") }}</li>
           <li ><strong>{{ t.step3 }}</strong><span>{{ t.step3_t }}</span>{{ code("cd Shop && coworkee run") }}</li>
-          <li class="cw-steps__more"><a href="{{ (base ~ 'getting-started/cli/') | url }}">{{ t.cli_doc }} {% include ".icons/material/arrow-right.svg" %}</a></li>
+          <li class="cw-steps__more"><a href="{{ (base ~ 'getting-started/cli/') | url }}">{{ t.cli_doc }} {% include ".icons/material/arrow-right.svg" %}</a><a href="{{ (base ~ 'getting-started/gallery/') | url }}">{{ t.gallery_doc }} {% include ".icons/material/arrow-right.svg" %}</a></li>
         </ol>
         <div class="cw-studio">
           <a class="cw-zoom" href="{{ shot('studio-wizard') }}" data-caption="Coworkee Studio">

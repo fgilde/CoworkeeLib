@@ -1,0 +1,61 @@
+{
+  "name": "Crm",
+  "options": {
+    "samples": false,
+    "reports": true,
+    "social": true,
+    "chat": false
+  },
+  "branding": {
+    "title": "Pipeline",
+    "theme": "Ocean",
+    "signInLayout": "Split"
+  },
+  "modules": [
+    {
+      "name": "Sales",
+      "entities": [
+        {
+          "name": "Company",
+          "plural": "Companies",
+          "properties": [
+            { "name": "Name", "required": true, "maxLength": 200, "display": true, "unique": true },
+            { "name": "Website", "type": "url", "maxLength": 300 },
+            { "name": "Industry", "maxLength": 100, "facet": true },
+            { "name": "Notes", "type": "text" }
+          ]
+        },
+        {
+          "name": "Contact",
+          "properties": [
+            { "name": "FullName", "required": true, "maxLength": 200, "display": true, "label": "Name" },
+            { "name": "Email", "type": "email", "maxLength": 250 },
+            { "name": "Phone", "maxLength": 50 },
+            { "name": "Company", "type": "reference", "reference": "Company", "inverse": "Contacts", "onDelete": "setNull", "facet": true }
+          ]
+        },
+        {
+          "name": "Deal",
+          "properties": [
+            { "name": "Title", "required": true, "maxLength": 200, "display": true },
+            { "name": "Company", "type": "reference", "reference": "Company", "required": true, "inverse": "Deals", "facet": true },
+            { "name": "Contact", "type": "reference", "reference": "Contact", "onDelete": "setNull" },
+            { "name": "Stage", "type": "enum", "enum": "DealStage", "required": true, "default": "Lead", "facet": true },
+            { "name": "Value", "type": "money", "required": true },
+            { "name": "ExpectedClose", "type": "dateOnly", "label": "Expected close" }
+          ]
+        }
+      ]
+    }
+  ],
+  "enums": [
+    { "name": "DealStage", "values": ["Lead", "Qualified", "Proposal", "Won", "Lost"] }
+  ],
+  "roles": [
+    {
+      "name": "Sales Rep",
+      "description": "Works the pipeline",
+      "permissions": ["Sales.Companies.View", "Sales.Contacts.View", "Sales.Contacts.Create", "Sales.Contacts.Edit", "Sales.Deals.View", "Sales.Deals.Create", "Sales.Deals.Edit", "Reports.View"]
+    }
+  ]
+}

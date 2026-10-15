@@ -43,9 +43,14 @@ theme:
 hooks:
   - hooks/seo.py
   - hooks/release.py
+  - hooks/specs.py
 
 extra_css:
   - assets/extra.css
+
+# only does something on the page of the starter specs
+extra_javascript:
+  - assets/gallery.js
 
 plugins:
   - search
@@ -82,6 +87,7 @@ plugins:
             MCP server: MCP-Server
             Solution structure: Aufbau der Solution
             Your first feature: Das erste Feature
+            Starter specs: Startvorlagen
             Fundamentals: Grundlagen
             Modules: Module
             Messaging and pipeline: Messaging und Pipeline
@@ -185,6 +191,7 @@ nav:
       - Installation: getting-started/installation.md
       - Command line: getting-started/cli.md
       - Coworkee Studio: getting-started/studio.md
+      - Starter specs: getting-started/gallery.md
       - MCP server: getting-started/mcp.md
       - Solution structure: getting-started/solution-structure.md
       - Your first feature: getting-started/first-feature.md
