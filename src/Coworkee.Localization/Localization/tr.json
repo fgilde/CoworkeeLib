@@ -1341,5 +1341,8 @@
   "{0} is now {1}": "{0} artık {1}",
   "Workflows and approvals": "İş akışları ve onaylar",
   "View workflows and own approvals": "İş akışlarını ve kendi onaylarını görüntüleme",
-  "Run workflow transitions": "İş akışı geçişlerini çalıştırma"
+  "Run workflow transitions": "İş akışı geçişlerini çalıştırma",
+  "Workflow designer": "İş akışı tasarımcısı",
+  "Elsa workflows": "Elsa iş akışları",
+  "Design and run Elsa workflows": "Elsa iş akışlarını tasarlama ve çalıştırma"
 }

@@ -1341,5 +1341,8 @@
   "{0} is now {1}": "{0}은(는) 이제 {1}입니다",
   "Workflows and approvals": "워크플로 및 승인",
   "View workflows and own approvals": "워크플로 및 본인 승인 보기",
-  "Run workflow transitions": "워크플로 전환 실행"
+  "Run workflow transitions": "워크플로 전환 실행",
+  "Workflow designer": "워크플로 디자이너",
+  "Elsa workflows": "Elsa 워크플로",
+  "Design and run Elsa workflows": "Elsa 워크플로 설계 및 실행"
 }

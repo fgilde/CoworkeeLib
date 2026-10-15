@@ -1341,5 +1341,8 @@
   "{0} is now {1}": "{0} er nu {1}",
   "Workflows and approvals": "Workflows og godkendelser",
   "View workflows and own approvals": "Se workflows og egne godkendelser",
-  "Run workflow transitions": "Udføre workflow-overgange"
+  "Run workflow transitions": "Udføre workflow-overgange",
+  "Workflow designer": "Workflow-designer",
+  "Elsa workflows": "Elsa-workflows",
+  "Design and run Elsa workflows": "Designe og køre Elsa-workflows"
 }

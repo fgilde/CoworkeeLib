@@ -1341,5 +1341,8 @@
   "{0} is now {1}": "{0} ឥឡូវនេះគឺ {1}",
   "Workflows and approvals": "លំហូរការងារ និងការអនុម័ត",
   "View workflows and own approvals": "មើលលំហូរការងារ និងការអនុម័តផ្ទាល់ខ្លួន",
-  "Run workflow transitions": "ដំណើរការការផ្លាស់ប្តូរលំហូរការងារ"
+  "Run workflow transitions": "ដំណើរការការផ្លាស់ប្តូរលំហូរការងារ",
+  "Workflow designer": "អ្នករចនាលំហូរការងារ",
+  "Elsa workflows": "លំហូរការងារ Elsa",
+  "Design and run Elsa workflows": "រចនា និងដំណើរការលំហូរការងារ Elsa"
 }

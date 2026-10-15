@@ -11,6 +11,9 @@ public static class WorkflowPermissions
 
     /// <summary>Run transitions at all; each transition may ask for more (a permission, a role, a condition).</summary>
     public const string Transition = "Workflows.Transition";
+
+    /// <summary>Design, run and inspect Elsa workflows (Coworkee.Workflows.Elsa).</summary>
+    public const string Elsa = "Workflows.Elsa.Manage";
 }
 
 public static class WorkflowTopics

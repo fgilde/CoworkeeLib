@@ -1341,5 +1341,8 @@
   "{0} is now {1}": "{0} agora está {1}",
   "Workflows and approvals": "Fluxos de trabalho e aprovações",
   "View workflows and own approvals": "Ver fluxos de trabalho e aprovações próprias",
-  "Run workflow transitions": "Executar transições de fluxo de trabalho"
+  "Run workflow transitions": "Executar transições de fluxo de trabalho",
+  "Workflow designer": "Designer de fluxos de trabalho",
+  "Elsa workflows": "Fluxos de trabalho Elsa",
+  "Design and run Elsa workflows": "Projetar e executar fluxos de trabalho Elsa"
 }

@@ -1341,5 +1341,8 @@
   "{0} is now {1}": "{0} 现在为 {1}",
   "Workflows and approvals": "工作流和审批",
   "View workflows and own approvals": "查看工作流和自己的审批",
-  "Run workflow transitions": "执行工作流转换"
+  "Run workflow transitions": "执行工作流转换",
+  "Workflow designer": "工作流设计器",
+  "Elsa workflows": "Elsa 工作流",
+  "Design and run Elsa workflows": "设计和运行 Elsa 工作流"
 }

@@ -1341,5 +1341,8 @@
   "{0} is now {1}": "{0} je nyní {1}",
   "Workflows and approvals": "Pracovní postupy a schválení",
   "View workflows and own approvals": "Zobrazit pracovní postupy a vlastní schválení",
-  "Run workflow transitions": "Provádět přechody pracovních postupů"
+  "Run workflow transitions": "Provádět přechody pracovních postupů",
+  "Workflow designer": "Návrhář pracovních postupů",
+  "Elsa workflows": "Pracovní postupy Elsa",
+  "Design and run Elsa workflows": "Navrhovat a spouštět pracovní postupy Elsa"
 }

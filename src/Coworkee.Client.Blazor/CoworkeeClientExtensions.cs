@@ -164,5 +164,6 @@ internal sealed class AdminNavigation : INavigationContributor
         new("Files", "/files", MudBlazor.Icons.Material.Outlined.FolderOpen, Coworkee.Contracts.Files.FilePermissions.View, Order: -8),
         new("Chat", "/chat", MudBlazor.Icons.Material.Outlined.Chat, Coworkee.Contracts.Chat.ChatPermissions.Use, Order: -9),
         new("Approvals", "/workflows/approvals", MudBlazor.Icons.Material.Outlined.FactCheck, Coworkee.Contracts.Workflows.WorkflowPermissions.View, Order: -7),
+        new("Workflow designer", "/api/v1/workflows/elsa/studio", MudBlazor.Icons.Material.Outlined.AccountTree, Coworkee.Contracts.Workflows.WorkflowPermissions.Elsa, ForceLoad: true, Group: System, Order: 7),
     ];
 }

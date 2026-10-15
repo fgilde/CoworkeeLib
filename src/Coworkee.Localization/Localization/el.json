@@ -1341,5 +1341,8 @@
   "{0} is now {1}": "Το {0} είναι τώρα {1}",
   "Workflows and approvals": "Ροές εργασίας και εγκρίσεις",
   "View workflows and own approvals": "Προβολή ροών εργασίας και δικών σας εγκρίσεων",
-  "Run workflow transitions": "Εκτέλεση μεταβάσεων ροών εργασίας"
+  "Run workflow transitions": "Εκτέλεση μεταβάσεων ροών εργασίας",
+  "Workflow designer": "Σχεδιαστής ροών εργασίας",
+  "Elsa workflows": "Ροές εργασίας Elsa",
+  "Design and run Elsa workflows": "Σχεδίαση και εκτέλεση ροών εργασίας Elsa"
 }

@@ -1341,5 +1341,8 @@
   "{0} is now {1}": "{0} je sada {1}",
   "Workflows and approvals": "Tijekovi rada i odobrenja",
   "View workflows and own approvals": "Pregled tijekova rada i vlastitih odobrenja",
-  "Run workflow transitions": "Izvršavanje prijelaza tijeka rada"
+  "Run workflow transitions": "Izvršavanje prijelaza tijeka rada",
+  "Workflow designer": "Dizajner tijeka rada",
+  "Elsa workflows": "Elsa tijekovi rada",
+  "Design and run Elsa workflows": "Dizajniranje i pokretanje Elsa tijekova rada"
 }

@@ -1341,5 +1341,8 @@
   "{0} is now {1}": "{0} الآن {1}",
   "Workflows and approvals": "سير العمل والموافقات",
   "View workflows and own approvals": "عرض سير العمل والموافقات الخاصة",
-  "Run workflow transitions": "تنفيذ انتقالات سير العمل"
+  "Run workflow transitions": "تنفيذ انتقالات سير العمل",
+  "Workflow designer": "مصمم سير العمل",
+  "Elsa workflows": "سير عمل Elsa",
+  "Design and run Elsa workflows": "تصميم وتشغيل سير عمل Elsa"
 }

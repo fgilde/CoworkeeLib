@@ -1341,5 +1341,8 @@
   "{0} is now {1}": "{0} вече е {1}",
   "Workflows and approvals": "Работни процеси и одобрения",
   "View workflows and own approvals": "Преглед на работни процеси и собствени одобрения",
-  "Run workflow transitions": "Изпълнение на преходи в работни процеси"
+  "Run workflow transitions": "Изпълнение на преходи в работни процеси",
+  "Workflow designer": "Дизайнер на работни процеси",
+  "Elsa workflows": "Работни процеси Elsa",
+  "Design and run Elsa workflows": "Проектиране и изпълнение на работни процеси Elsa"
 }

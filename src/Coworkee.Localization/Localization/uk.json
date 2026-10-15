@@ -1341,5 +1341,8 @@
   "{0} is now {1}": "{0} тепер {1}",
   "Workflows and approvals": "Робочі процеси та погодження",
   "View workflows and own approvals": "Перегляд робочих процесів і власних погоджень",
-  "Run workflow transitions": "Виконання переходів робочих процесів"
+  "Run workflow transitions": "Виконання переходів робочих процесів",
+  "Workflow designer": "Конструктор робочих процесів",
+  "Elsa workflows": "Робочі процеси Elsa",
+  "Design and run Elsa workflows": "Проєктування та запуск робочих процесів Elsa"
 }
