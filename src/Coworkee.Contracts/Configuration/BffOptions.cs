@@ -23,4 +23,16 @@ public sealed class BffOptions
 
     /// <summary>Name of the session cookie; browsers send cookies to every port of a host, so a second client on the same host needs its own.</summary>
     public string? CookieName { get; set; }
+
+    /// <summary>Name and icon of the installable app; colours and logo come from the organisation's theme.</summary>
+    public BffPwaOptions Pwa { get; set; } = new();
+}
+
+public sealed class BffPwaOptions
+{
+    /// <summary>Name of the installed app (default: the host name).</summary>
+    public string? Name { get; set; }
+
+    /// <summary>Icon path of the web app for themes without a logo, e.g. <c>/coworkee-icon.svg</c>.</summary>
+    public string? Icon { get; set; }
 }

@@ -184,6 +184,7 @@ public static class BffExtensions
         app.MapPost("/bff/logout", (Delegate)LogoutAsync);
         app.MapGet(LoadingScreenLogo.Path, LoadingScreenLogo.ServeAsync);
         app.MapGet(LoadingScreenScript.Path, LoadingScreenScript.Serve);
+        Pwa.PwaEndpoints.Map(app);
         app.MapGet("/bff/user", (ClaimsPrincipal user) => user.Identity?.IsAuthenticated == true
             ? new BffUserDto(
                 true,
