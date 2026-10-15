@@ -1310,5 +1310,13 @@
   "FlexGrid": "Flex/Grid",
   "Every day at {0}": "Každý den v {0}",
   "Every {0} at {1}": "Každý týden: {0} v {1}",
-  "Every month on day {0} at {1}": "Každý měsíc {0}. dne v {1}"
+  "Every month on day {0} at {1}": "Každý měsíc {0}. dne v {1}",
+  "A new version of the app is available.": "Je k dispozici nová verze aplikace.",
+  "Install app": "Nainstalovat aplikaci",
+  "Install the app on this device to open it like any other app.": "Nainstalujte aplikaci do tohoto zařízení a otevírejte ji jako každou jinou aplikaci.",
+  "Push notifications on this device": "Push oznámení na tomto zařízení",
+  "Push notifications are blocked in the settings of this browser.": "Push oznámení jsou zablokována v nastavení tohoto prohlížeče.",
+  "This browser cannot receive push notifications.": "Tento prohlížeč nemůže přijímat push oznámení.",
+  "Devices with push notifications": "Zařízení s push oznámeními",
+  "This device": "Toto zařízení"
 }

@@ -1310,5 +1310,13 @@
   "FlexGrid": "Flex/Grid",
   "Every day at {0}": "Hver dag kl. {0}",
   "Every {0} at {1}": "Hver {0} kl. {1}",
-  "Every month on day {0} at {1}": "Hver måned den {0}. kl. {1}"
+  "Every month on day {0} at {1}": "Hver måned den {0}. kl. {1}",
+  "A new version of the app is available.": "Der er en ny version af appen tilgængelig.",
+  "Install app": "Installer appen",
+  "Install the app on this device to open it like any other app.": "Installer appen på denne enhed for at åbne den som enhver anden app.",
+  "Push notifications on this device": "Pushnotifikationer på denne enhed",
+  "Push notifications are blocked in the settings of this browser.": "Pushnotifikationer er blokeret i denne browsers indstillinger.",
+  "This browser cannot receive push notifications.": "Denne browser kan ikke modtage pushnotifikationer.",
+  "Devices with push notifications": "Enheder med pushnotifikationer",
+  "This device": "Denne enhed"
 }

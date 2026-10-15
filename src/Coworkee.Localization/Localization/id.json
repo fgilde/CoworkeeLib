@@ -1310,5 +1310,13 @@
   "FlexGrid": "Flex/Grid",
   "Every day at {0}": "Setiap hari pukul {0}",
   "Every {0} at {1}": "Setiap {0} pukul {1}",
-  "Every month on day {0} at {1}": "Setiap bulan pada tanggal {0} pukul {1}"
+  "Every month on day {0} at {1}": "Setiap bulan pada tanggal {0} pukul {1}",
+  "A new version of the app is available.": "Versi baru aplikasi tersedia.",
+  "Install app": "Pasang aplikasi",
+  "Install the app on this device to open it like any other app.": "Pasang aplikasi di perangkat ini untuk membukanya seperti aplikasi lainnya.",
+  "Push notifications on this device": "Notifikasi push di perangkat ini",
+  "Push notifications are blocked in the settings of this browser.": "Notifikasi push diblokir di pengaturan browser ini.",
+  "This browser cannot receive push notifications.": "Browser ini tidak dapat menerima notifikasi push.",
+  "Devices with push notifications": "Perangkat dengan notifikasi push",
+  "This device": "Perangkat ini"
 }

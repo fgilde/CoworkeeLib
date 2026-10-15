@@ -1310,5 +1310,13 @@
   "FlexGrid": "Flex/Grid",
   "Every day at {0}": "Ogni giorno alle {0}",
   "Every {0} at {1}": "Ogni {0} alle {1}",
-  "Every month on day {0} at {1}": "Ogni mese il giorno {0} alle {1}"
+  "Every month on day {0} at {1}": "Ogni mese il giorno {0} alle {1}",
+  "A new version of the app is available.": "È disponibile una nuova versione dell'app.",
+  "Install app": "Installa l'app",
+  "Install the app on this device to open it like any other app.": "Installa l'app su questo dispositivo per aprirla come qualsiasi altra app.",
+  "Push notifications on this device": "Notifiche push su questo dispositivo",
+  "Push notifications are blocked in the settings of this browser.": "Le notifiche push sono bloccate nelle impostazioni di questo browser.",
+  "This browser cannot receive push notifications.": "Questo browser non può ricevere notifiche push.",
+  "Devices with push notifications": "Dispositivi con notifiche push",
+  "This device": "Questo dispositivo"
 }

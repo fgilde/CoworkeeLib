@@ -1310,5 +1310,13 @@
   "FlexGrid": "Flex/Grid",
   "Every day at {0}": "每天 {0}",
   "Every {0} at {1}": "每{0} {1}",
-  "Every month on day {0} at {1}": "每月 {0} 日 {1}"
+  "Every month on day {0} at {1}": "每月 {0} 日 {1}",
+  "A new version of the app is available.": "应用有新版本可用。",
+  "Install app": "安装应用",
+  "Install the app on this device to open it like any other app.": "在此设备上安装应用，即可像其他应用一样打开它。",
+  "Push notifications on this device": "此设备上的推送通知",
+  "Push notifications are blocked in the settings of this browser.": "推送通知已在此浏览器的设置中被阻止。",
+  "This browser cannot receive push notifications.": "此浏览器无法接收推送通知。",
+  "Devices with push notifications": "接收推送通知的设备",
+  "This device": "此设备"
 }

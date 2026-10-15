@@ -1310,5 +1310,13 @@
   "FlexGrid": "Flex/Grid",
   "Every day at {0}": "매일 {0}",
   "Every {0} at {1}": "매주 {0} {1}",
-  "Every month on day {0} at {1}": "매월 {0}일 {1}"
+  "Every month on day {0} at {1}": "매월 {0}일 {1}",
+  "A new version of the app is available.": "앱의 새 버전을 사용할 수 있습니다.",
+  "Install app": "앱 설치",
+  "Install the app on this device to open it like any other app.": "이 기기에 앱을 설치하면 다른 앱처럼 열 수 있습니다.",
+  "Push notifications on this device": "이 기기의 푸시 알림",
+  "Push notifications are blocked in the settings of this browser.": "이 브라우저의 설정에서 푸시 알림이 차단되어 있습니다.",
+  "This browser cannot receive push notifications.": "이 브라우저는 푸시 알림을 받을 수 없습니다.",
+  "Devices with push notifications": "푸시 알림을 받는 기기",
+  "This device": "이 기기"
 }
