@@ -1,6 +1,6 @@
 # CONTINUE – handover for the next agent
 
-State of the Coworkee library as of 2026-10-15: everything below is merged on `main` and pushed. Released: **0.0.1.24** on nuget.org and `@coworkee/client` / `@coworkee/airworks` `0.0.1024` on npm (release workflow with `NPM_TOKEN`; the owner rotates the token or switches to trusted publishing). The round of 2026-10-15 is in 0.0.1.24. Demo and Sharemee are on the same state (`master`, pushed).
+State of the Coworkee library as of 2026-10-16: everything up to round 7 is merged on `main` and pushed; round 7 waits on `feat/round7`. Released: **0.0.1.24** on nuget.org and `@coworkee/client` / `@coworkee/airworks` `0.0.1024` on npm (release workflow with `NPM_TOKEN`; the owner rotates the token or switches to trusted publishing). The round of 2026-10-15 is in 0.0.1.24. Demo and Sharemee are on the same state (`master`, pushed).
 
 ## Repositories
 | Repo | Local path | Remote / branch |
@@ -106,19 +106,25 @@ Spec `docs/superpowers/specs/2026-10-15-loading-tables-demo-design.md`, reports 
 - The demo's AirWorks client uses `@coworkee/client`/`@coworkee/airworks` `0.0.1024`; bump it after each release (`src/MyApp.AirWorks/ClientApp/package.json`).
 - Verified in the browser (demo): loading screen with progress, product and order dialogs aligned, Region filter, client switch compare toast, endless scroll, logo upload and pick from files, translated upload texts, AirWorks desktop with the demo apps.
 
-## Workflows (branch `feat/workflows`, not merged)
+## Round 7 (branch `feat/round7`, merged locally, not pushed, not released)
+Branches merged: mail-langs, workflows, mobile-pwa, import-export, history-palette, webhooks, cli-add, deploy, gallery, entity-import. Changelog *Unreleased* is one list (breaking first); `upgrade-rules.json` has them as `0.0.1.26` (rename the changelog heading to the release version). Template initial migration regenerated with everything in; `defaultModel` excludes workflows and webhooks (pwa/elsa need no change: push table comes with notifications, elsa needs workflows).
+- **Demo and Sharemee need**: a migration (`cw.PushSubscriptions`, `cw.DataTransferJobs`, `cw.ImportProfiles`), `viewport-fit=cover` in `App.razor`, OpenAPI snapshots/SDKs.
+- Template samples: products are `ISoftDelete` and, with `auditing`, registered with `AddEntityHistory` (`MyAppDatabaseModule`) and `History` on the products table; brand delete counts soft deleted products. Dashboard groups months in memory (SQLite could not translate `DateTimeOffset.Year`, was 500).
+- Starter specs do not turn on `workflows`: the spec cannot declare workflows, the module alone would be empty.
+
+### Workflows
 Docs `modules/workflows.md`, `modules/workflows-elsa.md`.
 - `Coworkee.Workflows`: state machine per entity type declared in code (`AddCoworkeeWorkflows(w => w.Entity<T>(...))`), guards (permission, role, condition, comment), actions (`Then`, `OnEnter/OnExit`, `Set`, `NotifyRole`), approvals (roles/users, any/all, four eyes, `DueIn`, `RemindAfter`, `EscalateTo`, `OnTimeout`) via the recurring job `workflow-deadlines`, history table, domain events `WorkflowTransitioned`/`ApprovalStarted`/`ApprovalDecided` (outbox). Tables `cw.Workflow*` (apps need a migration).
 - Client: `CoworkeeWorkflow`, `CoworkeeWorkflowActions` (row; one GET per row, `ponytail:`), `CoworkeeWorkflowTimeline`, page `/workflows/approvals`, nav entries Approvals and Workflow designer.
 - `Coworkee.Workflows.Elsa`: Elsa 3.9.0 (MIT, net10 builds) in the API host, tables in the app database (Elsa's own migrations), API `/api/elsa` behind a gate for `Workflows.Elsa.Manage` (Elsa's endpoint security disabled), activities SendCommand/RunTransition/WaitForApproval/Notify/QueryOData, triggers WorkflowStateReached/EntityChangedTrigger (`AddCoworkeeElsa(e => e.Watch<T>(...))`). Elsa Studio is not embedded and no host ships yet (see the docs page for why and the plan); `Coworkee:Workflows:Elsa:StudioUrl` feeds the designer link.
 - Template/CLI/Studio options `workflows` and `elsa` (off); with samples: product approval (`ProductApproval.cs`, products column) and `ProductApprovedWorkflow` in the API. A generated app with both builds (`COWORKEE_TEST_FEED`); not run in Aspire or a browser yet.
 - Not done: personal data export of approver comments, batch status endpoint for rows, Elsa tests on SQL Server.
-## Import and export (branch `feat/import-export`, not merged)
+
+### Import and export
 Docs `website/docs/web/import-export*.md`, changelog section *Unreleased*.
 - Server in `Coworkee.OData/Transfer` (+ `Import/`): `ImportFileReader`/`CsvFile` (CSV/TSV/XLSX/JSON, encoding/separator/header detection), `ImportField` (writable simple properties of the row type, `XxxId` + navigation `Xxx` of a registered set = lookup by display text), `ImportValueConverter` (culture, ISO dates, enum labels and translations, yes/no words), `ImportColumnMatcher`, `ImportPlanner` (key lookup, updates start from the stored row, FluentValidation of the commands, permission of the command type), `ImportService` (draft job holds the upload), `ImportJob` (one scope per row, never rethrows, undo deletes created ids), `DataExport(s)`/`ExportJob` (xlsx/csv/json, `columns`, job above `BackgroundExportRows`), `ImportProfiles`, `DataTransferJobs`. Entities `DataTransferJob` (IHasRealtimeTopics -> user topic = live progress) and `ImportProfile`, schema `cw`.
 - `CoworkeeODataModule` now DependsOn `CoworkeeBackgroundJobsModule`. Test hosts with OData need `Coworkee:Jobs:ConnectionStringName`/`RunServer=false` and EnsureCreated before `UseCoworkee()` (Hangfire's schema made EnsureCreated skip). OData tests run jobs inline (`InlineBackgroundJobs`).
 - `AddODataImport(set, (Guid? id, TRow row) => cmd, id => deleteCmd)` enables update/upsert/undo; template sample sets use it. `IODataClient.Export/ImportAsync` removed (breaking), client `IDataTransferApi` + `DataTransferWatcher`, wizard `Components/Data/Import`, page `/admin/data-transfer` (permission `DataTransfer.Use`).
-- Template initial migration regenerated. **Demo and Sharemee need a migration** (`cw.DataTransferJobs`, `cw.ImportProfiles`) and new OpenAPI snapshots/SDKs.
 - Limits (`ponytail:`): uploads/results in the job row; one query per key and lookup text; undo only deletes created rows; preview checks the first 200 rows (dry run checks all); no persistent notification (Notifications module is above OData), only the realtime snackbar.
 
 ## Product backlog (older ideas, not part of the recent rounds)
@@ -127,6 +133,6 @@ Docs `website/docs/web/import-export*.md`, changelog section *Unreleased*.
 - MudEx: `MudExDateRangeSlider` Day mode default step ≈ 0 (arrow keys dead; lib passes `StepLength`), no per-thumb aria-label.
 - Multi-instance: shared Data Protection key ring needed for pending assistant tool calls; assistant "busy" guard is per instance.
 - Lib pages live under generic `/admin/...` routes; an app page with the same route breaks Blazor routing (`AppShellTests` covers `/admin/ai`). Consider a prefix.
-- Not built: MySQL (no EF Core 10 Pomelo), many-to-many in specs, report versioning/public link/map widget, QueryBuilder OData-text import and drag reorder, deploy story (aspire publish) not verified.
+- Not built: MySQL (no EF Core 10 Pomelo), many-to-many in specs, report versioning/public link/map widget, QueryBuilder OData-text import and drag reorder; deploy: `hosting/deployment.md` lists what is verified.
 - Flaky under load: Keycloak container start in Aspire tests.
 - bUnit tests that find an element and act on it later can hit a stale handler while MudEx `ObjectEdit` re-renders (debounced, 50 ms, also applies `IgnoreIf` conditions a moment after the first render): wrap find and act in `cut.InvokeAsync` and wait for the condition (see `UserAdministrationTests`, `MailTemplatesPageTests`).

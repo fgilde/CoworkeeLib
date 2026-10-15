@@ -81,7 +81,7 @@ public sealed class RelationDesignerTests
         main.Languages.Errors.ShouldContain(e => e.StartsWith("defaultLanguage:", StringComparison.Ordinal));
         languages.MultiChoices.Single(c => c.Value == "en").IsChecked = false;
         languages.Value.ShouldBeNull();
-        main.ToSpec().Options.Keys.ShouldBe([.. OptionCatalog.All.Where(o => o.Group == OptionCatalog.Modules).Select(o => o.Id), "defaultLanguage"]);
+        main.ToSpec().Options.Keys.ShouldBe([.. OptionCatalog.All.Where(o => o.Group == OptionCatalog.Modules && main.Option(o.Id).IsRelevant).Select(o => o.Id), "defaultLanguage"]);
         main.Architecture.Groups.Select(g => g.Name).ShouldContain(OptionCatalog.Tooling);
     }
 }
