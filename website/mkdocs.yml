@@ -42,6 +42,7 @@ theme:
 
 hooks:
   - hooks/seo.py
+  - hooks/release.py
 
 extra_css:
   - assets/extra.css
@@ -172,6 +173,7 @@ nav:
       - Files and search: features/files.md
       - Use cases: features/use-cases.md
       - Why Coworkee: features/why-coworkee.md
+      - Screenshots: screenshots.md
   - Getting started:
       - Installation: getting-started/installation.md
       - Command line: getting-started/cli.md
