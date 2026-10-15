@@ -18,14 +18,13 @@ internal sealed class GetDashboardHandler(CoworkeeDbContext db, TimeProvider clo
     {
         var now = clock.GetUtcNow();
         var start = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, TimeSpan.Zero).AddMonths(1 - Months);
-        var created = await db.Set<Product>()
-            .Where(p => p.CreatedAt >= start)
-            .GroupBy(p => new { p.CreatedAt.Year, p.CreatedAt.Month })
-            .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count() })
-            .ToListAsync(cancellationToken);
+        // grouped in memory: SQLite cannot translate the date parts of a DateTimeOffset
+        var created = (await db.Set<Product>().Where(p => p.CreatedAt >= start).Select(p => p.CreatedAt).ToListAsync(cancellationToken))
+            .CountBy(c => (c.UtcDateTime.Year, c.UtcDateTime.Month))
+            .ToDictionary();
         var perMonth = Enumerable.Range(0, Months)
             .Select(offset => start.AddMonths(offset))
-            .Select(month => new MonthCountDto(month.Year, month.Month, created.FirstOrDefault(c => c.Year == month.Year && c.Month == month.Month)?.Count ?? 0))
+            .Select(month => new MonthCountDto(month.Year, month.Month, created.GetValueOrDefault((month.Year, month.Month))))
             .ToList();
         var (documentCount, typeCount) = documents.FirstOrDefault() is { } counts ? await counts.DocumentsAsync(cancellationToken) : (0, 0);
         return new DashboardDto(

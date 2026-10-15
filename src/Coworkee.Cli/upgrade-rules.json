@@ -97,6 +97,29 @@
         { "text": "ODataPicker.Margin is Margin? now: add ?? Margin.Dense where it is read as Margin.", "find": "ODataPicker[^>]*Margin", "files": [ "src/**/*.cs", "src/**/*.razor" ] },
         { "text": "Pass SignedIn to LoadingScreenDto.", "find": "new LoadingScreenDto\\(", "files": [ "src/**/*.cs", "tests/**/*.cs" ] }
       ]
+    },
+    {
+      "version": "0.0.1.26",
+      "breaking": [
+        "ICoworkeeApi gained AddMailTemplateLanguageAsync, GetPushSettingsAsync, SavePushSubscriptionAsync and DeletePushSubscriptionAsync; own implementations add them.",
+        "Notification derives from AggregateRoot (it raises NotificationCreated for Web Push); no schema change from that.",
+        "IODataClient.ExportAsync and ImportAsync are removed: exports and the import wizard go through IDataTransferApi.",
+        "ODataImportRegistration has Create, Update and Delete instead of Send; AddODataImport takes (Guid? id, row) => command and an optional delete command.",
+        "CoworkeeODataModule depends on CoworkeeBackgroundJobsModule (imports and large exports run as jobs); test hosts with OData set Coworkee:Jobs:ConnectionStringName and create their tables before UseCoworkee().",
+        "New tables cw.PushSubscriptions (Notifications), cw.DataTransferJobs and cw.ImportProfiles (OData): add a migration. Workflows and Webhooks bring their own tables when an app adds them.",
+        "Phone layout: the viewport tag of App.razor needs viewport-fit=cover.",
+        "New endpoints for push, mail template languages, import/export, history, workflows and webhooks: regenerate OpenAPI snapshots and SDKs."
+      ],
+      "needsMigration": true,
+      "renames": [
+        { "find": "(<meta name=\"viewport\" content=\"[^\"]*)(\")", "replace": "$1, viewport-fit=cover$2", "files": [ "src/*.Web/App.razor" ], "unless": "viewport-fit", "description": "viewport-fit=cover in App.razor" }
+      ],
+      "manual": [
+        { "text": "Own ICoworkeeApi implementations add AddMailTemplateLanguageAsync, GetPushSettingsAsync, SavePushSubscriptionAsync and DeletePushSubscriptionAsync.", "find": ":\\s*ICoworkeeApi\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] },
+        { "text": "IODataClient.ExportAsync/ImportAsync are gone: use IDataTransferApi; own IODataClient fakes drop the two methods.", "find": "\\bIODataClient\\b", "files": [ "src/**/*.cs", "src/**/*.razor", "tests/**/*.cs" ] },
+        { "text": "ODataImportRegistration.Send is now Create/Update/Delete; for updates and undo pass (Guid? id, row) => command and id => delete command to AddODataImport.", "find": "\\b(ODataImportRegistration|AddODataImport)\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] },
+        { "text": "Test hosts with OData need Coworkee:Jobs:ConnectionStringName (RunServer=false) and their tables created before UseCoworkee().", "find": "\\b(CoworkeeODataModule|AddODataEntity)\\b", "files": [ "tests/**/*.cs" ] }
+      ]
     }
   ]
 }

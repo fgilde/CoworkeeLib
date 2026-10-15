@@ -37,7 +37,7 @@ public sealed class UpgradeTests
     {
         UpgradeRules.All.Select(r => r.Version).ShouldBe(UpgradeRules.All.Select(r => r.Version).OrderBy(v => Version.Parse(v)));
         UpgradeRules.Between("0.0.1.21", "0.0.1.23").Select(r => r.Version).ShouldBe(["0.0.1.22", "0.0.1.23"]);
-        UpgradeRules.Between("0.0.1.24", "0.1.0-dev.20261015184054").Select(r => r.Version).ShouldBeEmpty();
+        UpgradeRules.Between("0.0.1.26", "0.1.0-dev.20261015184054").Select(r => r.Version).ShouldBeEmpty();
         UpgradeRules.Between(null, "0.0.1.15").Select(r => r.Version).ShouldBe(["0.0.1.15"]);
         UpgradeRules.All.ShouldAllBe(r => r.Breaking != null && r.Breaking.Length > 0);
         UpgradeRules.All.SelectMany(r => (r.Renames ?? []).Select(x => x.Find).Concat((r.Manual ?? []).Select(m => m.Find))).ShouldAllBe(p => new Regex(p) != null);

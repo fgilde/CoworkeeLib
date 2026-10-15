@@ -4,41 +4,36 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
-- **Languages of mail templates**: *Add language* on Administration > Mail templates adds a variant for a language switched on later, copied from an existing one or machine translated (texts only, tags and placeholders kept), and an added language can be removed again; see [Mailing](../modules/mailing.md#languages-of-a-template). New: `POST /api/v1/mail/templates/{name}/{culture}`, `ICoworkeeApi.AddMailTemplateLanguageAsync`, `MailTemplateSummaryDto.DefaultCultures`; regenerate OpenAPI snapshots and SDKs.
-- **Mail fallback**: a mail in a language without a variant now uses the default language (organisation, system, Languages page) before English. The localization module provides it through the new `IDefaultLanguage`; machine translation is available to other modules as `IMachineTranslator`.
-### New
-
-- **Workflows and approvals** (`Coworkee.Workflows`, optional): states and guarded transitions per entity type, approvals by roles or users with deadline, reminder and escalation, a history, the components `CoworkeeWorkflow`, `CoworkeeWorkflowActions` and `CoworkeeWorkflowTimeline` and the page *Approvals*, see [Workflows and approvals](../modules/workflows.md). The module has tables: apps that add it create a migration.
-- **Elsa workflows** (`Coworkee.Workflows.Elsa`, optional): Elsa Workflows 3 in the API with Coworkee activities and triggers, see [Elsa workflows](../modules/workflows-elsa.md).
-- CLI and Studio: `--workflows` and `--elsa`.
 ### Breaking changes
 
-- **`ICoworkeeApi`** gained `GetPushSettingsAsync`, `SavePushSubscriptionAsync` and `DeletePushSubscriptionAsync`; own implementations add them.
+- **Migration needed**: new tables `cw.PushSubscriptions` (Notifications), `cw.DataTransferJobs` and `cw.ImportProfiles` (OData, so every app). Workflows and Webhooks bring their own tables when an app adds them.
+- **`ICoworkeeApi`** gained `AddMailTemplateLanguageAsync`, `GetPushSettingsAsync`, `SavePushSubscriptionAsync` and `DeletePushSubscriptionAsync`; own implementations add them.
 - **`Notification`** derives from `AggregateRoot` now (it raises `NotificationCreated` while push is configured). No schema change from that.
-- **The model gained `PushSubscription`** (table `cw.PushSubscriptions`): apps with the Notifications module add a migration.
-- **New endpoints** `GET`/`PUT /api/v1/notifications/push` and `DELETE /api/v1/notifications/push/{id}`; regenerate OpenAPI snapshots and SDKs.
-
-### New
-
-- **Phone layout** of the Blazor shell and the sign-in pages: overflow menu in the app bar, navigation as overlay that closes after a click, full-screen edit sheets, facet menus as bottom sheets, page headers that wrap, sticky row actions, 44 px touch targets and safe areas, see [Phones, installable app and push](../ui/phones-and-pwa.md). Apps add `viewport-fit=cover` to the viewport tag of `App.razor`.
-- **Installable app**: `<Coworkee.Bff.Pwa.CoworkeePwa />` in the head of `App.razor` links the web manifest in the theme's colours; `Coworkee.Bff` serves manifest, service worker (it keeps only the offline page), icon and offline page. Update and install prompts in the app. Template option `pwa` (on by default).
-- **Web Push** for the notifications: `options.UsePush()` in Aspire, or `Coworkee:Notifications:Push:PublicKey`/`PrivateKey`; users switch it on per device on the notifications page.
-### Breaking changes
-
-- **New tables `cw.DataTransferJobs` and `cw.ImportProfiles`** (Coworkee.OData): every app adds a migration.
-- **`CoworkeeODataModule` depends on `CoworkeeBackgroundJobsModule`**: imports and large exports run as jobs. Apps from the template have it already (mailing); test hosts set `Coworkee:Jobs:ConnectionStringName` and create their tables before `UseCoworkee()`.
 - **`IODataClient.ExportAsync` and `ImportAsync` removed**: use `IDataTransferApi` (export of the current view in three formats, the import wizard). Own `IODataClient` fakes drop the two methods.
-- **`ODataImportRegistration`** has `Create`, `Update` and `Delete` instead of `Send`.
+- **`ODataImportRegistration`** has `Create`, `Update` and `Delete` instead of `Send`; `AddODataImport` takes `(Guid? id, row) => command` and an optional delete command for updates and undo.
+- **`CoworkeeODataModule` depends on `CoworkeeBackgroundJobsModule`**: imports and large exports run as jobs. Apps from the template have it already (mailing); test hosts set `Coworkee:Jobs:ConnectionStringName` and create their tables before `UseCoworkee()`.
 - The *Import* button of `CoworkeeDataTable` opens the import wizard instead of uploading an Excel file at once; Excel, CSV and JSON exports of OData sets come from the server with the visible columns.
+- Phone layout: apps add `viewport-fit=cover` to the viewport tag of `App.razor` (`coworkee update` does it).
+- New endpoints (push, mail template languages, import and export, record history, workflows, webhooks): regenerate OpenAPI snapshots and SDKs.
+
+`coworkee update` knows all of these (upgrade rules of 0.0.1.26).
 
 ### New
 
-- **Import wizard** per entity set: CSV, Excel and JSON, detected encoding, separator and header, column mapping with suggestions and saved mappings, conversion with the file's language, preview with the validation of the commands, add, update by key or both, dry run, background job with live progress, file of the failed rows and undo of the last import, see [Import and export](../web/import-export.md). `AddODataImport` takes `(Guid? id, row) => command` and an optional delete command for that.
-- **Admin page** *Import and export* (`/admin/data-transfer`, permission `DataTransfer.Use`; grant it to the roles that should see it).
-- **Exports** of the current view as Excel, CSV or JSON (`format`, `columns`); more than `Coworkee:OData:BackgroundExportRows` rows (10 000) run as a job with a download notice.
-### New
-
-- **Webhooks** (`Coworkee.Webhooks`, CLI `--webhooks`, Studio card): endpoints per organisation get signed events (Standard Webhooks style) about changes of opted-in entity sets, workflow transitions and the app's own events, shaped by what the endpoint's owner may read; retries with backoff, switch-off after repeated failures, delivery log, test events and redelivery on `/admin/webhooks`, SSRF protection. See [Webhooks](../modules/webhooks.md). The module has tables: add a migration when you switch it on.
+- **Workflows and approvals** (`Coworkee.Workflows`, optional): states and guarded transitions per entity type, approvals by roles or users with deadline, reminder and escalation, a history, the components `CoworkeeWorkflow`, `CoworkeeWorkflowActions` and `CoworkeeWorkflowTimeline` and the page *Approvals*, see [Workflows and approvals](../modules/workflows.md).
+- **Elsa workflows** (`Coworkee.Workflows.Elsa`, optional): Elsa Workflows 3 in the API with Coworkee activities and triggers, see [Elsa workflows](../modules/workflows-elsa.md).
+- **Webhooks** (`Coworkee.Webhooks`, optional): endpoints per organisation get signed events (Standard Webhooks style) about changes of opted-in entity sets, workflow transitions and the app's own events, shaped by what the endpoint's owner may read; retries with backoff, switch-off after repeated failures, delivery log, test events and redelivery on `/admin/webhooks`, SSRF protection. See [Webhooks](../modules/webhooks.md).
+- **Import wizard** per entity set: CSV, Excel and JSON, detected encoding, separator and header, column mapping with suggestions and saved mappings, conversion with the file's language, preview with the validation of the commands, add, update by key or both, dry run, background job with live progress, file of the failed rows and undo of the last import, see [Import and export](../web/import-export.md). **Admin page** *Import and export* (`/admin/data-transfer`, permission `DataTransfer.Use`; grant it to the roles that should see it). **Exports** of the current view as Excel, CSV or JSON (`format`, `columns`); more than `Coworkee:OData:BackgroundExportRows` rows (10 000) run as a job with a download notice.
+- **Record history and restore** (`AddEntityHistory`, `History="true"` on `CoworkeeDataTable`, `CoworkeeEntityHistory`): timeline with word diff, restore of a state or a single field with preview, deleted records of `ISoftDelete` sets come back, see [Auditing](../modules/auditing.md#record-history-and-restore).
+- **Command palette** (Ctrl+K): pages, records, actions and the assistant as fallback, extensible with `AddCommandPaletteProvider`, see [Command palette](../ui/command-palette.md).
+- **Phone layout** of the Blazor shell and the sign-in pages: overflow menu in the app bar, navigation as overlay, full-screen edit sheets, facet menus as bottom sheets, sticky row actions, 44 px touch targets and safe areas, see [Phones, installable app and push](../ui/phones-and-pwa.md).
+- **Installable app**: `<Coworkee.Bff.Pwa.CoworkeePwa />` in the head of `App.razor` links the web manifest in the theme's colours; `Coworkee.Bff` serves manifest, service worker (it keeps only the offline page), icon and offline page; update and install prompts in the app.
+- **Web Push** for the notifications: `options.UsePush()` in Aspire, or `Coworkee:Notifications:Push:PublicKey`/`PrivateKey`; users switch it on per device on the notifications page.
+- **Languages of mail templates**: *Add language* on Administration > Mail templates adds a variant for a language switched on later, copied or machine translated (texts only, tags and placeholders kept), and removes it again, see [Mailing](../modules/mailing.md#languages-of-a-template). A mail in a language without a variant uses the default language (organisation, system, Languages page) before English (`IDefaultLanguage`); machine translation is available to other modules as `IMachineTranslator`.
+- **Deployment**: the app host publishes for Docker Compose, Azure Container Apps or Kubernetes (public addresses, token certificates and setup token as parameters, stable volumes, fixed ports, no development tools); `coworkee deploy compose|azure|k8s`; token certificates can come as Base64 from a secret. Only services that process jobs create the Hangfire schema. See [Deployment](../hosting/deployment.md).
+- **CLI**: `coworkee add`/`remove` turn template options on or off in an existing app (merged into your files, conflicts as `.rej`, options kept in `.coworkee/app.json`), `coworkee update` applies the upgrade rules of the versions in between, `coworkee db reset|seed|backup|restore`, `coworkee entity import --from db|openapi|csv`, six starter specs (`coworkee specs list|show`, `coworkee new --template-spec`), options `--workflows`, `--elsa`, `--webhooks` and `--pwa` (on by default). MCP tools `add_option` and `import_entities`. See [CLI](../getting-started/cli.md) and [Starter specs](../getting-started/gallery.md).
+- **Studio**: open an existing app and change it, *My apps* (start, stop, links), *Start from a template*, entity diagram (drag, draw references, auto layout, PNG export) and entity import with a preview.
+- **Template**: sample products are soft deleted and, with auditing, show their history and come back; the dashboard works on SQLite (it returned 500 there); demo users are seeded only in Development, migrations wait for the database.
 
 ## 0.0.1.25 (2026-10-15)
 

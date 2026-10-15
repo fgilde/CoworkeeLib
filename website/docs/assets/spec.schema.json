@@ -49,6 +49,11 @@
           ],
           "default": "bundled"
         },
+        "pwa": {
+          "description": "Web manifest, service worker and offline page: the app installs on phones and desktops and opens without the browser bar. With notifications users switch on Web Push per device.",
+          "type": "boolean",
+          "default": true
+        },
         "repository": {
           "description": "GitHub repository of the app as owner/repo, e.g. acme/shop: the README gets a QuickRun badge that starts the app from there with one click.",
           "type": "string"
@@ -95,6 +100,21 @@
         },
         "social": {
           "description": "Comments, tags and star ratings for any entity, opted in per entity type.",
+          "type": "boolean",
+          "default": false
+        },
+        "workflows": {
+          "description": "States and transitions per entity type, approvals by roles or users with deadlines, reminders and escalation, a history, the approvals inbox; declared in code. With the samples, products go through an approval.",
+          "type": "boolean",
+          "default": false
+        },
+        "elsa": {
+          "description": "Elsa Workflows 3 in the api: its tables in the app's database, its api under /api/elsa for the permission Workflows.Elsa.Manage, activities and triggers for Coworkee workflows. Elsa Studio runs as its own app. Only used with workflows.",
+          "type": "boolean",
+          "default": false
+        },
+        "webhooks": {
+          "description": "Outgoing webhooks: admins register endpoints that get signed events about entity changes, workflow transitions and the app's own events, with retries and a delivery log. With the samples, products send events.",
           "type": "boolean",
           "default": false
         },
@@ -654,6 +674,29 @@
                         "description": "Offered as facet next to the list (bool, enum, reference, number or string).",
                         "type": "boolean"
                       }
+                    }
+                  }
+                },
+                "layout": {
+                  "description": "Where the diagram of Coworkee Studio shows the entity; no effect on the generated code.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "x": {
+                      "type": [
+                        "string",
+                        "number"
+                      ],
+                      "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$"
+                    },
+                    "y": {
+                      "type": [
+                        "string",
+                        "number"
+                      ],
+                      "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$"
                     }
                   }
                 }

@@ -6,7 +6,7 @@ using Nextended.Core.Facets;
 namespace MyApp.Catalog.Domain;
 
 [Realtime(CatalogPermissions.Products.View)]
-public sealed class Product : AuditedEntity, IMultiTenant
+public sealed class Product : AuditedEntity, IMultiTenant, ISoftDelete
 {
     public required string Name { get; set; }
 
@@ -25,4 +25,10 @@ public sealed class Product : AuditedEntity, IMultiTenant
     public Brand? Brand { get; set; }
 
     public Guid TenantId { get; set; }
+
+    public bool IsDeleted { get; set; }
+
+    public DateTimeOffset? DeletedAt { get; set; }
+
+    public Guid? DeletedBy { get; set; }
 }

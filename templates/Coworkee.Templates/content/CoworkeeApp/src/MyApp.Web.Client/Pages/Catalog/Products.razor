@@ -3,7 +3,7 @@
 
 <PageHeader Title="Products" Description="Manage products." />
 <CoworkeeDataTable @ref="_table" T="ProductDto" EntitySet="Products" Expand="Brand" SearchFields="SearchFields" MultiSelection="true" Importable="true" ImportPermission="@CatalogPermissions.Products.Create" ExportFileName="products"
-                   DescribeItem="p => p.Name" CreateText="New product"
+                   DescribeItem="p => p.Name" CreateText="New product" History="WithHistory"
                    CreatePermission="@CatalogPermissions.Products.Create" EditPermission="@CatalogPermissions.Products.Edit" DeletePermission="@CatalogPermissions.Products.Delete"
                    OnCreate="CreateAsync" OnEdit="EditAsync" OnDelete="DeleteAsync">
     <Columns>

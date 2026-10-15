@@ -17,6 +17,12 @@ public partial class Products
     private static readonly string[] SearchFields = [nameof(ProductDto.Name), nameof(ProductDto.Barcode), nameof(ProductDto.Description)];
     private CoworkeeDataTable<ProductDto> _table = null!;
 
+#if (auditing)
+    private const bool WithHistory = true;
+#else
+    private const bool WithHistory = false;
+#endif
+
     // shown below the rows and below each group
     private static readonly AggregateDefinition<ProductDto> AverageRate = new() { Type = AggregateType.Avg, DisplayFormat = "Ø {value}", NumberFormat = "0.00" };
 

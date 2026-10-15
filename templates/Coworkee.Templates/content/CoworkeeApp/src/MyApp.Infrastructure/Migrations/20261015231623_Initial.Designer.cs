@@ -14,11 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-<<<<<<<< HEAD:templates/Coworkee.Templates/content/CoworkeeApp/src/MyApp.Infrastructure/Migrations/20261015213727_Initial.Designer.cs
-    [Migration("20261015213727_Initial")]
-========
-    [Migration("20261015222137_Initial")]
->>>>>>>> feat/import-export:templates/Coworkee.Templates/content/CoworkeeApp/src/MyApp.Infrastructure/Migrations/20261015222137_Initial.Designer.cs
+    [Migration("20261015231623_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -1358,30 +1354,20 @@ namespace MyApp.Infrastructure.Migrations
                     b.ToTable("NotificationDigests", "cw");
                 });
 
-<<<<<<<< HEAD:templates/Coworkee.Templates/content/CoworkeeApp/src/MyApp.Infrastructure/Migrations/20261015213727_Initial.Designer.cs
             modelBuilder.Entity("Coworkee.Notifications.Push.PushSubscription", b =>
-========
-            modelBuilder.Entity("Coworkee.OData.Transfer.DataTransferJob", b =>
->>>>>>>> feat/import-export:templates/Coworkee.Templates/content/CoworkeeApp/src/MyApp.Infrastructure/Migrations/20261015222137_Initial.Designer.cs
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-<<<<<<<< HEAD:templates/Coworkee.Templates/content/CoworkeeApp/src/MyApp.Infrastructure/Migrations/20261015213727_Initial.Designer.cs
                     b.Property<string>("Auth")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
-========
-                    b.Property<int>("Created")
-                        .HasColumnType("integer");
->>>>>>>> feat/import-export:templates/Coworkee.Templates/content/CoworkeeApp/src/MyApp.Infrastructure/Migrations/20261015222137_Initial.Designer.cs
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-<<<<<<<< HEAD:templates/Coworkee.Templates/content/CoworkeeApp/src/MyApp.Infrastructure/Migrations/20261015213727_Initial.Designer.cs
                     b.Property<string>("Device")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
@@ -1395,7 +1381,32 @@ namespace MyApp.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
-========
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Endpoint")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PushSubscriptions", "cw");
+                });
+
+            modelBuilder.Entity("Coworkee.OData.Transfer.DataTransferJob", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Created")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("CreatedIds")
                         .HasColumnType("text");
 
@@ -1459,21 +1470,12 @@ namespace MyApp.Infrastructure.Migrations
 
                     b.Property<int>("Updated")
                         .HasColumnType("integer");
->>>>>>>> feat/import-export:templates/Coworkee.Templates/content/CoworkeeApp/src/MyApp.Infrastructure/Migrations/20261015222137_Initial.Designer.cs
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-<<<<<<<< HEAD:templates/Coworkee.Templates/content/CoworkeeApp/src/MyApp.Infrastructure/Migrations/20261015213727_Initial.Designer.cs
-                    b.HasIndex("Endpoint")
-                        .IsUnique();
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("PushSubscriptions", "cw");
-========
                     b.HasIndex("TenantId", "UserId", "CreatedAt");
 
                     b.ToTable("DataTransferJobs", "cw");
@@ -1521,7 +1523,6 @@ namespace MyApp.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("ImportProfiles", "cw");
->>>>>>>> feat/import-export:templates/Coworkee.Templates/content/CoworkeeApp/src/MyApp.Infrastructure/Migrations/20261015222137_Initial.Designer.cs
                 });
 
             modelBuilder.Entity("Coworkee.Reporting.Report", b =>
@@ -1918,12 +1919,21 @@ namespace MyApp.Infrastructure.Migrations
                     b.Property<Guid?>("CreatedBy")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Description")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
                     b.Property<string>("ImageDataUrl")
                         .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset?>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
@@ -2515,11 +2525,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-<<<<<<<< HEAD:templates/Coworkee.Templates/content/CoworkeeApp/src/MyApp.Infrastructure/Migrations/20261015213727_Initial.Designer.cs
-    [Migration("20261015213727_Initial")]
-========
-    [Migration("20261015222137_Initial")]
->>>>>>>> feat/import-export:templates/Coworkee.Templates/content/CoworkeeApp/src/MyApp.Infrastructure/Migrations/20261015222137_Initial.Designer.cs
+    [Migration("20261015231623_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -3785,30 +3791,20 @@ namespace MyApp.Infrastructure.Migrations
                     b.ToTable("NotificationDigests", "cw");
                 });
 
-<<<<<<<< HEAD:templates/Coworkee.Templates/content/CoworkeeApp/src/MyApp.Infrastructure/Migrations/20261015213727_Initial.Designer.cs
             modelBuilder.Entity("Coworkee.Notifications.Push.PushSubscription", b =>
-========
-            modelBuilder.Entity("Coworkee.OData.Transfer.DataTransferJob", b =>
->>>>>>>> feat/import-export:templates/Coworkee.Templates/content/CoworkeeApp/src/MyApp.Infrastructure/Migrations/20261015222137_Initial.Designer.cs
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-<<<<<<<< HEAD:templates/Coworkee.Templates/content/CoworkeeApp/src/MyApp.Infrastructure/Migrations/20261015213727_Initial.Designer.cs
                     b.Property<string>("Auth")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
-========
-                    b.Property<int>("Created")
-                        .HasColumnType("integer");
->>>>>>>> feat/import-export:templates/Coworkee.Templates/content/CoworkeeApp/src/MyApp.Infrastructure/Migrations/20261015222137_Initial.Designer.cs
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-<<<<<<<< HEAD:templates/Coworkee.Templates/content/CoworkeeApp/src/MyApp.Infrastructure/Migrations/20261015213727_Initial.Designer.cs
                     b.Property<string>("Device")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
@@ -3822,7 +3818,32 @@ namespace MyApp.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
-========
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Endpoint")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PushSubscriptions", "cw");
+                });
+
+            modelBuilder.Entity("Coworkee.OData.Transfer.DataTransferJob", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Created")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("CreatedIds")
                         .HasColumnType("text");
 
@@ -3886,21 +3907,12 @@ namespace MyApp.Infrastructure.Migrations
 
                     b.Property<int>("Updated")
                         .HasColumnType("integer");
->>>>>>>> feat/import-export:templates/Coworkee.Templates/content/CoworkeeApp/src/MyApp.Infrastructure/Migrations/20261015222137_Initial.Designer.cs
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-<<<<<<<< HEAD:templates/Coworkee.Templates/content/CoworkeeApp/src/MyApp.Infrastructure/Migrations/20261015213727_Initial.Designer.cs
-                    b.HasIndex("Endpoint")
-                        .IsUnique();
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("PushSubscriptions", "cw");
-========
                     b.HasIndex("TenantId", "UserId", "CreatedAt");
 
                     b.ToTable("DataTransferJobs", "cw");
@@ -3948,7 +3960,6 @@ namespace MyApp.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("ImportProfiles", "cw");
->>>>>>>> feat/import-export:templates/Coworkee.Templates/content/CoworkeeApp/src/MyApp.Infrastructure/Migrations/20261015222137_Initial.Designer.cs
                 });
 
             modelBuilder.Entity("Coworkee.Reporting.Report", b =>

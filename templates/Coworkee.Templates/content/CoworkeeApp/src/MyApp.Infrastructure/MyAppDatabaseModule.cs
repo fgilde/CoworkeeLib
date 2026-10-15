@@ -1,5 +1,6 @@
 #if (auditing)
 using Coworkee.Auditing;
+using Coworkee.Auditing.History;
 #endif
 using Coworkee.AuthServer;
 using Coworkee.Core.Modularity;
@@ -67,6 +68,15 @@ namespace MyApp.Infrastructure;
     )]
 public sealed class MyAppDatabaseModule : CoworkeeModule
 {
-    public override void ConfigureServices(ModuleServiceContext context) =>
+    public override void ConfigureServices(ModuleServiceContext context)
+    {
         context.Services.AddSingleton<ILocalizationResourceContributor, MyAppTexts>();
+#if (auditing && samples)
+        context.Services.AddEntityHistory("Products", MyApp.Contracts.Catalog.CatalogPermissions.Products.Edit, (MyApp.Catalog.Domain.Product p) =>
+            new MyApp.Catalog.Features.Products.Commands.AddEdit.AddEditProductCommand(p.Id, new MyApp.Contracts.Catalog.AddEditProductRequest
+            {
+                Name = p.Name, Barcode = p.Barcode, Description = p.Description, ImageDataUrl = p.ImageDataUrl, Rate = p.Rate, BrandId = p.BrandId,
+            }));
+#endif
+    }
 }
