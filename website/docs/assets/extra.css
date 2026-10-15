@@ -278,12 +278,15 @@
 
 /* landing: integrations */
 .cw-features__more { margin-top: 1.6rem; }
-.md-typeset ul.cw-brands { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: .7rem; margin: 0; padding: 0; list-style: none; }
+.md-typeset ul.cw-brands { display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr)); gap: .7rem; margin: 0; padding: 0; list-style: none; }
 .md-typeset .cw-brands li { margin: 0; }
-.md-typeset .cw-brands a { display: flex; align-items: center; gap: .6rem; height: 100%; padding: .7rem .8rem; border-radius: var(--cw-radius); background: var(--cw-surface); border: 1px solid var(--cw-line); color: var(--cw-text); font-size: .72rem; font-weight: 600; line-height: 1.25; transition: transform .2s, box-shadow .2s, border-color .2s; }
+.md-typeset .cw-brands a { display: flex; align-items: center; gap: .6rem; height: 100%; padding: .7rem .8rem; border-radius: var(--cw-radius); background: var(--cw-surface); border: 1px solid var(--cw-line); color: var(--cw-text); font-size: .72rem; font-weight: 600; line-height: 1.25; overflow-wrap: normal; word-break: normal; transition: transform .2s, box-shadow .2s, border-color .2s; }
 .cw-brands svg, .cw-brands img { flex: none; width: 1.4rem; height: 1.4rem; object-fit: contain; fill: var(--cw-text-2); transition: fill .2s; }
 .md-typeset .cw-brands a:hover { transform: translateY(-2px); box-shadow: var(--cw-shadow); border-color: var(--cw-primary); color: var(--cw-primary); }
 .cw-brands a:hover svg { fill: var(--cw-primary); }
+.cw-brands img[src$=".svg"] { object-position: left center; object-fit: cover; }
+[data-md-color-scheme="default"] .cw-brands img[src$="airworks.png"] { filter: invert(1); }
 @media (max-width: 44.9375em) {
-  .md-typeset ul.cw-brands { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .md-typeset ul.cw-brands { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
+  .md-typeset .cw-brands a { gap: .45rem; padding: .6rem; font-size: .66rem; }
 }

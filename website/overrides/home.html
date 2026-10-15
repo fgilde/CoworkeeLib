@@ -216,7 +216,7 @@
         {% for icon, img, name, href in cw_brands %}
           <li><a href="{{ (base ~ href) | url }}">
             {%- if icon %}{% include ".icons/" ~ icon ~ ".svg" %}{% else %}<img src="{{ ('assets/brands/' ~ img) | url }}" alt="" width="28" height="28" loading="lazy">{% endif -%}
-            <span>{{ name }}</span></a></li>
+            <span>{{ name.replace("MudBlazor.", "MudBlazor.<wbr>") }}</span></a></li>
         {% endfor %}
       </ul>
     </div>
