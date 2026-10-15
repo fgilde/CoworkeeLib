@@ -44,4 +44,13 @@ public static class LocalFeed
         sources.Add(new XElement("add", new XAttribute("key", Name), new XAttribute("value", feed)));
         document.Save(file);
     }
+
+    /// <summary>The local folders among the package sources of the app's nuget.config.</summary>
+    public static IEnumerable<string> Folders(string appFolder)
+    {
+        var file = Path.Combine(appFolder, "nuget.config");
+        return File.Exists(file)
+            ? XDocument.Load(file).Descendants("packageSources").Elements("add").Select(e => (string?)e.Attribute("value")).OfType<string>().Where(Directory.Exists)
+            : [];
+    }
 }

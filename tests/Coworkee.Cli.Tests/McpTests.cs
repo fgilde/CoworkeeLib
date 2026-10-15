@@ -43,7 +43,7 @@ public sealed class McpTests : IAsyncLifetime
         var tools = await _client.ListToolsAsync(cancellationToken: Ct);
 
         tools.Select(t => t.Name).ShouldBe(
-            ["list_options", "get_spec_schema", "get_spec_example", "validate_spec", "create_app", "add_module", "add_entity", "add_migration", "run_doctor", "update_packages", "search_docs"],
+            ["list_options", "get_spec_schema", "get_spec_example", "validate_spec", "create_app", "add_module", "add_entity", "add_migration", "add_option", "run_doctor", "update_packages", "search_docs"],
             ignoreOrder: true);
         tools.ShouldAllBe(t => !string.IsNullOrWhiteSpace(t.Description));
         tools.Single(t => t.Name == "create_app").JsonSchema.GetRawText().ShouldNotContain("templateSource");
@@ -96,6 +96,8 @@ public sealed class McpTests : IAsyncLifetime
         await CallAsync("add_module", new() { ["directory"] = "app", ["module"] = "Sales", ["entity"] = "Order", ["properties"] = new[] { "Number:string:required:50", "Total:decimal" }, ["clientEntity"] = true, ["mapping"] = "Mapperly" });
         await CallAsync("add_entity", new() { ["directory"] = "app", ["module"] = "Sales", ["entity"] = "Invoice", ["plural"] = "Invoices" });
         await CallAsync("add_migration", new() { ["directory"] = "app", ["name"] = "AddSales" });
+        await CallAsync("add_option", new() { ["directory"] = "app", ["options"] = new[] { "eventBus", "rabbitMq" }, ["dryRun"] = true });
+        await CallAsync("add_option", new() { ["directory"] = "app", ["options"] = new[] { "chat" }, ["remove"] = true });
         await CallAsync("update_packages", new() { ["directory"] = "app", ["prerelease"] = true });
         await CallAsync("run_doctor", new() { ["directory"] = "app" });
 
@@ -105,6 +107,8 @@ public sealed class McpTests : IAsyncLifetime
             "module add Sales --entity Order --property Number:string:required:50 --property Total:decimal --client-entity --mapping Mapperly",
             "entity add Sales Invoice --plural Invoices",
             "migrations add AddSales",
+            "add eventBus rabbitMq --dry-run",
+            "remove chat",
             "update --prerelease",
             "doctor",
         ]);

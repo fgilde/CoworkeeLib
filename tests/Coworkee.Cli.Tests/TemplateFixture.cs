@@ -11,7 +11,7 @@ public sealed class TemplateFixture : IAsyncLifetime
 
     public string Root => _folder.Path;
 
-    private string Hive => Path.Combine(Root, "hive");
+    public string Hive => Path.Combine(Root, "hive");
 
     public async ValueTask InitializeAsync()
     {
