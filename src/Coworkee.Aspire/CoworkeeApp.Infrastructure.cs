@@ -20,7 +20,7 @@ public sealed partial class CoworkeeApp
     public IResourceBuilder<PostgresDatabaseResource> Database => _database ??= Server.AddDatabase(Name);
 
     /// <summary>The SQL Server container of <see cref="CoworkeeAppOptions.UseSqlServer"/>; awaited like <see cref="Server"/>.</summary>
-    public IResourceBuilder<SqlServerServerResource> SqlServer => _sqlServer ??= Configured(Persistent ? Builder.AddSqlServer("sqlserver").WithDataVolume() : Builder.AddSqlServer("sqlserver"), Options.SqlServerServer);
+    public IResourceBuilder<SqlServerServerResource> SqlServer => _sqlServer ??= Configured(Persistent ? Builder.AddSqlServer("sqlserver").WithDataVolume(DataVolume("sqlserver")) : Builder.AddSqlServer("sqlserver"), Options.SqlServerServer);
 
     public IResourceBuilder<SqlServerDatabaseResource> SqlServerDatabase => _sqlServerDatabase ??= SqlServer.AddDatabase(Name);
 
@@ -64,13 +64,13 @@ public sealed partial class CoworkeeApp
     private IResourceBuilder<PostgresServerResource> AddPostgres()
     {
         var postgres = Builder.AddPostgres("postgres");
-        return Configured(Persistent ? postgres.WithDataVolume() : postgres, Options.Postgres);
+        return Configured(Persistent ? postgres.WithDataVolume(DataVolume("postgres")) : postgres, Options.Postgres);
     }
 
     private IResourceBuilder<RedisResource> AddRedis()
     {
         var redis = Builder.AddRedis("redis");
-        return Configured(Persistent ? redis.WithDataVolume() : redis, Options.RedisServer);
+        return Configured(Persistent ? redis.WithDataVolume(DataVolume("redis")) : redis, Options.RedisServer);
     }
 
     private IResourceBuilder<MailPitContainerResource> AddMail() =>
@@ -82,8 +82,11 @@ public sealed partial class CoworkeeApp
         var search = Builder.AddElasticsearch("elasticsearch")
             .WithEnvironment("ES_JAVA_OPTS", "-Xms512m -Xmx512m -XX:TieredStopAtLevel=1")
             .WithEnvironment("cluster.routing.allocation.disk.threshold_enabled", "false");
-        return Configured(Persistent ? search.WithDataVolume() : search, Options.Elasticsearch);
+        return Configured(Persistent ? search.WithDataVolume(DataVolume("elasticsearch")) : search, Options.Elasticsearch);
     }
+
+    // Aspire names volumes after the app host's folder; a deployment keeps its data when it is published again from another checkout
+    private string? DataVolume(string server) => Publishing ? $"{Name}-{server}-data" : null;
 
     private static IResourceBuilder<T> Configured<T>(IResourceBuilder<T> resource, Action<IResourceBuilder<T>>? configure)
         where T : IResource

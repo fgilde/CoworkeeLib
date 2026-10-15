@@ -26,11 +26,7 @@ public sealed partial class CoworkeeApp
             Modules.Remove(module);
         }
 
-        if (options.DockerCompose is { } compose)
-        {
-            compose(builder.AddDockerComposeEnvironment("compose"));
-        }
-
+        AddDeployTarget();
         AddTools();
     }
 
@@ -65,6 +61,7 @@ public sealed partial class CoworkeeApp
         where TProject : IProjectMetadata, new()
     {
         Migrations = WithAppDatabase(Builder.AddProject<TProject>($"{Name}-{suffix}"), awaitServer: true);
+        AsDeployJob(Migrations);
         WireGrafanaTelemetry(Migrations);
         AddDatabaseCommands(Migrations);
         return Added<TProject>(Migrations, suffix);
@@ -73,10 +70,10 @@ public sealed partial class CoworkeeApp
     public IResourceBuilder<ProjectResource> AddAuthServer<TProject>(string suffix = "auth")
         where TProject : IProjectMetadata, new()
     {
-        var auth = Service<TProject>(suffix).WithExternalHttpEndpoints();
+        var auth = Exposed(Service<TProject>(suffix));
         AuthServer = auth;
         auth.WithSetting(s => s.Coworkee.Jobs.RunServer, false)
-            .WithSetting(s => s.Coworkee.Account.PublicAuthUrl, auth.GetEndpoint("https"))
+            .WithSetting(s => s.Coworkee.Account.PublicAuthUrl, PublicUrl(auth))
             .WithSetting(s => s.Coworkee.Auth.DisplayName, Options.DisplayName ?? Name);
         // a path is a file address on Linux, only http(s) logos reach the auth server
         if (Uri.TryCreate(Options.LogoUrl, UriKind.Absolute, out var logo) && logo.Scheme is "https" or "http")
@@ -84,13 +81,18 @@ public sealed partial class CoworkeeApp
             auth.WithSetting(s => s.Coworkee.Auth.LogoUrl, Options.LogoUrl!);
         }
         WithSignInDesign(auth);
-        if (Builder.Environment.IsDevelopment())
+        if (Publishing)
+        {
+            WithProductionAuth(auth);
+        }
+        else if (Builder.Environment.IsDevelopment())
         {
             // per machine certificates are fine locally; production configures SigningCertificate and EncryptionCertificate
             auth.WithSetting(s => s.Coworkee.Auth.DevelopmentCertificates, true);
         }
 
-        if (Options.Keycloak is { } keycloak)
+        // the realm with the development users is reconciled by the running app host; a deployment brings its own identity provider
+        if (Options.Keycloak is { } keycloak && !Publishing)
         {
             AddKeycloak(auth, keycloak);
             AddToolsSignIn();
@@ -103,13 +105,17 @@ public sealed partial class CoworkeeApp
         where TProject : IProjectMetadata, new()
     {
         var auth = Require(AuthServer, nameof(AddAuthServer), nameof(AddApi));
-        var api = Service<TProject>(suffix).WithExternalHttpEndpoints()
-            .WithSetting(s => s.Coworkee.ApiAuth.Authority, auth.GetEndpoint("https"))
+        var api = Exposed(Service<TProject>(suffix))
+            .WithSetting(s => s.Coworkee.ApiAuth.Authority, PublicUrl(auth))
             .WithSetting(s => s.Coworkee.ApiAuth.Audience, ApiAudience)
-            .WithSetting(s => s.Coworkee.Account.PublicAuthUrl, auth.GetEndpoint("https"));
+            .WithSetting(s => s.Coworkee.Account.PublicAuthUrl, PublicUrl(auth));
         if (Builder.Configuration["Coworkee:SetupToken"] is { Length: > 0 } setupToken)
         {
             api.WithSetting(s => s.Coworkee.SetupToken, setupToken);
+        }
+        else if (Publishing)
+        {
+            api.WithSetting(s => s.Coworkee.SetupToken, DeployParameter($"{Name}-setup-token", secret: true));
         }
 
         AddKeycloakSignInSettings(api);
@@ -132,7 +138,7 @@ public sealed partial class CoworkeeApp
         Web = web;
         AddWebUrls(web);
 
-        var redirect = web.GetEndpoint("https");
+        var redirect = PublicUrl(web);
         if (Options.LogoUrl is { } logo && logo.StartsWith('/'))
         {
             auth.WithSetting(s => s.Coworkee.Auth.LogoUrl, ReferenceExpression.Create($"{redirect}{logo}"));
@@ -175,10 +181,10 @@ public sealed partial class CoworkeeApp
         var auth = Require(AuthServer, nameof(AddAuthServer), caller);
         var api = Require(_apis.FirstOrDefault(), nameof(AddApi), caller);
         var clientId = $"{Name}-{suffix}";
-        var host = Service<TProject>(suffix).WithExternalHttpEndpoints()
+        var host = Exposed(Service<TProject>(suffix))
             .WithReference(api)
             .WaitFor(auth)
-            .WithSetting(s => s.Coworkee.Bff.Authority, auth.GetEndpoint("https"))
+            .WithSetting(s => s.Coworkee.Bff.Authority, PublicUrl(auth))
             .WithSetting(s => s.Coworkee.Bff.ClientId, clientId)
             .WithSetting(s => s.Coworkee.Bff.ApiAddress, $"https+http://{api.Resource.Name}")
             .WithSettings(s => s.Coworkee.Bff.Scopes, ApiAudience);
@@ -188,7 +194,7 @@ public sealed partial class CoworkeeApp
             WireRedis(host);
         }
 
-        var redirect = host.GetEndpoint("https");
+        var redirect = PublicUrl(host);
         var index = _bffClients++;
         auth.WithSetting(s => s.Coworkee.Auth.Clients[index].ClientId, clientId)
             .WithSetting(s => s.Coworkee.Auth.Clients[index].DisplayName, displayName)
