@@ -1,5 +1,5 @@
 site_name: Coworkee
-site_description: Coworkee is an open source .NET application framework for Blazor, ASP.NET Core and Aspire, with identity, multi-tenancy, admin UI and AI built in.
+site_description: Coworkee is a free .NET application framework for Blazor, ASP.NET Core and Aspire, with identity, multi-tenancy, admin UI and AI built in.
 site_url: https://fgilde.github.io/CoworkeeLib/
 repo_url: https://github.com/fgilde/CoworkeeLib
 repo_name: fgilde/CoworkeeLib
@@ -60,7 +60,7 @@ plugins:
         - locale: de
           name: Deutsch
           build: true
-          site_description: Coworkee ist ein quelloffenes Anwendungsframework für .NET, Blazor, ASP.NET Core und Aspire, mit Identity, Mandanten, Admin-Oberfläche und KI.
+          site_description: Coworkee ist ein kostenloses Anwendungsframework für .NET, Blazor, ASP.NET Core und Aspire, mit Identity, Mandanten, Admin-Oberfläche und KI.
           nav_translations:
             Home: Start
             Features: Features
@@ -70,9 +70,7 @@ plugins:
             Data and queries: Daten und Abfragen
             Blazor admin UI: Blazor-Admin-Oberfläche
             Realtime and collaboration: Realtime und Zusammenarbeit
-            AI assistant: KI-Assistent
             Reporting and dashboards: Berichte und Dashboards
-            Localization and translation: Lokalisierung und Übersetzung
             Aspire and observability: Aspire und Observability
             Files and search: Dateien und Suche
             Use cases: Einsatzbeispiele
@@ -167,9 +165,9 @@ nav:
       - Data and queries: features/data.md
       - Blazor admin UI: features/blazor-ui.md
       - Realtime and collaboration: features/realtime.md
-      - AI assistant: features/ai.md
+      - AI assistant and MCP: features/ai.md
       - Reporting and dashboards: features/reporting.md
-      - Localization and translation: features/localization.md
+      - Localization: features/localization.md
       - Aspire and observability: features/observability.md
       - Files and search: features/files.md
       - Use cases: features/use-cases.md
