@@ -134,8 +134,16 @@ body.layout-slide { display: grid; place-items: center; padding: 24px 16px; }
   .slide > .form { padding: 32px 20px; }
 }
 @media (max-width: 480px) {
-  body.layout-card .panel { padding: 24px 20px; }
+  /* phones: the form fills the screen like an app, inside the safe area of notched devices; 16px inputs keep iOS from zooming in */
+  body.layout-card, body.layout-slide { display: block; padding: 0; }
+  body.layout-card .panel { min-height: 100dvh; padding: calc(24px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom)); border: 0; border-radius: 0; box-shadow: none; }
+  .slide, .slide.wide { width: 100%; min-height: 100dvh; border-radius: 0; box-shadow: none; }
+  .slide > .media, .slide.media-left > .media, .slide.media-right > .media { padding-top: calc(28px + env(safe-area-inset-top)); }
+  .slide > .form, .split > .form { padding-bottom: calc(32px + env(safe-area-inset-bottom)); }
   .row { grid-template-columns: 1fr; }
+  input[type=email], input[type=password], input[type=text], input[type=tel] { font-size: 16px; }
+  .check input { width: 22px; height: 22px; }
+  .links a { display: inline-block; padding: 10px 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after, ::view-transition-group(*) { animation: none !important; transition: none !important; }
