@@ -13,6 +13,7 @@
   </ItemGroup>
   <ItemGroup>
     <!-- the library texts travel inside the tool for coworkee texts export; the tool must not reference the library -->
+    <EmbeddedResource Include="upgrade-rules.json" LogicalName="upgrade-rules.json" />
     <EmbeddedResource Include="..\Coworkee.Localization\Localization\*.json" LogicalName="Texts.Ui.%(Filename).json" Link="Texts\Ui\%(Filename).json" />
   </ItemGroup>
   <ItemGroup>
