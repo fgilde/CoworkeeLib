@@ -510,3 +510,6 @@ FodyWeavers.xsd
 artifacts/
 *.local.json
 artifacts/
+
+# local planning docs (superpowers)
+/docs/
