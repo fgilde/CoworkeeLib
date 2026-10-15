@@ -41,6 +41,8 @@ Der Server prüft jedes Feld gegen die Quelle, baut `GroupBy` und `Select` als E
 
 Gemessen an den 100.000 Aufträgen der Demo (Postgres, warm): Anzahl nach Status 9 ms, Summe nach Monat 29 ms, Anzahl nach Woche 55 ms, Region nach Kanal 23 ms, Top 10 Kunden mit Join 30 ms, vier KPI-Werte 58 ms.
 
+**Stand:** Berichte haben noch keine Versionsgeschichte, keinen öffentlichen Link und kein Karten-Widget. Unter SQLite werden Zeiträume auf `DateTimeOffset`-Feldern abgelehnt, weil EF sie dort als Text speichert; `DateTime` und `DateOnly` funktionieren.
+
 ## Designer, Kreuzfilter und Drill-down
 
 ![Berichtsdesigner mit geöffnetem Widget-Bereich](../assets/screenshots/reporting-designer.png){ .shot loading=lazy }
@@ -52,7 +54,5 @@ Widget-Typen: Kennzahl mit Trend und Ziel, Diagramme (Balken, Linie, Fläche, To
 Jede Gruppe kommt vom Server mit einem OData-Filter für genau ihre Zeilen zurück. Ein Klick auf einen Balken oder ein Tortenstück grenzt damit die anderen Widgets derselben Menge ein; *Daten öffnen* springt auf die Seite, die du mit `DrillDown` registriert hast, schon gefiltert auf die Zeilen hinter der Zahl.
 
 Ein Bericht ist privat, für Rollen oder für die ganze Organisation freigegeben (`Reports.Share`). Andere können ihn duplizieren, ändern darf ihn nur der Besitzer, und eine gespeicherte Änderung erreicht alle, die ihn gerade offen haben. Exportieren lässt er sich als PNG, als PDF über den Druckdialog oder je Widget als CSV und Excel.
-
-**Stand:** Berichte haben noch keine Versionsgeschichte, keinen öffentlichen Link und kein Karten-Widget. Unter SQLite werden Zeiträume auf `DateTimeOffset`-Feldern abgelehnt, weil EF sie dort als Text speichert; `DateTime` und `DateOnly` funktionieren.
 
 Referenz: [Berichte](../modules/reporting.md), [OData](../web/odata.md), [Query Builder](../ui/query-builder.md).

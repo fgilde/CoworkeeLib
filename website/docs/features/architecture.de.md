@@ -68,11 +68,4 @@ Für Agenten gibt es `coworkee mcp`, einen Model-Context-Protocol-Server über s
 
 **Stand:** Coworkee ist bei Version 0.0.1.x. Many-to-many-Beziehungen kennen die Entity-Specs noch nicht, und ein Deployment mit `aspire publish` ist bisher nicht geprüft.
 
-## Weiterlesen
-
-- [Module](../fundamentals/modules.md): Lebenszyklus, Root-Module, Contributors
-- [Messaging und Pipeline](../fundamentals/messaging.md): Commands, Queries, Middleware, Caching
-- [Events und Sperren](../fundamentals/events.md): Integration Events, RabbitMQ, verteilte Sperren
-- [Kommandozeile](../getting-started/cli.md): Optionen von `coworkee new` und das Spec-Format
-- [Coworkee Studio](../getting-started/studio.md) und der [MCP-Server der CLI](../getting-started/mcp.md)
-- [Pakete und Namespaces](../reference/packages.md)
+Referenz: [Module](../fundamentals/modules.md), [Messaging und Pipeline](../fundamentals/messaging.md), [Events und Sperren](../fundamentals/events.md), [Kommandozeile](../getting-started/cli.md), [Coworkee Studio](../getting-started/studio.md), [MCP-Server der CLI](../getting-started/mcp.md).

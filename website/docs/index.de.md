@@ -34,8 +34,6 @@ app.AddApi<Projects.MyApp_Api>();
 app.AddWeb<Projects.MyApp_Web>();
 ```
 
-## Woher Coworkee kommt
+## Was darauf läuft
 
-Coworkee war zuerst mein eigenes Projekt-Template: ein [Blazor-Basis-Template](https://github.com/fgilde/Coworkee/tree/release/last-standalone) mit allem, was eine Business-App braucht, kopiert in jede neue App. Jede App trug dann ihre eigene Kopie von Identity, Berechtigungen, Einstellungen, Audit und Administrationsseiten, und jede Verbesserung musste von Hand nachgezogen werden. Deshalb habe ich aus dem Template diese Bibliothek gebaut: Die gemeinsamen Teile sind jetzt NuGet-Pakete, und eine App enthält nur noch ihre eigene Fachlichkeit.
-
-Die [Demo-App](https://github.com/fgilde/Coworkee/tree/master) ist das frühere Template, neu gebaut auf den Paketen, und [Sharemee](https://github.com/fgilde/sharemee), ein Digital-Asset-Management-System, ist die zweite App darauf. Die Oberfläche nutzt [MudBlazor](https://mudblazor.com) und [MudBlazor.Extensions](https://www.mudex.org); Facetten, Response-Filter und Codegenerierung kommen aus [Nextended](https://github.com/fgilde/Nextended).
+Die [Demo-App](https://github.com/fgilde/Coworkee/tree/master) und [Sharemee](https://github.com/fgilde/sharemee) laufen auf diesen Paketen; Facetten, Response-Filter und Codegenerierung kommen aus [Nextended](https://github.com/fgilde/Nextended).

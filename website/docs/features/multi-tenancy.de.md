@@ -55,6 +55,8 @@ context.Services.AddCoworkeeSettings<MyAppSettings>(context.Configuration, rules
     .Hide(s => s.Billing.WebhookSecret));   // never leaves the server
 ```
 
+**Stand:** Version 0.0.1.x. Typisierte App-Einstellungen gelten nur für die ganze Installation (Werte pro Mandant sind normale Einstellungen), und MySQL wird nicht unterstützt, weil es dafür noch keinen EF-Core-10-Provider gibt.
+
 ## Features und Editionen
 
 `Coworkee.Features` schaltet Teile der Anwendung pro Mandant an und aus. Module definieren Features (`Bool`, `Int` oder `String`), Editionen bündeln Werte, und jeder Mandant bekommt eine Edition und dazu eigene Überschreibungen. Erst zählt die Überschreibung, dann die Edition, dann der Standardwert.
@@ -65,7 +67,5 @@ public sealed record CreateReport(string Name) : ICommand<Result<Guid>>;
 ```
 
 Solange das Feature aus ist, antwortet der Dispatcher mit `403` und `feature.disabled`. In Blazor blenden `FeatureGate` und Navigationseinträge mit `Feature` aus, was nicht zur Edition gehört, und offene Clients bekommen Änderungen über Realtime mit.
-
-**Stand:** Version 0.0.1.x. Typisierte App-Einstellungen gelten nur für die ganze Installation (Werte pro Mandant sind normale Einstellungen), und MySQL wird nicht unterstützt, weil es dafür noch keinen EF-Core-10-Provider gibt.
 
 Referenz: [Persistenz](../fundamentals/persistence.md#mandanten-und-aktueller-benutzer), [Einstellungen und App-Konfiguration](../modules/settings.md), [Features und Editionen](../modules/features.md), [Berechtigungen nur für den Host](../security/permissions.md#berechtigungen-nur-fur-den-host).

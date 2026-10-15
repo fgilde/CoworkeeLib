@@ -7,7 +7,7 @@ description: "Coworkee's EF Core data layer: PostgreSQL, SQL Server or SQLite, f
 
 ![Sales orders table with 100,000 rows and the measured median times of server and browser](../assets/screenshots/orders-compare-light.webp){ .shot loading=lazy }
 
-That is the demo's sales order list: 100,000 rows, and the line under the facets is the table timing its own query on both sides. In this shot: server 141 ms, browser 58 ms. The browser wins because the rows are already there.
+That is the demo's sales order list: 100,000 rows, and the line under the facets is the table timing its own query on both sides. In this shot: server 141 ms, browser 58 ms. The browser wins because the rows are already there. (That shot is an older, lighter run; the measured table, 39-56 ms in the browser against 216-236 ms on the server, is in [Client entities](../ui/client-entities.md).)
 
 Underneath sits plain EF Core. Handlers inject `CoworkeeDbContext` and call `db.Set<T>()`, with no repository layer in between (EF Core already is one).
 

@@ -3,20 +3,23 @@
 {% set de = config.theme.language == "de" %}
 {% set base = ("de/" if de else "") %}
 {% set t = {
-  "eyebrow": ".NET 10 · Blazor · Aspire",
   "title": ("Identity, Admin-Oberfläche und Aspire für .NET 10, als NuGet-Pakete" if de else "Identity, admin UI and Aspire for .NET 10, as NuGet packages"),
   "origin": ("Ich habe Coworkee gebaut, weil ich Anmeldung, Einstellungen und Admin-Seiten in jede neue App kopiert habe. Jetzt kommen sie als Paket." if de else "I built Coworkee because I kept copying sign-in, settings and admin pages into every new app. Now they come as a package."),
   "release": ("Aktuelles Release" if de else "Latest release"),
-  "release_v": "0.0.1.25",
-  "release_d": ("15. Oktober 2026" if de else "15 October 2026"),
   "changelog": ("Änderungen" if de else "Changelog"),
-  "lead": ("Coworkee ist ein modulares Anwendungsframework für .NET, Blazor und ASP.NET Core: Identity, Berechtigungen, Auth-Server, Blazor-Oberfläche, Datentabellen, Themes und ein Aspire-AppHost kommen als NuGet-Pakete. Deine App enthält nur noch ihre Fachlichkeit." if de else "Coworkee is a modular .NET application framework for Blazor and ASP.NET Core: identity, permissions, an auth server, a Blazor shell, data tables, theming and an Aspire app host come as NuGet packages. Your app only holds its own domain."),
+  "lead": ("Für Blazor und ASP.NET Core. MIT-Lizenz, ein Maintainer." if de else "For Blazor and ASP.NET Core. MIT licensed, one maintainer."),
   "search": ("Dokumentation durchsuchen" if de else "Search the documentation"),
   "topics": ("Direkt zu" if de else "Jump to"),
   "start": ("Loslegen" if de else "Get started"),
   "docs": ("Dokumentation" if de else "Documentation"),
   "features": ("Was das Framework abdeckt" if de else "What the framework covers"),
-  "features_lead": ("Vier Bereiche, gemessen an der Demo-App." if de else "Four areas, measured on the demo app."),
+  "timing_lead": ("Gemessen an den 100.000 Aufträgen der Demo-App:" if de else "Measured on the demo app's 100,000 sales orders:"),
+  "timing": [
+    (("Auftragstabelle mit allen Facetten, im Browser" if de else "Order table with all facets, in the browser"), "39–56 ms", "ui/client-entities/"),
+    (("dieselbe Abfrage auf dem Server" if de else "the same query on the server"), "216–236 ms", "ui/client-entities/"),
+    (("Berichtsabfragen, in der Datenbank aggregiert" if de else "report queries, aggregated in the database"), "9–58 ms", "modules/reporting/")
+  ],
+  "more_shots": ("Alle Screenshots" if de else "More screenshots"),
   "also": ("Außerdem" if de else "Also in the box"),
   "all_features": ("Alle Features" if de else "All features"),
   "why": ("Warum Coworkee" if de else "Why Coworkee"),
@@ -39,9 +42,9 @@
   "mcp": ("Für KI-Assistenten" if de else "For AI assistants"),
   "mcp_t": ("<code>coworkee mcp</code> startet einen MCP-Server: Claude, Copilot und andere Assistenten legen Apps, Module und Migrationen über dieselben Befehle an." if de else "<code>coworkee mcp</code> starts an MCP server: Claude, Copilot and other assistants create apps, modules and migrations through the same commands."),
   "tour": ("Ein Rundgang durch die Demo-App" if de else "A tour of the demo app"),
-  "tour_lead": ("Alles auf diesen Bildern kommt aus den Paketen. Die Demo-App bringt nur Katalog, Dokumente und Aufträge mit. (Die App-Screenshots sind auf Englisch, die Oberfläche gibt es in 23 Sprachen.)" if de else "Everything in these pictures comes from the packages. The demo app only adds catalog, documents and orders."),
+  "tour_lead": ("Alles auf diesen Bildern kommt aus den Paketen. Die Demo-App bringt nur Katalog, Dokumente und Aufträge mit. (Die Screenshots sind auf Englisch, die Oberfläche gibt es in 23 Sprachen.)" if de else "Everything in these pictures comes from the packages. The demo app only adds catalog, documents and orders."),
   "gallery": ("Galerie" if de else "Gallery"),
-  "gallery_lead": ("Hell und dunkel, im Ocean-Theme. Screenshots auf Englisch." if de else "Light and dark, in the Ocean theme."),
+  "gallery_lead": ("Hell und dunkel, im Ocean-Theme." if de else "Light and dark, in the Ocean theme."),
   "connect": ("Fragen, Ideen oder Lust zu helfen?" if de else "Questions, ideas or want to help?"),
   "connect_lead": ("Schreib mir oder unterstütze das Projekt. Coworkee bleibt frei und quelloffen." if de else "Write to me or support the project. Coworkee stays free and open source."),
   "close": ("Schließen" if de else "Close"),
@@ -64,28 +67,25 @@
   ("SDKs", "web/sdk/")
 ] %}
 
-{% set cw_highlights = [
-  ("100.000" if de else "100,000", ("Daten und Abfragen" if de else "Data and queries"), ("Aufträge hält eine Client-Entity der Demo im Browser. Die Tabellenabfrage mit allen Facetten braucht dort 39 bis 56 ms, auf dem Server 216 bis 236 ms." if de else "sales orders sit in the browser as a client entity in the demo. The table query with all its facets takes 39 to 56 ms there, 216 to 236 ms on the server."), "features/data/"),
-  ("9–58 ms", ("Berichte und Dashboards" if de else "Reporting and dashboards"), ("für jede Abfrage hinter einem Vertriebs-Dashboard über dieselben 100.000 Aufträge. Die Datenbank aggregiert, der Browser zeichnet nur." if de else "for each query behind a sales dashboard over the same 100,000 orders. The database aggregates, the browser only draws."), "features/reporting/"),
-  ("14", ("KI-Assistent und MCP" if de else "AI assistant and MCP"), ("Modellanbieter, von Anthropic bis zu einem lokalen Ollama. Der Assistent arbeitet mit den Rechten des Benutzers und fragt, bevor er etwas löscht." if de else "model providers, from Anthropic to a local Ollama. The assistant works with the user's permissions and asks before it deletes anything."), "features/ai/"),
-  ("23", ("Lokalisierung" if de else "Localization"), ("Sprachen liefern die Pakete mit, inklusive Mails und Anmeldeseiten. Eigene Texte übersetzt LibreTranslate, DeepL oder ein Sprachmodell." if de else "languages ship with the packages, mails and sign-in pages included. Your own texts go through LibreTranslate, DeepL or a language model."), "features/localization/")
-] %}
-
 {% set cw_more = [
-  (("Modulare Architektur" if de else "Modular architecture"), "features/architecture/"),
-  (("Identity und Sicherheit" if de else "Identity and security"), "features/identity/"),
-  (("Mandanten und Einstellungen" if de else "Multi-tenancy and settings"), "features/multi-tenancy/"),
-  (("Blazor-Admin-Oberfläche" if de else "Blazor admin UI"), "features/blazor-ui/"),
-  (("Realtime und Zusammenarbeit" if de else "Realtime and collaboration"), "features/realtime/"),
-  (("Aspire und Observability" if de else "Aspire and observability"), "features/observability/"),
-  (("Dateien und Suche" if de else "Files and search"), "features/files/"),
-  (("Einsatzbeispiele" if de else "Use cases"), "features/use-cases/")
+  (("Modulare Architektur" if de else "Modular architecture"), None, "features/architecture/"),
+  (("Identity und Sicherheit" if de else "Identity and security"), None, "features/identity/"),
+  (("Mandanten und Einstellungen" if de else "Multi-tenancy and settings"), None, "features/multi-tenancy/"),
+  (("Daten und Abfragen" if de else "Data and queries"), None, "features/data/"),
+  (("Blazor-Admin-Oberfläche" if de else "Blazor admin UI"), None, "features/blazor-ui/"),
+  (("Realtime und Zusammenarbeit" if de else "Realtime and collaboration"), None, "features/realtime/"),
+  (("KI-Assistent und MCP" if de else "AI assistant and MCP"), ("14 Anbieter" if de else "14 providers"), "features/ai/"),
+  (("Berichte und Dashboards" if de else "Reporting and dashboards"), None, "features/reporting/"),
+  (("Lokalisierung" if de else "Localization"), ("23 Sprachen" if de else "23 languages"), "features/localization/"),
+  (("Aspire und Observability" if de else "Aspire and observability"), None, "features/observability/"),
+  (("Dateien und Suche" if de else "Files and search"), None, "features/files/"),
+  (("Einsatzbeispiele" if de else "Use cases"), None, "features/use-cases/")
 ] %}
 
 {% set cw_brands = [
   (("Daten" if de else "Data"), [
     ("simple/postgresql", None, "PostgreSQL", None, "features/data/"),
-    (None, None, "SQL Server", None, "features/data/"),
+    ("material/database", None, "SQL Server", None, "features/data/"),
     ("simple/sqlite", None, "SQLite", None, "features/data/"),
     ("simple/redis", None, "Redis", None, "hosting/redis/")
   ]),
@@ -119,31 +119,13 @@
 
 {% set gallery = [
   ("signin-light", "Anmeldung (Slide)" if de else "Sign-in (slide)"),
-  ("register-dark", "Registrierung, dunkel" if de else "Registration, dark"),
-  ("signin-phone-light", "Anmeldung am Telefon" if de else "Sign-in on a phone"),
-  ("dashboard-light", "Dashboard"),
   ("dashboard-dark", "Dashboard, dunkel" if de else "Dashboard, dark"),
-  ("products-grouped-dark", "Produkte nach Marke gruppiert" if de else "Products grouped by brand"),
   ("products-filter-dark", "Spaltenfilter mit Anzahlen" if de else "Column filter with counts"),
   ("orders-grouped-light", "Aufträge nach Status gruppiert" if de else "Orders grouped by status"),
-  ("orders-compare-dark", "Server und Browser im Vergleich" if de else "Server and browser compared"),
-  ("themes-light", "Themes und Anmelde-Design" if de else "Themes and sign-in design"),
-  ("my-settings-light", "Eigene Einstellungen" if de else "My settings"),
-  ("app-configuration-light", "App-Konfiguration" if de else "App configuration"),
   ("users-light", "Benutzer" if de else "Users"),
-  ("user-dialog-light", "Benutzer anlegen" if de else "New user dialog"),
-  ("roles-dark", "Rollen" if de else "Roles"),
   ("audit-log-dark", "Audit-Log auf Feldebene" if de else "Field level audit log"),
-  ("services-dark", "Dienste und ihr Zustand" if de else "Services and their health"),
   ("translations-light", "Übersetzungen" if de else "Translations"),
-  ("languages-light", "Sprachen" if de else "Languages"),
-  ("account-light", "Konto" if de else "Account"),
-  ("swagger-light", "Swagger"),
-  ("studio-welcome-light", "Coworkee Studio: Start" if de else "Coworkee Studio: start"),
-  ("studio-branding-dark", "Coworkee Studio: Branding mit Live-Vorschau" if de else "Coworkee Studio: branding with live preview"),
-  ("studio-architecture-light", "Coworkee Studio: Module und Infrastruktur" if de else "Coworkee Studio: modules and infrastructure"),
-  ("studio-entities-dark", "Coworkee Studio: Entities entwerfen" if de else "Coworkee Studio: designing entities"),
-  ("studio-generate-light", "Coworkee Studio: die App wird angelegt" if de else "Coworkee Studio: the app is created")
+  ("studio-entities-dark", "Coworkee Studio: Entities entwerfen" if de else "Coworkee Studio: designing entities")
 ] %}
 
 {% macro shot(name) -%}
@@ -163,7 +145,6 @@
     <div class="cw-hero__curve" aria-hidden="true"></div>
     <div class="md-grid cw-hero__inner">
       <div class="cw-hero__text">
-        <span class="cw-eyebrow">{{ t.eyebrow }}</span>
         <h1>{{ t.title }}</h1>
         <p class="cw-lead">{{ t.lead }}</p>
         <p class="cw-origin">{{ t.origin }} <a href="https://florian.gilde.org" target="_blank" rel="noopener">Florian Gilde</a></p>
@@ -180,11 +161,11 @@
           <a class="cw-btn" href="{{ (base ~ 'getting-started/installation/') | url }}">{% include ".icons/material/book-open-variant.svg" %}{{ t.docs }}</a>
           <a class="cw-btn" href="{{ config.repo_url }}" target="_blank" rel="noopener">{% include ".icons/fontawesome/brands/github.svg" %}GitHub</a>
         </div>
-        <p class="cw-release">{{ t.release }} <strong>{{ t.release_v }}</strong>, {{ t.release_d }} · <a href="{{ (base ~ 'reference/changelog/') | url }}">{{ t.changelog }}</a></p>
+        {% set rel = config.extra.release %}<p class="cw-release">{{ t.release }} <strong>{{ rel.version }}</strong>, {{ rel.de if de else rel.en }} · <a href="{{ (base ~ 'reference/changelog/') | url }}">{{ t.changelog }}</a></p>
       </div>
       <div class="cw-hero__shot">
         <div class="cw-frame">
-          <div class="cw-frame__bar"><i></i><i></i><i></i><span>MyApp</span></div>
+          <div class="cw-frame__bar"><span>MyApp</span></div>
           <div class="cw-slides">
             {% for n in ["signin", "register", "dashboard", "products-grouped"] %}
               {% set auth = " cw-auth" if loop.index < 3 else "" %}
@@ -200,19 +181,13 @@
   <section class="cw-section md-typeset">
     <div class="md-grid">
       <h2>{{ t.features }}</h2>
-      <p class="cw-section__lead">{{ t.features_lead }}</p>
-      <div class="cw-highlights">
-        {% for number, title, text, href in cw_highlights %}
-          <a class="cw-card" href="{{ (base ~ href) | url }}">
-            <span class="cw-card__number">{{ number }}</span>
-            <span>{{ text }}</span>
-            <strong>{{ title }}</strong>
-          </a>
-        {% endfor %}
-      </div>
+      <p class="cw-section__lead">{{ t.timing_lead }}</p>
+      <table class="cw-timing">
+        {% for what, ms, href in t.timing %}<tr><td><a href="{{ (base ~ href) | url }}">{{ what }}</a></td><td>{{ ms }}</td></tr>{% endfor %}
+      </table>
       <h3 class="cw-also">{{ t.also }}</h3>
       <ul class="cw-more">
-        {% for title, href in cw_more %}<li><a href="{{ (base ~ href) | url }}">{{ title }}</a></li>{% endfor %}
+        {% for title, note, href in cw_more %}<li><a href="{{ (base ~ href) | url }}">{{ title }}</a>{% if note %} <span>{{ note }}</span>{% endif %}</li>{% endfor %}
       </ul>
       <div class="cw-ctas cw-features__more">
         <a class="cw-btn" href="{{ (base ~ 'features/') | url }}">{% include ".icons/material/view-grid-outline.svg" %}{{ t.all_features }}</a>
@@ -308,6 +283,7 @@
           </a>
         {% endfor %}
       </div>
+      <p class="cw-more-shots"><a href="{{ (base ~ 'screenshots/') | url }}">{{ t.more_shots }} {% include ".icons/material/arrow-right.svg" %}</a></p>
     </div>
   </section>
 

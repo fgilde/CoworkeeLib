@@ -22,7 +22,7 @@ You can write the shared parts of an ASP.NET Core and Blazor app yourself, copy 
 | Runtime | any, including .NET 8 LTS | whatever the template targets | .NET 10 only |
 | Dependency risk | none | none after the copy | a 0.0.x project with one maintainer |
 
-The last four rows go to the hand-rolled project, and that is honest. If you need .NET 8 LTS, or your team has no time to learn another set of conventions, start from scratch.
+The last four rows go to the hand-rolled project. If you need .NET 8 LTS, or your team has no time to learn another set of conventions, start from scratch.
 
 ## What you get in return
 

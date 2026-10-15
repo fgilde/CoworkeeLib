@@ -5,10 +5,6 @@ description: "Blob-Speicher auf Festplatte, S3 oder Azure, ein Blazor-Dateimanag
 
 # Dateien und Suche
 
-Produktfotos, unterschriebene Lieferscheine, das PDF, das ein Kunde bei der Registrierung angehängt hat: Früher oder später speichert jedes Bestellsystem und jedes Kundenportal Dateien. Coworkee teilt die Arbeit auf in Ablage, ein Laufwerk für Menschen und Suche.
-
-## Ablage, der der Ort egal ist
-
 `IBlobStorage` legt Bytes unter einem Schlüssel ab, öffnet und löscht sie. Ob sie in einem lokalen Ordner, einem S3-Bucket (MinIO geht auch) oder in Azure Blob Storage landen, entscheidet eine einzige Einstellung, `Coworkee:Storage:Provider`:
 
 ```csharp
@@ -49,6 +45,6 @@ await index.EnsureAsync(schema, ct);
 
 Volltext, Filter, Facetten und Cursor-Paging sind dabei. `CreateIndexAsync` und `SwapAsync` bauen einen Index im Hintergrund neu auf und schalten den Alias ohne Ausfallzeit um.
 
-**Stand:** Öffentliche Dateien sind neu in Version 0.0.1.24 und brauchen in Apps mit dem Files-Modul eine Migration. Ordner kennen keinen öffentlichen Zustand; jede Datei wird einzeln veröffentlicht.
+**Stand:** Öffentliche Dateien sind neu in [0.0.1.24](../reference/changelog.md) und brauchen in Apps mit dem Files-Modul eine Migration. Ordner kennen keinen öffentlichen Zustand; jede Datei wird einzeln veröffentlicht.
 
 Referenz: [Dateiablage](../modules/storage.md), [Dateien](../modules/files.md), [öffentliche Dateien](../modules/files.md#offentliche-dateien), [Suche](../modules/search.md).

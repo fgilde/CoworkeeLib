@@ -68,11 +68,4 @@ Agents get `coworkee mcp`, a Model Context Protocol server over stdio. Claude Co
 
 **Status:** Coworkee is at version 0.0.1.x. Entity specs have no many-to-many relations yet, and deployment with `aspire publish` has not been verified.
 
-## Where to go next
-
-- [Modules](../fundamentals/modules.md): lifecycle, root modules, contributors
-- [Messaging and pipeline](../fundamentals/messaging.md): commands, queries, middleware, caching
-- [Events and locks](../fundamentals/events.md): integration events, RabbitMQ, distributed locks
-- [Command line](../getting-started/cli.md): options of `coworkee new` and the spec format
-- [Coworkee Studio](../getting-started/studio.md) and the [MCP server of the CLI](../getting-started/mcp.md)
-- [Packages and namespaces](../reference/packages.md)
+Reference: [modules](../fundamentals/modules.md), [messaging and pipeline](../fundamentals/messaging.md), [events and locks](../fundamentals/events.md), [command line](../getting-started/cli.md), [Coworkee Studio](../getting-started/studio.md), [MCP server of the CLI](../getting-started/mcp.md).

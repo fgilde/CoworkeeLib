@@ -64,9 +64,4 @@ Every service knows the addresses of the others, plus the Aspire and Hangfire da
 
 **Status:** publishing with `aspire publish` to Docker Compose or Azure Container Apps is wired but not yet verified end to end. Running more than one instance needs Redis and a shared Data Protection key ring.
 
-## Where to go next
-
-- [Aspire app host](../hosting/aspire.md): roles, conventions, own infrastructure, Keycloak, publishing
-- [Grafana and WebDataStudio](../hosting/observability.md): every dashboard, sign-in, switching them off
-- [Scaling out with Redis](../hosting/redis.md)
-- [Services page](../modules/settings.md#services) and [AspireUI](../hosting/aspire.md#aspireui)
+Reference: [Aspire app host](../hosting/aspire.md), [Grafana and WebDataStudio](../hosting/observability.md), [scaling out with Redis](../hosting/redis.md), [AspireUI](../hosting/aspire.md#aspireui).

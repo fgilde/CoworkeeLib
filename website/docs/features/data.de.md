@@ -7,7 +7,7 @@ description: "Die EF-Core-Datenschicht von Coworkee: PostgreSQL, SQL Server oder
 
 ![Auftragstabelle mit 100.000 Zeilen und den gemessenen Medianzeiten von Server und Browser](../assets/screenshots/orders-compare-light.webp){ .shot loading=lazy }
 
-Das ist die Auftragsliste der Demo: 100.000 Zeilen, und die Zeile unter den Facetten zeigt, wie die Tabelle ihre eigene Abfrage auf beiden Seiten gemessen hat. Hier: Server 141 ms, Browser 58 ms. Der Browser gewinnt, weil die Zeilen schon bei ihm liegen.
+Das ist die Auftragsliste der Demo: 100.000 Zeilen, und die Zeile unter den Facetten zeigt, wie die Tabelle ihre eigene Abfrage auf beiden Seiten gemessen hat. Hier: Server 141 ms, Browser 58 ms. Der Browser gewinnt, weil die Zeilen schon bei ihm liegen. (Der Screenshot stammt aus einem älteren, leichteren Lauf; die gemessene Tabelle mit 39-56 ms im Browser gegen 216-236 ms auf dem Server steht bei den [Client-Entities](../ui/client-entities.md).)
 
 Darunter steckt ganz normales EF Core. Handler bekommen `CoworkeeDbContext` injiziert und rufen `db.Set<T>()` auf, ohne Repository-Schicht dazwischen (EF Core ist ja schon eine).
 

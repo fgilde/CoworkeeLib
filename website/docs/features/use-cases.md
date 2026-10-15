@@ -42,7 +42,7 @@ Most portals need more than one language. The packages ship 23, mails and sign-i
 
 ## Any of the above, with an assistant
 
-The [AI assistant](ai.md) works through the same requests as the UI, with the signed-in user's permissions. It asks before it deletes anything.
+The [AI assistant](ai.md) works through the same requests as the UI, with the signed-in user's permissions. Every change to data waits until the user clicks *Run*.
 
 ## Not a good fit
 

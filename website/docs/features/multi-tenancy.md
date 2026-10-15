@@ -55,6 +55,8 @@ context.Services.AddCoworkeeSettings<MyAppSettings>(context.Configuration, rules
     .Hide(s => s.Billing.WebhookSecret));   // never leaves the server
 ```
 
+**Status:** version 0.0.1.x. Typed app settings apply to the whole installation only (per tenant values are plain settings), and MySQL is not supported because there is no EF Core 10 provider for it yet.
+
 ## Features and editions
 
 `Coworkee.Features` turns parts of the app on and off per tenant. Modules define features (`Bool`, `Int` or `String`), editions bundle values, and each tenant gets an edition plus its own overrides. Override first, then edition, then the default.
@@ -65,7 +67,5 @@ public sealed record CreateReport(string Name) : ICommand<Result<Guid>>;
 ```
 
 While the feature is off, the dispatcher answers `403` with `feature.disabled`. In Blazor, `FeatureGate` and navigation items with a `Feature` hide what the edition doesn't include, and open clients pick up a change over realtime.
-
-**Status:** version 0.0.1.x. Typed app settings apply to the whole installation only (per tenant values are plain settings), and MySQL is not supported because there is no EF Core 10 provider for it yet.
 
 Reference: [persistence](../fundamentals/persistence.md#tenants-and-the-current-user), [settings and app configuration](../modules/settings.md), [features and editions](../modules/features.md), [host-only permissions](../security/permissions.md#host-only-permissions).

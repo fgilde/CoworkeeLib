@@ -64,9 +64,4 @@ Jeder Dienst kennt die Adressen der anderen, dazu Aspire- und Hangfire-Dashboard
 
 **Stand:** Das Veröffentlichen mit `aspire publish` nach Docker Compose oder Azure Container Apps ist verdrahtet, aber noch nicht durchgängig geprüft. Für mehr als eine Instanz brauchst du Redis und einen gemeinsamen Data-Protection-Schlüsselring.
 
-## Weiterlesen
-
-- [Aspire-App-Host](../hosting/aspire.md): Rollen, Konventionen, eigene Infrastruktur, Keycloak, Veröffentlichen
-- [Grafana und WebDataStudio](../hosting/observability.md): alle Dashboards, Anmeldung, Abschalten
-- [Skalieren mit Redis](../hosting/redis.md)
-- [Seite Dienste](../modules/settings.md#dienste) und [AspireUI](../hosting/aspire.md#aspireui)
+Referenz: [Aspire-AppHost](../hosting/aspire.md), [Grafana und WebDataStudio](../hosting/observability.md), [Skalieren mit Redis](../hosting/redis.md), [AspireUI](../hosting/aspire.md#aspireui).

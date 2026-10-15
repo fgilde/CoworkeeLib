@@ -42,7 +42,7 @@ Die meisten Portale brauchen mehr als eine Sprache. Die Pakete bringen 23 mit, M
 
 ## Alles davon, mit Assistent
 
-Der [KI-Assistent](ai.md) arbeitet über dieselben Requests wie die Oberfläche, mit den Rechten des angemeldeten Benutzers. Bevor er etwas löscht, fragt er nach.
+Der [KI-Assistent](ai.md) arbeitet über dieselben Requests wie die Oberfläche, mit den Rechten des angemeldeten Benutzers. Jede Änderung an Daten wartet, bis der Benutzer auf *Ausführen* klickt.
 
 ## Wofür es nicht taugt
 

@@ -31,6 +31,6 @@ Skripte und KI-Clients nutzen persönliche API-Schlüssel: `cwk_` plus 64 Hex-Ze
 
 Module, die Daten über eine Person speichern, implementieren `IPersonalDataContributor`. Über den Reiter *Datenschutz* der Kontoseite lädt man dann alles als `personal-data.json` herunter oder löscht das Konto.
 
-**Stand:** Version 0.0.1.x. Die Admin-Seiten für Benutzer, Gruppen und Rollen liegen unter `/admin/...`; eine eigene Seite mit derselben Route bringt das Blazor-Routing durcheinander.
+**Stand:** Version 0.0.1.x, Namen können sich hier zwischen Releases noch ändern; was anzupassen ist, steht im [Änderungsprotokoll](../reference/changelog.md).
 
 Referenz: [Anmeldung und Keycloak](../security/authentication.md), [Berechtigungen](../security/permissions.md), [Registrierung und Anmelderegeln](../security/registration.md), [Clients, Sitzungen und Passwortregeln](../security/clients.md), [Anmeldeseiten](../security/sign-in-pages.md), [API-Schlüssel](../security/api-keys.md), [Datenschutz](../security/privacy.md).

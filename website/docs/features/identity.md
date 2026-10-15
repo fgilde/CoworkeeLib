@@ -31,6 +31,6 @@ Scripts and AI clients use personal API keys: `cwk_` plus 64 hex characters, sho
 
 Modules that store data about a person implement `IPersonalDataContributor`. The *Privacy* tab of the account page then downloads everything as `personal-data.json`, or deletes the account.
 
-**Status:** version 0.0.1.x. The admin pages for users, groups and roles live under `/admin/...`; an app page with the same route breaks Blazor routing.
+**Status:** version 0.0.1.x, so names in this area can still change between releases; the [changelog](../reference/changelog.md) lists what to adapt.
 
 Reference: [authentication and Keycloak](../security/authentication.md), [permissions](../security/permissions.md), [registration and sign-in rules](../security/registration.md), [clients, sessions and password rules](../security/clients.md), [sign-in pages](../security/sign-in-pages.md), [API keys](../security/api-keys.md), [privacy](../security/privacy.md).

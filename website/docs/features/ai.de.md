@@ -29,6 +29,8 @@ Das Fenster zeigt, was der Assistent ausführen will, Geheimnisse maskiert, und 
 
 Antworten kommen als Markdown, dem die scharfen Kanten fehlen: rohes HTML erscheint als Text, Bilder werden zu Links, und externe Links verlieren ihre Query, damit sie keine Daten hinaustragen.
 
+**Stand:** Bei mehreren API-Instanzen brauchen wartende Assistenten-Aufrufe einen gemeinsamen Data-Protection-Schlüsselring, und die Sperre, die zwei gleichzeitige Antworten für denselben Benutzer verhindert, gilt nur pro Instanz.
+
 ## 14 Anbieter, zur Laufzeit umschaltbar
 
 Das Modell steckt hinter `IChatClient` aus `Microsoft.Extensions.AI`. Host-Admins wählen es unter **Administration > System > KI**, schon die nächste Nachricht nutzt es, ohne Neustart.
@@ -56,7 +58,5 @@ claude mcp add --transport http myapp https://myapp.example/mcp --header "Author
 Schlüssel legst du unter *Konto > API-Schlüssel* an, mit einer Laufzeit von 7 bis 365 Tagen und einem Teil deiner eigenen Rechte. Der Server speichert nur einen SHA-256-Hash und prüft bei jeder Anfrage die aktuellen Rechte des Benutzers. `tools/list` zeigt nur, was der Aufrufer nutzen darf, Commands sind als destruktiv markiert, damit der Client vorher nachfragt, und jeder Aufruf landet im Audit der KI-Tool-Aufrufe.
 
 Die CLI hat mit `coworkee mcp` einen eigenen MCP-Server für den Schritt davor: Ein Agent auf deinem Rechner schreibt und prüft die Spezifikation einer App, legt sie an und ergänzt Module und Entities mit denselben Befehlen, die du tippen würdest.
-
-**Stand:** Bei mehreren API-Instanzen brauchen wartende Assistenten-Aufrufe einen gemeinsamen Data-Protection-Schlüsselring, und die Sperre, die zwei gleichzeitige Antworten für denselben Benutzer verhindert, gilt nur pro Instanz.
 
 Referenz: [KI-Assistent und MCP](../modules/ai.md), [MCP-Server der App](../modules/mcp.md), [API-Schlüssel](../security/api-keys.md), [MCP-Server der CLI](../getting-started/mcp.md).

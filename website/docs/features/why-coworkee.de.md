@@ -22,7 +22,7 @@ Die gemeinsamen Teile einer App mit ASP.NET Core und Blazor kannst du selbst sch
 | Laufzeit | jede, auch .NET 8 LTS | was die Vorlage vorgibt | nur .NET 10 |
 | Abhängigkeit | keine | nach dem Kopieren keine | ein 0.0.x-Projekt mit einem Maintainer |
 
-Die letzten vier Zeilen gehen an das selbst gebaute Projekt, und das ist auch so gemeint. Wenn du auf .NET 8 LTS angewiesen bist oder dein Team keine Zeit für noch ein Regelwerk hat, fang bei null an.
+Die letzten vier Zeilen gehen an das selbst gebaute Projekt. Wenn du auf .NET 8 LTS angewiesen bist oder dein Team keine Zeit für noch ein Regelwerk hat, fang bei null an.
 
 ## Was du dafür bekommst
 

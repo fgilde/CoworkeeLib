@@ -125,9 +125,8 @@
 /* landing */
 .cw-hero, .cw-section { overflow: hidden; }
 .cw-hero { position: relative; background: var(--cw-bg); color: var(--cw-text); }
-.cw-hero__curve { position: absolute; inset: 0 0 0 auto; width: 46%; background: var(--cw-gradient); clip-path: ellipse(100% 78% at 100% 50%); animation: cw-slide-in 1s cubic-bezier(.2, .8, .2, 1) both; }
+.cw-hero__curve { position: absolute; inset: 0 0 0 auto; width: 42%; background: var(--cw-gradient); opacity: .92; clip-path: ellipse(100% 74% at 100% 50%); animation: cw-slide-in 1s cubic-bezier(.2, .8, .2, 1) both; }
 .cw-hero__inner { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 2.4rem; align-items: center; padding: 3.6rem .8rem 4rem; }
-.cw-eyebrow { display: inline-block; padding: .25rem .75rem; border-radius: 999px; background: var(--md-accent-fg-color--transparent); color: var(--cw-secondary); font-size: .7rem; font-weight: 600; letter-spacing: .06em; }
 .cw-hero h1 { margin: .9rem 0 .8rem; font-size: 2.4rem; line-height: 1.12; font-weight: 700; letter-spacing: -.02em; color: var(--cw-text); }
 .cw-lead { margin: 0 0 1.4rem; font-size: .9rem; line-height: 1.65; color: var(--cw-text-2); max-width: 34rem; }
 .cw-search { display: flex; align-items: center; gap: .5rem; max-width: 30rem; padding: 0 .6rem 0 .8rem; height: 2.6rem; border-radius: var(--cw-radius); background: var(--cw-surface); border: 1px solid var(--cw-line); box-shadow: var(--cw-shadow); cursor: text; transition: border-color .2s, box-shadow .2s; }
@@ -148,7 +147,6 @@
 
 .cw-frame { border-radius: var(--cw-radius); overflow: hidden; background: var(--cw-surface); box-shadow: 0 30px 80px rgba(8, 30, 60, .35); border: 1px solid rgba(255, 255, 255, .25); animation: cw-rise 1s .15s cubic-bezier(.2, .8, .2, 1) both; }
 .cw-frame__bar { display: flex; align-items: center; gap: .35rem; height: 1.6rem; padding: 0 .7rem; background: var(--cw-drawer); border-bottom: 1px solid var(--cw-line); font-size: .6rem; color: var(--cw-text-2); }
-.cw-frame__bar i { width: .5rem; height: .5rem; border-radius: 50%; background: var(--cw-line); }
 .cw-frame__bar span { margin-left: .5rem; }
 .cw-slides { position: relative; aspect-ratio: 16 / 10; overflow: hidden; }
 .cw-slides img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top left; opacity: 0; animation: cw-cycle 20s infinite; }
@@ -173,15 +171,22 @@
 .cw-section__lead { margin: 0 0 2rem !important; max-width: 40rem; color: var(--cw-text-2); font-size: .85rem; }
 .md-typeset .cw-section h3, .md-typeset.cw-section h3 { margin: 0 0 .4rem; font-size: 1.05rem; font-weight: 600; color: var(--cw-text); }
 
-.cw-highlights { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
-.md-typeset .cw-card__number { font-size: 1.9rem; font-weight: 700; line-height: 1.1; letter-spacing: -.02em; color: var(--cw-primary); }
-.md-typeset .cw-highlights .cw-card strong { margin-top: auto; padding-top: .5rem; font-size: .74rem; color: var(--cw-secondary); }
 .md-typeset h3.cw-also { margin: 2.2rem 0 .6rem; }
 .md-typeset ul.cw-more { display: flex; flex-wrap: wrap; gap: .4rem 1.6rem; margin: 0; padding: 0; list-style: none; }
 .md-typeset .cw-more li { margin: 0; font-size: .8rem; }
 .cw-origin { margin: -.6rem 0 1.4rem; max-width: 34rem; padding-left: .8rem; border-left: 3px solid var(--cw-secondary); font-size: .76rem; line-height: 1.55; color: var(--cw-text-2); font-style: italic; }
 .cw-origin a { font-style: normal; font-weight: 600; white-space: nowrap; }
 .cw-release { margin: 1rem 0 0; font-size: .68rem; color: var(--cw-text-2); }
+.md-typeset .cw-release a, .cw-release a { color: var(--cw-primary); }
+.cw-release a:hover { text-decoration: underline; }
+.md-typeset table.cw-timing { display: table; width: auto; max-width: 34rem; margin: 0; border: 1px solid var(--cw-line); border-radius: var(--cw-radius); background: var(--cw-surface); font-size: .78rem; }
+.md-typeset .cw-timing td { padding: .55rem 1rem; border-top: 1px solid var(--cw-line); vertical-align: middle; }
+.md-typeset .cw-timing tr:first-child td { border-top: 0; }
+.md-typeset .cw-timing td:last-child { text-align: right; white-space: nowrap; font-weight: 700; color: var(--cw-text); font-variant-numeric: tabular-nums; }
+.md-typeset .cw-more span { color: var(--cw-text-2); font-size: .7rem; }
+.cw-more-shots { margin: 1.2rem 0 0; font-weight: 600; }
+.cw-more-shots a { display: inline-flex; align-items: center; gap: .3rem; }
+.cw-more-shots svg { width: 1rem; height: 1rem; fill: currentColor; }
 .md-typeset .cw-card { display: flex; flex-direction: column; gap: .35rem; padding: 1.2rem; border-radius: var(--cw-radius); background: var(--cw-surface); border: 1px solid var(--cw-line); color: var(--cw-text-2); font-size: .74rem; line-height: 1.55; transition: transform .25s, box-shadow .25s, border-color .25s; }
 .md-typeset .cw-card strong { color: var(--cw-text); font-size: .85rem; }
 .md-typeset .cw-card:hover { transform: translateY(-4px); box-shadow: var(--cw-shadow); border-color: var(--cw-primary); color: var(--cw-text-2); }
@@ -255,8 +260,7 @@
 
 
 @media (max-width: 76.1875em) {
-  .cw-highlights { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
+  }
 @media (max-width: 59.9375em) {
   .cw-hero__inner, .cw-start, .cw-tour, .cw-connect { grid-template-columns: minmax(0, 1fr); }
   .cw-hero__inner { padding: 2.4rem .8rem 2.8rem; gap: 2rem; }
@@ -266,8 +270,7 @@
 }
 @media (max-width: 44.9375em) {
   .cw-hero h1 { font-size: 1.75rem; }
-  .cw-highlights { grid-template-columns: minmax(0, 1fr); }
-  .cw-section { padding: 2.8rem 0; }
+    .cw-section { padding: 2.8rem 0; }
   .cw-search kbd { display: none; }
   .md-typeset .cw-cmd code { white-space: pre-wrap; word-break: break-word; }
 }
@@ -300,3 +303,7 @@
   .md-typeset .cw-brands a { gap: .45rem; padding: .6rem; font-size: .66rem; }
 }
 [dir] .md-typeset .cw-brands li, [dir] .md-typeset .cw-more li { margin-left: 0; }
+.cw-shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 1rem; }
+.md-typeset .cw-shots figure { margin: 0; border-radius: var(--cw-radius); overflow: hidden; background: var(--cw-surface); border: 1px solid var(--cw-line); }
+.md-typeset .cw-shots img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; object-position: top left; }
+.md-typeset .cw-shots figcaption { margin: 0; padding: .45rem .7rem; font-size: .68rem; color: var(--cw-text-2); text-align: left; max-width: none; }

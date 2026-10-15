@@ -29,6 +29,8 @@ The window shows what the assistant wants to run, secrets masked, and only the u
 
 Answers stream in as Markdown with the sharp edges filed off: raw HTML shows as text, images become links, and external links lose their query string so they cannot carry data out.
 
+**Status:** with several API instances, pending assistant calls need a shared Data Protection key ring, and the guard that keeps one user from running two answers at once works per instance.
+
 ## 14 providers, switched at runtime
 
 The model sits behind `IChatClient` from `Microsoft.Extensions.AI`. Host admins pick it under **Administration > System > AI**, and the next message uses it, no restart.
@@ -56,7 +58,5 @@ claude mcp add --transport http myapp https://myapp.example/mcp --header "Author
 Keys are created under *Account > API keys* with an expiry of 7 to 365 days and a subset of the user's own permissions. The server stores only a SHA-256 hash and re-checks the user's current permissions on every request. `tools/list` shows only what the caller may use, commands are flagged destructive so the client asks first, and every call ends up in the AI tool call audit.
 
 The CLI has an MCP server of its own, `coworkee mcp`, for the step before: an agent on your machine writes and validates an app spec, creates the app and adds modules and entities with the same commands you would type.
-
-**Status:** with several API instances, pending assistant calls need a shared Data Protection key ring, and the guard that keeps one user from running two answers at once works per instance.
 
 Reference: [AI assistant and MCP](../modules/ai.md), [MCP server of the app](../modules/mcp.md), [API keys](../security/api-keys.md), [MCP server of the CLI](../getting-started/mcp.md).

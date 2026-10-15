@@ -5,10 +5,6 @@ description: "Blob storage on disk, S3 or Azure, a Blazor file manager with prev
 
 # Files and search
 
-Product photos, signed delivery notes, the PDF a customer attached at registration: sooner or later an order system or customer portal stores files. Coworkee splits the work into storage, a drive for people, and search.
-
-## Storage that does not care where
-
 `IBlobStorage` puts, opens and deletes bytes under a key. Whether they land in a local folder, an S3 bucket (MinIO works too) or Azure Blob Storage is a single setting, `Coworkee:Storage:Provider`:
 
 ```csharp
@@ -49,6 +45,6 @@ await index.EnsureAsync(schema, ct);
 
 Full text, filters, facets and cursor paging are there. `CreateIndexAsync` and `SwapAsync` rebuild an index in the background and switch the alias without downtime.
 
-**Status:** public files are new in version 0.0.1.24 and need a migration in apps that use the Files module. Folders have no public state; each file is published on its own.
+**Status:** public files are new in [0.0.1.24](../reference/changelog.md) and need a migration in apps that use the Files module. Folders have no public state; each file is published on its own.
 
 Reference: [File storage](../modules/storage.md), [Files](../modules/files.md), [public files](../modules/files.md#public-files), [Search](../modules/search.md).
