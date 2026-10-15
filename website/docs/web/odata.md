@@ -79,31 +79,18 @@ The BFF forwards `/odata` to the API with the user's token.
 
 Mark an entity `[ClientEntity]` and Blazor clients keep a copy of its set and query it locally; see [Client entities](../ui/client-entities.md).
 
-## Excel export and import
+## Export and import
 
-Every entity set can be exported as an Excel workbook. The export takes the same `$filter`, `$search` and `$orderby` as the list and respects permission, entity filters and hidden properties:
+Every entity set can be exported as Excel, CSV or JSON with the list's `$filter`, `$search` and `$orderby`; `AddODataImport` makes a set importable through a wizard with column mapping, preview, upsert, dry run, background jobs and undo:
 
 ```http
-GET /api/v1/data/Products/export?$filter=Rate gt 10&$orderby=Name
+GET /api/v1/data/Products/export?format=csv&$filter=Rate gt 10&$orderby=Name
 ```
-
-The number of rows is capped by `Coworkee:OData:MaxExportRows` (default 100 000).
-
-An import turns every row of an uploaded sheet into a command. Columns map to properties by name, unknown columns are ignored. Each row runs through the pipeline on its own, so validation and permissions apply; failed rows come back with their row number:
 
 ```csharp
-// rows are the request type, the lambda wraps them into the command
-services.AddODataImport("Brands", (AddEditBrandRequest row) => new AddEditBrandCommand(null, row));
-
-// or the command itself is the row
-services.AddODataImport<AddNoteCommand>("Notes");
-```
-
-```http
-POST /api/v1/data/Brands/import   (multipart, field "file")
--> { "imported": 12, "errors": [ { "row": 7, "message": "Name: must not be empty" } ] }
+services.AddODataImport("Brands", (Guid? id, AddEditBrandRequest row) => new AddEditBrandCommand(id, row));
 ```
 
 ![Import result](../assets/screenshots/import.png){ .shot }
 
-[`CoworkeeDataTable`](../ui/data-table.md) offers both: *Excel* in the export menu and an import button with `Importable="true"`.
+Everything about it is on [Import and export](import-export.md).

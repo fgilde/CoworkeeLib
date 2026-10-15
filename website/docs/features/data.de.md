@@ -41,7 +41,7 @@ Mit dieser Zeile bekommt die Entity ein Set mit `$filter`, `$orderby`, `$expand`
 
 Eigenschaften mit `[ProvideFacet]` kommen als Facettengruppen zurück: jede Option mit Beschriftung, Anzahl und dem Filterstück, das sie anwendet. Die Zahlen richten sich nach dem aktuellen Filter, wie man es aus Online-Shops kennt. Zahlen- und Datumsfacetten bringen ein Histogramm mit.
 
-Dieselben Sets bedienen auch Excel. Der Export übernimmt Filter und Sortierung der Liste (höchstens 100.000 Zeilen, `Coworkee:OData:MaxExportRows`), und `AddODataImport` macht aus jeder hochgeladenen Zeile ein Command. Validiert wird also pro Zeile, und fehlerhafte Zeilen kommen mit ihrer Nummer zurück.
+Dieselben Sets bedienen auch Dateien. Exporte schreiben die aktuelle Ansicht als Excel, CSV oder JSON, große als Hintergrundjob mit Download-Link. `AddODataImport` macht ein Set über einen Assistenten importierbar: Spalten werden Feldern zugeordnet, Werte in der Sprache der Datei gelesen, jede Zeile von den Validatoren des Commands geprüft, bevor etwas geschrieben wird, und dann (neu, Änderung per Schlüssel oder beides) als Job importiert, mit Live-Fortschritt, einer Datei der fehlerhaften Zeilen und Rückgängig. Siehe [Import und Export](../web/import-export.md).
 
 Für Bedingungen, die Benutzer selbst zusammenklicken, gibt es den `QueryBuilder` mit verschachtelten *alle / irgendeine*-Gruppen. `ODataQueryTranslator.ToFilter` macht daraus `$filter`-Text, `LinqQueryTranslator.ToExpression<T>` einen Ausdruck, den EF Core ausführt, und die Tests prüfen, dass beide dieselben Zeilen liefern.
 

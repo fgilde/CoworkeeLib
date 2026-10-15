@@ -41,7 +41,7 @@ That line gives the entity a set with `$filter`, `$orderby`, `$expand`, paging a
 
 Properties marked `[ProvideFacet]` come back as facet groups: each option with label, count and the filter fragment that applies it. Counts follow the current filter, the way a shop sidebar does. Number and date facets carry a histogram.
 
-The same sets serve Excel. The export uses the list's filter and sort (capped at 100,000 rows by `Coworkee:OData:MaxExportRows`), and `AddODataImport` turns each uploaded row into a command, so validation runs per row and failures come back with their row number.
+The same sets serve files. Exports write the current view as Excel, CSV or JSON, large ones as a background job with a download link. `AddODataImport` makes a set importable through a wizard: columns are matched to fields, values converted with the file's language, every row checked by the command's validators before anything is written, then imported (new, update by key or both) as a job with live progress, a file of the failed rows and an undo. See [Import and export](../web/import-export.md).
 
 For conditions users assemble themselves, `QueryBuilder` produces nested *all / any* groups. `ODataQueryTranslator.ToFilter` turns the result into `$filter` text, `LinqQueryTranslator.ToExpression<T>` into an expression EF Core can run, and the tests make sure both return the same rows.
 
