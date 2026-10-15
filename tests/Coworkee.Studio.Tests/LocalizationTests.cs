@@ -27,7 +27,8 @@ public sealed partial class LocalizationTests
             .Concat(Directory.EnumerateFiles(source, "*.cs", SearchOption.AllDirectories).SelectMany(f => Code().Matches(File.ReadAllText(f))))
             .Select(m => m.Groups["text"].Value)
             .Concat(Preset.All.SelectMany(p => new[] { p.Name, p.Description }))
-            .Concat(PropertyViewModel.SearchModes).Concat(EntityViewModel.Mappings.Where(m => m != "Mapperly"));
+            .Concat(PropertyViewModel.SearchModes).Concat(EntityViewModel.Mappings.Where(m => m != "Mapperly"))
+            .Concat(EntitiesStep.ViewModes).Concat(EntityImportViewModel.Kinds.Take(1)).Concat(EntityImportViewModel.Providers.Take(1));
 
         texts.Distinct().Where(t => !German.Texts.ContainsKey(t)).ShouldBeEmpty();
     }

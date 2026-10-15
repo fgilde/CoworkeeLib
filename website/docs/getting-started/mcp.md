@@ -47,6 +47,7 @@ Other clients take the same command: `coworkee` with the argument `mcp`. `cowork
 | `create_app` | `coworkee new` from a spec, or from a name and options, in a folder; `users` adds development users (`email[:role,role][:admin]`), the answer lists them with their passwords |
 | `add_module` | `coworkee module add` with entity, properties, client entity and mapping |
 | `add_entity` | `coworkee entity add` |
+| `import_entities` | `coworkee entity import` (database, OpenAPI or CSV) |
 | `add_migration` | `coworkee migrations add` |
 | `add_option` | `coworkee add` or, with `remove`, `coworkee remove`: options of an existing app such as `reports`, `eventBus rabbitMq` or `languages=fr,it`; `dryRun` returns the plan |
 | `run_doctor` | `coworkee doctor` |

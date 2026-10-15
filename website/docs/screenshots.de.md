@@ -145,6 +145,11 @@ Alles aus der Demo-App im Ocean-Theme. Die App-Screenshots sind auf Englisch, Co
 </figure>
 
 <figure markdown>
+![Coworkee Studio: die Entities als Diagramm](assets/screenshots/studio-entities-diagram-dark.webp){ loading=lazy }
+<figcaption>Coworkee Studio: die Entities als Diagramm</figcaption>
+</figure>
+
+<figure markdown>
 ![Coworkee Studio: die App wird angelegt](assets/screenshots/studio-generate-light-de.webp){ loading=lazy }
 <figcaption>Coworkee Studio: die App wird angelegt</figcaption>
 </figure>

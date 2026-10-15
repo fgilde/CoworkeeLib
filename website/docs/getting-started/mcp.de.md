@@ -47,6 +47,7 @@ Andere Clients nehmen denselben Befehl: `coworkee` mit dem Argument `mcp`. `cowo
 | `create_app` | `coworkee new` aus einer Spezifikation oder aus Name und Optionen, in einem Ordner; `users` fügt Benutzer für die Entwicklung hinzu (`email[:rolle,rolle][:admin]`), die Antwort listet sie mit ihren Passwörtern |
 | `add_module` | `coworkee module add` mit Entity, Eigenschaften, Client-Entity und Mapping |
 | `add_entity` | `coworkee entity add` |
+| `import_entities` | `coworkee entity import` (Datenbank, OpenAPI oder CSV) |
 | `add_migration` | `coworkee migrations add` |
 | `add_option` | `coworkee add` oder, mit `remove`, `coworkee remove`: Optionen einer bestehenden App wie `reports`, `eventBus rabbitMq` oder `languages=fr,it`; `dryRun` liefert den Plan |
 | `run_doctor` | `coworkee doctor` |

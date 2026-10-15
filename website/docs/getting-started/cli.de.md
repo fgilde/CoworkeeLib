@@ -210,6 +210,28 @@ coworkee migrations add AddSales
 
 `--property` liest `Name[:typ][:required][:maxLänge][:flag][:schlüssel=wert]` (Standard: `Name:string:required:200`). Flags: `required`, `unique`, `display`, `facet`, `searchable`. Schlüssel wie in einer Spezifikation: `enum`, `ref` (oder `reference`), `referenceDisplay`, `onDelete`, `inverse`, `default`, `label`, `precision`, `scale`, `searchable`. `--enum Name=Wert1,Wert2` legt ein Enum in den Contracts an. Eine Referenz darf auf jede Entity der App mit OData-Set zeigen, erzeugt oder aus den Beispielen (`ref=Catalog.Brand`); das Modul verweist dann auf das Projekt des Ziels. `entity add` braucht ein von der CLI angelegtes Modul.
 
+## Entities importieren
+
+Du hast schon eine Datenbank, eine API oder eine Tabelle? `coworkee entity import` macht daraus ein Modul:
+
+```bash
+coworkee entity import --from db "Host=localhost;Database=shop;Username=app;Password=..." --module Legacy --tables orders,customers
+coworkee entity import --from db legacy.db --dry-run
+coworkee entity import --from openapi https://localhost:7301/openapi/v1.json --module Store
+coworkee entity import --from csv suppliers.csv --spec-out shop.json
+coworkee migrations add ImportLegacy
+```
+
+| Quelle | Was wozu wird |
+|---|---|
+| `db` (Postgres, SQL Server, SQLite) | Tabellen werden Entities, Spalten Eigenschaften mit Typ, Pflicht (not null), maximaler Länge, Stellen und Nachkommastellen, eindeutige Indizes über eine Spalte `unique`, Fremdschlüssel über eine Spalte Referenzen (mit `cascade` oder `setNull`), Enum-Typen von Postgres Enums. Den Provider errät der Befehl aus der Verbindungszeichenfolge (eine vorhandene Datei ist SQLite); `--provider` legt ihn fest. |
+| `openapi` (OpenAPI 3 oder Swagger 2, JSON) | Objekt-Schemas aus `components.schemas` werden Entities (ein Suffix `Dto` fällt weg, `allOf` wird zusammengeführt), String-Enums Enums, `$ref` Referenzen, `format` wählt Datum, Uhrzeit, UUID, E-Mail und URL; `customerId` neben einem importierten `Customer` wird ebenfalls eine Referenz. YAML-Dokumente wandelst du vorher in JSON um. |
+| `csv` | die Kopfzeile benennt die Eigenschaften, die ersten 500 Zeilen verraten ihre Typen (bool, int, long, decimal, guid, Datum, Uhrzeit, Zeitpunkt, E-Mail, URL, String mit maximaler Länge) und ob sie Pflicht sind. |
+
+Namen werden zu C#-Bezeichnern (aus `order_items` wird `OrderItems`), Tabellennamen zur Einzahl (aus `Orders` wird `Order`), Namen, die der erzeugte Code selbst nutzt, bekommen ein Suffix (aus `Task` wird `TaskItem`). Id-, Mandanten- und Audit-Spalten hat jede Entity von selbst, sie fallen weg; ein fachlicher Primärschlüssel bleibt als eindeutige Eigenschaft. Der Befehl zeigt jede Entity und was er ausgelassen hat: Verknüpfungstabellen einer Many-to-many-Beziehung (nicht unterstützt; eine eigene Entity mit zwei Referenzen erledigt das), JSON-, XML-, Binär- und Geo-Spalten, Fremdschlüssel über mehrere Spalten oder auf nicht importierte Tabellen, Listen in einer API.
+
+Ohne `--spec-out` landet das Modul direkt in der App: ein neues Modul in einem Schritt, ein vorhandenes bekommt die Entities nacheinander, referenzierte zuerst. `--spec-out` schreibt das Modul stattdessen in eine Spezifikation (eine vorhandene behält alles andere), `--dry-run` gibt nur die Spezifikation und ihre Probleme aus. Geprüft wird alles wie eine Spezifikation, bevor etwas geschrieben wird.
+
 ## Eine bestehende App ändern
 
 Optionen gibt es nicht nur bei `coworkee new`. `coworkee add` schaltet sie in einer App ein, an der du schon arbeitest, `coworkee remove` schaltet sie aus:

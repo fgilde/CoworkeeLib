@@ -10,7 +10,7 @@ public sealed class ScreenshotTests
     public static TheoryData<string, bool, string> Pages()
     {
         var data = new TheoryData<string, bool, string>();
-        foreach (var page in new[] { "welcome", "basics", "branding", "signin", "architecture", "ai", "languages", "entities", "users", "review", "generate", "run", "help", "gallery", "apps" })
+        foreach (var page in new[] { "welcome", "basics", "branding", "signin", "architecture", "ai", "languages", "entities", "entities-diagram", "entities-import", "users", "review", "generate", "run", "help", "gallery", "apps" })
         {
             data.Add(page, false, "en");
             data.Add(page, true, "en");
@@ -80,6 +80,41 @@ public sealed class ScreenshotTests
             main.Page = main.Apps;
         }
 
+        if (page == "entities-diagram")
+        {
+            main.Entities.ViewMode = "Diagram";
+            main.Entities.AddImported(new Coworkee.Cli.Spec.Import.ImportResult(new Coworkee.Cli.Spec.ModuleSpec
+            {
+                Name = "Sales",
+                Entities =
+                [
+                    new Coworkee.Cli.Spec.EntitySpec
+                    {
+                        Name = "Invoice",
+                        Properties =
+                        [
+                            new Coworkee.Cli.Spec.PropertySpec { Name = "Number", Required = true, MaxLength = 30 },
+                            new Coworkee.Cli.Spec.PropertySpec { Name = "Order", Type = Coworkee.Cli.Spec.PropertyType.Reference, Reference = "Order", Required = true },
+                            new Coworkee.Cli.Spec.PropertySpec { Name = "Contact", Type = Coworkee.Cli.Spec.PropertyType.Reference, Reference = "Customer" },
+                            new Coworkee.Cli.Spec.PropertySpec { Name = "Amount", Type = Coworkee.Cli.Spec.PropertyType.Money, Required = true },
+                            new Coworkee.Cli.Spec.PropertySpec { Name = "Paid", Type = Coworkee.Cli.Spec.PropertyType.Bool },
+                        ],
+                    },
+                ],
+            }, [], []));
+            main.Entities.SelectEntity(main.Entities.Modules[0].Entities.Single(e => e.Name == "Order"));
+        }
+
+        if (page == "entities-import")
+        {
+            var csv = folder.File("suppliers.csv");
+            File.WriteAllText(csv, "Id,Name,Email,Rating,Since" + Environment.NewLine + "1,Acme,info@acme.test,4,2020-01-02");
+            main.Entities.OpenImport();
+            main.Entities.Import.Kind = "CSV";
+            main.Entities.Import.Source = csv;
+            main.Entities.Import.Result = Coworkee.Cli.Spec.Import.EntityImporter.ImportAsync(new(Coworkee.Cli.Spec.Import.ImportSource.Csv, csv)).Result;
+        }
+
         if (page == "help")
         {
             main.ShowHelp("2");
@@ -102,7 +137,7 @@ public sealed class ScreenshotTests
             "signin" => main.SignIn,
             "architecture" or "ai" => main.Architecture,
             "languages" => main.Languages,
-            "entities" => main.Entities,
+            "entities" or "entities-diagram" or "entities-import" => main.Entities,
             "users" => main.Users,
             "review" => main.Review,
             "generate" or "run" => main.Generate,

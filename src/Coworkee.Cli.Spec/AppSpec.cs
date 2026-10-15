@@ -129,6 +129,9 @@ public sealed class EntitySpec
 
     public List<PropertySpec> Properties { get; set; } = [];
 
+    [Description("Where the diagram of Coworkee Studio shows the entity; no effect on the generated code.")]
+    public LayoutSpec? Layout { get; set; }
+
     [JsonIgnore]
     public string PluralName => Plural ?? Pluralize(Name);
 
@@ -139,6 +142,13 @@ public sealed class EntitySpec
         [.., 's'] or [.., 'x'] or [.., 'z'] or [.., 'c', 'h'] or [.., 's', 'h'] => name + "es",
         _ => name + "s",
     };
+}
+
+public sealed class LayoutSpec
+{
+    public double X { get; set; }
+
+    public double Y { get; set; }
 }
 
 public sealed class PropertySpec

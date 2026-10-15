@@ -11,6 +11,9 @@ public sealed class Dialogs
     /// <summary>Suggested file name, returns a path or null.</summary>
     public Func<string, Task<string?>> SaveFile { get; set; } = _ => Task.FromResult<string?>(null);
 
+    /// <summary>Suggested file name of a PNG image, returns a path or null.</summary>
+    public Func<string, Task<string?>> SavePng { get; set; } = _ => Task.FromResult<string?>(null);
+
     public Func<string, Task> Copy { get; set; } = _ => Task.CompletedTask;
 
     /// <summary>Folder, file or web address.</summary>

@@ -219,6 +219,15 @@ public sealed partial class EntityViewModel : ObservableObject
 
     public string Display => Name.Length > 0 ? Name : L.Get("(unnamed)");
 
+    /// <summary>Where the diagram shows the entity; null until it is moved or arranged.</summary>
+    public LayoutSpec? Layout { get; private set; }
+
+    public void MoveTo(double x, double y)
+    {
+        Layout = new LayoutSpec { X = Math.Round(x), Y = Math.Round(y) };
+        _changed();
+    }
+
     [RelayCommand]
     public void AddProperty() => Properties.Add(new PropertyViewModel(_changed) { Name = Properties.Count == 0 ? "Name" : string.Empty, Required = Properties.Count == 0, MaxLength = Properties.Count == 0 ? 200 : null });
 
@@ -232,11 +241,12 @@ public sealed partial class EntityViewModel : ObservableObject
         ClientEntity = ClientEntity,
         Mapping = Enum.TryParse<MappingStrategy>(Mapping, out var mapping) ? mapping : null,
         Properties = [.. Properties.Select(p => p.ToSpec())],
+        Layout = Layout is null ? null : new LayoutSpec { X = Layout.X, Y = Layout.Y },
     };
 
     public static EntityViewModel From(EntitySpec spec, Action changed)
     {
-        var entity = new EntityViewModel(changed) { Name = spec.Name, Plural = spec.Plural, ClientEntity = spec.ClientEntity, Mapping = spec.Mapping?.ToString() ?? "Default" };
+        var entity = new EntityViewModel(changed) { Name = spec.Name, Plural = spec.Plural, ClientEntity = spec.ClientEntity, Mapping = spec.Mapping?.ToString() ?? "Default", Layout = spec.Layout };
         foreach (var property in spec.Properties)
         {
             entity.Properties.Add(PropertyViewModel.From(property, changed));

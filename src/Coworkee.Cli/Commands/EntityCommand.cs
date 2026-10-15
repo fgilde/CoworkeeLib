@@ -16,7 +16,7 @@ internal static class EntityCommand
             Module, Name, FeatureOptions.Properties, FeatureOptions.Enums, FeatureOptions.Plural, FeatureOptions.ClientEntity, FeatureOptions.Mapping,
         }.Handle((result, cancellationToken) => AddAsync(
             Solution.Find(Environment.CurrentDirectory), result.GetValue(Module)!, FeatureOptions.Entity(result, result.GetValue(Name)!), cancellationToken, FeatureOptions.EnumSpecs(result)));
-        return new Command("entity", "Manage entities of feature modules.") { add };
+        return new Command("entity", "Manage entities of feature modules.") { add, EntityImportCommand.Create() };
     }
 
     public static async Task<int> AddAsync(Solution solution, string module, EntitySpec entity, CancellationToken cancellationToken, IReadOnlyList<EnumSpec>? enums = null)

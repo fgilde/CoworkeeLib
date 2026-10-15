@@ -7,7 +7,7 @@ public static partial class SpecValidator
     private const int MaxLabelLength = 100;
 
     // types the generated code uses unqualified; an entity or enum of that name would shadow them
-    private static readonly string[] ReservedTypes =
+    internal static readonly string[] ReservedTypes =
     [
         "Task", "Guid", "String", "Uri", "Result", "Error", "Color", "Severity", "Icons", "Description", "DateOnly", "TimeOnly", "DateTimeOffset",
         "Enum", "Object", "Action", "Func", "List", "Dictionary", "Math", "Type", "Exception", "Console", "Environment", "Program",

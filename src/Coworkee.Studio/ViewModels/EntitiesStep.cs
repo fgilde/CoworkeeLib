@@ -2,13 +2,17 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Coworkee.Cli.Spec;
+using Coworkee.Cli.Spec.Import;
 using Coworkee.Studio.Localization;
 using Coworkee.Studio.Model;
 
 namespace Coworkee.Studio.ViewModels;
 
-public sealed partial class EntitiesStep(MainViewModel main) : StepViewModel(main)
+public sealed partial class EntitiesStep : StepViewModel
 {
+    public EntitiesStep(MainViewModel main)
+        : base(main) => Import = new EntityImportViewModel(this);
+
     protected override string TitleText => "Entities";
 
     protected override string SubtitleText => "Feature modules with their entities; the CLI generates table, API, permissions and a page for each.";
@@ -35,6 +39,28 @@ public sealed partial class EntitiesStep(MainViewModel main) : StepViewModel(mai
     public partial EntityViewModel? SelectedEntity { get; set; }
 
     public bool HasModules => Modules.Count > 0;
+
+    public EntityImportViewModel Import { get; }
+
+    [ObservableProperty]
+    public partial bool IsImportOpen { get; set; }
+
+    public static IReadOnlyList<string> ViewModes { get; } = ["List", "Diagram"];
+
+    /// <summary>List: modules and the entity editor; Diagram: boxes and lines with the editor beside them.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsDiagram), nameof(IsList))]
+    public partial string ViewMode { get; set; } = "List";
+
+    public bool IsDiagram => ViewMode == "Diagram";
+
+    public bool IsList => !IsDiagram;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasPendingReference))]
+    public partial ReferenceDraft? PendingReference { get; set; }
+
+    public bool HasPendingReference => PendingReference is not null;
 
     /// <summary>Problems of the spec as a whole: enums without modules, modules referencing each other.</summary>
     [ObservableProperty]
@@ -140,6 +166,76 @@ public sealed partial class EntitiesStep(MainViewModel main) : StepViewModel(mai
 
         SelectedModule = Modules.LastOrDefault();
         SelectedEntity = SelectedModule?.Entities.FirstOrDefault();
+        Changed();
+    }
+
+    [RelayCommand]
+    public void OpenImport() => IsImportOpen = true;
+
+    [RelayCommand]
+    public void AutoLayout()
+    {
+        foreach (var (entity, point) in DiagramLayout.Arrange(this))
+        {
+            entity.MoveTo(point.X, point.Y);
+        }
+    }
+
+    /// <summary>A line drawn from <paramref name="source"/> to <paramref name="target"/> in the diagram; the dialog asks for the rest.</summary>
+    public void BeginReference(EntityViewModel source, EntityViewModel target)
+    {
+        var taken = source.Properties.Select(p => p.Name).Concat(source.Properties.Where(p => p.IsReference).Select(p => p.Name + "Id"));
+        PendingReference = new ReferenceDraft(source, target, Unique(target.Name, taken));
+    }
+
+    [RelayCommand]
+    public void ConfirmReference()
+    {
+        if (PendingReference is not { } draft)
+        {
+            return;
+        }
+
+        var module = Modules.First(m => m.Entities.Contains(draft.Source));
+        var target = Modules.First(m => m.Entities.Contains(draft.Target));
+        draft.Source.Properties.Add(new PropertyViewModel(Changed)
+        {
+            Name = draft.Name.Trim(),
+            Type = PropertyType.Reference,
+            Reference = module == target ? draft.Target.Name : $"{target.Name}.{draft.Target.Name}",
+            Required = draft.Required,
+            OnDelete = draft.OnDelete,
+        });
+        PendingReference = null;
+        SelectEntity(draft.Source);
+    }
+
+    [RelayCommand]
+    public void CancelReference() => PendingReference = null;
+
+    /// <summary>Imported entities join a module of the same name or come as a new one; enums only when the name is free.</summary>
+    public void AddImported(ImportResult result)
+    {
+        var module = Modules.FirstOrDefault(m => m.Name.Equals(result.Module.Name, StringComparison.OrdinalIgnoreCase));
+        if (module is null)
+        {
+            Modules.Add(module = ModuleViewModel.From(result.Module, Changed));
+        }
+        else
+        {
+            foreach (var entity in result.Module.Entities)
+            {
+                module.Entities.Add(EntityViewModel.From(entity, Changed));
+            }
+        }
+
+        foreach (var item in result.Enums.Where(e => Enums.All(x => !x.Name.Equals(e.Name, StringComparison.OrdinalIgnoreCase))))
+        {
+            Enums.Add(EnumViewModel.From(item, Changed));
+        }
+
+        SelectedModule = module;
+        SelectedEntity = module.Entities.LastOrDefault();
         Changed();
     }
 

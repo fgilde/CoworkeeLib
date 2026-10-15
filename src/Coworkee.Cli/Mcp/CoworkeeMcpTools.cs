@@ -137,6 +137,28 @@ internal sealed class CoworkeeMcpTools(CliRunner run, HttpClient http)
         CancellationToken cancellationToken = default) =>
         (await run([remove ? "remove" : "add", .. options, .. dryRun ? new[] { "--dry-run" } : []], directory, cancellationToken)).ToString();
 
+    [McpServerTool(Name = "import_entities", Title = "Import entities")]
+    [Description("Imports entities from an existing database (tables, columns, keys, foreign keys as references), an OpenAPI document (components.schemas) or a CSV file (header and sample rows) into a module of the app, or into a spec file. Reports what was skipped. Use dryRun to see the spec first; add a migration afterwards.")]
+    public async Task<string> ImportEntitiesAsync(
+        [Description("A folder of the app (or, with specOut, any folder).")] string directory,
+        [Description("db, openapi or csv.")] string from,
+        [Description("db: connection string or SQLite file; openapi: JSON file or http(s) address; csv: file.")] string source,
+        [Description("Module of the entities (default: database name, API title or file name).")] string? module = null,
+        [Description("Only these tables or schemas.")] string[]? tables = null,
+        [Description("db: postgres, sqlServer or sqlite (default: guessed).")] string? provider = null,
+        [Description("Print the spec and its problems only.")] bool dryRun = false,
+        [Description("Write the module into this spec file instead of the app.")] string? specOut = null,
+        CancellationToken cancellationToken = default) =>
+        (await run(
+        [
+            "entity", "import", source, "--from", from,
+            .. module is null ? [] : new[] { "--module", module },
+            .. tables is { Length: > 0 } ? new[] { "--tables", string.Join(',', tables) } : [],
+            .. provider is null ? [] : new[] { "--provider", provider },
+            .. dryRun ? new[] { "--dry-run" } : [],
+            .. specOut is null ? [] : new[] { "--spec-out", specOut },
+        ], directory, cancellationToken)).ToString();
+
     [McpServerTool(Name = "run_doctor", ReadOnly = true, Title = "Check the tools")]
     [Description("Checks the .NET SDK, Docker and dotnet-ef that a Coworkee app needs.")]
     public async Task<string> RunDoctorAsync([Description("Folder whose global.json sets the SDK (optional).")] string? directory = null, CancellationToken cancellationToken = default) =>
