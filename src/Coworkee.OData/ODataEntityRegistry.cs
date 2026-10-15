@@ -8,6 +8,11 @@ public sealed class ODataEntityRegistry
 
     public IReadOnlyList<ODataEntityRegistration> Entities => _entities;
 
+    public IReadOnlyList<Transfer.ODataImportRegistration> Imports => _imports;
+
+    public ODataEntityRegistration? Find(string entitySet) =>
+        _entities.FirstOrDefault(e => string.Equals(e.EntitySet, entitySet, StringComparison.OrdinalIgnoreCase));
+
     public ODataEntityRegistration? Find(Type entityType) => _entities.FirstOrDefault(e => e.EntityType == entityType);
 
     public Transfer.ODataImportRegistration? FindImport(string entitySet) =>

@@ -33,16 +33,21 @@ public sealed class ODataApp : DatabaseFixture
         builder.WebHost.UseTestServer();
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
+        builder.Configuration["Coworkee:Jobs:ConnectionStringName"] = "test";
+        builder.Configuration["Coworkee:Jobs:RunServer"] = "false";
+        builder.Configuration["Coworkee:OData:BackgroundExportRows"] = "5";
         builder.Configuration["Coworkee:Database:Provider"] = Provider;
         builder.AddCoworkee<GadgetModule>();
         builder.Services.AddTestAuthentication();
+        builder.Services.AddSingleton(provider => new InlineBackgroundJobs.Root(provider));
+        builder.Services.AddScoped<Coworkee.BackgroundJobs.IBackgroundJobs, InlineBackgroundJobs>();
         App = builder.Build();
-        App.UseCoworkee();
         await using (var scope = App.Services.CreateAsyncScope())
         {
             await scope.ServiceProvider.GetRequiredService<GadgetDbContext>().Database.EnsureCreatedAsync();
         }
 
+        App.UseCoworkee();
         await App.StartAsync();
     }
 
@@ -81,6 +86,7 @@ internal sealed class GadgetModelContributor : IModelContributor
     {
         modelBuilder.Entity<Gadget>(gadget => gadget.ToTable("Gadgets"));
         modelBuilder.Entity<Widget>(widget => widget.ToTable("Widgets"));
+        modelBuilder.Entity<Part>(part => part.ToTable("Parts"));
     }
 }
 
@@ -105,6 +111,9 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.ConfigureFacet<Widget>(w => w.Color, f => f.View = Contracts.Data.FacetView.Buttons);
         context.Services.AddMessagingFromAssembly(typeof(GadgetModule).Assembly);
         context.Services.AddODataImport<AddGadgetCommand>("Gadgets");
+        context.Services.AddODataEntity<Part>("Parts", ODataApp.ViewGadgets);
+        context.Services.AddODataImport("Widgets", (Guid? id, WidgetRow row) => new SaveWidgetCommand(id, row), id => new DeleteWidgetCommand(id));
+        context.Services.AddODataImport<AddPartCommand>("Parts");
     }
 }
 

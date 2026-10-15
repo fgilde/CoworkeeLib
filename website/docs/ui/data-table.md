@@ -28,7 +28,8 @@
 | `OnCreate`, `OnEdit`, `OnDelete` | callbacks; the table reloads after each of them |
 | `CreatePermission`, `EditPermission`, `DeletePermission` | hide the buttons without the permission |
 | `DescribeItem` | text for the delete confirmation |
-| `Exportable`, `ExportFileName` | CSV and JSON export of all rows of the current filter |
+| `Exportable`, `ExportFileName` | Excel, CSV and JSON export of the current view (filter, sort, visible columns); large ones run as a background job, see [import and export](../web/import-export.md) |
+| `Importable`, `ImportPermission` | an *Import* button that opens the [import wizard](../web/import-export.md) |
 | `ToolBarContent` | extra buttons in the tool bar |
 | `PageSize` | rows per page (25); in endless mode rows load in chunks of at least 50 |
 | `PageMode` | `FromSettings` (default), `Pager` or `EndlessScroll`, see [pages or endless scrolling](#pages-or-endless-scrolling) |
@@ -357,4 +358,4 @@ public sealed class LocalProducts(ProductStore store) : ITableDataSource<Product
 }
 ```
 
-The query carries the OData text the table builds (filter from search and facets, order, `Top`/`Skip`), so the source answers that subset. `EntitySet` still names the views and the URL parameter. CSV and JSON export use the source; Excel export and import stay with OData sets.
+The query carries the OData text the table builds (filter from search and facets, order, `Top`/`Skip`), so the source answers that subset. `EntitySet` still names the views and the URL parameter. CSV and JSON export use the source; Excel export, server exports and import stay with OData sets.

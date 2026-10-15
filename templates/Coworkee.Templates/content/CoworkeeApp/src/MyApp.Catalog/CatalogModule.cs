@@ -8,7 +8,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using MyApp.Catalog.Domain;
 using MyApp.Catalog.Features.Brands.Commands.AddEdit;
+using MyApp.Catalog.Features.Brands.Commands.Delete;
 using MyApp.Catalog.Features.Products.Commands.AddEdit;
+using MyApp.Catalog.Features.Products.Commands.Delete;
 #if (workflows)
 using MyApp.Catalog.Features.Products;
 #endif
@@ -29,8 +31,8 @@ public sealed class MyAppCatalogModule : CoworkeeModule, IWebModule
         context.Services.AddSingleton<IPermissionDefinitionContributor, CatalogPermissionDefinitions>();
         context.Services.AddODataEntity<Brand>("Brands", CatalogPermissions.Brands.View);
         context.Services.AddODataEntity<Product>("Products", CatalogPermissions.Products.View);
-        context.Services.AddODataImport("Brands", (AddEditBrandRequest row) => new AddEditBrandCommand(null, row));
-        context.Services.AddODataImport("Products", (AddEditProductRequest row) => new AddEditProductCommand(null, row));
+        context.Services.AddODataImport("Brands", (Guid? id, AddEditBrandRequest row) => new AddEditBrandCommand(id, row), id => new DeleteBrandsCommand([id]));
+        context.Services.AddODataImport("Products", (Guid? id, AddEditProductRequest row) => new AddEditProductCommand(id, row), id => new DeleteProductsCommand([id]));
 #if (workflows)
         context.Services.AddProductApproval();
 #endif

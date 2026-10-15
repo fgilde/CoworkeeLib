@@ -34,6 +34,8 @@ public sealed class FilesApp : DatabaseFixture
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["Coworkee:Storage:FileSystem:Root"] = _blobs;
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
+        builder.Configuration["Coworkee:Jobs:ConnectionStringName"] = "test";
+        builder.Configuration["Coworkee:Jobs:RunServer"] = "false";
         builder.Configuration["Coworkee:Database:Provider"] = Provider;
         builder.AddCoworkee<TestFilesModule>();
         builder.Services.AddTestAuthentication();

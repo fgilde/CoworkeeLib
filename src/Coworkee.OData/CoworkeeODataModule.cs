@@ -15,7 +15,7 @@ using Nextended.Web.Extensions;
 
 namespace Coworkee.OData;
 
-[DependsOn(typeof(CoworkeeApplicationModule))]
+[DependsOn(typeof(CoworkeeApplicationModule), typeof(Coworkee.BackgroundJobs.CoworkeeBackgroundJobsModule))]
 public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
 {
     public const string RoutePrefix = "odata";
@@ -29,6 +29,7 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
         services.AddTransient<IFacetBuilder>(sp => new FacetBuilder(sp.GetRequiredService<IServiceScopeFactory>(), FacetLiterals.Options(), new FacetLiterals()));
         services.AddODataAuto(_ => model.Value);
         services.Configure<CoworkeeODataOptions>(context.Configuration.GetSection(CoworkeeODataOptions.Section));
+        services.AddDataTransfer();
         services.Configure<ClientEntityOptions>(context.Configuration.GetSection(ClientEntityOptions.Section));
         services.AddSingleton<Microsoft.Extensions.Options.IPostConfigureOptions<ClientEntityOptions>, ServiceClientEntities>();
         services.AddSingleton<Microsoft.Extensions.Options.IPostConfigureOptions<ODataOptions>, ODataQueryLimits>();

@@ -1,0 +1,44 @@
+<MudDialog>
+    <DialogContent>
+        <MudStack Row="true" Spacing="2" Class="mb-4" Wrap="Wrap.Wrap">
+            @for (var i = 0; i < Steps.Length; i++)
+            {
+                var step = i;
+                <MudChip T="string" Size="Size.Small" Color="@(step == _step ? Color.Primary : Color.Default)" Variant="@(step <= _step ? Variant.Filled : Variant.Outlined)"
+                         data-testid="@($"wizard-step-{step}")">@(step + 1). @L[Steps[step]]</MudChip>
+            }
+        </MudStack>
+        @if (_state is null)
+        {
+            <MudProgressLinear Indeterminate="true" />
+        }
+        else if (_step == 0)
+        {
+            <ImportFileStep State="_state" Changed="StateHasChanged" />
+        }
+        else if (_step == 1)
+        {
+            <ImportMappingStep State="_state" Changed="StateHasChanged" />
+        }
+        else if (_step == 2)
+        {
+            <ImportPreviewStep State="_state" Changed="StateHasChanged" />
+        }
+        else
+        {
+            <ImportRunStep State="_state" Changed="StateHasChanged" />
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close">@L[_state?.Job is { IsFinished: true } ? "Close" : "Cancel"]</MudButton>
+        <MudSpacer />
+        @if (_step > 0 && _state?.Job is not { DryRun: false })
+        {
+            <MudButton OnClick="Back" data-testid="wizard-back">@L["Back"]</MudButton>
+        }
+        @if (_step < Steps.Length - 1)
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="!CanContinue" OnClick="Next" data-testid="wizard-next">@L["Next"]</MudButton>
+        }
+    </DialogActions>
+</MudDialog>

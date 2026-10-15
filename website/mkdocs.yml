@@ -93,6 +93,7 @@ plugins:
             Application services: Anwendungsdienste
             OData and facets: OData und Facetten
             Response filters: Response-Filter
+            Import and export: Import und Export
             AirWorks client: AirWorks-Client
             Security: Sicherheit
             Permissions: Berechtigungen
@@ -194,6 +195,7 @@ nav:
       - HTTP APIs: web/http-api.md
       - Application services: web/application-services.md
       - OData and facets: web/odata.md
+      - Import and export: web/import-export.md
       - Response filters: web/response-filters.md
       - SDKs: web/sdk.md
       - AirWorks client: web/airworks.md

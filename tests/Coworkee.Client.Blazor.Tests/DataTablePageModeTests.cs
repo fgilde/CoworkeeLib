@@ -93,10 +93,5 @@ public sealed class DataTablePageModeTests : ClientTestBase
             IReadOnlyList<T> items = (IReadOnlyList<T>)(object)_rows.Skip(query.Skip ?? 0).Take(query.Top ?? 500).ToList();
             return Task.FromResult(new ODataPage<T>(items, query.Count ? _rows.Length : null, []));
         }
-
-        public Task<byte[]> ExportAsync(string entitySet, ODataQuery query, CancellationToken cancellationToken = default) => Task.FromResult<byte[]>([]);
-
-        public Task<ImportResult> ImportAsync(string entitySet, Stream workbook, string fileName, CancellationToken cancellationToken = default) =>
-            Task.FromResult(new ImportResult(0, []));
     }
 }

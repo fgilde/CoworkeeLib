@@ -28,9 +28,4 @@ internal sealed class FakeODataClient : IODataClient
         var items = _sets.TryGetValue(entitySet, out var set) ? (T[])set : [];
         return Task.FromResult(new ODataPage<T>(items, items.Length, query.Facets ? _facets : []));
     }
-
-    public Task<byte[]> ExportAsync(string entitySet, ODataQuery query, CancellationToken cancellationToken = default) => Task.FromResult<byte[]>([]);
-
-    public Task<ImportResult> ImportAsync(string entitySet, Stream workbook, string fileName, CancellationToken cancellationToken = default) =>
-        Task.FromResult(new ImportResult(0, []));
 }

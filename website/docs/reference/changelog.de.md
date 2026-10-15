@@ -25,6 +25,19 @@
 - **Smartphone-Layout** der Blazor-Shell und der Anmeldeseiten: Überlaufmenü in der App-Leiste, Navigation als Overlay, das sich nach einem Klick schließt, Bearbeitungsblätter im Vollbild, Facetten-Menüs als Sheets von unten, umbrechende Seitenköpfe, fixierte Zeilenaktionen, 44-px-Touchziele und Safe Areas, siehe [Smartphones, installierbare App und Push](../ui/phones-and-pwa.md). Apps ergänzen `viewport-fit=cover` im Viewport-Tag von `App.razor`.
 - **Installierbare App**: `<Coworkee.Bff.Pwa.CoworkeePwa />` im Head von `App.razor` verlinkt das Web-Manifest in den Farben des Themes; `Coworkee.Bff` liefert Manifest, Service Worker (er speichert nur die Offline-Seite), Icon und Offline-Seite. Update- und Installationshinweise in der App. Vorlagen-Option `pwa` (standardmäßig an).
 - **Web-Push** für die Benachrichtigungen: `options.UsePush()` in Aspire oder `Coworkee:Notifications:Push:PublicKey`/`PrivateKey`; Benutzer schalten es pro Gerät auf der Benachrichtigungsseite ein.
+### Breaking Changes
+
+- **Neue Tabellen `cw.DataTransferJobs` und `cw.ImportProfiles`** (Coworkee.OData): Jede App ergänzt eine Migration.
+- **`CoworkeeODataModule` hängt von `CoworkeeBackgroundJobsModule` ab**: Importe und große Exporte laufen als Jobs. Apps aus dem Template haben es bereits (Mailing); Test-Hosts setzen `Coworkee:Jobs:ConnectionStringName` und legen ihre Tabellen vor `UseCoworkee()` an.
+- **`IODataClient.ExportAsync` und `ImportAsync` entfernt**: Nutze `IDataTransferApi` (Export der aktuellen Ansicht in drei Formaten, der Import-Assistent). Eigene `IODataClient`-Fakes streichen die beiden Methoden.
+- **`ODataImportRegistration`** hat `Create`, `Update` und `Delete` statt `Send`.
+- Der *Import*-Button von `CoworkeeDataTable` öffnet den Import-Assistenten, statt sofort eine Excel-Datei hochzuladen; Excel-, CSV- und JSON-Exporte von OData-Sets kommen mit den sichtbaren Spalten vom Server.
+
+### Neu
+
+- **Import-Assistent** pro Entity-Set: CSV, Excel und JSON, erkannte Kodierung, Trennzeichen und Kopfzeile, Spaltenzuordnung mit Vorschlägen und gespeicherten Zuordnungen, Umwandlung in der Sprache der Datei, Vorschau mit der Validierung der Commands, Anlegen, Ändern per Schlüssel oder beides, Probelauf, Hintergrundjob mit Live-Fortschritt, Datei der fehlerhaften Zeilen und Rückgängig für den letzten Import, siehe [Import und Export](../web/import-export.md). `AddODataImport` nimmt dafür `(Guid? id, row) => command` und optional einen Lösch-Command.
+- **Admin-Seite** *Import und Export* (`/admin/data-transfer`, Berechtigung `DataTransfer.Use`; gib sie den Rollen, die sie sehen sollen).
+- **Exporte** der aktuellen Ansicht als Excel, CSV oder JSON (`format`, `columns`); mehr als `Coworkee:OData:BackgroundExportRows` Zeilen (10 000) laufen als Job mit Download-Hinweis.
 
 ## 0.0.1.25 (2026-10-15)
 

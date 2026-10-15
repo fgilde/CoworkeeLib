@@ -33,6 +33,8 @@ public sealed class IdentityApp : DatabaseFixture
         builder.Configuration["Coworkee:SetupToken"] = SetupToken;
         builder.Configuration[CoworkeeWebApplicationExtensions.OpenApiSetting] = "true";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
+        builder.Configuration["Coworkee:Jobs:ConnectionStringName"] = "test";
+        builder.Configuration["Coworkee:Jobs:RunServer"] = "false";
         builder.Configuration["Coworkee:Database:Provider"] = Provider;
         builder.AddCoworkee<TestAppModule>();
         builder.Services.AddTestAuthentication();
@@ -46,12 +48,12 @@ public sealed class IdentityApp : DatabaseFixture
         });
         builder.Services.AddScoped<Coworkee.Application.Setup.ISetupStep, RecordingSetupStep>();
         App = builder.Build();
-        App.UseCoworkee();
         await using (var scope = App.Services.CreateAsyncScope())
         {
             await scope.ServiceProvider.GetRequiredService<IdentityTestDbContext>().Database.EnsureCreatedAsync();
         }
 
+        App.UseCoworkee();
         await App.StartAsync();
     }
 

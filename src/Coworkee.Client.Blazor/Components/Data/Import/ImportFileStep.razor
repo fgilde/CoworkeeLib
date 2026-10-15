@@ -1,0 +1,41 @@
+<MudFileUpload T="IBrowserFile" Accept=".csv,.txt,.tsv,.xlsx,.json" FilesChanged="UploadAsync" data-testid="import-file">
+    <CustomContent Context="upload">
+        <MudPaper Outlined="true" Class="pa-6 d-flex flex-column align-center" Style="cursor:pointer" @onclick="upload.OpenFilePickerAsync">
+            <MudIcon Icon="@Icons.Material.Outlined.UploadFile" Size="Size.Large" Color="Color.Primary" />
+            <MudText Class="mt-2">@L["Choose a CSV, Excel or JSON file"]</MudText>
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["At most 20 MB. The first row names the columns."]</MudText>
+        </MudPaper>
+    </CustomContent>
+    <SelectedTemplate />
+</MudFileUpload>
+@if (_busy)
+{
+    <MudProgressLinear Indeterminate="true" Class="mt-2" />
+}
+@if (State.Sheet is { } sheet)
+{
+    <MudAlert Severity="@(sheet.RowCount > 0 ? Severity.Success : Severity.Warning)" Dense="true" Class="mt-4" data-testid="import-sheet">
+        @L["{0}: {1} rows, {2} columns", sheet.FileName, sheet.RowCount, sheet.Columns.Count]
+    </MudAlert>
+    <MudStack Row="true" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Class="mt-2">
+        @if (State.IsText)
+        {
+            <MudSelect T="string" Value="State.Parse.Delimiter" ValueChanged="d => ReadAgainAsync(State.Parse with { Delimiter = d })" Label="@L["Separator"]"
+                       Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:180px" data-testid="import-delimiter">
+                <MudSelectItem T="string" Value="@(";")">; @L["Semicolon"]</MudSelectItem>
+                <MudSelectItem T="string" Value="@(",")">, @L["Comma"]</MudSelectItem>
+                <MudSelectItem T="string" Value="@("\\t")">@L["Tab"]</MudSelectItem>
+                <MudSelectItem T="string" Value="@("|")">| @L["Pipe"]</MudSelectItem>
+            </MudSelect>
+            <MudSelect T="string" Value="State.Parse.Encoding" ValueChanged="e => ReadAgainAsync(State.Parse with { Encoding = e })" Label="@L["Encoding"]"
+                       Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:200px" data-testid="import-encoding">
+                @foreach (var encoding in Encodings)
+                {
+                    <MudSelectItem T="string" Value="@encoding">@encoding</MudSelectItem>
+                }
+            </MudSelect>
+        }
+        <MudSwitch T="bool" Value="sheet.HasHeader" ValueChanged="h => ReadAgainAsync(State.Parse with { HasHeader = h })" Color="Color.Primary"
+                   Label="@L["First row names the columns"]" data-testid="import-header" />
+    </MudStack>
+}

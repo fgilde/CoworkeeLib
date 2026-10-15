@@ -79,31 +79,18 @@ Der BFF leitet `/odata` mit dem Token des Benutzers an die API weiter.
 
 Markiere eine Entity mit `[ClientEntity]`, und Blazor-Clients halten eine Kopie ihres Sets und fragen sie lokal ab; siehe [Client-Entities](../ui/client-entities.md).
 
-## Excel-Export und -Import
+## Export und Import
 
-Jedes Entity-Set lässt sich als Excel-Arbeitsmappe exportieren. Der Export nimmt dieselben `$filter`, `$search` und `$orderby` wie die Liste und beachtet Berechtigung, Entity-Filter und ausgeblendete Eigenschaften:
+Jedes Entity-Set lässt sich mit `$filter`, `$search` und `$orderby` der Liste als Excel, CSV oder JSON exportieren; `AddODataImport` macht ein Set über einen Assistenten importierbar, mit Spaltenzuordnung, Vorschau, Upsert, Probelauf, Hintergrundjobs und Rückgängig:
 
 ```http
-GET /api/v1/data/Products/export?$filter=Rate gt 10&$orderby=Name
+GET /api/v1/data/Products/export?format=csv&$filter=Rate gt 10&$orderby=Name
 ```
-
-Die Zeilenzahl begrenzt `Coworkee:OData:MaxExportRows` (Standard 100 000).
-
-Ein Import macht aus jeder Zeile einer hochgeladenen Tabelle einen Command. Spalten werden per Name auf Eigenschaften abgebildet, unbekannte Spalten ignoriert. Jede Zeile läuft einzeln durch die Pipeline, Validierung und Berechtigungen gelten also; fehlerhafte Zeilen kommen mit ihrer Zeilennummer zurück:
 
 ```csharp
-// Zeilen sind der Request-Typ, das Lambda verpackt sie in den Command
-services.AddODataImport("Brands", (AddEditBrandRequest row) => new AddEditBrandCommand(null, row));
-
-// oder der Command selbst ist die Zeile
-services.AddODataImport<AddNoteCommand>("Notes");
-```
-
-```http
-POST /api/v1/data/Brands/import   (multipart, Feld "file")
--> { "imported": 12, "errors": [ { "row": 7, "message": "Name: must not be empty" } ] }
+services.AddODataImport("Brands", (Guid? id, AddEditBrandRequest row) => new AddEditBrandCommand(id, row));
 ```
 
 ![Import-Ergebnis](../assets/screenshots/import.png){ .shot }
 
-[`CoworkeeDataTable`](../ui/data-table.md) bietet beides: *Excel* im Export-Menü und einen Import-Button mit `Importable="true"`.
+Alles Weitere steht unter [Import und Export](import-export.md).

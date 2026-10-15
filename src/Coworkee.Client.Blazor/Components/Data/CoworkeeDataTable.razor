@@ -100,12 +100,9 @@
     @if (Importable && DataSource is null)
     {
         <PermissionGate Permission="@ImportPermission">
-            <MudFileUpload @ref="_upload" T="IBrowserFile" Accept=".xlsx" FilesChanged="ImportAsync" Class="mb-2" data-testid="import">
-                <CustomContent Context="upload">
-                    <MudIconButton Icon="@Icons.Material.Outlined.FileUpload" Size="Size.Small" aria-label="@L["Import"]" Disabled="_importing" OnClick="upload.OpenFilePickerAsync" />
-                </CustomContent>
-                <SelectedTemplate />
-            </MudFileUpload>
+            <MudTooltip Text="@L["Import"]">
+                <MudIconButton Icon="@Icons.Material.Outlined.FileUpload" Size="Size.Small" Class="mb-2" aria-label="@L["Import"]" OnClick="ImportAsync" data-testid="import" />
+            </MudTooltip>
         </PermissionGate>
     }
     @if (Exportable)
@@ -113,7 +110,7 @@
         <MudMenu Dense="Density.Dense" Icon="@Icons.Material.Outlined.FileDownload" Size="Size.Small" Class="mb-2" aria-label="@L["Export"]" data-testid="export">
             @if (DataSource is null)
             {
-                <MudMenuItem OnClick="() => ExportAsync(ExportFormat.Excel)">Excel</MudMenuItem>
+                <MudMenuItem OnClick="() => ExportAsync(ExportFormat.Excel)" data-testid="export-excel">Excel</MudMenuItem>
             }
             <MudMenuItem OnClick="() => ExportAsync(ExportFormat.Csv)">CSV</MudMenuItem>
             <MudMenuItem OnClick="() => ExportAsync(ExportFormat.Json)">JSON</MudMenuItem>

@@ -72,10 +72,10 @@ internal sealed class QueryDataHandler(IServiceProvider services, ODataEntityReg
         var total = await visible.LongCountAsync(cancellationToken);
         var rows = await visible.ApplyODataOrderBy(options).Skip(Math.Max(0, query.Skip)).Take(Math.Clamp(query.Top, 1, MaxRows)).ToListAsync(cancellationToken);
         var fields = query.Select?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
-        var columns = ExcelExport.Columns<TEntity>(model).Where(c => fields.Length == 0 || fields.Contains(c.Name, StringComparer.OrdinalIgnoreCase)).ToList();
+        var columns = DataExport.Columns<TEntity>(model).Where(c => fields.Length == 0 || fields.Contains(c.Name, StringComparer.OrdinalIgnoreCase)).ToList();
         if (fields.Length > columns.Count)
         {
-            throw new ODataException($"Unknown field in select; the fields are {string.Join(", ", ExcelExport.Columns<TEntity>(model).Select(c => c.Name))}.");
+            throw new ODataException($"Unknown field in select; the fields are {string.Join(", ", DataExport.Columns<TEntity>(model).Select(c => c.Name))}.");
         }
 
         return new DataPage([.. rows.Select(row => (IReadOnlyDictionary<string, object?>)columns.ToDictionary(c => c.Name, c => c.GetValue(row)))], total);
