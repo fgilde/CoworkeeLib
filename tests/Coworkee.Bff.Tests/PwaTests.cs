@@ -44,7 +44,7 @@ public sealed class PwaTests
     }
 
     [Fact]
-    public async Task The_service_worker_caches_static_files_only_and_waits_for_the_user_to_update()
+    public async Task The_service_worker_only_answers_failed_page_loads_and_waits_for_the_user_to_update()
     {
         await using var app = await StartAsync();
 
@@ -54,8 +54,8 @@ public sealed class PwaTests
         response.Headers.CacheControl!.NoCache.ShouldBeTrue();
         var script = await response.Content.ReadAsStringAsync(Ct);
         script.ShouldNotContain("__VERSION__");
-        script.ShouldContain("request.method !== 'GET'");
-        script.ShouldContain("^\\/(bff|api|odata|hubs|signin-oidc|signout-callback-oidc");
+        script.ShouldContain("request.mode === 'navigate' && request.method === 'GET'");
+        script.ShouldNotContain("cache.put");
         script.ShouldContain("event.data === 'skip-waiting'");
         System.Text.RegularExpressions.Regex.Count(script, "skipWaiting").ShouldBe(1);
         script.ShouldContain("notificationclick");

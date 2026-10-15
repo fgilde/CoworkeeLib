@@ -14,7 +14,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 ### New
 
 - **Phone layout** of the Blazor shell and the sign-in pages: overflow menu in the app bar, navigation as overlay that closes after a click, full-screen edit sheets, facet menus as bottom sheets, page headers that wrap, sticky row actions, 44 px touch targets and safe areas, see [Phones, installable app and push](../ui/phones-and-pwa.md). Apps add `viewport-fit=cover` to the viewport tag of `App.razor`.
-- **Installable app**: `<Coworkee.Bff.Pwa.CoworkeePwa />` in the head of `App.razor` links the web manifest in the theme's colours; `Coworkee.Bff` serves manifest, service worker (static files only), icon and offline page. Update and install prompts in the app. Template option `pwa` (on by default).
+- **Installable app**: `<Coworkee.Bff.Pwa.CoworkeePwa />` in the head of `App.razor` links the web manifest in the theme's colours; `Coworkee.Bff` serves manifest, service worker (it keeps only the offline page), icon and offline page. Update and install prompts in the app. Template option `pwa` (on by default).
 - **Web Push** for the notifications: `options.UsePush()` in Aspire, or `Coworkee:Notifications:Push:PublicKey`/`PrivateKey`; users switch it on per device on the notifications page.
 
 ## 0.0.1.25 (2026-10-15)

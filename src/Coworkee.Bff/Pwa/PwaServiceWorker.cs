@@ -5,9 +5,10 @@ using Microsoft.AspNetCore.Http;
 namespace Coworkee.Bff.Pwa;
 
 /// <summary>
-/// The service worker of the installable app. It caches static files only (network first, the copy serves while offline), shows the offline page
-/// for navigations without network and leaves sign-in, the BFF, the API and live connections alone. Its version follows the app's static assets,
-/// so every deployment installs a new worker that waits until the user reloads. It shows pushed notifications and opens their link on a click.
+/// The service worker of the installable app. It keeps one static file, the offline page, and shows it for navigations without network; everything
+/// else goes to the network untouched (Blazor keeps its own framework files), so sign-in, the BFF, the API, antiforgery and live connections work as
+/// without it. Its version follows the app's static assets, so every deployment installs a new worker that waits until the user reloads.
+/// It shows pushed notifications and opens their link on a click.
 /// </summary>
 internal static class PwaServiceWorker
 {
@@ -17,8 +18,6 @@ internal static class PwaServiceWorker
         const CACHE = 'coworkee-__VERSION__';
         const OFFLINE = '/bff/pwa/offline';
         const ICON = '/bff/pwa/icon';
-        const PASS = /^\/(bff|api|odata|hubs|signin-oidc|signout-callback-oidc|swagger|openapi|mcp|admin\/jobs|_framework\/debug|manifest\.webmanifest)(\/|$)/i;
-        const STATIC = /^\/(_framework|_content)\/|\.(css|js|mjs|wasm|dll|dat|blat|woff2?|ttf|otf|svg|png|jpe?g|webp|gif|ico)$/i;
 
         self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.add(new Request(OFFLINE, { cache: 'reload' })))));
 
@@ -37,22 +36,11 @@ internal static class PwaServiceWorker
             }
         });
 
+        // page loads only, and only when the network fails; API, BFF and file requests are left alone
         self.addEventListener('fetch', event => {
             const request = event.request;
-            const url = new URL(request.url);
-            if (request.method !== 'GET' || url.origin !== self.location.origin || PASS.test(url.pathname)) {
-                return;
-            }
-            if (request.mode === 'navigate') {
+            if (request.mode === 'navigate' && request.method === 'GET' && new URL(request.url).origin === self.location.origin) {
                 event.respondWith(fetch(request).catch(async () => (await caches.match(OFFLINE)) ?? Response.error()));
-            } else if (STATIC.test(url.pathname)) {
-                event.respondWith(fetch(request).then(response => {
-                    if (response.ok && response.type === 'basic') {
-                        const copy = response.clone();
-                        event.waitUntil(caches.open(CACHE).then(cache => cache.put(request, copy)));
-                    }
-                    return response;
-                }).catch(async () => (await caches.match(request)) ?? Response.error()));
             }
         });
 

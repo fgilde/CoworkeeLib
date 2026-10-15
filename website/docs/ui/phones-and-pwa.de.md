@@ -49,9 +49,8 @@ Name und Icon kommen aus der Konfiguration; Aspire setzt beides aus `DisplayName
 
 Was der Service Worker tut:
 
-- Er speichert **nur statische Dateien** (`_framework`, `_content`, Styles, Skripte, Schriften, Bilder) und fragt immer zuerst das Netz. Die gespeicherte Kopie springt nur ohne Netz ein, eine neue Version mischt sich also nie mit alten Dateien.
-- Seiten ohne Netz bekommen die Offline-Seite mit einem Link zum Neuladen.
-- Anmeldung, `/bff`, `/api`, `/odata`, `/hubs`, das Job-Dashboard und alles außer GET fasst er nicht an. Sitzungs-Cookie, `X-CSRF`-Header und Antiforgery funktionieren wie bisher.
+- Er speichert eine einzige statische Datei, die Offline-Seite, und zeigt sie, wenn eine Seite ohne Netz nicht lädt. Ihre Framework-Dateien hält Blazor in einem eigenen Cache.
+- Alle anderen Anfragen gehen unverändert ans Netz: Anmeldung, `/bff`, `/api`, `/odata`, `/hubs`, Dateien und alles außer GET. Sitzungs-Cookie, `X-CSRF`-Header und Antiforgery funktionieren wie bisher, und keine Antwort der API landet in einem Cache.
 - Eine neue Version wartet, bis der Benutzer zustimmt: Die App zeigt *Eine neue Version der App ist verfügbar* mit einem Button *Neu laden*.
 - Bietet der Browser die Installation an, zeigt die App einmal pro Browser einen Hinweis, und das Benutzermenü behält den Eintrag *App installieren*.
 
