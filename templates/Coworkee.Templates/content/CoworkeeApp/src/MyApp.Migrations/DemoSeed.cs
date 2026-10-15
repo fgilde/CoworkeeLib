@@ -12,7 +12,7 @@ using MyApp.Contracts.Documents;
 
 namespace MyApp.Migrations;
 
-/// <summary>Development seed with the users and roles of <see cref="DemoUsers"/>; change their passwords before you deploy anywhere.</summary>
+/// <summary>Development seed with the users and roles of <see cref="DemoUsers"/>; it runs in the Development environment only.</summary>
 public static class DemoSeed
 {
     public static void Configure(IdentitySeedOptions seed)
