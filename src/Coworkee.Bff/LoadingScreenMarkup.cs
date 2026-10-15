@@ -7,7 +7,7 @@ using Coworkee.Contracts.Theming;
 namespace Coworkee.Bff;
 
 /// <summary>
-/// The loading screen as HTML with inline style and script (no flash of wrong colours; only the logo is its own, cacheable request): the theme's
+/// The loading screen as HTML with inline style (no flash of wrong colours; logo and script are their own, cacheable requests): the theme's
 /// colours for the remembered colour mode or the system preference, the logo in a ring that follows Blazor's <c>--blazor-load-percentage</c>, the chosen
 /// background and, hidden until the start fails, an error message with a reload button. The app removes it through <c>window.coworkeeLoadingScreen.hide()</c>.
 /// </summary>
@@ -42,8 +42,8 @@ public static partial class LoadingScreenMarkup
             // a media address that fails leaves the animated background
             html.Append("<div class=\"cwl-layer\" aria-hidden=\"true\">");
             html.Append(IsVideo(media)
-                ? $"<video class=\"cwl-media\" src=\"{Encode(media)}\" muted loop playsinline preload=\"auto\" onerror=\"this.parentNode.remove()\"></video>"
-                : $"<img class=\"cwl-media\" src=\"{Encode(media)}\" alt=\"\" onerror=\"this.parentNode.remove()\">");
+                ? $"<video class=\"cwl-media\" src=\"{Encode(media)}\" muted loop playsinline preload=\"auto\"></video>"
+                : $"<img class=\"cwl-media\" src=\"{Encode(media)}\" alt=\"\">");
             html.Append("<div class=\"cwl-veil\"></div></div>");
         }
 
@@ -51,12 +51,12 @@ public static partial class LoadingScreenMarkup
         html.Append(logo is null ? "<span class=\"cwl-mark\"></span>" : $"<img class=\"cwl-logo\" src=\"{Encode(logo)}\" alt=\"\">");
         html.Append("</div><div class=\"cwl-text\" aria-hidden=\"true\"></div></div>");
         html.Append($"<div class=\"cwl-error\" dir=\"auto\"><div class=\"cwl-error-title\">{Encode(texts.Title)}</div><p class=\"cwl-error-text\">{Encode(texts.Message)}</p>");
-        html.Append($"<button type=\"button\" class=\"cwl-reload\" onclick=\"location.reload()\">{Encode(texts.Reload)}</button>");
+        html.Append($"<button type=\"button\" class=\"cwl-reload\">{Encode(texts.Reload)}</button>");
         html.Append($"<details class=\"cwl-details\"><summary>{Encode(texts.Details)}</summary><pre class=\"cwl-detail\"></pre></details></div>");
 
         // Blazor shows the first #blazor-error-ui of the page when the start fails: this hidden one tells the script (an app's own one comes later)
         html.Append("<div id=\"blazor-error-ui\" class=\"cwl-blazor-error\"></div>");
-        html.Append("<script>").Append(LoadingScreenScript.Source).Append("</script></div>");
+        html.Append($"<script src=\"{LoadingScreenScript.Url}\"></script></div>");
         return html.ToString();
     }
 

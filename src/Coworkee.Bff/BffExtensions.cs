@@ -183,6 +183,7 @@ public static class BffExtensions
             [OpenIdConnectDefaults.AuthenticationScheme]));
         app.MapPost("/bff/logout", (Delegate)LogoutAsync);
         app.MapGet(LoadingScreenLogo.Path, LoadingScreenLogo.ServeAsync);
+        app.MapGet(LoadingScreenScript.Path, LoadingScreenScript.Serve);
         app.MapGet("/bff/user", (ClaimsPrincipal user) => user.Identity?.IsAuthenticated == true
             ? new BffUserDto(
                 true,

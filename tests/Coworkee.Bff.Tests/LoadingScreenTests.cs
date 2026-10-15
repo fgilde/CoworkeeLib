@@ -98,7 +98,7 @@ public sealed class LoadingScreenTests
 
         html.ShouldContain("src=\"coworkee-icon.svg\"");
         html.ShouldContain("--cwl-primary:#594ae2;");
-        html.ShouldContain("window.coworkeeLoadingScreen");
+        html.ShouldContain("<script src=\"/bff/loading-screen/script.js?v=");
     }
 
     [Fact]
@@ -187,8 +187,27 @@ public sealed class LoadingScreenTests
         html.ShouldContain("class=\"cwl-error\"");
         html.ShouldContain(">Die App konnte nicht starten.</div>");
         html.ShouldContain("<summary>Details</summary>");
-        html.ShouldContain("onclick=\"location.reload()\"");
-        html.ShouldContain("fail(");
+        html.ShouldContain("class=\"cwl-reload\"");
+    }
+
+    [Fact]
+    public async Task The_script_is_its_own_cacheable_file_so_a_strict_content_security_policy_runs_it()
+    {
+        await using var app = await StartAsync(new Answering(HttpStatusCode.OK, JsonSerializer.Serialize(Screen(LoadingScreenBackground.SignInMedia, "/media/a.mp4"), JsonSerializerOptions.Web)));
+        var page = LoadingScreenMarkup.Render(Screen(LoadingScreenBackground.SignInMedia, "/media/a.mp4"), null, null);
+        var url = System.Text.RegularExpressions.Regex.Match(page, "<script src=\"(/bff/loading-screen/script[.]js[^\"]+)\"></script>").Groups[1].Value;
+
+        using var response = await app.GetTestClient().GetAsync(url, TestContext.Current.CancellationToken);
+
+        page.ShouldNotContain("<script>");
+        page.ShouldNotContain("onclick=");
+        page.ShouldNotContain("onerror=");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.Content.Headers.ContentType!.MediaType.ShouldBe("text/javascript");
+        response.Headers.CacheControl!.ToString().ShouldContain("immutable");
+        var script = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        script.ShouldContain("location.reload()");
+        script.ShouldContain("fail(");
     }
 
     [Fact]

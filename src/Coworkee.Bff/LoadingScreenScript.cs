@@ -1,3 +1,7 @@
+using System.Security.Cryptography;
+using System.Text;
+using Microsoft.AspNetCore.Http;
+
 namespace Coworkee.Bff;
 
 /// <summary>
@@ -7,11 +11,14 @@ namespace Coworkee.Bff;
 /// A layout that hides it once its theme is applied claims the screen with an element <c>[data-coworkee-loading-claim]</c>; without a claim the
 /// screen goes as soon as the app rendered its first content into the body. A claiming layout that never calls hide() loses the screen 30 s
 /// after the download finished (or after the start when Blazor reports no progress).
+/// It is its own cacheable file, never inline, so pages with a Content-Security-Policy without <c>'unsafe-inline'</c> run it.
 /// </summary>
 internal static class LoadingScreenScript
 {
     public const string Source = """
         (()=>{const el=document.getElementById('coworkee-loading');if(!el)return;const root=document.documentElement;let since=Date.now(),timer,failed=false,last='';
+        el.querySelectorAll('.cwl-media').forEach(m=>{const drop=()=>m.parentNode&&m.parentNode.remove();m.addEventListener('error',drop);if(m.error||(m.complete&&!m.naturalWidth))drop();});
+        el.querySelector('.cwl-reload').addEventListener('click',()=>location.reload());
         const video=el.querySelector('video');if(video&&!matchMedia('(prefers-reduced-motion: reduce)').matches)video.play().catch(()=>{});
         const log=console.error,text=x=>x instanceof Error?(x.stack||x.message):String(x),ours=s=>/_framework|blazor|dotnet|webassembly/i.test(s||'');
         console.error=(...a)=>{last=a.map(text).join(' ').slice(0,4000);return log.apply(console,a);};
@@ -35,4 +42,17 @@ internal static class LoadingScreenScript
         if(Date.now()-since>30000)hide();};
         timer=setInterval(tick,100);tick();if(document.readyState==='loading')addEventListener('DOMContentLoaded',observe);else observe();})();
         """;
+
+    public const string Path = "/bff/loading-screen/script.js";
+
+    private static readonly string Version = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(Source)))[..16].ToLowerInvariant();
+
+    public static string Url => $"{Path}?v={Version}";
+
+    public static IResult Serve(HttpContext context, string? v)
+    {
+        context.Response.Headers.CacheControl = v == Version ? "public, max-age=31536000, immutable" : "no-cache";
+        context.Response.Headers.XContentTypeOptions = "nosniff";
+        return Results.Text(Source, "text/javascript");
+    }
 }
