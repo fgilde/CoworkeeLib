@@ -1,5 +1,7 @@
 # AirWorks-Client
 
+[![AirWorks](../assets/brands/airworks.png){ .cw-product-logo }](https://fgilde.github.io/AirWorks/)
+
 Eine Coworkee-App kann neben der Blazor-App einen zweiten Client haben: einen Web-Desktop auf Basis von [AirWorks](https://fgilde.github.io/AirWorks/de.html), mit Fenstern, Taskleiste, mehreren Desktops, Ordnern, Suche und Pop-outs. Er meldet sich über denselben Auth-Server an (und damit über denselben Keycloak-Realm), spricht mit derselben API, zeigt Logo und Theme der App und bringt fast alles mit, was die Blazor-App bietet: Einstellungen, Profil, Dateien mit Vorschau, Datentabellen, Chat, Berichte, den KI-Assistenten, Benachrichtigungen und die Administration (Benutzer, Gruppen, Rollen, Anwendungen, Scopes, API-Schlüssel, Themes, Sprachen, Übersetzungen, Mail-Vorlagen, Kampagnen, Empfängerlisten, Mail-Protokoll, Mail- und KI-Einstellungen, Backups, Mandanten, Editionen, Audit-Log). Die Bibliothek liefert die Apps als npm-Pakete; die App setzt sie zusammen und ergänzt eigene.
 
 ## Eine App damit erstellen

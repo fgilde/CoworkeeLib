@@ -272,3 +272,6 @@
   .cw-gilde path { stroke-dashoffset: 0; opacity: 1; transition: none !important; animation: none !important; }
   .cw-card, .cw-btn, .cw-topics a, .cw-gallery a, .cw-tour__main, .cw-tour__side { transition: none; }
 }
+
+/* product logos (AirWorks, WebDataStudio, AspireUI) */
+.cw-product-logo { float: right; height: 3rem; max-width: 40%; margin: 0 0 .8rem 1.2rem; object-fit: contain; }

@@ -1,5 +1,7 @@
 # Grafana und WebDataStudio
 
+[![WebDataStudio](../assets/brands/webdatastudio.svg){ .cw-product-logo }](https://fgilde.github.io/WebDataStudio/)
+
 Zwei Entwicklungswerkzeuge laufen im Aspire-AppHost neben der App, in einer neuen App sind beide eingeschaltet:
 
 - **Grafana** mit Prometheus, Loki, Tempo und einem OpenTelemetry-Collector: Metriken, Logs und Traces jedes Dienstes, die App-Datenbank und fertige Dashboards.

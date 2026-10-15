@@ -215,6 +215,8 @@ Call them after `UseKeycloak` and `AddAuthServer` (or `AddProjects`).
 
 ### AspireUI
 
+[![AspireUI](../assets/brands/aspireui.svg){ .cw-product-logo }](https://fgilde.github.io/AspireUI/)
+
 [AspireUI](https://fgilde.github.io/AspireUI/) signs in through the realm with one call; the app's administrators (realm role `Administrator`) become AspireUI admins, everybody else gets `defaultPermissions` (default `app-user`):
 
 ```csharp
