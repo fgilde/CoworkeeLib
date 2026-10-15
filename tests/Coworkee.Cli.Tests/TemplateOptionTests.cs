@@ -43,6 +43,33 @@ public sealed class TemplateOptionTests(TemplateFixture template)
         TemplateTests.ShouldHaveNoLeftovers(app);
     }
 
+    [Fact]
+    public async Task Workflows_bring_the_module_and_the_product_approval_and_elsa_the_api_with_a_sample_workflow()
+    {
+        var off = await template.CreateAsync("workflows-off");
+        Read(off, "src/Shop.Infrastructure/Shop.Infrastructure.csproj").ShouldNotContain("Coworkee.Workflows");
+        Read(off, "src/Shop.Catalog/CatalogModule.cs").ShouldNotContain("AddProductApproval");
+        Read(off, "src/Shop.Web.Client/Pages/Catalog/Products.razor").ShouldNotContain("CoworkeeWorkflowActions");
+        File.Exists(Path.Combine(off, "src/Shop.Catalog/Features/Products/ProductApproval.cs")).ShouldBeFalse();
+        Directory.Exists(Path.Combine(off, "src/Shop.Api/Workflows")).ShouldBeFalse();
+
+        var on = await template.CreateAsync("workflows-elsa", "--workflows", "true", "--elsa", "true");
+        Read(on, "src/Shop.Infrastructure/Shop.Infrastructure.csproj").ShouldContain("\"Coworkee.Workflows\"");
+        Read(on, "src/Shop.Infrastructure/ShopDatabaseModule.cs").ShouldContain("typeof(Coworkee.Workflows.CoworkeeWorkflowsModule)");
+        Read(on, "src/Shop.Catalog/CatalogModule.cs").ShouldContain("context.Services.AddProductApproval();");
+        Read(on, "src/Shop.Web.Client/Pages/Catalog/Products.razor").ShouldContain("<CoworkeeWorkflowActions EntityType=\"Products\"");
+        Read(on, "src/Shop.Migrations/DemoSeed.cs").ShouldContain("WorkflowPermissions.View, WorkflowPermissions.Transition");
+        Read(on, "src/Shop.Api/Shop.Api.csproj").ShouldContain("\"Coworkee.Workflows.Elsa\"");
+        Read(on, "src/Shop.Api/ShopApiModule.cs").ShouldContain("typeof(Coworkee.Workflows.Elsa.CoworkeeWorkflowsElsaModule)");
+        Read(on, "src/Shop.Api/ShopApiModule.cs").ShouldContain("AddWorkflow<Workflows.ProductApprovedWorkflow>()");
+        Directory.Exists(Path.Combine(on, "src/Shop.Infrastructure/Migrations")).ShouldBeFalse();
+        TemplateTests.ShouldHaveNoLeftovers(on);
+
+        var builtIn = await template.CreateAsync("workflows-only", "--workflows", "true");
+        Read(builtIn, "src/Shop.Api/Shop.Api.csproj").ShouldNotContain("Elsa");
+        Directory.Exists(Path.Combine(builtIn, "src/Shop.Api/Workflows")).ShouldBeFalse();
+    }
+
     [Theory]
     [InlineData("sqlServer", "options.UseSqlServer();", "DatabaseProviders.SqlServer")]
     [InlineData("sqlite", "options.UseSqlite();", "DatabaseProviders.Sqlite")]
@@ -224,6 +251,17 @@ public sealed class TemplateOptionTests(TemplateFixture template)
         var feed = Environment.GetEnvironmentVariable("COWORKEE_TEST_FEED");
         Assert.SkipWhen(string.IsNullOrEmpty(feed), "Set COWORKEE_TEST_FEED to a folder with packed Coworkee packages (build/pack-local.ps1) to build a generated app.");
         var app = await template.CreateAsync("build-no-tools", "--samples", "false", "--grafana", "false", "--webDataStudio", "false", "--keycloak", "true", "--aspireUI", "true");
+        await Dotnet.RunAsync(app, "nuget", "add", "source", Path.GetFullPath(feed!), "--name", "local", "--configfile", "nuget.config");
+
+        await Dotnet.RunAsync(app, "build", "Shop.slnx");
+    }
+
+    [Fact]
+    public async Task Generated_app_with_workflows_elsa_and_the_samples_builds()
+    {
+        var feed = Environment.GetEnvironmentVariable("COWORKEE_TEST_FEED");
+        Assert.SkipWhen(string.IsNullOrEmpty(feed), "Set COWORKEE_TEST_FEED to a folder with packed Coworkee packages (build/pack-local.ps1) to build a generated app.");
+        var app = await template.CreateAsync("build-workflows", "--workflows", "true", "--elsa", "true", "--grafana", "false", "--webDataStudio", "false");
         await Dotnet.RunAsync(app, "nuget", "add", "source", Path.GetFullPath(feed!), "--name", "local", "--configfile", "nuget.config");
 
         await Dotnet.RunAsync(app, "build", "Shop.slnx");

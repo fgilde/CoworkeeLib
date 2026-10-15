@@ -66,5 +66,11 @@
   "Site Settings": "Paramètres de l’application",
   "Database Backups": "Sauvegardes de la base de données",
   "Audit Trails": "Journal d’audit",
-  "Sign in with the seeded administrator account (see LOGIN.md in the solution folder), then add your first module with coworkee module add.": "Connectez-vous avec le compte administrateur préconfiguré (voir LOGIN.md dans le dossier de la solution), puis ajoutez votre premier module avec coworkee module add."
+  "Sign in with the seeded administrator account (see LOGIN.md in the solution folder), then add your first module with coworkee module add.": "Connectez-vous avec le compte administrateur préconfiguré (voir LOGIN.md dans le dossier de la solution), puis ajoutez votre premier module avec coworkee module add.",
+  "Approval": "Approbation",
+  "Draft": "Brouillon",
+  "In review": "En révision",
+  "Submit": "Soumettre",
+  "Withdraw": "Retirer",
+  "Reopen": "Rouvrir"
 }

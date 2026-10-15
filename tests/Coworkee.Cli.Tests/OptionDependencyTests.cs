@@ -22,7 +22,7 @@ public sealed class OptionDependencyTests
     public void Options_that_only_make_sense_with_another_one_say_so()
     {
         OptionCatalog.All.Where(o => o.DependsOn is not null).Select(o => o.Id)
-            .ShouldBe(["airworksPackages", "backup", "aiProvider", "aiModel", "aiEndpoint", "signInMedia", "signInMediaSide"]);
+            .ShouldBe(["airworksPackages", "backup", "elsa", "aiProvider", "aiModel", "aiEndpoint", "signInMedia", "signInMediaSide"]);
         foreach (var option in OptionCatalog.All.Where(o => o.DependsOn is not null))
         {
             var parent = OptionCatalog.Find(option.DependsOn!.Option).ShouldNotBeNull(option.Id);
@@ -131,7 +131,7 @@ public sealed class OptionDependencyTests
         var defaults = SpecSummary.Lines(Spec());
 
         defaults.ShouldContain("Library modules on:  auditing, notifications, chat, reports, ai, backup");
-        defaults.ShouldContain("Library modules off: files, features, social, extendedAttributes, elasticsearch, eventBus, clientEntities");
+        defaults.ShouldContain("Library modules off: files, features, social, workflows, elsa, extendedAttributes, elasticsearch, eventBus, clientEntities");
         defaults.ShouldContain("Own modules: -");
     }
 

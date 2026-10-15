@@ -58,6 +58,8 @@ internal static partial class DocsSearch
         ("Reporting", "modules/reporting/"),
         ("Extended attributes", "modules/extended-attributes/"),
         ("Comments, tags and ratings", "modules/social/"),
+        ("Workflows and approvals", "modules/workflows/"),
+        ("Elsa workflows", "modules/workflows-elsa/"),
         ("AI assistant and MCP", "modules/ai/"),
         ("MCP server of the app", "modules/mcp/"),
         ("Aspire app host", "hosting/aspire/"),

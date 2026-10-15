@@ -120,7 +120,9 @@ public sealed class OptionTests
         using var folder = new TempFolder();
         var main = Studio.Create(folder);
         main.Basics.Name = "Shop";
-        var modules = OptionCatalog.All.Where(o => o.Group == OptionCatalog.Modules).Select(o => o.Id).ToList();
+        // a module that needs another one which is off by default (elsa without workflows) stays out
+        var modules = OptionCatalog.All.Where(o => o.Group == OptionCatalog.Modules && OptionCatalog.Unmet(o, id => OptionCatalog.Find(id)!.Default) is null)
+            .Select(o => o.Id).ToList();
 
         main.ToSpec().Options.Keys.ShouldBe(modules);
         main.ToSpec().Options["chat"]!.GetValue<bool>().ShouldBeTrue();

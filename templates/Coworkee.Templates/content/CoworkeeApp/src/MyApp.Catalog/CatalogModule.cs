@@ -9,6 +9,9 @@ using Microsoft.Extensions.DependencyInjection;
 using MyApp.Catalog.Domain;
 using MyApp.Catalog.Features.Brands.Commands.AddEdit;
 using MyApp.Catalog.Features.Products.Commands.AddEdit;
+#if (workflows)
+using MyApp.Catalog.Features.Products;
+#endif
 using MyApp.Catalog.Endpoints;
 using MyApp.Catalog.Permissions;
 using MyApp.Catalog.Persistence;
@@ -28,6 +31,9 @@ public sealed class MyAppCatalogModule : CoworkeeModule, IWebModule
         context.Services.AddODataEntity<Product>("Products", CatalogPermissions.Products.View);
         context.Services.AddODataImport("Brands", (AddEditBrandRequest row) => new AddEditBrandCommand(null, row));
         context.Services.AddODataImport("Products", (AddEditProductRequest row) => new AddEditProductCommand(null, row));
+#if (workflows)
+        context.Services.AddProductApproval();
+#endif
     }
 
     public void ConfigureApplication(WebApplication app)

@@ -6,6 +6,13 @@
 
 - **Sprachen von Mail-Vorlagen**: *Sprache hinzufügen* unter Administration > Mail-Vorlagen legt eine Variante für eine später eingeschaltete Sprache an, kopiert aus einer vorhandenen oder maschinell übersetzt (nur Texte, Tags und Platzhalter bleiben), und eine hinzugefügte Sprache lässt sich wieder entfernen; siehe [Mailing](../modules/mailing.md#sprachen-einer-vorlage). Neu: `POST /api/v1/mail/templates/{name}/{culture}`, `ICoworkeeApi.AddMailTemplateLanguageAsync`, `MailTemplateSummaryDto.DefaultCultures`; OpenAPI-Snapshots und SDKs neu erzeugen.
 - **Mail-Rückfall**: Eine Mail in einer Sprache ohne Variante nutzt jetzt vor Englisch die Standardsprache (Organisation, System, Sprachen-Seite). Das Lokalisierungsmodul liefert sie über das neue `IDefaultLanguage`; die maschinelle Übersetzung steht anderen Modulen als `IMachineTranslator` zur Verfügung.
+## Noch nicht veröffentlicht
+
+### Neu
+
+- **Workflows und Genehmigungen** (`Coworkee.Workflows`, optional): Zustände und abgesicherte Übergänge pro Entitätstyp, Genehmigungen durch Rollen oder Benutzer mit Frist, Erinnerung und Eskalation, eine Historie, die Komponenten `CoworkeeWorkflow`, `CoworkeeWorkflowActions` und `CoworkeeWorkflowTimeline` und die Seite *Genehmigungen*, siehe [Workflows und Genehmigungen](../modules/workflows.md). Das Modul hat Tabellen: Apps, die es aufnehmen, legen eine Migration an.
+- **Elsa-Workflows** (`Coworkee.Workflows.Elsa`, optional): Elsa Workflows 3 in der API mit Coworkee-Aktivitäten und -Triggern, siehe [Elsa-Workflows](../modules/workflows-elsa.md).
+- CLI und Studio: `--workflows` und `--elsa`.
 
 ## 0.0.1.25 (2026-10-15)
 

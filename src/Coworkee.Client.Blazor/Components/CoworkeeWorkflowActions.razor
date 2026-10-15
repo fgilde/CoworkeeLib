@@ -1,0 +1,22 @@
+@using Coworkee.Contracts.Workflows
+
+<span class="d-inline-flex align-center" data-testid="workflow-actions" data-entity="@EntityId">
+    @if (_status is not null)
+    {
+        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(_status.Approval?.CanDecide == true ? Color.Warning : Color.Default)" data-testid="workflow-state">@L[_status.State]</MudChip>
+        @if (_status.Transitions.Count > 0 || _status.Approval?.CanDecide == true)
+        {
+            <MudMenu Icon="@Icons.Material.Outlined.MoreVert" Size="Size.Small" Dense="true" AriaLabel="@L["Workflow"]" data-testid="workflow-menu">
+                @foreach (var transition in _status.Transitions)
+                {
+                    <MudMenuItem OnClick="() => RunAsync(transition)" data-transition="@transition.Name">@L[transition.Name]</MudMenuItem>
+                }
+                @if (_status.Approval is { CanDecide: true } approval)
+                {
+                    <MudMenuItem Icon="@Icons.Material.Outlined.Check" IconColor="Color.Success" OnClick="() => DecideAsync(approval.Id, true)" data-testid="workflow-approve">@L["Approve"]</MudMenuItem>
+                    <MudMenuItem Icon="@Icons.Material.Outlined.Close" IconColor="Color.Error" OnClick="() => DecideAsync(approval.Id, false)" data-testid="workflow-reject">@L["Reject"]</MudMenuItem>
+                }
+            </MudMenu>
+        }
+    }
+</span>

@@ -1,0 +1,48 @@
+@page "/workflows/approvals"
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + Coworkee.Contracts.Workflows.WorkflowPermissions.View)]
+@using Coworkee.Contracts.Workflows
+
+<PageHeader Title="Approvals" Description="Everything that waits for your decision." />
+@if (_approvals is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_approvals.Count == 0)
+{
+    <MudAlert Severity="Severity.Success" Dense="Density.Dense" data-testid="approvals-empty">@L["Nothing waits for your decision."]</MudAlert>
+}
+else
+{
+    <MudStack Spacing="2" data-testid="approvals">
+        @foreach (var approval in _approvals)
+        {
+            <MudPaper Outlined="true" Class="pa-3" data-approval="@approval.Id">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                    <div>
+                        @if (approval.Link is { } link)
+                        {
+                            <MudLink Href="@link" Typo="Typo.subtitle1">@approval.Title</MudLink>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.subtitle1">@approval.Title</MudText>
+                        }
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                            @L[approval.EntityType] · @L[approval.State] · @L["Requested {0}", approval.CreatedAt.ToLocalTime().ToString("g")]
+                            @if (approval.RequiresAll)
+                            {
+                                <span> · @L["{0} of {1} approved", approval.Approvers.Count(a => a.Approved == true), approval.Approvers.Count(a => !a.Escalation)]</span>
+                            }
+                        </MudText>
+                        @if (approval.DueAt is { } due)
+                        {
+                            <MudText Typo="Typo.caption" Color="@(due < DateTimeOffset.UtcNow ? Color.Error : Color.Default)" data-testid="approval-due">@L["Due {0}", due.ToLocalTime().ToString("g")]</MudText>
+                        }
+                    </div>
+                    <MudSpacer />
+                    <WorkflowDecisionButtons ApprovalId="approval.Id" OnDecided="_ => LoadAsync()" />
+                </MudStack>
+            </MudPaper>
+        }
+    </MudStack>
+}

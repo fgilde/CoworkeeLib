@@ -44,6 +44,9 @@ namespace MyApp.Infrastructure;
 #if (social)
     , typeof(Coworkee.Social.CoworkeeSocialModule)
 #endif
+#if (workflows)
+    , typeof(Coworkee.Workflows.CoworkeeWorkflowsModule)
+#endif
 #if (extendedAttributes)
     , typeof(Coworkee.ExtendedAttributes.CoworkeeExtendedAttributesModule)
 #endif

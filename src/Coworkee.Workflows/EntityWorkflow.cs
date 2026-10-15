@@ -1,0 +1,119 @@
+using System.Linq.Expressions;
+using System.Reflection;
+using Coworkee.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+namespace Coworkee.Workflows;
+
+/// <summary>The states and transitions of one entity type; built with <see cref="WorkflowOptions.Entity{TEntity}"/>.</summary>
+public abstract class EntityWorkflow(string entityType)
+{
+    private readonly Dictionary<string, WorkflowState> _states = new(StringComparer.Ordinal);
+
+    public string EntityType { get; } = entityType;
+
+    public string? InitialState { get; protected set; }
+
+    public IReadOnlyCollection<WorkflowState> States => _states.Values;
+
+    public List<WorkflowTransition> Transitions { get; } = [];
+
+    internal Func<Guid, string>? LinkOf { get; set; }
+
+    internal Func<object, string>? TitleOf { get; set; }
+
+    internal Action<object, string>? Mirror { get; set; }
+
+    internal abstract Task<object?> FindAsync(CoworkeeDbContext db, Guid id, CancellationToken cancellationToken);
+
+    internal abstract WorkflowContext Context(object entity, Guid id, WorkflowMove move, IServiceProvider services, CancellationToken cancellationToken);
+
+    internal string Title(object entity, Guid id) => TitleOf?.Invoke(entity) ?? $"{EntityType} {id.ToString()[..8]}";
+
+    internal WorkflowState? FindState(string name) => _states.GetValueOrDefault(name);
+
+    protected TState GetOrAdd<TState>(string name, Func<TState> create)
+        where TState : WorkflowState
+    {
+        if (!_states.TryGetValue(name, out var state))
+        {
+            _states[name] = state = create();
+        }
+
+        return (TState)state;
+    }
+
+    internal void Validate()
+    {
+        if (InitialState is null)
+        {
+            throw new InvalidOperationException($"The workflow of {EntityType} has no initial state; call Initial(...).");
+        }
+    }
+}
+
+/// <summary>One move from <see cref="From"/> to <see cref="To"/>: a transition someone ran, or the workflow itself after a decision or a deadline.</summary>
+internal sealed record WorkflowMove(string From, string To, string? Transition, string? Comment, Guid? UserId);
+
+public sealed class EntityWorkflow<TEntity>(string entityType) : EntityWorkflow(entityType)
+    where TEntity : class
+{
+    public EntityWorkflow<TEntity> Initial(string state)
+    {
+        InitialState = state;
+        return this;
+    }
+
+    /// <summary>Where notifications and the approvals inbox lead, e.g. <c>id =&gt; $"/catalog/products?id={id}"</c>.</summary>
+    public EntityWorkflow<TEntity> Link(Func<Guid, string> link)
+    {
+        LinkOf = link;
+        return this;
+    }
+
+    /// <summary>How the entity is called in notifications and the inbox, e.g. its name.</summary>
+    public EntityWorkflow<TEntity> Describe(Func<TEntity, string> title)
+    {
+        TitleOf = entity => title((TEntity)entity);
+        return this;
+    }
+
+    /// <summary>Writes the state name into a string property of the entity as well, for filters and columns.</summary>
+    public EntityWorkflow<TEntity> MirrorTo(Expression<Func<TEntity, string?>> property)
+    {
+        var info = (property.Body as MemberExpression)?.Member as PropertyInfo
+            ?? throw new ArgumentException("Pass a property, e.g. p => p.Status.", nameof(property));
+        Mirror = (entity, state) => info.SetValue(entity, state);
+        return this;
+    }
+
+    public WorkflowTransition<TEntity> Transition(string name, string from, string to) => Transition(name, [from], to);
+
+    public WorkflowTransition<TEntity> Transition(string name, IReadOnlyList<string> from, string to)
+    {
+        var transition = new WorkflowTransition<TEntity>(name, from, to);
+        Transitions.Add(transition);
+        return transition;
+    }
+
+    public WorkflowState<TEntity> State(string name) => GetOrAdd(name, () => new WorkflowState<TEntity>(name));
+
+    internal override async Task<object?> FindAsync(CoworkeeDbContext db, Guid id, CancellationToken cancellationToken) =>
+        await db.Set<TEntity>().FirstOrDefaultAsync(e => EF.Property<Guid>(e, "Id") == id, cancellationToken);
+
+    internal override WorkflowContext Context(object entity, Guid id, WorkflowMove move, IServiceProvider services, CancellationToken cancellationToken) =>
+        new WorkflowContext<TEntity>((TEntity)entity)
+        {
+            EntityType = EntityType,
+            EntityId = id,
+            From = move.From,
+            To = move.To,
+            Transition = move.Transition,
+            Comment = move.Comment,
+            UserId = move.UserId,
+            Services = services,
+            CancellationToken = cancellationToken,
+            Link = LinkOf?.Invoke(id),
+            Title = Title(entity, id),
+        };
+}

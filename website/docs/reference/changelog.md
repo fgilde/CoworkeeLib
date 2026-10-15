@@ -6,6 +6,11 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 - **Languages of mail templates**: *Add language* on Administration > Mail templates adds a variant for a language switched on later, copied from an existing one or machine translated (texts only, tags and placeholders kept), and an added language can be removed again; see [Mailing](../modules/mailing.md#languages-of-a-template). New: `POST /api/v1/mail/templates/{name}/{culture}`, `ICoworkeeApi.AddMailTemplateLanguageAsync`, `MailTemplateSummaryDto.DefaultCultures`; regenerate OpenAPI snapshots and SDKs.
 - **Mail fallback**: a mail in a language without a variant now uses the default language (organisation, system, Languages page) before English. The localization module provides it through the new `IDefaultLanguage`; machine translation is available to other modules as `IMachineTranslator`.
+### New
+
+- **Workflows and approvals** (`Coworkee.Workflows`, optional): states and guarded transitions per entity type, approvals by roles or users with deadline, reminder and escalation, a history, the components `CoworkeeWorkflow`, `CoworkeeWorkflowActions` and `CoworkeeWorkflowTimeline` and the page *Approvals*, see [Workflows and approvals](../modules/workflows.md). The module has tables: apps that add it create a migration.
+- **Elsa workflows** (`Coworkee.Workflows.Elsa`, optional): Elsa Workflows 3 in the API with Coworkee activities and triggers, see [Elsa workflows](../modules/workflows-elsa.md).
+- CLI and Studio: `--workflows` and `--elsa`.
 
 ## 0.0.1.25 (2026-10-15)
 

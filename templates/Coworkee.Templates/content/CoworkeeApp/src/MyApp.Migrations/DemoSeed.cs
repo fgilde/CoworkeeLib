@@ -4,6 +4,9 @@ using Coworkee.Contracts.Reporting;
 #if (chat)
 using Coworkee.Contracts.Chat;
 #endif
+#if (workflows)
+using Coworkee.Contracts.Workflows;
+#endif
 using Coworkee.Identity.Setup;
 #if (samples)
 using MyApp.Contracts.Catalog;
@@ -41,6 +44,9 @@ public static class DemoSeed
 #endif
 #if (reports)
         ReportPermissions.View,
+#endif
+#if (workflows)
+        WorkflowPermissions.View, WorkflowPermissions.Transition,
 #endif
 #if (samples)
         CatalogPermissions.Dashboards.View,

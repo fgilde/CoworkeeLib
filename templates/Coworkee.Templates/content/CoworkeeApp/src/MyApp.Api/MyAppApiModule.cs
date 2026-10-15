@@ -13,7 +13,11 @@ using MyApp.Infrastructure;
 
 namespace MyApp.Api;
 
+#if (withElsa)
+[DependsOn(typeof(MyAppDatabaseModule), typeof(Coworkee.Workflows.Elsa.CoworkeeWorkflowsElsaModule))]
+#else
 [DependsOn(typeof(MyAppDatabaseModule))]
+#endif
 public sealed class MyAppApiModule : CoworkeeModule, IWebModule
 {
     public const string Audience = "myapp_api";
@@ -27,6 +31,9 @@ public sealed class MyAppApiModule : CoworkeeModule, IWebModule
         context.Services.AddCoworkeeResponseFilters([typeof(MyAppApiModule).Assembly]);
 #endif
         context.Services.AddCoworkeeApiAuthentication(context.Configuration, Audience);
+#if (withElsa && samples)
+        context.Services.AddWorkflow<Workflows.ProductApprovedWorkflow>();
+#endif
     }
 
     public void ConfigureApplication(WebApplication app)

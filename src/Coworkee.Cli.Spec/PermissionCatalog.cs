@@ -21,6 +21,8 @@ public static class PermissionCatalog
             "Social.Comments.View", "Social.Comments.Create", "Social.Comments.Moderate", "Social.Tags.View", "Social.Tags.Create", "Social.Tags.Moderate",
             "Social.Ratings.View", "Social.Ratings.Create", "Social.Ratings.Moderate",
         ]),
+        ("workflows", ["Workflows.View", "Workflows.Transition"]),
+        ("elsa", ["Workflows.Elsa.Manage"]),
         ("samples", [
             "Catalog.Products.View", "Catalog.Products.Create", "Catalog.Products.Edit", "Catalog.Products.Delete", "Catalog.Products.Export",
             "Catalog.Brands.View", "Catalog.Brands.Create", "Catalog.Brands.Edit", "Catalog.Brands.Delete", "Catalog.Brands.Export", "Dashboards.View",

@@ -66,5 +66,11 @@
   "Site Settings": "Ustawienia aplikacji",
   "Database Backups": "Kopie zapasowe bazy danych",
   "Audit Trails": "Dziennik audytu",
-  "Sign in with the seeded administrator account (see LOGIN.md in the solution folder), then add your first module with coworkee module add.": "Zaloguj się na utworzone konto administratora (zobacz LOGIN.md w folderze rozwiązania), a następnie dodaj swój pierwszy moduł poleceniem coworkee module add."
+  "Sign in with the seeded administrator account (see LOGIN.md in the solution folder), then add your first module with coworkee module add.": "Zaloguj się na utworzone konto administratora (zobacz LOGIN.md w folderze rozwiązania), a następnie dodaj swój pierwszy moduł poleceniem coworkee module add.",
+  "Approval": "Zatwierdzenie",
+  "Draft": "Szkic",
+  "In review": "W przeglądzie",
+  "Submit": "Wyślij",
+  "Withdraw": "Wycofaj",
+  "Reopen": "Otwórz ponownie"
 }

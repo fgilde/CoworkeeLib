@@ -1,0 +1,48 @@
+@using Coworkee.Contracts.Workflows
+
+<MudStack Spacing="2" data-testid="workflow">
+    @if (_status is null)
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+    else
+    {
+        <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="1">
+            <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined" Icon="@Icons.Material.Outlined.AccountTree" data-testid="workflow-state">@L[_status.State]</MudChip>
+            <MudSpacer />
+            @foreach (var transition in _status.Transitions)
+            {
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" Disabled="_busy" OnClick="() => RunAsync(transition)" data-transition="@transition.Name">@L[transition.Name]</MudButton>
+            }
+        </MudStack>
+        @if (_status.Approval is { } approval)
+        {
+            <MudAlert Severity="Severity.Info" Dense="Density.Dense" data-testid="workflow-approval">
+                <MudText Typo="Typo.body2">
+                    @(approval.RequiresAll ? L["Waiting for the approval of everyone listed."] : L["Waiting for the approval of one of the people listed."])
+                    @if (approval.DueAt is { } due)
+                    {
+                        <span class="@(due < DateTimeOffset.UtcNow ? "mud-error-text" : null)"> @L["Due {0}", due.ToLocalTime().ToString("g")]</span>
+                    }
+                </MudText>
+                <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" Class="mt-1">
+                    @foreach (var approver in approval.Approvers)
+                    {
+                        <span class="d-flex align-center" data-approver="@approver.UserId">
+                            <MudIcon Size="Size.Small" Icon="@DecisionIcon(approver)" Color="@DecisionColor(approver)" Class="mr-1" />
+                            <UserCard UserId="approver.UserId" />
+                        </span>
+                    }
+                </MudStack>
+                @if (approval.CanDecide)
+                {
+                    <WorkflowDecisionButtons ApprovalId="approval.Id" OnDecided="Apply" />
+                }
+            </MudAlert>
+        }
+        @if (ShowHistory)
+        {
+            <CoworkeeWorkflowTimeline Steps="_status.History" />
+        }
+    }
+</MudStack>

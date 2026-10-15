@@ -66,5 +66,11 @@
   "Site Settings": "앱 설정",
   "Database Backups": "데이터베이스 백업",
   "Audit Trails": "감사 로그",
-  "Sign in with the seeded administrator account (see LOGIN.md in the solution folder), then add your first module with coworkee module add.": "미리 만들어진 관리자 계정으로 로그인한 다음(솔루션 폴더의 LOGIN.md 참고) coworkee module add로 첫 번째 모듈을 추가하세요."
+  "Sign in with the seeded administrator account (see LOGIN.md in the solution folder), then add your first module with coworkee module add.": "미리 만들어진 관리자 계정으로 로그인한 다음(솔루션 폴더의 LOGIN.md 참고) coworkee module add로 첫 번째 모듈을 추가하세요.",
+  "Approval": "승인",
+  "Draft": "초안",
+  "In review": "검토 중",
+  "Submit": "제출",
+  "Withdraw": "철회",
+  "Reopen": "다시 열기"
 }

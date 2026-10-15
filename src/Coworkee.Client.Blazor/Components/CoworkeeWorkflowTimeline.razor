@@ -1,0 +1,29 @@
+@using Coworkee.Contracts.Workflows
+
+@if (Steps.Count == 0)
+{
+    <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["Nothing happened yet."]</MudText>
+}
+else
+{
+    <MudTimeline TimelinePosition="TimelinePosition.Start" Class="pt-0" data-testid="workflow-timeline">
+        @foreach (var step in Steps.Reverse())
+        {
+            <MudTimelineItem Size="Size.Small" Color="ColorOf(step.Kind)" data-step="@step.Kind">
+                <MudText Typo="Typo.body2"><b>@Text(step)</b> · @step.At.ToLocalTime().ToString("g")</MudText>
+                @if (step.UserId is { } user)
+                {
+                    <UserCard UserId="user" />
+                }
+                else
+                {
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["System"]</MudText>
+                }
+                @if (!string.IsNullOrWhiteSpace(step.Comment))
+                {
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary" Style="white-space:pre-wrap" data-testid="workflow-step-comment">@step.Comment</MudText>
+                }
+            </MudTimelineItem>
+        }
+    </MudTimeline>
+}

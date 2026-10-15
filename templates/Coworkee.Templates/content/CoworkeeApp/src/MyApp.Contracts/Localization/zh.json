@@ -66,5 +66,11 @@
   "Site Settings": "应用设置",
   "Database Backups": "数据库备份",
   "Audit Trails": "审计日志",
-  "Sign in with the seeded administrator account (see LOGIN.md in the solution folder), then add your first module with coworkee module add.": "请使用预置的管理员账户登录（参见解决方案文件夹中的 LOGIN.md），然后使用 coworkee module add 添加您的第一个模块。"
+  "Sign in with the seeded administrator account (see LOGIN.md in the solution folder), then add your first module with coworkee module add.": "请使用预置的管理员账户登录（参见解决方案文件夹中的 LOGIN.md），然后使用 coworkee module add 添加您的第一个模块。",
+  "Approval": "审批",
+  "Draft": "草稿",
+  "In review": "审核中",
+  "Submit": "提交",
+  "Withdraw": "撤回",
+  "Reopen": "重新打开"
 }

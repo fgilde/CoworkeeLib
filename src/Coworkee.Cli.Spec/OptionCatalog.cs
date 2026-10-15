@@ -129,6 +129,11 @@ public static class OptionCatalog
             "Multi-tenant SaaS with plans.", ["[RequiresFeature] and feature gates"], ["Only useful with several tenants"], Package: "Coworkee.Features"),
         new("social", Modules, "Comments, tags and ratings", "Comments, tags and star ratings for any entity, opted in per entity type.", OptionKind.Bool, "false",
             "Content that people discuss or rate.", ["Ready-made components"], ["Each entity type has to be registered"], Package: "Coworkee.Social"),
+        new("workflows", Modules, "Workflows and approvals", "States and transitions per entity type, approvals by roles or users with deadlines, reminders and escalation, a history, the approvals inbox; declared in code. With the samples, products go through an approval.", OptionKind.Bool, "false",
+            "When entities move through steps that people decide on, such as review and release.", ["Guards by permission, role or condition", "Buttons, timeline and inbox ready-made"], ["Each entity type has to be declared"], Package: "Coworkee.Workflows"),
+        new("elsa", Modules, "Elsa workflows", "Elsa Workflows 3 in the api: its tables in the app's database, its api under /api/elsa for the permission Workflows.Elsa.Manage, activities and triggers for Coworkee workflows. Elsa Studio runs as its own app.", OptionKind.Bool, "false",
+            "When administrators should build long running processes themselves, beyond the states declared in code.", ["Visual designer (Elsa Studio)", "Starts from transitions, decisions and entity changes"], ["Elsa brings many packages and its own tables", "Elsa Studio is a separate app to run"],
+            Package: "Coworkee.Workflows.Elsa", InfoUrl: "https://elsa-workflows.github.io/elsa-documentation/", DependsOn: new("workflows")),
         new("extendedAttributes", Modules, "Extended attributes", "Free key/value attributes for any entity without schema changes (the Documents sample brings it anyway).", OptionKind.Bool, "false",
             "When users need fields you cannot foresee.", ["No migration per field"], ["Values are not typed columns"], Package: "Coworkee.ExtendedAttributes"),
         // not "search": dotnet new reads --search as its own command

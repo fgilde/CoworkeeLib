@@ -1,0 +1,11 @@
+<MudDialog data-testid="workflow-comment-dialog">
+    <DialogContent>
+        <MudTextField T="string" @bind-Value="_comment" Label="@L["Comment"]" Lines="3" MaxLength="2000" Variant="Variant.Outlined" Immediate="true"
+                      Required="Required" HelperText="@(Required ? L["A comment is needed for this step."] : L["Optional"])" data-testid="workflow-comment" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog.Cancel()">@L["Cancel"]</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(Required && string.IsNullOrWhiteSpace(_comment))"
+                   OnClick="() => Dialog.Close(DialogResult.Ok(_comment ?? string.Empty))" data-testid="workflow-comment-ok">@L["OK"]</MudButton>
+    </DialogActions>
+</MudDialog>
