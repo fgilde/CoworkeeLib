@@ -1310,5 +1310,15 @@
   "FlexGrid": "Flex/Grid",
   "Every day at {0}": "Щодня о {0}",
   "Every {0} at {1}": "Щотижня, {0} о {1}",
-  "Every month on day {0} at {1}": "Щомісяця {0}-го числа о {1}"
+  "Every month on day {0} at {1}": "Щомісяця {0}-го числа о {1}",
+  "Each template has one variant per language. A language switched on later needs its own variant: add it with the translate button. Until then its mails use the default language, then English.": "Кожен шаблон має один варіант на мову. Мові, увімкненій пізніше, потрібен власний варіант: додайте його кнопкою перекладу. До того її листи використовують мову за замовчуванням, потім англійську.",
+  "No language yet: add one to write the mail.": "Мов ще немає: додайте одну, щоб написати лист.",
+  "Add language": "Додати мову",
+  "Every active language has a variant": "Кожна активна мова має варіант",
+  "Add language to {0}": "Додати мову до {0}",
+  "Machine translated from {0}. Please check the text.": "Машинний переклад з {0}. Перевірте текст.",
+  "Copied from {0}. Translate the text, or set up a translation service to have it translated.": "Скопійовано з {0}. Перекладіть текст або налаштуйте службу перекладу, щоб перекласти його.",
+  "Remove the {0} variant of {1}? Its mails then use the default language.": "Видалити варіант {0} шаблону {1}? Його листи використовуватимуть мову за замовчуванням.",
+  "Start from": "Вихідна мова",
+  "Machine translate (when a translation service is set up)": "Машинний переклад (якщо налаштовано службу перекладу)"
 }

@@ -1310,5 +1310,15 @@
   "FlexGrid": "Flex/Grid",
   "Every day at {0}": "Κάθε ημέρα στις {0}",
   "Every {0} at {1}": "Κάθε {0} στις {1}",
-  "Every month on day {0} at {1}": "Κάθε μήνα στις {0} στις {1}"
+  "Every month on day {0} at {1}": "Κάθε μήνα στις {0} στις {1}",
+  "Each template has one variant per language. A language switched on later needs its own variant: add it with the translate button. Until then its mails use the default language, then English.": "Κάθε πρότυπο έχει μία παραλλαγή ανά γλώσσα. Μια γλώσσα που ενεργοποιείται αργότερα χρειάζεται δική της παραλλαγή: προσθέστε την με το κουμπί μετάφρασης. Μέχρι τότε τα μηνύματά της χρησιμοποιούν την προεπιλεγμένη γλώσσα και μετά τα αγγλικά.",
+  "No language yet: add one to write the mail.": "Καμία γλώσσα ακόμα: προσθέστε μία για να γράψετε το μήνυμα.",
+  "Add language": "Προσθήκη γλώσσας",
+  "Every active language has a variant": "Κάθε ενεργή γλώσσα έχει παραλλαγή",
+  "Add language to {0}": "Προσθήκη γλώσσας στο {0}",
+  "Machine translated from {0}. Please check the text.": "Μηχανική μετάφραση από {0}. Ελέγξτε το κείμενο.",
+  "Copied from {0}. Translate the text, or set up a translation service to have it translated.": "Αντιγράφηκε από {0}. Μεταφράστε το κείμενο ή ρυθμίστε μια υπηρεσία μετάφρασης για να το μεταφράσει.",
+  "Remove the {0} variant of {1}? Its mails then use the default language.": "Αφαίρεση της παραλλαγής {0} του {1}; Τα μηνύματά του θα χρησιμοποιούν τότε την προεπιλεγμένη γλώσσα.",
+  "Start from": "Ξεκίνα από",
+  "Machine translate (when a translation service is set up)": "Μηχανική μετάφραση (όταν έχει ρυθμιστεί υπηρεσία μετάφρασης)"
 }

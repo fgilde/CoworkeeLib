@@ -1310,5 +1310,15 @@
   "FlexGrid": "Flex/Grid",
   "Every day at {0}": "Her gün {0}",
   "Every {0} at {1}": "Her {0} {1}",
-  "Every month on day {0} at {1}": "Her ayın {0}. günü {1}"
+  "Every month on day {0} at {1}": "Her ayın {0}. günü {1}",
+  "Each template has one variant per language. A language switched on later needs its own variant: add it with the translate button. Until then its mails use the default language, then English.": "Her şablonun dil başına bir varyantı vardır. Sonradan açılan bir dilin kendi varyantı olmalıdır: çeviri düğmesiyle ekleyin. O zamana kadar e-postaları varsayılan dili, ardından İngilizceyi kullanır.",
+  "No language yet: add one to write the mail.": "Henüz dil yok: e-postayı yazmak için bir tane ekleyin.",
+  "Add language": "Dil ekle",
+  "Every active language has a variant": "Her etkin dilin bir varyantı var",
+  "Add language to {0}": "{0} için dil ekle",
+  "Machine translated from {0}. Please check the text.": "{0} dilinden makine çevirisi yapıldı. Lütfen metni kontrol edin.",
+  "Copied from {0}. Translate the text, or set up a translation service to have it translated.": "{0} dilinden kopyalandı. Metni çevirin ya da çevirmesi için bir çeviri hizmeti ayarlayın.",
+  "Remove the {0} variant of {1}? Its mails then use the default language.": "{1} şablonunun {0} varyantı kaldırılsın mı? E-postaları bundan sonra varsayılan dili kullanır.",
+  "Start from": "Başlangıç dili",
+  "Machine translate (when a translation service is set up)": "Makine çevirisi (bir çeviri hizmeti ayarlıysa)"
 }

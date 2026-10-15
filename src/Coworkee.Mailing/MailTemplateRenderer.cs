@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Net;
+using Coworkee.Application.Localization;
 using Coworkee.Core.Security;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -34,7 +35,7 @@ public static class MailTemplateValidation
     }
 }
 
-internal sealed class MailTemplateRenderer(CoworkeeDbContext db, ICurrentUser currentUser, IMailTemplateCatalog catalog) : IMailTemplateRenderer
+internal sealed class MailTemplateRenderer(CoworkeeDbContext db, ICurrentUser currentUser, IMailTemplateCatalog catalog, IEnumerable<IDefaultLanguage> defaultLanguages) : IMailTemplateRenderer
 {
     public async Task<RenderedMail> RenderAsync(string name, object model, string? culture, CancellationToken cancellationToken) =>
         await RenderContentAsync(await ResolveAsync(name, culture, cancellationToken), model, culture, cancellationToken);
@@ -60,7 +61,7 @@ internal sealed class MailTemplateRenderer(CoworkeeDbContext db, ICurrentUser cu
     {
         var definition = await catalog.FindAsync(name, cancellationToken) ?? throw new ArgumentException($"Mail template '{name}' is not defined.", nameof(name));
         var custom = catalog.IsCustom(definition);
-        var candidates = MailCultures.Candidates(culture);
+        var candidates = MailCultures.Candidates(culture, await defaultLanguages.GetAsync(cancellationToken));
         var tenantId = currentUser.TenantId;
         var stored = db.Set<MailTemplateOverride>().AsNoTracking().Where(o => o.Name == name && (o.TenantId == null || o.TenantId == tenantId));
         if (!custom)

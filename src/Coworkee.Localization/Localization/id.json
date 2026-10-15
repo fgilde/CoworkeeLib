@@ -1310,5 +1310,15 @@
   "FlexGrid": "Flex/Grid",
   "Every day at {0}": "Setiap hari pukul {0}",
   "Every {0} at {1}": "Setiap {0} pukul {1}",
-  "Every month on day {0} at {1}": "Setiap bulan pada tanggal {0} pukul {1}"
+  "Every month on day {0} at {1}": "Setiap bulan pada tanggal {0} pukul {1}",
+  "Each template has one variant per language. A language switched on later needs its own variant: add it with the translate button. Until then its mails use the default language, then English.": "Setiap templat memiliki satu varian per bahasa. Bahasa yang diaktifkan kemudian membutuhkan variannya sendiri: tambahkan dengan tombol terjemahkan. Sampai saat itu, emailnya memakai bahasa bawaan, lalu bahasa Inggris.",
+  "No language yet: add one to write the mail.": "Belum ada bahasa: tambahkan satu untuk menulis email.",
+  "Add language": "Tambah bahasa",
+  "Every active language has a variant": "Setiap bahasa aktif memiliki varian",
+  "Add language to {0}": "Tambah bahasa ke {0}",
+  "Machine translated from {0}. Please check the text.": "Diterjemahkan mesin dari {0}. Periksa teksnya.",
+  "Copied from {0}. Translate the text, or set up a translation service to have it translated.": "Disalin dari {0}. Terjemahkan teksnya, atau siapkan layanan terjemahan untuk menerjemahkannya.",
+  "Remove the {0} variant of {1}? Its mails then use the default language.": "Hapus varian {0} dari {1}? Emailnya lalu memakai bahasa bawaan.",
+  "Start from": "Mulai dari",
+  "Machine translate (when a translation service is set up)": "Terjemahan mesin (jika layanan terjemahan sudah disiapkan)"
 }

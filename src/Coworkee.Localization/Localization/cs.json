@@ -1310,5 +1310,15 @@
   "FlexGrid": "Flex/Grid",
   "Every day at {0}": "Každý den v {0}",
   "Every {0} at {1}": "Každý týden: {0} v {1}",
-  "Every month on day {0} at {1}": "Každý měsíc {0}. dne v {1}"
+  "Every month on day {0} at {1}": "Každý měsíc {0}. dne v {1}",
+  "Each template has one variant per language. A language switched on later needs its own variant: add it with the translate button. Until then its mails use the default language, then English.": "Každá šablona má jednu variantu pro každý jazyk. Jazyk zapnutý později potřebuje vlastní variantu: přidejte ji tlačítkem pro překlad. Do té doby jeho e-maily používají výchozí jazyk a pak angličtinu.",
+  "No language yet: add one to write the mail.": "Zatím žádný jazyk: přidejte jeden a napište e-mail.",
+  "Add language": "Přidat jazyk",
+  "Every active language has a variant": "Každý aktivní jazyk má variantu",
+  "Add language to {0}": "Přidat jazyk do {0}",
+  "Machine translated from {0}. Please check the text.": "Strojově přeloženo z {0}. Zkontrolujte text.",
+  "Copied from {0}. Translate the text, or set up a translation service to have it translated.": "Zkopírováno z {0}. Přeložte text nebo nastavte překladovou službu, aby ho přeložila.",
+  "Remove the {0} variant of {1}? Its mails then use the default language.": "Odebrat variantu {0} šablony {1}? Její e-maily pak použijí výchozí jazyk.",
+  "Start from": "Vycházet z",
+  "Machine translate (when a translation service is set up)": "Strojový překlad (je-li nastavena překladová služba)"
 }

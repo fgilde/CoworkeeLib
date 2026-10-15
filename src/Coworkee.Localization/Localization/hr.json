@@ -1310,5 +1310,15 @@
   "FlexGrid": "Flex/Grid",
   "Every day at {0}": "Svaki dan u {0}",
   "Every {0} at {1}": "Svaki tjedan: {0} u {1}",
-  "Every month on day {0} at {1}": "Svaki mjesec na dan {0} u {1}"
+  "Every month on day {0} at {1}": "Svaki mjesec na dan {0} u {1}",
+  "Each template has one variant per language. A language switched on later needs its own variant: add it with the translate button. Until then its mails use the default language, then English.": "Svaki predložak ima jednu varijantu po jeziku. Jezik uključen kasnije treba vlastitu varijantu: dodajte je gumbom za prijevod. Do tada njegove poruke koriste zadani jezik, a zatim engleski.",
+  "No language yet: add one to write the mail.": "Još nema jezika: dodajte jedan da biste napisali poruku.",
+  "Add language": "Dodaj jezik",
+  "Every active language has a variant": "Svaki aktivni jezik ima varijantu",
+  "Add language to {0}": "Dodaj jezik u {0}",
+  "Machine translated from {0}. Please check the text.": "Strojno prevedeno s {0}. Provjerite tekst.",
+  "Copied from {0}. Translate the text, or set up a translation service to have it translated.": "Kopirano s {0}. Prevedite tekst ili postavite uslugu prevođenja da ga prevede.",
+  "Remove the {0} variant of {1}? Its mails then use the default language.": "Ukloniti varijantu {0} predloška {1}? Njegove poruke tada koriste zadani jezik.",
+  "Start from": "Krenuti od",
+  "Machine translate (when a translation service is set up)": "Strojni prijevod (ako je postavljena usluga prevođenja)"
 }

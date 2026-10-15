@@ -1310,5 +1310,15 @@
   "FlexGrid": "Flex/Grid",
   "Every day at {0}": "毎日{0}",
   "Every {0} at {1}": "毎週{0}の{1}",
-  "Every month on day {0} at {1}": "毎月{0}日の{1}"
+  "Every month on day {0} at {1}": "毎月{0}日の{1}",
+  "Each template has one variant per language. A language switched on later needs its own variant: add it with the translate button. Until then its mails use the default language, then English.": "各テンプレートには言語ごとに1つのバリアントがあります。後から有効にした言語には専用のバリアントが必要です。翻訳ボタンで追加してください。それまではその言語のメールに既定の言語、次に英語が使われます。",
+  "No language yet: add one to write the mail.": "まだ言語がありません。メールを書くには言語を追加してください。",
+  "Add language": "言語を追加",
+  "Every active language has a variant": "すべての有効な言語にバリアントがあります",
+  "Add language to {0}": "{0} に言語を追加",
+  "Machine translated from {0}. Please check the text.": "{0} から機械翻訳しました。テキストを確認してください。",
+  "Copied from {0}. Translate the text, or set up a translation service to have it translated.": "{0} からコピーしました。テキストを翻訳するか、翻訳サービスを設定して翻訳させてください。",
+  "Remove the {0} variant of {1}? Its mails then use the default language.": "{1} の {0} バリアントを削除しますか？そのメールには既定の言語が使われます。",
+  "Start from": "元の言語",
+  "Machine translate (when a translation service is set up)": "機械翻訳（翻訳サービスが設定されている場合）"
 }

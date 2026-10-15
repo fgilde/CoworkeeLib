@@ -1310,5 +1310,15 @@
   "FlexGrid": "Flex/Grid",
   "Every day at {0}": "Каждый день в {0}",
   "Every {0} at {1}": "Еженедельно: {0}, в {1}",
-  "Every month on day {0} at {1}": "Каждый месяц {0}-го числа в {1}"
+  "Every month on day {0} at {1}": "Каждый месяц {0}-го числа в {1}",
+  "Each template has one variant per language. A language switched on later needs its own variant: add it with the translate button. Until then its mails use the default language, then English.": "У каждого шаблона по одному варианту на язык. Языку, включённому позже, нужен свой вариант: добавьте его кнопкой перевода. До тех пор его письма используют язык по умолчанию, затем английский.",
+  "No language yet: add one to write the mail.": "Языков пока нет: добавьте один, чтобы написать письмо.",
+  "Add language": "Добавить язык",
+  "Every active language has a variant": "У каждого активного языка есть вариант",
+  "Add language to {0}": "Добавить язык в {0}",
+  "Machine translated from {0}. Please check the text.": "Машинный перевод с {0}. Проверьте текст.",
+  "Copied from {0}. Translate the text, or set up a translation service to have it translated.": "Скопировано из {0}. Переведите текст или настройте службу перевода, чтобы перевести его.",
+  "Remove the {0} variant of {1}? Its mails then use the default language.": "Удалить вариант {0} шаблона {1}? Его письма будут использовать язык по умолчанию.",
+  "Start from": "Исходный язык",
+  "Machine translate (when a translation service is set up)": "Машинный перевод (если настроена служба перевода)"
 }

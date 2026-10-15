@@ -1310,5 +1310,15 @@
   "FlexGrid": "Flex/Grid",
   "Every day at {0}": "Jeden Tag um {0}",
   "Every {0} at {1}": "Jeden {0} um {1}",
-  "Every month on day {0} at {1}": "Jeden Monat am {0}. um {1}"
+  "Every month on day {0} at {1}": "Jeden Monat am {0}. um {1}",
+  "Each template has one variant per language. A language switched on later needs its own variant: add it with the translate button. Until then its mails use the default language, then English.": "Jede Vorlage hat eine Variante pro Sprache. Eine später eingeschaltete Sprache braucht eine eigene Variante: Fügen Sie sie mit dem Übersetzen-Knopf hinzu. Bis dahin nutzen ihre Mails die Standardsprache, dann Englisch.",
+  "No language yet: add one to write the mail.": "Noch keine Sprache: Fügen Sie eine hinzu, um die Mail zu schreiben.",
+  "Add language": "Sprache hinzufügen",
+  "Every active language has a variant": "Jede aktive Sprache hat eine Variante",
+  "Add language to {0}": "Sprache zu {0} hinzufügen",
+  "Machine translated from {0}. Please check the text.": "Maschinell übersetzt aus {0}. Bitte prüfen Sie den Text.",
+  "Copied from {0}. Translate the text, or set up a translation service to have it translated.": "Aus {0} kopiert. Übersetzen Sie den Text oder richten Sie einen Übersetzungsdienst ein, um ihn übersetzen zu lassen.",
+  "Remove the {0} variant of {1}? Its mails then use the default language.": "Die Variante {0} von {1} entfernen? Ihre Mails nutzen dann die Standardsprache.",
+  "Start from": "Ausgehend von",
+  "Machine translate (when a translation service is set up)": "Maschinell übersetzen (wenn ein Übersetzungsdienst eingerichtet ist)"
 }

@@ -1310,5 +1310,15 @@
   "FlexGrid": "Flex/Grid",
   "Every day at {0}": "Elke dag om {0}",
   "Every {0} at {1}": "Elke {0} om {1}",
-  "Every month on day {0} at {1}": "Elke maand op dag {0} om {1}"
+  "Every month on day {0} at {1}": "Elke maand op dag {0} om {1}",
+  "Each template has one variant per language. A language switched on later needs its own variant: add it with the translate button. Until then its mails use the default language, then English.": "Elke sjabloon heeft één variant per taal. Een later ingeschakelde taal heeft een eigen variant nodig: voeg die toe met de vertaalknop. Tot dan gebruiken de mails de standaardtaal en daarna Engels.",
+  "No language yet: add one to write the mail.": "Nog geen taal: voeg er een toe om de mail te schrijven.",
+  "Add language": "Taal toevoegen",
+  "Every active language has a variant": "Elke actieve taal heeft een variant",
+  "Add language to {0}": "Taal toevoegen aan {0}",
+  "Machine translated from {0}. Please check the text.": "Automatisch vertaald uit {0}. Controleer de tekst.",
+  "Copied from {0}. Translate the text, or set up a translation service to have it translated.": "Gekopieerd uit {0}. Vertaal de tekst of stel een vertaaldienst in om hem te laten vertalen.",
+  "Remove the {0} variant of {1}? Its mails then use the default language.": "De variant {0} van {1} verwijderen? De mails gebruiken dan de standaardtaal.",
+  "Start from": "Uitgaan van",
+  "Machine translate (when a translation service is set up)": "Automatisch vertalen (als een vertaaldienst is ingesteld)"
 }

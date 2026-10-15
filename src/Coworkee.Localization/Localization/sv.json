@@ -1310,5 +1310,15 @@
   "FlexGrid": "Flex/Grid",
   "Every day at {0}": "Varje dag kl. {0}",
   "Every {0} at {1}": "Varje {0} kl. {1}",
-  "Every month on day {0} at {1}": "Varje månad den {0} kl. {1}"
+  "Every month on day {0} at {1}": "Varje månad den {0} kl. {1}",
+  "Each template has one variant per language. A language switched on later needs its own variant: add it with the translate button. Until then its mails use the default language, then English.": "Varje mall har en variant per språk. Ett språk som slås på senare behöver en egen variant: lägg till den med översättningsknappen. Tills dess använder dess mejl standardspråket och sedan engelska.",
+  "No language yet: add one to write the mail.": "Inget språk ännu: lägg till ett för att skriva mejlet.",
+  "Add language": "Lägg till språk",
+  "Every active language has a variant": "Varje aktivt språk har en variant",
+  "Add language to {0}": "Lägg till språk i {0}",
+  "Machine translated from {0}. Please check the text.": "Maskinöversatt från {0}. Kontrollera texten.",
+  "Copied from {0}. Translate the text, or set up a translation service to have it translated.": "Kopierad från {0}. Översätt texten eller konfigurera en översättningstjänst för att få den översatt.",
+  "Remove the {0} variant of {1}? Its mails then use the default language.": "Ta bort varianten {0} av {1}? Dess mejl använder då standardspråket.",
+  "Start from": "Utgå från",
+  "Machine translate (when a translation service is set up)": "Maskinöversätt (när en översättningstjänst är konfigurerad)"
 }

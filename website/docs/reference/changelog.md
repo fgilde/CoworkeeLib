@@ -2,6 +2,11 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+- **Languages of mail templates**: *Add language* on Administration > Mail templates adds a variant for a language switched on later, copied from an existing one or machine translated (texts only, tags and placeholders kept), and an added language can be removed again; see [Mailing](../modules/mailing.md#languages-of-a-template). New: `POST /api/v1/mail/templates/{name}/{culture}`, `ICoworkeeApi.AddMailTemplateLanguageAsync`, `MailTemplateSummaryDto.DefaultCultures`; regenerate OpenAPI snapshots and SDKs.
+- **Mail fallback**: a mail in a language without a variant now uses the default language (organisation, system, Languages page) before English. The localization module provides it through the new `IDefaultLanguage`; machine translation is available to other modules as `IMachineTranslator`.
+
 ## 0.0.1.25 (2026-10-15)
 
 Fixes only: the loading screen script is its own file, so a strict CSP runs it, and app pages are sent with `Cache-Control: no-cache, no-store`. Nothing to change in apps.

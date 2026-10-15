@@ -64,6 +64,8 @@ public sealed class CoworkeeMailingModule : CoworkeeModule, IWebModule
             d.SendAsync(new DeleteMailTemplate(name), ct).ToHttpResult());
         api.MapGet("/templates/{name}/{culture}", (string name, string culture, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new GetMailTemplate(name, culture), ct).ToHttpResult());
+        api.MapPost("/templates/{name}/{culture}", (string name, string culture, AddMailTemplateLanguageRequest body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new AddMailTemplateLanguage(name, culture, body), ct).ToHttpResult());
         api.MapPut("/templates/{name}/{culture}", (string name, string culture, SaveMailTemplateRequest body, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new SaveMailTemplate(name, culture, body), ct).ToHttpResult());
         api.MapDelete("/templates/{name}/{culture}", (string name, string culture, IDispatcher d, CancellationToken ct) =>
