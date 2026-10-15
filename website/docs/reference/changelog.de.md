@@ -2,6 +2,11 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+- **Sprachen von Mail-Vorlagen**: *Sprache hinzufügen* unter Administration > Mail-Vorlagen legt eine Variante für eine später eingeschaltete Sprache an, kopiert aus einer vorhandenen oder maschinell übersetzt (nur Texte, Tags und Platzhalter bleiben), und eine hinzugefügte Sprache lässt sich wieder entfernen; siehe [Mailing](../modules/mailing.md#sprachen-einer-vorlage). Neu: `POST /api/v1/mail/templates/{name}/{culture}`, `ICoworkeeApi.AddMailTemplateLanguageAsync`, `MailTemplateSummaryDto.DefaultCultures`; OpenAPI-Snapshots und SDKs neu erzeugen.
+- **Mail-Rückfall**: Eine Mail in einer Sprache ohne Variante nutzt jetzt vor Englisch die Standardsprache (Organisation, System, Sprachen-Seite). Das Lokalisierungsmodul liefert sie über das neue `IDefaultLanguage`; die maschinelle Übersetzung steht anderen Modulen als `IMachineTranslator` zur Verfügung.
+
 ## 0.0.1.25 (2026-10-15)
 
 Nur Korrekturen: Das Skript des Ladebildschirms ist eine eigene Datei, damit eine strikte CSP es ausführt, und App-Seiten gehen mit `Cache-Control: no-cache, no-store` raus. In Apps ist nichts zu ändern.
