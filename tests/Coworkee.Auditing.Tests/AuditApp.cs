@@ -1,5 +1,8 @@
 using System.Net.Http.Json;
 using Coworkee.Application.Authorization;
+using Coworkee.Application.Messaging;
+using Coworkee.Auditing.History;
+using Coworkee.OData;
 using Coworkee.AspNetCore;
 using Coworkee.Contracts.Identity;
 using Coworkee.Core.Modularity;
@@ -81,6 +84,29 @@ public sealed class AuditApp : DatabaseFixture
         return note.Id;
     });
 
+    public Task<Guid> CreateMemoAsync(Guid userId, Guid tenantId, string text) => AsActorAsync(userId, tenantId, async db =>
+    {
+        var memo = new Memo { Text = text, Secret = "s1" };
+        db.Add(memo);
+        await db.SaveChangesAsync();
+        return memo.Id;
+    });
+
+    public Task ChangeMemoAsync(Guid userId, Guid tenantId, Guid id, Action<Memo> change) => AsActorAsync(userId, tenantId, async db =>
+    {
+        var memo = await db.Set<Memo>().IgnoreQueryFilters([CoworkeeDbContext.SoftDeleteFilter]).SingleAsync(m => m.Id == id);
+        change(memo);
+        return await db.SaveChangesAsync();
+    });
+
+    public Task DeleteMemoAsync(Guid userId, Guid tenantId, Guid id) => AsActorAsync(userId, tenantId, async db =>
+    {
+        db.Remove(await db.Set<Memo>().SingleAsync(m => m.Id == id));
+        return await db.SaveChangesAsync();
+    });
+
+    public Task<Memo> MemoAsync(Guid id) => AsActorAsync(null, null, db => db.Set<Memo>().IgnoreQueryFilters().SingleAsync(m => m.Id == id));
+
     public Task UpdateNoteAsync(Guid userId, Guid tenantId, Guid id, string text) => AsActorAsync(userId, tenantId, async db =>
     {
         (await db.Set<Note>().SingleAsync(n => n.Id == id)).Text = text;
@@ -115,7 +141,11 @@ internal sealed class NotesModel : IModelContributor, IVersionedTypeContributor,
 {
     public const string Manage = "Test.Notes.Manage";
 
-    public void Apply(ModelBuilder modelBuilder) => modelBuilder.Entity<Note>();
+    public void Apply(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Note>();
+        modelBuilder.Entity<Memo>();
+    }
 
     public void Define(VersionedTypeContext context) => context.Add<Note>("Note", Manage);
 
@@ -131,6 +161,9 @@ public sealed class TestAuditModule : CoworkeeModule
         context.Services.AddSingleton<IModelContributor>(sp => sp.GetRequiredService<NotesModel>());
         context.Services.AddSingleton<IVersionedTypeContributor>(sp => sp.GetRequiredService<NotesModel>());
         context.Services.AddSingleton<IPermissionDefinitionContributor>(sp => sp.GetRequiredService<NotesModel>());
+        context.Services.AddMessagingFromAssembly(typeof(TestAuditModule).Assembly);
+        context.Services.AddODataEntity<Memo>("Memos", NotesModel.Manage);
+        context.Services.AddEntityHistory("Memos", NotesModel.Manage, (Memo m) => new SaveMemo(m.Id, m.Text, m.Priority));
         context.Services.AddCoworkeeDbContext<AuditTestDbContext>((provider, options) =>
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
     }
