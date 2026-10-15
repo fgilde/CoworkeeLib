@@ -37,6 +37,16 @@ public sealed partial class MainWindow : Window
             });
             return file?.TryGetLocalPath();
         };
+        main.Dialogs.SavePng = async name =>
+        {
+            var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                SuggestedFileName = name,
+                DefaultExtension = "png",
+                FileTypeChoices = [FilePickerFileTypes.ImagePng],
+            });
+            return file?.TryGetLocalPath();
+        };
         main.Dialogs.Copy = async text =>
         {
             if (Clipboard is { } clipboard)

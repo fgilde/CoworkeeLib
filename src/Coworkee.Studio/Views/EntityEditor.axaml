@@ -1,0 +1,172 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Coworkee.Studio.ViewModels"
+             xmlns:v="using:Coworkee.Studio.Views"
+             xmlns:l="using:Coworkee.Studio.Localization"
+             x:Class="Coworkee.Studio.Views.EntityEditor"
+             x:DataType="vm:EntityViewModel">
+  <UserControl.Resources>
+    <DataTemplate x:Key="Translated" x:DataType="x:String">
+      <TextBlock Text="{Binding Converter={x:Static v:Converters.Text}}" />
+    </DataTemplate>
+  </UserControl.Resources>
+  <UserControl.Styles>
+    <Style Selector="TextBlock.head">
+      <Setter Property="FontSize" Value="11.5" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+    </Style>
+  </UserControl.Styles>
+  <StackPanel Spacing="16">
+    <Border Classes="card">
+      <StackPanel Spacing="14">
+        <Grid ColumnDefinitions="*,16,*">
+          <StackPanel Spacing="6">
+            <TextBlock Classes="caption" Text="{l:L 'Entity name (singular)'}" />
+            <TextBox Text="{Binding Name}" PlaceholderText="Order" FontSize="15" FontWeight="SemiBold" />
+          </StackPanel>
+          <StackPanel Grid.Column="2" Spacing="6">
+            <TextBlock Classes="caption" Text="{l:L 'Plural (table, OData set, route)'}" />
+            <TextBox Text="{Binding Plural}" PlaceholderText="{Binding PluralPlaceholder}" />
+          </StackPanel>
+        </Grid>
+        <Grid ColumnDefinitions="*,16,*">
+          <Border Classes="soft" Padding="12,10">
+            <Grid ColumnDefinitions="*,Auto">
+              <StackPanel Spacing="2">
+                <TextBlock FontWeight="SemiBold" Text="{l:L 'Client entity'}" />
+                <TextBlock Classes="caption" Text="{l:L 'The browser keeps the rows and filters, sorts and facets them instantly.'}" />
+              </StackPanel>
+              <ToggleSwitch Grid.Column="1" IsChecked="{Binding ClientEntity}" VerticalAlignment="Center" Margin="12,0,0,0" />
+            </Grid>
+          </Border>
+          <Border Grid.Column="2" Classes="soft" Padding="12,10">
+            <StackPanel Spacing="6">
+              <TextBlock FontWeight="SemiBold" Text="{l:L 'DTO mapping'}" />
+              <ComboBox ItemsSource="{x:Static vm:EntityViewModel.Mappings}" SelectedItem="{Binding Mapping}" HorizontalAlignment="Stretch" ItemTemplate="{StaticResource Translated}" />
+            </StackPanel>
+          </Border>
+        </Grid>
+        <ItemsControl ItemsSource="{Binding Errors}" IsVisible="{Binding HasErrors}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="x:String">
+              <Border Classes="banner" Margin="0,0,0,4" Padding="10,6">
+                <TextBlock Classes="error" Text="{Binding}" />
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+
+    <Border Classes="card">
+      <StackPanel Spacing="8">
+        <Grid ColumnDefinitions="*,Auto">
+          <StackPanel Spacing="2">
+            <TextBlock Classes="h3" Text="{l:L 'Properties'}" />
+            <TextBlock Classes="caption" Text="{l:L 'Id, tenant and audit fields come with every entity.'}" />
+          </StackPanel>
+          <Button Grid.Column="1" Command="{Binding AddPropertyCommand}">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <PathIcon Classes="small" Data="{StaticResource Icon.Plus}" />
+              <TextBlock Text="{l:L Property}" />
+            </StackPanel>
+          </Button>
+        </Grid>
+        <Grid ColumnDefinitions="*,8,112,8,58,8,72,6,34,4,34" Margin="0,8,0,0">
+          <TextBlock Classes="head" Text="{l:L Name}" />
+          <TextBlock Grid.Column="2" Classes="head" Text="{l:L Type}" />
+          <TextBlock Grid.Column="4" Classes="head" Text="{l:L Required}" />
+          <TextBlock Grid.Column="6" Classes="head" Text="{l:L 'Max length'}" />
+        </Grid>
+        <ItemsControl ItemsSource="{Binding Properties}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:PropertyViewModel">
+              <StackPanel Margin="0,3" Spacing="4">
+              <Grid ColumnDefinitions="*,8,112,8,58,8,72,6,34,4,34">
+                <TextBox Text="{Binding Name}" PlaceholderText="Number" />
+                <ComboBox Grid.Column="2" ItemsSource="{x:Static vm:PropertyViewModel.Types}" SelectedItem="{Binding Type}" HorizontalAlignment="Stretch" />
+                <CheckBox Grid.Column="4" IsChecked="{Binding Required}" HorizontalAlignment="Center" />
+                <NumericUpDown Grid.Column="6" Value="{Binding MaxLength}" Minimum="1" Maximum="100000" Increment="50" FormatString="0" IsEnabled="{Binding IsText}" ShowButtonSpinner="False" PlaceholderText="{l:L text}" />
+                <ToggleButton Grid.Column="8" Classes="icon" Width="34" Height="34" IsChecked="{Binding IsExpanded}" ToolTip.Tip="{l:L 'More: label, default, unique, facet, enum or reference'}">
+                  <PathIcon Classes="small" Data="{StaticResource Icon.Cog}" />
+                </ToggleButton>
+                <Button Grid.Column="10" Classes="icon danger" Width="34" Height="34" ToolTip.Tip="{l:L 'Remove property'}"
+                        Command="{Binding $parent[ItemsControl].((vm:EntityViewModel)DataContext).RemovePropertyCommand}" CommandParameter="{Binding}">
+                  <PathIcon Classes="small" Data="{StaticResource Icon.Delete}" />
+                </Button>
+              </Grid>
+              <TextBlock Classes="caption" Margin="4,0" Text="{Binding Summary}" IsVisible="{Binding !IsExpanded}" />
+              <Border Classes="soft" Padding="12,10" IsVisible="{Binding IsExpanded}">
+                <StackPanel Spacing="10">
+                  <Grid ColumnDefinitions="*,12,*" IsVisible="{Binding IsEnum}">
+                    <StackPanel Spacing="4">
+                      <TextBlock Classes="head" Text="{l:L Enum}" />
+                      <AutoCompleteBox Text="{Binding Enum}" ItemsSource="{Binding $parent[v:EntitiesView].((vm:EntitiesStep)DataContext).EnumNames}" FilterMode="Contains" MinimumPrefixLength="0" PlaceholderText="OrderStatus" />
+                    </StackPanel>
+                  </Grid>
+                  <Grid ColumnDefinitions="*,12,*,12,*,12,*" IsVisible="{Binding IsReference}">
+                    <StackPanel Spacing="4">
+                      <TextBlock Classes="head" Text="{l:L 'References'}" />
+                      <AutoCompleteBox Text="{Binding Reference}" ItemsSource="{Binding $parent[v:EntitiesView].((vm:EntitiesStep)DataContext).ReferenceTargets}" FilterMode="Contains" MinimumPrefixLength="0" PlaceholderText="Sales.Customer" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Spacing="4">
+                      <TextBlock Classes="head" Text="{l:L 'Shown text'}" />
+                      <TextBox Text="{Binding ReferenceDisplay}" PlaceholderText="{l:L 'its display property'}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="4" Spacing="4">
+                      <TextBlock Classes="head" Text="{l:L 'On delete'}" />
+                      <ComboBox ItemsSource="{x:Static vm:PropertyViewModel.DeleteBehaviors}" SelectedItem="{Binding OnDelete}" HorizontalAlignment="Stretch" ItemTemplate="{StaticResource Translated}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="6" Spacing="4">
+                      <TextBlock Classes="head" Text="{l:L 'Collection on the target'}" />
+                      <TextBox Text="{Binding Inverse}" PlaceholderText="Orders" />
+                    </StackPanel>
+                  </Grid>
+                  <Grid ColumnDefinitions="*,12,*" IsVisible="{Binding IsDecimal}">
+                    <StackPanel Spacing="4">
+                      <TextBlock Classes="head" Text="{l:L Precision}" />
+                      <NumericUpDown Value="{Binding Precision}" Minimum="1" Maximum="38" FormatString="0" ShowButtonSpinner="False" PlaceholderText="18" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Spacing="4">
+                      <TextBlock Classes="head" Text="{l:L Scale}" />
+                      <NumericUpDown Value="{Binding Scale}" Minimum="0" Maximum="38" FormatString="0" ShowButtonSpinner="False" PlaceholderText="2" />
+                    </StackPanel>
+                  </Grid>
+                  <Grid ColumnDefinitions="*,12,*,12,*">
+                    <StackPanel Spacing="4">
+                      <TextBlock Classes="head" Text="{l:L Label}" />
+                      <TextBox Text="{Binding Label}" PlaceholderText="{l:L 'the name in words'}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Spacing="4">
+                      <TextBlock Classes="head" Text="{l:L 'Default value'}" />
+                      <TextBox Text="{Binding Default}" PlaceholderText="-" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="4" Spacing="4">
+                      <TextBlock Classes="head" Text="{l:L 'In the search box'}" />
+                      <ComboBox ItemsSource="{x:Static vm:PropertyViewModel.SearchModes}" SelectedItem="{Binding Searchable}" HorizontalAlignment="Stretch" ItemTemplate="{StaticResource Translated}" />
+                    </StackPanel>
+                  </Grid>
+                  <WrapPanel ItemSpacing="18">
+                    <CheckBox IsChecked="{Binding Unique}" Content="{l:L Unique}" ToolTip.Tip="{l:L 'No two rows of a tenant share the value.'}" />
+                    <CheckBox IsChecked="{Binding Display}" Content="{l:L 'Names the row'}" ToolTip.Tip="{l:L 'Shown in delete prompts, pickers and references.'}" />
+                    <CheckBox IsChecked="{Binding Facet}" Content="{l:L Facet}" ToolTip.Tip="{l:L 'Offered as filter next to the list.'}" />
+                  </WrapPanel>
+                </StackPanel>
+              </Border>
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+
+    <Button Classes="ghost danger" HorizontalAlignment="Left"
+            Command="{Binding $parent[v:EntitiesView].((vm:EntitiesStep)DataContext).RemoveEntityCommand}" CommandParameter="{Binding}">
+      <StackPanel Orientation="Horizontal" Spacing="6">
+        <PathIcon Classes="small" Data="{StaticResource Icon.Delete}" />
+        <TextBlock Text="{l:L 'Remove entity'}" />
+      </StackPanel>
+    </Button>
+  </StackPanel>
+</UserControl>

@@ -746,5 +746,37 @@ public static class German
         ["Get models"] = "Modelle holen",
         ["Storing the AI key in the user secrets of the app host"] = "KI-Schlüssel in den User Secrets des AppHosts speichern",
         ["The AI key could not be stored; run: dotnet user-secrets set Parameters:ai-apikey <key> --project {0}"] = "Der KI-Schlüssel ließ sich nicht speichern; ausführen: dotnet user-secrets set Parameters:ai-apikey <schlüssel> --project {0}",
+
+        // entity diagram and import
+        ["List"] = "Liste",
+        ["Diagram"] = "Diagramm",
+        ["Zoom out"] = "Verkleinern",
+        ["Zoom in"] = "Vergrößern",
+        ["Show everything"] = "Alles zeigen",
+        ["Auto layout"] = "Automatisch anordnen",
+        ["Arrange the boxes: referenced entities above the ones that reference them."] = "Die Kästen anordnen: referenzierte Entities über denen, die sie referenzieren.",
+        ["Export PNG"] = "Als PNG exportieren",
+        ["Save the whole diagram as a PNG image."] = "Das ganze Diagramm als PNG-Bild speichern.",
+        ["Import entities…"] = "Entities importieren…",
+        ["Import entities"] = "Entities importieren",
+        ["From a database, an OpenAPI document or a CSV file, with a preview."] = "Aus einer Datenbank, einem OpenAPI-Dokument oder einer CSV-Datei, mit Vorschau.",
+        ["Drag a box to move it, drag the dot of its header onto another box to add a reference, drag the background to pan, wheel to zoom."] =
+            "Kasten ziehen verschiebt ihn, den Punkt an seinem Kopf auf einen anderen Kasten ziehen legt eine Referenz an, Hintergrund ziehen verschiebt die Ansicht, das Mausrad zoomt.",
+        ["Select a box to edit its entity here. Add modules and entities in the list view."] = "Wählen Sie einen Kasten, um seine Entity hier zu bearbeiten. Module und Entities legen Sie in der Listenansicht an.",
+        ["New reference"] = "Neue Referenz",
+        ["{0} references {1}"] = "{0} referenziert {1}",
+        ["Add reference"] = "Referenz anlegen",
+        ["Tables, schemas or CSV columns become entities with their properties; foreign keys and references of the document become references. Nothing is added before you confirm the preview."] =
+            "Tabellen, Schemas oder CSV-Spalten werden zu Entities mit ihren Eigenschaften; Fremdschlüssel und Verweise des Dokuments werden zu Referenzen. Hinzugefügt wird erst, wenn Sie die Vorschau bestätigen.",
+        ["Automatic"] = "Automatisch",
+        ["Browse…"] = "Durchsuchen…",
+        ["from the source"] = "aus der Quelle",
+        ["Only these tables or schemas"] = "Nur diese Tabellen oder Schemas",
+        ["Preview"] = "Vorschau",
+        ["Add to the spec"] = "Zur Spezifikation hinzufügen",
+        ["Skipped"] = "Ausgelassen",
+        ["Choose the file to import"] = "Datei zum Importieren auswählen",
+        ["Enter a connection string, a file or an address."] = "Geben Sie eine Verbindungszeichenfolge, eine Datei oder eine Adresse ein.",
+        ["{0} entities for the module {1}, {2} things skipped"] = "{0} Entities für das Modul {1}, {2} Dinge ausgelassen",
     };
 }
