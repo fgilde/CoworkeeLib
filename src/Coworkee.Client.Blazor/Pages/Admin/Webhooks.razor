@@ -1,0 +1,96 @@
+@page "/admin/webhooks"
+@using Coworkee.Contracts.Webhooks
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + WebhookPermissions.Manage)]
+
+<PageHeader Title="Webhooks" Description="Endpoints that get a signed POST when something happens in the organisation; they receive only what the person who saved them may read." />
+<MudStack Row="true" Class="mb-2">
+    <MudSpacer />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" Size="Size.Small" Disabled="_busy"
+               OnClick="CreateAsync" data-testid="create-webhook">@L["Add endpoint"]</MudButton>
+</MudStack>
+<MudDataGrid T="WebhookSubscriptionDto" Items="_webhooks" Loading="_busy" Dense="Density.Dense" Hover="true" Elevation="0" Outlined="true" data-testid="webhooks">
+    <Columns>
+        <PropertyColumn Property="w => w.Url" Title="@L["Address"]">
+            <CellTemplate>
+                <code>@context.Item.Url</code><br /><MudText Typo="Typo.caption" Color="Color.Secondary">@context.Item.Description</MudText>
+            </CellTemplate>
+        </PropertyColumn>
+        <TemplateColumn T="WebhookSubscriptionDto" Title="@L["Events"]" Sortable="false">
+            <CellTemplate>
+                @foreach (var name in context.Item.Events)
+                {
+                    <MudChip T="string" Size="Size.Small">@name</MudChip>
+                }
+            </CellTemplate>
+        </TemplateColumn>
+        <PropertyColumn Property="w => w.IsActive" Title="@L["Status"]">
+            <CellTemplate>
+                <MudChip T="string" Size="Size.Small" Color="@(context.Item.IsActive ? Color.Success : Color.Error)" data-testid="@($"status-{context.Item.Url}")">
+                    @(context.Item.IsActive ? L["Active"] : L["Switched off"])
+                </MudChip>
+                @if (context.Item.ConsecutiveFailures > 0)
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Warning">@L["{0} failures in a row", context.Item.ConsecutiveFailures]</MudText>
+                }
+            </CellTemplate>
+        </PropertyColumn>
+        <TemplateColumn T="WebhookSubscriptionDto" Sortable="false" CellStyle="text-align:right;white-space:nowrap">
+            <CellTemplate>
+                <MudTooltip Text="@L["Send test event"]">
+                    <MudIconButton Icon="@Icons.Material.Outlined.Send" Size="Size.Small" aria-label="@L["Send test event"]" Disabled="_busy"
+                                   OnClick="() => SendTestAsync(context.Item)" data-testid="@($"test-{context.Item.Url}")" />
+                </MudTooltip>
+                <MudTooltip Text="@L["Signing secret"]">
+                    <MudIconButton Icon="@Icons.Material.Outlined.Key" Size="Size.Small" aria-label="@L["Signing secret"]" Disabled="_busy" OnClick="() => ShowSecretAsync(context.Item)" />
+                </MudTooltip>
+                <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" aria-label="@L["Edit"]" Disabled="_busy"
+                               OnClick="() => EditAsync(context.Item)" data-testid="@($"edit-{context.Item.Url}")" />
+                <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" aria-label="@L["Delete"]" Disabled="_busy"
+                               OnClick="() => DeleteAsync(context.Item)" />
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <NoRecordsContent>
+        <MudText Class="mud-text-secondary pa-4">@L["No endpoints yet."]</MudText>
+    </NoRecordsContent>
+</MudDataGrid>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-6 mb-2">
+    <MudText Typo="Typo.h6">@L["Deliveries"]</MudText>
+    <MudSpacer />
+    <MudIconButton Icon="@Icons.Material.Outlined.Refresh" Size="Size.Small" aria-label="@L["Reload"]" Disabled="_busy" OnClick="() => RunAsync(() => Task.CompletedTask)" />
+</MudStack>
+<MudDataGrid T="WebhookDeliveryDto" Items="_deliveries" Loading="_busy" Dense="Density.Dense" Hover="true" Elevation="0" Outlined="true" data-testid="webhook-deliveries">
+    <Columns>
+        <HierarchyColumn T="WebhookDeliveryDto" />
+        <PropertyColumn Property="d => d.CreatedAt" Title="@L["Created"]" Format="g" />
+        <PropertyColumn Property="d => d.EventType" Title="@L["Event"]" />
+        <TemplateColumn T="WebhookDeliveryDto" Title="@L["Address"]" Sortable="false">
+            <CellTemplate><code>@UrlOf(context.Item.SubscriptionId)</code></CellTemplate>
+        </TemplateColumn>
+        <PropertyColumn Property="d => d.Status" Title="@L["Status"]">
+            <CellTemplate>
+                <MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Item.Status)">@context.Item.Status @context.Item.ResponseStatus</MudChip>
+            </CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="d => d.Attempts" Title="@L["Attempts"]" />
+        <TemplateColumn T="WebhookDeliveryDto" Sortable="false" CellStyle="text-align:right">
+            <CellTemplate>
+                <MudButton Size="Size.Small" Disabled="_busy" OnClick="() => RedeliverAsync(context.Item)" data-testid="@($"redeliver-{context.Item.Id}")">@L["Redeliver"]</MudButton>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <ChildRowContent>
+        @if (context.Item.Error is { } error)
+        {
+            <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-2">@error</MudAlert>
+        }
+        <MudText Typo="Typo.subtitle2">@L["Request"]</MudText>
+        <pre class="mb-2" style="white-space:pre-wrap;word-break:break-all">@context.Item.Request</pre>
+        <MudText Typo="Typo.subtitle2">@L["Response"]</MudText>
+        <pre style="white-space:pre-wrap;word-break:break-all">@context.Item.Response</pre>
+    </ChildRowContent>
+    <NoRecordsContent>
+        <MudText Class="mud-text-secondary pa-4">@L["No deliveries yet."]</MudText>
+    </NoRecordsContent>
+</MudDataGrid>
