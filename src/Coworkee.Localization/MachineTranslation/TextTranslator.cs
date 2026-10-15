@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 namespace Coworkee.Localization.MachineTranslation;
 
 /// <summary>Machine translation with the service of the translation settings (<see cref="ITranslationProvider"/>), in batches the service accepts.</summary>
-public sealed class TextTranslator(IEnumerable<ITranslationProvider> providers, ISettingProvider settings, ILogger<TextTranslator> logger)
+public sealed class TextTranslator(IEnumerable<ITranslationProvider> providers, ISettingProvider settings, ILogger<TextTranslator> logger) : Application.Localization.IMachineTranslator
 {
     public const string HttpClientName = "Coworkee.Translator";
 

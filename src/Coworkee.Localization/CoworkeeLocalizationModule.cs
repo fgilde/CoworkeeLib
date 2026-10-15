@@ -38,7 +38,9 @@ public sealed class CoworkeeLocalizationModule : CoworkeeModule, IWebModule
         services.AddScoped<TextStore>();
         services.AddScoped<LocalizationChanges>();
         services.AddScoped<PromotedTexts>();
+        services.AddScoped<Application.Localization.IDefaultLanguage, Languages.DefaultLanguage>();
         services.AddScoped<MachineTranslation.TextTranslator>();
+        services.AddScoped<Application.Localization.IMachineTranslator>(sp => sp.GetRequiredService<MachineTranslation.TextTranslator>());
         services.AddScoped<MachineTranslation.MissingTexts>();
         services.AddScoped<MachineTranslation.ITranslationProvider, MachineTranslation.LibreTranslator>();
         services.AddScoped<MachineTranslation.ITranslationProvider, MachineTranslation.MyMemoryTranslator>();
