@@ -29,6 +29,12 @@ public sealed class DataTransferWatcher(
     /// <summary>Tells the user when the job is done, with a download button for its file.</summary>
     public Task Announce(DataTransferJobDto job)
     {
+        if (job.IsFinished)
+        {
+            Announce(job, job.Status == DataTransferStatus.Completed);
+            return Task.CompletedTask;
+        }
+
         _announced.Add(job.Id);
         snackbar.Add(L["The export runs in the background. You get the file here when it is ready."], Severity.Info);
         return StartAsync();

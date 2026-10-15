@@ -97,6 +97,7 @@ internal sealed class ImportJob(
         }
 
         job.CreatedIds = JsonSerializer.Serialize(created);
+        job.Input = null;
         (job.Status, job.FinishedAt) = (DataTransferStatus.Completed, clock.GetUtcNow());
         await SaveAsync(force: true, CancellationToken.None);
     }

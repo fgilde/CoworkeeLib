@@ -18,6 +18,7 @@ public sealed class ImportService(
     public const int MaxFileBytes = 20 * 1024 * 1024;
     private const int PreviewRows = 200;
     private const int ShownRows = 50;
+    private static readonly TimeSpan DraftLifetime = TimeSpan.FromDays(1);
 
     public async Task<IReadOnlyList<ImportTargetDto>> TargetsAsync(CancellationToken cancellationToken)
     {
@@ -62,6 +63,9 @@ public sealed class ImportService(
             Input = content,
             CreatedAt = clock.GetUtcNow(),
         };
+        // uploads the wizard never started are dropped after a day
+        var stale = clock.GetUtcNow() - DraftLifetime;
+        await db.Set<DataTransferJob>().Where(j => j.UserId == job.UserId && j.Status == DataTransferStatus.Draft && j.CreatedAt < stale).ExecuteDeleteAsync(cancellationToken);
         db.Add(job);
         var sheet = Sheet(job, null);
         if (sheet.IsSuccess)
