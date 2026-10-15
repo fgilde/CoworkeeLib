@@ -1,0 +1,6 @@
+<MudStack Row="true" Spacing="1" Class="mt-2" data-testid="workflow-decision">
+    <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" StartIcon="@Icons.Material.Outlined.Check" Disabled="_busy"
+               OnClick="() => DecideAsync(true)" data-testid="workflow-approve">@L["Approve"]</MudButton>
+    <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" StartIcon="@Icons.Material.Outlined.Close" Disabled="_busy"
+               OnClick="() => DecideAsync(false)" data-testid="workflow-reject">@L["Reject"]</MudButton>
+</MudStack>

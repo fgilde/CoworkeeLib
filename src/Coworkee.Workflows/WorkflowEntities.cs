@@ -48,7 +48,8 @@ public sealed class WorkflowStep : Entity, IMultiTenant
     public DateTimeOffset At { get; set; }
 }
 
-public sealed class WorkflowApproval : Entity, IMultiTenant, IHasConcurrencyToken
+/// <summary>An approval of one state; changes reach the inboxes of its approvers through their user topics.</summary>
+public sealed class WorkflowApproval : Entity, IMultiTenant, IHasConcurrencyToken, IHasRealtimeTopics
 {
     public Guid TenantId { get; set; }
 
@@ -82,6 +83,8 @@ public sealed class WorkflowApproval : Entity, IMultiTenant, IHasConcurrencyToke
     public uint Version { get; set; }
 
     public List<WorkflowApprover> Approvers { get; } = [];
+
+    public IEnumerable<string> RealtimeTopics => Approvers.Select(a => Contracts.Realtime.RealtimeTopics.User(a.UserId));
 }
 
 /// <summary>An approver of an approval with the decision once made; the change reaches the approver's inbox through the user topic.</summary>

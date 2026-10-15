@@ -79,7 +79,7 @@ internal sealed class WorkflowHandlers(CoworkeeDbContext db, WorkflowEngine engi
             .OrderBy(s => s.At)
             .Select(s => new WorkflowStepDto(s.Kind, s.From, s.To, s.Transition, s.UserId, s.Comment, s.At))
             .ToListAsync(cancellationToken);
-        return new WorkflowStatusDto(item.EntityType, item.EntityId, item.State, allowed.Select(t => new WorkflowTransitionDto(t.Name, t.To)).ToList(),
+        return new WorkflowStatusDto(item.EntityType, item.EntityId, item.State, allowed.Select(t => new WorkflowTransitionDto(t.Name, t.To, t.CommentRequired)).ToList(),
             approval is null ? null : ToDto(approval), history);
     }
 

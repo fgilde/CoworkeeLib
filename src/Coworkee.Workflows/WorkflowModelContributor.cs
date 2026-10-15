@@ -32,6 +32,7 @@ internal sealed class WorkflowModelContributor : IModelContributor
         modelBuilder.Entity<WorkflowApproval>(approval =>
         {
             approval.ToTable("WorkflowApprovals", "cw");
+            approval.Ignore(a => a.RealtimeTopics);
             approval.Property(a => a.EntityType).HasMaxLength(WorkflowLimits.EntityType);
             approval.Property(a => a.State).HasMaxLength(WorkflowLimits.Name);
             approval.Property(a => a.Title).HasMaxLength(WorkflowLimits.Title);

@@ -232,7 +232,7 @@ public sealed class WorkflowEngine(
     // tracked ones too: an approval decided a moment ago in this request is already finished in memory, not yet in the database
     private async Task CancelOpenApprovalAsync(WorkflowItem item, CancellationToken cancellationToken)
     {
-        await db.Set<WorkflowApproval>().Where(a => a.EntityType == item.EntityType && a.EntityId == item.EntityId && a.Status == ApprovalStatus.Pending)
+        await db.Set<WorkflowApproval>().Include(a => a.Approvers).Where(a => a.EntityType == item.EntityType && a.EntityId == item.EntityId && a.Status == ApprovalStatus.Pending)
             .LoadAsync(cancellationToken);
         foreach (var approval in db.ChangeTracker.Entries<WorkflowApproval>().Select(e => e.Entity)
                      .Where(a => a.EntityType == item.EntityType && a.EntityId == item.EntityId && a.Status == ApprovalStatus.Pending).ToList())

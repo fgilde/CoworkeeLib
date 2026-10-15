@@ -40,7 +40,7 @@ public enum ApprovalStatus
     Canceled,
 }
 
-public sealed record WorkflowTransitionDto(string Name, string To);
+public sealed record WorkflowTransitionDto(string Name, string To, bool CommentRequired = false);
 
 public sealed record WorkflowStepDto(WorkflowStepKind Kind, string? From, string? To, string? Transition, Guid? UserId, string? Comment, DateTimeOffset At);
 
