@@ -93,6 +93,21 @@ await coworkee.register(...defaultApps, ordersApp);
 
 Listen mit Anlegen, Bearbeiten, Löschen und Zeilenaktionen sind ein Aufruf: `crudApp({ id, title, icon, permissions, load, columns, create, edit, remove, actions })` (die Administrations-Apps sind damit gebaut); `formDialog`, `confirmDialog` und `infoDialog` sind die Dialoge dazu.
 
+### Icons
+
+Als `icon` einer App gilt ein Name aus dem kleinen Icon-Satz von AirWorks (`fn-planning.png`, `ratio-product.png`, ...) oder eine Adresse. Wo dieser Satz nichts Passendes hat (Chat, Benachrichtigungen, Schlüssel, Übersetzungen, ...), liefert das Paket weiße Glyphen von [Material Symbols](https://fonts.google.com/icons) als `data:`-URLs, auf die Kachel zugeschnitten wie die AirWorks-Icons. Sie stehen auch eigenen Apps zur Verfügung (Lizenz der Glyphen: Apache 2.0):
+
+```ts
+import { icons } from '@coworkee/airworks';
+
+const alertsApp = (coworkee: Coworkee): CoworkeeApp => ({
+  id: 'shop.alerts', title: coworkee.t('Alerts'), icon: icons.notifications, accent: '#a3283d',
+  render: ({ host }) => { host.textContent = 'No alerts'; },
+});
+```
+
+Verfügbar sind `chat`, `sparkles`, `smartToy`, `notifications`, `dataObject`, `adminPanel`, `manageAccounts`, `groups`, `roles`, `apps`, `checklist`, `key`, `language`, `translate`, `backup`, `dns`, `domain`, `history`, `drafts`, `campaign`, `contactMail`, `receiptLong`, `mail`, `build`, `table`, `description` und `dashboardCustomize`.
+
 ### Realtime
 
 `coworkee.realtime` verbindet sich beim ersten Abonnement mit dem Realtime-Hub der App (SignalR über das BFF) und abonniert nach einem Wiederverbinden alle gefolgten Topics erneut:

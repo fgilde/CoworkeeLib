@@ -13,6 +13,7 @@ import type { AppFactory } from './coworkee.ts';
 export { useCoworkee, type AirWorksApi, type AppFactory, type Coworkee, type CoworkeeApp, type CoworkeeOptions } from './coworkee.ts';
 export { bffAuthProvider, sessionOf } from './auth.ts';
 export { loadMudEx, defaultMudExFrameUrl, defaultMudExUrl, mudExFrame } from './mudex.ts';
+export { icons } from './icons.ts';
 export { bytes, display, esc, toast } from './dom.ts';
 export { confirmDialog, fieldHtml, formDialog, infoDialog, promptDialog, readFields, type Field, type FieldType, type FormOptions, type Values } from './form.ts';
 export { choices, crudApp, renderCrud, type CrudAction, type CrudColumn, type CrudOptions, type CrudQuery, type CrudToolbarAction } from './crud.ts';

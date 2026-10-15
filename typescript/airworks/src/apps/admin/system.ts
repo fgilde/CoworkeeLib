@@ -4,6 +4,7 @@ import type { Coworkee, CoworkeeApp } from '../../coworkee.ts';
 import { choices, crudApp, renderCrud } from '../../crud.ts';
 import { esc } from '../../dom.ts';
 import { confirmDialog, formDialog, infoDialog, type Field, type Values } from '../../form.ts';
+import { icons } from '../../icons.ts';
 
 type Language = Schemas['LanguageDto'];
 type Theme = Schemas['ThemeDto'];
@@ -22,7 +23,7 @@ const languageFields: Field[] = [
 ];
 
 export const languagesApp = crudApp<Language>({
-  id: 'coworkee.admin.languages', group: 'Localization', title: 'Languages', icon: 'icon-balancesheet.png', accent: '#0277bd',
+  id: 'coworkee.admin.languages', group: 'Localization', title: 'Languages', icon: icons.language, accent: '#0277bd',
   permissions: ['Localization.Manage'],
   search: true,
   load: async ({ request }) => ({ items: await request<Language[]>('/api/v1/localization/languages/all') }),
@@ -45,7 +46,7 @@ export const languagesApp = crudApp<Language>({
 
 /** The texts of one language: the English text, the language's default and the own translation, editable; missing ones machine translated. */
 export const translationsApp = (coworkee: Coworkee): CoworkeeApp => ({
-  id: 'coworkee.admin.translations', group: 'Localization', title: coworkee.t('Translations'), icon: 'fn-help.png', accent: '#0277bd', width: 980, height: 620,
+  id: 'coworkee.admin.translations', group: 'Localization', title: coworkee.t('Translations'), icon: icons.translate, accent: '#0277bd', width: 980, height: 620,
   requiredPermissions: ['Localization.Manage'],
   render: async ({ host, onClose }: AppContext) => {
     const { t, request } = coworkee;
@@ -130,7 +131,7 @@ export const themesApp = crudApp<Theme>({
 });
 
 export const backupsApp = crudApp<Backup>({
-  id: 'coworkee.admin.backups', group: 'System', title: 'Backups', icon: 'fn-planning.png', accent: '#455a64',
+  id: 'coworkee.admin.backups', group: 'System', title: 'Backups', icon: icons.backup, accent: '#455a64',
   permissions: ['Backups.Manage'], hostOnly: true,
   load: async ({ request }) => ({ items: await request<Backup[]>('/api/v1/backups') }),
   columns: [
@@ -150,7 +151,7 @@ export const backupsApp = crudApp<Backup>({
 });
 
 export const servicesApp = crudApp<Schemas['ServiceDto']>({
-  id: 'coworkee.admin.services', group: 'System', title: 'Services', icon: 'fn-workflow.png', accent: '#2e7d32',
+  id: 'coworkee.admin.services', group: 'System', title: 'Services', icon: icons.dns, accent: '#2e7d32',
   permissions: ['Settings.Manage'], hostOnly: true,
   load: async ({ request }) => ({ items: (await request<Schemas['ServiceDirectoryResult']>('/api/v1/services')).services }),
   columns: [
@@ -191,7 +192,7 @@ const tenantFields: Field[] = [
 ];
 
 export const tenantsApp = crudApp<Tenant>({
-  id: 'coworkee.admin.tenants', group: 'System', title: 'Tenants', icon: 'icon-desktop.png', accent: '#283593',
+  id: 'coworkee.admin.tenants', group: 'System', title: 'Tenants', icon: icons.domain, accent: '#283593',
   permissions: ['Features.Tenants'], hostOnly: true,
   search: true,
   load: async (_, { page, pageSize }) => {
@@ -236,7 +237,7 @@ const changesTable = (coworkee: Coworkee, changes: Schemas['AuditChangeDto'][]) 
   `<tr><td>${esc(change.property)}</td><td>${esc(change.oldValue)} &rarr; ${esc(change.newValue)}</td></tr>`).join('')}</tbody></table>`;
 
 export const auditApp = crudApp<Schemas['AuditEntryDto']>({
-  id: 'coworkee.admin.audit', group: 'Monitoring', title: 'Audit log', icon: 'fn-reporttable.png', accent: '#5d4037', width: 960,
+  id: 'coworkee.admin.audit', group: 'Monitoring', title: 'Audit log', icon: icons.history, accent: '#5d4037', width: 960,
   permissions: ['Audit.View'],
   search: true, serverSearch: true,
   load: async ({ request }, { page, pageSize, search }) => {
@@ -254,7 +255,7 @@ export const auditApp = crudApp<Schemas['AuditEntryDto']>({
 });
 
 export const aiToolCallsApp = crudApp<Schemas['AiToolCallDto']>({
-  id: 'coworkee.admin.ai-tool-calls', group: 'Monitoring', title: 'AI tool calls', icon: 'pilot2.png', accent: '#6a1b9a', width: 960,
+  id: 'coworkee.admin.ai-tool-calls', group: 'Monitoring', title: 'AI tool calls', icon: icons.build, accent: '#6a1b9a', width: 960,
   permissions: ['Ai.Audit'], probe: '/api/v1/ai/status',
   search: true, serverSearch: true,
   load: async ({ request }, { page, pageSize, search }) => {

@@ -3,6 +3,7 @@ import type { AppContext } from '@fgilde/airworks';
 import type { Coworkee, CoworkeeApp } from '../coworkee.ts';
 import { display, errorText, esc } from '../dom.ts';
 import { confirmDialog } from '../form.ts';
+import { icons } from '../icons.ts';
 import { settingsPageApp } from './settings.ts';
 
 type Message = Schemas['AiMessageDto'];
@@ -25,7 +26,7 @@ function messageHtml(coworkee: Coworkee, message: Message, last: boolean): strin
 
 /** The AI assistant: sessions, answers streamed as they arrive, tool calls and confirmations for tools that change data. */
 export const assistantApp = (coworkee: Coworkee): CoworkeeApp => ({
-  id: 'coworkee.assistant', title: coworkee.t('Assistant'), icon: 'pilot.png', accent: '#6a1b9a', width: 900, height: 640,
+  id: 'coworkee.assistant', title: coworkee.t('Assistant'), icon: icons.sparkles, accent: '#6a1b9a', width: 900, height: 640,
   requiredPermissions: ['Ai.Chat'], probe: `${ai}/status`,
   render: async ({ host, setState, intent }: AppContext) => {
     const { t, request, culture } = coworkee;
@@ -110,7 +111,7 @@ const aiFields = ['Provider', 'Model', 'Endpoint', 'ApiKey', 'Headers', 'AuthHea
 
 /** Provider, model and key of the assistant, with a test call to the model. */
 export const aiSettingsApp = settingsPageApp({
-  id: 'coworkee.admin.ai-settings', group: 'System', title: 'AI', icon: 'pilot2.png', accent: '#6a1b9a', page: '/admin/ai-settings', hostOnly: true, scopes: ['Global'], probe: `${ai}/status`,
+  id: 'coworkee.admin.ai-settings', group: 'System', title: 'AI', icon: icons.smartToy, accent: '#6a1b9a', page: '/admin/ai-settings', hostOnly: true, scopes: ['Global'], probe: `${ai}/status`,
   test: {
     title: 'Test connection',
     run: async (coworkee, values, changed) => {

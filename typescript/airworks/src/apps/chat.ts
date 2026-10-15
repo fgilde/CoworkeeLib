@@ -2,6 +2,7 @@ import { realtimeEvents, realtimeTopics, type Schemas } from '@coworkee/client';
 import type { AppContext } from '@fgilde/airworks';
 import type { Coworkee, CoworkeeApp } from '../coworkee.ts';
 import { display, errorText, esc } from '../dom.ts';
+import { icons } from '../icons.ts';
 
 type Contact = Schemas['ChatContactDto'];
 type Message = Schemas['ChatMessageDto'];
@@ -11,7 +12,7 @@ const json = (method: string, body?: unknown): RequestInit => ({ method, body: b
 
 /** Direct messages with the people of the organisation: who is online, unread counts, messages arriving live. */
 export const chatApp = (coworkee: Coworkee): CoworkeeApp => ({
-  id: 'coworkee.chat', title: coworkee.t('Chat'), icon: 'fn-userweblink.png', accent: '#00897b', width: 860, height: 600,
+  id: 'coworkee.chat', title: coworkee.t('Chat'), icon: icons.chat, accent: '#00897b', width: 860, height: 600,
   requiredPermissions: ['Chat.Use'], probe: `${chat}/unread-count`,
   render: async ({ host, intent, setState, onClose }: AppContext) => {
     const { t, request, culture, user, realtime } = coworkee;

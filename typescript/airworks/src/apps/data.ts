@@ -2,6 +2,7 @@ import { entitySets } from '@coworkee/client';
 import type { AppContext } from '@fgilde/airworks';
 import type { Coworkee, CoworkeeApp } from '../coworkee.ts';
 import { errorText, esc } from '../dom.ts';
+import { icons } from '../icons.ts';
 import { renderEntityTable, type EntityTableOptions } from '../table.ts';
 
 /** Every OData entity set of the app the user may read, each as a table. */
@@ -45,7 +46,7 @@ export type EntityAppOptions = EntityTableOptions & {
 export const entityApp = (options: EntityAppOptions) => (coworkee: Coworkee): CoworkeeApp => ({
   id: `coworkee.entity.${options.entitySet}`,
   title: coworkee.t(options.title ?? options.entitySet),
-  icon: options.icon ?? 'fn-analysis.png',
+  icon: options.icon ?? icons.table,
   accent: options.accent ?? '#35496b',
   width: 900,
   height: 580,

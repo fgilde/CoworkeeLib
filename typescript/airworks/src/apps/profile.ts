@@ -7,7 +7,7 @@ import { errorText, esc } from '../dom.ts';
 export const profileApp = (coworkee: Coworkee): CoworkeeApp => ({
   id: 'coworkee.profile',
   title: coworkee.t('Profile'),
-  icon: 'startmenu-user.png',
+  icon: 'ratio-personal.png',
   accent: '#00777a',
   width: 520,
   height: 520,
