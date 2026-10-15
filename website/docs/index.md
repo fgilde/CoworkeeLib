@@ -1,27 +1,11 @@
 ---
 template: home.html
 title: Coworkee
-description: "Coworkee is an open source .NET application framework: identity, permissions, multi-tenancy, a Blazor admin UI, reporting, AI and an Aspire app host as NuGet packages."
+description: "Coworkee is a free .NET application framework: identity, permissions, multi-tenancy, a Blazor admin UI, reporting, AI and an Aspire app host as NuGet packages."
 hide:
   - navigation
   - toc
 ---
-
-Coworkee is a modular application framework for .NET 10. It gives a Blazor and ASP.NET Core application the parts every business app needs, so the app itself can stay about its domain: modules with dependencies, a request pipeline with validation, permissions and caching, EF Core with audit and outbox, an auth server with external sign-in, a Blazor shell with data tables and admin pages, and an Aspire app host that wires all of it.
-
-## What is in the box
-
-| Area | You get |
-|---|---|
-| Modules | `CoworkeeModule` with `[DependsOn]`, one call `AddCoworkee<TRoot>()` per host |
-| Requests | `IDispatcher` with commands, queries, `Result`, FluentValidation, permission checks, caching, unit of work |
-| Data | `CoworkeeDbContext` with tenants, soft delete, field level audit trail, transactional outbox, realtime change events |
-| HTTP | Minimal API groups with problem details, [application services](web/application-services.md) with generated endpoints and Blazor clients, OData sets with facets for every entity, response filters |
-| Identity | Users, roles, groups, tenants, permission grants down to single resources, setup wizard or seed |
-| Sign-in | OpenIddict auth server, BFF for the Blazor client, Keycloak or any OpenID Connect provider as external login |
-| Blazor | MudBlazor shell with navigation, admin pages, data table with facets, [client entities](ui/client-entities.md) queried in the browser, theming, replaceable components |
-| Services | Settings, typed app configuration, mail templates, Hangfire jobs, blob storage, Elasticsearch, notifications, AI assistant with MCP |
-| Hosting | `AddCoworkeeApp` for Aspire: Postgres (or SQL Server, SQLite), Redis, Mailpit, Elasticsearch and Keycloak wired from the packages each service uses |
 
 ## A taste
 
