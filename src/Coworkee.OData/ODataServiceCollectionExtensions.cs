@@ -43,6 +43,20 @@ public static class ODataServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>
+    /// Rows become create commands with a null id and update commands with the id of the row a key column found, e.g.
+    /// <c>(Guid? id, AddEditBrandRequest row) =&gt; new AddEditBrandCommand(id, row)</c>; that enables update and upsert.
+    /// With <paramref name="delete"/> the last import of a user can be undone: the rows it created are deleted again.
+    /// </summary>
+    public static IServiceCollection AddODataImport<TRow, TResult>(
+        this IServiceCollection services, string entitySet, Func<Guid?, TRow, Application.Messaging.IRequest<TResult>> toCommand,
+        Func<Guid, Application.Messaging.IRequest<Core.Results.Result>>? delete = null)
+        where TResult : Core.Results.Result
+    {
+        services.Registry().Add(Transfer.ODataImportRegistration.For(entitySet, toCommand, delete));
+        return services;
+    }
+
     private static string PropertyName<TEntity>(Expression<Func<TEntity, object?>> property) =>
         (property.Body is UnaryExpression { Operand: MemberExpression boxed } ? boxed : property.Body as MemberExpression)?.Member.Name
         ?? throw new ArgumentException($"{property} does not select a property.", nameof(property));

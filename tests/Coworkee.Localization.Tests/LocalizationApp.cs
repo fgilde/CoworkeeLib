@@ -32,16 +32,18 @@ public sealed class LocalizationApp : DatabaseFixture
         builder.WebHost.UseTestServer();
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
+        builder.Configuration["Coworkee:Jobs:ConnectionStringName"] = "test";
+        builder.Configuration["Coworkee:Jobs:RunServer"] = "false";
         builder.Configuration["Coworkee:Database:Provider"] = Provider;
         builder.AddCoworkee<TestLocalizationModule>();
         builder.Services.AddTestAuthentication();
         App = builder.Build();
-        App.UseCoworkee();
         await using (var scope = App.Services.CreateAsyncScope())
         {
             await scope.ServiceProvider.GetRequiredService<LocalizationTestDbContext>().Database.EnsureCreatedAsync();
         }
 
+        App.UseCoworkee();
         await App.StartAsync();
     }
 

@@ -46,6 +46,8 @@ public sealed class AiApp : DatabaseFixture
         {
             ["Coworkee:SetupToken"] = "token",
             ["ConnectionStrings:test"] = ConnectionString,
+            ["Coworkee:Jobs:ConnectionStringName"] = "test",
+            ["Coworkee:Jobs:RunServer"] = "false",
             ["Coworkee:Database:Provider"] = Provider,
             ["Coworkee:Settings:Defaults:Ai.Enabled"] = "true",
             ["Coworkee:Settings:Defaults:Ai.ApiKey"] = "test-key",
