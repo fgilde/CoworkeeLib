@@ -54,7 +54,6 @@ public partial class ThemeLogoDialog : IAsyncDisposable
             return;
         }
 
-        await file.EnsureDataLoadedAsync();
         await UseAsync(file.ContentType, file.Data);
     }
 

@@ -35,7 +35,8 @@ public sealed class ThemeLogoEditTests : ClientTestBase
         Render<MudPopoverProvider>();
         _ = edit.Find("[data-testid='theme-logo-choose']").ClickAsync(new());
         var upload = _dialogs.WaitForComponent<MudExUploadEdit<UploadableFile>>();
-        await upload.InvokeAsync(() => upload.Instance.UploadRequestChanged.InvokeAsync(file));
+        // the event MudEx raises once the chosen file's bytes are read; UploadRequestChanged did not fire in the browser
+        await upload.InvokeAsync(() => upload.Instance.UploadRequestDataLoaded.InvokeAsync(file));
     }
 
     [Fact]

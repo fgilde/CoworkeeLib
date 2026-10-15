@@ -6,7 +6,7 @@
     <DialogContent>
         <div data-testid="logo-upload">
             @* MudEx localizes the button text itself: a translated text would be looked up as key again and machine translated *@
-            <MudExUploadEdit T="UploadableFile" UploadRequestChanged="LoadAsync" AllowMultiple="false" AllowFolderUpload="false" AllowExternalUrl="false"
+            <MudExUploadEdit T="UploadableFile" UploadRequestDataLoaded="LoadAsync" AllowMultiple="false" AllowFolderUpload="false" AllowExternalUrl="false"
                              MimeTypes="@_mimeTypes" MaxFileSize="@_maxUpload" TextUploadFile="Choose logo" ButtonVariant="Variant.Outlined" ButtonColor="Color.Default"
                              ExternalProviderRendering="ExternalProviderRendering.Images" ExternalPickerImageSize="@("30px")" />
         </div>
