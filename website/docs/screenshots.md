@@ -145,6 +145,11 @@ Everything from the demo app in the Ocean theme.
 </figure>
 
 <figure markdown>
+![Coworkee Studio: the entities as a diagram](assets/screenshots/studio-entities-diagram-dark.webp){ loading=lazy }
+<figcaption>Coworkee Studio: the entities as a diagram</figcaption>
+</figure>
+
+<figure markdown>
 ![Coworkee Studio: the app is created](assets/screenshots/studio-generate-light.webp){ loading=lazy }
 <figcaption>Coworkee Studio: the app is created</figcaption>
 </figure>

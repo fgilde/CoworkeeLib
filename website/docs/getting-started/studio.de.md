@@ -94,6 +94,14 @@ Feature-Module mit ihren Entities: Name, Plural, Client-Entity, DTO-Mapping und 
 
 ![Entities](../assets/screenshots/studio-entities-light-de.webp)
 
+**Diagramm** zeigt dieselben Entities als Kästen mit ihren Eigenschaften; Referenzen sind Linien von der Eigenschaft zum Ziel, mit `*` auf der referenzierenden Seite und `1` (Pflicht) oder `0..1` (optional, gestrichelt) am Ziel. Zieh einen Kasten, um ihn zu verschieben, zieh den Punkt an seinem Kopf auf einen anderen Kasten, um eine Referenz anzulegen (ein kleiner Dialog fragt nach Name, Pflicht und Löschverhalten), zieh den Hintergrund, um die Ansicht zu verschieben, und zoome mit dem Mausrad. Ein Klick auf einen Kasten öffnet die Entity im Editor neben dem Diagramm. **Automatisch anordnen** setzt referenzierte Entities über die, die sie referenzieren, **Als PNG exportieren** speichert das ganze Diagramm als Bild. Die Positionen stehen in der Spezifikation (`layout` einer Entity) und ändern nichts am erzeugten Code.
+
+![Entity-Diagramm](../assets/screenshots/studio-entities-diagram-light-de.webp)
+
+**Entities importieren…** liest eine Datenbank (Verbindungszeichenfolge oder SQLite-Datei), ein OpenAPI-Dokument (Datei oder Adresse) oder eine CSV-Datei, mit demselben Importer wie [`coworkee entity import`](cli.md#entities-importieren). Die Vorschau zeigt die Entities, Enums und alles, was ausgelassen wurde; **Zur Spezifikation hinzufügen** legt sie in ein Modul gleichen Namens oder in ein neues.
+
+![Entities importieren](../assets/screenshots/studio-entities-import-light-de.webp)
+
 ### Benutzer & Rollen
 
 Benutzer und Rollen für die Entwicklung, mit denen die App angelegt wird. Jeder Benutzer hat eine E-Mail, einen Anzeigenamen (ohne Angabe aus der E-Mail), ein optionales Passwort (leer wird es erzeugt), einen Schalter für Administratoren und Kästchen für die Rollen; der Administrator `admin@<name>.local` ist immer dabei. Rollen haben einen Namen, eine Beschreibung und Kästchen für die Berechtigungen, die die App haben wird: die der gewählten Module, der Beispiele und deiner Entities. Mit Keycloak bekommt der Realm dieselben Benutzer mit denselben Passwörtern.

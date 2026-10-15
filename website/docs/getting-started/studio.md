@@ -94,6 +94,14 @@ Feature modules with their entities: name, plural, client entity, DTO mapping an
 
 ![Entities](../assets/screenshots/studio-entities-light.webp)
 
+**Diagram** shows the same entities as boxes with their properties; references are lines from the property to the target with `*` on the referencing side and `1` (required) or `0..1` (optional, dashed) at the target. Drag a box to move it, drag the dot on its header onto another box to add a reference (a small dialog asks for name, required and delete behaviour), drag the background to pan and use the wheel to zoom. Clicking a box opens the entity in the editor beside the diagram. **Auto layout** puts referenced entities above the ones that reference them, **Export PNG** saves the whole diagram as an image. The positions are saved in the spec (`layout` of an entity) and have no effect on the generated code.
+
+![Entity diagram](../assets/screenshots/studio-entities-diagram-light.webp)
+
+**Import entities…** reads a database (connection string or SQLite file), an OpenAPI document (file or address) or a CSV file with the same importer as [`coworkee entity import`](cli.md#import-entities). The preview lists the entities, enums and everything that was skipped; **Add to the spec** puts them into a module of the same name or a new one.
+
+![Import entities](../assets/screenshots/studio-entities-import-light.webp)
+
 ### Users & roles
 
 Development users and roles the app is seeded with. Each user has an email, a display name (default: from the email), an optional password (generated when empty), an administrator switch and check boxes for the roles; the administrator `admin@<name>.local` is always there. Roles have a name, a description and check boxes for the permissions the app will have: those of the chosen modules, of the samples and of your entities. With Keycloak the realm gets the same users with the same passwords.

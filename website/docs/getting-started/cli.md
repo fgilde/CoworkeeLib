@@ -204,6 +204,28 @@ coworkee migrations add AddSales
 
 `--property` reads `Name[:type][:required][:maxLength][:flag][:key=value]` (default: `Name:string:required:200`). Flags: `required`, `unique`, `display`, `facet`, `searchable`. Keys like in a spec: `enum`, `ref` (or `reference`), `referenceDisplay`, `onDelete`, `inverse`, `default`, `label`, `precision`, `scale`, `searchable`. `--enum Name=Value1,Value2` adds an enum to the contracts. A reference may point to every entity of the app with an OData set, generated or sample (`ref=Catalog.Brand`); the module then references the target's project. `entity add` needs a module created by the CLI.
 
+## Import entities
+
+You have a database, an API or a spreadsheet already? `coworkee entity import` turns it into a module:
+
+```bash
+coworkee entity import --from db "Host=localhost;Database=shop;Username=app;Password=..." --module Legacy --tables orders,customers
+coworkee entity import --from db legacy.db --dry-run
+coworkee entity import --from openapi https://localhost:7301/openapi/v1.json --module Store
+coworkee entity import --from csv suppliers.csv --spec-out shop.json
+coworkee migrations add ImportLegacy
+```
+
+| Source | What becomes what |
+|---|---|
+| `db` (Postgres, SQL Server, SQLite) | tables become entities, columns properties with type, required (not null), maximum length, precision and scale, single-column unique indexes `unique`, single-column foreign keys references (with `cascade` or `setNull`), Postgres enum types enums. The provider is guessed from the connection string (an existing file is SQLite); `--provider` sets it. |
+| `openapi` (OpenAPI 3 or Swagger 2, JSON) | object schemas of `components.schemas` become entities (a `Dto` suffix is dropped, `allOf` is merged), string enums enums, `$ref` references, `format` picks date, time, uuid, email and url; `customerId` next to an imported `Customer` becomes a reference too. YAML documents need converting to JSON first. |
+| `csv` | the header names the properties, the first 500 rows tell their types (bool, int, long, decimal, guid, date, time, date-time, email, url, string with a maximum length) and whether they are required. |
+
+Names become C# identifiers (`order_items` becomes `OrderItems`), table names singular (`Orders` becomes `Order`), names the generated code uses get a suffix (`Task` becomes `TaskItem`). Id, tenant and audit columns come with every entity and are left out; a natural primary key stays as a unique property. The command prints every entity and what it skipped: link tables of a many-to-many relation (not supported; an entity of its own with two references does the job), JSON, XML, binary and spatial columns, foreign keys over several columns or to tables that are not imported, lists in an API.
+
+Without `--spec-out` the module goes straight into the app: a new module in one step, an existing one gets the entities one by one, referenced ones first. `--spec-out` writes the module into a spec file instead (an existing spec keeps everything else), `--dry-run` only prints the spec and its problems. Everything is checked like a spec before anything is written.
+
 ## Coworkee Studio
 
 ```bash
