@@ -78,8 +78,9 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--secondary-color` | `secondaryColor` | `#rrggbb` | | Second brand color |
 | `--logo` | `logo` | file | Coworkee icon | Copied into the web client; app bar, browser tab and sign-in pages |
 | `--sign-in-layout` | `signInLayout` | `Card`, `Split`, `Slide` | `Slide` | Layout of the [sign-in pages](../security/sign-in-pages.md) |
-| `--sign-in-media` | `signInMedia` | file or http(s) address | | Image or video next to the sign-in form; a file is copied to `wwwroot/media` of the web client |
+| `--sign-in-media` | `signInMedia` | file or http(s) address | | Image or video next to the sign-in form (Split, Slide) or behind the loading screen (`--loading-screen SignInMedia`, every layout); a file is copied to `wwwroot/media` of the web client |
 | `--sign-in-media-side` | `signInMediaSide` | `Left`, `Right` | `Left` | Side of the media |
+| `--loading-screen` | `loadingScreen` | `Animated`, `SignInMedia`, `Plain` | `Animated` | Background of the [loading screen](../modules/theming.md#loading-screen) |
 | `--mapping` | `mapping` | `manual`, `mapperly` | `manual` | DTO mapping of generated entities, see [DTOs and mapping](../fundamentals/dtos.md) |
 | `--languages` | `languages` | `en`, `de`, `fr`, `es`, `it`, `pt`, `pt-BR`, `nl`, `pl`, `ja`, `zh` and 28 more (`coworkee options`), comma separated (an array in a spec) | `en`, `de` | Languages offered from the start; those without shipped texts are [machine translated](../modules/localization.md#machine-translation) at the first start |
 | `--default-language` | `defaultLanguage` | one of the languages | `en` | Language of users who chose none; must be one of `languages` |
@@ -156,7 +157,7 @@ coworkee new --spec shop.json
 ```
 
 - `modules` are the modules of your own with their entities. The modules of the library (audit log, chat, files, ...) are options under `options`, and a spec you write lists only what differs from the defaults: without `"chat": false` the app has the chat, so a spec of the defaults has no module in it. The Studio therefore writes every library module with `true` or `false`; `coworkee spec show` prints the same for any spec (`Library modules on:` / `off:`, then every other option with its value, `(unused)` where it is ignored, and your own modules).
-- `options` takes the ids of the table above; `branding` takes `title`, `theme`, `primaryColor`, `secondaryColor`, `logo`, `signInLayout`, `signInMedia` and `signInMediaSide` and wins over the same ids in `options`.
+- `options` takes the ids of the table above; `branding` takes `title`, `theme`, `primaryColor`, `secondaryColor`, `logo`, `signInLayout`, `signInMedia`, `signInMediaSide` and `loadingScreen` and wins over the same ids in `options`.
 - Files and `output` are relative to the spec file and must stay inside its folder (no absolute paths, no `..`). A logo is an image (svg, png, jpg, jpeg, webp, gif, ico), sign-in media an image, a video (mp4, webm, ogg) or an http(s) address: both end up public in the web client. A file given as switch (`--logo C:\brand\logo.svg`) may be anywhere. Comments and trailing commas are allowed.
 - The title goes into code and HTML as it is, so it must not contain `"`, `\`, `<`, `>`, `@` or control characters.
 - Property types: `string`, `int`, `long`, `decimal`, `double`, `bool`, `dateTime` (`DateTimeOffset`), `guid`, `dateOnly`, `timeOnly`, `text` (long text, several lines in the form, no list column), `email` and `url` (strings with validation, 256 and 2000 characters unless `maxLength` says otherwise), `money` (decimal with `precision` 18 and `scale` 2 unless given), `enum` and `reference`. A property that is not `required` is nullable; `maxLength` is for strings, emails and urls, `precision` and `scale` for decimals and money.

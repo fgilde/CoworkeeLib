@@ -28,6 +28,10 @@ public sealed class OptionDependencyTests
             var parent = OptionCatalog.Find(option.DependsOn!.Option).ShouldNotBeNull(option.Id);
             parent.Id.ShouldNotBe(option.Id);
             option.DependsOn.Values.ShouldAllBe(v => parent.Choices != null && parent.Choices.Any(c => c.Value == v) || parent.Kind == OptionKind.Bool, option.Id);
+            if (option.DependsOn.Or is { } other)
+            {
+                other.Values.ShouldAllBe(v => OptionCatalog.Find(other.Option)!.Choices!.Any(c => c.Value == v), option.Id);
+            }
         }
     }
 
@@ -73,13 +77,25 @@ public sealed class OptionDependencyTests
 
         SpecValidator.Warnings(card).ShouldBe(
         [
-            "signInMedia: ignored, it only matters with signInLayout = Split or Slide (coworkee options).",
-            "signInMediaSide: ignored, it only matters with signInLayout = Split or Slide (coworkee options).",
+            "signInMedia: ignored, it only matters with signInLayout = Split or Slide, or loadingScreen = SignInMedia (coworkee options).",
+            "signInMediaSide: ignored, it only matters with signInLayout = Split or Slide, or loadingScreen = SignInMedia (coworkee options).",
         ]);
         NewCommand.TemplateArgs(new NewSettings(card, ".", "shop", null)).ShouldNotContain("--signInMedia");
 
         SpecValidator.Warnings(Spec(("signInMediaSide", "Right"))).ShouldBe(["signInMediaSide: ignored, it only matters with signInMedia (coworkee options)."]);
         SpecValidator.Warnings(Spec(("signInMedia", "https://cdn.test/a.mp4"), ("signInMediaSide", "Right"))).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Sign_in_media_also_matters_with_the_card_layout_when_the_loading_screen_shows_it()
+    {
+        var card = Spec(("signInLayout", "Card"), ("signInMedia", "https://cdn.test/a.mp4"), ("loadingScreen", "SignInMedia"));
+
+        SpecValidator.Warnings(card).ShouldBeEmpty();
+        NewCommand.TemplateArgs(new NewSettings(card, ".", "shop", null)).ShouldContain("--signInMedia");
+        NewCommand.TemplateArgs(new NewSettings(card, ".", "shop", null)).ShouldContain("--loadingScreen");
+        var json = JsonDocument.Parse(OptionsCommand.CatalogJson()).RootElement.EnumerateArray().Single(o => o.GetProperty("id").GetString() == "signInMedia");
+        json.GetProperty("dependsOn").GetProperty("or").GetProperty("option").GetString().ShouldBe("loadingScreen");
     }
 
     [Fact]

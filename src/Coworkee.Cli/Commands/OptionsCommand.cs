@@ -15,7 +15,7 @@ internal static class OptionsCommand
             return Task.FromResult(0);
         });
 
-    public static string CatalogJson(string? group = null) => JsonSerializer.Serialize(OptionCatalog.All.Where(o => group is null || o.Group.Equals(group, StringComparison.OrdinalIgnoreCase)).Select(o => new { o.Id, o.Flag, o.Group, o.Title, o.Description, o.Kind, o.Default, o.Choices, o.WhenToUse, o.Pros, o.Cons, o.Package, o.TemplateSymbol, o.InfoUrl, DependsOn = o.DependsOn is { } need ? new { need.Option, need.Values } : null }), SpecJson.Options);
+    public static string CatalogJson(string? group = null) => JsonSerializer.Serialize(OptionCatalog.All.Where(o => group is null || o.Group.Equals(group, StringComparison.OrdinalIgnoreCase)).Select(o => new { o.Id, o.Flag, o.Group, o.Title, o.Description, o.Kind, o.Default, o.Choices, o.WhenToUse, o.Pros, o.Cons, o.Package, o.TemplateSymbol, o.InfoUrl, DependsOn = o.DependsOn is { } need ? new { need.Option, need.Values, Or = need.Or is { } or ? new { or.Option, or.Values } : null } : null }), SpecJson.Options);
 
     public static string Text()
     {

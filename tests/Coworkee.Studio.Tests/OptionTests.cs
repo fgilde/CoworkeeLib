@@ -220,6 +220,12 @@ public sealed class OptionTests
         main.ToSpec().Branding!.SignInMediaSide.ShouldBeNull();
         main.Errors.ShouldBeEmpty();
 
+        // the loading screen shows the media with every layout
+        main.SignIn.LoadingMedia = true;
+        main.ToSpec().Branding!.LoadingScreen.ShouldBe("SignInMedia");
+        main.ToSpec().Branding!.SignInMedia.ShouldBe("https://cdn.test/a.mp4");
+        main.SignIn.LoadingAnimated = true;
+
         main.Option("signInLayout").Value = "Split";
         main.ToSpec().Branding!.SignInMedia.ShouldBe("https://cdn.test/a.mp4");
     }

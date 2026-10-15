@@ -20,13 +20,16 @@ public enum OptionKind
 public sealed record OptionChoice(string Value, string Description, string? InfoUrl = null);
 
 /// <summary>
-/// An option that only matters while another one has one of <paramref name="Values"/> (none: while it is set, a bool being true).
+/// An option that only matters while another one has one of <paramref name="Values"/> (none: while it is set, a bool being true),
+/// or while <see cref="Or"/> is met.
 /// </summary>
 public sealed record OptionDependency(string Option, params string[] Values)
 {
+    public OptionDependency? Or { get; init; }
+
     public bool IsMet(string? value) => Values.Length == 0 ? value is not (null or "" or "false") : value is not null && Values.Contains(value);
 
-    public override string ToString() => Values.Length == 0 ? Option : $"{Option} = {string.Join(" or ", Values)}";
+    public override string ToString() => (Values.Length == 0 ? Option : $"{Option} = {string.Join(" or ", Values)}") + (Or is { } other ? $", or {other}" : string.Empty);
 }
 
 /// <summary>
@@ -187,9 +190,13 @@ public static class OptionCatalog
             "Split for a full-page image or video, Card for a plain look.", ["Changeable later on the Themes page"], ["None"],
             [new("Card", "A centered card."), new("Split", "Image or video on one side, the form on the other."), new("Slide", "A colored panel next to the form.")]),
         new("signInMedia", SignIn, "Sign-in media", "Image or video next to the sign-in form: a local file (copied into the web client) or an http(s) address.", OptionKind.File, null,
-            "With the Split or Slide layout.", [".mp4, .webm, .ogg and .mov play as video"], ["Large videos slow the first sign-in"], DependsOn: new("signInLayout", "Split", "Slide")),
+            "With the Split or Slide layout, or as background of the loading screen.", [".mp4, .webm, .ogg and .mov play as video"], ["Large videos slow the first sign-in"],
+            DependsOn: new("signInLayout", "Split", "Slide") { Or = new("loadingScreen", "SignInMedia") }),
         new("signInMediaSide", SignIn, "Sign-in media side", "Side of the sign-in media.", OptionKind.Choice, "Left",
             "To match the media's composition.", ["None"], ["None"], [new("Left", "Media left."), new("Right", "Media right.")], DependsOn: new("signInMedia")),
+        new("loadingScreen", SignIn, "Loading screen", "Background of the app's loading screen while the WebAssembly app loads.", OptionKind.Choice, "Animated",
+            "SignInMedia to greet with the sign-in image or video already while loading.", ["Changeable later on the Themes page"], ["None"],
+            [new("Animated", "Soft moving shapes in the theme's colours."), new("SignInMedia", "The image or video of the sign-in pages."), new("Plain", "The theme's background colour only.")]),
 
         new("mapping", Code, "DTO mapping", "Default mapping of generated entities to their DTOs; an entity can choose its own.", OptionKind.Choice, "manual",
             "Mapperly for many or large entities.", ["manual: plain code you can read", "mapperly: compile-time mapper, reports unmapped members"], ["manual: one more line per property", "mapperly: one more package"],
@@ -223,10 +230,13 @@ public static class OptionCatalog
     public static CliOption? Find(string id) => All.FirstOrDefault(o => string.Equals(o.Id, id, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>The dependency that keeps the option from mattering (its own, or one of the option it depends on), or null when it matters.</summary>
-    public static OptionDependency? Unmet(CliOption option, Func<string, string?> value) =>
-        option.DependsOn is not { } need ? null
-        : Find(need.Option) is { } parent && Unmet(parent, value) is { } root ? root
-        : need.IsMet(value(need.Option)) ? null : need;
+    public static OptionDependency? Unmet(CliOption option, Func<string, string?> value) => option.DependsOn is { } need ? Unmet(need, value) : null;
+
+    private static OptionDependency? Unmet(OptionDependency need, Func<string, string?> value)
+    {
+        var unmet = Find(need.Option) is { } parent && Unmet(parent, value) is { } root ? root : need.IsMet(value(need.Option)) ? null : need;
+        return unmet is not null && need.Or is { } other && Unmet(other, value) is null ? null : unmet;
+    }
 
     public static bool IsActive(CliOption option, Func<string, string?> value) => Unmet(option, value) is null;
 
