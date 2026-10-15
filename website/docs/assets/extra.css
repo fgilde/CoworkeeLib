@@ -299,3 +299,4 @@
   .md-typeset ul.cw-brands { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
   .md-typeset .cw-brands a { gap: .45rem; padding: .6rem; font-size: .66rem; }
 }
+[dir] .md-typeset .cw-brands li, [dir] .md-typeset .cw-more li { margin-left: 0; }
