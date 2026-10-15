@@ -1,6 +1,9 @@
+using Coworkee.Client.Blazor.Api;
+using Coworkee.Client.Blazor.Components.Data.Import;
 using Coworkee.Client.Blazor.Data;
 using Coworkee.Contracts.Data;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.DependencyInjection;
 using System.Web;
 using Microsoft.AspNetCore.Components.Forms;
 using MudBlazor;
@@ -9,16 +12,12 @@ namespace Coworkee.Client.Blazor.Components.Data;
 
 public partial class CoworkeeDataTable<T> : IDisposable
 {
-    private const long MaxImportBytes = 20 * 1024 * 1024;
-
     private readonly FacetSelection _selection = new();
     private MudDataGrid<T>? _grid;
     private IReadOnlyList<FacetGroupDto> _facets = [];
     private string? _search;
     private HashSet<T> _selected = [];
     private string? _orderBy;
-    private bool _importing;
-    private MudFileUpload<IBrowserFile>? _upload;
     private DataTableState? _pendingLayout;
     private IReadOnlyList<string> _declaredOrder = [];
     private bool? _dense;
@@ -65,7 +64,7 @@ public partial class CoworkeeDataTable<T> : IDisposable
     /// <summary>A button that switches between compact and comfortable rows.</summary>
     [Parameter] public bool DensityToggle { get; set; } = true;
 
-    /// <summary>Uploads an Excel sheet to the import registered for the entity set (AddODataImport on the server).</summary>
+    /// <summary>An Import button that opens the import wizard for the entity set (AddODataImport on the server).</summary>
     [Parameter] public bool Importable { get; set; }
 
     [Parameter] public string? ImportPermission { get; set; }
@@ -323,10 +322,22 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     private async Task ExportAsync(ExportFormat format)
     {
-        if (format == ExportFormat.Excel)
+        if (DataSource is null)
         {
-            var workbook = await OData.ExportAsync(EntitySet, new ODataQuery { Filter = CurrentFilter, OrderBy = _orderBy });
-            await Downloader.DownloadAsync($"{ExportFileName}.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", workbook);
+            var query = new ODataQuery { Filter = CurrentFilter, OrderBy = _orderBy };
+            var columns = _grid is null ? [] : DataGridLayout<T>.Named(_grid)
+                .Where(c => DataGridLayout<T>.IsProperty(c) && !DataGridLayout<T>.IsHidden(c) && c.PropertyName?.Contains('.') == false)
+                .Select(c => c.PropertyName!)
+                .ToList();
+            var fileFormat = format switch { ExportFormat.Csv => ExportFileFormat.Csv, ExportFormat.Json => ExportFileFormat.Json, _ => ExportFileFormat.Xlsx };
+            ExportResult? result = null;
+            if (await Snackbar.RunAsync(async () => result = await Services.GetRequiredService<IDataTransferApi>().ExportAsync(EntitySet, fileFormat, query, columns)))
+            {
+                await (result!.Job is { } job
+                    ? Services.GetRequiredService<DataTransferWatcher>().Announce(job)
+                    : Downloader.DownloadAsync($"{ExportFileName}{Path.GetExtension(result.FileName)}", result.ContentType, result.Content!));
+            }
+
             return;
         }
 
@@ -359,32 +370,11 @@ public partial class CoworkeeDataTable<T> : IDisposable
     private Task<ODataPage<T>> QueryAsync(ODataQuery query, CancellationToken cancellationToken = default) =>
         DataSource?.QueryAsync(query, cancellationToken) ?? OData.QueryAsync<T>(EntitySet, query, cancellationToken);
 
-    private async Task ImportAsync(IBrowserFile? file)
+    private async Task ImportAsync()
     {
-        if (file is null)
+        if (await Dialogs.ShowImportWizardAsync(L["Import"], EntitySet))
         {
-            return;
-        }
-
-        _importing = true;
-        try
-        {
-            await using var stream = file.OpenReadStream(MaxImportBytes);
-            var result = await OData.ImportAsync(EntitySet, stream, file.Name);
-            Snackbar.Add(L["{0} rows imported, {1} failed.", result.Imported, result.Errors.Count], result.Errors.Count == 0 ? Severity.Success : Severity.Warning);
             await ReloadAsync();
-            if (result.Errors.Count > 0)
-            {
-                _ = Dialogs.ShowMessageBoxAsync(L["Import"], string.Join(Environment.NewLine, result.Errors.Take(20).Select(e => L["Row {0}: {1}", e.Row, e.Message])));
-            }
-        }
-        finally
-        {
-            _importing = false;
-            if (_upload is not null)
-            {
-                await _upload.ClearAsync();
-            }
         }
     }
 

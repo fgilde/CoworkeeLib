@@ -67,10 +67,6 @@ internal sealed class FakeServer : HttpMessageHandler, IODataClient
         }
     }
 
-    public Task<byte[]> ExportAsync(string entitySet, ODataQuery query, CancellationToken cancellationToken = default) => throw new NotSupportedException();
-
-    public Task<ImportResult> ImportAsync(string entitySet, Stream workbook, string fileName, CancellationToken cancellationToken = default) => throw new NotSupportedException();
-
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         await Feed;

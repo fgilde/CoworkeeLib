@@ -10,10 +10,4 @@ internal sealed class ClientEntityODataClient(IODataClient server, ClientEntitie
         await entities.SetAsync<T>(entitySet, query.Expand, cancellationToken) is { } set
             ? await set.QueryAsync(query, cancellationToken)
             : await server.QueryAsync<T>(entitySet, query, cancellationToken);
-
-    public Task<byte[]> ExportAsync(string entitySet, ODataQuery query, CancellationToken cancellationToken = default) =>
-        server.ExportAsync(entitySet, query, cancellationToken);
-
-    public Task<ImportResult> ImportAsync(string entitySet, Stream workbook, string fileName, CancellationToken cancellationToken = default) =>
-        server.ImportAsync(entitySet, workbook, fileName, cancellationToken);
 }

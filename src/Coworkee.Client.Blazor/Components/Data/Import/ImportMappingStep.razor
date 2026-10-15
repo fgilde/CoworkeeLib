@@ -1,0 +1,69 @@
+<MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-3">
+    <MudSelect T="ImportProfileDto" Value="_profile" ValueChanged="ApplyProfile" Label="@L["Saved mapping"]" Variant="Variant.Outlined" Margin="Margin.Dense"
+               Disabled="_profiles.Count == 0" ToStringFunc="p => p?.Name" Style="max-width:260px" data-testid="import-profile">
+        @foreach (var profile in _profiles)
+        {
+            <MudSelectItem T="ImportProfileDto" Value="profile">@profile.Name</MudSelectItem>
+        }
+    </MudSelect>
+    @if (_profile is not null)
+    {
+        <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" aria-label="@L["Delete"]" OnClick="DeleteProfileAsync" />
+    }
+    <MudSpacer />
+    <MudTextField T="string" @bind-Value="_profileName" Immediate="true" Label="@L["Save mapping as"]" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:220px"
+                  data-testid="import-profile-name" />
+    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Save" Disabled="string.IsNullOrWhiteSpace(_profileName)" OnClick="SaveProfileAsync"
+               data-testid="import-profile-save">@L["Save"]</MudButton>
+</MudStack>
+<MudSimpleTable Dense="true" Hover="true" Class="mb-3" data-testid="import-columns">
+    <thead>
+        <tr><th>@L["Column"]</th><th>@L["Values"]</th><th>@L["Field"]</th></tr>
+    </thead>
+    <tbody>
+        @foreach (var column in State.Sheet!.Columns)
+        {
+            <tr>
+                <td>@column.Header</td>
+                <td class="mud-text-secondary" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">@string.Join(", ", column.Samples.Where(s => s is not null))</td>
+                <td style="min-width:200px">
+                    <MudSelect T="string" Value="State.Columns[column.Index]" ValueChanged="f => Map(column.Index, f)" Variant="Variant.Outlined" Margin="Margin.Dense"
+                               Placeholder="@L["Ignore"]" Clearable="true" data-testid="@($"import-column-{column.Index}")">
+                        @foreach (var field in State.Target.Fields)
+                        {
+                            <MudSelectItem T="string" Value="field.Name">@Label(field)</MudSelectItem>
+                        }
+                    </MudSelect>
+                </td>
+            </tr>
+        }
+    </tbody>
+</MudSimpleTable>
+@if (State.MissingRequired.ToList() is { Count: > 0 } missing)
+{
+    <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3" data-testid="import-missing">@L["Not mapped yet: {0}", string.Join(", ", missing.Select(f => L[f.Label]))]</MudAlert>
+}
+<MudStack Row="true" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center">
+    <MudRadioGroup T="ImportMode" Value="State.Mode" ValueChanged="SetMode" data-testid="import-mode">
+        <MudRadio T="ImportMode" Value="ImportMode.Create" Color="Color.Primary">@L["Add new rows"]</MudRadio>
+        @if (State.Target.CanUpdate)
+        {
+            <MudRadio T="ImportMode" Value="ImportMode.Update" Color="Color.Primary">@L["Update existing rows"]</MudRadio>
+            <MudRadio T="ImportMode" Value="ImportMode.Upsert" Color="Color.Primary">@L["Update or add"]</MudRadio>
+        }
+    </MudRadioGroup>
+    @if (State.Mode != ImportMode.Create)
+    {
+        <MudSelect T="string" Value="State.KeyField" ValueChanged="SetKey" Label="@L["Find rows by"]" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:220px" data-testid="import-key">
+            @foreach (var key in State.Target.KeyFields.Where(State.Columns.Contains))
+            {
+                <MudSelectItem T="string" Value="key">@Label(State.Target.Fields.First(f => f.Name == key))</MudSelectItem>
+            }
+        </MudSelect>
+    }
+    @if (State.IsText)
+    {
+        <MudTextField T="string" Value="State.Culture" ValueChanged="SetCulture" Label="@L["Language of numbers and dates"]" Placeholder="@System.Globalization.CultureInfo.CurrentCulture.Name"
+                      Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:240px" data-testid="import-culture" />
+    }
+</MudStack>

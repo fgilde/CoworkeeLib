@@ -34,35 +34,6 @@ internal sealed class ODataClient(HttpClient http) : IODataClient
         return new ODataPage<T>(page?.Value ?? [], page?.Count, page?.Facets ?? []);
     }
 
-    public async Task<byte[]> ExportAsync(string entitySet, ODataQuery query, CancellationToken cancellationToken = default)
-    {
-        using var request = new HttpRequestMessage(HttpMethod.Get, $"api/v1/data/{Uri.EscapeDataString(entitySet)}/export{(query with { Count = false }).ToQueryString()}");
-        request.Headers.Add("X-CSRF", "1");
-        using var response = await http.SendAsync(request, cancellationToken);
-        if (!response.IsSuccessStatusCode)
-        {
-            throw new ApiException((int)response.StatusCode, "export.failed", null);
-        }
-
-        return await response.Content.ReadAsByteArrayAsync(cancellationToken);
-    }
-
-    public async Task<ImportResult> ImportAsync(string entitySet, Stream workbook, string fileName, CancellationToken cancellationToken = default)
-    {
-        using var request = new HttpRequestMessage(HttpMethod.Post, $"api/v1/data/{Uri.EscapeDataString(entitySet)}/import")
-        {
-            Content = new MultipartFormDataContent { { new StreamContent(workbook), "file", fileName } },
-        };
-        request.Headers.Add("X-CSRF", "1");
-        using var response = await http.SendAsync(request, cancellationToken);
-        if (!response.IsSuccessStatusCode)
-        {
-            throw new ApiException((int)response.StatusCode, "import.failed", null);
-        }
-
-        return (await response.Content.ReadFromJsonAsync<ImportResult>(Json, cancellationToken))!;
-    }
-
     private sealed class Response<T>
     {
         [JsonPropertyName("value")]

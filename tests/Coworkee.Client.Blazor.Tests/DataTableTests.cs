@@ -169,9 +169,13 @@ public sealed class DataTableTests : ClientTestBase
     }
 
     [Fact]
-    public async Task Excel_export_sends_the_current_filter_and_import_reports_failed_rows()
+    public async Task Excel_export_sends_the_current_filter_and_columns_and_import_opens_the_wizard()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
+        NSubstitute.SubstituteExtensions.ReturnsForAnyArgs(Transfer.ExportAsync(default!, default, default!, default!, default),
+            Task.FromResult(new ExportResult([1, 2], "Gadgets.xlsx", "application/octet-stream", null)));
+        NSubstitute.SubstituteExtensions.ReturnsForAnyArgs(Transfer.GetTargetAsync(default!, default),
+            Task.FromResult(new ImportTargetDto("Gadgets", [new ImportFieldDto("Name", "Name", "String", true)], false, false, [])));
         var dialogs = Render<MudDialogProvider>();
         var popovers = Render<MudPopoverProvider>();
         Render<MudSnackbarProvider>();
@@ -183,12 +187,13 @@ public sealed class DataTableTests : ClientTestBase
         table.WaitForAssertion(() => table.Markup.ShouldContain("Drill"));
 
         await table.Find("[data-testid='export'] button").ClickAsync(new());
-        await popovers.WaitForElement(".mud-menu-item").ClickAsync(new());
-        table.WaitForAssertion(() => _odata.Exported!.Filter.ShouldBe("Price gt 1"));
+        await popovers.WaitForElement("[data-testid='export-excel']").ClickAsync(new());
+        table.WaitForAssertion(() => NSubstitute.Received.InOrder(() => Transfer.ExportAsync("Gadgets", ExportFileFormat.Xlsx,
+            NSubstitute.Arg.Is<ODataQuery>(q => q.Filter == "Price gt 1"), NSubstitute.Arg.Is<IReadOnlyCollection<string>>(c => c.SequenceEqual(new[] { "Name" })),
+            NSubstitute.Arg.Any<CancellationToken>())));
 
-        table.FindComponent<Microsoft.AspNetCore.Components.Forms.InputFile>().UploadFiles(InputFileContent.CreateFromBinary([1], "gadgets.xlsx"));
-        table.WaitForAssertion(() => _odata.Imported.ShouldBe("Gadgets/gadgets.xlsx"));
-        dialogs.WaitForAssertion(() => dialogs.Markup.ShouldContain("Row 3: Name: required"));
+        _ = table.Find("[data-testid='import']").ClickAsync(new()); // the wizard stays open, so the click does not finish
+        dialogs.WaitForAssertion(() => dialogs.Markup.ShouldContain("Choose a CSV, Excel or JSON file"));
     }
 
     [Fact]
@@ -247,22 +252,6 @@ public sealed class DataTableTests : ClientTestBase
             Loads++;
             IReadOnlyList<T> items = (IReadOnlyList<T>)(object)new List<Gadget> { new(Guid.CreateVersion7(), "Drill", "Tools"), new(Guid.CreateVersion7(), "Lamp", "Light") };
             return Task.FromResult(new ODataPage<T>(items, 2, [Category]));
-        }
-
-        public ODataQuery? Exported { get; private set; }
-
-        public string? Imported { get; private set; }
-
-        public Task<byte[]> ExportAsync(string entitySet, ODataQuery query, CancellationToken cancellationToken = default)
-        {
-            Exported = query;
-            return Task.FromResult<byte[]>([1, 2]);
-        }
-
-        public Task<ImportResult> ImportAsync(string entitySet, Stream workbook, string fileName, CancellationToken cancellationToken = default)
-        {
-            Imported = $"{entitySet}/{fileName}";
-            return Task.FromResult(new ImportResult(1, [new ImportRowError(3, "Name: required")]));
         }
     }
 }

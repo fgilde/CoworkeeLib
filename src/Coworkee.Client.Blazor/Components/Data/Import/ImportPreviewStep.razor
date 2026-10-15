@@ -1,0 +1,48 @@
+@if (State.Preview is not { } preview)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else
+{
+    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" Class="mb-3" data-testid="import-counts">
+        <MudChip T="string" Size="Size.Small">@L["{0} of {1} rows checked", preview.Checked, preview.Total]</MudChip>
+        <MudChip T="string" Size="Size.Small" Color="Color.Success">@L["{0} new", preview.Creates]</MudChip>
+        @if (State.Mode != ImportMode.Create)
+        {
+            <MudChip T="string" Size="Size.Small" Color="Color.Info">@L["{0} updated", preview.Updates]</MudChip>
+        }
+        <MudChip T="string" Size="Size.Small" Color="@(preview.Checked > preview.Valid ? Color.Error : Color.Default)">@L["{0} with errors", preview.Checked - preview.Valid]</MudChip>
+    </MudStack>
+    @if (preview.Checked < preview.Total)
+    {
+        <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3">@L["The check covers the first rows. A dry run in the next step checks all of them."]</MudAlert>
+    }
+    <MudSwitch T="bool" @bind-Value="_onlyErrors" Color="Color.Error" Disabled="preview.Invalid.Count == 0" Label="@L["Only rows with errors"]" data-testid="import-only-errors" />
+    <MudSimpleTable Dense="true" Hover="true" Style="overflow-x:auto" data-testid="import-preview">
+        <thead>
+            <tr>
+                <th>@L["Row"]</th>
+                <th></th>
+                @foreach (var field in Fields)
+                {
+                    <th>@L[field.Label]</th>
+                }
+                <th>@L["Errors"]</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in _onlyErrors ? preview.Invalid : preview.Rows)
+            {
+                <tr class="@(row.Errors.Count > 0 ? "mud-error-text" : null)">
+                    <td>@row.Row</td>
+                    <td><MudIcon Icon="@Icon(row)" Size="Size.Small" Title="@L[row.Action]" /></td>
+                    @foreach (var field in Fields)
+                    {
+                        <td>@row.Values.GetValueOrDefault(field.Name)</td>
+                    }
+                    <td>@string.Join(" ", row.Errors)</td>
+                </tr>
+            }
+        </tbody>
+    </MudSimpleTable>
+}

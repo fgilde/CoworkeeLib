@@ -49,6 +49,8 @@ public abstract class ClientTestBase : BunitContext
         Services.AddSingleton<Realtime.IRealtimeConnection>(sp => sp.GetRequiredService<FakeRealtimeConnection>());
         Services.AddScoped<Realtime.RealtimeClient>();
         Services.AddScoped<Realtime.NotificationCenter>();
+        Services.AddSingleton(Transfer);
+        Services.AddScoped<Data.DataTransferWatcher>();
         Localization.GetTextsAsync(default!, default).ReturnsForAnyArgs(call => new Contracts.Localization.TextsDto(call.Arg<string>(), new Dictionary<string, string>()));
         Services.AddSingleton(Localization);
         Services.AddSingleton<Localization.CoworkeeLocalizer>();
@@ -61,6 +63,8 @@ public abstract class ClientTestBase : BunitContext
     protected ICoworkeeApi Api { get; } = Substitute.For<ICoworkeeApi>();
 
     protected Chat.IChatApi ChatApi { get; } = Substitute.For<Chat.IChatApi>();
+
+    protected Data.IDataTransferApi Transfer { get; } = Substitute.For<Data.IDataTransferApi>();
 
     protected Features.IFeaturesApi FeaturesApi { get; } = Substitute.For<Features.IFeaturesApi>();
 

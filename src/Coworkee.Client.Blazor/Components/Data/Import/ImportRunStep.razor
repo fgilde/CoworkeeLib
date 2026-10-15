@@ -1,0 +1,40 @@
+@if (State.Job is not { } job)
+{
+    <MudText Class="mb-3">@L["{0} rows will be imported. A dry run checks every row without writing anything.", State.Sheet!.RowCount]</MudText>
+    <MudStack Row="true" Spacing="2">
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.FactCheck" Disabled="_busy" OnClick="() => StartAsync(true)"
+                   data-testid="import-dry-run">@L["Dry run"]</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.FileUpload" Disabled="_busy" OnClick="() => StartAsync(false)"
+                   data-testid="import-start">@L["Import"]</MudButton>
+    </MudStack>
+}
+else
+{
+    <MudText Typo="Typo.subtitle1" data-testid="import-status">@L[Status(job)]</MudText>
+    <MudProgressLinear Color="@(job.Status == DataTransferStatus.Failed ? Color.Error : Color.Primary)" Value="Percent(job)" Indeterminate="@(job.Total == 0 && !job.IsFinished)"
+                       Class="my-2" data-testid="import-progress" />
+    <MudText Typo="Typo.body2" data-testid="import-result">
+        @L["{0} of {1} rows: {2} new, {3} updated, {4} failed", job.Processed, job.Total, job.Created, job.Updated, job.Failed]
+    </MudText>
+    @if (job.Message is { Length: > 0 } message)
+    {
+        <MudAlert Severity="Severity.Error" Dense="true" Class="mt-2">@message</MudAlert>
+    }
+    <MudStack Row="true" Spacing="2" Class="mt-3">
+        @if (job.ResultFileName is not null)
+        {
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.FileDownload" OnClick="() => Watcher.DownloadAsync(job)"
+                       data-testid="import-errors">@L["Download failed rows"]</MudButton>
+        }
+        @if (job is { DryRun: true, IsFinished: true })
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.FileUpload" Disabled="_busy" OnClick="() => StartAsync(false)"
+                       data-testid="import-start">@L["Import now"]</MudButton>
+        }
+        @if (job.CanUndo)
+        {
+            <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Outlined.Undo" Disabled="_busy" OnClick="UndoAsync"
+                       data-testid="import-undo">@L["Undo import"]</MudButton>
+        }
+    </MudStack>
+}
