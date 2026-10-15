@@ -1,6 +1,7 @@
 import type { AppContext, Intent } from '@fgilde/airworks';
 import type { Coworkee, CoworkeeApp } from '../coworkee.ts';
 import { esc } from '../dom.ts';
+import { icons } from '../icons.ts';
 import { mudExFrame } from '../mudex.ts';
 
 export const filePreviewAppId = 'coworkee.file-preview';
@@ -9,7 +10,7 @@ export const filePreviewAppId = 'coworkee.file-preview';
 export const filePreviewApp = (coworkee: Coworkee): CoworkeeApp => ({
   id: filePreviewAppId,
   title: coworkee.t('Preview'),
-  icon: 'fn-analysis.png',
+  icon: icons.description,
   accent: '#b26a00',
   width: 900,
   height: 640,

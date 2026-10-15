@@ -2,12 +2,13 @@ import { realtimeEvents, realtimeTopics, unwrap } from '@coworkee/client';
 import type { AppContext } from '@fgilde/airworks';
 import type { Coworkee, CoworkeeApp } from '../coworkee.ts';
 import { display, errorText, esc } from '../dom.ts';
+import { icons } from '../icons.ts';
 
 /** The user's notifications: unread first in bold, mark read, mark all read, delete. */
 export const notificationsApp = (coworkee: Coworkee): CoworkeeApp => ({
   id: 'coworkee.notifications',
   title: coworkee.t('Notifications'),
-  icon: 'fn-ideaportal.png',
+  icon: icons.notifications,
   accent: '#a2273b',
   width: 560,
   height: 600,
@@ -56,7 +57,7 @@ export const notificationsApp = (coworkee: Coworkee): CoworkeeApp => ({
 export const apiDocsApp = (coworkee: Coworkee): CoworkeeApp => ({
   id: 'coworkee.api-docs',
   title: coworkee.t('API documentation'),
-  icon: 'fn-workflow.png',
+  icon: icons.dataObject,
   accent: '#447d1c',
   width: 1000,
   height: 680,

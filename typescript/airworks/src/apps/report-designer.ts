@@ -3,6 +3,7 @@ import type { AppContext } from '@fgilde/airworks';
 import type { Coworkee, CoworkeeApp } from '../coworkee.ts';
 import { errorText, esc } from '../dom.ts';
 import { formDialog } from '../form.ts';
+import { icons } from '../icons.ts';
 import { createWidget, hasData, isNumber, place, presets, reportIcons, type Source, type Widget } from './report-model.ts';
 import { humanize, rangeSelect, renderGrid, renderWidget, reportAppId, reportDesignerAppId } from './reports.ts';
 
@@ -93,7 +94,7 @@ export function setPath(widget: Widget, path: string, value: unknown) {
 
 /** Creates and changes reports: widgets on the 12 column grid (drag to move, the corner to resize), their data, filter and display, the report's settings. */
 export const reportDesignerApp = (coworkee: Coworkee): CoworkeeApp => ({
-  id: reportDesignerAppId, title: coworkee.t('New report'), icon: 'fn-dashboard.png', accent: '#1565c0', width: 1280, height: 800, hidden: true,
+  id: reportDesignerAppId, title: coworkee.t('New report'), icon: icons.dashboardCustomize, accent: '#1565c0', width: 1280, height: 800, hidden: true,
   requiredPermissions: ['Reports.Manage'],
   render: async ({ host, intent, setTitle, setState, onClose }: AppContext) => {
     const { t, request } = coworkee;

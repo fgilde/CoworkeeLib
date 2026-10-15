@@ -1,6 +1,7 @@
 import type { AppContext } from '@fgilde/airworks';
 import type { AppFactory, Coworkee, CoworkeeApp } from '../../coworkee.ts';
 import { esc } from '../../dom.ts';
+import { icons } from '../../icons.ts';
 import { aiSettingsApp } from '../assistant.ts';
 import { identityApps } from './identity.ts';
 import { mailApps } from './mail.ts';
@@ -16,7 +17,7 @@ const allowed = (coworkee: Coworkee) => coworkee.apps.filter((app) => app.group 
 /** Every administration app the user may open, grouped like the administration menu of the web app. */
 export const administrationApp = (coworkee: Coworkee): CoworkeeApp => {
   const definition = (visible: boolean): CoworkeeApp => ({
-    id: administrationAppId, title: coworkee.t('Administration'), icon: 'startmenu-settings.png', accent: '#35496b', width: 760, height: 560, singleInstance: true,
+    id: administrationAppId, title: coworkee.t('Administration'), icon: icons.adminPanel, accent: '#35496b', width: 760, height: 560, singleInstance: true,
     requiredPermissions: visible ? [] : [nobody],
     render: ({ host }: AppContext) => {
       const { t } = coworkee;

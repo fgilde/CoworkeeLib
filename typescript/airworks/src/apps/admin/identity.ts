@@ -3,6 +3,7 @@ import type { Coworkee } from '../../coworkee.ts';
 import { choices, crudApp } from '../../crud.ts';
 import { display, esc } from '../../dom.ts';
 import { formDialog, infoDialog, type Field, type Values } from '../../form.ts';
+import { icons } from '../../icons.ts';
 import type { LookupSource } from '../../lookup.ts';
 
 type User = Schemas['UserDto'];
@@ -51,7 +52,7 @@ export async function editGrants(coworkee: Coworkee, providerType: 'Role' | 'Use
 }
 
 export const usersApp = crudApp<User>({
-  id: 'coworkee.admin.users', group: 'Identity', title: 'Users', icon: 'startmenu-user.png', accent: '#1565c0', width: 920,
+  id: 'coworkee.admin.users', group: 'Identity', title: 'Users', icon: icons.manageAccounts, accent: '#1565c0', width: 920,
   permissions: ['Identity.Users.View'],
   search: true, serverSearch: true,
   load: async ({ request }, { page, pageSize, search }) => {
@@ -130,7 +131,7 @@ export const usersApp = crudApp<User>({
 });
 
 export const groupsApp = crudApp<Group>({
-  id: 'coworkee.admin.groups', group: 'Identity', title: 'Groups', icon: 'ratio-personal.png', accent: '#6a1b9a',
+  id: 'coworkee.admin.groups', group: 'Identity', title: 'Groups', icon: icons.groups, accent: '#6a1b9a',
   permissions: ['Identity.Groups.View'],
   search: true, serverSearch: true,
   load: async ({ request }, { page, pageSize, search }) => {
@@ -169,7 +170,7 @@ const roleFields: Field[] = [
 ];
 
 export const rolesApp = crudApp<Role>({
-  id: 'coworkee.admin.roles', group: 'Identity', title: 'Roles', icon: 'fn-abcAnalysis.png', accent: '#ad1457',
+  id: 'coworkee.admin.roles', group: 'Identity', title: 'Roles', icon: icons.roles, accent: '#ad1457',
   permissions: ['Identity.Roles.View'],
   search: true,
   load: async ({ request }) => ({ items: await request<Role[]>(`${identity}/roles`) }),
@@ -197,7 +198,7 @@ const showSecret = async (coworkee: Coworkee, result: Schemas['ClientSecretDto']
 };
 
 export const clientsApp = crudApp<Client>({
-  id: 'coworkee.admin.clients', group: 'Identity', title: 'Applications', icon: 'fn-userweblink.png', accent: '#00695c', width: 940,
+  id: 'coworkee.admin.clients', group: 'Identity', title: 'Applications', icon: icons.apps, accent: '#00695c', width: 940,
   permissions: ['Identity.Clients.Manage'], hostOnly: true,
   search: true,
   load: async ({ request }) => ({ items: await request<Client[]>(`${identity}/clients`) }),
@@ -236,7 +237,7 @@ const scopeFields: Field[] = [
 ];
 
 export const scopesApp = crudApp<Scope>({
-  id: 'coworkee.admin.scopes', group: 'Identity', title: 'Scopes', icon: 'icon-percent.png', accent: '#4e342e',
+  id: 'coworkee.admin.scopes', group: 'Identity', title: 'Scopes', icon: icons.checklist, accent: '#4e342e',
   permissions: ['Identity.Clients.Manage'], hostOnly: true,
   search: true,
   load: async ({ request }) => ({ items: await request<Scope[]>(`${identity}/scopes`) }),
@@ -252,7 +253,7 @@ export const scopesApp = crudApp<Scope>({
 const inDays = (days: number) => new Date(Date.now() + days * 86400000).toISOString();
 
 export const apiKeysApp = crudApp<ApiKey>({
-  id: 'coworkee.admin.api-keys', group: 'Identity', title: 'API keys', icon: 'login-password.png', accent: '#37474f', width: 900,
+  id: 'coworkee.admin.api-keys', group: 'Identity', title: 'API keys', icon: icons.key, accent: '#37474f', width: 900,
   permissions: ['ApiKeys.Manage'],
   load: async ({ request }) => ({ items: await request<ApiKey[]>(`${identity}/api-keys`) }),
   columns: [

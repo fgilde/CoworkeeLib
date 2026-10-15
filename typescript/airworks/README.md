@@ -21,4 +21,6 @@ Apps are hidden when the user lacks their permission, like the menu of the Blazo
 
 `coworkee new --airworks` creates an app with this client in the Aspire app host; it takes the packages from the tarballs inside the template, or with `--airworks-packages npm` the version of the Coworkee release on npm. Documentation: [AirWorks client](https://fgilde.github.io/CoworkeeLib/web/airworks/)
 
-License: MIT
+`icons` holds white Material Symbols glyphs as `data:` URLs for apps where the AirWorks icon set has no fitting icon (`icon: icons.chat`); your own apps can use them too.
+
+License: MIT. The glyphs in `icons` are from [Material Symbols / Material Icons](https://github.com/google/material-design-icons) by Google, licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).

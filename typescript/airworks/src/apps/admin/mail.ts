@@ -4,6 +4,7 @@ import type { Coworkee, CoworkeeApp } from '../../coworkee.ts';
 import { choices, crudApp, renderCrud } from '../../crud.ts';
 import { display, errorText, esc } from '../../dom.ts';
 import { confirmDialog, formDialog, infoDialog, type Field, type Values } from '../../form.ts';
+import { icons } from '../../icons.ts';
 import { settingsPageApp } from '../settings.ts';
 import { userLookup } from './identity.ts';
 
@@ -61,7 +62,7 @@ export async function previewRecipients(coworkee: Coworkee, source: Source) {
 }
 
 export const mailTemplatesApp = crudApp<Template>({
-  id: 'coworkee.admin.mail-templates', group: 'Communication', title: 'Mail templates', icon: 'fn-ideaportal.png', accent: '#00838f',
+  id: 'coworkee.admin.mail-templates', group: 'Communication', title: 'Mail templates', icon: icons.drafts, accent: '#00838f',
   permissions: ['Mail.Templates.Manage'],
   search: true,
   load: async ({ request }) => ({ items: await request<Template[]>(`${mail}/templates`) }),
@@ -87,7 +88,7 @@ export const mailTemplatesApp = crudApp<Template>({
 
 /** Subject and body of a template in one language with a live preview, a test mail to oneself and the way back to the default. */
 export const mailTemplateApp = (coworkee: Coworkee): CoworkeeApp => ({
-  id: mailTemplateAppId, title: coworkee.t('Template'), icon: 'fn-ideaportal.png', accent: '#00838f', width: 1080, height: 680, hidden: true,
+  id: mailTemplateAppId, title: coworkee.t('Template'), icon: icons.drafts, accent: '#00838f', width: 1080, height: 680, hidden: true,
   requiredPermissions: ['Mail.Templates.Manage'],
   render: async ({ host, intent, setTitle }: AppContext) => {
     const { t, request } = coworkee;
@@ -157,7 +158,7 @@ const campaignRequest = async (coworkee: Coworkee, values: Values) => {
 const editable = (campaign: Campaign) => campaign.status === 'Draft';
 
 export const mailCampaignsApp = crudApp<Campaign>({
-  id: 'coworkee.admin.mail-campaigns', group: 'Communication', title: 'Mail campaigns', icon: 'fn-dashboard.png', accent: '#d84315', width: 980,
+  id: 'coworkee.admin.mail-campaigns', group: 'Communication', title: 'Mail campaigns', icon: icons.campaign, accent: '#d84315', width: 980,
   permissions: ['Mail.Campaigns.Send'],
   search: true,
   load: async ({ request }) => ({ items: await request<Campaign[]>(`${mail}/campaigns`) }),
@@ -196,7 +197,7 @@ export const mailCampaignsApp = crudApp<Campaign>({
 });
 
 export const recipientListsApp = crudApp<RecipientList>({
-  id: 'coworkee.admin.recipient-lists', group: 'Communication', title: 'Recipient lists', icon: 'ratio-personal.png', accent: '#d84315',
+  id: 'coworkee.admin.recipient-lists', group: 'Communication', title: 'Recipient lists', icon: icons.contactMail, accent: '#d84315',
   permissions: ['Mail.Campaigns.Send'],
   search: true,
   load: async ({ request }) => ({ items: await request<RecipientList[]>(`${mail}/recipient-lists`) }),
@@ -219,7 +220,7 @@ const statuses = ['', 'Queued', 'Sending', 'Sent', 'Failed', 'Skipped'];
 
 /** The mails the app sent or queued; opened from a campaign it shows that campaign's mails. */
 export const mailLogApp = (coworkee: Coworkee): CoworkeeApp => ({
-  id: mailLogAppId, group: 'Communication', title: coworkee.t('Mail log'), icon: 'fn-reporttable.png', accent: '#00838f', width: 980, height: 600,
+  id: mailLogAppId, group: 'Communication', title: coworkee.t('Mail log'), icon: icons.receiptLong, accent: '#00838f', width: 980, height: 600,
   requiredPermissions: ['Mail.Log.View'],
   render: ({ host, intent, onClose, setTitle }: AppContext) => {
     const { t } = coworkee;
@@ -253,7 +254,7 @@ export const mailLogApp = (coworkee: Coworkee): CoworkeeApp => ({
 });
 
 export const mailSettingsApp = settingsPageApp({
-  id: 'coworkee.admin.mail-settings', group: 'Communication', title: 'Mail settings', icon: 'startmenu-settings.png', accent: '#00838f', page: '/admin/mail-settings',
+  id: 'coworkee.admin.mail-settings', group: 'Communication', title: 'Mail settings', icon: icons.mail, accent: '#00838f', page: '/admin/mail-settings',
   test: {
     title: 'Test connection',
     run: async (coworkee, _, changed) => {
