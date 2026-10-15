@@ -27,7 +27,7 @@ public sealed class CoworkeeLoadingScreen : ComponentBase
             // the page now carries the visitor's theme and language: no shared cache may keep it
             if (!HttpContext.Response.HasStarted)
             {
-                HttpContext.Response.Headers.CacheControl = "no-store";
+                HttpContext.Response.Headers.CacheControl = "no-cache, no-store"; // exactly what antiforgery wants, so it does not override it with a warning
             }
 
             var preferences = LoadingScreenPreferences.Read(HttpContext.Request);

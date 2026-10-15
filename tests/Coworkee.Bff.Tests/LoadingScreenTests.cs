@@ -297,7 +297,7 @@ public sealed class LoadingScreenTests
 
         await RenderAsync(app, context);
 
-        context.Response.Headers.CacheControl.ToString().ShouldBe("no-store");
+        context.Response.Headers.CacheControl.ToString().ShouldBe("no-cache, no-store");
     }
 
     private static readonly Contracts.Localization.LanguageDto[] Languages = [new(null, "en", "English", true, true), new(null, "de", "Deutsch", true, false)];
