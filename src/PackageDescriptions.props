@@ -41,4 +41,5 @@
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Studio'"><Description>Coworkee Studio, the desktop wizard for Windows, macOS and Linux: name, branding, sign-in, modules, infrastructure and entities of a new app, created with the coworkee CLI. Start it with coworkee ui.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Testing'"><Description>Database fixture (Postgres or SQL Server container, SQLite file), test users and a web application factory for Coworkee apps.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Theming'"><Description>Themes with palettes, fonts, layout and app options per tenant, editable at runtime.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Webhooks'"><Description>Outgoing webhooks: signed events about entity changes, workflow transitions and app events, with retries and a delivery log.</Description></PropertyGroup>
 </Project>
