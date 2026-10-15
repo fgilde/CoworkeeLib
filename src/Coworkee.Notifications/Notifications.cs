@@ -21,7 +21,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Coworkee.Notifications;
 
 [NotAudited]
-public sealed class Notification : Entity, IHasRealtimeTopics
+public sealed class Notification : AggregateRoot, IHasRealtimeTopics
 {
     public Guid UserId { get; set; }
 
@@ -47,6 +47,8 @@ public sealed class Notification : Entity, IHasRealtimeTopics
     /// <summary>The text in English, placeholders filled.</summary>
     public static string? Format(string? text, IReadOnlyList<string>? arguments) =>
         text is null || arguments is null ? text : string.Format(System.Globalization.CultureInfo.InvariantCulture, text, [.. arguments]);
+
+    internal void OfferPush() => Raise(new Push.NotificationCreated(Id));
 }
 
 public interface INotifier
@@ -61,7 +63,7 @@ public interface INotifier
         IEnumerable<Guid> userIds, string type, string title, string? body, IReadOnlyList<string> arguments, string? link = null, CancellationToken cancellationToken = default);
 }
 
-internal sealed class Notifier(CoworkeeDbContext db, ICurrentUser currentUser, TimeProvider clock) : INotifier
+internal sealed class Notifier(CoworkeeDbContext db, ICurrentUser currentUser, TimeProvider clock, Microsoft.Extensions.Options.IOptions<NotificationOptions> options) : INotifier
 {
     public Task NotifyAsync(IEnumerable<Guid> userIds, string type, string title, string? body = null, string? link = null, CancellationToken cancellationToken = default) =>
         AddAsync(userIds, type, title, body, null, link);
@@ -73,17 +75,28 @@ internal sealed class Notifier(CoworkeeDbContext db, ICurrentUser currentUser, T
     private Task AddAsync(IEnumerable<Guid> userIds, string type, string title, string? body, List<string>? arguments, string? link)
     {
         var now = clock.GetUtcNow();
-        db.AddRange(userIds.Distinct().Select(userId => new Notification
+        var push = Push.PushConfiguration.IsOn(options.Value.Push);
+        foreach (var userId in userIds.Distinct())
         {
-            UserId = userId,
-            TenantId = currentUser.TenantId,
-            Type = type,
-            Title = title,
-            Body = body,
-            Arguments = arguments,
-            Link = link,
-            CreatedAt = now,
-        }));
+            var notification = new Notification
+            {
+                UserId = userId,
+                TenantId = currentUser.TenantId,
+                Type = type,
+                Title = title,
+                Body = body,
+                Arguments = arguments,
+                Link = link,
+                CreatedAt = now,
+            };
+            if (push)
+            {
+                notification.OfferPush();
+            }
+
+            db.Add(notification);
+        }
+
         return Task.CompletedTask;
     }
 }
@@ -203,6 +216,17 @@ internal sealed class NotificationModelContributor : IModelContributor
             state.ToTable("NotificationDigests", "cw");
             state.HasIndex(s => s.UserId).IsUnique();
         });
+
+        modelBuilder.Entity<Push.PushSubscription>(device =>
+        {
+            device.ToTable("PushSubscriptions", "cw");
+            device.Property(s => s.Endpoint).HasMaxLength(2000);
+            device.Property(s => s.P256dh).HasMaxLength(200);
+            device.Property(s => s.Auth).HasMaxLength(200);
+            device.Property(s => s.Device).HasMaxLength(200);
+            device.HasIndex(s => s.Endpoint).IsUnique();
+            device.HasIndex(s => s.UserId);
+        });
     }
 }
 
@@ -220,6 +244,7 @@ public sealed class CoworkeeNotificationsModule : CoworkeeModule, IWebModule
         context.Services.AddRecurringJob<NotificationDigestJob>(NotificationDigestJob.Id,
             context.Configuration[$"{NotificationOptions.Section}:DigestCron"] is { Length: > 0 } cron ? cron : new NotificationOptions().DigestCron);
         context.Services.TryAddSingleton(TimeProvider.System);
+        context.Services.AddHttpClient<Push.IPushSender, Push.WebPushSender>(http => http.Timeout = TimeSpan.FromSeconds(30));
     }
 
     public void ConfigureApplication(WebApplication app)
@@ -233,5 +258,8 @@ public sealed class CoworkeeNotificationsModule : CoworkeeModule, IWebModule
         api.MapPost("/{id:guid}/unread", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new MarkNotificationUnread(id), ct).ToHttpResult());
         api.MapDelete("/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteNotification(id), ct).ToHttpResult());
         api.MapDelete("/", (IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteAllNotifications(), ct).ToHttpResult());
+        api.MapGet("/push", (IDispatcher d, CancellationToken ct) => d.SendAsync(new Push.GetPushSettings(), ct).ToHttpResult());
+        api.MapPut("/push", (PushSubscriptionRequest subscription, IDispatcher d, CancellationToken ct) => d.SendAsync(new Push.SavePushSubscription(subscription), ct).ToHttpResult());
+        api.MapDelete("/push/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new Push.DeletePushSubscription(id), ct).ToHttpResult());
     }
 }

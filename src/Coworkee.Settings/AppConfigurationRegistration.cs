@@ -70,7 +70,9 @@ public static class AppConfigurationRegistrationExtensions
     private static readonly AppConfigurationRules<CoworkeeAppSettings> AppSettingsRules = new AppConfigurationRules<CoworkeeAppSettings>()
         .Protect(s => s.Jobs.ConnectionStringName, s => s.Jobs.RunServer, s => s.Jobs.DashboardPath, s => s.Notifications.PublicAppUrl)
         // the configuration binder appends to collections that start with items, so these could never be edited
-        .Hide(s => s.Jobs.Queues, s => s.Jobs.RetryDelaysInSeconds);
+        .Hide(s => s.Jobs.Queues, s => s.Jobs.RetryDelaysInSeconds)
+        // the VAPID keys come with the deployment; another pair would silence every subscribed device
+        .Hide(s => s.Notifications.Push);
 
     /// <summary>Binds <typeparamref name="T"/> to the section (IOptions/IOptionsMonitor) and lets admins of the system organisation edit it under Settings.</summary>
     public static IServiceCollection AddCoworkeeAppConfiguration<T>(this IServiceCollection services, IConfiguration configuration, string section, string title,
