@@ -44,6 +44,7 @@
     <Project Path="src/Coworkee.Studio/Coworkee.Studio.csproj" />
     <Project Path="src/Coworkee.Testing/Coworkee.Testing.csproj" />
     <Project Path="src/Coworkee.Theming/Coworkee.Theming.csproj" />
+    <Project Path="src/Coworkee.Workflows/Coworkee.Workflows.csproj" />
   </Folder>
   <Folder Name="/templates/">
     <Project Path="templates/Coworkee.Templates/Coworkee.Templates.csproj" />
@@ -89,5 +90,6 @@
     <Project Path="tests/Coworkee.Storage.Tests/Coworkee.Storage.Tests.csproj" />
     <Project Path="tests/Coworkee.Studio.Tests/Coworkee.Studio.Tests.csproj" />
     <Project Path="tests/Coworkee.Theming.Tests/Coworkee.Theming.Tests.csproj" />
+    <Project Path="tests/Coworkee.Workflows.Tests/Coworkee.Workflows.Tests.csproj" />
   </Folder>
 </Solution>
