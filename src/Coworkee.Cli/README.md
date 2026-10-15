@@ -20,7 +20,9 @@ coworkee run
 | `coworkee module add <name> [--entity <name>] [--property Name:type:required:max:key=value]... [--enum Name=A,B]` | Feature module with an entity (references, enums, money, dates, email, url, unique, facets): table, permissions, OData set, endpoints, validation, Blazor page and navigation |
 | `coworkee entity add <module> <name> [--property ...]` | Another entity in a generated module |
 | `coworkee texts export --lang <code> [--keys <glob>] [--out <file>]` | Copies the library texts of a language (23 ship) into `src/<App>.Contracts/Localization/<code>.json` so you can change them; merges, never overwrites existing texts |
-| `coworkee update [--version <version>] [--prerelease]` | Sets `CoworkeeVersion` in `Directory.Packages.props` (default: newest on nuget.org) |
+| `coworkee add <option> [value] [--dry-run]`, `coworkee remove <option>` | Turns options of an existing app on or off: the template's changes are merged into your files (conflicts as `.rej`), then a migration |
+| `coworkee db reset\|seed\|backup\|restore` | The local development database of the app host (volume or SQLite file) |
+| `coworkee update [--version <version>] [--prerelease] [--dry-run]` | Sets `CoworkeeVersion` in `Directory.Packages.props` (default: newest on nuget.org), applies the upgrade rules and lists breaking changes and manual steps |
 | `coworkee doctor` | Checks the .NET SDK, Docker and dotnet-ef |
 | `coworkee ui [args]` | Installs or updates the global tool `Coworkee.Studio` to the CLI version and starts the desktop wizard (`coworkee-ui`) |
 | `coworkee mcp` | MCP server over stdio for AI agents: `claude mcp add coworkee -- coworkee mcp` |
