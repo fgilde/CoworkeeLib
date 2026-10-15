@@ -1,6 +1,7 @@
 ---
 template: home.html
 title: Coworkee
+description: "Coworkee is an open source .NET application framework: identity, permissions, multi-tenancy, a Blazor admin UI, reporting, AI and an Aspire app host as NuGet packages."
 hide:
   - navigation
   - toc

@@ -1,6 +1,7 @@
 ---
 template: home.html
 title: Coworkee
+description: "Coworkee ist ein quelloffenes Anwendungsframework für .NET: Identity, Berechtigungen, Mandanten, Blazor-Admin-Oberfläche, Berichte, KI und Aspire-AppHost als NuGet-Pakete."
 hide:
   - navigation
   - toc

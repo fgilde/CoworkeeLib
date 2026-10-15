@@ -1,5 +1,5 @@
 site_name: Coworkee
-site_description: Modular application framework for .NET 10, Blazor and Aspire
+site_description: Coworkee is an open source .NET application framework for Blazor, ASP.NET Core and Aspire, with identity, multi-tenancy, admin UI and AI built in.
 site_url: https://fgilde.github.io/CoworkeeLib/
 repo_url: https://github.com/fgilde/CoworkeeLib
 repo_name: fgilde/CoworkeeLib
@@ -40,6 +40,9 @@ theme:
     - content.tabs.link
     - toc.follow
 
+hooks:
+  - hooks/seo.py
+
 extra_css:
   - assets/extra.css
 
@@ -57,7 +60,7 @@ plugins:
         - locale: de
           name: Deutsch
           build: true
-          site_description: Modulares Anwendungsframework für .NET 10, Blazor und Aspire
+          site_description: Coworkee ist ein quelloffenes Anwendungsframework für .NET, Blazor, ASP.NET Core und Aspire, mit Identity, Mandanten, Admin-Oberfläche und KI.
           nav_translations:
             Home: Start
             Getting started: Erste Schritte

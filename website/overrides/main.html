@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% set cw_de = config.theme.language == "de" %}
+{% set cw_home_title = ("Coworkee: Anwendungsframework für .NET, Blazor und Aspire" if cw_de else "Coworkee: .NET application framework for Blazor and Aspire") %}
+{% set cw_title = cw_home_title if page and page.is_homepage else ((page.meta.title if page.meta and page.meta.title else page.title | striptags) ~ " - Coworkee") %}
+{% set cw_description = page.meta.description if page.meta and page.meta.description else config.site_description %}
+{% set cw_image = config.site_url ~ "assets/social.png" %}
+
+{% block htmltitle %}
+  {% if page %}<title>{{ cw_title }}</title>{% else %}{{ super() }}{% endif %}
+{% endblock %}
+
+{% block extrahead %}
+{% if page %}
+  <meta property="og:type" content="{{ 'website' if page.is_homepage else 'article' }}">
+  <meta property="og:site_name" content="Coworkee">
+  <meta property="og:title" content="{{ cw_title }}">
+  <meta property="og:description" content="{{ cw_description }}">
+  <meta property="og:url" content="{{ page.canonical_url }}">
+  <meta property="og:image" content="{{ cw_image }}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="{{ cw_home_title }}">
+  <meta property="og:locale" content="{{ 'de_DE' if cw_de else 'en_US' }}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ cw_title }}">
+  <meta name="twitter:description" content="{{ cw_description }}">
+  <meta name="twitter:image" content="{{ cw_image }}">
+  {% if page.file.alternates is defined %}
+    {% for lang, alt in page.file.alternates.items() %}
+      <link rel="alternate" hreflang="{{ lang }}" href="{{ config.site_url ~ alt.url }}">
+      {% if lang == "en" %}<link rel="alternate" hreflang="x-default" href="{{ config.site_url ~ alt.url }}">{% endif %}
+    {% endfor %}
+  {% endif %}
+  {% if page.is_homepage %}
+    <script type="application/ld+json">
+      {{ {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "SoftwareApplication",
+            "name": "Coworkee",
+            "url": page.canonical_url,
+            "description": cw_description,
+            "applicationCategory": "DeveloperApplication",
+            "applicationSubCategory": ".NET application framework",
+            "operatingSystem": "Windows, Linux, macOS",
+            "softwareRequirements": ".NET 10",
+            "inLanguage": config.theme.language,
+            "image": cw_image,
+            "license": "https://opensource.org/licenses/MIT",
+            "isAccessibleForFree": true,
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+            "author": { "@type": "Person", "name": "Florian Gilde", "url": "https://florian.gilde.org" },
+            "downloadUrl": "https://www.nuget.org/packages?q=Coworkee"
+          },
+          {
+            "@type": "SoftwareSourceCode",
+            "name": "Coworkee",
+            "description": cw_description,
+            "codeRepository": config.repo_url,
+            "programmingLanguage": ["C#", "Razor", "TypeScript"],
+            "runtimePlatform": ".NET 10",
+            "license": "https://opensource.org/licenses/MIT",
+            "author": { "@type": "Person", "name": "Florian Gilde" }
+          }
+        ]
+      } | tojson }}
+    </script>
+  {% endif %}
+{% endif %}
+{% endblock %}
