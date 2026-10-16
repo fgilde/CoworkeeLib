@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Fixes
+
+- Links to addresses of the server (e.g. *Sign in* at the end of the setup, `/bff/login`) load from the server again; since the library pages have a catch-all route, the app showed *Not found.* for them. Nothing to change in apps.
+
 ## 0.0.1.26 (2026-10-16)
 
 ### Breaking changes

@@ -32,6 +32,9 @@ public partial class CoworkeeLayout : IAsyncDisposable
 
     [Inject] private NavigationManager Nav { get; set; } = null!;
 
+    // created with the layout, so links to server addresses after the first page are loaded from the server
+    [Inject] private Navigation.LinkNavigation Links { get; set; } = null!;
+
     [Inject] private ThemeService ThemeService { get; set; } = null!;
 
     [Inject] private LayoutPreferences Preferences { get; set; } = null!;

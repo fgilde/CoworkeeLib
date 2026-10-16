@@ -94,6 +94,7 @@ public static class CoworkeeClientExtensions
         }
 
         services.AddSingleton<Navigation.CoworkeePages>();
+        services.AddScoped<Navigation.LinkNavigation>();
         services.AddSingleton<INavigationContributor, AdminNavigation>();
         services.AddSingleton<INavigationContributor, Navigation.ApiDocsNavigation>();
         services.AddOptions<Navigation.NavigationMenuOptions>();

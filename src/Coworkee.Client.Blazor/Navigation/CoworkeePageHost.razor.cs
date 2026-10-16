@@ -4,7 +4,7 @@ namespace Coworkee.Client.Blazor.Navigation;
 
 /// <summary>
 /// Serves the library's pages: the router comes here for every address no page of the app has. Old addresses go on to the current ones,
-/// unknown ones to the router's NotFoundPage or a short text.
+/// links to other addresses load them from the server, other unknown addresses go to the router's NotFoundPage or a short text.
 /// </summary>
 public partial class CoworkeePageHost
 {
@@ -14,6 +14,8 @@ public partial class CoworkeePageHost
     [Inject] private CoworkeePages Pages { get; set; } = null!;
 
     [Inject] private NavigationManager Nav { get; set; } = null!;
+
+    [Inject] private LinkNavigation Links { get; set; } = null!;
 
     [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
 
@@ -27,6 +29,11 @@ public partial class CoworkeePageHost
         if (match?.RedirectTo is { } target)
         {
             Nav.NavigateTo(target, replace: true);
+        }
+        else if (match is null && Links.Intercepted)
+        {
+            // a link to an address of the server (e.g. /bff/login), as the router does for links without a page
+            Nav.NavigateTo(Nav.Uri, forceLoad: true);
         }
         else if (match is null)
         {

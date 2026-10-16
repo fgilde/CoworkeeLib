@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Korrekturen
+
+- Links auf Adressen des Servers (z. B. *Anmelden* am Ende der Einrichtung, `/bff/login`) laden wieder vom Server; seit die Seiten der Bibliothek eine Sammelroute haben, zeigte die App dafür *Not found.*. In Apps ist nichts zu ändern.
+
 ## 0.0.1.26 (2026-10-16)
 
 ### Breaking Changes
