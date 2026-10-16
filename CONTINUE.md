@@ -1,6 +1,6 @@
 # CONTINUE – handover for the next agent
 
-State of the Coworkee library as of 2026-10-16: everything up to round 7 is merged on `main` and pushed; round 7 waits on `feat/round7`. Released: **0.0.1.24** on nuget.org and `@coworkee/client` / `@coworkee/airworks` `0.0.1024` on npm (release workflow with `NPM_TOKEN`; the owner rotates the token or switches to trusted publishing). The round of 2026-10-15 is in 0.0.1.24. Demo and Sharemee are on the same state (`master`, pushed).
+State of the Coworkee library as of 2026-10-16: everything below is merged on `main` and pushed. Released: **0.0.1.26** (round 7) on nuget.org and `@coworkee/client` / `@coworkee/airworks` `0.0.1024` on npm (release workflow with `NPM_TOKEN`; the owner rotates the token or switches to trusted publishing). The round of 2026-10-15 is in 0.0.1.24, round 7 (incl. tooling smalls, UI smalls, deploy tools) in 0.0.1.26. Demo and Sharemee are on the same state (`master`, pushed).
 
 ## Repositories
 | Repo | Local path | Remote / branch |
@@ -107,7 +107,7 @@ Spec `docs/superpowers/specs/2026-10-15-loading-tables-demo-design.md`, reports 
 - The demo's AirWorks client uses `@coworkee/client`/`@coworkee/airworks` `0.0.1024`; bump it after each release (`src/MyApp.AirWorks/ClientApp/package.json`).
 - Verified in the browser (demo): loading screen with progress, product and order dialogs aligned, Region filter, client switch compare toast, endless scroll, logo upload and pick from files, translated upload texts, AirWorks desktop with the demo apps.
 
-## Round 7 (branch `feat/round7`, merged locally, not pushed, not released)
+## Round 7 (released in 0.0.1.26)
 Branches merged: mail-langs, workflows, mobile-pwa, import-export, history-palette, webhooks, cli-add, deploy, gallery, entity-import. Changelog *Unreleased* is one list (breaking first); `upgrade-rules.json` has them as `0.0.1.26` (the release workflow renames the changelog heading). Template initial migration regenerated with everything in; `defaultModel` excludes workflows and webhooks (pwa/elsa need no change: push table comes with notifications, elsa needs workflows).
 - **Demo and Sharemee need**: a migration (`cw.PushSubscriptions`, `cw.DataTransferJobs`, `cw.ImportProfiles`), `viewport-fit=cover` in `App.razor`, OpenAPI snapshots/SDKs.
 - Template samples: products are `ISoftDelete` and, with `auditing`, registered with `AddEntityHistory` (`MyAppDatabaseModule`) and `History` on the products table; brand delete counts soft deleted products. Dashboard groups months in memory (SQLite could not translate `DateTimeOffset.Year`, was 500).
