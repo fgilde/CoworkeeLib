@@ -69,6 +69,7 @@ public sealed partial class CoworkeeApp
         if (Publishing)
         {
             PublishKeycloak(Keycloak);
+            auth.WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].BrowserUrl, ToolUrl(Keycloak));
         }
 
         if (options.LoginTheme && options.Resource is null && Builder.ExecutionContext.IsRunMode)

@@ -56,6 +56,7 @@ public sealed class PublishTests
         compose.ShouldContain("127.0.0.1:8090:8080");
         compose.ShouldContain("source: \"demo-keycloak-data\"");
         compose.ShouldContain("Coworkee__Auth__External__Providers__keycloak__Authority: \"http://keycloak:8080/realms/demo\"");
+        compose.ShouldContain("Coworkee__Auth__External__Providers__keycloak__BrowserUrl: \"${DEMO_KEYCLOAK_URL}\"");
         compose.ShouldContain("Coworkee__KeycloakRealm__Url: \"http://keycloak:8080\"");
         compose.ShouldContain("Coworkee__KeycloakRealm__Clients__0__RedirectUris__0: \"${DEMO_AUTH_URL}/signin-keycloak\"");
         compose.ShouldContain("Coworkee__KeycloakRealm__Clients__1__RedirectUris__0: \"${DEMO_GRAFANA_URL}/login/generic_oauth\"");

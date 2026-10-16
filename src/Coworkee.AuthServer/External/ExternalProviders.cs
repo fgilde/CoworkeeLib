@@ -20,9 +20,9 @@ internal static class ExternalProviders
 
     /// <summary>The origins sign-in forms may redirect to (content security policy form-action).</summary>
     public static IEnumerable<string> Origins(ExternalLoginOptions options) =>
-        options.Providers.Values
-            .Select(p => Uri.TryCreate(p.Authority, UriKind.Absolute, out var uri) ? uri.GetLeftPart(UriPartial.Authority) : null)
-            .OfType<string>();
+        options.Providers.Values.SelectMany(p => new[] { p.Authority, p.BrowserUrl })
+            .Select(address => Uri.TryCreate(address, UriKind.Absolute, out var uri) ? uri.GetLeftPart(UriPartial.Authority) : null)
+            .OfType<string>().Distinct();
 
     private static void Configure(OpenIdConnectOptions oidc, string scheme, ExternalProviderOptions provider)
     {

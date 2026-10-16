@@ -41,7 +41,7 @@ internal static partial class DeploySummary
             {
                 var prefix = $"{appName.ToLowerInvariant()}-";
                 var key = $"{(service.StartsWith(prefix, StringComparison.Ordinal) ? service : prefix + service).ToUpperInvariant().Replace('-', '_')}_URL";
-                yield return $"{service,-18} 127.0.0.1:{port.Groups[1].Value,-6} {key}={(values.GetValueOrDefault(key) is { Length: > 0 } url ? url : "(not set yet)")}";
+                yield return $"{service,-18} 127.0.0.1:{port.Groups[1].Value,-6} {(values.ContainsKey(key) ? key + "=" : "")}{(!values.TryGetValue(key, out var url) ? "(no public address needed)" : url.Length > 0 ? url : "(not set yet)")}";
             }
         }
     }

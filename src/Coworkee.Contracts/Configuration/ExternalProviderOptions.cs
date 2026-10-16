@@ -7,6 +7,12 @@ public sealed class ExternalProviderOptions
     /// <summary>Issuer address, for Keycloak https://host/realms/{realm}.</summary>
     public string Authority { get; set; } = string.Empty;
 
+    /// <summary>
+    /// The address browsers sign in at when the auth server reaches the provider elsewhere (a container address as <see cref="Authority"/>,
+    /// the reverse proxy's address here); the sign-in form may redirect there.
+    /// </summary>
+    public string? BrowserUrl { get; set; }
+
     public string ClientId { get; set; } = string.Empty;
 
     public string? ClientSecret { get; set; }

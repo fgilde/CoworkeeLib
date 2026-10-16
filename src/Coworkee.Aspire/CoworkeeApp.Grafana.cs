@@ -60,10 +60,7 @@ public sealed partial class CoworkeeApp
             Builder.CreateResourceBuilder(loki).WithDataVolume(DataVolume("loki"));
         }
 
-        foreach (var tempo in Builder.Resources.OfType<TempoResource>())
-        {
-            Builder.CreateResourceBuilder(tempo).WithDataVolume(DataVolume("tempo"));
-        }
+        // ponytail: Tempo keeps its traces in the container, its user cannot write to a new volume at /tmp/tempo; give it one with the right owner if traces must survive
     }
 
     private void AddDatabaseDatasource(IResourceBuilder<GrafanaResource> grafana)
