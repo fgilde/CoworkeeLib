@@ -71,4 +71,53 @@ public sealed class ThemeSeedTests
     [InlineData("#1565c0", "#ffffff")]
     [InlineData("red", null)]
     public void Contrast_text_follows_the_luminance(string color, string? expected) => ThemeSeeds.ContrastText(color).ShouldBe(expected);
+
+    // ponytail: the older themes miss AA in places (button text of Coworkee, Forest and Sunset); measured are the ones that name every color
+    public static TheoryData<string> Themes() => ["Ocean", "Midnight", "High Contrast", "Octo", "Code", "Arctic", "Vampire", "Solar", "Atom", "Paper", "Aubergine"];
+
+    [Theory]
+    [MemberData(nameof(Themes))]
+    public void Text_of_the_built_in_themes_is_readable(string name)
+    {
+        var theme = ThemeSeeds.Create(new ThemingOptions()).Single(t => t.Name == name);
+        foreach (var palette in new[] { theme.PaletteLight, theme.PaletteDark }.Select(p => JsonSerializer.Deserialize<Dictionary<string, string>>(p)!))
+        {
+            foreach (var (text, background) in new[]
+                     {
+                         ("TextPrimary", "Background"), ("TextPrimary", "Surface"), ("TextSecondary", "Surface"), ("PrimaryContrastText", "Primary"),
+                         ("SecondaryContrastText", "Secondary"), ("AppbarText", "AppbarBackground"), ("DrawerText", "DrawerBackground"),
+                     })
+            {
+                if (palette.TryGetValue(text, out var foreground) && palette.TryGetValue(background, out var behind))
+                {
+                    Contrast(foreground, behind).ShouldBeGreaterThanOrEqualTo(4.5, $"{name}: {text} on {background}");
+                }
+            }
+        }
+    }
+
+    [Fact]
+    public void The_new_built_in_themes_ship()
+    {
+        ThemeSeeds.Create(new ThemingOptions()).Select(t => t.Name).ShouldBe(
+            ["Coworkee", "Ocean", "Forest", "Sunset", "Midnight", "Classic", "High Contrast", "Octo", "Code", "Arctic", "Vampire", "Solar", "Atom", "Paper", "Aubergine"]);
+    }
+
+    private static double Contrast(string a, string b)
+    {
+        static double Luminance(string color)
+        {
+            var rgb = Convert.ToInt32(color[1..7], 16);
+            double Channel(int shift)
+            {
+                var c = ((rgb >> shift) & 0xff) / 255d;
+                return c <= 0.03928 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4);
+            }
+
+            return (0.2126 * Channel(16)) + (0.7152 * Channel(8)) + (0.0722 * Channel(0));
+        }
+
+        var (x, y) = (Luminance(a), Luminance(b));
+        return (Math.Max(x, y) + 0.05) / (Math.Min(x, y) + 0.05);
+    }
 }
