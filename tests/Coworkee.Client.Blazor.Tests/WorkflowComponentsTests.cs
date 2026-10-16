@@ -99,8 +99,20 @@ public sealed class WorkflowComponentsTests : ClientTestBase
         _api.GetStatesAsync("Products", Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<CancellationToken>())
             .Returns([Status("Review", [], Approval(canDecide: true)), Status("Archived", [], id: other)]);
 
-        var row = Render<CoworkeeWorkflowActions>(p => p.Add(a => a.EntityType, "Products").Add(a => a.EntityId, _id));
-        var done = Render<CoworkeeWorkflowActions>(p => p.Add(a => a.EntityType, "Products").Add(a => a.EntityId, other));
+        // both rows in one render pass, like the rows of a table: two separate renders may lie further apart than the batch window
+        var table = Render(builder =>
+        {
+            foreach (var id in new[] { _id, other })
+            {
+                builder.OpenComponent<CoworkeeWorkflowActions>(0);
+                builder.AddAttribute(1, nameof(CoworkeeWorkflowActions.EntityType), "Products");
+                builder.AddAttribute(2, nameof(CoworkeeWorkflowActions.EntityId), id);
+                builder.CloseComponent();
+            }
+        });
+        var rows = table.FindComponents<CoworkeeWorkflowActions>();
+        var row = rows[0];
+        var done = rows[1];
 
         row.WaitForAssertion(() => row.Find("[data-testid='workflow-state']").TextContent.ShouldContain("Review"));
         row.Find("[data-testid='workflow-menu']").ShouldNotBeNull();
