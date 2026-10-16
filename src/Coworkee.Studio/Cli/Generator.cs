@@ -112,6 +112,10 @@ public sealed class Generator(ProcessRunner run)
         }
     }
 
+    /// <summary>coworkee deploy &lt;target&gt; in the app's folder: the deployment artifacts, the images (compose) and the addresses and sign-in at the end.</summary>
+    public Task<int> DeployAsync(string appRoot, string target, StudioSettings settings, Action<CliLine> onLine, CancellationToken cancellationToken) =>
+        RunCliAsync(CliInvocation.Resolve(settings.CliPath), ["deploy", target], settings, onLine, cancellationToken, appRoot);
+
     /// <summary>dotnet run of the app host, with every line of its output; canceling stops the app host and what it started.</summary>
     public Task<int> RunAppAsync(string appHostProject, StudioSettings settings, Action<string, bool> output, CancellationToken cancellationToken)
     {

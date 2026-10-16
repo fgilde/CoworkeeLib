@@ -54,7 +54,11 @@ public sealed partial class GenerateStep : StepViewModel
     private bool _nextSteps;
 
     public GenerateStep(MainViewModel main)
-        : base(main) => App = new AppRunViewModel(main, () => Output, action => Dispatch(action));
+        : base(main)
+    {
+        App = new AppRunViewModel(main, () => Output, action => Dispatch(action));
+        Deploy = new DeployViewModel(main, () => Output, action => Dispatch(action));
+    }
 
     protected override string TitleText => "Create";
 
@@ -82,6 +86,8 @@ public sealed partial class GenerateStep : StepViewModel
 
     /// <summary>The created app, run from the Studio.</summary>
     public AppRunViewModel App { get; }
+
+    public DeployViewModel Deploy { get; }
 
     public ObservableCollection<ProgressStepViewModel> Progress { get; } = [];
 
