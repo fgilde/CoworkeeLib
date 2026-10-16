@@ -16,6 +16,9 @@ public interface IWebhooksApi
 
     Task<WebhookSecretDto> GetSecretAsync(Guid id, CancellationToken cancellationToken = default);
 
+    /// <summary>A new secret, returned once; the old one keeps signing next to it for the grace period (Coworkee:Webhooks:SecretGracePeriod).</summary>
+    Task<WebhookSecretDto> RotateSecretAsync(Guid id, CancellationToken cancellationToken = default);
+
     Task SendTestAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<WebhookDeliveryDto>> GetDeliveriesAsync(CancellationToken cancellationToken = default);

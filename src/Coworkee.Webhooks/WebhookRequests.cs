@@ -32,6 +32,10 @@ public sealed record GetWebhookSecretQuery(Guid Id) : IQuery<Result<WebhookSecre
 
 [RequiresPermission(WebhookPermissions.Manage)]
 [AiTool(Exclude = true)]
+public sealed record RotateWebhookSecretCommand(Guid Id) : ICommand<Result<WebhookSecretDto>>;
+
+[RequiresPermission(WebhookPermissions.Manage)]
+[AiTool(Exclude = true)]
 public sealed record SendWebhookTestCommand(Guid Id) : ICommand<Result<Guid>>;
 
 [RequiresPermission(WebhookPermissions.Manage)]

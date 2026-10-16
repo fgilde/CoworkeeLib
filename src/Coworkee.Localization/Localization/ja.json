@@ -1531,5 +1531,8 @@
   "Not configured: every instance caches on its own": "未設定: 各インスタンスが個別にキャッシュします",
   "Disconnected": "切断",
   "Connected": "接続済み",
-  "No key or endpoint": "キーもエンドポイントもありません"
+  "No key or endpoint": "キーもエンドポイントもありません",
+  "Rotate secret": "シークレットを更新",
+  "Old secret signs too until {0}": "古いシークレットも {0} まで署名します",
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "{0} の新しい署名シークレットを作成しますか？受信側が切り替えられるよう、古いものもしばらく併せて署名します。"
 }

@@ -1531,5 +1531,8 @@
   "Not configured: every instance caches on its own": "Не е настроено: всяка инстанция кешира самостоятелно",
   "Disconnected": "Няма връзка",
   "Connected": "Свързано",
-  "No key or endpoint": "Няма ключ или крайна точка"
+  "No key or endpoint": "Няма ключ или крайна точка",
+  "Rotate secret": "Смяна на тайната",
+  "Old secret signs too until {0}": "Старата тайна подписва също до {0}",
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Да се създаде ли нова тайна за подписване за {0}? Старата продължава да подписва известно време, за да може получателят да премине."
 }

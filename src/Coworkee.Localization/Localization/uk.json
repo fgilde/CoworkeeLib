@@ -1531,5 +1531,8 @@
   "Not configured: every instance caches on its own": "Не налаштовано: кожен екземпляр кешує окремо",
   "Disconnected": "Відключено",
   "Connected": "Підключено",
-  "No key or endpoint": "Немає ключа чи кінцевої точки"
+  "No key or endpoint": "Немає ключа чи кінцевої точки",
+  "Rotate secret": "Змінити секрет",
+  "Old secret signs too until {0}": "Старий секрет також підписує до {0}",
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Створити новий секрет підпису для {0}? Старий ще деякий час підписує поруч, щоб отримувач міг перейти."
 }

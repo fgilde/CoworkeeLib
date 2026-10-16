@@ -1531,5 +1531,8 @@
   "Not configured: every instance caches on its own": "Nenastaveno: každá instance si ukládá mezipaměť sama",
   "Disconnected": "Odpojeno",
   "Connected": "Připojeno",
-  "No key or endpoint": "Chybí klíč nebo koncový bod"
+  "No key or endpoint": "Chybí klíč nebo koncový bod",
+  "Rotate secret": "Obnovit tajný klíč",
+  "Old secret signs too until {0}": "Starý klíč podepisuje také do {0}",
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Vytvořit nový podpisový klíč pro {0}? Starý ještě chvíli podepisuje vedle něj, aby příjemce mohl přejít."
 }

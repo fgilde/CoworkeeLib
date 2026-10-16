@@ -1531,5 +1531,8 @@
   "Not configured: every instance caches on its own": "Ikke konfigureret: hver instans cacher for sig selv",
   "Disconnected": "Afbrudt",
   "Connected": "Forbundet",
-  "No key or endpoint": "Ingen nøgle eller endpoint"
+  "No key or endpoint": "Ingen nøgle eller endpoint",
+  "Rotate secret": "Udskift hemmelighed",
+  "Old secret signs too until {0}": "Den gamle hemmelighed signerer også indtil {0}",
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Opret en ny signeringshemmelighed for {0}? Den gamle signerer stadig ved siden af i et stykke tid, så modtageren kan skifte."
 }

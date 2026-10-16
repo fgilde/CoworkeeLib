@@ -1531,5 +1531,8 @@
   "Not configured: every instance caches on its own": "Tidak dikonfigurasi: setiap instans menyimpan cache sendiri",
   "Disconnected": "Terputus",
   "Connected": "Terhubung",
-  "No key or endpoint": "Tanpa kunci atau endpoint"
+  "No key or endpoint": "Tanpa kunci atau endpoint",
+  "Rotate secret": "Ganti rahasia",
+  "Old secret signs too until {0}": "Rahasia lama juga menandatangani hingga {0}",
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Buat rahasia penandatanganan baru untuk {0}? Yang lama tetap menandatangani untuk sementara agar penerima bisa beralih."
 }

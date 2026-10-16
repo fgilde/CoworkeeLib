@@ -1531,5 +1531,8 @@
   "Not configured: every instance caches on its own": "Δεν έχει ρυθμιστεί: κάθε στιγμιότυπο χρησιμοποιεί δική του κρυφή μνήμη",
   "Disconnected": "Αποσυνδεδεμένο",
   "Connected": "Συνδεδεμένο",
-  "No key or endpoint": "Χωρίς κλειδί ή endpoint"
+  "No key or endpoint": "Χωρίς κλειδί ή endpoint",
+  "Rotate secret": "Εναλλαγή μυστικού",
+  "Old secret signs too until {0}": "Το παλιό μυστικό υπογράφει επίσης έως {0}",
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Δημιουργία νέου μυστικού υπογραφής για {0}; Το παλιό συνεχίζει να υπογράφει για λίγο, ώστε ο παραλήπτης να αλλάξει."
 }

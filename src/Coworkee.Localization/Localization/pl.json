@@ -1531,5 +1531,8 @@
   "Not configured: every instance caches on its own": "Nie skonfigurowano: każda instancja ma własną pamięć podręczną",
   "Disconnected": "Rozłączono",
   "Connected": "Połączono",
-  "No key or endpoint": "Brak klucza lub punktu końcowego"
+  "No key or endpoint": "Brak klucza lub punktu końcowego",
+  "Rotate secret": "Zmień sekret",
+  "Old secret signs too until {0}": "Stary sekret podpisuje też do {0}",
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Utworzyć nowy sekret podpisu dla {0}? Stary jeszcze przez jakiś czas podpisuje obok, aby odbiorca mógł się przełączyć."
 }

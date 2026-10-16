@@ -1531,5 +1531,8 @@
   "Not configured: every instance caches on its own": "구성되지 않음: 인스턴스마다 따로 캐시합니다",
   "Disconnected": "연결 끊김",
   "Connected": "연결됨",
-  "No key or endpoint": "키 또는 엔드포인트 없음"
+  "No key or endpoint": "키 또는 엔드포인트 없음",
+  "Rotate secret": "비밀 교체",
+  "Old secret signs too until {0}": "이전 비밀도 {0}까지 서명합니다",
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "{0}의 새 서명 비밀을 만들까요? 수신자가 전환할 수 있도록 이전 비밀도 한동안 함께 서명합니다."
 }

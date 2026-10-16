@@ -1531,5 +1531,8 @@
   "Not configured: every instance caches on its own": "未配置：每个实例单独缓存",
   "Disconnected": "已断开",
   "Connected": "已连接",
-  "No key or endpoint": "没有密钥或端点"
+  "No key or endpoint": "没有密钥或端点",
+  "Rotate secret": "轮换密钥",
+  "Old secret signs too until {0}": "旧密钥在 {0} 之前也会签名",
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "为 {0} 创建新的签名密钥？旧密钥会在一段时间内同时签名，以便接收方切换。"
 }

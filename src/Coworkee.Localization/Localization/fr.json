@@ -1531,5 +1531,8 @@
   "Not configured: every instance caches on its own": "Non configuré : chaque instance a son propre cache",
   "Disconnected": "Déconnecté",
   "Connected": "Connecté",
-  "No key or endpoint": "Ni clé ni point de terminaison"
+  "No key or endpoint": "Ni clé ni point de terminaison",
+  "Rotate secret": "Renouveler le secret",
+  "Old secret signs too until {0}": "L'ancien secret signe aussi jusqu'au {0}",
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Créer un nouveau secret de signature pour {0} ? L'ancien continue de signer un moment, le temps que le destinataire bascule."
 }

@@ -18,6 +18,7 @@ internal sealed class WebhookHandlers(
       IHandler<UpdateWebhookCommand, Result>,
       IHandler<DeleteWebhookCommand, Result>,
       IHandler<GetWebhookSecretQuery, Result<WebhookSecretDto>>,
+      IHandler<RotateWebhookSecretCommand, Result<WebhookSecretDto>>,
       IHandler<SendWebhookTestCommand, Result<Guid>>,
       IHandler<GetWebhookDeliveriesQuery, Result<IReadOnlyList<WebhookDeliveryDto>>>,
       IHandler<RedeliverWebhookCommand, Result<Guid>>
@@ -58,6 +59,7 @@ internal sealed class WebhookHandlers(
         if (command.Request.Secret is { } secret)
         {
             subscription.ProtectedSecret = secrets.Protect(secret);
+            (subscription.PreviousProtectedSecret, subscription.PreviousSecretUntil) = (null, null);
         }
 
         return Result.Success();
@@ -73,6 +75,21 @@ internal sealed class WebhookHandlers(
         db.Remove(subscription);
         await db.Set<WebhookDelivery>().Where(d => d.SubscriptionId == command.Id).ExecuteDeleteAsync(cancellationToken);
         return Result.Success();
+    }
+
+    // the old secret keeps signing for the grace period, so receivers can switch without missing deliveries
+    public async Task<Result<WebhookSecretDto>> HandleAsync(RotateWebhookSecretCommand command, CancellationToken cancellationToken)
+    {
+        if (await FindAsync(command.Id, cancellationToken) is not { } subscription)
+        {
+            return NotFound;
+        }
+
+        var secret = WebhookSignature.NewSecret();
+        subscription.PreviousProtectedSecret = subscription.ProtectedSecret;
+        subscription.PreviousSecretUntil = clock.GetUtcNow() + options.Value.SecretGracePeriod;
+        subscription.ProtectedSecret = secrets.Protect(secret);
+        return new WebhookSecretDto(subscription.Id, secret);
     }
 
     public async Task<Result<WebhookSecretDto>> HandleAsync(GetWebhookSecretQuery query, CancellationToken cancellationToken) =>
@@ -136,5 +153,5 @@ internal sealed class WebhookHandlers(
     }
 
     private static WebhookSubscriptionDto ToDto(WebhookSubscription s) =>
-        new(s.Id, s.Url, s.Description, s.Events, s.IsActive, s.ConsecutiveFailures, s.DisabledAt, s.CreatedAt);
+        new(s.Id, s.Url, s.Description, s.Events, s.IsActive, s.ConsecutiveFailures, s.DisabledAt, s.CreatedAt) { PreviousSecretUntil = s.PreviousSecretUntil };
 }

@@ -72,4 +72,24 @@ public sealed class WebhooksPageTests : ClientTestBase
             r.Url == "https://erp.example.com/hooks" && r.Events.SequenceEqual(new[] { "products.created" }) && r.IsActive), Arg.Any<CancellationToken>());
         creating.IsCompleted.ShouldBeFalse();
     }
+
+    [Fact]
+    public async Task Rotating_asks_first_shows_the_new_secret_once_and_the_grace_period()
+    {
+        _webhooks.RotateSecretAsync(WebhookId, Arg.Any<CancellationToken>()).Returns(new WebhookSecretDto(WebhookId, "whsec_rotated"));
+        var page = Render<Pages.Admin.Webhooks>();
+
+        var rotating = page.WaitForElement($"[data-testid='rotate-{Url}']").ClickAsync(new MouseEventArgs());
+        _dialogs.WaitForAssertion(() => _dialogs.FindAll("button").Any(b => b.TextContent.Trim() == "Rotate secret").ShouldBeTrue());
+        await _dialogs.FindAll("button").Last(b => b.TextContent.Trim() == "Rotate secret").ClickAsync(new MouseEventArgs());
+
+        _dialogs.WaitForAssertion(() => _dialogs.Find("[data-testid='webhook-secret']").TextContent.ShouldBe("whsec_rotated"));
+        await _webhooks.Received(1).RotateSecretAsync(WebhookId, Arg.Any<CancellationToken>());
+        rotating.IsCompleted.ShouldBeFalse();
+
+        _webhooks.GetAsync(default).ReturnsForAnyArgs([new WebhookSubscriptionDto(WebhookId, Url, "ERP", ["products.*"], true, 0, null, DateTimeOffset.UtcNow)
+            { PreviousSecretUntil = DateTimeOffset.UtcNow.AddHours(24) }]);
+        var later = Render<Pages.Admin.Webhooks>();
+        later.WaitForAssertion(() => later.Find($"[data-testid='previous-{Url}']").TextContent.ShouldContain("Old secret signs too until"));
+    }
 }

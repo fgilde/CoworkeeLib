@@ -81,6 +81,22 @@ public partial class Webhooks
 
     private Task RedeliverAsync(WebhookDeliveryDto delivery) => RunAsync(() => Api.RedeliverAsync(delivery.Id), L["Queued again"]);
 
+    private async Task RotateSecretAsync(WebhookSubscriptionDto webhook)
+    {
+        if (!await Dialogs.ConfirmAsync(L["Rotate secret"], L["Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.", webhook.Url],
+                L["Rotate secret"], L["Cancel"], Icons.Material.Outlined.Autorenew))
+        {
+            return;
+        }
+
+        WebhookSecretDto? rotated = null;
+        await RunAsync(async () => rotated = await Api.RotateSecretAsync(webhook.Id));
+        if (rotated is not null)
+        {
+            await ShowSecretAsync(L["Copy the secret now, it is not shown again:"], rotated.Secret);
+        }
+    }
+
     private async Task ShowSecretAsync(WebhookSubscriptionDto webhook)
     {
         WebhookSecretDto? secret = null;

@@ -1531,5 +1531,8 @@
   "Not configured: every instance caches on its own": "មិនបានកំណត់៖ instance នីមួយៗរក្សាឃ្លាំងសម្ងាត់ផ្ទាល់ខ្លួន",
   "Disconnected": "បានផ្តាច់",
   "Connected": "បានភ្ជាប់",
-  "No key or endpoint": "គ្មានសោ ឬ endpoint"
+  "No key or endpoint": "គ្មានសោ ឬ endpoint",
+  "Rotate secret": "ប្តូរសម្ងាត់",
+  "Old secret signs too until {0}": "សម្ងាត់ចាស់ក៏ចុះហត្ថលេខាដល់ {0}",
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "បង្កើតសម្ងាត់ចុះហត្ថលេខាថ្មីសម្រាប់ {0}? សម្ងាត់ចាស់នៅតែចុះហត្ថលេខាមួយរយៈ ដើម្បីឱ្យអ្នកទទួលអាចប្តូរបាន។"
 }

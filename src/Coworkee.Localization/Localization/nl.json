@@ -1531,5 +1531,8 @@
   "Not configured: every instance caches on its own": "Niet ingesteld: elke instantie cachet zelf",
   "Disconnected": "Verbroken",
   "Connected": "Verbonden",
-  "No key or endpoint": "Geen sleutel of endpoint"
+  "No key or endpoint": "Geen sleutel of endpoint",
+  "Rotate secret": "Geheim vernieuwen",
+  "Old secret signs too until {0}": "Oud geheim ondertekent ook tot {0}",
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Nieuw ondertekeningsgeheim voor {0} maken? Het oude ondertekent nog even mee, zodat de ontvanger kan overstappen."
 }

@@ -22,6 +22,7 @@
 
 ### Neu
 
+- **Webhooks: Secret erneuern**: ein neues Geheimnis, einmal angezeigt; das alte signiert für `Coworkee:Webhooks:SecretGracePeriod` (24 h) mit, siehe [Webhooks](../modules/webhooks.md). Zwei neue Spalten in `cw.WebhookSubscriptions` (Apps mit Webhooks brauchen eine Migration).
 - **Workflow-Chips in Tabellen** laden die Zustände einer Seite in einer Anfrage (`POST /api/v1/workflows/{entityType}/states`, `IWorkflowApi.GetStatesAsync`) statt einer pro Zeile; eigene `IWorkflowApi`-Implementierungen ergänzen die Methode.
 - **Schieberegler in Spaltenfiltern**: *zwischen* auf Zahlen- und Datumsspalten regelt zwischen kleinstem und größtem Wert, den der Server meldet; eine Spalte mit Datums- oder Zahlenbereich-Facette (etwa das Bestelldatum der Demo) zeigt deren Histogramm und Regler statt einer Checkbox pro Bucket.
 - **Systemstatus**-Seite für die Systemorganisation (`/cw/admin/system-status`): Versionen, Datenbank und ausstehende Migrationen, Outbox, Hintergrundjobs mit den letzten Fehlern, Mail, Echtzeit, Redis, Dateien, Übersetzung und KI; Module und Apps steuern Karten über `ISystemStatusContributor` bei, siehe [Admin-Oberfläche](../features/blazor-ui.md#systemstatus).

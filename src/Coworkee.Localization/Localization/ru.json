@@ -1531,5 +1531,8 @@
   "Not configured: every instance caches on its own": "Не настроено: каждый экземпляр кэширует сам",
   "Disconnected": "Отключено",
   "Connected": "Подключено",
-  "No key or endpoint": "Нет ключа или конечной точки"
+  "No key or endpoint": "Нет ключа или конечной точки",
+  "Rotate secret": "Сменить секрет",
+  "Old secret signs too until {0}": "Старый секрет тоже подписывает до {0}",
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Создать новый секрет подписи для {0}? Старый ещё некоторое время подписывает вместе с ним, чтобы получатель успел перейти."
 }

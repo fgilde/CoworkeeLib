@@ -1531,5 +1531,8 @@
   "Not configured: every instance caches on its own": "غير مُهيأ: كل مثيل يخزّن مؤقتًا بمفرده",
   "Disconnected": "غير متصل",
   "Connected": "متصل",
-  "No key or endpoint": "لا مفتاح ولا نقطة نهاية"
+  "No key or endpoint": "لا مفتاح ولا نقطة نهاية",
+  "Rotate secret": "تدوير السر",
+  "Old secret signs too until {0}": "السر القديم يوقّع أيضًا حتى {0}",
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "إنشاء سر توقيع جديد لـ {0}؟ يستمر القديم في التوقيع بجانبه لفترة حتى يتمكن المستقبِل من التبديل."
 }

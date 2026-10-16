@@ -1531,5 +1531,8 @@
   "Not configured: every instance caches on its own": "Inte konfigurerad: varje instans cachar för sig",
   "Disconnected": "Frånkopplad",
   "Connected": "Ansluten",
-  "No key or endpoint": "Ingen nyckel eller endpoint"
+  "No key or endpoint": "Ingen nyckel eller endpoint",
+  "Rotate secret": "Byt hemlighet",
+  "Old secret signs too until {0}": "Den gamla hemligheten signerar också till {0}",
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Skapa en ny signeringshemlighet för {0}? Den gamla signerar en stund till bredvid, så att mottagaren kan byta."
 }

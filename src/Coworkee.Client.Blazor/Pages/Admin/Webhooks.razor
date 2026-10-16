@@ -31,6 +31,10 @@
                 {
                     <MudText Typo="Typo.caption" Color="Color.Warning">@L["{0} failures in a row", context.Item.ConsecutiveFailures]</MudText>
                 }
+                @if (context.Item.PreviousSecretUntil is { } until && until > DateTimeOffset.UtcNow)
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" data-testid="@($"previous-{context.Item.Url}")">@L["Old secret signs too until {0}", until.ToLocalTime().ToString("g")]</MudText>
+                }
             </CellTemplate>
         </PropertyColumn>
         <TemplateColumn T="WebhookSubscriptionDto" Sortable="false" CellStyle="text-align:right;white-space:nowrap">
@@ -41,6 +45,10 @@
                 </MudTooltip>
                 <MudTooltip Text="@L["Signing secret"]">
                     <MudIconButton Icon="@Icons.Material.Outlined.Key" Size="Size.Small" aria-label="@L["Signing secret"]" Disabled="_busy" OnClick="() => ShowSecretAsync(context.Item)" />
+                </MudTooltip>
+                <MudTooltip Text="@L["Rotate secret"]">
+                    <MudIconButton Icon="@Icons.Material.Outlined.Autorenew" Size="Size.Small" aria-label="@L["Rotate secret"]" Disabled="_busy"
+                                   OnClick="() => RotateSecretAsync(context.Item)" data-testid="@($"rotate-{context.Item.Url}")" />
                 </MudTooltip>
                 <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" aria-label="@L["Edit"]" Disabled="_busy"
                                OnClick="() => EditAsync(context.Item)" data-testid="@($"edit-{context.Item.Url}")" />

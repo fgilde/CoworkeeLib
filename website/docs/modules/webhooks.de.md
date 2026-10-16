@@ -68,9 +68,10 @@ webhook-signature: v1,K5oZfzN95Z9UVu1EsfQmfVNQhnkZ2pj9o9NDN/H/pI4=
 
 ## Die Admin-Seite
 
-*Administration → System → Webhooks* (`/admin/webhooks`, Berechtigung `Webhooks.Manage`) zeigt die Endpunkte mit ihrem Zustand und die letzten Zustellungen:
+*Administration → System → Webhooks* (`/cw/admin/webhooks`, Berechtigung `Webhooks.Manage`) zeigt die Endpunkte mit ihrem Zustand und die letzten Zustellungen:
 
 - **Endpunkt hinzufügen**: Adresse, Beschreibung, Ereignisse (mit Vorschlägen aller bekannten Ereignistypen) und *Aktiv*. Das Signaturgeheimnis wird erzeugt und einmal angezeigt; über den Schlüssel-Knopf siehst du es später wieder.
+- **Secret erneuern** erzeugt ein neues Geheimnis und zeigt es einmal an. Für `SecretGracePeriod` (24 Stunden) trägt jede Zustellung zwei Signaturen, eine mit dem neuen und eine mit dem alten Geheimnis, so kann der Empfänger umstellen, ohne eine Zustellung zu verlieren; die Liste zeigt, bis wann.
 - **Testereignis senden** reiht eine `webhook.test`-Zustellung für den Endpunkt ein, auch wenn er abgeschaltet ist.
 - **Zustellungen** zeigt Zeit, Ereignis, Endpunkt, Status mit HTTP-Code und Versuche; eine Zeile klappt Anfrage und Antwort des letzten Versuchs auf. **Erneut zustellen** schickt denselben Body noch einmal als neue Zustellung.
 
@@ -108,6 +109,7 @@ Endpunkte dürfen nicht in dein eigenes Netz greifen:
 | `DisableAfterFailures` | `5` | gescheiterte Zustellungen in Folge, bevor der Endpunkt abgeschaltet wird |
 | `LogBodyLimit` | `4096` | Zeichen von Anfrage und Antwort im Protokoll |
 | `LogRetentionDays` | `30` | ein täglicher Job löscht ältere Zustellungen |
+| `SecretGracePeriod` | `24:00:00` | wie lange das alte Geheimnis nach *Secret erneuern* neben dem neuen signiert |
 | `DomainEvents` | `{ "WorkflowTransitioned": "workflow.transitioned" }` | Domain Events anderer Module, die zu Webhook-Ereignissen werden |
 
 Tests, die an einen lokalen Empfänger senden, setzen `RequireHttps=false`, `AllowPrivateNetworks=true` und den Port des Empfängers in `AllowedPorts`.
