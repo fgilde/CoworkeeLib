@@ -4,6 +4,8 @@
     <NoWarn>$(NoWarn);NU5104</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <!-- advisory GHSA-qhrr-8q5h-9q3h: lifts the MessagePack of Aspire.Hosting (2.5.302), also for the app hosts -->
+    <PackageReference Include="MessagePack" />
     <PackageReference Include="Aspire.Hosting" />
     <PackageReference Include="Aspire.Hosting.PostgreSQL" />
     <PackageReference Include="Aspire.Hosting.SqlServer" />
