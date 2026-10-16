@@ -79,7 +79,7 @@ public sealed class MailCampaignsPageTests : ClientTestBase
     {
         await PickAsync("campaign-template", "News");
         _dialogs.WaitForAssertion(() => _dialogs.Find("input[data-testid='campaign-name'], [data-testid='campaign-name'] input").GetAttribute("value").ShouldBe("News"));
-        await _dialogs.Find("[data-testid='wizard-next']").ClickAsync(new());
+        await _dialogs.InvokeAsync(() => _dialogs.Find("[data-testid='wizard-next']").ClickAsync(new()));
     }
 
     private async Task ToSendStepAsync()
@@ -194,11 +194,13 @@ public sealed class MailCampaignsPageTests : ClientTestBase
         OpenWizard();
         await ChooseTemplateAndContinueAsync();
 
-        await _dialogs.WaitForElements(".mud-tab").First(t => t.TextContent.Contains("Manual selection", StringComparison.Ordinal)).ClickAsync(new());
+        _dialogs.WaitForElements(".mud-tab");
+        await _dialogs.InvokeAsync(() => _dialogs.FindAll(".mud-tab").First(t => t.TextContent.Contains("Manual selection", StringComparison.Ordinal)).ClickAsync(new()));
         _dialogs.WaitForAssertion(() => _dialogs.FindAll(".mud-table-body input[type='checkbox']").Count.ShouldBe(2));
-        foreach (var box in _dialogs.FindAll(".mud-table-body input[type='checkbox']"))
+        for (var i = 0; i < 2; i++)
         {
-            await box.ChangeAsync(new ChangeEventArgs { Value = true });
+            var index = i;
+            await _dialogs.InvokeAsync(() => _dialogs.FindAll(".mud-table-body input[type='checkbox']")[index].ChangeAsync(new ChangeEventArgs { Value = true }));
         }
 
         _dialogs.WaitForAssertion(() => _previews.ShouldContain(s =>
@@ -206,7 +208,7 @@ public sealed class MailCampaignsPageTests : ClientTestBase
 
         await _dialogs.Find("input[data-testid='table-search'], [data-testid='table-search'] input").InputAsync(new ChangeEventArgs { Value = "ada" });
         _dialogs.WaitForAssertion(() => _filters.ShouldContain(f => f != null && f.Contains("ada", StringComparison.Ordinal)));
-        await _dialogs.Find("[data-testid='select-all-matching']").ClickAsync(new());
+        await _dialogs.InvokeAsync(() => _dialogs.Find("[data-testid='select-all-matching']").ClickAsync(new()));
 
         _dialogs.WaitForAssertion(() => _previews.ShouldContain(s => s.Kind == RecipientSourceKind.Query && s.Filter != null && s.Filter.Contains("ada", StringComparison.Ordinal)));
         _dialogs.Find("[data-testid='all-matching']");
