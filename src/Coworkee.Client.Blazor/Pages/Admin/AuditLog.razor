@@ -42,6 +42,25 @@
         </TemplateColumn>
     </Columns>
     <ChildRowContent>
+        @if (Record(context.Item) is { } record)
+        {
+            <div class="d-flex flex-wrap px-4 pb-2" style="gap:8px" data-testid="audit-history-actions">
+                <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.History"
+                           OnClick="() => OpenHistoryAsync(context.Item, record.Id)" data-testid="audit-open-history">@L["Open record history"]</MudButton>
+                @if (record.Set.CanRestore && context.Item.Action == "Deleted")
+                {
+                    <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.RestoreFromTrash"
+                               OnClick="() => RestoreAsync(context.Item, record, EntityHistoryRestoreMode.Before)" data-testid="audit-restore-record">@L["Restore record"]</MudButton>
+                }
+                else if (record.Set.CanRestore && context.Item.Action != "Created")
+                {
+                    <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.Undo"
+                               OnClick="() => RestoreAsync(context.Item, record, EntityHistoryRestoreMode.Undo)" data-testid="audit-undo">@L["Undo this change"]</MudButton>
+                    <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.SettingsBackupRestore"
+                               OnClick="() => RestoreAsync(context.Item, record, EntityHistoryRestoreMode.Before)" data-testid="audit-restore-before">@L["Restore the state before this change"]</MudButton>
+                }
+            </div>
+        }
         @if (context.Item.Changes.Count > 0)
         {
             <div class="px-4"><AuditChanges Changes="context.Item.Changes" /></div>

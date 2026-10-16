@@ -16,6 +16,9 @@ internal sealed class EntityHistoryApi(HttpClient http) : ApiClientBase(http), I
     public Task RestoreAsync(string entitySet, Guid id, EntityHistoryRestoreRequest request, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Post, $"{Root}/{Uri.EscapeDataString(entitySet)}/{id}/restore", request, cancellationToken);
 
+    public async Task<IReadOnlyList<EntityHistorySetDto>> GetSetsAsync(CancellationToken cancellationToken = default) =>
+        await GetAsync<EntityHistorySetDto[]>(Root, cancellationToken);
+
     public async Task<IReadOnlyList<DeletedRecordDto>> GetDeletedAsync(string entitySet, CancellationToken cancellationToken = default) =>
         await GetAsync<DeletedRecordDto[]>($"{Root}/{Uri.EscapeDataString(entitySet)}/deleted", cancellationToken);
 }

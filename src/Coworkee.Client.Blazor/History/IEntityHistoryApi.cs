@@ -10,5 +10,8 @@ public interface IEntityHistoryApi
 
     Task RestoreAsync(string entitySet, Guid id, EntityHistoryRestoreRequest request, CancellationToken cancellationToken = default);
 
+    /// <summary>The sets with a history the user may read, with whether the user may restore them.</summary>
+    Task<IReadOnlyList<EntityHistorySetDto>> GetSetsAsync(CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<DeletedRecordDto>> GetDeletedAsync(string entitySet, CancellationToken cancellationToken = default);
 }

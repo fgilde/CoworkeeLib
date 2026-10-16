@@ -5,6 +5,10 @@
         {
             <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">@L["The deleted record comes back."]</MudAlert>
         }
+        @if (Preview.Fields.Any(f => f.ChangedLater))
+        {
+            <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-2" data-testid="restore-changed-later">@L["Some of these fields were changed after this entry. The restore replaces the newer values."]</MudAlert>
+        }
         @if (Preview.Fields.Count > 0)
         {
             <MudSimpleTable Dense="true" Elevation="0" data-testid="restore-preview">
@@ -13,7 +17,13 @@
                     @foreach (var field in Preview.Fields)
                     {
                         <tr data-field="@field.Property">
-                            <td>@Label(field.Property)</td>
+                            <td>
+                                @Label(field.Property)
+                                @if (field.ChangedLater)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Text" data-changed-later>@L["Changed later"]</MudChip>
+                                }
+                            </td>
                             <td class="mud-text-secondary" style="white-space:pre-wrap">@(field.CurrentText ?? "–")</td>
                             <td style="white-space:pre-wrap">@(field.RestoredText ?? "–")</td>
                         </tr>

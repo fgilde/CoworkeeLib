@@ -1,6 +1,9 @@
 using System.Globalization;
+using Coworkee.Client.Blazor.Api;
+using Coworkee.Client.Blazor.Components;
 using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Data;
+using Coworkee.Client.Blazor.History;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Auditing;
 using Microsoft.AspNetCore.Components;
@@ -16,8 +19,15 @@ public partial class AuditLog
     private string? _me;
     private bool _mine = true;
     private DateRange? _range;
+    private Dictionary<string, EntityHistorySetDto> _sets = [];
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
+
+    [Inject] private IEntityHistoryApi HistoryApi { get; set; } = null!;
+
+    [Inject] private IDialogService Dialogs { get; set; } = null!;
+
+    [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
     [CascadingParameter] private Task<AuthenticationState> AuthenticationState { get; set; } = null!;
 
@@ -26,7 +36,36 @@ public partial class AuditLog
         _range?.Start is { } from ? $"{nameof(AuditEntryDto.OccurredAt)} ge {Literal(from.Date)}" : null,
         _range?.End is { } to ? $"{nameof(AuditEntryDto.OccurredAt)} lt {Literal(to.Date.AddDays(1))}" : null);
 
-    protected override async Task OnInitializedAsync() => _me = (await AuthenticationState).User.FindFirst("sub")?.Value;
+    protected override async Task OnInitializedAsync()
+    {
+        _me = (await AuthenticationState).User.FindFirst("sub")?.Value;
+        try
+        {
+            _sets = (await HistoryApi.GetSetsAsync() ?? []).ToDictionary(s => s.EntityType, StringComparer.Ordinal);
+        }
+        catch (ApiException)
+        {
+            // no history actions then; the log itself still works
+        }
+    }
+
+    /// <summary>The history set and record of an entry, when the server registered one; hard deleted records are gone.</summary>
+    private (EntityHistorySetDto Set, Guid Id)? Record(AuditEntryDto entry) =>
+        _sets.TryGetValue(entry.EntityType, out var set) && Guid.TryParse(entry.EntityId, out var id) && (set.SoftDelete || entry.Action != "Deleted")
+            ? (set, id)
+            : null;
+
+    private Task OpenHistoryAsync(AuditEntryDto entry, Guid id) =>
+        EntityHistoryDialog.ShowAsync(Dialogs, $"{entry.EntityType} {entry.EntityId}", _sets[entry.EntityType].EntitySet, id, EventCallback.Factory.Create(this, ReloadAsync));
+
+    private async Task RestoreAsync(AuditEntryDto entry, (EntityHistorySetDto Set, Guid Id) record, EntityHistoryRestoreMode mode)
+    {
+        if (await EntityHistoryRestoreDialog.ConfirmAsync(Dialogs, HistoryApi, Snackbar, L, record.Set.EntitySet, record.Id,
+                new EntityHistoryRestoreRequest(entry.Id, Mode: mode), p => CoworkeeEntityHistory.DefaultLabel(L, p)))
+        {
+            await ReloadAsync();
+        }
+    }
 
     private static string Literal(DateTime localDay) =>
         new DateTimeOffset(DateTime.SpecifyKind(localDay, DateTimeKind.Local)).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture);
