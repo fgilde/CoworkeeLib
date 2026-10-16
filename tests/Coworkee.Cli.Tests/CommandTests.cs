@@ -80,4 +80,24 @@ public sealed class CommandTests
         DoctorCommand.SdkSatisfies("9.0.318", "10.0.300").ShouldBeFalse();
         DoctorCommand.SdkSatisfies(string.Empty, "10.0.300").ShouldBeFalse();
     }
+
+    [Fact]
+    public void Doctor_reads_the_versions_and_ports_of_the_app()
+    {
+        DoctorCommand.AspireSdk("""<Project Sdk="Aspire.AppHost.Sdk/13.6.1">""").ShouldBe("13.6.1");
+        DoctorCommand.EfRuntime("""<PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.13" />""").ShouldBe("10.0.13");
+        DoctorCommand.ToolVersion("Entity Framework Core .NET Command-line Tools\n10.0.13\n").ShouldBe("10.0.13");
+        DoctorCommand.ToolVersion("13.1.0+4f7a2c").ShouldBe("13.1.0");
+        DoctorCommand.Ports("""{ "profiles": { "https": { "applicationUrl": "https://localhost:7300;http://localhost:5300", "environmentVariables": { "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:21000" } } } }""")
+            .ShouldBe([7300, 5300, 21000]);
+    }
+
+    [Theory]
+    [InlineData("13.1.0", "13.6.1", 2, -1)]
+    [InlineData("13.6.0", "13.6.1", 2, 0)]
+    [InlineData("10.0.12", "10.0.13", 3, -1)]
+    [InlineData("0.1.0-dev.12", "0.1.0-*", 3, 0)]
+    [InlineData("0.0.1.26", "0.0.1.25", 4, 1)]
+    public void Doctor_compares_versions(string a, string b, int parts, int expected) =>
+        DoctorCommand.Compare(a, b, parts).ShouldBe(expected);
 }

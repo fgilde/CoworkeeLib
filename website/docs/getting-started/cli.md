@@ -9,7 +9,7 @@ dotnet tool install -g Coworkee.Cli
 coworkee doctor
 ```
 
-`coworkee doctor` checks the .NET SDK (at least the version in `global.json`), whether Docker runs and whether `dotnet-ef` is installed. The Aspire CLI is optional; `coworkee run` uses `dotnet run`.
+`coworkee doctor` checks the .NET SDK (at least the version in `global.json`), whether Docker runs and whether `dotnet-ef` is installed. Inside an app it also compares versions: `dotnet-ef` with the app's EF Core, the Aspire CLI with the Aspire SDK of the app host (an older CLI, e.g. 13.1 with a 13.6 app host, can hang in `aspire run`), the coworkee CLI with the app's `CoworkeeVersion`, and it warns when a port of the launch profiles is already in use. Every finding comes with the command that fixes it; the exit code is 1 when something fails. The Aspire CLI is optional; `coworkee run` uses `dotnet run`.
 
 ## A new application
 
