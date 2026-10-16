@@ -71,7 +71,7 @@ public sealed class SeedTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Sync_gives_seeded_roles_the_permissions_added_to_the_seed_since()
+    public async Task Sync_gives_seed_users_and_roles_what_was_added_to_the_seed_since()
     {
         await app.App.Services.SeedCoworkeeIdentityAsync(Ct);
         var tenantId = await app.InDbAsync(null, db => db.Set<Tenant>().IgnoreQueryFilters().Where(t => t.IsDefault).Select(t => t.Id).SingleAsync(Ct));
@@ -79,6 +79,7 @@ public sealed class SeedTests(IdentityApp app) : IAsyncLifetime
         await app.InDbAsync(tenantId, async db =>
         {
             db.RemoveRange(db.Set<PermissionGrant>().Where(g => g.ProviderType == PermissionProviderType.Role && g.ProviderKey == editor));
+            db.RemoveRange(db.Set<IdentityUserRole<Guid>>().Where(r => r.RoleId == editor));
             return await db.SaveChangesAsync(Ct);
         });
 
@@ -98,6 +99,9 @@ public sealed class SeedTests(IdentityApp app) : IAsyncLifetime
         var grants = await app.InDbAsync(tenantId, db => db.Set<PermissionGrant>()
             .Where(g => g.ProviderType == PermissionProviderType.Role && g.ProviderKey == editor).Select(g => g.Name).ToListAsync(Ct));
         grants.ShouldBe([IdentityPermissions.Users.View]);
+        var editorUsers = await app.InDbAsync(tenantId, db => db.Set<IdentityUserRole<Guid>>().Where(r => r.RoleId == editor)
+            .Join(db.Set<User>(), r => r.UserId, u => u.Id, (_, u) => u.Email!).ToListAsync(Ct));
+        editorUsers.ShouldBe(["editor@seed.test"]);
     }
 
     private async Task ChangeRootPasswordAsync(Guid tenantId)

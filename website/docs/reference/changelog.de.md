@@ -7,7 +7,7 @@
 ### Korrekturen
 
 - `SyncDevelopmentUsersAsync()` läuft für die Migrationen eines lokalen Aspire-Laufs: Das Migrationsprojekt hat kein Startprofil und lief als Production, dort fand der Abgleich nie statt. `AddMigrations` setzt in lokalen Entwicklungsläufen `Coworkee:Identity:SyncDevelopmentUsers`; der Abgleich läuft in Development oder mit dieser Einstellung.
-- `SyncDevelopmentUsersAsync()` gibt Seed-Rollen auch die seitdem im Seed ergänzten Berechtigungen (nur in Development, entfernt wird nichts); so bekommt eine früher eingerichtete Datenbank z. B. neue Workflow-Berechtigungen einer Demo-Rolle.
+- `SyncDevelopmentUsersAsync()` gibt Seed-Benutzern auch die seitdem im Seed ergänzten Rollen und Seed-Rollen die ergänzten Berechtigungen (nur in Development, entfernt wird nichts); so bekommt eine früher eingerichtete Datenbank z. B. eine neue Rolle eines Demo-Benutzers und neue Workflow-Berechtigungen einer Demo-Rolle.
 
 ## 0.0.1.28 (2026-10-16)
 

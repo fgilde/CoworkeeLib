@@ -63,8 +63,8 @@ internal sealed class IdentitySeeder(
     }
 
     /// <summary>
-    /// Makes the accounts of an initialized system match the options: missing users and roles are added, seeded roles get the permissions added to
-    /// the seed since, a user whose password differs gets the seeded one. Other users, roles and grants stay as they are; nothing is removed.
+    /// Makes the accounts of an initialized system match the options: missing users and roles are added, seed users get the roles and seeded roles
+    /// the permissions added to the seed since, a user whose password differs gets the seeded one. Other users, roles and grants stay; nothing is removed.
     /// </summary>
     public async Task SyncAsync(CancellationToken cancellationToken = default)
     {
@@ -85,18 +85,22 @@ internal sealed class IdentitySeeder(
             if (user is null)
             {
                 await CreateAsync(seed);
+                continue;
             }
-            else if (!await users.CheckPasswordAsync(user, seed.Password))
+
+            if (!await users.CheckPasswordAsync(user, seed.Password))
             {
                 Ensure(await users.RemovePasswordAsync(user), seed);
                 Ensure(await users.AddPasswordAsync(user, seed.Password), seed);
             }
+
+            await AddMissingRolesAsync(user.Id, seed);
         }
 
         await GrantMissingAsync(tenant.Id, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
 
-        async Task CreateAsync(SeedUser seed)
+        async Task ResolveRolesAsync(SeedUser seed)
         {
             foreach (var name in seed.Roles.Where(n => !roles.ContainsKey(n)))
             {
@@ -105,6 +109,19 @@ internal sealed class IdentitySeeder(
             }
 
             await db.SaveChangesAsync(cancellationToken);
+        }
+
+        // a seed user gets roles added to the seed since; roles given by hand stay
+        async Task AddMissingRolesAsync(Guid userId, SeedUser seed)
+        {
+            await ResolveRolesAsync(seed);
+            var has = await db.Set<IdentityUserRole<Guid>>().Where(r => r.UserId == userId).Select(r => r.RoleId).ToListAsync(cancellationToken);
+            db.Set<IdentityUserRole<Guid>>().AddRange(seed.Roles.Select(name => roles[name].Id).Except(has).Select(id => new IdentityUserRole<Guid> { UserId = userId, RoleId = id }));
+        }
+
+        async Task CreateAsync(SeedUser seed)
+        {
+            await ResolveRolesAsync(seed);
             var user = new User { TenantId = tenant.Id, UserName = seed.Email, Email = seed.Email, EmailConfirmed = true, FirstName = seed.FirstName, LastName = seed.LastName };
             Ensure(await users.CreateAsync(user, seed.Password), seed);
             var roleIds = seed.Roles.Select(name => roles[name].Id).Concat(seed.IsAdmin ? [adminRole.Id] : []);

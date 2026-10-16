@@ -7,7 +7,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 ### Fixes
 
 - `SyncDevelopmentUsersAsync()` runs for the migrations of a local Aspire run: the migrations project has no launch profile and ran as Production, so the sync never happened there. `AddMigrations` sets `Coworkee:Identity:SyncDevelopmentUsers` in local development runs; the sync runs in Development or with that setting.
-- `SyncDevelopmentUsersAsync()` also gives seeded roles the permissions added to the seed since (Development only, nothing is removed), so a database set up earlier picks up e.g. new workflow permissions of a demo role.
+- `SyncDevelopmentUsersAsync()` also gives seed users the roles and seeded roles the permissions added to the seed since (Development only, nothing is removed), so a database set up earlier picks up e.g. a new role of a demo user and new workflow permissions of a demo role.
 
 ## 0.0.1.28 (2026-10-16)
 
