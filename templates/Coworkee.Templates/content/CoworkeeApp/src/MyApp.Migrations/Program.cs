@@ -23,6 +23,8 @@ try
     if (seed)
     {
         await host.Services.SeedCoworkeeIdentityAsync();
+        // a database set up earlier gets the users and roles added to DemoUsers.cs since, and their passwords again
+        await host.Services.SyncDevelopmentUsersAsync();
     }
 
     return 0;

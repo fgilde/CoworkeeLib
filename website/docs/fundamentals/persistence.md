@@ -95,6 +95,7 @@ using var host = builder.Build();
 await using var scope = host.Services.CreateAsyncScope();
 await scope.ServiceProvider.GetRequiredService<MyAppDbContext>().Database.MigrateAsync();
 await host.Services.SeedCoworkeeIdentityAsync();
+await host.Services.SyncDevelopmentUsersAsync();
 ```
 
-`AddCoworkeeIdentitySeed` replaces the setup wizard: it creates the default tenant, the administrator, roles with their permission grants, further users and system wide settings (`seed.Settings["Theme.Mode"] = "dark"`), once. `ISetupStep` implementations run inside the same setup, as the administrator, and are the place for sample data. See [Authentication](../security/authentication.md#setup-wizard-or-seed).
+`AddCoworkeeIdentitySeed` replaces the setup wizard: it creates the default tenant, the administrator, roles with their permission grants, further users and system wide settings (`seed.Settings["Theme.Mode"] = "dark"`), once. `ISetupStep` implementations run inside the same setup, as the administrator, and are the place for sample data. `SyncDevelopmentUsersAsync` runs in the Development environment only and keeps an existing database in step with the seed: users and roles it lacks are added, seed users whose password differs get the seeded one again; other users, roles and grants stay as they are. See [Authentication](../security/authentication.md#setup-wizard-or-seed).

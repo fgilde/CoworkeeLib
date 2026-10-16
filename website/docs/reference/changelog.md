@@ -34,6 +34,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 - **CLI**: `coworkee add`/`remove` turn template options on or off in an existing app (merged into your files, conflicts as `.rej`, options kept in `.coworkee/app.json`), `coworkee update` applies the upgrade rules of the versions in between, `coworkee db reset|seed|backup|restore`, `coworkee entity import --from db|openapi|csv`, six starter specs (`coworkee specs list|show`, `coworkee new --template-spec`), options `--workflows`, `--elsa`, `--webhooks` and `--pwa` (on by default). MCP tools `add_option` and `import_entities`. See [CLI](../getting-started/cli.md) and [Starter specs](../getting-started/gallery.md).
 - **Studio**: open an existing app and change it, *My apps* (start, stop, links), *Start from a template*, entity diagram (drag, draw references, auto layout, PNG export) and entity import with a preview.
 - **Template**: sample products are soft deleted and, with auditing, show their history and come back; the dashboard works on SQLite (it returned 500 there); demo users are seeded only in Development, migrations wait for the database.
+- **Development users stay in step**: `SyncDevelopmentUsersAsync()` (Development only) adds seed users and roles a database set up earlier lacks and gives seed users their seeded password again; the template's migrations host calls it after `SeedCoworkeeIdentityAsync()`, so changes to `DemoUsers.cs` reach an existing database.
 
 ## 0.0.1.25 (2026-10-15)
 

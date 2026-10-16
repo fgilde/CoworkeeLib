@@ -62,6 +62,63 @@ internal sealed class IdentitySeeder(
         }
     }
 
+    /// <summary>
+    /// Makes the accounts of an initialized system match the options: missing users and roles are added, a user whose password differs gets the seeded one.
+    /// Other users, roles and grants stay as they are.
+    /// </summary>
+    public async Task SyncAsync(CancellationToken cancellationToken = default)
+    {
+        if (await db.Set<Tenant>().IgnoreQueryFilters().FirstOrDefaultAsync(t => t.IsDefault, cancellationToken) is not { } tenant)
+        {
+            return;
+        }
+
+        var adminRole = await db.Set<Role>().IgnoreQueryFilters()
+            .FirstAsync(r => (r.TenantId == null || r.TenantId == tenant.Id) && r.IsSystem && r.Name == SystemRoles.Admin, cancellationToken);
+        var actorId = await db.Set<IdentityUserRole<Guid>>().Where(r => r.RoleId == adminRole.Id).Select(r => r.UserId).FirstOrDefaultAsync(cancellationToken);
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(actorId == Guid.Empty ? null : actorId, tenant.Id));
+        var roles = new Dictionary<string, Role>(StringComparer.OrdinalIgnoreCase);
+        foreach (var seed in _options.Users)
+        {
+            var email = seed.Email.ToUpperInvariant();
+            var user = await db.Set<User>().IgnoreQueryFilters().FirstOrDefaultAsync(u => u.NormalizedEmail == email && u.TenantId == tenant.Id, cancellationToken);
+            if (user is null)
+            {
+                await CreateAsync(seed);
+            }
+            else if (!await users.CheckPasswordAsync(user, seed.Password))
+            {
+                Ensure(await users.RemovePasswordAsync(user), seed);
+                Ensure(await users.AddPasswordAsync(user, seed.Password), seed);
+            }
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+
+        async Task CreateAsync(SeedUser seed)
+        {
+            foreach (var name in seed.Roles.Where(n => !roles.ContainsKey(n)))
+            {
+                roles[name] = await db.Set<Role>().IgnoreQueryFilters().FirstOrDefaultAsync(r => r.TenantId == tenant.Id && r.Name == name, cancellationToken)
+                    ?? AddRole(_options.Roles.First(r => string.Equals(r.Name, name, StringComparison.OrdinalIgnoreCase)), tenant.Id);
+            }
+
+            await db.SaveChangesAsync(cancellationToken);
+            var user = new User { TenantId = tenant.Id, UserName = seed.Email, Email = seed.Email, EmailConfirmed = true, FirstName = seed.FirstName, LastName = seed.LastName };
+            Ensure(await users.CreateAsync(user, seed.Password), seed);
+            var roleIds = seed.Roles.Select(name => roles[name].Id).Concat(seed.IsAdmin ? [adminRole.Id] : []);
+            db.Set<IdentityUserRole<Guid>>().AddRange(roleIds.Select(id => new IdentityUserRole<Guid> { UserId = user.Id, RoleId = id }));
+        }
+
+        static void Ensure(IdentityResult result, SeedUser seed)
+        {
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException($"Seed user {seed.Email}: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+            }
+        }
+    }
+
     private Role AddRole(SeedRole seed, Guid tenantId)
     {
         var role = new Role
