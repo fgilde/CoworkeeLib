@@ -7,6 +7,7 @@ using Coworkee.Contracts.Files;
 using Coworkee.Core.Modularity;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.OData;
+using Coworkee.OData.GlobalSearch;
 using Coworkee.Storage;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
@@ -45,6 +46,7 @@ public sealed class CoworkeeFilesModule : CoworkeeModule, IWebModule
         services.TryAddScoped<Application.Registration.IRegistrationDocumentStore, FileRegistrationDocuments>();
         services.AddODataEntity<StoredFile>("StoredFiles", FilePermissions.View, f => f.BlobKey);
         services.AddODataEntity<FileFolder>("FileFolders", FilePermissions.View);
+        services.AddGlobalSearch<StoredFile>(s => s.Fields(f => f.Name).Name("files").Group("Files").Subtitle(f => f.ContentType).Url(f => $"/files?file={f.Id}").Icon("InsertDriveFile"));
     }
 
     public void ConfigureApplication(WebApplication app) => app.MapFileEndpoints(app.Configuration.GetSection(FilesOptions.Section).Get<FilesOptions>() ?? new FilesOptions());

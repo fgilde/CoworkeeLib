@@ -8,14 +8,20 @@
 
 - **Migration nötig** (Apps mit Reporting): neue Tabelle `cw.DashboardReports`.
 - **`IReportsApi`** hat `GetDashboardAsync` und `SetDashboardAsync` bekommen; eigene Implementierungen ergänzen sie. Neue Endpunkte unter `/api/v1/reports/dashboard`: OpenAPI-Snapshots und SDKs neu erzeugen.
+- **`AddCommandPaletteEntitySet` und `CommandPaletteEntitySet<T>` sind entfernt**: Die Befehlspalette findet Datensätze über die neue globale Suche des Servers. Registriere das Set neben seinem OData-Set, z. B. `services.AddGlobalSearch<Product>(s => s.Fields(p => p.Name, p => p.Barcode).Page("/catalog/products"))` (`coworkee update` zeigt auf die alten Aufrufe).
+- Neue Endpunkte `/api/v1/search`, `/api/v1/search/stream` und `/api/v1/search/providers`: OpenAPI-Snapshots und SDKs neu erzeugen.
 
 ### Neu
 
 - Ein Bericht als Dashboard: jeder Benutzer kann einen Bericht zu seinem Dashboard machen, Inhaber der neuen Berechtigung `Reports.Dashboard` zum Standard der Organisation; die Wahl des Benutzers gewinnt. `ReportDashboard` zeigt es live an und fällt auf das eigene Dashboard der App zurück. Die Dashboard-Seite des Templates nutzt es, führt *Dashboard* vor *Berichte* auf, und die Einrichtung mit Beispielen macht *Catalog overview* zum Dashboard der Organisation. Siehe [Ein Bericht als Dashboard](../modules/reporting.md#ein-bericht-als-dashboard).
+- **Globale Suche**: eine Suche über Benutzer, Rollen, Gruppen, Dateien, Berichte, Chats und die eigenen Sets der App (`AddGlobalSearch<T>` für OData-Sets, `IGlobalSearchProvider` für alles andere, `AddGlobalSearchIndex` für einen Elasticsearch-Alias). Anfang vor Teil, `"exakt"`, Typfilter wie `users:max` und Ids; Bewertungen über Provider hinweg vergleichbar, ein Timeout pro Provider, dieselben Berechtigungen, Organisation und Zeilenregeln wie die OData-Listen. Die Befehlspalette zeigt die Treffer Gruppe für Gruppe, sobald sie da sind, `/search?q=` listet alle mit einem Filter pro Typ, `GET /api/v1/search/stream` streamt JSON-Zeilen durch das BFF, und das MCP-Tool `global_search` gibt sie an KI-Clients. Siehe [Globale Suche](../web/global-search.md).
+- Die Dateiseite öffnet die Vorschau von `?file={id}`.
+- Beispiele der Vorlage: Marken, Produkte und Dokumente sind in der globalen Suche.
 
 ### Korrekturen
 
 - Dialoge und Seitenleisten der Bibliothek (Import-Assistent, Kampagnen-Assistent, Theme, Logo, Code-Editor, API-Schlüssel, Workflow-Kommentar) tragen die Startklasse von MudBlazor.Extensions und erscheinen damit erst an ihrer endgültigen Position, statt zuerst kurz in der Mitte aufzublitzen. Eigene Dialoge, die du mit `ShowExAsync` oder `ShowSideSheetAsync` öffnest, setzen `Class="@MudExCss.Classes.Dialog.Initial"` an ihrem `MudDialog`.
+
 
 ## 0.0.1.27 (2026-10-16)
 

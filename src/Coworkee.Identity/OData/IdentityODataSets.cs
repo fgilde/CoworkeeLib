@@ -1,6 +1,7 @@
 using Coworkee.Contracts.Identity;
 using Coworkee.Identity.Domain;
 using Coworkee.OData;
+using Coworkee.OData.GlobalSearch;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Identity.OData;
@@ -17,5 +18,10 @@ internal static class IdentityODataSets
         services.AddODataEntity<ApiKeys.ApiKey>("ApiKeys", ApiKeyPermissions.Manage, k => k.SecretHash);
         services.AddScoped<IODataEntityFilter<User>, UserODataFilter>();
         services.AddScoped<IODataEntityFilter<Role>, RoleODataFilter>();
+        services.AddGlobalSearch<User>(s => s.Fields(u => u.UserName, u => u.Email, u => u.FirstName, u => u.LastName)
+            .Title(u => $"{u.FirstName} {u.LastName}".Trim() is { Length: > 0 } name ? name : u.UserName).Subtitle(u => u.Email)
+            .Url(u => $"/admin/users/{u.Id}").Thumbnail(u => u.AvatarUrl).Icon("Person"));
+        services.AddGlobalSearch<Role>(s => s.Fields(r => r.Name, r => r.Description).Subtitle(r => r.Description).Url(r => $"/admin/roles/{r.Id}").Icon("Shield"));
+        services.AddGlobalSearch<UserGroup>(s => s.Fields(g => g.Name, g => g.Description).Subtitle(g => g.Description).Url(_ => "/admin/groups").Icon("Groups"));
     }
 }

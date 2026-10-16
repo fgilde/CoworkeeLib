@@ -8,14 +8,20 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 - **Migration needed** (apps with Reporting): new table `cw.DashboardReports`.
 - **`IReportsApi`** gained `GetDashboardAsync` and `SetDashboardAsync`; own implementations add them. New endpoints under `/api/v1/reports/dashboard`: regenerate OpenAPI snapshots and SDKs.
+- **`AddCommandPaletteEntitySet` and `CommandPaletteEntitySet<T>` are removed**: the command palette finds records through the new global search of the server. Register the set next to its OData set, e.g. `services.AddGlobalSearch<Product>(s => s.Fields(p => p.Name, p => p.Barcode).Page("/catalog/products"))` (`coworkee update` points at the old calls).
+- New endpoints `/api/v1/search`, `/api/v1/search/stream` and `/api/v1/search/providers`: regenerate OpenAPI snapshots and SDKs.
 
 ### New
 
 - A report as dashboard: every user can make a report their dashboard, holders of the new permission `Reports.Dashboard` the organisation's default; the user's choice wins. `ReportDashboard` shows it live and falls back to the app's own dashboard. The template's dashboard page uses it, lists *Dashboard* before *Reports* and the sample setup makes *Catalog overview* the organisation's dashboard. See [A report as dashboard](../modules/reporting.md#a-report-as-dashboard).
+- **Global search**: one search over users, roles, groups, files, reports, chats and the app's own sets (`AddGlobalSearch<T>` for OData sets, `IGlobalSearchProvider` for anything else, `AddGlobalSearchIndex` for an Elasticsearch alias). Prefix before part, `"exact"`, `users:max` type filters and ids; scores comparable across providers, a timeout per provider, the same permissions, organisation and row rules as the OData lists. The command palette shows the hits group by group as they arrive, `/search?q=` lists all with a filter per type, `GET /api/v1/search/stream` streams JSON lines through the BFF, and the MCP tool `global_search` hands them to AI clients. See [Global search](../web/global-search.md).
+- The files page opens the preview of `?file={id}`.
+- Template samples: brands, products and documents are in the global search.
 
 ### Fixes
 
 - Dialogs and side sheets of the library (import wizard, campaign wizard, theme, logo, code editor, API key, workflow comment) carry the initial class of MudBlazor.Extensions, so they show up only at their final position instead of flashing in the middle first. Own dialogs opened with `ShowExAsync` or `ShowSideSheetAsync` set `Class="@MudExCss.Classes.Dialog.Initial"` on their `MudDialog`.
+
 
 ## 0.0.1.27 (2026-10-16)
 

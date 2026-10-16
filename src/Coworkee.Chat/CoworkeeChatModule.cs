@@ -1,4 +1,5 @@
 using Coworkee.Application.Authorization;
+using Coworkee.Application.GlobalSearch;
 using Coworkee.Application.Messaging;
 using Coworkee.AspNetCore;
 using Coworkee.AspNetCore.Http;
@@ -25,6 +26,7 @@ public sealed class CoworkeeChatModule : CoworkeeModule, IWebModule
         services.AddSingleton<IModelContributor, ChatModelContributor>();
         services.AddSingleton<IPermissionDefinitionContributor, ChatPermissionDefinitions>();
         services.AddScoped<Application.Privacy.IPersonalDataContributor, ChatPersonalData>();
+        services.AddGlobalSearchProvider<ChatSearchProvider>();
     }
 
     public void ConfigureApplication(WebApplication app)

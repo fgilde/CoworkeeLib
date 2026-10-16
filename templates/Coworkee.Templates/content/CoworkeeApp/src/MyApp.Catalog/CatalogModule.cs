@@ -4,6 +4,7 @@ using Coworkee.AspNetCore;
 using Coworkee.Core.Modularity;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.OData;
+using Coworkee.OData.GlobalSearch;
 #if (webhooks)
 using Coworkee.Webhooks;
 #endif
@@ -34,6 +35,10 @@ public sealed class MyAppCatalogModule : CoworkeeModule, IWebModule
         context.Services.AddSingleton<IPermissionDefinitionContributor, CatalogPermissionDefinitions>();
         context.Services.AddODataEntity<Brand>("Brands", CatalogPermissions.Brands.View);
         context.Services.AddODataEntity<Product>("Products", CatalogPermissions.Products.View);
+        // Ctrl+K and /search find brands and products; a hit opens the list searched for it
+        context.Services.AddGlobalSearch<Brand>(s => s.Fields(b => b.Name, b => b.Description).Subtitle(b => b.Description).Page("/catalog/brands").Icon("Label"));
+        context.Services.AddGlobalSearch<Product>(s => s.Fields(p => p.Name, p => p.Barcode, p => p.Description).Subtitle(p => p.Barcode)
+            .Thumbnail(p => p.ImageDataUrl).Page("/catalog/products").Icon("ViewCarousel"));
 #if (webhooks)
         context.Services.AddCoworkeeWebhooks(webhooks => webhooks.Entity<Product>());
 #endif

@@ -19,6 +19,7 @@ public static class ResponseFilterServiceCollectionExtensions
             options.ShouldHandle = (request, type) => IsDeferredQuery(type) ? Task.FromResult(false) : custom?.Invoke(request, type) ?? Task.FromResult(true);
         });
         services.AddScoped<ResponseFilterEndpointFilter>();
+        services.AddScoped<Application.IResponseShaper, ResponseFilterShaper>();
         services.Configure<CoworkeeApiOptions>(options => options.AddConvention(group => group.AddEndpointFilter<ResponseFilterEndpointFilter>()));
         return services;
     }

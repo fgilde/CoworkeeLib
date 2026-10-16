@@ -24,5 +24,7 @@ public sealed class CoworkeeApplicationModule : CoworkeeModule
         services.Configure<MessagingOptions>(context.Configuration.GetSection(MessagingOptions.Section));
         services.AddHybridCache();
         services.TryAddScoped<ICurrentUser, AnonymousCurrentUser>();
+        services.AddScoped<GlobalSearch.GlobalSearcher>();
+        services.Configure<GlobalSearch.GlobalSearchOptions>(context.Configuration.GetSection(GlobalSearch.GlobalSearchOptions.Section));
     }
 }

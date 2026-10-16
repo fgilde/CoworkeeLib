@@ -138,6 +138,15 @@ Docs `website/docs/web/import-export*.md`, changelog section *Unreleased*.
 - Webhooks: `RotateWebhookSecretCommand`, `PreviousProtectedSecret`/`PreviousSecretUntil` (EF change; template migration has no webhooks, apps with webhooks need a migration), `SecretGracePeriod`.
 - Template samples: palette command "New product" (`?new=true`) and product search.
 
+## Global search (branch `feat/global-search`, not merged)
+Docs `website/docs/web/global-search*.md`; changelog *Unreleased*; upgrade rule `0.0.1.28` (removed `AddCommandPaletteEntitySet`).
+- Abstractions in `Coworkee.Application/GlobalSearch` (`IGlobalSearchProvider` singletons, own scope per provider and search; `GlobalSearchQuery.Parse` with `"exact"`, `users:max`/`type:users`, GUID ids; `SearchMatch` shared 0..1 scores; `GlobalSearcher` runs providers side by side over a channel, timeout `Coworkee:GlobalSearch:ProviderTimeout`, limit per provider). `IResponseShaper` (Application) is implemented by the response filters module and shapes streamed hits.
+- `Coworkee.OData/GlobalSearch`: `AddGlobalSearch<T>(s => s.Fields(...).Page(...))` over `ODataEntityAccess.VisibleAsync` (permission, tenant, row filters; hidden fields refused at resolution), two rounds (prefix/id, then all words contained); endpoints `GET /api/v1/search`, `/stream` (NDJSON, flushed per line, `X-Accel-Buffering: no`), `/providers`; MCP/assistant tool `global_search` (`RunGlobalSearch`).
+- Lib providers: users, roles, groups (Identity), files (`/files?file=` opens the preview), reports (`ReportAccess`), chats. `Coworkee.Search` references Application now: `AddGlobalSearchIndex(alias, ...)` (tenant field filter, ES score scaled by the best hit).
+- Client: the palette streams server hits after its local providers (`IGlobalSearchApi`, optional service), keeps the chosen entry, *Show all results* (after the first hit) opens library page `search` (`/search?q=&type=`). One new text key in all 22 language files.
+- AirWorks: `@coworkee/airworks` registers `globalSearchProvider` in `useCoworkee` (no AirWorks change needed; its `registerSearchProvider` is promise based, so the desktop gets the plain JSON endpoint, not the stream).
+- Not done: demo/Sharemee registrations (demo orders) and OpenAPI/SDK regeneration, CLI `coworkee entity` does not emit `AddGlobalSearch`, browser check in a running app.
+
 ## After 0.0.1.26 (on main, unreleased)
 - Fix: the catch-all page of the library swallowed intercepted links to server addresses (setup *Sign in* -> `/bff/login` showed *Not found.*). `LinkNavigation` (scoped, created by `CoworkeeLayout`) records `IsNavigationIntercepted` in a LocationChanging handler; `CoworkeePageHost` force-loads such links. Found by the Sharemee E2E. Worth a 0.0.1.27: every new app of 0.0.1.26 hits it after the setup wizard. App test bases that render the layout without `AddCoworkeeClient` register `LinkNavigation`.
 - Flaky: `MailTemplatesPageTests.Add_language_*` (MudEx `ObjectEditForm.HasErrors` enumerates validation messages while bUnit renders on another thread; WASM is single threaded), `ThemesPageTests` on slow runners.

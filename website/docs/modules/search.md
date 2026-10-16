@@ -17,3 +17,5 @@ await index.UpsertAsync(schema.Alias, [new SearchDocument(product.Id.ToString(),
 Queries support full text, filters, sorting, facets and cursor paging. `CreateIndexAsync` and `SwapAsync` rebuild an index in the background and switch the alias without downtime.
 
 The connection comes from the connection string `elasticsearch` or `Coworkee:Search:Elasticsearch:Url`; user and password may be part of the URL. The app host adds Elasticsearch only when a service references the Elasticsearch package.
+
+An alias joins the [global search](../web/global-search.md#search-index-elasticsearch) (command palette, `/search`, MCP) with `services.AddGlobalSearchIndex(alias, s => s.Fields(...))`.

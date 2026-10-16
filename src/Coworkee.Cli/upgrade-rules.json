@@ -139,12 +139,14 @@
       "version": "0.0.1.28",
       "breaking": [
         "Reporting: new table cw.DashboardReports (a report as dashboard): apps with Reporting add a migration.",
-        "IReportsApi gained GetDashboardAsync and SetDashboardAsync; own implementations add them. New endpoints under /api/v1/reports/dashboard: regenerate OpenAPI snapshots and SDKs."
+        "IReportsApi gained GetDashboardAsync and SetDashboardAsync; own implementations add them. New endpoints under /api/v1/reports/dashboard: regenerate OpenAPI snapshots and SDKs.",
+        "AddCommandPaletteEntitySet and CommandPaletteEntitySet<T> are removed: the command palette finds records through the global search of the server; register the set there with services.AddGlobalSearch<T>(s => s.Fields(...).Page(...))."
       ],
       "needsMigration": true,
       "manual": [
         { "text": "Own IReportsApi implementations add GetDashboardAsync and SetDashboardAsync.", "find": ":\\s*IReportsApi\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] },
-        { "text": "Show the report chosen as dashboard: wrap the app's dashboard page in <ReportDashboard> (Coworkee.Client.Blazor.Reporting.Components); it falls back to its child content.", "find": "@page \"/dashboard\"", "files": [ "src/**/*.razor" ], "unless": "ReportDashboard" }
+        { "text": "Show the report chosen as dashboard: wrap the app's dashboard page in <ReportDashboard> (Coworkee.Client.Blazor.Reporting.Components); it falls back to its child content.", "find": "@page \"/dashboard\"", "files": [ "src/**/*.razor" ], "unless": "ReportDashboard" },
+        { "text": "Move the palette search of the set to the server module that registers its OData set: services.AddGlobalSearch<TEntity>(s => s.Fields(e => e.Name).Subtitle(...).Page(\"/list-page\")), then delete the client registration.", "find": "AddCommandPaletteEntitySet|CommandPaletteEntitySet<", "files": [ "src/**/*.cs" ] }
       ]
     }
   ]

@@ -1,8 +1,11 @@
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.CommandPalette;
 using Coworkee.Client.Blazor.Localization;
+using Coworkee.Client.Blazor.Search;
+using Coworkee.Contracts.Search;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using MudBlazor;
 
@@ -12,14 +15,21 @@ public sealed record PaletteHit(CommandPaletteItem Item, int Score, IReadOnlyLis
 
 /// <summary>
 /// Ctrl+K / Cmd+K or the search button in the app bar: pages, records, actions and the assistant in one keyboard-first list.
-/// Apps add items with AddCommandPaletteProvider, AddCommandPaletteCommand and AddCommandPaletteEntitySet.
+/// Apps add items with AddCommandPaletteProvider and AddCommandPaletteCommand; records come from the global search of the server
+/// (AddGlobalSearch there), group by group as the providers find them.
 /// </summary>
 public partial class CoworkeeCommandPalette : IAsyncDisposable
 {
     private const int PerGroup = 8;
     private const int DebounceMilliseconds = 150;
+    private const int MinServerQuery = 2;
+    private const int RecordsOrder = 10;
+    private const int AllResultsOrder = 900;
 
     private List<PaletteHit> _hits = [];
+    private List<PaletteHit> _local = [];
+    private List<PaletteHit> _remote = [];
+    private bool _streaming;
     private string _query = string.Empty;
     private int _active;
     private bool _open;
@@ -32,6 +42,8 @@ public partial class CoworkeeCommandPalette : IAsyncDisposable
     private DotNetObjectReference<CoworkeeCommandPalette>? _self;
 
     [Inject] private IEnumerable<ICommandPaletteProvider> Providers { get; set; } = null!;
+
+    [Inject] private IServiceProvider Services { get; set; } = null!;
 
     [Inject] private NavigationManager Nav { get; set; } = null!;
 
@@ -191,8 +203,11 @@ public partial class CoworkeeCommandPalette : IAsyncDisposable
                 return;
             }
 
-            _hits = Rank(items, query);
+            _local = [.. items.Select(i => Score(i, query)).OfType<PaletteHit>()];
+            _remote = [];
+            _hits = [];
             _active = 0;
+            Show(query);
         }
         catch (OperationCanceledException)
         {
@@ -207,12 +222,77 @@ public partial class CoworkeeCommandPalette : IAsyncDisposable
         }
 
         StateHasChanged();
+        if (query.Length >= MinServerQuery && Services.GetService<IGlobalSearchApi>() is { } api)
+        {
+            await StreamAsync(api, query, search.Token);
+        }
     }
 
+    /// <summary>Hits of the server's global search join the list as they arrive; the selected entry stays selected.</summary>
+    private async Task StreamAsync(IGlobalSearchApi api, string query, CancellationToken cancellationToken)
+    {
+        var remote = _remote;
+        _streaming = true;
+        StateHasChanged();
+        try
+        {
+            await foreach (var found in api.StreamAsync(query, cancellationToken: cancellationToken))
+            {
+                if (found.Hit is { } hit && remote == _remote)
+                {
+                    remote.Add(ToPaletteHit(hit));
+                    Show(query);
+                    StateHasChanged();
+                }
+            }
+        }
+        catch (Exception exception) when (exception is OperationCanceledException or ApiException or HttpRequestException or System.Text.Json.JsonException)
+        {
+        }
+        finally
+        {
+            if (remote == _remote)
+            {
+                _streaming = false;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private void Show(string query)
+    {
+        var selected = _active < _hits.Count ? _hits[_active].Item : null;
+        var all = _local.Concat(_remote);
+        if (_remote.Count > 0)
+        {
+            all = all.Append(new PaletteHit(new CommandPaletteItem("Search", L["Show all results for “{0}”", query])
+            {
+                Icon = Icons.Material.Outlined.ManageSearch,
+                Href = $"/search?q={Uri.EscapeDataString(query)}",
+                Matched = true,
+                Order = AllResultsOrder,
+            }, 0, []));
+        }
+
+        _hits = Rank(all);
+        _active = selected is null ? 0 : Math.Max(0, _hits.FindIndex(h => h.Item == selected));
+    }
+
+    internal static PaletteHit ToPaletteHit(GlobalSearchHit hit) =>
+        new(new CommandPaletteItem(hit.Group, hit.Title)
+        {
+            Icon = SearchIcons.Resolve(hit.Icon),
+            Subtitle = hit.Subtitle,
+            Href = hit.Url,
+            Matched = true,
+            Order = RecordsOrder,
+        }, (int)(hit.Score * 1000), [.. hit.Highlights.SelectMany(h => Enumerable.Range(h.Start, Math.Max(0, Math.Min(h.Length, hit.Title.Length - h.Start))))]);
+
     /// <summary>Recent first, then groups by order and best hit; within a group the best hits, at most eight.</summary>
-    internal static List<PaletteHit> Rank(IEnumerable<CommandPaletteItem> items, string query) =>
-        items.Select(i => Score(i, query)).OfType<PaletteHit>()
-            .GroupBy(h => h.Item.Group)
+    internal static List<PaletteHit> Rank(IEnumerable<CommandPaletteItem> items, string query) => Rank(items.Select(i => Score(i, query)).OfType<PaletteHit>());
+
+    internal static List<PaletteHit> Rank(IEnumerable<PaletteHit> hits) =>
+        hits.GroupBy(h => h.Item.Group)
             .OrderBy(g => g.Key == RecentPaletteItems.Group ? 0 : 1)
             .ThenBy(g => g.Min(h => h.Item.Order))
             .ThenByDescending(g => g.Max(h => h.Score))

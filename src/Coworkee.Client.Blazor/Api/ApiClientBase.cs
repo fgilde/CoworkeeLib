@@ -38,9 +38,16 @@ public abstract class ApiClientBase(HttpClient http)
     }
 
     /// <summary>Reads a response of JSON lines as they arrive (application/x-ndjson), e.g. a streamed assistant answer.</summary>
-    protected async IAsyncEnumerable<T> StreamAsync<T>(string url, object body, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    protected IAsyncEnumerable<T> StreamAsync<T>(string url, object body, CancellationToken cancellationToken) =>
+        StreamAsync<T>(new HttpRequestMessage(HttpMethod.Post, url) { Content = JsonContent.Create(body) }, cancellationToken);
+
+    /// <summary>Reads JSON lines of a GET as they arrive, e.g. the hits of the global search.</summary>
+    protected IAsyncEnumerable<T> StreamAsync<T>(string url, CancellationToken cancellationToken) =>
+        StreamAsync<T>(new HttpRequestMessage(HttpMethod.Get, url), cancellationToken);
+
+    private async IAsyncEnumerable<T> StreamAsync<T>(HttpRequestMessage message, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post, url) { Content = JsonContent.Create(body) };
+        using var request = message;
         request.Headers.Add("X-CSRF", "1");
         request.Options.Set(new HttpRequestOptionsKey<bool>("WebAssemblyEnableStreamingResponse"), true);
         using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);

@@ -67,7 +67,7 @@ Alte Adressen funktionieren weiter: `/admin/users/…` in einem Lesezeichen, ein
 
 So funktioniert es: eine Sammelseite der Bibliothek (`CoworkeePageHost`, Route `/{*Path}`) zeigt die Seiten der Bibliothek. Seiten deiner App gewinnen immer, eine eigene `/admin/ai`-Seite stößt also nie mit der Bibliothek zusammen. Eine Adresse, die niemand kennt, zeigt die `NotFoundPage` des Routers, wenn du eine gesetzt hast, sonst ein kurzes „Nicht gefunden.“ im Layout.
 
-Schlüssel: `users`, `user`, `groups`, `roles`, `role`, `clients`, `scopes`, `api-keys`, `settings`, `ai-settings`, `ai-tool-calls`, `audit`, `backups`, `data-transfer`, `editions`, `languages`, `translations`, `mail-settings`, `mail-templates`, `mail-template`, `mail-campaigns`, `mail-log`, `services`, `system-status`, `tenants`, `themes`, `webhooks`, `approvals`, `assistant`, `chat`, `files`, `notifications`, `profile`, `user-settings`, mit Reporting dazu `reports`, `report`, `report-data`. Ein unbekannter Schlüssel hält die App beim Start an.
+Schlüssel: `users`, `user`, `groups`, `roles`, `role`, `clients`, `scopes`, `api-keys`, `settings`, `ai-settings`, `ai-tool-calls`, `audit`, `backups`, `data-transfer`, `editions`, `languages`, `translations`, `mail-settings`, `mail-templates`, `mail-template`, `mail-campaigns`, `mail-log`, `services`, `system-status`, `tenants`, `themes`, `webhooks`, `approvals`, `assistant`, `chat`, `files`, `notifications`, `profile`, `search`, `user-settings`, mit Reporting dazu `reports`, `report`, `report-data`. Ein unbekannter Schlüssel hält die App beim Start an.
 
 ## Ersetzen oder beitragen
 

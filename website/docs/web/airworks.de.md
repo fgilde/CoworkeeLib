@@ -254,6 +254,13 @@ search: async (query) => (await loadProducts(query, 8)).items.map((product) => (
 })),
 ```
 
+Die [globale Suche](global-search.md) des Servers ist auch in der Desktop-Suche: `useCoworkee` registriert `globalSearchProvider`, der `GET /api/v1/search` fragt und Berichte, Chats und Dateien in ihren Apps öffnet, Datensätze von OData-Sets in der Daten-App. Sollen die Datensätze eines Sets deine eigene App öffnen, registrierst du den Provider mit einem eigenen Ziel neu (dieselbe Id ersetzt ihn):
+
+```ts
+airWorks.registerSearchProvider(globalSearchProvider(coworkee, (hit) =>
+  hit.provider === 'products' ? { appId: 'myapp.product', intent: { id: hit.id! } } : defaultSearchTarget(hit)));
+```
+
 ### 7. Eine MudEx-Web-Komponente
 
 `mudExFrame` setzt eine [Web-Komponente von MudBlazor.Extensions](https://www.mudex.org) in einen eigenen Frame (siehe [Dateivorschau](#dateivorschau)). Das Produktfenster zeigt das Produktbild in der Dateianzeige, die auch Data-URLs nimmt:
