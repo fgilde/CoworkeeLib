@@ -170,8 +170,12 @@ public sealed class WorkflowTests(WorkflowApp app) : IAsyncLifetime
         await Should.ThrowAsync<HubException>(() => connection.InvokeAsync(RealtimeHubMethods.Subscribe, WorkflowTopics.Entity("Unknown", _expense), Ct));
     }
 
-    private async Task<WorkflowStatusDto> Decide(Guid userId, Guid approvalId, bool approve, string? comment) =>
-        await ReadAsync<WorkflowStatusDto>(await app.As(userId, _setup.TenantId).PostAsJsonAsync($"/api/v1/workflows/approvals/{approvalId}", new DecisionRequest(approve, comment), Ct));
+    // the clock stands still otherwise: history steps of separate requests would share one time and come back in any order (SQL Server)
+    private async Task<WorkflowStatusDto> Decide(Guid userId, Guid approvalId, bool approve, string? comment)
+    {
+        WorkflowApp.Clock.Advance(TimeSpan.FromSeconds(1));
+        return await ReadAsync<WorkflowStatusDto>(await app.As(userId, _setup.TenantId).PostAsJsonAsync($"/api/v1/workflows/approvals/{approvalId}", new DecisionRequest(approve, comment), Ct));
+    }
 
     private static List<string> Names(WorkflowStatusDto status) => status.Transitions.Select(t => t.Name).ToList();
 

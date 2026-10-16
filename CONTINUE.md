@@ -120,7 +120,7 @@ Docs `modules/workflows.md`, `modules/workflows-elsa.md`.
 - Client: `CoworkeeWorkflow`, `CoworkeeWorkflowActions` (row; one GET per row, `ponytail:`), `CoworkeeWorkflowTimeline`, page `/workflows/approvals`, nav entries Approvals and Workflow designer.
 - `Coworkee.Workflows.Elsa`: Elsa 3.9.0 (MIT, net10 builds) in the API host, tables in the app database (Elsa's own migrations), API `/api/elsa` behind a gate for `Workflows.Elsa.Manage` (Elsa's endpoint security disabled), activities SendCommand/RunTransition/WaitForApproval/Notify/QueryOData, triggers WorkflowStateReached/EntityChangedTrigger (`AddCoworkeeElsa(e => e.Watch<T>(...))`). Elsa Studio is not embedded and no host ships yet (see the docs page for why and the plan); `Coworkee:Workflows:Elsa:StudioUrl` feeds the designer link.
 - Template/CLI/Studio options `workflows` and `elsa` (off); with samples: product approval (`ProductApproval.cs`, products column) and `ProductApprovedWorkflow` in the API. A generated app with both builds (`COWORKEE_TEST_FEED`); not run in Aspire or a browser yet.
-- Not done: personal data export of approver comments, batch status endpoint for rows, Elsa tests on SQL Server.
+- Not done: personal data export of approver comments, batch status endpoint for rows. Workflows and Workflows.Elsa tests run in the CI provider matrix (SQL Server, SQLite).
 
 ### Import and export
 Docs `website/docs/web/import-export*.md`, changelog section *Unreleased*.
