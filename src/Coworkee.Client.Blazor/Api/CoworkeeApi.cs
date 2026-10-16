@@ -213,6 +213,9 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
     public Task SendTestMailAsync(string name, string culture, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Post, Template(name, culture) + "/test", null, cancellationToken);
 
+    public async Task<IReadOnlyList<MailTemplateVersionDto>> GetMailTemplateHistoryAsync(string name, string culture, CancellationToken cancellationToken = default) =>
+        await GetAsync<MailTemplateVersionDto[]>(Template(name, culture) + "/history", cancellationToken);
+
     public Task<PagedResult<OutgoingMailDto>> GetOutgoingMailsAsync(PageRequest page, OutgoingMailStatus? status, CancellationToken cancellationToken = default) =>
         GetAsync<PagedResult<OutgoingMailDto>>(
             $"{Mail}/outgoing?page={page.Page}&pageSize={page.PageSize}&search={Uri.EscapeDataString(page.Search ?? string.Empty)}{(status is null ? string.Empty : "&status=" + status)}",

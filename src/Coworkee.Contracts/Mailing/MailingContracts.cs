@@ -52,6 +52,9 @@ public sealed record MailTemplateDto(
 
 public sealed record SaveMailTemplateRequest(string Subject, string Body);
 
+/// <summary>A saved state of a template language, newest first in the history; <paramref name="Author"/> is the display name of who saved it.</summary>
+public sealed record MailTemplateVersionDto(DateTimeOffset SavedAt, string? Author, string Subject, string Body);
+
 /// <summary>The mail settings as typed in the form; an empty secret stands for the stored one unless its setting name is in <paramref name="Cleared"/> (the form removes it).</summary>
 public sealed record MailConnectionTestRequest(IReadOnlyDictionary<string, string?> Values, IReadOnlyCollection<string>? Cleared = null);
 
