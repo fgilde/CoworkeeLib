@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Korrekturen
+
+- `SyncDevelopmentUsersAsync()` gibt Seed-Rollen auch die seitdem im Seed ergänzten Berechtigungen (nur in Development, entfernt wird nichts); so bekommt eine früher eingerichtete Datenbank z. B. neue Workflow-Berechtigungen einer Demo-Rolle.
+
 ## 0.0.1.28 (2026-10-16)
 
 ### Breaking Changes

@@ -63,8 +63,8 @@ internal sealed class IdentitySeeder(
     }
 
     /// <summary>
-    /// Makes the accounts of an initialized system match the options: missing users and roles are added, a user whose password differs gets the seeded one.
-    /// Other users, roles and grants stay as they are.
+    /// Makes the accounts of an initialized system match the options: missing users and roles are added, seeded roles get the permissions added to
+    /// the seed since, a user whose password differs gets the seeded one. Other users, roles and grants stay as they are; nothing is removed.
     /// </summary>
     public async Task SyncAsync(CancellationToken cancellationToken = default)
     {
@@ -93,6 +93,7 @@ internal sealed class IdentitySeeder(
             }
         }
 
+        await GrantMissingAsync(tenant.Id, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
 
         async Task CreateAsync(SeedUser seed)
@@ -116,6 +117,23 @@ internal sealed class IdentitySeeder(
             {
                 throw new InvalidOperationException($"Seed user {seed.Email}: {string.Join(", ", result.Errors.Select(e => e.Description))}");
             }
+        }
+    }
+
+    private async Task GrantMissingAsync(Guid tenantId, CancellationToken cancellationToken)
+    {
+        foreach (var seed in _options.Roles)
+        {
+            var role = db.Set<Role>().Local.FirstOrDefault(r => r.TenantId == tenantId && r.Name == seed.Name)
+                ?? await db.Set<Role>().IgnoreQueryFilters().FirstOrDefaultAsync(r => r.TenantId == tenantId && r.Name == seed.Name, cancellationToken);
+            if (role is null || db.Entry(role).State == EntityState.Added)
+            {
+                continue;
+            }
+
+            var granted = await db.Set<PermissionGrant>().IgnoreQueryFilters()
+                .Where(g => g.TenantId == tenantId && g.ProviderType == PermissionProviderType.Role && g.ProviderKey == role.Id).Select(g => g.Name).ToListAsync(cancellationToken);
+            db.AddRange(seed.Permissions.Except(granted).Select(p => new PermissionGrant { TenantId = tenantId, Name = p, ProviderType = PermissionProviderType.Role, ProviderKey = role.Id }));
         }
     }
 

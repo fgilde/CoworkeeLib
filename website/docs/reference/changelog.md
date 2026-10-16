@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Fixes
+
+- `SyncDevelopmentUsersAsync()` also gives seeded roles the permissions added to the seed since (Development only, nothing is removed), so a database set up earlier picks up e.g. new workflow permissions of a demo role.
+
 ## 0.0.1.28 (2026-10-16)
 
 ### Breaking changes

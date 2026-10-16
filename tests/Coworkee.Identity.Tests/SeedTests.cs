@@ -67,6 +67,36 @@ public sealed class SeedTests(IdentityApp app) : IAsyncLifetime
         (await RootPasswordIsAsync(tenantId, "Admin#12345")).ShouldBe(synced);
     }
 
+    [Fact]
+    public async Task Sync_gives_seeded_roles_the_permissions_added_to_the_seed_since()
+    {
+        await app.App.Services.SeedCoworkeeIdentityAsync(Ct);
+        var tenantId = await app.InDbAsync(null, db => db.Set<Tenant>().IgnoreQueryFilters().Where(t => t.IsDefault).Select(t => t.Id).SingleAsync(Ct));
+        var editor = await app.InDbAsync(tenantId, db => db.Set<Role>().Where(r => r.Name == "Editor").Select(r => r.Id).SingleAsync(Ct));
+        await app.InDbAsync(tenantId, async db =>
+        {
+            db.RemoveRange(db.Set<PermissionGrant>().Where(g => g.ProviderType == PermissionProviderType.Role && g.ProviderKey == editor));
+            return await db.SaveChangesAsync(Ct);
+        });
+
+        var host = app.App.Services.GetRequiredService<IHostEnvironment>();
+        var original = host.EnvironmentName;
+        host.EnvironmentName = Environments.Development;
+        try
+        {
+            await app.App.Services.SyncDevelopmentUsersAsync(Ct);
+            await app.App.Services.SyncDevelopmentUsersAsync(Ct);
+        }
+        finally
+        {
+            host.EnvironmentName = original;
+        }
+
+        var grants = await app.InDbAsync(tenantId, db => db.Set<PermissionGrant>()
+            .Where(g => g.ProviderType == PermissionProviderType.Role && g.ProviderKey == editor).Select(g => g.Name).ToListAsync(Ct));
+        grants.ShouldBe([IdentityPermissions.Users.View]);
+    }
+
     private async Task ChangeRootPasswordAsync(Guid tenantId)
     {
         using var actor = Coworkee.Core.Security.CurrentUserScope.Begin(new Coworkee.Core.Security.ImpersonatedUser(null, tenantId));
