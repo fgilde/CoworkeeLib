@@ -22,6 +22,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### New
 
+- Template samples: the command palette offers *New product* (opens the dialog through `/catalog/products?new=true`) and finds products by name or barcode.
 - **Webhooks: rotate secret**: a new secret shown once, the old one signs next to it for `Coworkee:Webhooks:SecretGracePeriod` (24 h), see [Webhooks](../modules/webhooks.md). Two new columns on `cw.WebhookSubscriptions` (apps with webhooks need a migration).
 - **Workflow chips in tables** load the states of a page in one request (`POST /api/v1/workflows/{entityType}/states`, `IWorkflowApi.GetStatesAsync`) instead of one per row; own `IWorkflowApi` implementations add the method.
 - **Range sliders in column filters**: *between* on number and date columns slides between the smallest and largest value the server reports; a column with a date or number range facet (e.g. the demo's order date) shows that facet's histogram and slider instead of a check box per bucket.

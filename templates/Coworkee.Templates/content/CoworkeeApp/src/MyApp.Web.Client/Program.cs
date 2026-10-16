@@ -9,6 +9,8 @@ using Coworkee.Client.Blazor.Reporting;
 #endif
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 #if (samples)
+using Coworkee.Client.Blazor.CommandPalette;
+using MyApp.Contracts.Catalog;
 using MyApp.Contracts.Documents;
 using MyApp.Web.Client.Api;
 using MyApp.Web.Client.Pages.Documents;
@@ -41,6 +43,15 @@ builder.Services.AddHttpClient<IDocumentsApi, DocumentsApi>(client =>
     client.Timeout = Timeout.InfiniteTimeSpan;
 });
 builder.Services.AddSingleton<INavigationContributor, MyAppNavigation>();
+// Ctrl+K: "New product" opens the create dialog, typing finds products by name or barcode
+builder.Services.AddCommandPaletteCommand(new CommandPaletteCommand("New product", MudBlazor.Icons.Material.Outlined.AddBox, CatalogPermissions.Products.Create,
+    Href: "/catalog/products?new=true", Keywords: "create add product"));
+builder.Services.AddCommandPaletteEntitySet(new CommandPaletteEntitySet<ProductDto>("Products", "/catalog/products", p => p.Name, [nameof(ProductDto.Name), nameof(ProductDto.Barcode)])
+{
+    Permission = CatalogPermissions.Products.View,
+    Icon = MudBlazor.Icons.Material.Outlined.ViewCarousel,
+    Subtitle = p => p.Barcode,
+});
 builder.Services.AddSingleton(new ProfileTab("Documents", "documents", typeof(MyDocuments), DocumentPermissions.Documents.View, MudBlazor.Icons.Material.Outlined.Description));
 #endif
 builder.Services.Configure<NavigationMenuOptions>(MyAppNavigation.Order);
