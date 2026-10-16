@@ -77,18 +77,46 @@ The module adds the tables `cw.WorkflowItems`, `cw.WorkflowSteps`, `cw.WorkflowA
 <CoworkeeWorkflow EntityType="Products" EntityId="product.Id" OnChanged="_ => ReloadAsync()" />
 ```
 
-`CoworkeeWorkflow` shows the state, a button for every transition the user may run, the open approval with its approvers and their decisions (*Approve* and *Reject* for the user's own), and the history as a timeline; `ShowHistory="false"` leaves the timeline out, `CoworkeeWorkflowTimeline` shows it alone. In a data table row, `CoworkeeWorkflowActions` shows the state as a chip and the same actions in a menu. The rows of a page ask for their states together (one request per entity type):
+`CoworkeeWorkflow` shows the state, a button for every transition the user may run, the open approval with its approvers and their decisions (*Approve* and *Reject* for the user's own), and the history as a timeline; `ShowHistory="false"` leaves the timeline out, `CoworkeeWorkflowTimeline` shows it alone. In a data table, `CoworkeeWorkflowColumn` shows the state as a chip and the same actions in a menu; the rows of a page ask for their states together (one request per entity type):
 
 ```razor
-<TemplateColumn T="ProductDto" Title="@L["Approval"]">
-    <CellTemplate>
-        <CoworkeeWorkflowActions EntityType="Products" EntityId="context.Item.Id" />
-    </CellTemplate>
-</TemplateColumn>
+<CoworkeeDataTable T="ProductDto" EntitySet="Products">
+    <Columns>
+        <PropertyColumn Property="p => p.Name" />
+        <CoworkeeWorkflowColumn T="ProductDto" EntityType="Products" Title="@L["Approval"]" />
+    </Columns>
+</CoworkeeDataTable>
 ```
+
+`CoworkeeWorkflowColumn` behaves like a property column: its filter lists the states of the workflow with their counts plus *Awaiting my approval*, it sorts, and it groups (the group keys come from the loaded states). After a transition it reloads the table, so filters and counts follow (`ReloadOnChange="false"` turns that off). The id of a row is its `Id` property; `EntityId="row => row.Key"` picks another one. `CoworkeeWorkflowActions` stays for a `TemplateColumn` of your own.
+
+### Filter, sort and facet by state
+
+Every OData set whose entity type has a workflow gets two virtual properties. They are no columns of the entity and never part of the response, but `$filter` and `$orderby` know them and the database evaluates them:
+
+| Property | |
+|---|---|
+| `WorkflowState` | the state; a subquery on `cw.WorkflowItems` (rows without an item are in the initial state), or the mirrored column with `MirrorTo` |
+| `WorkflowAwaitsMe` | `true` when an open approval waits for the decision of the current user |
+
+```http
+GET /odata/Products?$filter=WorkflowState eq 'In review'&$orderby=WorkflowState,Name
+GET /odata/Products?$filter=WorkflowAwaitsMe eq true
+```
+
+The subquery runs through the query filters of the app's `DbContext`, so a state of another organisation never matches. With facets on, the response carries the facet `WorkflowState`: every state the workflow names (initial state, declared states, the ends of transitions and approvals) with its count, then *Awaiting my approval*. `WithColor` gives a state a CSS color for swatches:
+
+```csharp
+product.State("Approved").WithColor("var(--mud-palette-success)");
+```
+
+Both properties need `Workflows.View`; without it a query that names them is refused (403) and the facet is left out. An entity type with several workflows uses the one whose entity type is named like the set.
+
+!!! note "Client entities"
+    Rows mirrored into the browser (client entities) are queried locally, where `WorkflowState` does not exist. For such sets mirror the state into a string property (`MirrorTo(o => o.ApprovalState)`), give it a facet with `[ProvideFacet]` and name it in the column: `<CoworkeeWorkflowColumn ... MirrorProperty="ApprovalState" />`. The column then filters, sorts and groups on the property, in the browser and on the server alike. A mirrored workflow has no `WorkflowState` facet (the property's own facet replaces it); `$filter=WorkflowState ...` still works and reads the mirrored column.
 
 A transition that needs a comment and every rejection ask for it in a small dialog. The page **Approvals** (`/workflows/approvals`) lists everything that waits for the user's decision, oldest first, with the deadline; it appears in the navigation for users with `Workflows.View`. State and transition names go through the localizer, so add them to the app's texts.
 
 ## In a new app
 
-`coworkee new MyApp --workflows` (or the *Workflows and approvals* card in the Studio) adds the module. With the samples, products get the workflow above in short: product managers submit, an administrator approves within three days, and the products table has an *Approval* column.
+`coworkee new MyApp --workflows` (or the *Workflows and approvals* card in the Studio) adds the module. With the samples, products get the workflow above in short: product managers submit, an administrator approves within three days, and the products table has an *Approval* column to filter, sort and group by.

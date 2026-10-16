@@ -4,6 +4,11 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### New
+
+- Workflow state as a server-side filter: every OData set whose entity has a workflow gets the virtual properties `WorkflowState` and `WorkflowAwaitsMe` for `$filter` and `$orderby` (a tenant-filtered subquery, or the `MirrorTo` column) and a facet `WorkflowState` with the states of the definition and *Awaiting my approval*; both need `Workflows.View`. `CoworkeeWorkflowColumn` for `CoworkeeDataTable` filters, sorts and groups by it; `WorkflowState<T>.WithColor(...)` colors a state. Replace `TemplateColumn` + `CoworkeeWorkflowActions` with `<CoworkeeWorkflowColumn T="..." EntityType="..." />`.
+- OData sets can carry computed properties of other modules (`IODataComputedPropertySource`, `ODataComputedProperty`): bound into `$filter`/`$orderby`, never serialized, optional facet. The library configures the OData route itself now instead of Nextended's `AddODataAuto`.
+
 ### Fixes
 
 - `SyncDevelopmentUsersAsync()` runs for the migrations of a local Aspire run: the migrations project has no launch profile and ran as Production, so the sync never happened there. `AddMigrations` sets `Coworkee:Identity:SyncDevelopmentUsers` in local development runs; the sync runs in Development or with that setting.

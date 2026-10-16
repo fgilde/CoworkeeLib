@@ -21,11 +21,7 @@
         <PropertyColumn Property="p => p.Barcode" Title="@L["Barcode"]" />
         <PropertyColumn Property="p => p.Rate" Title="@L["Rate"]" Format="0.00" AggregateDefinition="AverageRate" />
 @*#if (workflows)
-        <TemplateColumn T="ProductDto" Sortable="false" Title="@L["Approval"]">
-            <CellTemplate>
-                <CoworkeeWorkflowActions EntityType="Products" EntityId="context.Item.Id" />
-            </CellTemplate>
-        </TemplateColumn>
+        <CoworkeeWorkflowColumn T="ProductDto" EntityType="Products" Title="@L["Approval"]" />
 #endif*@
     </Columns>
 </CoworkeeDataTable>

@@ -77,18 +77,46 @@ Das Modul bringt die Tabellen `cw.WorkflowItems`, `cw.WorkflowSteps`, `cw.Workfl
 <CoworkeeWorkflow EntityType="Products" EntityId="product.Id" OnChanged="_ => ReloadAsync()" />
 ```
 
-`CoworkeeWorkflow` zeigt den Zustand, einen Button für jeden erlaubten Übergang, die offene Genehmigung mit den Genehmigenden und ihren Entscheidungen (*Genehmigen* und *Ablehnen* für die eigene) und die Historie als Zeitleiste; `ShowHistory="false"` lässt die Zeitleiste weg, `CoworkeeWorkflowTimeline` zeigt sie allein. In einer Tabellenzeile zeigt `CoworkeeWorkflowActions` den Zustand als Chip und dieselben Aktionen in einem Menü. Die Zeilen einer Seite fragen ihre Zustände gemeinsam ab (eine Anfrage pro Entity-Typ):
+`CoworkeeWorkflow` zeigt den Zustand, einen Button für jeden erlaubten Übergang, die offene Genehmigung mit den Genehmigenden und ihren Entscheidungen (*Genehmigen* und *Ablehnen* für die eigene) und die Historie als Zeitleiste; `ShowHistory="false"` lässt die Zeitleiste weg, `CoworkeeWorkflowTimeline` zeigt sie allein. In einer Datentabelle zeigt `CoworkeeWorkflowColumn` den Zustand als Chip und dieselben Aktionen in einem Menü; die Zeilen einer Seite fragen ihre Zustände gemeinsam ab (eine Anfrage pro Entity-Typ):
 
 ```razor
-<TemplateColumn T="ProductDto" Title="@L["Approval"]">
-    <CellTemplate>
-        <CoworkeeWorkflowActions EntityType="Products" EntityId="context.Item.Id" />
-    </CellTemplate>
-</TemplateColumn>
+<CoworkeeDataTable T="ProductDto" EntitySet="Products">
+    <Columns>
+        <PropertyColumn Property="p => p.Name" />
+        <CoworkeeWorkflowColumn T="ProductDto" EntityType="Products" Title="@L["Approval"]" />
+    </Columns>
+</CoworkeeDataTable>
 ```
+
+`CoworkeeWorkflowColumn` verhält sich wie eine Eigenschaftsspalte: Ihr Filter listet die Zustände des Workflows mit ihren Anzahlen und dazu *Wartet auf meine Genehmigung*, sie sortiert und gruppiert (die Gruppen kommen aus den geladenen Zuständen). Nach einem Übergang lädt sie die Tabelle neu, damit Filter und Anzahlen folgen (`ReloadOnChange="false"` schaltet das ab). Die Id einer Zeile ist ihre Eigenschaft `Id`; `EntityId="row => row.Key"` nimmt eine andere. `CoworkeeWorkflowActions` bleibt für eine eigene `TemplateColumn`.
+
+### Nach Zustand filtern, sortieren und facettieren
+
+Jede OData-Menge, deren Entity-Typ einen Workflow hat, bekommt zwei virtuelle Eigenschaften. Sie sind keine Spalten der Entität und stehen nie in der Antwort, aber `$filter` und `$orderby` kennen sie und die Datenbank wertet sie aus:
+
+| Eigenschaft | |
+|---|---|
+| `WorkflowState` | der Zustand; eine Unterabfrage auf `cw.WorkflowItems` (Zeilen ohne Eintrag stehen im Anfangszustand) oder mit `MirrorTo` die gespiegelte Spalte |
+| `WorkflowAwaitsMe` | `true`, wenn eine offene Genehmigung auf die Entscheidung des aktuellen Benutzers wartet |
+
+```http
+GET /odata/Products?$filter=WorkflowState eq 'In review'&$orderby=WorkflowState,Name
+GET /odata/Products?$filter=WorkflowAwaitsMe eq true
+```
+
+Die Unterabfrage läuft durch die Abfragefilter des `DbContext` der App, ein Zustand einer anderen Organisation passt also nie. Mit Facetten trägt die Antwort die Facette `WorkflowState`: jeden Zustand, den der Workflow nennt (Anfangszustand, deklarierte Zustände, Ziele von Übergängen und Genehmigungen), mit seiner Anzahl, danach *Wartet auf meine Genehmigung*. `WithColor` gibt einem Zustand eine CSS-Farbe für Farbfelder:
+
+```csharp
+product.State("Approved").WithColor("var(--mud-palette-success)");
+```
+
+Beide Eigenschaften brauchen `Workflows.View`; ohne die Berechtigung wird eine Abfrage, die sie nennt, abgelehnt (403), und die Facette fehlt. Ein Entity-Typ mit mehreren Workflows nimmt den, dessen Entity-Typ wie die Menge heißt.
+
+!!! note "Client-Entitäten"
+    In den Browser gespiegelte Zeilen (Client-Entitäten) werden lokal abgefragt, und dort gibt es `WorkflowState` nicht. Spiegle für solche Mengen den Zustand in eine String-Eigenschaft (`MirrorTo(o => o.ApprovalState)`), gib ihr mit `[ProvideFacet]` eine Facette und nenne sie in der Spalte: `<CoworkeeWorkflowColumn ... MirrorProperty="ApprovalState" />`. Die Spalte filtert, sortiert und gruppiert dann auf dieser Eigenschaft, im Browser wie auf dem Server. Ein gespiegelter Workflow hat keine Facette `WorkflowState` (die Facette der Eigenschaft ersetzt sie); `$filter=WorkflowState ...` funktioniert weiter und liest die gespiegelte Spalte.
 
 Ein Übergang mit Pflichtkommentar und jede Ablehnung fragen in einem kleinen Dialog danach. Die Seite **Genehmigungen** (`/workflows/approvals`) listet alles, was auf die Entscheidung des Benutzers wartet, älteste zuerst, mit Frist; sie erscheint in der Navigation für Benutzer mit `Workflows.View`. Namen von Zuständen und Übergängen laufen durch den Localizer, nimm sie also in die Texte der App auf.
 
 ## In einer neuen App
 
-`coworkee new MyApp --workflows` (oder die Karte *Workflows and approvals* im Studio) fügt das Modul hinzu. Mit den Beispielen bekommen Produkte den Workflow von oben in kurz: Produktmanager reichen ein, ein Administrator genehmigt innerhalb von drei Tagen, und die Produkttabelle hat eine Spalte *Freigabe*.
+`coworkee new MyApp --workflows` (oder die Karte *Workflows and approvals* im Studio) fügt das Modul hinzu. Mit den Beispielen bekommen Produkte den Workflow von oben in kurz: Produktmanager reichen ein, ein Administrator genehmigt innerhalb von drei Tagen, und die Produkttabelle hat eine Spalte *Freigabe*, nach der du filtern, sortieren und gruppieren kannst.

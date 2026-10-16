@@ -17,7 +17,9 @@ public static class ProductApproval
             product.Transition("Submit", "Draft", "In review").RequiresPermission(CatalogPermissions.Products.Edit).When(p => p.Rate > 0);
             product.Transition("Withdraw", "In review", "Draft").RequiresPermission(CatalogPermissions.Products.Edit);
             product.Transition("Reopen", ["Approved", "Rejected"], "Draft").RequiresPermission(CatalogPermissions.Products.Edit).RequiresComment();
-            product.State("In review").Approval("Approved", "Rejected", approval => approval
+            product.State("Approved").WithColor("var(--mud-palette-success)");
+            product.State("Rejected").WithColor("var(--mud-palette-error)");
+            product.State("In review").WithColor("var(--mud-palette-warning)").Approval("Approved", "Rejected", approval => approval
                 .Role("admin")
                 .DueIn(TimeSpan.FromDays(3))
                 .RemindAfter(TimeSpan.FromDays(1)));
