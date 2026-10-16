@@ -28,6 +28,7 @@ public static class CoworkeeClientExtensions
         services.AddHttpClient<Social.ISocialApi, Social.SocialApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Workflows.IWorkflowApi, Workflows.WorkflowApi>(client => client.BaseAddress = baseAddress);
         services.AddScoped<Workflows.WorkflowCommands>();
+        services.AddScoped<Workflows.WorkflowStates>();
         services.AddHttpClient<Features.IFeaturesApi, Features.FeaturesApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Security.IClientsApi, Security.ClientsApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Security.IApiKeysApi, Security.ApiKeysApi>(client => client.BaseAddress = baseAddress);

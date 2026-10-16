@@ -46,6 +46,22 @@ public sealed class WorkflowTests(WorkflowApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_states_of_a_table_page_come_in_one_request_without_history_and_without_foreign_rows()
+    {
+        var empty = await app.AddExpenseAsync(_setup.TenantId, amount: 0);
+        var foreign = await app.AddExpenseAsync(Guid.NewGuid());
+
+        var states = await ReadAsync<List<WorkflowStatusDto>>(
+            await Admin.PostAsJsonAsync("/api/v1/workflows/Expenses/states", new WorkflowStatesRequest([_expense, empty, foreign, _expense]), Ct));
+
+        states.Select(s => s.EntityId).ShouldBe([_expense, empty], ignoreOrder: true);
+        states.Single(s => s.EntityId == _expense).Transitions.Select(t => t.Name).ShouldBe(["Submit"]);
+        states.ShouldAllBe(s => s.History.Count == 0);
+        (await Admin.PostAsJsonAsync("/api/v1/workflows/Expenses/states", new WorkflowStatesRequest([.. Enumerable.Range(0, 201).Select(_ => Guid.NewGuid())]), Ct))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
     public async Task An_approval_of_all_managers_moves_on_after_the_last_one_and_the_history_tells_who_did_what()
     {
         var managers = await CreateRoleAsync("Manager", WorkflowPermissions.View);

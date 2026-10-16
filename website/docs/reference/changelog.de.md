@@ -22,6 +22,7 @@
 
 ### Neu
 
+- **Workflow-Chips in Tabellen** laden die Zustände einer Seite in einer Anfrage (`POST /api/v1/workflows/{entityType}/states`, `IWorkflowApi.GetStatesAsync`) statt einer pro Zeile; eigene `IWorkflowApi`-Implementierungen ergänzen die Methode.
 - **Schieberegler in Spaltenfiltern**: *zwischen* auf Zahlen- und Datumsspalten regelt zwischen kleinstem und größtem Wert, den der Server meldet; eine Spalte mit Datums- oder Zahlenbereich-Facette (etwa das Bestelldatum der Demo) zeigt deren Histogramm und Regler statt einer Checkbox pro Bucket.
 - **Systemstatus**-Seite für die Systemorganisation (`/cw/admin/system-status`): Versionen, Datenbank und ausstehende Migrationen, Outbox, Hintergrundjobs mit den letzten Fehlern, Mail, Echtzeit, Redis, Dateien, Übersetzung und KI; Module und Apps steuern Karten über `ISystemStatusContributor` bei, siehe [Admin-Oberfläche](../features/blazor-ui.md#systemstatus).
 - **Workflows und Genehmigungen** (`Coworkee.Workflows`, optional): Zustände und abgesicherte Übergänge pro Entitätstyp, Genehmigungen durch Rollen oder Benutzer mit Frist, Erinnerung und Eskalation, eine Historie, die Komponenten `CoworkeeWorkflow`, `CoworkeeWorkflowActions` und `CoworkeeWorkflowTimeline` und die Seite *Genehmigungen*, siehe [Workflows und Genehmigungen](../modules/workflows.md).

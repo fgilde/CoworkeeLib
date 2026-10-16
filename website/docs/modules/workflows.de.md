@@ -62,6 +62,7 @@ Handler der Domain-Events `WorkflowTransitioned`, `ApprovalStarted` und `Approva
 | Endpunkt | |
 |---|---|
 | `GET /api/v1/workflows/{entityType}/{entityId}` | Zustand, die erlaubten Übergänge, die offene Genehmigung und die Historie |
+| `POST /api/v1/workflows/{entityType}/states` | Zustände von bis zu 200 Zeilen `{ "ids": [...] }` in einer Anfrage, ohne Historie; Zeilen, die der Benutzer nicht sehen darf, fehlen |
 | `POST /api/v1/workflows/{entityType}/{entityId}/{transition}` | Übergang ausführen mit `{ "comment" }` |
 | `GET /api/v1/workflows/approvals` | die offenen Genehmigungen, die auf den Benutzer warten |
 | `POST /api/v1/workflows/approvals/{id}` | entscheiden mit `{ "approve": true, "comment" }` |
@@ -76,7 +77,7 @@ Das Modul bringt die Tabellen `cw.WorkflowItems`, `cw.WorkflowSteps`, `cw.Workfl
 <CoworkeeWorkflow EntityType="Products" EntityId="product.Id" OnChanged="_ => ReloadAsync()" />
 ```
 
-`CoworkeeWorkflow` zeigt den Zustand, einen Button für jeden erlaubten Übergang, die offene Genehmigung mit den Genehmigenden und ihren Entscheidungen (*Genehmigen* und *Ablehnen* für die eigene) und die Historie als Zeitleiste; `ShowHistory="false"` lässt die Zeitleiste weg, `CoworkeeWorkflowTimeline` zeigt sie allein. In einer Tabellenzeile zeigt `CoworkeeWorkflowActions` den Zustand als Chip und dieselben Aktionen in einem Menü:
+`CoworkeeWorkflow` zeigt den Zustand, einen Button für jeden erlaubten Übergang, die offene Genehmigung mit den Genehmigenden und ihren Entscheidungen (*Genehmigen* und *Ablehnen* für die eigene) und die Historie als Zeitleiste; `ShowHistory="false"` lässt die Zeitleiste weg, `CoworkeeWorkflowTimeline` zeigt sie allein. In einer Tabellenzeile zeigt `CoworkeeWorkflowActions` den Zustand als Chip und dieselben Aktionen in einem Menü. Die Zeilen einer Seite fragen ihre Zustände gemeinsam ab (eine Anfrage pro Entity-Typ):
 
 ```razor
 <TemplateColumn T="ProductDto" Title="@L["Approval"]">

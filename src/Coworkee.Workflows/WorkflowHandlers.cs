@@ -9,6 +9,7 @@ namespace Coworkee.Workflows;
 
 internal sealed class WorkflowHandlers(CoworkeeDbContext db, WorkflowEngine engine, ICurrentUser currentUser)
     : IHandler<GetWorkflowQuery, Result<WorkflowStatusDto>>,
+      IHandler<GetWorkflowStatesQuery, Result<IReadOnlyList<WorkflowStatusDto>>>,
       IHandler<RunTransitionCommand, Result<WorkflowStatusDto>>,
       IHandler<DecideApprovalCommand, Result<WorkflowStatusDto>>,
       IHandler<GetMyApprovalsQuery, Result<IReadOnlyList<ApprovalDto>>>
@@ -19,6 +20,21 @@ internal sealed class WorkflowHandlers(CoworkeeDbContext db, WorkflowEngine engi
     {
         var subject = await engine.LoadAsync(query.EntityType, query.EntityId, cancellationToken);
         return subject.IsSuccess ? await StatusAsync(subject.Value, cancellationToken) : subject.Error;
+    }
+
+    // one request for a table page; rows the user cannot see (or that do not exist) are left out
+    public async Task<Result<IReadOnlyList<WorkflowStatusDto>>> HandleAsync(GetWorkflowStatesQuery query, CancellationToken cancellationToken)
+    {
+        var states = new List<WorkflowStatusDto>();
+        foreach (var id in query.Ids.Distinct())
+        {
+            if (await engine.LoadAsync(query.EntityType, id, cancellationToken) is { IsSuccess: true } subject)
+            {
+                states.Add(await StatusAsync(subject.Value, cancellationToken, history: false));
+            }
+        }
+
+        return states;
     }
 
     public async Task<Result<WorkflowStatusDto>> HandleAsync(RunTransitionCommand command, CancellationToken cancellationToken)
@@ -67,20 +83,20 @@ internal sealed class WorkflowHandlers(CoworkeeDbContext db, WorkflowEngine engi
         return await StatusAsync(subject, cancellationToken);
     }
 
-    private async Task<WorkflowStatusDto> StatusAsync(WorkflowSubject subject, CancellationToken cancellationToken)
+    private async Task<WorkflowStatusDto> StatusAsync(WorkflowSubject subject, CancellationToken cancellationToken, bool history = true)
     {
         var item = subject.Item;
         var allowed = await engine.AllowedAsync(subject, cancellationToken);
         var approval = await db.Set<WorkflowApproval>().AsNoTracking().Include(a => a.Approvers)
             .Where(a => a.EntityType == item.EntityType && a.EntityId == item.EntityId && a.Status == ApprovalStatus.Pending)
             .FirstOrDefaultAsync(cancellationToken);
-        var history = await db.Set<WorkflowStep>().AsNoTracking()
+        var steps = !history ? [] : await db.Set<WorkflowStep>().AsNoTracking()
             .Where(s => s.EntityType == item.EntityType && s.EntityId == item.EntityId)
             .OrderBy(s => s.At)
             .Select(s => new WorkflowStepDto(s.Kind, s.From, s.To, s.Transition, s.UserId, s.Comment, s.At))
             .ToListAsync(cancellationToken);
         return new WorkflowStatusDto(item.EntityType, item.EntityId, item.State, allowed.Select(t => new WorkflowTransitionDto(t.Name, t.To, t.CommentRequired)).ToList(),
-            approval is null ? null : ToDto(approval), history);
+            approval is null ? null : ToDto(approval), steps);
     }
 
     private ApprovalDto ToDto(WorkflowApproval a) => new(
