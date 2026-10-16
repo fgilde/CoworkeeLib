@@ -143,6 +143,11 @@ Docs `website/docs/web/import-export*.md`, changelog section *Unreleased*.
 - Flaky: `MailTemplatesPageTests.Add_language_*` (MudEx `ObjectEditForm.HasErrors` enumerates validation messages while bUnit renders on another thread; WASM is single threaded), `ThemesPageTests` on slow runners.
 - Demo and Sharemee are on round 7 (migration `Round7`, PWA + push, `InitialAdmin`/realm reconcile, `SyncDevelopmentUsersAsync`; Sharemee dropped `DemoUserTopUp`).
 
+## Elsa Studio host (branch `feat/elsa-studio`, unreleased)
+- `Coworkee.Workflows.Elsa.Studio`: Elsa Studio 3.9 as Blazor Server host (`AddCoworkeeElsaStudio`/`MapCoworkeeElsaStudio`), sign-in through Coworkee.Bff (own OIDC client, tokens server side), calls the api's `/api/elsa` with the user's token (`Coworkee:Workflows:Elsa:Studio:BackendUrl`), 403 page without `Workflows.Elsa.Manage`. The host csproj needs `<RequiresAspNetWebAssets>true</RequiresAspNetWebAssets>` (a package props comes too late for restore). `ponytail:` a circuit keeps the token of its connection (reload after expiry).
+- Aspire `AddElsaStudio<T>()` (+ `AddProjects` for `*_ElsaStudio`, tool switch `elsastudio`), sets `StudioUrl` of the apis. Template/CLI/Studio option `elsaStudio`. Elsa endpoints are no longer in the OpenAPI documents.
+- Demo branch `feat/workflow-sample` (worktree `wt/elsa-studio/demo`): product approval, large-order approval, Elsa workflow *Product approved*, migration `Workflows`, `DemoWorkflows` seed, John = Product Manager, `MyApp.ElsaStudio`. Existing demo databases: the role *Product Manager* lacks `Workflows.View/Transition` (DemoRoles adds only missing roles) - grant them by hand or reseed.
+
 ## Product backlog (older ideas, not part of the recent rounds)
 - Own `IMailTransport` with a new provider name is only selectable via `Coworkee:Settings:Defaults:Mail.Provider` (choices are the four built-ins).
 - Translations of the 21 new languages were checked by sample, not by native speakers (km, ar least certain).
