@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Coworkee.Contracts.Search;
 
 /// <summary>A part of a hit's title that matched the search, to highlight.</summary>
@@ -29,6 +31,7 @@ public sealed record GlobalSearchHit(string Provider, string Group, string Title
     public string? Icon { get; init; }
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter<GlobalSearchProviderState>))]
 public enum GlobalSearchProviderState
 {
     Done,

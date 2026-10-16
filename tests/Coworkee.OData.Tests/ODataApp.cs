@@ -6,6 +6,7 @@ using Coworkee.Core.Modularity;
 using Coworkee.Core.Security;
 using Coworkee.Identity;
 using Coworkee.Identity.Setup;
+using Coworkee.OData.GlobalSearch;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.Testing;
 using Microsoft.AspNetCore.Builder;
@@ -107,6 +108,7 @@ public sealed class GadgetModule : CoworkeeModule
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
         context.Services.AddODataEntity<Gadget>("Gadgets", ODataApp.ViewGadgets, g => g.SerialCode);
         context.Services.AddScoped<IODataEntityFilter<Gadget>, HideSecretGadgets>();
+        context.Services.AddGlobalSearch<Gadget>(s => s.Fields(g => g.Name, g => g.Category).Subtitle(g => g.Category).Page("/gadgets"));
         context.Services.AddODataEntity<Widget>("Widgets", ODataApp.ViewGadgets);
         context.Services.ConfigureFacet<Widget>(w => w.Color, f => f.View = Contracts.Data.FacetView.Buttons);
         context.Services.AddMessagingFromAssembly(typeof(GadgetModule).Assembly);

@@ -31,6 +31,15 @@ public sealed class ToolDiscoveryTests
     }
 
     [Fact]
+    public void The_global_search_is_a_read_only_tool_for_assistant_and_mcp()
+    {
+        var tool = new AiToolCatalog([], [new Coworkee.OData.CoworkeeODataModule()]).Tools.Single(t => t.Name == "global_search");
+
+        tool.ShouldSatisfyAllConditions(t => t.ReadOnly.ShouldBeTrue(), t => t.Permissions.ShouldBeEmpty());
+        new AiToolSchemas().Get(tool, System.Text.Json.JsonSerializerOptions.Web)["required"]!.AsArray().Select(r => r!.GetValue<string>()).ShouldBe(["query"]);
+    }
+
+    [Fact]
     public void Any_value_inputs_get_an_object_schema_providers_accept()
     {
         var schema = new AiToolSchemas().Get(new AiTool("style_notes", "Styles notes.", typeof(StyleNotesCommand), typeof(Result)), System.Text.Json.JsonSerializerOptions.Web);
