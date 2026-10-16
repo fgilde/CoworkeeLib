@@ -1539,5 +1539,18 @@
   "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "Редактор форматованих текстів, наприклад шаблонів листів. Код і джерело HTML лишаються в редакторі коду.",
   "TipTap": "TipTap",
   "Quill": "Quill",
-  "Click to insert at the cursor.": "Натисни, щоб вставити в позицію курсора."
+  "Click to insert at the cursor.": "Натисни, щоб вставити в позицію курсора.",
+  "Desktop": "Комп’ютер",
+  "Light": "Світла",
+  "Dark": "Темна",
+  "Restore into the editor": "Повернути в редактор",
+  "Version history": "Історія версій",
+  "Unsaved changes": "Незбережені зміни",
+  "Leave": "Піти",
+  "Stay": "Залишитися",
+  "No saved versions yet. Every save adds one.": "Збережених версій ще немає. Кожне збереження додає одну.",
+  "Changes from this version to the editor": "Зміни від цієї версії до редактора",
+  "Sends the saved version with sample data to your address.": "Надсилає збережену версію з прикладом даних на твою адресу.",
+  "The version is in the editor. Save to keep it.": "Версія в редакторі. Збережи, щоб залишити її.",
+  "Leave without saving? Your changes to this template are lost.": "Піти без збереження? Твої зміни цього шаблону буде втрачено."
 }

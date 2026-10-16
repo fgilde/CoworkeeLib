@@ -1539,5 +1539,18 @@
   "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "El editor de textos con formato, como las plantillas de correo. El código y el HTML fuente siguen en el editor de código.",
   "TipTap": "TipTap",
   "Quill": "Quill",
-  "Click to insert at the cursor.": "Haz clic para insertarlo en el cursor."
+  "Click to insert at the cursor.": "Haz clic para insertarlo en el cursor.",
+  "Desktop": "Escritorio",
+  "Light": "Claro",
+  "Dark": "Oscuro",
+  "Restore into the editor": "Restaurar en el editor",
+  "Version history": "Historial de versiones",
+  "Unsaved changes": "Cambios sin guardar",
+  "Leave": "Salir",
+  "Stay": "Quedarse",
+  "No saved versions yet. Every save adds one.": "Aún no hay versiones guardadas. Cada guardado añade una.",
+  "Changes from this version to the editor": "Cambios de esta versión al editor",
+  "Sends the saved version with sample data to your address.": "Envía la versión guardada con datos de ejemplo a tu dirección.",
+  "The version is in the editor. Save to keep it.": "La versión está en el editor. Guarda para conservarla.",
+  "Leave without saving? Your changes to this template are lost.": "¿Salir sin guardar? Se perderán tus cambios en esta plantilla."
 }

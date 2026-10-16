@@ -1539,5 +1539,18 @@
   "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "De editor voor opgemaakte teksten zoals mailsjablonen. Code en HTML-bron blijven in de code-editor.",
   "TipTap": "TipTap",
   "Quill": "Quill",
-  "Click to insert at the cursor.": "Klik om bij de cursor in te voegen."
+  "Click to insert at the cursor.": "Klik om bij de cursor in te voegen.",
+  "Desktop": "Desktop",
+  "Light": "Licht",
+  "Dark": "Donker",
+  "Restore into the editor": "Terugzetten in de editor",
+  "Version history": "Versiegeschiedenis",
+  "Unsaved changes": "Niet-opgeslagen wijzigingen",
+  "Leave": "Verlaten",
+  "Stay": "Blijven",
+  "No saved versions yet. Every save adds one.": "Nog geen opgeslagen versies. Elke keer opslaan voegt er een toe.",
+  "Changes from this version to the editor": "Wijzigingen van deze versie naar de editor",
+  "Sends the saved version with sample data to your address.": "Stuurt de opgeslagen versie met voorbeeldgegevens naar je adres.",
+  "The version is in the editor. Save to keep it.": "De versie staat in de editor. Sla op om haar te bewaren.",
+  "Leave without saving? Your changes to this template are lost.": "Verlaten zonder opslaan? Je wijzigingen aan dit sjabloon gaan verloren."
 }

@@ -1539,5 +1539,18 @@
   "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "Editor untuk teks berformat seperti templat email. Kode dan sumber HTML tetap memakai editor kode.",
   "TipTap": "TipTap",
   "Quill": "Quill",
-  "Click to insert at the cursor.": "Klik untuk menyisipkan di kursor."
+  "Click to insert at the cursor.": "Klik untuk menyisipkan di kursor.",
+  "Desktop": "Desktop",
+  "Light": "Terang",
+  "Dark": "Gelap",
+  "Restore into the editor": "Pulihkan ke editor",
+  "Version history": "Riwayat versi",
+  "Unsaved changes": "Perubahan belum disimpan",
+  "Leave": "Tinggalkan",
+  "Stay": "Tetap di sini",
+  "No saved versions yet. Every save adds one.": "Belum ada versi tersimpan. Setiap penyimpanan menambah satu.",
+  "Changes from this version to the editor": "Perubahan dari versi ini ke editor",
+  "Sends the saved version with sample data to your address.": "Mengirim versi tersimpan dengan data contoh ke alamatmu.",
+  "The version is in the editor. Save to keep it.": "Versi ada di editor. Simpan untuk mempertahankannya.",
+  "Leave without saving? Your changes to this template are lost.": "Keluar tanpa menyimpan? Perubahanmu pada templat ini akan hilang."
 }

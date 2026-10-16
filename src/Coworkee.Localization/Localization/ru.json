@@ -1539,5 +1539,18 @@
   "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "Редактор форматированных текстов, например шаблонов писем. Код и исходный HTML остаются в редакторе кода.",
   "TipTap": "TipTap",
   "Quill": "Quill",
-  "Click to insert at the cursor.": "Нажми, чтобы вставить в позицию курсора."
+  "Click to insert at the cursor.": "Нажми, чтобы вставить в позицию курсора.",
+  "Desktop": "Компьютер",
+  "Light": "Светлая",
+  "Dark": "Тёмная",
+  "Restore into the editor": "Вернуть в редактор",
+  "Version history": "История версий",
+  "Unsaved changes": "Несохранённые изменения",
+  "Leave": "Уйти",
+  "Stay": "Остаться",
+  "No saved versions yet. Every save adds one.": "Сохранённых версий пока нет. Каждое сохранение добавляет одну.",
+  "Changes from this version to the editor": "Изменения от этой версии до редактора",
+  "Sends the saved version with sample data to your address.": "Отправляет сохранённую версию с примерными данными на твой адрес.",
+  "The version is in the editor. Save to keep it.": "Версия в редакторе. Сохрани, чтобы оставить её.",
+  "Leave without saving? Your changes to this template are lost.": "Уйти без сохранения? Изменения этого шаблона будут потеряны."
 }

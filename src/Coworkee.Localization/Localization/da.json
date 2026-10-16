@@ -1539,5 +1539,18 @@
   "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "Editoren til formaterede tekster som mailskabeloner. Kode og HTML-kilde bliver i kodeeditoren.",
   "TipTap": "TipTap",
   "Quill": "Quill",
-  "Click to insert at the cursor.": "Klik for at indsætte ved markøren."
+  "Click to insert at the cursor.": "Klik for at indsætte ved markøren.",
+  "Desktop": "Desktop",
+  "Light": "Lys",
+  "Dark": "Mørk",
+  "Restore into the editor": "Gendan i editoren",
+  "Version history": "Versionshistorik",
+  "Unsaved changes": "Ikke-gemte ændringer",
+  "Leave": "Forlad",
+  "Stay": "Bliv",
+  "No saved versions yet. Every save adds one.": "Ingen gemte versioner endnu. Hver gemning tilføjer en.",
+  "Changes from this version to the editor": "Ændringer fra denne version til editoren",
+  "Sends the saved version with sample data to your address.": "Sender den gemte version med eksempeldata til din adresse.",
+  "The version is in the editor. Save to keep it.": "Versionen er i editoren. Gem for at beholde den.",
+  "Leave without saving? Your changes to this template are lost.": "Forlad uden at gemme? Dine ændringer i skabelonen går tabt."
 }

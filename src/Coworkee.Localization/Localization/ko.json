@@ -1539,5 +1539,18 @@
   "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "메일 템플릿처럼 서식 있는 텍스트의 편집기입니다. 코드와 HTML 소스는 코드 편집기를 그대로 사용합니다.",
   "TipTap": "TipTap",
   "Quill": "Quill",
-  "Click to insert at the cursor.": "클릭하면 커서 위치에 삽입합니다."
+  "Click to insert at the cursor.": "클릭하면 커서 위치에 삽입합니다.",
+  "Desktop": "데스크톱",
+  "Light": "밝게",
+  "Dark": "어둡게",
+  "Restore into the editor": "편집기로 복원",
+  "Version history": "버전 기록",
+  "Unsaved changes": "저장하지 않은 변경 사항",
+  "Leave": "나가기",
+  "Stay": "머무르기",
+  "No saved versions yet. Every save adds one.": "아직 저장된 버전이 없습니다. 저장할 때마다 하나씩 추가됩니다.",
+  "Changes from this version to the editor": "이 버전과 편집기의 차이",
+  "Sends the saved version with sample data to your address.": "저장된 버전을 샘플 데이터로 내 주소에 보냅니다.",
+  "The version is in the editor. Save to keep it.": "버전이 편집기에 들어갔습니다. 유지하려면 저장하세요.",
+  "Leave without saving? Your changes to this template are lost.": "저장하지 않고 나갈까요? 이 템플릿의 변경 사항이 사라집니다."
 }

@@ -1539,5 +1539,18 @@
   "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "Posta şablonları gibi biçimli metinlerin düzenleyicisi. Kod ve HTML kaynağı kod düzenleyicide kalır.",
   "TipTap": "TipTap",
   "Quill": "Quill",
-  "Click to insert at the cursor.": "İmlece eklemek için tıkla."
+  "Click to insert at the cursor.": "İmlece eklemek için tıkla.",
+  "Desktop": "Masaüstü",
+  "Light": "Açık",
+  "Dark": "Koyu",
+  "Restore into the editor": "Düzenleyiciye geri yükle",
+  "Version history": "Sürüm geçmişi",
+  "Unsaved changes": "Kaydedilmemiş değişiklikler",
+  "Leave": "Ayrıl",
+  "Stay": "Kal",
+  "No saved versions yet. Every save adds one.": "Henüz kayıtlı sürüm yok. Her kaydetme bir sürüm ekler.",
+  "Changes from this version to the editor": "Bu sürümden düzenleyiciye değişiklikler",
+  "Sends the saved version with sample data to your address.": "Kaydedilmiş sürümü örnek verilerle adresine gönderir.",
+  "The version is in the editor. Save to keep it.": "Sürüm düzenleyicide. Korumak için kaydet.",
+  "Leave without saving? Your changes to this template are lost.": "Kaydetmeden çıkılsın mı? Bu şablondaki değişikliklerin kaybolur."
 }

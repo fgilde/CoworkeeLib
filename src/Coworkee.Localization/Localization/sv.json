@@ -1539,5 +1539,18 @@
   "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "Redigeraren för formaterad text som e-postmallar. Kod och HTML-källa stannar i kodredigeraren.",
   "TipTap": "TipTap",
   "Quill": "Quill",
-  "Click to insert at the cursor.": "Klicka för att infoga vid markören."
+  "Click to insert at the cursor.": "Klicka för att infoga vid markören.",
+  "Desktop": "Dator",
+  "Light": "Ljust",
+  "Dark": "Mörkt",
+  "Restore into the editor": "Återställ i redigeraren",
+  "Version history": "Versionshistorik",
+  "Unsaved changes": "Osparade ändringar",
+  "Leave": "Lämna",
+  "Stay": "Stanna",
+  "No saved versions yet. Every save adds one.": "Inga sparade versioner ännu. Varje sparning lägger till en.",
+  "Changes from this version to the editor": "Ändringar från den här versionen till redigeraren",
+  "Sends the saved version with sample data to your address.": "Skickar den sparade versionen med exempeldata till din adress.",
+  "The version is in the editor. Save to keep it.": "Versionen finns i redigeraren. Spara för att behålla den.",
+  "Leave without saving? Your changes to this template are lost.": "Lämna utan att spara? Dina ändringar i mallen går förlorade."
 }

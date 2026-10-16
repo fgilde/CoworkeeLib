@@ -1539,5 +1539,18 @@
   "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "Editor formátovaných textů, například e-mailových šablon. Kód a zdroj HTML zůstávají v editoru kódu.",
   "TipTap": "TipTap",
   "Quill": "Quill",
-  "Click to insert at the cursor.": "Kliknutím vložíš na pozici kurzoru."
+  "Click to insert at the cursor.": "Kliknutím vložíš na pozici kurzoru.",
+  "Desktop": "Počítač",
+  "Light": "Světlý",
+  "Dark": "Tmavý",
+  "Restore into the editor": "Obnovit do editoru",
+  "Version history": "Historie verzí",
+  "Unsaved changes": "Neuložené změny",
+  "Leave": "Odejít",
+  "Stay": "Zůstat",
+  "No saved versions yet. Every save adds one.": "Zatím žádné uložené verze. Každé uložení jednu přidá.",
+  "Changes from this version to the editor": "Změny od této verze k editoru",
+  "Sends the saved version with sample data to your address.": "Pošle uloženou verzi s ukázkovými daty na tvou adresu.",
+  "The version is in the editor. Save to keep it.": "Verze je v editoru. Ulož ji, aby zůstala.",
+  "Leave without saving? Your changes to this template are lost.": "Odejít bez uložení? Tvé změny této šablony se ztratí."
 }

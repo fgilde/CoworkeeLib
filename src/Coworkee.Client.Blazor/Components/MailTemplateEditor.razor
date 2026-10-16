@@ -1,33 +1,43 @@
 @using Coworkee.Client.Blazor.Components.Mail
 
+<NavigationLock ConfirmExternalNavigation="Dirty" OnBeforeInternalNavigation="ConfirmLeaveAsync" />
 @if (_template is null)
 {
     <MudProgressLinear Indeterminate="true" />
 }
 else
 {
-    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2" Wrap="Wrap.Wrap" Spacing="1">
         <MudChip T="string" Size="Size.Small" Color="@(_template.IsOverridden ? Color.Secondary : Color.Default)" data-testid="template-state">@(_template.IsCustom ? L["custom"] : _template.IsOverridden ? L["customized"] : L["default"])</MudChip>
+        @if (Dirty)
+        {
+            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined" Icon="@Icons.Material.Outlined.Edit" data-testid="unsaved">@L["Unsaved changes"]</MudChip>
+        }
         <MudSpacer />
-        <MudButton OnClick="PreviewAsync" data-testid="preview">@L["Preview"]</MudButton>
-        <MudButton OnClick="SendTestAsync" data-testid="send-test">@L["Send test to me"]</MudButton>
+        <MudTooltip Text="@L["Version history"]">
+            <MudIconButton Icon="@Icons.Material.Outlined.History" Size="Size.Small" OnClick="HistoryAsync" aria-label="@L["Version history"]" data-testid="history" />
+        </MudTooltip>
+        <MudTooltip Text="@L["Sends the saved version with sample data to your address."]">
+            <MudButton StartIcon="@Icons.Material.Outlined.Send" OnClick="SendTestAsync" data-testid="send-test">@L["Send test to me"]</MudButton>
+        </MudTooltip>
         @if (!_template.IsCustom)
         {
-            <MudButton OnClick="ResetAsync" Disabled="@(!_template.IsOverridden)" data-testid="reset-template">@L["Reset to default"]</MudButton>
+            <MudButton StartIcon="@Icons.Material.Outlined.SettingsBackupRestore" OnClick="ResetAsync" Disabled="@(!_template.IsOverridden)" data-testid="reset-template">@L["Reset to default"]</MudButton>
         }
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" data-testid="save-template">@L["Save"]</MudButton>
+        <MudButton StartIcon="@Icons.Material.Outlined.Preview" Variant="@(_sheet is null ? Variant.Text : Variant.Outlined)" Color="Color.Primary" OnClick="TogglePreviewAsync" data-testid="preview">@L["Preview"]</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Save" OnClick="SaveAsync" data-testid="save-template">@L["Save"]</MudButton>
     </MudStack>
 
     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
-        <MudTextField Margin="Density.Margin" @bind-Value="_subject" Label="@L["Subject"]" Immediate="true" />
+        <MudTextField T="string" Margin="Margin.Dense" Value="_subject" ValueChanged="SubjectChangedAsync" Label="@L["Subject"]" Immediate="true" data-testid="subject" />
         <MudMenu Icon="@Icons.Material.Outlined.DataObject" Size="Size.Small" AriaLabel="@L["Insert placeholder"]" data-testid="subject-placeholders">
             @foreach (var variable in _template.Variables.Where(v => !v.IsList && !v.IsItem()))
             {
-                <MudMenuItem OnClick="() => AddToSubject(variable)" data-testid="@($"subject-variable-{variable.Name}")">@variable.Name</MudMenuItem>
+                <MudMenuItem OnClick="() => AddToSubjectAsync(variable)" data-testid="@($"subject-variable-{variable.Name}")">@variable.Name</MudMenuItem>
             }
         </MudMenu>
     </MudStack>
-    <MailBodyEditor @bind-Value="_body" Variables="_template.Variables" />
+    <MailBodyEditor Value="@_body" ValueChanged="BodyChangedAsync" Variables="_template.Variables" Height="@BodyHeight" />
     <MudText Typo="Typo.caption">@L["Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template."]</MudText>
 
     @if (_errors.Count > 0)
@@ -38,11 +48,5 @@ else
                 <div>@error</div>
             }
         </MudAlert>
-    }
-
-    @if (_preview is not null)
-    {
-        <MudText Typo="Typo.overline" Class="mt-4 d-block">@L["Preview: {0}", _preview.Subject]</MudText>
-        <iframe data-testid="preview-frame" sandbox="" srcdoc="@_preview.HtmlBody" title="@L["Preview"]" style="width:100%;height:480px;border:1px solid var(--mud-palette-lines-default);background:#fff"></iframe>
     }
 }

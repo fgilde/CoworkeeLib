@@ -1539,5 +1539,18 @@
   "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "Редакторът на форматирани текстове, например шаблони за поща. Кодът и HTML източникът остават в редактора на код.",
   "TipTap": "TipTap",
   "Quill": "Quill",
-  "Click to insert at the cursor.": "Щракни, за да вмъкнеш при курсора."
+  "Click to insert at the cursor.": "Щракни, за да вмъкнеш при курсора.",
+  "Desktop": "Настолен",
+  "Light": "Светло",
+  "Dark": "Тъмно",
+  "Restore into the editor": "Върни в редактора",
+  "Version history": "История на версиите",
+  "Unsaved changes": "Незапазени промени",
+  "Leave": "Напусни",
+  "Stay": "Остани",
+  "No saved versions yet. Every save adds one.": "Все още няма запазени версии. Всяко запазване добавя една.",
+  "Changes from this version to the editor": "Промени от тази версия до редактора",
+  "Sends the saved version with sample data to your address.": "Изпраща запазената версия с примерни данни на твоя адрес.",
+  "The version is in the editor. Save to keep it.": "Версията е в редактора. Запази, за да я задържиш.",
+  "Leave without saving? Your changes to this template are lost.": "Да напуснеш без запазване? Промените ти в този шаблон ще се загубят."
 }
