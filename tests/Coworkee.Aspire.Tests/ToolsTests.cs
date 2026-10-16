@@ -169,15 +169,17 @@ public sealed class ToolsTests
     }
 
     [Fact]
-    public void Published_apps_bring_their_own_tools()
+    public void Published_apps_take_their_tools_along_unless_switched_off()
     {
-        var builder = DistributedApplication.CreateBuilder(["--operation", "publish"]);
+        var builder = DistributedApplication.CreateBuilder(["--operation", "publish", $"--{CoworkeeApp.DeployToolsSetting}:webdatastudio=false"]);
         var app = builder.AddCoworkeeApp("demo", o => o.UseGrafana().UseWebDataStudio());
 
         app.AddProjects();
 
-        builder.Resources.OfType<GrafanaResource>().ShouldBeEmpty();
+        builder.Resources.OfType<GrafanaResource>().ShouldHaveSingleItem();
         builder.Resources.OfType<WebDataStudioResource>().ShouldBeEmpty();
+        app.Deploys(CoworkeeTools.Mailpit).ShouldBeFalse();
+        app.Deploys(CoworkeeTools.Ollama).ShouldBeTrue();
     }
 
     private static T Allocated<T>(T resource)

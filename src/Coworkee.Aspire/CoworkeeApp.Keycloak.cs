@@ -1,5 +1,6 @@
 using Aspire.Hosting.ApplicationModel;
 using Coworkee.Aspire.Settings;
+using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Theming;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -50,7 +51,9 @@ public sealed partial class CoworkeeApp
     private void AddKeycloak(IResourceBuilder<ProjectResource> auth, CoworkeeKeycloakOptions options)
     {
         _realm = options.Realm ?? Name;
-        var authClient = new KeycloakClient($"{Name}-auth", GeneratedSecret($"{Name}-keycloak-client-secret", 32), []);
+        // locally any address may come back from Keycloak, a deployed realm knows the auth server's callback only
+        var authClient = new KeycloakClient($"{Name}-auth", GeneratedSecret($"{Name}-keycloak-client-secret", 32),
+            Publishing ? [ReferenceExpression.Create($"{PublicUrl(auth)}/signin-{Provider}")] : []);
         _keycloakClients.Insert(0, authClient);
         if (options.Users.Any(u => u.Password is null))
         {
@@ -60,7 +63,12 @@ public sealed partial class CoworkeeApp
         Keycloak = options.Resource ?? Builder.AddKeycloak("keycloak", options.Port);
         if (Persistent && options.Resource is null)
         {
-            Keycloak.WithDataVolume();
+            Keycloak.WithDataVolume(DataVolume("keycloak"));
+        }
+
+        if (Publishing)
+        {
+            PublishKeycloak(Keycloak);
         }
 
         if (options.LoginTheme && options.Resource is null && Builder.ExecutionContext.IsRunMode)
@@ -78,11 +86,52 @@ public sealed partial class CoworkeeApp
         auth.WaitFor(Keycloak)
             .WithSetting(s => s.Coworkee.Auth.External.Mode, options.LoginMode.ToString())
             .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].DisplayName, options.DisplayName)
-            .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].Authority, KeycloakAuthority)
+            .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].Authority, Publishing ? ReferenceExpression.Create($"{ContainerKeycloakAuthority()}") : KeycloakAuthority)
             .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].ClientId, authClient.ClientId)
             .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].ClientSecret, authClient.Secret)
             .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].RequireHttpsMetadata, false)
             .WithSetting(s => s.Coworkee.Auth.External.Providers[Provider].TrustEmail, options.TrustEmail);
+    }
+
+    /// <summary>
+    /// Keycloak behind the reverse proxy, named by its public address; the migrations bring the realm in line on every deployment
+    /// (the clients of the app host, the administrator of the deploy parameters).
+    /// </summary>
+    private void PublishKeycloak(IResourceBuilder<KeycloakResource> keycloak)
+    {
+        keycloak.WithEnvironment("KC_PROXY_HEADERS", "xforwarded").WithEnvironment("KC_HTTP_ENABLED", "true");
+        ContainerKeycloakAuthority();
+        if (Migrations is not { } migrations)
+        {
+            return;
+        }
+
+        const string Realm = "Coworkee__KeycloakRealm__";
+        migrations.WaitFor(keycloak).WithEnvironment(context =>
+        {
+            var env = context.EnvironmentVariables;
+            env[$"{Realm}Url"] = keycloak.GetEndpoint("http");
+            env[$"{Realm}AdminUser"] = keycloak.Resource.AdminUserNameParameter as object ?? "admin";
+            env[$"{Realm}AdminPassword"] = keycloak.Resource.AdminPasswordParameter;
+            env[$"{Realm}Realm"] = _realm!;
+            env[$"{Realm}DisplayName"] = Title;
+            for (var i = 0; i < _keycloakClients.Count; i++)
+            {
+                var client = _keycloakClients[i];
+                env[$"{Realm}Clients__{i}__ClientId"] = client.ClientId;
+                env[$"{Realm}Clients__{i}__Secret"] = client.Secret.Resource;
+                for (var j = 0; j < client.RedirectUris.Count; j++)
+                {
+                    env[$"{Realm}Clients__{i}__RedirectUris__{j}"] = client.RedirectUris[j];
+                }
+            }
+
+            env[$"{Realm}Users__0__Email"] = AdminEmail;
+            env[$"{Realm}Users__0__Password"] = AdminPassword.Resource;
+            env[$"{Realm}Users__0__FirstName"] = "Admin";
+            env[$"{Realm}Users__0__LastName"] = Title;
+            env[$"{Realm}Users__0__Roles__0"] = "Administrator";
+        });
     }
 
     /// <summary>
@@ -147,9 +196,6 @@ public sealed partial class CoworkeeApp
     private IResourceBuilder<KeycloakResource> RequireKeycloak(string caller) =>
         Require(Keycloak, $"{nameof(CoworkeeAppOptions.UseKeycloak)} and {nameof(AddAuthServer)}", caller);
 
-    private IResourceBuilder<ParameterResource> GeneratedSecret(string name, int length) =>
-        Builder.AddParameter(name, new GenerateParameterDefault { MinLength = length, Special = false }, secret: true, persist: true);
-
     private async Task ReconcileRealmAsync(KeycloakResource keycloak, IServiceProvider services, CoworkeeKeycloakOptions options, CancellationToken cancellationToken)
     {
         var logger = services.GetRequiredService<ResourceLoggerService>().GetLogger(keycloak);
@@ -165,10 +211,10 @@ public sealed partial class CoworkeeApp
             clients.Add(new(client.ClientId, (await client.Secret.Resource.GetValueAsync(cancellationToken))!, uris));
         }
 
-        var users = new List<KeycloakUser>();
+        var users = new List<KeycloakRealm.User>();
         foreach (var user in options.Users)
         {
-            users.Add(user with { Password = await KeycloakPassword(user).GetValueAsync(cancellationToken) });
+            users.Add(new(user.Email, user.FirstName, user.LastName, (await KeycloakPassword(user).GetValueAsync(cancellationToken))!, user.Roles));
         }
 
         var admin = keycloak.AdminUserNameParameter is { } name ? await name.GetValueAsync(cancellationToken) : "admin";

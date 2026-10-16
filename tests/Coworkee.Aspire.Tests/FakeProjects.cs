@@ -21,7 +21,7 @@ internal static class FakeProjects
 
     internal sealed class Api : FakeProject
     {
-        public Api() : base("Api", "Coworkee.Infrastructure", "Coworkee.Realtime", "Coworkee.Mailing", "Coworkee.Storage", "Coworkee.Notifications")
+        public Api() : base("Api", "Coworkee.Infrastructure", "Coworkee.Realtime", "Coworkee.Mailing", "Coworkee.Storage", "Coworkee.Notifications", "Coworkee.Localization")
         {
         }
     }

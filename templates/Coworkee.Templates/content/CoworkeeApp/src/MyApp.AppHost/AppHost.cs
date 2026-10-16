@@ -49,8 +49,8 @@ var app = builder.AddCoworkeeApp("myapp", options =>
 #elif (database == "sqlite")
     options.UseSqlite();
 #endif
-#if (grafana || webDataStudio)
-    // Grafana and WebDataStudio take the sign-in of the app's administrator (LOGIN.md)
+#if (grafana || webDataStudio || aspireUI)
+    // the tools take the sign-in of the app's administrator (LOGIN.md); a deployment takes the administrator of its parameters
     options.Administrator = new(administrator.Email, administrator.Password);
 #endif
 #if (grafana)
@@ -98,8 +98,8 @@ string aiModel = "COWORKEE_AI_MODEL", aiEndpoint = "COWORKEE_AI_ENDPOINT";
 var aiParameters = new[] { "ApiKey", "Endpoint", "Model" }.Where(n => builder.Configuration[$"Parameters:ai-{n.ToLowerInvariant()}"] is { Length: > 0 })
     .ToDictionary(n => n, n => builder.AddParameter($"ai-{n.ToLowerInvariant()}", secret: n == "ApiKey"));
 #if (aiProvider == "ollama")
-// Ollama runs next to the app only locally; a deployment sets Ai.Endpoint to its own model server
-var ollama = builder.ExecutionContext.IsRunMode ? builder.AddOllama("ollama").WithDataVolume() : null;
+// Ollama runs next to the app and goes along into a deployment (coworkee deploy --without ollama leaves it out, then set Ai.Endpoint to your model server)
+var ollama = app.Deploys(CoworkeeTools.Ollama) ? builder.AddOllama("ollama").WithDataVolume(builder.ExecutionContext.IsPublishMode ? "myapp-ollama-data" : null) : null;
 ollama?.AddModel(aiModel.Length > 0 ? aiModel : "llama3.2");
 #endif
 app.Modules.Add("Coworkee.Ai", (_, service) =>
@@ -159,15 +159,13 @@ app.AddAirWorks<Projects.MyApp_AirWorks>();
 #else
 // the apps and stacks hosted with AspireUI show up under Services; the administrator signs in locally (LOGIN.md)
 #endif
-if (builder.ExecutionContext.IsRunMode)
+if (app.Deploys(CoworkeeTools.AspireUI))
 {
-    builder.AddAspireUI()
-        .WithAdminUser(administrator.Email, administrator.Password)
-        .WithSeedFromDirectory(builder.AppHostDirectory)
-#if (keycloak)
-        .WithCoworkeeSignOn(app)
-#endif
-        .WithRetrieveApi();
+    var aspireUi = builder.AddAspireUI().WithCoworkee(app).WithRetrieveApi();
+    if (builder.ExecutionContext.IsRunMode)
+    {
+        aspireUi.WithSeedFromDirectory(builder.AppHostDirectory);
+    }
 }
 #endif
 

@@ -2,6 +2,7 @@ using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Azure.AppContainers;
 using Aspire.Hosting.Docker;
 using Coworkee.Aspire.Settings;
+using Microsoft.Extensions.Configuration;
 
 namespace Aspire.Hosting;
 
@@ -11,6 +12,9 @@ public sealed partial class CoworkeeApp
     public const string DeployTargetSetting = "Coworkee:Deploy:Target";
 
     public static readonly IReadOnlyList<string> DeployTargets = ["compose", "azure", "k8s"];
+
+    /// <summary>Per tool switch of a deployment, e.g. <c>Coworkee:Deploy:Tools:grafana=false</c> (see <see cref="CoworkeeAppOptions.DeployTool"/>).</summary>
+    public const string DeployToolsSetting = "Coworkee:Deploy:Tools";
 
     private bool Publishing => Builder.ExecutionContext.IsPublishMode;
 
@@ -75,6 +79,69 @@ public sealed partial class CoworkeeApp
         return ReferenceExpression.Create($"{url}");
     }
 
+    /// <summary>
+    /// Whether the app host adds <paramref name="tool"/> (a name of <see cref="CoworkeeTools"/>): always while it runs; in a deployment unless switched off,
+    /// Mailpit only when switched on.
+    /// </summary>
+    public bool Deploys(string tool) =>
+        !Publishing || (Builder.Configuration.GetValue<bool?>($"{DeployToolsSetting}:{tool}") ?? Options.DeployedTools.GetValueOrDefault(tool, tool != CoworkeeTools.Mailpit));
+
+    private readonly Dictionary<IResource, ReferenceExpression> _toolUrls = [];
+
+    /// <summary>
+    /// The address browsers use for a tool's web interface: its endpoint while running, in a deployment a parameter <c>{app}-{tool}-url</c>
+    /// (the reverse proxy in front of the loopback port of <see cref="CoworkeeTools.ComposePort"/>).
+    /// </summary>
+    public ReferenceExpression ToolUrl<T>(IResourceBuilder<T> tool, string endpointName = "http")
+        where T : ContainerResource
+    {
+        if (!Publishing)
+        {
+            return ReferenceExpression.Create($"{tool.GetEndpoint(endpointName)}");
+        }
+
+        if (!_toolUrls.TryGetValue(tool.Resource, out var url))
+        {
+            var name = tool.Resource.Name;
+            var parameter = DeployParameter($"{Name}-{name}-url").WithDescription($"The public address of {name}, e.g. https://{name}.example.com");
+            _toolUrls[tool.Resource] = url = ReferenceExpression.Create($"{parameter}");
+            tool.WithEndpoint(endpointName, e => e.IsExternal = true)
+                // tools behind the proxy build their sign-in addresses from the forwarded scheme and host
+                .WithEnvironment("ASPNETCORE_FORWARDEDHEADERS_ENABLED", "true");
+            if (Builder.Resources.OfType<DockerComposeEnvironmentResource>().Any())
+            {
+                var port = CoworkeeTools.ComposePort(name);
+                var target = tool.Resource.Annotations.OfType<EndpointAnnotation>().First(e => e.Name == endpointName).TargetPort;
+                tool.PublishAsDockerComposeService((_, compose) =>
+                {
+                    compose.Ports.Clear();
+                    compose.Ports.Add($"127.0.0.1:{port}:{target}");
+                });
+            }
+        }
+
+        return url;
+    }
+
+    private IResourceBuilder<ParameterResource>? _adminEmail;
+
+    /// <summary>The app's administrator: <see cref="CoworkeeAppOptions.Administrator"/> while running, the parameters <c>{app}-admin-email</c> and <c>-admin-password</c> in a deployment.</summary>
+    private ReferenceExpression AdminEmail => Publishing ? ReferenceExpression.Create($"{AdminEmailParameter}") : ReferenceExpression.Create($"{AdminUser}");
+
+    private IResourceBuilder<ParameterResource> AdminEmailParameter =>
+        _adminEmail ??= DeployParameter($"{Name}-admin-email").WithDescription("The first administrator of the app and its tools");
+
+    // the migrations set an empty database up with the administrator; without the parameters the setup page and its token do
+    private void WithInitialAdmin(IResourceBuilder<ProjectResource> migrations)
+    {
+        if (Publishing)
+        {
+            migrations.WithEnvironment("Coworkee__InitialAdmin__Email", AdminEmail)
+                .WithEnvironment("Coworkee__InitialAdmin__Password", AdminPassword)
+                .WithEnvironment("Coworkee__InitialAdmin__LastName", Title);
+        }
+    }
+
     // tokens name the public address as issuer and are signed with certificates every instance shares (coworkee deploy generates them)
     private void WithProductionAuth(IResourceBuilder<ProjectResource> auth) =>
         auth.WithSetting(s => s.Coworkee.Auth.Issuer, PublicUrl(auth))
@@ -123,7 +190,13 @@ public sealed partial class CoworkeeApp
 
     // Compose leaves a parameter without value to the .env; the Azure and Kubernetes publishers would wait for one, so values.yaml and the Bicep parameters start empty
     private IResourceBuilder<ParameterResource> DeployParameter(string name, bool secret = false) =>
+        Builder.Resources.OfType<ParameterResource>().FirstOrDefault(p => p.Name == name) is { } existing ? Builder.CreateResourceBuilder(existing) :
         _target is "k8s" or "azure" ? Builder.AddParameter(name, string.Empty, secret: secret) : Builder.AddParameter(name, secret: secret);
+
+    /// <summary>A secret the app host keeps in the user secrets while running; a deployment takes it as parameter (coworkee deploy generates it).</summary>
+    private IResourceBuilder<ParameterResource> GeneratedSecret(string name, int length) => Publishing
+        ? DeployParameter(name, secret: true)
+        : Builder.AddParameter(name, new GenerateParameterDefault { MinLength = length, Special = false }, secret: true, persist: true);
 
     // Container Apps would restart the finished migrations forever; as a job they run when started (az containerapp job start), Kubernetes gets a Job from coworkee deploy
     private void AsDeployJob(IResourceBuilder<ProjectResource> migrations)

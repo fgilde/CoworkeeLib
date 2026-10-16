@@ -11,8 +11,9 @@ public sealed partial class CoworkeeApp
 
     private IResourceBuilder<ContainerResource>? _libreTranslate;
 
-    /// <summary>LibreTranslate of <see cref="CoworkeeAppOptions.UseLibreTranslate"/>, added with the first service that has the localization module; development only, a deployment sets the endpoint in the settings.</summary>
-    public IResourceBuilder<ContainerResource>? LibreTranslate => Options.LibreTranslateLanguages is { } languages && !Publishing ? _libreTranslate ??= AddLibreTranslate(languages) : null;
+    /// <summary>LibreTranslate of <see cref="CoworkeeAppOptions.UseLibreTranslate"/>, added with the first service that has the localization module; in a deployment unless <see cref="CoworkeeTools.LibreTranslate"/> is switched off.</summary>
+    public IResourceBuilder<ContainerResource>? LibreTranslate =>
+        Options.LibreTranslateLanguages is { } languages && Deploys(CoworkeeTools.LibreTranslate) ? _libreTranslate ??= AddLibreTranslate(languages) : null;
 
     /// <summary>The language codes LibreTranslate loads for <paramref name="cultures"/>: English and the language of each culture.</summary>
     public static IReadOnlyList<string> LibreTranslateCodes(IEnumerable<string> cultures) =>
@@ -36,7 +37,7 @@ public sealed partial class CoworkeeApp
             .WithUrlForEndpoint("http", u => u.DisplayText = "LibreTranslate");
         if (Persistent)
         {
-            server.WithVolume("coworkee-libretranslate-models", "/home/libretranslate/.local");
+            server.WithVolume(Publishing ? $"{Name}-libretranslate-models" : "coworkee-libretranslate-models", "/home/libretranslate/.local");
         }
 
         Options.LibreTranslateServer?.Invoke(server);

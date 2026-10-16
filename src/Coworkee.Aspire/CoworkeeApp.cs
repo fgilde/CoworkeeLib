@@ -62,6 +62,7 @@ public sealed partial class CoworkeeApp
     {
         Migrations = WithAppDatabase(Builder.AddProject<TProject>($"{Name}-{suffix}"), awaitServer: true);
         AsDeployJob(Migrations);
+        WithInitialAdmin(Migrations);
         WireGrafanaTelemetry(Migrations);
         AddDatabaseCommands(Migrations);
         return Added<TProject>(Migrations, suffix);
@@ -91,8 +92,8 @@ public sealed partial class CoworkeeApp
             auth.WithSetting(s => s.Coworkee.Auth.DevelopmentCertificates, true);
         }
 
-        // the realm with the development users is reconciled by the running app host; a deployment brings its own identity provider
-        if (Options.Keycloak is { } keycloak && !Publishing)
+        // the running app host reconciles the realm with the development users, the migrations of a deployment the one with its administrator
+        if (Options.Keycloak is { } keycloak && Deploys(CoworkeeTools.Keycloak))
         {
             AddKeycloak(auth, keycloak);
             AddToolsSignIn();
