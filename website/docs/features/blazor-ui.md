@@ -59,7 +59,7 @@ Paging is either a pager or endless scrolling; administrators set the default, u
 
 ![Themes page with the sign-in page layouts Card, Split and Slide and a tile per theme](../assets/screenshots/themes-light.webp){ .shot loading=lazy }
 
-Seven themes ship, Ocean is the default. Administrators edit them with a live preview and publish them; each user then picks one, plus light or dark mode. An app brings its own colors:
+Fifteen themes ship, Ocean is the default. Administrators edit them with a live preview and publish them; each user then picks one, plus light or dark mode. An app brings its own colors:
 
 ```csharp
 context.Services.Configure<ThemingOptions>(themes =>

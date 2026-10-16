@@ -74,7 +74,7 @@ public sealed class BrandingSpec
     [Description("Display title (default: the name).")]
     public string? Title { get; set; }
 
-    [Description("Built-in theme: Ocean, Coworkee, Classic, Forest, Midnight, Sunset or HighContrast.")]
+    [Description("Built-in theme: Ocean, Coworkee, Classic, Forest, Midnight, Sunset, HighContrast, Octo, Code, Arctic, Vampire, Solar, Atom, Paper or Aubergine.")]
     public string? Theme { get; set; }
 
     [Description("Primary brand color #rrggbb; the app gets its own theme, based on the chosen one, as default.")]
