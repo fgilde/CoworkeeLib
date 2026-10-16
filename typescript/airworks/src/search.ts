@@ -1,6 +1,7 @@
 import type { Intent, SearchProvider, SearchResult } from '@fgilde/airworks';
 import type { Coworkee } from './coworkee.ts';
 import { filePreviewAppId } from './apps/file-preview.ts';
+import { recordAppId } from './apps/record.ts';
 import { reportAppId } from './apps/reports.ts';
 
 /** A hit of GET /api/v1/search (GlobalSearchHit). */
@@ -12,11 +13,12 @@ export type GlobalSearchHit = {
 /** Which app opens a hit, with which intent; undefined leaves the hit out. */
 export type SearchTarget = (hit: GlobalSearchHit) => { appId: string; intent?: Intent } | undefined;
 
-/** Reports, chats and files open their own app, records of OData sets the data app on their set. */
+/** Reports, chats and files open their own app, records of OData sets their record window (or the records app on their set). */
 export function defaultSearchTarget(hit: GlobalSearchHit): { appId: string; intent?: Intent } | undefined {
   if (hit.provider === 'reports' && hit.id) return { appId: reportAppId, intent: { id: hit.id } };
   if (hit.provider === 'chats' && hit.id) return { appId: 'coworkee.chat', intent: { user: hit.id } };
   if (hit.provider === 'files' && hit.id) return { appId: filePreviewAppId, intent: { id: hit.id, name: hit.title, contentType: hit.subtitle ?? '' } };
+  if (hit.entitySet && hit.id) return { appId: recordAppId, intent: { set: hit.entitySet, id: hit.id, title: hit.title } };
   if (hit.entitySet) return { appId: 'coworkee.data', intent: { set: hit.entitySet } };
   return undefined;
 }

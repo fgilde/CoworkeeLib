@@ -37,3 +37,16 @@ export function toast(message: string, kind: 'info' | 'error' = 'info') {
 }
 
 export const errorText = (error: unknown) => error instanceof Error ? error.message : String(error);
+
+/** A property or enum name for people: CreatedAt -> Created at, Last30Days -> Last 30 days. */
+export const humanize = (value: string) => value.replace(/([a-z])([A-Z0-9])/g, '$1 $2').replace(/(\d)([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase()).replace(/ ([A-Z])(?=[a-z])/g, (m) => m.toLowerCase());
+
+/** Fields of a row nobody wants in a list: OData annotations, tenant and concurrency keys, long texts like image data. */
+export const isNoise = (field: string, value: unknown) =>
+  field.includes('@') || /^(TenantId|ConcurrencyStamp|RowVersion)$/i.test(field) || (typeof value === 'string' && value.length > 200);
+
+/** What a record is called: its name, title, number, code or e-mail, otherwise its key. */
+export function recordTitle(row: Record<string, unknown>): string {
+  const key = ['Name', 'Title', 'DisplayName', 'Number', 'Code', 'Email', 'FileName'].find((name) => typeof row[name] === 'string' && row[name]);
+  return String(key ? row[key] : row.Id ?? row.id ?? '');
+}
