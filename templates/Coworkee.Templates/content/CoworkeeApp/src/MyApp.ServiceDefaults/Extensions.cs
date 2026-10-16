@@ -83,8 +83,8 @@ public static class Extensions
             Action<OtlpExporterOptions> Grafana(string signal) => o => (o.Endpoint, o.Protocol, o.Headers) = http
                 ? (new Uri($"{grafana.TrimEnd('/')}/v1/{signal}"), OtlpExportProtocol.HttpProtobuf, string.Empty)
                 : (new Uri(grafana), OtlpExportProtocol.Grpc, string.Empty);
-            telemetry.WithLogging(l => l.AddOtlpExporter("grafana", Grafana("logs"))).WithMetrics(m => m.AddOtlpExporter("grafana", Grafana("metrics")))
-                .WithTracing(t => t.AddOtlpExporter("grafana", Grafana("traces")));
+            telemetry.WithLogging(l => l.AddOtlpExporter("grafana-logs", Grafana("logs"))).WithMetrics(m => m.AddOtlpExporter("grafana-metrics", Grafana("metrics")))
+                .WithTracing(t => t.AddOtlpExporter("grafana-traces", Grafana("traces")));
         }
     }
 }
