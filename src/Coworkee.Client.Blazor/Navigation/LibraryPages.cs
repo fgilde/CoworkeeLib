@@ -41,6 +41,7 @@ internal static class LibraryPages
         new("files", typeof(Pages.Files), "files"),
         new("notifications", typeof(Notifications), "notifications"),
         new("profile", typeof(Profile), "profile", "profile/{Tab}"),
+        new("search", typeof(SearchResults), "search"),
         new("user-settings", typeof(UserSettings), "settings"),
     ];
 }

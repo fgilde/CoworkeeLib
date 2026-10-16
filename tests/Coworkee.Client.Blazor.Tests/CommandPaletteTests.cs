@@ -6,6 +6,7 @@ using Coworkee.Client.Blazor.Data;
 using Coworkee.Client.Blazor.Navigation;
 using Coworkee.Client.Blazor.Security;
 using Coworkee.Contracts.Ai;
+using Coworkee.Contracts.Search;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,6 +20,7 @@ public sealed class CommandPaletteTests : ClientTestBase
     private const string ProductsView = "Catalog.Products.View";
     private readonly IAssistantApi _assistant = Substitute.For<IAssistantApi>();
     private readonly FakeODataClient _odata = new();
+    private readonly FakeGlobalSearchApi _search = new();
 
     public CommandPaletteTests()
     {
@@ -32,7 +34,7 @@ public sealed class CommandPaletteTests : ClientTestBase
         Services.AddCommandPaletteProvider<ActionsPaletteProvider>();
         Services.AddCommandPaletteProvider<AssistantPaletteProvider>();
         Services.AddCommandPaletteCommand(new CommandPaletteCommand("New product", Icons.Material.Outlined.Add, ProductsView, Href: "/catalog/products?new=1"));
-        Services.AddCommandPaletteEntitySet(new CommandPaletteEntitySet<Gadget>("Gadgets", "/gadgets", g => g.Name, [nameof(Gadget.Name)]));
+        Services.AddSingleton<Search.IGlobalSearchApi>(_search);
         Api.GetMyPermissionsAsync(default).ReturnsForAnyArgs([ProductsView]);
         AddAuthorization().SetAuthorized("Ada").SetPolicies(PermissionPolicy.For(ProductsView));
     }
@@ -98,17 +100,69 @@ public sealed class CommandPaletteTests : ClientTestBase
     }
 
     [Fact]
-    public async Task Records_of_registered_sets_are_found_and_open_their_page_searched()
+    public async Task Records_of_the_global_search_show_as_they_arrive_and_open_their_link()
     {
-        _odata.With("Gadgets", new Gadget(Guid.CreateVersion7(), "Flux capacitor"));
         var palette = Open();
 
         palette.Find("[data-testid='palette-input']").Input("flux");
+        palette.WaitForAssertion(() => palette.Find("[data-testid='palette-streaming']"));
+        _search.Push(new GlobalSearchHit("gadgets", "Gadgets", "Flux capacitor") { Url = "/gadgets?id=1", Score = 0.8, Highlights = [new HighlightRange(0, 4)] });
 
         palette.WaitForAssertion(() => palette.FindAll("[data-group='Gadgets']").Count.ShouldBe(1));
+        palette.Find("[data-group='Gadgets'] mark").TextContent.ShouldBe("Flux");
+        palette.Find("[data-testid='palette-streaming']");
+
+        _search.Push(new GlobalSearchHit("users", "Users", "Flux Hunter") { Url = "/admin/users/2", Score = 0.6 });
+        palette.WaitForAssertion(() => palette.FindAll("[data-group='Users']").Count.ShouldBe(1));
+        _search.Complete();
+        palette.WaitForAssertion(() => palette.FindAll("[data-testid='palette-streaming']").ShouldBeEmpty());
+
         // find and click in one dispatch: the asynchronous search results may re-render in between
         await palette.InvokeAsync(() => palette.Find("[data-group='Gadgets']").Click());
-        Services.GetRequiredService<NavigationManager>().Uri.ShouldContain("/gadgets?gadgets=");
+        Services.GetRequiredService<NavigationManager>().Uri.ShouldEndWith("/gadgets?id=1");
+        _search.Queries.ShouldBe(["flux"]);
+    }
+
+    [Fact]
+    public async Task A_late_hit_keeps_the_chosen_entry_selected()
+    {
+        var palette = Open();
+        var input = palette.Find("[data-testid='palette-input']");
+        input.Input("flux");
+        _search.Push(new GlobalSearchHit("gadgets", "Gadgets", "Flux capacitor") { Url = "/gadgets?id=1", Score = 0.5 });
+        palette.WaitForAssertion(() => palette.FindAll("[data-group='Gadgets']").Count.ShouldBe(1));
+        await input.KeyDownAsync(new KeyboardEventArgs { Key = "ArrowDown" });
+        var chosen = palette.Find(".cw-palette-item.active .cw-palette-title").TextContent;
+
+        _search.Push(new GlobalSearchHit("gadgets", "Gadgets", "Flux") { Url = "/gadgets?id=2", Score = 1 });
+
+        palette.WaitForAssertion(() => palette.FindAll("[data-group='Gadgets']").Count.ShouldBe(2));
+        palette.Find(".cw-palette-item.active .cw-palette-title").TextContent.ShouldBe(chosen);
+    }
+
+    [Fact]
+    public async Task Show_all_results_comes_with_the_first_record_and_opens_the_search_page()
+    {
+        var palette = Open();
+
+        palette.Find("[data-testid='palette-input']").Input("flux");
+        palette.WaitForAssertion(() => palette.FindAll("[data-group='Search']").ShouldBeEmpty());
+        _search.Push(new GlobalSearchHit("gadgets", "Gadgets", "Flux capacitor") { Url = "/gadgets?id=1", Score = 0.5 });
+
+        palette.WaitForAssertion(() => palette.FindAll("[data-group='Search']").Count.ShouldBe(1));
+        await palette.InvokeAsync(() => palette.Find("[data-group='Search']").Click());
+        Services.GetRequiredService<NavigationManager>().Uri.ShouldEndWith("/search?q=flux");
+    }
+
+    [Fact]
+    public void One_letter_does_not_ask_the_server()
+    {
+        var palette = Open();
+
+        palette.Find("[data-testid='palette-input']").Input("f");
+
+        palette.WaitForAssertion(() => palette.FindAll("[data-group='Search']").ShouldBeEmpty());
+        _search.Queries.ShouldBeEmpty();
     }
 
     [Fact]
@@ -148,6 +202,4 @@ public sealed class CommandPaletteTests : ClientTestBase
         FuzzyMatch.Match("np", "New product")!.Positions.ShouldBe([0, 4]);
         FuzzyMatch.Match("xyz", "New product").ShouldBeNull();
     }
-
-    public sealed record Gadget(Guid Id, string Name);
 }

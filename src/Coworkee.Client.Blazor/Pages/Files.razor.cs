@@ -1,3 +1,4 @@
+using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Components.Files;
 using Coworkee.Client.Blazor.Files;
 using Coworkee.Client.Blazor.Localization;
@@ -42,9 +43,9 @@ public partial class Files
             {
                 await FilePreviewDialog.ShowAsync(Dialogs, await Api.GetFileAsync(id));
             }
-            catch (Api.ApiException exception)
+            catch (ApiException exception)
             {
-                Snackbar.Add(Api.SnackbarApiExtensions.Describe(exception), Severity.Warning);
+                Snackbar.Add(SnackbarApiExtensions.Describe(exception), Severity.Warning);
             }
         }
     }

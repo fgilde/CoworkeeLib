@@ -42,10 +42,14 @@
                    data-testid="palette-input" />
             <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small" aria-label="@L["Close"]" OnClick="Close" />
         </div>
-        <div id="cw-palette-list" class="cw-palette-list" role="listbox">
+        @if (_streaming)
+        {
+            <MudProgressLinear Indeterminate="true" Size="Size.Small" Color="Color.Primary" data-testid="palette-streaming" />
+        }
+        <div id="cw-palette-list" class="cw-palette-list" role="listbox" aria-busy="@(_streaming ? "true" : "false")">
             @if (_hits.Count == 0)
             {
-                <div class="cw-palette-empty" data-testid="palette-empty">@(_searching ? L["Searching…"] : L["Nothing found."])</div>
+                <div class="cw-palette-empty" data-testid="palette-empty">@(_searching || _streaming ? L["Searching…"] : L["Nothing found."])</div>
             }
             @foreach (var group in _hits.GroupBy(h => h.Item.Group))
             {
@@ -79,7 +83,7 @@
 }
 
 @code {
-    private static RenderFragment Highlight(PaletteHit hit) => builder =>
+    internal static RenderFragment Highlight(PaletteHit hit) => builder =>
     {
         var title = hit.Item.Title;
         var marked = hit.Positions.ToHashSet();

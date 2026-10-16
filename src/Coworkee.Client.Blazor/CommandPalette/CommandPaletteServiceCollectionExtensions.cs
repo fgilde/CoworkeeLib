@@ -13,10 +13,6 @@ public static class CommandPaletteServiceCollectionExtensions
     public static IServiceCollection AddCommandPaletteCommand(this IServiceCollection services, CommandPaletteCommand command) =>
         services.AddSingleton(command);
 
-    /// <summary>Lets the palette find records of an OData set by text.</summary>
-    public static IServiceCollection AddCommandPaletteEntitySet<T>(this IServiceCollection services, CommandPaletteEntitySet<T> set) =>
-        services.AddScoped<ICommandPaletteProvider>(sp => ActivatorUtilities.CreateInstance<EntitySetPaletteProvider<T>>(sp, set));
-
     internal static IServiceCollection AddCommandPalette(this IServiceCollection services) =>
         services
             .AddCommandPaletteProvider<PagesPaletteProvider>()
