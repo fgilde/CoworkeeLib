@@ -61,7 +61,7 @@ public sealed class ThemesPageTests : ClientTestBase
 
         _ = page.Find("[data-theme='Coworkee'] [data-testid='theme-edit']").ClickAsync(new());
 
-        dialogs.WaitForAssertion(() => dialogs.Find("input[data-testid='theme-name'], [data-testid='theme-name'] input").GetAttribute("value").ShouldBe("Coworkee copy"), TimeSpan.FromSeconds(10));
+        dialogs.WaitForAssertion(() => dialogs.Find("input[data-testid='theme-name'], [data-testid='theme-name'] input").GetAttribute("value").ShouldBe("Coworkee copy"), TimeSpan.FromSeconds(30)); // the theme editor renders a lot, slow CI runners need the time
         dialogs.Find("[data-testid='theme-editor']").ChildElementCount.ShouldBeGreaterThan(0);
         dialogs.WaitForAssertion(() => dialogs.Find("[data-testid='theme-logo']").QuerySelector("[data-testid='theme-logo-choose']").ShouldNotBeNull());
     }

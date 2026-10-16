@@ -189,7 +189,7 @@ public sealed class ImportWizardTests(ODataApp app) : IAsyncLifetime
     public async Task Exports_take_columns_and_format_and_large_ones_run_as_a_job()
     {
         var csv = Encoding.UTF8.GetString(await Admin.GetByteArrayAsync("/api/v1/data/Widgets/export?format=csv&columns=Name,Price", Ct));
-        csv.TrimStart('﻿').ShouldBe("Name;Price\r\nAnvil;10\r\n");
+        csv.TrimStart('﻿').ShouldMatch(@"^Name;Price\r\nAnvil;10(\.00)?\r\n$"); // SQL Server keeps the scale of the decimal column
 
         await app.InDbAsync(_setup.TenantId, async db =>
         {
