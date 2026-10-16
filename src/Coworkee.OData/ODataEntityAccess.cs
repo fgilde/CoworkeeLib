@@ -34,11 +34,16 @@ public static class ODataEntityAccess
         return query;
     }
 
-    /// <summary>Visible rows narrowed by an OData $filter, parsed against the EDM: hidden properties and unknown names fail with an ODataException.</summary>
+    /// <summary>Visible rows narrowed by an OData $filter, parsed against the EDM: hidden properties, unknown names and computed properties without their permission fail with an ODataException.</summary>
     public static async Task<IQueryable<TEntity>> FilteredAsync<TEntity>(IServiceProvider services, string? filter, CancellationToken cancellationToken)
         where TEntity : class
     {
         var visible = await VisibleAsync<TEntity>(services, cancellationToken);
+        if (await services.GetRequiredService<Computed.ODataComputedProperties>().DeniedAsync(services, typeof(TEntity), cancellationToken, filter))
+        {
+            throw new Microsoft.OData.ODataException("The filter names a property the user may not read.");
+        }
+
         if (string.IsNullOrWhiteSpace(filter))
         {
             return visible;

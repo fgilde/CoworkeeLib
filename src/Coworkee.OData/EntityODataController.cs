@@ -17,9 +17,21 @@ public class EntityODataController<TEntity> : GenericODataController<TEntity>, I
 
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
+        var query = Request.Query;
+        if (await Get<Computed.ODataComputedProperties>().DeniedAsync(HttpContext.RequestServices, typeof(TEntity), HttpContext.RequestAborted,
+                query["$filter"], query["$orderby"], FacetFilters()))
+        {
+            context.Result = new Microsoft.AspNetCore.Mvc.ForbidResult();
+            return;
+        }
+
         _visible = await ODataEntityAccess.VisibleAsync<TEntity>(HttpContext.RequestServices, HttpContext.RequestAborted);
         await next();
     }
+
+    private string? FacetFilters() => Coworkee.Contracts.Data.FacetContextDto.Decode(Request.Headers[Coworkee.Contracts.Data.FacetContextDto.Header]) is { } facets
+        ? string.Join(" ", facets.Groups.Values.Prepend(facets.Base))
+        : null;
 
     public override async Task<IQueryable<TEntity>> Get(CancellationToken ct = default)
     {
