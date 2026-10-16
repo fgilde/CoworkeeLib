@@ -114,6 +114,8 @@ Branches merged: mail-langs, workflows, mobile-pwa, import-export, history-palet
 - Known: a second `coworkee new --template-source <same .nupkg>` in the same template hive fails (`dotnet new install --force` of the same version leaves "Sequence contains more than one matching element"); a fresh `DOTNET_CLI_HOME` works. `Coworkee.Cli.Spec` now pulls Npgsql/SqlClient/Sqlite (entity import): about 40 of the 113 MB unpacked CLI tool.
 - Starter specs do not turn on `workflows`: the spec cannot declare workflows, the module alone would be empty.
 
+- Branch `feat/tooling-smalls`: Studio German says *du* (test `German_texts_say_du`); `SyncDevelopmentUsersAsync()` (Identity, Development only: missing seed users/roles, seeded passwords again) called by the template's migrations host; Sharemee can replace `DemoUserTopUp` with it. `coworkee doctor` compares dotnet-ef/EF Core, Aspire CLI/app host SDK, coworkee/`CoworkeeVersion` and finds busy launch ports.
+
 ### Workflows
 Docs `modules/workflows.md`, `modules/workflows-elsa.md`.
 - `Coworkee.Workflows`: state machine per entity type declared in code (`AddCoworkeeWorkflows(w => w.Entity<T>(...))`), guards (permission, role, condition, comment), actions (`Then`, `OnEnter/OnExit`, `Set`, `NotifyRole`), approvals (roles/users, any/all, four eyes, `DueIn`, `RemindAfter`, `EscalateTo`, `OnTimeout`) via the recurring job `workflow-deadlines`, history table, domain events `WorkflowTransitioned`/`ApprovalStarted`/`ApprovalDecided` (outbox). Tables `cw.Workflow*` (apps need a migration).
