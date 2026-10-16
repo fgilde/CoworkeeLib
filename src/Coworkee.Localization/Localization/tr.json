@@ -1562,5 +1562,7 @@
   "Changes from this version to the editor": "Bu sürümden düzenleyiciye değişiklikler",
   "Sends the saved version with sample data to your address.": "Kaydedilmiş sürümü örnek verilerle adresine gönderir.",
   "The version is in the editor. Save to keep it.": "Sürüm düzenleyicide. Korumak için kaydet.",
-  "Leave without saving? Your changes to this template are lost.": "Kaydetmeden çıkılsın mı? Bu şablondaki değişikliklerin kaybolur."
+  "Leave without saving? Your changes to this template are lost.": "Kaydetmeden çıkılsın mı? Bu şablondaki değişikliklerin kaybolur.",
+  "Workflow state": "İş akışı durumu",
+  "Awaiting my approval": "Onayımı bekliyor"
 }

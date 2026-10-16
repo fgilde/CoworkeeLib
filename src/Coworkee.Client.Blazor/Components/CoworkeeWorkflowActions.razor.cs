@@ -28,12 +28,19 @@ public partial class CoworkeeWorkflowActions
     /// <summary>After every change, e.g. to reload the table when the workflow mirrors its state into a column.</summary>
     [Parameter] public EventCallback<WorkflowStatusDto> OnChanged { get; set; }
 
+    /// <summary>Every status the component reads or a change returns, e.g. for the group key of <see cref="Data.CoworkeeWorkflowColumn{T}"/>.</summary>
+    [Parameter] public Action<WorkflowStatusDto>? StatusRead { get; set; }
+
     protected override async Task OnParametersSetAsync()
     {
         if (_loaded != EntityId)
         {
             _loaded = EntityId;
             await Snackbar.RunAsync(async () => _status = await States.GetAsync(EntityType, EntityId));
+            if (_status is not null)
+            {
+                StatusRead?.Invoke(_status);
+            }
         }
     }
 
@@ -46,6 +53,7 @@ public partial class CoworkeeWorkflowActions
         if (status is not null)
         {
             _status = status;
+            StatusRead?.Invoke(status);
             await OnChanged.InvokeAsync(status);
         }
     }

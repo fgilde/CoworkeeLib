@@ -1562,5 +1562,7 @@
   "Changes from this version to the editor": "Изменения от этой версии до редактора",
   "Sends the saved version with sample data to your address.": "Отправляет сохранённую версию с примерными данными на твой адрес.",
   "The version is in the editor. Save to keep it.": "Версия в редакторе. Сохрани, чтобы оставить её.",
-  "Leave without saving? Your changes to this template are lost.": "Уйти без сохранения? Изменения этого шаблона будут потеряны."
+  "Leave without saving? Your changes to this template are lost.": "Уйти без сохранения? Изменения этого шаблона будут потеряны.",
+  "Workflow state": "Состояние рабочего процесса",
+  "Awaiting my approval": "Ожидает моего одобрения"
 }

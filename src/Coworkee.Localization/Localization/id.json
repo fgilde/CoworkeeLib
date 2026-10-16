@@ -1562,5 +1562,7 @@
   "Changes from this version to the editor": "Perubahan dari versi ini ke editor",
   "Sends the saved version with sample data to your address.": "Mengirim versi tersimpan dengan data contoh ke alamatmu.",
   "The version is in the editor. Save to keep it.": "Versi ada di editor. Simpan untuk mempertahankannya.",
-  "Leave without saving? Your changes to this template are lost.": "Keluar tanpa menyimpan? Perubahanmu pada templat ini akan hilang."
+  "Leave without saving? Your changes to this template are lost.": "Keluar tanpa menyimpan? Perubahanmu pada templat ini akan hilang.",
+  "Workflow state": "Status alur kerja",
+  "Awaiting my approval": "Menunggu persetujuan saya"
 }

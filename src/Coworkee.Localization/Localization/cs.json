@@ -1562,5 +1562,7 @@
   "Changes from this version to the editor": "Změny od této verze k editoru",
   "Sends the saved version with sample data to your address.": "Pošle uloženou verzi s ukázkovými daty na tvou adresu.",
   "The version is in the editor. Save to keep it.": "Verze je v editoru. Ulož ji, aby zůstala.",
-  "Leave without saving? Your changes to this template are lost.": "Odejít bez uložení? Tvé změny této šablony se ztratí."
+  "Leave without saving? Your changes to this template are lost.": "Odejít bez uložení? Tvé změny této šablony se ztratí.",
+  "Workflow state": "Stav workflow",
+  "Awaiting my approval": "Čeká na mé schválení"
 }

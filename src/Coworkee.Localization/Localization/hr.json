@@ -1562,5 +1562,7 @@
   "Changes from this version to the editor": "Promjene od ove verzije do uređivača",
   "Sends the saved version with sample data to your address.": "Šalje spremljenu verziju s primjerima podataka na tvoju adresu.",
   "The version is in the editor. Save to keep it.": "Verzija je u uređivaču. Spremi je da je zadržiš.",
-  "Leave without saving? Your changes to this template are lost.": "Napustiti bez spremanja? Tvoje promjene ovog predloška bit će izgubljene."
+  "Leave without saving? Your changes to this template are lost.": "Napustiti bez spremanja? Tvoje promjene ovog predloška bit će izgubljene.",
+  "Workflow state": "Stanje tijeka rada",
+  "Awaiting my approval": "Čeka moje odobrenje"
 }

@@ -1562,5 +1562,7 @@
   "Changes from this version to the editor": "Αλλαγές από αυτή την έκδοση έως τον επεξεργαστή",
   "Sends the saved version with sample data to your address.": "Στέλνει την αποθηκευμένη έκδοση με δείγματα δεδομένων στη διεύθυνσή σου.",
   "The version is in the editor. Save to keep it.": "Η έκδοση είναι στον επεξεργαστή. Αποθήκευσε για να την κρατήσεις.",
-  "Leave without saving? Your changes to this template are lost.": "Αποχώρηση χωρίς αποθήκευση; Οι αλλαγές σου σε αυτό το πρότυπο θα χαθούν."
+  "Leave without saving? Your changes to this template are lost.": "Αποχώρηση χωρίς αποθήκευση; Οι αλλαγές σου σε αυτό το πρότυπο θα χαθούν.",
+  "Workflow state": "Κατάσταση ροής εργασιών",
+  "Awaiting my approval": "Αναμένει την έγκρισή μου"
 }
