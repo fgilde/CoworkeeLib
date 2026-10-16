@@ -31,6 +31,7 @@ export { reportDesignerApp, setPath } from './apps/report-designer.ts';
 export { createWidget, place, presets, resolveRange, widgetFilter } from './apps/report-model.ts';
 export { type LookupItem, type LookupSource } from './lookup.ts';
 export { aiSettingsApp, assistantApp } from './apps/assistant.ts';
+export { defaultSearchTarget, globalSearchProvider, toResults, type GlobalSearchHit, type SearchTarget } from './search.ts';
 export * from './apps/admin/index.ts';
 
 /** The apps of the library for every user: profile, settings, files with preview, data, chat, reports with their designer, assistant, notifications and the API documentation. */

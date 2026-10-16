@@ -6,6 +6,7 @@ import type { AirWorks, AirWorksOptions, AppDefinition } from '@fgilde/airworks'
 import { bffAuthProvider } from './auth.ts';
 import { toast } from './dom.ts';
 import { defaultMudExFrameUrl, defaultMudExUrl } from './mudex.ts';
+import { globalSearchProvider } from './search.ts';
 
 export type AirWorksApi = typeof AirWorks;
 
@@ -169,5 +170,7 @@ export async function useCoworkee(airWorks: AirWorksApi, options: CoworkeeOption
     ...options.airWorks,
   });
   if (user.isAuthenticated && user.userId) follow(coworkee, user.userId);
+  // the server's global search (users, files, reports, chats, the app's sets) in the search of the desktop
+  if (user.isAuthenticated) airWorks.registerSearchProvider(globalSearchProvider(coworkee));
   return coworkee;
 }
