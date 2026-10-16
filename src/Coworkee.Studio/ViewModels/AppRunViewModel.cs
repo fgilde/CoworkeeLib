@@ -23,7 +23,7 @@ public sealed partial class AppRunViewModel(MainViewModel main, Func<string?> ou
     private bool _failMessageNext;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsBusy), nameof(IsStarting), nameof(IsRunning), nameof(IsFailed), nameof(StatusText))]
+    [NotifyPropertyChangedFor(nameof(IsBusy), nameof(IsStarting), nameof(IsRunning), nameof(IsFailed), nameof(StatusText), nameof(HasSetupToken))]
     public partial AppRunState State { get; set; }
 
     [ObservableProperty]
@@ -36,6 +36,19 @@ public sealed partial class AppRunViewModel(MainViewModel main, Func<string?> ou
 
     [ObservableProperty]
     public partial bool ShowLog { get; set; }
+
+    /// <summary>Printed by the app host while the app is not set up yet: the token its setup page asks for.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSetupToken))]
+    public partial string? SetupToken { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSetupLink))]
+    public partial string? SetupLink { get; set; }
+
+    public bool HasSetupToken => SetupToken is not null && IsBusy;
+
+    public bool HasSetupLink => SetupLink is not null;
 
     [ObservableProperty]
     public partial IReadOnlyList<AppEndpoint> Endpoints { get; set; } = [];
@@ -76,6 +89,8 @@ public sealed partial class AppRunViewModel(MainViewModel main, Func<string?> ou
         Log.Clear();
         Error = null;
         DashboardUrl = null;
+        SetupToken = null;
+        SetupLink = null;
         _failMessageNext = false;
         WasStarted = true;
         if (appHost is null)
@@ -130,6 +145,10 @@ public sealed partial class AppRunViewModel(MainViewModel main, Func<string?> ou
         if (AspireOutput.DashboardLogin(line) is { } login)
         {
             DashboardUrl = login;
+        }
+        else if (AspireOutput.SetupToken(line) is { } setup)
+        {
+            (SetupToken, SetupLink) = setup;
         }
         else if (AspireOutput.IsStarted(line))
         {

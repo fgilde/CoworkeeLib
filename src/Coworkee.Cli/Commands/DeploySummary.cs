@@ -56,6 +56,11 @@ internal static partial class DeploySummary
             yield return "The migrations create this administrator in an empty database only; with the values left empty the app shows its setup page.";
         }
 
+        else if (values.FirstOrDefault(v => v.Key.EndsWith("_SETUP_TOKEN", StringComparison.Ordinal)) is { Value.Length: > 0 } token)
+        {
+            yield return $"Without an administrator in .env the app shows its setup page on the first visit; it asks for the setup token {token.Value} ({token.Key} in .env).";
+        }
+
         if (values.ContainsKey("KEYCLOAK_PASSWORD"))
         {
             yield return "Keycloak's own administration console: user admin, password KEYCLOAK_PASSWORD from .env.";

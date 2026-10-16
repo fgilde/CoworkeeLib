@@ -1,6 +1,6 @@
 # Themes
 
-Themes sind Daten: Paletten für hellen und dunklen Modus, Typografie, Eckenradius, Breite der Navigation und Höhe der App-Leiste, Schatten, Logo, eigenes CSS und die Optionen der App. Sieben Themes sind eingebaut (Ocean als Standard, Coworkee, Classic, Forest, Midnight, Sunset und High Contrast); sie unterscheiden sich in Schrift, Radius, Breite und Verhalten der Navigation, nicht nur in den Farben.
+Themes sind Daten: Paletten für hellen und dunklen Modus, Typografie, Eckenradius, Breite der Navigation und Höhe der App-Leiste, Schatten, Logo, eigenes CSS und die Optionen der App. Fünfzehn Themes sind eingebaut (siehe [Eingebaute Themes](#eingebaute-themes)); sie unterscheiden sich in Schrift, Radius, Breite und Verhalten der Navigation, nicht nur in den Farben.
 
 ![Theme-Auswahl in den Benutzereinstellungen](../assets/screenshots/themes.png){ .shot }
 
@@ -30,6 +30,34 @@ public sealed class MyThemeEditMeta : IObjectMetaConfiguration<CoworkeeTheme>
 }
 ```
 - `ThemeService` im Client wendet ein Theme zur Laufzeit an (`Apply`, `Preview`, `SetMode`).
+
+## Eingebaute Themes
+
+Jedes hat eine helle und eine dunkle Palette. Die Namen deuten nur an, was sie inspiriert hat; keine Logos, keine Marken. Die neueren (ab Octo) erfüllen den Kontrast nach WCAG AA für Text, Schaltflächen, App-Leiste und Navigation (`ThemeSeedTests`).
+
+| Theme | Aussehen | Überschriften / Text | Radius |
+|---|---|---|---|
+| Ocean (Standard) | blaue App-Leiste, Cyan als Akzent | Segoe UI | 14 px |
+| Coworkee | warmes Orange auf Papier | Inter | 6 px |
+| Classic | MudBlazor-Lila | Roboto | 4 px |
+| Forest | Grün, Bernstein als Akzent | Georgia / Segoe UI | 4 px |
+| Sunset | Pink, luftig | Trebuchet MS | 20 px |
+| Midnight | Indigo, Violett als Akzent | Cascadia Code / Inter | 8 px |
+| High Contrast | Schwarz-Weiß (dunkel: Gelb auf Schwarz), ohne Schatten | Arial | 0 |
+| Octo | neutrale Grautöne und Blau, wie bei einer Code-Hosting-Seite | Systemschrift | 6 px |
+| Code | Editor-Look: kompakt, graue Titelleiste, Blau | Segoe UI, kompakt | 2 px |
+| Arctic | kühle Polarblautöne und Frost, dunkle App-Leiste | Inter | 10 px |
+| Vampire | Lila und Pink auf nächtlichem Hintergrund (tagsüber Creme) | Inter | 12 px |
+| Solar | warmes Creme und tiefes Petrol, Bernstein als Akzent | Georgia / Segoe UI | 4 px |
+| Atom | sanfte Editor-Grautöne, Blau und Violett | Cascadia Code / Inter, kompakt | 6 px |
+| Paper | schlichtes weißes Papier, flach (ohne Schatten) | Georgia / Inter | 4 px |
+| Aubergine | dunkellila Navigation, grüne Akzente | Lato | 8 px |
+
+![Die acht neueren eingebauten Themes im hellen Modus](../assets/screenshots/themes-builtin-light.webp){ .shot }
+
+![Die acht neueren eingebauten Themes im dunklen Modus](../assets/screenshots/themes-builtin-dark.webp){ .shot }
+
+Für eine neue App wählst du eins mit `coworkee new --theme Octo` (oder `theme` in der Spec), in Coworkee Studio auf der Seite Branding oder später als Standard der Organisation unter *Administration > Themes*.
 
 ## Ladebildschirm
 

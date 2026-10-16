@@ -1,6 +1,6 @@
 # Theming
 
-Themes are data: palettes for light and dark mode, typography, border radius, drawer width and app bar height, shadows, logo, custom CSS, and the app's own options. Seven built-in themes ship with the package (Ocean, the default, Coworkee, Classic, Forest, Midnight, Sunset and High Contrast); they differ in fonts, radius, navigation width and behaviour, not only in colors.
+Themes are data: palettes for light and dark mode, typography, border radius, drawer width and app bar height, shadows, logo, custom CSS, and the app's own options. Fifteen built-in themes ship with the package (see [Built-in themes](#built-in-themes)); they differ in fonts, radius, navigation width and behaviour, not only in colors.
 
 ![Theme selection in the user settings](../assets/screenshots/themes.png){ .shot }
 
@@ -30,6 +30,34 @@ public sealed class MyThemeEditMeta : IObjectMetaConfiguration<CoworkeeTheme>
 }
 ```
 - `ThemeService` in the client applies a theme at runtime (`Apply`, `Preview`, `SetMode`).
+
+## Built-in themes
+
+Each one has a light and a dark palette. The names only hint at what inspired them; no logos, no trademarks. The newer ones (from Octo on) meet WCAG AA contrast for text, buttons, app bar and navigation (`ThemeSeedTests`).
+
+| Theme | Look | Headings / text | Radius |
+|---|---|---|---|
+| Ocean (default) | blue app bar, cyan accent | Segoe UI | 14 px |
+| Coworkee | warm orange on paper | Inter | 6 px |
+| Classic | MudBlazor purple | Roboto | 4 px |
+| Forest | green, amber accent | Georgia / Segoe UI | 4 px |
+| Sunset | pink, roomy | Trebuchet MS | 20 px |
+| Midnight | indigo, violet accent | Cascadia Code / Inter | 8 px |
+| High Contrast | black and white (yellow on black in dark), no shadows | Arial | 0 |
+| Octo | neutral grays and blue, like a code hosting site | system font | 6 px |
+| Code | editor look: compact, gray title bar, blue | Segoe UI, dense | 2 px |
+| Arctic | cool polar blues and frost, dark app bar | Inter | 10 px |
+| Vampire | purple and pink on a night background (cream by day) | Inter | 12 px |
+| Solar | warm cream and deep teal, amber accent | Georgia / Segoe UI | 4 px |
+| Atom | soft editor grays, blue and violet | Cascadia Code / Inter, dense | 6 px |
+| Paper | plain white paper, flat (no shadows) | Georgia / Inter | 4 px |
+| Aubergine | dark purple navigation, green accents | Lato | 8 px |
+
+![The eight newer built-in themes in light mode](../assets/screenshots/themes-builtin-light.webp){ .shot }
+
+![The eight newer built-in themes in dark mode](../assets/screenshots/themes-builtin-dark.webp){ .shot }
+
+Pick one for a new app with `coworkee new --theme Octo` (or `theme` in the spec), in Coworkee Studio on the Branding page, or later as the organisation's default under *Administration > Themes*.
 
 ## Loading screen
 

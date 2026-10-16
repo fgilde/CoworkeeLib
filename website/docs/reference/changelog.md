@@ -2,6 +2,18 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### New
+
+- Eight more built-in themes, each with light and dark palettes, own fonts, radius and options: Octo, Code, Arctic, Vampire, Solar, Atom, Paper and Aubergine (CLI/spec `theme`, template, Studio gallery). Their text meets WCAG AA contrast. See [Theming](../modules/theming.md#built-in-themes).
+- The setup token is easy to find in a local run: the app host gives every service one token and, while the system is not set up, prints it on its console (`coworkee run`), in the api's log and in the Aspire dashboard (*Setup* link with the token on the web resource, *Setup token* property on the api). Coworkee Studio shows it with a copy button on the run card and under *My apps*; `coworkee deploy` names `<APP>_SETUP_TOKEN` when no administrator is set. `/setup?token=...` fills the token in. See [Setup wizard or seed](../security/authentication.md#setup-wizard-or-seed).
+
+### Fixes
+
+- The setup page of a system that is already set up goes to the app; a setup tab left open leaves for the app when it gets the focus again or another tab finishes the setup.
+- Built-in themes were listed twice when requests seeded them at the same moment (SQL Server and SQLite let the unique index repeat null tenants). Seeding runs once at a time per process and removes such copies (the one an organisation uses stays).
+
 ## 0.0.1.30 (2026-10-16)
 
 ### New

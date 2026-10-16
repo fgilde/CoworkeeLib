@@ -10,6 +10,10 @@ public static partial class AspireOutput
 {
     public static string? DashboardLogin(string line) => LoginLine().Match(line) is { Success: true } match ? match.Groups["url"].Value : null;
 
+    /// <summary>The setup token (and the setup link) the app host prints while the app waits for its setup.</summary>
+    public static (string Token, string? Link)? SetupToken(string line) =>
+        SetupLine().Match(line) is { Success: true } match ? (match.Groups["token"].Value, match.Groups["link"].Success ? match.Groups["link"].Value : null) : null;
+
     public static bool IsStarted(string line) => line.Contains("Distributed application started", StringComparison.Ordinal);
 
     /// <summary>The header of an error log entry (<c>fail: Category[0]</c>): the message is on the next line.</summary>
@@ -69,6 +73,9 @@ public static partial class AspireOutput
             return null;
         }
     }
+
+    [GeneratedRegex(@"Setup token of \S+: (?<token>\S+)(?: - open (?<link>https?://\S+))?")]
+    private static partial Regex SetupLine();
 
     [GeneratedRegex(@"Login to the dashboard at (?<url>https?://\S+)")]
     private static partial Regex LoginLine();

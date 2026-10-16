@@ -30,6 +30,14 @@ public sealed class AppRunTests
     }
 
     [Fact]
+    public void Reads_the_setup_token_the_app_host_prints()
+    {
+        AspireOutput.SetupToken("      Setup token of shop: Ab-c_12 - open https://localhost:7001/setup?token=Ab-c_12").ShouldBe(("Ab-c_12", "https://localhost:7001/setup?token=Ab-c_12"));
+        AspireOutput.SetupToken("      Setup token of shop: Ab-c_12").ShouldBe(("Ab-c_12", (string?)null));
+        AspireOutput.SetupToken("      Login to the dashboard at " + Login).ShouldBeNull();
+    }
+
+    [Fact]
     public void Finds_the_addresses_of_the_app_in_the_launch_settings()
     {
         using var folder = new TempFolder();
