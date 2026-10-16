@@ -1,6 +1,0 @@
-<Project>
-  <!-- the host has no .razor files of its own, yet serves Blazor Server (_framework/blazor.server.js) -->
-  <PropertyGroup>
-    <RequiresAspNetWebAssets Condition="'$(RequiresAspNetWebAssets)' == ''">true</RequiresAspNetWebAssets>
-  </PropertyGroup>
-</Project>

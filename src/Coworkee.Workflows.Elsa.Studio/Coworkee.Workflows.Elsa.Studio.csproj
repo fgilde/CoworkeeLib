@@ -8,7 +8,4 @@
     <PackageReference Include="Elsa.Studio" />
     <PackageReference Include="Elsa.Studio.Core.BlazorServer" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="buildTransitive\*.props" Pack="true" PackagePath="buildTransitive;build" />
-  </ItemGroup>
 </Project>
