@@ -161,7 +161,7 @@ public sealed class AiTests(AiApp app) : IAsyncLifetime
     public async Task Tools_the_user_lacks_rights_for_are_not_offered_nor_run()
     {
         var chatter = app.As(await UserAsync(AiPermissions.Chat), _setup.TenantId);
-        (await chatter.GetFromJsonAsync<AiToolDto[]>("/api/v1/ai/tools", Ct))!.Select(t => t.Name).ShouldBe(["list_notes", "count_notes", "pin_notes", "list_data_sets", "query_data"], ignoreOrder: true);
+        (await chatter.GetFromJsonAsync<AiToolDto[]>("/api/v1/ai/tools", Ct))!.Select(t => t.Name).ShouldBe(["list_notes", "count_notes", "pin_notes", "list_data_sets", "query_data", "global_search"], ignoreOrder: true);
         app.Claude.ToolUse(("add_note", new JsonObject { ["title"] = "sneaky" }));
         app.Claude.Text("I could not add it.");
 
@@ -169,7 +169,7 @@ public sealed class AiTests(AiApp app) : IAsyncLifetime
 
         answer.ToolCalls.Single().Error!.ShouldContain("Unknown tool");
         app.Claude.Requests.First()["tools"]!.AsArray().Select(t => t!["name"]!.GetValue<string>())
-            .ShouldBe(["list_notes", "count_notes", "pin_notes", "list_data_sets", "query_data"], ignoreOrder: true);
+            .ShouldBe(["list_notes", "count_notes", "pin_notes", "list_data_sets", "query_data", "global_search"], ignoreOrder: true);
         (await app.InDbAsync(db => db.Set<Note>().CountAsync(Ct))).ShouldBe(0);
         (await chatter.GetAsync("/api/v1/ai/tool-calls", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await chatter.GetFromJsonAsync<AiStatusDto>("/api/v1/ai/status", Ct))!.Available.ShouldBeTrue();
