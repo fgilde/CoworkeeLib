@@ -116,10 +116,10 @@ Branches merged: mail-langs, workflows, mobile-pwa, import-export, history-palet
 ### Workflows
 Docs `modules/workflows.md`, `modules/workflows-elsa.md`.
 - `Coworkee.Workflows`: state machine per entity type declared in code (`AddCoworkeeWorkflows(w => w.Entity<T>(...))`), guards (permission, role, condition, comment), actions (`Then`, `OnEnter/OnExit`, `Set`, `NotifyRole`), approvals (roles/users, any/all, four eyes, `DueIn`, `RemindAfter`, `EscalateTo`, `OnTimeout`) via the recurring job `workflow-deadlines`, history table, domain events `WorkflowTransitioned`/`ApprovalStarted`/`ApprovalDecided` (outbox). Tables `cw.Workflow*` (apps need a migration).
-- Client: `CoworkeeWorkflow`, `CoworkeeWorkflowActions` (row; one GET per row, `ponytail:`), `CoworkeeWorkflowTimeline`, page `/workflows/approvals`, nav entries Approvals and Workflow designer.
+- Client: `CoworkeeWorkflow`, `CoworkeeWorkflowActions` (rows batch their states: `WorkflowStates`, `POST /api/v1/workflows/{type}/states`), `CoworkeeWorkflowTimeline`, page `/workflows/approvals`, nav entries Approvals and Workflow designer.
 - `Coworkee.Workflows.Elsa`: Elsa 3.9.0 (MIT, net10 builds) in the API host, tables in the app database (Elsa's own migrations), API `/api/elsa` behind a gate for `Workflows.Elsa.Manage` (Elsa's endpoint security disabled), activities SendCommand/RunTransition/WaitForApproval/Notify/QueryOData, triggers WorkflowStateReached/EntityChangedTrigger (`AddCoworkeeElsa(e => e.Watch<T>(...))`). Elsa Studio is not embedded and no host ships yet (see the docs page for why and the plan); `Coworkee:Workflows:Elsa:StudioUrl` feeds the designer link.
 - Template/CLI/Studio options `workflows` and `elsa` (off); with samples: product approval (`ProductApproval.cs`, products column) and `ProductApprovedWorkflow` in the API. A generated app with both builds (`COWORKEE_TEST_FEED`); not run in Aspire or a browser yet.
-- Not done: personal data export of approver comments, batch status endpoint for rows, Elsa tests on SQL Server.
+- Not done: personal data export of approver comments, Elsa tests on SQL Server.
 
 ### Import and export
 Docs `website/docs/web/import-export*.md`, changelog section *Unreleased*.
@@ -128,12 +128,18 @@ Docs `website/docs/web/import-export*.md`, changelog section *Unreleased*.
 - `AddODataImport(set, (Guid? id, TRow row) => cmd, id => deleteCmd)` enables update/upsert/undo; template sample sets use it. `IODataClient.Export/ImportAsync` removed (breaking), client `IDataTransferApi` + `DataTransferWatcher`, wizard `Components/Data/Import`, page `/admin/data-transfer` (permission `DataTransfer.Use`).
 - Limits (`ponytail:`): uploads/results in the job row; one query per key and lookup text; undo only deletes created rows; preview checks the first 200 rows (dry run checks all); no persistent notification (Notifications module is above OData), only the realtime snackbar.
 
+### UI smalls (branch `feat/ui-smalls`)
+- Library pages have no `@page` any more (except `/setup`): `Navigation/CoworkeePageHost` (`/{*Path}`) renders them from `CoworkeePages` (keys in `LibraryPages`, reporting registers its own). Admin pages under `CoworkeeClientOptions.PagePrefix` (`/cw` → `/cw/admin/users`, `""` = old), `options.Pages.Replace/Disable`, old addresses redirect; nav, palette, notification links and in-lib links go through `CoworkeePages.Href`. Unknown addresses: Router `NotFoundPage` if set, else the host's "Not found." (the Router's `NotFound` fragment is unreachable behind a catch-all). Server links stay on the old addresses.
+- System status (`/cw/admin/system-status`, `GET /api/v1/system/status`, Settings.Manage + system organisation): `ISystemStatusContributor` per module (`AddSystemStatus<T>`).
+- Column filters: *between* sliders with bounds from two `$orderby/$top=1` queries; range facets render their facet view in the column filter.
+- Webhooks: `RotateWebhookSecretCommand`, `PreviousProtectedSecret`/`PreviousSecretUntil` (EF change; template migration has no webhooks, apps with webhooks need a migration), `SecretGracePeriod`.
+- Template samples: palette command "New product" (`?new=true`) and product search.
+
 ## Product backlog (older ideas, not part of the recent rounds)
 - Own `IMailTransport` with a new provider name is only selectable via `Coworkee:Settings:Defaults:Mail.Provider` (choices are the four built-ins).
 - Translations of the 21 new languages were checked by sample, not by native speakers (km, ar least certain).
 - MudEx: `MudExDateRangeSlider` Day mode default step ≈ 0 (arrow keys dead; lib passes `StepLength`), no per-thumb aria-label.
 - Multi-instance: shared Data Protection key ring needed for pending assistant tool calls; assistant "busy" guard is per instance.
-- Lib pages live under generic `/admin/...` routes; an app page with the same route breaks Blazor routing (`AppShellTests` covers `/admin/ai`). Consider a prefix.
 - Not built: MySQL (no EF Core 10 Pomelo), many-to-many in specs, report versioning/public link/map widget, QueryBuilder OData-text import and drag reorder; deploy: `hosting/deployment.md` lists what is verified.
 - Flaky under load: Keycloak container start in Aspire tests.
 - bUnit tests that find an element and act on it later can hit a stale handler while MudEx `ObjectEdit` re-renders (debounced, 50 ms, also applies `IgnoreIf` conditions a moment after the first render): wrap find and act in `cut.InvokeAsync` and wait for the condition (see `UserAdministrationTests`, `MailTemplatesPageTests`).
