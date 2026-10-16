@@ -4,6 +4,7 @@ using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Workflows;
 using MudBlazor;
+using MudBlazor.Extensions;
 
 namespace Coworkee.Client.Blazor.Workflows;
 
@@ -25,7 +26,7 @@ public sealed class WorkflowCommands(IWorkflowApi api, IDialogService dialogs, I
 
     private async Task<string?> AskAsync(string title, bool required)
     {
-        var dialog = await dialogs.ShowAsync<WorkflowCommentDialog>(title, new DialogParameters { [nameof(WorkflowCommentDialog.Required)] = required }, EditDialogExtensions.Small());
+        var dialog = await dialogs.ShowExAsync<WorkflowCommentDialog>(title, new DialogParameters { [nameof(WorkflowCommentDialog.Required)] = required }, EditDialogExtensions.Small());
         return await dialog.Result is { Canceled: false, Data: string text } ? text : null;
     }
 

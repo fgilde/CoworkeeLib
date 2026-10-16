@@ -7,6 +7,7 @@ using Coworkee.Contracts.Identity;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using MudBlazor;
+using MudBlazor.Extensions;
 
 namespace Coworkee.Client.Blazor.Pages;
 
@@ -56,7 +57,7 @@ public partial class ProfileApiKeys
 
     private async Task CreateAsync()
     {
-        var dialog = await Dialogs.ShowAsync<ApiKeyDialog>(L["New API key"], EditDialogExtensions.Small());
+        var dialog = await Dialogs.ShowExAsync<ApiKeyDialog>(L["New API key"], EditDialogExtensions.Small());
         if (await dialog.Result is { Canceled: false, Data: CreatedApiKeyDto created })
         {
             _created = created;

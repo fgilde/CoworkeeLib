@@ -1,4 +1,4 @@
-<MudDialog data-testid="workflow-comment-dialog">
+<MudDialog Class="@MudBlazor.Extensions.Helper.MudExCss.Classes.Dialog.Initial" data-testid="workflow-comment-dialog">
     <DialogContent>
         <MudTextField T="string" @bind-Value="_comment" Label="@L["Comment"]" Lines="3" MaxLength="2000" Variant="Variant.Outlined" Immediate="true"
                       Required="Required" HelperText="@(Required ? L["A comment is needed for this step."] : L["Optional"])" data-testid="workflow-comment" />
