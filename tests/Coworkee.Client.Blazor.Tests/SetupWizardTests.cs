@@ -9,6 +9,7 @@ using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Theming;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.JSInterop;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
@@ -171,6 +172,61 @@ public sealed class SetupWizardTests : ClientTestBase
 
         wizard.WaitForAssertion(() => wizard.Markup.ShouldContain("at least one digit"));
         wizard.FindAll("input[data-testid='admin-password'], [data-testid='admin-password'] input").ShouldNotBeEmpty();
+    }
+
+    [Fact]
+    public void A_set_up_system_sends_the_setup_page_to_the_app()
+    {
+        Api.GetSetupStatusAsync(Arg.Any<CancellationToken>()).Returns(new SetupStatusDto(true));
+        var nav = Services.GetRequiredService<NavigationManager>();
+        nav.NavigateTo("/setup");
+
+        Render<Setup>();
+
+        nav.Uri.ShouldBe(nav.BaseUri);
+    }
+
+    [Fact]
+    public async Task A_tab_whose_setup_another_tab_finished_goes_to_the_app_when_it_looks_again()
+    {
+        Api.GetSetupStatusAsync(Arg.Any<CancellationToken>()).Returns(new SetupStatusDto(false), new SetupStatusDto(true));
+        var nav = Services.GetRequiredService<NavigationManager>();
+        nav.NavigateTo("/setup");
+        var wizard = Render<Setup>();
+        nav.Uri.ShouldEndWith("/setup");
+
+        await wizard.InvokeAsync(wizard.Instance.RecheckAsync);
+
+        nav.Uri.ShouldBe(nav.BaseUri);
+    }
+
+    [Fact]
+    public async Task Finishing_tells_the_other_tabs_and_already_done_leads_to_the_app()
+    {
+        var done = JSInterop.SetupModule("./_content/Coworkee.Client.Blazor/coworkee.js");
+        done.SetupVoid("setupDone").SetVoidResult();
+        done.SetupModule("watchSetup", _ => true);
+        var wizard = Render<Setup>();
+
+        await FillAsync(wizard, "token-123");
+
+        done.VerifyInvoke("setupDone");
+        Api.CompleteSetupAsync(Arg.Any<CompleteSetupRequest>(), Arg.Any<CancellationToken>()).ThrowsAsync(new ApiException(409, "setup.completed", null));
+        var nav = Services.GetRequiredService<NavigationManager>();
+        nav.NavigateTo("/setup");
+        await FillAsync(Render<Setup>(), "token-123");
+        nav.Uri.ShouldBe(nav.BaseUri);
+    }
+
+    [Fact]
+    public void The_token_of_the_setup_link_is_filled_in()
+    {
+        var nav = Services.GetRequiredService<NavigationManager>();
+        nav.NavigateTo(nav.GetUriWithQueryParameter("token", "from-dashboard"));
+
+        var wizard = Render<Setup>();
+
+        Input(wizard, "setup-token").GetAttribute("value").ShouldBe("from-dashboard");
     }
 
     [Fact]
