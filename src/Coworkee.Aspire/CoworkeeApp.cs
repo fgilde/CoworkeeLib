@@ -118,7 +118,7 @@ public sealed partial class CoworkeeApp
             .WithSetting(s => s.Coworkee.ApiAuth.Authority, PublicUrl(auth))
             .WithSetting(s => s.Coworkee.ApiAuth.Audience, ApiAudience)
             .WithSetting(s => s.Coworkee.Account.PublicAuthUrl, PublicUrl(auth));
-        if (Builder.Configuration["Coworkee:SetupToken"] is { Length: > 0 } setupToken)
+        if (Publishing && Builder.Configuration["Coworkee:SetupToken"] is { Length: > 0 } setupToken)
         {
             api.WithSetting(s => s.Coworkee.SetupToken, setupToken);
         }
@@ -126,6 +126,8 @@ public sealed partial class CoworkeeApp
         {
             api.WithSetting(s => s.Coworkee.SetupToken, DeployParameter($"{Name}-setup-token", secret: true));
         }
+
+        AnnounceSetup(api);
 
         AddKeycloakSignInSettings(api);
         WithSignInDesign(api);
@@ -273,6 +275,7 @@ public sealed partial class CoworkeeApp
         where TProject : IProjectMetadata, new()
     {
         var service = Builder.AddProject<TProject>($"{Name}-{suffix}").WithHttpHealthCheck(Health);
+        WithSetupToken(service);
         WireServices(service);
         WireGrafanaTelemetry(service);
         var references = CoworkeeModules.References(service.Resource.GetProjectMetadata().ProjectPath);
