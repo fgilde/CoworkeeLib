@@ -1534,5 +1534,14 @@
   "No key or endpoint": "គ្មានសោ ឬ endpoint",
   "Rotate secret": "ប្តូរសម្ងាត់",
   "Old secret signs too until {0}": "សម្ងាត់ចាស់ក៏ចុះហត្ថលេខាដល់ {0}",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "បង្កើតសម្ងាត់ចុះហត្ថលេខាថ្មីសម្រាប់ {0}? សម្ងាត់ចាស់នៅតែចុះហត្ថលេខាមួយរយៈ ដើម្បីឱ្យអ្នកទទួលអាចប្តូរបាន។"
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "បង្កើតសម្ងាត់ចុះហត្ថលេខាថ្មីសម្រាប់ {0}? សម្ងាត់ចាស់នៅតែចុះហត្ថលេខាមួយរយៈ ដើម្បីឱ្យអ្នកទទួលអាចប្តូរបាន។",
+  "Dashboard": "ផ្ទាំងគ្រប់គ្រង",
+  "Set as my dashboard": "កំណត់ជាផ្ទាំងគ្រប់គ្រងរបស់ខ្ញុំ",
+  "Remove as my dashboard": "ដកចេញពីផ្ទាំងគ្រប់គ្រងរបស់ខ្ញុំ",
+  "Set as organisation dashboard": "កំណត់ជាផ្ទាំងគ្រប់គ្រងរបស់អង្គភាព",
+  "Remove as organisation dashboard": "ដកចេញពីផ្ទាំងគ្រប់គ្រងរបស់អង្គភាព",
+  "Dashboard changed.": "បានប្ដូរផ្ទាំងគ្រប់គ្រង។",
+  "No dashboard chosen yet": "មិនទាន់បានជ្រើសរើសផ្ទាំងគ្រប់គ្រងនៅឡើយទេ",
+  "Open a report and choose it as your dashboard.": "បើករបាយការណ៍មួយ ហើយជ្រើសរើសវាជាផ្ទាំងគ្រប់គ្រងរបស់អ្នក។",
+  "Choose a report": "ជ្រើសរើសរបាយការណ៍"
 }

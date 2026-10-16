@@ -1534,5 +1534,14 @@
   "No key or endpoint": "Няма ключ или крайна точка",
   "Rotate secret": "Смяна на тайната",
   "Old secret signs too until {0}": "Старата тайна подписва също до {0}",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Да се създаде ли нова тайна за подписване за {0}? Старата продължава да подписва известно време, за да може получателят да премине."
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Да се създаде ли нова тайна за подписване за {0}? Старата продължава да подписва известно време, за да може получателят да премине.",
+  "Dashboard": "Табло",
+  "Set as my dashboard": "Задай като мое табло",
+  "Remove as my dashboard": "Премахни като мое табло",
+  "Set as organisation dashboard": "Задай като табло на организацията",
+  "Remove as organisation dashboard": "Премахни като табло на организацията",
+  "Dashboard changed.": "Таблото е променено.",
+  "No dashboard chosen yet": "Все още няма избрано табло",
+  "Open a report and choose it as your dashboard.": "Отворете отчет и го изберете като свое табло.",
+  "Choose a report": "Изберете отчет"
 }

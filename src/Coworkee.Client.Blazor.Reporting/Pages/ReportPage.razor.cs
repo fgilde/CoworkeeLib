@@ -18,6 +18,7 @@ public partial class ReportPage : IAsyncDisposable
     private readonly Stack<string> _undo = new();
     private readonly Stack<string> _redo = new();
     private ReportDto? _report;
+    private DashboardReportDto? _dashboard;
     private ReportDefinition? _definition;
     private ReportState? _state;
     private ReportGrid? _grid;
@@ -67,6 +68,15 @@ public partial class ReportPage : IAsyncDisposable
         catch (ApiException exception)
         {
             _failed = exception.Status == 404 ? L["The report does not exist or is not shared with you."] : L["The report could not be loaded."];
+            return;
+        }
+
+        try
+        {
+            _dashboard = await Api.GetDashboardAsync();
+        }
+        catch (ApiException)
+        {
         }
     }
 

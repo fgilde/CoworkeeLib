@@ -1534,5 +1534,14 @@
   "No key or endpoint": "Χωρίς κλειδί ή endpoint",
   "Rotate secret": "Εναλλαγή μυστικού",
   "Old secret signs too until {0}": "Το παλιό μυστικό υπογράφει επίσης έως {0}",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Δημιουργία νέου μυστικού υπογραφής για {0}; Το παλιό συνεχίζει να υπογράφει για λίγο, ώστε ο παραλήπτης να αλλάξει."
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Δημιουργία νέου μυστικού υπογραφής για {0}; Το παλιό συνεχίζει να υπογράφει για λίγο, ώστε ο παραλήπτης να αλλάξει.",
+  "Dashboard": "Πίνακας ελέγχου",
+  "Set as my dashboard": "Ορισμός ως πίνακα ελέγχου μου",
+  "Remove as my dashboard": "Κατάργηση ως πίνακα ελέγχου μου",
+  "Set as organisation dashboard": "Ορισμός ως πίνακα ελέγχου του οργανισμού",
+  "Remove as organisation dashboard": "Κατάργηση ως πίνακα ελέγχου του οργανισμού",
+  "Dashboard changed.": "Ο πίνακας ελέγχου άλλαξε.",
+  "No dashboard chosen yet": "Δεν έχει επιλεγεί ακόμη πίνακας ελέγχου",
+  "Open a report and choose it as your dashboard.": "Ανοίξτε μια αναφορά και επιλέξτε τη ως πίνακα ελέγχου σας.",
+  "Choose a report": "Επιλογή αναφοράς"
 }

@@ -1534,5 +1534,14 @@
   "No key or endpoint": "Kein Schlüssel und kein Endpunkt",
   "Rotate secret": "Secret erneuern",
   "Old secret signs too until {0}": "Altes Secret signiert noch bis {0}",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Neues Signatur-Secret für {0} erzeugen? Das alte signiert noch eine Weile mit, damit der Empfänger umstellen kann."
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Neues Signatur-Secret für {0} erzeugen? Das alte signiert noch eine Weile mit, damit der Empfänger umstellen kann.",
+  "Dashboard": "Dashboard",
+  "Set as my dashboard": "Als mein Dashboard festlegen",
+  "Remove as my dashboard": "Nicht mehr mein Dashboard",
+  "Set as organisation dashboard": "Als Dashboard der Organisation festlegen",
+  "Remove as organisation dashboard": "Nicht mehr Dashboard der Organisation",
+  "Dashboard changed.": "Dashboard geändert.",
+  "No dashboard chosen yet": "Noch kein Dashboard gewählt",
+  "Open a report and choose it as your dashboard.": "Öffnen Sie einen Bericht und wählen Sie ihn als Ihr Dashboard.",
+  "Choose a report": "Bericht wählen"
 }

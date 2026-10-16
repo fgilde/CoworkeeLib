@@ -1534,5 +1534,14 @@
   "No key or endpoint": "Chybí klíč nebo koncový bod",
   "Rotate secret": "Obnovit tajný klíč",
   "Old secret signs too until {0}": "Starý klíč podepisuje také do {0}",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Vytvořit nový podpisový klíč pro {0}? Starý ještě chvíli podepisuje vedle něj, aby příjemce mohl přejít."
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Vytvořit nový podpisový klíč pro {0}? Starý ještě chvíli podepisuje vedle něj, aby příjemce mohl přejít.",
+  "Dashboard": "Nástěnka",
+  "Set as my dashboard": "Nastavit jako moji nástěnku",
+  "Remove as my dashboard": "Odebrat jako moji nástěnku",
+  "Set as organisation dashboard": "Nastavit jako nástěnku organizace",
+  "Remove as organisation dashboard": "Odebrat jako nástěnku organizace",
+  "Dashboard changed.": "Nástěnka změněna.",
+  "No dashboard chosen yet": "Zatím není vybrána žádná nástěnka",
+  "Open a report and choose it as your dashboard.": "Otevřete sestavu a zvolte ji jako svou nástěnku.",
+  "Choose a report": "Vybrat sestavu"
 }

@@ -1534,5 +1534,14 @@
   "No key or endpoint": "Ingen nøgle eller endpoint",
   "Rotate secret": "Udskift hemmelighed",
   "Old secret signs too until {0}": "Den gamle hemmelighed signerer også indtil {0}",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Opret en ny signeringshemmelighed for {0}? Den gamle signerer stadig ved siden af i et stykke tid, så modtageren kan skifte."
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Opret en ny signeringshemmelighed for {0}? Den gamle signerer stadig ved siden af i et stykke tid, så modtageren kan skifte.",
+  "Dashboard": "Dashboard",
+  "Set as my dashboard": "Angiv som mit dashboard",
+  "Remove as my dashboard": "Fjern som mit dashboard",
+  "Set as organisation dashboard": "Angiv som organisationens dashboard",
+  "Remove as organisation dashboard": "Fjern som organisationens dashboard",
+  "Dashboard changed.": "Dashboard ændret.",
+  "No dashboard chosen yet": "Intet dashboard valgt endnu",
+  "Open a report and choose it as your dashboard.": "Åbn en rapport, og vælg den som dit dashboard.",
+  "Choose a report": "Vælg en rapport"
 }

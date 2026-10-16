@@ -1534,5 +1534,14 @@
   "No key or endpoint": "لا مفتاح ولا نقطة نهاية",
   "Rotate secret": "تدوير السر",
   "Old secret signs too until {0}": "السر القديم يوقّع أيضًا حتى {0}",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "إنشاء سر توقيع جديد لـ {0}؟ يستمر القديم في التوقيع بجانبه لفترة حتى يتمكن المستقبِل من التبديل."
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "إنشاء سر توقيع جديد لـ {0}؟ يستمر القديم في التوقيع بجانبه لفترة حتى يتمكن المستقبِل من التبديل.",
+  "Dashboard": "لوحة المعلومات",
+  "Set as my dashboard": "تعيين كلوحة معلوماتي",
+  "Remove as my dashboard": "إزالة من لوحة معلوماتي",
+  "Set as organisation dashboard": "تعيين كلوحة معلومات المؤسسة",
+  "Remove as organisation dashboard": "إزالة من لوحة معلومات المؤسسة",
+  "Dashboard changed.": "تم تغيير لوحة المعلومات.",
+  "No dashboard chosen yet": "لم يتم اختيار لوحة معلومات بعد",
+  "Open a report and choose it as your dashboard.": "افتح تقريرًا واختره كلوحة معلوماتك.",
+  "Choose a report": "اختر تقريرًا"
 }
