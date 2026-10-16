@@ -128,11 +128,13 @@ The summary (including database, AI provider, Redis, the containers, color mode,
 
 ### Create
 
-The Studio writes the spec, runs `coworkee spec validate` and `coworkee new --spec`, and shows each step of the CLI as it happens, with the full output when you want it. Output folder, logo and media go on the command line. Afterwards the **Sign in** card lists every user with password and roles, with copy buttons, and says whether Keycloak takes them too (they are also in `LOGIN.md` of the solution). Then: open the folder, open it in VS Code, Rider or Visual Studio, or run the app.
+The Studio writes the spec, runs `coworkee spec validate` and `coworkee new --spec`, and shows each step of the CLI as it happens, with the full output when you want it. Output folder, logo and media go on the command line. Afterwards the **Sign in** card lists every user with password and roles, with copy buttons, and says whether Keycloak takes them too (they are also in `LOGIN.md` of the solution). Then: open the folder, open it in VS Code, Rider or Visual Studio, run the app, or deploy it.
 
 ![Create](../assets/screenshots/studio-generate-dark.webp)
 
 **Run the app** starts `dotnet run --project <app host>` inside the Studio. The card shows whether the app host is starting, running or has failed, and on failure the line that explains it (a port in use, a build error). Once it is up it links the Aspire dashboard (the login address with its token, read from the output) and the addresses of the web app, the API and the auth server (from their launch settings). The output of the app host is one click away; **Stop** ends the app host and what it started, and so does closing the Studio.
+
+**Deploy** is the optional last step: pick a target (`compose`, `azure` or `k8s`) and the Studio runs `coworkee deploy` in the app's folder with its output live, ending with the addresses of the services and tools and the administrator's sign-in. See [Deployment](../hosting/deployment.md).
 
 ![Running app](../assets/screenshots/studio-run-dark.webp)
 

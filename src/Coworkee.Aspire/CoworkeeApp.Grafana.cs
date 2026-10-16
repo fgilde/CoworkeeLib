@@ -123,7 +123,9 @@ public sealed partial class CoworkeeApp
         {
             var http = collector.OtlpHttpEndpoint;
             service.WithEnvironment(GrafanaOtlpEndpoint, ReferenceExpression.Create($"http://{http.Property(EndpointProperty.Host)}:{http.Property(EndpointProperty.TargetPort)}"))
-                .WithEnvironment(GrafanaOtlpProtocol, "http/protobuf");
+                .WithEnvironment(GrafanaOtlpProtocol, "http/protobuf")
+                // the dashboards rate over a minute; exports once a minute (the default, Aspire shortens it only while running) would leave them mostly empty
+                .WithEnvironment("OTEL_METRIC_EXPORT_INTERVAL", "10000");
         }
         else
         {

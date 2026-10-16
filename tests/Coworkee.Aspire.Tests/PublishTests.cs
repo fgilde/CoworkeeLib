@@ -67,6 +67,7 @@ public sealed class PublishTests
         compose.ShouldContain("127.0.0.1:8091:3000");
         compose.ShouldContain("source: \"demo-prometheus-data\"");
         compose.ShouldContain("GRAFANA_OTLP_ENDPOINT: \"http://otel-collector:4318\"");
+        compose.ShouldContain("OTEL_METRIC_EXPORT_INTERVAL: \"10000\"");
         compose.ShouldContain("WDS_USER: \"${DEMO_ADMIN_EMAIL}\"");
         compose.ShouldContain("127.0.0.1:8092:8080");
         compose.ShouldContain("source: \"demo-webdatastudio-data\"");
