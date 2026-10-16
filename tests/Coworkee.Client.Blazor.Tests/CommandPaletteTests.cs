@@ -119,9 +119,21 @@ public sealed class CommandPaletteTests : ClientTestBase
 
         palette.Find("[data-testid='palette-input']").Input("how do refunds work");
         palette.WaitForAssertion(() => palette.Find("[data-group='Assistant']").TextContent.ShouldContain("how do refunds work"));
-        await palette.Find("[data-group='Assistant']").ClickAsync(new());
 
+        // the assistant status arrives asynchronously and may re-render the list between finding the entry and clicking it
         var state = Services.GetRequiredService<AssistantState>();
+        for (var attempt = 0; attempt < 5 && !state.IsOpen; attempt++)
+        {
+            try
+            {
+                await palette.Find("[data-group='Assistant']").ClickAsync(new());
+            }
+            catch (Bunit.Rendering.UnknownEventHandlerIdException)
+            {
+                await Task.Delay(50, TestContext.Current.CancellationToken);
+            }
+        }
+
         state.IsOpen.ShouldBeTrue();
         state.Draft.ShouldBe("how do refunds work");
     }
