@@ -28,6 +28,7 @@
 
 - Dialoge und Seitenleisten der Bibliothek (Import-Assistent, Kampagnen-Assistent, Theme, Logo, Code-Editor, API-Schlüssel, Workflow-Kommentar) tragen die Startklasse von MudBlazor.Extensions und erscheinen damit erst an ihrer endgültigen Position, statt zuerst kurz in der Mitte aufzublitzen. Eigene Dialoge, die du mit `ShowExAsync` oder `ShowSideSheetAsync` öffnest, setzen `Class="@MudExCss.Classes.Dialog.Initial"` an ihrem `MudDialog`.
 - Der Eingang für Genehmigungen zeigt Titel, Details und Frist einer Genehmigung in eigenen Zeilen.
+- Apps mit `Coworkee.Workflows.Elsa` behalten die Eigenschaftsnamen ihrer Validierungsfehler (`Brand.Name`); die Elsa-API (FastEndpoints) hatte FluentValidation für jeden Validator auf camelCase umgestellt (`brand.Name`).
 - Die Endpunkte von Elsa (`/api/elsa/...`) landen nicht mehr im OpenAPI-Dokument der App: OpenAPI-Snapshots und SDKs von Apps mit `Coworkee.Workflows.Elsa` neu erzeugen.
 
 

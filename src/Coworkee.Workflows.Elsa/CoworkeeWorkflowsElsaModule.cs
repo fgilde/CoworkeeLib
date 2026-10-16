@@ -7,6 +7,7 @@ using Coworkee.Core.Modularity;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.Workflows.Elsa.Activities;
 using Elsa.Extensions;
+using FluentValidation;
 using Elsa.Persistence.EFCore;
 using Elsa.Persistence.EFCore.Extensions;
 using Elsa.Persistence.EFCore.Modules.Management;
@@ -69,7 +70,10 @@ public sealed class CoworkeeWorkflowsElsaModule : CoworkeeModule, IWebModule
     public void ConfigureApplication(WebApplication app)
     {
         app.UseWhen(context => context.Request.Path.StartsWithSegments("/" + RoutePrefix), gate => gate.Use(ElsaGate.InvokeAsync));
+        // FastEndpoints under Elsa's API switches FluentValidation to camelCase property names for every validator of the app ("brand.Name")
+        var (names, displayNames) = (ValidatorOptions.Global.PropertyNameResolver, ValidatorOptions.Global.DisplayNameResolver);
         app.UseWorkflowsApi(RoutePrefix);
+        (ValidatorOptions.Global.PropertyNameResolver, ValidatorOptions.Global.DisplayNameResolver) = (names, displayNames);
         app.MapCoworkeeApi("/api/v1/workflows/elsa").WithTags("Workflows").RequireAuthorization()
             .MapGet("/studio", async (IConfiguration configuration, IPermissionChecker permissions, CancellationToken ct) =>
                 !await permissions.IsGrantedAsync(ElsaPermissions.Manage, ct) ? Results.Forbid()

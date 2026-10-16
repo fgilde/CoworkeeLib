@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System.Net;
+using FluentValidation;
 using System.Net.Http.Json;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Workflows;
@@ -22,6 +23,14 @@ public sealed class ElsaTests(ElsaApp app) : IAsyncLifetime
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     private HttpClient Admin => app.As(_setup.AdminUserId, _setup.TenantId);
+
+    [Fact]
+    public void The_validators_of_the_app_keep_their_property_names_next_to_the_Elsa_api()
+    {
+        var validator = new InlineValidator<Order> { v => v.RuleFor(o => o.Brand.Name).NotEmpty() };
+
+        validator.Validate(new Order(new Brand(string.Empty))).Errors.Single().PropertyName.ShouldBe("Brand.Name");
+    }
 
     [Fact]
     public async Task Only_users_with_the_permission_reach_the_Elsa_api_and_see_the_Coworkee_activities()
@@ -101,4 +110,8 @@ public sealed class ElsaTests(ElsaApp app) : IAsyncLifetime
 
         return (await response.Content.ReadFromJsonAsync<T>())!;
     }
+
+    public sealed record Brand(string Name);
+
+    public sealed record Order(Brand Brand);
 }

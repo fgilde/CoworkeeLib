@@ -28,6 +28,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 - Dialogs and side sheets of the library (import wizard, campaign wizard, theme, logo, code editor, API key, workflow comment) carry the initial class of MudBlazor.Extensions, so they show up only at their final position instead of flashing in the middle first. Own dialogs opened with `ShowExAsync` or `ShowSideSheetAsync` set `Class="@MudExCss.Classes.Dialog.Initial"` on their `MudDialog`.
 - The approvals inbox shows title, details and deadline of an approval on lines of their own.
+- Apps with `Coworkee.Workflows.Elsa` keep the property names of their validation errors (`Brand.Name`); the Elsa API (FastEndpoints) had switched FluentValidation to camelCase for every validator (`brand.Name`).
 - Elsa's endpoints (`/api/elsa/...`) no longer land in the app's OpenAPI document: regenerate OpenAPI snapshots and SDKs of apps with `Coworkee.Workflows.Elsa`.
 
 
