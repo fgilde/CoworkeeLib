@@ -18,6 +18,11 @@ public interface IReportsApi
 
     Task SetFavoriteAsync(Guid id, bool favorite, CancellationToken cancellationToken = default);
 
+    Task<DashboardReportDto> GetDashboardAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>The user's own dashboard report, or with <paramref name="organisation"/> the default of the organisation; null clears it.</summary>
+    Task SetDashboardAsync(Guid? reportId, bool organisation = false, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<ReportRoleDto>> GetRolesAsync(CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<ReportSourceDto>> GetSourcesAsync(CancellationToken cancellationToken = default);

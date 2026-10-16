@@ -41,6 +41,19 @@ public sealed class ImportWizardTests : ClientTestBase
         Render<MudSnackbarProvider>();
     }
 
+    // MudEx shows a dialog only once it stands at its final place: without the initial class it flashes in the middle before sliding in
+    [Fact]
+    public void The_wizard_opens_as_side_sheet_hidden_until_MudEx_placed_it()
+    {
+        Transfer.GetTargetAsync("Widgets", Arg.Any<CancellationToken>()).Returns(Target);
+        var dialogs = Render<MudDialogProvider>();
+
+        _ = dialogs.InvokeAsync(() => Services.GetRequiredService<IDialogService>().ShowImportWizardAsync("Import", "Widgets"));
+
+        dialogs.WaitForAssertion(() => dialogs.Find(".mud-dialog").ClassList.ShouldContain(MudBlazor.Extensions.Helper.MudExCss.Classes.Dialog.Initial.ToString()));
+        dialogs.WaitForElement("[data-testid='wizard-step-0']");
+    }
+
     [Fact]
     public void The_state_keeps_each_field_on_one_column_and_applies_profiles_by_header()
     {

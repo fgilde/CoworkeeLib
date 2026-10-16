@@ -17,6 +17,7 @@ public partial class Reports
     internal static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
     private List<ReportSummaryDto>? _reports;
+    private DashboardReportDto? _dashboard;
     private string? _search;
     private string _scope = "all";
 
@@ -44,7 +45,11 @@ public partial class Reports
             || r.Name.Contains(_search, StringComparison.CurrentCultureIgnoreCase)
             || r.Description?.Contains(_search, StringComparison.CurrentCultureIgnoreCase) == true);
 
-    protected override async Task OnInitializedAsync() => await ReloadAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadAsync();
+        await RunAsync(async () => _dashboard = await Api.GetDashboardAsync());
+    }
 
     private async Task ReloadAsync() => _reports = [.. await Api.GetReportsAsync()];
 

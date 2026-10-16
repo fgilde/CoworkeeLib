@@ -1534,5 +1534,14 @@
   "No key or endpoint": "キーもエンドポイントもありません",
   "Rotate secret": "シークレットを更新",
   "Old secret signs too until {0}": "古いシークレットも {0} まで署名します",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "{0} の新しい署名シークレットを作成しますか？受信側が切り替えられるよう、古いものもしばらく併せて署名します。"
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "{0} の新しい署名シークレットを作成しますか？受信側が切り替えられるよう、古いものもしばらく併せて署名します。",
+  "Dashboard": "ダッシュボード",
+  "Set as my dashboard": "マイダッシュボードに設定",
+  "Remove as my dashboard": "マイダッシュボードから解除",
+  "Set as organisation dashboard": "組織のダッシュボードに設定",
+  "Remove as organisation dashboard": "組織のダッシュボードから解除",
+  "Dashboard changed.": "ダッシュボードを変更しました。",
+  "No dashboard chosen yet": "ダッシュボードはまだ選択されていません",
+  "Open a report and choose it as your dashboard.": "レポートを開いて、ダッシュボードとして選択してください。",
+  "Choose a report": "レポートを選択"
 }

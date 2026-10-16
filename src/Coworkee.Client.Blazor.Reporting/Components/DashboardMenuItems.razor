@@ -1,0 +1,18 @@
+@if (Dashboard?.Mine == ReportId)
+{
+    <MudMenuItem Icon="@Icons.Material.Outlined.DashboardCustomize" OnClick="() => SetAsync(null, false)" data-testid="dashboard-mine-clear">@L["Remove as my dashboard"]</MudMenuItem>
+}
+else
+{
+    <MudMenuItem Icon="@Icons.Material.Outlined.Dashboard" OnClick="() => SetAsync(ReportId, false)" data-testid="dashboard-mine">@L["Set as my dashboard"]</MudMenuItem>
+}
+<PermissionGate Permission="@ReportPermissions.Dashboard">
+    @if (Dashboard?.Organisation == ReportId)
+    {
+        <MudMenuItem Icon="@Icons.Material.Outlined.DashboardCustomize" OnClick="() => SetAsync(null, true)" data-testid="dashboard-organisation-clear">@L["Remove as organisation dashboard"]</MudMenuItem>
+    }
+    else
+    {
+        <MudMenuItem Icon="@Icons.Material.Outlined.Business" OnClick="() => SetAsync(ReportId, true)" data-testid="dashboard-organisation">@L["Set as organisation dashboard"]</MudMenuItem>
+    }
+</PermissionGate>

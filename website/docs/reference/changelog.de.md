@@ -2,6 +2,21 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Breaking Changes
+
+- **Migration nötig** (Apps mit Reporting): neue Tabelle `cw.DashboardReports`.
+- **`IReportsApi`** hat `GetDashboardAsync` und `SetDashboardAsync` bekommen; eigene Implementierungen ergänzen sie. Neue Endpunkte unter `/api/v1/reports/dashboard`: OpenAPI-Snapshots und SDKs neu erzeugen.
+
+### Neu
+
+- Ein Bericht als Dashboard: jeder Benutzer kann einen Bericht zu seinem Dashboard machen, Inhaber der neuen Berechtigung `Reports.Dashboard` zum Standard der Organisation; die Wahl des Benutzers gewinnt. `ReportDashboard` zeigt es live an und fällt auf das eigene Dashboard der App zurück. Die Dashboard-Seite des Templates nutzt es, führt *Dashboard* vor *Berichte* auf, und die Einrichtung mit Beispielen macht *Catalog overview* zum Dashboard der Organisation. Siehe [Ein Bericht als Dashboard](../modules/reporting.md#ein-bericht-als-dashboard).
+
+### Korrekturen
+
+- Dialoge und Seitenleisten der Bibliothek (Import-Assistent, Kampagnen-Assistent, Theme, Logo, Code-Editor, API-Schlüssel, Workflow-Kommentar) tragen die Startklasse von MudBlazor.Extensions und erscheinen damit erst an ihrer endgültigen Position, statt zuerst kurz in der Mitte aufzublitzen. Eigene Dialoge, die du mit `ShowExAsync` oder `ShowSideSheetAsync` öffnest, setzen `Class="@MudExCss.Classes.Dialog.Initial"` an ihrem `MudDialog`.
+
 ## 0.0.1.27 (2026-10-16)
 
 ### Korrekturen

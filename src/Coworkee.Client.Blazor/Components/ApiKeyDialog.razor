@@ -1,4 +1,4 @@
-<MudDialog data-testid="api-key-dialog">
+<MudDialog Class="@MudBlazor.Extensions.Helper.MudExCss.Classes.Dialog.Initial" data-testid="api-key-dialog">
     <DialogContent>
         <MudTextField T="string" @bind-Value="_name" Label="@L["Name"]" Required="true" MaxLength="100" Variant="Variant.Outlined" Margin="Margin.Dense"
                       HelperText="@L["For example: Claude Desktop on my laptop"]" Class="mb-3" data-testid="api-key-name" />

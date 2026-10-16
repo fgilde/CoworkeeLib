@@ -104,8 +104,26 @@ A widget's rows are narrowed by, in this order: its own query builder rules and 
 | `Reports.View` | open reports shared with you, favorites |
 | `Reports.Manage` | create reports, change and delete your own, duplicate any you can open |
 | `Reports.Share` | share with roles or the organisation |
+| `Reports.Dashboard` | choose the organisation's dashboard |
 
 A report is *private*, shared with *roles* (holders of one of them, directly or through groups) or with the *organisation*. Only the owner changes it; others duplicate it into a private copy. A change reaches everyone who has the report open, over the [realtime hub](realtime.md).
+
+## A report as dashboard
+
+Every report you can open can be your dashboard: *Set as my dashboard* in the menu of its card or on the report page. Holders of `Reports.Dashboard` (administrators) also set the organisation's dashboard, which everybody sees who has made no choice of their own. Your own choice wins; a report you cannot open (any more) is skipped, and deleting a report removes it as dashboard.
+
+`ReportDashboard` shows it. Wrap the app's own dashboard in it, so users without a chosen report, or without `Reports.View`, keep seeing that; without child content it shows a hint to choose a report. A change of the choice reaches open tabs at once (realtime topic `type:DashboardReport`).
+
+```razor
+@using Coworkee.Client.Blazor.Reporting.Components
+
+<ReportDashboard>
+    <PageHeader Title="Dashboard" />
+    @* the app's own dashboard *@
+</ReportDashboard>
+```
+
+The template's dashboard page (*Personal > Dashboard*, above *Reports*) does this, and with samples the setup makes the report *Catalog overview* the organisation's dashboard. The seed adds a `DashboardReport` row (`UserId` null for the organisation) next to the report.
 
 ## Export
 
@@ -122,3 +140,4 @@ A report is *private*, shared with *roles* (holders of one of them, directly or 
 | `GET /api/v1/reports/sources`, `GET /api/v1/reports/roles` | fields per set, roles to share with |
 | `POST /api/v1/reports/query` | aggregate |
 | `POST /api/v1/reports/sheet` | rows to an Excel workbook |
+| `GET /api/v1/reports/dashboard`, `PUT /api/v1/reports/dashboard`, `PUT /api/v1/reports/dashboard/organisation` | the dashboard report shown to you, choose yours or the organisation's (`{ "reportId": null }` clears) |

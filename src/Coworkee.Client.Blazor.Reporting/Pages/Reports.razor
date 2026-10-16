@@ -57,6 +57,7 @@ else
                                 <MudMenuItem Icon="@Icons.Material.Outlined.ContentCopy" OnClick="() => DuplicateAsync(report)">@L["Duplicate"]</MudMenuItem>
                             </PermissionGate>
                             <MudMenuItem Icon="@Icons.Material.Outlined.FileDownload" OnClick="() => ExportAsync(report)">@L["Export"]</MudMenuItem>
+                            <DashboardMenuItems ReportId="report.Id" @bind-Dashboard="_dashboard" />
                             @if (report.IsOwner)
                             {
                                 <MudMenuItem Icon="@Icons.Material.Outlined.Delete" IconColor="Color.Error" OnClick="() => DeleteAsync(report)">@L["Delete"]</MudMenuItem>
@@ -69,6 +70,10 @@ else
                     <MudText Typo="Typo.body2" Class="cw-report-card-description">@description</MudText>
                 }
                 <div class="cw-report-card-foot">
+                    @if (_dashboard?.ReportId == report.Id)
+                    {
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Primary" Icon="@Icons.Material.Outlined.Dashboard" data-testid="report-is-dashboard">@L["Dashboard"]</MudChip>
+                    }
                     <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Icon="@VisibilityIcon(report.Visibility)">@L[VisibilityText(report.Visibility)]</MudChip>
                     <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Icon="@Icons.Material.Outlined.Widgets">@L["{0} widgets", report.Widgets]</MudChip>
                     @foreach (var set in report.EntitySets.Take(2))

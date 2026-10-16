@@ -12,7 +12,7 @@ public static class PermissionCatalog
         ]),
         ("auditing", ["Audit.View"]),
         ("chat", ["Chat.Use"]),
-        ("reports", ["Reports.View", "Reports.Manage", "Reports.Share"]),
+        ("reports", ["Reports.View", "Reports.Manage", "Reports.Share", "Reports.Dashboard"]),
         ("ai", ["Ai.Chat", "Ai.Audit"]),
         ("backup", ["Backups.Manage"]),
         ("files", ["Files.View", "Files.Upload", "Files.Manage", "Files.Registrations.View"]),

@@ -22,7 +22,7 @@ internal sealed class MyAppNavigation : INavigationContributor
         .OrderGroup(Communication, 3)
         .OrderGroup(CatalogManagement, 4)
 #if (auditing)
-        .Place("/admin/audit", Personal, "Audit Trails", 2)
+        .Place("/admin/audit", Personal, "Audit Trails", 3)
 #endif
         .Place("/admin/settings", NavigationGroups.System, "Site Settings", -1)
 #if (withBackup)
@@ -32,7 +32,7 @@ internal sealed class MyAppNavigation : INavigationContributor
         .Place("/chat", Communication)
 #endif
 #if (reports)
-        .Place("/reports", Personal, order: 0)
+        .Place("/reports", Personal, order: 1)
 #endif
         .IconForGroup(Communication, MudBlazor.Icons.Material.Outlined.Forum)
         .IconForGroup(Personal, MudBlazor.Icons.Material.Outlined.Person)
@@ -44,7 +44,7 @@ internal sealed class MyAppNavigation : INavigationContributor
 #if (samples)
         new("Dashboard", "/dashboard", Icons.Material.Outlined.Dashboard, CatalogPermissions.Dashboards.View, Group: Personal),
 #endif
-        new("Account", "/profile", Icons.Material.Outlined.ManageAccounts, Group: Personal, Order: 1),
+        new("Account", "/profile", Icons.Material.Outlined.ManageAccounts, Group: Personal, Order: 2),
 #if (samples)
         new("Document Store", "/document-store", Icons.Material.Outlined.AttachFile, DocumentPermissions.Documents.View, Group: DocumentManagement),
         new("Document Types", "/document-types", Icons.Material.Outlined.FileCopy, DocumentPermissions.Types.View, Group: DocumentManagement, Order: 1),

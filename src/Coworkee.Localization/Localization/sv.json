@@ -1534,5 +1534,14 @@
   "No key or endpoint": "Ingen nyckel eller endpoint",
   "Rotate secret": "Byt hemlighet",
   "Old secret signs too until {0}": "Den gamla hemligheten signerar också till {0}",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Skapa en ny signeringshemlighet för {0}? Den gamla signerar en stund till bredvid, så att mottagaren kan byta."
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Skapa en ny signeringshemlighet för {0}? Den gamla signerar en stund till bredvid, så att mottagaren kan byta.",
+  "Dashboard": "Instrumentpanel",
+  "Set as my dashboard": "Ange som min instrumentpanel",
+  "Remove as my dashboard": "Ta bort som min instrumentpanel",
+  "Set as organisation dashboard": "Ange som organisationens instrumentpanel",
+  "Remove as organisation dashboard": "Ta bort som organisationens instrumentpanel",
+  "Dashboard changed.": "Instrumentpanelen ändrades.",
+  "No dashboard chosen yet": "Ingen instrumentpanel vald ännu",
+  "Open a report and choose it as your dashboard.": "Öppna en rapport och välj den som din instrumentpanel.",
+  "Choose a report": "Välj en rapport"
 }

@@ -1534,5 +1534,14 @@
   "No key or endpoint": "Нет ключа или конечной точки",
   "Rotate secret": "Сменить секрет",
   "Old secret signs too until {0}": "Старый секрет тоже подписывает до {0}",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Создать новый секрет подписи для {0}? Старый ещё некоторое время подписывает вместе с ним, чтобы получатель успел перейти."
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Создать новый секрет подписи для {0}? Старый ещё некоторое время подписывает вместе с ним, чтобы получатель успел перейти.",
+  "Dashboard": "Панель",
+  "Set as my dashboard": "Сделать моей панелью",
+  "Remove as my dashboard": "Убрать из моей панели",
+  "Set as organisation dashboard": "Сделать панелью организации",
+  "Remove as organisation dashboard": "Убрать из панели организации",
+  "Dashboard changed.": "Панель изменена.",
+  "No dashboard chosen yet": "Панель ещё не выбрана",
+  "Open a report and choose it as your dashboard.": "Откройте отчёт и выберите его в качестве своей панели.",
+  "Choose a report": "Выбрать отчёт"
 }

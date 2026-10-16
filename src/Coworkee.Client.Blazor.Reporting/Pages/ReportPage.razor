@@ -70,6 +70,10 @@ else
                         <MudMenuItem Icon="@Icons.Material.Outlined.PictureAsPdf" OnClick="PrintAsync">@L["PDF or print"]</MudMenuItem>
                         <MudMenuItem Icon="@Icons.Material.Outlined.DataObject" OnClick="ExportJsonAsync">@L["Report file (JSON)"]</MudMenuItem>
                     </MudMenu>
+                    <MudMenu Icon="@(_dashboard?.ReportId == _report.Id ? Icons.Material.Filled.Dashboard : Icons.Material.Outlined.Dashboard)" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight"
+                             Dense="Density.Dense" aria-label="@L["Dashboard"]" data-testid="report-dashboard">
+                        <DashboardMenuItems ReportId="_report.Id" @bind-Dashboard="_dashboard" />
+                    </MudMenu>
                     <PermissionGate Permission="@ReportPermissions.Manage">
                         <MudTooltip Text="@L["Duplicate"]"><MudIconButton Icon="@Icons.Material.Outlined.ContentCopy" OnClick="DuplicateAsync" /></MudTooltip>
                     </PermissionGate>

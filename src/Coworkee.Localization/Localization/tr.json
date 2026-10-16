@@ -1534,5 +1534,14 @@
   "No key or endpoint": "Anahtar veya uç nokta yok",
   "Rotate secret": "Gizli anahtarı yenile",
   "Old secret signs too until {0}": "Eski gizli anahtar {0} tarihine kadar imzalamaya devam eder",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "{0} için yeni bir imza anahtarı oluşturulsun mu? Alıcının geçiş yapabilmesi için eskisi bir süre daha birlikte imzalar."
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "{0} için yeni bir imza anahtarı oluşturulsun mu? Alıcının geçiş yapabilmesi için eskisi bir süre daha birlikte imzalar.",
+  "Dashboard": "Pano",
+  "Set as my dashboard": "Panom olarak ayarla",
+  "Remove as my dashboard": "Panomdan kaldır",
+  "Set as organisation dashboard": "Kuruluşun panosu olarak ayarla",
+  "Remove as organisation dashboard": "Kuruluşun panosundan kaldır",
+  "Dashboard changed.": "Pano değiştirildi.",
+  "No dashboard chosen yet": "Henüz pano seçilmedi",
+  "Open a report and choose it as your dashboard.": "Bir rapor açın ve panonuz olarak seçin.",
+  "Choose a report": "Rapor seç"
 }

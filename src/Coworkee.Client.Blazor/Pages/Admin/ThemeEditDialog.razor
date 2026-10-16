@@ -1,6 +1,6 @@
 @using MudBlazor.Extensions.Components
 
-<MudDialog data-testid="theme-dialog">
+<MudDialog Class="@MudBlazor.Extensions.Helper.MudExCss.Classes.Dialog.Initial" data-testid="theme-dialog">
     <DialogContent>
         <MudTextField T="string" @bind-Value="Name" Label="@L["Name"]" Required="true" MaxLength="100" Margin="Density.Margin" Variant="Variant.Outlined"
                       Class="mb-3" data-testid="theme-name" />

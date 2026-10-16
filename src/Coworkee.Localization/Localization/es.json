@@ -1534,5 +1534,14 @@
   "No key or endpoint": "Sin clave ni endpoint",
   "Rotate secret": "Rotar secreto",
   "Old secret signs too until {0}": "El secreto anterior también firma hasta {0}",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "¿Crear un nuevo secreto de firma para {0}? El anterior sigue firmando un tiempo para que el receptor pueda cambiar."
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "¿Crear un nuevo secreto de firma para {0}? El anterior sigue firmando un tiempo para que el receptor pueda cambiar.",
+  "Dashboard": "Panel",
+  "Set as my dashboard": "Establecer como mi panel",
+  "Remove as my dashboard": "Quitar como mi panel",
+  "Set as organisation dashboard": "Establecer como panel de la organización",
+  "Remove as organisation dashboard": "Quitar como panel de la organización",
+  "Dashboard changed.": "Panel cambiado.",
+  "No dashboard chosen yet": "Aún no se ha elegido ningún panel",
+  "Open a report and choose it as your dashboard.": "Abre un informe y elígelo como tu panel.",
+  "Choose a report": "Elegir un informe"
 }

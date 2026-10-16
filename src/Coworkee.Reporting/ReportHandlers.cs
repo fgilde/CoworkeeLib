@@ -101,6 +101,8 @@ internal sealed class ReportHandlers(CoworkeeDbContext db, ReportAccess access, 
             return NotOwner;
         }
 
+        // the database cascades too; removing them here tells the open dashboards
+        db.RemoveRange(await db.Set<DashboardReport>().Where(d => d.ReportId == report.Id).ToListAsync(cancellationToken));
         db.Remove(report);
         await db.SaveChangesAsync(cancellationToken);
         return Result.Success();

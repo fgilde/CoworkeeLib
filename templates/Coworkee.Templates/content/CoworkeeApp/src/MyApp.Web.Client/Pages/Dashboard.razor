@@ -1,5 +1,10 @@
 @page "/dashboard"
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + CatalogPermissions.Dashboards.View)]
+@*#if (reports)
+@using Coworkee.Client.Blazor.Reporting.Components
+
+<ReportDashboard>
+#endif*@
 
 <PageHeader Title="Dashboard" Description="Realtime updates and insights." />
 <RealtimeSubscription Topic="type:Product" OnEvent="_ => LoadAsync()" />
@@ -31,3 +36,6 @@ else
         </MudItem>
     </MudGrid>
 }
+@*#if (reports)
+</ReportDashboard>
+#endif*@

@@ -1522,6 +1522,31 @@ namespace MyApp.Infrastructure.Migrations
                     b.ToTable("ImportProfiles", "cw");
                 });
 
+            modelBuilder.Entity("Coworkee.Reporting.DashboardReport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ReportId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReportId");
+
+                    b.HasIndex("TenantId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("DashboardReports", "cw");
+                });
+
             modelBuilder.Entity("Coworkee.Reporting.Report", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2363,6 +2388,15 @@ namespace MyApp.Infrastructure.Migrations
                         });
 
                     b.Navigation("Changes");
+                });
+
+            modelBuilder.Entity("Coworkee.Reporting.DashboardReport", b =>
+                {
+                    b.HasOne("Coworkee.Reporting.Report", null)
+                        .WithMany()
+                        .HasForeignKey("ReportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Coworkee.Reporting.ReportFavorite", b =>
@@ -3956,6 +3990,31 @@ namespace MyApp.Infrastructure.Migrations
                     b.ToTable("ImportProfiles", "cw");
                 });
 
+            modelBuilder.Entity("Coworkee.Reporting.DashboardReport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ReportId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReportId");
+
+                    b.HasIndex("TenantId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("DashboardReports", "cw");
+                });
+
             modelBuilder.Entity("Coworkee.Reporting.Report", b =>
                 {
                     b.Property<Guid>("Id")
@@ -4591,6 +4650,15 @@ namespace MyApp.Infrastructure.Migrations
                         });
 
                     b.Navigation("Changes");
+                });
+
+            modelBuilder.Entity("Coworkee.Reporting.DashboardReport", b =>
+                {
+                    b.HasOne("Coworkee.Reporting.Report", null)
+                        .WithMany()
+                        .HasForeignKey("ReportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Coworkee.Reporting.ReportFavorite", b =>

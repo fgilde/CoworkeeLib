@@ -1,0 +1,30 @@
+<ReportStyles />
+@if (_canView)
+{
+    <RealtimeSubscription Topic="@Topic" OnEvent="_ => LoadAsync()" />
+}
+
+@if (!_loaded)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_reportId is { } id)
+{
+    <ReportPage @key="id" Id="id" />
+}
+else if (ChildContent is not null)
+{
+    @ChildContent
+}
+else
+{
+    <div class="cw-reports-empty" data-testid="dashboard-empty">
+        <MudIcon Icon="@Icons.Material.Outlined.Dashboard" Style="font-size:4rem" Color="Color.Primary" />
+        <MudText Typo="Typo.h6">@L["No dashboard chosen yet"]</MudText>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["Open a report and choose it as your dashboard."]</MudText>
+        @if (_canView)
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.SpaceDashboard" Href="reports" Class="mt-2" data-testid="dashboard-choose">@L["Choose a report"]</MudButton>
+        }
+    </div>
+}

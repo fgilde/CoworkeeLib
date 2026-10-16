@@ -2,6 +2,21 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Breaking changes
+
+- **Migration needed** (apps with Reporting): new table `cw.DashboardReports`.
+- **`IReportsApi`** gained `GetDashboardAsync` and `SetDashboardAsync`; own implementations add them. New endpoints under `/api/v1/reports/dashboard`: regenerate OpenAPI snapshots and SDKs.
+
+### New
+
+- A report as dashboard: every user can make a report their dashboard, holders of the new permission `Reports.Dashboard` the organisation's default; the user's choice wins. `ReportDashboard` shows it live and falls back to the app's own dashboard. The template's dashboard page uses it, lists *Dashboard* before *Reports* and the sample setup makes *Catalog overview* the organisation's dashboard. See [A report as dashboard](../modules/reporting.md#a-report-as-dashboard).
+
+### Fixes
+
+- Dialogs and side sheets of the library (import wizard, campaign wizard, theme, logo, code editor, API key, workflow comment) carry the initial class of MudBlazor.Extensions, so they show up only at their final position instead of flashing in the middle first. Own dialogs opened with `ShowExAsync` or `ShowSideSheetAsync` set `Class="@MudExCss.Classes.Dialog.Initial"` on their `MudDialog`.
+
 ## 0.0.1.27 (2026-10-16)
 
 ### Fixes

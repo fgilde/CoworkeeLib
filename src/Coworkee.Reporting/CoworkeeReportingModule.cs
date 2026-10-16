@@ -42,6 +42,10 @@ public sealed class CoworkeeReportingModule : CoworkeeModule, IWebModule
         reports.MapPost("/sheet", async (ReportSheetRequest body, IPermissionChecker permissions, CancellationToken ct) =>
                 await permissions.IsGrantedAsync(ReportPermissions.View, ct) ? Results.File(ReportSheet.Write(body), ReportSheet.ContentType, $"{body.Name}.xlsx") : Results.Forbid())
             .Produces(StatusCodes.Status200OK, contentType: ReportSheet.ContentType);
+        reports.MapGet("/dashboard", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetDashboardReportQuery(), ct).ToHttpResult());
+        reports.MapPut("/dashboard", (SetDashboardReportRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SetMyDashboardReportCommand(body.ReportId), ct).ToHttpResult());
+        reports.MapPut("/dashboard/organisation", (SetDashboardReportRequest body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new SetOrganisationDashboardReportCommand(body.ReportId), ct).ToHttpResult());
         reports.MapGet("/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetReportQuery(id), ct).ToHttpResult());
         reports.MapPut("/{id:guid}", (Guid id, SaveReportRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new UpdateReportCommand(id, body), ct).ToHttpResult());
         reports.MapDelete("/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteReportCommand(id), ct).ToHttpResult());

@@ -888,6 +888,28 @@ namespace MyApp.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "DashboardReports",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ReportId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DashboardReports", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DashboardReports_Reports_ReportId",
+                        column: x => x.ReportId,
+                        principalSchema: "cw",
+                        principalTable: "Reports",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ReportFavorites",
                 schema: "cw",
                 columns: table => new
@@ -1286,6 +1308,19 @@ namespace MyApp.Infrastructure.Migrations
                 .Annotation("Npgsql:NullsDistinct", false);
 
             migrationBuilder.CreateIndex(
+                name: "IX_DashboardReports_ReportId",
+                schema: "cw",
+                table: "DashboardReports",
+                column: "ReportId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DashboardReports_TenantId_UserId",
+                schema: "cw",
+                table: "DashboardReports",
+                columns: new[] { "TenantId", "UserId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_DataTransferJobs_TenantId_UserId_CreatedAt",
                 schema: "cw",
                 table: "DataTransferJobs",
@@ -1643,6 +1678,10 @@ namespace MyApp.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "CustomMailTemplates",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "DashboardReports",
                 schema: "cw");
 
             migrationBuilder.DropTable(
@@ -2580,6 +2619,28 @@ namespace MyApp.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "DashboardReports",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ReportId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DashboardReports", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DashboardReports_Reports_ReportId",
+                        column: x => x.ReportId,
+                        principalSchema: "cw",
+                        principalTable: "Reports",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ReportFavorites",
                 schema: "cw",
                 columns: table => new
@@ -2971,6 +3032,19 @@ namespace MyApp.Infrastructure.Migrations
                 .Annotation("Npgsql:NullsDistinct", false);
 
             migrationBuilder.CreateIndex(
+                name: "IX_DashboardReports_ReportId",
+                schema: "cw",
+                table: "DashboardReports",
+                column: "ReportId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DashboardReports_TenantId_UserId",
+                schema: "cw",
+                table: "DashboardReports",
+                columns: new[] { "TenantId", "UserId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_DataTransferJobs_TenantId_UserId_CreatedAt",
                 schema: "cw",
                 table: "DataTransferJobs",
@@ -3296,6 +3370,10 @@ namespace MyApp.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "CustomMailTemplates",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "DashboardReports",
                 schema: "cw");
 
             migrationBuilder.DropTable(

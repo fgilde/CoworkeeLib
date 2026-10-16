@@ -28,6 +28,11 @@ internal sealed class ReportsApi(HttpClient http) : ApiClientBase(http), IReport
     public Task SetFavoriteAsync(Guid id, bool favorite, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Put, $"{Root}/{id}/favorite", new FavoriteReportRequest(favorite), cancellationToken);
 
+    public Task<DashboardReportDto> GetDashboardAsync(CancellationToken cancellationToken = default) => GetAsync<DashboardReportDto>($"{Root}/dashboard", cancellationToken);
+
+    public Task SetDashboardAsync(Guid? reportId, bool organisation = false, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Put, organisation ? $"{Root}/dashboard/organisation" : $"{Root}/dashboard", new SetDashboardReportRequest(reportId), cancellationToken);
+
     public async Task<IReadOnlyList<ReportRoleDto>> GetRolesAsync(CancellationToken cancellationToken = default) =>
         await GetAsync<ReportRoleDto[]>($"{Root}/roles", cancellationToken);
 

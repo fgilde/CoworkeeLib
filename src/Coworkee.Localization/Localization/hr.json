@@ -1534,5 +1534,14 @@
   "No key or endpoint": "Nema ključa ni krajnje točke",
   "Rotate secret": "Zamijeni tajnu",
   "Old secret signs too until {0}": "Stara tajna također potpisuje do {0}",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Stvoriti novu tajnu za potpisivanje za {0}? Stara još neko vrijeme potpisuje uz nju kako bi primatelj mogao prijeći."
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Stvoriti novu tajnu za potpisivanje za {0}? Stara još neko vrijeme potpisuje uz nju kako bi primatelj mogao prijeći.",
+  "Dashboard": "Nadzorna ploča",
+  "Set as my dashboard": "Postavi kao moju nadzornu ploču",
+  "Remove as my dashboard": "Ukloni kao moju nadzornu ploču",
+  "Set as organisation dashboard": "Postavi kao nadzornu ploču organizacije",
+  "Remove as organisation dashboard": "Ukloni kao nadzornu ploču organizacije",
+  "Dashboard changed.": "Nadzorna ploča promijenjena.",
+  "No dashboard chosen yet": "Još nije odabrana nadzorna ploča",
+  "Open a report and choose it as your dashboard.": "Otvorite izvješće i odaberite ga kao svoju nadzornu ploču.",
+  "Choose a report": "Odaberi izvješće"
 }

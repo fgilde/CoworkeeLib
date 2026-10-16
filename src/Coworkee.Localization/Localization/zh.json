@@ -1534,5 +1534,14 @@
   "No key or endpoint": "没有密钥或端点",
   "Rotate secret": "轮换密钥",
   "Old secret signs too until {0}": "旧密钥在 {0} 之前也会签名",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "为 {0} 创建新的签名密钥？旧密钥会在一段时间内同时签名，以便接收方切换。"
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "为 {0} 创建新的签名密钥？旧密钥会在一段时间内同时签名，以便接收方切换。",
+  "Dashboard": "仪表板",
+  "Set as my dashboard": "设为我的仪表板",
+  "Remove as my dashboard": "取消我的仪表板",
+  "Set as organisation dashboard": "设为组织仪表板",
+  "Remove as organisation dashboard": "取消组织仪表板",
+  "Dashboard changed.": "仪表板已更改。",
+  "No dashboard chosen yet": "尚未选择仪表板",
+  "Open a report and choose it as your dashboard.": "打开一个报表并将其选为你的仪表板。",
+  "Choose a report": "选择报表"
 }

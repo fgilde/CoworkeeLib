@@ -1534,5 +1534,14 @@
   "No key or endpoint": "Geen sleutel of endpoint",
   "Rotate secret": "Geheim vernieuwen",
   "Old secret signs too until {0}": "Oud geheim ondertekent ook tot {0}",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Nieuw ondertekeningsgeheim voor {0} maken? Het oude ondertekent nog even mee, zodat de ontvanger kan overstappen."
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Nieuw ondertekeningsgeheim voor {0} maken? Het oude ondertekent nog even mee, zodat de ontvanger kan overstappen.",
+  "Dashboard": "Dashboard",
+  "Set as my dashboard": "Instellen als mijn dashboard",
+  "Remove as my dashboard": "Verwijderen als mijn dashboard",
+  "Set as organisation dashboard": "Instellen als dashboard van de organisatie",
+  "Remove as organisation dashboard": "Verwijderen als dashboard van de organisatie",
+  "Dashboard changed.": "Dashboard gewijzigd.",
+  "No dashboard chosen yet": "Nog geen dashboard gekozen",
+  "Open a report and choose it as your dashboard.": "Open een rapport en kies het als je dashboard.",
+  "Choose a report": "Rapport kiezen"
 }
