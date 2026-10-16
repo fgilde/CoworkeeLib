@@ -133,5 +133,5 @@ Here `telemetry` is the `builder.Services.AddOpenTelemetry()` builder, and the A
 | SQLite | no database datasource and no *App data* dashboard | the database file, mounted from `.data` |
 | `UseDatabase(...)` | no database datasource | connection with the supplied connection string |
 
-!!! note "Development only"
-    Both tools are added in run mode only: `aspire publish` and `azd up` leave them out, because a deployment brings its own monitoring and should not expose a database studio with the administrator's password. Generated configs land in `src/MyApp.AppHost/observability/.generated` (ignored by git).
+!!! note "In a deployment"
+    Both tools go along with `coworkee deploy`: Grafana's configuration and the app's dashboards are built into its images, WebDataStudio gets a volume, both get a public address behind your proxy and the administrator of the deploy parameters (with Keycloak also its sign-in). `coworkee deploy --without grafana` or `DeployTool(CoworkeeTools.Grafana, false)` leaves one out, see [Deployment](deployment.md#tools). Generated configs land in `src/MyApp.AppHost/observability/.generated` (ignored by git).

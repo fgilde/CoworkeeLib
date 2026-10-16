@@ -7,10 +7,12 @@ using MyApp.Migrations;
 var builder = Host.CreateApplicationBuilder(args);
 builder.AddServiceDefaults();
 builder.Services.AddCoworkeeModules<MyAppDatabaseModule>(builder.Configuration);
-// the development users only where the app host runs locally; a deployment is set up in the browser with the setup token
-var seed = builder.Environment.IsDevelopment();
+// the development users only where the app host runs locally; a deployment gets its first administrator from the deploy parameters,
+// without them it is set up in the browser with the setup token
+var admin = InitialAdmin.From(builder.Configuration);
+var seed = builder.Environment.IsDevelopment() || admin is not null;
 var attempts = builder.Configuration.GetValue("Migrations:Attempts", 20);
-builder.Services.AddCoworkeeIdentitySeed(DemoSeed.Configure);
+builder.Services.AddCoworkeeIdentitySeed(builder.Environment.IsDevelopment() ? DemoSeed.Configure : options => DemoSeed.ConfigureDeployment(options, admin!));
 #if (samples)
 builder.Services.AddScoped<Coworkee.Application.Setup.ISetupStep, DemoData>();
 #endif
@@ -26,6 +28,9 @@ try
         // a database set up earlier gets the users and roles added to DemoUsers.cs since, and their passwords again
         await host.Services.SyncDevelopmentUsersAsync();
     }
+
+    // the Keycloak of a deployment gets the clients and the administrator of the app host
+    await scope.ServiceProvider.ReconcileKeycloakRealmAsync();
 
     return 0;
 }

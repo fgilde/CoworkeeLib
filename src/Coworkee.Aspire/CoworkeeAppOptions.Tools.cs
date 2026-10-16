@@ -6,20 +6,23 @@ namespace Aspire.Hosting;
 
 public sealed partial class CoworkeeAppOptions
 {
-    /// <summary>The app's administrator; Grafana and WebDataStudio take the same sign-in. Without it they get the user <c>admin</c> and a generated password (a parameter in the dashboard).</summary>
+    /// <summary>
+    /// The app's administrator while developing; Grafana, WebDataStudio and AspireUI take the same sign-in. Without it they get the user <c>admin</c> and a generated password
+    /// (a parameter in the dashboard). A deployment takes the parameters <c>{app}-admin-email</c> and <c>-admin-password</c> instead.
+    /// </summary>
     public CoworkeeLogin? Administrator { get; set; }
 
     internal Action<IResourceBuilder<GrafanaResource>>? GrafanaServer { get; private set; }
 
     internal Action<IResourceBuilder<WebDataStudioResource>>? WebDataStudioServer { get; private set; }
 
-    /// <summary>Grafana with Prometheus, Loki, Tempo and an OpenTelemetry collector: the services' metrics, logs and traces, the app database and ready dashboards. Development only; with Keycloak it offers single sign-on.</summary>
+    /// <summary>Grafana with Prometheus, Loki, Tempo and an OpenTelemetry collector: the services' metrics, logs and traces, the app database and ready dashboards. With Keycloak it offers single sign-on; deployed unless <see cref="CoworkeeTools.Grafana"/> is switched off.</summary>
     public CoworkeeAppOptions UseGrafana(Action<IResourceBuilder<GrafanaResource>>? configure = null) =>
         Set(() => GrafanaServer = (GrafanaServer ?? (_ => { })) + configure);
 
     public CoworkeeAppOptions WithoutGrafana() => Set(() => GrafanaServer = null);
 
-    /// <summary>WebDataStudio, a database studio in the browser, connected to the app database. Development only; with Keycloak it offers single sign-on.</summary>
+    /// <summary>WebDataStudio, a database studio in the browser, connected to the app database. With Keycloak it offers single sign-on; deployed unless <see cref="CoworkeeTools.WebDataStudio"/> is switched off.</summary>
     public CoworkeeAppOptions UseWebDataStudio(Action<IResourceBuilder<WebDataStudioResource>>? configure = null) =>
         Set(() => WebDataStudioServer = (WebDataStudioServer ?? (_ => { })) + configure);
 

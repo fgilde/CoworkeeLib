@@ -73,8 +73,18 @@ public sealed partial class CoworkeeApp
         return Configured(Persistent ? redis.WithDataVolume(DataVolume("redis")) : redis, Options.RedisServer);
     }
 
-    private IResourceBuilder<MailPitContainerResource> AddMail() =>
-        Configured(Builder.AddMailPit("mail").WithUrlForEndpoint("http", u => u.DisplayText = "Mailpit UI"), Options.MailPit);
+    private IResourceBuilder<MailPitContainerResource> AddMail()
+    {
+        var mail = Builder.AddMailPit("mail").WithUrlForEndpoint("http", u => u.DisplayText = "Mailpit UI");
+        if (Publishing)
+        {
+            // a test deployment's mails: the administrator signs in to the web interface
+            ToolUrl(mail);
+            mail.WithEnvironment("MP_UI_AUTH", ReferenceExpression.Create($"{AdminEmail}:{AdminPassword}"));
+        }
+
+        return Configured(mail, Options.MailPit);
+    }
 
     // a small heap keeps development machines responsive and nearly full dev disks do not block shards; the C2 JIT of the bundled JDK crashed (SIGSEGV in PhaseChaitin), so C1 only
     private IResourceBuilder<ElasticsearchResource> AddSearch()

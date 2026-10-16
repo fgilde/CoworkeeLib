@@ -2,15 +2,19 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json.Nodes;
 
-namespace Aspire.Hosting;
+namespace Coworkee.Contracts.Identity;
 
 /// <summary>
 /// Brings the realm in line with the app host on every start: creates it, or updates the clients and users of an existing one,
-/// so changed secrets, redirect addresses and passwords also reach a realm kept in the data volume.
+/// so changed secrets, redirect addresses and passwords also reach a realm kept in the data volume. The app host runs it locally,
+/// the migrations of a deployment from <see cref="Configuration.KeycloakRealmOptions"/>.
 /// </summary>
-internal static class KeycloakRealm
+public static class KeycloakRealm
 {
     public sealed record Client(string ClientId, string Secret, IReadOnlyList<string> RedirectUris);
+
+    /// <summary>A user of the realm; Keycloak asks for a complete profile on first sign-in, so both names are required.</summary>
+    public sealed record User(string Email, string FirstName, string LastName, string Password, IReadOnlyList<string> Roles);
 
     /// <summary>The realm's name above the sign-in form and its login theme; without one the realm keeps the theme it has.</summary>
     public sealed record Look(string DisplayName, string? LoginTheme)
@@ -19,8 +23,7 @@ internal static class KeycloakRealm
         public string DisplayNameHtml => System.Net.WebUtility.HtmlEncode(DisplayName);
     }
 
-    /// <summary>Users must carry their <see cref="KeycloakUser.Password"/>.</summary>
-    public static async Task ReconcileAsync(HttpClient http, string admin, string adminPassword, string realm, Look look, IReadOnlyList<Client> clients, IReadOnlyList<KeycloakUser> users,
+    public static async Task ReconcileAsync(HttpClient http, string admin, string adminPassword, string realm, Look look, IReadOnlyList<Client> clients, IReadOnlyList<User> users,
         CancellationToken cancellationToken)
     {
         http.DefaultRequestHeaders.Authorization = new("Bearer", await TokenAsync(http, admin, adminPassword, cancellationToken));
@@ -108,8 +111,8 @@ internal static class KeycloakRealm
         },
     };
 
-    /// <summary>The user's realm roles become exactly <see cref="KeycloakUser.Roles"/>, besides Keycloak's own defaults.</summary>
-    private static async Task AssignRolesAsync(HttpClient http, string mappings, KeycloakUser user, CancellationToken cancellationToken)
+    /// <summary>The user's realm roles become exactly <see cref="User.Roles"/>, besides Keycloak's own defaults.</summary>
+    private static async Task AssignRolesAsync(HttpClient http, string mappings, User user, CancellationToken cancellationToken)
     {
         var available = await http.GetFromJsonAsync<JsonArray>($"{mappings}/available", cancellationToken) ?? [];
         var assigned = await http.GetFromJsonAsync<JsonArray>(mappings, cancellationToken) ?? [];
@@ -163,7 +166,7 @@ internal static class KeycloakRealm
         ["protocolMappers"] = new JsonArray(RolesMapper),
     };
 
-    private static JsonObject UserJson(KeycloakUser user, bool withCredentials)
+    private static JsonObject UserJson(User user, bool withCredentials)
     {
         var json = new JsonObject
         {
@@ -184,8 +187,8 @@ internal static class KeycloakRealm
         return json;
     }
 
-    private static JsonObject Credential(KeycloakUser user) =>
-        new() { ["type"] = "password", ["value"] = user.Password ?? throw new InvalidOperationException($"{user.Email} has no password."), ["temporary"] = false };
+    private static JsonObject Credential(User user) =>
+        new() { ["type"] = "password", ["value"] = user.Password, ["temporary"] = false };
 
     private static async Task SendAsync(Task<HttpResponseMessage> request)
     {

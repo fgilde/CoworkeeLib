@@ -40,22 +40,36 @@ public sealed partial class CoworkeeApp
         service.WithReference(Redis).WaitFor(Redis);
     }
 
-    // Mailpit is a development tool; without UseMail a deployment sets its mail server on the mail settings page
+    // Mailpit is a development tool; without UseMail a deployment sends through the mail server of its deploy parameters, or through Mailpit when switched on
     private void WireMail(IResourceBuilder<ProjectResource> service)
     {
-        if (Publishing && Options.Smtp is null)
+        if (Publishing && Options.Smtp is null && !Deploys(CoworkeeTools.Mailpit))
         {
+            foreach (var (setting, parameter) in SmtpParameters())
+            {
+                service.WithSetting(s => s.Coworkee.Settings.Defaults[setting], parameter);
+            }
+
             return;
         }
 
         var smtp = Smtp;
         service.WithSetting(s => s.Coworkee.Settings.Defaults["Mail.Smtp.Host"], ReferenceExpression.Create($"{smtp.Property(EndpointProperty.Host)}"))
-            .WithSetting(s => s.Coworkee.Settings.Defaults["Mail.Smtp.Port"], ReferenceExpression.Create($"{smtp.Property(EndpointProperty.Port)}"));
+            .WithSetting(s => s.Coworkee.Settings.Defaults["Mail.Smtp.Port"], ReferenceExpression.Create($"{smtp.Property(Publishing ? EndpointProperty.TargetPort : EndpointProperty.Port)}"));
         if (Options.Smtp is null)
         {
             service.WaitFor(Mail);
         }
     }
+
+    private (string Setting, IResourceBuilder<ParameterResource> Parameter)[] SmtpParameters() =>
+    [
+        ("Mail.Smtp.Host", DeployParameter($"{Name}-smtp-host").WithDescription("The SMTP server the app sends its mails through")),
+        ("Mail.Smtp.Port", DeployParameter($"{Name}-smtp-port")),
+        ("Mail.Smtp.UserName", DeployParameter($"{Name}-smtp-username")),
+        ("Mail.Smtp.Password", DeployParameter($"{Name}-smtp-password", secret: true)),
+        ("Mail.From", DeployParameter($"{Name}-smtp-from").WithDescription("The sender address of the app's mails")),
+    ];
 
     // a host path means nothing inside a published container; there the files go to a volume shared by the services
     private void WireStorage(IResourceBuilder<ProjectResource> service)

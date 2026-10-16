@@ -30,6 +30,21 @@ public sealed class DeployCommandTests
 
         # Parameter shop-push-private-key
         SHOP_PUSH_PRIVATE_KEY=
+
+        # Parameter shop-admin-email
+        SHOP_ADMIN_EMAIL=
+
+        # Parameter shop-admin-password
+        SHOP_ADMIN_PASSWORD=
+
+        # Parameter shop-smtp-port
+        SHOP_SMTP_PORT=
+
+        # Parameter shop-smtp-password
+        SHOP_SMTP_PASSWORD=
+
+        # Container image name for grafana
+        GRAFANA_IMAGE=
         """;
 
     [Fact]
@@ -55,7 +70,72 @@ public sealed class DeployCommandTests
         Should.Throw<CliException>(() => DeployCommand.BuildImageArgs(solution, "shop-worker"));
     }
 
+    [Fact]
+    public void Tool_switches_reach_the_app_host_and_the_administrator_and_mail_server_are_asked_for()
+    {
+        using var folder = new TempFolder();
+        var appHost = folder.File("src/Shop.AppHost/Shop.AppHost.csproj");
+        folder.File("Shop.slnx");
+        var solution = Solution.Find(folder.Path);
+
+        DeployCommand.PublishArgs(solution, "compose", "out", DeployCommand.ToolSwitches(["grafana"], ["mailpit"]))[^2..]
+            .ShouldBe(["--Coworkee:Deploy:Tools:grafana=false", "--Coworkee:Deploy:Tools:mailpit=true"]);
+
+        var asked = new List<string>();
+        var known = DeploySummary.Known(["SHOP_ADMIN_EMAIL", "SHOP_SMTP_HOST", "SHOP_SMTP_PORT", "POSTGRES_PASSWORD"], new Dictionary<string, string> { ["SHOP_SMTP_PORT"] = "587" },
+            k => k == "SHOP_SMTP_HOST" ? "smtp.example.com" : null, null, k => { asked.Add(k); return "ada@example.com"; });
+
+        known["SHOP_ADMIN_EMAIL"].ShouldBe("ada@example.com");
+        known["SHOP_SMTP_HOST"].ShouldBe("smtp.example.com");
+        known["SHOP_SMTP_PORT"].ShouldBe("587");
+        asked.ShouldBe(["SHOP_ADMIN_EMAIL"]);
+        DeploySummary.Known(["SHOP_ADMIN_EMAIL"], new Dictionary<string, string>(), _ => null, "grace@example.com", null)["SHOP_ADMIN_EMAIL"].ShouldBe("grace@example.com");
+    }
+
+    [Fact]
+    public void The_summary_lists_each_loopback_port_with_its_public_address_and_how_to_sign_in()
+    {
+        const string compose = """
+            services:
+              keycloak:
+                ports:
+                  - "127.0.0.1:8090:8080"
+              shop-web:
+                ports:
+                  - "127.0.0.1:8082:8080"
+              postgres:
+                expose:
+                  - "5432"
+            """;
+        var values = new Dictionary<string, string>
+        {
+            ["SHOP_WEB_URL"] = "https://shop.example.com", ["SHOP_KEYCLOAK_URL"] = "", ["SHOP_ADMIN_EMAIL"] = "ada@example.com", ["SHOP_ADMIN_PASSWORD"] = "Pw1-x", ["KEYCLOAK_PASSWORD"] = "k",
+        };
+
+        var lines = DeploySummary.Addresses(compose, values, "Shop").ToList();
+
+        lines.Count.ShouldBe(2);
+        lines[0].ShouldContain("127.0.0.1:8090");
+        lines[0].ShouldContain("SHOP_KEYCLOAK_URL=(not set yet)");
+        lines[1].ShouldContain("SHOP_WEB_URL=https://shop.example.com");
+        var credentials = string.Join(' ', DeploySummary.Credentials(values));
+        credentials.ShouldContain("ada@example.com");
+        credentials.ShouldContain("Pw1-x");
+        credentials.ShouldContain("KEYCLOAK_PASSWORD");
+    }
+
+    [Fact]
+    public void The_public_addresses_of_a_bicep_or_helm_output_are_listed()
+    {
+        using var folder = new TempFolder();
+        File.WriteAllText(folder.File("grafana/grafana.bicep"), "param shop_grafana_url_value string param shop_keycloak_url_value string");
+        File.WriteAllText(folder.File("values.yaml"), "shop_web_url: \"\"");
+
+        DeploySummary.PublicAddresses(folder.Path).ShouldBe(["shop_grafana_url", "shop_keycloak_url", "shop_web_url"]);
+    }
+
     [Theory]
+    [InlineData("deploy compose --without grafana webdatastudio --with mailpit --admin-email ada@example.com")]
     [InlineData("deploy")]
     [InlineData("deploy compose -o out --no-build")]
     [InlineData("deploy azure")]
@@ -64,6 +144,9 @@ public sealed class DeployCommandTests
 
     [Fact]
     public void Deploy_rejects_unknown_targets() => CliApp.Build().Parse("deploy heroku").Errors.ShouldNotBeEmpty();
+
+    [Fact]
+    public void Deploy_rejects_unknown_tools() => CliApp.Build().Parse("deploy --without jenkins").Errors.ShouldNotBeEmpty();
 
     [Fact]
     public void The_env_gets_secrets_ports_images_and_certificates_but_no_guessed_addresses()
@@ -77,7 +160,13 @@ public sealed class DeployCommandTests
         values["SHOP_WEB_URL"].ShouldBeEmpty();
         using var certificate = X509CertificateLoader.LoadPkcs12(Convert.FromBase64String(values["SHOP_SIGNING_CERTIFICATE"]), null);
         certificate.HasPrivateKey.ShouldBeTrue();
-        ComposeEnv.Images(Env).ShouldBe(["shop-api"]);
+        ComposeEnv.Images(Env).ShouldBe(["shop-api", "grafana"]);
+        values["GRAFANA_IMAGE"].ShouldBe("shop-grafana:latest");
+        values["SHOP_ADMIN_EMAIL"].ShouldBe("admin@shop.local");
+        values["SHOP_ADMIN_PASSWORD"].ShouldSatisfyAllConditions(p => p.Any(char.IsUpper).ShouldBeTrue(), p => p.Any(char.IsLower).ShouldBeTrue(),
+            p => p.Any(char.IsDigit).ShouldBeTrue(), p => p.Any(c => !char.IsLetterOrDigit(c)).ShouldBeTrue());
+        values["SHOP_SMTP_PORT"].ShouldBeEmpty();
+        values["SHOP_SMTP_PASSWORD"].ShouldBeEmpty();
         Base64Url.DecodeFromChars(values["SHOP_PUSH_PUBLIC_KEY"]).Length.ShouldBe(65);
         Base64Url.DecodeFromChars(values["SHOP_PUSH_PRIVATE_KEY"]).Length.ShouldBe(32);
     }

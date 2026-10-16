@@ -186,11 +186,10 @@ public sealed class TemplateOptionTests(TemplateFixture template)
         var appHost = Read(plain, "src/Shop.AppHost/AppHost.cs");
         appHost.ShouldContain("using Nextended.Aspire.Hosting.AspireUI;");
         appHost.ShouldContain("var administrator = DemoUsers.All.First(u => u.IsAdmin);");
-        appHost.ShouldContain("builder.AddAspireUI()");
-        appHost.ShouldContain(".WithAdminUser(administrator.Email, administrator.Password)");
-        appHost.ShouldContain(".WithSeedFromDirectory(builder.AppHostDirectory)");
-        appHost.ShouldContain(".WithRetrieveApi();");
-        appHost.ShouldNotContain("WithCoworkeeSignOn");
+        appHost.ShouldContain("if (app.Deploys(CoworkeeTools.AspireUI))");
+        appHost.ShouldContain("builder.AddAspireUI().WithCoworkee(app).WithRetrieveApi();");
+        appHost.ShouldContain("options.Administrator = new(administrator.Email, administrator.Password);");
+        appHost.ShouldContain("aspireUi.WithSeedFromDirectory(builder.AppHostDirectory);");
         Read(plain, "src/Shop.AppHost/Shop.AppHost.csproj").ShouldContain("<PackageReference Include=\"Nextended.Aspire.Hosting.AspireUI\" />");
         Read(plain, "Directory.Packages.props").ShouldContain("Nextended.Aspire.Hosting.AspireUI");
         Read(plain, "LOGIN.md").ShouldContain("*aspireui*");
@@ -199,7 +198,7 @@ public sealed class TemplateOptionTests(TemplateFixture template)
 
         var keycloak = await template.CreateAsync("aspireui-keycloak", "--samples", "false", "--aspireUI", "true", "--keycloak", "true");
         appHost = Read(keycloak, "src/Shop.AppHost/AppHost.cs");
-        appHost.ShouldContain(".WithCoworkeeSignOn(app)");
+        appHost.ShouldContain(".WithCoworkee(app)");
         appHost.ShouldContain("options.UseGrafana();");
         SignInInfo.Read(keycloak)!.Tools.ShouldBe(["Grafana", "WebDataStudio", "AspireUI"]);
         TemplateTests.ShouldHaveNoLeftovers(keycloak);

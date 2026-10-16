@@ -9,24 +9,19 @@ public sealed partial class CoworkeeApp
 
     private string AdminUser => Options.Administrator?.UserName ?? "admin";
 
-    private IResourceBuilder<ParameterResource> AdminPassword => _adminPassword ??= Options.Administrator is { } admin
+    // a deployment never takes the development password of Options.Administrator
+    private IResourceBuilder<ParameterResource> AdminPassword => _adminPassword ??= Options.Administrator is { } admin && !Publishing
         ? Builder.AddParameter($"{Name}-admin-password", admin.Password, secret: true)
         : GeneratedSecret($"{Name}-admin-password", 16);
 
-    // ponytail: development tools only, a deployment brings its own monitoring and database access
     private void AddTools()
     {
-        if (!Builder.ExecutionContext.IsRunMode)
-        {
-            return;
-        }
-
-        if (Options.GrafanaServer is { } grafana)
+        if (Options.GrafanaServer is { } grafana && Deploys(CoworkeeTools.Grafana))
         {
             AddGrafana(grafana);
         }
 
-        if (Options.WebDataStudioServer is { } studio)
+        if (Options.WebDataStudioServer is { } studio && Deploys(CoworkeeTools.WebDataStudio))
         {
             AddWebDataStudio(studio);
         }
@@ -56,15 +51,32 @@ public sealed partial class CoworkeeApp
         if (!_keycloakHostname)
         {
             _keycloakHostname = true;
-            keycloak.WithEnvironment(context =>
+            keycloak.WithEnvironment("KC_HOSTNAME_BACKCHANNEL_DYNAMIC", "true");
+            if (Publishing)
             {
-                context.EnvironmentVariables["KC_HOSTNAME"] = http.Url;
-                context.EnvironmentVariables["KC_HOSTNAME_BACKCHANNEL_DYNAMIC"] = "true";
-            });
+                keycloak.WithEnvironment("KC_HOSTNAME", ToolUrl(keycloak));
+            }
+            else
+            {
+                keycloak.WithEnvironment(context => context.EnvironmentVariables["KC_HOSTNAME"] = http.Url);
+            }
         }
 
         return $"http://{keycloak.Resource.Name}:{http.TargetPort}/realms/{_realm}";
     }
 
-    private string KeycloakBrowserAuthority => $"{Keycloak!.GetEndpoint("http").Url}/realms/{_realm}";
+    /// <summary>An address of the realm as the browser knows it, e.g. where a tool sends it to sign in.</summary>
+    private void WithKeycloakBrowserUrl<T>(IResourceBuilder<T> resource, string variable, string path)
+        where T : IResourceWithEnvironment
+    {
+        var keycloak = RequireKeycloak(nameof(WithKeycloakBrowserUrl));
+        if (Publishing)
+        {
+            resource.WithEnvironment(variable, ReferenceExpression.Create($"{ToolUrl(keycloak)}/realms/{_realm}{path}"));
+        }
+        else
+        {
+            resource.WithEnvironment(context => context.EnvironmentVariables[variable] = $"{keycloak.GetEndpoint("http").Url}/realms/{_realm}{path}");
+        }
+    }
 }

@@ -19,6 +19,11 @@ internal static class ComposeEnv
     public static IEnumerable<string> Images(string env) =>
         Lines(env).Where(l => l.Comment?.StartsWith(ImageComment, StringComparison.Ordinal) == true && l.Key is not null).Select(l => l.Comment![ImageComment.Length..].Trim());
 
+    /// <summary>Each image with the tag the .env gives it.</summary>
+    public static IEnumerable<(string Image, string Tag)> ImageTags(string env) =>
+        Lines(env).Where(l => l.Comment?.StartsWith(ImageComment, StringComparison.Ordinal) == true && l.Key is not null && l.Value!.Length > 0)
+            .Select(l => (l.Comment![ImageComment.Length..].Trim(), l.Value!));
+
     public static string Fill(string env, IReadOnlyDictionary<string, string> previous, string appName)
     {
         var vapid = new Lazy<(string Public, string Private)>(VapidKeys);
@@ -26,12 +31,25 @@ internal static class ComposeEnv
             : $"{l.Key}={(previous.GetValueOrDefault(l.Key) is { Length: > 0 } kept ? kept : Default(l.Key, l.Comment, appName, vapid))}"));
     }
 
+    /// <summary>The mail server of a deployment, asked for by <c>coworkee deploy</c> and never generated.</summary>
+    public static bool IsSmtp(string key) => key.Contains("_SMTP_", StringComparison.Ordinal);
+
+    public static bool IsAdminEmail(string key) => key.EndsWith("_ADMIN_EMAIL", StringComparison.Ordinal);
+
+    /// <summary>The image of a tool the app host builds from a Dockerfile (e.g. Grafana with its dashboards) gets the app's name in front.</summary>
+    public static string ImageTag(string image, string appName) =>
+        image.StartsWith($"{appName.ToLowerInvariant()}-", StringComparison.Ordinal) ? $"{image}:latest" : $"{appName.ToLowerInvariant()}-{image}:latest";
+
     private static string Default(string key, string? comment, string appName, Lazy<(string Public, string Private)> vapid) => key switch
     {
+        _ when IsSmtp(key) => string.Empty,
+        _ when IsAdminEmail(key) => $"admin@{appName.ToLowerInvariant()}.local",
+        // the password rules of a new system want upper and lower case, a digit and a special character
+        _ when key.EndsWith("_ADMIN_PASSWORD", StringComparison.Ordinal) => $"Cw1-{Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(12))}",
         _ when key.EndsWith("_PUSH_PUBLIC_KEY", StringComparison.Ordinal) => vapid.Value.Public,
         _ when key.EndsWith("_PUSH_PRIVATE_KEY", StringComparison.Ordinal) => vapid.Value.Private,
-        _ when comment?.StartsWith(ImageComment, StringComparison.Ordinal) == true => $"{comment[ImageComment.Length..].Trim()}:latest",
-        _ when key.EndsWith("_PORT", StringComparison.Ordinal) => "8080",
+        _ when comment?.StartsWith(ImageComment, StringComparison.Ordinal) == true => ImageTag(comment[ImageComment.Length..].Trim(), appName),
+        _ when comment?.StartsWith("# Default container port", StringComparison.Ordinal) == true => "8080",
         _ when key.EndsWith("_SIGNING_CERTIFICATE", StringComparison.Ordinal) => Certificate($"{appName} token signing", X509KeyUsageFlags.DigitalSignature),
         _ when key.EndsWith("_ENCRYPTION_CERTIFICATE", StringComparison.Ordinal) => Certificate($"{appName} token encryption", X509KeyUsageFlags.KeyEncipherment),
         _ when key.EndsWith("_PASSWORD", StringComparison.Ordinal) || key.EndsWith("_TOKEN", StringComparison.Ordinal) || key.EndsWith("_SECRET", StringComparison.Ordinal) =>

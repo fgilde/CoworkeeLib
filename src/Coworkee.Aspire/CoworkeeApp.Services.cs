@@ -16,9 +16,16 @@ public sealed partial class CoworkeeApp
     {
         _services.Add(service.Resource);
 
-        // ponytail: run mode only, published endpoints are internal addresses; deployments list their public ones under Coworkee:Services
-        if (!Builder.ExecutionContext.IsRunMode)
+        // published endpoints are internal addresses; a deployment lists the public addresses of its tools
+        if (Publishing)
         {
+            service.WithEnvironment(context =>
+            {
+                foreach (var (tool, url) in _toolUrls)
+                {
+                    context.EnvironmentVariables[SettingPath.Of(s => s.Coworkee.Services[tool.Name].Url)] = url;
+                }
+            });
             return;
         }
 

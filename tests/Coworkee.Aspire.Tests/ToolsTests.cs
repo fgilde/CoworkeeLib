@@ -169,15 +169,31 @@ public sealed class ToolsTests
     }
 
     [Fact]
-    public void Published_apps_bring_their_own_tools()
+    public void Published_apps_take_their_tools_along_unless_switched_off()
     {
-        var builder = DistributedApplication.CreateBuilder(["--operation", "publish"]);
+        var builder = DistributedApplication.CreateBuilder(["--operation", "publish", $"--{CoworkeeApp.DeployToolsSetting}:webdatastudio=false"]);
         var app = builder.AddCoworkeeApp("demo", o => o.UseGrafana().UseWebDataStudio());
 
         app.AddProjects();
 
-        builder.Resources.OfType<GrafanaResource>().ShouldBeEmpty();
+        builder.Resources.OfType<GrafanaResource>().ShouldHaveSingleItem();
         builder.Resources.OfType<WebDataStudioResource>().ShouldBeEmpty();
+        app.Deploys(CoworkeeTools.Mailpit).ShouldBeFalse();
+        app.Deploys(CoworkeeTools.Ollama).ShouldBeTrue();
+        app.Deploys(CoworkeeTools.AspireUI).ShouldBeTrue();
+    }
+
+    [Theory]
+    [InlineData("azure")]
+    [InlineData("k8s")]
+    public void AspireUI_needs_the_Docker_of_a_compose_host_and_stays_out_of_Azure_and_Kubernetes(string target)
+    {
+        var builder = DistributedApplication.CreateBuilder(["--operation", "publish", $"--{CoworkeeApp.DeployTargetSetting}={target}"]);
+
+        var app = builder.AddCoworkeeApp("demo");
+
+        app.Deploys(CoworkeeTools.AspireUI).ShouldBeFalse();
+        app.Deploys(CoworkeeTools.Grafana).ShouldBeTrue();
     }
 
     private static T Allocated<T>(T resource)

@@ -134,4 +134,4 @@ if (builder.Configuration["GRAFANA_OTLP_ENDPOINT"] is { Length: > 0 } grafana)
 | `UseDatabase(...)` | keine Datenbank-Datenquelle | Verbindung mit dem übergebenen Connection-String |
 
 !!! note "Nur für die Entwicklung"
-    Beide Werkzeuge kommen nur im Run-Modus dazu: `aspire publish` und `azd up` lassen sie weg, weil ein Deployment sein eigenes Monitoring mitbringt und kein Datenbank-Studio mit dem Passwort des Administrators öffnen sollte. Generierte Konfigurationen landen in `src/MyApp.AppHost/observability/.generated` (von git ignoriert).
+    Beide Werkzeuge kommen mit `coworkee deploy` mit: Grafanas Konfiguration und die Dashboards der App stecken in seinen Images, WebDataStudio bekommt ein Volume, beide eine öffentliche Adresse hinter deinem Proxy und den Administrator aus den Deploy-Parametern (mit Keycloak auch dessen Anmeldung). `coworkee deploy --without grafana` oder `DeployTool(CoworkeeTools.Grafana, false)` lässt eins weg, siehe [Deployment](deployment.md#tools). Generierte Konfigurationen landen in `src/MyApp.AppHost/observability/.generated` (von git ignoriert).

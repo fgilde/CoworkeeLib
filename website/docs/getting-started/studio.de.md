@@ -128,11 +128,13 @@ Die Zusammenfassung (mit Datenbank, KI-Anbieter, Redis, den Containern, Farbmodu
 
 ### Anlegen
 
-Das Studio schreibt die Spezifikation, ruft `coworkee spec validate` und `coworkee new --spec` auf und zeigt jeden Schritt der CLI, sobald er beginnt, auf Wunsch mit der ganzen Ausgabe. Ausgabeordner, Logo und Medien gehen auf die Befehlszeile. Danach listet die Karte **Anmelden** jeden Benutzer mit Passwort und Rollen auf, mit Kopierknöpfen, und sagt, ob Keycloak sie ebenfalls annimmt (sie stehen auch in `LOGIN.md` der Solution). Dann: Ordner öffnen, in VS Code, Rider oder Visual Studio öffnen oder die App starten.
+Das Studio schreibt die Spezifikation, ruft `coworkee spec validate` und `coworkee new --spec` auf und zeigt jeden Schritt der CLI, sobald er beginnt, auf Wunsch mit der ganzen Ausgabe. Ausgabeordner, Logo und Medien gehen auf die Befehlszeile. Danach listet die Karte **Anmelden** jeden Benutzer mit Passwort und Rollen auf, mit Kopierknöpfen, und sagt, ob Keycloak sie ebenfalls annimmt (sie stehen auch in `LOGIN.md` der Solution). Dann: Ordner öffnen, in VS Code, Rider oder Visual Studio öffnen, die App starten oder deployen.
 
 ![Anlegen](../assets/screenshots/studio-generate-light-de.webp)
 
 **App starten** führt `dotnet run --project <App-Host>` im Studio aus. Die Karte zeigt, ob der App-Host startet, läuft oder gescheitert ist, und im Fehlerfall die Zeile, die es erklärt (ein belegter Port, ein Build-Fehler). Sobald er läuft, verlinkt sie das Aspire-Dashboard (die Anmeldeadresse mit Token, aus der Ausgabe gelesen) und die Adressen von Web-App, API und Auth-Server (aus ihren Launch Settings). Die Ausgabe des App-Hosts ist einen Klick entfernt; **Stoppen** beendet den App-Host und alles, was er gestartet hat, ebenso das Schließen des Studios.
+
+**Deployen** ist der optionale letzte Schritt: Wähl ein Ziel (`compose`, `azure` oder `k8s`), und das Studio startet `coworkee deploy` im Ordner der App und zeigt die Ausgabe live, am Ende mit den Adressen der Dienste und Tools und der Anmeldung des Administrators. Siehe [Deployment](../hosting/deployment.md).
 
 ![Laufende App](../assets/screenshots/studio-run-light-de.webp)
 

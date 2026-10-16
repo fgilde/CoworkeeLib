@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Aspire.Hosting;
+using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Theming;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
@@ -44,12 +45,12 @@ public sealed class KeycloakRealmTests : IAsyncLifetime
     public async Task A_missing_realm_is_created_and_an_existing_one_gets_changed_secrets_and_passwords()
     {
         var ct = TestContext.Current.CancellationToken;
-        var ada = new KeycloakUser("ada@demo.test", "Ada", "Lovelace") { Password = "first-Password1" };
+        var ada = new KeycloakRealm.User("ada@demo.test", "Ada", "Lovelace", "first-Password1", []);
 
         await Reconcile([new("demo-auth", "first-secret", [])], [ada], ct);
         (await SignInAsync(ada.Email, "first-Password1", ct)).ShouldBe(HttpStatusCode.OK);
 
-        var grace = new KeycloakUser("grace@demo.test", "Grace", "Hopper") { Password = "grace-Password1" };
+        var grace = new KeycloakRealm.User("grace@demo.test", "Grace", "Hopper", "grace-Password1", []);
         await Reconcile([new("demo-auth", "second-secret", []), new("demo-grafana", "grafana-secret", ["https://localhost:3000/login/generic_oauth"])],
             [ada with { Password = "second-Password1" }, grace], ct);
 
@@ -64,11 +65,11 @@ public sealed class KeycloakRealmTests : IAsyncLifetime
     public async Task Realm_roles_follow_the_users_and_every_client_puts_them_in_the_roles_claim()
     {
         var ct = TestContext.Current.CancellationToken;
-        var ada = new KeycloakUser("ada@demo.test", "Ada", "Lovelace") { Password = "ada-Password1", Roles = ["Administrator"] };
+        var ada = new KeycloakRealm.User("ada@demo.test", "Ada", "Lovelace", "ada-Password1", ["Administrator"]);
         await Reconcile([new("demo-auth", "secret", [])], [ada], ct);
         (await RealmRolesAsync(ada.Email, ct)).ShouldContain("Administrator");
 
-        var grace = new KeycloakUser("grace@demo.test", "Grace", "Hopper") { Password = "grace-Password1", Roles = ["Administrator", "Editor"] };
+        var grace = new KeycloakRealm.User("grace@demo.test", "Grace", "Hopper", "grace-Password1", ["Administrator", "Editor"]);
         await Reconcile([new("demo-auth", "secret", []), new("demo-grafana", "secret", [])], [ada with { Roles = [] }, grace], ct);
 
         (await RealmRolesAsync(ada.Email, ct)).ShouldNotContain("Administrator");
@@ -124,7 +125,7 @@ public sealed class KeycloakRealmTests : IAsyncLifetime
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
-    private async Task Reconcile(KeycloakRealm.Client[] clients, KeycloakUser[] users, CancellationToken ct, KeycloakRealm.Look? look = null)
+    private async Task Reconcile(KeycloakRealm.Client[] clients, KeycloakRealm.User[] users, CancellationToken ct, KeycloakRealm.Look? look = null)
     {
         using var http = new HttpClient { BaseAddress = Base };
         await KeycloakRealm.ReconcileAsync(http, Admin, AdminPassword, "demo", look ?? new("Demo", null), clients, users, ct);

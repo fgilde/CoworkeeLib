@@ -15,12 +15,12 @@ using MyApp.Contracts.Documents;
 
 namespace MyApp.Migrations;
 
-/// <summary>Development seed with the users and roles of <see cref="DemoUsers"/>; it runs in the Development environment only.</summary>
+/// <summary>The seed: the users and roles of <see cref="DemoUsers"/> in Development, the administrator of the deploy parameters in a deployment.</summary>
 public static class DemoSeed
 {
     public static void Configure(IdentitySeedOptions seed)
     {
-        seed.TenantName = "COWORKEE_APP_TITLE";
+        ConfigureSystem(seed);
 #if (samples)
         seed.Roles.Add(new SeedRole("Product Manager", "Maintains products", [.. Shared, CatalogPermissions.Products.View, CatalogPermissions.Products.Create, CatalogPermissions.Products.Edit, CatalogPermissions.Products.Delete, CatalogPermissions.Brands.View]));
         seed.Roles.Add(new SeedRole("Brand Manager", "Maintains brands", [.. Shared, CatalogPermissions.Brands.View, CatalogPermissions.Brands.Create, CatalogPermissions.Brands.Edit, CatalogPermissions.Brands.Delete]));
@@ -29,6 +29,18 @@ public static class DemoSeed
 #endif
         seed.Roles.AddRange(DemoUsers.Roles.Select(r => new SeedRole(r.Name, r.Description, [.. Shared.Union(r.Permissions)])));
         seed.Users.AddRange(DemoUsers.All.Select(u => new SeedUser(u.Email, u.Password, u.FirstName, u.LastName, u.IsAdmin) { Roles = u.Roles ?? [] }));
+    }
+
+    /// <summary>A deployment: the organisation, its settings and the administrator of the deploy parameters, no demo users.</summary>
+    public static void ConfigureDeployment(IdentitySeedOptions seed, SeedUser admin)
+    {
+        ConfigureSystem(seed);
+        seed.Users.Add(admin);
+    }
+
+    private static void ConfigureSystem(IdentitySeedOptions seed)
+    {
+        seed.TenantName = "COWORKEE_APP_TITLE";
 #if (colorMode != "system")
         seed.Settings["Theme.Mode"] = "COWORKEE_COLOR_MODE";
 #endif

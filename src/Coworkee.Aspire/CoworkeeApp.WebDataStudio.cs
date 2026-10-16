@@ -7,14 +7,22 @@ namespace Aspire.Hosting;
 
 public sealed partial class CoworkeeApp
 {
-    /// <summary>WebDataStudio of <see cref="CoworkeeAppOptions.UseWebDataStudio"/>, in run mode.</summary>
+    /// <summary>WebDataStudio of <see cref="CoworkeeAppOptions.UseWebDataStudio"/>; in a deployment unless <see cref="CoworkeeTools.WebDataStudio"/> is switched off.</summary>
     public IResourceBuilder<WebDataStudioResource>? WebDataStudio { get; private set; }
 
     private void AddWebDataStudio(Action<IResourceBuilder<WebDataStudioResource>> configure)
     {
-        WebDataStudio = Builder.AddWebDataStudio()
-            .WithTitle($"{Options.DisplayName ?? Name} data")
-            .WithLogin(AdminUser, AdminPassword);
+        WebDataStudio = Builder.AddWebDataStudio().WithTitle($"{Options.DisplayName ?? Name} data");
+        if (Publishing)
+        {
+            WebDataStudio.WithLogin(AdminEmailParameter, AdminPassword);
+            ToolUrl(WebDataStudio, WebDataStudioResource.HttpEndpointName);
+        }
+        else
+        {
+            WebDataStudio.WithLogin(AdminUser, AdminPassword);
+        }
+
         // the default volume is named after the resource only, so every app on the machine would share saved connections and queries
         foreach (var volume in WebDataStudio.Resource.Annotations.OfType<ContainerMountAnnotation>().Where(m => m.Target == "/data").ToList())
         {
@@ -72,9 +80,9 @@ public sealed partial class CoworkeeApp
 
     private void AddWebDataStudioSignIn(IResourceBuilder<WebDataStudioResource> studio)
     {
-        var client = AddKeycloakClient($"{Name}-webdatastudio", [ReferenceExpression.Create($"{studio.GetEndpoint(WebDataStudioResource.HttpEndpointName)}/signin-oidc")]);
+        var client = AddKeycloakClient($"{Name}-webdatastudio", [ReferenceExpression.Create($"{ToolUrl(studio, WebDataStudioResource.HttpEndpointName)}/signin-oidc")]);
         studio.WithSingleSignOn(ContainerKeycloakAuthority(), client.ClientId, client.Secret, Options.Keycloak!.DisplayName, "openid", "profile", "email")
-            .WithSignInRoles(admins: [AdminUser, "Administrator"]);
+            .WithSignInRoles(admins: Publishing ? ["Administrator"] : [AdminUser, "Administrator"]);
     }
 
     private static WebDataStudioEngine Engine(string provider) => provider switch
