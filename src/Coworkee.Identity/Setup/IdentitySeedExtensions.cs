@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -20,12 +21,13 @@ public static class IdentitySeedExtensions
     }
 
     /// <summary>
-    /// Development only: an already set up system gets the seed users and roles it lacks, and seed users whose password differs get the seeded one again.
-    /// Does nothing outside the Development environment.
+    /// Development only: an already set up system gets the seed users and roles it lacks, seeded roles the permissions added since, and seed users
+    /// whose password differs get the seeded one again. Runs in the Development environment or with <c>Coworkee:Identity:SyncDevelopmentUsers</c>
+    /// (set by the Aspire app host for the migrations of a local run), else does nothing.
     /// </summary>
     public static async Task SyncDevelopmentUsersAsync(this IServiceProvider services, CancellationToken cancellationToken = default)
     {
-        if (!services.GetRequiredService<IHostEnvironment>().IsDevelopment())
+        if (!services.GetRequiredService<IHostEnvironment>().IsDevelopment() && !services.GetRequiredService<IConfiguration>().GetValue<bool>("Coworkee:Identity:SyncDevelopmentUsers"))
         {
             return;
         }

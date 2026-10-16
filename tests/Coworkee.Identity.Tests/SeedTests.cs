@@ -35,9 +35,10 @@ public sealed class SeedTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Theory]
-    [InlineData("Development", true)]
-    [InlineData("Production", false)]
-    public async Task Sync_restores_missing_users_and_roles_and_changed_passwords_in_development_only(string environment, bool synced)
+    [InlineData("Development", false, true)]
+    [InlineData("Production", false, false)]
+    [InlineData("Production", true, true)]
+    public async Task Sync_restores_missing_users_and_roles_and_changed_passwords_in_development_only(string environment, bool localRun, bool synced)
     {
         await app.App.Services.SeedCoworkeeIdentityAsync(Ct);
         var tenantId = await app.InDbAsync(null, db => db.Set<Tenant>().IgnoreQueryFilters().Where(t => t.IsDefault).Select(t => t.Id).SingleAsync(Ct));
@@ -52,6 +53,7 @@ public sealed class SeedTests(IdentityApp app) : IAsyncLifetime
         var host = app.App.Services.GetRequiredService<IHostEnvironment>();
         var original = host.EnvironmentName;
         host.EnvironmentName = environment;
+        app.App.Configuration["Coworkee:Identity:SyncDevelopmentUsers"] = localRun ? "true" : null;
         try
         {
             await app.App.Services.SyncDevelopmentUsersAsync(Ct);
@@ -59,6 +61,7 @@ public sealed class SeedTests(IdentityApp app) : IAsyncLifetime
         finally
         {
             host.EnvironmentName = original;
+            app.App.Configuration["Coworkee:Identity:SyncDevelopmentUsers"] = null;
         }
 
         var editorRoles = await app.InDbAsync(tenantId, db => db.Set<User>().Where(u => u.Email == "editor@seed.test")

@@ -13,6 +13,23 @@ public sealed class DashboardTests
         Commands(DistributedApplication.CreateBuilder(["--environment", "Production"])).ShouldBeEmpty();
     }
 
+    [Theory]
+    [InlineData("Development", true)]
+    [InlineData("Production", false)]
+    public async Task The_migrations_of_a_local_run_sync_the_development_users(string environment, bool synced)
+    {
+        var builder = DistributedApplication.CreateBuilder(["--environment", environment]);
+        var migrations = builder.AddCoworkeeApp("demo").AddMigrations<FakeProjects.Migrations>();
+
+        var env = new Dictionary<string, object>();
+        foreach (var callback in migrations.Resource.Annotations.OfType<EnvironmentCallbackAnnotation>())
+        {
+            await callback.Callback(new EnvironmentCallbackContext(builder.ExecutionContext, env, TestContext.Current.CancellationToken));
+        }
+
+        env.ContainsKey("Coworkee__Identity__SyncDevelopmentUsers").ShouldBe(synced);
+    }
+
     [Fact]
     public void Reset_asks_for_confirmation_and_is_not_offered_for_a_supplied_database()
     {

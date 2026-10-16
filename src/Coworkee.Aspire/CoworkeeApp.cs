@@ -65,6 +65,12 @@ public sealed partial class CoworkeeApp
         Migrations = WithAppDatabase(Builder.AddProject<TProject>($"{Name}-{suffix}"), awaitServer: true);
         AsDeployJob(Migrations);
         WithInitialAdmin(Migrations);
+        if (LocalDevelopment)
+        {
+            // the migrations project has no launch profile and runs as Production; the dev sync of the seed users still belongs to a local run
+            Migrations.WithEnvironment("Coworkee__Identity__SyncDevelopmentUsers", "true");
+        }
+
         WireGrafanaTelemetry(Migrations);
         AddDatabaseCommands(Migrations);
         return Added<TProject>(Migrations, suffix);
