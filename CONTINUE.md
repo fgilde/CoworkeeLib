@@ -138,6 +138,11 @@ Docs `website/docs/web/import-export*.md`, changelog section *Unreleased*.
 - Webhooks: `RotateWebhookSecretCommand`, `PreviousProtectedSecret`/`PreviousSecretUntil` (EF change; template migration has no webhooks, apps with webhooks need a migration), `SecretGracePeriod`.
 - Template samples: palette command "New product" (`?new=true`) and product search.
 
+## After 0.0.1.26 (on main, unreleased)
+- Fix: the catch-all page of the library swallowed intercepted links to server addresses (setup *Sign in* -> `/bff/login` showed *Not found.*). `LinkNavigation` (scoped, created by `CoworkeeLayout`) records `IsNavigationIntercepted` in a LocationChanging handler; `CoworkeePageHost` force-loads such links. Found by the Sharemee E2E. Worth a 0.0.1.27: every new app of 0.0.1.26 hits it after the setup wizard. App test bases that render the layout without `AddCoworkeeClient` register `LinkNavigation`.
+- Flaky: `MailTemplatesPageTests.Add_language_*` (MudEx `ObjectEditForm.HasErrors` enumerates validation messages while bUnit renders on another thread; WASM is single threaded), `ThemesPageTests` on slow runners.
+- Demo and Sharemee are on round 7 (migration `Round7`, PWA + push, `InitialAdmin`/realm reconcile, `SyncDevelopmentUsersAsync`; Sharemee dropped `DemoUserTopUp`).
+
 ## Product backlog (older ideas, not part of the recent rounds)
 - Own `IMailTransport` with a new provider name is only selectable via `Coworkee:Settings:Defaults:Mail.Provider` (choices are the four built-ins).
 - Translations of the 21 new languages were checked by sample, not by native speakers (km, ar least certain).
