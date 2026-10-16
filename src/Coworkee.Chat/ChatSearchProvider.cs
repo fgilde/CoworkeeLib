@@ -17,7 +17,7 @@ internal sealed class ChatSearchProvider : IGlobalSearchProvider
 
     public string Name => "chats";
 
-    public string Group => "Chats";
+    public string Group => "Chat";
 
     public string? Icon => "Chat";
 
