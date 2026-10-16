@@ -1,6 +1,7 @@
 using Coworkee.Application;
 using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
+using Coworkee.Application.Status;
 using Coworkee.AspNetCore;
 using Coworkee.AspNetCore.Http;
 using Coworkee.Contracts.Settings;
@@ -40,6 +41,7 @@ public sealed class CoworkeeSettingsModule : CoworkeeModule, IWebModule
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IServiceSource, ConfiguredServiceSource>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IServiceSource, AspireUIServiceSource>());
         services.TryAddScoped<IServiceDirectory, ServiceDirectory>();
+        services.AddSystemStatus<VersionsStatus>().AddSystemStatus<DatabaseStatus>();
         if (!services.HasAppSettings())
         {
             services.AddCoworkeeSettings<CoworkeeAppSettings>(context.Configuration);
@@ -61,6 +63,8 @@ public sealed class CoworkeeSettingsModule : CoworkeeModule, IWebModule
         configuration.MapDelete("/{section}", (string section, IDispatcher d, CancellationToken ct) => d.SendAsync(new ResetAppConfiguration(section), ct).ToHttpResult());
         app.MapCoworkeeApi("/api/v1/services").WithTags("Services").RequireAuthorization()
             .MapGet("/", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetServices(), ct).ToHttpResult());
+        app.MapCoworkeeApi("/api/v1/system").WithTags("System").RequireAuthorization()
+            .MapGet("/status", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetSystemStatus(), ct).ToHttpResult());
         foreach (var scope in new[] { SettingScope.Global, SettingScope.Tenant })
         {
             var path = "/" + scope.ToString().ToLowerInvariant();

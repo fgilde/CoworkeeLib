@@ -1,5 +1,6 @@
 using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
+using Coworkee.Application.Status;
 using Coworkee.Application.Setup;
 using Coworkee.AspNetCore;
 using Coworkee.Core.Modularity;
@@ -40,6 +41,7 @@ public sealed class CoworkeeLocalizationModule : CoworkeeModule, IWebModule
         services.AddScoped<PromotedTexts>();
         services.AddScoped<Application.Localization.IDefaultLanguage, Languages.DefaultLanguage>();
         services.AddScoped<MachineTranslation.TextTranslator>();
+        services.AddSystemStatus<MachineTranslation.TranslationStatus>();
         services.AddScoped<Application.Localization.IMachineTranslator>(sp => sp.GetRequiredService<MachineTranslation.TextTranslator>());
         services.AddScoped<MachineTranslation.MissingTexts>();
         services.AddScoped<MachineTranslation.ITranslationProvider, MachineTranslation.LibreTranslator>();

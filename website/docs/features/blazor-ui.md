@@ -77,6 +77,10 @@ Anything in the shell can be swapped with `builder.Services.ReplaceComponent<Cow
 
 The same apps can also run in a web desktop: `coworkee new Shop --airworks` adds an [AirWorks](../web/airworks.md) client with windows and a taskbar, signed in through the same auth server and talking to the same API.
 
-**Status:** the library's pages live under generic `/admin/...` routes, and an app page with the same route breaks Blazor routing. Grouped rows cannot be virtualized, so a grouped table falls back to the pager.
+## System status
+
+*Administration → Monitoring → System status* (`/cw/admin/system-status`, permission `Settings.Manage`, system organisation only) shows the installation at a glance: versions of the library, the app and .NET, the database with pending migrations and the outbox backlog, background jobs with the last failures and a link to the job dashboard, mail waiting or failed in the last seven days, realtime connections, Redis, file storage, machine translation and the AI assistant. Each module adds its own card through `ISystemStatusContributor` (`services.AddSystemStatus<T>()`), and so can your app.
+
+**Status:** the library's admin pages live under `/cw/admin/...` (see [Pages of the library](../ui/customizing.md#pages-of-the-library)). Grouped rows cannot be virtualized, so a grouped table falls back to the pager.
 
 Reference: [client and layout](../ui/client.md), [data tables](../ui/data-table.md), [replacing components](../ui/customizing.md), [theming](../modules/theming.md), [sign-in pages](../security/sign-in-pages.md).

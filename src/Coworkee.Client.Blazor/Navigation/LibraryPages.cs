@@ -31,6 +31,7 @@ internal static class LibraryPages
         new("mail-campaigns", typeof(MailCampaigns), "admin/mail/campaigns"),
         new("mail-log", typeof(MailLog), "admin/mail/log"),
         new("services", typeof(Services), "admin/services"),
+        new("system-status", typeof(SystemStatus), "admin/system-status"),
         new("tenants", typeof(Tenants), "admin/tenants"),
         new("themes", typeof(Themes), "admin/themes"),
         new("webhooks", typeof(Pages.Admin.Webhooks), "admin/webhooks"),

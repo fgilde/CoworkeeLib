@@ -6,6 +6,7 @@
 
 ### Breaking Changes
 
+- **`ICoworkeeApi`** hat `GetSystemStatusAsync` dazubekommen; eigene Implementierungen ergänzen es.
 - **Seiten der Bibliothek unter eigenem Präfix**: die Admin-Seiten der Bibliothek liegen jetzt unter `/cw/admin/...` statt `/admin/...` (`CoworkeeClientOptions.PagePrefix`, `""` behält die alten Adressen); alte Adressen leiten weiter. Die Seiten der Bibliothek haben keine `@page`-Routen mehr, eine Sammelseite (`/{*Path}`) zeigt sie: eine App mit eigener Sammelseite bekommt eine mehrdeutige Route. Apps ersetzen oder schalten Seiten per Schlüssel ab (`options.Pages`), siehe [Komponenten ersetzen](../ui/customizing.md#seiten-der-bibliothek).
 - **Migration nötig**: neue Tabellen `cw.PushSubscriptions` (Notifications), `cw.DataTransferJobs` und `cw.ImportProfiles` (OData, also jede App). Workflows und Webhooks bringen eigene Tabellen mit, wenn eine App sie aufnimmt.
 - **`ICoworkeeApi`** hat `AddMailTemplateLanguageAsync`, `GetPushSettingsAsync`, `SavePushSubscriptionAsync` und `DeletePushSubscriptionAsync` dazubekommen; eigene Implementierungen ergänzen sie.
@@ -21,6 +22,7 @@
 
 ### Neu
 
+- **Systemstatus**-Seite für die Systemorganisation (`/cw/admin/system-status`): Versionen, Datenbank und ausstehende Migrationen, Outbox, Hintergrundjobs mit den letzten Fehlern, Mail, Echtzeit, Redis, Dateien, Übersetzung und KI; Module und Apps steuern Karten über `ISystemStatusContributor` bei, siehe [Admin-Oberfläche](../features/blazor-ui.md#systemstatus).
 - **Workflows und Genehmigungen** (`Coworkee.Workflows`, optional): Zustände und abgesicherte Übergänge pro Entitätstyp, Genehmigungen durch Rollen oder Benutzer mit Frist, Erinnerung und Eskalation, eine Historie, die Komponenten `CoworkeeWorkflow`, `CoworkeeWorkflowActions` und `CoworkeeWorkflowTimeline` und die Seite *Genehmigungen*, siehe [Workflows und Genehmigungen](../modules/workflows.md).
 - **Elsa-Workflows** (`Coworkee.Workflows.Elsa`, optional): Elsa Workflows 3 in der API mit Coworkee-Aktivitäten und -Triggern, siehe [Elsa-Workflows](../modules/workflows-elsa.md).
 - **Webhooks** (`Coworkee.Webhooks`, optional): Endpunkte pro Organisation bekommen signierte Ereignisse (im Stil von Standard Webhooks) zu Änderungen freigeschalteter Entity-Sets, Workflow-Übergängen und eigenen Ereignissen der App, beschränkt auf das, was der Besitzer des Endpunkts lesen darf; Wiederholungen mit Backoff, Abschalten nach wiederholten Fehlern, Zustellprotokoll, Testereignisse und erneute Zustellung unter `/admin/webhooks`, Schutz vor SSRF. Siehe [Webhooks](../modules/webhooks.md).
