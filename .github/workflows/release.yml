@@ -52,6 +52,36 @@ jobs:
       - name: Publish
         run: dotnet nuget push "artifacts/release/*.nupkg" --api-key "${{ steps.nuget.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
 
+  changelog:
+    # the Unreleased section of the changelogs (EN + DE) becomes the section of this version, so the website shows the right release line (website/hooks/release.py)
+    needs: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Changelog section of the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 build/release-changelog.py "${GITHUB_REF_NAME#v}"
+          if git diff --quiet; then
+            echo "No Unreleased section to move"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "docs: changelog for ${GITHUB_REF_NAME#v}"
+          git pull --rebase origin main
+          git push origin HEAD:main
+          # a push with the workflow token starts no workflow, so the website is rebuilt explicitly
+          gh workflow run docs.yml --ref main
+
   npm:
     # @coworkee/client and @coworkee/airworks in the npm version of the release (scripts/npm-version.mjs); a failure here never fails the NuGet release
     needs: release
