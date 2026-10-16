@@ -90,6 +90,41 @@ public sealed class CoworkeeAppTests : IDisposable
     }
 
     [Fact]
+    public async Task Elsa_studio_is_a_client_of_the_auth_server_that_calls_the_elsa_api_and_the_designer_link_leads_there()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var app = builder.AddCoworkeeApp("demo", o => o.DisplayName = "Demo");
+
+        app.AddMigrations<FakeProjects.Migrations>();
+        var auth = app.AddAuthServer<FakeProjects.Auth>();
+        var api = app.AddApi<FakeProjects.Api>();
+        app.AddWeb<FakeProjects.Web>();
+        var studio = app.AddElsaStudio<FakeProjects.Web>();
+
+        studio.Resource.Name.ShouldBe("demo-elsastudio");
+        app.ElsaStudio.ShouldBe(studio);
+        var settings = await Environment(auth.Resource);
+        settings["Coworkee__Auth__Clients__1__ClientId"].ShouldBe("demo-elsastudio");
+        settings["Coworkee__Auth__Clients__1__DisplayName"].ShouldBe("Demo (Workflow designer)");
+        settings["Coworkee__Auth__Clients__1__Scopes__0"].ShouldBe("demo_api");
+        settings["Coworkee__Auth__Clients__1__RedirectUris__0"].ShouldBe("{demo-elsastudio.bindings.https.url}/signin-oidc");
+        var host = await Environment(studio.Resource);
+        host["Coworkee__Bff__ClientId"].ShouldBe("demo-elsastudio");
+        host["Coworkee__Bff__CookieName"].ShouldBe("demo-elsastudio");
+        host["Coworkee__Workflows__Elsa__Studio__BackendUrl"].ShouldBe("{demo-api.bindings.https.url}/api/elsa");
+        (await Environment(api.Resource))["Coworkee__Workflows__Elsa__StudioUrl"].ShouldBe("{demo-elsastudio.bindings.https.url}");
+    }
+
+    [Fact]
+    public void Elsa_studio_is_a_tool_a_deployment_can_leave_out()
+    {
+        var app = DistributedApplication.CreateBuilder(["--operation", "publish", $"--{CoworkeeApp.DeployToolsSetting}:elsastudio=false"]).AddCoworkeeApp("demo");
+
+        CoworkeeTools.All.ShouldContain(CoworkeeTools.ElsaStudio);
+        app.Deploys(CoworkeeTools.ElsaStudio).ShouldBeFalse();
+    }
+
+    [Fact]
     public void The_airworks_client_needs_the_api()
     {
         var app = DistributedApplication.CreateBuilder().AddCoworkeeApp("demo");

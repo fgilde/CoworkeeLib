@@ -11,7 +11,7 @@ internal static class DeployCommand
     public static readonly string[] Targets = ["compose", "azure", "k8s"];
 
     /// <summary>The tools of the app host (CoworkeeTools); each one is deployed when the app uses it, Mailpit only with <c>--with mailpit</c>.</summary>
-    public static readonly string[] Tools = ["keycloak", "mailpit", "libretranslate", "grafana", "webdatastudio", "ollama", "aspireui"];
+    public static readonly string[] Tools = ["keycloak", "mailpit", "libretranslate", "grafana", "webdatastudio", "ollama", "aspireui", "elsastudio"];
 
     private static readonly Argument<string> Target = new Argument<string>("target")
     {

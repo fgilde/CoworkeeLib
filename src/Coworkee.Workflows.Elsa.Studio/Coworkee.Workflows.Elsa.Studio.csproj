@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+  <PropertyGroup>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\Coworkee.Bff\Coworkee.Bff.csproj" />
+    <PackageReference Include="Elsa.Studio" />
+    <PackageReference Include="Elsa.Studio.Core.BlazorServer" />
+  </ItemGroup>
+</Project>

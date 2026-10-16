@@ -46,6 +46,7 @@
     <Project Path="src/Coworkee.Theming/Coworkee.Theming.csproj" />
     <Project Path="src/Coworkee.Workflows/Coworkee.Workflows.csproj" />
     <Project Path="src/Coworkee.Workflows.Elsa/Coworkee.Workflows.Elsa.csproj" />
+    <Project Path="src/Coworkee.Workflows.Elsa.Studio/Coworkee.Workflows.Elsa.Studio.csproj" />
     <Project Path="src/Coworkee.Webhooks/Coworkee.Webhooks.csproj" />
   </Folder>
   <Folder Name="/templates/">

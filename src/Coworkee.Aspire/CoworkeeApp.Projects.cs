@@ -12,11 +12,13 @@ public sealed partial class CoworkeeApp
         (nameof(AddWorker), n => n.Contains("_Worker", StringComparison.Ordinal) || n.EndsWith("Worker", StringComparison.Ordinal)),
         (nameof(AddWeb), n => n.EndsWith("_Web", StringComparison.Ordinal)),
         (nameof(AddAirWorks), n => n.EndsWith("_AirWorks", StringComparison.Ordinal)),
+        (nameof(AddElsaStudio), n => n.EndsWith("_ElsaStudio", StringComparison.Ordinal)),
     ];
 
     /// <summary>
-    /// Adds the projects the app host references (<c>Projects.MyApp_Migrations</c>, <c>_Auth</c>, <c>_Api</c>, <c>_Worker</c>, <c>_Web</c>, <c>_AirWorks</c>) in that order;
-    /// the suffix is the name after the first underscore (<c>MyApp_Jobs_Worker</c> becomes <c>myapp-jobs-worker</c>). Projects added before are left alone.
+    /// Adds the projects the app host references (<c>Projects.MyApp_Migrations</c>, <c>_Auth</c>, <c>_Api</c>, <c>_Worker</c>, <c>_Web</c>, <c>_AirWorks</c>, <c>_ElsaStudio</c>) in that order;
+    /// the suffix is the name after the first underscore (<c>MyApp_Jobs_Worker</c> becomes <c>myapp-jobs-worker</c>). Projects added before are left alone,
+    /// Elsa Studio in a deployment only while <see cref="CoworkeeTools.ElsaStudio"/> is on.
     /// </summary>
     public CoworkeeApp AddProjects()
     {
@@ -25,6 +27,7 @@ public sealed partial class CoworkeeApp
             .Where(t => !_added.Contains(t))
             .Select(t => (Type: t, Suffix: Suffix(t.Name), Role: Array.FindIndex(Roles, r => r.Matches(t.Name))))
             .Where(p => p.Role >= 0 && !Options.Skipped.Contains(p.Suffix) && !Options.Skipped.Contains(p.Type.Name))
+            .Where(p => Roles[p.Role].Add != nameof(AddElsaStudio) || Deploys(CoworkeeTools.ElsaStudio))
             .OrderBy(p => p.Role)
             .ThenBy(p => p.Type.Name, StringComparer.Ordinal);
         foreach (var (type, suffix, role) in projects.ToList())

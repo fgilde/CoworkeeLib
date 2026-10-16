@@ -47,6 +47,8 @@ public sealed partial class CoworkeeApp
 
     public IResourceBuilder<ProjectResource>? AirWorks { get; private set; }
 
+    public IResourceBuilder<ProjectResource>? ElsaStudio { get; private set; }
+
     public IResourceBuilder<KeycloakResource>? Keycloak { get; private set; }
 
     public IReadOnlyList<IResourceBuilder<ProjectResource>> Apis => _apis;
@@ -180,6 +182,31 @@ public sealed partial class CoworkeeApp
         AirWorks = airWorks;
         return Added<TProject>(airWorks, suffix);
     }
+
+    /// <summary>
+    /// Elsa Studio, the workflow designer (<c>MyApp.ElsaStudio</c> with Coworkee.Workflows.Elsa.Studio): a client of its own of the auth server that calls
+    /// the Elsa API of the first api with the user's token. The apis' <c>Coworkee:Workflows:Elsa:StudioUrl</c> (the designer link) leads there. Add it after the api.
+    /// </summary>
+    public IResourceBuilder<ProjectResource> AddElsaStudio<TProject>(string suffix = "elsastudio")
+        where TProject : IProjectMetadata, new()
+    {
+        var studio = BffClient<TProject>(suffix, $"{Title} (Workflow designer)", nameof(AddElsaStudio))
+            .WithSetting(s => s.Coworkee.Bff.CookieName, $"{Name}-{suffix}");
+        // TLS ends at the proxy in a deployment, the services talk plain http to each other there
+        var api = _apis[0];
+        studio.WithEnvironment(ElsaStudioBackendUrl, ReferenceExpression.Create($"{api.GetEndpoint(Publishing ? "http" : "https")}/api/elsa"));
+        foreach (var service in _apis)
+        {
+            service.WithEnvironment(ElsaStudioUrl, PublicUrl(studio));
+        }
+
+        ElsaStudio = studio;
+        return Added<TProject>(studio, suffix);
+    }
+
+    private const string ElsaStudioBackendUrl = "Coworkee__Workflows__Elsa__Studio__BackendUrl";
+
+    private const string ElsaStudioUrl = "Coworkee__Workflows__Elsa__StudioUrl";
 
     /// <summary>A host with Coworkee.Bff: signs in at the auth server as the next of its clients and forwards to the first api.</summary>
     private IResourceBuilder<ProjectResource> BffClient<TProject>(string suffix, string displayName, string caller)
