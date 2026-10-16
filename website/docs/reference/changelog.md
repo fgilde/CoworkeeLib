@@ -22,6 +22,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### New
 
+- **Range sliders in column filters**: *between* on number and date columns slides between the smallest and largest value the server reports; a column with a date or number range facet (e.g. the demo's order date) shows that facet's histogram and slider instead of a check box per bucket.
 - **System status** page for the system organisation (`/cw/admin/system-status`): versions, database and pending migrations, outbox, background jobs with the last failures, mail, realtime, Redis, files, translation and AI; modules and apps add cards with `ISystemStatusContributor`, see [Admin UI](../features/blazor-ui.md#system-status).
 - **Workflows and approvals** (`Coworkee.Workflows`, optional): states and guarded transitions per entity type, approvals by roles or users with deadline, reminder and escalation, a history, the components `CoworkeeWorkflow`, `CoworkeeWorkflowActions` and `CoworkeeWorkflowTimeline` and the page *Approvals*, see [Workflows and approvals](../modules/workflows.md).
 - **Elsa workflows** (`Coworkee.Workflows.Elsa`, optional): Elsa Workflows 3 in the API with Coworkee activities and triggers, see [Elsa workflows](../modules/workflows-elsa.md).

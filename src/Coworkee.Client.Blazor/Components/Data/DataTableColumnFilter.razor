@@ -1,7 +1,18 @@
 @typeparam T
+@using MudBlazor.Extensions.Components
 
 <div class="cw-column-filter" data-testid="column-filter" data-column="@Column.PropertyName">
-    @if (Facet is not null)
+    @if (Facet is { ValueKind: FacetValueKind.Date, Min: not null, Max: not null })
+    {
+        <MudText Typo="Typo.subtitle2" Class="mb-1">@L[Facet.Label]</MudText>
+        <FacetDateView Group="Facet" Selection="Selection" />
+    }
+    else if (Facet is { ValueKind: FacetValueKind.Number, Min: not null, Max: not null })
+    {
+        <MudText Typo="Typo.subtitle2" Class="mb-1">@L[Facet.Label]</MudText>
+        <FacetRangeView Group="Facet" Selection="Selection" />
+    }
+    else if (Facet is not null)
     {
         <MudText Typo="Typo.subtitle2" Class="mb-1">@L[Facet.Label]</MudText>
         <div class="cw-table-panel-list">
@@ -36,6 +47,20 @@
                         <MudChip T="string" Value="op" Text="@L[op]" Variant="Variant.Outlined" Color="Color.Primary" data-operator="@op" />
                     }
                 </MudChipSet>
+            }
+            @if (IsBetween && Field.IsNumber && NumberBounds is { } numbers)
+            {
+                <div class="cw-facet-slider" data-testid="filter-range-slider">
+                    <MudExRangeSlider T="decimal" SizeRange="numbers" Value="NumberSpan(numbers)" StepLength="NumberStep(numbers)" TrackColor="@("var(--mud-palette-lines-default)")"
+                                      OnInput="SlideNumbers" />
+                </div>
+            }
+            else if (IsBetween && IsDate && DateBounds is { } dates)
+            {
+                <div class="cw-facet-slider" data-testid="filter-date-slider">
+                    <MudExDateRangeSlider SizeRange="dates" Value="DateSpan(dates)" StepLength="OneDay" TrackColor="@("var(--mud-palette-lines-default)")"
+                                          TrackTemplate="null" SelectionTemplate="null" ThumbStartTemplate="null" ThumbEndTemplate="null" OnInput="SlideDates" />
+                </div>
             }
             @if (NeedsValue)
             {

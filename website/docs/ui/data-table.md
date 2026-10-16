@@ -179,12 +179,12 @@ Like in QuickGrid every column can be filtered: the filter icon in the header (o
 | Column type | Editor | OData |
 |---|---|---|
 | text | *contains*, *starts with*, *equals* and a value | `contains(tolower(Name),'dri')`, `startswith(...)`, `Name eq 'Drill'` |
-| numbers | *=*, *>*, *<*, *between* | `Rate gt 3`, `Rate ge 3 and Rate le 10` |
-| dates | *is*, *after*, *before*, *between* (whole days) | `Added ge 2026-02-01T00:00:00+01:00 and Added lt ...` |
+| numbers | *=*, *>*, *<*, *between* (a range slider between the smallest and largest value) | `Rate gt 3`, `Rate ge 3 and Rate le 10` |
+| dates | *is*, *after*, *before*, *between* (whole days, a date range slider between the first and last day) | `Added ge 2026-02-01T00:00:00+01:00 and Added lt ...` |
 | enums, yes/no | check boxes, several are alternatives | `(Kind eq 'Hand' or Kind eq 'Power')` |
-| a column with a facet | the facet's options with their counts | the facet's own filter |
+| a column with a facet | the facet's options with their counts; a date or number range facet brings its histogram and slider | the facet's own filter |
 
-**Facets and column filters are one thing.** When the set has a facet on the column's property, the column filter shows that facet's options and counts, and ticking one there or in the facet menu is the same choice (same chip, same URL). A column on a navigation property uses the facet of its key: `Brand.Name` uses a facet on `BrandId`.
+**Facets and column filters are one thing.** When the set has a facet on the column's property, the column filter shows that facet's options and counts, and ticking one there or in the facet menu is the same choice (same chip, same URL). A column on a navigation property uses the facet of its key: `Brand.Name` uses a facet on `BrandId`. The bounds of the *between* sliders come from the server: two one-row queries ordered by the column (`$orderby=Price asc&$top=1`), within the table's own `Filter`.
 
 The filters join the table's OData filter with `and`, so the server answers them, and so does the browser for [client entities](client-entities.md): they only use what both understand (`eq`, `ne`, `gt`, `ge`, `lt`, `le`, `and`, `or`, `not`, `contains`, `startswith`, `endswith`, `tolower`). They belong to the table's state: saved views, shared links and the address bar keep them.
 

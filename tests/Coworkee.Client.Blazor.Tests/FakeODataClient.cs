@@ -26,6 +26,13 @@ internal sealed class FakeODataClient : IODataClient
     {
         Queried?.Invoke(this, query);
         var items = _sets.TryGetValue(entitySet, out var set) ? (T[])set : [];
+        // "Prop asc|desc" with $top, enough for the bounds of a column
+        if (query.OrderBy?.Split(' ') is [var property, var direction] && typeof(T).GetProperty(property) is { } member)
+        {
+            var sorted = direction == "desc" ? items.OrderByDescending(i => member.GetValue(i)) : items.OrderBy(i => member.GetValue(i));
+            items = [.. sorted.Take(query.Top ?? int.MaxValue)];
+        }
+
         return Task.FromResult(new ODataPage<T>(items, items.Length, query.Facets ? _facets : []));
     }
 }
