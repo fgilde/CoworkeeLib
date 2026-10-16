@@ -62,7 +62,7 @@ public sealed class TemplateOptionTests(TemplateFixture template)
         var off = await template.CreateAsync("workflows-off");
         Read(off, "src/Shop.Infrastructure/Shop.Infrastructure.csproj").ShouldNotContain("Coworkee.Workflows");
         Read(off, "src/Shop.Catalog/CatalogModule.cs").ShouldNotContain("AddProductApproval");
-        Read(off, "src/Shop.Web.Client/Pages/Catalog/Products.razor").ShouldNotContain("CoworkeeWorkflowActions");
+        Read(off, "src/Shop.Web.Client/Pages/Catalog/Products.razor").ShouldNotContain("CoworkeeWorkflowColumn");
         File.Exists(Path.Combine(off, "src/Shop.Catalog/Features/Products/ProductApproval.cs")).ShouldBeFalse();
         Directory.Exists(Path.Combine(off, "src/Shop.Api/Workflows")).ShouldBeFalse();
 
@@ -70,7 +70,7 @@ public sealed class TemplateOptionTests(TemplateFixture template)
         Read(on, "src/Shop.Infrastructure/Shop.Infrastructure.csproj").ShouldContain("\"Coworkee.Workflows\"");
         Read(on, "src/Shop.Infrastructure/ShopDatabaseModule.cs").ShouldContain("typeof(Coworkee.Workflows.CoworkeeWorkflowsModule)");
         Read(on, "src/Shop.Catalog/CatalogModule.cs").ShouldContain("context.Services.AddProductApproval();");
-        Read(on, "src/Shop.Web.Client/Pages/Catalog/Products.razor").ShouldContain("<CoworkeeWorkflowActions EntityType=\"Products\"");
+        Read(on, "src/Shop.Web.Client/Pages/Catalog/Products.razor").ShouldContain("<CoworkeeWorkflowColumn T=\"ProductDto\" EntityType=\"Products\"");
         Read(on, "src/Shop.Migrations/DemoSeed.cs").ShouldContain("WorkflowPermissions.View, WorkflowPermissions.Transition");
         Read(on, "src/Shop.Api/Shop.Api.csproj").ShouldContain("\"Coworkee.Workflows.Elsa\"");
         Read(on, "src/Shop.Api/ShopApiModule.cs").ShouldContain("typeof(Coworkee.Workflows.Elsa.CoworkeeWorkflowsElsaModule)");
