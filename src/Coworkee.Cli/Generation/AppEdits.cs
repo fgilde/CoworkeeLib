@@ -60,7 +60,19 @@ internal static class AppEdits
         var index = moduleClass.IndexOf(ConfigureApplication, StringComparison.Ordinal);
         return index < 0
             ? throw new CliException($"The module class does not look generated; register the entity yourself:\n{services}{endpoint}")
-            : moduleClass.Insert(index + ConfigureApplication.Length, endpoint).Insert(index, services);
+            : AddGlobalSearchUsing(moduleClass.Insert(index + ConfigureApplication.Length, endpoint).Insert(index, services), services);
+    }
+
+    private static string AddGlobalSearchUsing(string moduleClass, string services)
+    {
+        const string Using = "using Coworkee.OData.GlobalSearch;\n";
+        if (!services.Contains("AddGlobalSearch<", StringComparison.Ordinal) || moduleClass.Contains(Using, StringComparison.Ordinal))
+        {
+            return moduleClass;
+        }
+
+        var index = moduleClass.IndexOf("using Microsoft.", StringComparison.Ordinal);
+        return index < 0 ? Using + moduleClass : moduleClass.Insert(index, Using);
     }
 
     public static string Normalize(string text) => text.Replace("\r\n", "\n", StringComparison.Ordinal);

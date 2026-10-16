@@ -92,6 +92,9 @@ public sealed class GenerationTests
         var module = Content(files, "ShopSalesModule.cs");
         module.ShouldContain("context.Services.AddODataEntity<Order>(\"Orders\", SalesPermissions.Orders.View);");
         module.ShouldContain("context.Services.AddSingleton<IModelContributor, CustomerModelContributor>();");
+        module.ShouldContain("using Coworkee.OData.GlobalSearch;");
+        module.ShouldContain("context.Services.AddGlobalSearch<Order>(s => s.Fields(e => e.Number, e => e.Note).Page(\"/sales/orders\"));");
+        ServerFiles.Services(Model(new EntitySpec { Name = "Tag", Properties = [new PropertySpec { Name = "Weight", Type = PropertyType.Int }] })).ShouldNotContain("AddGlobalSearch");
         module.ShouldContain("        app.MapOrderEndpoints();\n        app.MapCustomerEndpoints();\n    }");
         Content(files, "Shop.Sales.csproj").ShouldContain("Riok.Mapperly");
         Content(ServerFiles.Module("Shop", "Sales", [Model(Order)]), "Shop.Sales.csproj").ShouldNotContain("Riok.Mapperly");
@@ -131,8 +134,11 @@ public sealed class GenerationTests
 
         var extended = AppEdits.AddToModule(module, ServerFiles.Services(invoice), ServerFiles.Endpoint(invoice));
 
-        extended.ShouldContain("AddODataEntity<Order>(\"Orders\", SalesPermissions.Orders.View);\n        context.Services.AddSingleton<IModelContributor, InvoiceModelContributor>();");
+        extended.ShouldContain(".Page(\"/sales/orders\"));\n        context.Services.AddSingleton<IModelContributor, InvoiceModelContributor>();");
+        extended.ShouldContain("context.Services.AddGlobalSearch<Invoice>(s => s.Fields(e => e.Number).Page(\"/sales/invoices\"));");
         extended.ShouldContain("    {\n        app.MapInvoiceEndpoints();\n        app.MapOrderEndpoints();");
+        AppEdits.AddToModule(module.Replace("using Coworkee.OData.GlobalSearch;\n", string.Empty), ServerFiles.Services(invoice), ServerFiles.Endpoint(invoice))
+            .ShouldContain("using Coworkee.OData.GlobalSearch;\nusing Microsoft.");
         Should.Throw<CliException>(() => AppEdits.AddToModule("class X;", "a", "b"));
     }
 

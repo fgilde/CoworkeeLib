@@ -18,6 +18,7 @@ internal static class ServerFiles
             using Coworkee.Core.Modularity;
             using Coworkee.Infrastructure.Persistence;
             using Coworkee.OData;
+            using Coworkee.OData.GlobalSearch;
             using Microsoft.AspNetCore.Builder;
             using Microsoft.Extensions.DependencyInjection;
             using {{app}}.{{module}}.Domain;
@@ -67,8 +68,16 @@ internal static class ServerFiles
                 context.Services.AddSingleton<IModelContributor, {e.Name}ModelContributor>();
                 context.Services.AddSingleton<IPermissionDefinitionContributor, {e.Name}PermissionDefinitions>();
                 context.Services.AddODataEntity<{e.Name}>("{e.Plural}", {e.Permissions}.View);
-
+        {GlobalSearch(e)}
         """.ReplaceLineEndings("\n");
+
+    /// <summary>Ctrl+K and /search find the entity by its text properties; a hit opens its list searched for it.</summary>
+    public static string GlobalSearch(EntityModel e)
+    {
+        var fields = e.Properties.Where(EntityModel.IsText).Select(p => $"e => e.{p.Name}").ToList();
+        return fields.Count == 0 ? string.Empty
+            : $"        context.Services.AddGlobalSearch<{e.Name}>(s => s.Fields({string.Join(", ", fields)}).Page(\"{e.Route}\"));\n";
+    }
 
     public static string Endpoint(EntityModel e) => $"        app.Map{e.Name}Endpoints();\n";
 
