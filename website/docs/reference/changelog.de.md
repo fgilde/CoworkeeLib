@@ -4,6 +4,11 @@
 
 ## Unveröffentlicht
 
+### Neu
+
+- Workflow-Zustand als Filter auf dem Server: Jede OData-Menge, deren Entität einen Workflow hat, bekommt die virtuellen Eigenschaften `WorkflowState` und `WorkflowAwaitsMe` für `$filter` und `$orderby` (eine nach Mandant gefilterte Unterabfrage oder die `MirrorTo`-Spalte) und eine Facette `WorkflowState` mit den Zuständen der Definition und *Wartet auf meine Genehmigung*; beide brauchen `Workflows.View`. `CoworkeeWorkflowColumn` für `CoworkeeDataTable` filtert, sortiert und gruppiert danach; `WorkflowState<T>.WithColor(...)` färbt einen Zustand. Ersetze `TemplateColumn` + `CoworkeeWorkflowActions` durch `<CoworkeeWorkflowColumn T="..." EntityType="..." />`.
+- OData-Mengen können berechnete Eigenschaften anderer Module tragen (`IODataComputedPropertySource`, `ODataComputedProperty`): in `$filter`/`$orderby` gebunden, nie serialisiert, optional mit Facette. Die OData-Route konfiguriert jetzt die Bibliothek selbst statt Nextendeds `AddODataAuto`.
+
 ### Korrekturen
 
 - `SyncDevelopmentUsersAsync()` läuft für die Migrationen eines lokalen Aspire-Laufs: Das Migrationsprojekt hat kein Startprofil und lief als Production, dort fand der Abgleich nie statt. `AddMigrations` setzt in lokalen Entwicklungsläufen `Coworkee:Identity:SyncDevelopmentUsers`; der Abgleich läuft in Development oder mit dieser Einstellung.

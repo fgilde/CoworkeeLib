@@ -1,0 +1,10 @@
+@using Coworkee.Client.Blazor.Components.Data
+@using MudBlazor
+@using static Coworkee.Client.Blazor.Tests.WorkflowColumnTests
+
+<CoworkeeDataTable T="Ticket" EntitySet="Tickets">
+    <Columns>
+        <PropertyColumn Property="t => t.Title" Title="Title" />
+        <CoworkeeWorkflowColumn T="Ticket" EntityType="Tickets" Title="State" />
+    </Columns>
+</CoworkeeDataTable>

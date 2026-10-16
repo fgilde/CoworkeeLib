@@ -1562,5 +1562,7 @@
   "Changes from this version to the editor": "Différences entre cette version et l’éditeur",
   "Sends the saved version with sample data to your address.": "Envoie la version enregistrée avec des données d’exemple à ton adresse.",
   "The version is in the editor. Save to keep it.": "La version est dans l’éditeur. Enregistre pour la garder.",
-  "Leave without saving? Your changes to this template are lost.": "Quitter sans enregistrer ? Tes modifications de ce modèle seront perdues."
+  "Leave without saving? Your changes to this template are lost.": "Quitter sans enregistrer ? Tes modifications de ce modèle seront perdues.",
+  "Workflow state": "État du workflow",
+  "Awaiting my approval": "En attente de mon approbation"
 }

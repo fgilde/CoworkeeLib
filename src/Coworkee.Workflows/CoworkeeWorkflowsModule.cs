@@ -17,7 +17,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 namespace Coworkee.Workflows;
 
 /// <summary>States, transitions, approvals with deadlines and a history for the entity types an app declares with AddCoworkeeWorkflows.</summary>
-[DependsOn(typeof(CoworkeeRealtimeModule), typeof(CoworkeeNotificationsModule), typeof(CoworkeeIdentityModule))]
+[DependsOn(typeof(Coworkee.OData.CoworkeeODataModule), typeof(CoworkeeRealtimeModule), typeof(CoworkeeNotificationsModule), typeof(CoworkeeIdentityModule))]
 public sealed class CoworkeeWorkflowsModule : CoworkeeModule, IWebModule
 {
     public const string Section = "Coworkee:Workflows";
@@ -31,6 +31,10 @@ public sealed class CoworkeeWorkflowsModule : CoworkeeModule, IWebModule
         services.AddSingleton<IPermissionDefinitionContributor, WorkflowPermissionDefinitions>();
         services.AddScoped<WorkflowEngine>();
         services.AddScoped<ApproverDirectory>();
+        services.AddHttpContextAccessor();
+        services.AddSingleton<WorkflowUser>();
+        services.AddSingleton<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, WorkflowQueryRoots>();
+        services.AddSingleton<Coworkee.OData.Computed.IODataComputedPropertySource, WorkflowODataProperties>();
         services.AddScoped<IRealtimeTopicAuthorizer, WorkflowTopicAuthorizer>();
         services.AddRecurringJob<WorkflowDeadlineJob>(WorkflowDeadlineJob.Id,
             context.Configuration[$"{Section}:DeadlineCron"] is { Length: > 0 } cron ? cron : "*/5 * * * *");

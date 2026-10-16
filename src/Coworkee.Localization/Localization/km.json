@@ -1562,5 +1562,7 @@
   "Changes from this version to the editor": "ការផ្លាស់ប្ដូរពីកំណែនេះទៅកម្មវិធីកែ",
   "Sends the saved version with sample data to your address.": "ផ្ញើកំណែដែលបានរក្សាទុកជាមួយទិន្នន័យគំរូទៅអាសយដ្ឋានរបស់អ្នក។",
   "The version is in the editor. Save to keep it.": "កំណែនៅក្នុងកម្មវិធីកែហើយ។ រក្សាទុកដើម្បីទុកវា។",
-  "Leave without saving? Your changes to this template are lost.": "ចាកចេញដោយមិនរក្សាទុក? ការផ្លាស់ប្ដូររបស់អ្នកលើគំរូនេះនឹងបាត់។"
+  "Leave without saving? Your changes to this template are lost.": "ចាកចេញដោយមិនរក្សាទុក? ការផ្លាស់ប្ដូររបស់អ្នកលើគំរូនេះនឹងបាត់។",
+  "Workflow state": "ស្ថានភាពលំហូរការងារ",
+  "Awaiting my approval": "កំពុងរង់ចាំការអនុម័តរបស់ខ្ញុំ"
 }

@@ -1562,5 +1562,7 @@
   "Changes from this version to the editor": "Zmiany od tej wersji do edytora",
   "Sends the saved version with sample data to your address.": "Wysyła zapisaną wersję z przykładowymi danymi na twój adres.",
   "The version is in the editor. Save to keep it.": "Wersja jest w edytorze. Zapisz, aby ją zachować.",
-  "Leave without saving? Your changes to this template are lost.": "Wyjść bez zapisywania? Twoje zmiany w tym szablonie przepadną."
+  "Leave without saving? Your changes to this template are lost.": "Wyjść bez zapisywania? Twoje zmiany w tym szablonie przepadną.",
+  "Workflow state": "Stan przepływu pracy",
+  "Awaiting my approval": "Czeka na moje zatwierdzenie"
 }

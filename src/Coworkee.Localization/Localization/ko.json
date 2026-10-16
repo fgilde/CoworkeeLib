@@ -1562,5 +1562,7 @@
   "Changes from this version to the editor": "이 버전과 편집기의 차이",
   "Sends the saved version with sample data to your address.": "저장된 버전을 샘플 데이터로 내 주소에 보냅니다.",
   "The version is in the editor. Save to keep it.": "버전이 편집기에 들어갔습니다. 유지하려면 저장하세요.",
-  "Leave without saving? Your changes to this template are lost.": "저장하지 않고 나갈까요? 이 템플릿의 변경 사항이 사라집니다."
+  "Leave without saving? Your changes to this template are lost.": "저장하지 않고 나갈까요? 이 템플릿의 변경 사항이 사라집니다.",
+  "Workflow state": "워크플로 상태",
+  "Awaiting my approval": "내 승인 대기 중"
 }

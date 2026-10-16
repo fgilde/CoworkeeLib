@@ -1562,5 +1562,7 @@
   "Changes from this version to the editor": "Wijzigingen van deze versie naar de editor",
   "Sends the saved version with sample data to your address.": "Stuurt de opgeslagen versie met voorbeeldgegevens naar je adres.",
   "The version is in the editor. Save to keep it.": "De versie staat in de editor. Sla op om haar te bewaren.",
-  "Leave without saving? Your changes to this template are lost.": "Verlaten zonder opslaan? Je wijzigingen aan dit sjabloon gaan verloren."
+  "Leave without saving? Your changes to this template are lost.": "Verlaten zonder opslaan? Je wijzigingen aan dit sjabloon gaan verloren.",
+  "Workflow state": "Workflowstatus",
+  "Awaiting my approval": "Wacht op mijn goedkeuring"
 }

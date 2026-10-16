@@ -66,6 +66,9 @@ public class WorkflowState(string name)
 {
     public string Name { get; } = name;
 
+    /// <summary>A CSS color for the state in facets and filters, e.g. <c>#2e7d32</c> or <c>var(--mud-palette-success)</c>.</summary>
+    public string? Color { get; internal set; }
+
     internal List<Func<WorkflowContext, Task>> OnEnterActions { get; } = [];
 
     internal List<Func<WorkflowContext, Task>> OnExitActions { get; } = [];
@@ -79,6 +82,13 @@ public sealed class WorkflowState<TEntity>(string name) : WorkflowState(name)
     public WorkflowState<TEntity> OnEnter(Func<WorkflowContext<TEntity>, Task> action)
     {
         OnEnterActions.Add(context => action((WorkflowContext<TEntity>)context));
+        return this;
+    }
+
+    /// <summary>A CSS color for the state in facets and filters, e.g. <c>#2e7d32</c> or <c>var(--mud-palette-success)</c>.</summary>
+    public WorkflowState<TEntity> WithColor(string color)
+    {
+        Color = color;
         return this;
     }
 

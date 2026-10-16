@@ -1562,5 +1562,7 @@
   "Changes from this version to the editor": "Ændringer fra denne version til editoren",
   "Sends the saved version with sample data to your address.": "Sender den gemte version med eksempeldata til din adresse.",
   "The version is in the editor. Save to keep it.": "Versionen er i editoren. Gem for at beholde den.",
-  "Leave without saving? Your changes to this template are lost.": "Forlad uden at gemme? Dine ændringer i skabelonen går tabt."
+  "Leave without saving? Your changes to this template are lost.": "Forlad uden at gemme? Dine ændringer i skabelonen går tabt.",
+  "Workflow state": "Workflowstatus",
+  "Awaiting my approval": "Afventer min godkendelse"
 }

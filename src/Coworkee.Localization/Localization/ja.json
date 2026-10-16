@@ -1562,5 +1562,7 @@
   "Changes from this version to the editor": "このバージョンからエディターまでの変更",
   "Sends the saved version with sample data to your address.": "保存されたバージョンをサンプルデータであなたのアドレスに送信します。",
   "The version is in the editor. Save to keep it.": "バージョンをエディターに読み込みました。残すには保存してください。",
-  "Leave without saving? Your changes to this template are lost.": "保存せずに移動しますか？このテンプレートへの変更は失われます。"
+  "Leave without saving? Your changes to this template are lost.": "保存せずに移動しますか？このテンプレートへの変更は失われます。",
+  "Workflow state": "ワークフローの状態",
+  "Awaiting my approval": "自分の承認待ち"
 }

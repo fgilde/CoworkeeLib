@@ -12,6 +12,7 @@ using Coworkee.Identity;
 using Coworkee.Identity.Setup;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.Notifications;
+using Coworkee.OData;
 using Coworkee.Testing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -91,6 +92,27 @@ public sealed class WorkflowApp : DatabaseFixture
         return expense.Id;
     }
 
+    public async Task<Guid> AddTicketAsync(Guid tenantId, string title)
+    {
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, tenantId));
+        await using var scope = App.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<WorkflowTestDbContext>();
+        var ticket = new Ticket { Title = title, TenantId = tenantId };
+        db.Add(ticket);
+        await db.SaveChangesAsync();
+        return ticket.Id;
+    }
+
+    /// <summary>A workflow row written straight into a tenant, e.g. one of another tenant that names a foreign entity id.</summary>
+    public async Task AddWorkflowItemAsync(Guid tenantId, string entityType, Guid entityId, string state)
+    {
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, tenantId));
+        await using var scope = App.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<WorkflowTestDbContext>();
+        db.Add(new WorkflowItem { TenantId = tenantId, EntityType = entityType, EntityId = entityId, State = state, ChangedAt = Clock.GetUtcNow() });
+        await db.SaveChangesAsync();
+    }
+
     public async Task<Expense> ExpenseAsync(Guid id)
     {
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
@@ -138,6 +160,14 @@ public sealed class Expense : AuditedEntity, IMultiTenant
     public Guid TenantId { get; set; }
 }
 
+/// <summary>A workflow without MirrorTo: its OData set reads the state from the workflow tables.</summary>
+public sealed class Ticket : AuditedEntity, IMultiTenant
+{
+    public required string Title { get; set; }
+
+    public Guid TenantId { get; set; }
+}
+
 public sealed class WorkflowTestDbContext(DbContextOptions<WorkflowTestDbContext> options, ICurrentUser currentUser, IEnumerable<IModelContributor> contributors)
     : CoworkeeDbContext(options, currentUser, contributors);
 
@@ -147,7 +177,7 @@ internal sealed class ExpenseModelContributor : IModelContributor
     {
         expense.ToTable("Expenses");
         expense.Property(e => e.Amount).HasPrecision(18, 2);
-    });
+    }).Entity<Ticket>(ticket => ticket.ToTable("Tickets"));
 }
 
 internal sealed class ExpensePermissions : IPermissionDefinitionContributor
@@ -174,12 +204,21 @@ public sealed class TestWorkflowModule : CoworkeeModule
                 e.State("Review").Approval("Approved", "Rejected", a => a.Role("Manager").All().DueIn(TimeSpan.FromDays(2)).RemindAfter(TimeSpan.FromDays(1)).EscalateTo("Auditor"));
                 e.State("Paid").Set(x => x.Paid = true);
             })
+            .Entity<Ticket>("Tickets", t =>
+            {
+                t.Initial("Open");
+                t.Transition("Submit", "Open", "Review");
+                t.State("Review").Approval("Done", "Rejected", a => a.Role("Manager"));
+                t.State("Done").WithColor("#2e7d32");
+            })
             .Entity<Expense>("Trips", e =>
             {
                 e.Initial("Draft");
                 e.Transition("Submit", "Draft", "Review");
                 e.State("Review").Approval("Approved", "Rejected", a => a.Role("Manager").NotByRequester().DueIn(TimeSpan.FromHours(4)).OnTimeout("Expired"));
             }));
+        context.Services.AddODataEntity<Ticket>("Tickets");
+        context.Services.AddODataEntity<Expense>("Expenses");
         context.Services.AddCoworkeeDbContext<WorkflowTestDbContext>((provider, options) =>
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
     }

@@ -1562,5 +1562,7 @@
   "Changes from this version to the editor": "从此版本到编辑器的更改",
   "Sends the saved version with sample data to your address.": "用示例数据将已保存的版本发送到你的地址。",
   "The version is in the editor. Save to keep it.": "该版本已在编辑器中。保存后才会保留。",
-  "Leave without saving? Your changes to this template are lost.": "不保存就离开？你对此模板的更改将丢失。"
+  "Leave without saving? Your changes to this template are lost.": "不保存就离开？你对此模板的更改将丢失。",
+  "Workflow state": "工作流状态",
+  "Awaiting my approval": "等待我审批"
 }

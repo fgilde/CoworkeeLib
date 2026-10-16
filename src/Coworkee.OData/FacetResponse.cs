@@ -45,7 +45,38 @@ internal static class FacetResponse
             result.Add(dto);
         }
 
+        foreach (var property in services.GetRequiredService<Computed.ODataComputedProperties>().Of(typeof(T)).Where(p => p.Facet is not null))
+        {
+            if (property.Permission is null || await services.GetRequiredService<Coworkee.Application.Authorization.IPermissionChecker>().IsGrantedAsync(property.Permission, cancellationToken))
+            {
+                var own = context is not null && context.Groups.ContainsKey(property.Name);
+                result.Add(await ComputedAsync(property, own ? Filter(visible, context!.Without(property.Name), services) : filtered, services, cancellationToken));
+            }
+        }
+
         return result;
+    }
+
+    // ponytail: one count per option; fine for the handful of workflow states, group in the database if options get many
+    private static async Task<FacetGroupDto> ComputedAsync<T>(Computed.ODataComputedProperty property, IQueryable<T> rows, IServiceProvider services, CancellationToken cancellationToken)
+        where T : class
+    {
+        var options = new List<FacetOptionDto>();
+        foreach (var option in property.Facet!.Options)
+        {
+            var count = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(Filter(rows, option.OData, services), cancellationToken);
+            options.Add(new FacetOptionDto(System.Text.Json.JsonSerializer.SerializeToElement(option.Value), option.Label, count > 0, count, option.OData)
+            {
+                Meta = option.Color is null ? null : new Dictionary<string, string> { ["color"] = option.Color },
+            });
+        }
+
+        return new FacetGroupDto(property.Name, property.Facet.Label, property.Name, FacetKind.CheckboxList, FacetOperator.Or, options, true, int.MaxValue)
+        {
+            ValuePath = property.Name,
+            ValueKind = FacetValueKind.Enum,
+            Combine = FacetCombine.Any,
+        };
     }
 
     /// <summary>The rows matching an OData $filter, read the way the entity set's own list reads it.</summary>

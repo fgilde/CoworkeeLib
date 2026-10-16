@@ -24,6 +24,22 @@ public abstract class EntityWorkflow(string entityType)
 
     internal Action<object, string>? Mirror { get; set; }
 
+    /// <summary>The property <see cref="EntityWorkflow{TEntity}.MirrorTo"/> writes the state into.</summary>
+    internal PropertyInfo? MirrorProperty { get; set; }
+
+    /// <summary>Every state the workflow names: the initial one, the declared ones, the ends of transitions and approvals.</summary>
+    public IReadOnlyList<string> StateNames =>
+    [
+        .. new[] { InitialState! }
+            .Concat(States.Select(s => s.Name))
+            .Concat(Transitions.SelectMany(t => t.From.Append(t.To)))
+            .Concat(States.Where(s => s.Step is not null).SelectMany(s => new[] { s.Step!.ApprovedState, s.Step.RejectedState, s.Step.TimeoutState }))
+            .OfType<string>()
+            .Distinct(StringComparer.Ordinal),
+    ];
+
+    internal abstract Type ClrType { get; }
+
     internal abstract Task<object?> FindAsync(CoworkeeDbContext db, Guid id, CancellationToken cancellationToken);
 
     internal abstract WorkflowContext Context(object entity, Guid id, WorkflowMove move, IServiceProvider services, CancellationToken cancellationToken);
@@ -58,6 +74,8 @@ internal sealed record WorkflowMove(string From, string To, string? Transition, 
 public sealed class EntityWorkflow<TEntity>(string entityType) : EntityWorkflow(entityType)
     where TEntity : class
 {
+    internal override Type ClrType => typeof(TEntity);
+
     public EntityWorkflow<TEntity> Initial(string state)
     {
         InitialState = state;
@@ -84,6 +102,7 @@ public sealed class EntityWorkflow<TEntity>(string entityType) : EntityWorkflow(
         var info = (property.Body as MemberExpression)?.Member as PropertyInfo
             ?? throw new ArgumentException("Pass a property, e.g. p => p.Status.", nameof(property));
         Mirror = (entity, state) => info.SetValue(entity, state);
+        MirrorProperty = info;
         return this;
     }
 

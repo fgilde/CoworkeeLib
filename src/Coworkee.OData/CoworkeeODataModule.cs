@@ -11,7 +11,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
 using Nextended.Core.Facets;
-using Nextended.Web.Extensions;
 
 namespace Coworkee.OData;
 
@@ -25,9 +24,10 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
         var services = context.Services;
         var registry = services.Registry();
         services.AddMessagingFromAssembly(typeof(CoworkeeODataModule).Assembly);
-        var model = new Lazy<IEdmModel>(() => BuildModel(registry));
+        services.AddSingleton<Computed.ODataComputedProperties>();
+        services.AddSingleton<IEdmModel>(sp => BuildModel(registry, sp.GetRequiredService<Computed.ODataComputedProperties>()));
+        services.AddSingleton<Microsoft.Extensions.Options.IConfigureOptions<ODataOptions>, Computed.ODataRoute>();
         services.AddTransient<IFacetBuilder>(sp => new FacetBuilder(sp.GetRequiredService<IServiceScopeFactory>(), FacetLiterals.Options(), new FacetLiterals()));
-        services.AddODataAuto(_ => model.Value);
         services.Configure<CoworkeeODataOptions>(context.Configuration.GetSection(CoworkeeODataOptions.Section));
         services.AddDataTransfer();
         services.Configure<ClientEntityOptions>(context.Configuration.GetSection(ClientEntityOptions.Section));
@@ -47,7 +47,7 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
         GlobalSearch.GlobalSearchEndpoints.MapGlobalSearchEndpoints(app);
     }
 
-    private static IEdmModel BuildModel(ODataEntityRegistry registry)
+    private static IEdmModel BuildModel(ODataEntityRegistry registry, Computed.ODataComputedProperties computed)
     {
         var builder = new ODataConventionModelBuilder();
         foreach (var entity in registry.Entities)
@@ -62,6 +62,8 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
             builder.AddEntitySet(entity.EntitySet, type);
         }
 
-        return builder.GetEdmModel();
+        var model = (EdmModel)builder.GetEdmModel();
+        computed.AddTo(model);
+        return model;
     }
 }

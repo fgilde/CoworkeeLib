@@ -20,12 +20,14 @@ internal static class DataGridLayout<T>
     public static string? Key(Column<T> column) =>
         IsProperty(column) ? column.PropertyName : string.IsNullOrEmpty(column.Title) ? null : column.Title;
 
+    /// <summary>A <see cref="PropertyColumn{T, TProperty}"/>, or a column that filters, sorts and groups on a property of the set like one (the workflow column).</summary>
     public static bool IsProperty(Column<T> column) =>
-        column.GetType() is { IsGenericType: true } type && type.GetGenericTypeDefinition() == typeof(PropertyColumn<,>);
+        column is IPropertyLikeColumn || column.GetType() is { IsGenericType: true } type && type.GetGenericTypeDefinition() == typeof(PropertyColumn<,>);
 
     /// <summary>The property type of a property column, without <c>Nullable</c>.</summary>
     public static Type? ValueType(Column<T> column) =>
-        IsProperty(column) ? column.GetType().GetGenericArguments()[1] is var type && Nullable.GetUnderlyingType(type) is { } inner ? inner : type : null;
+        column is IPropertyLikeColumn like ? like.ValueType
+        : IsProperty(column) ? column.GetType().GetGenericArguments()[1] is var type && Nullable.GetUnderlyingType(type) is { } inner ? inner : type : null;
 
     /// <summary>The column filters of the grid; facet markers and filters without a property are left out.</summary>
     public static IEnumerable<IFilterDefinition<T>> Filters(MudDataGrid<T> grid) =>
@@ -149,4 +151,10 @@ internal static class DataGridLayout<T>
     }
 
     private static ParameterState<TValue> State<TValue>(object? state) => (ParameterState<TValue>)state!;
+}
+
+/// <summary>A column without a property of the row type that the table treats like a property column of <see cref="ValueType"/>, named by its PropertyName.</summary>
+internal interface IPropertyLikeColumn
+{
+    Type ValueType { get; }
 }
