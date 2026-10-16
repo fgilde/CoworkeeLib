@@ -49,9 +49,49 @@
   "connect": ("Fragen, Ideen oder Lust zu helfen?" if de else "Questions, ideas or want to help?"),
   "connect_lead": ("Schreib mir oder unterstütze das Projekt. Coworkee bleibt frei und quelloffen." if de else "Write to me or support the project. Coworkee stays free and open source."),
   "close": ("Schließen" if de else "Close"),
-  "prev": ("Zurück" if de else "Previous"),
-  "next": ("Weiter" if de else "Next")
+  "closer": ("Genauer hingeschaut" if de else "A closer look"),
+  "closer_lead": ("Sechs Stellen aus der Demo-App. Ein Klick dreht das Bild um und erklärt, was du siehst." if de else "Six places in the demo app. Click a picture to turn it over and read what it shows."),
+  "turn": ("Umdrehen" if de else "Turn over")
 } %}
+
+{% set closer = [
+  ("reporting-overview-light.webp", "a",
+    ("Berichte" if de else "Reporting"),
+    ("Vertriebsübersicht" if de else "Sales overview"),
+    ("Einer der Berichte, die mit der Demo-App kommen: vier Kennzahlen im Vergleich zu den zwölf Monaten davor, Umsatz pro Monat, Aufträge nach Status und weiter unten Pivot und Tabelle. Solche Berichte bauen die Benutzer selbst im Browser, aus den Entitätsmengen, die du für OData registriert hast, und teilen sie mit Rollen oder der ganzen Organisation. Gerechnet wird in SQL: bei 100.000 Aufträgen braucht ein Widget 9 bis 58 ms." if de else
+     "One of the reports that come with the demo app: four KPIs compared with the twelve months before, revenue by month, orders by status, and a pivot and a table further down. Users build reports like this in the browser from the entity sets you registered for OData, and share them with roles or the whole organisation. The sums run in SQL; on 100,000 orders a widget takes 9 to 58 ms."),
+    "features/reporting/"),
+  ("reporting-phone-light.webp", "p",
+    ("Handy" if de else "Phones"),
+    ("Auf dem Handy" if de else "On a phone"),
+    ("Unter 600 px stellt sich das Layout selbst um: die Navigation wird ein Overlay, Tabellen werden zu Karten und die Widgets eines Berichts stehen untereinander. Die App lässt sich wie eine native installieren und schickt Push-Nachrichten, pro Gerät abschaltbar." if de else
+     "Below 600 px the layout changes by itself: the navigation becomes an overlay, tables turn into cards, and the widgets of a report stack in one column. The app installs like a native one and sends push notifications, switchable per device."),
+    "ui/phones-and-pwa/"),
+  ("reporting-cross-filter-dark.webp", "x",
+    ("Berichte" if de else "Reporting"),
+    ("Kreuzfilter" if de else "Cross filter"),
+    ("Hier wurde der Balken Nord angeklickt. Alle anderen Widgets auf den Aufträgen zeigen jetzt nur noch Nord: das Pivot hat eine Zeile, die Top-Kunden sind andere. Über das Widget-Menü geht es mit denselben Zeilen weiter in die Auftragsliste." if de else
+     "Someone clicked the Nord bar. Every other widget on the sales orders now shows only Nord: the pivot has one row, the top customers changed. The widget menu goes on to the order list with the same rows."),
+    "features/reporting/"),
+  ("palette-dark.webp", "k",
+    ("Admin-Oberfläche" if de else "Admin UI"),
+    ("Befehlspalette" if de else "Command palette"),
+    ("Strg+K öffnet sie auf jeder Seite. Ohne Eingabe zeigt sie Seiten, die der Benutzer öffnen darf, und Aktionen wie Dunkelmodus oder ein anderes Theme; beim Tippen sucht sie auch Datensätze. Eigene Befehle wie <em>New product</em> sind eine Zeile Registrierung." if de else
+     "Ctrl+K opens it on every page. With nothing typed it lists the pages the user may open and actions like dark mode or another theme; typing also searches records. Your own commands, such as <em>New product</em>, take one line to register."),
+    "ui/command-palette/"),
+  ("mcp-ai-window-dark.png", "m",
+    ("KI" if de else "AI"),
+    ("Der Assistent" if de else "The assistant"),
+    ("Der Assistent antwortet aus den Daten der App: für das neueste Produkt hat er die Produkte abgefragt und eine Tabelle gezeigt. Löschen ging erst nach einer Bestätigung, die Chips unter jeder Antwort zeigen, welche Tools liefen. Er arbeitet mit 14 Anbietern, von Anthropic und OpenAI bis zu einem lokalen Ollama." if de else
+     "The assistant answers from the app's own data: for the newest product it queried the products and showed a table. Deleting one needed a confirmation first, and the chips under each answer show which tools ran. It works with 14 providers, from Anthropic and OpenAI to a local Ollama."),
+    "features/ai/"),
+  ("import-columns-light.webp", "i",
+    ("Daten" if de else "Data"),
+    ("Import-Assistent" if de else "Import wizard"),
+    ("Eine CSV mit fünf Spalten, und jede hat ihr Feld über den Namen gefunden. Der Assistent liest CSV, Excel und JSON, erkennt Trennzeichen und Kodierung und prüft die ersten 200 Zeilen, bevor etwas geschrieben wird. Jede Zeile läuft durch deinen eigenen Command, mit derselben Validierung und denselben Rechten wie das Formular." if de else
+     "A CSV with five columns, and each one found its field by name. The wizard reads CSV, Excel and JSON, detects separator and encoding, and tries the first 200 rows before anything is written. Every row goes through your own command, with the same validation and permissions as the form."),
+    "web/import-export/")
+] %}
 
 {% set topics = [
   ("Installation", "getting-started/installation/"),
@@ -272,7 +312,40 @@
     </div>
   </section>
 
-  <section class="cw-section md-typeset" id="gallery">
+  <section class="cw-section md-typeset cw-closer" id="closer">
+    <div class="md-grid">
+      <h2>{{ t.closer }}</h2>
+      <p class="cw-section__lead">{{ t.closer_lead }}</p>
+      <div class="cw-closer__grid">
+        {% for file, area, feature, title, text, href in closer %}
+          <div class="cw-closer__item" style="grid-area: {{ area }}; --i: {{ loop.index0 }}">
+            <button type="button" class="cw-flip" aria-haspopup="dialog" aria-label="{{ title }}, {{ t.turn }}">
+              <img src="{{ ('assets/screenshots/' ~ file) | url }}" alt="" loading="lazy">
+              <span class="cw-flip__tag">{{ feature }}</span>
+            </button>
+            <div class="cw-flip__info" hidden>
+              <p class="cw-flipcard__feature">{{ feature }}</p>
+              <h3>{{ title }}</h3>
+              <p>{{ text }}</p>
+              <a href="{{ (base ~ href) | url }}">{{ t.more }} {% include ".icons/material/arrow-right.svg" %}</a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    <dialog class="cw-flipbox" aria-labelledby="cw-flipbox-title">
+      <div class="cw-flipcard">
+        <div class="cw-flipcard__front"><img alt=""></div>
+        <div class="cw-flipcard__back">
+          <button type="button" class="cw-flipcard__close" aria-label="{{ t.close }}">{% include ".icons/material/close.svg" %}</button>
+          <img class="cw-flipcard__img" alt="">
+          <div class="cw-flipcard__text"></div>
+        </div>
+      </div>
+    </dialog>
+  </section>
+
+  <section class="cw-section cw-section--alt md-typeset" id="gallery">
     <div class="md-grid">
       <h2>{{ t.gallery }}</h2>
       <p class="cw-section__lead">{{ t.gallery_lead }}</p>
@@ -288,7 +361,7 @@
     </div>
   </section>
 
-  <section class="cw-section cw-section--alt md-typeset">
+  <section class="cw-section md-typeset">
     <div class="md-grid">
       <div class="md-content cw-overview" data-md-component="content">
         <article class="md-content__inner md-typeset">{{ page.content }}</article>
@@ -296,7 +369,7 @@
     </div>
   </section>
 
-  <section class="cw-section md-typeset" id="contact">
+  <section class="cw-section cw-section--alt md-typeset" id="contact">
     <div class="md-grid">
       <h2>{{ t.connect }}</h2>
       <p class="cw-section__lead">{{ t.connect_lead }}</p>
@@ -308,13 +381,6 @@
     </div>
   </section>
 
-  <dialog class="cw-lightbox" aria-label="{{ t.gallery }}">
-    <img alt="">
-    <p></p>
-    <button type="button" class="cw-lightbox__close" aria-label="{{ t.close }}">{% include ".icons/material/close.svg" %}</button>
-    <button type="button" class="cw-lightbox__prev" aria-label="{{ t.prev }}">{% include ".icons/material/chevron-left.svg" %}</button>
-    <button type="button" class="cw-lightbox__next" aria-label="{{ t.next }}">{% include ".icons/material/chevron-right.svg" %}</button>
-  </dialog>
 {% endblock %}
 
 {% block container %}{% endblock %}
@@ -350,28 +416,54 @@
       });
 
 
-      const box = document.querySelector(".cw-lightbox");
-      const img = box.querySelector("img");
-      const text = box.querySelector("p");
-      let items = [], index = 0;
-      const show = i => {
-        index = (i + items.length) % items.length;
-        img.src = items[index].href;
-        img.alt = text.textContent = items[index].dataset.caption || "";
+      // a closer look: the screenshots come in once, a click turns one over into a large card with its story on the back
+      const closer = document.querySelector(".cw-closer");
+      const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if ("IntersectionObserver" in window && !still) {
+        closer.classList.add("is-waiting");
+        new IntersectionObserver((entries, io) => {
+          if (entries.some(entry => entry.isIntersecting)) { closer.classList.remove("is-waiting"); io.disconnect(); }
+        }, { threshold: .2 }).observe(closer.querySelector(".cw-closer__grid"));
+      }
+      const flipbox = closer.querySelector(".cw-flipbox");
+      const card = flipbox.querySelector(".cw-flipcard");
+      let opened = null, flight = null;
+      const from = thumb => {
+        const a = thumb.getBoundingClientRect(), b = card.getBoundingClientRect();
+        const dx = a.left + a.width / 2 - (b.left + b.width / 2), dy = a.top + a.height / 2 - (b.top + b.height / 2);
+        return `translate(${dx}px, ${dy}px) scale(${a.width / b.width}, ${a.height / b.height}) rotateY(0deg)`;
       };
-      document.addEventListener("click", e => {
-        const link = e.target.closest(".cw-zoom");
-        if (!link) return;
-        e.preventDefault();
-        const group = link.closest(".cw-gallery") || link.closest(".cw-section");
-        items = [...group.querySelectorAll(".cw-zoom")];
-        show(items.indexOf(link));
-        box.showModal();
+      const flipTo = (thumb, back) => {
+        flight?.cancel();
+        const frames = [{ transform: from(thumb) }, { transform: "translate(0, 0) scale(1, 1) rotateY(180deg)" }];
+        flight = card.animate(back ? frames.reverse() : frames, { duration: 650, easing: "cubic-bezier(.2, .8, .2, 1)", fill: back ? "forwards" : "none" });
+        return flight.finished;
+      };
+      closer.addEventListener("click", e => {
+        const thumb = e.target.closest(".cw-flip");
+        if (!thumb) return;
+        const src = thumb.querySelector("img").getAttribute("src");
+        flipbox.querySelector(".cw-flipcard__front img").src = src;
+        flipbox.querySelector(".cw-flipcard__img").src = src;
+        const text = flipbox.querySelector(".cw-flipcard__text");
+        text.innerHTML = thumb.nextElementSibling.innerHTML;
+        text.querySelector("h3").id = "cw-flipbox-title";
+        opened = thumb;
+        flipbox.showModal();
+        if (!still) flipTo(thumb, false).catch(() => {});
       });
-      box.querySelector(".cw-lightbox__close").addEventListener("click", () => box.close());
-      box.querySelector(".cw-lightbox__prev").addEventListener("click", () => show(index - 1));
-      box.querySelector(".cw-lightbox__next").addEventListener("click", () => show(index + 1));
-      box.addEventListener("click", e => { if (e.target === box) box.close(); });
+      const closeCard = async () => {
+        if (!opened) return;
+        const thumb = opened;
+        opened = null;
+        if (!still) await flipTo(thumb, true).catch(() => {});
+        flipbox.close();
+        flight?.cancel();
+        thumb.focus();
+      };
+      flipbox.addEventListener("cancel", e => { e.preventDefault(); closeCard(); });
+      flipbox.addEventListener("click", e => { if (e.target === flipbox || e.target.closest(".cw-flipcard__close")) closeCard(); });
+
       // the contact widgets take the Ocean colors and fade in once when they come into view
       const connect = document.querySelector(".cw-connect");
       const ocean = new CSSStyleSheet();
@@ -390,10 +482,6 @@
         }, { threshold: .15 }).observe(connect);
       }
 
-      box.addEventListener("keydown", e => {
-        if (e.key === "ArrowLeft") show(index - 1);
-        if (e.key === "ArrowRight") show(index + 1);
-      });
     })();
   </script>
 {% endblock %}

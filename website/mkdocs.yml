@@ -48,9 +48,10 @@ hooks:
 extra_css:
   - assets/extra.css
 
-# only does something on the page of the starter specs
+# gallery.js only does something on the page of the starter specs, lightbox.js where screenshots can be enlarged
 extra_javascript:
   - assets/gallery.js
+  - assets/lightbox.js
 
 plugins:
   - search
