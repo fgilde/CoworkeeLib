@@ -1569,5 +1569,8 @@
   "The version is in the editor. Save to keep it.": "バージョンをエディターに読み込みました。残すには保存してください。",
   "Leave without saving? Your changes to this template are lost.": "保存せずに移動しますか？このテンプレートへの変更は失われます。",
   "Workflow state": "ワークフローの状態",
-  "Awaiting my approval": "自分の承認待ち"
+  "Awaiting my approval": "自分の承認待ち",
+  "Records": "レコード",
+  "Inbox": "受信トレイ",
+  "Open in a new tab": "新しいタブで開く"
 }

@@ -1569,5 +1569,8 @@
   "The version is in the editor. Save to keep it.": "버전이 편집기에 들어갔습니다. 유지하려면 저장하세요.",
   "Leave without saving? Your changes to this template are lost.": "저장하지 않고 나갈까요? 이 템플릿의 변경 사항이 사라집니다.",
   "Workflow state": "워크플로 상태",
-  "Awaiting my approval": "내 승인 대기 중"
+  "Awaiting my approval": "내 승인 대기 중",
+  "Records": "레코드",
+  "Inbox": "받은 편지함",
+  "Open in a new tab": "새 탭에서 열기"
 }

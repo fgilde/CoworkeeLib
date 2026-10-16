@@ -1569,5 +1569,8 @@
   "The version is in the editor. Save to keep it.": "La versione è nell’editor. Salva per tenerla.",
   "Leave without saving? Your changes to this template are lost.": "Uscire senza salvare? Le tue modifiche a questo modello andranno perse.",
   "Workflow state": "Stato del workflow",
-  "Awaiting my approval": "In attesa della mia approvazione"
+  "Awaiting my approval": "In attesa della mia approvazione",
+  "Records": "Record",
+  "Inbox": "Posta in arrivo",
+  "Open in a new tab": "Apri in una nuova scheda"
 }

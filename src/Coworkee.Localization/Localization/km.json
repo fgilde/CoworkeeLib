@@ -1569,5 +1569,8 @@
   "The version is in the editor. Save to keep it.": "កំណែនៅក្នុងកម្មវិធីកែហើយ។ រក្សាទុកដើម្បីទុកវា។",
   "Leave without saving? Your changes to this template are lost.": "ចាកចេញដោយមិនរក្សាទុក? ការផ្លាស់ប្ដូររបស់អ្នកលើគំរូនេះនឹងបាត់។",
   "Workflow state": "ស្ថានភាពលំហូរការងារ",
-  "Awaiting my approval": "កំពុងរង់ចាំការអនុម័តរបស់ខ្ញុំ"
+  "Awaiting my approval": "កំពុងរង់ចាំការអនុម័តរបស់ខ្ញុំ",
+  "Records": "កំណត់ត្រា",
+  "Inbox": "ប្រអប់សំបុត្រ",
+  "Open in a new tab": "បើកក្នុងផ្ទាំងថ្មី"
 }

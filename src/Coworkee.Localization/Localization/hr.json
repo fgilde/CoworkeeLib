@@ -1569,5 +1569,8 @@
   "The version is in the editor. Save to keep it.": "Verzija je u uređivaču. Spremi je da je zadržiš.",
   "Leave without saving? Your changes to this template are lost.": "Napustiti bez spremanja? Tvoje promjene ovog predloška bit će izgubljene.",
   "Workflow state": "Stanje tijeka rada",
-  "Awaiting my approval": "Čeka moje odobrenje"
+  "Awaiting my approval": "Čeka moje odobrenje",
+  "Records": "Zapisi",
+  "Inbox": "Pristigla pošta",
+  "Open in a new tab": "Otvori u novoj kartici"
 }

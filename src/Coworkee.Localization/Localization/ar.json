@@ -1569,5 +1569,8 @@
   "The version is in the editor. Save to keep it.": "الإصدار في المحرر الآن. احفظه للاحتفاظ به.",
   "Leave without saving? Your changes to this template are lost.": "المغادرة دون حفظ؟ ستضيع تغييراتك على هذا القالب.",
   "Workflow state": "حالة سير العمل",
-  "Awaiting my approval": "بانتظار موافقتي"
+  "Awaiting my approval": "بانتظار موافقتي",
+  "Records": "السجلات",
+  "Inbox": "البريد الوارد",
+  "Open in a new tab": "فتح في علامة تبويب جديدة"
 }
