@@ -1,6 +1,6 @@
 # CONTINUE – handover for the next agent
 
-State of the Coworkee library as of 2026-10-16: everything below is merged on `main` and pushed. Released: **0.0.1.28** on nuget.org and `@coworkee/client` / `@coworkee/airworks` `0.0.1028` on npm (trusted publishing works). 0.0.1.24 = round of 2026-10-15, 0.0.1.26 = round 7, 0.0.1.27 = link fix, 0.0.1.28 = round 8 (dashboard report, global search, editors, Elsa Studio). Demo and Sharemee are on 0.0.1.28 (`master`, pushed).
+State of the Coworkee library as of 2026-10-16 evening: everything below is merged on `main` and pushed. Released: **0.0.1.30** on nuget.org and `@coworkee/client` / `@coworkee/airworks` `0.0.1030` on npm. 0.0.1.24 = round of 2026-10-15, 0.0.1.26 = round 7, 0.0.1.27 = link fix, 0.0.1.28 = round 8 (dashboard report, global search, editors, Elsa Studio), 0.0.1.29 = workflow state filter/facet/column + dev user sync under Aspire, 0.0.1.30 = undo/restore from the audit log. Demo (`master` d20ef72) and Sharemee (`master` da80836) build against the local pack of main and are pushed; the demo's AirWorks client still pins `@coworkee/*` 0.0.1028 (bump when touching it).
 
 ## Repositories
 | Repo | Local path | Remote / branch |
@@ -180,3 +180,10 @@ Docs `website/docs/web/global-search*.md`; changelog *Unreleased*; upgrade rule 
 - Not built: MySQL (no EF Core 10 Pomelo), many-to-many in specs, report versioning/public link/map widget, QueryBuilder OData-text import and drag reorder; deploy: `hosting/deployment.md` lists what is verified.
 - Flaky under load: Keycloak container start in Aspire tests.
 - bUnit tests that find an element and act on it later can hit a stale handler while MudEx `ObjectEdit` re-renders (debounced, 50 ms, also applies `IgnoreIf` conditions a moment after the first render): wrap find and act in `cut.InvokeAsync` and wait for the condition (see `UserAdministrationTests`, `MailTemplatesPageTests`).
+
+## After 0.0.1.28 (released in 0.0.1.29 and 0.0.1.30)
+- Workflow state is filterable/sortable/facetable on every workflow-enabled OData set (`WorkflowState`, `WorkflowAwaitsMe`, computed OData properties in `Coworkee.OData/Computed`), `CoworkeeWorkflowColumn`; demo products use it, sales orders (client entity) mirror into `ApprovalState`.
+- Demo got entity history (products, brands, sales orders; products/brands soft delete) and the webhooks module with a disabled example endpoint.
+- Audit log page: undo a change / restore the state before / restore a soft-deleted record / open record history, via the history restore modes (`After`, `Before`, `Undo`) and `GET /api/v1/history`. Not done: audit actions in `@coworkee/airworks`; no concurrency check between preview and restore.
+- Studio welcome tiles have short descriptions. MudEx 9.11.4 adopted (no date slider step workaround, `AriaLabelStart`/`AriaLabelEnd`).
+- Machine of the owner is low on memory: run one app host / heavy test run at a time; Claude Code reaps background app hosts under memory pressure.
