@@ -14,6 +14,10 @@ The *Keycloak* button on the sign-in page takes the same users with the same pas
 The AirWorks web desktop *myapp-airworks* signs in the same way (it is a second client of the same sign-in) and works on the same data.
 
 <!--#endif -->
+<!--#if (withElsaStudio) -->
+The workflow designer *myapp-elsastudio* (Elsa Studio, *Workflow designer* in the app's navigation) signs in the same way; it needs the permission `Workflows.Elsa.Manage`, which administrators have.
+
+<!--#endif -->
 <!--#if (registration) -->
 Visitors can also create an account on the sign-in page (setting `Account.AllowRegistration`).
 

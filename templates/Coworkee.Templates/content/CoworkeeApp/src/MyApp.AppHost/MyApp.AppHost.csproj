@@ -27,5 +27,8 @@
     <!--#if (airworks) -->
     <ProjectReference Include="..\MyApp.AirWorks\MyApp.AirWorks.csproj" />
     <!--#endif -->
+    <!--#if (withElsaStudio) -->
+    <ProjectReference Include="..\MyApp.ElsaStudio\MyApp.ElsaStudio.csproj" />
+    <!--#endif -->
   </ItemGroup>
 </Project>
