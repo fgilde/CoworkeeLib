@@ -1,4 +1,3 @@
-@page "/admin/scopes"
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + IdentityPermissions.Clients.Manage)]
 
 <PageHeader Title="Scopes" Description="What clients may ask for; the resources of a scope become the audiences of the access token. openid, profile, email, roles and offline_access are built in." />

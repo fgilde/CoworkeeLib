@@ -9,7 +9,7 @@ namespace Coworkee.Client.Blazor.CommandPalette;
 
 /// <summary>The pages of the navigation the user may open, placed and hidden like in the menu.</summary>
 internal sealed class PagesPaletteProvider(
-    IEnumerable<INavigationContributor> contributors, IOptions<NavigationMenuOptions> menu, AuthenticationStateProvider authentication,
+    IEnumerable<INavigationContributor> contributors, IOptions<NavigationMenuOptions> menu, AuthenticationStateProvider authentication, CoworkeePages pageLinks,
     IAuthorizationService authorization, Features.FeatureStore features, CoworkeeLocalizer l, NavigationManager nav) : ICommandPaletteProvider
 {
     public const string Group = "Pages";
@@ -18,7 +18,7 @@ internal sealed class PagesPaletteProvider(
     {
         var options = menu.Value;
         var user = (await authentication.GetAuthenticationStateAsync()).User;
-        var allowed = await NavigationAccess.AllowedAsync(contributors.SelectMany(c => c.Items), user, authorization, features);
+        var allowed = NavigationAccess.Linked(await NavigationAccess.AllowedAsync(contributors.SelectMany(c => c.Items), user, authorization, features), pageLinks, options);
         var pages = allowed.Select(options.Arrange)
             .Where(i => !options.Hidden.Contains(i.Href))
             .Select(i => new CommandPaletteItem(Group, l[i.Title])

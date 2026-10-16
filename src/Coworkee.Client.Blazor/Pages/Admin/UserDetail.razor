@@ -1,11 +1,10 @@
-@page "/admin/users/{Id:guid}"
 @attribute [Authorize(Policy = "perm:" + IdentityPermissions.Users.View)]
 @using MudBlazor.Extensions.Components.ObjectEdit
 @using MudBlazor.Extensions.Components.ObjectEdit.Options
 
 <PageTitle>@(_user?.Email ?? "User")</PageTitle>
-<EntityWatch EntityType="User" EntityId="Id" ReturnHref="/admin/users" />
-<MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" Href="/admin/users" Class="mb-2">@L["Users"]</MudButton>
+<EntityWatch EntityType="User" EntityId="Id" ReturnHref="@Links.Href("/admin/users")" />
+<MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" Href="@Links.Href("/admin/users")" Class="mb-2">@L["Users"]</MudButton>
 
 @if (_error is not null)
 {
@@ -118,7 +117,7 @@ else
                     }
                     @foreach (var group in _user.Groups)
                     {
-                        <MudChip T="string" Size="Size.Small" Href="/admin/groups" Icon="@Icons.Material.Outlined.Groups">@group.Name</MudChip>
+                        <MudChip T="string" Size="Size.Small" Href="@Links.Href("/admin/groups")" Icon="@Icons.Material.Outlined.Groups">@group.Name</MudChip>
                     }
                 }
             </MudPaper>

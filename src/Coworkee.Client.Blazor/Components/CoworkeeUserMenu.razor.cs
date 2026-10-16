@@ -11,6 +11,8 @@ public partial class CoworkeeUserMenu : IDisposable
 
     [Inject] private CoworkeeClientOptions Options { get; set; } = null!;
 
+    [Inject] private Navigation.CoworkeePages Links { get; set; } = null!;
+
     [Inject] private NavigationManager Nav { get; set; } = null!;
 
     [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;

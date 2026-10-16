@@ -23,6 +23,8 @@ public partial class UserDetail
 
     [Inject] private IDialogService Dialogs { get; set; } = null!;
 
+    [Inject] private Navigation.CoworkeePages Links { get; set; } = null!;
+
     [Inject] private NavigationManager Nav { get; set; } = null!;
 
     [Inject] private UserCards Cards { get; set; } = null!;
@@ -161,7 +163,7 @@ public partial class UserDetail
 
         if (await Snackbar.RunAsync(() => Api.DeleteUserAsync(Id), L["User deleted"]))
         {
-            Nav.NavigateTo("/admin/users");
+            Nav.NavigateTo(Links.Href("/admin/users")!);
         }
     }
 

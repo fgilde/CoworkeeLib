@@ -6,6 +6,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Breaking changes
 
+- **Library pages under their own prefix**: admin pages of the library moved from `/admin/...` to `/cw/admin/...` (`CoworkeeClientOptions.PagePrefix`, `""` keeps the old addresses); old addresses go on to the new ones. The library pages have no `@page` routes any more, one catch-all page (`/{*Path}`) renders them: an app with its own catch-all page gets an ambiguous route. Apps can replace or turn off pages by key (`options.Pages`), see [Replacing components](../ui/customizing.md#pages-of-the-library).
 - **Migration needed**: new tables `cw.PushSubscriptions` (Notifications), `cw.DataTransferJobs` and `cw.ImportProfiles` (OData, so every app). Workflows and Webhooks bring their own tables when an app adds them.
 - **`ICoworkeeApi`** gained `AddMailTemplateLanguageAsync`, `GetPushSettingsAsync`, `SavePushSubscriptionAsync` and `DeletePushSubscriptionAsync`; own implementations add them.
 - **`Notification`** derives from `AggregateRoot` now (it raises `NotificationCreated` while push is configured). No schema change from that.

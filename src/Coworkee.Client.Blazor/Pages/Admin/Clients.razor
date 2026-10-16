@@ -1,4 +1,3 @@
-@page "/admin/clients"
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + IdentityPermissions.Clients.Manage)]
 
 <PageHeader Title="Applications" Description="OpenID Connect clients that sign users in with this installation. Clients from the configuration change only there." />

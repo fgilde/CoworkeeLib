@@ -16,6 +16,8 @@ public partial class NotificationBell : IDisposable
 
     [Inject] private NotificationCenter Center { get; set; } = null!;
 
+    [Inject] private Navigation.CoworkeePages Links { get; set; } = null!;
+
     [Inject] private NavigationManager Nav { get; set; } = null!;
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
@@ -82,7 +84,7 @@ public partial class NotificationBell : IDisposable
 
     private Task NavigateToAll()
     {
-        Nav.NavigateTo("/notifications");
+        Nav.NavigateTo(Links.Href("/notifications")!);
         return Task.CompletedTask;
     }
 

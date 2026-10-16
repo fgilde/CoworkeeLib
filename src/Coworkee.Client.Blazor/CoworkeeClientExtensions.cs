@@ -87,6 +87,12 @@ public static class CoworkeeClientExtensions
         services.AddCascadingAuthenticationState();
         services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         services.AddScoped<IAuthorizationHandler, PermissionHandler>();
+        foreach (var page in Navigation.LibraryPages.All)
+        {
+            services.AddSingleton(page);
+        }
+
+        services.AddSingleton<Navigation.CoworkeePages>();
         services.AddSingleton<INavigationContributor, AdminNavigation>();
         services.AddSingleton<INavigationContributor, Navigation.ApiDocsNavigation>();
         services.AddOptions<Navigation.NavigationMenuOptions>();

@@ -1,4 +1,3 @@
-@page "/admin/users"
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + IdentityPermissions.Users.View)]
 
 <PageHeader Title="Users" Description="Accounts of this organisation, their roles and whether they may sign in." />
@@ -24,7 +23,7 @@
                    CreateText="New user" CreatePermission="@IdentityPermissions.Users.Manage" OnCreate="CreateAsync">
     <Columns>
         <PropertyColumn Property="u => u.Email" Title="@L["Email"]">
-            <CellTemplate><MudLink Href="@($"/admin/users/{context.Item.Id}")" data-user="@context.Item.Email">@context.Item.Email</MudLink></CellTemplate>
+            <CellTemplate><MudLink Href="@Links.Href($"/admin/users/{context.Item.Id}")" data-user="@context.Item.Email">@context.Item.Email</MudLink></CellTemplate>
         </PropertyColumn>
         <PropertyColumn Property="u => u.LastName" Title="@L["Name"]">
             <CellTemplate>@context.Item.Name</CellTemplate>

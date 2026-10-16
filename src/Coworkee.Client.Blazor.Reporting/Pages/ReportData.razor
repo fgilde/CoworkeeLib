@@ -1,4 +1,3 @@
-@page "/reports/data/{EntitySet}"
 @attribute [Authorize(Policy = Coworkee.Client.Blazor.Security.PermissionPolicy.Prefix + ReportPermissions.View)]
 
 <PageHeader Title="@(_source?.Label ?? EntitySet)" Description="Rows behind a report widget, with its filter as facet." />

@@ -1,4 +1,3 @@
-@page "/admin/roles"
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + IdentityPermissions.Roles.View)]
 
 <PageHeader Title="Roles" Description="Roles bundle permissions; users and groups get roles." />
@@ -8,7 +7,7 @@
     <Columns>
         <PropertyColumn Property="r => r.Name" Title="@L["Name"]">
             <CellTemplate>
-                <MudLink Href="@($"/admin/roles/{context.Item.Id}")">@context.Item.Name</MudLink>
+                <MudLink Href="@Links.Href($"/admin/roles/{context.Item.Id}")">@context.Item.Name</MudLink>
                 @if (context.Item.IsSystem)
                 {
                     <MudChip T="string" Size="Size.Small">@L["system"]</MudChip>

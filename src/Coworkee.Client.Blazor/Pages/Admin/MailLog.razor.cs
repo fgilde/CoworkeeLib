@@ -11,11 +11,13 @@ public partial class MailLog
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
+    [Inject] private Navigation.CoworkeePages Links { get; set; } = null!;
+
     [Inject] private NavigationManager Navigation { get; set; } = null!;
 
     [SupplyParameterFromQuery(Name = "campaign")] private Guid? Campaign { get; set; }
 
-    private void ClearCampaign() => Navigation.NavigateTo("/admin/mail/log");
+    private void ClearCampaign() => Navigation.NavigateTo(Links.Href("/admin/mail/log")!);
 
     private static Color ColorFor(OutgoingMailStatus status) => status switch
     {

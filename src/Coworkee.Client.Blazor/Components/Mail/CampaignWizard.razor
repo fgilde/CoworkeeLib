@@ -20,7 +20,7 @@
                     <MudSelectItem T="string" Value="@template.Name">@template.DisplayName</MudSelectItem>
                 }
             </MudSelect>
-            <MudLink Href="/admin/mail/templates" Target="_blank" Typo="Typo.caption">@L["New template"]</MudLink>
+            <MudLink Href="@Links.Href("/admin/mail/templates")" Target="_blank" Typo="Typo.caption">@L["New template"]</MudLink>
             <MudTextField T="string" @bind-Value="_name" Immediate="true" Label="@L["Name"]" Required="true" MaxLength="256" Variant="Variant.Outlined" Margin="Density.Margin"
                           Class="mt-3" data-testid="campaign-name" />
         </div>

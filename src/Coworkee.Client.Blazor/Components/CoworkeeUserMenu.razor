@@ -15,8 +15,8 @@
                 </MudButton>
             </ActivatorContent>
             <ChildContent>
-                <MudMenuItem Href="/profile" Icon="@Icons.Material.Outlined.Badge">@L["My profile"]</MudMenuItem>
-                <MudMenuItem Href="/profile/settings" Icon="@Icons.Material.Outlined.ManageAccounts">@L["My settings"]</MudMenuItem>
+                <MudMenuItem Href="@Links.Href("/profile")" Icon="@Icons.Material.Outlined.Badge">@L["My profile"]</MudMenuItem>
+                <MudMenuItem Href="@Links.Href("/profile/settings")" Icon="@Icons.Material.Outlined.ManageAccounts">@L["My settings"]</MudMenuItem>
                 @if (context.User.FindFirst("manage_url")?.Value is { } manage)
                 {
                     <MudMenuItem Href="@manage" Target="_blank" Icon="@Icons.Material.Outlined.Security">@L["Password and security"]</MudMenuItem>

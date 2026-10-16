@@ -6,6 +6,7 @@
 
 ### Breaking Changes
 
+- **Seiten der Bibliothek unter eigenem Präfix**: die Admin-Seiten der Bibliothek liegen jetzt unter `/cw/admin/...` statt `/admin/...` (`CoworkeeClientOptions.PagePrefix`, `""` behält die alten Adressen); alte Adressen leiten weiter. Die Seiten der Bibliothek haben keine `@page`-Routen mehr, eine Sammelseite (`/{*Path}`) zeigt sie: eine App mit eigener Sammelseite bekommt eine mehrdeutige Route. Apps ersetzen oder schalten Seiten per Schlüssel ab (`options.Pages`), siehe [Komponenten ersetzen](../ui/customizing.md#seiten-der-bibliothek).
 - **Migration nötig**: neue Tabellen `cw.PushSubscriptions` (Notifications), `cw.DataTransferJobs` und `cw.ImportProfiles` (OData, also jede App). Workflows und Webhooks bringen eigene Tabellen mit, wenn eine App sie aufnimmt.
 - **`ICoworkeeApi`** hat `AddMailTemplateLanguageAsync`, `GetPushSettingsAsync`, `SavePushSubscriptionAsync` und `DeletePushSubscriptionAsync` dazubekommen; eigene Implementierungen ergänzen sie.
 - **`Notification`** erbt jetzt von `AggregateRoot` (sie löst `NotificationCreated` aus, solange Push eingerichtet ist). Das Schema ändert sich dadurch nicht.
