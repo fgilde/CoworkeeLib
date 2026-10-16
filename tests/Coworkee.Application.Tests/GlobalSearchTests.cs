@@ -149,9 +149,9 @@ public sealed class GlobalSearchTests
     {
         var permissions = Substitute.For<IPermissionChecker>();
         permissions.IsGrantedAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(call => granted is null || granted.Contains(call.Arg<string>()));
-        var scopes = new ServiceCollection().BuildServiceProvider().GetRequiredService<IServiceScopeFactory>();
+        var services = new ServiceCollection().AddSingleton(permissions).BuildServiceProvider();
         var options = Options.Create(new GlobalSearchOptions { ProviderTimeout = timeout ?? TimeSpan.FromSeconds(5) });
-        return new GlobalSearcher(providers, permissions, scopes, options, NullLogger<GlobalSearcher>.Instance);
+        return new GlobalSearcher(providers, services, services.GetRequiredService<IServiceScopeFactory>(), options, NullLogger<GlobalSearcher>.Instance);
     }
 
     private sealed class FakeProvider(string name, TimeSpan delay, params string[] titles) : IGlobalSearchProvider

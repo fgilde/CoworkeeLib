@@ -23,11 +23,13 @@ public sealed class GlobalSearchOptions
 
 /// <summary>Runs the providers the current user may use side by side and hands out their hits as they come.</summary>
 public sealed class GlobalSearcher(
-    IEnumerable<IGlobalSearchProvider> providers, IPermissionChecker permissions, IServiceScopeFactory scopes, IOptions<GlobalSearchOptions> options,
+    IEnumerable<IGlobalSearchProvider> providers, IServiceProvider services, IServiceScopeFactory scopes, IOptions<GlobalSearchOptions> options,
     ILogger<GlobalSearcher> logger)
 {
     public async Task<IReadOnlyList<IGlobalSearchProvider>> AvailableAsync(CancellationToken cancellationToken)
     {
+        // resolved on use like the authorization middleware: hosts without the identity module still build
+        var permissions = services.GetRequiredService<IPermissionChecker>();
         var available = new List<IGlobalSearchProvider>();
         foreach (var provider in providers)
         {

@@ -44,6 +44,7 @@ internal static partial class DocsSearch
         ("OData and facets", "web/odata/"),
         ("Import and export", "web/import-export/"),
         ("Response filters", "web/response-filters/"),
+        ("Global search", "web/global-search/"),
         ("SDKs", "web/sdk/"),
         ("AirWorks client", "web/airworks/"),
         ("Permissions", "security/permissions/"),
