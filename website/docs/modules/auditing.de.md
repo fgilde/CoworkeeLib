@@ -35,6 +35,8 @@ Im Client schaltest du entweder die Zeilenaktion einer Tabelle ein oder setzt di
 - Für den Verlauf brauchst du `Audit.View` und die Leseberechtigung des Entity-Sets, fürs Wiederherstellen die registrierte Berechtigung. Alles bleibt im Mandanten des Benutzers.
 - `[Sensitive]`-Felder erscheinen als `***` und werden nie zurückgeschrieben; Felder, die das OData-Set verbirgt, tauchen im Verlauf nicht auf.
 
-Die Endpunkte liegen unter `/api/v1/history/{entitySet}`: `GET /{id}`, `POST /{id}/preview`, `POST /{id}/restore` und `GET /deleted`.
+Das Audit-Log (`/admin/audit`) bietet dieselben Aktionen pro Eintrag, wenn dessen Typ zu so einem Set gehört: Öffne eine Zeile und wähle **Diese Änderung rückgängig machen** (nur die Felder dieses Eintrags gehen zurück, spätere Änderungen an anderen Feldern bleiben), **Stand vor dieser Änderung wiederherstellen** (dieser Eintrag und alles danach wird zurückgerollt), **Datensatz wiederherstellen** beim Löschen eines Soft-Delete-Datensatzes oder **Verlauf des Datensatzes öffnen**. Alle zeigen dieselbe Vorschau und fragen nach. Hat ein späterer Eintrag ein Feld geändert, das ein Rückgängigmachen zurücksetzt, markiert die Vorschau das Feld mit *Später geändert* und warnt dich, dass der neuere Wert ersetzt wird. Ohne die Berechtigung zum Wiederherstellen siehst du nur den Verlauf; Einträge anderer Typen zeigen nichts.
+
+Die Endpunkte liegen unter `/api/v1/history`: `GET /` (die Sets, die du lesen darfst, mit `CanRestore`) und pro Set `/{entitySet}`: `GET /{id}`, `POST /{id}/preview`, `POST /{id}/restore` und `GET /deleted`. Vorschau und Wiederherstellen nehmen `{ entryId, property?, mode }` mit `mode` `After` (Standard, der Stand direkt nach dem Eintrag), `Before` oder `Undo`.
 
 Hart gelöschte Datensätze gibt es in der Tabelle nicht mehr, also gibt es auch nichts zu aktualisieren. Nimm `ISoftDelete` für alles, was jemand vielleicht zurückhaben möchte.

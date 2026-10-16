@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Neu
+
+- Das Audit-Log macht Änderungen von Entity-Sets mit `AddEntityHistory` rückgängig: pro Eintrag *Diese Änderung rückgängig machen*, *Stand vor dieser Änderung wiederherstellen*, *Datensatz wiederherstellen* (Soft Delete) und *Verlauf des Datensatzes öffnen*, über die Vorschau und das Wiederherstellen des Verlaufs. `EntityHistoryRestoreRequest` hat einen `Mode` (`After`, `Before`, `Undo`), die Vorschau markiert Felder, die ein späterer Eintrag geändert hat (`ChangedLater`), und `GET /api/v1/history` listet die lesbaren Sets. `IEntityHistoryApi` hat `GetSetsAsync` (eigene Implementierungen ergänzen es).
+
 ## 0.0.1.29 (2026-10-16)
 
 ### Neu

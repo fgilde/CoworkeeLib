@@ -35,6 +35,8 @@ In the client, either turn on the row action of a table or put the timeline on a
 - Seeing the history needs `Audit.View` and the read permission of the entity set; restoring needs the permission you registered. Everything stays in the user's tenant.
 - `[Sensitive]` fields show as `***` and are never restored; properties hidden from the OData set stay out of the history.
 
-The endpoints live under `/api/v1/history/{entitySet}`: `GET /{id}`, `POST /{id}/preview`, `POST /{id}/restore` and `GET /deleted`.
+The audit log (`/admin/audit`) offers the same actions per entry when the entry's type belongs to such a set: open a row and pick **Undo this change** (only the fields of that entry go back, later changes of other fields stay), **Restore the state before this change** (that entry and everything after it is rolled back), **Restore record** for the delete of a soft-delete record, or **Open record history**. They use the same preview and confirmation. If a later entry changed one of the fields an undo puts back, the preview marks the field *Changed later* and warns that the newer value is replaced. Users without the restore permission see only the history; entries of other types show nothing.
+
+The endpoints live under `/api/v1/history`: `GET /` (the sets the user may read, with `CanRestore`), and per set `/{entitySet}`: `GET /{id}`, `POST /{id}/preview`, `POST /{id}/restore` and `GET /deleted`. The request of preview and restore is `{ entryId, property?, mode }` with `mode` `After` (default, the state right after the entry), `Before` or `Undo`.
 
 Records that were hard deleted are gone from the table, so there is nothing to update; use `ISoftDelete` for anything people might want back.

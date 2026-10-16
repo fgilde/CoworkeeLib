@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### New
+
+- The audit log undoes changes of entity sets registered with `AddEntityHistory`: per entry *Undo this change*, *Restore the state before this change*, *Restore record* (soft delete) and *Open record history*, through the history preview and restore. `EntityHistoryRestoreRequest` has a `Mode` (`After`, `Before`, `Undo`), the preview marks fields a later entry changed (`ChangedLater`), and `GET /api/v1/history` lists the readable sets. `IEntityHistoryApi` has `GetSetsAsync` (own implementations add it).
+
 ## 0.0.1.29 (2026-10-16)
 
 ### New
