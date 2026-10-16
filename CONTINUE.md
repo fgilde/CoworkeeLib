@@ -1,6 +1,6 @@
 # CONTINUE – handover for the next agent
 
-State of the Coworkee library as of 2026-10-16: everything below is merged on `main` and pushed. Released: **0.0.1.26** (round 7) on nuget.org and `@coworkee/client` / `@coworkee/airworks` `0.0.1024` on npm (release workflow with `NPM_TOKEN`; the owner rotates the token or switches to trusted publishing). The round of 2026-10-15 is in 0.0.1.24, round 7 (incl. tooling smalls, UI smalls, deploy tools) in 0.0.1.26. Demo and Sharemee are on the same state (`master`, pushed).
+State of the Coworkee library as of 2026-10-16: everything below is merged on `main` and pushed. Released: **0.0.1.28** on nuget.org and `@coworkee/client` / `@coworkee/airworks` `0.0.1028` on npm (trusted publishing works). 0.0.1.24 = round of 2026-10-15, 0.0.1.26 = round 7, 0.0.1.27 = link fix, 0.0.1.28 = round 8 (dashboard report, global search, editors, Elsa Studio). Demo and Sharemee are on 0.0.1.28 (`master`, pushed).
 
 ## Repositories
 | Repo | Local path | Remote / branch |
@@ -138,24 +138,33 @@ Docs `website/docs/web/import-export*.md`, changelog section *Unreleased*.
 - Webhooks: `RotateWebhookSecretCommand`, `PreviousProtectedSecret`/`PreviousSecretUntil` (EF change; template migration has no webhooks, apps with webhooks need a migration), `SecretGracePeriod`.
 - Template samples: palette command "New product" (`?new=true`) and product search.
 
-## Global search (branch `feat/global-search`, not merged)
+## Global search (released in 0.0.1.28)
 Docs `website/docs/web/global-search*.md`; changelog *Unreleased*; upgrade rule `0.0.1.28` (removed `AddCommandPaletteEntitySet`).
 - Abstractions in `Coworkee.Application/GlobalSearch` (`IGlobalSearchProvider` singletons, own scope per provider and search; `GlobalSearchQuery.Parse` with `"exact"`, `users:max`/`type:users`, GUID ids; `SearchMatch` shared 0..1 scores; `GlobalSearcher` runs providers side by side over a channel, timeout `Coworkee:GlobalSearch:ProviderTimeout`, limit per provider). `IResponseShaper` (Application) is implemented by the response filters module and shapes streamed hits.
 - `Coworkee.OData/GlobalSearch`: `AddGlobalSearch<T>(s => s.Fields(...).Page(...))` over `ODataEntityAccess.VisibleAsync` (permission, tenant, row filters; hidden fields refused at resolution), two rounds (prefix/id, then all words contained); endpoints `GET /api/v1/search`, `/stream` (NDJSON, flushed per line, `X-Accel-Buffering: no`), `/providers`; MCP/assistant tool `global_search` (`RunGlobalSearch`).
 - Lib providers: users, roles, groups (Identity), files (`/files?file=` opens the preview), reports (`ReportAccess`), chats. `Coworkee.Search` references Application now: `AddGlobalSearchIndex(alias, ...)` (tenant field filter, ES score scaled by the best hit).
 - Client: the palette streams server hits after its local providers (`IGlobalSearchApi`, optional service), keeps the chosen entry, *Show all results* (after the first hit) opens library page `search` (`/search?q=&type=`). One new text key in all 22 language files.
 - AirWorks: `@coworkee/airworks` registers `globalSearchProvider` in `useCoworkee` (no AirWorks change needed; its `registerSearchProvider` is promise based, so the desktop gets the plain JSON endpoint, not the stream).
-- Not done: demo/Sharemee registrations (demo orders) and OpenAPI/SDK regeneration, CLI `coworkee entity` does not emit `AddGlobalSearch`, browser check in a running app.
+- `coworkee module/entity add` emits `AddGlobalSearch<T>` for generated entities with text properties (and the `using`). Demo: brands, products, sales orders, documents. Sharemee: `NodeSearchProvider` (provider `content`, reuses `SearchNodes` with the reader rights, links via `NodeRoutes` in Contracts); people come from the lib's users provider. Sharemee keeps its own `/search` page (app route wins over the library page).
+- `GlobalSearcher` resolves `IPermissionChecker` on use (hosts without Identity build).
+- Not done: browser check in a running app.
 
-## After 0.0.1.26 (on main, unreleased)
+## After 0.0.1.26 (released in 0.0.1.27)
 - Fix: the catch-all page of the library swallowed intercepted links to server addresses (setup *Sign in* -> `/bff/login` showed *Not found.*). `LinkNavigation` (scoped, created by `CoworkeeLayout`) records `IsNavigationIntercepted` in a LocationChanging handler; `CoworkeePageHost` force-loads such links. Found by the Sharemee E2E. Worth a 0.0.1.27: every new app of 0.0.1.26 hits it after the setup wizard. App test bases that render the layout without `AddCoworkeeClient` register `LinkNavigation`.
 - Flaky: `MailTemplatesPageTests.Add_language_*` (MudEx `ObjectEditForm.HasErrors` enumerates validation messages while bUnit renders on another thread; WASM is single threaded), `ThemesPageTests` on slow runners.
 - Demo and Sharemee are on round 7 (migration `Round7`, PWA + push, `InitialAdmin`/realm reconcile, `SyncDevelopmentUsersAsync`; Sharemee dropped `DemoUserTopUp`).
 
-## Elsa Studio host (branch `feat/elsa-studio`, unreleased)
+## Round 8 (released in 0.0.1.28)
+- Merged: `feat/dashboard-report`, `feat/global-search`, `feat/editors`, `feat/elsa-studio`; one upgrade rule `0.0.1.28` with all breaking changes.
+- `WorkflowComponentsTests.Rows_ask_for_their_states_together...` renders both rows in one render pass (the 30 ms batch window of `WorkflowStates` could split two separate renders under load).
+- Elsa's `UseWorkflowsApi` (FastEndpoints) set `ValidatorOptions.Global.PropertyNameResolver` to camelCase for every validator of the app (`brand.Name`); the module restores the resolvers (test in `Coworkee.Workflows.Elsa.Tests`).
+- MessagePack 2.5.303 referenced by `Coworkee.Aspire` (GHSA-qhrr-8q5h-9q3h on Aspire.Hosting's 2.5.302 broke CI restore).
+- Template initial migration: unchanged model (only `cw.DashboardReports`, already in).
+
+## Elsa Studio host (released in 0.0.1.28)
 - `Coworkee.Workflows.Elsa.Studio`: Elsa Studio 3.9 as Blazor Server host (`AddCoworkeeElsaStudio`/`MapCoworkeeElsaStudio`), sign-in through Coworkee.Bff (own OIDC client, tokens server side), calls the api's `/api/elsa` with the user's token (`Coworkee:Workflows:Elsa:Studio:BackendUrl`), 403 page without `Workflows.Elsa.Manage`. The host csproj needs `<RequiresAspNetWebAssets>true</RequiresAspNetWebAssets>` (a package props comes too late for restore). `ponytail:` a circuit keeps the token of its connection (reload after expiry).
 - Aspire `AddElsaStudio<T>()` (+ `AddProjects` for `*_ElsaStudio`, tool switch `elsastudio`), sets `StudioUrl` of the apis. Template/CLI/Studio option `elsaStudio`. Elsa endpoints are no longer in the OpenAPI documents.
-- Demo branch `feat/workflow-sample` (worktree `wt/elsa-studio/demo`): product approval, large-order approval, Elsa workflow *Product approved*, migration `Workflows`, `DemoWorkflows` seed, John = Product Manager, `MyApp.ElsaStudio`. Existing demo databases: the role *Product Manager* lacks `Workflows.View/Transition` (DemoRoles adds only missing roles) - grant them by hand or reseed.
+- Demo branch `feat/workflow-sample` (worktree `wt/elsa-studio/demo`): product approval, large-order approval, Elsa workflow *Product approved*, migration `Workflows`, `DemoWorkflows` seed, John = Product Manager, `MyApp.ElsaStudio`. Merged into demo master. Existing demo databases: the role *Product Manager* lacks `Workflows.View/Transition` (`SyncDevelopmentUsersAsync` only adds missing users/roles and resets passwords, not permissions of existing roles) - grant them by hand or reseed.
 
 ## Product backlog (older ideas, not part of the recent rounds)
 - Own `IMailTransport` with a new provider name is only selectable via `Coworkee:Settings:Defaults:Mail.Provider` (choices are the four built-ins).
