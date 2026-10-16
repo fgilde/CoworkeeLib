@@ -40,6 +40,7 @@ public static class ElsaStudioExtensions
         services.AddHttpContextAccessor();
         services.AddTransient<AccessTokenHandler>();
         services.AddScoped<IUnauthorizedComponentProvider, SignInComponentProvider>();
+        services.AddScoped<global::Elsa.Studio.Authentication.Abstractions.Contracts.IHttpConnectionOptionsConfigurator, AccessTokenConnectionConfigurator>();
         services.AddHttpClient(PermissionCheckClient);
 
         var api = new BackendApiConfig
@@ -59,6 +60,7 @@ public static class ElsaStudioExtensions
     public static WebApplication MapCoworkeeElsaStudio(this WebApplication app)
     {
         app.UseStaticFiles();
+        app.MapStaticAssets();
         app.MapCoworkeeBff();
         app.MapBlazorHub();
         app.MapFallbackToAreaPage("/Host", "ElsaStudio");
