@@ -179,12 +179,12 @@ Wie in QuickGrid lässt sich jede Spalte filtern: das Filtersymbol im Spaltenkop
 | Spaltentyp | Editor | OData |
 |---|---|---|
 | Text | *enthält*, *beginnt mit*, *ist gleich* und ein Wert | `contains(tolower(Name),'dri')`, `startswith(...)`, `Name eq 'Drill'` |
-| Zahlen | *=*, *>*, *<*, *zwischen* | `Rate gt 3`, `Rate ge 3 and Rate le 10` |
-| Datum | *ist*, *nach*, *vor*, *zwischen* (ganze Tage) | `Added ge 2026-02-01T00:00:00+01:00 and Added lt ...` |
+| Zahlen | *=*, *>*, *<*, *zwischen* (ein Schieberegler zwischen kleinstem und größtem Wert) | `Rate gt 3`, `Rate ge 3 and Rate le 10` |
+| Datum | *ist*, *nach*, *vor*, *zwischen* (ganze Tage, ein Datumsregler zwischen erstem und letztem Tag) | `Added ge 2026-02-01T00:00:00+01:00 and Added lt ...` |
 | Enums, Ja/Nein | Checkboxen, mehrere sind Alternativen | `(Kind eq 'Hand' or Kind eq 'Power')` |
-| eine Spalte mit Facette | die Optionen der Facette mit ihren Anzahlen | der Filter der Facette |
+| eine Spalte mit Facette | die Optionen der Facette mit ihren Anzahlen; eine Datums- oder Zahlenbereich-Facette bringt Histogramm und Regler mit | der Filter der Facette |
 
-**Facetten und Spaltenfilter sind dasselbe.** Hat das Set eine Facette auf der Eigenschaft der Spalte, zeigt der Spaltenfilter deren Optionen und Anzahlen; ein Haken dort oder im Facettenmenü ist dieselbe Auswahl (derselbe Chip, dieselbe URL). Eine Spalte auf einer Navigationseigenschaft nutzt die Facette ihres Schlüssels: `Brand.Name` nutzt eine Facette auf `BrandId`.
+**Facetten und Spaltenfilter sind dasselbe.** Hat das Set eine Facette auf der Eigenschaft der Spalte, zeigt der Spaltenfilter deren Optionen und Anzahlen; ein Haken dort oder im Facettenmenü ist dieselbe Auswahl (derselbe Chip, dieselbe URL). Eine Spalte auf einer Navigationseigenschaft nutzt die Facette ihres Schlüssels: `Brand.Name` nutzt eine Facette auf `BrandId`. Die Grenzen der *zwischen*-Regler kommen vom Server: zwei Abfragen mit je einer Zeile, nach der Spalte sortiert (`$orderby=Price asc&$top=1`), innerhalb des eigenen `Filter` der Tabelle.
 
 Die Filter werden mit `and` an den OData-Filter der Tabelle gehängt. Der Server beantwortet sie, bei [Client-Entities](client-entities.md) auch der Browser: sie nutzen nur, was beide verstehen (`eq`, `ne`, `gt`, `ge`, `lt`, `le`, `and`, `or`, `not`, `contains`, `startswith`, `endswith`, `tolower`). Sie gehören zum Zustand der Tabelle: gespeicherte Ansichten, geteilte Links und die Adresszeile behalten sie.
 

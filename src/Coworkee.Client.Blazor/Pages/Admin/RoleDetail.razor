@@ -1,8 +1,7 @@
-@page "/admin/roles/{Id:guid}"
 @attribute [Authorize(Policy = "perm:" + IdentityPermissions.Roles.View)]
 
 <PageTitle>@(_role?.Name ?? "Role")</PageTitle>
-<EntityWatch EntityType="Role" EntityId="Id" ReturnHref="/admin/roles" OnChanged="OnParametersSetAsync" />
+<EntityWatch EntityType="Role" EntityId="Id" ReturnHref="@Links.Href("/admin/roles")" OnChanged="OnParametersSetAsync" />
 @if (_role is not null)
 {
     <MudText Typo="Typo.h4">@_role.Name</MudText>

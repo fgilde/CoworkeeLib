@@ -42,6 +42,37 @@ public sealed class WebhookDeliveryTests(WebhooksApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_rotated_secret_signs_next_to_the_old_one_until_the_grace_period_ends()
+    {
+        var old = await SubscribeAsync(Admin, "gadgets.*");
+        var id = (await WebhooksAsync()).Single().Id;
+
+        var rotated = await ReadAsync<WebhookSecretDto>(await Admin.PostAsync($"/api/v1/webhooks/{id}/rotate-secret", null, Ct));
+        await AddGadgetAsync("Lamp");
+        await app.SettleAsync();
+
+        rotated.Secret.ShouldNotBe(old);
+        (await WebhooksAsync()).Single().PreviousSecretUntil.ShouldBe(app.Clock.GetUtcNow().AddHours(24));
+        var during = app.Received.ShouldHaveSingleItem();
+        during.Headers["webhook-signature"].Split(' ').Length.ShouldBe(2);
+        Verifies(old, during).ShouldBeTrue();
+        Verifies(rotated.Secret, during).ShouldBeTrue();
+
+        app.Received.Clear();
+        app.Clock.Advance(TimeSpan.FromHours(25));
+        await AddGadgetAsync("Desk");
+        await app.SettleAsync();
+
+        var after = app.Received.ShouldHaveSingleItem();
+        Verifies(old, after).ShouldBeFalse();
+        Verifies(rotated.Secret, after).ShouldBeTrue();
+    }
+
+    private bool Verifies(string secret, ReceivedWebhook received) =>
+        WebhookSignature.Verify(secret, received.Headers["webhook-id"], received.Headers["webhook-timestamp"], received.Body, received.Headers["webhook-signature"],
+            app.Clock.GetUtcNow(), TimeSpan.FromMinutes(5));
+
+    [Fact]
     public async Task The_data_is_what_the_owner_of_the_endpoint_may_read()
     {
         var viewer = await CreateUserAsync("viewer@acme.test", WebhookPermissions.Manage, GadgetPermissions.View);

@@ -43,6 +43,8 @@ public sealed class CoworkeeWorkflowsModule : CoworkeeModule, IWebModule
         api.MapGet("/approvals", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetMyApprovalsQuery(), ct).ToHttpResult());
         api.MapPost("/approvals/{id:guid}", (Guid id, DecisionRequest body, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new DecideApprovalCommand(id, body.Approve, body.Comment), ct).ToHttpResult());
+        api.MapPost("/{entityType}/states", (string entityType, WorkflowStatesRequest body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new GetWorkflowStatesQuery(entityType, body.Ids), ct).ToHttpResult());
         api.MapGet("/{entityType}/{entityId:guid}", (string entityType, Guid entityId, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new GetWorkflowQuery(entityType, entityId), ct).ToHttpResult());
         api.MapPost("/{entityType}/{entityId:guid}/{transition}", (string entityType, Guid entityId, string transition, TransitionRequest? body, IDispatcher d, CancellationToken ct) =>

@@ -6,6 +6,8 @@
 
 ### Breaking Changes
 
+- **`ICoworkeeApi`** hat `GetSystemStatusAsync` dazubekommen; eigene Implementierungen ergänzen es.
+- **Seiten der Bibliothek unter eigenem Präfix**: die Admin-Seiten der Bibliothek liegen jetzt unter `/cw/admin/...` statt `/admin/...` (`CoworkeeClientOptions.PagePrefix`, `""` behält die alten Adressen); alte Adressen leiten weiter. Die Seiten der Bibliothek haben keine `@page`-Routen mehr, eine Sammelseite (`/{*Path}`) zeigt sie: eine App mit eigener Sammelseite bekommt eine mehrdeutige Route. Apps ersetzen oder schalten Seiten per Schlüssel ab (`options.Pages`), siehe [Komponenten ersetzen](../ui/customizing.md#seiten-der-bibliothek).
 - **Migration nötig**: neue Tabellen `cw.PushSubscriptions` (Notifications), `cw.DataTransferJobs` und `cw.ImportProfiles` (OData, also jede App). Workflows und Webhooks bringen eigene Tabellen mit, wenn eine App sie aufnimmt.
 - **`ICoworkeeApi`** hat `AddMailTemplateLanguageAsync`, `GetPushSettingsAsync`, `SavePushSubscriptionAsync` und `DeletePushSubscriptionAsync` dazubekommen; eigene Implementierungen ergänzen sie.
 - **`Notification`** erbt jetzt von `AggregateRoot` (sie löst `NotificationCreated` aus, solange Push eingerichtet ist). Das Schema ändert sich dadurch nicht.
@@ -20,6 +22,11 @@
 
 ### Neu
 
+- Template-Beispiele: die Befehlspalette bietet *Neues Produkt* (öffnet den Dialog über `/catalog/products?new=true`) und findet Produkte nach Name oder Barcode.
+- **Webhooks: Secret erneuern**: ein neues Geheimnis, einmal angezeigt; das alte signiert für `Coworkee:Webhooks:SecretGracePeriod` (24 h) mit, siehe [Webhooks](../modules/webhooks.md). Zwei neue Spalten in `cw.WebhookSubscriptions` (Apps mit Webhooks brauchen eine Migration).
+- **Workflow-Chips in Tabellen** laden die Zustände einer Seite in einer Anfrage (`POST /api/v1/workflows/{entityType}/states`, `IWorkflowApi.GetStatesAsync`) statt einer pro Zeile; eigene `IWorkflowApi`-Implementierungen ergänzen die Methode.
+- **Schieberegler in Spaltenfiltern**: *zwischen* auf Zahlen- und Datumsspalten regelt zwischen kleinstem und größtem Wert, den der Server meldet; eine Spalte mit Datums- oder Zahlenbereich-Facette (etwa das Bestelldatum der Demo) zeigt deren Histogramm und Regler statt einer Checkbox pro Bucket.
+- **Systemstatus**-Seite für die Systemorganisation (`/cw/admin/system-status`): Versionen, Datenbank und ausstehende Migrationen, Outbox, Hintergrundjobs mit den letzten Fehlern, Mail, Echtzeit, Redis, Dateien, Übersetzung und KI; Module und Apps steuern Karten über `ISystemStatusContributor` bei, siehe [Admin-Oberfläche](../features/blazor-ui.md#systemstatus).
 - **Workflows und Genehmigungen** (`Coworkee.Workflows`, optional): Zustände und abgesicherte Übergänge pro Entitätstyp, Genehmigungen durch Rollen oder Benutzer mit Frist, Erinnerung und Eskalation, eine Historie, die Komponenten `CoworkeeWorkflow`, `CoworkeeWorkflowActions` und `CoworkeeWorkflowTimeline` und die Seite *Genehmigungen*, siehe [Workflows und Genehmigungen](../modules/workflows.md).
 - **Elsa-Workflows** (`Coworkee.Workflows.Elsa`, optional): Elsa Workflows 3 in der API mit Coworkee-Aktivitäten und -Triggern, siehe [Elsa-Workflows](../modules/workflows-elsa.md).
 - **Webhooks** (`Coworkee.Webhooks`, optional): Endpunkte pro Organisation bekommen signierte Ereignisse (im Stil von Standard Webhooks) zu Änderungen freigeschalteter Entity-Sets, Workflow-Übergängen und eigenen Ereignissen der App, beschränkt auf das, was der Besitzer des Endpunkts lesen darf; Wiederholungen mit Backoff, Abschalten nach wiederholten Fehlern, Zustellprotokoll, Testereignisse und erneute Zustellung unter `/admin/webhooks`, Schutz vor SSRF. Siehe [Webhooks](../modules/webhooks.md).

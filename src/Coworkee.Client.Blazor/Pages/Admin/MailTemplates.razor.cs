@@ -31,6 +31,8 @@ public partial class MailTemplates
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
+    [Inject] private Navigation.CoworkeePages Links { get; set; } = null!;
+
     [Inject] private NavigationManager Navigation { get; set; } = null!;
 
     [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
@@ -77,7 +79,7 @@ public partial class MailTemplates
                 created = form.Name;
             }, Meta))
         {
-            Navigation.NavigateTo($"/admin/mail/templates/{Uri.EscapeDataString(created)}/{L.Culture}");
+            Navigation.NavigateTo(Links.Href($"/admin/mail/templates/{Uri.EscapeDataString(created)}/{L.Culture}")!);
         }
     }
 
@@ -134,7 +136,7 @@ public partial class MailTemplates
     }
 
     // a chip with Href renders as a link without its close button, so the chips navigate on click
-    private void Open(MailTemplateSummaryDto template, string culture) => Navigation.NavigateTo($"/admin/mail/templates/{Uri.EscapeDataString(template.Name)}/{culture}");
+    private void Open(MailTemplateSummaryDto template, string culture) => Navigation.NavigateTo(Links.Href($"/admin/mail/templates/{Uri.EscapeDataString(template.Name)}/{culture}")!);
 
     private string? SourceOf(MailTemplateSummaryDto template)
     {

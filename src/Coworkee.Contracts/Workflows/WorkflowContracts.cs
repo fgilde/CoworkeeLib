@@ -59,4 +59,7 @@ public sealed record WorkflowStatusDto(
 
 public sealed record TransitionRequest(string? Comment = null);
 
+/// <summary>The rows of a table page whose workflow states to read in one request (at most 200).</summary>
+public sealed record WorkflowStatesRequest(IReadOnlyList<Guid> Ids);
+
 public sealed record DecisionRequest(bool Approve, string? Comment = null);

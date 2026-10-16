@@ -1,5 +1,6 @@
 using Coworkee.Application.Authorization;
 using Coworkee.Application;
+using Coworkee.Application.Status;
 using Coworkee.AspNetCore;
 using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Jobs;
@@ -30,6 +31,7 @@ public sealed class CoworkeeBackgroundJobsModule : CoworkeeModule, IWebModule
         services.AddSingleton<IPermissionDefinitionContributor, JobsPermissionDefinitions>();
         services.AddScoped<IBackgroundJobs, HangfireBackgroundJobs>();
         services.AddHostedService<RecurringJobScheduler>();
+        services.AddSystemStatus<JobsStatus>();
 
         services.AddHangfire((provider, config) =>
         {

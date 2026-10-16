@@ -35,6 +35,7 @@ public partial class CoworkeeDataTable<T>
         builder.AddComponentParameter(2, nameof(DataTableColumnFilter<T>.Facet), FacetOf(column));
         builder.AddComponentParameter(3, nameof(DataTableColumnFilter<T>.Selection), _selection);
         builder.AddComponentParameter(4, nameof(DataTableColumnFilter<T>.Operators), OperatorsOf(column));
+        builder.AddComponentParameter(5, nameof(DataTableColumnFilter<T>.LoadBounds), (Func<Task<(object? Min, object? Max)>>)(() => BoundsAsync(column)));
         builder.CloseComponent();
     };
 
@@ -78,6 +79,18 @@ public partial class CoworkeeDataTable<T>
                 _grid.FilterDefinitions.Add(DataGridLayout<T>.Definition(column, DataTableFilters.FacetMarker, facet.Key));
             }
         }
+    }
+
+    /// <summary>The smallest and largest value of the column in the set (the table's own filter applied), for the range slider of its filter.</summary>
+    private async Task<(object? Min, object? Max)> BoundsAsync(Column<T> column)
+    {
+        var path = column.PropertyName!.Replace('.', '/');
+        var filter = ODataFilter.And(Filter, $"{path} ne null");
+        async Task<object?> EdgeAsync(string direction) =>
+            (await QueryAsync(new ODataQuery { Filter = filter, OrderBy = $"{path} {direction}", Top = 1, Count = false, Expand = Expand })).Items.FirstOrDefault() is { } row
+                ? column.PropertyName.Split('.').Aggregate((object?)row, (value, name) => value?.GetType().GetProperty(name)?.GetValue(value))
+                : null;
+        return (await EdgeAsync("asc"), await EdgeAsync("desc"));
     }
 
     private string Describe(IReadOnlyList<IFilterDefinition<T>> filters) =>

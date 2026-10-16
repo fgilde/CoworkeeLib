@@ -1,4 +1,5 @@
 using Coworkee.Application;
+using Coworkee.Application.Status;
 using Coworkee.AspNetCore;
 using Coworkee.AspNetCore.Http;
 using Coworkee.Contracts.Realtime;
@@ -32,6 +33,7 @@ public sealed class CoworkeeRealtimeModule : CoworkeeModule, IWebModule
 
         services.AddSingleton<IRealtimePublisher, RealtimePublisher>();
         services.AddSingleton<RealtimeConnections>();
+        services.AddSystemStatus<RealtimeStatus>().AddSystemStatus<CacheStatus>();
         services.AddSingleton<RealtimePresence>();
         services.AddHostedService(provider => provider.GetRequiredService<RealtimePresence>());
         services.AddSingleton<RealtimeAccessSignal>();

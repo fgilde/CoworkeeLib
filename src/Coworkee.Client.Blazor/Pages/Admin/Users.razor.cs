@@ -17,6 +17,8 @@ public partial class Users
     private UserRow? _permissionsOf;
     private IReadOnlyList<string> _permissions = [];
 
+    [Inject] private Navigation.CoworkeePages Links { get; set; } = null!;
+
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;

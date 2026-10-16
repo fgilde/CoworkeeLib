@@ -20,6 +20,8 @@ public partial class Profile
 
     [Inject] private IAuthorizationService Authorization { get; set; } = null!;
 
+    [Inject] private Navigation.CoworkeePages Links { get; set; } = null!;
+
     [Inject] private NavigationManager Nav { get; set; } = null!;
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
@@ -57,6 +59,6 @@ public partial class Profile
     {
         var key = Keys.ElementAt(index);
         Tab = key;
-        Nav.NavigateTo(key.Length == 0 ? "/profile" : $"/profile/{key}", replace: true);
+        Nav.NavigateTo(Links.Href(key.Length == 0 ? "/profile" : $"/profile/{key}")!, replace: true);
     }
 }

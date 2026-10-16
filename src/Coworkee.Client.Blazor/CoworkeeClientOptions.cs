@@ -38,6 +38,15 @@ public sealed class CoworkeeClientOptions
     /// <summary>Layouts offered on the Themes page; add the names of the auth server's own _Design{Name}.cshtml layouts.</summary>
     public List<string> SignInLayouts { get; } = [.. Contracts.Theming.SignInLayouts.All];
 
+    /// <summary>
+    /// Where the library's admin pages live: "/cw" serves /admin/users at /cw/admin/users, so the app keeps /admin for its own pages.
+    /// Empty keeps the old addresses. Old addresses (bookmarks, links in mails) go on to the current ones.
+    /// </summary>
+    public string PagePrefix { get; set; } = "/cw";
+
+    /// <summary>Replaces or turns off pages of the library by key, e.g. Pages.Replace&lt;MyUsers&gt;("users").Disable("backups").</summary>
+    public Navigation.PageOptions Pages { get; } = new();
+
     public string LoginPath { get; set; } = "/bff/login";
 
     public string LogoutPath { get; set; } = "/bff/logout";

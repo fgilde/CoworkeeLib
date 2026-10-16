@@ -82,6 +82,15 @@ internal sealed class WebhookDeliveryJob(
         }
     }
 
+    // during the grace period after a rotation both secrets sign, space separated as Standard Webhooks allows
+    private string Signatures(WebhookSubscription subscription, string id, long timestamp, string payload, DateTimeOffset now)
+    {
+        var current = WebhookSignature.Sign(secrets.Unprotect(subscription.ProtectedSecret), id, timestamp, payload);
+        return subscription is { PreviousProtectedSecret: { } previous, PreviousSecretUntil: { } until } && until > now
+            ? $"{current} {WebhookSignature.Sign(secrets.Unprotect(previous), id, timestamp, payload)}"
+            : current;
+    }
+
     private async Task<bool> SendAsync(WebhookSubscription subscription, WebhookDelivery delivery, DateTimeOffset now, CancellationToken cancellationToken)
     {
         var id = delivery.EventId.ToString();
@@ -89,7 +98,7 @@ internal sealed class WebhookDeliveryJob(
         using var request = new HttpRequestMessage(HttpMethod.Post, subscription.Url) { Content = new StringContent(delivery.Payload, Encoding.UTF8, "application/json") };
         request.Headers.Add(WebhookSignature.IdHeader, id);
         request.Headers.Add(WebhookSignature.TimestampHeader, timestamp.ToString(System.Globalization.CultureInfo.InvariantCulture));
-        request.Headers.Add(WebhookSignature.SignatureHeader, WebhookSignature.Sign(secrets.Unprotect(subscription.ProtectedSecret), id, timestamp, delivery.Payload));
+        request.Headers.Add(WebhookSignature.SignatureHeader, Signatures(subscription, id, timestamp, delivery.Payload, now));
         request.Headers.UserAgent.Add(new ProductInfoHeaderValue("Coworkee-Webhooks", "1"));
         delivery.Request = Log($"POST {subscription.Url}", request.Headers, delivery.Payload);
         delivery.Response = null;

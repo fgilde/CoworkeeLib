@@ -35,6 +35,8 @@ public partial class ChatNotifier : IAsyncDisposable
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
+    [Inject] private Navigation.CoworkeePages Links { get; set; } = null!;
+
     [Inject] private NavigationManager Nav { get; set; } = null!;
 
     [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
@@ -63,7 +65,7 @@ public partial class ChatNotifier : IAsyncDisposable
     {
         try
         {
-            Badges.Set(ChatHref, await Chat.GetUnreadCountAsync());
+            Badges.Set(Links.Href(ChatHref)!, await Chat.GetUnreadCountAsync());
         }
         catch (Exception exception) when (exception is ApiException or HttpRequestException)
         {
@@ -91,7 +93,7 @@ public partial class ChatNotifier : IAsyncDisposable
 
         var name = (await Cards.GetAsync(message.FromUserId))?.Name ?? L["Someone"];
         var text = message.Text.Length > Preview ? message.Text[..Preview] + "…" : message.Text;
-        var link = $"/chat?with={message.FromUserId}";
+        var link = Links.Href($"/chat?with={message.FromUserId}")!;
         Snackbar.Add(L["{0}: {1}", name, text], Severity.Info, options =>
         {
             options.Action = L["Open chat"];

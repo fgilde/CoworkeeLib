@@ -22,6 +22,9 @@ internal sealed class WebhooksApi(HttpClient http) : ApiClientBase(http), IWebho
     public Task DeleteAsync(Guid id, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Delete, $"{Root}/{id}", null, cancellationToken);
 
+    public Task<WebhookSecretDto> RotateSecretAsync(Guid id, CancellationToken cancellationToken = default) =>
+        SendAsync<WebhookSecretDto>(HttpMethod.Post, $"{Root}/{id}/rotate-secret", null, cancellationToken);
+
     public Task<WebhookSecretDto> GetSecretAsync(Guid id, CancellationToken cancellationToken = default) =>
         GetAsync<WebhookSecretDto>($"{Root}/{id}/secret", cancellationToken);
 

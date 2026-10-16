@@ -49,6 +49,26 @@ builder.Services.AddCoworkeeClient(baseAddress, options =>
 
 For a completely different dialog, replace it: `builder.Services.ReplaceComponent<AboutDialog, MyAbout>();`. `MyAbout` is an ordinary `MudDialog`.
 
+## Pages of the library
+
+The library's admin pages live under their own prefix: `/cw/admin/users`, `/cw/admin/settings` and so on. `/admin` stays free for your own admin pages, and a library update can never take an address your app already uses. The other pages (`/files`, `/chat`, `/profile`, `/settings`, `/notifications`, `/assistant`, `/workflows/approvals`, `/reports`) keep their short addresses.
+
+```csharp
+builder.Services.AddCoworkeeClient(baseAddress, options =>
+{
+    options.PagePrefix = "/cw";                        // the default; "" keeps the old /admin/... addresses
+    options.Pages.Replace<MyUsers>("users")              // your component at the library's address, with the same parameters
+        .Replace("user", "/people/{Id}")                // links and old addresses go to your own page
+        .Disable("backups");                            // menu entry and address are gone
+});
+```
+
+Old addresses keep working: `/admin/users/…` in a bookmark, a mail or a push notification goes on to the current address. The menu, the command palette and the links between the pages ask the same registry (`CoworkeePages.Href(path)`), so a replaced or turned off page is replaced or gone everywhere. Server links (notifications, mails) use the old address; the client resolves it.
+
+How it works: one catch-all page of the library (`CoworkeePageHost`, route `/{*Path}`) renders the library pages. Pages of your app always win over it, so an own `/admin/ai` page never clashes with the library. An address nobody knows shows the router's `NotFoundPage` if you set one, otherwise a short "Not found." in the layout.
+
+Keys: `users`, `user`, `groups`, `roles`, `role`, `clients`, `scopes`, `api-keys`, `settings`, `ai-settings`, `ai-tool-calls`, `audit`, `backups`, `data-transfer`, `editions`, `languages`, `translations`, `mail-settings`, `mail-templates`, `mail-template`, `mail-campaigns`, `mail-log`, `services`, `system-status`, `tenants`, `themes`, `webhooks`, `approvals`, `assistant`, `chat`, `files`, `notifications`, `profile`, `user-settings`, and with reporting `reports`, `report`, `report-data`. An unknown key stops the app at start.
+
 ## When to replace and when to contribute
 
 Prefer the contribution points when they fit: `INavigationContributor` for menu entries, `IAppBarContributor` for the top bar, `NavigationMenuOptions` to hide or order. Replace a component when you need different markup or behavior.

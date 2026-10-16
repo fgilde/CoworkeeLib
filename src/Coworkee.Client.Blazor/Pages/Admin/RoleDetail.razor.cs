@@ -6,6 +6,8 @@ namespace Coworkee.Client.Blazor.Pages.Admin;
 
 public partial class RoleDetail
 {
+    [Inject] private Navigation.CoworkeePages Links { get; set; } = null!;
+
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
     [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;

@@ -1,0 +1,13 @@
+@page "/{*Path}"
+@if (_routeData is not null)
+{
+    <AuthorizeRouteView RouteData="_routeData">
+        <NotAuthorized>
+            <NotAllowed PageType="_routeData.PageType" />
+        </NotAuthorized>
+    </AuthorizeRouteView>
+}
+else if (_notFound)
+{
+    <MudText data-testid="not-found">@L["Not found."]</MudText>
+}

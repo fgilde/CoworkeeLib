@@ -1,0 +1,62 @@
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + SettingsPermissions.Manage)]
+
+<PageHeader Title="System status" Description="Versions, database, background jobs and the services the app depends on.">
+    @if (_status is not null)
+    {
+        <MudText Typo="Typo.caption" Class="mr-2">@L["As of {0}", _status.At.ToLocalTime().ToString("T")]</MudText>
+    }
+    <MudIconButton Icon="@Icons.Material.Outlined.Refresh" OnClick="RefreshAsync" Disabled="_busy" aria-label="@L["Refresh"]" data-testid="refresh-status" />
+</PageHeader>
+
+@if (_error is not null)
+{
+    <MudAlert Severity="Severity.Error" Dense="Density.Dense" Class="mb-4">@_error</MudAlert>
+}
+else if (_status is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <MudGrid Spacing="3">
+        @foreach (var section in _status.Sections)
+        {
+            <MudItem xs="12" md="6" xl="4">
+                <MudCard Outlined="true" Style="height:100%" data-section="@section.Key">
+                    <MudCardHeader>
+                        <CardHeaderAvatar><MudIcon Icon="@IconOf(section.Key)" Color="@WorstColor(section)" /></CardHeaderAvatar>
+                        <CardHeaderContent><MudText Typo="Typo.h6">@L[section.Title]</MudText></CardHeaderContent>
+                        <CardHeaderActions>
+                            @if (LinkOf(section) is { } link)
+                            {
+                                <MudIconButton Icon="@Icons.Material.Outlined.OpenInNew" Size="Size.Small" Href="@link" Target="@(section.ExternalLink ? "_blank" : null)"
+                                               aria-label="@L["Details"]" data-link="@section.Key" />
+                            }
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent Class="pt-0">
+                        <MudSimpleTable Dense="true" Elevation="0">
+                            <tbody>
+                                @foreach (var entry in section.Entries)
+                                {
+                                    <tr data-entry="@entry.Label" data-level="@entry.Level">
+                                        <td>@L[entry.Label]</td>
+                                        <td style="text-align:right">
+                                            <MudText Typo="Typo.body2" Color="@ColorOf(entry.Level)" title="@entry.Detail">@L.Server(entry.Value, entry.Arguments)</MudText>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                        @foreach (var problem in section.Problems ?? [])
+                        {
+                            <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-2" data-problem="@section.Key">
+                                <b>@problem.Title</b>@(problem.At is { } at ? $" · {at.ToLocalTime():g}" : null)<br />@problem.Message
+                            </MudAlert>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+}

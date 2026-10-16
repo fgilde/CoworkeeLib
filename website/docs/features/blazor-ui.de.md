@@ -77,6 +77,10 @@ Alles in der Oberfläche lässt sich mit `builder.Services.ReplaceComponent<Cowo
 
 Dieselben Apps laufen auf Wunsch auch in einem Web-Desktop: `coworkee new Shop --airworks` legt einen [AirWorks](../web/airworks.md)-Client mit Fenstern und Taskleiste an, der sich am selben Auth-Server anmeldet und mit derselben API spricht.
 
-**Stand:** Die Seiten der Bibliothek liegen unter allgemeinen `/admin/...`-Routen; eine App-Seite mit derselben Route bringt das Blazor-Routing durcheinander. Gruppierte Zeilen lassen sich nicht virtualisieren, eine gruppierte Tabelle fällt deshalb auf den Pager zurück.
+## Systemstatus
+
+*Administration → Überwachung → Systemstatus* (`/cw/admin/system-status`, Berechtigung `Settings.Manage`, nur in der Systemorganisation) zeigt die Installation auf einen Blick: Versionen von Bibliothek, App und .NET, die Datenbank mit ausstehenden Migrationen und dem Outbox-Rückstand, Hintergrundjobs mit den letzten Fehlern und einem Link aufs Job-Dashboard, wartende und in den letzten sieben Tagen fehlgeschlagene Mails, Echtzeit-Verbindungen, Redis, Dateispeicher, maschinelle Übersetzung und den KI-Assistenten. Jedes Modul steuert seine eigene Karte über `ISystemStatusContributor` bei (`services.AddSystemStatus<T>()`), deine App kann das auch.
+
+**Stand:** Die Admin-Seiten der Bibliothek liegen unter `/cw/admin/...` (siehe [Seiten der Bibliothek](../ui/customizing.md#seiten-der-bibliothek)). Gruppierte Zeilen lassen sich nicht virtualisieren, eine gruppierte Tabelle fällt deshalb auf den Pager zurück.
 
 Referenz: [Client und Layout](../ui/client.md), [Datentabellen](../ui/data-table.md), [Komponenten ersetzen](../ui/customizing.md), [Themes](../modules/theming.md), [Anmeldeseiten](../security/sign-in-pages.md).

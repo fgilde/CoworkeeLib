@@ -1,4 +1,3 @@
-@page "/admin/data-transfer"
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + DataTransferPermissions.Use)]
 
 <PageHeader Title="Import and export" Description="Bring rows in from CSV, Excel or JSON files and take them out again. Every row runs through the same checks as a form." />

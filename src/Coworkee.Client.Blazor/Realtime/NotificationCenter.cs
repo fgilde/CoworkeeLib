@@ -12,7 +12,7 @@ namespace Coworkee.Client.Blazor.Realtime;
 /// the server) refreshes the count and raises <see cref="Changed"/> once, also for bursts like "mark all as read".
 /// </summary>
 public sealed class NotificationCenter(
-    ICoworkeeApi api, RealtimeClient realtime, AuthenticationStateProvider authentication, NavigationManager navigation) : IAsyncDisposable
+    ICoworkeeApi api, RealtimeClient realtime, AuthenticationStateProvider authentication, NavigationManager navigation, Navigation.CoworkeePages links) : IAsyncDisposable
 {
     private const string EntityType = "Notification";
     private static readonly TimeSpan Settle = TimeSpan.FromMilliseconds(250);
@@ -60,7 +60,7 @@ public sealed class NotificationCenter(
 
         if (item.Link is { Length: > 0 } link && link.StartsWith('/') && !link.StartsWith("//", StringComparison.Ordinal))
         {
-            navigation.NavigateTo(link);
+            navigation.NavigateTo(links.Href(link) ?? link);
         }
     }
 

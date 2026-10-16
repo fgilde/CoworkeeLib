@@ -1,4 +1,3 @@
-@page "/admin/api-keys"
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + ApiKeyPermissions.Manage)]
 
 <PageHeader Title="API keys" Description="The personal keys of the organisation's users; revoking one stops its clients at once." />

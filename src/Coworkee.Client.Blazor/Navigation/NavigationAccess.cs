@@ -23,4 +23,12 @@ public static class NavigationAccess
 
         return allowed;
     }
+
+    /// <summary>The links at the current addresses of the library's pages; hidden ones (by old or new address) and turned off pages drop out.</summary>
+    public static IReadOnlyList<CoworkeeNavItem> Linked(IEnumerable<CoworkeeNavItem> items, CoworkeePages pages, NavigationMenuOptions menu) =>
+        items.Where(i => !menu.Hidden.Contains(i.Href))
+            .Select(menu.Arrange)
+            .Select(i => i.ForceLoad ? i : pages.Href(i.Href) is { } href ? i with { Href = href } : null)
+            .OfType<CoworkeeNavItem>()
+            .ToList();
 }

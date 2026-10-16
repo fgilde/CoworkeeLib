@@ -30,6 +30,8 @@ public partial class CampaignWizard
     /// <summary>A draft to continue; without one the wizard starts a new campaign.</summary>
     [Parameter] public MailCampaignDto? Campaign { get; set; }
 
+    [Inject] private Navigation.CoworkeePages Links { get; set; } = null!;
+
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;

@@ -92,6 +92,45 @@ public sealed class DataTableColumnFilterTests : ClientTestBase
     }
 
     [Fact]
+    public async Task Between_numbers_slide_within_the_bounds_the_server_reports()
+    {
+        var table = RenderTable();
+
+        await OpenFilterAsync(table, "Price");
+        await _popovers.Find($"[data-operator='{DataTableFilters.Between}']").ClickAsync(new());
+
+        _popovers.WaitForElement("[data-testid='filter-range-slider']");
+        _queries.ShouldContain(q => q.OrderBy == "Price asc" && q.Top == 1 && q.Filter == "Price ne null");
+        _queries.ShouldContain(q => q.OrderBy == "Price desc" && q.Top == 1);
+    }
+
+    [Fact]
+    public async Task Between_dates_slide_within_the_bounds_the_server_reports()
+    {
+        var table = RenderTable();
+
+        await OpenFilterAsync(table, "Added");
+        await _popovers.Find($"[data-operator='{DataTableFilters.Between}']").ClickAsync(new());
+
+        _popovers.WaitForElement("[data-testid='filter-date-slider']");
+    }
+
+    [Fact]
+    public async Task A_column_with_a_date_facet_filters_with_the_facet_slider()
+    {
+        _odata.WithFacets(Category, new FacetGroupDto("added", "Added", "Added", FacetKind.DateRange, FacetOperator.And, [], false, 1)
+        {
+            ValueKind = FacetValueKind.Date, Min = "2026-01-05", Max = "2026-03-01",
+        });
+        var table = RenderTable();
+
+        await OpenFilterAsync(table, "Added");
+
+        _popovers.WaitForElement("[data-testid='facet-date-slider']");
+        _popovers.FindAll("[data-operator]").ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task A_column_with_a_facet_filters_with_the_facet_options()
     {
         var table = RenderTable();

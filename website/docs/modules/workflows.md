@@ -62,6 +62,7 @@ Handlers of the domain events `WorkflowTransitioned`, `ApprovalStarted` and `App
 | Endpoint | |
 |---|---|
 | `GET /api/v1/workflows/{entityType}/{entityId}` | state, the transitions the user may run, the open approval and the history |
+| `POST /api/v1/workflows/{entityType}/states` | states of up to 200 rows `{ "ids": [...] }` in one request, without history; rows the user cannot see are left out |
 | `POST /api/v1/workflows/{entityType}/{entityId}/{transition}` | run a transition with `{ "comment" }` |
 | `GET /api/v1/workflows/approvals` | the open approvals waiting for the user |
 | `POST /api/v1/workflows/approvals/{id}` | decide with `{ "approve": true, "comment" }` |
@@ -76,7 +77,7 @@ The module adds the tables `cw.WorkflowItems`, `cw.WorkflowSteps`, `cw.WorkflowA
 <CoworkeeWorkflow EntityType="Products" EntityId="product.Id" OnChanged="_ => ReloadAsync()" />
 ```
 
-`CoworkeeWorkflow` shows the state, a button for every transition the user may run, the open approval with its approvers and their decisions (*Approve* and *Reject* for the user's own), and the history as a timeline; `ShowHistory="false"` leaves the timeline out, `CoworkeeWorkflowTimeline` shows it alone. In a data table row, `CoworkeeWorkflowActions` shows the state as a chip and the same actions in a menu:
+`CoworkeeWorkflow` shows the state, a button for every transition the user may run, the open approval with its approvers and their decisions (*Approve* and *Reject* for the user's own), and the history as a timeline; `ShowHistory="false"` leaves the timeline out, `CoworkeeWorkflowTimeline` shows it alone. In a data table row, `CoworkeeWorkflowActions` shows the state as a chip and the same actions in a menu. The rows of a page ask for their states together (one request per entity type):
 
 ```razor
 <TemplateColumn T="ProductDto" Title="@L["Approval"]">

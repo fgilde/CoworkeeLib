@@ -1,4 +1,3 @@
-@page "/admin/audit"
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + AuditPermissions.View)]
 
 <PageHeader Title="Audit log" Description="Every change, field by field, with who made it. Open a row to see what changed." />

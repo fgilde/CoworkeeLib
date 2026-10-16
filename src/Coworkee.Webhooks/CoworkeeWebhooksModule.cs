@@ -56,6 +56,7 @@ public sealed class CoworkeeWebhooksModule : CoworkeeModule, IWebModule
         api.MapPut("/{id:guid}", (Guid id, WebhookRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new UpdateWebhookCommand(id, body), ct).ToHttpResult());
         api.MapDelete("/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteWebhookCommand(id), ct).ToHttpResult());
         api.MapGet("/{id:guid}/secret", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetWebhookSecretQuery(id), ct).ToHttpResult());
+        api.MapPost("/{id:guid}/rotate-secret", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new RotateWebhookSecretCommand(id), ct).ToHttpResult());
         api.MapPost("/{id:guid}/test", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new SendWebhookTestCommand(id), ct).ToHttpResult());
         api.MapGet("/deliveries", (Guid? subscriptionId, int? take, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new GetWebhookDeliveriesQuery(subscriptionId, take ?? 50), ct).ToHttpResult());

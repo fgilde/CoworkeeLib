@@ -195,6 +195,9 @@ public interface ICoworkeeApi
     /// <summary>The services of the app (Coworkee:Services) with the status the server sees.</summary>
     Task<ServiceDirectoryResult> GetServicesAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>The status of the installation (system organisation only): versions, database, jobs, mail and what the modules add.</summary>
+    Task<SystemStatusDto> GetSystemStatusAsync(CancellationToken cancellationToken = default);
+
     /// <summary>The themes that ship with the app; answers before setup.</summary>
     Task<IReadOnlyList<ThemeDto>> GetBuiltInThemesAsync(CancellationToken cancellationToken = default);
 

@@ -35,6 +35,8 @@ public partial class CoworkeeCommandPalette : IAsyncDisposable
 
     [Inject] private NavigationManager Nav { get; set; } = null!;
 
+    [Inject] private Navigation.CoworkeePages Links { get; set; } = null!;
+
     [Inject] private IJSRuntime JS { get; set; } = null!;
 
     [Inject] private IScrollManager Scroll { get; set; } = null!;
@@ -151,7 +153,7 @@ public partial class CoworkeeCommandPalette : IAsyncDisposable
             }
             else if (item.Href is { } href)
             {
-                Nav.NavigateTo(href);
+                Nav.NavigateTo(Links.Href(href) ?? href);
             }
         }
         catch (ApiException exception)

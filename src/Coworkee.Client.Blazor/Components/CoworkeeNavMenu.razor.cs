@@ -19,6 +19,8 @@ public partial class CoworkeeNavMenu : IDisposable
 
     [Inject] private IEnumerable<INavigationContributor> Contributors { get; set; } = null!;
 
+    [Inject] private CoworkeePages Pages { get; set; } = null!;
+
     [Inject] private IOptions<NavigationMenuOptions> MenuOptions { get; set; } = null!;
 
     [Inject] private LayoutPreferences Preferences { get; set; } = null!;
@@ -80,7 +82,7 @@ public partial class CoworkeeNavMenu : IDisposable
     {
         var options = MenuOptions.Value;
         var user = AuthenticationState is null ? new System.Security.Claims.ClaimsPrincipal() : (await AuthenticationState).User;
-        var allowed = await NavigationAccess.AllowedAsync(Contributors.SelectMany(c => c.Items), user, Authorization, Features);
+        var allowed = NavigationAccess.Linked(await NavigationAccess.AllowedAsync(Contributors.SelectMany(c => c.Items), user, Authorization, Features), Pages, options);
 
         _entries = NavigationEntry.Build(allowed, options, options.ShowHome ? options.HomeTitle : null);
         SelectCurrent();

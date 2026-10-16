@@ -16,6 +16,11 @@ public sealed class WebhookSubscription : AuditedEntity, IMultiTenant
     /// <summary>The signing secret, protected with Data Protection.</summary>
     public required string ProtectedSecret { get; set; }
 
+    /// <summary>The secret before the last rotation, protected; deliveries are signed with it too until <see cref="PreviousSecretUntil"/>.</summary>
+    public string? PreviousProtectedSecret { get; set; }
+
+    public DateTimeOffset? PreviousSecretUntil { get; set; }
+
     public bool IsActive { get; set; } = true;
 
     /// <summary>Who saved the endpoint last: event data is shaped by what this user may read.</summary>

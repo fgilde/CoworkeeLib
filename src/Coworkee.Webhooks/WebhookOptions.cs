@@ -33,6 +33,9 @@ public sealed class WebhookOptions
 
     public int LogRetentionDays { get; set; } = 30;
 
+    /// <summary>How long the old secret still signs deliveries after a rotation, next to the new one (Standard Webhooks allows several signatures).</summary>
+    public TimeSpan SecretGracePeriod { get; set; } = TimeSpan.FromHours(24);
+
     /// <summary>Domain events (by type name) other modules raise that become webhook events, with their data as they are; workflow transitions by default.</summary>
     public Dictionary<string, string> DomainEvents { get; set; } = new(StringComparer.Ordinal) { ["WorkflowTransitioned"] = "workflow.transitioned" };
 

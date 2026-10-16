@@ -32,6 +32,21 @@ public partial class Products
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
+    [Inject] private NavigationManager Nav { get; set; } = null!;
+
+    /// <summary>?new=true (the palette's "New product") opens the create dialog once.</summary>
+    [SupplyParameterFromQuery(Name = "new")] public bool New { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (New)
+        {
+            New = false;
+            Nav.NavigateTo(Nav.GetUriWithQueryParameter("new", (string?)null), replace: true);
+            await CreateAsync();
+        }
+    }
+
     private Task CreateAsync() => EditAsync(null, new AddEditProductRequest());
 
     private Task EditAsync(ProductDto product) => EditAsync(product.Id, new AddEditProductRequest

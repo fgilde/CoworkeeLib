@@ -1,4 +1,3 @@
-@page "/admin/mail/campaigns"
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + MailPermissions.Campaigns.Send)]
 
 <PageHeader Title="Mail campaigns" Description="Send one of your mail templates to many users of this organisation, now or at a chosen time.">
@@ -38,7 +37,7 @@
                 </td>
                 <td>@(When(campaign)?.ToLocalTime().ToString("g"))</td>
                 <td style="text-align:right;white-space:nowrap">
-                    <MudIconButton Icon="@Icons.Material.Outlined.ListAlt" Size="Size.Small" Href="@($"/admin/mail/log?campaign={campaign.Id}")" aria-label="@L["Mail log"]"
+                    <MudIconButton Icon="@Icons.Material.Outlined.ListAlt" Size="Size.Small" Href="@Links.Href($"/admin/mail/log?campaign={campaign.Id}")" aria-label="@L["Mail log"]"
                                    data-testid="@($"campaign-log-{campaign.Id}")" />
                     @if (campaign.Status is MailCampaignStatus.Scheduled or MailCampaignStatus.Sending)
                     {

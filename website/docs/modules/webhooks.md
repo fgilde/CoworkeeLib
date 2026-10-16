@@ -68,9 +68,10 @@ webhook-signature: v1,K5oZfzN95Z9UVu1EsfQmfVNQhnkZ2pj9o9NDN/H/pI4=
 
 ## The admin page
 
-*Administration → System → Webhooks* (`/admin/webhooks`, permission `Webhooks.Manage`) lists the endpoints with their state and the latest deliveries:
+*Administration → System → Webhooks* (`/cw/admin/webhooks`, permission `Webhooks.Manage`) lists the endpoints with their state and the latest deliveries:
 
 - **Add endpoint**: address, description, events (with suggestions of every known event type) and *Active*. The signing secret is generated and shown once; the key button shows it again later.
+- **Rotate secret** creates a new secret and shows it once. For `SecretGracePeriod` (24 hours) every delivery carries two signatures, one with the new and one with the old secret, so the receiver can switch without losing a delivery; the list shows until when.
 - **Send test event** queues a `webhook.test` delivery to the endpoint, even when it is switched off.
 - **Deliveries** shows time, event, endpoint, status with the HTTP code and the attempts; a row opens the request and the response of the last attempt. **Redeliver** sends the same body again as a new delivery.
 
@@ -108,6 +109,7 @@ Endpoints may not reach into your own network:
 | `DisableAfterFailures` | `5` | failed deliveries in a row before the endpoint is switched off |
 | `LogBodyLimit` | `4096` | characters of request and response in the log |
 | `LogRetentionDays` | `30` | a daily job deletes older deliveries |
+| `SecretGracePeriod` | `24:00:00` | how long the old secret signs next to the new one after *Rotate secret* |
 | `DomainEvents` | `{ "WorkflowTransitioned": "workflow.transitioned" }` | domain events of other modules that become webhook events |
 
 Tests that send to a local receiver set `RequireHttps=false`, `AllowPrivateNetworks=true` and the receiver's port in `AllowedPorts`.

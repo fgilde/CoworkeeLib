@@ -3,6 +3,9 @@ using Coworkee.Client.Blazor.Data;
 using Coworkee.Contracts.Data;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using MudBlazor.Extensions.Helper;
+using Nextended.Core.Contracts;
+using Nextended.Core.Types;
 using Op = MudBlazor.FilterOperator;
 
 namespace Coworkee.Client.Blazor.Components.Data;
@@ -18,6 +21,8 @@ public partial class DataTableColumnFilter<T>
     private object? _to;
     private HashSet<object> _chosen = [];
     private string? _loaded;
+    private (object? Min, object? Max)? _bounds;
+    private Column<T>? _boundsOf;
 
     [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
 
@@ -29,6 +34,20 @@ public partial class DataTableColumnFilter<T>
     [Parameter, EditorRequired] public FacetSelection Selection { get; set; } = null!;
 
     [Parameter] public IReadOnlyList<string> Operators { get; set; } = [];
+
+    /// <summary>The smallest and largest value of the column, asked once "between" is chosen, for the range slider.</summary>
+    [Parameter] public Func<Task<(object? Min, object? Max)>>? LoadBounds { get; set; }
+
+    // without a step the date slider's arrow keys move by zero days
+    private static RangeLength<DateOnly> OneDay => new(1d);
+
+    private IRange<decimal>? NumberBounds =>
+        _bounds is { Min: { } min, Max: { } max } && ToDecimal(min) < ToDecimal(max) ? new MudExRange<decimal>(ToDecimal(min), ToDecimal(max)) : null;
+
+    private IRange<DateOnly>? DateBounds =>
+        _bounds is { Min: { } min, Max: { } max } && ToDate(min) is { } from && ToDate(max) is { } to && from.Date < to.Date
+            ? new MudExRange<DateOnly>(DateOnly.FromDateTime(from), DateOnly.FromDateTime(to))
+            : null;
 
     private Column<T> Column => Context.FilterDefinition!.Column!;
 
@@ -74,6 +93,25 @@ public partial class DataTableColumnFilter<T>
     {
         get => ToDate(_to);
         set => _to = value;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // the grid reuses one filter for every column
+        if (IsBetween && (Field.IsNumber || IsDate) && _boundsOf != Column && LoadBounds is not null)
+        {
+            (_boundsOf, _bounds) = (Column, null);
+            try
+            {
+                _bounds = await LoadBounds();
+            }
+            catch (Exception exception) when (exception is Api.ApiException or HttpRequestException)
+            {
+                // the fields still work without the slider
+            }
+
+            StateHasChanged();
+        }
     }
 
     protected override void OnParametersSet()
@@ -150,6 +188,23 @@ public partial class DataTableColumnFilter<T>
         double number when Type != typeof(double) => Convert.ChangeType(number, Type, CultureInfo.InvariantCulture),
         _ => value,
     };
+
+    private IRange<decimal> NumberSpan(IRange<decimal> whole) =>
+        new MudExRange<decimal>(Number is { } from ? (decimal)from : whole.Start, NumberTo is { } to ? (decimal)to : whole.End);
+
+    private static RangeLength<decimal> NumberStep(IRange<decimal> whole) =>
+        new(decimal.Truncate(whole.Start) == whole.Start && decimal.Truncate(whole.End) == whole.End && whole.End - whole.Start >= 20
+            ? 1
+            : Math.Max(0.01m, Math.Round((whole.End - whole.Start) / 100, 2)));
+
+    private void SlideNumbers(IRange<decimal> range) => (_value, _to) = ((double)Math.Round(range.Start, 2), (double)Math.Round(range.End, 2));
+
+    private IRange<DateOnly> DateSpan(IRange<DateOnly> whole) =>
+        new MudExRange<DateOnly>(Date is { } from ? DateOnly.FromDateTime(from) : whole.Start, DateTo is { } to ? DateOnly.FromDateTime(to) : whole.End);
+
+    private void SlideDates(IRange<DateOnly> range) => (_value, _to) = (range.Start.ToDateTime(TimeOnly.MinValue), range.End.ToDateTime(TimeOnly.MinValue));
+
+    private static decimal ToDecimal(object value) => Convert.ToDecimal(value, CultureInfo.InvariantCulture);
 
     private static double? ToNumber(object? value) => value is null ? null : Convert.ToDouble(value, CultureInfo.InvariantCulture);
 

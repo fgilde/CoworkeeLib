@@ -28,6 +28,7 @@ public static class CoworkeeClientExtensions
         services.AddHttpClient<Social.ISocialApi, Social.SocialApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Workflows.IWorkflowApi, Workflows.WorkflowApi>(client => client.BaseAddress = baseAddress);
         services.AddScoped<Workflows.WorkflowCommands>();
+        services.AddScoped<Workflows.WorkflowStates>();
         services.AddHttpClient<Features.IFeaturesApi, Features.FeaturesApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Security.IClientsApi, Security.ClientsApi>(client => client.BaseAddress = baseAddress);
         services.AddHttpClient<Security.IApiKeysApi, Security.ApiKeysApi>(client => client.BaseAddress = baseAddress);
@@ -87,6 +88,12 @@ public static class CoworkeeClientExtensions
         services.AddCascadingAuthenticationState();
         services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         services.AddScoped<IAuthorizationHandler, PermissionHandler>();
+        foreach (var page in Navigation.LibraryPages.All)
+        {
+            services.AddSingleton(page);
+        }
+
+        services.AddSingleton<Navigation.CoworkeePages>();
         services.AddSingleton<INavigationContributor, AdminNavigation>();
         services.AddSingleton<INavigationContributor, Navigation.ApiDocsNavigation>();
         services.AddOptions<Navigation.NavigationMenuOptions>();
@@ -168,6 +175,7 @@ internal sealed class AdminNavigation : INavigationContributor
         new("Languages", "/admin/languages", MudBlazor.Icons.Material.Outlined.Language, Coworkee.Contracts.Localization.LocalizationPermissions.Manage, Group: Localization),
         new("Translations", "/admin/translations", MudBlazor.Icons.Material.Outlined.Translate, Coworkee.Contracts.Localization.LocalizationPermissions.Manage, Group: Localization, Order: 1),
         new("Audit log", "/admin/audit", MudBlazor.Icons.Material.Outlined.History, Coworkee.Contracts.Auditing.AuditPermissions.View, Group: Monitoring),
+        new("System status", "/admin/system-status", MudBlazor.Icons.Material.Outlined.MonitorHeart, Coworkee.Contracts.Settings.SettingsPermissions.Manage, Group: Monitoring, Order: -1, HostOnly: true),
         new("AI tool calls", "/admin/ai-tool-calls", MudBlazor.Icons.Material.Outlined.ManageSearch, Coworkee.Contracts.Ai.AiPermissions.Audit, Group: Monitoring, Order: 1),
         new("Files", "/files", MudBlazor.Icons.Material.Outlined.FolderOpen, Coworkee.Contracts.Files.FilePermissions.View, Order: -8),
         new("Chat", "/chat", MudBlazor.Icons.Material.Outlined.Chat, Coworkee.Contracts.Chat.ChatPermissions.Use, Order: -9),

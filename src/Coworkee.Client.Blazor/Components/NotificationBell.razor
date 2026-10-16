@@ -36,6 +36,6 @@
         {
             <MudMenuItem OnClick="MarkAllAsync" Icon="@Icons.Material.Outlined.DoneAll" data-testid="bell-mark-all">@L["Mark all as read"]</MudMenuItem>
         }
-        <MudMenuItem Href="/notifications" Icon="@Icons.Material.Outlined.List">@L["All notifications"]</MudMenuItem>
+        <MudMenuItem Href="@Links.Href("/notifications")" Icon="@Icons.Material.Outlined.List">@L["All notifications"]</MudMenuItem>
     </ChildContent>
 </MudMenu>

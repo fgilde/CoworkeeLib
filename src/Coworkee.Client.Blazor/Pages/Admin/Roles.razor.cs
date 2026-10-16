@@ -20,6 +20,8 @@ public partial class Roles
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
+    [Inject] private Navigation.CoworkeePages Links { get; set; } = null!;
+
     [Inject] private NavigationManager Nav { get; set; } = null!;
 
     private async Task CreateAsync()
@@ -29,7 +31,7 @@ public partial class Roles
             Guid id = default;
             if (await Snackbar.RunAsync(async () => id = await Api.CreateRoleAsync(new RoleRequest(role.Name, role.Description, role.SelectableForRegistration))))
             {
-                Nav.NavigateTo($"/admin/roles/{id}");
+                Nav.NavigateTo(Links.Href($"/admin/roles/{id}")!);
             }
         }
     }

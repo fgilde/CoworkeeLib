@@ -23,6 +23,7 @@ public sealed class WorkflowComponentsTests : ClientTestBase
     {
         Services.AddSingleton(_api);
         Services.AddScoped<WorkflowCommands>();
+        Services.AddScoped<WorkflowStates>();
         AddAuthorization().SetAuthorized("Ada").SetClaims(new Claim("sub", Me.ToString()));
         Render<MudPopoverProvider>();
         Render<MudSnackbarProvider>();
@@ -92,11 +93,11 @@ public sealed class WorkflowComponentsTests : ClientTestBase
     }
 
     [Fact]
-    public void A_row_shows_the_state_and_a_menu_only_when_there_is_something_to_do()
+    public async Task Rows_ask_for_their_states_together_and_show_a_menu_only_when_there_is_something_to_do()
     {
         var other = Guid.CreateVersion7();
-        _api.GetAsync("Products", _id, default).Returns(Status("Review", [], Approval(canDecide: true)));
-        _api.GetAsync("Products", other, default).Returns(Status("Archived", []));
+        _api.GetStatesAsync("Products", Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns([Status("Review", [], Approval(canDecide: true)), Status("Archived", [], id: other)]);
 
         var row = Render<CoworkeeWorkflowActions>(p => p.Add(a => a.EntityType, "Products").Add(a => a.EntityId, _id));
         var done = Render<CoworkeeWorkflowActions>(p => p.Add(a => a.EntityType, "Products").Add(a => a.EntityId, other));
@@ -105,10 +106,12 @@ public sealed class WorkflowComponentsTests : ClientTestBase
         row.Find("[data-testid='workflow-menu']").ShouldNotBeNull();
         done.WaitForAssertion(() => done.Find("[data-testid='workflow-state']").TextContent.ShouldContain("Archived"));
         done.FindAll("[data-testid='workflow-menu']").ShouldBeEmpty();
+        await _api.Received(1).GetStatesAsync("Products", Arg.Is<IReadOnlyList<Guid>>(ids => ids.Count == 2 && ids.Contains(_id) && ids.Contains(other)), Arg.Any<CancellationToken>());
+        await _api.DidNotReceiveWithAnyArgs().GetAsync(default!, default, default);
     }
 
-    private WorkflowStatusDto Status(string state, IReadOnlyList<WorkflowTransitionDto> transitions, ApprovalDto? approval = null) =>
-        new("Products", _id, state, transitions, approval, []);
+    private WorkflowStatusDto Status(string state, IReadOnlyList<WorkflowTransitionDto> transitions, ApprovalDto? approval = null, Guid? id = null) =>
+        new("Products", id ?? _id, state, transitions, approval, []);
 
     private ApprovalDto Approval(bool canDecide) => new(
         Guid.CreateVersion7(), "Products", _id, "Review", "Laptop", RequiresAll: true, ApprovalStatus.Pending, Start, Start.AddDays(2),

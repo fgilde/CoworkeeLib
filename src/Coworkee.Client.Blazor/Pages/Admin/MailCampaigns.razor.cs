@@ -17,6 +17,8 @@ public partial class MailCampaigns : IDisposable
     private bool _polling;
     private readonly Dictionary<Guid, DateTimeOffset> _unclaimedSince = [];
 
+    [Inject] private Navigation.CoworkeePages Links { get; set; } = null!;
+
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;

@@ -14,6 +14,7 @@ internal sealed class WebhookModelContributor : IModelContributor
             subscription.Property(s => s.Url).HasMaxLength(WebhookLimits.Url);
             subscription.Property(s => s.Description).HasMaxLength(500);
             subscription.Property(s => s.ProtectedSecret).HasMaxLength(1000).IsNotAudited();
+            subscription.Property(s => s.PreviousProtectedSecret).HasMaxLength(1000).IsNotAudited();
             subscription.HasIndex(s => new { s.TenantId, s.IsActive });
         });
         modelBuilder.Entity<WebhookDelivery>(delivery =>

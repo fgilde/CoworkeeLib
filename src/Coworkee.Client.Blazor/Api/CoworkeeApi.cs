@@ -278,6 +278,9 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
     public async Task<ServiceDirectoryResult> GetServicesAsync(CancellationToken cancellationToken = default) =>
         await GetAsync<ServiceDirectoryResult>("api/v1/services", cancellationToken);
 
+    public async Task<SystemStatusDto> GetSystemStatusAsync(CancellationToken cancellationToken = default) =>
+        await GetAsync<SystemStatusDto>("api/v1/system/status", cancellationToken);
+
     public async Task<IReadOnlyList<ThemeDto>> GetBuiltInThemesAsync(CancellationToken cancellationToken = default) => await GetAsync<ThemeDto[]>($"{Themes}/built-in", cancellationToken);
 
     public Task<ThemeDto> CreateThemeAsync(ThemeRequest request, CancellationToken cancellationToken = default) =>

@@ -21,6 +21,12 @@ public sealed class RealtimeConnections(IHubContext<RealtimeHub> hub, IServiceSc
     private readonly ConcurrentDictionary<string, HubCallerContext> _connections = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, byte>> _topics = new(StringComparer.Ordinal);
 
+    /// <summary>Open connections of this instance.</summary>
+    public int Count => _connections.Count;
+
+    /// <summary>Signed-in users with an open connection to this instance.</summary>
+    public int Users => _connections.Values.Select(c => Identity(c.User).UserId).OfType<Guid>().Distinct().Count();
+
     internal void Add(HubCallerContext context)
     {
         _connections[context.ConnectionId] = context;
