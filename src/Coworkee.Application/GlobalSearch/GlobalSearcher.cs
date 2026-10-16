@@ -68,7 +68,7 @@ public sealed class GlobalSearcher(
     {
         var hits = new List<GlobalSearchHit>();
         var states = new List<GlobalSearchProviderStatus>();
-        var groups = providers.ToDictionary(p => p.Name, p => p.Group);
+        var groups = providers.DistinctBy(p => p.Name).ToDictionary(p => p.Name, p => p.Group);
         await foreach (var found in StreamAsync(text, types, limit, cancellationToken))
         {
             if (found.Hit is { } hit)
