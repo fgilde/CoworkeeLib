@@ -1,0 +1,20 @@
+@using MudExRichTextEditor
+@* with a height the editor fills it: the text area grows, the toolbar stays *@
+<style>
+    .cw-rich-text { display: flex; flex-direction: column; }
+    .cw-rich-text > .mudex-richtexteditor { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    .cw-rich-text .mud-input-control { flex: 1; min-height: 0; }
+    .cw-rich-text .mud-input-control-input-container { height: 100%; }
+    .cw-rich-text .tt-container, .cw-rich-text .ql-container { height: 100% !important; overflow: auto; }
+    .cw-rich-text .ProseMirror { min-height: 100%; }
+</style>
+<div class="cw-rich-text" style="@(Height is null ? null : $"height:{Height}")">
+    @if (Backend == RichTextBackend.Quill)
+    {
+        <MudExRichTextEdit @ref="_quill" Value="@Value" ValueChanged="ValueChanged" Modules="@_quillModules" Immediate="Immediate" ReadOnly="ReadOnly" />
+    }
+    else
+    {
+        <MudExTiptapEdit @ref="_tiptap" Value="@Value" ValueChanged="ValueChanged" Modules="@_tiptapModules" Immediate="Immediate" ReadOnly="ReadOnly" />
+    }
+</div>

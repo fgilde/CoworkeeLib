@@ -1,14 +1,16 @@
-<MudExpansionPanels Elevation="0" Class="cw-mail-variables">
-    <MudExpansionPanel Text="@L["Placeholders"]" Expanded="true" Dense="true">
-        <MudStack Spacing="0">
-            @foreach (var variable in Variables)
-            {
-                <div>
-                    <MudButton Size="Size.Small" Variant="Variant.Text" Style="text-transform:none;justify-content:flex-start;padding:0 4px"
-                               OnClick="() => OnPick.InvokeAsync(variable)" data-testid="@($"mail-variable-{variable.Name}")">@variable.Name</MudButton>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="d-block pl-1">@variable.Type@(variable.Sample is null ? null : $" · {variable.Sample}")</MudText>
-                </div>
-            }
-        </MudStack>
-    </MudExpansionPanel>
-</MudExpansionPanels>
+<MudPaper Outlined="true" Class="cw-mail-variables d-flex flex-column" Style="@($"height:{Height}")" data-testid="mail-variables">
+    <MudText Typo="Typo.subtitle2" Class="px-3 pt-2">@L["Placeholders"]</MudText>
+    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="px-3">@L["Click to insert at the cursor."]</MudText>
+    <MudTextField @bind-Value="_filter" Immediate="true" Placeholder="@L["Search"]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search"
+                  Margin="Margin.Dense" Variant="Variant.Outlined" Class="px-2 flex-grow-0" data-testid="mail-variables-filter" />
+    <MudList T="MailVariableDto" Dense="true" Class="overflow-y-auto flex-grow-1">
+        @foreach (var variable in Shown)
+        {
+            <MudListItem T="MailVariableDto" OnClick="() => OnPick.InvokeAsync(variable)" data-testid="@($"mail-variable-{variable.Name}")"
+                         Icon="@(variable.IsList ? Icons.Material.Outlined.Repeat : Icons.Material.Outlined.DataObject)">
+                <MudText Typo="Typo.body2" Style="font-family:monospace">@variable.Name</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">@variable.Type@(variable.Sample is null ? null : $" · {variable.Sample}")</MudText>
+            </MudListItem>
+        }
+    </MudList>
+</MudPaper>

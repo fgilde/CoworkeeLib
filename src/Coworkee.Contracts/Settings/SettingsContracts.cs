@@ -38,6 +38,16 @@ public static class TableSettings
     public const string ClientEntityModes = "Table.ClientEntityModes";
 }
 
+/// <summary>The engine of every rich text editor of the library: <see cref="TipTap"/> (default) or <see cref="Quill"/>.</summary>
+public static class EditorSettings
+{
+    public const string RichTextEditor = "Editors.RichTextEditor";
+
+    public const string TipTap = "TipTap";
+
+    public const string Quill = "Quill";
+}
+
 /// <summary>The cloud pickers of every upload field; a picker shows when it is enabled and has its client id or app key.</summary>
 public static class FilePickerSettings
 {

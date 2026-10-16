@@ -10,6 +10,8 @@ Changes that need action in apps built on Coworkee. Newest first.
 - **`IReportsApi`** gained `GetDashboardAsync` and `SetDashboardAsync`; own implementations add them. New endpoints under `/api/v1/reports/dashboard`: regenerate OpenAPI snapshots and SDKs.
 - **`AddCommandPaletteEntitySet` and `CommandPaletteEntitySet<T>` are removed**: the command palette finds records through the new global search of the server. Register the set next to its OData set, e.g. `services.AddGlobalSearch<Product>(s => s.Fields(p => p.Name, p => p.Barcode).Page("/catalog/products"))` (`coworkee update` points at the old calls).
 - New endpoints `/api/v1/search`, `/api/v1/search/stream` and `/api/v1/search/providers`: regenerate OpenAPI snapshots and SDKs.
+- **`ICoworkeeApi`** gained `GetMailTemplateHistoryAsync`; own implementations add it.
+- **MudBlazor.Extensions 9.11.4 and MudExRichTextEditor 9.5.5**: apps that pin MudBlazor.Extensions themselves move to 9.11.4.
 
 ### New
 
@@ -17,6 +19,8 @@ Changes that need action in apps built on Coworkee. Newest first.
 - **Global search**: one search over users, roles, groups, files, reports, chats and the app's own sets (`AddGlobalSearch<T>` for OData sets, `IGlobalSearchProvider` for anything else, `AddGlobalSearchIndex` for an Elasticsearch alias). Prefix before part, `"exact"`, `users:max` type filters and ids; scores comparable across providers, a timeout per provider, the same permissions, organisation and row rules as the OData lists. The command palette shows the hits group by group as they arrive, `/search?q=` lists all with a filter per type, `GET /api/v1/search/stream` streams JSON lines through the BFF, and the MCP tool `global_search` hands them to AI clients. See [Global search](../web/global-search.md).
 - The files page opens the preview of `?file={id}`.
 - Template samples: brands, products and documents are in the global search.
+- **Rich text editor setting**: `Editors.RichTextEditor` (TipTap, the default, or Quill) picks the engine of every rich text editor of the library; `RichTextEditor` brings the same choice to own pages. Mail placeholders work as mentions in both. See [Mailing](../modules/mailing.md#editing-a-template).
+- **Mail template editor**: the editor fills the window, a preview sheet follows every change (desktop or phone width, light or dark mail client, inbox line), version history with a line diff and restore (`GET /api/v1/mail/templates/{name}/{culture}/history`), a guard against leaving unsaved changes, language chips next to the title and a searchable placeholder list.
 
 ### Fixes
 

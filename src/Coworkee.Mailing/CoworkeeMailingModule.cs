@@ -74,6 +74,8 @@ public sealed class CoworkeeMailingModule : CoworkeeModule, IWebModule
             d.SendAsync(new ResetMailTemplate(name, culture), ct).ToHttpResult());
         api.MapPost("/templates/{name}/{culture}/preview", (string name, string culture, SaveMailTemplateRequest body, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new PreviewMailTemplate(name, culture, body), ct).ToHttpResult());
+        api.MapGet("/templates/{name}/{culture}/history", (string name, string culture, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new GetMailTemplateHistory(name, culture), ct).ToHttpResult());
         api.MapPost("/templates/{name}/{culture}/test", (string name, string culture, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new SendTestMail(name, culture), ct).ToHttpResult());
         api.MapPost("/connection/test", (MailConnectionTestRequest body, IDispatcher d, CancellationToken ct) =>

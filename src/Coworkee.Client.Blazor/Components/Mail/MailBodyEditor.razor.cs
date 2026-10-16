@@ -3,7 +3,6 @@ using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Mailing;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using MudExRichTextEditor;
 using MudExRichTextEditor.Extensibility;
 
 namespace Coworkee.Client.Blazor.Components.Mail;
@@ -19,13 +18,7 @@ public partial class MailBodyEditor : IAsyncDisposable
         Source,
     }
 
-    // Quill shows the mention's ToString(), which a record DTO does not give
-    private sealed record Placeholder(string Name)
-    {
-        public override string ToString() => Name;
-    }
-
-    private readonly IQuillModule[] _modules;
+    private readonly object[] _modules;
     private EditorMode _mode;
     private bool _modeChosen;
     private string _html = string.Empty;
@@ -33,13 +26,14 @@ public partial class MailBodyEditor : IAsyncDisposable
     private IReadOnlyList<string> _known = [];
     private IReadOnlyList<CodeCompletion> _completions = [];
     private IReadOnlyList<MailVariableDto>? _variables;
-    private MudExRichTextEdit? _visual;
+    private RichTextEditor? _visual;
     private CodeEditor? _source;
     private ElementReference _visualHost;
     private IJSObjectReference? _module;
     private bool _widened;
+    private bool _touched;
 
-    public MailBodyEditor() => _modules = [new QuillMentionModule<Placeholder>(SearchAsync, '{')];
+    public MailBodyEditor() => _modules = [new MentionModule<MailPlaceholder>(SearchAsync, '{')];
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
@@ -50,6 +44,15 @@ public partial class MailBodyEditor : IAsyncDisposable
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
 
     [Parameter] public IReadOnlyList<MailVariableDto> Variables { get; set; } = [];
+
+    /// <summary>
+    /// The visual editor rewrote the body on its own (Quill turns a line break inside a paragraph into a new paragraph);
+    /// raised before <see cref="ValueChanged"/>, so a caller can treat it as unchanged.
+    /// </summary>
+    [Parameter] public EventCallback<string> Normalized { get; set; }
+
+    /// <summary>Height of the editor and the placeholder list, any CSS length.</summary>
+    [Parameter] public string Height { get; set; } = "360px";
 
     private bool VisualAllowed => MailVisualMode.Allowed(Value);
 
@@ -79,6 +82,7 @@ public partial class MailBodyEditor : IAsyncDisposable
         if (Value != _seen)
         {
             _seen = Value;
+            _touched = false;
             _html = MailMentionHtml.ToMentions(Value, _known);
             if (_mode == EditorMode.Visual && !VisualAllowed)
             {
@@ -89,6 +93,7 @@ public partial class MailBodyEditor : IAsyncDisposable
 
     public async Task InsertVariableAsync(MailVariableDto variable)
     {
+        Touch();
         var snippet = variable.IsList ? $"{{{{ for item in {variable.Name} }}}}\n{{{{ end }}}}" : $"{{{{ {variable.Expression()} }}}}";
         if (_mode == EditorMode.Source && _source is not null)
         {
@@ -106,8 +111,8 @@ public partial class MailBodyEditor : IAsyncDisposable
         }
     }
 
-    private Task<IEnumerable<Placeholder>> SearchAsync(char denotation, string term) => Task.FromResult(
-        _known.Where(name => name.Contains(term, StringComparison.OrdinalIgnoreCase)).Take(MaxSuggestions).Select(name => new Placeholder(name)));
+    private Task<IEnumerable<MailPlaceholder>> SearchAsync(char denotation, string term) => Task.FromResult(
+        _known.Where(name => name.Contains(term, StringComparison.OrdinalIgnoreCase)).Take(MaxSuggestions).Select(name => new MailPlaceholder(name)));
 
     private Task SetModeAsync(EditorMode mode)
     {
@@ -119,21 +124,31 @@ public partial class MailBodyEditor : IAsyncDisposable
             }
 
             _html = MailMentionHtml.ToMentions(Value, _known);
+            _touched = false;
         }
 
         _mode = mode;
         return Task.CompletedTask;
     }
 
-    private Task VisualChangedAsync(string html)
+    private async Task VisualChangedAsync(string html)
     {
         _html = html;
-        return EmitAsync(MailMentionHtml.ToScriban(html, _known));
+        var body = MailMentionHtml.ToScriban(html, _known);
+        if (!_touched && body != Value)
+        {
+            await Normalized.InvokeAsync(body);
+        }
+
+        await EmitAsync(body);
     }
+
+    private void Touch() => _touched = true;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_mode != EditorMode.Visual)
+        // TipTap takes any character up to the next space; only Quill's mention list needs widening
+        if (_mode != EditorMode.Visual || _visual?.Backend != RichTextBackend.Quill)
         {
             _widened = false;
             return;

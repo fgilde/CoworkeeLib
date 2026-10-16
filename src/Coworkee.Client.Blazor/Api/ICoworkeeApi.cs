@@ -150,6 +150,9 @@ public interface ICoworkeeApi
 
     Task SendTestMailAsync(string name, string culture, CancellationToken cancellationToken = default);
 
+    /// <summary>The saved states of a template language, newest first.</summary>
+    Task<IReadOnlyList<MailTemplateVersionDto>> GetMailTemplateHistoryAsync(string name, string culture, CancellationToken cancellationToken = default);
+
     Task<PagedResult<OutgoingMailDto>> GetOutgoingMailsAsync(PageRequest page, OutgoingMailStatus? status, CancellationToken cancellationToken = default);
 
     Task<RecipientPreviewDto> PreviewRecipientsAsync(RecipientSourceDto source, CancellationToken cancellationToken = default);

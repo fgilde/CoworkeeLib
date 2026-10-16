@@ -10,6 +10,8 @@
 - **`IReportsApi`** hat `GetDashboardAsync` und `SetDashboardAsync` bekommen; eigene Implementierungen ergänzen sie. Neue Endpunkte unter `/api/v1/reports/dashboard`: OpenAPI-Snapshots und SDKs neu erzeugen.
 - **`AddCommandPaletteEntitySet` und `CommandPaletteEntitySet<T>` sind entfernt**: Die Befehlspalette findet Datensätze über die neue globale Suche des Servers. Registriere das Set neben seinem OData-Set, z. B. `services.AddGlobalSearch<Product>(s => s.Fields(p => p.Name, p => p.Barcode).Page("/catalog/products"))` (`coworkee update` zeigt auf die alten Aufrufe).
 - Neue Endpunkte `/api/v1/search`, `/api/v1/search/stream` und `/api/v1/search/providers`: OpenAPI-Snapshots und SDKs neu erzeugen.
+- **`ICoworkeeApi`** hat `GetMailTemplateHistoryAsync` bekommen; eigene Implementierungen ergänzen es.
+- **MudBlazor.Extensions 9.11.4 und MudExRichTextEditor 9.5.5**: Apps, die MudBlazor.Extensions selbst festlegen, gehen auf 9.11.4.
 
 ### Neu
 
@@ -17,6 +19,8 @@
 - **Globale Suche**: eine Suche über Benutzer, Rollen, Gruppen, Dateien, Berichte, Chats und die eigenen Sets der App (`AddGlobalSearch<T>` für OData-Sets, `IGlobalSearchProvider` für alles andere, `AddGlobalSearchIndex` für einen Elasticsearch-Alias). Anfang vor Teil, `"exakt"`, Typfilter wie `users:max` und Ids; Bewertungen über Provider hinweg vergleichbar, ein Timeout pro Provider, dieselben Berechtigungen, Organisation und Zeilenregeln wie die OData-Listen. Die Befehlspalette zeigt die Treffer Gruppe für Gruppe, sobald sie da sind, `/search?q=` listet alle mit einem Filter pro Typ, `GET /api/v1/search/stream` streamt JSON-Zeilen durch das BFF, und das MCP-Tool `global_search` gibt sie an KI-Clients. Siehe [Globale Suche](../web/global-search.md).
 - Die Dateiseite öffnet die Vorschau von `?file={id}`.
 - Beispiele der Vorlage: Marken, Produkte und Dokumente sind in der globalen Suche.
+- **Einstellung Rich-Text-Editor**: `Editors.RichTextEditor` (TipTap, der Standard, oder Quill) wählt den Editor für jeden Rich-Text-Editor der Bibliothek; `RichTextEditor` bringt dieselbe Wahl auf eigene Seiten. Mail-Platzhalter funktionieren in beiden als Erwähnungen. Siehe [Mailing](../modules/mailing.md#vorlage-bearbeiten).
+- **Mail-Vorlageneditor**: Der Editor füllt das Fenster, ein Vorschau-Panel folgt jeder Änderung (Desktop- oder Telefonbreite, helles oder dunkles Mailprogramm, Zeile im Posteingang), Versionsverlauf mit Zeilenvergleich und Wiederherstellen (`GET /api/v1/mail/templates/{name}/{culture}/history`), Schutz vor dem Verlassen mit ungespeicherten Änderungen, Sprach-Chips neben dem Titel und eine durchsuchbare Platzhalterliste.
 
 ### Korrekturen
 

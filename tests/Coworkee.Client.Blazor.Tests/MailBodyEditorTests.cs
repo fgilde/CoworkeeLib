@@ -2,7 +2,11 @@ using Bunit;
 using Coworkee.Client.Blazor.Components.Editors;
 using Coworkee.Client.Blazor.Components.Mail;
 using Coworkee.Contracts.Mailing;
+using Coworkee.Contracts.Settings;
+using Microsoft.Extensions.DependencyInjection;
 using MudExRichTextEditor;
+using MudExRichTextEditor.Extensibility;
+using NSubstitute;
 
 namespace Coworkee.Client.Blazor.Tests;
 
@@ -39,7 +43,7 @@ public sealed class MailBodyEditorTests : ClientTestBase
     {
         var cut = Render("<p>Hi</p>");
 
-        cut.FindComponents<MudExRichTextEdit>().Count.ShouldBe(1);
+        cut.FindComponents<RichTextEditor>().Count.ShouldBe(1);
         cut.FindComponents<CodeEditor>().ShouldBeEmpty();
     }
 
@@ -52,7 +56,7 @@ public sealed class MailBodyEditorTests : ClientTestBase
         cut.FindComponent<CodeEditor>().Instance.Value.ShouldBe("<p>Hi {{ user.first_name }}</p>");
 
         await cut.Find("[data-testid='mail-mode-visual']").ClickAsync(new());
-        cut.FindComponents<MudExRichTextEdit>().Count.ShouldBe(1);
+        cut.FindComponents<RichTextEditor>().Count.ShouldBe(1);
     }
 
     [Fact]
@@ -83,18 +87,67 @@ public sealed class MailBodyEditorTests : ClientTestBase
     {
         string? received = null;
         var cut = Render("<p>Hi</p>", v => received = v);
-        cut.FindComponents<MudExRichTextEdit>().Count.ShouldBe(1);
+        cut.FindComponents<RichTextEditor>().Count.ShouldBe(1);
 
         await cut.Find("[data-testid='mail-variable-notifications']").ClickAsync(new());
 
-        cut.FindComponents<MudExRichTextEdit>().ShouldBeEmpty();
+        cut.FindComponents<RichTextEditor>().ShouldBeEmpty();
         cut.FindComponent<CodeEditor>().Instance.Value.ShouldBe("<p>Hi</p>{{ for item in notifications }}\n{{ end }}");
         received.ShouldBe("<p>Hi</p>{{ for item in notifications }}\n{{ end }}");
     }
 
     [Fact]
-    public void The_visual_editor_widens_the_characters_the_mention_list_accepts()
+    public void TipTap_is_the_default_engine_with_the_placeholder_mentions()
     {
+        var cut = Render("<p>Hi</p>");
+
+        var tiptap = cut.FindComponent<MudExTiptapEdit>().Instance;
+        tiptap.Modules.ShouldHaveSingleItem().ShouldBeOfType<MentionModule<MailPlaceholder>>();
+        cut.FindComponents<MudExRichTextEdit>().ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task The_setting_switches_to_Quill_with_the_same_mentions()
+    {
+        await UseRichTextEditorAsync(EditorSettings.Quill);
+
+        var cut = Render("<p>Hi</p>");
+
+        var quill = cut.FindComponent<MudExRichTextEdit>().Instance;
+        quill.Modules.ShouldHaveSingleItem().ShouldBeOfType<MentionModule<MailPlaceholder>>();
+        cut.FindComponents<MudExTiptapEdit>().ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Mentions_search_the_placeholders_with_both_engines()
+    {
+        foreach (var engine in new[] { EditorSettings.TipTap, EditorSettings.Quill })
+        {
+            await UseRichTextEditorAsync(engine);
+            var cut = Render("<p>Hi</p>");
+            var module = (MentionModule<MailPlaceholder>)cut.FindComponent<RichTextEditor>().Instance.Modules.Single();
+
+            var found = await module.GetSuggestions('{', "first");
+
+            found.Select(m => m.Value).ShouldBe(["user.first_name"]);
+            found.Single().Data.ShouldBe(new MailPlaceholder("user.first_name"));
+        }
+    }
+
+    [Fact]
+    public async Task Picking_a_variable_in_visual_mode_inserts_a_mention_TipTap_parses()
+    {
+        var cut = Render("<p>Hi</p>");
+
+        await cut.Find("[data-testid='mail-variable-user.first_name']").ClickAsync(new());
+
+        cut.WaitForAssertion(() => JSInterop.Invocations.ShouldContain(i => i.Arguments.OfType<string>().Any(a => a.Contains($"data-__type=\"{MailPlaceholder.MentionType}\""))));
+    }
+
+    [Fact]
+    public async Task The_visual_editor_widens_the_characters_the_Quill_mention_list_accepts()
+    {
+        await UseRichTextEditorAsync(EditorSettings.Quill);
         var module = JSInterop.SetupModule("./_content/Coworkee.Client.Blazor/coworkee.js");
         module.Mode = JSRuntimeMode.Loose;
 
@@ -113,5 +166,11 @@ public sealed class MailBodyEditorTests : ClientTestBase
 
         received.ShouldNotBeNull().ShouldContain("{{ item.title }}");
         cut.FindComponent<CodeEditor>().Instance.Completions.ShouldNotBeNull().ShouldContain(new CodeCompletion("notifications[].title", " item.title }}", "string"));
+    }
+
+    private Task UseRichTextEditorAsync(string engine)
+    {
+        Api.GetClientSettingsAsync(default).ReturnsForAnyArgs(new Dictionary<string, string?> { [EditorSettings.RichTextEditor] = engine });
+        return Services.GetRequiredService<Theming.ThemeService>().LoadAsync();
     }
 }

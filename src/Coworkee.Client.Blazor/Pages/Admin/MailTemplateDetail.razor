@@ -2,5 +2,20 @@
 
 <PageTitle>@Name</PageTitle>
 <MudBreadcrumbs Items="_breadcrumbs" />
-<MudText Typo="Typo.h4" Class="mb-4">@Name <MudText Typo="Typo.body1" Inline="true">(@Culture)</MudText></MudText>
+<MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="mb-3" Spacing="1">
+    <MudText Typo="Typo.h4">@(_summary?.DisplayName ?? Name)</MudText>
+    <MudSpacer />
+    @if (_summary is not null)
+    {
+        @foreach (var culture in _summary.Cultures)
+        {
+            <MudChip T="string" Size="Size.Small" OnClick="() => Open(culture)" title="@Variants.Name(culture)" data-testid="@($"language-chip-{culture}")"
+                     Color="@(culture == Culture ? Color.Primary : Color.Default)" Variant="@(culture == Culture ? Variant.Filled : Variant.Outlined)">@LanguageFlags.For(culture) @culture</MudChip>
+        }
+        <MudTooltip Text="@(Variants.Missing(_summary).Count > 0 ? L["Add language"] : L["Every active language has a variant"])">
+            <MudIconButton Icon="@Icons.Material.Outlined.Translate" Size="Size.Small" aria-label="@L["Add language"]" Disabled="@(Variants.Missing(_summary).Count == 0)"
+                           OnClick="AddLanguageAsync" data-testid="add-language" />
+        </MudTooltip>
+    }
+</MudStack>
 <MailTemplateEditor Name="@Name" Culture="@Culture" />

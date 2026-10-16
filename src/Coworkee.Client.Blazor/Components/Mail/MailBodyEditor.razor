@@ -1,5 +1,4 @@
 @using Coworkee.Client.Blazor.Components.Editors
-@using MudExRichTextEditor
 <MudGrid Spacing="2">
     <MudItem xs="12" md="9">
         <MudStack Spacing="1">
@@ -19,17 +18,17 @@
             </MudStack>
             @if (_mode == EditorMode.Visual)
             {
-                <div @ref="_visualHost">
-                    <MudExRichTextEdit @ref="_visual" Value="@_html" ValueChanged="VisualChangedAsync" Modules="_modules" Immediate="true" Height="320" />
+                <div @ref="_visualHost" data-testid="mail-visual" @onkeydown="Touch" @onmousedown="Touch" @onpaste="Touch" @ondrop="Touch">
+                    <RichTextEditor @ref="_visual" Value="@_html" ValueChanged="VisualChangedAsync" Modules="_modules" Height="@Height" />
                 </div>
             }
             else
             {
-                <CodeEditor @ref="_source" Value="@Value" ValueChanged="SourceChangedAsync" Language="html" Label="@L["Body"]" Completions="_completions" CompletionTrigger="{{" />
+                <CodeEditor @ref="_source" Value="@Value" ValueChanged="SourceChangedAsync" Language="html" Label="@L["Body"]" Completions="_completions" CompletionTrigger="{{" Height="@Height" />
             }
         </MudStack>
     </MudItem>
     <MudItem xs="12" md="3">
-        <MailVariablesPanel Variables="Variables" OnPick="InsertVariableAsync" />
+        <MailVariablesPanel Variables="Variables" OnPick="InsertVariableAsync" Height="@Height" />
     </MudItem>
 </MudGrid>

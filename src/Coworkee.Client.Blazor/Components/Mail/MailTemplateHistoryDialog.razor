@@ -1,0 +1,42 @@
+<MudDialog Class="@MudBlazor.Extensions.Helper.MudExCss.Classes.Dialog.Initial">
+    <DialogContent>
+        @if (Versions.Count == 0)
+        {
+            <MudText Color="Color.Secondary" data-testid="history-empty">@L["No saved versions yet. Every save adds one."]</MudText>
+        }
+        else
+        {
+            <MudGrid Spacing="2">
+                <MudItem xs="12" md="4">
+                    <MudList T="MailTemplateVersionDto" @bind-SelectedValue="_selected" SelectionMode="SelectionMode.SingleSelection" Dense="true" Class="overflow-y-auto" Style="max-height:60vh">
+                        @foreach (var version in Versions)
+                        {
+                            <MudListItem T="MailTemplateVersionDto" Value="version" data-testid="history-version">
+                                <MudText Typo="Typo.body2">@version.SavedAt.ToLocalTime().ToString("g")</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">@(version.Author ?? L["Unknown"]) · @version.Subject</MudText>
+                            </MudListItem>
+                        }
+                    </MudList>
+                </MudItem>
+                <MudItem xs="12" md="8">
+                    @if (_selected is { } selected)
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@L["Changes from this version to the editor"]</MudText>
+                        @if (selected.Subject != Subject)
+                        {
+                            <pre style="@Pre" data-testid="history-subject-diff"><span style="@Style(MailDiffKind.Removed)">- @selected.Subject</span>
+<span style="@Style(MailDiffKind.Added)">+ @Subject</span></pre>
+                        }
+                        <pre style="@($"{Pre};max-height:55vh;overflow:auto")" data-testid="history-diff">@foreach (var line in MailLineDiff.Compute(selected.Body, Body))
+{<span style="@Style(line.Kind)" data-diff="@line.Kind">@(line.Kind switch { MailDiffKind.Added => "+ ", MailDiffKind.Removed => "- ", _ => "  " })@line.Text
+</span>}</pre>
+                    }
+                </MudItem>
+            </MudGrid>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog.Cancel()">@L["Close"]</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_selected is null" OnClick="() => Dialog.Close(DialogResult.Ok(_selected))" data-testid="history-restore">@L["Restore into the editor"]</MudButton>
+    </DialogActions>
+</MudDialog>
