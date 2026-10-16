@@ -45,7 +45,7 @@ var app = builder.AddCoworkeeApp("shop", options => options.UseGrafana().DeployT
 | WebDataStudio | connected to the app database; the administrator signs in with the password or through Keycloak. Public address `<app>-webdatastudio-url`, data in `<app>-webdatastudio-data` |
 | LibreTranslate | the translation service of the app, inside the network only; the models live in `<app>-libretranslate-models`, the first start downloads them |
 | Ollama | the model server of the app, inside the network only, models in `<app>-ollama-data`. It needs a host with enough memory |
-| AspireUI | with the administrator's sign-in (and Keycloak), public address `<app>-aspireui-url`, data in `<app>-aspireui-data`. It drives the host's Docker through `/var/run/docker.sock`, so it suits Docker Compose |
+| AspireUI | with the administrator's sign-in (and Keycloak), public address `<app>-aspireui-url`, data in `<app>-aspireui-data`. It drives the host's Docker through `/var/run/docker.sock`, so it goes along to Docker Compose only (`--with aspireui` forces it, which the Kubernetes publisher refuses) |
 | Mailpit | only with `--with mailpit`, for a test deployment: every mail lands there, its web interface (`<app>-mail-url`) asks for the administrator's email and password |
 
 Each tool with a web interface sits behind your reverse proxy like the services; its public address also shows on the admin page **Services** (`Coworkee:Services`).

@@ -64,7 +64,7 @@ internal static partial class DeploySummary
 
     /// <summary>The address parameters (<c>shop_web_url</c>, <c>shop_grafana_url</c>, ...) of a Bicep or Helm output.</summary>
     public static IReadOnlyList<string> PublicAddresses(string folder) =>
-        [.. Directory.EnumerateFiles(folder, "*.*", SearchOption.TopDirectoryOnly).Where(f => f.EndsWith(".bicep", StringComparison.Ordinal) || f.EndsWith("values.yaml", StringComparison.Ordinal))
+        [.. Directory.EnumerateFiles(folder, "*.*", SearchOption.AllDirectories).Where(f => f.EndsWith(".bicep", StringComparison.Ordinal) || f.EndsWith("values.yaml", StringComparison.Ordinal))
             .SelectMany(f => UrlParameter().Matches(File.ReadAllText(f)).Select(m => m.Groups[1].Value)).Distinct().Order(StringComparer.Ordinal)];
 
     [GeneratedRegex(@"^  ([a-z0-9][a-z0-9-]*):\s*$")]
@@ -73,6 +73,7 @@ internal static partial class DeploySummary
     [GeneratedRegex(@"127\.0\.0\.1:(\d+):")]
     private static partial Regex LoopbackPort();
 
-    [GeneratedRegex(@"\b([a-z0-9]+(?:_[a-z0-9]+)*_url)\b")]
+    // Bicep names them shop_web_url_value
+    [GeneratedRegex(@"\b([a-z0-9]+(?:_[a-z0-9]+)*?_url)(?:_value)?\b")]
     private static partial Regex UrlParameter();
 }

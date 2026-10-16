@@ -81,10 +81,17 @@ public sealed partial class CoworkeeApp
 
     /// <summary>
     /// Whether the app host adds <paramref name="tool"/> (a name of <see cref="CoworkeeTools"/>): always while it runs; in a deployment unless switched off,
-    /// Mailpit only when switched on.
+    /// Mailpit only when switched on, AspireUI by default on Docker Compose only (it drives the host's Docker through its socket).
     /// </summary>
     public bool Deploys(string tool) =>
-        !Publishing || (Builder.Configuration.GetValue<bool?>($"{DeployToolsSetting}:{tool}") ?? Options.DeployedTools.GetValueOrDefault(tool, tool != CoworkeeTools.Mailpit));
+        !Publishing || (Builder.Configuration.GetValue<bool?>($"{DeployToolsSetting}:{tool}") ?? Options.DeployedTools.GetValueOrDefault(tool, DeployedByDefault(tool)));
+
+    private bool DeployedByDefault(string tool) => tool switch
+    {
+        CoworkeeTools.Mailpit => false,
+        CoworkeeTools.AspireUI => _target is not ("azure" or "k8s"),
+        _ => true,
+    };
 
     private readonly Dictionary<IResource, ReferenceExpression> _toolUrls = [];
 

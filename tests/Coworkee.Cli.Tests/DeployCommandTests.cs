@@ -124,6 +124,16 @@ public sealed class DeployCommandTests
         credentials.ShouldContain("KEYCLOAK_PASSWORD");
     }
 
+    [Fact]
+    public void The_public_addresses_of_a_bicep_or_helm_output_are_listed()
+    {
+        using var folder = new TempFolder();
+        File.WriteAllText(folder.File("grafana/grafana.bicep"), "param shop_grafana_url_value string param shop_keycloak_url_value string");
+        File.WriteAllText(folder.File("values.yaml"), "shop_web_url: \"\"");
+
+        DeploySummary.PublicAddresses(folder.Path).ShouldBe(["shop_grafana_url", "shop_keycloak_url", "shop_web_url"]);
+    }
+
     [Theory]
     [InlineData("deploy compose --without grafana webdatastudio --with mailpit --admin-email ada@example.com")]
     [InlineData("deploy")]
