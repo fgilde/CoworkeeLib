@@ -44,6 +44,7 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
         app.MapControllers();
         app.MapDataTransferEndpoints();
         app.MapClientEntityEndpoints();
+        GlobalSearch.GlobalSearchEndpoints.MapGlobalSearchEndpoints(app);
     }
 
     private static IEdmModel BuildModel(ODataEntityRegistry registry)
