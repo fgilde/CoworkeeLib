@@ -26,10 +26,28 @@ public partial class Files
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
+    /// <summary>A file to preview on arrival, e.g. a hit of the global search.</summary>
+    [SupplyParameterFromQuery(Name = "file")] public Guid? File { get; set; }
+
     /// <summary>The one file selected; sharing acts on it.</summary>
     private StoredFileDto? Selected => _node?.Handle as StoredFileDto;
 
     protected override void OnInitialized() => _manager = new FilesStructureManager(Api);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && File is { } id)
+        {
+            try
+            {
+                await FilePreviewDialog.ShowAsync(Dialogs, await Api.GetFileAsync(id));
+            }
+            catch (Api.ApiException exception)
+            {
+                Snackbar.Add(Api.SnackbarApiExtensions.Describe(exception), Severity.Warning);
+            }
+        }
+    }
 
     private void Enter(MudExFileStructureNode? directory) => _manager.CurrentFolderId = FilesStructureManager.IdOf(directory);
 

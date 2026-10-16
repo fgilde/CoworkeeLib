@@ -1,4 +1,5 @@
 using Coworkee.Application.Authorization;
+using Coworkee.Application.GlobalSearch;
 using Coworkee.Application.Messaging;
 using Coworkee.AspNetCore;
 using Coworkee.AspNetCore.Http;
@@ -29,6 +30,7 @@ public sealed class CoworkeeReportingModule : CoworkeeModule, IWebModule
         services.AddSingleton<ReportSchema>();
         services.AddScoped<ReportQueries>();
         services.AddScoped<ReportAccess>();
+        services.AddGlobalSearchProvider<ReportSearchProvider>();
     }
 
     public void ConfigureApplication(WebApplication app)
