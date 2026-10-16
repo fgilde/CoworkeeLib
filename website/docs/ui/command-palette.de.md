@@ -5,7 +5,7 @@
 Was sie findet:
 
 - **Seiten** der Navigation, die der Benutzer öffnen darf (dieselben Regeln für Berechtigung, Feature und Organisation wie im Menü).
-- **Datensätze** der Entity-Sets, die du registrierst. Gesucht wird auf dem Server, sobald zwei Buchstaben dastehen.
+- **Datensätze** aus der [globalen Suche](../web/global-search.md) des Servers, sobald zwei Buchstaben dastehen: Benutzer, Dateien, Berichte und die Sets, die deine Module mit `AddGlobalSearch` registrieren. Sie erscheinen Gruppe für Gruppe, sobald die Provider sie finden, der gewählte Eintrag bleibt gewählt, und *Alle Ergebnisse* öffnet `/search?q=` mit einem Filter pro Typ.
 - **Aktionen**: dunkler oder heller Modus, ein anderes Theme, eine andere Sprache, eine andere aktive Rolle und deine eigenen Befehle wie *Neues Produkt*.
 - **Den Assistenten fragen: …** als letzter Eintrag, wenn der [Assistent](../modules/ai.md) eingerichtet ist und der Benutzer chatten darf. Er öffnet das Assistentenfenster mit dem Text im Eingabefeld.
 
@@ -17,20 +17,11 @@ Die Suche ist unscharf: `nwprd` findet *New product*, und die passenden Buchstab
 // eine Aktion: ein Link oder beliebiger Code
 builder.Services.AddCommandPaletteCommand(new CommandPaletteCommand("New product", Icons.Material.Outlined.Add,
     CatalogPermissions.Products.Create, Href: "/catalog/products?new=1"));
-
-// Datensätze eines OData-Sets; ein Treffer öffnet die Liste, nach ihm gesucht
-builder.Services.AddCommandPaletteEntitySet(new CommandPaletteEntitySet<ProductDto>("Products", "/catalog/products", p => p.Name,
-    [nameof(ProductDto.Name), nameof(ProductDto.Barcode)])
-{
-    Permission = CatalogPermissions.Products.View,
-    Icon = Icons.Material.Outlined.Inventory2,
-    Subtitle = p => p.Brand?.Name,
-});
 ```
 
-`?new=1` auf einer Seite mit `CoworkeeDataTable` öffnet einmal deren Anlegen-Dialog, ein Befehl *Neues ...* braucht also nicht mehr. Hat ein Datensatz eine eigene Seite, nimm `Href = p => $"/catalog/products/{p.Id}"`.
+`?new=1` auf einer Seite mit `CoworkeeDataTable` öffnet einmal deren Anlegen-Dialog, ein Befehl *Neues ...* braucht also nicht mehr. Datensätze registrierst du auf dem Server neben ihrem OData-Set, siehe [Globale Suche](../web/global-search.md).
 
-Für alles andere schreibst du einen Provider. Er bekommt den bisher getippten Text und liefert Einträge; die Palette filtert und sortiert sie, außer du setzt `Matched = true`, weil du selbst gesucht hast.
+Für alles andere, was im Browser lebt, schreibst du einen Provider (Daten des Servers gehören in einen Provider der globalen Suche). Er bekommt den bisher getippten Text und liefert Einträge; die Palette filtert und sortiert sie, außer du setzt `Matched = true`, weil du selbst gesucht hast.
 
 ```csharp
 public sealed class HelpArticles(IHelpApi help) : ICommandPaletteProvider

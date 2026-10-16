@@ -99,6 +99,7 @@ plugins:
             Application services: Anwendungsdienste
             OData and facets: OData und Facetten
             Response filters: Response-Filter
+            Global search: Globale Suche
             Import and export: Import und Export
             AirWorks client: AirWorks-Client
             Security: Sicherheit
@@ -207,6 +208,7 @@ nav:
       - OData and facets: web/odata.md
       - Import and export: web/import-export.md
       - Response filters: web/response-filters.md
+      - Global search: web/global-search.md
       - SDKs: web/sdk.md
       - AirWorks client: web/airworks.md
   - Security:

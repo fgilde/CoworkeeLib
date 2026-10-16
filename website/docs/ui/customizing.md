@@ -67,7 +67,7 @@ Old addresses keep working: `/admin/users/…` in a bookmark, a mail or a push n
 
 How it works: one catch-all page of the library (`CoworkeePageHost`, route `/{*Path}`) renders the library pages. Pages of your app always win over it, so an own `/admin/ai` page never clashes with the library. An address nobody knows shows the router's `NotFoundPage` if you set one, otherwise a short "Not found." in the layout.
 
-Keys: `users`, `user`, `groups`, `roles`, `role`, `clients`, `scopes`, `api-keys`, `settings`, `ai-settings`, `ai-tool-calls`, `audit`, `backups`, `data-transfer`, `editions`, `languages`, `translations`, `mail-settings`, `mail-templates`, `mail-template`, `mail-campaigns`, `mail-log`, `services`, `system-status`, `tenants`, `themes`, `webhooks`, `approvals`, `assistant`, `chat`, `files`, `notifications`, `profile`, `user-settings`, and with reporting `reports`, `report`, `report-data`. An unknown key stops the app at start.
+Keys: `users`, `user`, `groups`, `roles`, `role`, `clients`, `scopes`, `api-keys`, `settings`, `ai-settings`, `ai-tool-calls`, `audit`, `backups`, `data-transfer`, `editions`, `languages`, `translations`, `mail-settings`, `mail-templates`, `mail-template`, `mail-campaigns`, `mail-log`, `services`, `system-status`, `tenants`, `themes`, `webhooks`, `approvals`, `assistant`, `chat`, `files`, `notifications`, `profile`, `search`, `user-settings`, and with reporting `reports`, `report`, `report-data`. An unknown key stops the app at start.
 
 ## When to replace and when to contribute
 

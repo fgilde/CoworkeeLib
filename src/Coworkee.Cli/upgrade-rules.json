@@ -134,6 +134,15 @@
         { "text": "Grafana exporter per signal: with GRAFANA_OTLP_PROTOCOL=http/protobuf use {endpoint}/v1/{logs|metrics|traces} over HttpProtobuf, exporters grafana-logs/-metrics/-traces (see the template ServiceDefaults/Extensions.cs).", "find": "GRAFANA_OTLP_ENDPOINT", "files": [ "src/*.ServiceDefaults/Extensions.cs" ], "unless": "GRAFANA_OTLP_PROTOCOL" },
         { "text": "App host: add Ollama when app.Deploys(CoworkeeTools.Ollama) and AspireUI when app.Deploys(CoworkeeTools.AspireUI) with builder.AddAspireUI().WithCoworkee(app).WithRetrieveApi() (seed from the directory only in run mode) instead of IsRunMode checks.", "find": "AddOllama|AddAspireUI", "files": [ "src/*.AppHost/*.cs" ], "unless": "app.Deploys(" }
       ]
+    },
+    {
+      "version": "0.0.1.28",
+      "breaking": [
+        "AddCommandPaletteEntitySet and CommandPaletteEntitySet<T> are removed: the command palette finds records through the global search of the server; register the set there with services.AddGlobalSearch<T>(s => s.Fields(...).Page(...))."
+      ],
+      "manual": [
+        { "text": "Move the palette search of the set to the server module that registers its OData set: services.AddGlobalSearch<TEntity>(s => s.Fields(e => e.Name).Subtitle(...).Page(\"/list-page\")), then delete the client registration.", "find": "AddCommandPaletteEntitySet|CommandPaletteEntitySet<", "files": [ "src/**/*.cs" ] }
+      ]
     }
   ]
 }

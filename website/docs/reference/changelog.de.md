@@ -2,6 +2,19 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Breaking Changes
+
+- **`AddCommandPaletteEntitySet` und `CommandPaletteEntitySet<T>` sind entfernt**: Die Befehlspalette findet Datensätze über die neue globale Suche des Servers. Registriere das Set neben seinem OData-Set, z. B. `services.AddGlobalSearch<Product>(s => s.Fields(p => p.Name, p => p.Barcode).Page("/catalog/products"))` (`coworkee update` zeigt auf die alten Aufrufe).
+- Neue Endpunkte `/api/v1/search`, `/api/v1/search/stream` und `/api/v1/search/providers`: OpenAPI-Snapshots und SDKs neu erzeugen.
+
+### Neu
+
+- **Globale Suche**: eine Suche über Benutzer, Rollen, Gruppen, Dateien, Berichte, Chats und die eigenen Sets der App (`AddGlobalSearch<T>` für OData-Sets, `IGlobalSearchProvider` für alles andere, `AddGlobalSearchIndex` für einen Elasticsearch-Alias). Anfang vor Teil, `"exakt"`, Typfilter wie `users:max` und Ids; Bewertungen über Provider hinweg vergleichbar, ein Timeout pro Provider, dieselben Berechtigungen, Organisation und Zeilenregeln wie die OData-Listen. Die Befehlspalette zeigt die Treffer Gruppe für Gruppe, sobald sie da sind, `/search?q=` listet alle mit einem Filter pro Typ, `GET /api/v1/search/stream` streamt JSON-Zeilen durch das BFF, und das MCP-Tool `global_search` gibt sie an KI-Clients. Siehe [Globale Suche](../web/global-search.md).
+- Die Dateiseite öffnet die Vorschau von `?file={id}`.
+- Beispiele der Vorlage: Marken, Produkte und Dokumente sind in der globalen Suche.
+
 ## 0.0.1.27 (2026-10-16)
 
 ### Korrekturen

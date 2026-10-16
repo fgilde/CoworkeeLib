@@ -2,6 +2,19 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Breaking changes
+
+- **`AddCommandPaletteEntitySet` and `CommandPaletteEntitySet<T>` are removed**: the command palette finds records through the new global search of the server. Register the set next to its OData set, e.g. `services.AddGlobalSearch<Product>(s => s.Fields(p => p.Name, p => p.Barcode).Page("/catalog/products"))` (`coworkee update` points at the old calls).
+- New endpoints `/api/v1/search`, `/api/v1/search/stream` and `/api/v1/search/providers`: regenerate OpenAPI snapshots and SDKs.
+
+### New
+
+- **Global search**: one search over users, roles, groups, files, reports, chats and the app's own sets (`AddGlobalSearch<T>` for OData sets, `IGlobalSearchProvider` for anything else, `AddGlobalSearchIndex` for an Elasticsearch alias). Prefix before part, `"exact"`, `users:max` type filters and ids; scores comparable across providers, a timeout per provider, the same permissions, organisation and row rules as the OData lists. The command palette shows the hits group by group as they arrive, `/search?q=` lists all with a filter per type, `GET /api/v1/search/stream` streams JSON lines through the BFF, and the MCP tool `global_search` hands them to AI clients. See [Global search](../web/global-search.md).
+- The files page opens the preview of `?file={id}`.
+- Template samples: brands, products and documents are in the global search.
+
 ## 0.0.1.27 (2026-10-16)
 
 ### Fixes
