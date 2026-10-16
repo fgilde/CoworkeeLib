@@ -106,7 +106,8 @@ public sealed class CommandPaletteTests : ClientTestBase
         palette.Find("[data-testid='palette-input']").Input("flux");
 
         palette.WaitForAssertion(() => palette.FindAll("[data-group='Gadgets']").Count.ShouldBe(1));
-        await palette.Find("[data-group='Gadgets']").ClickAsync(new());
+        // find and click in one dispatch: the asynchronous search results may re-render in between
+        await palette.InvokeAsync(() => palette.Find("[data-group='Gadgets']").Click());
         Services.GetRequiredService<NavigationManager>().Uri.ShouldContain("/gadgets?gadgets=");
     }
 
@@ -120,20 +121,10 @@ public sealed class CommandPaletteTests : ClientTestBase
         palette.Find("[data-testid='palette-input']").Input("how do refunds work");
         palette.WaitForAssertion(() => palette.Find("[data-group='Assistant']").TextContent.ShouldContain("how do refunds work"));
 
-        // the assistant status arrives asynchronously and may re-render the list between finding the entry and clicking it
-        var state = Services.GetRequiredService<AssistantState>();
-        for (var attempt = 0; attempt < 5 && !state.IsOpen; attempt++)
-        {
-            try
-            {
-                await palette.Find("[data-group='Assistant']").ClickAsync(new());
-            }
-            catch (Bunit.Rendering.UnknownEventHandlerIdException)
-            {
-                await Task.Delay(50, TestContext.Current.CancellationToken);
-            }
-        }
+        // find and click in one dispatch: the asynchronous assistant status may re-render the list in between
+        await palette.InvokeAsync(() => palette.Find("[data-group='Assistant']").Click());
 
+        var state = Services.GetRequiredService<AssistantState>();
         state.IsOpen.ShouldBeTrue();
         state.Draft.ShouldBe("how do refunds work");
     }
