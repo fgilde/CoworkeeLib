@@ -1534,5 +1534,10 @@
   "No key or endpoint": "Chybí klíč nebo koncový bod",
   "Rotate secret": "Obnovit tajný klíč",
   "Old secret signs too until {0}": "Starý klíč podepisuje také do {0}",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Vytvořit nový podpisový klíč pro {0}? Starý ještě chvíli podepisuje vedle něj, aby příjemce mohl přejít."
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Vytvořit nový podpisový klíč pro {0}? Starý ještě chvíli podepisuje vedle něj, aby příjemce mohl přejít.",
+  "Rich text editor": "Editor formátovaného textu",
+  "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "Editor formátovaných textů, například e-mailových šablon. Kód a zdroj HTML zůstávají v editoru kódu.",
+  "TipTap": "TipTap",
+  "Quill": "Quill",
+  "Click to insert at the cursor.": "Kliknutím vložíš na pozici kurzoru."
 }

@@ -1534,5 +1534,10 @@
   "No key or endpoint": "Geen sleutel of endpoint",
   "Rotate secret": "Geheim vernieuwen",
   "Old secret signs too until {0}": "Oud geheim ondertekent ook tot {0}",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Nieuw ondertekeningsgeheim voor {0} maken? Het oude ondertekent nog even mee, zodat de ontvanger kan overstappen."
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Nieuw ondertekeningsgeheim voor {0} maken? Het oude ondertekent nog even mee, zodat de ontvanger kan overstappen.",
+  "Rich text editor": "Opgemaakte-teksteditor",
+  "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "De editor voor opgemaakte teksten zoals mailsjablonen. Code en HTML-bron blijven in de code-editor.",
+  "TipTap": "TipTap",
+  "Quill": "Quill",
+  "Click to insert at the cursor.": "Klik om bij de cursor in te voegen."
 }

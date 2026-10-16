@@ -1534,5 +1534,10 @@
   "No key or endpoint": "គ្មានសោ ឬ endpoint",
   "Rotate secret": "ប្តូរសម្ងាត់",
   "Old secret signs too until {0}": "សម្ងាត់ចាស់ក៏ចុះហត្ថលេខាដល់ {0}",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "បង្កើតសម្ងាត់ចុះហត្ថលេខាថ្មីសម្រាប់ {0}? សម្ងាត់ចាស់នៅតែចុះហត្ថលេខាមួយរយៈ ដើម្បីឱ្យអ្នកទទួលអាចប្តូរបាន។"
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "បង្កើតសម្ងាត់ចុះហត្ថលេខាថ្មីសម្រាប់ {0}? សម្ងាត់ចាស់នៅតែចុះហត្ថលេខាមួយរយៈ ដើម្បីឱ្យអ្នកទទួលអាចប្តូរបាន។",
+  "Rich text editor": "កម្មវិធីកែអត្ថបទទម្រង់",
+  "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "កម្មវិធីកែអត្ថបទមានទម្រង់ ដូចជាគំរូសំបុត្រ។ កូដ និងប្រភព HTML នៅតែប្រើកម្មវិធីកែកូដ។",
+  "TipTap": "TipTap",
+  "Quill": "Quill",
+  "Click to insert at the cursor.": "ចុចដើម្បីបញ្ចូលនៅទីតាំងទស្សន៍ទ្រនិច។"
 }

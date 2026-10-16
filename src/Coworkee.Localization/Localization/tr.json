@@ -1534,5 +1534,10 @@
   "No key or endpoint": "Anahtar veya uç nokta yok",
   "Rotate secret": "Gizli anahtarı yenile",
   "Old secret signs too until {0}": "Eski gizli anahtar {0} tarihine kadar imzalamaya devam eder",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "{0} için yeni bir imza anahtarı oluşturulsun mu? Alıcının geçiş yapabilmesi için eskisi bir süre daha birlikte imzalar."
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "{0} için yeni bir imza anahtarı oluşturulsun mu? Alıcının geçiş yapabilmesi için eskisi bir süre daha birlikte imzalar.",
+  "Rich text editor": "Zengin metin düzenleyici",
+  "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "Posta şablonları gibi biçimli metinlerin düzenleyicisi. Kod ve HTML kaynağı kod düzenleyicide kalır.",
+  "TipTap": "TipTap",
+  "Quill": "Quill",
+  "Click to insert at the cursor.": "İmlece eklemek için tıkla."
 }

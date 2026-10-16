@@ -1534,5 +1534,10 @@
   "No key or endpoint": "Няма ключ или крайна точка",
   "Rotate secret": "Смяна на тайната",
   "Old secret signs too until {0}": "Старата тайна подписва също до {0}",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Да се създаде ли нова тайна за подписване за {0}? Старата продължава да подписва известно време, за да може получателят да премине."
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Да се създаде ли нова тайна за подписване за {0}? Старата продължава да подписва известно време, за да може получателят да премине.",
+  "Rich text editor": "Редактор на форматиран текст",
+  "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "Редакторът на форматирани текстове, например шаблони за поща. Кодът и HTML източникът остават в редактора на код.",
+  "TipTap": "TipTap",
+  "Quill": "Quill",
+  "Click to insert at the cursor.": "Щракни, за да вмъкнеш при курсора."
 }

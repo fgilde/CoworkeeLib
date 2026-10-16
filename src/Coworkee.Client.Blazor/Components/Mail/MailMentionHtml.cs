@@ -34,7 +34,7 @@ public static partial class MailMentionHtml
     public static string Mention(string name)
     {
         var encoded = WebUtility.HtmlEncode(name);
-        return $"<span class=\"mention\" data-denotation-char=\"{{\" data-id=\"{encoded}\" data-value=\"{encoded}\"><span contenteditable=\"false\"><span class=\"ql-mention-denotation-char\">{{</span>{encoded}</span></span>";
+        return $"<span class=\"mention\" data-__type=\"{MailPlaceholder.MentionType}\" data-denotation-char=\"{{\" data-id=\"{encoded}\" data-value=\"{encoded}\"><span contenteditable=\"false\"><span class=\"ql-mention-denotation-char\">{{</span>{encoded}</span></span>";
     }
 
     // index after the closing </span> of the span whose opening tag ended at <paramref name="from"/>; an unclosed span ends with its opening tag, so it cannot swallow the rest

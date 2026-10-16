@@ -1534,5 +1534,10 @@
   "No key or endpoint": "Tanpa kunci atau endpoint",
   "Rotate secret": "Ganti rahasia",
   "Old secret signs too until {0}": "Rahasia lama juga menandatangani hingga {0}",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Buat rahasia penandatanganan baru untuk {0}? Yang lama tetap menandatangani untuk sementara agar penerima bisa beralih."
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Buat rahasia penandatanganan baru untuk {0}? Yang lama tetap menandatangani untuk sementara agar penerima bisa beralih.",
+  "Rich text editor": "Editor teks kaya",
+  "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "Editor untuk teks berformat seperti templat email. Kode dan sumber HTML tetap memakai editor kode.",
+  "TipTap": "TipTap",
+  "Quill": "Quill",
+  "Click to insert at the cursor.": "Klik untuk menyisipkan di kursor."
 }

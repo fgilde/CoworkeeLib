@@ -1534,5 +1534,10 @@
   "No key or endpoint": "لا مفتاح ولا نقطة نهاية",
   "Rotate secret": "تدوير السر",
   "Old secret signs too until {0}": "السر القديم يوقّع أيضًا حتى {0}",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "إنشاء سر توقيع جديد لـ {0}؟ يستمر القديم في التوقيع بجانبه لفترة حتى يتمكن المستقبِل من التبديل."
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "إنشاء سر توقيع جديد لـ {0}؟ يستمر القديم في التوقيع بجانبه لفترة حتى يتمكن المستقبِل من التبديل.",
+  "Rich text editor": "محرر النص المنسق",
+  "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "محرر النصوص المنسقة مثل قوالب البريد. تبقى الشيفرة ومصدر HTML في محرر الشيفرة.",
+  "TipTap": "TipTap",
+  "Quill": "Quill",
+  "Click to insert at the cursor.": "انقر للإدراج عند المؤشر."
 }

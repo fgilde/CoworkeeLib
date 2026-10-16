@@ -1534,5 +1534,10 @@
   "No key or endpoint": "没有密钥或端点",
   "Rotate secret": "轮换密钥",
   "Old secret signs too until {0}": "旧密钥在 {0} 之前也会签名",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "为 {0} 创建新的签名密钥？旧密钥会在一段时间内同时签名，以便接收方切换。"
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "为 {0} 创建新的签名密钥？旧密钥会在一段时间内同时签名，以便接收方切换。",
+  "Rich text editor": "富文本编辑器",
+  "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "用于邮件模板等格式文本的编辑器。代码和 HTML 源码仍使用代码编辑器。",
+  "TipTap": "TipTap",
+  "Quill": "Quill",
+  "Click to insert at the cursor.": "点击即可插入到光标处。"
 }

@@ -1534,5 +1534,10 @@
   "No key or endpoint": "Nema ključa ni krajnje točke",
   "Rotate secret": "Zamijeni tajnu",
   "Old secret signs too until {0}": "Stara tajna također potpisuje do {0}",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Stvoriti novu tajnu za potpisivanje za {0}? Stara još neko vrijeme potpisuje uz nju kako bi primatelj mogao prijeći."
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Stvoriti novu tajnu za potpisivanje za {0}? Stara još neko vrijeme potpisuje uz nju kako bi primatelj mogao prijeći.",
+  "Rich text editor": "Uređivač oblikovanog teksta",
+  "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "Uređivač oblikovanih tekstova poput predložaka pošte. Kod i HTML izvor ostaju u uređivaču koda.",
+  "TipTap": "TipTap",
+  "Quill": "Quill",
+  "Click to insert at the cursor.": "Klikni za umetanje na mjesto kursora."
 }

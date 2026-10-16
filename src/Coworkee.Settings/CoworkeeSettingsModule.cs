@@ -29,6 +29,7 @@ public sealed class CoworkeeSettingsModule : CoworkeeModule, IWebModule
         services.AddSingleton<IPermissionDefinitionContributor, SettingsPermissionDefinitions>();
         services.AddSingleton<ISettingDefinitionManager, SettingDefinitionManager>();
         services.AddSingleton<ISettingDefinitionContributor, TableSettingDefinitions>();
+        services.AddSingleton<ISettingDefinitionContributor, EditorSettingDefinitions>();
         services.AddSingleton<ISettingDefinitionContributor, FilePickerSettingDefinitions>();
         services.AddScoped<ISettingProvider, SettingProvider>();
         services.AddSingleton<SettingProtector>();

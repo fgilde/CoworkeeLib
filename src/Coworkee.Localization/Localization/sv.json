@@ -1534,5 +1534,10 @@
   "No key or endpoint": "Ingen nyckel eller endpoint",
   "Rotate secret": "Byt hemlighet",
   "Old secret signs too until {0}": "Den gamla hemligheten signerar också till {0}",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Skapa en ny signeringshemlighet för {0}? Den gamla signerar en stund till bredvid, så att mottagaren kan byta."
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Skapa en ny signeringshemlighet för {0}? Den gamla signerar en stund till bredvid, så att mottagaren kan byta.",
+  "Rich text editor": "Redigerare för formaterad text",
+  "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "Redigeraren för formaterad text som e-postmallar. Kod och HTML-källa stannar i kodredigeraren.",
+  "TipTap": "TipTap",
+  "Quill": "Quill",
+  "Click to insert at the cursor.": "Klicka för att infoga vid markören."
 }

@@ -1,0 +1,9 @@
+@using MudExRichTextEditor
+@if (Backend == RichTextBackend.Quill)
+{
+    <MudExRichTextEdit @ref="_quill" Value="@Value" ValueChanged="ValueChanged" Modules="@_quillModules" Immediate="Immediate" Height="Height" ReadOnly="ReadOnly" />
+}
+else
+{
+    <MudExTiptapEdit @ref="_tiptap" Value="@Value" ValueChanged="ValueChanged" Modules="@_tiptapModules" Immediate="Immediate" Height="Height" ReadOnly="ReadOnly" />
+}

@@ -1534,5 +1534,10 @@
   "No key or endpoint": "Нет ключа или конечной точки",
   "Rotate secret": "Сменить секрет",
   "Old secret signs too until {0}": "Старый секрет тоже подписывает до {0}",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Создать новый секрет подписи для {0}? Старый ещё некоторое время подписывает вместе с ним, чтобы получатель успел перейти."
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Создать новый секрет подписи для {0}? Старый ещё некоторое время подписывает вместе с ним, чтобы получатель успел перейти.",
+  "Rich text editor": "Редактор форматированного текста",
+  "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "Редактор форматированных текстов, например шаблонов писем. Код и исходный HTML остаются в редакторе кода.",
+  "TipTap": "TipTap",
+  "Quill": "Quill",
+  "Click to insert at the cursor.": "Нажми, чтобы вставить в позицию курсора."
 }

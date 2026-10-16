@@ -27,6 +27,22 @@ public sealed class MailMentionHtmlTests
     }
 
     [Fact]
+    public void TipTap_markup_becomes_a_placeholder()
+    {
+        var html = $"<p>Hi <span class=\"mention\" data-__type=\"{MailPlaceholder.MentionType}\" data-id=\"a1\" data-value=\"user.first_name\" data-denotation-char=\"{{\" data-__data-json=\"{{&quot;name&quot;:&quot;user.first_name&quot;}}\">{{user.first_name</span>!</p>";
+
+        MailMentionHtml.ToScriban(html, Known).ShouldBe("<p>Hi {{ user.first_name }}!</p>");
+    }
+
+    // TipTap reads only span.mention[data-__type="<type>"] back as a mention, Quill keeps the attribute
+    [Fact]
+    public void Mentions_carry_the_type_TipTap_parses_them_by()
+    {
+        MailMentionHtml.ToMentions("{{ user.first_name }}", Known)
+            .ShouldContain($"data-__type=\"{MailPlaceholder.MentionType}\"");
+    }
+
+    [Fact]
     public void Unknown_placeholders_stay_text()
     {
         MailMentionHtml.ToMentions("{{ foo }}", Known).ShouldBe("{{ foo }}");

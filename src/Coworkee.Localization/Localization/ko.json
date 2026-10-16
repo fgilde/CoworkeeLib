@@ -1534,5 +1534,10 @@
   "No key or endpoint": "키 또는 엔드포인트 없음",
   "Rotate secret": "비밀 교체",
   "Old secret signs too until {0}": "이전 비밀도 {0}까지 서명합니다",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "{0}의 새 서명 비밀을 만들까요? 수신자가 전환할 수 있도록 이전 비밀도 한동안 함께 서명합니다."
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "{0}의 새 서명 비밀을 만들까요? 수신자가 전환할 수 있도록 이전 비밀도 한동안 함께 서명합니다.",
+  "Rich text editor": "서식 있는 텍스트 편집기",
+  "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "메일 템플릿처럼 서식 있는 텍스트의 편집기입니다. 코드와 HTML 소스는 코드 편집기를 그대로 사용합니다.",
+  "TipTap": "TipTap",
+  "Quill": "Quill",
+  "Click to insert at the cursor.": "클릭하면 커서 위치에 삽입합니다."
 }

@@ -1534,5 +1534,10 @@
   "No key or endpoint": "キーもエンドポイントもありません",
   "Rotate secret": "シークレットを更新",
   "Old secret signs too until {0}": "古いシークレットも {0} まで署名します",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "{0} の新しい署名シークレットを作成しますか？受信側が切り替えられるよう、古いものもしばらく併せて署名します。"
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "{0} の新しい署名シークレットを作成しますか？受信側が切り替えられるよう、古いものもしばらく併せて署名します。",
+  "Rich text editor": "リッチテキストエディター",
+  "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "メールテンプレートなど書式付きテキストのエディターです。コードと HTML ソースはコードエディターのままです。",
+  "TipTap": "TipTap",
+  "Quill": "Quill",
+  "Click to insert at the cursor.": "クリックするとカーソル位置に挿入します。"
 }

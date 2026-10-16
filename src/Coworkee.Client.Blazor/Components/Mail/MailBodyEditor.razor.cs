@@ -3,7 +3,6 @@ using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Mailing;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using MudExRichTextEditor;
 using MudExRichTextEditor.Extensibility;
 
 namespace Coworkee.Client.Blazor.Components.Mail;
@@ -19,13 +18,7 @@ public partial class MailBodyEditor : IAsyncDisposable
         Source,
     }
 
-    // Quill shows the mention's ToString(), which a record DTO does not give
-    private sealed record Placeholder(string Name)
-    {
-        public override string ToString() => Name;
-    }
-
-    private readonly IQuillModule[] _modules;
+    private readonly object[] _modules;
     private EditorMode _mode;
     private bool _modeChosen;
     private string _html = string.Empty;
@@ -33,13 +26,13 @@ public partial class MailBodyEditor : IAsyncDisposable
     private IReadOnlyList<string> _known = [];
     private IReadOnlyList<CodeCompletion> _completions = [];
     private IReadOnlyList<MailVariableDto>? _variables;
-    private MudExRichTextEdit? _visual;
+    private RichTextEditor? _visual;
     private CodeEditor? _source;
     private ElementReference _visualHost;
     private IJSObjectReference? _module;
     private bool _widened;
 
-    public MailBodyEditor() => _modules = [new QuillMentionModule<Placeholder>(SearchAsync, '{')];
+    public MailBodyEditor() => _modules = [new MentionModule<MailPlaceholder>(SearchAsync, '{')];
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
@@ -50,6 +43,9 @@ public partial class MailBodyEditor : IAsyncDisposable
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
 
     [Parameter] public IReadOnlyList<MailVariableDto> Variables { get; set; } = [];
+
+    /// <summary>Height of the editor and the placeholder list, any CSS length.</summary>
+    [Parameter] public string Height { get; set; } = "360px";
 
     private bool VisualAllowed => MailVisualMode.Allowed(Value);
 
@@ -106,8 +102,8 @@ public partial class MailBodyEditor : IAsyncDisposable
         }
     }
 
-    private Task<IEnumerable<Placeholder>> SearchAsync(char denotation, string term) => Task.FromResult(
-        _known.Where(name => name.Contains(term, StringComparison.OrdinalIgnoreCase)).Take(MaxSuggestions).Select(name => new Placeholder(name)));
+    private Task<IEnumerable<MailPlaceholder>> SearchAsync(char denotation, string term) => Task.FromResult(
+        _known.Where(name => name.Contains(term, StringComparison.OrdinalIgnoreCase)).Take(MaxSuggestions).Select(name => new MailPlaceholder(name)));
 
     private Task SetModeAsync(EditorMode mode)
     {
@@ -133,7 +129,8 @@ public partial class MailBodyEditor : IAsyncDisposable
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_mode != EditorMode.Visual)
+        // TipTap takes any character up to the next space; only Quill's mention list needs widening
+        if (_mode != EditorMode.Visual || _visual?.Backend != RichTextBackend.Quill)
         {
             _widened = false;
             return;

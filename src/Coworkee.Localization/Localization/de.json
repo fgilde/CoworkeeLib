@@ -1534,5 +1534,10 @@
   "No key or endpoint": "Kein Schlüssel und kein Endpunkt",
   "Rotate secret": "Secret erneuern",
   "Old secret signs too until {0}": "Altes Secret signiert noch bis {0}",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Neues Signatur-Secret für {0} erzeugen? Das alte signiert noch eine Weile mit, damit der Empfänger umstellen kann."
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Neues Signatur-Secret für {0} erzeugen? Das alte signiert noch eine Weile mit, damit der Empfänger umstellen kann.",
+  "Rich text editor": "Rich-Text-Editor",
+  "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "Der Editor für formatierte Texte wie Mail-Vorlagen. Code und HTML-Quelltext bleiben im Code-Editor.",
+  "TipTap": "TipTap",
+  "Quill": "Quill",
+  "Click to insert at the cursor.": "Klicke, um an der Cursorposition einzufügen."
 }

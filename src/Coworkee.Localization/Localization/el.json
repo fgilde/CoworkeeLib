@@ -1534,5 +1534,10 @@
   "No key or endpoint": "Χωρίς κλειδί ή endpoint",
   "Rotate secret": "Εναλλαγή μυστικού",
   "Old secret signs too until {0}": "Το παλιό μυστικό υπογράφει επίσης έως {0}",
-  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Δημιουργία νέου μυστικού υπογραφής για {0}; Το παλιό συνεχίζει να υπογράφει για λίγο, ώστε ο παραλήπτης να αλλάξει."
+  "Create a new signing secret for {0}? The old one keeps signing next to it for a while, so the receiver can switch.": "Δημιουργία νέου μυστικού υπογραφής για {0}; Το παλιό συνεχίζει να υπογράφει για λίγο, ώστε ο παραλήπτης να αλλάξει.",
+  "Rich text editor": "Επεξεργαστής μορφοποιημένου κειμένου",
+  "The editor of formatted texts such as mail templates. Code and HTML source keep the code editor.": "Ο επεξεργαστής μορφοποιημένων κειμένων, όπως τα πρότυπα αλληλογραφίας. Ο κώδικας και η πηγή HTML μένουν στον επεξεργαστή κώδικα.",
+  "TipTap": "TipTap",
+  "Quill": "Quill",
+  "Click to insert at the cursor.": "Κάνε κλικ για εισαγωγή στη θέση του δρομέα."
 }
