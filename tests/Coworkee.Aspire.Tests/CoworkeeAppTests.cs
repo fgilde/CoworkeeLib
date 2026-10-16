@@ -85,6 +85,7 @@ public sealed class CoworkeeAppTests : IDisposable
         bff["Coworkee__Bff__ApiAddress"].ShouldBe("https+http://demo-api");
         bff["Coworkee__Bff__Scopes__0"].ShouldBe("demo_api");
         bff["Coworkee__Bff__CookieName"].ShouldBe("demo-airworks");
+        bff["Coworkee__Bff__WebAppUrl"].ShouldBe("{demo-web.bindings.https.url}");
         bff["ConnectionStrings__redis"].ShouldNotBeNullOrEmpty();
         (await Environment(app.Web!.Resource)).Keys.ShouldNotContain("Coworkee__Bff__CookieName");
     }

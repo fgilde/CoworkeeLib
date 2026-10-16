@@ -185,6 +185,12 @@ public sealed partial class CoworkeeApp
         var airWorks = BffClient<TProject>(suffix, $"{Title} (AirWorks)", nameof(AddAirWorks))
             .WithSettings(s => s.Coworkee.Bff.ForwardedPrefixes, "/hubs")
             .WithSetting(s => s.Coworkee.Bff.CookieName, $"{Name}-{suffix}");
+        if (Web is not null)
+        {
+            // the desktop shows pages of the web client in windows (embedApp, links of notifications)
+            airWorks.WithSetting(s => s.Coworkee.Bff.WebAppUrl, PublicUrl(Web));
+        }
+
         AirWorks = airWorks;
         return Added<TProject>(airWorks, suffix);
     }
