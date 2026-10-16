@@ -61,6 +61,10 @@ public sealed partial class LocalizationTests
     public void Texts_without_a_translation_stay_english() =>
         German.Texts.ContainsKey("Coworkee Studio").ShouldBeFalse();
 
+    [Fact]
+    public void German_texts_say_du() =>
+        German.Texts.Values.Where(t => Formal().IsMatch(t)).ShouldBeEmpty();
+
     private static string Here([CallerFilePath] string path = "") => path;
 
     // {l:L 'Some text'} and {l:L Word}
@@ -70,4 +74,8 @@ public sealed partial class LocalizationTests
     // L.Get("..."), L.Format("...") and the texts of the steps
     [GeneratedRegex(@"(?:L\.(?:Get|Format)\(|(?:TitleText|SubtitleText|PitchText) => )""(?<text>[^""]*)""")]
     private static partial Regex Code();
+
+    // Sie/Ihr inside a sentence is the formal address; at a sentence start it may mean "it"/"its"
+    [GeneratedRegex(@"(?<![.!?]) (?:Sie|Ihnen|Ihre?[mnrs]?)\b")]
+    private static partial Regex Formal();
 }
