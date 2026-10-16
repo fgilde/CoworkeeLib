@@ -62,6 +62,7 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--social` | `social` | bool | `false` | Comments, tags and ratings |
 | `--workflows` | `workflows` | bool | `false` | States, transitions and approvals for entities; with the samples, products go through an approval |
 | `--elsa` | `elsa` | bool | `false` | Elsa Workflows 3 in the API (needs `--workflows`) |
+| `--elsa-studio` | `elsaStudio` | bool | `false` | [Workflow designer](../modules/workflows-elsa.md#elsa-studio): Elsa Studio as project `MyApp.ElsaStudio` in the app host, signed in at the auth server (needs `--elsa`) |
 | `--webhooks` | `webhooks` | bool | `false` | Outgoing webhooks with signed deliveries, retries and a delivery log; with the samples, products send events |
 | `--extended-attributes` | `extendedAttributes` | bool | `false` | Key/value attributes for any entity (the Documents sample brings it anyway) |
 | `--elasticsearch` | `elasticsearch` | bool | `false` | Elasticsearch index; the app host adds the container |

@@ -44,6 +44,7 @@ app.AddWorker<Projects.Shareme_Processing_Host>("processing");
 | `*_Worker*`, `*Worker` | `AddWorker` | `{name}-worker` |
 | `*_Web` | `AddWeb` | `{name}-web` |
 | `*_AirWorks` | `AddAirWorks` | `{name}-airworks` |
+| `*_ElsaStudio` | `AddElsaStudio` (in einem Deployment nur, solange das Tool `elsastudio` an ist) | `{name}-elsastudio` |
 
 Das Suffix ist der Teil nach dem ersten Unterstrich, kleingeschrieben mit Bindestrichen: Aus `MyApp_Jobs_Worker` wird `myapp-jobs-worker`. Andere Projekte bleiben unberührt.
 
@@ -67,6 +68,7 @@ Explizite Aufrufe funktionieren weiter und haben Vorrang: Ein Projekt, das vor `
 | `AddWorker<T>(suffix)` | `{name}-{suffix}` | nur Infrastruktur, keine öffentlichen Endpunkte |
 | `AddWeb<T>()` | `{name}-web` | BFF-Einstellungen, OIDC-Client am Auth-Server mit Redirect-URIs, Referenz auf die API, Links zu Swagger und zum Job-Dashboard |
 | `AddAirWorks<T>()` | `{name}-airworks` | wie `AddWeb`: BFF-Einstellungen, der nächste OIDC-Client am Auth-Server, ein eigener Name des Sitzungs-Cookies; für den [AirWorks-Client](../web/airworks.md) |
+| `AddElsaStudio<T>()` | `{name}-elsastudio` | der nächste OIDC-Client am Auth-Server, ein eigenes Sitzungscookie, die Elsa-API der ersten API, `Coworkee:Workflows:Elsa:StudioUrl` der APIs; für den [Workflow-Designer](../modules/workflows-elsa.md#elsa-studio) |
 
 Ruf sie in dieser Reihenfolge auf (`AddProjects()` tut das). `AddWeb` vor `AddAuthServer` wirft eine Exception, die genau das sagt.
 

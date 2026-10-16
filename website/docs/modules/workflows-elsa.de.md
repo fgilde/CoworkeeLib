@@ -46,17 +46,37 @@ Die Trigger werden nach dem Commit über die Outbox versorgt: Übergänge und En
 
 ## Elsa Studio
 
-Elsa Studio, der visuelle Designer, ist **nicht** in die Blazor-App eingebettet. Es ist eine vollständige eigene Blazor-Anwendung: eigener Router, eigenes Layout und eigene MudBlazor-Provider, Radzen, eine Diagramm-Bibliothek in JavaScript und Monaco, dazu Module, die sich beim Start initialisieren und die Root-Komponente für sich beanspruchen. In der WebAssembly-App von Coworkee würde es mit den MudBlazor-Providern und dem Layout der App konkurrieren, und jeder Benutzer lüde die mehreren Megabyte des Designers herunter, mit oder ohne Berechtigung.
+Elsa Studio, der visuelle Designer, läuft als **eigene App** neben der Blazor-App: `Coworkee.Workflows.Elsa.Studio` macht aus einem kleinen ASP.NET-Projekt einen Host für Elsa Studio (Blazor Server). In die Blazor-App eingebettet ist er bewusst nicht: Studio ist eine vollständige Blazor-Anwendung mit eigenem Router, Layout, MudBlazor-Providern, Radzen, einer Diagramm-Bibliothek und Monaco, und jeder Benutzer der App lüde es herunter, mit oder ohne Berechtigung.
 
-Die Bibliothek bringt dafür noch keinen Host mit. Betreib Studio stattdessen als eigene kleine Blazor-WebAssembly-App (Elsas `Elsa.Studio`-Pakete, siehe die Elsa-Dokumentation) unter dem Origin der Web-App, damit es mit der Sitzung des Benutzers über den BFF mit Elsa spricht:
+```csharp
+// MyApp.ElsaStudio/Program.cs
+var builder = WebApplication.CreateBuilder(args);
+builder.AddServiceDefaults();
+builder.AddCoworkeeElsaStudio();
 
-1. Hoste Studio z. B. unter `/elsa-studio/` und richte sein Backend auf `/api/elsa` der Web-App. Anfragen tragen dann das Sitzungscookie des Benutzers durch den BFF.
-2. Gib dem Backend-Client von Studio (`BackendApiConfig.ConfigureHttpClientBuilder`) einen HTTP-Handler, der den Header `X-CSRF: 1` mitschickt, den der BFF bei jeder ändernden Anfrage erwartet.
-3. Liefere Studio unter dem Origin der Web-App aus: vom Web-Host selbst als zweite WebAssembly-App mit dem Pfad `/elsa-studio`, oder hinter einem gemeinsamen Reverse Proxy mit der Web-App.
-4. Setz `Coworkee:Workflows:Elsa:StudioUrl` auf `/elsa-studio/`: Der Navigationseintrag *Workflow designer* (Gruppe System, für `Workflows.Elsa.Manage`) führt dorthin.
+var app = builder.Build();
+app.MapDefaultEndpoints();
+app.MapCoworkeeElsaStudio();
+app.Run();
+```
 
-Ohne Studio schreibst du Workflows in C# (`WorkflowBase`) oder als JSON über die API.
+Das Projekt ist `Microsoft.NET.Sdk.Web` mit `<RequiresAspNetWebAssets>true</RequiresAspNetWebAssets>` (es hat keine eigenen `.razor`-Dateien, die Skripte des Frameworks müssen angefordert werden) und dem Paket `Coworkee.Workflows.Elsa.Studio`.
+
+- **Anmeldung**: Der Host meldet sich wie die Web-App am Auth-Server der App an, als eigener OIDC-Client (`Coworkee:Bff`, dieselben Einstellungen wie die Web-App, siehe [Clients and scopes](../security/authentication.md#clients-and-scopes)): dieselben Benutzer, dieselbe Anmeldeseite, Keycloak inklusive. Die Tokens bleiben auf dem Server, der Browser hält nur ein Sitzungscookie.
+- **Berechtigung**: Studio ruft die Elsa-API der API (`Coworkee:Workflows:Elsa:Studio:BackendUrl`, z. B. `https://api.example.com/api/elsa`) serverseitig mit dem Access Token des Benutzers auf, die API entscheidet also. Wer `Workflows.Elsa.Manage` nicht hat, sieht statt des Designers eine Seite, die das sagt.
+- **Aktivitäten**: Die Palette zeigt die Kategorie *Coworkee* mit den Aktivitäten und Triggern von oben; ihre Ein- und Ausgaben kommen von der API.
+- **Link**: Der Navigationseintrag *Workflow designer* der App (Gruppe System, für `Workflows.Elsa.Manage`) führt auf `/api/v1/workflows/elsa/studio`, das auf `Coworkee:Workflows:Elsa:StudioUrl` weiterleitet.
+
+### Im Aspire-App-Host
+
+```csharp
+app.AddElsaStudio<Projects.MyApp_ElsaStudio>();   // oder AddProjects(), das *_ElsaStudio findet
+```
+
+`AddElsaStudio` registriert den Client `{app}-elsastudio` am Auth-Server (Redirect `/signin-oidc`, API-Scope), gibt dem Host ein eigenes Sitzungscookie und die Adresse der Elsa-API der ersten API und setzt `Coworkee:Workflows:Elsa:StudioUrl` der APIs auf die Adresse des Designers. Ruf es nach der API auf. In einem Deployment ist es ein Werkzeug wie Grafana: `coworkee deploy --without elsastudio` lässt es weg, seine öffentliche Adresse ist der Parameter `<app>-elsastudio-url` (siehe [Deployment](../hosting/deployment.md#tools)).
+
+Ohne laufenden Designer antwortet der Link mit 404; Workflows lassen sich weiter in C# (`WorkflowBase`) schreiben oder als JSON an die API schicken. In C# geschriebene Workflows erscheinen im Designer und lassen sich dort ändern und veröffentlichen; die veröffentlichte Version bleibt nach einem Neustart.
 
 ## In einer neuen App
 
-`coworkee new MyApp --workflows --elsa` (oder die Karte *Elsa workflows* im Studio) fügt das Paket der API hinzu. Mit den Beispielen benachrichtigt `MyApp.Api/Workflows/ProductApprovedWorkflow.cs` die Produktmanager, wenn ein Produkt genehmigt ist.
+`coworkee new MyApp --workflows --elsa` (oder die Karte *Elsa workflows* im Studio) fügt das Paket der API hinzu; `--elsa-studio` (Karte *Workflow-Designer*) fügt das Projekt `MyApp.ElsaStudio` und seine Zeile im App-Host hinzu. Mit den Beispielen benachrichtigt `MyApp.Api/Workflows/ProductApprovedWorkflow.cs` die Produktmanager, wenn ein Produkt genehmigt ist.

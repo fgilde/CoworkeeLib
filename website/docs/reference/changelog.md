@@ -2,6 +2,16 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### New
+
+- **Workflow designer**: `Coworkee.Workflows.Elsa.Studio` hosts Elsa Studio as an app of its own that signs in at the auth server (permission `Workflows.Elsa.Manage`) and works with the Elsa API of the api; `app.AddElsaStudio<T>()` (or `AddProjects()` for `*_ElsaStudio`) wires the client, the API address and the designer link, `coworkee deploy --without elsastudio` leaves it out. Template option `elsaStudio` (`--elsa-studio`). See [Elsa Studio](../modules/workflows-elsa.md#elsa-studio).
+
+### Fixes
+
+- The approvals inbox shows title, details and deadline of an approval on lines of their own.
+
 ## 0.0.1.27 (2026-10-16)
 
 ### Fixes

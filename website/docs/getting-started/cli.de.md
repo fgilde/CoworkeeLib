@@ -62,6 +62,7 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--social` | `social` | bool | `false` | Kommentare, Tags und Bewertungen |
 | `--workflows` | `workflows` | bool | `false` | Zustände, Übergänge und Genehmigungen für Entities; mit den Beispielen durchlaufen Produkte eine Freigabe |
 | `--elsa` | `elsa` | bool | `false` | Elsa Workflows 3 in der API (braucht `--workflows`) |
+| `--elsa-studio` | `elsaStudio` | bool | `false` | [Workflow-Designer](../modules/workflows-elsa.md#elsa-studio): Elsa Studio als Projekt `MyApp.ElsaStudio` im App-Host, angemeldet am Auth-Server (braucht `--elsa`) |
 | `--webhooks` | `webhooks` | bool | `false` | Ausgehende Webhooks mit signierter Zustellung, Wiederholungen und Zustellprotokoll; mit den Beispielen senden Produkte Ereignisse |
 | `--extended-attributes` | `extendedAttributes` | bool | `false` | Schlüssel/Wert-Attribute für beliebige Entities (das Documents-Beispiel bringt sie ohnehin mit) |
 | `--elasticsearch` | `elasticsearch` | bool | `false` | Elasticsearch-Index; der App-Host ergänzt den Container |

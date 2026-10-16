@@ -44,6 +44,7 @@ app.AddWorker<Projects.Shareme_Processing_Host>("processing");
 | `*_Worker*`, `*Worker` | `AddWorker` | `{name}-worker` |
 | `*_Web` | `AddWeb` | `{name}-web` |
 | `*_AirWorks` | `AddAirWorks` | `{name}-airworks` |
+| `*_ElsaStudio` | `AddElsaStudio` (in a deployment only while the tool `elsastudio` is on) | `{name}-elsastudio` |
 
 The suffix is the part after the first underscore, lower case with dashes: `MyApp_Jobs_Worker` becomes `myapp-jobs-worker`. Other projects are left alone.
 
@@ -67,6 +68,7 @@ Explicit calls still work and win: a project added before `AddProjects()` is not
 | `AddWorker<T>(suffix)` | `{name}-{suffix}` | infrastructure only, no public endpoints |
 | `AddWeb<T>()` | `{name}-web` | BFF settings, OIDC client at the auth server with redirect URIs, reference to the API, links to Swagger and the jobs dashboard |
 | `AddAirWorks<T>()` | `{name}-airworks` | like `AddWeb`: BFF settings, the next OIDC client at the auth server, its own session cookie name; for the [AirWorks client](../web/airworks.md) |
+| `AddElsaStudio<T>()` | `{name}-elsastudio` | the next OIDC client at the auth server, its own session cookie, the Elsa API of the first api, `Coworkee:Workflows:Elsa:StudioUrl` of the apis; for the [workflow designer](../modules/workflows-elsa.md#elsa-studio) |
 
 Call them in this order (`AddProjects()` does). Calling `AddWeb` before `AddAuthServer` throws and says so.
 

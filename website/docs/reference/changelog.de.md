@@ -2,6 +2,16 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Neu
+
+- **Workflow-Designer**: `Coworkee.Workflows.Elsa.Studio` hostet Elsa Studio als eigene App, die sich am Auth-Server anmeldet (Berechtigung `Workflows.Elsa.Manage`) und mit der Elsa-API der API arbeitet; `app.AddElsaStudio<T>()` (oder `AddProjects()` für `*_ElsaStudio`) verdrahtet Client, API-Adresse und den Link zum Designer, `coworkee deploy --without elsastudio` lässt ihn weg. Template-Option `elsaStudio` (`--elsa-studio`). Siehe [Elsa Studio](../modules/workflows-elsa.md#elsa-studio).
+
+### Korrekturen
+
+- Der Eingang für Genehmigungen zeigt Titel, Details und Frist einer Genehmigung in eigenen Zeilen.
+
 ## 0.0.1.27 (2026-10-16)
 
 ### Korrekturen
