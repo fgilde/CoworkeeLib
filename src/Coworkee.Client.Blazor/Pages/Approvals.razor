@@ -17,7 +17,7 @@ else
         {
             <MudPaper Outlined="true" Class="pa-3" data-approval="@approval.Id">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
-                    <div>
+                    <MudStack Spacing="0">
                         @if (approval.Link is { } link)
                         {
                             <MudLink Href="@link" Typo="Typo.subtitle1">@approval.Title</MudLink>
@@ -37,7 +37,7 @@ else
                         {
                             <MudText Typo="Typo.caption" Color="@(due < DateTimeOffset.UtcNow ? Color.Error : Color.Default)" data-testid="approval-due">@L["Due {0}", due.ToLocalTime().ToString("g")]</MudText>
                         }
-                    </div>
+                    </MudStack>
                     <MudSpacer />
                     <WorkflowDecisionButtons ApprovalId="approval.Id" OnDecided="_ => LoadAsync()" />
                 </MudStack>
