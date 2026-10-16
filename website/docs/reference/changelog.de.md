@@ -11,6 +11,7 @@
 ### Korrekturen
 
 - Der Eingang für Genehmigungen zeigt Titel, Details und Frist einer Genehmigung in eigenen Zeilen.
+- Die Endpunkte von Elsa (`/api/elsa/...`) landen nicht mehr im OpenAPI-Dokument der App: OpenAPI-Snapshots und SDKs von Apps mit `Coworkee.Workflows.Elsa` neu erzeugen.
 
 ## 0.0.1.27 (2026-10-16)
 

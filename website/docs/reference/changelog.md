@@ -11,6 +11,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 ### Fixes
 
 - The approvals inbox shows title, details and deadline of an approval on lines of their own.
+- Elsa's endpoints (`/api/elsa/...`) no longer land in the app's OpenAPI document: regenerate OpenAPI snapshots and SDKs of apps with `Coworkee.Workflows.Elsa`.
 
 ## 0.0.1.27 (2026-10-16)
 
