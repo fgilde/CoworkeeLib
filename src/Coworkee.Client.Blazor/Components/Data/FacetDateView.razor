@@ -15,7 +15,7 @@
 {
     <div class="cw-facet-slider" data-testid="facet-date-slider">
         <span id="@_labelId" hidden>@L[Group.Label]</span>
-        <MudExDateRangeSlider SizeRange="whole" Value="Span(whole)" StepLength="OneDay" TrackColor="@("var(--mud-palette-lines-default)")" AriaLabelledBy="@_labelId"
+        <MudExDateRangeSlider SizeRange="whole" Value="Span(whole)" TrackColor="@("var(--mud-palette-lines-default)")" AriaLabelledBy="@_labelId" AriaLabelStart="@L["From"]" AriaLabelEnd="@L["Up to"]"
                               TrackTemplate="null" SelectionTemplate="null" ThumbStartTemplate="null" ThumbEndTemplate="null" OnInput="Slide" OnChange="Slid" />
     </div>
 }

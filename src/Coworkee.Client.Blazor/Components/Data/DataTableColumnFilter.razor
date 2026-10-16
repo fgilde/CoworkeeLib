@@ -51,14 +51,14 @@
             @if (IsBetween && Field.IsNumber && NumberBounds is { } numbers)
             {
                 <div class="cw-facet-slider" data-testid="filter-range-slider">
-                    <MudExRangeSlider T="decimal" SizeRange="numbers" Value="NumberSpan(numbers)" StepLength="NumberStep(numbers)" TrackColor="@("var(--mud-palette-lines-default)")"
+                    <MudExRangeSlider T="decimal" SizeRange="numbers" Value="NumberSpan(numbers)" StepLength="NumberStep(numbers)" TrackColor="@("var(--mud-palette-lines-default)")" AriaLabelStart="@L["From"]" AriaLabelEnd="@L["Up to"]"
                                       OnInput="SlideNumbers" />
                 </div>
             }
             else if (IsBetween && IsDate && DateBounds is { } dates)
             {
                 <div class="cw-facet-slider" data-testid="filter-date-slider">
-                    <MudExDateRangeSlider SizeRange="dates" Value="DateSpan(dates)" StepLength="OneDay" TrackColor="@("var(--mud-palette-lines-default)")"
+                    <MudExDateRangeSlider SizeRange="dates" Value="DateSpan(dates)" TrackColor="@("var(--mud-palette-lines-default)")" AriaLabelStart="@L["From"]" AriaLabelEnd="@L["Up to"]"
                                           TrackTemplate="null" SelectionTemplate="null" ThumbStartTemplate="null" ThumbEndTemplate="null" OnInput="SlideDates" />
                 </div>
             }

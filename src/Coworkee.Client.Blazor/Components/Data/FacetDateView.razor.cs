@@ -19,8 +19,6 @@ public partial class FacetDateView : IDisposable
     private DateTime? _to;
     private CancellationTokenSource? _settle;
 
-    // without a step the date slider's arrow keys move by zero days
-    private static RangeLength<DateOnly> OneDay => new(1d);
 
     private IRange<DateOnly>? Whole => Day(Group.Min) is { } min && Day(Group.Max) is { } max && min < max ? new MudExRange<DateOnly>(min, max) : null;
 

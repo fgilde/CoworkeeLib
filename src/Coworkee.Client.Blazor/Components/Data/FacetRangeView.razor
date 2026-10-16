@@ -7,7 +7,7 @@
     <div class="cw-facet-slider" data-testid="facet-range-slider">
         <span id="@_labelId" hidden>@L[Group.Label]</span>
         <MudExRangeSlider T="decimal" SizeRange="Whole" Value="Chosen" StepLength="StepLength"
-                          TrackColor="@("var(--mud-palette-lines-default)")" AriaLabelledBy="@_labelId"
+                          TrackColor="@("var(--mud-palette-lines-default)")" AriaLabelledBy="@_labelId" AriaLabelStart="@L["From"]" AriaLabelEnd="@L["Up to"]"
                           ToStartStringFunc="r => Show(r.Start)" ToEndStringFunc="r => Show(r.End)" OnInput="Slide" OnChange="Slid" />
     </div>
     <div class="cw-facet-axis"><span>@Show(bounds.Min)</span><span>@Show(bounds.Max)</span></div>

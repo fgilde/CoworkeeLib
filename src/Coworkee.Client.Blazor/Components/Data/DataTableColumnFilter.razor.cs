@@ -38,8 +38,6 @@ public partial class DataTableColumnFilter<T>
     /// <summary>The smallest and largest value of the column, asked once "between" is chosen, for the range slider.</summary>
     [Parameter] public Func<Task<(object? Min, object? Max)>>? LoadBounds { get; set; }
 
-    // without a step the date slider's arrow keys move by zero days
-    private static RangeLength<DateOnly> OneDay => new(1d);
 
     private IRange<decimal>? NumberBounds =>
         _bounds is { Min: { } min, Max: { } max } && ToDecimal(min) < ToDecimal(max) ? new MudExRange<decimal>(ToDecimal(min), ToDecimal(max)) : null;
