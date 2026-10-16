@@ -308,13 +308,6 @@
     </div>
   </section>
 
-  <dialog class="cw-lightbox" aria-label="{{ t.gallery }}">
-    <img alt="">
-    <p></p>
-    <button type="button" class="cw-lightbox__close" aria-label="{{ t.close }}">{% include ".icons/material/close.svg" %}</button>
-    <button type="button" class="cw-lightbox__prev" aria-label="{{ t.prev }}">{% include ".icons/material/chevron-left.svg" %}</button>
-    <button type="button" class="cw-lightbox__next" aria-label="{{ t.next }}">{% include ".icons/material/chevron-right.svg" %}</button>
-  </dialog>
 {% endblock %}
 
 {% block container %}{% endblock %}
@@ -350,28 +343,6 @@
       });
 
 
-      const box = document.querySelector(".cw-lightbox");
-      const img = box.querySelector("img");
-      const text = box.querySelector("p");
-      let items = [], index = 0;
-      const show = i => {
-        index = (i + items.length) % items.length;
-        img.src = items[index].href;
-        img.alt = text.textContent = items[index].dataset.caption || "";
-      };
-      document.addEventListener("click", e => {
-        const link = e.target.closest(".cw-zoom");
-        if (!link) return;
-        e.preventDefault();
-        const group = link.closest(".cw-gallery") || link.closest(".cw-section");
-        items = [...group.querySelectorAll(".cw-zoom")];
-        show(items.indexOf(link));
-        box.showModal();
-      });
-      box.querySelector(".cw-lightbox__close").addEventListener("click", () => box.close());
-      box.querySelector(".cw-lightbox__prev").addEventListener("click", () => show(index - 1));
-      box.querySelector(".cw-lightbox__next").addEventListener("click", () => show(index + 1));
-      box.addEventListener("click", e => { if (e.target === box) box.close(); });
       // the contact widgets take the Ocean colors and fade in once when they come into view
       const connect = document.querySelector(".cw-connect");
       const ocean = new CSSStyleSheet();
@@ -390,10 +361,6 @@
         }, { threshold: .15 }).observe(connect);
       }
 
-      box.addEventListener("keydown", e => {
-        if (e.key === "ArrowLeft") show(index - 1);
-        if (e.key === "ArrowRight") show(index + 1);
-      });
     })();
   </script>
 {% endblock %}

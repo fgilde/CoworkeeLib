@@ -309,6 +309,9 @@
 .md-typeset .cw-shots figure { margin: 0; border-radius: var(--cw-radius); overflow: hidden; background: var(--cw-surface); border: 1px solid var(--cw-line); }
 .md-typeset .cw-shots img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; object-position: top left; }
 .md-typeset .cw-shots figcaption { margin: 0; padding: .45rem .7rem; font-size: .68rem; color: var(--cw-text-2); text-align: left; max-width: none; }
+.cw-shots a.cw-zoom { display: block; cursor: zoom-in; }
+.cw-shots a.cw-zoom:focus-visible { outline: 2px solid var(--cw-primary); outline-offset: -2px; }
+.cw-lightbox button[hidden] { display: none; }
 
 /* starter specs and the mini wizard (getting-started/gallery) */
 .cw-starters__bar { display: flex; flex-wrap: wrap; gap: .6rem 1rem; align-items: center; margin: 1.2rem 0 1rem; }

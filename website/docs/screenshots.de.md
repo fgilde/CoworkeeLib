@@ -5,7 +5,7 @@ description: "Anmeldung, Datentabellen, Administration, Grafana und Coworkee Stu
 
 # Screenshots
 
-Alles aus der Demo-App im Ocean-Theme. Die App-Screenshots sind auf Englisch, Coworkee Studio zeigt sich auf Deutsch.
+Alles aus der Demo-App im Ocean-Theme. Ein Klick vergrößert ein Bild, die Pfeiltasten blättern weiter, Esc schließt. Die App-Screenshots sind auf Englisch, Coworkee Studio zeigt sich auf Deutsch.
 
 <div class="cw-shots" markdown>
 
@@ -52,6 +52,61 @@ Alles aus der Demo-App im Ocean-Theme. Die App-Screenshots sind auf Englisch, Co
 <figure markdown>
 ![Server und Browser im Vergleich](assets/screenshots/orders-compare-dark.webp){ loading=lazy }
 <figcaption>Server und Browser im Vergleich</figcaption>
+</figure>
+
+<figure markdown>
+![Berichte](assets/screenshots/reporting-list-dark.webp){ loading=lazy }
+<figcaption>Berichte</figcaption>
+</figure>
+
+<figure markdown>
+![Bericht Vertriebsübersicht](assets/screenshots/reporting-overview-light.webp){ loading=lazy }
+<figcaption>Bericht Vertriebsübersicht</figcaption>
+</figure>
+
+<figure markdown>
+![Bericht Vertriebsübersicht, dunkel](assets/screenshots/reporting-overview-dark.webp){ loading=lazy }
+<figcaption>Bericht Vertriebsübersicht, dunkel</figcaption>
+</figure>
+
+<figure markdown>
+![Berichtsdesigner mit Widget-Einstellungen](assets/screenshots/reporting-designer-light.webp){ loading=lazy }
+<figcaption>Berichtsdesigner mit Widget-Einstellungen</figcaption>
+</figure>
+
+<figure markdown>
+![Kreuzfilter nach Klick auf einen Balken](assets/screenshots/reporting-cross-filter-dark.webp){ loading=lazy }
+<figcaption>Kreuzfilter nach Klick auf einen Balken</figcaption>
+</figure>
+
+<figure markdown>
+![Drill-down auf die Aufträge hinter einem Widget](assets/screenshots/reporting-drill-down-dark.webp){ loading=lazy }
+<figcaption>Drill-down auf die Aufträge hinter einem Widget</figcaption>
+</figure>
+
+<figure markdown>
+![Tabellen-Widget als Karten](assets/screenshots/reporting-table-light.webp){ loading=lazy }
+<figcaption>Tabellen-Widget als Karten</figcaption>
+</figure>
+
+<figure markdown>
+![Pivot mit Summen](assets/screenshots/reporting-pivot-light.webp){ loading=lazy }
+<figcaption>Pivot mit Summen</figcaption>
+</figure>
+
+<figure markdown>
+![Ein Bericht auf dem Handy](assets/screenshots/reporting-phone-light.webp){ loading=lazy }
+<figcaption>Ein Bericht auf dem Handy</figcaption>
+</figure>
+
+<figure markdown>
+![Befehlspalette (Strg+K)](assets/screenshots/palette-dark.webp){ loading=lazy }
+<figcaption>Befehlspalette (Strg+K)</figcaption>
+</figure>
+
+<figure markdown>
+![Import-Assistent: Spalten den Feldern zugeordnet](assets/screenshots/import-columns-light.webp){ loading=lazy }
+<figcaption>Import-Assistent: Spalten den Feldern zugeordnet</figcaption>
 </figure>
 
 <figure markdown>

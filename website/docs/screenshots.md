@@ -5,7 +5,7 @@ description: "Sign-in, data tables, administration, Grafana and Coworkee Studio 
 
 # Screenshots
 
-Everything from the demo app in the Ocean theme.
+Everything from the demo app in the Ocean theme. Click a picture to see it large; the arrow keys move on, Esc closes.
 
 <div class="cw-shots" markdown>
 
@@ -52,6 +52,61 @@ Everything from the demo app in the Ocean theme.
 <figure markdown>
 ![Server and browser compared](assets/screenshots/orders-compare-dark.webp){ loading=lazy }
 <figcaption>Server and browser compared</figcaption>
+</figure>
+
+<figure markdown>
+![Reports](assets/screenshots/reporting-list-dark.webp){ loading=lazy }
+<figcaption>Reports</figcaption>
+</figure>
+
+<figure markdown>
+![Sales overview report](assets/screenshots/reporting-overview-light.webp){ loading=lazy }
+<figcaption>Sales overview report</figcaption>
+</figure>
+
+<figure markdown>
+![Sales overview report, dark](assets/screenshots/reporting-overview-dark.webp){ loading=lazy }
+<figcaption>Sales overview report, dark</figcaption>
+</figure>
+
+<figure markdown>
+![Report designer with widget settings](assets/screenshots/reporting-designer-light.webp){ loading=lazy }
+<figcaption>Report designer with widget settings</figcaption>
+</figure>
+
+<figure markdown>
+![Cross filter after a click on a bar](assets/screenshots/reporting-cross-filter-dark.webp){ loading=lazy }
+<figcaption>Cross filter after a click on a bar</figcaption>
+</figure>
+
+<figure markdown>
+![Drill-down into the orders behind a widget](assets/screenshots/reporting-drill-down-dark.webp){ loading=lazy }
+<figcaption>Drill-down into the orders behind a widget</figcaption>
+</figure>
+
+<figure markdown>
+![Table widget switched to cards](assets/screenshots/reporting-table-light.webp){ loading=lazy }
+<figcaption>Table widget switched to cards</figcaption>
+</figure>
+
+<figure markdown>
+![Pivot with totals](assets/screenshots/reporting-pivot-light.webp){ loading=lazy }
+<figcaption>Pivot with totals</figcaption>
+</figure>
+
+<figure markdown>
+![A report on a phone](assets/screenshots/reporting-phone-light.webp){ loading=lazy }
+<figcaption>A report on a phone</figcaption>
+</figure>
+
+<figure markdown>
+![Command palette (Ctrl+K)](assets/screenshots/palette-dark.webp){ loading=lazy }
+<figcaption>Command palette (Ctrl+K)</figcaption>
+</figure>
+
+<figure markdown>
+![Import wizard: columns matched to fields](assets/screenshots/import-columns-light.webp){ loading=lazy }
+<figcaption>Import wizard: columns matched to fields</figcaption>
 </figure>
 
 <figure markdown>
