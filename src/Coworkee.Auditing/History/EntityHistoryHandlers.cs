@@ -20,13 +20,16 @@ public sealed record RestoreEntity(string EntitySet, Guid Id, EntityHistoryResto
 
 public sealed record GetDeletedRecords(string EntitySet) : IQuery<Result<IReadOnlyList<DeletedRecordDto>>>;
 
+public sealed record GetEntityHistorySets : IQuery<Result<IReadOnlyList<EntityHistorySetDto>>>;
+
 internal sealed class EntityHistoryHandlers(
     CoworkeeDbContext db, IEnumerable<EntityHistoryRegistration> registrations, IPermissionChecker permissions, ICurrentUser currentUser,
     IDispatcher dispatcher, IServiceProvider services)
     : IHandler<GetEntityHistory, Result<EntityHistoryDto>>,
       IHandler<PreviewEntityRestore, Result<EntityHistoryPreviewDto>>,
       IHandler<RestoreEntity, Result>,
-      IHandler<GetDeletedRecords, Result<IReadOnlyList<DeletedRecordDto>>>
+      IHandler<GetDeletedRecords, Result<IReadOnlyList<DeletedRecordDto>>>,
+      IHandler<GetEntityHistorySets, Result<IReadOnlyList<EntityHistorySetDto>>>
 {
     private const int DeletedLimit = 100;
 
@@ -69,9 +72,11 @@ internal sealed class EntityHistoryHandlers(
         }
 
         var differences = record.Differences(target!).ToList();
+        var later = record.ChangedLater(query.Request);
         await record.Texts.LoadAsync(differences.SelectMany(p => new[] { (p.Name, record.Current[p.Name]), (p.Name, target![p.Name]) }), cancellationToken);
         return new EntityHistoryPreviewDto(record.IsDeleted, differences
-            .Select(p => new EntityHistoryFieldDto(p.Name, record.Texts.Text(p.Name, record.Current[p.Name]), record.Texts.Text(p.Name, target![p.Name])))
+            .Select(p => new EntityHistoryFieldDto(
+                p.Name, record.Texts.Text(p.Name, record.Current[p.Name]), record.Texts.Text(p.Name, target![p.Name]), later.Contains(p.Name)))
             .ToList());
     }
 
@@ -121,6 +126,27 @@ internal sealed class EntityHistoryHandlers(
                 ((Entity)d).Id.ToString(), EntityHistoryTexts.Describe(d), d.DeletedAt ?? default, d.DeletedBy is { } by ? names.GetValueOrDefault(by) : null))
             .ToList();
         return Result<IReadOnlyList<DeletedRecordDto>>.Success(records);
+    }
+
+    public async Task<Result<IReadOnlyList<EntityHistorySetDto>>> HandleAsync(GetEntityHistorySets query, CancellationToken cancellationToken)
+    {
+        var sets = new List<EntityHistorySetDto>();
+        if (!currentUser.IsAuthenticated || !await permissions.IsGrantedAsync(AuditPermissions.View, cancellationToken))
+        {
+            return Result<IReadOnlyList<EntityHistorySetDto>>.Success(sets);
+        }
+
+        foreach (var registration in registrations)
+        {
+            if (await ODataEntityAccess.IsGrantedAsync(services, registration.EntityType, cancellationToken))
+            {
+                sets.Add(new EntityHistorySetDto(
+                    registration.EntityType.Name, registration.EntitySet, await permissions.IsGrantedAsync(registration.RestorePermission, cancellationToken),
+                    registration.EntityType.IsAssignableTo(typeof(ISoftDelete))));
+            }
+        }
+
+        return Result<IReadOnlyList<EntityHistorySetDto>>.Success(sets);
     }
 
     private async Task<(EntityHistoryRecord? Record, Error? Error)> LoadAsync(string entitySet, Guid id, bool restore, CancellationToken cancellationToken)

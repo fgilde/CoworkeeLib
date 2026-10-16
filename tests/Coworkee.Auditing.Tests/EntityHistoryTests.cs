@@ -21,6 +21,9 @@ public sealed class EntityHistoryTests(AuditApp app) : IAsyncLifetime
 
     private Task ChangeAsync(Guid id, Action<Memo> change) => app.ChangeMemoAsync(_setup.AdminUserId, _setup.TenantId, id, change);
 
+    private async Task<EntityHistoryPreviewDto> PreviewAsync(Guid id, EntityHistoryRestoreRequest request) =>
+        (await (await Admin.PostAsJsonAsync($"/api/v1/history/Memos/{id}/preview", request, Ct)).Content.ReadFromJsonAsync<EntityHistoryPreviewDto>(Ct))!;
+
     private async Task<EntityHistoryDto> HistoryAsync(Guid id) => (await Admin.GetFromJsonAsync<EntityHistoryDto>($"/api/v1/history/Memos/{id}", Ct))!;
 
     [Fact]
@@ -72,6 +75,52 @@ public sealed class EntityHistoryTests(AuditApp app) : IAsyncLifetime
 
         var memo = await app.MemoAsync(id);
         (memo.Text, memo.Priority).ShouldBe(("one", MemoPriority.High));
+    }
+
+    [Fact]
+    public async Task Undo_of_an_entry_shows_the_fields_a_later_change_wrote_and_then_replaces_them()
+    {
+        var id = await CreateAsync("one");
+        await ChangeAsync(id, m => (m.Text, m.Priority) = ("two", MemoPriority.High));
+        await ChangeAsync(id, m => m.Text = "three");
+        var entry = (await HistoryAsync(id)).Entries[1].Id;
+        var undo = new EntityHistoryRestoreRequest(entry, Mode: EntityHistoryRestoreMode.Undo);
+
+        var preview = await PreviewAsync(id, undo);
+
+        preview.Fields.Select(f => (f.Property, f.CurrentText, f.RestoredText, f.ChangedLater))
+            .ShouldBe([("Text", "three", "one", true), ("Priority", "High", "Low", false)], ignoreOrder: true);
+        (await Admin.PostAsJsonAsync($"/api/v1/history/Memos/{id}/restore", undo, Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        var memo = await app.MemoAsync(id);
+        (memo.Text, memo.Priority).ShouldBe(("one", MemoPriority.Low));
+    }
+
+    [Fact]
+    public async Task Undo_keeps_later_changes_of_other_fields_and_before_rolls_them_back()
+    {
+        var id = await CreateAsync("one");
+        await ChangeAsync(id, m => m.Text = "two");
+        await ChangeAsync(id, m => m.Priority = MemoPriority.High);
+        var entry = (await HistoryAsync(id)).Entries[1].Id;
+
+        var before = await PreviewAsync(id, new EntityHistoryRestoreRequest(entry, Mode: EntityHistoryRestoreMode.Before));
+        before.Fields.Select(f => (f.Property, f.RestoredText, f.ChangedLater)).ShouldBe([("Text", "one", false), ("Priority", "Low", false)], ignoreOrder: true);
+
+        var undo = new EntityHistoryRestoreRequest(entry, Mode: EntityHistoryRestoreMode.Undo);
+        (await PreviewAsync(id, undo)).Fields.Single().ShouldBe(new EntityHistoryFieldDto("Text", "two", "one"));
+        (await Admin.PostAsJsonAsync($"/api/v1/history/Memos/{id}/restore", undo, Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        var memo = await app.MemoAsync(id);
+        (memo.Text, memo.Priority).ShouldBe(("one", MemoPriority.High));
+    }
+
+    [Fact]
+    public async Task The_sets_with_a_history_say_whether_the_user_may_restore()
+    {
+        var response = await Admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest("eve@acme.test", "Passw0rd!x", null, null), Ct);
+        var eve = (await response.Content.ReadFromJsonAsync<UserDto>(Ct))!;
+
+        (await Admin.GetFromJsonAsync<EntityHistorySetDto[]>("/api/v1/history", Ct)).ShouldBe([new EntityHistorySetDto("Memo", "Memos", true, true)]);
+        (await app.As(eve.Id, _setup.TenantId).GetFromJsonAsync<EntityHistorySetDto[]>("/api/v1/history", Ct)).ShouldBeEmpty();
     }
 
     [Fact]

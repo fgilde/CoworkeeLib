@@ -38,6 +38,7 @@ public sealed class CoworkeeAuditingModule : CoworkeeModule, IWebModule
             d.SendAsync(new RestoreEntityVersion(type, id, revision), ct).ToHttpResult());
 
         var history = app.MapCoworkeeApi("/api/v1/history").WithTags("History").RequireAuthorization();
+        history.MapGet("/", (IDispatcher d, CancellationToken ct) => d.SendAsync(new History.GetEntityHistorySets(), ct).ToHttpResult());
         history.MapGet("/{entitySet}/deleted", (string entitySet, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new History.GetDeletedRecords(entitySet), ct).ToHttpResult());
         history.MapGet("/{entitySet}/{id:guid}", (string entitySet, Guid id, IDispatcher d, CancellationToken ct) =>

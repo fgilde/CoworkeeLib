@@ -24,20 +24,29 @@ internal sealed class EntityHistoryRecord(
 
     public IReadOnlyDictionary<string, string?> Current { get; } = fields.Read(entity);
 
-    /// <summary>The values after the entry: later changes are rolled back from the current values; with a property only that change is undone.</summary>
+    /// <summary>
+    /// The values the request asks for: after or before the entry later changes are rolled back from the current values;
+    /// an undo sets only the entry's fields (or the one property) back.
+    /// </summary>
     public (Dictionary<string, string?>? Values, Error? Error) Target(EntityHistoryRestoreRequest request)
     {
-        var index = entries.ToList().FindIndex(e => e.Id == request.EntryId);
+        var index = IndexOf(request.EntryId);
         if (index < 0)
         {
             return (null, HistoryErrors.NotFound);
         }
 
+        var entry = entries[index];
+        var undo = request.Property is not null || request.Mode == EntityHistoryRestoreMode.Undo;
+        if (entry.Action == AuditAction.Created && request.Mode != EntityHistoryRestoreMode.After)
+        {
+            return (null, HistoryErrors.NotRestorable);
+        }
+
         var target = new Dictionary<string, string?>(Current, StringComparer.Ordinal);
         if (request.Property is { } name)
         {
-            if (entries[index].Action == AuditAction.Created
-                || entries[index].Changes.FirstOrDefault(c => c.Property == name) is not { } change
+            if (entry.Changes.FirstOrDefault(c => c.Property == name) is not { } change
                 || fields.Restorable(name) is not { } property
                 || !fields.CanTake(property, change.OldValue))
             {
@@ -48,7 +57,8 @@ internal sealed class EntityHistoryRecord(
             return (target, null);
         }
 
-        foreach (var change in entries.Skip(index + 1).Reverse().SelectMany(e => e.Changes))
+        var rolledBack = undo ? [entry] : entries.Skip(request.Mode == EntityHistoryRestoreMode.Before ? index : index + 1);
+        foreach (var change in rolledBack.Reverse().SelectMany(e => e.Changes))
         {
             if (fields.Restorable(change.Property) is { } property && fields.CanTake(property, change.OldValue))
             {
@@ -58,6 +68,14 @@ internal sealed class EntityHistoryRecord(
 
         return (target, null);
     }
+
+    /// <summary>The properties an undo of the request would take from a later entry; empty for the other modes.</summary>
+    public IReadOnlySet<string> ChangedLater(EntityHistoryRestoreRequest request) =>
+        request.Property is null && request.Mode != EntityHistoryRestoreMode.Undo
+            ? new HashSet<string>()
+            : entries.Skip(IndexOf(request.EntryId) + 1).SelectMany(e => e.Changes).Select(c => c.Property).ToHashSet(StringComparer.Ordinal);
+
+    private int IndexOf(Guid entryId) => entries.ToList().FindIndex(e => e.Id == entryId);
 
     public IEnumerable<IProperty> Differences(IReadOnlyDictionary<string, string?> target) =>
         fields.Properties.Where(p => !fields.Same(p, Current[p.Name], target[p.Name]));
