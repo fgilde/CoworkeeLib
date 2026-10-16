@@ -3,6 +3,7 @@ using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Components;
 using Coworkee.Contracts.Mailing;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
 using NSubstitute;
@@ -73,6 +74,21 @@ public sealed class MailTemplateEditorTests : ClientTestBase
 
         dialogs.WaitForAssertion(() => dialogs.Markup.ShouldContain("Leave without saving?"));
         navigation.Uri.ShouldNotEndWith("/elsewhere");
+    }
+
+    [Fact]
+    public async Task What_the_editor_rewrites_on_its_own_is_no_change_but_typing_is()
+    {
+        var editor = RenderEditor();
+        editor.WaitForState(() => editor.FindComponents<Components.Editors.RichTextEditor>().Count == 1);
+        var visual = editor.FindComponent<Components.Editors.RichTextEditor>();
+
+        await editor.InvokeAsync(() => visual.Instance.ValueChanged.InvokeAsync("<p>custom</p><p></p>"));
+        editor.FindAll("[data-testid='unsaved']").ShouldBeEmpty();
+
+        await editor.InvokeAsync(() => editor.Find("[data-testid='mail-visual']").KeyDown(new KeyboardEventArgs { Key = "x" }));
+        await editor.InvokeAsync(() => visual.Instance.ValueChanged.InvokeAsync("<p>custom x</p>"));
+        editor.WaitForElement("[data-testid='unsaved']");
     }
 
     [Fact]

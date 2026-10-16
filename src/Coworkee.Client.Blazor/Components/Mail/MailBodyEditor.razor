@@ -18,8 +18,8 @@
             </MudStack>
             @if (_mode == EditorMode.Visual)
             {
-                <div @ref="_visualHost" style="height:@Height">
-                    <RichTextEditor @ref="_visual" Value="@_html" ValueChanged="VisualChangedAsync" Modules="_modules" Height="@("100%")" />
+                <div @ref="_visualHost" data-testid="mail-visual" @onkeydown="Touch" @onmousedown="Touch" @onpaste="Touch" @ondrop="Touch">
+                    <RichTextEditor @ref="_visual" Value="@_html" ValueChanged="VisualChangedAsync" Modules="_modules" Height="@Height" />
                 </div>
             }
             else

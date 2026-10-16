@@ -37,8 +37,8 @@ else
             }
         </MudMenu>
     </MudStack>
-    <MailBodyEditor Value="@_body" ValueChanged="BodyChangedAsync" Variables="_template.Variables" Height="@BodyHeight" />
-    <MudText Typo="Typo.caption">@L["Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template."]</MudText>
+    <MailBodyEditor Value="@_body" ValueChanged="BodyChangedAsync" Normalized="BodyNormalized" Variables="_template.Variables" Height="@BodyHeight" />
+    <MudText Typo="Typo.caption" Class="mt-1 d-block">@L["Placeholders look like {{ user.first_name }} and are HTML escaped. The body is placed inside the Layout template."]</MudText>
 
     @if (_errors.Count > 0)
     {

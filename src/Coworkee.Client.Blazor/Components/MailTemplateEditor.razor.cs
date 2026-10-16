@@ -21,6 +21,7 @@ public partial class MailTemplateEditor : IDisposable
     private MailTemplateDto? _template;
     private string _subject = string.Empty;
     private string _body = string.Empty;
+    private string _savedBody = string.Empty;
     private List<string> _errors = [];
     private IDialogReference? _sheet;
     private CancellationTokenSource? _debounce;
@@ -38,7 +39,7 @@ public partial class MailTemplateEditor : IDisposable
     [Parameter, EditorRequired] public string Culture { get; set; } = string.Empty;
 
     /// <summary>Subject or body differ from the saved template.</summary>
-    public bool Dirty => _template is not null && (_subject != _template.Subject || _body != _template.Body);
+    public bool Dirty => _template is not null && (_subject != _template.Subject || _body != _savedBody);
 
     private SaveMailTemplateRequest Content => new(_subject, _body);
 
@@ -52,7 +53,7 @@ public partial class MailTemplateEditor : IDisposable
     {
         _template = await Api.GetMailTemplateAsync(Name, Culture);
         _subject = _template.Subject;
-        _body = _template.Body;
+        _body = _savedBody = _template.Body;
         _errors = [];
     }
 
@@ -66,6 +67,15 @@ public partial class MailTemplateEditor : IDisposable
     {
         _body = body;
         return RefreshPreviewAsync(PreviewDelayMilliseconds);
+    }
+
+    // what the editor makes of the saved body on its own is no change
+    private void BodyNormalized(string body)
+    {
+        if (_body == _savedBody)
+        {
+            _savedBody = body;
+        }
     }
 
     private Task AddToSubjectAsync(MailVariableDto variable) => SubjectChangedAsync(_subject + $"{{{{ {variable.Name} }}}}");

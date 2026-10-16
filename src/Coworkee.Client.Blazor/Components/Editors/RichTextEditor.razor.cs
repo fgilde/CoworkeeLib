@@ -1,7 +1,6 @@
 using Coworkee.Client.Blazor.Theming;
 using Coworkee.Contracts.Settings;
 using Microsoft.AspNetCore.Components;
-using MudBlazor.Extensions.Core;
 using MudExRichTextEditor;
 using MudExRichTextEditor.Extensibility;
 
@@ -28,7 +27,8 @@ public partial class RichTextEditor
 
     [Parameter] public IReadOnlyList<object> Modules { get; set; } = [];
 
-    [Parameter] public MudExSize<double>? Height { get; set; }
+    /// <summary>Any CSS length; the editor fills it. Without one it grows with its text.</summary>
+    [Parameter] public string? Height { get; set; }
 
     [Parameter] public bool Immediate { get; set; } = true;
 

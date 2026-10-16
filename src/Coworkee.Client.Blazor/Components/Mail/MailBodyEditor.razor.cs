@@ -31,6 +31,7 @@ public partial class MailBodyEditor : IAsyncDisposable
     private ElementReference _visualHost;
     private IJSObjectReference? _module;
     private bool _widened;
+    private bool _touched;
 
     public MailBodyEditor() => _modules = [new MentionModule<MailPlaceholder>(SearchAsync, '{')];
 
@@ -43,6 +44,12 @@ public partial class MailBodyEditor : IAsyncDisposable
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
 
     [Parameter] public IReadOnlyList<MailVariableDto> Variables { get; set; } = [];
+
+    /// <summary>
+    /// The visual editor rewrote the body on its own (Quill turns a line break inside a paragraph into a new paragraph);
+    /// raised before <see cref="ValueChanged"/>, so a caller can treat it as unchanged.
+    /// </summary>
+    [Parameter] public EventCallback<string> Normalized { get; set; }
 
     /// <summary>Height of the editor and the placeholder list, any CSS length.</summary>
     [Parameter] public string Height { get; set; } = "360px";
@@ -75,6 +82,7 @@ public partial class MailBodyEditor : IAsyncDisposable
         if (Value != _seen)
         {
             _seen = Value;
+            _touched = false;
             _html = MailMentionHtml.ToMentions(Value, _known);
             if (_mode == EditorMode.Visual && !VisualAllowed)
             {
@@ -85,6 +93,7 @@ public partial class MailBodyEditor : IAsyncDisposable
 
     public async Task InsertVariableAsync(MailVariableDto variable)
     {
+        Touch();
         var snippet = variable.IsList ? $"{{{{ for item in {variable.Name} }}}}\n{{{{ end }}}}" : $"{{{{ {variable.Expression()} }}}}";
         if (_mode == EditorMode.Source && _source is not null)
         {
@@ -115,17 +124,26 @@ public partial class MailBodyEditor : IAsyncDisposable
             }
 
             _html = MailMentionHtml.ToMentions(Value, _known);
+            _touched = false;
         }
 
         _mode = mode;
         return Task.CompletedTask;
     }
 
-    private Task VisualChangedAsync(string html)
+    private async Task VisualChangedAsync(string html)
     {
         _html = html;
-        return EmitAsync(MailMentionHtml.ToScriban(html, _known));
+        var body = MailMentionHtml.ToScriban(html, _known);
+        if (!_touched && body != Value)
+        {
+            await Normalized.InvokeAsync(body);
+        }
+
+        await EmitAsync(body);
     }
+
+    private void Touch() => _touched = true;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
