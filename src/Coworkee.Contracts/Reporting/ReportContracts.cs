@@ -8,6 +8,7 @@ public static class ReportPermissions
     public const string View = "Reports.View";
     public const string Manage = "Reports.Manage";
     public const string Share = "Reports.Share";
+    public const string Dashboard = "Reports.Dashboard";
 }
 
 /// <summary>Who sees a report besides its owner.</summary>
@@ -54,6 +55,12 @@ public sealed record SaveReportRequest(
     ReportDefinition Definition);
 
 public sealed record FavoriteReportRequest(bool Favorite);
+
+/// <summary>The report shown as dashboard (the user's choice, else the organisation's), and both choices as stored.</summary>
+public sealed record DashboardReportDto(Guid? ReportId, Guid? Mine, Guid? Organisation);
+
+/// <summary>A report as dashboard, or none to go back to the default.</summary>
+public sealed record SetDashboardReportRequest(Guid? ReportId);
 
 public sealed record ReportRoleDto(Guid Id, string Name);
 

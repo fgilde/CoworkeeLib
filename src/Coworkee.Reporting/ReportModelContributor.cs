@@ -24,6 +24,13 @@ internal sealed class ReportModelContributor : IModelContributor
             favorite.HasKey(f => new { f.UserId, f.ReportId });
             favorite.HasOne<Report>().WithMany().HasForeignKey(f => f.ReportId).OnDelete(DeleteBehavior.Cascade);
         });
+
+        modelBuilder.Entity<DashboardReport>(dashboard =>
+        {
+            dashboard.ToTable("DashboardReports", "cw");
+            dashboard.HasIndex(d => new { d.TenantId, d.UserId }).IsUnique();
+            dashboard.HasOne<Report>().WithMany().HasForeignKey(d => d.ReportId).OnDelete(DeleteBehavior.Cascade);
+        });
     }
 }
 

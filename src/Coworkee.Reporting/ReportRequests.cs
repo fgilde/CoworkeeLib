@@ -35,6 +35,18 @@ public sealed record DuplicateReportCommand(Guid Id) : ICommand<Result<ReportDto
 [AiTool(Exclude = true)]
 public sealed record SetReportFavoriteCommand(Guid Id, bool Favorite) : ICommand<Result>;
 
+[RequiresPermission(ReportPermissions.View)]
+[Description("Reads which report the signed-in user sees as dashboard: the own choice, else the default of the organisation.")]
+public sealed record GetDashboardReportQuery : IQuery<Result<DashboardReportDto>>;
+
+[RequiresPermission(ReportPermissions.View)]
+[AiTool(Exclude = true)]
+public sealed record SetMyDashboardReportCommand(Guid? ReportId) : ICommand<Result>;
+
+[RequiresPermission(ReportPermissions.Dashboard)]
+[AiTool(Exclude = true)]
+public sealed record SetOrganisationDashboardReportCommand(Guid? ReportId) : ICommand<Result>;
+
 [RequiresPermission(ReportPermissions.Share)]
 [AiTool(Exclude = true)]
 public sealed record GetReportRolesQuery : IQuery<Result<IReadOnlyList<ReportRoleDto>>>;
