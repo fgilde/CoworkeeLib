@@ -26,8 +26,8 @@ internal sealed class FakeODataClient : IODataClient
     {
         Queried?.Invoke(this, query);
         var items = _sets.TryGetValue(entitySet, out var set) ? (T[])set : [];
-        // "Prop asc|desc" with $top, enough for the bounds of a column
-        if (query.OrderBy?.Split(' ') is [var property, var direction] && typeof(T).GetProperty(property) is { } member)
+        // "Prop asc|desc" with $top=1: the bounds of a column; other queries keep the given order
+        if (query.Top == 1 && query.OrderBy?.Split(' ') is [var property, var direction] && typeof(T).GetProperty(property) is { } member)
         {
             var sorted = direction == "desc" ? items.OrderByDescending(i => member.GetValue(i)) : items.OrderBy(i => member.GetValue(i));
             items = [.. sorted.Take(query.Top ?? int.MaxValue)];
