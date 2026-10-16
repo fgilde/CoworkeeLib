@@ -2,6 +2,18 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Breaking Changes
+
+- **`ICoworkeeApi`** hat `GetMailTemplateHistoryAsync` bekommen; eigene Implementierungen ergänzen es.
+- **MudBlazor.Extensions 9.11.4 und MudExRichTextEditor 9.5.5**: Apps, die MudBlazor.Extensions selbst festlegen, gehen auf 9.11.4.
+
+### Neu
+
+- **Einstellung Rich-Text-Editor**: `Editors.RichTextEditor` (TipTap, der Standard, oder Quill) wählt den Editor für jeden Rich-Text-Editor der Bibliothek; `RichTextEditor` bringt dieselbe Wahl auf eigene Seiten. Mail-Platzhalter funktionieren in beiden als Erwähnungen. Siehe [Mailing](../modules/mailing.md#vorlage-bearbeiten).
+- **Mail-Vorlageneditor**: Der Editor füllt das Fenster, ein Vorschau-Panel folgt jeder Änderung (Desktop- oder Telefonbreite, helles oder dunkles Mailprogramm, Zeile im Posteingang), Versionsverlauf mit Zeilenvergleich und Wiederherstellen (`GET /api/v1/mail/templates/{name}/{culture}/history`), Schutz vor dem Verlassen mit ungespeicherten Änderungen, Sprach-Chips neben dem Titel und eine durchsuchbare Platzhalterliste.
+
 ## 0.0.1.27 (2026-10-16)
 
 ### Korrekturen
