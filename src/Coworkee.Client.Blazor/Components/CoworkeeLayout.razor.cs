@@ -24,6 +24,9 @@ public partial class CoworkeeLayout : IAsyncDisposable
     private readonly Guid _viewport = Guid.NewGuid();
     private bool _phone;
 
+    // the layout lives on while the user navigates, so the first address decides: ?embed=1 shows the page without app bar, menu and assistant
+    private bool _embedded;
+
     [Inject] private IBrowserViewportService Viewport { get; set; } = null!;
 
     [Inject] private IJSRuntime JS { get; set; } = null!;
@@ -49,6 +52,7 @@ public partial class CoworkeeLayout : IAsyncDisposable
 
     protected override void OnInitialized()
     {
+        _embedded = System.Web.HttpUtility.ParseQueryString(new Uri(Nav.Uri).Query)["embed"] == "1";
         ThemeService.Changed += Refresh;
         Preferences.Changed += FollowPin;
         L.Changed += Refresh;

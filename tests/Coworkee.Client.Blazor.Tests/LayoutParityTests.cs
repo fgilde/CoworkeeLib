@@ -25,6 +25,21 @@ public sealed class LayoutParityTests : ClientTestBase
         Render<CoworkeeLayout>(p => p.Add(l => l.Body, (RenderFragment)(b => b.AddContent(0, "body"))));
 
     [Fact]
+    public void Embedded_pages_show_without_app_bar_and_menu_and_stay_so_while_navigating()
+    {
+        var nav = Services.GetRequiredService<NavigationManager>();
+        nav.NavigateTo("/sales/orders?embed=1");
+        var layout = RenderLayout();
+
+        layout.WaitForAssertion(() => layout.Markup.ShouldContain("body"));
+        layout.FindAll("[data-testid='nav-drawer']").ShouldBeEmpty();
+        layout.FindAll(".mud-appbar").ShouldBeEmpty();
+        nav.NavigateTo("/catalog/products");
+        layout.Render();
+        layout.FindAll(".mud-appbar").ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task Groups_are_tree_nodes_and_the_filter_narrows_them()
     {
         var layout = RenderLayout();
