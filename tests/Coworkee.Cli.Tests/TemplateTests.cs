@@ -89,11 +89,12 @@ public sealed class TemplateTests(TemplateFixture template)
     }
 
     [Fact]
-    public async Task Generated_app_publishes_a_compose_deployment_without_development_tools()
+    public async Task Generated_app_publishes_a_compose_deployment_with_its_tools()
     {
         var feed = Environment.GetEnvironmentVariable("COWORKEE_TEST_FEED");
         Assert.SkipWhen(string.IsNullOrEmpty(feed), "Set COWORKEE_TEST_FEED to a folder with packed Coworkee packages (build/pack-local.ps1) to publish a generated app.");
-        var app = await template.CreateAsync("deploy", "--samples", "false", "--keycloak", "true");
+        var app = await template.CreateAsync("deploy", "--samples", "false", "--keycloak", "true", "--grafana", "true", "--webDataStudio", "true",
+            "--translationProvider", "libreTranslate", "--ai", "true", "--aiProvider", "ollama", "--aspireUI", "true");
         await Dotnet.RunAsync(app, "nuget", "add", "source", Path.GetFullPath(feed!), "--name", "local", "--configfile", "nuget.config");
         var solution = Solution.Find(app);
         var output = DeployCommand.OutputFolder(solution, "compose", null);
@@ -101,22 +102,37 @@ public sealed class TemplateTests(TemplateFixture template)
         await Dotnet.RunAsync(app, DeployCommand.PublishArgs(solution, "compose", output)[1..]);
 
         var compose = await File.ReadAllTextAsync(Path.Combine(output, "docker-compose.yaml"), TestContext.Current.CancellationToken);
-        foreach (var service in new[] { "shop-migrations:", "shop-auth:", "shop-api:", "shop-web:", "postgres:", "redis:" })
+        foreach (var service in new[] { "shop-migrations:", "shop-auth:", "shop-api:", "shop-web:", "postgres:", "redis:", "keycloak:", "grafana:", "webdatastudio:", "shop-translate:", "ollama:", "aspireui:" })
         {
             compose.ShouldContain(service);
         }
 
         compose.ShouldContain("Coworkee__Bff__Authority: \"${SHOP_AUTH_URL}\"");
         compose.ShouldContain("condition: \"service_completed_successfully\"");
-        compose.ShouldNotContain("keycloak");
+        compose.ShouldContain("Coworkee__KeycloakRealm__Users__0__Email: \"${SHOP_ADMIN_EMAIL}\"");
+        compose.ShouldContain("source: \"shop-ollama-data\"");
+        compose.ShouldContain("ASPIREUI_ADMIN_USERNAME: \"${SHOP_ADMIN_EMAIL}\"");
         compose.ShouldNotContain("axllent/mailpit");
-        compose.ShouldNotContain("libretranslate/libretranslate");
         compose.ShouldNotContain("DevelopmentCertificates");
-        var env = ComposeEnv.Values(ComposeEnv.Fill(await File.ReadAllTextAsync(Path.Combine(output, ".env"), TestContext.Current.CancellationToken), new Dictionary<string, string>(), "Shop"));
-        env.Keys.ShouldBe(["POSTGRES_PASSWORD", "REDIS_PASSWORD", "SHOP_API_IMAGE", "SHOP_AUTH_IMAGE", "SHOP_AUTH_URL", "SHOP_ENCRYPTION_CERTIFICATE",
-            "SHOP_MIGRATIONS_IMAGE", "SHOP_PUSH_PRIVATE_KEY", "SHOP_PUSH_PUBLIC_KEY", "SHOP_SETUP_TOKEN", "SHOP_SIGNING_CERTIFICATE", "SHOP_WEB_IMAGE", "SHOP_WEB_URL"], ignoreOrder: true);
-        ComposeEnv.Images(await File.ReadAllTextAsync(Path.Combine(output, ".env"), TestContext.Current.CancellationToken))
-            .Select(i => DeployCommand.BuildImageArgs(solution, i)[2]).ShouldAllBe(p => File.Exists(p));
+        // no development password reaches a deployment
+        compose.ShouldNotContain("SEED_PASSWORD");
+        foreach (System.Text.RegularExpressions.Match password in System.Text.RegularExpressions.Regex.Matches(await File.ReadAllTextAsync(Path.Combine(app, "src", "Shop.Migrations", "DemoUsers.cs")), "\"(Cw1[^\"]+)\""))
+        {
+            compose.ShouldNotContain(password.Groups[1].Value);
+        }
+
+        var published = await File.ReadAllTextAsync(Path.Combine(output, ".env"), TestContext.Current.CancellationToken);
+        var env = ComposeEnv.Values(ComposeEnv.Fill(published, new Dictionary<string, string>(), "Shop"));
+        env.Keys.ShouldContain("SHOP_ADMIN_EMAIL");
+        env.Keys.ShouldContain("SHOP_SMTP_HOST");
+        env.Keys.ShouldContain("SHOP_GRAFANA_URL");
+        env.Keys.ShouldContain("SHOP_KEYCLOAK_URL");
+        env["GRAFANA_IMAGE"].ShouldBe("shop-grafana:latest");
+        foreach (var image in ComposeEnv.Images(published))
+        {
+            Path.Exists(image.StartsWith("shop-", StringComparison.Ordinal) ? DeployCommand.BuildImageArgs(solution, image)[2] : DeployCommand.BuildToolImageArgs(solution, image, "x")[^1])
+                .ShouldBeTrue(image);
+        }
     }
 
     internal static void ShouldHaveNoLeftovers(string app)
