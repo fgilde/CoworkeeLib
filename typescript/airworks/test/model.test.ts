@@ -119,3 +119,16 @@ test('the designer sets values at their paths and clears a grouping with its fie
   setPath(widget, 'query.aggregates.0.function', 'Count');
   assert.equal(widget.query?.aggregates?.[0].field, null);
 });
+
+test('records: noise stays out of the columns, a record is called by its name, web pages open in the embedded shell', async () => {
+  const { isNoise, recordTitle } = await import('../src/dom.ts');
+  const { embedUrl } = await import('../src/apps/web.ts');
+  const rows = [{ Id: 'p1', Name: 'Chair', TenantId: 't1', ImageDataUrl: `data:image/png;base64,${'A'.repeat(300)}`, 'Brand@odata.navigationLink': 'x' }];
+
+  assert.deepEqual(columnsOf(rows).map((c) => c.field), ['Name', 'Id']);
+  assert.equal(isNoise('Description', 'short'), false);
+  assert.equal(recordTitle({ Id: 'o1', Number: 'SO-1' }), 'SO-1');
+  assert.equal(recordTitle({ Id: 'o2' }), 'o2');
+  assert.equal(embedUrl('https://app.test', '/sales/orders?status=Open'), 'https://app.test/sales/orders?status=Open&embed=1');
+  assert.equal(embedUrl(null, '/sales/orders'), undefined);
+});

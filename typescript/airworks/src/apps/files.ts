@@ -2,6 +2,7 @@ import { apiRequest, unwrap, type Schemas } from '@coworkee/client';
 import type { AppContext } from '@fgilde/airworks';
 import type { Coworkee, CoworkeeApp } from '../coworkee.ts';
 import { bytes, display, errorText, esc } from '../dom.ts';
+import { confirmDialog, promptDialog } from '../form.ts';
 import { filePreviewAppId } from './file-preview.ts';
 
 type Crumb = { id?: string; name: string };
@@ -61,7 +62,7 @@ export const filesApp = (coworkee: Coworkee): CoworkeeApp => ({
         ...content.folders.map((folder) => `<tr data-folder="${esc(folder.id)}" data-name="${esc(folder.name)}"><td><span class="cw-icon">📁</span>${esc(folder.name)}</td><td></td><td>${esc(display(folder.createdAt, culture))}</td>${actions('folder', folder.id)}</tr>`),
         ...content.files.map((file) => `<tr data-file="${esc(file.id)}" data-name="${esc(file.name)}" data-type="${esc(file.contentType)}"><td><span class="cw-icon">📄</span>${esc(file.name)}</td><td>${esc(bytes(file.size, culture))}</td><td>${esc(display(file.createdAt, culture))}</td>${actions('file', file.id)}</tr>`),
       ];
-      body.innerHTML = rows.join('') || `<tr><td colspan="4" class="cw-muted">${esc(t('(empty)'))}</td></tr>`;
+      body.innerHTML = rows.join('') || `<tr><td colspan="4" class="cw-empty">${esc(content.canUpload ? t('Drop files here') : t('(empty)'))}</td></tr>`;
     };
 
     const run = async (work: () => Promise<unknown>) => {
@@ -71,7 +72,6 @@ export const filesApp = (coworkee: Coworkee): CoworkeeApp => ({
 
     const upload = (files: FileList | File[]) => run(async () => { for (const file of [...files]) await uploadFile(file, folderId()); });
 
-    // shortcut: names and confirmations through the browser's prompt/confirm, an AirWorks dialog once one is wanted
     host.addEventListener('click', (event) => {
       const target = event.target as Element;
       const action = target.closest<HTMLElement>('[data-action]')?.dataset.action;
@@ -81,24 +81,26 @@ export const filesApp = (coworkee: Coworkee): CoworkeeApp => ({
       if (action === 'up' && path.length > 1) { path.pop(); void load(); }
       else if (action === 'refresh') void load();
       else if (action === 'folder') {
-        const name = prompt(t('New folder'))?.trim();
-        if (name) void run(() => api.POST('/api/v1/files/folders', { body: { parentId: folderId() ?? null, name } }).then(unwrap));
+        void promptDialog(coworkee, t('New folder'), 'Name').then((name) => {
+          if (name?.trim()) void run(() => api.POST('/api/v1/files/folders', { body: { parentId: folderId() ?? null, name: name.trim() } }).then(unwrap));
+        });
       } else if (crumb !== undefined) { path.splice(Number(crumb) + 1); void load(); }
       else if (rename) {
         const [kind, id] = rename.split(':');
         const row = target.closest<HTMLElement>('tr')!;
-        const name = prompt(t('Rename'), row.dataset.name)?.trim();
-        if (name && name !== row.dataset.name) {
+        void promptDialog(coworkee, t('Rename'), 'Name', row.dataset.name).then((value) => {
+          const name = value?.trim();
+          if (!name || name === row.dataset.name) return;
           void run(() => (kind === 'folder'
             ? api.PUT('/api/v1/files/folders/{id}/name', { params: { path: { id } }, body: { name } })
             : api.PUT('/api/v1/files/{id}/name', { params: { path: { id } }, body: { name } })).then(unwrap));
-        }
+        });
       } else if (remove) {
         const [kind, id] = remove.split(':');
         const name = target.closest<HTMLElement>('tr')!.dataset.name;
-        if (confirm(kind === 'folder' ? t("Delete the folder '{0}' and everything in it?", name) : t("Delete the file '{0}'?", name))) {
-          void run(() => api.POST('/api/v1/files/delete', { body: kind === 'folder' ? { fileIds: [], folderIds: [id] } : { fileIds: [id], folderIds: [] } }).then(unwrap));
-        }
+        void confirmDialog(coworkee, kind === 'folder' ? t("Delete the folder '{0}' and everything in it?", name) : t("Delete the file '{0}'?", name), t('Delete')).then((ok) => {
+          if (ok) void run(() => api.POST('/api/v1/files/delete', { body: kind === 'folder' ? { fileIds: [], folderIds: [id] } : { fileIds: [id], folderIds: [] } }).then(unwrap));
+        });
       } else if (!target.closest('a, button')) {
         const row = target.closest<HTMLElement>('tr[data-folder], tr[data-file]');
         if (row?.dataset.folder) { path.push({ id: row.dataset.folder, name: row.dataset.name! }); void load(); }

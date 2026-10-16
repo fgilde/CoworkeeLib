@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { adminApps, defaultApps, entityApp, icons, type Coworkee } from '../src/index.ts';
 
 const airWorksIcons = new Set(readdirSync(join(dirname(fileURLToPath(import.meta.resolve('@fgilde/airworks'))), 'icons')));
-const coworkee = { t: (text: string) => text, can: () => true, apps: [], airWorks: { on() {} } } as unknown as Coworkee;
+const coworkee = { t: (text: string) => text, can: () => true, apps: [], user: { appUrl: 'https://app.test' }, title: 'App', airWorks: { on() {} } } as unknown as Coworkee;
 
 test('every app icon is an AirWorks icon or an SVG data URL', () => {
   const apps = [...defaultApps, ...adminApps, entityApp({ entitySet: 'Things' })].flatMap((factory) => factory(coworkee));
