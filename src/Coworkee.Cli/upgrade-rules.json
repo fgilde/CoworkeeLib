@@ -134,6 +134,18 @@
         { "text": "Grafana exporter per signal: with GRAFANA_OTLP_PROTOCOL=http/protobuf use {endpoint}/v1/{logs|metrics|traces} over HttpProtobuf, exporters grafana-logs/-metrics/-traces (see the template ServiceDefaults/Extensions.cs).", "find": "GRAFANA_OTLP_ENDPOINT", "files": [ "src/*.ServiceDefaults/Extensions.cs" ], "unless": "GRAFANA_OTLP_PROTOCOL" },
         { "text": "App host: add Ollama when app.Deploys(CoworkeeTools.Ollama) and AspireUI when app.Deploys(CoworkeeTools.AspireUI) with builder.AddAspireUI().WithCoworkee(app).WithRetrieveApi() (seed from the directory only in run mode) instead of IsRunMode checks.", "find": "AddOllama|AddAspireUI", "files": [ "src/*.AppHost/*.cs" ], "unless": "app.Deploys(" }
       ]
+    },
+    {
+      "version": "0.0.1.28",
+      "breaking": [
+        "Reporting: new table cw.DashboardReports (a report as dashboard): apps with Reporting add a migration.",
+        "IReportsApi gained GetDashboardAsync and SetDashboardAsync; own implementations add them. New endpoints under /api/v1/reports/dashboard: regenerate OpenAPI snapshots and SDKs."
+      ],
+      "needsMigration": true,
+      "manual": [
+        { "text": "Own IReportsApi implementations add GetDashboardAsync and SetDashboardAsync.", "find": ":\\s*IReportsApi\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] },
+        { "text": "Show the report chosen as dashboard: wrap the app's dashboard page in <ReportDashboard> (Coworkee.Client.Blazor.Reporting.Components); it falls back to its child content.", "find": "@page \"/dashboard\"", "files": [ "src/**/*.razor" ], "unless": "ReportDashboard" }
+      ]
     }
   ]
 }

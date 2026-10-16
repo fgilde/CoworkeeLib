@@ -104,8 +104,26 @@ Die Zeilen eines Widgets grenzen in dieser Reihenfolge ein: seine eigenen Query-
 | `Reports.View` | mit dir geteilte Berichte öffnen, Favoriten |
 | `Reports.Manage` | Berichte anlegen, eigene ändern und löschen, jeden sichtbaren duplizieren |
 | `Reports.Share` | mit Rollen oder der Organisation teilen |
+| `Reports.Dashboard` | das Dashboard der Organisation wählen |
 
 Ein Bericht ist *privat*, mit *Rollen* geteilt (Inhaber einer davon, direkt oder über Gruppen) oder mit der *Organisation*. Nur der Besitzer ändert ihn; andere duplizieren ihn in eine private Kopie. Eine Änderung erreicht über den [Realtime-Hub](realtime.md) jeden, der den Bericht geöffnet hat.
+
+## Ein Bericht als Dashboard
+
+Jeder Bericht, den du öffnen kannst, kann dein Dashboard sein: *Als mein Dashboard festlegen* im Menü seiner Karte oder auf der Berichtsseite. Inhaber von `Reports.Dashboard` (Administratoren) legen außerdem das Dashboard der Organisation fest, das jeder sieht, der selbst keins gewählt hat. Deine eigene Wahl gewinnt; einen Bericht, den du (nicht mehr) öffnen kannst, überspringt sie, und wer einen Bericht löscht, nimmt ihn auch als Dashboard heraus.
+
+`ReportDashboard` zeigt es an. Leg es um das eigene Dashboard der App, dann sehen Benutzer ohne gewählten Bericht oder ohne `Reports.View` weiter dieses; ohne Inhalt zeigt es einen Hinweis, einen Bericht zu wählen. Eine geänderte Wahl erreicht offene Tabs sofort (Realtime-Topic `type:DashboardReport`).
+
+```razor
+@using Coworkee.Client.Blazor.Reporting.Components
+
+<ReportDashboard>
+    <PageHeader Title="Dashboard" />
+    @* das eigene Dashboard der App *@
+</ReportDashboard>
+```
+
+Die Dashboard-Seite des Templates (*Persönlich > Dashboard*, über *Berichte*) macht genau das, und mit Beispielen macht die Einrichtung den Bericht *Catalog overview* zum Dashboard der Organisation. Der Seed legt dazu neben dem Bericht eine Zeile `DashboardReport` an (`UserId` null für die Organisation).
 
 ## Export
 
@@ -122,3 +140,4 @@ Ein Bericht ist *privat*, mit *Rollen* geteilt (Inhaber einer davon, direkt oder
 | `GET /api/v1/reports/sources`, `GET /api/v1/reports/roles` | Felder je Menge, Rollen zum Teilen |
 | `POST /api/v1/reports/query` | aggregieren |
 | `POST /api/v1/reports/sheet` | Zeilen als Excel-Arbeitsmappe |
+| `GET /api/v1/reports/dashboard`, `PUT /api/v1/reports/dashboard`, `PUT /api/v1/reports/dashboard/organisation` | der Dashboard-Bericht, den du siehst, deinen oder den der Organisation wählen (`{ "reportId": null }` setzt zurück) |
