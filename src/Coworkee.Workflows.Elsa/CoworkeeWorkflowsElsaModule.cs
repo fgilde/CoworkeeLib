@@ -48,6 +48,13 @@ public sealed class CoworkeeWorkflowsElsaModule : CoworkeeModule, IWebModule
             }
         });
 
+        // Elsa's endpoints belong to Elsa Studio, not to the app's OpenAPI documents and SDKs
+        services.PostConfigureAll<Microsoft.AspNetCore.OpenApi.OpenApiOptions>(options =>
+        {
+            var included = options.ShouldInclude;
+            options.ShouldInclude = description => !(description.RelativePath ?? "").StartsWith(RoutePrefix + "/", StringComparison.OrdinalIgnoreCase) && included(description);
+        });
+
         // the gate in ConfigureApplication lets only users with the permission reach the API, which then trusts them fully
         global::Elsa.EndpointSecurityOptions.DisableSecurity();
         services.AddElsa(elsa =>

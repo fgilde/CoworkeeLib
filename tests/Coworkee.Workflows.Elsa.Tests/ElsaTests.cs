@@ -1,4 +1,9 @@
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.OpenApi;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using System.Net;
 using System.Net.Http.Json;
 using Coworkee.Contracts.Identity;
@@ -31,6 +36,16 @@ public sealed class ElsaTests(ElsaApp app) : IAsyncLifetime
         descriptors.ShouldContain("Coworkee.WorkflowStateReached");
         var studio = await Admin.GetAsync("/api/v1/workflows/elsa/studio", Ct);
         (studio.StatusCode, studio.Headers.Location?.ToString()).ShouldBe((HttpStatusCode.Redirect, "https://studio.example/"));
+    }
+
+    [Fact]
+    public void The_Elsa_api_stays_out_of_the_apps_OpenAPI_document()
+    {
+        var include = app.App.Services.GetRequiredService<IOptionsMonitor<OpenApiOptions>>().Get("v1").ShouldInclude;
+        ApiDescription Endpoint(string path) => new() { RelativePath = path, ActionDescriptor = new ActionDescriptor { EndpointMetadata = [] } };
+
+        include(Endpoint("api/v1/workflows/approvals")).ShouldBeTrue();
+        include(Endpoint("api/elsa/workflow-definitions")).ShouldBeFalse();
     }
 
     [Fact]
