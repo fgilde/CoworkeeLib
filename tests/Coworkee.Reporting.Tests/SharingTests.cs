@@ -118,4 +118,17 @@ public sealed class SharingTests(ReportingApp app) : ReportingTestBase(app)
 
         Coworkee.Contracts.Realtime.EntityChangedPayload.From(events.ShouldHaveSingleItem())!.ChangedProperties.ShouldContain(nameof(Report.Name));
     }
+
+    [Fact]
+    public async Task The_global_search_finds_only_the_reports_a_user_sees()
+    {
+        var bob = App.As((await CreateUserAsync("bob@acme.test", ReportPermissions.View)).Id, Setup.TenantId);
+        await CreateAsync(Admin, Request("Revenue mine"));
+        var shared = await CreateAsync(Admin, Request("Revenue for everybody", ReportVisibility.Organisation));
+
+        var result = await bob.GetFromJsonAsync<Contracts.Search.GlobalSearchResult>("/api/v1/search?q=report:revenue", Ct);
+
+        result!.Hits.Select(h => (h.Title, h.Url)).ShouldBe([("Revenue for everybody", $"/reports/{shared.Id}")]);
+        (await Admin.GetFromJsonAsync<Contracts.Search.GlobalSearchResult>("/api/v1/search?q=report:revenue", Ct))!.Hits.Count.ShouldBe(2);
+    }
 }
