@@ -108,7 +108,14 @@
         "CoworkeeODataModule depends on CoworkeeBackgroundJobsModule (imports and large exports run as jobs); test hosts with OData set Coworkee:Jobs:ConnectionStringName and create their tables before UseCoworkee().",
         "New tables cw.PushSubscriptions (Notifications), cw.DataTransferJobs and cw.ImportProfiles (OData): add a migration. Workflows and Webhooks bring their own tables when an app adds them.",
         "Phone layout: the viewport tag of App.razor needs viewport-fit=cover.",
-        "New endpoints for push, mail template languages, import/export, history, workflows and webhooks: regenerate OpenAPI snapshots and SDKs."
+        "New endpoints for push, mail template languages, import/export, history, workflows and webhooks: regenerate OpenAPI snapshots and SDKs.",
+        "Library pages live under /cw/admin/... instead of /admin/... (CoworkeeClientOptions.PagePrefix, \"\" keeps the old addresses); one catch-all page (/{*Path}) renders them, so an app page with its own catch-all route is ambiguous. Old addresses redirect.",
+        "ICoworkeeApi gained GetSystemStatusAsync; own implementations add it.",
+        "IWorkflowApi gained GetStatesAsync (POST /api/v1/workflows/{entityType}/states); own implementations add it.",
+        "Webhooks: two new columns on cw.WebhookSubscriptions (secret rotation); apps with webhooks add a migration.",
+        "KeycloakRealm moved from Aspire.Hosting to Coworkee.Contracts.Identity.",
+        "Deployments take the app host's tools along: Migrations/Program.cs seeds InitialAdmin and reconciles the Keycloak realm, ServiceDefaults exports to Grafana per signal (GRAFANA_OTLP_PROTOCOL), AppHost.cs uses app.Deploys(...) and aspireUi.WithCoworkee(app).",
+        "SyncDevelopmentUsersAsync() (Development only) keeps the seed users of an existing database in step; the migrations host calls it after SeedCoworkeeIdentityAsync()."
       ],
       "needsMigration": true,
       "renames": [
@@ -118,7 +125,14 @@
         { "text": "Own ICoworkeeApi implementations add AddMailTemplateLanguageAsync, GetPushSettingsAsync, SavePushSubscriptionAsync and DeletePushSubscriptionAsync.", "find": ":\\s*ICoworkeeApi\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] },
         { "text": "IODataClient.ExportAsync/ImportAsync are gone: use IDataTransferApi; own IODataClient fakes drop the two methods.", "find": "\\bIODataClient\\b", "files": [ "src/**/*.cs", "src/**/*.razor", "tests/**/*.cs" ] },
         { "text": "ODataImportRegistration.Send is now Create/Update/Delete; for updates and undo pass (Guid? id, row) => command and id => delete command to AddODataImport.", "find": "\\b(ODataImportRegistration|AddODataImport)\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] },
-        { "text": "Test hosts with OData need Coworkee:Jobs:ConnectionStringName (RunServer=false) and their tables created before UseCoworkee().", "find": "\\b(CoworkeeODataModule|AddODataEntity)\\b", "files": [ "tests/**/*.cs" ] }
+        { "text": "Test hosts with OData need Coworkee:Jobs:ConnectionStringName (RunServer=false) and their tables created before UseCoworkee().", "find": "\\b(CoworkeeODataModule|AddODataEntity)\\b", "files": [ "tests/**/*.cs" ] },
+        { "text": "Links to library admin pages move to /cw/admin/... (old addresses redirect); an own catch-all page (@page \"/{*...}\") clashes with the library one: give it a prefix or set CoworkeeClientOptions.PagePrefix.", "find": "\"(/admin/|/\\{\\*)", "files": [ "src/**/*.cs", "src/**/*.razor", "tests/**/*.cs" ] },
+        { "text": "Own ICoworkeeApi implementations add GetSystemStatusAsync.", "find": ":\\s*ICoworkeeApi\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] },
+        { "text": "Own IWorkflowApi implementations add GetStatesAsync.", "find": ":\\s*IWorkflowApi\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] },
+        { "text": "KeycloakRealm is in Coworkee.Contracts.Identity now: add using Coworkee.Contracts.Identity;.", "find": "\\bKeycloakRealm\\.", "files": [ "src/**/*.cs", "tests/**/*.cs" ], "unless": "Coworkee.Contracts.Identity" },
+        { "text": "Seed the first administrator of a deployment: var admin = InitialAdmin.From(builder.Configuration); AddCoworkeeIdentitySeed(IsDevelopment ? DemoSeed.Configure : o => DemoSeed.ConfigureDeployment(o, admin!)); seed only in Development or with an admin, then call host.Services.SyncDevelopmentUsersAsync() and scope.ServiceProvider.ReconcileKeycloakRealmAsync() (see the template Migrations/Program.cs).", "find": "SeedCoworkeeIdentityAsync", "files": [ "src/*.Migrations/Program.cs" ], "unless": "ReconcileKeycloakRealmAsync" },
+        { "text": "Grafana exporter per signal: with GRAFANA_OTLP_PROTOCOL=http/protobuf use {endpoint}/v1/{logs|metrics|traces} over HttpProtobuf, exporters grafana-logs/-metrics/-traces (see the template ServiceDefaults/Extensions.cs).", "find": "GRAFANA_OTLP_ENDPOINT", "files": [ "src/*.ServiceDefaults/Extensions.cs" ], "unless": "GRAFANA_OTLP_PROTOCOL" },
+        { "text": "App host: add Ollama when app.Deploys(CoworkeeTools.Ollama) and AspireUI when app.Deploys(CoworkeeTools.AspireUI) with builder.AddAspireUI().WithCoworkee(app).WithRetrieveApi() (seed from the directory only in run mode) instead of IsRunMode checks.", "find": "AddOllama|AddAspireUI", "files": [ "src/*.AppHost/*.cs" ], "unless": "app.Deploys(" }
       ]
     }
   ]
