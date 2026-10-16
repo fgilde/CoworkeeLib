@@ -35,6 +35,7 @@ Welches Paket wohin gehört und was in den `using`-Block kommt.
 | `Coworkee.Social` | API | `Coworkee.Social` | `CoworkeeSocialModule`, `AddCoworkeeSocial` |
 | `Coworkee.Workflows` | API | `Coworkee.Workflows` | `CoworkeeWorkflowsModule`, `AddCoworkeeWorkflows`, `WorkflowTransitioned`, `ApprovalDecided` |
 | `Coworkee.Workflows.Elsa` | API | `Coworkee.Workflows.Elsa` | `CoworkeeWorkflowsElsaModule`, `AddCoworkeeElsa`, Elsa-Aktivitäten der Kategorie *Coworkee* |
+| `Coworkee.Workflows.Elsa.Studio` | Studio-Host | `Coworkee.Workflows.Elsa.Studio` | `AddCoworkeeElsaStudio`, `MapCoworkeeElsaStudio`: Elsa Studio als eigene App, angemeldet am Auth-Server |
 | `Coworkee.Webhooks` | API, workers | `Coworkee.Webhooks` | `CoworkeeWebhooksModule`, `AddCoworkeeWebhooks`, `IWebhookPublisher`, `WebhookSignature` |
 | `Coworkee.EventBus`, `Coworkee.EventBus.RabbitMq` | API, workers | `Coworkee.EventBus` | `IEventBus`, `IIntegrationEvent`, `IIntegrationEventHandler<T>`, `CoworkeeRabbitMqEventBusModule` |
 | `Coworkee.Cli` | Dein Rechner | | `coworkee new` (Optionen oder `--spec`), `options`, `spec`, `run`, `migrations add`, `module add`, `entity add`, `update`, `doctor`, `ui`, `mcp` |

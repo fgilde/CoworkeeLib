@@ -14,6 +14,9 @@
 <!--#if (samples) -->
     <Project Path="src/MyApp.Documents/MyApp.Documents.csproj" />
 <!--#endif -->
+<!--#if (withElsaStudio) -->
+    <Project Path="src/MyApp.ElsaStudio/MyApp.ElsaStudio.csproj" />
+<!--#endif -->
     <Project Path="src/MyApp.Infrastructure/MyApp.Infrastructure.csproj" />
     <Project Path="src/MyApp.Migrations/MyApp.Migrations.csproj" />
     <Project Path="src/MyApp.ServiceDefaults/MyApp.ServiceDefaults.csproj" />

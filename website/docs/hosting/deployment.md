@@ -14,7 +14,7 @@ Publishing runs the app host in publish mode with the environment `Production`. 
 
 | Local run | Deployment |
 |---|---|
-| Each service on its https endpoint | the public addresses behind your reverse proxy, as parameters `<app>-auth-url` and `<app>-web-url` (and `<app>-airworks-url`) |
+| Each service on its https endpoint | the public addresses behind your reverse proxy, as parameters `<app>-auth-url` and `<app>-web-url` (and `<app>-airworks-url`, `<app>-elsastudio-url`) |
 | Development certificates for the tokens | two certificates from the parameters `<app>-signing-certificate` and `<app>-encryption-certificate` (PKCS#12 as Base64), the issuer is the public auth address |
 | Demo users from `DemoUsers.cs` | one administrator from the parameters `<app>-admin-email` and `<app>-admin-password`, created by the migrations in an empty database (see [The first administrator](#the-first-administrator)) |
 | Mailpit | your mail server from the parameters `<app>-smtp-host`, `-smtp-port`, `-smtp-username`, `-smtp-password` and `-smtp-from`; Mailpit only when you ask for it (see [Mail](#mail)) |
@@ -36,7 +36,7 @@ coworkee deploy compose --without grafana --without ollama
 var app = builder.AddCoworkeeApp("shop", options => options.UseGrafana().DeployTool(CoworkeeTools.Grafana, false));
 ```
 
-`--without` and `--with` set `Coworkee:Deploy:Tools:<tool>`, which wins over `DeployTool`. The tools are `keycloak`, `mailpit`, `libretranslate`, `grafana`, `webdatastudio`, `ollama` and `aspireui`. Your own app host code asks `app.Deploys(CoworkeeTools.Ollama)`, the way the template adds Ollama and AspireUI.
+`--without` and `--with` set `Coworkee:Deploy:Tools:<tool>`, which wins over `DeployTool`. The tools are `keycloak`, `mailpit`, `libretranslate`, `grafana`, `webdatastudio`, `ollama`, `aspireui` and `elsastudio` (the workflow designer, a project of the app). Your own app host code asks `app.Deploys(CoworkeeTools.Ollama)`, the way the template adds Ollama and AspireUI.
 
 | Tool | In the deployment |
 |---|---|

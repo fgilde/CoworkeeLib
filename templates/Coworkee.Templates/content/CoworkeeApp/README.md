@@ -34,6 +34,9 @@ How to sign in, with the users and their generated passwords: [LOGIN.md](LOGIN.m
 <!--#if (airworks) -->
 | `MyApp.AirWorks` | [AirWorks](https://fgilde.github.io/AirWorks/) web desktop on the same api (TypeScript in `ClientApp`, built with Node.js) |
 <!--#endif -->
+<!--#if (withElsaStudio) -->
+| `MyApp.ElsaStudio` | Elsa Studio, the workflow designer, signed in through the auth server (permission `Workflows.Elsa.Manage`) |
+<!--#endif -->
 | `MyApp.Infrastructure` | DbContext, migrations, module composition |
 | `MyApp.Migrations` | Applies migrations and the seed before the hosts start |
 | `MyApp.Contracts` | DTOs, permission names, texts |

@@ -109,6 +109,8 @@
     <PackageVersion Include="Elsa.Persistence.EFCore.PostgreSql" Version="3.9.0" />
     <PackageVersion Include="Elsa.Persistence.EFCore.SqlServer" Version="3.9.0" />
     <PackageVersion Include="Elsa.Persistence.EFCore.Sqlite" Version="3.9.0" />
+    <PackageVersion Include="Elsa.Studio" Version="3.9.0" />
+    <PackageVersion Include="Elsa.Studio.Core.BlazorServer" Version="3.9.0" />
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="6.1.6" />
     <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.13" />
   </ItemGroup>

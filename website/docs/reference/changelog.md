@@ -21,10 +21,13 @@ Changes that need action in apps built on Coworkee. Newest first.
 - Template samples: brands, products and documents are in the global search.
 - **Rich text editor setting**: `Editors.RichTextEditor` (TipTap, the default, or Quill) picks the engine of every rich text editor of the library; `RichTextEditor` brings the same choice to own pages. Mail placeholders work as mentions in both. See [Mailing](../modules/mailing.md#editing-a-template).
 - **Mail template editor**: the editor fills the window, a preview sheet follows every change (desktop or phone width, light or dark mail client, inbox line), version history with a line diff and restore (`GET /api/v1/mail/templates/{name}/{culture}/history`), a guard against leaving unsaved changes, language chips next to the title and a searchable placeholder list.
+- **Workflow designer**: `Coworkee.Workflows.Elsa.Studio` hosts Elsa Studio as an app of its own that signs in at the auth server (permission `Workflows.Elsa.Manage`) and works with the Elsa API of the api; `app.AddElsaStudio<T>()` (or `AddProjects()` for `*_ElsaStudio`) wires the client, the API address and the designer link, `coworkee deploy --without elsastudio` leaves it out. Template option `elsaStudio` (`--elsa-studio`). See [Elsa Studio](../modules/workflows-elsa.md#elsa-studio).
 
 ### Fixes
 
 - Dialogs and side sheets of the library (import wizard, campaign wizard, theme, logo, code editor, API key, workflow comment) carry the initial class of MudBlazor.Extensions, so they show up only at their final position instead of flashing in the middle first. Own dialogs opened with `ShowExAsync` or `ShowSideSheetAsync` set `Class="@MudExCss.Classes.Dialog.Initial"` on their `MudDialog`.
+- The approvals inbox shows title, details and deadline of an approval on lines of their own.
+- Elsa's endpoints (`/api/elsa/...`) no longer land in the app's OpenAPI document: regenerate OpenAPI snapshots and SDKs of apps with `Coworkee.Workflows.Elsa`.
 
 
 ## 0.0.1.27 (2026-10-16)

@@ -53,6 +53,7 @@ public static class ExistingApp
             ["devcontainer"] = Flag(Directory.Exists(Path.Combine(root, ".devcontainer"))),
             ["git"] = Flag(Directory.Exists(Path.Combine(root, ".git"))),
             ["airworks"] = Flag(appHost.Contains("AddAirWorks<", StringComparison.Ordinal)),
+            ["elsaStudio"] = Flag(appHost.Contains("AddElsaStudio<", StringComparison.Ordinal)),
             ["airworksPackages"] = Directory.Exists(Path.Combine(src, $"{name}.AirWorks", "ClientApp", "vendor")) ? "bundled" : "npm",
             ["eventBus"] = Has(projects, "Coworkee.EventBus.RabbitMq") ? "rabbitMq" : Has(projects, "Coworkee.EventBus") ? "inProcess" : "none",
             ["storage"] = appHost.Contains("AddAzureStorage(", StringComparison.Ordinal) ? "azureBlob" : "fileSystem",

@@ -21,10 +21,13 @@
 - Beispiele der Vorlage: Marken, Produkte und Dokumente sind in der globalen Suche.
 - **Einstellung Rich-Text-Editor**: `Editors.RichTextEditor` (TipTap, der Standard, oder Quill) wählt den Editor für jeden Rich-Text-Editor der Bibliothek; `RichTextEditor` bringt dieselbe Wahl auf eigene Seiten. Mail-Platzhalter funktionieren in beiden als Erwähnungen. Siehe [Mailing](../modules/mailing.md#vorlage-bearbeiten).
 - **Mail-Vorlageneditor**: Der Editor füllt das Fenster, ein Vorschau-Panel folgt jeder Änderung (Desktop- oder Telefonbreite, helles oder dunkles Mailprogramm, Zeile im Posteingang), Versionsverlauf mit Zeilenvergleich und Wiederherstellen (`GET /api/v1/mail/templates/{name}/{culture}/history`), Schutz vor dem Verlassen mit ungespeicherten Änderungen, Sprach-Chips neben dem Titel und eine durchsuchbare Platzhalterliste.
+- **Workflow-Designer**: `Coworkee.Workflows.Elsa.Studio` hostet Elsa Studio als eigene App, die sich am Auth-Server anmeldet (Berechtigung `Workflows.Elsa.Manage`) und mit der Elsa-API der API arbeitet; `app.AddElsaStudio<T>()` (oder `AddProjects()` für `*_ElsaStudio`) verdrahtet Client, API-Adresse und den Link zum Designer, `coworkee deploy --without elsastudio` lässt ihn weg. Template-Option `elsaStudio` (`--elsa-studio`). Siehe [Elsa Studio](../modules/workflows-elsa.md#elsa-studio).
 
 ### Korrekturen
 
 - Dialoge und Seitenleisten der Bibliothek (Import-Assistent, Kampagnen-Assistent, Theme, Logo, Code-Editor, API-Schlüssel, Workflow-Kommentar) tragen die Startklasse von MudBlazor.Extensions und erscheinen damit erst an ihrer endgültigen Position, statt zuerst kurz in der Mitte aufzublitzen. Eigene Dialoge, die du mit `ShowExAsync` oder `ShowSideSheetAsync` öffnest, setzen `Class="@MudExCss.Classes.Dialog.Initial"` an ihrem `MudDialog`.
+- Der Eingang für Genehmigungen zeigt Titel, Details und Frist einer Genehmigung in eigenen Zeilen.
+- Die Endpunkte von Elsa (`/api/elsa/...`) landen nicht mehr im OpenAPI-Dokument der App: OpenAPI-Snapshots und SDKs von Apps mit `Coworkee.Workflows.Elsa` neu erzeugen.
 
 
 ## 0.0.1.27 (2026-10-16)

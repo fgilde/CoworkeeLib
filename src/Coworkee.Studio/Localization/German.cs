@@ -472,6 +472,13 @@ public static class German
         ["Starts from transitions, decisions and entity changes"] = "Startet bei Übergängen, Entscheidungen und Entity-Änderungen",
         ["Elsa brings many packages and its own tables"] = "Elsa bringt viele Pakete und eigene Tabellen mit",
         ["Elsa Studio is a separate app to run"] = "Elsa Studio ist eine eigene App, die laufen muss",
+        ["Workflow designer"] = "Workflow-Designer",
+        ["Elsa Studio, the visual designer, as an app of its own in the app host: signs in at the auth server like the web app, lets in users with the permission Workflows.Elsa.Manage and works with the Elsa API of the api. The app's navigation links to it."] =
+            "Elsa Studio, der visuelle Designer, als eigene App im App-Host: meldet sich wie die Web-App am Auth-Server an, lässt Benutzer mit der Berechtigung Workflows.Elsa.Manage hinein und arbeitet mit der Elsa-API der API. Die Navigation der App verlinkt darauf.",
+        ["When administrators should draw their workflows instead of writing them in C#."] = "Wenn Administratoren ihre Workflows zeichnen statt in C# schreiben sollen.",
+        ["Drag and drop designer with the Coworkee activities"] = "Designer mit Drag and Drop und den Coworkee-Aktivitäten",
+        ["Same users and sign-in as the app"] = "Dieselben Benutzer und dieselbe Anmeldung wie die App",
+        ["A third web app to run and deploy"] = "Eine dritte Web-App, die laufen und deployt werden muss",
         ["Extended attributes"] = "Erweiterte Attribute",
         ["Free key/value attributes for any entity without schema changes (the Documents sample brings it anyway)."] = "Freie Schlüssel-Wert-Attribute für jede Entity ohne Schemaänderung (das Documents-Beispiel bringt es ohnehin mit).",
         ["When users need fields you cannot foresee."] = "Wenn Benutzer Felder brauchen, die du nicht vorhersehen kannst.",

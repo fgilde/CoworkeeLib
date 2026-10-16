@@ -140,13 +140,17 @@
       "breaking": [
         "Reporting: new table cw.DashboardReports (a report as dashboard): apps with Reporting add a migration.",
         "IReportsApi gained GetDashboardAsync and SetDashboardAsync; own implementations add them. New endpoints under /api/v1/reports/dashboard: regenerate OpenAPI snapshots and SDKs.",
-        "AddCommandPaletteEntitySet and CommandPaletteEntitySet<T> are removed: the command palette finds records through the global search of the server; register the set there with services.AddGlobalSearch<T>(s => s.Fields(...).Page(...))."
+        "AddCommandPaletteEntitySet and CommandPaletteEntitySet<T> are removed: the command palette finds records through the global search of the server; register the set there with services.AddGlobalSearch<T>(s => s.Fields(...).Page(...)).",
+        "ICoworkeeApi gained GetMailTemplateHistoryAsync; own implementations add it.",
+        "MudBlazor.Extensions 9.11.4 and MudExRichTextEditor 9.5.5 (TipTap is the default rich text editor, setting Editors.RichTextEditor): apps that pin these packages move up.",
+        "Elsa endpoints (/api/elsa) no longer appear in the OpenAPI document: apps with Coworkee.Workflows.Elsa regenerate OpenAPI snapshots and SDKs. New optional template option elsaStudio (Elsa Studio host, AddElsaStudio)."
       ],
       "needsMigration": true,
       "manual": [
         { "text": "Own IReportsApi implementations add GetDashboardAsync and SetDashboardAsync.", "find": ":\\s*IReportsApi\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] },
         { "text": "Show the report chosen as dashboard: wrap the app's dashboard page in <ReportDashboard> (Coworkee.Client.Blazor.Reporting.Components); it falls back to its child content.", "find": "@page \"/dashboard\"", "files": [ "src/**/*.razor" ], "unless": "ReportDashboard" },
-        { "text": "Move the palette search of the set to the server module that registers its OData set: services.AddGlobalSearch<TEntity>(s => s.Fields(e => e.Name).Subtitle(...).Page(\"/list-page\")), then delete the client registration.", "find": "AddCommandPaletteEntitySet|CommandPaletteEntitySet<", "files": [ "src/**/*.cs" ] }
+        { "text": "Move the palette search of the set to the server module that registers its OData set: services.AddGlobalSearch<TEntity>(s => s.Fields(e => e.Name).Subtitle(...).Page(\"/list-page\")), then delete the client registration.", "find": "AddCommandPaletteEntitySet|CommandPaletteEntitySet<", "files": [ "src/**/*.cs" ] },
+        { "text": "Own ICoworkeeApi implementations add GetMailTemplateHistoryAsync.", "find": ":\\s*ICoworkeeApi\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] }
       ]
     }
   ]

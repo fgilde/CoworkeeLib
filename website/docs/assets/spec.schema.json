@@ -113,6 +113,11 @@
           "type": "boolean",
           "default": false
         },
+        "elsaStudio": {
+          "description": "Elsa Studio, the visual designer, as an app of its own in the app host: signs in at the auth server like the web app, lets in users with the permission Workflows.Elsa.Manage and works with the Elsa API of the api. The app's navigation links to it. Only used with elsa.",
+          "type": "boolean",
+          "default": false
+        },
         "webhooks": {
           "description": "Outgoing webhooks: admins register endpoints that get signed events about entity changes, workflow transitions and the app's own events, with retries and a delivery log. With the samples, products send events.",
           "type": "boolean",

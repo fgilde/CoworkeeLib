@@ -152,6 +152,14 @@ app.AddWeb<Projects.MyApp_Web>();
 // the AirWorks web desktop: a second client of the same auth server and api (LOGIN.md)
 app.AddAirWorks<Projects.MyApp_AirWorks>();
 #endif
+#if (withElsaStudio)
+
+// the workflow designer: a client of its own of the auth server that works with the Elsa API of the api; the app's "Workflow designer" link leads there
+if (app.Deploys(CoworkeeTools.ElsaStudio))
+{
+    app.AddElsaStudio<Projects.MyApp_ElsaStudio>();
+}
+#endif
 #if (aspireUI)
 
 #if (keycloak)

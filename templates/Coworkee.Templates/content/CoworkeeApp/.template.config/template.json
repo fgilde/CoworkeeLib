@@ -121,6 +121,16 @@
       "type": "computed",
       "value": "(workflows && elsa)"
     },
+    "elsaStudio": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Elsa Studio, the visual workflow designer, as an app of its own (MyApp.ElsaStudio) that signs in at the auth server; needs --elsa."
+    },
+    "withElsaStudio": {
+      "type": "computed",
+      "value": "(workflows && elsa && elsaStudio)"
+    },
     "webhooks": {
       "type": "parameter",
       "datatype": "bool",
@@ -1159,6 +1169,12 @@
           "condition": "(!airworks)",
           "exclude": [
             "src/MyApp.AirWorks/**"
+          ]
+        },
+        {
+          "condition": "(!withElsaStudio)",
+          "exclude": [
+            "src/MyApp.ElsaStudio/**"
           ]
         },
         {

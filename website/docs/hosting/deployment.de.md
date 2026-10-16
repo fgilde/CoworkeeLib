@@ -14,7 +14,7 @@ Beim Veröffentlichen läuft der App-Host im Publish-Modus mit der Umgebung `Pro
 
 | Lokaler Lauf | Deployment |
 |---|---|
-| Jeder Dienst auf seinem https-Endpunkt | die öffentlichen Adressen hinter deinem Reverse Proxy, als Parameter `<app>-auth-url` und `<app>-web-url` (und `<app>-airworks-url`) |
+| Jeder Dienst auf seinem https-Endpunkt | die öffentlichen Adressen hinter deinem Reverse Proxy, als Parameter `<app>-auth-url` und `<app>-web-url` (und `<app>-airworks-url`, `<app>-elsastudio-url`) |
 | Entwicklungszertifikate für die Tokens | zwei Zertifikate aus den Parametern `<app>-signing-certificate` und `<app>-encryption-certificate` (PKCS#12 als Base64), Issuer ist die öffentliche Adresse des Auth-Servers |
 | Demo-Benutzer aus `DemoUsers.cs` | ein Administrator aus den Parametern `<app>-admin-email` und `<app>-admin-password`, den die Migrationen in einer leeren Datenbank anlegen (siehe [Der erste Administrator](#der-erste-administrator)) |
 | Mailpit | dein Mailserver aus den Parametern `<app>-smtp-host`, `-smtp-port`, `-smtp-username`, `-smtp-password` und `-smtp-from`; Mailpit nur, wenn du es willst (siehe [Mail](#mail)) |
@@ -36,7 +36,7 @@ coworkee deploy compose --without grafana --without ollama
 var app = builder.AddCoworkeeApp("shop", options => options.UseGrafana().DeployTool(CoworkeeTools.Grafana, false));
 ```
 
-`--without` und `--with` setzen `Coworkee:Deploy:Tools:<tool>`, das gewinnt gegen `DeployTool`. Die Tools heißen `keycloak`, `mailpit`, `libretranslate`, `grafana`, `webdatastudio`, `ollama` und `aspireui`. Eigener Code im App-Host fragt `app.Deploys(CoworkeeTools.Ollama)`, so wie das Template Ollama und AspireUI hinzufügt.
+`--without` und `--with` setzen `Coworkee:Deploy:Tools:<tool>`, das gewinnt gegen `DeployTool`. Die Tools heißen `keycloak`, `mailpit`, `libretranslate`, `grafana`, `webdatastudio`, `ollama`, `aspireui` und `elsastudio` (der Workflow-Designer, ein Projekt der App). Eigener Code im App-Host fragt `app.Deploys(CoworkeeTools.Ollama)`, so wie das Template Ollama und AspireUI hinzufügt.
 
 | Tool | Im Deployment |
 |---|---|

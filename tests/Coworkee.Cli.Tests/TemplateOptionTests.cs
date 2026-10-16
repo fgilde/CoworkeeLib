@@ -76,7 +76,21 @@ public sealed class TemplateOptionTests(TemplateFixture template)
         Read(on, "src/Shop.Api/ShopApiModule.cs").ShouldContain("typeof(Coworkee.Workflows.Elsa.CoworkeeWorkflowsElsaModule)");
         Read(on, "src/Shop.Api/ShopApiModule.cs").ShouldContain("AddWorkflow<Workflows.ProductApprovedWorkflow>()");
         Directory.Exists(Path.Combine(on, "src/Shop.Infrastructure/Migrations")).ShouldBeFalse();
+        Directory.Exists(Path.Combine(on, "src/Shop.ElsaStudio")).ShouldBeFalse();
+        Read(on, "src/Shop.AppHost/AppHost.cs").ShouldNotContain("AddElsaStudio");
         TemplateTests.ShouldHaveNoLeftovers(on);
+
+        var studio = await template.CreateAsync("workflows-elsa-studio", "--workflows", "true", "--elsa", "true", "--elsaStudio", "true");
+        Read(studio, "src/Shop.ElsaStudio/Shop.ElsaStudio.csproj").ShouldContain("\"Coworkee.Workflows.Elsa.Studio\"");
+        Read(studio, "src/Shop.ElsaStudio/Program.cs").ShouldContain("builder.AddCoworkeeElsaStudio();");
+        Read(studio, "src/Shop.AppHost/AppHost.cs").ShouldContain("app.AddElsaStudio<Projects.Shop_ElsaStudio>();");
+        Read(studio, "src/Shop.AppHost/Shop.AppHost.csproj").ShouldContain("Shop.ElsaStudio.csproj");
+        Read(studio, "Shop.slnx").ShouldContain("src/Shop.ElsaStudio/Shop.ElsaStudio.csproj");
+        Read(studio, "Directory.Packages.props").ShouldContain("\"Coworkee.Workflows.Elsa.Studio\"");
+        TemplateTests.ShouldHaveNoLeftovers(studio);
+
+        var studioWithoutElsa = await template.CreateAsync("studio-without-elsa", "--workflows", "true", "--elsaStudio", "true");
+        Directory.Exists(Path.Combine(studioWithoutElsa, "src/Shop.ElsaStudio")).ShouldBeFalse();
 
         var builtIn = await template.CreateAsync("workflows-only", "--workflows", "true");
         Read(builtIn, "src/Shop.Api/Shop.Api.csproj").ShouldNotContain("Elsa");
@@ -273,7 +287,7 @@ public sealed class TemplateOptionTests(TemplateFixture template)
     {
         var feed = Environment.GetEnvironmentVariable("COWORKEE_TEST_FEED");
         Assert.SkipWhen(string.IsNullOrEmpty(feed), "Set COWORKEE_TEST_FEED to a folder with packed Coworkee packages (build/pack-local.ps1) to build a generated app.");
-        var app = await template.CreateAsync("build-workflows", "--workflows", "true", "--elsa", "true", "--grafana", "false", "--webDataStudio", "false");
+        var app = await template.CreateAsync("build-workflows", "--workflows", "true", "--elsa", "true", "--elsaStudio", "true", "--grafana", "false", "--webDataStudio", "false");
         await Dotnet.RunAsync(app, "nuget", "add", "source", Path.GetFullPath(feed!), "--name", "local", "--configfile", "nuget.config");
 
         await Dotnet.RunAsync(app, "build", "Shop.slnx");
