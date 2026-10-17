@@ -97,11 +97,12 @@
 {% set walk = [
   ("studio-welcome", 58.8, 36.3, ("Coworkee Studio: eine neue App" if de else "Coworkee Studio: a new app")),
   ("studio-basics", 93.4, 96.4, ("Name, Titel und Zielordner" if de else "Name, title and target folder")),
-  ("studio-branding", 93.4, 96.4, ("Logo, Farben und Theme, hell und dunkel in der Vorschau" if de else "Logo, colors and theme, previewed light and dark")),
+  ("studio-branding", 93.4, 96.4, ("Logo, Farben und eines von fünfzehn Themes, hell und dunkel in der Vorschau" if de else "Logo, colors and one of fifteen themes, previewed light and dark")),
   ("studio-signin", 93.4, 96.4, ("Das Design der Anmeldeseite" if de else "The design of the sign-in page")),
   ("studio-architecture", 93.4, 96.4, ("Module und Infrastruktur, mit Vor- und Nachteilen jeder Wahl" if de else "Modules and infrastructure, with what each choice brings and costs")),
   ("studio-entities", 93.4, 96.4, ("Die Entities: Tabelle, API, Rechte und Seite entstehen für jede" if de else "The entities: each gets a table, API, permissions and a page")),
   ("studio-review", 89.5, 96.4, ("Die Spec prüfen und die App anlegen" if de else "Check the spec and create the app")),
+  ("studio-generate", 61.8, 27.6, ("Das CLI legt die Solution an, das Studio zeigt die Entwicklungs-Logins (hier maskiert)" if de else "The CLI creates the solution; the Studio lists the development sign-ins (masked here)")),
   ("studio-run", 29.7, 80.4, ("Die App läuft im Aspire-AppHost. Web-Client öffnen" if de else "The app runs in the Aspire app host. Open the web client")),
   ("signin", 33.3, 72.6, ("Anmeldung am Auth-Server der App" if de else "Sign in on the app's auth server")),
   ("dashboard", 8.1, 64.2, ("Dashboard, Navigation und Administration aus den Paketen" if de else "Dashboard, navigation and administration from the packages")),
@@ -224,8 +225,7 @@
 ] %}
 
 {% macro shot(name) -%}
-  {%- if name == "studio-wizard" -%}{%- set file = name ~ ".png" -%}
-  {%- elif de and name.startswith("studio-") and name.endswith("-light") -%}{%- set file = name ~ "-de.webp" -%}
+  {%- if de and name.startswith("studio-") and name.endswith("-light") -%}{%- set file = name ~ "-de.webp" -%}
   {%- else -%}{%- set file = name ~ ".webp" -%}{%- endif -%}
   {{ ("assets/screenshots/" ~ file) | url }}
 {%- endmacro %}
@@ -385,7 +385,7 @@
           <li class="cw-steps__more"><a href="{{ (base ~ 'getting-started/cli/') | url }}">{{ t.cli_doc }} {% include ".icons/material/arrow-right.svg" %}</a><a href="{{ (base ~ 'getting-started/gallery/') | url }}">{{ t.gallery_doc }} {% include ".icons/material/arrow-right.svg" %}</a></li>
         </ol>
         <div class="cw-studio">
-          <a class="cw-zoom" href="{{ shot('studio-wizard') }}" data-caption="Coworkee Studio">
+          <a class="cw-zoom" href="{{ shot('studio-branding-light') }}" data-caption="Coworkee Studio">
             <div class="cw-slides">
               {% for n in ["studio-welcome", "studio-branding", "studio-architecture", "studio-entities"] %}
                 <img class="cw-light" src="{{ shot(n ~ '-light') }}" alt="Coworkee Studio" loading="lazy">
