@@ -8,6 +8,10 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 - `coworkee update` inserts single lines itself (rule kind `insertions` in `upgrade-rules.json`: after the first line matching a pattern, with its indentation, skipped where the line is already there; `--dry-run` only lists them). The step of 0.0.1.32 (`builder.ConfigureContainer(new DefaultServiceProviderFactory());` in `src/*.Migrations/Program.cs`) is applied automatically now.
 
+### Fixes
+
+- `npm run build` of `@coworkee/client` and `@coworkee/airworks` empties `dist` first, so packs no longer carry files of removed sources.
+
 ## 0.0.1.32 (2026-10-17)
 
 ### Fixes
