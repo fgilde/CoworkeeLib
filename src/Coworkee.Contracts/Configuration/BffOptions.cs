@@ -27,6 +27,9 @@ public sealed class BffOptions
     /// <summary>Address of the app's web client when this host is another client (AirWorks), so it can show pages of it in the embedded shell (<c>?embed=1</c>).</summary>
     public string? WebAppUrl { get; set; }
 
+    /// <summary>Origins that may show the pages of this host in a frame (the AirWorks host of the app); without any no page may be framed.</summary>
+    public List<string> FrameAncestors { get; set; } = [];
+
     /// <summary>Name and icon of the installable app; colours and logo come from the organisation's theme.</summary>
     public BffPwaOptions Pwa { get; set; } = new();
 }

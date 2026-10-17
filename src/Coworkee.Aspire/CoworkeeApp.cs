@@ -189,6 +189,7 @@ public sealed partial class CoworkeeApp
         {
             // the desktop shows pages of the web client in windows (embedApp, links of notifications)
             airWorks.WithSetting(s => s.Coworkee.Bff.WebAppUrl, PublicUrl(Web));
+            Web.WithSetting(s => s.Coworkee.Bff.FrameAncestors[0], PublicUrl(airWorks));
         }
 
         AirWorks = airWorks;
