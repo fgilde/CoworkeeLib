@@ -82,6 +82,7 @@ plugins:
             Files and search: Dateien und Suche
             Use cases: Einsatzbeispiele
             Why Coworkee: Warum Coworkee
+            Building with AI: Mit KI bauen
             Getting started: Erste Schritte
             Installation: Installation
             Command line: Kommandozeile
@@ -182,6 +183,7 @@ nav:
       - Blazor admin UI: features/blazor-ui.md
       - Realtime and collaboration: features/realtime.md
       - AI assistant and MCP: features/ai.md
+      - Building with AI: features/building-with-ai.md
       - Reporting and dashboards: features/reporting.md
       - Localization: features/localization.md
       - Aspire and observability: features/observability.md
