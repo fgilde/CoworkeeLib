@@ -3,11 +3,14 @@
 {% set de = config.theme.language == "de" %}
 {% set base = ("de/" if de else "") %}
 {% set t = {
-  "title": ("Identity, Admin-Oberfläche und Aspire für .NET 10, als NuGet-Pakete" if de else "Identity, admin UI and Aspire for .NET 10, as NuGet packages"),
-  "origin": ("Ich habe Coworkee gebaut, weil ich Anmeldung, Einstellungen und Admin-Seiten in jede neue App kopiert habe. Jetzt kommen sie als Paket." if de else "I built Coworkee because I kept copying sign-in, settings and admin pages into every new app. Now they come as a package."),
+  "eyebrow": ("Anwendungsframework für .NET 10, Blazor und Aspire" if de else "Application framework for .NET 10, Blazor and Aspire"),
+  "title": ("Module zusammenstecken, nur die Fachlichkeit schreiben" if de else "Snap the modules together, write only your domain"),
+  "kit_label": ("Coworkee-Pakete, die zu einer App zusammengesetzt werden" if de else "Coworkee packages assembled into one app"),
+  "kit_done": ("eine App" if de else "one app"),
+  "ai_hint": ("Gebaut für KI-Agenten: Sie schreiben die Fachlichkeit, Sicherheit und Admin-Oberfläche bringen die Pakete mit." if de else "Built for AI coding agents: they write the domain, the packages bring security and the admin UI."),
   "release": ("Aktuelles Release" if de else "Latest release"),
   "changelog": ("Änderungen" if de else "Changelog"),
-  "lead": ("Für Blazor und ASP.NET Core. MIT-Lizenz, ein Maintainer." if de else "For Blazor and ASP.NET Core. MIT licensed, one maintainer."),
+  "lead": ("Identity, Mandanten, Admin-Oberfläche, Realtime, Workflows, Berichte und KI kommen als NuGet-Pakete und stecken in einer App zusammen. MIT-Lizenz." if de else "Identity, tenants, admin UI, realtime, workflows, reporting and AI ship as NuGet packages that plug into one app. MIT licensed."),
   "search": ("Dokumentation durchsuchen" if de else "Search the documentation"),
   "topics": ("Direkt zu" if de else "Jump to"),
   "start": ("Loslegen" if de else "Get started"),
@@ -51,8 +54,59 @@
   "close": ("Schließen" if de else "Close"),
   "closer": ("Genauer hingeschaut" if de else "A closer look"),
   "closer_lead": ("Sechs Stellen aus der Demo-App. Ein Klick dreht das Bild um und erklärt, was du siehst." if de else "Six places in the demo app. Click a picture to turn it over and read what it shows."),
-  "turn": ("Umdrehen" if de else "Turn over")
+  "turn": ("Umdrehen" if de else "Turn over"),
+  "ai": ("Gemacht, um mit KI zu bauen" if de else "Made for building with AI"),
+  "ai_lead": ("Lass den Agenten die Fachlichkeit schreiben. Anmeldung, Berechtigungen, Mandanten, Audit und Admin-Oberfläche stecken schon in den Paketen, also beginnt erzeugter Code sicher statt bei null." if de else "Let the agent write the domain. Sign-in, permissions, tenants, audit and the admin UI are already in the packages, so generated code starts out safe instead of starting from zero."),
+  "ai_writes": ("Das schreibt der Agent" if de else "What the agent writes"),
+  "ai_has": ("Das ist schon da" if de else "What is already there"),
+  "ai_cli": ("Das CLI als MCP-Server" if de else "The CLI as MCP server"),
+  "ai_cli_t": ("13 Tools, von <code>list_options</code> und <code>validate_spec</code> bis <code>create_app</code> und <code>add_entity</code>. Eine ganze App ist eine JSON-Spec mit Schema, und jede laufende App ist selbst ein MCP-Server unter <code>/mcp</code>." if de else "13 tools, from <code>list_options</code> and <code>validate_spec</code> to <code>create_app</code> and <code>add_entity</code>. A whole app is one JSON spec with a schema, and every running app is an MCP server of its own under <code>/mcp</code>."),
+  "ai_more": ("Mit KI bauen" if de else "Building with AI"),
+  "walk": ("Vom Assistenten zur laufenden App" if de else "From the wizard to a running app"),
+  "walk_lead": ("Coworkee Studio Schritt für Schritt, dann die App im Browser. Echte Screenshots; die App-Bilder zeigen die Demo-App, die auf denselben Paketen läuft." if de else "Coworkee Studio step by step, then the app in the browser. Real screenshots; the app screens show the demo app, which runs on the same packages."),
+  "walk_play": ("Abspielen" if de else "Play"),
+  "walk_pause": ("Anhalten" if de else "Pause"),
+  "walk_step": ("Schritt" if de else "Step")
 } %}
+
+{% set kit = ["Identity", "AuthServer", "Realtime", "Workflows", "Reporting", "Ai", "Search", "Files", "Localization", "Notifications", "Auditing", "Theming"] %}
+
+{% set ai_writes = [
+  ("Entities und ihre Felder" if de else "Entities and their fields"),
+  ("Commands, Queries und Validatoren" if de else "Commands, queries and validators"),
+  ("Seiten, Dialoge und Berichte" if de else "Pages, dialogs and reports"),
+  ("Tests gegen eine echte Datenbank" if de else "Tests against a real database")
+] %}
+
+{% set ai_has = [
+  (("Auth-Server und Anmeldung" if de else "Auth server and sign-in"), "features/identity/"),
+  (("Rechte bei jedem Request" if de else "Permissions on every request"), "security/permissions/"),
+  (("Mandantenfilter" if de else "Tenant filters"), "features/multi-tenancy/"),
+  (("API-Schlüssel" if de else "API keys"), "security/api-keys/"),
+  (("Audit, Verlauf, Rückgängig" if de else "Audit, history, undo"), "modules/auditing/"),
+  (("Realtime" if de else "Realtime"), "features/realtime/"),
+  (("Workflows und Genehmigungen" if de else "Workflows and approvals"), "modules/workflows/"),
+  (("Globale Suche" if de else "Global search"), "web/global-search/"),
+  (("Berichte" if de else "Reporting"), "features/reporting/"),
+  (("23 Sprachen" if de else "23 languages"), "features/localization/"),
+  (("Benachrichtigungen und Push" if de else "Notifications and push"), "modules/realtime/"),
+  (("Dateien" if de else "Files"), "modules/files/"),
+  (("MCP-Server der App" if de else "MCP server of the app"), "modules/mcp/")
+] %}
+
+{% set walk = [
+  ("studio-welcome", 58.8, 36.3, ("Coworkee Studio: eine neue App" if de else "Coworkee Studio: a new app")),
+  ("studio-basics", 93.4, 96.4, ("Name, Titel und Zielordner" if de else "Name, title and target folder")),
+  ("studio-branding", 93.4, 96.4, ("Logo, Farben und Theme, hell und dunkel in der Vorschau" if de else "Logo, colors and theme, previewed light and dark")),
+  ("studio-signin", 93.4, 96.4, ("Das Design der Anmeldeseite" if de else "The design of the sign-in page")),
+  ("studio-architecture", 93.4, 96.4, ("Module und Infrastruktur, mit Vor- und Nachteilen jeder Wahl" if de else "Modules and infrastructure, with what each choice brings and costs")),
+  ("studio-entities", 93.4, 96.4, ("Die Entities: Tabelle, API, Rechte und Seite entstehen für jede" if de else "The entities: each gets a table, API, permissions and a page")),
+  ("studio-review", 89.5, 96.4, ("Die Spec prüfen und die App anlegen" if de else "Check the spec and create the app")),
+  ("studio-run", 29.7, 80.4, ("Die App läuft im Aspire-AppHost. Web-Client öffnen" if de else "The app runs in the Aspire app host. Open the web client")),
+  ("signin", 33.3, 72.6, ("Anmeldung am Auth-Server der App" if de else "Sign in on the app's auth server")),
+  ("dashboard", 8.1, 64.2, ("Dashboard, Navigation und Administration aus den Paketen" if de else "Dashboard, navigation and administration from the packages")),
+  ("products-grouped", 50, 50, ("Tabellen mit Gruppierung, Facetten und Summen" if de else "Tables with grouping, facets and totals"))
+] %}
 
 {% set closer = [
   ("reporting-overview-light.webp", "a",
@@ -186,9 +240,17 @@
     <div class="cw-hero__curve" aria-hidden="true"></div>
     <div class="md-grid cw-hero__inner">
       <div class="cw-hero__text">
+        <p class="cw-eyebrow">{{ t.eyebrow }}</p>
         <h1>{{ t.title }}</h1>
+        <div class="cw-kit" role="img" aria-label="{{ t.kit_label }}: {{ kit | join(', ') }}">
+          <div class="cw-kit__line" aria-hidden="true"><span class="cw-kit__plus">+</span><code>Coworkee.<span class="cw-kit__name">{{ kit[0] }}</span></code></div>
+          <div class="cw-kit__app" aria-hidden="true">
+            <span class="cw-kit__tab">MyApp<span class="cw-kit__done">{{ kit | length }} · {{ t.kit_done }}</span></span>
+            <ul>{% for name in kit %}<li>{{ name }}</li>{% endfor %}</ul>
+          </div>
+        </div>
         <p class="cw-lead">{{ t.lead }}</p>
-        <p class="cw-origin">{{ t.origin }} <a href="https://florian.gilde.org" target="_blank" rel="noopener">Florian Gilde</a></p>
+        <a class="cw-ai-hint" href="#ai">{% include ".icons/material/robot-outline.svg" %}<span>{{ t.ai_hint }}</span>{% include ".icons/material/arrow-down.svg" %}</a>
         <label class="cw-search">
           <span class="cw-search__icon">{% include ".icons/material/magnify.svg" %}</span>
           <input type="search" placeholder="{{ t.search }}" aria-label="{{ t.search }}" autocomplete="off">
@@ -214,6 +276,58 @@
               <img class="cw-dark{{ auth }}" src="{{ shot(n ~ '-dark') }}" alt="" loading="lazy">
             {% endfor %}
           </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cw-section md-typeset" id="walkthrough">
+    <div class="md-grid">
+      <h2>{{ t.walk }}</h2>
+      <p class="cw-section__lead">{{ t.walk_lead }}</p>
+      <div class="cw-walk">
+        <div class="cw-walk__screen">
+          {% for name, x, y, caption in walk %}
+            <figure class="cw-walk__frame{% if loop.first %} is-on{% endif %}" data-x="{{ x }}" data-y="{{ y }}" data-caption="{{ caption }}">
+              <img class="cw-light" src="{{ shot(name ~ '-light') }}" alt="{{ caption }}" loading="lazy">
+              <img class="cw-dark" src="{{ shot(name ~ '-dark') }}" alt="{{ caption }}" loading="lazy">
+            </figure>
+          {% endfor %}
+          <span class="cw-walk__cursor" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 2.5v17.2l4.6-4.3 3 6.6 2.9-1.3-3-6.5h6.3z"/></svg></span>
+        </div>
+        <div class="cw-walk__bar">
+          <button type="button" class="cw-walk__toggle" aria-label="{{ t.walk_pause }}" data-play="{{ t.walk_play }}" data-pause="{{ t.walk_pause }}">{% include ".icons/material/pause.svg" %}{% include ".icons/material/play.svg" %}</button>
+          <p class="cw-walk__caption" aria-live="polite"><span class="cw-walk__count">1 / {{ walk | length }}</span> <span class="cw-walk__text">{{ walk[0][3] }}</span></p>
+          <ol class="cw-walk__steps">
+            {% for name, x, y, caption in walk %}<li><button type="button" aria-label="{{ t.walk_step }} {{ loop.index }}: {{ caption }}"{% if loop.first %} aria-current="step"{% endif %}></button></li>{% endfor %}
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cw-section cw-section--alt md-typeset cw-ai" id="ai">
+    <div class="md-grid">
+      <h2>{{ t.ai }}</h2>
+      <p class="cw-section__lead">{{ t.ai_lead }}</p>
+      <div class="cw-ai__grid">
+        <div class="cw-ai__card cw-ai__card--writes">
+          <h3>{% include ".icons/material/robot-outline.svg" %}{{ t.ai_writes }}</h3>
+          <ul>{% for item in ai_writes %}<li>{{ item }}</li>{% endfor %}</ul>
+        </div>
+        <div class="cw-ai__card">
+          <h3>{% include ".icons/material/package-variant-closed.svg" %}{{ t.ai_has }}</h3>
+          <ul class="cw-ai__chips">{% for label, href in ai_has %}<li><a href="{{ (base ~ href) | url }}">{{ label }}</a></li>{% endfor %}</ul>
+        </div>
+      </div>
+      <div class="cw-ai__cli">
+        <div>
+          <h3>{% include ".icons/material/console.svg" %}{{ t.ai_cli }}</h3>
+          <p>{{ t.ai_cli_t }}</p>
+        </div>
+        <div class="cw-ai__cmd">
+          {{ code("claude mcp add coworkee -- coworkee mcp") }}
+          <a class="cw-btn cw-btn--primary" href="{{ (base ~ 'features/building-with-ai/') | url }}">{{ t.ai_more }} {% include ".icons/material/arrow-right.svg" %}</a>
         </div>
       </div>
     </div>
@@ -416,9 +530,67 @@
       });
 
 
+      // hero: the packages snap into the app one by one, then the round starts again
+      const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const kit = document.querySelector(".cw-kit");
+      if (!still) {
+        const chips = [...kit.querySelectorAll("li")], name = kit.querySelector(".cw-kit__name");
+        let next = 0;
+        kit.classList.add("is-live");
+        const snap = () => {
+          if (next < chips.length) {
+            name.textContent = chips[next].textContent;
+            name.classList.remove("is-in"); void name.offsetWidth; name.classList.add("is-in");
+            chips[next++].classList.add("is-on");
+            return setTimeout(snap, 850);
+          }
+          kit.classList.add("is-done");
+          setTimeout(() => { chips.forEach(c => c.classList.remove("is-on")); kit.classList.remove("is-done"); next = 0; setTimeout(snap, 700); }, 3400);
+        };
+        setTimeout(snap, 700);
+      }
+
+      // walkthrough: real screenshots one after another, a cursor moves to what gets clicked next
+      const walk = document.querySelector(".cw-walk");
+      const frames = [...walk.querySelectorAll(".cw-walk__frame")], dots = [...walk.querySelectorAll(".cw-walk__steps button")];
+      const cursor = walk.querySelector(".cw-walk__cursor"), toggle = walk.querySelector(".cw-walk__toggle");
+      const count = walk.querySelector(".cw-walk__count"), text = walk.querySelector(".cw-walk__text");
+      let step = 0, timer = null, playing = !still, visible = false;
+      const show = i => {
+        step = (i + frames.length) % frames.length;
+        frames.forEach((f, k) => f.classList.toggle("is-on", k === step));
+        dots.forEach(d => d.removeAttribute("aria-current"));
+        dots[step].setAttribute("aria-current", "step");
+        count.textContent = `${step + 1} / ${frames.length}`;
+        text.textContent = frames[step].dataset.caption;
+        cursor.classList.remove("is-click");
+        cursor.style.left = frames[step].dataset.x + "%";
+        cursor.style.top = frames[step].dataset.y + "%";
+      };
+      const run = () => {
+        clearTimeout(timer);
+        if (!playing || !visible) return;
+        timer = setTimeout(() => {
+          if (step < frames.length - 1) cursor.classList.add("is-click");
+          timer = setTimeout(() => { show(step + 1); run(); }, step < frames.length - 1 ? 450 : 1500);
+        }, 2600);
+      };
+      const setPlaying = on => {
+        playing = on;
+        walk.classList.toggle("is-paused", !on);
+        toggle.setAttribute("aria-label", on ? toggle.dataset.pause : toggle.dataset.play);
+        run();
+      };
+      toggle.addEventListener("click", () => setPlaying(!playing));
+      dots.forEach((d, k) => d.addEventListener("click", () => { show(k); run(); }));
+      walk.classList.toggle("is-still", still);
+      setPlaying(playing);
+      show(0);
+      if ("IntersectionObserver" in window)
+        new IntersectionObserver(entries => { visible = entries.some(e => e.isIntersecting); run(); }, { threshold: .35 }).observe(walk);
+
       // a closer look: the screenshots come in once, a click turns one over into a large card with its story on the back
       const closer = document.querySelector(".cw-closer");
-      const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
       if ("IntersectionObserver" in window && !still) {
         closer.classList.add("is-waiting");
         new IntersectionObserver((entries, io) => {
