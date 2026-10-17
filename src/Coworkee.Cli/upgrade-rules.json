@@ -178,6 +178,9 @@
     },
     {
       "version": "0.0.1.33",
+      "breaking": [
+        "The migrations host, the security headers of the web host and its upload limit come from the library (AddCoworkeeMigrations/RunCoworkeeMigrationsAsync, UseCoworkeeSecurityHeaders, Coworkee:Bff:MaxRequestBodySize); hand-written copies keep working but no longer get the fixes."
+      ],
       "manual": [
         { "text": "Replace the hand-written migrations host with the library's: builder.AddCoworkeeMigrations<TDbContext>(o => { o.DevelopmentSeed = DemoSeed.Configure; o.DeploymentSeed = DemoSeed.ConfigureDeployment; }) and return await host.RunCoworkeeMigrationsAsync(); it brings InitialAdmin, the seed, SyncDevelopmentUsersAsync, ReconcileKeycloakRealmAsync, Migrations:Attempts and the container fix of 0.0.1.32 (see the template Migrations/Program.cs).", "find": "SeedCoworkeeIdentityAsync", "files": [ "src/*.Migrations/Program.cs" ], "unless": "AddCoworkeeMigrations" },
         { "text": "Add app.UseCoworkeeSecurityHeaders(); before UseStaticFiles in the web host and remove a hand-written Content-Security-Policy middleware (extra sources: Coworkee:Bff:SecurityHeaders:Sources).", "find": "MapCoworkeeBff\\(", "files": [ "src/*.Web/Program.cs" ], "unless": "UseCoworkeeSecurityHeaders" },
