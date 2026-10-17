@@ -77,7 +77,7 @@ internal sealed class EntityHistoryHandlers(
         return new EntityHistoryPreviewDto(record.IsDeleted, differences
             .Select(p => new EntityHistoryFieldDto(
                 p.Name, record.Texts.Text(p.Name, record.Current[p.Name]), record.Texts.Text(p.Name, target![p.Name]), later.Contains(p.Name)))
-            .ToList());
+            .ToList(), record.Version);
     }
 
     public async Task<Result> HandleAsync(RestoreEntity command, CancellationToken cancellationToken)
@@ -92,6 +92,11 @@ internal sealed class EntityHistoryHandlers(
         if (targetError is not null)
         {
             return targetError;
+        }
+
+        if (command.Request.Version != record.Version)
+        {
+            return HistoryErrors.Changed;
         }
 
         // the undelete has to reach the database before the update command looks the record up through the soft delete filter
@@ -203,4 +208,5 @@ internal static class HistoryErrors
     public static readonly Error NotFound = Error.NotFound("history.not_found", "The record or the history entry does not exist.");
     public static readonly Error UnknownSet = Error.NotFound("history.unknown_set", "The entity set has no history.");
     public static readonly Error NotRestorable = Error.Validation("property", "This change cannot be undone.");
+    public static readonly Error Changed = Error.Conflict("history.changed", "The record changed since the preview. Check the preview again before you restore.");
 }

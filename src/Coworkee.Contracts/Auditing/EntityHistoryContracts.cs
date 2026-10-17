@@ -10,8 +10,12 @@ public sealed record EntityHistoryEntryDto(
 
 public sealed record EntityHistoryDto(bool CanRestore, bool IsDeleted, IReadOnlyList<EntityHistoryEntryDto> Entries);
 
-/// <summary>With <see cref="Property"/> only that change of the entry is undone, otherwise <see cref="Mode"/> says what comes back.</summary>
-public sealed record EntityHistoryRestoreRequest(Guid EntryId, string? Property = null, EntityHistoryRestoreMode Mode = EntityHistoryRestoreMode.After);
+/// <summary>
+/// With <see cref="Property"/> only that change of the entry is undone, otherwise <see cref="Mode"/> says what comes back.
+/// A restore sends the <see cref="EntityHistoryPreviewDto.Version"/> of its preview; when the record changed since, it answers 409.
+/// </summary>
+public sealed record EntityHistoryRestoreRequest(
+    Guid EntryId, string? Property = null, EntityHistoryRestoreMode Mode = EntityHistoryRestoreMode.After, string? Version = null);
 
 [JsonConverter(typeof(JsonStringEnumConverter<EntityHistoryRestoreMode>))]
 public enum EntityHistoryRestoreMode
@@ -29,7 +33,8 @@ public enum EntityHistoryRestoreMode
 /// <summary><see cref="ChangedLater"/>: an undo replaces a value a later entry wrote.</summary>
 public sealed record EntityHistoryFieldDto(string Property, string? CurrentText, string? RestoredText, bool ChangedLater = false);
 
-public sealed record EntityHistoryPreviewDto(bool Undeletes, IReadOnlyList<EntityHistoryFieldDto> Fields);
+/// <param name="Version">The state of the record the preview shows; the restore sends it back.</param>
+public sealed record EntityHistoryPreviewDto(bool Undeletes, IReadOnlyList<EntityHistoryFieldDto> Fields, string Version = "");
 
 public sealed record DeletedRecordDto(string EntityId, string? Title, DateTimeOffset DeletedAt, string? DeletedByName);
 

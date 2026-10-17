@@ -1605,5 +1605,6 @@
   "Delete this message for everyone?": "Dit bericht voor iedereen verwijderen?",
   "{0} mentioned you in the chat": "{0} heeft je genoemd in de chat",
   "Largest chat attachment (MB)": "Grootste chatbijlage (MB)",
-  "Files above this size cannot be sent in the chat.": "Grotere bestanden kunnen niet in de chat worden verzonden."
+  "Files above this size cannot be sent in the chat.": "Grotere bestanden kunnen niet in de chat worden verzonden.",
+  "The record changed in the meantime. Check the new preview.": "Het record is intussen gewijzigd. Controleer het nieuwe voorbeeld."
 }

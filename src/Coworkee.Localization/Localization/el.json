@@ -1605,5 +1605,6 @@
   "Delete this message for everyone?": "Διαγραφή αυτού του μηνύματος για όλους;",
   "{0} mentioned you in the chat": "{0} σας ανέφερε στη συνομιλία",
   "Largest chat attachment (MB)": "Μέγιστο συνημμένο συνομιλίας (MB)",
-  "Files above this size cannot be sent in the chat.": "Μεγαλύτερα αρχεία δεν μπορούν να σταλούν στη συνομιλία."
+  "Files above this size cannot be sent in the chat.": "Μεγαλύτερα αρχεία δεν μπορούν να σταλούν στη συνομιλία.",
+  "The record changed in the meantime. Check the new preview.": "Η εγγραφή άλλαξε στο μεταξύ. Έλεγξε τη νέα προεπισκόπηση."
 }

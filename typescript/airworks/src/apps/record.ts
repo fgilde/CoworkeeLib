@@ -1,4 +1,4 @@
-import { literal, odataPage, type Schemas } from '@coworkee/client';
+import { ApiError, literal, odataPage, type Schemas } from '@coworkee/client';
 import type { AppContext } from '@fgilde/airworks';
 import type { Coworkee, CoworkeeApp } from '../coworkee.ts';
 import { display, errorText, esc, humanize, isNoise, recordTitle } from '../dom.ts';
@@ -78,16 +78,29 @@ export async function decide(coworkee: Coworkee, id: string, approve: boolean): 
   return true;
 }
 
-/** Shows what a restore changes and runs it once the user agrees; false when cancelled. */
+/** Shows what a restore changes and runs it once the user agrees; false when cancelled. A record changed in between is previewed again. */
 async function restore(coworkee: Coworkee, set: string, id: string, request: Schemas['EntityHistoryRestoreRequest']) {
-  const { t } = coworkee;
   const base = `/api/v1/history/${encodeURIComponent(set)}/${id}`;
-  const preview = await coworkee.request<Schemas['EntityHistoryPreviewDto']>(`${base}/preview`, json('POST', request));
+  for (let changedMeanwhile = false; ; changedMeanwhile = true) {
+    const preview = await coworkee.request<Schemas['EntityHistoryPreviewDto']>(`${base}/preview`, json('POST', request));
+    if (!await confirmRestore(coworkee, preview, changedMeanwhile)) return false;
+    try {
+      await coworkee.request(`${base}/restore`, json('POST', { ...request, version: preview.version }));
+      return true;
+    } catch (error) {
+      if (!(error instanceof ApiError) || error.status !== 409) throw error;
+    }
+  }
+}
+
+function confirmRestore(coworkee: Coworkee, preview: Schemas['EntityHistoryPreviewDto'], changedMeanwhile: boolean) {
+  const { t } = coworkee;
   const changed = preview.fields.some((field) => field.changedLater);
-  const ok = await new Promise<boolean>((resolve) => {
+  return new Promise<boolean>((resolve) => {
     const dialog = document.createElement('dialog');
     dialog.className = 'cw-app cw-dialog cw-wide';
     dialog.innerHTML = `<form method="dialog"><h2>${esc(t('Restore'))}</h2><div class="cw-dialog-body">
+      ${changedMeanwhile ? `<p class="cw-note" data-changed-meanwhile>${esc(t('The record changed in the meantime. Check the new preview.'))}</p>` : ''}
       ${preview.undeletes ? `<p class="cw-note">${esc(t('The deleted record comes back.'))}</p>` : ''}
       ${changed ? `<p class="cw-note">${esc(t('Some of these fields were changed after this entry. The restore replaces the newer values.'))}</p>` : ''}
       <table class="cw-table"><thead><tr><th>${esc(t('Field'))}</th><th>${esc(t('Now'))}</th><th>${esc(t('After the restore'))}</th></tr></thead><tbody>
@@ -98,8 +111,6 @@ async function restore(coworkee: Coworkee, set: string, id: string, request: Sch
     dialog.addEventListener('close', () => { dialog.remove(); resolve(dialog.returnValue === 'ok'); });
     dialog.showModal();
   });
-  if (ok) await coworkee.request(`${base}/restore`, json('POST', request));
-  return ok;
 }
 
 /** Renders one record of an OData entity set: its fields, its history with undo and restore, its workflow with steps and approvals. */

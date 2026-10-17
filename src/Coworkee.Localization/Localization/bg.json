@@ -1605,5 +1605,6 @@
   "Delete this message for everyone?": "Да се изтрие ли това съобщение за всички?",
   "{0} mentioned you in the chat": "{0} ви спомена в чата",
   "Largest chat attachment (MB)": "Най-голям прикачен файл в чата (MB)",
-  "Files above this size cannot be sent in the chat.": "По-големи файлове не могат да се изпращат в чата."
+  "Files above this size cannot be sent in the chat.": "По-големи файлове не могат да се изпращат в чата.",
+  "The record changed in the meantime. Check the new preview.": "Записът се промени междувременно. Провери новия преглед."
 }

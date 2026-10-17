@@ -1605,5 +1605,6 @@
   "Delete this message for everyone?": "Bu mesaj herkes için silinsin mi?",
   "{0} mentioned you in the chat": "{0} sohbette sizden bahsetti",
   "Largest chat attachment (MB)": "En büyük sohbet eki (MB)",
-  "Files above this size cannot be sent in the chat.": "Daha büyük dosyalar sohbette gönderilemez."
+  "Files above this size cannot be sent in the chat.": "Daha büyük dosyalar sohbette gönderilemez.",
+  "The record changed in the meantime. Check the new preview.": "Kayıt bu arada değişti. Yeni önizlemeyi kontrol et."
 }

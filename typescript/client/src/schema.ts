@@ -11112,6 +11112,8 @@ export interface components {
         EntityHistoryPreviewDto: {
             undeletes: boolean;
             fields: components["schemas"]["EntityHistoryFieldDto"][];
+            /** @default  */
+            version: string;
         };
         /**
          * @default After
@@ -11123,6 +11125,7 @@ export interface components {
             entryId: string;
             property?: null | string;
             mode: components["schemas"]["EntityHistoryRestoreMode"];
+            version?: null | string;
         };
         EntityHistorySetDto: {
             entityType: string;

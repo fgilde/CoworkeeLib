@@ -1605,5 +1605,6 @@
   "Delete this message for everyone?": "为所有人删除此消息？",
   "{0} mentioned you in the chat": "{0} 在聊天中提到了你",
   "Largest chat attachment (MB)": "聊天附件上限 (MB)",
-  "Files above this size cannot be sent in the chat.": "更大的文件无法在聊天中发送。"
+  "Files above this size cannot be sent in the chat.": "更大的文件无法在聊天中发送。",
+  "The record changed in the meantime. Check the new preview.": "记录在此期间已更改。请查看新的预览。"
 }
