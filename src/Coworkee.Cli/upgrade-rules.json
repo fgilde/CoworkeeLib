@@ -152,6 +152,20 @@
         { "text": "Move the palette search of the set to the server module that registers its OData set: services.AddGlobalSearch<TEntity>(s => s.Fields(e => e.Name).Subtitle(...).Page(\"/list-page\")), then delete the client registration.", "find": "AddCommandPaletteEntitySet|CommandPaletteEntitySet<", "files": [ "src/**/*.cs" ] },
         { "text": "Own ICoworkeeApi implementations add GetMailTemplateHistoryAsync.", "find": ":\\s*ICoworkeeApi\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] }
       ]
+    },
+    {
+      "version": "0.0.1.31",
+      "breaking": [
+        "Chat: direct and group conversations; new tables cw.ChatConversations, cw.ChatMembers, cw.ChatReactions, cw.ChatAttachments and new columns of cw.ChatMessages: apps with Chat add a migration. Earlier direct messages move into conversations at the next start.",
+        "Coworkee.Chat depends on Coworkee.Storage (attachments) and references Coworkee.Notifications (mention notifications when the module is there).",
+        "ChatMessageDto.ToUserId is nullable (empty in groups) and has new init properties; ChatReadDto has ConversationId. IChatApi gained the conversation members; own implementations add them. New endpoints under /api/v1/chat/chats, /messages and /attachments: regenerate OpenAPI snapshots and SDKs.",
+        "UserAvatar offers a chat menu on click (OfferChat, default true); set OfferChat=\"false\" where the avatar sits in something that reacts to clicks. New library page person at /people/{id}: an app page with that address wins, or replace it with options.Pages.Replace(\"person\", ...)."
+      ],
+      "needsMigration": true,
+      "manual": [
+        { "text": "Own IChatApi implementations add the conversation members (GetChatsAsync, OpenDirectAsync, PostAsync, ...).", "find": ":\\s*IChatApi\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] },
+        { "text": "Test bases that render the layout without AddCoworkeeClient register Coworkee.Client.Blazor.Chat.ChatDock (scoped).", "find": "AddScoped<.*LinkNavigation>", "files": [ "tests/**/*.cs" ], "unless": "ChatDock" }
+      ]
     }
   ]
 }

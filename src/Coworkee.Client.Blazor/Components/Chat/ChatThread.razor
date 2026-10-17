@@ -1,0 +1,37 @@
+<style>@ChatStyles.Css</style>
+<div class="cw-chat-thread @(Compact ? "compact" : null)" style="@(Height is null ? null : $"height:{Height}")" data-chat="@ConversationId">
+    <div class="cw-chat-messages" @ref="_list" data-testid="chat-messages">
+        @if (_conversation is null)
+        {
+            <MudProgressLinear Indeterminate="true" />
+        }
+        else
+        {
+            @if (_more && string.IsNullOrWhiteSpace(Search))
+            {
+                <div class="d-flex justify-center my-1">
+                    <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="OlderAsync" data-testid="chat-older">@L["Earlier messages"]</MudButton>
+                </div>
+            }
+            @if (_messages.Count == 0)
+            {
+                <MudText Typo="Typo.body2" Class="cw-chat-muted ma-auto text-center pa-4">
+                    @(string.IsNullOrWhiteSpace(Search) ? L["No messages yet. Say hello!"] : L["No message contains {0}.", Search])
+                </MudText>
+            }
+            @foreach (var message in _messages)
+            {
+                <ChatMessageView @key="message.Id" Message="message" Conversation="_conversation" Me="_me" Reply="m => _replyTo = m" Edit="m => _editing = m"
+                                 Delete="DeleteAsync" React="emoji => ReactAsync(message, emoji)" />
+            }
+        }
+    </div>
+    @if (Typing.Count > 0)
+    {
+        <div class="cw-chat-typing" data-testid="chat-typing">@L["{0} is writing…", string.Join(", ", Typing)]</div>
+    }
+    @if (_conversation is not null)
+    {
+        <ChatComposer ConversationId="ConversationId" @bind-ReplyTo="_replyTo" @bind-Editing="_editing" Sent="Arrived" />
+    }
+</div>

@@ -92,7 +92,7 @@ Ein Benutzer mit mindestens einer Hub-Verbindung ist online, egal wie viele Tabs
 
 ## Chat
 
-Eine Nachricht geht als `chat.message` an die Themen `user:{id}` beider Personen, das Lesen einer Unterhaltung als `chat.read`. Der `ChatNotifier` der App-Leiste zeigt eine Snackbar mit Absender, Textanfang und Link auf `/chat?with={absender}`; die Chatseite hält die offene Unterhaltung in dieser Adresse, sodass sie still bleibt, solange du darin bist. Er setzt außerdem die Zahl der ungelesenen Nachrichten (`GET /api/v1/chat/unread-count`) an den Chat-Link der Navigation und hält sie in jedem Tab aktuell.
+Eine Nachricht geht als `chat.message` an die Themen `user:{id}` aller Mitglieder ihres Chats, das Lesen als `chat.read`, das Schreiben als `chat.typing`, Namens- und Mitgliederänderungen als `chat.conversation` ([Chat](chat.md#live-ereignisse)). Der `ChatNotifier` der App-Leiste zeigt eine Snackbar mit Absender und Textanfang, deren Aktion den Chat als Mini-Chat öffnet; er bleibt still, solange dieser Chat auf der Chatseite (`/chat?c={id}`) oder im Dock offen ist. Er setzt außerdem die Zahl der ungelesenen Nachrichten (`GET /api/v1/chat/unread-count`) an den Chat-Link der Navigation und hält sie in jedem Tab aktuell.
 
 Jede Seite kann so eine Zahl an ihrem Navigationslink zeigen: `NavigationBadges.Set("/orders", 3)`.
 

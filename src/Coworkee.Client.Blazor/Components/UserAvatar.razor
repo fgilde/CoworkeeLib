@@ -1,13 +1,26 @@
-@if (ShowTooltip && _card is not null)
+@if (_offerChat)
 {
-    <MudTooltip Text="@_card.Name">@Badged</MudTooltip>
+    <span class="d-inline-flex" @onclick:stopPropagation="true">
+        <MudMenu Dense="true" AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft" Class="cw-avatar-menu" data-testid="avatar-menu">
+            <ActivatorContent>
+                <span role="button" tabindex="0" aria-label="@_card?.Name" style="cursor:pointer;display:inline-flex">@Shown</span>
+            </ActivatorContent>
+            <ChildContent>
+                <MudText Typo="Typo.subtitle2" Class="px-4 py-1">@_card?.Name</MudText>
+                <MudMenuItem Icon="@Icons.Material.Outlined.Chat" OnClick="ChatAsync" data-testid="avatar-chat">@L["Chat"]</MudMenuItem>
+                <MudMenuItem Icon="@Icons.Material.Outlined.Person" Href="@Links.Href($"/people/{UserId}")">@L["Profile"]</MudMenuItem>
+            </ChildContent>
+        </MudMenu>
+    </span>
 }
 else
 {
-    @Badged
+    @Shown
 }
 
 @code {
+    private RenderFragment Shown => ShowTooltip && _card is not null ? @<MudTooltip Text="@_card.Name">@Badged</MudTooltip> : Badged;
+
     private RenderFragment Badged => @<MudBadge Dot="true" Overlap="true" Bordered="true" Color="Color.Success" Origin="Origin.BottomRight" Visible="_online"
                                                 data-online="@(_online ? "true" : "false")">@Avatar</MudBadge>;
 

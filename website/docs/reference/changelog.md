@@ -4,14 +4,23 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Breaking changes
+
+- **Migration needed** (apps with Chat): direct and group chats bring the tables `cw.ChatConversations`, `cw.ChatMembers`, `cw.ChatReactions`, `cw.ChatAttachments` and new columns of `cw.ChatMessages`. Earlier direct messages move into conversations at the next start; what was read stays read.
+- **`Coworkee.Chat` depends on `Coworkee.Storage`** (attachments) and references `Coworkee.Notifications` (mention notifications when that module is there).
+- **Chat contracts**: `ChatMessageDto.ToUserId` is nullable (empty in groups) and the DTO has new properties (`ConversationId`, `Html`, `Source`, `EditedAt`, `Deleted`, `ReplyTo`, `Reactions`, `Attachments`, `HasEntityMentions`); `ChatReadDto` has `ConversationId`. `IChatApi` gained the conversation members; own implementations add them. New endpoints under `/api/v1/chat/chats`, `/messages` and `/attachments`: regenerate OpenAPI snapshots and SDKs. The plain text endpoints by person stay.
+- **`UserAvatar` opens a menu with *Chat* and *Profile*** for other people when the user may chat (`OfferChat`, default `true`); set `OfferChat="false"` where the avatar sits in something that reacts to clicks. New library page `person` at `/people/{id}`.
+
 ### New
 
 - Eight more built-in themes, each with light and dark palettes, own fonts, radius and options: Octo, Code, Arctic, Vampire, Solar, Atom, Paper and Aubergine (CLI/spec `theme`, template, Studio gallery). Their text meets WCAG AA contrast. See [Theming](../modules/theming.md#built-in-themes).
 - The setup token is easy to find in a local run: the app host gives every service one token and, while the system is not set up, prints it on its console (`coworkee run`), in the api's log and in the Aspire dashboard (*Setup* link with the token on the web resource, *Setup token* property on the api). Coworkee Studio shows it with a copy button on the run card and under *My apps*; `coworkee deploy` names `<APP>_SETUP_TOKEN` when no administrator is set. `/setup?token=...` fills the token in. See [Setup wizard or seed](../security/authentication.md#setup-wizard-or-seed).
-
 - `@coworkee/airworks`: *Inbox* (`coworkee.inbox`, approvals and notifications) replaces `notificationsApp`; *Records* with a record window (`coworkee.record`: fields, history with undo and restore, workflow); the profile is the first tab of *Settings* (`profileApp` is gone, `renderProfile` stays); the API documentation moved into the administration (*Monitoring*). Apps that registered `notificationsApp`, `profileApp` or `apiDocsApp` by name take `defaultApps` or the new names.
 - Pages of the web app in AirWorks windows: `embedApp`, `openWebPage`; `CoworkeeLayout` shows only the page with `?embed=1`. `BffOptions.WebAppUrl` (reported as `appUrl` of `/bff/user`) and `BffOptions.FrameAncestors` (lets those origins frame the pages; antiforgery's `X-Frame-Options` is suppressed then); `AddAirWorks` sets both under Aspire.
 - Badges on the inbox and chat tiles with AirWorks' `setBadge` (AirWorks 0.5; older versions just show none).
+- Chat: group chats (name, add and remove people, leave), formatted messages with the rich text editor (Enter sends), `@` mentions of people (link to the person, notification for members of the chat) and `#` mentions of records from the global search (shown only to readers whose search finds them, otherwise *restricted*), replies, emoji reactions, editing and deleting own messages, files and pictures by button, drag and drop or paste with upload progress (members only, setting `Chat.MaxAttachmentMb`, hook `IChatAttachmentScanner`), read marks per reader, typing indicator and search in a chat. The server sanitizes every message. See [Chat](../modules/chat.md).
+- Mini chats: a dock at the bottom right with up to three collapsible chat windows (unread count when minimized, *Open in the chat*, kept per user across reloads, full screen on phones). They open from the chat page, the command palette (**Chat with…**, `@name`), any avatar, the person page, the snackbar of a new message and mention notifications. `ChatDock` opens them from own components.
+- `RichTextEditor` takes `Tools` (toolbar) and `Placeholder`.
 
 ### Fixes
 

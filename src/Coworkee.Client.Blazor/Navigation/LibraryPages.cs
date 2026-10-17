@@ -38,6 +38,7 @@ internal static class LibraryPages
         new("approvals", typeof(Approvals), "workflows/approvals"),
         new("assistant", typeof(Assistant), "assistant"),
         new("chat", typeof(Pages.Chat), "chat"),
+        new("person", typeof(Person), "people/{Id:guid}"),
         new("files", typeof(Pages.Files), "files"),
         new("notifications", typeof(Notifications), "notifications"),
         new("profile", typeof(Profile), "profile", "profile/{Tab}"),

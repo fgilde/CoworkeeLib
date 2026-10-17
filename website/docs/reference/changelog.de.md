@@ -4,14 +4,23 @@
 
 ## Unveröffentlicht
 
+### Breaking Changes
+
+- **Migration nötig** (Apps mit Chat): Direkt- und Gruppenchats bringen die Tabellen `cw.ChatConversations`, `cw.ChatMembers`, `cw.ChatReactions`, `cw.ChatAttachments` und neue Spalten von `cw.ChatMessages`. Frühere Direktnachrichten wandern beim nächsten Start in Unterhaltungen; Gelesenes bleibt gelesen.
+- **`Coworkee.Chat` hängt von `Coworkee.Storage` ab** (Anhänge) und referenziert `Coworkee.Notifications` (Benachrichtigungen bei Erwähnungen, wenn das Modul da ist).
+- **Chat-Verträge**: `ChatMessageDto.ToUserId` ist nullable (leer in Gruppen), das DTO hat neue Eigenschaften (`ConversationId`, `Html`, `Source`, `EditedAt`, `Deleted`, `ReplyTo`, `Reactions`, `Attachments`, `HasEntityMentions`); `ChatReadDto` hat `ConversationId`. `IChatApi` hat die Mitglieder für Unterhaltungen dazubekommen; eigene Implementierungen ergänzen sie. Neue Endpunkte unter `/api/v1/chat/chats`, `/messages` und `/attachments`: OpenAPI-Snapshots und SDKs neu erzeugen. Die Klartext-Endpunkte pro Person bleiben.
+- **`UserAvatar` öffnet ein Menü mit *Chat* und *Profil*** für andere Personen, wenn der Benutzer chatten darf (`OfferChat`, Standard `true`); setze `OfferChat="false"`, wo der Avatar in etwas sitzt, das auf Klicks reagiert. Neue Bibliotheksseite `person` unter `/people/{id}`.
+
 ### Neu
 
 - Acht weitere eingebaute Themes, jeweils mit heller und dunkler Palette, eigener Schrift, Radius und Optionen: Octo, Code, Arctic, Vampire, Solar, Atom, Paper und Aubergine (CLI/Spec `theme`, Template, Studio-Galerie). Ihr Text erfüllt den Kontrast nach WCAG AA. Siehe [Theming](../modules/theming.md#eingebaute-themes).
 - Das Setup-Token ist bei einem lokalen Lauf leicht zu finden: Der AppHost gibt allen Diensten dasselbe Token und zeigt es, solange das System nicht eingerichtet ist, in seiner Konsole (`coworkee run`), im Log der API und im Aspire-Dashboard (Link *Setup* mit Token an der Web-Ressource, Eigenschaft *Setup token* an der API). Coworkee Studio zeigt es mit Kopier-Knopf in der Lauf-Karte und unter *Meine Apps*; `coworkee deploy` nennt `<APP>_SETUP_TOKEN`, wenn kein Administrator gesetzt ist. `/setup?token=...` füllt das Token ein. Siehe [Setup-Assistent oder Seed](../security/authentication.md#setup-assistent-oder-seed).
-
 - `@coworkee/airworks`: *Eingang* (`coworkee.inbox`, Genehmigungen und Benachrichtigungen) ersetzt `notificationsApp`; *Datensätze* mit einem Datensatzfenster (`coworkee.record`: Felder, Verlauf mit Rückgängig und Wiederherstellen, Workflow); das Profil ist der erste Tab der *Einstellungen* (`profileApp` entfällt, `renderProfile` bleibt); die API-Dokumentation liegt in der Administration (*Überwachung*). Apps, die `notificationsApp`, `profileApp` oder `apiDocsApp` einzeln registriert haben, nehmen `defaultApps` oder die neuen Namen.
 - Seiten der Web-App in AirWorks-Fenstern: `embedApp`, `openWebPage`; `CoworkeeLayout` zeigt mit `?embed=1` nur die Seite. `BffOptions.WebAppUrl` (als `appUrl` von `/bff/user`) und `BffOptions.FrameAncestors` (diese Origins dürfen die Seiten einrahmen; das `X-Frame-Options` des Antiforgery entfällt dann); `AddAirWorks` setzt beides unter Aspire.
 - Badges auf den Kacheln von Eingang und Chat mit `setBadge` von AirWorks (AirWorks 0.5; ältere Versionen zeigen keine).
+- Chat: Gruppenchats (Name, Personen hinzufügen und entfernen, austreten), formatierte Nachrichten mit dem Rich-Text-Editor (Enter sendet), `@`-Erwähnungen von Personen (Link auf die Person, Benachrichtigung für Mitglieder des Chats) und `#`-Erwähnungen von Datensätzen aus der globalen Suche (nur für Leser sichtbar, deren Suche sie findet, sonst *eingeschränkt*), Antworten, Emoji-Reaktionen, eigene Nachrichten bearbeiten und löschen, Dateien und Bilder per Button, Drag-and-drop oder Einfügen mit Upload-Fortschritt (nur für Mitglieder, Einstellung `Chat.MaxAttachmentMb`, Erweiterung `IChatAttachmentScanner`), Lesebestätigungen pro Leser, Tipp-Anzeige und Suche im Chat. Der Server bereinigt jede Nachricht. Siehe [Chat](../modules/chat.md).
+- Mini-Chats: ein Dock unten rechts mit bis zu drei einklappbaren Chatfenstern (ungelesene Nachrichten im minimierten Zustand, *Im Chat öffnen*, pro Benutzer über ein Neuladen hinweg gemerkt, auf dem Handy bildschirmfüllend). Sie öffnen sich von der Chatseite, der Befehlspalette (**Chatten mit…**, `@name`), jedem Avatar, der Personenseite, der Snackbar einer neuen Nachricht und Erwähnungs-Benachrichtigungen. `ChatDock` öffnet sie aus eigenen Komponenten.
+- `RichTextEditor` nimmt `Tools` (Werkzeugleiste) und `Placeholder`.
 
 ### Korrekturen
 

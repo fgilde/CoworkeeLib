@@ -1,0 +1,45 @@
+@using Coworkee.Client.Blazor.Components.Editors
+<div class="cw-chat-composer" @ref="_host" data-testid="chat-composer">
+    @if (Editing is not null)
+    {
+        <div class="cw-chat-context d-flex align-center gap-1">
+            <MudIcon Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" />
+            <MudText Typo="Typo.caption" Class="flex-grow-1">@L["Edit message"]</MudText>
+            <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small" OnClick="CancelEditAsync" aria-label="@L["Cancel"]" />
+        </div>
+    }
+    else if (ReplyTo is not null)
+    {
+        <div class="cw-chat-context d-flex align-center gap-1" data-testid="chat-reply-to">
+            <MudIcon Icon="@Icons.Material.Outlined.Reply" Size="Size.Small" />
+            <MudText Typo="Typo.caption" Class="flex-grow-1 cw-chat-ellipsis">@ReplyTo.Text</MudText>
+            <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small" OnClick="() => ReplyToChanged.InvokeAsync(null)" aria-label="@L["Cancel"]" />
+        </div>
+    }
+    @if (_uploads.Count > 0)
+    {
+        <div class="d-flex flex-wrap gap-1 mb-1" data-testid="chat-uploads">
+            @foreach (var upload in _uploads)
+            {
+                <MudChip T="string" Size="Size.Small" Icon="@(upload.Failed ? Icons.Material.Outlined.ErrorOutline : Icons.Material.Outlined.AttachFile)"
+                         Color="@(upload.Failed ? Color.Error : Color.Default)" OnClose="() => Remove(upload)" data-upload="@upload.Name">
+                    @upload.Name
+                    @if (upload.Attachment is null && !upload.Failed)
+                    {
+                        <MudProgressLinear Value="upload.Percent" Size="Size.Small" Color="Color.Primary" Style="width:48px" Class="ml-1" />
+                    }
+                </MudChip>
+            }
+        </div>
+    }
+    <div class="d-flex align-end gap-1">
+        <MudIconButton Icon="@Icons.Material.Outlined.AttachFile" Size="Size.Small" OnClick="PickAsync" aria-label="@L["Attach files"]" title="@L["Attach files"]"
+                       data-testid="chat-attach" />
+        <div class="cw-chat-editor flex-grow-1" data-testid="chat-text">
+            <RichTextEditor @ref="_editor" Value="@_html" ValueChanged="ChangedAsync" Modules="_modules" Tools="Tools" Placeholder="@L["Write a message, @ mentions a person, # a record"]" />
+        </div>
+        <MudIconButton Icon="@(Editing is null ? Icons.Material.Filled.Send : Icons.Material.Filled.Check)" Color="Color.Primary" OnClick="SendAsync" Disabled="_busy"
+                       aria-label="@L["Send"]" title="@L["Send (Enter)"]" data-testid="chat-send" />
+    </div>
+    <input type="file" multiple hidden @ref="_input" />
+</div>

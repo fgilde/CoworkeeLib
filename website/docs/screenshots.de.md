@@ -105,6 +105,26 @@ Alles aus der Demo-App im Ocean-Theme. Ein Klick vergrößert ein Bild, die Pfei
 </figure>
 
 <figure markdown>
+![Chat mit Erwähnungen, Reaktionen und Dateien](assets/screenshots/chat-light.webp){ loading=lazy }
+<figcaption>Chat mit Erwähnungen, Reaktionen und Dateien</figcaption>
+</figure>
+
+<figure markdown>
+![Chat, dunkel](assets/screenshots/chat-dark.webp){ loading=lazy }
+<figcaption>Chat, dunkel</figcaption>
+</figure>
+
+<figure markdown>
+![Mini-Chats unten rechts](assets/screenshots/chat-dock-light.webp){ loading=lazy }
+<figcaption>Mini-Chats unten rechts</figcaption>
+</figure>
+
+<figure markdown>
+![Mini-Chats, dunkel](assets/screenshots/chat-dock-dark.webp){ loading=lazy }
+<figcaption>Mini-Chats, dunkel</figcaption>
+</figure>
+
+<figure markdown>
 ![Import-Assistent: Spalten den Feldern zugeordnet](assets/screenshots/import-columns-light.webp){ loading=lazy }
 <figcaption>Import-Assistent: Spalten den Feldern zugeordnet</figcaption>
 </figure>

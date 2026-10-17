@@ -37,6 +37,7 @@ public abstract class ClientTestBase : BunitContext
         Services.AddSingleton(ChatApi);
         Services.AddSingleton(Substitute.For<Ai.IAssistantApi>());
         Services.AddScoped<Ai.AssistantState>();
+        Services.AddScoped<Chat.ChatDock>();
         Api.GetOnlineUsersAsync(default).ReturnsForAnyArgs([]);
         Services.AddSingleton(Api);
         Services.AddSingleton(Substitute.For<Files.IFilesApi>());

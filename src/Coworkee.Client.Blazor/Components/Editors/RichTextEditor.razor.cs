@@ -34,6 +34,14 @@ public partial class RichTextEditor
 
     [Parameter] public bool ReadOnly { get; set; }
 
+    /// <summary>The toolbar; null keeps the editor's default.</summary>
+    [Parameter] public MudExRichTextEditor.Types.QuillTool[]? Tools { get; set; }
+
+    /// <summary>Shown while empty; null keeps the editor's own (translated) text.</summary>
+    [Parameter] public string? Placeholder { get; set; }
+
+    private const string DefaultPlaceholder = "Insert text here...";
+
     /// <summary>The engine in use: <see cref="Engine"/>, else the setting, else TipTap.</summary>
     public RichTextBackend Backend => Engine != RichTextBackend.FromSettings ? Engine
         : string.Equals((Services.GetService(typeof(ThemeService)) as ThemeService)?.ClientSettings.GetValueOrDefault(EditorSettings.RichTextEditor), EditorSettings.Quill, StringComparison.OrdinalIgnoreCase)

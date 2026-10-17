@@ -1,4 +1,8 @@
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
+using Coworkee.Application.GlobalSearch;
+using Coworkee.Contracts.Search;
+using Coworkee.Notifications;
 using System.Net.Http.Json;
 using Coworkee.AspNetCore;
 using Coworkee.Contracts.Identity;
@@ -24,6 +28,8 @@ namespace Coworkee.Chat.Tests;
 
 public sealed class ChatApp : DatabaseFixture
 {
+    private readonly string _blobs = Path.Combine(Path.GetTempPath(), "coworkee-chat-tests", Guid.NewGuid().ToString("N"));
+
     public WebApplication App { get; private set; } = null!;
 
     public override async ValueTask InitializeAsync()
@@ -34,15 +40,18 @@ public sealed class ChatApp : DatabaseFixture
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
         builder.Configuration["Coworkee:Database:Provider"] = Provider;
+        builder.Configuration["Coworkee:Storage:FileSystem:Root"] = _blobs;
+        builder.Configuration["Coworkee:Jobs:ConnectionStringName"] = "test";
+        builder.Configuration["Coworkee:Jobs:RunServer"] = "false";
         builder.AddCoworkee<TestChatModule>();
         builder.Services.AddTestAuthentication();
         App = builder.Build();
-        App.UseCoworkee();
         await using (var scope = App.Services.CreateAsyncScope())
         {
             await scope.ServiceProvider.GetRequiredService<ChatTestDbContext>().Database.EnsureCreatedAsync();
         }
 
+        App.UseCoworkee();
         await App.StartAsync();
     }
 
@@ -50,6 +59,17 @@ public sealed class ChatApp : DatabaseFixture
     {
         await App.DisposeAsync();
         await base.DisposeAsync();
+        if (Directory.Exists(_blobs))
+        {
+            Directory.Delete(_blobs, true);
+        }
+    }
+
+    public async Task<List<Notification>> NotificationsAsync()
+    {
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
+        await using var scope = App.Services.CreateAsyncScope();
+        return await scope.ServiceProvider.GetRequiredService<ChatTestDbContext>().Set<Notification>().ToListAsync();
     }
 
     public async Task<SetupResultDto> SetupAsync()
@@ -63,6 +83,23 @@ public sealed class ChatApp : DatabaseFixture
     }
 
     public HttpClient As(Guid userId, Guid tenantId) => App.GetTestClient().AsUser(userId, tenantId);
+
+    public async Task<UserDto> CreateUserAsync(SetupResultDto setup, string email, params string[] permissions)
+    {
+        var admin = As(setup.AdminUserId, setup.TenantId);
+        var ct = TestContext.Current.CancellationToken;
+        var response = await admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest(email, "Passw0rd!x", null, null), ct);
+        response.EnsureSuccessStatusCode();
+        var user = (await response.Content.ReadFromJsonAsync<UserDto>(ct))!;
+        if (permissions.Length > 0)
+        {
+            var role = await (await admin.PostAsJsonAsync("/api/v1/identity/roles", new RoleRequest($"Chat {email}", null), ct)).Content.ReadFromJsonAsync<Guid>(ct);
+            (await admin.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{role}", new NameListRequest(permissions), ct)).EnsureSuccessStatusCode();
+            (await admin.PutAsJsonAsync($"/api/v1/identity/users/{user.Id}/roles", new IdListRequest([role]), ct)).EnsureSuccessStatusCode();
+        }
+
+        return user;
+    }
 
     /// <summary>A hub connection that follows the user's own topic.</summary>
     public async Task<(HubConnection Connection, ConcurrentQueue<RealtimeEnvelope> Events)> ConnectAsync(Guid userId, Guid tenantId)
@@ -87,10 +124,40 @@ public sealed class ChatApp : DatabaseFixture
 public sealed class ChatTestDbContext(DbContextOptions<ChatTestDbContext> options, ICurrentUser currentUser, IEnumerable<IModelContributor> contributors)
     : CoworkeeDbContext(options, currentUser, contributors);
 
-[DependsOn(typeof(CoworkeeChatModule))]
+[DependsOn(typeof(CoworkeeChatModule), typeof(CoworkeeNotificationsModule))]
 public sealed class TestChatModule : CoworkeeModule
 {
-    public override void ConfigureServices(ModuleServiceContext context) =>
+    public override void ConfigureServices(ModuleServiceContext context)
+    {
         context.Services.AddCoworkeeDbContext<ChatTestDbContext>((provider, options) =>
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
+        context.Services.AddGlobalSearchProvider<TestRecordProvider>();
+    }
+}
+
+/// <summary>Records only their reader may find: the provider "records" knows each id's single reader.</summary>
+public sealed class TestRecordProvider : IGlobalSearchProvider
+{
+    public static readonly ConcurrentDictionary<Guid, (Guid Reader, string Title)> Records = new();
+
+    public string Name => "records";
+
+    public string Group => "Records";
+
+    public string? Icon => null;
+
+    public string? Permission => null;
+
+    public async IAsyncEnumerable<GlobalSearchHit> SearchAsync(GlobalSearchQuery query, GlobalSearchContext context, [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        await Task.Yield();
+        var me = context.Services.GetRequiredService<ICurrentUser>().UserId;
+        foreach (var (id, record) in Records)
+        {
+            if (record.Reader == me && (query.Id == id || record.Title.Contains(query.Text, StringComparison.OrdinalIgnoreCase)))
+            {
+                yield return new GlobalSearchHit(Name, Group, record.Title) { Id = id.ToString(), Url = $"/records/{id}", Score = 1 };
+            }
+        }
+    }
 }

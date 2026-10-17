@@ -26,7 +26,7 @@ services.AddScoped<IPersonalDataContributor, TaskPersonalData>();
 | `profile` | Identity: Name, E-Mail, Telefon, Adresse, Bild, Rollen, Gruppen, externe Anmeldungen | Benutzer gelöscht (Rollen, Claims, Anmeldungen, Mitgliedschaften per Kaskade), eigene Berechtigungen entfernt, Werte im Audit-Verlauf des Benutzers durch `***` ersetzt |
 | `settings` | Einstellungen: Werte mit Benutzerbereich (Geheimnisse als `***`) | gelöscht |
 | `notifications` | Benachrichtigungen | gelöscht, samt Digest-Status |
-| `chat` | Chat: gesendete und empfangene Nachrichten | beide Seiten der Unterhaltungen gelöscht |
+| `chat` | Chat: gesendete Nachrichten, empfangene Direktnachrichten | gesendete Nachrichten samt Dateien, Reaktionen und Gruppenmitgliedschaften gelöscht; Direkt-Chats mit beiden Seiten gelöscht |
 | `aiToolCalls` | KI: Protokoll der Tool-Aufrufe (der Assistent speichert keinen Chatverlauf) | gelöscht |
 | `mails` | Mailversand: Mails an die Adresse, ohne Inhalt | gelöscht |
 | `activity` | Audit: was der Benutzer geändert hat | bleibt; der Verlauf nennt den Handelnden nur per ID, die danach auf niemanden mehr zeigt |

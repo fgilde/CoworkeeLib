@@ -92,7 +92,7 @@ A user with at least one hub connection is online, however many tabs he has open
 
 ## Chat
 
-A message goes as `chat.message` to the topics `user:{id}` of both people, reading a conversation as `chat.read`. The app bar's `ChatNotifier` shows a snackbar with the sender, the start of the text and a link to `/chat?with={sender}`; the chat page keeps the open conversation in that address, so it stays quiet while you are in it. It also puts the unread count (`GET /api/v1/chat/unread-count`) on the chat link of the navigation and keeps it live in every tab.
+A message goes as `chat.message` to the topics `user:{id}` of every member of its chat, reading as `chat.read`, writing as `chat.typing`, name and member changes as `chat.conversation` ([Chat](chat.md#live-events)). The app bar's `ChatNotifier` shows a snackbar with the sender and the start of the text whose action opens the chat as mini chat; it stays quiet while that chat is open on the chat page (`/chat?c={id}`) or in the dock. It also puts the unread count (`GET /api/v1/chat/unread-count`) on the chat link of the navigation and keeps it live in every tab.
 
 Any page can show a count on its navigation link the same way: `NavigationBadges.Set("/orders", 3)`.
 

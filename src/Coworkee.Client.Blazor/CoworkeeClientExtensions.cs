@@ -54,6 +54,7 @@ public static class CoworkeeClientExtensions
             client.Timeout = TimeSpan.FromMinutes(11);
         });
         services.AddScoped<Ai.AssistantState>();
+        services.AddScoped<Chat.ChatDock>();
         services.AddHttpClient<Ai.IAiConnectionApi, Ai.AiConnectionApi>(client =>
         {
             client.BaseAddress = baseAddress;

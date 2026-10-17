@@ -1,0 +1,20 @@
+@attribute [Authorize]
+
+<PageTitle>@(_card?.Name ?? L["Profile"])</PageTitle>
+<MudPaper Outlined="true" Class="pa-6 mx-auto" Style="max-width:520px" data-testid="person">
+    <MudStack AlignItems="AlignItems.Center" Spacing="2">
+        <UserAvatar UserId="Id" Pixels="120" OfferChat="false" />
+        <MudText Typo="Typo.h5" data-testid="person-name">@(_card?.Name ?? "…")</MudText>
+        <MudChip T="string" Size="Size.Small" Color="@(_online ? Color.Success : Color.Default)" Variant="Variant.Outlined">@(_online ? L["Online"] : L["Offline"])</MudChip>
+        <MudStack Row="true" Spacing="2" Class="mt-2">
+            @if (_mayChat && !_isMe)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Chat" OnClick="ChatAsync" data-testid="person-chat">@L["Chat"]</MudButton>
+            }
+            @if (_mayManage)
+            {
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.ManageAccounts" Href="@Links.Href($"/admin/users/{Id}")">@L["Manage user"]</MudButton>
+            }
+        </MudStack>
+    </MudStack>
+</MudPaper>

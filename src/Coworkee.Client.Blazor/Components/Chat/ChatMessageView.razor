@@ -1,0 +1,78 @@
+<div class="@($"cw-chat-row {(Mine ? "mine" : "theirs")}")" data-message="@Message.Id">
+    @if (!Mine)
+    {
+        <UserAvatar UserId="Message.FromUserId" Size="Size.Small" />
+    }
+    <div class="cw-chat-bubble @(Message.Deleted ? "deleted" : null)">
+        @if (ShowSender && !Mine)
+        {
+            <div class="cw-chat-sender">@SenderName</div>
+        }
+        @if (Message.ReplyTo is { } reply)
+        {
+            <div class="cw-chat-quote" data-testid="chat-quote">@(reply.Text.Length > 0 ? reply.Text : L["Deleted message"])</div>
+        }
+        @if (Message.Deleted)
+        {
+            <MudText Typo="Typo.body2" Class="cw-chat-muted"><MudIcon Icon="@Icons.Material.Outlined.Block" Size="Size.Small" Class="mr-1" />@L["This message was deleted."]</MudText>
+        }
+        else
+        {
+            <div class="cw-chat-html">@((MarkupString)ChatMarkup.Prepare(Message.Html, Links, L["restricted"]))</div>
+            @foreach (var file in Message.Attachments)
+            {
+                var url = $"api/v1/chat/attachments/{file.Id}";
+                @if (file.IsImage)
+                {
+                    <a href="@url" target="_blank" rel="noopener" class="cw-chat-image"><img src="@url" alt="@file.Name" loading="lazy" /></a>
+                }
+                else
+                {
+                    <a href="@($"{url}?download=true")" class="cw-chat-file" data-file="@file.Name">
+                        <MudIcon Icon="@Icons.Material.Outlined.InsertDriveFile" Size="Size.Small" />
+                        <span class="cw-chat-ellipsis">@file.Name</span>
+                        <span class="cw-chat-muted">@FileSize(file.Size)</span>
+                    </a>
+                }
+            }
+        }
+        <div class="cw-chat-meta">
+            <span>@Message.SentAt.ToLocalTime().ToString("g")</span>
+            @if (Message.EditedAt is not null && !Message.Deleted)
+            {
+                <span data-testid="chat-edited">· @L["edited"]</span>
+            }
+            @if (Mine && SeenBy.Count > 0)
+            {
+                <span title="@string.Join(", ", SeenBy)" data-testid="chat-read"><MudIcon Icon="@Icons.Material.Filled.DoneAll" Size="Size.Small" Style="font-size:.9rem;vertical-align:middle" /></span>
+            }
+        </div>
+        @if (Message.Reactions.Count > 0)
+        {
+            <div class="cw-chat-reactions">
+                @foreach (var reaction in Message.Reactions)
+                {
+                    <button type="button" class="@($"cw-chat-reaction {(reaction.UserIds.Contains(Me) ? "own" : null)}")" @onclick="() => React.InvokeAsync(reaction.Emoji)"
+                            data-reaction="@reaction.Emoji">@reaction.Emoji @reaction.UserIds.Count</button>
+                }
+            </div>
+        }
+    </div>
+    @if (!Message.Deleted)
+    {
+        <MudMenu Icon="@Icons.Material.Outlined.MoreVert" Size="Size.Small" Dense="true" Class="cw-chat-actions" AriaLabel="@L["Actions"]" data-testid="chat-actions">
+            <div class="d-flex px-2">
+                @foreach (var emoji in QuickReactions)
+                {
+                    <MudMenuItem OnClick="() => React.InvokeAsync(emoji)" Class="px-1" data-emoji="@emoji">@emoji</MudMenuItem>
+                }
+            </div>
+            <MudMenuItem Icon="@Icons.Material.Outlined.Reply" OnClick="() => Reply.InvokeAsync(Message)" data-testid="chat-reply">@L["Reply"]</MudMenuItem>
+            @if (Mine)
+            {
+                <MudMenuItem Icon="@Icons.Material.Outlined.Edit" OnClick="() => Edit.InvokeAsync(Message)" data-testid="chat-edit">@L["Edit"]</MudMenuItem>
+                <MudMenuItem Icon="@Icons.Material.Outlined.Delete" OnClick="() => Delete.InvokeAsync(Message)" data-testid="chat-delete">@L["Delete"]</MudMenuItem>
+            }
+        </MudMenu>
+    }
+</div>
