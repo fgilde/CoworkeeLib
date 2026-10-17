@@ -48,6 +48,8 @@ public partial class ChatComposer : IAsyncDisposable
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
+    [Inject] private IDialogService Dialogs { get; set; } = null!;
+
     [Inject] private IServiceProvider Services { get; set; } = null!;
 
     [Parameter, EditorRequired] public Guid ConversationId { get; set; }
@@ -182,6 +184,10 @@ public partial class ChatComposer : IAsyncDisposable
     private Upload? Find(string id) => _uploads.FirstOrDefault(u => u.Id == id);
 
     private void Remove(Upload upload) => _uploads.Remove(upload);
+
+    private Task OpenAsync(Upload upload) => upload.Attachment is { } file
+        ? Files.FilePreviewDialog.ShowAsync(Dialogs, ChatMessageView.Url(file), file.ContentType, file.Name)
+        : Task.CompletedTask;
 
     private async Task PickAsync()
     {

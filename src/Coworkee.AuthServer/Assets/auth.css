@@ -1,7 +1,7 @@
 /* Account pages of the Coworkee auth server. The theme sets the variables inline; these are the built-in theme's values. */
 :root {
   --paper: #f3efe6; --surface: #fbf9f4; --ink: #16140f; --ink-2: #4a463d; --rule: #d6cfbf;
-  --signal: #d4481f; --on-signal: #ffffff; --accent: #16140f; --error: #c62828; --success: #2e7d32;
+  --signal: #d0471e; --on-signal: #ffffff; --accent: #16140f; --error: #c62828; --success: #2e7d32;
   --radius: 6px; --font: "Inter", "Segoe UI", system-ui, sans-serif;
   color-scheme: light;
 }

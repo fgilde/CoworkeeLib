@@ -1606,5 +1606,6 @@
   "Delete this message for everyone?": "حذف هذه الرسالة للجميع؟",
   "{0} mentioned you in the chat": "{0} أشار إليك في المحادثة",
   "Largest chat attachment (MB)": "أكبر مرفق في المحادثة (ميغابايت)",
-  "Files above this size cannot be sent in the chat.": "لا يمكن إرسال الملفات الأكبر في المحادثة."
+  "Files above this size cannot be sent in the chat.": "لا يمكن إرسال الملفات الأكبر في المحادثة.",
+  "The record changed in the meantime. Check the new preview.": "تغيّر السجل في هذه الأثناء. راجع المعاينة الجديدة."
 }

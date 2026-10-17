@@ -1606,5 +1606,6 @@
   "Delete this message for everyone?": "Excluir esta mensagem para todos?",
   "{0} mentioned you in the chat": "{0} mencionou você na conversa",
   "Largest chat attachment (MB)": "Anexo máximo da conversa (MB)",
-  "Files above this size cannot be sent in the chat.": "Arquivos maiores não podem ser enviados na conversa."
+  "Files above this size cannot be sent in the chat.": "Arquivos maiores não podem ser enviados na conversa.",
+  "The record changed in the meantime. Check the new preview.": "O registo mudou entretanto. Verifica a nova pré-visualização."
 }

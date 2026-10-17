@@ -5,5 +5,7 @@
     <ProjectReference Include="..\Coworkee.Storage\Coworkee.Storage.csproj" />
     <ProjectReference Include="..\Coworkee.Notifications\Coworkee.Notifications.csproj" />
     <PackageReference Include="HtmlSanitizer" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" />
   </ItemGroup>
 </Project>

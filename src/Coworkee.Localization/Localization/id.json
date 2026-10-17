@@ -1606,5 +1606,6 @@
   "Delete this message for everyone?": "Hapus pesan ini untuk semua orang?",
   "{0} mentioned you in the chat": "{0} menyebut Anda di chat",
   "Largest chat attachment (MB)": "Lampiran chat terbesar (MB)",
-  "Files above this size cannot be sent in the chat.": "File yang lebih besar tidak dapat dikirim di chat."
+  "Files above this size cannot be sent in the chat.": "File yang lebih besar tidak dapat dikirim di chat.",
+  "The record changed in the meantime. Check the new preview.": "Data telah berubah sementara itu. Periksa pratinjau yang baru."
 }

@@ -1,3 +1,6 @@
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 using Coworkee.Contracts.Auditing;
 using Coworkee.Core.Results;
 using Coworkee.Domain;
@@ -23,6 +26,10 @@ internal sealed class EntityHistoryRecord(
     public bool IsDeleted => entity is ISoftDelete { IsDeleted: true };
 
     public IReadOnlyDictionary<string, string?> Current { get; } = fields.Read(entity);
+
+    /// <summary>Changes with any value, the deleted state or a new entry; a restore compares it with the one of its preview.</summary>
+    public string Version =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new { Current, IsDeleted, Last = entries.LastOrDefault()?.Id }))))[..32];
 
     /// <summary>
     /// The values the request asks for: after or before the entry later changes are rolled back from the current values;

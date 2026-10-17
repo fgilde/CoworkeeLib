@@ -46,6 +46,7 @@ internal sealed class ChatModelContributor : IModelContributor
             attachment.Property(a => a.Name).HasMaxLength(ChatLimits.NameLength).IsNotAudited();
             attachment.Property(a => a.ContentType).HasMaxLength(200);
             attachment.Property(a => a.BlobKey).HasMaxLength(512);
+            attachment.Property(a => a.ThumbnailKey).HasMaxLength(520);
             attachment.HasIndex(a => a.MessageId);
             attachment.HasIndex(a => new { a.ConversationId, a.UploadedBy });
         });

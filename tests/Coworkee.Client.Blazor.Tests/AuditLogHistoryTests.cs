@@ -46,7 +46,7 @@ public sealed class AuditLogHistoryTests : ClientTestBase
         var entry = Entry("Updated");
         var request = new EntityHistoryRestoreRequest(entry.Id, Mode: EntityHistoryRestoreMode.Undo);
         _history.PreviewAsync("Memos", _record, request, Arg.Any<CancellationToken>())
-            .Returns(new EntityHistoryPreviewDto(false, [new EntityHistoryFieldDto("Text", "three", "one", true)]));
+            .Returns(new EntityHistoryPreviewDto(false, [new EntityHistoryFieldDto("Text", "three", "one", true)], "v1"));
         var dialogs = Render<MudDialogProvider>();
         var page = Expanded(entry, [new EntityHistorySetDto("Memo", "Memos", true, false)]);
 
@@ -56,7 +56,30 @@ public sealed class AuditLogHistoryTests : ClientTestBase
         await dialogs.Find("[data-testid='confirm-restore']").ClickAsync(new());
         await undoing;
 
-        await _history.Received(1).RestoreAsync("Memos", _record, request, Arg.Any<CancellationToken>());
+        await _history.Received(1).RestoreAsync("Memos", _record, request with { Version = "v1" }, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task A_record_changed_since_the_preview_is_previewed_again_before_it_restores()
+    {
+        var entry = Entry("Updated");
+        var request = new EntityHistoryRestoreRequest(entry.Id, Mode: EntityHistoryRestoreMode.Undo);
+        _history.PreviewAsync("Memos", _record, request, Arg.Any<CancellationToken>()).Returns(
+            new EntityHistoryPreviewDto(false, [new EntityHistoryFieldDto("Text", "two", "one")], "v1"),
+            new EntityHistoryPreviewDto(false, [new EntityHistoryFieldDto("Text", "four", "one")], "v2"));
+        _history.RestoreAsync("Memos", _record, request with { Version = "v1" }, Arg.Any<CancellationToken>())
+            .Returns(Task.FromException(new Api.ApiException(409, "history.changed", null)));
+        var dialogs = Render<MudDialogProvider>();
+        var page = Expanded(entry, [new EntityHistorySetDto("Memo", "Memos", true, false)]);
+
+        var undoing = page.Find("[data-testid='audit-undo']").ClickAsync(new());
+        dialogs.WaitForAssertion(() => dialogs.Find("[data-field='Text']").TextContent.ShouldContain("two"));
+        await dialogs.Find("[data-testid='confirm-restore']").ClickAsync(new());
+        dialogs.WaitForAssertion(() => dialogs.Find("[data-field='Text']").TextContent.ShouldContain("four"));
+        await dialogs.Find("[data-testid='confirm-restore']").ClickAsync(new());
+        await undoing;
+
+        await _history.Received(1).RestoreAsync("Memos", _record, request with { Version = "v2" }, Arg.Any<CancellationToken>());
     }
 
     [Fact]

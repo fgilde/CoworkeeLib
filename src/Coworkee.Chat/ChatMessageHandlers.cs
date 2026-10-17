@@ -146,7 +146,7 @@ internal sealed class ChatMessageHandlers(
         await db.SaveChangesAsync(cancellationToken);
         foreach (var attachment in attachments)
         {
-            await storage.DeleteAsync(attachment.BlobKey, cancellationToken);
+            await ChatAttachmentBlobs.DeleteAsync(storage, attachment.BlobKey, attachment.ThumbnailKey, cancellationToken);
         }
 
         await PublishAsync(message, cancellationToken);

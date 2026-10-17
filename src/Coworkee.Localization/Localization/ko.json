@@ -1606,5 +1606,6 @@
   "Delete this message for everyone?": "모든 사람에게서 이 메시지를 삭제할까요?",
   "{0} mentioned you in the chat": "{0} 님이 채팅에서 회원님을 언급했습니다",
   "Largest chat attachment (MB)": "최대 채팅 첨부 파일 (MB)",
-  "Files above this size cannot be sent in the chat.": "더 큰 파일은 채팅에서 보낼 수 없습니다."
+  "Files above this size cannot be sent in the chat.": "더 큰 파일은 채팅에서 보낼 수 없습니다.",
+  "The record changed in the meantime. Check the new preview.": "그 사이에 레코드가 변경되었습니다. 새 미리 보기를 확인하세요."
 }

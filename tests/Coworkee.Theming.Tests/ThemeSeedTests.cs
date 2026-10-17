@@ -72,8 +72,7 @@ public sealed class ThemeSeedTests
     [InlineData("red", null)]
     public void Contrast_text_follows_the_luminance(string color, string? expected) => ThemeSeeds.ContrastText(color).ShouldBe(expected);
 
-    // ponytail: the older themes miss AA in places (button text of Coworkee, Forest and Sunset); measured are the ones that name every color
-    public static TheoryData<string> Themes() => ["Ocean", "Midnight", "High Contrast", "Octo", "Code", "Arctic", "Vampire", "Solar", "Atom", "Paper", "Aubergine"];
+    public static TheoryData<string> Themes() => [.. ThemeSeeds.Create(new ThemingOptions()).Select(t => t.Name)];
 
     [Theory]
     [MemberData(nameof(Themes))]

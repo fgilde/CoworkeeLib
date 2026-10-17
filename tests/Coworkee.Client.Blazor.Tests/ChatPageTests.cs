@@ -76,6 +76,30 @@ public sealed class ChatPageTests : ClientTestBase
     }
 
     [Fact]
+    public async Task Attachments_show_the_small_picture_and_open_in_the_file_viewer()
+    {
+        var picture = new ChatAttachmentDto(Guid.NewGuid(), "shot.png", "image/png", 10) { HasThumbnail = true };
+        var document = new ChatAttachmentDto(Guid.NewGuid(), "plan.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", 2048);
+        _api.GetMessagesAsync(ChatId, null, null, default).ReturnsForAnyArgs([Message(Bob, "<p>Look</p>", "Look") with { Attachments = [picture, document] }]);
+        var dialogs = Render<MudBlazor.MudDialogProvider>();
+        Render<MudBlazor.MudPopoverProvider>();
+        var thread = Render<Components.Chat.ChatThread>(p => p.Add(t => t.ConversationId, ChatId));
+
+        thread.WaitForAssertion(() => thread.Find(".cw-chat-image img").GetAttribute("src").ShouldBe($"api/v1/chat/attachments/{picture.Id}/thumbnail"));
+        await thread.Find("[data-file='shot.png']").ClickAsync(new());
+        dialogs.WaitForAssertion(() => dialogs.FindComponent<MudBlazor.Extensions.Components.MudExFileDisplay>().Instance.Url
+            .ShouldBe($"http://localhost/api/v1/chat/attachments/{picture.Id}"));
+
+        await thread.Find("[data-file='plan.docx']").ClickAsync(new());
+        dialogs.WaitForAssertion(() =>
+        {
+            var display = dialogs.FindComponents<MudBlazor.Extensions.Components.MudExFileDisplay>().Single(d => d.Instance.FileName == "plan.docx").Instance;
+            display.Url.ShouldBe($"http://localhost/api/v1/chat/attachments/{document.Id}");
+            display.IgnoredRenderControls.ShouldContain(typeof(MudBlazor.Extensions.Components.MudExFileDisplayOfficeLive));
+        });
+    }
+
+    [Fact]
     public async Task People_and_records_are_suggested_as_mentions()
     {
         _api.GetContactsAsync(default).ReturnsForAnyArgs([new ChatContactDto(Bob, "Bob Builder", null, null, 0), new ChatContactDto(Guid.NewGuid(), "Carol", null, null, 0)]);

@@ -1606,5 +1606,6 @@
   "Delete this message for everyone?": "Smazat tuto zprávu pro všechny?",
   "{0} mentioned you in the chat": "{0} vás zmínil(a) v chatu",
   "Largest chat attachment (MB)": "Největší příloha chatu (MB)",
-  "Files above this size cannot be sent in the chat.": "Větší soubory nelze v chatu odeslat."
+  "Files above this size cannot be sent in the chat.": "Větší soubory nelze v chatu odeslat.",
+  "The record changed in the meantime. Check the new preview.": "Záznam se mezitím změnil. Zkontroluj nový náhled."
 }

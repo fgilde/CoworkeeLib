@@ -219,6 +219,10 @@ namespace MyApp.Infrastructure.Migrations
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ThumbnailKey")
+                        .HasMaxLength(520)
+                        .HasColumnType("character varying(520)");
+
                     b.Property<DateTimeOffset>("UploadedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -1935,6 +1939,10 @@ namespace MyApp.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasFilter("\"TenantId\" IS NULL");
+
                     b.HasIndex("TenantId", "Name")
                         .IsUnique();
 
@@ -2931,6 +2939,10 @@ namespace MyApp.Infrastructure.Migrations
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("ThumbnailKey")
+                        .HasMaxLength(520)
+                        .HasColumnType("character varying(520)");
 
                     b.Property<DateTimeOffset>("UploadedAt")
                         .HasColumnType("timestamp with time zone");
@@ -4573,6 +4585,10 @@ namespace MyApp.Infrastructure.Migrations
                         .HasColumnType("jsonb");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasFilter("\"TenantId\" IS NULL");
 
                     b.HasIndex("TenantId", "Name")
                         .IsUnique();

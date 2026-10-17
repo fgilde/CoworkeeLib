@@ -179,13 +179,24 @@
     {
       "version": "0.0.1.33",
       "breaking": [
-        "The migrations host, the security headers of the web host and its upload limit come from the library (AddCoworkeeMigrations/RunCoworkeeMigrationsAsync, UseCoworkeeSecurityHeaders, Coworkee:Bff:MaxRequestBodySize); hand-written copies keep working but no longer get the fixes."
+        "The migrations host, the security headers of the web host and its upload limit come from the library (AddCoworkeeMigrations/RunCoworkeeMigrationsAsync, UseCoworkeeSecurityHeaders, Coworkee:Bff:MaxRequestBodySize); hand-written copies keep working but no longer get the fixes.",
+        "Theming: a filtered unique index on cw.Themes.Name for the built-in themes (TenantId null) keeps a second app instance from seeding them twice on SQL Server and SQLite; add a migration. Earlier versions removed such duplicates at every start; if the migration still reports a duplicate key on IX_Themes_Name, delete the extra built-in row first.",
+        "Chat: the column cw.ChatAttachments.ThumbnailKey holds the small WebP of a picture; add a migration. Coworkee.Chat depends on Coworkee.BackgroundJobs (an hourly job deletes files uploaded but never sent) and brings SkiaSharp with its native Linux assets.",
+        "History restore: POST /api/v1/history/{set}/{id}/restore needs the version of its preview (EntityHistoryRestoreRequest.Version from EntityHistoryPreviewDto.Version) and answers 409 when the record changed since; regenerate OpenAPI snapshots and SDKs. EntityHistoryRestoreDialog.ConfirmAsync does it for the Blazor UI."
+      ],
+      "needsMigration": true,
+      "manual": [
+        { "text": "Own IEntityHistoryApi implementations return the preview's Version and pass EntityHistoryRestoreRequest.Version on to the restore endpoint.", "find": ":\\s*IEntityHistoryApi\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] },
+        { "text": "Direct calls of the restore endpoint send the version of a preview first: request with { Version = preview.Version }.", "find": "/api/v1/history/.*/restore", "files": [ "src/**/*.cs", "src/**/*.ts", "tests/**/*.cs" ] }
       ],
       "manual": [
         { "text": "Replace the hand-written migrations host with the library's: builder.AddCoworkeeMigrations<TDbContext>(o => { o.DevelopmentSeed = DemoSeed.Configure; o.DeploymentSeed = DemoSeed.ConfigureDeployment; }) and return await host.RunCoworkeeMigrationsAsync(); it brings InitialAdmin, the seed, SyncDevelopmentUsersAsync, ReconcileKeycloakRealmAsync, Migrations:Attempts and the container fix of 0.0.1.32 (see the template Migrations/Program.cs).", "find": "SeedCoworkeeIdentityAsync", "files": [ "src/*.Migrations/Program.cs" ], "unless": "AddCoworkeeMigrations" },
         { "text": "Add app.UseCoworkeeSecurityHeaders(); before UseStaticFiles in the web host and remove a hand-written Content-Security-Policy middleware (extra sources: Coworkee:Bff:SecurityHeaders:Sources).", "find": "MapCoworkeeBff\\(", "files": [ "src/*.Web/Program.cs" ], "unless": "UseCoworkeeSecurityHeaders" },
-        { "text": "Remove the hand-written Kestrel MaxRequestBodySize: the BFF's forwarded routes take any size and the API checks its own limits (cap: Coworkee:Bff:MaxRequestBodySize).", "find": "MaxRequestBodySize", "files": [ "src/*.Web/Program.cs", "src/*.AirWorks/Program.cs" ] }
-      ]
+        { "text": "Remove the hand-written Kestrel MaxRequestBodySize: the BFF's forwarded routes take any size and the API checks its own limits (cap: Coworkee:Bff:MaxRequestBodySize).", "find": "MaxRequestBodySize", "files": [ "src/*.Web/Program.cs", "src/*.AirWorks/Program.cs" ] },
+        { "text": "Own IEntityHistoryApi implementations return the preview's Version and pass EntityHistoryRestoreRequest.Version on to the restore endpoint.", "find": ":\\s*IEntityHistoryApi\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] },
+        { "text": "Direct calls of the restore endpoint send the version of a preview first: request with { Version = preview.Version }.", "find": "/api/v1/history/.*/restore", "files": [ "src/**/*.cs", "src/**/*.ts", "tests/**/*.cs" ] }
+      ],
+      "needsMigration": true
     }
   ]
 }

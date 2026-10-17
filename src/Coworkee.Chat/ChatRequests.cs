@@ -94,7 +94,7 @@ public sealed record UploadChatAttachmentCommand(Guid ConversationId, string Nam
 
 [RequiresPermission(ChatPermissions.Use)]
 [AiTool(Exclude = true)]
-public sealed record OpenChatAttachmentQuery(Guid AttachmentId) : IQuery<Result<ChatAttachmentContent>>;
+public sealed record OpenChatAttachmentQuery(Guid AttachmentId, bool Thumbnail = false) : IQuery<Result<ChatAttachmentContent>>;
 
 public sealed record ChatAttachmentContent(Stream Content, string ContentType, string Name);
 

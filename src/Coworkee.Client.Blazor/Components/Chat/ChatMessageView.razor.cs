@@ -1,9 +1,11 @@
 using System.Globalization;
 using Coworkee.Client.Blazor.Chat;
+using Coworkee.Client.Blazor.Components.Files;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Navigation;
 using Coworkee.Contracts.Chat;
 using Microsoft.AspNetCore.Components;
+using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Components.Chat;
 
@@ -15,6 +17,8 @@ public partial class ChatMessageView
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
     [Inject] private CoworkeePages Links { get; set; } = null!;
+
+    [Inject] private IDialogService Dialogs { get; set; } = null!;
 
     [Parameter, EditorRequired] public ChatMessageDto Message { get; set; } = null!;
 
@@ -39,6 +43,12 @@ public partial class ChatMessageView
     // the others whose read mark is past the message
     private List<string> SeenBy =>
         [.. Conversation.Members.Where(m => m.UserId != Me && m.LastReadAt >= Message.SentAt).Select(m => m.Name)];
+
+    public static string Url(ChatAttachmentDto file) => $"api/v1/chat/attachments/{file.Id}";
+
+    private static string Preview(ChatAttachmentDto file) => file.HasThumbnail ? $"{Url(file)}/thumbnail" : Url(file);
+
+    private Task OpenAsync(ChatAttachmentDto file) => FilePreviewDialog.ShowAsync(Dialogs, Url(file), file.ContentType, file.Name);
 
     private static string FileSize(long bytes) => bytes switch
     {

@@ -55,6 +55,14 @@ meta.Property(p => p.LogoId).RenderWith<CoworkeeFilePicker, Guid?>(p => p.Value)
 
 `FilePreviewDialog.ShowAsync(dialogs, file)` zeigt eine gespeicherte Datei in einem Seitenblatt; `FilePreviewDialog.ShowAsync(dialogs, url, contentType, name)` zeigt jede Inhaltsadresse der App, zum Beispiel die Dokumente eines eigenen Moduls (eine relative Adresse wird absolut gemacht).
 
+### Dateien anzeigen
+
+Jede Datei, die die Coworkee-Oberfläche zeigt, läuft über MudEx `MudExFileDisplay`, damit jeder Typ seinen Viewer bekommt: Bilder, Video, Audio, PDF, Word, Excel, PowerPoint, OpenDocument, Code, Markdown, CSV, ZIP, E-Mails, 3D-Modelle und mehr. Dateimanager, Dateiauswahl, Chat-Dateien und ihre Uploads öffnen alle `FilePreviewDialog`; ein kleines Bild in einer Liste (ein Chat-Vorschaubild) ist nur der Einstieg, ein Klick öffnet den Viewer. Mach es in deinen eigenen Seiten genauso: kein eigenes `<img>`, `<iframe>` oder Download-Link für eine gespeicherte Datei, sondern `FilePreviewDialog.ShowAsync`.
+
+Der Viewer lädt die Datei von der eigenen Adresse der App mit dem Sitzungs-Cookie, also gelten die Rechte des Endpunkts (Chat-Dateien nur für die Mitglieder). Private Dateien gehen nie an den Online-Office-Viewer von Microsoft; nur öffentliche Dateien dürfen ihn nutzen.
+
+Manche Viewer laden ihr Skript beim ersten Anzeigen eines Typs von einem CDN (jsDelivr, esm.sh, unpkg), der Karten-Viewer lädt Kacheln von OpenStreetMap. Eine Content Security Policy der App muss sie erlauben.
+
 ## Öffentliche Dateien
 
 Eine Datei kann öffentlich sein: `PUT /api/v1/files/{id}/public` mit `{ "isPublic": true }` (braucht `Files.Manage` auf ihrem Ordner, auch für den Hochladenden, weil sie danach jeder lesen kann). Öffentliche Dateien werden ohne Anmeldung unter `GET /api/v1/files/public/{id}/{name}` ausgeliefert (`FileLinks.Public(id, name)`, auch über `/api` der Web-App), mit Range-Unterstützung und `Cache-Control: public, max-age=300`, sodass eine wieder private Datei innerhalb von fünf Minuten aus den Browsern verschwindet. `StoredFileDto.IsPublic` zeigt, welche Dateien öffentlich sind; die Vorschau einer öffentlichen Datei sagt es und bietet *Privat machen* an.

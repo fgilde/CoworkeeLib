@@ -22,7 +22,7 @@ internal static class ThemeSeeds
     /// <summary>Built-in themes are owned by the code: missing ones are added, changed ones updated (they cannot be edited in the app).</summary>
     public static async Task EnsureAsync(CoworkeeDbContext db, ThemingOptions options, CancellationToken cancellationToken)
     {
-        // ponytail: one seed at a time per process; the unique index stops a second instance on Postgres only (SQL Server and SQLite let null tenants repeat)
+        // one seed at a time per process; a second instance runs into the unique index of the built-in names
         await Seeding.WaitAsync(cancellationToken);
         try
         {
@@ -38,7 +38,6 @@ internal static class ThemeSeeds
     {
         var stored = await db.Set<ThemeDefinition>().Where(t => t.TenantId == null).ToListAsync(cancellationToken);
         var changed = new List<ThemeDefinition>();
-        await RemoveDuplicatesAsync(db, stored, changed, cancellationToken);
         foreach (var seed in Create(options))
         {
             if (stored.FirstOrDefault(t => t.Name == seed.Name) is not { } existing)
@@ -80,24 +79,6 @@ internal static class ThemeSeeds
             {
                 db.Entry(theme).State = EntityState.Detached;
             }
-        }
-    }
-
-    // seeds that raced each other before: the copy an organisation uses (else the oldest) stays
-    private static async Task RemoveDuplicatesAsync(CoworkeeDbContext db, List<ThemeDefinition> stored, List<ThemeDefinition> changed, CancellationToken cancellationToken)
-    {
-        var groups = stored.GroupBy(t => t.Name, StringComparer.Ordinal).Where(g => g.Count() > 1).ToList();
-        if (groups.Count == 0)
-        {
-            return;
-        }
-
-        var used = (await db.Set<TenantTheme>().Select(m => m.ThemeId).ToListAsync(cancellationToken)).ToHashSet();
-        foreach (var extra in groups.SelectMany(g => g.OrderByDescending(t => used.Contains(t.Id)).ThenBy(t => t.CreatedAt).ThenBy(t => t.Id).Skip(1)))
-        {
-            db.Remove(extra);
-            stored.Remove(extra);
-            changed.Add(extra);
         }
     }
 
@@ -190,7 +171,7 @@ internal static class ThemeSeeds
     private static List<ThemeDefinition> BuiltIn() =>
     [
         Theme("Coworkee",
-            light: new() { ["Primary"] = "#d4481f", ["PrimaryContrastText"] = "#ffffff", ["Secondary"] = "#16140f", ["SecondaryContrastText"] = "#ffffff", ["Background"] = "#f3efe6", ["Surface"] = "#fbf9f4", ["AppbarBackground"] = "#f3efe6", ["AppbarText"] = "#16140f", ["DrawerBackground"] = "#ebe5d8", ["TextPrimary"] = "#16140f", ["TextSecondary"] = "#4a463d", ["LinesDefault"] = "#d6cfbf" },
+            light: new() { ["Primary"] = "#d0471e", ["PrimaryContrastText"] = "#ffffff", ["Secondary"] = "#16140f", ["SecondaryContrastText"] = "#ffffff", ["Background"] = "#f3efe6", ["Surface"] = "#fbf9f4", ["AppbarBackground"] = "#f3efe6", ["AppbarText"] = "#16140f", ["DrawerBackground"] = "#ebe5d8", ["TextPrimary"] = "#16140f", ["TextSecondary"] = "#4a463d", ["LinesDefault"] = "#d6cfbf" },
             dark: new() { ["Primary"] = "#f06a43", ["PrimaryContrastText"] = "#14130f", ["Secondary"] = "#efe9dc", ["SecondaryContrastText"] = "#14130f", ["Background"] = "#14130f", ["Surface"] = "#1f1d18", ["AppbarBackground"] = "#14130f", ["AppbarText"] = "#efe9dc", ["DrawerBackground"] = "#1c1a15", ["TextPrimary"] = "#efe9dc", ["TextSecondary"] = "#bdb6a6", ["LinesDefault"] = "#34312a" },
             layout: Layout("6px", "300px", "64px"),
             typography: Fonts(Sans, Sans),
@@ -202,13 +183,13 @@ internal static class ThemeSeeds
             typography: Fonts(Humanist, Humanist),
             options: new() { ["ShowLogoInNav"] = true, ["ShowLogoInAppBar"] = false, ["NavSingleExpand"] = true, ["StripedTables"] = true }),
         Theme("Forest",
-            light: new() { ["Primary"] = "#2e7d32", ["PrimaryContrastText"] = "#ffffff", ["Secondary"] = "#b26a00", ["SecondaryContrastText"] = "#ffffff", ["Background"] = "#f4f7f2", ["Surface"] = "#ffffff", ["AppbarBackground"] = "#2e7d32", ["AppbarText"] = "#ffffff", ["DrawerBackground"] = "#e9efe6" },
+            light: new() { ["Primary"] = "#2e7d32", ["PrimaryContrastText"] = "#ffffff", ["Secondary"] = "#aa6500", ["SecondaryContrastText"] = "#ffffff", ["Background"] = "#f4f7f2", ["Surface"] = "#ffffff", ["AppbarBackground"] = "#2e7d32", ["AppbarText"] = "#ffffff", ["DrawerBackground"] = "#e9efe6" },
             dark: new() { ["Primary"] = "#81c784", ["PrimaryContrastText"] = "#0f1a10", ["Secondary"] = "#ffd54f", ["SecondaryContrastText"] = "#1a1405", ["Background"] = "#111a12", ["Surface"] = "#18241a", ["AppbarBackground"] = "#111a12", ["AppbarText"] = "#e6f0e6", ["DrawerBackground"] = "#142016", ["TextPrimary"] = "#e6f0e6", ["TextSecondary"] = "#a7bba8", ["LinesDefault"] = "#2a3a2c" },
             layout: Layout("4px", "290px", "64px"),
             typography: Fonts(Serif, Humanist),
             options: new() { ["ShowLogoInNav"] = true }),
         Theme("Sunset",
-            light: new() { ["Primary"] = "#c2185b", ["PrimaryContrastText"] = "#ffffff", ["Secondary"] = "#e64a19", ["SecondaryContrastText"] = "#ffffff", ["Background"] = "#fdf6f4", ["Surface"] = "#ffffff", ["AppbarBackground"] = "#c2185b", ["AppbarText"] = "#ffffff", ["DrawerBackground"] = "#f9ebe7" },
+            light: new() { ["Primary"] = "#c2185b", ["PrimaryContrastText"] = "#ffffff", ["Secondary"] = "#d34417", ["SecondaryContrastText"] = "#ffffff", ["Background"] = "#fdf6f4", ["Surface"] = "#ffffff", ["AppbarBackground"] = "#c2185b", ["AppbarText"] = "#ffffff", ["DrawerBackground"] = "#f9ebe7" },
             dark: new() { ["Primary"] = "#f48fb1", ["PrimaryContrastText"] = "#2a0d18", ["Secondary"] = "#ffab91", ["SecondaryContrastText"] = "#2a120a", ["Background"] = "#1d1417", ["Surface"] = "#261a1e", ["AppbarBackground"] = "#1d1417", ["AppbarText"] = "#fbe9ee", ["DrawerBackground"] = "#21171a", ["TextPrimary"] = "#fbe9ee", ["TextSecondary"] = "#c9aab3", ["LinesDefault"] = "#3d2a31" },
             layout: Layout("20px", "300px", "72px"),
             typography: Fonts(Rounded, Rounded),

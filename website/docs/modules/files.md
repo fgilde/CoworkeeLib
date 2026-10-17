@@ -55,6 +55,14 @@ meta.Property(p => p.LogoId).RenderWith<CoworkeeFilePicker, Guid?>(p => p.Value)
 
 `FilePreviewDialog.ShowAsync(dialogs, file)` previews a stored file in a side sheet; `FilePreviewDialog.ShowAsync(dialogs, url, contentType, name)` previews any content address of the app, for example the documents of your own module (a relative address is made absolute).
 
+### Showing files
+
+Every file the Coworkee UI shows goes through MudEx `MudExFileDisplay`, so each type gets its viewer: pictures, video, audio, PDF, Word, Excel, PowerPoint, OpenDocument, code, Markdown, CSV, ZIP, e-mails, 3D models and more. The file manager, the file picker, chat files and their uploads all open `FilePreviewDialog`; a small picture in a list (a chat thumbnail) is only the way in, a click opens the viewer. Do the same in your own pages: no own `<img>`, `<iframe>` or download link for a stored file, but `FilePreviewDialog.ShowAsync`.
+
+The viewer loads the file from the app's own address with the session cookie, so the endpoint's rights apply (chat files only for the members). Private files never go to the online Office viewer of Microsoft; only public files may use it.
+
+Some viewers load their script from a CDN the first time they show a type (jsDelivr, esm.sh, unpkg), and the map viewer loads OpenStreetMap tiles. A content security policy of the app has to allow them.
+
 ## Public files
 
 A file can be public: `PUT /api/v1/files/{id}/public` with `{ "isPublic": true }` (needs `Files.Manage` on its folder, also for the uploader, because anyone can then read it). Public files are served without sign-in under `GET /api/v1/files/public/{id}/{name}` (`FileLinks.Public(id, name)`, through the web app's `/api` as well), with range support and `Cache-Control: public, max-age=300`, so a file made private again disappears from browsers within five minutes. `StoredFileDto.IsPublic` tells which files are public; the preview of a public file says so and offers *Make private*.

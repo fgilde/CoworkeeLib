@@ -24,6 +24,9 @@ public sealed class EntityHistoryTests(AuditApp app) : IAsyncLifetime
     private async Task<EntityHistoryPreviewDto> PreviewAsync(Guid id, EntityHistoryRestoreRequest request) =>
         (await (await Admin.PostAsJsonAsync($"/api/v1/history/Memos/{id}/preview", request, Ct)).Content.ReadFromJsonAsync<EntityHistoryPreviewDto>(Ct))!;
 
+    private async Task<HttpResponseMessage> RestoreAsync(Guid id, EntityHistoryRestoreRequest request) =>
+        await Admin.PostAsJsonAsync($"/api/v1/history/Memos/{id}/restore", request with { Version = (await PreviewAsync(id, request)).Version }, Ct);
+
     private async Task<EntityHistoryDto> HistoryAsync(Guid id) => (await Admin.GetFromJsonAsync<EntityHistoryDto>($"/api/v1/history/Memos/{id}", Ct))!;
 
     [Fact]
@@ -56,7 +59,7 @@ public sealed class EntityHistoryTests(AuditApp app) : IAsyncLifetime
         preview!.Undeletes.ShouldBeFalse();
         preview.Fields.Select(f => (f.Property, f.CurrentText, f.RestoredText)).ShouldBe([("Text", "three", "one"), ("Priority", "High", "Low")], ignoreOrder: true);
 
-        (await Admin.PostAsJsonAsync($"/api/v1/history/Memos/{id}/restore", new EntityHistoryRestoreRequest(created), Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await RestoreAsync(id, new EntityHistoryRestoreRequest(created))).StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
         var memo = await app.MemoAsync(id);
         (memo.Text, memo.Priority, memo.Secret).ShouldBe(("one", MemoPriority.Low, "s1"));
@@ -71,7 +74,7 @@ public sealed class EntityHistoryTests(AuditApp app) : IAsyncLifetime
         await ChangeAsync(id, m => m.Priority = MemoPriority.High);
         var textChange = (await HistoryAsync(id)).Entries[1].Id;
 
-        (await Admin.PostAsJsonAsync($"/api/v1/history/Memos/{id}/restore", new EntityHistoryRestoreRequest(textChange, "Text"), Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await RestoreAsync(id, new EntityHistoryRestoreRequest(textChange, "Text"))).StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
         var memo = await app.MemoAsync(id);
         (memo.Text, memo.Priority).ShouldBe(("one", MemoPriority.High));
@@ -90,7 +93,7 @@ public sealed class EntityHistoryTests(AuditApp app) : IAsyncLifetime
 
         preview.Fields.Select(f => (f.Property, f.CurrentText, f.RestoredText, f.ChangedLater))
             .ShouldBe([("Text", "three", "one", true), ("Priority", "High", "Low", false)], ignoreOrder: true);
-        (await Admin.PostAsJsonAsync($"/api/v1/history/Memos/{id}/restore", undo, Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await RestoreAsync(id, undo)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
         var memo = await app.MemoAsync(id);
         (memo.Text, memo.Priority).ShouldBe(("one", MemoPriority.Low));
     }
@@ -108,9 +111,27 @@ public sealed class EntityHistoryTests(AuditApp app) : IAsyncLifetime
 
         var undo = new EntityHistoryRestoreRequest(entry, Mode: EntityHistoryRestoreMode.Undo);
         (await PreviewAsync(id, undo)).Fields.Single().ShouldBe(new EntityHistoryFieldDto("Text", "two", "one"));
-        (await Admin.PostAsJsonAsync($"/api/v1/history/Memos/{id}/restore", undo, Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await RestoreAsync(id, undo)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
         var memo = await app.MemoAsync(id);
         (memo.Text, memo.Priority).ShouldBe(("one", MemoPriority.High));
+    }
+
+    [Fact]
+    public async Task A_restore_of_a_record_changed_since_its_preview_is_refused()
+    {
+        var id = await CreateAsync("one");
+        await ChangeAsync(id, m => m.Text = "two");
+        var request = new EntityHistoryRestoreRequest((await HistoryAsync(id)).Entries[^1].Id);
+        var preview = await PreviewAsync(id, request);
+        await ChangeAsync(id, m => m.Priority = MemoPriority.High);
+
+        var response = await Admin.PostAsJsonAsync($"/api/v1/history/Memos/{id}/restore", request with { Version = preview.Version }, Ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await response.Content.ReadAsStringAsync(Ct)).ShouldContain("changed since the preview");
+        (await Admin.PostAsJsonAsync($"/api/v1/history/Memos/{id}/restore", request, Ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await app.MemoAsync(id)).Text.ShouldBe("two");
+        (await PreviewAsync(id, request)).Version.ShouldNotBe(preview.Version);
     }
 
     [Fact]
@@ -130,7 +151,7 @@ public sealed class EntityHistoryTests(AuditApp app) : IAsyncLifetime
         await ChangeAsync(id, m => m.Text = "open");
         var created = (await HistoryAsync(id)).Entries[^1].Id;
 
-        (await Admin.PostAsJsonAsync($"/api/v1/history/Memos/{id}/restore", new EntityHistoryRestoreRequest(created), Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await RestoreAsync(id, new EntityHistoryRestoreRequest(created))).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
         (await app.MemoAsync(id)).Text.ShouldBe("open");
     }
@@ -151,7 +172,7 @@ public sealed class EntityHistoryTests(AuditApp app) : IAsyncLifetime
         var preview = await (await Admin.PostAsJsonAsync($"/api/v1/history/Memos/{id}/preview", new EntityHistoryRestoreRequest(history.Entries[0].Id), Ct))
             .Content.ReadFromJsonAsync<EntityHistoryPreviewDto>(Ct);
         preview!.Undeletes.ShouldBeTrue();
-        (await Admin.PostAsJsonAsync($"/api/v1/history/Memos/{id}/restore", new EntityHistoryRestoreRequest(history.Entries[^1].Id), Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await RestoreAsync(id, new EntityHistoryRestoreRequest(history.Entries[^1].Id))).StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
         var memo = await app.MemoAsync(id);
         (memo.IsDeleted, memo.Text).ShouldBe((false, "one"));

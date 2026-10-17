@@ -1606,5 +1606,6 @@
   "Delete this message for everyone?": "Radera meddelandet för alla?",
   "{0} mentioned you in the chat": "{0} nämnde dig i chatten",
   "Largest chat attachment (MB)": "Största chattbilaga (MB)",
-  "Files above this size cannot be sent in the chat.": "Större filer kan inte skickas i chatten."
+  "Files above this size cannot be sent in the chat.": "Större filer kan inte skickas i chatten.",
+  "The record changed in the meantime. Check the new preview.": "Posten har ändrats under tiden. Kontrollera den nya förhandsvisningen."
 }

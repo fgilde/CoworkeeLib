@@ -17,7 +17,7 @@ The module depends on the identity, realtime and storage modules (files go to th
 - **Enter** sends, **Shift+Enter** breaks the line. While a mention list is open, Enter picks the entry.
 - **`@`** suggests the people of the organisation. A mention is a link to the person's page (`/people/{id}`, library page key `person`) and always shows the person's current name.
 - **`#`** suggests records from the [global search](../web/global-search.md) (every provider the writer may use, except chats). The mention links to the record's page. Each reader sees it only when his own search finds the record; otherwise it shows as *#restricted* with a lock, without label or link. Sending a mention of a record the writer cannot see is refused.
-- **Files**: the clip button, drag and drop onto the composer, or pasting a picture. Uploads show their progress; pictures show inline, other files as a download chip. Only members of the chat download them (`GET /api/v1/chat/attachments/{id}`), served like the files module (no sniffing, sandboxed inline).
+- **Files**: the clip button, drag and drop onto the composer, or pasting a picture. Uploads show their progress and open in the file viewer once they are up. Pictures show inline as a small WebP the server makes (`/thumbnail`, at most 480 px, turned upright), other files as a chip; a click opens the file in `MudExFileDisplay` (see [Showing files](files.md#showing-files)). Only members of the chat load them (`GET /api/v1/chat/attachments/{id}`), served like the files module (no sniffing, sandboxed inline). Files uploaded but never sent are deleted after `Coworkee:Chat:UnsentAttachmentLifetime` (default `1.00:00:00`, a job checks every hour).
 - **Reply**, **react** (👍 ❤️ 😂 🎉 😮 😢, click a reaction to add or take back your own), **edit** and **delete** are in the menu of each message. Only the sender edits or deletes; an edited message shows *edited*, a deleted one *This message was deleted.* and loses its files and reactions.
 - The check marks under an own message show who read it (tooltip with the names).
 - Search in a chat with the magnifier: messages containing every word.
@@ -80,6 +80,7 @@ services.AddScoped<IChatAttachmentScanner, ClamAvScanner>();
 | `GET` · `PUT` · `DELETE /api/v1/chat/messages/{id}` | read (rendered for the reader) · edit · delete |
 | `POST /api/v1/chat/messages/{id}/reactions` | add or take back `{ "emoji" }` |
 | `GET /api/v1/chat/attachments/{id}?download=` | a file, members only |
+| `GET /api/v1/chat/attachments/{id}/thumbnail` | the small WebP of a picture (`hasThumbnail` of the attachment), members only |
 | `GET /api/v1/chat/unread-count` | unread messages of all chats |
 | `GET /api/v1/chat/contacts`, `GET`/`POST /api/v1/chat/conversations/{userId}`, `POST …/{userId}/read` | the plain text direct chat API by person (AirWorks chat app, assistant) |
 
@@ -102,5 +103,7 @@ await realtime.SubscribeAsync(RealtimeTopics.User(me), envelope =>
 ```
 
 ## Upgrading
+
+Since the thumbnails, apps need a migration for the column `cw.ChatAttachments.ThumbnailKey`; pictures sent before keep showing the full file in the list.
 
 Apps need a migration (`cw.ChatConversations`, `cw.ChatMembers`, `cw.ChatReactions`, `cw.ChatAttachments`, new columns of `cw.ChatMessages`). Direct messages from before move into conversations at the next start (`ChatLegacyMessages`); what the recipient had read stays read.

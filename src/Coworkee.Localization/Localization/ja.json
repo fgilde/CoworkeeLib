@@ -1606,5 +1606,6 @@
   "Delete this message for everyone?": "このメッセージを全員から削除しますか？",
   "{0} mentioned you in the chat": "{0} がチャットであなたをメンションしました",
   "Largest chat attachment (MB)": "チャット添付ファイルの上限 (MB)",
-  "Files above this size cannot be sent in the chat.": "これより大きいファイルはチャットで送信できません。"
+  "Files above this size cannot be sent in the chat.": "これより大きいファイルはチャットで送信できません。",
+  "The record changed in the meantime. Check the new preview.": "その間にレコードが変更されました。新しいプレビューを確認してください。"
 }

@@ -3,6 +3,7 @@ using Coworkee.Application.GlobalSearch;
 using Coworkee.Application.Messaging;
 using Coworkee.AspNetCore;
 using Coworkee.AspNetCore.Http;
+using Coworkee.BackgroundJobs;
 using Coworkee.Contracts.Chat;
 using Coworkee.Core.Modularity;
 using Coworkee.Identity;
@@ -22,7 +23,7 @@ namespace Coworkee.Chat;
 /// Direct and group chats of the people of an organisation: formatted messages with mentions of people and records, replies, reactions and files,
 /// pushed live over the realtime hub. Mentions notify through the notifications module when it is there.
 /// </summary>
-[DependsOn(typeof(CoworkeeIdentityModule), typeof(CoworkeeRealtimeModule), typeof(CoworkeeStorageModule))]
+[DependsOn(typeof(CoworkeeIdentityModule), typeof(CoworkeeRealtimeModule), typeof(CoworkeeStorageModule), typeof(CoworkeeBackgroundJobsModule))]
 public sealed class CoworkeeChatModule : CoworkeeModule, IWebModule
 {
     public override void ConfigureServices(ModuleServiceContext context)
@@ -40,6 +41,8 @@ public sealed class CoworkeeChatModule : CoworkeeModule, IWebModule
         services.AddScoped<Application.Privacy.IPersonalDataContributor, ChatPersonalData>();
         services.AddGlobalSearchProvider<ChatSearchProvider>();
         services.AddHostedService<ChatLegacyMessages>();
+        services.AddOptions<ChatOptions>().BindConfiguration(ChatOptions.Section);
+        services.AddRecurringJob<ChatAttachmentCleanup>(ChatAttachmentCleanup.Id, "23 * * * *");
     }
 
     public void ConfigureApplication(WebApplication app)
@@ -73,6 +76,7 @@ public sealed class CoworkeeChatModule : CoworkeeModule, IWebModule
         chat.MapPost("/chats/{id:guid}/typing", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new ChatTypingCommand(id), ct).ToHttpResult());
         chat.MapPost("/chats/{id:guid}/attachments", UploadAsync);
         chat.MapGet("/attachments/{id:guid}", ContentAsync);
+        chat.MapGet("/attachments/{id:guid}/thumbnail", ThumbnailAsync);
 
         chat.MapGet("/messages/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetChatMessageQuery(id), ct).ToHttpResult());
         chat.MapPut("/messages/{id:guid}", (Guid id, EditChatMessageRequest body, IDispatcher d, CancellationToken ct) =>
@@ -93,11 +97,17 @@ public sealed class CoworkeeChatModule : CoworkeeModule, IWebModule
         return await dispatcher.SendAsync(new UploadChatAttachmentCommand(id, name, context.Request.ContentType, context.Request.Body), cancellationToken).ToHttpResult();
     }
 
-    private static async Task<IResult> ContentAsync(Guid id, bool? download, IDispatcher dispatcher, CancellationToken cancellationToken)
+    private static Task<IResult> ContentAsync(Guid id, bool? download, IDispatcher dispatcher, CancellationToken cancellationToken) =>
+        OpenAsync(new OpenChatAttachmentQuery(id), download == true, dispatcher, cancellationToken);
+
+    private static Task<IResult> ThumbnailAsync(Guid id, IDispatcher dispatcher, CancellationToken cancellationToken) =>
+        OpenAsync(new OpenChatAttachmentQuery(id, Thumbnail: true), false, dispatcher, cancellationToken);
+
+    private static async Task<IResult> OpenAsync(OpenChatAttachmentQuery query, bool download, IDispatcher dispatcher, CancellationToken cancellationToken)
     {
-        var result = await dispatcher.SendAsync(new OpenChatAttachmentQuery(id), cancellationToken);
+        var result = await dispatcher.SendAsync(query, cancellationToken);
         return result.IsSuccess
-            ? new BlobContentResult(result.Value.Content, result.Value.ContentType, result.Value.Name, download == true)
+            ? new BlobContentResult(result.Value.Content, result.Value.ContentType, result.Value.Name, download)
             : result.Error!.ToProblem();
     }
 }

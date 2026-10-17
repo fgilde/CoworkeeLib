@@ -4,6 +4,12 @@
 
 ## Unveröffentlicht
 
+### Breaking Changes
+
+- **Migration nötig**: ein gefilterter eindeutiger Index `IX_Themes_Name` auf `cw.Themes` (eingebaute Themes, `TenantId` null) und die Spalte `cw.ChatAttachments.ThumbnailKey`. Der Index verhindert, dass zwei App-Instanzen die eingebauten Themes auf SQL Server und SQLite doppelt anlegen (Postgres lehnte das schon ab); der Seed räumt solche Doppel nicht mehr auf. Meldet die Migration einen doppelten Schlüssel, lösch zuerst die überzählige eingebaute Zeile.
+- **Wiederherstellen aus dem Verlauf prüft seine Vorschau**: `EntityHistoryPreviewDto.Version` und `EntityHistoryRestoreRequest.Version` sind neu; `POST /api/v1/history/{set}/{id}/restore` antwortet `409`, wenn die Version fehlt oder sich der Datensatz seit der Vorschau geändert hat. Verlaufsdialog, Rückgängig im Audit-Log und das AirWorks-Datensatzfenster zeigen dann die neue Vorschau. Eigene `IEntityHistoryApi`-Implementierungen und direkte API-Aufrufe geben die Version weiter; OpenAPI-Snapshots und SDKs neu erzeugen. Siehe [Auditing](../modules/auditing.md#verlauf-eines-datensatzes-und-wiederherstellen).
+- **`Coworkee.Chat` hängt von `Coworkee.BackgroundJobs` ab** und bringt SkiaSharp (MIT) mit seinen nativen Linux-Bibliotheken für die Vorschaubilder.
+
 ### Neu
 
 - `coworkee update` fügt einzelne Zeilen selbst ein (Regelart `insertions` in `upgrade-rules.json`: nach der ersten Zeile, die zu einem Muster passt, mit deren Einrückung, übersprungen, wo die Zeile schon steht; `--dry-run` listet sie nur). Der Schritt von 0.0.1.32 (`builder.ConfigureContainer(new DefaultServiceProviderFactory());` in `src/*.Migrations/Program.cs`) passiert jetzt automatisch.
@@ -13,10 +19,16 @@
 - `app.UseCoworkeeSecurityHeaders()` (`Coworkee.Bff`) schickt eine Content-Security-Policy für den Blazor-WebAssembly-Client (frame-ancestors aus `Coworkee:Bff:FrameAncestors`, MudEx-Dateivorschauen aus blob- und data-URLs, Hot Reload in Development), `nosniff` und eine Referrer-Policy; weitere Quellen pro Direktive oder eine eigene Policy über `Coworkee:Bff:SecurityHeaders`. Der Web-Host der Vorlage nutzt es; bestehende Apps ergänzen es vor `UseStaticFiles` und entfernen eine selbst geschriebene Policy. Apps mit der Cloud-Auswahl des Files-Moduls ergänzen deren Hosts. Siehe [Sicherheits-Header der Web-App](../security/authentication.md#sicherheits-header-der-web-app).
 - `Coworkee:Bff:MaxRequestBodySize` begrenzt, was der Web-Host an die API weiterleitet; ohne den Wert haben seine weitergeleiteten Routen keine Grenze und die API prüft ihre eigene. Ein selbst geschriebenes `ConfigureKestrel(k => k.Limits.MaxRequestBodySize = ...)` im Web- oder AirWorks-Host ist unnötig und kann weg.
 - `builder.AddCoworkeeMigrations<TDbContext>(...)` und `host.RunCoworkeeMigrationsAsync()` (`Coworkee.Identity.Setup`) sind der Migrations-Host: migrieren mit Wiederholungen (`Migrations:Attempts`), die Entwicklungsbenutzer oder den ersten Administrator eines Deployments seeden, die Entwicklungsbenutzer im Stand halten, Keycloak abgleichen, dazu die Container-Korrektur von 0.0.1.32. Die Vorlage nutzt es; bestehende Apps ersetzen damit ihre selbst geschriebene `src/*.Migrations/Program.cs`, damit spätere Korrekturen mit dem Paket kommen (`coworkee update` weist darauf hin). Siehe [Migrationen und Seed](../fundamentals/persistence.md#migrationen-und-seed).
+- Chat-Bilder bekommen ein kleines WebP, das der Server erzeugt (höchstens 480 px, aufrecht gedreht, `GET /api/v1/chat/attachments/{id}/thumbnail`, `ChatAttachmentDto.HasThumbnail`); die Nachrichtenliste zeigt es, ein Klick öffnet die ganze Datei.
+- Jede Chat-Datei öffnet sich im MudEx-Datei-Viewer (`MudExFileDisplay`), auch ein Upload vor dem Senden. Die Regel für eigene Seiten steht unter [Dateien](../modules/files.md#dateien-anzeigen).
+- In einen Chat hochgeladene, aber nie gesendete Dateien werden nach `Coworkee:Chat:UnsentAttachmentLifetime` gelöscht (Standard 24 Stunden, ein stündlicher Job).
 
 ### Korrekturen
 
 - `npm run build` von `@coworkee/client` und `@coworkee/airworks` leert zuerst `dist`, damit Pakete keine Dateien entfernter Quellen mehr mitnehmen.
+- Die eingebauten Themes Coworkee, Forest und Sunset erreichen WCAG AA beim Button-Text im hellen Modus (etwas dunklere Primär- oder Sekundärfarbe); der Kontrasttest prüft jedes eingebaute Theme.
+- Der Datei-Viewer gibt eine private Datei nie an den Online-Office-Viewer von Microsoft.
+
 
 ## 0.0.1.32 (2026-10-17)
 

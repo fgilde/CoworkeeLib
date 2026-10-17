@@ -4,6 +4,12 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Breaking changes
+
+- **Migration needed**: a filtered unique index `IX_Themes_Name` on `cw.Themes` (built-in themes, `TenantId` null) and the column `cw.ChatAttachments.ThumbnailKey`. The index keeps two app instances from seeding the built-in themes twice on SQL Server and SQLite (Postgres already refused it); the seed no longer cleans up such duplicates. If the migration reports a duplicate key, delete the extra built-in row first.
+- **History restore checks its preview**: `EntityHistoryPreviewDto.Version` and `EntityHistoryRestoreRequest.Version` are new; `POST /api/v1/history/{set}/{id}/restore` answers `409` when the version is missing or the record changed since the preview. The history dialog, the audit log undo and the AirWorks record window preview again. Own `IEntityHistoryApi` implementations and direct API calls pass the version; regenerate OpenAPI snapshots and SDKs. See [Auditing](../modules/auditing.md#record-history-and-restore).
+- **`Coworkee.Chat` depends on `Coworkee.BackgroundJobs`** and brings SkiaSharp (MIT) with its native Linux assets for the thumbnails.
+
 ### New
 
 - `coworkee update` inserts single lines itself (rule kind `insertions` in `upgrade-rules.json`: after the first line matching a pattern, with its indentation, skipped where the line is already there; `--dry-run` only lists them). The step of 0.0.1.32 (`builder.ConfigureContainer(new DefaultServiceProviderFactory());` in `src/*.Migrations/Program.cs`) is applied automatically now.
@@ -13,10 +19,16 @@ Changes that need action in apps built on Coworkee. Newest first.
 - `app.UseCoworkeeSecurityHeaders()` (`Coworkee.Bff`) sends a Content-Security-Policy for the Blazor WebAssembly client (frame-ancestors from `Coworkee:Bff:FrameAncestors`, MudEx file previews from blob and data URLs, hot reload in Development), `nosniff` and a Referrer-Policy; extra sources per directive or an own policy through `Coworkee:Bff:SecurityHeaders`. The template's web host uses it; existing apps add it before `UseStaticFiles` and drop a hand-written policy. Apps with the cloud pickers of the Files module add their hosts. See [Security headers of the web app](../security/authentication.md#security-headers-of-the-web-app).
 - `Coworkee:Bff:MaxRequestBodySize` caps what the web host forwards to the API; by default its forwarded routes have no limit and the API checks its own. A hand-written `ConfigureKestrel(k => k.Limits.MaxRequestBodySize = ...)` in the web or AirWorks host is not needed and can go.
 - `builder.AddCoworkeeMigrations<TDbContext>(...)` and `host.RunCoworkeeMigrationsAsync()` (`Coworkee.Identity.Setup`) are the migrations host: migrate with retries (`Migrations:Attempts`), seed the development users or the first administrator of a deployment, keep the development users in step, reconcile Keycloak, and the container fix of 0.0.1.32. The template uses it; existing apps replace their hand-written `src/*.Migrations/Program.cs` with it, so later fixes come with the package (`coworkee update` points at it). See [Migrations and seeding](../fundamentals/persistence.md#migrations-and-seeding).
+- Chat pictures get a small WebP the server makes (at most 480 px, turned upright, `GET /api/v1/chat/attachments/{id}/thumbnail`, `ChatAttachmentDto.HasThumbnail`); the message list shows it, a click opens the full file.
+- Every chat file opens in the MudEx file viewer (`MudExFileDisplay`), also an upload before it is sent. The rule for own pages is on [Files](../modules/files.md#showing-files).
+- Files uploaded to a chat but never sent are deleted after `Coworkee:Chat:UnsentAttachmentLifetime` (default 24 hours, an hourly job).
 
 ### Fixes
 
 - `npm run build` of `@coworkee/client` and `@coworkee/airworks` empties `dist` first, so packs no longer carry files of removed sources.
+- The built-in themes Coworkee, Forest and Sunset meet WCAG AA on button text in light mode (slightly darker primary or secondary color); the contrast test covers every built-in theme.
+- The file viewer never hands a private file to the online Office viewer of Microsoft.
+
 
 ## 0.0.1.32 (2026-10-17)
 

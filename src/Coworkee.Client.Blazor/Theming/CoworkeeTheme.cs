@@ -9,7 +9,7 @@ public class CoworkeeTheme : MudTheme
     {
         PaletteLight = new PaletteLight
         {
-            Primary = "#d4481f",
+            Primary = "#d0471e",
             Secondary = "#16140f",
             Background = "#f3efe6",
             Surface = "#fbf9f4",
