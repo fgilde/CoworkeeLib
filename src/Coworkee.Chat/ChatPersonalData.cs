@@ -30,9 +30,9 @@ internal sealed class ChatPersonalData(CoworkeeDbContext db, IBlobStorage storag
         var messages = db.Set<ChatMessage>().IgnoreQueryFilters().Where(m => m.FromUserId == userId || m.ToUserId == userId || direct.Contains(m.ConversationId));
         var attachments = db.Set<ChatAttachment>().IgnoreQueryFilters()
             .Where(a => a.UploadedBy == userId || direct.Contains(a.ConversationId) || messages.Any(m => m.Id == a.MessageId));
-        foreach (var key in await attachments.Select(a => a.BlobKey).ToListAsync(cancellationToken))
+        foreach (var blobs in await attachments.Select(a => new { a.BlobKey, a.ThumbnailKey }).ToListAsync(cancellationToken))
         {
-            await storage.DeleteAsync(key, cancellationToken);
+            await ChatAttachmentBlobs.DeleteAsync(storage, blobs.BlobKey, blobs.ThumbnailKey, cancellationToken);
         }
 
         await attachments.ExecuteDeleteAsync(cancellationToken);

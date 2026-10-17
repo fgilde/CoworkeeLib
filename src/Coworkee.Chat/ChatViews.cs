@@ -157,5 +157,6 @@ internal sealed class ChatViews(CoworkeeDbContext db, ICurrentUser currentUser, 
     public async Task<ChatMessageDto> MessageAsync(ChatMessage message, bool resolveEntities, CancellationToken cancellationToken) =>
         (await MessagesAsync([message], resolveEntities, cancellationToken)).Single();
 
-    public static ChatAttachmentDto ToDto(ChatAttachment attachment) => new(attachment.Id, attachment.Name, attachment.ContentType, attachment.Size);
+    public static ChatAttachmentDto ToDto(ChatAttachment attachment) =>
+        new(attachment.Id, attachment.Name, attachment.ContentType, attachment.Size) { HasThumbnail = attachment.ThumbnailKey is not null };
 }

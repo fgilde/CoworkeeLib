@@ -27,8 +27,9 @@ internal static class ChatStyles
         .cw-chat-meta { font-size: .7rem; opacity: .7; display: flex; gap: 4px; justify-content: flex-end; align-items: center; }
         .cw-chat-muted { opacity: .7; }
         .cw-chat-ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+        .cw-chat-image { display: block; border: 0; padding: 0; background: none; cursor: zoom-in; max-width: 100%; }
         .cw-chat-image img { display: block; max-width: 100%; max-height: 220px; border-radius: 8px; margin-top: 4px; }
-        .cw-chat-file { display: flex; gap: 6px; align-items: center; color: inherit; text-decoration: none; margin-top: 4px; padding: 4px 6px; border-radius: 8px; background: rgba(127,127,127,.18); }
+        .cw-chat-file { display: flex; gap: 6px; align-items: center; width: 100%; border: 0; font: inherit; text-align: start; cursor: pointer; color: inherit; text-decoration: none; margin-top: 4px; padding: 4px 6px; border-radius: 8px; background: rgba(127,127,127,.18); }
         .cw-chat-reactions { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 2px; }
         .cw-chat-reaction { border: 1px solid var(--mud-palette-lines-default); background: var(--mud-palette-surface); color: var(--mud-palette-text-primary); border-radius: 10px; padding: 0 6px; font-size: .75rem; cursor: pointer; }
         .cw-chat-reaction.own { border-color: var(--mud-palette-primary); }

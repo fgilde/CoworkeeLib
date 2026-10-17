@@ -41,5 +41,8 @@ public partial class FilePreviewDialog
 
     [Inject] private IDialogService Dialogs { get; set; } = null!;
 
+    // the online Office viewer fetches the file from Microsoft's servers: it gets only files anyone may open
+    private Type[] IgnoredViewers => File is { IsPublic: true } ? [] : [typeof(MudBlazor.Extensions.Components.MudExFileDisplayOfficeLive)];
+
     private async Task MakePrivateAsync() => File = await FilePublishing.SetPublicAsync(Dialogs, Files, Snackbar, L, File!, false) ?? File;
 }

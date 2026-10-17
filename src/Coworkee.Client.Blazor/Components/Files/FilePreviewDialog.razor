@@ -14,7 +14,8 @@
             </MudAlert>
         }
         <div style="flex:1 1 auto;min-height:360px" data-testid="file-preview">
-            <MudExFileDisplay Dense="Density.Dense" Url="@Navigation.ToAbsoluteUri(Url).ToString()" ContentType="@ContentType" FileName="@Name" ShowFileName="false" Style="height:100%" />
+            <MudExFileDisplay Dense="Density.Dense" Url="@Navigation.ToAbsoluteUri(Url).ToString()" ContentType="@ContentType" FileName="@Name" ShowFileName="false" Style="height:100%"
+                              IgnoredRenderControls="IgnoredViewers" />
         </div>
     </DialogContent>
 </MudDialog>

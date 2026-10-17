@@ -70,6 +70,7 @@ internal sealed class ChatAttachmentHandlers(
             ContentType = contentType,
             Size = buffer.Length,
             BlobKey = key,
+            ThumbnailKey = await ThumbnailAsync(buffer, key, contentType, cancellationToken),
             UploadedAt = clock.GetUtcNow(),
         };
         db.Add(attachment);
@@ -85,12 +86,44 @@ internal sealed class ChatAttachmentHandlers(
             .Where(a => a.Id == query.AttachmentId && (a.MessageId != null || a.UploadedBy == me)
                         && db.Set<ChatMember>().Any(m => m.ConversationId == a.ConversationId && m.UserId == me))
             .SingleOrDefaultAsync(cancellationToken);
-        if (attachment is null || await storage.OpenReadAsync(attachment.BlobKey, cancellationToken) is not { } content)
+        var key = query.Thumbnail ? attachment?.ThumbnailKey : attachment?.BlobKey;
+        if (key is null || await storage.OpenReadAsync(key, cancellationToken) is not { } content)
         {
             return ChatErrors.MessageNotFound;
         }
 
-        return new ChatAttachmentContent(content, attachment.ContentType, attachment.Name);
+        return query.Thumbnail
+            ? new ChatAttachmentContent(content, ChatThumbnails.ContentType, Path.ChangeExtension(attachment!.Name, ".webp"))
+            : new ChatAttachmentContent(content, attachment!.ContentType, attachment.Name);
+    }
+
+    private async Task<string?> ThumbnailAsync(Stream buffer, string key, string contentType, CancellationToken cancellationToken)
+    {
+        if (!contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        buffer.Position = 0;
+        byte[]? thumbnail;
+        try
+        {
+            thumbnail = ChatThumbnails.Create(buffer);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            // a picture Skia cannot read is still sent, just without the small version
+            return null;
+        }
+
+        if (thumbnail is null)
+        {
+            return null;
+        }
+
+        var thumbnailKey = ChatThumbnails.KeyOf(key);
+        await storage.PutAsync(thumbnailKey, new MemoryStream(thumbnail), ChatThumbnails.ContentType, cancellationToken);
+        return thumbnailKey;
     }
 
     public async Task<long> MaxBytesAsync(CancellationToken cancellationToken)

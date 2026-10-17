@@ -21,18 +21,19 @@
             <div class="cw-chat-html">@((MarkupString)ChatMarkup.Prepare(Message.Html, Links, L["restricted"]))</div>
             @foreach (var file in Message.Attachments)
             {
-                var url = $"api/v1/chat/attachments/{file.Id}";
                 @if (file.IsImage)
                 {
-                    <a href="@url" target="_blank" rel="noopener" class="cw-chat-image"><img src="@url" alt="@file.Name" loading="lazy" /></a>
+                    <button type="button" class="cw-chat-image" title="@file.Name" @onclick="() => OpenAsync(file)" data-file="@file.Name">
+                        <img src="@Preview(file)" alt="@file.Name" loading="lazy" />
+                    </button>
                 }
                 else
                 {
-                    <a href="@($"{url}?download=true")" class="cw-chat-file" data-file="@file.Name">
+                    <button type="button" class="cw-chat-file" title="@file.Name" @onclick="() => OpenAsync(file)" data-file="@file.Name">
                         <MudIcon Icon="@Icons.Material.Outlined.InsertDriveFile" Size="Size.Small" />
                         <span class="cw-chat-ellipsis">@file.Name</span>
                         <span class="cw-chat-muted">@FileSize(file.Size)</span>
-                    </a>
+                    </button>
                 }
             }
         }
