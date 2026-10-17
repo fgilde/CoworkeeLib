@@ -13,7 +13,7 @@ using MudBlazor;
 namespace Coworkee.Client.Blazor.Components;
 
 /// <summary>
-/// A new chat message shows a snackbar with a link to the conversation, unless that conversation is open; the navigation shows the
+/// A new chat message shows a snackbar that opens the chat as mini chat, unless that chat is open already; the navigation shows the
 /// unread count on "/chat", live in every tab.
 /// </summary>
 public partial class ChatNotifier : IAsyncDisposable
@@ -38,6 +38,8 @@ public partial class ChatNotifier : IAsyncDisposable
     [Inject] private Navigation.CoworkeePages Links { get; set; } = null!;
 
     [Inject] private NavigationManager Nav { get; set; } = null!;
+
+    [Inject] private ChatDock Dock { get; set; } = null!;
 
     [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
 
@@ -80,36 +82,33 @@ public partial class ChatNotifier : IAsyncDisposable
             return;
         }
 
-        if (envelope.Type == ChatEvents.Message && envelope.Payload.Deserialize<ChatMessageDto>(JsonSerializerOptions.Web)?.ToUserId == _me)
+        if (envelope.Type != ChatEvents.Message || envelope.Payload.Deserialize<ChatMessageDto>(JsonSerializerOptions.Web) is not { } message || message.FromUserId == _me)
         {
-            await CountAsync();
+            return;
         }
 
-        if (envelope.Type != ChatEvents.Message || envelope.Payload.Deserialize<ChatMessageDto>(JsonSerializerOptions.Web) is not { } message
-            || message.FromUserId == _me || IsOpen(message.FromUserId))
+        await CountAsync();
+        // a new message, not an edit, reaction or deletion of an older one
+        if (message.EditedAt is not null || message.Deleted || message.Reactions.Count > 0 || DateTimeOffset.UtcNow - message.SentAt > TimeSpan.FromMinutes(1)
+            || IsOpen(message.ConversationId))
         {
             return;
         }
 
         var name = (await Cards.GetAsync(message.FromUserId))?.Name ?? L["Someone"];
         var text = message.Text.Length > Preview ? message.Text[..Preview] + "…" : message.Text;
-        var link = Links.Href($"/chat?with={message.FromUserId}")!;
         Snackbar.Add(L["{0}: {1}", name, text], Severity.Info, options =>
         {
             options.Action = L["Open chat"];
             options.ActionColor = Color.Primary;
-            options.OnClick = _ =>
-            {
-                Nav.NavigateTo(link);
-                return Task.CompletedTask;
-            };
+            options.OnClick = _ => Dock.OpenAsync(message.ConversationId);
         });
     }
 
-    private bool IsOpen(Guid contact)
+    private bool IsOpen(Guid conversationId)
     {
         var uri = new Uri(Nav.Uri);
-        return uri.AbsolutePath.TrimEnd('/').EndsWith("/chat", StringComparison.OrdinalIgnoreCase)
-            && uri.Query.Contains($"with={contact}", StringComparison.OrdinalIgnoreCase);
+        return Dock.IsOpen(conversationId) || (uri.AbsolutePath.TrimEnd('/').EndsWith("/chat", StringComparison.OrdinalIgnoreCase)
+            && uri.Query.Contains($"c={conversationId}", StringComparison.OrdinalIgnoreCase));
     }
 }

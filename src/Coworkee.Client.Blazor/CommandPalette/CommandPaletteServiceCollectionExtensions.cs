@@ -17,5 +17,6 @@ public static class CommandPaletteServiceCollectionExtensions
         services
             .AddCommandPaletteProvider<PagesPaletteProvider>()
             .AddCommandPaletteProvider<ActionsPaletteProvider>()
+            .AddCommandPaletteProvider<ChatPaletteProvider>()
             .AddCommandPaletteProvider<AssistantPaletteProvider>();
 }

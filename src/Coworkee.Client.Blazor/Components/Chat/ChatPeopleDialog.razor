@@ -1,0 +1,39 @@
+<MudDialog Class="@MudBlazor.Extensions.Helper.MudExCss.Classes.Dialog.Initial" data-testid="chat-people-dialog">
+    <DialogContent>
+        @if (AskName)
+        {
+            <MudTextField T="string" @bind-Value="_name" Label="@L["Group name"]" Required="true" MaxLength="200" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-3"
+                          data-testid="chat-group-name" />
+        }
+        <MudTextField T="string" @bind-Value="_filter" Immediate="true" Placeholder="@L["Search"]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search"
+                      Variant="Variant.Outlined" Margin="Margin.Dense" AutoFocus="true" data-testid="chat-people-filter" />
+        @if (_people is null)
+        {
+            <MudProgressLinear Indeterminate="true" Class="my-2" />
+        }
+        else
+        {
+            <div style="max-height:45vh;overflow-y:auto" class="mt-2" data-testid="chat-people">
+                @foreach (var person in Shown)
+                {
+                    <div class="cw-chat-person d-flex align-center gap-2 pa-1" data-person="@person.UserId" @onclick="() => PickAsync(person.UserId)">
+                        @if (Multiple)
+                        {
+                            <MudCheckBox T="bool" Value="_selected.Contains(person.UserId)" Dense="true" Size="Size.Small" ReadOnly="true" />
+                        }
+                        <UserAvatar UserId="person.UserId" Size="Size.Small" OfferChat="false" />
+                        <MudText Typo="Typo.body2">@person.Name</MudText>
+                    </div>
+                }
+            </div>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">@L["Cancel"]</MudButton>
+        @if (Multiple)
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Done" Disabled="@(_selected.Count == 0 || (AskName && string.IsNullOrWhiteSpace(_name)))"
+                       data-testid="chat-people-done">@(AskName ? L["Create group"] : L["Add"])</MudButton>
+        }
+    </DialogActions>
+</MudDialog>

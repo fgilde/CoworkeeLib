@@ -1,0 +1,42 @@
+@if (_available && Dock.Windows.Count > 0)
+{
+    <style>@ChatStyles.Css</style>
+    <div class="cw-chat-dock" data-testid="chat-dock">
+        @foreach (var window in Dock.Windows.Reverse())
+        {
+            var chat = _chats.GetValueOrDefault(window.ConversationId);
+            <section class="@($"cw-chat-window {(window.Minimized ? "minimized" : "open")}")" data-window="@window.ConversationId" aria-label="@chat?.Name">
+                <div class="cw-chat-window-head" @onclick="() => Dock.ToggleAsync(window.ConversationId)">
+                    @if (chat is { IsGroup: false } && Partner(chat) is { } partner)
+                    {
+                        <UserAvatar UserId="partner" Size="Size.Small" OfferChat="false" />
+                    }
+                    else
+                    {
+                        <MudAvatar Size="Size.Small" Color="Color.Primary"><MudIcon Icon="@Icons.Material.Outlined.Forum" Size="Size.Small" /></MudAvatar>
+                    }
+                    <MudText Typo="Typo.subtitle2" Class="cw-chat-ellipsis flex-grow-1">@(chat?.Name ?? "…")</MudText>
+                    @if (window.Minimized && _unread.GetValueOrDefault(window.ConversationId) is > 0 and var unread)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Secondary" data-testid="chat-window-unread">@unread</MudChip>
+                    }
+                    <span class="d-flex" @onclick:stopPropagation="true">
+                        <MudIconButton Icon="@Icons.Material.Outlined.OpenInFull" Size="Size.Small" OnClick="() => Dock.OpenFullAsync(window.ConversationId)" title="@L["Open in the chat"]"
+                                       aria-label="@L["Open in the chat"]" data-testid="chat-window-full" />
+                        <MudIconButton Icon="@(window.Minimized ? Icons.Material.Outlined.ExpandLess : Icons.Material.Outlined.Remove)" Size="Size.Small"
+                                       OnClick="() => Dock.ToggleAsync(window.ConversationId)" title="@(window.Minimized ? L["Open"] : L["Minimize"])"
+                                       aria-label="@(window.Minimized ? L["Open"] : L["Minimize"])" data-testid="chat-window-toggle" />
+                        <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small" OnClick="() => Dock.CloseAsync(window.ConversationId)" title="@L["Close"]"
+                                       aria-label="@L["Close"]" data-testid="chat-window-close" />
+                    </span>
+                </div>
+                @if (!window.Minimized)
+                {
+                    <div class="cw-chat-window-body">
+                        <ChatThread ConversationId="window.ConversationId" Compact="true" />
+                    </div>
+                }
+            </section>
+        }
+    </div>
+}

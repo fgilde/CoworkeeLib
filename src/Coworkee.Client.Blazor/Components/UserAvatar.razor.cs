@@ -1,6 +1,8 @@
+using Coworkee.Client.Blazor.Chat;
 using Coworkee.Client.Blazor.People;
 using Coworkee.Contracts.Identity;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Components;
@@ -10,10 +12,19 @@ public partial class UserAvatar : IDisposable
 {
     private UserCardDto? _card;
     private bool _online;
+    private bool _offerChat;
 
     [Inject] private UserCards Cards { get; set; } = null!;
 
     [Inject] private Presence Presence { get; set; } = null!;
+
+    [Inject] private IServiceProvider Services { get; set; } = null!;
+
+    [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
+
+    [Inject] private Navigation.CoworkeePages Links { get; set; } = null!;
+
+    [CascadingParameter] private Task<Microsoft.AspNetCore.Components.Authorization.AuthenticationState>? AuthenticationState { get; set; }
 
     [Parameter, EditorRequired] public Guid UserId { get; set; }
 
@@ -26,6 +37,9 @@ public partial class UserAvatar : IDisposable
 
     /// <summary>A green dot while the user is online.</summary>
     [Parameter] public bool ShowPresence { get; set; } = true;
+
+    /// <summary>A click offers "Chat" (the mini chat) and the profile, for other people while the user may chat; off inside lists that select on click.</summary>
+    [Parameter] public bool OfferChat { get; set; } = true;
 
     private string? StyleText => Pixels is { } px ? $"width:{px}px;height:{px}px;font-size:{px / 2.5}px" : null;
 
@@ -47,7 +61,17 @@ public partial class UserAvatar : IDisposable
         }
 
         _online = ShowPresence && await Presence.IsOnlineAsync(UserId);
+        _offerChat = OfferChat && _card is not null && await MayChatAsync();
     }
+
+    private async Task<bool> MayChatAsync()
+    {
+        var user = AuthenticationState is null ? null : (await AuthenticationState).User;
+        return Guid.TryParse(user?.FindFirst("sub")?.Value, out var me) && me != UserId && Services.GetService<ChatDock>() is not null
+            && Services.GetService<Security.PermissionStore>() is { } permissions && await permissions.HasAsync(Contracts.Chat.ChatPermissions.Use);
+    }
+
+    private Task ChatAsync() => Services.GetRequiredService<ChatDock>().OpenWithAsync(UserId);
 
     public void Dispose()
     {

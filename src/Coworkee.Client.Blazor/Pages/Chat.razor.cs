@@ -1,187 +1,195 @@
 using System.Text.Json;
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Chat;
+using Coworkee.Client.Blazor.Components.Chat;
+using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Realtime;
 using Coworkee.Contracts.Chat;
 using Coworkee.Contracts.Realtime;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
+using MudBlazor.Extensions;
 
 namespace Coworkee.Client.Blazor.Pages;
 
+/// <summary>All chats of the user: direct and group chats with unread counts, one open with its members, search and group settings.</summary>
 public partial class Chat : IAsyncDisposable
 {
-    private IReadOnlyList<ChatContactDto> _contacts = [];
-    private List<ChatMessageDto> _messages = [];
-    private ChatContactDto? _contact;
+    private IReadOnlyList<ChatConversationDto> _chats = [];
+    private ChatConversationDto? _chat;
     private string? _filter;
-    private string? _text;
+    private string? _search;
+    private bool _searching;
     private Guid _me;
     private IAsyncDisposable? _subscription;
 
     [Inject] private IChatApi Api { get; set; } = null!;
 
+    [Inject] private ChatDock Dock { get; set; } = null!;
+
     [Inject] private RealtimeClient Realtime { get; set; } = null!;
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
+
+    [Inject] private IDialogService Dialogs { get; set; } = null!;
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
     [Inject] private NavigationManager Nav { get; set; } = null!;
 
-    [Inject] private People.UserCards Cards { get; set; } = null!;
+    /// <summary>The chat to open, e.g. from a notification.</summary>
+    [SupplyParameterFromQuery(Name = "c")] public Guid? Conversation { get; set; }
 
-    /// <summary>The person whose conversation is open, e.g. from the snackbar of a new message.</summary>
+    /// <summary>The person whose direct chat to open; it is created on first use.</summary>
     [SupplyParameterFromQuery(Name = "with")] public Guid? With { get; set; }
 
     [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
 
-    private IEnumerable<ChatContactDto> Contacts =>
-        string.IsNullOrWhiteSpace(_filter) ? _contacts : _contacts.Where(c => c.Name.Contains(_filter, StringComparison.CurrentCultureIgnoreCase));
+    private IEnumerable<ChatConversationDto> Chats =>
+        string.IsNullOrWhiteSpace(_filter) ? _chats : _chats.Where(c => c.Name.Contains(_filter, StringComparison.CurrentCultureIgnoreCase));
+
+    private bool IsOwner => _chat?.Members.Any(m => m.UserId == _me && m.IsOwner) == true;
 
     protected override async Task OnInitializedAsync()
     {
-        Cards.Changed += Renamed;
         var user = AuthenticationState is null ? null : (await AuthenticationState).User;
         if (Guid.TryParse(user?.FindFirst("sub")?.Value, out _me))
         {
             _subscription = await Realtime.SubscribeAsync(RealtimeTopics.User(_me), envelope => InvokeAsync(() => ReceiveAsync(envelope)));
         }
 
-        await Snackbar.RunAsync(LoadContactsAsync);
+        await Snackbar.RunAsync(LoadAsync);
     }
 
     protected override async Task OnParametersSetAsync()
     {
-        if (With is { } with && _contact?.UserId != with && _contacts.FirstOrDefault(c => c.UserId == with) is { } contact)
+        if (With is { } with && Partner(_chat) != with)
         {
-            await OpenAsync(contact);
+            await Snackbar.RunAsync(async () => await ShowAsync(await Api.OpenDirectAsync(with)));
+        }
+        else if (Conversation is { } id && _chat?.Id != id)
+        {
+            await Snackbar.RunAsync(async () => await ShowAsync(_chats.FirstOrDefault(c => c.Id == id) ?? await Api.GetChatAsync(id)));
         }
     }
 
     public async ValueTask DisposeAsync()
     {
-        Cards.Changed -= Renamed;
         if (_subscription is not null)
         {
             await _subscription.DisposeAsync();
         }
     }
 
-    private async Task OpenAsync(ChatContactDto? contact)
-    {
-        // the list reports "nothing selected" while it renders a selection it has not seen yet; that must not drop the open conversation
-        if (contact is null)
-        {
-            return;
-        }
+    private Guid? Partner(ChatConversationDto? chat) => chat is { IsGroup: false } ? chat.Members.FirstOrDefault(m => m.UserId != _me)?.UserId : null;
 
-        _contact = contact;
-        _messages = [];
-        Nav.NavigateTo(Nav.GetUriWithQueryParameter("with", contact.UserId), replace: true);
-        await Snackbar.RunAsync(async () =>
-        {
-            _messages = [.. await Api.GetConversationAsync(contact.UserId)];
-            await MarkReadAsync(contact);
-        });
+    private async Task LoadAsync()
+    {
+        _chats = await Api.GetChatsAsync();
+        _chat = _chat is null ? null : _chats.FirstOrDefault(c => c.Id == _chat.Id) ?? _chat;
     }
 
-    private async Task SendAsync()
+    private Task SelectAsync(ChatConversationDto chat)
     {
-        if (_contact is null || string.IsNullOrWhiteSpace(_text))
-        {
-            return;
-        }
-
-        var text = _text;
-        _text = null;
-        if (!await Snackbar.RunAsync(async () => Add(await Api.SendAsync(_contact.UserId, text))))
-        {
-            _text = text;
-        }
+        Nav.NavigateTo(Nav.GetUriWithQueryParameters(new Dictionary<string, object?> { ["c"] = chat.Id, ["with"] = null }), replace: true);
+        return ShowAsync(chat);
     }
 
-    private async Task KeyDownAsync(KeyboardEventArgs args)
+    private async Task ShowAsync(ChatConversationDto chat)
     {
-        if (args is { Key: "Enter", ShiftKey: false })
+        _chat = chat;
+        _search = null;
+        _searching = false;
+        if (_chats.All(c => c.Id != chat.Id))
         {
-            await SendAsync();
+            await LoadAsync();
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task NewChatAsync()
+    {
+        if (await Dialogs.PickPeopleAsync(L["Chat with…"]) is { UserIds: [var userId] })
+        {
+            await Snackbar.RunAsync(async () => await SelectAsync(await Api.OpenDirectAsync(userId)));
         }
     }
 
+    private async Task NewGroupAsync()
+    {
+        if (await Dialogs.PickPeopleAsync(L["New group"], multiple: true, askName: true) is { Name: { Length: > 0 } name } pick)
+        {
+            await Snackbar.RunAsync(async () => await SelectAsync(await Api.CreateGroupAsync(name, pick.UserIds)));
+        }
+    }
+
+    private async Task RenameAsync()
+    {
+        var name = await Dialogs.PromptAsync(L["Rename"], L["Group name"], _chat!.Name, L["Save"], L["Cancel"], canConfirm: n => !string.IsNullOrWhiteSpace(n));
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            await Snackbar.RunAsync(async () => _chat = await Api.RenameAsync(_chat.Id, name.Trim()));
+        }
+    }
+
+    private async Task AddMembersAsync()
+    {
+        if (await Dialogs.PickPeopleAsync(L["Add people"], multiple: true, exclude: [.. _chat!.Members.Select(m => m.UserId)]) is { } pick)
+        {
+            await Snackbar.RunAsync(async () => _chat = await Api.AddMembersAsync(_chat.Id, pick.UserIds));
+        }
+    }
+
+    private async Task RemoveAsync(ChatMemberDto member)
+    {
+        if (await Dialogs.ConfirmAsync(L["Remove"], L["Remove {0} from the group?", member.Name], L["Remove"], L["Cancel"], Icons.Material.Outlined.PersonRemove))
+        {
+            await Snackbar.RunAsync(() => Api.RemoveMemberAsync(_chat!.Id, member.UserId));
+        }
+    }
+
+    private async Task LeaveAsync()
+    {
+        if (await Dialogs.ConfirmAsync(L["Leave group"], L["Leave {0}? You will no longer see its messages.", _chat!.Name], L["Leave"], L["Cancel"], Icons.Material.Outlined.Logout)
+            && await Snackbar.RunAsync(() => Api.RemoveMemberAsync(_chat.Id, _me)))
+        {
+            _chat = null;
+            await Snackbar.RunAsync(LoadAsync);
+        }
+    }
+
+    private void ToggleSearch()
+    {
+        _searching = !_searching;
+        _search = null;
+    }
+
+    private void SearchAsync(string? text) => _search = text;
+
+    // counts and last messages follow every chat event
     private async Task ReceiveAsync(RealtimeEnvelope envelope)
     {
-        if (envelope.Type == ChatEvents.Read && envelope.Payload.Deserialize<ChatReadDto>(JsonSerializerOptions.Web) is { } read)
-        {
-            await ReadAsync(read);
-            return;
-        }
-
-        if (envelope.Type != ChatEvents.Message || envelope.Payload.Deserialize<ChatMessageDto>(JsonSerializerOptions.Web) is not { } message)
+        if (envelope.Type is not (ChatEvents.Message or ChatEvents.Read or ChatEvents.Conversation))
         {
             return;
         }
 
-        var other = message.FromUserId == _me ? message.ToUserId : message.FromUserId;
-        if (_contact?.UserId == other)
+        if (envelope.Type == ChatEvents.Conversation && envelope.Payload.Deserialize<ChatConversationDto>(JsonSerializerOptions.Web) is { } changed && changed.Id == _chat?.Id)
         {
-            Add(message);
-            if (message.FromUserId == other)
-            {
-                await MarkReadAsync(_contact);
-            }
+            _chat = changed.Members.Any(m => m.UserId == _me) ? changed : null;
         }
 
-        await LoadContactsAsync();
+        try
+        {
+            await LoadAsync();
+        }
+        catch (Exception exception) when (exception is ApiException or HttpRequestException)
+        {
+        }
+
         StateHasChanged();
     }
-
-    // read in another tab, or the open contact read what I sent
-    private async Task ReadAsync(ChatReadDto read)
-    {
-        if (read.ReaderId == _contact?.UserId)
-        {
-            _messages = [.. _messages.Select(m => m.FromUserId == _me && m.ReadAt is null ? m with { ReadAt = read.ReadAt } : m)];
-        }
-
-        await LoadContactsAsync();
-        StateHasChanged();
-    }
-
-    // a contact changed name or picture
-    private void Renamed(Guid userId) => _ = InvokeAsync(async () =>
-    {
-        if (_contacts.Any(c => c.UserId == userId))
-        {
-            await LoadContactsAsync();
-            StateHasChanged();
-        }
-    });
-
-    private void Add(ChatMessageDto message)
-    {
-        if (_messages.All(m => m.Id != message.Id))
-        {
-            _messages.Add(message);
-        }
-    }
-
-    private async Task MarkReadAsync(ChatContactDto contact)
-    {
-        if (contact.Unread > 0 || _messages.Any(m => m.FromUserId == contact.UserId && m.ReadAt is null))
-        {
-            await Api.MarkReadAsync(contact.UserId);
-            await LoadContactsAsync();
-        }
-    }
-
-    private async Task LoadContactsAsync()
-    {
-        _contacts = await Api.GetContactsAsync();
-        _contact = _contact is null ? null : _contacts.FirstOrDefault(c => c.UserId == _contact.UserId) ?? _contact;
-    }
-
 }

@@ -12,7 +12,8 @@ namespace Coworkee.Client.Blazor.Realtime;
 /// the server) refreshes the count and raises <see cref="Changed"/> once, also for bursts like "mark all as read".
 /// </summary>
 public sealed class NotificationCenter(
-    ICoworkeeApi api, RealtimeClient realtime, AuthenticationStateProvider authentication, NavigationManager navigation, Navigation.CoworkeePages links) : IAsyncDisposable
+    ICoworkeeApi api, RealtimeClient realtime, AuthenticationStateProvider authentication, NavigationManager navigation, Navigation.CoworkeePages links,
+    Chat.ChatDock? dock = null) : IAsyncDisposable
 {
     private const string EntityType = "Notification";
     private static readonly TimeSpan Settle = TimeSpan.FromMilliseconds(250);
@@ -42,7 +43,7 @@ public sealed class NotificationCenter(
         Changed?.Invoke(arrived);
     }
 
-    /// <summary>Marks the notification read and goes to its link when that is a page of this app.</summary>
+    /// <summary>Marks the notification read and goes to its link when that is a page of this app; a chat opens as mini chat.</summary>
     public async Task OpenAsync(NotificationDto item)
     {
         if (item.ReadAt is null)
@@ -58,7 +59,11 @@ public sealed class NotificationCenter(
             await RefreshAsync();
         }
 
-        if (item.Link is { Length: > 0 } link && link.StartsWith('/') && !link.StartsWith("//", StringComparison.Ordinal))
+        if (item.Link is { } chatLink && dock is { Available: true } && chatLink.StartsWith("/chat?c=", StringComparison.Ordinal) && Guid.TryParse(chatLink[8..], out var chat))
+        {
+            await dock.OpenAsync(chat);
+        }
+        else if (item.Link is { Length: > 0 } link && link.StartsWith('/') && !link.StartsWith("//", StringComparison.Ordinal))
         {
             navigation.NavigateTo(links.Href(link) ?? link);
         }

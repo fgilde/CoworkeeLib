@@ -1,68 +1,96 @@
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + ChatPermissions.Use)]
 
-<PageHeader Title="Chat" Description="Direct messages with the people of your organisation." />
+<PageHeader Title="Chat" Description="Direct and group chats with the people of your organisation." />
 <MudGrid Spacing="2">
     <MudItem xs="12" md="4">
-        <MudPaper Outlined="true" Class="pa-2" Style="height:65vh;overflow:auto">
-            <MudTextField T="string" @bind-Value="_filter" Immediate="true" Placeholder="@L["Search"]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search"
-                          Variant="Variant.Outlined" Margin="Density.Margin" Class="mb-2" />
-            <MudList T="ChatContactDto" Dense="Density.Dense" SelectedValue="_contact" SelectedValueChanged="OpenAsync" data-testid="chat-contacts">
-                @foreach (var contact in Contacts)
+        <MudPaper Outlined="true" Class="pa-2 d-flex flex-column" Style="height:70vh">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-2">
+                <MudTextField T="string" @bind-Value="_filter" Immediate="true" Placeholder="@L["Search"]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search"
+                              Variant="Variant.Outlined" Margin="Margin.Dense" />
+                <MudTooltip Text="@L["Chat with…"]">
+                    <MudIconButton Icon="@Icons.Material.Outlined.MapsUgc" OnClick="NewChatAsync" aria-label="@L["Chat with…"]" data-testid="chat-new" />
+                </MudTooltip>
+                <MudTooltip Text="@L["New group"]">
+                    <MudIconButton Icon="@Icons.Material.Outlined.GroupAdd" OnClick="NewGroupAsync" aria-label="@L["New group"]" data-testid="chat-new-group" />
+                </MudTooltip>
+            </MudStack>
+            <div style="flex:1;overflow:auto" data-testid="chat-contacts">
+                @if (!Chats.Any())
                 {
-                    <MudListItem Value="contact" data-contact="@contact.UserId">
-                        <MudStack Row="true" AlignItems="AlignItems.Center">
-                            <UserAvatar UserId="contact.UserId" Size="Size.Small" />
-                            <MudStack Spacing="0" Style="min-width:0;flex:1">
-                                <MudText Typo="Typo.body2" Style="@(contact.Unread > 0 ? "font-weight:600" : null)">@contact.Name</MudText>
-                                <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">@contact.LastMessage</MudText>
-                            </MudStack>
-                            @if (contact.Unread > 0)
-                            {
-                                <MudChip T="string" Size="Size.Small" Color="Color.Secondary">@contact.Unread</MudChip>
-                            }
-                        </MudStack>
-                    </MudListItem>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary pa-2">@L["No chats yet. Start one with a person or a group."]</MudText>
                 }
-            </MudList>
+                @foreach (var chat in Chats)
+                {
+                    <div class="@($"cw-chat-person d-flex align-center gap-2 pa-2 {(chat.Id == _chat?.Id ? "mud-selected-item mud-primary-hover" : null)}")" data-conversation="@chat.Id"
+                         data-contact="@(chat.IsGroup ? null : Partner(chat))" @onclick="() => SelectAsync(chat)">
+                        @if (!chat.IsGroup && Partner(chat) is { } partner)
+                        {
+                            <UserAvatar UserId="partner" Size="Size.Small" OfferChat="false" />
+                        }
+                        else
+                        {
+                            <MudAvatar Size="Size.Small" Color="Color.Primary"><MudIcon Icon="@Icons.Material.Outlined.Forum" Size="Size.Small" /></MudAvatar>
+                        }
+                        <div style="min-width:0;flex:1">
+                            <MudText Typo="Typo.body2" Style="@(chat.Unread > 0 ? "font-weight:600" : null)">@chat.Name</MudText>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary cw-chat-ellipsis d-block">@chat.LastMessage</MudText>
+                        </div>
+                        @if (chat.Unread > 0)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Secondary">@chat.Unread</MudChip>
+                        }
+                    </div>
+                }
+            </div>
         </MudPaper>
     </MudItem>
     <MudItem xs="12" md="8">
-        <MudPaper Outlined="true" Class="pa-3 d-flex flex-column" Style="height:65vh">
-            @if (_contact is null)
+        <MudPaper Outlined="true" Class="pa-3 d-flex flex-column" Style="height:70vh">
+            @if (_chat is null)
             {
-                <MudText Class="mud-text-secondary ma-auto">@L["Pick a person to chat with."]</MudText>
+                <MudText Class="mud-text-secondary ma-auto">@L["Pick a chat or start a new one."]</MudText>
             }
             else
             {
-                <MudText Typo="Typo.h6" Class="mb-2">@_contact.Name</MudText>
-                <div style="flex:1;overflow:auto" data-testid="chat-messages">
-                    @foreach (var message in _messages)
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-1">
+                    <MudText Typo="Typo.h6" Class="cw-chat-ellipsis" data-testid="chat-title">@_chat.Name</MudText>
+                    @if (_chat.IsGroup)
                     {
-                        var mine = message.FromUserId == _me;
-                        <div class="d-flex align-end gap-2 @(mine ? "justify-end" : "justify-start") my-1">
-                            @if (!mine)
+                        <MudAvatarGroup Max="5" Spacing="2" MaxSize="Size.Small" Class="ml-2">
+                            @foreach (var member in _chat.Members)
                             {
-                                <UserAvatar UserId="message.FromUserId" Size="Size.Small" />
+                                <UserAvatar UserId="member.UserId" Size="Size.Small" ShowTooltip="true" />
                             }
-                            <MudPaper Elevation="0" Class="@($"px-3 py-2 {(mine ? "mud-theme-primary" : "mud-background-gray")}")" Style="max-width:75%;border-radius:12px;white-space:pre-wrap">
-                                <MudText Typo="Typo.body2">@message.Text</MudText>
-                                <MudText Typo="Typo.caption" Style="opacity:.7">
-                                    @message.SentAt.ToLocalTime().ToString("g")
-                                    @if (mine && message.ReadAt is not null)
-                                    {
-                                        <MudIcon Icon="@Icons.Material.Filled.DoneAll" Size="Size.Small" Style="font-size:.9rem;vertical-align:middle" Title="@L["Read"]" data-testid="chat-read" />
-                                    }
-                                </MudText>
-                            </MudPaper>
-                        </div>
+                        </MudAvatarGroup>
                     }
-                </div>
-                <MudStack Row="true" AlignItems="AlignItems.End" Class="mt-2">
-                    <MudTextField Margin="Density.Margin" T="string" @bind-Value="_text" Lines="2" Variant="Variant.Outlined" Placeholder="@L["Write a message"]" Immediate="true"
-                                  OnKeyDown="KeyDownAsync" MaxLength="4000" data-testid="chat-text" />
-                    <MudIconButton Icon="@Icons.Material.Filled.Send" Color="Color.Primary" Disabled="string.IsNullOrWhiteSpace(_text)" OnClick="SendAsync"
-                                   aria-label="@L["Send"]" data-testid="chat-send" />
+                    <MudSpacer />
+                    @if (_searching)
+                    {
+                        <MudTextField T="string" Value="_search" ValueChanged="SearchAsync" Placeholder="@L["Search in this chat"]" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                      DebounceInterval="300" Immediate="true" AutoFocus="true" Style="max-width:220px" data-testid="chat-search" />
+                    }
+                    <MudIconButton Icon="@(_searching ? Icons.Material.Outlined.SearchOff : Icons.Material.Outlined.Search)" OnClick="ToggleSearch" aria-label="@L["Search in this chat"]" />
+                    <MudIconButton Icon="@Icons.Material.Outlined.PictureInPictureAlt" OnClick="() => Dock.OpenAsync(_chat.Id)" aria-label="@L["Open as mini chat"]"
+                                   title="@L["Open as mini chat"]" data-testid="chat-to-dock" />
+                    @if (_chat.IsGroup)
+                    {
+                        <MudMenu Icon="@Icons.Material.Outlined.MoreVert" AriaLabel="@L["Group"]" data-testid="chat-group-menu">
+                            <MudMenuItem Icon="@Icons.Material.Outlined.Edit" OnClick="RenameAsync">@L["Rename"]</MudMenuItem>
+                            <MudMenuItem Icon="@Icons.Material.Outlined.PersonAdd" OnClick="AddMembersAsync" data-testid="chat-add-members">@L["Add people"]</MudMenuItem>
+                            @if (IsOwner)
+                            {
+                                @foreach (var member in _chat.Members.Where(m => m.UserId != _me))
+                                {
+                                    <MudMenuItem Icon="@Icons.Material.Outlined.PersonRemove" OnClick="() => RemoveAsync(member)">@L["Remove {0}", member.Name]</MudMenuItem>
+                                }
+                            }
+                            <MudMenuItem Icon="@Icons.Material.Outlined.Logout" OnClick="LeaveAsync" data-testid="chat-leave">@L["Leave group"]</MudMenuItem>
+                        </MudMenu>
+                    }
                 </MudStack>
+                <div style="flex:1;min-height:0">
+                    <ChatThread @key="_chat.Id" ConversationId="_chat.Id" Search="@(_searching ? _search : null)" />
+                </div>
             }
         </MudPaper>
     </MudItem>
