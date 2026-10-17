@@ -194,7 +194,7 @@ public static class OptionCatalog
              new("Midnight", "Indigo, monospace headings."), new("Sunset", "Pink, rounded, roomy."), new("HighContrast", "Black and white, no shadows."),
              new("Octo", "Neutral grays and blue, like a code hosting site."), new("Code", "Editor look: compact, dark gray with blue."), new("Arctic", "Cool polar blues and frost."),
              new("Vampire", "Purple and pink on a night background."), new("Solar", "Warm cream and deep teal, serif headings."), new("Atom", "Soft editor grays, blue and violet."),
-             new("Paper", "Plain white paper, serif headings, flat."), new("Aubergine", "Dark purple navigation, green accents.")]),
+             new("Paper", "Plain white paper, serif headings, flat."), new("Aubergine", "Aubergine app bar, green accents.")]),
         new("primaryColor", Branding, "Primary color", "Primary brand color #rrggbb. With a brand color the app gets its own theme (named like the title), based on the chosen theme, as default.", OptionKind.Color, null,
             "When the app should carry the brand color.", ["Contrast text is computed"], ["The title must not be the name of a built-in theme"]),
         new("secondaryColor", Branding, "Secondary color", "Secondary brand color #rrggbb.", OptionKind.Color, null,

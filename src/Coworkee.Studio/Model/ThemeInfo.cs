@@ -97,7 +97,7 @@ public sealed record ThemeInfo(string Name, Palette Light, Palette Dark, double 
             P("#529cca", "#d4d4d4", "#191919", "#202020", "#191919", "#d4d4d4", "#202020", "#d4d4d4", "#9b9b9b", "#2f2f2f"),
             4, new FontFamily("Georgia, Cambria, Times New Roman")),
         new("Aubergine",
-            P("#611f69", "#007a5a", "#f8f8f8", "#ffffff", "#3f0e40", "#ffffff", "#3f0e40", "#1d1c1d", "#616061", "#dddddd"),
+            P("#611f69", "#007a5a", "#f8f8f8", "#ffffff", "#3f0e40", "#ffffff", "#f4eef5", "#1d1c1d", "#616061", "#dddddd"),
             P("#c79fd0", "#2bac76", "#1a1d21", "#222529", "#350d36", "#ffffff", "#19171d", "#d1d2d3", "#ababad", "#35373b"),
             8, new FontFamily("Lato, Segoe UI, Arial")),
     ];

@@ -51,7 +51,7 @@ Jedes hat eine helle und eine dunkle Palette. Die Namen deuten nur an, was sie i
 | Solar | warmes Creme und tiefes Petrol, Bernstein als Akzent | Georgia / Segoe UI | 4 px |
 | Atom | sanfte Editor-Grautöne, Blau und Violett | Cascadia Code / Inter, kompakt | 6 px |
 | Paper | schlichtes weißes Papier, flach (ohne Schatten) | Georgia / Inter | 4 px |
-| Aubergine | dunkellila Navigation, grüne Akzente | Lato | 8 px |
+| Aubergine | auberginefarbene App-Leiste (im dunklen Modus auch die Navigation), grüne Akzente | Lato | 8 px |
 
 ![Die acht neueren eingebauten Themes im hellen Modus](../assets/screenshots/themes-builtin-light.webp){ .shot }
 

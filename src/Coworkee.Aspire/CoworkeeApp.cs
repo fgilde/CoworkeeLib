@@ -67,8 +67,9 @@ public sealed partial class CoworkeeApp
         WithInitialAdmin(Migrations);
         if (LocalDevelopment)
         {
-            // the migrations project has no launch profile and runs as Production; the dev sync of the seed users still belongs to a local run
-            Migrations.WithEnvironment("Coworkee__Identity__SyncDevelopmentUsers", "true");
+            // the migrations project has no launch profile and would run as Production: no seed of the development users, so a new app showed its setup page
+            Migrations.WithEnvironment("DOTNET_ENVIRONMENT", Builder.Environment.EnvironmentName)
+                .WithEnvironment("Coworkee__Identity__SyncDevelopmentUsers", "true");
         }
 
         WireGrafanaTelemetry(Migrations);

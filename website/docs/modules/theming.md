@@ -51,7 +51,7 @@ Each one has a light and a dark palette. The names only hint at what inspired th
 | Solar | warm cream and deep teal, amber accent | Georgia / Segoe UI | 4 px |
 | Atom | soft editor grays, blue and violet | Cascadia Code / Inter, dense | 6 px |
 | Paper | plain white paper, flat (no shadows) | Georgia / Inter | 4 px |
-| Aubergine | dark purple navigation, green accents | Lato | 8 px |
+| Aubergine | aubergine app bar (and navigation in dark mode), green accents | Lato | 8 px |
 
 ![The eight newer built-in themes in light mode](../assets/screenshots/themes-builtin-light.webp){ .shot }
 

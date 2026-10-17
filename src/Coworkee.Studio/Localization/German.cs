@@ -600,7 +600,7 @@ public static class German
         ["Warm cream and deep teal, serif headings."] = "Warmes Creme und tiefes Petrol, Überschriften mit Serifen.",
         ["Soft editor grays, blue and violet."] = "Sanfte Editor-Grautöne, Blau und Violett.",
         ["Plain white paper, serif headings, flat."] = "Schlichtes weißes Papier, Überschriften mit Serifen, flach.",
-        ["Dark purple navigation, green accents."] = "Dunkellila Navigation, grüne Akzente.",
+        ["Aubergine app bar, green accents."] = "Auberginefarbene App-Leiste, grüne Akzente.",
         ["Black and white, no shadows."] = "Schwarz-weiß, ohne Schatten.",
         ["Primary color"] = "Primärfarbe",
         ["Primary brand color #rrggbb. With a brand color the app gets its own theme (named like the title), based on the chosen theme, as default."] = "Primäre Markenfarbe #rrggbb. Mit einer Markenfarbe bekommt die App ein eigenes Theme (benannt wie der Titel) auf Basis des gewählten Themes als Standard.",

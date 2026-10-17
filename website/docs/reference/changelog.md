@@ -11,6 +11,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixes
 
+- A new app run locally showed its setup page instead of signing in with the development users: the migrations project has no launch profile and ran as Production, so `DemoSeed` was skipped. `AddMigrations` passes the app host's environment (`DOTNET_ENVIRONMENT`) to the migrations of a local run.
 - The setup page of a system that is already set up goes to the app; a setup tab left open leaves for the app when it gets the focus again or another tab finishes the setup.
 - Built-in themes were listed twice when requests seeded them at the same moment (SQL Server and SQLite let the unique index repeat null tenants). Seeding runs once at a time per process and removes such copies (the one an organisation uses stays).
 

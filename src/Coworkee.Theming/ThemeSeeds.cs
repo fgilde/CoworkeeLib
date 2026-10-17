@@ -276,8 +276,8 @@ internal static class ThemeSeeds
             options: new() { ["ShowLogoInNav"] = true, ["ShowLogoInAppBar"] = false },
             flat: true),
         Theme("Aubergine",
-            light: Colors("#611f69", "#ffffff", "#007a5a", "#ffffff", "#f8f8f8", "#ffffff", "#3f0e40", "#ffffff", "#3f0e40", "#1d1c1d", "#616061", "#dddddd", drawerText: "#f3e9f3"),
-            dark: Colors("#c79fd0", "#1a1d21", "#2bac76", "#1a1d21", "#1a1d21", "#222529", "#350d36", "#ffffff", "#19171d", "#d1d2d3", "#ababad", "#35373b", drawerText: "#d1d2d3"),
+            light: Colors("#611f69", "#ffffff", "#007a5a", "#ffffff", "#f8f8f8", "#ffffff", "#3f0e40", "#ffffff", "#f4eef5", "#1d1c1d", "#616061", "#dddddd"),
+            dark: Colors("#c79fd0", "#1a1d21", "#2bac76", "#1a1d21", "#1a1d21", "#222529", "#350d36", "#ffffff", "#19171d", "#d1d2d3", "#ababad", "#35373b"),
             layout: Layout("8px", "280px", "56px"),
             typography: Fonts(Friendly, Friendly),
             options: new() { ["ShowLogoInNav"] = true, ["NavSingleExpand"] = true }),
@@ -285,22 +285,12 @@ internal static class ThemeSeeds
 
     private static Dictionary<string, string> Colors(
         string primary, string primaryText, string secondary, string secondaryText, string background, string surface, string appbar, string appbarText,
-        string drawer, string text, string textSecondary, string lines, string? drawerText = null)
-    {
-        var colors = new Dictionary<string, string>
+        string drawer, string text, string textSecondary, string lines) => new()
         {
             ["Primary"] = primary, ["PrimaryContrastText"] = primaryText, ["Secondary"] = secondary, ["SecondaryContrastText"] = secondaryText,
             ["Background"] = background, ["Surface"] = surface, ["AppbarBackground"] = appbar, ["AppbarText"] = appbarText, ["DrawerBackground"] = drawer,
             ["TextPrimary"] = text, ["TextSecondary"] = textSecondary, ["LinesDefault"] = lines,
         };
-        if (drawerText is not null)
-        {
-            colors["DrawerText"] = drawerText;
-            colors["DrawerIcon"] = drawerText;
-        }
-
-        return colors;
-    }
 
     private static Dictionary<string, object> Layout(string radius, string drawerWidth, string appbarHeight) =>
         new() { ["DefaultBorderRadius"] = radius, ["DrawerWidthLeft"] = drawerWidth, ["AppbarHeight"] = appbarHeight };

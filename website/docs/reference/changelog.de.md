@@ -11,6 +11,7 @@
 
 ### Korrekturen
 
+- Eine neue App zeigte lokal ihre Setup-Seite, statt mit den Entwicklungsbenutzern anzumelden: Das Migrationsprojekt hat kein Launch-Profil und lief als Production, also fiel `DemoSeed` weg. `AddMigrations` gibt den Migrationen eines lokalen Laufs die Umgebung des AppHosts mit (`DOTNET_ENVIRONMENT`).
 - Die Setup-Seite eines bereits eingerichteten Systems führt zur App; ein offener Setup-Tab wechselt zur App, sobald er wieder den Fokus bekommt oder ein anderer Tab das Setup abschließt.
 - Eingebaute Themes standen doppelt in der Liste, wenn Anfragen sie gleichzeitig anlegten (SQL Server und SQLite lassen im eindeutigen Index leere Mandanten mehrfach zu). Das Anlegen läuft pro Prozess nur einmal gleichzeitig und entfernt solche Kopien (die Kopie, die eine Organisation nutzt, bleibt).
 
