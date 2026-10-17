@@ -5,6 +5,7 @@ import { choices, crudApp, renderCrud } from '../../crud.ts';
 import { esc } from '../../dom.ts';
 import { confirmDialog, formDialog, infoDialog, type Field, type Values } from '../../form.ts';
 import { icons } from '../../icons.ts';
+import { recordAppId } from '../record.ts';
 
 type Language = Schemas['LanguageDto'];
 type Theme = Schemas['ThemeDto'];
@@ -236,12 +237,20 @@ const changesTable = (coworkee: Coworkee, changes: Schemas['AuditChangeDto'][]) 
   <th>${esc(coworkee.t('Changes'))}</th></tr></thead><tbody>${changes.map((change) =>
   `<tr><td>${esc(change.property)}</td><td>${esc(change.oldValue)} &rarr; ${esc(change.newValue)}</td></tr>`).join('')}</tbody></table>`;
 
+/** The entity sets with a history; the audit log names their entity types. */
+let historySets: Schemas['EntityHistorySetDto'][] | undefined;
+const setOf = (entityType: string) => historySets?.find((set) => set.entityType === entityType)?.entitySet;
+
 export const auditApp = crudApp<Schemas['AuditEntryDto']>({
   id: 'coworkee.admin.audit', group: 'Monitoring', title: 'Audit log', icon: icons.history, accent: '#5d4037', width: 960,
   permissions: ['Audit.View'],
   search: true, serverSearch: true,
   load: async ({ request }, { page, pageSize, search }) => {
-    const result = await request<Schemas['PagedResultOfAuditEntryDto']>(`/api/v1/audit?${paged(page, pageSize, { EntityType: search })}`);
+    const [result, sets] = await Promise.all([
+      request<Schemas['PagedResultOfAuditEntryDto']>(`/api/v1/audit?${paged(page, pageSize, { EntityType: search })}`),
+      historySets ?? request<Schemas['EntityHistorySetDto'][]>('/api/v1/history').catch(() => []),
+    ]);
+    historySets = sets;
     return { items: result.items, total: Number(result.totalCount) };
   },
   columns: [
@@ -251,6 +260,11 @@ export const auditApp = crudApp<Schemas['AuditEntryDto']>({
   actions: [{
     title: 'Changes', icon: '&#x2139;',
     run: async (entry, coworkee) => { await infoDialog(coworkee, `${entry.entityType} ${entry.entityId}`, changesTable(coworkee, entry.changes), true); return false; },
+  }, {
+    // undo, restore a state or a deleted record: the record window has its history
+    title: 'Open record history', icon: '&#x21b6;',
+    visible: (entry) => !!setOf(entry.entityType),
+    run: async (entry, coworkee) => { coworkee.airWorks.openApp(recordAppId, { set: setOf(entry.entityType)!, id: entry.entityId }); return false; },
   }],
 });
 
@@ -276,4 +290,10 @@ export const aiToolCallsApp = crudApp<Schemas['AiToolCallDto']>({
   }],
 });
 
-export const systemApps = [languagesApp, translationsApp, themesApp, backupsApp, servicesApp, editionsApp, tenantsApp, auditApp, aiToolCallsApp];
+/** The API documentation (Swagger UI) of the app in a window. */
+export const apiDocsApp = (coworkee: Coworkee): CoworkeeApp => ({
+  id: 'coworkee.api-docs', group: 'Monitoring', title: coworkee.t('API documentation'), icon: icons.dataObject, accent: '#447d1c', width: 1000, height: 680,
+  requiredPermissions: ['ApiDocs.View'], url: '/swagger/index.html',
+});
+
+export const systemApps = [languagesApp, translationsApp, themesApp, backupsApp, servicesApp, editionsApp, tenantsApp, auditApp, aiToolCallsApp, apiDocsApp];

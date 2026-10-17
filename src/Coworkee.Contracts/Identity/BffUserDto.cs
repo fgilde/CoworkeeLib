@@ -1,8 +1,12 @@
 namespace Coworkee.Contracts.Identity;
 
-/// <summary>The signed-in user of the BFF; <paramref name="SystemTenant"/> tells whether he belongs to the system organisation (null when the sign-in predates it).</summary>
+/// <summary>
+/// The signed-in user of the BFF; <paramref name="SystemTenant"/> tells whether he belongs to the system organisation (null when the sign-in predates it),
+/// <paramref name="AppUrl"/> is the web client of the app when this host is another client of it (<see cref="Configuration.BffOptions.WebAppUrl"/>).
+/// </summary>
 public sealed record BffUserDto(
-    bool IsAuthenticated, string? Name, string? Email, Guid? UserId, Guid? TenantId, IReadOnlyList<string> Roles, string? ManageUrl = null, bool? SystemTenant = null)
+    bool IsAuthenticated, string? Name, string? Email, Guid? UserId, Guid? TenantId, IReadOnlyList<string> Roles, string? ManageUrl = null, bool? SystemTenant = null,
+    string? AppUrl = null)
 {
     public static readonly BffUserDto Anonymous = new(false, null, null, null, null, []);
 }

@@ -2,6 +2,7 @@ import type { Schemas } from '@coworkee/client';
 import type { AppContext } from '@fgilde/airworks';
 import type { Coworkee, CoworkeeApp } from '../coworkee.ts';
 import { errorText, esc } from '../dom.ts';
+import { renderProfile } from './profile.ts';
 import {
   changes, groupsFor, isEnabled, reloadSettings, scopePaths, valuesOf, type SettingDefinition, type SettingGroup, type SettingScope, type SettingValue,
 } from '../settings-model.ts';
@@ -93,23 +94,23 @@ async function renderScope(coworkee: Coworkee, panel: HTMLElement, scope: Settin
 }
 
 /** Tabs per scope over one settings form. */
-export function renderSettings(coworkee: Coworkee, host: HTMLElement, tabs: Array<[SettingScope, string]>, page?: string, test?: SettingsTest) {
+export function renderSettings(coworkee: Coworkee, host: HTMLElement, tabs: Array<[SettingScope | 'Profile', string]>, page?: string, test?: SettingsTest) {
   host.classList.add('cw-host');
   host.innerHTML = `<div class="cw-app cw-settings"><nav class="cw-tabs" role="tablist">${tabs.map(([scope, title], index) =>
     `<button role="tab" data-scope="${scope}" aria-selected="${index === 0}">${esc(title)}</button>`).join('')}</nav><section class="cw-panel"></section></div>`;
   const panel = host.querySelector<HTMLElement>('.cw-panel')!;
-  const show = (scope: SettingScope) => {
+  const show = (scope: SettingScope | 'Profile') => {
     host.querySelectorAll<HTMLElement>('[data-scope]').forEach((tab) => tab.setAttribute('aria-selected', String(tab.dataset.scope === scope)));
-    renderScope(coworkee, panel, scope, page, test).catch((error) => { panel.innerHTML = `<p class="cw-error">${esc(errorText(error))}</p>`; });
+    (scope === 'Profile' ? renderProfile(coworkee, panel) : renderScope(coworkee, panel, scope, page, test)).catch((error) => { panel.innerHTML = `<p class="cw-error">${esc(errorText(error))}</p>`; });
   };
   host.querySelector('nav')!.addEventListener('click', (event) => {
     const tab = (event.target as Element).closest<HTMLElement>('[data-scope]');
-    if (tab) show(tab.dataset.scope as SettingScope);
+    if (tab) show(tab.dataset.scope as SettingScope | 'Profile');
   });
   if (tabs[0]) show(tabs[0][0]);
 }
 
-/** The settings of the user and, for administrators, of the organisation and the system, built from the setting definitions. */
+/** The user's profile and settings and, for administrators, those of the organisation and the system, built from the setting definitions. */
 export const settingsApp = (coworkee: Coworkee): CoworkeeApp => ({
   id: 'coworkee.settings',
   title: coworkee.t('Settings'),
@@ -118,7 +119,7 @@ export const settingsApp = (coworkee: Coworkee): CoworkeeApp => ({
   width: 760,
   height: 620,
   singleInstance: true,
-  render: ({ host }: AppContext) => renderSettings(coworkee, host, scopes(coworkee)),
+  render: ({ host }: AppContext) => renderSettings(coworkee, host, [['Profile', coworkee.t('Profile')], ...scopes(coworkee)]),
 });
 
 export type SettingsPageOptions = {

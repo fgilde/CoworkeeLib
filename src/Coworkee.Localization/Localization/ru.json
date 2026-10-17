@@ -1569,5 +1569,8 @@
   "The version is in the editor. Save to keep it.": "Версия в редакторе. Сохрани, чтобы оставить её.",
   "Leave without saving? Your changes to this template are lost.": "Уйти без сохранения? Изменения этого шаблона будут потеряны.",
   "Workflow state": "Состояние рабочего процесса",
-  "Awaiting my approval": "Ожидает моего одобрения"
+  "Awaiting my approval": "Ожидает моего одобрения",
+  "Records": "Записи",
+  "Inbox": "Входящие",
+  "Open in a new tab": "Открыть в новой вкладке"
 }

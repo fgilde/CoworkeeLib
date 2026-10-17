@@ -33,6 +33,12 @@ public static class BffExtensions
     {
         var options = builder.Configuration.GetSection(BffOptions.Section).Get<BffOptions>() ?? new BffOptions();
         builder.Services.Configure<BffOptions>(builder.Configuration.GetSection(BffOptions.Section));
+        if (options.FrameAncestors.Count > 0)
+        {
+            // antiforgery would forbid every frame; MapCoworkeeBff allows the listed origins instead
+            builder.Services.Configure<Microsoft.AspNetCore.Antiforgery.AntiforgeryOptions>(o => o.SuppressXFrameOptionsHeader = true);
+        }
+
         builder.Services.AddHttpClient(nameof(TokenRefresher));
         builder.Services.AddScoped<TokenRefresher>();
         builder.Services.AddMemoryCache();
@@ -155,9 +161,29 @@ public static class BffExtensions
         return Results.Ok(new BffLogoutDto(redirect.Length > 0 ? redirect : "/"));
     }
 
+    /// <summary>The policy that lets the configured origins frame the pages, null when there are none.</summary>
+    internal static string? FrameAncestors(BffOptions options)
+    {
+        var origins = options.FrameAncestors.Select(o => Uri.TryCreate(o, UriKind.Absolute, out var uri) ? uri.GetLeftPart(UriPartial.Authority) : null).OfType<string>().Distinct().ToList();
+        return origins.Count == 0 ? null : $"frame-ancestors 'self' {string.Join(' ', origins)}";
+    }
+
     public static WebApplication MapCoworkeeBff(this WebApplication app)
     {
         var options = app.Configuration.GetSection(BffOptions.Section).Get<BffOptions>() ?? new BffOptions();
+        if (FrameAncestors(options) is { } ancestors)
+        {
+            app.Use((context, next) =>
+            {
+                context.Response.OnStarting(() =>
+                {
+                    context.Response.Headers.Append("Content-Security-Policy", ancestors);
+                    return Task.CompletedTask;
+                });
+                return next(context);
+            });
+        }
+
         app.Use(async (context, next) =>
         {
             var unsafeMethod = !HttpMethods.IsGet(context.Request.Method) && !HttpMethods.IsHead(context.Request.Method) && !HttpMethods.IsOptions(context.Request.Method);
@@ -194,7 +220,8 @@ public static class BffExtensions
                 Guid.TryParse(user.FindFirstValue("tenant"), out var tenant) ? tenant : null,
                 user.FindAll("role").Select(c => c.Value).ToArray(),
                 options.Authority.TrimEnd('/') + "/Account/Manage",
-                user.FindFirstValue("system_tenant") is { } system ? system == "true" : null)
+                user.FindFirstValue("system_tenant") is { } system ? system == "true" : null,
+                options.WebAppUrl is { Length: > 0 } web ? web.TrimEnd('/') : null)
             : BffUserDto.Anonymous);
 
         // the assistant may think and call tools for minutes before the first byte of its answer

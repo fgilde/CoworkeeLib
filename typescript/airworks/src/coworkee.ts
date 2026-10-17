@@ -67,6 +67,8 @@ export type Coworkee = {
   apps: CoworkeeApp[];
   /** Registers apps; factories get this object. */
   register: (...apps: AppFactory[]) => void;
+  /** Reads the counts of the inbox (pending approvals, unread notifications) and the chat again and shows them on their tiles. */
+  refreshBadges: () => Promise<void>;
 };
 
 /** English of the MudBlazor keys the apps borrow; the API serves them only for other languages. */
@@ -88,11 +90,16 @@ function setFavicon(href: string) {
 
 type Notification = { title: string; arguments?: string[] | null };
 
+const inboxAppId = 'coworkee.inbox';
+const chatAppId = 'coworkee.chat';
+const count = (path: string) => quietly(() => apiRequest<{ count: number | string }>(path).then((result) => Number(result.count) || 0), 0);
+
 /** Live parts every desktop needs: new notifications as toasts, permissions that changed, a session ended elsewhere. */
 function follow(coworkee: Coworkee, userId: string) {
   const { realtime, airWorks, t } = coworkee;
   realtime.subscribe(realtimeTopics.user(userId), async ({ type, payload }) => {
     if (type === realtimeEvents.sessionRevoked) return void airWorks.logout();
+    void coworkee.refreshBadges();
     const change = payload as { entityType?: string; action?: string };
     if (type !== realtimeEvents.entityChanged || change.entityType !== 'Notification' || change.action !== 'Created') return;
     const latest = await quietly(() => apiRequest<{ items: Notification[] }>('/api/v1/notifications?Page=1&PageSize=1&UnreadOnly=true'), { items: [] });
@@ -141,6 +148,20 @@ export async function useCoworkee(airWorks: AirWorksApi, options: CoworkeeOption
         shortcuts.push(...added.filter((app): app is CoworkeeApp => !!app && !app.hidden && !app.group && app.shortcut !== false).map((app) => app.id));
         airWorks.configure({ initialShortcuts: shortcuts });
       }
+      await coworkee.refreshBadges();
+    },
+    refreshBadges: async () => {
+      // AirWorks before 0.5 has no badges
+      const setBadge = (airWorks as { setBadge?: (appId: string, value?: string | number) => void }).setBadge;
+      const has = (id: string) => coworkee.apps.some((app) => app.id === id);
+      if (!setBadge || !user.isAuthenticated) return;
+      const [unread, approvals, chat] = await Promise.all([
+        has(inboxAppId) ? count('/api/v1/notifications/unread-count') : 0,
+        has(inboxAppId) && coworkee.can('Workflows.View') ? quietly(() => apiRequest<Array<{ canDecide: boolean }>>('/api/v1/workflows/approvals').then((items) => items.filter((item) => item.canDecide).length), 0) : 0,
+        has(chatAppId) ? count('/api/v1/chat/unread-count') : 0,
+      ]);
+      setBadge(inboxAppId, unread + approvals);
+      setBadge(chatAppId, chat);
     },
   };
 
@@ -170,6 +191,8 @@ export async function useCoworkee(airWorks: AirWorksApi, options: CoworkeeOption
     ...options.airWorks,
   });
   if (user.isAuthenticated && user.userId) follow(coworkee, user.userId);
+  // the approvals count needs the permissions, which arrive after the start
+  if (user.isAuthenticated) airWorks.on('access-changed', () => void coworkee.refreshBadges());
   // the server's global search (users, files, reports, chats, the app's sets) in the search of the desktop
   if (user.isAuthenticated) airWorks.registerSearchProvider(globalSearchProvider(coworkee));
   return coworkee;

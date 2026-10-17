@@ -2,7 +2,7 @@ import type { Schemas } from '@coworkee/client';
 import type { AppContext } from '@fgilde/airworks';
 import type { Coworkee, CoworkeeApp } from '../coworkee.ts';
 import { crudApp } from '../crud.ts';
-import { errorText, esc } from '../dom.ts';
+import { errorText, esc, humanize } from '../dom.ts';
 import { renderEntityTable } from '../table.ts';
 import { icon, widgetFilter, type DateRange, type Widget } from './report-model.ts';
 
@@ -14,7 +14,7 @@ const json = (method: string, body?: unknown): RequestInit => ({ method, body: b
 export const reportAppId = 'coworkee.report';
 export const reportDesignerAppId = 'coworkee.report-designer';
 export const datePresets = ['Today', 'Last7Days', 'Last30Days', 'Last90Days', 'ThisMonth', 'LastMonth', 'ThisQuarter', 'ThisYear', 'LastYear', 'Last12Months'];
-export const humanize = (value: string) => value.replace(/([a-z])([A-Z0-9])/g, '$1 $2').replace(/(\d)([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase()).replace(/ ([A-Z])(?=[a-z])/g, (m) => m.toLowerCase());
+export { humanize };
 
 /** A value in the widget's number format. */
 export function formatNumber(value: unknown, format: string | undefined, culture: string, currency?: string): string {

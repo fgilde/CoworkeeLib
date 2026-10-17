@@ -17,7 +17,7 @@ test('global search hits open the app that shows them, others are left out', () 
     ['coworkee.report', { id: 'r1' }],
     ['coworkee.chat', { user: 'u2' }],
     ['coworkee.file-preview', { id: 'f3', name: 'files hit', contentType: 'application/pdf' }],
-    ['coworkee.data', { set: 'Products' }],
+    ['coworkee.record', { set: 'Products', id: 'p4', title: 'products hit' }],
   ]);
   assert.equal(results[3].description, '4006381333931');
 });

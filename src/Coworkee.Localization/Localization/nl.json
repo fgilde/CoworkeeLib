@@ -1569,5 +1569,8 @@
   "The version is in the editor. Save to keep it.": "De versie staat in de editor. Sla op om haar te bewaren.",
   "Leave without saving? Your changes to this template are lost.": "Verlaten zonder opslaan? Je wijzigingen aan dit sjabloon gaan verloren.",
   "Workflow state": "Workflowstatus",
-  "Awaiting my approval": "Wacht op mijn goedkeuring"
+  "Awaiting my approval": "Wacht op mijn goedkeuring",
+  "Records": "Records",
+  "Inbox": "Inbox",
+  "Open in a new tab": "Openen in een nieuw tabblad"
 }

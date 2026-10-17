@@ -25,6 +25,7 @@ public sealed class BffTests : IAsyncLifetime
             ["Coworkee:Bff:ApiAddress"] = "http://api.test",
             ["Coworkee:Bff:AuthorizationEndpoint"] = "https://auth.test/connect/authorize",
             ["Coworkee:Bff:ForwardedPrefixes:0"] = "/admin/jobs",
+            ["Coworkee:Bff:FrameAncestors:0"] = "https://desk.test/",
             ["Coworkee:Mcp:Path"] = "/ai/mcp",
         });
         builder.AddCoworkeeBff();
@@ -36,6 +37,14 @@ public sealed class BffTests : IAsyncLifetime
     }
 
     public async ValueTask DisposeAsync() => await _app.DisposeAsync();
+
+    [Fact]
+    public async Task Pages_may_be_framed_by_the_configured_origins_only()
+    {
+        var response = await _client.GetAsync("/bff/user", TestContext.Current.CancellationToken);
+
+        response.Headers.GetValues("Content-Security-Policy").ShouldContain("frame-ancestors 'self' https://desk.test");
+    }
 
     [Fact]
     public async Task Anonymous_user_endpoint_reports_signed_out()

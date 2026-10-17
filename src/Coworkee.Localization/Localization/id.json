@@ -1569,5 +1569,8 @@
   "The version is in the editor. Save to keep it.": "Versi ada di editor. Simpan untuk mempertahankannya.",
   "Leave without saving? Your changes to this template are lost.": "Keluar tanpa menyimpan? Perubahanmu pada templat ini akan hilang.",
   "Workflow state": "Status alur kerja",
-  "Awaiting my approval": "Menunggu persetujuan saya"
+  "Awaiting my approval": "Menunggu persetujuan saya",
+  "Records": "Rekaman",
+  "Inbox": "Kotak masuk",
+  "Open in a new tab": "Buka di tab baru"
 }

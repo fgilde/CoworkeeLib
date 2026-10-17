@@ -1569,5 +1569,8 @@
   "The version is in the editor. Save to keep it.": "Sürüm düzenleyicide. Korumak için kaydet.",
   "Leave without saving? Your changes to this template are lost.": "Kaydetmeden çıkılsın mı? Bu şablondaki değişikliklerin kaybolur.",
   "Workflow state": "İş akışı durumu",
-  "Awaiting my approval": "Onayımı bekliyor"
+  "Awaiting my approval": "Onayımı bekliyor",
+  "Records": "Kayıtlar",
+  "Inbox": "Gelen kutusu",
+  "Open in a new tab": "Yeni sekmede aç"
 }

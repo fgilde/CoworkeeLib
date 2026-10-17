@@ -1569,5 +1569,8 @@
   "The version is in the editor. Save to keep it.": "该版本已在编辑器中。保存后才会保留。",
   "Leave without saving? Your changes to this template are lost.": "不保存就离开？你对此模板的更改将丢失。",
   "Workflow state": "工作流状态",
-  "Awaiting my approval": "等待我审批"
+  "Awaiting my approval": "等待我审批",
+  "Records": "记录",
+  "Inbox": "收件箱",
+  "Open in a new tab": "在新标签页中打开"
 }

@@ -1569,5 +1569,8 @@
   "The version is in the editor. Save to keep it.": "Verze je v editoru. Ulož ji, aby zůstala.",
   "Leave without saving? Your changes to this template are lost.": "Odejít bez uložení? Tvé změny této šablony se ztratí.",
   "Workflow state": "Stav workflow",
-  "Awaiting my approval": "Čeká na mé schválení"
+  "Awaiting my approval": "Čeká na mé schválení",
+  "Records": "Záznamy",
+  "Inbox": "Doručená pošta",
+  "Open in a new tab": "Otevřít na nové kartě"
 }

@@ -1,6 +1,6 @@
 import { odataPage, realtimeTopics, searchFilter } from '@coworkee/client';
 import type { Coworkee } from './coworkee.ts';
-import { display, errorText, esc } from './dom.ts';
+import { display, errorText, esc, humanize, isNoise } from './dom.ts';
 
 export type Column = { field: string; title?: string };
 
@@ -17,6 +17,8 @@ export type EntityTableOptions = {
   orderBy?: string;
   /** Entity type whose changes (realtime topic type:{name}, the entity needs [Realtime]) reload the table, e.g. Product. */
   liveType?: string;
+  /** What a click on a row does, e.g. open the record in its window. */
+  onOpen?: (row: Record<string, unknown>) => void;
 };
 
 type Row = Record<string, unknown>;
@@ -25,7 +27,8 @@ const simple = (value: unknown) => value === null || ['string', 'number', 'boole
 
 /** The columns of rows nobody described: their simple fields, the id last. */
 export function columnsOf(rows: readonly Row[]): Column[] {
-  const fields = [...new Set(rows.flatMap((row) => Object.keys(row).filter((key) => !key.includes('@') && simple(row[key]))))];
+  const fields = [...new Set(rows.flatMap((row) => Object.keys(row).filter((key) => simple(row[key]))))]
+    .filter((field) => !rows.some((row) => isNoise(field, row[field])));
   return [...fields.filter((field) => field.toLowerCase() !== 'id'), ...fields.filter((field) => field.toLowerCase() === 'id')].map((field) => ({ field }));
 }
 
@@ -59,6 +62,7 @@ export function renderEntityTable(coworkee: Coworkee, host: HTMLElement, options
   const body = host.querySelector('tbody')!;
   const pager = host.querySelector('.cw-pager span')!;
   let total = 0;
+  let rows: Row[] = [];
 
   const load = async () => {
     try {
@@ -70,9 +74,10 @@ export function renderEntityTable(coworkee: Coworkee, host: HTMLElement, options
       total = result.count ?? result.items.length;
       head.innerHTML = `<tr>${columns.map((column) => {
         const sort = orderBy === column.field ? ' ▲' : orderBy === `${column.field} desc` ? ' ▼' : '';
-        return `<th><button data-sort="${esc(column.field)}">${esc(t(column.title ?? column.field))}${sort}</button></th>`;
+        return `<th><button data-sort="${esc(column.field)}">${esc(t(column.title ?? humanize(column.field)))}${sort}</button></th>`;
       }).join('')}</tr>`;
-      body.innerHTML = result.items.map((row) => `<tr>${columns!.map((column) => `<td>${esc(display(row[column.field], culture))}</td>`).join('')}</tr>`).join('')
+      rows = result.items;
+      body.innerHTML = rows.map((row, index) => `<tr data-row="${index}" class="${options.onOpen ? 'cw-clickable' : ''}" ${options.onOpen ? 'tabindex="0"' : ''}>${columns!.map((column) => `<td>${esc(display(row[column.field], culture))}</td>`).join('')}</tr>`).join('')
         || `<tr><td colspan="${columns.length || 1}" class="cw-muted">${esc(t('Nothing found.'))}</td></tr>`;
       const pages = Math.max(1, Math.ceil(total / pageSize));
       pager.textContent = t('MudDataGridPager_InfoFormat', total === 0 ? 0 : page * pageSize + 1, Math.min(total, (page + 1) * pageSize), total);
@@ -87,11 +92,17 @@ export function renderEntityTable(coworkee: Coworkee, host: HTMLElement, options
     const target = event.target as Element;
     const action = target.closest<HTMLElement>('[data-action]')?.dataset.action;
     const sort = target.closest<HTMLElement>('[data-sort]')?.dataset.sort;
+    const row = rows[Number(target.closest<HTMLElement>('[data-row]')?.dataset.row)];
+    if (row && options.onOpen) return options.onOpen(row);
     if (sort) { orderBy = nextOrder(orderBy, sort); page = 0; }
     else if (action === 'previous') page = Math.max(0, page - 1);
     else if (action === 'next') page++;
     else if (action !== 'refresh') return;
     void load();
+  });
+  host.addEventListener('keydown', (event) => {
+    const row = rows[Number((event.target as Element).closest<HTMLElement>('[data-row]')?.dataset.row)];
+    if (event.key === 'Enter' && row && options.onOpen) options.onOpen(row);
   });
   let timer: ReturnType<typeof setTimeout> | undefined;
   host.querySelector('input')!.addEventListener('input', (event) => {

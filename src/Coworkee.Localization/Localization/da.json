@@ -1569,5 +1569,8 @@
   "The version is in the editor. Save to keep it.": "Versionen er i editoren. Gem for at beholde den.",
   "Leave without saving? Your changes to this template are lost.": "Forlad uden at gemme? Dine ændringer i skabelonen går tabt.",
   "Workflow state": "Workflowstatus",
-  "Awaiting my approval": "Afventer min godkendelse"
+  "Awaiting my approval": "Afventer min godkendelse",
+  "Records": "Poster",
+  "Inbox": "Indbakke",
+  "Open in a new tab": "Åbn i en ny fane"
 }
