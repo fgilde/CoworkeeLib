@@ -13,6 +13,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixes
 
+- The SDKs page described an `sdk/openapi.json` with a snapshot test and an `sdk/typescript` client that the template never had; it now shows them as a recipe for apps that need them.
 - `npm run build` of `@coworkee/client` and `@coworkee/airworks` empties `dist` first, so packs no longer carry files of removed sources.
 
 ## 0.0.1.32 (2026-10-17)

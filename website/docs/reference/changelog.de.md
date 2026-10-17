@@ -13,6 +13,7 @@
 
 ### Korrekturen
 
+- Die SDK-Seite beschrieb ein `sdk/openapi.json` mit Snapshot-Test und einen Client in `sdk/typescript`, die das Template nie hatte; sie zeigt beides jetzt als Rezept für Apps, die es brauchen.
 - `npm run build` von `@coworkee/client` und `@coworkee/airworks` leert zuerst `dist`, damit Pakete keine Dateien entfernter Quellen mehr mitnehmen.
 
 ## 0.0.1.32 (2026-10-17)
