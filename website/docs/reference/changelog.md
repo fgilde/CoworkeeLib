@@ -2,6 +2,21 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Breaking changes
+
+- **Migration needed** (apps with Chat): direct and group chats bring the tables `cw.ChatConversations`, `cw.ChatMembers`, `cw.ChatReactions`, `cw.ChatAttachments` and new columns of `cw.ChatMessages`. Earlier direct messages move into conversations at the next start; what was read stays read.
+- **`Coworkee.Chat` depends on `Coworkee.Storage`** (attachments) and references `Coworkee.Notifications` (mention notifications when that module is there).
+- **Chat contracts**: `ChatMessageDto.ToUserId` is nullable (empty in groups) and the DTO has new properties (`ConversationId`, `Html`, `Source`, `EditedAt`, `Deleted`, `ReplyTo`, `Reactions`, `Attachments`, `HasEntityMentions`); `ChatReadDto` has `ConversationId`. `IChatApi` gained the conversation members; own implementations add them. New endpoints under `/api/v1/chat/chats`, `/messages` and `/attachments`: regenerate OpenAPI snapshots and SDKs. The plain text endpoints by person stay.
+- **`UserAvatar` opens a menu with *Chat* and *Profile*** for other people when the user may chat (`OfferChat`, default `true`); set `OfferChat="false"` where the avatar sits in something that reacts to clicks. New library page `person` at `/people/{id}`.
+
+### New
+
+- Chat: group chats (name, add and remove people, leave), formatted messages with the rich text editor (Enter sends), `@` mentions of people (link to the person, notification for members of the chat) and `#` mentions of records from the global search (shown only to readers whose search finds them, otherwise *restricted*), replies, emoji reactions, editing and deleting own messages, files and pictures by button, drag and drop or paste with upload progress (members only, setting `Chat.MaxAttachmentMb`, hook `IChatAttachmentScanner`), read marks per reader, typing indicator and search in a chat. The server sanitizes every message. See [Chat](../modules/chat.md).
+- Mini chats: a dock at the bottom right with up to three collapsible chat windows (unread count when minimized, *Open in the chat*, kept per user across reloads, full screen on phones). They open from the chat page, the command palette (**Chat with…**, `@name`), any avatar, the person page, the snackbar of a new message and mention notifications. `ChatDock` opens them from own components.
+- `RichTextEditor` takes `Tools` (toolbar) and `Placeholder`.
+
 ## 0.0.1.30 (2026-10-16)
 
 ### New

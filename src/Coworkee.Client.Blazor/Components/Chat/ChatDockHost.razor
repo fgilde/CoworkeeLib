@@ -18,7 +18,7 @@
                     <MudText Typo="Typo.subtitle2" Class="cw-chat-ellipsis flex-grow-1">@(chat?.Name ?? "…")</MudText>
                     @if (window.Minimized && _unread.GetValueOrDefault(window.ConversationId) is > 0 and var unread)
                     {
-                        <MudChip T="string" Size="Size.Small" Color="Color.Secondary" data-testid="chat-window-unread">@unread</MudChip>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" data-testid="chat-window-unread">@unread</MudChip>
                     }
                     <span class="d-flex" @onclick:stopPropagation="true">
                         <MudIconButton Icon="@Icons.Material.Outlined.OpenInFull" Size="Size.Small" OnClick="() => Dock.OpenFullAsync(window.ConversationId)" title="@L["Open in the chat"]"

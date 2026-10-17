@@ -2,6 +2,21 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Breaking Changes
+
+- **Migration nötig** (Apps mit Chat): Direkt- und Gruppenchats bringen die Tabellen `cw.ChatConversations`, `cw.ChatMembers`, `cw.ChatReactions`, `cw.ChatAttachments` und neue Spalten von `cw.ChatMessages`. Frühere Direktnachrichten wandern beim nächsten Start in Unterhaltungen; Gelesenes bleibt gelesen.
+- **`Coworkee.Chat` hängt von `Coworkee.Storage` ab** (Anhänge) und referenziert `Coworkee.Notifications` (Benachrichtigungen bei Erwähnungen, wenn das Modul da ist).
+- **Chat-Verträge**: `ChatMessageDto.ToUserId` ist nullable (leer in Gruppen), das DTO hat neue Eigenschaften (`ConversationId`, `Html`, `Source`, `EditedAt`, `Deleted`, `ReplyTo`, `Reactions`, `Attachments`, `HasEntityMentions`); `ChatReadDto` hat `ConversationId`. `IChatApi` hat die Mitglieder für Unterhaltungen dazubekommen; eigene Implementierungen ergänzen sie. Neue Endpunkte unter `/api/v1/chat/chats`, `/messages` und `/attachments`: OpenAPI-Snapshots und SDKs neu erzeugen. Die Klartext-Endpunkte pro Person bleiben.
+- **`UserAvatar` öffnet ein Menü mit *Chat* und *Profil*** für andere Personen, wenn der Benutzer chatten darf (`OfferChat`, Standard `true`); setze `OfferChat="false"`, wo der Avatar in etwas sitzt, das auf Klicks reagiert. Neue Bibliotheksseite `person` unter `/people/{id}`.
+
+### Neu
+
+- Chat: Gruppenchats (Name, Personen hinzufügen und entfernen, austreten), formatierte Nachrichten mit dem Rich-Text-Editor (Enter sendet), `@`-Erwähnungen von Personen (Link auf die Person, Benachrichtigung für Mitglieder des Chats) und `#`-Erwähnungen von Datensätzen aus der globalen Suche (nur für Leser sichtbar, deren Suche sie findet, sonst *eingeschränkt*), Antworten, Emoji-Reaktionen, eigene Nachrichten bearbeiten und löschen, Dateien und Bilder per Button, Drag-and-drop oder Einfügen mit Upload-Fortschritt (nur für Mitglieder, Einstellung `Chat.MaxAttachmentMb`, Erweiterung `IChatAttachmentScanner`), Lesebestätigungen pro Leser, Tipp-Anzeige und Suche im Chat. Der Server bereinigt jede Nachricht. Siehe [Chat](../modules/chat.md).
+- Mini-Chats: ein Dock unten rechts mit bis zu drei einklappbaren Chatfenstern (ungelesene Nachrichten im minimierten Zustand, *Im Chat öffnen*, pro Benutzer über ein Neuladen hinweg gemerkt, auf dem Handy bildschirmfüllend). Sie öffnen sich von der Chatseite, der Befehlspalette (**Chatten mit…**, `@name`), jedem Avatar, der Personenseite, der Snackbar einer neuen Nachricht und Erwähnungs-Benachrichtigungen. `ChatDock` öffnet sie aus eigenen Komponenten.
+- `RichTextEditor` nimmt `Tools` (Werkzeugleiste) und `Placeholder`.
+
 ## 0.0.1.30 (2026-10-16)
 
 ### Neu

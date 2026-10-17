@@ -51,7 +51,7 @@ Für einen ganz anderen Dialog ersetzt du ihn: `builder.Services.ReplaceComponen
 
 ## Seiten der Bibliothek
 
-Die Admin-Seiten der Bibliothek liegen unter einem eigenen Präfix: `/cw/admin/users`, `/cw/admin/settings` und so weiter. `/admin` bleibt frei für deine eigenen Admin-Seiten, und ein Update der Bibliothek kann dir keine Adresse wegnehmen, die deine App schon nutzt. Die übrigen Seiten (`/files`, `/chat`, `/profile`, `/settings`, `/notifications`, `/assistant`, `/workflows/approvals`, `/reports`) behalten ihre kurzen Adressen.
+Die Admin-Seiten der Bibliothek liegen unter einem eigenen Präfix: `/cw/admin/users`, `/cw/admin/settings` und so weiter. `/admin` bleibt frei für deine eigenen Admin-Seiten, und ein Update der Bibliothek kann dir keine Adresse wegnehmen, die deine App schon nutzt. Die übrigen Seiten (`/files`, `/chat`, `/people/{id}`, `/profile`, `/settings`, `/notifications`, `/assistant`, `/workflows/approvals`, `/reports`) behalten ihre kurzen Adressen.
 
 ```csharp
 builder.Services.AddCoworkeeClient(baseAddress, options =>
@@ -67,7 +67,7 @@ Alte Adressen funktionieren weiter: `/admin/users/…` in einem Lesezeichen, ein
 
 So funktioniert es: eine Sammelseite der Bibliothek (`CoworkeePageHost`, Route `/{*Path}`) zeigt die Seiten der Bibliothek. Seiten deiner App gewinnen immer, eine eigene `/admin/ai`-Seite stößt also nie mit der Bibliothek zusammen. Eine Adresse, die niemand kennt, zeigt die `NotFoundPage` des Routers, wenn du eine gesetzt hast, sonst ein kurzes „Nicht gefunden.“ im Layout.
 
-Schlüssel: `users`, `user`, `groups`, `roles`, `role`, `clients`, `scopes`, `api-keys`, `settings`, `ai-settings`, `ai-tool-calls`, `audit`, `backups`, `data-transfer`, `editions`, `languages`, `translations`, `mail-settings`, `mail-templates`, `mail-template`, `mail-campaigns`, `mail-log`, `services`, `system-status`, `tenants`, `themes`, `webhooks`, `approvals`, `assistant`, `chat`, `files`, `notifications`, `profile`, `search`, `user-settings`, mit Reporting dazu `reports`, `report`, `report-data`. Ein unbekannter Schlüssel hält die App beim Start an.
+Schlüssel: `users`, `user`, `groups`, `roles`, `role`, `clients`, `scopes`, `api-keys`, `settings`, `ai-settings`, `ai-tool-calls`, `audit`, `backups`, `data-transfer`, `editions`, `languages`, `translations`, `mail-settings`, `mail-templates`, `mail-template`, `mail-campaigns`, `mail-log`, `services`, `system-status`, `tenants`, `themes`, `webhooks`, `approvals`, `assistant`, `chat`, `person`, `files`, `notifications`, `profile`, `search`, `user-settings`, mit Reporting dazu `reports`, `report`, `report-data`. Ein unbekannter Schlüssel hält die App beim Start an.
 
 ## Ersetzen oder beitragen
 

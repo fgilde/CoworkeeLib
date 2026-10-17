@@ -105,6 +105,26 @@ Everything from the demo app in the Ocean theme. Click a picture to see it large
 </figure>
 
 <figure markdown>
+![Chat with mentions, reactions and files](assets/screenshots/chat-light.webp){ loading=lazy }
+<figcaption>Chat with mentions, reactions and files</figcaption>
+</figure>
+
+<figure markdown>
+![Chat, dark](assets/screenshots/chat-dark.webp){ loading=lazy }
+<figcaption>Chat, dark</figcaption>
+</figure>
+
+<figure markdown>
+![Mini chats at the bottom right](assets/screenshots/chat-dock-light.webp){ loading=lazy }
+<figcaption>Mini chats at the bottom right</figcaption>
+</figure>
+
+<figure markdown>
+![Mini chats, dark](assets/screenshots/chat-dock-dark.webp){ loading=lazy }
+<figcaption>Mini chats, dark</figcaption>
+</figure>
+
+<figure markdown>
 ![Import wizard: columns matched to fields](assets/screenshots/import-columns-light.webp){ loading=lazy }
 <figcaption>Import wizard: columns matched to fields</figcaption>
 </figure>

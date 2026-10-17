@@ -26,7 +26,7 @@ services.AddScoped<IPersonalDataContributor, TaskPersonalData>();
 | `profile` | Identity: name, e-mail, phone, address, picture, roles, groups, external logins | user deleted (roles, claims, logins, memberships by cascade), own permission grants removed, values in the user's own audit trail replaced by `***` |
 | `settings` | Settings: values with user scope (secrets as `***`) | deleted |
 | `notifications` | Notifications | deleted, with the digest state |
-| `chat` | Chat: sent and received messages | both sides of the conversations deleted |
+| `chat` | Chat: sent messages, received direct messages | sent messages with their files, reactions and group memberships deleted; direct chats deleted with both sides |
 | `aiToolCalls` | AI: tool call log (the assistant keeps no chat history) | deleted |
 | `mails` | Mailing: mails queued for the address, without bodies | deleted |
 | `activity` | Auditing: what the user changed | kept; the trail names the actor only by id, which points to nobody afterwards |
