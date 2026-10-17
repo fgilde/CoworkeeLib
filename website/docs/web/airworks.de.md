@@ -56,16 +56,16 @@ document.body.append(document.createElement('air-desktop'));
 
 | App | Id | Sichtbar, wenn |
 |---|---|---|
-| Profil: Name, Telefon, Kontoseiten, Abmelden | `coworkee.profile` | immer |
-| Einstellungen: die des Benutzers, der Organisation und des Systems, aus den Einstellungsdefinitionen | `coworkee.settings` | immer; Organisation und System mit `Settings.Manage` |
+| Eingang: Genehmigungen zum Entscheiden (genehmigen oder ablehnen mit Kommentar, Fälligkeit, öffnet den Datensatz) und Benachrichtigungen (Links öffnen die Seite der Web-App); die Anzahl beider steht auf der Kachel | `coworkee.inbox` | die App hat das Notifications-Modul; Genehmigungen mit `Workflows.View` |
+| Einstellungen: Profil (Name, Telefon, Kontoseiten, Abmelden), die Einstellungen des Benutzers, der Organisation und des Systems | `coworkee.settings` | immer; Organisation und System mit `Settings.Manage` |
 | Dateien: Ordner, Hochladen (auch per Drag & Drop), Umbenennen, Löschen, Herunterladen | `coworkee.files` | `Files.View` |
 | Dateivorschau mit der MudEx-Dateianzeige (PDF, Bilder, Office, Archive, Markdown, Audio, Video) | `coworkee.file-preview` | aus Dateien geöffnet |
-| Daten: jedes OData-Entity-Set als blätterbare, sortierbare und durchsuchbare Tabelle | `coworkee.data` | die App hat OData |
-| Chat: Personen der Organisation mit Anwesenheit und ungelesenen Nachrichten, Nachrichten kommen live an | `coworkee.chat` | `Chat.Use` und das Chat-Modul |
+| Datensätze: jedes OData-Entity-Set als blätterbare, sortierbare und durchsuchbare Tabelle; gelöschte Datensätze der Sets mit Soft Delete | `coworkee.data` | die App hat OData |
+| Datensatzfenster: Felder, Verlauf mit Rückgängig, Wiederherstellen des Stands vor oder nach einer Änderung (mit Vorschau), Workflow-Status, Schritte und Genehmigungen; geöffnet aus Datensätzen, Suche, Eingang und Audit-Log | `coworkee.record` | geöffnet mit `{ set, id }` |
+| Chat: Personen der Organisation mit Anwesenheit und ungelesenen Nachrichten, Nachrichten kommen live an; die Zahl der ungelesenen steht auf der Kachel | `coworkee.chat` | `Chat.Use` und das Chat-Modul |
 | Berichte: Liste, Favoriten, Duplizieren, Löschen, ein Bericht mit KPIs, Diagrammen und Tabellen und der Berichtsdesigner | `coworkee.reports`, `coworkee.report`, `coworkee.report-designer` | `Reports.View` und das Reporting-Modul |
 | Assistent: Unterhaltungen, Antworten erscheinen beim Schreiben, Bestätigung von Tools, die Daten ändern | `coworkee.assistant` | `Ai.Chat` und das KI-Modul |
-| Benachrichtigungen: lesen, als gelesen markieren, löschen; neue erscheinen zusätzlich als Hinweis | `coworkee.notifications` | die App hat das Notifications-Modul |
-| API-Dokumentation (Swagger UI) | `coworkee.api-docs` | `ApiDocs.View` |
+| Webseite: jede Seite der Web-App in einem Fenster, ohne App-Leiste und Menü (`?embed=1`) | `coworkee.web-page` | der BFF kennt die Web-App |
 | `entityApp({ entitySet, ... })`: ein Entity-Set als eigene App; `liveType` lädt bei Änderungen neu | `coworkee.entity.{set}` | ihre `requiredPermissions` |
 
 ### Administration (`adminApps`)
@@ -78,7 +78,7 @@ Die Administrations-Apps bekommen keine eigene Desktop-Verknüpfung: Die App *Ad
 | System | Themes (`Themes.Manage`; neu aus einem eingebauten Theme, Paletten, Logo, CSS, Standard, Keycloak-Anmeldeseite), Backups, Dienste, Editionen, Mandanten mit ihren Features (System), KI-Einstellungen mit Verbindungstest (System) |
 | Kommunikation | Mail-Vorlagen mit Live-Vorschau und Testmail (`Mail.Templates.Manage`), Mail-Kampagnen mit Empfängervorschau, Test, Planen und Abbrechen, Empfängerlisten (`Mail.Campaigns.Send`), Mail-Protokoll (`Mail.Log.View`), Mail-Einstellungen mit Verbindungstest (`Settings.Manage`) |
 | Lokalisierung | Sprachen (ein-/ausschalten, Standard), Übersetzungen mit maschineller Übersetzung der fehlenden Texte (`Localization.Manage`) |
-| Überwachung | Audit-Log mit den geänderten Feldern (`Audit.View`), KI-Tool-Aufrufe (`Ai.Audit`) |
+| Überwachung | Audit-Log mit den geänderten Feldern und dem Verlauf des Datensatzes (`Audit.View`), KI-Tool-Aufrufe (`Ai.Audit`), API-Dokumentation (`ApiDocs.View`) |
 
 Apps lässt du weg, indem du nur die gewünschten registrierst; ersetze eine, indem du nach `defaultApps` eine eigene App mit derselben Id registrierst. Eigene Apps sind normale AirWorks-Apps (siehe [AirWorks-Dokumentation](https://fgilde.github.io/AirWorks/de.html)); eine Factory bekommt das `coworkee`-Objekt mit dem typisierten API-Client, `request`, dem Realtime-Hub, der Übersetzungsfunktion `t`, dem Benutzer, dem Theme und `notify`:
 
@@ -127,6 +127,14 @@ Der Desktop selbst folgt dem Topic des Benutzers (neue Benachrichtigungen ersche
 ### Auswahlfelder
 
 Felder, die Benutzer oder Gruppen auswählen (Gruppenmitglieder, die Gruppen eines Benutzers, die Empfänger einer Mail-Kampagne), suchen auf dem Server und blättern durch die Ergebnisse (`type: 'lookup'` in `formDialog`, `userLookup`/`groupLookup`); so funktionieren sie mit beliebig vielen Benutzern.
+
+### Seiten der Web-App (`embedApp`)
+
+Bildschirme, die in Blazor tief sind (Datentabellen mit Facetten und QueryBuilder, Editoren), brauchen keinen Nachbau: `embedApp({ id, title, path })` zeigt eine Seite der Web-App in einem Fenster, `openWebPage(coworkee, path)` öffnet eine aus dem Code. Die Seite läuft in der eingebetteten Hülle von `CoworkeeLayout` (`?embed=1`: ohne App-Leiste, Menü und Assistent). Unter Aspire gibt `AddAirWorks` dem AirWorks-Host die Adresse der Web-App (`Coworkee:Bff:WebAppUrl`, als `appUrl` von `/bff/user`) und erlaubt ihm, die Web-App einzurahmen (`Coworkee:Bff:FrameAncestors` des Web-Hosts); ohne sie fehlen diese Apps. Das Fenster meldet sich still mit der Sitzung an, die der Benutzer am Auth-Server hat; der Knopf in seiner Ecke öffnet die Seite in einem Browser-Tab. Jedes solche Fenster startet die WebAssembly-Laufzeit der Web-App (etwa eine Sekunde, sobald der Browser sie zwischengespeichert hat); Gründe und Alternativen stehen in `docs/airworks-concept.md` des Repositorys.
+
+### Badges
+
+Mit AirWorks 0.5 (`AirWorks.setBadge`) zeigt der Eingang die offenen Genehmigungen und ungelesenen Benachrichtigungen, der Chat seine ungelesenen Nachrichten auf Kachel, Startmenü und Taskleistenknopf; `coworkee.refreshBadges()` liest sie neu.
 
 ### Dateivorschau
 
@@ -183,7 +191,7 @@ await coworkee.register(
   catalogApp,
   productApp,
   salesDashboardApp,
-  entityApp({ entitySet: 'Brands', liveType: 'Brand', icon: 'ratio-shoppingCart.png', requiredPermissions: ['Catalog.Brands.View'] }),
+  embedApp({ id: 'myapp.orders', title: 'Orders', path: '/sales/orders', icon: 'fn-planning.png', accent: '#2e7d32', requiredPermissions: ['SalesOrders.View'] }),
 );
 ```
 

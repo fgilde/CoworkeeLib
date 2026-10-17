@@ -2,6 +2,14 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### New
+
+- `@coworkee/airworks`: *Inbox* (`coworkee.inbox`, approvals and notifications) replaces `notificationsApp`; *Records* with a record window (`coworkee.record`: fields, history with undo and restore, workflow); the profile is the first tab of *Settings* (`profileApp` is gone, `renderProfile` stays); the API documentation moved into the administration (*Monitoring*). Apps that registered `notificationsApp`, `profileApp` or `apiDocsApp` by name take `defaultApps` or the new names.
+- Pages of the web app in AirWorks windows: `embedApp`, `openWebPage`; `CoworkeeLayout` shows only the page with `?embed=1`. `BffOptions.WebAppUrl` (reported as `appUrl` of `/bff/user`) and `BffOptions.FrameAncestors` (lets those origins frame the pages; antiforgery's `X-Frame-Options` is suppressed then); `AddAirWorks` sets both under Aspire.
+- Badges on the inbox and chat tiles with AirWorks' `setBadge` (AirWorks 0.5; older versions just show none).
+
 ## 0.0.1.30 (2026-10-16)
 
 ### New

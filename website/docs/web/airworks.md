@@ -56,16 +56,16 @@ document.body.append(document.createElement('air-desktop'));
 
 | App | Id | Shown when |
 |---|---|---|
-| Profile: name, phone, account pages, sign out | `coworkee.profile` | always |
-| Settings: the user's, the organisation's and the system's, built from the setting definitions | `coworkee.settings` | always; organisation and system with `Settings.Manage` |
+| Inbox: approvals to decide (approve or reject with a comment, due date, opens the record) and notifications (links open the page of the web app); the count of both shows on the tile | `coworkee.inbox` | the app has the Notifications module; approvals with `Workflows.View` |
+| Settings: profile (name, phone, account pages, sign out), the user's, the organisation's and the system's settings | `coworkee.settings` | always; organisation and system with `Settings.Manage` |
 | Files: folders, upload (also by dropping files), rename, delete, download | `coworkee.files` | `Files.View` |
 | File preview with the MudEx file display (pdf, images, office, archives, markdown, audio, video) | `coworkee.file-preview` | opened from Files |
-| Data: every OData entity set as a paged, sortable and searchable table | `coworkee.data` | the app has OData |
-| Chat: people of the organisation with presence and unread counts, messages arrive live | `coworkee.chat` | `Chat.Use` and the Chat module |
+| Records: every OData entity set as a paged, sortable and searchable table; deleted records of sets with soft delete | `coworkee.data` | the app has OData |
+| Record window: fields, history with undo, restore of a state before or after a change (with a preview), workflow state, steps and approvals; opened from records, search, inbox and audit log | `coworkee.record` | opened with `{ set, id }` |
+| Chat: people of the organisation with presence and unread counts, messages arrive live; the unread count shows on the tile | `coworkee.chat` | `Chat.Use` and the Chat module |
 | Reports: list, favourites, duplicate, delete, a report with its KPIs, charts and tables, and the report designer | `coworkee.reports`, `coworkee.report`, `coworkee.report-designer` | `Reports.View` and the Reporting module |
 | Assistant: conversations, answers streamed as they arrive, confirmation of tools that change data | `coworkee.assistant` | `Ai.Chat` and the AI module |
-| Notifications: read, mark read, delete; new ones also pop up as a toast | `coworkee.notifications` | the app has the Notifications module |
-| API documentation (Swagger UI) | `coworkee.api-docs` | `ApiDocs.View` |
+| Web page: any page of the web app in a window, without app bar and menu (`?embed=1`) | `coworkee.web-page` | the BFF knows the web app |
 | `entityApp({ entitySet, ... })`: one entity set as an app of its own; `liveType` reloads it on changes | `coworkee.entity.{set}` | its `requiredPermissions` |
 
 ### Administration (`adminApps`)
@@ -78,7 +78,7 @@ The administration apps get no desktop shortcut of their own: the app *Administr
 | System | Themes (`Themes.Manage`; new from a built-in theme, palettes, logo, CSS, default, Keycloak sign-in page), Backups, Services, Editions, Tenants with their features (system), AI settings with a connection test (system) |
 | Communication | Mail templates with live preview and test mail (`Mail.Templates.Manage`), Mail campaigns with recipient preview, test, schedule and cancel, Recipient lists (`Mail.Campaigns.Send`), Mail log (`Mail.Log.View`), Mail settings with a connection test (`Settings.Manage`) |
 | Localization | Languages (switch on/off, default), Translations with machine translation of the missing texts (`Localization.Manage`) |
-| Monitoring | Audit log with the changed fields (`Audit.View`), AI tool calls (`Ai.Audit`) |
+| Monitoring | Audit log with the changed fields and the record's history (`Audit.View`), AI tool calls (`Ai.Audit`), API documentation (`ApiDocs.View`) |
 
 Leave apps out by registering only those you want, or replace one by registering your own app with the same id after `defaultApps`. Your own apps are plain AirWorks apps (see the [AirWorks documentation](https://fgilde.github.io/AirWorks/)); a factory gets the `coworkee` object with the typed API client, `request`, the realtime hub, the translation function `t`, the user, the theme and `notify`:
 
@@ -127,6 +127,14 @@ The desktop itself follows the user's topic (new notifications pop up, a session
 ### Pickers
 
 Fields that pick users or groups (group members, a user's groups, the users of a mail campaign) search on the server and page through the results (`type: 'lookup'` in `formDialog`, `userLookup`/`groupLookup`), so they work with any number of users.
+
+### Pages of the web app (`embedApp`)
+
+Screens that are deep in Blazor (data tables with facets and query builder, editors) need no rebuild: `embedApp({ id, title, path })` shows a page of the web app in a window, and `openWebPage(coworkee, path)` opens one from code. The page runs in the embedded shell of `CoworkeeLayout` (`?embed=1`: no app bar, menu or assistant). Under Aspire `AddAirWorks` hands the address of the web app to the AirWorks host (`Coworkee:Bff:WebAppUrl`, reported as `appUrl` of `/bff/user`) and lets it frame the web app (`Coworkee:Bff:FrameAncestors` of the web host); without it these apps are left out. The window signs in silently with the session the user has at the auth server; the button in its corner opens the page in a browser tab. Each such window starts the WebAssembly runtime of the web app (about a second once the browser has cached it); the reasons and the alternatives are in `docs/airworks-concept.md` of the repository.
+
+### Badges
+
+With AirWorks 0.5 (`AirWorks.setBadge`) the inbox shows the open approvals and unread notifications, the chat its unread messages on the tile, the start menu and the task button; `coworkee.refreshBadges()` reads them again.
 
 ### File preview
 
@@ -183,7 +191,7 @@ await coworkee.register(
   catalogApp,
   productApp,
   salesDashboardApp,
-  entityApp({ entitySet: 'Brands', liveType: 'Brand', icon: 'ratio-shoppingCart.png', requiredPermissions: ['Catalog.Brands.View'] }),
+  embedApp({ id: 'myapp.orders', title: 'Orders', path: '/sales/orders', icon: 'fn-planning.png', accent: '#2e7d32', requiredPermissions: ['SalesOrders.View'] }),
 );
 ```
 
