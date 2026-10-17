@@ -68,23 +68,13 @@ public sealed class ThemeTests(ThemeApp app) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task A_built_in_theme_stored_twice_by_an_earlier_race_is_cleaned_up()
+    public async Task A_built_in_theme_cannot_be_stored_twice()
     {
-        if (app.Provider == Coworkee.Contracts.Configuration.DatabaseProviders.Postgres)
+        await Should.ThrowAsync<DbUpdateException>(() => app.InDbAsync(async db =>
         {
-            Assert.Skip("Postgres refuses the second row (unique index with nulls not distinct).");
-        }
-
-        var copy = ThemeSeeds.Create(new ThemingOptions()).Single(t => t.Name == "Octo");
-        await app.InDbAsync(async db =>
-        {
-            db.Add(copy);
+            db.AddRange(ThemeSeeds.Create(new ThemingOptions()).Single(t => t.Name == "Octo"), ThemeSeeds.Create(new ThemingOptions()).Single(t => t.Name == "Octo"));
             return await db.SaveChangesAsync(Ct);
-        });
-
-        var themes = await app.Anonymous().GetFromJsonAsync<ThemeDto[]>("/api/v1/themes/built-in", Ct);
-
-        themes!.Count(t => t.Name == "Octo").ShouldBe(1);
+        }));
     }
 
     [Fact]

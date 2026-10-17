@@ -60,6 +60,8 @@ internal sealed class ThemeModelContributor : IModelContributor, IVersionedTypeC
             theme.Property(t => t.Shadows).HasColumnType("jsonb");
             theme.Property(t => t.Options).HasColumnType("jsonb");
             theme.HasIndex(t => new { t.TenantId, t.Name }).IsUnique().AreNullsDistinct(false);
+            // SQL Server and SQLite let null tenants repeat in the index above, so built-in themes get their own; the quoted name works on all three
+            theme.HasIndex(t => t.Name).IsUnique().HasFilter("\"TenantId\" IS NULL");
         });
 
         modelBuilder.Entity<TenantTheme>(mapping =>
