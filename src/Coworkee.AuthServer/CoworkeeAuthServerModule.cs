@@ -35,6 +35,11 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
         services.AddSingleton<AuthClientSeeder>();
         services.AddHostedService(provider => provider.GetRequiredService<AuthClientSeeder>());
         services.AddRazorPages().AddApplicationPart(typeof(CoworkeeAuthServerModule).Assembly);
+        if (options.FrameAncestors.Count > 0)
+        {
+            // antiforgery's X-Frame-Options would forbid every frame; frame-ancestors of the policy allows the listed origins instead
+            services.Configure<Microsoft.AspNetCore.Antiforgery.AntiforgeryOptions>(o => o.SuppressXFrameOptionsHeader = true);
+        }
 
         var authentication = services.AddAuthentication(IdentityConstants.ApplicationScheme);
         authentication.AddIdentityCookies();
@@ -121,9 +126,11 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
         var logos = new[] { options.LogoUrl, mediaUrl }.Concat(options.Clients.Select(c => c.LogoUrl)).Concat(stored.Logos)
             .Where(Clients.ClientApp.IsWebAddress).Select(u => new Uri(u!).GetLeftPart(UriPartial.Authority)).Distinct(StringComparer.OrdinalIgnoreCase);
         var media = Clients.ClientApp.IsWebAddress(mediaUrl) ? " " + new Uri(mediaUrl!).GetLeftPart(UriPartial.Authority) : null;
+        var ancestors = options.FrameAncestors.Select(o => Uri.TryCreate(o, UriKind.Absolute, out var uri) ? uri.GetLeftPart(UriPartial.Authority) : null)
+            .OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         return $"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src {string.Join(' ', ["'self'", "data:", .. logos])}; media-src 'self'{media}; "
             + "object-src 'none'; base-uri 'self'; "
-            + $"frame-ancestors 'none'; form-action {string.Join(' ', ["'self'", .. clients])}";
+            + $"frame-ancestors {(ancestors.Count == 0 ? "'none'" : string.Join(' ', ancestors))}; form-action {string.Join(' ', ["'self'", .. clients])}";
     }
 
     // clients added in the admin pages redirect to their origins as well; the auth server learns about them within a minute
