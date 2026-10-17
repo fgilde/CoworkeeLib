@@ -19,7 +19,7 @@ public sealed class PageOptions
     public PageOptions Replace<TComponent>(string key) where TComponent : Microsoft.AspNetCore.Components.IComponent =>
         Replace(key, typeof(TComponent));
 
-    /// <summary>Sends links and old addresses of the page to an own page of the app, e.g. "/people/{Id}".</summary>
+    /// <summary>Sends links and old addresses of the page to an own page of the app, e.g. "/team/{Id}".</summary>
     public PageOptions Replace(string key, string href)
     {
         Hrefs[key] = href;

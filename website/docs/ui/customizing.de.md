@@ -58,7 +58,7 @@ builder.Services.AddCoworkeeClient(baseAddress, options =>
 {
     options.PagePrefix = "/cw";                        // Standard; "" behält die alten /admin/...-Adressen
     options.Pages.Replace<MyUsers>("users")              // deine Komponente unter der Adresse der Bibliothek, mit denselben Parametern
-        .Replace("user", "/people/{Id}")                // Links und alte Adressen führen zu deiner eigenen Seite
+        .Replace("user", "/team/{Id}")                // Links und alte Adressen führen zu deiner eigenen Seite
         .Disable("backups");                            // Menüeintrag und Adresse sind weg
 });
 ```

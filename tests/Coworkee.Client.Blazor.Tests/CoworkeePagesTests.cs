@@ -54,11 +54,11 @@ public sealed class CoworkeePagesTests
     [Fact]
     public void A_page_replaced_by_an_own_route_sends_links_and_old_addresses_there()
     {
-        var pages = Pages(o => o.Pages.Replace("user", "/people/{Id}"));
+        var pages = Pages(o => o.Pages.Replace("user", "/team/{Id}"));
 
-        pages.Href($"/admin/users/{Id}").ShouldBe($"/people/{Id}");
-        pages.Match($"cw/admin/users/{Id}")!.RedirectTo.ShouldBe($"/people/{Id}");
-        pages.Match($"people/{Id}").ShouldBeNull();
+        pages.Href($"/admin/users/{Id}").ShouldBe($"/team/{Id}");
+        pages.Match($"cw/admin/users/{Id}")!.RedirectTo.ShouldBe($"/team/{Id}");
+        pages.Match($"team/{Id}").ShouldBeNull();
     }
 
     [Fact]

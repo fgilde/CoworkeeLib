@@ -215,7 +215,8 @@ public partial class ChatComposer : IAsyncDisposable
             return;
         }
 
-        var html = _editor?.Editor is { } editor ? await editor.GetHtml() : _html;
+        // the editor knows the latest keystroke; without its script (tests, prerendering) the bound value counts
+        var html = (_editor?.Editor is { } editor ? await editor.GetHtml() : null) is { Length: > 0 } current ? current : _html;
         var attachments = _uploads.Where(u => u.Attachment is not null).Select(u => u.Attachment!.Id).ToList();
         if (!HasText(html) && (attachments.Count == 0 || Editing is not null))
         {

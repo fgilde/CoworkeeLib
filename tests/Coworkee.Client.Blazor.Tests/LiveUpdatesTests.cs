@@ -30,10 +30,13 @@ public sealed class LiveUpdatesTests : ClientTestBase
 
     private FakeRealtimeConnection Realtime => Services.GetRequiredService<FakeRealtimeConnection>();
 
-    private static ChatMessageDto Message(Guid from, Guid to, string text) => new(Guid.CreateVersion7(), from, to, text, DateTimeOffset.UtcNow, null);
+    private static readonly Guid ChatId = Guid.CreateVersion7();
+
+    private static ChatMessageDto Message(Guid from, Guid to, string text) =>
+        new(Guid.CreateVersion7(), from, to, text, DateTimeOffset.UtcNow, null) { ConversationId = ChatId, Html = $"<p>{text}</p>" };
 
     [Fact]
-    public async Task A_chat_message_outside_its_conversation_shows_a_snackbar_that_opens_it()
+    public async Task A_chat_message_outside_its_chat_shows_a_snackbar_that_opens_it()
     {
         var snackbar = Render<MudSnackbarProvider>();
         Render<ChatNotifier>();
@@ -43,13 +46,13 @@ public sealed class LiveUpdatesTests : ClientTestBase
 
         snackbar.WaitForAssertion(() => snackbar.Markup.ShouldContain("Bob Builder: Lunch?"));
         await snackbar.InvokeAsync(() => snackbar.Find(".mud-snackbar-content-action button").ClickAsync(new()));
-        snackbar.WaitForAssertion(() => Services.GetRequiredService<NavigationManager>().Uri.ShouldEndWith($"/chat?with={Bob}"));
+        snackbar.WaitForAssertion(() => Services.GetRequiredService<NavigationManager>().Uri.ShouldEndWith($"/chat?c={ChatId}"));
     }
 
     [Fact]
-    public void A_chat_message_of_the_open_conversation_or_from_myself_stays_quiet()
+    public void A_chat_message_of_the_open_chat_or_from_myself_stays_quiet()
     {
-        Services.GetRequiredService<NavigationManager>().NavigateTo($"/chat?with={Bob}");
+        Services.GetRequiredService<NavigationManager>().NavigateTo($"/chat?c={ChatId}");
         var snackbar = Render<MudSnackbarProvider>();
         Render<ChatNotifier>();
         snackbar.WaitForAssertion(() => Realtime.Invocations.ShouldContain(("Subscribe", $"user:{Me}")));
@@ -63,19 +66,22 @@ public sealed class LiveUpdatesTests : ClientTestBase
     }
 
     [Fact]
-    public async Task The_open_conversation_shows_when_the_other_side_read_it()
+    public async Task The_open_chat_shows_when_the_other_side_read_it()
     {
-        _chat.GetContactsAsync(Arg.Any<CancellationToken>()).Returns([new ChatContactDto(Bob, "Bob Builder", "Hi", DateTimeOffset.UtcNow, 0)]);
-        _chat.GetConversationAsync(Bob, null, Arg.Any<CancellationToken>()).Returns([Message(Me, Bob, "Hi")]);
-        Services.GetRequiredService<NavigationManager>().NavigateTo($"/chat?with={Bob}");
+        var chat = new ChatConversationDto(ChatId, false, "Bob Builder", [new ChatMemberDto(Me, "Ada", null, false), new ChatMemberDto(Bob, "Bob Builder", null, false)], "Hi",
+            DateTimeOffset.UtcNow, 0);
+        _chat.GetChatsAsync(Arg.Any<CancellationToken>()).Returns([chat]);
+        _chat.GetChatAsync(ChatId, Arg.Any<CancellationToken>()).Returns(chat);
+        _chat.GetMessagesAsync(ChatId, null, null, Arg.Any<CancellationToken>()).Returns([Message(Me, Bob, "Hi")]);
+        Services.GetRequiredService<NavigationManager>().NavigateTo($"/chat?c={ChatId}");
         var page = Render<Pages.Chat>();
         page.WaitForAssertion(() => page.Find("[data-testid='chat-messages']").TextContent.ShouldContain("Hi"));
         page.FindAll("[data-testid='chat-read']").ShouldBeEmpty();
 
-        Realtime.Push($"user:{Me}", ChatEvents.Read, new ChatReadDto(Bob, Me, DateTimeOffset.UtcNow));
+        Realtime.Push($"user:{Me}", ChatEvents.Read, new ChatReadDto(Bob, Me, DateTimeOffset.UtcNow.AddSeconds(1)) { ConversationId = ChatId });
 
         page.WaitForAssertion(() => page.Find("[data-testid='chat-read']"));
-        await _chat.Received().GetContactsAsync(Arg.Any<CancellationToken>());
+        await _chat.Received().GetChatsAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]
