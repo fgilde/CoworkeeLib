@@ -23,9 +23,13 @@ function fieldsHtml(coworkee: Coworkee, row: Row) {
   const value = (field: string, item: unknown) => typeof item === 'string' && item.startsWith('data:image/')
     ? `<img class="cw-record-image" src="${esc(item)}" alt=""/>`
     : esc(item && typeof item === 'object' ? recordTitle(item as Row) || display(item, culture) : display(item, culture));
-  const fields = Object.entries(row).filter(([field, item]) => (!isNoise(field, item) || (typeof item === 'string' && item.startsWith('data:image/'))) && !Array.isArray(item));
+  const fields = Object.entries(row).filter(([field, item]) => item !== null && item !== '' && !Array.isArray(item)
+    && (!isNoise(field, item) || (typeof item === 'string' && item.startsWith('data:image/'))));
   return `<dl class="cw-fields">${fields.map(([field, item]) => `<dt>${esc(t(humanize(field)))}</dt><dd>${value(field, item)}</dd>`).join('')}</dl>`;
 }
+
+/** The changes people read: no tenant key, no field that stayed empty. */
+const changes = (entry: Entry) => entry.changes.filter((change) => change.property !== 'TenantId' && (change.oldText || change.oldValue || change.newText || change.newValue));
 
 function historyHtml(coworkee: Coworkee, history: History) {
   const { t, culture } = coworkee;
@@ -36,7 +40,7 @@ function historyHtml(coworkee: Coworkee, history: History) {
     ${entries.map((entry) => `<article class="cw-entry"><header><strong>${esc(t(entry.action))}</strong>
         <span class="cw-muted">${esc(entry.actorName ?? t('system'))} · ${esc(display(entry.occurredAt, culture))}</span><span class="cw-spacer"></span>
         ${history.canRestore ? `${restore(entry, 'After', 'Restore this state')}${entry.action === 'Created' ? '' : restore(entry, 'Before', 'Restore the state before this change')}` : ''}</header>
-      ${entry.changes.length ? `<table class="cw-table"><tbody>${entry.changes.map((change) => `<tr><td>${esc(t(humanize(change.property)))}</td>
+      ${changes(entry).length ? `<table class="cw-table"><tbody>${changes(entry).map((change) => `<tr><td>${esc(t(humanize(change.property)))}</td>
         <td><s class="cw-muted">${esc(change.oldText ?? change.oldValue ?? '')}</s> &rarr; ${esc(change.newText ?? change.newValue ?? '')}</td>
         <td class="cw-row-actions">${history.canRestore && change.restorable ? `<button data-restore="${esc(entry.id)}" data-mode="Undo" data-property="${esc(change.property)}" title="${esc(t('Undo this change'))}" aria-label="${esc(t('Undo this change'))}">&#x21b6;</button>` : ''}</td></tr>`).join('')}</tbody></table>`
         : `<p class="cw-muted">${esc(t('No field changes recorded.'))}</p>`}</article>`).join('')

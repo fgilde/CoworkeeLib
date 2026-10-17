@@ -1,7 +1,7 @@
 import { entitySets, type Schemas } from '@coworkee/client';
 import type { AppContext } from '@fgilde/airworks';
 import type { Coworkee, CoworkeeApp } from '../coworkee.ts';
-import { display, errorText, esc, recordTitle } from '../dom.ts';
+import { display, errorText, esc, label, recordTitle } from '../dom.ts';
 import { recordAppId } from './record.ts';
 import { icons } from '../icons.ts';
 import { renderEntityTable, type EntityTableOptions } from '../table.ts';
@@ -38,9 +38,9 @@ export const dataApp = (coworkee: Coworkee): CoworkeeApp => ({
     const { t } = coworkee;
     host.classList.add('cw-host');
     const [sets, histories] = await Promise.all([entitySets(), coworkee.request<HistorySet[]>('/api/v1/history').catch(() => [] as HistorySet[])]);
-    sets.sort((a, b) => t(a.name).localeCompare(t(b.name)));
+    sets.sort((a, b) => label(t, a.name).localeCompare(label(t, b.name)));
     host.innerHTML = `<div class="cw-app cw-data"><nav class="cw-list" aria-label="${esc(t('Records'))}">${sets.map((set) =>
-      `<button data-set="${esc(set.name)}">${esc(t(set.name))}</button>`).join('') || `<p class="cw-muted">${esc(t('Nothing found.'))}</p>`}</nav>
+      `<button data-set="${esc(set.name)}">${esc(label(t, set.name))}</button>`).join('') || `<p class="cw-muted">${esc(t('Nothing found.'))}</p>`}</nav>
       <section class="cw-stack"><div class="cw-views" hidden><button data-view="all" aria-pressed="true">${esc(t('All'))}</button><button data-view="deleted" aria-pressed="false">${esc(t('Deleted'))}</button></div>
       <div class="cw-panel cw-grow"></div></section></div>`;
     const panel = host.querySelector<HTMLElement>('.cw-panel')!;
@@ -53,7 +53,7 @@ export const dataApp = (coworkee: Coworkee): CoworkeeApp => ({
       host.querySelectorAll<HTMLElement>('[data-set]').forEach((button) => button.setAttribute('aria-current', String(button.dataset.set === name)));
       host.querySelectorAll<HTMLElement>('[data-view]').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.view === view)));
       views.hidden = !histories.some((history) => history.entitySet === name && history.softDelete);
-      setState({ set: name }, t(name));
+      setState({ set: name }, label(t, name));
       stop?.();
       stop = undefined;
       // a fresh element per set: the old table takes its listeners along

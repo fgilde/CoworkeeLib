@@ -1,7 +1,7 @@
 import { realtimeEvents, realtimeTopics, unwrap, type Schemas } from '@coworkee/client';
 import type { AppContext } from '@fgilde/airworks';
 import type { Coworkee, CoworkeeApp } from '../coworkee.ts';
-import { display, errorText, esc } from '../dom.ts';
+import { display, errorText, esc, label } from '../dom.ts';
 import { icons } from '../icons.ts';
 import { decide, recordAppId } from './record.ts';
 import { openWebPage } from './web.ts';
@@ -14,7 +14,7 @@ function approvalsHtml(coworkee: Coworkee, approvals: Approval[]) {
   const { t, culture } = coworkee;
   return approvals.map((approval) => `<li data-approval="${esc(approval.id)}" data-set="${esc(approval.entityType)}" data-entity="${esc(approval.entityId)}">
       <div class="cw-grow"><button class="cw-link" data-open>${esc(approval.title)}</button><br/>
-        <small class="cw-muted">${esc(t(approval.entityType))} · ${esc(t(approval.state))} · ${esc(t('Requested {0}', display(approval.createdAt, culture)))}${approval.requiresAll
+        <small class="cw-muted">${esc(label(t, approval.entityType))} · ${esc(t(approval.state))} · ${esc(t('Requested {0}', display(approval.createdAt, culture)))}${approval.requiresAll
           ? ` · ${esc(t('{0} of {1} approved', approval.approvers.filter((a) => a.approved === true).length, approval.approvers.filter((a) => !a.escalation).length))}` : ''}</small>
         ${approval.dueAt ? `<br/><small class="${new Date(approval.dueAt) < new Date() ? 'cw-error' : 'cw-muted'}">${esc(t('Due {0}', display(approval.dueAt, culture)))}</small>` : ''}</div>
       ${approval.canDecide ? `<span class="cw-decide"><button class="cw-primary" data-approve="true">${esc(t('Approve'))}</button><button data-approve="false">${esc(t('Reject'))}</button></span>` : ''}</li>`).join('')

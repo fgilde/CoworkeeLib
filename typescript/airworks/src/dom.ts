@@ -41,9 +41,15 @@ export const errorText = (error: unknown) => error instanceof Error ? error.mess
 /** A property or enum name for people: CreatedAt -> Created at, Last30Days -> Last 30 days. */
 export const humanize = (value: string) => value.replace(/([a-z])([A-Z0-9])/g, '$1 $2').replace(/(\d)([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase()).replace(/ ([A-Z])(?=[a-z])/g, (m) => m.toLowerCase());
 
-/** Fields of a row nobody wants in a list: OData annotations, tenant and concurrency keys, long texts like image data. */
+const guid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Fields of a row nobody wants to read: OData annotations, tenant, concurrency and soft delete fields, keys of other records, long texts like image data. */
 export const isNoise = (field: string, value: unknown) =>
-  field.includes('@') || /^(TenantId|ConcurrencyStamp|RowVersion)$/i.test(field) || (typeof value === 'string' && value.length > 200);
+  field.includes('@') || /^(TenantId|ConcurrencyStamp|RowVersion|IsDeleted|DeletedAt|DeletedBy)$/i.test(field)
+  || (typeof value === 'string' && (value.length > 200 || (field.toLowerCase() !== 'id' && guid.test(value))));
+
+/** A name of the app (an entity set, an entity type) for people: its translation, else the translation of its words (SalesOrders -> Sales orders). */
+export const label = (t: (text: string) => string, name: string) => t(name) !== name ? t(name) : t(humanize(name));
 
 /** What a record is called: its name, title, number, code or e-mail, otherwise its key. */
 export function recordTitle(row: Record<string, unknown>): string {

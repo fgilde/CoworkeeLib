@@ -127,6 +127,7 @@ test('records: noise stays out of the columns, a record is called by its name, w
 
   assert.deepEqual(columnsOf(rows).map((c) => c.field), ['Name', 'Id']);
   assert.equal(isNoise('Description', 'short'), false);
+  assert.equal(isNoise('BrandId', '01a148c0-a5d6-732f-92ac-99de9f786ca9'), true);
   assert.equal(recordTitle({ Id: 'o1', Number: 'SO-1' }), 'SO-1');
   assert.equal(recordTitle({ Id: 'o2' }), 'o2');
   assert.equal(embedUrl('https://app.test', '/sales/orders?status=Open'), 'https://app.test/sales/orders?status=Open&embed=1');
