@@ -72,7 +72,7 @@ Never edit an applied migration or the model snapshot by hand. The migrations pr
 
 ## OpenAPI and SDKs
 
-The API serves its OpenAPI document at `/openapi/v1.json` in Development. This app keeps no snapshot or generated SDK by default. If you add one (see the SDKs page of the docs), regenerate it in the same change as the endpoints or DTOs it describes.
+The API serves its OpenAPI document at `/openapi/v1.json` in Development. The template ships no snapshot of it and no generated client. If the app keeps them (the SDKs page of the docs shows a snapshot test and a generated TypeScript client), refresh the snapshot and regenerate the clients in the same change as the endpoints or DTOs they describe.
 
 <!--#if (tests) -->
 ## Tests

@@ -25,6 +25,7 @@
 
 ### Korrekturen
 
+- Die SDK-Seite beschrieb ein `sdk/openapi.json` mit Snapshot-Test und einen Client in `sdk/typescript`, die das Template nie hatte; sie zeigt beides jetzt als Rezept für Apps, die es brauchen.
 - `npm run build` von `@coworkee/client` und `@coworkee/airworks` leert zuerst `dist`, damit Pakete keine Dateien entfernter Quellen mehr mitnehmen.
 - Die eingebauten Themes Coworkee, Forest und Sunset erreichen WCAG AA beim Button-Text im hellen Modus (etwas dunklere Primär- oder Sekundärfarbe); der Kontrasttest prüft jedes eingebaute Theme.
 - Der Datei-Viewer gibt eine private Datei nie an den Online-Office-Viewer von Microsoft.

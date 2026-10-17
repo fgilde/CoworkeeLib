@@ -25,6 +25,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixes
 
+- The SDKs page described an `sdk/openapi.json` with a snapshot test and an `sdk/typescript` client that the template never had; it now shows them as a recipe for apps that need them.
 - `npm run build` of `@coworkee/client` and `@coworkee/airworks` empties `dist` first, so packs no longer carry files of removed sources.
 - The built-in themes Coworkee, Forest and Sunset meet WCAG AA on button text in light mode (slightly darker primary or secondary color); the contrast test covers every built-in theme.
 - The file viewer never hands a private file to the online Office viewer of Microsoft.

@@ -1,25 +1,40 @@
 # SDKs
 
-Eine App auf Coworkee liefert zwei Clients für andere Systeme: einen typisierten .NET-Client und einen aus der API-Beschreibung generierten TypeScript-Client.
+Andere Systeme rufen eine App auf Coworkee über ihre HTTP-API auf. Die API beschreibt sich mit OpenAPI; daraus schreibst du einen typisierten .NET-Client auf `Coworkee.Client` oder generierst einen TypeScript-Client. Das Template bringt weder einen Client noch eine Kopie der Beschreibung mit: Leg sie an, wenn ein anderes System sie braucht.
 
 ## Die API-Beschreibung
 
-Die API liefert ihre OpenAPI-Beschreibung unter `/openapi/v1.json` (in Development oder mit `Coworkee:OpenApi:Enabled`). Das Template hält eine Kopie in `sdk/openapi.json`, und ein Test schlägt fehl, wenn sich die API ohne die Kopie ändert:
+Die API liefert ihre OpenAPI-Beschreibung unter `/openapi/v1.json` (in Development oder mit `Coworkee:OpenApi:Enabled`). Die API-Tests des Templates lesen sie (`OpenApi_documents_system_info` in `tests/MyApp.Api.Tests/ApiTests.cs`). Sobald andere Systeme von der API abhängen, legst du eine Kopie ins Repository, etwa `sdk/openapi.json`, und einen Test, der fehlschlägt, wenn sich die API ohne die Kopie ändert:
 
 ```csharp
-var live = await api.Factory.CreateClient().GetStringAsync("/openapi/v1.json");
-(await File.ReadAllTextAsync("sdk/openapi.json")).ShouldBe(Pretty(live), "run with MYAPP_UPDATE_OPENAPI=1 and regenerate the SDKs");
+[Fact]
+public async Task OpenApi_matches_the_snapshot()
+{
+    var live = Pretty(await api.Factory.CreateClient().GetStringAsync("/openapi/v1.json"));
+    if (Environment.GetEnvironmentVariable("UPDATE_OPENAPI") == "1")
+    {
+        await File.WriteAllTextAsync("../../../../../sdk/openapi.json", live);
+    }
+
+    (await File.ReadAllTextAsync("../../../../../sdk/openapi.json")).ShouldBe(live, "run with UPDATE_OPENAPI=1 and regenerate the SDKs");
+}
 ```
+
+`Pretty` formatiert das JSON jedes Mal gleich (etwa `JsonNode.Parse(json)!.ToJsonString(new() { WriteIndented = true })`). Eine geänderte Kopie im Diff zeigt jede Änderung des Vertrags.
 
 ## .NET mit `Coworkee.Client`
 
-`CoworkeeApiClient` erledigt die Grundlagen: JSON-Aufrufe, OData-Abfragen und Problem Details als `CoworkeeApiException` mit Status, Code und Validierungsmeldungen. Die App ergänzt typisierte Methoden:
+`CoworkeeApiClient` erledigt die Grundlagen: JSON-Aufrufe, OData-Abfragen und Problem Details als `CoworkeeApiException` mit Status, Code und Validierungsmeldungen. Du ergänzt die typisierten Methoden deiner Endpunkte:
 
 ```csharp
 public sealed class MyAppClient(HttpClient http) : CoworkeeApiClient(http)
 {
     public Task<BrandDto> GetBrandAsync(Guid id, CancellationToken cancellationToken = default) =>
         GetAsync<BrandDto>($"api/v1/brands/{id}", cancellationToken);
+
+    public Task<BrandDto> SaveBrandAsync(Guid? id, AddEditBrandRequest brand, CancellationToken cancellationToken = default) =>
+        id is null ? SendAsync<BrandDto>(HttpMethod.Post, "api/v1/brands", brand, cancellationToken)
+            : SendAsync<BrandDto>(HttpMethod.Put, $"api/v1/brands/{id}", brand, cancellationToken);
 
     public Task<ODataResult<ProductDto>> GetProductsAsync(string? filter = null, CancellationToken cancellationToken = default) =>
         QueryAsync<ProductDto>("Products", filter, "Name", expand: "Brand", cancellationToken: cancellationToken);
@@ -43,15 +58,19 @@ Der Client hängt nur von den Contracts der App und `Coworkee.Client` ab, nicht 
 
 ## TypeScript
 
-`sdk/typescript` generiert Typen mit `openapi-typescript` und ruft über `openapi-fetch` auf; Pfade, Parameter und Bodies prüft der Compiler:
+Für deine eigenen Endpunkte generierst du Typen aus der Beschreibung mit `openapi-typescript` und rufst über `openapi-fetch` auf; dann prüft der Compiler Pfade, Parameter und Bodies. In einem eigenen Ordner, etwa `sdk/typescript`:
 
 ```bash
-cd sdk/typescript && npm install && npm run generate && npm run build
+npm install openapi-fetch && npm install -D openapi-typescript typescript
+npx openapi-typescript ../openapi.json -o src/schema.ts
 ```
 
 ```ts
-const api = createMyAppClient("https://myapp.example", () => getToken());
-const { data: brand } = await api.GET("/api/v1/brands/{id}", { params: { path: { id } } });
+import createClient from 'openapi-fetch';
+import type { paths } from './schema';
+
+const api = createClient<paths>({ baseUrl: 'https://myapp.example', headers: { Authorization: `Bearer ${apiKey}` } });
+const { data: brand } = await api.GET('/api/v1/brands/{id}', { params: { path: { id } } });
 ```
 
 ## `@coworkee/client`
