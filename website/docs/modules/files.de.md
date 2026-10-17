@@ -61,7 +61,7 @@ Jede Datei, die die Coworkee-Oberfläche zeigt, läuft über MudEx `MudExFileDis
 
 Der Viewer lädt die Datei von der eigenen Adresse der App mit dem Sitzungs-Cookie, also gelten die Rechte des Endpunkts (Chat-Dateien nur für die Mitglieder). Private Dateien gehen nie an den Online-Office-Viewer von Microsoft; nur öffentliche Dateien dürfen ihn nutzen.
 
-Manche Viewer laden ihr Skript beim ersten Anzeigen eines Typs von einem CDN (jsDelivr, esm.sh, unpkg), der Karten-Viewer lädt Kacheln von OpenStreetMap. Eine Content Security Policy der App muss sie erlauben.
+Manche Viewer laden ihr Skript beim ersten Anzeigen eines Typs von einem CDN (jsDelivr, esm.sh, unpkg), der Karten-Viewer lädt Kacheln von OpenStreetMap. `UseCoworkeeSecurityHeaders` erlaubt sie, siehe [Sicherheits-Header der Web-App](../security/authentication.md#sicherheits-header-der-web-app).
 
 ## Öffentliche Dateien
 

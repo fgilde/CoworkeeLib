@@ -23,8 +23,11 @@ internal static class FileEndpoints
         files.MapPost("/delete", (FileSelectionRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteEntries(body), ct).ToHttpResult());
         files.MapPost("/", UploadAsync).WithMetadata(new RequestSizeLimitAttribute(options.MaxFileSize));
         files.MapGet("/{id:guid}/content", ContentAsync);
+        // the file viewer asks with HEAD for type and size first
+        files.MapMethods("/{id:guid}/content", [HttpMethods.Head], ContentAsync).ExcludeFromDescription();
         files.MapPut("/{id:guid}/public", (Guid id, FilePublicRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SetFilePublic(id, body.IsPublic), ct).ToHttpResult());
         files.MapGet("/public/{id:guid}/{name}", PublicContentAsync).AllowAnonymous();
+        files.MapMethods("/public/{id:guid}/{name}", [HttpMethods.Head], PublicContentAsync).AllowAnonymous().ExcludeFromDescription();
     }
 
     // the name in the address is for the reader (and the video check of the sign-in page); the id decides

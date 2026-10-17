@@ -33,14 +33,22 @@ The browser never sees an access token. The sign-in with its tokens lives in a s
 
 | Directive | Sources | Why |
 |---|---|---|
-| `script-src` | `'self' 'wasm-unsafe-eval' 'unsafe-eval'` | WebAssembly, and BlazorJS of MudBlazor.Extensions evaluates script strings |
-| `style-src` | `'self' 'unsafe-inline'` | MudBlazor positions with inline styles |
-| `img-src` | `'self' data: blob: https:` | previews, logos and credits from other hosts |
+| `script-src` | `'self' 'wasm-unsafe-eval' 'unsafe-eval'` and the file viewer CDNs | WebAssembly, and BlazorJS of MudBlazor.Extensions evaluates script strings |
+| `style-src` | `'self' 'unsafe-inline'` and the file viewer CDNs | MudBlazor positions with inline styles |
+| `img-src` | `'self' data: blob: https:` | previews, logos and credits from other hosts, the tiles of the map viewer |
 | `media-src`, `frame-src`, `object-src` | `'self' data: blob:` | `MudExFileDisplay` shows video and audio, and PDFs and other files in `object` or `iframe` |
-| `connect-src` | `'self'` | the browser talks only to this host, which forwards the API and the hubs |
+| `connect-src` | `'self'` and the file viewer CDNs | the browser talks to this host, which forwards the API and the hubs, and loads viewer modules |
 | `frame-ancestors` | `'self'` and `Coworkee:Bff:FrameAncestors` | the AirWorks host may frame the pages |
 
-In Development `connect-src` also allows `http://localhost:*`, `ws://localhost:*` and `wss://localhost:*` (browser link and hot reload). Answers with their own policy (uploaded files, the loading screen logo) keep it.
+The file viewer CDNs are `Coworkee:Bff:SecurityHeaders:FileViewerCdns` (`https://cdn.jsdelivr.net`, `https://esm.sh`, `https://unpkg.com`). `MudExFileDisplay` loads the viewers of many types from there the first time it shows one (Word, Excel, PowerPoint, maps, 3D models, HEIC, PSD, Parquet, ...), so every file shows out of the box. The trade-off is third-party script: an app that wants none clears the list and loses the preview of those types (pictures, video, audio, PDF and text keep working):
+
+```csharp
+app.UseCoworkeeSecurityHeaders(headers => headers.FileViewerCdns.Clear());
+```
+
+The inline `onerror` fallback of `MudExFileDisplay` is not allowed: its script differs per viewer, so no hash covers it; without it only that fallback message stays away.
+
+In Development `connect-src` also allows `http://localhost:*`, `ws://localhost:*` and `wss://localhost:*` (browser link and hot reload). Answers with their own policy (uploaded files, also when the web host forwards them from the API, and the loading screen logo) keep it and get no second one.
 
 Extra sources per directive come from `Coworkee:Bff:SecurityHeaders:Sources` or the callback; `ContentSecurityPolicy` replaces the whole policy (frame-ancestors is then yours to set), `ReferrerPolicy` the referrer policy:
 

@@ -14,16 +14,30 @@ public sealed class SecurityHeadersTests
     {
         var policy = SecurityHeaders.ContentSecurityPolicy(new BffOptions(), development: false);
 
-        policy.ShouldContain("script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'");
+        policy.ShouldContain("script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval' https://cdn.jsdelivr.net https://esm.sh https://unpkg.com;");
+        policy.ShouldContain("style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://esm.sh https://unpkg.com;");
+        policy.ShouldContain("connect-src 'self' https://cdn.jsdelivr.net https://esm.sh https://unpkg.com;");
+        policy.ShouldContain("img-src 'self' data: blob: https:;");
         policy.ShouldContain("object-src 'self' data: blob:");
         policy.ShouldContain("frame-src 'self' data: blob:");
-        policy.ShouldContain("connect-src 'self';");
         policy.ShouldEndWith("frame-ancestors 'self'");
     }
 
     [Fact]
     public void Development_lets_hot_reload_connect() =>
-        SecurityHeaders.ContentSecurityPolicy(new BffOptions(), development: true).ShouldContain("connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:*;");
+        SecurityHeaders.ContentSecurityPolicy(new BffOptions(), development: true).ShouldContain("connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:*");
+
+    [Fact]
+    public void Without_the_file_viewer_cdns_no_third_party_script_is_allowed()
+    {
+        var options = new BffOptions();
+        options.SecurityHeaders.FileViewerCdns.Clear();
+
+        var policy = SecurityHeaders.ContentSecurityPolicy(options, development: false);
+
+        policy.ShouldContain("script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval';");
+        policy.ShouldContain("connect-src 'self';");
+    }
 
     [Fact]
     public void Extra_sources_join_their_directive_or_add_one()
@@ -34,7 +48,7 @@ public sealed class SecurityHeadersTests
 
         var policy = SecurityHeaders.ContentSecurityPolicy(options, development: false);
 
-        policy.ShouldContain("script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval' https://apis.google.com;");
+        policy.ShouldContain("script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval' https://cdn.jsdelivr.net https://esm.sh https://unpkg.com https://apis.google.com;");
         policy.ShouldContain("manifest-src 'self'");
     }
 

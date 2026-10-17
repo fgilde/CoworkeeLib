@@ -11,7 +11,8 @@ public static class SecurityHeaders
     internal const string Marker = "coworkee:bff:security-headers";
 
     // Blazor WebAssembly needs wasm-unsafe-eval, BlazorJS (MudBlazor.Extensions) evaluates script strings, MudBlazor positions with inline styles;
-    // MudExFileDisplay shows files from blob and data URLs in img, video, audio, object (PDF) and iframe; the browser talks only to this host
+    // MudExFileDisplay shows files from blob and data URLs in img, video, audio, object (PDF) and iframe and loads viewers from FileViewerCdns;
+    // img-src https: covers the map tiles. Its inline onerror fallback differs per viewer id, so no hash can allow it: without it only that fallback stays silent
     private static readonly (string Directive, string[] Sources)[] Defaults =
     [
         ("default-src", ["'self'"]),
@@ -44,11 +45,15 @@ public static class SecurityHeaders
         ((IApplicationBuilder)app).Properties[Marker] = true;
         app.Use((context, next) =>
         {
-            // set before the endpoint, so answers with an own policy (uploaded files, the loading screen logo) replace it
             var headers = context.Response.Headers;
-            headers.ContentSecurityPolicy = policy;
             headers.XContentTypeOptions = "nosniff";
             headers["Referrer-Policy"] = referrer;
+            // only for answers without an own policy: files from the API keep their sandbox, the loading screen logo its own
+            context.Response.OnStarting(() =>
+            {
+                headers.TryAdd("Content-Security-Policy", policy);
+                return Task.CompletedTask;
+            });
             return next(context);
         });
         return app;
@@ -66,6 +71,11 @@ public static class SecurityHeaders
         if (development)
         {
             directives["connect-src"].AddRange(DevelopmentConnect);
+        }
+
+        foreach (var directive in new[] { "script-src", "style-src", "connect-src" })
+        {
+            directives[directive].AddRange(headers.FileViewerCdns);
         }
 
         foreach (var (directive, sources) in headers.Sources)

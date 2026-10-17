@@ -21,6 +21,7 @@
 - `builder.AddCoworkeeMigrations<TDbContext>(...)` und `host.RunCoworkeeMigrationsAsync()` (`Coworkee.Identity.Setup`) sind der Migrations-Host: migrieren mit Wiederholungen (`Migrations:Attempts`), die Entwicklungsbenutzer oder den ersten Administrator eines Deployments seeden, die Entwicklungsbenutzer im Stand halten, Keycloak abgleichen, dazu die Container-Korrektur von 0.0.1.32. Die Vorlage nutzt es; bestehende Apps ersetzen damit ihre selbst geschriebene `src/*.Migrations/Program.cs`, damit spätere Korrekturen mit dem Paket kommen (`coworkee update` weist darauf hin). Siehe [Migrationen und Seed](../fundamentals/persistence.md#migrationen-und-seed).
 - Chat-Bilder bekommen ein kleines WebP, das der Server erzeugt (höchstens 480 px, aufrecht gedreht, `GET /api/v1/chat/attachments/{id}/thumbnail`, `ChatAttachmentDto.HasThumbnail`); die Nachrichtenliste zeigt es, ein Klick öffnet die ganze Datei.
 - Jede Chat-Datei öffnet sich im MudEx-Datei-Viewer (`MudExFileDisplay`), auch ein Upload vor dem Senden. Die Regel für eigene Seiten steht unter [Dateien](../modules/files.md#dateien-anzeigen).
+- Die Policy von `UseCoworkeeSecurityHeaders` erlaubt die CDNs, von denen der Datei-Viewer seine Viewer lädt (`Coworkee:Bff:SecurityHeaders:FileViewerCdns`: jsDelivr, esm.sh, unpkg), in `script-src`, `style-src` und `connect-src`, damit Word, Excel, Karten und die anderen Viewer ohne weiteres Zutun gehen; leere die Liste für eine Policy ohne Fremd-Skript. Siehe [Sicherheits-Header der Web-App](../security/authentication.md#sicherheits-header-der-web-app).
 - In einen Chat hochgeladene, aber nie gesendete Dateien werden nach `Coworkee:Chat:UnsentAttachmentLifetime` gelöscht (Standard 24 Stunden, ein stündlicher Job).
 
 ### Korrekturen
@@ -29,6 +30,8 @@
 - `npm run build` von `@coworkee/client` und `@coworkee/airworks` leert zuerst `dist`, damit Pakete keine Dateien entfernter Quellen mehr mitnehmen.
 - Die eingebauten Themes Coworkee, Forest und Sunset erreichen WCAG AA beim Button-Text im hellen Modus (etwas dunklere Primär- oder Sekundärfarbe); der Kontrasttest prüft jedes eingebaute Theme.
 - Der Datei-Viewer gibt eine private Datei nie an den Online-Office-Viewer von Microsoft.
+- Dateien, die der Web-Host weiterleitet, behalten ihre eigene Sandbox-Policy: `UseCoworkeeSecurityHeaders` setzt die App-Policy nur bei Antworten ohne eigene (vorher trugen weitergeleitete Dateien beide).
+- Die Inhalts-Endpunkte von Dateien, öffentlichen Dateien, Chat-Dateien und Vorschaubildern beantworten `HEAD`, das der Bild-Viewer zuerst schickt (bisher 405).
 
 
 ## 0.0.1.32 (2026-10-17)
