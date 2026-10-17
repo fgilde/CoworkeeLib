@@ -5,6 +5,8 @@ using MyApp.Infrastructure;
 using MyApp.Migrations;
 
 var builder = Host.CreateApplicationBuilder(args);
+// a local run is Development, whose scope checks fail on the MVC services of OData in a host without a web environment
+builder.ConfigureContainer(new DefaultServiceProviderFactory());
 builder.AddServiceDefaults();
 builder.Services.AddCoworkeeModules<MyAppDatabaseModule>(builder.Configuration);
 // the development users only where the app host runs locally; a deployment gets its first administrator from the deploy parameters,

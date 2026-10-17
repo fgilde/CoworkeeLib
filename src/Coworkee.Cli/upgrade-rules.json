@@ -166,6 +166,15 @@
         { "text": "Own IChatApi implementations add the conversation members (GetChatsAsync, OpenDirectAsync, PostAsync, ...).", "find": ":\\s*IChatApi\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] },
         { "text": "Test bases that render the layout without AddCoworkeeClient register Coworkee.Client.Blazor.Chat.ChatDock (scoped).", "find": "AddScoped<.*LinkNavigation>", "files": [ "tests/**/*.cs" ], "unless": "ChatDock" }
       ]
+    },
+    {
+      "version": "0.0.1.32",
+      "breaking": [
+        "The app host runs the migrations of a local run as Development; their host validates its services then and fails on the MVC services of OData (IWebHostEnvironment). The migrations project builds its container with the production defaults."
+      ],
+      "manual": [
+        { "text": "Add builder.ConfigureContainer(new DefaultServiceProviderFactory()); after Host.CreateApplicationBuilder(args) in the migrations project.", "find": "Host\\.CreateApplicationBuilder", "files": [ "src/*.Migrations/Program.cs" ], "unless": "DefaultServiceProviderFactory" }
+      ]
     }
   ]
 }

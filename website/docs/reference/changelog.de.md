@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Korrekturen
+
+- Die Migrationen eines lokalen Laufs stürzten seit 0.0.1.31 beim Start ab: Sie laufen als Development, und dessen Prüfung der Dienste scheitert an den MVC-Diensten von OData in einem Host ohne Web-Umgebung. Die Vorlage baut den Container der Migrationen mit den Produktions-Standards; bestehende Apps ergänzen `builder.ConfigureContainer(new DefaultServiceProviderFactory());` nach `Host.CreateApplicationBuilder(args)` in `src/*.Migrations/Program.cs` (`coworkee update` weist darauf hin).
+
 ## 0.0.1.31 (2026-10-17)
 
 ### Breaking Changes

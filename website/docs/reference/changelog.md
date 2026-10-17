@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Fixes
+
+- The migrations of a local run crashed at start since 0.0.1.31: they run as Development, whose service validation fails on the MVC services of OData in a host without a web environment. The template builds the container of the migrations with the production defaults; existing apps add `builder.ConfigureContainer(new DefaultServiceProviderFactory());` after `Host.CreateApplicationBuilder(args)` in `src/*.Migrations/Program.cs` (`coworkee update` points at it).
+
 ## 0.0.1.31 (2026-10-17)
 
 ### Breaking changes
