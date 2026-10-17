@@ -46,12 +46,16 @@ public sealed class ScreenshotTests
             Scenario.Generated(main.Generate, main.Basics.Output!);
             var app = main.Generate.App;
             app.WasStarted = true;
-            foreach (var line in new[] { "info: Aspire.Hosting.DistributedApplication[0]", "      Login to the dashboard at https://localhost:17100/login?t=3f9c2a7e41b84d0c", "      Distributed application started. Press Ctrl+C to shut down." })
+            foreach (var line in new[] { "info: Aspire.Hosting.DistributedApplication[0]", "      Login to the dashboard at https://localhost:17100/login?t=••••••••", "      Distributed application started. Press Ctrl+C to shut down." })
             {
                 app.Add(line, false);
             }
 
             app.Endpoints = [new Cli.AppEndpoint("Web", "https://localhost:7300"), new Cli.AppEndpoint("Api", "https://localhost:7301"), new Cli.AppEndpoint("Auth", "https://localhost:7302")];
+
+            // published screenshots show no password, not even a made-up one
+            var signIn = main.Generate.SignIn!;
+            main.Generate.SignIn = signIn with { Users = [.. signIn.Users.Select(u => u with { Password = new string('•', 16) })] };
         }
 
         if (page == "entities")
