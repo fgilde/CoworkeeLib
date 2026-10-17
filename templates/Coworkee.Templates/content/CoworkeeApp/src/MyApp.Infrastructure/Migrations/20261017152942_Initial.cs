@@ -144,6 +144,7 @@ namespace MyApp.Infrastructure.Migrations
                     ContentType = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Size = table.Column<long>(type: "bigint", nullable: false),
                     BlobKey = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
+                    ThumbnailKey = table.Column<string>(type: "character varying(520)", maxLength: 520, nullable: true),
                     UploadedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -1715,6 +1716,14 @@ namespace MyApp.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Themes_Name",
+                schema: "cw",
+                table: "Themes",
+                column: "Name",
+                unique: true,
+                filter: "\"TenantId\" IS NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Themes_TenantId_Name",
                 schema: "cw",
                 table: "Themes",
@@ -2123,6 +2132,7 @@ namespace MyApp.Infrastructure.Migrations
                     ContentType = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Size = table.Column<long>(type: "bigint", nullable: false),
                     BlobKey = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
+                    ThumbnailKey = table.Column<string>(type: "character varying(520)", maxLength: 520, nullable: true),
                     UploadedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -3539,6 +3549,14 @@ namespace MyApp.Infrastructure.Migrations
                 table: "TextKeys",
                 column: "Key",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Themes_Name",
+                schema: "cw",
+                table: "Themes",
+                column: "Name",
+                unique: true,
+                filter: "\"TenantId\" IS NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Themes_TenantId_Name",
