@@ -1,6 +1,6 @@
 # CONTINUE – handover for the next agent
 
-State of the Coworkee library as of 2026-10-17: everything below is merged on `main` and pushed. Released: **0.0.1.32** on nuget.org and `@coworkee/client` / `@coworkee/airworks` `0.0.1032` on npm. 0.0.1.24 = round of 2026-10-15, 0.0.1.26 = round 7, 0.0.1.27 = link fix, 0.0.1.28 = round 8, 0.0.1.29 = workflow state filter + dev user sync, 0.0.1.30 = undo/restore from the audit log, 0.0.1.31 = round 9 (chat, AirWorks inbox/records/embed, setup token, themes), 0.0.1.32 = migrations container fix. Demo (`master` f8c7171) and Sharemee (`master` fc3e23a) are on 0.0.1.31 via the local pack and add the 0.0.1.32 line themselves; the demo's AirWorks client pins `@coworkee/*` 0.0.1031.
+State of the Coworkee library as of 2026-10-17 evening: main is pushed up to 03509db = release **0.0.1.33** (nuget.org, npm `@coworkee/*` 0.0.1033); later commits on main are local only until the next round (GitHub Actions minutes are scarce: push and release once per round). Demo (`master` 59d89da) and Sharemee (`master` 45c9f98) build against the local pack of 0.0.1.33 and are pushed. AirWorks 0.5.0 is released (tile badges).
 
 ## Repositories
 | Repo | Local path | Remote / branch |
@@ -165,6 +165,15 @@ Docs `website/docs/web/global-search*.md`; changelog *Unreleased*; upgrade rule 
 - `Coworkee.Workflows.Elsa.Studio`: Elsa Studio 3.9 as Blazor Server host (`AddCoworkeeElsaStudio`/`MapCoworkeeElsaStudio`), sign-in through Coworkee.Bff (own OIDC client, tokens server side), calls the api's `/api/elsa` with the user's token (`Coworkee:Workflows:Elsa:Studio:BackendUrl`), 403 page without `Workflows.Elsa.Manage`. The host csproj needs `<RequiresAspNetWebAssets>true</RequiresAspNetWebAssets>` (a package props comes too late for restore). `ponytail:` a circuit keeps the token of its connection (reload after expiry).
 - Aspire `AddElsaStudio<T>()` (+ `AddProjects` for `*_ElsaStudio`, tool switch `elsastudio`), sets `StudioUrl` of the apis. Template/CLI/Studio option `elsaStudio`. Elsa endpoints are no longer in the OpenAPI documents.
 - Demo branch `feat/workflow-sample` (worktree `wt/elsa-studio/demo`): product approval, large-order approval, Elsa workflow *Product approved*, migration `Workflows`, `DemoWorkflows` seed, John = Product Manager, `MyApp.ElsaStudio`. Merged into demo master. Existing demo databases: the role *Product Manager* lacks `Workflows.View/Transition` - `SyncDevelopmentUsersAsync` (lib main after 0.0.1.28) now adds missing roles of seed users and missing permissions of seeded roles, and runs for the migrations of a local Aspire run (`Coworkee:Identity:SyncDevelopmentUsers`, set by `AddMigrations`; the migrations project has no launch profile and ran as Production, so the sync never ran there before). The demo DB fixed itself on the next start.
+
+## Round 10 (released in 0.0.1.33)
+
+- Hosting: `app.UseCoworkeeSecurityHeaders()` (CSP for Blazor WASM incl. MudEx file viewer CDNs `FileViewerCdns`, nosniff, Referrer-Policy, frame-ancestors from `BffOptions.FrameAncestors`); `AddCoworkeeMigrations<TDb>` + `RunCoworkeeMigrationsAsync` (seed, dev user sync, Keycloak, retries, container fix); BFF forwards any body size (`Coworkee:Bff:MaxRequestBodySize` cap); template AppHost tests in one non-parallel collection.
+- Tooling: template `AGENTS.md` + `CLAUDE.md`; `coworkee update` rule kind `insertions`; npm builds clean `dist`; SDK docs describe what the template really has (no sdk folder).
+- Content: every file display uses `MudExFileDisplay` (chat attachments, uploads); chat thumbnails (SkiaSharp WebP) and hourly cleanup of unsent uploads; history restore needs the preview `Version` (409); theme contrast AA for all built-ins; filtered unique index `IX_Themes_Name`; file endpoints answer HEAD.
+- AirWorks: theme and mail template editors via `embedOr`, workflow designer link, record window "Open in the web app", opt-in `Coworkee:Auth:FrameAncestors`.
+- MudEx main 566b296b (not released): file display errors via event listener (CSP), image viewer keyup leak.
+- Local only since 0.0.1.33: `AfterSeed` hook of the migrations helper (the demo runs its Demo* steps after `RunCoworkeeMigrationsAsync`; switch it to `AfterSeed` after the next release), strict-JSON fix of the 0.0.1.33 upgrade rule, note on `Migrations__Attempts=1` for unreachable-database tests.
 
 ## Round 9 (released in 0.0.1.31 and 0.0.1.32)
 

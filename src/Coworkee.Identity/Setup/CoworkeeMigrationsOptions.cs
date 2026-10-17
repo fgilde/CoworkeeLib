@@ -13,4 +13,7 @@ public sealed class CoworkeeMigrationsOptions
 
     /// <summary>Tries to reach the database (3 seconds apart); default <c>Migrations:Attempts</c> or 20.</summary>
     public int Attempts { get; set; }
+
+    /// <summary>Runs after the migration and the seed, before Keycloak is reconciled: the app's own data steps.</summary>
+    public Func<IServiceProvider, CancellationToken, Task>? AfterSeed { get; set; }
 }

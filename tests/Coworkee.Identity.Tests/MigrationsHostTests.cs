@@ -34,6 +34,23 @@ public sealed class MigrationsHostTests
         (await host.RunCoworkeeMigrationsAsync(TestContext.Current.CancellationToken)).ShouldBe(1);
     }
 
+    [Fact]
+    public async Task The_steps_of_the_app_run_after_the_migration()
+    {
+        var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { EnvironmentName = "Production" });
+        builder.Services.AddDbContext<BrokenDb>(o => o.UseSqlite($"Data Source={Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".db")}"));
+        var ran = false;
+        builder.AddCoworkeeMigrations<BrokenDb>(o => o.AfterSeed = (services, _) =>
+        {
+            ran = services.GetService<BrokenDb>() is not null;
+            return Task.CompletedTask;
+        });
+        using var host = builder.Build();
+
+        (await host.RunCoworkeeMigrationsAsync(TestContext.Current.CancellationToken)).ShouldBe(0);
+        ran.ShouldBeTrue();
+    }
+
     private static string[] SeededUsers(string environment, Dictionary<string, string?> settings, Action<CoworkeeMigrationsOptions>? configure = null)
     {
         var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { EnvironmentName = environment });

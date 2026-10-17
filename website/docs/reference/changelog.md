@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### New
+
+- `CoworkeeMigrationsOptions.AfterSeed` runs the app's own data steps after the migration and the seed, before Keycloak is reconciled.
+
 ## 0.0.1.33 (2026-10-17)
 
 ### Breaking changes

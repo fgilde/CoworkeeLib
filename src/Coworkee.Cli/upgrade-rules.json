@@ -184,15 +184,11 @@
         "Chat: the column cw.ChatAttachments.ThumbnailKey holds the small WebP of a picture; add a migration. Coworkee.Chat depends on Coworkee.BackgroundJobs (an hourly job deletes files uploaded but never sent) and brings SkiaSharp with its native Linux assets.",
         "History restore: POST /api/v1/history/{set}/{id}/restore needs the version of its preview (EntityHistoryRestoreRequest.Version from EntityHistoryPreviewDto.Version) and answers 409 when the record changed since; regenerate OpenAPI snapshots and SDKs. EntityHistoryRestoreDialog.ConfirmAsync does it for the Blazor UI."
       ],
-      "needsMigration": true,
-      "manual": [
-        { "text": "Own IEntityHistoryApi implementations return the preview's Version and pass EntityHistoryRestoreRequest.Version on to the restore endpoint.", "find": ":\\s*IEntityHistoryApi\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] },
-        { "text": "Direct calls of the restore endpoint send the version of a preview first: request with { Version = preview.Version }.", "find": "/api/v1/history/.*/restore", "files": [ "src/**/*.cs", "src/**/*.ts", "tests/**/*.cs" ] }
-      ],
       "manual": [
         { "text": "Replace the hand-written migrations host with the library's: builder.AddCoworkeeMigrations<TDbContext>(o => { o.DevelopmentSeed = DemoSeed.Configure; o.DeploymentSeed = DemoSeed.ConfigureDeployment; }) and return await host.RunCoworkeeMigrationsAsync(); it brings InitialAdmin, the seed, SyncDevelopmentUsersAsync, ReconcileKeycloakRealmAsync, Migrations:Attempts and the container fix of 0.0.1.32 (see the template Migrations/Program.cs).", "find": "SeedCoworkeeIdentityAsync", "files": [ "src/*.Migrations/Program.cs" ], "unless": "AddCoworkeeMigrations" },
         { "text": "Add app.UseCoworkeeSecurityHeaders(); before UseStaticFiles in the web host and remove a hand-written Content-Security-Policy middleware (extra sources: Coworkee:Bff:SecurityHeaders:Sources).", "find": "MapCoworkeeBff\\(", "files": [ "src/*.Web/Program.cs" ], "unless": "UseCoworkeeSecurityHeaders" },
         { "text": "Remove the hand-written Kestrel MaxRequestBodySize: the BFF's forwarded routes take any size and the API checks its own limits (cap: Coworkee:Bff:MaxRequestBodySize).", "find": "MaxRequestBodySize", "files": [ "src/*.Web/Program.cs", "src/*.AirWorks/Program.cs" ] },
+        { "text": "Tests that start the migrations host against an unreachable database set Migrations__Attempts=1: RunCoworkeeMigrationsAsync retries 20 times 3 seconds by default.", "find": "Unreachable|unreachable", "files": [ "tests/**/*.cs" ], "unless": "Migrations__Attempts" },
         { "text": "Own IEntityHistoryApi implementations return the preview's Version and pass EntityHistoryRestoreRequest.Version on to the restore endpoint.", "find": ":\\s*IEntityHistoryApi\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] },
         { "text": "Direct calls of the restore endpoint send the version of a preview first: request with { Version = preview.Version }.", "find": "/api/v1/history/.*/restore", "files": [ "src/**/*.cs", "src/**/*.ts", "tests/**/*.cs" ] }
       ],

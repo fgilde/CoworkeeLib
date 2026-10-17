@@ -29,7 +29,7 @@ public static class CoworkeeMigrations
             builder.Services.AddCoworkeeIdentitySeed(options.DevelopmentSeed!);
         }
 
-        builder.Services.AddSingleton(new MigrationsPlan(typeof(TDbContext), admin is not null || developmentUsers, developmentUsers, Math.Max(1, options.Attempts)));
+        builder.Services.AddSingleton(new MigrationsPlan(typeof(TDbContext), admin is not null || developmentUsers, developmentUsers, Math.Max(1, options.Attempts), options.AfterSeed));
         return builder;
     }
 
@@ -50,6 +50,11 @@ public static class CoworkeeMigrations
                     // a database set up earlier gets the users and roles added to the seed since, and their passwords again
                     await host.Services.SyncDevelopmentUsersAsync(cancellationToken);
                 }
+            }
+
+            if (plan.AfterSeed is not null)
+            {
+                await plan.AfterSeed(scope.ServiceProvider, cancellationToken);
             }
 
             await scope.ServiceProvider.ReconcileKeycloakRealmAsync(cancellationToken: cancellationToken);
@@ -82,5 +87,5 @@ public static class CoworkeeMigrations
 
     private static void AddAdmin(IdentitySeedOptions seed, SeedUser admin) => seed.Users.Add(admin);
 
-    private sealed record MigrationsPlan(Type DbContext, bool Seed, bool DevelopmentUsers, int Attempts);
+    private sealed record MigrationsPlan(Type DbContext, bool Seed, bool DevelopmentUsers, int Attempts, Func<IServiceProvider, CancellationToken, Task>? AfterSeed);
 }
