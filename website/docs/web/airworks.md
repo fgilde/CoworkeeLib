@@ -61,7 +61,7 @@ document.body.append(document.createElement('air-desktop'));
 | Files: folders, upload (also by dropping files), rename, delete, download | `coworkee.files` | `Files.View` |
 | File preview with the MudEx file display (pdf, images, office, archives, markdown, audio, video) | `coworkee.file-preview` | opened from Files |
 | Records: every OData entity set as a paged, sortable and searchable table; deleted records of sets with soft delete | `coworkee.data` | the app has OData |
-| Record window: fields, history with undo, restore of a state before or after a change (with a preview), workflow state, steps and approvals; opened from records, search, inbox and audit log | `coworkee.record` | opened with `{ set, id }` |
+| Record window: fields, history with undo, restore of a state before or after a change (with a preview), workflow state, steps and approvals; *Open in the web app* opens the record's page of the web app (the link of its global search hit) in a window, or in a browser tab when the page cannot be framed; opened from records, search, inbox and audit log | `coworkee.record` | opened with `{ set, id }` |
 | Chat: people of the organisation with presence and unread counts, messages arrive live; the unread count shows on the tile | `coworkee.chat` | `Chat.Use` and the Chat module |
 | Reports: list, favourites, duplicate, delete, a report with its KPIs, charts and tables, and the report designer | `coworkee.reports`, `coworkee.report`, `coworkee.report-designer` | `Reports.View` and the Reporting module |
 | Assistant: conversations, answers streamed as they arrive, confirmation of tools that change data | `coworkee.assistant` | `Ai.Chat` and the AI module |
@@ -75,8 +75,8 @@ The administration apps get no desktop shortcut of their own: the app *Administr
 | Section | Apps (permission) |
 |---|---|
 | Identity | Users (`Identity.Users.View`; edit, roles, groups, permissions, password, lock, reset mail, sign out everywhere), Groups (`Identity.Groups.View`), Roles with their permissions (`Identity.Roles.View`), Applications and Scopes (`Identity.Clients.Manage`, system), API keys (`ApiKeys.Manage`) |
-| System | Themes (`Themes.Manage`; new from a built-in theme, palettes, logo, CSS, default, Keycloak sign-in page), Backups, Services, Editions, Tenants with their features (system), AI settings with a connection test (system) |
-| Communication | Mail templates with live preview and test mail (`Mail.Templates.Manage`), Mail campaigns with recipient preview, test, schedule and cancel, Recipient lists (`Mail.Campaigns.Send`), Mail log (`Mail.Log.View`), Mail settings with a connection test (`Settings.Manage`) |
+| System | Themes (`Themes.Manage`; the theme editor of the web app in a window when the BFF knows the web app, otherwise new from a built-in theme, palettes, logo, CSS, default, Keycloak sign-in page), Workflow designer (`Workflows.Elsa.Manage`; opens Elsa Studio in a browser tab), Backups, Services, Editions, Tenants with their features (system), AI settings with a connection test (system) |
+| Communication | Mail templates (`Mail.Templates.Manage`; the template editor of the web app in a window when the BFF knows the web app, otherwise subject and body with live preview and test mail), Mail campaigns with recipient preview, test, schedule and cancel, Recipient lists (`Mail.Campaigns.Send`), Mail log (`Mail.Log.View`), Mail settings with a connection test (`Settings.Manage`) |
 | Localization | Languages (switch on/off, default), Translations with machine translation of the missing texts (`Localization.Manage`) |
 | Monitoring | Audit log with the changed fields and the record's history (`Audit.View`), AI tool calls (`Ai.Audit`), API documentation (`ApiDocs.View`) |
 
@@ -131,6 +131,10 @@ Fields that pick users or groups (group members, a user's groups, the users of a
 ### Pages of the web app (`embedApp`)
 
 Screens that are deep in Blazor (data tables with facets and query builder, editors) need no rebuild: `embedApp({ id, title, path })` shows a page of the web app in a window, and `openWebPage(coworkee, path)` opens one from code. The page runs in the embedded shell of `CoworkeeLayout` (`?embed=1`: no app bar, menu or assistant). Under Aspire `AddAirWorks` hands the address of the web app to the AirWorks host (`Coworkee:Bff:WebAppUrl`, reported as `appUrl` of `/bff/user`) and lets it frame the web app (`Coworkee:Bff:FrameAncestors` of the web host); without it these apps are left out. The window signs in silently with the session the user has at the auth server; the button in its corner opens the page in a browser tab. Each such window starts the WebAssembly runtime of the web app (about a second once the browser has cached it); the reasons and the alternatives are in `docs/airworks-concept.md` of the repository.
+
+`embedOr(options, fallback)` takes the page of the web app while the BFF knows the web app and the app `fallback` otherwise; the theme and mail template editors of `adminApps` are built that way. Elsa Studio is a host of its own that does not let other origins frame it, so its app only opens a browser tab.
+
+Without a session at the auth server the window shows its sign-in page only when the auth server lets the AirWorks origin frame it: `Coworkee:Auth:FrameAncestors` (for example `["https://desk.example.com"]`) puts these origins into the `frame-ancestors` of the account pages instead of `'none'`. It is off unless you set it, because a page that may be framed can be overlaid by the framing page (clickjacking); list only the AirWorks origin of your own deployment. It works only when AirWorks, the web app and the auth server are on the same site (one domain with subdomains, or localhost): browsers do not send the sign-in cookies to a frame of another site. External providers such as Google refuse to be framed; their buttons need the browser tab.
 
 ### Badges
 

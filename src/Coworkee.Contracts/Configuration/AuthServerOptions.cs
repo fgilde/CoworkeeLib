@@ -39,6 +39,12 @@ public sealed class AuthServerOptions
     /// <summary>PKCS#12 file that encrypts authorization codes and refresh tokens. Required outside development.</summary>
     public CertificateOptions? EncryptionCertificate { get; set; }
 
+    /// <summary>
+    /// Origins that may show the account pages in a frame, such as the AirWorks desktop whose windows embed pages of the web app; empty forbids every frame.
+    /// Only for trusted origins of the same site as the auth server: a frame on another site gets no sign-in cookie in most browsers.
+    /// </summary>
+    public List<string> FrameAncestors { get; set; } = [];
+
     /// <summary>Allows the per machine development certificates outside the Development environment (tests, demos).</summary>
     public bool DevelopmentCertificates { get; set; }
 }

@@ -1,5 +1,5 @@
 import type { AppContext } from '@fgilde/airworks';
-import type { Coworkee, CoworkeeApp } from '../coworkee.ts';
+import type { AppFactory, Coworkee, CoworkeeApp } from '../coworkee.ts';
 import { esc } from '../dom.ts';
 import { icons } from '../icons.ts';
 
@@ -25,12 +25,18 @@ function frame(coworkee: Coworkee, host: HTMLElement, path: string, title: strin
  * A page of the web client as a desktop app, e.g. embedApp({ id: "shop.orders", title: "Sales orders", path: "/sales/orders" }):
  * the Blazor page with all its tools (facets, query builder, history) in a window instead of a rebuild. Left out while the BFF does not know the web client.
  */
-export const embedApp = (options: { id: string; title: string; path: string; icon?: string; accent?: string; width?: number; height?: number; requiredPermissions?: string[]; group?: string }) =>
+export const embedApp = (options: EmbedOptions) =>
   (coworkee: Coworkee): CoworkeeApp[] => coworkee.user.appUrl ? [{
     id: options.id, title: coworkee.t(options.title), icon: options.icon ?? icons.web, accent: options.accent ?? '#35496b',
     width: options.width ?? 1100, height: options.height ?? 700, requiredPermissions: options.requiredPermissions, group: options.group,
     render: ({ host }: AppContext) => frame(coworkee, host, options.path, coworkee.t(options.title)),
   }] : [];
+
+export type EmbedOptions = { id: string; title: string; path: string; icon?: string; accent?: string; width?: number; height?: number; requiredPermissions?: string[]; group?: string };
+
+/** The page of the web client (the full editor) while the BFF knows the web client, otherwise the lighter app built here. */
+export const embedOr = (options: EmbedOptions, fallback: AppFactory): AppFactory => (coworkee) =>
+  coworkee.user.appUrl ? embedApp(options)(coworkee) : fallback(coworkee);
 
 /** Any page of the web client in a window, opened with the intent { path, title }: links of notifications and approvals. */
 export const webPageApp = (coworkee: Coworkee): CoworkeeApp[] => coworkee.user.appUrl ? [{

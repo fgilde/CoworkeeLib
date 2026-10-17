@@ -2,6 +2,19 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Neu
+
+- `coworkee update` fügt einzelne Zeilen selbst ein (Regelart `insertions` in `upgrade-rules.json`: nach der ersten Zeile, die zu einem Muster passt, mit deren Einrückung, übersprungen, wo die Zeile schon steht; `--dry-run` listet sie nur). Der Schritt von 0.0.1.32 (`builder.ConfigureContainer(new DefaultServiceProviderFactory());` in `src/*.Migrations/Program.cs`) passiert jetzt automatisch.
+- Neue Apps haben eine `AGENTS.md` mit den Regeln für Coding-Agenten (Aufbau, Pflichtmuster, Fallstricke, Migrationen, Tests, CLI und MCP) und eine `CLAUDE.md`, die sie einbindet. Bestehende Apps übernehmen sie aus einer neuen App mit denselben Optionen.
+- AirWorks: Der Theme- und der Mail-Vorlagen-Editor der Verwaltung sind die Seiten der Web-App in einem Fenster, wenn die BFF die Web-App kennt (`embedOr`), die TypeScript-Editoren bleiben der Ersatz; *Workflow-Designer* öffnet Elsa Studio in einem Browser-Tab (`Workflows.Elsa.Manage`); das Datensatzfenster hat *In der Web-App öffnen* (die Seite des Treffers der globalen Suche). Neuer Textschlüssel `Open in the web app`.
+- `Coworkee:Auth:FrameAncestors`: Origins, die die Kontoseiten des Auth-Servers einrahmen dürfen (Standard: keine), damit ein AirWorks-Fenster die Anmeldeseite einer eingebetteten Webseite zeigen kann. Nur auf derselben Site; siehe [AirWorks](../web/airworks.md#seiten-der-web-app-embedapp).
+
+### Korrekturen
+
+- `npm run build` von `@coworkee/client` und `@coworkee/airworks` leert zuerst `dist`, damit Pakete keine Dateien entfernter Quellen mehr mitnehmen.
+
 ## 0.0.1.32 (2026-10-17)
 
 ### Korrekturen

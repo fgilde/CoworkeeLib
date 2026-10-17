@@ -35,6 +35,7 @@
   "scripts": {
     "openapi": "node scripts/openapi.mjs",
     "generate": "openapi-typescript openapi.json -o src/schema.ts",
+    "prebuild": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
     "build": "tsc -p tsconfig.json",
     "test": "node --test \"test/**/*.test.ts\""
   },

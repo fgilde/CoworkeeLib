@@ -40,7 +40,7 @@ public sealed class UpgradeTests
         UpgradeRules.Between(UpgradeRules.All[^1].Version, "0.1.0-dev.20261015184054").Select(r => r.Version).ShouldBeEmpty();
         UpgradeRules.Between(null, "0.0.1.15").Select(r => r.Version).ShouldBe(["0.0.1.15"]);
         UpgradeRules.All.ShouldAllBe(r => r.Breaking != null && r.Breaking.Length > 0);
-        UpgradeRules.All.SelectMany(r => (r.Renames ?? []).Select(x => x.Find).Concat((r.Manual ?? []).Select(m => m.Find))).ShouldAllBe(p => new Regex(p) != null);
+        UpgradeRules.All.SelectMany(r => (r.Renames ?? []).Select(x => x.Find).Concat((r.Insertions ?? []).Select(i => i.InsertAfter)).Concat((r.Manual ?? []).Select(m => m.Find))).ShouldAllBe(p => new Regex(p) != null);
     }
 
     [Fact]
@@ -87,6 +87,23 @@ public sealed class UpgradeTests
 
         Read(root, "Directory.Packages.props").ShouldBe(Props);
         Read(root, "tests/Shop.Api.Tests/ApiFixture.cs").ShouldContain("PostgresFixture");
+    }
+
+    [Fact]
+    public void Update_inserts_a_line_after_the_match_with_its_indentation_and_line_ending_once()
+    {
+        using var folder = new TempFolder();
+        const string program = "using X;\r\n\r\n    var builder = Host.CreateApplicationBuilder(args);\r\nbuilder.AddServiceDefaults();\r\n";
+        File.WriteAllText(folder.File("src/Shop.Migrations/Program.cs"), program);
+        var rules = UpgradeRules.Between("0.0.1.31", "0.0.1.32");
+
+        UpgradeRules.Apply(folder.Path, rules, dryRun: true).Select(c => c.File).ShouldBe(["src/Shop.Migrations/Program.cs"]);
+        Read(folder.Path, "src/Shop.Migrations/Program.cs").ShouldBe(program);
+
+        UpgradeRules.Apply(folder.Path, rules, dryRun: false);
+        Read(folder.Path, "src/Shop.Migrations/Program.cs").ShouldBe(
+            "using X;\r\n\r\n    var builder = Host.CreateApplicationBuilder(args);\r\n    builder.ConfigureContainer(new DefaultServiceProviderFactory());\r\nbuilder.AddServiceDefaults();\r\n");
+        UpgradeRules.Apply(folder.Path, rules, dryRun: false).ShouldBeEmpty();
     }
 
     private static string Read(string root, string path) => File.ReadAllText(Path.Combine(root, path));

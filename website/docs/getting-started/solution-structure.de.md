@@ -26,6 +26,8 @@ flowchart LR
 | `MyApp.Application` | Schnittstellen, die Module teilen, etwa die Dashboard-Zähler |
 | `MyApp.Infrastructure` | `MyAppDbContext`, Migrationen und das Modul, das die Datenbank zusammenführt |
 
+Im Wurzelordner: `README.md`, `LOGIN.md` (die Entwicklungsbenutzer), `quickrun.yml` und `AGENTS.md` mit den Regeln für Coding-Agenten (`CLAUDE.md` bindet sie ein), siehe [Mit KI bauen](../features/building-with-ai.md).
+
 ## In einem Fachmodul
 
 ```text

@@ -154,6 +154,14 @@ public sealed class ClientAdminTests(AuthApp app) : IAsyncLifetime
         CoworkeeAuthServerModule.ContentSecurityPolicy(new Contracts.Configuration.AuthServerOptions { LogoUrl = "/logo.svg" }, StoredClients.None).ShouldContain("img-src 'self' data:;");
     }
 
+    [Fact]
+    public void Only_the_configured_origins_may_frame_the_account_pages()
+    {
+        CoworkeeAuthServerModule.ContentSecurityPolicy(new Contracts.Configuration.AuthServerOptions(), StoredClients.None).ShouldContain("frame-ancestors 'none';");
+        CoworkeeAuthServerModule.ContentSecurityPolicy(new Contracts.Configuration.AuthServerOptions { FrameAncestors = ["https://desk.test/app", "not a url"] }, StoredClients.None)
+            .ShouldContain("frame-ancestors https://desk.test;");
+    }
+
     private static ClientRequest Request(string clientId, string type, string consent) =>
         new(clientId, "Partner", type, consent, [Callback], [], [ClientGrantTypes.AuthorizationCode, ClientGrantTypes.RefreshToken], ["openid", "profile", "offline_access"]);
 
