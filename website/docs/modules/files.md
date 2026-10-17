@@ -61,7 +61,7 @@ Every file the Coworkee UI shows goes through MudEx `MudExFileDisplay`, so each 
 
 The viewer loads the file from the app's own address with the session cookie, so the endpoint's rights apply (chat files only for the members). Private files never go to the online Office viewer of Microsoft; only public files may use it.
 
-Some viewers load their script from a CDN the first time they show a type (jsDelivr, esm.sh, unpkg), and the map viewer loads OpenStreetMap tiles. A content security policy of the app has to allow them.
+Some viewers load their script from a CDN the first time they show a type (jsDelivr, esm.sh, unpkg), and the map viewer loads OpenStreetMap tiles. `UseCoworkeeSecurityHeaders` allows them, see [Security headers of the web app](../security/authentication.md#security-headers-of-the-web-app).
 
 ## Public files
 

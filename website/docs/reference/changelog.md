@@ -21,6 +21,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 - `builder.AddCoworkeeMigrations<TDbContext>(...)` and `host.RunCoworkeeMigrationsAsync()` (`Coworkee.Identity.Setup`) are the migrations host: migrate with retries (`Migrations:Attempts`), seed the development users or the first administrator of a deployment, keep the development users in step, reconcile Keycloak, and the container fix of 0.0.1.32. The template uses it; existing apps replace their hand-written `src/*.Migrations/Program.cs` with it, so later fixes come with the package (`coworkee update` points at it). See [Migrations and seeding](../fundamentals/persistence.md#migrations-and-seeding).
 - Chat pictures get a small WebP the server makes (at most 480 px, turned upright, `GET /api/v1/chat/attachments/{id}/thumbnail`, `ChatAttachmentDto.HasThumbnail`); the message list shows it, a click opens the full file.
 - Every chat file opens in the MudEx file viewer (`MudExFileDisplay`), also an upload before it is sent. The rule for own pages is on [Files](../modules/files.md#showing-files).
+- The policy of `UseCoworkeeSecurityHeaders` allows the CDNs the file viewer loads its viewers from (`Coworkee:Bff:SecurityHeaders:FileViewerCdns`: jsDelivr, esm.sh, unpkg) in `script-src`, `style-src` and `connect-src`, so Word, Excel, maps and the other viewers work out of the box; clear the list for a policy without third-party script. See [Security headers of the web app](../security/authentication.md#security-headers-of-the-web-app).
 - Files uploaded to a chat but never sent are deleted after `Coworkee:Chat:UnsentAttachmentLifetime` (default 24 hours, an hourly job).
 
 ### Fixes
@@ -28,6 +29,8 @@ Changes that need action in apps built on Coworkee. Newest first.
 - `npm run build` of `@coworkee/client` and `@coworkee/airworks` empties `dist` first, so packs no longer carry files of removed sources.
 - The built-in themes Coworkee, Forest and Sunset meet WCAG AA on button text in light mode (slightly darker primary or secondary color); the contrast test covers every built-in theme.
 - The file viewer never hands a private file to the online Office viewer of Microsoft.
+- Files forwarded by the web host keep their own sandbox policy: `UseCoworkeeSecurityHeaders` adds the app policy only to answers without one (before, forwarded files carried both).
+- The content endpoints of files, public files, chat files and thumbnails answer `HEAD`, which the image viewer sends first (it got 405).
 
 
 ## 0.0.1.32 (2026-10-17)

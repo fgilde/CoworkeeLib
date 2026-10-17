@@ -45,6 +45,8 @@ public sealed class ChatAttachmentTests(ChatApp app) : IAsyncLifetime
 
         (picture.HasThumbnail, photo.HasThumbnail, text.HasThumbnail).ShouldBe((true, true, false));
         (await ThumbnailAsync(Bob, picture.Id)).ShouldBe((480, 240));
+        (await Bob.SendAsync(new HttpRequestMessage(HttpMethod.Head, $"/api/v1/chat/attachments/{picture.Id}"), Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await Carol.SendAsync(new HttpRequestMessage(HttpMethod.Head, $"/api/v1/chat/attachments/{picture.Id}"), Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
         (await ThumbnailAsync(Bob, photo.Id)).ShouldBe((240, 480));
         (await Bob.GetAsync($"/api/v1/chat/attachments/{text.Id}/thumbnail", Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
         (await Carol.GetAsync($"/api/v1/chat/attachments/{picture.Id}/thumbnail", Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);

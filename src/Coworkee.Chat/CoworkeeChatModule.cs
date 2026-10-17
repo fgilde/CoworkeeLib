@@ -77,6 +77,9 @@ public sealed class CoworkeeChatModule : CoworkeeModule, IWebModule
         chat.MapPost("/chats/{id:guid}/attachments", UploadAsync);
         chat.MapGet("/attachments/{id:guid}", ContentAsync);
         chat.MapGet("/attachments/{id:guid}/thumbnail", ThumbnailAsync);
+        // the file viewer asks with HEAD for type and size first
+        chat.MapMethods("/attachments/{id:guid}", [HttpMethods.Head], ContentAsync).ExcludeFromDescription();
+        chat.MapMethods("/attachments/{id:guid}/thumbnail", [HttpMethods.Head], ThumbnailAsync).ExcludeFromDescription();
 
         chat.MapGet("/messages/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetChatMessageQuery(id), ct).ToHttpResult());
         chat.MapPut("/messages/{id:guid}", (Guid id, EditChatMessageRequest body, IDispatcher d, CancellationToken ct) =>

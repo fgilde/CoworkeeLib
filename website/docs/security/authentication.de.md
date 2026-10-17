@@ -33,14 +33,22 @@ Der Browser sieht nie ein Access-Token. Die Anmeldung samt Tokens liegt in einem
 
 | Direktive | Quellen | Warum |
 |---|---|---|
-| `script-src` | `'self' 'wasm-unsafe-eval' 'unsafe-eval'` | WebAssembly, und BlazorJS von MudBlazor.Extensions wertet Skript-Strings aus |
-| `style-src` | `'self' 'unsafe-inline'` | MudBlazor positioniert mit Inline-Styles |
-| `img-src` | `'self' data: blob: https:` | Vorschauen, Logos und Credits anderer Hosts |
+| `script-src` | `'self' 'wasm-unsafe-eval' 'unsafe-eval'` und die CDNs der Datei-Viewer | WebAssembly, und BlazorJS von MudBlazor.Extensions wertet Skript-Strings aus |
+| `style-src` | `'self' 'unsafe-inline'` und die CDNs der Datei-Viewer | MudBlazor positioniert mit Inline-Styles |
+| `img-src` | `'self' data: blob: https:` | Vorschauen, Logos und Credits anderer Hosts, die Kacheln des Karten-Viewers |
 | `media-src`, `frame-src`, `object-src` | `'self' data: blob:` | `MudExFileDisplay` zeigt Video und Audio, PDFs und andere Dateien in `object` oder `iframe` |
-| `connect-src` | `'self'` | der Browser spricht nur mit diesem Host, der API und Hubs weiterleitet |
+| `connect-src` | `'self'` und die CDNs der Datei-Viewer | der Browser spricht mit diesem Host, der API und Hubs weiterleitet, und lädt Viewer-Module |
 | `frame-ancestors` | `'self'` und `Coworkee:Bff:FrameAncestors` | der AirWorks-Host darf die Seiten einbetten |
 
-In Development erlaubt `connect-src` zusätzlich `http://localhost:*`, `ws://localhost:*` und `wss://localhost:*` (Browser Link und Hot Reload). Antworten mit eigener Policy (hochgeladene Dateien, das Logo des Ladebildschirms) behalten sie.
+Die CDNs der Datei-Viewer stehen in `Coworkee:Bff:SecurityHeaders:FileViewerCdns` (`https://cdn.jsdelivr.net`, `https://esm.sh`, `https://unpkg.com`). `MudExFileDisplay` lädt von dort die Viewer vieler Typen, wenn es einen zum ersten Mal zeigt (Word, Excel, PowerPoint, Karten, 3D-Modelle, HEIC, PSD, Parquet, ...), damit jede Datei ohne weiteres Zutun angezeigt wird. Der Preis ist Fremd-Skript: Eine App, die keines will, leert die Liste und verliert die Vorschau dieser Typen (Bilder, Video, Audio, PDF und Text gehen weiter):
+
+```csharp
+app.UseCoworkeeSecurityHeaders(headers => headers.FileViewerCdns.Clear());
+```
+
+Der Inline-`onerror`-Fallback von `MudExFileDisplay` ist nicht erlaubt: Sein Skript ist pro Viewer anders, also deckt ihn kein Hash ab; ohne ihn bleibt nur diese Fallback-Meldung aus.
+
+In Development erlaubt `connect-src` zusätzlich `http://localhost:*`, `ws://localhost:*` und `wss://localhost:*` (Browser Link und Hot Reload). Antworten mit eigener Policy (hochgeladene Dateien, auch wenn der Web-Host sie von der API weiterleitet, und das Logo des Ladebildschirms) behalten sie und bekommen keine zweite.
 
 Weitere Quellen pro Direktive kommen aus `Coworkee:Bff:SecurityHeaders:Sources` oder dem Callback; `ContentSecurityPolicy` ersetzt die ganze Policy (frame-ancestors setzt du dann selbst), `ReferrerPolicy` die Referrer-Policy:
 

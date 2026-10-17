@@ -39,6 +39,8 @@ public sealed class FileTests(FilesApp app) : IAsyncLifetime
         using var download = await Admin.GetAsync($"/api/v1/files/{file.Id}/content?download=true", Ct);
         download.Content.Headers.ContentDisposition!.DispositionType.ShouldBe("attachment");
         download.Content.Headers.ContentDisposition.FileNameStar.ShouldBe("page.html");
+        using var head = await Admin.SendAsync(new HttpRequestMessage(HttpMethod.Head, $"/api/v1/files/{file.Id}/content"), Ct);
+        (head.StatusCode, head.Content.Headers.ContentType!.MediaType, head.Content.Headers.ContentLength).ShouldBe((HttpStatusCode.OK, "text/html", 25L));
     }
 
     [Fact]
