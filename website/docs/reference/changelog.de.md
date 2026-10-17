@@ -2,6 +2,25 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Breaking Changes
+
+- **Migration nötig**: ein gefilterter eindeutiger Index `IX_Themes_Name` auf `cw.Themes` (eingebaute Themes, `TenantId` null) und die Spalte `cw.ChatAttachments.ThumbnailKey`. Der Index verhindert, dass zwei App-Instanzen die eingebauten Themes auf SQL Server und SQLite doppelt anlegen (Postgres lehnte das schon ab); der Seed räumt solche Doppel nicht mehr auf. Meldet die Migration einen doppelten Schlüssel, lösch zuerst die überzählige eingebaute Zeile.
+- **Wiederherstellen aus dem Verlauf prüft seine Vorschau**: `EntityHistoryPreviewDto.Version` und `EntityHistoryRestoreRequest.Version` sind neu; `POST /api/v1/history/{set}/{id}/restore` antwortet `409`, wenn die Version fehlt oder sich der Datensatz seit der Vorschau geändert hat. Verlaufsdialog, Rückgängig im Audit-Log und das AirWorks-Datensatzfenster zeigen dann die neue Vorschau. Eigene `IEntityHistoryApi`-Implementierungen und direkte API-Aufrufe geben die Version weiter; OpenAPI-Snapshots und SDKs neu erzeugen. Siehe [Auditing](../modules/auditing.md#verlauf-eines-datensatzes-und-wiederherstellen).
+- **`Coworkee.Chat` hängt von `Coworkee.BackgroundJobs` ab** und bringt SkiaSharp (MIT) mit seinen nativen Linux-Bibliotheken für die Vorschaubilder.
+
+### Neu
+
+- Chat-Bilder bekommen ein kleines WebP, das der Server erzeugt (höchstens 480 px, aufrecht gedreht, `GET /api/v1/chat/attachments/{id}/thumbnail`, `ChatAttachmentDto.HasThumbnail`); die Nachrichtenliste zeigt es, ein Klick öffnet die ganze Datei.
+- Jede Chat-Datei öffnet sich im MudEx-Datei-Viewer (`MudExFileDisplay`), auch ein Upload vor dem Senden. Die Regel für eigene Seiten steht unter [Dateien](../modules/files.md#dateien-anzeigen).
+- In einen Chat hochgeladene, aber nie gesendete Dateien werden nach `Coworkee:Chat:UnsentAttachmentLifetime` gelöscht (Standard 24 Stunden, ein stündlicher Job).
+
+### Korrekturen
+
+- Die eingebauten Themes Coworkee, Forest und Sunset erreichen WCAG AA beim Button-Text im hellen Modus (etwas dunklere Primär- oder Sekundärfarbe); der Kontrasttest prüft jedes eingebaute Theme.
+- Der Datei-Viewer gibt eine private Datei nie an den Online-Office-Viewer von Microsoft.
+
 ## 0.0.1.32 (2026-10-17)
 
 ### Korrekturen

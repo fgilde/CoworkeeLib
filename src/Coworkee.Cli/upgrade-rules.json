@@ -175,6 +175,19 @@
       "manual": [
         { "text": "Add builder.ConfigureContainer(new DefaultServiceProviderFactory()); after Host.CreateApplicationBuilder(args) in the migrations project.", "find": "Host\\.CreateApplicationBuilder", "files": [ "src/*.Migrations/Program.cs" ], "unless": "DefaultServiceProviderFactory" }
       ]
+    },
+    {
+      "version": "0.0.1.33",
+      "breaking": [
+        "Theming: a filtered unique index on cw.Themes.Name for the built-in themes (TenantId null) keeps a second app instance from seeding them twice on SQL Server and SQLite; add a migration. Earlier versions removed such duplicates at every start; if the migration still reports a duplicate key on IX_Themes_Name, delete the extra built-in row first.",
+        "Chat: the column cw.ChatAttachments.ThumbnailKey holds the small WebP of a picture; add a migration. Coworkee.Chat depends on Coworkee.BackgroundJobs (an hourly job deletes files uploaded but never sent) and brings SkiaSharp with its native Linux assets.",
+        "History restore: POST /api/v1/history/{set}/{id}/restore needs the version of its preview (EntityHistoryRestoreRequest.Version from EntityHistoryPreviewDto.Version) and answers 409 when the record changed since; regenerate OpenAPI snapshots and SDKs. EntityHistoryRestoreDialog.ConfirmAsync does it for the Blazor UI."
+      ],
+      "needsMigration": true,
+      "manual": [
+        { "text": "Own IEntityHistoryApi implementations return the preview's Version and pass EntityHistoryRestoreRequest.Version on to the restore endpoint.", "find": ":\\s*IEntityHistoryApi\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] },
+        { "text": "Direct calls of the restore endpoint send the version of a preview first: request with { Version = preview.Version }.", "find": "/api/v1/history/.*/restore", "files": [ "src/**/*.cs", "src/**/*.ts", "tests/**/*.cs" ] }
+      ]
     }
   ]
 }

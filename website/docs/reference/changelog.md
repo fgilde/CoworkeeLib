@@ -2,6 +2,25 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Breaking changes
+
+- **Migration needed**: a filtered unique index `IX_Themes_Name` on `cw.Themes` (built-in themes, `TenantId` null) and the column `cw.ChatAttachments.ThumbnailKey`. The index keeps two app instances from seeding the built-in themes twice on SQL Server and SQLite (Postgres already refused it); the seed no longer cleans up such duplicates. If the migration reports a duplicate key, delete the extra built-in row first.
+- **History restore checks its preview**: `EntityHistoryPreviewDto.Version` and `EntityHistoryRestoreRequest.Version` are new; `POST /api/v1/history/{set}/{id}/restore` answers `409` when the version is missing or the record changed since the preview. The history dialog, the audit log undo and the AirWorks record window preview again. Own `IEntityHistoryApi` implementations and direct API calls pass the version; regenerate OpenAPI snapshots and SDKs. See [Auditing](../modules/auditing.md#record-history-and-restore).
+- **`Coworkee.Chat` depends on `Coworkee.BackgroundJobs`** and brings SkiaSharp (MIT) with its native Linux assets for the thumbnails.
+
+### New
+
+- Chat pictures get a small WebP the server makes (at most 480 px, turned upright, `GET /api/v1/chat/attachments/{id}/thumbnail`, `ChatAttachmentDto.HasThumbnail`); the message list shows it, a click opens the full file.
+- Every chat file opens in the MudEx file viewer (`MudExFileDisplay`), also an upload before it is sent. The rule for own pages is on [Files](../modules/files.md#showing-files).
+- Files uploaded to a chat but never sent are deleted after `Coworkee:Chat:UnsentAttachmentLifetime` (default 24 hours, an hourly job).
+
+### Fixes
+
+- The built-in themes Coworkee, Forest and Sunset meet WCAG AA on button text in light mode (slightly darker primary or secondary color); the contrast test covers every built-in theme.
+- The file viewer never hands a private file to the online Office viewer of Microsoft.
+
 ## 0.0.1.32 (2026-10-17)
 
 ### Fixes

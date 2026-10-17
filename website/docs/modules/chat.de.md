@@ -17,7 +17,7 @@ Das Modul hängt von den Modulen Identity, Realtime und Storage ab (Dateien land
 - **Enter** sendet, **Umschalt+Enter** bricht die Zeile um. Ist eine Erwähnungsliste offen, wählt Enter den Eintrag.
 - **`@`** schlägt die Personen der Organisation vor. Eine Erwähnung verlinkt auf die Seite der Person (`/people/{id}`, Seitenschlüssel `person`) und zeigt immer ihren aktuellen Namen.
 - **`#`** schlägt Datensätze aus der [globalen Suche](../web/global-search.md) vor (jeder Provider, den der Schreibende nutzen darf, außer Chats). Die Erwähnung verlinkt auf die Seite des Datensatzes. Jeder Leser sieht sie nur, wenn seine eigene Suche den Datensatz findet; sonst erscheint sie als *#eingeschränkt* mit Schloss, ohne Bezeichnung und Link. Eine Erwähnung eines Datensatzes, den der Schreibende nicht sehen darf, wird abgelehnt.
-- **Dateien**: über die Büroklammer, per Drag-and-drop auf das Eingabefeld oder durch Einfügen eines Bildes. Uploads zeigen ihren Fortschritt; Bilder erscheinen direkt, andere Dateien als Download-Chip. Nur Mitglieder des Chats laden sie herunter (`GET /api/v1/chat/attachments/{id}`), ausgeliefert wie im Dateimodul (kein Sniffing, inline in einer Sandbox).
+- **Dateien**: über die Büroklammer, per Drag-and-drop auf das Eingabefeld oder durch Einfügen eines Bildes. Uploads zeigen ihren Fortschritt und öffnen sich im Datei-Viewer, sobald sie oben sind. Bilder erscheinen direkt als kleines WebP, das der Server erzeugt (`/thumbnail`, höchstens 480 px, aufrecht gedreht), andere Dateien als Chip; ein Klick öffnet die Datei in `MudExFileDisplay` (siehe [Dateien anzeigen](files.md#dateien-anzeigen)). Nur Mitglieder des Chats laden sie (`GET /api/v1/chat/attachments/{id}`), ausgeliefert wie im Dateimodul (kein Sniffing, inline in einer Sandbox). Hochgeladene, aber nie gesendete Dateien werden nach `Coworkee:Chat:UnsentAttachmentLifetime` gelöscht (Standard `1.00:00:00`, ein Job prüft stündlich).
 - **Antworten**, **reagieren** (👍 ❤️ 😂 🎉 😮 😢, ein Klick auf eine Reaktion fügt die eigene hinzu oder nimmt sie zurück), **bearbeiten** und **löschen** stehen im Menü jeder Nachricht. Nur der Absender bearbeitet oder löscht; eine bearbeitete Nachricht zeigt *bearbeitet*, eine gelöschte *Diese Nachricht wurde gelöscht.* und verliert Dateien und Reaktionen.
 - Die Häkchen unter einer eigenen Nachricht zeigen, wer sie gelesen hat (Tooltip mit Namen).
 - Mit der Lupe suchst du in einem Chat: Nachrichten, die jedes Wort enthalten.
@@ -80,6 +80,7 @@ services.AddScoped<IChatAttachmentScanner, ClamAvScanner>();
 | `GET` · `PUT` · `DELETE /api/v1/chat/messages/{id}` | lesen (für den Leser gerendert) · bearbeiten · löschen |
 | `POST /api/v1/chat/messages/{id}/reactions` | `{ "emoji" }` hinzufügen oder zurücknehmen |
 | `GET /api/v1/chat/attachments/{id}?download=` | eine Datei, nur für Mitglieder |
+| `GET /api/v1/chat/attachments/{id}/thumbnail` | das kleine WebP eines Bildes (`hasThumbnail` des Anhangs), nur für Mitglieder |
 | `GET /api/v1/chat/unread-count` | ungelesene Nachrichten aller Chats |
 | `GET /api/v1/chat/contacts`, `GET`/`POST /api/v1/chat/conversations/{userId}`, `POST …/{userId}/read` | die Klartext-API des Direkt-Chats pro Person (AirWorks-Chat-App, Assistent) |
 
@@ -102,5 +103,7 @@ await realtime.SubscribeAsync(RealtimeTopics.User(me), envelope =>
 ```
 
 ## Aktualisieren
+
+Seit den Vorschaubildern brauchen Apps eine Migration für die Spalte `cw.ChatAttachments.ThumbnailKey`; vorher gesendete Bilder zeigen in der Liste weiter die ganze Datei.
 
 Apps brauchen eine Migration (`cw.ChatConversations`, `cw.ChatMembers`, `cw.ChatReactions`, `cw.ChatAttachments`, neue Spalten von `cw.ChatMessages`). Direktnachrichten von vorher wandern beim nächsten Start in Unterhaltungen (`ChatLegacyMessages`); was der Empfänger gelesen hatte, bleibt gelesen.
