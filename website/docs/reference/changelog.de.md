@@ -7,6 +7,7 @@
 ### Neu
 
 - `coworkee update` fügt einzelne Zeilen selbst ein (Regelart `insertions` in `upgrade-rules.json`: nach der ersten Zeile, die zu einem Muster passt, mit deren Einrückung, übersprungen, wo die Zeile schon steht; `--dry-run` listet sie nur). Der Schritt von 0.0.1.32 (`builder.ConfigureContainer(new DefaultServiceProviderFactory());` in `src/*.Migrations/Program.cs`) passiert jetzt automatisch.
+- Neue Apps haben eine `AGENTS.md` mit den Regeln für Coding-Agenten (Aufbau, Pflichtmuster, Fallstricke, Migrationen, Tests, CLI und MCP) und eine `CLAUDE.md`, die sie einbindet. Bestehende Apps übernehmen sie aus einer neuen App mit denselben Optionen.
 
 ### Korrekturen
 

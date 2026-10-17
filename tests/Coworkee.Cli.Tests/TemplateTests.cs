@@ -24,6 +24,9 @@ public sealed class TemplateTests(TemplateFixture template)
         File.ReadAllText(Path.Combine(app, "README.md")).ShouldContain("## QuickRun");
         File.ReadAllText(Path.Combine(app, "README.md")).ShouldNotContain("quickrun.org/badge.svg");
         File.ReadAllText(Path.Combine(app, "src", "Shop.Web", "Program.cs")).ShouldContain("app.UseWebAssemblyDebugging();");
+        File.ReadAllText(Path.Combine(app, "AGENTS.md")).ShouldContain("--project src/Shop.Infrastructure");
+        File.ReadAllText(Path.Combine(app, "AGENTS.md")).ShouldNotContain("Catalog");
+        File.ReadAllText(Path.Combine(app, "CLAUDE.md")).ShouldContain("@AGENTS.md");
         ShouldHaveNoLeftovers(app);
     }
 
@@ -37,6 +40,8 @@ public sealed class TemplateTests(TemplateFixture template)
         File.Exists(Path.Combine(app, "src", "Shop.Documents", "Shop.Documents.csproj")).ShouldBeTrue();
         File.ReadAllText(Path.Combine(app, "src", "Shop.AppHost", "AppHost.cs")).ShouldContain("options.DisplayName = \"Shop\";");
         File.ReadAllText(Path.Combine(app, "src", "Shop.AppHost", "AppHost.cs")).ShouldContain("UseKeycloak");
+        File.ReadAllText(Path.Combine(app, "AGENTS.md")).ShouldContain("`src/Shop.Catalog` (brands, products) is the reference module");
+        File.ReadAllText(Path.Combine(app, "AGENTS.md")).ShouldContain("dotnet test --project tests/Shop.Api.Tests");
         File.ReadAllText(Path.Combine(app, "README.md")).ShouldContain("[![QuickRun](https://quickrun.org/badge.svg)](https://quickrun.org/run?repo=acme/shop)");
         ShouldHaveNoLeftovers(app);
     }

@@ -26,6 +26,8 @@ flowchart LR
 | `MyApp.Application` | Interfaces modules share, for example the dashboard counts |
 | `MyApp.Infrastructure` | `MyAppDbContext`, migrations and the module that ties the database together |
 
+At the root: `README.md`, `LOGIN.md` (the development users), `quickrun.yml`, and `AGENTS.md` with the rules for coding agents (`CLAUDE.md` imports it), see [Building with AI](../features/building-with-ai.md).
+
 ## Inside a feature module
 
 ```text

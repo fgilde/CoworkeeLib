@@ -38,6 +38,8 @@ public sealed record DeleteBrandCommand(Guid Id) : ICommand<Result>;
 
 ## Werkzeuge für den Agenten
 
+**Regeln in der Solution.** Jede App bringt im Wurzelordner eine `AGENTS.md` mit, die Codex, Copilot, Cursor und die meisten anderen Agenten lesen, und eine `CLAUDE.md`, die sie für Claude Code einbindet. Sie nennt den Aufbau der Solution, wohin Entities, Requests und Seiten gehören, die Muster jedes Features (`AuditedEntity`, `IMultiTenant`, `[Realtime]`, `[RequiresPermission]` mit seiner Berechtigungsdefinition, Validatoren), die Fallstricke unten und die Befehle für Migrationen, Tests und das CLI. Sie folgt den Optionen der App: Ohne Beispiele zeigt sie nicht auf den Katalog, ohne Tests fehlt der Testabschnitt. Ergänze sie um die Regeln deiner Domäne.
+
 **Das CLI als MCP-Server.** `coworkee mcp` gibt Claude Code, Claude Desktop, VS Code und anderen Clients die Tools `list_options`, `get_spec_schema`, `get_spec_example`, `validate_spec`, `create_app`, `add_module`, `add_entity`, `import_entities`, `add_migration`, `add_option`, `run_doctor`, `update_packages` und `search_docs`. Sie führen dieselben Befehle aus, die du tippen würdest. Siehe [MCP-Server des CLI](../getting-started/mcp.md).
 
 ```bash

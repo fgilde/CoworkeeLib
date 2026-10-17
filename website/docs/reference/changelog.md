@@ -7,6 +7,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 ### New
 
 - `coworkee update` inserts single lines itself (rule kind `insertions` in `upgrade-rules.json`: after the first line matching a pattern, with its indentation, skipped where the line is already there; `--dry-run` only lists them). The step of 0.0.1.32 (`builder.ConfigureContainer(new DefaultServiceProviderFactory());` in `src/*.Migrations/Program.cs`) is applied automatically now.
+- New apps have an `AGENTS.md` with the rules for coding agents (layout, required patterns, pitfalls, migrations, tests, CLI and MCP) and a `CLAUDE.md` that imports it. Existing apps can copy them from a new app of the same options.
 
 ### Fixes
 
