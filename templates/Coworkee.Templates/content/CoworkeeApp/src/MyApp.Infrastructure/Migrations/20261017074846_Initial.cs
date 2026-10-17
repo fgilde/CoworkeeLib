@@ -131,21 +131,100 @@ namespace MyApp.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ChatAttachments",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ConversationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    MessageId = table.Column<Guid>(type: "uuid", nullable: true),
+                    UploadedBy = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    ContentType = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Size = table.Column<long>(type: "bigint", nullable: false),
+                    BlobKey = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
+                    UploadedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatAttachments", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChatConversations",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsGroup = table.Column<bool>(type: "boolean", nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    DirectKey = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: true),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    LastMessageAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatConversations", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChatMembers",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ConversationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsOwner = table.Column<bool>(type: "boolean", nullable: false),
+                    JoinedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    LastReadAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatMembers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ChatMessages",
                 schema: "cw",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ConversationId = table.Column<Guid>(type: "uuid", nullable: false),
                     FromUserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ToUserId = table.Column<Guid>(type: "uuid", nullable: false),
                     Text = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: false),
+                    Html = table.Column<string>(type: "character varying(16000)", maxLength: 16000, nullable: true),
+                    ReplyToId = table.Column<Guid>(type: "uuid", nullable: true),
                     SentAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    EditedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    ToUserId = table.Column<Guid>(type: "uuid", nullable: true),
                     ReadAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ChatMessages", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChatReactions",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    MessageId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Emoji = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatReactions", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -1288,16 +1367,55 @@ namespace MyApp.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_ChatAttachments_ConversationId_UploadedBy",
+                schema: "cw",
+                table: "ChatAttachments",
+                columns: new[] { "ConversationId", "UploadedBy" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatAttachments_MessageId",
+                schema: "cw",
+                table: "ChatAttachments",
+                column: "MessageId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatConversations_TenantId_DirectKey",
+                schema: "cw",
+                table: "ChatConversations",
+                columns: new[] { "TenantId", "DirectKey" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatMembers_ConversationId_UserId",
+                schema: "cw",
+                table: "ChatMembers",
+                columns: new[] { "ConversationId", "UserId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatMembers_TenantId_UserId",
+                schema: "cw",
+                table: "ChatMembers",
+                columns: new[] { "TenantId", "UserId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatMessages_ConversationId_SentAt",
+                schema: "cw",
+                table: "ChatMessages",
+                columns: new[] { "ConversationId", "SentAt" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ChatMessages_TenantId_FromUserId_ToUserId_SentAt",
                 schema: "cw",
                 table: "ChatMessages",
                 columns: new[] { "TenantId", "FromUserId", "ToUserId", "SentAt" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_ChatMessages_TenantId_ToUserId_ReadAt",
+                name: "IX_ChatReactions_MessageId_UserId_Emoji",
                 schema: "cw",
-                table: "ChatMessages",
-                columns: new[] { "TenantId", "ToUserId", "ReadAt" });
+                table: "ChatReactions",
+                columns: new[] { "MessageId", "UserId", "Emoji" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_CustomMailTemplates_TenantId_Name",
@@ -1669,7 +1787,23 @@ namespace MyApp.Infrastructure.Migrations
                 schema: "cw");
 
             migrationBuilder.DropTable(
+                name: "ChatAttachments",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "ChatConversations",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "ChatMembers",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
                 name: "ChatMessages",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "ChatReactions",
                 schema: "cw");
 
             migrationBuilder.DropTable(
@@ -1976,21 +2110,100 @@ namespace MyApp.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ChatAttachments",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ConversationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    MessageId = table.Column<Guid>(type: "uuid", nullable: true),
+                    UploadedBy = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    ContentType = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Size = table.Column<long>(type: "bigint", nullable: false),
+                    BlobKey = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
+                    UploadedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatAttachments", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChatConversations",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsGroup = table.Column<bool>(type: "boolean", nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    DirectKey = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: true),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    LastMessageAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatConversations", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChatMembers",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ConversationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsOwner = table.Column<bool>(type: "boolean", nullable: false),
+                    JoinedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    LastReadAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatMembers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ChatMessages",
                 schema: "cw",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ConversationId = table.Column<Guid>(type: "uuid", nullable: false),
                     FromUserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ToUserId = table.Column<Guid>(type: "uuid", nullable: false),
                     Text = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: false),
+                    Html = table.Column<string>(type: "character varying(16000)", maxLength: 16000, nullable: true),
+                    ReplyToId = table.Column<Guid>(type: "uuid", nullable: true),
                     SentAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    EditedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    ToUserId = table.Column<Guid>(type: "uuid", nullable: true),
                     ReadAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ChatMessages", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChatReactions",
+                schema: "cw",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    MessageId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Emoji = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatReactions", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -3012,16 +3225,55 @@ namespace MyApp.Infrastructure.Migrations
                 column: "OccurredAt");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ChatAttachments_ConversationId_UploadedBy",
+                schema: "cw",
+                table: "ChatAttachments",
+                columns: new[] { "ConversationId", "UploadedBy" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatAttachments_MessageId",
+                schema: "cw",
+                table: "ChatAttachments",
+                column: "MessageId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatConversations_TenantId_DirectKey",
+                schema: "cw",
+                table: "ChatConversations",
+                columns: new[] { "TenantId", "DirectKey" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatMembers_ConversationId_UserId",
+                schema: "cw",
+                table: "ChatMembers",
+                columns: new[] { "ConversationId", "UserId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatMembers_TenantId_UserId",
+                schema: "cw",
+                table: "ChatMembers",
+                columns: new[] { "TenantId", "UserId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatMessages_ConversationId_SentAt",
+                schema: "cw",
+                table: "ChatMessages",
+                columns: new[] { "ConversationId", "SentAt" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ChatMessages_TenantId_FromUserId_ToUserId_SentAt",
                 schema: "cw",
                 table: "ChatMessages",
                 columns: new[] { "TenantId", "FromUserId", "ToUserId", "SentAt" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_ChatMessages_TenantId_ToUserId_ReadAt",
+                name: "IX_ChatReactions_MessageId_UserId_Emoji",
                 schema: "cw",
-                table: "ChatMessages",
-                columns: new[] { "TenantId", "ToUserId", "ReadAt" });
+                table: "ChatReactions",
+                columns: new[] { "MessageId", "UserId", "Emoji" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_CustomMailTemplates_TenantId_Name",
@@ -3361,7 +3613,23 @@ namespace MyApp.Infrastructure.Migrations
                 schema: "cw");
 
             migrationBuilder.DropTable(
+                name: "ChatAttachments",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "ChatConversations",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "ChatMembers",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
                 name: "ChatMessages",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "ChatReactions",
                 schema: "cw");
 
             migrationBuilder.DropTable(
