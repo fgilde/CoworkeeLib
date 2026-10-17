@@ -74,9 +74,9 @@ Bewusst **nicht** zusammengelegt: Chat in die Inbox – Gespräche brauchen die 
 ### Empfehlung (konkreter Pfad)
 
 1. **Jetzt (dieser Durchgang)**: TS-Apps konsolidieren (Inbox, Records + Datensatzfenster, Settings mit Profil, Audit-Aktionen), Badges in AirWorks (generisch, `AirWorks.setBadge`), Embed-Shell als Beweis (B) für einen schweren Bildschirm in der Demo.
-2. **Als Nächstes**: `embedApp()` für die schweren Admin-Editoren (Mail-Templates, Themes, Elsa) statt der TS-Nachbauten, die dann entfallen können; *Im Web öffnen* aus jedem Datensatz.
+2. **Als Nächstes**: `embedApp()` für die schweren Admin-Editoren (Mail-Templates, Themes, Elsa) statt der TS-Nachbauten, die dann entfallen können; *Im Web öffnen* aus jedem Datensatz. Erledigt: Mail-Vorlagen und Themes über `embedOr` (TS-Editoren als Ersatz ohne `appUrl`), Elsa Studio im Browser-Tab (eigener Host, nicht einrahmbar), *In der Web-App öffnen* im Datensatzfenster über die URL des Suchtreffers.
 3. **Später, nur bei Bedarf**: Custom Elements (A) für genau eine Komponente, wenn ein Kunde sie ohne Coworkee-Web-App braucht (z. B. Berichtsviewer in einer Fremdseite) – dann als eigenes WASM-Paket mit Token-Übergabe vom Host, im iframe.
-4. Embed-Anmeldung härten: Auth-Server erlaubt `frame-ancestors` für registrierte Client-Origins nur auf der Anmeldeseite **oder** Popup-Anmeldung mit `postMessage` zurück ins Fenster.
+4. Embed-Anmeldung härten: Auth-Server erlaubt `frame-ancestors` für registrierte Client-Origins nur auf der Anmeldeseite **oder** Popup-Anmeldung mit `postMessage` zurück ins Fenster. Umgesetzt als Opt-in `Coworkee:Auth:FrameAncestors` (alle Kontoseiten, nicht nur die Anmeldeseite); hilft nur bei gleicher Site, weil Browser Cookies an Frames fremder Sites nicht schicken. Popup bleibt die Lösung für fremde Sites und externe Anbieter.
 
 ### Top 5
 

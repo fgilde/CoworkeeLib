@@ -6,6 +6,7 @@ import { display, errorText, esc } from '../../dom.ts';
 import { confirmDialog, formDialog, infoDialog, type Field, type Values } from '../../form.ts';
 import { icons } from '../../icons.ts';
 import { settingsPageApp } from '../settings.ts';
+import { embedOr } from '../web.ts';
 import { userLookup } from './identity.ts';
 
 type Template = Schemas['MailTemplateSummaryDto'];
@@ -265,4 +266,9 @@ export const mailSettingsApp = settingsPageApp({
   },
 });
 
-export const mailApps = [mailTemplatesApp, mailTemplateApp, mailCampaignsApp, recipientListsApp, mailLogApp, mailSettingsApp];
+/** The template editor of the web client where the BFF knows it, the plain editor here otherwise. */
+export const mailTemplateEditorApp = embedOr({
+  id: 'coworkee.admin.mail-templates', group: 'Communication', title: 'Mail templates', icon: icons.drafts, accent: '#00838f', path: '/admin/mail/templates', requiredPermissions: ['Mail.Templates.Manage'],
+}, mailTemplatesApp);
+
+export const mailApps = [mailTemplateEditorApp, mailTemplateApp, mailCampaignsApp, recipientListsApp, mailLogApp, mailSettingsApp];

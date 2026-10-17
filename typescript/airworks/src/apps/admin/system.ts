@@ -6,6 +6,7 @@ import { esc } from '../../dom.ts';
 import { confirmDialog, formDialog, infoDialog, type Field, type Values } from '../../form.ts';
 import { icons } from '../../icons.ts';
 import { recordAppId } from '../record.ts';
+import { embedOr } from '../web.ts';
 
 type Language = Schemas['LanguageDto'];
 type Theme = Schemas['ThemeDto'];
@@ -296,4 +297,18 @@ export const apiDocsApp = (coworkee: Coworkee): CoworkeeApp => ({
   requiredPermissions: ['ApiDocs.View'], url: '/swagger/index.html',
 });
 
-export const systemApps = [languagesApp, translationsApp, themesApp, backupsApp, servicesApp, editionsApp, tenantsApp, auditApp, aiToolCallsApp, apiDocsApp];
+/** Elsa Studio is a host of its own that other origins may not frame: the app only leads into a browser tab. No one holds the permission without Coworkee.Workflows.Elsa. */
+export const workflowDesignerApp = (coworkee: Coworkee): CoworkeeApp => ({
+  id: 'coworkee.admin.workflow-designer', group: 'System', title: coworkee.t('Workflow designer'), icon: icons.build, accent: '#2e7d32', width: 420, height: 200,
+  requiredPermissions: ['Workflows.Elsa.Manage'],
+  render: ({ host }: AppContext) => {
+    host.classList.add('cw-host');
+    // the BFF of this page forwards the call with the user's token; the api answers with a redirect to the designer
+    host.innerHTML = `<div class="cw-app"><p><a class="cw-primary" href="/api/v1/workflows/elsa/studio" target="_blank" rel="noopener">${esc(coworkee.t('Open in a new tab'))} &#x2197;</a></p></div>`;
+  },
+});
+
+/** The theme editor of the web client where the BFF knows it, the JSON form here otherwise. */
+export const themeEditorApp = embedOr({ id: 'coworkee.admin.themes', group: 'System', title: 'Themes', icon: 'icon-palette.png', accent: '#c2185b', path: '/admin/themes', requiredPermissions: ['Themes.Manage'] }, themesApp);
+
+export const systemApps = [languagesApp, translationsApp, themeEditorApp, workflowDesignerApp, backupsApp, servicesApp, editionsApp, tenantsApp, auditApp, aiToolCallsApp, apiDocsApp];

@@ -8,6 +8,8 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 - `coworkee update` inserts single lines itself (rule kind `insertions` in `upgrade-rules.json`: after the first line matching a pattern, with its indentation, skipped where the line is already there; `--dry-run` only lists them). The step of 0.0.1.32 (`builder.ConfigureContainer(new DefaultServiceProviderFactory());` in `src/*.Migrations/Program.cs`) is applied automatically now.
 - New apps have an `AGENTS.md` with the rules for coding agents (layout, required patterns, pitfalls, migrations, tests, CLI and MCP) and a `CLAUDE.md` that imports it. Existing apps can copy them from a new app of the same options.
+- AirWorks: the theme and mail template editors of the administration are the pages of the web app in a window when the BFF knows the web app (`embedOr`), the TypeScript editors stay the fallback; *Workflow designer* opens Elsa Studio in a browser tab (`Workflows.Elsa.Manage`); the record window has *Open in the web app* (the page of the record's global search hit). New text key `Open in the web app`.
+- `Coworkee:Auth:FrameAncestors`: origins that may frame the account pages of the auth server (default none), so an AirWorks window can show the sign-in page of an embedded web page. Same site only; see [AirWorks](../web/airworks.md#pages-of-the-web-app-embedapp).
 
 ### Fixes
 

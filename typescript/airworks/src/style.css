@@ -193,7 +193,7 @@ dialog.cw-dialog h2 { margin: 0 0 10px; font-size: 18px; }
 
 /* inbox */
 .cw-inbox { display: flex; flex-direction: column; }
-.cw-inbox .cw-toolbar .cw-tabs { margin: 0; border: 0; }
+.cw-inbox .cw-toolbar .cw-tabs, .cw-record .cw-toolbar .cw-tabs { margin: 0; border: 0; }
 .cw-inbox .cw-feed { flex: 1; overflow: auto; }
 .cw-inbox .cw-feed li { align-items: center; padding: 10px 4px; }
 .cw-decide { display: flex; gap: 6px; flex: none; }

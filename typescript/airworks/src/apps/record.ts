@@ -4,6 +4,8 @@ import type { Coworkee, CoworkeeApp } from '../coworkee.ts';
 import { display, errorText, esc, humanize, isNoise, recordTitle } from '../dom.ts';
 import { formDialog } from '../form.ts';
 import { icons } from '../icons.ts';
+import type { GlobalSearchHit } from '../search.ts';
+import { openWebPage } from './web.ts';
 
 type History = Schemas['EntityHistoryDto'];
 type Entry = Schemas['EntityHistoryEntryDto'];
@@ -16,6 +18,13 @@ export const recordAppId = 'coworkee.record';
 const json = (method: string, body?: unknown): RequestInit => ({ method, body: body === undefined ? undefined : JSON.stringify(body) });
 const quietly = <T>(load: Promise<T>) => load.catch(() => undefined);
 const guid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** The record's page in the web client, as the global search links it (its own page or the list searched for it); undefined without a web client or a search of the set. */
+export async function recordPage(coworkee: Coworkee, set: string, id: string): Promise<string | undefined> {
+  if (!coworkee.user.appUrl || !guid.test(id)) return undefined;
+  const { hits } = await coworkee.request<{ hits: GlobalSearchHit[] }>(`/api/v1/search?${new URLSearchParams({ q: id, limit: '5' })}`);
+  return hits.find((hit) => hit.entitySet === set && hit.id?.toLowerCase() === id.toLowerCase())?.url ?? undefined;
+}
 
 /** The record's fields for people: simple values in the user's format, images as images. */
 function fieldsHtml(coworkee: Coworkee, row: Row) {
@@ -105,19 +114,25 @@ async function restore(coworkee: Coworkee, set: string, id: string, request: Sch
 /** Renders one record of an OData entity set: its fields, its history with undo and restore, its workflow with steps and approvals. */
 export function renderRecord(coworkee: Coworkee, host: HTMLElement, set: string, id: string, onTitle?: (title: string) => void): () => void {
   const { t } = coworkee;
-  host.innerHTML = `<div class="cw-record"><nav class="cw-tabs" role="tablist"></nav><section class="cw-panel"><p class="cw-muted">${esc(t('MudDataGrid_Loading'))}</p></section></div>`;
+  host.innerHTML = `<div class="cw-record"><div class="cw-toolbar" hidden><nav class="cw-tabs" role="tablist"></nav><span class="cw-spacer"></span>
+    <button data-web hidden>${esc(t('Open in the web app'))} &#x2197;</button></div><section class="cw-panel"><p class="cw-muted">${esc(t('MudDataGrid_Loading'))}</p></section></div>`;
+  const toolbar = host.querySelector<HTMLElement>('.cw-toolbar')!;
   const tabs = host.querySelector('nav')!;
+  const web = host.querySelector<HTMLElement>('[data-web]')!;
   const panel = host.querySelector<HTMLElement>('.cw-panel')!;
   let current = 'Details';
   let row: Row | undefined;
   let history: History | undefined;
   let workflow: Workflow | undefined;
+  let page: string | undefined;
 
   const show = (tab = current) => {
     current = tab;
     const available = [['Details', row], ['History', history], ['Workflow', workflow]].filter(([, data]) => data).map(([name]) => name as string);
     tabs.innerHTML = available.map((name) => `<button role="tab" data-tab="${name}" aria-selected="${name === current}">${esc(t(name))}</button>`).join('');
     tabs.hidden = available.length < 2;
+    web.hidden = !page;
+    toolbar.hidden = tabs.hidden && web.hidden;
     panel.innerHTML = current === 'History' && history ? historyHtml(coworkee, history)
       : current === 'Workflow' && workflow ? workflowHtml(coworkee, workflow)
       : row ? fieldsHtml(coworkee, row)
@@ -127,10 +142,11 @@ export function renderRecord(coworkee: Coworkee, host: HTMLElement, set: string,
   const load = async () => {
     try {
       const filter = guid.test(id) ? `Id eq ${id}` : `Id eq ${literal(id)}`;
-      [row, history, workflow] = await Promise.all([
+      [row, history, workflow, page] = await Promise.all([
         quietly(odataPage<Row>(set, { filter, top: 1 }).then((page) => page.items[0])),
         quietly(coworkee.request<History>(`/api/v1/history/${encodeURIComponent(set)}/${id}`)),
         quietly(coworkee.request<Workflow>(`/api/v1/workflows/${encodeURIComponent(set)}/${id}`)),
+        page ? Promise.resolve(page) : quietly(recordPage(coworkee, set, id)),
       ]);
       if (row) onTitle?.(recordTitle(row));
       if (!row && history?.isDeleted && current === 'Details') current = 'History';
@@ -153,6 +169,7 @@ export function renderRecord(coworkee: Coworkee, host: HTMLElement, set: string,
     if (!target) return;
     const { tab, restore: entryId, mode, property, transition, decide: approval, approve } = target.dataset;
     if (tab) show(tab);
+    else if (target === web && page) openWebPage(coworkee, page, row ? recordTitle(row) : undefined);
     else if (entryId) void run(() => restore(coworkee, set, id, { entryId, mode: mode as Mode, property: property ?? null }));
     else if (approval) void run(() => decide(coworkee, approval, approve === 'true'));
     else if (transition) {
@@ -170,7 +187,7 @@ export function renderRecord(coworkee: Coworkee, host: HTMLElement, set: string,
   return coworkee.realtime.subscribe(`workflow:${set}:${id}`, () => void load());
 }
 
-/** One record in a window, opened from the records, the search, the inbox and the audit log with the intent { set, id }. */
+/** One record in a window, opened from the records, the search, the inbox and the audit log with the intent { set, id }; "Open in the web app" leads to its page there. */
 export const recordApp = (coworkee: Coworkee): CoworkeeApp => ({
   id: recordAppId, title: coworkee.t('Details'), icon: icons.table, accent: '#167d79', width: 720, height: 620, hidden: true, probe: '/odata',
   render: ({ host, intent, onIntent, setTitle, setState, onClose }: AppContext) => {

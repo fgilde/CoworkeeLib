@@ -21,9 +21,9 @@ export { choices, crudApp, renderCrud, type CrudAction, type CrudColumn, type Cr
 export { columnsOf, nextOrder, renderEntityTable, type Column, type EntityTableOptions } from './table.ts';
 export { changes, groupsFor, isEnabled, valuesOf } from './settings-model.ts';
 export { dataApp, entityApp, openRecord, type EntityAppOptions } from './apps/data.ts';
-export { decide, recordApp, recordAppId, renderRecord } from './apps/record.ts';
+export { decide, recordApp, recordAppId, recordPage, renderRecord } from './apps/record.ts';
 export { inboxApp, inboxAppId } from './apps/inbox.ts';
-export { embedApp, embedUrl, openWebPage, webPageApp, webPageAppId } from './apps/web.ts';
+export { embedApp, embedOr, embedUrl, openWebPage, webPageApp, webPageAppId, type EmbedOptions } from './apps/web.ts';
 export { filePreviewApp, filePreviewAppId } from './apps/file-preview.ts';
 export { fileContentUrl, filesApp, uploadFile } from './apps/files.ts';
 export { renderProfile } from './apps/profile.ts';
