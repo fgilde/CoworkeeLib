@@ -3,6 +3,9 @@ using System.Text.Json;
 using Aspire.Hosting;
 using Aspire.Hosting.Testing;
 
+// every test starts the whole app with its databases and services; one at a time keeps the memory in bounds
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
+
 namespace MyApp.AppHost.Tests;
 
 public sealed class AppHostTests
