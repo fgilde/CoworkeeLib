@@ -1,47 +1,52 @@
 ---
 title: "Why use a .NET application framework?"
-description: "Coworkee compared with a hand-rolled ASP.NET Core project and a copied project template: what you build yourself, what you maintain, and where each one wins."
+description: "Why build on Coworkee: updatable NuGet packages, modules you pick, security, tenants and observability built in, a base for AI agents, CLI and Studio, on an open .NET 10 stack."
 ---
 
 # Why Coworkee
 
-You can write the shared parts of an ASP.NET Core and Blazor app yourself, copy them from a project template, or take them as packages. Coworkee is the third way, and it grew out of the second: it started as a Blazor template of mine that I copied into every new app, until keeping the copies in step took more time than the apps.
+Every business app needs the same foundation before its first feature: sign-in, users and roles, permissions, tenants, settings, an admin UI, audit, mail, a local environment and a way to deploy. Coworkee ships that foundation as NuGet packages for ASP.NET Core, Blazor and Aspire, so the code in your solution is your domain.
 
-## Side by side
+## Packages you update, not code you inherit
 
-| | Hand-rolled ASP.NET Core | Copied project template | Coworkee packages |
-|---|---|---|---|
-| Sign-in, users, roles, permissions | you write and secure it | in the copy, frozen on the day you copied | [packages](identity.md), updated with the package version |
-| Multi-tenancy | query filters and tenant resolution by hand | depends on the template | [tenants, features and editions](multi-tenancy.md) |
-| Admin pages | you build each one | in the copy, yours to maintain | users, roles, settings, themes, languages, mail, audit, backups and more |
-| Tables with filters and export | per entity | one generic table, if any | [facets, column filters, grouping, views, export](blazor-ui.md) over OData |
-| Local environment | compose files you keep in step | whatever was there when you copied | one [Aspire app host](observability.md) |
-| Fixes in shared code | yours | carried into every copy by hand | the next package version |
-| Control over every line | full | full, after the copy | through [replaceable components](../ui/customizing.md) and interfaces, not everywhere |
-| Learning curve | none beyond ASP.NET Core | the template's own conventions | modules, the dispatcher, the settings model |
-| Runtime | any, including .NET 8 LTS | whatever the template targets | .NET 10 only |
-| Dependency risk | none | none after the copy | a 0.0.x project with one maintainer |
+Everything ships as packages starting with `Coworkee.`, pinned by one `<CoworkeeVersion>` in `Directory.Packages.props`. A fix in the sign-in flow, a new language or a faster data table reaches every app with the next version.
 
-The last four rows go to the hand-rolled project. If you need .NET 8 LTS, or your team has no time to learn another set of conventions, start from scratch.
+`coworkee update` sets that version and applies the upgrade rules the CLI ships for every release: it prints the breaking changes between your version and the new one, applies the ones it can (renames, package and SDK versions, template lines) and lists the manual steps with the `file:line` they concern. `--dry-run` shows the plan and changes nothing. The [changelog](../reference/changelog.md) lists the same changes per version.
 
-## What you get in return
+## Modular: take what you need
 
-The demo app shows it best. Its own code is a product catalog, documents and sales orders. Everything else on the screenshots on this site, from the sign-in page to the audit log, comes out of the packages. Sharemee, the second app on the library, is in the same position: its projects are about assets and metadata, not about user administration.
+Each area is a module in its own package: identity, settings, mailing, files, search, realtime, notifications, auditing, workflows, reporting, the AI assistant, chat, webhooks, backups and more. Leave a module out and its tables, endpoints and pages stay out of the app. `coworkee add` and `coworkee remove` switch options on an existing app later, and Coworkee Studio starts from presets (minimal, business app, collaboration, SaaS platform and others) with the trade-off of each choice next to it. See [Modular architecture](architecture.md).
 
-A template is a snapshot. When I fix the sign-in flow, add a language or make the data table faster, every app on Coworkee gets it with the next version, and the breaking changes are listed in the [changelog](../reference/changelog.md). About 1,500 automated tests run against PostgreSQL, SQL Server and SQLite, and the CLI's template tests build real generated apps.
+## Production concerns built in
 
-Every request goes through the same pipeline (validation, permission check, caching, unit of work). Once a new developer has seen it in one module, they have seen it in all of them.
+- **Security.** An OpenIddict auth server with Keycloak or any OpenID Connect provider, tokens kept on the server behind a session cookie, permissions down to a single resource, personal [API keys](../security/api-keys.md), rate limits and a Content-Security-Policy on the sign-in pages. See [Identity and security](identity.md).
+- **Multi-tenancy.** `IMultiTenant` on an entity filters every query by organisation; features and editions turn an app into a SaaS product. See [Multi-tenancy](multi-tenancy.md).
+- **Audit and history.** Field-level audit in the same transaction as the change, record history with restore and undo.
+- **Observability.** One [Aspire app host](observability.md) starts the app with PostgreSQL or SQL Server, Redis, Mailpit and, when you want them, Grafana with Prometheus, Loki and Tempo. `coworkee deploy` publishes the same app host for Docker Compose, Azure Container Apps or Kubernetes.
+- **Testing.** `Coworkee.Testing` runs API tests against a real PostgreSQL, SQL Server or SQLite database and acts as any user; the generated solution comes with test projects for the API, the app host, the migrations and the Blazor client. The library itself has more than 1,500 tests; CI runs the persistence-heavy suites on all three databases. See [Testing](../testing.md).
 
-## What it costs
+## A base for building with AI
 
-- An opinionated stack: EF Core, MudBlazor with MudBlazor.Extensions, OpenIddict, FluentValidation, Aspire. Another UI library or ORM means working against the framework.
-- .NET 10 only.
-- Conventions to learn. The [first feature](../getting-started/first-feature.md) walkthrough shows them on one entity.
-- A young API. The packages are on 0.0.1.x and things still move between releases; pin versions and read the changelog before you update.
+Because security, tenants, audit, realtime and the admin UI come with the packages, a coding agent only has to write the domain, and what it writes plugs into code that already checks permissions and filters by tenant. The CLI is an MCP server (`coworkee mcp`), a whole app is a JSON spec with a published schema, and every running app is an MCP server for its own data. See [Building with AI](building-with-ai.md).
 
-## Where you can step around it
+## Tooling
 
-Every Blazor component of the library can be swapped through `ReplaceComponent`. Modules are optional: leave out chat or reporting and their tables, endpoints and pages stay out of the app. Your endpoints are plain minimal APIs, so a hand-written one next to the generated ones is fine. Mail transports, machine translation, blob storage and search sit behind interfaces you can implement yourself.
+- **CLI.** `coworkee new`, `run`, `module add`, `entity add`, `entity import` (from a database, OpenAPI or CSV), `migrations add`, `update`, `deploy`, `doctor`. See [Command line](../getting-started/cli.md).
+- **Coworkee Studio.** A desktop wizard for Windows, macOS and Linux: name, logo and theme, sign-in design, modules and infrastructure, entities, then it creates and runs the app. See [Coworkee Studio](../getting-started/studio.md).
+- **AirWorks client.** `coworkee new --airworks` adds a web desktop with windows and a taskbar next to the Blazor app, on the same auth server and API. See [AirWorks client](../web/airworks.md).
+
+## An open .NET 10 stack
+
+.NET 10, ASP.NET Core minimal APIs, Blazor with MudBlazor and MudBlazor.Extensions, EF Core on PostgreSQL, SQL Server or SQLite, OpenIddict, FluentValidation and Aspire. MIT licensed, with the source on [GitHub](https://github.com/fgilde/CoworkeeLib).
+
+Your own code stays plain: endpoints are minimal APIs, so a hand-written one next to the generated ones is fine. Every Blazor component of the library can be swapped through [`ReplaceComponent`](../ui/customizing.md), and mail transports, machine translation, blob storage and search sit behind interfaces you can implement yourself.
+
+## Good to know
+
+- Coworkee targets .NET 10 only.
+- The stack is chosen: another UI library or ORM means working against it.
+- The packages are on 0.0.1.x and the API still moves between releases. Pin the version and run `coworkee update --dry-run` before you update.
+- The conventions take a moment to learn. [Your first feature](../getting-started/first-feature.md) shows them on one entity.
 
 ```bash
 dotnet tool install -g Coworkee.Cli
