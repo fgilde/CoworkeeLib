@@ -2,6 +2,13 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### New
+
+- `app.UseCoworkeeSecurityHeaders()` (`Coworkee.Bff`) sends a Content-Security-Policy for the Blazor WebAssembly client (frame-ancestors from `Coworkee:Bff:FrameAncestors`, MudEx file previews from blob and data URLs, hot reload in Development), `nosniff` and a Referrer-Policy; extra sources per directive or an own policy through `Coworkee:Bff:SecurityHeaders`. The template's web host uses it; existing apps add it before `UseStaticFiles` and drop a hand-written policy. Apps with the cloud pickers of the Files module add their hosts. See [Security headers of the web app](../security/authentication.md#security-headers-of-the-web-app).
+- `Coworkee:Bff:MaxRequestBodySize` caps what the web host forwards to the API; by default its forwarded routes have no limit and the API checks its own. A hand-written `ConfigureKestrel(k => k.Limits.MaxRequestBodySize = ...)` in the web or AirWorks host is not needed and can go.
+
 ## 0.0.1.32 (2026-10-17)
 
 ### Fixes

@@ -91,7 +91,7 @@ Die IDs erreichen mit den Client-Einstellungen jeden angemeldeten Browser und ge
 | OneDrive | [App-Registrierungen in Microsoft Entra](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade) | **Neue Registrierung** für Konten in beliebigen Organisationen und persönliche Microsoft-Konten, Plattform *Single-Page-Anwendung* mit der Adresse der App als Umleitungs-URI (die Auswahl kehrt zum Ursprung der Seite zurück). Die *Anwendungs-ID (Client)* ist die ID. [Anleitung zur Dateiauswahl](https://learn.microsoft.com/onedrive/developer/controls/file-pickers/) |
 | Dropbox | [Dropbox App Console](https://www.dropbox.com/developers/apps) | **Create app** mit Scoped Access, dann die Domain der App (`localhost` in der Entwicklung) unter *Chooser / Saver / Embedder domains* eintragen. Der *App key* ist der Key. [Chooser-Anleitung](https://www.dropbox.com/developers/chooser) |
 
-Die Auswahlen laden ihre Skripte von den Anbietern (`apis.google.com`, `accounts.google.com`, `js.live.net`, `login.microsoftonline.com`, `onedrive.live.com`, `www.dropbox.com`). Die Web-App setzt keine Content Security Policy; wer eine ergänzt, erlaubt diese Hosts für Skripte und Frames.
+Die Auswahlen laden ihre Skripte von den Anbietern (`apis.google.com`, `accounts.google.com`, `js.live.net`, `login.microsoftonline.com`, `onedrive.live.com`, `www.dropbox.com`). Die Content-Security-Policy von `UseCoworkeeSecurityHeaders` erlaubt keinen davon: Ergänze diese Hosts für Skripte und Frames wie in [Sicherheits-Header der Web-App](../security/authentication.md#sicherheits-header-der-web-app).
 
 ## Datenbank
 

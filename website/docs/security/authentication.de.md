@@ -27,6 +27,38 @@ sequenceDiagram
 
 Der Browser sieht nie ein Access-Token. Die Anmeldung samt Tokens liegt in einem Sitzungsspeicher auf dem Server (Redis, wenn ein Connection String `redis` gesetzt ist, sonst im Speicher), das Cookie enthält nur einen Sitzungsschlüssel. Anfragen des Clients tragen den Header `X-CSRF: 1`, den `ApiClientBase` setzt.
 
+## Sicherheits-Header der Web-App
+
+`app.UseCoworkeeSecurityHeaders()` (vor `UseStaticFiles` und `MapCoworkeeBff`) schickt mit jeder Antwort des Web-Hosts eine Content-Security-Policy, `X-Content-Type-Options: nosniff` und `Referrer-Policy: strict-origin-when-cross-origin`. Die Policy passt zum Blazor-WebAssembly-Client:
+
+| Direktive | Quellen | Warum |
+|---|---|---|
+| `script-src` | `'self' 'wasm-unsafe-eval' 'unsafe-eval'` | WebAssembly, und BlazorJS von MudBlazor.Extensions wertet Skript-Strings aus |
+| `style-src` | `'self' 'unsafe-inline'` | MudBlazor positioniert mit Inline-Styles |
+| `img-src` | `'self' data: blob: https:` | Vorschauen, Logos und Credits anderer Hosts |
+| `media-src`, `frame-src`, `object-src` | `'self' data: blob:` | `MudExFileDisplay` zeigt Video und Audio, PDFs und andere Dateien in `object` oder `iframe` |
+| `connect-src` | `'self'` | der Browser spricht nur mit diesem Host, der API und Hubs weiterleitet |
+| `frame-ancestors` | `'self'` und `Coworkee:Bff:FrameAncestors` | der AirWorks-Host darf die Seiten einbetten |
+
+In Development erlaubt `connect-src` zusätzlich `http://localhost:*`, `ws://localhost:*` und `wss://localhost:*` (Browser Link und Hot Reload). Antworten mit eigener Policy (hochgeladene Dateien, das Logo des Ladebildschirms) behalten sie.
+
+Weitere Quellen pro Direktive kommen aus `Coworkee:Bff:SecurityHeaders:Sources` oder dem Callback; `ContentSecurityPolicy` ersetzt die ganze Policy (frame-ancestors setzt du dann selbst), `ReferrerPolicy` die Referrer-Policy:
+
+```csharp
+app.UseCoworkeeSecurityHeaders(headers =>
+{
+    // die Cloud-Auswahl des Files-Moduls
+    headers.Sources["script-src"] = ["https://apis.google.com", "https://js.live.net", "https://www.dropbox.com"];
+    headers.Sources["frame-src"] = ["https://accounts.google.com", "https://docs.google.com", "https://onedrive.live.com", "https://login.microsoftonline.com", "https://www.dropbox.com"];
+});
+```
+
+```json
+"Coworkee": { "Bff": { "SecurityHeaders": { "Sources": { "frame-src": [ "https://view.officeapps.live.com" ] } } } }
+```
+
+Uploads fließen durch den Web-Host: Seine weitergeleiteten Routen nehmen Bodys jeder Größe über Kestrels Grenze von etwa 30 MB hinaus an, und die API prüft ihre eigene Grenze pro Endpunkt (`Coworkee:Files:MaxFileSize`, die Einstellung `Chat.MaxAttachmentMb`). `Coworkee:Bff:MaxRequestBodySize` (Bytes) begrenzt, was der Web-Host weiterleitet.
+
 ## Clients und Scopes
 
 Der Auth-Server legt seine OpenID-Connect-Clients beim Start aus der Konfiguration an. Mit dem [AppHost](../hosting/aspire.md) setzt du nichts davon; von Hand sieht es so aus:

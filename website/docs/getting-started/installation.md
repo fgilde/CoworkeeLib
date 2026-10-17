@@ -134,6 +134,7 @@ builder.AddCoworkeeBff();
 builder.Services.AddRazorComponents().AddInteractiveWebAssemblyComponents();
 
 var app = builder.Build();
+app.UseCoworkeeSecurityHeaders();
 app.MapDefaultEndpoints();
 app.UseStaticFiles();
 app.UseAntiforgery();

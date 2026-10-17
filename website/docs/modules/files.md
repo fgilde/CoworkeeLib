@@ -91,7 +91,7 @@ The ids reach every signed in browser with the client settings and are applied w
 | OneDrive | [Microsoft Entra app registrations](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade) | **New registration** for accounts in any organisation and personal Microsoft accounts, platform *Single-page application* with the address of the app as redirect URI (the picker returns to the origin of the page). The *Application (client) ID* is the id. [File picker guide](https://learn.microsoft.com/onedrive/developer/controls/file-pickers/) |
 | Dropbox | [Dropbox App Console](https://www.dropbox.com/developers/apps) | **Create app** with scoped access, then add the domain of the app (`localhost` in development) under *Chooser / Saver / Embedder domains*. The *App key* is the key. [Chooser guide](https://www.dropbox.com/developers/chooser) |
 
-The pickers load their scripts from the providers (`apis.google.com`, `accounts.google.com`, `js.live.net`, `login.microsoftonline.com`, `onedrive.live.com`, `www.dropbox.com`). The web app sets no content security policy; if you add one, allow these hosts for scripts and frames.
+The pickers load their scripts from the providers (`apis.google.com`, `accounts.google.com`, `js.live.net`, `login.microsoftonline.com`, `onedrive.live.com`, `www.dropbox.com`). The content security policy of `UseCoworkeeSecurityHeaders` allows none of them: add these hosts for scripts and frames, as in [Security headers of the web app](../security/authentication.md#security-headers-of-the-web-app).
 
 ## Database
 

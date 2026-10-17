@@ -13,7 +13,7 @@ In a Coworkee app they are not the agent's job. They come with the packages, the
 
 | Concern | Where it comes from |
 |---|---|
-| Sign-in, users, roles, groups, external providers | [Identity](identity.md): an OpenIddict auth server with Keycloak or any OpenID Connect provider; the browser never sees an access token, and the auth server sends its own Content-Security-Policy |
+| Sign-in, users, roles, groups, external providers | [Identity](identity.md): an OpenIddict auth server with Keycloak or any OpenID Connect provider; the browser never sees an access token, and the auth server and the web app send a Content-Security-Policy |
 | Permissions | one `[RequiresPermission]` on a request; the [pipeline](../fundamentals/messaging.md) checks it for endpoints, jobs, the assistant and MCP alike |
 | Tenants | `IMultiTenant` on an entity; the DbContext filters every query and fills the tenant on insert ([Multi-tenancy](multi-tenancy.md)) |
 | Validation and transactions | FluentValidation and the unit of work run around every request; a handler does not call `SaveChangesAsync` |

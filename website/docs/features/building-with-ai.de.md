@@ -13,7 +13,7 @@ In einer Coworkee-App ist das nicht die Aufgabe des Agenten. Diese Teile kommen 
 
 | Thema | Woher es kommt |
 |---|---|
-| Anmeldung, Benutzer, Rollen, Gruppen, externe Anbieter | [Identity](identity.md): ein OpenIddict-Auth-Server mit Keycloak oder einem beliebigen OpenID-Connect-Anbieter; der Browser sieht nie ein Access-Token, und der Auth-Server schickt eine eigene Content-Security-Policy |
+| Anmeldung, Benutzer, Rollen, Gruppen, externe Anbieter | [Identity](identity.md): ein OpenIddict-Auth-Server mit Keycloak oder einem beliebigen OpenID-Connect-Anbieter; der Browser sieht nie ein Access-Token, und Auth-Server und Web-App schicken eine Content-Security-Policy |
 | Berechtigungen | ein `[RequiresPermission]` am Request; die [Pipeline](../fundamentals/messaging.md) prüft es für Endpunkte, Jobs, den Assistenten und MCP gleichermaßen |
 | Mandanten | `IMultiTenant` an der Entity; der DbContext filtert jede Abfrage und setzt den Mandanten beim Einfügen ([Mandanten](multi-tenancy.md)) |
 | Validierung und Transaktionen | FluentValidation und die Unit of Work laufen um jeden Request; ein Handler ruft kein `SaveChangesAsync` |

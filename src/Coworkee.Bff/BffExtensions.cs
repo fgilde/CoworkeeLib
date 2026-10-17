@@ -171,7 +171,8 @@ public static class BffExtensions
     public static WebApplication MapCoworkeeBff(this WebApplication app)
     {
         var options = app.Configuration.GetSection(BffOptions.Section).Get<BffOptions>() ?? new BffOptions();
-        if (FrameAncestors(options) is { } ancestors)
+        // UseCoworkeeSecurityHeaders puts frame-ancestors into its policy; a second policy would only narrow it
+        if (FrameAncestors(options) is { } ancestors && !((IApplicationBuilder)app).Properties.ContainsKey(SecurityHeaders.Marker))
         {
             app.Use((context, next) =>
             {
@@ -249,8 +250,10 @@ public static class BffExtensions
                 });
             });
 
-            // the API enforces its own body limits per endpoint, large file uploads stream through
-            forwarder.WithMetadata(new Microsoft.AspNetCore.Mvc.DisableRequestSizeLimitAttribute());
+            // the API enforces its own body limits per endpoint, large file uploads stream through past Kestrel's 30 MB
+            forwarder.WithMetadata(options.MaxRequestBodySize is { } max
+                ? new Microsoft.AspNetCore.Mvc.RequestSizeLimitAttribute(max)
+                : new Microsoft.AspNetCore.Mvc.DisableRequestSizeLimitAttribute());
 
             // signed-out visitors of the API docs go through the login first; the API checks the permission
             if (prefix == SwaggerUi)

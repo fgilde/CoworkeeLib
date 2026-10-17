@@ -30,8 +30,28 @@ public sealed class BffOptions
     /// <summary>Origins that may show the pages of this host in a frame (the AirWorks host of the app); without any no page may be framed.</summary>
     public List<string> FrameAncestors { get; set; } = [];
 
+    /// <summary>
+    /// Largest request body in bytes forwarded to the API; by default none, the API checks its own limit per endpoint
+    /// (<c>Coworkee:Files:MaxFileSize</c>, the setting <c>Chat.MaxAttachmentMb</c>), so uploads stream through.
+    /// </summary>
+    public long? MaxRequestBodySize { get; set; }
+
     /// <summary>Name and icon of the installable app; colours and logo come from the organisation's theme.</summary>
     public BffPwaOptions Pwa { get; set; } = new();
+
+    /// <summary>The Content-Security-Policy and further headers of <c>UseCoworkeeSecurityHeaders</c>.</summary>
+    public BffSecurityHeadersOptions SecurityHeaders { get; set; } = new();
+}
+
+public sealed class BffSecurityHeadersOptions
+{
+    /// <summary>Extra sources per directive, e.g. <c>script-src</c>: <c>https://apis.google.com</c> for the Google Drive picker.</summary>
+    public Dictionary<string, List<string>> Sources { get; set; } = [];
+
+    /// <summary>Replaces the whole policy; frame-ancestors of <see cref="BffOptions.FrameAncestors"/> is not added then.</summary>
+    public string? ContentSecurityPolicy { get; set; }
+
+    public string ReferrerPolicy { get; set; } = "strict-origin-when-cross-origin";
 }
 
 public sealed class BffPwaOptions
