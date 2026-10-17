@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Neu
+
+- `coworkee update` fügt einzelne Zeilen selbst ein (Regelart `insertions` in `upgrade-rules.json`: nach der ersten Zeile, die zu einem Muster passt, mit deren Einrückung, übersprungen, wo die Zeile schon steht; `--dry-run` listet sie nur). Der Schritt von 0.0.1.32 (`builder.ConfigureContainer(new DefaultServiceProviderFactory());` in `src/*.Migrations/Program.cs`) passiert jetzt automatisch.
+
 ## 0.0.1.32 (2026-10-17)
 
 ### Korrekturen

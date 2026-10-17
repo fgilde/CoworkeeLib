@@ -1,5 +1,5 @@
 {
-  "$comment": "What coworkee update knows about each Coworkee version: breaking changes of website/docs/reference/changelog.md, automatic renames and package bumps, manual steps with the code they concern. A version's rules apply when an app moves past it.",
+  "$comment": "What coworkee update knows about each Coworkee version: breaking changes of website/docs/reference/changelog.md, automatic renames, one-line insertions and package bumps, manual steps with the code they concern. A version's rules apply when an app moves past it.",
   "versions": [
     {
       "version": "0.0.1.15",
@@ -172,8 +172,8 @@
       "breaking": [
         "The app host runs the migrations of a local run as Development; their host validates its services then and fails on the MVC services of OData (IWebHostEnvironment). The migrations project builds its container with the production defaults."
       ],
-      "manual": [
-        { "text": "Add builder.ConfigureContainer(new DefaultServiceProviderFactory()); after Host.CreateApplicationBuilder(args) in the migrations project.", "find": "Host\\.CreateApplicationBuilder", "files": [ "src/*.Migrations/Program.cs" ], "unless": "DefaultServiceProviderFactory" }
+      "insertions": [
+        { "insertAfter": "Host\\.CreateApplicationBuilder\\(", "line": "builder.ConfigureContainer(new DefaultServiceProviderFactory());", "files": [ "src/*.Migrations/Program.cs" ], "unless": "DefaultServiceProviderFactory", "description": "DefaultServiceProviderFactory in the migrations host" }
       ]
     }
   ]
