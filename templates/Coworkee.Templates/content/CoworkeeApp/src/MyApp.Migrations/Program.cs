@@ -1,61 +1,18 @@
 using Coworkee.Core.Modularity;
 using Coworkee.Identity.Setup;
-using Microsoft.EntityFrameworkCore;
 using MyApp.Infrastructure;
 using MyApp.Migrations;
 
 var builder = Host.CreateApplicationBuilder(args);
-// a local run is Development, whose scope checks fail on the MVC services of OData in a host without a web environment
-builder.ConfigureContainer(new DefaultServiceProviderFactory());
 builder.AddServiceDefaults();
 builder.Services.AddCoworkeeModules<MyAppDatabaseModule>(builder.Configuration);
-// the development users only where the app host runs locally; a deployment gets its first administrator from the deploy parameters,
-// without them it is set up in the browser with the setup token
-var admin = InitialAdmin.From(builder.Configuration);
-var seed = builder.Environment.IsDevelopment() || admin is not null;
-var attempts = builder.Configuration.GetValue("Migrations:Attempts", 20);
-builder.Services.AddCoworkeeIdentitySeed(builder.Environment.IsDevelopment() ? DemoSeed.Configure : options => DemoSeed.ConfigureDeployment(options, admin!));
+builder.AddCoworkeeMigrations<MyAppDbContext>(options =>
+{
+    options.DevelopmentSeed = DemoSeed.Configure;
+    options.DeploymentSeed = DemoSeed.ConfigureDeployment;
+});
 #if (samples)
 builder.Services.AddScoped<Coworkee.Application.Setup.ISetupStep, DemoData>();
 #endif
 using var host = builder.Build();
-
-await using var scope = host.Services.CreateAsyncScope();
-try
-{
-    await MigrateAsync(scope.ServiceProvider, attempts);
-    if (seed)
-    {
-        await host.Services.SeedCoworkeeIdentityAsync();
-        // a database set up earlier gets the users and roles added to DemoUsers.cs since, and their passwords again
-        await host.Services.SyncDevelopmentUsersAsync();
-    }
-
-    // the Keycloak of a deployment gets the clients and the administrator of the app host
-    await scope.ServiceProvider.ReconcileKeycloakRealmAsync();
-
-    return 0;
-}
-catch (Exception exception)
-{
-    scope.ServiceProvider.GetRequiredService<ILogger<Program>>().LogCritical(exception, "Database migration or seed failed");
-    return 1;
-}
-
-// a database server started next to the app (Docker Compose, Kubernetes) may not accept connections yet
-static async Task MigrateAsync(IServiceProvider services, int attempts)
-{
-    for (var attempt = 1; ; attempt++)
-    {
-        try
-        {
-            await services.GetRequiredService<MyAppDbContext>().Database.MigrateAsync();
-            return;
-        }
-        catch (Exception exception) when (attempt < attempts)
-        {
-            services.GetRequiredService<ILogger<Program>>().LogWarning("Database not reachable yet ({Message}), attempt {Attempt}", exception.Message, attempt);
-            await Task.Delay(TimeSpan.FromSeconds(3));
-        }
-    }
-}
+return await host.RunCoworkeeMigrationsAsync();

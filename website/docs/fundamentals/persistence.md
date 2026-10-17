@@ -88,14 +88,22 @@ A small host applies them. The template's migration service also seeds:
 var builder = Host.CreateApplicationBuilder(args);
 builder.AddServiceDefaults();
 builder.Services.AddCoworkeeModules<MyAppDatabaseModule>(builder.Configuration);
-builder.Services.AddCoworkeeIdentitySeed(DemoSeed.Configure);
+builder.AddCoworkeeMigrations<MyAppDbContext>(options =>
+{
+    options.DevelopmentSeed = DemoSeed.Configure;
+    options.DeploymentSeed = DemoSeed.ConfigureDeployment;
+});
 builder.Services.AddScoped<ISetupStep, DemoData>();
 using var host = builder.Build();
-
-await using var scope = host.Services.CreateAsyncScope();
-await scope.ServiceProvider.GetRequiredService<MyAppDbContext>().Database.MigrateAsync();
-await host.Services.SeedCoworkeeIdentityAsync();
-await host.Services.SyncDevelopmentUsersAsync();
+return await host.RunCoworkeeMigrationsAsync();
 ```
+
+`AddCoworkeeMigrations` (`Coworkee.Identity.Setup`) plans the run and `RunCoworkeeMigrationsAsync` carries it out, with exit code 0 or 1:
+
+1. migrate the database, retried every 3 seconds while its server does not accept connections yet (`Migrations:Attempts`, default 20, or `options.Attempts`);
+2. seed: with a first administrator from the deploy parameters (`Coworkee:InitialAdmin`, see [Setup wizard or seed](../security/authentication.md#setup-wizard-or-seed)) `DeploymentSeed` with it; otherwise `DevelopmentSeed` in the Development environment (`options.DevelopmentUsers` decides elsewhere), followed by `SyncDevelopmentUsersAsync`; otherwise nothing, and the setup page with its token sets the system up;
+3. bring a deployed Keycloak in line (`ReconcileKeycloakRealmAsync`).
+
+It also builds the container with the production defaults: a local run is Development, whose scope checks fail on the MVC services of OData in a host without a web environment.
 
 `AddCoworkeeIdentitySeed` replaces the setup wizard: it creates the default tenant, the administrator, roles with their permission grants, further users and system wide settings (`seed.Settings["Theme.Mode"] = "dark"`), once. `ISetupStep` implementations run inside the same setup, as the administrator, and are the place for sample data. `SyncDevelopmentUsersAsync` runs in the Development environment only (or with `Coworkee:Identity:SyncDevelopmentUsers`, which the Aspire app host sets for the migrations of a local run) and keeps an existing database in step with the seed: users and roles it lacks are added, seed users get the roles and seeded roles the permissions added to the seed since, seed users whose password differs get the seeded one again; other users, roles and grants stay as they are, nothing is removed. See [Authentication](../security/authentication.md#setup-wizard-or-seed).

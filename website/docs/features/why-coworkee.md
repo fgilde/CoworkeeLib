@@ -19,7 +19,7 @@ Each area is a module in its own package: identity, settings, mailing, files, se
 
 ## Production concerns built in
 
-- **Security.** An OpenIddict auth server with Keycloak or any OpenID Connect provider, tokens kept on the server behind a session cookie, permissions down to a single resource, personal [API keys](../security/api-keys.md), rate limits and a Content-Security-Policy on the sign-in pages. See [Identity and security](identity.md).
+- **Security.** An OpenIddict auth server with Keycloak or any OpenID Connect provider, tokens kept on the server behind a session cookie, permissions down to a single resource, personal [API keys](../security/api-keys.md), rate limits and a Content-Security-Policy on the sign-in pages and the web app. See [Identity and security](identity.md).
 - **Multi-tenancy.** `IMultiTenant` on an entity filters every query by organisation; features and editions turn an app into a SaaS product. See [Multi-tenancy](multi-tenancy.md).
 - **Audit and history.** Field-level audit in the same transaction as the change, record history with restore and undo.
 - **Observability.** One [Aspire app host](observability.md) starts the app with PostgreSQL or SQL Server, Redis, Mailpit and, when you want them, Grafana with Prometheus, Loki and Tempo. `coworkee deploy` publishes the same app host for Docker Compose, Azure Container Apps or Kubernetes.

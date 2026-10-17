@@ -5,6 +5,11 @@ using Aspire.Hosting.Testing;
 
 namespace MyApp.AppHost.Tests;
 
+// every test starts the whole app with its databases and services; one at a time keeps the memory in bounds
+[CollectionDefinition(nameof(AppHostTests), DisableParallelization = true)]
+public sealed class AppHostCollection;
+
+[Collection(nameof(AppHostTests))]
 public sealed class AppHostTests
 {
     [Fact]

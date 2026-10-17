@@ -19,7 +19,7 @@ Jeder Bereich ist ein Modul in einem eigenen Paket: Identity, Einstellungen, Mai
 
 ## Produktionsthemen eingebaut
 
-- **Sicherheit.** Ein OpenIddict-Auth-Server mit Keycloak oder einem beliebigen OpenID-Connect-Anbieter, Tokens auf dem Server hinter einem Sitzungscookie, Berechtigungen bis auf die einzelne Ressource, persönliche [API-Schlüssel](../security/api-keys.md), Rate-Limits und eine Content-Security-Policy auf den Anmeldeseiten. Siehe [Identity und Sicherheit](identity.md).
+- **Sicherheit.** Ein OpenIddict-Auth-Server mit Keycloak oder einem beliebigen OpenID-Connect-Anbieter, Tokens auf dem Server hinter einem Sitzungscookie, Berechtigungen bis auf die einzelne Ressource, persönliche [API-Schlüssel](../security/api-keys.md), Rate-Limits und eine Content-Security-Policy auf den Anmeldeseiten und in der Web-App. Siehe [Identity und Sicherheit](identity.md).
 - **Mandanten.** `IMultiTenant` an einer Entity filtert jede Abfrage nach Organisation; Features und Editionen machen aus einer App ein SaaS-Produkt. Siehe [Mandanten](multi-tenancy.md).
 - **Audit und Verlauf.** Audit auf Feldebene in derselben Transaktion wie die Änderung, Verlauf eines Datensatzes mit Wiederherstellen und Rückgängig.
 - **Observability.** Ein [Aspire-AppHost](observability.md) startet die App mit PostgreSQL oder SQL Server, Redis, Mailpit und auf Wunsch Grafana mit Prometheus, Loki und Tempo. `coworkee deploy` veröffentlicht denselben AppHost für Docker Compose, Azure Container Apps oder Kubernetes.
