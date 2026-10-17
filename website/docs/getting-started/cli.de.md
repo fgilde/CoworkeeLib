@@ -78,7 +78,7 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--web-data-studio` | `webDataStudio` | bool | `true` | WebDataStudio, verbunden mit der App-Datenbank ([Grafana und WebDataStudio](../hosting/observability.md)) |
 | `--aspire-ui` | `aspireUI` | bool | `false` | AspireUI im AppHost, um weitere Apps und Stacks neben der App zu hosten und auszuprobieren; mit Keycloak meldet es sich über den Realm der App an ([AspireUI](../hosting/aspire.md#aspireui-in-einer-generierten-app)) |
 | `--database` | `database` | `postgres`, `sqlServer`, `sqlite` | `postgres` | Datenbank-Engine, siehe [Datenbank-Provider](../fundamentals/persistence.md#datenbank-provider); `sqlServer` startet einen SQL-Server-Container, `sqlite` eine Datei ohne Container. Sicherungen brauchen `postgres` |
-| `--theme` | `theme` | `Ocean`, `Coworkee`, `Classic`, `Forest`, `Midnight`, `Sunset`, `HighContrast` | `Ocean` | Standard-Theme |
+| `--theme` | `theme` | `Ocean`, `Coworkee`, `Classic`, `Forest`, `Midnight`, `Sunset`, `HighContrast`, `Octo`, `Code`, `Arctic`, `Vampire`, `Solar`, `Atom`, `Paper`, `Aubergine` | `Ocean` | Standard-Theme |
 | `--primary-color` | `primaryColor` | `#rrggbb` | | Markenfarbe: Die App bekommt ein eigenes Theme auf Basis von `--theme`, benannt wie der Titel, als Standard |
 | `--secondary-color` | `secondaryColor` | `#rrggbb` | | Zweite Markenfarbe |
 | `--logo` | `logo` | Datei | Coworkee-Symbol | Wird in den Web-Client kopiert; App-Leiste, Browser-Tab und Anmeldeseiten |

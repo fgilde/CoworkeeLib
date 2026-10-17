@@ -59,7 +59,7 @@ Geblättert wird mit Pager oder per endlosem Scrollen; den Standard legen Admini
 
 ![Themes-Seite mit den Anmelde-Layouts Card, Split und Slide und einer Kachel pro Theme](../assets/screenshots/themes-light.webp){ .shot loading=lazy }
 
-Sieben Themes sind eingebaut, Standard ist Ocean. Administratoren bearbeiten sie mit Live-Vorschau und veröffentlichen sie; danach sucht sich jeder Benutzer eins aus, dazu hellen oder dunklen Modus. Eigene Farben bringt die App so mit:
+Fünfzehn Themes sind eingebaut, Standard ist Ocean. Administratoren bearbeiten sie mit Live-Vorschau und veröffentlichen sie; danach sucht sich jeder Benutzer eins aus, dazu hellen oder dunklen Modus. Eigene Farben bringt die App so mit:
 
 ```csharp
 context.Services.Configure<ThemingOptions>(themes =>

@@ -30,6 +30,20 @@ public sealed class CoworkeeAppTests : IDisposable
     }
 
     [Fact]
+    public async Task A_local_run_gives_every_service_one_setup_token()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var app = builder.AddCoworkeeApp("demo");
+        var auth = app.AddAuthServer<FakeProjects.Auth>();
+        var api = app.AddApi<FakeProjects.Api>();
+
+        var token = (await Environment(api.Resource))["Coworkee__SetupToken"];
+
+        token.ShouldNotBeNullOrWhiteSpace();
+        (await Environment(auth.Resource))["Coworkee__SetupToken"].ShouldBe(token);
+    }
+
+    [Fact]
     public async Task Services_get_the_infrastructure_of_their_modules_and_the_settings_that_connect_them()
     {
         var builder = DistributedApplication.CreateBuilder();

@@ -2,6 +2,19 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Neu
+
+- Acht weitere eingebaute Themes, jeweils mit heller und dunkler Palette, eigener Schrift, Radius und Optionen: Octo, Code, Arctic, Vampire, Solar, Atom, Paper und Aubergine (CLI/Spec `theme`, Template, Studio-Galerie). Ihr Text erfüllt den Kontrast nach WCAG AA. Siehe [Theming](../modules/theming.md#eingebaute-themes).
+- Das Setup-Token ist bei einem lokalen Lauf leicht zu finden: Der AppHost gibt allen Diensten dasselbe Token und zeigt es, solange das System nicht eingerichtet ist, in seiner Konsole (`coworkee run`), im Log der API und im Aspire-Dashboard (Link *Setup* mit Token an der Web-Ressource, Eigenschaft *Setup token* an der API). Coworkee Studio zeigt es mit Kopier-Knopf in der Lauf-Karte und unter *Meine Apps*; `coworkee deploy` nennt `<APP>_SETUP_TOKEN`, wenn kein Administrator gesetzt ist. `/setup?token=...` füllt das Token ein. Siehe [Setup-Assistent oder Seed](../security/authentication.md#setup-assistent-oder-seed).
+
+### Korrekturen
+
+- Eine neue App zeigte lokal ihre Setup-Seite, statt mit den Entwicklungsbenutzern anzumelden: Das Migrationsprojekt hat kein Launch-Profil und lief als Production, also fiel `DemoSeed` weg. `AddMigrations` gibt den Migrationen eines lokalen Laufs die Umgebung des AppHosts mit (`DOTNET_ENVIRONMENT`).
+- Die Setup-Seite eines bereits eingerichteten Systems führt zur App; ein offener Setup-Tab wechselt zur App, sobald er wieder den Fokus bekommt oder ein anderer Tab das Setup abschließt.
+- Eingebaute Themes standen doppelt in der Liste, wenn Anfragen sie gleichzeitig anlegten (SQL Server und SQLite lassen im eindeutigen Index leere Mandanten mehrfach zu). Das Anlegen läuft pro Prozess nur einmal gleichzeitig und entfernt solche Kopien (die Kopie, die eine Organisation nutzt, bleibt).
+
 ## 0.0.1.30 (2026-10-16)
 
 ### Neu

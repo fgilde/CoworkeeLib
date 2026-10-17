@@ -64,7 +64,7 @@ Explizite Aufrufe funktionieren weiter und haben Vorrang: Ein Projekt, das vor `
 |---|---|---|
 | `AddMigrations<T>()` | `{name}-migrations` | Datenbank, wartet auf den Datenbankserver, Dashboard-Befehle |
 | `AddAuthServer<T>()` | `{name}-auth` | externe Endpunkte, kein Job-Server, öffentliche Auth-URL, Entwicklungszertifikate in Development, Keycloak-Anbieter |
-| `AddApi<T>()` | `{name}-api` | Token-Authority und Audience `{name}_api`, API-Scope am Auth-Server, Setup-Token aus `Coworkee:SetupToken` |
+| `AddApi<T>()` | `{name}-api` | Token-Authority und Audience `{name}_api`, API-Scope am Auth-Server, Setup-Token (lokal: dasselbe für alle Dienste, in Konsole und Dashboard sichtbar, solange das System nicht eingerichtet ist, siehe [Setup-Assistent](../security/authentication.md#setup-assistent-oder-seed)) |
 | `AddWorker<T>(suffix)` | `{name}-{suffix}` | nur Infrastruktur, keine öffentlichen Endpunkte |
 | `AddWeb<T>()` | `{name}-web` | BFF-Einstellungen, OIDC-Client am Auth-Server mit Redirect-URIs, Referenz auf die API, Links zu Swagger und zum Job-Dashboard |
 | `AddAirWorks<T>()` | `{name}-airworks` | wie `AddWeb`: BFF-Einstellungen, der nächste OIDC-Client am Auth-Server, ein eigener Name des Sitzungs-Cookies; für den [AirWorks-Client](../web/airworks.md) |

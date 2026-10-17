@@ -88,7 +88,17 @@ Lokal startet `options.UseKeycloak()` im AppHost ein Keycloak mit einem Realm f�
 
 Eine neue Installation braucht einen Mandanten und einen ersten Administrator. Zwei Wege:
 
-**Assistent.** Die API antwortet mit `503 setup_required`, bis das Setup erledigt ist. Der Blazor-Client zeigt die Setup-Seite: Pr체fungen, Organisation, Administrator, Theme. Das Setup-Token steht im Log der API oder wird mit `Coworkee:SetupToken` gesetzt. So arbeitet Sharemee.
+**Assistent.** Die API antwortet mit `503 setup_required`, bis das Setup erledigt ist. Der Blazor-Client zeigt die Setup-Seite: Pr체fungen, Organisation, Administrator, Theme. So arbeitet Sharemee.
+
+Wann erscheint die Setup-Seite? Immer, wenn die Datenbank kein eingerichtetes System enth채lt: eine leere Datenbank ohne Seed (kein `AddCoworkeeIdentitySeed` oder eine Template-App mit abgeschalteten Demo-Benutzern) und ein Deployment ohne ersten Administrator (`<APP>_ADMIN_EMAIL` und `_ADMIN_PASSWORD` leer). Apps mit Demo-Benutzern richten ihre Migrationen ein; dort erscheint sie nie.
+
+Die Seite fragt nach dem Setup-Token. Hier findest du es:
+
+- **Lokaler Lauf** (`coworkee run`, Visual Studio, Coworkee Studio): Der AppHost gibt allen Diensten dasselbe Token (sein eigenes `Coworkee:SetupToken`, sonst ein neues pro Lauf). Solange das System nicht eingerichtet ist, schreibt er `Setup token of <app>: <token> - open https://.../setup?token=...` in seine Konsole und dieselbe Zeile ins Log der API, h채ngt an die Web-Ressource im Aspire-Dashboard einen Link *Setup* (mit Token) und an die API die Eigenschaft *Setup token*. Coworkee Studio zeigt das Token mit Kopier-Knopf in der Lauf-Karte der Seite Erstellen und unter *Meine Apps*.
+- **Deployment**: der Parameter `<app>-setup-token`; `coworkee deploy` f체llt ihn in `.env` (`<APP>_SETUP_TOKEN`) und nennt ihn am Ende, wenn kein Administrator gesetzt ist.
+- **Ohne beides**: Die API erzeugt beim Start eins und schreibt es in ihr Log (`System is not set up yet. Setup token: ...`); oder du setzt `Coworkee:SetupToken`.
+
+Eine Setup-Seite, die in einem anderen Tab offen ist, wechselt zur App, sobald das Setup erledigt ist: Sie fragt erneut, wenn der Tab den Fokus bekommt und wenn ein anderer Tab fertig wird, und ein eingerichtetes System zeigt den Assistenten nie (`/setup` f체hrt zu `/`).
 
 **Seed.** `AddCoworkeeIdentitySeed` im Migrations-Dienst legt beim ersten Start alles an; der Assistent erscheint nie. So arbeitet das Template.
 

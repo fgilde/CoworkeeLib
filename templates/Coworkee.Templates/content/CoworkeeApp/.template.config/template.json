@@ -367,6 +367,38 @@
         {
           "choice": "HighContrast",
           "description": "Black and white, no shadows."
+        },
+        {
+          "choice": "Octo",
+          "description": "Neutral grays and blue, like a code hosting site."
+        },
+        {
+          "choice": "Code",
+          "description": "Editor look: compact, dark gray with blue."
+        },
+        {
+          "choice": "Arctic",
+          "description": "Cool polar blues and frost."
+        },
+        {
+          "choice": "Vampire",
+          "description": "Purple and pink on a night background."
+        },
+        {
+          "choice": "Solar",
+          "description": "Warm cream and deep teal, serif headings."
+        },
+        {
+          "choice": "Atom",
+          "description": "Soft editor grays, blue and violet."
+        },
+        {
+          "choice": "Paper",
+          "description": "Plain white paper, serif headings, flat."
+        },
+        {
+          "choice": "Aubergine",
+          "description": "Aubergine app bar, green accents."
         }
       ]
     },

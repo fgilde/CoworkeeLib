@@ -26,7 +26,8 @@ public sealed class ThemeTests(ThemeApp app) : IAsyncLifetime
     private static JsonElement Palette(string primary) =>
         JsonSerializer.SerializeToElement(new Dictionary<string, object> { ["Primary"] = primary, ["Secondary"] = "rgba(10, 20, 30, 0.5)", ["HoverOpacity"] = 0.06 });
 
-    private static readonly string[] BuiltIn = ["Classic", "Coworkee", "Forest", "High Contrast", "Midnight", "Ocean", "Sunset"];
+    private static readonly string[] BuiltIn =
+        ["Arctic", "Atom", "Aubergine", "Classic", "Code", "Coworkee", "Forest", "High Contrast", "Midnight", "Ocean", "Octo", "Paper", "Solar", "Sunset", "Vampire"];
 
     [Fact]
     public async Task Seeds_global_themes_with_ocean_as_default()
@@ -54,6 +55,36 @@ public sealed class ThemeTests(ThemeApp app) : IAsyncLifetime
         });
 
         (await app.InDbAsync(db => db.Set<ThemeDefinition>().Where(t => t.TenantId == null).Select(t => t.ModifiedAt).ToListAsync(Ct))).ShouldBe(before);
+    }
+
+    [Fact]
+    public async Task Built_in_themes_seeded_by_requests_at_the_same_time_are_listed_once()
+    {
+        await app.InDbAsync(db => db.Set<ThemeDefinition>().Where(t => t.TenantId == null && !db.Set<TenantTheme>().Any(m => m.ThemeId == t.Id)).ExecuteDeleteAsync(Ct));
+
+        var lists = await Task.WhenAll(Enumerable.Range(0, 6).Select(_ => app.Anonymous().GetFromJsonAsync<ThemeDto[]>("/api/v1/themes/built-in", Ct)));
+
+        lists.ShouldAllBe(themes => themes!.Select(t => t.Name).Order().SequenceEqual(BuiltIn));
+    }
+
+    [Fact]
+    public async Task A_built_in_theme_stored_twice_by_an_earlier_race_is_cleaned_up()
+    {
+        if (app.Provider == Coworkee.Contracts.Configuration.DatabaseProviders.Postgres)
+        {
+            Assert.Skip("Postgres refuses the second row (unique index with nulls not distinct).");
+        }
+
+        var copy = ThemeSeeds.Create(new ThemingOptions()).Single(t => t.Name == "Octo");
+        await app.InDbAsync(async db =>
+        {
+            db.Add(copy);
+            return await db.SaveChangesAsync(Ct);
+        });
+
+        var themes = await app.Anonymous().GetFromJsonAsync<ThemeDto[]>("/api/v1/themes/built-in", Ct);
+
+        themes!.Count(t => t.Name == "Octo").ShouldBe(1);
     }
 
     [Fact]

@@ -124,6 +124,22 @@
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
+<Border Classes="code" CornerRadius="10" Padding="12,8" IsVisible="{Binding Run.HasSetupToken}">
+                  <StackPanel Spacing="4">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                      <TextBlock Text="{l:L 'Setup token'}" FontWeight="SemiBold" Foreground="{DynamicResource CodeText}" VerticalAlignment="Center" Margin="0,0,10,0" />
+                      <TextBlock Grid.Column="1" Text="{Binding Run.SetupToken}" FontFamily="{DynamicResource MonoFont}" Foreground="{DynamicResource CodeText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                      <Button Grid.Column="2" Classes="icon" Foreground="{DynamicResource CodeText}" Margin="8,0" ToolTip.Tip="{l:L 'Copy setup token'}"
+                              Command="{Binding $parent[ItemsControl].((vm:MyAppsViewModel)DataContext).Main.CopyCommand}" CommandParameter="{Binding Run.SetupToken}">
+                        <PathIcon Classes="small" Data="{StaticResource Icon.Copy}" />
+                      </Button>
+                      <Button Grid.Column="3" Classes="ghost" Content="{l:L 'Open setup'}" IsVisible="{Binding Run.HasSetupLink}"
+                              Command="{Binding OpenCommand}" CommandParameter="{Binding Run.SetupLink}" />
+                    </Grid>
+                    <TextBlock Classes="caption" TextWrapping="Wrap" Foreground="{DynamicResource CodeText}" Text="{l:L 'The app is not set up yet: its setup page asks for this token.'}" />
+                  </StackPanel>
+                </Border>
+
                 <TextBlock Classes="mono caption" Text="{Binding LastLog}" IsVisible="{Binding LastLog, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                            TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" ToolTip.Tip="{Binding LastLog}" />
 

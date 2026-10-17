@@ -88,7 +88,17 @@ Locally, `options.UseKeycloak()` in the app host starts Keycloak with a realm fo
 
 A new installation needs a tenant and a first administrator. Two ways:
 
-**Wizard.** The API answers `503 setup_required` until setup is done. The Blazor client shows the setup page: checks, organization, administrator, theme. The setup token is printed in the API log, or set with `Coworkee:SetupToken`. Sharemee works this way.
+**Wizard.** The API answers `503 setup_required` until setup is done. The Blazor client shows the setup page: checks, organization, administrator, theme. Sharemee works this way.
+
+When does the setup page show up? Whenever the database has no set up system: an empty database without a seed (no `AddCoworkeeIdentitySeed`, or a template app whose demo users are switched off), and a deployment without a first administrator (`<APP>_ADMIN_EMAIL` and `_ADMIN_PASSWORD` left empty). Apps generated with demo users are set up by their migrations and never show it.
+
+The page asks for the setup token. Where to find it:
+
+- **Local run** (`coworkee run`, Visual Studio, Coworkee Studio): the app host gives every service one token (its own `Coworkee:SetupToken`, otherwise a new one per run). While the system is not set up it prints `Setup token of <app>: <token> - open https://.../setup?token=...` on its console, writes the same line into the api's log, adds a *Setup* link (token included) to the web resource and the property *Setup token* to the api in the Aspire dashboard. Coworkee Studio shows the token with a copy button on the run card of the Create page and under *My apps*.
+- **Deployment**: the parameter `<app>-setup-token`; `coworkee deploy` fills it in `.env` (`<APP>_SETUP_TOKEN`) and names it at the end when no administrator is set.
+- **Without either**: the api makes one up at start and writes it to its log (`System is not set up yet. Setup token: ...`); or set `Coworkee:SetupToken`.
+
+A setup page left open in another tab leaves for the app as soon as setup is done: it asks again when the tab gets the focus and when another tab finishes, and a set up system never shows the wizard (`/setup` goes to `/`).
 
 **Seed.** `AddCoworkeeIdentitySeed` in the migration service creates everything on the first start; the wizard never appears. The template works this way.
 

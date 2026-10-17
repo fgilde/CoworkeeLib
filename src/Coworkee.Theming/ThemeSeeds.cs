@@ -15,12 +15,30 @@ internal static class ThemeSeeds
     private static readonly string[] Rounded = ["Trebuchet MS", "Lucida Grande", "sans-serif"];
     private static readonly string[] Mono = ["Cascadia Code", "Consolas", "Courier New", "monospace"];
     private static readonly string[] Plain = ["Arial", "Helvetica", "sans-serif"];
+    private static readonly string[] SystemFonts = ["-apple-system", "BlinkMacSystemFont", "Segoe UI", "Noto Sans", "Helvetica", "Arial", "sans-serif"];
+    private static readonly string[] Friendly = ["Lato", "Segoe UI", "Helvetica Neue", "Arial", "sans-serif"];
+    private static readonly SemaphoreSlim Seeding = new(1, 1);
 
     /// <summary>Built-in themes are owned by the code: missing ones are added, changed ones updated (they cannot be edited in the app).</summary>
     public static async Task EnsureAsync(CoworkeeDbContext db, ThemingOptions options, CancellationToken cancellationToken)
     {
+        // ponytail: one seed at a time per process; the unique index stops a second instance on Postgres only (SQL Server and SQLite let null tenants repeat)
+        await Seeding.WaitAsync(cancellationToken);
+        try
+        {
+            await SeedAsync(db, options, cancellationToken);
+        }
+        finally
+        {
+            Seeding.Release();
+        }
+    }
+
+    private static async Task SeedAsync(CoworkeeDbContext db, ThemingOptions options, CancellationToken cancellationToken)
+    {
         var stored = await db.Set<ThemeDefinition>().Where(t => t.TenantId == null).ToListAsync(cancellationToken);
         var changed = new List<ThemeDefinition>();
+        await RemoveDuplicatesAsync(db, stored, changed, cancellationToken);
         foreach (var seed in Create(options))
         {
             if (stored.FirstOrDefault(t => t.Name == seed.Name) is not { } existing)
@@ -62,6 +80,24 @@ internal static class ThemeSeeds
             {
                 db.Entry(theme).State = EntityState.Detached;
             }
+        }
+    }
+
+    // seeds that raced each other before: the copy an organisation uses (else the oldest) stays
+    private static async Task RemoveDuplicatesAsync(CoworkeeDbContext db, List<ThemeDefinition> stored, List<ThemeDefinition> changed, CancellationToken cancellationToken)
+    {
+        var groups = stored.GroupBy(t => t.Name, StringComparer.Ordinal).Where(g => g.Count() > 1).ToList();
+        if (groups.Count == 0)
+        {
+            return;
+        }
+
+        var used = (await db.Set<TenantTheme>().Select(m => m.ThemeId).ToListAsync(cancellationToken)).ToHashSet();
+        foreach (var extra in groups.SelectMany(g => g.OrderByDescending(t => used.Contains(t.Id)).ThenBy(t => t.CreatedAt).ThenBy(t => t.Id).Skip(1)))
+        {
+            db.Remove(extra);
+            stored.Remove(extra);
+            changed.Add(extra);
         }
     }
 
@@ -196,7 +232,65 @@ internal static class ThemeSeeds
             typography: Fonts(Plain, Plain),
             options: new() { ["ShowLogoInNav"] = true, ["Dense"] = false },
             flat: true),
+        Theme("Octo",
+            light: Colors("#0969da", "#ffffff", "#1a7f37", "#ffffff", "#f6f8fa", "#ffffff", "#f6f8fa", "#1f2328", "#f6f8fa", "#1f2328", "#59636e", "#d1d9e0"),
+            dark: Colors("#4493f8", "#0d1117", "#3fb950", "#0d1117", "#0d1117", "#151b23", "#010409", "#f0f6fc", "#010409", "#f0f6fc", "#9198a1", "#3d444d"),
+            layout: Layout("6px", "296px", "56px"),
+            typography: Fonts(SystemFonts, SystemFonts),
+            options: new() { ["ShowLogoInNav"] = true, ["ShowLogoInAppBar"] = true }),
+        Theme("Code",
+            light: Colors("#005fb8", "#ffffff", "#16825d", "#ffffff", "#f8f8f8", "#ffffff", "#f8f8f8", "#3b3b3b", "#f3f3f3", "#3b3b3b", "#616161", "#e5e5e5"),
+            dark: Colors("#4daafc", "#1e1e1e", "#c586c0", "#1e1e1e", "#1e1e1e", "#252526", "#3c3c3c", "#cccccc", "#252526", "#d4d4d4", "#9d9d9d", "#3c3c3c"),
+            layout: Layout("2px", "260px", "48px"),
+            typography: Fonts(Humanist, Humanist),
+            options: new() { ["ShowLogoInNav"] = true, ["Dense"] = true }),
+        Theme("Arctic",
+            light: Colors("#4c6a92", "#ffffff", "#88c0d0", "#2e3440", "#eceff4", "#ffffff", "#2e3440", "#eceff4", "#e5e9f0", "#2e3440", "#4c566a", "#d8dee9"),
+            dark: Colors("#88c0d0", "#2e3440", "#81a1c1", "#2e3440", "#2e3440", "#3b4252", "#2e3440", "#eceff4", "#292e39", "#eceff4", "#c3c8d4", "#4c566a"),
+            layout: Layout("10px", "300px", "60px"),
+            typography: Fonts(Sans, Sans),
+            options: new() { ["ShowLogoInNav"] = true, ["NavSingleExpand"] = true }),
+        Theme("Vampire",
+            light: Colors("#644ac9", "#ffffff", "#a3144d", "#ffffff", "#fffbeb", "#ffffff", "#644ac9", "#ffffff", "#f6f1dc", "#1f1f1f", "#5c5689", "#e4dfcc"),
+            dark: Colors("#bd93f9", "#282a36", "#ff79c6", "#282a36", "#282a36", "#343746", "#21222c", "#f8f8f2", "#21222c", "#f8f8f2", "#a3acd1", "#44475a"),
+            layout: Layout("12px", "300px", "64px"),
+            typography: Fonts(Sans, Sans),
+            options: new() { ["ShowLogoInNav"] = true }),
+        Theme("Solar",
+            light: Colors("#1f6fa8", "#ffffff", "#b58900", "#002b36", "#fdf6e3", "#fffdf6", "#eee8d5", "#073642", "#eee8d5", "#073642", "#586e75", "#e0d9c3"),
+            dark: Colors("#4ea2e0", "#002b36", "#2aa198", "#002b36", "#002b36", "#073642", "#002b36", "#eee8d5", "#01313d", "#eee8d5", "#93a1a1", "#0e4654"),
+            layout: Layout("4px", "290px", "60px"),
+            typography: Fonts(Serif, Humanist),
+            options: new() { ["ShowLogoInNav"] = true }),
+        Theme("Atom",
+            light: Colors("#2f62d0", "#ffffff", "#a626a4", "#ffffff", "#fafafa", "#ffffff", "#eaeaeb", "#383a42", "#f0f0f1", "#383a42", "#696c77", "#dbdbdc"),
+            dark: Colors("#61afef", "#282c34", "#c678dd", "#282c34", "#282c34", "#2f343e", "#21252b", "#d7dae0", "#21252b", "#dcdfe4", "#abb2bf", "#3e4451"),
+            layout: Layout("6px", "280px", "52px"),
+            typography: Fonts(Mono, Sans),
+            options: new() { ["ShowLogoInNav"] = true, ["Dense"] = true }),
+        Theme("Paper",
+            light: Colors("#1a6fc4", "#ffffff", "#37352f", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#37352f", "#f7f7f5", "#37352f", "#73726e", "#e9e9e7"),
+            dark: Colors("#529cca", "#191919", "#d4d4d4", "#191919", "#191919", "#202020", "#191919", "#d4d4d4", "#202020", "#d4d4d4", "#9b9b9b", "#2f2f2f"),
+            layout: Layout("4px", "260px", "48px"),
+            typography: Fonts(Serif, Sans),
+            options: new() { ["ShowLogoInNav"] = true, ["ShowLogoInAppBar"] = false },
+            flat: true),
+        Theme("Aubergine",
+            light: Colors("#611f69", "#ffffff", "#007a5a", "#ffffff", "#f8f8f8", "#ffffff", "#3f0e40", "#ffffff", "#f4eef5", "#1d1c1d", "#616061", "#dddddd"),
+            dark: Colors("#c79fd0", "#1a1d21", "#2bac76", "#1a1d21", "#1a1d21", "#222529", "#350d36", "#ffffff", "#19171d", "#d1d2d3", "#ababad", "#35373b"),
+            layout: Layout("8px", "280px", "56px"),
+            typography: Fonts(Friendly, Friendly),
+            options: new() { ["ShowLogoInNav"] = true, ["NavSingleExpand"] = true }),
     ];
+
+    private static Dictionary<string, string> Colors(
+        string primary, string primaryText, string secondary, string secondaryText, string background, string surface, string appbar, string appbarText,
+        string drawer, string text, string textSecondary, string lines) => new()
+        {
+            ["Primary"] = primary, ["PrimaryContrastText"] = primaryText, ["Secondary"] = secondary, ["SecondaryContrastText"] = secondaryText,
+            ["Background"] = background, ["Surface"] = surface, ["AppbarBackground"] = appbar, ["AppbarText"] = appbarText, ["DrawerBackground"] = drawer,
+            ["TextPrimary"] = text, ["TextSecondary"] = textSecondary, ["LinesDefault"] = lines,
+        };
 
     private static Dictionary<string, object> Layout(string radius, string drawerWidth, string appbarHeight) =>
         new() { ["DefaultBorderRadius"] = radius, ["DrawerWidthLeft"] = drawerWidth, ["AppbarHeight"] = appbarHeight };

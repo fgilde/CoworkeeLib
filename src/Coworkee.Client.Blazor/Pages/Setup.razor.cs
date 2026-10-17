@@ -5,11 +5,12 @@ using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Theming;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Pages;
 
-public partial class Setup
+public partial class Setup : IAsyncDisposable
 {
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
@@ -18,6 +19,14 @@ public partial class Setup
     [Inject] private ThemeService ThemeService { get; set; } = null!;
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
+
+    [Inject] private NavigationManager Nav { get; set; } = null!;
+
+    [Inject] private IJSRuntime JS { get; set; } = null!;
+
+    /// <summary>The setup token, e.g. from the Setup link of the Aspire dashboard.</summary>
+    [SupplyParameterFromQuery(Name = "token")]
+    public string? Token { get; set; }
 
     private const int LastStep = 5;
     private const int LookStep = 3;
@@ -46,6 +55,9 @@ public partial class Setup
     private bool _done;
     private string? _error;
     private IReadOnlyDictionary<string, string[]>? _errors;
+    private IJSObjectReference? _module;
+    private IJSObjectReference? _watch;
+    private DotNetObjectReference<Setup>? _self;
 
     private bool BlockedByChecks => _step == 1 && (_checks is null || _checks.Any(c => c.Status == SetupCheckStatus.Error));
 
@@ -53,13 +65,78 @@ public partial class Setup
 
     protected override async Task OnInitializedAsync()
     {
+        _request.SetupToken = Token ?? string.Empty;
+        var status = await StatusAsync();
+        if (status?.IsInitialized == true)
+        {
+            Nav.NavigateTo("/", replace: true);
+            return;
+        }
+
+        _rules = status?.PasswordRules;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
         try
         {
-            _rules = (await Api.GetSetupStatusAsync())?.PasswordRules;
+            _self = DotNetObjectReference.Create(this);
+            _module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");
+            _watch = await _module.InvokeAsync<IJSObjectReference>("watchSetup", _self);
+        }
+        catch (JSException)
+        {
+        }
+    }
+
+    /// <summary>Another tab may have finished the setup: called when this tab gets the focus again or hears of it; leaves for the app then.</summary>
+    [JSInvokable]
+    public async Task RecheckAsync()
+    {
+        if (!_done && (await StatusAsync())?.IsInitialized == true)
+        {
+            Nav.NavigateTo("/", replace: true);
+        }
+    }
+
+    private async Task<SetupStatusDto?> StatusAsync()
+    {
+        try
+        {
+            return await Api.GetSetupStatusAsync();
         }
         catch (Exception exception) when (exception is ApiException or HttpRequestException)
         {
+            return null;
         }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (_watch is not null)
+            {
+                await _watch.InvokeVoidAsync("dispose");
+                await _watch.DisposeAsync();
+            }
+
+            if (_module is not null)
+            {
+                await _module.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+
+        _self?.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     private InputType PasswordInput => _showPassword ? InputType.Text : InputType.Password;
@@ -180,6 +257,7 @@ public partial class Setup
                 _request.SetupToken.Trim(), _request.TenantName.Trim(), _request.AdminEmail, _request.AdminPassword, _request.AdminFirstName, _request.AdminLastName,
                 Settings(), _themeId));
             _done = true;
+            await TellOtherTabsAsync();
         }
         catch (ApiException exception) when (exception.Status == 403)
         {
@@ -188,7 +266,7 @@ public partial class Setup
         }
         catch (ApiException exception) when (exception.Status == 409)
         {
-            _error = "The system is already set up.";
+            Nav.NavigateTo("/", replace: true);
         }
         catch (ApiException exception)
         {
@@ -206,6 +284,20 @@ public partial class Setup
         finally
         {
             _busy = false;
+        }
+    }
+
+    private async Task TellOtherTabsAsync()
+    {
+        try
+        {
+            if (_module is not null)
+            {
+                await _module.InvokeVoidAsync("setupDone");
+            }
+        }
+        catch (JSException)
+        {
         }
     }
 

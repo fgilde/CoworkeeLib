@@ -28,6 +28,7 @@ public sealed class DashboardTests
         }
 
         env.ContainsKey("Coworkee__Identity__SyncDevelopmentUsers").ShouldBe(synced);
+        (env.GetValueOrDefault("DOTNET_ENVIRONMENT") as string == "Development").ShouldBe(synced);
     }
 
     [Fact]

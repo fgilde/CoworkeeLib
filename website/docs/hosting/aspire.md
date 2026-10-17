@@ -64,7 +64,7 @@ Explicit calls still work and win: a project added before `AddProjects()` is not
 |---|---|---|
 | `AddMigrations<T>()` | `{name}-migrations` | database, waits for the database server, dashboard commands |
 | `AddAuthServer<T>()` | `{name}-auth` | external endpoints, no job server, public auth URL, development certificates in Development, Keycloak provider |
-| `AddApi<T>()` | `{name}-api` | token authority and audience `{name}_api`, API scope at the auth server, setup token from `Coworkee:SetupToken` |
+| `AddApi<T>()` | `{name}-api` | token authority and audience `{name}_api`, API scope at the auth server, setup token (local run: the same for every service, shown on the console and in the dashboard while the system is not set up, see [Setup wizard](../security/authentication.md#setup-wizard-or-seed)) |
 | `AddWorker<T>(suffix)` | `{name}-{suffix}` | infrastructure only, no public endpoints |
 | `AddWeb<T>()` | `{name}-web` | BFF settings, OIDC client at the auth server with redirect URIs, reference to the API, links to Swagger and the jobs dashboard |
 | `AddAirWorks<T>()` | `{name}-airworks` | like `AddWeb`: BFF settings, the next OIDC client at the auth server, its own session cookie name; for the [AirWorks client](../web/airworks.md) |

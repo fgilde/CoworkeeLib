@@ -61,6 +61,23 @@ export function hideLoadingScreen(mode, theme, culture) {
     window.coworkeeLoadingScreen?.hide();
 }
 
+// the setup page of a second tab leaves once the system is set up: it looks again on focus and when another tab finishes (storage event)
+export function watchSetup(dotnet) {
+    const recheck = () => dotnet.invokeMethodAsync('RecheckAsync');
+    const heard = e => e.key === 'coworkee-setup-done' && recheck();
+    window.addEventListener('focus', recheck);
+    window.addEventListener('storage', heard);
+    return { dispose: () => { window.removeEventListener('focus', recheck); window.removeEventListener('storage', heard); } };
+}
+
+export function setupDone() {
+    try {
+        localStorage.setItem('coworkee-setup-done', String(Date.now()));
+    } catch {
+        // storage blocked: the other tabs look again when they get the focus
+    }
+}
+
 export function onHotkey(dotnet, key) {
     const handler = e => {
         if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === key) {

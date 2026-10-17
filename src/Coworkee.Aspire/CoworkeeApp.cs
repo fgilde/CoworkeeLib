@@ -67,8 +67,9 @@ public sealed partial class CoworkeeApp
         WithInitialAdmin(Migrations);
         if (LocalDevelopment)
         {
-            // the migrations project has no launch profile and runs as Production; the dev sync of the seed users still belongs to a local run
-            Migrations.WithEnvironment("Coworkee__Identity__SyncDevelopmentUsers", "true");
+            // the migrations project has no launch profile and would run as Production: no seed of the development users, so a new app showed its setup page
+            Migrations.WithEnvironment("DOTNET_ENVIRONMENT", Builder.Environment.EnvironmentName)
+                .WithEnvironment("Coworkee__Identity__SyncDevelopmentUsers", "true");
         }
 
         WireGrafanaTelemetry(Migrations);
@@ -118,7 +119,7 @@ public sealed partial class CoworkeeApp
             .WithSetting(s => s.Coworkee.ApiAuth.Authority, PublicUrl(auth))
             .WithSetting(s => s.Coworkee.ApiAuth.Audience, ApiAudience)
             .WithSetting(s => s.Coworkee.Account.PublicAuthUrl, PublicUrl(auth));
-        if (Builder.Configuration["Coworkee:SetupToken"] is { Length: > 0 } setupToken)
+        if (Publishing && Builder.Configuration["Coworkee:SetupToken"] is { Length: > 0 } setupToken)
         {
             api.WithSetting(s => s.Coworkee.SetupToken, setupToken);
         }
@@ -126,6 +127,8 @@ public sealed partial class CoworkeeApp
         {
             api.WithSetting(s => s.Coworkee.SetupToken, DeployParameter($"{Name}-setup-token", secret: true));
         }
+
+        AnnounceSetup(api);
 
         AddKeycloakSignInSettings(api);
         WithSignInDesign(api);
@@ -273,6 +276,7 @@ public sealed partial class CoworkeeApp
         where TProject : IProjectMetadata, new()
     {
         var service = Builder.AddProject<TProject>($"{Name}-{suffix}").WithHttpHealthCheck(Health);
+        WithSetupToken(service);
         WireServices(service);
         WireGrafanaTelemetry(service);
         var references = CoworkeeModules.References(service.Resource.GetProjectMetadata().ProjectPath);

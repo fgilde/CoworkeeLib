@@ -122,6 +122,9 @@ public sealed class DeployCommandTests
         credentials.ShouldContain("ada@example.com");
         credentials.ShouldContain("Pw1-x");
         credentials.ShouldContain("KEYCLOAK_PASSWORD");
+        credentials.ShouldNotContain("setup token");
+        string.Join(' ', DeploySummary.Credentials(new Dictionary<string, string> { ["SHOP_ADMIN_EMAIL"] = "", ["SHOP_SETUP_TOKEN"] = "tok-1" }))
+            .ShouldContain("setup token tok-1 (SHOP_SETUP_TOKEN");
     }
 
     [Fact]
