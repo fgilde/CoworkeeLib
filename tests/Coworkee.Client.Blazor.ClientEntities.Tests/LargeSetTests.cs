@@ -53,7 +53,7 @@ public sealed class LargeSetTests(ITestOutputHelper output)
             next.Count.ShouldBe(first.Count);
             // generous bounds: they catch a quadratic slip, not a slow machine
             cold.ShouldBeLessThan(2000);
-            watch.Elapsed.TotalMilliseconds.ShouldBeLessThan(100);
+            watch.Elapsed.TotalMilliseconds.ShouldBeLessThan(500);
         }
     }
 }

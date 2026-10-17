@@ -20,6 +20,7 @@ internal static partial class DocsSearch
         ("Blazor admin UI", "features/blazor-ui/"),
         ("Realtime and collaboration", "features/realtime/"),
         ("AI assistant and MCP", "features/ai/"),
+        ("Building with AI", "features/building-with-ai/"),
         ("Reporting and dashboards", "features/reporting/"),
         ("Localization", "features/localization/"),
         ("Aspire and observability", "features/observability/"),
