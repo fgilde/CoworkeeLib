@@ -4,8 +4,13 @@
 
 ## Unveröffentlicht
 
+### Breaking Changes
+
+- **Migration nötig**: Passkeys liegen in der neuen Tabelle `cw.UserPasskeys` (Schema-Version 3 von ASP.NET Core Identity: Schlüssel `CredentialId`, `Data` als JSON, Cascade von `cw.Users`). Eigene `ICoworkeeApi`-Implementierungen ergänzen `ResetUserPasskeysAsync`.
+
 ### Neu
 
+- Passkeys (WebAuthn) am Auth-Server: *Mit Passkey anmelden* und das Autofill des Browsers auf der Anmeldeseite, die Kontoseite *Passkeys* zum Hinzufügen (höchstens 20), Umbenennen und Entfernen, *Passkeys (n)* im Sicherheitsreiter des Profils, *Passkeys: n* mit *Alle entfernen* im Anmeldebereich der Benutzerverwaltung (`POST /api/v1/identity/users/{id}/passkeys/reset`), `PasskeyCount` in `ProfileDto` und `UserDetailDto`, Passkeys im Export der persönlichen Daten. Eine Anmeldung per Passkey überspringt die Bestätigung in zwei Schritten. Die Einstellung `Account.Passkeys.Enabled` (Standard an) und der Login-Modus *External* schalten sie ab; `Coworkee:Auth:Passkeys` bindet `IdentityPasskeyOptions` (`ServerDomain` hinter einem Proxy ohne Forwarded Headers). Siehe [Passkeys](../security/passkeys.md).
 - `CoworkeeMigrationsOptions.AfterSeed` führt die eigenen Datenschritte der App nach Migration und Seed aus, bevor Keycloak abgeglichen wird.
 
 ## 0.0.1.33 (2026-10-17)

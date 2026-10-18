@@ -12,7 +12,7 @@ Three layouts ship with the library:
 | `Split` | full page: image or video on one side, the form on the other |
 | `Slide` (default) | a card with a colored panel next to the form. On the sign-in page the panel invites to create an account (when registration is on); on the registration page it moves to the other side and links back to sign-in. Browsers with cross-document view transitions animate the move. |
 
-The pages work without script. A small script adds what a browser alone cannot: a button that shows the password, a hint while Caps Lock is on, a *Last used* badge on the sign-in method chosen the last time (only when there are external providers) and one submit per form. Animations stop when the system asks for reduced motion.
+The pages work without script. A small script adds what a browser alone cannot: a button that shows the password, a hint while Caps Lock is on, a *Last used* badge on the sign-in method chosen the last time (only when there are external providers) and one submit per form. Passkeys need a second small script, `passkey.js`; without it their button stays hidden (see [Passkeys](passkeys.md)). Animations stop when the system asks for reduced motion.
 
 ## Configuration
 
