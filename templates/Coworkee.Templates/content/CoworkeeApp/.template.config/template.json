@@ -137,6 +137,12 @@
       "defaultValue": "false",
       "description": "Outgoing webhooks with signed deliveries, retries and a delivery log (Coworkee.Webhooks); with the samples, products send events."
     },
+    "retention": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "true",
+      "description": "Days to keep per kind of data, a nightly cleanup and the admin page Retention (Coworkee.Retention)."
+    },
     "extendedAttributes": {
       "type": "parameter",
       "datatype": "bool",
@@ -1037,7 +1043,7 @@
     },
     "defaultModel": {
       "type": "computed",
-      "value": "(database == \"postgres\" && ai && chat && reports && backup && notifications && !files && !features && !social && !workflows && !webhooks && eventBus == \"none\" && (samples || !extendedAttributes))"
+      "value": "(database == \"postgres\" && ai && chat && reports && backup && notifications && retention && !files && !features && !social && !workflows && !webhooks && eventBus == \"none\" && (samples || !extendedAttributes))"
     }
   },
   "sources": [
@@ -1255,6 +1261,12 @@
           "condition": "(!ai)",
           "exclude": [
             "tests/MyApp.Api.Tests/AiToolTests.cs"
+          ]
+        },
+        {
+          "condition": "(!retention)",
+          "exclude": [
+            "src/MyApp.Api/appsettings.json"
           ]
         },
         {

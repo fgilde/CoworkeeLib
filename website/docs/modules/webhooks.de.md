@@ -83,7 +83,7 @@ Zustellungen laufen über die Outbox und die Background Jobs; ein Absturz zwisch
 
 Ein fehlgeschlagener Versuch wird mit exponentiellem Backoff wiederholt: 30 s, 1 min, 2 min, 4 min, 8 min (jeweils doppelt so lang, gedeckelt bei `MaxRetryDelay`), insgesamt sechs Versuche. Ist eine Zustellung endgültig gescheitert, zählt der Endpunkt mit; nach `DisableAfterFailures` gescheiterten Zustellungen in Folge wird er abgeschaltet, und sein Besitzer sowie die Administratoren der Organisation bekommen eine Benachrichtigung (mit `Coworkee.Notifications` in der App). Eine erfolgreiche Zustellung setzt den Zähler zurück, das Wiedereinschalten auch.
 
-Das Protokoll behält die Anfrage mit ihren Headern (die Signatur maskiert) und die Antwort, beide nach `LogBodyLimit` Zeichen gekürzt, für `LogRetentionDays` Tage.
+Das Protokoll behält die Anfrage mit ihren Headern (die Signatur maskiert) und die Antwort, beide nach `LogBodyLimit` Zeichen gekürzt, für `LogRetentionDays` Tage. Mit dem Modul [Aufbewahrung](retention.md) entscheidet die Einstellung `Retention.webhook-deliveries.Days` (Standard `LogRetentionDays`), und die Admin-Seite *Aufbewahrung* ändert sie oder löscht sofort.
 
 ## Schutz vor SSRF
 
@@ -108,7 +108,7 @@ Endpunkte dürfen nicht in dein eigenes Netz greifen:
 | `FirstRetryDelay`, `MaxRetryDelay` | `00:00:30`, `06:00:00` | Backoff |
 | `DisableAfterFailures` | `5` | gescheiterte Zustellungen in Folge, bevor der Endpunkt abgeschaltet wird |
 | `LogBodyLimit` | `4096` | Zeichen von Anfrage und Antwort im Protokoll |
-| `LogRetentionDays` | `30` | ein täglicher Job löscht ältere Zustellungen |
+| `LogRetentionDays` | `30` | ein täglicher Job löscht ältere Zustellungen; mit [Aufbewahrung](retention.md) der Standard von `Retention.webhook-deliveries.Days` |
 | `SecretGracePeriod` | `24:00:00` | wie lange das alte Geheimnis nach *Secret erneuern* neben dem neuen signiert |
 | `DomainEvents` | `{ "WorkflowTransitioned": "workflow.transitioned" }` | Domain Events anderer Module, die zu Webhook-Ereignissen werden |
 

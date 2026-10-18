@@ -83,7 +83,7 @@ Deliveries leave through the outbox and the background jobs, so a crash between 
 
 A failed attempt is retried with exponential backoff: 30 s, 1 min, 2 min, 4 min, 8 min (doubling, capped at `MaxRetryDelay`), six attempts in all. When a delivery has failed for good, the endpoint counts it; after `DisableAfterFailures` failed deliveries in a row the endpoint is switched off, and its owner and the organisation's administrators get a notification (with `Coworkee.Notifications` in the app). A successful delivery resets the count; switching the endpoint on again does too.
 
-The log keeps the request with its headers (the signature masked) and the answer, both cut after `LogBodyLimit` characters, for `LogRetentionDays` days.
+The log keeps the request with its headers (the signature masked) and the answer, both cut after `LogBodyLimit` characters, for `LogRetentionDays` days. With the [Retention](retention.md) module the setting `Retention.webhook-deliveries.Days` decides (default `LogRetentionDays`), and the admin page *Retention* changes it or deletes at once.
 
 ## Protection against SSRF
 
@@ -108,7 +108,7 @@ Endpoints may not reach into your own network:
 | `FirstRetryDelay`, `MaxRetryDelay` | `00:00:30`, `06:00:00` | backoff |
 | `DisableAfterFailures` | `5` | failed deliveries in a row before the endpoint is switched off |
 | `LogBodyLimit` | `4096` | characters of request and response in the log |
-| `LogRetentionDays` | `30` | a daily job deletes older deliveries |
+| `LogRetentionDays` | `30` | a daily job deletes older deliveries; with [Retention](retention.md) the default of `Retention.webhook-deliveries.Days` |
 | `SecretGracePeriod` | `24:00:00` | how long the old secret signs next to the new one after *Rotate secret* |
 | `DomainEvents` | `{ "WorkflowTransitioned": "workflow.transitioned" }` | domain events of other modules that become webhook events |
 

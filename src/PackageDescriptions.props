@@ -33,6 +33,7 @@
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.OData'"><Description>OData set per entity with facets, row filters and hidden properties.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Realtime'"><Description>SignalR push for entity changes, notifications and app events.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.ResponseFilters'"><Description>Permission dependent response filters on Nextended.ResponseFilters.</Description></PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Retention'"><Description>Retention: days to keep per kind of data (audit trail, outbox, logs, deleted records, files, tokens), a nightly cleanup and an admin page.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Search'"><Description>Search index abstraction for Coworkee entities.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Search.Elasticsearch'"><Description>Elasticsearch provider for Coworkee.Search.</Description></PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Coworkee.Settings'"><Description>Typed settings per global, tenant and user scope with encrypted secrets.</Description></PropertyGroup>

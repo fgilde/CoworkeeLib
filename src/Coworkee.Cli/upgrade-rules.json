@@ -200,7 +200,8 @@
         "Passkeys: the new table cw.UserPasskeys keeps the passkeys of the users (ASP.NET Core Identity schema version 3); add a migration."
       ],
       "manual": [
-        { "text": "Own ICoworkeeApi implementations add ResetUserPasskeysAsync.", "find": ":\\s*ICoworkeeApi\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] }
+        { "text": "Own ICoworkeeApi implementations add ResetUserPasskeysAsync.", "find": ":\\s*ICoworkeeApi\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] },
+        { "text": "Optional: Coworkee.Retention sets how long data is kept (admin page Retention, nightly cleanup). Add the package to the infrastructure project, typeof(Coworkee.Retention.CoworkeeRetentionModule) to the DependsOn of the database module and a migration (cw.RetentionRuns).", "find": "class \\w+DatabaseModule\\b", "files": [ "src/**/*.cs" ], "unless": "CoworkeeRetentionModule" }
       ],
       "needsMigration": true
     }

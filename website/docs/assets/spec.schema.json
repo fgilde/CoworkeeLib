@@ -88,6 +88,11 @@
           "type": "boolean",
           "default": true
         },
+        "retention": {
+          "description": "Days to keep per kind of data (audit trail, outbox, logs, deleted records and files, tokens), a nightly job that deletes what is older and the admin page Retention to set them and delete now. New apps keep processed messages and tokens 14 days, import and export jobs 30, everything else until set.",
+          "type": "boolean",
+          "default": true
+        },
         "files": {
           "description": "Folders and files of the organisation with preview, upload and per-folder permissions.",
           "type": "boolean",

@@ -1,4 +1,5 @@
 using Coworkee.Application.Messaging;
+using Coworkee.Application.Retention;
 using Coworkee.AspNetCore;
 using Coworkee.Core.Modularity;
 using Coworkee.Infrastructure.Persistence;
@@ -17,6 +18,7 @@ public sealed class CoworkeeAuthStoreModule : CoworkeeModule, IWebModule
         context.Services.AddScoped<Application.Privacy.IPersonalDataContributor, AuthPersonalData>();
         AddClientAdministration(context.Services);
         context.Services.AddScoped<Clients.HostAccess>();
+        context.Services.AddRetentionTarget<AuthTokenRetention>();
         context.Services.AddScoped<Clients.ServiceClientRights>();
         context.Services.AddScoped<Identity.Users.IUserSessionListener, Clients.SessionRevocation>();
         context.Services.AddOpenIddict()

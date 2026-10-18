@@ -20,6 +20,7 @@ public partial class SystemStatus
         ["files"] = MudBlazor.Icons.Material.Outlined.FolderOpen,
         ["translation"] = MudBlazor.Icons.Material.Outlined.Translate,
         ["ai"] = MudBlazor.Icons.Material.Outlined.AutoAwesome,
+        ["retention"] = MudBlazor.Icons.Material.Outlined.AutoDelete,
     };
 
     private SystemStatusDto? _status;

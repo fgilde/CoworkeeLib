@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
+using Coworkee.Application.Retention;
 using Coworkee.Application.Status;
 using Coworkee.AspNetCore.Http;
 using Coworkee.AspNetCore.RateLimiting;
@@ -54,6 +55,7 @@ public sealed class CoworkeeAiModule : CoworkeeModule, IWebModule
         var services = context.Services;
         services.AddMessagingFromAssembly(typeof(CoworkeeAiModule).Assembly);
         services.AddSystemStatus<AiStatus>();
+        services.AddRetentionTarget<AiToolCallRetention>().AddRetentionTarget<Sessions.AiSessionRetention>();
         services.AddSingleton<IModelContributor, AiModelContributor>();
         services.AddSingleton<IModelContributor, AiSessionModel>();
         services.AddSingleton<IPermissionDefinitionContributor, AiPermissionDefinitions>();

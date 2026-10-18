@@ -1,6 +1,7 @@
 using Coworkee.Application;
 using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
+using Coworkee.Application.Retention;
 using Coworkee.AspNetCore;
 using Coworkee.Core.Modularity;
 using Coworkee.Infrastructure.Persistence;
@@ -21,6 +22,7 @@ public sealed class CoworkeeBackupModule : CoworkeeModule, IWebModule
         services.AddSingleton<IModelContributor, BackupModelContributor>();
         services.AddSingleton<IPermissionDefinitionContributor, BackupPermissionDefinitions>();
         services.AddScoped<DatabaseCopy>();
+        services.AddRetentionTarget<BackupRetention>();
     }
 
     public void ConfigureApplication(WebApplication app) => app.MapBackupEndpoints();

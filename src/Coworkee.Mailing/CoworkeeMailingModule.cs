@@ -1,5 +1,6 @@
 using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
+using Coworkee.Application.Retention;
 using Coworkee.Application.Status;
 using Coworkee.AspNetCore.Http;
 using Coworkee.AspNetCore;
@@ -27,6 +28,7 @@ public sealed class CoworkeeMailingModule : CoworkeeModule, IWebModule
         var services = context.Services;
         services.AddMessagingFromAssembly(typeof(CoworkeeMailingModule).Assembly);
         services.AddSystemStatus<MailStatus>();
+        services.AddRetentionTarget<MailLogRetention>();
         services.AddSingleton<IModelContributor, MailModelContributor>();
         services.AddSingleton<Coworkee.Infrastructure.Versioning.IVersionedTypeContributor, MailVersionedTypes>();
         services.AddSingleton<IPermissionDefinitionContributor, MailPermissionDefinitions>();

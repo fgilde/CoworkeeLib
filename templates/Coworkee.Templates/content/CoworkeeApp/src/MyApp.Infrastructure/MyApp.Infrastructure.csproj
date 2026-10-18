@@ -36,6 +36,9 @@
     <!--#if (webhooks) -->
     <CoworkeePackage Include="Coworkee.Webhooks" />
     <!--#endif -->
+    <!--#if (retention) -->
+    <CoworkeePackage Include="Coworkee.Retention" />
+    <!--#endif -->
     <!--#if (extendedAttributes) -->
     <CoworkeePackage Include="Coworkee.ExtendedAttributes" />
     <!--#endif -->

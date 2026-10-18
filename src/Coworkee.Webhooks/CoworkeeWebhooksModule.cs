@@ -1,5 +1,6 @@
 using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
+using Coworkee.Application.Retention;
 using Coworkee.AspNetCore;
 using Coworkee.AspNetCore.Http;
 using Coworkee.BackgroundJobs;
@@ -36,6 +37,8 @@ public sealed class CoworkeeWebhooksModule : CoworkeeModule, IWebModule
         services.AddScoped<IInterceptor, WebhookChangeInterceptor>();
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IOutboxRelay, WebhookRelay>());
         services.TryAddSingleton(TimeProvider.System);
+        services.AddScoped<WebhookDeliveryRetention>();
+        services.AddRetentionTarget<WebhookDeliveryRetention>();
         services.AddRecurringJob<WebhookLogCleanup>("coworkee-webhooks-log-cleanup", "17 3 * * *");
         services.AddHttpClient(WebhookDeliveryJob.HttpClientName)
             .ConfigurePrimaryHttpMessageHandler(provider => new SocketsHttpHandler
@@ -68,14 +71,4 @@ internal sealed class WebhookPermissionDefinitions : IPermissionDefinitionContri
 {
     public void Define(PermissionDefinitionContext context) =>
         context.Group(WebhookPermissions.GroupName, "Webhooks").Add(WebhookPermissions.Manage, "Manage webhook endpoints and read their deliveries");
-}
-
-internal sealed class WebhookLogCleanup(CoworkeeDbContext db, TimeProvider clock, IOptions<WebhookOptions> options) : IRecurringJob
-{
-    public Task ExecuteAsync(CancellationToken cancellationToken)
-    {
-        var before = clock.GetUtcNow().AddDays(-options.Value.LogRetentionDays);
-        return db.Set<WebhookDelivery>().IgnoreQueryFilters().Where(d => d.CreatedAt < before && d.Status != Contracts.Webhooks.WebhookDeliveryStatus.Pending)
-            .ExecuteDeleteAsync(cancellationToken);
-    }
 }

@@ -36,6 +36,7 @@ public static class CoworkeeClientExtensions
         services.AddHttpClient<History.IEntityHistoryApi, History.EntityHistoryApi>(client => client.BaseAddress = baseAddress);
         CommandPalette.CommandPaletteServiceCollectionExtensions.AddCommandPalette(services);
         services.AddHttpClient<Webhooks.IWebhooksApi, Webhooks.WebhooksApi>(client => client.BaseAddress = baseAddress);
+        services.AddHttpClient<Retention.IRetentionApi, Retention.RetentionApi>(client => client.BaseAddress = baseAddress);
         services.AddSingleton(new Pages.ProfileTab("API keys", "api-keys", typeof(Pages.ProfileApiKeys), Coworkee.Contracts.Identity.ApiKeyPermissions.Create,
             MudBlazor.Icons.Material.Outlined.Key, Order: 100));
         services.AddHttpClient<Backup.IBackupApi, Backup.BackupApi>(client =>
@@ -180,6 +181,7 @@ internal sealed class AdminNavigation : INavigationContributor
         new("Audit log", "/admin/audit", MudBlazor.Icons.Material.Outlined.History, Coworkee.Contracts.Auditing.AuditPermissions.View, Group: Monitoring),
         new("System status", "/admin/system-status", MudBlazor.Icons.Material.Outlined.MonitorHeart, Coworkee.Contracts.Settings.SettingsPermissions.Manage, Group: Monitoring, Order: -1, HostOnly: true),
         new("AI tool calls", "/admin/ai-tool-calls", MudBlazor.Icons.Material.Outlined.ManageSearch, Coworkee.Contracts.Ai.AiPermissions.Audit, Group: Monitoring, Order: 1),
+        new("Retention", "/admin/retention", MudBlazor.Icons.Material.Outlined.AutoDelete, Coworkee.Contracts.Retention.RetentionPermissions.Manage, Group: Monitoring, Order: 2, HostOnly: true),
         new("Files", "/files", MudBlazor.Icons.Material.Outlined.FolderOpen, Coworkee.Contracts.Files.FilePermissions.View, Order: -8),
         new("Chat", "/chat", MudBlazor.Icons.Material.Outlined.Chat, Coworkee.Contracts.Chat.ChatPermissions.Use, Order: -9),
         new("Approvals", "/workflows/approvals", MudBlazor.Icons.Material.Outlined.FactCheck, Coworkee.Contracts.Workflows.WorkflowPermissions.View, Order: -7),

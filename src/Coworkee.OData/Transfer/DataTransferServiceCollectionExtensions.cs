@@ -1,4 +1,5 @@
 using Coworkee.Application.Authorization;
+using Coworkee.Application.Retention;
 using Coworkee.Contracts.Data;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.OData.Transfer.Import;
@@ -18,6 +19,7 @@ internal static class DataTransferServiceCollectionExtensions
         services.AddScoped<DataExports>();
         services.AddScoped<ImportJob>();
         services.AddScoped<ExportJob>();
+        services.AddRetentionTarget<DataTransferJobRetention>();
         return services;
     }
 }

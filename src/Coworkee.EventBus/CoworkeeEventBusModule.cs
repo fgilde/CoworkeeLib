@@ -1,3 +1,4 @@
+using Coworkee.Application.Retention;
 using Coworkee.Core.Modularity;
 using Coworkee.Infrastructure.Outbox;
 using Coworkee.Infrastructure.Persistence;
@@ -18,5 +19,6 @@ public sealed class CoworkeeEventBusModule : CoworkeeModule
         services.TryAddEnumerable(ServiceDescriptor.Scoped<IOutboxRelay, IntegrationEventRelay>());
         services.TryAddSingleton<IntegrationEventDelivery>();
         services.TryAddSingleton<IEventTransport, InProcessTransport>();
+        services.AddRetentionTarget<InboxRetention>();
     }
 }

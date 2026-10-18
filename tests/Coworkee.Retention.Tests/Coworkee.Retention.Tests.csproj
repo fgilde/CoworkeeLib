@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Coworkee.Retention\Coworkee.Retention.csproj" />
+    <ProjectReference Include="..\..\src\Coworkee.Identity\Coworkee.Identity.csproj" />
+    <ProjectReference Include="..\..\src\Coworkee.Webhooks\Coworkee.Webhooks.csproj" />
+    <ProjectReference Include="..\..\src\Coworkee.Files\Coworkee.Files.csproj" />
+    <ProjectReference Include="..\..\src\Coworkee.Backup\Coworkee.Backup.csproj" />
+    <ProjectReference Include="..\..\src\Coworkee.EventBus\Coworkee.EventBus.csproj" />
+    <ProjectReference Include="..\..\src\Coworkee.Ai\Coworkee.Ai.csproj" />
+    <ProjectReference Include="..\..\src\Coworkee.AuthServer\Coworkee.AuthServer.csproj" />
+    <ProjectReference Include="..\..\src\Coworkee.Testing\Coworkee.Testing.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+  </ItemGroup>
+</Project>

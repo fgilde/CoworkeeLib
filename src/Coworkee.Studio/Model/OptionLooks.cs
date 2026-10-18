@@ -26,6 +26,7 @@ public static class OptionLooks
         ["elsa"] = "Icon.CogPlay",
         ["elsaStudio"] = "Icon.Magic",
         ["webhooks"] = "Icon.Webhook",
+        ["retention"] = "Icon.Delete",
         ["extendedAttributes"] = "Icon.TagPlus",
         ["elasticsearch"] = "Icon.DatabaseSearch",
         ["eventBus"] = "Icon.Broadcast",
