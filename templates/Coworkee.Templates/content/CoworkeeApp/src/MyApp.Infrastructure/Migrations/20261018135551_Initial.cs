@@ -710,6 +710,24 @@ namespace MyApp.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "RetentionRuns",
+                schema: "cw",
+                columns: table => new
+                {
+                    Key = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    LastRunAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LastDeleted = table.Column<long>(type: "bigint", nullable: true),
+                    LastError = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
+                    RunningSince = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    RunToken = table.Column<Guid>(type: "uuid", nullable: true),
+                    LastRunBy = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RetentionRuns", x => x.Key);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Roles",
                 schema: "cw",
                 columns: table => new
@@ -1269,6 +1287,27 @@ namespace MyApp.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UserPasskeys",
+                schema: "cw",
+                columns: table => new
+                {
+                    CredentialId = table.Column<byte[]>(type: "bytea", maxLength: 1024, nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Data = table.Column<string>(type: "jsonb", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserPasskeys", x => x.CredentialId);
+                    table.ForeignKey(
+                        name: "FK_UserPasskeys_Users_UserId",
+                        column: x => x.UserId,
+                        principalSchema: "cw",
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserRoles",
                 schema: "cw",
                 columns: table => new
@@ -1751,6 +1790,12 @@ namespace MyApp.Infrastructure.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_UserPasskeys_UserId",
+                schema: "cw",
+                table: "UserPasskeys",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserRoles_RoleId",
                 schema: "cw",
                 table: "UserRoles",
@@ -1924,6 +1969,10 @@ namespace MyApp.Infrastructure.Migrations
                 schema: "cw");
 
             migrationBuilder.DropTable(
+                name: "RetentionRuns",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
                 name: "RoleClaims",
                 schema: "cw");
 
@@ -1953,6 +2002,10 @@ namespace MyApp.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "UserLogins",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "UserPasskeys",
                 schema: "cw");
 
             migrationBuilder.DropTable(
@@ -2650,6 +2703,24 @@ namespace MyApp.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "RetentionRuns",
+                schema: "cw",
+                columns: table => new
+                {
+                    Key = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    LastRunAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LastDeleted = table.Column<long>(type: "bigint", nullable: true),
+                    LastError = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
+                    RunningSince = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    RunToken = table.Column<Guid>(type: "uuid", nullable: true),
+                    LastRunBy = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RetentionRuns", x => x.Key);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Roles",
                 schema: "cw",
                 columns: table => new
@@ -3143,6 +3214,27 @@ namespace MyApp.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UserPasskeys",
+                schema: "cw",
+                columns: table => new
+                {
+                    CredentialId = table.Column<byte[]>(type: "bytea", maxLength: 1024, nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Data = table.Column<string>(type: "jsonb", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserPasskeys", x => x.CredentialId);
+                    table.ForeignKey(
+                        name: "FK_UserPasskeys_Users_UserId",
+                        column: x => x.UserId,
+                        principalSchema: "cw",
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserRoles",
                 schema: "cw",
                 columns: table => new
@@ -3586,6 +3678,12 @@ namespace MyApp.Infrastructure.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_UserPasskeys_UserId",
+                schema: "cw",
+                table: "UserPasskeys",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserRoles_RoleId",
                 schema: "cw",
                 table: "UserRoles",
@@ -3747,6 +3845,10 @@ namespace MyApp.Infrastructure.Migrations
                 schema: "cw");
 
             migrationBuilder.DropTable(
+                name: "RetentionRuns",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
                 name: "RoleClaims",
                 schema: "cw");
 
@@ -3776,6 +3878,10 @@ namespace MyApp.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "UserLogins",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "UserPasskeys",
                 schema: "cw");
 
             migrationBuilder.DropTable(
