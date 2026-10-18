@@ -4,7 +4,7 @@
 
 ## Unveröffentlicht
 
-### Fehlerbehebungen
+### Korrekturen
 
 - Eine gespeicherte geheime Einstellung, die der aktuelle Data-Protection-Schlüsselring nicht entschlüsseln kann (etwa nach einem Wechsel des Schlüsselrings), gilt mit einer Warnung im Log als nicht gesetzt, statt jedes Lesen der Einstellungen scheitern zu lassen (`/api/v1/ai/status` antwortete auf jeder Seite mit 500). Das Secret einfach neu speichern. `SettingProtector` bekommt einen `ILogger<SettingProtector>`.
 
