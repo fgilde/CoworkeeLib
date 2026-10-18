@@ -59,6 +59,7 @@ internal static partial class IdentityEndpoints
         api.MapPut("/users/{id:guid}/password", (Guid id, SetPasswordRequest body, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new SetUserPassword(id, body.Password, body.MustChangePassword), ct).ToHttpResult());
         api.MapPost("/users/{id:guid}/two-factor/reset", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new ResetUserTwoFactor(id), ct).ToHttpResult());
+        api.MapPost("/users/{id:guid}/passkeys/reset", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new ResetUserPasskeys(id), ct).ToHttpResult());
         api.MapDelete("/users/{id:guid}/logins", (Guid id, string provider, string key, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new RemoveUserLogin(id, provider, key), ct).ToHttpResult());
     }

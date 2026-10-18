@@ -65,6 +65,7 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
                 options.Password.RequiredLength = 8;
                 options.Lockout.MaxFailedAccessAttempts = 10;
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+                options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
             })
             .AddDefaultTokenProviders()
             .AddErrorDescriber<LocalizedIdentityErrorDescriber>();

@@ -47,6 +47,7 @@ internal sealed class IdentityModelContributor : IModelContributor
             user.HasMany<IdentityUserLogin<Guid>>().WithOne().HasForeignKey(l => l.UserId).IsRequired();
             user.HasMany<IdentityUserToken<Guid>>().WithOne().HasForeignKey(t => t.UserId).IsRequired();
             user.HasMany<IdentityUserRole<Guid>>().WithOne().HasForeignKey(r => r.UserId).IsRequired();
+            user.HasMany<IdentityUserPasskey<Guid>>().WithOne().HasForeignKey(p => p.UserId).IsRequired();
         });
 
         modelBuilder.Entity<Role>(role =>
@@ -79,6 +80,20 @@ internal sealed class IdentityModelContributor : IModelContributor
             b.Property(t => t.LoginProvider).HasMaxLength(128);
             b.Property(t => t.Name).HasMaxLength(128);
             b.Property(t => t.Value).IsSensitive();
+        });
+
+        modelBuilder.Entity<IdentityUserPasskey<Guid>>(b =>
+        {
+            b.ToTable("UserPasskeys", Schema);
+            b.HasKey(p => p.CredentialId);
+            b.Property(p => p.CredentialId).HasMaxLength(1024);
+            b.OwnsOne(p => p.Data, data =>
+            {
+                data.ToJson();
+                data.Property(d => d.PublicKey).IsNotAudited();
+                data.Property(d => d.AttestationObject).IsNotAudited();
+                data.Property(d => d.ClientDataJson).IsNotAudited();
+            });
         });
 
         modelBuilder.Entity<UserGroup>(group =>

@@ -24,6 +24,7 @@ internal sealed class IdentityPersonalData(CoworkeeDbContext db) : IPersonalData
                             where member.UserId == user.Id
                             select userGroup.Name).ToListAsync(cancellationToken);
         var logins = await db.Set<IdentityUserLogin<Guid>>().Where(l => l.UserId == user.Id).Select(l => l.LoginProvider).ToListAsync(cancellationToken);
+        var passkeys = await db.Set<IdentityUserPasskey<Guid>>().AsNoTracking().Where(p => p.UserId == user.Id).ToListAsync(cancellationToken);
         return new
         {
             user.Id,
@@ -42,6 +43,7 @@ internal sealed class IdentityPersonalData(CoworkeeDbContext db) : IPersonalData
             Roles = roles.GetValueOrDefault(user.Id)?.Select(r => r.Name) ?? [],
             Groups = groups,
             ExternalLogins = logins,
+            Passkeys = passkeys.Select(p => new { p.Data.Name, p.Data.CreatedAt, p.Data.IsBackedUp }),
         };
     }
 
@@ -64,7 +66,7 @@ internal sealed class IdentityPersonalData(CoworkeeDbContext db) : IPersonalData
         await db.Set<ResourcePermission>().IgnoreQueryFilters()
             .Where(p => p.PrincipalType == PrincipalType.User && p.PrincipalId == subject.UserId).ExecuteDeleteAsync(cancellationToken);
 
-        // a direct delete writes no audit entry with the old values; roles, claims, logins, tokens and memberships go with it by cascade
+        // a direct delete writes no audit entry with the old values; roles, claims, logins, tokens, passkeys and memberships go with it by cascade
         await db.Set<User>().Where(u => u.Id == subject.UserId).ExecuteDeleteAsync(cancellationToken);
     }
 }
