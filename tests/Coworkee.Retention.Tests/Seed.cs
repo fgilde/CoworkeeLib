@@ -41,7 +41,7 @@ public static class Seed
         await app.InDbAsync(tenantId, db =>
         {
             db.Add(new AuditEntry { TenantId = tenantId, EntityType = "Gadget", EntityId = tag, OccurredAt = now });
-            db.Add(new EntitySnapshot { TenantId = tenantId, EntityType = "Gadget", EntityId = tag, Revision = 1, Payload = "{}", CreatedAt = now });
+            db.Add(new EntitySnapshot { TenantId = tenantId, EntityType = "Gadget", EntityId = "versioned", Revision = tag == "old" ? 1 : 2, Payload = "{}", CreatedAt = now });
             db.Add(new OutboxMessage { Type = "processed", Payload = "{}", OccurredAt = now, ProcessedAt = now });
             db.Add(new OutboxMessage { Type = "pending", Payload = "{}", OccurredAt = now });
             db.Add(new Gadget { Name = tag, IsDeleted = true, DeletedAt = now });

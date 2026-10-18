@@ -7,8 +7,8 @@ internal sealed class RetentionApi(HttpClient http) : ApiClientBase(http), IRete
 {
     private const string Root = "api/v1/retention";
 
-    public async Task<IReadOnlyList<RetentionTargetDto>> GetAsync(CancellationToken cancellationToken = default) =>
-        await GetAsync<RetentionTargetDto[]>(Root, cancellationToken);
+    public async Task<IReadOnlyList<RetentionTargetDto>> GetAsync(bool counts = true, CancellationToken cancellationToken = default) =>
+        await GetAsync<RetentionTargetDto[]>(counts ? Root : $"{Root}?counts=false", cancellationToken);
 
     public Task<long> CountAsync(string key, int days, CancellationToken cancellationToken = default) =>
         GetAsync<long>($"{Root}/{Uri.EscapeDataString(key)}/count?days={days}", cancellationToken);

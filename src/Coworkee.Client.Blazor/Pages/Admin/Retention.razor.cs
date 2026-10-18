@@ -41,7 +41,7 @@ public partial class Retention : IDisposable
         _busy = true;
         try
         {
-            _rows = [.. (await Api.GetAsync(_stop.Token)).Select(t => new RetentionRow(t))];
+            _rows = [.. (await Api.GetAsync(true, _stop.Token)).Select(t => new RetentionRow(t))];
             _error = null;
         }
         catch (ApiException exception)
@@ -67,9 +67,13 @@ public partial class Retention : IDisposable
         {
             while (_rows.Any(r => r.Target.Running) && await timer.WaitForNextTickAsync(_stop.Token))
             {
-                var targets = (await Api.GetAsync(_stop.Token)).ToDictionary(t => t.Key, StringComparer.Ordinal);
-                // the run state is new, the days being edited stay
-                _rows = [.. _rows.Select(r => targets.TryGetValue(r.Target.Key, out var t) ? new RetentionRow(t) { Days = r.Days, Affected = r.Changed ? r.Affected : t.Affected } : r)];
+                // only the run state while it runs; the counts once it is done
+                Merge(await Api.GetAsync(false, _stop.Token), counts: false);
+                if (!_rows.Any(r => r.Target.Running))
+                {
+                    Merge(await Api.GetAsync(true, _stop.Token), counts: true);
+                }
+
                 await InvokeAsync(StateHasChanged);
             }
         }
@@ -80,6 +84,15 @@ public partial class Retention : IDisposable
         {
             _polling = false;
         }
+    }
+
+    // the days being edited and their count stay
+    private void Merge(IReadOnlyList<Contracts.Retention.RetentionTargetDto> targets, bool counts)
+    {
+        var byKey = targets.ToDictionary(t => t.Key, StringComparer.Ordinal);
+        _rows = [.. _rows.Select(r => byKey.TryGetValue(r.Target.Key, out var t)
+            ? new RetentionRow(t) { Days = r.Changed ? r.Days : t.Days, Affected = counts && !r.Changed ? t.Affected : r.Affected }
+            : r)];
     }
 
     private async Task DaysChanged(RetentionRow row, int? days)
@@ -120,7 +133,8 @@ public partial class Retention : IDisposable
 
     private async Task DeleteNowAsync(RetentionRow row)
     {
-        if (row.Days is not { } days)
+        // the stored days, never a value that is not saved yet
+        if (row.Changed || row.Target.Days is not { } days)
         {
             return;
         }

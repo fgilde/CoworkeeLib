@@ -1632,7 +1632,6 @@
   "Database backups": "Резервні копії бази даних",
   "Expired sign-in tokens": "Прострочені токени входу",
   "Who changed what. Entity history and restore read it: older changes can no longer be shown or undone.": "Хто що змінив. Історія сутностей і відновлення читають його: старіші зміни більше не можна показати чи скасувати.",
-  "The stored revisions of versioned entities.": "Збережені ревізії сутностей із версіями.",
   "Domain events that were delivered; pending ones stay.": "Доставлені доменні події; ті, що очікують, залишаються.",
   "Records that were deleted softly and could still be restored.": "Записи, видалені м'яко, які ще можна відновити.",
   "The inbox that skips redeliveries; keep it longer than a transport redelivers.": "Вхідні, що пропускають повторні доставки; зберігайте їх довше, ніж транспорт доставляє повторно.",
@@ -1643,6 +1642,8 @@
   "In-app notifications of all users, read or not.": "Сповіщення в застосунку всіх користувачів, прочитані чи ні.",
   "Finished imports and exports with their uploaded and result files; an import can no longer be undone.": "Завершені імпорти та експорти із завантаженими файлами й результатами; імпорт більше не можна скасувати.",
   "Deleted files and folders, with the content of the files in the blob storage.": "Видалені файли й теки з вмістом файлів у сховищі BLOB.",
-  "Backups with their zip files in the blob storage.": "Резервні копії з їхніми ZIP-файлами у сховищі BLOB.",
-  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Відкликані, використані та прострочені токени й авторизації сервера автентифікації; дійсні залишаються."
+  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Відкликані, використані та прострочені токени й авторизації сервера автентифікації; дійсні залишаються.",
+  "Save first": "Спершу збережіть",
+  "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "Старіші ревізії сутностей із версіями, як-от шаблонів листів; історія версій і відновлення читають їх. Найновіша ревізія кожної сутності залишається.",
+  "Backups with their zip files in the blob storage; the newest backup always stays.": "Резервні копії з їхніми ZIP-файлами у сховищі BLOB; найновіша копія завжди залишається."
 }

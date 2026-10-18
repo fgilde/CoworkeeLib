@@ -16,7 +16,7 @@ Every kind of data is deleted across all organisations. The library never delete
 | Key | Module | Data | Age by | Default |
 |---|---|---|---|---|
 | `audit` | Retention | audit trail (`cw.AuditEntries`) | `OccurredAt` | never |
-| `snapshots` | Retention | revisions of versioned entities (`cw.EntitySnapshots`) | `CreatedAt` | never |
+| `snapshots` | Retention | older revisions of versioned entities (`cw.EntitySnapshots`), the newest of each entity stays | `CreatedAt` | never |
 | `outbox` | Retention | processed outbox messages, pending ones stay | `ProcessedAt` | never |
 | `soft-deleted` | Retention | every soft deleted type of the model, except files | `DeletedAt` | never |
 | `inbox` | EventBus | processed integration events (`cw.InboxMessages`) | `ProcessedAt` | never |
@@ -27,11 +27,14 @@ Every kind of data is deleted across all organisations. The library never delete
 | `notifications` | Notifications | in-app notifications | `CreatedAt` | never |
 | `data-transfer-jobs` | OData | finished imports and exports with their files | `FinishedAt` | never |
 | `deleted-files` | Files | soft deleted files with their blobs, then empty soft deleted folders | `DeletedAt` | never |
-| `backups` | Backup | database backups with their zip | `CreatedAt` | never |
-| `auth-tokens` | AuthServer | what OpenIddict's prune removes: revoked, redeemed or expired tokens, invalid authorizations and ad-hoc ones without tokens | creation | never |
+| `backups` | Backup | database backups with their zip, the newest backup always stays | `CreatedAt` | never |
+| `auth-tokens` | AuthServer | what OpenIddict's prune removes: tokens that are neither valid nor inactive, belong to an invalid authorization or expired; authorizations without tokens that are invalid or ad hoc | creation | never |
 
 - `audit`: entity history and restore read the audit trail. Older changes can no longer be shown or undone.
-- `soft-deleted`: one type after the other. A type that a foreign key still holds (a soft deleted owner whose children stay) is reported as error of the run and the next type is tried.
+- `snapshots`: the version history and restore of versioned entities (mail templates, for example) read them; older versions can no longer be shown or restored.
+- `soft-deleted`: every concrete soft deleted type of the model, one after the other, also below a root that is not soft deleted; a table-per-hierarchy type deletes exactly its own rows. A type that a foreign key still holds (a soft deleted owner whose children stay) or that EF cannot bulk delete (table per type) is reported as error of the run and the next type is tried. Types registered with `AddRetentionOwnedType<T>()` and their derived types are left out.
+- `deleted-files`: a blob that cannot be deleted does not stop the run; it is logged and named in the error of the run (the row is gone already).
+- `auth-tokens`: OpenIddict's prune deletes 1000 rows per statement. The count leaves out authorizations that only lose their last tokens in the same prune.
 - `data-transfer-jobs`: an import whose job is gone can no longer be undone.
 
 New apps of the template start with technical defaults in `src/MyApp.Api/appsettings.json`: `outbox`, `inbox` and `auth-tokens` 14 days, `data-transfer-jobs` 30 days.
@@ -60,14 +63,14 @@ The webhook module still reads `Coworkee:Webhooks:LogRetentionDays` as default o
 *Monitoring → Retention*, for users of the system organisation with `Retention.Manage` (administrators get it like every other permission). One row per kind of data:
 
 - **Keep (days)**: empty keeps everything; while typing, *Affected now* counts what these days would delete. *Save* stores every changed row.
-- **Last run**: when, how many rows, and the error of the last run. A row that is running shows a progress bar; the page asks every 2 seconds until it is done.
-- **Delete now** asks with the number of rows (*Delete 12,480 entries older than 365 days?*) and runs in a background job. The log and the table remember who started it.
+- **Last run**: when, how many rows, and the error of the last run. A row that is running shows a progress bar; the page asks for the run state every 2 seconds (`?counts=false`, no counting) and counts again once it is done.
+- **Delete now** works with the saved days only: while a row has unsaved changes the button is off (*Save first*). It asks with the number of rows (*Delete 12,480 entries older than 365 days?*) and runs in a background job. The log and the table remember who started it.
 
 The section *Retention* of the system status page (`/admin/system-status`) shows the last run and the errors of every kind of data.
 
 | Endpoint | |
 |---|---|
-| `GET /api/v1/retention` | kinds of data with days, default, affected rows, last run |
+| `GET /api/v1/retention` | kinds of data with days, default (after the configuration), affected rows, last run; `?counts=false` leaves the counts out |
 | `GET /api/v1/retention/{key}/count?days=N` | rows older than `N` days |
 | `PUT /api/v1/retention` | `{ "audit": 365, "mail-log": null }` stores the days |
 | `POST /api/v1/retention/{key}/run` | body `{ "days": N }` (at least 1): `202` and a background job, `409` while the key runs |
@@ -110,7 +113,7 @@ services.AddRetentionTarget<SensorReadingRetention>();
 
 ## Job and limits
 
-`coworkee-retention` runs at `Coworkee:Retention:Cron` (default `41 2 * * *`, UTC). It runs the kinds of data with days set one after the other, each in its own scope; an error is written to the run and does not stop the others. A run that crashed with its process is given up after two hours.
+`coworkee-retention` runs at `Coworkee:Retention:Cron` (default `41 2 * * *`, UTC). It runs the kinds of data with days set one after the other, each in its own scope; an error is written to the run and does not stop the others. A run that crashed with its process is given up after two hours; every claim has its own token, so a late first run never releases the claim of the run that took over.
 
 - Days are system wide: there are no own days per organisation.
 - There is no archive: deleted data is gone.

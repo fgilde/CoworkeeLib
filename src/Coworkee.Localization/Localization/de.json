@@ -1632,7 +1632,6 @@
   "Database backups": "Datenbank-Backups",
   "Expired sign-in tokens": "Abgelaufene Anmelde-Tokens",
   "Who changed what. Entity history and restore read it: older changes can no longer be shown or undone.": "Wer was geändert hat. Entity-Historie und Wiederherstellen lesen ihn: Ältere Änderungen lassen sich dann nicht mehr anzeigen oder rückgängig machen.",
-  "The stored revisions of versioned entities.": "Die gespeicherten Revisionen versionierter Entities.",
   "Domain events that were delivered; pending ones stay.": "Zugestellte Domain-Events; ausstehende bleiben.",
   "Records that were deleted softly and could still be restored.": "Datensätze, die weich gelöscht wurden und sich noch wiederherstellen ließen.",
   "The inbox that skips redeliveries; keep it longer than a transport redelivers.": "Die Inbox, die erneute Zustellungen überspringt; länger behalten, als ein Transport erneut zustellt.",
@@ -1643,6 +1642,8 @@
   "In-app notifications of all users, read or not.": "In-App-Benachrichtigungen aller Benutzer, gelesen oder nicht.",
   "Finished imports and exports with their uploaded and result files; an import can no longer be undone.": "Beendete Importe und Exporte mit hochgeladenen und Ergebnisdateien; ein Import lässt sich dann nicht mehr rückgängig machen.",
   "Deleted files and folders, with the content of the files in the blob storage.": "Gelöschte Dateien und Ordner, mit dem Inhalt der Dateien im Blob-Speicher.",
-  "Backups with their zip files in the blob storage.": "Backups mit ihren ZIP-Dateien im Blob-Speicher.",
-  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Widerrufene, benutzte und abgelaufene Tokens und Autorisierungen des Auth-Servers; gültige bleiben."
+  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Widerrufene, benutzte und abgelaufene Tokens und Autorisierungen des Auth-Servers; gültige bleiben.",
+  "Save first": "Erst speichern",
+  "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "Ältere Revisionen versionierter Entities wie Mail-Vorlagen; Versionshistorie und Wiederherstellen lesen sie. Die neueste Revision jeder Entity bleibt.",
+  "Backups with their zip files in the blob storage; the newest backup always stays.": "Backups mit ihren ZIP-Dateien im Blob-Speicher; das neueste Backup bleibt immer."
 }

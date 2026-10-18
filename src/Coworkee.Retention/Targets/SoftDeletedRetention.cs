@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Retention.Targets;
 
-/// <summary>Every soft deleted type of the model, one after the other; a type that cannot go (a foreign key) is reported and the next one is tried.</summary>
+/// <summary>Every soft deleted type of the model, one after the other; a type that cannot go (a foreign key, a table per type hierarchy) is reported and the next one is tried.</summary>
 internal sealed class SoftDeletedRetention(CoworkeeDbContext db, IEnumerable<RetentionOwnedType> owned) : IRetentionTarget
 {
     private static readonly MethodInfo CountMethod = typeof(SoftDeletedRetention).GetMethod(nameof(CountTypeAsync), BindingFlags.Instance | BindingFlags.NonPublic)!;
@@ -50,16 +50,15 @@ internal sealed class SoftDeletedRetention(CoworkeeDbContext db, IEnumerable<Ret
         return failed.Count == 0 ? total : throw new RetentionIncompleteException(total, string.Join(Environment.NewLine, failed));
     }
 
-    private IEnumerable<Type> Types()
-    {
-        var skipped = owned.Select(o => o.Type).ToHashSet();
-        return db.Model.GetEntityTypes()
-            .Where(t => t.BaseType is null && !t.IsOwned() && typeof(ISoftDelete).IsAssignableFrom(t.ClrType) && !skipped.Contains(t.ClrType))
+    // every concrete soft deleted type of the model, also below a root that is not soft deleted, each with exactly its own rows
+    private IEnumerable<Type> Types() =>
+        db.Model.GetEntityTypes()
+            .Where(t => !t.IsOwned() && !t.ClrType.IsAbstract && typeof(ISoftDelete).IsAssignableFrom(t.ClrType)
+                && !owned.Any(o => o.Type.IsAssignableFrom(t.ClrType)))
             .Select(t => t.ClrType)
             .Distinct()
             .OrderBy(t => t.Name, StringComparer.Ordinal)
             .ToList();
-    }
 
     private Task<long> CountTypeAsync<T>(DateTimeOffset before, CancellationToken cancellationToken) where T : class, ISoftDelete =>
         Older<T>(before).LongCountAsync(cancellationToken);
@@ -67,6 +66,9 @@ internal sealed class SoftDeletedRetention(CoworkeeDbContext db, IEnumerable<Ret
     private Task<long> DeleteTypeAsync<T>(DateTimeOffset before, CancellationToken cancellationToken) where T : class, ISoftDelete =>
         Older<T>(before).OrderBy(e => e.DeletedAt).ExecuteDeleteInBatchesAsync(cancellationToken);
 
-    private IQueryable<T> Older<T>(DateTimeOffset before) where T : class, ISoftDelete =>
-        db.Set<T>().IgnoreQueryFilters().Where(e => e.IsDeleted && e.DeletedAt < before);
+    private IQueryable<T> Older<T>(DateTimeOffset before) where T : class, ISoftDelete
+    {
+        var rows = db.Set<T>().IgnoreQueryFilters().Where(e => e.IsDeleted && e.DeletedAt < before);
+        return db.Model.FindEntityType(typeof(T))!.GetDerivedTypes().Any() ? rows.Where(e => e.GetType() == typeof(T)) : rows;
+    }
 }

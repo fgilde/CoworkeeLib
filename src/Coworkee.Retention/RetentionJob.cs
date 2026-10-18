@@ -12,9 +12,9 @@ internal sealed class RetentionJob(IEnumerable<IRetentionTarget> targets, ISetti
         foreach (var key in targets.Select(t => t.Key).ToList())
         {
             if (RetentionSettingDefinitions.Days(await settings.GetAsync(RetentionSettingDefinitions.Name(key), cancellationToken)) is { } days
-                && await runner.TryClaimAsync(key, cancellationToken))
+                && await runner.TryClaimAsync(key, cancellationToken) is { } token)
             {
-                await runner.RunAsync(key, days, null, cancellationToken);
+                await runner.RunAsync(key, days, null, token, cancellationToken);
             }
         }
     }

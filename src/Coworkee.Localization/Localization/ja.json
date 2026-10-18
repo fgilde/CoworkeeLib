@@ -1632,7 +1632,6 @@
   "Database backups": "データベースバックアップ",
   "Expired sign-in tokens": "期限切れのサインイントークン",
   "Who changed what. Entity history and restore read it: older changes can no longer be shown or undone.": "誰が何を変更したか。エンティティ履歴と復元はこれを参照します。古い変更は表示も元に戻すこともできなくなります。",
-  "The stored revisions of versioned entities.": "バージョン管理されたエンティティの保存済みリビジョン。",
   "Domain events that were delivered; pending ones stay.": "配信済みのドメインイベント。保留中のものは残ります。",
   "Records that were deleted softly and could still be restored.": "論理削除され、まだ復元できるレコード。",
   "The inbox that skips redeliveries; keep it longer than a transport redelivers.": "再配信をスキップする受信箱です。トランスポートが再配信する期間より長く保持してください。",
@@ -1643,6 +1642,8 @@
   "In-app notifications of all users, read or not.": "全ユーザーのアプリ内通知（既読・未読を問わず）。",
   "Finished imports and exports with their uploaded and result files; an import can no longer be undone.": "完了したインポートとエクスポート（アップロードと結果のファイルを含む）。インポートは元に戻せなくなります。",
   "Deleted files and folders, with the content of the files in the blob storage.": "削除されたファイルとフォルダー（BLOB ストレージ内のファイル内容を含む）。",
-  "Backups with their zip files in the blob storage.": "BLOB ストレージ内の ZIP ファイルを含むバックアップ。",
-  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "認証サーバーの失効・使用済み・期限切れのトークンと承認。有効なものは残ります。"
+  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "認証サーバーの失効・使用済み・期限切れのトークンと承認。有効なものは残ります。",
+  "Save first": "先に保存してください",
+  "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "メールテンプレートなどバージョン管理されたエンティティの古いリビジョン。バージョン履歴と復元がこれを参照します。各エンティティの最新リビジョンは残ります。",
+  "Backups with their zip files in the blob storage; the newest backup always stays.": "BLOB ストレージ内の ZIP ファイルを含むバックアップ。最新のバックアップは常に残ります。"
 }

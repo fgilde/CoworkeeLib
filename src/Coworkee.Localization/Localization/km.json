@@ -1632,7 +1632,6 @@
   "Database backups": "ការបម្រុងទុកមូលដ្ឋានទិន្នន័យ",
   "Expired sign-in tokens": "ថូខឹនចូលដែលផុតកំណត់",
   "Who changed what. Entity history and restore read it: older changes can no longer be shown or undone.": "អ្នកណាបានផ្លាស់ប្តូរអ្វី។ ប្រវត្តិអង្គភាពទិន្នន័យ និងការស្ដារអានវា៖ ការផ្លាស់ប្តូរចាស់ៗមិនអាចបង្ហាញ ឬត្រឡប់វិញបានទៀតទេ។",
-  "The stored revisions of versioned entities.": "កំណែដែលបានរក្សាទុករបស់អង្គភាពទិន្នន័យដែលមានកំណែ។",
   "Domain events that were delivered; pending ones stay.": "ព្រឹត្តិការណ៍ដែនដែលបានបញ្ជូន៖ ព្រឹត្តិការណ៍ដែលកំពុងរង់ចាំនៅដដែល។",
   "Records that were deleted softly and could still be restored.": "កំណត់ត្រាដែលបានលុបបណ្ដោះអាសន្ន ហើយនៅអាចស្ដារវិញបាន។",
   "The inbox that skips redeliveries; keep it longer than a transport redelivers.": "ប្រអប់ទទួលដែលរំលងការបញ្ជូនឡើងវិញ៖ រក្សាវាឱ្យយូរជាងរយៈពេលដែលការដឹកជញ្ជូនបញ្ជូនឡើងវិញ។",
@@ -1643,6 +1642,8 @@
   "In-app notifications of all users, read or not.": "ការជូនដំណឹងក្នុងកម្មវិធីរបស់អ្នកប្រើទាំងអស់ ទោះបានអាន ឬមិនទាន់អាន។",
   "Finished imports and exports with their uploaded and result files; an import can no longer be undone.": "ការនាំចូល និងនាំចេញដែលបានបញ្ចប់ ព្រមទាំងឯកសារផ្ទុកឡើង និងលទ្ធផល៖ ការនាំចូលមិនអាចត្រឡប់វិញបានទៀតទេ។",
   "Deleted files and folders, with the content of the files in the blob storage.": "ឯកសារ និងថតដែលបានលុប ព្រមទាំងខ្លឹមសារឯកសារនៅក្នុងឃ្លាំង blob។",
-  "Backups with their zip files in the blob storage.": "ការបម្រុងទុក ព្រមទាំងឯកសារ zip របស់វានៅក្នុងឃ្លាំង blob។",
-  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "ថូខឹន និងការអនុញ្ញាតរបស់ម៉ាស៊ីនមេផ្ទៀងផ្ទាត់ដែលបានដកហូត ប្រើរួច ឬផុតកំណត់៖ ដែលនៅមានសុពលភាពនៅដដែល។"
+  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "ថូខឹន និងការអនុញ្ញាតរបស់ម៉ាស៊ីនមេផ្ទៀងផ្ទាត់ដែលបានដកហូត ប្រើរួច ឬផុតកំណត់៖ ដែលនៅមានសុពលភាពនៅដដែល។",
+  "Save first": "រក្សាទុកជាមុនសិន",
+  "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "កំណែចាស់ៗរបស់អង្គភាពទិន្នន័យដែលមានកំណែ ដូចជាគំរូសំបុត្រ៖ ប្រវត្តិកំណែ និងការស្ដារអានវា។ កំណែថ្មីបំផុតរបស់អង្គភាពនីមួយៗនៅដដែល។",
+  "Backups with their zip files in the blob storage; the newest backup always stays.": "ការបម្រុងទុក ព្រមទាំងឯកសារ zip របស់វានៅក្នុងឃ្លាំង blob៖ ការបម្រុងទុកថ្មីបំផុតតែងតែនៅដដែល។"
 }

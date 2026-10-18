@@ -31,7 +31,7 @@ public sealed class RetentionTests(RetentionApp app) : IAsyncLifetime
     private Task<List<RetentionTargetDto>?> ListAsync() => Admin.GetFromJsonAsync<List<RetentionTargetDto>>("/api/v1/retention", Ct);
 
     [Fact]
-    public async Task Every_registered_target_is_listed_and_only_webhook_deliveries_have_a_default()
+    public async Task Every_registered_target_is_listed_with_the_defaults_of_code_and_configuration()
     {
         var registered = new List<string>();
         await app.InScopeAsync(services =>
@@ -45,7 +45,8 @@ public sealed class RetentionTests(RetentionApp app) : IAsyncLifetime
         targets.Select(t => t.Key).ShouldBe(registered);
         registered.ShouldBe(LibraryTargets, ignoreOrder: true);
         targets.ShouldAllBe(t => t.Title.Length > 0 && !t.Running && t.LastRunAt == null);
-        targets.Where(t => t.Days != null).Select(t => (t.Key, t.Days, t.DefaultDays)).ShouldBe([("webhook-deliveries", (int?)30, (int?)30)]);
+        targets.Where(t => t.Days != null).Select(t => (t.Key, t.Days, t.DefaultDays)).ShouldBe([("outbox", (int?)14, (int?)14), ("webhook-deliveries", (int?)30, (int?)30)], ignoreOrder: true);
+        (await Admin.GetFromJsonAsync<List<RetentionTargetDto>>("/api/v1/retention?counts=false", Ct))!.ShouldAllBe(t => t.Affected == null);
     }
 
     [Fact]
@@ -74,6 +75,13 @@ public sealed class RetentionTests(RetentionApp app) : IAsyncLifetime
         (targets.Single(t => t.Key == "audit").Days, targets.Single(t => t.Key == "webhook-deliveries").Days).ShouldBe(((int?)null, (int?)30));
         global = await Admin.GetFromJsonAsync<List<SettingValueDto>>("/api/v1/settings/global", Ct);
         global!.Where(s => s.Name.StartsWith("Retention.", StringComparison.Ordinal)).ShouldAllBe(s => !s.HasValue);
+        await Admin.PutAsJsonAsync("/api/v1/retention", new Dictionary<string, int?> { ["outbox"] = null }, Ct);
+        (await ListAsync())!.Single(t => t.Key == "outbox").Days.ShouldBeNull("never beats a default of the configuration too");
+        global = await Admin.GetFromJsonAsync<List<SettingValueDto>>("/api/v1/settings/global", Ct);
+        global!.Single(s => s.Name == "Retention.outbox.Days").Value.ShouldBe("0");
+        await Admin.PutAsJsonAsync("/api/v1/retention", new Dictionary<string, int?> { ["outbox"] = 14 }, Ct);
+        global = await Admin.GetFromJsonAsync<List<SettingValueDto>>("/api/v1/settings/global", Ct);
+        global!.Single(s => s.Name == "Retention.outbox.Days").HasValue.ShouldBeFalse();
         (await Admin.PutAsJsonAsync("/api/v1/retention", new Dictionary<string, int?> { ["nothing"] = 3 }, Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
         (await Admin.PutAsJsonAsync("/api/v1/retention", new Dictionary<string, int?> { ["audit"] = -1 }, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
@@ -151,7 +159,7 @@ public sealed class RetentionTests(RetentionApp app) : IAsyncLifetime
             return db.SaveChangesAsync(Ct);
         });
         app.Clock.Advance(TimeSpan.FromDays(10));
-        await Admin.PutAsJsonAsync("/api/v1/retention", new Dictionary<string, int?> { ["soft-deleted"] = 5, ["webhook-deliveries"] = null }, Ct);
+        await Admin.PutAsJsonAsync("/api/v1/retention", new Dictionary<string, int?> { ["soft-deleted"] = 5, ["webhook-deliveries"] = null, ["outbox"] = null }, Ct);
 
         await app.RunNightlyAsync();
 
@@ -159,5 +167,49 @@ public sealed class RetentionTests(RetentionApp app) : IAsyncLifetime
         (target.LastDeleted, target.Affected).ShouldBe(((long?)1, (long?)1));
         target.LastError.ShouldNotBeNull().ShouldStartWith("Owner:");
         (await app.InDbAsync(null, db => db.Set<Gadget>().IgnoreQueryFilters().CountAsync(Ct))).ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task Soft_deleted_walks_the_hierarchy_and_leaves_types_of_other_targets_alone()
+    {
+        var deletedAt = app.Clock.GetUtcNow();
+        await app.InDbAsync(_setup.TenantId, db =>
+        {
+            db.AddRange(
+                new Device { Name = "device", IsDeleted = true, DeletedAt = deletedAt },
+                new Phone { Name = "phone", IsDeleted = true, DeletedAt = deletedAt },
+                new Vehicle { Name = "vehicle" },
+                new Car { Name = "car", IsDeleted = true, DeletedAt = deletedAt });
+            return db.SaveChangesAsync(Ct);
+        });
+        app.Clock.Advance(TimeSpan.FromDays(10));
+        await Admin.PutAsJsonAsync("/api/v1/retention", new Dictionary<string, int?> { ["soft-deleted"] = 5, ["webhook-deliveries"] = null, ["outbox"] = null }, Ct);
+
+        await app.RunNightlyAsync();
+
+        var target = (await ListAsync())!.Single(t => t.Key == "soft-deleted");
+        (target.LastDeleted, target.LastError).ShouldBe(((long?)2, (string?)null));
+        var left = await app.InDbAsync(null, async db => (
+            await db.Set<Device>().IgnoreQueryFilters().Select(d => d.Name).OrderBy(n => n).ToListAsync(Ct),
+            await db.Set<Vehicle>().IgnoreQueryFilters().Select(v => v.Name).OrderBy(n => n).ToListAsync(Ct)));
+        left.Item1.ShouldBe(["phone"]);
+        left.Item2.ShouldBe(["vehicle"]);
+    }
+
+    [Fact]
+    public async Task A_run_that_lost_its_claim_to_a_later_run_leaves_that_claim_alone()
+    {
+        Guid? first = null, second = null;
+        await app.InScopeAsync(async services => first = await services.GetRequiredService<RetentionRunner>().TryClaimAsync("notifications", Ct));
+        await app.InScopeAsync(async services => (await services.GetRequiredService<RetentionRunner>().TryClaimAsync("notifications", Ct)).ShouldBeNull());
+        app.Clock.Advance(RetentionRunner.StaleAfter + TimeSpan.FromMinutes(1));
+        await app.InScopeAsync(async services => second = await services.GetRequiredService<RetentionRunner>().TryClaimAsync("notifications", Ct));
+
+        await app.InScopeAsync(services => services.GetRequiredService<RetentionRunner>().RunAsync("notifications", 5, null, first!.Value, Ct));
+
+        (await ListAsync())!.Single(t => t.Key == "notifications").Running.ShouldBeTrue();
+        await app.InScopeAsync(services => services.GetRequiredService<RetentionRunner>().RunAsync("notifications", 5, null, second!.Value, Ct));
+        var notifications = (await ListAsync())!.Single(t => t.Key == "notifications");
+        (notifications.Running, notifications.LastRunAt).ShouldBe((false, (DateTimeOffset?)app.Clock.GetUtcNow()));
     }
 }

@@ -1632,7 +1632,6 @@
   "Database backups": "Veritabanı yedekleri",
   "Expired sign-in tokens": "Süresi dolmuş oturum açma belirteçleri",
   "Who changed what. Entity history and restore read it: older changes can no longer be shown or undone.": "Kimin neyi değiştirdiği. Varlık geçmişi ve geri yükleme bunu okur: daha eski değişiklikler artık gösterilemez veya geri alınamaz.",
-  "The stored revisions of versioned entities.": "Sürümlü varlıkların kayıtlı revizyonları.",
   "Domain events that were delivered; pending ones stay.": "Teslim edilmiş etki alanı olayları; bekleyenler kalır.",
   "Records that were deleted softly and could still be restored.": "Geçici olarak silinmiş ve hâlâ geri yüklenebilecek kayıtlar.",
   "The inbox that skips redeliveries; keep it longer than a transport redelivers.": "Yeniden teslimleri atlayan gelen kutusu; bir aktarımın yeniden teslim ettiğinden daha uzun saklayın.",
@@ -1643,6 +1642,8 @@
   "In-app notifications of all users, read or not.": "Tüm kullanıcıların uygulama içi bildirimleri, okunmuş ya da okunmamış.",
   "Finished imports and exports with their uploaded and result files; an import can no longer be undone.": "Tamamlanmış içe ve dışa aktarmalar, yüklenen ve sonuç dosyalarıyla; içe aktarma artık geri alınamaz.",
   "Deleted files and folders, with the content of the files in the blob storage.": "Silinen dosyalar ve klasörler, blob depolamadaki dosya içerikleriyle.",
-  "Backups with their zip files in the blob storage.": "Blob depolamadaki zip dosyalarıyla birlikte yedekler.",
-  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Kimlik doğrulama sunucusunun iptal edilmiş, kullanılmış ve süresi dolmuş belirteçleri ve yetkilendirmeleri; geçerli olanlar kalır."
+  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Kimlik doğrulama sunucusunun iptal edilmiş, kullanılmış ve süresi dolmuş belirteçleri ve yetkilendirmeleri; geçerli olanlar kalır.",
+  "Save first": "Önce kaydedin",
+  "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "E-posta şablonları gibi sürümlü varlıkların eski revizyonları; sürüm geçmişi ve geri yükleme bunları okur. Her varlığın en yeni revizyonu kalır.",
+  "Backups with their zip files in the blob storage; the newest backup always stays.": "Blob depolamadaki zip dosyalarıyla birlikte yedekler; en yeni yedek her zaman kalır."
 }

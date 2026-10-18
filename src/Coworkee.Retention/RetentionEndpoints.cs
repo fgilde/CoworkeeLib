@@ -12,7 +12,7 @@ internal static class RetentionEndpoints
     public static void MapRetentionEndpoints(this IEndpointRouteBuilder app)
     {
         var retention = app.MapCoworkeeApi("/api/v1/retention").WithTags("Retention").RequireAuthorization();
-        retention.MapGet("/", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetRetentionTargetsQuery(), ct).ToHttpResult());
+        retention.MapGet("/", (bool? counts, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetRetentionTargetsQuery(counts ?? true), ct).ToHttpResult());
         retention.MapGet("/{key}/count", (string key, int days, IDispatcher d, CancellationToken ct) => d.SendAsync(new CountRetentionQuery(key, days), ct).ToHttpResult());
         retention.MapPut("/", (Dictionary<string, int?> body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SetRetentionDaysCommand(body), ct).ToHttpResult());
         retention.MapPost("/{key}/run", RunAsync).Produces(StatusCodes.Status202Accepted);

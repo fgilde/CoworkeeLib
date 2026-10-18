@@ -43,6 +43,7 @@ public sealed class RetentionApp : DatabaseFixture
         builder.Configuration["Coworkee:Database:Provider"] = Provider;
         builder.Configuration["Coworkee:Jobs:ConnectionStringName"] = "test";
         builder.Configuration["Coworkee:Jobs:RunServer"] = "false";
+        builder.Configuration["Coworkee:Settings:Defaults:Retention.outbox.Days"] = "14";
         builder.AddCoworkee<TestRetentionModule>();
         builder.Services.AddTestAuthentication();
         builder.Services.AddSingleton<TimeProvider>(Clock);

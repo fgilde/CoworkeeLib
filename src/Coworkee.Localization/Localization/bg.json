@@ -1632,7 +1632,6 @@
   "Database backups": "Резервни копия на базата данни",
   "Expired sign-in tokens": "Изтекли токени за вход",
   "Who changed what. Entity history and restore read it: older changes can no longer be shown or undone.": "Кой какво е променил. Историята на обектите и възстановяването го четат: по-старите промени вече не могат да се покажат или отменят.",
-  "The stored revisions of versioned entities.": "Съхранените ревизии на версионираните обекти.",
   "Domain events that were delivered; pending ones stay.": "Доставени събития на домейна; чакащите остават.",
   "Records that were deleted softly and could still be restored.": "Записи, изтрити меко, които все още могат да се възстановят.",
   "The inbox that skips redeliveries; keep it longer than a transport redelivers.": "Входящата опашка, която пропуска повторните доставки; пазете я по-дълго, отколкото транспортът доставя повторно.",
@@ -1643,6 +1642,8 @@
   "In-app notifications of all users, read or not.": "Известията в приложението на всички потребители, прочетени или не.",
   "Finished imports and exports with their uploaded and result files; an import can no longer be undone.": "Завършени импорти и експорти с качените файлове и резултатите; импортът вече не може да се отмени.",
   "Deleted files and folders, with the content of the files in the blob storage.": "Изтрити файлове и папки, със съдържанието на файловете в blob хранилището.",
-  "Backups with their zip files in the blob storage.": "Резервни копия с техните ZIP файлове в blob хранилището.",
-  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Отменени, използвани и изтекли токени и упълномощавания на сървъра за удостоверяване; валидните остават."
+  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Отменени, използвани и изтекли токени и упълномощавания на сървъра за удостоверяване; валидните остават.",
+  "Save first": "Първо запазете",
+  "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "По-старите ревизии на версионирани обекти като шаблоните за имейли; историята на версиите и възстановяването ги четат. Най-новата ревизия на всеки обект остава.",
+  "Backups with their zip files in the blob storage; the newest backup always stays.": "Резервни копия с техните ZIP файлове в blob хранилището; най-новото копие винаги остава."
 }

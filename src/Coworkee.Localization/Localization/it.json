@@ -1632,7 +1632,6 @@
   "Database backups": "Backup del database",
   "Expired sign-in tokens": "Token di accesso scaduti",
   "Who changed what. Entity history and restore read it: older changes can no longer be shown or undone.": "Chi ha modificato cosa. La cronologia delle entità e il ripristino lo leggono: le modifiche più vecchie non si possono più mostrare né annullare.",
-  "The stored revisions of versioned entities.": "Le revisioni salvate delle entità con versioni.",
   "Domain events that were delivered; pending ones stay.": "Eventi di dominio consegnati; quelli in attesa restano.",
   "Records that were deleted softly and could still be restored.": "Record eliminati logicamente che si potrebbero ancora ripristinare.",
   "The inbox that skips redeliveries; keep it longer than a transport redelivers.": "La inbox che salta le riconsegne; conservala più a lungo di quanto un trasporto riconsegni.",
@@ -1643,6 +1642,8 @@
   "In-app notifications of all users, read or not.": "Notifiche in app di tutti gli utenti, lette o no.",
   "Finished imports and exports with their uploaded and result files; an import can no longer be undone.": "Importazioni ed esportazioni concluse con i file caricati e di risultato; un'importazione non si può più annullare.",
   "Deleted files and folders, with the content of the files in the blob storage.": "File e cartelle eliminati, con il contenuto dei file nello storage blob.",
-  "Backups with their zip files in the blob storage.": "Backup con i loro file zip nello storage blob.",
-  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Token e autorizzazioni del server di autenticazione revocati, usati e scaduti; quelli validi restano."
+  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Token e autorizzazioni del server di autenticazione revocati, usati e scaduti; quelli validi restano.",
+  "Save first": "Salva prima",
+  "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "Revisioni più vecchie delle entità con versioni, come i modelli di mail; la cronologia delle versioni e il ripristino le leggono. La revisione più recente di ogni entità resta.",
+  "Backups with their zip files in the blob storage; the newest backup always stays.": "Backup con i loro file zip nello storage blob; il backup più recente resta sempre."
 }

@@ -16,7 +16,7 @@ Jede Datenart wird über alle Organisationen hinweg gelöscht. Die Bibliothek l�
 | Schlüssel | Modul | Daten | Alter nach | Standard |
 |---|---|---|---|---|
 | `audit` | Retention | Audit-Trail (`cw.AuditEntries`) | `OccurredAt` | nie |
-| `snapshots` | Retention | Revisionen versionierter Entities (`cw.EntitySnapshots`) | `CreatedAt` | nie |
+| `snapshots` | Retention | ältere Revisionen versionierter Entities (`cw.EntitySnapshots`), die neueste jeder Entity bleibt | `CreatedAt` | nie |
 | `outbox` | Retention | verarbeitete Outbox-Nachrichten, ausstehende bleiben | `ProcessedAt` | nie |
 | `soft-deleted` | Retention | jeder weich gelöschte Typ des Modells außer Dateien | `DeletedAt` | nie |
 | `inbox` | EventBus | verarbeitete Integrations-Events (`cw.InboxMessages`) | `ProcessedAt` | nie |
@@ -27,11 +27,14 @@ Jede Datenart wird über alle Organisationen hinweg gelöscht. Die Bibliothek l�
 | `notifications` | Notifications | In-App-Benachrichtigungen | `CreatedAt` | nie |
 | `data-transfer-jobs` | OData | beendete Importe und Exporte mit ihren Dateien | `FinishedAt` | nie |
 | `deleted-files` | Files | weich gelöschte Dateien mit ihren Blobs, danach leere weich gelöschte Ordner | `DeletedAt` | nie |
-| `backups` | Backup | Datenbank-Backups mit ihrer ZIP-Datei | `CreatedAt` | nie |
-| `auth-tokens` | AuthServer | was der Prune von OpenIddict entfernt: widerrufene, eingelöste oder abgelaufene Tokens, ungültige Autorisierungen und Ad-hoc-Autorisierungen ohne Tokens | Erstellung | nie |
+| `backups` | Backup | Datenbank-Backups mit ihrer ZIP-Datei, das neueste Backup bleibt immer | `CreatedAt` | nie |
+| `auth-tokens` | AuthServer | was der Prune von OpenIddict entfernt: Tokens, die weder gültig noch inaktiv sind, zu einer ungültigen Autorisierung gehören oder abgelaufen sind; Autorisierungen ohne Tokens, die ungültig oder ad hoc sind | Erstellung | nie |
 
 - `audit`: Entity-Historie und Wiederherstellen lesen den Audit-Trail. Ältere Änderungen lassen sich dann nicht mehr anzeigen oder rückgängig machen.
-- `soft-deleted`: ein Typ nach dem anderen. Hält ein Fremdschlüssel einen Typ noch fest (ein weich gelöschter Besitzer, dessen Kinder bleiben), meldet der Lauf das als Fehler und nimmt sich den nächsten Typ vor.
+- `snapshots`: Versionshistorie und Wiederherstellen versionierter Entities (etwa Mail-Vorlagen) lesen sie; ältere Versionen lassen sich dann nicht mehr anzeigen oder wiederherstellen.
+- `soft-deleted`: jeder konkrete weich gelöschte Typ des Modells, einer nach dem anderen, auch unter einer Wurzel, die nicht weich gelöscht wird; ein Typ in einer Table-per-Hierarchy löscht genau seine eigenen Zeilen. Hält ein Fremdschlüssel einen Typ noch fest (ein weich gelöschter Besitzer, dessen Kinder bleiben) oder kann EF ihn nicht in Masse löschen (Table per Type), meldet der Lauf das als Fehler und nimmt sich den nächsten Typ vor. Typen, die mit `AddRetentionOwnedType<T>()` angemeldet sind, und ihre abgeleiteten Typen bleiben außen vor.
+- `deleted-files`: Ein Blob, der sich nicht löschen lässt, hält den Lauf nicht auf; er wird geloggt und im Fehler des Laufs genannt (die Zeile ist dann schon weg).
+- `auth-tokens`: Der Prune von OpenIddict löscht 1000 Zeilen pro Anweisung. Die Zählung lässt Autorisierungen aus, die erst im selben Prune ihre letzten Tokens verlieren.
 - `data-transfer-jobs`: Ein Import, dessen Job weg ist, lässt sich nicht mehr rückgängig machen.
 
 Neue Apps aus dem Template starten mit technischen Standards in `src/MyApp.Api/appsettings.json`: `outbox`, `inbox` und `auth-tokens` 14 Tage, `data-transfer-jobs` 30 Tage.
@@ -60,14 +63,14 @@ Das Webhook-Modul liest `Coworkee:Webhooks:LogRetentionDays` weiterhin als Stand
 *Monitoring → Aufbewahrung*, für Benutzer der Systemorganisation mit `Retention.Manage` (Administratoren bekommen sie wie jede andere Permission). Eine Zeile pro Datenart:
 
 - **Behalten (Tage)**: leer behält alles; schon beim Tippen zählt *Betroffen jetzt*, was diese Tage löschen würden. *Speichern* speichert alle geänderten Zeilen.
-- **Letzter Lauf**: wann, wie viele Zeilen und der Fehler des letzten Laufs. Eine laufende Zeile zeigt einen Fortschrittsbalken; die Seite fragt alle 2 Sekunden nach, bis sie fertig ist.
-- **Jetzt löschen** fragt mit der Anzahl nach (*12.480 Einträge älter als 365 Tage löschen?*) und läuft als Hintergrundjob. Das Log und die Tabelle merken sich, wer ihn gestartet hat.
+- **Letzter Lauf**: wann, wie viele Zeilen und der Fehler des letzten Laufs. Eine laufende Zeile zeigt einen Fortschrittsbalken; die Seite fragt alle 2 Sekunden den Laufzustand ab (`?counts=false`, ohne Zählung) und zählt neu, sobald der Lauf fertig ist.
+- **Jetzt löschen** arbeitet nur mit den gespeicherten Tagen: Solange eine Zeile ungespeicherte Änderungen hat, ist der Button aus (*Erst speichern*). Er fragt mit der Anzahl nach (*12.480 Einträge älter als 365 Tage löschen?*) und läuft als Hintergrundjob. Das Log und die Tabelle merken sich, wer ihn gestartet hat.
 
 Der Abschnitt *Aufbewahrung* der Systemstatus-Seite (`/admin/system-status`) zeigt den letzten Lauf und die Fehler jeder Datenart.
 
 | Endpoint | |
 |---|---|
-| `GET /api/v1/retention` | Datenarten mit Tagen, Standard, betroffenen Zeilen, letztem Lauf |
+| `GET /api/v1/retention` | Datenarten mit Tagen, Standard (nach der Konfiguration), betroffenen Zeilen, letztem Lauf; `?counts=false` lässt die Zählung weg |
 | `GET /api/v1/retention/{key}/count?days=N` | Zeilen älter als `N` Tage |
 | `PUT /api/v1/retention` | `{ "audit": 365, "mail-log": null }` speichert die Tage |
 | `POST /api/v1/retention/{key}/run` | Body `{ "days": N }` (mindestens 1): `202` und ein Hintergrundjob, `409`, solange der Schlüssel läuft |
@@ -110,7 +113,7 @@ services.AddRetentionTarget<SensorReadingRetention>();
 
 ## Job und Grenzen
 
-`coworkee-retention` läuft nach `Coworkee:Retention:Cron` (Standard `41 2 * * *`, UTC). Er arbeitet die Datenarten mit eingestellten Tagen nacheinander ab, jede in einem eigenen Scope; ein Fehler landet im Lauf und hält die anderen nicht auf. Ein Lauf, der mit seinem Prozess abgestürzt ist, gilt nach zwei Stunden als beendet.
+`coworkee-retention` läuft nach `Coworkee:Retention:Cron` (Standard `41 2 * * *`, UTC). Er arbeitet die Datenarten mit eingestellten Tagen nacheinander ab, jede in einem eigenen Scope; ein Fehler landet im Lauf und hält die anderen nicht auf. Ein Lauf, der mit seinem Prozess abgestürzt ist, gilt nach zwei Stunden als beendet; jeder Anspruch hat sein eigenes Token, so gibt ein verspäteter erster Lauf nie den Anspruch des Laufs frei, der übernommen hat.
 
 - Die Tage gelten systemweit: Eigene Tage pro Organisation gibt es nicht.
 - Es gibt kein Archiv: Gelöschte Daten sind weg.

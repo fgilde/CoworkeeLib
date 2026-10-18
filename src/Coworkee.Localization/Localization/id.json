@@ -1632,7 +1632,6 @@
   "Database backups": "Cadangan database",
   "Expired sign-in tokens": "Token masuk yang kedaluwarsa",
   "Who changed what. Entity history and restore read it: older changes can no longer be shown or undone.": "Siapa mengubah apa. Riwayat entitas dan pemulihan membacanya: perubahan yang lebih lama tidak bisa lagi ditampilkan atau dibatalkan.",
-  "The stored revisions of versioned entities.": "Revisi tersimpan dari entitas berversi.",
   "Domain events that were delivered; pending ones stay.": "Event domain yang sudah dikirim; yang tertunda tetap ada.",
   "Records that were deleted softly and could still be restored.": "Catatan yang dihapus sementara dan masih bisa dipulihkan.",
   "The inbox that skips redeliveries; keep it longer than a transport redelivers.": "Inbox yang melewati pengiriman ulang; simpan lebih lama daripada transport mengirim ulang.",
@@ -1643,6 +1642,8 @@
   "In-app notifications of all users, read or not.": "Notifikasi dalam aplikasi semua pengguna, sudah dibaca atau belum.",
   "Finished imports and exports with their uploaded and result files; an import can no longer be undone.": "Impor dan ekspor yang selesai beserta file unggahan dan hasilnya; impor tidak bisa dibatalkan lagi.",
   "Deleted files and folders, with the content of the files in the blob storage.": "File dan folder yang dihapus, beserta isi file di penyimpanan blob.",
-  "Backups with their zip files in the blob storage.": "Cadangan beserta file zip-nya di penyimpanan blob.",
-  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Token dan otorisasi server autentikasi yang dicabut, dipakai, dan kedaluwarsa; yang valid tetap ada."
+  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Token dan otorisasi server autentikasi yang dicabut, dipakai, dan kedaluwarsa; yang valid tetap ada.",
+  "Save first": "Simpan dulu",
+  "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "Revisi lama dari entitas berversi seperti templat email; riwayat versi dan pemulihan membacanya. Revisi terbaru setiap entitas tetap ada.",
+  "Backups with their zip files in the blob storage; the newest backup always stays.": "Cadangan beserta file zip-nya di penyimpanan blob; cadangan terbaru selalu tetap ada."
 }

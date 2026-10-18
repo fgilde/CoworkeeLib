@@ -1632,7 +1632,6 @@
   "Database backups": "数据库备份",
   "Expired sign-in tokens": "已过期的登录令牌",
   "Who changed what. Entity history and restore read it: older changes can no longer be shown or undone.": "谁改了什么。实体历史和恢复依赖它：更早的更改将无法再显示或撤销。",
-  "The stored revisions of versioned entities.": "版本化实体的已存修订。",
   "Domain events that were delivered; pending ones stay.": "已投递的领域事件；待处理的保留。",
   "Records that were deleted softly and could still be restored.": "已软删除、仍可恢复的记录。",
   "The inbox that skips redeliveries; keep it longer than a transport redelivers.": "跳过重复投递的收件箱；保留时间应长于传输重新投递的时间。",
@@ -1643,6 +1642,8 @@
   "In-app notifications of all users, read or not.": "所有用户的应用内通知，无论已读与否。",
   "Finished imports and exports with their uploaded and result files; an import can no longer be undone.": "已完成的导入和导出及其上传和结果文件；导入将无法再撤销。",
   "Deleted files and folders, with the content of the files in the blob storage.": "已删除的文件和文件夹，包括 Blob 存储中的文件内容。",
-  "Backups with their zip files in the blob storage.": "备份及其在 Blob 存储中的 zip 文件。",
-  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "认证服务器中已撤销、已使用和已过期的令牌与授权；有效的保留。"
+  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "认证服务器中已撤销、已使用和已过期的令牌与授权；有效的保留。",
+  "Save first": "请先保存",
+  "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "版本化实体（如邮件模板）的旧修订；版本历史和恢复依赖它们。每个实体的最新修订保留。",
+  "Backups with their zip files in the blob storage; the newest backup always stays.": "备份及其在 Blob 存储中的 zip 文件；最新的备份始终保留。"
 }

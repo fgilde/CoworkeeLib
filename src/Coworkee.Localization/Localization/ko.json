@@ -1632,7 +1632,6 @@
   "Database backups": "데이터베이스 백업",
   "Expired sign-in tokens": "만료된 로그인 토큰",
   "Who changed what. Entity history and restore read it: older changes can no longer be shown or undone.": "누가 무엇을 변경했는지입니다. 엔터티 기록과 복원이 이를 읽으므로 오래된 변경은 더 이상 표시하거나 되돌릴 수 없습니다.",
-  "The stored revisions of versioned entities.": "버전이 관리되는 엔터티의 저장된 리비전입니다.",
   "Domain events that were delivered; pending ones stay.": "전달된 도메인 이벤트입니다. 대기 중인 이벤트는 남습니다.",
   "Records that were deleted softly and could still be restored.": "소프트 삭제되어 아직 복원할 수 있는 레코드입니다.",
   "The inbox that skips redeliveries; keep it longer than a transport redelivers.": "재전송을 건너뛰는 인박스입니다. 전송이 재전송하는 기간보다 오래 보관하세요.",
@@ -1643,6 +1642,8 @@
   "In-app notifications of all users, read or not.": "모든 사용자의 앱 내 알림(읽음 여부와 무관)입니다.",
   "Finished imports and exports with their uploaded and result files; an import can no longer be undone.": "완료된 가져오기와 내보내기 및 업로드·결과 파일입니다. 가져오기를 더 이상 되돌릴 수 없습니다.",
   "Deleted files and folders, with the content of the files in the blob storage.": "삭제된 파일과 폴더 및 Blob 저장소의 파일 내용입니다.",
-  "Backups with their zip files in the blob storage.": "Blob 저장소의 zip 파일을 포함한 백업입니다.",
-  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "인증 서버의 취소·사용·만료된 토큰과 권한 부여입니다. 유효한 것은 남습니다."
+  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "인증 서버의 취소·사용·만료된 토큰과 권한 부여입니다. 유효한 것은 남습니다.",
+  "Save first": "먼저 저장하세요",
+  "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "메일 템플릿처럼 버전이 관리되는 엔터티의 오래된 리비전입니다. 버전 기록과 복원이 이를 읽습니다. 각 엔터티의 최신 리비전은 남습니다.",
+  "Backups with their zip files in the blob storage; the newest backup always stays.": "Blob 저장소의 zip 파일을 포함한 백업입니다. 최신 백업은 항상 남습니다."
 }

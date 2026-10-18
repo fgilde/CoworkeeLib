@@ -4,7 +4,8 @@ namespace Coworkee.Client.Blazor.Retention;
 
 public interface IRetentionApi
 {
-    Task<IReadOnlyList<RetentionTargetDto>> GetAsync(CancellationToken cancellationToken = default);
+    /// <summary>Without <paramref name="counts"/> only days and runs, <see cref="RetentionTargetDto.Affected"/> stays null.</summary>
+    Task<IReadOnlyList<RetentionTargetDto>> GetAsync(bool counts = true, CancellationToken cancellationToken = default);
 
     Task<long> CountAsync(string key, int days, CancellationToken cancellationToken = default);
 

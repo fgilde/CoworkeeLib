@@ -63,9 +63,11 @@
         </TemplateColumn>
         <TemplateColumn T="RetentionRow" Sortable="false" CellStyle="text-align:right;white-space:nowrap">
             <CellTemplate>
-                <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" StartIcon="@Icons.Material.Outlined.DeleteSweep"
-                           Disabled="@(_busy || context.Item.Target.Running || context.Item.Days is not > 0)" OnClick="() => DeleteNowAsync(context.Item)"
-                           data-delete="@context.Item.Target.Key">@L["Delete now"]</MudButton>
+                <MudTooltip Text="@(context.Item.Changed ? L["Save first"] : null)">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" StartIcon="@Icons.Material.Outlined.DeleteSweep"
+                               Disabled="@(_busy || context.Item.Target.Running || context.Item.Changed || context.Item.Target.Days is not > 0)"
+                               OnClick="() => DeleteNowAsync(context.Item)" data-delete="@context.Item.Target.Key">@L["Delete now"]</MudButton>
+                </MudTooltip>
             </CellTemplate>
         </TemplateColumn>
     </Columns>

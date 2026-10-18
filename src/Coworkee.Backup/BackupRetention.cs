@@ -5,13 +5,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Backup;
 
+/// <summary>Old backups with their zip; the newest backup always stays, however old it is.</summary>
 internal sealed class BackupRetention(CoworkeeDbContext db, IBlobStorage storage) : IRetentionTarget
 {
     public string Key => "backups";
 
     public string Title => "Database backups";
 
-    public string? Description => "Backups with their zip files in the blob storage.";
+    public string? Description => "Backups with their zip files in the blob storage; the newest backup always stays.";
 
     public int? DefaultDays => null;
 
@@ -32,5 +33,8 @@ internal sealed class BackupRetention(CoworkeeDbContext db, IBlobStorage storage
         return total;
     }
 
-    private IQueryable<DatabaseBackup> Older(DateTimeOffset before) => db.Set<DatabaseBackup>().IgnoreQueryFilters().Where(b => b.CreatedAt < before);
+    private IQueryable<DatabaseBackup> All => db.Set<DatabaseBackup>().IgnoreQueryFilters();
+
+    private IQueryable<DatabaseBackup> Older(DateTimeOffset before) =>
+        All.Where(b => b.CreatedAt < before && All.Any(newer => newer.CreatedAt > b.CreatedAt));
 }

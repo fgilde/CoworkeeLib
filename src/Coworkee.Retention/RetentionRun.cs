@@ -16,6 +16,9 @@ public sealed class RetentionRun
 
     public DateTimeOffset? RunningSince { get; set; }
 
+    /// <summary>The claim of the run going on; only that run releases it.</summary>
+    public Guid? RunToken { get; set; }
+
     /// <summary>Who started the last run by hand; null for the nightly job.</summary>
     public Guid? LastRunBy { get; set; }
 }

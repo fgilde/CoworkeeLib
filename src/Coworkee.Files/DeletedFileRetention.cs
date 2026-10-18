@@ -2,11 +2,12 @@ using Coworkee.Application.Retention;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.Storage;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Coworkee.Files;
 
 /// <summary>Soft deleted files with their blobs, then the soft deleted folders that hold nothing anymore, the deepest first.</summary>
-internal sealed class DeletedFileRetention(CoworkeeDbContext db, IBlobStorage storage) : IRetentionTarget
+internal sealed partial class DeletedFileRetention(CoworkeeDbContext db, IBlobStorage storage, ILogger<DeletedFileRetention> logger) : IRetentionTarget
 {
     public string Key => "deleted-files";
 
@@ -26,6 +27,7 @@ internal sealed class DeletedFileRetention(CoworkeeDbContext db, IBlobStorage st
     public async Task<long> DeleteAsync(DateTimeOffset before, CancellationToken cancellationToken)
     {
         long total = 0;
+        var failed = new List<string>();
         List<(Guid Id, string BlobKey)> batch;
         do
         {
@@ -36,8 +38,16 @@ internal sealed class DeletedFileRetention(CoworkeeDbContext db, IBlobStorage st
                 // a file restored right now keeps its content
                 if (await OlderFiles(before).Where(f => f.Id == id).ExecuteDeleteAsync(cancellationToken) == 1)
                 {
-                    await storage.DeleteAsync(blobKey, cancellationToken);
                     total++;
+                    try
+                    {
+                        await storage.DeleteAsync(blobKey, cancellationToken);
+                    }
+                    catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
+                    {
+                        LogBlobFailed(exception, blobKey);
+                        failed.Add($"{blobKey}: {exception.Message}");
+                    }
                 }
             }
         }
@@ -52,10 +62,15 @@ internal sealed class DeletedFileRetention(CoworkeeDbContext db, IBlobStorage st
         }
         while (folders > 0);
 
-        return total;
+        return failed.Count == 0
+            ? total
+            : throw new RetentionIncompleteException(total, $"{failed.Count} blobs could not be deleted:{Environment.NewLine}{string.Join(Environment.NewLine, failed.Take(20))}");
     }
 
     private IQueryable<StoredFile> OlderFiles(DateTimeOffset before) => AllFiles.Where(f => f.IsDeleted && f.DeletedAt < before);
 
     private IQueryable<FileFolder> OlderFolders(DateTimeOffset before) => AllFolders.Where(f => f.IsDeleted && f.DeletedAt < before);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The blob {BlobKey} of a deleted file could not be deleted.")]
+    private partial void LogBlobFailed(Exception exception, string blobKey);
 }

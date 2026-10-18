@@ -1632,7 +1632,6 @@
   "Database backups": "Zálohy databáze",
   "Expired sign-in tokens": "Prošlé přihlašovací tokeny",
   "Who changed what. Entity history and restore read it: older changes can no longer be shown or undone.": "Kdo co změnil. Čte z něj historie entit a obnovení: starší změny pak už nelze zobrazit ani vrátit.",
-  "The stored revisions of versioned entities.": "Uložené revize verzovaných entit.",
   "Domain events that were delivered; pending ones stay.": "Doručené doménové události; čekající zůstávají.",
   "Records that were deleted softly and could still be restored.": "Záznamy smazané měkce, které by šlo ještě obnovit.",
   "The inbox that skips redeliveries; keep it longer than a transport redelivers.": "Inbox, který přeskakuje opakovaná doručení; uchovávejte ji déle, než transport doručuje znovu.",
@@ -1643,6 +1642,8 @@
   "In-app notifications of all users, read or not.": "Oznámení v aplikaci všech uživatelů, přečtená i nepřečtená.",
   "Finished imports and exports with their uploaded and result files; an import can no longer be undone.": "Dokončené importy a exporty s nahranými a výslednými soubory; import pak už nelze vrátit.",
   "Deleted files and folders, with the content of the files in the blob storage.": "Smazané soubory a složky včetně obsahu souborů v úložišti blobů.",
-  "Backups with their zip files in the blob storage.": "Zálohy s jejich soubory ZIP v úložišti blobů.",
-  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Odvolané, použité a prošlé tokeny a autorizace autorizačního serveru; platné zůstávají."
+  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Odvolané, použité a prošlé tokeny a autorizace autorizačního serveru; platné zůstávají.",
+  "Save first": "Nejdřív uložte",
+  "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "Starší revize verzovaných entit, například e-mailových šablon; čte z nich historie verzí a obnovení. Nejnovější revize každé entity zůstává.",
+  "Backups with their zip files in the blob storage; the newest backup always stays.": "Zálohy s jejich soubory ZIP v úložišti blobů; nejnovější záloha vždy zůstává."
 }

@@ -1632,7 +1632,6 @@
   "Database backups": "Sigurnosne kopije baze podataka",
   "Expired sign-in tokens": "Istekli tokeni za prijavu",
   "Who changed what. Entity history and restore read it: older changes can no longer be shown or undone.": "Tko je što promijenio. Povijest entiteta i vraćanje čitaju ga: starije promjene više se ne mogu prikazati ni poništiti.",
-  "The stored revisions of versioned entities.": "Spremljene revizije entiteta s verzijama.",
   "Domain events that were delivered; pending ones stay.": "Isporučeni domenski događaji; oni na čekanju ostaju.",
   "Records that were deleted softly and could still be restored.": "Zapisi koji su meko izbrisani i još bi se mogli vratiti.",
   "The inbox that skips redeliveries; keep it longer than a transport redelivers.": "Ulazni spremnik koji preskače ponovne isporuke; čuvajte ga dulje nego što transport ponovno isporučuje.",
@@ -1643,6 +1642,8 @@
   "In-app notifications of all users, read or not.": "Obavijesti u aplikaciji svih korisnika, pročitane ili ne.",
   "Finished imports and exports with their uploaded and result files; an import can no longer be undone.": "Završeni uvozi i izvozi s učitanim i rezultatnim datotekama; uvoz se više ne može poništiti.",
   "Deleted files and folders, with the content of the files in the blob storage.": "Izbrisane datoteke i mape, sa sadržajem datoteka u blob pohrani.",
-  "Backups with their zip files in the blob storage.": "Sigurnosne kopije s njihovim zip datotekama u blob pohrani.",
-  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Opozvani, iskorišteni i istekli tokeni i autorizacije poslužitelja za autentifikaciju; valjani ostaju."
+  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Opozvani, iskorišteni i istekli tokeni i autorizacije poslužitelja za autentifikaciju; valjani ostaju.",
+  "Save first": "Najprije spremite",
+  "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "Starije revizije entiteta s verzijama, poput predložaka e-pošte; povijest verzija i vraćanje ih čitaju. Najnovija revizija svakog entiteta ostaje.",
+  "Backups with their zip files in the blob storage; the newest backup always stays.": "Sigurnosne kopije s njihovim zip datotekama u blob pohrani; najnovija kopija uvijek ostaje."
 }

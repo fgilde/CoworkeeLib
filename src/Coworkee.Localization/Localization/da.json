@@ -1632,7 +1632,6 @@
   "Database backups": "Databasesikkerhedskopier",
   "Expired sign-in tokens": "Udløbne login-tokens",
   "Who changed what. Entity history and restore read it: older changes can no longer be shown or undone.": "Hvem ændrede hvad. Entitetshistorik og gendannelse læser det: ældre ændringer kan derefter ikke længere vises eller fortrydes.",
-  "The stored revisions of versioned entities.": "De gemte revisioner af versionerede entiteter.",
   "Domain events that were delivered; pending ones stay.": "Leverede domænehændelser; ventende bliver.",
   "Records that were deleted softly and could still be restored.": "Poster, der er blødt slettet og stadig kunne gendannes.",
   "The inbox that skips redeliveries; keep it longer than a transport redelivers.": "Indbakken, der springer gentagne leveringer over; behold den længere, end en transport genleverer.",
@@ -1643,6 +1642,8 @@
   "In-app notifications of all users, read or not.": "Notifikationer i appen for alle brugere, læst eller ej.",
   "Finished imports and exports with their uploaded and result files; an import can no longer be undone.": "Afsluttede importer og eksporter med uploadede filer og resultatfiler; en import kan derefter ikke fortrydes.",
   "Deleted files and folders, with the content of the files in the blob storage.": "Slettede filer og mapper med filernes indhold i blob-lageret.",
-  "Backups with their zip files in the blob storage.": "Sikkerhedskopier med deres zip-filer i blob-lageret.",
-  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Tilbagekaldte, brugte og udløbne tokens og autorisationer fra godkendelsesserveren; gyldige bliver."
+  "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Tilbagekaldte, brugte og udløbne tokens og autorisationer fra godkendelsesserveren; gyldige bliver.",
+  "Save first": "Gem først",
+  "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "Ældre revisioner af versionerede entiteter som mailskabeloner; versionshistorik og gendannelse læser dem. Den nyeste revision af hver entitet bliver.",
+  "Backups with their zip files in the blob storage; the newest backup always stays.": "Sikkerhedskopier med deres zip-filer i blob-lageret; den nyeste sikkerhedskopi bliver altid."
 }
