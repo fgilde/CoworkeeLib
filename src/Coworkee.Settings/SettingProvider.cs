@@ -83,7 +83,7 @@ internal sealed class SettingProvider(
     }
 }
 
-internal sealed class SettingProtector(IDataProtectionProvider provider)
+public sealed class SettingProtector(IDataProtectionProvider provider)
 {
     private readonly IDataProtector _protector = provider.CreateProtector("Coworkee.Settings");
 

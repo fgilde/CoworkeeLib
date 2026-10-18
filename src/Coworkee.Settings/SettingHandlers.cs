@@ -130,7 +130,8 @@ internal sealed class SettingValueHandlers(
     }
 }
 
-internal sealed class SettingWriter(CoworkeeDbContext db, ISettingDefinitionManager definitions, SettingProtector protector)
+/// <summary>Validates and stores setting values of one scope; the caller saves the changes.</summary>
+public sealed class SettingWriter(CoworkeeDbContext db, ISettingDefinitionManager definitions, SettingProtector protector)
 {
     public async Task<Error?> WriteAsync(SettingScope scope, Guid? key, IReadOnlyDictionary<string, string?> values, CancellationToken cancellationToken)
     {

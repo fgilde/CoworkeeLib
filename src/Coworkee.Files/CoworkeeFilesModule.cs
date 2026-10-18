@@ -1,6 +1,7 @@
 using Coworkee.Application;
 using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
+using Coworkee.Application.Retention;
 using Coworkee.Application.Status;
 using Coworkee.AspNetCore;
 using Coworkee.Contracts.Files;
@@ -36,6 +37,7 @@ public sealed class CoworkeeFilesModule : CoworkeeModule, IWebModule
         services.AddSingleton<IPermissionDefinitionContributor, FilePermissionDefinitions>();
         services.AddScoped<IResourceHierarchy, FolderHierarchy>();
         services.AddSystemStatus<FilesStatus>();
+        services.AddRetentionTarget<DeletedFileRetention>().AddRetentionOwnedType<StoredFile>().AddRetentionOwnedType<FileFolder>();
         services.AddScoped<FolderAccess>();
         services.AddScoped<RegistrationFolders>();
         services.AddScoped<IResourceRestriction>(sp => sp.GetRequiredService<RegistrationFolders>());

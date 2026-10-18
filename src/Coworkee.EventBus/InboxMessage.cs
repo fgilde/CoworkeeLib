@@ -17,7 +17,6 @@ public sealed class InboxMessage
 
 internal sealed class InboxModelContributor : IModelContributor
 {
-    // ponytail: inbox rows are kept forever, add a retention cleanup when the table grows too large
     public void Apply(ModelBuilder modelBuilder) => modelBuilder.Entity<InboxMessage>(entity =>
     {
         entity.ToTable("InboxMessages", "cw");

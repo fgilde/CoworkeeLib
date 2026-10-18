@@ -88,6 +88,6 @@ jobs:
 
       - name: Test
         run: |
-          for suite in Infrastructure EventBus AuthServer Settings Localization Notifications OData Social Theming Workflows Workflows.Elsa; do
+          for suite in Infrastructure EventBus AuthServer Settings Localization Notifications OData Social Theming Workflows Workflows.Elsa Retention; do
             dotnet test --project tests/Coworkee.$suite.Tests -c Release --no-build || exit 1
           done

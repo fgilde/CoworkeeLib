@@ -31,6 +31,7 @@ public sealed class WebhookOptions
     /// <summary>Request and response bodies in the delivery log are cut after this many characters.</summary>
     public int LogBodyLimit { get; set; } = 4096;
 
+    /// <summary>The default days of the delivery log; with the Retention module the setting Retention.webhook-deliveries.Days decides.</summary>
     public int LogRetentionDays { get; set; } = 30;
 
     /// <summary>How long the old secret still signs deliveries after a rotation, next to the new one (Standard Webhooks allows several signatures).</summary>
