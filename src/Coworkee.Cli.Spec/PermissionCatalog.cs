@@ -15,6 +15,7 @@ public static class PermissionCatalog
         ("reports", ["Reports.View", "Reports.Manage", "Reports.Share", "Reports.Dashboard"]),
         ("ai", ["Ai.Chat", "Ai.Audit"]),
         ("backup", ["Backups.Manage"]),
+        ("retention", ["Retention.Manage"]),
         ("files", ["Files.View", "Files.Upload", "Files.Manage", "Files.Registrations.View"]),
         ("features", ["Features.Tenants", "Features.Editions"]),
         ("social", [

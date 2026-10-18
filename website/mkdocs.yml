@@ -139,6 +139,7 @@ plugins:
             Workflows and approvals: Workflows und Genehmigungen
             Elsa workflows: Elsa-Workflows
             Webhooks: Webhooks
+            Retention: Aufbewahrung
             AI assistant and MCP: KI-Assistent und MCP
             MCP server of the app: MCP-Server der App
             API keys: API-Schlüssel
@@ -250,6 +251,7 @@ nav:
       - Workflows and approvals: modules/workflows.md
       - Elsa workflows: modules/workflows-elsa.md
       - Webhooks: modules/webhooks.md
+      - Retention: modules/retention.md
       - AI assistant and MCP: modules/ai.md
       - MCP server of the app: modules/mcp.md
   - Hosting:

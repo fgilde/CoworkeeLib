@@ -4,8 +4,15 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Breaking changes
+
+- **Migration needed** in apps that add the new module `Coworkee.Retention`: the table `cw.RetentionRuns`. Apps without it need nothing.
+- `SettingWriter` and `SettingProtector` of `Coworkee.Settings` are public now (for modules that write their own settings).
+
 ### New
 
+- `Coworkee.Retention`: days to keep per kind of data (audit trail, snapshots, processed outbox and inbox, soft deleted records, AI tool calls and conversations, webhook deliveries, mail log, notifications, import and export jobs, deleted files with their blobs, backups, OpenIddict tokens), the nightly job `coworkee-retention` (`Coworkee:Retention:Cron`, default `41 2 * * *`), the admin page *Retention* (`/admin/retention`, permission `Retention.Manage`, system organisation only) with live counts and *Delete now*, endpoints `/api/v1/retention` and a section in the system status. Every kind of data that was kept forever stays so until days are set; only the webhook log keeps its 30 days. Modules and apps add their own with `IRetentionTarget` and `services.AddRetentionTarget<T>()`; `ExecuteDeleteInBatchesAsync` deletes in batches of 1000. Template, CLI and Studio option `retention` (on); new apps keep processed messages and tokens 14 days and import and export jobs 30. See [Retention](../modules/retention.md).
+- Webhooks: `WebhookOptions.LogRetentionDays` is the default of `Retention.webhook-deliveries.Days`; with the Retention module the old daily webhook log cleanup does nothing.
 - `CoworkeeMigrationsOptions.AfterSeed` runs the app's own data steps after the migration and the seed, before Keycloak is reconciled.
 
 ## 0.0.1.33 (2026-10-17)

@@ -130,7 +130,7 @@ public sealed class OptionDependencyTests
     {
         var defaults = SpecSummary.Lines(Spec());
 
-        defaults.ShouldContain("Library modules on:  auditing, notifications, chat, reports, ai, backup");
+        defaults.ShouldContain("Library modules on:  auditing, notifications, chat, reports, ai, backup, retention");
         defaults.ShouldContain("Library modules off: files, features, social, workflows, elsa, elsaStudio, webhooks, extendedAttributes, elasticsearch, eventBus, clientEntities");
         defaults.ShouldContain("Own modules: -");
     }

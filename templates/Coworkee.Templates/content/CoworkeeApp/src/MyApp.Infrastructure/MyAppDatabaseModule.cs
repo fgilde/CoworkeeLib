@@ -51,6 +51,9 @@ namespace MyApp.Infrastructure;
 #if (webhooks)
     , typeof(Coworkee.Webhooks.CoworkeeWebhooksModule)
 #endif
+#if (retention)
+    , typeof(Coworkee.Retention.CoworkeeRetentionModule)
+#endif
 #if (extendedAttributes)
     , typeof(Coworkee.ExtendedAttributes.CoworkeeExtendedAttributesModule)
 #endif

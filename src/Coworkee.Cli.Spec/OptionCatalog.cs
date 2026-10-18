@@ -126,6 +126,8 @@ public static class OptionCatalog
             "When users or agents should work with the app in natural language.", ["Tools come from the existing commands", "MCP endpoint for Claude and other clients"], ["Needs an AI provider to answer"], Package: "Coworkee.Ai"),
         new("backup", Modules, "Database backups", "Backups and restore of the database from the admin pages.", OptionKind.Bool, "true",
             "Self-hosted installations without managed database backups.", ["Backup and restore without a DBA"], ["Managed databases bring their own"], Package: "Coworkee.Backup", DependsOn: new("database", "postgres")),
+        new("retention", Modules, "Retention", "Days to keep per kind of data (audit trail, outbox, logs, deleted records and files, tokens), a nightly job that deletes what is older and the admin page Retention to set them and delete now. New apps keep processed messages and tokens 14 days, import and export jobs 30, everything else until set.", OptionKind.Bool, "true",
+            "Almost always: tables like the outbox, the audit trail and the mail log grow without end otherwise.", ["One page for every kind of data", "Modules and app code add their own data"], ["Deleted data is gone, there is no archive"], Package: "Coworkee.Retention"),
         new("files", Modules, "Files", "Folders and files of the organisation with preview, upload and per-folder permissions.", OptionKind.Bool, "false",
             "When users share documents like on a drive.", ["File manager with preview of nearly every type"], ["Blob storage grows"], Package: "Coworkee.Files"),
         new("features", Modules, "Features and editions", "Features switched per tenant, editions and the tenant administration of the host.", OptionKind.Bool, "false",

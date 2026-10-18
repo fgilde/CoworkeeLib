@@ -29,6 +29,7 @@ Welches Paket wohin gehört und was in den `using`-Block kommt.
 | `Coworkee.Ai` | API | `Coworkee.Ai` | `AddAiTool<TRequest>`, MCP-Server |
 | `Coworkee.Localization` | API | `Coworkee.Localization.Resources` | `CoworkeeLocalizationModule`, `ILocalizationResourceContributor`, `AddEmbeddedJson` |
 | `Coworkee.Backup` | API | `Coworkee.Backup` | `CoworkeeBackupModule` |
+| `Coworkee.Retention` | API | `Coworkee.Retention` | `CoworkeeRetentionModule` |
 | `Coworkee.Chat` | API | `Coworkee.Chat` | `CoworkeeChatModule`, `ChatEvents` |
 | `Coworkee.Reporting` | API | `Coworkee.Reporting` | `CoworkeeReportingModule`, `RunReportQuery` |
 | `Coworkee.ExtendedAttributes` | API | `Coworkee.ExtendedAttributes` | `CoworkeeExtendedAttributesModule`, `AddExtendedAttributes<T>` |
