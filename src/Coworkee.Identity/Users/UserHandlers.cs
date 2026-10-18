@@ -46,7 +46,7 @@ internal sealed class MyProfileHandlers(CoworkeeDbContext db, ICurrentUser curre
     : IHandler<GetMyProfile, Result<ProfileDto>>, IHandler<UpdateMyProfile, Result<ProfileDto>>
 {
     public async Task<Result<ProfileDto>> HandleAsync(GetMyProfile query, CancellationToken cancellationToken) =>
-        await MeAsync(cancellationToken) is { } user ? Map(user) : UserErrors.NotFound;
+        await MeAsync(cancellationToken) is { } user ? await MapAsync(db, user, cancellationToken) : UserErrors.NotFound;
 
     public async Task<Result<ProfileDto>> HandleAsync(UpdateMyProfile command, CancellationToken cancellationToken)
     {
@@ -64,7 +64,7 @@ internal sealed class MyProfileHandlers(CoworkeeDbContext db, ICurrentUser curre
         user.Country = Clean(command.Profile.Address?.Country);
         await db.SaveChangesAsync(cancellationToken);
         await changes.NotifyAsync(user, cancellationToken);
-        return Map(user);
+        return await MapAsync(db, user, cancellationToken);
     }
 
     private Task<User?> MeAsync(CancellationToken cancellationToken) =>
@@ -72,7 +72,12 @@ internal sealed class MyProfileHandlers(CoworkeeDbContext db, ICurrentUser curre
 
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
-    internal static ProfileDto Map(User user) => new(user.Email!, user.FirstName, user.LastName, user.PhoneNumber, user.AvatarUrl, Address(user), user.PasswordHash is not null);
+    internal static async Task<ProfileDto> MapAsync(CoworkeeDbContext db, User user, CancellationToken cancellationToken) =>
+        new(user.Email!, user.FirstName, user.LastName, user.PhoneNumber, user.AvatarUrl, Address(user), user.PasswordHash is not null,
+            await PasskeyCountAsync(db, user.Id, cancellationToken));
+
+    internal static Task<int> PasskeyCountAsync(CoworkeeDbContext db, Guid userId, CancellationToken cancellationToken) =>
+        db.Set<IdentityUserPasskey<Guid>>().CountAsync(p => p.UserId == userId, cancellationToken);
 
     internal static PostalAddress? Address(User user) =>
         (user.Street ?? user.ZipCode ?? user.City ?? user.Country) is null ? null : new PostalAddress(user.Street, user.ZipCode, user.City, user.Country);
@@ -193,7 +198,8 @@ internal sealed class UserDetailHandlers(CoworkeeDbContext db, ICurrentUser curr
         var lockedUntil = user.LockoutEnd is { } end && end > clock.GetUtcNow() ? end : (DateTimeOffset?)null;
         return new UserDetailDto(user.Id, user.UserName!, user.Email!, user.FirstName, user.LastName, user.IsActive, user.EmailConfirmed, user.TwoFactorEnabled,
             lockedUntil, user.LastLoginAt, roles.GetValueOrDefault(user.Id) ?? [], groups, user.MustChangePassword,
-            user.PhoneNumber, MyProfileHandlers.Address(user), user.PasswordHash is not null, user.AvatarUrl is not null, logins);
+            user.PhoneNumber, MyProfileHandlers.Address(user), user.PasswordHash is not null, user.AvatarUrl is not null, logins,
+            await MyProfileHandlers.PasskeyCountAsync(db, user.Id, cancellationToken));
     }
 
     public async Task<Result> HandleAsync(UnlockUser command, CancellationToken cancellationToken)

@@ -9,6 +9,12 @@
     @if (_manage is not null)
     {
         <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Password" Href="@($"{_manage}/ChangePassword")" Target="_blank" Class="mr-2 mb-2">@L["Change password"]</MudButton>
-        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Security" Href="@($"{_manage}/TwoFactor")" Target="_blank" Class="mb-2">@L["Two-step verification"]</MudButton>
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Security" Href="@($"{_manage}/TwoFactor")" Target="_blank" Class="mr-2 mb-2">@L["Two-step verification"]</MudButton>
+        @if (ShowsPasskeys)
+        {
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Key" Href="@($"{_manage}/Passkeys")" Target="_blank" Class="mb-2" data-testid="manage-passkeys">
+                @L["Passkeys ({0})", _profile?.PasskeyCount ?? 0]
+            </MudButton>
+        }
     }
 </MudPaper>

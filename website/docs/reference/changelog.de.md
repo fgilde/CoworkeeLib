@@ -6,11 +6,14 @@
 
 ### Breaking Changes
 
+- **Migration nötig**: Passkeys liegen in der neuen Tabelle `cw.UserPasskeys` (Schema-Version 3 von ASP.NET Core Identity: Schlüssel `CredentialId`, `Data` als JSON, Cascade von `cw.Users`). Eigene `ICoworkeeApi`-Implementierungen ergänzen `ResetUserPasskeysAsync`.
 - **Migration nötig** in Apps, die das neue Modul `Coworkee.Retention` aufnehmen: die Tabelle `cw.RetentionRuns`. Apps ohne das Modul brauchen nichts.
 - `SettingWriter` und `SettingProtector` aus `Coworkee.Settings` sind jetzt öffentlich (für Module, die eigene Einstellungen schreiben).
 
 ### Neu
 
+- Passkeys (WebAuthn) am Auth-Server: *Mit Passkey anmelden* und das Autofill des Browsers auf der Anmeldeseite, die Kontoseite *Passkeys* zum Hinzufügen (höchstens 20), Umbenennen und Entfernen, *Passkeys (n)* im Sicherheitsreiter des Profils, *Passkeys: n* mit *Alle entfernen* im Anmeldebereich der Benutzerverwaltung (`POST /api/v1/identity/users/{id}/passkeys/reset`), `PasskeyCount` in `ProfileDto` und `UserDetailDto`, Passkeys im Export der persönlichen Daten. Eine Anmeldung per Passkey überspringt die Bestätigung in zwei Schritten. Die Einstellung `Account.Passkeys.Enabled` (Standard an) und der Login-Modus *External* schalten sie ab; `Coworkee:Auth:Passkeys` bindet `IdentityPasskeyOptions` (`ServerDomain` hinter einem Proxy ohne Forwarded Headers). Siehe [Passkeys](../security/passkeys.md).
+- Der Audit-Trail schreibt binäre Schlüssel als base64url in `EntityId` statt `System.Byte[]`.
 - `Coworkee.Retention`: Tage pro Datenart (Audit-Trail, Snapshots, verarbeitete Outbox und Inbox, weich gelöschte Datensätze, KI-Werkzeugaufrufe und Unterhaltungen, Webhook-Zustellungen, Mail-Log, Benachrichtigungen, Import- und Export-Jobs, gelöschte Dateien mit ihren Blobs, Backups, OpenIddict-Tokens), der nächtliche Job `coworkee-retention` (`Coworkee:Retention:Cron`, Standard `41 2 * * *`), die Admin-Seite *Aufbewahrung* (`/admin/retention`, Permission `Retention.Manage`, nur in der Systemorganisation) mit Live-Zählung und *Jetzt löschen*, Endpoints `/api/v1/retention` und ein Abschnitt im Systemstatus. Jede Datenart, die bisher für immer blieb, bleibt so, bis jemand Tage einstellt; nur das Webhook-Protokoll behält seine 30 Tage. Module und Apps melden eigene Datenarten mit `IRetentionTarget` und `services.AddRetentionTarget<T>()` an; `ExecuteDeleteInBatchesAsync` löscht in Batches zu 1000. Template-, CLI- und Studio-Option `retention` (an); neue Apps behalten verarbeitete Nachrichten und Tokens 14 Tage, Import- und Export-Jobs 30. Siehe [Aufbewahrung](../modules/retention.md).
 - Webhooks: `WebhookOptions.LogRetentionDays` ist der Standard von `Retention.webhook-deliveries.Days`; mit dem Retention-Modul tut die alte tägliche Bereinigung des Webhook-Protokolls nichts.
 - `CoworkeeMigrationsOptions.AfterSeed` führt die eigenen Datenschritte der App nach Migration und Seed aus, bevor Keycloak abgeglichen wird.

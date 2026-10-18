@@ -27,7 +27,7 @@ internal sealed class AvatarHandlers(CoworkeeDbContext db, ICurrentUser currentU
         user.AvatarChangedAt = clock.GetUtcNow();
         await db.SaveChangesAsync(cancellationToken);
         await changes.NotifyAsync(user, cancellationToken);
-        return MyProfileHandlers.Map(user);
+        return await MyProfileHandlers.MapAsync(db, user, cancellationToken);
     }
 
     public async Task<Result<UserAvatar>> HandleAsync(GetUserAvatar query, CancellationToken cancellationToken) =>

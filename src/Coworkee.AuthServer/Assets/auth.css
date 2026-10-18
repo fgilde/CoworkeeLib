@@ -148,3 +148,9 @@ body.layout-slide { display: grid; place-items: center; padding: 24px 16px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after, ::view-transition-group(*) { animation: none !important; transition: none !important; }
 }
+
+/* passkeys (passkey.js) */
+form.passkey { margin-top: 12px; }
+form[data-passkey] button { display: flex; align-items: center; justify-content: center; gap: 8px; }
+form[data-passkey] button svg { width: 20px; height: 20px; fill: currentColor; flex: none; }
+details summary { cursor: pointer; font-size: 14px; color: var(--signal); margin-top: 4px; }

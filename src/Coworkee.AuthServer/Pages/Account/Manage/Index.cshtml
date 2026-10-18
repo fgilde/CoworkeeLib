@@ -1,9 +1,13 @@
 @page
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(AuthenticationSchemes = "Identity.Application")]
+@model Coworkee.AuthServer.Pages.Account.Manage.IndexModel
 @{ ViewData["Title"] = T("Account security"); }
 <h1>@T("Account security")</h1>
 <div class="links">
   <a asp-page="ChangePassword">@T("Change password")</a>
   <a asp-page="TwoFactor">@T("Two-step verification")</a>
+  @if (Model.ShowsPasskeys)
+  {
+    <a asp-page="Passkeys">@T("Passkeys")</a>
+  }
   <a asp-page="Applications">@T("Authorized applications")</a>
 </div>

@@ -952,6 +952,39 @@
         }
       }
     },
+    "/api/v1/identity/users/{id}/passkeys/reset": {
+      "post": {
+        "tags": [
+          "Identity"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/identity/users/{id}/logins": {
       "delete": {
         "tags": [
@@ -14056,7 +14089,8 @@
           "firstName",
           "lastName",
           "phoneNumber",
-          "hasPassword"
+          "hasPassword",
+          "passkeyCount"
         ],
         "type": "object",
         "properties": {
@@ -14100,6 +14134,15 @@
           "hasPassword": {
             "type": "boolean",
             "default": true
+          },
+          "passkeyCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 0
           }
         }
       },
@@ -16350,7 +16393,8 @@
           "groups",
           "mustChangePassword",
           "hasPassword",
-          "hasAvatar"
+          "hasAvatar",
+          "passkeyCount"
         ],
         "type": "object",
         "properties": {
@@ -16447,6 +16491,15 @@
             "items": {
               "$ref": "#/components/schemas/UserLoginDto"
             }
+          },
+          "passkeyCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 0
           }
         }
       },

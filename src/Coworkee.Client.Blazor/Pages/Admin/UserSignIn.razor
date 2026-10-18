@@ -42,6 +42,16 @@
     </MudStack>
     <MudDivider />
 
+    <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Class="py-2" data-testid="user-passkeys">
+        <MudIcon Icon="@Icons.Material.Outlined.Key" />
+        <MudText Class="flex-grow-1">@L["Passkeys: {0}", User.PasskeyCount]</MudText>
+        @if (CanManage && User.PasskeyCount > 0)
+        {
+            <MudButton Variant="Variant.Text" Size="Size.Small" Color="Color.Error" OnClick="ResetPasskeysAsync" data-testid="reset-passkeys">@L["Remove all"]</MudButton>
+        }
+    </MudStack>
+    <MudDivider />
+
     <MudText Typo="Typo.subtitle2" Class="mt-3 mb-1">@L["External sign-ins"]</MudText>
     @if (Logins.Count == 0)
     {

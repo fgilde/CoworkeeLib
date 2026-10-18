@@ -1,6 +1,8 @@
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Localization;
+using Coworkee.Client.Blazor.Theming;
+using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Identity;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -23,7 +25,11 @@ public partial class ProfileSecurity
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
+    [Inject] private ThemeService ThemeService { get; set; } = null!;
+
     [CascadingParameter] private Task<AuthenticationState> AuthenticationState { get; set; } = null!;
+
+    private bool ShowsPasskeys => !string.Equals(ThemeService.ClientSettings.GetValueOrDefault(AuthSettings.PasskeysEnabled), "false", StringComparison.OrdinalIgnoreCase);
 
     protected override async Task OnInitializedAsync()
     {
