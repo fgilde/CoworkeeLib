@@ -30,6 +30,7 @@ internal static class LibraryPages
         new("mail-template", typeof(MailTemplateDetail), "admin/mail/templates/{Name}/{Culture}"),
         new("mail-campaigns", typeof(MailCampaigns), "admin/mail/campaigns"),
         new("mail-log", typeof(MailLog), "admin/mail/log"),
+        new("retention", typeof(Pages.Admin.Retention), "admin/retention"),
         new("services", typeof(Services), "admin/services"),
         new("system-status", typeof(SystemStatus), "admin/system-status"),
         new("tenants", typeof(Tenants), "admin/tenants"),

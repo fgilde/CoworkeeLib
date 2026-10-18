@@ -1,0 +1,72 @@
+@using Coworkee.Client.Blazor.Retention
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + RetentionPermissions.Manage)]
+
+<PageHeader Title="Retention" Description="How long data is kept. A nightly job deletes what is older, across all organisations. Empty keeps everything." />
+@if (_error is not null)
+{
+    <MudAlert Severity="Severity.Error" Dense="true" Class="mb-4">@_error</MudAlert>
+}
+<MudStack Row="true" Class="mb-2">
+    <MudSpacer />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Save" Size="Size.Small" Disabled="@(_busy || !_rows.Any(r => r.Changed))"
+               OnClick="SaveAsync" data-testid="save-retention">@L["Save"]</MudButton>
+</MudStack>
+<MudDataGrid T="RetentionRow" Items="_rows" Loading="_busy" Dense="Density.Dense" Hover="true" Striped="true" Elevation="0" Outlined="true" data-testid="retention">
+    <Columns>
+        <TemplateColumn T="RetentionRow" Title="@L["Data"]" Sortable="false">
+            <CellTemplate>
+                <MudText Typo="Typo.body2">@L[context.Item.Target.Title]</MudText>
+                @if (context.Item.Target.Description is { } description)
+                {
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@L[description]</MudText>
+                }
+            </CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn T="RetentionRow" Title="@L["Keep (days)"]" Sortable="false">
+            <CellTemplate>
+                <MudNumericField T="int?" Value="context.Item.Days" ValueChanged="days => DaysChanged(context.Item, days)" Min="0" Max="36500" Variant="Variant.Outlined"
+                                 Margin="Margin.Dense" Placeholder="@L["Never"]" Clearable="true" Style="max-width:160px" data-key="@context.Item.Target.Key"
+                                 HelperText="@(context.Item.Target.DefaultDays is { } d ? L["Default: {0}", d] : null)" />
+            </CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn T="RetentionRow" Title="@L["Affected now"]" Sortable="false">
+            <CellTemplate>
+                @if (context.Item.Counting)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                }
+                else
+                {
+                    <span data-affected="@context.Item.Target.Key">@(context.Item.Affected?.ToString("N0") ?? "-")</span>
+                }
+            </CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn T="RetentionRow" Title="@L["Last run"]" Sortable="false">
+            <CellTemplate>
+                @if (context.Item.Target.Running)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" Style="min-width:80px" data-running="@context.Item.Target.Key" />
+                }
+                else if (context.Item.Target.LastRunAt is { } at)
+                {
+                    <MudText Typo="Typo.body2">@at.ToLocalTime().ToString("g") · @L["{0} deleted", (context.Item.Target.LastDeleted ?? 0).ToString("N0")]</MudText>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["Never"]</MudText>
+                }
+                @if (context.Item.Target.LastError is { } error)
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Error" Style="white-space:pre-line" data-error="@context.Item.Target.Key">@error</MudText>
+                }
+            </CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn T="RetentionRow" Sortable="false" CellStyle="text-align:right;white-space:nowrap">
+            <CellTemplate>
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" StartIcon="@Icons.Material.Outlined.DeleteSweep"
+                           Disabled="@(_busy || context.Item.Target.Running || context.Item.Days is not > 0)" OnClick="() => DeleteNowAsync(context.Item)"
+                           data-delete="@context.Item.Target.Key">@L["Delete now"]</MudButton>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+</MudDataGrid>
