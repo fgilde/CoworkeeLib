@@ -58,6 +58,8 @@ public interface ICoworkeeApi
 
     Task ResetUserTwoFactorAsync(Guid userId, CancellationToken cancellationToken = default);
 
+    Task ResetUserPasskeysAsync(Guid userId, CancellationToken cancellationToken = default);
+
     Task RemoveUserLoginAsync(Guid userId, UserLoginDto login, CancellationToken cancellationToken = default);
 
     Task SetUserGroupsAsync(Guid userId, IReadOnlyList<Guid> groupIds, CancellationToken cancellationToken = default);

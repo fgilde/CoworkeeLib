@@ -12,7 +12,7 @@ Drei Layouts kommen mit der Bibliothek:
 | `Split` | ganze Seite: Bild oder Video auf einer Seite, das Formular auf der anderen |
 | `Slide` (Standard) | eine Karte mit farbigem Feld neben dem Formular. Auf der Anmeldeseite lädt das Feld zur Registrierung ein (wenn sie erlaubt ist); auf der Registrierungsseite wechselt es auf die andere Seite und führt zurück zur Anmeldung. Browser mit dokumentübergreifenden View Transitions animieren den Wechsel. |
 
-Die Seiten funktionieren ohne Skript. Ein kleines Skript ergänzt, was ein Browser allein nicht kann: einen Knopf, der das Passwort zeigt, einen Hinweis bei aktiver Feststelltaste, ein Abzeichen *Zuletzt verwendet* an der zuletzt gewählten Anmeldeart (nur wenn es externe Anbieter gibt) und ein einziges Absenden je Formular. Animationen entfallen, wenn das System reduzierte Bewegung verlangt.
+Die Seiten funktionieren ohne Skript. Ein kleines Skript ergänzt, was ein Browser allein nicht kann: einen Knopf, der das Passwort zeigt, einen Hinweis bei aktiver Feststelltaste, ein Abzeichen *Zuletzt verwendet* an der zuletzt gewählten Anmeldeart (nur wenn es externe Anbieter gibt) und ein einziges Absenden je Formular. Passkeys brauchen ein zweites kleines Skript, `passkey.js`; ohne es bleibt ihr Button verborgen (siehe [Passkeys](passkeys.md)). Animationen entfallen, wenn das System reduzierte Bewegung verlangt.
 
 ## Konfiguration
 

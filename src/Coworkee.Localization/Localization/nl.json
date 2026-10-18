@@ -1607,5 +1607,12 @@
   "{0} mentioned you in the chat": "{0} heeft je genoemd in de chat",
   "Largest chat attachment (MB)": "Grootste chatbijlage (MB)",
   "Files above this size cannot be sent in the chat.": "Grotere bestanden kunnen niet in de chat worden verzonden.",
-  "The record changed in the meantime. Check the new preview.": "Het record is intussen gewijzigd. Controleer het nieuwe voorbeeld."
+  "The record changed in the meantime. Check the new preview.": "Het record is intussen gewijzigd. Controleer het nieuwe voorbeeld.",
+  "Passkeys": "Passkeys",
+  "Passkeys: {0}": "Passkeys: {0}",
+  "Passkeys ({0})": "Passkeys ({0})",
+  "Remove all passkeys": "Alle passkeys verwijderen",
+  "Remove every passkey of {0}? The user is signed out and can add new ones.": "Alle passkeys van {0} verwijderen? De gebruiker wordt afgemeld en kan nieuwe toevoegen.",
+  "The passkeys were removed.": "De passkeys zijn verwijderd.",
+  "Users add passkeys to their account and sign in with them. Off hides them; stored passkeys stay.": "Gebruikers voegen passkeys toe aan hun account en loggen daarmee in. Uit verbergt ze; opgeslagen passkeys blijven bewaard."
 }

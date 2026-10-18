@@ -8,12 +8,13 @@ public sealed record UserDto(Guid Id, string UserName, string Email, string? Fir
 public sealed record UserDetailDto(
     Guid Id, string UserName, string Email, string? FirstName, string? LastName, bool IsActive, bool EmailConfirmed, bool TwoFactorEnabled,
     DateTimeOffset? LockedUntil, DateTimeOffset? LastLoginAt, IReadOnlyList<RoleRefDto> Roles, IReadOnlyList<GroupRefDto> Groups, bool MustChangePassword = false,
-    string? PhoneNumber = null, PostalAddress? Address = null, bool HasPassword = true, bool HasAvatar = false, IReadOnlyList<UserLoginDto>? Logins = null);
+    string? PhoneNumber = null, PostalAddress? Address = null, bool HasPassword = true, bool HasAvatar = false, IReadOnlyList<UserLoginDto>? Logins = null,
+    int PasskeyCount = 0);
 
 public sealed record GroupRefDto(Guid Id, string Name);
 
 /// <summary>What everyone may change about themselves; the email and the password belong to the sign-in.</summary>
-public sealed record ProfileDto(string Email, string? FirstName, string? LastName, string? PhoneNumber, string? AvatarUrl = null, PostalAddress? Address = null, bool HasPassword = true);
+public sealed record ProfileDto(string Email, string? FirstName, string? LastName, string? PhoneNumber, string? AvatarUrl = null, PostalAddress? Address = null, bool HasPassword = true, int PasskeyCount = 0);
 
 public sealed record UpdateProfileRequest(string? FirstName, string? LastName, string? PhoneNumber, PostalAddress? Address = null);
 

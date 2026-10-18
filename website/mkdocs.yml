@@ -220,6 +220,7 @@ nav:
       - Clients, sessions and passwords: security/clients.md
       - Registration and sign-in rules: security/registration.md
       - Sign-in pages and designs: security/sign-in-pages.md
+      - Passkeys: security/passkeys.md
       - Privacy and personal data: security/privacy.md
       - API keys: security/api-keys.md
   - Blazor UI:

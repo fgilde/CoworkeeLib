@@ -13,6 +13,7 @@ namespace Coworkee.Identity.Users.Admin;
 internal sealed class UserAdminHandlers(CoworkeeDbContext db, ICurrentUser currentUser, UserManager<User> users, UserChanges changes, TimeProvider clock)
     : IHandler<SetUserAvatar, Result>,
       IHandler<ResetUserTwoFactor, Result>,
+      IHandler<ResetUserPasskeys, Result>,
       IHandler<SetUserPassword, Result>,
       IHandler<RemoveUserLogin, Result>,
       IHandler<SetUserGroups, Result>
@@ -39,6 +40,18 @@ internal sealed class UserAdminHandlers(CoworkeeDbContext db, ICurrentUser curre
         : await users.ResetAuthenticatorKeyAsync(user) is { Succeeded: false } reset ? IdentityErrors.ToError(reset)
         : await users.RemoveAuthenticationTokenAsync(user, "[AspNetUserStore]", RecoveryCodes) is { Succeeded: false } codes ? IdentityErrors.ToError(codes)
         : Result.Success();
+
+    public async Task<Result> HandleAsync(ResetUserPasskeys command, CancellationToken cancellationToken)
+    {
+        if (await FindAsync(command.Id, cancellationToken) is not { } user)
+        {
+            return UserErrors.NotFound;
+        }
+
+        var passkeys = db.Set<IdentityUserPasskey<Guid>>();
+        passkeys.RemoveRange(await passkeys.Where(p => p.UserId == user.Id).ToListAsync(cancellationToken));
+        return await users.UpdateSecurityStampAsync(user) is { Succeeded: false } stamp ? IdentityErrors.ToError(stamp) : Result.Success();
+    }
 
     public async Task<Result> HandleAsync(SetUserPassword command, CancellationToken cancellationToken)
     {

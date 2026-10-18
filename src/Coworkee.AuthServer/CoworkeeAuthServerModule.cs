@@ -29,6 +29,9 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
                 $"{RegistrationOptions.Section}:Documents needs an {nameof(IRegistrationDocumentStore)}: add Coworkee.Files or register your own store.")
             .ValidateOnStart();
         services.Configure<IdentityOptions>(identity => identity.SignIn.RequireConfirmedEmail = true);
+        // a passkey skips the second step, so the device has to verify its user (overridable, but the sign-in still refuses unverified ones)
+        services.Configure<IdentityPasskeyOptions>(passkeys => passkeys.UserVerificationRequirement = "required");
+        services.Configure<IdentityPasskeyOptions>(context.Configuration.GetSection(Passkeys.Section));
         services.AddScoped<Registration.AccountRegistration>();
         services.AddScoped<AuthBrandingProvider>();
         services.AddSingleton<Application.Localization.ITextTranslator, AuthTextTranslator>();
@@ -114,7 +117,7 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
     }
 
     /// <summary>
-    /// The account pages run no script and style inline; after sign-in the browser follows redirects to the clients, which
+    /// The account pages load their scripts from the own origin only (passkeys included) and style inline; after sign-in the browser follows redirects to the clients, which
     /// browsers check against form-action, so the clients' origins are allowed there. Logos and the design's image or video from elsewhere
     /// add their origins to img-src and media-src.
     /// </summary>

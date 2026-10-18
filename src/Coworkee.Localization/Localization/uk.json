@@ -1607,5 +1607,12 @@
   "{0} mentioned you in the chat": "{0} згадав(ла) вас у чаті",
   "Largest chat attachment (MB)": "Найбільше вкладення чату (МБ)",
   "Files above this size cannot be sent in the chat.": "Більші файли не можна надіслати в чаті.",
-  "The record changed in the meantime. Check the new preview.": "Запис тим часом змінився. Перевір новий попередній перегляд."
+  "The record changed in the meantime. Check the new preview.": "Запис тим часом змінився. Перевір новий попередній перегляд.",
+  "Passkeys": "Ключі доступу",
+  "Passkeys: {0}": "Ключі доступу: {0}",
+  "Passkeys ({0})": "Ключі доступу ({0})",
+  "Remove all passkeys": "Вилучити всі ключі доступу",
+  "Remove every passkey of {0}? The user is signed out and can add new ones.": "Вилучити всі ключі доступу користувача {0}? Користувача буде виведено з системи, і він зможе додати нові.",
+  "The passkeys were removed.": "Ключі доступу вилучено.",
+  "Users add passkeys to their account and sign in with them. Off hides them; stored passkeys stay.": "Користувачі додають ключі доступу до свого облікового запису та входять із ними. Вимкнено приховує їх; збережені ключі залишаються."
 }

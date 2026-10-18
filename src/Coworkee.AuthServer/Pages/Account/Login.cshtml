@@ -19,7 +19,7 @@
 }
 <form method="post" data-sign-in="password">
   <label for="email">@(Model.AllowUserName ? T("Email or user name") : T("Email"))</label>
-  <input id="email" type="@(Model.AllowUserName ? "text" : "email")" asp-for="Input.Email" autocomplete="username" required autofocus />
+  <input id="email" type="@(Model.AllowUserName ? "text" : "email")" asp-for="Input.Email" autocomplete="@(Model.ShowsPasskeys ? "username webauthn" : "username")" required autofocus />
   <label for="password">@T("Password")</label>
   <input id="password" type="password" asp-for="Input.Password" autocomplete="current-password" required />
   <label class="check"><input type="checkbox" asp-for="Input.RememberMe" /> @T("Stay signed in")</label>
@@ -36,4 +36,13 @@
     }
   </div>
 </form>
+@if (Model.ShowsPasskeys)
+{
+  <form method="post" asp-page-handler="Passkey" asp-route-returnUrl="@Model.Request.Query["returnUrl"]" class="passkey" data-passkey="sign-in"
+        data-options="@Url.Page("Login", "PasskeyOptions")" hidden>
+    <input type="hidden" name="credential" />
+    <button type="button" class="secondary"><partial name="_PasskeyIcon" />@T("Sign in with a passkey")</button>
+    <p class="error" role="alert" hidden></p>
+  </form>
+}
 }

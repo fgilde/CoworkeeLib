@@ -1607,5 +1607,12 @@
   "{0} mentioned you in the chat": "{0} ви спомена в чата",
   "Largest chat attachment (MB)": "Най-голям прикачен файл в чата (MB)",
   "Files above this size cannot be sent in the chat.": "По-големи файлове не могат да се изпращат в чата.",
-  "The record changed in the meantime. Check the new preview.": "Записът се промени междувременно. Провери новия преглед."
+  "The record changed in the meantime. Check the new preview.": "Записът се промени междувременно. Провери новия преглед.",
+  "Passkeys": "Ключове за достъп",
+  "Passkeys: {0}": "Ключове за достъп: {0}",
+  "Passkeys ({0})": "Ключове за достъп ({0})",
+  "Remove all passkeys": "Премахване на всички ключове за достъп",
+  "Remove every passkey of {0}? The user is signed out and can add new ones.": "Да се премахнат ли всички ключове за достъп на {0}? Потребителят ще бъде отписан и може да добави нови.",
+  "The passkeys were removed.": "Ключовете за достъп бяха премахнати.",
+  "Users add passkeys to their account and sign in with them. Off hides them; stored passkeys stay.": "Потребителите добавят ключове за достъп към профила си и влизат с тях. Изключено ги скрива; запазените ключове остават."
 }

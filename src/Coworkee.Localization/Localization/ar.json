@@ -1607,5 +1607,12 @@
   "{0} mentioned you in the chat": "{0} أشار إليك في المحادثة",
   "Largest chat attachment (MB)": "أكبر مرفق في المحادثة (ميغابايت)",
   "Files above this size cannot be sent in the chat.": "لا يمكن إرسال الملفات الأكبر في المحادثة.",
-  "The record changed in the meantime. Check the new preview.": "تغيّر السجل في هذه الأثناء. راجع المعاينة الجديدة."
+  "The record changed in the meantime. Check the new preview.": "تغيّر السجل في هذه الأثناء. راجع المعاينة الجديدة.",
+  "Passkeys": "مفاتيح المرور",
+  "Passkeys: {0}": "مفاتيح المرور: {0}",
+  "Passkeys ({0})": "مفاتيح المرور ({0})",
+  "Remove all passkeys": "إزالة كل مفاتيح المرور",
+  "Remove every passkey of {0}? The user is signed out and can add new ones.": "هل تريد إزالة كل مفاتيح المرور الخاصة بـ {0}؟ سيُسجَّل خروج المستخدم ويمكنه إضافة مفاتيح جديدة.",
+  "The passkeys were removed.": "أُزيلت مفاتيح المرور.",
+  "Users add passkeys to their account and sign in with them. Off hides them; stored passkeys stay.": "يضيف المستخدمون مفاتيح مرور إلى حساباتهم ويسجّلون الدخول بها. الإيقاف يخفيها؛ وتبقى المفاتيح المحفوظة."
 }

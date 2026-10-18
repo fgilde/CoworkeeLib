@@ -193,6 +193,16 @@
         { "text": "Direct calls of the restore endpoint send the version of a preview first: request with { Version = preview.Version }.", "find": "/api/v1/history/.*/restore", "files": [ "src/**/*.cs", "src/**/*.ts", "tests/**/*.cs" ] }
       ],
       "needsMigration": true
+    },
+    {
+      "version": "0.0.1.34",
+      "breaking": [
+        "Passkeys: the new table cw.UserPasskeys keeps the passkeys of the users (ASP.NET Core Identity schema version 3); add a migration."
+      ],
+      "manual": [
+        { "text": "Own ICoworkeeApi implementations add ResetUserPasskeysAsync.", "find": ":\\s*ICoworkeeApi\\b", "files": [ "src/**/*.cs", "tests/**/*.cs" ] }
+      ],
+      "needsMigration": true
     }
   ]
 }

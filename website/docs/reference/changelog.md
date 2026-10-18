@@ -4,8 +4,14 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Breaking changes
+
+- **Migration needed**: passkeys live in the new table `cw.UserPasskeys` (ASP.NET Core Identity schema version 3: key `CredentialId`, `Data` as JSON, cascade from `cw.Users`). Own `ICoworkeeApi` implementations add `ResetUserPasskeysAsync`.
+
 ### New
 
+- Passkeys (WebAuthn) on the auth server: *Sign in with a passkey* and the browser's autofill on the sign-in page, the account page *Passkeys* to add (at most 20), rename and remove them, *Passkeys (n)* in the security tab of the profile, *Passkeys: n* with *Remove all* in the admin sign-in panel (`POST /api/v1/identity/users/{id}/passkeys/reset`), `PasskeyCount` in `ProfileDto` and `UserDetailDto`, passkeys in the personal data export. A passkey sign-in skips two-step verification. The setting `Account.Passkeys.Enabled` (default on) and the login mode *External* turn them off; `Coworkee:Auth:Passkeys` binds `IdentityPasskeyOptions` (`ServerDomain` behind a proxy without forwarded headers). See [Passkeys](../security/passkeys.md).
+- The audit trail writes binary keys as base64url in `EntityId` instead of `System.Byte[]`.
 - `CoworkeeMigrationsOptions.AfterSeed` runs the app's own data steps after the migration and the seed, before Keycloak is reconciled.
 
 ## 0.0.1.33 (2026-10-17)

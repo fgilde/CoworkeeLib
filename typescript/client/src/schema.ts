@@ -1070,6 +1070,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/identity/users/{id}/passkeys/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/identity/users/{id}/logins": {
         parameters: {
             query?: never;
@@ -11651,6 +11695,11 @@ export interface components {
             address?: null | components["schemas"]["PostalAddress"];
             /** @default true */
             hasPassword: boolean;
+            /**
+             * Format: int32
+             * @default 0
+             */
+            passkeyCount: number | string;
         };
         PushDeviceDto: {
             /** Format: uuid */
@@ -12192,6 +12241,11 @@ export interface components {
             /** @default false */
             hasAvatar: boolean;
             logins?: null | components["schemas"]["UserLoginDto"][];
+            /**
+             * Format: int32
+             * @default 0
+             */
+            passkeyCount: number | string;
         };
         UserDto: {
             /** Format: uuid */

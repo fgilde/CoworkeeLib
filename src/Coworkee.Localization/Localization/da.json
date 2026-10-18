@@ -1607,5 +1607,12 @@
   "{0} mentioned you in the chat": "{0} nævnte dig i chatten",
   "Largest chat attachment (MB)": "Største chatvedhæftning (MB)",
   "Files above this size cannot be sent in the chat.": "Større filer kan ikke sendes i chatten.",
-  "The record changed in the meantime. Check the new preview.": "Posten er blevet ændret i mellemtiden. Tjek den nye forhåndsvisning."
+  "The record changed in the meantime. Check the new preview.": "Posten er blevet ændret i mellemtiden. Tjek den nye forhåndsvisning.",
+  "Passkeys": "Adgangsnøgler",
+  "Passkeys: {0}": "Adgangsnøgler: {0}",
+  "Passkeys ({0})": "Adgangsnøgler ({0})",
+  "Remove all passkeys": "Fjern alle adgangsnøgler",
+  "Remove every passkey of {0}? The user is signed out and can add new ones.": "Fjern alle adgangsnøgler for {0}? Brugeren logges ud og kan tilføje nye.",
+  "The passkeys were removed.": "Adgangsnøglerne blev fjernet.",
+  "Users add passkeys to their account and sign in with them. Off hides them; stored passkeys stay.": "Brugere tilføjer adgangsnøgler til deres konto og logger ind med dem. Fra skjuler dem; gemte adgangsnøgler bevares."
 }

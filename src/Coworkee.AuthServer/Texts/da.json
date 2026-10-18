@@ -145,5 +145,25 @@
   "a digit": "et ciffer",
   "a lowercase letter": "et lille bogstav",
   "an uppercase letter": "et stort bogstav",
-  "a special character": "et specialtegn"
-}
+  "a special character": "et specialtegn",
+  "Sign in with a passkey": "Log ind med en adgangsnøgle",
+  "The passkey was not accepted.": "Adgangsnøglen blev ikke godkendt.",
+  "Passkeys": "Adgangsnøgler",
+  "A passkey signs you in with your fingerprint, face or screen lock instead of a password.": "Med en adgangsnøgle logger du ind med fingeraftryk, ansigt eller skærmlås i stedet for en adgangskode.",
+  "You have no passkey yet.": "Du har endnu ingen adgangsnøgle.",
+  "Passkey": "Adgangsnøgle",
+  "Added on {0}": "Tilføjet {0}",
+  "Backed up": "Sikkerhedskopieret",
+  "Only on one device": "Kun på én enhed",
+  "Rename": "Omdøb",
+  "Remove": "Fjern",
+  "This browser cannot create passkeys.": "Denne browser kan ikke oprette adgangsnøgler.",
+  "Add a passkey": "Tilføj en adgangsnøgle",
+  "You have the most passkeys allowed. Remove one to add another.": "Du har det højeste tilladte antal adgangsnøgler. Fjern en for at tilføje en ny.",
+  "The passkey could not be saved.": "Adgangsnøglen kunne ikke gemmes.",
+  "The passkey was added.": "Adgangsnøglen blev tilføjet.",
+  "The passkey was renamed.": "Adgangsnøglen blev omdøbt.",
+  "The passkey was removed.": "Adgangsnøglen blev fjernet.",
+  "This passkey is your only way to sign in. Set a password before you remove it.": "Denne adgangsnøgle er din eneste måde at logge ind på. Angiv en adgangskode, før du fjerner den.",
+  "The passkey did not work. Try again or use another way to sign in.": "Adgangsnøglen virkede ikke. Prøv igen, eller log ind på en anden måde."
+}

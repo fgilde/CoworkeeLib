@@ -78,6 +78,9 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
     public Task ResetUserTwoFactorAsync(Guid userId, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Post, $"{Identity}/users/{userId}/two-factor/reset", null, cancellationToken);
 
+    public Task ResetUserPasskeysAsync(Guid userId, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Post, $"{Identity}/users/{userId}/passkeys/reset", null, cancellationToken);
+
     public Task RemoveUserLoginAsync(Guid userId, UserLoginDto login, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Delete, $"{Identity}/users/{userId}/logins?provider={Uri.EscapeDataString(login.LoginProvider)}&key={Uri.EscapeDataString(login.ProviderKey)}", null, cancellationToken);
 
