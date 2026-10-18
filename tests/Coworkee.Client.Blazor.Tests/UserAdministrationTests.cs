@@ -107,6 +107,41 @@ public sealed class UserAdministrationTests : ClientTestBase
     }
 
     [Fact]
+    public async Task The_sign_in_panel_counts_the_passkeys_and_removes_them_all_after_asking()
+    {
+        var user = new UserDetailDto(_bob, "bob@acme.test", "bob@acme.test", null, null, true, true, false, null, null, [], [], PasskeyCount: 2);
+        var dialogs = Render<MudDialogProvider>();
+        var panel = Render<UserSignIn>(p => p.Add(s => s.User, user).Add(s => s.CanManage, true));
+
+        panel.Find("[data-testid='user-passkeys']").TextContent.ShouldContain("Passkeys: 2");
+        var resetting = panel.Find("[data-testid='reset-passkeys']").ClickAsync(new());
+        dialogs.WaitForAssertion(() => dialogs.Markup.ShouldContain("Remove every passkey of bob@acme.test?"));
+        await dialogs.FindAll("button").Single(b => b.TextContent.Trim() == "Remove all").ClickAsync(new());
+        await resetting;
+
+        await Api.Received(1).ResetUserPasskeysAsync(_bob, Arg.Any<CancellationToken>());
+        Render<UserSignIn>(p => p.Add(s => s.User, user with { PasskeyCount = 0 }).Add(s => s.CanManage, true))
+            .FindAll("[data-testid='reset-passkeys']").ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task The_security_tab_links_to_the_passkeys_unless_they_are_off()
+    {
+        Api.GetMyProfileAsync(Arg.Any<CancellationToken>()).Returns(new ProfileDto("ada@acme.test", "Ada", null, null, PasskeyCount: 3));
+
+        var page = Render<ProfileSecurity>();
+
+        page.WaitForAssertion(() => page.Find("[data-testid='manage-passkeys']").TextContent.ShouldContain("Passkeys (3)"));
+        page.Find("[data-testid='manage-passkeys']").GetAttribute("href").ShouldBe("https://auth.test/Account/Manage/Passkeys");
+
+        Api.GetClientSettingsAsync(Arg.Any<CancellationToken>()).Returns(new Dictionary<string, string?> { [AuthSettings.PasskeysEnabled] = "false" });
+        await Services.GetRequiredService<ThemeService>().LoadAsync();
+        var off = Render<ProfileSecurity>();
+        off.WaitForAssertion(() => off.Find("[data-testid='change-email']").HasAttribute("disabled").ShouldBeFalse());
+        off.FindAll("[data-testid='manage-passkeys']").ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task The_password_dialog_shows_the_rules_that_apply()
     {
         Api.GetClientSettingsAsync(Arg.Any<CancellationToken>()).Returns(new Dictionary<string, string?>

@@ -1607,5 +1607,12 @@
   "{0} mentioned you in the chat": "{0} nämnde dig i chatten",
   "Largest chat attachment (MB)": "Största chattbilaga (MB)",
   "Files above this size cannot be sent in the chat.": "Större filer kan inte skickas i chatten.",
-  "The record changed in the meantime. Check the new preview.": "Posten har ändrats under tiden. Kontrollera den nya förhandsvisningen."
+  "The record changed in the meantime. Check the new preview.": "Posten har ändrats under tiden. Kontrollera den nya förhandsvisningen.",
+  "Passkeys": "Nycklar",
+  "Passkeys: {0}": "Nycklar: {0}",
+  "Passkeys ({0})": "Nycklar ({0})",
+  "Remove all passkeys": "Ta bort alla nycklar",
+  "Remove every passkey of {0}? The user is signed out and can add new ones.": "Ta bort alla nycklar för {0}? Användaren loggas ut och kan lägga till nya.",
+  "The passkeys were removed.": "Nycklarna togs bort.",
+  "Users add passkeys to their account and sign in with them. Off hides them; stored passkeys stay.": "Användare lägger till nycklar i sitt konto och loggar in med dem. Av döljer dem; sparade nycklar finns kvar."
 }

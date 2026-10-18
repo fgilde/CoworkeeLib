@@ -1607,5 +1607,12 @@
   "{0} mentioned you in the chat": "{0} បានលើកឡើងអ្នកក្នុងការជជែក",
   "Largest chat attachment (MB)": "ឯកសារភ្ជាប់ធំបំផុតក្នុងការជជែក (MB)",
   "Files above this size cannot be sent in the chat.": "ឯកសារធំជាងនេះមិនអាចផ្ញើក្នុងការជជែកបានទេ។",
-  "The record changed in the meantime. Check the new preview.": "កំណត់ត្រាបានផ្លាស់ប្តូរក្នុងពេលនេះ។ សូមពិនិត្យការមើលជាមុនថ្មី។"
+  "The record changed in the meantime. Check the new preview.": "កំណត់ត្រាបានផ្លាស់ប្តូរក្នុងពេលនេះ។ សូមពិនិត្យការមើលជាមុនថ្មី។",
+  "Passkeys": "សោ​ចូល",
+  "Passkeys: {0}": "សោ​ចូល៖ {0}",
+  "Passkeys ({0})": "សោ​ចូល ({0})",
+  "Remove all passkeys": "ដក​សោ​ចូល​ទាំងអស់​ចេញ",
+  "Remove every passkey of {0}? The user is signed out and can add new ones.": "ដក​សោ​ចូល​ទាំងអស់​របស់ {0} ចេញ​ឬ? អ្នក​ប្រើ​នឹង​ត្រូវ​ចាកចេញ ហើយ​អាច​បន្ថែម​សោ​ថ្មី​បាន។",
+  "The passkeys were removed.": "បាន​ដក​សោ​ចូល​ចេញ។",
+  "Users add passkeys to their account and sign in with them. Off hides them; stored passkeys stay.": "អ្នក​ប្រើ​បន្ថែម​សោ​ចូល​ទៅ​គណនី​របស់​ខ្លួន ហើយ​ចូល​ដោយ​ប្រើ​វា។ បិទ​នឹង​លាក់​វា ប៉ុន្តែ​សោ​ដែល​បាន​រក្សាទុក​នៅ​តែ​មាន។"
 }

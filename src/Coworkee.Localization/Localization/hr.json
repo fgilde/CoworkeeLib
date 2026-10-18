@@ -1607,5 +1607,12 @@
   "{0} mentioned you in the chat": "{0} te spomenuo/la u razgovoru",
   "Largest chat attachment (MB)": "Najveći privitak razgovora (MB)",
   "Files above this size cannot be sent in the chat.": "Veće datoteke ne mogu se poslati u razgovoru.",
-  "The record changed in the meantime. Check the new preview.": "Zapis se u međuvremenu promijenio. Provjeri novi pregled."
+  "The record changed in the meantime. Check the new preview.": "Zapis se u međuvremenu promijenio. Provjeri novi pregled.",
+  "Passkeys": "Pristupni ključevi",
+  "Passkeys: {0}": "Pristupni ključevi: {0}",
+  "Passkeys ({0})": "Pristupni ključevi ({0})",
+  "Remove all passkeys": "Ukloni sve pristupne ključeve",
+  "Remove every passkey of {0}? The user is signed out and can add new ones.": "Ukloniti sve pristupne ključeve korisnika {0}? Korisnik će biti odjavljen i može dodati nove.",
+  "The passkeys were removed.": "Pristupni ključevi su uklonjeni.",
+  "Users add passkeys to their account and sign in with them. Off hides them; stored passkeys stay.": "Korisnici dodaju pristupne ključeve svom računu i prijavljuju se njima. Isključeno ih skriva; spremljeni ključevi ostaju."
 }

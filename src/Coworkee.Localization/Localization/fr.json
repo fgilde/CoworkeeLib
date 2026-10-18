@@ -1607,5 +1607,12 @@
   "{0} mentioned you in the chat": "{0} vous a mentionné dans la discussion",
   "Largest chat attachment (MB)": "Pièce jointe maximale (Mo)",
   "Files above this size cannot be sent in the chat.": "Les fichiers plus grands ne peuvent pas être envoyés dans la discussion.",
-  "The record changed in the meantime. Check the new preview.": "L'enregistrement a changé entre-temps. Vérifie le nouvel aperçu."
+  "The record changed in the meantime. Check the new preview.": "L'enregistrement a changé entre-temps. Vérifie le nouvel aperçu.",
+  "Passkeys": "Clés d’accès",
+  "Passkeys: {0}": "Clés d’accès : {0}",
+  "Passkeys ({0})": "Clés d’accès ({0})",
+  "Remove all passkeys": "Supprimer toutes les clés d’accès",
+  "Remove every passkey of {0}? The user is signed out and can add new ones.": "Supprimer toutes les clés d’accès de {0} ? L’utilisateur est déconnecté et peut en ajouter de nouvelles.",
+  "The passkeys were removed.": "Les clés d’accès ont été supprimées.",
+  "Users add passkeys to their account and sign in with them. Off hides them; stored passkeys stay.": "Les utilisateurs ajoutent des clés d’accès à leur compte et se connectent avec. Désactivé les masque ; les clés enregistrées sont conservées."
 }

@@ -11,7 +11,7 @@ using MudBlazor.Extensions.Components.ObjectEdit.Options;
 
 namespace Coworkee.Client.Blazor.Pages.Admin;
 
-/// <summary>How a user signs in, for administrators: address, password, two-step verification and external sign-ins.</summary>
+/// <summary>How a user signs in, for administrators: address, password, two-step verification, passkeys and external sign-ins.</summary>
 public partial class UserSignIn
 {
     [Parameter, EditorRequired] public UserDetailDto User { get; set; } = null!;
@@ -59,6 +59,15 @@ public partial class UserSignIn
                 Icons.Material.Outlined.Security))
         {
             await RunAsync(() => Api.ResetUserTwoFactorAsync(User.Id), L["Two-step verification was reset."]);
+        }
+    }
+
+    private async Task ResetPasskeysAsync()
+    {
+        if (await Dialogs.ConfirmAsync(L["Remove all passkeys"], L["Remove every passkey of {0}? The user is signed out and can add new ones.", User.Email], L["Remove all"], L["Cancel"],
+                Icons.Material.Outlined.Key))
+        {
+            await RunAsync(() => Api.ResetUserPasskeysAsync(User.Id), L["The passkeys were removed."]);
         }
     }
 

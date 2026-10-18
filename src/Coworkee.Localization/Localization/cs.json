@@ -1607,5 +1607,12 @@
   "{0} mentioned you in the chat": "{0} vás zmínil(a) v chatu",
   "Largest chat attachment (MB)": "Největší příloha chatu (MB)",
   "Files above this size cannot be sent in the chat.": "Větší soubory nelze v chatu odeslat.",
-  "The record changed in the meantime. Check the new preview.": "Záznam se mezitím změnil. Zkontroluj nový náhled."
+  "The record changed in the meantime. Check the new preview.": "Záznam se mezitím změnil. Zkontroluj nový náhled.",
+  "Passkeys": "Přístupové klíče",
+  "Passkeys: {0}": "Přístupové klíče: {0}",
+  "Passkeys ({0})": "Přístupové klíče ({0})",
+  "Remove all passkeys": "Odebrat všechny přístupové klíče",
+  "Remove every passkey of {0}? The user is signed out and can add new ones.": "Odebrat všechny přístupové klíče uživatele {0}? Uživatel bude odhlášen a může přidat nové.",
+  "The passkeys were removed.": "Přístupové klíče byly odebrány.",
+  "Users add passkeys to their account and sign in with them. Off hides them; stored passkeys stay.": "Uživatelé přidávají přístupové klíče ke svému účtu a přihlašují se jimi. Vypnuto je skryje; uložené klíče zůstanou."
 }
