@@ -53,6 +53,7 @@ internal static partial class DocsSearch
         ("Clients, sessions and passwords", "security/clients/"),
         ("Registration and sign-in rules", "security/registration/"),
         ("Sign-in pages and designs", "security/sign-in-pages/"),
+        ("Passkeys", "security/passkeys/"),
         ("Privacy and personal data", "security/privacy/"),
         ("API keys", "security/api-keys/"),
         ("Client and layout", "ui/client/"),
