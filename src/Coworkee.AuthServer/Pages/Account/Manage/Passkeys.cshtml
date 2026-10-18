@@ -1,0 +1,54 @@
+@page
+@model Coworkee.AuthServer.Pages.Account.Manage.PasskeysModel
+@{ ViewData["Title"] = T("Passkeys"); }
+<h1>@T("Passkeys")</h1>
+<p class="hint">@T("A passkey signs you in with your fingerprint, face or screen lock instead of a password.")</p>
+@if (Model.Items.Count == 0)
+{
+  <p class="hint">@T("You have no passkey yet.")</p>
+}
+@foreach (var passkey in Model.Items)
+{
+  <div class="choice" data-testid="passkey">
+    <div style="flex:1">
+      <strong>@(passkey.Name ?? T("Passkey"))</strong>
+      <span class="hint">@T("Added on {0}", passkey.CreatedAt.ToLocalTime().ToString("d")) · @(passkey.IsBackedUp ? T("Backed up") : T("Only on one device"))</span>
+      <details>
+        <summary>@T("Rename")</summary>
+        <form method="post" asp-page-handler="Rename">
+          <input type="hidden" name="id" value="@Coworkee.AuthServer.Pages.Account.Manage.PasskeysModel.IdOf(passkey)" />
+          <input type="text" name="name" value="@passkey.Name" maxlength="100" required aria-label="@T("Name")" />
+          <button type="submit" class="secondary" style="margin-top:8px">@T("Rename")</button>
+        </form>
+      </details>
+    </div>
+    <form method="post" asp-page-handler="Remove">
+      <input type="hidden" name="id" value="@Coworkee.AuthServer.Pages.Account.Manage.PasskeysModel.IdOf(passkey)" />
+      <button type="submit" class="secondary" style="width:auto">@T("Remove")</button>
+    </form>
+  </div>
+}
+@if (Model.CanAdd)
+{
+  <p class="hint" data-passkey="unsupported">@T("This browser cannot create passkeys.")</p>
+  <form method="post" asp-page-handler="Add" data-passkey="add" data-options="@Url.Page("Passkeys", "CreationOptions")" hidden>
+    <input type="hidden" name="credential" />
+    <label for="passkey-name">@T("Name")</label>
+    <input id="passkey-name" type="text" name="name" maxlength="100" />
+    <button type="button" style="margin-top:18px"><partial name="_PasskeyIcon" />@T("Add a passkey")</button>
+    <p class="error" role="alert" hidden></p>
+  </form>
+}
+else
+{
+  <p class="hint">@T("You have the most passkeys allowed. Remove one to add another.")</p>
+}
+@if (Model.Notice is not null)
+{
+  <p class="notice" role="status">@Model.Notice</p>
+}
+@if (Model.ErrorMessage is not null)
+{
+  <p class="error" role="alert">@Model.ErrorMessage</p>
+}
+<div class="links"><a asp-page="Index">@T("Account security")</a></div>

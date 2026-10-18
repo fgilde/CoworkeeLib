@@ -100,7 +100,9 @@ internal sealed class SecuritySettingDefinitions(IOptions<IdentityOptions> ident
             .Add(SecuritySettings.PasswordExpiryDays, "Password expiry in days", SettingType.Int, [SettingScope.Global], "0",
                 description: "After so many days the sign-in asks for a new password; 0 never.")
             .Add(SecuritySettings.PasswordHistory, "Password history", SettingType.Int, [SettingScope.Global], "0",
-                description: "A new password may not be one of the last so many; 0 allows any.");
+                description: "A new password may not be one of the last so many; 0 allows any.")
+            .Add(AuthSettings.PasskeysEnabled, "Passkeys", SettingType.Bool, [SettingScope.Global], "true", visibleToClient: true,
+                description: "Users add passkeys to their account and sign in with them. Off hides them; stored passkeys stay.");
     }
 
     private static string Flag(bool value) => value ? "true" : "false";
