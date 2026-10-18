@@ -140,6 +140,70 @@ public sealed partial class AccountPagesTests
         (await PasskeyCountAsync()).ShouldBe(0);
     }
 
+    [Fact]
+    public async Task A_browser_adds_a_passkey_and_signs_in_with_it_once_the_device_verified_the_user()
+    {
+        var authenticator = new FakeAuthenticator();
+        var browser = app.Browser();
+        (await LoginAsync(browser, "admin@acme.test", Password)).StatusCode.ShouldBe(HttpStatusCode.Redirect);
+
+        var added = await AttestAsync(browser, authenticator, "Fake key");
+
+        added.Html.ShouldContain("The passkey was added.");
+        added.Html.ShouldContain("Fake key");
+        var fresh = app.Browser();
+        var unverified = await AssertAsync(fresh, authenticator, userVerified: false);
+        unverified.Response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        unverified.Html.ShouldContain("The passkey was not accepted.");
+        var signedIn = await AssertAsync(fresh, authenticator, userVerified: true);
+        signedIn.Response.StatusCode.ShouldBe(HttpStatusCode.Redirect);
+        signedIn.Response.Headers.Location!.OriginalString.ShouldBe("/Account/Apps");
+        (await app.LastLoginAsync("admin@acme.test")).ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task A_credential_of_another_user_is_refused_and_stays_his()
+    {
+        var bob = await CreateUserAsync("bob@acme.test");
+        var shared = RandomNumberGenerator.GetBytes(32);
+        await AddPasskeyAsync(bob, "Bob's key", shared);
+        var browser = app.Browser();
+        (await LoginAsync(browser, "admin@acme.test", Password)).StatusCode.ShouldBe(HttpStatusCode.Redirect);
+
+        var added = await AttestAsync(browser, new FakeAuthenticator(shared), "Taken");
+
+        added.Html.ShouldContain("The passkey could not be saved.");
+        (await PasskeyCountAsync()).ShouldBe(0);
+        (await InDbAsync(db => db.Set<IdentityUserPasskey<Guid>>().SingleAsync(p => p.CredentialId == shared, Ct))).UserId.ShouldBe(bob);
+    }
+
+    private async Task<(HttpResponseMessage Response, string Html)> AttestAsync(HttpClient browser, FakeAuthenticator authenticator, string name)
+    {
+        const string url = "/Account/Manage/Passkeys";
+        var page = await browser.GetStringAsync(url, Ct);
+        using var options = await PostWithTokenAsync(browser, url + "?handler=CreationOptions", page);
+        var credential = authenticator.Create(await options.Content.ReadAsStringAsync(Ct));
+        return await PostFromBrowserAsync(browser, url + "?handler=Add", page, new() { ["credential"] = credential, ["name"] = name });
+    }
+
+    private async Task<(HttpResponseMessage Response, string Html)> AssertAsync(HttpClient browser, FakeAuthenticator authenticator, bool userVerified)
+    {
+        var page = await browser.GetStringAsync("/Account/Login", Ct);
+        using var options = await PostWithTokenAsync(browser, "/Account/Login?handler=PasskeyOptions", page);
+        var credential = authenticator.Get(await options.Content.ReadAsStringAsync(Ct), userVerified);
+        return await PostFromBrowserAsync(browser, "/Account/Login?handler=Passkey&returnUrl=%2FAccount%2FApps", page, new() { ["credential"] = credential });
+    }
+
+    // a browser's form post carries the page's origin, which the passkey check compares with the client data
+    private static async Task<(HttpResponseMessage Response, string Html)> PostFromBrowserAsync(HttpClient browser, string url, string page, Dictionary<string, string> fields)
+    {
+        fields["__RequestVerificationToken"] = Antiforgery().Match(page).Groups[1].Value;
+        using var request = new HttpRequestMessage(HttpMethod.Post, url) { Content = new FormUrlEncodedContent(fields) };
+        request.Headers.Add("Origin", FakeAuthenticator.Origin);
+        var response = await browser.SendAsync(request, Ct);
+        return (response, await response.Content.ReadAsStringAsync(Ct));
+    }
+
     private static int PasskeyRows(string html) => html.Split("data-testid=\"passkey\"").Length - 1;
 
     private static async Task<HttpResponseMessage> PostWithTokenAsync(HttpClient browser, string url, string page)
@@ -149,14 +213,15 @@ public sealed partial class AccountPagesTests
         return await browser.SendAsync(request, Ct);
     }
 
-    private async Task<string> AddPasskeyAsync(string name)
+    private Task<string> AddPasskeyAsync(string name) => AddPasskeyAsync(_setup.AdminUserId, name, RandomNumberGenerator.GetBytes(16));
+
+    private async Task<string> AddPasskeyAsync(Guid userId, string name, byte[] id)
     {
-        var id = RandomNumberGenerator.GetBytes(16);
         await InDbAsync(async db =>
         {
             using var scope = app.App.Services.CreateScope();
             var users = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-            var user = await users.FindByIdAsync(_setup.AdminUserId.ToString());
+            var user = await users.FindByIdAsync(userId.ToString());
             var passkey = new UserPasskeyInfo(id, RandomNumberGenerator.GetBytes(77), DateTimeOffset.UtcNow, 0, ["internal"], true, true, false, [1], [2]) { Name = name };
             (await users.AddOrUpdatePasskeyAsync(user!, passkey)).Succeeded.ShouldBeTrue();
             return await scope.ServiceProvider.GetRequiredService<AuthTestDbContext>().SaveChangesAsync(Ct);

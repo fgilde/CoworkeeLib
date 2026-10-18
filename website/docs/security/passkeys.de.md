@@ -9,13 +9,13 @@ Benutzer melden sich am Auth-Server mit einem Passkey (WebAuthn) statt mit dem P
 - **Der letzte bleibt**: Wer weder Passwort noch externe Anmeldung hat, kann den letzten Passkey nicht entfernen; er ist dann der einzige Zugang.
 - **Anmelden**: Die Anmeldeseite hat unter dem Passwortformular *Mit Passkey anmelden*, und das Adressfeld bietet die Passkeys des Browsers im Autofill an (Conditional UI, `autocomplete="username webauthn"`). Browser ohne WebAuthn zeigen beides nicht.
 
-Eine Anmeldung per Passkey gilt als starke Anmeldung: Die Bestätigung in zwei Schritten folgt nicht, wie in ASP.NET Core Identity. Alles andere wird wie beim Passwort geprüft: Inaktive Konten, `Coworkee:Auth:Login:AllowedEmails`, die bestätigte Adresse und die Sperre geben dieselben Antworten, und die Anmeldung vermerkt den letzten Login.
+Eine Anmeldung per Passkey gilt als starke Anmeldung: Die Bestätigung in zwei Schritten folgt nicht, wie in ASP.NET Core Identity. Deshalb muss das Gerät den Benutzer prüfen (Fingerabdruck, Gesicht, PIN): Die Anmeldung lehnt eine Assertion ohne Benutzerverifizierung ab, unabhängig von der Konfiguration. Alles andere wird wie beim Passwort geprüft: Inaktive Konten, `Coworkee:Auth:Login:AllowedEmails`, die bestätigte Adresse und die Sperre geben dieselben Antworten, und die Anmeldung vermerkt den letzten Login.
 
 Eine Registrierung ohne Passwort gibt es nicht; ein Passkey kommt immer zu einem bestehenden Konto hinzu.
 
 ## Für Administratoren
 
-Der Anmeldebereich eines Benutzers (**Administration › Benutzer**, Benutzerseite) zeigt *Passkeys: n* und *Alle entfernen*, zum Beispiel nach einem verlorenen Gerät. Das braucht `Identity.Users.Manage`, erneuert den Security-Stamp und meldet den Benutzer damit überall ab. Dasselbe über die API:
+Der Anmeldebereich eines Benutzers (**Administration › Benutzer**, Benutzerseite) zeigt *Passkeys: n* und *Alle entfernen*, zum Beispiel nach einem verlorenen Gerät. Das braucht `Identity.Users.Manage`, erneuert den Security-Stamp und meldet den Benutzer damit überall ab. Anders als die eigene Seite des Benutzers entfernt es auch den letzten Passkey eines Kontos ohne Passwort; einem solchen Benutzer schicken Sie dann einen Passwort-Reset oder eine Einladung. Dasselbe über die API:
 
 ```http
 POST /api/v1/identity/users/{id}/passkeys/reset
@@ -48,7 +48,7 @@ Im Login-Modus *External* (nur der externe Provider, z. B. Keycloak, meldet an) 
 |---|---|
 | `ServerDomain` | die Relying-Party-ID, also der Host, zu dem die Passkeys gehören. Ohne Angabe gilt der Host der Anfrage: `localhost` in der Entwicklung, `auth.example.com` in Produktion. Setzen, wenn der Auth-Server hinter einem Proxy ohne Forwarded Headers läuft und Anfragen deshalb einen internen Host tragen. Passkeys einer Domain funktionieren auf keiner anderen; beim Umzug des Servers also beibehalten. |
 | `AuthenticatorTimeout` | wie lange der Browser auf den Authenticator wartet (Standard 5 Minuten) |
-| `UserVerificationRequirement` | `required` (Standard), `preferred` oder `discouraged` |
+| `UserVerificationRequirement` | `required` (Standard). `preferred` oder `discouraged` ändern nur, was der Browser anfragt: Die Anmeldung lehnt Passkeys, die den Benutzer nicht geprüft haben, trotzdem ab |
 | `ResidentKeyRequirement` | `preferred` (Standard), `required` oder `discouraged` |
 | `AttestationConveyancePreference`, `AuthenticatorAttachment` | gehen an den Browser; eine Herstellerliste wird nicht geprüft |
 

@@ -85,7 +85,8 @@ internal sealed class IdentityModelContributor : IModelContributor
         modelBuilder.Entity<IdentityUserPasskey<Guid>>(b =>
         {
             b.ToTable("UserPasskeys", Schema);
-            b.HasKey(p => p.CredentialId);
+            // credential ids reach 1023 bytes, beyond the 900 bytes of a clustered key on SQL Server; other providers ignore it
+            b.HasKey(p => p.CredentialId).IsClustered(false);
             b.Property(p => p.CredentialId).HasMaxLength(1024);
             b.OwnsOne(p => p.Data, data =>
             {

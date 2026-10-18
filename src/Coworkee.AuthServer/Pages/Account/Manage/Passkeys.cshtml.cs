@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using static Coworkee.AuthServer.AuthTexts;
 
@@ -55,6 +56,12 @@ public sealed class PasskeysModel(
             return await ShowAsync(user, error: T("You have the most passkeys allowed. Remove one to add another."));
         }
 
+        // the store would overwrite a passkey of somebody else with the same credential id
+        if (await db.Set<IdentityUserPasskey<Guid>>().AnyAsync(p => p.CredentialId == passkey.CredentialId && p.UserId != user.Id, HttpContext.RequestAborted))
+        {
+            return await ShowAsync(user, error: T("The passkey could not be saved."));
+        }
+
         passkey.Name = Clean(name) ?? T("Passkey");
         return await SaveAsync(user, await users.AddOrUpdatePasskeyAsync(user, passkey), T("The passkey was added."));
     });
@@ -70,7 +77,10 @@ public sealed class PasskeysModel(
         return await SaveAsync(user, await users.AddOrUpdatePasskeyAsync(user, passkey), T("The passkey was renamed."));
     });
 
-    /// <summary>The last passkey stays while it is the only way in: without a password and without an external sign-in.</summary>
+    /// <summary>
+    /// The last passkey stays while it is the only way in: without a password and without an external sign-in. Every passkey change
+    /// renews the user's concurrency stamp in the same save, so of two requests that counted at once only the first one saves.
+    /// </summary>
     public Task<IActionResult> OnPostRemoveAsync(string? id) => RunAsync(async user =>
     {
         var all = await users.GetPasskeysAsync(user);
@@ -113,8 +123,18 @@ public sealed class PasskeysModel(
 
     private async Task<IActionResult> SaveAsync(User user, IdentityResult result, string done)
     {
-        // the store leaves saving to the unit of work
-        await db.SaveChangesAsync(HttpContext.RequestAborted);
+        try
+        {
+            // the store leaves saving to the unit of work
+            await db.SaveChangesAsync(HttpContext.RequestAborted);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // another request changed the passkeys (or the user) since this one counted them
+            db.ChangeTracker.Clear();
+            return await ShowAsync((await users.GetUserAsync(User))!, error: T("The passkey could not be saved."));
+        }
+
         return await ShowAsync(user, result.Succeeded ? done : null, result.Succeeded ? null : T("The passkey could not be saved."));
     }
 

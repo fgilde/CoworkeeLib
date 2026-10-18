@@ -29,6 +29,8 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
                 $"{RegistrationOptions.Section}:Documents needs an {nameof(IRegistrationDocumentStore)}: add Coworkee.Files or register your own store.")
             .ValidateOnStart();
         services.Configure<IdentityOptions>(identity => identity.SignIn.RequireConfirmedEmail = true);
+        // a passkey skips the second step, so the device has to verify its user (overridable, but the sign-in still refuses unverified ones)
+        services.Configure<IdentityPasskeyOptions>(passkeys => passkeys.UserVerificationRequirement = "required");
         services.Configure<IdentityPasskeyOptions>(context.Configuration.GetSection(Passkeys.Section));
         services.AddScoped<Registration.AccountRegistration>();
         services.AddScoped<AuthBrandingProvider>();

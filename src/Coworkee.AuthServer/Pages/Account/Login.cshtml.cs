@@ -101,7 +101,7 @@ public sealed class LoginModel(
 
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
         var assertion = string.IsNullOrEmpty(credential) ? null : await AssertAsync(credential);
-        if (assertion is not { Succeeded: true, User: { } user, Passkey: { } passkey } || !MaySignIn(user))
+        if (assertion is not { Succeeded: true, User: { } user, Passkey: { IsUserVerified: true } passkey } || !MaySignIn(user))
         {
             ErrorMessage = T("The passkey was not accepted.");
             return Page();

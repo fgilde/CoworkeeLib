@@ -9,13 +9,13 @@ Users sign in to the auth server with a passkey (WebAuthn) instead of the passwo
 - **The last one stays**: a user without a password and without an external sign-in cannot remove the last passkey; it is the only way in.
 - **Signing in**: the sign-in page has *Sign in with a passkey* below the password form, and the address field offers the passkeys of the browser in its autofill (conditional UI, `autocomplete="username webauthn"`). Browsers without WebAuthn show neither.
 
-A passkey sign-in counts as a strong sign-in: two-step verification does not follow, as in ASP.NET Core Identity. Everything else is checked as for the password: inactive accounts, `Coworkee:Auth:Login:AllowedEmails`, the confirmed address and the lockout give the same answers, and the sign-in records the last login.
+A passkey sign-in counts as a strong sign-in: two-step verification does not follow, as in ASP.NET Core Identity. That is why the device has to verify the user (fingerprint, face, PIN): the sign-in refuses an assertion without user verification, whatever the configuration says. Everything else is checked as for the password: inactive accounts, `Coworkee:Auth:Login:AllowedEmails`, the confirmed address and the lockout give the same answers, and the sign-in records the last login.
 
 Registering without a password is not possible; a passkey always joins an existing account.
 
 ## For administrators
 
-The sign-in panel of a user (**Administration › Users**, user page) shows *Passkeys: n* and *Remove all*, for example after a lost device. It needs `Identity.Users.Manage`, renews the security stamp and so signs the user out everywhere. The same through the API:
+The sign-in panel of a user (**Administration › Users**, user page) shows *Passkeys: n* and *Remove all*, for example after a lost device. It needs `Identity.Users.Manage`, renews the security stamp and so signs the user out everywhere. Unlike the user's own page it also removes the last passkey of an account without password; send such a user a password reset or an invitation. The same through the API:
 
 ```http
 POST /api/v1/identity/users/{id}/passkeys/reset
@@ -48,7 +48,7 @@ In the login mode *External* (only the external provider, e.g. Keycloak, signs i
 |---|---|
 | `ServerDomain` | the relying party id, the host the passkeys belong to. Without it the host of the request is used: `localhost` in development, `auth.example.com` in production. Set it when the auth server runs behind a proxy without forwarded headers, so that requests carry an internal host. Passkeys of one domain do not work on another, so keep it when the server moves. |
 | `AuthenticatorTimeout` | how long the browser waits for the authenticator (default 5 minutes) |
-| `UserVerificationRequirement` | `required` (default), `preferred` or `discouraged` |
+| `UserVerificationRequirement` | `required` (default). `preferred` or `discouraged` only change what the browser is asked for: the sign-in still refuses passkeys that did not verify the user |
 | `ResidentKeyRequirement` | `preferred` (default), `required` or `discouraged` |
 | `AttestationConveyancePreference`, `AuthenticatorAttachment` | passed on to the browser; no vendor list is checked |
 

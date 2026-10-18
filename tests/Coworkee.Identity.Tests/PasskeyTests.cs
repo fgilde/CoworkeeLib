@@ -89,6 +89,36 @@ public sealed class PasskeyTests(IdentityApp app) : IAsyncLifetime
         (await app.InDbAsync(null, db => db.Set<IdentityUserPasskey<Guid>>().CountAsync(p => p.CredentialId == id, Ct))).ShouldBe(0);
     }
 
+    [Fact]
+    public async Task Of_two_requests_that_change_passkeys_at_once_only_the_first_saves()
+    {
+        var laptop = await AddAsync("Laptop");
+        var phone = await AddAsync("Phone");
+        using var actor = Coworkee.Core.Security.CurrentUserScope.Begin(new Coworkee.Core.Security.ImpersonatedUser(null, null));
+        using var first = app.App.Services.CreateScope();
+        using var second = app.App.Services.CreateScope();
+        var firstUsers = first.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var secondUsers = second.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var firstUser = (await firstUsers.FindByIdAsync(_bob.Id.ToString()))!;
+        var secondUser = (await secondUsers.FindByIdAsync(_bob.Id.ToString()))!;
+
+        (await firstUsers.RemovePasskeyAsync(firstUser, laptop)).Succeeded.ShouldBeTrue();
+        (await secondUsers.RemovePasskeyAsync(secondUser, phone)).Succeeded.ShouldBeTrue();
+        await first.ServiceProvider.GetRequiredService<IdentityTestDbContext>().SaveChangesAsync(Ct);
+
+        await Should.ThrowAsync<DbUpdateConcurrencyException>(() => second.ServiceProvider.GetRequiredService<IdentityTestDbContext>().SaveChangesAsync(Ct));
+        (await app.InDbAsync(null, db => db.Set<IdentityUserPasskey<Guid>>().CountAsync(p => p.UserId == _bob.Id, Ct))).ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task The_audit_trail_names_a_passkey_by_its_credential_id()
+    {
+        var id = await AddAsync("Laptop");
+        var expected = System.Buffers.Text.Base64Url.EncodeToString(id);
+
+        (await app.InDbAsync(null, db => db.Set<Coworkee.Infrastructure.Auditing.AuditEntry>().CountAsync(e => e.EntityId == expected, Ct))).ShouldBe(1);
+    }
+
     private Task<string?> StampAsync() => app.InDbAsync(null, db => db.Set<User>().Where(u => u.Id == _bob.Id).Select(u => u.SecurityStamp).SingleAsync(Ct));
 
     private async Task<byte[]> AddAsync(string name)
