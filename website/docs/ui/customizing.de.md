@@ -69,6 +69,16 @@ So funktioniert es: eine Sammelseite der Bibliothek (`CoworkeePageHost`, Route `
 
 Schlüssel: `users`, `user`, `groups`, `roles`, `role`, `clients`, `scopes`, `api-keys`, `settings`, `ai-settings`, `ai-tool-calls`, `audit`, `backups`, `data-transfer`, `editions`, `languages`, `translations`, `mail-settings`, `mail-templates`, `mail-template`, `mail-campaigns`, `mail-log`, `retention`, `services`, `system-status`, `tenants`, `themes`, `webhooks`, `approvals`, `assistant`, `chat`, `person`, `files`, `notifications`, `profile`, `search`, `user-settings`, mit Reporting dazu `reports`, `report`, `report-data`. Ein unbekannter Schlüssel hält die App beim Start an.
 
+### Ein eigenes Personenprofil
+
+Die Personenseite (`/people/{id}`, Schlüssel `person`) ist das Ziel des Eintrags *Profil* in jedem Avatar-Menü und der `@`-Erwähnungen im Chat. Eine App mit eigenem Personenprofil (etwa eine HR-App mit Mitarbeiterakten) schickt sie dorthin:
+
+```csharp
+options.Pages.Replace("person", "/hr/people/{Id}");   // Links gehen auf deine Seite; {Id} ist die Benutzer-Id
+```
+
+Deine Seite nimmt die Benutzer-Id entgegen und sucht ihren eigenen Datensatz. Soll deine Seite selbst unter `/people/{id}` liegen, gib ihr diese Route (`@page "/people/{Id:guid}"`): Seiten der App gewinnen gegen die der Bibliothek, die Links bleiben, wie sie sind. `options.Pages.Replace<MyPerson>("person")` rendert stattdessen deine Komponente unter der Adresse der Bibliothek.
+
 ## Ersetzen oder beitragen
 
 Nimm die Erweiterungspunkte, wenn sie passen: `INavigationContributor` für Menüeinträge, `IAppBarContributor` für die obere Leiste, `NavigationMenuOptions` zum Ausblenden und Sortieren. Ersetze eine Komponente, wenn du anderes Markup oder Verhalten brauchst.

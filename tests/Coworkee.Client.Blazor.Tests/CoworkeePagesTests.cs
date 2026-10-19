@@ -62,6 +62,15 @@ public sealed class CoworkeePagesTests
     }
 
     [Fact]
+    public void Profile_links_go_to_the_apps_own_people_page()
+    {
+        var pages = Pages(o => o.Pages.Replace("person", "/hr/employees/by-user/{Id}"));
+
+        pages.Href($"/people/{Id}").ShouldBe($"/hr/employees/by-user/{Id}");
+        Chat.ChatMarkup.Prepare($"""<a class="cw-mention" href="/people/{Id}">@Ada</a>""", pages, "restricted").ShouldContain($"href=\"/hr/employees/by-user/{Id}\"");
+    }
+
+    [Fact]
     public void A_turned_off_page_has_no_link_and_no_address()
     {
         var pages = Pages(o => o.Pages.Disable("backups"));

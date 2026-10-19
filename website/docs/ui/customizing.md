@@ -69,6 +69,16 @@ How it works: one catch-all page of the library (`CoworkeePageHost`, route `/{*P
 
 Keys: `users`, `user`, `groups`, `roles`, `role`, `clients`, `scopes`, `api-keys`, `settings`, `ai-settings`, `ai-tool-calls`, `audit`, `backups`, `data-transfer`, `editions`, `languages`, `translations`, `mail-settings`, `mail-templates`, `mail-template`, `mail-campaigns`, `mail-log`, `retention`, `services`, `system-status`, `tenants`, `themes`, `webhooks`, `approvals`, `assistant`, `chat`, `person`, `files`, `notifications`, `profile`, `search`, `user-settings`, and with reporting `reports`, `report`, `report-data`. An unknown key stops the app at start.
 
+### An own people profile
+
+The person page (`/people/{id}`, key `person`) is where the *Profile* entry of every avatar menu and the `@` mentions of the chat lead. An app with its own profile of people (an HR app with employee records, say) sends them there:
+
+```csharp
+options.Pages.Replace("person", "/hr/people/{Id}");   // links go to your page; {Id} is the user id
+```
+
+Your page takes the user id and looks up its own record. If your page should live at `/people/{id}` itself, give it that route (`@page "/people/{Id:guid}"`): pages of the app win over the library's, and the links stay as they are. `options.Pages.Replace<MyPerson>("person")` renders your component at the library's address instead.
+
 ## When to replace and when to contribute
 
 Prefer the contribution points when they fit: `INavigationContributor` for menu entries, `IAppBarContributor` for the top bar, `NavigationMenuOptions` to hide or order. Replace a component when you need different markup or behavior.
