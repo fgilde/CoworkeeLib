@@ -9,7 +9,7 @@ namespace Coworkee.Client.Blazor.Tests;
 public sealed class ChatAttachDialogTests : ClientTestBase
 {
     [Fact]
-    public async Task Loaded_files_close_the_dialog_and_removed_ones_stay_behind()
+    public async Task The_listed_files_close_the_dialog_and_removed_ones_stay_behind()
     {
         var dialogs = Render<MudDialogProvider>();
         var picked = dialogs.InvokeAsync(() => ChatAttachDialog.ShowAsync(Services.GetRequiredService<IDialogService>(), "Attach files", 1024));
@@ -17,9 +17,9 @@ public sealed class ChatAttachDialogTests : ClientTestBase
         var keep = new UploadableFile { FileName = "a.txt", ContentType = "text/plain", Data = [1] };
         var drop = new UploadableFile { FileName = "b.txt", ContentType = "text/plain", Data = [2] };
 
-        await upload.InvokeAsync(() => upload.Instance.UploadRequestDataLoaded.InvokeAsync(keep));
-        await upload.InvokeAsync(() => upload.Instance.UploadRequestDataLoaded.InvokeAsync(drop));
-        await upload.InvokeAsync(() => upload.Instance.UploadRequestRemoved.InvokeAsync(drop));
+        await upload.InvokeAsync(() => upload.Instance.Add(keep));
+        await upload.InvokeAsync(() => upload.Instance.Add(drop));
+        await upload.InvokeAsync(() => upload.Instance.Remove(drop));
         await dialogs.Find("[data-testid='chat-attach-done']").ClickAsync(new());
 
         (await picked).ShouldBe([keep]);
