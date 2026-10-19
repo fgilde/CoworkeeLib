@@ -15,8 +15,9 @@ public sealed record Error(string Code, string Message, ErrorKind Kind, IReadOnl
     public static Error Validation(IReadOnlyDictionary<string, string[]> details) =>
         new("validation", "One or more validation errors occurred.", ErrorKind.Validation, details);
 
+    /// <summary>One field's error; <see cref="Message"/> is the message itself, so callers need not dig in <see cref="Details"/>.</summary>
     public static Error Validation(string field, string message) =>
-        Validation(new Dictionary<string, string[]>(StringComparer.Ordinal) { [field] = [message] });
+        new("validation", message, ErrorKind.Validation, new Dictionary<string, string[]>(StringComparer.Ordinal) { [field] = [message] });
 
     public static Error Unauthorized(string code, string message) => new(code, message, ErrorKind.Unauthorized);
 

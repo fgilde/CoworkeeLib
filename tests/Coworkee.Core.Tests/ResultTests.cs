@@ -48,4 +48,13 @@ public sealed class ResultTests
         (await Should.ThrowAsync<ErrorException>(() => Task.FromResult<Result<int>>(error).OrThrow())).Error.ShouldBe(error);
         (await Should.ThrowAsync<ErrorException>(() => Task.FromResult(Result.Failure(error)).OrThrow())).Error.ShouldBe(error);
     }
+
+    [Fact]
+    public void A_single_field_validation_error_carries_its_message()
+    {
+        var error = Error.Validation("comment", "This transition needs a comment.");
+
+        (error.Code, error.Message, error.Kind).ShouldBe(("validation", "This transition needs a comment.", ErrorKind.Validation));
+        error.Details!["comment"].ShouldBe(["This transition needs a comment."]);
+    }
 }

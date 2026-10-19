@@ -6,6 +6,7 @@
 
 ### Breaking Changes
 
+- `Error.Validation(field, message).Message` ist die übergebene Meldung statt *One or more validation errors occurred.*; ebenso der `title` der 400-Problem-Details. `code` (`validation`) und `errors` bleiben gleich; die Überladung mit dem Dictionary behält den allgemeinen Text.
 - **Migration nötig** in Apps mit `Coworkee.Workflows`: die neue Spalte `RequestedBy` von `cw.WorkflowApprovals` (wer den Übergang in die Genehmigung ausgelöst hat). Die Eskalation einer Genehmigung mit `NotByRequester()` nimmt die antragstellende Person nicht mehr als Genehmigende auf, wenn sie in der Eskalationsrolle ist; vor der Migration gestartete Genehmigungen haben keine gespeicherte antragstellende Person und werden nicht gefiltert.
 
 ### Korrekturen

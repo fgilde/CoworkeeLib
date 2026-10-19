@@ -6,6 +6,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Breaking changes
 
+- `Error.Validation(field, message).Message` is the given message instead of *One or more validation errors occurred.*; so is the `title` of the 400 problem details. `code` (`validation`) and `errors` are unchanged; the dictionary overload keeps the generic text.
 - **Migration needed** in apps with `Coworkee.Workflows`: the new column `RequestedBy` of `cw.WorkflowApprovals` (who ran the transition into the approval). The escalation of an approval with `NotByRequester()` no longer adds the requester as an approver when they are in the escalation role; approvals started before the migration have no requester stored and are not filtered.
 
 ### Fixes
