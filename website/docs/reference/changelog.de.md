@@ -6,6 +6,7 @@
 
 ### Korrekturen
 
+- Vorlage: `App.razor` bindet das Scoped-CSS-Bundle ein, damit `.razor.css`-Dateien des Web-Clients ohne Weiteres greifen (das Logo der Startseite nutzt eine). Bestehende Apps ergänzen `<link href="@Assets["MyApp.Web.styles.css"]" rel="stylesheet" />` (mit dem Namen ihres Web-Projekts) nach dem Stylesheet von MudBlazor.Extensions.
 - API-Tests einer App mit `--event-bus rabbitMq` starten ohne Broker: neue Einstellung `Coworkee:EventBus:RabbitMq:Enabled` (Standard `true`); die Fixture der Vorlage setzt sie auf `false`, die Events erreichen die Handler im Prozess. Bestehende Apps ergänzen `builder.UseSetting("Coworkee:EventBus:RabbitMq:Enabled", "false");` in ihrer `ApiFactory`. Siehe [Testen](../testing.md).
 - `coworkee spec validate` lehnt eine Entität ab, deren Plural dem Namen gleicht (der erzeugte Feature-Namespace verdeckte den Entitätstyp, die App baute nicht).
 
