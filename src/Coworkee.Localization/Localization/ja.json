@@ -1652,5 +1652,7 @@
   "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "認証サーバーの失効・使用済み・期限切れのトークンと承認。有効なものは残ります。",
   "Save first": "先に保存してください",
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "メールテンプレートなどバージョン管理されたエンティティの古いリビジョン。バージョン履歴と復元がこれを参照します。各エンティティの最新リビジョンは残ります。",
-  "Backups with their zip files in the blob storage; the newest backup always stays.": "BLOB ストレージ内の ZIP ファイルを含むバックアップ。最新のバックアップは常に残ります。"
+  "Backups with their zip files in the blob storage; the newest backup always stays.": "BLOB ストレージ内の ZIP ファイルを含むバックアップ。最新のバックアップは常に残ります。",
+  "Previous": "前へ",
+  "2 weeks": "2週間"
 }

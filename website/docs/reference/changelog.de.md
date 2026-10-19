@@ -10,6 +10,7 @@
 
 ### Neu
 
+- `ResourceCalendar` (Blazor): Ressourcen über Tagen mit Balken, halben Tagen, Spuren, Feiertagen und Ziehen zur Tagesauswahl. Siehe [Ressourcenkalender](../ui/resource-calendar.md).
 - Workflows: `ApprovalStep.UsersFrom(context => ...)` ermittelt Genehmigende beim Start der Genehmigung aus der Entität, etwa die Führungskraft der antragstellenden Person.
 
 ### Korrekturen

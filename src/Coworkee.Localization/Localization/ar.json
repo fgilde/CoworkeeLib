@@ -1652,5 +1652,7 @@
   "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "الرموز والتفويضات الملغاة والمستخدمة والمنتهية لخادم المصادقة؛ تبقى الصالحة.",
   "Save first": "احفظ أولاً",
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "المراجعات الأقدم للكيانات ذات الإصدارات مثل قوالب البريد؛ يعتمد عليها سجل الإصدارات والاستعادة. تبقى أحدث مراجعة لكل كيان.",
-  "Backups with their zip files in the blob storage; the newest backup always stays.": "النسخ الاحتياطية مع ملفات ZIP الخاصة بها في مخزن الكائنات؛ تبقى أحدث نسخة احتياطية دائمًا."
+  "Backups with their zip files in the blob storage; the newest backup always stays.": "النسخ الاحتياطية مع ملفات ZIP الخاصة بها في مخزن الكائنات؛ تبقى أحدث نسخة احتياطية دائمًا.",
+  "Previous": "السابق",
+  "2 weeks": "أسبوعان"
 }

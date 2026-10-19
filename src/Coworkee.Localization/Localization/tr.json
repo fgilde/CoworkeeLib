@@ -1652,5 +1652,7 @@
   "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Kimlik doğrulama sunucusunun iptal edilmiş, kullanılmış ve süresi dolmuş belirteçleri ve yetkilendirmeleri; geçerli olanlar kalır.",
   "Save first": "Önce kaydedin",
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "E-posta şablonları gibi sürümlü varlıkların eski revizyonları; sürüm geçmişi ve geri yükleme bunları okur. Her varlığın en yeni revizyonu kalır.",
-  "Backups with their zip files in the blob storage; the newest backup always stays.": "Blob depolamadaki zip dosyalarıyla birlikte yedekler; en yeni yedek her zaman kalır."
+  "Backups with their zip files in the blob storage; the newest backup always stays.": "Blob depolamadaki zip dosyalarıyla birlikte yedekler; en yeni yedek her zaman kalır.",
+  "Previous": "Önceki",
+  "2 weeks": "2 hafta"
 }

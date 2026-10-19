@@ -1652,5 +1652,7 @@
   "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Token dan otorisasi server autentikasi yang dicabut, dipakai, dan kedaluwarsa; yang valid tetap ada.",
   "Save first": "Simpan dulu",
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "Revisi lama dari entitas berversi seperti templat email; riwayat versi dan pemulihan membacanya. Revisi terbaru setiap entitas tetap ada.",
-  "Backups with their zip files in the blob storage; the newest backup always stays.": "Cadangan beserta file zip-nya di penyimpanan blob; cadangan terbaru selalu tetap ada."
+  "Backups with their zip files in the blob storage; the newest backup always stays.": "Cadangan beserta file zip-nya di penyimpanan blob; cadangan terbaru selalu tetap ada.",
+  "Previous": "Sebelumnya",
+  "2 weeks": "2 minggu"
 }

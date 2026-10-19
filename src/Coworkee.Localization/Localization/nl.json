@@ -1652,5 +1652,7 @@
   "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Ingetrokken, gebruikte en verlopen tokens en autorisaties van de authenticatieserver; geldige blijven.",
   "Save first": "Eerst opslaan",
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "Oudere revisies van entiteiten met versies, zoals mailsjablonen; versiegeschiedenis en herstellen lezen ze. De nieuwste revisie van elke entiteit blijft.",
-  "Backups with their zip files in the blob storage; the newest backup always stays.": "Back-ups met hun zip-bestanden in de blobopslag; de nieuwste back-up blijft altijd."
+  "Backups with their zip files in the blob storage; the newest backup always stays.": "Back-ups met hun zip-bestanden in de blobopslag; de nieuwste back-up blijft altijd.",
+  "Previous": "Vorige",
+  "2 weeks": "2 weken"
 }

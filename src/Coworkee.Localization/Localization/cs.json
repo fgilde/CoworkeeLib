@@ -1652,5 +1652,7 @@
   "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Odvolané, použité a prošlé tokeny a autorizace autorizačního serveru; platné zůstávají.",
   "Save first": "Nejdřív uložte",
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "Starší revize verzovaných entit, například e-mailových šablon; čte z nich historie verzí a obnovení. Nejnovější revize každé entity zůstává.",
-  "Backups with their zip files in the blob storage; the newest backup always stays.": "Zálohy s jejich soubory ZIP v úložišti blobů; nejnovější záloha vždy zůstává."
+  "Backups with their zip files in the blob storage; the newest backup always stays.": "Zálohy s jejich soubory ZIP v úložišti blobů; nejnovější záloha vždy zůstává.",
+  "Previous": "Předchozí",
+  "2 weeks": "2 týdny"
 }

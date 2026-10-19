@@ -1,0 +1,111 @@
+@inherits CoworkeeComponentBase
+
+<div class="cw-cal @Class" data-testid="resource-calendar">
+    @if (ShowToolbar)
+    {
+        <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="1" Class="cw-cal-toolbar">
+            <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" aria-label="@L["Previous"]" OnClick="() => MoveAsync(-1)" data-testid="calendar-previous" />
+            <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" aria-label="@L["Next"]" OnClick="() => MoveAsync(1)" data-testid="calendar-next" />
+            <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="TodayAsync">@L["Today"]</MudButton>
+            <MudText Typo="Typo.h6" Class="ml-2" data-testid="calendar-title">@Title</MudText>
+            <MudSpacer />
+            @ToolbarContent
+            <MudToggleGroup T="CalendarSpan" Value="Span" ValueChanged="SetSpanAsync" Size="Size.Small" Outlined="true" Delimiters="true">
+                <MudToggleItem Value="CalendarSpan.Week" Text="@L["Week"]" />
+                <MudToggleItem Value="CalendarSpan.TwoWeeks" Text="@L["2 weeks"]" />
+                <MudToggleItem Value="CalendarSpan.Month" Text="@L["Month"]" />
+            </MudToggleGroup>
+        </MudStack>
+    }
+    <div class="cw-cal-scroll" style="max-height:@Height" @onmouseup="DragEndAsync" @onmouseleave="DragEndAsync">
+        <div class="cw-cal-grid @(OnRangeSelected.HasDelegate ? "cw-cal-selectable" : null)" style="grid-template-columns:minmax(180px, 220px) repeat(@(DayCount * 2), minmax(14px, 1fr))">
+            <div class="cw-cal-corner">@ResourceHeader</div>
+            @foreach (var day in Days)
+            {
+                var mark = Mark(day, null);
+                <div class="cw-cal-head @DayClass(day)" style="grid-column:@Column(day) / span 2" title="@mark?.Label">
+                    <span class="cw-cal-weekday">@WeekDay(day)</span>
+                    <span class="cw-cal-number">@day.Day</span>
+                </div>
+            }
+            @foreach (var group in Groups)
+            {
+                if (group.Key is { } name)
+                {
+                    <div class="cw-cal-group" data-testid="calendar-group">@name</div>
+                }
+                @foreach (var resource in group)
+                {
+                    var items = RowItems(resource);
+                    var lanes = Math.Max(1, items.Count == 0 ? 1 : items.Max(i => i.Lane) + 1);
+                    <div class="cw-cal-row" style="grid-template-rows:repeat(@lanes, 28px)" data-testid="calendar-row">
+                        <div class="cw-cal-resource" style="grid-row:1 / span @lanes">
+                            @if (ResourceTemplate is not null)
+                            {
+                                @ResourceTemplate(resource)
+                            }
+                            else if (resource.UserId is { } userId)
+                            {
+                                <UserCard UserId="userId" />
+                            }
+                            else
+                            {
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudAvatar Size="Size.Small" Color="Color.Primary">@Initials(resource.Title)</MudAvatar>
+                                    <div class="cw-cal-resource-text">
+                                        <MudText Typo="Typo.body2">@resource.Title</MudText>
+                                        @if (resource.Subtitle is not null)
+                                        {
+                                            <MudText Typo="Typo.caption" Class="mud-text-secondary">@resource.Subtitle</MudText>
+                                        }
+                                    </div>
+                                </MudStack>
+                            }
+                        </div>
+                        @foreach (var day in Days)
+                        {
+                            var mark = Mark(day, resource.Id);
+                            <div class="@DayClass(day, resource.Id)" style="grid-column:@Column(day) / span 2;grid-row:1 / span @lanes" title="@mark?.Label"
+                                 @onmousedown="() => DragStart(resource, day)" @onmouseenter="() => DragOver(resource, day)"></div>
+                        }
+                        @foreach (var (item, lane) in items)
+                        {
+                            <div class="cw-cal-bar" style="@BarStyle(item, lane)" title="@item.Title" data-testid="calendar-item"
+                                 @onclick="() => OnItemClick.InvokeAsync(item)" @onmousedown:stopPropagation="true">
+                                @if (item.Icon is not null)
+                                {
+                                    <MudIcon Icon="@item.Icon" Size="Size.Small" />
+                                }
+                                <span>@item.Title</span>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .cw-cal-toolbar { margin-bottom: 8px; }
+    .cw-cal-scroll { overflow: auto; border: 1px solid var(--mud-palette-lines-default); border-radius: var(--mud-default-borderradius); background: var(--mud-palette-surface); }
+    .cw-cal-grid { display: grid; min-width: max-content; user-select: none; }
+    .cw-cal-selectable .cw-cal-row .cw-cal-day { cursor: cell; }
+    .cw-cal-corner, .cw-cal-head { position: sticky; top: 0; z-index: 3; background: var(--mud-palette-surface); border-bottom: 1px solid var(--mud-palette-lines-default); }
+    .cw-cal-corner { left: 0; z-index: 4; padding: 6px 12px; font-weight: 600; display: flex; align-items: end; }
+    .cw-cal-head { display: flex; flex-direction: column; align-items: center; padding: 4px 0; font-size: .75rem; line-height: 1.1; }
+    .cw-cal-weekday { color: var(--mud-palette-text-secondary); text-transform: uppercase; font-size: .65rem; }
+    .cw-cal-number { font-weight: 600; }
+    .cw-cal-head.cw-cal-today .cw-cal-number { background: var(--mud-palette-primary); color: var(--mud-palette-primary-text); border-radius: 999px; padding: 1px 6px; }
+    .cw-cal-group { grid-column: 1 / -1; position: sticky; left: 0; padding: 6px 12px; font-weight: 600; font-size: .8rem; background: var(--mud-palette-background-gray); border-bottom: 1px solid var(--mud-palette-lines-default); }
+    .cw-cal-row { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; border-bottom: 1px solid var(--mud-palette-lines-default); padding: 3px 0; }
+    .cw-cal-resource { grid-column: 1; position: sticky; left: 0; z-index: 2; background: var(--mud-palette-surface); padding: 0 12px; display: flex; align-items: center; border-right: 1px solid var(--mud-palette-lines-default); overflow: hidden; }
+    .cw-cal-resource-text { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cw-cal-row .cw-cal-day { border-left: 1px solid color-mix(in srgb, var(--mud-palette-lines-default) 50%, transparent); }
+    .cw-cal-off { background: color-mix(in srgb, var(--mud-palette-text-secondary) 8%, transparent); }
+    .cw-cal-mark { background: color-mix(in srgb, var(--mud-palette-warning) 14%, transparent); }
+    .cw-cal-row .cw-cal-today { box-shadow: inset 2px 0 0 var(--mud-palette-primary); }
+    .cw-cal-drag { background: color-mix(in srgb, var(--mud-palette-primary) 22%, transparent) !important; }
+    .cw-cal-bar { z-index: 1; margin: 2px 1px; border-radius: 6px; color: #fff; font-size: .75rem; padding: 0 6px; display: flex; align-items: center; gap: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; cursor: pointer; box-shadow: 0 1px 2px rgba(0, 0, 0, .2); text-shadow: 0 1px 1px rgba(0, 0, 0, .35); }
+    .cw-cal-bar:hover { filter: brightness(1.08); }
+</style>

@@ -1652,5 +1652,7 @@
   "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "인증 서버의 취소·사용·만료된 토큰과 권한 부여입니다. 유효한 것은 남습니다.",
   "Save first": "먼저 저장하세요",
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "메일 템플릿처럼 버전이 관리되는 엔터티의 오래된 리비전입니다. 버전 기록과 복원이 이를 읽습니다. 각 엔터티의 최신 리비전은 남습니다.",
-  "Backups with their zip files in the blob storage; the newest backup always stays.": "Blob 저장소의 zip 파일을 포함한 백업입니다. 최신 백업은 항상 남습니다."
+  "Backups with their zip files in the blob storage; the newest backup always stays.": "Blob 저장소의 zip 파일을 포함한 백업입니다. 최신 백업은 항상 남습니다.",
+  "Previous": "이전",
+  "2 weeks": "2주"
 }

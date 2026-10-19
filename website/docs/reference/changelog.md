@@ -10,6 +10,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### New
 
+- `ResourceCalendar` (Blazor): resources against days with bars, half days, lanes, holidays and drag to select days. See [Resource calendar](../ui/resource-calendar.md).
 - Workflows: `ApprovalStep.UsersFrom(context => ...)` finds approvers from the entity when the approval starts, e.g. the manager of the requester.
 
 ### Fixes

@@ -1652,5 +1652,7 @@
   "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Tilbagekaldte, brugte og udløbne tokens og autorisationer fra godkendelsesserveren; gyldige bliver.",
   "Save first": "Gem først",
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "Ældre revisioner af versionerede entiteter som mailskabeloner; versionshistorik og gendannelse læser dem. Den nyeste revision af hver entitet bliver.",
-  "Backups with their zip files in the blob storage; the newest backup always stays.": "Sikkerhedskopier med deres zip-filer i blob-lageret; den nyeste sikkerhedskopi bliver altid."
+  "Backups with their zip files in the blob storage; the newest backup always stays.": "Sikkerhedskopier med deres zip-filer i blob-lageret; den nyeste sikkerhedskopi bliver altid.",
+  "Previous": "Forrige",
+  "2 weeks": "2 uger"
 }

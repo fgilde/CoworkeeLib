@@ -1652,5 +1652,7 @@
   "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Widerrufene, benutzte und abgelaufene Tokens und Autorisierungen des Auth-Servers; gültige bleiben.",
   "Save first": "Erst speichern",
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "Ältere Revisionen versionierter Entities wie Mail-Vorlagen; Versionshistorie und Wiederherstellen lesen sie. Die neueste Revision jeder Entity bleibt.",
-  "Backups with their zip files in the blob storage; the newest backup always stays.": "Backups mit ihren ZIP-Dateien im Blob-Speicher; das neueste Backup bleibt immer."
+  "Backups with their zip files in the blob storage; the newest backup always stays.": "Backups mit ihren ZIP-Dateien im Blob-Speicher; das neueste Backup bleibt immer.",
+  "Previous": "Zurück",
+  "2 weeks": "2 Wochen"
 }

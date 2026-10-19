@@ -1652,5 +1652,7 @@
   "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "Opozvani, iskorišteni i istekli tokeni i autorizacije poslužitelja za autentifikaciju; valjani ostaju.",
   "Save first": "Najprije spremite",
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "Starije revizije entiteta s verzijama, poput predložaka e-pošte; povijest verzija i vraćanje ih čitaju. Najnovija revizija svakog entiteta ostaje.",
-  "Backups with their zip files in the blob storage; the newest backup always stays.": "Sigurnosne kopije s njihovim zip datotekama u blob pohrani; najnovija kopija uvijek ostaje."
+  "Backups with their zip files in the blob storage; the newest backup always stays.": "Sigurnosne kopije s njihovim zip datotekama u blob pohrani; najnovija kopija uvijek ostaje.",
+  "Previous": "Prethodno",
+  "2 weeks": "2 tjedna"
 }

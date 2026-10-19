@@ -1652,5 +1652,7 @@
   "Revoked, used and expired tokens and authorizations of the auth server; valid ones stay.": "ថូខឹន និងការអនុញ្ញាតរបស់ម៉ាស៊ីនមេផ្ទៀងផ្ទាត់ដែលបានដកហូត ប្រើរួច ឬផុតកំណត់៖ ដែលនៅមានសុពលភាពនៅដដែល។",
   "Save first": "រក្សាទុកជាមុនសិន",
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "កំណែចាស់ៗរបស់អង្គភាពទិន្នន័យដែលមានកំណែ ដូចជាគំរូសំបុត្រ៖ ប្រវត្តិកំណែ និងការស្ដារអានវា។ កំណែថ្មីបំផុតរបស់អង្គភាពនីមួយៗនៅដដែល។",
-  "Backups with their zip files in the blob storage; the newest backup always stays.": "ការបម្រុងទុក ព្រមទាំងឯកសារ zip របស់វានៅក្នុងឃ្លាំង blob៖ ការបម្រុងទុកថ្មីបំផុតតែងតែនៅដដែល។"
+  "Backups with their zip files in the blob storage; the newest backup always stays.": "ការបម្រុងទុក ព្រមទាំងឯកសារ zip របស់វានៅក្នុងឃ្លាំង blob៖ ការបម្រុងទុកថ្មីបំផុតតែងតែនៅដដែល។",
+  "Previous": "មុន",
+  "2 weeks": "2 សប្តាហ៍"
 }
