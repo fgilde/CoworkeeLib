@@ -38,7 +38,7 @@ Angeboten werden nur Übergänge, deren Bedingungen erfüllt sind, und der Serve
 
 Ein Zustand mit `Approval(approved, rejected, ...)` fordert beim Betreten eine Genehmigung an:
 
-- **Genehmigende**: `Role(...)` (die Mitglieder zum Zeitpunkt des Starts) `User(...)` und `UsersFrom(context => ...)`, das die Genehmigenden beim Start aus der Entität ermittelt (etwa die Führungskraft der antragstellenden Person oder ersatzweise eine Rolle über `context.UsersInRoleAsync`). Standardmäßig reicht eine Entscheidung; `All()` wartet auf alle. Eine Ablehnung entscheidet immer. `NotByRequester()` hält die Person, die den Übergang ausgelöst hat, aus dem Kreis heraus (Vier-Augen-Prinzip).
+- **Genehmigende**: `Role(...)` (die Mitglieder zum Zeitpunkt des Starts) `User(...)` und `UsersFrom(context => ...)`, das die Genehmigenden beim Start aus der Entität ermittelt (etwa die Führungskraft der antragstellenden Person oder ersatzweise eine Rolle über `context.UsersInRoleAsync`). Standardmäßig reicht eine Entscheidung; `All()` wartet auf alle. Eine Ablehnung entscheidet immer. `NotByRequester()` hält die Person, die den Übergang ausgelöst hat, aus dem Kreis heraus (Vier-Augen-Prinzip), auch wenn bei der Eskalation die Eskalationsrolle hinzukommt.
 - **Frist**: `DueIn(...)` mit `RemindAfter(...)` (eine Erinnerung an alle, die noch nicht entschieden haben) und `EscalateTo(role)`: Bei Fristablauf kommen die Mitglieder dieser Rolle dazu, und eine Person davon entscheidet allein. `OnTimeout(state)` lässt die Genehmigung stattdessen verfallen und schaltet den Workflow weiter.
 - Nach der Entscheidung wechselt der Workflow von selbst in den genehmigten oder abgelehnten Zustand. Wer den Zustand über einen Übergang verlässt (z. B. *Withdraw*), bricht die offene Genehmigung ab.
 

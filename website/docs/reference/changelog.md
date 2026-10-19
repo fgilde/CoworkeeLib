@@ -4,6 +4,10 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Breaking changes
+
+- **Migration needed** in apps with `Coworkee.Workflows`: the new column `RequestedBy` of `cw.WorkflowApprovals` (who ran the transition into the approval). The escalation of an approval with `NotByRequester()` no longer adds the requester as an approver when they are in the escalation role; approvals started before the migration have no requester stored and are not filtered.
+
 ### Fixes
 
 - Security, workflows: the state, history, comments, transitions, decisions and realtime topic of a workflow now require that the user sees the row through its OData set (set permission, organisation, `IODataEntityFilter<T>` row filters); before, `Workflows.View` and an id were enough. Approvers of the row's open approval still see and decide it. `WorkflowEngine.LoadAsync` takes an optional `WorkflowAccess` (default `See`). See [Workflows](../modules/workflows.md#permissions).

@@ -66,6 +66,9 @@ public sealed class WorkflowApproval : Entity, IMultiTenant, IHasConcurrencyToke
 
     public bool RequiresAll { get; set; }
 
+    /// <summary>Who ran the transition into the state; kept out of the approvers with NotByRequester, at the escalation too.</summary>
+    public Guid? RequestedBy { get; set; }
+
     public ApprovalStatus Status { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }

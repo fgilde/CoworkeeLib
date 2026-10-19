@@ -38,7 +38,7 @@ Only the transitions whose guards pass are offered to the user, and the server c
 
 A state with `Approval(approved, rejected, ...)` asks for an approval when the workflow enters it:
 
-- **Approvers**: `Role(...)` (the members at the moment the approval starts) `User(...)` and `UsersFrom(context => ...)`, which finds approvers from the entity when the approval starts (for example the manager of the requester, or a fallback role through `context.UsersInRoleAsync`). One decision is enough by default; `All()` waits for every approver. A rejection always decides. `NotByRequester()` keeps the person who ran the transition out of the approvers (four eyes).
+- **Approvers**: `Role(...)` (the members at the moment the approval starts) `User(...)` and `UsersFrom(context => ...)`, which finds approvers from the entity when the approval starts (for example the manager of the requester, or a fallback role through `context.UsersInRoleAsync`). One decision is enough by default; `All()` waits for every approver. A rejection always decides. `NotByRequester()` keeps the person who ran the transition out of the approvers (four eyes), also when the escalation role joins.
 - **Deadline**: `DueIn(...)` with `RemindAfter(...)` (one reminder to whoever has not decided yet) and `EscalateTo(role)`: at the deadline the members of that role join and one of them decides alone. `OnTimeout(state)` lets the approval expire and moves the workflow on instead.
 - Once decided, the workflow moves to the approved or rejected state by itself. Leaving the state through a transition (e.g. *Withdraw*) cancels the open approval.
 

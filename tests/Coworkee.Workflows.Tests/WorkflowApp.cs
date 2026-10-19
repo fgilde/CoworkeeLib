@@ -224,6 +224,12 @@ public sealed class TestWorkflowModule : CoworkeeModule
                 e.Transition("Submit", "Draft", "Review");
                 e.State("Review").Approval("Approved", "Rejected", a => a.Role("Manager").NotByRequester().DueIn(TimeSpan.FromHours(4)).OnTimeout("Expired"));
             })
+            .Entity<Expense>("Claims", e =>
+            {
+                e.Initial("Draft");
+                e.Transition("Submit", "Draft", "Review");
+                e.State("Review").Approval("Approved", "Rejected", a => a.Role("Manager").NotByRequester().DueIn(TimeSpan.FromHours(4)).EscalateTo("Manager"));
+            })
             .Entity<Expense>("Leaves", e =>
             {
                 // the title holds the approver: stands in for "the manager of the requester"

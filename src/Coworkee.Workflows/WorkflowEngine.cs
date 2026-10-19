@@ -149,7 +149,7 @@ public sealed class WorkflowEngine(
             }
             else
             {
-                var added = (await directory.UsersInRoleAsync(step.EscalationRoles, cancellationToken)).Where(u => approval.Approvers.All(a => a.UserId != u)).ToList();
+                var added = (await directory.UsersInRoleAsync(step.EscalationRoles, cancellationToken)).Where(u => approval.Approvers.All(a => a.UserId != u) && !(step.FourEyes && u == approval.RequestedBy)).ToList();
                 // added explicitly: with its id already set EF would take a new approver found through the collection for an existing one
                 db.AddRange(added.Select(u => new WorkflowApprover { ApprovalId = approval.Id, UserId = u, Escalation = true }));
                 AddStep(subject.Item, WorkflowStepKind.Escalated, subject.Item.State, null, null, null, null);
@@ -245,6 +245,7 @@ public sealed class WorkflowEngine(
             Title = subject.Workflow.Title(subject.Entity, subject.Item.EntityId),
             Link = subject.Workflow.LinkOf?.Invoke(subject.Item.EntityId),
             RequiresAll = step.RequiresAll,
+            RequestedBy = requester,
             Status = ApprovalStatus.Pending,
             CreatedAt = now,
             DueAt = now + step.Deadline,

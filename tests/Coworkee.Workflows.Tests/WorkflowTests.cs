@@ -187,6 +187,22 @@ public sealed class WorkflowTests(WorkflowApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_escalation_keeps_the_requester_out_too()
+    {
+        var managers = await CreateRoleAsync("Manager", WorkflowPermissions.View, WorkflowPermissions.Transition);
+        var ann = await CreateUserAsync("ann@acme.test", managers);
+        var bob = await CreateUserAsync("bob@acme.test", managers);
+        (await app.As(ann.Id, _setup.TenantId).PostAsync($"{Url(_expense, "Claims")}/Submit", null, Ct)).EnsureSuccessStatusCode();
+
+        WorkflowApp.Clock.Advance(TimeSpan.FromHours(5));
+        await app.RunDeadlineJobAsync();
+
+        var status = (await Admin.GetFromJsonAsync<WorkflowStatusDto>(Url(_expense, "Claims"), Ct))!;
+        status.History.ShouldContain(s => s.Kind == WorkflowStepKind.Escalated);
+        status.Approval!.Approvers.Select(a => a.UserId).ShouldBe([bob.Id]);
+    }
+
+    [Fact]
     public async Task Approvers_can_be_found_from_the_entity_when_the_approval_starts()
     {
         var ann = await CreateUserAsync("ann@acme.test", await CreateRoleAsync("Manager", WorkflowPermissions.View));

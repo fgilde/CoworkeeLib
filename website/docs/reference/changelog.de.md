@@ -4,6 +4,10 @@
 
 ## Unveröffentlicht
 
+### Breaking Changes
+
+- **Migration nötig** in Apps mit `Coworkee.Workflows`: die neue Spalte `RequestedBy` von `cw.WorkflowApprovals` (wer den Übergang in die Genehmigung ausgelöst hat). Die Eskalation einer Genehmigung mit `NotByRequester()` nimmt die antragstellende Person nicht mehr als Genehmigende auf, wenn sie in der Eskalationsrolle ist; vor der Migration gestartete Genehmigungen haben keine gespeicherte antragstellende Person und werden nicht gefiltert.
+
 ### Korrekturen
 
 - Sicherheit, Workflows: Zustand, Historie, Kommentare, Übergänge, Entscheidungen und das Echtzeit-Topic eines Workflows verlangen jetzt, dass der Benutzer die Zeile über ihr OData-Set sieht (Berechtigung des Sets, Organisation, Zeilenfilter `IODataEntityFilter<T>`); vorher reichten `Workflows.View` und eine Id. Genehmigende der offenen Genehmigung der Zeile sehen und entscheiden sie weiterhin. `WorkflowEngine.LoadAsync` nimmt ein optionales `WorkflowAccess` (Standard `See`). Siehe [Workflows](../modules/workflows.md#berechtigungen).
