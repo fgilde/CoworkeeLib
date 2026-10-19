@@ -29,10 +29,25 @@ public sealed class ODataComputedProperties(ODataEntityRegistry registry, IEnume
         }
     }
 
-    /// <summary>Whether one of the texts (a $filter, an $orderby) names a computed property of the set the user lacks the permission of.</summary>
+    /// <summary>
+    /// Whether one of the texts (a $filter, an $orderby) names a computed or protected property of the set the user lacks the permission of,
+    /// or a protected property of another set through a navigation path (Manager/Salary).
+    /// </summary>
     // ponytail: a word match, so a text literal with the exact name also counts; parse the clauses if that ever bites
     internal async Task<bool> DeniedAsync(IServiceProvider services, Type entityType, CancellationToken cancellationToken, params string?[] texts)
     {
+        foreach (var protectedSet in registry.Entities.Where(e => e.ProtectedProperties.Count > 0))
+        {
+            var prefix = protectedSet.EntityType == entityType ? @"\b" : "/";
+            foreach (var name in await ODataEntityAccess.DeniedPropertiesAsync(services, protectedSet.EntityType, cancellationToken))
+            {
+                if (texts.Any(t => t is not null && Regex.IsMatch(t, $@"{prefix}{name}\b", RegexOptions.IgnoreCase)))
+                {
+                    return true;
+                }
+            }
+        }
+
         foreach (var property in Of(entityType).Where(p => p.Permission is not null))
         {
             if (texts.Any(t => t is not null && Regex.IsMatch(t, $@"\b{property.Name}\b", RegexOptions.IgnoreCase))

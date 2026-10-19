@@ -21,7 +21,7 @@ internal sealed class ReportQueries(IServiceProvider services, ReportSchema sche
         var granted = await GrantedAsync(cancellationToken);
         return schema.All
             .Where(s => s.Registration.Permission is null || granted.Contains(s.Registration.Permission))
-            .Select(s => s with { Fields = [.. s.Fields.Where(f => f.Permission is null || granted.Contains(f.Permission))] })
+            .Select(s => s with { Fields = [.. s.Fields.Where(f => f.Allowed(granted))] })
             .ToList();
     }
 

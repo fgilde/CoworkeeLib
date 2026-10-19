@@ -25,6 +25,8 @@ public sealed class ODataApp : DatabaseFixture
 {
     public const string ViewGadgets = "Gadgets.View";
 
+    public const string SeeCategories = "Gadgets.Categories";
+
     public WebApplication App { get; private set; } = null!;
 
     public override async ValueTask InitializeAsync()
@@ -94,7 +96,7 @@ internal sealed class GadgetModelContributor : IModelContributor
 internal sealed class GadgetPermissions : Coworkee.Application.Authorization.IPermissionDefinitionContributor
 {
     public void Define(Coworkee.Application.Authorization.PermissionDefinitionContext context) =>
-        context.Group("Gadgets", "Gadgets").Add(ODataApp.ViewGadgets, "View gadgets");
+        context.Group("Gadgets", "Gadgets").Add(ODataApp.ViewGadgets, "View gadgets").Add(ODataApp.SeeCategories, "See categories");
 }
 
 [DependsOn(typeof(CoworkeeODataModule), typeof(CoworkeeIdentityModule))]
@@ -106,7 +108,7 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.AddSingleton<Coworkee.Application.Authorization.IPermissionDefinitionContributor, GadgetPermissions>();
         context.Services.AddCoworkeeDbContext<GadgetDbContext>((provider, options) =>
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
-        context.Services.AddODataEntity<Gadget>("Gadgets", ODataApp.ViewGadgets, g => g.SerialCode);
+        context.Services.AddODataEntity<Gadget>("Gadgets", ODataApp.ViewGadgets, o => o.Hide(g => g.SerialCode).HideUnless(g => g.Category, ODataApp.SeeCategories));
         context.Services.AddScoped<IODataEntityFilter<Gadget>, HideSecretGadgets>();
         context.Services.AddGlobalSearch<Gadget>(s => s.Fields(g => g.Name, g => g.Category).Subtitle(g => g.Category).Page("/gadgets"));
         context.Services.AddODataEntity<Widget>("Widgets", ODataApp.ViewGadgets);

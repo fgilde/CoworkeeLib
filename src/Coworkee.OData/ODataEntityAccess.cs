@@ -16,6 +16,44 @@ public static class ODataEntityAccess
         services.GetRequiredService<ODataEntityRegistry>().Find(entityType)?.Permission is not { } permission
         || await services.GetRequiredService<IPermissionChecker>().IsGrantedAsync(permission, cancellationToken);
 
+    /// <summary>The properties of the set protected with HideUnless whose permission the current user lacks.</summary>
+    public static async Task<IReadOnlySet<string>> DeniedPropertiesAsync(IServiceProvider services, Type entityType, CancellationToken cancellationToken)
+    {
+        var denied = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (services.GetRequiredService<ODataEntityRegistry>().Find(entityType) is not { ProtectedProperties.Count: > 0 } registration)
+        {
+            return denied;
+        }
+
+        var permissions = services.GetRequiredService<IPermissionChecker>();
+        foreach (var (name, permission) in registration.ProtectedProperties)
+        {
+            if (!await permissions.IsGrantedAsync(permission, cancellationToken))
+            {
+                denied.Add(name);
+            }
+        }
+
+        return denied;
+    }
+
+    internal const string DeniedItem = "coworkee:odata:denied-properties";
+
+    /// <summary>The denied properties of every set with protected properties, by EDM type name, for the serializer of the request.</summary>
+    internal static async Task<Dictionary<string, IReadOnlySet<string>>> DeniedByTypeAsync(IServiceProvider services, CancellationToken cancellationToken)
+    {
+        var denied = new Dictionary<string, IReadOnlySet<string>>(StringComparer.Ordinal);
+        foreach (var entity in services.GetRequiredService<ODataEntityRegistry>().Entities.Where(e => e.ProtectedProperties.Count > 0))
+        {
+            if (await DeniedPropertiesAsync(services, entity.EntityType, cancellationToken) is { Count: > 0 } names)
+            {
+                denied[entity.EntityType.FullName!] = names;
+            }
+        }
+
+        return denied;
+    }
+
     /// <param name="withDeleted">Keeps soft deleted rows, so a sync can tell clients what vanished.</param>
     public static async Task<IQueryable<TEntity>> VisibleAsync<TEntity>(IServiceProvider services, CancellationToken cancellationToken, bool withDeleted = false)
         where TEntity : class
@@ -34,7 +72,7 @@ public static class ODataEntityAccess
         return query;
     }
 
-    /// <summary>Visible rows narrowed by an OData $filter, parsed against the EDM: hidden properties, unknown names and computed properties without their permission fail with an ODataException.</summary>
+    /// <summary>Visible rows narrowed by an OData $filter, parsed against the EDM: hidden properties, unknown names and computed or protected properties without their permission fail with an ODataException.</summary>
     public static async Task<IQueryable<TEntity>> FilteredAsync<TEntity>(IServiceProvider services, string? filter, CancellationToken cancellationToken)
         where TEntity : class
     {

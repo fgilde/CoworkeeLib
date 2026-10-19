@@ -24,8 +24,9 @@ internal sealed class QueryDataHandler(IServiceProvider services, ODataEntityReg
             if (await ODataEntityAccess.IsGrantedAsync(services, entity.EntityType, cancellationToken))
             {
                 var type = (IEdmStructuredType)model.FindDeclaredType(entity.EntityType.FullName);
+                var denied = await ODataEntityAccess.DeniedPropertiesAsync(services, entity.EntityType, cancellationToken);
                 sets.Add(new DataSetInfo(entity.EntitySet, type.StructuralProperties()
-                    .Where(p => p.Type.IsPrimitive() || p.Type.IsEnum())
+                    .Where(p => (p.Type.IsPrimitive() || p.Type.IsEnum()) && !denied.Contains(p.Name))
                     .ToDictionary(p => p.Name, p => p.Type.IsEnum() ? string.Join("|", p.Type.AsEnum().EnumDefinition().Members.Select(m => m.Name)) : p.Type.ShortQualifiedName())));
             }
         }
@@ -68,14 +69,20 @@ internal sealed class QueryDataHandler(IServiceProvider services, ODataEntityReg
         http.Request.QueryString = QueryString.Create(
             new[] { KeyValuePair.Create("$filter", query.Filter), KeyValuePair.Create("$orderby", query.OrderBy) }.Where(o => !string.IsNullOrWhiteSpace(o.Value)));
         var options = http.Request.ODataQueryOptions<TEntity>(model);
+        if (await services.GetRequiredService<Computed.ODataComputedProperties>().DeniedAsync(services, typeof(TEntity), cancellationToken, query.Filter, query.OrderBy))
+        {
+            throw new ODataException("The filter or order names a field you may not read.");
+        }
+
         var visible = (await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken)).ApplyODataFilter(options);
         var total = await visible.LongCountAsync(cancellationToken);
         var rows = await visible.ApplyODataOrderBy(options).Skip(Math.Max(0, query.Skip)).Take(Math.Clamp(query.Top, 1, MaxRows)).ToListAsync(cancellationToken);
         var fields = query.Select?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
-        var columns = DataExport.Columns<TEntity>(model).Where(c => fields.Length == 0 || fields.Contains(c.Name, StringComparer.OrdinalIgnoreCase)).ToList();
+        var all = DataExport.Columns<TEntity>(model, await ODataEntityAccess.DeniedPropertiesAsync(services, typeof(TEntity), cancellationToken));
+        var columns = all.Where(c => fields.Length == 0 || fields.Contains(c.Name, StringComparer.OrdinalIgnoreCase)).ToList();
         if (fields.Length > columns.Count)
         {
-            throw new ODataException($"Unknown field in select; the fields are {string.Join(", ", DataExport.Columns<TEntity>(model).Select(c => c.Name))}.");
+            throw new ODataException($"Unknown field in select; the fields are {string.Join(", ", all.Select(c => c.Name))}.");
         }
 
         return new DataPage([.. rows.Select(row => (IReadOnlyDictionary<string, object?>)columns.ToDictionary(c => c.Name, c => c.GetValue(row)))], total);

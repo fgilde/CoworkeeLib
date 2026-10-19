@@ -140,6 +140,7 @@ public sealed class AuditTestDbContext(DbContextOptions<AuditTestDbContext> opti
 internal sealed class NotesModel : IModelContributor, IVersionedTypeContributor, IPermissionDefinitionContributor
 {
     public const string Manage = "Test.Notes.Manage";
+    public const string Priorities = "Test.Notes.Priorities";
 
     public void Apply(ModelBuilder modelBuilder)
     {
@@ -149,7 +150,7 @@ internal sealed class NotesModel : IModelContributor, IVersionedTypeContributor,
 
     public void Define(VersionedTypeContext context) => context.Add<Note>("Note", Manage);
 
-    public void Define(PermissionDefinitionContext context) => context.Group("Test", "Test").Add(Manage, "Manage notes");
+    public void Define(PermissionDefinitionContext context) => context.Group("Test", "Test").Add(Manage, "Manage notes").Add(Priorities, "See priorities");
 }
 
 [DependsOn(typeof(CoworkeeAuditingModule), typeof(CoworkeeIdentityModule))]
@@ -162,7 +163,7 @@ public sealed class TestAuditModule : CoworkeeModule
         context.Services.AddSingleton<IVersionedTypeContributor>(sp => sp.GetRequiredService<NotesModel>());
         context.Services.AddSingleton<IPermissionDefinitionContributor>(sp => sp.GetRequiredService<NotesModel>());
         context.Services.AddMessagingFromAssembly(typeof(TestAuditModule).Assembly);
-        context.Services.AddODataEntity<Memo>("Memos", NotesModel.Manage);
+        context.Services.AddODataEntity<Memo>("Memos", NotesModel.Manage, o => o.HideUnless(m => m.Priority, NotesModel.Priorities));
         context.Services.AddEntityHistory("Memos", NotesModel.Manage, (Memo m) => new SaveMemo(m.Id, m.Text, m.Priority));
         context.Services.AddCoworkeeDbContext<AuditTestDbContext>((provider, options) =>
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));

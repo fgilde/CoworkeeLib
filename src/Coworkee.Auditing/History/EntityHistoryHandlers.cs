@@ -168,7 +168,9 @@ internal sealed class EntityHistoryHandlers(
         }
 
         var type = db.Model.FindEntityType(registration.EntityType)!;
-        var hidden = services.GetService<ODataEntityRegistry>()?.Find(registration.EntityType)?.HiddenProperties ?? [];
+        // properties the user may not read neither show their changes nor go back
+        var hidden = (services.GetService<ODataEntityRegistry>()?.Find(registration.EntityType)?.HiddenProperties ?? [])
+            .Concat(await ODataEntityAccess.DeniedPropertiesAsync(services, registration.EntityType, cancellationToken)).ToList();
         var entries = await (await AuditAsync(cancellationToken))
             .Where(e => e.EntityType == registration.EntityType.Name && e.EntityId == id.ToString())
             .OrderBy(e => e.OccurredAt).ThenBy(e => e.Id)

@@ -14,6 +14,17 @@ public static class ODataServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>An OData set whose properties <paramref name="configure"/> hides, e.g. <c>o =&gt; o.HideUnless(e =&gt; e.Salary, HrPermissions.Salaries)</c>.</summary>
+    public static IServiceCollection AddODataEntity<TEntity>(
+        this IServiceCollection services, string entitySet, string? permission, Action<ODataEntityOptions<TEntity>> configure)
+        where TEntity : class
+    {
+        var options = new ODataEntityOptions<TEntity>();
+        configure(options);
+        services.Registry().Add(new ODataEntityRegistration(typeof(TEntity), entitySet, permission, options.Hidden) { ProtectedProperties = options.Protected });
+        return services;
+    }
+
     /// <summary>Sets how the facet on a property looks and combines its values, like [FacetBehavior] on the property; this call wins.</summary>
     public static IServiceCollection ConfigureFacet<TEntity>(this IServiceCollection services, Expression<Func<TEntity, object?>> property, Action<Contracts.Data.FacetBehaviorAttribute> configure)
         where TEntity : class
@@ -57,7 +68,7 @@ public static class ODataServiceCollectionExtensions
         return services;
     }
 
-    private static string PropertyName<TEntity>(Expression<Func<TEntity, object?>> property) =>
+    internal static string PropertyName<TEntity>(Expression<Func<TEntity, object?>> property) =>
         (property.Body is UnaryExpression { Operand: MemberExpression boxed } ? boxed : property.Body as MemberExpression)?.Member.Name
         ?? throw new ArgumentException($"{property} does not select a property.", nameof(property));
 

@@ -51,11 +51,25 @@ public sealed class QueryAccessTests(ReportingApp app) : ReportingTestBase(app)
 
         var sources = await asSeller.GetFromJsonAsync<List<ReportSourceDto>>("/api/v1/reports/sources", Ct);
         var sales = sources.ShouldHaveSingleItem();
-        sales.Fields.Select(f => f.Path).ShouldBe(["Region", "Status", "Amount", "Quantity", "SoldAt", "ShippedOn", "ShopperId", "Id"], ignoreOrder: true);
+        sales.Fields.Select(f => f.Path).ShouldBe(["Region", "Status", "Amount", "SoldAt", "ShippedOn", "ShopperId", "Id"], ignoreOrder: true);
         sales.Fields.Single(f => f.Path == "Status").Members.ShouldBe(["Open", "Shipped", "Cancelled"]);
 
         var all = await Admin.GetFromJsonAsync<List<ReportSourceDto>>("/api/v1/reports/sources", Ct);
         all!.Single(s => s.EntitySet == "Sales").Fields.Single(f => f.Path == "Shopper/Name").Label.ShouldBe("Shopper name");
+    }
+
+    [Fact]
+    public async Task A_protected_field_needs_its_permission()
+    {
+        var seller = App.As((await CreateUserAsync("plain@acme.test", ReportPermissions.View, ReportingApp.ViewSales)).Id, Setup.TenantId);
+        var counter = App.As((await CreateUserAsync("counter@acme.test", ReportPermissions.View, ReportingApp.ViewSales, ReportingApp.SeeQuantities)).Id, Setup.TenantId);
+        var sum = new ReportQueryRequest("Sales", Aggregates: [new(AggregateFunction.Sum, "Quantity")]);
+
+        (await seller.PostAsJsonAsync("/api/v1/reports/query", sum, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await seller.PostAsJsonAsync("/api/v1/reports/query", new ReportQueryRequest("Sales", GroupBy: new ReportGroupBy("Quantity")), Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await seller.PostAsJsonAsync("/api/v1/reports/query", new ReportQueryRequest("Sales", Filter: "Quantity gt 5"), Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await QueryAsync(sum, counter)).Rows.Single().Values[0].ShouldBe(Visible.Sum(s => s.Quantity));
+        (await counter.GetFromJsonAsync<List<ReportSourceDto>>("/api/v1/reports/sources", Ct))!.Single().Fields.Select(f => f.Path).ShouldContain("Quantity");
     }
 
     [Fact]

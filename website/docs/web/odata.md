@@ -65,6 +65,31 @@ Internal fields stay out of the model, so they are neither returned nor filterab
 services.AddODataEntity<Document>("Documents", DocumentPermissions.Documents.View, d => d.BlobKey);
 ```
 
+### Properties behind a permission
+
+Some fields are for some users only, salaries for HR for example. `HideUnless` keeps a property in the model but out of reach of users without the permission:
+
+```csharp
+services.AddODataEntity<Employee>("Employees", HrPermissions.Employees.View, o => o
+    .Hide(e => e.PasswordResetToken)
+    .HideUnless(e => e.Salary, HrPermissions.Salaries)
+    .HideUnless(e => e.BirthDate, HrPermissions.PersonalData));
+```
+
+For a user without the permission:
+
+- lists and single reads leave the property out (make it nullable in the client's DTO, so it reads as empty and not as `0`);
+- `$filter`, `$orderby`, `$select`, `$expand`, `$apply`, `$compute` and facet filters naming it answer `403`, also through a navigation (`Manager/Salary`);
+- its facet group is left out;
+- exports leave the column out and refuse filters on it;
+- reports neither list the field nor group, aggregate or filter by it;
+- the global search does not match on it (a `Title` or `Subtitle` function of your own must not show it either);
+- the assistant's `list_data_sets` and `query_data` neither list nor return nor filter it;
+- the entity history leaves its changes out and a restore does not touch it;
+- webhooks of an endpoint whose owner lacks the permission leave it out.
+
+The check is per permission, not per row. The admin audit log (`Audit.View`) still shows every change.
+
 ## From the Blazor client
 
 `IODataClient` builds the URL and reads values, count and facets:

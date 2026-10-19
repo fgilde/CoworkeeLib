@@ -65,6 +65,31 @@ Interne Felder bleiben aus dem Modell, sie werden weder ausgeliefert noch sind s
 services.AddODataEntity<Document>("Documents", DocumentPermissions.Documents.View, d => d.BlobKey);
 ```
 
+### Eigenschaften hinter einer Berechtigung
+
+Manche Felder sind nur für manche Benutzer, Gehälter etwa für die Personalabteilung. `HideUnless` behält eine Eigenschaft im Modell, hält sie aber von Benutzern ohne die Berechtigung fern:
+
+```csharp
+services.AddODataEntity<Employee>("Employees", HrPermissions.Employees.View, o => o
+    .Hide(e => e.PasswordResetToken)
+    .HideUnless(e => e.Salary, HrPermissions.Salaries)
+    .HideUnless(e => e.BirthDate, HrPermissions.PersonalData));
+```
+
+Für einen Benutzer ohne die Berechtigung:
+
+- Listen und Einzelabrufe lassen die Eigenschaft weg (im DTO des Clients nullable machen, damit sie leer ankommt und nicht als `0`);
+- `$filter`, `$orderby`, `$select`, `$expand`, `$apply`, `$compute` und Facettenfilter, die sie nennen, antworten mit `403`, auch über eine Navigation (`Manager/Salary`);
+- ihre Facettengruppe fehlt;
+- Exporte lassen die Spalte weg und lehnen Filter darauf ab;
+- Berichte bieten das Feld nicht an und gruppieren, aggregieren und filtern nicht danach;
+- die globale Suche findet nichts über sie (eigene `Title`- oder `Subtitle`-Funktionen dürfen sie auch nicht zeigen);
+- `list_data_sets` und `query_data` des Assistenten listen, liefern und filtern sie nicht;
+- die Entity-Historie lässt ihre Änderungen weg, und eine Wiederherstellung fasst sie nicht an;
+- Webhooks eines Endpunkts, dessen Besitzer die Berechtigung fehlt, lassen sie weg.
+
+Geprüft wird pro Berechtigung, nicht pro Zeile. Das Audit-Log für Admins (`Audit.View`) zeigt weiterhin jede Änderung.
+
 ## Aus dem Blazor-Client
 
 `IODataClient` baut die URL und liest Werte, Anzahl und Facetten:

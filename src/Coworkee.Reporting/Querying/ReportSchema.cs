@@ -16,8 +16,13 @@ internal sealed record ReportSource(ODataEntityRegistration Registration, string
     public ReportField? Find(string? path) => Fields.FirstOrDefault(f => string.Equals(f.Path, path, StringComparison.OrdinalIgnoreCase));
 }
 
-internal sealed record ReportField(string Path, string Label, ReportFieldKind Kind, IReadOnlyList<PropertyInfo> Chain, string? EnumType, string? Permission)
+/// <param name="Permission">The permission of the set a navigation leads to.</param>
+/// <param name="PropertyPermission">The permission a protected property needs (HideUnless).</param>
+internal sealed record ReportField(string Path, string Label, ReportFieldKind Kind, IReadOnlyList<PropertyInfo> Chain, string? EnumType, string? Permission, string? PropertyPermission = null)
 {
+    public bool Allowed(IReadOnlySet<string> granted) =>
+        (Permission is null || granted.Contains(Permission)) && (PropertyPermission is null || granted.Contains(PropertyPermission));
+
     public Type ClrType => Chain[^1].PropertyType;
 
     public bool IsNumeric => Kind is ReportFieldKind.Integer or ReportFieldKind.Number;
@@ -45,13 +50,13 @@ internal sealed partial class ReportSchema(ODataEntityRegistry registry, IEdmMod
         var fields = new List<ReportField>();
         if (model.FindDeclaredType(entity.EntityType.FullName) is IEdmEntityType type)
         {
-            fields.AddRange(Scalars(type, entity.EntityType, [], null, null));
+            fields.AddRange(Scalars(type, entity.EntityType, [], null, null, entity.ProtectedProperties));
             foreach (var navigation in type.NavigationProperties().Where(n => n.TargetMultiplicity() != EdmMultiplicity.Many))
             {
                 var property = entity.EntityType.GetProperty(navigation.Name);
                 if (property is not null && registry.Find(property.PropertyType) is { } target && model.FindDeclaredType(property.PropertyType.FullName) is IEdmEntityType targetType)
                 {
-                    fields.AddRange(Scalars(targetType, property.PropertyType, [property], Label(property), target.Permission));
+                    fields.AddRange(Scalars(targetType, property.PropertyType, [property], Label(property), target.Permission, target.ProtectedProperties));
                 }
             }
         }
@@ -59,7 +64,8 @@ internal sealed partial class ReportSchema(ODataEntityRegistry registry, IEdmMod
         return new ReportSource(entity, Humanize(entity.EntitySet), fields);
     }
 
-    private static IEnumerable<ReportField> Scalars(IEdmEntityType type, Type clrType, PropertyInfo[] prefix, string? prefixLabel, string? permission)
+    private static IEnumerable<ReportField> Scalars(
+        IEdmEntityType type, Type clrType, PropertyInfo[] prefix, string? prefixLabel, string? permission, IReadOnlyDictionary<string, string> protectedProperties)
     {
         foreach (var edm in type.StructuralProperties().Where(p => p.Type.IsPrimitive() || p.Type.IsEnum()))
         {
@@ -75,7 +81,8 @@ internal sealed partial class ReportSchema(ODataEntityRegistry registry, IEdmMod
                 kind,
                 [.. prefix, property],
                 edm.Type.IsEnum() ? edm.Type.FullName() : null,
-                permission);
+                permission,
+                protectedProperties.GetValueOrDefault(property.Name));
         }
     }
 

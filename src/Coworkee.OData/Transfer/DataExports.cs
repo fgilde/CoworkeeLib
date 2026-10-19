@@ -31,7 +31,17 @@ public sealed class DataExports(IServiceProvider services, CoworkeeDbContext db,
             return Results.Forbid();
         }
 
-        if (await WriteAsync(entity, query, options.Value.BackgroundExportRows, cancellationToken) is { } file)
+        ExportFile? file;
+        try
+        {
+            file = await WriteAsync(entity, query, options.Value.BackgroundExportRows, cancellationToken);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Results.Forbid();
+        }
+
+        if (file is not null)
         {
             return Results.File(file.Content, file.ContentType, file.Name);
         }

@@ -27,6 +27,7 @@ public sealed class ReportingApp : DatabaseFixture
 {
     public const string ViewSales = "Sales.View";
     public const string ViewShoppers = "Shoppers.View";
+    public const string SeeQuantities = "Sales.Quantities";
 
     public WebApplication App { get; private set; } = null!;
 
@@ -111,7 +112,7 @@ internal sealed class SalesModelContributor : IModelContributor
 internal sealed class SalesPermissions : Coworkee.Application.Authorization.IPermissionDefinitionContributor
 {
     public void Define(Coworkee.Application.Authorization.PermissionDefinitionContext context) =>
-        context.Group("Sales", "Sales").Add(ReportingApp.ViewSales, "View sales").Add(ReportingApp.ViewShoppers, "View shoppers");
+        context.Group("Sales", "Sales").Add(ReportingApp.ViewSales, "View sales").Add(ReportingApp.ViewShoppers, "View shoppers").Add(ReportingApp.SeeQuantities, "See quantities");
 }
 
 /// <summary>Rows of the region "Hidden" never leave the server, like an app's row filter.</summary>
@@ -130,7 +131,7 @@ public sealed class SalesReportingModule : CoworkeeModule
         context.Services.AddSingleton<Coworkee.Application.Authorization.IPermissionDefinitionContributor, SalesPermissions>();
         context.Services.AddCoworkeeDbContext<ReportingTestDbContext>((provider, options) =>
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
-        context.Services.AddODataEntity<Sale>("Sales", ReportingApp.ViewSales, s => s.Secret);
+        context.Services.AddODataEntity<Sale>("Sales", ReportingApp.ViewSales, o => o.Hide(s => s.Secret).HideUnless(s => s.Quantity, ReportingApp.SeeQuantities));
         context.Services.AddODataEntity<Shopper>("Shoppers", ReportingApp.ViewShoppers);
         context.Services.AddScoped<IODataEntityFilter<Sale>, HideHiddenRegion>();
     }

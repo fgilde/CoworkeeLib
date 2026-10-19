@@ -18,16 +18,24 @@ public class EntityODataController<TEntity> : GenericODataController<TEntity>, I
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
         var query = Request.Query;
+        var denied = await ODataEntityAccess.DeniedByTypeAsync(HttpContext.RequestServices, HttpContext.RequestAborted);
         if (await Get<Computed.ODataComputedProperties>().DeniedAsync(HttpContext.RequestServices, typeof(TEntity), HttpContext.RequestAborted,
-                query["$filter"], query["$orderby"], FacetFilters()))
+                query["$filter"], query["$orderby"], query["$select"], query["$apply"], query["$compute"], FacetFilters())
+            || Names(query["$expand"], denied.Values.SelectMany(n => n)))
         {
             context.Result = new Microsoft.AspNetCore.Mvc.ForbidResult();
             return;
         }
 
+        HttpContext.Items[ODataEntityAccess.DeniedItem] = denied;
+
         _visible = await ODataEntityAccess.VisibleAsync<TEntity>(HttpContext.RequestServices, HttpContext.RequestAborted);
         await next();
     }
+
+    // ponytail: a word match on the whole $expand, as for $filter; parse the clause if a literal ever collides
+    private static bool Names(string? text, IEnumerable<string> names) =>
+        !string.IsNullOrEmpty(text) && names.Any(n => System.Text.RegularExpressions.Regex.IsMatch(text, $@"\b{n}\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase));
 
     private string? FacetFilters() => Coworkee.Contracts.Data.FacetContextDto.Decode(Request.Headers[Coworkee.Contracts.Data.FacetContextDto.Header]) is { } facets
         ? string.Join(" ", facets.Groups.Values.Prepend(facets.Base))

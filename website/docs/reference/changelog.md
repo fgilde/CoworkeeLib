@@ -12,6 +12,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### New
 
+- OData sets: `AddODataEntity<T>(set, permission, o => o.Hide(...).HideUnless(e => e.Salary, permission))` shows a property only to users with the permission; lists, single reads, `$filter`/`$orderby`/`$select`/`$expand`, facets, exports, reports, the global search, the assistant's data tools, the entity history and webhooks respect it. `ODataEntityRegistration.ProtectedProperties`, `ODataEntityAccess.DeniedPropertiesAsync`. See [OData](../web/odata.md#properties-behind-a-permission).
 - `ISystemDispatcher.SendAsync(request, permissions, ct)` runs a request as the system in the caller's organisation, with exactly the given permissions and in its own scope (audit: *system*); `CurrentUserScope.BeginSystem(tenantId, permissions)` and `SystemActor` underneath. `AnonymousCurrentUser` and `TestCurrentUser` now pass on the ambient `ClientId`/`ClientPermissions`. See [Permissions](../security/permissions.md#acting-as-the-system).
 - `CoworkeeDataTable`: `RowHref` (`Func<T, string?>`) and `OnRowClick` (`EventCallback<T>`) open a row by clicking it (not its buttons or checkbox) or by its open button in the action column (keyboard, real link for `RowHref`). See [Data tables](../ui/data-table.md#row-links).
 - `ResourceCalendar` (Blazor): resources against days with bars, half days, lanes, holidays and drag to select days. See [Resource calendar](../ui/resource-calendar.md).

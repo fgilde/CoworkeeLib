@@ -23,7 +23,8 @@ internal static class FacetResponse
         var registry = services.GetRequiredService<ODataEntityRegistry>();
         var context = FacetContextDto.Decode(http.Request.Headers[FacetContextDto.Header]);
         var result = new List<FacetGroupDto>(facets.Count);
-        foreach (var facet in facets)
+        var denied = await ODataEntityAccess.DeniedPropertiesAsync(services, typeof(T), cancellationToken);
+        foreach (var facet in facets.Where(f => !denied.Contains(f.Field)))
         {
             var own = context is not null && context.Groups.ContainsKey(facet.Key) && context.Combines?.GetValueOrDefault(facet.Key) != FacetCombine.All;
             var rows = own ? Filter(visible, context!.Without(facet.Key), services) : filtered;

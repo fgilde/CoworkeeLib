@@ -36,6 +36,13 @@ public static class DataExport
         http.ODataFeature().RoutePrefix = CoworkeeODataModule.RoutePrefix;
         http.Request.QueryString = query;
         var options = http.Request.ODataQueryOptions<TEntity>(model);
+        var denied = await ODataEntityAccess.DeniedPropertiesAsync(services, typeof(TEntity), cancellationToken);
+        if (await services.GetRequiredService<Computed.ODataComputedProperties>().DeniedAsync(services, typeof(TEntity), cancellationToken,
+                http.Request.Query["$filter"], http.Request.Query["$orderby"]))
+        {
+            throw new UnauthorizedAccessException("The export filters or sorts on a property the user may not read.");
+        }
+
         var rows = (await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken)).ApplyODataSearch(options.Search)!
             .ApplyODataFilter(options)
             .ApplyODataOrderBy(options);
@@ -46,7 +53,7 @@ public static class DataExport
 
         var list = await rows.Take(services.GetRequiredService<IOptions<CoworkeeODataOptions>>().Value.MaxExportRows).ToListAsync(cancellationToken);
         var wanted = http.Request.Query["columns"].ToString().Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        var all = Columns<TEntity>(model);
+        var all = Columns<TEntity>(model, denied);
         var columns = wanted.Length == 0 ? all : [.. wanted.Select(w => all.FirstOrDefault(c => string.Equals(c.Name, w, StringComparison.OrdinalIgnoreCase))).OfType<PropertyInfo>()];
         return Format(http.Request.Query["format"]) switch
         {
@@ -56,13 +63,14 @@ public static class DataExport
         };
     }
 
-    internal static List<PropertyInfo> Columns<TEntity>(IEdmModel model)
+    /// <summary>The exportable properties of the EDM type, without <paramref name="denied"/> ones.</summary>
+    internal static List<PropertyInfo> Columns<TEntity>(IEdmModel model, IReadOnlySet<string> denied)
     {
         var type = (IEdmStructuredType)model.FindDeclaredType(typeof(TEntity).FullName);
         return
         [
             .. type.StructuralProperties()
-                .Where(p => p.Type.IsPrimitive() || p.Type.IsEnum())
+                .Where(p => (p.Type.IsPrimitive() || p.Type.IsEnum()) && !denied.Contains(p.Name))
                 .Select(p => typeof(TEntity).GetProperty(p.Name))
                 .OfType<PropertyInfo>(),
         ];

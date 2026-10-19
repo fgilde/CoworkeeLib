@@ -55,14 +55,21 @@ internal sealed class ODataSearchProvider<T> : IGlobalSearchProvider
     public async IAsyncEnumerable<GlobalSearchHit> SearchAsync(GlobalSearchQuery query, GlobalSearchContext context, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var visible = await ODataEntityAccess.VisibleAsync<T>(context.Services, cancellationToken);
+        var denied = await ODataEntityAccess.DeniedPropertiesAsync(context.Services, typeof(T), cancellationToken);
+        var fields = Enumerable.Range(0, _fields.Count).Where(i => !denied.Contains(MemberName(_options.SearchFields[i]))).ToList();
+        if (fields.Count == 0)
+        {
+            yield break;
+        }
+
         var text = query.Text.ToLowerInvariant();
         var first = query.Id is { } id
             ? _id.PropertyType == typeof(Guid) ? visible.Where(IdIs(id)) : null
-            : visible.Where(AnyField(value => query.Exact ? Expression.Equal(value, Parameter(text)) : Expression.Call(value, StartsWith, Parameter(text))));
+            : visible.Where(AnyField(fields, value => query.Exact ? Expression.Equal(value, Parameter(text)) : Expression.Call(value, StartsWith, Parameter(text))));
         var sent = new HashSet<string>(StringComparer.Ordinal);
         if (first is not null)
         {
-            foreach (var hit in await HitsAsync(first, query, context.Limit, cancellationToken))
+            foreach (var hit in await HitsAsync(first, query, fields, context.Limit, cancellationToken))
             {
                 sent.Add(hit.Id!);
                 yield return hit;
@@ -76,22 +83,23 @@ internal sealed class ODataSearchProvider<T> : IGlobalSearchProvider
 
         // ponytail: the second round reads the first round's rows again and drops them here; a NOT IN of their ids if limits grow
         var rest = query.Words.Aggregate(visible, (rows, word) =>
-            rows.Where(AnyField(value => Expression.Call(value, Contains, Parameter(word.ToLowerInvariant())))));
-        foreach (var hit in (await HitsAsync(rest, query, context.Limit + sent.Count, cancellationToken)).Where(h => !sent.Contains(h.Id!)).Take(context.Limit - sent.Count))
+            rows.Where(AnyField(fields, value => Expression.Call(value, Contains, Parameter(word.ToLowerInvariant())))));
+        foreach (var hit in (await HitsAsync(rest, query, fields, context.Limit + sent.Count, cancellationToken)).Where(h => !sent.Contains(h.Id!)).Take(context.Limit - sent.Count))
         {
             yield return hit;
         }
     }
 
-    private async Task<IEnumerable<GlobalSearchHit>> HitsAsync(IQueryable<T> rows, GlobalSearchQuery query, int take, CancellationToken cancellationToken)
+    private async Task<IEnumerable<GlobalSearchHit>> HitsAsync(IQueryable<T> rows, GlobalSearchQuery query, List<int> fields, int take, CancellationToken cancellationToken)
     {
-        var found = await rows.OrderBy(_options.SearchFields[0]).Take(take).ToListAsync(cancellationToken);
-        return found.Select(row => Hit(row, query)).OrderByDescending(h => h.Score);
+        var found = await rows.OrderBy(_options.SearchFields[fields[0]]).Take(take).ToListAsync(cancellationToken);
+        return found.Select(row => Hit(row, query, fields)).OrderByDescending(h => h.Score);
     }
 
-    private GlobalSearchHit Hit(T row, GlobalSearchQuery query)
+    // fields the user may not read neither match nor show
+    private GlobalSearchHit Hit(T row, GlobalSearchQuery query, List<int> fields)
     {
-        var values = _fields.Select(f => f(row)).ToList();
+        var values = fields.Select(i => _fields[i](row)).ToList();
         var id = _id.GetValue(row)?.ToString();
         var title = _options.TitleOf?.Invoke(row) ?? values[0] ?? id ?? string.Empty;
         // the database compares in its own way (collation, LOWER); a row it found counts even when the culture here disagrees
@@ -117,10 +125,10 @@ internal sealed class ODataSearchProvider<T> : IGlobalSearchProvider
         return $"{page}{(page.Contains('?') ? '&' : '?')}{entitySet.ToLowerInvariant()}={encoded}";
     }
 
-    private Expression<Func<T, bool>> AnyField(Func<Expression, Expression> test)
+    private Expression<Func<T, bool>> AnyField(List<int> fields, Func<Expression, Expression> test)
     {
         var row = Expression.Parameter(typeof(T), "row");
-        var body = _options.SearchFields
+        var body = fields.Select(i => _options.SearchFields[i])
             .Select(field => test(Expression.Call(ReplacingExpressionVisitor.Replace(field.Parameters[0], row, field.Body), ToLower)))
             .Aggregate(Expression.OrElse);
         return Expression.Lambda<Func<T, bool>>(body, row);

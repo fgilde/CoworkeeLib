@@ -28,8 +28,14 @@ internal sealed class ComputedSerializerProvider : ODataSerializerProvider
         edmType.IsEntity() ? _resources : base.GetEdmTypeSerializer(edmType);
 }
 
+/// <summary>Leaves out computed properties and the protected properties the user may not see (<see cref="ODataEntityAccess.DeniedItem"/>).</summary>
 internal sealed class ComputedResourceSerializer(IODataSerializerProvider provider, ODataComputedProperties computed) : ODataResourceSerializer(provider)
 {
     public override ODataProperty CreateStructuralProperty(IEdmStructuralProperty structuralProperty, ResourceContext resourceContext) =>
-        computed.Find(structuralProperty) is null ? base.CreateStructuralProperty(structuralProperty, resourceContext) : null!;
+        computed.Find(structuralProperty) is null && !Denied(structuralProperty, resourceContext) ? base.CreateStructuralProperty(structuralProperty, resourceContext) : null!;
+
+    private static bool Denied(IEdmStructuralProperty property, ResourceContext context) =>
+        context.Request?.HttpContext.Items[ODataEntityAccess.DeniedItem] is Dictionary<string, IReadOnlySet<string>> denied
+        && denied.TryGetValue(property.DeclaringType.FullTypeName(), out var names)
+        && names.Contains(property.Name);
 }

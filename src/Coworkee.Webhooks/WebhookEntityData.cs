@@ -36,7 +36,7 @@ internal static class WebhookEntityData
 
         var shaped = await ResponseFilterApplier.ApplyAsync(services, entity, Json, cancellationToken);
         var node = shaped as JsonNode ?? JsonSerializer.SerializeToNode(shaped, shaped!.GetType(), Json);
-        return node is JsonObject data ? Keep(data, Columns(services, set)) : node;
+        return node is JsonObject data ? Keep(data, Columns(services, set, await ODataEntityAccess.DeniedPropertiesAsync(services, set.EntityType, cancellationToken))) : node;
     }
 
     private static async Task<object?> LoadAsync<TEntity>(IServiceProvider services, string key, CancellationToken cancellationToken)
@@ -50,11 +50,11 @@ internal static class WebhookEntityData
         return await visible.FirstOrDefaultAsync(match, cancellationToken);
     }
 
-    // only the columns of the set: navigations are not loaded and hidden properties never leave
-    private static HashSet<string> Columns(IServiceProvider services, ODataEntityRegistration set) =>
+    // only the columns of the set: navigations are not loaded, hidden properties and protected ones the owner may not read never leave
+    private static HashSet<string> Columns(IServiceProvider services, ODataEntityRegistration set, IReadOnlySet<string> denied) =>
     [
         .. services.GetRequiredService<CoworkeeDbContext>().Model.FindEntityType(set.EntityType)!.GetProperties()
-            .Where(p => !p.IsShadowProperty() && !set.HiddenProperties.Contains(p.Name))
+            .Where(p => !p.IsShadowProperty() && !set.HiddenProperties.Contains(p.Name) && !denied.Contains(p.Name))
             .Select(p => JsonNamingPolicy.CamelCase.ConvertName(p.Name)),
     ];
 

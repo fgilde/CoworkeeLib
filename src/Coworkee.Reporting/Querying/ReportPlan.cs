@@ -95,7 +95,7 @@ internal sealed record ReportPlan(ReportGroup? Group, ReportGroup? Split, IReadO
 
     private static ReportField? Resolve(ReportSource source, string? path, string key, IReadOnlySet<string> granted, Dictionary<string, string[]> errors)
     {
-        if (source.Find(path) is { } field && (field.Permission is null || granted.Contains(field.Permission)))
+        if (source.Find(path) is { } field && field.Allowed(granted))
         {
             return field;
         }

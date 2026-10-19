@@ -191,4 +191,21 @@ public sealed class EntityHistoryTests(AuditApp app) : IAsyncLifetime
         (await app.As(otherUser, otherTenant).GetAsync($"/api/v1/history/Memos/{id}", Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
         (await Admin.GetAsync($"/api/v1/history/Nope/{id}", Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
+
+    [Fact]
+    public async Task Changes_of_a_protected_property_need_its_permission()
+    {
+        var id = await CreateAsync("one");
+        await ChangeAsync(id, m => (m.Text, m.Priority) = ("two", MemoPriority.High));
+        var carl = (await (await Admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest("carl@acme.test", "Passw0rd!x", null, null), Ct)).Content.ReadFromJsonAsync<UserDto>(Ct))!;
+        var role = await (await Admin.PostAsJsonAsync("/api/v1/identity/roles", new RoleRequest("Auditors", null), Ct)).Content.ReadFromJsonAsync<Guid>(Ct);
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{role}", new NameListRequest([AuditPermissions.View, NotesModel.Manage]), Ct)).EnsureSuccessStatusCode();
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/users/{carl.Id}/roles", new IdListRequest([role]), Ct)).EnsureSuccessStatusCode();
+
+        var history = (await app.As(carl.Id, _setup.TenantId).GetFromJsonAsync<EntityHistoryDto>($"/api/v1/history/Memos/{id}", Ct))!;
+
+        history.Entries.SelectMany(e => e.Changes).Select(c => c.Property).ShouldNotContain("Priority");
+        history.Entries[0].Changes.Select(c => c.Property).ShouldBe(["Text"]);
+        (await HistoryAsync(id)).Entries[0].Changes.Select(c => c.Property).ShouldContain("Priority");
+    }
 }
