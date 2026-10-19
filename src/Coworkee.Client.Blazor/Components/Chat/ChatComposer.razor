@@ -41,5 +41,4 @@
         <MudIconButton Icon="@(Editing is null ? Icons.Material.Filled.Send : Icons.Material.Filled.Check)" Color="Color.Primary" OnClick="SendAsync" Disabled="_busy"
                        aria-label="@L["Send"]" title="@L["Send (Enter)"]" data-testid="chat-send" />
     </div>
-    <input type="file" multiple hidden @ref="_input" />
 </div>

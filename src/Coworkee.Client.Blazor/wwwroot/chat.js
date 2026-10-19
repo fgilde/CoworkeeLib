@@ -1,11 +1,11 @@
-// The composer of a chat: files from the picker, drag and drop and pasted images upload with progress; Enter sends unless a mention list is open.
+// The composer of a chat: files from the upload field, drag and drop and pasted images upload with progress; Enter sends unless a mention list is open.
 const mentionLists = '.tt-mention-list, .ql-mention-list-container';
 
 function mentionListOpen() {
     return [...document.querySelectorAll(mentionLists)].some(list => list.offsetParent !== null);
 }
 
-export function attach(host, input, dotnet, options) {
+export function attach(host, dotnet, options) {
     let url = options.url;
     let maxBytes = options.maxBytes;
 
@@ -69,20 +69,15 @@ export function attach(host, input, dotnet, options) {
             dotnet.invokeMethodAsync('SendFromEnter');
         }
     };
-    const onPick = () => {
-        files(input.files).forEach(upload);
-        input.value = '';
-    };
 
     host.addEventListener('drop', onDrop, true);
     host.addEventListener('dragover', onDragOver, true);
     host.addEventListener('dragleave', onDragLeave, true);
     host.addEventListener('paste', onPaste, true);
     host.addEventListener('keydown', onKeyDown, true);
-    input.addEventListener('change', onPick);
 
     return {
-        pick: () => input.click(),
+        send: async (name, type, stream) => upload(new File([await stream.arrayBuffer()], name, { type: type || '' })),
         configure: (newUrl, newMax) => { url = newUrl; maxBytes = newMax; },
         dispose: () => {
             host.removeEventListener('drop', onDrop, true);
@@ -90,7 +85,6 @@ export function attach(host, input, dotnet, options) {
             host.removeEventListener('dragleave', onDragLeave, true);
             host.removeEventListener('paste', onPaste, true);
             host.removeEventListener('keydown', onKeyDown, true);
-            input.removeEventListener('change', onPick);
         },
     };
 }

@@ -30,7 +30,6 @@ public partial class ChatComposer : IAsyncDisposable
     private object[] _modules = [];
     private RichTextEditor? _editor;
     private ElementReference _host;
-    private ElementReference _input;
     private IJSObjectReference? _module;
     private IJSObjectReference? _handle;
     private DotNetObjectReference<ChatComposer>? _self;
@@ -107,7 +106,7 @@ public partial class ChatComposer : IAsyncDisposable
         {
             _self = DotNetObjectReference.Create(this);
             _module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/chat.js");
-            _handle = await _module.InvokeAsync<IJSObjectReference>("attach", _host, _input, _self, new { url = UploadUrl, maxBytes = MaxBytes });
+            _handle = await _module.InvokeAsync<IJSObjectReference>("attach", _host, _self, new { url = UploadUrl, maxBytes = MaxBytes });
             _attachedTo = ConversationId;
         }
         catch (JSException)
@@ -189,11 +188,18 @@ public partial class ChatComposer : IAsyncDisposable
         ? Files.FilePreviewDialog.ShowAsync(Dialogs, ChatMessageView.Url(file), file.ContentType, file.Name)
         : Task.CompletedTask;
 
+    // the dialog only reads the files; the composer's script uploads them like dropped ones, with progress
     private async Task PickAsync()
     {
-        if (_handle is not null)
+        if (_handle is null)
         {
-            await _handle.InvokeVoidAsync("pick");
+            return;
+        }
+
+        foreach (var file in await ChatAttachDialog.ShowAsync(Dialogs, L["Attach files"], MaxBytes))
+        {
+            using var stream = new DotNetStreamReference(new MemoryStream(file.Data));
+            await _handle.InvokeVoidAsync("send", file.FileName, file.ContentType, stream);
         }
     }
 

@@ -1,13 +1,11 @@
-<MudFileUpload T="IBrowserFile" Accept=".csv,.txt,.tsv,.xlsx,.json" FilesChanged="UploadAsync" data-testid="import-file">
-    <CustomContent Context="upload">
-        <MudPaper Outlined="true" Class="pa-6 d-flex flex-column align-center" Style="cursor:pointer" @onclick="upload.OpenFilePickerAsync">
-            <MudIcon Icon="@Icons.Material.Outlined.UploadFile" Size="Size.Large" Color="Color.Primary" />
-            <MudText Class="mt-2">@L["Choose a CSV, Excel or JSON file"]</MudText>
-            <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["At most 20 MB. The first row names the columns."]</MudText>
-        </MudPaper>
-    </CustomContent>
-    <SelectedTemplate />
-</MudFileUpload>
+@using MudBlazor.Extensions.Components
+@* MudEx localizes the button text itself: a translated text would be looked up as key again and machine translated *@
+<div data-testid="import-file">
+    <MudExUploadEdit T="UploadableFile" UploadRequestDataLoaded="UploadAsync" ItemIsVisibleFunc="@(_ => false)" AllowMultiple="false" AllowFolderUpload="false" AllowExternalUrl="false"
+                     AllowDuplicates="true" Extensions="@Extensions" MaxFileSize="@MaxBytes" TextUploadFile="Choose a CSV, Excel or JSON file"
+                     ButtonVariant="Variant.Outlined" ButtonColor="Color.Default" ExternalProviderRendering="ExternalProviderRendering.Images" ExternalPickerImageSize="@("30px")" />
+    <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["At most 20 MB. The first row names the columns."]</MudText>
+</div>
 @if (_busy)
 {
     <MudProgressLinear Indeterminate="true" Class="mt-2" />

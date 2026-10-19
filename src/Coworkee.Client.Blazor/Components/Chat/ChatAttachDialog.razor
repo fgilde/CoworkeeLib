@@ -1,0 +1,14 @@
+@using MudBlazor.Extensions.Components
+<MudDialog Class="@MudBlazor.Extensions.Helper.MudExCss.Classes.Dialog.Initial" data-testid="chat-attach-dialog">
+    <DialogContent>
+        @* MudEx localizes the button text itself: a translated text would be looked up as key again and machine translated *@
+        <MudExUploadEdit T="UploadableFile" UploadRequestDataLoaded="AddAsync" UploadRequestRemoved="RemoveAsync" AllowMultiple="true" AllowFolderUpload="false" AllowExternalUrl="false"
+                         MaxFileSize="@MaxBytes" TextUploadFiles="Choose files" TextDropZone="Drop files here" MinHeight="160"
+                         ButtonVariant="Variant.Outlined" ButtonColor="Color.Default" ExternalProviderRendering="ExternalProviderRendering.Images" ExternalPickerImageSize="@("30px")" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">@L["Cancel"]</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.AttachFile" OnClick="Done" Disabled="@(_files.Count == 0)"
+                   data-testid="chat-attach-done">@L["Attach files"]</MudButton>
+    </DialogActions>
+</MudDialog>

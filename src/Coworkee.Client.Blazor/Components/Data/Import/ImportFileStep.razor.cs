@@ -3,8 +3,8 @@ using Coworkee.Client.Blazor.Data;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Data;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
 using MudBlazor;
+using MudBlazor.Extensions.Components;
 
 namespace Coworkee.Client.Blazor.Components.Data.Import;
 
@@ -12,6 +12,7 @@ namespace Coworkee.Client.Blazor.Components.Data.Import;
 public partial class ImportFileStep
 {
     private const long MaxBytes = 20 * 1024 * 1024;
+    private static readonly string[] Extensions = [".csv", ".txt", ".tsv", ".xlsx", ".json"];
     private static readonly string[] Encodings = ["utf-8", "windows-1252", "iso-8859-1", "utf-16"];
     private bool _busy;
 
@@ -25,14 +26,14 @@ public partial class ImportFileStep
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
-    private async Task UploadAsync(IBrowserFile? file)
+    private async Task UploadAsync(UploadableFile? file)
     {
         if (file is null)
         {
             return;
         }
 
-        if (file.Size > MaxBytes)
+        if (file.Data is not { Length: > 0 } data || data.Length > MaxBytes)
         {
             Snackbar.Add(L["At most 20 MB. The first row names the columns."], Severity.Warning);
             return;
@@ -40,8 +41,8 @@ public partial class ImportFileStep
 
         await RunAsync(async () =>
         {
-            await using var stream = file.OpenReadStream(MaxBytes);
-            State.Apply(await Api.UploadAsync(State.Target.EntitySet, stream, file.Name));
+            await using var stream = new MemoryStream(data);
+            State.Apply(await Api.UploadAsync(State.Target.EntitySet, stream, file.FileName));
         });
     }
 
@@ -58,6 +59,7 @@ public partial class ImportFileStep
         finally
         {
             _busy = false;
+            await InvokeAsync(StateHasChanged);
             await Changed.InvokeAsync();
         }
     }
