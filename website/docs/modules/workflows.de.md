@@ -28,6 +28,7 @@ public sealed class MyAppCatalogModule : CoworkeeModule
 ## Zustände und Übergänge
 
 - **`Initial`** nennt den Zustand, in dem eine neue Entität beginnt. Der Zustand liegt in der eigenen Tabelle des Moduls, die Entitätsklasse ändert sich also nicht. `MirrorTo(p => p.Status)` schreibt den Namen des Zustands zusätzlich in eine Eigenschaft der Entität, für Spalten, Filter und Facetten.
+- **`Describe(...)`** benennt die Entität in Benachrichtigungen und im Posteingang. Die Entität wird ohne Navigationen geladen; `Include(l => l.Employee)` lädt eine mit, für Titel, Guards und Aktionen: `leave.Include(l => l.Employee).Describe(l => $"Urlaub von {l.Employee.Name}")`.
 - **`Transition(name, from, to)`** deklariert einen Schritt, den ein Benutzer ausführen kann; `from` dürfen mehrere Zustände sein.
 - **Bedingungen**: `RequiresPermission`, `RequiresRole` (eine der Rollen, direkt oder über eine Gruppe), `When(entity => ...)` und `When(async context => ...)`. Jede Bedingung muss erfüllt sein, zusätzlich zur Berechtigung `Workflows.Transition`. `RequiresComment()` macht den Kommentar zur Pflicht.
 - **Aktionen**: `Then(context => ...)` am Übergang, `OnEnter` und `OnExit` am Zustand, `Set(entity => ...)` zum Setzen von Feldern, `NotifyRole(role)` für eine Nachricht an die Mitglieder einer Rolle. Aktionen bekommen die verfolgte Entität; was sie ändern, wird zusammen mit dem Übergang gespeichert. `context.NotifyAsync(...)` und `context.UsersInRoleAsync(...)` decken die üblichen Fälle ab.

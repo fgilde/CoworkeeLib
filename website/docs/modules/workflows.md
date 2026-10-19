@@ -28,6 +28,7 @@ public sealed class MyAppCatalogModule : CoworkeeModule
 ## States and transitions
 
 - **`Initial`** names the state a new entity starts in. The state lives in the module's own table, so the entity class does not change. `MirrorTo(p => p.Status)` writes the state name into a property of the entity as well, for columns, filters and facets.
+- **`Describe(...)`** names the entity in notifications and the inbox. The entity is loaded without navigations; `Include(l => l.Employee)` loads one with it, for the title, guards and actions: `leave.Include(l => l.Employee).Describe(l => $"Vacation of {l.Employee.Name}")`.
 - **`Transition(name, from, to)`** declares a move a user can run; `from` may be several states.
 - **Guards**: `RequiresPermission`, `RequiresRole` (one of the roles, directly or through a group), `When(entity => ...)` and `When(async context => ...)`. Every guard has to pass, on top of the permission `Workflows.Transition`. `RequiresComment()` makes the comment mandatory.
 - **Actions**: `Then(context => ...)` on a transition, `OnEnter` and `OnExit` on a state, `Set(entity => ...)` to change fields, `NotifyRole(role)` to tell the members of a role. Actions get the tracked entity; what they change is saved together with the transition. `context.NotifyAsync(...)` and `context.UsersInRoleAsync(...)` cover the usual cases.

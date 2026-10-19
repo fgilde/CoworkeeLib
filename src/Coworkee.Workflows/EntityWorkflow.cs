@@ -93,7 +93,17 @@ public sealed class EntityWorkflow<TEntity>(string entityType) : EntityWorkflow(
         return this;
     }
 
-    /// <summary>How the entity is called in notifications and the inbox, e.g. its name.</summary>
+    private Func<IQueryable<TEntity>, IQueryable<TEntity>> _load = query => query;
+
+    /// <summary>Loads a navigation with the entity, for <see cref="Describe"/>, guards and actions, e.g. <c>l =&gt; l.Employee</c>.</summary>
+    public EntityWorkflow<TEntity> Include<TProperty>(Expression<Func<TEntity, TProperty>> navigation)
+    {
+        var load = _load;
+        _load = query => load(query).Include(navigation);
+        return this;
+    }
+
+    /// <summary>How the entity is called in notifications and the inbox, e.g. its name; navigations need <see cref="Include{TProperty}"/>.</summary>
     public EntityWorkflow<TEntity> Describe(Func<TEntity, string> title)
     {
         TitleOf = entity => title((TEntity)entity);
@@ -122,7 +132,7 @@ public sealed class EntityWorkflow<TEntity>(string entityType) : EntityWorkflow(
     public WorkflowState<TEntity> State(string name) => GetOrAdd(name, () => new WorkflowState<TEntity>(name));
 
     internal override async Task<object?> FindAsync(CoworkeeDbContext db, Guid id, CancellationToken cancellationToken) =>
-        await db.Set<TEntity>().FirstOrDefaultAsync(e => EF.Property<Guid>(e, "Id") == id, cancellationToken);
+        await _load(db.Set<TEntity>()).FirstOrDefaultAsync(e => EF.Property<Guid>(e, "Id") == id, cancellationToken);
 
     internal override async Task<bool> VisibleAsync(IServiceProvider services, Guid id, CancellationToken cancellationToken) =>
         await ODataEntityAccess.IsGrantedAsync(services, typeof(TEntity), cancellationToken)

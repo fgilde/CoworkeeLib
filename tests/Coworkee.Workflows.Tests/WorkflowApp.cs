@@ -81,12 +81,12 @@ public sealed class WorkflowApp : DatabaseFixture
 
     public HttpClient As(Guid userId, Guid tenantId) => App.GetTestClient().AsUser(userId, tenantId);
 
-    public async Task<Guid> AddExpenseAsync(Guid tenantId, decimal amount = 100, string title = "Laptop")
+    public async Task<Guid> AddExpenseAsync(Guid tenantId, decimal amount = 100, string title = "Laptop", string? category = null)
     {
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, tenantId));
         await using var scope = App.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<WorkflowTestDbContext>();
-        var expense = new Expense { Title = title, Amount = amount, TenantId = tenantId };
+        var expense = new Expense { Title = title, Amount = amount, TenantId = tenantId, Category = category is null ? null : new ExpenseCategory { Name = category } };
         db.Add(expense);
         await db.SaveChangesAsync();
         return expense.Id;
@@ -158,6 +158,15 @@ public sealed class Expense : AuditedEntity, IMultiTenant
     public bool Paid { get; set; }
 
     public Guid TenantId { get; set; }
+
+    public Guid? CategoryId { get; set; }
+
+    public ExpenseCategory? Category { get; set; }
+}
+
+public sealed class ExpenseCategory : Entity
+{
+    public required string Name { get; set; }
 }
 
 /// <summary>A workflow without MirrorTo: its OData set reads the state from the workflow tables.</summary>
@@ -177,7 +186,7 @@ internal sealed class ExpenseModelContributor : IModelContributor
     {
         expense.ToTable("Expenses");
         expense.Property(e => e.Amount).HasPrecision(18, 2);
-    }).Entity<Ticket>(ticket => ticket.ToTable("Tickets"));
+    }).Entity<Ticket>(ticket => ticket.ToTable("Tickets")).Entity<ExpenseCategory>(category => category.ToTable("ExpenseCategories"));
 }
 
 /// <summary>A row filter of the Expenses set: secret expenses only for payers.</summary>
@@ -229,6 +238,12 @@ public sealed class TestWorkflowModule : CoworkeeModule
                 e.Initial("Draft");
                 e.Transition("Submit", "Draft", "Review");
                 e.State("Review").Approval("Approved", "Rejected", a => a.Role("Manager").NotByRequester().DueIn(TimeSpan.FromHours(4)).EscalateTo("Manager"));
+            })
+            .Entity<Expense>("Purchases", e =>
+            {
+                e.Initial("Draft").Include(x => x.Category).Describe(x => $"{x.Title} for {x.Category!.Name}");
+                e.Transition("Submit", "Draft", "Review");
+                e.State("Review").Approval("Approved", "Rejected", a => a.Role("Manager"));
             })
             .Entity<Expense>("Leaves", e =>
             {

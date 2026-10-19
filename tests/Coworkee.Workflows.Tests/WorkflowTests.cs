@@ -203,6 +203,17 @@ public sealed class WorkflowTests(WorkflowApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Titles_can_use_navigations_loaded_with_the_entity()
+    {
+        await CreateUserAsync("ann@acme.test", await CreateRoleAsync("Manager", WorkflowPermissions.View));
+        var purchase = await app.AddExpenseAsync(_setup.TenantId, category: "IT");
+
+        var approval = (await ReadAsync<WorkflowStatusDto>(await Admin.PostAsync($"{Url(purchase, "Purchases")}/Submit", null, Ct))).Approval!;
+
+        approval.Title.ShouldBe("Laptop for IT");
+    }
+
+    [Fact]
     public async Task Approvers_can_be_found_from_the_entity_when_the_approval_starts()
     {
         var ann = await CreateUserAsync("ann@acme.test", await CreateRoleAsync("Manager", WorkflowPermissions.View));

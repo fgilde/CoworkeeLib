@@ -17,6 +17,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### New
 
+- Workflows: `EntityWorkflow<T>.Include(e => e.Employee)` loads a navigation with the entity, so `Describe`, guards and actions can use it (`Describe(l => $"Vacation of {l.Employee.Name}")`). See [Workflows](../modules/workflows.md#states-and-transitions).
 - OData sets: `AddODataEntity<T>(set, permission, o => o.Hide(...).HideUnless(e => e.Salary, permission))` shows a property only to users with the permission; lists, single reads, `$filter`/`$orderby`/`$select`/`$expand`, facets, exports, reports, the global search, the assistant's data tools, the entity history and webhooks respect it. `ODataEntityRegistration.ProtectedProperties`, `ODataEntityAccess.DeniedPropertiesAsync`. See [OData](../web/odata.md#properties-behind-a-permission).
 - `ISystemDispatcher.SendAsync(request, permissions, ct)` runs a request as the system in the caller's organisation, with exactly the given permissions and in its own scope (audit: *system*); `CurrentUserScope.BeginSystem(tenantId, permissions)` and `SystemActor` underneath. `AnonymousCurrentUser` and `TestCurrentUser` now pass on the ambient `ClientId`/`ClientPermissions`. See [Permissions](../security/permissions.md#acting-as-the-system).
 - `CoworkeeDataTable`: `RowHref` (`Func<T, string?>`) and `OnRowClick` (`EventCallback<T>`) open a row by clicking it (not its buttons or checkbox) or by its open button in the action column (keyboard, real link for `RowHref`). See [Data tables](../ui/data-table.md#row-links).
