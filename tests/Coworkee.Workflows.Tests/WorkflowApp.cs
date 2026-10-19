@@ -216,6 +216,13 @@ public sealed class TestWorkflowModule : CoworkeeModule
                 e.Initial("Draft");
                 e.Transition("Submit", "Draft", "Review");
                 e.State("Review").Approval("Approved", "Rejected", a => a.Role("Manager").NotByRequester().DueIn(TimeSpan.FromHours(4)).OnTimeout("Expired"));
+            })
+            .Entity<Expense>("Leaves", e =>
+            {
+                // the title holds the approver: stands in for "the manager of the requester"
+                e.Initial("Draft");
+                e.Transition("Submit", "Draft", "Review");
+                e.State("Review").Approval("Approved", "Rejected", a => a.UsersFrom(c => Task.FromResult<IReadOnlyList<Guid>>([Guid.Parse(((Expense)c.Entity).Title)])));
             }));
         context.Services.AddODataEntity<Ticket>("Tickets");
         context.Services.AddODataEntity<Expense>("Expenses");

@@ -163,6 +163,18 @@ public sealed class WorkflowTests(WorkflowApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Approvers_can_be_found_from_the_entity_when_the_approval_starts()
+    {
+        var ann = await CreateUserAsync("ann@acme.test", await CreateRoleAsync("Manager", WorkflowPermissions.View));
+        var leave = await app.AddExpenseAsync(_setup.TenantId, title: ann.Id.ToString());
+
+        var approval = (await ReadAsync<WorkflowStatusDto>(await Admin.PostAsync($"{Url(leave, "Leaves")}/Submit", null, Ct))).Approval!;
+
+        approval.Approvers.Select(a => a.UserId).ShouldBe([ann.Id]);
+        (await Decide(ann.Id, approval.Id, true, null)).State.ShouldBe("Approved");
+    }
+
+    [Fact]
     public async Task Actions_set_fields_and_transitions_reach_subscribers_live()
     {
         var payer = await CreateRoleAsync("Payer", WorkflowApp.PayPermission);

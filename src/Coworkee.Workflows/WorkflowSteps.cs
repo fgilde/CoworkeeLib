@@ -135,6 +135,8 @@ public sealed class ApprovalStep(string approvedState, string rejectedState)
 
     public List<Guid> Users { get; } = [];
 
+    public List<Func<WorkflowContext, Task<IReadOnlyList<Guid>>>> UserResolvers { get; } = [];
+
     public bool RequiresAll { get; private set; }
 
     public bool FourEyes { get; private set; }
@@ -155,6 +157,13 @@ public sealed class ApprovalStep(string approvedState, string rejectedState)
     public ApprovalStep User(params Guid[] users)
     {
         Users.AddRange(users);
+        return this;
+    }
+
+    /// <summary>Approvers found when the approval starts, e.g. the manager of the requester; together with <see cref="Role"/> and <see cref="User"/>.</summary>
+    public ApprovalStep UsersFrom(Func<WorkflowContext, Task<IReadOnlyList<Guid>>> resolve)
+    {
+        UserResolvers.Add(resolve);
         return this;
     }
 

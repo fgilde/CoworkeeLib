@@ -207,8 +207,13 @@ public sealed class WorkflowEngine(
     private async Task StartApprovalAsync(WorkflowSubject subject, WorkflowContext context, ApprovalStep step, Guid? requester, CancellationToken cancellationToken)
     {
         var now = clock.GetUtcNow();
-        var users = (await directory.UsersInRoleAsync(step.Roles, cancellationToken)).Concat(step.Users).Distinct()
-            .Where(u => !step.FourEyes || u != requester).ToList();
+        var users = (await directory.UsersInRoleAsync(step.Roles, cancellationToken)).Concat(step.Users).ToList();
+        foreach (var resolve in step.UserResolvers)
+        {
+            users.AddRange(await resolve(context));
+        }
+
+        users = users.Distinct().Where(u => !step.FourEyes || u != requester).ToList();
         var approval = new WorkflowApproval
         {
             TenantId = subject.Item.TenantId,

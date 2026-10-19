@@ -4,6 +4,10 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### New
+
+- Workflows: `ApprovalStep.UsersFrom(context => ...)` finds approvers from the entity when the approval starts, e.g. the manager of the requester.
+
 ### Fixes
 
 - A stored secret setting that the current Data Protection key ring cannot decrypt (for example after the key ring changed) reads as unset with a warning in the log, instead of failing every read of the settings (`/api/v1/ai/status` answered 500 on every page). Save the secret again. `SettingProtector` takes an `ILogger<SettingProtector>`.
