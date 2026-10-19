@@ -4,7 +4,7 @@ using Coworkee.Realtime;
 
 namespace Coworkee.Workflows;
 
-/// <summary>Lets people who may see workflows follow "workflow:{entityType}:{entityId}" of entities of their organisation.</summary>
+/// <summary>Lets people who may see workflows follow "workflow:{entityType}:{entityId}" of entities they see (or decide on).</summary>
 internal sealed class WorkflowTopicAuthorizer(WorkflowEngine engine, IPermissionChecker permissions) : IRealtimeTopicAuthorizer
 {
     private const string Prefix = "workflow:";
@@ -18,6 +18,6 @@ internal sealed class WorkflowTopicAuthorizer(WorkflowEngine engine, IPermission
             && Guid.TryParse(topic[(separator + 1)..], out var entityId)
             && WorkflowTopics.Entity(topic[Prefix.Length..separator], entityId) == topic
             && await permissions.IsGrantedAsync(WorkflowPermissions.View, cancellationToken)
-            && (await engine.LoadAsync(topic[Prefix.Length..separator], entityId, cancellationToken)).IsSuccess;
+            && (await engine.LoadAsync(topic[Prefix.Length..separator], entityId, cancellationToken, WorkflowAccess.SeeOrDecide)).IsSuccess;
     }
 }

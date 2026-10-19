@@ -7,6 +7,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Workflows;
 
+/// <summary>Who may load a workflow item.</summary>
+public enum WorkflowAccess
+{
+    /// <summary>Only users who see the entity through its OData set (permission, tenant, row filters).</summary>
+    See,
+
+    /// <summary>Those, and the approvers of the entity's open approval: they see what they decide.</summary>
+    SeeOrDecide,
+
+    /// <summary>No check: the system (deadline job).</summary>
+    System,
+}
+
 /// <summary>An entity with its workflow and state, loaded for one request.</summary>
 public sealed record WorkflowSubject(EntityWorkflow Workflow, object Entity, WorkflowItem Item);
 
@@ -18,9 +31,12 @@ public sealed class WorkflowEngine(
 
     public static readonly Error Forbidden = Error.Forbidden("workflows.forbidden", "You may not run this transition.");
 
-    public async Task<Result<WorkflowSubject>> LoadAsync(string entityType, Guid entityId, CancellationToken cancellationToken)
+    /// <summary>The entity with its workflow; <see cref="NotFound"/> also when the current user may not see it.</summary>
+    public async Task<Result<WorkflowSubject>> LoadAsync(string entityType, Guid entityId, CancellationToken cancellationToken, WorkflowAccess access = WorkflowAccess.See)
     {
-        if (options.For(entityType) is not { } workflow || await workflow.FindAsync(db, entityId, cancellationToken) is not { } entity)
+        if (options.For(entityType) is not { } workflow
+            || !await MaySeeAsync(workflow, entityId, access, cancellationToken)
+            || await workflow.FindAsync(db, entityId, cancellationToken) is not { } entity)
         {
             return NotFound;
         }
@@ -35,6 +51,12 @@ public sealed class WorkflowEngine(
 
         return new WorkflowSubject(workflow, entity, item);
     }
+
+    private async Task<bool> MaySeeAsync(EntityWorkflow workflow, Guid entityId, WorkflowAccess access, CancellationToken cancellationToken) =>
+        access == WorkflowAccess.System
+        || await workflow.VisibleAsync(services, entityId, cancellationToken)
+        || (access == WorkflowAccess.SeeOrDecide && currentUser.UserId is { } me && await db.Set<WorkflowApproval>().AnyAsync(
+            a => a.EntityType == workflow.EntityType && a.EntityId == entityId && a.Status == ApprovalStatus.Pending && a.Approvers.Any(x => x.UserId == me), cancellationToken));
 
     /// <summary>The transitions out of the current state that the current user passes every guard of.</summary>
     public async Task<IReadOnlyList<WorkflowTransition>> AllowedAsync(WorkflowSubject subject, CancellationToken cancellationToken)

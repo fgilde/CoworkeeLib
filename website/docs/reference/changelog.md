@@ -6,6 +6,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixes
 
+- Security, workflows: the state, history, comments, transitions, decisions and realtime topic of a workflow now require that the user sees the row through its OData set (set permission, organisation, `IODataEntityFilter<T>` row filters); before, `Workflows.View` and an id were enough. Approvers of the row's open approval still see and decide it. `WorkflowEngine.LoadAsync` takes an optional `WorkflowAccess` (default `See`). See [Workflows](../modules/workflows.md#permissions).
 - Template: `App.razor` links the scoped CSS bundle, so `.razor.css` files of the web client apply out of the box (the home page logo uses one). Existing apps add `<link href="@Assets["MyApp.Web.styles.css"]" rel="stylesheet" />` (their web project name) after the MudBlazor.Extensions stylesheet.
 - API tests of an app with `--event-bus rabbitMq` start without a broker: new setting `Coworkee:EventBus:RabbitMq:Enabled` (default `true`); the template fixture sets it to `false`, so events reach the handlers in process. Existing apps add `builder.UseSetting("Coworkee:EventBus:RabbitMq:Enabled", "false");` to their `ApiFactory`. See [Testing](../testing.md).
 - `coworkee spec validate` refuses an entity whose plural equals its name (the generated feature namespace hid the entity type and the app did not build).

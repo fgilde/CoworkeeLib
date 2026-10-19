@@ -39,7 +39,7 @@ public sealed partial class WorkflowDeadlineJob(CoworkeeDbContext db, IServiceSc
         await using var scope = scopes.CreateAsyncScope();
         var scoped = scope.ServiceProvider.GetRequiredService<CoworkeeDbContext>();
         var approval = await scoped.Set<WorkflowApproval>().Include(a => a.Approvers).SingleAsync(a => a.Id == approvalId, cancellationToken);
-        var subject = await scope.ServiceProvider.GetRequiredService<WorkflowEngine>().LoadAsync(approval.EntityType, approval.EntityId, cancellationToken);
+        var subject = await scope.ServiceProvider.GetRequiredService<WorkflowEngine>().LoadAsync(approval.EntityType, approval.EntityId, cancellationToken, WorkflowAccess.System);
         if (subject.IsSuccess)
         {
             await scope.ServiceProvider.GetRequiredService<WorkflowEngine>().TickAsync(subject.Value, approval, cancellationToken);

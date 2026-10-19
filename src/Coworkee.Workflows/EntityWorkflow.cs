@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using System.Reflection;
 using Coworkee.Infrastructure.Persistence;
+using Coworkee.OData;
 using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Workflows;
@@ -41,6 +42,9 @@ public abstract class EntityWorkflow(string entityType)
     internal abstract Type ClrType { get; }
 
     internal abstract Task<object?> FindAsync(CoworkeeDbContext db, Guid id, CancellationToken cancellationToken);
+
+    /// <summary>Whether the current user sees the entity the way its OData set shows it: set permission, tenant, soft delete and row filters.</summary>
+    internal abstract Task<bool> VisibleAsync(IServiceProvider services, Guid id, CancellationToken cancellationToken);
 
     internal abstract WorkflowContext Context(object entity, Guid id, WorkflowMove move, IServiceProvider services, CancellationToken cancellationToken);
 
@@ -119,6 +123,10 @@ public sealed class EntityWorkflow<TEntity>(string entityType) : EntityWorkflow(
 
     internal override async Task<object?> FindAsync(CoworkeeDbContext db, Guid id, CancellationToken cancellationToken) =>
         await db.Set<TEntity>().FirstOrDefaultAsync(e => EF.Property<Guid>(e, "Id") == id, cancellationToken);
+
+    internal override async Task<bool> VisibleAsync(IServiceProvider services, Guid id, CancellationToken cancellationToken) =>
+        await ODataEntityAccess.IsGrantedAsync(services, typeof(TEntity), cancellationToken)
+        && await (await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken)).AnyAsync(e => EF.Property<Guid>(e, "Id") == id, cancellationToken);
 
     internal override WorkflowContext Context(object entity, Guid id, WorkflowMove move, IServiceProvider services, CancellationToken cancellationToken) =>
         new WorkflowContext<TEntity>((TEntity)entity)

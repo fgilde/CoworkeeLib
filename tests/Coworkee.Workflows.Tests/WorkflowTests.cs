@@ -94,6 +94,30 @@ public sealed class WorkflowTests(WorkflowApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Rows_the_user_cannot_see_have_no_workflow_for_him_but_their_approvers_see_and_decide()
+    {
+        var viewer = await CreateUserAsync("viewer@acme.test", await CreateRoleAsync("Viewers", WorkflowPermissions.View, WorkflowPermissions.Transition));
+        var ann = await CreateUserAsync("ann@acme.test", await CreateRoleAsync("Manager", WorkflowPermissions.View, WorkflowPermissions.Transition));
+        var secret = await app.AddExpenseAsync(_setup.TenantId, title: "Secret bonus");
+        var (asViewer, asAnn) = (app.As(viewer.Id, _setup.TenantId), app.As(ann.Id, _setup.TenantId));
+
+        (await asViewer.GetAsync(Url(secret), Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await asViewer.PostAsync($"{Url(secret)}/Submit", null, Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await ReadAsync<List<WorkflowStatusDto>>(await asViewer.PostAsJsonAsync("/api/v1/workflows/Expenses/states", new WorkflowStatesRequest([secret, _expense]), Ct)))
+            .Select(s => s.EntityId).ShouldBe([_expense]);
+        (await asAnn.GetAsync(Url(secret), Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        var approval = (await ReadAsync<WorkflowStatusDto>(await Admin.PostAsJsonAsync($"{Url(secret)}/Submit", new TransitionRequest("Q3"), Ct))).Approval!;
+
+        (await asViewer.GetAsync(Url(secret), Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await asAnn.GetFromJsonAsync<WorkflowStatusDto>(Url(secret), Ct))!.History.ShouldContain(s => s.Comment == "Q3");
+        (await asAnn.PostAsync($"{Url(secret)}/Withdraw", null, Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await asAnn.GetFromJsonAsync<List<ApprovalDto>>("/api/v1/workflows/approvals", Ct))!.ShouldHaveSingleItem().EntityId.ShouldBe(secret);
+        (await Decide(ann.Id, approval.Id, true, null)).State.ShouldBe("Approved");
+        (await asAnn.GetAsync(Url(secret), Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
     public async Task One_rejection_decides_and_reopening_needs_the_role_and_a_comment()
     {
         var ann = await CreateUserAsync("ann@acme.test", await CreateRoleAsync("Manager", WorkflowPermissions.View));

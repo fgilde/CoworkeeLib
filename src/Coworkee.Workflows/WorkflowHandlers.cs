@@ -18,7 +18,7 @@ internal sealed class WorkflowHandlers(CoworkeeDbContext db, WorkflowEngine engi
 
     public async Task<Result<WorkflowStatusDto>> HandleAsync(GetWorkflowQuery query, CancellationToken cancellationToken)
     {
-        var subject = await engine.LoadAsync(query.EntityType, query.EntityId, cancellationToken);
+        var subject = await engine.LoadAsync(query.EntityType, query.EntityId, cancellationToken, WorkflowAccess.SeeOrDecide);
         return subject.IsSuccess ? await StatusAsync(subject.Value, cancellationToken) : subject.Error;
     }
 
@@ -28,7 +28,7 @@ internal sealed class WorkflowHandlers(CoworkeeDbContext db, WorkflowEngine engi
         var states = new List<WorkflowStatusDto>();
         foreach (var id in query.Ids.Distinct())
         {
-            if (await engine.LoadAsync(query.EntityType, id, cancellationToken) is { IsSuccess: true } subject)
+            if (await engine.LoadAsync(query.EntityType, id, cancellationToken, WorkflowAccess.SeeOrDecide) is { IsSuccess: true } subject)
             {
                 states.Add(await StatusAsync(subject.Value, cancellationToken, history: false));
             }
@@ -57,7 +57,7 @@ internal sealed class WorkflowHandlers(CoworkeeDbContext db, WorkflowEngine engi
             return UnknownApproval;
         }
 
-        var subject = await engine.LoadAsync(approval.EntityType, approval.EntityId, cancellationToken);
+        var subject = await engine.LoadAsync(approval.EntityType, approval.EntityId, cancellationToken, WorkflowAccess.SeeOrDecide);
         if (!subject.IsSuccess)
         {
             return subject.Error;

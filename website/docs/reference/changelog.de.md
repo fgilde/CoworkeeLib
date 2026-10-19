@@ -6,6 +6,7 @@
 
 ### Korrekturen
 
+- Sicherheit, Workflows: Zustand, Historie, Kommentare, Übergänge, Entscheidungen und das Echtzeit-Topic eines Workflows verlangen jetzt, dass der Benutzer die Zeile über ihr OData-Set sieht (Berechtigung des Sets, Organisation, Zeilenfilter `IODataEntityFilter<T>`); vorher reichten `Workflows.View` und eine Id. Genehmigende der offenen Genehmigung der Zeile sehen und entscheiden sie weiterhin. `WorkflowEngine.LoadAsync` nimmt ein optionales `WorkflowAccess` (Standard `See`). Siehe [Workflows](../modules/workflows.md#berechtigungen).
 - Vorlage: `App.razor` bindet das Scoped-CSS-Bundle ein, damit `.razor.css`-Dateien des Web-Clients ohne Weiteres greifen (das Logo der Startseite nutzt eine). Bestehende Apps ergänzen `<link href="@Assets["MyApp.Web.styles.css"]" rel="stylesheet" />` (mit dem Namen ihres Web-Projekts) nach dem Stylesheet von MudBlazor.Extensions.
 - API-Tests einer App mit `--event-bus rabbitMq` starten ohne Broker: neue Einstellung `Coworkee:EventBus:RabbitMq:Enabled` (Standard `true`); die Fixture der Vorlage setzt sie auf `false`, die Events erreichen die Handler im Prozess. Bestehende Apps ergänzen `builder.UseSetting("Coworkee:EventBus:RabbitMq:Enabled", "false");` in ihrer `ApiFactory`. Siehe [Testen](../testing.md).
 - `coworkee spec validate` lehnt eine Entität ab, deren Plural dem Namen gleicht (der erzeugte Feature-Namespace verdeckte den Entitätstyp, die App baute nicht).

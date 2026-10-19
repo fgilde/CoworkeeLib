@@ -59,6 +59,8 @@ Handlers of the domain events `WorkflowTransitioned`, `ApprovalStarted` and `App
 | `Workflows.View` | see states, histories and the own approvals inbox; decide approvals the user is an approver of |
 | `Workflows.Transition` | run transitions at all; each transition may ask for more |
 
+On top of that, the workflow of a row is only there for users who see the row the way its [OData set](../web/odata.md) shows it: the set's permission, the organisation, soft delete and every `IODataEntityFilter<T>` row filter. Everyone else gets 404 on the state, the history, the comments, transitions and the realtime topic, as if the row did not exist. One exception: the approvers of the row's open approval see its state and history and decide, even without seeing the row in its list, because they have to see what they decide; they cannot run transitions through it, and once the approval is decided the exception ends. The approvals inbox always shows a user's own open approvals.
+
 | Endpoint | |
 |---|---|
 | `GET /api/v1/workflows/{entityType}/{entityId}` | state, the transitions the user may run, the open approval and the history |

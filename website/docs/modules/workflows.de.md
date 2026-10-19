@@ -59,6 +59,8 @@ Handler der Domain-Events `WorkflowTransitioned`, `ApprovalStarted` und `Approva
 | `Workflows.View` | Zustände, Historien und den eigenen Genehmigungs-Posteingang sehen; Genehmigungen entscheiden, bei denen man genehmigt |
 | `Workflows.Transition` | überhaupt Übergänge ausführen; jeder Übergang kann mehr verlangen |
 
+Darüber hinaus gibt es den Workflow einer Zeile nur für Benutzer, die die Zeile so sehen, wie ihr [OData-Set](../web/odata.md) sie zeigt: Berechtigung des Sets, Organisation, Soft Delete und jeder Zeilenfilter `IODataEntityFilter<T>`. Alle anderen bekommen 404 auf Zustand, Historie, Kommentare, Übergänge und das Echtzeit-Topic, als gäbe es die Zeile nicht. Eine Ausnahme: Wer bei der offenen Genehmigung der Zeile genehmigt, sieht deren Zustand und Historie und entscheidet, auch ohne die Zeile in ihrer Liste zu sehen, denn man muss sehen, worüber man entscheidet; Übergänge sind darüber nicht möglich, und mit der Entscheidung endet die Ausnahme. Der Genehmigungs-Posteingang zeigt immer die eigenen offenen Genehmigungen.
+
 | Endpunkt | |
 |---|---|
 | `GET /api/v1/workflows/{entityType}/{entityId}` | Zustand, die erlaubten Übergänge, die offene Genehmigung und die Historie |

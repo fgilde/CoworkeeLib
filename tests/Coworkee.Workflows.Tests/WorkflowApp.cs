@@ -180,6 +180,13 @@ internal sealed class ExpenseModelContributor : IModelContributor
     }).Entity<Ticket>(ticket => ticket.ToTable("Tickets"));
 }
 
+/// <summary>A row filter of the Expenses set: secret expenses only for payers.</summary>
+internal sealed class SecretExpenses(IPermissionChecker permissions) : IODataEntityFilter<Expense>
+{
+    public async Task<IQueryable<Expense>> ApplyAsync(IQueryable<Expense> query, CancellationToken cancellationToken) =>
+        await permissions.IsGrantedAsync(WorkflowApp.PayPermission, cancellationToken) ? query : query.Where(e => !e.Title.StartsWith("Secret"));
+}
+
 internal sealed class ExpensePermissions : IPermissionDefinitionContributor
 {
     public void Define(PermissionDefinitionContext context) => context.Group("Expenses", "Expenses").Add(WorkflowApp.PayPermission, "Pay expenses");
@@ -226,6 +233,7 @@ public sealed class TestWorkflowModule : CoworkeeModule
             }));
         context.Services.AddODataEntity<Ticket>("Tickets");
         context.Services.AddODataEntity<Expense>("Expenses");
+        context.Services.AddScoped<IODataEntityFilter<Expense>, SecretExpenses>();
         context.Services.AddCoworkeeDbContext<WorkflowTestDbContext>((provider, options) =>
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
     }
