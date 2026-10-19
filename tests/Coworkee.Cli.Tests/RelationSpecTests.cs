@@ -33,6 +33,14 @@ public sealed class RelationSpecTests
     }
 
     [Fact]
+    public void A_plural_equal_to_the_name_is_refused()
+    {
+        var errors = SpecValidator.Validate(App(Module("Crm", KudosEntity())));
+
+        errors.ShouldContain(e => e.StartsWith("modules[0].entities[0].plural:"));
+    }
+
+    [Fact]
     public void Broken_references_enums_defaults_and_flags_are_named()
     {
         var spec = App(
@@ -166,6 +174,13 @@ public sealed class RelationSpecTests
         Should.Throw<CliException>(() => FeatureOptions.Property("X:onDelete=sometimes"));
         Should.Throw<CliException>(() => FeatureOptions.Property("X:color=red"));
         Should.Throw<CliException>(() => FeatureOptions.EnumSpec("OrderStatus"));
+    }
+
+    private static EntitySpec KudosEntity()
+    {
+        var kudos = Entity("Kudos");
+        kudos.Plural = "Kudos";
+        return kudos;
     }
 
     private static PropertySpec Set(PropertySpec property, Action<PropertySpec> change)

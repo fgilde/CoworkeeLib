@@ -4,6 +4,10 @@
 
 ## Unveröffentlicht
 
+### Korrekturen
+
+- `coworkee spec validate` lehnt eine Entität ab, deren Plural dem Namen gleicht (der erzeugte Feature-Namespace verdeckte den Entitätstyp, die App baute nicht).
+
 ### Neu
 
 - Workflows: `ApprovalStep.UsersFrom(context => ...)` ermittelt Genehmigende beim Start der Genehmigung aus der Entität, etwa die Führungskraft der antragstellenden Person.

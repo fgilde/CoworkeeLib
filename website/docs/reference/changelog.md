@@ -4,6 +4,10 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Fixes
+
+- `coworkee spec validate` refuses an entity whose plural equals its name (the generated feature namespace hid the entity type and the app did not build).
+
 ### New
 
 - Workflows: `ApprovalStep.UsersFrom(context => ...)` finds approvers from the entity when the approval starts, e.g. the manager of the requester.

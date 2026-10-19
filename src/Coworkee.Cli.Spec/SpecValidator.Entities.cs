@@ -130,6 +130,11 @@ public static partial class SpecValidator
             Name(errors, path + ".plural", entity.Plural);
         }
 
+        if (string.Equals(entity.PluralName, entity.Name, StringComparison.OrdinalIgnoreCase))
+        {
+            errors.Add($"{path}.plural: the plural '{entity.PluralName}' equals the name; the feature namespace of the plural would hide the entity type.");
+        }
+
         if (!taken.Add(entity.Name) | !taken.Add("plural:" + entity.PluralName))
         {
             errors.Add($"{path}.name: '{entity.Name}' appears twice; entity names are unique in the app.");
