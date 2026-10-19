@@ -18,5 +18,6 @@ _holidays = [new CalendarDayMark(new(2026, 4, 3), "Karfreitag")];
 - `CalendarItem`: `Start` und `End` zählen mit, `HalfStart`/`HalfEnd` beginnen oder enden den Balken mittags, `Tentative` schraffiert ihn (offene Anträge), `Data` trägt ein eigenes Objekt zu `OnItemClick`.
 - `CalendarDayMark`: hinterlegt einen Tag in allen Zeilen oder mit `ResourceId` in einer.
 - `Span`: `Week`, `TwoWeeks` oder `Month`; die Werkzeugleiste blättert darum weiter, *Heute* springt zurück. `ToolbarContent` ergänzt eigene Filter, `ShowToolbar="false"` blendet sie aus.
-- `WorkDays`: Tage, die als Arbeitstage gezeichnet werden (standardmäßig Montag bis Freitag).
+- `WorkDays`: Tage, die als Arbeitstage gezeichnet werden (standardmäßig Montag bis Freitag). `CalendarResource.WorkDays` ersetzt sie für eine Zeile, so werden die freien Tage von Teilzeitkräften schattiert: `new CalendarResource(id, "Bob Ray", WorkDays: new HashSet<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Tuesday })`.
+- Weitere Attribute (`id`, `data-testid`, `aria-label`, ...) landen auf dem Wurzelelement und haben Vorrang vor dessen Standardwerten.
 - `OnRangeSelected`: Ziehen über die Tage einer Zeile meldet einen `CalendarRange(Resource, Start, End)`, etwa um einen Antragsdialog für diese Tage zu öffnen.

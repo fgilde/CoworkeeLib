@@ -47,6 +47,9 @@ public partial class ResourceCalendar
 
     [Parameter] public string? Class { get; set; }
 
+    /// <summary>Further attributes of the root element, e.g. <c>id</c> or <c>data-testid</c>.</summary>
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? Attributes { get; set; }
+
     [Parameter] public string Height { get; set; } = "auto";
 
     private DateOnly Today { get; } = DateOnly.FromDateTime(DateTime.Today);
@@ -118,14 +121,14 @@ public partial class ResourceCalendar
         return $"grid-column:{start}/{end};grid-row:{lane + 1};background:{background};";
     }
 
-    private string DayClass(DateOnly day, string? resourceId = null) =>
+    private string DayClass(DateOnly day, CalendarResource? resource = null) =>
         string.Join(' ', new[]
         {
             "cw-cal-day",
-            WorkDays.Contains(day.DayOfWeek) ? null : "cw-cal-off",
-            Mark(day, resourceId) is null ? null : "cw-cal-mark",
+            (resource?.WorkDays ?? WorkDays).Contains(day.DayOfWeek) ? null : "cw-cal-off",
+            Mark(day, resource?.Id) is null ? null : "cw-cal-mark",
             day == Today ? "cw-cal-today" : null,
-            InDrag(resourceId, day) ? "cw-cal-drag" : null,
+            InDrag(resource?.Id, day) ? "cw-cal-drag" : null,
         }.Where(c => c is not null));
 
     private CalendarDayMark? Mark(DateOnly day, string? resourceId) =>

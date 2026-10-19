@@ -17,6 +17,7 @@
 
 ### Neu
 
+- `ResourceCalendar`: `CalendarResource.WorkDays` ersetzt die Arbeitstage für eine Zeile (Teilzeit), und weitere Attribute (`id`, `data-testid`, ...) landen auf dem Wurzelelement. Siehe [Ressourcenkalender](../ui/resource-calendar.md).
 - Workflows: `EntityWorkflow<T>.Include(e => e.Employee)` lädt eine Navigation mit der Entität, sodass `Describe`, Guards und Aktionen sie nutzen können (`Describe(l => $"Urlaub von {l.Employee.Name}")`). Siehe [Workflows](../modules/workflows.md).
 - OData-Sets: `AddODataEntity<T>(set, permission, o => o.Hide(...).HideUnless(e => e.Salary, permission))` zeigt eine Eigenschaft nur Benutzern mit der Berechtigung; Listen, Einzelabrufe, `$filter`/`$orderby`/`$select`/`$expand`, Facetten, Exporte, Berichte, die globale Suche, die Daten-Tools des Assistenten, die Entity-Historie und Webhooks halten sich daran. `ODataEntityRegistration.ProtectedProperties`, `ODataEntityAccess.DeniedPropertiesAsync`. Siehe [OData](../web/odata.md#eigenschaften-hinter-einer-berechtigung).
 - `ISystemDispatcher.SendAsync(request, permissions, ct)` führt einen Request als System in der Organisation des Aufrufers aus, mit genau den genannten Berechtigungen und in einem eigenen Scope (Audit: *system*); darunter `CurrentUserScope.BeginSystem(tenantId, permissions)` und `SystemActor`. `AnonymousCurrentUser` und `TestCurrentUser` reichen jetzt `ClientId`/`ClientPermissions` des Umgebungs-Benutzers weiter. Siehe [Berechtigungen](../security/permissions.md#als-system-handeln).

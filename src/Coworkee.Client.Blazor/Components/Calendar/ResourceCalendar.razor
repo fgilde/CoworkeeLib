@@ -1,6 +1,6 @@
 @inherits CoworkeeComponentBase
 
-<div class="cw-cal @Class" data-testid="resource-calendar">
+<div class="cw-cal @Class" data-testid="resource-calendar" @attributes="Attributes">
     @if (ShowToolbar)
     {
         <MudStack Row="true" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" Spacing="1" Class="cw-cal-toolbar">
@@ -65,7 +65,7 @@
                         @foreach (var day in Days)
                         {
                             var mark = Mark(day, resource.Id);
-                            <div class="@DayClass(day, resource.Id)" style="grid-column:@Column(day) / span 2;grid-row:1 / span @lanes" title="@mark?.Label"
+                            <div class="@DayClass(day, resource)" style="grid-column:@Column(day) / span 2;grid-row:1 / span @lanes" title="@mark?.Label"
                                  @onmousedown="() => DragStart(resource, day)" @onmouseenter="() => DragOver(resource, day)"></div>
                         }
                         @foreach (var (item, lane) in items)

@@ -56,6 +56,25 @@ public sealed class ResourceCalendarTests : ClientTestBase
     }
 
     [Fact]
+    public void A_row_with_own_work_days_shades_its_free_days_and_attributes_reach_the_root()
+    {
+        var partTime = Bob with { WorkDays = new HashSet<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Tuesday } };
+        var cut = Render<ResourceCalendar>(p => p
+            .Add(c => c.Resources, [Ann, partTime])
+            .Add(c => c.From, March)
+            .AddUnmatched("data-testid", "team-calendar")
+            .AddUnmatched("id", "absences"));
+
+        var rows = cut.FindAll("[data-testid=calendar-row]");
+        // March 2nd is a Monday, the 4th a Wednesday
+        rows[0].QuerySelectorAll(".cw-cal-day")[3].ClassList.ShouldNotContain("cw-cal-off");
+        rows[1].QuerySelectorAll(".cw-cal-day")[1].ClassList.ShouldNotContain("cw-cal-off");
+        rows[1].QuerySelectorAll(".cw-cal-day")[3].ClassList.ShouldContain("cw-cal-off");
+        var root = cut.Find(".cw-cal");
+        (root.GetAttribute("data-testid"), root.Id).ShouldBe(("team-calendar", "absences"));
+    }
+
+    [Fact]
     public void A_week_starts_on_the_first_day_of_the_culture()
     {
         ResourceCalendar.Start(new DateOnly(2026, 3, 5), CalendarSpan.Week).ShouldBe(new DateOnly(2026, 3, 1));
