@@ -407,6 +407,12 @@ public sealed class TemplateOptionTests(TemplateFixture template)
         Directory.GetFiles(Path.Combine(app, "src/Shop.Infrastructure/Migrations"), "*_Initial.cs").ShouldHaveSingleItem();
         await Dotnet.RunAsync(app, "build", "Shop.slnx");
         await Dotnet.RunAsync(app, "test", "--project", "tests/Shop.Migrations.Tests", "--no-build", "--filter-class", "Shop.Migrations.Tests.ModelTests");
+
+        // the api starts in its tests without a RabbitMQ broker, and the web host serves the scoped CSS bundle App.razor links
+        await Dotnet.RunAsync(app, "test", "--project", "tests/Shop.Api.Tests", "--no-build", "--filter-class", "Shop.Api.Tests.SetupFlowTests");
+        Read(app, "src/Shop.Web/App.razor").ShouldContain("@Assets[\"Shop.Web.styles.css\"]");
+        var endpoints = Directory.GetFiles(Path.Combine(app, "src/Shop.Web/bin"), "Shop.Web.staticwebassets.endpoints.json", SearchOption.AllDirectories).ShouldHaveSingleItem();
+        File.ReadAllText(endpoints).ShouldContain("\"Shop.Web.styles.css\"");
     }
 
     private static string Read(string app, string path) => File.ReadAllText(Path.Combine(app, path));
