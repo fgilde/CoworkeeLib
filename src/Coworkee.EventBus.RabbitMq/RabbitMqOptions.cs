@@ -5,6 +5,9 @@ public sealed class RabbitMqOptions
     public const string Section = "Coworkee:EventBus:RabbitMq";
     public const string ConnectionStringName = "rabbitmq";
 
+    /// <summary>False keeps the events in process (no connection, no consumer), e.g. for API tests without a broker.</summary>
+    public bool Enabled { get; set; } = true;
+
     /// <summary>amqp:// url; falls back to the "rabbitmq" connection string.</summary>
     public string? ConnectionString { get; set; }
 

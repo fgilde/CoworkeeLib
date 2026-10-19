@@ -17,6 +17,11 @@ public sealed class CoworkeeRabbitMqEventBusModule : CoworkeeModule
     {
         var services = context.Services;
         var options = context.Configuration.GetSection(RabbitMqOptions.Section).Get<RabbitMqOptions>() ?? new RabbitMqOptions();
+        if (!options.Enabled)
+        {
+            return;
+        }
+
         options.ConnectionString ??= context.Configuration.GetConnectionString(RabbitMqOptions.ConnectionStringName);
         options.Queue ??= Assembly.GetEntryAssembly()?.GetName().Name ?? "coworkee";
         services.AddSingleton(options);

@@ -32,6 +32,14 @@ var admin = api.As(setup.AdminUserId, setup.TenantId);
 (await admin.PostAsJsonAsync("/api/v1/brands", new AddEditBrandRequest { Name = "Acme" }, ct)).EnsureSuccessStatusCode();
 ```
 
+### Brokers and search in API tests
+
+An app with `--event-bus rabbitMq` needs no broker in its API tests: the template's fixture sets `Coworkee:EventBus:RabbitMq:Enabled` to `false`, so integration events go from the outbox straight to the handlers of the app, as without a broker. The Elasticsearch index connects only when it is used; tests that search start a container and pass its address as the `elasticsearch` connection string.
+
+```csharp
+builder.UseSetting("Coworkee:EventBus:RabbitMq:Enabled", "false");
+```
+
 ## Blazor components
 
 Pages and components are tested with bUnit. Fake the API clients and `IODataClient`; the table, dialogs and permission gates render as in the browser.

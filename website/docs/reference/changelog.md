@@ -6,6 +6,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixes
 
+- API tests of an app with `--event-bus rabbitMq` start without a broker: new setting `Coworkee:EventBus:RabbitMq:Enabled` (default `true`); the template fixture sets it to `false`, so events reach the handlers in process. Existing apps add `builder.UseSetting("Coworkee:EventBus:RabbitMq:Enabled", "false");` to their `ApiFactory`. See [Testing](../testing.md).
 - `coworkee spec validate` refuses an entity whose plural equals its name (the generated feature namespace hid the entity type and the app did not build).
 
 ### New

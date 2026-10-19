@@ -51,6 +51,7 @@ Add `Coworkee.EventBus.RabbitMq` and depend on `CoworkeeRabbitMqEventBusModule`.
 
 | Setting (`Coworkee:EventBus:RabbitMq`) | Default | Meaning |
 |---|---|---|
+| `Enabled` | true | `false` keeps events in process (no connection, no consumer), e.g. in API tests |
 | `Exchange` | `coworkee.events` | direct exchange, routing key is the event type |
 | `Queue` | entry assembly name | queue of this app: instances of one app share it, every other app needs its own |
 | `MaxDeliveries` | 5 | attempts before a message moves to `{Queue}.dead` |

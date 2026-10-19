@@ -34,13 +34,14 @@ public sealed class RabbitMqFixture : DatabaseFixture
         await base.DisposeAsync();
     }
 
-    public ServiceProvider CreateServices(string queue)
+    public ServiceProvider CreateServices(string queue, bool enabled = true)
     {
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
         {
             [$"{RabbitMqOptions.Section}:ConnectionString"] = RabbitConnectionString,
             [$"{RabbitMqOptions.Section}:Queue"] = queue,
             [$"{RabbitMqOptions.Section}:MaxDeliveries"] = "2",
+            [$"{RabbitMqOptions.Section}:Enabled"] = enabled.ToString(),
         }).Build();
         var services = new ServiceCollection();
         services.AddLogging();

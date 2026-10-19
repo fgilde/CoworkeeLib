@@ -66,6 +66,17 @@ public sealed class RabbitMqTests(RabbitMqFixture fixture) : IAsyncLifetime
         provider.GetRequiredService<Recorder>().Received.Count.ShouldBe(2);
     }
 
+    [Fact]
+    public async Task Disabled_transport_delivers_in_process_without_a_consumer()
+    {
+        await using var provider = fixture.CreateServices("disabled-" + Guid.NewGuid().ToString("N"), enabled: false);
+
+        provider.GetServices<IHostedService>().OfType<RabbitMqConsumer>().ShouldBeEmpty();
+        await PublishAsync(provider, new ShipmentArrived("S2"));
+
+        provider.GetRequiredService<Recorder>().Received.ShouldHaveSingleItem().ShouldBe(new ShipmentArrived("S2"));
+    }
+
     private async Task<ServiceProvider> StartAsync(string queue)
     {
         var provider = fixture.CreateServices(queue);

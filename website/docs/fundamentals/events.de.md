@@ -51,6 +51,7 @@ internal sealed class CreateInvoice(CoworkeeDbContext db) : IIntegrationEventHan
 
 | Einstellung (`Coworkee:EventBus:RabbitMq`) | Standard | Bedeutung |
 |---|---|---|
+| `Enabled` | true | `false` hält die Events im Prozess (keine Verbindung, kein Consumer), etwa in API-Tests |
 | `Exchange` | `coworkee.events` | Direct-Exchange, Routing-Key ist der Event-Typ |
 | `Queue` | Name der Entry-Assembly | Queue dieser App: Instanzen einer App teilen sie, jede andere App braucht eine eigene |
 | `MaxDeliveries` | 5 | Versuche, bevor eine Nachricht nach `{Queue}.dead` wandert |
