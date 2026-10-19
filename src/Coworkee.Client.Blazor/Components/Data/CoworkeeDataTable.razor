@@ -169,7 +169,7 @@
              SortMode="SortMode.Multiple" Dense="Dense" Hover="true" Striped="@Theme.StripedTables" Elevation="0" Outlined="true" ChildRowContent="ChildRowContent"
              Groupable="Groupable" GroupExpanded="true" Hideable="ColumnChooser" DragDropColumnReordering="ReorderableColumns" ColumnReorderMode="DataGridDragAndDropColumnReorderMode.Insert"
              ColumnResizeMode="@(ResizableColumns ? ResizeMode.Column : ResizeMode.None)" Filterable="Filterable" FilterMode="DataGridFilterMode.ColumnFilterMenu"
-             FilterChanged="ColumnFiltersChanged" data-testid="data-table">
+             FilterChanged="ColumnFiltersChanged" RowClick="RowClickedAsync" RowClassFunc="RowClass" data-testid="data-table">
     <Header>
         @if (Groupable && _grid is not null)
         {
@@ -186,11 +186,23 @@
             <SelectColumn T="T" />
         }
         @Columns
-        @if (OnEdit.HasDelegate || OnDelete is not null || History)
+        @if (HasRowActions)
         {
             <TemplateColumn T="T" Sortable="false" Groupable="false" Filterable="false" Hideable="false" Resizable="false" DragAndDropEnabled="false" ShowColumnOptions="false"
                             CellClass="cw-row-actions" HeaderClass="cw-row-actions" CellStyle="text-align:right;white-space:nowrap">
                 <CellTemplate Context="cell">
+                    <span @onclick:stopPropagation="true">
+                    @if (RowOpens)
+                    {
+                        @if (RowHref?.Invoke(cell.Item) is { } href)
+                        {
+                            <MudIconButton Icon="@Icons.Material.Outlined.OpenInNew" Size="Size.Small" Href="@href" aria-label="@L["Open"]" data-testid="open-row" />
+                        }
+                        else
+                        {
+                            <MudIconButton Icon="@Icons.Material.Outlined.OpenInNew" Size="Size.Small" aria-label="@L["Open"]" OnClick="() => OpenRowAsync(cell.Item)" data-testid="open-row" />
+                        }
+                    }
                     @if (History)
                     {
                         <PermissionGate Permission="@AuditPermissions.View">
@@ -209,6 +221,7 @@
                             <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" aria-label="@L["Delete"]" OnClick="() => DeleteAsync([cell.Item])" data-testid="delete-row" />
                         </PermissionGate>
                     }
+                    </span>
                 </CellTemplate>
             </TemplateColumn>
         }

@@ -12,6 +12,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### New
 
+- `CoworkeeDataTable`: `RowHref` (`Func<T, string?>`) and `OnRowClick` (`EventCallback<T>`) open a row by clicking it (not its buttons or checkbox) or by its open button in the action column (keyboard, real link for `RowHref`). See [Data tables](../ui/data-table.md#row-links).
 - `ResourceCalendar` (Blazor): resources against days with bars, half days, lanes, holidays and drag to select days. See [Resource calendar](../ui/resource-calendar.md).
 - Workflows: `ApprovalStep.UsersFrom(context => ...)` finds approvers from the entity when the approval starts, e.g. the manager of the requester.
 

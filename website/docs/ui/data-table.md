@@ -59,6 +59,20 @@ MudBlazor cannot virtualize grouped rows: while the table is grouped it shows pa
 <CoworkeeDataTable T="SalesOrderDto" EntitySet="SalesOrders" PageMode="DataTablePageMode.EndlessScroll" EndlessHeight="70vh" ...>
 ```
 
+## Row links
+
+`RowHref` makes each row lead somewhere, `OnRowClick` runs code instead. A click on the row opens it, clicks on the row's buttons and its checkbox do not. Every such row gets an open button in the action column, so keyboard users reach it with Tab and Enter, and with `RowHref` it is a real link (middle click, open in a new tab).
+
+```razor
+<CoworkeeDataTable T="EmployeeDto" EntitySet="Employees" RowHref="@(e => $"/people/{e.Id}")">
+```
+
+```razor
+<CoworkeeDataTable T="EmployeeDto" EntitySet="Employees" OnRowClick="OpenAsync">
+```
+
+When a row has both, `RowHref` wins where it returns a link; rows for which it returns `null` call `OnRowClick`.
+
 ## Tool bar items
 
 A package can put a component into the tool bar of every table over an OData set: register `new DataTableToolbarItem(typeof(MyComponent))` in DI. The component gets the table as parameter `Table` (`IDataTable`: `EntitySet`, `Expand`, `CurrentQuery`, `ReloadAsync()`). The [client entity switch](client-entities.md#the-switch-in-the-table) is added this way.

@@ -59,6 +59,20 @@ MudBlazor kann gruppierte Zeilen nicht virtualisieren: Solange die Tabelle grupp
 <CoworkeeDataTable T="SalesOrderDto" EntitySet="SalesOrders" PageMode="DataTablePageMode.EndlessScroll" EndlessHeight="70vh" ...>
 ```
 
+## Zeilen-Links
+
+`RowHref` lässt jede Zeile auf eine Adresse führen, `OnRowClick` führt stattdessen Code aus. Ein Klick auf die Zeile öffnet sie, Klicks auf ihre Buttons und ihre Checkbox nicht. Jede solche Zeile bekommt in der Aktionsspalte einen Öffnen-Button, den Tastaturnutzer mit Tab und Enter erreichen; mit `RowHref` ist er ein echter Link (mittlere Maustaste, in neuem Tab öffnen).
+
+```razor
+<CoworkeeDataTable T="EmployeeDto" EntitySet="Employees" RowHref="@(e => $"/people/{e.Id}")">
+```
+
+```razor
+<CoworkeeDataTable T="EmployeeDto" EntitySet="Employees" OnRowClick="OpenAsync">
+```
+
+Hat eine Tabelle beides, gewinnt `RowHref`, wo es einen Link liefert; Zeilen, für die es `null` liefert, rufen `OnRowClick` auf.
+
 ## Einträge der Werkzeugleiste
 
 Ein Paket kann eine Komponente in die Werkzeugleiste jeder Tabelle über einem OData-Set legen: `new DataTableToolbarItem(typeof(MyComponent))` in DI registrieren. Die Komponente bekommt die Tabelle als Parameter `Table` (`IDataTable`: `EntitySet`, `Expand`, `CurrentQuery`, `ReloadAsync()`). Der [Client-Entity-Schalter](client-entities.md#der-schalter-in-der-tabelle) kommt so in die Tabelle.
