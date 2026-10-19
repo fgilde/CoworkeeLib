@@ -12,6 +12,7 @@
 
 ### Neu
 
+- `ISystemDispatcher.SendAsync(request, permissions, ct)` führt einen Request als System in der Organisation des Aufrufers aus, mit genau den genannten Berechtigungen und in einem eigenen Scope (Audit: *system*); darunter `CurrentUserScope.BeginSystem(tenantId, permissions)` und `SystemActor`. `AnonymousCurrentUser` und `TestCurrentUser` reichen jetzt `ClientId`/`ClientPermissions` des Umgebungs-Benutzers weiter. Siehe [Berechtigungen](../security/permissions.md#als-system-handeln).
 - `CoworkeeDataTable`: `RowHref` (`Func<T, string?>`) und `OnRowClick` (`EventCallback<T>`) öffnen eine Zeile per Klick (nicht auf ihre Buttons oder Checkbox) oder über ihren Öffnen-Button in der Aktionsspalte (Tastatur, echter Link bei `RowHref`). Siehe [Datentabellen](../ui/data-table.md#zeilen-links).
 - `ResourceCalendar` (Blazor): Ressourcen über Tagen mit Balken, halben Tagen, Spuren, Feiertagen und Ziehen zur Tagesauswahl. Siehe [Ressourcenkalender](../ui/resource-calendar.md).
 - Workflows: `ApprovalStep.UsersFrom(context => ...)` ermittelt Genehmigende beim Start der Genehmigung aus der Entität, etwa die Führungskraft der antragstellenden Person.

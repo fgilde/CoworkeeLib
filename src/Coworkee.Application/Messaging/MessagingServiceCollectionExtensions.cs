@@ -9,7 +9,7 @@ public static class MessagingServiceCollectionExtensions
     private static readonly Type[] HandlerTypes = [typeof(IHandler<,>), typeof(IDomainEventHandler<>)];
 
     public static IServiceCollection AddDispatcher(this IServiceCollection services) =>
-        services.AddScoped<IDispatcher, Dispatcher>();
+        services.AddScoped<IDispatcher, Dispatcher>().AddScoped<ISystemDispatcher, SystemDispatcher>();
 
     public static IServiceCollection AddMessagingFromAssembly(this IServiceCollection services, Assembly assembly)
     {

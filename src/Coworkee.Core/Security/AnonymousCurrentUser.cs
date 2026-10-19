@@ -9,4 +9,8 @@ public sealed class AnonymousCurrentUser : ICurrentUser
     public bool IsAuthenticated => CurrentUserScope.Current?.IsAuthenticated ?? false;
 
     public IReadOnlyCollection<string> Roles => CurrentUserScope.Current?.Roles ?? [];
+
+    public string? ClientId => CurrentUserScope.Current?.ClientId;
+
+    public IReadOnlyCollection<string> ClientPermissions => CurrentUserScope.Current?.ClientPermissions ?? [];
 }

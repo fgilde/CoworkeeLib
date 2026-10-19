@@ -32,6 +32,18 @@ The definitions build the permission matrix in the role editor: grouped, searcha
 
 Resource grants inherit along a hierarchy you describe with `IResourceHierarchy` (folders in folders, for example). `IResourceRestriction` takes access away again for certain roles, even from holders of a global grant.
 
+## Acting as the system
+
+Sometimes a module has to run a library command whatever the caller may do: the HR module keeps the group of a team in step when a manager edits the team, although the manager may not manage groups. `ISystemDispatcher` sends such a command as the system:
+
+```csharp
+await system.SendAsync(new SetGroupMembers(groupId, memberIds), [IdentityPermissions.Groups.Manage], ct);
+```
+
+The command runs in the caller's organisation, signed in without a user and with exactly the permissions you name (no roles, nothing more), and in a DI scope of its own, so the caller's pending changes are not saved with it. Its audit entries show *system*. `CurrentUserScope.BeginSystem(tenantId, permissions)` does the same without the own scope, e.g. in a background job for another organisation.
+
+Use it only after your own code has decided that the caller may cause the change (`[RequiresPermission]` on your own command, a check on the record). Never pass on a request the caller built: it would let them do anything the named permissions allow. For work on behalf of a user, act as that user (`ImpersonatedUser`) instead.
+
 ## Checking in the UI
 
 ```razor

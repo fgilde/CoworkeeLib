@@ -6,6 +6,7 @@ public sealed class TestCurrentUser : ICurrentUser
 {
     private Guid? _userId = Guid.CreateVersion7();
     private Guid? _tenantId = Guid.CreateVersion7();
+    private IReadOnlyCollection<string> _roles = [];
 
     public Guid? UserId
     {
@@ -19,7 +20,15 @@ public sealed class TestCurrentUser : ICurrentUser
         set => _tenantId = value;
     }
 
-    public bool IsAuthenticated => UserId is not null;
+    public bool IsAuthenticated => CurrentUserScope.Current?.IsAuthenticated ?? UserId is not null;
 
-    public IReadOnlyCollection<string> Roles { get; set; } = [];
+    public IReadOnlyCollection<string> Roles
+    {
+        get => CurrentUserScope.Current?.Roles ?? _roles;
+        set => _roles = value;
+    }
+
+    public string? ClientId => CurrentUserScope.Current?.ClientId;
+
+    public IReadOnlyCollection<string> ClientPermissions => CurrentUserScope.Current?.ClientPermissions ?? [];
 }
