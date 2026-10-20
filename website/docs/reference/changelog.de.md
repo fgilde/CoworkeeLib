@@ -13,6 +13,7 @@
 
 ### Korrekturen
 
+- `CoworkeeDataTable`: Spaltenköpfe behalten ihre Beschriftung auf einer Zeile, eine breite Tabelle scrollt also seitlich, statt ihre letzten Spalten ("Kostenstell", "Stat") unter die fixierte Aktionsspalte zu quetschen.
 - Layout: der App-Titel in der App-Leiste bleibt einzeilig und endet auf schmalen Bildschirmen mit Auslassungspunkten, statt umzubrechen.
 - `CoworkeeWorkflow`: das Fälligkeitsdatum einer Genehmigung behält seinen Abstand zum Wartetext ("…Personen. Fällig 25.10.").
 - Aspire: `AddMigrations` verdrahtet die Module, die das Migrationsprojekt referenziert, wie bei jedem Dienst (Speicher, Mail, Redis, Suche, Übersetzung, Einträge in `app.Modules`); Dateien eines Seeds landeten vorher im lokalen Ordner des Migrations-Hosts und öffneten sich in der App mit 404. App-Hosts, die `CoworkeeModules.Storage` von Hand in die Migrationen verdrahtet haben, können diese Zeile streichen.

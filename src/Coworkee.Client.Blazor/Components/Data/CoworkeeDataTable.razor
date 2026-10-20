@@ -32,6 +32,8 @@
     .cw-table-facets { position: sticky; top: 72px; max-height: calc(100vh - 96px); overflow-y: auto; padding-right: 2px; }
     @@media (max-width: 960px) { .cw-table-paneled { grid-template-columns: 1fr; } .cw-table-facets { position: static; max-height: none; } }
     .cw-table-main { min-width: 0; }
+    /* a header keeps its label on one line, so a wide table scrolls sideways instead of squeezing its last columns under the sticky action column */
+    .cw-table-main .mud-table-head th.mud-table-cell:not(.cw-row-actions) .column-header { white-space: nowrap; }
     .cw-advanced { margin-bottom: 12px; padding: 12px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--mud-palette-primary) 30%, var(--mud-palette-lines-default));
         background: color-mix(in srgb, var(--mud-palette-primary) 2%, var(--mud-palette-surface)); }
     .cw-table-total { padding: 10px 16px; text-align: right; color: var(--mud-palette-text-secondary); font-size: .875rem; }

@@ -13,6 +13,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixes
 
+- `CoworkeeDataTable`: column headers keep their label on one line, so a wide table scrolls sideways instead of squeezing its last columns ("Kostenstell", "Stat") under the sticky action column.
 - Layout: the app title in the app bar stays on one line and ends with an ellipsis on narrow screens instead of wrapping.
 - `CoworkeeWorkflow`: the due date of an approval keeps its space after the waiting text ("…listed. Due 25.10.").
 - Aspire: `AddMigrations` wires the modules the migrations project references like any service (storage, mail, Redis, search, translation, `app.Modules` entries); files a seed stored went to the local folder of the migrations host before, and opened with 404 in the app. App hosts that wired `CoworkeeModules.Storage` into the migrations by hand can drop that line.
