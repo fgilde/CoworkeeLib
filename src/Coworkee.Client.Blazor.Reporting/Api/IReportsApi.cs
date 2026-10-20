@@ -29,5 +29,8 @@ public interface IReportsApi
 
     Task<ReportQueryResult> QueryAsync(ReportQueryRequest request, CancellationToken cancellationToken = default);
 
+    /// <summary>A page of rows of a computed source; entity sets page through OData.</summary>
+    Task<ReportRowsResult> RowsAsync(ReportRowsRequest request, CancellationToken cancellationToken = default);
+
     Task<byte[]> SheetAsync(ReportSheetRequest sheet, CancellationToken cancellationToken = default);
 }

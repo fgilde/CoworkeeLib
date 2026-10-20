@@ -18,7 +18,7 @@
         <MudDateRangePicker DateRange="CustomRange" DateRangeChanged="CustomChanged" Variant="Variant.Outlined" Margin="Margin.Dense" Class="cw-custom-range mr-2 mb-2"
                             PlaceholderStart="@L["From"]" PlaceholderEnd="@L["To"]" AutoClose="true" />
     }
-    @foreach (var set in State.EntitySets)
+    @foreach (var set in State.EntitySets.Where(s => State.Source(s) is not { Computed: true }))
     {
         <div class="cw-filter-set">
             @if (State.EntitySets.Skip(1).Any())

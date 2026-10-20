@@ -30,6 +30,9 @@ public static class WidgetPresets
         new("Web page", Icons.Material.Outlined.Language, WidgetType.Embed, ChartKind.Bar, 6, 5),
     ];
 
+    /// <summary>The data table pages through OData, which computed sources do not have.</summary>
+    public static bool Fits(WidgetType type, ReportSourceDto source) => type != WidgetType.DataTable || !source.Computed;
+
     public static bool HasData(WidgetType type) => type is WidgetType.Kpi or WidgetType.Chart or WidgetType.Table or WidgetType.DataTable or WidgetType.Pivot;
 
     public static string IconFor(ReportWidget widget) =>
@@ -47,7 +50,7 @@ public static class WidgetPresets
             Y = existing.Count == 0 ? 0 : existing.Max(w => w.Y + w.H),
             Options = new WidgetOptions { Chart = preset.Chart, Text = preset.Type == WidgetType.Markdown ? "## Notes\nWrite **markdown** here." : null },
         };
-        if (!HasData(preset.Type) || (sources.FirstOrDefault(s => s.EntitySet == entitySet) ?? sources.FirstOrDefault()) is not { } source)
+        if (!HasData(preset.Type) || (sources.FirstOrDefault(s => s.EntitySet == entitySet && Fits(preset.Type, s)) ?? sources.FirstOrDefault(s => Fits(preset.Type, s))) is not { } source)
         {
             return widget;
         }

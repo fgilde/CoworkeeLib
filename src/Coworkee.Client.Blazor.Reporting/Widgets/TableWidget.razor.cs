@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Coworkee.Client.Blazor.Data;
+using Coworkee.Contracts.Data;
 using Coworkee.Contracts.Reporting;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web.Virtualization;
@@ -52,8 +53,9 @@ public partial class TableWidget
             return;
         }
 
-        var page = await OData.QueryAsync<JsonElement>(query.EntitySet, new ODataQuery { Filter = Filter, Top = 0, Count = true }, cancellationToken);
-        _total = page.Count;
+        _total = Source is { Computed: true }
+            ? (await Api.RowsAsync(new ReportRowsRequest(query.EntitySet, [Columns[0].Path], Filter, Top: 1), cancellationToken)).Count
+            : (await OData.QueryAsync<JsonElement>(query.EntitySet, new ODataQuery { Filter = Filter, Top = 0, Count = true }, cancellationToken)).Count;
         _generation++;
         await ReportInfoAsync(L["{0} rows", _total ?? 0]);
     }
@@ -66,7 +68,7 @@ public partial class TableWidget
         }
 
         var paths = Columns.Select(c => c.Path).ToList();
-        var page = await OData.QueryAsync<JsonElement>(query.EntitySet, new ODataQuery
+        var page = Source is { Computed: true } ? await ComputedPageAsync(query, paths, request) : await OData.QueryAsync<JsonElement>(query.EntitySet, new ODataQuery
         {
             Filter = Filter,
             OrderBy = OrderBy,
@@ -83,6 +85,13 @@ public partial class TableWidget
         }
 
         return new([.. page.Items.Chunk(PerRow).Select(c => (IReadOnlyList<JsonElement>)c)], (int)Math.Ceiling((page.Count ?? page.Items.Count) / (double)PerRow));
+    }
+
+    private async Task<ODataPage<JsonElement>> ComputedPageAsync(WidgetQuery query, List<string> paths, ItemsProviderRequest request)
+    {
+        var rows = await Api.RowsAsync(new ReportRowsRequest(query.EntitySet, paths, Filter, _sort, _descending, request.StartIndex * PerRow, Math.Clamp(request.Count * PerRow, 1, 1000)),
+            request.CancellationToken);
+        return new ODataPage<JsonElement>(rows.Rows, rows.Count, []);
     }
 
     private void Sort(string path)

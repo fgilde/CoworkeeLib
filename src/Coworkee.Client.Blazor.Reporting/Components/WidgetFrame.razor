@@ -32,7 +32,7 @@
             }
             <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Dense="Density.Dense" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" aria-label="@L["More"]" data-testid="widget-menu">
                 <MudMenuItem Icon="@(_full ? Icons.Material.Outlined.FullscreenExit : Icons.Material.Outlined.Fullscreen)" OnClick="() => _full = !_full">@L[_full ? "Exit full screen" : "Full screen"]</MudMenuItem>
-                @if (Widget.Query is { EntitySet.Length: > 0 })
+                @if (Widget.Query is { EntitySet.Length: > 0 } query && (State.Source(query.EntitySet) is not { Computed: true } || Options.HasPage(query.EntitySet)))
                 {
                     <MudMenuItem Icon="@Icons.Material.Outlined.OpenInNew" OnClick="DrillDown" data-testid="drill-down">@L["Open the data"]</MudMenuItem>
                 }

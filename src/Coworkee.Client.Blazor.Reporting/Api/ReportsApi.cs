@@ -43,6 +43,9 @@ internal sealed class ReportsApi(HttpClient http) : ApiClientBase(http), IReport
     public Task<ReportQueryResult> QueryAsync(ReportQueryRequest request, CancellationToken cancellationToken = default) =>
         SendAsync<ReportQueryResult>(HttpMethod.Post, $"{Root}/query", request, cancellationToken);
 
+    public Task<ReportRowsResult> RowsAsync(ReportRowsRequest request, CancellationToken cancellationToken = default) =>
+        SendAsync<ReportRowsResult>(HttpMethod.Post, $"{Root}/rows", request, cancellationToken);
+
     public async Task<byte[]> SheetAsync(ReportSheetRequest sheet, CancellationToken cancellationToken = default)
     {
         using var response = await SendCoreAsync(HttpMethod.Post, $"{Root}/sheet", sheet, cancellationToken);

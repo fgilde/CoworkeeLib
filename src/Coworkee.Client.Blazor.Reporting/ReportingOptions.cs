@@ -11,6 +11,9 @@ public sealed class ReportingOptions
         return this;
     }
 
+    /// <summary>Whether the app registered a page for the set or source; computed sources drill down only then.</summary>
+    public bool HasPage(string entitySet) => _pages.ContainsKey(entitySet);
+
     /// <summary>The app's page for the set, otherwise the module's generic data page.</summary>
     public string PageFor(string entitySet) => _pages.GetValueOrDefault(entitySet) ?? $"reports/data/{Uri.EscapeDataString(entitySet)}";
 }

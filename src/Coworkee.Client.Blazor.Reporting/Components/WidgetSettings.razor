@@ -27,9 +27,17 @@
         {
             <MudText Typo="Typo.overline" Class="cw-settings-section">@L["Data"]</MudText>
             <MudSelect T="string" Value="query.EntitySet" ValueChanged="SourceChanged" Label="@L["Data source"]" Variant="Variant.Outlined" Margin="Margin.Dense" data-testid="widget-source">
-                @foreach (var source in State.Sources)
+                @foreach (var source in State.Sources.Where(s => WidgetPresets.Fits(Widget.Type, s)))
                 {
-                    <MudSelectItem Value="source.EntitySet">@L[source.Label]</MudSelectItem>
+                    <MudSelectItem Value="source.EntitySet">
+                        <span class="cw-source-option" data-computed="@source.Computed">
+                            @if (source.Computed)
+                            {
+                                <MudIcon Icon="@Icons.Material.Outlined.Functions" Size="Size.Small" />
+                            }
+                            @L[source.Label]
+                        </span>
+                    </MudSelectItem>
                 }
             </MudSelect>
 
