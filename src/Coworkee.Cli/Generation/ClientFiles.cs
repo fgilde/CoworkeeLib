@@ -72,10 +72,10 @@ internal static class ClientFiles
             @using {{e.App}}.Contracts.{{e.Module}}
             @attribute [Authorize(Policy = PermissionPolicy.Prefix + {{e.Permissions}}.View)]
 
-            <PageHeader Title="@L["{{e.Plural}}"]" Description="@L["Manage {{e.PluralWords}}."]" />
+            <PageHeader Title="{{e.Plural}}" Description="Manage {{e.PluralWords}}." />
             <RealtimeSubscription Topic="type:{{e.Name}}" OnEvent="_ => _table.ReloadAsync()" />
             <CoworkeeDataTable @ref="_table" T="{{e.Name}}Dto" EntitySet="{{e.Plural}}"{{expand}} SearchFields="SearchFields" MultiSelection="true" ExportFileName="{{e.PluralWords.Replace(' ', '-')}}" DescribeItem="e => {{e.Describe}}"
-                               CreateText="@L["New {{e.Words}}"]" CreatePermission="@{{e.Permissions}}.Create" EditPermission="@{{e.Permissions}}.Edit" DeletePermission="@{{e.Permissions}}.Delete"
+                               CreateText="New {{e.Words}}" CreatePermission="@{{e.Permissions}}.Create" EditPermission="@{{e.Permissions}}.Edit" DeletePermission="@{{e.Permissions}}.Delete"
                                OnCreate="CreateAsync" OnEdit="EditAsync" OnDelete="DeleteAsync">
                 <Columns>
             {{string.Concat(e.Columns.Select(p => $"        <PropertyColumn Property=\"e => e.{Shown(e, p)}\" Title=\"@L[\"{EntityModel.Label(p)}\"]\"{Format(p)} />\n"))}}    </Columns>

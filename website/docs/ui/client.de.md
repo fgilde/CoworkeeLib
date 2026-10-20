@@ -118,7 +118,7 @@ builder.Services.AddSingleton(new ProfileTab("Documents", "documents", typeof(My
 
 | Komponente | Zweck |
 |---|---|
-| `PageHeader` | Titel, Beschreibung, Aktionen rechts; setzt den Browsertitel |
+| `PageHeader` | Titel, Beschreibung, Aktionen rechts; setzt den Browsertitel. Übergib Textschlüssel (`Title="Brands"`), es übersetzt sie selbst; ebenso `CreateText` von `CoworkeeDataTable` |
 | `StickyMergeTabs` | umschließt ein `<MudTabs>`: dessen Tab-Leiste klebt unter der App-Leiste und schrumpft auf die Breite der Tabs schrumpft, sodass eine klebende `MudExObjectEditForm`-Toolbar im Panel daneben sichtbar wird; nicht auf schmalen Bildschirmen |
 | `PermissionGate`, `PermissionView` | rendern Inhalt nur mit einer Berechtigung |
 | `RealtimeSubscription` | ruft zurück, wenn der Server auf einem Thema veröffentlicht, z. B. `type:Brand` |

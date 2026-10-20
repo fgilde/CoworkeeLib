@@ -118,7 +118,7 @@ builder.Services.AddSingleton(new ProfileTab("Documents", "documents", typeof(My
 
 | Component | Use |
 |---|---|
-| `PageHeader` | title, description, actions on the right; sets the browser title |
+| `PageHeader` | title, description, actions on the right; sets the browser title. Pass text keys (`Title="Brands"`), it translates them itself; so does `CreateText` of `CoworkeeDataTable` |
 | `StickyMergeTabs` | wraps a `<MudTabs>`: its tab bar sticks below the app bar and shrinks to its tabs, so a sticky `MudExObjectEditForm` toolbar in the panel shows next to it; not on narrow screens |
 | `PermissionGate`, `PermissionView` | render content only with a permission |
 | `RealtimeSubscription` | calls back when the server publishes on a topic, e.g. `type:Brand` |
