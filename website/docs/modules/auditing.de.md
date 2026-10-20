@@ -40,3 +40,35 @@ Das Audit-Log (`/admin/audit`) bietet dieselben Aktionen pro Eintrag, wenn desse
 Die Endpunkte liegen unter `/api/v1/history`: `GET /` (die Sets, die du lesen darfst, mit `CanRestore`) und pro Set `/{entitySet}`: `GET /{id}`, `POST /{id}/preview`, `POST /{id}/restore` und `GET /deleted`. Vorschau und Wiederherstellen nehmen `{ entryId, property?, mode, version? }` mit `mode` `After` (Standard, der Stand direkt nach dem Eintrag), `Before` oder `Undo`. Die Vorschau liefert eine `version` des Datensatzes; das Wiederherstellen schickt sie zurück und antwortet `409`, wenn sich der Datensatz dazwischen geändert hat (ein Wert, das Löschen oder ein neuer Verlaufseintrag). Die Blazor-Dialoge und das AirWorks-Datensatzfenster zeigen dann die neue Vorschau.
 
 Hart gelöschte Datensätze gibt es in der Tabelle nicht mehr, also gibt es auch nichts zu aktualisieren. Nimm `ISoftDelete` für alles, was jemand vielleicht zurückhaben möchte.
+
+## Anonyme Datensätze
+
+Manche Zeilen dürfen nicht auf die Person zurückführbar sein, die sie geschrieben hat: Antworten einer anonymen Umfrage, Hinweisgebermeldungen, Abstimmungen. Markiere den Typ mit `IAnonymous` (oder leite von `AnonymousEntity` ab):
+
+```csharp
+public sealed class SurveyResponse : AnonymousEntity, IMultiTenant   // zufällige ID mit Guid.NewGuid()
+{
+    public Guid SurveyId { get; set; }
+    public DateTimeOffset SubmittedAt { get; set; }
+    public string? AnswersJson { get; set; }
+    public Guid TenantId { get; set; }
+}
+
+response.SubmittedAt = response.Truncate(clock.GetUtcNow());   // eigene Zeitstempel genauso kürzen
+```
+
+Für solche Zeilen
+
+- schreibt die Bibliothek kein `CreatedBy`, `ModifiedBy` oder `DeletedBy` und kürzt `CreatedAt`, `ModifiedAt` und `DeletedAt` auf den UTC-Tag;
+- schreibt sie **keinen Audit-Eintrag** (also auch keinen Verlauf) und `IVersioned`-Snapshots ohne `CreatedBy` und mit gekürzter Zeit;
+- verschickt sie Domain Events (Outbox), Webhooks und Elsa-Entity-Trigger **ohne Benutzer und Trace-ID**, ihre Handler laufen also ohne Benutzer; Realtime-Änderungsereignisse tragen nie einen Benutzer;
+- lässt sie IDs, wie sie sind: IDs von `Entity` sind zeitlich sortiert (`Guid.CreateVersion7()`, auf die Millisekunde), `AnonymousEntity` setzt `Guid.NewGuid()`. Ein Typ mit anderer Basisklasse setzt `Id = Guid.NewGuid()` in seinem Konstruktor.
+
+`TimeSpan IAnonymous.TimestampPrecision => TimeSpan.FromHours(1);` ändert die Genauigkeit (`TimeSpan.Zero` behält exakte Zeiten); eine Klasse, die von `AnonymousEntity` erbt, führt dafür `IAnonymous` noch einmal auf.
+
+Was deine Aufgabe bleibt:
+
+- Keine Person an der Zeile speichern (`EmployeeId`) oder über eine Navigation erreichbar machen, und Kind-Zeilen (`SurveyAnswer`) ebenfalls mit `IAnonymous` markieren.
+- Kleine Gruppen verraten Personen: Ergebnisse erst ab einer Mindestzahl an Antworten zeigen.
+- Workflows, Kommentare, Reaktionen, Dateien und Benachrichtigungen speichern ihren eigenen Akteur; hänge sie nicht an anonyme Zeilen. Integration Events, die du selbst veröffentlichst (`IEventBus`), tragen den aktuellen Benutzer: veröffentliche sie in `CurrentUserScope.Begin(new ImpersonatedUser(null, tenantId))`, wenn sie zu einer anonymen Zeile gehören.
+- Request-Logs und Traces (OpenTelemetry) zeigen weiterhin, wer den Endpunkt wann aufgerufen hat; halte ihre Aufbewahrung kurz oder nimm den Endpunkt aus dem detaillierten Logging.

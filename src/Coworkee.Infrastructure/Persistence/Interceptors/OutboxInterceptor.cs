@@ -39,8 +39,8 @@ internal sealed class OutboxInterceptor(ICurrentUser currentUser, TimeProvider c
                 Payload = JsonSerializer.Serialize(domainEvent, domainEvent.GetType()),
                 OccurredAt = now,
                 TenantId = currentUser.TenantId,
-                ActorId = currentUser.UserId,
-                CorrelationId = correlationId,
+                ActorId = aggregate is IAnonymous ? null : currentUser.UserId,
+                CorrelationId = aggregate is IAnonymous ? null : correlationId,
             }));
             aggregate.ClearDomainEvents();
         }

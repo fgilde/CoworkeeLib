@@ -77,6 +77,19 @@ public sealed class WebhookUnitTests
     }
 
     [Fact]
+    public void Messages_of_anonymous_records_carry_no_actor_and_no_trace()
+    {
+        using var request = new System.Diagnostics.Activity("request").Start();
+        var user = Guid.NewGuid();
+
+        var named = WebhookOutbox.Message(new WebhookEntityChanged("Ballots", "1", WebhookNames.Created), null, user, TimeProvider.System);
+        var anonymous = WebhookOutbox.Message(new WebhookEntityChanged("Ballots", "1", WebhookNames.Created), null, user, TimeProvider.System, anonymous: true);
+
+        (named.ActorId, named.CorrelationId is not null).ShouldBe((user, true));
+        (anonymous.ActorId, anonymous.CorrelationId).ShouldBe((null, null));
+    }
+
+    [Fact]
     public void Retries_wait_twice_as_long_each_time_up_to_the_cap()
     {
         var options = new WebhookOptions { FirstRetryDelay = TimeSpan.FromSeconds(30), MaxRetryDelay = TimeSpan.FromMinutes(3) };

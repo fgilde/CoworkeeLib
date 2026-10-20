@@ -56,6 +56,41 @@ public sealed class Article : AggregateRoot, IVersioned
     public int Revision { get; set; }
 }
 
+public sealed record BallotCast(Guid BallotId) : IDomainEvent;
+
+/// <summary>An answer that must not point to its author.</summary>
+public sealed class Ballot : AggregateRoot, IAuditable, ISoftDelete, IMultiTenant, IVersioned, IAnonymous
+{
+    public Ballot() => Id = Guid.NewGuid();
+
+    public void Cast() => Raise(new BallotCast(Id));
+
+    public required string Answer { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public Guid? CreatedBy { get; set; }
+
+    public DateTimeOffset? ModifiedAt { get; set; }
+
+    public Guid? ModifiedBy { get; set; }
+
+    public bool IsDeleted { get; set; }
+
+    public DateTimeOffset? DeletedAt { get; set; }
+
+    public Guid? DeletedBy { get; set; }
+
+    public Guid TenantId { get; set; }
+
+    public int Revision { get; set; }
+}
+
+public sealed class HourlyNote : AnonymousEntity, IAnonymous
+{
+    TimeSpan IAnonymous.TimestampPrecision => TimeSpan.FromHours(1);
+}
+
 public sealed class DocumentSettings
 {
     public string Color { get; set; } = "none";
@@ -70,6 +105,7 @@ public sealed class TestModelContributor : IModelContributor
         document.Property(d => d.Note).IsSensitive();
         document.Property(d => d.Internal).IsNotAudited();
         modelBuilder.Entity<Article>();
+        modelBuilder.Entity<Ballot>();
     }
 }
 

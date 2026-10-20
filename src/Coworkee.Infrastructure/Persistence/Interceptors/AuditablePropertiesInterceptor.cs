@@ -24,15 +24,18 @@ internal sealed class AuditablePropertiesInterceptor(ICurrentUser currentUser, T
         var now = clock.GetUtcNow();
         foreach (var entry in context?.ChangeTracker.Entries<IAuditable>() ?? [])
         {
+            var anonymous = entry.Entity as IAnonymous;
+            var at = anonymous?.Truncate(now) ?? now;
+            var by = anonymous is null ? currentUser.UserId : null;
             if (entry.State == EntityState.Added)
             {
-                entry.Entity.CreatedAt = now;
-                entry.Entity.CreatedBy = currentUser.UserId;
+                entry.Entity.CreatedAt = at;
+                entry.Entity.CreatedBy = by;
             }
             else if (entry.State == EntityState.Modified)
             {
-                entry.Entity.ModifiedAt = now;
-                entry.Entity.ModifiedBy = currentUser.UserId;
+                entry.Entity.ModifiedAt = at;
+                entry.Entity.ModifiedBy = by;
             }
         }
 

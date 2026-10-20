@@ -25,8 +25,9 @@ internal sealed class SoftDeleteInterceptor(ICurrentUser currentUser, TimeProvid
         {
             entry.State = EntityState.Modified;
             entry.Entity.IsDeleted = true;
-            entry.Entity.DeletedAt = clock.GetUtcNow();
-            entry.Entity.DeletedBy = currentUser.UserId;
+            var anonymous = entry.Entity as IAnonymous;
+            entry.Entity.DeletedAt = anonymous?.Truncate(clock.GetUtcNow()) ?? clock.GetUtcNow();
+            entry.Entity.DeletedBy = anonymous is null ? currentUser.UserId : null;
         }
     }
 }

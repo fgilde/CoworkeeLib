@@ -82,8 +82,8 @@ internal sealed class SnapshotInterceptor(ICurrentUser currentUser, TimeProvider
             Revision = revision,
             Payload = Payload(entry),
             IsDeleted = deleted,
-            CreatedAt = now,
-            CreatedBy = currentUser.UserId,
+            CreatedAt = (entry.Entity as IAnonymous)?.Truncate(now) ?? now,
+            CreatedBy = entry.Entity is IAnonymous ? null : currentUser.UserId,
         };
     }
 

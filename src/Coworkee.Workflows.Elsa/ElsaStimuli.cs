@@ -76,15 +76,15 @@ internal sealed class EntityChangeInterceptor(ElsaWorkflowOptions options, ICurr
 
         var changes = context.ChangeTracker.Entries()
             .Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted && options.Watched.ContainsKey(e.Metadata.ClrType))
-            .Select(e => new EntityChanged(options.Watched[e.Metadata.ClrType], (Guid)e.Property("Id").CurrentValue!, e.State == EntityState.Added ? "Created" : e.State == EntityState.Deleted ? "Deleted" : "Updated"))
+            .Select(e => (Anonymous: e.Entity is IAnonymous, Change: new EntityChanged(options.Watched[e.Metadata.ClrType], (Guid)e.Property("Id").CurrentValue!, e.State == EntityState.Added ? "Created" : e.State == EntityState.Deleted ? "Deleted" : "Updated")))
             .ToList();
-        context.Set<OutboxMessage>().AddRange(changes.Select(change => new OutboxMessage
+        context.Set<OutboxMessage>().AddRange(changes.Select(c => new OutboxMessage
         {
             Type = typeof(EntityChanged).AssemblyQualifiedName!,
-            Payload = JsonSerializer.Serialize(change),
+            Payload = JsonSerializer.Serialize(c.Change),
             OccurredAt = clock.GetUtcNow(),
             TenantId = currentUser.TenantId,
-            ActorId = currentUser.UserId,
+            ActorId = c.Anonymous ? null : currentUser.UserId,
         }));
     }
 }
