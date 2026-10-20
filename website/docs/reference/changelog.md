@@ -13,6 +13,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixes
 
+- Layout: the app title in the app bar stays on one line and ends with an ellipsis on narrow screens instead of wrapping.
 - `CoworkeeWorkflow`: the due date of an approval keeps its space after the waiting text ("…listed. Due 25.10.").
 - Aspire: `AddMigrations` wires the modules the migrations project references like any service (storage, mail, Redis, search, translation, `app.Modules` entries); files a seed stored went to the local folder of the migrations host before, and opened with 404 in the app. App hosts that wired `CoworkeeModules.Storage` into the migrations by hand can drop that line.
 - Dialogs: a side sheet or dialog of the library opened from inside a dialog the app showed with the plain MudBlazor `ShowAsync` (for example the file preview of `RecordAttachment`) stayed invisible; MudBlazor.Extensions applied its options to the outer dialog. The layout now marks dialogs that are already open when a new one is added.

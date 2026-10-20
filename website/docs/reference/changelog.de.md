@@ -13,6 +13,7 @@
 
 ### Korrekturen
 
+- Layout: der App-Titel in der App-Leiste bleibt einzeilig und endet auf schmalen Bildschirmen mit Auslassungspunkten, statt umzubrechen.
 - `CoworkeeWorkflow`: das Fälligkeitsdatum einer Genehmigung behält seinen Abstand zum Wartetext ("…Personen. Fällig 25.10.").
 - Aspire: `AddMigrations` verdrahtet die Module, die das Migrationsprojekt referenziert, wie bei jedem Dienst (Speicher, Mail, Redis, Suche, Übersetzung, Einträge in `app.Modules`); Dateien eines Seeds landeten vorher im lokalen Ordner des Migrations-Hosts und öffneten sich in der App mit 404. App-Hosts, die `CoworkeeModules.Storage` von Hand in die Migrationen verdrahtet haben, können diese Zeile streichen.
 - Dialoge: ein Seitenblatt oder Dialog der Bibliothek, geöffnet aus einem Dialog, den die App mit dem einfachen MudBlazor-`ShowAsync` zeigt (etwa die Dateivorschau von `RecordAttachment`), blieb unsichtbar; MudBlazor.Extensions wandte seine Optionen auf den äußeren Dialog an. Das Layout markiert jetzt die schon offenen Dialoge, wenn ein neuer hinzukommt.

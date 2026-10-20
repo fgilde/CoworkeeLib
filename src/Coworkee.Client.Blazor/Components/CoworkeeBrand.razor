@@ -2,4 +2,5 @@
 {
     <CoworkeeLogo Class="ml-2" />
 }
-<MudText Typo="Typo.h6" Class="ml-2">@Options.AppTitle</MudText>
+@* one line with an ellipsis: on phones a long title wrapped and doubled the bar's height *@
+<MudText Typo="Typo.h6" Class="ml-2" Style="min-width:0;flex:0 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="@Options.AppTitle">@Options.AppTitle</MudText>
