@@ -1,3 +1,4 @@
+using Coworkee.Contracts.Attachments;
 using Coworkee.Domain;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -5,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Coworkee.Files.Attachments;
 
 /// <summary>A file of a record in one of its slots; the content lives in the blob storage under <see cref="BlobKey"/>.</summary>
-public sealed class RecordAttachment : AuditedEntity, IMultiTenant
+public sealed class RecordAttachment : AuditedEntity, IMultiTenant, IHasRealtimeTopics
 {
     public Guid TenantId { get; set; }
 
@@ -22,6 +23,8 @@ public sealed class RecordAttachment : AuditedEntity, IMultiTenant
     public long Size { get; set; }
 
     public required string BlobKey { get; set; }
+
+    public IEnumerable<string> RealtimeTopics => [AttachmentTopics.Record(EntityType, EntityId)];
 }
 
 internal sealed class RecordAttachmentModelContributor : IModelContributor

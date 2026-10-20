@@ -6,8 +6,11 @@ using Coworkee.Application.Retention;
 using Coworkee.Contracts.Attachments;
 using Coworkee.Contracts.Files;
 using Coworkee.Contracts.Identity;
+using Coworkee.Contracts.Realtime;
 using Coworkee.Core.Security;
 using Coworkee.Files.Attachments;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -88,6 +91,48 @@ public sealed class AttachmentTests(FilesApp app) : IAsyncLifetime
         (await reader.GetAsync("/" + AttachmentUrls.Content(shared), Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await Upload(reader, _ticket, "docs", "no.txt", "n")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await reader.DeleteAsync("/" + AttachmentUrls.Content(shared), Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task Changes_reach_followers_of_the_record_topic_who_see_the_record()
+    {
+        var hidden = await app.AddTicketAsync(_setup.AdminUserId, _setup.TenantId, Ticket.Private);
+        var reader = await CreateUserAsync("read@acme.test");
+        var (connection, events) = await app.ConnectAsync(_setup.AdminUserId, _setup.TenantId);
+        await using var _ = connection;
+        var (other, _) = await app.ConnectAsync(reader.Id, _setup.TenantId);
+        await using var __ = other;
+        await connection.InvokeAsync(RealtimeHubMethods.Subscribe, AttachmentTopics.Record("Tickets", _ticket), Ct);
+        await Should.ThrowAsync<HubException>(() => other.InvokeAsync(RealtimeHubMethods.Subscribe, AttachmentTopics.Record("Tickets", hidden), Ct));
+        await Should.ThrowAsync<HubException>(() => connection.InvokeAsync(RealtimeHubMethods.Subscribe, AttachmentTopics.Record("Unknown", _ticket), Ct));
+
+        var file = await UploadAsync(Admin, _ticket, "docs", "live.txt", "x");
+        (await Admin.DeleteAsync("/" + AttachmentUrls.Content(file), Ct)).EnsureSuccessStatusCode();
+
+        for (var i = 0; i < 50 && events.Count < 2; i++)
+        {
+            await Task.Delay(100, Ct);
+        }
+
+        events.Where(e => e.Topic == AttachmentTopics.Record("Tickets", _ticket)).Count().ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task The_personal_data_export_lists_the_uploads_and_erasing_the_user_keeps_the_files()
+    {
+        var uploader = await CreateUserAsync("up@acme.test", FilePermissions.Upload);
+        var asUploader = app.As(uploader.Id, _setup.TenantId);
+        var file = await UploadAsync(asUploader, _ticket, "docs", "cv.txt", "me");
+        await UploadAsync(Admin, _ticket, "docs", "other.txt", "x");
+
+        var export = await asUploader.GetFromJsonAsync<System.Text.Json.JsonElement>("/api/v1/identity/me/personal-data", Ct);
+        var item = export.GetProperty("attachments").EnumerateArray().ShouldHaveSingleItem();
+        (item.GetProperty("fileName").GetString(), item.GetProperty("entityId").GetGuid(), item.GetProperty("slot").GetString()).ShouldBe(("cv.txt", _ticket, "docs"));
+
+        (await Admin.DeleteAsync($"/api/v1/identity/users/{uploader.Id}", Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        (await Admin.GetFromJsonAsync<AttachmentSlotDto>(Slot(_ticket, "docs"), Ct))!.Items.Select(a => a.Id).ShouldContain(file.Id);
+        (await Admin.GetAsync("/" + AttachmentUrls.Content(file), Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
     [Fact]

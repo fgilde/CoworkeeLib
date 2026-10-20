@@ -8,6 +8,12 @@ public sealed record RecordAttachmentDto(Guid Id, string EntityType, Guid Entity
 /// <param name="Multiple">False: an upload replaces the file of the slot.</param>
 public sealed record AttachmentSlotDto(string Slot, long MaxBytes, IReadOnlyList<string> ContentTypes, bool Multiple, bool CanWrite, IReadOnlyList<RecordAttachmentDto> Items);
 
+public static class AttachmentTopics
+{
+    /// <summary>Realtime topic that signals every added, replaced or deleted attachment of one record.</summary>
+    public static string Record(string entityType, Guid entityId) => $"attachments:{entityType}:{entityId}";
+}
+
 public static class AttachmentUrls
 {
     public const string Root = "api/v1/attachments";

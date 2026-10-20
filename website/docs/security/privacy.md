@@ -32,6 +32,7 @@ services.AddScoped<IPersonalDataContributor, TaskPersonalData>();
 | `activity` | Auditing: what the user changed | kept; the trail names the actor only by id, which points to nobody afterwards |
 | `social` | Comments, tags, ratings and reactions: own comments, ratings and reactions | deleted, replies to the comments too |
 | `files` | Files: uploaded files (name, type, size) | kept, they belong to the organisation's folders |
+| `attachments` | Record attachments: files the user attached (record, slot, name, type, size) | kept, they belong to the organisation's records |
 | `signIns` | Auth server: granted clients | grants and tokens deleted, every session ends |
 
 Database backups keep earlier data until they are rotated.

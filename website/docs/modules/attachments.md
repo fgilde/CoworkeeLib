@@ -64,9 +64,15 @@ services.AddSingleton<IAttachmentScanner, ClamAvScanner>();
 
 A soft deleted record keeps its files, so a restore brings them back. Once the row is gone for good (the `soft-deleted` [retention](retention.md) target or a hard delete), the retention target `orphaned-attachments` deletes its files with their blobs; it keeps files younger than a day, so files of a record that is still being created stay. Apps that delete a record for good and want the files gone at once call `DeleteAllAsync`.
 
+## Realtime and personal data
+
+Every added, replaced or deleted attachment is sent on the realtime topic `attachments:{entityType}:{entityId}` (`AttachmentTopics.Record`), after the commit. Following it needs read access to one of the record's slots, the same check as the list endpoint.
+
+The [personal data export](../security/privacy.md) has a section `attachments` with the files the user attached (record, slot, name, type, size, time), without the content. Erasing the user keeps them: like other files they belong to the organisation's records, and the uploader id points to nobody afterwards.
+
 ## Client
 
-`RecordAttachment` shows one slot: every file opens in the file viewer (`MudExFileDisplay`) or downloads; users who may change the slot upload with `MudExUploadEdit` (type and size limits of the slot) and delete after a confirmation. `ReadOnly` hides upload and delete, `Changed` reports the new list.
+`RecordAttachment` shows one slot: every file opens in the file viewer (`MudExFileDisplay`) or downloads; users who may change the slot upload with `MudExUploadEdit` (type and size limits of the slot) and delete after a confirmation. `ReadOnly` hides upload and delete, `Changed` reports the new list. It follows the record's attachment topic, so files that others add or delete appear without a reload.
 
 ```razor
 <RecordAttachment EntityType="LeaveRequests" EntityId="@request.Id" Slot="certificate" Label="@L["Medical certificate"]" />

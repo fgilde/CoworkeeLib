@@ -3,6 +3,7 @@ using Coworkee.Client.Blazor.Attachments;
 using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Components.Files;
 using Coworkee.Client.Blazor.Localization;
+using Coworkee.Client.Blazor.Realtime;
 using Coworkee.Contracts.Attachments;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -12,12 +13,15 @@ namespace Coworkee.Client.Blazor.Components.Attachments;
 
 /// <summary>
 /// The files of one slot of a record registered with AddRecordAttachments: opens them in the file viewer, downloads, and for users who may
-/// change the slot uploads (replacing the file of a single-file slot) and deletes.
+/// change the slot uploads (replacing the file of a single-file slot) and deletes. Changes by others appear live.
 /// </summary>
-public partial class RecordAttachment
+public partial class RecordAttachment : IAsyncDisposable
 {
     private AttachmentSlotDto? _slot;
     private (string, Guid, string)? _loaded;
+    private IAsyncDisposable? _subscription;
+
+    [Inject] private RealtimeClient Realtime { get; set; } = null!;
 
     [Inject] private IAttachmentsApi Api { get; set; } = null!;
 
@@ -49,7 +53,20 @@ public partial class RecordAttachment
         if (_loaded != (EntityType, EntityId, Slot))
         {
             _loaded = (EntityType, EntityId, Slot);
+            await UnsubscribeAsync();
+            _subscription = await Realtime.SubscribeAsync(AttachmentTopics.Record(EntityType, EntityId), _ => ReloadAsync());
             await LoadAsync();
+        }
+    }
+
+    public async ValueTask DisposeAsync() => await UnsubscribeAsync();
+
+    private async Task UnsubscribeAsync()
+    {
+        if (_subscription is not null)
+        {
+            await _subscription.DisposeAsync();
+            _subscription = null;
         }
     }
 

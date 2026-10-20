@@ -44,6 +44,20 @@ public sealed class RecordAttachmentTests : ClientTestBase
     }
 
     [Fact]
+    public void A_change_on_the_record_topic_reloads_the_slot()
+    {
+        var added = File("by-someone-else.pdf");
+        _api.GetSlotAsync("LeaveRequests", _id, "certificate", Arg.Any<CancellationToken>()).Returns(Slot(false), Slot(false, added));
+        var attachment = Render();
+        var realtime = Services.GetRequiredService<FakeRealtimeConnection>();
+        attachment.WaitForAssertion(() => realtime.Invocations.ShouldContain(("Subscribe", AttachmentTopics.Record("LeaveRequests", _id))));
+
+        realtime.Push(AttachmentTopics.Record("LeaveRequests", _id));
+
+        attachment.WaitForAssertion(() => attachment.Find($"[data-attachment='{added.Id}']").TextContent.ShouldContain("by-someone-else.pdf"));
+    }
+
+    [Fact]
     public async Task Delete_asks_first_then_removes_the_file()
     {
         var file = File("old.pdf");

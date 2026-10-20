@@ -32,6 +32,7 @@ services.AddScoped<IPersonalDataContributor, TaskPersonalData>();
 | `activity` | Audit: was der Benutzer geändert hat | bleibt; der Verlauf nennt den Handelnden nur per ID, die danach auf niemanden mehr zeigt |
 | `social` | Kommentare, Tags, Bewertungen und Reaktionen: eigene Kommentare, Bewertungen und Reaktionen | gelöscht, Antworten auf die Kommentare ebenso |
 | `files` | Dateien: hochgeladene Dateien (Name, Typ, Größe) | bleiben, sie gehören in die Ordner der Organisation |
+| `attachments` | Anhänge an Datensätzen: angehängte Dateien (Datensatz, Slot, Name, Typ, Größe) | bleiben, sie gehören zu den Datensätzen der Organisation |
 | `signIns` | Auth-Server: freigegebene Clients | Freigaben und Tokens gelöscht, jede Sitzung endet |
 
 Datenbank-Backups behalten frühere Daten, bis sie rotiert werden.

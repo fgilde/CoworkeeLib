@@ -1,7 +1,9 @@
 using Coworkee.Application;
+using Coworkee.Application.Privacy;
 using Coworkee.AspNetCore;
 using Coworkee.Core.Modularity;
 using Coworkee.Infrastructure.Persistence;
+using Coworkee.Realtime;
 using Coworkee.Storage;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -27,6 +29,8 @@ public sealed class CoworkeeAttachmentsModule : CoworkeeModule, IWebModule
         services.AddScoped<AttachmentBlobs>();
         services.AddScoped<IInterceptor>(provider => provider.GetRequiredService<AttachmentBlobs>());
         services.AddScoped<AttachmentGuard>();
+        services.AddScoped<IRealtimeTopicAuthorizer, AttachmentTopicAuthorizer>();
+        services.AddScoped<IPersonalDataContributor, AttachmentPersonalData>();
         services.TryAddSingleton(TimeProvider.System);
     }
 

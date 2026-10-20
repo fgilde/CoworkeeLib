@@ -64,9 +64,15 @@ services.AddSingleton<IAttachmentScanner, ClamAvScanner>();
 
 Ein weich gelöschter Datensatz behält seine Dateien, eine Wiederherstellung bringt sie also zurück. Ist die Zeile endgültig weg (das [Aufbewahrungs](retention.md)-Ziel `soft-deleted` oder ein hartes Löschen), löscht das Aufbewahrungsziel `orphaned-attachments` ihre Dateien samt Blobs; Dateien, die jünger als ein Tag sind, bleiben, damit die Dateien eines Datensatzes, der gerade entsteht, nicht verschwinden. Apps, die einen Datensatz endgültig löschen und die Dateien sofort loswerden wollen, rufen `DeleteAllAsync`.
 
+## Echtzeit und personenbezogene Daten
+
+Jeder hinzugefügte, ersetzte oder gelöschte Anhang geht nach dem Commit über das Echtzeit-Topic `attachments:{entityType}:{entityId}` (`AttachmentTopics.Record`). Folgen darf, wer einen Slot des Datensatzes lesen darf, dieselbe Prüfung wie beim Listen-Endpunkt.
+
+Der [Export personenbezogener Daten](../security/privacy.md) hat einen Abschnitt `attachments` mit den Dateien, die der Benutzer angehängt hat (Datensatz, Slot, Name, Typ, Größe, Zeit), ohne den Inhalt. Das Löschen des Benutzers behält sie: Wie andere Dateien gehören sie zu den Datensätzen der Organisation, die Id der hochladenden Person zeigt danach auf niemanden.
+
 ## Client
 
-`RecordAttachment` zeigt einen Slot: Jede Datei öffnet im Dateibetrachter (`MudExFileDisplay`) oder wird heruntergeladen; Benutzer, die den Slot ändern dürfen, laden mit `MudExUploadEdit` hoch (Typ- und Größengrenzen des Slots) und löschen nach einer Rückfrage. `ReadOnly` blendet Upload und Löschen aus, `Changed` meldet die neue Liste.
+`RecordAttachment` zeigt einen Slot: Jede Datei öffnet im Dateibetrachter (`MudExFileDisplay`) oder wird heruntergeladen; Benutzer, die den Slot ändern dürfen, laden mit `MudExUploadEdit` hoch (Typ- und Größengrenzen des Slots) und löschen nach einer Rückfrage. `ReadOnly` blendet Upload und Löschen aus, `Changed` meldet die neue Liste. Die Komponente folgt dem Anhang-Topic des Datensatzes, Dateien, die andere hinzufügen oder löschen, erscheinen also ohne Neuladen.
 
 ```razor
 <RecordAttachment EntityType="LeaveRequests" EntityId="@request.Id" Slot="certificate" Label="@L["Medical certificate"]" />

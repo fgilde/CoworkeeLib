@@ -1,7 +1,9 @@
+using System.Collections.Concurrent;
 using System.Net.Http.Json;
 using Coworkee.Application.Messaging;
 using Coworkee.AspNetCore;
 using Coworkee.Contracts.Identity;
+using Coworkee.Contracts.Realtime;
 using Coworkee.Core.Modularity;
 using Coworkee.Core.Results;
 using Coworkee.Core.Security;
@@ -11,9 +13,12 @@ using Coworkee.Identity;
 using Coworkee.Identity.Setup;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.OData;
+using Coworkee.Realtime;
 using Coworkee.Testing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http.Connections;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -76,6 +81,23 @@ public sealed class FilesApp : DatabaseFixture
     /// <summary>The files in the blob storage, of every test so far.</summary>
     public int BlobCount() => Directory.Exists(_blobs) ? Directory.EnumerateFiles(_blobs, "*", SearchOption.AllDirectories).Count() : 0;
 
+    public async Task<(HubConnection Connection, ConcurrentQueue<RealtimeEnvelope> Events)> ConnectAsync(Guid userId, Guid tenantId)
+    {
+        var server = App.GetTestServer();
+        var connection = new HubConnectionBuilder()
+            .WithUrl(new Uri(server.BaseAddress, "hubs/realtime"), options =>
+            {
+                options.HttpMessageHandlerFactory = _ => server.CreateHandler();
+                options.Transports = HttpTransportType.LongPolling;
+                options.Headers["Authorization"] = $"{TestAuthHandler.SchemeName} {userId};{tenantId}";
+            })
+            .Build();
+        var events = new ConcurrentQueue<RealtimeEnvelope>();
+        connection.On<RealtimeEnvelope>(RealtimeHubMethods.OnEvent, events.Enqueue);
+        await connection.StartAsync();
+        return (connection, events);
+    }
+
     public HttpClient As(Guid userId, Guid tenantId) => App.GetTestClient().AsUser(userId, tenantId);
 
     public async Task<Guid> AddTicketAsync(Guid userId, Guid tenantId, string title = "ticket")
@@ -137,7 +159,7 @@ internal sealed class TicketModelContributor : IModelContributor
     public void Apply(ModelBuilder modelBuilder) => modelBuilder.Entity<Ticket>(ticket => ticket.ToTable("Tickets"));
 }
 
-[DependsOn(typeof(CoworkeeFilesModule), typeof(CoworkeeAttachmentsModule), typeof(CoworkeeODataModule), typeof(CoworkeeIdentityModule))]
+[DependsOn(typeof(CoworkeeFilesModule), typeof(CoworkeeAttachmentsModule), typeof(CoworkeeODataModule), typeof(CoworkeeIdentityModule), typeof(CoworkeeRealtimeModule))]
 public sealed class TestFilesModule : CoworkeeModule
 {
     public override void ConfigureServices(ModuleServiceContext context)
