@@ -1,10 +1,10 @@
 @if (Stop is { } stop && ThresholdColors.Css(stop.Color) is { } color)
 {
-    <span class="cw-threshold @Class" style="color:@color" title="@stop.Label" role="img" aria-label="@(stop.Label ?? stop.Color)" data-threshold="@stop.Color">
+    <span class="cw-threshold @Class" style="color:@color" title="@L.Stored(stop.Label)" role="img" aria-label="@(L.Stored(stop.Label) ?? stop.Color)" data-threshold="@stop.Color">
         <MudIcon Icon="@ThresholdColors.Icon(stop.Color)" Size="Size.Small" Style="font-size:1em" />
         @if (ShowLabel && stop.Label is { Length: > 0 } label)
         {
-            <span class="cw-threshold-label">@label</span>
+            <span class="cw-threshold-label">@L.Stored(label)</span>
         }
     </span>
 }
