@@ -12,14 +12,14 @@
         {
             <MudTooltip Text="@L[Preferences.Pinned ? "Unpin" : "Pin"]">
                 <MudToggleIconButton Toggled="Preferences.Pinned" ToggledChanged="Preferences.SetPinnedAsync" Size="Size.Small" ToggledSize="Size.Small"
-                                     Icon="@Icons.Material.Outlined.PushPin" ToggledIcon="@Icons.Material.Filled.PushPin" ToggledColor="Color.Warning" aria-label="Pin navigation" data-testid="nav-pin" />
+                                     Icon="@Icons.Material.Outlined.PushPin" ToggledIcon="@Icons.Material.Filled.PushPin" ToggledColor="Color.Warning" aria-label="@L["Pin navigation"]" data-testid="nav-pin" />
             </MudTooltip>
         }
         @if (Theme.CanChangeNavExpandMode)
         {
             <MudTooltip Text="@L[SingleExpand ? "Expand many groups" : "Expand one group at a time"]">
                 <MudToggleIconButton Toggled="SingleExpand" ToggledChanged="Preferences.SetSingleExpandAsync" Size="Size.Small" ToggledSize="Size.Small"
-                                     Icon="@Icons.Material.Outlined.Expand" ToggledIcon="@Icons.Material.Outlined.UnfoldLess" ToggledColor="Color.Warning" aria-label="Expand one group at a time" data-testid="nav-single-expand" />
+                                     Icon="@Icons.Material.Outlined.Expand" ToggledIcon="@Icons.Material.Outlined.UnfoldLess" ToggledColor="Color.Warning" aria-label="@L["Expand one group at a time"]" data-testid="nav-single-expand" />
             </MudTooltip>
         }
     </div>

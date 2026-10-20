@@ -6,6 +6,8 @@ namespace Coworkee.Client.Blazor.Components;
 
 public partial class SetupLayout : IDisposable
 {
+    [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
+
     [Inject] private CoworkeeClientOptions Options { get; set; } = null!;
 
     [Inject] private ThemeService ThemeService { get; set; } = null!;

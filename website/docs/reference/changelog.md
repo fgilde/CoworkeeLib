@@ -13,6 +13,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixes
 
+- Localization: 57 library texts that showed in English in every language now ship in all 22 languages: the setup wizard (labels, steps, hints, messages), the descriptions of the Reports, Chat and report data pages, *No reports yet*, *Chat with {0}*, the permission matrix and resource permissions (*Search permissions*, *User or group*, ...), version history, audit timeline, theme picker, *My settings* and the navigation pins. The literal-key test also checks `l[...]`, both texts of `L[a ? "…" : "…"]` and the texts passed to `PageHeader` and `CoworkeeDataTable`.
 - Reporting: report names and descriptions, widget titles and value labels show their translation when the app has a text for them (seeded reports can be localized; the stored text stays the key, `CoworkeeLocalizer.Stored`); a widget added from a preset stores the preset's key instead of the translated title. The donut total and the target line are translated, and category labels of the x axis turn by 45° instead of being cut ("2…", "Back…"). See [Reporting](../modules/reporting.md#seeding-a-report-on-a-source).
 - `CoworkeeDataTable`: column headers keep their label on one line, so a wide table scrolls sideways instead of squeezing its last columns ("Kostenstell", "Stat") under the sticky action column.
 - Layout: the app title in the app bar stays on one line and ends with an ellipsis on narrow screens instead of wrapping.

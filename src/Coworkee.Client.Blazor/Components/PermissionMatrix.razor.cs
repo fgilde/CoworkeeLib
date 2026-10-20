@@ -7,6 +7,8 @@ namespace Coworkee.Client.Blazor.Components;
 
 public partial class PermissionMatrix
 {
+    [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
+
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
@@ -68,7 +70,7 @@ public partial class PermissionMatrix
         {
             var ordered = _groups!.SelectMany(g => g.Permissions).Select(p => p.Name).Where(_selected.Contains).ToList();
             await Api.SetGrantsAsync(ProviderType, ProviderKey, ordered);
-            Snackbar.Add("Permissions saved.", Severity.Success);
+            Snackbar.Add(L["Permissions saved."], Severity.Success);
         }
         catch (ApiException exception)
         {

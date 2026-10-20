@@ -172,11 +172,11 @@ public partial class Setup : IAsyncDisposable
     /// <summary>Why the current step cannot be left yet, if it cannot.</summary>
     private string? Problem() => _step switch
     {
-        0 when string.IsNullOrWhiteSpace(_request.SetupToken) => "Enter the setup token.",
-        2 when string.IsNullOrWhiteSpace(_request.TenantName) => "Enter the name of the organisation.",
-        AdministratorStep when string.IsNullOrWhiteSpace(_request.AdminEmail) || !_request.AdminEmail.Contains('@') => "Enter the administrator's email address.",
-        AdministratorStep when string.IsNullOrEmpty(_request.AdminPassword) => "Choose a password.",
-        AdministratorStep when _request.AdminPassword != _confirmPassword => "The passwords do not match.",
+        0 when string.IsNullOrWhiteSpace(_request.SetupToken) => L["Enter the setup token."],
+        2 when string.IsNullOrWhiteSpace(_request.TenantName) => L["Enter the name of the organisation."],
+        AdministratorStep when string.IsNullOrWhiteSpace(_request.AdminEmail) || !_request.AdminEmail.Contains('@') => L["Enter the administrator's email address."],
+        AdministratorStep when string.IsNullOrEmpty(_request.AdminPassword) => L["Choose a password."],
+        AdministratorStep when _request.AdminPassword != _confirmPassword => L["The passwords do not match."],
         _ => null,
     };
 
@@ -261,7 +261,7 @@ public partial class Setup : IAsyncDisposable
         }
         catch (ApiException exception) when (exception.Status == 403)
         {
-            _error = "The setup token is not valid.";
+            _error = L["The setup token is not valid."];
             _step = 0;
         }
         catch (ApiException exception) when (exception.Status == 409)
@@ -271,7 +271,7 @@ public partial class Setup : IAsyncDisposable
         catch (ApiException exception)
         {
             _errors = exception.Errors;
-            _error = exception.Errors is null ? exception.Message : "Please correct the highlighted fields: " + string.Join(" ", exception.Errors.SelectMany(e => e.Value));
+            _error = exception.Errors is null ? exception.Message : L["Please correct the highlighted fields: {0}", string.Join(" ", exception.Errors.SelectMany(e => e.Value))];
             if (HasError("Password") || HasError("Email"))
             {
                 _step = AdministratorStep;

@@ -12,11 +12,11 @@
 </style>
 
 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4" Wrap="Wrap.Wrap">
-    <MudText Typo="Typo.subtitle2">Color mode</MudText>
+    <MudText Typo="Typo.subtitle2">@L["Color mode"]</MudText>
     <MudButtonGroup Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">
         @foreach (var (mode, label, icon) in Modes)
         {
-            <MudButton data-mode="@mode" StartIcon="@icon" Variant="@(Mode == mode ? Variant.Filled : Variant.Outlined)" OnClick="() => ModeChanged.InvokeAsync(mode)">@label</MudButton>
+            <MudButton data-mode="@mode" StartIcon="@icon" Variant="@(Mode == mode ? Variant.Filled : Variant.Outlined)" OnClick="() => ModeChanged.InvokeAsync(mode)">@L[label]</MudButton>
         }
     </MudButtonGroup>
     @ChildContent

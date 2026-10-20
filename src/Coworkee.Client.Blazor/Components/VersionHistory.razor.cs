@@ -7,6 +7,8 @@ namespace Coworkee.Client.Blazor.Components;
 
 public partial class VersionHistory
 {
+    [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
+
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
@@ -32,7 +34,7 @@ public partial class VersionHistory
         try
         {
             await Api.RestoreVersionAsync(Type, Id, revision);
-            Snackbar.Add($"Version {revision} restored.", Severity.Success);
+            Snackbar.Add(L["Version {0} restored.", revision], Severity.Success);
             await OnRestored.InvokeAsync();
             await ReloadAsync();
         }

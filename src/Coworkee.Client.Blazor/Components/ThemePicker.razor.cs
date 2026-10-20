@@ -20,6 +20,8 @@ public partial class ThemePicker
 
     [Parameter] public EventCallback<Guid> SelectedIdChanged { get; set; }
 
+    [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
+
     [Parameter] public string Mode { get; set; } = "system";
 
     [Parameter] public EventCallback<string> ModeChanged { get; set; }

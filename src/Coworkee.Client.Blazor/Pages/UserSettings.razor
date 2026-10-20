@@ -2,15 +2,15 @@
 
 @if (!Embedded)
 {
-    <PageTitle>My settings</PageTitle>
-    <MudText Typo="Typo.h4" Class="mb-4">My settings</MudText>
+    <PageTitle>@L["My settings"]</PageTitle>
+    <MudText Typo="Typo.h4" Class="mb-4">@L["My settings"]</MudText>
 }
 
 <MudPaper Outlined="true" Class="pa-4 mb-6">
-    <MudText Typo="Typo.h6" Class="mb-3">Appearance</MudText>
+    <MudText Typo="Typo.h6" Class="mb-3">@L["Appearance"]</MudText>
     <ThemePicker Themes="_themes" SelectedId="ThemeService.Current?.Id" SelectedIdChanged="ChooseAsync" Mode="@ThemeService.Mode" ModeChanged="ModeAsync">
         <MudSpacer />
-        <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Outlined.Business" OnClick="UseDefaultAsync" data-testid="theme-default">Organisation default</MudButton>
+        <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Outlined.Business" OnClick="UseDefaultAsync" data-testid="theme-default">@L["Organisation default"]</MudButton>
     </ThemePicker>
 </MudPaper>
 

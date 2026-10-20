@@ -5,7 +5,7 @@
 }
 else if (_entries.Count == 0)
 {
-    <MudText Typo="Typo.body2">No changes recorded yet.</MudText>
+    <MudText Typo="Typo.body2">@L["No changes recorded yet."]</MudText>
 }
 else
 {
@@ -13,7 +13,7 @@ else
         @foreach (var entry in _entries)
         {
             <MudTimelineItem Size="Size.Small" Color="@(entry.Action == "Deleted" ? Color.Error : entry.Action == "Restored" ? Color.Secondary : Color.Default)">
-                <MudText Typo="Typo.body2"><b>@entry.Action</b> by @(entry.ActorName ?? "system") · @entry.OccurredAt.ToLocalTime().ToString("g")</MudText>
+                <MudText Typo="Typo.body2"><b>@L[entry.Action]</b> @L["by {0}", entry.ActorName ?? L["system"]] · @entry.OccurredAt.ToLocalTime().ToString("g")</MudText>
                 <AuditChanges Changes="entry.Changes" />
             </MudTimelineItem>
         }

@@ -6,6 +6,8 @@ namespace Coworkee.Client.Blazor.Components;
 
 public partial class AuditTimeline
 {
+    [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
+
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
     private IReadOnlyList<AuditEntryDto>? _entries;

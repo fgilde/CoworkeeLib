@@ -6,10 +6,10 @@
 else
 {
     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2" Wrap="Wrap.Wrap">
-        <MudTextField @bind-Value="_search" Immediate="true" Placeholder="Search permissions" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search"
+        <MudTextField @bind-Value="_search" Immediate="true" Placeholder="@L["Search permissions"]" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search"
                       Clearable="true" Variant="Variant.Outlined" Margin="Density.Margin" data-testid="permission-search" Style="max-width:360px" />
         <MudSpacer />
-        <MudText Typo="Typo.body2" Class="mud-text-secondary" data-testid="total-count">@_selected.Count(Known) of @_groups.Sum(g => g.Permissions.Count) granted</MudText>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary" data-testid="total-count">@L["{0} of {1} granted", _selected.Count(Known), _groups.Sum(g => g.Permissions.Count)]</MudText>
     </MudStack>
 
     @foreach (var group in Visible())
@@ -19,7 +19,7 @@ else
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                 @if (!ReadOnly)
                 {
-                    <input type="checkbox" checked="@all" aria-label="@($"All of {group.DisplayName}")" data-testid="group-all" @onchange="e => ToggleGroup(group, e.Value is true)" />
+                    <input type="checkbox" checked="@all" aria-label="@L["All of {0}", group.DisplayName]" data-testid="group-all" @onchange="e => ToggleGroup(group, e.Value is true)" />
                 }
                 <MudText Typo="Typo.subtitle2">@group.DisplayName</MudText>
                 <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(all ? Color.Primary : Color.Default)" data-testid="group-count">@group.Permissions.Count(p => _selected.Contains(p.Name)) / @group.Permissions.Count</MudChip>
@@ -38,7 +38,7 @@ else
                             <td>
                                 @if (permission.Implies.Count > 0)
                                 {
-                                    <MudText Typo="Typo.caption">includes @string.Join(", ", permission.Implies)</MudText>
+                                    <MudText Typo="Typo.caption">@L["includes {0}", string.Join(", ", permission.Implies)]</MudText>
                                 }
                             </td>
                         </tr>
@@ -50,6 +50,6 @@ else
 
     @if (!ReadOnly)
     {
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_saving" data-testid="save-permissions">Save</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_saving" data-testid="save-permissions">@L["Save"]</MudButton>
     }
 }

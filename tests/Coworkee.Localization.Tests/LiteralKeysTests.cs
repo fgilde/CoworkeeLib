@@ -38,12 +38,28 @@ public sealed partial class LiteralKeysTests
                 .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal) && !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
                 .Where(f => !IsFolder(f, "Coworkee.Cli"))
                 .Where(files)
-                .SelectMany(f => Literal().Matches(File.ReadAllText(f)).Select(m => Regex.Unescape(m.Groups[1].Value)))
+                .SelectMany(f => Keys(File.ReadAllText(f)))
                 .Where(key => !known.Contains(key))
                 .Distinct(StringComparer.Ordinal),
         ];
     }
 
-    [GeneratedRegex("""\b(?:L\[|T\()"((?:[^"\\]|\\.)*)"(?!\s*\+)""")]
+    // L["..."], l["..."] and T("..."); both texts of L[a ? "..." : "..."]; the texts PageHeader and CoworkeeDataTable translate themselves
+    private static IEnumerable<string> Keys(string source) =>
+        Literal().Matches(source).Select(m => m.Groups[1].Value)
+            .Concat(Choice().Matches(source).SelectMany(m => new[] { m.Groups[1].Value, m.Groups[2].Value }))
+            .Concat(Tag().Matches(source).SelectMany(t => Parameter().Matches(t.Value)).Select(m => m.Groups[1].Value))
+            .Select(Regex.Unescape);
+
+    [GeneratedRegex("""\b(?:[Ll]\[|T\()"((?:[^"\\]|\\.)*)"(?!\s*\+)""")]
     private static partial Regex Literal();
+
+    [GeneratedRegex("""\b[Ll]\[[^\[\]"\n]*\?\s*"((?:[^"\\]|\\.)*)"\s*:\s*"((?:[^"\\]|\\.)*)"\s*\]""")]
+    private static partial Regex Choice();
+
+    [GeneratedRegex("""<(?:PageHeader|CoworkeeDataTable)\b[^>]*>""", RegexOptions.Singleline)]
+    private static partial Regex Tag();
+
+    [GeneratedRegex("""\b(?:Title|Description|CreateText|NoRecordsText|SearchPlaceholder)="([^"@]+)\x22""")]
+    private static partial Regex Parameter();
 }

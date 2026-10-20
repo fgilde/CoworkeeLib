@@ -8,6 +8,8 @@ namespace Coworkee.Client.Blazor.Components;
 
 public partial class ResourcePermissionsPanel
 {
+    [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
+
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;

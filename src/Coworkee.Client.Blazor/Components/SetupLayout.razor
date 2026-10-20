@@ -45,7 +45,7 @@
         }
         <MudText Typo="Typo.h6">@Options.AppTitle</MudText>
         <MudSpacer />
-        <MudIconButton Icon="@(_dark ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" OnClick="ToggleDark" aria-label="Toggle dark mode" />
+        <MudIconButton Icon="@(_dark ? Icons.Material.Outlined.LightMode : Icons.Material.Outlined.DarkMode)" OnClick="ToggleDark" aria-label="@L["Toggle dark mode"]" />
     </div>
     <div class="cw-setup-main">@Body</div>
 </div>

@@ -6,19 +6,19 @@
 else
 {
     <MudSimpleTable Dense="Density.Dense" Hover="true">
-        <thead><tr><th>Version</th><th>When</th><th>Who</th><th></th></tr></thead>
+        <thead><tr><th>@L["Version"]</th><th>@L["When"]</th><th>@L["Who"]</th><th></th></tr></thead>
         <tbody>
             @foreach (var version in _versions)
             {
                 <tr>
-                    <td>@version.Revision @if (version == _versions[0]) { <MudChip T="string" Size="Size.Small">current</MudChip> }</td>
+                    <td>@version.Revision @if (version == _versions[0]) { <MudChip T="string" Size="Size.Small">@L["current"]</MudChip> }</td>
                     <td>@version.CreatedAt.ToLocalTime().ToString("g")</td>
-                    <td>@(version.CreatedByName ?? "system")</td>
+                    <td>@(version.CreatedByName ?? L["system"])</td>
                     <td style="text-align:right">
-                        <MudButton Size="Size.Small" OnClick="() => ShowAsync(version.Revision)">View</MudButton>
+                        <MudButton Size="Size.Small" OnClick="() => ShowAsync(version.Revision)">@L["View"]</MudButton>
                         @if (version != _versions[0] && !version.IsDeleted)
                         {
-                            <MudButton Size="Size.Small" Color="Color.Secondary" OnClick="() => RestoreAsync(version.Revision)" data-testid="@($"restore-{version.Revision}")">Restore</MudButton>
+                            <MudButton Size="Size.Small" Color="Color.Secondary" OnClick="() => RestoreAsync(version.Revision)" data-testid="@($"restore-{version.Revision}")">@L["Restore"]</MudButton>
                         }
                     </td>
                 </tr>
@@ -28,7 +28,7 @@ else
 
     @if (_detail is not null)
     {
-        <MudText Typo="Typo.overline" Class="mt-3 d-block">Version @_detail.Revision</MudText>
+        <MudText Typo="Typo.overline" Class="mt-3 d-block">@L["Version {0}", _detail.Revision]</MudText>
         <pre style="white-space:pre-wrap;font-size:12px;max-height:320px;overflow:auto">@System.Text.Json.JsonSerializer.Serialize(_detail.Payload, Indented)</pre>
     }
 }
