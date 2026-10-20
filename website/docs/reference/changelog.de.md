@@ -6,6 +6,7 @@
 
 ### Breaking Changes
 
+- Anhänge an Datensätzen: `IRecordAttachments.PutAsync`, `DeleteAsync` und `DeleteAllAsync` speichern nicht mehr selbst, sie gehören zur Unit of Work des Aufrufers (die Pipeline speichert nach einem Command, anderer Code ruft `IUnitOfWork.SaveChangesAsync`). Blobs zu nie committeten Zeilen werden am Ende des Scopes gelöscht, Blobs entfernter Zeilen nach dem Commit. App-Code, der sie außerhalb eines Commands aufrief, speichert jetzt selbst; lesende Aufrufe (`OpenAsync`, `ListAsync`) sehen nur gespeicherte Zeilen. Die HTTP-Endpunkte speichern wie bisher. Siehe [Anhänge an Datensätzen](../modules/attachments.md#im-app-code).
 - **Migration nötig** in Apps mit `Coworkee.Social`: die neue Tabelle `cw.Reactions` (Emoji-Reaktionen).
 - `Error.Validation(field, message).Message` ist die übergebene Meldung statt *One or more validation errors occurred.*; ebenso der `title` der 400-Problem-Details. `code` (`validation`) und `errors` bleiben gleich; die Überladung mit dem Dictionary behält den allgemeinen Text.
 - **Migration nötig** in Apps mit `Coworkee.Workflows`: die neue Spalte `RequestedBy` von `cw.WorkflowApprovals` (wer den Übergang in die Genehmigung ausgelöst hat). Die Eskalation einer Genehmigung mit `NotByRequester()` nimmt die antragstellende Person nicht mehr als Genehmigende auf, wenn sie in der Eskalationsrolle ist; vor der Migration gestartete Genehmigungen haben keine gespeicherte antragstellende Person und werden nicht gefiltert.

@@ -1,7 +1,9 @@
 using System.Net.Http.Json;
+using Coworkee.Application.Messaging;
 using Coworkee.AspNetCore;
 using Coworkee.Contracts.Identity;
 using Coworkee.Core.Modularity;
+using Coworkee.Core.Results;
 using Coworkee.Core.Security;
 using Coworkee.Domain;
 using Coworkee.Files.Attachments;
@@ -70,6 +72,9 @@ public sealed class FilesApp : DatabaseFixture
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<SetupResultDto>())!;
     }
+
+    /// <summary>The files in the blob storage, of every test so far.</summary>
+    public int BlobCount() => Directory.Exists(_blobs) ? Directory.EnumerateFiles(_blobs, "*", SearchOption.AllDirectories).Count() : 0;
 
     public HttpClient As(Guid userId, Guid tenantId) => App.GetTestClient().AsUser(userId, tenantId);
 
@@ -141,6 +146,7 @@ public sealed class TestFilesModule : CoworkeeModule
         context.Services.AddODataEntity<Ticket>("Tickets");
         context.Services.AddScoped<IODataEntityFilter<Ticket>, PrivateTickets>();
         context.Services.AddSingleton<IAttachmentScanner, NameScanner>();
+        context.Services.AddScoped<IHandler<AttachToTicket, Result>, AttachToTicketHandler>();
         context.Services.AddRecordAttachments<Ticket>("Tickets", a => a
             .Slot("proof", 1024, "application/pdf", "image/*")
             .MultiSlot("docs")

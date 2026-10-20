@@ -6,6 +6,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Breaking changes
 
+- Record attachments: `IRecordAttachments.PutAsync`, `DeleteAsync` and `DeleteAllAsync` no longer save; they join the caller's unit of work (the pipeline saves after a command, other code calls `IUnitOfWork.SaveChangesAsync`). Blobs written for rows that are never committed are deleted at the end of the scope, blobs of removed rows after the commit. App code that called them outside a command saves itself now; reads (`OpenAsync`, `ListAsync`) see saved rows only. The HTTP endpoints save as before. See [Record attachments](../modules/attachments.md#in-app-code).
 - **Migration needed** in apps with `Coworkee.Social`: the new table `cw.Reactions` (emoji reactions).
 - `Error.Validation(field, message).Message` is the given message instead of *One or more validation errors occurred.*; so is the `title` of the 400 problem details. `code` (`validation`) and `errors` are unchanged; the dictionary overload keeps the generic text.
 - **Migration needed** in apps with `Coworkee.Workflows`: the new column `RequestedBy` of `cw.WorkflowApprovals` (who ran the transition into the approval). The escalation of an approval with `NotByRequester()` no longer adds the requester as an approver when they are in the escalation role; approvals started before the migration have no requester stored and are not filtered.

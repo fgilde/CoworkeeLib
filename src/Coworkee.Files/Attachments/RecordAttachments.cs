@@ -5,7 +5,6 @@ using Coworkee.Core.Security;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.Storage;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace Coworkee.Files.Attachments;
 
@@ -24,15 +23,17 @@ public interface IAttachmentScanner
 /// <summary>
 /// Files of records in named slots: metadata in <c>cw.RecordAttachments</c>, content in the blob storage.
 /// Checks the slot's limits but not who may do it: app code calls it after its own checks, the endpoints after the record's visibility.
+/// Changes join the caller's unit of work (the pipeline saves after the command); a blob written for a row that is never committed is deleted when the scope ends.
 /// </summary>
 public interface IRecordAttachments
 {
-    /// <summary>Stores the file; in a single-file slot it replaces the one there.</summary>
+    /// <summary>Writes the file to the blob storage and adds its row; in a single-file slot it replaces the one there. Saved with the unit of work.</summary>
     Task<Result<RecordAttachmentDto>> PutAsync(string entityType, Guid entityId, string slot, string fileName, string? contentType, Stream content, CancellationToken cancellationToken);
 
     /// <summary>The attachment with its content, or null when it (or its blob) is gone.</summary>
     Task<RecordAttachmentFile?> OpenAsync(Guid attachmentId, CancellationToken cancellationToken);
 
+    /// <summary>Removes the row; the blob goes after the commit.</summary>
     Task<bool> DeleteAsync(Guid attachmentId, CancellationToken cancellationToken);
 
     /// <summary>Every attachment of the record, e.g. when the app deletes it for good.</summary>
@@ -41,9 +42,9 @@ public interface IRecordAttachments
     Task<IReadOnlyList<RecordAttachmentDto>> ListAsync(string entityType, Guid entityId, string? slot = null, CancellationToken cancellationToken = default);
 }
 
-internal sealed partial class RecordAttachments(
-    CoworkeeDbContext db, RecordAttachmentOptions options, IBlobStorage storage, ICurrentUser currentUser, TimeProvider clock,
-    IEnumerable<IAttachmentScanner> scanners, ILogger<RecordAttachments> logger) : IRecordAttachments
+internal sealed class RecordAttachments(
+    CoworkeeDbContext db, RecordAttachmentOptions options, IBlobStorage storage, AttachmentBlobs blobs, ICurrentUser currentUser, TimeProvider clock,
+    IEnumerable<IAttachmentScanner> scanners) : IRecordAttachments
 {
     private const string FallbackContentType = "application/octet-stream";
 
@@ -96,16 +97,22 @@ internal sealed partial class RecordAttachments(
 
         buffer.Position = 0;
         var key = BlobKeys.New(tenantId, clock);
+        blobs.Written(db, key);
         await storage.PutAsync(key, buffer, type, cancellationToken);
         var replaced = definition.Multiple ? [] : await Of(entityType, entityId, slot).ToListAsync(cancellationToken);
+        if (!definition.Multiple)
+        {
+            replaced.AddRange(db.ChangeTracker.Entries<RecordAttachment>()
+                .Where(e => e.State == EntityState.Added && e.Entity.EntityType == entityType && e.Entity.EntityId == entityId && e.Entity.Slot == slot).Select(e => e.Entity));
+        }
+
         var attachment = new RecordAttachment
         {
             TenantId = tenantId, EntityType = entityType, EntityId = entityId, Slot = slot, FileName = name, ContentType = type, Size = buffer.Length, BlobKey = key,
+            CreatedAt = clock.GetUtcNow(), CreatedBy = currentUser.UserId,
         };
+        Remove(replaced);
         db.Add(attachment);
-        db.RemoveRange(replaced);
-        await db.SaveChangesAsync(cancellationToken);
-        await DeleteBlobsAsync(replaced, cancellationToken);
         return ToDto(attachment);
     }
 
@@ -116,10 +123,10 @@ internal sealed partial class RecordAttachments(
             : null;
 
     public async Task<bool> DeleteAsync(Guid attachmentId, CancellationToken cancellationToken) =>
-        await RemoveAsync(await db.Set<RecordAttachment>().Where(a => a.Id == attachmentId).ToListAsync(cancellationToken), cancellationToken) > 0;
+        Remove(await db.Set<RecordAttachment>().Where(a => a.Id == attachmentId).ToListAsync(cancellationToken)) > 0;
 
     public async Task DeleteAllAsync(string entityType, Guid entityId, CancellationToken cancellationToken) =>
-        await RemoveAsync(await db.Set<RecordAttachment>().Where(a => a.EntityType == entityType && a.EntityId == entityId).ToListAsync(cancellationToken), cancellationToken);
+        Remove(await db.Set<RecordAttachment>().Where(a => a.EntityType == entityType && a.EntityId == entityId).ToListAsync(cancellationToken));
 
     public async Task<IReadOnlyList<RecordAttachmentDto>> ListAsync(string entityType, Guid entityId, string? slot = null, CancellationToken cancellationToken = default) =>
         await db.Set<RecordAttachment>().AsNoTracking().Where(a => a.EntityType == entityType && a.EntityId == entityId && (slot == null || a.Slot == slot))
@@ -127,28 +134,15 @@ internal sealed partial class RecordAttachments(
 
     internal static RecordAttachmentDto ToDto(RecordAttachment a) => new(a.Id, a.EntityType, a.EntityId, a.Slot, a.FileName, a.ContentType, a.Size, a.CreatedAt, a.CreatedBy);
 
-    private async Task<int> RemoveAsync(List<RecordAttachment> attachments, CancellationToken cancellationToken)
-    {
-        db.RemoveRange(attachments);
-        await db.SaveChangesAsync(cancellationToken);
-        await DeleteBlobsAsync(attachments, cancellationToken);
-        return attachments.Count;
-    }
-
-    // the rows are gone already: a blob left behind is logged, never brings the row back
-    private async Task DeleteBlobsAsync(IEnumerable<RecordAttachment> attachments, CancellationToken cancellationToken)
+    private int Remove(List<RecordAttachment> attachments)
     {
         foreach (var attachment in attachments)
         {
-            try
-            {
-                await storage.DeleteAsync(attachment.BlobKey, cancellationToken);
-            }
-            catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
-            {
-                LogBlobFailed(exception, attachment.BlobKey);
-            }
+            blobs.Removed(db, attachment.BlobKey);
         }
+
+        db.RemoveRange(attachments);
+        return attachments.Count;
     }
 
     private IQueryable<RecordAttachment> Of(string entityType, Guid entityId, string slot) =>
@@ -170,7 +164,4 @@ internal sealed partial class RecordAttachments(
 
         return true;
     }
-
-    [LoggerMessage(Level = LogLevel.Warning, Message = "The blob {BlobKey} of a removed attachment could not be deleted.")]
-    private partial void LogBlobFailed(Exception exception, string blobKey);
 }

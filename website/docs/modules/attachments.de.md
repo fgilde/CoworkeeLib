@@ -47,10 +47,12 @@ Eine Datei über der Grenze des Slots, eines Typs, den der Slot nicht nimmt, mit
 
 ```csharp
 var stored = await attachments.PutAsync("LeaveRequests", request.Id, "certificate", file.Name, file.ContentType, stream, ct);
-await using var opened = await attachments.OpenAsync(stored.Value.Id, ct);
 var list = await attachments.ListAsync("LeaveRequests", request.Id, cancellationToken: ct);
+await using var opened = await attachments.OpenAsync(list[0].Id, ct);
 await attachments.DeleteAllAsync("LeaveRequests", request.Id, ct);
 ```
+
+Die Aufrufe gehören wie jede andere Änderung zur Unit of Work des Aufrufers: `PutAsync` schreibt den Blob und fügt die Zeile hinzu, `DeleteAsync`/`DeleteAllAsync` entfernen Zeilen, und die Pipeline speichert nach dem Command (Code außerhalb eines Commands speichert mit `IUnitOfWork`). Lesende Aufrufe sehen nur gespeicherte Zeilen. Schlägt der Command fehl, wirft er oder speichert er nie, werden die Zeilen nicht geschrieben, und die dafür geschriebenen Blobs werden am Ende des Scopes gelöscht; Blobs entfernter oder ersetzter Zeilen werden erst nach dem Commit gelöscht, ein Rollback behält die Dateien also.
 
 Ein Virenscanner (oder jede andere Prüfung des Inhalts) ist ein `IAttachmentScanner`: Er bekommt den Upload mit Name, Typ und Größe und den gepufferten Inhalt und gibt zurück, warum die Datei abgelehnt wird, oder null. Jeder registrierte Scanner läuft, bevor der Blob gespeichert wird.
 

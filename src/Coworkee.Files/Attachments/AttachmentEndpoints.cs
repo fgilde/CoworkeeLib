@@ -1,3 +1,4 @@
+using Coworkee.Application;
 using Coworkee.AspNetCore;
 using Coworkee.AspNetCore.Http;
 using Coworkee.Contracts.Attachments;
@@ -76,7 +77,8 @@ internal static class AttachmentEndpoints
 
     /// <summary>The body is the file itself, its Content-Type the file's type.</summary>
     private static async Task<IResult> UploadAsync(
-        string entityType, Guid entityId, string slot, string name, HttpRequest request, AttachmentGuard guard, IRecordAttachments attachments, CancellationToken cancellationToken)
+        string entityType, Guid entityId, string slot, string name, HttpRequest request, AttachmentGuard guard, IRecordAttachments attachments, IUnitOfWork unitOfWork,
+        CancellationToken cancellationToken)
     {
         if ((await guard.CheckAsync(new(entityType, entityId, slot, true), cancellationToken)).Error is { } error)
         {
@@ -84,11 +86,17 @@ internal static class AttachmentEndpoints
         }
 
         var result = await attachments.PutAsync(entityType, entityId, slot, name, request.ContentType, request.Body, cancellationToken);
-        return result.IsSuccess ? Results.Ok(result.Value) : result.Error!.ToProblem();
+        if (!result.IsSuccess)
+        {
+            return result.Error!.ToProblem();
+        }
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return Results.Ok(result.Value);
     }
 
     private static async Task<IResult> DeleteAsync(
-        string entityType, Guid entityId, string slot, Guid id, AttachmentGuard guard, IRecordAttachments attachments, CancellationToken cancellationToken)
+        string entityType, Guid entityId, string slot, Guid id, AttachmentGuard guard, IRecordAttachments attachments, IUnitOfWork unitOfWork, CancellationToken cancellationToken)
     {
         if ((await guard.CheckAsync(new(entityType, entityId, slot, true), cancellationToken)).Error is { } error)
         {
@@ -96,7 +104,13 @@ internal static class AttachmentEndpoints
         }
 
         var existing = await attachments.ListAsync(entityType, entityId, slot, cancellationToken);
-        return existing.Any(a => a.Id == id) && await attachments.DeleteAsync(id, cancellationToken) ? Results.NoContent() : AttachmentGuard.NotFound.ToProblem();
+        if (!existing.Any(a => a.Id == id) || !await attachments.DeleteAsync(id, cancellationToken))
+        {
+            return AttachmentGuard.NotFound.ToProblem();
+        }
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return Results.NoContent();
     }
 
     private static bool Belongs(RecordAttachmentDto attachment, string entityType, Guid entityId, string slot) =>

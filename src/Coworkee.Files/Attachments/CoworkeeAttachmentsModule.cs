@@ -4,6 +4,7 @@ using Coworkee.Core.Modularity;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.Storage;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -23,6 +24,8 @@ public sealed class CoworkeeAttachmentsModule : CoworkeeModule, IWebModule
 
         services.AddSingleton<IModelContributor, RecordAttachmentModelContributor>();
         services.AddScoped<IRecordAttachments, RecordAttachments>();
+        services.AddScoped<AttachmentBlobs>();
+        services.AddScoped<IInterceptor>(provider => provider.GetRequiredService<AttachmentBlobs>());
         services.AddScoped<AttachmentGuard>();
         services.TryAddSingleton(TimeProvider.System);
     }
