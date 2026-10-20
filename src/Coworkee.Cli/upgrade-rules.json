@@ -229,6 +229,21 @@
       "packages": [
         { "id": "MudBlazor.Extensions", "version": "9.11.5" }
       ]
+    },
+    {
+      "version": "0.0.1.37",
+      "breaking": [
+        "Reporting: the new tables cw.ReportSubscriptions (report subscriptions) and cw.OutgoingMailAttachments (Mailing, files of queued mails); add a migration in apps with Coworkee.Reporting. CoworkeeReportingModule now depends on CoworkeeMailingModule.",
+        "DateRanges moved from Coworkee.Client.Blazor.Reporting.State to Coworkee.Contracts.Reporting.",
+        "MudBlazor.Extensions 9.11.6: apps that pin the package move up."
+      ],
+      "manual": [
+        { "text": "DateRanges is in Coworkee.Contracts.Reporting now: add using Coworkee.Contracts.Reporting; where it is called directly.", "find": "\\bDateRanges\\.", "files": [ "src/**/*.cs", "src/**/*.razor" ] }
+      ],
+      "packages": [
+        { "id": "MudBlazor.Extensions", "version": "9.11.6" }
+      ],
+      "needsMigration": true
     }
   ]
 }
