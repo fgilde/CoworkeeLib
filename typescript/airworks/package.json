@@ -46,7 +46,7 @@
     "@fgilde/airworks": ">=0.4.0"
   },
   "devDependencies": {
-    "@fgilde/airworks": "git+https://github.com/fgilde/AirWorks.git#1cbe8589794c152150a9130e43f7cfab0678a1df",
+    "@fgilde/airworks": "git+https://github.com/fgilde/AirWorks.git#9657ff3967a9dd8fa5dc2b7502c2b2e3d4e20d72",
     "typescript": "^5.9.3"
   }
 }
