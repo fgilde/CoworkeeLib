@@ -11,6 +11,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixes
 
+- `CoworkeeDataTable`: the sticky action column stays opaque on hovered and striped rows (the translucent row tint is painted over the surface), so long cell text no longer shows through under the buttons, in light and dark mode.
 - `coworkee entity add`/`module add`: navigation entries, page titles and permission groups show names of several words as words ("Benefit enrollments", "Time off: Benefit enrollments") instead of the PascalCase plural; dialog titles and permission names already did.
 - `coworkee entity add`/`module add`: generated pages pass text keys to `PageHeader` and `CreateText` instead of translated texts, which were translated a second time ("People" → "Personal" → "Persönlich"). Rule: `PageHeader` and `CoworkeeDataTable.CreateText` translate, callers pass keys. Generated pages of existing apps drop the `@L[...]` around these values.
 - `coworkee entity add`/`module add`: reference facets get `LabelPath = "it.{Navigation}.{Display}"`, so a navigation named like a Dynamic LINQ keyword (`Parent`, `It`, `Root`, ...) no longer makes the OData set answer 500 when facets are asked for. Hand-written facets on such a navigation add the `it.` themselves. See [OData](../web/odata.md#facets).

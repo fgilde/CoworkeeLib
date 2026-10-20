@@ -20,7 +20,9 @@ internal static class MobileStyles
 
         @media (min-width: 600px) {
           .mud-table-root .cw-row-actions { position: sticky; inset-inline-end: 0; z-index: 1; background-color: var(--mud-palette-surface); }
-          .mud-table-hover .mud-table-row:hover > .cw-row-actions { background-color: var(--mud-palette-table-hover); }
+          :where(.mud-table-striped .mud-table-body:not(.mud-table-body-virtualized) .mud-table-row:nth-of-type(odd), .mud-table-striped .mud-table-row-stripe) > .cw-row-actions {
+            background-image: linear-gradient(var(--mud-palette-table-striped), var(--mud-palette-table-striped)); }
+          .mud-table-hover .mud-table-row:hover > .cw-row-actions { background-image: linear-gradient(var(--mud-palette-table-hover), var(--mud-palette-table-hover)); }
         }
 
         @media (max-width: 599.98px) {
