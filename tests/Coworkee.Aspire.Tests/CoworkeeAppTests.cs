@@ -74,6 +74,22 @@ public sealed class CoworkeeAppTests : IDisposable
     }
 
     [Fact]
+    public async Task The_migrations_get_the_modules_they_use_like_the_api()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var app = builder.AddCoworkeeApp("demo");
+
+        var migrations = app.AddMigrations<FakeProjects.SeedingMigrations>();
+        app.AddAuthServer<FakeProjects.Auth>();
+        var api = app.AddApi<FakeProjects.Api>();
+
+        var settings = await Environment(migrations.Resource);
+        settings["Coworkee__Storage__FileSystem__Root"].ShouldBe((await Environment(api.Resource))["Coworkee__Storage__FileSystem__Root"]);
+        settings.Keys.ShouldNotContain("ConnectionStrings__redis");
+        migrations.Resource.Annotations.OfType<WaitAnnotation>().Select(w => w.Resource.Name).ShouldNotContain("demo-migrations");
+    }
+
+    [Fact]
     public async Task The_airworks_client_is_a_second_bff_client_of_the_auth_server_with_its_own_cookie()
     {
         var builder = DistributedApplication.CreateBuilder();

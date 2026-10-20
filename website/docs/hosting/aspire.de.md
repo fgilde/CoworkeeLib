@@ -62,7 +62,7 @@ Explizite Aufrufe funktionieren weiter und haben Vorrang: Ein Projekt, das vor `
 
 | Methode | Ressource | Verdrahtung |
 |---|---|---|
-| `AddMigrations<T>()` | `{name}-migrations` | Datenbank, wartet auf den Datenbankserver, Dashboard-Befehle |
+| `AddMigrations<T>()` | `{name}-migrations` | Datenbank, wartet auf den Datenbankserver, die referenzierten Module wie jeder Dienst (Blob-Speicher für geseedete Dateien, ...), Dashboard-Befehle |
 | `AddAuthServer<T>()` | `{name}-auth` | externe Endpunkte, kein Job-Server, öffentliche Auth-URL, Entwicklungszertifikate in Development, Keycloak-Anbieter |
 | `AddApi<T>()` | `{name}-api` | Token-Authority und Audience `{name}_api`, API-Scope am Auth-Server, Setup-Token (lokal: dasselbe für alle Dienste, in Konsole und Dashboard sichtbar, solange das System nicht eingerichtet ist, siehe [Setup-Assistent](../security/authentication.md#setup-assistent-oder-seed)) |
 | `AddWorker<T>(suffix)` | `{name}-{suffix}` | nur Infrastruktur, keine öffentlichen Endpunkte |

@@ -13,6 +13,7 @@
 
 ### Korrekturen
 
+- Aspire: `AddMigrations` verdrahtet die Module, die das Migrationsprojekt referenziert, wie bei jedem Dienst (Speicher, Mail, Redis, Suche, Übersetzung, Einträge in `app.Modules`); Dateien eines Seeds landeten vorher im lokalen Ordner des Migrations-Hosts und öffneten sich in der App mit 404. App-Hosts, die `CoworkeeModules.Storage` von Hand in die Migrationen verdrahtet haben, können diese Zeile streichen.
 - Dialoge: ein Seitenblatt oder Dialog der Bibliothek, geöffnet aus einem Dialog, den die App mit dem einfachen MudBlazor-`ShowAsync` zeigt (etwa die Dateivorschau von `RecordAttachment`), blieb unsichtbar; MudBlazor.Extensions wandte seine Optionen auf den äußeren Dialog an. Das Layout markiert jetzt die schon offenen Dialoge, wenn ein neuer hinzukommt.
 - Reporting: Diagramme über eine berechnete Quelle (`AddReportSource`) mit mehreren Zeilen pro Kategorie und Serie schlagen nicht mehr fehl (die Gruppierung im Speicher machte aus jeder Zeile eine eigene Gruppe, das Diagramm warf dann wegen doppelter Schlüssel); Diagrammserien addieren doppelte Kategorien.
 - Datensatz-Anhänge: Mit `CreateScope()` erzeugte Scopes (Startcode, das Elsa-Modul, ältere Dienste) lassen sich mit eingeschaltetem Anhangsmodul wieder freigeben (`AttachmentBlobs` ist auch `IDisposable`).

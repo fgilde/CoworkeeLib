@@ -13,6 +13,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixes
 
+- Aspire: `AddMigrations` wires the modules the migrations project references like any service (storage, mail, Redis, search, translation, `app.Modules` entries); files a seed stored went to the local folder of the migrations host before, and opened with 404 in the app. App hosts that wired `CoworkeeModules.Storage` into the migrations by hand can drop that line.
 - Dialogs: a side sheet or dialog of the library opened from inside a dialog the app showed with the plain MudBlazor `ShowAsync` (for example the file preview of `RecordAttachment`) stayed invisible; MudBlazor.Extensions applied its options to the outer dialog. The layout now marks dialogs that are already open when a new one is added.
 - Reporting: charts over a computed source (`AddReportSource`) with several rows per category and series no longer fail (the in-memory grouping split every row into its own group, the chart then threw on the duplicate keys); chart series add up duplicate categories.
 - Record attachments: scopes created with `CreateScope()` (start-up code, the Elsa module, older services) no longer fail to dispose once the attachments module is on (`AttachmentBlobs` is `IDisposable` too).

@@ -62,7 +62,7 @@ Explicit calls still work and win: a project added before `AddProjects()` is not
 
 | Method | Resource | Wiring |
 |---|---|---|
-| `AddMigrations<T>()` | `{name}-migrations` | database, waits for the database server, dashboard commands |
+| `AddMigrations<T>()` | `{name}-migrations` | database, waits for the database server, the modules it references like any service (blob storage for seeded files, ...), dashboard commands |
 | `AddAuthServer<T>()` | `{name}-auth` | external endpoints, no job server, public auth URL, development certificates in Development, Keycloak provider |
 | `AddApi<T>()` | `{name}-api` | token authority and audience `{name}_api`, API scope at the auth server, setup token (local run: the same for every service, shown on the console and in the dashboard while the system is not set up, see [Setup wizard](../security/authentication.md#setup-wizard-or-seed)) |
 | `AddWorker<T>(suffix)` | `{name}-{suffix}` | infrastructure only, no public endpoints |

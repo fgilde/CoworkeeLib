@@ -12,6 +12,14 @@ internal static class FakeProjects
         }
     }
 
+    /// <summary>A migrations host whose seed stores files.</summary>
+    internal sealed class SeedingMigrations : FakeProject
+    {
+        public SeedingMigrations() : base("Migrations", "Coworkee.Infrastructure", "Coworkee.Storage")
+        {
+        }
+    }
+
     internal sealed class Auth : FakeProject
     {
         public Auth() : base("Auth", "Coworkee.Infrastructure", "Coworkee.AuthServer", "Coworkee.Account", "Coworkee.Mailing", "Coworkee.BackgroundJobs")

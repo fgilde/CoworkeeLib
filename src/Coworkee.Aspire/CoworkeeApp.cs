@@ -73,6 +73,8 @@ public sealed partial class CoworkeeApp
         }
 
         WireGrafanaTelemetry(Migrations);
+        // the seed writes through the modules as well (files into the blob storage, ...); the database is wired above
+        WireModules(Migrations, except: CoworkeeModules.Infrastructure);
         AddDatabaseCommands(Migrations);
         return Added<TProject>(Migrations, suffix);
     }
@@ -286,13 +288,17 @@ public sealed partial class CoworkeeApp
         WithSetupToken(service);
         WireServices(service);
         WireGrafanaTelemetry(service);
+        WireModules(service);
+        return service;
+    }
+
+    private void WireModules(IResourceBuilder<ProjectResource> service, string? except = null)
+    {
         var references = CoworkeeModules.References(service.Resource.GetProjectMetadata().ProjectPath);
-        foreach (var (_, wire) in Modules.Where(m => references.Contains(m.Key)).ToList())
+        foreach (var (_, wire) in Modules.Where(m => references.Contains(m.Key) && !string.Equals(m.Key, except, StringComparison.OrdinalIgnoreCase)).ToList())
         {
             wire(this, service);
         }
-
-        return service;
     }
 
     private IResourceBuilder<ProjectResource> Added<TProject>(IResourceBuilder<ProjectResource> service, string suffix)
