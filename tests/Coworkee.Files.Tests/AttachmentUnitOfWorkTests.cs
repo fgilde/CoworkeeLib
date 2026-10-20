@@ -83,6 +83,15 @@ public sealed class AttachmentUnitOfWorkTests(FilesApp app) : IAsyncLifetime
         app.BlobCount().ShouldBe(blobs + 1);
     }
 
+    [Fact]
+    public void A_synchronous_scope_with_the_database_disposes()
+    {
+        var scope = app.App.Services.CreateScope();
+        scope.ServiceProvider.GetRequiredService<Coworkee.Infrastructure.Persistence.CoworkeeDbContext>().ShouldNotBeNull();
+
+        Should.NotThrow(scope.Dispose);
+    }
+
     private Task<List<string>> RowsAsync() =>
         app.InDbAsync(db => db.Set<RecordAttachment>().IgnoreQueryFilters().Where(a => a.EntityId == _ticket).Select(a => a.FileName).ToListAsync(Ct));
 

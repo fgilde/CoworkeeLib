@@ -11,7 +11,7 @@ namespace Coworkee.Files.Attachments;
 /// blobs of removed rows are deleted after the commit.
 /// </summary>
 // ponytail: a process crash between the blob write and the commit leaves the blob without a row; a sweep of unreferenced blob keys if that ever matters
-internal sealed partial class AttachmentBlobs(IBlobStorage storage, ILogger<AttachmentBlobs> logger) : SaveChangesInterceptor, IDbTransactionInterceptor, IAsyncDisposable
+internal sealed partial class AttachmentBlobs(IBlobStorage storage, ILogger<AttachmentBlobs> logger) : SaveChangesInterceptor, IDbTransactionInterceptor, IAsyncDisposable, IDisposable
 {
     private readonly List<string> _written = [];
     private readonly List<string> _removed = [];
@@ -54,6 +54,9 @@ internal sealed partial class AttachmentBlobs(IBlobStorage storage, ILogger<Atta
         RolledBack();
         return Task.CompletedTask;
     }
+
+    // sync scopes (start-up code, older modules) dispose synchronously; without IDisposable the container refuses to dispose them at all
+    public void Dispose() => DisposeAsync().AsTask().GetAwaiter().GetResult();
 
     public async ValueTask DisposeAsync()
     {
