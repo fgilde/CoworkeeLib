@@ -1,6 +1,6 @@
 # CONTINUE – handover for the next agent
 
-State of the Coworkee library as of 2026-10-17 evening: main is pushed up to 03509db = release **0.0.1.33** (nuget.org, npm `@coworkee/*` 0.0.1033); later commits on main are local only until the next round (GitHub Actions minutes are scarce: push and release once per round). Demo (`master` 59d89da) and Sharemee (`master` 45c9f98) build against the local pack of 0.0.1.33 and are pushed. AirWorks 0.5.0 is released (tile badges).
+State of the Coworkee library as of 2026-10-20: main is pushed and released as **0.0.1.35** (nuget.org, npm `@coworkee/*` 0.0.1035). Finished commits are pushed right away; only releases wait for the end of a round. Demo (`master` 1368e83, AirWorks client on 0.0.1035) and Sharemee (`master` d7c2322, no change needed) build against 0.0.1.35 and are pushed. The HR app CoworkeeHR (see below) is local only. AirWorks 0.5.0 is released (tile badges).
 
 ## Repositories
 | Repo | Local path | Remote / branch |
