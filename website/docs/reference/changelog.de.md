@@ -12,6 +12,7 @@
 
 ### Korrekturen
 
+- Sicherheit, Social: Kommentare, Tags, Bewertungen, Reaktionen und ihre Echtzeit-Topics eines mit Entitätsklasse registrierten Typs (`Comments<T>`, ...) verlangen jetzt, dass der Benutzer die Zeile über das OData-Set des Typs sieht (Berechtigung des Sets, Organisation, Soft Delete, Zeilenfilter `IODataEntityFilter<T>`); vorher reichten die Berechtigung und eine vorhandene Id. Tag-Zähler und `GET /api/v1/tags/{entityType}/entities` zählen nur sichtbare Zeilen. Typen ohne OData-Set behalten die Id-Prüfung; `Authorize(...)` ergänzt weiterhin Prüfungen, Hooks, die nur den Zeilenfilter wiederholten, können entfallen. Siehe [Social](../modules/social.md).
 - Workflows: Für eine Entität, die der Command in derselben Unit of Work hinzugefügt hat, lädt `WorkflowEngine.LoadAsync` die `Include(...)`-Referenzen über ihren Fremdschlüssel, wenn nur die ID gesetzt war; `Describe`, Guards und Aktionen sehen dort kein `null` mehr.
 - `CoworkeeDataTable`: die fixierte Aktionsspalte bleibt auf Zeilen unter dem Mauszeiger und gestreiften Zeilen deckend (die durchscheinende Zeilenfarbe liegt über der Oberfläche), langer Zellentext scheint nicht mehr unter den Knöpfen durch, im hellen wie im dunklen Modus.
 - `coworkee entity add`/`module add`: Navigationseinträge, Seitentitel und Berechtigungsgruppen zeigen Namen aus mehreren Wörtern als Wörter („Benefit enrollments“, „Time off: Benefit enrollments“) statt des PascalCase-Plurals; Dialogtitel und Berechtigungsnamen taten das schon.

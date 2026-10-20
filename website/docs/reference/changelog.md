@@ -12,6 +12,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixes
 
+- Security, social: comments, tags, ratings, reactions and their realtime topics of a type registered with its entity class (`Comments<T>`, ...) now require that the user sees the row through the type's OData set (set permission, organisation, soft delete, `IODataEntityFilter<T>` row filters); before, the permission and an existing id were enough. Tag counts and `GET /api/v1/tags/{entityType}/entities` only count visible rows. Types without an OData set keep the id check; `Authorize(...)` still adds checks on top, and hooks that only repeated the row filter can go. See [Social](../modules/social.md).
 - Workflows: for an entity the command added in the same unit of work, `WorkflowEngine.LoadAsync` loads the `Include(...)` references through their foreign key when only the id was set, so `Describe`, guards and actions no longer see `null` there.
 - `CoworkeeDataTable`: the sticky action column stays opaque on hovered and striped rows (the translucent row tint is painted over the surface), so long cell text no longer shows through under the buttons, in light and dark mode.
 - `coworkee entity add`/`module add`: navigation entries, page titles and permission groups show names of several words as words ("Benefit enrollments", "Time off: Benefit enrollments") instead of the PascalCase plural; dialog titles and permission names already did.

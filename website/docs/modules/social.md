@@ -16,9 +16,9 @@ public sealed class MyAppProductsModule : CoworkeeModule
 }
 ```
 
-With the entity class, the id is checked through the `DbContext`, so tenant filters apply; without it (`Comments("Products")`) any id is accepted. `AddCoworkeeSocial` may be called by several modules.
+With the entity class, the social data of a row is only there for users who see the row: when the type has an [OData set](../web/odata.md), the way that set shows it (the set's permission, the organisation, soft delete and every `IODataEntityFilter<T>` row filter); without a set, every row of the own organisation. Everyone else gets 404 on comments, tags, ratings and reactions and may not follow the realtime topics; tag counts and `tags/{entityType}/entities` only count visible rows. Without the entity class (`Comments("Products")`) any id is accepted. `AddCoworkeeSocial` may be called by several modules.
 
-An optional hook decides on top of the permissions whether the user may see (`Write == false`) or change the social data of one entity, e.g. only products the user may see:
+An optional hook decides on top of that whether the user may see (`Write == false`) or change the social data of one entity, e.g. for an entity type without an OData set:
 
 ```csharp
 social.Authorize(async (services, access, ct) =>

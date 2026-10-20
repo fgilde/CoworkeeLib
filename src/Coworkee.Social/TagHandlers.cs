@@ -22,8 +22,9 @@ internal sealed class TagHandlers(CoworkeeDbContext db, SocialGuard guard, IPerm
             return error;
         }
 
+        var links = await LinksAsync(query.EntityType, cancellationToken);
         var tags = await Set(query.EntityType)
-            .Select(t => new TagDto(t.Name, db.Set<EntityTag>().Count(l => l.TagId == t.Id)))
+            .Select(t => new TagDto(t.Name, links.Count(l => l.TagId == t.Id)))
             .ToListAsync(cancellationToken);
         return tags.OrderByDescending(t => t.Count).ThenBy(t => t.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
     }
@@ -41,7 +42,7 @@ internal sealed class TagHandlers(CoworkeeDbContext db, SocialGuard guard, IPerm
         }
 
         var tagId = (await FindAsync(query.EntityType, query.Tag, cancellationToken))?.Id;
-        return await db.Set<EntityTag>().Where(l => l.TagId == tagId).Select(l => l.EntityId).ToListAsync(cancellationToken);
+        return await (await LinksAsync(query.EntityType, cancellationToken)).Where(l => l.TagId == tagId).Select(l => l.EntityId).ToListAsync(cancellationToken);
     }
 
     public async Task<Result<EntityTagsDto>> HandleAsync(SetEntityTagsCommand command, CancellationToken cancellationToken)
@@ -101,6 +102,12 @@ internal sealed class TagHandlers(CoworkeeDbContext db, SocialGuard guard, IPerm
             && await guard.AllowsAsync(Access(entityType, entityId, write: true), cancellationToken);
         return new EntityTagsDto(names, canEdit);
     }
+
+    /// <summary>The tag links of entities the current user sees: counts and lists never tell of hidden rows.</summary>
+    private async Task<IQueryable<EntityTag>> LinksAsync(string entityType, CancellationToken cancellationToken) =>
+        await guard.VisibleIdsAsync(SocialFeature.Tags, entityType, cancellationToken) is { } visible
+            ? db.Set<EntityTag>().Where(l => visible.Contains(l.EntityId))
+            : db.Set<EntityTag>();
 
     private IQueryable<Tag> Set(string entityType) => db.Set<Tag>().Where(t => t.EntityType == entityType);
 

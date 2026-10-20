@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Social;
 
-/// <summary>Checks that the entity type is opted in, the entity exists in the own organisation and the app's access checks pass.</summary>
+/// <summary>Checks that the entity type is opted in, the current user sees the entity (through its OData set, if it has one) and the app's access checks pass.</summary>
 internal sealed class SocialGuard(CoworkeeDbContext db, SocialOptions options, IPermissionChecker permissions, IServiceProvider services)
 {
     public static readonly Error NotFound = Error.NotFound("social.not_found", "There is no such entity.");
@@ -20,9 +20,13 @@ internal sealed class SocialGuard(CoworkeeDbContext db, SocialOptions options, I
             return NotFound;
         }
 
-        if (access.EntityId is { } id && target.ExistsAsync is { } exists && !await exists(db, id, cancellationToken))
+        if (target.VisibleIdsAsync is { } visibleIds)
         {
-            return NotFound;
+            var ids = await visibleIds(services, cancellationToken);
+            if (access.EntityId is { } id ? ids is null || !await ids.AnyAsync(x => x == id, cancellationToken) : ids is null)
+            {
+                return access.EntityId is null ? Forbidden : NotFound;
+            }
         }
 
         if (access is { Feature: SocialFeature.Reactions, EntityType: SocialReactions.Comment })
@@ -46,6 +50,10 @@ internal sealed class SocialGuard(CoworkeeDbContext db, SocialOptions options, I
     }
 
     public async Task<bool> AllowsAsync(SocialAccess access, CancellationToken cancellationToken) => await CheckAsync(access, cancellationToken) is null;
+
+    /// <summary>The ids of <paramref name="entityType"/> the current user sees; null when the type checks no ids.</summary>
+    public async Task<IQueryable<Guid>?> VisibleIdsAsync(SocialFeature feature, string entityType, CancellationToken cancellationToken) =>
+        options.Targets[(feature, entityType)].VisibleIdsAsync is { } visibleIds ? await visibleIds(services, cancellationToken) : null;
 
     public SocialTarget Target(SocialFeature feature, string entityType) => options.Targets[(feature, entityType)];
 

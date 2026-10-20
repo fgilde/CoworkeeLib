@@ -1,6 +1,7 @@
 using Coworkee.Contracts.Social;
 using Coworkee.Domain;
 using Coworkee.Infrastructure.Persistence;
+using Coworkee.OData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -17,8 +18,9 @@ public enum SocialFeature
 /// <summary>What is about to happen: <see cref="EntityId"/> is null for questions about the whole entity type, such as the tag cloud.</summary>
 public sealed record SocialAccess(SocialFeature Feature, string EntityType, Guid? EntityId, bool Write);
 
+/// <param name="VisibleIdsAsync">The ids the current user sees; null when he may not see the type at all.</param>
 internal sealed record SocialTarget(
-    Func<CoworkeeDbContext, Guid, CancellationToken, Task<bool>>? ExistsAsync,
+    Func<IServiceProvider, CancellationToken, Task<IQueryable<Guid>?>>? VisibleIdsAsync,
     Func<CoworkeeDbContext, Guid, CancellationToken, Task<Guid?>>? OwnerAsync,
     Func<Guid, string>? Link);
 
@@ -54,7 +56,7 @@ public sealed class SocialOptions
     /// <summary>Reactions on the comments of every entity type with comments; who may see or write the comments may see or add reactions there (with the reaction permissions).</summary>
     public SocialOptions CommentReactions() => Add(SocialFeature.Reactions, SocialReactions.Comment, new(null, null, null));
 
-    /// <summary>An extra check on top of the permissions, e.g. "may the user see this product at all"; every check must pass.</summary>
+    /// <summary>An extra check on top of the permissions and the row visibility of the entity's OData set, e.g. for entity types without a set; every check must pass.</summary>
     public SocialOptions Authorize(Func<IServiceProvider, SocialAccess, CancellationToken, Task<bool>> check)
     {
         AccessChecks.Add(check);
@@ -69,11 +71,25 @@ public sealed class SocialOptions
 
     private static SocialTarget For<TEntity>(Func<Guid, string>? link)
         where TEntity : class => new(
-        (db, id, cancellationToken) => db.Set<TEntity>().AnyAsync(e => EF.Property<Guid>(e, "Id") == id, cancellationToken),
+        VisibleIdsAsync<TEntity>,
         typeof(IAuditable).IsAssignableFrom(typeof(TEntity))
             ? (db, id, cancellationToken) => db.Set<TEntity>().Where(e => EF.Property<Guid>(e, "Id") == id).Select(e => EF.Property<Guid?>(e, nameof(IAuditable.CreatedBy))).FirstOrDefaultAsync(cancellationToken)
             : null,
         link);
+
+    // the entity's OData set decides (permission, tenant, soft delete, row filters); without a set every row of the own organisation counts
+    private static async Task<IQueryable<Guid>?> VisibleIdsAsync<TEntity>(IServiceProvider services, CancellationToken cancellationToken)
+        where TEntity : class
+    {
+        if (services.GetService<ODataEntityRegistry>()?.Find(typeof(TEntity)) is null)
+        {
+            return services.GetRequiredService<CoworkeeDbContext>().Set<TEntity>().Select(e => EF.Property<Guid>(e, "Id"));
+        }
+
+        return await ODataEntityAccess.IsGrantedAsync(services, typeof(TEntity), cancellationToken)
+            ? (await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken)).Select(e => EF.Property<Guid>(e, "Id"))
+            : null;
+    }
 }
 
 public static class SocialServiceCollectionExtensions

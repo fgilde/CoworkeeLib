@@ -16,9 +16,9 @@ public sealed class MyAppProductsModule : CoworkeeModule
 }
 ```
 
-Mit der Entitätsklasse wird die Id über den `DbContext` geprüft, Mandantenfilter gelten also; ohne sie (`Comments("Products")`) wird jede Id angenommen. `AddCoworkeeSocial` darf von mehreren Modulen aufgerufen werden.
+Mit der Entitätsklasse gibt es die Social-Daten einer Zeile nur für Benutzer, die die Zeile sehen: hat der Typ ein [OData-Set](../web/odata.md), so wie dieses Set sie zeigt (Berechtigung des Sets, Organisation, Soft Delete und jeder Zeilenfilter `IODataEntityFilter<T>`); ohne Set jede Zeile der eigenen Organisation. Alle anderen bekommen 404 auf Kommentare, Tags, Bewertungen und Reaktionen und dürfen den Echtzeit-Topics nicht folgen; Tag-Zähler und `tags/{entityType}/entities` zählen nur sichtbare Zeilen. Ohne die Entitätsklasse (`Comments("Products")`) wird jede Id angenommen. `AddCoworkeeSocial` darf von mehreren Modulen aufgerufen werden.
 
-Ein optionaler Hook entscheidet zusätzlich zu den Berechtigungen, ob der Benutzer die Daten einer Entität sehen (`Write == false`) oder ändern darf, z. B. nur Produkte, die er sehen darf:
+Ein optionaler Hook entscheidet zusätzlich, ob der Benutzer die Daten einer Entität sehen (`Write == false`) oder ändern darf, z. B. für einen Entitätstyp ohne OData-Set:
 
 ```csharp
 social.Authorize(async (services, access, ct) =>

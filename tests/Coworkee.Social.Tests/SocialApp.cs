@@ -10,6 +10,7 @@ using Coworkee.Identity;
 using Coworkee.Identity.Setup;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.Notifications;
+using Coworkee.OData;
 using Coworkee.Testing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -33,6 +34,9 @@ public sealed class SocialApp : DatabaseFixture
 
     /// <summary>Notes with this text are hidden from everyone by the app's access check.</summary>
     public const string Secret = "secret";
+
+    /// <summary>Notes with this text are hidden by the row filter of the Notes set from everyone but their creator.</summary>
+    public const string Private = "private";
 
     public override async ValueTask InitializeAsync()
     {
@@ -127,6 +131,16 @@ public sealed class Note : AuditedEntity, IMultiTenant
 public sealed class SocialTestDbContext(DbContextOptions<SocialTestDbContext> options, ICurrentUser currentUser, IEnumerable<IModelContributor> contributors)
     : CoworkeeDbContext(options, currentUser, contributors);
 
+/// <summary>A row filter of the Notes set: private notes only for their creator.</summary>
+internal sealed class PrivateNotes(ICurrentUser currentUser) : IODataEntityFilter<Note>
+{
+    public Task<IQueryable<Note>> ApplyAsync(IQueryable<Note> query, CancellationToken cancellationToken)
+    {
+        var me = currentUser.UserId;
+        return Task.FromResult(query.Where(n => n.Text != SocialApp.Private || n.CreatedBy == me));
+    }
+}
+
 internal sealed class NoteModelContributor : IModelContributor
 {
     public void Apply(ModelBuilder modelBuilder) => modelBuilder.Entity<Note>(note => note.ToTable("Notes"));
@@ -138,6 +152,8 @@ public sealed class TestSocialModule : CoworkeeModule
     public override void ConfigureServices(ModuleServiceContext context)
     {
         context.Services.AddSingleton<IModelContributor, NoteModelContributor>();
+        context.Services.AddODataEntity<Note>("Notes");
+        context.Services.AddScoped<IODataEntityFilter<Note>, PrivateNotes>();
         context.Services.AddCoworkeeSocial(social => social
             .Comments<Note>("Notes", id => $"/notes/{id}")
             .Tags<Note>("Notes")

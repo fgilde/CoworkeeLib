@@ -137,6 +137,38 @@ public sealed class SocialTests(SocialApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Rows_hidden_by_the_row_filter_of_the_set_are_not_found_and_their_topics_refused()
+    {
+        var hidden = await app.AddNoteAsync(_setup.AdminUserId, _setup.TenantId, SocialApp.Private);
+        var bob = await CreateUserAsync("outsider@acme.test",
+            SocialPermissions.Comments.Create, SocialPermissions.Tags.Create, SocialPermissions.Ratings.Create, SocialPermissions.Reactions.Create);
+        var asBob = app.As(bob.Id, _setup.TenantId);
+        await ReadAsync<CommentDto>(await Admin.PostAsJsonAsync($"/api/v1/comments/Notes/{hidden}", new CommentRequest("Only for me"), Ct));
+        await SaveTagsAsync(hidden, "private-tag");
+        await SaveTagsAsync(_note, "private-tag");
+
+        foreach (var url in new[] { "comments", "ratings", "reactions", "tags" }.Select(f => $"/api/v1/{f}/Notes/{hidden}"))
+        {
+            (await asBob.GetAsync(url, Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+            (await Admin.GetAsync(url, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        }
+
+        (await asBob.PostAsJsonAsync($"/api/v1/comments/Notes/{hidden}", new CommentRequest("Hi"), Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await asBob.PutAsJsonAsync($"/api/v1/ratings/Notes/{hidden}", new RateRequest(1), Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await asBob.PostAsJsonAsync($"/api/v1/reactions/Notes/{hidden}", new ReactionRequest("👍"), Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await asBob.PutAsJsonAsync($"/api/v1/tags/Notes/{hidden}", new SaveTagsRequest(["mine"]), Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await asBob.GetFromJsonAsync<List<Guid>>("/api/v1/tags/Notes/entities?tag=private-tag", Ct))!.ShouldBe([_note]);
+        (await asBob.GetFromJsonAsync<List<TagDto>>("/api/v1/tags/Notes", Ct))!.ShouldContain(t => t.Name == "private-tag" && t.Count == 1);
+        (await Admin.GetFromJsonAsync<List<Guid>>("/api/v1/tags/Notes/entities?tag=private-tag", Ct))!.Count.ShouldBe(2);
+
+        var (connection, _) = await app.ConnectAsync(bob.Id, _setup.TenantId);
+        await using var __ = connection;
+        await Should.ThrowAsync<HubException>(() => connection.InvokeAsync(RealtimeHubMethods.Subscribe, SocialTopics.Comments("Notes", hidden), Ct));
+        await Should.ThrowAsync<HubException>(() => connection.InvokeAsync(RealtimeHubMethods.Subscribe, SocialTopics.Reactions("Notes", hidden), Ct));
+        await connection.InvokeAsync(RealtimeHubMethods.Subscribe, SocialTopics.Comments("Notes", _note), Ct);
+    }
+
+    [Fact]
     public async Task Reactions_toggle_per_user_and_emoji_list_who_reacted_and_reach_subscribers_live()
     {
         var bob = await CreateUserAsync("fan@acme.test", SocialPermissions.Reactions.Create);
