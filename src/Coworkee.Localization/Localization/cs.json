@@ -1736,5 +1736,19 @@
   "Column the thresholds colour": "Sloupec, který prahy obarví",
   "Off target": "Mimo cíl",
   "Near target": "Blízko cíle",
-  "On target": "V cíli"
+  "On target": "V cíli",
+  "Ask AI to change this report": "Požádat AI o změnu tohoto přehledu",
+  "The AI changed the report. Look it over, then save or undo.": "AI přehled změnila. Zkontrolujte jej a pak uložte nebo vraťte zpět.",
+  "Create with AI": "Vytvořit pomocí AI",
+  "{0} per {1} as a bar chart, with the total as KPI": "{0} podle {1} jako sloupcový graf, s celkovým součtem jako KPI",
+  "Monthly trend of the sum of {0} of {1} by {2}, with a target line": "Měsíční vývoj součtu {0} z {1} podle {2}, s čárou cíle",
+  "Top 10 {0} of {1} by {2} as a table with colours for good and bad values": "Top 10 {0} z {1} podle {2} jako tabulka s barvami pro dobré a špatné hodnoty",
+  "An overview of {0} with KPIs and charts": "Přehled {0} s KPI a grafy",
+  "Describe the report you need; the AI builds it from the data you may see. Nothing is saved until you save it.": "Popište přehled, který potřebujete; AI jej sestaví z dat, která smíte vidět. Nic se neuloží, dokud to neuložíte.",
+  "Describe what to change; the result opens in the designer and can be undone.": "Popište, co změnit; výsledek se otevře v návrháři a lze jej vrátit zpět.",
+  "What should the report show?": "Co má přehled ukazovat?",
+  "The AI builds the report and checks it against your data…": "AI sestavuje přehled a kontroluje jej proti vašim datům…",
+  "Change": "Změnit",
+  "No AI model is set up, or you may not create reports.": "Není nastaven žádný model AI, nebo nesmíte vytvářet přehledy.",
+  "The AI could not be reached. Try again later.": "AI není dostupná. Zkuste to později."
 }

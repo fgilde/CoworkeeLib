@@ -1,0 +1,34 @@
+<MudDialog Class="@MudBlazor.Extensions.Helper.MudExCss.Classes.Dialog.Initial">
+    <DialogContent>
+        <MudStack Spacing="3" Class="pt-2" data-testid="report-ai">
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                @L[Current is null ? "Describe the report you need; the AI builds it from the data you may see. Nothing is saved until you save it." : "Describe what to change; the result opens in the designer and can be undone."]
+            </MudText>
+            <MudTextField T="string" @bind-Value="_prompt" Label="@L["What should the report show?"]" Lines="4" Variant="Variant.Outlined" MaxLength="4000" Immediate="true"
+                          Disabled="_busy" data-testid="report-ai-prompt" />
+            @if (Current is null && _examples.Count > 0)
+            {
+                <div class="cw-ai-examples">
+                    @foreach (var example in _examples)
+                    {
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Icon="@Icons.Material.Outlined.Lightbulb" OnClick="() => _prompt = example" Disabled="_busy" data-testid="report-ai-example">@example</MudChip>
+                    }
+                </div>
+            }
+            @if (_busy)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                <MudText Typo="Typo.caption">@L["The AI builds the report and checks it against your data…"]</MudText>
+            }
+            @if (_error is { } error)
+            {
+                <MudAlert Severity="Severity.Error" Dense="true" data-testid="report-ai-error">@error</MudAlert>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog.Cancel()" Disabled="_busy">@L["Cancel"]</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Outlined.AutoAwesome" Disabled="@(_busy || string.IsNullOrWhiteSpace(_prompt))" OnClick="GenerateAsync"
+                   data-testid="report-ai-generate">@L[Current is null ? "Create" : "Change"]</MudButton>
+    </DialogActions>
+</MudDialog>

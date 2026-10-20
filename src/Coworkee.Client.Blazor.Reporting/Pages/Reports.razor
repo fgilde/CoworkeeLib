@@ -9,6 +9,10 @@
             </CustomContent>
             <SelectedTemplate />
         </MudFileUpload>
+        @if (_ai)
+        {
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.AutoAwesome" Class="mr-2" OnClick="CreateWithAiAsync" data-testid="report-create-ai">@L["Create with AI"]</MudButton>
+        }
         <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="CreateAsync" data-testid="report-create">@L["New report"]</MudButton>
     </PermissionGate>
 </PageHeader>

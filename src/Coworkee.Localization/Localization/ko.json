@@ -1736,5 +1736,19 @@
   "Column the thresholds colour": "임계값으로 색칠할 열",
   "Off target": "목표 미달",
   "Near target": "목표 근접",
-  "On target": "목표 달성"
+  "On target": "목표 달성",
+  "Ask AI to change this report": "AI에게 이 보고서 변경 요청",
+  "The AI changed the report. Look it over, then save or undo.": "AI가 보고서를 변경했습니다. 확인한 후 저장하거나 실행 취소하세요.",
+  "Create with AI": "AI로 만들기",
+  "{0} per {1} as a bar chart, with the total as KPI": "{1}별 {0} 막대 차트와 합계 KPI",
+  "Monthly trend of the sum of {0} of {1} by {2}, with a target line": "{2} 기준 {1}의 {0} 합계 월별 추이와 목표선",
+  "Top 10 {0} of {1} by {2} as a table with colours for good and bad values": "{2} 기준 {1}의 상위 10개 {0}를 좋은 값과 나쁜 값을 색으로 구분한 표로",
+  "An overview of {0} with KPIs and charts": "KPI와 차트로 보는 {0} 개요",
+  "Describe the report you need; the AI builds it from the data you may see. Nothing is saved until you save it.": "필요한 보고서를 설명하세요. AI가 볼 수 있는 데이터로 보고서를 만듭니다. 저장할 때까지 아무것도 저장되지 않습니다.",
+  "Describe what to change; the result opens in the designer and can be undone.": "변경할 내용을 설명하세요. 결과는 디자이너에서 열리며 실행 취소할 수 있습니다.",
+  "What should the report show?": "보고서에 무엇을 표시할까요?",
+  "The AI builds the report and checks it against your data…": "AI가 보고서를 만들고 데이터와 대조하고 있습니다…",
+  "Change": "변경",
+  "No AI model is set up, or you may not create reports.": "AI 모델이 설정되지 않았거나 보고서를 만들 권한이 없습니다.",
+  "The AI could not be reached. Try again later.": "AI에 연결할 수 없습니다. 나중에 다시 시도하세요."
 }

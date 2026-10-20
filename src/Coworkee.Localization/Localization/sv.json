@@ -1736,5 +1736,19 @@
   "Column the thresholds colour": "Kolumn som tröskelvärdena färgar",
   "Off target": "Utanför målet",
   "Near target": "Nära målet",
-  "On target": "På målet"
+  "On target": "På målet",
+  "Ask AI to change this report": "Be AI att ändra den här rapporten",
+  "The AI changed the report. Look it over, then save or undo.": "AI har ändrat rapporten. Granska den och spara eller ångra.",
+  "Create with AI": "Skapa med AI",
+  "{0} per {1} as a bar chart, with the total as KPI": "{0} per {1} som stapeldiagram, med totalen som KPI",
+  "Monthly trend of the sum of {0} of {1} by {2}, with a target line": "Månadstrend för summan av {0} i {1} efter {2}, med mållinje",
+  "Top 10 {0} of {1} by {2} as a table with colours for good and bad values": "Topp 10 {0} i {1} efter {2} som tabell med färger för bra och dåliga värden",
+  "An overview of {0} with KPIs and charts": "En översikt över {0} med KPI:er och diagram",
+  "Describe the report you need; the AI builds it from the data you may see. Nothing is saved until you save it.": "Beskriv rapporten du behöver; AI bygger den av de data du får se. Inget sparas förrän du sparar.",
+  "Describe what to change; the result opens in the designer and can be undone.": "Beskriv vad som ska ändras; resultatet öppnas i designern och kan ångras.",
+  "What should the report show?": "Vad ska rapporten visa?",
+  "The AI builds the report and checks it against your data…": "AI bygger rapporten och kontrollerar den mot dina data…",
+  "Change": "Ändra",
+  "No AI model is set up, or you may not create reports.": "Ingen AI-modell är konfigurerad, eller så får du inte skapa rapporter.",
+  "The AI could not be reached. Try again later.": "AI kunde inte nås. Försök igen senare."
 }

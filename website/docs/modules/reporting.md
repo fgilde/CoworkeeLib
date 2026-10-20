@@ -82,7 +82,7 @@ services.AddReportSource<HeadcountRow>("HeadcountByMonth", "Headcount by month",
 - **Aggregation**: the widget's filter (OData `$filter`, parsed against the row type), group by with date buckets, the values and top work as for sets. A list is aggregated in memory; return an `IQueryable` of the database (the `Task<IEnumerable<T>>` takes it) and the database aggregates it. A synchronous overload `AddReportSource<T>(name, label, permission, context => rows)` exists too.
 - Values that are a stock per month (headcount) add up per quarter; use `Average` or `Max` for them and `Sum` for flows like hires.
 - **Widgets**: KPI, charts, pivot and table work; tables read the rows from `POST /api/v1/reports/rows`. The data table widget, facets in the filter bar and realtime refresh need an OData set (use the report's refresh interval instead). *Open the data* shows only when the client registers a page for the source: `ReportingOptions.DrillDown("HeadcountByMonth", "/hr/people")`.
-- **AI**: the reporting tools of the assistant and the MCP server (`get_report_sources`, `run_report`, `read_report_rows`) see the sources the user may read; `list_data_sets`/`query_data` cover OData sets only.
+- **AI**: the reporting tools of the assistant and the MCP server (`get_report_sources`, `run_report`, `read_report_rows`, `generate_report`) see the sources the user may read; `list_data_sets`/`query_data` cover OData sets only.
 
 ### Seeding a report on a source
 
@@ -205,6 +205,19 @@ new ReportWidget
 
 Colour is never the only sign: every band shows an icon (check, warning, error, info) and its label as text or tooltip. *Bands from the target* builds three bands from the widget's `Target` and *Higher is better*: below 80 % / near / on target, or for lower is better on target / up to 120 % / above.
 
+## Create a report with AI
+
+With an AI model set up (*Administration › AI settings*, see [AI](ai.md)), holders of `Reports.Manage` get **Create with AI** on the report list and **Ask AI to change this report** (sparkle icon) in the designer. The prompt box suggests three examples built from the user's own data sets.
+
+The server (`GenerateReportDefinitionQuery`, `POST /api/v1/reports/generate`) writes the instructions from what the user may read: every visible set with label, field paths, kinds and enum members (computed sources marked), the widget types, chart kinds, aggregates, buckets, options incl. switches and thresholds, the 12-column grid rules, a small example definition and the user's language for titles. It takes the model's JSON, checks it like a save would (validator plus every widget and alternative against the sources) and, if something is wrong, asks the model again with the error list, at most twice. The definition comes back **unsaved**:
+
+- a new report opens at `reports/new` in the designer; *Save* creates it, *Cancel* drops it;
+- a change replaces the designer's definition as one step of the history, so *Undo* brings the old one back.
+
+Without a model the endpoint answers `403` and the buttons stay hidden (`GET /api/v1/reports/ai` says `{ "available": false }`); a model that gives no usable report three times ends in a `400` naming the last errors.
+
+The assistant and MCP clients get the same as the read-only tool `generate_report` (prompt, optional current definition). `create_report` and `update_report` save the result; as commands they run in the assistant only after the user confirmed the call.
+
 ## Filters
 
 ![A click on a slice filters the other widgets](../assets/screenshots/reporting-cross-filter.png){ .shot }
@@ -255,4 +268,5 @@ The template's dashboard page (*Personal > Dashboard*, above *Reports*) does thi
 | `POST /api/v1/reports/query` | aggregate |
 | `POST /api/v1/reports/rows` | rows of an own source, for tables |
 | `POST /api/v1/reports/sheet` | rows to an Excel workbook |
+| `GET /api/v1/reports/ai`, `POST /api/v1/reports/generate` | whether AI is available, a definition from a prompt (not saved) |
 | `GET /api/v1/reports/dashboard`, `PUT /api/v1/reports/dashboard`, `PUT /api/v1/reports/dashboard/organisation` | the dashboard report shown to you, choose yours or the organisation's (`{ "reportId": null }` clears) |

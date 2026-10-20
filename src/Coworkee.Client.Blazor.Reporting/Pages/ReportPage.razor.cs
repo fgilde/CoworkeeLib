@@ -28,6 +28,7 @@ public partial class ReportPage : IAsyncDisposable
     private string? _failed;
     private bool _editing;
     private bool _saving;
+    private bool _ai;
     private CancellationTokenSource? _timer;
     private CancellationTokenSource? _debounce;
 
@@ -47,9 +48,14 @@ public partial class ReportPage : IAsyncDisposable
 
     [Inject] private ReportTheme Theme { get; set; } = null!;
 
+    [Inject] private ReportDrafts Drafts { get; set; } = null!;
+
     [Parameter] public Guid Id { get; set; }
 
     [SupplyParameterFromQuery(Name = "edit")] public bool Edit { get; set; }
+
+    // reports/new: a draft that exists only here until it is saved
+    private bool IsNew => Id == Guid.Empty;
 
     private IEnumerable<string> DataTopics => _state is null ? [] : _state.EntitySets.Select(s => _state.Source(s)?.Topic).OfType<string>().Distinct();
 
@@ -58,11 +64,19 @@ public partial class ReportPage : IAsyncDisposable
         try
         {
             var sources = Api.GetSourcesAsync();
-            _report = await Api.GetReportAsync(Id);
+            var draft = IsNew ? Drafts.Take() ?? new SaveReportRequest(L["New report"], null, null, ReportVisibility.Private, [], new ReportDefinition()) : null;
+            _report = draft is null ? await Api.GetReportAsync(Id) : new ReportDto(Id, draft.Name, draft.Description, draft.Icon, draft.Visibility, draft.RoleIds, null, true, false, new ReportDefinition(), null);
             _definition = Clone(_report.Definition);
             _state = new ReportState(_definition, await sources);
-            _editing = Edit && _report.CanEdit;
+            _editing = (Edit || IsNew) && _report.CanEdit;
             _snapshot = Serialize();
+            if (draft is not null)
+            {
+                // the generated widgets come in as a change: undo goes back to the empty report
+                Apply(draft.Definition);
+            }
+
+            _ai = _report.CanEdit && await Api.IsAiAvailableAsync();
             StartTimer();
         }
         catch (ApiException exception)
@@ -73,7 +87,7 @@ public partial class ReportPage : IAsyncDisposable
 
         try
         {
-            _dashboard = await Api.GetDashboardAsync();
+            _dashboard = IsNew ? null : await Api.GetDashboardAsync();
         }
         catch (ApiException)
         {
@@ -90,6 +104,12 @@ public partial class ReportPage : IAsyncDisposable
 
     private void CancelEdit()
     {
+        if (IsNew)
+        {
+            Nav.NavigateTo("reports");
+            return;
+        }
+
         _editing = false;
         _selected = null;
         Load(Clone(_report!.Definition));
@@ -100,7 +120,16 @@ public partial class ReportPage : IAsyncDisposable
         _saving = true;
         try
         {
-            _report = await Api.UpdateAsync(_report!.Id, new SaveReportRequest(_report.Name, _report.Description, _report.Icon, _report.Visibility, _report.RoleIds, _definition!));
+            var request = new SaveReportRequest(_report!.Name, _report.Description, _report.Icon, _report.Visibility, _report.RoleIds, _definition!);
+            if (IsNew)
+            {
+                var created = await Api.CreateAsync(request);
+                Snackbar.Add(L["Report saved."], Severity.Success);
+                Nav.NavigateTo($"reports/{created.Id}", replace: true);
+                return;
+            }
+
+            _report = await Api.UpdateAsync(_report.Id, request);
             _editing = false;
             _selected = null;
             StartTimer();
@@ -133,6 +162,29 @@ public partial class ReportPage : IAsyncDisposable
             _definition.RefreshSeconds = settings.RefreshSeconds;
             _report = _report with { Name = settings.Name, Description = settings.Description, Icon = settings.Icon, Visibility = settings.Visibility, RoleIds = settings.RoleIds };
         }
+    }
+
+    private async Task AskAiAsync()
+    {
+        if (await ReportAiDialog.ShowAsync(Dialogs, L["Ask AI to change this report"], _definition) is { } changed)
+        {
+            Apply(changed);
+            Snackbar.Add(L["The AI changed the report. Look it over, then save or undo."], Severity.Info, options =>
+            {
+                options.Action = L["Undo"];
+                options.OnClick = _ => InvokeAsync(Undo);
+            });
+        }
+    }
+
+    // a whole new definition as one step of the history
+    private void Apply(ReportDefinition definition)
+    {
+        _snapshot = Serialize();
+        Remember();
+        _selected = null;
+        Load(definition);
+        _snapshot = Serialize();
     }
 
     private void Add(WidgetPreset preset)

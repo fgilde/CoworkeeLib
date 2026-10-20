@@ -33,4 +33,10 @@ public interface IReportsApi
     Task<ReportRowsResult> RowsAsync(ReportRowsRequest request, CancellationToken cancellationToken = default);
 
     Task<byte[]> SheetAsync(ReportSheetRequest sheet, CancellationToken cancellationToken = default);
+
+    /// <summary>Whether a report can be built with AI; false when the server says no.</summary>
+    Task<bool> IsAiAvailableAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>A definition the app's AI model built from the prompt (or from the current one), checked but not saved.</summary>
+    Task<ReportDefinition> GenerateAsync(GenerateReportRequest request, CancellationToken cancellationToken = default);
 }

@@ -1736,5 +1736,19 @@
   "Column the thresholds colour": "Stupac koji pragovi boje",
   "Off target": "Izvan cilja",
   "Near target": "Blizu cilja",
-  "On target": "Na cilju"
+  "On target": "Na cilju",
+  "Ask AI to change this report": "Zatraži od AI-ja da promijeni ovo izvješće",
+  "The AI changed the report. Look it over, then save or undo.": "AI je promijenio izvješće. Pregledaj ga pa spremi ili poništi.",
+  "Create with AI": "Izradi pomoću AI-ja",
+  "{0} per {1} as a bar chart, with the total as KPI": "{0} po {1} kao stupčasti grafikon, s ukupnim zbrojem kao KPI",
+  "Monthly trend of the sum of {0} of {1} by {2}, with a target line": "Mjesečni trend zbroja {0} iz {1} po {2}, s linijom cilja",
+  "Top 10 {0} of {1} by {2} as a table with colours for good and bad values": "Top 10 {0} iz {1} po {2} kao tablica s bojama za dobre i loše vrijednosti",
+  "An overview of {0} with KPIs and charts": "Pregled {0} s KPI-jevima i grafikonima",
+  "Describe the report you need; the AI builds it from the data you may see. Nothing is saved until you save it.": "Opiši izvješće koje trebaš; AI ga gradi od podataka koje smiješ vidjeti. Ništa se ne sprema dok ne spremiš.",
+  "Describe what to change; the result opens in the designer and can be undone.": "Opiši što promijeniti; rezultat se otvara u dizajneru i može se poništiti.",
+  "What should the report show?": "Što izvješće treba prikazivati?",
+  "The AI builds the report and checks it against your data…": "AI gradi izvješće i provjerava ga prema tvojim podacima…",
+  "Change": "Promijeni",
+  "No AI model is set up, or you may not create reports.": "Nije postavljen AI model ili ne smiješ izrađivati izvješća.",
+  "The AI could not be reached. Try again later.": "AI nije dostupan. Pokušaj ponovno kasnije."
 }

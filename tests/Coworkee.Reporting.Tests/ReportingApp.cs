@@ -134,6 +134,8 @@ public sealed class SalesReportingModule : CoworkeeModule
         context.Services.AddODataEntity<Sale>("Sales", ReportingApp.ViewSales, o => o.Hide(s => s.Secret).HideUnless(s => s.Quantity, ReportingApp.SeeQuantities));
         context.Services.AddODataEntity<Shopper>("Shoppers", ReportingApp.ViewShoppers);
         context.Services.AddScoped<IODataEntityFilter<Sale>, HideHiddenRegion>();
+        context.Services.AddSingleton<FakeAi>();
+        context.Services.AddSingleton<Coworkee.Application.Ai.IAiTextGenerator>(provider => provider.GetRequiredService<FakeAi>());
         context.Services.AddReportSource<MonthlyNumber>("MonthlyNumbers", "Monthly numbers", MonthlyNumbers.ViewNumbers, MonthlyNumbers.RowsAsync);
         context.Services.AddReportSource<SaleRow>("SaleRows", "Sale rows", MonthlyNumbers.ViewNumbers, MonthlyNumbers.SalesAsync);
     }

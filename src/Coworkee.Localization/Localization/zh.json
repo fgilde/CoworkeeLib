@@ -1736,5 +1736,19 @@
   "Column the thresholds colour": "由阈值着色的列",
   "Off target": "未达目标",
   "Near target": "接近目标",
-  "On target": "达到目标"
+  "On target": "达到目标",
+  "Ask AI to change this report": "让 AI 修改此报表",
+  "The AI changed the report. Look it over, then save or undo.": "AI 已修改报表。请检查后保存或撤销。",
+  "Create with AI": "用 AI 创建",
+  "{0} per {1} as a bar chart, with the total as KPI": "按 {1} 显示 {0} 的柱形图，并以总数作为 KPI",
+  "Monthly trend of the sum of {0} of {1} by {2}, with a target line": "按 {2} 显示 {1} 中 {0} 总和的月度趋势，并带目标线",
+  "Top 10 {0} of {1} by {2} as a table with colours for good and bad values": "按 {2} 列出 {1} 中前 10 个 {0} 的表格，并用颜色标出好坏值",
+  "An overview of {0} with KPIs and charts": "包含 KPI 和图表的 {0} 概览",
+  "Describe the report you need; the AI builds it from the data you may see. Nothing is saved until you save it.": "描述你需要的报表；AI 会根据你可查看的数据生成。保存之前不会保存任何内容。",
+  "Describe what to change; the result opens in the designer and can be undone.": "描述要修改的内容；结果会在设计器中打开，并且可以撤销。",
+  "What should the report show?": "报表应显示什么？",
+  "The AI builds the report and checks it against your data…": "AI 正在生成报表并根据你的数据进行检查…",
+  "Change": "修改",
+  "No AI model is set up, or you may not create reports.": "尚未设置 AI 模型，或你无权创建报表。",
+  "The AI could not be reached. Try again later.": "无法连接 AI。请稍后再试。"
 }

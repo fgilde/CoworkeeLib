@@ -20,6 +20,7 @@ public partial class Reports
     private DashboardReportDto? _dashboard;
     private string? _search;
     private string _scope = "all";
+    private bool _ai;
 
     [Inject] private IReportsApi Api { get; set; } = null!;
 
@@ -32,6 +33,10 @@ public partial class Reports
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
     [Inject] private FileDownloader Downloader { get; set; } = null!;
+
+    [Inject] private Security.PermissionStore Permissions { get; set; } = null!;
+
+    [Inject] private State.ReportDrafts Drafts { get; set; } = null!;
 
     private IEnumerable<ReportSummaryDto> Shown => (_reports ?? [])
         .Where(r => _scope switch
@@ -49,6 +54,7 @@ public partial class Reports
     {
         await ReloadAsync();
         await RunAsync(async () => _dashboard = await Api.GetDashboardAsync());
+        _ai = await Permissions.HasAsync(ReportPermissions.Manage) && await Api.IsAiAvailableAsync();
     }
 
     private async Task ReloadAsync() => _reports = [.. await Api.GetReportsAsync()];
@@ -84,6 +90,16 @@ public partial class Reports
                 new ReportDefinition { RefreshSeconds = settings.RefreshSeconds }));
             Nav.NavigateTo($"reports/{report.Id}?edit=true");
         });
+    }
+
+    // the generated report opens in the designer unsaved
+    private async Task CreateWithAiAsync()
+    {
+        if (await ReportAiDialog.ShowAsync(Dialogs, L["Create with AI"], null) is { } definition)
+        {
+            Drafts.Set(new SaveReportRequest(L["New report"], null, null, ReportVisibility.Private, [], definition));
+            Nav.NavigateTo("reports/new");
+        }
     }
 
     private async Task FavoriteAsync(ReportSummaryDto report) => await RunAsync(async () =>

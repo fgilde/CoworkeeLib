@@ -1736,5 +1736,19 @@
   "Column the thresholds colour": "العمود الذي تلوّنه العتبات",
   "Off target": "خارج الهدف",
   "Near target": "قريب من الهدف",
-  "On target": "ضمن الهدف"
+  "On target": "ضمن الهدف",
+  "Ask AI to change this report": "اطلب من الذكاء الاصطناعي تغيير هذا التقرير",
+  "The AI changed the report. Look it over, then save or undo.": "غيّر الذكاء الاصطناعي التقرير. راجعه ثم احفظه أو تراجع.",
+  "Create with AI": "إنشاء بالذكاء الاصطناعي",
+  "{0} per {1} as a bar chart, with the total as KPI": "{0} حسب {1} كمخطط أعمدة، مع الإجمالي كمؤشر أداء",
+  "Monthly trend of the sum of {0} of {1} by {2}, with a target line": "الاتجاه الشهري لمجموع {0} في {1} حسب {2}، مع خط هدف",
+  "Top 10 {0} of {1} by {2} as a table with colours for good and bad values": "أعلى 10 {0} في {1} حسب {2} كجدول بألوان للقيم الجيدة والسيئة",
+  "An overview of {0} with KPIs and charts": "نظرة عامة على {0} مع مؤشرات أداء ومخططات",
+  "Describe the report you need; the AI builds it from the data you may see. Nothing is saved until you save it.": "صف التقرير الذي تحتاجه؛ يبنيه الذكاء الاصطناعي من البيانات التي يمكنك رؤيتها. لا يُحفظ شيء حتى تحفظه.",
+  "Describe what to change; the result opens in the designer and can be undone.": "صف ما يجب تغييره؛ تُفتح النتيجة في المصمم ويمكن التراجع عنها.",
+  "What should the report show?": "ماذا يجب أن يعرض التقرير؟",
+  "The AI builds the report and checks it against your data…": "يبني الذكاء الاصطناعي التقرير ويتحقق منه مقابل بياناتك…",
+  "Change": "تغيير",
+  "No AI model is set up, or you may not create reports.": "لم يتم إعداد نموذج ذكاء اصطناعي، أو لا يُسمح لك بإنشاء تقارير.",
+  "The AI could not be reached. Try again later.": "تعذر الوصول إلى الذكاء الاصطناعي. حاول مرة أخرى لاحقًا."
 }

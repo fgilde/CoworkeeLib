@@ -1736,5 +1736,19 @@
   "Column the thresholds colour": "Столбец, окрашиваемый порогами",
   "Off target": "Вне цели",
   "Near target": "Близко к цели",
-  "On target": "В цели"
+  "On target": "В цели",
+  "Ask AI to change this report": "Попросить ИИ изменить этот отчёт",
+  "The AI changed the report. Look it over, then save or undo.": "ИИ изменил отчёт. Проверьте его, затем сохраните или отмените.",
+  "Create with AI": "Создать с ИИ",
+  "{0} per {1} as a bar chart, with the total as KPI": "{0} по {1} в виде столбчатой диаграммы, с итогом как KPI",
+  "Monthly trend of the sum of {0} of {1} by {2}, with a target line": "Ежемесячная динамика суммы {0} из {1} по {2}, с линией цели",
+  "Top 10 {0} of {1} by {2} as a table with colours for good and bad values": "Топ-10 {0} из {1} по {2} в виде таблицы с цветами для хороших и плохих значений",
+  "An overview of {0} with KPIs and charts": "Обзор {0} с KPI и диаграммами",
+  "Describe the report you need; the AI builds it from the data you may see. Nothing is saved until you save it.": "Опишите нужный отчёт; ИИ построит его по данным, которые вам доступны. Ничего не сохраняется, пока вы не сохраните.",
+  "Describe what to change; the result opens in the designer and can be undone.": "Опишите, что изменить; результат откроется в конструкторе и его можно отменить.",
+  "What should the report show?": "Что должен показывать отчёт?",
+  "The AI builds the report and checks it against your data…": "ИИ строит отчёт и проверяет его по вашим данным…",
+  "Change": "Изменить",
+  "No AI model is set up, or you may not create reports.": "Модель ИИ не настроена, или вам нельзя создавать отчёты.",
+  "The AI could not be reached. Try again later.": "ИИ недоступен. Повторите попытку позже."
 }

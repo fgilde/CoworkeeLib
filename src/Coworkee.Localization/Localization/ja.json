@@ -1736,5 +1736,19 @@
   "Column the thresholds colour": "しきい値で色分けする列",
   "Off target": "目標未達",
   "Near target": "目標に近い",
-  "On target": "目標達成"
+  "On target": "目標達成",
+  "Ask AI to change this report": "このレポートの変更を AI に依頼",
+  "The AI changed the report. Look it over, then save or undo.": "AI がレポートを変更しました。確認してから保存するか元に戻してください。",
+  "Create with AI": "AI で作成",
+  "{0} per {1} as a bar chart, with the total as KPI": "{1} 別の {0} を棒グラフで、合計を KPI で",
+  "Monthly trend of the sum of {0} of {1} by {2}, with a target line": "{1} の {0} の合計の月次推移 ({2} 別、目標線付き)",
+  "Top 10 {0} of {1} by {2} as a table with colours for good and bad values": "{1} の {2} 上位 10 件の {0} を、良い値と悪い値を色分けした表で",
+  "An overview of {0} with KPIs and charts": "KPI とグラフによる {0} の概要",
+  "Describe the report you need; the AI builds it from the data you may see. Nothing is saved until you save it.": "必要なレポートを説明してください。AI が閲覧可能なデータから作成します。保存するまで何も保存されません。",
+  "Describe what to change; the result opens in the designer and can be undone.": "変更内容を説明してください。結果はデザイナーで開き、元に戻せます。",
+  "What should the report show?": "レポートに何を表示しますか?",
+  "The AI builds the report and checks it against your data…": "AI がレポートを作成し、データと照合しています…",
+  "Change": "変更",
+  "No AI model is set up, or you may not create reports.": "AI モデルが設定されていないか、レポートを作成する権限がありません。",
+  "The AI could not be reached. Try again later.": "AI に接続できませんでした。後でもう一度お試しください。"
 }

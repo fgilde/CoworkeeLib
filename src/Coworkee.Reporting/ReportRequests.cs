@@ -16,11 +16,11 @@ public sealed record GetReportsQuery : IQuery<Result<IReadOnlyList<ReportSummary
 public sealed record GetReportQuery(Guid Id) : IQuery<Result<ReportDto>>;
 
 [RequiresPermission(ReportPermissions.Manage)]
-[AiTool(Exclude = true)]
+[Description("Saves a new report of the user with name, description, sharing and definition (e.g. one from generate_report).")]
 public sealed record CreateReportCommand(SaveReportRequest Report) : ICommand<Result<ReportDto>>;
 
 [RequiresPermission(ReportPermissions.Manage)]
-[AiTool(Exclude = true)]
+[Description("Replaces name, description, sharing and definition of a report the user owns (e.g. with one from generate_report).")]
 public sealed record UpdateReportCommand(Guid Id, SaveReportRequest Report) : ICommand<Result<ReportDto>>;
 
 [RequiresPermission(ReportPermissions.Manage)]
@@ -62,6 +62,19 @@ public sealed record RunReportQuery(ReportQueryRequest Request) : IQuery<Result<
 [RequiresPermission(ReportPermissions.View)]
 [Description("Reads a page of rows of a computed report source (one whose Computed flag is set), with the chosen fields, an OData filter and an order.")]
 public sealed record ReadReportRowsQuery(ReportRowsRequest Request) : IQuery<Result<ReportRowsResult>>;
+
+[RequiresPermission(ReportPermissions.Manage)]
+[AiTool("Builds a report definition (widgets on a 12 column grid, values, groupings, filters) from a description with the app's AI model, checked against the data sets the user may read; pass the current definition to change it. Returns it unsaved: save it with create_report or update_report.", Name = "generate_report")]
+public sealed record GenerateReportDefinitionQuery(string Prompt, ReportDefinition? Current = null) : IQuery<Result<ReportDefinition>>;
+
+[RequiresPermission(ReportPermissions.Manage)]
+[AiTool(Exclude = true)]
+public sealed record GetReportAiStatusQuery : IQuery<Result<ReportAiStatusDto>>;
+
+internal sealed class GenerateReportDefinitionValidator : AbstractValidator<GenerateReportDefinitionQuery>
+{
+    public GenerateReportDefinitionValidator() => RuleFor(q => q.Prompt).NotEmpty().MaximumLength(4000);
+}
 
 internal sealed class CreateReportValidator : AbstractValidator<CreateReportCommand>
 {

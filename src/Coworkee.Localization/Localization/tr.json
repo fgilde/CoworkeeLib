@@ -1736,5 +1736,19 @@
   "Column the thresholds colour": "Eşiklerin renklendirdiği sütun",
   "Off target": "Hedef dışı",
   "Near target": "Hedefe yakın",
-  "On target": "Hedefte"
+  "On target": "Hedefte",
+  "Ask AI to change this report": "Bu raporu değiştirmesini yapay zekâdan iste",
+  "The AI changed the report. Look it over, then save or undo.": "Yapay zekâ raporu değiştirdi. Gözden geçirin, ardından kaydedin veya geri alın.",
+  "Create with AI": "Yapay zekâ ile oluştur",
+  "{0} per {1} as a bar chart, with the total as KPI": "{1} başına {0} çubuk grafik olarak, toplam KPI olarak",
+  "Monthly trend of the sum of {0} of {1} by {2}, with a target line": "{2} ölçütüne göre {1} için {0} toplamının aylık eğilimi, hedef çizgisiyle",
+  "Top 10 {0} of {1} by {2} as a table with colours for good and bad values": "{2} ölçütüne göre {1} içindeki ilk 10 {0}, iyi ve kötü değerler için renkli tablo olarak",
+  "An overview of {0} with KPIs and charts": "KPI'lar ve grafiklerle {0} genel bakışı",
+  "Describe the report you need; the AI builds it from the data you may see. Nothing is saved until you save it.": "İhtiyacınız olan raporu tanımlayın; yapay zekâ görebildiğiniz verilerden oluşturur. Siz kaydedene kadar hiçbir şey kaydedilmez.",
+  "Describe what to change; the result opens in the designer and can be undone.": "Neyin değişeceğini tanımlayın; sonuç tasarımcıda açılır ve geri alınabilir.",
+  "What should the report show?": "Rapor ne göstermeli?",
+  "The AI builds the report and checks it against your data…": "Yapay zekâ raporu oluşturuyor ve verilerinize göre denetliyor…",
+  "Change": "Değiştir",
+  "No AI model is set up, or you may not create reports.": "Yapay zekâ modeli ayarlanmamış veya rapor oluşturma izniniz yok.",
+  "The AI could not be reached. Try again later.": "Yapay zekâya ulaşılamadı. Daha sonra yeniden deneyin."
 }

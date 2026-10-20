@@ -1736,5 +1736,19 @@
   "Column the thresholds colour": "ជួរឈរដែលកម្រិតកំណត់ដាក់ពណ៌",
   "Off target": "ក្រៅគោលដៅ",
   "Near target": "ជិតគោលដៅ",
-  "On target": "ដល់គោលដៅ"
+  "On target": "ដល់គោលដៅ",
+  "Ask AI to change this report": "ស្នើ AI ឱ្យកែប្រែរបាយការណ៍នេះ",
+  "The AI changed the report. Look it over, then save or undo.": "AI បានកែប្រែរបាយការណ៍។ សូមពិនិត្យ រួចរក្សាទុក ឬមិនធ្វើវិញ។",
+  "Create with AI": "បង្កើតដោយ AI",
+  "{0} per {1} as a bar chart, with the total as KPI": "{0} តាម {1} ជាគំនូសតាងរបារ ជាមួយសរុបជា KPI",
+  "Monthly trend of the sum of {0} of {1} by {2}, with a target line": "និន្នាការប្រចាំខែនៃផលបូក {0} របស់ {1} តាម {2} ជាមួយបន្ទាត់គោលដៅ",
+  "Top 10 {0} of {1} by {2} as a table with colours for good and bad values": "{0} កំពូល 10 របស់ {1} តាម {2} ជាតារាងមានពណ៌សម្រាប់តម្លៃល្អ និងអាក្រក់",
+  "An overview of {0} with KPIs and charts": "ទិដ្ឋភាពទូទៅនៃ {0} ជាមួយ KPI និងគំនូសតាង",
+  "Describe the report you need; the AI builds it from the data you may see. Nothing is saved until you save it.": "ពិពណ៌នារបាយការណ៍ដែលអ្នកត្រូវការ។ AI បង្កើតវាពីទិន្នន័យដែលអ្នកអាចមើលបាន។ គ្មានអ្វីត្រូវបានរក្សាទុករហូតដល់អ្នករក្សាទុក។",
+  "Describe what to change; the result opens in the designer and can be undone.": "ពិពណ៌នាអ្វីដែលត្រូវកែ។ លទ្ធផលបើកក្នុងកម្មវិធីរចនា ហើយអាចមិនធ្វើវិញបាន។",
+  "What should the report show?": "តើរបាយការណ៍គួរបង្ហាញអ្វី?",
+  "The AI builds the report and checks it against your data…": "AI កំពុងបង្កើតរបាយការណ៍ ហើយពិនិត្យជាមួយទិន្នន័យរបស់អ្នក…",
+  "Change": "កែប្រែ",
+  "No AI model is set up, or you may not create reports.": "មិនមានម៉ូដែល AI ត្រូវបានរៀបចំ ឬអ្នកមិនអាចបង្កើតរបាយការណ៍បានទេ។",
+  "The AI could not be reached. Try again later.": "មិនអាចភ្ជាប់ទៅ AI បានទេ។ សូមព្យាយាមម្តងទៀតពេលក្រោយ។"
 }

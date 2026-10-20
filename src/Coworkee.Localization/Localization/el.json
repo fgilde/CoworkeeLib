@@ -1736,5 +1736,19 @@
   "Column the thresholds colour": "Στήλη που χρωματίζουν τα κατώφλια",
   "Off target": "Εκτός στόχου",
   "Near target": "Κοντά στον στόχο",
-  "On target": "Εντός στόχου"
+  "On target": "Εντός στόχου",
+  "Ask AI to change this report": "Ζητήστε από την ΤΝ να αλλάξει αυτή την αναφορά",
+  "The AI changed the report. Look it over, then save or undo.": "Η ΤΝ άλλαξε την αναφορά. Ελέγξτε την και μετά αποθηκεύστε ή αναιρέστε.",
+  "Create with AI": "Δημιουργία με ΤΝ",
+  "{0} per {1} as a bar chart, with the total as KPI": "{0} ανά {1} ως ραβδόγραμμα, με το σύνολο ως KPI",
+  "Monthly trend of the sum of {0} of {1} by {2}, with a target line": "Μηνιαία τάση του αθροίσματος {0} από {1} ανά {2}, με γραμμή στόχου",
+  "Top 10 {0} of {1} by {2} as a table with colours for good and bad values": "Κορυφαία 10 {0} από {1} ανά {2} ως πίνακας με χρώματα για καλές και κακές τιμές",
+  "An overview of {0} with KPIs and charts": "Επισκόπηση του {0} με KPI και γραφήματα",
+  "Describe the report you need; the AI builds it from the data you may see. Nothing is saved until you save it.": "Περιγράψτε την αναφορά που χρειάζεστε· η ΤΝ τη φτιάχνει από τα δεδομένα που μπορείτε να δείτε. Τίποτα δεν αποθηκεύεται μέχρι να το αποθηκεύσετε.",
+  "Describe what to change; the result opens in the designer and can be undone.": "Περιγράψτε τι να αλλάξει· το αποτέλεσμα ανοίγει στον σχεδιαστή και μπορεί να αναιρεθεί.",
+  "What should the report show?": "Τι πρέπει να δείχνει η αναφορά;",
+  "The AI builds the report and checks it against your data…": "Η ΤΝ φτιάχνει την αναφορά και την ελέγχει με τα δεδομένα σας…",
+  "Change": "Αλλαγή",
+  "No AI model is set up, or you may not create reports.": "Δεν έχει ρυθμιστεί μοντέλο ΤΝ ή δεν επιτρέπεται να δημιουργείτε αναφορές.",
+  "The AI could not be reached. Try again later.": "Η ΤΝ δεν είναι διαθέσιμη. Δοκιμάστε ξανά αργότερα."
 }

@@ -29,6 +29,7 @@ public sealed class CoworkeeReportingModule : CoworkeeModule, IWebModule
         services.AddSingleton<IPermissionDefinitionContributor, ReportPermissionDefinitions>();
         services.AddSingleton<ReportSchema>();
         services.AddScoped<ReportQueries>();
+        services.AddScoped<ReportDefinitionCheck>();
         services.AddScoped<ReportAccess>();
         services.AddGlobalSearchProvider<ReportSearchProvider>();
     }
@@ -41,6 +42,9 @@ public sealed class CoworkeeReportingModule : CoworkeeModule, IWebModule
         reports.MapGet("/sources", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetReportSourcesQuery(), ct).ToHttpResult());
         reports.MapGet("/roles", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetReportRolesQuery(), ct).ToHttpResult());
         reports.MapPost("/query", (ReportQueryRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new RunReportQuery(body), ct).ToHttpResult());
+        reports.MapGet("/ai", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetReportAiStatusQuery(), ct).ToHttpResult());
+        reports.MapPost("/generate", (GenerateReportRequest body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new GenerateReportDefinitionQuery(body.Prompt, body.Current), ct).ToHttpResult());
         reports.MapPost("/rows", (ReportRowsRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new ReadReportRowsQuery(body), ct).ToHttpResult());
         reports.MapPost("/sheet", async (ReportSheetRequest body, IPermissionChecker permissions, CancellationToken ct) =>
                 await permissions.IsGrantedAsync(ReportPermissions.View, ct) ? Results.File(ReportSheet.Write(body), ReportSheet.ContentType, $"{body.Name}.xlsx") : Results.Forbid())

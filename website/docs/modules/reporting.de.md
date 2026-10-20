@@ -82,7 +82,7 @@ services.AddReportSource<HeadcountRow>("HeadcountByMonth", "Mitarbeitende pro Mo
 - **Aggregation**: Filter des Widgets (OData `$filter`, gegen den Zeilentyp geparst), Gruppierung mit Datums-Buckets, Werte und Top funktionieren wie bei Mengen. Eine Liste wird im Speicher aggregiert; gib ein `IQueryable` der Datenbank zurück (das `Task<IEnumerable<T>>` nimmt es an), dann aggregiert die Datenbank. Es gibt auch eine synchrone Überladung `AddReportSource<T>(name, label, permission, context => rows)`.
 - Werte, die ein Bestand pro Monat sind (Mitarbeiterzahl), addieren sich pro Quartal; nimm dafür `Average` oder `Max` und `Sum` für Bewegungen wie Eintritte.
 - **Widgets**: KPI, Diagramme, Pivot und Tabelle funktionieren; Tabellen lesen die Zeilen über `POST /api/v1/reports/rows`. Das Datentabellen-Widget, Facetten in der Filterleiste und die Echtzeit-Aktualisierung brauchen eine OData-Menge (nimm stattdessen das Aktualisierungsintervall des Berichts). *Daten öffnen* erscheint nur, wenn der Client eine Seite für die Quelle registriert: `ReportingOptions.DrillDown("HeadcountByMonth", "/hr/people")`.
-- **KI**: Die Berichtswerkzeuge des Assistenten und des MCP-Servers (`get_report_sources`, `run_report`, `read_report_rows`) sehen die Quellen, die der Benutzer lesen darf; `list_data_sets`/`query_data` decken nur OData-Mengen ab.
+- **KI**: Die Berichtswerkzeuge des Assistenten und des MCP-Servers (`get_report_sources`, `run_report`, `read_report_rows`, `generate_report`) sehen die Quellen, die der Benutzer lesen darf; `list_data_sets`/`query_data` decken nur OData-Mengen ab.
 
 ### Einen Bericht auf einer Quelle anlegen (Seed)
 
@@ -205,6 +205,19 @@ new ReportWidget
 
 Farbe ist nie das einzige Zeichen: jedes Band zeigt ein Symbol (Haken, Warnung, Fehler, Info) und seine Bezeichnung als Text oder Tooltip. *Bänder aus dem Ziel* legt drei Bänder aus dem `Target` des Widgets und *Höher ist besser* an: unter 80 % / nahe / im Ziel, bei niedriger ist besser im Ziel / bis 120 % / darüber.
 
+## Einen Bericht mit KI erstellen
+
+Mit eingerichtetem KI-Modell (*Administration › KI-Einstellungen*, siehe [KI](ai.md)) bekommen Inhaber von `Reports.Manage` **Mit KI erstellen** in der Berichtsliste und **KI bitten, diesen Bericht zu ändern** (Funken-Symbol) im Designer. Das Eingabefeld schlägt drei Beispiele vor, die aus den eigenen Datenmengen des Benutzers gebaut sind.
+
+Der Server (`GenerateReportDefinitionQuery`, `POST /api/v1/reports/generate`) schreibt die Anweisungen aus dem, was der Benutzer lesen darf: jede sichtbare Menge mit Bezeichnung, Feldpfaden, Arten und Enum-Werten (berechnete Quellen gekennzeichnet), die Widget-Typen, Diagrammarten, Aggregate, Datumsstufen, Optionen samt Umschaltern und Schwellenwerten, die Regeln des 12-Spalten-Rasters, eine kleine Beispieldefinition und die Sprache des Benutzers für Titel. Er nimmt das JSON des Modells, prüft es wie beim Speichern (Validator und jedes Widget samt Alternativen gegen die Quellen) und fragt bei Fehlern das Modell mit der Fehlerliste erneut, höchstens zweimal. Die Definition kommt **ungespeichert** zurück:
+
+- ein neuer Bericht öffnet sich unter `reports/new` im Designer; *Speichern* legt ihn an, *Abbrechen* verwirft ihn;
+- eine Änderung ersetzt die Definition des Designers als ein Schritt des Verlaufs, *Rückgängig* holt die alte zurück.
+
+Ohne Modell antwortet der Endpunkt mit `403` und die Schaltflächen bleiben verborgen (`GET /api/v1/reports/ai` liefert `{ "available": false }`); liefert das Modell dreimal keinen brauchbaren Bericht, endet es in einem `400` mit den letzten Fehlern.
+
+Der Assistent und MCP-Clients bekommen dasselbe als lesendes Werkzeug `generate_report` (Prompt, optional die aktuelle Definition). `create_report` und `update_report` speichern das Ergebnis; als Befehle laufen sie im Assistenten erst, nachdem der Benutzer den Aufruf bestätigt hat.
+
 ## Filter
 
 ![Ein Klick auf ein Tortenstück filtert die übrigen Widgets](../assets/screenshots/reporting-cross-filter.png){ .shot }
@@ -255,4 +268,5 @@ Die Dashboard-Seite des Templates (*Persönlich > Dashboard*, über *Berichte*) 
 | `POST /api/v1/reports/query` | aggregieren |
 | `POST /api/v1/reports/rows` | Zeilen einer eigenen Quelle, für Tabellen |
 | `POST /api/v1/reports/sheet` | Zeilen als Excel-Arbeitsmappe |
+| `GET /api/v1/reports/ai`, `POST /api/v1/reports/generate` | ob KI verfügbar ist, eine Definition aus einem Prompt (nicht gespeichert) |
 | `GET /api/v1/reports/dashboard`, `PUT /api/v1/reports/dashboard`, `PUT /api/v1/reports/dashboard/organisation` | der Dashboard-Bericht, den du siehst, deinen oder den der Organisation wählen (`{ "reportId": null }` setzt zurück) |

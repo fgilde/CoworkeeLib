@@ -1736,5 +1736,19 @@
   "Column the thresholds colour": "Kolom die de drempelwaarden kleuren",
   "Off target": "Niet op doel",
   "Near target": "Bijna op doel",
-  "On target": "Op doel"
+  "On target": "Op doel",
+  "Ask AI to change this report": "AI vragen dit rapport te wijzigen",
+  "The AI changed the report. Look it over, then save or undo.": "De AI heeft het rapport gewijzigd. Bekijk het en sla op of maak ongedaan.",
+  "Create with AI": "Maken met AI",
+  "{0} per {1} as a bar chart, with the total as KPI": "{0} per {1} als staafdiagram, met het totaal als KPI",
+  "Monthly trend of the sum of {0} of {1} by {2}, with a target line": "Maandelijkse trend van de som van {0} van {1} per {2}, met een doellijn",
+  "Top 10 {0} of {1} by {2} as a table with colours for good and bad values": "Top 10 {0} van {1} op {2} als tabel met kleuren voor goede en slechte waarden",
+  "An overview of {0} with KPIs and charts": "Een overzicht van {0} met KPI's en grafieken",
+  "Describe the report you need; the AI builds it from the data you may see. Nothing is saved until you save it.": "Beschrijf het rapport dat je nodig hebt; de AI bouwt het uit de gegevens die je mag zien. Er wordt niets opgeslagen tot je opslaat.",
+  "Describe what to change; the result opens in the designer and can be undone.": "Beschrijf wat er moet veranderen; het resultaat opent in de ontwerper en kan ongedaan worden gemaakt.",
+  "What should the report show?": "Wat moet het rapport laten zien?",
+  "The AI builds the report and checks it against your data…": "De AI bouwt het rapport en controleert het met je gegevens…",
+  "Change": "Wijzigen",
+  "No AI model is set up, or you may not create reports.": "Er is geen AI-model ingesteld, of je mag geen rapporten maken.",
+  "The AI could not be reached. Try again later.": "De AI is niet bereikbaar. Probeer het later opnieuw."
 }

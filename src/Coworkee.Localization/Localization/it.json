@@ -1736,5 +1736,19 @@
   "Column the thresholds colour": "Colonna colorata dalle soglie",
   "Off target": "Fuori obiettivo",
   "Near target": "Vicino all'obiettivo",
-  "On target": "In obiettivo"
+  "On target": "In obiettivo",
+  "Ask AI to change this report": "Chiedi all'IA di modificare questo report",
+  "The AI changed the report. Look it over, then save or undo.": "L'IA ha modificato il report. Controllalo, poi salva o annulla.",
+  "Create with AI": "Crea con l'IA",
+  "{0} per {1} as a bar chart, with the total as KPI": "{0} per {1} come grafico a barre, con il totale come KPI",
+  "Monthly trend of the sum of {0} of {1} by {2}, with a target line": "Andamento mensile della somma di {0} di {1} per {2}, con linea obiettivo",
+  "Top 10 {0} of {1} by {2} as a table with colours for good and bad values": "Top 10 {0} di {1} per {2} come tabella con colori per valori buoni e cattivi",
+  "An overview of {0} with KPIs and charts": "Una panoramica di {0} con KPI e grafici",
+  "Describe the report you need; the AI builds it from the data you may see. Nothing is saved until you save it.": "Descrivi il report che ti serve; l'IA lo crea dai dati che puoi vedere. Nulla viene salvato finché non salvi.",
+  "Describe what to change; the result opens in the designer and can be undone.": "Descrivi cosa cambiare; il risultato si apre nel designer e può essere annullato.",
+  "What should the report show?": "Cosa deve mostrare il report?",
+  "The AI builds the report and checks it against your data…": "L'IA crea il report e lo verifica sui tuoi dati…",
+  "Change": "Modifica",
+  "No AI model is set up, or you may not create reports.": "Nessun modello di IA configurato, oppure non puoi creare report.",
+  "The AI could not be reached. Try again later.": "Impossibile raggiungere l'IA. Riprova più tardi."
 }

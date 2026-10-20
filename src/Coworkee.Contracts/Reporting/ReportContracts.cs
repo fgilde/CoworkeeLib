@@ -72,3 +72,9 @@ public sealed record ReportFile(string Name, string? Description, string? Icon, 
 
 /// <summary>A table as a widget shows it, written to an Excel workbook; cells are text, numbers or null.</summary>
 public sealed record ReportSheetRequest(string Name, IReadOnlyList<string> Headers, IReadOnlyList<IReadOnlyList<System.Text.Json.JsonElement>> Rows);
+
+/// <summary>A report to build from <see cref="Prompt"/> with the app's AI model, or <see cref="Current"/> to change; the answer is not saved.</summary>
+public sealed record GenerateReportRequest(string Prompt, ReportDefinition? Current = null);
+
+/// <summary>Whether reports can be built with AI: a model is configured and the user may create reports.</summary>
+public sealed record ReportAiStatusDto(bool Available);

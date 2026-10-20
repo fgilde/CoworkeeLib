@@ -1736,5 +1736,19 @@
   "Column the thresholds colour": "Стовпець, який фарбують пороги",
   "Off target": "Поза ціллю",
   "Near target": "Близько до цілі",
-  "On target": "У цілі"
+  "On target": "У цілі",
+  "Ask AI to change this report": "Попросити ШІ змінити цей звіт",
+  "The AI changed the report. Look it over, then save or undo.": "ШІ змінив звіт. Перегляньте його, потім збережіть або скасуйте.",
+  "Create with AI": "Створити з ШІ",
+  "{0} per {1} as a bar chart, with the total as KPI": "{0} за {1} як стовпчикова діаграма, з підсумком як KPI",
+  "Monthly trend of the sum of {0} of {1} by {2}, with a target line": "Щомісячна динаміка суми {0} з {1} за {2}, з лінією цілі",
+  "Top 10 {0} of {1} by {2} as a table with colours for good and bad values": "Топ-10 {0} з {1} за {2} як таблиця з кольорами для добрих і поганих значень",
+  "An overview of {0} with KPIs and charts": "Огляд {0} з KPI та діаграмами",
+  "Describe the report you need; the AI builds it from the data you may see. Nothing is saved until you save it.": "Опишіть потрібний звіт; ШІ побудує його з даних, які вам доступні. Нічого не зберігається, доки ви не збережете.",
+  "Describe what to change; the result opens in the designer and can be undone.": "Опишіть, що змінити; результат відкриється в конструкторі, і його можна скасувати.",
+  "What should the report show?": "Що має показувати звіт?",
+  "The AI builds the report and checks it against your data…": "ШІ будує звіт і перевіряє його за вашими даними…",
+  "Change": "Змінити",
+  "No AI model is set up, or you may not create reports.": "Модель ШІ не налаштовано, або вам не можна створювати звіти.",
+  "The AI could not be reached. Try again later.": "ШІ недоступний. Спробуйте пізніше."
 }

@@ -31,7 +31,8 @@ public abstract class ReportingTestBase : BunitContext
         Grid = JSInterop.SetupModule(ReportGrid.Module);
         Grid.Mode = JSRuntimeMode.Loose;
         Services.AddMudServicesWithExtensions();
-        AddAuthorization().SetAuthorized("ada@acme.test");
+        Auth = AddAuthorization();
+        Auth.SetAuthorized("ada@acme.test");
         Services.AddSingleton(Reports);
         Services.AddSingleton(OData);
         Services.AddSingleton(Substitute.For<ICoworkeeApi>());
@@ -41,6 +42,7 @@ public abstract class ReportingTestBase : BunitContext
         Services.AddScoped<FileDownloader>();
         Services.AddScoped<ReportTheme>();
         Services.AddScoped<ReportViewChoices>();
+        Services.AddScoped<ReportDrafts>();
         Services.AddSingleton(new ReportingOptions());
         Services.AddSingleton(new CoworkeeClientOptions());
         var texts = Substitute.For<Localization.ILocalizationApi>();
@@ -52,6 +54,8 @@ public abstract class ReportingTestBase : BunitContext
     }
 
     protected BunitJSModuleInterop Grid { get; }
+
+    protected Bunit.TestDoubles.BunitAuthorizationContext Auth { get; }
 
     protected IReportsApi Reports { get; } = Substitute.For<IReportsApi>();
 

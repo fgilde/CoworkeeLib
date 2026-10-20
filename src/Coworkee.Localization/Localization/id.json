@@ -1736,5 +1736,19 @@
   "Column the thresholds colour": "Kolom yang diwarnai ambang batas",
   "Off target": "Di luar target",
   "Near target": "Mendekati target",
-  "On target": "Sesuai target"
+  "On target": "Sesuai target",
+  "Ask AI to change this report": "Minta AI mengubah laporan ini",
+  "The AI changed the report. Look it over, then save or undo.": "AI telah mengubah laporan. Periksa, lalu simpan atau urungkan.",
+  "Create with AI": "Buat dengan AI",
+  "{0} per {1} as a bar chart, with the total as KPI": "{0} per {1} sebagai diagram batang, dengan total sebagai KPI",
+  "Monthly trend of the sum of {0} of {1} by {2}, with a target line": "Tren bulanan jumlah {0} dari {1} menurut {2}, dengan garis target",
+  "Top 10 {0} of {1} by {2} as a table with colours for good and bad values": "10 {0} teratas dari {1} menurut {2} sebagai tabel dengan warna untuk nilai baik dan buruk",
+  "An overview of {0} with KPIs and charts": "Ringkasan {0} dengan KPI dan diagram",
+  "Describe the report you need; the AI builds it from the data you may see. Nothing is saved until you save it.": "Jelaskan laporan yang Anda perlukan; AI membuatnya dari data yang boleh Anda lihat. Tidak ada yang disimpan sampai Anda menyimpannya.",
+  "Describe what to change; the result opens in the designer and can be undone.": "Jelaskan apa yang diubah; hasilnya terbuka di desainer dan dapat diurungkan.",
+  "What should the report show?": "Apa yang harus ditampilkan laporan?",
+  "The AI builds the report and checks it against your data…": "AI membuat laporan dan memeriksanya terhadap data Anda…",
+  "Change": "Ubah",
+  "No AI model is set up, or you may not create reports.": "Tidak ada model AI yang disiapkan, atau Anda tidak boleh membuat laporan.",
+  "The AI could not be reached. Try again later.": "AI tidak dapat dihubungi. Coba lagi nanti."
 }

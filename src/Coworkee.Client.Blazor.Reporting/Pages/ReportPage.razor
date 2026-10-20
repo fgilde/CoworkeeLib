@@ -49,6 +49,10 @@ else
                             }
                         </ChildContent>
                     </MudMenu>
+                    @if (_ai)
+                    {
+                        <MudTooltip Text="@L["Ask AI to change this report"]"><MudIconButton Icon="@Icons.Material.Outlined.AutoAwesome" Color="Color.Primary" OnClick="AskAiAsync" data-testid="report-ai-change" /></MudTooltip>
+                    }
                     <MudTooltip Text="@L["Undo"]"><MudIconButton Icon="@Icons.Material.Outlined.Undo" Disabled="_undo.Count == 0" OnClick="Undo" data-testid="undo" /></MudTooltip>
                     <MudTooltip Text="@L["Redo"]"><MudIconButton Icon="@Icons.Material.Outlined.Redo" Disabled="_redo.Count == 0" OnClick="Redo" data-testid="redo" /></MudTooltip>
                     <MudTooltip Text="@L["Report settings"]"><MudIconButton Icon="@Icons.Material.Outlined.Settings" OnClick="SettingsAsync" data-testid="report-settings-open" /></MudTooltip>

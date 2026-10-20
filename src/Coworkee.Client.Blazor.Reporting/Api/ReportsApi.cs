@@ -51,4 +51,19 @@ internal sealed class ReportsApi(HttpClient http) : ApiClientBase(http), IReport
         using var response = await SendCoreAsync(HttpMethod.Post, $"{Root}/sheet", sheet, cancellationToken);
         return await response.Content.ReadAsByteArrayAsync(cancellationToken);
     }
+
+    public async Task<bool> IsAiAvailableAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return (await GetAsync<ReportAiStatusDto>($"{Root}/ai", cancellationToken)).Available;
+        }
+        catch (ApiException)
+        {
+            return false;
+        }
+    }
+
+    public Task<ReportDefinition> GenerateAsync(GenerateReportRequest request, CancellationToken cancellationToken = default) =>
+        SendAsync<ReportDefinition>(HttpMethod.Post, $"{Root}/generate", request, cancellationToken);
 }
