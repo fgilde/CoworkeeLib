@@ -25,6 +25,15 @@ public static class ODataServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>
+    /// Child rows follow their parent's row filters: <c>services.AddODataChildFilter&lt;TalkItem, Talk&gt;(i =&gt; i.Talk)</c> shows an item only when
+    /// <see cref="ODataEntityAccess.VisibleAsync{TEntity}"/> of the talks contains its talk. Rows without a parent are hidden.
+    /// </summary>
+    public static IServiceCollection AddODataChildFilter<TChild, TParent>(this IServiceCollection services, Expression<Func<TChild, TParent?>> parent)
+        where TChild : class
+        where TParent : class =>
+        services.AddScoped<IODataEntityFilter<TChild>>(provider => new ODataChildFilter<TChild, TParent>(provider, parent));
+
     /// <summary>Sets how the facet on a property looks and combines its values, like [FacetBehavior] on the property; this call wins.</summary>
     public static IServiceCollection ConfigureFacet<TEntity>(this IServiceCollection services, Expression<Func<TEntity, object?>> property, Action<Contracts.Data.FacetBehaviorAttribute> configure)
         where TEntity : class

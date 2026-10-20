@@ -116,9 +116,17 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.AddMessagingFromAssembly(typeof(GadgetModule).Assembly);
         context.Services.AddODataImport<AddGadgetCommand>("Gadgets");
         context.Services.AddODataEntity<Part>("Parts", ODataApp.ViewGadgets);
+        context.Services.AddScoped<IODataEntityFilter<Widget>, HideSecretWidgets>();
+        context.Services.AddODataChildFilter<Part, Widget>(p => p.Widget);
         context.Services.AddODataImport("Widgets", (Guid? id, WidgetRow row) => new SaveWidgetCommand(id, row), id => new DeleteWidgetCommand(id));
         context.Services.AddODataImport<AddPartCommand>("Parts");
     }
+}
+
+internal sealed class HideSecretWidgets : IODataEntityFilter<Widget>
+{
+    public Task<IQueryable<Widget>> ApplyAsync(IQueryable<Widget> query, CancellationToken cancellationToken) =>
+        Task.FromResult(query.Where(w => w.Color != "Secret"));
 }
 
 internal sealed class HideSecretGadgets : IODataEntityFilter<Gadget>

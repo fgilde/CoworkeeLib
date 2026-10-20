@@ -59,6 +59,16 @@ internal sealed class DocumentODataFilter(DocumentVisibility visibility) : IODat
 services.AddScoped<IODataEntityFilter<Document>, DocumentODataFilter>();
 ```
 
+### Child rows follow their parent
+
+Rows that belong to a parent (items of a talk, lines of an order) should be visible exactly when the parent is. Instead of repeating the parent's filter:
+
+```csharp
+services.AddODataChildFilter<TalkItem, Talk>(i => i.Talk);
+```
+
+An item is shown when the visible talks (every `IODataEntityFilter<Talk>`, tenant and soft delete, as `ODataEntityAccess.VisibleAsync<Talk>` returns them) contain its talk; the query is a subquery on the foreign key, no join. Items without a talk are hidden. It adds up with other filters of the child.
+
 ## Hiding properties
 
 Internal fields stay out of the model, so they are neither returned nor filterable:

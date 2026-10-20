@@ -59,6 +59,16 @@ internal sealed class DocumentODataFilter(DocumentVisibility visibility) : IODat
 services.AddScoped<IODataEntityFilter<Document>, DocumentODataFilter>();
 ```
 
+### Kind-Zeilen folgen ihrem Elternteil
+
+Zeilen, die zu einem Elternteil gehören (Punkte eines Gesprächs, Positionen eines Auftrags), sollen genau dann sichtbar sein, wenn das Elternteil es ist. Statt den Filter des Elternteils zu wiederholen:
+
+```csharp
+services.AddODataChildFilter<TalkItem, Talk>(i => i.Talk);
+```
+
+Ein Punkt wird gezeigt, wenn die sichtbaren Gespräche (alle `IODataEntityFilter<Talk>`, Mandant und Soft Delete, so wie `ODataEntityAccess.VisibleAsync<Talk>` sie liefert) sein Gespräch enthalten; die Abfrage ist eine Unterabfrage auf den Fremdschlüssel, kein Join. Punkte ohne Gespräch sind ausgeblendet. Weitere Filter des Kinds gelten zusätzlich.
+
 ## Eigenschaften ausblenden
 
 Interne Felder bleiben aus dem Modell, sie werden weder ausgeliefert noch sind sie filterbar:
