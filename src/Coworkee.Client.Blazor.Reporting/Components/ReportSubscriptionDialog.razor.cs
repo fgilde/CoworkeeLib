@@ -1,7 +1,9 @@
+using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Reporting;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using MudBlazor.Extensions;
 
 namespace Coworkee.Client.Blazor.Reporting.Components;
 
@@ -60,9 +62,9 @@ public partial class ReportSubscriptionDialog
 
     public static async Task<SaveReportSubscriptionRequest?> ShowAsync(IDialogService dialogs, string title, Guid reportId, IReadOnlyList<ReportFilterValue> filters, ReportSubscriptionDto? existing = null)
     {
-        var dialog = await dialogs.ShowAsync<ReportSubscriptionDialog>(title,
+        var dialog = await dialogs.ShowExAsync<ReportSubscriptionDialog>(title,
             new DialogParameters<ReportSubscriptionDialog> { { d => d.ReportId, reportId }, { d => d.Filters, filters }, { d => d.Existing, existing } },
-            new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true });
+            EditDialogExtensions.Small());
         var result = await dialog.Result;
         return result is { Canceled: false, Data: SaveReportSubscriptionRequest request } ? request : null;
     }

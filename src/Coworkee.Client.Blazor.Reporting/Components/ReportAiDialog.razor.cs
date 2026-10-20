@@ -1,10 +1,12 @@
 using Coworkee.Client.Blazor.Api;
+using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Reporting.Api;
 using Coworkee.Client.Blazor.Reporting.State;
 using Coworkee.Contracts.Reporting;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using MudBlazor.Extensions;
 
 namespace Coworkee.Client.Blazor.Reporting.Components;
 
@@ -62,8 +64,8 @@ public partial class ReportAiDialog
 
     public static async Task<ReportDefinition?> ShowAsync(IDialogService dialogs, string title, ReportDefinition? current)
     {
-        var dialog = await dialogs.ShowAsync<ReportAiDialog>(title, new DialogParameters<ReportAiDialog> { { d => d.Current, current } },
-            new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true });
+        var dialog = await dialogs.ShowExAsync<ReportAiDialog>(title, new DialogParameters<ReportAiDialog> { { d => d.Current, current } },
+            EditDialogExtensions.Small());
         var result = await dialog.Result;
         return result is { Canceled: false, Data: ReportDefinition definition } ? definition : null;
     }
