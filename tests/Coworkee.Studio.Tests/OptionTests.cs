@@ -172,7 +172,7 @@ public sealed class OptionTests
     }
 
     [Fact]
-    public void The_airworks_packages_are_not_shown_nor_written_unless_airworks_is_on()
+    public void The_airworks_packages_and_launcher_are_not_shown_nor_written_unless_airworks_is_on()
     {
         using var folder = new TempFolder();
         var main = Studio.Create(folder);
@@ -180,8 +180,11 @@ public sealed class OptionTests
         var packages = main.Option("airworksPackages");
         var general = main.Architecture.Groups.Single(g => g.Name == OptionCatalog.General);
 
+        var launcher = main.Option("airworksLauncher");
         packages.IsRelevant.ShouldBeFalse();
+        launcher.IsRelevant.ShouldBeFalse();
         general.Shown.ShouldNotContain(packages);
+        general.Shown.ShouldNotContain(launcher);
         general.Shown.ShouldContain(main.Option("airworks"));
 
         packages.Value = "npm";
@@ -194,6 +197,10 @@ public sealed class OptionTests
         general.Shown.ShouldBe(general.Options.Where(o => o.IsRelevant));
         main.ToSpec().Options["airworksPackages"]!.GetValue<string>().ShouldBe("npm");
         Coworkee.Studio.Cli.CommandLine.Flags(main.ToSpec()).ShouldContain("--airworks-packages");
+        general.Shown.ShouldContain(launcher);
+        launcher.Value = "overlay";
+        main.ToSpec().Options["airworksLauncher"]!.GetValue<string>().ShouldBe("overlay");
+        Coworkee.Studio.Cli.CommandLine.Flags(main.ToSpec()).ShouldContain("--airworks-launcher");
 
         main.Option("airworks").IsOn = false;
         general.Shown.ShouldNotContain(packages);

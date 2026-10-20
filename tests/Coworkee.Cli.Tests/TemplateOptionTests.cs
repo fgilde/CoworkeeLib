@@ -244,9 +244,11 @@ public sealed class TemplateOptionTests(TemplateFixture template)
         File.Exists(Path.Combine(on, "src", "Shop.AirWorks", "ClientApp", "vendor", "coworkee-client.tgz")).ShouldBeTrue();
         Read(on, "src/Shop.AirWorks/ClientApp/.npmrc").ShouldContain("allow-git=root");
         Read(on, "LOGIN.md").ShouldContain("*shop-airworks*");
+        Read(on, "src/Shop.AirWorks/appsettings.json").ShouldContain("\"Launcher\": \"menu\"");
         TemplateTests.ShouldHaveNoLeftovers(on);
 
-        var npm = await template.CreateAsync("airworks-npm", "--airworks", "true", "--airworksPackages", "npm");
+        var npm = await template.CreateAsync("airworks-npm", "--airworks", "true", "--airworksPackages", "npm", "--airworksLauncher", "overlay");
+        Read(npm, "src/Shop.AirWorks/appsettings.json").ShouldContain("\"Launcher\": \"overlay\"");
         Read(npm, "src/Shop.AirWorks/ClientApp/package.json").ShouldContain($"\"@coworkee/airworks\": \"{template.Version}\"");
         Directory.Exists(Path.Combine(npm, "src", "Shop.AirWorks", "ClientApp", "vendor")).ShouldBeFalse();
         TemplateTests.ShouldHaveNoLeftovers(npm);

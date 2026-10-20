@@ -55,6 +55,8 @@ public static class ExistingApp
             ["airworks"] = Flag(appHost.Contains("AddAirWorks<", StringComparison.Ordinal)),
             ["elsaStudio"] = Flag(appHost.Contains("AddElsaStudio<", StringComparison.Ordinal)),
             ["airworksPackages"] = Directory.Exists(Path.Combine(src, $"{name}.AirWorks", "ClientApp", "vendor")) ? "bundled" : "npm",
+            ["airworksLauncher"] = File.Exists(Path.Combine(src, $"{name}.AirWorks", "appsettings.json"))
+                && File.ReadAllText(Path.Combine(src, $"{name}.AirWorks", "appsettings.json")).Contains("\"overlay\"", StringComparison.Ordinal) ? "overlay" : "menu",
             ["eventBus"] = Has(projects, "Coworkee.EventBus.RabbitMq") ? "rabbitMq" : Has(projects, "Coworkee.EventBus") ? "inProcess" : "none",
             ["storage"] = appHost.Contains("AddAzureStorage(", StringComparison.Ordinal) ? "azureBlob" : "fileSystem",
             ["keycloak"] = Flag(appHost.Contains("options.UseKeycloak(", StringComparison.Ordinal)),

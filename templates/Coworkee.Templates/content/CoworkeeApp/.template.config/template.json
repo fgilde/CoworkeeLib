@@ -316,6 +316,17 @@
         { "choice": "npm", "description": "npm, the version of this template." }
       ]
     },
+    "airworksLauncher": {
+      "type": "parameter",
+      "datatype": "choice",
+      "defaultValue": "menu",
+      "description": "How the start button of the AirWorks desktop shows the apps (Coworkee:AirWorks:Launcher of the AirWorks host).",
+      "choices": [
+        { "choice": "menu", "description": "The start menu slides in from the side." },
+        { "choice": "overlay", "description": "A full-screen app grid over the blurred desktop." }
+      ],
+      "replaces": "COWORKEE_AIRWORKS_LAUNCHER"
+    },
     "database": {
       "type": "parameter",
       "datatype": "choice",

@@ -11,6 +11,7 @@ public static class OptionLooks
         ["git"] = "Icon.Git",
         ["airworks"] = "Icon.MonitorMultiple",
         ["airworksPackages"] = "Icon.Package",
+        ["airworksLauncher"] = "Icon.Apps",
         ["repository"] = "Icon.Github",
         ["auditing"] = "Icon.History",
         ["notifications"] = "Icon.Bell",
