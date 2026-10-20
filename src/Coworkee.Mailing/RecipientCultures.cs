@@ -1,4 +1,5 @@
 using System.Globalization;
+using Coworkee.Application.Localization;
 using Coworkee.Contracts.Localization;
 using Coworkee.Contracts.Settings;
 using Coworkee.Infrastructure.Persistence;
@@ -24,6 +25,12 @@ public static class RecipientCultures
         return tenantOfUser.ToDictionary(p => p.Key, p => Culture(
             Of(SettingScope.User, p.Key) ?? Of(SettingScope.Tenant, p.Value) ?? Of(SettingScope.Global, null)));
     }
+
+    /// <summary>One reader's language as <see cref="ForAsync"/> finds it, else the default language of the organisation (Languages page included), else English.</summary>
+    public static async Task<CultureInfo> OfAsync(CoworkeeDbContext db, Guid userId, Guid? tenantId, IEnumerable<IDefaultLanguage> defaults, CancellationToken cancellationToken) =>
+        (await ForAsync(db, new Dictionary<Guid, Guid?> { [userId] = tenantId }, cancellationToken))[userId]
+        ?? Culture(await defaults.GetAsync(cancellationToken))
+        ?? CultureInfo.GetCultureInfo("en");
 
     private static CultureInfo? Culture(string? name)
     {

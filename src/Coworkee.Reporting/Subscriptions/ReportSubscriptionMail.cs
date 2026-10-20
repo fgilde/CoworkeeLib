@@ -18,7 +18,7 @@ namespace Coworkee.Reporting.Subscriptions;
 /// </summary>
 internal sealed partial class ReportSubscriptionMail(
     IServiceProvider services, CoworkeeDbContext db, ReportAccess access, ReportQueries queries, IPermissionChecker permissions, IMailSender mails, IUserDirectory users,
-    ReportMailLinks links, IEnumerable<ITextTranslator> translators, ICurrentUser currentUser, ILogger<ReportSubscriptionMail> logger)
+    ReportMailLinks links, IEnumerable<ITextTranslator> translators, IEnumerable<IDefaultLanguage> defaultLanguages, ICurrentUser currentUser, ILogger<ReportSubscriptionMail> logger)
 {
     public const string Template = "Reports.Subscription";
     public const int MailRows = 10;
@@ -78,8 +78,7 @@ internal sealed partial class ReportSubscriptionMail(
             return "The subscriber has no active e-mail address.";
         }
 
-        var culture = (await RecipientCultures.ForAsync(db, new Dictionary<Guid, Guid?> { [subscription.UserId] = subscription.TenantId }, cancellationToken))[subscription.UserId]
-            ?? CultureInfo.GetCultureInfo("en");
+        var culture = await RecipientCultures.OfAsync(db, subscription.UserId, subscription.TenantId, defaultLanguages, cancellationToken);
         var definition = ReportHandlers.Read(report);
         if (subscription.Filter is { Length: > 0 } json && JsonSerializer.Deserialize<ReportSubscriptionFilter>(json, ReportHandlers.Json) is { } own)
         {

@@ -145,9 +145,19 @@ public sealed class SalesReportingModule : CoworkeeModule
         context.Services.AddODataEntity<Shopper>("Shoppers", ReportingApp.ViewShoppers);
         context.Services.AddScoped<IODataEntityFilter<Sale>, HideHiddenRegion>();
         context.Services.AddScoped<IODataEntityFilter<Sale>, SouthOnlyFilter>();
+        context.Services.AddSingleton<TestDefaultLanguage>();
+        context.Services.AddScoped<Coworkee.Application.Localization.IDefaultLanguage>(sp => sp.GetRequiredService<TestDefaultLanguage>());
         context.Services.AddSingleton<FakeAi>();
         context.Services.AddSingleton<Coworkee.Application.Ai.IAiTextGenerator>(provider => provider.GetRequiredService<FakeAi>());
         context.Services.AddReportSource<MonthlyNumber>("MonthlyNumbers", "Monthly numbers", MonthlyNumbers.ViewNumbers, MonthlyNumbers.RowsAsync);
         context.Services.AddReportSource<SaleRow>("SaleRows", "Sale rows", MonthlyNumbers.ViewNumbers, MonthlyNumbers.SalesAsync);
     }
+}
+
+/// <summary>The organisation's default language of the tests; null like an app without one.</summary>
+public sealed class TestDefaultLanguage : Coworkee.Application.Localization.IDefaultLanguage
+{
+    public string? Culture { get; set; }
+
+    public Task<string?> GetAsync(CancellationToken cancellationToken) => Task.FromResult(Culture);
 }

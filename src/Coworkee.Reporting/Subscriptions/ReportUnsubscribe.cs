@@ -106,7 +106,7 @@ internal sealed class ReportUnsubscribe(ReportMailLinks links, IServiceScopeFact
             await db.SaveChangesAsync(cancellationToken);
         }
 
-        return (await RecipientCultures.ForAsync(db, new Dictionary<Guid, Guid?> { [subscription.UserId] = tenantId }, cancellationToken))[subscription.UserId] ?? CultureInfo.GetCultureInfo("en");
+        return await RecipientCultures.OfAsync(db, subscription.UserId, tenantId, scope.ServiceProvider.GetServices<IDefaultLanguage>(), cancellationToken);
     }
 
     private static void Harden(HttpContext http)
