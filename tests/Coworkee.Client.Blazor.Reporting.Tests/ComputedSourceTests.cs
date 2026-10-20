@@ -82,6 +82,7 @@ public sealed class ComputedSourceTests : ReportingTestBase
 
         var bar = Render<ReportFilterBar>(p => p.Add(x => x.State, state));
         var frame = Render<WidgetFrame>(p => p.Add(x => x.Widget, widget).Add(x => x.State, state));
+        Render<WidgetSettings>(p => p.Add(x => x.Widget, widget).Add(x => x.State, state));
         frame.Find("[data-testid='widget-menu'] button").Click();
 
         bar.FindAll(".cw-filter-set").ShouldBeEmpty();

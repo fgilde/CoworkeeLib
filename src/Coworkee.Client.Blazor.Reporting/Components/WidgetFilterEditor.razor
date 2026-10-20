@@ -1,5 +1,9 @@
 <div class="cw-widget-filter" data-testid="widget-filter">
-    <ReportFacetFilter EntitySet="@Query.EntitySet" Selection="_selection" />
-    <FacetChips Selection="_selection" />
+    @* a computed source has no OData set to count facets on, like in the filter bar *@
+    @if (State.Source(Query.EntitySet) is not { Computed: true })
+    {
+        <ReportFacetFilter EntitySet="@Query.EntitySet" Selection="_selection" />
+        <FacetChips Selection="_selection" />
+    }
     <QueryBuilder Fields="_fields" Value="_rules" ValueChanged="RulesChanged" Localize="s => L[s]" ShowImportExport="false" MaxDepth="2" />
 </div>
