@@ -2,6 +2,15 @@
 
 State of the Coworkee library as of 2026-10-20: main is pushed and released as **0.0.1.36** (nuget.org, npm `@coworkee/*` 0.0.1036; MudBlazor.Extensions 9.11.5, nav filter workaround removed). Finished commits are pushed right away; only releases wait for the end of a round. Demo (`master` 56e42ca, AirWorks client on 0.0.1036) and Sharemee (`master` d7c2322, no change needed) build against 0.0.1.36 and are pushed. The HR app CoworkeeHR (see below) is local only. AirWorks 0.5.0 is released (tile badges).
 
+## Reporting round 2026-10-20 (on main, not released)
+Four gaps from a comparison with another report builder, one commit each (7b3c6db2, 6fa8db0b, 5b87769c, 01290f6e), docs in `modules/reporting(.de).md`, changelog under Unreleased.
+- **Switches for viewers**: `WidgetOptions.Metrics` (`MetricView`) / `Buckets` (`BucketView`), `ReportViews.Apply` (Contracts, shared with the server check); viewer dropdowns in `WidgetFrame` (`WidgetViewSwitch`), editor `ViewSwitchEditor`, choice per user in the user setting `Reports.Views` (`ReportViewChoices`). Save checks every alternative (`ReportDefinitionCheck`).
+- **Thresholds**: `WidgetOptions.Thresholds` (`ThresholdStop`, `ReportThresholds`), `ColorBarsByThreshold`, `ThresholdColumn`; KPI value/gauge, bars (ApexCharts `PointColor` + `ThresholdLegend`), pivot cells, table column; icon + label always (`ThresholdBadge`); editor `ThresholdEditor` with *Bands from the target*.
+- **AI**: `GenerateReportDefinitionQuery` (`POST /api/v1/reports/generate`, tool `generate_report`, `Reports.Manage`), `ReportPrompt` + `ReportGenerator` (2 retries with the error list), `GET /api/v1/reports/ai`; client *Create with AI* (draft opens at `reports/new`, `ReportDrafts`) and *Ask AI to change this report* (one undo step). `create_report`/`update_report` are assistant tools now (confirm flow).
+- **Subscriptions**: `ReportSubscription` (`cw.ReportSubscriptions`), job `coworkee-report-subscriptions` (*/5, runs each as `ImpersonatedUser(subscriber)` inside `TenantJobRunner`), mail `Reports.Subscription` (23 languages, in Mailing/Templates), Excel via `ReportSheet.Write(list)`, unsubscribe token page `/api/v1/reports/subscriptions/unsubscribe` (CSRF exempt by default), page `reports/subscriptions`, permission `Reports.Subscriptions`. Mailing got attachments (`MailAttachment`, `QueueWithAttachmentsAsync`, `cw.OutgoingMailAttachments`, all four transports). Reporting now depends on Mailing. Template initial migration regenerated; apps need a migration.
+- HR (`master` 16ed001): migration `ReportSubscriptions`, training compliance widget of *HR overview* with a value switch and bands (new seeds only).
+- Limits (`ponytail:`/docs): no server-side PNG/PDF; seeds of existing HR databases keep their old report (seed adds missing reports only); AirWorks TS viewer ignores switches/thresholds; subscription job sends at most 200 per run; no run log (mail log + retention cover sent mails).
+
 ## Repositories
 | Repo | Local path | Remote / branch |
 |---|---|---|
