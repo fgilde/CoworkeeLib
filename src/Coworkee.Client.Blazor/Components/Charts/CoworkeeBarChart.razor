@@ -1,0 +1,20 @@
+@inherits CoworkeeComponentBase
+
+<ChartStyles />
+<figure class="cw-chart cw-bars @(Vertical ? "cw-bars-v" : "cw-bars-h") @Class" style="@Style" aria-label="@Title" data-testid="bar-chart" @attributes="Attributes">
+    @if (Title is not null)
+    {
+        <figcaption class="cw-chart-title">@Title</figcaption>
+    }
+    <ul class="cw-bars-list" style="@(Vertical ? $"height:{Height}" : null)">
+        @for (var i = 0; i < Values.Count; i++)
+        {
+            var value = Values[i];
+            <li class="cw-bar-row" data-testid="bar">
+                <span class="cw-bar-label" title="@value.Label">@value.Label</span>
+                <span class="cw-bar-track" aria-hidden="true"><span class="cw-bar-fill" style="@FillStyle(value, i)"></span></span>
+                <span class="cw-bar-value">@Text(value)</span>
+            </li>
+        }
+    </ul>
+</figure>

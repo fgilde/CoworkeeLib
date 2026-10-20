@@ -1,0 +1,15 @@
+@inherits CoworkeeComponentBase
+
+<ChartStyles />
+<span class="cw-spark @Class" style="width:@Width;height:@Height;@Style" data-testid="sparkline" @attributes="Attributes">
+    <svg viewBox="0 0 100 @ViewHeight" preserveAspectRatio="none" role="img" aria-label="@Description">
+        @if (Values.Count > 1)
+        {
+            @if (Fill)
+            {
+                <polygon points="0,@ViewHeight @Points 100,@ViewHeight" style="fill:@Color;opacity:.15;stroke:none" />
+            }
+            <polyline points="@Points" vector-effect="non-scaling-stroke" style="stroke:@Color" />
+        }
+    </svg>
+</span>

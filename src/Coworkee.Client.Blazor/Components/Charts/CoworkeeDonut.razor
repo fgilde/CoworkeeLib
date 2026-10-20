@@ -1,0 +1,44 @@
+@inherits CoworkeeComponentBase
+
+<ChartStyles />
+<figure class="cw-chart cw-donut @Class" style="@Style" aria-label="@Title" data-testid="donut" @attributes="Attributes">
+    <div class="cw-donut-ring" style="width:@Size;height:@Size" aria-hidden="true">
+        <svg viewBox="0 0 42 42">
+            <circle cx="21" cy="21" r="15.9155" stroke-width="@Thickness" style="stroke:color-mix(in srgb, var(--mud-palette-text-primary) 8%, transparent)" />
+            @foreach (var segment in Segments())
+            {
+                <circle cx="21" cy="21" r="15.9155" stroke-width="@Thickness" pathLength="100" data-testid="donut-segment"
+                        stroke-dasharray="@segment.Dash" stroke-dashoffset="@segment.Offset" style="stroke:@segment.Color" />
+            }
+        </svg>
+        <div class="cw-donut-centre">
+            @if (Center is not null)
+            {
+                @Center
+            }
+            else
+            {
+                <strong data-testid="donut-label">@CenterLabel</strong>
+                @if (CenterSubLabel is not null)
+                {
+                    <span class="cw-chart-muted">@CenterSubLabel</span>
+                }
+            }
+        </div>
+    </div>
+    @if (Title is not null)
+    {
+        <figcaption class="cw-sr-only">@Title</figcaption>
+    }
+    <ul class="cw-donut-legend @(ShowLegend ? null : "cw-sr-only")">
+        @for (var i = 0; i < Values.Count; i++)
+        {
+            var value = Values[i];
+            <li data-testid="donut-legend">
+                <span class="cw-swatch" style="background:@ChartColors.Of(value, i)" aria-hidden="true"></span>
+                <span>@value.Label</span>
+                <span class="cw-bar-value">@Text(value)</span>
+            </li>
+        }
+    </ul>
+</figure>
