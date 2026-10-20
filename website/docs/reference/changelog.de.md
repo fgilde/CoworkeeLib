@@ -8,6 +8,7 @@
 
 - **Migration nötig** in Apps mit `Coworkee.Reporting` (das Template hat es standardmäßig): die neuen Tabellen `cw.ReportSubscriptions` (Berichtsabos) und `cw.OutgoingMailAttachments` (Mailing, Dateien eingereihter Mails). `CoworkeeReportingModule` hängt jetzt von `CoworkeeMailingModule` ab.
 - `DateRanges` ist von `Coworkee.Client.Blazor.Reporting.State` nach `Coworkee.Contracts.Reporting` gezogen (der Server nutzt es auch); wo es direkt aufgerufen wird, das `using` ergänzen.
+- **MudBlazor.Extensions 9.11.6**: Apps, die MudBlazor.Extensions selbst festlegen, gehen auf 9.11.6.
 
 ### Neu
 

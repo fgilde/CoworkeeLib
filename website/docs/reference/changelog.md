@@ -8,6 +8,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 - **Migration needed** in apps with `Coworkee.Reporting` (the template has it by default): the new tables `cw.ReportSubscriptions` (report subscriptions) and `cw.OutgoingMailAttachments` (Mailing, files of queued mails). `CoworkeeReportingModule` now depends on `CoworkeeMailingModule`.
 - `DateRanges` moved from `Coworkee.Client.Blazor.Reporting.State` to `Coworkee.Contracts.Reporting` (the server uses it too); add the `using` where it is called directly.
+- **MudBlazor.Extensions 9.11.6**: apps that pin MudBlazor.Extensions themselves move to 9.11.6.
 
 ### New
 
