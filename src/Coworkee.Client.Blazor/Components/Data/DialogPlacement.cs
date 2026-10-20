@@ -18,6 +18,7 @@ public static class DialogPlacement
         {
             _module = module;
             await module.InvokeVoidAsync("trackPointer");
+            await module.InvokeVoidAsync("guardNestedDialogs");
         }
         finally
         {

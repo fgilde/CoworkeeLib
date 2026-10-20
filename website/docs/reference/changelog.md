@@ -13,6 +13,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixes
 
+- Dialogs: a side sheet or dialog of the library opened from inside a dialog the app showed with the plain MudBlazor `ShowAsync` (for example the file preview of `RecordAttachment`) stayed invisible; MudBlazor.Extensions applied its options to the outer dialog. The layout now marks dialogs that are already open when a new one is added.
 - Reporting: charts over a computed source (`AddReportSource`) with several rows per category and series no longer fail (the in-memory grouping split every row into its own group, the chart then threw on the duplicate keys); chart series add up duplicate categories.
 - Record attachments: scopes created with `CreateScope()` (start-up code, the Elsa module, older services) no longer fail to dispose once the attachments module is on (`AttachmentBlobs` is `IDisposable` too).
 - Security, social: comments, tags, ratings, reactions and their realtime topics of a type registered with its entity class (`Comments<T>`, ...) now require that the user sees the row through the type's OData set (set permission, organisation, soft delete, `IODataEntityFilter<T>` row filters); before, the permission and an existing id were enough. Tag counts and `GET /api/v1/tags/{entityType}/entities` only count visible rows. Types without an OData set keep the id check; `Authorize(...)` still adds checks on top, and hooks that only repeated the row filter can go. See [Social](../modules/social.md).

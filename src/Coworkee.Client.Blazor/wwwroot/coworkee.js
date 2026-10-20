@@ -16,6 +16,24 @@ export function trackPointer() {
     }
 }
 
+// MudBlazor.Extensions applies the options of a new dialog to the first .mud-dialog it has not extended yet. A dialog opened with the plain
+// MudBlazor ShowAsync is never extended, so a side sheet opened from inside it styled the outer dialog and stayed hidden itself.
+// When a dialog is added, the ones already open are marked as extended. ponytail: goes when MudEx targets the dialog by its id.
+export function guardNestedDialogs() {
+    if (window.__coworkeeNestedDialogs) return;
+    window.__coworkeeNestedDialogs = true;
+    new MutationObserver(mutations => {
+        const added = mutations.flatMap(m => Array.from(m.addedNodes)).filter(n => n.nodeType === 1 && (n.matches('.mud-dialog') || n.querySelector('.mud-dialog')));
+        if (added.length === 0) return;
+        document.querySelectorAll('.mud-dialog:not([data-mud-extended=true])').forEach(d => {
+            if (!added.some(n => n.contains(d))) {
+                d.__extended = true;
+                d.setAttribute('data-mud-extended', 'true');
+            }
+        });
+    }).observe(document.body, { childList: true, subtree: true });
+}
+
 export function pointerOnLeft() {
     const rtl = document.dir === 'rtl' || document.documentElement.dir === 'rtl';
     return !rtl && pointerX !== null && pointerX < window.innerWidth / 2;
