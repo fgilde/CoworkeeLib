@@ -39,3 +39,12 @@ test('the page of a record in the web client is the link of its global search hi
   assert.equal(await recordPage(fake(null, hits).coworkee, 'Products', id), undefined);
   assert.deepEqual(requests, [`/api/v1/search?q=${id}&limit=5`, `/api/v1/search?q=${id}&limit=5`]);
 });
+
+test('the launcher heading is launcherGroup, Administration for the sections of the administration, none otherwise', async () => {
+  const { launcherApp } = await import('../src/index.ts');
+  const t = (text: string) => `~${text}`;
+  const base = { id: 'a', title: 'A', icon: 'a.png', probe: '/x', hostOnly: true, shortcut: false };
+  assert.deepEqual(launcherApp({ ...base, group: 'Identity' }, t), { id: 'a', title: 'A', icon: 'a.png', group: '~Administration' });
+  assert.equal(launcherApp({ ...base, group: 'Identity', launcherGroup: 'People' }, t).group, 'People');
+  assert.equal('group' in launcherApp(base, t), false);
+});

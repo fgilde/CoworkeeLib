@@ -13,8 +13,8 @@ await coworkee.register(
   ...defaultApps,
   ...adminApps,
 //#if (samples)
-  entityApp({ entitySet: 'Products', liveType: 'Product', icon: 'ratio-product.png', requiredPermissions: ['Catalog.Products.View'] }),
-  entityApp({ entitySet: 'Brands', liveType: 'Brand', icon: 'ratio-shoppingCart.png', requiredPermissions: ['Catalog.Brands.View'] }),
+  entityApp({ entitySet: 'Products', liveType: 'Product', icon: 'ratio-product.png', requiredPermissions: ['Catalog.Products.View'], launcherGroup: coworkee.t('Catalog Management') }),
+  entityApp({ entitySet: 'Brands', liveType: 'Brand', icon: 'ratio-shoppingCart.png', requiredPermissions: ['Catalog.Brands.View'], launcherGroup: coworkee.t('Catalog Management') }),
 //#endif
 );
 

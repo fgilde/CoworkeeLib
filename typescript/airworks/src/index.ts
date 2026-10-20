@@ -11,7 +11,7 @@ import { reportApp, reportsApp } from './apps/reports.ts';
 import { settingsApp } from './apps/settings.ts';
 import type { AppFactory } from './coworkee.ts';
 
-export { useCoworkee, type AirWorksApi, type AppFactory, type Coworkee, type CoworkeeApp, type CoworkeeOptions } from './coworkee.ts';
+export { launcherApp, useCoworkee, type AirWorksApi, type AppFactory, type Coworkee, type CoworkeeApp, type CoworkeeOptions } from './coworkee.ts';
 export { bffAuthProvider, sessionOf } from './auth.ts';
 export { loadMudEx, defaultMudExFrameUrl, defaultMudExUrl, mudExFrame } from './mudex.ts';
 export { icons } from './icons.ts';

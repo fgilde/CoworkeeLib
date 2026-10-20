@@ -1,5 +1,5 @@
 import type { AppContext } from '@fgilde/airworks';
-import type { AppFactory, Coworkee, CoworkeeApp } from '../../coworkee.ts';
+import { launcherApp, type AppFactory, type Coworkee, type CoworkeeApp } from '../../coworkee.ts';
 import { esc } from '../../dom.ts';
 import { icons } from '../../icons.ts';
 import { aiSettingsApp } from '../assistant.ts';
@@ -17,7 +17,7 @@ const allowed = (coworkee: Coworkee) => coworkee.apps.filter((app) => app.group 
 /** Every administration app the user may open, grouped like the administration menu of the web app. */
 export const administrationApp = (coworkee: Coworkee): CoworkeeApp => {
   const definition = (visible: boolean): CoworkeeApp => ({
-    id: administrationAppId, title: coworkee.t('Administration'), icon: icons.adminPanel, accent: '#35496b', width: 760, height: 560, singleInstance: true,
+    id: administrationAppId, title: coworkee.t('Administration'), icon: icons.adminPanel, accent: '#35496b', width: 760, height: 560, singleInstance: true, launcherGroup: coworkee.t('Administration'),
     requiredPermissions: visible ? [] : [nobody],
     render: ({ host }: AppContext) => {
       const { t } = coworkee;
@@ -41,7 +41,7 @@ export const administrationApp = (coworkee: Coworkee): CoworkeeApp => {
     if (now === visible) return;
     visible = now;
     coworkee.airWorks.unregisterApp(administrationAppId);
-    coworkee.airWorks.registerApp(definition(now));
+    coworkee.airWorks.registerApp(launcherApp(definition(now), coworkee.t));
   };
   coworkee.airWorks.on('access-changed', update);
   return definition(false);

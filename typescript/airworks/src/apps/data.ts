@@ -83,6 +83,8 @@ export type EntityAppOptions = EntityTableOptions & {
   icon?: string;
   accent?: string;
   requiredPermissions?: string[];
+  /** Heading in the full-screen launcher, e.g. the nav group of the set's page. */
+  launcherGroup?: string;
 };
 
 /** One entity set as its own desktop app, e.g. entityApp({ entitySet: 'Products', requiredPermissions: ['Catalog.Products.View'] }). */
@@ -94,6 +96,7 @@ export const entityApp = (options: EntityAppOptions) => (coworkee: Coworkee): Co
   width: 900,
   height: 580,
   requiredPermissions: options.requiredPermissions,
+  launcherGroup: options.launcherGroup,
   render: ({ host, onClose }: AppContext) => {
     host.classList.add('cw-host');
     host.innerHTML = '<div class="cw-app"></div>';

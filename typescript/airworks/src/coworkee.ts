@@ -17,11 +17,19 @@ export type AirWorksApi = typeof AirWorks;
 export type CoworkeeApp = AppDefinition & {
   probe?: string;
   hostOnly?: boolean;
-  /** Section of the administration app (Identity, System, ...); such apps get no desktop shortcut of their own. */
+  /** Section of the administration app (Identity, System, ...); such apps get no desktop shortcut of their own and are listed under Administration in the full-screen launcher. */
   group?: string;
+  /** Heading of the app in the full-screen launcher (AirWorks `group`), e.g. People; wins over Administration. */
+  launcherGroup?: string;
   /** false: no desktop shortcut at the start (the app stays in the start menu). */
   shortcut?: boolean;
 };
+
+/** The AirWorks app of a Coworkee app: launcherGroup, or Administration for a section of the administration, becomes the launcher heading. */
+export function launcherApp({ probe, hostOnly, group, shortcut, launcherGroup, ...app }: CoworkeeApp, t: Translate): AppDefinition {
+  const heading = launcherGroup ?? (group ? t('Administration') : undefined);
+  return heading ? { ...app, group: heading } : app;
+}
 
 export type AppFactory = (coworkee: Coworkee) => CoworkeeApp | CoworkeeApp[];
 
@@ -167,9 +175,10 @@ export async function useCoworkee(airWorks: AirWorksApi, options: CoworkeeOption
 
   const shortcuts: string[] = [];
   async function add(definition: CoworkeeApp): Promise<CoworkeeApp | undefined> {
-    const { probe, hostOnly, group, shortcut, ...app } = definition;
+    const { probe, hostOnly } = definition;
     if (hostOnly && !user.systemTenant) return undefined;
     if (probe && !(user.isAuthenticated && await quietly(() => apiRequest(probe).then(() => true), false))) return undefined;
+    const app = launcherApp(definition, coworkee.t);
     airWorks.unregisterApp(app.id);
     airWorks.registerApp(app);
     const known = coworkee.apps.findIndex((item) => item.id === app.id);
