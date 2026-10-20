@@ -1,6 +1,7 @@
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.People;
+using Coworkee.Client.Blazor.Security;
 using Coworkee.Contracts.Identity;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -37,7 +38,7 @@ public partial class ProfileDetails
     protected override async Task OnInitializedAsync()
     {
         var user = (await AuthenticationState).User;
-        _userId = Guid.TryParse(user.FindFirst("sub")?.Value, out var id) ? id : Guid.Empty;
+        _userId = ClientUser.From(user).UserId ?? Guid.Empty;
         Show(await Api.GetMyProfileAsync());
     }
 

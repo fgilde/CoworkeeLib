@@ -2,6 +2,7 @@ using System.Text.Json;
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Realtime;
+using Coworkee.Client.Blazor.Security;
 using Coworkee.Client.Blazor.Workflows;
 using Coworkee.Contracts.Realtime;
 using Coworkee.Contracts.Workflows;
@@ -30,7 +31,7 @@ public partial class Approvals : IAsyncDisposable
     protected override async Task OnInitializedAsync()
     {
         var user = AuthenticationState is null ? null : (await AuthenticationState).User;
-        if (Guid.TryParse(user?.FindFirst("sub")?.Value, out var me))
+        if (ClientUser.From(user).TryGetUserId(out var me))
         {
             _subscription = await Realtime.SubscribeAsync(RealtimeTopics.User(me), envelope =>
                 envelope.Payload.ValueKind == JsonValueKind.Object && EntityChangedPayload.From(envelope)?.EntityType is "WorkflowApproval" or "WorkflowApprover"

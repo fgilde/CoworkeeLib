@@ -7,7 +7,7 @@
             <ActivatorContent Context="menu">
                 <MudButton Variant="Variant.Text" Color="Color.Inherit" Class="ml-2" Style="text-transform:none"
                            EndIcon="@Icons.Material.Filled.ArrowDropDown" aria-label="@L["Account"]" OnClick="@(() => menu.ToggleAsync())">
-                    @if (Guid.TryParse(context.User.FindFirst("sub")?.Value, out var me))
+                    @if (ClientUser.From(context.User).UserId is { } me)
                     {
                         <UserAvatar UserId="me" Size="Size.Small" />
                     }

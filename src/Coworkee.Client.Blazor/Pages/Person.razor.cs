@@ -37,7 +37,7 @@ public partial class Person
     protected override async Task OnParametersSetAsync()
     {
         var user = AuthenticationState is null ? null : (await AuthenticationState).User;
-        _isMe = user?.FindFirst("sub")?.Value == Id.ToString();
+        _isMe = ClientUser.From(user).UserId == Id;
         _card = await Cards.GetAsync(Id);
         _online = await Presence.IsOnlineAsync(Id);
         _mayChat = await Permissions.HasAsync(ChatPermissions.Use);

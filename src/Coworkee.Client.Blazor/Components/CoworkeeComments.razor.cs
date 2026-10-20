@@ -1,6 +1,7 @@
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Realtime;
+using Coworkee.Client.Blazor.Security;
 using Coworkee.Client.Blazor.Social;
 using Coworkee.Contracts.Social;
 using Microsoft.AspNetCore.Components;
@@ -36,7 +37,7 @@ public partial class CoworkeeComments : IAsyncDisposable
     protected override async Task OnInitializedAsync()
     {
         var user = AuthenticationState is null ? null : (await AuthenticationState).User;
-        _ = Guid.TryParse(user?.FindFirst("sub")?.Value, out _me);
+        _me = ClientUser.From(user).UserId ?? Guid.Empty;
     }
 
     protected override async Task OnParametersSetAsync()

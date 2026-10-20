@@ -2,6 +2,7 @@ using System.Text.Json;
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Realtime;
+using Coworkee.Client.Blazor.Security;
 using Coworkee.Contracts.Realtime;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -29,7 +30,7 @@ public partial class SessionGuard : IAsyncDisposable
     protected override async Task OnInitializedAsync()
     {
         var user = AuthenticationState is null ? null : (await AuthenticationState).User;
-        if (Guid.TryParse(user?.FindFirst("sub")?.Value, out var userId))
+        if (ClientUser.From(user).TryGetUserId(out var userId))
         {
             _subscription = await Realtime.SubscribeAsync(RealtimeTopics.User(userId),
                 envelope => envelope.Type == RealtimeEventTypes.SessionRevoked ? InvokeAsync(() => EndAsync(envelope)) : Task.CompletedTask);

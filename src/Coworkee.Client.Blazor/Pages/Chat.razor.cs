@@ -5,6 +5,7 @@ using Coworkee.Client.Blazor.Components.Chat;
 using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Realtime;
+using Coworkee.Client.Blazor.Security;
 using Coworkee.Contracts.Chat;
 using Coworkee.Contracts.Realtime;
 using Microsoft.AspNetCore.Components;
@@ -55,7 +56,7 @@ public partial class Chat : IAsyncDisposable
     protected override async Task OnInitializedAsync()
     {
         var user = AuthenticationState is null ? null : (await AuthenticationState).User;
-        if (Guid.TryParse(user?.FindFirst("sub")?.Value, out _me))
+        if (ClientUser.From(user).TryGetUserId(out _me))
         {
             _subscription = await Realtime.SubscribeAsync(RealtimeTopics.User(_me), envelope => InvokeAsync(() => ReceiveAsync(envelope)));
         }

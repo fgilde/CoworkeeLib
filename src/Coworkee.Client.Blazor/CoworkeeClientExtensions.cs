@@ -86,6 +86,7 @@ public static class CoworkeeClientExtensions
         services.AddScoped<Realtime.NotificationCenter>();
         services.AddScoped<Data.DataTransferWatcher>();
         services.AddScoped<BffAuthenticationStateProvider>();
+        services.AddScoped<CurrentUserInfo>();
         services.AddScoped<AuthenticationStateProvider>(provider => provider.GetRequiredService<BffAuthenticationStateProvider>());
         services.AddAuthorizationCore();
         services.AddCascadingAuthenticationState();

@@ -48,7 +48,7 @@ public partial class ChatNotifier : IAsyncDisposable
     protected override async Task OnInitializedAsync()
     {
         var user = AuthenticationState is null ? null : (await AuthenticationState).User;
-        if (Guid.TryParse(user?.FindFirst("sub")?.Value, out _me) && await Permissions.HasAsync(ChatPermissions.Use))
+        if (ClientUser.From(user).TryGetUserId(out _me) && await Permissions.HasAsync(ChatPermissions.Use))
         {
             _subscription = await Realtime.SubscribeAsync(RealtimeTopics.User(_me), envelope => InvokeAsync(() => ReceiveAsync(envelope)));
             await CountAsync();

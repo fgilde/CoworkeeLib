@@ -97,6 +97,18 @@ internal sealed class CatalogApi(HttpClient http) : ApiClientBase(http), ICatalo
 
 `Snackbar.RunAsync(() => api.SaveAsync(...), "Saved")` führt einen Aufruf aus und zeigt Erfolg oder die Validierungsmeldungen eines Fehlers.
 
+## Aktueller Benutzer
+
+`ClientUser.From(user)` liest den angemeldeten Benutzer aus einem `ClaimsPrincipal` (`IsAuthenticated`, `UserId`, `TenantId`, `Email`, `DisplayName`); mit dem kaskadierenden Authentifizierungszustand braucht eine Seite nicht mehr. Dienste und Seiten ohne ihn injizieren das scoped `CurrentUserInfo` (registriert von `AddCoworkeeClient`):
+
+```csharp
+var me = await currentUser.GetAsync();
+if (me.UserId is { } userId) { ... }
+currentUser.Changed += user => ...; // Anmeldung, Abmeldung, neu ausgestellte Rechte
+```
+
+Den Claim `sub` nicht selbst parsen.
+
 ## Personen
 
 `UserAvatar` zeigt das Bild eines Benutzers oder seine Initialen, `UserCard` Bild und Name mit optionaler zweiter Zeile. Beide laden gebündelt und aktualisieren sich für alle, sobald jemand Name oder Bild auf der Profilseite ändert (Realtime-Topic `tenant:users`).

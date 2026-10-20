@@ -5,6 +5,7 @@ using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Data;
 using Coworkee.Client.Blazor.History;
 using Coworkee.Client.Blazor.Localization;
+using Coworkee.Client.Blazor.Security;
 using Coworkee.Contracts.Auditing;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -38,7 +39,7 @@ public partial class AuditLog
 
     protected override async Task OnInitializedAsync()
     {
-        _me = (await AuthenticationState).User.FindFirst("sub")?.Value;
+        _me = ClientUser.From((await AuthenticationState).User).UserId?.ToString();
         try
         {
             _sets = (await HistoryApi.GetSetsAsync() ?? []).ToDictionary(s => s.EntityType, StringComparer.Ordinal);

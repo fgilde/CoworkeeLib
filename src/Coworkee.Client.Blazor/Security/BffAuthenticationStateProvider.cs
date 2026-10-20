@@ -43,6 +43,11 @@ public sealed class BffAuthenticationStateProvider : AuthenticationStateProvider
             }
 
             var claims = new List<Claim> { new("name", user.Name ?? user.Email ?? string.Empty), new("email", user.Email ?? string.Empty), new("sub", user.UserId?.ToString() ?? string.Empty) };
+            if (user.TenantId is { } tenantId)
+            {
+                claims.Add(new Claim(ClientUser.TenantClaimType, tenantId.ToString()));
+            }
+
             claims.AddRange(user.Roles.Select(r => new Claim("role", r)));
             if (user.ManageUrl is { Length: > 0 } manage)
             {

@@ -2,6 +2,7 @@ using System.Text.Json;
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Realtime;
+using Coworkee.Client.Blazor.Security;
 using Coworkee.Contracts.Data;
 using Coworkee.Contracts.Realtime;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -59,7 +60,7 @@ public sealed class DataTransferWatcher(
     private async Task StartCoreAsync()
     {
         var user = (await authentication.GetAuthenticationStateAsync()).User;
-        if (Guid.TryParse(user.FindFirst("sub")?.Value, out var userId))
+        if (ClientUser.From(user).TryGetUserId(out var userId))
         {
             _subscription = await realtime.SubscribeAsync(RealtimeTopics.User(userId), OnEventAsync);
         }

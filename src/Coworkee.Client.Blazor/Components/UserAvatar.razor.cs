@@ -1,5 +1,6 @@
 using Coworkee.Client.Blazor.Chat;
 using Coworkee.Client.Blazor.People;
+using Coworkee.Client.Blazor.Security;
 using Coworkee.Contracts.Identity;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
@@ -67,7 +68,7 @@ public partial class UserAvatar : IDisposable
     private async Task<bool> MayChatAsync()
     {
         var user = AuthenticationState is null ? null : (await AuthenticationState).User;
-        return Guid.TryParse(user?.FindFirst("sub")?.Value, out var me) && me != UserId && Services.GetService<ChatDock>() is not null
+        return ClientUser.From(user).TryGetUserId(out var me) && me != UserId && Services.GetService<ChatDock>() is not null
             && Services.GetService<Security.PermissionStore>() is { } permissions && await permissions.HasAsync(Contracts.Chat.ChatPermissions.Use);
     }
 

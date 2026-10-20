@@ -38,7 +38,7 @@ public partial class ChatDockHost : IAsyncDisposable
     protected override async Task OnInitializedAsync()
     {
         var user = AuthenticationState is null ? null : (await AuthenticationState).User;
-        if (!Guid.TryParse(user?.FindFirst("sub")?.Value, out _me) || !await Permissions.HasAsync(ChatPermissions.Use))
+        if (!ClientUser.From(user).TryGetUserId(out _me) || !await Permissions.HasAsync(ChatPermissions.Use))
         {
             return;
         }

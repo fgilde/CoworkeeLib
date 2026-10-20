@@ -3,6 +3,7 @@ using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Realtime;
+using Coworkee.Client.Blazor.Security;
 using Coworkee.Contracts.Ai;
 using Coworkee.Contracts.Realtime;
 using Microsoft.AspNetCore.Components;
@@ -78,7 +79,7 @@ public partial class AssistantWindow : IAsyncDisposable
         }
 
         var user = AuthenticationState is null ? null : (await AuthenticationState).User;
-        if (Guid.TryParse(user?.FindFirst("sub")?.Value, out var me))
+        if (ClientUser.From(user).TryGetUserId(out var me))
         {
             _subscription = await Realtime.SubscribeAsync(RealtimeTopics.User(me), envelope => InvokeAsync(() => ReceiveAsync(envelope)));
         }
