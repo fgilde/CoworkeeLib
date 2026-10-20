@@ -32,6 +32,24 @@ Aus den Definitionen entsteht die Berechtigungsmatrix im Rolleneditor: gruppiert
 
 Berechtigungen auf Ressourcen vererben sich entlang einer Hierarchie, die du mit `IResourceHierarchy` beschreibst (etwa Ordner in Ordnern). `IResourceRestriction` entzieht bestimmten Rollen den Zugriff wieder, auch Inhabern einer globalen Berechtigung.
 
+## Berechnete Berechtigungen
+
+Manche Rechte folgen aus Daten, nicht aus einer Rolle: „führt mindestens eine Person“, „besitzt ein Projekt“. Eine berechnete Berechtigung vergibt eine definierte Berechtigung, sobald ihre Prüfung true liefert:
+
+```csharp
+services.AddComputedPermission(HrPermissions.LeadsPeople, (c, ct) =>
+    c.Granted.Contains(HrPermissions.Manage)
+        ? Task.FromResult(true)
+        : c.Services.GetRequiredService<HrDbContext>().Employees.AnyAsync(e => e.LeaderUserId == c.UserId, ct));
+```
+
+Oder eine Klasse, die `IComputedPermission` implementiert, registriert mit `services.AddScoped<IComputedPermission, LeadsPeople>()`. Die Berechtigung muss wie jede andere definiert sein (sie erscheint im Rolleneditor, ein Admin kann sie also auch einer Rolle geben) und schließt ein, was ihre Definition einschließt. Sie gehört überall zu den effektiven Berechtigungen des Benutzers: `[RequiresPermission]`, `IPermissionChecker`, OData-Sets, MCP-Tools, die Berechtigungsliste, die der Client lädt, und damit Navigationseinträge, `PermissionGate` und Policies.
+
+- Die Prüfungen laufen nach den Rollenrechten, einmal pro Request und Benutzer (das Ergebnis gilt für den Request, nicht darüber hinaus), nur für aktive Mitglieder und nur für Berechtigungen, die der Benutzer noch nicht hat. Eine Datenänderung wirkt ab dem nächsten Request; der Client sieht sie, wenn er seine Berechtigungen neu lädt (nach der Anmeldung oder einer Rechteänderung).
+- Halte sie bei je einer Abfrage über einen Index: jeder angemeldete Request, der eine Berechtigung prüft, zahlt einmal für alle berechneten Berechtigungen.
+- Frag deine Tabellen direkt ab. Ruft eine Prüfung den Permission-Checker oder einen Command mit `[RequiresPermission]` auf, rekursiert sie.
+- API-Schlüssel bekommen eine berechnete Berechtigung nur innerhalb ihrer Scopes.
+
 ## Als System handeln
 
 Manchmal muss ein Modul ein Kommando der Bibliothek ausführen, egal was der Aufrufer darf: Das HR-Modul hält die Gruppe eines Teams aktuell, wenn eine Führungskraft das Team bearbeitet, auch wenn sie keine Gruppen verwalten darf. `ISystemDispatcher` sendet so ein Kommando als System:

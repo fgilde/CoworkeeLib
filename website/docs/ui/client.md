@@ -64,6 +64,8 @@ The menu is a `MudExTreeView`: groups are nodes, the filter box highlights match
 
 Entries with `HostOnly: true` serve the whole installation and show only to users of the system organisation; the library marks Tenants, Editions, Applications, Scopes, Services and Backups that way, and the settings page shows its typed tabs and the System tab only there. The client knows the organisation from `/bff/user` (`SystemTenant`, from the `system_tenant` claim of the auth server); sign-ins from before that claim show everything as before.
 
+For pure UI cases an entry can decide itself: `Visible: sp => sp.GetRequiredService<MyTips>().HasAnyAsync()` hides it when the callback answers false. The menu and the command palette ask it whenever they build (after sign-in, permission and feature changes), so keep it cheap and cache what it loads. It only hides; when the server must agree, use a [computed permission](../security/permissions.md#computed-permissions) instead.
+
 ![Collapsed navigation](../assets/screenshots/mini-drawer.png){ .shot }
 
 ## App bar

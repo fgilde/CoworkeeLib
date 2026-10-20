@@ -12,9 +12,12 @@ namespace Coworkee.Identity.Permissions;
 
 internal sealed class PermissionChecker(
     CoworkeeDbContext db, ICurrentUser currentUser, IPermissionDefinitionManager definitions, HybridCache cache, IEnumerable<IResourceHierarchy> hierarchies,
-    IEnumerable<IResourceRestriction> restrictions, IActiveRoleSwitch activeRoles)
+    IEnumerable<IResourceRestriction> restrictions, IActiveRoleSwitch activeRoles, IEnumerable<IComputedPermission> computed, IServiceProvider services)
     : IPermissionChecker
 {
+    private readonly IComputedPermission[] _computed = [.. computed];
+    private readonly Dictionary<(Guid, Guid?, bool), IReadOnlyCollection<string>> _withComputed = [];
+
     public async Task<IReadOnlyCollection<string>> GetGrantedAsync(CancellationToken cancellationToken)
     {
         if (currentUser.UserId is not { } userId)
@@ -24,7 +27,8 @@ internal sealed class PermissionChecker(
 
         // an API key works within all roles of its user, whatever role the user picked in the app, and only within its scopes
         var scopes = currentUser.PermissionScopes;
-        var granted = await GrantedAsync(userId, scopes is null && await activeRoles.IsEnabledAsync(cancellationToken), cancellationToken);
+        var narrow = scopes is null && await activeRoles.IsEnabledAsync(cancellationToken);
+        var granted = await WithComputedAsync(userId, currentUser.TenantId, narrow, await GrantedAsync(userId, narrow, cancellationToken), cancellationToken);
         if (scopes is null)
         {
             return granted;
@@ -152,7 +156,43 @@ internal sealed class PermissionChecker(
     internal async Task<string[]> GetGrantedForAsync(Guid userId, Guid? tenantId, CancellationToken cancellationToken)
     {
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(userId, tenantId));
-        return await LoadAsync(userId, tenantId, await activeRoles.IsEnabledAsync(cancellationToken), cancellationToken);
+        var narrow = await activeRoles.IsEnabledAsync(cancellationToken);
+        return [.. await WithComputedAsync(userId, tenantId, narrow, await LoadAsync(userId, tenantId, narrow, cancellationToken), cancellationToken)];
+    }
+
+    // ponytail: computed permissions run once per scope (request) and user, never across requests: data changes show on the next request without invalidation
+    private async Task<IReadOnlyCollection<string>> WithComputedAsync(Guid userId, Guid? tenantId, bool narrow, IReadOnlyCollection<string> granted, CancellationToken cancellationToken)
+    {
+        if (_computed.Length == 0)
+        {
+            return granted;
+        }
+
+        var key = (userId, tenantId, narrow);
+        if (_withComputed.TryGetValue(key, out var cached))
+        {
+            return cached;
+        }
+
+        var extra = new List<string>();
+        if (await IsActiveMemberAsync(userId, tenantId, cancellationToken))
+        {
+            var context = new ComputedPermissionContext(userId, tenantId, granted, services);
+            foreach (var permission in _computed.Where(c => !granted.Contains(c.Permission)))
+            {
+                if (!definitions.Exists(permission.Permission))
+                {
+                    throw new InvalidOperationException($"Computed permission '{permission.Permission}' is not defined.");
+                }
+
+                if (await permission.IsGrantedAsync(context, cancellationToken))
+                {
+                    extra.Add(permission.Permission);
+                }
+            }
+        }
+
+        return _withComputed[key] = extra.Count == 0 ? granted : [.. definitions.Expand(granted.Concat(extra))];
     }
 
     // once per user and tenant in a scope: resource restrictions ask for every checked resource

@@ -39,6 +39,8 @@ public partial class CoworkeeNavMenu : IDisposable
 
     [Inject] private NavigationManager Nav { get; set; } = null!;
 
+    [Inject] private IServiceProvider Services { get; set; } = null!;
+
     [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
 
     /// <summary>The drawer shows icons only: the tree becomes a flat icon list and the tools hide.</summary>
@@ -82,7 +84,7 @@ public partial class CoworkeeNavMenu : IDisposable
     {
         var options = MenuOptions.Value;
         var user = AuthenticationState is null ? new System.Security.Claims.ClaimsPrincipal() : (await AuthenticationState).User;
-        var allowed = NavigationAccess.Linked(await NavigationAccess.AllowedAsync(Contributors.SelectMany(c => c.Items), user, Authorization, Features), Pages, options);
+        var allowed = NavigationAccess.Linked(await NavigationAccess.AllowedAsync(Contributors.SelectMany(c => c.Items), user, Authorization, Features, Services), Pages, options);
 
         _entries = NavigationEntry.Build(allowed, options, options.ShowHome ? options.HomeTitle : null);
         SelectCurrent();

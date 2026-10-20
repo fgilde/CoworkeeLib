@@ -32,6 +32,24 @@ The definitions build the permission matrix in the role editor: grouped, searcha
 
 Resource grants inherit along a hierarchy you describe with `IResourceHierarchy` (folders in folders, for example). `IResourceRestriction` takes access away again for certain roles, even from holders of a global grant.
 
+## Computed permissions
+
+Some rights follow from data, not from a role: "leads at least one person", "owns a project". A computed permission grants a defined permission whenever its check answers true:
+
+```csharp
+services.AddComputedPermission(HrPermissions.LeadsPeople, (c, ct) =>
+    c.Granted.Contains(HrPermissions.Manage)
+        ? Task.FromResult(true)
+        : c.Services.GetRequiredService<HrDbContext>().Employees.AnyAsync(e => e.LeaderUserId == c.UserId, ct));
+```
+
+Or a class implementing `IComputedPermission`, registered with `services.AddScoped<IComputedPermission, LeadsPeople>()`. The permission must be defined like any other (it shows in the role editor, so an admin can also grant it to a role) and implies what its definition implies. It is part of the user's effective permissions everywhere: `[RequiresPermission]`, `IPermissionChecker`, OData sets, MCP tools, the permission list the client loads, and so navigation entries, `PermissionGate` and policies.
+
+- The checks run after the role grants, once per request and user (the result is kept for the request, not across requests), only for active members, and only for permissions the user does not already hold. A data change shows with the next request; the client sees it when it reloads its permissions (after sign-in or a permission change).
+- Keep them to one indexed query each: every authenticated request that checks a permission pays for all computed permissions once.
+- Query your tables directly. Calling the permission checker or a command with `[RequiresPermission]` from a check recurses.
+- API keys get a computed permission only within their scopes.
+
 ## Acting as the system
 
 Sometimes a module has to run a library command whatever the caller may do: the HR module keeps the group of a team in step when a manager edits the team, although the manager may not manage groups. `ISystemDispatcher` sends such a command as the system:

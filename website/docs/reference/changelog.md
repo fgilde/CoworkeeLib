@@ -23,6 +23,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### New
 
+- Permissions: computed permissions grant a defined permission from data (`services.AddComputedPermission(HrPermissions.LeadsPeople, (c, ct) => db.Employees.AnyAsync(e => e.LeaderUserId == c.UserId, ct))` or `IComputedPermission`), evaluated once per request and user after the role grants; they count for `[RequiresPermission]`, `IPermissionChecker`, OData, MCP and the client's permission list (navigation, `PermissionGate`, policies). `CoworkeeNavItem(..., Visible: sp => ...)` hides an entry from a client-side callback. See [Permissions](../security/permissions.md#computed-permissions).
 - `ODataPicker`/`OptionalODataPicker`: `TextProperty="FirstName,LastName"` shows several properties joined with spaces, `$select`s and sorts by them and finds a row when every word of the search appears in one of them; with one property a search of several words now also matches when the words are not adjacent. See [Data tables](../ui/data-table.md#edit-dialogs).
 - `ResourceCalendar`: `CalendarResource.WorkDays` overrides the work days for one row (part-time people), and unmatched attributes (`id`, `data-testid`, ...) reach the root element. See [Resource calendar](../ui/resource-calendar.md).
 - Workflows: `EntityWorkflow<T>.Include(e => e.Employee)` loads a navigation with the entity, so `Describe`, guards and actions can use it (`Describe(l => $"Vacation of {l.Employee.Name}")`). See [Workflows](../modules/workflows.md#states-and-transitions).

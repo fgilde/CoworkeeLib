@@ -64,6 +64,8 @@ Das Menü ist ein `MudExTreeView`: Gruppen sind Knoten, das Filterfeld hebt Tref
 
 Einträge mit `HostOnly: true` dienen der ganzen Installation und erscheinen nur Benutzern der Systemorganisation; die Bibliothek markiert so Mandanten, Editionen, Anwendungen, Scopes, Dienste und Sicherungen, und die Einstellungsseite zeigt ihre typisierten Reiter und den Reiter System nur dort. Die Organisation kennt der Client aus `/bff/user` (`SystemTenant`, aus dem Claim `system_tenant` des Auth-Servers); Anmeldungen von vor diesem Claim zeigen alles wie bisher.
 
+Für reine Oberflächenfälle entscheidet ein Eintrag selbst: `Visible: sp => sp.GetRequiredService<MyTips>().HasAnyAsync()` blendet ihn aus, wenn der Callback false liefert. Menü und Befehlspalette fragen ihn bei jedem Aufbau (nach der Anmeldung, nach Rechte- und Feature-Änderungen), halte ihn also billig und cache, was er lädt. Er blendet nur aus; muss der Server zustimmen, nimm eine [berechnete Berechtigung](../security/permissions.md#berechnete-berechtigungen).
+
 ![Eingeklappte Navigation](../assets/screenshots/mini-drawer.png){ .shot }
 
 ## App-Leiste

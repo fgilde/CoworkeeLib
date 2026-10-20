@@ -4,18 +4,19 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace Coworkee.Client.Blazor.Navigation;
 
-/// <summary>The links a user may see: permission, feature and installation-wide pages only in the system organisation.</summary>
+/// <summary>The links a user may see: permission, feature, the item's own visibility and installation-wide pages only in the system organisation.</summary>
 public static class NavigationAccess
 {
     public static async Task<IReadOnlyList<CoworkeeNavItem>> AllowedAsync(
-        IEnumerable<CoworkeeNavItem> items, ClaimsPrincipal user, IAuthorizationService authorization, Features.FeatureStore features)
+        IEnumerable<CoworkeeNavItem> items, ClaimsPrincipal user, IAuthorizationService authorization, Features.FeatureStore features, IServiceProvider? services = null)
     {
         var allowed = new List<CoworkeeNavItem>();
         foreach (var item in items)
         {
             if (!(item.HostOnly && SystemTenant.IsOutside(user))
                 && (item.Permission is null || (await authorization.AuthorizeAsync(user, PermissionPolicy.For(item.Permission))).Succeeded)
-                && (item.Feature is null || await features.IsEnabledAsync(item.Feature)))
+                && (item.Feature is null || await features.IsEnabledAsync(item.Feature))
+                && (item.Visible is null || (services is not null && await item.Visible(services))))
             {
                 allowed.Add(item);
             }
