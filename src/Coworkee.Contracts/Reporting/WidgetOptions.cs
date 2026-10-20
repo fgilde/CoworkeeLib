@@ -46,6 +46,15 @@ public sealed class WidgetOptions
 
     /// <summary>Groupings the viewer may switch to besides the widget's own.</summary>
     public List<BucketView> Buckets { get; set; } = [];
+
+    /// <summary>Colour bands of the value (see <see cref="ReportThresholds"/>): the KPI value and gauge, pivot cells, the table's <see cref="ThresholdColumn"/> and, with <see cref="ColorBarsByThreshold"/>, bars.</summary>
+    public List<ThresholdStop> Thresholds { get; set; } = [];
+
+    /// <summary>Bar and horizontal bar charts colour each bar by its band instead of the series colour.</summary>
+    public bool ColorBarsByThreshold { get; set; }
+
+    /// <summary>The number column of a table whose cells the thresholds colour.</summary>
+    public string? ThresholdColumn { get; set; }
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter<ChartKind>))]

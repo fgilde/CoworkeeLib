@@ -1723,5 +1723,18 @@
   "Extra filter (OData)": "附加筛选 (OData)",
   "Add grouping": "添加分组",
   "Filtered": "已筛选",
-  "Switches for viewers": "查看者切换项"
+  "Switches for viewers": "查看者切换项",
+  "Thresholds": "阈值",
+  "Colour": "颜色",
+  "Success": "成功",
+  "Warning": "警告",
+  "Error": "错误",
+  "Own colour": "自定义颜色",
+  "Add threshold": "添加阈值",
+  "Bands from the target": "按目标生成区间",
+  "Colour bars by threshold": "按阈值为柱形着色",
+  "Column the thresholds colour": "由阈值着色的列",
+  "Off target": "未达目标",
+  "Near target": "接近目标",
+  "On target": "达到目标"
 }

@@ -122,6 +122,7 @@ export function palette() {
     return {
         dark: luminance < 0.5,
         colors: ['primary', 'secondary', 'tertiary', 'info', 'success', 'warning', 'error'].map(v).filter(c => c),
+        named: Object.fromEntries(['success', 'warning', 'error', 'info'].map(n => [n, v(n)]).filter(e => e[1])),
         text: v('text-secondary'),
         lines: v('lines-default'),
         surface: background,

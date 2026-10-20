@@ -1723,5 +1723,18 @@
   "Extra filter (OData)": "Další filtr (OData)",
   "Add grouping": "Přidat seskupení",
   "Filtered": "Filtrováno",
-  "Switches for viewers": "Přepínače pro diváky"
+  "Switches for viewers": "Přepínače pro diváky",
+  "Thresholds": "Prahové hodnoty",
+  "Colour": "Barva",
+  "Success": "Úspěch",
+  "Warning": "Varování",
+  "Error": "Chyba",
+  "Own colour": "Vlastní barva",
+  "Add threshold": "Přidat práh",
+  "Bands from the target": "Pásma podle cíle",
+  "Colour bars by threshold": "Obarvit sloupce podle prahu",
+  "Column the thresholds colour": "Sloupec, který prahy obarví",
+  "Off target": "Mimo cíl",
+  "Near target": "Blízko cíle",
+  "On target": "V cíli"
 }

@@ -1723,5 +1723,18 @@
   "Extra filter (OData)": "Ek filtre (OData)",
   "Add grouping": "Gruplama ekle",
   "Filtered": "Filtrelenmiş",
-  "Switches for viewers": "İzleyiciler için geçişler"
+  "Switches for viewers": "İzleyiciler için geçişler",
+  "Thresholds": "Eşik değerleri",
+  "Colour": "Renk",
+  "Success": "Başarılı",
+  "Warning": "Uyarı",
+  "Error": "Hata",
+  "Own colour": "Özel renk",
+  "Add threshold": "Eşik ekle",
+  "Bands from the target": "Hedefe göre bantlar",
+  "Colour bars by threshold": "Çubukları eşiğe göre renklendir",
+  "Column the thresholds colour": "Eşiklerin renklendirdiği sütun",
+  "Off target": "Hedef dışı",
+  "Near target": "Hedefe yakın",
+  "On target": "Hedefte"
 }

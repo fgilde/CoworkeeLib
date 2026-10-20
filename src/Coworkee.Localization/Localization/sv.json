@@ -1723,5 +1723,18 @@
   "Extra filter (OData)": "Extra filter (OData)",
   "Add grouping": "Lägg till gruppering",
   "Filtered": "Filtrerat",
-  "Switches for viewers": "Växlare för betraktare"
+  "Switches for viewers": "Växlare för betraktare",
+  "Thresholds": "Tröskelvärden",
+  "Colour": "Färg",
+  "Success": "Lyckat",
+  "Warning": "Varning",
+  "Error": "Fel",
+  "Own colour": "Egen färg",
+  "Add threshold": "Lägg till tröskelvärde",
+  "Bands from the target": "Band utifrån målet",
+  "Colour bars by threshold": "Färga staplar efter tröskelvärde",
+  "Column the thresholds colour": "Kolumn som tröskelvärdena färgar",
+  "Off target": "Utanför målet",
+  "Near target": "Nära målet",
+  "On target": "På målet"
 }

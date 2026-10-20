@@ -1723,5 +1723,18 @@
   "Extra filter (OData)": "Filtre supplémentaire (OData)",
   "Add grouping": "Ajouter un regroupement",
   "Filtered": "Filtré",
-  "Switches for viewers": "Sélecteurs pour les lecteurs"
+  "Switches for viewers": "Sélecteurs pour les lecteurs",
+  "Thresholds": "Seuils",
+  "Colour": "Couleur",
+  "Success": "Succès",
+  "Warning": "Avertissement",
+  "Error": "Erreur",
+  "Own colour": "Couleur personnalisée",
+  "Add threshold": "Ajouter un seuil",
+  "Bands from the target": "Bandes à partir de l'objectif",
+  "Colour bars by threshold": "Colorer les barres selon le seuil",
+  "Column the thresholds colour": "Colonne colorée par les seuils",
+  "Off target": "Hors objectif",
+  "Near target": "Proche de l'objectif",
+  "On target": "Objectif atteint"
 }

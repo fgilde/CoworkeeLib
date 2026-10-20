@@ -4,7 +4,8 @@
 <WidgetStatus Loading="Loading" Error="@Error">
     <div class="cw-kpi" data-testid="kpi">
         <div class="cw-kpi-main">
-            <div class="cw-kpi-value" data-testid="kpi-value">@ReportFormat.Number(_value, Widget.Options)</div>
+            <div class="cw-kpi-value" data-testid="kpi-value" style="@ValueStyle">@ReportFormat.Number(_value, Widget.Options)</div>
+            <ThresholdBadge Stop="Band" ShowLabel="true" Class="cw-kpi-band" />
             @if (_change is { } change)
             {
                 <div class="cw-kpi-trend @(Good(change) ? "good" : "bad")" data-testid="kpi-trend">

@@ -50,7 +50,7 @@
                         <div class="cw-table-row" style="@Template">
                             @foreach (var column in Columns)
                             {
-                                <div class="@CellClass(column)">@Text(chunk[0], column)</div>
+                                <div class="@CellClass(column)" style="@CellStyle(chunk[0], column)"><ThresholdBadge Stop="Band(chunk[0], column)" /> @Text(chunk[0], column)</div>
                             }
                         </div>
                     }

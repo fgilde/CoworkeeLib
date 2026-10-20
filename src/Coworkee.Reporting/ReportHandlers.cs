@@ -205,7 +205,7 @@ internal sealed class ReportHandlers(CoworkeeDbContext db, ReportAccess access, 
         }
 
         var source = sources.FirstOrDefault(s => string.Equals(s.EntitySet, query.EntitySet, StringComparison.OrdinalIgnoreCase));
-        return query.Columns.Concat(new[] { query.DateField, query.OrderBy }.OfType<string>()).FirstOrDefault(c => source?.Find(c) is null) is { } column
+        return query.Columns.Concat(new[] { query.DateField, query.OrderBy, widget.Options.ThresholdColumn }.OfType<string>()).FirstOrDefault(c => source?.Find(c) is null) is { } column
             ? Error.Validation($"{key}.Columns", $"{query.EntitySet} has no field '{column}'.")
             : null;
     }

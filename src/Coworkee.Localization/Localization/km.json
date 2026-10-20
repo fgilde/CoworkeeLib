@@ -1723,5 +1723,18 @@
   "Extra filter (OData)": "តម្រងបន្ថែម (OData)",
   "Add grouping": "បន្ថែមការដាក់ជាក្រុម",
   "Filtered": "បានត្រង",
-  "Switches for viewers": "កុងតាក់សម្រាប់អ្នកមើល"
+  "Switches for viewers": "កុងតាក់សម្រាប់អ្នកមើល",
+  "Thresholds": "កម្រិតកំណត់",
+  "Colour": "ពណ៌",
+  "Success": "ជោគជ័យ",
+  "Warning": "ការព្រមាន",
+  "Error": "កំហុស",
+  "Own colour": "ពណ៌ផ្ទាល់ខ្លួន",
+  "Add threshold": "បន្ថែមកម្រិតកំណត់",
+  "Bands from the target": "ក្រុមពីគោលដៅ",
+  "Colour bars by threshold": "ដាក់ពណ៌របារតាមកម្រិតកំណត់",
+  "Column the thresholds colour": "ជួរឈរដែលកម្រិតកំណត់ដាក់ពណ៌",
+  "Off target": "ក្រៅគោលដៅ",
+  "Near target": "ជិតគោលដៅ",
+  "On target": "ដល់គោលដៅ"
 }

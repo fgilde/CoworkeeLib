@@ -1,0 +1,47 @@
+<div class="cw-settings-label">@L["Thresholds"]</div>
+@foreach (var (stop, index) in Options.Thresholds.Select((s, i) => (s, i)).ToList())
+{
+    <div class="cw-alternative" data-testid="threshold">
+        <div class="cw-settings-row">
+            <MudNumericField T="double" Value="stop.Value" ValueChanged="v => Set(index, stop with { Value = v })" Label="@L["From"]" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true" DebounceInterval="400" />
+            <MudTextField T="string" Value="stop.Label" ValueChanged="v => Set(index, stop with { Label = string.IsNullOrWhiteSpace(v) ? null : v })" Label="@L["Label"]" Variant="Variant.Outlined" Margin="Margin.Dense"
+                          MaxLength="ReportViews.LabelLength" Immediate="true" DebounceInterval="300" />
+            <Reorder Index="index" Count="Options.Thresholds.Count" Move="i => Move(index, i)" Remove="() => Change(() => Options.Thresholds.RemoveAt(index))" />
+        </div>
+        <div class="cw-threshold-colors" role="radiogroup" aria-label="@L["Colour"]">
+            @foreach (var color in ReportThresholds.ThemeColors)
+            {
+                <MudTooltip Text="@L[ReportFormat.Humanize(color[..1].ToUpperInvariant() + color[1..])]">
+                    <MudIconButton Icon="@ThresholdColors.Icon(color)" Size="Size.Small" Style="@($"color:{ThresholdColors.Css(color)}")" Variant="@(stop.Color == color ? Variant.Outlined : Variant.Text)"
+                                   role="radio" aria-checked="@(stop.Color == color ? "true" : "false")" aria-label="@L[ReportFormat.Humanize(color[..1].ToUpperInvariant() + color[1..])]"
+                                   OnClick="() => Set(index, stop with { Color = color })" data-color="@color" />
+                </MudTooltip>
+            }
+            <input type="color" class="cw-threshold-custom" value="@(stop.Color.StartsWith('#') ? stop.Color : "#757575")" aria-label="@L["Own colour"]"
+                   @onchange="e => Set(index, stop with { Color = e.Value?.ToString() ?? stop.Color })" />
+        </div>
+    </div>
+}
+<div class="cw-settings-row">
+    @if (Options.Thresholds.Count < ReportThresholds.Max)
+    {
+        <MudButton StartIcon="@Icons.Material.Filled.Add" Size="Size.Small" Variant="Variant.Text" OnClick="Add" data-testid="add-threshold">@L["Add threshold"]</MudButton>
+    }
+    @if (Options.Target is { } target && target != 0)
+    {
+        <MudButton StartIcon="@Icons.Material.Outlined.Flag" Size="Size.Small" Variant="Variant.Text" OnClick="() => FromTarget(target)" data-testid="thresholds-from-target">@L["Bands from the target"]</MudButton>
+    }
+</div>
+@if (Options.Thresholds.Count > 0 && Widget.Type == WidgetType.Chart)
+{
+    <MudSwitch T="bool" Value="Options.ColorBarsByThreshold" ValueChanged="v => Change(() => Options.ColorBarsByThreshold = v)" Color="Color.Primary" Label="@L["Colour bars by threshold"]" />
+}
+@if (Options.Thresholds.Count > 0 && Widget.Type == WidgetType.Table)
+{
+    <MudSelect T="string" Value="Options.ThresholdColumn" ValueChanged="v => Change(() => Options.ThresholdColumn = v)" Label="@L["Column the thresholds colour"]" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true">
+        @foreach (var field in NumberColumns)
+        {
+            <MudSelectItem Value="field.Path">@field.Label</MudSelectItem>
+        }
+    </MudSelect>
+}

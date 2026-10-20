@@ -1723,5 +1723,18 @@
   "Extra filter (OData)": "追加フィルター (OData)",
   "Add grouping": "グループ化を追加",
   "Filtered": "フィルター済み",
-  "Switches for viewers": "閲覧者向けの切り替え"
+  "Switches for viewers": "閲覧者向けの切り替え",
+  "Thresholds": "しきい値",
+  "Colour": "色",
+  "Success": "成功",
+  "Warning": "警告",
+  "Error": "エラー",
+  "Own colour": "独自の色",
+  "Add threshold": "しきい値を追加",
+  "Bands from the target": "目標から帯を作成",
+  "Colour bars by threshold": "しきい値で棒を色分け",
+  "Column the thresholds colour": "しきい値で色分けする列",
+  "Off target": "目標未達",
+  "Near target": "目標に近い",
+  "On target": "目標達成"
 }

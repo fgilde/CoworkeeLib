@@ -103,6 +103,13 @@ internal sealed class SaveReportValidator : AbstractValidator<SaveReportRequest>
                 metric.RuleFor(m => m.Aggregates).Must(a => a.Count <= ReportLimits.Aggregates).WithMessage($"At most {ReportLimits.Aggregates} values.");
             });
             widget.RuleForEach(w => w.Options.Buckets).ChildRules(bucket => bucket.RuleFor(b => b.Label).NotEmpty().MaximumLength(ReportViews.LabelLength));
+            widget.RuleFor(w => w.Options.Thresholds).Must(t => t.Count <= ReportThresholds.Max).WithMessage($"At most {ReportThresholds.Max} thresholds.");
+            widget.RuleForEach(w => w.Options.Thresholds).ChildRules(stop =>
+            {
+                stop.RuleFor(t => t.Value).Must(double.IsFinite).WithMessage("A threshold is a number.");
+                stop.RuleFor(t => t.Color).Must(ReportThresholds.IsValidColor).WithMessage("Use success, warning, error, info or a colour like #2e7d32.");
+                stop.RuleFor(t => t.Label).MaximumLength(ReportViews.LabelLength);
+            });
             widget.RuleFor(w => w.Query).NotNull().When(w => w.Type is WidgetType.Kpi or WidgetType.Chart or WidgetType.Table or WidgetType.DataTable or WidgetType.Pivot)
                 .WithMessage("Choose a data source.");
         });

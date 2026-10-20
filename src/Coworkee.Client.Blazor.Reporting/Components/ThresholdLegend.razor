@@ -1,0 +1,9 @@
+@if (Options.Thresholds.Count > 0)
+{
+    <div class="cw-threshold-legend" data-testid="threshold-legend">
+        @foreach (var stop in Options.Thresholds.OrderBy(s => s.Value))
+        {
+            <span class="cw-threshold-entry"><ThresholdBadge Stop="stop" /> ≥ @ReportFormat.Number(stop.Value, Options) @stop.Label</span>
+        }
+    </div>
+}

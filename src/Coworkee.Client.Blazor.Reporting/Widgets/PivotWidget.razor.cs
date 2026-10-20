@@ -43,8 +43,11 @@ public partial class PivotWidget
 
     private double ColumnTotal(string column) => _rows.Sum(r => Value(r.Value, column) ?? 0);
 
+    private ThresholdStop? Band(double? value) => ReportThresholds.Find(Widget.Options.Thresholds, value);
+
     private string Shade(double? value) =>
-        value is { } v && _max > 0
+        ThresholdColors.Css(Band(value)?.Color) is { } band ? $"background: color-mix(in srgb, {band} 22%, transparent)"
+        : value is { } v && _max > 0
             ? $"background: color-mix(in srgb, var(--mud-palette-primary) {(Math.Abs(v) / _max * 38).ToString("0", CultureInfo.InvariantCulture)}%, transparent)"
             : string.Empty;
 

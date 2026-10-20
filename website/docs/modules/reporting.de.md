@@ -192,6 +192,19 @@ new ReportWidget
 };
 ```
 
+## Schwellenwerte
+
+*Schwellenwerte* im Widget-Bereich färben einen Wert nach Bändern (`WidgetOptions.Thresholds`, eine Liste von `ThresholdStop`): jeder Schwellenwert hat einen Startwert, eine Farbe und eine Bezeichnung, und ein Wert nimmt das Band des höchsten Schwellenwerts, den er erreicht (Werte unter dem ersten behalten ihre eigene Farbe). Farben sind `success`, `warning`, `error` und `info` des Themes (sie folgen eigenen Themes und dem Dunkelmodus) oder ein eigenes `#rrggbb`; alles andere wird beim Speichern abgelehnt.
+
+| Widget | Was die Bänder färben |
+|---|---|
+| Kennzahl | den Wert und den Tacho, mit Symbol und Bezeichnung des Bands unter dem Wert |
+| Diagramm | mit *Balken nach Schwellenwert färben* (`ColorBarsByThreshold`) jeden Balken eines Balken- oder liegenden Balkendiagramms; eine Legende nennt die Bänder in Worten |
+| Pivot | die Zellen, mit dem Symbol des Bands |
+| Tabelle | die Zellen der Zahlenspalte `ThresholdColumn`, mit dem Symbol des Bands |
+
+Farbe ist nie das einzige Zeichen: jedes Band zeigt ein Symbol (Haken, Warnung, Fehler, Info) und seine Bezeichnung als Text oder Tooltip. *Bänder aus dem Ziel* legt drei Bänder aus dem `Target` des Widgets und *Höher ist besser* an: unter 80 % / nahe / im Ziel, bei niedriger ist besser im Ziel / bis 120 % / darüber.
+
 ## Filter
 
 ![Ein Klick auf ein Tortenstück filtert die übrigen Widgets](../assets/screenshots/reporting-cross-filter.png){ .shot }

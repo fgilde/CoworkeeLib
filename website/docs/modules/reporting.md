@@ -192,6 +192,19 @@ new ReportWidget
 };
 ```
 
+## Thresholds
+
+*Thresholds* in the widget panel colour a value by bands (`WidgetOptions.Thresholds`, a list of `ThresholdStop`): each stop has a start value, a colour and a label, and a value takes the band of the highest stop it reaches (values below the first stop keep their own colour). Colours are the theme's `success`, `warning`, `error` and `info` (they follow custom themes and dark mode) or an own `#rrggbb`; anything else is refused on save.
+
+| Widget | What the bands colour |
+|---|---|
+| KPI | the value and the gauge, with the band's icon and label below the value |
+| Chart | with *Colour bars by threshold* (`ColorBarsByThreshold`), each bar of a bar or horizontal bar chart; a legend lists the bands in words |
+| Pivot | the cells, with the band's icon |
+| Table | the cells of the number column `ThresholdColumn`, with the band's icon |
+
+Colour is never the only sign: every band shows an icon (check, warning, error, info) and its label as text or tooltip. *Bands from the target* builds three bands from the widget's `Target` and *Higher is better*: below 80 % / near / on target, or for lower is better on target / up to 120 % / above.
+
 ## Filters
 
 ![A click on a slice filters the other widgets](../assets/screenshots/reporting-cross-filter.png){ .shot }

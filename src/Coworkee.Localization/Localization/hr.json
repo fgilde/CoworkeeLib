@@ -1723,5 +1723,18 @@
   "Extra filter (OData)": "Dodatni filtar (OData)",
   "Add grouping": "Dodaj grupiranje",
   "Filtered": "Filtrirano",
-  "Switches for viewers": "Prekidači za gledatelje"
+  "Switches for viewers": "Prekidači za gledatelje",
+  "Thresholds": "Pragovi",
+  "Colour": "Boja",
+  "Success": "Uspjeh",
+  "Warning": "Upozorenje",
+  "Error": "Pogreška",
+  "Own colour": "Vlastita boja",
+  "Add threshold": "Dodaj prag",
+  "Bands from the target": "Pojasevi iz cilja",
+  "Colour bars by threshold": "Oboji stupce prema pragu",
+  "Column the thresholds colour": "Stupac koji pragovi boje",
+  "Off target": "Izvan cilja",
+  "Near target": "Blizu cilja",
+  "On target": "Na cilju"
 }

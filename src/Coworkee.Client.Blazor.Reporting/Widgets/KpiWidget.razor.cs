@@ -54,6 +54,10 @@ public partial class KpiWidget
         await ReportSheetAsync([AggregateLabel(value), L["Previous period"]], [[_value, _previous]]);
     }
 
+    private ThresholdStop? Band => ReportThresholds.Find(Widget.Options.Thresholds, _value);
+
+    private string? ValueStyle => ThresholdColors.Css(Band?.Color) is { } color ? $"color:{color}" : null;
+
     private List<ChartPoint> GaugePoints(double target) => [new ChartPoint(L["Target"], (decimal)Math.Clamp((_value ?? 0) / target * 100, 0, 999), null)];
 
     private bool Good(double change) => change >= 0 == Widget.Options.HigherIsBetter;
@@ -70,7 +74,7 @@ public partial class KpiWidget
     private ApexChartOptions<ChartPoint> Gauge(ChartPalette palette) => new()
     {
         Chart = new Chart { Background = "transparent", Sparkline = new ChartSparkline { Enabled = true } },
-        Colors = [Widget.Options.Palette.FirstOrDefault() ?? palette.Colors[0]],
+        Colors = [Band is { } band ? ThresholdColors.Chart(band.Color, palette) : Widget.Options.Palette.FirstOrDefault() ?? palette.Colors[0]],
         PlotOptions = new PlotOptions
         {
             RadialBar = new PlotOptionsRadialBar

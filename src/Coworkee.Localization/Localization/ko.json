@@ -1723,5 +1723,18 @@
   "Extra filter (OData)": "추가 필터 (OData)",
   "Add grouping": "그룹화 추가",
   "Filtered": "필터링됨",
-  "Switches for viewers": "보는 사람용 전환"
+  "Switches for viewers": "보는 사람용 전환",
+  "Thresholds": "임계값",
+  "Colour": "색상",
+  "Success": "성공",
+  "Warning": "경고",
+  "Error": "오류",
+  "Own colour": "사용자 지정 색상",
+  "Add threshold": "임계값 추가",
+  "Bands from the target": "목표 기준 구간",
+  "Colour bars by threshold": "임계값에 따라 막대 색상 지정",
+  "Column the thresholds colour": "임계값으로 색칠할 열",
+  "Off target": "목표 미달",
+  "Near target": "목표 근접",
+  "On target": "목표 달성"
 }

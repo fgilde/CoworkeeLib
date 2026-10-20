@@ -8,6 +8,7 @@ namespace Coworkee.Client.Blazor.Reporting.Widgets;
 public partial class ChartWidget
 {
     private List<ChartSeries> _series = [];
+    private ChartPalette _palette = ChartPalette.Fallback;
     private ApexChartOptions<ChartPoint>? _options;
     private int _render;
 
@@ -22,6 +23,12 @@ public partial class ChartWidget
     // dates on a time axis: ApexCharts spaces the ticks itself
     private bool Timeline => Widget.Options.Chart is ChartKind.Line or ChartKind.Area or ChartKind.Bar or ChartKind.StackedBar
         && FieldOf(Query?.GroupBy?.Field)?.Kind == ReportFieldKind.Date && _series.FirstOrDefault()?.Points is { Count: > 2 } points && points.All(p => p.Date is not null);
+
+    // bars of one series take the colour of their band; other kinds keep their series colours
+    private bool Banded => Widget.Options is { ColorBarsByThreshold: true, Thresholds.Count: > 0 } && Kind is ChartKind.Bar or ChartKind.HorizontalBar;
+
+    private string BarColor(ChartPoint point) =>
+        ReportThresholds.Find(Widget.Options.Thresholds, (double?)point.Value) is { } band ? ThresholdColors.Chart(band.Color, _palette) : Widget.Options.Palette.FirstOrDefault() ?? _palette.Colors[0];
 
     private string? Hint => Query?.GroupBy is null ? L["Choose what to group by."] : null;
 
@@ -65,6 +72,7 @@ public partial class ChartWidget
 
     private ApexChartOptions<ChartPoint> Options(ChartPalette palette)
     {
+        _palette = palette;
         var options = ChartOptions.For(Widget.Options, palette, _series.Count, _series.FirstOrDefault()?.Points.Count ?? 0, Widget.W, s => L[s]);
         if (Timeline)
         {

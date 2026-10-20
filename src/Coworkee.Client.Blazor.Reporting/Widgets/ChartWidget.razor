@@ -15,10 +15,14 @@
                     else
                     {
                         <ApexPointSeries TItem="ChartPoint" Items="series.Points" Name="@series.Name" SeriesType="ChartOptions.SeriesType(Kind)" XValue="p => Timeline ? p.Date : p.Label" YValue="p => p.Value"
-                                         ShowDataLabels="@(Widget.Options.ShowDataLabels || Kind is ChartKind.Treemap or ChartKind.Heatmap)" />
+                                         ShowDataLabels="@(Widget.Options.ShowDataLabels || Kind is ChartKind.Treemap or ChartKind.Heatmap)" PointColor="@(Banded ? BarColor : null)" />
                     }
                 }
             </ApexChart>
         }
     </div>
+    @if (Banded)
+    {
+        <ThresholdLegend Options="Widget.Options" />
+    }
 </WidgetStatus>

@@ -24,7 +24,7 @@
                         @foreach (var column in _columns)
                         {
                             var value = Value(row.Value, column.Value);
-                            <td class="number cw-pivot-cell" style="@Shade(value)" @onclick="() => Select(row, column)">@ReportFormat.Number(value, Widget.Options)</td>
+                            <td class="number cw-pivot-cell" style="@Shade(value)" @onclick="() => Select(row, column)"><ThresholdBadge Stop="Band(value)" /> @ReportFormat.Number(value, Widget.Options)</td>
                         }
                         @if (Totals)
                         {

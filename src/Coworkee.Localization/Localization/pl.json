@@ -1723,5 +1723,18 @@
   "Extra filter (OData)": "Dodatkowy filtr (OData)",
   "Add grouping": "Dodaj grupowanie",
   "Filtered": "Przefiltrowane",
-  "Switches for viewers": "Przełączniki dla odbiorców"
+  "Switches for viewers": "Przełączniki dla odbiorców",
+  "Thresholds": "Progi",
+  "Colour": "Kolor",
+  "Success": "Sukces",
+  "Warning": "Ostrzeżenie",
+  "Error": "Błąd",
+  "Own colour": "Własny kolor",
+  "Add threshold": "Dodaj próg",
+  "Bands from the target": "Przedziały z celu",
+  "Colour bars by threshold": "Koloruj słupki według progu",
+  "Column the thresholds colour": "Kolumna kolorowana przez progi",
+  "Off target": "Poza celem",
+  "Near target": "Blisko celu",
+  "On target": "W celu"
 }

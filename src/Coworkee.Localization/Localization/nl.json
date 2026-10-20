@@ -1723,5 +1723,18 @@
   "Extra filter (OData)": "Extra filter (OData)",
   "Add grouping": "Groepering toevoegen",
   "Filtered": "Gefilterd",
-  "Switches for viewers": "Schakelaars voor kijkers"
+  "Switches for viewers": "Schakelaars voor kijkers",
+  "Thresholds": "Drempelwaarden",
+  "Colour": "Kleur",
+  "Success": "Succes",
+  "Warning": "Waarschuwing",
+  "Error": "Fout",
+  "Own colour": "Eigen kleur",
+  "Add threshold": "Drempelwaarde toevoegen",
+  "Bands from the target": "Banden vanuit het doel",
+  "Colour bars by threshold": "Balken kleuren op drempelwaarde",
+  "Column the thresholds colour": "Kolom die de drempelwaarden kleuren",
+  "Off target": "Niet op doel",
+  "Near target": "Bijna op doel",
+  "On target": "Op doel"
 }

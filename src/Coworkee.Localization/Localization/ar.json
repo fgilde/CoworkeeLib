@@ -1723,5 +1723,18 @@
   "Extra filter (OData)": "عامل تصفية إضافي (OData)",
   "Add grouping": "إضافة تجميع",
   "Filtered": "مُصفّى",
-  "Switches for viewers": "مفاتيح التبديل للمشاهدين"
+  "Switches for viewers": "مفاتيح التبديل للمشاهدين",
+  "Thresholds": "العتبات",
+  "Colour": "اللون",
+  "Success": "نجاح",
+  "Warning": "تحذير",
+  "Error": "خطأ",
+  "Own colour": "لون خاص",
+  "Add threshold": "إضافة عتبة",
+  "Bands from the target": "نطاقات من الهدف",
+  "Colour bars by threshold": "تلوين الأعمدة حسب العتبة",
+  "Column the thresholds colour": "العمود الذي تلوّنه العتبات",
+  "Off target": "خارج الهدف",
+  "Near target": "قريب من الهدف",
+  "On target": "ضمن الهدف"
 }

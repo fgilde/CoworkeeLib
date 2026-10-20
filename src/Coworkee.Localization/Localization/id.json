@@ -1723,5 +1723,18 @@
   "Extra filter (OData)": "Filter tambahan (OData)",
   "Add grouping": "Tambah pengelompokan",
   "Filtered": "Terfilter",
-  "Switches for viewers": "Pengalih untuk pembaca"
+  "Switches for viewers": "Pengalih untuk pembaca",
+  "Thresholds": "Ambang batas",
+  "Colour": "Warna",
+  "Success": "Berhasil",
+  "Warning": "Peringatan",
+  "Error": "Kesalahan",
+  "Own colour": "Warna sendiri",
+  "Add threshold": "Tambah ambang batas",
+  "Bands from the target": "Pita dari target",
+  "Colour bars by threshold": "Warnai batang menurut ambang",
+  "Column the thresholds colour": "Kolom yang diwarnai ambang batas",
+  "Off target": "Di luar target",
+  "Near target": "Mendekati target",
+  "On target": "Sesuai target"
 }

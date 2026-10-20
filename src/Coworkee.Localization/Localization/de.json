@@ -1723,5 +1723,18 @@
   "Extra filter (OData)": "Zusätzlicher Filter (OData)",
   "Add grouping": "Gruppierung hinzufügen",
   "Filtered": "Gefiltert",
-  "Switches for viewers": "Umschalter für Betrachter"
+  "Switches for viewers": "Umschalter für Betrachter",
+  "Thresholds": "Schwellenwerte",
+  "Colour": "Farbe",
+  "Success": "Erfolg",
+  "Warning": "Warnung",
+  "Error": "Fehler",
+  "Own colour": "Eigene Farbe",
+  "Add threshold": "Schwellenwert hinzufügen",
+  "Bands from the target": "Bänder aus dem Ziel",
+  "Colour bars by threshold": "Balken nach Schwellenwert färben",
+  "Column the thresholds colour": "Spalte, die die Schwellenwerte färben",
+  "Off target": "Nicht im Ziel",
+  "Near target": "Nahe am Ziel",
+  "On target": "Im Ziel"
 }

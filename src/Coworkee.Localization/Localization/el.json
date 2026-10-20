@@ -1723,5 +1723,18 @@
   "Extra filter (OData)": "Επιπλέον φίλτρο (OData)",
   "Add grouping": "Προσθήκη ομαδοποίησης",
   "Filtered": "Φιλτραρισμένο",
-  "Switches for viewers": "Επιλογές για τους θεατές"
+  "Switches for viewers": "Επιλογές για τους θεατές",
+  "Thresholds": "Κατώφλια",
+  "Colour": "Χρώμα",
+  "Success": "Επιτυχία",
+  "Warning": "Προειδοποίηση",
+  "Error": "Σφάλμα",
+  "Own colour": "Δικό σας χρώμα",
+  "Add threshold": "Προσθήκη κατωφλίου",
+  "Bands from the target": "Ζώνες από τον στόχο",
+  "Colour bars by threshold": "Χρωματισμός ράβδων ανά κατώφλι",
+  "Column the thresholds colour": "Στήλη που χρωματίζουν τα κατώφλια",
+  "Off target": "Εκτός στόχου",
+  "Near target": "Κοντά στον στόχο",
+  "On target": "Εντός στόχου"
 }

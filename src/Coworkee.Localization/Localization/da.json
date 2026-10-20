@@ -1723,5 +1723,18 @@
   "Extra filter (OData)": "Ekstra filter (OData)",
   "Add grouping": "Tilføj gruppering",
   "Filtered": "Filtreret",
-  "Switches for viewers": "Skift for seere"
+  "Switches for viewers": "Skift for seere",
+  "Thresholds": "Tærskler",
+  "Colour": "Farve",
+  "Success": "Succes",
+  "Warning": "Advarsel",
+  "Error": "Fejl",
+  "Own colour": "Egen farve",
+  "Add threshold": "Tilføj tærskel",
+  "Bands from the target": "Bånd ud fra målet",
+  "Colour bars by threshold": "Farv søjler efter tærskel",
+  "Column the thresholds colour": "Kolonne, som tærsklerne farver",
+  "Off target": "Uden for målet",
+  "Near target": "Tæt på målet",
+  "On target": "På målet"
 }

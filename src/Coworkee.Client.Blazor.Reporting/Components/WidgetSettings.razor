@@ -159,6 +159,11 @@
             </MudSelect>
         }
 
+        @if (Widget.Type is WidgetType.Kpi or WidgetType.Chart or WidgetType.Pivot or WidgetType.Table && Widget.Query is not null)
+        {
+            <ThresholdEditor Widget="Widget" State="State" OnChanged="() => Change(() => { })" />
+        }
+
         @if (Widget.Type == WidgetType.Chart)
         {
             <MudSwitch T="bool" Value="Widget.Options.ShowLegend" ValueChanged="v => Change(() => Widget.Options.ShowLegend = v)" Color="Color.Primary" Label="@L["Legend"]" />

@@ -1723,5 +1723,18 @@
   "Extra filter (OData)": "Додатковий фільтр (OData)",
   "Add grouping": "Додати групування",
   "Filtered": "Відфільтровано",
-  "Switches for viewers": "Перемикачі для глядачів"
+  "Switches for viewers": "Перемикачі для глядачів",
+  "Thresholds": "Порогові значення",
+  "Colour": "Колір",
+  "Success": "Успіх",
+  "Warning": "Попередження",
+  "Error": "Помилка",
+  "Own colour": "Власний колір",
+  "Add threshold": "Додати поріг",
+  "Bands from the target": "Діапазони від цілі",
+  "Colour bars by threshold": "Фарбувати стовпці за порогом",
+  "Column the thresholds colour": "Стовпець, який фарбують пороги",
+  "Off target": "Поза ціллю",
+  "Near target": "Близько до цілі",
+  "On target": "У цілі"
 }

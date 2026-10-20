@@ -1723,5 +1723,18 @@
   "Extra filter (OData)": "Допълнителен филтър (OData)",
   "Add grouping": "Добавяне на групиране",
   "Filtered": "Филтрирано",
-  "Switches for viewers": "Превключватели за зрителите"
+  "Switches for viewers": "Превключватели за зрителите",
+  "Thresholds": "Прагове",
+  "Colour": "Цвят",
+  "Success": "Успех",
+  "Warning": "Предупреждение",
+  "Error": "Грешка",
+  "Own colour": "Собствен цвят",
+  "Add threshold": "Добавяне на праг",
+  "Bands from the target": "Ленти от целта",
+  "Colour bars by threshold": "Оцветяване на стълбовете по праг",
+  "Column the thresholds colour": "Колона, оцветявана от праговете",
+  "Off target": "Извън целта",
+  "Near target": "Близо до целта",
+  "On target": "В целта"
 }

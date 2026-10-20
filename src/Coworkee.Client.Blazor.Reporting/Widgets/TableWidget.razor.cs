@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Coworkee.Client.Blazor.Data;
+using Coworkee.Client.Blazor.Reporting.State;
 using Coworkee.Contracts.Data;
 using Coworkee.Contracts.Reporting;
 using Microsoft.AspNetCore.Components;
@@ -105,6 +106,15 @@ public partial class TableWidget
     private string Secondary(JsonElement row) => string.Join(" · ", Columns.Skip(1).Take(3).Select(c => Text(row, c)).Where(t => t.Length > 0));
 
     private string Initial(JsonElement row) => Text(row, Columns[0]) is { Length: > 0 } text ? text[..1].ToUpperInvariant() : "?";
+
+    private ThresholdStop? Band(JsonElement row, ReportFieldDto column) =>
+        Widget.Options.Thresholds.Count > 0 && string.Equals(column.Path, Widget.Options.ThresholdColumn, StringComparison.OrdinalIgnoreCase)
+        && RowValues.Get(row, column.Path) is double value
+            ? ReportThresholds.Find(Widget.Options.Thresholds, value)
+            : null;
+
+    private string? CellStyle(JsonElement row, ReportFieldDto column) =>
+        ThresholdColors.Css(Band(row, column)?.Color) is { } color ? $"color:{color};font-weight:600" : null;
 
     private static string CellClass(ReportFieldDto column) => column.Kind is ReportFieldKind.Integer or ReportFieldKind.Number ? "cw-table-cell number" : "cw-table-cell";
 }
