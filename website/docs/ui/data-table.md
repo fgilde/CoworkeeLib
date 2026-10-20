@@ -306,6 +306,8 @@ await Dialogs.ShowEditAsync(L["New product"], model, saved => Api.SaveProductAsy
 | `OptionalODataPicker` | an optional foreign key (`Guid?`): like `ODataPicker`, clearing it gives null |
 | `ImageDataUrlEdit` | a picture kept as data URL |
 
+`TextProperty` of both pickers (default `Name`) takes several properties separated by commas: `.WithAdditionalAttribute(nameof(ODataPicker.TextProperty), "FirstName,LastName")` shows *Eva Schulz*, selects only these columns, sorts by them and finds a row when every typed word appears in one of them (*eva sch*).
+
 ### Chip lists
 
 In an `ObjectEdit` meta, `ChipListMeta.RenderAsChips` renders an `IReadOnlyList<string>` property as chips over the full width of the form, with MudEx's `MudExTagField<string>`: Enter, a space, comma or line break, a paste (a pasted list splits into chips) or leaving the field adds them; the &times; of a chip removes it. The action configures the tag field, e.g. `SearchFunc` (suggestions), `ValidateChip` (error text of an invalid value, `null` for a valid one) and `IsChipClosable` (chips that cannot be removed):

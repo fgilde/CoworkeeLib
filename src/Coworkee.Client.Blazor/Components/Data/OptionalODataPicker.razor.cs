@@ -8,6 +8,7 @@ public partial class OptionalODataPicker
 {
     [Parameter, EditorRequired] public string EntitySet { get; set; } = string.Empty;
 
+    /// <summary>One property or several separated by commas, see <see cref="ODataPicker.TextProperty"/>.</summary>
     [Parameter] public string TextProperty { get; set; } = "Name";
 
     [Parameter] public Guid? Value { get; set; }

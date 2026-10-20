@@ -28,6 +28,25 @@ public sealed class EditDialogGridTests : ClientTestBase
     }
 
     [Fact]
+    public async Task Picker_with_several_text_properties_selects_them_joins_them_and_finds_every_word_in_any_of_them()
+    {
+        var eva = Guid.NewGuid();
+        var queries = new List<ODataQuery>();
+        var people = new FakeODataClient().With("Employees", JsonSerializer.SerializeToElement(new { Id = eva, FirstName = "Eva", LastName = "Schulz" }));
+        people.Queried += (_, query) => queries.Add(query);
+        Services.AddSingleton<IODataClient>(people);
+        Render<MudPopoverProvider>();
+
+        var picker = Render<OptionalODataPicker>(p => p.Add(e => e.EntitySet, "Employees").Add(e => e.TextProperty, "FirstName, LastName").Add(e => e.Value, eva));
+
+        picker.WaitForAssertion(() => picker.Find("input").GetAttribute("value").ShouldBe("Eva Schulz"));
+        (queries[0].Select, queries[0].OrderBy).ShouldBe(("Id,FirstName,LastName", "FirstName,LastName"));
+        var search = picker.FindComponent<MudAutocomplete<ODataPickerItem>>();
+        (await search.Instance.SearchFunc!("eva sch", CancellationToken.None)).Select(i => i.Text).ShouldBe(["Eva Schulz"]);
+        queries[^1].Filter.ShouldBe("(contains(tolower(FirstName),'eva') or contains(tolower(LastName),'eva')) and (contains(tolower(FirstName),'sch') or contains(tolower(LastName),'sch'))");
+    }
+
+    [Fact]
     public async Task The_dialog_keeps_editors_set_with_RenderWith_in_the_grid_and_localizes_enums()
     {
         Services.AddSingleton<IODataClient>(Brands());

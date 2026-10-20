@@ -22,6 +22,7 @@
 
 ### Neu
 
+- `ODataPicker`/`OptionalODataPicker`: `TextProperty="FirstName,LastName"` zeigt mehrere Eigenschaften mit Leerzeichen verbunden, fragt sie per `$select` ab, sortiert nach ihnen und findet eine Zeile, wenn jedes Wort der Suche in einer davon vorkommt; mit einer Eigenschaft trifft eine Suche aus mehreren Wörtern jetzt auch, wenn die Wörter nicht nebeneinander stehen. Siehe [Datentabellen](../ui/data-table.md#bearbeitungsdialoge).
 - `ResourceCalendar`: `CalendarResource.WorkDays` ersetzt die Arbeitstage für eine Zeile (Teilzeit), und weitere Attribute (`id`, `data-testid`, ...) landen auf dem Wurzelelement. Siehe [Ressourcenkalender](../ui/resource-calendar.md).
 - Workflows: `EntityWorkflow<T>.Include(e => e.Employee)` lädt eine Navigation mit der Entität, sodass `Describe`, Guards und Aktionen sie nutzen können (`Describe(l => $"Urlaub von {l.Employee.Name}")`). Siehe [Workflows](../modules/workflows.md).
 - OData-Sets: `AddODataEntity<T>(set, permission, o => o.Hide(...).HideUnless(e => e.Salary, permission))` zeigt eine Eigenschaft nur Benutzern mit der Berechtigung; Listen, Einzelabrufe, `$filter`/`$orderby`/`$select`/`$expand`, Facetten, Exporte, Berichte, die globale Suche, die Daten-Tools des Assistenten, die Entity-Historie und Webhooks halten sich daran. `ODataEntityRegistration.ProtectedProperties`, `ODataEntityAccess.DeniedPropertiesAsync`. Siehe [OData](../web/odata.md#eigenschaften-hinter-einer-berechtigung).

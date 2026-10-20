@@ -8,7 +8,11 @@ namespace Coworkee.Client.Blazor.Components.Data;
 
 public sealed record ODataPickerItem(Guid Id, string Text);
 
-/// <summary>Chooses a row of an OData entity set by its id, searching on a text property; for foreign keys in forms.</summary>
+/// <summary>
+/// Chooses a row of an OData entity set by its id, searching on its text properties; for foreign keys in forms.
+/// <see cref="TextProperty"/> takes one property or several separated by commas (<c>"FirstName,LastName"</c>): the text joins them with spaces,
+/// and every word of the search must appear in one of them.
+/// </summary>
 public partial class ODataPicker
 {
     private ODataPickerItem? _selected;
@@ -20,6 +24,8 @@ public partial class ODataPicker
     [Parameter, EditorRequired] public string EntitySet { get; set; } = string.Empty;
 
     [Parameter] public string TextProperty { get; set; } = "Name";
+
+    private string[] TextProperties => TextProperty.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
     [Parameter] public Guid Value { get; set; }
 
@@ -50,14 +56,16 @@ public partial class ODataPicker
     }
 
     private Task<IEnumerable<ODataPickerItem>> SearchAsync(string? text, CancellationToken cancellationToken) =>
-        QueryAsync(string.IsNullOrWhiteSpace(text) ? null : ODataFilter.Search(text, [TextProperty]), 50, cancellationToken);
+        QueryAsync(ODataFilter.And([.. (text ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(word => ODataFilter.Search(word, TextProperties))]), 50, cancellationToken);
 
     private async Task<IEnumerable<ODataPickerItem>> QueryAsync(string? filter, int top, CancellationToken cancellationToken)
     {
-        var page = await OData.QueryAsync<JsonElement>(EntitySet, new ODataQuery { Filter = filter, OrderBy = TextProperty, Top = top, Count = false }, cancellationToken);
+        var properties = TextProperties;
+        var query = new ODataQuery { Filter = filter, Select = string.Join(',', ["Id", .. properties]), OrderBy = string.Join(',', properties), Top = top, Count = false };
+        var page = await OData.QueryAsync<JsonElement>(EntitySet, query, cancellationToken);
         return page.Items.Select(row => new ODataPickerItem(
             row.GetProperty("Id").GetGuid(),
-            row.TryGetProperty(TextProperty, out var text) ? text.ToString() : string.Empty));
+            string.Join(' ', properties.Select(p => row.TryGetProperty(p, out var text) && text.ValueKind != JsonValueKind.Null ? text.ToString() : null).Where(t => !string.IsNullOrEmpty(t)))));
     }
 
     private async Task SelectAsync(ODataPickerItem? item)
