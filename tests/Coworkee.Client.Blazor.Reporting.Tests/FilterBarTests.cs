@@ -38,7 +38,7 @@ public sealed class FilterBarTests : ReportingTestBase
         bar.Find("[data-testid='date-range'] button").Click();
         popovers.WaitForElement("[data-preset='Last7Days']").Click();
 
-        state.DateRange!.Preset.ShouldBe(DateRangePreset.Last7Days);
+        bar.WaitForAssertion(() => state.DateRange?.Preset.ShouldBe(DateRangePreset.Last7Days));
         state.FilterFor(Chart.Query!)!.ShouldStartWith("OrderDate ge ");
         bar.WaitForAssertion(() => bar.Find("[data-testid='date-range'] button").TextContent.ShouldContain("Last 7 days"));
     }
