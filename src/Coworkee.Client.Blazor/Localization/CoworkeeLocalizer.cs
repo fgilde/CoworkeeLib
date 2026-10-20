@@ -34,6 +34,10 @@ public sealed class CoworkeeLocalizer(ILocalizationApi api, IJSRuntime js) : IDi
     /// <summary>The translation of <paramref name="key"/>, or null when the language has none.</summary>
     public string? Find(string key) => _texts.TryGetValue(key, out var text) ? text : null;
 
+    /// <summary>Text users or a seed stored (a report name, a widget title): its translation when one exists, else as it is; never reported as missing.</summary>
+    [return: System.Diagnostics.CodeAnalysis.NotNullIfNotNull(nameof(text))]
+    public string? Stored(string? text) => text is { Length: > 0 } ? Find(text) ?? text : text;
+
     public bool IsInitialized { get; private set; }
 
     /// <summary>

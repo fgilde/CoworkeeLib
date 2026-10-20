@@ -65,7 +65,7 @@ public partial class ChartWidget
 
     private ApexChartOptions<ChartPoint> Options(ChartPalette palette)
     {
-        var options = ChartOptions.For(Widget.Options, palette, _series.Count, _series.FirstOrDefault()?.Points.Count ?? 0, Widget.W);
+        var options = ChartOptions.For(Widget.Options, palette, _series.Count, _series.FirstOrDefault()?.Points.Count ?? 0, Widget.W, s => L[s]);
         if (Timeline)
         {
             ChartOptions.TimeAxis(options, Query!.GroupBy!.Bucket);

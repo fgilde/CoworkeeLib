@@ -1,7 +1,7 @@
 @attribute [Authorize(Policy = Coworkee.Client.Blazor.Security.PermissionPolicy.Prefix + ReportPermissions.View)]
 
 <ReportStyles />
-<PageTitle>@(_report?.Name ?? L["Reports"])</PageTitle>
+<PageTitle>@(L.Stored(_report?.Name) ?? L["Reports"])</PageTitle>
 <RealtimeSubscription Topic="@($"entity:Report:{Id}")" OnEvent="_ => ReportChangedAsync()" />
 @foreach (var topic in DataTopics)
 {
@@ -24,14 +24,14 @@ else
             <div class="cw-report-card-icon"><MudIcon Icon="@(_report.Icon ?? Icons.Material.Outlined.SpaceDashboard)" /></div>
             <div class="cw-report-heading">
                 <div class="cw-report-name">
-                    <MudText Typo="Typo.h5" Color="Color.Primary" data-testid="report-title">@_report.Name</MudText>
+                    <MudText Typo="Typo.h5" Color="Color.Primary" data-testid="report-title">@L.Stored(_report.Name)</MudText>
                     <MudIconButton Icon="@(_report.IsFavorite ? Icons.Material.Filled.Star : Icons.Material.Outlined.StarBorder)" Color="@(_report.IsFavorite ? Color.Warning : Color.Default)"
                                    Size="Size.Small" aria-label="@L["Favorite"]" OnClick="FavoriteAsync" Class="cw-no-print" />
                     <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Icon="@Reports.VisibilityIcon(_report.Visibility)" Class="cw-no-print">@L[Reports.VisibilityText(_report.Visibility)]</MudChip>
                 </div>
                 @if (_report.Description is { Length: > 0 } description)
                 {
-                    <MudText Typo="Typo.body2" Class="mud-text-secondary">@description</MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">@L.Stored(description)</MudText>
                 }
             </div>
             <MudSpacer />

@@ -59,7 +59,7 @@ public abstract class WidgetBase : Coworkee.Client.Blazor.Components.CoworkeeCom
     protected Task ReportInfoAsync(string info) => OnInfo.InvokeAsync(info);
 
     protected string AggregateLabel(ReportAggregate aggregate) =>
-        aggregate.Label is { Length: > 0 } label ? label
+        aggregate.Label is { Length: > 0 } label ? L.Stored(label)
         : aggregate.Function == AggregateFunction.Count ? L["Count"]
         : $"{L[ReportFormat.Humanize(aggregate.Function.ToString())]} {FieldOf(aggregate.Field)?.Label ?? aggregate.Field}";
 

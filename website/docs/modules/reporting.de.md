@@ -114,6 +114,8 @@ db.Add(new Report
 });
 ```
 
+Name und Beschreibung des Berichts, Widget-Titel und Wertbeschriftungen werden gespeichert, wie sie geschrieben sind, und übersetzt angezeigt, wenn die App einen Text dafür hat (ihre `Localization/*.json`); ein Seed schreibt also englische Schlüssel und liefert deren Übersetzungen mit. Eigene Namen ohne Text erscheinen, wie sie eingegeben wurden.
+
 ## Aggregation auf dem Server
 
 Widgets senden ein Abfragemodell, nie einen Ausdruck:

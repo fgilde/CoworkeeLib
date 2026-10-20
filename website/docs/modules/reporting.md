@@ -114,6 +114,8 @@ db.Add(new Report
 });
 ```
 
+Report name and description, widget titles and value labels are stored as written and shown translated when the app has a text for them (its `Localization/*.json`), so a seed writes English keys and ships their translations. Users' own names without a text show as typed.
+
 ## Server side aggregation
 
 Widgets send a query model, never an expression:

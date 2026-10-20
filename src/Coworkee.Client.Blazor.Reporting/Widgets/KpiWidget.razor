@@ -31,7 +31,7 @@
         {
             <div class="cw-kpi-spark">
                 <ApexChart @key="_render" TItem="ChartPoint" Options="_spark" Height="@("100%")">
-                    <ApexPointSeries TItem="ChartPoint" Items="_sparkline" Name="@(Widget.Title ?? string.Empty)" SeriesType="SeriesType.Area" XValue="p => p.Label" YValue="p => p.Value" />
+                    <ApexPointSeries TItem="ChartPoint" Items="_sparkline" Name="@(L.Stored(Widget.Title) ?? string.Empty)" SeriesType="SeriesType.Area" XValue="p => p.Label" YValue="p => p.Value" />
                 </ApexChart>
             </div>
         }

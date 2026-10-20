@@ -13,6 +13,7 @@
 
 ### Korrekturen
 
+- Reporting: Berichtsnamen und -beschreibungen, Widget-Titel und Wertbeschriftungen zeigen ihre Übersetzung, wenn die App einen Text dafür hat (geseedete Berichte lassen sich lokalisieren; der gespeicherte Text bleibt der Schlüssel, `CoworkeeLocalizer.Stored`); ein Widget aus einer Vorlage speichert den Schlüssel der Vorlage statt des übersetzten Titels. Die Summe im Donut und die Ziellinie sind übersetzt, und Kategorien der x-Achse drehen sich um 45°, statt abgeschnitten zu werden ("2…", "Back…"). Siehe [Reporting](../modules/reporting.md#einen-bericht-auf-einer-quelle-anlegen-seed).
 - `CoworkeeDataTable`: Spaltenköpfe behalten ihre Beschriftung auf einer Zeile, eine breite Tabelle scrollt also seitlich, statt ihre letzten Spalten ("Kostenstell", "Stat") unter die fixierte Aktionsspalte zu quetschen.
 - Layout: der App-Titel in der App-Leiste bleibt einzeilig und endet auf schmalen Bildschirmen mit Auslassungspunkten, statt umzubrechen.
 - `CoworkeeWorkflow`: das Fälligkeitsdatum einer Genehmigung behält seinen Abstand zum Wartetext ("…Personen. Fällig 25.10.").

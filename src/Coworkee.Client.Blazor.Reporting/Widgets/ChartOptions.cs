@@ -28,8 +28,9 @@ public static class ChartOptions
 
     public static bool IsCircular(ChartKind kind) => kind is ChartKind.Pie or ChartKind.Donut;
 
-    public static ApexChartOptions<ChartPoint> For(WidgetOptions widget, ChartPalette palette, int seriesCount, int points = 0, int columns = ReportDefinition.GridColumns)
+    public static ApexChartOptions<ChartPoint> For(WidgetOptions widget, ChartPalette palette, int seriesCount, int points = 0, int columns = ReportDefinition.GridColumns, Func<string, string>? text = null)
     {
+        text ??= s => s;
         var formatter = ReportFormat.Script(widget);
         var kind = widget.Chart;
         var colors = widget.Palette is { Count: > 0 } own ? own : palette.Colors;
@@ -69,7 +70,7 @@ public static class ChartOptions
                     Donut = new PlotOptionsDonut
                     {
                         Size = "64%",
-                        Labels = new DonutLabels { Show = true, Total = new DonutLabelTotal { Show = true, Label = "Total", Formatter = $"function(w){{ var f = {formatter}; return f(w.globals.seriesTotals.reduce(function(a, b){{ return a + b; }}, 0)); }}" } },
+                        Labels = new DonutLabels { Show = true, Total = new DonutLabelTotal { Show = true, Label = text("Total"), Formatter = $"function(w){{ var f = {formatter}; return f(w.globals.seriesTotals.reduce(function(a, b){{ return a + b; }}, 0)); }}" } },
                     },
                 },
                 Treemap = new PlotOptionsTreemap { Distributed = true, EnableShades = false },
@@ -78,7 +79,8 @@ public static class ChartOptions
             Xaxis = new XAxis
             {
                 TickAmount = points > 16 && kind is ChartKind.Line or ChartKind.Area or ChartKind.Bar or ChartKind.StackedBar ? 12 : null,
-                Labels = new XAxisLabels { Trim = true, HideOverlappingLabels = true, Rotate = 0, Formatter = kind == ChartKind.HorizontalBar ? ReportFormat.Script(widget, compact: true) : null },
+                // labels that do not fit turn by 45° instead of being cut to "2…"
+                Labels = new XAxisLabels { Trim = true, HideOverlappingLabels = true, Rotate = -45, Formatter = kind == ChartKind.HorizontalBar ? ReportFormat.Script(widget, compact: true) : null },
             },
             Markers = new Markers { Size = kind == ChartKind.Line && points <= 24 ? 4 : 0, StrokeWidth = 0, Hover = new MarkersHover { Size = 6 } },
             States = new States { Active = new StatesActive { Filter = new StatesFilter { Type = StatesFilterType.darken, Value = 0.25 } } },
@@ -87,7 +89,7 @@ public static class ChartOptions
         {
             options.Annotations = new Annotations
             {
-                Yaxis = [new AnnotationsYAxis { Y = target, BorderColor = palette.Colors.ElementAtOrDefault(6) ?? "#f44336", StrokeDashArray = 6, Label = new Label { Text = "Target" } }],
+                Yaxis = [new AnnotationsYAxis { Y = target, BorderColor = palette.Colors.ElementAtOrDefault(6) ?? "#f44336", StrokeDashArray = 6, Label = new Label { Text = text("Target") } }],
             };
         }
 

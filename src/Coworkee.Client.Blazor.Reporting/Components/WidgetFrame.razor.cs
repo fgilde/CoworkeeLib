@@ -44,7 +44,7 @@ public partial class WidgetFrame
 
     [Parameter] public EventCallback OnChanged { get; set; }
 
-    private string Title => Widget.Title is { Length: > 0 } title ? title : L[ReportFormat.Humanize(Widget.Type.ToString())];
+    private string Title => Widget.Title is { Length: > 0 } title ? L.Stored(title) : L[ReportFormat.Humanize(Widget.Type.ToString())];
 
     private Task ViewChanged(TableView view)
     {

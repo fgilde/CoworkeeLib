@@ -139,7 +139,6 @@ public partial class ReportPage : IAsyncDisposable
     {
         Remember();
         var widget = WidgetPresets.Create(preset, _state!.Sources, _definition!.Widgets, _state.EntitySets.FirstOrDefault());
-        widget.Title = L[preset.Name];
         _definition.Widgets.Add(widget);
         _selected = widget;
     }

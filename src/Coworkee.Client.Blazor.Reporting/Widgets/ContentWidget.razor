@@ -6,10 +6,10 @@
         </div>
         break;
     case WidgetType.Image when Safe:
-        <img class="cw-image" src="@Widget.Options.Url" alt="@(Widget.Title ?? string.Empty)" loading="lazy" data-testid="image-widget" />
+        <img class="cw-image" src="@Widget.Options.Url" alt="@(L.Stored(Widget.Title) ?? string.Empty)" loading="lazy" data-testid="image-widget" />
         break;
     case WidgetType.Embed when Safe:
-        <iframe class="cw-embed" src="@Widget.Options.Url" title="@(Widget.Title ?? string.Empty)" sandbox="@Sandbox" referrerpolicy="no-referrer" loading="lazy" data-testid="embed-widget"></iframe>
+        <iframe class="cw-embed" src="@Widget.Options.Url" title="@(L.Stored(Widget.Title) ?? string.Empty)" sandbox="@Sandbox" referrerpolicy="no-referrer" loading="lazy" data-testid="embed-widget"></iframe>
         break;
     default:
         <div class="cw-widget-message">

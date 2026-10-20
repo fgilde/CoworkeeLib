@@ -61,6 +61,17 @@ public sealed class LocalizationTests : ClientTestBase
     }
 
     [Fact]
+    public async Task Stored_texts_are_translated_when_a_text_exists_and_kept_otherwise()
+    {
+        var localizer = Services.GetRequiredService<Localization.CoworkeeLocalizer>();
+        await localizer.UseAsync("de");
+
+        localizer.Stored("Products").ShouldBe("Produkte");
+        localizer.Stored("Sales by region").ShouldBe("Sales by region");
+        localizer.Stored(null).ShouldBeNull();
+    }
+
+    [Fact]
     public async Task Switching_off_the_current_language_moves_the_client_to_the_default()
     {
         var localizer = Services.GetRequiredService<Localization.CoworkeeLocalizer>();

@@ -45,7 +45,7 @@ else
                 <div class="cw-report-card-head">
                     <div class="cw-report-card-icon"><MudIcon Icon="@(report.Icon ?? Icons.Material.Outlined.SpaceDashboard)" /></div>
                     <div class="cw-report-card-title">
-                        <MudText Typo="Typo.subtitle1"><b>@report.Name</b></MudText>
+                        <MudText Typo="Typo.subtitle1"><b>@L.Stored(report.Name)</b></MudText>
                         <MudText Typo="Typo.caption" Class="mud-text-secondary">@Owner(report)</MudText>
                     </div>
                     <div @onclick:stopPropagation="true">
@@ -67,7 +67,7 @@ else
                 </div>
                 @if (report.Description is { Length: > 0 } description)
                 {
-                    <MudText Typo="Typo.body2" Class="cw-report-card-description">@description</MudText>
+                    <MudText Typo="Typo.body2" Class="cw-report-card-description">@L.Stored(description)</MudText>
                 }
                 <div class="cw-report-card-foot">
                     @if (_dashboard?.ReportId == report.Id)
