@@ -3,7 +3,7 @@
     <MudMenu Dense="Density.Dense" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" data-testid="metric-switch">
         <ActivatorContent Context="menu">
             <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.Functions" EndIcon="@Icons.Material.Filled.ArrowDropDown" Class="cw-view-choice" OnClick="@(() => menu.ToggleAsync())"
-                       aria-label="@L["Value"]" title="@L["Value"]">@Label(Metrics, Current.Metric)</MudButton>
+                       aria-label="@L["Value"]" title="@L["Value"]"><span class="cw-view-choice-text">@Label(Metrics, Current.Metric)</span></MudButton>
         </ActivatorContent>
         <ChildContent>
             @foreach (var (label, index) in Metrics)
@@ -18,7 +18,7 @@
     <MudMenu Dense="Density.Dense" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" data-testid="bucket-switch">
         <ActivatorContent Context="menu">
             <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.Category" EndIcon="@Icons.Material.Filled.ArrowDropDown" Class="cw-view-choice" OnClick="@(() => menu.ToggleAsync())"
-                       aria-label="@L["Group by"]" title="@L["Group by"]">@Label(Buckets, Current.Bucket)</MudButton>
+                       aria-label="@L["Group by"]" title="@L["Group by"]"><span class="cw-view-choice-text">@Label(Buckets, Current.Bucket)</span></MudButton>
         </ActivatorContent>
         <ChildContent>
             @foreach (var (label, index) in Buckets)
