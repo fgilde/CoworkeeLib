@@ -30,6 +30,7 @@ public sealed class CoworkeeBackgroundJobsModule : CoworkeeModule, IWebModule
         services.Configure<BackgroundJobOptions>(context.Configuration.GetSection(BackgroundJobOptions.Section));
         services.AddSingleton<IPermissionDefinitionContributor, JobsPermissionDefinitions>();
         services.AddScoped<IBackgroundJobs, HangfireBackgroundJobs>();
+        services.AddSingleton<TenantJobRunner>();
         services.AddHostedService<RecurringJobScheduler>();
         services.AddSystemStatus<JobsStatus>();
 

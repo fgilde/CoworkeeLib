@@ -26,6 +26,19 @@ internal sealed class CleanupJob : IRecurringJob
 services.AddRecurringJob<CleanupJob>("cleanup", "0 3 * * *");
 ```
 
+Work in every organisation goes through `TenantJobRunner`: once per active organisation, as the system of that organisation (tenant filters, audit) and in a DI scope of its own. A failing organisation is logged and returned, the others still run:
+
+```csharp
+internal sealed class ReminderJob(TenantJobRunner tenants) : IRecurringJob
+{
+    public async Task ExecuteAsync(CancellationToken cancellationToken) =>
+        await tenants.ForEachTenantAsync((services, tenantId, ct) =>
+            services.GetRequiredService<IDispatcher>().SendAsync(new SendReminders(), ct), cancellationToken);
+}
+```
+
+`ForTenantsAsync(tenantIds, ...)` does the same for the organisations a query found (due rows grouped by `TenantId`), so organisations without work cost nothing. `ForEachTenantAsync` lists the organisations through the Identity module. The run is sequential; with many organisations keep the work per organisation short.
+
 | `Coworkee:Jobs` | |
 |---|---|
 | `RunServer` | process jobs in this host (the app host turns it off for the auth server) |

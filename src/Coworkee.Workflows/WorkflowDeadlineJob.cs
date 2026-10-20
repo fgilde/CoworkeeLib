@@ -1,6 +1,5 @@
 using Coworkee.BackgroundJobs;
 using Coworkee.Contracts.Workflows;
-using Coworkee.Core.Security;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,8 +7,8 @@ using Microsoft.Extensions.Logging;
 
 namespace Coworkee.Workflows;
 
-/// <summary>Sends due reminders and handles passed deadlines of open approvals, in every organisation, one approval per scope.</summary>
-public sealed partial class WorkflowDeadlineJob(CoworkeeDbContext db, IServiceScopeFactory scopes, TimeProvider clock, ILogger<WorkflowDeadlineJob> logger) : IRecurringJob
+/// <summary>Sends due reminders and handles passed deadlines of open approvals, organisation by organisation, one approval per scope.</summary>
+public sealed partial class WorkflowDeadlineJob(CoworkeeDbContext db, TenantJobRunner tenants, TimeProvider clock, ILogger<WorkflowDeadlineJob> logger) : IRecurringJob
 {
     public const string Id = "workflow-deadlines";
 
@@ -20,23 +19,26 @@ public sealed partial class WorkflowDeadlineJob(CoworkeeDbContext db, IServiceSc
             .Where(a => a.Status == ApprovalStatus.Pending && ((a.RemindAt <= now && a.RemindedAt == null) || (a.DueAt <= now && a.EscalatedAt == null)))
             .Select(a => new { a.Id, a.TenantId })
             .ToListAsync(cancellationToken);
-        foreach (var approval in due)
+        var byTenant = due.ToLookup(a => a.TenantId, a => a.Id);
+        await tenants.ForTenantsAsync(byTenant.Select(g => g.Key), async (services, tenantId, ct) =>
         {
-            try
+            foreach (var approvalId in byTenant[tenantId])
             {
-                await TickAsync(approval.Id, approval.TenantId, cancellationToken);
+                try
+                {
+                    await TickAsync(services, approvalId, ct);
+                }
+                catch (DbUpdateConcurrencyException exception)
+                {
+                    LogConflict(exception, approvalId);
+                }
             }
-            catch (DbUpdateConcurrencyException exception)
-            {
-                LogConflict(exception, approval.Id);
-            }
-        }
+        }, cancellationToken);
     }
 
-    private async Task TickAsync(Guid approvalId, Guid tenantId, CancellationToken cancellationToken)
+    private async Task TickAsync(IServiceProvider services, Guid approvalId, CancellationToken cancellationToken)
     {
-        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, tenantId));
-        await using var scope = scopes.CreateAsyncScope();
+        await using var scope = services.CreateAsyncScope();
         var scoped = scope.ServiceProvider.GetRequiredService<CoworkeeDbContext>();
         var approval = await scoped.Set<WorkflowApproval>().Include(a => a.Approvers).SingleAsync(a => a.Id == approvalId, cancellationToken);
         var subject = await scope.ServiceProvider.GetRequiredService<WorkflowEngine>().LoadAsync(approval.EntityType, approval.EntityId, cancellationToken, WorkflowAccess.System);
