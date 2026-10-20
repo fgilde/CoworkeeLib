@@ -18,7 +18,7 @@
         </MudStack>
     }
     <div class="cw-cal-scroll" style="max-height:@Height" @onmouseup="DragEndAsync" @onmouseleave="DragEndAsync">
-        <div class="cw-cal-grid @(OnRangeSelected.HasDelegate ? "cw-cal-selectable" : null)" style="grid-template-columns:minmax(180px, 220px) repeat(@(DayCount * 2), minmax(14px, 1fr))">
+        <div class="cw-cal-grid @(OnRangeSelected.HasDelegate ? "cw-cal-selectable" : null)" style="grid-template-columns:minmax(120px, 200px) repeat(@(DayCount * 2), minmax(10px, 1fr))">
             <div class="cw-cal-corner">@ResourceHeader</div>
             @foreach (var day in Days)
             {
@@ -38,20 +38,23 @@
                 {
                     var items = RowItems(resource);
                     var lanes = Math.Max(1, items.Count == 0 ? 1 : items.Max(i => i.Lane) + 1);
-                    <div class="cw-cal-row" style="grid-template-rows:repeat(@lanes, 28px)" data-testid="calendar-row">
-                        <div class="cw-cal-resource" style="grid-row:1 / span @lanes">
+                    <div class="cw-cal-row" style="grid-template-rows:repeat(@lanes, 28px) auto" data-testid="calendar-row">
+                        <div class="cw-cal-resource" style="grid-row:1 / -1">
                             @if (ResourceTemplate is not null)
                             {
                                 @ResourceTemplate(resource)
                             }
-                            else if (resource.UserId is { } userId)
-                            {
-                                <UserCard UserId="userId" />
-                            }
                             else
                             {
                                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                                    <MudAvatar Size="Size.Small" Color="Color.Primary">@Initials(resource.Title)</MudAvatar>
+                                    @if (resource.UserId is { } userId)
+                                    {
+                                        <UserAvatar UserId="userId" Size="Size.Small" />
+                                    }
+                                    else
+                                    {
+                                        <MudAvatar Size="Size.Small" Color="Color.Primary">@Initials(resource.Title)</MudAvatar>
+                                    }
                                     <div class="cw-cal-resource-text">
                                         <MudText Typo="Typo.body2">@resource.Title</MudText>
                                         @if (resource.Subtitle is not null)
@@ -65,7 +68,7 @@
                         @foreach (var day in Days)
                         {
                             var mark = Mark(day, resource.Id);
-                            <div class="@DayClass(day, resource)" style="grid-column:@Column(day) / span 2;grid-row:1 / span @lanes" title="@mark?.Label"
+                            <div class="@DayClass(day, resource)" style="grid-column:@Column(day) / span 2;grid-row:1 / -1" title="@mark?.Label"
                                  @onmousedown="() => DragStart(resource, day)" @onmouseenter="() => DragOver(resource, day)"></div>
                         }
                         @foreach (var (item, lane) in items)
@@ -88,18 +91,22 @@
 
 <style>
     .cw-cal-toolbar { margin-bottom: 8px; }
-    .cw-cal-scroll { overflow: auto; border: 1px solid var(--mud-palette-lines-default); border-radius: var(--mud-default-borderradius); background: var(--mud-palette-surface); }
-    .cw-cal-grid { display: grid; min-width: max-content; user-select: none; }
+    /* ponytail: the fade at the right edge is a background-attachment trick, shown under transparent cells only; scroll-driven animations if it must cover the header too */
+    .cw-cal-scroll { overflow: auto; border: 1px solid var(--mud-palette-lines-default); border-radius: var(--mud-default-borderradius);
+        background: linear-gradient(to left, var(--mud-palette-surface) 40%, transparent) right / 32px 100% no-repeat local,
+                    radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, .22), transparent) right / 14px 100% no-repeat scroll,
+                    var(--mud-palette-surface); }
+    .cw-cal-grid { display: grid; min-width: min-content; user-select: none; }
     .cw-cal-selectable .cw-cal-row .cw-cal-day { cursor: cell; }
     .cw-cal-corner, .cw-cal-head { position: sticky; top: 0; z-index: 3; background: var(--mud-palette-surface); border-bottom: 1px solid var(--mud-palette-lines-default); }
     .cw-cal-corner { left: 0; z-index: 4; padding: 6px 12px; font-weight: 600; display: flex; align-items: end; }
     .cw-cal-head { display: flex; flex-direction: column; align-items: center; padding: 4px 0; font-size: .75rem; line-height: 1.1; }
-    .cw-cal-weekday { color: var(--mud-palette-text-secondary); text-transform: uppercase; font-size: .65rem; }
+    .cw-cal-weekday { color: var(--mud-palette-text-secondary); text-transform: uppercase; font-size: .6rem; }
     .cw-cal-number { font-weight: 600; }
     .cw-cal-head.cw-cal-today .cw-cal-number { background: var(--mud-palette-primary); color: var(--mud-palette-primary-text); border-radius: 999px; padding: 1px 6px; }
     .cw-cal-group { grid-column: 1 / -1; position: sticky; left: 0; padding: 6px 12px; font-weight: 600; font-size: .8rem; background: var(--mud-palette-background-gray); border-bottom: 1px solid var(--mud-palette-lines-default); }
     .cw-cal-row { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; border-bottom: 1px solid var(--mud-palette-lines-default); padding: 3px 0; }
-    .cw-cal-resource { grid-column: 1; position: sticky; left: 0; z-index: 2; background: var(--mud-palette-surface); padding: 0 12px; display: flex; align-items: center; border-right: 1px solid var(--mud-palette-lines-default); overflow: hidden; }
+    .cw-cal-resource { grid-column: 1; position: sticky; left: 0; z-index: 2; background: var(--mud-palette-surface); padding: 2px 12px; display: flex; align-items: center; border-right: 1px solid var(--mud-palette-lines-default); overflow: hidden; }
     .cw-cal-resource-text { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .cw-cal-row .cw-cal-day { border-left: 1px solid color-mix(in srgb, var(--mud-palette-lines-default) 50%, transparent); }
     .cw-cal-off { background: color-mix(in srgb, var(--mud-palette-text-secondary) 8%, transparent); }

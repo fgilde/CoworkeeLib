@@ -1,5 +1,6 @@
 using Bunit;
 using Coworkee.Client.Blazor.Components.Calendar;
+using NSubstitute;
 
 namespace Coworkee.Client.Blazor.Tests;
 
@@ -72,6 +73,21 @@ public sealed class ResourceCalendarTests : ClientTestBase
         rows[1].QuerySelectorAll(".cw-cal-day")[3].ClassList.ShouldContain("cw-cal-off");
         var root = cut.Find(".cw-cal");
         (root.GetAttribute("data-testid"), root.Id).ShouldBe(("team-calendar", "absences"));
+    }
+
+    [Fact]
+    public void A_user_row_shows_the_avatar_title_and_subtitle_and_grows_past_its_lanes()
+    {
+        var userId = Guid.NewGuid();
+        Api.GetUserCardsAsync(default!, default).ReturnsForAnyArgs(call => call.Arg<IReadOnlyList<Guid>>().Select(id => new Contracts.Identity.UserCardDto(id, "Eva Schulz", null)).ToList());
+        var cut = Render<ResourceCalendar>(p => p
+            .Add(c => c.Resources, [new CalendarResource("eva", "Eva Schulz", "Backend", userId)])
+            .Add(c => c.From, March));
+
+        cut.WaitForAssertion(() => cut.Find($".cw-cal-resource [data-user='{userId}']"));
+        cut.Find(".cw-cal-resource-text").TextContent.ShouldContain("Backend");
+        cut.Find("[data-testid=calendar-row]").GetAttribute("style").ShouldBe("grid-template-rows:repeat(1, 28px) auto");
+        cut.Find(".cw-cal-grid").GetAttribute("style")!.ShouldContain("minmax(10px, 1fr)");
     }
 
     [Fact]
