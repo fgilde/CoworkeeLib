@@ -136,6 +136,16 @@ Bildschirme, die in Blazor tief sind (Datentabellen mit Facetten und QueryBuilde
 
 Ohne Sitzung am Auth-Server zeigt das Fenster dessen Anmeldeseite nur, wenn der Auth-Server dem AirWorks-Origin das Einrahmen erlaubt: `Coworkee:Auth:FrameAncestors` (etwa `["https://desk.example.com"]`) setzt diese Origins statt `'none'` in `frame-ancestors` der Kontoseiten. Ohne deine Einstellung bleibt es aus, denn eine einrahmbare Seite kann die einrahmende Seite überdecken (Clickjacking); trag nur den AirWorks-Origin deines eigenen Deployments ein. Es klappt nur, wenn AirWorks, Web-App und Auth-Server auf derselben Site liegen (eine Domain mit Subdomains, oder localhost): Browser schicken die Anmelde-Cookies nicht an einen Frame einer anderen Site. Externe Anbieter wie Google lassen sich nicht einrahmen; ihre Knöpfe brauchen den Browser-Tab.
 
+### App-Starter
+
+Der Startknopf öffnet das Startmenü von der Seite (`menu`, Standard) oder ein Vollbild-Raster großer Icons über dem unscharfen Desktop (`overlay`): Ein Suchfeld oben filtert beim Tippen, Enter startet den ersten Treffer, die Pfeiltasten wechseln zwischen den Apps, Esc oder ein Klick auf den Hintergrund schließt es; auch auf dem Handy. Der AirWorks-Host legt es in seiner `appsettings.json` fest:
+
+```json
+{ "Coworkee": { "AirWorks": { "Launcher": "overlay" } } }
+```
+
+Das BFF meldet es als `launcher` von `/bff/user`, `useCoworkee` gibt es an AirWorks weiter; `airWorks: { launcher: 'overlay' }` im Code geht vor. Benutzer stellen es unter *Einstellungen → Allgemein* des Desktops um, und ihre Wahl geht vor beidem. `coworkee new --airworks --airworks-launcher overlay` (Studio: die Karte *AirWorks-App-Starter*, sichtbar, wenn *AirWorks-Client* an ist) schreibt die Einstellung. Es braucht AirWorks 1cbe858 oder neuer.
+
 ### Badges
 
 Mit AirWorks 0.5 (`AirWorks.setBadge`) zeigt der Eingang die offenen Genehmigungen und ungelesenen Benachrichtigungen, der Chat seine ungelesenen Nachrichten auf Kachel, Startmenü und Taskleistenknopf; `coworkee.refreshBadges()` liest sie neu.

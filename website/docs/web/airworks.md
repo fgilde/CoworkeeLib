@@ -136,6 +136,16 @@ Screens that are deep in Blazor (data tables with facets and query builder, edit
 
 Without a session at the auth server the window shows its sign-in page only when the auth server lets the AirWorks origin frame it: `Coworkee:Auth:FrameAncestors` (for example `["https://desk.example.com"]`) puts these origins into the `frame-ancestors` of the account pages instead of `'none'`. It is off unless you set it, because a page that may be framed can be overlaid by the framing page (clickjacking); list only the AirWorks origin of your own deployment. It works only when AirWorks, the web app and the auth server are on the same site (one domain with subdomains, or localhost): browsers do not send the sign-in cookies to a frame of another site. External providers such as Google refuse to be framed; their buttons need the browser tab.
 
+### App launcher
+
+The start button opens the start menu from the side (`menu`, the default) or a full-screen grid of large icons over the blurred desktop (`overlay`): a search box at the top filters as you type and Enter starts the first match, the arrow keys move between the apps, Esc or a click on the backdrop closes it; it works on phones too. The AirWorks host sets it in its `appsettings.json`:
+
+```json
+{ "Coworkee": { "AirWorks": { "Launcher": "overlay" } } }
+```
+
+The BFF reports it as `launcher` of `/bff/user` and `useCoworkee` hands it to AirWorks; `airWorks: { launcher: 'overlay' }` in code wins over it. Users can switch it under *Settings → General* of the desktop, and their choice wins over both. `coworkee new --airworks --airworks-launcher overlay` (Studio: the card *AirWorks app launcher*, shown when *AirWorks client* is on) writes the setting. It needs AirWorks 1cbe858 or later.
+
 ### Badges
 
 With AirWorks 0.5 (`AirWorks.setBadge`) the inbox shows the open approvals and unread notifications, the chat its unread messages on the tile, the start menu and the task button; `coworkee.refreshBadges()` reads them again.

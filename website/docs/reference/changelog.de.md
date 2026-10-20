@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Neu
+
+- AirWorks: Vollbild-App-Starter. `Coworkee:AirWorks:Launcher` des AirWorks-Hosts (`menu`, Standard, oder `overlay`) erreicht den Desktop als `launcher` von `/bff/user`; das Template schreibt es in die `appsettings.json` des Hosts (Option `airworksLauncher`, CLI `--airworks-launcher`, Studio-Karte *AirWorks-App-Starter*). Bestehende AirWorks-Clients setzen `@fgilde/airworks` in `ClientApp/package.json` auf Commit 1cbe858, um ihn zu nutzen. Siehe [App-Starter](../web/airworks.md#app-starter).
+
 ## 0.0.1.36 (2026-10-20)
 
 ### Breaking Changes
