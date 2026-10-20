@@ -4,9 +4,13 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Breaking changes
+
+- **MudBlazor.Extensions 9.11.5**: apps that pin MudBlazor.Extensions themselves move to 9.11.5.
+
 ### Fixes
 
-- Navigation: the filter text typed after the filter chips stays in the filter box when a page is opened; it was emptied while the filter still applied.
+- Navigation: the filter text typed after the filter chips stays in the filter box when a page is opened; it was emptied while the filter still applied. The fix comes with MudBlazor.Extensions 9.11.5.
 
 ## 0.0.1.35 (2026-10-20)
 

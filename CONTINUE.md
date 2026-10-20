@@ -216,5 +216,5 @@ Specs `docs/superpowers/specs/2026-10-18-passkeys-design.md`, `2026-10-18-retent
 - Workflow state is filterable/sortable/facetable on every workflow-enabled OData set (`WorkflowState`, `WorkflowAwaitsMe`, computed OData properties in `Coworkee.OData/Computed`), `CoworkeeWorkflowColumn`; demo products use it, sales orders (client entity) mirror into `ApprovalState`.
 - Demo got entity history (products, brands, sales orders; products/brands soft delete) and the webhooks module with a disabled example endpoint.
 - Audit log page: undo a change / restore the state before / restore a soft-deleted record / open record history, via the history restore modes (`After`, `Before`, `Undo`) and `GET /api/v1/history`. Not done: audit actions in `@coworkee/airworks`; no concurrency check between preview and restore.
-- Studio welcome tiles have short descriptions. MudEx 9.11.4 adopted (no date slider step workaround, `AriaLabelStart`/`AriaLabelEnd`).
+- Studio welcome tiles have short descriptions. MudEx 9.11.5 adopted (no date slider step workaround, `AriaLabelStart`/`AriaLabelEnd`; typed filter text survives re-renders).
 - Machine of the owner is low on memory: run one app host / heavy test run at a time; Claude Code reaps background app hosts under memory pressure.

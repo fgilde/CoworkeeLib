@@ -220,6 +220,15 @@
         { "text": "API tests of apps with the RabbitMQ event bus: builder.UseSetting(\"Coworkee:EventBus:RabbitMq:Enabled\", \"false\") in the test host delivers integration events in process.", "find": "RabbitMq", "files": [ "tests/**/*.cs" ], "unless": "RabbitMq:Enabled" }
       ],
       "needsMigration": true
+    },
+    {
+      "version": "0.0.1.36",
+      "breaking": [
+        "MudBlazor.Extensions 9.11.5: apps that pin the package move up."
+      ],
+      "packages": [
+        { "id": "MudBlazor.Extensions", "version": "9.11.5" }
+      ]
     }
   ]
 }

@@ -137,31 +137,6 @@ export function scrollToEnd(element) {
     }
 }
 
-// keeps the given text in an input the user is not typing in: Blazor writing an empty value then is ignored
-export function keepText(selector, text) {
-    const input = document.querySelector(selector);
-    if (!input) {
-        return;
-    }
-    if (input.__cwKept === undefined) {
-        const native = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
-        Object.defineProperty(input, 'value', {
-            configurable: true,
-            get() { return native.get.call(this); },
-            set(value) {
-                if (!value && this.__cwKept && document.activeElement !== this) {
-                    return;
-                }
-                native.set.call(this, value);
-            }
-        });
-    }
-    input.__cwKept = text;
-    if (document.activeElement !== input && input.value !== text) {
-        input.value = text;
-    }
-}
-
 export function focus(element) {
     element?.focus();
 }

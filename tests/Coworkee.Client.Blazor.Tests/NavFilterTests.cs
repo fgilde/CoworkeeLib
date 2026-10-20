@@ -21,7 +21,6 @@ public sealed class NavFilterTests : ClientTestBase
     [Fact]
     public async Task The_typed_filter_text_stays_in_the_box_after_navigating()
     {
-        var module = JSInterop.SetupModule("./_content/Coworkee.Client.Blazor/coworkee.js");
         AddAuthorization().SetAuthorized("Ada");
         var menu = Render<CoworkeeNavMenu>();
         menu.WaitForAssertion(() => menu.FindAll("[data-nav='/admin/roles']").ShouldNotBeEmpty());
@@ -34,19 +33,13 @@ public sealed class NavFilterTests : ClientTestBase
 
         // clicking a nav item moves the focus out of the filter box
         await menu.Find(CoworkeeNavMenu.FilterInput).BlurAsync(new FocusEventArgs());
-        var keeps = module.Invocations.Count(i => i.Identifier == "keepText");
         await menu.Find("[data-nav='/admin/roles']").ClickAsync(new MouseEventArgs());
         await menu.InvokeAsync(() => Services.GetRequiredService<NavigationManager>().NavigateTo("/admin/roles"));
 
-        // ponytail: MudEx 9.11.4 empties the box in the browser on this render, the input keeps the text the menu sends (also for renders of the tree alone, e.g. expanding a group, which only a browser shows); after the MudEx fix assert the input value instead
-        menu.WaitForAssertion(() => module.Invocations.Count(i => i.Identifier == "keepText").ShouldBeGreaterThan(keeps));
-        module.Invocations.Last(i => i.Identifier == "keepText").Arguments.ShouldBe([CoworkeeNavMenu.FilterInput, "rol"]);
+        // the box keeps the text after the re-render (MudEx 9.11.4 emptied it)
+        menu.WaitForAssertion(() => menu.Find(CoworkeeNavMenu.FilterInput).GetAttribute("value").ShouldBe("rol"));
         menu.FindAll("[data-chip='ten']").Count.ShouldBe(1);
         menu.FindAll("[data-nav='/admin/users']").ShouldBeEmpty();
         menu.FindAll("[data-nav='/admin/roles']").ShouldNotBeEmpty();
-
-        // a cleared box must not be refilled
-        await menu.Find(CoworkeeNavMenu.FilterInput).InputAsync(new ChangeEventArgs { Value = "" });
-        menu.WaitForAssertion(() => module.Invocations.Last(i => i.Identifier == "keepText").Arguments.ShouldBe([CoworkeeNavMenu.FilterInput, ""]));
     }
 }

@@ -5,7 +5,6 @@ using Coworkee.Client.Blazor.Security;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.Extensions.Options;
-using Microsoft.JSInterop;
 using MudBlazor.Extensions.Core.Enums;
 using Nextended.Core.Extensions;
 
@@ -17,9 +16,6 @@ public partial class CoworkeeNavMenu : IDisposable
     private HashSet<NavigationEntry>? _entries;
     private NavigationEntry? _selected;
     private TreeViewMode _viewMode = TreeViewMode.Default;
-    private string? _filter;
-    private string? _keptFilter;
-    private IJSObjectReference? _module;
 
     [Inject] private IEnumerable<INavigationContributor> Contributors { get; set; } = null!;
 
@@ -44,8 +40,6 @@ public partial class CoworkeeNavMenu : IDisposable
     [Inject] private NavigationManager Nav { get; set; } = null!;
 
     [Inject] private IServiceProvider Services { get; set; } = null!;
-
-    [Inject] private IJSRuntime JS { get; set; } = null!;
 
     [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
 
@@ -74,28 +68,6 @@ public partial class CoworkeeNavMenu : IDisposable
         Nav.LocationChanged += LocationChanged;
         Badges.Changed += Refresh;
         await BuildAsync();
-    }
-
-    // ponytail: MudEx 9.11.4 renders the filter box from a stale Text parameter, so any render of the box after it lost the focus
-    // (navigation, expanding a group) empties the typed text in the browser while the filter stays. The input keeps the text the
-    // menu last sent (keepText guards the value setter). Remove after the MudEx release with the fix.
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (string.IsNullOrEmpty(_filter) && string.IsNullOrEmpty(_keptFilter))
-        {
-            return;
-        }
-
-        _keptFilter = _filter;
-
-        try
-        {
-            _module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");
-            await _module.InvokeVoidAsync("keepText", FilterInput, _filter ?? string.Empty);
-        }
-        catch (JSDisconnectedException)
-        {
-        }
     }
 
     internal const string FilterInput = ".cw-nav-filter input";

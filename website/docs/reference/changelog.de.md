@@ -4,9 +4,13 @@
 
 ## Unveröffentlicht
 
+### Breaking Changes
+
+- **MudBlazor.Extensions 9.11.5**: Apps, die MudBlazor.Extensions selbst festlegen, gehen auf 9.11.5.
+
 ### Korrekturen
 
-- Navigation: der hinter den Filter-Chips getippte Filtertext bleibt beim Öffnen einer Seite im Filterfeld stehen; bisher wurde das Feld geleert, während der Filter weiter galt.
+- Navigation: der hinter den Filter-Chips getippte Filtertext bleibt beim Öffnen einer Seite im Filterfeld stehen; bisher wurde das Feld geleert, während der Filter weiter galt. Die Korrektur kommt mit MudBlazor.Extensions 9.11.5.
 
 ## 0.0.1.35 (2026-10-20)
 
