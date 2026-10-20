@@ -130,6 +130,30 @@ public sealed class FacetTests(ODataApp app) : IAsyncLifetime
         counted.Single(f => f.Key == "price").Options.Sum(o => o.Count).ShouldBe(4, "a range counts the whole distribution");
     }
 
+    [Fact]
+    public async Task A_self_reference_named_Parent_counts_by_the_parent_name()
+    {
+        await app.InDbAsync(_setup.TenantId, async db =>
+        {
+            var widget = Make("Vise", WidgetKind.Saw, WidgetFeatures.None, true, 5, new(2026, 1, 1, 9, 0, 0, TimeSpan.Zero), "Red");
+            var frame = new Part { Name = "Frame", Widget = widget, TenantId = _setup.TenantId };
+            db.AddRange(frame, new Part { Name = "Jaw", Widget = widget, Parent = frame, TenantId = _setup.TenantId },
+                new Part { Name = "Screw", Widget = widget, Parent = frame, TenantId = _setup.TenantId });
+            return await db.SaveChangesAsync();
+        });
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/odata/Parts");
+        request.Headers.Add("Prefer", "odata.include-annotations=\"cn.facets\"");
+
+        var response = await Admin.SendAsync(request, Ct);
+        var body = await response.Content.ReadAsStringAsync(Ct);
+
+        response.IsSuccessStatusCode.ShouldBeTrue(body);
+        var facets = JsonDocument.Parse(body).RootElement.GetProperty("@cn.facets").Deserialize<List<FacetGroupDto>>(new JsonSerializerOptions(JsonSerializerDefaults.Web))!;
+        var parent = facets.Single(f => f.Key == "parentId");
+        parent.ValueKind.ShouldBe(FacetValueKind.Reference);
+        parent.Options.Select(o => (o.Label, o.Count)).ShouldBe([("Frame", 2)]);
+    }
+
     private async Task<(string[] Names, List<FacetGroupDto> Facets)> QueryAsync(string? filter, FacetContextDto? context = null)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, "/odata/Widgets?$orderby=Name" + (filter is null ? "" : "&$filter=" + Uri.EscapeDataString(filter)));

@@ -68,7 +68,7 @@ public sealed class RichEntityGenerationTests
         var domain = Content(files, "Domain/Order.cs");
         domain.ShouldContain("using Shop.Crm.Domain;");
         domain.ShouldContain("using Shop.Contracts;");
-        domain.ShouldContain("[Nextended.Core.Facets.ProvideFacet(Label = \"Customer\", ValuePath = \"CustomerId\", LabelPath = \"Customer.Name\", ValueType = typeof(Guid))]\n    public Guid CustomerId { get; set; }");
+        domain.ShouldContain("[Nextended.Core.Facets.ProvideFacet(Label = \"Customer\", ValuePath = \"CustomerId\", LabelPath = \"it.Customer.Name\", ValueType = typeof(Guid))]\n    public Guid CustomerId { get; set; }");
         domain.ShouldContain("public Customer? Customer { get; set; }");
         domain.ShouldContain("public OrderStatus Status { get; set; } = OrderStatus.Paid;");
         domain.ShouldContain("public decimal Total { get; set; } = 9.5m;");

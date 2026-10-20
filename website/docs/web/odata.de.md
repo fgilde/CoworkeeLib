@@ -39,6 +39,8 @@ public sealed class Product : AuditedEntity, IMultiTenant
 }
 ```
 
+`LabelPath` ist ein Dynamic-LINQ-Ausdruck. Eine Navigation, die wie eines seiner Schlüsselwörter heißt (`Parent`, `It`, `Root`, `New`, ...), braucht das Präfix `it.`: `LabelPath = "it.Parent.Name"`; ohne scheitert die Facettenabfrage. `coworkee entity add` schreibt immer `it.`.
+
 Fragt der Request mit `Prefer: odata.include-annotations="cn.facets"` danach, enthält die Seite die Facettengruppen unter `@cn.facets`: jede Option mit Beschriftung, Anzahl und dem OData-Filterfragment, das sie setzt. Die Zahlen folgen dem aktuellen Filter, wie man es von Shop-Filtern kennt. Enum-Optionen tragen den Membernamen als Wert und Filter (`Status eq 'Shipped'`) und ihren `[Display]`-Namen als Beschriftung; `[Flags]`-Enums listen jedes Flag einzeln (`Options has 'Express'`). Zahlenbereiche und Datumswerte kommen mit kleinstem und größtem Wert und einem Histogramm. `[FacetBehavior]` neben `[ProvideFacet]` oder `services.ConfigureFacet<T>(...)` legt die Ansicht fest und wie Werte verknüpft werden (*eines von*, *alle von*, einzeln, mit Ausschluss). Mit dem Header `Coworkee-Facets` zählt eine Gruppe ohne ihre eigene Auswahl. [`CoworkeeDataTable`](../ui/data-table.md#facetten) zeigt sie in Ansichten passend zu ihren Werten.
 
 ![Marken-Facette mit Anzahlen](../assets/screenshots/products.png){ .shot }

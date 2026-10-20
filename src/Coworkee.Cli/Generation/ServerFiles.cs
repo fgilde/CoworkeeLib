@@ -180,7 +180,7 @@ internal static class ServerFiles
     {
         var facet = !p.Facet ? string.Empty
             : p.Type == PropertyType.Reference
-                ? $"    [Nextended.Core.Facets.ProvideFacet(Label = \"{EntityModel.Label(p)}\", ValuePath = \"{p.Name}Id\", LabelPath = \"{p.Name}.{e.TargetDisplay(p)}\", ValueType = typeof(Guid))]\n"
+                ? $"    [Nextended.Core.Facets.ProvideFacet(Label = \"{EntityModel.Label(p)}\", ValuePath = \"{p.Name}Id\", LabelPath = \"it.{p.Name}.{e.TargetDisplay(p)}\", ValueType = typeof(Guid))]\n"
                 : $"    [Nextended.Core.Facets.ProvideFacet(Label = \"{EntityModel.Label(p)}\")]\n";
         var navigation = p.Type == PropertyType.Reference ? $"    public {e.Target(p).Name}? {p.Name} {{ get; set; }}\n\n" : string.Empty;
         return $"{facet}    {EntityModel.Settable(p)}\n\n{navigation}";
