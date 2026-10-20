@@ -12,6 +12,7 @@
 
 ### Korrekturen
 
+- Workflows: Für eine Entität, die der Command in derselben Unit of Work hinzugefügt hat, lädt `WorkflowEngine.LoadAsync` die `Include(...)`-Referenzen über ihren Fremdschlüssel, wenn nur die ID gesetzt war; `Describe`, Guards und Aktionen sehen dort kein `null` mehr.
 - `CoworkeeDataTable`: die fixierte Aktionsspalte bleibt auf Zeilen unter dem Mauszeiger und gestreiften Zeilen deckend (die durchscheinende Zeilenfarbe liegt über der Oberfläche), langer Zellentext scheint nicht mehr unter den Knöpfen durch, im hellen wie im dunklen Modus.
 - `coworkee entity add`/`module add`: Navigationseinträge, Seitentitel und Berechtigungsgruppen zeigen Namen aus mehreren Wörtern als Wörter („Benefit enrollments“, „Time off: Benefit enrollments“) statt des PascalCase-Plurals; Dialogtitel und Berechtigungsnamen taten das schon.
 - `coworkee entity add`/`module add`: erzeugte Seiten geben `PageHeader` und `CreateText` Textschlüssel statt übersetzter Texte, die ein zweites Mal übersetzt wurden („People“ → „Personal“ → „Persönlich“). Regel: `PageHeader` und `CoworkeeDataTable.CreateText` übersetzen, Aufrufer übergeben Schlüssel. Erzeugte Seiten bestehender Apps entfernen das `@L[...]` um diese Werte.

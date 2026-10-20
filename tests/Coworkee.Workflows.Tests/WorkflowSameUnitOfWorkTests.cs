@@ -9,16 +9,16 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Workflows.Tests;
 
-public sealed record AddSubmittedExpense(string Title, decimal Amount) : ICommand<Result<Guid>>;
+public sealed record AddSubmittedExpense(string Title, decimal Amount, string EntityType = "Expenses", Guid? CategoryId = null) : ICommand<Result<Guid>>;
 
 /// <summary>Adds an expense and submits it in the same unit of work: nothing is saved before the dispatcher saves once.</summary>
 internal sealed class AddSubmittedExpenseHandler(CoworkeeDbContext db, WorkflowEngine workflows, ICurrentUser currentUser) : IHandler<AddSubmittedExpense, Result<Guid>>
 {
     public async Task<Result<Guid>> HandleAsync(AddSubmittedExpense command, CancellationToken cancellationToken)
     {
-        var expense = new Expense { Title = command.Title, Amount = command.Amount, TenantId = currentUser.TenantId!.Value };
+        var expense = new Expense { Title = command.Title, Amount = command.Amount, CategoryId = command.CategoryId, TenantId = currentUser.TenantId!.Value };
         db.Add(expense);
-        var subject = await workflows.LoadAsync("Expenses", expense.Id, cancellationToken);
+        var subject = await workflows.LoadAsync(command.EntityType, expense.Id, cancellationToken);
         if (!subject.IsSuccess)
         {
             return subject.Error!;
@@ -45,6 +45,18 @@ public sealed class WorkflowSameUnitOfWorkTests(WorkflowApp app)
         status.Approval.ShouldNotBeNull();
         status.History.ShouldNotBeEmpty();
         (await app.ExpenseAsync(id)).Status.ShouldBe("Review");
+    }
+
+    [Fact]
+    public async Task Included_references_of_an_added_entity_are_loaded_from_its_foreign_key()
+    {
+        var setup = await app.SetupAsync();
+        var category = (await app.ExpenseAsync(await app.AddExpenseAsync(setup.TenantId, category: "IT"))).CategoryId;
+
+        var id = await SendAsync(setup, new AddSubmittedExpense("Monitor", 250, "Purchases", category));
+
+        var status = await app.As(setup.AdminUserId, setup.TenantId).GetFromJsonAsync<WorkflowStatusDto>($"/api/v1/workflows/Purchases/{id}", Ct);
+        status!.Approval!.Title.ShouldBe("Monitor for IT");
     }
 
     [Fact]

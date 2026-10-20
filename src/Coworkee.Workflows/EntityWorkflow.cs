@@ -3,6 +3,8 @@ using System.Reflection;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.OData;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Coworkee.Workflows;
 
@@ -43,8 +45,8 @@ public abstract class EntityWorkflow(string entityType)
 
     internal abstract Task<object?> FindAsync(CoworkeeDbContext db, Guid id, CancellationToken cancellationToken);
 
-    /// <summary>The entity when the current unit of work added it and has not saved it yet.</summary>
-    internal abstract object? FindAdded(CoworkeeDbContext db, Guid id);
+    /// <summary>The entity when the current unit of work added it and has not saved it yet, with the included references its foreign keys point to.</summary>
+    internal abstract Task<object?> FindAddedAsync(CoworkeeDbContext db, Guid id, CancellationToken cancellationToken);
 
     /// <summary>Whether the current user sees the entity the way its OData set shows it: set permission, tenant, soft delete and row filters.</summary>
     internal abstract Task<bool> VisibleAsync(IServiceProvider services, Guid id, CancellationToken cancellationToken);
@@ -98,11 +100,18 @@ public sealed class EntityWorkflow<TEntity>(string entityType) : EntityWorkflow(
 
     private Func<IQueryable<TEntity>, IQueryable<TEntity>> _load = query => query;
 
+    private readonly List<string> _includes = [];
+
     /// <summary>Loads a navigation with the entity, for <see cref="Describe"/>, guards and actions, e.g. <c>l =&gt; l.Employee</c>.</summary>
     public EntityWorkflow<TEntity> Include<TProperty>(Expression<Func<TEntity, TProperty>> navigation)
     {
         var load = _load;
         _load = query => load(query).Include(navigation);
+        if (navigation.Body is MemberExpression { Expression: ParameterExpression } member)
+        {
+            _includes.Add(member.Member.Name);
+        }
+
         return this;
     }
 
@@ -137,8 +146,28 @@ public sealed class EntityWorkflow<TEntity>(string entityType) : EntityWorkflow(
     internal override async Task<object?> FindAsync(CoworkeeDbContext db, Guid id, CancellationToken cancellationToken) =>
         await _load(db.Set<TEntity>()).FirstOrDefaultAsync(e => EF.Property<Guid>(e, "Id") == id, cancellationToken);
 
-    internal override object? FindAdded(CoworkeeDbContext db, Guid id) =>
-        db.ChangeTracker.Entries<TEntity>().FirstOrDefault(e => e.State == EntityState.Added && e.Property("Id").CurrentValue is Guid key && key == id)?.Entity;
+    // ponytail: only direct references (x => x.Category) are loaded for added entities; deeper paths and collections stay as the command set them
+    internal override async Task<object?> FindAddedAsync(CoworkeeDbContext db, Guid id, CancellationToken cancellationToken)
+    {
+        var entry = db.ChangeTracker.Entries<TEntity>().FirstOrDefault(e => e.State == EntityState.Added && e.Property("Id").CurrentValue is Guid key && key == id);
+        if (entry is null)
+        {
+            return null;
+        }
+
+        foreach (var reference in _includes.Select(entry.Navigation).OfType<ReferenceEntry>().Where(r => r.CurrentValue is null))
+        {
+            var keys = reference.Metadata is INavigation { IsOnDependent: true } navigation
+                ? navigation.ForeignKey.Properties.Select(p => entry.Property(p.Name).CurrentValue).ToArray()
+                : null;
+            if (keys is not null && keys.All(k => k is not null))
+            {
+                reference.CurrentValue = await db.FindAsync(reference.Metadata.TargetEntityType.ClrType, keys, cancellationToken);
+            }
+        }
+
+        return entry.Entity;
+    }
 
     internal override async Task<bool> VisibleAsync(IServiceProvider services, Guid id, CancellationToken cancellationToken) =>
         await ODataEntityAccess.IsGrantedAsync(services, typeof(TEntity), cancellationToken)

@@ -43,7 +43,7 @@ public sealed class WorkflowEngine(
             return NotFound;
         }
 
-        var entity = workflow.FindAdded(db, entityId);
+        var entity = await workflow.FindAddedAsync(db, entityId, cancellationToken);
         if (entity is null && (!await MaySeeAsync(workflow, entityId, access, cancellationToken) || (entity = await workflow.FindAsync(db, entityId, cancellationToken)) is null))
         {
             return NotFound;

@@ -35,7 +35,7 @@ public sealed class MyAppCatalogModule : CoworkeeModule
 
 Only the transitions whose guards pass are offered to the user, and the server checks them again when one runs.
 
-From your own command, `WorkflowEngine.LoadAsync(entityType, id, ct)` and `RunAsync(subject, transition, comment, ct)` run a transition. An entity the command has just added (not saved yet) is found in the change tracker, so a command can create a record and run its first transition in one unit of work: the record, the workflow row, its history and the approval are saved together, and a refused transition saves none of them. Such a new entity skips the visibility check of its OData set, since the command that added it already decided.
+From your own command, `WorkflowEngine.LoadAsync(entityType, id, ct)` and `RunAsync(subject, transition, comment, ct)` run a transition. An entity the command has just added (not saved yet) is found in the change tracker, so a command can create a record and run its first transition in one unit of work: the record, the workflow row, its history and the approval are saved together, and a refused transition saves none of them. Such a new entity skips the visibility check of its OData set, since the command that added it already decided. Its `Include(...)` references are loaded through the foreign key when the command set only the id (`CategoryId`, not `Category`); deeper paths and collections stay as the command left them.
 
 ```csharp
 db.Add(leave);
