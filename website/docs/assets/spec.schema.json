@@ -49,6 +49,15 @@
           ],
           "default": "bundled"
         },
+        "airworksLauncher": {
+          "description": "How the start button of the AirWorks desktop shows the apps: the start menu sliding in from the side, or a full-screen grid of large icons over the blurred desktop with search and keyboard navigation. Coworkee:AirWorks:Launcher of the AirWorks host; users can switch it in the desktop settings. Only used with airworks.",
+          "type": "string",
+          "enum": [
+            "menu",
+            "overlay"
+          ],
+          "default": "menu"
+        },
         "pwa": {
           "description": "Web manifest, service worker and offline page: the app installs on phones and desktops and opens without the browser bar. With notifications users switch on Web Push per device.",
           "type": "boolean",
