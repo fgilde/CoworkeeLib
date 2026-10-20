@@ -25,4 +25,9 @@ public interface ISocialApi
     Task<RatingDto> RateAsync(string entityType, Guid entityId, int stars, CancellationToken cancellationToken = default);
 
     Task<RatingDto> ClearRatingAsync(string entityType, Guid entityId, CancellationToken cancellationToken = default);
+
+    Task<ReactionsDto> GetReactionsAsync(string entityType, Guid entityId, CancellationToken cancellationToken = default);
+
+    /// <summary>Adds the emoji of the signed-in user, or takes it back when it is there already.</summary>
+    Task<ReactionsDto> ToggleReactionAsync(string entityType, Guid entityId, string emoji, CancellationToken cancellationToken = default);
 }

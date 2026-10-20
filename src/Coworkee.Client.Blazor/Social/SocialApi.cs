@@ -38,5 +38,11 @@ internal sealed class SocialApi(HttpClient http) : ApiClientBase(http), ISocialA
     public Task<RatingDto> ClearRatingAsync(string entityType, Guid entityId, CancellationToken cancellationToken = default) =>
         SendAsync<RatingDto>(HttpMethod.Delete, Url("ratings", entityType, entityId), null, cancellationToken);
 
+    public Task<ReactionsDto> GetReactionsAsync(string entityType, Guid entityId, CancellationToken cancellationToken = default) =>
+        GetAsync<ReactionsDto>(Url("reactions", entityType, entityId), cancellationToken);
+
+    public Task<ReactionsDto> ToggleReactionAsync(string entityType, Guid entityId, string emoji, CancellationToken cancellationToken = default) =>
+        SendAsync<ReactionsDto>(HttpMethod.Post, Url("reactions", entityType, entityId), new ReactionRequest(emoji), cancellationToken);
+
     private static string Url(string area, string entityType, Guid entityId) => $"api/v1/{area}/{Uri.EscapeDataString(entityType)}/{entityId}";
 }

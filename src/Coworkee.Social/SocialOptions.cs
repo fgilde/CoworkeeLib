@@ -1,3 +1,4 @@
+using Coworkee.Contracts.Social;
 using Coworkee.Domain;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,7 @@ public enum SocialFeature
     Comments,
     Tags,
     Ratings,
+    Reactions,
 }
 
 /// <summary>What is about to happen: <see cref="EntityId"/> is null for questions about the whole entity type, such as the tag cloud.</summary>
@@ -20,7 +22,7 @@ internal sealed record SocialTarget(
     Func<CoworkeeDbContext, Guid, CancellationToken, Task<Guid?>>? OwnerAsync,
     Func<Guid, string>? Link);
 
-/// <summary>Which entity types take comments, tags and ratings; entity types are opt-in.</summary>
+/// <summary>Which entity types take comments, tags, ratings and reactions; entity types are opt-in.</summary>
 public sealed class SocialOptions
 {
     internal Dictionary<(SocialFeature Feature, string EntityType), SocialTarget> Targets { get; } = [];
@@ -43,6 +45,14 @@ public sealed class SocialOptions
 
     public SocialOptions Ratings<TEntity>(string entityType)
         where TEntity : class => Add(SocialFeature.Ratings, entityType, For<TEntity>(null));
+
+    public SocialOptions Reactions(string entityType) => Add(SocialFeature.Reactions, entityType, new(null, null, null));
+
+    public SocialOptions Reactions<TEntity>(string entityType)
+        where TEntity : class => Add(SocialFeature.Reactions, entityType, For<TEntity>(null));
+
+    /// <summary>Reactions on the comments of every entity type with comments; who may see or write the comments may see or add reactions there (with the reaction permissions).</summary>
+    public SocialOptions CommentReactions() => Add(SocialFeature.Reactions, SocialReactions.Comment, new(null, null, null));
 
     /// <summary>An extra check on top of the permissions, e.g. "may the user see this product at all"; every check must pass.</summary>
     public SocialOptions Authorize(Func<IServiceProvider, SocialAccess, CancellationToken, Task<bool>> check)

@@ -1,3 +1,4 @@
+using Coworkee.Infrastructure.Auditing;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -39,6 +40,17 @@ internal sealed class SocialModelContributor : IModelContributor
             rating.Property(r => r.EntityType).HasMaxLength(SocialLimits.EntityType);
             rating.HasIndex(r => new { r.TenantId, r.EntityType, r.EntityId, r.UserId }).IsUnique();
         });
+
+        modelBuilder.Entity<Reaction>(reaction =>
+        {
+            reaction.ToTable("Reactions", "cw");
+            reaction.Metadata.IsNotAudited();
+            reaction.Ignore(r => r.RealtimeTopics);
+            reaction.Ignore(r => r.ThreadTopic);
+            reaction.Property(r => r.EntityType).HasMaxLength(SocialLimits.EntityType);
+            reaction.Property(r => r.Emoji).HasMaxLength(SocialLimits.Emoji);
+            reaction.HasIndex(r => new { r.TenantId, r.EntityType, r.EntityId, r.UserId, r.Emoji }).IsUnique();
+        });
     }
 }
 
@@ -47,4 +59,6 @@ internal static class SocialLimits
     public const int EntityType = 100;
     public const int CommentText = 4000;
     public const int TagName = 50;
+    public const int Emoji = 16;
+    public const int ReactionsPerUser = 20;
 }

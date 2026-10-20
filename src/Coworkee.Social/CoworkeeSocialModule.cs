@@ -13,7 +13,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Coworkee.Social;
 
-/// <summary>Comments, tags and ratings on any entity type an app opts in with AddCoworkeeSocial.</summary>
+/// <summary>Comments, tags, ratings and reactions on any entity type an app opts in with AddCoworkeeSocial.</summary>
 [DependsOn(typeof(CoworkeeRealtimeModule))]
 public sealed class CoworkeeSocialModule : CoworkeeModule, IWebModule
 {
@@ -26,7 +26,8 @@ public sealed class CoworkeeSocialModule : CoworkeeModule, IWebModule
         services.AddSingleton<IPermissionDefinitionContributor, SocialPermissionDefinitions>();
         services.AddScoped<SocialGuard>();
         services.AddScoped<Application.Privacy.IPersonalDataContributor, SocialPersonalData>();
-        services.AddScoped<IRealtimeTopicAuthorizer, CommentTopicAuthorizer>();
+        services.AddScoped<IRealtimeTopicAuthorizer>(sp => ActivatorUtilities.CreateInstance<SocialTopicAuthorizer>(sp, SocialFeature.Comments));
+        services.AddScoped<IRealtimeTopicAuthorizer>(sp => ActivatorUtilities.CreateInstance<SocialTopicAuthorizer>(sp, SocialFeature.Reactions));
         services.TryAddSingleton(TimeProvider.System);
     }
 
@@ -59,6 +60,12 @@ public sealed class CoworkeeSocialModule : CoworkeeModule, IWebModule
             d.SendAsync(new RateCommand(entityType, entityId, body.Stars), ct).ToHttpResult());
         ratings.MapDelete("/{entityType}/{entityId:guid}", (string entityType, Guid entityId, Guid? userId, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new ClearRatingCommand(entityType, entityId, userId), ct).ToHttpResult());
+
+        var reactions = app.MapCoworkeeApi("/api/v1/reactions").WithTags("Reactions").RequireAuthorization();
+        reactions.MapGet("/{entityType}/{entityId:guid}", (string entityType, Guid entityId, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new GetReactionsQuery(entityType, entityId), ct).ToHttpResult());
+        reactions.MapPost("/{entityType}/{entityId:guid}", (string entityType, Guid entityId, ReactionRequest body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new ToggleReactionCommand(entityType, entityId, body.Emoji), ct).ToHttpResult());
     }
 }
 
@@ -74,5 +81,7 @@ internal sealed class SocialPermissionDefinitions : IPermissionDefinitionContrib
             .Add(SocialPermissions.Tags.Moderate, "Manage tag sets", SocialPermissions.Tags.Create)
             .Add(SocialPermissions.Ratings.View, "View ratings")
             .Add(SocialPermissions.Ratings.Create, "Rate entities", SocialPermissions.Ratings.View)
-            .Add(SocialPermissions.Ratings.Moderate, "Moderate ratings", SocialPermissions.Ratings.Create);
+            .Add(SocialPermissions.Ratings.Moderate, "Moderate ratings", SocialPermissions.Ratings.Create)
+            .Add(SocialPermissions.Reactions.View, "View reactions")
+            .Add(SocialPermissions.Reactions.Create, "React with emojis", SocialPermissions.Reactions.View);
 }

@@ -1,0 +1,22 @@
+<MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap" data-testid="reactions">
+    @foreach (var reaction in _reactions?.Reactions ?? [])
+    {
+        <MudTooltip Text="@_names.GetValueOrDefault(reaction.Emoji, reaction.Emoji)">
+            <span @onmouseenter="() => LoadNamesAsync(reaction)">
+                <MudChip T="string" Size="Size.Small" Variant="@(Mine(reaction) ? Variant.Filled : Variant.Outlined)" Color="@(Mine(reaction) ? Color.Primary : Color.Default)"
+                         OnClick="() => ToggleAsync(reaction.Emoji)" data-reaction="@reaction.Emoji">@reaction.Emoji @reaction.UserIds.Count</MudChip>
+            </span>
+        </MudTooltip>
+    }
+    @if (_reactions?.CanReact == true && !ReadOnly)
+    {
+        <MudMenu Icon="@Icons.Material.Outlined.AddReaction" Size="Size.Small" Dense="true" AriaLabel="@L["Add reaction"]" data-testid="reaction-add">
+            <div class="d-flex px-2">
+                @foreach (var emoji in Emojis)
+                {
+                    <MudMenuItem OnClick="() => ToggleAsync(emoji)" Class="px-1" data-emoji="@emoji">@emoji</MudMenuItem>
+                }
+            </div>
+        </MudMenu>
+    }
+</MudStack>

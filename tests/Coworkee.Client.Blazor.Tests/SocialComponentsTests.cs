@@ -82,6 +82,40 @@ public sealed class SocialComponentsTests : ClientTestBase
     public void Tag_filter_matches_the_ids_or_nothing() =>
         (CoworkeeTagCloud.ToFilter([]), CoworkeeTagCloud.ToFilter([Me, Bob])).ShouldBe(("false", $"Id in ({Me},{Bob})"));
 
+    [Fact]
+    public async Task Reactions_show_counts_highlight_the_own_toggle_through_the_picker_and_reload_on_realtime_events()
+    {
+        _api.GetReactionsAsync("Products", _id, default).ReturnsForAnyArgs(new ReactionsDto([new ReactionDto("👍", [Bob, Me]), new ReactionDto("🎉", [Bob])], true));
+        _api.ToggleReactionAsync("Products", _id, default!, default).ReturnsForAnyArgs(new ReactionsDto([new ReactionDto("👍", [Bob, Me]), new ReactionDto("🎉", [Bob, Me])], true));
+        var reactions = Render<CoworkeeReactions>(p => p.Add(r => r.EntityType, "Products").Add(r => r.EntityId, _id));
+        reactions.WaitForAssertion(() => reactions.FindAll("[data-reaction]").Count.ShouldBe(2));
+
+        reactions.Find("[data-reaction='👍']").TextContent.ShouldContain("2");
+        reactions.Find("[data-reaction='👍']").ClassList.ShouldContain("mud-chip-filled");
+        reactions.Find("[data-reaction='🎉']").ClassList.ShouldNotContain("mud-chip-filled");
+        await reactions.Find("[data-reaction='🎉']").ClickAsync(new());
+        await _api.Received(1).ToggleReactionAsync("Products", _id, "🎉", Arg.Any<CancellationToken>());
+        reactions.WaitForAssertion(() => reactions.Find("[data-reaction='🎉']").TextContent.ShouldContain("2"));
+
+        _api.GetReactionsAsync("Products", _id, default).ReturnsForAnyArgs(new ReactionsDto([], true));
+        Services.GetRequiredService<FakeRealtimeConnection>().Push(SocialTopics.Reactions("Products", _id));
+        reactions.WaitForAssertion(() => reactions.FindAll("[data-reaction]").ShouldBeEmpty());
+        reactions.Find("[data-testid='reaction-add']").ShouldNotBeNull();
+    }
+
+    [Fact]
+    public void Comments_show_their_reactions_from_the_thread_and_without_the_right_offer_no_picker()
+    {
+        var root = Comment(Bob, "Root") with { Reactions = [new ReactionDto("❤️", [Bob])] };
+        _api.GetCommentsAsync("Products", _id, default).ReturnsForAnyArgs(new CommentThreadDto([root], true, false) { ShowReactions = true, CanReact = false });
+
+        var comments = Render<CoworkeeComments>(p => p.Add(c => c.EntityType, "Products").Add(c => c.EntityId, _id));
+
+        comments.WaitForAssertion(() => comments.Find($"[data-comment='{root.Id}'] [data-reaction='❤️']").TextContent.ShouldContain("1"));
+        comments.FindAll("[data-testid='reaction-add']").ShouldBeEmpty();
+        _api.DidNotReceiveWithAnyArgs().GetReactionsAsync(default!, default, default);
+    }
+
     private static CommentDto Comment(Guid author, string text, Guid? parentId = null) =>
         new(Guid.CreateVersion7(), parentId, author, text, DateTimeOffset.UtcNow, null);
 }

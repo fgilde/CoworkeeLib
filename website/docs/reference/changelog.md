@@ -6,6 +6,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Breaking changes
 
+- **Migration needed** in apps with `Coworkee.Social`: the new table `cw.Reactions` (emoji reactions).
 - `Error.Validation(field, message).Message` is the given message instead of *One or more validation errors occurred.*; so is the `title` of the 400 problem details. `code` (`validation`) and `errors` are unchanged; the dictionary overload keeps the generic text.
 - **Migration needed** in apps with `Coworkee.Workflows`: the new column `RequestedBy` of `cw.WorkflowApprovals` (who ran the transition into the approval). The escalation of an approval with `NotByRequester()` no longer adds the requester as an approver when they are in the escalation role; approvals started before the migration have no requester stored and are not filtered.
 
@@ -23,6 +24,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### New
 
+- Social: emoji reactions. `AddCoworkeeSocial(s => s.Reactions<Product>("Products").CommentReactions())`, permissions `Social.Reactions.View`/`.Create`, `GET/POST /api/v1/reactions/{entityType}/{entityId}` (toggle `{ "emoji" }`), realtime topic `reactions:{entityType}:{entityId}`, component `<CoworkeeReactions EntityType="Products" EntityId="id" />` (counts, own ones filled, who reacted on hover, picker of `SocialReactions.Defaults`); with `CommentReactions()` every comment of `CoworkeeComments` gets the same row (`CommentDto.Reactions`, `CommentThreadDto.ShowReactions/CanReact`). Personal data export and erase include reactions. `ISocialApi` has `GetReactionsAsync`/`ToggleReactionAsync`. See [Comments, tags, ratings and reactions](../modules/social.md#reactions).
 - Workflows: `WorkflowEngine.LoadAsync` finds an entity the current unit of work added and has not saved yet in the change tracker, so a command adds a record and runs its first transition in one `SaveChanges` (no early save; a refused transition saves nothing). See [Workflows](../modules/workflows.md).
 - Background jobs: `TenantJobRunner.ForEachTenantAsync((services, tenantId, ct) => ..., ct)` runs work once per active organisation as its system and in an own scope, logs and returns failed organisations and goes on with the others; `ForTenantsAsync(ids, ...)` for the organisations a query found. `ITenantDirectory.GetActiveTenantIdsAsync`. The `workflow-deadlines` job uses it (an error in one organisation no longer stops the run). See [Background jobs](../modules/background-jobs.md).
 - Client: `ClientUser.From(principal)` (`IsAuthenticated`, `UserId`, `TenantId`, `Email`, `DisplayName`) and the scoped `CurrentUserInfo` (`GetAsync()`, `Changed`) registered by `AddCoworkeeClient`; the library components use it instead of parsing `sub`, and the client principal carries the `tenant_id` claim. See [Client](../ui/client.md#current-user).

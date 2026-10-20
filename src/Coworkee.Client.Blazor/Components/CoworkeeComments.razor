@@ -23,6 +23,12 @@
                 {
                     <MudText Typo="Typo.body2" Class="ml-10" Style="white-space:pre-wrap">@comment.Text</MudText>
                 }
+                @if (_thread.ShowReactions && (comment.Reactions.Count > 0 || _thread.CanReact))
+                {
+                    <div class="ml-10 mt-1">
+                        <CoworkeeReactions EntityType="@SocialReactions.Comment" EntityId="comment.Id" Value="@(new ReactionsDto(comment.Reactions, _thread.CanReact))" />
+                    </div>
+                }
                 <MudStack Row="true" Spacing="0" Class="ml-8">
                     @if (_thread.CanComment)
                     {

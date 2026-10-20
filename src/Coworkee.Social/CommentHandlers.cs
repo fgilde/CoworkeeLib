@@ -31,7 +31,14 @@ internal sealed class CommentHandlers(
         var comments = await Of(query.EntityType, query.EntityId).AsNoTracking().OrderBy(c => c.CreatedAt).ToListAsync(cancellationToken);
         var canComment = await permissions.IsGrantedAsync(SocialPermissions.Comments.Create, cancellationToken)
             && await guard.AllowsAsync(Access(query.EntityType, query.EntityId, write: true), cancellationToken);
-        return new CommentThreadDto(comments.Select(ToDto).ToList(), canComment, canComment && await IsModeratorAsync(cancellationToken));
+        var showReactions = guard.HasCommentReactions && await permissions.IsGrantedAsync(SocialPermissions.Reactions.View, cancellationToken);
+        var reactions = showReactions ? await ReactionSummary.OfAsync(db, SocialReactions.Comment, [.. comments.Select(c => c.Id)], cancellationToken) : [];
+        return new CommentThreadDto([.. comments.Select(c => ToDto(c) with { Reactions = reactions.GetValueOrDefault(c.Id, []) })], canComment, canComment && await IsModeratorAsync(cancellationToken))
+        {
+            ShowReactions = showReactions,
+            CanReact = showReactions && await permissions.IsGrantedAsync(SocialPermissions.Reactions.Create, cancellationToken)
+                && await guard.AllowsAsync(Access(query.EntityType, query.EntityId, write: true), cancellationToken),
+        };
     }
 
     public async Task<Result<CommentDto>> HandleAsync(AddCommentCommand command, CancellationToken cancellationToken)
@@ -103,7 +110,9 @@ internal sealed class CommentHandlers(
         }
 
         // the replies go along; loaded, so EF removes them where the database does not cascade (SQL Server)
-        await Of(comment.EntityType, comment.EntityId).LoadAsync(cancellationToken);
+        var thread = await Of(comment.EntityType, comment.EntityId).ToListAsync(cancellationToken);
+        var gone = Subtree(comment.Id, thread.ToLookup(c => c.ParentId)).ToList();
+        db.RemoveRange(await db.Set<Reaction>().Where(r => r.EntityType == SocialReactions.Comment && gone.Contains(r.EntityId)).ToListAsync(cancellationToken));
         db.Remove(comment);
         return Result.Success();
     }
@@ -125,6 +134,8 @@ internal sealed class CommentHandlers(
             await notifier.NotifyLocalizedAsync(recipients, "social.comment", "New comment", "{0}", [body], target.Link?.Invoke(comment.EntityId), cancellationToken);
         }
     }
+
+    private static IEnumerable<Guid> Subtree(Guid id, ILookup<Guid?, Comment> replies) => replies[id].SelectMany(r => Subtree(r.Id, replies)).Prepend(id);
 
     private Task<bool> IsModeratorAsync(CancellationToken cancellationToken) => permissions.IsGrantedAsync(SocialPermissions.Comments.Moderate, cancellationToken);
 

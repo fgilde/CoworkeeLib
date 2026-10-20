@@ -85,6 +85,13 @@ public sealed class SocialApp : DatabaseFixture
         return note.Id;
     }
 
+    public async Task<int> ReactionCountAsync()
+    {
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
+        await using var scope = App.Services.CreateAsyncScope();
+        return await scope.ServiceProvider.GetRequiredService<SocialTestDbContext>().Set<Reaction>().IgnoreQueryFilters().CountAsync();
+    }
+
     public async Task<List<Notification>> NotificationsAsync()
     {
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
@@ -135,6 +142,8 @@ public sealed class TestSocialModule : CoworkeeModule
             .Comments<Note>("Notes", id => $"/notes/{id}")
             .Tags<Note>("Notes")
             .Ratings<Note>("Notes")
+            .Reactions<Note>("Notes")
+            .CommentReactions()
             .Authorize(async (services, access, ct) => access.EntityId is not { } id
                 || !await services.GetRequiredService<CoworkeeDbContext>().Set<Note>().AnyAsync(n => n.Id == id && n.Text == SocialApp.Secret, ct)));
         context.Services.AddCoworkeeDbContext<SocialTestDbContext>((provider, options) =>

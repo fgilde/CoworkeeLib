@@ -1,6 +1,6 @@
-# Comments, tags and ratings
+# Comments, tags, ratings and reactions
 
-`Coworkee.Social` attaches comments, tags and star ratings to any entity, addressed by entity type and id, like the CMS kit of other frameworks. Entity types are opt-in: an app names the types that take each block.
+`Coworkee.Social` attaches comments, tags, star ratings and emoji reactions to any entity, addressed by entity type and id, like the CMS kit of other frameworks. Entity types are opt-in: an app names the types that take each block.
 
 ```csharp
 [DependsOn(typeof(CoworkeeSocialModule))]
@@ -10,7 +10,9 @@ public sealed class MyAppProductsModule : CoworkeeModule
         context.Services.AddCoworkeeSocial(social => social
             .Comments<Product>("Products", id => $"/products/{id}")
             .Tags<Product>("Products")
-            .Ratings<Product>("Products"));
+            .Ratings<Product>("Products")
+            .Reactions<Product>("Products")
+            .CommentReactions());
 }
 ```
 
@@ -30,6 +32,7 @@ social.Authorize(async (services, access, ct) =>
 | Comments | `Social.Comments.View` | write, edit and delete own comments | delete any comment |
 | Tags | `Social.Tags.View` | tag entities, new tags join the set | remove a tag from the set |
 | Ratings | `Social.Ratings.View` | rate, take back the own rating | remove the rating of anyone |
+| Reactions | `Social.Reactions.View` | react, take back the own reaction | – |
 
 Moderate implies Create, Create implies View.
 
@@ -45,6 +48,12 @@ Each entity type has its own tag set per organisation. Names are matched without
 
 One rating of 1 to 5 stars per user and entity; a second rating replaces the first. The summary carries average, count and the own rating.
 
+## Reactions
+
+Every user can put several emojis on an entity, each once; reacting with the same emoji again takes it back (at most 20 per user and entity). Reactions list the users per emoji, first reaction first, and change live on the topic `reactions:{entityType}:{entityId}` (`SocialTopics.Reactions`).
+
+`CommentReactions()` turns them on for the comments of every entity type with comments, entity type `Social.Comment` (`SocialReactions.Comment`) with the comment's id. Who may see or write the comments of an entity may see or add reactions there, with the reaction permissions on top. The thread carries the reactions of its comments, they change live on the thread's comments topic and go when their comment is deleted.
+
 | Endpoint | |
 |---|---|
 | `GET/POST /api/v1/comments/{entityType}/{entityId}` | the thread / comment with `{ "text", "parentId" }` |
@@ -53,20 +62,22 @@ One rating of 1 to 5 stars per user and entity; a second rating replaces the fir
 | `DELETE /api/v1/tags/{entityType}?tag=` | remove a tag from the set |
 | `GET/PUT /api/v1/tags/{entityType}/{entityId}` | tags of an entity / replace with `{ "tags": [...] }` |
 | `GET/PUT/DELETE /api/v1/ratings/{entityType}/{entityId}` | summary / rate with `{ "stars" }` / take back (`?userId=` for moderators) |
+| `GET/POST /api/v1/reactions/{entityType}/{entityId}` | reactions with who reacted / toggle the own `{ "emoji" }` |
 
 ## Database
 
-The module adds the tables `cw.Comments`, `cw.Tags`, `cw.EntityTags` and `cw.Ratings`; create a migration in the app after adding it.
+The module adds the tables `cw.Comments`, `cw.Tags`, `cw.EntityTags`, `cw.Ratings` and `cw.Reactions`; create a migration in the app after adding it.
 
 ## In the client
 
 ```razor
 <CoworkeeRating EntityType="Products" EntityId="product.Id" />
 <CoworkeeTags EntityType="Products" EntityId="product.Id" />
+<CoworkeeReactions EntityType="Products" EntityId="product.Id" />
 <CoworkeeComments EntityType="Products" EntityId="product.Id" />
 ```
 
-The components ask the server what the user may do and hide the inputs otherwise. `CoworkeeTagCloud` lists the tag set and turns the chosen tag into an OData filter for a data table:
+The components ask the server what the user may do and hide the inputs otherwise. `CoworkeeReactions` shows a chip per emoji with its count (the own ones filled), who reacted on hover and a picker with `SocialReactions.Defaults` (👍 ❤️ 😂 🎉 😮 😢; `Emojis` sets others). With `CommentReactions()` the comments show the same row under each comment. `CoworkeeTagCloud` lists the tag set and turns the chosen tag into an OData filter for a data table:
 
 ```razor
 <CoworkeeTagCloud EntityType="Products" @bind-Filter="_tagFilter" @bind-Filter:after="() => _table.ReloadAsync()" />

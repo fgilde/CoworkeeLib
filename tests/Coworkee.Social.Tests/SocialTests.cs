@@ -104,19 +104,22 @@ public sealed class SocialTests(SocialApp app) : IAsyncLifetime
     [Fact]
     public async Task Personal_data_lists_own_comments_and_ratings_and_erasing_the_user_removes_them()
     {
-        var bob = await CreateUserAsync("leaver@acme.test", SocialPermissions.Comments.Create, SocialPermissions.Ratings.Create);
+        var bob = await CreateUserAsync("leaver@acme.test", SocialPermissions.Comments.Create, SocialPermissions.Ratings.Create, SocialPermissions.Reactions.Create);
         var asBob = app.As(bob.Id, _setup.TenantId);
         await ReadAsync<CommentDto>(await asBob.PostAsJsonAsync(Comments, new CommentRequest("My two cents"), Ct));
         await ReadAsync<RatingDto>(await asBob.PutAsJsonAsync($"/api/v1/ratings/Notes/{_note}", new RateRequest(3), Ct));
+        await ReadAsync<ReactionsDto>(await asBob.PostAsJsonAsync($"/api/v1/reactions/Notes/{_note}", new ReactionRequest("👍"), Ct));
 
         var export = await asBob.GetFromJsonAsync<System.Text.Json.JsonElement>("/api/v1/identity/me/personal-data", Ct);
         export.GetProperty("social").GetProperty("comments")[0].GetProperty("text").GetString().ShouldBe("My two cents");
         export.GetProperty("social").GetProperty("ratings")[0].GetProperty("stars").GetInt32().ShouldBe(3);
+        export.GetProperty("social").GetProperty("reactions")[0].GetProperty("emoji").GetString().ShouldBe("👍");
 
         (await Admin.DeleteAsync($"/api/v1/identity/users/{bob.Id}", Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
         (await Admin.GetFromJsonAsync<CommentThreadDto>(Comments, Ct))!.Comments.ShouldBeEmpty();
         (await Admin.GetFromJsonAsync<RatingDto>($"/api/v1/ratings/Notes/{_note}", Ct))!.Count.ShouldBe(0);
+        (await Admin.GetFromJsonAsync<ReactionsDto>($"/api/v1/reactions/Notes/{_note}", Ct))!.Reactions.ShouldBeEmpty();
     }
 
     [Fact]
@@ -131,6 +134,73 @@ public sealed class SocialTests(SocialApp app) : IAsyncLifetime
         (await Admin.GetAsync($"/api/v1/ratings/Notes/{Guid.NewGuid()}", Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
         (await Admin.GetAsync($"/api/v1/tags/Notes/{secret}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await app.As(viewer.Id, _setup.TenantId).GetAsync(Comments, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task Reactions_toggle_per_user_and_emoji_list_who_reacted_and_reach_subscribers_live()
+    {
+        var bob = await CreateUserAsync("fan@acme.test", SocialPermissions.Reactions.Create);
+        var viewer = await CreateUserAsync("looker@acme.test", SocialPermissions.Reactions.View);
+        var url = $"/api/v1/reactions/Notes/{_note}";
+        var (connection, events) = await app.ConnectAsync(_setup.AdminUserId, _setup.TenantId);
+        await using var _ = connection;
+        await connection.InvokeAsync(RealtimeHubMethods.Subscribe, SocialTopics.Reactions("Notes", _note), Ct);
+
+        await ReadAsync<ReactionsDto>(await Admin.PostAsJsonAsync(url, new ReactionRequest("👍"), Ct));
+        await ReadAsync<ReactionsDto>(await app.As(bob.Id, _setup.TenantId).PostAsJsonAsync(url, new ReactionRequest("👍"), Ct));
+        var reactions = await ReadAsync<ReactionsDto>(await app.As(bob.Id, _setup.TenantId).PostAsJsonAsync(url, new ReactionRequest("🎉"), Ct));
+
+        reactions.CanReact.ShouldBeTrue();
+        reactions.Reactions.Select(r => (r.Emoji, r.UserIds.Count)).ShouldBe([("👍", 2), ("🎉", 1)]);
+        reactions.Reactions[0].UserIds.ShouldBe([_setup.AdminUserId, bob.Id]);
+
+        var taken = await ReadAsync<ReactionsDto>(await Admin.PostAsJsonAsync(url, new ReactionRequest("👍"), Ct));
+        taken.Reactions[0].UserIds.ShouldBe([bob.Id]);
+        (await app.As(viewer.Id, _setup.TenantId).GetFromJsonAsync<ReactionsDto>(url, Ct))!.CanReact.ShouldBeFalse();
+        (await app.As(viewer.Id, _setup.TenantId).PostAsJsonAsync(url, new ReactionRequest("👍"), Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await Admin.PostAsJsonAsync(url, new ReactionRequest("ok"), Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        for (var i = 0; i < 50 && events.IsEmpty; i++)
+        {
+            await Task.Delay(100, Ct);
+        }
+
+        events.ShouldContain(e => e.Topic == SocialTopics.Reactions("Notes", _note));
+    }
+
+    [Fact]
+    public async Task Comment_reactions_come_with_the_thread_follow_the_comment_rights_and_go_with_the_comment()
+    {
+        var reader = await CreateUserAsync("reader@acme.test", SocialPermissions.Reactions.Create);
+        var comment = await ReadAsync<CommentDto>(await Admin.PostAsJsonAsync(Comments, new CommentRequest("Nice"), Ct));
+        var url = $"/api/v1/reactions/{SocialReactions.Comment}/{comment.Id}";
+        var (connection, events) = await app.ConnectAsync(_setup.AdminUserId, _setup.TenantId);
+        await using var _ = connection;
+        await connection.InvokeAsync(RealtimeHubMethods.Subscribe, SocialTopics.Comments("Notes", _note), Ct);
+
+        await ReadAsync<ReactionsDto>(await Admin.PostAsJsonAsync(url, new ReactionRequest("❤️"), Ct));
+
+        var thread = (await Admin.GetFromJsonAsync<CommentThreadDto>(Comments, Ct))!;
+        (thread.ShowReactions, thread.CanReact).ShouldBe((true, true));
+        thread.Comments.Single().Reactions.ShouldHaveSingleItem().ShouldBe(new ReactionDto("❤️", [_setup.AdminUserId]), new ReactionDtoComparer());
+        (await app.As(reader.Id, _setup.TenantId).PostAsJsonAsync(url, new ReactionRequest("❤️"), Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await Admin.GetAsync($"/api/v1/reactions/{SocialReactions.Comment}/{Guid.NewGuid()}", Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        for (var i = 0; i < 50 && events.IsEmpty; i++)
+        {
+            await Task.Delay(100, Ct);
+        }
+
+        events.ShouldContain(e => e.Topic == SocialTopics.Comments("Notes", _note));
+
+        (await Admin.DeleteAsync($"/api/v1/comments/{comment.Id}", Ct)).EnsureSuccessStatusCode();
+        (await Admin.GetAsync(url, Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await app.ReactionCountAsync()).ShouldBe(0);
+    }
+
+    private sealed class ReactionDtoComparer : IEqualityComparer<ReactionDto>
+    {
+        public bool Equals(ReactionDto? x, ReactionDto? y) => x?.Emoji == y?.Emoji && x!.UserIds.SequenceEqual(y!.UserIds);
+
+        public int GetHashCode(ReactionDto obj) => obj.Emoji.GetHashCode();
     }
 
     private async Task<EntityTagsDto> SaveTagsAsync(Guid note, params string[] tags) =>

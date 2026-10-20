@@ -136,7 +136,7 @@ plugins:
             Chat: Chat
             Reporting: Berichte
             Extended attributes: Erweiterte Attribute
-            Comments, tags and ratings: Kommentare, Tags und Bewertungen
+            Comments, tags, ratings and reactions: Kommentare, Tags, Bewertungen und Reaktionen
             Workflows and approvals: Workflows und Genehmigungen
             Elsa workflows: Elsa-Workflows
             Webhooks: Webhooks
@@ -250,7 +250,7 @@ nav:
       - Chat: modules/chat.md
       - Reporting: modules/reporting.md
       - Extended attributes: modules/extended-attributes.md
-      - Comments, tags and ratings: modules/social.md
+      - Comments, tags, ratings and reactions: modules/social.md
       - Workflows and approvals: modules/workflows.md
       - Elsa workflows: modules/workflows-elsa.md
       - Webhooks: modules/webhooks.md
