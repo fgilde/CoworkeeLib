@@ -51,6 +51,16 @@ public sealed class ViewSwitchTests : ReportingTestBase
     }
 
     [Fact]
+    public void The_widget_renders_while_the_stored_choices_still_load()
+    {
+        Settings.GetSettingsAsync(SettingScope.User, default).ReturnsForAnyArgs(new TaskCompletionSource<IReadOnlyList<SettingValueDto>>().Task);
+
+        var frame = Show(Chart());
+
+        frame.Find("[data-testid='widget']").TextContent.ShouldContain("Orders");
+    }
+
+    [Fact]
     public void A_stored_grouping_is_shown_when_the_widget_opens()
     {
         Settings.GetSettingsAsync(SettingScope.User, default).ReturnsForAnyArgs([new SettingValueDto(TableSettings.ReportViews, "{\"" + ReportId.ToString("N") + ":c\":{\"bucket\":0}}", true)]);

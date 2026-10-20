@@ -54,13 +54,14 @@ public partial class WidgetFrame
 
     protected override async Task OnParametersSetAsync()
     {
+        // the frame renders while the remembered choice loads: the widget as it is until then
+        _shown = ReportViews.Apply(Widget, Editing ? null : _choice);
         if (!_choiceRead && ReportId is { } report)
         {
             _choiceRead = true;
             _choice = await Choices.GetAsync(report, Widget.Id);
+            _shown = ReportViews.Apply(Widget, Editing ? null : _choice);
         }
-
-        _shown = ReportViews.Apply(Widget, Editing ? null : _choice);
     }
 
     private async Task ChooseAsync(ReportViewChoice choice)
