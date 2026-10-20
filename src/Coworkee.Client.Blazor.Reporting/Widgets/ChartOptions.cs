@@ -79,8 +79,8 @@ public static class ChartOptions
             Xaxis = new XAxis
             {
                 TickAmount = points > 16 && kind is ChartKind.Line or ChartKind.Area or ChartKind.Bar or ChartKind.StackedBar ? 12 : null,
-                // labels that do not fit turn by 45° instead of being cut to "2…"
-                Labels = new XAxisLabels { Trim = true, HideOverlappingLabels = true, Rotate = -45, Formatter = kind == ChartKind.HorizontalBar ? ReportFormat.Script(widget, compact: true) : null },
+                // labels that do not fit turn by 45° instead of being cut to "2…"; the values below horizontal bars do not turn, so they are never cut
+                Labels = new XAxisLabels { Trim = kind != ChartKind.HorizontalBar, HideOverlappingLabels = true, Rotate = -45, Formatter = kind == ChartKind.HorizontalBar ? ReportFormat.Script(widget, compact: true) : null },
             },
             Markers = new Markers { Size = kind == ChartKind.Line && points <= 24 ? 4 : 0, StrokeWidth = 0, Hover = new MarkersHover { Size = 6 } },
             States = new States { Active = new StatesActive { Filter = new StatesFilter { Type = StatesFilterType.darken, Value = 0.25 } } },
