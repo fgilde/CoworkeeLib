@@ -73,6 +73,19 @@ public sealed class GenerationTests
     }
 
     [Fact]
+    public void Names_of_several_words_show_as_words_in_navigation_page_dialogs_and_permissions()
+    {
+        var files = FeatureWriter.Files(new EntityModel("Shop", "TimeOff", new EntitySpec { Name = "BenefitEnrollment", Properties = [new PropertySpec { Name = "Note" }] }, MappingStrategy.Manual)).ToList();
+
+        Content(files, "BenefitEnrollmentsNavigation.cs").ShouldContain("[new(\"Benefit enrollments\", \"/time-off/benefit-enrollments\"");
+        Content(files, "BenefitEnrollmentsPage.razor").ShouldContain("<PageHeader Title=\"Benefit enrollments\" Description=\"Manage benefit enrollments.\" />");
+        Content(files, "BenefitEnrollmentsPage.razor.cs").ShouldContain("L[id is null ? \"New benefit enrollment\" : \"Edit benefit enrollment\"]");
+        var permissions = Content(files, "BenefitEnrollmentPermissionDefinitions.cs");
+        permissions.ShouldContain("\"Time off: Benefit enrollments\")");
+        permissions.ShouldContain("\"View benefit enrollments\")");
+    }
+
+    [Fact]
     public void Mapperly_entities_get_a_mapper_and_entities_without_rules_no_validator()
     {
         var spec = new EntitySpec { Name = "Tag", Properties = [new PropertySpec { Name = "Weight", Type = PropertyType.Int }] };

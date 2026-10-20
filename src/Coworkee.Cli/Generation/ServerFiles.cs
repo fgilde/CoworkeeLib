@@ -236,7 +236,7 @@ internal static class ServerFiles
         internal sealed class {{e.Name}}PermissionDefinitions : IPermissionDefinitionContributor
         {
             public void Define(PermissionDefinitionContext context) =>
-                context.Group({{e.Permissions}}.GroupName, "{{e.Module}}: {{e.Plural}}")
+                context.Group({{e.Permissions}}.GroupName, "{{EntityModel.Sentence(e.Module)}}: {{e.PluralTitle}}")
                     .Add({{e.Permissions}}.View, "View {{e.PluralWords}}")
                     .Add({{e.Permissions}}.Create, "Create {{e.PluralWords}}", {{e.Permissions}}.View)
                     .Add({{e.Permissions}}.Edit, "Edit {{e.PluralWords}}", {{e.Permissions}}.View)

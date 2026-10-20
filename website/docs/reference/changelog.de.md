@@ -11,6 +11,7 @@
 
 ### Korrekturen
 
+- `coworkee entity add`/`module add`: Navigationseinträge, Seitentitel und Berechtigungsgruppen zeigen Namen aus mehreren Wörtern als Wörter („Benefit enrollments“, „Time off: Benefit enrollments“) statt des PascalCase-Plurals; Dialogtitel und Berechtigungsnamen taten das schon.
 - `coworkee entity add`/`module add`: erzeugte Seiten geben `PageHeader` und `CreateText` Textschlüssel statt übersetzter Texte, die ein zweites Mal übersetzt wurden („People“ → „Personal“ → „Persönlich“). Regel: `PageHeader` und `CoworkeeDataTable.CreateText` übersetzen, Aufrufer übergeben Schlüssel. Erzeugte Seiten bestehender Apps entfernen das `@L[...]` um diese Werte.
 - `coworkee entity add`/`module add`: Referenz-Facetten bekommen `LabelPath = "it.{Navigation}.{Anzeige}"`, damit eine Navigation mit dem Namen eines Dynamic-LINQ-Schlüsselworts (`Parent`, `It`, `Root`, ...) die OData-Menge nicht mehr mit 500 antworten lässt, wenn Facetten angefragt werden. Handgeschriebene Facetten auf so einer Navigation ergänzen das `it.` selbst. Siehe [OData](../web/odata.md#facetten).
 - `ResourceCalendar`: ein Monat passt in die verfügbare Breite (schmalere Tagesspalten und Ressourcenspalte) und blendet am rechten Rand aus, wenn er scrollt; Zeilen wachsen mit einer zweizeiligen Ressourcenzelle, statt sie abzuschneiden; eine Zeile mit `UserId` zeigt Avatar mit Anwesenheit plus `Title` und `Subtitle` statt der Benutzerkarte ohne Untertitel.

@@ -51,7 +51,7 @@ internal static class ClientFiles
 
             internal sealed class {{e.Plural}}Navigation : INavigationContributor
             {
-                public IEnumerable<CoworkeeNavItem> Items => [new("{{e.Plural}}", "{{e.Route}}", Icons.Material.Outlined.TableRows, {{e.Permissions}}.View, Group: "{{e.Module}}")];
+                public IEnumerable<CoworkeeNavItem> Items => [new("{{e.PluralTitle}}", "{{e.Route}}", Icons.Material.Outlined.TableRows, {{e.Permissions}}.View, Group: "{{e.Module}}")];
             }
 
             """);
@@ -72,7 +72,7 @@ internal static class ClientFiles
             @using {{e.App}}.Contracts.{{e.Module}}
             @attribute [Authorize(Policy = PermissionPolicy.Prefix + {{e.Permissions}}.View)]
 
-            <PageHeader Title="{{e.Plural}}" Description="Manage {{e.PluralWords}}." />
+            <PageHeader Title="{{e.PluralTitle}}" Description="Manage {{e.PluralWords}}." />
             <RealtimeSubscription Topic="type:{{e.Name}}" OnEvent="_ => _table.ReloadAsync()" />
             <CoworkeeDataTable @ref="_table" T="{{e.Name}}Dto" EntitySet="{{e.Plural}}"{{expand}} SearchFields="SearchFields" MultiSelection="true" ExportFileName="{{e.PluralWords.Replace(' ', '-')}}" DescribeItem="e => {{e.Describe}}"
                                CreateText="New {{e.Words}}" CreatePermission="@{{e.Permissions}}.Create" EditPermission="@{{e.Permissions}}.Edit" DeletePermission="@{{e.Permissions}}.Delete"

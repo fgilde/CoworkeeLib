@@ -23,6 +23,9 @@ internal sealed partial record EntityModel(string App, string Module, EntitySpec
 
     public string PluralWords => Humanize(Plural);
 
+    /// <summary>The plural as shown in the navigation, page title and permissions: "Benefit enrollments".</summary>
+    public string PluralTitle => Sentence(Plural);
+
     public string Route => $"/{Kebab(Module)}/{Kebab(Plural)}";
 
     public string ApiRoute => $"api/v1/{Kebab(Plural)}";

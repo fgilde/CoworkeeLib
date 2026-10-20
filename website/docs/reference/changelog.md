@@ -11,6 +11,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixes
 
+- `coworkee entity add`/`module add`: navigation entries, page titles and permission groups show names of several words as words ("Benefit enrollments", "Time off: Benefit enrollments") instead of the PascalCase plural; dialog titles and permission names already did.
 - `coworkee entity add`/`module add`: generated pages pass text keys to `PageHeader` and `CreateText` instead of translated texts, which were translated a second time ("People" → "Personal" → "Persönlich"). Rule: `PageHeader` and `CoworkeeDataTable.CreateText` translate, callers pass keys. Generated pages of existing apps drop the `@L[...]` around these values.
 - `coworkee entity add`/`module add`: reference facets get `LabelPath = "it.{Navigation}.{Display}"`, so a navigation named like a Dynamic LINQ keyword (`Parent`, `It`, `Root`, ...) no longer makes the OData set answer 500 when facets are asked for. Hand-written facets on such a navigation add the `it.` themselves. See [OData](../web/odata.md#facets).
 - `ResourceCalendar`: a month fits the available width (day columns shrink, narrower resource column) and fades at the right edge when it scrolls; rows grow to a two-line resource cell instead of clipping it; a row with a `UserId` shows the avatar with presence plus `Title` and `Subtitle` instead of the user card without the subtitle.
