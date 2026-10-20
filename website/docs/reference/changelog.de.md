@@ -6,7 +6,7 @@
 
 ### Neu
 
-- AirWorks: Vollbild-App-Starter. `Coworkee:AirWorks:Launcher` des AirWorks-Hosts (`menu`, Standard, oder `overlay`) erreicht den Desktop als `launcher` von `/bff/user`; das Template schreibt es in die `appsettings.json` des Hosts (Option `airworksLauncher`, CLI `--airworks-launcher`, Studio-Karte *AirWorks-App-Starter*). Bestehende AirWorks-Clients setzen `@fgilde/airworks` in `ClientApp/package.json` auf Commit 1cbe858, um ihn zu nutzen. Siehe [App-Starter](../web/airworks.md#app-starter).
+- AirWorks: Vollbild-App-Starter. `Coworkee:AirWorks:Launcher` des AirWorks-Hosts (`menu`, Standard, oder `overlay`) erreicht den Desktop als `launcher` von `/bff/user`; das Template schreibt es in die `appsettings.json` des Hosts (Option `airworksLauncher`, CLI `--airworks-launcher`, Studio-Karte *AirWorks-App-Starter*). Der Starter listet die Apps der Administration unter *Administration* und andere Apps unter ihrer `launcherGroup` (neu an `CoworkeeApp` und `entityApp`; `group` bleibt der Bereich der Administration), mit Kontextmenü (*Öffnen*, *Zum Desktop hinzufügen*) und Fokusfalle. Bestehende AirWorks-Clients setzen `@fgilde/airworks` in `ClientApp/package.json` auf Commit 9657ff3 (AirWorks 0.6.0), um ihn zu nutzen. Siehe [App-Starter](../web/airworks.md#app-starter).
 
 ## 0.0.1.36 (2026-10-20)
 

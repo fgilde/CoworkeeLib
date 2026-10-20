@@ -144,7 +144,9 @@ Der Startknopf öffnet das Startmenü von der Seite (`menu`, Standard) oder ein 
 { "Coworkee": { "AirWorks": { "Launcher": "overlay" } } }
 ```
 
-Das BFF meldet es als `launcher` von `/bff/user`, `useCoworkee` gibt es an AirWorks weiter; `airWorks: { launcher: 'overlay' }` im Code geht vor. Benutzer stellen es unter *Einstellungen → Allgemein* des Desktops um, und ihre Wahl geht vor beidem. `coworkee new --airworks --airworks-launcher overlay` (Studio: die Karte *AirWorks-App-Starter*, sichtbar, wenn *AirWorks-Client* an ist) schreibt die Einstellung. Es braucht AirWorks 1cbe858 oder neuer.
+Das BFF meldet es als `launcher` von `/bff/user`, `useCoworkee` gibt es an AirWorks weiter; `airWorks: { launcher: 'overlay' }` im Code geht vor. Benutzer stellen es unter *Einstellungen → Allgemein* des Desktops um, und ihre Wahl geht vor beidem. `coworkee new --airworks --airworks-launcher overlay` (Studio: die Karte *AirWorks-App-Starter*, sichtbar, wenn *AirWorks-Client* an ist) schreibt die Einstellung. Es braucht AirWorks 0.6.0 (Commit 9657ff3) oder neuer.
+
+Das Raster hat eine Überschrift je Gruppe: Die Apps der Administration (`group` einer `CoworkeeApp`, der Bereich in der App *Administration*) stehen unter *Administration*, `launcherGroup` setzt jede andere Überschrift, etwa die Navigationsgruppe der Seite in der Web-App (`entityApp({ entitySet: 'Products', launcherGroup: coworkee.t('Catalog Management') })`); Apps ohne Gruppe kommen zuerst. Tab und Umschalt+Tab bleiben im Starter, Esc gibt den Fokus an den Startknopf zurück. Rechtsklick oder langes Tippen auf ein Icon öffnet ein Menü mit *Öffnen* und *Zum Desktop hinzufügen*; beim Ziehen eines Icons blendet sich der Starter aus, damit es auf dem Desktop landet.
 
 ### Badges
 

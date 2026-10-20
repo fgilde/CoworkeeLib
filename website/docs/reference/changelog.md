@@ -6,7 +6,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### New
 
-- AirWorks: full-screen app launcher. `Coworkee:AirWorks:Launcher` of the AirWorks host (`menu`, the default, or `overlay`) reaches the desktop as `launcher` of `/bff/user`; the template writes it to the host's `appsettings.json` (option `airworksLauncher`, CLI `--airworks-launcher`, Studio card *AirWorks app launcher*). Existing AirWorks clients move `@fgilde/airworks` to commit 1cbe858 in `ClientApp/package.json` to use it. See [App launcher](../web/airworks.md#app-launcher).
+- AirWorks: full-screen app launcher. `Coworkee:AirWorks:Launcher` of the AirWorks host (`menu`, the default, or `overlay`) reaches the desktop as `launcher` of `/bff/user`; the template writes it to the host's `appsettings.json` (option `airworksLauncher`, CLI `--airworks-launcher`, Studio card *AirWorks app launcher*). The launcher lists the administration apps under *Administration* and other apps under their `launcherGroup` (new on `CoworkeeApp` and `entityApp`; `group` stays the section of the administration), with a context menu (*Open*, *Add to desktop*) and a focus trap. Existing AirWorks clients move `@fgilde/airworks` to commit 9657ff3 (AirWorks 0.6.0) in `ClientApp/package.json` to use it. See [App launcher](../web/airworks.md#app-launcher).
 
 ## 0.0.1.36 (2026-10-20)
 

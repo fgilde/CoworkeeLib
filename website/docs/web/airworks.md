@@ -144,7 +144,9 @@ The start button opens the start menu from the side (`menu`, the default) or a f
 { "Coworkee": { "AirWorks": { "Launcher": "overlay" } } }
 ```
 
-The BFF reports it as `launcher` of `/bff/user` and `useCoworkee` hands it to AirWorks; `airWorks: { launcher: 'overlay' }` in code wins over it. Users can switch it under *Settings → General* of the desktop, and their choice wins over both. `coworkee new --airworks --airworks-launcher overlay` (Studio: the card *AirWorks app launcher*, shown when *AirWorks client* is on) writes the setting. It needs AirWorks 1cbe858 or later.
+The BFF reports it as `launcher` of `/bff/user` and `useCoworkee` hands it to AirWorks; `airWorks: { launcher: 'overlay' }` in code wins over it. Users can switch it under *Settings → General* of the desktop, and their choice wins over both. `coworkee new --airworks --airworks-launcher overlay` (Studio: the card *AirWorks app launcher*, shown when *AirWorks client* is on) writes the setting. It needs AirWorks 0.6.0 (commit 9657ff3) or later.
+
+The grid has a heading per group: the apps of the administration (`group` of a `CoworkeeApp`, the section of the *Administration* app) are listed under *Administration*, `launcherGroup` sets any other heading, e.g. the nav group of the page in the web app (`entityApp({ entitySet: 'Products', launcherGroup: coworkee.t('Catalog Management') })`); apps without one come first. Tab and Shift+Tab stay inside the launcher, and Esc returns the focus to the start button. Right click or a long press on an icon opens a menu with *Open* and *Add to desktop*; dragging an icon fades the launcher so it can be dropped on the desktop.
 
 ### Badges
 
