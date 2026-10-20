@@ -188,6 +188,7 @@ export async function useCoworkee(airWorks: AirWorksApi, options: CoworkeeOption
     defaults: { systemColor: palette(theme, mode).primary },
     storageKey: `coworkee.airworks.${location.host}`,
     webLinks: true,
+    ...(user.launcher === 'menu' || user.launcher === 'overlay' ? { launcher: user.launcher } : {}),
     ...options.airWorks,
   });
   if (user.isAuthenticated && user.userId) follow(coworkee, user.userId);

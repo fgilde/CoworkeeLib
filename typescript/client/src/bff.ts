@@ -12,6 +12,8 @@ export type BffUser = {
   systemTenant?: boolean | null;
   /** Address of the app's web client when the BFF knows it (Coworkee:Bff:WebAppUrl); pages of it can be embedded with ?embed=1. */
   appUrl?: string | null;
+  /** App launcher of an AirWorks host (Coworkee:AirWorks:Launcher): menu or overlay. */
+  launcher?: string | null;
 };
 
 export const getUser = (options?: CoworkeeClientOptions) => apiRequest<BffUser>('/bff/user', {}, options);

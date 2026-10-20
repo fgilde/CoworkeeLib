@@ -27,6 +27,7 @@ public sealed class BffTests : IAsyncLifetime
             ["Coworkee:Bff:ForwardedPrefixes:0"] = "/admin/jobs",
             ["Coworkee:Bff:FrameAncestors:0"] = "https://desk.test/",
             ["Coworkee:Mcp:Path"] = "/ai/mcp",
+            ["Coworkee:AirWorks:Launcher"] = "overlay",
         });
         builder.AddCoworkeeBff();
         _app = builder.Build();
@@ -52,6 +53,7 @@ public sealed class BffTests : IAsyncLifetime
         var user = await _client.GetFromJsonAsync<BffUserDto>("/bff/user", TestContext.Current.CancellationToken);
 
         user!.IsAuthenticated.ShouldBeFalse();
+        user.Launcher.ShouldBe("overlay");
     }
 
     [Fact]

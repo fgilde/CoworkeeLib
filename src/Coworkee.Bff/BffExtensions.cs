@@ -212,6 +212,7 @@ public static class BffExtensions
         app.MapGet(LoadingScreenLogo.Path, LoadingScreenLogo.ServeAsync);
         app.MapGet(LoadingScreenScript.Path, LoadingScreenScript.Serve);
         Pwa.PwaEndpoints.Map(app);
+        var launcher = app.Configuration["Coworkee:AirWorks:Launcher"] is { Length: > 0 } configured ? configured : null;
         app.MapGet("/bff/user", (ClaimsPrincipal user) => user.Identity?.IsAuthenticated == true
             ? new BffUserDto(
                 true,
@@ -222,8 +223,9 @@ public static class BffExtensions
                 user.FindAll("role").Select(c => c.Value).ToArray(),
                 options.Authority.TrimEnd('/') + "/Account/Manage",
                 user.FindFirstValue("system_tenant") is { } system ? system == "true" : null,
-                options.WebAppUrl is { Length: > 0 } web ? web.TrimEnd('/') : null)
-            : BffUserDto.Anonymous);
+                options.WebAppUrl is { Length: > 0 } web ? web.TrimEnd('/') : null,
+                launcher)
+            : BffUserDto.Anonymous with { Launcher = launcher });
 
         // the assistant may think and call tools for minutes before the first byte of its answer
         var longRequests = new Yarp.ReverseProxy.Forwarder.ForwarderRequestConfig { ActivityTimeout = TimeSpan.FromMinutes(10) };
