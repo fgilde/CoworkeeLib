@@ -38,6 +38,82 @@ services.AddODataEntity<Customer>("Customers", SalesPermissions.Orders.View);
 
 `GET /api/v1/reports/sources` listet die Mengen und Felder, die der angemeldete Benutzer nutzen darf.
 
+## Eigene Datenquellen
+
+Manche Kennzahlen sind keine Zeilen einer Tabelle: Mitarbeiterzahl pro Monat aus Eintritts- und Austrittsdatum, Fluktuation oder Krankenquote pro Monat, Überstunden pro Abteilung, Schulungsquote. Registriere sie als Quelle mit einem einfachen Zeilentyp; Berichte listen sie nach den Entitätsmengen (mit einem Summen-Symbol markiert) und aggregieren ihre Zeilen wie die einer Menge:
+
+```csharp
+public sealed record HeadcountRow(
+    DateOnly Month,
+    string Department,
+    [property: DisplayName("Mitarbeitende")] int Headcount,
+    int Hires,
+    int Exits);
+
+services.AddReportSource<HeadcountRow>("HeadcountByMonth", "Mitarbeitende pro Monat", HrPermissions.Reports,
+    async (context, cancellationToken) =>
+    {
+        // die Mitarbeitenden, die der Benutzer lesen darf: Mandant, Soft Delete und die Zeilenfilter der Menge gelten
+        var employees = await ODataEntityAccess.VisibleAsync<Employee>(context.Services, cancellationToken);
+        var from = context.DateFrom ?? new DateOnly(DateTime.Today.Year - 1, 1, 1);
+        var to = context.DateTo ?? DateOnly.FromDateTime(DateTime.Today).AddDays(1);
+        var people = await employees
+            .Where(e => e.HireDate < to && (e.ExitDate == null || e.ExitDate >= from))
+            .Select(e => new { e.HireDate, e.ExitDate, Department = e.Department!.Name })
+            .ToListAsync(cancellationToken);
+
+        var rows = new List<HeadcountRow>();
+        for (var month = new DateOnly(from.Year, from.Month, 1); month < to; month = month.AddMonths(1))
+        {
+            var end = month.AddMonths(1);
+            rows.AddRange(people.GroupBy(p => p.Department).Select(g => new HeadcountRow(month, g.Key,
+                g.Count(p => p.HireDate < end && (p.ExitDate is not { } exit || exit >= end)),
+                g.Count(p => p.HireDate >= month && p.HireDate < end),
+                g.Count(p => p.ExitDate >= month && p.ExitDate < end))));
+        }
+
+        return rows;
+    });
+```
+
+- **Felder** sind die einfachen öffentlichen Eigenschaften des Zeilentyps (Text, Zahlen, Datumswerte, Wahrheitswerte, Enums, GUIDs), beschriftet wie bei Entitätsmengen (`[Display]`, `[DisplayName]`, `[ProvideFacet(Label = ...)]`, `[Display]`-Namen der Enum-Werte). Der Name darf nicht der einer OData-Menge sein.
+- **Berechtigung** wirkt wie die einer Menge: Ohne sie fehlt die Quelle in der Liste und ihre Abfragen antworten mit 403. Die Zeilen sind das, was deine Funktion liefert; Zeilenregeln wendet sie also selbst an, z. B. über `ODataEntityAccess.VisibleAsync<T>` oder den aktuellen Benutzer aus `context.Services`.
+- **Kontext**: `context.Services` sind die Dienste der Anfrage. `DateFrom`/`DateTo` sind die Grenzen, die ein Datumsfeld im Filter des Widgets bekommt (der Zeitraum des Berichts schickt `Month ge 2026-01-01 and Month lt 2026-04-01`), damit die Quelle nur diese Monate berechnet. Sie sind ein Hinweis: Der Filter gilt trotzdem für die gelieferten Zeilen.
+- **Aggregation**: Filter des Widgets (OData `$filter`, gegen den Zeilentyp geparst), Gruppierung mit Datums-Buckets, Werte und Top funktionieren wie bei Mengen. Eine Liste wird im Speicher aggregiert; gib ein `IQueryable` der Datenbank zurück (das `Task<IEnumerable<T>>` nimmt es an), dann aggregiert die Datenbank. Es gibt auch eine synchrone Überladung `AddReportSource<T>(name, label, permission, context => rows)`.
+- Werte, die ein Bestand pro Monat sind (Mitarbeiterzahl), addieren sich pro Quartal; nimm dafür `Average` oder `Max` und `Sum` für Bewegungen wie Eintritte.
+- **Widgets**: KPI, Diagramme, Pivot und Tabelle funktionieren; Tabellen lesen die Zeilen über `POST /api/v1/reports/rows`. Das Datentabellen-Widget, Facetten in der Filterleiste und die Echtzeit-Aktualisierung brauchen eine OData-Menge (nimm stattdessen das Aktualisierungsintervall des Berichts). *Daten öffnen* erscheint nur, wenn der Client eine Seite für die Quelle registriert: `ReportingOptions.DrillDown("HeadcountByMonth", "/hr/people")`.
+- **KI**: Die Berichtswerkzeuge des Assistenten und des MCP-Servers (`get_report_sources`, `run_report`, `read_report_rows`) sehen die Quellen, die der Benutzer lesen darf; `list_data_sets`/`query_data` decken nur OData-Mengen ab.
+
+### Einen Bericht auf einer Quelle anlegen (Seed)
+
+Ein Bericht speichert nur den Namen der Quelle; eine App legt ihn also wie jeden Bericht an, z. B. in ihrem Migrations-Host:
+
+```csharp
+var definition = new ReportDefinition
+{
+    DateRange = new ReportDateRange(DateRangePreset.Last12Months),
+    Widgets =
+    [
+        new ReportWidget
+        {
+            Id = "trend", Type = WidgetType.Chart, Title = "Mitarbeitende pro Abteilung", W = 12, H = 5,
+            Query = new WidgetQuery
+            {
+                EntitySet = "HeadcountByMonth", DateField = "Month",
+                GroupBy = new ReportGroupBy("Month", DateBucket.Month), SplitBy = new ReportGroupBy("Department"),
+                Aggregates = [new(AggregateFunction.Sum, "Headcount")],
+            },
+            Options = new WidgetOptions { Chart = ChartKind.Line },
+        },
+    ],
+};
+db.Add(new Report
+{
+    TenantId = tenantId, OwnerId = adminId, Name = "Mitarbeitende", Visibility = ReportVisibility.Organisation,
+    Definition = JsonSerializer.Serialize(definition, new JsonSerializerOptions(JsonSerializerDefaults.Web)),
+});
+```
+
 ## Aggregation auf dem Server
 
 Widgets senden ein Abfragemodell, nie einen Ausdruck:
@@ -139,5 +215,6 @@ Die Dashboard-Seite des Templates (*Persönlich > Dashboard*, über *Berichte*) 
 | `POST /api/v1/reports/{id}/duplicate`, `PUT /api/v1/reports/{id}/favorite` | kopieren, Favorit |
 | `GET /api/v1/reports/sources`, `GET /api/v1/reports/roles` | Felder je Menge, Rollen zum Teilen |
 | `POST /api/v1/reports/query` | aggregieren |
+| `POST /api/v1/reports/rows` | Zeilen einer eigenen Quelle, für Tabellen |
 | `POST /api/v1/reports/sheet` | Zeilen als Excel-Arbeitsmappe |
 | `GET /api/v1/reports/dashboard`, `PUT /api/v1/reports/dashboard`, `PUT /api/v1/reports/dashboard/organisation` | der Dashboard-Bericht, den du siehst, deinen oder den der Organisation wählen (`{ "reportId": null }` setzt zurück) |

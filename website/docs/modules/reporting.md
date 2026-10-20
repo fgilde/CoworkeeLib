@@ -38,6 +38,82 @@ services.AddODataEntity<Customer>("Customers", SalesPermissions.Orders.View);
 
 `GET /api/v1/reports/sources` lists the sets and fields the signed-in user may use.
 
+## Own data sources
+
+Some numbers are no rows of one table: headcount per month from hire and exit dates, turnover or sick rate per month, overtime per department, training compliance. Register them as a source with a plain row type; reports list it after the entity sets (marked with a sum icon) and aggregate its rows like those of a set:
+
+```csharp
+public sealed record HeadcountRow(
+    DateOnly Month,
+    string Department,
+    [property: DisplayName("Employees")] int Headcount,
+    int Hires,
+    int Exits);
+
+services.AddReportSource<HeadcountRow>("HeadcountByMonth", "Headcount by month", HrPermissions.Reports,
+    async (context, cancellationToken) =>
+    {
+        // the employees the user may read: tenant, soft delete and the set's row filters apply
+        var employees = await ODataEntityAccess.VisibleAsync<Employee>(context.Services, cancellationToken);
+        var from = context.DateFrom ?? new DateOnly(DateTime.Today.Year - 1, 1, 1);
+        var to = context.DateTo ?? DateOnly.FromDateTime(DateTime.Today).AddDays(1);
+        var people = await employees
+            .Where(e => e.HireDate < to && (e.ExitDate == null || e.ExitDate >= from))
+            .Select(e => new { e.HireDate, e.ExitDate, Department = e.Department!.Name })
+            .ToListAsync(cancellationToken);
+
+        var rows = new List<HeadcountRow>();
+        for (var month = new DateOnly(from.Year, from.Month, 1); month < to; month = month.AddMonths(1))
+        {
+            var end = month.AddMonths(1);
+            rows.AddRange(people.GroupBy(p => p.Department).Select(g => new HeadcountRow(month, g.Key,
+                g.Count(p => p.HireDate < end && (p.ExitDate is not { } exit || exit >= end)),
+                g.Count(p => p.HireDate >= month && p.HireDate < end),
+                g.Count(p => p.ExitDate >= month && p.ExitDate < end))));
+        }
+
+        return rows;
+    });
+```
+
+- **Fields** are the simple public properties of the row type (text, numbers, dates, booleans, enums, GUIDs), labelled like those of entity sets (`[Display]`, `[DisplayName]`, `[ProvideFacet(Label = ...)]`, `[Display]` names of enum members). The name must not be the name of an OData set.
+- **Permission** works like the one of a set: without it the source is not listed and its queries answer 403. The rows are what your function returns, so it applies row rules itself, e.g. through `ODataEntityAccess.VisibleAsync<T>` or the current user from `context.Services`.
+- **Context**: `context.Services` are the services of the request. `DateFrom`/`DateTo` are the bounds a date field gets in the widget's filter (the report's date range sends `Month ge 2026-01-01 and Month lt 2026-04-01`), so the source computes only those months. They are a hint: the filter still applies to the rows the source returns.
+- **Aggregation**: the widget's filter (OData `$filter`, parsed against the row type), group by with date buckets, the values and top work as for sets. A list is aggregated in memory; return an `IQueryable` of the database (the `Task<IEnumerable<T>>` takes it) and the database aggregates it. A synchronous overload `AddReportSource<T>(name, label, permission, context => rows)` exists too.
+- Values that are a stock per month (headcount) add up per quarter; use `Average` or `Max` for them and `Sum` for flows like hires.
+- **Widgets**: KPI, charts, pivot and table work; tables read the rows from `POST /api/v1/reports/rows`. The data table widget, facets in the filter bar and realtime refresh need an OData set (use the report's refresh interval instead). *Open the data* shows only when the client registers a page for the source: `ReportingOptions.DrillDown("HeadcountByMonth", "/hr/people")`.
+- **AI**: the reporting tools of the assistant and the MCP server (`get_report_sources`, `run_report`, `read_report_rows`) see the sources the user may read; `list_data_sets`/`query_data` cover OData sets only.
+
+### Seeding a report on a source
+
+A report stores only the source's name, so an app seeds it like any report, e.g. in its migrations host:
+
+```csharp
+var definition = new ReportDefinition
+{
+    DateRange = new ReportDateRange(DateRangePreset.Last12Months),
+    Widgets =
+    [
+        new ReportWidget
+        {
+            Id = "trend", Type = WidgetType.Chart, Title = "Headcount by department", W = 12, H = 5,
+            Query = new WidgetQuery
+            {
+                EntitySet = "HeadcountByMonth", DateField = "Month",
+                GroupBy = new ReportGroupBy("Month", DateBucket.Month), SplitBy = new ReportGroupBy("Department"),
+                Aggregates = [new(AggregateFunction.Sum, "Headcount")],
+            },
+            Options = new WidgetOptions { Chart = ChartKind.Line },
+        },
+    ],
+};
+db.Add(new Report
+{
+    TenantId = tenantId, OwnerId = adminId, Name = "Headcount", Visibility = ReportVisibility.Organisation,
+    Definition = JsonSerializer.Serialize(definition, new JsonSerializerOptions(JsonSerializerDefaults.Web)),
+});
+```
+
 ## Server side aggregation
 
 Widgets send a query model, never an expression:
@@ -139,5 +215,6 @@ The template's dashboard page (*Personal > Dashboard*, above *Reports*) does thi
 | `POST /api/v1/reports/{id}/duplicate`, `PUT /api/v1/reports/{id}/favorite` | copy, favorite |
 | `GET /api/v1/reports/sources`, `GET /api/v1/reports/roles` | fields per set, roles to share with |
 | `POST /api/v1/reports/query` | aggregate |
+| `POST /api/v1/reports/rows` | rows of an own source, for tables |
 | `POST /api/v1/reports/sheet` | rows to an Excel workbook |
 | `GET /api/v1/reports/dashboard`, `PUT /api/v1/reports/dashboard`, `PUT /api/v1/reports/dashboard/organisation` | the dashboard report shown to you, choose yours or the organisation's (`{ "reportId": null }` clears) |

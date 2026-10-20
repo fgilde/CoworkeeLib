@@ -1,6 +1,6 @@
 # Coworkee.Reporting
 
-Reports and dashboards over OData entity sets, aggregated on the server.
+Reports and dashboards over OData entity sets and own data sources of the app, aggregated on the server.
 
 Part of [Coworkee](https://fgilde.github.io/CoworkeeLib/), a modular application framework for .NET 10, Blazor and Aspire. Start a new app with the CLI:
 
