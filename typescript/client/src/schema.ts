@@ -7617,6 +7617,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reports/rows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ReportRowsRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ReportRowsResult"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reports/sheet": {
         parameters: {
             query?: never;
@@ -11859,6 +11907,29 @@ export interface components {
             series: null | components["schemas"]["ReportKey"];
             values: (null | number | string)[];
         };
+        ReportRowsRequest: {
+            entitySet: string;
+            columns: string[];
+            filter?: null | string;
+            orderBy?: null | string;
+            /** @default false */
+            descending: boolean;
+            /**
+             * Format: int32
+             * @default 0
+             */
+            skip: number | string;
+            /**
+             * Format: int32
+             * @default 50
+             */
+            top: number | string;
+        };
+        ReportRowsResult: {
+            rows: components["schemas"]["JsonElement"][];
+            /** Format: int64 */
+            count: number | string;
+        };
         ReportRoleDto: {
             /** Format: uuid */
             id: string;
@@ -11876,6 +11947,8 @@ export interface components {
             label: string;
             fields: components["schemas"]["ReportFieldDto"][];
             topic?: null | string;
+            /** @default false */
+            computed: boolean;
         };
         ReportSummaryDto: {
             /** Format: uuid */

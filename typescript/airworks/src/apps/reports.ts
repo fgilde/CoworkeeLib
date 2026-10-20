@@ -2,9 +2,9 @@ import type { Schemas } from '@coworkee/client';
 import type { AppContext } from '@fgilde/airworks';
 import type { Coworkee, CoworkeeApp } from '../coworkee.ts';
 import { crudApp } from '../crud.ts';
-import { errorText, esc, humanize } from '../dom.ts';
+import { display, errorText, esc, humanize } from '../dom.ts';
 import { renderEntityTable } from '../table.ts';
-import { icon, widgetFilter, type DateRange, type Widget } from './report-model.ts';
+import { icon, rowsRequest, sourceFilter, type DateRange, type Source, type Widget } from './report-model.ts';
 
 type Summary = Schemas['ReportSummaryDto'];
 type Result = Schemas['ReportQueryResult'];
@@ -29,10 +29,10 @@ export function formatNumber(value: unknown, format: string | undefined, culture
   }
 }
 
-const query = (coworkee: Coworkee, widget: Widget, range?: DateRange | null) => {
+const query = (coworkee: Coworkee, widget: Widget, range?: DateRange | null, set?: Source) => {
   const source = widget.query!;
   return coworkee.request<Result>(`${reports}/query`, json('POST', {
-    entitySet: source.entitySet, filter: widgetFilter(source, range), groupBy: source.groupBy ?? null, splitBy: source.splitBy ?? null,
+    entitySet: source.entitySet, filter: sourceFilter(source, set, range), groupBy: source.groupBy ?? null, splitBy: source.splitBy ?? null,
     aggregates: source.aggregates, sortBy: source.sortBy, descending: source.descending, top: source.top ?? null,
   }));
 };
@@ -82,8 +82,19 @@ function table(coworkee: Coworkee, widget: Widget, result: Result): string {
       `<td class="cw-number">${esc(formatNumber(value, widget.options.format, coworkee.culture, widget.options.currency))}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
 }
 
+/** The rows of a table on a computed source, read from the report API (there is no OData set). */
+async function rows(coworkee: Coworkee, widget: Widget, source: Source, range?: DateRange | null): Promise<string> {
+  const request = rowsRequest(widget.query!, source, range);
+  if (request.columns.length === 0) return '';
+  const result = await coworkee.request<Schemas['ReportRowsResult']>(`${reports}/rows`, json('POST', request));
+  const label = (path: string) => source.fields.find((field) => field.path === path)?.label ?? humanize(path);
+  return `<table class="cw-table"><thead><tr>${request.columns.map((path) => `<th>${esc(coworkee.t(label(path)))}</th>`).join('')}</tr></thead>
+    <tbody>${result.rows.map((row) => `<tr>${request.columns.map((path) => `<td>${esc(display((row as Record<string, unknown>)[path], coworkee.culture))}</td>`).join('')}</tr>`).join('')
+      || `<tr><td colspan="${request.columns.length}" class="cw-muted">${esc(coworkee.t('Nothing found.'))}</td></tr>`}</tbody></table>`;
+}
+
 /** Renders one widget into body: KPI, chart (bars, lines, areas, pies), table, pivot, data table, text, image or web page. */
-export async function renderWidget(coworkee: Coworkee, widget: Widget, body: HTMLElement, onClose: AppContext['onClose'], range?: DateRange | null) {
+export async function renderWidget(coworkee: Coworkee, widget: Widget, body: HTMLElement, onClose: AppContext['onClose'], range?: DateRange | null, sources: readonly Source[] = []) {
   const options = widget.options;
   switch (widget.type) {
     case 'Markdown': body.innerHTML = `<div class="cw-text">${esc(options.text ?? '')}</div>`; return;
@@ -91,12 +102,14 @@ export async function renderWidget(coworkee: Coworkee, widget: Widget, body: HTM
     case 'Embed': body.innerHTML = options.url ? `<iframe src="${esc(options.url)}" title="${esc(widget.title ?? '')}"></iframe>` : ''; return;
   }
   if (!widget.query?.entitySet) { body.innerHTML = ''; return; }
+  const source = sources.find((item) => item.entitySet === widget.query!.entitySet);
+  if (source?.computed && (widget.type === 'Table' || widget.type === 'DataTable')) { body.innerHTML = await rows(coworkee, widget, source, range); return; }
   if (widget.type === 'DataTable') {
     const columns = widget.query.columns?.length ? widget.query.columns.map((field) => ({ field: String(field) })) : undefined;
-    renderEntityTable(coworkee, body, { entitySet: String(widget.query.entitySet), columns, pageSize: 10, filter: widgetFilter(widget.query, range) ?? undefined, orderBy: widget.query.orderBy ? `${widget.query.orderBy}${widget.query.descending ? ' desc' : ''}` : undefined }, onClose);
+    renderEntityTable(coworkee, body, { entitySet: String(widget.query.entitySet), columns, pageSize: 10, filter: sourceFilter(widget.query, source, range) ?? undefined, orderBy: widget.query.orderBy ? `${widget.query.orderBy}${widget.query.descending ? ' desc' : ''}` : undefined }, onClose);
     return;
   }
-  const result = await query(coworkee, widget, range);
+  const result = await query(coworkee, widget, range, source);
   if (widget.type === 'Kpi') {
     const value = result.rows[0]?.values[0];
     const target = options.target === null || options.target === undefined ? '' : ` <small class="cw-muted">/ ${esc(formatNumber(options.target, options.format, coworkee.culture, options.currency))}</small>`;
@@ -111,14 +124,14 @@ export async function renderWidget(coworkee: Coworkee, widget: Widget, body: HTM
 }
 
 /** Widgets on the 12 column grid, each loading its data. */
-export function renderGrid(coworkee: Coworkee, grid: HTMLElement, widgets: readonly Widget[], onClose: AppContext['onClose'], range?: DateRange | null, selected?: string) {
+export function renderGrid(coworkee: Coworkee, grid: HTMLElement, widgets: readonly Widget[], onClose: AppContext['onClose'], range?: DateRange | null, selected?: string, sources: readonly Source[] = []) {
   grid.innerHTML = widgets.map((widget) => `<article class="cw-widget${widget.id === selected ? ' cw-selected' : ''}" data-widget="${esc(widget.id)}"
       style="grid-column:${Number(widget.x) + 1} / span ${widget.w};grid-row:${Number(widget.y) + 1} / span ${widget.h}">
       <header data-drag>${esc(widget.title ?? '')}${widget.subtitle ? `<small class="cw-muted"> ${esc(widget.subtitle)}</small>` : ''}</header><div class="cw-widget-body"></div><span class="cw-resize" data-resize hidden></span></article>`).join('')
     || `<p class="cw-muted">${esc(coworkee.t('Nothing found.'))}</p>`;
   for (const widget of widgets) {
     const body = grid.querySelector<HTMLElement>(`[data-widget="${CSS.escape(widget.id)}"] .cw-widget-body`)!;
-    renderWidget(coworkee, widget, body, onClose, range).catch((error) => { body.innerHTML = `<p class="cw-error">${esc(errorText(error))}</p>`; });
+    renderWidget(coworkee, widget, body, onClose, range, sources).catch((error) => { body.innerHTML = `<p class="cw-error">${esc(errorText(error))}</p>`; });
   }
 }
 
@@ -132,7 +145,8 @@ export const reportApp = (coworkee: Coworkee): CoworkeeApp => ({
   render: async ({ host, intent, setTitle, onClose }: AppContext) => {
     const { t } = coworkee;
     host.classList.add('cw-host');
-    const report = await coworkee.request<Schemas['ReportDto']>(`${reports}/${intent?.id}`);
+    // the sources say which sets the app computes: their tables read the report API, not OData
+    const [report, sources] = await Promise.all([coworkee.request<Schemas['ReportDto']>(`${reports}/${intent?.id}`), coworkee.request<Source[]>(`${reports}/sources`).catch(() => [])]);
     let range = report.definition.dateRange ?? null;
     setTitle(report.name);
     host.innerHTML = `<div class="cw-app"><div class="cw-toolbar">${icon(report.icon)}<strong>${esc(report.name)}</strong><span class="cw-muted">${esc(report.description ?? '')}</span>
@@ -141,7 +155,7 @@ export const reportApp = (coworkee: Coworkee): CoworkeeApp => ({
       <button data-action="refresh" title="${esc(t('Refresh'))}" aria-label="${esc(t('Refresh'))}">&#x21bb;</button></div><div class="cw-report"></div></div>`;
     const grid = host.querySelector<HTMLElement>('.cw-report')!;
     const widgets = report.definition.widgets ?? [];
-    const draw = () => renderGrid(coworkee, grid, widgets, onClose, range);
+    const draw = () => renderGrid(coworkee, grid, widgets, onClose, range, undefined, sources);
     host.querySelector('[data-action=refresh]')!.addEventListener('click', draw);
     host.querySelector('[data-action=edit]')?.addEventListener('click', () => coworkee.airWorks.openApp(reportDesignerAppId, { id: report.id }));
     host.querySelector<HTMLSelectElement>('[data-range]')!.addEventListener('change', (event) => {

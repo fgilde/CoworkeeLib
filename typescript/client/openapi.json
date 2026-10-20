@@ -6933,6 +6933,45 @@
         }
       }
     },
+    "/api/v1/reports/rows": {
+      "post": {
+        "tags": [
+          "Reports"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportRowsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportRowsResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/reports/sheet": {
       "post": {
         "tags": [
@@ -14872,6 +14911,84 @@
           }
         }
       },
+      "ReportRowsRequest": {
+        "required": [
+          "entitySet",
+          "columns",
+          "descending",
+          "skip",
+          "top"
+        ],
+        "type": "object",
+        "properties": {
+          "entitySet": {
+            "type": "string"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "filter": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "orderBy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "descending": {
+            "type": "boolean",
+            "default": false
+          },
+          "skip": {
+            "pattern": "^-?(?:0|[1-9]d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 0
+          },
+          "top": {
+            "pattern": "^-?(?:0|[1-9]d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 50
+          }
+        }
+      },
+      "ReportRowsResult": {
+        "required": [
+          "rows",
+          "count"
+        ],
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JsonElement"
+            }
+          },
+          "count": {
+            "pattern": "^-?(?:0|[1-9]d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
       "ReportRoleDto": {
         "required": [
           "id",
@@ -14923,7 +15040,8 @@
         "required": [
           "entitySet",
           "label",
-          "fields"
+          "fields",
+          "computed"
         ],
         "type": "object",
         "properties": {
@@ -14944,6 +15062,10 @@
               "null",
               "string"
             ]
+          },
+          "computed": {
+            "type": "boolean",
+            "default": false
           }
         }
       },

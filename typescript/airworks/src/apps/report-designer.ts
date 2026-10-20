@@ -4,7 +4,7 @@ import type { Coworkee, CoworkeeApp } from '../coworkee.ts';
 import { errorText, esc } from '../dom.ts';
 import { formDialog } from '../form.ts';
 import { icons } from '../icons.ts';
-import { createWidget, hasData, isNumber, place, presets, reportIcons, type Source, type Widget } from './report-model.ts';
+import { createWidget, fits, hasData, isNumber, place, presets, reportIcons, type Source, type Widget } from './report-model.ts';
 import { humanize, rangeSelect, renderGrid, renderWidget, reportAppId, reportDesignerAppId } from './reports.ts';
 
 type Report = { id?: string; name: string; description: string | null; icon: string | null; visibility: Schemas['ReportVisibility']; roleIds: string[]; definition: Schemas['ReportDefinition'] };
@@ -41,7 +41,8 @@ function panelHtml(coworkee: Coworkee, widget: Widget, sources: readonly Source[
     widget.type === 'Chart' ? select('options.chart', 'Chart', presets.filter((preset) => preset.type === 'Chart').map((preset) => [preset.chart, t(preset.name)]), widget.options.chart) : '',
   ];
   if (q && hasData(widget.type)) {
-    parts.push(`<h4>${esc(t('Data'))}</h4>`, select('query.entitySet', 'Data source', sources.map((source) => [source.entitySet, t(source.label)]), q.entitySet));
+    parts.push(`<h4>${esc(t('Data'))}</h4>`, select('query.entitySet', 'Data source', sources.filter((source) => fits(widget.type, source))
+      .map((source) => [source.entitySet, `${source.computed ? '∑ ' : ''}${t(source.label)}`]), q.entitySet));
     if (widget.type === 'Chart' || widget.type === 'Pivot') parts.push(groupBy('groupBy', widget.type === 'Pivot' ? 'Rows' : 'Group by', false), groupBy('splitBy', widget.type === 'Pivot' ? 'Columns' : 'Series', true));
     if (widget.type === 'Kpi' || widget.type === 'Chart' || widget.type === 'Pivot') {
       parts.push(`<div class="cw-field"><span>${esc(t('Values'))}</span>${(q.aggregates ??= []).map((aggregate, index) => `<div class="cw-aggregate">
@@ -118,7 +119,7 @@ export const reportDesignerApp = (coworkee: Coworkee): CoworkeeApp => ({
     const panel = host.querySelector<HTMLElement>('.cw-designer-panel')!;
     const title = () => setTitle(report.name || t('New report'));
     const draw = () => {
-      renderGrid(coworkee, grid, widgets(), onClose, report.definition.dateRange, selected);
+      renderGrid(coworkee, grid, widgets(), onClose, report.definition.dateRange, selected, sources);
       grid.querySelectorAll<HTMLElement>('[data-resize]').forEach((handle) => { handle.hidden = false; });
       if (widgets().length === 0) grid.innerHTML = `<p class="cw-muted">${esc(t('This report has no widgets yet.'))}</p>`;
     };
@@ -144,7 +145,7 @@ export const reportDesignerApp = (coworkee: Coworkee): CoworkeeApp => ({
       if (!element) return draw();
       element.querySelector('header')!.firstChild!.textContent = widget.title ?? '';
       const body = element.querySelector<HTMLElement>('.cw-widget-body')!;
-      renderWidget(coworkee, widget, body, onClose, report.definition.dateRange).catch((error) => { body.innerHTML = `<p class="cw-error">${esc(errorText(error))}</p>`; });
+      renderWidget(coworkee, widget, body, onClose, report.definition.dateRange, sources).catch((error) => { body.innerHTML = `<p class="cw-error">${esc(errorText(error))}</p>`; });
     };
     const settings = async () => formDialog(coworkee, {
       title: t('Report settings'),
@@ -257,7 +258,8 @@ export const reportDesignerApp = (coworkee: Coworkee): CoworkeeApp => ({
         return;
       }
       const structural = input.tagName === 'SELECT' || input.type === 'checkbox';
-      if (input.dataset.path === 'type' && hasData(widget.type) && !widget.query) widget.query = createWidget(presets.find((preset) => preset.type === widget.type)!, sources, []).query;
+      const unfit = sources.find((source) => source.entitySet === widget.query?.entitySet && !fits(widget.type, source));
+      if (input.dataset.path === 'type' && hasData(widget.type) && (!widget.query || unfit)) widget.query = createWidget(presets.find((preset) => preset.type === widget.type)!, sources, []).query;
       if (input.dataset.path === 'query.entitySet') Object.assign(widget.query!, { groupBy: null, splitBy: null, dateField: null, columns: [], orderBy: null, filter: null, rules: null, facets: [], aggregates: [{ function: 'Count', field: null, label: null }] });
       clearTimeout(timer);
       timer = setTimeout(() => { remember(); refreshWidget(widget); if (structural) showPanel(); }, structural ? 0 : 400);

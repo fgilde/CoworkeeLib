@@ -101,6 +101,27 @@ test('report widgets: palette defaults, placement on the 12 column grid and the 
   assert.equal(widgetFilter({ ...kpi.query!, dateField: null }, null), null);
 });
 
+test('computed report sources: no data table on them, tables read the report API with plain days for date-only fields', async () => {
+  const { createWidget, fits, presets, rowsRequest } = await import('../src/apps/report-model.ts');
+  const orders = { entitySet: 'Orders', label: 'Orders', topic: null, computed: false, fields: [{ path: 'Status', label: 'Status', kind: 'Enum' }] };
+  const headcount = { entitySet: 'HeadcountByMonth', label: 'Headcount by month', topic: null, computed: true, fields: [
+    { path: 'Id', label: 'Id', kind: 'Guid' }, { path: 'Month', label: 'Month', kind: 'Date', dateOnly: true }, { path: 'Department/Name', label: 'Department', kind: 'Text' },
+    { path: 'Headcount', label: 'Headcount', kind: 'Integer' }] };
+  const dataTable = presets.find((preset) => preset.type === 'DataTable')!;
+  const table = presets.find((preset) => preset.type === 'Table')!;
+
+  assert.equal(fits('DataTable', headcount as never), false);
+  assert.equal(fits('Table', headcount as never), true);
+  assert.equal(createWidget(dataTable, [headcount, orders] as never, [], 'HeadcountByMonth').query?.entitySet, 'Orders');
+  assert.equal(createWidget(dataTable, [headcount] as never, []).query, null);
+  const widget = createWidget(table, [headcount, orders] as never, [], 'HeadcountByMonth');
+  assert.equal(widget.query?.entitySet, 'HeadcountByMonth');
+  assert.deepEqual(rowsRequest({ ...widget.query!, orderBy: 'Month', descending: true }, headcount as never, { preset: 'ThisMonth' } as never, new Date(2026, 9, 14)), {
+    entitySet: 'HeadcountByMonth', columns: ['Month', 'Headcount'], filter: '(Month ge 2026-10-01 and Month lt 2026-11-01)', orderBy: 'Month', descending: true, skip: 0, top: 50,
+  });
+  assert.deepEqual(rowsRequest({ ...widget.query!, columns: ['Headcount'] }, headcount as never).columns, ['Headcount']);
+});
+
 test('the designer sets values at their paths and clears a grouping with its field', async () => {
   const { createWidget, presets } = await import('../src/apps/report-model.ts');
   const { setPath } = await import('../src/apps/report-designer.ts');

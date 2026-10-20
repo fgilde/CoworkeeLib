@@ -45,6 +45,8 @@ export const icon = (svg?: string | null) => svg ? `<svg viewBox="0 0 24 24" fil
 
 export const hasData = (type: Widget['type']) => type === 'Kpi' || type === 'Chart' || type === 'Table' || type === 'DataTable' || type === 'Pivot';
 export const isNumber = (field: Field) => field.kind === 'Integer' || field.kind === 'Number';
+/** The data table pages through OData, which computed sources (the app's own, `computed`) do not have. */
+export const fits = (type: Widget['type'], source: Source) => type !== 'DataTable' || !source.computed;
 
 let counter = 0;
 const id = () => (globalThis.crypto?.randomUUID?.() ?? `w${Date.now()}${counter++}`).replace(/-/g, '').slice(0, 12);
@@ -56,7 +58,7 @@ export function createWidget(preset: Preset, sources: readonly Source[], existin
     w: preset.w, h: preset.h, query: null,
     options: { chart: preset.chart, format: 'Number', currency: 'EUR', showLegend: true, showDataLabels: false, palette: [], compareToPrevious: false, higherIsBetter: true, sparkline: 'None', target: null, view: 'Table', crossFilter: false, text: preset.type === 'Markdown' ? '## Notes\nWrite **markdown** here.' : null, url: null },
   } as unknown as Widget;
-  const source = sources.find((s) => s.entitySet === entitySet) ?? sources[0];
+  const source = sources.find((s) => s.entitySet === entitySet && fits(preset.type, s)) ?? sources.find((s) => fits(preset.type, s));
   if (!hasData(preset.type) || !source) return widget;
   const date = source.fields.find((f) => f.kind === 'Date');
   const category = source.fields.find((f) => f.kind === 'Enum' || f.kind === 'Boolean') ?? source.fields.find((f) => f.kind === 'Text');
@@ -113,12 +115,28 @@ export function resolveRange(range: DateRange, today = new Date()): { from: stri
   return { from: iso(from), to: iso(to) };
 }
 
-/** The widget filter with the report's date range on the widget's date field. */
-export function widgetFilter(query: NonNullable<Widget['query']>, range?: DateRange | null, today?: Date): string | null {
+/** The widget filter with the report's date range on the widget's date field (plain days for date-only fields). */
+export function widgetFilter(query: NonNullable<Widget['query']>, range?: DateRange | null, today?: Date, dateOnly = false): string | null {
   const parts = [query.filter, ...(query.facets ?? []).map((facet) => facet.oData)].filter((part): part is string => !!part);
   if (range && query.dateField) {
     const { from, to } = resolveRange(range, today);
-    parts.push(`${query.dateField} ge ${from}T00:00:00Z and ${query.dateField} lt ${to}T00:00:00Z`);
+    const time = dateOnly ? '' : 'T00:00:00Z';
+    parts.push(`${query.dateField} ge ${from}${time} and ${query.dateField} lt ${to}${time}`);
   }
   return parts.length === 0 ? null : parts.map((part) => `(${part})`).join(' and ');
 }
+
+/** The filter of a widget on its source: the date range as plain days when the source's date field is date-only. */
+export const sourceFilter = (query: NonNullable<Widget['query']>, source: Source | undefined, range?: DateRange | null, today?: Date) =>
+  widgetFilter(query, range, today, !!source?.fields.find((field) => field.path === query.dateField)?.dateOnly);
+
+/** The columns of a table: the chosen ones, otherwise the first six plain fields of the source. */
+export const tableColumns = (query: NonNullable<Widget['query']>, source?: Source): string[] => query.columns?.length
+  ? query.columns.map(String)
+  : (source?.fields ?? []).filter((field) => field.kind !== 'Guid' && !field.path.includes('/')).slice(0, 6).map((field) => field.path);
+
+/** The first page of a table on a computed source, for POST /api/v1/reports/rows. */
+export const rowsRequest = (query: NonNullable<Widget['query']>, source: Source, range?: DateRange | null, today?: Date, top = 50): Schemas['ReportRowsRequest'] => ({
+  entitySet: String(query.entitySet), columns: tableColumns(query, source), filter: sourceFilter(query, source, range, today),
+  orderBy: query.orderBy ?? null, descending: !!query.descending, skip: 0, top,
+});
