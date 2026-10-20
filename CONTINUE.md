@@ -13,6 +13,12 @@ State of the Coworkee library as of 2026-10-20: main is pushed and released as *
 
 Old worktrees under `C:\dev\privat\github\wt\` are disposable.
 
+## AirWorks app launcher (on main, not released)
+- AirWorks `main` 1cbe858 (pushed, no AirWorks release, `VERSION` still 0.4.0/package 0.5.0): option `launcher: 'menu' | 'overlay'` (default menu), user setting under Settings -> General (wins), `AppDefinition.group` headings; pure helpers + `npm run check` in `src/airworks/src/launcher(.check).ts`.
+- Lib: `Coworkee:AirWorks:Launcher` of the AirWorks host -> `BffUserDto.Launcher` (`/bff/user`, anonymous too) -> `useCoworkee` configures AirWorks (`airWorks: {}` wins). Template option `airworksLauncher` (menu/overlay, DependsOn airworks) writes `MyApp.AirWorks/appsettings.json`; template and `@coworkee/airworks` pin AirWorks 1cbe858. Changelog under Unreleased.
+- HR (`master` 75f0727): `Launcher: overlay` in `CoworkeeHR.AirWorks/appsettings.json`, tarballs from the local pack. Its running AirWorks host still has the old Coworkee.Bff (dlls locked); restart that resource to get `launcher` from `/bff/user`.
+- Release order: AirWorks (owner, then bump the pin if the release commit differs), then the lib, then HR/demo `@coworkee/*`.
+
 ## Rules of the owner
 - Never add Co-Authored-By / "Generated with" / any attribution to commits or PRs.
 - Docs and website never mention "ABP" or "CleanArchitectureBase(Blazor)".
