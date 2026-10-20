@@ -17,7 +17,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Reporting;
 
-/// <summary>Reports and dashboards over the app's OData entity sets, aggregated on the server, shared with roles or the organisation.</summary>
+/// <summary>Reports and dashboards over the app's OData entity sets and own sources (AddReportSource), aggregated on the server, shared with roles or the organisation.</summary>
 [DependsOn(typeof(CoworkeeIdentityModule), typeof(CoworkeeRealtimeModule), typeof(CoworkeeODataModule))]
 public sealed class CoworkeeReportingModule : CoworkeeModule, IWebModule
 {
@@ -41,6 +41,7 @@ public sealed class CoworkeeReportingModule : CoworkeeModule, IWebModule
         reports.MapGet("/sources", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetReportSourcesQuery(), ct).ToHttpResult());
         reports.MapGet("/roles", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetReportRolesQuery(), ct).ToHttpResult());
         reports.MapPost("/query", (ReportQueryRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new RunReportQuery(body), ct).ToHttpResult());
+        reports.MapPost("/rows", (ReportRowsRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new ReadReportRowsQuery(body), ct).ToHttpResult());
         reports.MapPost("/sheet", async (ReportSheetRequest body, IPermissionChecker permissions, CancellationToken ct) =>
                 await permissions.IsGrantedAsync(ReportPermissions.View, ct) ? Results.File(ReportSheet.Write(body), ReportSheet.ContentType, $"{body.Name}.xlsx") : Results.Forbid())
             .Produces(StatusCodes.Status200OK, contentType: ReportSheet.ContentType);

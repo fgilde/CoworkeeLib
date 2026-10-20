@@ -59,6 +59,10 @@ public sealed record GetReportSourcesQuery : IQuery<Result<IReadOnlyList<ReportS
 [Description("Aggregates a data set on the server: OData filter, group by up to two fields (dates by day, week, month, quarter or year) and count, sum, average, min, max or distinct count.")]
 public sealed record RunReportQuery(ReportQueryRequest Request) : IQuery<Result<ReportQueryResult>>;
 
+[RequiresPermission(ReportPermissions.View)]
+[Description("Reads a page of rows of a computed report source (one whose Computed flag is set), with the chosen fields, an OData filter and an order.")]
+public sealed record ReadReportRowsQuery(ReportRowsRequest Request) : IQuery<Result<ReportRowsResult>>;
+
 internal sealed class CreateReportValidator : AbstractValidator<CreateReportCommand>
 {
     public CreateReportValidator() => RuleFor(c => c.Report).SetValidator(new SaveReportValidator());

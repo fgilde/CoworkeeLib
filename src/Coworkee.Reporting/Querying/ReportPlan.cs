@@ -100,7 +100,7 @@ internal sealed record ReportPlan(ReportGroup? Group, ReportGroup? Split, IReadO
             return field;
         }
 
-        errors[key] = [$"{source.Registration.EntitySet} has no field '{path}'."];
+        errors[key] = [$"{source.EntitySet} has no field '{path}'."];
         return null;
     }
 }

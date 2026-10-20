@@ -26,9 +26,16 @@ public sealed record ReportQueryRow(ReportKey? Key, ReportKey? Series, IReadOnly
 /// <param name="Filter">OData filter that selects the rows of this key, e.g. for cross filters and drill-down.</param>
 public sealed record ReportKey(string? Value, string Label, string Filter);
 
-/// <summary>An entity set reports can use, with the fields the signed-in user may group, aggregate and filter by.</summary>
+/// <summary>An entity set or app source reports can use, with the fields the signed-in user may group, aggregate and filter by.</summary>
 /// <param name="Topic">Realtime topic announcing changes of its rows, if the entity is [Realtime].</param>
-public sealed record ReportSourceDto(string EntitySet, string Label, IReadOnlyList<ReportFieldDto> Fields, string? Topic = null);
+/// <param name="Computed">A source the app computes (no OData set): its rows come from <c>POST /api/v1/reports/rows</c>, it has no facets.</param>
+public sealed record ReportSourceDto(string EntitySet, string Label, IReadOnlyList<ReportFieldDto> Fields, string? Topic = null, bool Computed = false);
+
+/// <summary>A page of rows of an app source, with the chosen fields only.</summary>
+public sealed record ReportRowsRequest(string EntitySet, IReadOnlyList<string> Columns, string? Filter = null, string? OrderBy = null, bool Descending = false, int Skip = 0, int Top = 50);
+
+/// <param name="Rows">One object per row, field path to value (enums by name, dates ISO).</param>
+public sealed record ReportRowsResult(IReadOnlyList<System.Text.Json.JsonElement> Rows, long Count);
 
 /// <param name="Path">OData path, e.g. "Status" or "Customer/Name".</param>
 /// <param name="EnumType">Qualified OData name of enum fields.</param>

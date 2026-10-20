@@ -10,8 +10,9 @@ using Nextended.Core.Facets;
 
 namespace Coworkee.Reporting.Querying;
 
-/// <summary>A registered entity set with the fields reports may use; a field behind a navigation needs the permission of its set too.</summary>
-internal sealed record ReportSource(ODataEntityRegistration Registration, string Label, IReadOnlyList<ReportField> Fields)
+/// <summary>A registered entity set or app source with the fields reports may use; a field behind a navigation needs the permission of its set too.</summary>
+/// <param name="Computed">The app's source, null for an entity set.</param>
+internal sealed record ReportSource(string EntitySet, Type RowType, string? Permission, string Label, IReadOnlyList<ReportField> Fields, Sources.ReportSourceRegistration? Computed = null)
 {
     public ReportField? Find(string? path) => Fields.FirstOrDefault(f => string.Equals(f.Path, path, StringComparison.OrdinalIgnoreCase));
 }
@@ -34,16 +35,31 @@ internal sealed record ReportField(string Path, string Label, ReportFieldKind Ki
 }
 
 /// <summary>Reads fields from the EDM, so properties hidden from OData stay hidden from reports.</summary>
-internal sealed partial class ReportSchema(ODataEntityRegistry registry, IEdmModel model)
+internal sealed partial class ReportSchema(ODataEntityRegistry registry, IEdmModel model, IEnumerable<Sources.ReportSourceRegistration> computed)
 {
-    private readonly ConcurrentDictionary<Type, ReportSource> _sources = new();
+    private readonly ConcurrentDictionary<string, ReportSource> _sources = new(StringComparer.OrdinalIgnoreCase);
+    private readonly IReadOnlyList<Sources.ReportSourceRegistration> _computed = Unique(registry, computed);
 
-    public IEnumerable<ReportSource> All => registry.Entities.Select(Source);
+    public IEnumerable<ReportSource> All => registry.Entities.Select(Source).Concat(_computed.Select(Source));
 
     public ReportSource? Find(string entitySet) =>
-        registry.Entities.FirstOrDefault(e => string.Equals(e.EntitySet, entitySet, StringComparison.OrdinalIgnoreCase)) is { } entity ? Source(entity) : null;
+        registry.Entities.FirstOrDefault(e => string.Equals(e.EntitySet, entitySet, StringComparison.OrdinalIgnoreCase)) is { } entity ? Source(entity)
+        : _computed.FirstOrDefault(c => string.Equals(c.Name, entitySet, StringComparison.OrdinalIgnoreCase)) is { } source ? Source(source)
+        : null;
 
-    private ReportSource Source(ODataEntityRegistration entity) => _sources.GetOrAdd(entity.EntityType, _ => Build(entity));
+    private ReportSource Source(ODataEntityRegistration entity) => _sources.GetOrAdd(entity.EntitySet, _ => Build(entity));
+
+    private ReportSource Source(Sources.ReportSourceRegistration source) =>
+        _sources.GetOrAdd(source.Name, _ => new ReportSource(source.Name, source.RowType, source.Permission, source.Label,
+            [.. Scalars(source.EdmType, source.RowType, [], null, null, new Dictionary<string, string>())], source));
+
+    private static List<Sources.ReportSourceRegistration> Unique(ODataEntityRegistry registry, IEnumerable<Sources.ReportSourceRegistration> computed)
+    {
+        var list = computed.ToList();
+        var clash = list.Select(c => c.Name).GroupBy(n => n, StringComparer.OrdinalIgnoreCase).FirstOrDefault(g => g.Count() > 1)?.Key
+            ?? list.FirstOrDefault(c => registry.Entities.Any(e => string.Equals(e.EntitySet, c.Name, StringComparison.OrdinalIgnoreCase)))?.Name;
+        return clash is null ? list : throw new InvalidOperationException($"The report source '{clash}' is registered twice or clashes with an OData set.");
+    }
 
     private ReportSource Build(ODataEntityRegistration entity)
     {
@@ -61,11 +77,11 @@ internal sealed partial class ReportSchema(ODataEntityRegistry registry, IEdmMod
             }
         }
 
-        return new ReportSource(entity, Humanize(entity.EntitySet), fields);
+        return new ReportSource(entity.EntitySet, entity.EntityType, entity.Permission, Humanize(entity.EntitySet), fields);
     }
 
     private static IEnumerable<ReportField> Scalars(
-        IEdmEntityType type, Type clrType, PropertyInfo[] prefix, string? prefixLabel, string? permission, IReadOnlyDictionary<string, string> protectedProperties)
+        IEdmStructuredType type, Type clrType, PropertyInfo[] prefix, string? prefixLabel, string? permission, IReadOnlyDictionary<string, string> protectedProperties)
     {
         foreach (var edm in type.StructuralProperties().Where(p => p.Type.IsPrimitive() || p.Type.IsEnum()))
         {

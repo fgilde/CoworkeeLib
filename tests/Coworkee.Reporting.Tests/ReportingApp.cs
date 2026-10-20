@@ -112,7 +112,7 @@ internal sealed class SalesModelContributor : IModelContributor
 internal sealed class SalesPermissions : Coworkee.Application.Authorization.IPermissionDefinitionContributor
 {
     public void Define(Coworkee.Application.Authorization.PermissionDefinitionContext context) =>
-        context.Group("Sales", "Sales").Add(ReportingApp.ViewSales, "View sales").Add(ReportingApp.ViewShoppers, "View shoppers").Add(ReportingApp.SeeQuantities, "See quantities");
+        context.Group("Sales", "Sales").Add(ReportingApp.ViewSales, "View sales").Add(ReportingApp.ViewShoppers, "View shoppers").Add(ReportingApp.SeeQuantities, "See quantities").Add(MonthlyNumbers.ViewNumbers, "View numbers");
 }
 
 /// <summary>Rows of the region "Hidden" never leave the server, like an app's row filter.</summary>
@@ -134,5 +134,7 @@ public sealed class SalesReportingModule : CoworkeeModule
         context.Services.AddODataEntity<Sale>("Sales", ReportingApp.ViewSales, o => o.Hide(s => s.Secret).HideUnless(s => s.Quantity, ReportingApp.SeeQuantities));
         context.Services.AddODataEntity<Shopper>("Shoppers", ReportingApp.ViewShoppers);
         context.Services.AddScoped<IODataEntityFilter<Sale>, HideHiddenRegion>();
+        context.Services.AddReportSource<MonthlyNumber>("MonthlyNumbers", "Monthly numbers", MonthlyNumbers.ViewNumbers, MonthlyNumbers.RowsAsync);
+        context.Services.AddReportSource<SaleRow>("SaleRows", "Sale rows", MonthlyNumbers.ViewNumbers, MonthlyNumbers.SalesAsync);
     }
 }

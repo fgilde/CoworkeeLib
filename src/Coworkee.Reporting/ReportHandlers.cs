@@ -160,9 +160,10 @@ internal sealed class ReportHandlers(CoworkeeDbContext db, ReportAccess access, 
 
     public async Task<Result<IReadOnlyList<ReportSourceDto>>> HandleAsync(GetReportSourcesQuery query, CancellationToken cancellationToken) =>
         (await queries.SourcesAsync(cancellationToken))
-            .Select(s => new ReportSourceDto(s.Registration.EntitySet, s.Label, [.. s.Fields.Select(f => f.ToDto())],
-                s.Registration.EntityType.IsDefined(typeof(Domain.RealtimeAttribute), false) ? Contracts.Realtime.RealtimeTopics.Type(s.Registration.EntityType.Name) : null))
-            .OrderBy(s => s.Label, StringComparer.CurrentCultureIgnoreCase)
+            .Select(s => new ReportSourceDto(s.EntitySet, s.Label, [.. s.Fields.Select(f => f.ToDto())],
+                s.Computed is null && s.RowType.IsDefined(typeof(Domain.RealtimeAttribute), false) ? Contracts.Realtime.RealtimeTopics.Type(s.RowType.Name) : null, s.Computed is not null))
+            .OrderBy(s => s.Computed)
+            .ThenBy(s => s.Label, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
 
     public Task<Result<ReportQueryResult>> HandleAsync(RunReportQuery query, CancellationToken cancellationToken) => queries.RunAsync(query.Request, cancellationToken);
@@ -189,7 +190,7 @@ internal sealed class ReportHandlers(CoworkeeDbContext db, ReportAccess access, 
 
             foreach (var column in widget.Query.Columns.Concat(new[] { widget.Query.DateField, widget.Query.OrderBy }.OfType<string>()))
             {
-                if (sources.FirstOrDefault(s => string.Equals(s.Registration.EntitySet, widget.Query.EntitySet, StringComparison.OrdinalIgnoreCase))?.Find(column) is null)
+                if (sources.FirstOrDefault(s => string.Equals(s.EntitySet, widget.Query.EntitySet, StringComparison.OrdinalIgnoreCase))?.Find(column) is null)
                 {
                     return Error.Validation($"Widgets[{widget.Id}].Columns", $"{widget.Query.EntitySet} has no field '{column}'.");
                 }

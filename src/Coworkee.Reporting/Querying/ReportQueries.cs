@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Reflection;
 using Coworkee.Application.Authorization;
+using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Reporting;
 using Coworkee.Core.Results;
 using Coworkee.OData;
@@ -20,7 +21,7 @@ internal sealed class ReportQueries(IServiceProvider services, ReportSchema sche
     {
         var granted = await GrantedAsync(cancellationToken);
         return schema.All
-            .Where(s => s.Registration.Permission is null || granted.Contains(s.Registration.Permission))
+            .Where(s => s.Permission is null || granted.Contains(s.Permission))
             .Select(s => s with { Fields = [.. s.Fields.Where(f => f.Allowed(granted))] })
             .ToList();
     }
@@ -36,8 +37,8 @@ internal sealed class ReportQueries(IServiceProvider services, ReportSchema sche
         var watch = Stopwatch.StartNew();
         try
         {
-            var rows = await (Task<Result<IReadOnlyList<ReportQueryRow>>>)RunMethod.MakeGenericMethod(source!.Registration.EntityType)
-                .Invoke(null, [services, request.Filter, plan.Value, cancellationToken])!;
+            var rows = await (Task<Result<IReadOnlyList<ReportQueryRow>>>)RunMethod.MakeGenericMethod(source!.RowType)
+                .Invoke(null, [services, source, request.Filter, plan.Value, cancellationToken])!;
             return rows.IsSuccess ? new ReportQueryResult(rows.Value, watch.ElapsedMilliseconds) : rows.Error;
         }
         catch (ODataException exception)
@@ -57,7 +58,15 @@ internal sealed class ReportQueries(IServiceProvider services, ReportSchema sche
 
         try
         {
-            await (Task)CheckMethod.MakeGenericMethod(source!.Registration.EntityType).Invoke(null, [services, request.Filter, cancellationToken])!;
+            if (source!.Computed is { } computed)
+            {
+                computed.Parse(request.Filter);
+            }
+            else
+            {
+                await (Task)CheckMethod.MakeGenericMethod(source.RowType).Invoke(null, [services, request.Filter, cancellationToken])!;
+            }
+
             return null;
         }
         catch (ODataException exception)
@@ -68,26 +77,39 @@ internal sealed class ReportQueries(IServiceProvider services, ReportSchema sche
 
     private async Task<(ReportSource? Source, Result<ReportPlan> Plan)> PlanAsync(ReportQueryRequest request, CancellationToken cancellationToken)
     {
-        if (schema.Find(request.EntitySet) is not { } source)
+        var source = await ReadableAsync(request.EntitySet, cancellationToken);
+        if (!source.IsSuccess)
         {
-            return (null, Error.NotFound("reports.unknown_set", $"There is no data set '{request.EntitySet}'."));
+            return (null, source.Error);
         }
 
-        var granted = await GrantedAsync(cancellationToken);
-        if (source.Registration.Permission is { } permission && !granted.Contains(permission))
-        {
-            return (null, Error.Forbidden("reports.forbidden_set", $"You may not read {source.Registration.EntitySet}."));
-        }
-
-        return (source, ReportPlan.Create(source, request, granted, Infrastructure.Persistence.CoworkeeDatabase.Provider(db.Database)));
+        // an app source aggregates in memory unless it hands out a query of the database
+        var provider = source.Value.Computed is null ? Infrastructure.Persistence.CoworkeeDatabase.Provider(db.Database) : DatabaseProviders.Postgres;
+        return (source.Value, ReportPlan.Create(source.Value, request, await GrantedAsync(cancellationToken), provider));
     }
 
-    private async Task<IReadOnlySet<string>> GrantedAsync(CancellationToken cancellationToken) =>
+    internal async Task<Result<ReportSource>> ReadableAsync(string name, CancellationToken cancellationToken)
+    {
+        if (schema.Find(name) is not { } source)
+        {
+            return Error.NotFound("reports.unknown_set", $"There is no data set '{name}'.");
+        }
+
+        return source.Permission is { } permission && !(await GrantedAsync(cancellationToken)).Contains(permission)
+            ? Error.Forbidden("reports.forbidden_set", $"You may not read {source.EntitySet}.")
+            : source;
+    }
+
+    internal async Task<IReadOnlySet<string>> GrantedAsync(CancellationToken cancellationToken) =>
         _granted ??= (await permissions.GetGrantedAsync(cancellationToken)).ToHashSet(StringComparer.Ordinal);
 
-    private static async Task<Result<IReadOnlyList<ReportQueryRow>>> RunTypedAsync<TEntity>(IServiceProvider services, string? filter, ReportPlan plan, CancellationToken cancellationToken)
+    private static async Task<Result<IReadOnlyList<ReportQueryRow>>> RunTypedAsync<TEntity>(IServiceProvider services, ReportSource source, string? filter, ReportPlan plan, CancellationToken cancellationToken)
         where TEntity : class =>
-        await ReportAggregator.RunAsync(await ODataEntityAccess.FilteredAsync<TEntity>(services, filter, cancellationToken), plan, cancellationToken);
+        await ReportAggregator.RunAsync(
+            source.Computed is { } computed
+                ? (IQueryable<TEntity>)await computed.RowsAsync(services, filter, cancellationToken)
+                : await ODataEntityAccess.FilteredAsync<TEntity>(services, filter, cancellationToken),
+            plan, cancellationToken);
 
     private static Task CheckFilterAsync<TEntity>(IServiceProvider services, string? filter, CancellationToken cancellationToken)
         where TEntity : class =>
