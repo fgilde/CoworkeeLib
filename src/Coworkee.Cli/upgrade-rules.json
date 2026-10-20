@@ -204,6 +204,22 @@
         { "text": "Optional: Coworkee.Retention sets how long data is kept (admin page Retention, nightly cleanup). Add the package to the infrastructure project, typeof(Coworkee.Retention.CoworkeeRetentionModule) to the DependsOn of the database module and a migration (cw.RetentionRuns).", "find": "class \\w+DatabaseModule\\b", "files": [ "src/**/*.cs" ], "unless": "CoworkeeRetentionModule" }
       ],
       "needsMigration": true
+    },
+    {
+      "version": "0.0.1.35",
+      "breaking": [
+        "Workflows: the new column RequestedBy of cw.WorkflowApprovals; add a migration in apps with Coworkee.Workflows.",
+        "Social: the new table cw.Reactions; add a migration in apps with Coworkee.Social. Comments, tags, ratings and reactions now follow the row visibility of the entity's OData set.",
+        "Error.Validation(field, message).Message is the given message instead of the generic text.",
+        "Record attachments: IRecordAttachments.PutAsync, DeleteAsync and DeleteAllAsync no longer save; outside a command call IUnitOfWork.SaveChangesAsync.",
+        "Workflows: ApprovalStep.ApprovedState and RejectedState are nullable (null for targets chosen from the entity; see ApprovedTargets/RejectedTargets)."
+      ],
+      "manual": [
+        { "text": "PageHeader and CoworkeeDataTable.CreateText translate themselves: pass text keys instead of @L[\"...\"].", "find": "(PageHeader[^>]*(Title|Description)|CreateText)=\"@L\\[", "files": [ "src/**/*.razor" ] },
+        { "text": "Web clients with .razor.css files: link the scoped CSS bundle in App.razor after the MudBlazor.Extensions stylesheet: <link href=\"@Assets[\"MyApp.Web.styles.css\"]\" rel=\"stylesheet\" /> (your web project name).", "find": "MudBlazor\\.Extensions.*\\.css", "files": [ "src/**/App.razor" ], "unless": "styles.css" },
+        { "text": "API tests of apps with the RabbitMQ event bus: builder.UseSetting(\"Coworkee:EventBus:RabbitMq:Enabled\", \"false\") in the test host delivers integration events in process.", "find": "RabbitMq", "files": [ "tests/**/*.cs" ], "unless": "RabbitMq:Enabled" }
+      ],
+      "needsMigration": true
     }
   ]
 }
