@@ -158,7 +158,8 @@ internal interface IGroupKey
     object? B { get; }
 }
 
-internal sealed class GroupKey<TA, TB> : IGroupKey
+// a record: in-memory sources group with Enumerable.GroupBy, which needs value equality
+internal sealed record GroupKey<TA, TB> : IGroupKey
 {
     public TA A { get; init; } = default!;
 

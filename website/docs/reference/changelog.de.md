@@ -13,6 +13,7 @@
 
 ### Korrekturen
 
+- Reporting: Diagramme über eine berechnete Quelle (`AddReportSource`) mit mehreren Zeilen pro Kategorie und Serie schlagen nicht mehr fehl (die Gruppierung im Speicher machte aus jeder Zeile eine eigene Gruppe, das Diagramm warf dann wegen doppelter Schlüssel); Diagrammserien addieren doppelte Kategorien.
 - Datensatz-Anhänge: Mit `CreateScope()` erzeugte Scopes (Startcode, das Elsa-Modul, ältere Dienste) lassen sich mit eingeschaltetem Anhangsmodul wieder freigeben (`AttachmentBlobs` ist auch `IDisposable`).
 - Sicherheit, Social: Kommentare, Tags, Bewertungen, Reaktionen und ihre Echtzeit-Topics eines mit Entitätsklasse registrierten Typs (`Comments<T>`, ...) verlangen jetzt, dass der Benutzer die Zeile über das OData-Set des Typs sieht (Berechtigung des Sets, Organisation, Soft Delete, Zeilenfilter `IODataEntityFilter<T>`); vorher reichten die Berechtigung und eine vorhandene Id. Tag-Zähler und `GET /api/v1/tags/{entityType}/entities` zählen nur sichtbare Zeilen. Typen ohne OData-Set behalten die Id-Prüfung; `Authorize(...)` ergänzt weiterhin Prüfungen, Hooks, die nur den Zeilenfilter wiederholten, können entfallen. Siehe [Social](../modules/social.md).
 - Workflows: Für eine Entität, die der Command in derselben Unit of Work hinzugefügt hat, lädt `WorkflowEngine.LoadAsync` die `Include(...)`-Referenzen über ihren Fremdschlüssel, wenn nur die ID gesetzt war; `Describe`, Guards und Aktionen sehen dort kein `null` mehr.

@@ -56,6 +56,16 @@ public sealed class SourceTests(ReportingApp app) : ReportingTestBase(app)
     }
 
     [Fact]
+    public async Task Several_rows_per_category_and_series_fold_into_one_group()
+    {
+        var result = await QueryAsync(new ReportQueryRequest("MonthlyNumbers", GroupBy: new ReportGroupBy("Month", DateBucket.Quarter), SplitBy: new ReportGroupBy("Team"),
+            Aggregates: [new(AggregateFunction.Sum, "Headcount")]));
+
+        result.Rows.Count.ShouldBe(8);
+        result.Rows.Take(2).Select(r => (r.Key!.Label, r.Series!.Value, (int?)r.Values[0])).ShouldBe([("2025 Q1", "North", 33), ("2025 Q1", "South", 57)]);
+    }
+
+    [Fact]
     public async Task Quarters_by_value_keep_the_top()
     {
         var result = await QueryAsync(new ReportQueryRequest("MonthlyNumbers", GroupBy: new ReportGroupBy("Month", DateBucket.Quarter),

@@ -30,7 +30,9 @@ public static class ChartData
         [
             .. result.Rows.GroupBy(r => r.Series?.Value).Select(g =>
             {
-                var values = g.ToDictionary(r => r.Key?.Value ?? string.Empty, r => Value(r.Values, 0));
+                // duplicate category keys (labels that collapse, older servers) add up instead of throwing
+                var values = g.GroupBy(r => r.Key?.Value ?? string.Empty)
+                    .ToDictionary(k => k.Key, k => k.Select(r => Value(r.Values, 0)).Aggregate((decimal?)null, (sum, v) => v is null ? sum : (sum ?? 0) + v));
                 return new ChartSeries(series(g.First().Series), [.. categories.Select(c => new ChartPoint(category(c), values.TryGetValue(c?.Value ?? string.Empty, out var v) ? v : fillGaps ? 0 : null, c))]);
             }),
         ];
