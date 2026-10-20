@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Korrekturen
+
+- Navigation: der hinter den Filter-Chips getippte Filtertext bleibt beim Öffnen einer Seite im Filterfeld stehen; bisher wurde das Feld geleert, während der Filter weiter galt.
+
 ## 0.0.1.35 (2026-10-20)
 
 ### Breaking Changes

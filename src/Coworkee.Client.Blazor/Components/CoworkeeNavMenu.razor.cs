@@ -5,6 +5,7 @@ using Coworkee.Client.Blazor.Security;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.Extensions.Options;
+using Microsoft.JSInterop;
 using MudBlazor.Extensions.Core.Enums;
 using Nextended.Core.Extensions;
 
@@ -16,6 +17,8 @@ public partial class CoworkeeNavMenu : IDisposable
     private HashSet<NavigationEntry>? _entries;
     private NavigationEntry? _selected;
     private TreeViewMode _viewMode = TreeViewMode.Default;
+    private string? _filter;
+    private IJSObjectReference? _module;
 
     [Inject] private IEnumerable<INavigationContributor> Contributors { get; set; } = null!;
 
@@ -40,6 +43,8 @@ public partial class CoworkeeNavMenu : IDisposable
     [Inject] private NavigationManager Nav { get; set; } = null!;
 
     [Inject] private IServiceProvider Services { get; set; } = null!;
+
+    [Inject] private IJSRuntime JS { get; set; } = null!;
 
     [Inject] private Localization.CoworkeeLocalizer L { get; set; } = null!;
 
@@ -69,6 +74,27 @@ public partial class CoworkeeNavMenu : IDisposable
         Badges.Changed += Refresh;
         await BuildAsync();
     }
+
+    // ponytail: MudEx 9.11.4 renders the filter box from a stale Text parameter, so a render after the box lost the focus
+    // (e.g. on navigation) empties the typed text in the browser while the filter stays. Remove after the MudEx release with the fix.
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (string.IsNullOrEmpty(_filter))
+        {
+            return;
+        }
+
+        try
+        {
+            _module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");
+            await _module.InvokeVoidAsync("restoreText", FilterInput, _filter);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
+
+    internal const string FilterInput = ".cw-nav-filter input";
 
     public void Dispose()
     {

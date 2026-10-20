@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Fixes
+
+- Navigation: the filter text typed after the filter chips stays in the filter box when a page is opened; it was emptied while the filter still applied.
+
 ## 0.0.1.35 (2026-10-20)
 
 ### Breaking changes

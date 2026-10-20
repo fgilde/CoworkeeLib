@@ -137,6 +137,14 @@ export function scrollToEnd(element) {
     }
 }
 
+// sets the text of an input the user is not typing in
+export function restoreText(selector, text) {
+    const input = document.querySelector(selector);
+    if (input && document.activeElement !== input && input.value !== text) {
+        input.value = text;
+    }
+}
+
 export function focus(element) {
     element?.focus();
 }
