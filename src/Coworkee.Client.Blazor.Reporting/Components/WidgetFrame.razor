@@ -12,6 +12,10 @@
             }
         </div>
         <div class="cw-widget-tools" @onmousedown:stopPropagation="true">
+            @if (!Editing)
+            {
+                <WidgetViewSwitch Widget="Widget" State="State" Choice="_choice" ChoiceChanged="ChooseAsync" />
+            }
             @if (Widget.Type == WidgetType.Table)
             {
                 <MudToggleGroup T="TableView" Value="Widget.Options.View" ValueChanged="ViewChanged" Size="Size.Small" Outlined="false" Delimiters="false" Class="cw-view-switch" data-testid="view-switch">
@@ -51,6 +55,6 @@
         </div>
     </div>
     <div class="cw-widget-body">
-        <WidgetHost Widget="Widget" State="State" OnSheet="s => _sheet = s" OnInfo="i => _info = i" />
+        <WidgetHost Widget="_shown" State="State" OnSheet="s => _sheet = s" OnInfo="i => _info = i" />
     </div>
 </div>

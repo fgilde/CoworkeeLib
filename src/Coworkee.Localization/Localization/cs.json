@@ -1716,5 +1716,12 @@
   "The name your people will see.": "Název, který uvidí vaši lidé.",
   "Pick a theme; it applies right away. You can change it any time.": "Vyberte motiv; platí hned. Můžete ho kdykoli změnit.",
   "The first account, with full access.": "První účet s plným přístupem.",
-  "Optional: the server for invitations and password mails. You can set it later under Settings.": "Volitelné: server pro pozvánky a e-maily s hesly. Můžete ho nastavit později v části Nastavení."
+  "Optional: the server for invitations and password mails. You can set it later under Settings.": "Volitelné: server pro pozvánky a e-maily s hesly. Můžete ho nastavit později v části Nastavení.",
+  "Values the viewer can switch to": "Hodnoty, na které může divák přepnout",
+  "Groupings the viewer can switch to": "Seskupení, na která může divák přepnout",
+  "Label": "Popisek",
+  "Extra filter (OData)": "Další filtr (OData)",
+  "Add grouping": "Přidat seskupení",
+  "Filtered": "Filtrováno",
+  "Switches for viewers": "Přepínače pro diváky"
 }

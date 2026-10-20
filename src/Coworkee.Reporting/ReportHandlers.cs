@@ -181,23 +181,33 @@ internal sealed class ReportHandlers(CoworkeeDbContext db, ReportAccess access, 
         var sources = await queries.SourcesAsync(cancellationToken);
         foreach (var widget in request.Definition.Widgets.Where(w => w.Query is not null && w.Type is not (WidgetType.Markdown or WidgetType.Image or WidgetType.Embed)))
         {
-            if (await queries.CheckAsync(ReportQueryRequest.From(widget.Query!, widget.Query!.Filter), cancellationToken) is { } error)
+            // the widget as designed and each alternative a viewer can switch it to
+            foreach (var (view, shown) in ReportViews.All(widget))
             {
-                return error.Kind == ErrorKind.Validation && error.Details is { } details
-                    ? Error.Validation(details.ToDictionary(d => $"Widgets[{widget.Id}].{d.Key}", d => d.Value, StringComparer.Ordinal))
-                    : error with { Message = $"{widget.Title ?? widget.Id}: {error.Message}" };
-            }
-
-            foreach (var column in widget.Query.Columns.Concat(new[] { widget.Query.DateField, widget.Query.OrderBy }.OfType<string>()))
-            {
-                if (sources.FirstOrDefault(s => string.Equals(s.EntitySet, widget.Query.EntitySet, StringComparison.OrdinalIgnoreCase))?.Find(column) is null)
+                if (await CheckWidgetAsync(shown, view.Length == 0 ? $"Widgets[{widget.Id}]" : $"Widgets[{widget.Id}].{view}", sources, cancellationToken) is { } error)
                 {
-                    return Error.Validation($"Widgets[{widget.Id}].Columns", $"{widget.Query.EntitySet} has no field '{column}'.");
+                    return error;
                 }
             }
         }
 
         return null;
+    }
+
+    private async Task<Error?> CheckWidgetAsync(ReportWidget widget, string key, IReadOnlyList<ReportSource> sources, CancellationToken cancellationToken)
+    {
+        var query = widget.Query!;
+        if (await queries.CheckAsync(ReportQueryRequest.From(query, query.Filter), cancellationToken) is { } error)
+        {
+            return error.Kind == ErrorKind.Validation && error.Details is { } details
+                ? Error.Validation(details.ToDictionary(d => $"{key}.{d.Key}", d => d.Value, StringComparer.Ordinal))
+                : error with { Message = $"{widget.Title ?? widget.Id}: {error.Message}" };
+        }
+
+        var source = sources.FirstOrDefault(s => string.Equals(s.EntitySet, query.EntitySet, StringComparison.OrdinalIgnoreCase));
+        return query.Columns.Concat(new[] { query.DateField, query.OrderBy }.OfType<string>()).FirstOrDefault(c => source?.Find(c) is null) is { } column
+            ? Error.Validation($"{key}.Columns", $"{query.EntitySet} has no field '{column}'.")
+            : null;
     }
 
     private static void Apply(Report report, SaveReportRequest request)

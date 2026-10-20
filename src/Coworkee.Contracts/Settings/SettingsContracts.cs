@@ -36,6 +36,9 @@ public static class TableSettings
 
     /// <summary>The user's choice per table with a local copy, "Client" or "Server", as JSON keyed by table.</summary>
     public const string ClientEntityModes = "Table.ClientEntityModes";
+
+    /// <summary>The user's view choices of report widgets as JSON, keyed by report and widget (see <c>ReportViews.Key</c>).</summary>
+    public const string ReportViews = "Reports.Views";
 }
 
 /// <summary>The engine of every rich text editor of the library: <see cref="TipTap"/> (default) or <see cref="Quill"/>.</summary>

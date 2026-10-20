@@ -1716,5 +1716,12 @@
   "The name your people will see.": "Namnet som dina medarbetare ser.",
   "Pick a theme; it applies right away. You can change it any time.": "Välj ett tema; det gäller direkt. Du kan ändra det när som helst.",
   "The first account, with full access.": "Det första kontot, med full åtkomst.",
-  "Optional: the server for invitations and password mails. You can set it later under Settings.": "Valfritt: servern för inbjudningar och lösenordsmejl. Du kan ange den senare under Inställningar."
+  "Optional: the server for invitations and password mails. You can set it later under Settings.": "Valfritt: servern för inbjudningar och lösenordsmejl. Du kan ange den senare under Inställningar.",
+  "Values the viewer can switch to": "Värden som betraktaren kan växla till",
+  "Groupings the viewer can switch to": "Grupperingar som betraktaren kan växla till",
+  "Label": "Etikett",
+  "Extra filter (OData)": "Extra filter (OData)",
+  "Add grouping": "Lägg till gruppering",
+  "Filtered": "Filtrerat",
+  "Switches for viewers": "Växlare för betraktare"
 }

@@ -1716,5 +1716,12 @@
   "The name your people will see.": "Назва, яку бачитимуть ваші люди.",
   "Pick a theme; it applies right away. You can change it any time.": "Виберіть тему; вона діє одразу. Її можна змінити будь-коли.",
   "The first account, with full access.": "Перший обліковий запис із повним доступом.",
-  "Optional: the server for invitations and password mails. You can set it later under Settings.": "Необов'язково: сервер для запрошень і листів із паролями. Його можна задати пізніше в розділі Налаштування."
+  "Optional: the server for invitations and password mails. You can set it later under Settings.": "Необов'язково: сервер для запрошень і листів із паролями. Його можна задати пізніше в розділі Налаштування.",
+  "Values the viewer can switch to": "Значення, на які може перемкнутися глядач",
+  "Groupings the viewer can switch to": "Групування, на які може перемкнутися глядач",
+  "Label": "Підпис",
+  "Extra filter (OData)": "Додатковий фільтр (OData)",
+  "Add grouping": "Додати групування",
+  "Filtered": "Відфільтровано",
+  "Switches for viewers": "Перемикачі для глядачів"
 }

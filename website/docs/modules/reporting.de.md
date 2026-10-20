@@ -169,6 +169,29 @@ Diagramme nutzen [Blazor-ApexCharts](https://github.com/apexcharts/Blazor-ApexCh
 - **Rückgängig** und **Wiederholen** decken jede Änderung bis zum Speichern ab. Die *Berichtseinstellungen* enthalten Name, Beschreibung, Symbol, Freigabe und das Aktualisierungsintervall.
 - **Ansicht**: Zeitraum für alle Widgets, Facetten je Entitätsmenge, Kreuzfilter per Klick auf Balken, Tortenstück oder Pivot-Zelle, *Daten öffnen* an jedem Widget, Vollbild je Widget, Präsentationsmodus, Aktualisieren, Export.
 
+## Umschalter für Betrachter
+
+Ein Widget kann Betrachtern andere Werte und Gruppierungen anbieten, ohne ein zweites Widget: *Umschalter für Betrachter* im Widget-Bereich fügt Alternativen hinzu, jede beginnt als Kopie des eigenen Werts oder der eigenen Gruppierung des Widgets.
+
+- **Werte** (`WidgetOptions.Metrics`, eine Liste von `MetricView`): Bezeichnung, Aggregate, Zahlenformat und ein zusätzlicher OData-Filter, der mit dem eigenen Filter des Widgets und-verknüpft wird. Kennzahlen, Diagramme und Pivots wechseln ihre Werte; Tabellen übernehmen nur den Filter (z. B. *Offene Aufträge* neben *Alle*).
+- **Gruppierungen** (`WidgetOptions.Buckets`, eine Liste von `BucketView`): Bezeichnung, Gruppierungsfeld und Datumsstufe, optional ein anderes Datumsfeld für den Zeitraum des Berichts. Diagramme und Pivots gruppieren neu; Kennzahlen ändern die Stufe ihrer Kurve.
+
+Betrachter wählen sie in Auswahllisten im Kopf des Widgets; der eigene Eintrag des Widgets steht zuerst. Die Wahl lädt das Widget mit der Alternative neu (der Bericht bleibt unverändert), wirkt mit Facetten, Zeitraum und Kreuzfiltern zusammen und ist das, was *CSV/Excel exportieren* schreibt. Sie bleibt je Benutzer, Bericht und Widget in der Benutzereinstellung `Reports.Views` erhalten. Beim Speichern wird jede Alternative wie das Widget selbst geprüft; eine mit unbekanntem Feld oder kaputtem Filter wird abgelehnt (`400`, Schlüssel `Widgets[{id}].Metrics[{i}]...`).
+
+```csharp
+new ReportWidget
+{
+    Type = WidgetType.Chart,
+    Title = "Aufträge",
+    Query = new WidgetQuery { EntitySet = "SalesOrders", GroupBy = new ReportGroupBy("Region"), DateField = "OrderDate" },
+    Options = new WidgetOptions
+    {
+        Metrics = [new MetricView("Umsatz", [new(AggregateFunction.Sum, "Total")], NumberFormat.Currency)],
+        Buckets = [new BucketView("Nach Monat", "OrderDate", DateBucket.Month)],
+    },
+};
+```
+
 ## Filter
 
 ![Ein Klick auf ein Tortenstück filtert die übrigen Widgets](../assets/screenshots/reporting-cross-filter.png){ .shot }

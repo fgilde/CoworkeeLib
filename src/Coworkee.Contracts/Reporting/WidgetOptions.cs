@@ -40,6 +40,12 @@ public sealed class WidgetOptions
 
     /// <summary>Address of images and embedded pages.</summary>
     public string? Url { get; set; }
+
+    /// <summary>Values the viewer may switch to besides the widget's own (see <see cref="ReportViews"/>).</summary>
+    public List<MetricView> Metrics { get; set; } = [];
+
+    /// <summary>Groupings the viewer may switch to besides the widget's own.</summary>
+    public List<BucketView> Buckets { get; set; } = [];
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter<ChartKind>))]

@@ -1716,5 +1716,12 @@
   "The name your people will see.": "الاسم الذي سيراه أفرادك.",
   "Pick a theme; it applies right away. You can change it any time.": "اختر سمة؛ تُطبَّق فورًا. يمكنك تغييرها في أي وقت.",
   "The first account, with full access.": "الحساب الأول، بصلاحية وصول كاملة.",
-  "Optional: the server for invitations and password mails. You can set it later under Settings.": "اختياري: الخادم لرسائل الدعوة وكلمات المرور. يمكنك تعيينه لاحقًا ضمن الإعدادات."
+  "Optional: the server for invitations and password mails. You can set it later under Settings.": "اختياري: الخادم لرسائل الدعوة وكلمات المرور. يمكنك تعيينه لاحقًا ضمن الإعدادات.",
+  "Values the viewer can switch to": "القيم التي يمكن للمشاهد التبديل إليها",
+  "Groupings the viewer can switch to": "التجميعات التي يمكن للمشاهد التبديل إليها",
+  "Label": "التسمية",
+  "Extra filter (OData)": "عامل تصفية إضافي (OData)",
+  "Add grouping": "إضافة تجميع",
+  "Filtered": "مُصفّى",
+  "Switches for viewers": "مفاتيح التبديل للمشاهدين"
 }

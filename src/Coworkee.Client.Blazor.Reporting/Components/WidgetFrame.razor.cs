@@ -15,6 +15,9 @@ namespace Coworkee.Client.Blazor.Reporting.Components;
 public partial class WidgetFrame
 {
     private ReportSheetRequest? _sheet;
+    private ReportViewChoice? _choice;
+    private ReportWidget _shown = null!;
+    private bool _choiceRead;
     private string? _info;
     private bool _full;
 
@@ -27,6 +30,11 @@ public partial class WidgetFrame
     [Inject] private NavigationManager Nav { get; set; } = null!;
 
     [Inject] private ReportingOptions Options { get; set; } = null!;
+
+    [Inject] private ReportViewChoices Choices { get; set; } = null!;
+
+    /// <summary>The report the widget belongs to; the viewer's switches are remembered per report and widget.</summary>
+    [Parameter] public Guid? ReportId { get; set; }
 
     [Parameter, EditorRequired] public ReportWidget Widget { get; set; } = null!;
 
@@ -44,6 +52,27 @@ public partial class WidgetFrame
 
     [Parameter] public EventCallback OnChanged { get; set; }
 
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!_choiceRead && ReportId is { } report)
+        {
+            _choiceRead = true;
+            _choice = await Choices.GetAsync(report, Widget.Id);
+        }
+
+        _shown = ReportViews.Apply(Widget, Editing ? null : _choice);
+    }
+
+    private async Task ChooseAsync(ReportViewChoice choice)
+    {
+        _choice = choice;
+        _shown = ReportViews.Apply(Widget, choice);
+        if (ReportId is { } report)
+        {
+            await Choices.SetAsync(report, Widget.Id, choice);
+        }
+    }
+
     private string Title => Widget.Title is { Length: > 0 } title ? L.Stored(title) : L[ReportFormat.Humanize(Widget.Type.ToString())];
 
     private Task ViewChanged(TableView view)
@@ -54,7 +83,7 @@ public partial class WidgetFrame
 
     private void DrillDown()
     {
-        var query = Widget.Query!;
+        var query = _shown.Query!;
         var facets = State.FilterFor(query, Widget.Id) is { Length: > 0 } filter
             ? [new SelectedFacet("report", L["Report"], FacetOperator.And, Title, filter)]
             : Array.Empty<SelectedFacet>();

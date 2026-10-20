@@ -1716,5 +1716,12 @@
   "The name your people will see.": "Името, което хората ви ще виждат.",
   "Pick a theme; it applies right away. You can change it any time.": "Изберете тема; прилага се веднага. Можете да я смените по всяко време.",
   "The first account, with full access.": "Първият акаунт, с пълен достъп.",
-  "Optional: the server for invitations and password mails. You can set it later under Settings.": "По избор: сървърът за покани и имейли с пароли. Можете да го зададете по-късно в Настройки."
+  "Optional: the server for invitations and password mails. You can set it later under Settings.": "По избор: сървърът за покани и имейли с пароли. Можете да го зададете по-късно в Настройки.",
+  "Values the viewer can switch to": "Стойности, към които зрителят може да превключи",
+  "Groupings the viewer can switch to": "Групирания, към които зрителят може да превключи",
+  "Label": "Етикет",
+  "Extra filter (OData)": "Допълнителен филтър (OData)",
+  "Add grouping": "Добавяне на групиране",
+  "Filtered": "Филтрирано",
+  "Switches for viewers": "Превключватели за зрителите"
 }

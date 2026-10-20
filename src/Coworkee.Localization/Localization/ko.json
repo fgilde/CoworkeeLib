@@ -1716,5 +1716,12 @@
   "The name your people will see.": "구성원에게 표시될 이름입니다.",
   "Pick a theme; it applies right away. You can change it any time.": "테마를 선택하세요. 바로 적용되며 언제든지 변경할 수 있습니다.",
   "The first account, with full access.": "전체 액세스 권한이 있는 첫 번째 계정입니다.",
-  "Optional: the server for invitations and password mails. You can set it later under Settings.": "선택 사항: 초대 및 비밀번호 메일을 위한 서버입니다. 나중에 설정에서 지정할 수 있습니다."
+  "Optional: the server for invitations and password mails. You can set it later under Settings.": "선택 사항: 초대 및 비밀번호 메일을 위한 서버입니다. 나중에 설정에서 지정할 수 있습니다.",
+  "Values the viewer can switch to": "보는 사람이 전환할 수 있는 값",
+  "Groupings the viewer can switch to": "보는 사람이 전환할 수 있는 그룹화",
+  "Label": "레이블",
+  "Extra filter (OData)": "추가 필터 (OData)",
+  "Add grouping": "그룹화 추가",
+  "Filtered": "필터링됨",
+  "Switches for viewers": "보는 사람용 전환"
 }

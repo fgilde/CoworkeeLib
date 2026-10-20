@@ -11,5 +11,7 @@ internal sealed class TableSettingDefinitions : ISettingDefinitionContributor
             .Add(TableSettings.DefaultPageMode, "Table rows", SettingType.Choice, [SettingScope.Global, SettingScope.User], TableSettings.Pager, visibleToClient: true,
                 description: "Pages with a pager, or endless scrolling that loads more rows while scrolling.", choices: [TableSettings.Pager, TableSettings.EndlessScroll])
             .Add(TableSettings.ClientEntityModes, "Search on the client or the server", SettingType.Text, [SettingScope.User],
-                description: "Per table with a local copy: whether searching and filtering run in the browser or on the server.");
+                description: "Per table with a local copy: whether searching and filtering run in the browser or on the server.")
+            .Add(TableSettings.ReportViews, "Report views", SettingType.Text, [SettingScope.User],
+                description: "The value and grouping the user switched report widgets to.");
 }

@@ -40,6 +40,7 @@ public abstract class ReportingTestBase : BunitContext
         Services.AddScoped<Security.PermissionStore>();
         Services.AddScoped<FileDownloader>();
         Services.AddScoped<ReportTheme>();
+        Services.AddScoped<ReportViewChoices>();
         Services.AddSingleton(new ReportingOptions());
         Services.AddSingleton(new CoworkeeClientOptions());
         var texts = Substitute.For<Localization.ILocalizationApi>();

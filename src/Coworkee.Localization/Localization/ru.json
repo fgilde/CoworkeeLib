@@ -1716,5 +1716,12 @@
   "The name your people will see.": "Название, которое увидят ваши сотрудники.",
   "Pick a theme; it applies right away. You can change it any time.": "Выберите тему; она применяется сразу. Её можно сменить в любой момент.",
   "The first account, with full access.": "Первая учётная запись с полным доступом.",
-  "Optional: the server for invitations and password mails. You can set it later under Settings.": "Необязательно: сервер для приглашений и писем с паролями. Его можно задать позже в разделе Настройки."
+  "Optional: the server for invitations and password mails. You can set it later under Settings.": "Необязательно: сервер для приглашений и писем с паролями. Его можно задать позже в разделе Настройки.",
+  "Values the viewer can switch to": "Значения, на которые может переключиться зритель",
+  "Groupings the viewer can switch to": "Группировки, на которые может переключиться зритель",
+  "Label": "Подпись",
+  "Extra filter (OData)": "Дополнительный фильтр (OData)",
+  "Add grouping": "Добавить группировку",
+  "Filtered": "Отфильтровано",
+  "Switches for viewers": "Переключатели для зрителей"
 }

@@ -1,0 +1,30 @@
+@if (Metrics.Count > 0)
+{
+    <MudMenu Dense="Density.Dense" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" data-testid="metric-switch">
+        <ActivatorContent Context="menu">
+            <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.Functions" EndIcon="@Icons.Material.Filled.ArrowDropDown" Class="cw-view-choice" OnClick="@(() => menu.ToggleAsync())"
+                       aria-label="@L["Value"]" title="@L["Value"]">@Label(Metrics, Current.Metric)</MudButton>
+        </ActivatorContent>
+        <ChildContent>
+            @foreach (var (label, index) in Metrics)
+            {
+                <MudMenuItem Icon="@(Chosen(Current.Metric, index) ? Icons.Material.Filled.Check : null)" OnClick="() => ChooseAsync(Current with { Metric = Index(index) })" data-metric="@index">@label</MudMenuItem>
+            }
+        </ChildContent>
+    </MudMenu>
+}
+@if (Buckets.Count > 0)
+{
+    <MudMenu Dense="Density.Dense" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" data-testid="bucket-switch">
+        <ActivatorContent Context="menu">
+            <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.Category" EndIcon="@Icons.Material.Filled.ArrowDropDown" Class="cw-view-choice" OnClick="@(() => menu.ToggleAsync())"
+                       aria-label="@L["Group by"]" title="@L["Group by"]">@Label(Buckets, Current.Bucket)</MudButton>
+        </ActivatorContent>
+        <ChildContent>
+            @foreach (var (label, index) in Buckets)
+            {
+                <MudMenuItem Icon="@(Chosen(Current.Bucket, index) ? Icons.Material.Filled.Check : null)" OnClick="() => ChooseAsync(Current with { Bucket = Index(index) })" data-bucket="@index">@label</MudMenuItem>
+            }
+        </ChildContent>
+    </MudMenu>
+}

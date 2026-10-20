@@ -1716,5 +1716,12 @@
   "The name your people will see.": "ឈ្មោះដែលមនុស្សរបស់អ្នកនឹងឃើញ។",
   "Pick a theme; it applies right away. You can change it any time.": "ជ្រើសធីម; វាអនុវត្តភ្លាមៗ។ អ្នកអាចប្ដូរវាបានគ្រប់ពេល។",
   "The first account, with full access.": "គណនីដំបូង ដែលមានសិទ្ធិចូលប្រើពេញលេញ។",
-  "Optional: the server for invitations and password mails. You can set it later under Settings.": "ស្រេចចិត្ត៖ ម៉ាស៊ីនមេសម្រាប់ការអញ្ជើញ និងអ៊ីមែលពាក្យសម្ងាត់។ អ្នកអាចកំណត់វានៅពេលក្រោយនៅក្រោម ការកំណត់។"
+  "Optional: the server for invitations and password mails. You can set it later under Settings.": "ស្រេចចិត្ត៖ ម៉ាស៊ីនមេសម្រាប់ការអញ្ជើញ និងអ៊ីមែលពាក្យសម្ងាត់។ អ្នកអាចកំណត់វានៅពេលក្រោយនៅក្រោម ការកំណត់។",
+  "Values the viewer can switch to": "តម្លៃដែលអ្នកមើលអាចប្តូរទៅ",
+  "Groupings the viewer can switch to": "ការដាក់ជាក្រុមដែលអ្នកមើលអាចប្តូរទៅ",
+  "Label": "ស្លាក",
+  "Extra filter (OData)": "តម្រងបន្ថែម (OData)",
+  "Add grouping": "បន្ថែមការដាក់ជាក្រុម",
+  "Filtered": "បានត្រង",
+  "Switches for viewers": "កុងតាក់សម្រាប់អ្នកមើល"
 }

@@ -1716,5 +1716,12 @@
   "The name your people will see.": "De naam die je mensen zien.",
   "Pick a theme; it applies right away. You can change it any time.": "Kies een thema; het geldt meteen. Je kunt het altijd wijzigen.",
   "The first account, with full access.": "Het eerste account, met volledige toegang.",
-  "Optional: the server for invitations and password mails. You can set it later under Settings.": "Optioneel: de server voor uitnodigingen en wachtwoordmails. Je kunt hem later instellen onder Instellingen."
+  "Optional: the server for invitations and password mails. You can set it later under Settings.": "Optioneel: de server voor uitnodigingen en wachtwoordmails. Je kunt hem later instellen onder Instellingen.",
+  "Values the viewer can switch to": "Waarden waarnaar de kijker kan wisselen",
+  "Groupings the viewer can switch to": "Groeperingen waarnaar de kijker kan wisselen",
+  "Label": "Label",
+  "Extra filter (OData)": "Extra filter (OData)",
+  "Add grouping": "Groepering toevoegen",
+  "Filtered": "Gefilterd",
+  "Switches for viewers": "Schakelaars voor kijkers"
 }

@@ -1716,5 +1716,12 @@
   "The name your people will see.": "Nama yang akan dilihat orang-orang Anda.",
   "Pick a theme; it applies right away. You can change it any time.": "Pilih tema; langsung berlaku. Anda dapat mengubahnya kapan saja.",
   "The first account, with full access.": "Akun pertama, dengan akses penuh.",
-  "Optional: the server for invitations and password mails. You can set it later under Settings.": "Opsional: server untuk undangan dan email kata sandi. Anda dapat mengaturnya nanti di Pengaturan."
+  "Optional: the server for invitations and password mails. You can set it later under Settings.": "Opsional: server untuk undangan dan email kata sandi. Anda dapat mengaturnya nanti di Pengaturan.",
+  "Values the viewer can switch to": "Nilai yang dapat dipilih oleh pembaca",
+  "Groupings the viewer can switch to": "Pengelompokan yang dapat dipilih oleh pembaca",
+  "Label": "Label",
+  "Extra filter (OData)": "Filter tambahan (OData)",
+  "Add grouping": "Tambah pengelompokan",
+  "Filtered": "Terfilter",
+  "Switches for viewers": "Pengalih untuk pembaca"
 }

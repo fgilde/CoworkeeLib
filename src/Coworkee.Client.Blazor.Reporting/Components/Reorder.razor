@@ -1,0 +1,5 @@
+<div class="cw-reorder">
+    <MudIconButton Icon="@Icons.Material.Outlined.ArrowUpward" Size="Size.Small" Disabled="Index == 0" aria-label="@L["Move up"]" OnClick="() => Move.InvokeAsync(Index - 1)" />
+    <MudIconButton Icon="@Icons.Material.Outlined.ArrowDownward" Size="Size.Small" Disabled="Index >= Count - 1" aria-label="@L["Move down"]" OnClick="() => Move.InvokeAsync(Index + 1)" />
+    <MudIconButton Icon="@Icons.Material.Outlined.RemoveCircleOutline" Size="Size.Small" aria-label="@L["Remove"]" OnClick="Remove" />
+</div>

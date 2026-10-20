@@ -1716,5 +1716,12 @@
   "The name your people will see.": "Det navn, dine folk vil se.",
   "Pick a theme; it applies right away. You can change it any time.": "Vælg et tema; det gælder med det samme. Du kan altid ændre det.",
   "The first account, with full access.": "Den første konto, med fuld adgang.",
-  "Optional: the server for invitations and password mails. You can set it later under Settings.": "Valgfrit: serveren til invitationer og adgangskodemails. Du kan angive den senere under Indstillinger."
+  "Optional: the server for invitations and password mails. You can set it later under Settings.": "Valgfrit: serveren til invitationer og adgangskodemails. Du kan angive den senere under Indstillinger.",
+  "Values the viewer can switch to": "Værdier, som seeren kan skifte til",
+  "Groupings the viewer can switch to": "Grupperinger, som seeren kan skifte til",
+  "Label": "Etiket",
+  "Extra filter (OData)": "Ekstra filter (OData)",
+  "Add grouping": "Tilføj gruppering",
+  "Filtered": "Filtreret",
+  "Switches for viewers": "Skift for seere"
 }

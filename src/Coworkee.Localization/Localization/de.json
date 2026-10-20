@@ -1716,5 +1716,12 @@
   "The name your people will see.": "Der Name, den Ihre Leute sehen.",
   "Pick a theme; it applies right away. You can change it any time.": "Wählen Sie ein Theme; es gilt sofort. Sie können es jederzeit ändern.",
   "The first account, with full access.": "Das erste Konto, mit vollem Zugriff.",
-  "Optional: the server for invitations and password mails. You can set it later under Settings.": "Optional: der Server für Einladungen und Passwort-Mails. Sie können ihn später unter Einstellungen festlegen."
+  "Optional: the server for invitations and password mails. You can set it later under Settings.": "Optional: der Server für Einladungen und Passwort-Mails. Sie können ihn später unter Einstellungen festlegen.",
+  "Values the viewer can switch to": "Werte, zu denen Betrachter wechseln können",
+  "Groupings the viewer can switch to": "Gruppierungen, zu denen Betrachter wechseln können",
+  "Label": "Bezeichnung",
+  "Extra filter (OData)": "Zusätzlicher Filter (OData)",
+  "Add grouping": "Gruppierung hinzufügen",
+  "Filtered": "Gefiltert",
+  "Switches for viewers": "Umschalter für Betrachter"
 }

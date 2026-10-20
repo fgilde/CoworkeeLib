@@ -169,6 +169,29 @@ Charts use [Blazor-ApexCharts](https://github.com/apexcharts/Blazor-ApexCharts):
 - **Undo** and **redo** cover every change until you save. *Report settings* hold name, description, icon, sharing and the refresh interval.
 - **View mode**: date range for all widgets, facets per entity set, cross filters by clicking a bar, slice or pivot cell, *Open the data* on every widget, full screen per widget, presentation mode, refresh, export.
 
+## Switches for viewers
+
+A widget can offer viewers other values and groupings without a second widget: *Switches for viewers* in the widget panel adds alternatives, each starting as a copy of the widget's own value or grouping.
+
+- **Values** (`WidgetOptions.Metrics`, a list of `MetricView`): label, aggregates, number format and an extra OData filter that is and-ed to the widget's own. KPIs, charts and pivots switch their values; tables only take the filter (e.g. *Open orders* next to *All*).
+- **Groupings** (`WidgetOptions.Buckets`, a list of `BucketView`): label, group-by field and date bucket, and optionally another date field for the report's date range. Charts and pivots regroup; KPIs change the bucket of their curve.
+
+Viewers pick them from dropdowns in the widget's header; the widget's own entry comes first. The choice runs the widget again with the alternative (the report is not changed), works with facets, the date range and cross filters, and is what *Export CSV/Excel* writes. It is remembered per user, report and widget in the user setting `Reports.Views`. Saving a report checks every alternative like the widget itself, so one with an unknown field or a broken filter is refused (`400`, key `Widgets[{id}].Metrics[{i}]...`).
+
+```csharp
+new ReportWidget
+{
+    Type = WidgetType.Chart,
+    Title = "Orders",
+    Query = new WidgetQuery { EntitySet = "SalesOrders", GroupBy = new ReportGroupBy("Region"), DateField = "OrderDate" },
+    Options = new WidgetOptions
+    {
+        Metrics = [new MetricView("Revenue", [new(AggregateFunction.Sum, "Total")], NumberFormat.Currency)],
+        Buckets = [new BucketView("By month", "OrderDate", DateBucket.Month)],
+    },
+};
+```
+
 ## Filters
 
 ![A click on a slice filters the other widgets](../assets/screenshots/reporting-cross-filter.png){ .shot }

@@ -95,6 +95,14 @@ internal sealed class SaveReportValidator : AbstractValidator<SaveReportRequest>
             widget.RuleFor(w => w.H).InclusiveBetween(1, 40);
             widget.RuleFor(w => w.Options.Text).MaximumLength(ReportLimits.TextLength);
             widget.RuleFor(w => w.Options.Url).Must(SafeUrl).WithMessage("Use an http or https address.");
+            widget.RuleFor(w => w.Options.Metrics).Must(m => m.Count <= ReportViews.Max).WithMessage($"At most {ReportViews.Max} values to switch to.");
+            widget.RuleFor(w => w.Options.Buckets).Must(b => b.Count <= ReportViews.Max).WithMessage($"At most {ReportViews.Max} groupings to switch to.");
+            widget.RuleForEach(w => w.Options.Metrics).ChildRules(metric =>
+            {
+                metric.RuleFor(m => m.Label).NotEmpty().MaximumLength(ReportViews.LabelLength);
+                metric.RuleFor(m => m.Aggregates).Must(a => a.Count <= ReportLimits.Aggregates).WithMessage($"At most {ReportLimits.Aggregates} values.");
+            });
+            widget.RuleForEach(w => w.Options.Buckets).ChildRules(bucket => bucket.RuleFor(b => b.Label).NotEmpty().MaximumLength(ReportViews.LabelLength));
             widget.RuleFor(w => w.Query).NotNull().When(w => w.Type is WidgetType.Kpi or WidgetType.Chart or WidgetType.Table or WidgetType.DataTable or WidgetType.Pivot)
                 .WithMessage("Choose a data source.");
         });

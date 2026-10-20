@@ -1,0 +1,87 @@
+@if (ReportViews.HasMetrics(Widget.Type))
+{
+    <div class="cw-settings-label">@L["Values the viewer can switch to"]</div>
+    @foreach (var (metric, index) in Options.Metrics.Select((m, i) => (m, i)).ToList())
+    {
+        var aggregate = metric.Aggregates.FirstOrDefault() ?? new ReportAggregate();
+        <div class="cw-alternative" data-testid="metric-alternative">
+            <div class="cw-settings-row">
+                <MudTextField T="string" Value="metric.Label" ValueChanged="v => SetMetric(index, metric with { Label = v ?? string.Empty })" Label="@L["Label"]" Variant="Variant.Outlined" Margin="Margin.Dense"
+                              MaxLength="ReportViews.LabelLength" Immediate="true" DebounceInterval="300" />
+                <Reorder Index="index" Count="Options.Metrics.Count" Move="i => Move(Options.Metrics, index, i)" Remove="() => Change(() => Options.Metrics.RemoveAt(index))" />
+            </div>
+            @if (Widget.Type != WidgetType.Table)
+            {
+                <div class="cw-aggregate">
+                    <MudSelect T="AggregateFunction" Value="aggregate.Function" ValueChanged="f => SetAggregate(index, metric, aggregate with { Function = f, Field = f == AggregateFunction.Count ? null : aggregate.Field ?? NumberFields.FirstOrDefault()?.Path })"
+                               Variant="Variant.Outlined" Margin="Margin.Dense" Class="cw-aggregate-function">
+                        @foreach (var function in Enum.GetValues<AggregateFunction>())
+                        {
+                            <MudSelectItem Value="function">@L[ReportFormat.Humanize(function.ToString())]</MudSelectItem>
+                        }
+                    </MudSelect>
+                    @if (aggregate.Function != AggregateFunction.Count)
+                    {
+                        <MudSelect T="string" Value="aggregate.Field" ValueChanged="f => SetAggregate(index, metric, aggregate with { Field = f })" Variant="Variant.Outlined" Margin="Margin.Dense" Class="cw-aggregate-field">
+                            @foreach (var field in aggregate.Function == AggregateFunction.DistinctCount ? Fields : NumberFields)
+                            {
+                                <MudSelectItem Value="field.Path">@field.Label</MudSelectItem>
+                            }
+                        </MudSelect>
+                    }
+                </div>
+                <MudSelect T="NumberFormat?" Value="metric.Format" ValueChanged="f => SetMetric(index, metric with { Format = f })" Label="@L["Number format"]" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true">
+                    @foreach (var format in Enum.GetValues<NumberFormat>())
+                    {
+                        <MudSelectItem T="NumberFormat?" Value="format">@L[format.ToString()]</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+            <MudTextField T="string" Value="metric.Filter" ValueChanged="v => SetMetric(index, metric with { Filter = string.IsNullOrWhiteSpace(v) ? null : v })" Label="@L["Extra filter (OData)"]"
+                          Placeholder="Status eq 'Open'" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true" DebounceInterval="500" />
+        </div>
+    }
+    @if (Options.Metrics.Count < ReportViews.Max)
+    {
+        <MudButton StartIcon="@Icons.Material.Filled.Add" Size="Size.Small" Variant="Variant.Text" OnClick="AddMetric" data-testid="add-metric">@L["Add value"]</MudButton>
+    }
+}
+
+@if (ReportViews.HasBuckets(Widget.Type))
+{
+    <div class="cw-settings-label">@L["Groupings the viewer can switch to"]</div>
+    @foreach (var (bucket, index) in Options.Buckets.Select((b, i) => (b, i)).ToList())
+    {
+        <div class="cw-alternative" data-testid="bucket-alternative">
+            <div class="cw-settings-row">
+                <MudTextField T="string" Value="bucket.Label" ValueChanged="v => SetBucket(index, bucket with { Label = v ?? string.Empty })" Label="@L["Label"]" Variant="Variant.Outlined" Margin="Margin.Dense"
+                              MaxLength="ReportViews.LabelLength" Immediate="true" DebounceInterval="300" />
+                <Reorder Index="index" Count="Options.Buckets.Count" Move="i => Move(Options.Buckets, index, i)" Remove="() => Change(() => Options.Buckets.RemoveAt(index))" />
+            </div>
+            @if (Widget.Type == WidgetType.Kpi)
+            {
+                <MudSelect T="DateBucket" Value="bucket.Bucket" ValueChanged="b => SetBucket(index, bucket with { Bucket = b })" Label="@L["Curve over time"]" Variant="Variant.Outlined" Margin="Margin.Dense">
+                    @foreach (var value in Enum.GetValues<DateBucket>())
+                    {
+                        <MudSelectItem Value="value">@L[value == DateBucket.None ? "None" : "By " + value.ToString().ToLowerInvariant()]</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+            else
+            {
+                <GroupByEditor Label="@L["Group by"]" Fields="Fields" Value="@(bucket.Field is { } path ? new ReportGroupBy(path, bucket.Bucket) : null)"
+                               ValueChanged="g => SetBucket(index, bucket with { Field = g?.Field, Bucket = g?.Bucket ?? DateBucket.None })" />
+            }
+            <MudSelect T="string" Value="bucket.DateField" ValueChanged="v => SetBucket(index, bucket with { DateField = v })" Label="@L["Date for the report's date range"]" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true">
+                @foreach (var field in Fields.Where(f => f.Kind == ReportFieldKind.Date))
+                {
+                    <MudSelectItem Value="field.Path">@field.Label</MudSelectItem>
+                }
+            </MudSelect>
+        </div>
+    }
+    @if (Options.Buckets.Count < ReportViews.Max)
+    {
+        <MudButton StartIcon="@Icons.Material.Filled.Add" Size="Size.Small" Variant="Variant.Text" OnClick="AddBucket" data-testid="add-bucket">@L["Add grouping"]</MudButton>
+    }
+}

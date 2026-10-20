@@ -15,6 +15,7 @@ public static class ReportingClientExtensions
         services.AddSingleton(options);
         services.AddHttpClient<IReportsApi, ReportsApi>(client => client.BaseAddress = baseAddress);
         services.AddScoped<ReportTheme>();
+        services.AddScoped<ReportViewChoices>();
         services.AddSingleton<INavigationContributor, ReportingNavigation>();
         services.AddSingleton(new Navigation.CoworkeePage("reports", typeof(Pages.Reports), "reports"));
         services.AddSingleton(new Navigation.CoworkeePage("report", typeof(Pages.ReportPage), "reports/{Id:guid}"));

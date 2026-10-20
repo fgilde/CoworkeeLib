@@ -1716,5 +1716,12 @@
   "The name your people will see.": "メンバーに表示される名前です。",
   "Pick a theme; it applies right away. You can change it any time.": "テーマを選んでください。すぐに適用され、いつでも変更できます。",
   "The first account, with full access.": "フルアクセス権を持つ最初のアカウントです。",
-  "Optional: the server for invitations and password mails. You can set it later under Settings.": "任意: 招待メールとパスワードメールの送信サーバー。後で「設定」で指定することもできます。"
+  "Optional: the server for invitations and password mails. You can set it later under Settings.": "任意: 招待メールとパスワードメールの送信サーバー。後で「設定」で指定することもできます。",
+  "Values the viewer can switch to": "閲覧者が切り替えられる値",
+  "Groupings the viewer can switch to": "閲覧者が切り替えられるグループ化",
+  "Label": "ラベル",
+  "Extra filter (OData)": "追加フィルター (OData)",
+  "Add grouping": "グループ化を追加",
+  "Filtered": "フィルター済み",
+  "Switches for viewers": "閲覧者向けの切り替え"
 }

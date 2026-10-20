@@ -114,7 +114,7 @@ else
                 }
                 <ReportGrid @ref="_grid" Widgets="_definition.Widgets" Editable="_editing" LayoutChanged="LayoutChanged">
                     <ItemTemplate Context="widget">
-                        <WidgetFrame Widget="widget" State="_state" Editing="_editing" Selected="@(_selected == widget)" OnSettings="() => Select(widget)"
+                        <WidgetFrame Widget="widget" State="_state" ReportId="_report.Id" Editing="_editing" Selected="@(_selected == widget)" OnSettings="() => Select(widget)"
                                      OnRemove="() => Remove(widget)" OnDuplicate="() => Duplicate(widget)" OnChanged="StateHasChanged" />
                     </ItemTemplate>
                 </ReportGrid>

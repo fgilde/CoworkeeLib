@@ -122,6 +122,11 @@
 
             <MudText Typo="Typo.overline" Class="cw-settings-section">@L["Filter"]</MudText>
             <WidgetFilterEditor Query="query" State="State" Changed="() => Change(() => { })" />
+            @if (ReportViews.HasMetrics(Widget.Type) || ReportViews.HasBuckets(Widget.Type))
+            {
+                <MudText Typo="Typo.overline" Class="cw-settings-section">@L["Switches for viewers"]</MudText>
+                <ViewSwitchEditor Widget="Widget" State="State" OnChanged="() => Change(() => { })" />
+            }
         }
 
         @if (Widget.Type is WidgetType.Kpi or WidgetType.Chart or WidgetType.Pivot)

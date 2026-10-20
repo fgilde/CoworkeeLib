@@ -81,6 +81,11 @@ public static partial class ReportFormat
         return field?.Kind == ReportFieldKind.Enum ? localize(key.Label) : key.Label;
     }
 
+    public static string AggregateLabel(ReportAggregate aggregate, ReportFieldDto? field, Localization.CoworkeeLocalizer l) =>
+        aggregate.Label is { Length: > 0 } label ? l.Stored(label)!
+        : aggregate.Function == AggregateFunction.Count ? l["Count"]
+        : $"{l[Humanize(aggregate.Function.ToString())]} {field?.Label ?? aggregate.Field}";
+
     /// <summary>"Last12Months" becomes "Last 12 months", "InProgress" "In progress".</summary>
     public static string Humanize(string name)
     {

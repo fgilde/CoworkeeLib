@@ -1716,5 +1716,12 @@
   "The name your people will see.": "Naziv koji će vaši ljudi vidjeti.",
   "Pick a theme; it applies right away. You can change it any time.": "Odaberite temu; primjenjuje se odmah. Možete je promijeniti u bilo kojem trenutku.",
   "The first account, with full access.": "Prvi račun, s punim pristupom.",
-  "Optional: the server for invitations and password mails. You can set it later under Settings.": "Neobavezno: poslužitelj za pozivnice i poruke o lozinkama. Možete ga postaviti kasnije pod Postavke."
+  "Optional: the server for invitations and password mails. You can set it later under Settings.": "Neobavezno: poslužitelj za pozivnice i poruke o lozinkama. Možete ga postaviti kasnije pod Postavke.",
+  "Values the viewer can switch to": "Vrijednosti na koje gledatelj može prebaciti",
+  "Groupings the viewer can switch to": "Grupiranja na koja gledatelj može prebaciti",
+  "Label": "Oznaka",
+  "Extra filter (OData)": "Dodatni filtar (OData)",
+  "Add grouping": "Dodaj grupiranje",
+  "Filtered": "Filtrirano",
+  "Switches for viewers": "Prekidači za gledatelje"
 }

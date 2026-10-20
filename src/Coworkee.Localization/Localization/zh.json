@@ -1716,5 +1716,12 @@
   "The name your people will see.": "你的成员将看到的名称。",
   "Pick a theme; it applies right away. You can change it any time.": "选择一个主题；立即生效，随时可以更改。",
   "The first account, with full access.": "第一个帐户，拥有完全访问权限。",
-  "Optional: the server for invitations and password mails. You can set it later under Settings.": "可选：用于邀请和密码邮件的服务器。你也可以稍后在“设置”中指定。"
+  "Optional: the server for invitations and password mails. You can set it later under Settings.": "可选：用于邀请和密码邮件的服务器。你也可以稍后在“设置”中指定。",
+  "Values the viewer can switch to": "查看者可切换的值",
+  "Groupings the viewer can switch to": "查看者可切换的分组",
+  "Label": "标签",
+  "Extra filter (OData)": "附加筛选 (OData)",
+  "Add grouping": "添加分组",
+  "Filtered": "已筛选",
+  "Switches for viewers": "查看者切换项"
 }

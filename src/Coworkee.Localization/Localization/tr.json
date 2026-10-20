@@ -1716,5 +1716,12 @@
   "The name your people will see.": "Çalışanlarınızın göreceği ad.",
   "Pick a theme; it applies right away. You can change it any time.": "Bir tema seçin; hemen uygulanır. İstediğiniz zaman değiştirebilirsiniz.",
   "The first account, with full access.": "Tam erişimli ilk hesap.",
-  "Optional: the server for invitations and password mails. You can set it later under Settings.": "İsteğe bağlı: davetler ve parola e-postaları için sunucu. Bunu daha sonra Ayarlar altında belirleyebilirsiniz."
+  "Optional: the server for invitations and password mails. You can set it later under Settings.": "İsteğe bağlı: davetler ve parola e-postaları için sunucu. Bunu daha sonra Ayarlar altında belirleyebilirsiniz.",
+  "Values the viewer can switch to": "İzleyicinin geçiş yapabileceği değerler",
+  "Groupings the viewer can switch to": "İzleyicinin geçiş yapabileceği gruplamalar",
+  "Label": "Etiket",
+  "Extra filter (OData)": "Ek filtre (OData)",
+  "Add grouping": "Gruplama ekle",
+  "Filtered": "Filtrelenmiş",
+  "Switches for viewers": "İzleyiciler için geçişler"
 }
