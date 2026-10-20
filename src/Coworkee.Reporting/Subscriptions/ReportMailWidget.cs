@@ -80,8 +80,11 @@ internal sealed class ReportMailWidget(
         var split = query.SplitBy is not null;
         var values = split ? [query.Aggregates.FirstOrDefault() ?? new ReportAggregate()] : query.Aggregates;
         List<string> headers = [FieldLabel(source, query.GroupBy.Field), .. split ? [FieldLabel(source, query.SplitBy!.Field)] : Array.Empty<string>(), .. values.Select(a => Label(a, source))];
-        var rows = result.Value.Rows.Select(r => (IReadOnlyList<object?>)[Key(r.Key), .. split ? [Key(r.Series)] : Array.Empty<object?>(), .. r.Values.Take(values.Count).Cast<object?>()]).ToList();
-        return (Table(headers, rows, cell => cell is double number ? ReportNumbers.Format(number, widget.Options, culture) : cell?.ToString() ?? string.Empty), Sheet(headers, rows));
+        // a time series shows its latest buckets, oldest first (keys are ISO dates)
+        var series = query.GroupBy.Bucket != DateBucket.None;
+        var ordered = series ? result.Value.Rows.OrderBy(r => r.Key?.Value, StringComparer.Ordinal) : result.Value.Rows.AsEnumerable();
+        var rows = ordered.Select(r => (IReadOnlyList<object?>)[Key(r.Key), .. split ? [Key(r.Series)] : Array.Empty<object?>(), .. r.Values.Take(values.Count).Cast<object?>()]).ToList();
+        return (Table(headers, rows, cell => cell is double number ? ReportNumbers.Format(number, widget.Options, culture) : cell?.ToString() ?? string.Empty, latest: series), Sheet(headers, rows));
     }
 
     private async Task<(object, ReportSheetRequest?)> TableAsync(WidgetQuery query, string? filter, ReportSource source, CancellationToken cancellationToken)
@@ -95,7 +98,7 @@ internal sealed class ReportMailWidget(
         return (Table(headers, cells, Format), Sheet(headers, cells));
     }
 
-    private object Table(IReadOnlyList<string> headers, IReadOnlyList<IReadOnlyList<object?>> rows, Func<object?, string> format) => new
+    private object Table(IReadOnlyList<string> headers, IReadOnlyList<IReadOnlyList<object?>> rows, Func<object?, string> format, bool latest = false) => new
     {
         title = Title,
         kpi = false,
@@ -104,8 +107,9 @@ internal sealed class ReportMailWidget(
         symbol = string.Empty,
         band = string.Empty,
         headers,
-        rows = rows.Take(ReportSubscriptionMail.MailRows).Select(r => r.Select(format).ToArray()).ToArray(),
+        rows = (latest ? rows.TakeLast(ReportSubscriptionMail.MailRows) : rows.Take(ReportSubscriptionMail.MailRows)).Select(r => r.Select(format).ToArray()).ToArray(),
         more = rows.Count > ReportSubscriptionMail.MailRows,
+        latest,
         error = string.Empty,
     };
 

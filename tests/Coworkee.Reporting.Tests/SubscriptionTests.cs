@@ -166,6 +166,54 @@ public sealed partial class SubscriptionTests(ReportingApp app) : ReportingTestB
         (await reader.GetFromJsonAsync<List<ReportSubscriptionDto>>("/api/v1/reports/subscriptions", Ct))!.ShouldBeEmpty();
     }
 
+    [Fact]
+    public async Task Without_an_own_language_the_mail_and_the_unsubscribe_page_take_the_default_language()
+    {
+        var language = App.App.Services.GetRequiredService<TestDefaultLanguage>();
+        language.Culture = "de";
+        try
+        {
+            var report = await CreateReportAsync();
+            var subscription = await SubscribeAsync(Admin, report.Id);
+
+            await RunDueAsync(subscription.Id);
+
+            var body = (await MailsAsync()).Single().Mail.HtmlBody;
+            body.ShouldContain("hier ist der Bericht");
+            var link = UnsubscribeLink().Match(body).Groups[1].Value.Replace("&amp;", "&", StringComparison.Ordinal);
+            (await (await App.App.GetTestClient().GetAsync(new Uri(link).PathAndQuery, Ct)).Content.ReadAsStringAsync(Ct)).ShouldContain("lang=\"de\"");
+        }
+        finally
+        {
+            language.Culture = null;
+        }
+    }
+
+    [Fact]
+    public async Task A_time_series_shows_its_latest_buckets_in_chronological_order()
+    {
+        var report = await CreateReportAsync(new SaveReportRequest("Shipped by month", null, null, ReportVisibility.Organisation, [], new ReportDefinition
+        {
+            Widgets =
+            [
+                new ReportWidget { Id = "months", Type = WidgetType.Chart, Title = "Months",
+                    Query = new WidgetQuery { EntitySet = "Sales", GroupBy = new ReportGroupBy("ShippedOn", DateBucket.Month), Descending = true } },
+            ],
+        }));
+        var subscription = await SubscribeAsync(Admin, report.Id);
+        var months = Visible.Where(s => s.ShippedOn is not null).Select(s => $"{s.ShippedOn!.Value.Year}-{s.ShippedOn.Value.Month:00}").Distinct().Order(StringComparer.Ordinal).ToList();
+
+        await RunDueAsync(subscription.Id);
+
+        var body = (await MailsAsync()).Single().Mail.HtmlBody;
+        months.Count.ShouldBeGreaterThan(ReportSubscriptionMail.MailRows);
+        body.ShouldNotContain($">{months[^(ReportSubscriptionMail.MailRows + 1)]}<");
+        var shown = months.TakeLast(ReportSubscriptionMail.MailRows).Select(m => body.IndexOf($">{m}<", StringComparison.Ordinal)).ToList();
+        shown.ShouldAllBe(i => i >= 0);
+        shown.ShouldBe(shown.Order());
+        body.ShouldContain("Only the latest rows are shown");
+    }
+
     [Theory]
     [InlineData("Mars/Olympus", "Weekly", "TimeZone")]
     [InlineData("UTC", "WeeklyWithoutDay", "Weekday")]

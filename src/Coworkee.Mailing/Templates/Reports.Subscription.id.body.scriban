@@ -6,7 +6,7 @@
 {{ else }}<table role="presentation" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:14px;">
 <tr>{{ for h in w.headers }}<th align="left" style="border-bottom:1px solid #16140f;">{{ h }}</th>{{ end }}</tr>
 {{ for r in w.rows }}<tr>{{ for c in r }}<td style="border-bottom:1px solid #d6cfbf;">{{ c }}</td>{{ end }}</tr>
-{{ end }}</table>{{ if w.more }}<p style="font-size:13px;color:#4a463d;">Hanya baris pertama yang ditampilkan; buka laporan untuk melihat semuanya.</p>{{ end }}
+{{ end }}</table>{{ if w.more }}<p style="font-size:13px;color:#4a463d;">{{ if w.latest }}Hanya baris terbaru yang ditampilkan; buka laporan untuk melihat semuanya.{{ else }}Hanya baris pertama yang ditampilkan; buka laporan untuk melihat semuanya.{{ end }}</p>{{ end }}
 {{ end }}{{ end }}
 {{ if attachment }}<p>File Excel terlampir berisi data setiap widget.</p>{{ end }}
 <p style="font-size:12px;color:#4a463d;">Anda menerima email ini karena berlangganan laporan tersebut. <a href="{{ unsubscribe_link }}" style="color:#4a463d;">Akhiri langganan</a></p>

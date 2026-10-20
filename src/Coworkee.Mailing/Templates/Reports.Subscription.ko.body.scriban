@@ -6,7 +6,7 @@
 {{ else }}<table role="presentation" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:14px;">
 <tr>{{ for h in w.headers }}<th align="left" style="border-bottom:1px solid #16140f;">{{ h }}</th>{{ end }}</tr>
 {{ for r in w.rows }}<tr>{{ for c in r }}<td style="border-bottom:1px solid #d6cfbf;">{{ c }}</td>{{ end }}</tr>
-{{ end }}</table>{{ if w.more }}<p style="font-size:13px;color:#4a463d;">처음 몇 행만 표시됩니다. 전체는 보고서에서 확인하세요.</p>{{ end }}
+{{ end }}</table>{{ if w.more }}<p style="font-size:13px;color:#4a463d;">{{ if w.latest }}최근 몇 행만 표시됩니다. 전체는 보고서에서 확인하세요.{{ else }}처음 몇 행만 표시됩니다. 전체는 보고서에서 확인하세요.{{ end }}</p>{{ end }}
 {{ end }}{{ end }}
 {{ if attachment }}<p>첨부된 Excel 파일에 모든 위젯의 데이터가 들어 있습니다.</p>{{ end }}
 <p style="font-size:12px;color:#4a463d;">이 보고서를 구독하셨기 때문에 이 메일을 받으셨습니다. <a href="{{ unsubscribe_link }}" style="color:#4a463d;">구독 종료</a></p>

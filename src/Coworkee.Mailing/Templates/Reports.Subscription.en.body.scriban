@@ -6,7 +6,7 @@
 {{ else }}<table role="presentation" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:14px;">
 <tr>{{ for h in w.headers }}<th align="left" style="border-bottom:1px solid #16140f;">{{ h }}</th>{{ end }}</tr>
 {{ for r in w.rows }}<tr>{{ for c in r }}<td style="border-bottom:1px solid #d6cfbf;">{{ c }}</td>{{ end }}</tr>
-{{ end }}</table>{{ if w.more }}<p style="font-size:13px;color:#4a463d;">Only the first rows are shown; open the report for all of them.</p>{{ end }}
+{{ end }}</table>{{ if w.more }}<p style="font-size:13px;color:#4a463d;">{{ if w.latest }}Only the latest rows are shown; open the report for all of them.{{ else }}Only the first rows are shown; open the report for all of them.{{ end }}</p>{{ end }}
 {{ end }}{{ end }}
 {{ if attachment }}<p>The attached Excel file holds the data of every widget.</p>{{ end }}
 <p style="font-size:12px;color:#4a463d;">You get this mail because you subscribed to the report. <a href="{{ unsubscribe_link }}" style="color:#4a463d;">End the subscription</a></p>

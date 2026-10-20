@@ -6,7 +6,7 @@
 {{ else }}<table role="presentation" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:14px;">
 <tr>{{ for h in w.headers }}<th align="left" style="border-bottom:1px solid #16140f;">{{ h }}</th>{{ end }}</tr>
 {{ for r in w.rows }}<tr>{{ for c in r }}<td style="border-bottom:1px solid #d6cfbf;">{{ c }}</td>{{ end }}</tr>
-{{ end }}</table>{{ if w.more }}<p style="font-size:13px;color:#4a463d;">Εμφανίζονται μόνο οι πρώτες γραμμές· ανοίξτε την αναφορά για όλες.</p>{{ end }}
+{{ end }}</table>{{ if w.more }}<p style="font-size:13px;color:#4a463d;">{{ if w.latest }}Εμφανίζονται μόνο οι πιο πρόσφατες γραμμές· ανοίξτε την αναφορά για όλες.{{ else }}Εμφανίζονται μόνο οι πρώτες γραμμές· ανοίξτε την αναφορά για όλες.{{ end }}</p>{{ end }}
 {{ end }}{{ end }}
 {{ if attachment }}<p>Το συνημμένο αρχείο Excel περιέχει τα δεδομένα κάθε στοιχείου.</p>{{ end }}
 <p style="font-size:12px;color:#4a463d;">Λαμβάνετε αυτό το μήνυμα επειδή έχετε εγγραφεί στην αναφορά. <a href="{{ unsubscribe_link }}" style="color:#4a463d;">Τερματισμός συνδρομής</a></p>

@@ -6,7 +6,7 @@
 {{ else }}<table role="presentation" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:14px;">
 <tr>{{ for h in w.headers }}<th align="left" style="border-bottom:1px solid #16140f;">{{ h }}</th>{{ end }}</tr>
 {{ for r in w.rows }}<tr>{{ for c in r }}<td style="border-bottom:1px solid #d6cfbf;">{{ c }}</td>{{ end }}</tr>
-{{ end }}</table>{{ if w.more }}<p style="font-size:13px;color:#4a463d;">Endast de första raderna visas; öppna rapporten för att se alla.</p>{{ end }}
+{{ end }}</table>{{ if w.more }}<p style="font-size:13px;color:#4a463d;">{{ if w.latest }}Endast de senaste raderna visas; öppna rapporten för att se alla.{{ else }}Endast de första raderna visas; öppna rapporten för att se alla.{{ end }}</p>{{ end }}
 {{ end }}{{ end }}
 {{ if attachment }}<p>Den bifogade Excel-filen innehåller data från varje widget.</p>{{ end }}
 <p style="font-size:12px;color:#4a463d;">Du får det här mejlet eftersom du prenumererar på rapporten. <a href="{{ unsubscribe_link }}" style="color:#4a463d;">Avsluta prenumerationen</a></p>
