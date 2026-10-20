@@ -50,6 +50,16 @@ Ein Zustand mit `Approval(approved, rejected, ...)` fordert beim Betreten eine G
 - **Genehmigende**: `Role(...)` (die Mitglieder zum Zeitpunkt des Starts) `User(...)` und `UsersFrom(context => ...)`, das die Genehmigenden beim Start aus der Entität ermittelt (etwa die Führungskraft der antragstellenden Person oder ersatzweise eine Rolle über `context.UsersInRoleAsync`). Standardmäßig reicht eine Entscheidung; `All()` wartet auf alle. Eine Ablehnung entscheidet immer. `NotByRequester()` hält die Person, die den Übergang ausgelöst hat, aus dem Kreis heraus (Vier-Augen-Prinzip), auch wenn bei der Eskalation die Eskalationsrolle hinzukommt.
 - **Frist**: `DueIn(...)` mit `RemindAfter(...)` (eine Erinnerung an alle, die noch nicht entschieden haben) und `EscalateTo(role)`: Bei Fristablauf kommen die Mitglieder dieser Rolle dazu, und eine Person davon entscheidet allein. `OnTimeout(state)` lässt die Genehmigung stattdessen verfallen und schaltet den Workflow weiter.
 - Nach der Entscheidung wechselt der Workflow von selbst in den genehmigten oder abgelehnten Zustand. Wer den Zustand über einen Übergang verlässt (z. B. *Withdraw*), bricht die offene Genehmigung ab.
+- **Genehmigungsziel aus der Entität**: Der genehmigte (und optional der abgelehnte) Zustand wird bei der Entscheidung gewählt, so deckt ein einziger Einreichen-Übergang eine zweite Stufe für große Beträge ab:
+
+    ```csharp
+    e.Transition("Submit", "Draft", "Review");
+    e.State("Review").Approval(ctx => ctx.Entity.Amount > 1000 ? "Finance review" : "Approved", "Rejected",
+        a => a.Role("Manager").ApprovedTo("Finance review", "Approved"));
+    e.State("Finance review").Approval("Approved", "Rejected", a => a.Role("Finance"));
+    ```
+
+    `ApprovedTo(...)`/`RejectedTo(...)` zählen jeden Zustand auf, den die Wahl liefern darf; ohne sie startet der Workflow nicht (so kennen Filter, Facetten und der Designer jeden Zustand), und eine Entscheidung, die einen nicht aufgeführten Zustand wählt, schlägt fehl. Der Kontext enthält die Entität, den Kommentar der Entscheidung und wer entschieden hat. Historie, Posteingang, Domain-Events und Elsa-Trigger sehen den gewählten Zustand wie einen festen.
 
 Erinnerungen und Fristen erledigt der wiederkehrende Job `workflow-deadlines` (alle fünf Minuten; `Coworkee:Workflows:DeadlineCron` ändert das). Genehmigende bekommen In-App-Benachrichtigungen, wenn eine Genehmigung startet, wenn sie überfällig ist und als Erinnerung.
 

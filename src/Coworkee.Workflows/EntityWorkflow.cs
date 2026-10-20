@@ -36,7 +36,7 @@ public abstract class EntityWorkflow(string entityType)
         .. new[] { InitialState! }
             .Concat(States.Select(s => s.Name))
             .Concat(Transitions.SelectMany(t => t.From.Append(t.To)))
-            .Concat(States.Where(s => s.Step is not null).SelectMany(s => new[] { s.Step!.ApprovedState, s.Step.RejectedState, s.Step.TimeoutState }))
+            .Concat(States.Where(s => s.Step is not null).SelectMany(s => s.Step!.ApprovedTargets.Concat(s.Step.RejectedTargets).Append(s.Step.TimeoutState)))
             .OfType<string>()
             .Distinct(StringComparer.Ordinal),
     ];
@@ -73,6 +73,11 @@ public abstract class EntityWorkflow(string entityType)
         if (InitialState is null)
         {
             throw new InvalidOperationException($"The workflow of {EntityType} has no initial state; call Initial(...).");
+        }
+
+        foreach (var state in States.Where(s => s.Step is not null))
+        {
+            state.Step!.Validate(EntityType, state.Name);
         }
     }
 }

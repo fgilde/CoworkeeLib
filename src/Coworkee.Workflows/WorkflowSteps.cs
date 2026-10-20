@@ -113,9 +113,24 @@ public sealed class WorkflowState<TEntity>(string name) : WorkflowState(name)
     /// Entering the state asks for an approval; once it is decided the workflow moves on to <paramref name="approved"/> or <paramref name="rejected"/>.
     /// Leaving the state by a transition cancels an open approval.
     /// </summary>
-    public WorkflowState<TEntity> Approval(string approved, string rejected, Action<ApprovalStep> configure)
+    public WorkflowState<TEntity> Approval(string approved, string rejected, Action<ApprovalStep> configure) =>
+        Approval(new ApprovalStep(approved, rejected), configure);
+
+    /// <summary>
+    /// An approval whose approved target is chosen from the entity when it is decided, e.g. <c>ctx =&gt; ctx.Entity.Amount &gt; 1000 ? "Finance review" : "Approved"</c>;
+    /// list every possible target with <see cref="ApprovalStep.ApprovedTo"/>.
+    /// </summary>
+    public WorkflowState<TEntity> Approval(Func<WorkflowContext<TEntity>, string> approved, string rejected, Action<ApprovalStep> configure) =>
+        Approval(new ApprovalStep(Typed(approved), null, null, rejected), configure);
+
+    /// <summary>An approval whose approved and rejected targets are chosen from the entity; list them with <see cref="ApprovalStep.ApprovedTo"/> and <see cref="ApprovalStep.RejectedTo"/>.</summary>
+    public WorkflowState<TEntity> Approval(Func<WorkflowContext<TEntity>, string> approved, Func<WorkflowContext<TEntity>, string> rejected, Action<ApprovalStep> configure) =>
+        Approval(new ApprovalStep(Typed(approved), Typed(rejected), null, null), configure);
+
+    private static Func<WorkflowContext, string> Typed(Func<WorkflowContext<TEntity>, string> target) => context => target((WorkflowContext<TEntity>)context);
+
+    private WorkflowState<TEntity> Approval(ApprovalStep step, Action<ApprovalStep> configure)
     {
-        var step = new ApprovalStep(approved, rejected);
         configure(step);
         Step = step;
         return this;
@@ -123,11 +138,72 @@ public sealed class WorkflowState<TEntity>(string name) : WorkflowState(name)
 }
 
 /// <summary>Who decides and until when: one of the approvers by default, <see cref="All"/> asks every one of them; a rejection always decides.</summary>
-public sealed class ApprovalStep(string approvedState, string rejectedState)
+public sealed class ApprovalStep
 {
-    public string ApprovedState { get; } = approvedState;
+    private readonly Func<WorkflowContext, string>? _approvedOf;
 
-    public string RejectedState { get; } = rejectedState;
+    private readonly Func<WorkflowContext, string>? _rejectedOf;
+
+    private readonly List<string> _approvedTargets = [];
+
+    private readonly List<string> _rejectedTargets = [];
+
+    public ApprovalStep(string approvedState, string rejectedState)
+        : this(null, null, approvedState, rejectedState)
+    {
+    }
+
+    internal ApprovalStep(Func<WorkflowContext, string>? approvedOf, Func<WorkflowContext, string>? rejectedOf, string? approvedState, string? rejectedState)
+    {
+        _approvedOf = approvedOf;
+        _rejectedOf = rejectedOf;
+        ApprovedState = approvedState;
+        RejectedState = rejectedState;
+    }
+
+    /// <summary>The fixed target after an approval; null when it is chosen from the entity.</summary>
+    public string? ApprovedState { get; }
+
+    /// <summary>The fixed target after a rejection; null when it is chosen from the entity.</summary>
+    public string? RejectedState { get; }
+
+    /// <summary>Every state an approval may move to.</summary>
+    public IReadOnlyList<string> ApprovedTargets => ApprovedState is { } state ? [state] : _approvedTargets;
+
+    /// <summary>Every state a rejection may move to.</summary>
+    public IReadOnlyList<string> RejectedTargets => RejectedState is { } state ? [state] : _rejectedTargets;
+
+    /// <summary>The states the approved target chosen from the entity may be; checked at start-up and at every decision.</summary>
+    public ApprovalStep ApprovedTo(params string[] states)
+    {
+        _approvedTargets.AddRange(states);
+        return this;
+    }
+
+    /// <summary>The states the rejected target chosen from the entity may be.</summary>
+    public ApprovalStep RejectedTo(params string[] states)
+    {
+        _rejectedTargets.AddRange(states);
+        return this;
+    }
+
+    internal string TargetOf(bool approved, WorkflowContext context)
+    {
+        var (fixedState, choose, targets) = approved ? (ApprovedState, _approvedOf, ApprovedTargets) : (RejectedState, _rejectedOf, RejectedTargets);
+        var target = fixedState ?? choose!(context);
+        return targets.Contains(target, StringComparer.Ordinal)
+            ? target
+            : throw new InvalidOperationException($"The approval of {context.EntityType} chose \"{target}\", which is not one of {string.Join(", ", targets)}.");
+    }
+
+    internal void Validate(string entityType, string state)
+    {
+        if (ApprovedTargets.Count == 0 || RejectedTargets.Count == 0)
+        {
+            throw new InvalidOperationException(
+                $"The approval of the state \"{state}\" in the workflow of {entityType} chooses its target from the entity; list the possible states with ApprovedTo(...) or RejectedTo(...).");
+        }
+    }
 
     public string? TimeoutState { get; private set; }
 

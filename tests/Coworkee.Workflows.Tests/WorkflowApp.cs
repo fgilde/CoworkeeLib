@@ -254,6 +254,13 @@ public sealed class TestWorkflowModule : CoworkeeModule
                 e.Transition("Submit", "Draft", "Review");
                 e.State("Review").Approval("Approved", "Rejected", a => a.Role("Manager"));
             })
+            .Entity<Expense>("Invoices", e =>
+            {
+                e.Initial("Draft");
+                e.Transition("Submit", "Draft", "Review");
+                e.State("Review").Approval(c => c.Entity.Amount > 1000 ? "Finance review" : "Approved", "Rejected", a => a.Role("Manager").ApprovedTo("Finance review", "Approved"));
+                e.State("Finance review").Approval("Approved", "Rejected", a => a.Role("Finance"));
+            })
             .Entity<Expense>("Leaves", e =>
             {
                 // the title holds the approver: stands in for "the manager of the requester"

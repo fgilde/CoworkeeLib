@@ -226,6 +226,27 @@ public sealed class WorkflowTests(WorkflowApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task One_submit_takes_large_amounts_through_a_second_approval_chosen_from_the_entity()
+    {
+        var ann = await CreateUserAsync("ann@acme.test", await CreateRoleAsync("Manager", WorkflowPermissions.View));
+        var fay = await CreateUserAsync("fay@acme.test", await CreateRoleAsync("Finance", WorkflowPermissions.View));
+        var (small, large) = (await app.AddExpenseAsync(_setup.TenantId, amount: 500), await app.AddExpenseAsync(_setup.TenantId, amount: 5000));
+
+        var smallApproval = (await ReadAsync<WorkflowStatusDto>(await Admin.PostAsync($"{Url(small, "Invoices")}/Submit", null, Ct))).Approval!;
+        var largeApproval = (await ReadAsync<WorkflowStatusDto>(await Admin.PostAsync($"{Url(large, "Invoices")}/Submit", null, Ct))).Approval!;
+
+        (await Decide(ann.Id, smallApproval.Id, true, null)).State.ShouldBe("Approved");
+        var review = await Decide(ann.Id, largeApproval.Id, true, "Over budget line");
+        review.State.ShouldBe("Finance review");
+        review.Approval!.Approvers.Select(a => a.UserId).ShouldBe([fay.Id]);
+        var inbox = (await app.As(fay.Id, _setup.TenantId).GetFromJsonAsync<List<ApprovalDto>>("/api/v1/workflows/approvals", Ct))!.ShouldHaveSingleItem();
+        inbox.EntityId.ShouldBe(large);
+        var approved = await Decide(fay.Id, inbox.Id, true, null);
+        approved.State.ShouldBe("Approved");
+        approved.History.Where(s => s.Kind == WorkflowStepKind.Transition).Select(s => (s.From, s.To)).ShouldBe([("Draft", "Review"), ("Review", "Finance review"), ("Finance review", "Approved")]);
+    }
+
+    [Fact]
     public async Task Actions_set_fields_and_transitions_reach_subscribers_live()
     {
         var payer = await CreateRoleAsync("Payer", WorkflowApp.PayPermission);

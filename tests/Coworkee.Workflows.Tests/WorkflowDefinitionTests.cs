@@ -42,4 +42,21 @@ public sealed class WorkflowDefinitionTests
         workflow.Title(new Expense { Title = "Laptop" }, Guid.NewGuid()).ShouldBe("Laptop");
         options.For("Unknown").ShouldBeNull();
     }
+
+    [Fact]
+    public void Targets_chosen_from_the_entity_are_listed_checked_and_counted_as_states()
+    {
+        Should.Throw<InvalidOperationException>(() => new WorkflowOptions().Entity<Expense>("Expenses", e =>
+                e.Initial("Draft").State("Review").Approval(c => c.Entity.Amount > 1000 ? "Finance" : "Approved", "Rejected", a => a.Role("Manager"))))
+            .Message.ShouldContain("ApprovedTo");
+        var options = new WorkflowOptions().Entity<Expense>("Expenses", e => e.Initial("Draft").State("Review")
+            .Approval(c => c.Entity.Amount > 1000 ? "Finance" : c.Entity.Amount > 0 ? "Approved" : "Lost", c => "Rejected", a => a.ApprovedTo("Finance", "Approved").RejectedTo("Rejected")));
+        var workflow = options.For("Expenses")!;
+        var step = workflow.FindState("Review")!.Step!;
+        WorkflowContext Context(decimal amount) => workflow.Context(new Expense { Title = "Laptop", Amount = amount }, Guid.NewGuid(), new("Review", "Review", null, null, null), null!, default);
+
+        workflow.StateNames.ShouldBe(["Draft", "Review", "Finance", "Approved", "Rejected"], ignoreOrder: true);
+        (step.TargetOf(true, Context(5000)), step.TargetOf(true, Context(10)), step.TargetOf(false, Context(10))).ShouldBe(("Finance", "Approved", "Rejected"));
+        Should.Throw<InvalidOperationException>(() => step.TargetOf(true, Context(0))).Message.ShouldContain("Lost");
+    }
 }

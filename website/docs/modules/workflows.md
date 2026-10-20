@@ -50,6 +50,16 @@ A state with `Approval(approved, rejected, ...)` asks for an approval when the w
 - **Approvers**: `Role(...)` (the members at the moment the approval starts) `User(...)` and `UsersFrom(context => ...)`, which finds approvers from the entity when the approval starts (for example the manager of the requester, or a fallback role through `context.UsersInRoleAsync`). One decision is enough by default; `All()` waits for every approver. A rejection always decides. `NotByRequester()` keeps the person who ran the transition out of the approvers (four eyes), also when the escalation role joins.
 - **Deadline**: `DueIn(...)` with `RemindAfter(...)` (one reminder to whoever has not decided yet) and `EscalateTo(role)`: at the deadline the members of that role join and one of them decides alone. `OnTimeout(state)` lets the approval expire and moves the workflow on instead.
 - Once decided, the workflow moves to the approved or rejected state by itself. Leaving the state through a transition (e.g. *Withdraw*) cancels the open approval.
+- **Approval target from the entity**: the approved (and optionally rejected) state is chosen when the approval is decided, so one submit transition covers a second step for large amounts:
+
+    ```csharp
+    e.Transition("Submit", "Draft", "Review");
+    e.State("Review").Approval(ctx => ctx.Entity.Amount > 1000 ? "Finance review" : "Approved", "Rejected",
+        a => a.Role("Manager").ApprovedTo("Finance review", "Approved"));
+    e.State("Finance review").Approval("Approved", "Rejected", a => a.Role("Finance"));
+    ```
+
+    `ApprovedTo(...)`/`RejectedTo(...)` list every state the choice may return; the workflow refuses to start without them (so filters, facets and the designer know every state), and a decision that chooses an unlisted state fails. The context has the entity, the decision's comment and who decided. History, inbox, domain events and Elsa triggers see the chosen state like a fixed one.
 
 The reminders and deadlines are handled by the recurring job `workflow-deadlines` (every five minutes; `Coworkee:Workflows:DeadlineCron` changes it). Approvers get in-app notifications when an approval starts, when it is overdue and as a reminder.
 

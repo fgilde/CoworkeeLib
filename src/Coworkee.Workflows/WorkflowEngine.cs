@@ -127,7 +127,8 @@ public sealed class WorkflowEngine(
         var done = !approve || approver.Escalation || !approval.RequiresAll || regular.All(a => a.Approved == true);
         if (done && subject.Workflow.FindState(approval.State)?.Step is { } step)
         {
-            await FinishAsync(subject, approval, approve ? ApprovalStatus.Approved : ApprovalStatus.Rejected, approve ? step.ApprovedState : step.RejectedState, comment, me, cancellationToken);
+            var context = subject.Workflow.Context(subject.Entity, subject.Item.EntityId, new(subject.Item.State, subject.Item.State, null, comment, me), services, cancellationToken);
+            await FinishAsync(subject, approval, approve ? ApprovalStatus.Approved : ApprovalStatus.Rejected, step.TargetOf(approve, context), comment, me, cancellationToken);
         }
 
         subject.Item.ChangedAt = clock.GetUtcNow();
