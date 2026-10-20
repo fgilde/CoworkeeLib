@@ -1,0 +1,15 @@
+@typeparam TKey where TKey : IParsable<TKey>
+<MudDrawer Open="IsOpen" OpenChanged="OpenChangedAsync" Anchor="Anchor.End" Variant="DrawerVariant.Temporary" Width="@($"min(100vw, {Width})")" Elevation="4"
+           Class="coworkee-detail-panel" data-testid="detail-panel">
+    @if (IsOpen && Key is { } key)
+    {
+        <div @ref="_root" tabindex="-1" @onkeydown="KeyDownAsync" class="d-flex flex-column" style="height:100%;outline:none" role="dialog" aria-modal="true">
+            <MudToolBar Dense="true" Gutters="true" Class="flex-none" Style="border-bottom:1px solid var(--mud-palette-lines-default)">
+                <div class="flex-grow-1 text-truncate" data-testid="detail-panel-title">@Title?.Invoke(key)</div>
+                @Actions?.Invoke(key)
+                <MudIconButton Icon="@Icons.Material.Outlined.Close" aria-label="@L["Close"]" OnClick="CloseAsync" data-testid="detail-panel-close" />
+            </MudToolBar>
+            <div class="flex-grow-1 pa-4" style="overflow:auto">@ChildContent?.Invoke(key)</div>
+        </div>
+    }
+</MudDrawer>

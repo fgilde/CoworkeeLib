@@ -120,6 +120,7 @@ plugins:
             Command palette: Befehlspalette
             Resource calendar: Ressourcenkalender
             Small charts: Kleine Diagramme
+            Detail panel: Detailbereich
             Replacing components: Komponenten ersetzen
             Phones, installable app and push: Smartphones, installierbare App und Push
             Modules in detail: Module im Detail
@@ -237,6 +238,7 @@ nav:
       - Command palette: ui/command-palette.md
       - Resource calendar: ui/resource-calendar.md
       - Small charts: ui/charts.md
+      - Detail panel: ui/detail-panel.md
       - Replacing components: ui/customizing.md
       - Phones, installable app and push: ui/phones-and-pwa.md
   - Modules in detail:
