@@ -78,10 +78,33 @@ internal static class ClientFiles
                                CreateText="New {{e.Words}}" CreatePermission="@{{e.Permissions}}.Create" EditPermission="@{{e.Permissions}}.Edit" DeletePermission="@{{e.Permissions}}.Delete"
                                OnCreate="CreateAsync" OnEdit="EditAsync" OnDelete="DeleteAsync">
                 <Columns>
-            {{string.Concat(e.Columns.Select(p => $"        <PropertyColumn Property=\"e => e.{Shown(e, p)}\" Title=\"@L[\"{EntityModel.Label(p)}\"]\"{Format(p)} />\n"))}}    </Columns>
+            {{string.Concat(e.Columns.Select(p => Column(e, p)))}}    </Columns>
             </CoworkeeDataTable>
 
             """;
+    }
+
+    private static string Column(EntityModel e, PropertySpec p)
+    {
+        var column = $"        <PropertyColumn Property=\"e => e.{Shown(e, p)}\" Title=\"@L[\"{EntityModel.Label(p)}\"]\"{Format(p)}";
+        return Cell(p) is { } cell ? $"{column}>\n            <CellTemplate>{cell}</CellTemplate>\n        </PropertyColumn>\n" : $"{column} />\n";
+    }
+
+    // the value as people read it: yes/no and enum labels in their language, times in local time, short dates; sorting and filtering stay on the property
+    private static string? Cell(PropertySpec p)
+    {
+        var value = $"context.Item.{p.Name}";
+        var maybe = p.Required ? string.Empty : "?";
+        return (p.Type, p.Required) switch
+        {
+            (PropertyType.Bool, true) => $"@L[{value} ? \"Yes\" : \"No\"]",
+            (PropertyType.Bool, false) => $"@({value} is {{ }} flag ? L[flag ? \"Yes\" : \"No\"] : null)",
+            (PropertyType.Enum, true) => $"@L[Coworkee.Contracts.Data.EnumLabels.Of({value})]",
+            (PropertyType.Enum, false) => $"@({value} is {{ }} member ? L[Coworkee.Contracts.Data.EnumLabels.Of(member)] : null)",
+            (PropertyType.DateTime, _) => $"@({value}{maybe}.ToLocalTime().ToString(\"g\"))",
+            (PropertyType.DateOnly, _) => $"@({value}{maybe}.ToString(\"d\"))",
+            _ => null,
+        };
     }
 
     private static string Shown(EntityModel e, PropertySpec p) => p.Type == PropertyType.Reference ? $"{p.Name}!.{e.TargetDisplay(p)}" : p.Name;

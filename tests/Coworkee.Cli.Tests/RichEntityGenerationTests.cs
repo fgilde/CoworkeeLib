@@ -36,6 +36,8 @@ public sealed class RichEntityGenerationTests
                             new PropertySpec { Name = "Site", Type = PropertyType.Url },
                             new PropertySpec { Name = "Note", Type = PropertyType.Text },
                             new PropertySpec { Name = "Weight", Type = PropertyType.Decimal, Precision = 10, Scale = 3, Default = "1" },
+                            new PropertySpec { Name = "Gift", Type = PropertyType.Bool, Required = true },
+                            new PropertySpec { Name = "Express", Type = PropertyType.Bool },
                         ],
                     },
                     new EntitySpec
@@ -98,7 +100,10 @@ public sealed class RichEntityGenerationTests
         page.ShouldContain("EntitySet=\"Orders\" Expand=\"Customer\"");
         page.ShouldContain("<PropertyColumn Property=\"e => e.Customer!.Name\" Title=\"@L[\"Customer\"]\" />");
         page.ShouldContain("<PropertyColumn Property=\"e => e.Total\" Title=\"@L[\"Total\"]\" Format=\"N2\" />");
-        page.ShouldContain("Title=\"@L[\"Due date\"]\"");
+        page.ShouldContain("Title=\"@L[\"Due date\"]\">\n            <CellTemplate>@(context.Item.Due?.ToString(\"d\"))</CellTemplate>");
+        page.ShouldContain("<CellTemplate>@L[Coworkee.Contracts.Data.EnumLabels.Of(context.Item.Status)]</CellTemplate>");
+        page.ShouldContain("<CellTemplate>@L[context.Item.Gift ? \"Yes\" : \"No\"]</CellTemplate>");
+        page.ShouldContain("<CellTemplate>@(context.Item.Express is { } flag ? L[flag ? \"Yes\" : \"No\"] : null)</CellTemplate>");
         page.ShouldNotContain("e.Note");
         var code = Content(files, "OrdersPage.razor.cs");
         code.ShouldContain("SearchFields = [nameof(OrderDto.Number), nameof(OrderDto.Contact), nameof(OrderDto.Site), nameof(OrderDto.Note)];");

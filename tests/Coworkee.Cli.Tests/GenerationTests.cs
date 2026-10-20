@@ -66,7 +66,7 @@ public sealed class GenerationTests
         Content(files, "OrdersPage.razor").ShouldNotContain("ToolBarContent", customMessage: "the table brings the client entity switch itself");
         Content(files, "OrdersPage.razor").ShouldContain("<PageHeader Title=\"Orders\" Description=\"Manage orders.\" />", customMessage: "PageHeader translates its texts, the page passes keys");
         Content(files, "OrdersPage.razor").ShouldContain("CreateText=\"New order\"");
-        Content(files, "OrdersPage.razor").ShouldContain("<PropertyColumn Property=\"e => e.ShippedAt\" Title=\"@L[\"Shipped at\"]\" />");
+        Content(files, "OrdersPage.razor").ShouldContain("<PropertyColumn Property=\"e => e.ShippedAt\" Title=\"@L[\"Shipped at\"]\">\n            <CellTemplate>@(context.Item.ShippedAt?.ToLocalTime().ToString(\"g\"))</CellTemplate>\n        </PropertyColumn>");
         Content(files, "OrdersPage.razor.cs").ShouldContain("[nameof(OrderDto.Number), nameof(OrderDto.Note)]");
         Content(files, "OrdersNavigation.cs").ShouldContain("Group: \"Sales\"");
         files.ShouldAllBe(f => !f.Content.Contains("{{") && !f.Content.Contains("}}"));
