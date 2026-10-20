@@ -1657,5 +1657,7 @@
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "المراجعات الأقدم للكيانات ذات الإصدارات مثل قوالب البريد؛ يعتمد عليها سجل الإصدارات والاستعادة. تبقى أحدث مراجعة لكل كيان.",
   "Backups with their zip files in the blob storage; the newest backup always stays.": "النسخ الاحتياطية مع ملفات ZIP الخاصة بها في مخزن الكائنات؛ تبقى أحدث نسخة احتياطية دائمًا.",
   "Previous": "السابق",
-  "2 weeks": "أسبوعان"
+  "2 weeks": "أسبوعان",
+  "Attachments of deleted records": "مرفقات السجلات المحذوفة",
+  "Files attached to records that no longer exist, with their content in the blob storage.": "ملفات مرفقة بسجلات لم تعد موجودة، مع محتواها في مخزن الكائنات."
 }

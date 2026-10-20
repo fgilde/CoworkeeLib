@@ -72,6 +72,23 @@ public static class ODataEntityAccess
         return query;
     }
 
+    /// <summary>
+    /// The ids of the rows the current user sees: through the entity's registered set (null without the set's permission),
+    /// without a set (or without the OData module) every row the DbContext shows, so tenant and soft delete filters apply.
+    /// </summary>
+    public static async Task<IQueryable<Guid>?> VisibleIdsAsync<TEntity>(IServiceProvider services, CancellationToken cancellationToken)
+        where TEntity : class
+    {
+        if (services.GetService<ODataEntityRegistry>()?.Find(typeof(TEntity)) is null)
+        {
+            return services.GetRequiredService<CoworkeeDbContext>().Set<TEntity>().Select(e => EF.Property<Guid>(e, "Id"));
+        }
+
+        return await IsGrantedAsync(services, typeof(TEntity), cancellationToken)
+            ? (await VisibleAsync<TEntity>(services, cancellationToken)).Select(e => EF.Property<Guid>(e, "Id"))
+            : null;
+    }
+
     /// <summary>Visible rows narrowed by an OData $filter, parsed against the EDM: hidden properties, unknown names and computed or protected properties without their permission fail with an ODataException.</summary>
     public static async Task<IQueryable<TEntity>> FilteredAsync<TEntity>(IServiceProvider services, string? filter, CancellationToken cancellationToken)
         where TEntity : class

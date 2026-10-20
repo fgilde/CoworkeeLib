@@ -1657,5 +1657,7 @@
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "Старіші ревізії сутностей із версіями, як-от шаблонів листів; історія версій і відновлення читають їх. Найновіша ревізія кожної сутності залишається.",
   "Backups with their zip files in the blob storage; the newest backup always stays.": "Резервні копії з їхніми ZIP-файлами у сховищі BLOB; найновіша копія завжди залишається.",
   "Previous": "Назад",
-  "2 weeks": "2 тижні"
+  "2 weeks": "2 тижні",
+  "Attachments of deleted records": "Вкладення видалених записів",
+  "Files attached to records that no longer exist, with their content in the blob storage.": "Файли, прикріплені до записів, яких більше немає, разом із їхнім вмістом у сховищі BLOB-об’єктів."
 }

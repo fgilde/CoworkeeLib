@@ -44,6 +44,11 @@ public static class CoworkeeClientExtensions
             client.BaseAddress = baseAddress;
             client.Timeout = TimeSpan.FromMinutes(10);
         });
+        services.AddHttpClient<Attachments.IAttachmentsApi, Attachments.AttachmentsApi>(client =>
+        {
+            client.BaseAddress = baseAddress;
+            client.Timeout = TimeSpan.FromMinutes(10);
+        });
         services.AddHttpClient<Files.IFilesApi, Files.FilesApi>(client =>
         {
             client.BaseAddress = baseAddress;

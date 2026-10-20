@@ -3,6 +3,8 @@ using Coworkee.AspNetCore;
 using Coworkee.Contracts.Identity;
 using Coworkee.Core.Modularity;
 using Coworkee.Core.Security;
+using Coworkee.Domain;
+using Coworkee.Files.Attachments;
 using Coworkee.Identity;
 using Coworkee.Identity.Setup;
 using Coworkee.Infrastructure.Persistence;
@@ -71,6 +73,17 @@ public sealed class FilesApp : DatabaseFixture
 
     public HttpClient As(Guid userId, Guid tenantId) => App.GetTestClient().AsUser(userId, tenantId);
 
+    public async Task<Guid> AddTicketAsync(Guid userId, Guid tenantId, string title = "ticket")
+    {
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(userId, tenantId));
+        await using var scope = App.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<FilesTestDbContext>();
+        var ticket = new Ticket { Title = title, TenantId = tenantId };
+        db.Add(ticket);
+        await db.SaveChangesAsync();
+        return ticket.Id;
+    }
+
     public async Task<T> InDbAsync<T>(Func<FilesTestDbContext, Task<T>> action)
     {
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
@@ -82,10 +95,57 @@ public sealed class FilesApp : DatabaseFixture
 public sealed class FilesTestDbContext(DbContextOptions<FilesTestDbContext> options, ICurrentUser currentUser, IEnumerable<IModelContributor> contributors)
     : CoworkeeDbContext(options, currentUser, contributors);
 
-[DependsOn(typeof(CoworkeeFilesModule), typeof(CoworkeeODataModule), typeof(CoworkeeIdentityModule))]
+/// <summary>A record with attachments; private tickets are hidden by the row filter of the Tickets set from everyone but their creator.</summary>
+public sealed class Ticket : AuditedEntity, IMultiTenant, ISoftDelete
+{
+    public const string Private = "private";
+
+    public required string Title { get; set; }
+
+    public Guid TenantId { get; set; }
+
+    public bool IsDeleted { get; set; }
+
+    public DateTimeOffset? DeletedAt { get; set; }
+
+    public Guid? DeletedBy { get; set; }
+}
+
+internal sealed class PrivateTickets(ICurrentUser currentUser) : IODataEntityFilter<Ticket>
+{
+    public Task<IQueryable<Ticket>> ApplyAsync(IQueryable<Ticket> query, CancellationToken cancellationToken)
+    {
+        var me = currentUser.UserId;
+        return Task.FromResult(query.Where(t => t.Title != Ticket.Private || t.CreatedBy == me));
+    }
+}
+
+/// <summary>Refuses every file with "virus" in its name, as a scanner would.</summary>
+internal sealed class NameScanner : IAttachmentScanner
+{
+    public Task<string?> ScanAsync(AttachmentUpload upload, Stream content, CancellationToken cancellationToken) =>
+        Task.FromResult(upload.FileName.Contains("virus", StringComparison.OrdinalIgnoreCase) ? "The file is infected." : null);
+}
+
+internal sealed class TicketModelContributor : IModelContributor
+{
+    public void Apply(ModelBuilder modelBuilder) => modelBuilder.Entity<Ticket>(ticket => ticket.ToTable("Tickets"));
+}
+
+[DependsOn(typeof(CoworkeeFilesModule), typeof(CoworkeeAttachmentsModule), typeof(CoworkeeODataModule), typeof(CoworkeeIdentityModule))]
 public sealed class TestFilesModule : CoworkeeModule
 {
-    public override void ConfigureServices(ModuleServiceContext context) =>
+    public override void ConfigureServices(ModuleServiceContext context)
+    {
+        context.Services.AddSingleton<IModelContributor, TicketModelContributor>();
+        context.Services.AddODataEntity<Ticket>("Tickets");
+        context.Services.AddScoped<IODataEntityFilter<Ticket>, PrivateTickets>();
+        context.Services.AddSingleton<IAttachmentScanner, NameScanner>();
+        context.Services.AddRecordAttachments<Ticket>("Tickets", a => a
+            .Slot("proof", 1024, "application/pdf", "image/*")
+            .MultiSlot("docs")
+            .WriteRequires(Contracts.Files.FilePermissions.Upload));
         context.Services.AddCoworkeeDbContext<FilesTestDbContext>((provider, options) =>
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
+    }
 }

@@ -1657,5 +1657,7 @@
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "Παλαιότερες αναθεωρήσεις οντοτήτων με εκδόσεις, όπως τα πρότυπα email· το ιστορικό εκδόσεων και η επαναφορά τις διαβάζουν. Η νεότερη αναθεώρηση κάθε οντότητας παραμένει.",
   "Backups with their zip files in the blob storage; the newest backup always stays.": "Αντίγραφα ασφαλείας με τα αρχεία zip τους στον χώρο blob· το νεότερο αντίγραφο παραμένει πάντα.",
   "Previous": "Προηγούμενο",
-  "2 weeks": "2 εβδομάδες"
+  "2 weeks": "2 εβδομάδες",
+  "Attachments of deleted records": "Συνημμένα διαγραμμένων εγγραφών",
+  "Files attached to records that no longer exist, with their content in the blob storage.": "Αρχεία συνημμένα σε εγγραφές που δεν υπάρχουν πια, μαζί με το περιεχόμενό τους στον χώρο αποθήκευσης blob."
 }

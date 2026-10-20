@@ -1657,5 +1657,7 @@
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "По-старите ревизии на версионирани обекти като шаблоните за имейли; историята на версиите и възстановяването ги четат. Най-новата ревизия на всеки обект остава.",
   "Backups with their zip files in the blob storage; the newest backup always stays.": "Резервни копия с техните ZIP файлове в blob хранилището; най-новото копие винаги остава.",
   "Previous": "Предишен",
-  "2 weeks": "2 седмици"
+  "2 weeks": "2 седмици",
+  "Attachments of deleted records": "Прикачени файлове на изтрити записи",
+  "Files attached to records that no longer exist, with their content in the blob storage.": "Файлове, прикачени към записи, които вече не съществуват, със съдържанието им в хранилището за обекти."
 }

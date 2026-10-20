@@ -1657,5 +1657,7 @@
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "Revisi lama dari entitas berversi seperti templat email; riwayat versi dan pemulihan membacanya. Revisi terbaru setiap entitas tetap ada.",
   "Backups with their zip files in the blob storage; the newest backup always stays.": "Cadangan beserta file zip-nya di penyimpanan blob; cadangan terbaru selalu tetap ada.",
   "Previous": "Sebelumnya",
-  "2 weeks": "2 minggu"
+  "2 weeks": "2 minggu",
+  "Attachments of deleted records": "Lampiran catatan yang dihapus",
+  "Files attached to records that no longer exist, with their content in the blob storage.": "File yang dilampirkan pada catatan yang sudah tidak ada, beserta isinya di penyimpanan blob."
 }

@@ -1657,5 +1657,7 @@
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "Äldre revisioner av versionerade entiteter som mejlmallar; versionshistorik och återställning läser dem. Den senaste revisionen av varje entitet finns kvar.",
   "Backups with their zip files in the blob storage; the newest backup always stays.": "Säkerhetskopior med sina zip-filer i blob-lagringen; den senaste säkerhetskopian finns alltid kvar.",
   "Previous": "Föregående",
-  "2 weeks": "2 veckor"
+  "2 weeks": "2 veckor",
+  "Attachments of deleted records": "Bilagor till borttagna poster",
+  "Files attached to records that no longer exist, with their content in the blob storage.": "Filer bifogade till poster som inte längre finns, med deras innehåll i blob-lagringen."
 }

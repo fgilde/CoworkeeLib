@@ -2,7 +2,7 @@
 
 `Coworkee.Files` verwaltet Ordner und Dateien einer Organisation im [Dateispeicher](storage.md): verschachtelte Ordner, Hochladen, Herunterladen, Vorschau für fast jeden Dateityp, Verschieben, Umbenennen und Löschen, mit Berechtigungen pro Ordner.
 
-Dateien sind das Laufwerk der Organisation. Das Beispiel *Documents* der App-Vorlage ist etwas anderes: eine Liste typisierter Datensätze, jeder mit Besitzer und privat oder öffentlich. Eine App kann beides nebeneinander haben; Code, der eine gespeicherte Datei anderswohin kopiert, liest sie mit `OpenFile` als aktueller Benutzer, die Ordnerberechtigungen gelten also.
+Dateien sind das Laufwerk der Organisation. Das Beispiel *Documents* der App-Vorlage ist etwas anderes: eine Liste typisierter Datensätze, jeder mit Besitzer und privat oder öffentlich. Eine App kann beides nebeneinander haben; Code, der eine gespeicherte Datei anderswohin kopiert, liest sie mit `OpenFile` als aktueller Benutzer, die Ordnerberechtigungen gelten also. Dateien, die zu einem Datensatz gehören (eine Bescheinigung, ein Lebenslauf), sind stattdessen [Anhänge an Datensätzen](attachments.md): keine Ordner, der Datensatz entscheidet, wer sie sieht.
 
 ```csharp
 [DependsOn(typeof(CoworkeeFilesModule))]

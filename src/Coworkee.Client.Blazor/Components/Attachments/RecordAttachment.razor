@@ -1,0 +1,37 @@
+@using MudBlazor.Extensions.Components
+@using Coworkee.Contracts.Attachments
+<div class="d-flex flex-column gap-1" data-testid="record-attachment" data-slot="@Slot">
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <MudText Typo="Typo.subtitle2">@Label</MudText>
+    }
+    @if (_slot is { } slot)
+    {
+        @foreach (var item in slot.Items)
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" data-testid="attachment" data-attachment="@item.Id">
+                <MudIcon Icon="@Icons.Material.Outlined.AttachFile" Size="Size.Small" />
+                <MudLink Typo="Typo.body2" OnClick="() => PreviewAsync(item)" data-testid="attachment-preview">@item.FileName</MudLink>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">@SizeText(item.Size)</MudText>
+                <MudIconButton Icon="@Icons.Material.Outlined.Download" Size="Size.Small" Href="@AttachmentUrls.Content(item, download: true)" aria-label="@L["Download"]" />
+                @if (CanWrite)
+                {
+                    <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" aria-label="@L["Delete {0}", item.FileName]" OnClick="() => DeleteAsync(item)"
+                                   data-testid="attachment-delete" />
+                }
+            </MudStack>
+        }
+        @if (slot.Items.Count == 0 && !CanWrite)
+        {
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["None"]</MudText>
+        }
+        @if (CanWrite)
+        {
+            @* MudEx localizes the button text itself: a translated text would be looked up as key again and machine translated *@
+            <MudExUploadEdit T="UploadableFile" UploadRequestDataLoaded="UploadAsync" ItemIsVisibleFunc="@(_ => false)" AllowMultiple="@slot.Multiple" AllowFolderUpload="false"
+                             AllowExternalUrl="false" MimeTypes="@MimeTypes" MaxFileSize="@slot.MaxBytes" TextUploadFile="Choose file" TextUploadFiles="Choose files"
+                             ButtonVariant="Variant.Outlined" ButtonColor="Color.Default" ExternalProviderRendering="ExternalProviderRendering.Images" ExternalPickerImageSize="@("30px")"
+                             data-testid="attachment-upload" />
+        }
+    }
+</div>

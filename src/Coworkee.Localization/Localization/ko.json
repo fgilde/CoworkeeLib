@@ -1657,5 +1657,7 @@
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "메일 템플릿처럼 버전이 관리되는 엔터티의 오래된 리비전입니다. 버전 기록과 복원이 이를 읽습니다. 각 엔터티의 최신 리비전은 남습니다.",
   "Backups with their zip files in the blob storage; the newest backup always stays.": "Blob 저장소의 zip 파일을 포함한 백업입니다. 최신 백업은 항상 남습니다.",
   "Previous": "이전",
-  "2 weeks": "2주"
+  "2 weeks": "2주",
+  "Attachments of deleted records": "삭제된 레코드의 첨부 파일",
+  "Files attached to records that no longer exist, with their content in the blob storage.": "더 이상 존재하지 않는 레코드에 첨부된 파일과 Blob 스토리지에 있는 그 내용."
 }

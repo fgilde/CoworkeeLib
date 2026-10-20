@@ -1657,5 +1657,7 @@
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "版本化实体（如邮件模板）的旧修订；版本历史和恢复依赖它们。每个实体的最新修订保留。",
   "Backups with their zip files in the blob storage; the newest backup always stays.": "备份及其在 Blob 存储中的 zip 文件；最新的备份始终保留。",
   "Previous": "上一个",
-  "2 weeks": "2 周"
+  "2 weeks": "2 周",
+  "Attachments of deleted records": "已删除记录的附件",
+  "Files attached to records that no longer exist, with their content in the blob storage.": "附加到已不存在的记录的文件，以及它们在 Blob 存储中的内容。"
 }

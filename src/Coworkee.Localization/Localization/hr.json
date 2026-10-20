@@ -1657,5 +1657,7 @@
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "Starije revizije entiteta s verzijama, poput predložaka e-pošte; povijest verzija i vraćanje ih čitaju. Najnovija revizija svakog entiteta ostaje.",
   "Backups with their zip files in the blob storage; the newest backup always stays.": "Sigurnosne kopije s njihovim zip datotekama u blob pohrani; najnovija kopija uvijek ostaje.",
   "Previous": "Prethodno",
-  "2 weeks": "2 tjedna"
+  "2 weeks": "2 tjedna",
+  "Attachments of deleted records": "Privici izbrisanih zapisa",
+  "Files attached to records that no longer exist, with their content in the blob storage.": "Datoteke priložene zapisima koji više ne postoje, s njihovim sadržajem u blob pohrani."
 }

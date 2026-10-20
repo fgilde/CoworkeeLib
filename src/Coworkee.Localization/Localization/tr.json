@@ -1657,5 +1657,7 @@
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "E-posta şablonları gibi sürümlü varlıkların eski revizyonları; sürüm geçmişi ve geri yükleme bunları okur. Her varlığın en yeni revizyonu kalır.",
   "Backups with their zip files in the blob storage; the newest backup always stays.": "Blob depolamadaki zip dosyalarıyla birlikte yedekler; en yeni yedek her zaman kalır.",
   "Previous": "Önceki",
-  "2 weeks": "2 hafta"
+  "2 weeks": "2 hafta",
+  "Attachments of deleted records": "Silinen kayıtların ekleri",
+  "Files attached to records that no longer exist, with their content in the blob storage.": "Artık var olmayan kayıtlara eklenmiş dosyalar ve blob depolamadaki içerikleri."
 }

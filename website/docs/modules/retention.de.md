@@ -11,7 +11,7 @@ Das Modul bringt die Tabelle `cw.RetentionRuns` (letzter Lauf pro Datenart) mit:
 
 ## Datenarten
 
-Jede Datenart wird über alle Organisationen hinweg gelöscht. Die Bibliothek löscht nach einem Update nie von selbst: Alles, was bisher für immer blieb, bleibt für immer, bis jemand Tage einstellt. Nur das Zustellprotokoll der Webhooks behält seine 30 Tage.
+Jede Datenart wird über alle Organisationen hinweg gelöscht. Die Bibliothek löscht nach einem Update nie von selbst: Alles, was bisher für immer blieb, bleibt für immer, bis jemand Tage einstellt. Nur das Zustellprotokoll der Webhooks behält seine 30 Tage, und Anhänge endgültig gelöschter Datensätze gehen nach einem Tag (sie nützen niemandem mehr).
 
 | Schlüssel | Modul | Daten | Alter nach | Standard |
 |---|---|---|---|---|
@@ -26,6 +26,7 @@ Jede Datenart wird über alle Organisationen hinweg gelöscht. Die Bibliothek l�
 | `mail-log` | Mailing | gesendete, fehlgeschlagene und übersprungene Mails | `QueuedAt` | nie |
 | `notifications` | Notifications | In-App-Benachrichtigungen | `CreatedAt` | nie |
 | `data-transfer-jobs` | OData | beendete Importe und Exporte mit ihren Dateien | `FinishedAt` | nie |
+| `orphaned-attachments` | Files | [Anhänge an Datensätzen](attachments.md), deren Datensatz endgültig weg ist, mit ihren Blobs | `CreatedAt` | 1 Tag |
 | `deleted-files` | Files | weich gelöschte Dateien mit ihren Blobs, danach leere weich gelöschte Ordner | `DeletedAt` | nie |
 | `backups` | Backup | Datenbank-Backups mit ihrer ZIP-Datei, das neueste Backup bleibt immer | `CreatedAt` | nie |
 | `auth-tokens` | AuthServer | was der Prune von OpenIddict entfernt: Tokens, die weder gültig noch inaktiv sind, zu einer ungültigen Autorisierung gehören oder abgelaufen sind; Autorisierungen ohne Tokens, die ungültig oder ad hoc sind | Erstellung | nie |

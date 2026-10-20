@@ -11,7 +11,7 @@ The module brings the table `cw.RetentionRuns` (last run per kind of data): **ad
 
 ## Kinds of data
 
-Every kind of data is deleted across all organisations. The library never deletes on its own after an update: everything that was kept forever before is kept forever until someone sets days. Only the webhook delivery log keeps its 30 days.
+Every kind of data is deleted across all organisations. The library never deletes on its own after an update: everything that was kept forever before is kept forever until someone sets days. Only the webhook delivery log keeps its 30 days, and attachments of records deleted for good go after a day (they are of no use to anyone).
 
 | Key | Module | Data | Age by | Default |
 |---|---|---|---|---|
@@ -26,6 +26,7 @@ Every kind of data is deleted across all organisations. The library never delete
 | `mail-log` | Mailing | sent, failed and skipped mails | `QueuedAt` | never |
 | `notifications` | Notifications | in-app notifications | `CreatedAt` | never |
 | `data-transfer-jobs` | OData | finished imports and exports with their files | `FinishedAt` | never |
+| `orphaned-attachments` | Files | [record attachments](attachments.md) whose record is gone for good, with their blobs | `CreatedAt` | 1 day |
 | `deleted-files` | Files | soft deleted files with their blobs, then empty soft deleted folders | `DeletedAt` | never |
 | `backups` | Backup | database backups with their zip, the newest backup always stays | `CreatedAt` | never |
 | `auth-tokens` | AuthServer | what OpenIddict's prune removes: tokens that are neither valid nor inactive, belong to an invalid authorization or expired; authorizations without tokens that are invalid or ad hoc | creation | never |

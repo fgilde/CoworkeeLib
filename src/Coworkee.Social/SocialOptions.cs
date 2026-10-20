@@ -71,25 +71,11 @@ public sealed class SocialOptions
 
     private static SocialTarget For<TEntity>(Func<Guid, string>? link)
         where TEntity : class => new(
-        VisibleIdsAsync<TEntity>,
+        ODataEntityAccess.VisibleIdsAsync<TEntity>,
         typeof(IAuditable).IsAssignableFrom(typeof(TEntity))
             ? (db, id, cancellationToken) => db.Set<TEntity>().Where(e => EF.Property<Guid>(e, "Id") == id).Select(e => EF.Property<Guid?>(e, nameof(IAuditable.CreatedBy))).FirstOrDefaultAsync(cancellationToken)
             : null,
         link);
-
-    // the entity's OData set decides (permission, tenant, soft delete, row filters); without a set every row of the own organisation counts
-    private static async Task<IQueryable<Guid>?> VisibleIdsAsync<TEntity>(IServiceProvider services, CancellationToken cancellationToken)
-        where TEntity : class
-    {
-        if (services.GetService<ODataEntityRegistry>()?.Find(typeof(TEntity)) is null)
-        {
-            return services.GetRequiredService<CoworkeeDbContext>().Set<TEntity>().Select(e => EF.Property<Guid>(e, "Id"));
-        }
-
-        return await ODataEntityAccess.IsGrantedAsync(services, typeof(TEntity), cancellationToken)
-            ? (await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken)).Select(e => EF.Property<Guid>(e, "Id"))
-            : null;
-    }
 }
 
 public static class SocialServiceCollectionExtensions

@@ -1657,5 +1657,7 @@
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "メールテンプレートなどバージョン管理されたエンティティの古いリビジョン。バージョン履歴と復元がこれを参照します。各エンティティの最新リビジョンは残ります。",
   "Backups with their zip files in the blob storage; the newest backup always stays.": "BLOB ストレージ内の ZIP ファイルを含むバックアップ。最新のバックアップは常に残ります。",
   "Previous": "前へ",
-  "2 weeks": "2週間"
+  "2 weeks": "2週間",
+  "Attachments of deleted records": "削除されたレコードの添付ファイル",
+  "Files attached to records that no longer exist, with their content in the blob storage.": "存在しなくなったレコードに添付されたファイルと、BLOB ストレージ内のその内容。"
 }

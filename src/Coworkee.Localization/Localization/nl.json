@@ -1657,5 +1657,7 @@
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "Oudere revisies van entiteiten met versies, zoals mailsjablonen; versiegeschiedenis en herstellen lezen ze. De nieuwste revisie van elke entiteit blijft.",
   "Backups with their zip files in the blob storage; the newest backup always stays.": "Back-ups met hun zip-bestanden in de blobopslag; de nieuwste back-up blijft altijd.",
   "Previous": "Vorige",
-  "2 weeks": "2 weken"
+  "2 weeks": "2 weken",
+  "Attachments of deleted records": "Bijlagen van verwijderde records",
+  "Files attached to records that no longer exist, with their content in the blob storage.": "Bestanden bij records die niet meer bestaan, met hun inhoud in de blobopslag."
 }

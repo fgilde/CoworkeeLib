@@ -1657,5 +1657,7 @@
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "Revisiones antiguas de entidades con versiones, como las plantillas de correo; el historial de versiones y la restauración las leen. La revisión más reciente de cada entidad se queda.",
   "Backups with their zip files in the blob storage; the newest backup always stays.": "Copias de seguridad con sus archivos zip en el almacenamiento de blobs; la más reciente siempre se queda.",
   "Previous": "Anterior",
-  "2 weeks": "2 semanas"
+  "2 weeks": "2 semanas",
+  "Attachments of deleted records": "Adjuntos de registros eliminados",
+  "Files attached to records that no longer exist, with their content in the blob storage.": "Archivos adjuntos a registros que ya no existen, con su contenido en el almacenamiento de blobs."
 }

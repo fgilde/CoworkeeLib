@@ -1657,5 +1657,7 @@
   "Older revisions of versioned entities such as mail templates; their version history and restore read them. The newest revision of every entity stays.": "កំណែចាស់ៗរបស់អង្គភាពទិន្នន័យដែលមានកំណែ ដូចជាគំរូសំបុត្រ៖ ប្រវត្តិកំណែ និងការស្ដារអានវា។ កំណែថ្មីបំផុតរបស់អង្គភាពនីមួយៗនៅដដែល។",
   "Backups with their zip files in the blob storage; the newest backup always stays.": "ការបម្រុងទុក ព្រមទាំងឯកសារ zip របស់វានៅក្នុងឃ្លាំង blob៖ ការបម្រុងទុកថ្មីបំផុតតែងតែនៅដដែល។",
   "Previous": "មុន",
-  "2 weeks": "2 សប្តាហ៍"
+  "2 weeks": "2 សប្តាហ៍",
+  "Attachments of deleted records": "ឯកសារភ្ជាប់នៃកំណត់ត្រាដែលបានលុប",
+  "Files attached to records that no longer exist, with their content in the blob storage.": "ឯកសារដែលភ្ជាប់ទៅកំណត់ត្រាដែលលែងមាន រួមទាំងខ្លឹមសាររបស់វានៅក្នុងឃ្លាំងផ្ទុក blob។"
 }

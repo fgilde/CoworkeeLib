@@ -2,7 +2,7 @@
 
 `Coworkee.Files` keeps folders and files of an organisation in the [blob storage](storage.md): nested folders, upload, download, preview of nearly every file type, move, rename and delete, with per-folder permissions.
 
-Files is the organisation's drive. The *Documents* sample of the app template is something else: a list of typed records, each with an owner and private or public. An app can have both side by side; code that copies a stored file elsewhere reads it with `OpenFile` as the current user, so the folder permissions apply.
+Files is the organisation's drive. The *Documents* sample of the app template is something else: a list of typed records, each with an owner and private or public. An app can have both side by side; code that copies a stored file elsewhere reads it with `OpenFile` as the current user, so the folder permissions apply. Files that belong to one record (a certificate, a CV) are [record attachments](attachments.md) instead: no folders, the record decides who sees them.
 
 ```csharp
 [DependsOn(typeof(CoworkeeFilesModule))]

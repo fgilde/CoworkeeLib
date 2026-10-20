@@ -129,6 +129,7 @@ plugins:
             Background jobs: Hintergrundjobs
             File storage: Dateiablage
             Files: Dateien
+            Record attachments: Anhänge an Datensätzen
             Search: Suche
             Realtime and notifications: Realtime und Benachrichtigungen
             Theming: Themes
@@ -245,6 +246,7 @@ nav:
       - Background jobs: modules/background-jobs.md
       - File storage: modules/storage.md
       - Files: modules/files.md
+      - Record attachments: modules/attachments.md
       - Search: modules/search.md
       - Realtime and notifications: modules/realtime.md
       - Theming: modules/theming.md

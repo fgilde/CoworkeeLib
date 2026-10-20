@@ -20,7 +20,7 @@ Which package goes where, and what to put in the `using` block.
 | `Coworkee.Mailing` | API | `Coworkee.Mailing` | `IMailTemplateContributor`, `IMailSender` |
 | `Coworkee.BackgroundJobs` | API, workers | `Coworkee.BackgroundJobs` | `IBackgroundJob<T>`, `IBackgroundJobs`, `IRecurringJob`, `AddRecurringJob` |
 | `Coworkee.Storage` | API, workers | `Coworkee.Storage` | `IBlobStorage`, `BlobLinks` |
-| `Coworkee.Files` | API | `Coworkee.Files` | `CoworkeeFilesModule`, `FilesOptions` |
+| `Coworkee.Files` | API | `Coworkee.Files` | `CoworkeeFilesModule`, `FilesOptions`, `CoworkeeAttachmentsModule`, `AddRecordAttachments` |
 | `Coworkee.Search`, `Coworkee.Search.Elasticsearch` | API, workers | `Coworkee.Search` | `ISearchIndex`, `SearchSchema`, `SearchQuery` |
 | `Coworkee.Realtime`, `Coworkee.Notifications` | API, workers | `Coworkee.Realtime`, `Coworkee.Notifications` | `IRealtimePublisher`, `INotifier` |
 | `Coworkee.Auditing` | API | `Coworkee.Auditing` | audit log queries |
