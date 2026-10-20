@@ -113,7 +113,7 @@ public interface IMailTransport
 }
 ```
 
-`MailEnvelope` holds `From`, `To`, `Subject` and `HtmlBody`; `MailConnection` the provider name and the resolved values by setting name (`connection[MailSettings.ApiKey]`, null when empty). Throw to fail the mail; the job retries it. A transport with a name of its own is a new provider. This one writes mails to the log, which is handy in tests:
+`MailEnvelope` holds `From`, `To`, `Subject`, `HtmlBody` and the attached `Files` (`MailAttachment`: file name, content type, bytes; queued with `IMailSender.QueueWithAttachmentsAsync`, at most 10 MB per mail, kept in `cw.OutgoingMailAttachments` with the mail; the four built-in providers send them); `MailConnection` the provider name and the resolved values by setting name (`connection[MailSettings.ApiKey]`, null when empty). Throw to fail the mail; the job retries it. A transport with a name of its own is a new provider. This one writes mails to the log, which is handy in tests:
 
 ```csharp
 using Coworkee.Mailing;

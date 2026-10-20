@@ -9,6 +9,7 @@ public static class ReportPermissions
     public const string Manage = "Reports.Manage";
     public const string Share = "Reports.Share";
     public const string Dashboard = "Reports.Dashboard";
+    public const string Subscriptions = "Reports.Subscriptions";
 }
 
 /// <summary>Who sees a report besides its owner.</summary>

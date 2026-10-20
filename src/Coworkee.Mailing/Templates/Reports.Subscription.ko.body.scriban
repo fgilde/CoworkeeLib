@@ -1,0 +1,12 @@
+<p>{{ user.first_name }}님, 안녕하세요.</p>
+<p>{{ report.date }} 기준 보고서 <a href="{{ report.link }}">{{ report.name }}</a>입니다.</p>
+{{ for w in widgets }}<h3 style="margin:24px 0 8px 0;font-size:17px;">{{ w.title }}</h3>
+{{ if w.error != "" }}<p style="color:#d32f2f;">{{ w.error }}</p>
+{{ else if w.kpi }}<p style="margin:0;font-size:30px;font-weight:600;color:{{ w.color }};">{{ w.symbol }} {{ w.value }}</p>{{ if w.band != "" }}<p style="margin:2px 0 0 0;font-weight:600;color:{{ w.color }};">{{ w.band }}</p>{{ end }}
+{{ else }}<table role="presentation" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:14px;">
+<tr>{{ for h in w.headers }}<th align="left" style="border-bottom:1px solid #16140f;">{{ h }}</th>{{ end }}</tr>
+{{ for r in w.rows }}<tr>{{ for c in r }}<td style="border-bottom:1px solid #d6cfbf;">{{ c }}</td>{{ end }}</tr>
+{{ end }}</table>{{ if w.more }}<p style="font-size:13px;color:#4a463d;">처음 몇 행만 표시됩니다. 전체는 보고서에서 확인하세요.</p>{{ end }}
+{{ end }}{{ end }}
+{{ if attachment }}<p>첨부된 Excel 파일에 모든 위젯의 데이터가 들어 있습니다.</p>{{ end }}
+<p style="font-size:12px;color:#4a463d;">이 보고서를 구독하셨기 때문에 이 메일을 받으셨습니다. <a href="{{ unsubscribe_link }}" style="color:#4a463d;">구독 종료</a></p>

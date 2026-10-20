@@ -7,7 +7,7 @@ namespace Coworkee.Client.Blazor.Reporting;
 
 public static class ReportingClientExtensions
 {
-    /// <summary>Reports and dashboards: the pages under /reports (keys reports, report, report-new, report-data), their navigation entry and the API client.</summary>
+    /// <summary>Reports and dashboards: the pages under /reports (keys reports, report, report-new, report-subscriptions, report-data), their navigation entry and the API client.</summary>
     public static IServiceCollection AddCoworkeeReporting(this IServiceCollection services, Uri baseAddress, Action<ReportingOptions>? configure = null)
     {
         var options = new ReportingOptions();
@@ -21,6 +21,7 @@ public static class ReportingClientExtensions
         services.AddSingleton(new Navigation.CoworkeePage("reports", typeof(Pages.Reports), "reports"));
         services.AddSingleton(new Navigation.CoworkeePage("report", typeof(Pages.ReportPage), "reports/{Id:guid}"));
         services.AddSingleton(new Navigation.CoworkeePage("report-new", typeof(Pages.ReportPage), "reports/new"));
+        services.AddSingleton(new Navigation.CoworkeePage("report-subscriptions", typeof(Pages.ReportSubscriptions), "reports/subscriptions"));
         services.AddSingleton(new Navigation.CoworkeePage("report-data", typeof(Pages.ReportData), "reports/data/{EntitySet}"));
         return services;
     }

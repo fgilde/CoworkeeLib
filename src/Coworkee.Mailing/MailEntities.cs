@@ -136,6 +136,20 @@ public sealed class OutgoingMail : AggregateRoot
     }
 }
 
+/// <summary>A file of a queued mail; deleted with the mail.</summary>
+public sealed class OutgoingMailAttachment
+{
+    public Guid Id { get; set; } = Guid.CreateVersion7();
+
+    public Guid MailId { get; set; }
+
+    public required string FileName { get; set; }
+
+    public required string ContentType { get; set; }
+
+    public required byte[] Content { get; set; }
+}
+
 internal sealed class MailModelContributor : IModelContributor
 {
     public void Apply(ModelBuilder modelBuilder)
@@ -168,6 +182,14 @@ internal sealed class MailModelContributor : IModelContributor
             mail.Property(m => m.LastError).HasMaxLength(2000);
             mail.HasIndex(m => new { m.TenantId, m.QueuedAt });
             mail.HasIndex(m => m.CampaignId);
+        });
+
+        modelBuilder.Entity<OutgoingMailAttachment>(attachment =>
+        {
+            attachment.ToTable("OutgoingMailAttachments", "cw");
+            attachment.Property(a => a.FileName).HasMaxLength(255);
+            attachment.Property(a => a.ContentType).HasMaxLength(200);
+            attachment.HasOne<OutgoingMail>().WithMany().HasForeignKey(a => a.MailId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<MailCampaign>(campaign =>

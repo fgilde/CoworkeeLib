@@ -320,6 +320,32 @@ public partial class ReportPage : IAsyncDisposable
         }, token);
     }
 
+    private async Task SubscribeAsync()
+    {
+        if (await ReportSubscriptionDialog.ShowAsync(Dialogs, L["Subscribe by mail"], _report!.Id, _definition!.Filters) is not { } request)
+        {
+            return;
+        }
+
+        try
+        {
+            await Api.SubscribeAsync(request);
+            Snackbar.Add(L["Subscribed. The report comes by mail; see My subscriptions."], Severity.Success, options =>
+            {
+                options.Action = L["My subscriptions"];
+                options.OnClick = _ =>
+                {
+                    Nav.NavigateTo("reports/subscriptions");
+                    return Task.CompletedTask;
+                };
+            });
+        }
+        catch (ApiException exception)
+        {
+            Snackbar.Add(exception.Errors is { Count: > 0 } errors ? string.Join(" ", errors.SelectMany(e => e.Value)) : L["That did not work: {0}", exception.Message], Severity.Error);
+        }
+    }
+
     private async Task FavoriteAsync()
     {
         await Api.SetFavoriteAsync(_report!.Id, !_report.IsFavorite);

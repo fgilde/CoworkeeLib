@@ -1,0 +1,69 @@
+@attribute [Authorize(Policy = Coworkee.Client.Blazor.Security.PermissionPolicy.Prefix + ReportPermissions.View)]
+
+<ReportStyles />
+<PageHeader Title="Report subscriptions" Description="Reports that come by mail on a schedule, with the data each subscriber may see.">
+    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.SpaceDashboard" Href="reports">@L["Reports"]</MudButton>
+</PageHeader>
+
+@if (_canSeeAll)
+{
+    <MudChipSet T="bool" SelectedValue="_all" SelectedValueChanged="ScopeChanged" SelectionMode="SelectionMode.SingleSelection" CheckMark="false" Color="Color.Primary" Variant="Variant.Text" Class="mb-3">
+        <MudChip Value="false" Icon="@Icons.Material.Outlined.Person">@L["Mine"]</MudChip>
+        <MudChip Value="true" Icon="@Icons.Material.Outlined.Groups" data-testid="subscriptions-all">@L["Everybody in the organisation"]</MudChip>
+    </MudChipSet>
+}
+
+@if (_subscriptions is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_subscriptions.Count == 0)
+{
+    <div class="cw-reports-empty" data-testid="subscriptions-empty">
+        <MudIcon Icon="@Icons.Material.Outlined.ForwardToInbox" Style="font-size:4rem" Color="Color.Primary" />
+        <MudText Typo="Typo.h6">@L["No subscriptions yet"]</MudText>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["Open a report and choose Subscribe by mail."]</MudText>
+    </div>
+}
+else
+{
+    <MudTable Items="_subscriptions" Dense="true" Hover="true" Elevation="0" Outlined="true" data-testid="subscriptions">
+        <HeaderContent>
+            <MudTh>@L["Report"]</MudTh>
+            @if (_all)
+            {
+                <MudTh>@L["User"]</MudTh>
+            }
+            <MudTh>@L["When"]</MudTh>
+            <MudTh>@L["Next mail"]</MudTh>
+            <MudTh>@L["Last sent"]</MudTh>
+            <MudTh />
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd><MudLink Href="@($"reports/{context.ReportId}")">@L.Stored(context.ReportName)</MudLink></MudTd>
+            @if (_all)
+            {
+                <MudTd>@context.UserName</MudTd>
+            }
+            <MudTd>@ReportScheduleText.Of(context.Schedule, L)</MudTd>
+            <MudTd>@context.NextRunAt.ToLocalTime().ToString("g", System.Globalization.CultureInfo.CurrentCulture)</MudTd>
+            <MudTd>
+                @(context.LastSentAt?.ToLocalTime().ToString("g", System.Globalization.CultureInfo.CurrentCulture) ?? "–")
+                @if (context.LastError is { Length: > 0 } error)
+                {
+                    <MudTooltip Text="@error">
+                        <MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error" Size="Size.Small" aria-label="@L["Last mail failed: {0}", error]" data-testid="subscription-error" />
+                    </MudTooltip>
+                }
+            </MudTd>
+            <MudTd Style="text-align:right;white-space:nowrap">
+                @if (!_all)
+                {
+                    <MudTooltip Text="@L["Edit"]"><MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" OnClick="() => EditAsync(context)" /></MudTooltip>
+                    <MudTooltip Text="@L["Send now"]"><MudIconButton Icon="@Icons.Material.Outlined.Send" Size="Size.Small" OnClick="() => SendAsync(context)" data-testid="subscription-send" /></MudTooltip>
+                }
+                <MudTooltip Text="@L["End the subscription"]"><MudIconButton Icon="@Icons.Material.Outlined.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(context)" data-testid="subscription-delete" /></MudTooltip>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}

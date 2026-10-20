@@ -66,4 +66,18 @@ internal sealed class ReportsApi(HttpClient http) : ApiClientBase(http), IReport
 
     public Task<ReportDefinition> GenerateAsync(GenerateReportRequest request, CancellationToken cancellationToken = default) =>
         SendAsync<ReportDefinition>(HttpMethod.Post, $"{Root}/generate", request, cancellationToken);
+
+    public async Task<IReadOnlyList<ReportSubscriptionDto>> GetSubscriptionsAsync(bool all = false, CancellationToken cancellationToken = default) =>
+        await GetAsync<ReportSubscriptionDto[]>(all ? $"{Root}/subscriptions/all" : $"{Root}/subscriptions", cancellationToken);
+
+    public Task<ReportSubscriptionDto> SubscribeAsync(SaveReportSubscriptionRequest subscription, CancellationToken cancellationToken = default) =>
+        SendAsync<ReportSubscriptionDto>(HttpMethod.Post, $"{Root}/subscriptions", subscription, cancellationToken);
+
+    public Task<ReportSubscriptionDto> UpdateSubscriptionAsync(Guid id, SaveReportSubscriptionRequest subscription, CancellationToken cancellationToken = default) =>
+        SendAsync<ReportSubscriptionDto>(HttpMethod.Put, $"{Root}/subscriptions/{id}", subscription, cancellationToken);
+
+    public Task DeleteSubscriptionAsync(Guid id, CancellationToken cancellationToken = default) => SendAsync(HttpMethod.Delete, $"{Root}/subscriptions/{id}", null, cancellationToken);
+
+    public Task<ReportSubscriptionDto> SendSubscriptionAsync(Guid id, CancellationToken cancellationToken = default) =>
+        SendAsync<ReportSubscriptionDto>(HttpMethod.Post, $"{Root}/subscriptions/{id}/send", null, cancellationToken);
 }

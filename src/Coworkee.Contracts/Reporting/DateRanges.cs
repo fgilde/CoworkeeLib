@@ -1,7 +1,6 @@
 using System.Globalization;
-using Coworkee.Contracts.Reporting;
 
-namespace Coworkee.Client.Blazor.Reporting.State;
+namespace Coworkee.Contracts.Reporting;
 
 /// <summary>Turns a preset into days: From inclusive, To exclusive.</summary>
 public static class DateRanges

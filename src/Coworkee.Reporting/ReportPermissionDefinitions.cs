@@ -10,5 +10,6 @@ internal sealed class ReportPermissionDefinitions : IPermissionDefinitionContrib
             .Add(ReportPermissions.View, "View the reports shared with you")
             .Add(ReportPermissions.Manage, "Create reports and edit your own", ReportPermissions.View)
             .Add(ReportPermissions.Share, "Share reports with roles or the organisation", ReportPermissions.Manage)
-            .Add(ReportPermissions.Dashboard, "Choose the dashboard of the organisation", ReportPermissions.View);
+            .Add(ReportPermissions.Dashboard, "Choose the dashboard of the organisation", ReportPermissions.View)
+            .Add(ReportPermissions.Subscriptions, "See and end the report subscriptions of the organisation", ReportPermissions.View);
 }

@@ -68,6 +68,7 @@ else
                         </MudTooltip>
                     }
                     <MudTooltip Text="@L["Refresh"]"><MudIconButton Icon="@Icons.Material.Outlined.Refresh" OnClick="_state.Refresh" data-testid="report-refresh" /></MudTooltip>
+                    <MudTooltip Text="@L["Subscribe by mail"]"><MudIconButton Icon="@Icons.Material.Outlined.ForwardToInbox" OnClick="SubscribeAsync" data-testid="report-subscribe" /></MudTooltip>
                     <MudTooltip Text="@L["Presentation"]"><MudIconButton Icon="@Icons.Material.Outlined.Fullscreen" OnClick="PresentAsync" /></MudTooltip>
                     <MudMenu Icon="@Icons.Material.Outlined.FileDownload" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Dense="Density.Dense" aria-label="@L["Export"]" data-testid="report-export">
                         <MudMenuItem Icon="@Icons.Material.Outlined.Image" OnClick="PngAsync">@L["Image (PNG)"]</MudMenuItem>

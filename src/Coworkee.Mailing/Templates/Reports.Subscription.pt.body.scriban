@@ -1,0 +1,12 @@
+<p>Olá, {{ user.first_name }},</p>
+<p>aqui está o relatório <a href="{{ report.link }}">{{ report.name }}</a> com data de {{ report.date }}.</p>
+{{ for w in widgets }}<h3 style="margin:24px 0 8px 0;font-size:17px;">{{ w.title }}</h3>
+{{ if w.error != "" }}<p style="color:#d32f2f;">{{ w.error }}</p>
+{{ else if w.kpi }}<p style="margin:0;font-size:30px;font-weight:600;color:{{ w.color }};">{{ w.symbol }} {{ w.value }}</p>{{ if w.band != "" }}<p style="margin:2px 0 0 0;font-weight:600;color:{{ w.color }};">{{ w.band }}</p>{{ end }}
+{{ else }}<table role="presentation" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:14px;">
+<tr>{{ for h in w.headers }}<th align="left" style="border-bottom:1px solid #16140f;">{{ h }}</th>{{ end }}</tr>
+{{ for r in w.rows }}<tr>{{ for c in r }}<td style="border-bottom:1px solid #d6cfbf;">{{ c }}</td>{{ end }}</tr>
+{{ end }}</table>{{ if w.more }}<p style="font-size:13px;color:#4a463d;">São mostradas apenas as primeiras linhas; abra o relatório para ver todas.</p>{{ end }}
+{{ end }}{{ end }}
+{{ if attachment }}<p>O ficheiro Excel em anexo contém os dados de cada widget.</p>{{ end }}
+<p style="font-size:12px;color:#4a463d;">Recebe este e-mail porque subscreveu o relatório. <a href="{{ unsubscribe_link }}" style="color:#4a463d;">Terminar a subscrição</a></p>

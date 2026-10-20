@@ -2,6 +2,7 @@
 
 <ReportStyles />
 <PageHeader Title="Reports" Description="Dashboards over the data of the app: arrange widgets, filter them together and share them with your team.">
+    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.ForwardToInbox" Class="mr-2" Href="reports/subscriptions" data-testid="report-subscriptions">@L["Subscriptions"]</MudButton>
     <PermissionGate Permission="@ReportPermissions.Manage">
         <MudFileUpload T="IBrowserFile" Accept=".json" FilesChanged="ImportAsync" data-testid="report-import">
             <CustomContent Context="upload">

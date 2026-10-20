@@ -19,7 +19,7 @@ public sealed class BffOptions
     public string? AuthorizationEndpoint { get; set; }
 
     /// <summary>API paths whose unsafe requests are authorized by their own token instead of the session cookie (plain HTML forms in mails), so they need no X-CSRF header.</summary>
-    public List<string> CsrfExemptPaths { get; set; } = ["/api/v1/mail/unsubscribe"];
+    public List<string> CsrfExemptPaths { get; set; } = ["/api/v1/mail/unsubscribe", "/api/v1/reports/subscriptions/unsubscribe"];
 
     /// <summary>Name of the session cookie; browsers send cookies to every port of a host, so a second client on the same host needs its own.</summary>
     public string? CookieName { get; set; }

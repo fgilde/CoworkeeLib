@@ -152,6 +152,28 @@ public sealed class MailTransportTests
         error.Message.ShouldBe("Mailgun rejected the mail with 401 Unauthorized: echo ***");
     }
 
+    [Fact]
+    public async Task Http_providers_send_the_files_base64_or_as_form_parts()
+    {
+        var mail = new MailEnvelope("noreply@acme.test", "ada@acme.test", "Hello", "<p>Hi</p>", [new MailAttachment("Sales.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", [1, 2, 3])]);
+        var key = new Dictionary<string, string?> { [MailSettings.ApiKey] = "k", [MailSettings.MailgunDomain] = "mg.acme.test" };
+
+        var sendGrid = new FakeHttp(HttpStatusCode.Accepted, string.Empty);
+        await new SendGridMailTransport(sendGrid).SendAsync(mail, new MailConnection(MailProviders.SendGrid, key), Ct);
+        var attachment = JsonDocument.Parse(sendGrid.Body).RootElement.GetProperty("attachments")[0];
+        attachment.GetProperty("filename").GetString().ShouldBe("Sales.xlsx");
+        attachment.GetProperty("content").GetString().ShouldBe(Convert.ToBase64String([1, 2, 3]));
+
+        var mailchimp = new FakeHttp(HttpStatusCode.OK, """[{"email":"ada@acme.test","status":"sent"}]""");
+        await new MailchimpMailTransport(mailchimp).SendAsync(mail, new MailConnection(MailProviders.Mailchimp, key), Ct);
+        JsonDocument.Parse(mailchimp.Body).RootElement.GetProperty("message").GetProperty("attachments")[0].GetProperty("name").GetString().ShouldBe("Sales.xlsx");
+
+        var mailgun = new FakeHttp(HttpStatusCode.OK, "{}");
+        await new MailgunMailTransport(mailgun).SendAsync(mail, new MailConnection(MailProviders.Mailgun, key), Ct);
+        mailgun.ContentType.ShouldBe("multipart/form-data");
+        mailgun.Body.ShouldContain("filename=Sales.xlsx");
+    }
+
     private sealed class FakeHttp(HttpStatusCode status, string response) : HttpMessageHandler, IHttpClientFactory
     {
         public string Url { get; private set; } = string.Empty;

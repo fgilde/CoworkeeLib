@@ -15,6 +15,16 @@ public interface IMailSender
 
     Task<Guid> QueueAsync(string to, string template, object model, string? culture, CancellationToken cancellationToken) =>
         QueueAsync(to, template, model, culture, null, cancellationToken);
+
+    /// <summary>A mail with files attached (together at most <see cref="MailAttachment.MaxTotalBytes"/>); they stay with the mail until the mail log is cleaned up.</summary>
+    Task<Guid> QueueWithAttachmentsAsync(string to, string template, object model, string? culture, IReadOnlyList<MailAttachment> attachments, CancellationToken cancellationToken) =>
+        throw new NotSupportedException($"{GetType().Name} sends no attachments.");
+}
+
+/// <summary>A file sent with a mail.</summary>
+public sealed record MailAttachment(string FileName, string ContentType, byte[] Content)
+{
+    public const int MaxTotalBytes = 10 * 1024 * 1024;
 }
 
 internal sealed class MailSender(CoworkeeDbContext db, IMailTemplateRenderer renderer, ICurrentUser currentUser, TimeProvider clock) : IMailSender
@@ -25,6 +35,18 @@ internal sealed class MailSender(CoworkeeDbContext db, IMailTemplateRenderer ren
         var mail = OutgoingMail.Queue(to, rendered, template, currentUser.TenantId, clock.GetUtcNow(), campaignId);
         db.Add(mail);
         return mail.Id;
+    }
+
+    public async Task<Guid> QueueWithAttachmentsAsync(string to, string template, object model, string? culture, IReadOnlyList<MailAttachment> attachments, CancellationToken cancellationToken)
+    {
+        if (attachments.Sum(a => (long)a.Content.Length) > MailAttachment.MaxTotalBytes)
+        {
+            throw new ArgumentException($"The attachments of a mail are at most {MailAttachment.MaxTotalBytes / 1024 / 1024} MB together.", nameof(attachments));
+        }
+
+        var id = await QueueAsync(to, template, model, culture, null, cancellationToken);
+        db.AddRange(attachments.Select(a => new OutgoingMailAttachment { MailId = id, FileName = a.FileName, ContentType = a.ContentType, Content = a.Content }));
+        return id;
     }
 }
 
@@ -54,7 +76,10 @@ internal sealed class MailCampaignScheduledHandler(IBackgroundJobs jobs, TimePro
     }
 }
 
-public sealed record MailEnvelope(string From, string To, string Subject, string HtmlBody);
+public sealed record MailEnvelope(string From, string To, string Subject, string HtmlBody, IReadOnlyList<MailAttachment>? Attachments = null)
+{
+    public IReadOnlyList<MailAttachment> Files => Attachments ?? [];
+}
 
 public sealed record MailConnection(string Provider, IReadOnlyDictionary<string, string?> Values)
 {
@@ -98,7 +123,9 @@ internal sealed class SendMailJob(CoworkeeDbContext db, MailConnectionResolver r
 
             var transport = transports.FirstOrDefault(t => t.Provider == connection.Provider)
                 ?? throw new InvalidOperationException($"No mail transport is registered for provider '{connection.Provider}'.");
-            await transport.SendAsync(new MailEnvelope(connection[MailSettings.From] ?? "noreply@localhost", mail.To, mail.Subject, mail.HtmlBody), connection, cancellationToken);
+            var attachments = await db.Set<OutgoingMailAttachment>().AsNoTracking().Where(a => a.MailId == mail.Id).OrderBy(a => a.FileName)
+                .Select(a => new MailAttachment(a.FileName, a.ContentType, a.Content)).ToListAsync(cancellationToken);
+            await transport.SendAsync(new MailEnvelope(connection[MailSettings.From] ?? "noreply@localhost", mail.To, mail.Subject, mail.HtmlBody, attachments), connection, cancellationToken);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {

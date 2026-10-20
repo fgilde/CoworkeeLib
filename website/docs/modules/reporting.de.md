@@ -203,7 +203,7 @@ new ReportWidget
 | Pivot | die Zellen, mit dem Symbol des Bands |
 | Tabelle | die Zellen der Zahlenspalte `ThresholdColumn`, mit dem Symbol des Bands |
 
-Farbe ist nie das einzige Zeichen: jedes Band zeigt ein Symbol (Haken, Warnung, Fehler, Info) und seine Bezeichnung als Text oder Tooltip. *Bänder aus dem Ziel* legt drei Bänder aus dem `Target` des Widgets und *Höher ist besser* an: unter 80 % / nahe / im Ziel, bei niedriger ist besser im Ziel / bis 120 % / darüber.
+Farbe ist nie das einzige Zeichen: jedes Band zeigt ein Symbol (Haken, Warnung, Fehler, Info) und seine Bezeichnung als Text oder Tooltip. Auch die Mails von Abos zeigen die Bänder der Kennzahlen, mit ✓, !, ✕ oder i vor dem Wert. *Bänder aus dem Ziel* legt drei Bänder aus dem `Target` des Widgets und *Höher ist besser* an: unter 80 % / nahe / im Ziel, bei niedriger ist besser im Ziel / bis 120 % / darüber.
 
 ## Einen Bericht mit KI erstellen
 
@@ -232,8 +232,26 @@ Die Zeilen eines Widgets grenzen in dieser Reihenfolge ein: seine eigenen Query-
 | `Reports.Manage` | Berichte anlegen, eigene ändern und löschen, jeden sichtbaren duplizieren |
 | `Reports.Share` | mit Rollen oder der Organisation teilen |
 | `Reports.Dashboard` | das Dashboard der Organisation wählen |
+| `Reports.Subscriptions` | die Berichtsabos der Organisation sehen und beenden |
 
 Ein Bericht ist *privat*, mit *Rollen* geteilt (Inhaber einer davon, direkt oder über Gruppen) oder mit der *Organisation*. Nur der Besitzer ändert ihn; andere duplizieren ihn in eine private Kopie. Eine Änderung erreicht über den [Realtime-Hub](realtime.md) jeden, der den Bericht geöffnet hat.
+
+## Abos per Mail
+
+*Per Mail abonnieren* (Briefumschlag-Symbol) an einem Bericht schickt ihn nach Plan: jeden Tag, jede Woche an einem Wochentag oder jeden Monat an einem Tag (kürzere Monate nehmen ihren letzten Tag), zu einer Uhrzeit einer Zeitzone (IANA-Ids wie `Europe/Berlin`; die Zeit folgt der Sommerzeit, eine übersprungene Uhrzeit läuft direkt nach der Lücke, eine doppelte beim ersten Mal). Der Dialog kann den Zeitraum des Berichts ersetzen (z. B. *Letzter Monat* für eine monatliche Mail) und die gerade gewählten Facetten übernehmen; der Excel-Anhang lässt sich abschalten.
+
+Die Mail (Vorlage `Reports.Subscription`, in jeder mitgelieferten Sprache, bearbeitbar unter *Mail-Vorlagen*) zeigt jede Kennzahl mit Wert, Schwellenwert-Farbe, Zeichen und Bezeichnung und die ersten zehn Zeilen jedes Diagramms, Pivots und jeder Tabelle, mit einem Link zum Bericht. Die angehängte Arbeitsmappe hat ein Blatt je Widget mit allen Zeilen (Tabellen bis 1.000), geschrieben wie *Excel exportieren*. Bilder der Widgets oder ein PDF werden auf dem Server nicht erzeugt.
+
+Der wiederkehrende Job `coworkee-report-subscriptions` (alle fünf Minuten, `Coworkee:Reporting:SubscriptionCron`) führt die fälligen Abos Organisation für Organisation aus, jedes **als der Abonnent**: der Bericht muss ihm noch freigegeben sein, und seine Berechtigungen, geschützten Felder und Zeilenfilter bestimmen, was die Mail zeigt. Steht etwas im Weg (Bericht nicht mehr freigegeben, keine aktive Mail-Adresse, `Reports.View` entzogen), wird nichts gesendet und das Abo zeigt den Grund; der nächste Lauf versucht es erneut. Für ihre Links brauchen die Mails `Coworkee:Notifications:PublicAppUrl`.
+
+Jede Mail endet mit einem Link, der das Abo ohne Anmeldung beendet (ein geschütztes Token; das Öffnen fragt zuerst, die Bestätigung schickt ein Formular). *Berichte › Abos* (`reports/subscriptions`) listet die Abos des Benutzers mit Plan, nächster und letzter Mail und dem letzten Fehler, zum Ändern, sofort Senden oder Beenden. Inhaber von `Reports.Subscriptions` wechseln zu *Alle in der Organisation* und sehen und beenden alle. Gesendete Mails samt Anhängen gehören zum Mail-Log und folgen dessen Aufbewahrung.
+
+| Endpunkt | |
+|---|---|
+| `GET /api/v1/reports/subscriptions`, `GET /api/v1/reports/subscriptions/all` | die Abos des Benutzers, die der Organisation (`Reports.Subscriptions`) |
+| `POST /api/v1/reports/subscriptions`, `PUT …/{id}`, `DELETE …/{id}` | abonnieren, ändern, beenden (fremde mit `Reports.Subscriptions`) |
+| `POST /api/v1/reports/subscriptions/{id}/send` | jetzt senden, der Plan bleibt |
+| `GET`/`POST /api/v1/reports/subscriptions/unsubscribe` | die Abmeldeseite des Mail-Links (anonym, ohne `X-CSRF`) |
 
 ## Ein Bericht als Dashboard
 

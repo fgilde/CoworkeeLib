@@ -39,4 +39,16 @@ public interface IReportsApi
 
     /// <summary>A definition the app's AI model built from the prompt (or from the current one), checked but not saved.</summary>
     Task<ReportDefinition> GenerateAsync(GenerateReportRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>The signed-in user's subscriptions, or with <paramref name="all"/> those of the organisation (Reports.Subscriptions).</summary>
+    Task<IReadOnlyList<ReportSubscriptionDto>> GetSubscriptionsAsync(bool all = false, CancellationToken cancellationToken = default);
+
+    Task<ReportSubscriptionDto> SubscribeAsync(SaveReportSubscriptionRequest subscription, CancellationToken cancellationToken = default);
+
+    Task<ReportSubscriptionDto> UpdateSubscriptionAsync(Guid id, SaveReportSubscriptionRequest subscription, CancellationToken cancellationToken = default);
+
+    Task DeleteSubscriptionAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>Mails the report now, as a test; the schedule stays.</summary>
+    Task<ReportSubscriptionDto> SendSubscriptionAsync(Guid id, CancellationToken cancellationToken = default);
 }

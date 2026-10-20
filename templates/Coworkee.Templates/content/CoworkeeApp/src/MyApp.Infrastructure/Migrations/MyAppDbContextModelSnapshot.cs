@@ -1428,6 +1428,36 @@ namespace MyApp.Infrastructure.Migrations
                     b.ToTable("OutgoingMails", "cw");
                 });
 
+            modelBuilder.Entity("Coworkee.Mailing.OutgoingMailAttachment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<byte[]>("Content")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<Guid>("MailId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MailId");
+
+                    b.ToTable("OutgoingMailAttachments", "cw");
+                });
+
             modelBuilder.Entity("Coworkee.Mailing.RecipientList", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1792,6 +1822,70 @@ namespace MyApp.Infrastructure.Migrations
                     b.HasIndex("ReportId");
 
                     b.ToTable("ReportFavorites", "cw");
+                });
+
+            modelBuilder.Entity("Coworkee.Reporting.Subscriptions.ReportSubscription", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Attachment")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("DayOfMonth")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Filter")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Frequency")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset?>("LastSentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("NextRunAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ReportId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<TimeOnly>("Time")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<string>("TimeZone")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("Weekday")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NextRunAt");
+
+                    b.HasIndex("ReportId");
+
+                    b.HasIndex("TenantId", "UserId");
+
+                    b.ToTable("ReportSubscriptions", "cw");
                 });
 
             modelBuilder.Entity("Coworkee.Retention.RetentionRun", b =>
@@ -2616,6 +2710,15 @@ namespace MyApp.Infrastructure.Migrations
                     b.Navigation("Changes");
                 });
 
+            modelBuilder.Entity("Coworkee.Mailing.OutgoingMailAttachment", b =>
+                {
+                    b.HasOne("Coworkee.Mailing.OutgoingMail", null)
+                        .WithMany()
+                        .HasForeignKey("MailId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Coworkee.Reporting.DashboardReport", b =>
                 {
                     b.HasOne("Coworkee.Reporting.Report", null)
@@ -2626,6 +2729,15 @@ namespace MyApp.Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("Coworkee.Reporting.ReportFavorite", b =>
+                {
+                    b.HasOne("Coworkee.Reporting.Report", null)
+                        .WithMany()
+                        .HasForeignKey("ReportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Coworkee.Reporting.Subscriptions.ReportSubscription", b =>
                 {
                     b.HasOne("Coworkee.Reporting.Report", null)
                         .WithMany()
@@ -4176,6 +4288,36 @@ namespace MyApp.Infrastructure.Migrations
                     b.ToTable("OutgoingMails", "cw");
                 });
 
+            modelBuilder.Entity("Coworkee.Mailing.OutgoingMailAttachment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<byte[]>("Content")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<Guid>("MailId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MailId");
+
+                    b.ToTable("OutgoingMailAttachments", "cw");
+                });
+
             modelBuilder.Entity("Coworkee.Mailing.RecipientList", b =>
                 {
                     b.Property<Guid>("Id")
@@ -4540,6 +4682,70 @@ namespace MyApp.Infrastructure.Migrations
                     b.HasIndex("ReportId");
 
                     b.ToTable("ReportFavorites", "cw");
+                });
+
+            modelBuilder.Entity("Coworkee.Reporting.Subscriptions.ReportSubscription", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Attachment")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("DayOfMonth")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Filter")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Frequency")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset?>("LastSentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("NextRunAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ReportId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<TimeOnly>("Time")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<string>("TimeZone")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("Weekday")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NextRunAt");
+
+                    b.HasIndex("ReportId");
+
+                    b.HasIndex("TenantId", "UserId");
+
+                    b.ToTable("ReportSubscriptions", "cw");
                 });
 
             modelBuilder.Entity("Coworkee.Retention.RetentionRun", b =>
@@ -5158,6 +5364,15 @@ namespace MyApp.Infrastructure.Migrations
                     b.Navigation("Changes");
                 });
 
+            modelBuilder.Entity("Coworkee.Mailing.OutgoingMailAttachment", b =>
+                {
+                    b.HasOne("Coworkee.Mailing.OutgoingMail", null)
+                        .WithMany()
+                        .HasForeignKey("MailId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Coworkee.Reporting.DashboardReport", b =>
                 {
                     b.HasOne("Coworkee.Reporting.Report", null)
@@ -5168,6 +5383,15 @@ namespace MyApp.Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("Coworkee.Reporting.ReportFavorite", b =>
+                {
+                    b.HasOne("Coworkee.Reporting.Report", null)
+                        .WithMany()
+                        .HasForeignKey("ReportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Coworkee.Reporting.Subscriptions.ReportSubscription", b =>
                 {
                     b.HasOne("Coworkee.Reporting.Report", null)
                         .WithMany()

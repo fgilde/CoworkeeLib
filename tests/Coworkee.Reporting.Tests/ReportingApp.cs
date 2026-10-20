@@ -41,6 +41,7 @@ public sealed class ReportingApp : DatabaseFixture
         builder.Configuration["Coworkee:Jobs:ConnectionStringName"] = "test";
         builder.Configuration["Coworkee:Jobs:RunServer"] = "false";
         builder.Configuration["Coworkee:Database:Provider"] = Provider;
+        builder.Configuration["Coworkee:Notifications:PublicAppUrl"] = "https://app.test";
         builder.AddCoworkee<SalesReportingModule>();
         builder.Services.AddTestAuthentication();
         App = builder.Build();
@@ -122,6 +123,15 @@ internal sealed class HideHiddenRegion : IODataEntityFilter<Sale>
         Task.FromResult(query.Where(s => s.Region != "Hidden"));
 }
 
+/// <summary>A row filter that depends on the user, like a sales territory: the users in <see cref="Users"/> see the region South only.</summary>
+internal sealed class SouthOnlyFilter(ICurrentUser currentUser) : IODataEntityFilter<Sale>
+{
+    public static readonly ConcurrentDictionary<Guid, bool> Users = new();
+
+    public Task<IQueryable<Sale>> ApplyAsync(IQueryable<Sale> query, CancellationToken cancellationToken) =>
+        Task.FromResult(currentUser.UserId is { } id && Users.ContainsKey(id) ? query.Where(s => s.Region == "South") : query);
+}
+
 [DependsOn(typeof(CoworkeeReportingModule))]
 public sealed class SalesReportingModule : CoworkeeModule
 {
@@ -134,6 +144,7 @@ public sealed class SalesReportingModule : CoworkeeModule
         context.Services.AddODataEntity<Sale>("Sales", ReportingApp.ViewSales, o => o.Hide(s => s.Secret).HideUnless(s => s.Quantity, ReportingApp.SeeQuantities));
         context.Services.AddODataEntity<Shopper>("Shoppers", ReportingApp.ViewShoppers);
         context.Services.AddScoped<IODataEntityFilter<Sale>, HideHiddenRegion>();
+        context.Services.AddScoped<IODataEntityFilter<Sale>, SouthOnlyFilter>();
         context.Services.AddSingleton<FakeAi>();
         context.Services.AddSingleton<Coworkee.Application.Ai.IAiTextGenerator>(provider => provider.GetRequiredService<FakeAi>());
         context.Services.AddReportSource<MonthlyNumber>("MonthlyNumbers", "Monthly numbers", MonthlyNumbers.ViewNumbers, MonthlyNumbers.RowsAsync);

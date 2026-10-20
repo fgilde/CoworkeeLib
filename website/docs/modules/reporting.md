@@ -203,7 +203,7 @@ new ReportWidget
 | Pivot | the cells, with the band's icon |
 | Table | the cells of the number column `ThresholdColumn`, with the band's icon |
 
-Colour is never the only sign: every band shows an icon (check, warning, error, info) and its label as text or tooltip. *Bands from the target* builds three bands from the widget's `Target` and *Higher is better*: below 80 % / near / on target, or for lower is better on target / up to 120 % / above.
+Colour is never the only sign: every band shows an icon (check, warning, error, info) and its label as text or tooltip. Subscription mails show the bands of KPIs too, with ✓, !, ✕ or i before the value. *Bands from the target* builds three bands from the widget's `Target` and *Higher is better*: below 80 % / near / on target, or for lower is better on target / up to 120 % / above.
 
 ## Create a report with AI
 
@@ -232,8 +232,26 @@ A widget's rows are narrowed by, in this order: its own query builder rules and 
 | `Reports.Manage` | create reports, change and delete your own, duplicate any you can open |
 | `Reports.Share` | share with roles or the organisation |
 | `Reports.Dashboard` | choose the organisation's dashboard |
+| `Reports.Subscriptions` | see and end the report subscriptions of the organisation |
 
 A report is *private*, shared with *roles* (holders of one of them, directly or through groups) or with the *organisation*. Only the owner changes it; others duplicate it into a private copy. A change reaches everyone who has the report open, over the [realtime hub](realtime.md).
+
+## Subscriptions by mail
+
+*Subscribe by mail* (envelope icon) on a report mails it on a schedule: every day, every week on a weekday or every month on a day (shorter months take their last day), at a time of a time zone (IANA ids like `Europe/Berlin`; the time follows summer time, a time the clock skips runs right after the gap, a time that happens twice runs the first time). The dialog can replace the report's date range (e.g. *Last month* for a monthly mail) and use the facets chosen at the moment; the Excel attachment can be switched off.
+
+The mail (template `Reports.Subscription`, in every shipped language, editable under *Mail templates*) shows each KPI with its value, threshold colour, sign and label, and the first ten rows of every chart, pivot and table, with a link to the report. The attached workbook has one sheet per widget with all its rows (tables up to 1,000), written like *Export Excel*. Images of the widgets or a PDF are not rendered on the server.
+
+The recurring job `coworkee-report-subscriptions` (every five minutes, `Coworkee:Reporting:SubscriptionCron`) runs the due subscriptions organisation by organisation, each **as the subscriber**: the report must still be shared with them, and their permissions, protected fields and row filters decide what the mail shows. When something is in the way (report no longer shared, no active mail address, `Reports.View` gone) nothing is sent and the subscription shows the reason; the next run tries again. Mails need `Coworkee:Notifications:PublicAppUrl` for their links.
+
+Every mail ends with a link that ends the subscription without signing in (a protected token; opening it asks first, the confirm button posts). *Reports › Subscriptions* (`reports/subscriptions`) lists the user's subscriptions with schedule, next and last mail and the last error, to edit, send now or end them. Holders of `Reports.Subscriptions` switch to *Everybody in the organisation* to see and end all of them. Sent mails and their attachments are part of the mail log and go with its retention.
+
+| Endpoint | |
+|---|---|
+| `GET /api/v1/reports/subscriptions`, `GET /api/v1/reports/subscriptions/all` | the user's subscriptions, those of the organisation (`Reports.Subscriptions`) |
+| `POST /api/v1/reports/subscriptions`, `PUT …/{id}`, `DELETE …/{id}` | subscribe, change, end (others' with `Reports.Subscriptions`) |
+| `POST /api/v1/reports/subscriptions/{id}/send` | mail it now, the schedule stays |
+| `GET`/`POST /api/v1/reports/subscriptions/unsubscribe` | the unsubscribe page of the mail link (anonymous, needs no `X-CSRF`) |
 
 ## A report as dashboard
 

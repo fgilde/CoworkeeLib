@@ -25,6 +25,19 @@ internal sealed class ReportModelContributor : IModelContributor
             favorite.HasOne<Report>().WithMany().HasForeignKey(f => f.ReportId).OnDelete(DeleteBehavior.Cascade);
         });
 
+        modelBuilder.Entity<Subscriptions.ReportSubscription>(subscription =>
+        {
+            subscription.ToTable("ReportSubscriptions", "cw");
+            subscription.Ignore(s => s.Schedule);
+            subscription.Property(s => s.Frequency).HasConversion<string>().HasMaxLength(20);
+            subscription.Property(s => s.TimeZone).HasMaxLength(100);
+            subscription.Property(s => s.Filter).HasColumnType("jsonb");
+            subscription.Property(s => s.LastError).HasMaxLength(2000);
+            subscription.HasIndex(s => s.NextRunAt);
+            subscription.HasIndex(s => new { s.TenantId, s.UserId });
+            subscription.HasOne<Report>().WithMany().HasForeignKey(s => s.ReportId).OnDelete(DeleteBehavior.Cascade);
+        });
+
         modelBuilder.Entity<DashboardReport>(dashboard =>
         {
             dashboard.ToTable("DashboardReports", "cw");

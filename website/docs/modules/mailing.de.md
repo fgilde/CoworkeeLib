@@ -113,7 +113,7 @@ public interface IMailTransport
 }
 ```
 
-`MailEnvelope` enthält `From`, `To`, `Subject` und `HtmlBody`; `MailConnection` den Namen des Anbieters und die ermittelten Werte nach Einstellungsname (`connection[MailSettings.ApiKey]`, null, wenn leer). Eine Ausnahme lässt die Mail scheitern, der Job wiederholt sie. Ein Transport mit eigenem Namen ist ein neuer Anbieter. Dieser schreibt Mails ins Log, was in Tests praktisch ist:
+`MailEnvelope` enthält `From`, `To`, `Subject`, `HtmlBody` und die angehängten `Files` (`MailAttachment`: Dateiname, Inhaltstyp, Bytes; eingereiht mit `IMailSender.QueueWithAttachmentsAsync`, höchstens 10 MB je Mail, mit der Mail in `cw.OutgoingMailAttachments` gespeichert; die vier eingebauten Anbieter senden sie); `MailConnection` den Namen des Anbieters und die ermittelten Werte nach Einstellungsname (`connection[MailSettings.ApiKey]`, null, wenn leer). Eine Ausnahme lässt die Mail scheitern, der Job wiederholt sie. Ein Transport mit eigenem Namen ist ein neuer Anbieter. Dieser schreibt Mails ins Log, was in Tests praktisch ist:
 
 ```csharp
 using Coworkee.Mailing;

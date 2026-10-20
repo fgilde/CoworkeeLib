@@ -12,7 +12,13 @@ internal sealed class SmtpMailTransport : IMailTransport
 
     public async Task SendAsync(MailEnvelope mail, MailConnection connection, CancellationToken cancellationToken)
     {
-        var message = new MimeMessage { Subject = mail.Subject, Body = new BodyBuilder { HtmlBody = mail.HtmlBody }.ToMessageBody() };
+        var body = new BodyBuilder { HtmlBody = mail.HtmlBody };
+        foreach (var file in mail.Files)
+        {
+            body.Attachments.Add(file.FileName, file.Content, ContentType.Parse(file.ContentType));
+        }
+
+        var message = new MimeMessage { Subject = mail.Subject, Body = body.ToMessageBody() };
         message.From.Add(MailboxAddress.Parse(mail.From));
         message.To.Add(MailboxAddress.Parse(mail.To));
 

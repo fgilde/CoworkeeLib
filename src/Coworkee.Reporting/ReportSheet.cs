@@ -9,10 +9,36 @@ internal static class ReportSheet
     public const string ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
     public const int MaxRows = 100_000;
 
-    public static byte[] Write(ReportSheetRequest request)
+    public static byte[] Write(ReportSheetRequest request) => Write([request]);
+
+    /// <summary>One worksheet per table, e.g. one per widget of a report.</summary>
+    public static byte[] Write(IReadOnlyList<ReportSheetRequest> requests)
     {
         using var workbook = new XLWorkbook();
-        var sheet = workbook.AddWorksheet(SheetName(request.Name));
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var request in requests)
+        {
+            var name = SheetName(request.Name);
+            for (var i = 2; !names.Add(name); i++)
+            {
+                name = $"{SheetName(request.Name)[..Math.Min(26, SheetName(request.Name).Length)]} ({i})";
+            }
+
+            Fill(workbook.AddWorksheet(name), request);
+        }
+
+        if (requests.Count == 0)
+        {
+            workbook.AddWorksheet("Report");
+        }
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
+    }
+
+    private static void Fill(IXLWorksheet sheet, ReportSheetRequest request)
+    {
         for (var column = 0; column < request.Headers.Count; column++)
         {
             sheet.Cell(1, column + 1).Value = request.Headers[column];
@@ -30,9 +56,6 @@ internal static class ReportSheet
         sheet.SheetView.FreezeRows(1);
         sheet.RangeUsed()?.SetAutoFilter();
         sheet.Columns().AdjustToContents();
-        using var stream = new MemoryStream();
-        workbook.SaveAs(stream);
-        return stream.ToArray();
     }
 
     private static XLCellValue Cell(JsonElement value) => value.ValueKind switch

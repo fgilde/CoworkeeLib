@@ -24,6 +24,7 @@ internal sealed class MailchimpMailTransport(IHttpClientFactory httpClients) : I
                     from_email = address,
                     from_name = name,
                     to = new[] { new { email = mail.To, type = "to" } },
+                    attachments = mail.Files.Count == 0 ? null : mail.Files.Select(f => new { type = f.ContentType, name = f.FileName, content = Convert.ToBase64String(f.Content) }).ToArray(),
                 },
             }, options: MailHttp.Json),
         };

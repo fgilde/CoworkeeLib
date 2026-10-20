@@ -20,6 +20,7 @@ internal sealed class SendGridMailTransport(IHttpClientFactory httpClients) : IM
                 from = new { email = address, name },
                 subject = mail.Subject,
                 content = new[] { new { type = "text/html", value = mail.HtmlBody } },
+                attachments = mail.Files.Count == 0 ? null : mail.Files.Select(f => new { content = Convert.ToBase64String(f.Content), filename = f.FileName, type = f.ContentType, disposition = "attachment" }).ToArray(),
             }, options: MailHttp.Json),
         };
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);

@@ -1,0 +1,49 @@
+<MudDialog Class="@MudBlazor.Extensions.Helper.MudExCss.Classes.Dialog.Initial">
+    <DialogContent>
+        <MudStack Spacing="3" Class="pt-2" data-testid="report-subscription">
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["The report comes by mail as you see it: its numbers in the mail, the data of every widget as Excel file."]</MudText>
+            <MudSelect T="SubscriptionFrequency" @bind-Value="_frequency" Label="@L["How often"]" Variant="Variant.Outlined" data-testid="subscription-frequency">
+                <MudSelectItem Value="SubscriptionFrequency.Daily">@L["Every day"]</MudSelectItem>
+                <MudSelectItem Value="SubscriptionFrequency.Weekly">@L["Every week"]</MudSelectItem>
+                <MudSelectItem Value="SubscriptionFrequency.Monthly">@L["Every month"]</MudSelectItem>
+            </MudSelect>
+            @if (_frequency == SubscriptionFrequency.Weekly)
+            {
+                <MudSelect T="DayOfWeek" @bind-Value="_weekday" Label="@L["Weekday"]" Variant="Variant.Outlined" data-testid="subscription-weekday">
+                    @foreach (var day in Weekdays)
+                    {
+                        <MudSelectItem Value="day">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(day)</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+            @if (_frequency == SubscriptionFrequency.Monthly)
+            {
+                <MudNumericField T="int" @bind-Value="_dayOfMonth" Min="1" Max="31" Label="@L["Day of the month"]" HelperText="@L["Shorter months take their last day."]" Variant="Variant.Outlined" />
+            }
+            <div class="cw-settings-row">
+                <MudTimePicker @bind-Time="_time" Label="@L["Time"]" Variant="Variant.Outlined" AmPm="false" data-testid="subscription-time" />
+                <MudAutocomplete T="string" @bind-Value="_timeZone" SearchFunc="SearchZones" Label="@L["Time zone"]" Variant="Variant.Outlined" MaxItems="50" CoerceValue="false" Strict="true"
+                                 data-testid="subscription-zone" />
+            </div>
+            <MudSelect T="DateRangePreset?" @bind-Value="_range" Label="@L["Date range in the mail"]" Variant="Variant.Outlined" Clearable="true" Placeholder="@L["As in the report"]">
+                @foreach (var preset in Enum.GetValues<DateRangePreset>().Where(p => p != DateRangePreset.Custom))
+                {
+                    <MudSelectItem T="DateRangePreset?" Value="preset">@L[ReportFormat.Humanize(preset.ToString())]</MudSelectItem>
+                }
+            </MudSelect>
+            @if (_filters.Count > 0)
+            {
+                <MudSwitch T="bool" @bind-Value="_useFilters" Color="Color.Primary" Label="@L["Use the filters chosen now"]" />
+            }
+            <MudSwitch T="bool" @bind-Value="_attachment" Color="Color.Primary" Label="@L["Attach the data as Excel file"]" />
+            @if (Next is { } next)
+            {
+                <MudText Typo="Typo.caption" data-testid="subscription-next">@L["Next mail: {0}", next.ToLocalTime().ToString("f", System.Globalization.CultureInfo.CurrentCulture)]</MudText>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog.Cancel()">@L["Cancel"]</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Outlined.MarkEmailRead" Disabled="Next is null" OnClick="Save" data-testid="subscription-save">@L[Existing is null ? "Subscribe" : "Save"]</MudButton>
+    </DialogActions>
+</MudDialog>
