@@ -43,6 +43,9 @@ public abstract class EntityWorkflow(string entityType)
 
     internal abstract Task<object?> FindAsync(CoworkeeDbContext db, Guid id, CancellationToken cancellationToken);
 
+    /// <summary>The entity when the current unit of work added it and has not saved it yet.</summary>
+    internal abstract object? FindAdded(CoworkeeDbContext db, Guid id);
+
     /// <summary>Whether the current user sees the entity the way its OData set shows it: set permission, tenant, soft delete and row filters.</summary>
     internal abstract Task<bool> VisibleAsync(IServiceProvider services, Guid id, CancellationToken cancellationToken);
 
@@ -133,6 +136,9 @@ public sealed class EntityWorkflow<TEntity>(string entityType) : EntityWorkflow(
 
     internal override async Task<object?> FindAsync(CoworkeeDbContext db, Guid id, CancellationToken cancellationToken) =>
         await _load(db.Set<TEntity>()).FirstOrDefaultAsync(e => EF.Property<Guid>(e, "Id") == id, cancellationToken);
+
+    internal override object? FindAdded(CoworkeeDbContext db, Guid id) =>
+        db.ChangeTracker.Entries<TEntity>().FirstOrDefault(e => e.State == EntityState.Added && e.Property("Id").CurrentValue is Guid key && key == id)?.Entity;
 
     internal override async Task<bool> VisibleAsync(IServiceProvider services, Guid id, CancellationToken cancellationToken) =>
         await ODataEntityAccess.IsGrantedAsync(services, typeof(TEntity), cancellationToken)

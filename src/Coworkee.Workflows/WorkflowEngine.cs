@@ -31,12 +31,20 @@ public sealed class WorkflowEngine(
 
     public static readonly Error Forbidden = Error.Forbidden("workflows.forbidden", "You may not run this transition.");
 
-    /// <summary>The entity with its workflow; <see cref="NotFound"/> also when the current user may not see it.</summary>
+    /// <summary>
+    /// The entity with its workflow; <see cref="NotFound"/> also when the current user may not see it.
+    /// An entity the current unit of work added and has not saved yet is taken from the change tracker without the visibility check (the command that added it decided),
+    /// so a command can add an entity and run its first transition in one SaveChanges.
+    /// </summary>
     public async Task<Result<WorkflowSubject>> LoadAsync(string entityType, Guid entityId, CancellationToken cancellationToken, WorkflowAccess access = WorkflowAccess.See)
     {
-        if (options.For(entityType) is not { } workflow
-            || !await MaySeeAsync(workflow, entityId, access, cancellationToken)
-            || await workflow.FindAsync(db, entityId, cancellationToken) is not { } entity)
+        if (options.For(entityType) is not { } workflow)
+        {
+            return NotFound;
+        }
+
+        var entity = workflow.FindAdded(db, entityId);
+        if (entity is null && (!await MaySeeAsync(workflow, entityId, access, cancellationToken) || (entity = await workflow.FindAsync(db, entityId, cancellationToken)) is null))
         {
             return NotFound;
         }

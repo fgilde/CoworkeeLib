@@ -35,6 +35,14 @@ public sealed class MyAppCatalogModule : CoworkeeModule
 
 Angeboten werden nur Übergänge, deren Bedingungen erfüllt sind, und der Server prüft sie beim Ausführen noch einmal.
 
+Aus einem eigenen Command führen `WorkflowEngine.LoadAsync(entityType, id, ct)` und `RunAsync(subject, transition, comment, ct)` einen Übergang aus. Eine Entität, die der Command gerade hinzugefügt hat (noch nicht gespeichert), wird im Change Tracker gefunden, so legt ein Command einen Datensatz an und führt seinen ersten Übergang in einer Unit of Work aus: Datensatz, Workflow-Zeile, Historie und Genehmigung werden zusammen gespeichert, ein abgelehnter Übergang speichert nichts davon. Eine solche neue Entität überspringt die Sichtbarkeitsprüfung ihres OData-Sets, denn der Command, der sie hinzugefügt hat, hat schon entschieden.
+
+```csharp
+db.Add(leave);
+var subject = await workflows.LoadAsync(LeaveStates.EntityType, leave.Id, ct);
+var submitted = await workflows.RunAsync(subject.Value, LeaveStates.Submit, null, ct);
+```
+
 ## Genehmigungen
 
 Ein Zustand mit `Approval(approved, rejected, ...)` fordert beim Betreten eine Genehmigung an:

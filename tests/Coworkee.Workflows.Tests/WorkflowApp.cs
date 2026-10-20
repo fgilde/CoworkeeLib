@@ -1,11 +1,13 @@
 using System.Collections.Concurrent;
 using System.Net.Http.Json;
 using Coworkee.Application.Authorization;
+using Coworkee.Application.Messaging;
 using Coworkee.AspNetCore;
 using Coworkee.BackgroundJobs;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Realtime;
 using Coworkee.Core.Modularity;
+using Coworkee.Core.Results;
 using Coworkee.Core.Security;
 using Coworkee.Domain;
 using Coworkee.Identity;
@@ -118,6 +120,13 @@ public sealed class WorkflowApp : DatabaseFixture
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
         await using var scope = App.Services.CreateAsyncScope();
         return await scope.ServiceProvider.GetRequiredService<WorkflowTestDbContext>().Set<Expense>().IgnoreQueryFilters().AsNoTracking().SingleAsync(e => e.Id == id);
+    }
+
+    public async Task<List<Expense>> ExpensesAsync()
+    {
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
+        await using var scope = App.Services.CreateAsyncScope();
+        return await scope.ServiceProvider.GetRequiredService<WorkflowTestDbContext>().Set<Expense>().IgnoreQueryFilters().AsNoTracking().ToListAsync();
     }
 
     public async Task<List<Notification>> NotificationsAsync()
@@ -252,6 +261,7 @@ public sealed class TestWorkflowModule : CoworkeeModule
                 e.Transition("Submit", "Draft", "Review");
                 e.State("Review").Approval("Approved", "Rejected", a => a.UsersFrom(c => Task.FromResult<IReadOnlyList<Guid>>([Guid.Parse(((Expense)c.Entity).Title)])));
             }));
+        context.Services.AddScoped<IHandler<AddSubmittedExpense, Result<Guid>>, AddSubmittedExpenseHandler>();
         context.Services.AddODataEntity<Ticket>("Tickets");
         context.Services.AddODataEntity<Expense>("Expenses");
         context.Services.AddScoped<IODataEntityFilter<Expense>, SecretExpenses>();
