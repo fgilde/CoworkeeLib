@@ -22,7 +22,7 @@
                     @(approval.RequiresAll ? L["Waiting for the approval of everyone listed."] : L["Waiting for the approval of one of the people listed."])
                     @if (approval.DueAt is { } due)
                     {
-                        <span class="@(due < DateTimeOffset.UtcNow ? "mud-error-text" : null)"> @L["Due {0}", due.ToLocalTime().ToString("g")]</span>
+                        <span class="@(due < DateTimeOffset.UtcNow ? "ms-1 mud-error-text" : "ms-1")" data-testid="workflow-due">@L["Due {0}", due.ToLocalTime().ToString("g")]</span>
                     }
                 </MudText>
                 <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" Class="mt-1">
