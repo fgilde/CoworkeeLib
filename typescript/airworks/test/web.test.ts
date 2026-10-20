@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { Coworkee, CoworkeeApp } from '../src/coworkee.ts';
-import { mailTemplateEditorApp, recordPage, themeEditorApp, workflowDesignerApp } from '../src/index.ts';
+import { embedApp, mailTemplateEditorApp, recordPage, themeEditorApp, workflowDesignerApp } from '../src/index.ts';
 
 const fake = (appUrl: string | null, hits: unknown[] = []) => {
   const requests: string[] = [];
@@ -47,4 +47,6 @@ test('the launcher heading is launcherGroup, Administration for the sections of 
   assert.deepEqual(launcherApp({ ...base, group: 'Identity' }, t), { id: 'a', title: 'A', icon: 'a.png', group: '~Administration' });
   assert.equal(launcherApp({ ...base, group: 'Identity', launcherGroup: 'People' }, t).group, 'People');
   assert.equal('group' in launcherApp(base, t), false);
+  const [page] = list(embedApp({ id: 'hr.time', title: 'My time', path: '/time', launcherGroup: 'Time', shortcut: false })(fake('https://app.test').coworkee));
+  assert.deepEqual([page.launcherGroup, page.shortcut, launcherApp(page, t).group], ['Time', false, 'Time']);
 });

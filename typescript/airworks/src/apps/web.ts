@@ -28,11 +28,11 @@ function frame(coworkee: Coworkee, host: HTMLElement, path: string, title: strin
 export const embedApp = (options: EmbedOptions) =>
   (coworkee: Coworkee): CoworkeeApp[] => coworkee.user.appUrl ? [{
     id: options.id, title: coworkee.t(options.title), icon: options.icon ?? icons.web, accent: options.accent ?? '#35496b',
-    width: options.width ?? 1100, height: options.height ?? 700, requiredPermissions: options.requiredPermissions, group: options.group,
+    width: options.width ?? 1100, height: options.height ?? 700, requiredPermissions: options.requiredPermissions, group: options.group, launcherGroup: options.launcherGroup, shortcut: options.shortcut,
     render: ({ host }: AppContext) => frame(coworkee, host, options.path, coworkee.t(options.title)),
   }] : [];
 
-export type EmbedOptions = { id: string; title: string; path: string; icon?: string; accent?: string; width?: number; height?: number; requiredPermissions?: string[]; group?: string };
+export type EmbedOptions = { id: string; title: string; path: string; icon?: string; accent?: string; width?: number; height?: number; requiredPermissions?: string[]; group?: string; launcherGroup?: string; shortcut?: boolean };
 
 /** The page of the web client (the full editor) while the BFF knows the web client, otherwise the lighter app built here. */
 export const embedOr = (options: EmbedOptions, fallback: AppFactory): AppFactory => (coworkee) =>
