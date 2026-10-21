@@ -53,7 +53,7 @@ else
                         <MudText Typo="Typo.subtitle1"><b>@L.Stored(report.Name)</b></MudText>
                         <MudText Typo="Typo.caption" Class="mud-text-secondary">@Owner(report)</MudText>
                     </div>
-                    <div @onclick:stopPropagation="true">
+                    <div class="d-flex align-center" @onclick:stopPropagation="true" data-testid="report-card-actions">
                         <MudIconButton Icon="@(report.IsFavorite ? Icons.Material.Filled.Star : Icons.Material.Outlined.StarBorder)" Color="@(report.IsFavorite ? Color.Warning : Color.Default)"
                                        Size="Size.Small" aria-label="@L["Favorite"]" OnClick="() => FavoriteAsync(report)" data-testid="report-favorite" />
                         <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Dense="Density.Dense" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">

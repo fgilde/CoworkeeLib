@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Korrekturen
+
+- Berichtsliste: Favoritenstern und Menü einer Berichtskachel stehen auf einer Linie.
+
 ## 0.0.1.37 (2026-10-20)
 
 ### Breaking Changes

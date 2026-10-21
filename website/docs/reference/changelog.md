@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Fixes
+
+- Reports list: the favourite star and the menu of a report card sit on one line.
+
 ## 0.0.1.37 (2026-10-20)
 
 ### Breaking changes
