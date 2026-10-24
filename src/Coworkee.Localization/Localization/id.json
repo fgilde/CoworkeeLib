@@ -226,6 +226,8 @@
   "No backups yet.": "Belum ada cadangan.",
   "Backup created": "Cadangan dibuat",
   "Backup restored": "Cadangan dipulihkan",
+  "Backup uploaded": "Cadangan diunggah",
+  "Upload backup": "Unggah cadangan",
   "Replace every table with the backup {0}? Changes made since then are lost.": "Ganti semua tabel dengan cadangan {0}? Perubahan sejak saat itu akan hilang.",
   "Create, download and restore database backups": "Buat, unduh, dan pulihkan cadangan database",
   "Chat": "Obrolan",

@@ -226,6 +226,8 @@
   "No backups yet.": "لا توجد نسخ احتياطية بعد.",
   "Backup created": "تم إنشاء النسخة الاحتياطية",
   "Backup restored": "تمت استعادة النسخة الاحتياطية",
+  "Backup uploaded": "تم رفع النسخة الاحتياطية",
+  "Upload backup": "رفع نسخة احتياطية",
   "Replace every table with the backup {0}? Changes made since then are lost.": "هل تريد استبدال كل الجداول بالنسخة الاحتياطية {0}؟ ستُفقد التغييرات التي أُجريت منذ ذلك الحين.",
   "Create, download and restore database backups": "إنشاء النسخ الاحتياطية لقاعدة البيانات وتنزيلها واستعادتها",
   "Chat": "الدردشة",

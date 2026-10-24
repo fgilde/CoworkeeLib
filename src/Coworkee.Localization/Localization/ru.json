@@ -226,6 +226,8 @@
   "No backups yet.": "Резервных копий пока нет.",
   "Backup created": "Резервная копия создана",
   "Backup restored": "Резервная копия восстановлена",
+  "Backup uploaded": "Резервная копия загружена",
+  "Upload backup": "Загрузить резервную копию",
   "Replace every table with the backup {0}? Changes made since then are lost.": "Заменить все таблицы резервной копией {0}? Изменения, сделанные после её создания, будут потеряны.",
   "Create, download and restore database backups": "Создавать, скачивать и восстанавливать резервные копии базы данных",
   "Chat": "Чат",

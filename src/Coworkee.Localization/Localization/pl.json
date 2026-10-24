@@ -226,6 +226,8 @@
   "No backups yet.": "Brak kopii zapasowych.",
   "Backup created": "Kopia zapasowa została utworzona",
   "Backup restored": "Kopia zapasowa została przywrócona",
+  "Backup uploaded": "Kopia zapasowa przesłana",
+  "Upload backup": "Prześlij kopię zapasową",
   "Replace every table with the backup {0}? Changes made since then are lost.": "Zastąpić wszystkie tabele kopią zapasową {0}? Zmiany wprowadzone od tego czasu zostaną utracone.",
   "Create, download and restore database backups": "Tworzenie, pobieranie i przywracanie kopii zapasowych bazy danych",
   "Chat": "Czat",

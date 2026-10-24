@@ -35,12 +35,7 @@ internal sealed class DatabaseCopy(CoworkeeDbContext db)
     public async Task<string?> RestoreAsync(Stream zip, CancellationToken cancellationToken)
     {
         using var archive = new ZipArchive(zip, ZipArchiveMode.Read);
-        BackupManifest? manifest;
-        await using (var entry = archive.GetEntry(ManifestEntry)?.Open() ?? Stream.Null)
-        {
-            manifest = entry == Stream.Null ? null : await JsonSerializer.DeserializeAsync<BackupManifest>(entry, cancellationToken: cancellationToken);
-        }
-
+        var manifest = await ManifestAsync(archive, cancellationToken);
         if (manifest is null || !manifest.Tables.ToHashSet().SetEquals(Tables()) || manifest.Tables.Any(t => archive.GetEntry(t) is null))
         {
             return "The backup does not contain the tables of this database.";
@@ -65,6 +60,31 @@ internal sealed class DatabaseCopy(CoworkeeDbContext db)
 
         await transaction.CommitAsync(cancellationToken);
         return null;
+    }
+
+    /// <returns>The manifest of an uploaded zip, or null when it is no backup.</returns>
+    public static async Task<BackupManifest?> ReadManifestAsync(Stream zip, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var archive = new ZipArchive(zip, ZipArchiveMode.Read, leaveOpen: true);
+            return await ManifestAsync(archive, cancellationToken);
+        }
+        catch (Exception e) when (e is InvalidDataException or JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static async Task<BackupManifest?> ManifestAsync(ZipArchive archive, CancellationToken cancellationToken)
+    {
+        if (archive.GetEntry(ManifestEntry) is not { } entry)
+        {
+            return null;
+        }
+
+        await using var stream = entry.Open();
+        return await JsonSerializer.DeserializeAsync<BackupManifest>(stream, cancellationToken: cancellationToken) is { Tables: not null } manifest ? manifest : null;
     }
 
     private List<string> Tables() =>

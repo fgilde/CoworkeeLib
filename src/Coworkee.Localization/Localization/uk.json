@@ -226,6 +226,8 @@
   "No backups yet.": "Резервних копій ще немає.",
   "Backup created": "Резервну копію створено",
   "Backup restored": "Резервну копію відновлено",
+  "Backup uploaded": "Резервну копію завантажено",
+  "Upload backup": "Завантажити резервну копію",
   "Replace every table with the backup {0}? Changes made since then are lost.": "Замінити всі таблиці резервною копією {0}? Зміни, внесені після її створення, буде втрачено.",
   "Create, download and restore database backups": "Створення, завантаження та відновлення резервних копій бази даних",
   "Chat": "Чат",

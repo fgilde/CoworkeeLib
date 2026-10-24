@@ -4,6 +4,7 @@ using Coworkee.Client.Blazor.Pages.Admin;
 using Coworkee.Contracts.Backup;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
+using MudBlazor.Extensions.Components;
 using NSubstitute;
 
 namespace Coworkee.Client.Blazor.Tests;
@@ -35,5 +36,19 @@ public sealed class BackupsPageTests : ClientTestBase
         await restoring;
 
         await _api.Received(1).RestoreAsync(backup.Id, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task An_uploaded_zip_goes_to_the_api_and_the_list_reloads()
+    {
+        _api.GetAsync(default).ReturnsForAnyArgs([]);
+        Render<MudPopoverProvider>();
+        var page = Render<Backups>();
+        var upload = page.FindComponent<MudExUploadEdit<UploadableFile>>();
+
+        await upload.InvokeAsync(() => upload.Instance.UploadRequestDataLoaded.InvokeAsync(new UploadableFile { FileName = "old.zip", ContentType = "application/zip", Data = [1, 2] }));
+
+        await _api.Received(1).UploadAsync("old.zip", Arg.Is<Stream>(s => s.Length == 2), Arg.Any<CancellationToken>());
+        await _api.Received(2).GetAsync(Arg.Any<CancellationToken>());
     }
 }

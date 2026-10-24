@@ -226,6 +226,8 @@
   "No backups yet.": "Ainda não há backups.",
   "Backup created": "Backup criado",
   "Backup restored": "Backup restaurado",
+  "Backup uploaded": "Cópia de segurança carregada",
+  "Upload backup": "Carregar cópia de segurança",
   "Replace every table with the backup {0}? Changes made since then are lost.": "Substituir todas as tabelas pelo backup {0}? As alterações feitas desde então serão perdidas.",
   "Create, download and restore database backups": "Criar, baixar e restaurar backups do banco de dados",
   "Chat": "Chat",

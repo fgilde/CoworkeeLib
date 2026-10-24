@@ -226,6 +226,8 @@
   "No backups yet.": "Henüz yedek yok.",
   "Backup created": "Yedek oluşturuldu",
   "Backup restored": "Yedek geri yüklendi",
+  "Backup uploaded": "Yedek yüklendi",
+  "Upload backup": "Yedek yükle",
   "Replace every table with the backup {0}? Changes made since then are lost.": "Tüm tablolar {0} yedeğiyle değiştirilsin mi? O tarihten sonra yapılan değişiklikler kaybolur.",
   "Create, download and restore database backups": "Veritabanı yedeklerini oluştur, indir ve geri yükle",
   "Chat": "Sohbet",

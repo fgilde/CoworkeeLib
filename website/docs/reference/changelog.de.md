@@ -4,6 +4,10 @@
 
 ## Unveröffentlicht
 
+### Neu
+
+- Backups: ein heruntergeladenes Zip wieder hochladen (*Backup hochladen* auf `/admin/backups` und in der AirWorks-Backup-App, `POST /api/v1/backups/upload?name=`, `UploadBackupCommand`); es steht in der Liste wie ein hier erstelltes Backup und wird genauso wiederhergestellt. Siehe [Datenbank-Backups](../modules/backups.md).
+
 ### Korrekturen
 
 - Berichtsliste: Favoritenstern und Menü einer Berichtskachel stehen auf einer Linie.

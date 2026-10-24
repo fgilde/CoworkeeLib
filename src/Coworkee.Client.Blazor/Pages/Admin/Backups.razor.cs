@@ -6,6 +6,7 @@ using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Backup;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using MudBlazor.Extensions.Components;
 
 namespace Coworkee.Client.Blazor.Pages.Admin;
 
@@ -27,6 +28,12 @@ public partial class Backups
     protected override Task OnInitializedAsync() => RunAsync(() => Task.CompletedTask);
 
     private Task CreateAsync() => RunAsync(() => Api.CreateAsync(), L["Backup created"]);
+
+    // ponytail: MudEx reads the whole zip into browser memory; a streaming upload when backups outgrow a few hundred MB
+    private Task UploadAsync(UploadableFile? file) =>
+        file?.Data is { Length: > 0 } data
+            ? RunAsync(() => Api.UploadAsync(file.FileName, new MemoryStream(data)), L["Backup uploaded"])
+            : Task.CompletedTask;
 
     private Task DownloadAsync(BackupDto backup) =>
         RunAsync(async () => await Downloader.DownloadAsync(backup.Name, "application/zip", await Api.DownloadAsync(backup.Id)));

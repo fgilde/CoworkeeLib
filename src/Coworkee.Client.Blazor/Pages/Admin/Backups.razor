@@ -1,8 +1,15 @@
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + BackupPermissions.Manage)]
+@using MudBlazor.Extensions.Components
 
 <PageHeader Title="Backups" Description="Backups of the whole database. A restore replaces every table and only fits the migration the backup was made at." />
-<MudStack Row="true" Class="mb-2">
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
     <MudSpacer />
+    @* MudEx localizes the button text itself *@
+    <div data-testid="upload-backup">
+        <MudExUploadEdit T="UploadableFile" UploadRequestDataLoaded="UploadAsync" ItemIsVisibleFunc="@(_ => false)" AllowMultiple="false" AllowFolderUpload="false" AllowExternalUrl="false"
+                         AllowDuplicates="true" Extensions="@(new[] { ".zip" })" TextUploadFile="Upload backup" ReadOnly="_busy"
+                         ButtonVariant="Variant.Outlined" ButtonColor="Color.Default" ExternalProviderRendering="ExternalProviderRendering.Images" ExternalPickerImageSize="@("30px")" />
+    </div>
     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Backup" Size="Size.Small" Disabled="_busy"
                OnClick="CreateAsync" data-testid="create-backup">@L["Create backup"]</MudButton>
 </MudStack>

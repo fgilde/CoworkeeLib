@@ -132,6 +132,14 @@ export const themesApp = crudApp<Theme>({
   ],
 });
 
+/** The file the user picks, or null when the picker closes without one. */
+const pickFile = (accept: string) => new Promise<File | null>((resolve) => {
+  const input = Object.assign(document.createElement('input'), { type: 'file', accept });
+  input.addEventListener('change', () => resolve(input.files?.[0] ?? null));
+  input.addEventListener('cancel', () => resolve(null));
+  input.click();
+});
+
 export const backupsApp = crudApp<Backup>({
   id: 'coworkee.admin.backups', group: 'System', title: 'Backups', icon: icons.backup, accent: '#455a64',
   permissions: ['Backups.Manage'], hostOnly: true,
@@ -140,7 +148,13 @@ export const backupsApp = crudApp<Backup>({
     { field: 'name', title: 'Name' }, { field: 'createdAt', title: 'Created' }, { field: 'tables', title: 'Tables' },
     { field: 'size', title: 'Size', format: (backup) => `${(Number(backup.size) / 1048576).toFixed(1)} MB` }, { field: 'migration', title: 'Migration' },
   ],
-  toolbar: [{ title: 'Create backup', primary: true, run: ({ request }) => request('/api/v1/backups', json('POST')) }],
+  toolbar: [
+    { title: 'Upload backup', run: async ({ request }) => {
+      const file = await pickFile('.zip');
+      return file && request(`/api/v1/backups/upload?${new URLSearchParams({ name: file.name })}`, { method: 'POST', body: file, headers: { 'Content-Type': 'application/zip' } });
+    } },
+    { title: 'Create backup', primary: true, run: ({ request }) => request('/api/v1/backups', json('POST')) },
+  ],
   remove: { run: (backup, { request }) => request(`/api/v1/backups/${backup.id}`, json('DELETE')) },
   actions: [
     { title: 'Download', icon: '&#x2b07;', run: async (backup) => { window.open(`/api/v1/backups/${backup.id}/download`, '_blank'); return false; } },

@@ -18,6 +18,11 @@ public sealed record GetBackupsQuery : IQuery<Result<IReadOnlyList<BackupDto>>>;
 [RequiresPermission(BackupPermissions.Manage)]
 public sealed record CreateBackupCommand : ICommand<Result<BackupDto>>;
 
+/// <summary>A zip of a download, kept like a backup made here; the restore checks whether it fits.</summary>
+[AiTool(Exclude = true)]
+[RequiresPermission(BackupPermissions.Manage)]
+public sealed record UploadBackupCommand(string Name, Stream Content) : ICommand<Result<BackupDto>>;
+
 [AiTool(Exclude = true)]
 [RequiresPermission(BackupPermissions.Manage)]
 public sealed record RestoreBackupCommand(Guid Id) : ICommand<Result>;
@@ -36,6 +41,7 @@ internal sealed class BackupHandlers(
     CoworkeeDbContext db, DatabaseCopy copy, IBlobStorage blobs, ICurrentUser currentUser, ITenantDirectory tenants, HybridCache cache, TimeProvider clock)
     : IHandler<GetBackupsQuery, Result<IReadOnlyList<BackupDto>>>,
       IHandler<CreateBackupCommand, Result<BackupDto>>,
+      IHandler<UploadBackupCommand, Result<BackupDto>>,
       IHandler<RestoreBackupCommand, Result>,
       IHandler<DeleteBackupCommand, Result>,
       IHandler<OpenBackupQuery, Result<BackupFile>>
@@ -59,18 +65,31 @@ internal sealed class BackupHandlers(
             return SystemOnly;
         }
 
-        var backup = new DatabaseBackup { Name = $"backup-{clock.GetUtcNow():yyyyMMdd-HHmmss}.zip", BlobKey = string.Empty };
-        backup.BlobKey = $"backups/{backup.Id:N}.zip";
-        await using var zip = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 81920, FileOptions.DeleteOnClose);
-        var manifest = await copy.WriteAsync(zip, cancellationToken);
-        backup.Size = zip.Length;
-        backup.Tables = manifest.Tables.Count;
-        backup.Migration = manifest.Migration;
+        await using var zip = TempFile();
+        return await StoreAsync($"backup-{clock.GetUtcNow():yyyyMMdd-HHmmss}.zip", zip, await copy.WriteAsync(zip, cancellationToken), cancellationToken);
+    }
+
+    public async Task<Result<BackupDto>> HandleAsync(UploadBackupCommand command, CancellationToken cancellationToken)
+    {
+        if (!await IsSystemAsync(cancellationToken))
+        {
+            return SystemOnly;
+        }
+
+        // the request body cannot seek; the zip directory sits at its end
+        await using var zip = TempFile();
+        await command.Content.CopyToAsync(zip, cancellationToken);
         zip.Position = 0;
-        await blobs.PutAsync(backup.BlobKey, zip, "application/zip", cancellationToken);
-        Backups.Add(backup);
-        await db.SaveChangesAsync(cancellationToken);
-        return ToDto(backup);
+        if (await DatabaseCopy.ReadManifestAsync(zip, cancellationToken) is not { } manifest)
+        {
+            return Error.Validation("file", "The file is no backup zip of this app.");
+        }
+
+        var name = Path.GetFileName(command.Name.Trim());
+        name = name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ? name : $"{name}.zip";
+        return name.Length is > 4 and <= 200
+            ? await StoreAsync(name, zip, manifest, cancellationToken)
+            : Error.Validation("name", "The file name needs 1 to 200 characters.");
     }
 
     public async Task<Result> HandleAsync(RestoreBackupCommand command, CancellationToken cancellationToken)
@@ -122,6 +141,20 @@ internal sealed class BackupHandlers(
           && await blobs.OpenReadAsync(backup.BlobKey, cancellationToken) is { } content
             ? new BackupFile(backup.Name, content)
             : NotFound;
+
+    private async Task<BackupDto> StoreAsync(string name, Stream zip, BackupManifest manifest, CancellationToken cancellationToken)
+    {
+        var backup = new DatabaseBackup { Name = name, BlobKey = string.Empty, Size = zip.Length, Tables = manifest.Tables.Count, Migration = manifest.Migration };
+        backup.BlobKey = $"backups/{backup.Id:N}.zip";
+        zip.Position = 0;
+        await blobs.PutAsync(backup.BlobKey, zip, "application/zip", cancellationToken);
+        Backups.Add(backup);
+        await db.SaveChangesAsync(cancellationToken);
+        return ToDto(backup);
+    }
+
+    private static FileStream TempFile() =>
+        new(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None, 81920, FileOptions.DeleteOnClose);
 
     private async Task<bool> IsSystemAsync(CancellationToken cancellationToken) =>
         currentUser.TenantId is { } tenantId && await tenants.IsSystemTenantAsync(tenantId, cancellationToken);

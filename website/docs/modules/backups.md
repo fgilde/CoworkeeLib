@@ -11,6 +11,7 @@ public sealed class MyAppDatabaseModule : CoworkeeModule;
 
 - Every table of the model is written with Postgres `COPY ... (FORMAT BINARY)`; a manifest records the tables and the last applied migration.
 - A restore replaces every table in one transaction. It refuses a backup made at another migration or with other tables.
+- A downloaded zip can be uploaded again (also into another installation): it shows up in the list and is restored like any other backup. An upload without a manifest is refused; whether it fits the database is checked at the restore.
 - Caches are cleared after a restore.
 - Backups hold every organisation, so only users of the system organisation with `Backups.Manage` see them. The admin page is `/admin/backups`.
 
@@ -19,6 +20,7 @@ public sealed class MyAppDatabaseModule : CoworkeeModule;
 | `GET /api/v1/backups` | list |
 | `POST /api/v1/backups` | create |
 | `GET /api/v1/backups/{id}/download` | zip |
+| `POST /api/v1/backups/upload?name=` | upload a zip (the body is the file) |
 | `POST /api/v1/backups/{id}/restore` | restore |
 | `DELETE /api/v1/backups/{id}` | delete |
 

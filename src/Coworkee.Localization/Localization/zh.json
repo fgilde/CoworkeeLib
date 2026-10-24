@@ -226,6 +226,8 @@
   "No backups yet.": "暂无备份。",
   "Backup created": "备份已创建",
   "Backup restored": "备份已恢复",
+  "Backup uploaded": "备份已上传",
+  "Upload backup": "上传备份",
   "Replace every table with the backup {0}? Changes made since then are lost.": "要用备份 {0} 替换所有表吗？此后所做的更改将会丢失。",
   "Create, download and restore database backups": "创建、下载和恢复数据库备份",
   "Chat": "聊天",

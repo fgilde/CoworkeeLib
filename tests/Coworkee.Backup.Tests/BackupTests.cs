@@ -59,4 +59,34 @@ public sealed class BackupTests(BackupApp app) : IAsyncLifetime
         (await Admin.GetFromJsonAsync<List<BackupDto>>("/api/v1/backups", Ct))!.ShouldBeEmpty();
         (await Admin.GetAsync($"/api/v1/backups/{backup.Id}/download", Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
+
+    [Fact]
+    public async Task A_downloaded_backup_uploads_again_and_restores()
+    {
+        var made = await (await Admin.PostAsync("/api/v1/backups", null, Ct)).Content.ReadFromJsonAsync<BackupDto>(Ct);
+        var zip = await Admin.GetByteArrayAsync($"/api/v1/backups/{made!.Id}/download", Ct);
+        await Admin.DeleteAsync($"/api/v1/backups/{made.Id}", Ct);
+        await app.InDbAsync(async db =>
+        {
+            db.Add(new Note { Text = "later" });
+            return await db.SaveChangesAsync(Ct);
+        });
+
+        var response = await Admin.PostAsync("/api/v1/backups/upload?name=from-elsewhere", new ByteArrayContent(zip), Ct);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var uploaded = await response.Content.ReadFromJsonAsync<BackupDto>(Ct);
+        uploaded!.Name.ShouldBe("from-elsewhere.zip");
+        uploaded.Tables.ShouldBe(made.Tables);
+        uploaded.Migration.ShouldBe(made.Migration);
+
+        (await Admin.PostAsync($"/api/v1/backups/{uploaded.Id}/restore", null, Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await app.InDbAsync(db => db.Set<Note>().Select(n => n.Text).ToListAsync(Ct))).ShouldNotContain("later");
+    }
+
+    [Fact]
+    public async Task An_upload_that_is_no_backup_is_refused()
+    {
+        (await Admin.PostAsync("/api/v1/backups/upload?name=notes.zip", new ByteArrayContent("hello"u8.ToArray()), Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await Admin.GetFromJsonAsync<List<BackupDto>>("/api/v1/backups", Ct))!.ShouldBeEmpty();
+    }
 }

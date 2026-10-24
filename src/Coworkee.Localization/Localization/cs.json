@@ -226,6 +226,8 @@
   "No backups yet.": "Zatím žádné zálohy.",
   "Backup created": "Záloha vytvořena",
   "Backup restored": "Záloha obnovena",
+  "Backup uploaded": "Záloha nahrána",
+  "Upload backup": "Nahrát zálohu",
   "Replace every table with the backup {0}? Changes made since then are lost.": "Nahradit všechny tabulky zálohou {0}? Změny provedené od té doby budou ztraceny.",
   "Create, download and restore database backups": "Vytvářet, stahovat a obnovovat zálohy databáze",
   "Chat": "Chat",

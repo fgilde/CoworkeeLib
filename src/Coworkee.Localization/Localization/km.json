@@ -226,6 +226,8 @@
   "No backups yet.": "មិនទាន់មានការបម្រុងទុកនៅឡើយទេ។",
   "Backup created": "បានបង្កើតការបម្រុងទុក",
   "Backup restored": "បានស្ដារការបម្រុងទុកឡើងវិញ",
+  "Backup uploaded": "បានផ្ទុកឡើងការបម្រុងទុក",
+  "Upload backup": "ផ្ទុកឡើងការបម្រុងទុក",
   "Replace every table with the backup {0}? Changes made since then are lost.": "ជំនួសតារាងទាំងអស់ដោយការបម្រុងទុក {0}? ការផ្លាស់ប្តូរចាប់តាំងពីពេលនោះនឹងបាត់បង់។",
   "Create, download and restore database backups": "បង្កើត ទាញយក និងស្ដារការបម្រុងទុកមូលដ្ឋានទិន្នន័យឡើងវិញ",
   "Chat": "ជជែក",

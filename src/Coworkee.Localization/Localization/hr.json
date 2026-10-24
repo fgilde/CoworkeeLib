@@ -226,6 +226,8 @@
   "No backups yet.": "Još nema sigurnosnih kopija.",
   "Backup created": "Sigurnosna kopija je izrađena",
   "Backup restored": "Sigurnosna kopija je vraćena",
+  "Backup uploaded": "Sigurnosna kopija je učitana",
+  "Upload backup": "Učitaj sigurnosnu kopiju",
   "Replace every table with the backup {0}? Changes made since then are lost.": "Zamijeniti sve tablice sigurnosnom kopijom {0}? Izmjene napravljene od tada bit će izgubljene.",
   "Create, download and restore database backups": "Izrada, preuzimanje i vraćanje sigurnosnih kopija baze podataka",
   "Chat": "Chat",

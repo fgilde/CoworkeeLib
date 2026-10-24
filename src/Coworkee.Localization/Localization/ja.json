@@ -226,6 +226,8 @@
   "No backups yet.": "バックアップはまだありません。",
   "Backup created": "バックアップを作成しました",
   "Backup restored": "バックアップを復元しました",
+  "Backup uploaded": "バックアップをアップロードしました",
+  "Upload backup": "バックアップをアップロード",
   "Replace every table with the backup {0}? Changes made since then are lost.": "すべてのテーブルをバックアップ{0}で置き換えますか？ それ以降の変更は失われます。",
   "Create, download and restore database backups": "データベースのバックアップの作成、ダウンロード、復元",
   "Chat": "チャット",

@@ -226,6 +226,8 @@
   "No backups yet.": "Ingen sikkerhedskopier endnu.",
   "Backup created": "Sikkerhedskopi oprettet",
   "Backup restored": "Sikkerhedskopi gendannet",
+  "Backup uploaded": "Sikkerhedskopi uploadet",
+  "Upload backup": "Upload sikkerhedskopi",
   "Replace every table with the backup {0}? Changes made since then are lost.": "Erstat alle tabeller med sikkerhedskopien {0}? Ændringer foretaget siden da går tabt.",
   "Create, download and restore database backups": "Opret, download og gendan databasesikkerhedskopier",
   "Chat": "Chat",

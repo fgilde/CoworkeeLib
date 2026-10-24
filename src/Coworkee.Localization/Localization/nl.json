@@ -226,6 +226,8 @@
   "No backups yet.": "Nog geen back-ups.",
   "Backup created": "Back-up gemaakt",
   "Backup restored": "Back-up hersteld",
+  "Backup uploaded": "Back-up geüpload",
+  "Upload backup": "Back-up uploaden",
   "Replace every table with the backup {0}? Changes made since then are lost.": "Alle tabellen vervangen door back-up {0}? Wijzigingen sinds die back-up gaan verloren.",
   "Create, download and restore database backups": "Database-back-ups maken, downloaden en herstellen",
   "Chat": "Chat",

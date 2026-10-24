@@ -226,6 +226,8 @@
   "No backups yet.": "Inga säkerhetskopior än.",
   "Backup created": "Säkerhetskopian skapades",
   "Backup restored": "Säkerhetskopian återställdes",
+  "Backup uploaded": "Säkerhetskopia uppladdad",
+  "Upload backup": "Ladda upp säkerhetskopia",
   "Replace every table with the backup {0}? Changes made since then are lost.": "Ersätta alla tabeller med säkerhetskopian {0}? Ändringar som gjorts sedan dess går förlorade.",
   "Create, download and restore database backups": "Skapa, ladda ned och återställa databassäkerhetskopior",
   "Chat": "Chatt",

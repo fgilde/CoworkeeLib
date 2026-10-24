@@ -4,6 +4,10 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### New
+
+- Backups: upload a downloaded zip again (*Upload backup* on `/admin/backups` and in the AirWorks backups app, `POST /api/v1/backups/upload?name=`, `UploadBackupCommand`); it is listed like a backup made here and restored the same way. See [Database backups](../modules/backups.md).
+
 ### Fixes
 
 - Reports list: the favourite star and the menu of a report card sit on one line.
