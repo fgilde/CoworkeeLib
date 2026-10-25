@@ -12,7 +12,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 - Grafana, WebDataStudio and AspireUI sign in at the app's auth server, with or without Keycloak, like Kibana's proxy: one client `{app}-{tool}` each, administrators of the system organisation only, as admins of the tool. The local administrator login stays. They no longer get clients of the Keycloak realm.
 - Auth server: user info endpoint `/connect/userinfo` (sub, email, name, role, tenant). `Coworkee:Auth:DynamicBackchannel` names sign-in and sign-out by the issuer and token, user info and keys by the address asked, so tools in containers reach it over the container network while the browser uses the host address; the app host sets it with the issuer in a local run.
-- Grafana 13.2.4 (Nextended 10.1.47); data sources and volumes of 11.5 keep working.
+- Grafana 13.2.4 (Nextended 10.1.47); data sources and volumes of 11.5 keep working. **Action:** an app host that pins `Nextended.Aspire.Hosting.AspireUI` (`aspireUI` option) raises the pin to 10.1.47, or restore fails with NU1605.
 - Studio: cards of options that do not matter right now stay visible, disabled, with the reason as tooltip; Kibana sits right after Search and is part of the preset *Everything*.
 
 ### Fixed
