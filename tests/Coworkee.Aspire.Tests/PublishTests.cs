@@ -70,7 +70,7 @@ public sealed class PublishTests
 ((?:    .*
 |\s*
 )*)").Groups[1].Value.ShouldNotContain("ports:");
-        compose.ShouldContain("OAUTH2_PROXY_OIDC_ISSUER_URL: \"${DEMO_AUTH_URL}\"");
+        compose.ShouldContain("OAUTH2_PROXY_OIDC_ISSUER_URL: \"${DEMO_AUTH_URL}/\"");
         compose.ShouldContain("OAUTH2_PROXY_REDEEM_URL: \"${DEMO_AUTH_URL}/connect/token\"");
         compose.ShouldContain("OAUTH2_PROXY_REDIRECT_URL: \"${DEMO_KIBANA_URL}/oauth2/callback\"");
         compose.ShouldContain("OAUTH2_PROXY_COOKIE_SECURE: \"true\"");

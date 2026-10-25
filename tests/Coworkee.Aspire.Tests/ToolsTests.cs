@@ -225,6 +225,8 @@ public sealed class ToolsTests
         // the browser follows both: host addresses, not those of the container network
         proxy["OAUTH2_PROXY_REDIRECT_URL"].ShouldBe("http://localhost:8180/oauth2/callback");
         proxy["OAUTH2_PROXY_LOGIN_URL"].ShouldBe("https://localhost:8180/connect/authorize");
+        // exactly the iss of the tokens, slash included
+        proxy["OAUTH2_PROXY_OIDC_ISSUER_URL"].ShouldBe("https://localhost:8180/");
         kibana.Annotations.OfType<ResourceUrlsCallbackAnnotation>().ShouldNotBeEmpty();
 
         var auth = await Environment(Allocated(app.AuthServer!.Resource));

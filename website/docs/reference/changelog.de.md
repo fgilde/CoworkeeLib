@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Behoben
+
+- Kibana: Die Anmeldung endete mit 500 auf `/oauth2/callback` („id token issued by a different provider"); oauth2-proxy erwartet den Issuer mit dem abschließenden Schrägstrich, den der Auth-Server in `iss` schreibt.
+
 ## 0.0.1.39 (2026-10-25)
 
 ### Hinzugefügt

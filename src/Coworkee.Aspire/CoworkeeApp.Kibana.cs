@@ -93,8 +93,8 @@ public sealed partial class CoworkeeApp
             .WithEnvironment("OAUTH2_PROXY_COOKIE_SECURE", Publishing ? "true" : "false")
             .WithEnvironment("OAUTH2_PROXY_REVERSE_PROXY", Publishing ? "true" : "false");
         // the browser's addresses: inside the container the endpoints would resolve to the container network (aspire.dev.internal, kibana.dev.internal);
-        // the issuer is the browser's address of the auth server as well (Coworkee:Auth:Issuer)
-        WithAuthBrowserUrl(proxy, "OAUTH2_PROXY_OIDC_ISSUER_URL", "");
+        // the issuer is the browser's address of the auth server as well (Coworkee:Auth:Issuer), with the slash OpenIddict puts into iss
+        WithAuthBrowserUrl(proxy, "OAUTH2_PROXY_OIDC_ISSUER_URL", "/");
         WithAuthBrowserUrl(proxy, "OAUTH2_PROXY_LOGIN_URL", "/connect/authorize");
         WithBrowserUrl(proxy, "OAUTH2_PROXY_REDIRECT_URL", "/oauth2/callback");
 

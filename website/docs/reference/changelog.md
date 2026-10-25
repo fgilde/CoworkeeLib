@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Fixed
+
+- Kibana: the sign-in ended with 500 at `/oauth2/callback` ("id token issued by a different provider"); oauth2-proxy expects the issuer with the trailing slash the auth server puts into `iss`.
+
 ## 0.0.1.39 (2026-10-25)
 
 ### Added
