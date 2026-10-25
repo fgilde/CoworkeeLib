@@ -36,12 +36,13 @@ coworkee deploy compose --without grafana --without ollama
 var app = builder.AddCoworkeeApp("shop", options => options.UseGrafana().DeployTool(CoworkeeTools.Grafana, false));
 ```
 
-`--without` und `--with` setzen `Coworkee:Deploy:Tools:<tool>`, das gewinnt gegen `DeployTool`. Die Tools heißen `keycloak`, `mailpit`, `libretranslate`, `grafana`, `webdatastudio`, `ollama`, `aspireui`, `kibana` und `elsastudio` (der Workflow-Designer, ein Projekt der App). Eigener Code im App-Host fragt `app.Deploys(CoworkeeTools.Ollama)`, so wie das Template Ollama und AspireUI hinzufügt.
+`--without` und `--with` setzen `Coworkee:Deploy:Tools:<tool>`, das gewinnt gegen `DeployTool`. Die Tools heißen `keycloak`, `mailpit`, `libretranslate`, `grafana`, `webdatastudio`, `ollama`, `aspireui`, `kibana`, `openwebui` und `elsastudio` (der Workflow-Designer, ein Projekt der App). Eigener Code im App-Host fragt `app.Deploys(CoworkeeTools.Ollama)`, so wie das Template Ollama und AspireUI hinzufügt.
 
 | Tool | Im Deployment |
 |---|---|
 | Keycloak | der Realm der App mit den Clients des Auth-Servers und der Tools, dazu der erste Administrator als Benutzer mit der Rolle `Administrator`; die Migrationen gleichen ihn bei jedem Deployment ab. Öffentliche Adresse `<app>-keycloak-url`, Daten in `<app>-keycloak-data` (Keycloaks eigene Dateidatenbank), seine Konsole als `admin` mit `KEYCLOAK_PASSWORD`. Demo-Benutzer und Login-Theme bleiben lokal |
 | Grafana | mit Prometheus, Loki, Tempo und dem Collector; die Dashboards der App und die Konfiguration stecken in den Images (`<app>-grafana`, ...). Der Administrator meldet sich mit Passwort oder am Auth-Server an. Öffentliche Adresse `<app>-grafana-url`, Daten in `<app>-grafana-data`, `<app>-prometheus-data` und `<app>-loki-data`; Tempo hält seine Traces im Container |
+| Open WebUI | mit Ollama; der Administrator meldet sich mit Passwort oder am Auth-Server an. Öffentliche Adresse `<app>-openwebui-url`, Daten in `<app>-openwebui-data`, Schlüssel `<app>-openwebui-secret-key` |
 | Kibana | hinter oauth2-proxy; Administratoren der System-Organisation melden sich am Auth-Server an (seine öffentliche Adresse ist Issuer und Token-Endpunkt). Öffentliche Adresse `<app>-kibana-url`, Client-Secret `<app>-kibana-secret`, Cookie-Secret `<app>-kibana-cookie-secret`, Passwort von `kibana_system` `<app>-kibana-password` |
 | WebDataStudio | mit der App-Datenbank verbunden; der Administrator meldet sich mit Passwort oder am Auth-Server an. Öffentliche Adresse `<app>-webdatastudio-url`, Daten in `<app>-webdatastudio-data` |
 | LibreTranslate | der Übersetzungsdienst der App, nur im internen Netz; die Modelle liegen in `<app>-libretranslate-models`, der erste Start lädt sie herunter |

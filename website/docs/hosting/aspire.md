@@ -243,7 +243,18 @@ It registers the client `{app}-{resource}` at the auth server with the redirect 
 
 ### Tools sign in at the auth server
 
-Grafana, WebDataStudio, AspireUI and Kibana's proxy sign in at the app's auth server, with or without Keycloak. Each gets a confidential client `{app}-{tool}` that is not in the launcher and lets only the administrators of the system organisation in (`SystemAdministratorsOnly`); they are admins of the tool. The local administrator login of each tool stays. While the app host runs, the auth server names itself by the browser's address (`Coworkee:Auth:Issuer`) and, with `Coworkee:Auth:DynamicBackchannel`, hands containers token, user info and keys at the address they asked by, so the containers reach it over the container network and the browser over the host. A deployment uses the public address for both.
+Grafana, WebDataStudio, AspireUI, Open WebUI and Kibana's proxy sign in at the app's auth server, with or without Keycloak. Each gets a confidential client `{app}-{tool}` that is not in the launcher and lets only the administrators of the system organisation in (`SystemAdministratorsOnly`); they are admins of the tool. The local administrator login of each tool stays. While the app host runs, the auth server names itself by the browser's address (`Coworkee:Auth:Issuer`) and, with `Coworkee:Auth:DynamicBackchannel`, hands containers token, user info and keys at the address they asked by, so the containers reach it over the container network and the browser over the host. A deployment uses the public address for both.
+
+### Open WebUI
+
+[Open WebUI](https://openwebui.com/) is a chat in the browser over the models of an Ollama container:
+
+```csharp
+var ollama = builder.AddOllama("ollama");
+app.AddOpenWebUI(ollama);
+```
+
+The app's administrator signs in locally (`WEBUI_ADMIN_EMAIL`, nobody signs up with the form), and with the auth server the administrators of the system organisation sign in through it as admins of Open WebUI (client `{app}-openwebui`, PKCE). The app host owns its settings (`ENABLE_PERSISTENT_CONFIG=false`): Open WebUI would otherwise keep the addresses of its first start in its database. Data in the volume `{app}-openwebui-data`. `coworkee new --ai-provider ollama --open-web-ui` (template option `openWebUI`) adds the call; `coworkee deploy --without openwebui` leaves it out of a deployment.
 
 ### AspireUI in a generated app
 
@@ -259,4 +270,4 @@ builder.AddAspireUI()
 
 ## Publishing
 
-`coworkee deploy compose|azure|k8s` publishes the app host for Docker Compose, Azure Container Apps or Kubernetes: public addresses, token certificates, the first administrator and the mail server as parameters, no demo users, and the tools of the app host (Keycloak, Grafana, WebDataStudio, LibreTranslate, Ollama, AspireUI) along unless switched off with `DeployTool` or `coworkee deploy --without`. `PublishToDockerCompose(configure)` still configures the Compose environment (`compose => compose.WithDashboard(false)`); an environment the app host adds itself before `AddCoworkeeApp` replaces the one of `Coworkee:Deploy:Target`. Everything else, and what is verified, is in [Deployment](deployment.md).
+`coworkee deploy compose|azure|k8s` publishes the app host for Docker Compose, Azure Container Apps or Kubernetes: public addresses, token certificates, the first administrator and the mail server as parameters, no demo users, and the tools of the app host (Keycloak, Grafana, WebDataStudio, LibreTranslate, Ollama, Open WebUI, AspireUI) along unless switched off with `DeployTool` or `coworkee deploy --without`. `PublishToDockerCompose(configure)` still configures the Compose environment (`compose => compose.WithDashboard(false)`); an environment the app host adds itself before `AddCoworkeeApp` replaces the one of `Coworkee:Deploy:Target`. Everything else, and what is verified, is in [Deployment](deployment.md).

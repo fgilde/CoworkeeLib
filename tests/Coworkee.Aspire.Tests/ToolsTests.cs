@@ -235,6 +235,37 @@ public sealed class ToolsTests
     }
 
     [Fact]
+    public async Task Open_webui_chats_with_ollama_and_signs_in_at_the_auth_server()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var app = builder.AddCoworkeeApp("demo", o => o.Administrator = Admin);
+        app.AddProjects();
+        var ollama = builder.AddContainer("ollama", "ollama/ollama").WithHttpEndpoint(targetPort: 11434, name: "http");
+
+        var ui = app.AddOpenWebUI(ollama);
+
+        Allocated(app.AuthServer!.Resource);
+        Allocated(ollama.Resource);
+        var env = await Environment(Allocated(ui.Resource));
+        env["OLLAMA_BASE_URL"].ShouldBe("{ollama.bindings.http.url}");
+        env["WEBUI_ADMIN_EMAIL"].ShouldBe(Admin.UserName);
+        env["ENABLE_SIGNUP"].ShouldBe("false");
+        env["ENABLE_PERSISTENT_CONFIG"].ShouldBe("false");
+        env["OAUTH_CLIENT_ID"].ShouldBe("demo-openwebui");
+        env["OAUTH_CODE_CHALLENGE_METHOD"].ShouldBe("S256");
+        env["OAUTH_CLIENT_SECRET"].ShouldBe("{demo-openwebui-secret.value}");
+        // discovery over the container network, the browser comes back to the host address
+        env["OPENID_PROVIDER_URL"].ShouldBe("{demo-auth.bindings.https.url}/.well-known/openid-configuration");
+        env["OPENID_REDIRECT_URI"].ShouldBe("http://localhost:8180/oauth/oidc/callback");
+        env["WEBUI_URL"].ShouldBe("http://localhost:8180");
+
+        var auth = await Environment(app.AuthServer.Resource);
+        var client = auth.Single(e => e.Value == "demo-openwebui").Key.Replace("__ClientId", "", StringComparison.Ordinal);
+        auth[$"{client}__SystemAdministratorsOnly"].ShouldBe("true");
+        auth[$"{client}__RedirectUris__0"].ShouldBe("{openwebui.bindings.http.url}/oauth/oidc/callback");
+    }
+
+    [Fact]
     public void Published_apps_take_their_tools_along_unless_switched_off()
     {
         var builder = DistributedApplication.CreateBuilder(["--operation", "publish", $"--{CoworkeeApp.DeployToolsSetting}:webdatastudio=false"]);

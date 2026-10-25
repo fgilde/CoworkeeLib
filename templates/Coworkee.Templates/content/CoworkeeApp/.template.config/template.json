@@ -300,11 +300,17 @@
       "defaultValue": "false",
       "description": "Kibana next to the Elasticsearch container (with elasticsearch), behind oauth2-proxy with the sign-in of the auth server for administrators of the system organisation."
     },
+    "openWebUI": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Open WebUI next to the Ollama container (with aiProvider ollama): a chat over the local models; the administrator signs in locally or at the auth server."
+    },
     "aspireUI": {
       "type": "parameter",
       "datatype": "bool",
       "defaultValue": "false",
-      "description": "AspireUI, a web UI to host and try more apps and stacks next to the app; with Keycloak it signs in through the app's realm (development)."
+      "description": "AspireUI, a web UI to host and try more apps and stacks next to the app; administrators of the system organisation sign in at the app's auth server (development)."
     },
     "airworks": {
       "type": "parameter",
@@ -352,6 +358,10 @@
           "description": "SQLite file .data/<name>.db, no container."
         }
       ]
+    },
+    "withOpenWebUI": {
+      "type": "computed",
+      "value": "(ai && aiProvider == \"ollama\" && openWebUI)"
     },
     "withBackup": {
       "type": "computed",

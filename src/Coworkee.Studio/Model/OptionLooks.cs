@@ -42,6 +42,7 @@ public static class OptionLooks
         ["webDataStudio"] = "Icon.DatabaseEye",
         ["kibana"] = "Icon.DatabaseSearch",
         ["aspireUI"] = "Icon.Apps",
+        ["openWebUI"] = "Icon.Chat",
         ["database"] = "Icon.Database",
         ["theme"] = "Icon.Palette",
         ["primaryColor"] = "Icon.FormatColorFill",

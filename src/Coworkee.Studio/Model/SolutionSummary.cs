@@ -50,7 +50,7 @@ public sealed record SolutionSummary(IReadOnlyList<string> Projects, IReadOnlyLi
 
         if (On("ai") && values["aiProvider"] == "ollama")
         {
-            containers.Add("Ollama");
+            containers.AddRange(["Ollama", .. On("openWebUI") ? new[] { "Open WebUI" } : []]);
         }
 
         if (values["translationProvider"] == "libreTranslate")

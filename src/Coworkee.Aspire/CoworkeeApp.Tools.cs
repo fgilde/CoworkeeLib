@@ -109,4 +109,18 @@ public sealed partial class CoworkeeApp
             resource.WithEnvironment(context => context.EnvironmentVariables[variable] = $"{https.Url}{path}");
         }
     }
+
+    // the address the browser knows the tool by; inside the container its own endpoint would resolve to the container network while running
+    private void WithBrowserUrl(IResourceBuilder<ContainerResource> tool, string variable, string path)
+    {
+        if (Publishing)
+        {
+            tool.WithEnvironment(variable, ReferenceExpression.Create($"{ToolUrl(tool)}{path}"));
+        }
+        else
+        {
+            var http = tool.GetEndpoint("http");
+            tool.WithEnvironment(context => context.EnvironmentVariables[variable] = $"{http.Url}{path}");
+        }
+    }
 }

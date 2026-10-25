@@ -166,11 +166,7 @@ if (app.Deploys(CoworkeeTools.ElsaStudio))
 #endif
 #if (aspireUI)
 
-#if (keycloak)
-// the apps and stacks hosted with AspireUI show up under Services; the administrator signs in locally or through Keycloak (LOGIN.md)
-#else
-// the apps and stacks hosted with AspireUI show up under Services; the administrator signs in locally (LOGIN.md)
-#endif
+// the apps and stacks hosted with AspireUI show up under Services; the administrator signs in locally or at the auth server (LOGIN.md)
 if (app.Deploys(CoworkeeTools.AspireUI))
 {
     var aspireUi = builder.AddAspireUI().WithCoworkee(app).WithRetrieveApi();
@@ -178,6 +174,14 @@ if (app.Deploys(CoworkeeTools.AspireUI))
     {
         aspireUi.WithSeedFromDirectory(builder.AppHostDirectory);
     }
+}
+#endif
+#if (withOpenWebUI)
+
+// a chat over the models of Ollama; the administrator signs in locally or at the auth server (LOGIN.md)
+if (ollama is not null && app.Deploys(CoworkeeTools.OpenWebUI))
+{
+    app.AddOpenWebUI(ollama);
 }
 #endif
 

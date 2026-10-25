@@ -96,15 +96,7 @@ public sealed partial class CoworkeeApp
         // the issuer is the browser's address of the auth server as well (Coworkee:Auth:Issuer)
         WithAuthBrowserUrl(proxy, "OAUTH2_PROXY_OIDC_ISSUER_URL", "");
         WithAuthBrowserUrl(proxy, "OAUTH2_PROXY_LOGIN_URL", "/connect/authorize");
-        if (Publishing)
-        {
-            proxy.WithEnvironment("OAUTH2_PROXY_REDIRECT_URL", ReferenceExpression.Create($"{url}/oauth2/callback"));
-        }
-        else
-        {
-            var proxyHttp = proxy.GetEndpoint("http");
-            proxy.WithEnvironment(context => context.EnvironmentVariables["OAUTH2_PROXY_REDIRECT_URL"] = $"{proxyHttp.Url}/oauth2/callback");
-        }
+        WithBrowserUrl(proxy, "OAUTH2_PROXY_REDIRECT_URL", "/oauth2/callback");
 
         KibanaSignIn = proxy;
     }

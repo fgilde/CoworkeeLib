@@ -4,6 +4,10 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Added
+
+- Open WebUI: `app.AddOpenWebUI(ollama)` adds a chat over the models of Ollama, signed in at the auth server like the other tools; template option `openWebUI` (`--open-web-ui`, with `--ai-provider ollama`), a card in the Studio and part of the preset *Everything*; deploy tool `openwebui`.
+
 ### Changed
 
 - Grafana, WebDataStudio and AspireUI sign in at the app's auth server, with or without Keycloak, like Kibana's proxy: one client `{app}-{tool}` each, administrators of the system organisation only, as admins of the tool. The local administrator login stays. They no longer get clients of the Keycloak realm.

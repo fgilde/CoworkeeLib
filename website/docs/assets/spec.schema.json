@@ -211,12 +211,12 @@
           "default": true
         },
         "grafana": {
-          "description": "Grafana with Prometheus, Loki, Tempo and an OpenTelemetry collector in the app host: metrics, logs and traces of every service, the app database and ready dashboards. Sign-in with the app's administrator, and Keycloak when it is on.",
+          "description": "Grafana with Prometheus, Loki, Tempo and an OpenTelemetry collector in the app host: metrics, logs and traces of every service, the app database and ready dashboards. Sign-in with the app's administrator, or at the app's auth server for administrators of the system organisation.",
           "type": "boolean",
           "default": true
         },
         "webDataStudio": {
-          "description": "WebDataStudio, a database studio in the browser, connected to the app database. Sign-in with the app's administrator, and Keycloak when it is on.",
+          "description": "WebDataStudio, a database studio in the browser, connected to the app database. Sign-in with the app's administrator, or at the app's auth server for administrators of the system organisation.",
           "type": "boolean",
           "default": true
         },
@@ -225,8 +225,13 @@
           "type": "boolean",
           "default": false
         },
+        "openWebUI": {
+          "description": "Open WebUI next to the Ollama container: a chat in the browser over the local models. Sign-in with the app's administrator, or at the app's auth server for administrators of the system organisation. Only used with aiProvider = ollama.",
+          "type": "boolean",
+          "default": false
+        },
         "aspireUI": {
-          "description": "AspireUI, a web UI to host and try more apps and stacks next to the app, in the app host. Its apps show up on the admin page Services. Sign-in with the app's administrator, and Keycloak when it is on.",
+          "description": "AspireUI, a web UI to host and try more apps and stacks next to the app, in the app host. Its apps show up on the admin page Services. Sign-in with the app's administrator, or at the app's auth server for administrators of the system organisation.",
           "type": "boolean",
           "default": false
         },

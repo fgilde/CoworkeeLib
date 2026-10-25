@@ -19,14 +19,14 @@ public static class CoworkeeAppExtensions
     }
 
     /// <summary>
-    /// Sign-in to AspireUI with the app's Keycloak: a client of the realm, the realm roles as groups, the app's administrators (role Administrator) as AspireUI admins.
-    /// Call it after <see cref="CoworkeeApp.AddAuthServer{TProject}"/> with <see cref="CoworkeeAppOptions.UseKeycloak"/>.
+    /// Sign-in to AspireUI at the app's auth server: a client of its own, administrators of the system organisation only, as AspireUI admins.
+    /// Call it after <see cref="CoworkeeApp.AddAuthServer{TProject}"/>.
     /// </summary>
     public static IResourceBuilder<AspireUIResource> WithCoworkeeSignOn(this IResourceBuilder<AspireUIResource> aspireUi, CoworkeeApp app, string defaultPermissions = AspireUIPermissions.AppUser) =>
         app.AddAspireUISignIn(aspireUi, defaultPermissions);
 
     /// <summary>
-    /// AspireUI as a tool of the app: the app's administrator signs in (with Keycloak also through it), and a deployment gives it a public address
+    /// AspireUI as a tool of the app: the app's administrator signs in (with the auth server also through it), and a deployment gives it a public address
     /// (<c>{app}-aspireui-url</c>); its volume is the app's own. Add it when <c>app.Deploys(CoworkeeTools.AspireUI)</c>.
     /// </summary>
     public static IResourceBuilder<AspireUIResource> WithCoworkee(this IResourceBuilder<AspireUIResource> aspireUi, CoworkeeApp app, string defaultPermissions = AspireUIPermissions.AppUser) =>

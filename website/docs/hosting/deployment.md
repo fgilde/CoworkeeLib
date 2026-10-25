@@ -36,12 +36,13 @@ coworkee deploy compose --without grafana --without ollama
 var app = builder.AddCoworkeeApp("shop", options => options.UseGrafana().DeployTool(CoworkeeTools.Grafana, false));
 ```
 
-`--without` and `--with` set `Coworkee:Deploy:Tools:<tool>`, which wins over `DeployTool`. The tools are `keycloak`, `mailpit`, `libretranslate`, `grafana`, `webdatastudio`, `ollama`, `aspireui`, `kibana` and `elsastudio` (the workflow designer, a project of the app). Your own app host code asks `app.Deploys(CoworkeeTools.Ollama)`, the way the template adds Ollama and AspireUI.
+`--without` and `--with` set `Coworkee:Deploy:Tools:<tool>`, which wins over `DeployTool`. The tools are `keycloak`, `mailpit`, `libretranslate`, `grafana`, `webdatastudio`, `ollama`, `aspireui`, `kibana`, `openwebui` and `elsastudio` (the workflow designer, a project of the app). Your own app host code asks `app.Deploys(CoworkeeTools.Ollama)`, the way the template adds Ollama and AspireUI.
 
 | Tool | In the deployment |
 |---|---|
 | Keycloak | the realm of the app with the clients of the auth server and the tools, and the first administrator as user with the role `Administrator`; the migrations bring it in line on every deployment. Public address `<app>-keycloak-url`, data in `<app>-keycloak-data` (Keycloak's own file database), its console as `admin` with `KEYCLOAK_PASSWORD`. The demo users and the login theme stay local |
 | Grafana | with Prometheus, Loki, Tempo and the collector; the app's dashboards and the configuration are built into the images (`<app>-grafana`, ...). The administrator signs in with the password or at the auth server. Public address `<app>-grafana-url`, data in `<app>-grafana-data`, `<app>-prometheus-data` and `<app>-loki-data`; Tempo keeps its traces in the container |
+| Open WebUI | with Ollama; the administrator signs in with the password or at the auth server. Public address `<app>-openwebui-url`, data in `<app>-openwebui-data`, key `<app>-openwebui-secret-key` |
 | Kibana | behind oauth2-proxy; administrators of the system organisation sign in at the auth server (its public address is the issuer and token endpoint). Public address `<app>-kibana-url`, client secret `<app>-kibana-secret`, cookie secret `<app>-kibana-cookie-secret`, the password of `kibana_system` `<app>-kibana-password` |
 | WebDataStudio | connected to the app database; the administrator signs in with the password or at the auth server. Public address `<app>-webdatastudio-url`, data in `<app>-webdatastudio-data` |
 | LibreTranslate | the translation service of the app, inside the network only; the models live in `<app>-libretranslate-models`, the first start downloads them |

@@ -243,7 +243,18 @@ Der Aufruf registriert den Client `{app}-{resource}` am Auth-Server mit der Redi
 
 ### Tools melden sich am Auth-Server an
 
-Grafana, WebDataStudio, AspireUI und der Proxy von Kibana melden sich am Auth-Server der App an, mit oder ohne Keycloak. Jedes bekommt einen vertraulichen Client `{app}-{tool}`, der nicht im Launcher steht und nur die Administratoren der Systemorganisation hereinlässt (`SystemAdministratorsOnly`); sie sind Admins des Tools. Die lokale Administrator-Anmeldung jedes Tools bleibt. Solange der App-Host läuft, nennt sich der Auth-Server nach der Adresse des Browsers (`Coworkee:Auth:Issuer`) und gibt Containern mit `Coworkee:Auth:DynamicBackchannel` Token, Benutzerinfo und Schlüssel unter der Adresse, unter der sie gefragt haben: Die Container erreichen ihn über das Container-Netz, der Browser über den Host. Ein Deployment nutzt für beides die öffentliche Adresse.
+Grafana, WebDataStudio, AspireUI, Open WebUI und der Proxy von Kibana melden sich am Auth-Server der App an, mit oder ohne Keycloak. Jedes bekommt einen vertraulichen Client `{app}-{tool}`, der nicht im Launcher steht und nur die Administratoren der Systemorganisation hereinlässt (`SystemAdministratorsOnly`); sie sind Admins des Tools. Die lokale Administrator-Anmeldung jedes Tools bleibt. Solange der App-Host läuft, nennt sich der Auth-Server nach der Adresse des Browsers (`Coworkee:Auth:Issuer`) und gibt Containern mit `Coworkee:Auth:DynamicBackchannel` Token, Benutzerinfo und Schlüssel unter der Adresse, unter der sie gefragt haben: Die Container erreichen ihn über das Container-Netz, der Browser über den Host. Ein Deployment nutzt für beides die öffentliche Adresse.
+
+### Open WebUI
+
+[Open WebUI](https://openwebui.com/) ist ein Chat im Browser über die Modelle eines Ollama-Containers:
+
+```csharp
+var ollama = builder.AddOllama("ollama");
+app.AddOpenWebUI(ollama);
+```
+
+Der Administrator der App meldet sich lokal an (`WEBUI_ADMIN_EMAIL`, über das Formular registriert sich niemand), und mit dem Auth-Server melden sich die Administratoren der Systemorganisation darüber an, als Admins von Open WebUI (Client `{app}-openwebui`, PKCE). Die Einstellungen gehören dem App-Host (`ENABLE_PERSISTENT_CONFIG=false`): Sonst behielte Open WebUI die Adressen seines ersten Starts in seiner Datenbank. Daten im Volume `{app}-openwebui-data`. `coworkee new --ai-provider ollama --open-web-ui` (Template-Option `openWebUI`) fügt den Aufruf ein; `coworkee deploy --without openwebui` lässt es im Deployment weg.
 
 ### AspireUI in einer generierten App
 

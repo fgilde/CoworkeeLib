@@ -4,6 +4,10 @@
 
 ## Unveröffentlicht
 
+### Hinzugefügt
+
+- Open WebUI: `app.AddOpenWebUI(ollama)` fügt einen Chat über die Modelle von Ollama hinzu, mit Anmeldung am Auth-Server wie die anderen Tools; Template-Option `openWebUI` (`--open-web-ui`, mit `--ai-provider ollama`), eine Karte im Studio und Teil der Vorlage *Everything*; Deploy-Tool `openwebui`.
+
 ### Geändert
 
 - Grafana, WebDataStudio und AspireUI melden sich am Auth-Server der App an, mit oder ohne Keycloak, wie der Proxy von Kibana: je ein Client `{app}-{tool}`, nur Administratoren der Systemorganisation, als Admins des Tools. Die lokale Administrator-Anmeldung bleibt. Clients im Keycloak-Realm bekommen sie nicht mehr.

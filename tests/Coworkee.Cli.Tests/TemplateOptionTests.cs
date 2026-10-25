@@ -201,6 +201,20 @@ public sealed class TemplateOptionTests(TemplateFixture template)
     }
 
     [Fact]
+    public async Task Open_webui_comes_with_ollama_only()
+    {
+        var on = await template.CreateAsync("openwebui-on", "--samples", "false", "--aiProvider", "ollama", "--openWebUI", "true");
+        Read(on, "src/Shop.AppHost/AppHost.cs").ShouldContain("app.AddOpenWebUI(ollama);");
+        Read(on, "LOGIN.md").ShouldContain("*openwebui*");
+        SignInInfo.Read(on)!.Tools.ShouldContain("Open WebUI");
+        TemplateTests.ShouldHaveNoLeftovers(on);
+
+        var other = await template.CreateAsync("openwebui-other", "--samples", "false", "--openWebUI", "true");
+        Read(other, "src/Shop.AppHost/AppHost.cs").ShouldNotContain("AddOpenWebUI");
+        Read(other, "LOGIN.md").ShouldNotContain("openwebui");
+    }
+
+    [Fact]
     public async Task AspireUI_is_off_by_default_and_adds_the_host_the_package_and_the_sign_on_with_keycloak()
     {
         var off = await template.CreateAsync("aspireui-off", "--samples", "false", "--keycloak", "true");
