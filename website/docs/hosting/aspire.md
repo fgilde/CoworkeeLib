@@ -85,9 +85,20 @@ Before wiring a service, Coworkee reads the service's `obj/project.assets.json` 
 | `Coworkee.Search.Elasticsearch` | Elasticsearch |
 | `Coworkee.Notifications` | links in digest mails point to the web app |
 
-Grafana (with Prometheus, Loki, Tempo and a collector) and WebDataStudio come with `options.UseGrafana()` and `options.UseWebDataStudio()`, see [Grafana and WebDataStudio](observability.md).
+Grafana (with Prometheus, Loki, Tempo and a collector) and WebDataStudio come with `options.UseGrafana()` and `options.UseWebDataStudio()`, see [Grafana and WebDataStudio](observability.md). Kibana comes with `options.UseKibana()`, see [Kibana](#kibana).
 
 Containers are only created when a service needs them. Postgres, SQL Server, Redis, Elasticsearch and Keycloak keep their data in volumes; `--Coworkee:EphemeralInfrastructure=true` starts them empty, which the tests use.
+
+### Kibana
+
+`options.UseKibana()` adds Kibana next to the Elasticsearch container (not with `UseSearch`, an Elasticsearch of your own brings its own Kibana). Kibana's single sign-on (OpenID Connect, SAML) needs a paid Elastic license, so the app host puts [oauth2-proxy](https://oauth2-proxy.github.io/oauth2-proxy/) in front of it:
+
+- The resource `kibana` is the proxy and the address you open. It signs in at the app's auth server (client `<app>-kibana`), and with Keycloak on, the auth server sends you on to Keycloak as for the app.
+- The auth server lets only administrators of the system organisation through (`AuthClientOptions.SystemAdministratorsOnly`). Everybody else gets `access_denied`.
+- `kibana-server` is Kibana itself. It lets every request in as the Elasticsearch user `elastic` (its anonymous provider, part of the free license), so nothing but the proxy should reach it. `kibana-setup` gives the built-in user `kibana_system` its password once Elasticsearch answers.
+- Kibana takes the image version of the Elasticsearch container. Its saved objects live in Elasticsearch, so they share its volume.
+
+Without an auth server Kibana keeps its own login: user `elastic` with the password of Elasticsearch (parameter `elasticsearch-password`). `coworkee new --elasticsearch --kibana` (template option `kibana`, off by default) adds the call.
 
 ### Modules of your own
 

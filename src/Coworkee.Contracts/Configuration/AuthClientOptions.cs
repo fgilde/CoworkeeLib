@@ -23,4 +23,7 @@ public sealed class AuthClientOptions
     public string? Description { get; set; }
 
     public bool ShowInLauncher { get; set; } = true;
+
+    /// <summary>Only administrators of the system organisation may sign in, e.g. for tools that see every organisation's data (Kibana).</summary>
+    public bool SystemAdministratorsOnly { get; set; }
 }

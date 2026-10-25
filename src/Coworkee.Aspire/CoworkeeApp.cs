@@ -103,6 +103,8 @@ public sealed partial class CoworkeeApp
             auth.WithSetting(s => s.Coworkee.Auth.DevelopmentCertificates, true);
         }
 
+        AddKibanaSignIn();
+
         // the running app host reconciles the realm with the development users, the migrations of a deployment the one with its administrator
         if (Options.Keycloak is { } keycloak && Deploys(CoworkeeTools.Keycloak))
         {

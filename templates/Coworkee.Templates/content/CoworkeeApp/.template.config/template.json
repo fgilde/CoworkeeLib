@@ -294,6 +294,12 @@
       "defaultValue": "true",
       "description": "WebDataStudio, a database studio in the browser connected to the app database (development)."
     },
+    "kibana": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Kibana next to the Elasticsearch container (with elasticsearch), behind oauth2-proxy with the sign-in of the auth server for administrators of the system organisation."
+    },
     "aspireUI": {
       "type": "parameter",
       "datatype": "bool",

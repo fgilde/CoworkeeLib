@@ -92,7 +92,13 @@ public sealed partial class CoworkeeApp
         var search = Builder.AddElasticsearch("elasticsearch")
             .WithEnvironment("ES_JAVA_OPTS", "-Xms512m -Xmx512m -XX:TieredStopAtLevel=1")
             .WithEnvironment("cluster.routing.allocation.disk.threshold_enabled", "false");
-        return Configured(Persistent ? search.WithDataVolume(DataVolume("elasticsearch")) : search, Options.Elasticsearch);
+        Configured(Persistent ? search.WithDataVolume(DataVolume("elasticsearch")) : search, Options.Elasticsearch);
+        if (Options.KibanaServer is { } kibana && Deploys(CoworkeeTools.Kibana))
+        {
+            AddKibana(search, kibana);
+        }
+
+        return search;
     }
 
     // Aspire names volumes after the app host's folder; a deployment keeps its data when it is published again from another checkout

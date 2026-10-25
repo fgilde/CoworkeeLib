@@ -22,7 +22,7 @@ public sealed class OptionDependencyTests
     public void Options_that_only_make_sense_with_another_one_say_so()
     {
         OptionCatalog.All.Where(o => o.DependsOn is not null).Select(o => o.Id)
-            .ShouldBe(["airworksPackages", "airworksLauncher", "backup", "elsa", "elsaStudio", "aiProvider", "aiModel", "aiEndpoint", "signInMedia", "signInMediaSide"]);
+            .ShouldBe(["airworksPackages", "airworksLauncher", "backup", "elsa", "elsaStudio", "aiProvider", "aiModel", "aiEndpoint", "kibana", "signInMedia", "signInMediaSide"]);
         foreach (var option in OptionCatalog.All.Where(o => o.DependsOn is not null))
         {
             var parent = OptionCatalog.Find(option.DependsOn!.Option).ShouldNotBeNull(option.Id);

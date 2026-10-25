@@ -6,6 +6,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### New
 
+- Kibana: `options.UseKibana()` puts Kibana next to the Elasticsearch container (template and CLI option `kibana`, Studio card *Kibana*, deploy tool `kibana`). oauth2-proxy in front of it signs in at the app's auth server, with Keycloak when it is on; Kibana's own single sign-on would need a paid Elastic license. New `AuthClientOptions.SystemAdministratorsOnly`: the auth server lets only administrators of the system organisation sign in at such a client. See [Kibana](../hosting/aspire.md#kibana).
 - Backups: upload a downloaded zip again (*Upload backup* on `/admin/backups` and in the AirWorks backups app, `POST /api/v1/backups/upload?name=`, `UploadBackupCommand`); it is listed like a backup made here and restored the same way. See [Database backups](../modules/backups.md).
 
 ### Fixes

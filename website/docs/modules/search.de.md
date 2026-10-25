@@ -16,6 +16,6 @@ await index.UpsertAsync(schema.Alias, [new SearchDocument(product.Id.ToString(),
 
 Abfragen können Volltext, Filter, Sortierung, Facetten und Blättern per Cursor. `CreateIndexAsync` und `SwapAsync` bauen einen Index im Hintergrund neu und schalten den Alias ohne Ausfall um.
 
-Die Verbindung kommt aus dem Connection-String `elasticsearch` oder `Coworkee:Search:Elasticsearch:Url`; Benutzer und Passwort dürfen in der URL stehen. Der AppHost fügt Elasticsearch nur hinzu, wenn ein Dienst das Elasticsearch-Paket referenziert.
+Die Verbindung kommt aus dem Connection-String `elasticsearch` oder `Coworkee:Search:Elasticsearch:Url`; Benutzer und Passwort dürfen in der URL stehen. Der AppHost fügt Elasticsearch nur hinzu, wenn ein Dienst das Elasticsearch-Paket referenziert; `options.UseKibana()` stellt [Kibana](../hosting/aspire.md#kibana) daneben.
 
 Mit `services.AddGlobalSearchIndex(alias, s => s.Fields(...))` wird ein Alias Teil der [globalen Suche](../web/global-search.md#suchindex-elasticsearch) (Befehlspalette, `/search`, MCP).

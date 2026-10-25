@@ -6,6 +6,7 @@
 
 ### Neu
 
+- Kibana: `options.UseKibana()` stellt Kibana neben den Elasticsearch-Container (Template- und CLI-Option `kibana`, Studio-Karte *Kibana*, Deploy-Tool `kibana`). Davor meldet oauth2-proxy am Auth-Server der App an, mit Keycloak, wenn es an ist; Kibanas eigenes Single Sign-on bräuchte eine kostenpflichtige Elastic-Lizenz. Neu ist `AuthClientOptions.SystemAdministratorsOnly`: Bei so einem Client lässt der Auth-Server nur Administratoren der System-Organisation herein. Siehe [Kibana](../hosting/aspire.md#kibana).
 - Backups: ein heruntergeladenes Zip wieder hochladen (*Backup hochladen* auf `/admin/backups` und in der AirWorks-Backup-App, `POST /api/v1/backups/upload?name=`, `UploadBackupCommand`); es steht in der Liste wie ein hier erstelltes Backup und wird genauso wiederhergestellt. Siehe [Datenbank-Backups](../modules/backups.md).
 
 ### Korrekturen

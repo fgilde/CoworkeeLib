@@ -25,11 +25,11 @@ public sealed partial record SignInInfo(string Name, IReadOnlyList<SignInUser> U
         var code = File.Exists(appHost) ? File.ReadAllText(appHost) : string.Empty;
         return new SignInInfo(name, Parse(File.ReadAllText(users)), code.Contains("UseKeycloak", StringComparison.Ordinal))
         {
-            Tools = [.. new[] { ("UseGrafana", "Grafana"), ("UseWebDataStudio", "WebDataStudio"), ("AddAspireUI", "AspireUI") }.Where(t => code.Contains(t.Item1, StringComparison.Ordinal)).Select(t => t.Item2)],
+            Tools = [.. new[] { ("UseGrafana", "Grafana"), ("UseWebDataStudio", "WebDataStudio"), ("UseKibana", "Kibana"), ("AddAspireUI", "AspireUI") }.Where(t => code.Contains(t.Item1, StringComparison.Ordinal)).Select(t => t.Item2)],
         };
     }
 
-    /// <summary>Development tools of the app host (Grafana, WebDataStudio, AspireUI); they take the administrator's sign-in.</summary>
+    /// <summary>Development tools of the app host (Grafana, WebDataStudio, Kibana, AspireUI); they take the administrator's sign-in.</summary>
     public IReadOnlyList<string> Tools { get; init; } = [];
 
     public SignInUser? Administrator => Users.FirstOrDefault(u => u.IsAdmin);

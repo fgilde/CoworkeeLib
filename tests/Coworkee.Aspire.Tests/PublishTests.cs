@@ -46,6 +46,35 @@ public sealed class PublishTests
     }
 
     [Fact]
+    public async Task Kibana_goes_along_behind_its_sign_in_proxy_at_the_public_address_of_the_auth_server()
+    {
+        var output = Directory.CreateTempSubdirectory("coworkee-publish").FullName;
+        var builder = DistributedApplication.CreateBuilder(["--operation", "publish", "--step", "publish", "--output-path", output, $"--{CoworkeeApp.DeployTargetSetting}=compose"]);
+        var app = builder.AddCoworkeeApp("demo", o => o.UseKibana());
+        app.AddAuthServer<FakeProjects.Auth>();
+        // the api of the demo has the search module
+        app.AddApi<Projects.Demo_Api>();
+        using (var host = builder.Build())
+        {
+            await host.RunAsync(TestContext.Current.CancellationToken);
+        }
+
+        var compose = await File.ReadAllTextAsync(Path.Combine(output, "docker-compose.yaml"), TestContext.Current.CancellationToken);
+        var env = await File.ReadAllTextAsync(Path.Combine(output, ".env"), TestContext.Current.CancellationToken);
+
+        compose.ShouldContain("quay.io/oauth2-proxy/oauth2-proxy");
+        compose.ShouldContain("docker.io/library/kibana");
+        compose.ShouldContain("127.0.0.1:8096:4180");
+        compose.ShouldContain("OAUTH2_PROXY_OIDC_ISSUER_URL: \"${DEMO_AUTH_URL}\"");
+        compose.ShouldContain("OAUTH2_PROXY_REDEEM_URL: \"${DEMO_AUTH_URL}/connect/token\"");
+        compose.ShouldContain("OAUTH2_PROXY_REDIRECT_URL: \"${DEMO_KIBANA_URL}/oauth2/callback\"");
+        compose.ShouldContain("OAUTH2_PROXY_COOKIE_SECURE: \"true\"");
+        compose.ShouldNotContain("OAUTH2_PROXY_SSL_INSECURE_SKIP_VERIFY");
+        compose.ShouldContain("__SystemAdministratorsOnly: \"true\"");
+        env.ShouldContain("DEMO_KIBANA_URL=");
+    }
+
+    [Fact]
     public async Task The_tools_go_along_with_volumes_public_addresses_and_a_realm_the_migrations_reconcile()
     {
         var (compose, env) = await PublishAsync("compose", o => o.UseKeycloak().UseLibreTranslate(["de"]).UseGrafana().UseWebDataStudio());

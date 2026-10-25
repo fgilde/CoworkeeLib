@@ -77,6 +77,7 @@ coworkee new Shop --no-samples --chat false --files --event-bus rabbitMq \
 | `--redis` | `redis` | bool | `true` | Redis container for backplane, presence, cache invalidation and sessions across instances ([Redis](../hosting/redis.md)) |
 | `--grafana` | `grafana` | bool | `true` | Grafana with Prometheus, Loki, Tempo and a collector: telemetry of every service, the app database and dashboards ([Grafana and WebDataStudio](../hosting/observability.md)) |
 | `--web-data-studio` | `webDataStudio` | bool | `true` | WebDataStudio connected to the app database ([Grafana and WebDataStudio](../hosting/observability.md)) |
+| `--kibana` | `kibana` | bool | `false` | Kibana next to Elasticsearch (with `--elasticsearch`), signed in through the auth server for administrators of the system organisation ([Kibana](../hosting/aspire.md#kibana)) |
 | `--aspire-ui` | `aspireUI` | bool | `false` | AspireUI in the app host to host and try more apps and stacks next to the app; with Keycloak it signs in through the app's realm ([AspireUI](../hosting/aspire.md#aspireui-in-a-generated-app)) |
 | `--database` | `database` | `postgres`, `sqlServer`, `sqlite` | `postgres` | Database engine, see [Database providers](../fundamentals/persistence.md#database-providers); `sqlServer` runs a SQL Server container, `sqlite` a file without container. Backups need `postgres` |
 | `--theme` | `theme` | `Ocean`, `Coworkee`, `Classic`, `Forest`, `Midnight`, `Sunset`, `HighContrast`, `Octo`, `Code`, `Arctic`, `Vampire`, `Solar`, `Atom`, `Paper`, `Aubergine` | `Ocean` | Default theme |

@@ -52,7 +52,7 @@ internal static partial class DeploySummary
         var password = values.FirstOrDefault(v => v.Key.EndsWith("_ADMIN_PASSWORD", StringComparison.Ordinal));
         if (email.Value is { Length: > 0 } && password.Value is { Length: > 0 })
         {
-            yield return $"Sign in as {email.Value} with the password {password.Value} (also in .env as {email.Key} and {password.Key}): the app, and Keycloak, Grafana, WebDataStudio, AspireUI and Mailpit when they are deployed.";
+            yield return $"Sign in as {email.Value} with the password {password.Value} (also in .env as {email.Key} and {password.Key}): the app, and Keycloak, Grafana, WebDataStudio, Kibana, AspireUI and Mailpit when they are deployed.";
             yield return "The migrations create this administrator in an empty database only; with the values left empty the app shows its setup page.";
         }
 

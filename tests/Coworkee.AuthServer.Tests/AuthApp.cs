@@ -28,6 +28,8 @@ public sealed class AuthApp : DatabaseFixture
 {
     public const string ClientId = "test-web";
     public const string RedirectUri = "https://client.test/signin-oidc";
+    public const string ToolClientId = "test-tool";
+    public const string ToolRedirectUri = "https://tool.test/oauth2/callback";
 
     public WebApplication App { get; private set; } = null!;
 
@@ -60,6 +62,11 @@ public sealed class AuthApp : DatabaseFixture
             ["Coworkee:Auth:Clients:0:Scopes:0"] = "test_api",
             ["Coworkee:Auth:Clients:0:ClientUri"] = "https://client.test/",
             ["Coworkee:Auth:Clients:0:Description"] = "The test app",
+            ["Coworkee:Auth:Clients:1:ClientId"] = ToolClientId,
+            ["Coworkee:Auth:Clients:1:ClientSecret"] = "tool-secret",
+            ["Coworkee:Auth:Clients:1:RedirectUris:0"] = ToolRedirectUri,
+            ["Coworkee:Auth:Clients:1:ShowInLauncher"] = "false",
+            ["Coworkee:Auth:Clients:1:SystemAdministratorsOnly"] = "true",
             ["Coworkee:Jobs:ConnectionStringName"] = "test",
             ["Coworkee:Jobs:RunServer"] = "false",
             ["Coworkee:Account:PublicAuthUrl"] = "http://localhost",

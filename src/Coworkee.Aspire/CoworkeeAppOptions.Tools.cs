@@ -27,4 +27,15 @@ public sealed partial class CoworkeeAppOptions
         Set(() => WebDataStudioServer = (WebDataStudioServer ?? (_ => { })) + configure);
 
     public CoworkeeAppOptions WithoutWebDataStudio() => Set(() => WebDataStudioServer = null);
+
+    internal Action<IResourceBuilder<ContainerResource>>? KibanaServer { get; private set; }
+
+    /// <summary>
+    /// Kibana next to the Elasticsearch container of the search module (not with <see cref="UseSearch"/>). Behind oauth2-proxy the browser signs in at the app's auth server
+    /// (with Keycloak when it is on); only administrators of the system organisation get in. Deployed unless <see cref="CoworkeeTools.Kibana"/> is switched off.
+    /// </summary>
+    public CoworkeeAppOptions UseKibana(Action<IResourceBuilder<ContainerResource>>? configure = null) =>
+        Set(() => KibanaServer = (KibanaServer ?? (_ => { })) + configure);
+
+    public CoworkeeAppOptions WithoutKibana() => Set(() => KibanaServer = null);
 }

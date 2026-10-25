@@ -116,6 +116,11 @@ public sealed partial class AuthClientSeeder(IServiceScopeFactory scopes, IOptio
             Requirements = { Requirements.Features.ProofKeyForCodeExchange },
         };
         descriptor.Properties[ManagedProperty] = JsonSerializer.SerializeToElement(true);
+        if (client.SystemAdministratorsOnly)
+        {
+            descriptor.Properties[AuthEndpoints.SystemAdministratorsOnlyProperty] = JsonSerializer.SerializeToElement(true);
+        }
+
         Clients.ClientApp.Of(client.ClientUri, client.LogoUrl, client.Description, client.ShowInLauncher).Write(descriptor);
 
         foreach (var scope in client.Scopes)

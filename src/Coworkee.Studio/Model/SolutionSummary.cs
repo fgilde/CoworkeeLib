@@ -68,6 +68,11 @@ public sealed record SolutionSummary(IReadOnlyList<string> Projects, IReadOnlyLi
             containers.Add("WebDataStudio");
         }
 
+        if (On("elasticsearch") && On("kibana"))
+        {
+            containers.AddRange(["Kibana", "oauth2-proxy"]);
+        }
+
         if (On("aspireUI"))
         {
             containers.Add("AspireUI");

@@ -29,6 +29,9 @@ internal static class AuthEndpoints
     /// <summary>"true" when the user belongs to the system organisation; the client shows the installation-wide pages only then.</summary>
     public const string SystemTenantClaim = "system_tenant";
 
+    /// <summary>Property of an OpenIddict application (<see cref="AuthClientOptions.SystemAdministratorsOnly"/>): only administrators of the system organisation sign in there.</summary>
+    internal const string SystemAdministratorsOnlyProperty = "coworkee_system_admins";
+
     public static void Map(WebApplication app)
     {
         app.MapGet("/", () => Results.Redirect("/Account/Apps")).ExcludeFromDescription();
@@ -66,6 +69,11 @@ internal static class AuthEndpoints
             return Results.Redirect("/Account/ChangePasswordRequired?returnUrl=" + Uri.EscapeDataString(ReturnUrl(context)));
         }
 
+        if (!await MaySignInAsync(context, db, request, user))
+        {
+            return Results.Forbid(Error(Errors.AccessDenied, "Only administrators of the system organisation may use this application."), [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]);
+        }
+
         var consent = await ConsentAsync(context, request, user);
         if (consent.Result is { } result)
         {
@@ -80,6 +88,23 @@ internal static class AuthEndpoints
         }
 
         return Results.SignIn(principal, null, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+    }
+
+    private static async Task<bool> MaySignInAsync(HttpContext context, CoworkeeDbContext db, OpenIddictRequest request, User user)
+    {
+        var applications = context.RequestServices.GetRequiredService<IOpenIddictApplicationManager>();
+        if (await applications.FindByClientIdAsync(request.ClientId!, context.RequestAborted) is not { } application
+            || !(await applications.GetPropertiesAsync(application, context.RequestAborted)).ContainsKey(SystemAdministratorsOnlyProperty))
+        {
+            return true;
+        }
+
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
+        return await context.RequestServices.GetRequiredService<ITenantDirectory>().IsSystemTenantAsync(user.TenantId, context.RequestAborted)
+               && await (from userRole in db.Set<IdentityUserRole<Guid>>()
+                         join role in db.Set<Role>() on userRole.RoleId equals role.Id
+                         where userRole.UserId == user.Id && role.IsSystem && role.Name == SystemRoles.Admin
+                         select role.Id).AnyAsync(context.RequestAborted);
     }
 
     /// <summary>Clients with explicit consent need the user's permanent authorization for the requested scopes; the consent page records it.</summary>

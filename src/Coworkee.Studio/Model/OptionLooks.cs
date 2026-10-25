@@ -40,6 +40,7 @@ public static class OptionLooks
         ["redis"] = "Icon.Memory",
         ["grafana"] = "Icon.ChartLine",
         ["webDataStudio"] = "Icon.DatabaseEye",
+        ["kibana"] = "Icon.DatabaseSearch",
         ["aspireUI"] = "Icon.Apps",
         ["database"] = "Icon.Database",
         ["theme"] = "Icon.Palette",

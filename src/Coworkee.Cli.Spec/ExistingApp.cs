@@ -63,6 +63,7 @@ public static class ExistingApp
             ["redis"] = Flag(!appHost.Contains("options.WithoutRedis();", StringComparison.Ordinal)),
             ["grafana"] = Flag(appHost.Contains("options.UseGrafana();", StringComparison.Ordinal)),
             ["webDataStudio"] = Flag(appHost.Contains("options.UseWebDataStudio();", StringComparison.Ordinal)),
+            ["kibana"] = Flag(appHost.Contains("options.UseKibana();", StringComparison.Ordinal)),
             ["aspireUI"] = Flag(appHost.Contains("AddAspireUI()", StringComparison.Ordinal)),
             ["database"] = appHost.Contains("options.UseSqlServer();", StringComparison.Ordinal) ? "sqlServer" : appHost.Contains("options.UseSqlite();", StringComparison.Ordinal) ? "sqlite" : "postgres",
             ["title"] = Match(appHost, @"options\.DisplayName = ""([^""]*)"";"),

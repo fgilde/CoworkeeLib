@@ -141,7 +141,7 @@ public sealed class ClientAdminTests(AuthApp app) : IAsyncLifetime
 
         await app.App.Services.GetRequiredService<AuthClientSeeder>().SeedAsync(Ct);
 
-        (await SendAsync(new GetClients())).Value.Select(c => c.ClientId).ShouldBe([AuthApp.ClientId, "partner"], ignoreOrder: true);
+        (await SendAsync(new GetClients())).Value.Select(c => c.ClientId).ShouldBe([AuthApp.ClientId, AuthApp.ToolClientId, "partner"], ignoreOrder: true);
         (await SendAsync(new GetScopes())).Value.Select(s => s.Name).ShouldBe(["reports", "test_api"], ignoreOrder: true);
     }
 

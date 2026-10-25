@@ -169,6 +169,54 @@ public sealed class ToolsTests
     }
 
     [Fact]
+    public void Kibana_comes_only_when_asked_and_with_the_search_container()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var app = builder.AddCoworkeeApp("demo", o => o.UseKibana().WithoutKibana());
+        app.AddProjects();
+        app.Kibana.ShouldBeNull();
+
+        builder = DistributedApplication.CreateBuilder();
+        app = builder.AddCoworkeeApp("demo", o => o.UseKibana().Without(Coworkee.Aspire.Modules.CoworkeeModules.Search));
+        app.AddProjects();
+        app.Kibana.ShouldBeNull();
+        builder.Resources.Select(r => r.Name).ShouldNotContain("kibana-setup");
+    }
+
+    [Fact]
+    public async Task Kibana_lets_in_whom_the_auth_server_lets_through_its_proxy()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var app = builder.AddCoworkeeApp("demo", o => o.UseKibana(k => k.WithEnvironment("MINE", "1")));
+
+        app.AddProjects();
+
+        var search = builder.Resources.OfType<ElasticsearchResource>().Single();
+        var kibana = app.Kibana!.Resource;
+        kibana.Annotations.OfType<ContainerImageAnnotation>().Single().Tag.ShouldBe(search.Annotations.OfType<ContainerImageAnnotation>().Last().Tag);
+        var env = await Environment(kibana);
+        env["ELASTICSEARCH_USERNAME"].ShouldBe("kibana_system");
+        env["ELASTICSEARCH_PASSWORD"].ShouldBe("{demo-kibana-password.value}");
+        env["MINE"].ShouldBe("1");
+        var args = await kibana.GetArgumentValuesAsync(DistributedApplicationOperation.Publish);
+        args.ShouldContain("--xpack.security.authc.providers.anonymous.anonymous1.credentials.username=elastic");
+        (await Environment(builder.Resources.OfType<ContainerResource>().Single(r => r.Name == "kibana-setup")))["KIBANA_PASSWORD"].ShouldBe("{demo-kibana-password.value}");
+
+        var proxy = await Environment(Allocated(app.KibanaSignIn!.Resource));
+        proxy["OAUTH2_PROXY_CLIENT_ID"].ShouldBe("demo-kibana");
+        proxy["OAUTH2_PROXY_CLIENT_SECRET"].ShouldBe("{demo-kibana-secret.value}");
+        proxy["OAUTH2_PROXY_UPSTREAMS"].ShouldBe("{kibana-server.bindings.http.url}");
+        proxy["OAUTH2_PROXY_REDIRECT_URL"].ShouldBe("{kibana.bindings.http.url}/oauth2/callback");
+        proxy["OAUTH2_PROXY_LOGIN_URL"].ShouldEndWith("/connect/authorize");
+
+        var auth = await Environment(Allocated(app.AuthServer!.Resource));
+        var client = auth.Single(e => e.Value == "demo-kibana").Key.Replace("__ClientId", "", StringComparison.Ordinal);
+        auth[$"{client}__SystemAdministratorsOnly"].ShouldBe("true");
+        auth[$"{client}__ClientSecret"].ShouldBe("{demo-kibana-secret.value}");
+        auth[$"{client}__RedirectUris__0"].ShouldBe("{kibana.bindings.http.url}/oauth2/callback");
+    }
+
+    [Fact]
     public void Published_apps_take_their_tools_along_unless_switched_off()
     {
         var builder = DistributedApplication.CreateBuilder(["--operation", "publish", $"--{CoworkeeApp.DeployToolsSetting}:webdatastudio=false"]);

@@ -188,6 +188,19 @@ public sealed class TemplateOptionTests(TemplateFixture template)
     }
 
     [Fact]
+    public async Task Kibana_comes_with_the_search_only()
+    {
+        var on = await template.CreateAsync("kibana-on", "--samples", "false", "--elasticsearch", "true", "--kibana", "true");
+        Read(on, "src/Shop.AppHost/AppHost.cs").ShouldContain("options.UseKibana();");
+        Read(on, "LOGIN.md").ShouldContain("*kibana*");
+        SignInInfo.Read(on)!.Tools.ShouldContain("Kibana");
+
+        var alone = await template.CreateAsync("kibana-alone", "--samples", "false", "--kibana", "true");
+        Read(alone, "src/Shop.AppHost/AppHost.cs").ShouldNotContain("UseKibana");
+        TemplateTests.ShouldHaveNoLeftovers(alone);
+    }
+
+    [Fact]
     public async Task AspireUI_is_off_by_default_and_adds_the_host_the_package_and_the_sign_on_with_keycloak()
     {
         var off = await template.CreateAsync("aspireui-off", "--samples", "false", "--keycloak", "true");

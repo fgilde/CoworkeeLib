@@ -85,9 +85,20 @@ Bevor Coworkee einen Dienst verdrahtet, liest es dessen `obj/project.assets.json
 | `Coworkee.Search.Elasticsearch` | Elasticsearch |
 | `Coworkee.Notifications` | Links in Zusammenfassungsmails zeigen auf die Web-App |
 
-Grafana (mit Prometheus, Loki, Tempo und Collector) und WebDataStudio kommen mit `options.UseGrafana()` und `options.UseWebDataStudio()` dazu, siehe [Grafana und WebDataStudio](observability.md).
+Grafana (mit Prometheus, Loki, Tempo und Collector) und WebDataStudio kommen mit `options.UseGrafana()` und `options.UseWebDataStudio()` dazu, siehe [Grafana und WebDataStudio](observability.md). Kibana kommt mit `options.UseKibana()`, siehe [Kibana](#kibana).
 
 Container entstehen nur, wenn ein Dienst sie braucht. Postgres, SQL Server, Redis, Elasticsearch und Keycloak halten ihre Daten in Volumes; `--Coworkee:EphemeralInfrastructure=true` startet sie leer, das nutzen die Tests.
+
+### Kibana
+
+`options.UseKibana()` stellt Kibana neben den Elasticsearch-Container (nicht bei `UseSearch`: ein eigenes Elasticsearch bringt sein eigenes Kibana mit). Kibanas Single Sign-on (OpenID Connect, SAML) braucht eine kostenpflichtige Elastic-Lizenz, deshalb setzt der AppHost [oauth2-proxy](https://oauth2-proxy.github.io/oauth2-proxy/) davor:
+
+- Die Ressource `kibana` ist der Proxy und die Adresse, die du öffnest. Er meldet dich am Auth-Server der App an (Client `<app>-kibana`); ist Keycloak an, schickt der Auth-Server dich wie bei der App zu Keycloak weiter.
+- Der Auth-Server lässt nur Administratoren der System-Organisation durch (`AuthClientOptions.SystemAdministratorsOnly`). Alle anderen bekommen `access_denied`.
+- `kibana-server` ist Kibana selbst. Es lässt jede Anfrage als Elasticsearch-Benutzer `elastic` herein (sein Anonymous-Provider, Teil der freien Lizenz), deshalb darf nur der Proxy es erreichen. `kibana-setup` setzt das Passwort des eingebauten Benutzers `kibana_system`, sobald Elasticsearch antwortet.
+- Kibana nimmt die Image-Version des Elasticsearch-Containers. Seine gespeicherten Objekte liegen in Elasticsearch und damit in dessen Volume.
+
+Ohne Auth-Server behält Kibana sein eigenes Login: Benutzer `elastic` mit dem Passwort von Elasticsearch (Parameter `elasticsearch-password`). `coworkee new --elasticsearch --kibana` (Template-Option `kibana`, standardmäßig aus) fügt den Aufruf hinzu.
 
 ### Eigene Module
 

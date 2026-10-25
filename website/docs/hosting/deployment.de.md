@@ -36,12 +36,13 @@ coworkee deploy compose --without grafana --without ollama
 var app = builder.AddCoworkeeApp("shop", options => options.UseGrafana().DeployTool(CoworkeeTools.Grafana, false));
 ```
 
-`--without` und `--with` setzen `Coworkee:Deploy:Tools:<tool>`, das gewinnt gegen `DeployTool`. Die Tools heißen `keycloak`, `mailpit`, `libretranslate`, `grafana`, `webdatastudio`, `ollama`, `aspireui` und `elsastudio` (der Workflow-Designer, ein Projekt der App). Eigener Code im App-Host fragt `app.Deploys(CoworkeeTools.Ollama)`, so wie das Template Ollama und AspireUI hinzufügt.
+`--without` und `--with` setzen `Coworkee:Deploy:Tools:<tool>`, das gewinnt gegen `DeployTool`. Die Tools heißen `keycloak`, `mailpit`, `libretranslate`, `grafana`, `webdatastudio`, `ollama`, `aspireui`, `kibana` und `elsastudio` (der Workflow-Designer, ein Projekt der App). Eigener Code im App-Host fragt `app.Deploys(CoworkeeTools.Ollama)`, so wie das Template Ollama und AspireUI hinzufügt.
 
 | Tool | Im Deployment |
 |---|---|
 | Keycloak | der Realm der App mit den Clients des Auth-Servers und der Tools, dazu der erste Administrator als Benutzer mit der Rolle `Administrator`; die Migrationen gleichen ihn bei jedem Deployment ab. Öffentliche Adresse `<app>-keycloak-url`, Daten in `<app>-keycloak-data` (Keycloaks eigene Dateidatenbank), seine Konsole als `admin` mit `KEYCLOAK_PASSWORD`. Demo-Benutzer und Login-Theme bleiben lokal |
 | Grafana | mit Prometheus, Loki, Tempo und dem Collector; die Dashboards der App und die Konfiguration stecken in den Images (`<app>-grafana`, ...). Der Administrator meldet sich mit Passwort oder über Keycloak an. Öffentliche Adresse `<app>-grafana-url`, Daten in `<app>-grafana-data`, `<app>-prometheus-data` und `<app>-loki-data`; Tempo hält seine Traces im Container |
+| Kibana | hinter oauth2-proxy; Administratoren der System-Organisation melden sich am Auth-Server an (seine öffentliche Adresse ist Issuer und Token-Endpunkt). Öffentliche Adresse `<app>-kibana-url`, Client-Secret `<app>-kibana-secret`, Cookie-Secret `<app>-kibana-cookie-secret`, Passwort von `kibana_system` `<app>-kibana-password` |
 | WebDataStudio | mit der App-Datenbank verbunden; der Administrator meldet sich mit Passwort oder über Keycloak an. Öffentliche Adresse `<app>-webdatastudio-url`, Daten in `<app>-webdatastudio-data` |
 | LibreTranslate | der Übersetzungsdienst der App, nur im internen Netz; die Modelle liegen in `<app>-libretranslate-models`, der erste Start lädt sie herunter |
 | Ollama | der Modellserver der App, nur im internen Netz, Modelle in `<app>-ollama-data`. Er braucht einen Host mit genug Speicher |
@@ -84,7 +85,7 @@ SHOP_GRAFANA_URL=https://grafana.example.com
 SHOP_WEBDATASTUDIO_URL=https://data.example.com
 ```
 
-Die Dienste lauschen auf dem Loopback des Hosts, in der Reihenfolge, in der sie hinzugefügt wurden: Auth-Server `127.0.0.1:8080`, API `8081`, Web-App `8082` (AirWorks `8083`). Die Tools haben feste Ports: Keycloak `8090`, Grafana `8091`, WebDataStudio `8092`, AspireUI `8093`, Mailpit `8094`. Davor beendet ein Reverse Proxy HTTPS, zum Beispiel Caddy, der sich die Zertifikate bei Let's Encrypt holt:
+Die Dienste lauschen auf dem Loopback des Hosts, in der Reihenfolge, in der sie hinzugefügt wurden: Auth-Server `127.0.0.1:8080`, API `8081`, Web-App `8082` (AirWorks `8083`). Die Tools haben feste Ports: Keycloak `8090`, Grafana `8091`, WebDataStudio `8092`, AspireUI `8093`, Mailpit `8094`, Kibana `8096`. Davor beendet ein Reverse Proxy HTTPS, zum Beispiel Caddy, der sich die Zertifikate bei Let's Encrypt holt:
 
 ```caddyfile
 auth.example.com {

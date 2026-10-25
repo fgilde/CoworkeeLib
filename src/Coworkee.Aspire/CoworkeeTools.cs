@@ -10,11 +10,12 @@ public static class CoworkeeTools
     public const string WebDataStudio = "webdatastudio";
     public const string Ollama = "ollama";
     public const string AspireUI = "aspireui";
+    public const string Kibana = "kibana";
 
     /// <summary>The workflow designer, a project of the app (<c>MyApp.ElsaStudio</c>) that <see cref="CoworkeeApp.AddProjects"/> adds.</summary>
     public const string ElsaStudio = "elsastudio";
 
-    public static readonly IReadOnlyList<string> All = [Keycloak, Mailpit, LibreTranslate, Grafana, WebDataStudio, Ollama, AspireUI, ElsaStudio];
+    public static readonly IReadOnlyList<string> All = [Keycloak, Mailpit, LibreTranslate, Grafana, WebDataStudio, Ollama, AspireUI, Kibana, ElsaStudio];
 
     /// <summary>The loopback port Docker Compose binds a tool's web interface to, next to the services' 8080 and up.</summary>
     internal static int ComposePort(string tool) => tool switch
@@ -24,6 +25,7 @@ public static class CoworkeeTools
         WebDataStudio => 8092,
         AspireUI => 8093,
         Mailpit or "mail" => 8094,
+        Kibana => 8096,
         _ => 8095,
     };
 }
