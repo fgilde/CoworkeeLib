@@ -39,6 +39,7 @@ internal static class AuthEndpoints
         app.MapMethods("/connect/authorize", [HttpMethods.Get, HttpMethods.Post], (Delegate)AuthorizeAsync).ExcludeFromDescription();
         app.MapPost("/connect/token", TokenAsync).ExcludeFromDescription();
         app.MapMethods("/connect/endsession", [HttpMethods.Get, HttpMethods.Post], (Delegate)EndSessionAsync).ExcludeFromDescription();
+        app.MapMethods("/connect/userinfo", [HttpMethods.Get, HttpMethods.Post], (Delegate)UserInfoAsync).ExcludeFromDescription();
     }
 
     private static async Task<IResult> AuthorizeAsync(HttpContext context, CoworkeeDbContext db, IOptions<AuthServerOptions> options, PasswordPolicy policy, TimeProvider clock)
@@ -165,6 +166,25 @@ internal static class AuthEndpoints
         }
 
         return Results.SignIn(principal, null, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+    }
+
+    // tools that read the user from here instead of the ID token (Grafana, Open WebUI); the access token carries the same claims, roles always as a list
+    private static async Task<IResult> UserInfoAsync(HttpContext context)
+    {
+        var principal = (await context.AuthenticateAsync(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme)).Principal;
+        if (principal is null)
+        {
+            return Results.Challenge(authenticationSchemes: [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]);
+        }
+
+        return Results.Ok(new Dictionary<string, object?>
+        {
+            [Claims.Subject] = principal.GetClaim(Claims.Subject),
+            [Claims.Email] = principal.GetClaim(Claims.Email),
+            [Claims.Name] = principal.GetClaim(Claims.Name),
+            [Claims.Role] = principal.GetClaims(Claims.Role),
+            ["tenant"] = principal.GetClaim("tenant"),
+        });
     }
 
     private static async Task<IResult> EndSessionAsync(HttpContext context)

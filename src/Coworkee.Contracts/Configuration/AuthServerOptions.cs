@@ -33,6 +33,12 @@ public sealed class AuthServerOptions
     /// <summary>Public base address tokens name as issuer; set it when the server sits behind a proxy or runs on several instances.</summary>
     public Uri? Issuer { get; set; }
 
+    /// <summary>
+    /// With <see cref="Issuer"/>: the discovery document names the endpoints servers call (token, keys) by the address the request came in on,
+    /// the pages the browser is sent to (sign-in, sign-out) by the issuer. Tools in containers reach the auth server by another name than the browser (Keycloak's KC_HOSTNAME_BACKCHANNEL_DYNAMIC).
+    /// </summary>
+    public bool DynamicBackchannel { get; set; }
+
     /// <summary>PKCS#12 file that signs tokens. Required outside development, shared by all instances.</summary>
     public CertificateOptions? SigningCertificate { get; set; }
 

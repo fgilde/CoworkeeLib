@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OpenIddict.Server;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace Coworkee.AuthServer;
@@ -66,7 +67,8 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
             {
                 server.SetAuthorizationEndpointUris("/connect/authorize")
                     .SetTokenEndpointUris("/connect/token")
-                    .SetEndSessionEndpointUris("/connect/endsession");
+                    .SetEndSessionEndpointUris("/connect/endsession")
+                    .SetUserInfoEndpointUris("/connect/userinfo");
                 server.AllowAuthorizationCodeFlow().AllowRefreshTokenFlow().AllowClientCredentialsFlow();
                 server.RequireProofKeyForCodeExchange();
                 server.RegisterScopes([Scopes.OpenId, Scopes.Profile, Scopes.Email, Scopes.Roles, Scopes.OfflineAccess, .. options.ApiScopes.Keys]);
@@ -76,10 +78,18 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
                 var aspNetCore = server.UseAspNetCore()
                     .EnableAuthorizationEndpointPassthrough()
                     .EnableTokenEndpointPassthrough()
-                    .EnableEndSessionEndpointPassthrough();
+                    .EnableEndSessionEndpointPassthrough()
+                    .EnableUserInfoEndpointPassthrough();
                 if (options.AllowHttp)
                 {
                     aspNetCore.DisableTransportSecurityRequirement();
+                }
+
+                if (options is { DynamicBackchannel: true, Issuer: not null })
+                {
+                    server.AddEventHandler<OpenIddictServerEvents.HandleConfigurationRequestContext>(handler => handler
+                        .UseInlineHandler(BrowserEndpointsByIssuer)
+                        .SetOrder(OpenIddictServerHandlers.Discovery.AttachEndpoints.Descriptor.Order + 1_000));
                 }
             })
             .AddValidation(validation =>
@@ -87,6 +97,17 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
                 validation.UseLocalServer();
                 validation.UseAspNetCore();
             });
+    }
+
+    // OpenIddict names every endpoint by the address of the request; the pages the browser is sent to take the issuer's instead
+    private static ValueTask BrowserEndpointsByIssuer(OpenIddictServerEvents.HandleConfigurationRequestContext context)
+    {
+        var issuer = context.Options.Issuer!;
+        Uri? Browser(Uri? endpoint) => endpoint is null ? null
+            : new UriBuilder(endpoint) { Scheme = issuer.Scheme, Host = issuer.Host, Port = issuer.Port }.Uri;
+        context.AuthorizationEndpoint = Browser(context.AuthorizationEndpoint);
+        context.EndSessionEndpoint = Browser(context.EndSessionEndpoint);
+        return ValueTask.CompletedTask;
     }
 
     /// <summary>

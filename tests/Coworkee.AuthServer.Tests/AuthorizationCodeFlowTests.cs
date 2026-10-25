@@ -26,6 +26,23 @@ public sealed partial class AuthorizationCodeFlowTests(AuthApp app) : IAsyncLife
     }
 
     [Fact]
+    public async Task Discovery_names_the_sign_in_page_by_the_issuer_and_what_servers_call_by_the_address_they_asked()
+    {
+        // a tool in a container asks by its own name for the auth server, the browser it sends there only knows the issuer
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/.well-known/openid-configuration");
+        request.Headers.Host = "auth.dev.internal:7302";
+        using var response = await app.Browser().SendAsync(request, Ct);
+        using var discovery = JsonDocument.Parse(await response.Content.ReadAsStringAsync(Ct));
+        var root = discovery.RootElement;
+
+        root.GetProperty("issuer").GetString().ShouldBe("http://localhost/");
+        root.GetProperty("authorization_endpoint").GetString().ShouldBe("http://localhost/connect/authorize");
+        root.GetProperty("end_session_endpoint").GetString().ShouldBe("http://localhost/connect/endsession");
+        root.GetProperty("token_endpoint").GetString().ShouldBe("http://auth.dev.internal:7302/connect/token");
+        root.GetProperty("jwks_uri").GetString().ShouldStartWith("http://auth.dev.internal:7302/");
+    }
+
+    [Fact]
     public async Task Anonymous_authorize_redirects_to_login()
     {
         var browser = NoRedirects();
@@ -45,6 +62,23 @@ public sealed partial class AuthorizationCodeFlowTests(AuthApp app) : IAsyncLife
         access.Claims.Single(c => c.Type == "tenant").Value.ShouldBe(_setup.TenantId.ToString());
         access.Audiences.ShouldContain("test_api");
         tokens.TryGetProperty("refresh_token", out _).ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task User_info_names_the_user_of_the_access_token_with_its_roles_as_a_list()
+    {
+        var tokens = await SignInAsync("admin@acme.test", "Admin#12345");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/connect/userinfo");
+        request.Headers.Authorization = new("Bearer", tokens.GetProperty("access_token").GetString());
+
+        using var response = await app.Browser().SendAsync(request, Ct);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using var info = JsonDocument.Parse(await response.Content.ReadAsStringAsync(Ct));
+
+        info.RootElement.GetProperty("sub").GetString().ShouldBe(_setup.AdminUserId.ToString());
+        info.RootElement.GetProperty("email").GetString().ShouldBe("admin@acme.test");
+        info.RootElement.GetProperty("role").ValueKind.ShouldBe(JsonValueKind.Array);
+        (await app.Browser().GetAsync("/connect/userinfo", Ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
     [Fact]

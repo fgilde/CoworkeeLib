@@ -52,6 +52,8 @@ public sealed class AuthApp : DatabaseFixture
             ["Coworkee:SetupToken"] = "token",
             ["Coworkee:RateLimiting:Policies:auth:PermitLimit"] = "100000",
             ["Coworkee:Auth:AllowHttp"] = "true",
+            ["Coworkee:Auth:Issuer"] = "http://localhost/",
+            ["Coworkee:Auth:DynamicBackchannel"] = "true",
             ["Coworkee:Auth:SigningCertificate:Path"] = TestCertificates.Write("signing", System.Security.Cryptography.X509Certificates.X509KeyUsageFlags.DigitalSignature),
             ["Coworkee:Auth:EncryptionCertificate:Path"] = TestCertificates.Write("encryption", System.Security.Cryptography.X509Certificates.X509KeyUsageFlags.KeyEncipherment),
             ["Coworkee:Auth:ApiScopes:test_api"] = "test_api",
