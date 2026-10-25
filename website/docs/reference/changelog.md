@@ -6,6 +6,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixed
 
+- Kibana: the sign-in of a local run sends the browser to the host addresses of the auth server and the proxy; it went to `aspire.dev.internal`, which only containers know. The dashboard no longer links `kibana-server`, which let everyone in without the proxy.
 - AspireUI: a local run gives it the volume `{app}-aspireui-data` like a deployment. The shared `aspireui-data-aspireui` let the app started last set the Keycloak sign-in of every other app (404 on `/realms/<other app>/.well-known/openid-configuration`). The old volume stays; delete it with `docker volume rm aspireui-data-aspireui` once nothing uses it.
 
 ## 0.0.1.38 (2026-10-25)

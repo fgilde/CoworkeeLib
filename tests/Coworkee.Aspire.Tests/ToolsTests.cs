@@ -202,12 +202,15 @@ public sealed class ToolsTests
         args.ShouldContain("--xpack.security.authc.providers.anonymous.anonymous1.credentials.username=elastic");
         (await Environment(builder.Resources.OfType<ContainerResource>().Single(r => r.Name == "kibana-setup")))["KIBANA_PASSWORD"].ShouldBe("{demo-kibana-password.value}");
 
+        Allocated(app.AuthServer!.Resource);
         var proxy = await Environment(Allocated(app.KibanaSignIn!.Resource));
         proxy["OAUTH2_PROXY_CLIENT_ID"].ShouldBe("demo-kibana");
         proxy["OAUTH2_PROXY_CLIENT_SECRET"].ShouldBe("{demo-kibana-secret.value}");
         proxy["OAUTH2_PROXY_UPSTREAMS"].ShouldBe("{kibana-server.bindings.http.url}");
-        proxy["OAUTH2_PROXY_REDIRECT_URL"].ShouldBe("{kibana.bindings.http.url}/oauth2/callback");
-        proxy["OAUTH2_PROXY_LOGIN_URL"].ShouldEndWith("/connect/authorize");
+        // the browser follows both: host addresses, not those of the container network
+        proxy["OAUTH2_PROXY_REDIRECT_URL"].ShouldBe("http://localhost:8180/oauth2/callback");
+        proxy["OAUTH2_PROXY_LOGIN_URL"].ShouldBe("https://localhost:8180/connect/authorize");
+        kibana.Annotations.OfType<ResourceUrlsCallbackAnnotation>().ShouldNotBeEmpty();
 
         var auth = await Environment(Allocated(app.AuthServer!.Resource));
         var client = auth.Single(e => e.Value == "demo-kibana").Key.Replace("__ClientId", "", StringComparison.Ordinal);

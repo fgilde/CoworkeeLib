@@ -95,7 +95,7 @@ Container entstehen nur, wenn ein Dienst sie braucht. Postgres, SQL Server, Redi
 
 - Die Ressource `kibana` ist der Proxy und die Adresse, die du öffnest. Er meldet dich am Auth-Server der App an (Client `<app>-kibana`); ist Keycloak an, schickt der Auth-Server dich wie bei der App zu Keycloak weiter.
 - Der Auth-Server lässt nur Administratoren der System-Organisation durch (`AuthClientOptions.SystemAdministratorsOnly`). Alle anderen bekommen `access_denied`.
-- `kibana-server` ist Kibana selbst. Es lässt jede Anfrage als Elasticsearch-Benutzer `elastic` herein (sein Anonymous-Provider, Teil der freien Lizenz), deshalb darf nur der Proxy es erreichen. `kibana-setup` setzt das Passwort des eingebauten Benutzers `kibana_system`, sobald Elasticsearch antwortet.
+- `kibana-server` ist Kibana selbst. Es lässt jede Anfrage als Elasticsearch-Benutzer `elastic` herein (sein Anonymous-Provider, Teil der freien Lizenz), deshalb darf nur der Proxy es erreichen: Das Dashboard zeigt keinen Link darauf, ein Deployment veröffentlicht keinen Port davon (ein lokaler Lauf behält seinen Port auf der Loopback-Adresse). `kibana-setup` setzt das Passwort des eingebauten Benutzers `kibana_system`, sobald Elasticsearch antwortet.
 - Kibana nimmt die Image-Version des Elasticsearch-Containers. Seine gespeicherten Objekte liegen in Elasticsearch und damit in dessen Volume.
 
 Ohne Auth-Server behält Kibana sein eigenes Login: Benutzer `elastic` mit dem Passwort von Elasticsearch (Parameter `elasticsearch-password`). `coworkee new --elasticsearch --kibana` (Template-Option `kibana`, standardmäßig aus) fügt den Aufruf hinzu.

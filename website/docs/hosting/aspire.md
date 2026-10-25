@@ -95,7 +95,7 @@ Containers are only created when a service needs them. Postgres, SQL Server, Red
 
 - The resource `kibana` is the proxy and the address you open. It signs in at the app's auth server (client `<app>-kibana`), and with Keycloak on, the auth server sends you on to Keycloak as for the app.
 - The auth server lets only administrators of the system organisation through (`AuthClientOptions.SystemAdministratorsOnly`). Everybody else gets `access_denied`.
-- `kibana-server` is Kibana itself. It lets every request in as the Elasticsearch user `elastic` (its anonymous provider, part of the free license), so nothing but the proxy should reach it. `kibana-setup` gives the built-in user `kibana_system` its password once Elasticsearch answers.
+- `kibana-server` is Kibana itself. It lets every request in as the Elasticsearch user `elastic` (its anonymous provider, part of the free license), so nothing but the proxy should reach it: the dashboard shows no link to it and a deployment publishes no port of it (a local run keeps its port on the loopback address). `kibana-setup` gives the built-in user `kibana_system` its password once Elasticsearch answers.
 - Kibana takes the image version of the Elasticsearch container. Its saved objects live in Elasticsearch, so they share its volume.
 
 Without an auth server Kibana keeps its own login: user `elastic` with the password of Elasticsearch (parameter `elasticsearch-password`). `coworkee new --elasticsearch --kibana` (template option `kibana`, off by default) adds the call.

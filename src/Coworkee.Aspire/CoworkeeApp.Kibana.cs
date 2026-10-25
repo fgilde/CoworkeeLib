@@ -36,10 +36,11 @@ public sealed partial class CoworkeeApp
         Kibana = Builder.AddContainer("kibana-server", "library/kibana", image.Tag!)
             .WithImageRegistry(image.Registry)
             .WithHttpEndpoint(targetPort: 5601, name: "http")
+            // only oauth2-proxy is the way in: no link in the dashboard, and a deployment publishes no port of Kibana itself
+            .WithUrls(context => context.Urls.Clear())
             .WithEnvironment("ELASTICSEARCH_HOSTS", elasticsearch)
             .WithEnvironment("ELASTICSEARCH_USERNAME", "kibana_system")
             .WithEnvironment("ELASTICSEARCH_PASSWORD", _kibanaPassword)
-            .WithUrlForEndpoint("http", u => u.DisplayText = "Kibana")
             .WaitForCompletion(setup);
         configure(Kibana);
         AddKibanaSignIn();
@@ -82,7 +83,6 @@ public sealed partial class CoworkeeApp
             .WithEnvironment("OAUTH2_PROXY_SCOPE", "openid profile email")
             .WithEnvironment("OAUTH2_PROXY_OIDC_ISSUER_URL", publicAuth)
             .WithEnvironment("OAUTH2_PROXY_SKIP_OIDC_DISCOVERY", "true")
-            .WithEnvironment("OAUTH2_PROXY_LOGIN_URL", ReferenceExpression.Create($"{publicAuth}/connect/authorize"))
             .WithEnvironment("OAUTH2_PROXY_REDEEM_URL", ReferenceExpression.Create($"{backchannel}/connect/token"))
             .WithEnvironment("OAUTH2_PROXY_OIDC_JWKS_URL", ReferenceExpression.Create($"{backchannel}/.well-known/jwks"))
             // the auth server issues no email_verified; it decides who gets in (SystemAdministratorsOnly)
@@ -91,14 +91,26 @@ public sealed partial class CoworkeeApp
             .WithEnvironment("OAUTH2_PROXY_SKIP_PROVIDER_BUTTON", "true")
             .WithEnvironment("OAUTH2_PROXY_UPSTREAMS", kibana.GetEndpoint("http"))
             .WithEnvironment("OAUTH2_PROXY_HTTP_ADDRESS", "0.0.0.0:4180")
-            .WithEnvironment("OAUTH2_PROXY_REDIRECT_URL", ReferenceExpression.Create($"{url}/oauth2/callback"))
             .WithEnvironment("OAUTH2_PROXY_COOKIE_SECRET", GeneratedSecret($"{clientId}-cookie-secret", 32))
             // browsers send cookies to every port of localhost
             .WithEnvironment("OAUTH2_PROXY_COOKIE_NAME", $"_{Name}_kibana")
             .WithEnvironment("OAUTH2_PROXY_COOKIE_SECURE", Publishing ? "true" : "false")
             .WithEnvironment("OAUTH2_PROXY_REVERSE_PROXY", Publishing ? "true" : "false");
-        if (!Publishing)
+        if (Publishing)
         {
+            proxy.WithEnvironment("OAUTH2_PROXY_LOGIN_URL", ReferenceExpression.Create($"{publicAuth}/connect/authorize"))
+                .WithEnvironment("OAUTH2_PROXY_REDIRECT_URL", ReferenceExpression.Create($"{url}/oauth2/callback"));
+        }
+        else
+        {
+            // the browser addresses: inside the container both endpoints would resolve to the container network (aspire.dev.internal, kibana.dev.internal)
+            var authHttps = auth.GetEndpoint("https");
+            var proxyHttp = proxy.GetEndpoint("http");
+            proxy.WithEnvironment(context =>
+            {
+                context.EnvironmentVariables["OAUTH2_PROXY_LOGIN_URL"] = $"{authHttps.Url}/connect/authorize";
+                context.EnvironmentVariables["OAUTH2_PROXY_REDIRECT_URL"] = $"{proxyHttp.Url}/oauth2/callback";
+            });
             // the development certificate of the auth server, reached as host.docker.internal, which then also names itself so in the tokens
             proxy.WithEnvironment("OAUTH2_PROXY_SSL_INSECURE_SKIP_VERIFY", "true")
                 .WithEnvironment("OAUTH2_PROXY_INSECURE_OIDC_SKIP_ISSUER_VERIFICATION", "true");
