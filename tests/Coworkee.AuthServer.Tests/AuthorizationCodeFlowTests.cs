@@ -172,6 +172,22 @@ public sealed partial class AuthorizationCodeFlowTests(AuthApp app) : IAsyncLife
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
+    [Fact]
+    public async Task Form_post_answer_may_run_its_submit_script()
+    {
+        var browser = NoRedirects();
+        var authorize = await browser.GetAsync(AuthorizeUrl(Challenge(Verifier())) + "&response_mode=form_post", Ct);
+        var returnUrl = QueryHelpers.ParseQuery(new Uri(new Uri("http://localhost"), authorize.Headers.Location!.ToString()).Query)["ReturnUrl"].ToString();
+        var (login, _) = await PostLoginAsync(browser, "admin@acme.test", "Admin#12345", returnUrl);
+
+        var answer = await browser.GetAsync(login.Headers.Location, Ct);
+        var html = await answer.Content.ReadAsStringAsync(Ct);
+        html.ShouldContain("name=\"code\"");
+        var script = Regex.Match(html, "<script>(.*?)</script>", RegexOptions.Singleline).Groups[1].Value;
+        var hash = $"'sha256-{Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(script)))}'";
+        string.Join(' ', answer.Headers.GetValues("Content-Security-Policy")).ShouldContain($"script-src 'self' {hash}");
+    }
+
     private HttpClient NoRedirects() => app.Browser();
 
     private async Task<JsonElement> SignInAsync(string email, string password)

@@ -137,6 +137,9 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
         }
     }
 
+    // the one inline script allowed: OpenIddict's answer with response_mode=form_post submits its form to the client (ASP.NET Core's OpenID Connect handler, WebDataStudio)
+    internal const string FormPostScriptHash = "'sha256-j7OoGArf6XW6YY4cAyS3riSSvrJRqpSi1fOF9vQ5SrI='";
+
     /// <summary>
     /// The account pages load their scripts from the own origin only (passkeys included) and style inline; after sign-in the browser follows redirects to the clients, which
     /// browsers check against form-action, so the clients' origins are allowed there. Logos and the design's image or video from elsewhere
@@ -152,7 +155,7 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
         var media = Clients.ClientApp.IsWebAddress(mediaUrl) ? " " + new Uri(mediaUrl!).GetLeftPart(UriPartial.Authority) : null;
         var ancestors = options.FrameAncestors.Select(o => Uri.TryCreate(o, UriKind.Absolute, out var uri) ? uri.GetLeftPart(UriPartial.Authority) : null)
             .OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        return $"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src {string.Join(' ', ["'self'", "data:", .. logos])}; media-src 'self'{media}; "
+        return $"default-src 'self'; script-src 'self' {FormPostScriptHash}; style-src 'self' 'unsafe-inline'; img-src {string.Join(' ', ["'self'", "data:", .. logos])}; media-src 'self'{media}; "
             + "object-src 'none'; base-uri 'self'; "
             + $"frame-ancestors {(ancestors.Count == 0 ? "'none'" : string.Join(' ', ancestors))}; form-action {string.Join(' ', ["'self'", .. clients])}";
     }
