@@ -49,7 +49,7 @@ internal static class ThemeSeeds
             else if (!SameJson(existing.PaletteLight, seed.PaletteLight) || !SameJson(existing.PaletteDark, seed.PaletteDark)
                      || !SameJson(existing.LayoutProperties, seed.LayoutProperties) || !SameJson(existing.Typography, seed.Typography)
                      || !SameJson(existing.Shadows, seed.Shadows) || !SameJson(existing.Options, seed.Options)
-                     || existing.IsDefault != seed.IsDefault || !existing.IsPublished)
+                     || existing.CustomCss != seed.CustomCss || existing.IsDefault != seed.IsDefault || !existing.IsPublished)
             {
                 existing.PaletteLight = seed.PaletteLight;
                 existing.PaletteDark = seed.PaletteDark;
@@ -57,6 +57,7 @@ internal static class ThemeSeeds
                 existing.Typography = seed.Typography;
                 existing.Shadows = seed.Shadows;
                 existing.Options = seed.Options;
+                existing.CustomCss = seed.CustomCss;
                 existing.IsDefault = seed.IsDefault;
                 existing.IsPublished = true;
                 changed.Add(existing);
@@ -130,6 +131,7 @@ internal static class ThemeSeeds
         Typography = source.Typography,
         Shadows = source.Shadows,
         Options = source.Options,
+        CustomCss = source.CustomCss,
     };
 
     private static string Merge(string palette, IReadOnlyDictionary<string, string> colors)
@@ -262,7 +264,58 @@ internal static class ThemeSeeds
             layout: Layout("8px", "280px", "56px"),
             typography: Fonts(Friendly, Friendly),
             options: new() { ["ShowLogoInNav"] = true, ["NavSingleExpand"] = true }),
+        // the logo sits in the header only, the header is dark in both modes
+        Theme("GitHub",
+            light: Colors("#0969da", "#ffffff", "#1a7f37", "#ffffff", "#ffffff", "#ffffff", "#24292f", "#ffffff", "#f6f8fa", "#1f2328", "#59636e", "#d1d9e0"),
+            dark: Colors("#4493f8", "#0d1117", "#3fb950", "#0d1117", "#0d1117", "#151b23", "#010409", "#f0f6fc", "#0d1117", "#f0f6fc", "#9198a1", "#3d444d"),
+            layout: Layout("6px", "280px", "60px"),
+            typography: Fonts(SystemFonts, SystemFonts),
+            options: new() { ["ShowLogoInNav"] = false, ["ShowLogoInAppBar"] = true, ["StripedTables"] = true }),
+        // a link-in-bio page: pill buttons, roomy, the logo heads the menu, not the header
+        Theme("LinkHub",
+            light: Colors("#1e2330", "#ffffff", "#6d28d9", "#ffffff", "#e9f5db", "#ffffff", "#e9f5db", "#1e2330", "#dcefc4", "#1e2330", "#4b5563", "#c5dca8"),
+            dark: Colors("#c6f432", "#10140b", "#a78bfa", "#10140b", "#10140b", "#1a2013", "#10140b", "#eef7e0", "#151a10", "#eef7e0", "#b5c2a3", "#2c3622"),
+            layout: Layout("24px", "300px", "72px"),
+            typography: Fonts(Friendly, Friendly),
+            options: new() { ["ShowLogoInNav"] = true, ["ShowLogoInAppBar"] = false, ["NavSingleExpand"] = true, ["Dense"] = false },
+            css: ".mud-button-root:not(.mud-icon-button), .mud-chip { border-radius: 999px; }"),
+        // no logo at all: the app name alone, as in a shell
+        Theme("Terminal",
+            light: Colors("#0a6b2c", "#ffffff", "#8a5a00", "#ffffff", "#f5f5f0", "#ffffff", "#0c0c0c", "#33ff66", "#ecece4", "#111111", "#4d4d47", "#d4d4cc"),
+            dark: Colors("#33ff66", "#0c0c0c", "#ffb000", "#0c0c0c", "#0c0c0c", "#121212", "#0c0c0c", "#33ff66", "#0c0c0c", "#d0ffd8", "#8fbf98", "#1f3a26"),
+            layout: Layout("0px", "260px", "48px"),
+            typography: Fonts(Mono, Mono),
+            options: new() { ["ShowLogoInNav"] = false, ["ShowLogoInAppBar"] = false, ["Dense"] = true },
+            flat: true),
+        // a dark sidebar next to light content; the logo heads the sidebar, the header stays plain
+        Theme("Slate",
+            light: Drawer(Colors("#4f46e5", "#ffffff", "#0f766e", "#ffffff", "#f8fafc", "#ffffff", "#ffffff", "#0f172a", "#0f172a", "#0f172a", "#475569", "#e2e8f0"), "#e2e8f0", "#94a3b8"),
+            dark: Drawer(Colors("#818cf8", "#0b1020", "#2dd4bf", "#0b1020", "#0b1020", "#111827", "#0b1020", "#e2e8f0", "#070b16", "#e2e8f0", "#94a3b8", "#1f2937"), "#e2e8f0", "#94a3b8"),
+            layout: Layout("8px", "264px", "56px"),
+            typography: Fonts(Sans, Sans),
+            options: new() { ["ShowLogoInNav"] = true, ["ShowLogoInAppBar"] = false, ["NavSingleExpand"] = true }),
+        // amber on charcoal, the logo in the dark header only
+        Theme("Ember",
+            light: Colors("#b45309", "#ffffff", "#1f2937", "#ffffff", "#fafaf9", "#ffffff", "#1c1917", "#fbbf24", "#f5f5f4", "#1c1917", "#57534e", "#e7e5e4"),
+            dark: Colors("#f59e0b", "#1c1917", "#fb923c", "#1c1917", "#1c1917", "#292524", "#0c0a09", "#fbbf24", "#1c1917", "#f5f5f4", "#a8a29e", "#44403c"),
+            layout: Layout("6px", "290px", "60px"),
+            typography: Fonts(Sans, Humanist),
+            options: new() { ["ShowLogoInNav"] = false, ["ShowLogoInAppBar"] = true }),
+        // fresh and roomy, the logo in the light header only
+        Theme("Mint",
+            light: Colors("#047857", "#ffffff", "#0e7490", "#ffffff", "#f0fdf9", "#ffffff", "#ffffff", "#064e3b", "#e6f7f1", "#052e26", "#3f6b5f", "#cfe9df"),
+            dark: Colors("#34d399", "#022c22", "#22d3ee", "#042f2e", "#06201a", "#0b2b23", "#06201a", "#d1fae5", "#05261e", "#d1fae5", "#8fbfae", "#164e3f"),
+            layout: Layout("12px", "300px", "64px"),
+            typography: Fonts(Rounded, Friendly),
+            options: new() { ["ShowLogoInNav"] = false, ["ShowLogoInAppBar"] = true, ["Dense"] = false }),
     ];
+
+    private static Dictionary<string, string> Drawer(Dictionary<string, string> colors, string text, string icon)
+    {
+        colors["DrawerText"] = text;
+        colors["DrawerIcon"] = icon;
+        return colors;
+    }
 
     private static Dictionary<string, string> Colors(
         string primary, string primaryText, string secondary, string secondaryText, string background, string surface, string appbar, string appbarText,
@@ -294,7 +347,7 @@ internal static class ThemeSeeds
 
     private static ThemeDefinition Theme(
         string name, Dictionary<string, string> light, Dictionary<string, string> dark, Dictionary<string, object> layout,
-        Dictionary<string, object>? typography, Dictionary<string, object> options, bool flat = false) => new()
+        Dictionary<string, object>? typography, Dictionary<string, object> options, bool flat = false, string? css = null) => new()
     {
         Name = name,
         IsPublished = true,
@@ -304,5 +357,6 @@ internal static class ThemeSeeds
         Typography = typography is null ? null : JsonSerializer.Serialize(typography),
         Shadows = flat ? JsonSerializer.Serialize(new { Elevation = Enumerable.Repeat("none", 26) }) : null,
         Options = JsonSerializer.Serialize(options),
+        CustomCss = css,
     };
 }

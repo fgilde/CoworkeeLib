@@ -56,7 +56,7 @@ The name becomes the prefix of every project and namespace (`Shop.Api`, `Shop.We
 
 ### Branding
 
-Logo, the fifteen [built-in themes](../modules/theming.md) as cards in light and dark, and brand colors with a color picker. The live preview draws the app shell (app bar, navigation, cards, buttons) in the colors, font and corner radius of the theme, in light and dark side by side. With brand colors the app gets its own theme, named like the title and based on the chosen one.
+Logo, the twenty-one [built-in themes](../modules/theming.md) as cards in light and dark, and brand colors with a color picker. The live preview draws the app shell (app bar, navigation, cards, buttons) in the colors, font and corner radius of the theme, in light and dark side by side. With brand colors the app gets its own theme, named like the title and based on the chosen one.
 
 ![Branding](../assets/screenshots/studio-branding-dark.webp)
 

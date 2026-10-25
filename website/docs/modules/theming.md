@@ -1,6 +1,6 @@
 # Theming
 
-Themes are data: palettes for light and dark mode, typography, border radius, drawer width and app bar height, shadows, logo, custom CSS, and the app's own options. Fifteen built-in themes ship with the package (see [Built-in themes](#built-in-themes)); they differ in fonts, radius, navigation width and behaviour, not only in colors.
+Themes are data: palettes for light and dark mode, typography, border radius, drawer width and app bar height, shadows, logo, custom CSS, and the app's own options. Twenty-one built-in themes ship with the package (see [Built-in themes](#built-in-themes)); they differ in fonts, radius, navigation width and behaviour, not only in colors.
 
 ![Theme selection in the user settings](../assets/screenshots/themes.png){ .shot }
 
@@ -33,7 +33,7 @@ public sealed class MyThemeEditMeta : IObjectMetaConfiguration<CoworkeeTheme>
 
 ## Built-in themes
 
-Each one has a light and a dark palette. The names only hint at what inspired them; no logos, no trademarks. The newer ones (from Octo on) meet WCAG AA contrast for text, buttons, app bar and navigation (`ThemeSeedTests`).
+Each one has a light and a dark palette. The names only hint at what inspired them and none ships a logo; GitHub is named after the site it follows. They also differ in where the logo sits: in the menu, in the header, in both or nowhere (`ShowLogoInNav`, `ShowLogoInAppBar`); LinkHub brings custom CSS for its pill buttons. The newer ones (from Octo on) meet WCAG AA contrast for text, buttons, app bar and navigation (`ThemeSeedTests`).
 
 | Theme | Look | Headings / text | Radius |
 |---|---|---|---|
@@ -52,6 +52,12 @@ Each one has a light and a dark palette. The names only hint at what inspired th
 | Atom | soft editor grays, blue and violet | Cascadia Code / Inter, dense | 6 px |
 | Paper | plain white paper, flat (no shadows) | Georgia / Inter | 4 px |
 | Aubergine | aubergine app bar (and navigation in dark mode), green accents | Lato | 8 px |
+| GitHub | dark header, white pages, blue links, like GitHub; logo in the header only | system font | 6 px |
+| LinkHub | link page look: lime and violet, pill buttons, roomy; logo above the menu only | Lato | 24 px |
+| Terminal | green on black like a shell, monospace, square; no logo, flat | Cascadia Code, dense | 0 |
+| Slate | dark sidebar next to light pages, indigo; logo above the menu only | Inter | 8 px |
+| Ember | amber on charcoal, dark header; logo in the header only | Inter / Segoe UI | 6 px |
+| Mint | fresh mint and teal, roomy; logo in the header only | Trebuchet MS / Lato | 12 px |
 
 ![The eight newer built-in themes in light mode](../assets/screenshots/themes-builtin-light.webp){ .shot }
 

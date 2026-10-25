@@ -28,7 +28,7 @@ public sealed partial class BrandingStep : StepViewModel
 
     protected override string SubtitleText => "Logo, theme and brand colors, previewed in light and dark.";
 
-    protected override string PitchText => "Fifteen built-in themes differ in more than colors: fonts, corner radius and density. With brand colors your app gets its own theme, based on the one you pick, as the default.";
+    protected override string PitchText => "Twenty-one built-in themes differ in more than colors: fonts, corner radius, density and where the logo sits. With brand colors your app gets its own theme, based on the one you pick, as the default.";
 
     public override string Icon => "Icon.Palette";
 

@@ -88,7 +88,7 @@ public static class OptionCatalog
     /// <summary>The options whose choices are <see cref="Languages"/>, named in their own language.</summary>
     public static readonly IReadOnlyList<string> LanguageOptions = ["languages", "defaultLanguage", "translationSource"];
 
-    public static readonly IReadOnlyList<string> Themes = ["Ocean", "Coworkee", "Classic", "Forest", "Midnight", "Sunset", "HighContrast", "Octo", "Code", "Arctic", "Vampire", "Solar", "Atom", "Paper", "Aubergine"];
+    public static readonly IReadOnlyList<string> Themes = ["Ocean", "Coworkee", "Classic", "Forest", "Midnight", "Sunset", "HighContrast", "Octo", "Code", "Arctic", "Vampire", "Solar", "Atom", "Paper", "Aubergine", "GitHub", "LinkHub", "Terminal", "Slate", "Ember", "Mint"];
 
     public static IReadOnlyList<CliOption> All { get; } =
     [
@@ -199,12 +199,13 @@ public static class OptionCatalog
             [new("postgres", "PostgreSQL container in the app host.", "https://www.postgresql.org/"), new("sqlServer", "SQL Server container in the app host.", "https://www.microsoft.com/sql-server"), new("sqlite", "SQLite file .data/<name>.db, no container.", "https://sqlite.org/")]),
 
         new("theme", Branding, "Theme", "Default theme of the installation.", OptionKind.Choice, "Ocean",
-            "Pick the look closest to your brand; brand colors adjust it.", ["Fifteen themes that differ in more than colors"], ["Organisations can still choose another"],
+            "Pick the look closest to your brand; brand colors adjust it.", ["Twenty-one themes that differ in more than colors, also in where the logo sits"], ["Organisations can still choose another"],
             [new("Ocean", "Blue, humanist font, rounded."), new("Coworkee", "Warm orange on paper."), new("Classic", "MudBlazor purple."), new("Forest", "Green with serif headings."),
              new("Midnight", "Indigo, monospace headings."), new("Sunset", "Pink, rounded, roomy."), new("HighContrast", "Black and white, no shadows."),
              new("Octo", "Neutral grays and blue, like a code hosting site."), new("Code", "Editor look: compact, dark gray with blue."), new("Arctic", "Cool polar blues and frost."),
              new("Vampire", "Purple and pink on a night background."), new("Solar", "Warm cream and deep teal, serif headings."), new("Atom", "Soft editor grays, blue and violet."),
-             new("Paper", "Plain white paper, serif headings, flat."), new("Aubergine", "Aubergine app bar, green accents.")]),
+             new("Paper", "Plain white paper, serif headings, flat."), new("Aubergine", "Aubergine app bar, green accents."),
+             new("GitHub", "Dark header with the logo, white pages, blue links, like GitHub."), new("LinkHub", "Link page look: lime and violet, pill buttons, roomy."), new("Terminal", "Green on black like a shell, monospace, square, no logo."), new("Slate", "Dark sidebar with the logo next to light pages, indigo."), new("Ember", "Amber on charcoal, dark header with the logo."), new("Mint", "Fresh mint and teal, roomy, the logo in the header.")]),
         new("primaryColor", Branding, "Primary color", "Primary brand color #rrggbb. With a brand color the app gets its own theme (named like the title), based on the chosen theme, as default.", OptionKind.Color, null,
             "When the app should carry the brand color.", ["Contrast text is computed"], ["The title must not be the name of a built-in theme"]),
         new("secondaryColor", Branding, "Secondary color", "Secondary brand color #rrggbb.", OptionKind.Color, null,

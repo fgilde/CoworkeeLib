@@ -1,6 +1,6 @@
 # Themes
 
-Themes sind Daten: Paletten für hellen und dunklen Modus, Typografie, Eckenradius, Breite der Navigation und Höhe der App-Leiste, Schatten, Logo, eigenes CSS und die Optionen der App. Fünfzehn Themes sind eingebaut (siehe [Eingebaute Themes](#eingebaute-themes)); sie unterscheiden sich in Schrift, Radius, Breite und Verhalten der Navigation, nicht nur in den Farben.
+Themes sind Daten: Paletten für hellen und dunklen Modus, Typografie, Eckenradius, Breite der Navigation und Höhe der App-Leiste, Schatten, Logo, eigenes CSS und die Optionen der App. Einundzwanzig Themes sind eingebaut (siehe [Eingebaute Themes](#eingebaute-themes)); sie unterscheiden sich in Schrift, Radius, Breite und Verhalten der Navigation, nicht nur in den Farben.
 
 ![Theme-Auswahl in den Benutzereinstellungen](../assets/screenshots/themes.png){ .shot }
 
@@ -33,7 +33,7 @@ public sealed class MyThemeEditMeta : IObjectMetaConfiguration<CoworkeeTheme>
 
 ## Eingebaute Themes
 
-Jedes hat eine helle und eine dunkle Palette. Die Namen deuten nur an, was sie inspiriert hat; keine Logos, keine Marken. Die neueren (ab Octo) erfüllen den Kontrast nach WCAG AA für Text, Schaltflächen, App-Leiste und Navigation (`ThemeSeedTests`).
+Jedes hat eine helle und eine dunkle Palette. Die Namen deuten nur an, was sie inspiriert hat, und keins bringt ein Logo mit; GitHub ist nach der Seite benannt, der es folgt. Sie unterscheiden sich auch darin, wo das Logo sitzt: im Menü, im Header, in beiden oder nirgends (`ShowLogoInNav`, `ShowLogoInAppBar`); LinkHub bringt eigenes CSS für seine Pillen-Schaltflächen mit. Die neueren (ab Octo) erfüllen den Kontrast nach WCAG AA für Text, Schaltflächen, App-Leiste und Navigation (`ThemeSeedTests`).
 
 | Theme | Aussehen | Überschriften / Text | Radius |
 |---|---|---|---|
@@ -52,6 +52,12 @@ Jedes hat eine helle und eine dunkle Palette. Die Namen deuten nur an, was sie i
 | Atom | sanfte Editor-Grautöne, Blau und Violett | Cascadia Code / Inter, kompakt | 6 px |
 | Paper | schlichtes weißes Papier, flach (ohne Schatten) | Georgia / Inter | 4 px |
 | Aubergine | auberginefarbene App-Leiste (im dunklen Modus auch die Navigation), grüne Akzente | Lato | 8 px |
+| GitHub | dunkler Header, weiße Seiten, blaue Links, wie bei GitHub; Logo nur im Header | Systemschrift | 6 px |
+| LinkHub | Link-Seiten-Look: Limette und Violett, Pillen-Schaltflächen, luftig; Logo nur über dem Menü | Lato | 24 px |
+| Terminal | Grün auf Schwarz wie eine Shell, Monospace, eckig; kein Logo, flach | Cascadia Code, kompakt | 0 |
+| Slate | dunkle Seitenleiste neben hellen Seiten, Indigo; Logo nur über dem Menü | Inter | 8 px |
+| Ember | Bernstein auf Anthrazit, dunkler Header; Logo nur im Header | Inter / Segoe UI | 6 px |
+| Mint | frisches Mint und Petrol, luftig; Logo nur im Header | Trebuchet MS / Lato | 12 px |
 
 ![Die acht neueren eingebauten Themes im hellen Modus](../assets/screenshots/themes-builtin-light.webp){ .shot }
 

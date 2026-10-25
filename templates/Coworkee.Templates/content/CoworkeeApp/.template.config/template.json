@@ -422,6 +422,30 @@
         {
           "choice": "Aubergine",
           "description": "Aubergine app bar, green accents."
+        },
+        {
+          "choice": "GitHub",
+          "description": "Dark header with the logo, white pages, blue links, like GitHub."
+        },
+        {
+          "choice": "LinkHub",
+          "description": "Link page look: lime and violet, pill buttons, roomy."
+        },
+        {
+          "choice": "Terminal",
+          "description": "Green on black like a shell, monospace, square, no logo."
+        },
+        {
+          "choice": "Slate",
+          "description": "Dark sidebar with the logo next to light pages, indigo."
+        },
+        {
+          "choice": "Ember",
+          "description": "Amber on charcoal, dark header with the logo."
+        },
+        {
+          "choice": "Mint",
+          "description": "Fresh mint and teal, roomy, the logo in the header."
         }
       ]
     },

@@ -258,7 +258,13 @@
             "Solar",
             "Atom",
             "Paper",
-            "Aubergine"
+            "Aubergine",
+            "GitHub",
+            "LinkHub",
+            "Terminal",
+            "Slate",
+            "Ember",
+            "Mint"
           ],
           "default": "Ocean"
         },
@@ -481,7 +487,7 @@
           ]
         },
         "theme": {
-          "description": "Built-in theme: Ocean, Coworkee, Classic, Forest, Midnight, Sunset, HighContrast, Octo, Code, Arctic, Vampire, Solar, Atom, Paper or Aubergine.",
+          "description": "Built-in theme: Ocean, Coworkee, Classic, Forest, Midnight, Sunset, HighContrast, Octo, Code, Arctic, Vampire, Solar, Atom, Paper, Aubergine, GitHub, LinkHub, Terminal, Slate, Ember or Mint.",
           "type": [
             "string",
             "null"

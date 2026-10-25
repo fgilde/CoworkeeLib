@@ -20,7 +20,7 @@ dotnet run --project src/Shop.AppHost
 | `--eventBus` | `none` | `inProcess` or `rabbitMq` (with a RabbitMQ container) |
 | `--clientEntities` | `false` | Browser copies of OData sets |
 | `--storage` | `fileSystem` | `azureBlob` with Azurite in the app host |
-| `--theme` | `Ocean` | `Coworkee`, `Classic`, `Forest`, `Midnight`, `Sunset`, `HighContrast`, `Octo`, `Code`, `Arctic`, `Vampire`, `Solar`, `Atom`, `Paper`, `Aubergine` |
+| `--theme` | `Ocean` | `Coworkee`, `Classic`, `Forest`, `Midnight`, `Sunset`, `HighContrast`, `Octo`, `Code`, `Arctic`, `Vampire`, `Solar`, `Atom`, `Paper`, `Aubergine`, `GitHub`, `LinkHub`, `Terminal`, `Slate`, `Ember`, `Mint` |
 | `--primaryColor`, `--secondaryColor` | | Brand colors `#rrggbb`: an app theme as default |
 | `--logo` | `coworkee-icon.svg` | File name in `wwwroot` of the web client (copy the file there) |
 | `--signInLayout`, `--signInMedia`, `--signInMediaSide` | `Slide`, none, `Left` | Design of the sign-in pages |

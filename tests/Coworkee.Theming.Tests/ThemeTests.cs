@@ -27,7 +27,7 @@ public sealed class ThemeTests(ThemeApp app) : IAsyncLifetime
         JsonSerializer.SerializeToElement(new Dictionary<string, object> { ["Primary"] = primary, ["Secondary"] = "rgba(10, 20, 30, 0.5)", ["HoverOpacity"] = 0.06 });
 
     private static readonly string[] BuiltIn =
-        ["Arctic", "Atom", "Aubergine", "Classic", "Code", "Coworkee", "Forest", "High Contrast", "Midnight", "Ocean", "Octo", "Paper", "Solar", "Sunset", "Vampire"];
+        ["Arctic", "Atom", "Aubergine", "Classic", "Code", "Coworkee", "Ember", "Forest", "GitHub", "High Contrast", "LinkHub", "Midnight", "Mint", "Ocean", "Octo", "Paper", "Slate", "Solar", "Sunset", "Terminal", "Vampire"];
 
     [Fact]
     public async Task Seeds_global_themes_with_ocean_as_default()

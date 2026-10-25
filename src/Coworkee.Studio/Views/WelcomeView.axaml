@@ -102,7 +102,7 @@
             <StackPanel Spacing="6">
               <PathIcon Data="{StaticResource Icon.Palette}" Foreground="{DynamicResource Primary}" HorizontalAlignment="Left" />
               <TextBlock Classes="h3" Text="{l:L 'Branding'}" />
-              <TextBlock Classes="caption" Text="{l:L 'Logo, fifteen themes and brand colors with a live preview in light and dark.'}" />
+              <TextBlock Classes="caption" Text="{l:L 'Logo, twenty-one themes and brand colors with a live preview in light and dark.'}" />
             </StackPanel>
           </Border>
           <Border Classes="soft">

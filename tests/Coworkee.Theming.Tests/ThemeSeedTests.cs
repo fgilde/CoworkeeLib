@@ -96,10 +96,30 @@ public sealed class ThemeSeedTests
     }
 
     [Fact]
+    public void Built_in_themes_place_the_logo_differently_and_app_themes_keep_the_css_of_their_base()
+    {
+        var options = new ThemingOptions();
+        options.Themes.Add(new AppTheme("Links", "LinkHub", new Dictionary<string, string> { ["Primary"] = "#0d47a1" }));
+        var themes = ThemeSeeds.Create(options);
+
+        string Logo(string name)
+        {
+            var values = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(themes.Single(t => t.Name == name).Options!)!;
+            return $"{values["ShowLogoInNav"].GetBoolean()}/{values["ShowLogoInAppBar"].GetBoolean()}";
+        }
+
+        Logo("GitHub").ShouldBe("False/True");
+        Logo("LinkHub").ShouldBe("True/False");
+        Logo("Terminal").ShouldBe("False/False");
+        themes.Single(t => t.Name == "LinkHub").CustomCss.ShouldContain("999px");
+        themes.Single(t => t.Name == "Links").CustomCss.ShouldBe(themes.Single(t => t.Name == "LinkHub").CustomCss);
+    }
+
+    [Fact]
     public void The_new_built_in_themes_ship()
     {
         ThemeSeeds.Create(new ThemingOptions()).Select(t => t.Name).ShouldBe(
-            ["Coworkee", "Ocean", "Forest", "Sunset", "Midnight", "Classic", "High Contrast", "Octo", "Code", "Arctic", "Vampire", "Solar", "Atom", "Paper", "Aubergine"]);
+            ["Coworkee", "Ocean", "Forest", "Sunset", "Midnight", "Classic", "High Contrast", "Octo", "Code", "Arctic", "Vampire", "Solar", "Atom", "Paper", "Aubergine", "GitHub", "LinkHub", "Terminal", "Slate", "Ember", "Mint"]);
     }
 
     private static double Contrast(string a, string b)

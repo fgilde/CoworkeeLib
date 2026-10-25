@@ -6,6 +6,7 @@
 
 ### Neu
 
+- Themes: sechs neue eingebaute Themes, 21 insgesamt, die sich auch darin unterscheiden, wo das Logo sitzt: GitHub (dunkler Header mit Logo, kein Logo im Menü), LinkHub (Pillen-Schaltflächen per eigenem CSS, Logo nur im Menü), Terminal (gar kein Logo), Slate (dunkle Seitenleiste mit Logo, schlichter Header), Ember und Mint (Logo nur im Header). Eingebaute Themes können jetzt eigenes CSS mitbringen, App-Themes übernehmen es von ihrer Basis. CLI/Template `--theme`, Studio-Karten. Siehe [Eingebaute Themes](../modules/theming.md#eingebaute-themes).
 - Kibana: `options.UseKibana()` stellt Kibana neben den Elasticsearch-Container (Template- und CLI-Option `kibana`, Studio-Karte *Kibana*, Deploy-Tool `kibana`). Davor meldet oauth2-proxy am Auth-Server der App an, mit Keycloak, wenn es an ist; Kibanas eigenes Single Sign-on bräuchte eine kostenpflichtige Elastic-Lizenz. Neu ist `AuthClientOptions.SystemAdministratorsOnly`: Bei so einem Client lässt der Auth-Server nur Administratoren der System-Organisation herein. Siehe [Kibana](../hosting/aspire.md#kibana).
 - Backups: ein heruntergeladenes Zip wieder hochladen (*Backup hochladen* auf `/admin/backups` und in der AirWorks-Backup-App, `POST /api/v1/backups/upload?name=`, `UploadBackupCommand`); es steht in der Liste wie ein hier erstelltes Backup und wird genauso wiederhergestellt. Siehe [Datenbank-Backups](../modules/backups.md).
 
