@@ -171,7 +171,7 @@ public static class German
         ["Local demo"] = "Lokale Demo",
         ["SQLite file, a local model in Ollama, no Redis: runs offline on one machine without keys. One writer at a time and no backups, so not for production."] = "SQLite-Datei, ein lokales Modell in Ollama, kein Redis: läuft offline auf einem Rechner ohne Schlüssel. Nur ein Schreiber gleichzeitig und keine Backups, also nicht für den Betrieb.",
         ["Everything"] = "Alles",
-        ["Every module and every container: Postgres, Redis, Ollama, search, RabbitMQ, Azurite, Keycloak, the samples, CI and a dev container."] = "Jedes Modul und jeder Container: Postgres, Redis, Ollama, Suche, RabbitMQ, Azurite, Keycloak, die Beispiele, CI und ein Dev-Container.",
+        ["Every module and every container: Postgres, Redis, Ollama, search with Kibana, RabbitMQ, Azurite, Keycloak, the samples, CI and a dev container."] = "Jedes Modul und jeder Container: Postgres, Redis, Ollama, Suche mit Kibana, RabbitMQ, Azurite, Keycloak, die Beispiele, CI und ein Dev-Container.",
 
         // infrastructure
         ["WHERE IT RUNS"] = "WO SIE LÄUFT",
@@ -584,6 +584,8 @@ public static class German
         ["The start menu slides in from the side."] = "Das Startmenü fährt von der Seite herein.",
         ["A full-screen app grid over the blurred desktop."] = "Ein Vollbild-Raster der Apps über dem unscharfen Desktop.",
         ["More about {0}"] = "Mehr über {0}",
+        ["Only used with {0}: switch it on first."] = "Nur mit {0}: erst das einschalten.",
+        ["Only used with {0}: {1}."] = "Nur mit {0}: {1}.",
         ["AspireUI, a web UI to host and try more apps and stacks next to the app, in the app host. Its apps show up on the admin page Services. Sign-in with the app's administrator, and Keycloak when it is on."] = "AspireUI, eine Web-Oberfläche, um weitere Apps und Stacks neben der App zu hosten und auszuprobieren, im AppHost. Ihre Apps erscheinen auf der Admin-Seite Dienste. Anmeldung mit dem Administrator der App und mit Keycloak, wenn es aktiv ist.",
         ["When the app should be tried next to other apps or stacks (a second service, a database tool, a sample), or the Services page should list them."] = "Wenn die App neben anderen Apps oder Stacks ausprobiert werden soll (ein zweiter Dienst, ein Datenbankwerkzeug, ein Beispiel) oder die Seite Dienste sie auflisten soll.",
         ["Start and stop more apps and stacks from one web UI"] = "Weitere Apps und Stacks in einer Web-Oberfläche starten und stoppen",

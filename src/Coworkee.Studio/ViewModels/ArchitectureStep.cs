@@ -41,9 +41,17 @@ public sealed partial class ArchitectureStep : StepViewModel
         Presets = [.. Preset.All.Select(p => new PresetViewModel(p))];
         Infrastructure = [.. Highlighted.Select(main.Option)];
         Ai = new AiSetupViewModel(main);
-        Groups = [.. GroupInfo.Select(g => new OptionGroupViewModel(g.Group, g.Description, g.Icon,
-            [.. main.Options.Values.Where(o => o.Option.Group == g.Group && o.Id != "title" && !Highlighted.Contains(o.Id) && !LanguagesStep.Ids.Contains(o.Id) && !AiOptions.Contains(o.Id))]))];
+        var cards = main.Options.Values.Where(o => o.Id != "title" && !Highlighted.Contains(o.Id) && !LanguagesStep.Ids.Contains(o.Id) && !AiOptions.Contains(o.Id)).ToList();
+        Groups = [.. GroupInfo.Select(g => new OptionGroupViewModel(g.Group, g.Description, g.Icon, [.. cards.Where(o => GroupOf(o.Option) == g.Group).SelectMany(o => Follow(o, cards))]))];
     }
+
+    // a switch that only works with one of another group (Kibana with the search) is shown right after it, so it is seen when it becomes usable
+    private static string GroupOf(CliOption option) =>
+        option.DependsOn is { Values.Length: 0 } need && OptionCatalog.Find(need.Option) is { } parent ? GroupOf(parent) : option.Group;
+
+    private static IEnumerable<OptionViewModel> Follow(OptionViewModel option, List<OptionViewModel> cards) =>
+        option.Option.DependsOn is { Values.Length: 0 } need && OptionCatalog.Find(need.Option)!.Group != option.Option.Group ? []
+            : [option, .. cards.Where(c => c.Option.DependsOn is { Values.Length: 0 } d && d.Option == option.Id && c.Option.Group != option.Option.Group)];
 
     protected override string TitleText => "Architecture";
 

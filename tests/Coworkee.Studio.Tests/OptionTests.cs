@@ -31,9 +31,11 @@ public sealed class OptionTests
         var main = Studio.Create(folder);
         main.Architecture.ApplyPreset(main.Architecture.Presets.Single(p => p.Preset.Name == "Everything"));
 
-        main.Architecture.Summary.Containers.ShouldBe(["PostgreSQL", "Redis", "Mailpit", "Elasticsearch", "RabbitMQ", "Azurite", "Keycloak", "Ollama", "LibreTranslate", "Grafana", "Prometheus", "Loki", "Tempo", "OpenTelemetry Collector", "postgres_exporter", "WebDataStudio", "AspireUI"]);
+        main.Architecture.Summary.Containers.ShouldBe(["PostgreSQL", "Redis", "Mailpit", "Elasticsearch", "RabbitMQ", "Azurite", "Keycloak", "Ollama", "LibreTranslate", "Grafana", "Prometheus", "Loki", "Tempo", "OpenTelemetry Collector", "postgres_exporter", "WebDataStudio", "Kibana", "oauth2-proxy", "AspireUI"]);
         main.Architecture.Summary.Packages.ShouldContain("Coworkee.EventBus.RabbitMq");
         main.Architecture.Summary.Projects.ShouldContain("MyApp.Catalog");
+        var modules = main.Architecture.Groups.Single(g => g.Name == OptionCatalog.Modules).Options.Select(o => o.Id).ToList();
+        modules.IndexOf("kibana").ShouldBe(modules.IndexOf("elasticsearch") + 1);
     }
 
     [Fact]
@@ -97,6 +99,7 @@ public sealed class OptionTests
 
         main.Option("database").Value = "sqlite";
         main.Option("backup").IsRelevant.ShouldBeFalse();
+        main.Option("backup").UnmetText.ShouldBe("Only used with Database: PostgreSQL.");
         main.ToSpec().Options.ShouldNotContainKey("backup");
         main.Option("database").Note!.ShouldContain("One writer at a time");
 
@@ -183,9 +186,8 @@ public sealed class OptionTests
         var launcher = main.Option("airworksLauncher");
         packages.IsRelevant.ShouldBeFalse();
         launcher.IsRelevant.ShouldBeFalse();
-        general.Shown.ShouldNotContain(packages);
-        general.Shown.ShouldNotContain(launcher);
-        general.Shown.ShouldContain(main.Option("airworks"));
+        packages.UnmetText.ShouldBe("Only used with AirWorks client: switch it on first.");
+        general.Options.ShouldContain(packages);
 
         packages.Value = "npm";
         main.ToSpec().Options.ShouldNotContainKey("airworksPackages");
@@ -193,17 +195,15 @@ public sealed class OptionTests
 
         main.Option("airworks").IsOn = true;
         packages.IsRelevant.ShouldBeTrue();
-        general.Shown.ShouldContain(packages);
-        general.Shown.ShouldBe(general.Options.Where(o => o.IsRelevant));
+        packages.UnmetText.ShouldBeNull();
         main.ToSpec().Options["airworksPackages"]!.GetValue<string>().ShouldBe("npm");
         Coworkee.Studio.Cli.CommandLine.Flags(main.ToSpec()).ShouldContain("--airworks-packages");
-        general.Shown.ShouldContain(launcher);
         launcher.Value = "overlay";
         main.ToSpec().Options["airworksLauncher"]!.GetValue<string>().ShouldBe("overlay");
         Coworkee.Studio.Cli.CommandLine.Flags(main.ToSpec()).ShouldContain("--airworks-launcher");
 
         main.Option("airworks").IsOn = false;
-        general.Shown.ShouldNotContain(packages);
+        packages.IsRelevant.ShouldBeFalse();
         packages.Value.ShouldBe("npm");
     }
 

@@ -4,7 +4,7 @@ namespace Coworkee.Studio.Model;
 public sealed record Preset(string Name, string Description, string Icon, IReadOnlyDictionary<string, string> Values)
 {
     private static readonly string[] ModuleSwitches =
-        ["samples", "auditing", "notifications", "chat", "reports", "ai", "backup", "retention", "files", "features", "social", "workflows", "elsa", "elsaStudio", "webhooks", "extendedAttributes", "elasticsearch", "clientEntities", "keycloak",
+        ["samples", "auditing", "notifications", "chat", "reports", "ai", "backup", "retention", "files", "features", "social", "workflows", "elsa", "elsaStudio", "webhooks", "extendedAttributes", "elasticsearch", "kibana", "clientEntities", "keycloak",
          "registration", "githubActions", "devcontainer", "redis", "grafana", "webDataStudio", "aspireUI", "airworks"];
 
     public static IReadOnlyList<Preset> All { get; } =
@@ -20,7 +20,7 @@ public sealed record Preset(string Name, string Description, string Icon, IReadO
                 ("aiProvider", "azureOpenAI"))),
         new("Local demo", "SQLite file, a local model in Ollama, no Redis: runs offline on one machine without keys. One writer at a time and no backups, so not for production.", "Icon.Monitor",
             Switches(["samples", "notifications", "chat", "reports", "ai", "files", "registration", "webDataStudio"], ("eventBus", "none"), ("storage", "fileSystem"), ("database", "sqlite"), ("aiProvider", "ollama"))),
-        new("Everything", "Every module and every container: Postgres, Redis, Ollama, search, RabbitMQ, Azurite, Keycloak, the samples, CI and a dev container.", "Icon.Rocket",
+        new("Everything", "Every module and every container: Postgres, Redis, Ollama, search with Kibana, RabbitMQ, Azurite, Keycloak, the samples, CI and a dev container.", "Icon.Rocket",
             Switches([.. ModuleSwitches], ("eventBus", "rabbitMq"), ("storage", "azureBlob"), ("aiProvider", "ollama"))),
     ];
 

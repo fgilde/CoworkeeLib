@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Coworkee.Cli.Spec;
@@ -75,11 +74,22 @@ public sealed partial class OptionViewModel : ObservableObject
 
     /// <summary>False while another choice rules the option out (backups off Postgres, a provider without the AI assistant).</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsUsable))]
     public partial bool IsAvailable { get; set; } = true;
 
-    /// <summary>False while the option it depends on rules it out (the AirWorks packages without AirWorks): the card is not shown and the option stays out of the spec.</summary>
+    /// <summary>The dependency that rules the option out (the AirWorks packages without AirWorks), null while it matters.</summary>
     [ObservableProperty]
-    public partial bool IsRelevant { get; set; } = true;
+    [NotifyPropertyChangedFor(nameof(IsRelevant), nameof(IsUsable), nameof(UnmetText))]
+    public partial OptionDependency? Unmet { get; set; }
+
+    /// <summary>False while <see cref="Unmet"/> rules the option out: the card is disabled, its tooltip says why, and the option stays out of the spec.</summary>
+    public bool IsRelevant => Unmet is null;
+
+    public bool IsUsable => IsAvailable && IsRelevant;
+
+    public string? UnmetText => Unmet is not { } need ? null
+        : need.Values.Length == 0 ? L.Format("Only used with {0}: switch it on first.", L.Get(OptionCatalog.Find(need.Option)!.Title))
+        : L.Format("Only used with {0}: {1}.", L.Get(OptionCatalog.Find(need.Option)!.Title), string.Join(" / ", need.Values.Select(v => new ChoiceViewModel(v, string.Empty).Label)));
 
     /// <summary>What the current value means for the solution (English, the key of <see cref="NoteText"/>).</summary>
     [ObservableProperty]
@@ -204,36 +214,7 @@ public sealed partial class OptionViewModel : ObservableObject
 
 public sealed record OptionGroupViewModel(string Name, string Description, string Icon, IReadOnlyList<OptionViewModel> Options)
 {
-    /// <summary>The options that matter right now: one that depends on another is not shown while that one rules it out.</summary>
-    public ObservableCollection<OptionViewModel> Shown { get; } = Track(Options);
-
     public string Title => L.Get(Name);
 
     public string Text => L.Get(Description);
-
-    private static ObservableCollection<OptionViewModel> Track(IReadOnlyList<OptionViewModel> options)
-    {
-        var shown = new ObservableCollection<OptionViewModel>(options.Where(o => o.IsRelevant));
-        foreach (var option in options)
-        {
-            option.PropertyChanged += (_, e) =>
-            {
-                if (e.PropertyName != nameof(OptionViewModel.IsRelevant))
-                {
-                    return;
-                }
-
-                if (!option.IsRelevant)
-                {
-                    shown.Remove(option);
-                }
-                else if (!shown.Contains(option))
-                {
-                    shown.Insert(options.TakeWhile(o => o != option).Count(shown.Contains), option);
-                }
-            };
-        }
-
-        return shown;
-    }
 }

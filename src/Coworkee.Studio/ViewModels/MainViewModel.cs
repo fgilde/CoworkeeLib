@@ -540,7 +540,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         foreach (var option in Options.Values.Where(o => o.Option.DependsOn is not null))
         {
-            option.IsRelevant = OptionCatalog.IsActive(option.Option, id => Options[id].Value);
+            option.Unmet = OptionCatalog.Unmet(option.Option, id => Options[id].Value);
         }
 
         Errors = Validate();

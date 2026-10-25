@@ -50,8 +50,8 @@
       </Border>
     </DataTemplate>
     <DataTemplate x:Key="OptionCard" x:DataType="vm:OptionViewModel">
-      <Border Classes="card" Padding="16" Classes.on="{Binding IsOn}">
-        <StackPanel Spacing="8" Opacity="{Binding IsAvailable, Converter={x:Static v:Converters.Dim}}">
+      <Border Classes="card" Padding="16" Classes.on="{Binding IsOn}" ToolTip.Tip="{Binding UnmetText}" ToolTip.ShowOnDisabled="True">
+        <StackPanel Spacing="8" IsEnabled="{Binding IsRelevant}" Opacity="{Binding IsUsable, Converter={x:Static v:Converters.Dim}}">
           <Grid ColumnDefinitions="Auto,*,Auto">
             <Border Width="34" Height="34" CornerRadius="10" Background="{DynamicResource PrimarySoft}" VerticalAlignment="Top" Margin="0,0,10,0">
               <PathIcon Data="{Binding Icon, Converter={x:Static v:Converters.Icon}}" Foreground="{DynamicResource Primary}" />
@@ -186,7 +186,7 @@
               </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
           </ItemsControl>
-          <ItemsControl ItemsSource="{Binding Shown}" ItemTemplate="{StaticResource OptionCard}">
+          <ItemsControl ItemsSource="{Binding Options}" ItemTemplate="{StaticResource OptionCard}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
                 <UniformGrid Columns="2" ColumnSpacing="12" RowSpacing="12" />
@@ -266,7 +266,7 @@
                   </StackPanel>
                   <TextBlock Classes="muted" Text="{Binding Text}" TextWrapping="Wrap" />
                 </StackPanel>
-                <ItemsControl ItemsSource="{Binding Shown}" ItemTemplate="{StaticResource OptionCard}">
+                <ItemsControl ItemsSource="{Binding Options}" ItemTemplate="{StaticResource OptionCard}">
                   <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                       <UniformGrid Columns="2" ColumnSpacing="12" RowSpacing="12" />
