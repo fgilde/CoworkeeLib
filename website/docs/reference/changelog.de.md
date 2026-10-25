@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Behoben
+
+- AspireUI: Ein lokaler Lauf gibt ihm wie ein Deployment das Volume `{app}-aspireui-data`. Über das geteilte `aspireui-data-aspireui` setzte die zuletzt gestartete App die Keycloak-Anmeldung aller anderen (404 auf `/realms/<andere App>/.well-known/openid-configuration`). Das alte Volume bleibt; löschen mit `docker volume rm aspireui-data-aspireui`, sobald es nichts mehr nutzt.
+
 ## 0.0.1.38 (2026-10-25)
 
 ### Neu

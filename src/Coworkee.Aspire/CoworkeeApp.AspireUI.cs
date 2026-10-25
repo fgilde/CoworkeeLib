@@ -8,17 +8,17 @@ public sealed partial class CoworkeeApp
     /// <summary>The administrator of the app signs in; in a deployment AspireUI gets a public address, with Keycloak the single sign-on.</summary>
     internal IResourceBuilder<AspireUIResource> AddAspireUI(IResourceBuilder<AspireUIResource> aspireUi, string defaultPermissions)
     {
+        // the default volume is named after the resource only: every app on the machine would share it, and the last one started would set the sign-in of all
+        foreach (var volume in aspireUi.Resource.Annotations.OfType<ContainerMountAnnotation>().Where(m => m.Target == "/data").ToList())
+        {
+            aspireUi.Resource.Annotations.Remove(volume);
+        }
+
+        aspireUi.WithVolume($"{Name}-{aspireUi.Resource.Name}-data", "/data");
         if (Publishing)
         {
             ToolUrl(aspireUi, AspireUIResource.HttpEndpointName);
-            // the default volume is named after the resource only
-            foreach (var volume in aspireUi.Resource.Annotations.OfType<ContainerMountAnnotation>().Where(m => m.Target == "/data").ToList())
-            {
-                aspireUi.Resource.Annotations.Remove(volume);
-            }
-
-            aspireUi.WithEnvironment("ASPIREUI_ADMIN_USERNAME", AdminEmail).WithEnvironment("ASPIREUI_ADMIN_PASSWORD", AdminPassword)
-                .WithVolume($"{Name}-{aspireUi.Resource.Name}-data", "/data");
+            aspireUi.WithEnvironment("ASPIREUI_ADMIN_USERNAME", AdminEmail).WithEnvironment("ASPIREUI_ADMIN_PASSWORD", AdminPassword);
         }
         else
         {

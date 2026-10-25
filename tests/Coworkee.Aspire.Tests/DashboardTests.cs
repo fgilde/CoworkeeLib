@@ -148,12 +148,14 @@ public sealed class DashboardTests
         }
 
         IResource? seen = null;
-        var aspireUi = builder.AddAspireUI().WithCoworkeeSignOn(app).WithRetrieveApi().WithEnvironment(context => seen = context.Resource);
+        var aspireUi = builder.AddAspireUI().WithCoworkee(app).WithRetrieveApi().WithEnvironment(context => seen = context.Resource);
 
         var env = await ApiEnvironment(builder, app);
 
         env["Coworkee__AspireUI__Url"].ShouldBeOfType<EndpointReference>().EndpointName.ShouldBe("http");
         seen.ShouldBe(aspireUi.Resource);
+        // one volume per app: a shared one would carry the sign-in of whichever app started last
+        aspireUi.Resource.Annotations.OfType<ContainerMountAnnotation>().Single(m => m.Target == "/data").Source.ShouldBe("demo-aspireui-data");
     }
 
     [Fact]

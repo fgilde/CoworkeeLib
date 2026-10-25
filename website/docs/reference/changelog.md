@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Fixed
+
+- AspireUI: a local run gives it the volume `{app}-aspireui-data` like a deployment. The shared `aspireui-data-aspireui` let the app started last set the Keycloak sign-in of every other app (404 on `/realms/<other app>/.well-known/openid-configuration`). The old volume stays; delete it with `docker volume rm aspireui-data-aspireui` once nothing uses it.
+
 ## 0.0.1.38 (2026-10-25)
 
 ### New

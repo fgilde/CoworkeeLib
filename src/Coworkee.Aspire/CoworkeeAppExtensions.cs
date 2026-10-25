@@ -27,7 +27,7 @@ public static class CoworkeeAppExtensions
 
     /// <summary>
     /// AspireUI as a tool of the app: the app's administrator signs in (with Keycloak also through it), and a deployment gives it a public address
-    /// (<c>{app}-aspireui-url</c>) and a volume of its own. Add it when <c>app.Deploys(CoworkeeTools.AspireUI)</c>.
+    /// (<c>{app}-aspireui-url</c>); its volume is the app's own. Add it when <c>app.Deploys(CoworkeeTools.AspireUI)</c>.
     /// </summary>
     public static IResourceBuilder<AspireUIResource> WithCoworkee(this IResourceBuilder<AspireUIResource> aspireUi, CoworkeeApp app, string defaultPermissions = AspireUIPermissions.AppUser) =>
         app.AddAspireUI(aspireUi, defaultPermissions);
