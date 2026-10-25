@@ -46,13 +46,13 @@ Zwei Container gibt es optional dazu: `UseLibreTranslate([...])` für die [masch
 
 `UseWebDataStudio()` öffnet die App-Datenbank im Browser, mit Tabellen, SQL, Diagrammen und Exporten. Bei SQLite hängt es die Datenbankdatei ein.
 
-Beide melden sich mit dem Administrator der App an, mit Keycloak zusätzlich über den Keycloak-Button. In `aspire publish` landet keines von beiden, und das ist Absicht: Ein Deployment sollte kein Datenbankstudio mit dem Admin-Passwort ausliefern.
+Beide melden sich mit dem Administrator der App an oder am Auth-Server der App als Administrator der Systemorganisation. In `aspire publish` landet keines von beiden, und das ist Absicht: Ein Deployment sollte kein Datenbankstudio mit dem Admin-Passwort ausliefern.
 
 ## AspireUI und die Seite Dienste
 
 [![AspireUI](../assets/brands/aspireui.svg){ .cw-product-logo }](https://fgilde.github.io/AspireUI/)
 
-AspireUI hostet weitere Apps und Stacks neben deiner. Mit Keycloak werden die Administratoren der App über einen einzigen Aufruf zu AspireUI-Admins:
+AspireUI hostet weitere Apps und Stacks neben deiner. Die Administratoren der Systemorganisation melden sich am Auth-Server der App an und werden über einen einzigen Aufruf zu AspireUI-Admins:
 
 ```csharp
 builder.AddAspireUI().WithCoworkeeSignOn(app).WithRetrieveApi();

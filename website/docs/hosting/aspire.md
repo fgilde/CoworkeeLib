@@ -230,26 +230,30 @@ Call them after `UseKeycloak` and `AddAuthServer` (or `AddProjects`).
 
 [![AspireUI](../assets/brands/aspireui.svg){ .cw-product-logo }](https://fgilde.github.io/AspireUI/)
 
-[AspireUI](https://fgilde.github.io/AspireUI/) signs in through the realm with one call; the app's administrators (realm role `Administrator`) become AspireUI admins, everybody else gets `defaultPermissions` (default `app-user`):
+[AspireUI](https://fgilde.github.io/AspireUI/) signs in at the app's auth server with one call; the administrators of the system organisation become AspireUI admins:
 
 ```csharp
 using Nextended.Aspire.Hosting.AspireUI;
 
-var app = builder.AddCoworkeeApp("myapp", options => options.UseKeycloak(...)).AddProjects();
+var app = builder.AddCoworkeeApp("myapp").AddProjects();
 builder.AddAspireUI().WithCoworkeeSignOn(app);
 ```
 
-It registers the client `{app}-{resource}` with the redirect address `/api/auth/sso/callback`, passes the realm as the container reaches it (Keycloak then names itself by the browser's address, `KC_HOSTNAME`) and sets the roles claim as groups. AspireUI seeds settings only while they are empty, so the call also forces the app host's settings (`ASPIREUI_SET_FORCE`): a data volume from an earlier realm would keep the old sign-in otherwise.
+It registers the client `{app}-{resource}` at the auth server with the redirect address `/api/auth/sso/callback` and sets the `role` claim as groups. With Keycloak on, the auth server sends you on to Keycloak as for the app. AspireUI seeds settings only while they are empty, so the call also forces the app host's settings (`ASPIREUI_SET_FORCE`): a data volume from an earlier client would keep the old sign-in otherwise.
+
+### Tools sign in at the auth server
+
+Grafana, WebDataStudio, AspireUI and Kibana's proxy sign in at the app's auth server, with or without Keycloak. Each gets a confidential client `{app}-{tool}` that is not in the launcher and lets only the administrators of the system organisation in (`SystemAdministratorsOnly`); they are admins of the tool. The local administrator login of each tool stays. While the app host runs, the auth server names itself by the browser's address (`Coworkee:Auth:Issuer`) and, with `Coworkee:Auth:DynamicBackchannel`, hands containers token, user info and keys at the address they asked by, so the containers reach it over the container network and the browser over the host. A deployment uses the public address for both.
 
 ### AspireUI in a generated app
 
-`coworkee new --aspire-ui` (template option `aspireUI`, off by default) adds the same lines to `src/MyApp.AppHost/AppHost.cs`, the package reference `Nextended.Aspire.Hosting.AspireUI` to the app host and a section to `LOGIN.md`: the administrator signs in locally with the app's email and password. With Keycloak, `WithCoworkeeSignOn(app)` is part of the call and the realm's administrators sign in with the Keycloak button. The Studio shows it next to Grafana and WebDataStudio; the preset *Everything* switches it on.
+`coworkee new --aspire-ui` (template option `aspireUI`, off by default) adds the same lines to `src/MyApp.AppHost/AppHost.cs`, the package reference `Nextended.Aspire.Hosting.AspireUI` to the app host and a section to `LOGIN.md`: the administrator signs in locally with the app's email and password or at the auth server of the app (`WithCoworkee(app)`). The Studio shows it next to Grafana and WebDataStudio; the preset *Everything* switches it on.
 
 ```csharp
 builder.AddAspireUI()
     .WithAdminUser(administrator.Email, administrator.Password)
     .WithSeedFromDirectory(builder.AppHostDirectory)
-    .WithCoworkeeSignOn(app) // only with Keycloak
+    .WithCoworkeeSignOn(app)
     .WithRetrieveApi();
 ```
 

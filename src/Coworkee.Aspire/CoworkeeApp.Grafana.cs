@@ -87,22 +87,31 @@ public sealed partial class CoworkeeApp
 
     private void AddGrafanaSignIn(IResourceBuilder<GrafanaResource> grafana)
     {
-        var options = Options.Keycloak!;
-        var client = AddKeycloakClient($"{Name}-grafana", [ReferenceExpression.Create($"{ToolUrl(grafana, GrafanaResource.HttpEndpointName)}/login/generic_oauth")]);
-        // a deployed administrator is a Keycloak user with the role Administrator
-        var administrator = Publishing ? "" : $"email == '{AdminUser.Replace("'", "\\'", StringComparison.Ordinal)}' && 'GrafanaAdmin' || ";
-        grafana.WithOAuthLogin(GrafanaOAuthOptions.Keycloak(ContainerKeycloakAuthority(), client.ClientId, ReferenceExpression.Create($"{client.Secret}"),
-            roleAttributePath: $"{administrator}{GrafanaOAuthOptions.Roles("roles", grafanaAdmins: ["Administrator"])} || 'Viewer'", name: options.DisplayName));
+        var client = AddToolClient("grafana", "Grafana", ReferenceExpression.Create($"{ToolUrl(grafana, GrafanaResource.HttpEndpointName)}/login/generic_oauth"));
+        var authority = PublicUrl(AuthServer!);
+        // the addresses are known only when the app host runs: set below, after the placeholders WithOAuthLogin insists on;
+        // only administrators of the system organisation get through the auth server, so whoever comes is Grafana's admin
+        grafana.WithOAuthLogin(new GrafanaOAuthOptions
+        {
+            Name = Title,
+            ClientId = client.ClientId,
+            ClientSecret = ReferenceExpression.Create($"{client.Secret}"),
+            AuthUrl = "https://auth/connect/authorize",
+            TokenUrl = "https://auth/connect/token",
+            ApiUrl = "https://auth/connect/userinfo",
+            RoleAttributePath = "'GrafanaAdmin'",
+        });
         if (Publishing)
         {
             // WithOAuthLogin points the root at the container address
             grafana.WithEnvironment("GF_SERVER_ROOT_URL", ToolUrl(grafana, GrafanaResource.HttpEndpointName));
         }
 
-        // the browser signs in at the address it knows Keycloak by; token and user info stay on the container network
-        WithKeycloakBrowserUrl(grafana, "GF_AUTH_GENERIC_OAUTH_AUTH_URL", "/protocol/openid-connect/auth");
-        grafana
-            // WithOAuthLogin allows the provider only; the local administrator signs in as well, Keycloak users with the same email are the same Grafana user
+        // the browser signs in at the address it knows the auth server by; token and user info stay on the container network
+        WithAuthBrowserUrl(grafana, "GF_AUTH_GENERIC_OAUTH_AUTH_URL", "/connect/authorize");
+        grafana.WithEnvironment("GF_AUTH_GENERIC_OAUTH_TOKEN_URL", ReferenceExpression.Create($"{authority}/connect/token"))
+            .WithEnvironment("GF_AUTH_GENERIC_OAUTH_API_URL", ReferenceExpression.Create($"{authority}/connect/userinfo"))
+            // WithOAuthLogin allows the provider only; the local administrator signs in as well, users of the auth server with the same email are the same Grafana user
             .WithEnvironment("GF_AUTH_DISABLE_LOGIN_FORM", "false")
             .WithEnvironment("GF_AUTH_BASIC_ENABLED", "true")
             .WithEnvironment("GF_SECURITY_DISABLE_INITIAL_ADMIN_CREATION", "false")

@@ -1,4 +1,5 @@
 using Aspire.Hosting.ApplicationModel;
+using Coworkee.Aspire.Settings;
 
 namespace Aspire.Hosting;
 
@@ -6,6 +7,7 @@ public sealed partial class CoworkeeApp
 {
     private IResourceBuilder<ParameterResource>? _adminPassword;
     private bool _keycloakHostname;
+    private bool _toolIssuer;
 
     private string AdminUser => Options.Administrator?.UserName ?? "admin";
 
@@ -65,18 +67,46 @@ public sealed partial class CoworkeeApp
         return $"http://{keycloak.Resource.Name}:{http.TargetPort}/realms/{_realm}";
     }
 
-    /// <summary>An address of the realm as the browser knows it, e.g. where a tool sends it to sign in.</summary>
-    private void WithKeycloakBrowserUrl<T>(IResourceBuilder<T> resource, string variable, string path)
+    /// <summary>
+    /// A client of the auth server for a tool with a sign-in of its own (Grafana, WebDataStudio, AspireUI, Kibana's proxy): confidential, not in the launcher,
+    /// administrators of the system organisation only. While running, the auth server then names itself by the browser's address and gives containers
+    /// the token endpoint by theirs (<see cref="Coworkee.Contracts.Configuration.AuthServerOptions.DynamicBackchannel"/>).
+    /// </summary>
+    private (string ClientId, IResourceBuilder<ParameterResource> Secret) AddToolClient(string tool, string displayName, ReferenceExpression redirectUri)
+    {
+        var auth = AuthServer!;
+        var clientId = $"{Name}-{tool}";
+        var secret = GeneratedSecret($"{clientId}-secret", 32);
+        var index = _bffClients++;
+        auth.WithSetting(s => s.Coworkee.Auth.Clients[index].ClientId, clientId)
+            .WithSetting(s => s.Coworkee.Auth.Clients[index].DisplayName, $"{Title} ({displayName})")
+            .WithSetting(s => s.Coworkee.Auth.Clients[index].ClientSecret, secret)
+            .WithSetting(s => s.Coworkee.Auth.Clients[index].RedirectUris[0], redirectUri)
+            .WithSetting(s => s.Coworkee.Auth.Clients[index].ShowInLauncher, false)
+            .WithSetting(s => s.Coworkee.Auth.Clients[index].SystemAdministratorsOnly, true);
+        if (!Publishing && !_toolIssuer)
+        {
+            _toolIssuer = true;
+            auth.WithSetting(s => s.Coworkee.Auth.Issuer, PublicUrl(auth))
+                .WithSetting(s => s.Coworkee.Auth.DynamicBackchannel, true);
+        }
+
+        return (clientId, secret);
+    }
+
+    /// <summary>An address of the auth server as the browser knows it; in a container's environment <see cref="PublicUrl"/> names the container network while running.</summary>
+    private void WithAuthBrowserUrl<T>(IResourceBuilder<T> resource, string variable, string path)
         where T : IResourceWithEnvironment
     {
-        var keycloak = RequireKeycloak(nameof(WithKeycloakBrowserUrl));
+        var auth = AuthServer!;
         if (Publishing)
         {
-            resource.WithEnvironment(variable, ReferenceExpression.Create($"{ToolUrl(keycloak)}/realms/{_realm}{path}"));
+            resource.WithEnvironment(variable, ReferenceExpression.Create($"{PublicUrl(auth)}{path}"));
         }
         else
         {
-            resource.WithEnvironment(context => context.EnvironmentVariables[variable] = $"{keycloak.GetEndpoint("http").Url}/realms/{_realm}{path}");
+            var https = auth.GetEndpoint("https");
+            resource.WithEnvironment(context => context.EnvironmentVariables[variable] = $"{https.Url}{path}");
         }
     }
 }

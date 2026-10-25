@@ -93,10 +93,13 @@ public sealed class PublishTests
         compose.ShouldContain("Coworkee__Auth__External__Providers__keycloak__BrowserUrl: \"${DEMO_KEYCLOAK_URL}\"");
         compose.ShouldContain("Coworkee__KeycloakRealm__Url: \"http://keycloak:8080\"");
         compose.ShouldContain("Coworkee__KeycloakRealm__Clients__0__RedirectUris__0: \"${DEMO_AUTH_URL}/signin-keycloak\"");
-        compose.ShouldContain("Coworkee__KeycloakRealm__Clients__1__RedirectUris__0: \"${DEMO_GRAFANA_URL}/login/generic_oauth\"");
+        // the tools sign in at the auth server (which hands over to Keycloak), not at the realm
+        compose.ShouldNotContain("Coworkee__KeycloakRealm__Clients__1__");
+        compose.ShouldContain("GF_AUTH_GENERIC_OAUTH_TOKEN_URL: \"${DEMO_AUTH_URL}/connect/token\"");
+        compose.ShouldContain("WDS_OIDC_AUTHORITY: \"${DEMO_AUTH_URL}\"");
         compose.ShouldContain("Coworkee__KeycloakRealm__Users__0__Email: \"${DEMO_ADMIN_EMAIL}\"");
         compose.ShouldContain("GF_SERVER_ROOT_URL: \"${DEMO_GRAFANA_URL}\"");
-        compose.ShouldContain("GF_AUTH_GENERIC_OAUTH_AUTH_URL: \"${DEMO_KEYCLOAK_URL}/realms/demo/protocol/openid-connect/auth\"");
+        compose.ShouldContain("GF_AUTH_GENERIC_OAUTH_AUTH_URL: \"${DEMO_AUTH_URL}/connect/authorize\"");
         compose.ShouldContain("GF_SECURITY_ADMIN_USER: \"${DEMO_ADMIN_EMAIL}\"");
         compose.ShouldContain("127.0.0.1:8091:3000");
         compose.ShouldContain("source: \"demo-prometheus-data\"");

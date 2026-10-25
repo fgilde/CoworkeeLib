@@ -4,6 +4,13 @@
 
 ## Unveröffentlicht
 
+### Geändert
+
+- Grafana, WebDataStudio und AspireUI melden sich am Auth-Server der App an, mit oder ohne Keycloak, wie der Proxy von Kibana: je ein Client `{app}-{tool}`, nur Administratoren der Systemorganisation, als Admins des Tools. Die lokale Administrator-Anmeldung bleibt. Clients im Keycloak-Realm bekommen sie nicht mehr.
+- Auth-Server: Benutzerinfo-Endpunkt `/connect/userinfo` (sub, email, name, role, tenant). `Coworkee:Auth:DynamicBackchannel` nennt An- und Abmeldung nach dem Issuer und Token, Benutzerinfo und Schlüssel nach der gefragten Adresse; so erreichen Tools in Containern ihn über das Container-Netz, der Browser über die Host-Adresse. Der App-Host setzt es mit dem Issuer in einem lokalen Lauf.
+- Grafana 13.2.4 (Nextended 10.1.47); Datenquellen und Volumes von 11.5 funktionieren weiter.
+- Studio: Karten von Optionen, die gerade keine Rolle spielen, bleiben sichtbar, deaktiviert, mit dem Grund als Tooltip; Kibana steht direkt nach der Suche und gehört zur Vorlage *Everything*.
+
 ### Behoben
 
 - Kibana: Die Anmeldung eines lokalen Laufs schickt den Browser an die Host-Adressen von Auth-Server und Proxy; sie ging an `aspire.dev.internal`, das nur Container kennen. Das Dashboard verlinkt `kibana-server` nicht mehr, darüber kam jeder ohne Proxy herein.

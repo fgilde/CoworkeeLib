@@ -230,26 +230,30 @@ Ruf sie nach `UseKeycloak` und `AddAuthServer` (oder `AddProjects`) auf.
 
 [![AspireUI](../assets/brands/aspireui.svg){ .cw-product-logo }](https://fgilde.github.io/AspireUI/)
 
-[AspireUI](https://fgilde.github.io/AspireUI/) meldet sich mit einem Aufruf über den Realm an; die Administratoren der App (Realm-Rolle `Administrator`) werden AspireUI-Admins, alle anderen bekommen `defaultPermissions` (Standard `app-user`):
+[AspireUI](https://fgilde.github.io/AspireUI/) meldet sich mit einem Aufruf am Auth-Server der App an; die Administratoren der Systemorganisation werden AspireUI-Admins:
 
 ```csharp
 using Nextended.Aspire.Hosting.AspireUI;
 
-var app = builder.AddCoworkeeApp("myapp", options => options.UseKeycloak(...)).AddProjects();
+var app = builder.AddCoworkeeApp("myapp").AddProjects();
 builder.AddAspireUI().WithCoworkeeSignOn(app);
 ```
 
-Der Aufruf registriert den Client `{app}-{resource}` mit der Redirect-Adresse `/api/auth/sso/callback`, übergibt den Realm so, wie der Container ihn erreicht (Keycloak nennt sich dann nach der Adresse des Browsers, `KC_HOSTNAME`), und setzt den Rollen-Claim als Gruppen. AspireUI übernimmt Einstellungen nur, solange sie leer sind; deshalb erzwingt der Aufruf die Einstellungen des App-Hosts (`ASPIREUI_SET_FORCE`), sonst behielte ein Daten-Volume aus einem früheren Realm die alte Anmeldung.
+Der Aufruf registriert den Client `{app}-{resource}` am Auth-Server mit der Redirect-Adresse `/api/auth/sso/callback` und setzt den Claim `role` als Gruppen. Ist Keycloak an, schickt der Auth-Server weiter zu Keycloak wie bei der App. AspireUI übernimmt Einstellungen nur, solange sie leer sind; deshalb erzwingt der Aufruf die Einstellungen des App-Hosts (`ASPIREUI_SET_FORCE`), sonst behielte ein Daten-Volume aus einem früheren Client die alte Anmeldung.
+
+### Tools melden sich am Auth-Server an
+
+Grafana, WebDataStudio, AspireUI und der Proxy von Kibana melden sich am Auth-Server der App an, mit oder ohne Keycloak. Jedes bekommt einen vertraulichen Client `{app}-{tool}`, der nicht im Launcher steht und nur die Administratoren der Systemorganisation hereinlässt (`SystemAdministratorsOnly`); sie sind Admins des Tools. Die lokale Administrator-Anmeldung jedes Tools bleibt. Solange der App-Host läuft, nennt sich der Auth-Server nach der Adresse des Browsers (`Coworkee:Auth:Issuer`) und gibt Containern mit `Coworkee:Auth:DynamicBackchannel` Token, Benutzerinfo und Schlüssel unter der Adresse, unter der sie gefragt haben: Die Container erreichen ihn über das Container-Netz, der Browser über den Host. Ein Deployment nutzt für beides die öffentliche Adresse.
 
 ### AspireUI in einer generierten App
 
-`coworkee new --aspire-ui` (Template-Option `aspireUI`, standardmäßig aus) fügt dieselben Zeilen in `src/MyApp.AppHost/AppHost.cs` ein, dazu den Paketverweis `Nextended.Aspire.Hosting.AspireUI` im AppHost und einen Abschnitt in `LOGIN.md`: Der Administrator meldet sich lokal mit E-Mail und Passwort der App an. Mit Keycloak gehört `WithCoworkeeSignOn(app)` zum Aufruf, und die Administratoren des Realms melden sich mit dem Keycloak-Knopf an. Das Studio zeigt die Option neben Grafana und WebDataStudio; die Vorlage *Everything* schaltet sie ein.
+`coworkee new --aspire-ui` (Template-Option `aspireUI`, standardmäßig aus) fügt dieselben Zeilen in `src/MyApp.AppHost/AppHost.cs` ein, dazu den Paketverweis `Nextended.Aspire.Hosting.AspireUI` im AppHost und einen Abschnitt in `LOGIN.md`: Der Administrator meldet sich lokal mit E-Mail und Passwort der App an oder am Auth-Server der App (`WithCoworkee(app)`). Das Studio zeigt die Option neben Grafana und WebDataStudio; die Vorlage *Everything* schaltet sie ein.
 
 ```csharp
 builder.AddAspireUI()
     .WithAdminUser(administrator.Email, administrator.Password)
     .WithSeedFromDirectory(builder.AppHostDirectory)
-    .WithCoworkeeSignOn(app) // nur mit Keycloak
+    .WithCoworkeeSignOn(app)
     .WithRetrieveApi();
 ```
 

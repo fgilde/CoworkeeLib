@@ -49,7 +49,7 @@
     <PackageVersion Include="Coworkee.EventBus.RabbitMq" Version="$(CoworkeeVersion)" />
     <PackageVersion Include="Aspire.Hosting.Azure.Storage" Version="13.6.1" />
     <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="13.6.1" />
-    <PackageVersion Include="Nextended.Aspire.Hosting.AspireUI" Version="10.1.45" />
+    <PackageVersion Include="Nextended.Aspire.Hosting.AspireUI" Version="10.1.47" />
     <PackageVersion Include="CommunityToolkit.Aspire.Hosting.Ollama" Version="13.6.0" />
     <PackageVersion Include="Aspire.StackExchange.Redis" Version="13.6.1" />
     <PackageVersion Include="Riok.Mapperly" Version="4.3.1" />

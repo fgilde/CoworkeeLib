@@ -23,7 +23,7 @@ internal static class SignInBox
 
         if (info is { Tools.Count: > 0, Administrator: { } admin })
         {
-            body.Add($"{Names(info.Tools)} (Aspire dashboard) take {admin.Email}{(info.Keycloak ? " and Keycloak" : string.Empty)} too.");
+            body.Add($"{Names(info.Tools)} (Aspire dashboard) take {admin.Email}, with the password or the app's sign-in.");
         }
 
         body.Add("Development passwords only, also in LOGIN.md; change them before you deploy.");

@@ -25,14 +25,15 @@ public sealed partial class CoworkeeApp
             aspireUi.WithAdminUser(AdminUser, AdminPassword);
         }
 
-        return Keycloak is null ? aspireUi : AddAspireUISignIn(aspireUi, defaultPermissions);
+        return AuthServer is null ? aspireUi : AddAspireUISignIn(aspireUi, defaultPermissions);
     }
 
     internal IResourceBuilder<AspireUIResource> AddAspireUISignIn(IResourceBuilder<AspireUIResource> aspireUi, string defaultPermissions)
     {
-        var client = AddKeycloakClient($"{Name}-{aspireUi.Resource.Name}", [ReferenceExpression.Create($"{ToolUrl(aspireUi, AspireUIResource.HttpEndpointName)}/api/auth/sso/callback")]);
-        // the app host owns the sign-in: AspireUI seeds settings only while they are empty, so a volume from an earlier realm or client would keep those
-        return aspireUi.WithForcedSettings().WithSingleSignOn(ContainerKeycloakAuthority(), client.ClientId, client.Secret, Options.Keycloak!.DisplayName,
-            groupsClaim: "roles", adminGroup: "Administrator", defaultPermissions: defaultPermissions);
+        var client = AddToolClient(aspireUi.Resource.Name, "AspireUI", ReferenceExpression.Create($"{ToolUrl(aspireUi, AspireUIResource.HttpEndpointName)}/api/auth/sso/callback"));
+        // the app host owns the sign-in: AspireUI seeds settings only while they are empty, so a volume from an earlier client would keep those;
+        // only administrators of the system organisation get through the auth server, their role admin makes them AspireUI's admins
+        return aspireUi.WithForcedSettings().WithSingleSignOn(PublicUrl(AuthServer!), client.ClientId, client.Secret, Title,
+            groupsClaim: "role", adminGroup: "admin", defaultPermissions: defaultPermissions);
     }
 }

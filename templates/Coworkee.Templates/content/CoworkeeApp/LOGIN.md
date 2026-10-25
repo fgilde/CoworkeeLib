@@ -37,15 +37,10 @@ The administrator signs in with the same email and password to the tools the app
 - *kibana*: the search indexes in Kibana. It signs in at the auth server of the app: only administrators of the system organisation get in (with Keycloak when it is on).
 <!--#endif -->
 <!--#if (aspireUI) -->
-- *aspireui*: host and try more apps and stacks next to COWORKEE_APP_TITLE; what you host there also shows up on the admin page *Services* of the app. Its data lives in the volume `aspireui-data-aspireui`.
+- *aspireui*: host and try more apps and stacks next to COWORKEE_APP_TITLE; what you host there also shows up on the admin page *Services* of the app. Its data lives in the volume `myapp-aspireui-data`.
 <!--#endif -->
-<!--#if (keycloak) -->
 
-They also offer the *Keycloak* button; users with the realm role *Administrator* are administrators there, everybody else may look.
-<!--#if (aspireUI) -->
-In AspireUI, everybody else gets the app-user permissions.
-<!--#endif -->
-<!--#endif -->
+They also offer the sign-in at the auth server of the app: only administrators of the system organisation get in, as administrators of the tool.
 
 <!--#endif -->
 The users and passwords come from `src/MyApp.Migrations/DemoUsers.cs` and are seeded on the first start of an empty database, in the Development environment only. A deployment (`coworkee deploy`) starts without users and is set up in the browser with its setup token.

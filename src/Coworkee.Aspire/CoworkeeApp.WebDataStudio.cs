@@ -80,9 +80,10 @@ public sealed partial class CoworkeeApp
 
     private void AddWebDataStudioSignIn(IResourceBuilder<WebDataStudioResource> studio)
     {
-        var client = AddKeycloakClient($"{Name}-webdatastudio", [ReferenceExpression.Create($"{ToolUrl(studio, WebDataStudioResource.HttpEndpointName)}/signin-oidc")]);
-        studio.WithSingleSignOn(ContainerKeycloakAuthority(), client.ClientId, client.Secret, Options.Keycloak!.DisplayName, "openid", "profile", "email")
-            .WithSignInRoles(admins: Publishing ? ["Administrator"] : [AdminUser, "Administrator"]);
+        var client = AddToolClient("webdatastudio", "WebDataStudio", ReferenceExpression.Create($"{ToolUrl(studio, WebDataStudioResource.HttpEndpointName)}/signin-oidc"));
+        // only administrators of the system organisation get through the auth server; their role admin makes them the studio's admins
+        studio.WithSingleSignOn(PublicUrl(AuthServer!), client.ClientId, client.Secret, Title, scopes: ["openid", "profile", "email"])
+            .WithSignInRoles(admins: ["admin"]);
     }
 
     private static WebDataStudioEngine Engine(string provider) => provider switch

@@ -1,5 +1,4 @@
 using Aspire.Hosting.ApplicationModel;
-using Coworkee.Aspire.Settings;
 
 namespace Aspire.Hosting;
 
@@ -63,8 +62,6 @@ public sealed partial class CoworkeeApp
         kibana.WithArgs("/usr/local/bin/kibana-docker", $"{provider}.order=0", $"{provider}.credentials.username=elastic",
             ReferenceExpression.Create($"{provider}.credentials.password={_kibanaSearch!.Resource.PasswordParameter}"));
 
-        var clientId = $"{Name}-kibana";
-        var secret = GeneratedSecret($"{clientId}-secret", 32);
         var proxy = Builder.AddContainer(CoworkeeTools.Kibana, KibanaProxyImage, KibanaProxyTag)
             .WithImageRegistry("quay.io")
             .WithHttpEndpoint(targetPort: 4180, name: "http")
@@ -72,16 +69,15 @@ public sealed partial class CoworkeeApp
             .WaitFor(kibana)
             .WaitFor(auth);
         var url = ToolUrl(proxy);
-        // the browser signs in at the public address; in a deployment the proxy redeems the code there too, while running it reaches the auth server on the host
-        var publicAuth = PublicUrl(auth);
-        var backchannel = Publishing ? publicAuth : ReferenceExpression.Create($"{auth.GetEndpoint("https")}");
+        var (clientId, secret) = AddToolClient("kibana", "Kibana", ReferenceExpression.Create($"{url}/oauth2/callback"));
+        // the proxy redeems the code over the container network while running, at the public address deployed
+        var backchannel = PublicUrl(auth);
         proxy.WithEnvironment("OAUTH2_PROXY_PROVIDER", "oidc")
             .WithEnvironment("OAUTH2_PROXY_PROVIDER_DISPLAY_NAME", Title)
             .WithEnvironment("OAUTH2_PROXY_CLIENT_ID", clientId)
             .WithEnvironment("OAUTH2_PROXY_CLIENT_SECRET", secret)
             .WithEnvironment("OAUTH2_PROXY_CODE_CHALLENGE_METHOD", "S256")
             .WithEnvironment("OAUTH2_PROXY_SCOPE", "openid profile email")
-            .WithEnvironment("OAUTH2_PROXY_OIDC_ISSUER_URL", publicAuth)
             .WithEnvironment("OAUTH2_PROXY_SKIP_OIDC_DISCOVERY", "true")
             .WithEnvironment("OAUTH2_PROXY_REDEEM_URL", ReferenceExpression.Create($"{backchannel}/connect/token"))
             .WithEnvironment("OAUTH2_PROXY_OIDC_JWKS_URL", ReferenceExpression.Create($"{backchannel}/.well-known/jwks"))
@@ -96,33 +92,20 @@ public sealed partial class CoworkeeApp
             .WithEnvironment("OAUTH2_PROXY_COOKIE_NAME", $"_{Name}_kibana")
             .WithEnvironment("OAUTH2_PROXY_COOKIE_SECURE", Publishing ? "true" : "false")
             .WithEnvironment("OAUTH2_PROXY_REVERSE_PROXY", Publishing ? "true" : "false");
+        // the browser's addresses: inside the container the endpoints would resolve to the container network (aspire.dev.internal, kibana.dev.internal);
+        // the issuer is the browser's address of the auth server as well (Coworkee:Auth:Issuer)
+        WithAuthBrowserUrl(proxy, "OAUTH2_PROXY_OIDC_ISSUER_URL", "");
+        WithAuthBrowserUrl(proxy, "OAUTH2_PROXY_LOGIN_URL", "/connect/authorize");
         if (Publishing)
         {
-            proxy.WithEnvironment("OAUTH2_PROXY_LOGIN_URL", ReferenceExpression.Create($"{publicAuth}/connect/authorize"))
-                .WithEnvironment("OAUTH2_PROXY_REDIRECT_URL", ReferenceExpression.Create($"{url}/oauth2/callback"));
+            proxy.WithEnvironment("OAUTH2_PROXY_REDIRECT_URL", ReferenceExpression.Create($"{url}/oauth2/callback"));
         }
         else
         {
-            // the browser addresses: inside the container both endpoints would resolve to the container network (aspire.dev.internal, kibana.dev.internal)
-            var authHttps = auth.GetEndpoint("https");
             var proxyHttp = proxy.GetEndpoint("http");
-            proxy.WithEnvironment(context =>
-            {
-                context.EnvironmentVariables["OAUTH2_PROXY_LOGIN_URL"] = $"{authHttps.Url}/connect/authorize";
-                context.EnvironmentVariables["OAUTH2_PROXY_REDIRECT_URL"] = $"{proxyHttp.Url}/oauth2/callback";
-            });
-            // the development certificate of the auth server, reached as host.docker.internal, which then also names itself so in the tokens
-            proxy.WithEnvironment("OAUTH2_PROXY_SSL_INSECURE_SKIP_VERIFY", "true")
-                .WithEnvironment("OAUTH2_PROXY_INSECURE_OIDC_SKIP_ISSUER_VERIFICATION", "true");
+            proxy.WithEnvironment(context => context.EnvironmentVariables["OAUTH2_PROXY_REDIRECT_URL"] = $"{proxyHttp.Url}/oauth2/callback");
         }
 
-        var index = _bffClients++;
-        auth.WithSetting(s => s.Coworkee.Auth.Clients[index].ClientId, clientId)
-            .WithSetting(s => s.Coworkee.Auth.Clients[index].DisplayName, $"{Title} (Kibana)")
-            .WithSetting(s => s.Coworkee.Auth.Clients[index].ClientSecret, secret)
-            .WithSetting(s => s.Coworkee.Auth.Clients[index].RedirectUris[0], ReferenceExpression.Create($"{url}/oauth2/callback"))
-            .WithSetting(s => s.Coworkee.Auth.Clients[index].ShowInLauncher, false)
-            .WithSetting(s => s.Coworkee.Auth.Clients[index].SystemAdministratorsOnly, true);
         KibanaSignIn = proxy;
     }
 }

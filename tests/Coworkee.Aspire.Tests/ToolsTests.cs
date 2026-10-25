@@ -30,6 +30,7 @@ public sealed class ToolsTests
         var app = builder.AddCoworkeeApp("demo", o => { o.Administrator = Admin; o.UseGrafana(g => g.WithEnvironment("MINE", "1")); });
 
         app.AddProjects();
+        Allocated(app.AuthServer!.Resource);
 
         builder.Resources.Select(r => r.Name).ShouldContain("prometheus");
         builder.Resources.Select(r => r.Name).ShouldContain("loki");
@@ -65,33 +66,44 @@ public sealed class ToolsTests
     }
 
     [Fact]
-    public async Task With_keycloak_both_sign_in_through_the_realm_and_keep_their_own_login()
+    public async Task Both_sign_in_at_the_auth_server_and_keep_their_own_login()
     {
         var builder = DistributedApplication.CreateBuilder();
-        var app = builder.AddCoworkeeApp("demo", o => { o.Administrator = Admin; o.UseKeycloak().UseGrafana().UseWebDataStudio(); });
+        var app = builder.AddCoworkeeApp("demo", o => { o.Administrator = Admin; o.UseGrafana().UseWebDataStudio(); });
 
         app.AddProjects();
-
-        app.KeycloakClients.Select(c => c.ClientId).ShouldBe(["demo-auth", "demo-grafana", "demo-webdatastudio"]);
-        var keycloak = await Environment(Allocated(app.Keycloak!.Resource));
-        keycloak["KC_HOSTNAME"].ShouldBe("http://localhost:8180");
-        keycloak["KC_HOSTNAME_BACKCHANNEL_DYNAMIC"].ShouldBe("true");
+        Allocated(app.AuthServer!.Resource);
 
         Allocated(app.Grafana!.Resource);
         var grafana = await Environment(app.Grafana.Resource);
-        grafana["GF_AUTH_GENERIC_OAUTH_AUTH_URL"].ShouldBe("http://localhost:8180/realms/demo/protocol/openid-connect/auth");
-        grafana["GF_AUTH_GENERIC_OAUTH_TOKEN_URL"].ShouldBe("http://keycloak:8080/realms/demo/protocol/openid-connect/token");
+        // the browser goes to the auth server's address on the host, Grafana itself over the container network
+        grafana["GF_AUTH_GENERIC_OAUTH_AUTH_URL"].ShouldBe("https://localhost:8180/connect/authorize");
+        grafana["GF_AUTH_GENERIC_OAUTH_TOKEN_URL"].ShouldBe("{demo-auth.bindings.https.url}/connect/token");
+        grafana["GF_AUTH_GENERIC_OAUTH_API_URL"].ShouldBe("{demo-auth.bindings.https.url}/connect/userinfo");
         grafana["GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET"].ShouldBe("{demo-grafana-secret.value}");
-        grafana["GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH"].ShouldStartWith("email == 'admin@demo.test' && 'GrafanaAdmin' || contains(roles[*]");
+        grafana["GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH"].ShouldBe("'GrafanaAdmin'");
         grafana["GF_AUTH_DISABLE_LOGIN_FORM"].ShouldBe("false");
         grafana["GF_SECURITY_DISABLE_INITIAL_ADMIN_CREATION"].ShouldBe("false");
 
         var studio = await Environment(Allocated(app.WebDataStudio!.Resource));
-        studio["WDS_OIDC_AUTHORITY"].ShouldBe("http://keycloak:8080/realms/demo");
+        studio["WDS_OIDC_AUTHORITY"].ShouldBe("{demo-auth.bindings.https.url}");
         studio["WDS_OIDC_CLIENT_SECRET"].ShouldBe("{demo-webdatastudio-secret.value}");
-        studio["WDS_OIDC_ADMINS"].ShouldBe("admin@demo.test,Administrator");
+        studio["WDS_OIDC_ADMINS"].ShouldBe("admin");
         studio["WDS_USER"].ShouldBe(Admin.UserName);
-        (await app.KeycloakClients[2].RedirectUris[0].GetValueAsync(TestContext.Current.CancellationToken)).ShouldBe("http://localhost:8180/signin-oidc");
+
+        // administrators of the system organisation only; the auth server names itself by the browser's address and hands containers their own
+        var auth = await Environment(app.AuthServer.Resource);
+        auth["Coworkee__Auth__Issuer"].ShouldBe("{demo-auth.bindings.https.url}");
+        auth["Coworkee__Auth__DynamicBackchannel"].ShouldBe("true");
+        foreach (var tool in new[] { "demo-grafana", "demo-webdatastudio" })
+        {
+            var client = auth.Single(e => e.Value == tool).Key.Replace("__ClientId", "", StringComparison.Ordinal);
+            auth[$"{client}__SystemAdministratorsOnly"].ShouldBe("true");
+            auth[$"{client}__ShowInLauncher"].ShouldBe("false");
+        }
+
+        auth[auth.Single(e => e.Value == "demo-webdatastudio").Key.Replace("__ClientId", "__RedirectUris__0", StringComparison.Ordinal)]
+            .ShouldBe("{webdatastudio.bindings.http.url}/signin-oidc");
     }
 
     [Fact]
@@ -101,6 +113,7 @@ public sealed class ToolsTests
         var app = builder.AddCoworkeeApp("demo", o => o.UseSqlServer().UseGrafana().UseWebDataStudio());
 
         app.AddProjects();
+        Allocated(app.AuthServer!.Resource);
 
         builder.Resources.Select(r => r.Name).ShouldNotContain("postgres-exporter");
         (await Environment(Allocated(app.Grafana!.Resource)))["GF_DS_APP_DATABASE_PASSWORD"].ShouldBe("{sqlserver-password.value}");
@@ -112,7 +125,7 @@ public sealed class ToolsTests
     }
 
     [Fact]
-    public async Task Aspireui_signs_in_through_the_realm_with_the_roles_of_the_app()
+    public async Task Aspireui_signs_in_at_the_auth_server_as_its_admin()
     {
         var builder = DistributedApplication.CreateBuilder();
         var app = builder.AddCoworkeeApp("demo", o => o.UseKeycloak());
@@ -120,16 +133,17 @@ public sealed class ToolsTests
 
         var aspireUi = builder.AddAspireUI().WithCoworkeeSignOn(app);
 
-        app.KeycloakClients.Last().ClientId.ShouldBe("demo-aspireui");
-        (await Environment(Allocated(app.Keycloak!.Resource)))["KC_HOSTNAME"].ShouldBe("http://localhost:8180");
+        app.KeycloakClients.Select(c => c.ClientId).ShouldBe(["demo-auth"]);
         var env = await Environment(Allocated(aspireUi.Resource));
-        env["ASPIREUI_SET_OidcAuthority"].ShouldBe("http://keycloak:8080/realms/demo");
+        env["ASPIREUI_SET_OidcAuthority"].ShouldBe("{demo-auth.bindings.https.url}");
         env["ASPIREUI_SET_OidcClientId"].ShouldBe("demo-aspireui");
         env["ASPIREUI_SET_OidcClientSecret"].ShouldBe("{demo-aspireui-secret.value}");
-        env["ASPIREUI_SET_OidcGroupsClaim"].ShouldBe("roles");
-        env["ASPIREUI_SET_OidcAdminGroup"].ShouldBe("Administrator");
+        env["ASPIREUI_SET_OidcGroupsClaim"].ShouldBe("role");
+        env["ASPIREUI_SET_OidcAdminGroup"].ShouldBe("admin");
         env["ASPIREUI_SET_FORCE"].ShouldBe("true");
-        (await app.KeycloakClients.Last().RedirectUris[0].GetValueAsync(TestContext.Current.CancellationToken)).ShouldBe("http://localhost:8180/api/auth/sso/callback");
+        var auth = await Environment(Allocated(app.AuthServer!.Resource));
+        auth[auth.Single(e => e.Value == "demo-aspireui").Key.Replace("__ClientId", "__RedirectUris__0", StringComparison.Ordinal)]
+            .ShouldBe("{aspireui.bindings.http.url}/api/auth/sso/callback");
     }
 
     [Fact]
@@ -139,6 +153,7 @@ public sealed class ToolsTests
         var app = builder.AddCoworkeeApp("demo", o => o.UseSqlite().UseGrafana().UseWebDataStudio());
 
         app.AddProjects();
+        Allocated(app.AuthServer!.Resource);
 
         (await Environment(Allocated(app.Grafana!.Resource))).Keys.ShouldNotContain("GF_DS_APP_DATABASE_PASSWORD");
         app.WebDataStudio!.Resource.Annotations.OfType<ContainerMountAnnotation>().ShouldContain(m => m.Target == "/data/app");

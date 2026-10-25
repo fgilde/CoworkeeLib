@@ -104,12 +104,12 @@ public sealed partial class CoworkeeApp
         }
 
         AddKibanaSignIn();
+        AddToolsSignIn();
 
         // the running app host reconciles the realm with the development users, the migrations of a deployment the one with its administrator
         if (Options.Keycloak is { } keycloak && Deploys(CoworkeeTools.Keycloak))
         {
             AddKeycloak(auth, keycloak);
-            AddToolsSignIn();
         }
 
         return Added<TProject>(auth, suffix);
