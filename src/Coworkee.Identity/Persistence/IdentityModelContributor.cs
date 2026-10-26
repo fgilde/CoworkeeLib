@@ -102,7 +102,10 @@ internal sealed class IdentityModelContributor : IModelContributor
             group.ToTable("Groups", Schema);
             group.Property(g => g.Name).HasMaxLength(200);
             group.Property(g => g.Description).HasMaxLength(1000);
-            group.HasIndex(g => new { g.TenantId, g.Name }).IsUnique();
+            group.Property(g => g.Code).HasMaxLength(95);
+            group.HasOne<UserGroup>().WithMany().HasForeignKey(g => g.ParentId).OnDelete(DeleteBehavior.Restrict);
+            group.HasIndex(g => new { g.TenantId, g.Code }).IsUnique();
+            group.HasIndex(g => new { g.TenantId, g.ParentId, g.Name }).IsUnique().AreNullsDistinct(false);
             group.HasMany(g => g.Members).WithOne().HasForeignKey(m => m.GroupId).OnDelete(DeleteBehavior.Cascade);
             group.HasMany(g => g.Roles).WithOne().HasForeignKey(r => r.GroupId).OnDelete(DeleteBehavior.Cascade);
         });
@@ -112,6 +115,14 @@ internal sealed class IdentityModelContributor : IModelContributor
             member.ToTable("GroupMembers", Schema);
             member.HasKey(m => new { m.GroupId, m.UserId });
             member.HasOne<User>().WithMany().HasForeignKey(m => m.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<GroupSelection>(selection =>
+        {
+            selection.ToTable("GroupSelections", Schema);
+            selection.HasKey(s => new { s.UserId, s.GroupId });
+            selection.HasOne<User>().WithMany().HasForeignKey(s => s.UserId).OnDelete(DeleteBehavior.Cascade);
+            selection.HasOne<UserGroup>().WithMany().HasForeignKey(s => s.GroupId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<UserGroupRole>(groupRole =>

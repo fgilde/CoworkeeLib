@@ -1,3 +1,5 @@
+using Coworkee.Identity.Groups;
+using Coworkee.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,7 +43,13 @@ public static class CoworkeeMigrations
         await using var scope = host.Services.CreateAsyncScope();
         try
         {
-            await MigrateAsync((DbContext)scope.ServiceProvider.GetRequiredService(plan.DbContext), plan.Attempts, logger, cancellationToken);
+            var db = (DbContext)scope.ServiceProvider.GetRequiredService(plan.DbContext);
+            await MigrateAsync(db, plan.Attempts, logger, cancellationToken);
+            if (db is CoworkeeDbContext coworkeeDb)
+            {
+                await GroupCodes.FillMissingAsync(coworkeeDb, cancellationToken);
+            }
+
             if (plan.Seed)
             {
                 await host.Services.SeedCoworkeeIdentityAsync(cancellationToken);

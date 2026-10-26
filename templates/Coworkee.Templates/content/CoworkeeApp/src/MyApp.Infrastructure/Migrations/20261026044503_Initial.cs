@@ -409,6 +409,8 @@ namespace MyApp.Infrastructure.Migrations
                     Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Description = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ParentId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Code = table.Column<string>(type: "character varying(95)", maxLength: 95, nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
                     ModifiedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -417,6 +419,13 @@ namespace MyApp.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Groups", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Groups_Groups_ParentId",
+                        column: x => x.ParentId,
+                        principalSchema: "cw",
+                        principalTable: "Groups",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -1298,6 +1307,33 @@ namespace MyApp.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "GroupSelections",
+                schema: "cw",
+                columns: table => new
+                {
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    GroupId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GroupSelections", x => new { x.UserId, x.GroupId });
+                    table.ForeignKey(
+                        name: "FK_GroupSelections_Groups_GroupId",
+                        column: x => x.GroupId,
+                        principalSchema: "cw",
+                        principalTable: "Groups",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_GroupSelections_Users_UserId",
+                        column: x => x.UserId,
+                        principalSchema: "cw",
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserClaims",
                 schema: "cw",
                 columns: table => new
@@ -1586,11 +1622,31 @@ namespace MyApp.Infrastructure.Migrations
                 column: "RoleId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Groups_TenantId_Name",
+                name: "IX_Groups_ParentId",
                 schema: "cw",
                 table: "Groups",
-                columns: new[] { "TenantId", "Name" },
+                column: "ParentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Groups_TenantId_Code",
+                schema: "cw",
+                table: "Groups",
+                columns: new[] { "TenantId", "Code" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Groups_TenantId_ParentId_Name",
+                schema: "cw",
+                table: "Groups",
+                columns: new[] { "TenantId", "ParentId", "Name" },
+                unique: true)
+                .Annotation("Npgsql:NullsDistinct", false);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GroupSelections_GroupId",
+                schema: "cw",
+                table: "GroupSelections",
+                column: "GroupId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ImportProfiles_TenantId_EntitySet_Name",
@@ -1982,6 +2038,10 @@ namespace MyApp.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "GroupRoles",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "GroupSelections",
                 schema: "cw");
 
             migrationBuilder.DropTable(
@@ -2490,6 +2550,8 @@ namespace MyApp.Infrastructure.Migrations
                     Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Description = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ParentId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Code = table.Column<string>(type: "character varying(95)", maxLength: 95, nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
                     ModifiedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -2498,6 +2560,13 @@ namespace MyApp.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Groups", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Groups_Groups_ParentId",
+                        column: x => x.ParentId,
+                        principalSchema: "cw",
+                        principalTable: "Groups",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -3313,6 +3382,33 @@ namespace MyApp.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "GroupSelections",
+                schema: "cw",
+                columns: table => new
+                {
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    GroupId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GroupSelections", x => new { x.UserId, x.GroupId });
+                    table.ForeignKey(
+                        name: "FK_GroupSelections_Groups_GroupId",
+                        column: x => x.GroupId,
+                        principalSchema: "cw",
+                        principalTable: "Groups",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_GroupSelections_Users_UserId",
+                        column: x => x.UserId,
+                        principalSchema: "cw",
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserClaims",
                 schema: "cw",
                 columns: table => new
@@ -3568,11 +3664,31 @@ namespace MyApp.Infrastructure.Migrations
                 column: "RoleId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Groups_TenantId_Name",
+                name: "IX_Groups_ParentId",
                 schema: "cw",
                 table: "Groups",
-                columns: new[] { "TenantId", "Name" },
+                column: "ParentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Groups_TenantId_Code",
+                schema: "cw",
+                table: "Groups",
+                columns: new[] { "TenantId", "Code" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Groups_TenantId_ParentId_Name",
+                schema: "cw",
+                table: "Groups",
+                columns: new[] { "TenantId", "ParentId", "Name" },
+                unique: true)
+                .Annotation("Npgsql:NullsDistinct", false);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GroupSelections_GroupId",
+                schema: "cw",
+                table: "GroupSelections",
+                column: "GroupId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ImportProfiles_TenantId_EntitySet_Name",
@@ -3950,6 +4066,10 @@ namespace MyApp.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "GroupRoles",
+                schema: "cw");
+
+            migrationBuilder.DropTable(
+                name: "GroupSelections",
                 schema: "cw");
 
             migrationBuilder.DropTable(

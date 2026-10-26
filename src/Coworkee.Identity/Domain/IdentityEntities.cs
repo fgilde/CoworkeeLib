@@ -111,6 +111,11 @@ public sealed class UserGroup : AuditedAggregateRoot, IMultiTenant
 
     public Guid TenantId { get; set; }
 
+    public Guid? ParentId { get; set; }
+
+    /// <summary>Path of 5-digit segments joined by dots (<c>00001.00002</c>); null only until the migrations host has filled it for groups that existed before the tree.</summary>
+    public string? Code { get; set; }
+
     public List<UserGroupMember> Members { get; } = [];
 
     public List<UserGroupRole> Roles { get; } = [];
@@ -121,6 +126,13 @@ public sealed class UserGroupMember
     public Guid GroupId { get; set; }
 
     public Guid UserId { get; set; }
+}
+
+public sealed class GroupSelection
+{
+    public Guid UserId { get; set; }
+
+    public Guid GroupId { get; set; }
 }
 
 public sealed class UserGroupRole

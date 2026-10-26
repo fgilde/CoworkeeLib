@@ -60,7 +60,7 @@ internal sealed class GetGroupsHandler(CoworkeeDbContext db) : IHandler<GetGroup
 
         var total = await groups.CountAsync(cancellationToken);
         var items = await groups.OrderBy(g => g.Name).Skip((page.Page - 1) * page.PageSize).Take(page.PageSize)
-            .Select(g => new GroupDto(g.Id, g.Name, g.Description, g.Members.Select(m => m.UserId).ToList(), g.Roles.Select(r => r.RoleId).ToList()))
+            .Select(g => new GroupDto(g.Id, g.Name, g.Description, g.Members.Select(m => m.UserId).ToList(), g.Roles.Select(r => r.RoleId).ToList(), g.ParentId, g.Code))
             .ToListAsync(cancellationToken);
         return new PagedResult<GroupDto>(items, total, page.Page, page.PageSize);
     }
@@ -71,12 +71,36 @@ internal sealed class CreateGroupHandler(CoworkeeDbContext db) : IHandler<Create
     public async Task<Result<Guid>> HandleAsync(CreateGroup command, CancellationToken cancellationToken)
     {
         var name = command.Group.Name.Trim();
-        if (await db.Set<UserGroup>().AnyAsync(g => g.Name == name, cancellationToken))
+        var groups = db.Set<UserGroup>();
+        var parentId = command.Group.ParentId;
+        string? parentCode = null;
+        if (parentId is not null)
+        {
+            // the tenant filter hides parents of other tenants; a parent without a code has not been through the migrations host yet
+            parentCode = await groups.Where(g => g.Id == parentId).Select(g => g.Code).SingleOrDefaultAsync(cancellationToken);
+            if (parentCode is null)
+            {
+                return GroupErrors.ParentNotFound;
+            }
+
+            if (GroupCodes.Depth(parentCode) >= GroupCodes.MaxDepth)
+            {
+                return GroupErrors.TooDeep;
+            }
+        }
+
+        if (await groups.AnyAsync(g => g.ParentId == parentId && g.Name == name, cancellationToken))
         {
             return GroupErrors.NameTaken;
         }
 
-        var group = new UserGroup { Name = name, Description = command.Group.Description };
+        var group = new UserGroup
+        {
+            Name = name,
+            Description = command.Group.Description,
+            ParentId = parentId,
+            Code = await GroupCodes.NextAsync(groups, parentCode, parentId, cancellationToken),
+        };
         db.Add(group);
         return group.Id;
     }
@@ -93,7 +117,7 @@ internal sealed class UpdateGroupHandler(CoworkeeDbContext db) : IHandler<Update
         }
 
         var name = command.Group.Name.Trim();
-        if (await db.Set<UserGroup>().AnyAsync(g => g.Name == name && g.Id != group.Id, cancellationToken))
+        if (await db.Set<UserGroup>().AnyAsync(g => g.ParentId == group.ParentId && g.Name == name && g.Id != group.Id, cancellationToken))
         {
             return GroupErrors.NameTaken;
         }
@@ -170,6 +194,10 @@ internal sealed class SetGroupRolesHandler(CoworkeeDbContext db, ICurrentUser cu
 internal static class GroupErrors
 {
     public static readonly Error NotFound = Error.NotFound("identity.group_not_found", "Group not found.");
+
+    public static readonly Error ParentNotFound = Error.NotFound("identity.group_parent_not_found", "Parent group not found.");
+
+    public static readonly Error TooDeep = Error.Validation(nameof(GroupRequest.ParentId), $"Groups can be nested at most {GroupCodes.MaxDepth} levels deep.");
 
     public static readonly Error NameTaken = Error.Conflict("identity.group_name_taken", "A group with this name already exists.");
 }

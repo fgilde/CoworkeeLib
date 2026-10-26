@@ -42,9 +42,9 @@ public sealed record RoleDto(Guid Id, string Name, string? Description, bool IsS
 /// <summary>A role; <paramref name="SelectableForRegistration"/> offers it in the registration wizard.</summary>
 public sealed record RoleRequest(string Name, string? Description, bool SelectableForRegistration = false);
 
-public sealed record GroupDto(Guid Id, string Name, string? Description, IReadOnlyList<Guid> MemberIds, IReadOnlyList<Guid> RoleIds);
+public sealed record GroupDto(Guid Id, string Name, string? Description, IReadOnlyList<Guid> MemberIds, IReadOnlyList<Guid> RoleIds, Guid? ParentId = null, string? Code = null);
 
-public sealed record GroupRequest(string Name, string? Description);
+public sealed record GroupRequest(string Name, string? Description, Guid? ParentId = null);
 
 public sealed record PermissionDto(string Name, string DisplayName, IReadOnlyList<string> Implies);
 
