@@ -51,12 +51,13 @@ Apps schränken ihre Zeilen mit einem Filter ein, der einmal gegen `ActiveAsync`
 ```csharp
 using Coworkee.Application.Groups;
 using Coworkee.OData;
+using Microsoft.EntityFrameworkCore;
 
 internal sealed class ShipmentFilter(IGroupScope scope) : IODataEntityFilter<Shipment>
 {
     public async Task<IQueryable<Shipment>> ApplyAsync(IQueryable<Shipment> query, CancellationToken ct)
     {
-        var ids = await scope.ActiveAsync(ct);
+        var ids = (await scope.ActiveAsync(ct)).ToList();
         return query.Where(s => EF.Parameter(ids).Contains(s.GroupId));
     }
 }
@@ -71,7 +72,7 @@ Die Auswahl bestimmt, was **Listen** zeigen, nicht, was ein Benutzer öffnen dar
 
 `<GroupScopePicker />` setzt du selbst in die App-Leiste; das Template-Layout enthält ihn nicht, und er blendet sich für Benutzer ohne zugängliche Gruppen aus. Datentabellen laden bei einer Änderung der Auswahl neu (`GroupScopeState`), und `IClientDataCache` ist die Schnittstelle für eigene clientseitige Caches.
 
-Der Gruppenimport (`Groups.Manage`) nimmt `Name`, `Description` und `ParentPath` („Kunde A/Hamburg") und ist ein Upsert über den Pfad: Eine Gruppe dieses Namens an diesem Pfad bekommt ihre Beschreibung aktualisiert, sonst wird sie angelegt. Fehlende Eltern werden nicht implizit angelegt (eine frühere Zeile derselben Datei kann sie anlegen); ein unbekanntes Elternteil ist eine Fehlerzeile. Ein `/` im Namen ist per Pfad nicht ansprechbar, leere Pfadsegmente werden ignoriert, eine leere Beschreibung löscht eine vorhandene nicht, und ein Probelauf kann unbekannte Pfade nicht melden (der echte Lauf schon). Das Users-OData-Set liefert `Groups` für Filter wie `Groups/any(m: m/GroupId eq {id})`.
+Der Gruppenimport (`Groups.Manage`) nimmt `Name`, `Description` und `ParentPath` („Kunde A/Hamburg") und ist ein Upsert über den Pfad: Eine Gruppe dieses Namens an diesem Pfad bekommt ihre Beschreibung aktualisiert, sonst wird sie angelegt. Fehlende Eltern werden nicht implizit angelegt (eine frühere Zeile derselben Datei kann sie anlegen); ein unbekanntes Elternteil ist eine Fehlerzeile. Ein `/` im Namen ist per Pfad nicht ansprechbar, leere Pfadsegmente werden ignoriert, eine leere Beschreibung löscht eine vorhandene nicht, und ein Probelauf kann unbekannte Pfade nicht melden (der echte Lauf schon). Die Gruppenseite hat Schaltflächen für Import und Export; das Set `Groups` hat ein berechnetes `ParentPath`, und der Export schreibt `Name`, `Description` und `ParentPath` in Baumreihenfolge, so dass sich ein Export wieder importieren lässt, etwa in einen anderen Mandanten. Das Users-OData-Set liefert `Groups` für Filter wie `Groups/any(m: m/GroupId eq {id})`.
 
 !!! warning "Echtzeit und Einheiten als Kunden"
     `[Realtime]` sendet `type:X` weiterhin an alle mit der Ansichts-Berechtigung. Sind Einheiten Kunden in einem Mandanten, sehen Clients anderer Einheiten die IDs und geänderten Eigenschaftsnamen von Datensätzen, die sie nicht öffnen dürfen (und laden neu). Themen pro Gruppe sind ein Folgeschritt.

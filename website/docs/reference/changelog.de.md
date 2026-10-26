@@ -8,12 +8,15 @@
 
 - Gruppenbaum und Geltungsbereich: Gruppen haben eine übergeordnete Gruppe und einen `Code`-Pfad (anlegen unter einer übergeordneten, verschieben mit `PUT /api/v1/identity/groups/{id}/parent`, Löschen entfernt den Teilbaum), Mitglieder lassen sich hinzufügen, entfernen und verschieben, `IGroupScope` (`Coworkee.Application.Groups`) liefert Filtern die zugänglichen, ausgewählten und aktiven Gruppen, `<GroupScopePicker />` lässt Benutzer Listen auf einzelne Gruppen einschränken, `AddGroupDetailTab` ergänzt Reiter auf der Gruppenseite, Gruppenimport über den Pfad der übergeordneten Gruppe. Neue Berechtigungen `Identity.Groups.ManageMembers` (in `Manage` enthalten) und `Identity.Groups.ScopeAll`; siehe [Identität](../features/identity.md#gruppenbaum-und-geltungsbereich).
 - Users-OData-Set: `Groups`-Mitgliedschaften, Filter `Groups/any(m: m/GroupId eq {id})`.
+- Gruppenseite: Schaltflächen für Import (`Groups.Manage`) und Export. Das Set `Groups` hat ein berechnetes `ParentPath` („Kunde A/Hamburg“), und der Export schreibt `Name`, `Description` und `ParentPath` in Baumreihenfolge, so dass sich die Datei wieder importieren lässt, auch in einen anderen Mandanten.
+- Berechnete OData-Eigenschaften mit `Exported = true` sind Spalten des Exports; `ComputedQueryRoot` (aus Workflows verschoben) und `ODataComputedProperty.Inline` helfen, Unterabfragen darin zu schreiben.
 
 ### Geändert
 
 - Apps brauchen eine Migration (`dotnet ef migrations add GroupTree`): `cw.Groups` bekommt `ParentId` und `Code`, der Name ist pro übergeordneter Gruppe statt pro Mandant eindeutig, neue Tabelle `cw.GroupSelections`. Der Migrationshost vergibt den vorhandenen Gruppen ihre Codes.
 - `SetGroupMembers` braucht `Identity.Groups.ManageMembers` statt `Manage`; Rollen mit `Manage` funktionieren weiter, es enthält die neue Berechtigung.
-- Binärer Bruch: `ODataEntityAccess.VisibleAsync` hat einen optionalen Parameter `unnarrowed`; Apps und Bibliotheken, die es aufrufen, neu bauen.
+- `ICoworkeeApi` hat neue Gruppen-Mitglieder (`GetGroupChildrenAsync`, `SearchGroupTreeAsync`, `MoveGroupAsync`, `AddGroupMembersAsync`, `RemoveGroupMembersAsync`, `MoveGroupMembersAsync`, `GetMyGroupsAsync`, `SelectGroupsAsync`): eigene Implementierungen und Test-Fakes kompilieren erst wieder, wenn sie sie ergänzen.
+- `PUT /api/v1/identity/groups/{id}` mit einer anderen `ParentId` als der aktuellen übergeordneten Gruppe antwortet mit 400; verschoben wird eine Gruppe mit `PUT /api/v1/identity/groups/{id}/parent`. Fehlt `ParentId`, bleibt die übergeordnete Gruppe.
 - `[Realtime]` sendet weiterhin an alle mit der Ansichts-Berechtigung; sind Gruppen Kunden in einem Mandanten, sehen Clients anderer Einheiten Datensatz-IDs und geänderte Eigenschaftsnamen. Themen pro Gruppe folgen.
 
 ## 0.0.1.40 (2026-10-25)

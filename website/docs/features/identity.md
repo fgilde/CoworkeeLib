@@ -51,12 +51,13 @@ Apps scope their rows with a filter written once against `ActiveAsync`:
 ```csharp
 using Coworkee.Application.Groups;
 using Coworkee.OData;
+using Microsoft.EntityFrameworkCore;
 
 internal sealed class ShipmentFilter(IGroupScope scope) : IODataEntityFilter<Shipment>
 {
     public async Task<IQueryable<Shipment>> ApplyAsync(IQueryable<Shipment> query, CancellationToken ct)
     {
-        var ids = await scope.ActiveAsync(ct);
+        var ids = (await scope.ActiveAsync(ct)).ToList();
         return query.Where(s => EF.Parameter(ids).Contains(s.GroupId));
     }
 }
@@ -71,7 +72,7 @@ The selection decides what **lists** show, not what a user may open. The library
 
 Place `<GroupScopePicker />` in your app bar yourself; the template layout does not include it, and it hides itself for users without accessible groups. Data tables reload when the selection changes (`GroupScopeState`), and `IClientDataCache` is the seam for your own client-side caches.
 
-Group import (`Groups.Manage`) takes `Name`, `Description` and `ParentPath` ("Customer A/Hamburg") and is an upsert by path: a group of that name at that path gets its description updated, otherwise it is created. Missing parents are not created implicitly (an earlier row of the same file may create them); an unknown parent is an error row. A `/` in a name cannot be addressed by path, empty path segments are ignored, a blank description does not clear an existing one, and a dry run cannot flag unknown paths (a real run does). The Users OData set exposes `Groups` for filters such as `Groups/any(m: m/GroupId eq {id})`.
+Group import (`Groups.Manage`) takes `Name`, `Description` and `ParentPath` ("Customer A/Hamburg") and is an upsert by path: a group of that name at that path gets its description updated, otherwise it is created. Missing parents are not created implicitly (an earlier row of the same file may create them); an unknown parent is an error row. A `/` in a name cannot be addressed by path, empty path segments are ignored, a blank description does not clear an existing one, and a dry run cannot flag unknown paths (a real run does). The groups page has Import and Export buttons; the `Groups` set has a computed `ParentPath`, and the export writes `Name`, `Description` and `ParentPath` in tree order, so an export imports again, for example into another tenant. The Users OData set exposes `Groups` for filters such as `Groups/any(m: m/GroupId eq {id})`.
 
 !!! warning "Realtime and units as customers"
     `[Realtime]` still broadcasts `type:X` to everyone with the view permission. When units are customers in one tenant, clients of other units see the ids and changed property names of records they may not open (and reload). Per-group topics are a follow-up.
