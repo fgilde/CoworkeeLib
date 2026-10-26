@@ -46,6 +46,8 @@ public sealed record GroupDto(Guid Id, string Name, string? Description, IReadOn
 
 public sealed record GroupRequest(string Name, string? Description, Guid? ParentId = null);
 
+public sealed record MoveGroupRequest(Guid? ParentId);
+
 public sealed record PermissionDto(string Name, string DisplayName, IReadOnlyList<string> Implies);
 
 public sealed record PermissionGroupDto(string Name, string DisplayName, IReadOnlyList<PermissionDto> Permissions);

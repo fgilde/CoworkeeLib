@@ -18,6 +18,7 @@ internal static partial class IdentityEndpoints
         api.MapPost("/groups", (GroupRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new CreateGroup(body), ct).ToHttpResult());
         api.MapPut("/groups/{id:guid}", (Guid id, GroupRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new UpdateGroup(id, body), ct).ToHttpResult());
         api.MapDelete("/groups/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteGroup(id), ct).ToHttpResult());
+        api.MapPut("/groups/{id:guid}/parent", (Guid id, MoveGroupRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new MoveGroup(id, body.ParentId), ct).ToHttpResult());
         api.MapPut("/groups/{id:guid}/members", (Guid id, IdListRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SetGroupMembers(id, body.Ids), ct).ToHttpResult());
         api.MapPut("/groups/{id:guid}/roles", (Guid id, IdListRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SetGroupRoles(id, body.Ids), ct).ToHttpResult());
     }

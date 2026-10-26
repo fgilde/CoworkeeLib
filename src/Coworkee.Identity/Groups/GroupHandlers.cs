@@ -138,9 +138,15 @@ internal sealed class DeleteGroupHandler(CoworkeeDbContext db) : IHandler<Delete
             return GroupErrors.NotFound;
         }
 
-        db.RemoveRange(await db.Set<PermissionGrant>().Where(g => g.ProviderType == PermissionProviderType.Group && g.ProviderKey == group.Id).ToListAsync(cancellationToken));
-        db.RemoveRange(await db.Set<ResourcePermission>().Where(p => p.PrincipalType == PrincipalType.Group && p.PrincipalId == group.Id).ToListAsync(cancellationToken));
-        db.Remove(group);
+        // members, roles and selections go with their group through the foreign keys; the self reference restricts, so the whole subtree is removed in one unit
+        var subtree = group.Code is { } code
+            ? await db.Set<UserGroup>().Where(g => g.Code!.StartsWith(code + ".")).ToListAsync(cancellationToken)
+            : [];
+        subtree.Add(group);
+        var ids = subtree.Select(g => g.Id).ToList();
+        db.RemoveRange(await db.Set<PermissionGrant>().Where(g => g.ProviderType == PermissionProviderType.Group && ids.Contains(g.ProviderKey)).ToListAsync(cancellationToken));
+        db.RemoveRange(await db.Set<ResourcePermission>().Where(p => p.PrincipalType == PrincipalType.Group && ids.Contains(p.PrincipalId)).ToListAsync(cancellationToken));
+        db.RemoveRange(subtree);
         return Result.Success();
     }
 }
@@ -198,6 +204,9 @@ internal static class GroupErrors
     public static readonly Error ParentNotFound = Error.NotFound("identity.group_parent_not_found", "Parent group not found.");
 
     public static readonly Error TooDeep = Error.Validation(nameof(GroupRequest.ParentId), $"Groups can be nested at most {GroupCodes.MaxDepth} levels deep.");
+
+    public static readonly Error MoveIntoOwnSubtree = new("identity.group_move_cycle", "A group cannot be moved into itself or one of its sub-groups.", ErrorKind.Validation,
+        new Dictionary<string, string[]> { [nameof(GroupRequest.ParentId)] = ["A group cannot be moved into itself or one of its sub-groups."] });
 
     public static readonly Error NameTaken = Error.Conflict("identity.group_name_taken", "A group with this name already exists.");
 }
