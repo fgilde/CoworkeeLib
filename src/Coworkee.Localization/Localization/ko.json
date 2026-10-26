@@ -1799,6 +1799,7 @@
   "Move all members to…": "모든 구성원 이동…",
   "Move {0}": "{0} 이동",
   "New root group": "새 루트 그룹",
+  "Viewing the members requires the permission to view users.": "구성원을 보려면 사용자 보기 권한이 필요합니다.",
   "New sub-group": "새 하위 그룹",
   "New sub-group of {0}": "{0}의 새 하위 그룹",
   "No group matches.": "일치하는 그룹이 없습니다.",

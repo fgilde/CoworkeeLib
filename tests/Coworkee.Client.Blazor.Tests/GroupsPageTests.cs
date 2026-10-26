@@ -26,7 +26,7 @@ public sealed class GroupsPageTests : ClientTestBase
     {
         Services.AddSingleton<IODataClient>(_odata);
         AddAuthorization().SetAuthorized("admin");
-        Grant(IdentityPermissions.Groups.View, IdentityPermissions.Groups.Manage, IdentityPermissions.Groups.ManageMembers);
+        Grant(IdentityPermissions.Groups.View, IdentityPermissions.Groups.Manage, IdentityPermissions.Groups.ManageMembers, IdentityPermissions.Users.View);
         Api.GetGroupChildrenAsync(null, Arg.Any<CancellationToken>()).Returns([Customer, Supplier]);
         Api.GetGroupChildrenAsync(Customer.Id, Arg.Any<CancellationToken>()).Returns([Bremen, Hamburg]);
         Api.GetRolesAsync(Arg.Any<CancellationToken>()).Returns([]);
@@ -138,6 +138,51 @@ public sealed class GroupsPageTests : ClientTestBase
         page.WaitForElement("[data-member='ada@acme.test']");
         page.FindAll("[data-testid='group-move-members']").ShouldBeEmpty();
         page.FindAll("[data-testid^='remove-member-']").ShouldBeEmpty();
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Import_needs_Manage_and_export_is_there_for_viewers(bool manage)
+    {
+        Grant(manage ? [IdentityPermissions.Groups.View, IdentityPermissions.Groups.Manage] : [IdentityPermissions.Groups.View]);
+
+        var page = RenderPage();
+
+        page.WaitForElement($"[data-group-node='{Supplier.Id}']");
+        page.FindAll("[data-testid='groups-export']").Count.ShouldBe(1);
+        page.FindAll("[data-testid='groups-import']").Count.ShouldBe(manage ? 1 : 0);
+    }
+
+    [Fact]
+    public async Task Export_writes_parent_paths_in_code_order()
+    {
+        Transfer.ExportAsync(Arg.Any<string>(), Arg.Any<Coworkee.Contracts.Data.ExportFileFormat>(), Arg.Any<ODataQuery>(), Arg.Any<IReadOnlyCollection<string>>(), Arg.Any<CancellationToken>())
+            .Returns(new Coworkee.Client.Blazor.Data.ExportResult([1], "Groups.xlsx", "application/octet-stream", null));
+        var page = RenderPage();
+        page.WaitForElement($"[data-group-node='{Supplier.Id}']");
+
+        await page.Find("[data-testid='groups-export']").ClickAsync(new());
+
+        await Transfer.Received(1).ExportAsync("Groups", Coworkee.Contracts.Data.ExportFileFormat.Xlsx, Arg.Is<ODataQuery>(q => q.OrderBy == "Code"),
+            Arg.Is<IReadOnlyCollection<string>>(c => c.SequenceEqual(new[] { "Name", "Description", "ParentPath" })), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Members_tab_without_Users_View_shows_a_hint_instead_of_the_table()
+    {
+        Grant(IdentityPermissions.Groups.View);
+        _odata.With("Groups", Row(Supplier, Ada.Id)).With("Users", Ada);
+        var users = 0;
+        _odata.Queried += (_, query) => users += query.Filter?.Contains("Groups/any") == true ? 1 : 0;
+        Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Supplier.Id}");
+        var page = RenderPage();
+        page.WaitForElement("[data-testid='group-title']");
+
+        await Tab(page, "Members").ClickAsync(new());
+
+        page.WaitForElement("[data-testid='group-members-hidden']");
+        users.ShouldBe(0);
     }
 
     [Fact]

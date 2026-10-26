@@ -1799,6 +1799,7 @@
   "Move all members to…": "Sposta tutti i membri in…",
   "Move {0}": "Sposta {0}",
   "New root group": "Nuovo gruppo radice",
+  "Viewing the members requires the permission to view users.": "Per vedere i membri serve l'autorizzazione a visualizzare gli utenti.",
   "New sub-group": "Nuovo sottogruppo",
   "New sub-group of {0}": "Nuovo sottogruppo di {0}",
   "No group matches.": "Nessun gruppo corrisponde.",

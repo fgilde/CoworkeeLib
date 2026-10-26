@@ -1799,6 +1799,7 @@
   "Move all members to…": "Tüm üyeleri şuraya taşı…",
   "Move {0}": "{0} grubunu taşı",
   "New root group": "Yeni kök grup",
+  "Viewing the members requires the permission to view users.": "Üyeleri görüntülemek için kullanıcıları görüntüleme izni gerekir.",
   "New sub-group": "Yeni alt grup",
   "New sub-group of {0}": "{0} için yeni alt grup",
   "No group matches.": "Eşleşen grup yok.",

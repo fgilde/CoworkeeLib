@@ -1799,6 +1799,7 @@
   "Move all members to…": "Flyt alle medlemmer til…",
   "Move {0}": "Flyt {0}",
   "New root group": "Ny rodgruppe",
+  "Viewing the members requires the permission to view users.": "Visning af medlemmerne kræver tilladelse til at se brugere.",
   "New sub-group": "Ny undergruppe",
   "New sub-group of {0}": "Ny undergruppe af {0}",
   "No group matches.": "Ingen gruppe matcher.",

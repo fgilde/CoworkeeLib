@@ -14,7 +14,8 @@ public sealed record GroupImportRow(string Name, string? Description, string? Pa
 
 /// <summary>Creates the group at its path or, when a group of that name already sits there, updates its description.</summary>
 [RequiresPermission(IdentityPermissions.Groups.Manage)]
-public sealed record ImportGroup(Guid? Id, GroupImportRow Row) : ICommand<Result<Guid>>;
+[AiTool(Exclude = true)]
+public sealed record ImportGroup(GroupImportRow Row) : ICommand<Result<Guid>>;
 
 // ponytail: the path is only resolved by the handler, so a dry run accepts rows whose parent an earlier row of the same file creates and cannot report an unknown path;
 // names containing '/' cannot be addressed by path (rejected here), empty path segments are ignored, a blank description does not clear an existing one

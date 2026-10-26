@@ -6,10 +6,18 @@
 <MudGrid Spacing="3">
     <MudItem xs="12" md="4">
         <MudPaper Outlined="true" Class="pa-3">
-            @if (_canManage)
-            {
-                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Add" Class="mb-2" OnClick="CreateRootAsync" data-testid="new-root-group">@L["New root group"]</MudButton>
-            }
+            <div class="d-flex flex-wrap align-center gap-1 mb-2">
+                @if (_canManage)
+                {
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Add" OnClick="CreateRootAsync" data-testid="new-root-group">@L["New root group"]</MudButton>
+                    <MudTooltip Text="@L["Import"]">
+                        <MudIconButton Icon="@Icons.Material.Outlined.FileUpload" Size="Size.Small" aria-label="@L["Import"]" OnClick="ImportAsync" data-testid="groups-import" />
+                    </MudTooltip>
+                }
+                <MudTooltip Text="@L["Export"]">
+                    <MudIconButton Icon="@Icons.Material.Outlined.FileDownload" Size="Size.Small" aria-label="@L["Export"]" OnClick="ExportAsync" data-testid="groups-export" />
+                </MudTooltip>
+            </div>
             @if (_ready)
             {
                 <GroupTree @ref="_tree" SelectedId="_group?.Id" SelectedChanged="SelectAsync" RevealCode="@_group?.Code">

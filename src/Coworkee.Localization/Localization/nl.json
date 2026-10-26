@@ -1799,6 +1799,7 @@
   "Move all members to…": "Alle leden verplaatsen naar…",
   "Move {0}": "{0} verplaatsen",
   "New root group": "Nieuwe hoofdgroep",
+  "Viewing the members requires the permission to view users.": "Om de leden te zien is de machtiging om gebruikers te bekijken nodig.",
   "New sub-group": "Nieuwe subgroep",
   "New sub-group of {0}": "Nieuwe subgroep van {0}",
   "No group matches.": "Geen groep komt overeen.",

@@ -2,13 +2,13 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Query;
 
-namespace Coworkee.Workflows;
+namespace Coworkee.OData.Computed;
 
 /// <summary>
-/// A workflow table inside a query bound without a DbContext (OData binders). EF refuses a query root of another context,
-/// so the table stays a placeholder until <see cref="WorkflowQueryRoots"/> swaps in the root of the executing context, whose query filters (tenant) apply.
+/// A table inside a computed property (<see cref="ODataComputedProperty.Bind"/>), bound without a DbContext. EF refuses a query root of another context,
+/// so the table stays a placeholder until <see cref="ComputedQueryRoots"/> swaps in the root of the executing context, whose query filters (tenant) apply.
 /// </summary>
-internal sealed class WorkflowQueryRoot(Type entityType) : Expression
+public sealed class ComputedQueryRoot(Type entityType) : Expression
 {
     public Type EntityType { get; } = entityType;
 
@@ -16,17 +16,19 @@ internal sealed class WorkflowQueryRoot(Type entityType) : Expression
 
     public override Type Type => typeof(IQueryable<>).MakeGenericType(EntityType);
 
+    public static ComputedQueryRoot Of<TEntity>() => new(typeof(TEntity));
+
     protected override Expression VisitChildren(ExpressionVisitor visitor) => this;
 
     // compiled queries are cached by their expression
-    public override bool Equals(object? obj) => obj is WorkflowQueryRoot other && other.EntityType == EntityType;
+    public override bool Equals(object? obj) => obj is ComputedQueryRoot other && other.EntityType == EntityType;
 
     public override int GetHashCode() => EntityType.GetHashCode();
 
-    public override string ToString() => $"WorkflowQueryRoot<{EntityType.Name}>";
+    public override string ToString() => $"ComputedQueryRoot<{EntityType.Name}>";
 }
 
-internal sealed class WorkflowQueryRoots : IQueryExpressionInterceptor
+internal sealed class ComputedQueryRoots : IQueryExpressionInterceptor
 {
     public Expression QueryCompilationStarting(Expression queryExpression, QueryExpressionEventData eventData) =>
         new Replacer(eventData.Context!).Visit(queryExpression);
@@ -34,6 +36,6 @@ internal sealed class WorkflowQueryRoots : IQueryExpressionInterceptor
     private sealed class Replacer(Microsoft.EntityFrameworkCore.DbContext context) : ExpressionVisitor
     {
         protected override Expression VisitExtension(Expression node) =>
-            node is WorkflowQueryRoot root ? new EntityQueryRootExpression(context.Model.FindEntityType(root.EntityType)!) : base.VisitExtension(node);
+            node is ComputedQueryRoot root ? new EntityQueryRootExpression(context.Model.FindEntityType(root.EntityType)!) : base.VisitExtension(node);
     }
 }

@@ -4,7 +4,6 @@ using Coworkee.Core.Security;
 using Coworkee.OData;
 using Coworkee.OData.Computed;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Workflows;
@@ -55,7 +54,7 @@ internal sealed class WorkflowODataProperties(WorkflowOptions options, WorkflowU
         var type = workflow.EntityType;
         Expression<Func<IQueryable<WorkflowItem>, Guid, string?>> state = (items, id) =>
             items.Where(i => i.EntityType == type && i.EntityId == id).Select(i => i.State).FirstOrDefault();
-        return Expression.Coalesce(Inline(state, Root<WorkflowItem>(), Expression.Property(row, "Id")), initial);
+        return Expression.Coalesce(ODataComputedProperty.Inline(state, ComputedQueryRoot.Of<WorkflowItem>(), Expression.Property(row, "Id")), initial);
     }
 
     private Expression AwaitsMeOf(EntityWorkflow workflow, Expression row)
@@ -63,20 +62,7 @@ internal sealed class WorkflowODataProperties(WorkflowOptions options, WorkflowU
         var type = workflow.EntityType;
         Expression<Func<IQueryable<WorkflowApproval>, Guid, Guid?, bool>> awaits = (approvals, id, me) =>
             approvals.Any(a => a.EntityType == type && a.EntityId == id && a.Status == ApprovalStatus.Pending && a.Approvers.Any(x => x.UserId == me && x.Approved == null));
-        return Inline(awaits, Root<WorkflowApproval>(), Expression.Property(row, "Id"), Expression.Property(Expression.Constant(user), nameof(WorkflowUser.Id)));
-    }
-
-    private static WorkflowQueryRoot Root<TEntity>() => new(typeof(TEntity));
-
-    private static Expression Inline(LambdaExpression template, params Expression[] arguments)
-    {
-        var body = template.Body;
-        for (var i = 0; i < arguments.Length; i++)
-        {
-            body = ReplacingExpressionVisitor.Replace(template.Parameters[i], arguments[i], body);
-        }
-
-        return body;
+        return ODataComputedProperty.Inline(awaits, ComputedQueryRoot.Of<WorkflowApproval>(), Expression.Property(row, "Id"), Expression.Property(Expression.Constant(user), nameof(WorkflowUser.Id)));
     }
 }
 

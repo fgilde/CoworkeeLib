@@ -1799,6 +1799,7 @@
   "Move all members to…": "نقل جميع الأعضاء إلى…",
   "Move {0}": "نقل {0}",
   "New root group": "مجموعة جذرية جديدة",
+  "Viewing the members requires the permission to view users.": "يتطلب عرض الأعضاء صلاحية عرض المستخدمين.",
   "New sub-group": "مجموعة فرعية جديدة",
   "New sub-group of {0}": "مجموعة فرعية جديدة لـ {0}",
   "No group matches.": "لا توجد مجموعة مطابقة.",

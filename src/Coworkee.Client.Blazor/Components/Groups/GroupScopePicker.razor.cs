@@ -64,7 +64,8 @@ public partial class GroupScopePicker : IDisposable
 
     private void Rebuild()
     {
-        _nodes = [.. State.Groups.Select(g => new GroupNodeDto(g.Id, g.ParentId, g.Code, g.Name, null, State.Groups.Count(c => c.ParentId == g.Id), 0))];
+        var children = State.Groups.ToLookup(g => g.ParentId);
+        _nodes = [.. State.Groups.Select(g => new GroupNodeDto(g.Id, g.ParentId, g.Code, g.Name, null, children[g.Id].Count(), 0))];
         _checked = State.Groups.Where(g => g.Selected).Select(g => g.Id).ToHashSet();
     }
 

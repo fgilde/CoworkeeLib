@@ -1,11 +1,14 @@
 using Coworkee.Client.Blazor.Api;
+using Coworkee.Client.Blazor.Components.Data.Import;
 using Coworkee.Client.Blazor.Components.Groups;
 using Coworkee.Client.Blazor.Data;
 using Coworkee.Client.Blazor.Data.Admin;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Security;
+using Coworkee.Contracts.Data;
 using Coworkee.Contracts.Identity;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Pages.Admin;
@@ -36,6 +39,8 @@ public partial class Groups
     [Inject] private IDialogService Dialogs { get; set; } = null!;
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
+
+    [Inject] private IServiceProvider Services { get; set; } = null!;
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
@@ -106,6 +111,27 @@ public partial class Groups
         if (await GroupForm.CreateAsync(Dialogs, Api, L["New root group"], null) is { } id)
         {
             await NodeChangedAsync(id);
+        }
+    }
+
+    private async Task ImportAsync()
+    {
+        if (await Dialogs.ShowImportWizardAsync(L["Import"], "Groups") && _tree is not null)
+        {
+            await _tree.ReloadAsync();
+        }
+    }
+
+    // parents before children and the columns the group import reads, so the file imports again (also into another tenant)
+    private async Task ExportAsync()
+    {
+        ExportResult? result = null;
+        var query = new ODataQuery { OrderBy = "Code" };
+        if (await Snackbar.RunAsync(async () => result = await Services.GetRequiredService<IDataTransferApi>().ExportAsync("Groups", ExportFileFormat.Xlsx, query, ["Name", "Description", "ParentPath"])))
+        {
+            await (result!.Job is { } job
+                ? Services.GetRequiredService<DataTransferWatcher>().Announce(job)
+                : Services.GetRequiredService<FileDownloader>().DownloadAsync(result.FileName, result.ContentType, result.Content!));
         }
     }
 

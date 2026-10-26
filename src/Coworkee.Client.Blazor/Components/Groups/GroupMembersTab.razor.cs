@@ -3,6 +3,8 @@ using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Data.Admin;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Navigation;
+using Coworkee.Client.Blazor.Security;
+using Coworkee.Contracts.Identity;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using MudBlazor.Extensions.Components.ObjectEdit;
@@ -15,6 +17,7 @@ public partial class GroupMembersTab
 {
     private static readonly string[] SearchFields = [nameof(UserRow.Email), nameof(UserRow.FirstName), nameof(UserRow.LastName)];
     private CoworkeeDataTable<UserRow>? _table;
+    private bool? _canViewUsers;
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
@@ -23,6 +26,8 @@ public partial class GroupMembersTab
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
     [Inject] private CoworkeePages Links { get; set; } = null!;
+
+    [Inject] private PermissionStore Permissions { get; set; } = null!;
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
@@ -35,6 +40,9 @@ public partial class GroupMembersTab
 
     // the server resolves the membership: the URL stays the same size however many members the group has
     private string Filter => $"Groups/any(m: m/GroupId eq {Group.Id})";
+
+    // the members are rows of the Users set, which Groups.View alone does not open
+    protected override async Task OnInitializedAsync() => _canViewUsers = await Permissions.HasAsync(IdentityPermissions.Users.View);
 
     private async Task AddAsync()
     {

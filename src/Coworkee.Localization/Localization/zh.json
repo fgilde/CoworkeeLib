@@ -1799,6 +1799,7 @@
   "Move all members to…": "将所有成员移动到…",
   "Move {0}": "移动 {0}",
   "New root group": "新建根组",
+  "Viewing the members requires the permission to view users.": "查看成员需要查看用户的权限。",
   "New sub-group": "新建子组",
   "New sub-group of {0}": "新建 {0} 的子组",
   "No group matches.": "没有匹配的组。",

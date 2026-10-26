@@ -1799,6 +1799,7 @@
   "Move all members to…": "Flytta alla medlemmar till…",
   "Move {0}": "Flytta {0}",
   "New root group": "Ny rotgrupp",
+  "Viewing the members requires the permission to view users.": "För att se medlemmarna krävs behörighet att visa användare.",
   "New sub-group": "Ny undergrupp",
   "New sub-group of {0}": "Ny undergrupp till {0}",
   "No group matches.": "Ingen grupp matchar.",

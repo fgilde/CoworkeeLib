@@ -130,13 +130,12 @@ public sealed class GroupImportTests(IdentityApp app) : IAsyncLifetime
     [Fact]
     public async Task Another_tenant_with_the_same_names_stays_separate()
     {
-        var other = await app.InDbAsync(null, async db =>
+        var other = await app.InDbAsync(null, db =>
         {
             var tenant = new Tenant { Name = "Other", Identifier = "other" };
             db.Add(tenant);
             db.Add(new UserGroup { Name = "A", Description = "theirs", TenantId = tenant.Id, Code = "00001" });
-            await Task.CompletedTask;
-            return tenant.Id;
+            return Task.FromResult(tenant.Id);
         });
 
         var result = await ImportAsync("Name,Description,ParentPath\r\nA,mine,\r\nB,,A\r\n");
@@ -158,6 +157,35 @@ public sealed class GroupImportTests(IdentityApp app) : IAsyncLifetime
 
         preview.Valid.ShouldBe(2);
         (await GroupsAsync()).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task The_export_has_the_parent_path_and_imports_into_another_tenant_as_the_same_tree()
+    {
+        await ImportAsync("Name,Description,ParentPath\r\nCustomer A,Big,\r\nHamburg,Port,Customer A\r\nAltona,,Customer A/Hamburg\r\nSupplier,,\r\n");
+
+        var csv = await Admin.GetStringAsync("/api/v1/data/Groups/export?format=csv&columns=Name,Description,ParentPath&$orderby=Code", Ct);
+
+        csv.Split('\n').Select(l => l.Trim('\r', '\uFEFF')).ShouldContain("Altona;;Customer A/Hamburg");
+        (await Admin.GetStringAsync("/odata/Groups?$filter=ParentPath eq 'Customer A/Hamburg'&$select=Name", Ct)).ShouldContain("Altona");
+        var (tenant, client) = await OtherTenantAdminAsync();
+        (await ImportAsync(csv, client)).Errors.ShouldBeEmpty();
+        var mine = await app.InDbAsync(_setup.TenantId, db => db.Set<UserGroup>().ToDictionaryAsync(g => g.Name, g => (g.Code, g.Description), Ct));
+        (await app.InDbAsync(tenant, db => db.Set<UserGroup>().ToDictionaryAsync(g => g.Name, g => (g.Code, g.Description), Ct))).ShouldBe(mine, ignoreOrder: true);
+    }
+
+    private async Task<(Guid Tenant, HttpClient Client)> OtherTenantAdminAsync()
+    {
+        var (tenant, user) = await app.InDbAsync(null, db =>
+        {
+            var tenant = new Tenant { Name = "Other", Identifier = "other" };
+            var user = new User { UserName = "admin@other.test", Email = "admin@other.test", TenantId = tenant.Id };
+            db.AddRange(tenant, user);
+            db.AddRange(new[] { IdentityPermissions.Groups.View, IdentityPermissions.Groups.Manage }.Select(name =>
+                new PermissionGrant { Name = name, ProviderType = PermissionProviderType.User, ProviderKey = user.Id, TenantId = tenant.Id }));
+            return Task.FromResult((tenant.Id, user.Id));
+        });
+        return (tenant, app.As(user, tenant));
     }
 
     private async Task<ImportPreviewDto> PreviewAsync(string csv, ImportSettings settings)

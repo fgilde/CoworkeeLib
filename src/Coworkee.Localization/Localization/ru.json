@@ -1799,6 +1799,7 @@
   "Move all members to…": "Переместить всех участников в…",
   "Move {0}": "Переместить {0}",
   "New root group": "Новая корневая группа",
+  "Viewing the members requires the permission to view users.": "Для просмотра участников нужно право на просмотр пользователей.",
   "New sub-group": "Новая подгруппа",
   "New sub-group of {0}": "Новая подгруппа {0}",
   "No group matches.": "Нет подходящих групп.",

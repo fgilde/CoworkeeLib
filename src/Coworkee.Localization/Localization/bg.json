@@ -1799,6 +1799,7 @@
   "Move all members to…": "Преместване на всички членове в…",
   "Move {0}": "Преместване на {0}",
   "New root group": "Нова основна група",
+  "Viewing the members requires the permission to view users.": "За преглед на членовете е нужно право за преглед на потребители.",
   "New sub-group": "Нова подгрупа",
   "New sub-group of {0}": "Нова подгрупа на {0}",
   "No group matches.": "Няма съвпадащи групи.",

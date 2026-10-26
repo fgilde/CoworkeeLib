@@ -74,7 +74,7 @@ public sealed class UserDetailTests : ClientTestBase
 
         page.WaitForAssertion(() => page.Find($"[data-group='{hamburg.Id}']").TextContent.ShouldContain("Customer A / Hamburg"));
         page.Find($"[data-group='{hamburg.Id}']").GetAttribute("href")!.ShouldEndWith($"/admin/groups?group={hamburg.Id}");
-        Api.DidNotReceiveWithAnyArgs().GetGroupsAsync(default!, default);
+        Api.DidNotReceive().GetGroupsAsync(Arg.Any<Contracts.PageRequest>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]

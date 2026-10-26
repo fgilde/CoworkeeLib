@@ -33,7 +33,6 @@ public sealed class CoworkeeWorkflowsModule : CoworkeeModule, IWebModule
         services.AddScoped<ApproverDirectory>();
         services.AddHttpContextAccessor();
         services.AddSingleton<WorkflowUser>();
-        services.AddSingleton<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, WorkflowQueryRoots>();
         services.AddSingleton<Coworkee.OData.Computed.IODataComputedPropertySource, WorkflowODataProperties>();
         services.AddScoped<IRealtimeTopicAuthorizer, WorkflowTopicAuthorizer>();
         services.AddRecurringJob<WorkflowDeadlineJob>(WorkflowDeadlineJob.Id,

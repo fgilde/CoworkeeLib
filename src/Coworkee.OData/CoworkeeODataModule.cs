@@ -25,6 +25,7 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
         var registry = services.Registry();
         services.AddMessagingFromAssembly(typeof(CoworkeeODataModule).Assembly);
         services.AddSingleton<Computed.ODataComputedProperties>();
+        services.AddSingleton<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, Computed.ComputedQueryRoots>();
         services.AddSingleton<IEdmModel>(sp => BuildModel(registry, sp.GetRequiredService<Computed.ODataComputedProperties>()));
         services.AddSingleton<Microsoft.Extensions.Options.IConfigureOptions<ODataOptions>, Computed.ODataRoute>();
         services.AddTransient<IFacetBuilder>(sp => new FacetBuilder(sp.GetRequiredService<IServiceScopeFactory>(), FacetLiterals.Options(), new FacetLiterals()));
