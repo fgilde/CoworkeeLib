@@ -71,6 +71,11 @@ internal sealed class GroupScopeHandlers(CoworkeeDbContext db, ICurrentUser curr
     private async Task<IReadOnlyList<GroupNode>> WithAncestorsAsync(IReadOnlyList<GroupNode> nodes, CancellationToken cancellationToken)
     {
         var codes = nodes.Where(n => n.Code.Length > 0).SelectMany(n => GroupCodes.Prefixes(n.Code)).Distinct().ToList();
+        if (codes.Count == 0)
+        {
+            return nodes;
+        }
+
         var tree = await db.Set<UserGroup>().AsNoTracking().Where(g => EF.Parameter(codes).Contains(g.Code!)).Select(GroupScopeService.Node).ToListAsync(cancellationToken);
         return tree.UnionBy(nodes, n => n.Id).OrderBy(n => n.Code, StringComparer.Ordinal).ToList();
     }

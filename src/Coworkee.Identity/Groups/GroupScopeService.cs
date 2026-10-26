@@ -16,8 +16,11 @@ internal sealed class GroupScopeService(CoworkeeDbContext db, ICurrentUser user,
 {
     internal static readonly Expression<Func<UserGroup, GroupNode>> Node = g => new GroupNode(g.Id, g.ParentId, g.Code ?? "", g.Name);
 
-    private Access? _access;
-    private IReadOnlyList<Guid>? _stored;
+    // keyed by the acting user: a CurrentUserScope inside the same DI scope must not reuse another user's groups
+    private readonly Dictionary<(Guid?, Guid?), Access> _access = [];
+    private readonly Dictionary<(Guid?, Guid?), IReadOnlyList<Guid>> _stored = [];
+
+    private (Guid?, Guid?) Actor => (user.UserId, user.TenantId);
 
     private IQueryable<UserGroup> Groups => db.Set<UserGroup>().AsNoTracking();
 
@@ -53,7 +56,7 @@ internal sealed class GroupScopeService(CoworkeeDbContext db, ICurrentUser user,
     public async Task<IReadOnlyList<GroupNode>> NodesAsync(IEnumerable<Guid> ids, CancellationToken ct)
     {
         var wanted = ids.Distinct().ToList();
-        if (user.UserId is null || wanted.Count == 0)
+        if (wanted.Count == 0)
         {
             return [];
         }
@@ -64,7 +67,7 @@ internal sealed class GroupScopeService(CoworkeeDbContext db, ICurrentUser user,
 
     public async Task<IReadOnlyList<GroupNode>> AncestorsAsync(Guid id, CancellationToken ct)
     {
-        if (user.UserId is null || await Groups.Where(g => g.Id == id).Select(g => g.Code).SingleOrDefaultAsync(ct) is not { } code)
+        if (await Groups.Where(g => g.Id == id).Select(g => g.Code).SingleOrDefaultAsync(ct) is not { } code)
         {
             return [];
         }
@@ -76,14 +79,14 @@ internal sealed class GroupScopeService(CoworkeeDbContext db, ICurrentUser user,
 
     private async Task<Access> AccessAsync(CancellationToken ct)
     {
-        if (_access is not null)
+        if (_access.TryGetValue(Actor, out var cached))
         {
-            return _access;
+            return cached;
         }
 
         if (user.UserId is not { } me)
         {
-            return _access = new Access([], []);
+            return _access[Actor] = new Access([], []);
         }
 
         var memberships = await Groups.Where(g => g.Members.Any(m => m.UserId == me)).Select(g => new GroupRef(g.Id, g.Code)).ToListAsync(ct);
@@ -100,11 +103,19 @@ internal sealed class GroupScopeService(CoworkeeDbContext db, ICurrentUser user,
             accessible = memberships.UnionBy(descendants, g => g.Id).ToList();
         }
 
-        return _access = new Access(memberships.Select(g => g.Id).ToList(), accessible.OrderBy(g => g.Code, StringComparer.Ordinal).ToList());
+        return _access[Actor] = new Access(memberships.Select(g => g.Id).ToList(), accessible.OrderBy(g => g.Code, StringComparer.Ordinal).ToList());
     }
 
-    private async Task<IReadOnlyList<Guid>> StoredAsync(CancellationToken ct) =>
-        _stored ??= await db.Set<GroupSelection>().AsNoTracking().Where(s => s.UserId == user.UserId).Select(s => s.GroupId).ToListAsync(ct);
+    private async Task<IReadOnlyList<Guid>> StoredAsync(CancellationToken ct)
+    {
+        var actor = Actor;
+        if (!_stored.TryGetValue(actor, out var stored))
+        {
+            _stored[actor] = stored = await db.Set<GroupSelection>().AsNoTracking().Where(s => s.UserId == user.UserId).Select(s => s.GroupId).ToListAsync(ct);
+        }
+
+        return stored;
+    }
 
     /// <summary><c>g.Code.StartsWith(code + ".")</c> for any of <paramref name="codes"/>, each code a parameter.</summary>
     // ponytail: one parameter per top-level membership; a user directly in more than ~2000 separate subtrees exceeds SQL Server's parameter limit

@@ -131,21 +131,18 @@ public sealed class GroupScopeTests(IdentityApp app) : IAsyncLifetime
         var (user, a, a1, b) = await MemberOfAAndBAsync();
         await SelectAsync(user, a);
 
-        var (inside, nested) = await ScopeAsync(user, async s =>
+        IReadOnlyList<Guid> inside;
+        using (GroupScope.Unnarrowed())
         {
             using (GroupScope.Unnarrowed())
             {
-                var outer = await s.ActiveAsync(Ct);
-                using (GroupScope.Unnarrowed())
-                {
-                }
-
-                return (outer, await s.ActiveAsync(Ct));
             }
-        });
+
+            GroupScope.IsUnnarrowed.ShouldBeTrue();
+            inside = await ScopeAsync(user, s => s.ActiveAsync(Ct));
+        }
 
         inside.ShouldBe([a, a1, b], ignoreOrder: true);
-        nested.ShouldBe([a, a1, b], ignoreOrder: true);
         GroupScope.IsUnnarrowed.ShouldBeFalse();
         (await ScopeAsync(user, s => s.ActiveAsync(Ct))).ShouldBe([a, a1], ignoreOrder: true);
     }
@@ -202,17 +199,61 @@ public sealed class GroupScopeTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task No_user_means_no_groups()
+    public async Task Without_a_user_the_lists_are_empty_but_nodes_follow_the_tenant()
     {
-        var (_, a, _, _) = await MemberOfAAndBAsync();
+        var (_, a, a1, _) = await MemberOfAAndBAsync();
+        var nodeA = new GroupNode(a, null, "00001", "A");
 
-        using var actor = CurrentUserScope.BeginSystem(_setup.TenantId);
+        using (CurrentUserScope.BeginSystem(_setup.TenantId))
+        {
+            await using var scope = app.App.Services.CreateAsyncScope();
+            var groups = scope.ServiceProvider.GetRequiredService<IGroupScope>();
+
+            (await groups.AccessibleAsync(Ct)).ShouldBeEmpty();
+            (await groups.ActiveAsync(Ct)).ShouldBeEmpty();
+            (await groups.NodesAsync([a], Ct)).ShouldBe([nodeA]);
+            (await groups.AncestorsAsync(a1, Ct)).ShouldBe([nodeA]);
+        }
+
+        using (CurrentUserScope.Begin(new ImpersonatedUser(null, null)))
+        {
+            await using var scope = app.App.Services.CreateAsyncScope();
+            var groups = scope.ServiceProvider.GetRequiredService<IGroupScope>();
+
+            (await groups.NodesAsync([a], Ct)).ShouldBeEmpty();
+            (await groups.AncestorsAsync(a1, Ct)).ShouldBeEmpty();
+        }
+    }
+
+    [Fact]
+    public async Task Another_acting_user_in_the_same_scope_gets_their_own_groups()
+    {
+        var (user, a, a1, b) = await MemberOfAAndBAsync();
+        var other = await UserAsync("other");
+        await AddMemberAsync(b, other);
+        await SelectAsync(user, a);
+
         await using var scope = app.App.Services.CreateAsyncScope();
+        var accessor = scope.ServiceProvider.GetRequiredService<IHttpContextAccessor>();
+        accessor.HttpContext = new DefaultHttpContext();
         var groups = scope.ServiceProvider.GetRequiredService<IGroupScope>();
+        try
+        {
+            using (CurrentUserScope.Begin(new ImpersonatedUser(user, _setup.TenantId)))
+            {
+                (await groups.ActiveAsync(Ct)).ShouldBe([a, a1], ignoreOrder: true);
+            }
 
-        (await groups.AccessibleAsync(Ct)).ShouldBeEmpty();
-        (await groups.ActiveAsync(Ct)).ShouldBeEmpty();
-        (await groups.NodesAsync([a], Ct)).ShouldBeEmpty();
+            using (CurrentUserScope.Begin(new ImpersonatedUser(other, _setup.TenantId)))
+            {
+                (await groups.AccessibleAsync(Ct)).ShouldBe([b]);
+                (await groups.ActiveAsync(Ct)).ShouldBe([b]);
+            }
+        }
+        finally
+        {
+            accessor.HttpContext = null;
+        }
     }
 
     [Fact]
