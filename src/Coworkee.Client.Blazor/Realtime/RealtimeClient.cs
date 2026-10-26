@@ -94,6 +94,9 @@ public sealed class RealtimeClient(IRealtimeConnection connection)
         return new Subscription(this, topic, handler);
     }
 
+    /// <summary>False for what <see cref="SubscribeAsync"/> returns when the hub was not reachable: nothing arrives, subscribe again later.</summary>
+    public static bool IsActive(IAsyncDisposable subscription) => subscription is not NoSubscription;
+
     private bool _wired;
 
     private async Task<bool> StartAsync()

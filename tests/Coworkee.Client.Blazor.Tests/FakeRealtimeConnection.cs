@@ -14,7 +14,10 @@ public sealed class FakeRealtimeConnection : IRealtimeConnection
 
     public int FailStarts { get; set; }
 
-    public Task StartAsync() => FailStarts-- > 0 ? throw new HttpRequestException("offline") : Task.CompletedTask;
+    /// <summary>What a start waits for, e.g. a hub that does not answer yet.</summary>
+    public Task Gate { get; set; } = Task.CompletedTask;
+
+    public Task StartAsync() => FailStarts-- > 0 ? throw new HttpRequestException("offline") : Gate;
 
     public Task InvokeAsync(string method, string topic)
     {

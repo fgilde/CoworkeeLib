@@ -6,6 +6,7 @@ using Coworkee.Client.Blazor.Security;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Realtime;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.Extensions.Logging;
 
 namespace Coworkee.Client.Blazor.Components.Groups;
 
@@ -13,11 +14,15 @@ namespace Coworkee.Client.Blazor.Components.Groups;
 /// The groups the signed-in user works in (<see cref="GroupScopePicker"/>). A new selection, here or in another tab of the user, drops the
 /// client entities and raises <see cref="Changed"/>, on which data tables reload.
 /// </summary>
-public sealed class GroupScopeState(ICoworkeeApi api, RealtimeClient realtime, AuthenticationStateProvider authentication, IClientDataCache? cache = null) : IAsyncDisposable
+public sealed class GroupScopeState(
+    ICoworkeeApi api, RealtimeClient realtime, AuthenticationStateProvider authentication, ILogger<GroupScopeState> logger, IClientDataCache? cache = null)
+    : IAsyncDisposable
 {
-    private Task? _subscribed;
+    private readonly SemaphoreSlim _selecting = new(1, 1);
+    private Task? _subscribing;
     private IAsyncDisposable? _subscription;
     private HashSet<Guid> _applied = [];
+    private int _loads;
 
     /// <summary>What the picker shows: the accessible groups; with ScopeAll only memberships, the selection and their ancestors.</summary>
     public IReadOnlyList<MyGroupDto> Groups { get; private set; } = [];
@@ -27,11 +32,21 @@ public sealed class GroupScopeState(ICoworkeeApi api, RealtimeClient realtime, A
 
     public async Task LoadAsync()
     {
-        await (_subscribed ??= SubscribeAsync());
+        // the hub may take its time: the groups do not wait for it; a failed subscription is tried again on the next load
+        if (_subscription is null && _subscribing is not { IsCompleted: false })
+        {
+            _subscribing = SubscribeAsync();
+        }
+
+        var load = ++_loads;
         try
         {
-            Groups = await api.GetMyGroupsAsync();
-            _applied = [.. Groups.Where(g => g.Selected).Select(g => g.Id)];
+            var groups = await api.GetMyGroupsAsync();
+            if (load == _loads)
+            {
+                Groups = groups;
+                _applied = Selection();
+            }
         }
         catch (ApiException)
         {
@@ -42,10 +57,28 @@ public sealed class GroupScopeState(ICoworkeeApi api, RealtimeClient realtime, A
     /// <summary>Stores the selection; empty selects all of the user's groups. Throws <see cref="ApiException"/> for groups the user cannot access.</summary>
     public async Task SelectAsync(IReadOnlyList<Guid> groupIds)
     {
-        // the server echoes the selection on the user's topic; this tab has it already
-        _applied = [.. groupIds];
-        await api.SelectGroupsAsync(groupIds);
-        await ApplyAsync();
+        // one at a time: two quick clicks must not race their PUTs
+        await _selecting.WaitAsync();
+        try
+        {
+            // the server echoes the selection on the user's topic; this tab has it already
+            _applied = [.. groupIds];
+            try
+            {
+                await api.SelectGroupsAsync(groupIds);
+            }
+            catch
+            {
+                _applied = Selection();
+                throw;
+            }
+
+            await ApplyAsync();
+        }
+        finally
+        {
+            _selecting.Release();
+        }
     }
 
     public async ValueTask DisposeAsync()
@@ -56,12 +89,21 @@ public sealed class GroupScopeState(ICoworkeeApi api, RealtimeClient realtime, A
         }
     }
 
+    private HashSet<Guid> Selection() => [.. Groups.Where(g => g.Selected).Select(g => g.Id)];
+
     private async Task ApplyAsync()
     {
         await LoadAsync();
-        if (cache is not null)
+        try
         {
-            await cache.ClearAsync();
+            if (cache is not null)
+            {
+                await cache.ClearAsync();
+            }
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(exception, "The client entities were not dropped after a new group selection");
         }
 
         Changed?.Invoke();
@@ -69,9 +111,10 @@ public sealed class GroupScopeState(ICoworkeeApi api, RealtimeClient realtime, A
 
     private async Task SubscribeAsync()
     {
-        if (ClientUser.From((await authentication.GetAuthenticationStateAsync()).User).TryGetUserId(out var userId))
+        if (ClientUser.From((await authentication.GetAuthenticationStateAsync()).User).TryGetUserId(out var userId)
+            && await realtime.SubscribeAsync(RealtimeTopics.User(userId), OnEventAsync) is var subscription && RealtimeClient.IsActive(subscription))
         {
-            _subscription = await realtime.SubscribeAsync(RealtimeTopics.User(userId), OnEventAsync);
+            _subscription = subscription;
         }
     }
 

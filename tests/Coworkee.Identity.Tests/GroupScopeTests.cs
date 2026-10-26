@@ -89,6 +89,25 @@ public sealed class GroupScopeTests(IdentityApp app) : IAsyncLifetime
         (await ScopeAsync(user, s => s.ActiveAsync(Ct))).ShouldBe([a, a1], ignoreOrder: true);
     }
 
+    // the picker of an operator loads the tree lazily; ScopeAll alone must reach the tree routes, not the group admin (member lists)
+    [Fact]
+    public async Task ScopeAll_alone_browses_the_tree_others_need_view()
+    {
+        var operatorId = await UserWithAsync(IdentityPermissions.Groups.ScopeAll);
+        var plain = await UserAsync("plain");
+        var a = await GroupAsync("A");
+        await GroupAsync("A1", a);
+        var op = app.As(operatorId, _setup.TenantId);
+        var other = app.As(plain, _setup.TenantId);
+
+        (await op.GetFromJsonAsync<List<GroupNodeDto>>("/api/v1/identity/groups/children", Ct))!.Select(n => n.Name).ShouldBe(["A"]);
+        (await op.GetFromJsonAsync<List<GroupNodeDto>>($"/api/v1/identity/groups/children?parentId={a}", Ct))!.Select(n => n.Name).ShouldBe(["A1"]);
+        (await op.GetFromJsonAsync<List<GroupNodeDto>>("/api/v1/identity/groups/tree?search=A1", Ct))!.Select(n => n.Name).ShouldBe(["A", "A1"]);
+        (await op.GetAsync("/odata/Groups", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await other.GetAsync("/api/v1/identity/groups/children", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await other.GetAsync("/api/v1/identity/groups/tree?search=A1", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
     [Fact]
     public async Task ScopeAll_makes_every_group_accessible_and_selectable()
     {

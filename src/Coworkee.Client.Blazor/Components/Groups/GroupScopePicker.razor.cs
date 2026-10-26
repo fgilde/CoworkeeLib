@@ -20,6 +20,8 @@ public partial class GroupScopePicker : IDisposable
 
     [Inject] private GroupScopeState State { get; set; } = null!;
 
+    [Inject] private ICoworkeeApi Api { get; set; } = null!;
+
     [Inject] private PermissionStore Permissions { get; set; } = null!;
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
@@ -43,6 +45,12 @@ public partial class GroupScopePicker : IDisposable
         State.Changed += Refresh;
         _scopeAll = await Permissions.HasAsync(IdentityPermissions.Groups.ScopeAll);
         await State.LoadAsync();
+        if (_scopeAll && State.Groups.Count == 0)
+        {
+            // no membership, no selection: one look at the roots tells whether the tenant has groups at all
+            _scopeAll = await HasGroupsAsync();
+        }
+
         Rebuild();
     }
 
@@ -60,10 +68,24 @@ public partial class GroupScopePicker : IDisposable
         _checked = State.Groups.Where(g => g.Selected).Select(g => g.Id).ToHashSet();
     }
 
-    // checked at once, so a second click while the first one is saved builds on it
+    private async Task<bool> HasGroupsAsync()
+    {
+        try
+        {
+            return (await Api.GetGroupChildrenAsync(null)).Count > 0;
+        }
+        catch (ApiException)
+        {
+            return false;
+        }
+    }
+
+    // checked at once, so a second click while the first one is saved builds on it; rendered before the save, so a rejected one unchecks again
     private async Task SelectAsync(IReadOnlySet<Guid> ids)
     {
         _checked = ids;
+        StateHasChanged();
+        await Task.Yield();
         if (!await Snackbar.RunAsync(() => State.SelectAsync([.. ids])))
         {
             Rebuild();
