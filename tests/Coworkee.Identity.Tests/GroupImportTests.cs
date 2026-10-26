@@ -74,6 +74,81 @@ public sealed class GroupImportTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_blank_name_is_an_error_row()
+    {
+        var result = await ImportAsync("Name,Description,ParentPath\r\n,x,\r\nOk,,\r\n");
+
+        result.Imported.ShouldBe(1);
+        result.Errors.Single().Row.ShouldBe(2);
+        result.Errors.Single().Message.ShouldContain("Name");
+        (await GroupsAsync()).Keys.ShouldBe(["Ok"]);
+    }
+
+    [Fact]
+    public async Task A_preview_without_a_name_column_reports_error_rows()
+    {
+        var preview = await PreviewAsync("ParentPath\r\nA\r\n", new ImportSettings(["ParentPath"]));
+
+        preview.Valid.ShouldBe(0);
+        preview.Invalid.Single().Errors.ShouldContain(e => e.Contains("Name"));
+    }
+
+    [Fact]
+    public async Task Names_with_a_slash_are_error_rows()
+    {
+        var result = await ImportAsync("Name\r\nA/B\r\n");
+
+        result.Errors.Single().Message.ShouldContain("/");
+        (await GroupsAsync()).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Duplicate_rows_in_one_file_make_one_group()
+    {
+        var result = await ImportAsync("Name,Description,ParentPath\r\nA,first,\r\nA,second,\r\n");
+
+        result.Errors.ShouldBeEmpty();
+        var groups = await app.InDbAsync(_setup.TenantId, db => db.Set<UserGroup>().ToListAsync(Ct));
+        groups.ShouldHaveSingleItem().Description.ShouldBe("second");
+    }
+
+    [Fact]
+    public async Task Users_without_Manage_get_error_rows_and_nothing_is_created()
+    {
+        var user = (await (await Admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest("viewer@acme.test", "Passw0rd!x", "V", "W"), Ct)).Content.ReadFromJsonAsync<UserDto>(Ct))!;
+        var role = await (await Admin.PostAsJsonAsync("/api/v1/identity/roles", new RoleRequest("GroupViewers", null), Ct)).Content.ReadFromJsonAsync<Guid>(Ct);
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{role}", new NameListRequest([IdentityPermissions.Groups.View]), Ct)).EnsureSuccessStatusCode();
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/users/{user.Id}/roles", new IdListRequest([role]), Ct)).EnsureSuccessStatusCode();
+
+        var result = await ImportAsync("Name\r\nA\r\nB\r\n", app.As(user.Id, _setup.TenantId));
+
+        (result.Imported, result.Errors.Count).ShouldBe((0, 2));
+        result.Errors[0].Message.ShouldContain(IdentityPermissions.Groups.Manage);
+        (await GroupsAsync()).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Another_tenant_with_the_same_names_stays_separate()
+    {
+        var other = await app.InDbAsync(null, async db =>
+        {
+            var tenant = new Tenant { Name = "Other", Identifier = "other" };
+            db.Add(tenant);
+            db.Add(new UserGroup { Name = "A", Description = "theirs", TenantId = tenant.Id, Code = "00001" });
+            await Task.CompletedTask;
+            return tenant.Id;
+        });
+
+        var result = await ImportAsync("Name,Description,ParentPath\r\nA,mine,\r\nB,,A\r\n");
+
+        result.Errors.ShouldBeEmpty();
+        (await app.InDbAsync(other, db => db.Set<UserGroup>().ToListAsync(Ct))).ShouldHaveSingleItem().Description.ShouldBe("theirs");
+        var mine = await GroupsAsync();
+        mine.Keys.ShouldBe(["A", "B"], ignoreOrder: true);
+        mine["A"].Description.ShouldBe("mine");
+    }
+
+    [Fact]
     public async Task A_dry_run_writes_nothing_and_accepts_a_parent_from_an_earlier_row()
     {
         using var form = new MultipartFormDataContent { { new ByteArrayContent(Encoding.UTF8.GetBytes("Name,ParentPath\r\nA,\r\nB,A\r\n")), "file", "groups.csv" } };
@@ -85,10 +160,19 @@ public sealed class GroupImportTests(IdentityApp app) : IAsyncLifetime
         (await GroupsAsync()).ShouldBeEmpty();
     }
 
-    private async Task<ImportResult> ImportAsync(string csv)
+    private async Task<ImportPreviewDto> PreviewAsync(string csv, ImportSettings settings)
     {
         using var form = new MultipartFormDataContent { { new ByteArrayContent(Encoding.UTF8.GetBytes(csv)), "file", "groups.csv" } };
-        var response = await Admin.PostAsync("/api/v1/data/Groups/import", form, Ct);
+        var sheet = (await (await Admin.PostAsync("/api/v1/data/Groups/import/file", form, Ct)).Content.ReadFromJsonAsync<ImportSheetDto>(Ct))!;
+        var response = await Admin.PostAsJsonAsync($"/api/v1/data/imports/{sheet.JobId}/preview", settings, Ct);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<ImportPreviewDto>(Ct))!;
+    }
+
+    private async Task<ImportResult> ImportAsync(string csv, HttpClient? client = null)
+    {
+        using var form = new MultipartFormDataContent { { new ByteArrayContent(Encoding.UTF8.GetBytes(csv)), "file", "groups.csv" } };
+        var response = await (client ?? Admin).PostAsync("/api/v1/data/Groups/import", form, Ct);
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<ImportResult>(Ct))!;
     }
