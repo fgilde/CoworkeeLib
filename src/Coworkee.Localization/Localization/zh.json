@@ -1810,5 +1810,7 @@
   "Search groups": "搜索组",
   "Top level": "顶层",
   "{0} members": "{0} 名成员",
-  "Group not found.": "未找到该组。"
+  "Group not found.": "未找到该组。",
+  "All my groups": "我的所有用户组",
+  "{0} groups": "{0} 个用户组"
 }

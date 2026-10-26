@@ -1,0 +1,16 @@
+@if (Visible)
+{
+    <div class="d-inline-flex" style="position:relative" data-testid="group-scope">
+        <MudButton Variant="Variant.Text" Color="Color.Inherit" StartIcon="@Icons.Material.Outlined.AccountTree" EndIcon="@Icons.Material.Filled.ArrowDropDown"
+                   Class="text-none" OnClick="() => _open = !_open" data-testid="group-scope-button">@Label</MudButton>
+        <MudPopover Open="_open" AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopLeft" Paper="true" Elevation="8" Class="pa-2" Style="width:340px;max-height:70vh;overflow:auto">
+            @if (_open)
+            {
+                <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Outlined.SelectAll" Disabled="_checked.Count == 0"
+                           OnClick="() => SelectAsync(new HashSet<Guid>())" Class="mb-1" data-testid="group-scope-all">@L["All my groups"]</MudButton>
+                <GroupTree Nodes="@(_scopeAll ? null : _nodes)" CheckedIds="_checked" CheckedIdsChanged="SelectAsync" Bold="Members" />
+            }
+        </MudPopover>
+        <MudOverlay @bind-Visible="_open" AutoClose="true" />
+    </div>
+}

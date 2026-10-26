@@ -1810,5 +1810,7 @@
   "Search groups": "グループを検索",
   "Top level": "最上位",
   "{0} members": "メンバー {0} 人",
-  "Group not found.": "グループが見つかりません。"
+  "Group not found.": "グループが見つかりません。",
+  "All my groups": "自分のすべてのグループ",
+  "{0} groups": "{0} 個のグループ"
 }

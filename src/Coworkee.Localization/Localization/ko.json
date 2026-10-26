@@ -1810,5 +1810,7 @@
   "Search groups": "그룹 검색",
   "Top level": "최상위",
   "{0} members": "구성원 {0}명",
-  "Group not found.": "그룹을 찾을 수 없습니다."
+  "Group not found.": "그룹을 찾을 수 없습니다.",
+  "All my groups": "내 모든 그룹",
+  "{0} groups": "그룹 {0}개"
 }

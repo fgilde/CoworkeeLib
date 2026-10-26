@@ -9,7 +9,7 @@ namespace Coworkee.Client.Blazor.ClientEntities;
 /// The local copies of the OData sets the server marked as client entities. Data tables use them on their own;
 /// call <see cref="SetAsync{T}"/> to query one in your own UI.
 /// </summary>
-public sealed class ClientEntities : IAsyncDisposable
+public sealed class ClientEntities : IClientDataCache, IAsyncDisposable
 {
     private readonly ClientEntityApi _api;
     private readonly IODataClient _server;

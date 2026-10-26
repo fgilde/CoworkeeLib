@@ -8,13 +8,14 @@ namespace Coworkee.Client.Blazor.Components.Groups;
 
 /// <summary>
 /// The group tree, loaded level by level as nodes open (MudBlazor's <c>ServerData</c>); a search shows the matches with their ancestors.
-/// Used by the groups page and by the group picker dialog.
+/// Used by the groups page, the group picker dialog and, with checkboxes, the group scope picker.
 /// </summary>
 public partial class GroupTree
 {
     private List<TreeItemData<GroupNodeDto>> _items = [];
     private string _search = string.Empty;
     private int _loads;
+    private IReadOnlyList<GroupNodeDto>? _nodes;
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
@@ -37,7 +38,29 @@ public partial class GroupTree
 
     [Parameter] public RenderFragment<GroupNodeDto>? NodeActions { get; set; }
 
+    /// <summary>A fixed set of groups (e.g. the user's own) shown and searched without the API; without it the tree loads from the server.</summary>
+    [Parameter] public IReadOnlyList<GroupNodeDto>? Nodes { get; set; }
+
+    /// <summary>Checkbox mode: the checked groups; a click on a checkbox raises <see cref="CheckedIdsChanged"/> instead of selecting the node.</summary>
+    [Parameter] public IReadOnlySet<Guid>? CheckedIds { get; set; }
+
+    [Parameter] public EventCallback<IReadOnlySet<Guid>> CheckedIdsChanged { get; set; }
+
+    /// <summary>Groups whose name is shown bold, e.g. direct memberships.</summary>
+    [Parameter] public IReadOnlySet<Guid>? Bold { get; set; }
+
     private GroupNodeDto? Selected => Flatten(_items).FirstOrDefault(i => i.Value!.Id == SelectedId)?.Value;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // new fixed groups (the scope state reloaded) rebuild the tree; the first load happens in OnInitializedAsync
+        if (Nodes is not null && _nodes is not null && !ReferenceEquals(Nodes, _nodes))
+        {
+            await LoadAsync();
+        }
+
+        _nodes = Nodes;
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -84,13 +107,14 @@ public partial class GroupTree
     {
         var load = ++_loads;
         var search = _search;
-        var nodes = await FetchAsync(() => search.Length == 0 ? Api.GetGroupChildrenAsync(null) : Api.SearchGroupTreeAsync(search));
+        var nodes = Nodes is { } fixedNodes ? GroupPaths.Matching(fixedNodes, search)
+            : await FetchAsync(() => search.Length == 0 ? Api.GetGroupChildrenAsync(null) : Api.SearchGroupTreeAsync(search));
         if (nodes is null || load != _loads)
         {
             return false;
         }
 
-        _items = search.Length == 0 ? [.. nodes.Where(Shown).Select(Item)] : Tree(nodes);
+        _items = search.Length == 0 && Nodes is null ? [.. nodes.Where(Shown).Select(Item)] : Tree(nodes);
         return true;
     }
 
@@ -148,6 +172,21 @@ public partial class GroupTree
         items.SelectMany(i => (IEnumerable<TreeItemData<GroupNodeDto>>)[i, .. Flatten(Typed(i.Children ?? []))]);
 
     private static IEnumerable<TreeItemData<GroupNodeDto>> Typed(IEnumerable<ITreeItemData<GroupNodeDto>> items) => items.OfType<TreeItemData<GroupNodeDto>>();
+
+    private Task ToggleAsync(GroupNodeDto node, bool on)
+    {
+        HashSet<Guid> ids = CheckedIds?.ToHashSet() ?? [];
+        if (on)
+        {
+            ids.Add(node.Id);
+        }
+        else
+        {
+            ids.Remove(node.Id);
+        }
+
+        return CheckedIdsChanged.InvokeAsync(ids);
+    }
 
     private Task SelectAsync(GroupNodeDto? node) => node is null || Disabled(node) ? Task.CompletedTask : SelectedChanged.InvokeAsync(node);
 

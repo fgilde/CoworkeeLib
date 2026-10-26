@@ -1810,5 +1810,7 @@
   "Search groups": "Buscar grupos",
   "Top level": "Nivel superior",
   "{0} members": "{0} miembros",
-  "Group not found.": "Grupo no encontrado."
+  "Group not found.": "Grupo no encontrado.",
+  "All my groups": "Todos mis grupos",
+  "{0} groups": "{0} grupos"
 }

@@ -1,4 +1,5 @@
 using Coworkee.Client.Blazor.Data;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using NSubstitute;
@@ -22,5 +23,27 @@ public sealed class RegistrationTests
         scope.ServiceProvider.GetRequiredService<ClientEntityHttpHandler>();
 
         Should.NotThrow(scope.Dispose);
+    }
+
+    // a new group selection drops the local copies through the client's cache hook
+    [Fact]
+    public async Task The_local_copies_are_the_clients_data_cache()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddSingleton(Substitute.For<IJSRuntime>());
+        services.AddSingleton(Substitute.For<IODataClient>());
+        services.AddSingleton(new CoworkeeClientOptions());
+        services.AddSingleton<NavigationManager, TestNavigation>();
+        services.AddCoworkeeClientEntities();
+        await using var provider = services.BuildServiceProvider();
+        await using var scope = provider.CreateAsyncScope();
+
+        scope.ServiceProvider.GetRequiredService<IClientDataCache>().ShouldBeSameAs(scope.ServiceProvider.GetRequiredService<ClientEntities>());
+    }
+
+    private sealed class TestNavigation : NavigationManager
+    {
+        public TestNavigation() => Initialize("http://localhost/", "http://localhost/");
     }
 }

@@ -1810,5 +1810,7 @@
   "Search groups": "Пошук груп",
   "Top level": "Верхній рівень",
   "{0} members": "Учасників: {0}",
-  "Group not found.": "Групу не знайдено."
+  "Group not found.": "Групу не знайдено.",
+  "All my groups": "Усі мої групи",
+  "{0} groups": "Груп: {0}"
 }

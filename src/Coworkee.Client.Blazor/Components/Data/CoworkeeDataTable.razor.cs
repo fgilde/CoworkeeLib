@@ -25,6 +25,9 @@ public partial class CoworkeeDataTable<T> : IDisposable
 
     [Inject] private IServiceProvider Services { get; set; } = null!;
 
+    // the rows follow the user's group selection
+    private Groups.GroupScopeState? GroupScope => Services.GetService<Groups.GroupScopeState>();
+
     private Theming.CoworkeeTheme Theme => Themes?.Theme ?? Theming.CoworkeeTheme.Default;
 
     [Inject] private IDialogService Dialogs { get; set; } = null!;
@@ -184,6 +187,11 @@ public partial class CoworkeeDataTable<T> : IDisposable
         {
             themes.Changed += FollowSettings;
         }
+
+        if (GroupScope is { } scope)
+        {
+            scope.Changed += Reload;
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -275,6 +283,11 @@ public partial class CoworkeeDataTable<T> : IDisposable
         if (Themes is { } themes)
         {
             themes.Changed -= FollowSettings;
+        }
+
+        if (GroupScope is { } scope)
+        {
+            scope.Changed -= Reload;
         }
     }
 

@@ -89,6 +89,7 @@ public static class CoworkeeClientExtensions
         services.AddScoped<Realtime.IRealtimeConnection, Realtime.SignalRRealtimeConnection>();
         services.AddScoped<Realtime.RealtimeClient>();
         services.AddScoped<Realtime.NotificationCenter>();
+        services.AddScoped<Components.Groups.GroupScopeState>();
         services.AddScoped<Data.DataTransferWatcher>();
         services.AddScoped<BffAuthenticationStateProvider>();
         services.AddScoped<CurrentUserInfo>();

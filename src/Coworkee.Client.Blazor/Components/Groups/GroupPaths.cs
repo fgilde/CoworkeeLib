@@ -1,5 +1,6 @@
 using Coworkee.Client.Blazor.Data;
 using Coworkee.Client.Blazor.Data.Admin;
+using Coworkee.Contracts.Identity;
 
 namespace Coworkee.Client.Blazor.Components.Groups;
 
@@ -11,6 +12,18 @@ public static class GroupPaths
     {
         var segments = code.Split('.');
         return Enumerable.Range(1, segments.Length).Select(n => string.Join('.', segments.Take(n)));
+    }
+
+    /// <summary>The groups whose name contains <paramref name="search"/>, with their ancestors among <paramref name="nodes"/>; all of them for an empty search.</summary>
+    public static IReadOnlyList<GroupNodeDto> Matching(IReadOnlyList<GroupNodeDto> nodes, string search)
+    {
+        if (search.Length == 0)
+        {
+            return nodes;
+        }
+
+        var codes = nodes.Where(n => n.Name.Contains(search, StringComparison.CurrentCultureIgnoreCase)).SelectMany(n => Prefixes(n.Code)).ToHashSet(StringComparer.Ordinal);
+        return [.. nodes.Where(n => codes.Contains(n.Code))];
     }
 
     /// <summary>"Customer A / Hamburg" from the groups whose codes lead to <paramref name="code"/>; ancestors missing in <paramref name="groups"/> are left out.</summary>

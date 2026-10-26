@@ -1810,5 +1810,7 @@
   "Search groups": "Pretraži grupe",
   "Top level": "Najviša razina",
   "{0} members": "Članova: {0}",
-  "Group not found.": "Grupa nije pronađena."
+  "Group not found.": "Grupa nije pronađena.",
+  "All my groups": "Sve moje grupe",
+  "{0} groups": "Grupa: {0}"
 }

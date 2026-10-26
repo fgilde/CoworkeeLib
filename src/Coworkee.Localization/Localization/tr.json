@@ -1810,5 +1810,7 @@
   "Search groups": "Grup ara",
   "Top level": "En üst düzey",
   "{0} members": "{0} üye",
-  "Group not found.": "Grup bulunamadı."
+  "Group not found.": "Grup bulunamadı.",
+  "All my groups": "Tüm gruplarım",
+  "{0} groups": "{0} grup"
 }

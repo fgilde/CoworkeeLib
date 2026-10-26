@@ -1810,5 +1810,7 @@
   "Search groups": "Hledat skupiny",
   "Top level": "Nejvyšší úroveň",
   "{0} members": "Členové: {0}",
-  "Group not found.": "Skupina nebyla nalezena."
+  "Group not found.": "Skupina nebyla nalezena.",
+  "All my groups": "Všechny moje skupiny",
+  "{0} groups": "Skupiny: {0}"
 }

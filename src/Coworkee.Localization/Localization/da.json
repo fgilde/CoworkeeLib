@@ -1810,5 +1810,7 @@
   "Search groups": "Søg i grupper",
   "Top level": "Øverste niveau",
   "{0} members": "{0} medlemmer",
-  "Group not found.": "Gruppen blev ikke fundet."
+  "Group not found.": "Gruppen blev ikke fundet.",
+  "All my groups": "Alle mine grupper",
+  "{0} groups": "{0} grupper"
 }

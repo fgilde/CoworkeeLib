@@ -38,6 +38,7 @@ public static class ClientEntitiesServiceCollectionExtensions
             provider.GetRequiredService<ClientEntitySignal>(),
             provider.GetRequiredService<ILogger<ClientEntities>>(),
             provider.GetService<Api.ICoworkeeApi>() is { } api ? new ClientEntityModes(api, provider.GetRequiredService<ILogger<ClientEntityModes>>()) : null));
+        services.AddScoped<IClientDataCache>(provider => provider.GetRequiredService<ClientEntities>());
         services.AddSingleton(new DataTableToolbarItem(typeof(ClientEntitySwitch)));
         return services;
     }
