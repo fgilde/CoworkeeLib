@@ -2,6 +2,20 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- Group tree and scope: groups have a parent and a `Code` path (create under a parent, move with `PUT /api/v1/identity/groups/{id}/parent`, delete removes the subtree), members can be added, removed and moved, `IGroupScope` (`Coworkee.Application.Groups`) gives filters the accessible, selected and active groups, `<GroupScopePicker />` lets users narrow lists to some groups, `AddGroupDetailTab` adds tabs to the groups page, group import by parent path. New permissions `Identity.Groups.ManageMembers` (implied by `Manage`) and `Identity.Groups.ScopeAll`; see [identity](../features/identity.md#group-tree-and-scope).
+- Users OData set: `Groups` memberships, filter `Groups/any(m: m/GroupId eq {id})`.
+
+### Changed
+
+- Apps need a migration (`dotnet ef migrations add GroupTree`): `cw.Groups` gets `ParentId` and `Code`, the name is unique per parent instead of per tenant, new table `cw.GroupSelections`. The migrations host gives existing groups their codes.
+- `SetGroupMembers` needs `Identity.Groups.ManageMembers` instead of `Manage`; roles with `Manage` keep working, it implies the new permission.
+- Binary break: `ODataEntityAccess.VisibleAsync` has an optional parameter `unnarrowed`; rebuild apps and libraries that call it.
+- `[Realtime]` still broadcasts to everyone with the view permission; with groups as customers in one tenant, clients of other units see record ids and changed property names. Per-group topics follow.
+
 ## 0.0.1.40 (2026-10-25)
 
 ### Fixed
