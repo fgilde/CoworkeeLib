@@ -22,6 +22,6 @@ internal static class IdentityODataSets
             .Title(u => $"{u.FirstName} {u.LastName}".Trim() is { Length: > 0 } name ? name : u.UserName).Subtitle(u => u.Email)
             .Url(u => $"/admin/users/{u.Id}").Thumbnail(u => u.AvatarUrl).Icon("Person"));
         services.AddGlobalSearch<Role>(s => s.Fields(r => r.Name, r => r.Description).Subtitle(r => r.Description).Url(r => $"/admin/roles/{r.Id}").Icon("Shield"));
-        services.AddGlobalSearch<UserGroup>(s => s.Fields(g => g.Name, g => g.Description).Subtitle(g => g.Description).Url(_ => "/admin/groups").Icon("Groups"));
+        services.AddGlobalSearch<UserGroup>(s => s.Fields(g => g.Name, g => g.Description).Subtitle(g => g.Description).Url(g => $"/admin/groups?group={g.Id}").Icon("Groups"));
     }
 }

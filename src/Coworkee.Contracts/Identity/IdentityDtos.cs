@@ -44,6 +44,8 @@ public sealed record RoleRequest(string Name, string? Description, bool Selectab
 
 public sealed record GroupDto(Guid Id, string Name, string? Description, IReadOnlyList<Guid> MemberIds, IReadOnlyList<Guid> RoleIds, Guid? ParentId = null, string? Code = null);
 
+public sealed record GroupNodeDto(Guid Id, Guid? ParentId, string Code, string Name, string? Description, int ChildCount, int MemberCount);
+
 public sealed record GroupRequest(string Name, string? Description, Guid? ParentId = null);
 
 public sealed record MoveGroupRequest(Guid? ParentId);
