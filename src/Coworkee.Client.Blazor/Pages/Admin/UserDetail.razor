@@ -102,10 +102,10 @@ else
                 <MudText Typo="Typo.h6" Class="mt-4 mb-2">@L["Groups"]</MudText>
                 @if (_canManageGroups)
                 {
-                    <MudSelect Margin="Density.Margin" Dense="Density.Dense" T="Guid" MultiSelection="true" Label="@L["Groups"]" SelectedValues="_groupIds" SelectedValuesChanged="SetGroupsAsync" ToStringFunc="GroupName" Disabled="_busy" data-testid="user-groups">
+                    <MudSelect Margin="Density.Margin" Dense="Density.Dense" T="Guid" MultiSelection="true" Label="@L["Groups"]" SelectedValues="_groupIds" SelectedValuesChanged="SetGroupsAsync" ToStringFunc="id => GroupName(id)" Disabled="_busy" data-testid="user-groups">
                         @foreach (var group in _groups)
                         {
-                            <MudSelectItem Value="@group.Id">@group.Name</MudSelectItem>
+                            <MudSelectItem Value="@group.Id">@GroupName(group.Id)</MudSelectItem>
                         }
                     </MudSelect>
                 }
@@ -117,7 +117,7 @@ else
                     }
                     @foreach (var group in _user.Groups)
                     {
-                        <MudChip T="string" Size="Size.Small" Href="@Links.Href("/admin/groups")" Icon="@Icons.Material.Outlined.Groups">@group.Name</MudChip>
+                        <MudChip T="string" Size="Size.Small" Href="@Links.Href($"/admin/groups?group={group.Id}")" Icon="@Icons.Material.Outlined.Groups" data-group="@group.Id">@GroupName(group.Id, group.Name)</MudChip>
                     }
                 }
             </MudPaper>

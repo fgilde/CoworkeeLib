@@ -1,0 +1,28 @@
+<CoworkeeDataTable T="UserRow" EntitySet="Users" Filter="@Filter" SearchFields="SearchFields" UrlState="false" SavedViews="false" Exportable="false" Facets="false"
+                   CreateText="Add member" CreatePermission="@IdentityPermissions.Groups.ManageMembers" OnCreate="AddAsync" NoRecordsText="No members.">
+    <ToolBarContent>
+        @if (CanManage && Group.Members.Count > 0)
+        {
+            <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.DriveFileMove" OnClick="MoveAllAsync" data-testid="group-move-members">@L["Move all members to…"]</MudButton>
+        }
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Property="u => u.Email" Title="@L["Email"]">
+            <CellTemplate><MudLink Href="@Links.Href($"/admin/users/{context.Item.Id}")" data-member="@context.Item.Email">@context.Item.Email</MudLink></CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="u => u.LastName" Title="@L["Name"]">
+            <CellTemplate>@context.Item.Name</CellTemplate>
+        </PropertyColumn>
+        @if (CanManage)
+        {
+            <TemplateColumn T="UserRow" Sortable="false">
+                <CellTemplate>
+                    <MudTooltip Text="@L["Remove from group"]">
+                        <MudIconButton Icon="@Icons.Material.Outlined.PersonRemove" Size="Size.Small" aria-label="@L["Remove from group"]" OnClick="() => RemoveAsync(context.Item)"
+                                       data-testid="@($"remove-member-{context.Item.Email}")" />
+                    </MudTooltip>
+                </CellTemplate>
+            </TemplateColumn>
+        }
+    </Columns>
+</CoworkeeDataTable>

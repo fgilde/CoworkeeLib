@@ -1,0 +1,6 @@
+<MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Dense="true" AriaLabel="@L["Group actions"]" data-testid="@($"group-actions-{Node.Id}")">
+    <MudMenuItem Icon="@Icons.Material.Outlined.CreateNewFolder" OnClick="CreateAsync" data-testid="group-new-child">@L["New sub-group"]</MudMenuItem>
+    <MudMenuItem Icon="@Icons.Material.Outlined.Edit" OnClick="RenameAsync" data-testid="group-rename">@L["Rename"]</MudMenuItem>
+    <MudMenuItem Icon="@Icons.Material.Outlined.DriveFileMove" OnClick="MoveAsync" data-testid="group-move">@L["Move"]</MudMenuItem>
+    <MudMenuItem Icon="@Icons.Material.Outlined.DeleteForever" OnClick="DeleteAsync" data-testid="group-delete">@L["Delete"]</MudMenuItem>
+</MudMenu>

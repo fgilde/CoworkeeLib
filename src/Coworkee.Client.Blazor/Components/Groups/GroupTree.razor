@@ -1,0 +1,23 @@
+<MudTextField T="string" Value="_search" ValueChanged="SearchAsync" Placeholder="@L["Search groups"]" Immediate="true" DebounceInterval="300" Clearable="true"
+              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" Margin="Density.Margin" Class="mb-2" data-testid="group-search" />
+<MudTreeView T="GroupNodeDto" Items="_items" ServerData="ChildrenAsync" Comparer="GroupNodeComparer.Instance" SelectionMode="SelectionMode.SingleSelection"
+             SelectedValue="Selected" SelectedValueChanged="SelectAsync" Hover="true" Dense="Density.Dense" data-testid="group-tree">
+    <ItemTemplate>
+        <MudTreeViewItem T="GroupNodeDto" Value="context.Value" Items="context.Children" ItemsChanged="items => context.Children = items"
+                         CanExpand="context.Expandable" @bind-Expanded="context.Expanded">
+            <BodyContent Context="item">
+                <div class="d-flex align-center gap-1" style="width:100%">
+                    <MudText Typo="Typo.body2" Style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" data-group-node="@item.Value!.Id">@item.Value.Name</MudText>
+                    <MudTooltip Text="@L["{0} members", item.Value.MemberCount]" RootClass="ml-auto">
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Icon="@Icons.Material.Outlined.Person" data-group-count="@item.Value.Id">@item.Value.MemberCount</MudChip>
+                    </MudTooltip>
+                    @NodeActions?.Invoke(item.Value)
+                </div>
+            </BodyContent>
+        </MudTreeViewItem>
+    </ItemTemplate>
+</MudTreeView>
+@if (_items.Count == 0)
+{
+    <MudText Typo="Typo.body2" Class="mud-text-secondary pa-2">@L[_search.Length == 0 ? "No groups yet." : "No group matches."]</MudText>
+}

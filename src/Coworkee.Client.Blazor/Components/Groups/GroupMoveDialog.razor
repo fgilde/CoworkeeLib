@@ -1,0 +1,14 @@
+<MudDialog Class="@MudBlazor.Extensions.Helper.MudExCss.Classes.Dialog.Initial" data-testid="group-pick-dialog">
+    <DialogContent>
+        @if (AllowRoot)
+        {
+            <MudButton Class="mb-2" Variant="@(_pick is { Id: null } ? Variant.Filled : Variant.Outlined)" StartIcon="@Icons.Material.Outlined.VerticalAlignTop"
+                       OnClick="() => _pick = new GroupPick(null)" data-testid="group-pick-root">@L["Top level"]</MudButton>
+        }
+        <GroupTree SelectedId="_pick?.Id" SelectedChanged="node => _pick = new GroupPick(node.Id)" Exclude="Exclude" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog.Cancel()">@L["Cancel"]</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_pick is null" OnClick="() => Dialog.Close(DialogResult.Ok(_pick))" data-testid="group-pick-ok">@L["OK"]</MudButton>
+    </DialogActions>
+</MudDialog>

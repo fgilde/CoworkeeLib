@@ -171,6 +171,30 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
     public Task SetGroupRolesAsync(Guid id, IReadOnlyList<Guid> roleIds, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Put, $"{Identity}/groups/{id}/roles", new IdListRequest(roleIds), cancellationToken);
 
+    public async Task<IReadOnlyList<GroupNodeDto>> GetGroupChildrenAsync(Guid? parentId, CancellationToken cancellationToken = default) =>
+        await GetAsync<GroupNodeDto[]>($"{Identity}/groups/children{(parentId is { } id ? $"?parentId={id}" : string.Empty)}", cancellationToken);
+
+    public async Task<IReadOnlyList<GroupNodeDto>> SearchGroupTreeAsync(string search, CancellationToken cancellationToken = default) =>
+        await GetAsync<GroupNodeDto[]>($"{Identity}/groups/tree?search={Uri.EscapeDataString(search)}", cancellationToken);
+
+    public Task MoveGroupAsync(Guid id, Guid? parentId, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Put, $"{Identity}/groups/{id}/parent", new MoveGroupRequest(parentId), cancellationToken);
+
+    public Task AddGroupMembersAsync(Guid id, IReadOnlyList<Guid> userIds, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Post, $"{Identity}/groups/{id}/members/add", new IdListRequest(userIds), cancellationToken);
+
+    public Task RemoveGroupMembersAsync(Guid id, IReadOnlyList<Guid> userIds, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Post, $"{Identity}/groups/{id}/members/remove", new IdListRequest(userIds), cancellationToken);
+
+    public Task MoveGroupMembersAsync(Guid from, Guid to, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Post, $"{Identity}/groups/{from}/members/move", new MoveMembersRequest(to), cancellationToken);
+
+    public async Task<IReadOnlyList<MyGroupDto>> GetMyGroupsAsync(CancellationToken cancellationToken = default) =>
+        await GetAsync<MyGroupDto[]>($"{Identity}/groups/mine", cancellationToken);
+
+    public Task SelectGroupsAsync(IReadOnlyList<Guid> groupIds, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Put, $"{Identity}/groups/mine/selection", new IdListRequest(groupIds), cancellationToken);
+
     public async Task<IReadOnlyList<ResourcePermissionDto>> GetResourcePermissionsAsync(string resourceType, Guid resourceId, CancellationToken cancellationToken = default) =>
         await GetAsync<ResourcePermissionDto[]>($"{Identity}/resource-permissions/{resourceType}/{resourceId}", cancellationToken);
 

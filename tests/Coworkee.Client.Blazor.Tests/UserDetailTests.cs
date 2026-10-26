@@ -35,6 +35,24 @@ public sealed class UserDetailTests : ClientTestBase
     }
 
     [Fact]
+    public void Group_chips_show_the_path_and_link_to_the_group()
+    {
+        var customer = new GroupDto(Guid.CreateVersion7(), "Customer A", null, [], [], null, "00001");
+        var hamburg = new GroupDto(Guid.CreateVersion7(), "Hamburg", null, [], [], customer.Id, "00001.00001");
+        Api.GetUserDetailAsync(_user, Arg.Any<CancellationToken>()).Returns(new UserDetailDto(
+            _user, "bob@acme.test", "bob@acme.test", "Bob", "Builder", true, false, false, null, null, [], [new GroupRefDto(hamburg.Id, "Hamburg")]));
+        Api.GetGroupsAsync(Arg.Any<Contracts.PageRequest>(), Arg.Any<CancellationToken>()).Returns(new Contracts.PagedResult<GroupDto>([hamburg, customer], 2, 1, 200));
+        var auth = AddAuthorization();
+        auth.SetAuthorized("viewer");
+        auth.SetPolicies(Security.PermissionPolicy.For(IdentityPermissions.Users.View), Security.PermissionPolicy.For(IdentityPermissions.Groups.View));
+
+        var page = Render<UserDetail>(p => p.Add(d => d.Id, _user));
+
+        page.WaitForAssertion(() => page.Find($"[data-group='{hamburg.Id}']").TextContent.ShouldContain("Customer A / Hamburg"));
+        page.Find($"[data-group='{hamburg.Id}']").GetAttribute("href")!.ShouldEndWith($"/admin/groups?group={hamburg.Id}");
+    }
+
+    [Fact]
     public async Task Unlock_and_save_call_the_api()
     {
         var page = Render<UserDetail>(p => p.Add(d => d.Id, _user));

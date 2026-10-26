@@ -1,0 +1,7 @@
+<MudSelect Class="pt-2" Margin="Density.Margin" T="Guid" MultiSelection="true" Dense="Density.Dense" Label="@L["Roles"]" SelectedValues="Group.Roles.Select(r => r.RoleId).ToArray()"
+           ToStringFunc="RoleName" Disabled="!CanManage" SelectedValuesChanged="SetRolesAsync" HelperText="@L["Members of the group get these roles."]" data-testid="group-roles">
+    @foreach (var role in _roles.Where(r => !r.IsSystem))
+    {
+        <MudSelectItem T="Guid" Value="@role.Id">@role.Name</MudSelectItem>
+    }
+</MudSelect>

@@ -1,32 +1,55 @@
 @attribute [Authorize(Policy = PermissionPolicy.Prefix + IdentityPermissions.Groups.View)]
+@using Coworkee.Client.Blazor.Components.Groups
 
 <PageHeader Title="Groups" Description="Groups give their members roles together." />
-<CoworkeeDataTable @ref="_table" RealtimeTopic="type:UserGroup" T="GroupRow" EntitySet="Groups" SearchFields="SearchFields" Exportable="false" DescribeItem="g => g.Name"
-                   CreateText="New group" CreatePermission="@IdentityPermissions.Groups.Manage" DeletePermission="@IdentityPermissions.Groups.Manage"
-                   OnCreate="CreateAsync" OnDelete="DeleteAsync">
-    <Columns>
-        <PropertyColumn Property="g => g.Name" Title="@L["Name"]" />
-        <TemplateColumn T="GroupRow" Title="@L["Members"]" Sortable="false">
-            <CellTemplate>
-                <MudSelect Margin="Density.Margin" T="Guid" MultiSelection="true" Dense="Density.Dense" SelectedValues="context.Item.Members.Select(m => m.UserId).ToArray()" ToStringFunc="UserName"
-                           Disabled="!_canManage" SelectedValuesChanged="ids => SetMembersAsync(context.Item, ids)">
-                    @foreach (var user in _users)
+<MudGrid Spacing="3">
+    <MudItem xs="12" md="4">
+        <MudPaper Outlined="true" Class="pa-3">
+            @if (_canManage)
+            {
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Add" Class="mb-2" OnClick="CreateRootAsync" data-testid="new-root-group">@L["New root group"]</MudButton>
+            }
+            @if (_ready)
+            {
+                <GroupTree @ref="_tree" SelectedId="_group?.Id" SelectedChanged="SelectAsync" RevealCode="@_group?.Code">
+                    <NodeActions Context="node">
+                        @if (_canManage)
+                        {
+                            <GroupNodeMenu Node="node" Changed="NodeChangedAsync" Deleted="DeletedAsync" />
+                        }
+                    </NodeActions>
+                </GroupTree>
+            }
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" md="8">
+        @if (_group is { } group)
+        {
+            <MudPaper Outlined="true" Class="pa-4">
+                <MudText Typo="Typo.h6" data-testid="group-title">@group.Name</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">@GroupPaths.Path(group.Code, group.Name, _ancestors)</MudText>
+                <MudTabs @key="group.Id" Elevation="0" TabPanelsClass="pt-2" data-testid="group-tabs">
+                    <MudTabPanel Text="@L["General"]">
+                        <GroupGeneralTab Group="group" Parent="ParentPath" CanManage="_canManage" Changed="ChangedAsync" />
+                    </MudTabPanel>
+                    <MudTabPanel Text="@L["Members"]">
+                        <GroupMembersTab Group="group" CanManage="_canManageMembers" Changed="ChangedAsync" />
+                    </MudTabPanel>
+                    <MudTabPanel Text="@L["Roles"]">
+                        <GroupRolesTab Group="group" CanManage="_canManage" Changed="ChangedAsync" />
+                    </MudTabPanel>
+                    @foreach (var tab in _appTabs)
                     {
-                        <MudSelectItem T="Guid" Value="@user.Id">@user.Email</MudSelectItem>
+                        <MudTabPanel Text="@L[tab.Title]">
+                            <DynamicComponent Type="tab.Component" Parameters="@(new Dictionary<string, object> { ["GroupId"] = group.Id })" />
+                        </MudTabPanel>
                     }
-                </MudSelect>
-            </CellTemplate>
-        </TemplateColumn>
-        <TemplateColumn T="GroupRow" Title="@L["Roles"]" Sortable="false">
-            <CellTemplate>
-                <MudSelect Margin="Density.Margin" T="Guid" MultiSelection="true" Dense="Density.Dense" SelectedValues="context.Item.Roles.Select(r => r.RoleId).ToArray()" ToStringFunc="RoleName"
-                           Disabled="!_canManage" SelectedValuesChanged="ids => SetRolesAsync(context.Item, ids)">
-                    @foreach (var role in _roles.Where(r => !r.IsSystem))
-                    {
-                        <MudSelectItem T="Guid" Value="@role.Id">@role.Name</MudSelectItem>
-                    }
-                </MudSelect>
-            </CellTemplate>
-        </TemplateColumn>
-    </Columns>
-</CoworkeeDataTable>
+                </MudTabs>
+            </MudPaper>
+        }
+        else
+        {
+            <MudText Class="mud-text-secondary pa-4">@L["Choose a group in the tree."]</MudText>
+        }
+    </MudItem>
+</MudGrid>

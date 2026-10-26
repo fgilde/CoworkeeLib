@@ -58,10 +58,12 @@ public partial class UserDetail
         var user = (await AuthenticationState).User;
         _canManage = (await Authorization.AuthorizeAsync(user, Security.PermissionPolicy.For(IdentityPermissions.Users.Manage))).Succeeded;
         _canManageGroups = (await Authorization.AuthorizeAsync(user, Security.PermissionPolicy.For(IdentityPermissions.Groups.Manage))).Succeeded;
+        var canViewGroups = _canManageGroups || (await Authorization.AuthorizeAsync(user, Security.PermissionPolicy.For(IdentityPermissions.Groups.View))).Succeeded;
         try
         {
             _roles = await Api.GetRolesAsync();
-            _groups = _canManageGroups ? (await Api.GetGroupsAsync(new PageRequest(1, 200))).Items : [];
+            // ponytail: the first 200 groups name the paths; ancestors beyond them are left out of a path
+            _groups = canViewGroups ? [.. (await Api.GetGroupsAsync(new PageRequest(1, 200))).Items.OrderBy(g => g.Code, StringComparer.Ordinal)] : [];
             await LoadAsync();
         }
         catch (ApiException exception)
@@ -86,7 +88,10 @@ public partial class UserDetail
 
     private string RoleName(Guid id) => _roles.FirstOrDefault(r => r.Id == id)?.Name ?? string.Empty;
 
-    private string GroupName(Guid id) => _groups.FirstOrDefault(g => g.Id == id)?.Name ?? string.Empty;
+    /// <summary>"Customer A / Hamburg"; just the name when the groups are not loaded.</summary>
+    private string GroupName(Guid id, string? name = null) => _groups.FirstOrDefault(g => g.Id == id) is { } group
+        ? Components.Groups.GroupPaths.Path(group.Code, group.Name, _groups.Select(g => (g.Code, g.Name)))
+        : name ?? string.Empty;
 
     private Task SaveAsync(EditContext context) => RunAsync(async () =>
     {

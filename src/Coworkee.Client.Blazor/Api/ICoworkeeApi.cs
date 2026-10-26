@@ -122,6 +122,28 @@ public interface ICoworkeeApi
 
     Task SetGroupRolesAsync(Guid id, IReadOnlyList<Guid> roleIds, CancellationToken cancellationToken = default);
 
+    /// <summary>The direct children of a group ordered by name, the roots for <c>null</c>.</summary>
+    Task<IReadOnlyList<GroupNodeDto>> GetGroupChildrenAsync(Guid? parentId, CancellationToken cancellationToken = default);
+
+    /// <summary>Groups whose name contains the text, with their ancestors, in tree order.</summary>
+    Task<IReadOnlyList<GroupNodeDto>> SearchGroupTreeAsync(string search, CancellationToken cancellationToken = default);
+
+    /// <summary>Moves a group with its subtree under another parent, to the roots for <c>null</c>.</summary>
+    Task MoveGroupAsync(Guid id, Guid? parentId, CancellationToken cancellationToken = default);
+
+    Task AddGroupMembersAsync(Guid id, IReadOnlyList<Guid> userIds, CancellationToken cancellationToken = default);
+
+    Task RemoveGroupMembersAsync(Guid id, IReadOnlyList<Guid> userIds, CancellationToken cancellationToken = default);
+
+    /// <summary>Moves all members of a group into another group.</summary>
+    Task MoveGroupMembersAsync(Guid from, Guid to, CancellationToken cancellationToken = default);
+
+    /// <summary>The groups the signed-in user may work in, with membership and selection.</summary>
+    Task<IReadOnlyList<MyGroupDto>> GetMyGroupsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>The groups listings narrow to; empty for all accessible ones.</summary>
+    Task SelectGroupsAsync(IReadOnlyList<Guid> groupIds, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<ResourcePermissionDto>> GetResourcePermissionsAsync(string resourceType, Guid resourceId, CancellationToken cancellationToken = default);
 
     Task<Guid> GrantResourcePermissionAsync(string resourceType, Guid resourceId, GrantResourcePermissionRequest request, CancellationToken cancellationToken = default);

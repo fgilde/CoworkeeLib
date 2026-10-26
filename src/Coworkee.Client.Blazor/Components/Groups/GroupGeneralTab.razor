@@ -1,0 +1,17 @@
+<MudStack Spacing="2" Class="pt-2">
+    <MudTextField T="string" @bind-Value="_name" Label="@L["Name"]" ReadOnly="!CanManage" Required="true" MaxLength="200" Margin="Density.Margin" data-testid="group-name" />
+    <MudTextField T="string" @bind-Value="_description" Label="@L["Description"]" ReadOnly="!CanManage" Lines="3" Margin="Density.Margin" data-testid="group-description" />
+    <div class="d-flex align-center gap-2">
+        <MudTextField T="string" Value="@(Parent ?? L["Top level"])" Label="@L["Parent group"]" ReadOnly="true" Margin="Density.Margin" data-testid="group-parent" />
+        @if (CanManage)
+        {
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.DriveFileMove" OnClick="MoveAsync" data-testid="group-move-general">@L["Move"]</MudButton>
+        }
+    </div>
+    @if (CanManage)
+    {
+        <div>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="string.IsNullOrWhiteSpace(_name)" OnClick="SaveAsync" data-testid="group-save">@L["Save"]</MudButton>
+        </div>
+    }
+</MudStack>

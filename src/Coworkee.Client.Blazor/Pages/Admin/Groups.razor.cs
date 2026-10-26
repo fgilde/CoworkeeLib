@@ -1,7 +1,7 @@
 using Coworkee.Client.Blazor.Api;
-using Coworkee.Client.Blazor.Components.Data;
-using Coworkee.Client.Blazor.Data.Admin;
+using Coworkee.Client.Blazor.Components.Groups;
 using Coworkee.Client.Blazor.Data;
+using Coworkee.Client.Blazor.Data.Admin;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Security;
 using Coworkee.Contracts.Identity;
@@ -10,13 +10,16 @@ using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Pages.Admin;
 
+/// <summary>The group tree on the left, the selected group in tabs on the right (General, Members, Roles, then the app's tabs); <c>?group=</c> selects one.</summary>
 public partial class Groups
 {
-    private static readonly string[] SearchFields = [nameof(GroupRow.Name), nameof(GroupRow.Description)];
-    private CoworkeeDataTable<GroupRow> _table = null!;
-    private IReadOnlyList<UserRow> _users = [];
-    private IReadOnlyList<RoleDto> _roles = [];
+    private GroupTree? _tree;
+    private GroupRow? _group;
+    private List<(string? Code, string Name)> _ancestors = [];
+    private List<GroupDetailTab> _appTabs = [];
     private bool _canManage;
+    private bool _canManageMembers;
+    private bool _ready;
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
@@ -24,58 +27,113 @@ public partial class Groups
 
     [Inject] private PermissionStore Permissions { get; set; } = null!;
 
-    [Inject] private CoworkeeLocalizer L { get; set; } = null!;
+    [Inject] private IEnumerable<GroupDetailTab> AppTabs { get; set; } = null!;
+
+    [Inject] private NavigationManager Navigation { get; set; } = null!;
 
     [Inject] private IDialogService Dialogs { get; set; } = null!;
 
     [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
+    [Inject] private CoworkeeLocalizer L { get; set; } = null!;
+
+    [SupplyParameterFromQuery(Name = "group")] public Guid? GroupId { get; set; }
+
+    private string? ParentPath => _ancestors.Count == 0 ? null : string.Join(" / ", _ancestors.Select(a => a.Name));
+
     protected override async Task OnInitializedAsync()
     {
         _canManage = await Permissions.HasAsync(IdentityPermissions.Groups.Manage);
-        await Snackbar.RunAsync(async () =>
+        _canManageMembers = await Permissions.HasAsync(IdentityPermissions.Groups.ManageMembers);
+        foreach (var tab in AppTabs)
         {
-            _users = (await OData.QueryAsync<UserRow>("Users", new ODataQuery { OrderBy = "Email", Top = 1000, Count = false })).Items;
-            _roles = await Api.GetRolesAsync();
-        });
+            if (tab.Permission is null || await Permissions.HasAsync(tab.Permission))
+            {
+                _appTabs.Add(tab);
+            }
+        }
+
+        if (GroupId is { } id)
+        {
+            await LoadAsync(id);
+        }
+
+        _ready = true;
     }
 
-    private string UserName(Guid id) => _users.FirstOrDefault(u => u.Id == id)?.Email ?? string.Empty;
-
-    private string RoleName(Guid id) => _roles.FirstOrDefault(r => r.Id == id)?.Name ?? string.Empty;
-
-    private async Task CreateAsync()
+    // a global search hit while the page is open
+    protected override async Task OnParametersSetAsync()
     {
-        if (await Dialogs.ShowEditAsync(L["New group"], new NewGroup()) is { } group)
+        if (_ready && GroupId is { } id && id != _group?.Id)
         {
-            await Snackbar.RunAsync(() => Api.CreateGroupAsync(new GroupRequest(group.Name, group.Description)));
+            await LoadAsync(id);
+            if (_group?.Code is { } code && _tree is not null)
+            {
+                await _tree.RevealAsync(code);
+            }
         }
     }
 
-    private async Task SetMembersAsync(GroupRow group, IEnumerable<Guid> ids)
+    private async Task LoadAsync(Guid id) => await Snackbar.RunAsync(async () =>
     {
-        await Snackbar.RunAsync(() => Api.SetGroupMembersAsync(group.Id, [.. ids]));
-        await _table.ReloadAsync();
+        var query = new ODataQuery { Filter = $"Id eq {id}", Top = 1, Count = false };
+        _group = (await OData.QueryAsync<GroupRow>("Groups", query)).Items.FirstOrDefault(g => g.Id == id);
+        _ancestors = _group?.Code is { } code && code.Contains('.') ? await AncestorsAsync(code) : [];
+    });
+
+    private async Task<List<(string? Code, string Name)>> AncestorsAsync(string code)
+    {
+        var prefixes = GroupPaths.Prefixes(code).SkipLast(1).ToList();
+        var query = new ODataQuery { Filter = $"Code in ({string.Join(",", prefixes.Select(p => $"'{p}'"))})", Select = "Id,Name,Code", Count = false };
+        var rows = (await OData.QueryAsync<GroupRow>("Groups", query)).Items;
+        return [.. rows.Where(r => prefixes.Contains(r.Code!)).OrderBy(r => r.Code, StringComparer.Ordinal).Select(r => (r.Code, r.Name))];
     }
 
-    private async Task SetRolesAsync(GroupRow group, IEnumerable<Guid> ids)
+    private Task SelectAsync(GroupNodeDto node) => ShowAsync(node.Id);
+
+    private async Task ShowAsync(Guid id)
     {
-        await Snackbar.RunAsync(() => Api.SetGroupRolesAsync(group.Id, [.. ids]));
-        await _table.ReloadAsync();
+        await LoadAsync(id);
+        Navigation.NavigateTo(Navigation.GetUriWithQueryParameter("group", id), replace: true);
     }
 
-    private async Task DeleteAsync(IReadOnlyCollection<GroupRow> groups)
+    private async Task CreateRootAsync()
     {
-        foreach (var group in groups)
+        if (await GroupForm.CreateAsync(Dialogs, Api, L["New root group"], null) is { } id)
         {
-            await Snackbar.RunAsync(() => Api.DeleteGroupAsync(group.Id));
+            await NodeChangedAsync(id);
         }
     }
 
-    private sealed class NewGroup
+    private async Task NodeChangedAsync(Guid id)
     {
-        public string Name { get; set; } = string.Empty;
+        await ShowAsync(id);
+        if (_tree is not null)
+        {
+            await _tree.ReloadAsync();
+            await _tree.RevealAsync(_group?.Code ?? string.Empty);
+        }
+    }
 
-        public string? Description { get; set; }
+    private async Task ChangedAsync()
+    {
+        if (_group is { } group)
+        {
+            await NodeChangedAsync(group.Id);
+        }
+    }
+
+    private async Task DeletedAsync(GroupNodeDto node)
+    {
+        if (_group?.Code is { } code && GroupPaths.Prefixes(code).Contains(node.Code))
+        {
+            _group = null;
+            Navigation.NavigateTo(Navigation.GetUriWithQueryParameter("group", (Guid?)null), replace: true);
+        }
+
+        if (_tree is not null)
+        {
+            await _tree.ReloadAsync();
+        }
     }
 }
