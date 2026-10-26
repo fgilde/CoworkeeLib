@@ -68,11 +68,14 @@ internal sealed class GetGroupsHandler(CoworkeeDbContext db) : IHandler<GetGroup
 
 internal sealed class CreateGroupHandler(CoworkeeDbContext db) : IHandler<CreateGroup, Result<Guid>>
 {
-    public async Task<Result<Guid>> HandleAsync(CreateGroup command, CancellationToken cancellationToken)
+    public Task<Result<Guid>> HandleAsync(CreateGroup command, CancellationToken cancellationToken) => AddAsync(db, command.Group, cancellationToken);
+
+    /// <summary>Adds a group under its parent with the next free code; shared with the group import.</summary>
+    internal static async Task<Result<Guid>> AddAsync(CoworkeeDbContext db, GroupRequest request, CancellationToken cancellationToken)
     {
-        var name = command.Group.Name.Trim();
+        var name = request.Name.Trim();
         var groups = db.Set<UserGroup>();
-        var parentId = command.Group.ParentId;
+        var parentId = request.ParentId;
         string? parentCode = null;
         if (parentId is not null)
         {
@@ -97,7 +100,7 @@ internal sealed class CreateGroupHandler(CoworkeeDbContext db) : IHandler<Create
         var group = new UserGroup
         {
             Name = name,
-            Description = command.Group.Description,
+            Description = request.Description,
             ParentId = parentId,
             Code = await GroupCodes.NextAsync(groups, parentCode, parentId, cancellationToken),
         };
@@ -206,6 +209,9 @@ internal static class GroupErrors
 
     public static readonly Error MoveIntoOwnSubtree = new("identity.group_move_cycle", "A group cannot be moved into itself or one of its sub-groups.", ErrorKind.Validation,
         new Dictionary<string, string[]> { [nameof(GroupRequest.ParentId)] = ["A group cannot be moved into itself or one of its sub-groups."] });
+
+    public static readonly Error ParentPathUnknown = new("identity.group_parent_path_unknown", "No group exists at this parent path.", ErrorKind.Validation,
+        new Dictionary<string, string[]> { [nameof(GroupImportRow.ParentPath)] = ["No group exists at this parent path."] });
 
     public static readonly Error NameTaken = Error.Conflict("identity.group_name_taken", "A group with this name already exists.");
 }
