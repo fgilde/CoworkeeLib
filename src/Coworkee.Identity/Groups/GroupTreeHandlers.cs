@@ -49,7 +49,7 @@ internal sealed class MoveGroupHandler(CoworkeeDbContext db) : IHandler<MoveGrou
         }
 
         var subtree = await groups.Where(g => g.Code!.StartsWith(oldCode + ".")).ToListAsync(cancellationToken);
-        var levels = subtree.Select(g => GroupCodes.Depth(g.Code!)).DefaultIfEmpty(0).Max() - GroupCodes.Depth(oldCode);
+        var levels = subtree.Select(g => GroupCodes.Depth(g.Code!)).DefaultIfEmpty(GroupCodes.Depth(oldCode)).Max() - GroupCodes.Depth(oldCode);
         if ((parentCode is null ? 1 : GroupCodes.Depth(parentCode) + 1) + levels > GroupCodes.MaxDepth)
         {
             return GroupErrors.TooDeep;

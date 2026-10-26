@@ -168,18 +168,21 @@ public sealed class GroupTreeTests(IdentityApp app) : IAsyncLifetime
         (await MoveAsync(x, b)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
 
         Guid? deep = null;
-        for (var level = 1; level <= 15; level++)
+        for (var level = 1; level <= 16; level++)
         {
             deep = await CreateAsync($"L{level}", deep);
         }
 
         var branch = await CreateAsync("Branch");
         await CreateAsync("Leaf", branch);
+        var solo = await CreateAsync("Solo");
         (await MoveAsync(branch, deep)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await MoveAsync(solo, deep)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await MoveAsync(Guid.CreateVersion7(), null)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
         (await MoveAsync(branch, Guid.CreateVersion7())).StatusCode.ShouldBe(HttpStatusCode.NotFound);
-        var leaf = (await Admin.GetFromJsonAsync<PagedResult<GroupDto>>("/api/v1/identity/groups?pageSize=100", Ct))!.Items.Single(g => g.Name == "Leaf");
-        leaf.Code.ShouldBe("00004.00001");
+        var groups = (await Admin.GetFromJsonAsync<PagedResult<GroupDto>>("/api/v1/identity/groups?pageSize=100", Ct))!.Items;
+        groups.Single(g => g.Name == "Leaf").Code.ShouldBe("00004.00001");
+        groups.Single(g => g.Name == "Solo").Code.ShouldBe("00005");
     }
 
     [Fact]
@@ -189,27 +192,28 @@ public sealed class GroupTreeTests(IdentityApp app) : IAsyncLifetime
         var a1 = await CreateAsync("A1", a);
         var a1a = await CreateAsync("A1a", a1);
         (await Admin.PutAsJsonAsync($"/api/v1/identity/groups/{a1}/members", new IdListRequest([_setup.AdminUserId]), Ct)).EnsureSuccessStatusCode();
-        await app.InDbAsync(_setup.TenantId, async db =>
+        var role = Guid.CreateVersion7();
+        await app.InDbAsync(_setup.TenantId, db =>
         {
             db.Add(new PermissionGrant { Name = IdentityPermissions.Users.View, ProviderType = PermissionProviderType.Group, ProviderKey = a1a, TenantId = _setup.TenantId });
             db.Add(new GroupSelection { UserId = _setup.AdminUserId, GroupId = a1a });
-            await Task.CompletedTask;
-            return 0;
+            db.Add(new Role { Id = role, Name = "Reader", TenantId = _setup.TenantId });
+            db.Add(new ResourcePermission { ResourceType = "Folder", ResourceId = Guid.CreateVersion7(), PrincipalType = PrincipalType.Group, PrincipalId = a1a, RoleId = role, TenantId = _setup.TenantId });
+            return Task.FromResult(0);
         });
+        (await CountRowsAsync()).ShouldBe((1, 1, 1, 1));
 
         (await Admin.DeleteAsync($"/api/v1/identity/groups/{a}", Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
         (await Admin.GetFromJsonAsync<PagedResult<GroupDto>>("/api/v1/identity/groups?pageSize=50", Ct))!.Items.ShouldBeEmpty();
-        var left = await app.InDbAsync(_setup.TenantId, async db => new
-        {
-            Grants = await db.Set<PermissionGrant>().IgnoreQueryFilters().CountAsync(g => g.ProviderType == PermissionProviderType.Group, Ct),
-            Selections = await db.Set<GroupSelection>().CountAsync(Ct),
-            Members = await db.Set<UserGroupMember>().CountAsync(Ct),
-        });
-        left.Grants.ShouldBe(0);
-        left.Selections.ShouldBe(0);
-        left.Members.ShouldBe(0);
+        (await CountRowsAsync()).ShouldBe((0, 0, 0, 0));
     }
+
+    private Task<(int Grants, int Selections, int Members, int Resources)> CountRowsAsync() => app.InDbAsync(_setup.TenantId, async db =>
+        (await db.Set<PermissionGrant>().IgnoreQueryFilters().CountAsync(g => g.ProviderType == PermissionProviderType.Group, Ct),
+         await db.Set<GroupSelection>().CountAsync(Ct),
+         await db.Set<UserGroupMember>().CountAsync(Ct),
+         await db.Set<ResourcePermission>().CountAsync(p => p.PrincipalType == PrincipalType.Group, Ct)));
 
     private Task<HttpResponseMessage> MoveAsync(Guid id, Guid? parent) =>
         Admin.PutAsJsonAsync($"/api/v1/identity/groups/{id}/parent", new MoveGroupRequest(parent), Ct);
