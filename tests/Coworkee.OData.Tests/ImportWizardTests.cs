@@ -37,7 +37,7 @@ public sealed class ImportWizardTests(ODataApp app) : IAsyncLifetime
     {
         var targets = await Admin.GetFromJsonAsync<List<ImportTargetDto>>("/api/v1/data/imports", Json, Ct);
 
-        targets!.Select(t => t.EntitySet).ShouldBe(["Gadgets", "Widgets", "Parts"], ignoreOrder: true);
+        targets!.Select(t => t.EntitySet).ShouldBe(["Gadgets", "Widgets", "Parts", "Crates"], ignoreOrder: true);
         var widgets = targets.Single(t => t.EntitySet == "Widgets");
         widgets.CanUpdate.ShouldBeTrue();
         widgets.CanUndo.ShouldBeTrue();

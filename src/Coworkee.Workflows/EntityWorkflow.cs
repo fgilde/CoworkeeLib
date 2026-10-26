@@ -176,7 +176,7 @@ public sealed class EntityWorkflow<TEntity>(string entityType) : EntityWorkflow(
 
     internal override async Task<bool> VisibleAsync(IServiceProvider services, Guid id, CancellationToken cancellationToken) =>
         await ODataEntityAccess.IsGrantedAsync(services, typeof(TEntity), cancellationToken)
-        && await (await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken)).AnyAsync(e => EF.Property<Guid>(e, "Id") == id, cancellationToken);
+        && await (await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken, unnarrowed: true)).AnyAsync(e => EF.Property<Guid>(e, "Id") == id, cancellationToken);
 
     internal override WorkflowContext Context(object entity, Guid id, WorkflowMove move, IServiceProvider services, CancellationToken cancellationToken) =>
         new WorkflowContext<TEntity>((TEntity)entity)

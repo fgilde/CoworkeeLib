@@ -1,4 +1,5 @@
 using System.Reflection;
+using Coworkee.Application.Groups;
 using Coworkee.BackgroundJobs;
 using Coworkee.Contracts.Data;
 using Coworkee.Core.Security;
@@ -11,7 +12,8 @@ using Microsoft.Extensions.Options;
 
 namespace Coworkee.OData.Transfer;
 
-public sealed record ExportJobArgs(Guid JobId);
+/// <param name="Groups">The groups selected when the export was requested; the job lists the rows of them, as the user's list did.</param>
+public sealed record ExportJobArgs(Guid JobId, Guid[]? Groups = null);
 
 /// <summary>Writes an export too large for the request; the owner gets the file through the job (the client shows a download link).</summary>
 public sealed class DataExports(IServiceProvider services, CoworkeeDbContext db, ODataEntityRegistry registry, ICurrentUser user, TimeProvider clock, IOptions<CoworkeeODataOptions> options)
@@ -59,7 +61,8 @@ public sealed class DataExports(IServiceProvider services, CoworkeeDbContext db,
         };
         db.Add(job);
         await db.SaveChangesAsync(cancellationToken);
-        services.GetRequiredService<IBackgroundJobs>().Enqueue<ExportJob, ExportJobArgs>(new ExportJobArgs(job.Id));
+        var groups = services.GetService<IGroupScope>() is { } scope ? await scope.SelectedAsync(cancellationToken) : [];
+        services.GetRequiredService<IBackgroundJobs>().Enqueue<ExportJob, ExportJobArgs>(new ExportJobArgs(job.Id, [.. groups]));
         var dto = await services.GetRequiredService<DataTransferJobs>().GetAsync(job.Id, cancellationToken);
         return Results.Accepted($"/api/v1/data/jobs/{job.Id}", dto.Value);
     }

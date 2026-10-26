@@ -34,7 +34,7 @@ internal sealed class EntityHistoryRegistration<TEntity, TResult>(string entityS
     where TResult : Result
 {
     internal override async Task<object?> FindAsync(IServiceProvider services, Guid id, CancellationToken cancellationToken) =>
-        await (await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken, withDeleted: true))
+        await (await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken, withDeleted: true, unnarrowed: true))
             .SingleOrDefaultAsync(e => EF.Property<Guid>(e, nameof(Entity.Id)) == id, cancellationToken);
 
     internal override async Task<IReadOnlyList<object>> DeletedAsync(IServiceProvider services, int take, CancellationToken cancellationToken)

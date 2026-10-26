@@ -29,7 +29,8 @@ public class EntityODataController<TEntity> : GenericODataController<TEntity>, I
 
         HttpContext.Items[ODataEntityAccess.DeniedItem] = denied;
 
-        _visible = await ODataEntityAccess.VisibleAsync<TEntity>(HttpContext.RequestServices, HttpContext.RequestAborted);
+        // a single record opens whatever groups are selected; the selection narrows lists only
+        _visible = await ODataEntityAccess.VisibleAsync<TEntity>(HttpContext.RequestServices, HttpContext.RequestAborted, unnarrowed: context.RouteData.Values.ContainsKey("key"));
         await next();
     }
 

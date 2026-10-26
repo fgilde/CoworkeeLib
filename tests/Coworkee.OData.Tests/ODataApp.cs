@@ -44,6 +44,8 @@ public sealed class ODataApp : DatabaseFixture
         builder.Services.AddTestAuthentication();
         builder.Services.AddSingleton(provider => new InlineBackgroundJobs.Root(provider));
         builder.Services.AddScoped<Coworkee.BackgroundJobs.IBackgroundJobs, InlineBackgroundJobs>();
+        builder.Services.AddSingleton<FakeGroupScope>();
+        builder.Services.AddSingleton<Coworkee.Application.Groups.IGroupScope>(provider => provider.GetRequiredService<FakeGroupScope>());
         App = builder.Build();
         await using (var scope = App.Services.CreateAsyncScope())
         {
@@ -63,6 +65,7 @@ public sealed class ODataApp : DatabaseFixture
     public async Task<SetupResultDto> SetupAsync()
     {
         await ResetAsync();
+        App.Services.GetRequiredService<FakeGroupScope>().Stored = [];
         App.Services.GetRequiredService<SystemStateCache>().Reset();
         var response = await App.GetTestClient().PostAsJsonAsync("/api/v1/setup/complete",
             new CompleteSetupRequest("token", "Acme", "admin@acme.test", "Admin#12345", "Ada", "Admin"));
@@ -90,6 +93,7 @@ internal sealed class GadgetModelContributor : IModelContributor
         modelBuilder.Entity<Gadget>(gadget => gadget.ToTable("Gadgets"));
         modelBuilder.Entity<Widget>(widget => widget.ToTable("Widgets"));
         modelBuilder.Entity<Part>(part => part.ToTable("Parts"));
+        modelBuilder.Entity<Crate>(crate => crate.ToTable("Crates"));
     }
 }
 
@@ -120,6 +124,10 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.AddODataChildFilter<Part, Widget>(p => p.Widget);
         context.Services.AddODataImport("Widgets", (Guid? id, WidgetRow row) => new SaveWidgetCommand(id, row), id => new DeleteWidgetCommand(id));
         context.Services.AddODataImport<AddPartCommand>("Parts");
+        context.Services.AddODataEntity<Crate>("Crates", ODataApp.ViewGadgets);
+        context.Services.AddScoped<IODataEntityFilter<Crate>, CratesOfActiveUnits>();
+        context.Services.AddGlobalSearch<Crate>(s => s.Fields(c => c.Name).Page("/crates"));
+        context.Services.AddODataImport("Crates", (Guid? id, CrateRow row) => new SaveCrateCommand(id, row));
     }
 }
 

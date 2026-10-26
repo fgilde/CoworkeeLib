@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using Coworkee.Application.Groups;
+using Coworkee.Contracts.Data;
 using Coworkee.Contracts.Identity;
 using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
@@ -277,6 +278,24 @@ public sealed class GroupScopeTests(IdentityApp app) : IAsyncLifetime
 
         RecordingRealtimePublisher.Instance.Events.ShouldContain(e =>
             e.TenantId == _setup.TenantId && e.Topic == $"user:{user}" && e.Type == GroupSelectionEvents.Changed);
+    }
+
+    [Fact]
+    public async Task Partition_changes_with_the_selection()
+    {
+        var (user, a, _, b) = await MemberOfAAndBAsync();
+        var client = app.As(user, _setup.TenantId);
+        async Task<string> PartitionAsync() => (await client.GetFromJsonAsync<ClientEntityManifest>("/api/v1/client-entities", Ct))!.Partition;
+
+        var none = await PartitionAsync();
+        await SelectAsync(user, a);
+        var withA = await PartitionAsync();
+        await SelectAsync(user, b);
+        var withB = await PartitionAsync();
+        await SelectAsync(user);
+
+        new[] { none, withA, withB }.Distinct().Count().ShouldBe(3);
+        (await PartitionAsync()).ShouldBe(none);
     }
 
     /// <summary>A user in A and B; A has the sub-group A1.</summary>

@@ -1,4 +1,5 @@
 using Coworkee.Application.Authorization;
+using Coworkee.Application.Groups;
 using Coworkee.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OData.Extensions;
@@ -55,9 +56,11 @@ public static class ODataEntityAccess
     }
 
     /// <param name="withDeleted">Keeps soft deleted rows, so a sync can tell clients what vanished.</param>
-    public static async Task<IQueryable<TEntity>> VisibleAsync<TEntity>(IServiceProvider services, CancellationToken cancellationToken, bool withDeleted = false)
+    /// <param name="unnarrowed">Access instead of listing: the filters run inside <see cref="GroupScope.Unnarrowed"/>, the user's group selection does not narrow the rows.</param>
+    public static async Task<IQueryable<TEntity>> VisibleAsync<TEntity>(IServiceProvider services, CancellationToken cancellationToken, bool withDeleted = false, bool unnarrowed = false)
         where TEntity : class
     {
+        using var scope = unnarrowed ? GroupScope.Unnarrowed() : null;
         var query = services.GetRequiredService<CoworkeeDbContext>().Set<TEntity>().AsNoTracking();
         if (withDeleted)
         {
@@ -73,8 +76,9 @@ public static class ODataEntityAccess
     }
 
     /// <summary>
-    /// The ids of the rows the current user sees: through the entity's registered set (null without the set's permission),
-    /// without a set (or without the OData module) every row the DbContext shows, so tenant and soft delete filters apply.
+    /// The ids of the rows the current user may open (guards: attachments, social, children), whatever groups he selected: through the
+    /// entity's registered set (null without the set's permission), without a set (or without the OData module) every row the DbContext
+    /// shows, so tenant and soft delete filters apply.
     /// </summary>
     public static async Task<IQueryable<Guid>?> VisibleIdsAsync<TEntity>(IServiceProvider services, CancellationToken cancellationToken)
         where TEntity : class
@@ -85,7 +89,7 @@ public static class ODataEntityAccess
         }
 
         return await IsGrantedAsync(services, typeof(TEntity), cancellationToken)
-            ? (await VisibleAsync<TEntity>(services, cancellationToken)).Select(e => EF.Property<Guid>(e, "Id"))
+            ? (await VisibleAsync<TEntity>(services, cancellationToken, unnarrowed: true)).Select(e => EF.Property<Guid>(e, "Id"))
             : null;
     }
 

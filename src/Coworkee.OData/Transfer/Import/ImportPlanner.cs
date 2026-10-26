@@ -275,7 +275,7 @@ public sealed class ImportPlanner
     {
         var entity = Expression.Parameter(typeof(TEntity));
         var equals = Expression.Lambda<Func<TEntity, bool>>(Expression.Equal(Expression.Property(entity, property), Expression.Constant(value, property.PropertyType)), entity);
-        var visible = await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken);
+        var visible = await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken, unnarrowed: true);
         return [.. await visible.Where(equals).Take(2).ToListAsync(cancellationToken)];
     }
 }

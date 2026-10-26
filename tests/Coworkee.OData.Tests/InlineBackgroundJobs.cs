@@ -9,12 +9,23 @@ internal sealed class InlineBackgroundJobs(ICurrentUser user, InlineBackgroundJo
     public string Enqueue<TJob, TArgs>(TArgs args, string queue = "default")
         where TJob : IBackgroundJob<TArgs>
     {
-        new JobRunner<TJob, TArgs>(root.Services).RunAsync(new JobEnvelope<TArgs>(args, user.UserId, user.TenantId), CancellationToken.None).GetAwaiter().GetResult();
+        var envelope = new JobEnvelope<TArgs>(args, user.UserId, user.TenantId);
+        if (root.Held is { } held)
+        {
+            held.Add(() => new JobRunner<TJob, TArgs>(root.Services).RunAsync(envelope, CancellationToken.None));
+            return Guid.NewGuid().ToString();
+        }
+
+        new JobRunner<TJob, TArgs>(root.Services).RunAsync(envelope, CancellationToken.None).GetAwaiter().GetResult();
         return Guid.NewGuid().ToString();
     }
 
     public string Schedule<TJob, TArgs>(TArgs args, TimeSpan delay, string queue = "default")
         where TJob : IBackgroundJob<TArgs> => Enqueue<TJob, TArgs>(args, queue);
 
-    public sealed record Root(IServiceProvider Services);
+    public sealed record Root(IServiceProvider Services)
+    {
+        /// <summary>When set, jobs wait here instead of running, until the test runs them (outside the request that enqueued them).</summary>
+        public List<Func<Task>>? Held { get; set; }
+    }
 }

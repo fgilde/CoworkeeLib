@@ -1,3 +1,4 @@
+using Coworkee.Application.Groups;
 using Coworkee.BackgroundJobs;
 using Coworkee.Contracts.Data;
 using Coworkee.Infrastructure.Persistence;
@@ -27,6 +28,7 @@ internal sealed class ExportJob(IServiceProvider services, DataExports exports, 
                 throw new UnauthorizedAccessException($"You may not read {job.EntitySet}.");
             }
 
+            using var selection = args.Groups is { Length: > 0 } groups ? GroupScope.Selection(groups) : null;
             var file = (await exports.WriteAsync(entity, new QueryString(job.Settings), null, cancellationToken))!;
             (job.Result, job.ResultContentType, job.ResultFileName) = (file.Content, file.ContentType, file.Name);
             job.Status = DataTransferStatus.Completed;

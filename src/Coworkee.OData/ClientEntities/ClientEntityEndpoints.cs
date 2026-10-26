@@ -48,11 +48,22 @@ internal static class ClientEntityEndpoints
             }
         }
 
-        return Results.Ok(new ClientEntityManifest(Partition(user), sets));
+        return Results.Ok(new ClientEntityManifest(await PartitionAsync(services, user, http.RequestAborted), sets));
     }
 
-    private static string Partition(ICurrentUser user) =>
-        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"{user.UserId}|{user.TenantId}|{user.ClientId}")))[..16].ToLowerInvariant();
+    private static async Task<string> PartitionAsync(IServiceProvider services, ICurrentUser user, CancellationToken cancellationToken)
+    {
+        var key = new StringBuilder($"{user.UserId}|{user.TenantId}|{user.ClientId}");
+        foreach (var part in services.GetServices<IClientEntityPartitionPart>())
+        {
+            if (await part.GetAsync(cancellationToken) is { } value)
+            {
+                key.Append('|').Append(value);
+            }
+        }
+
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(key.ToString())))[..16].ToLowerInvariant();
+    }
 
     private static async Task<IResult> DispatchAsync(string entitySet, HttpContext http, string method, DateTimeOffset? since)
     {
