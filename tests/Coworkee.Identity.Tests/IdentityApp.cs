@@ -48,6 +48,7 @@ public sealed class IdentityApp : DatabaseFixture
             seed.Settings["Theme.Mode"] = "dark";
         });
         builder.Services.AddScoped<Coworkee.Application.Setup.ISetupStep, RecordingSetupStep>();
+        builder.Services.AddSingleton<Coworkee.Realtime.IRealtimePublisher>(RecordingRealtimePublisher.Instance);
         builder.Services.AddComputedPermission(ComputedPermissionTests.Permission, (c, _) => Task.FromResult(ComputedPermissionTests.Leaders.ContainsKey(c.UserId)));
         App = builder.Build();
         await using (var scope = App.Services.CreateAsyncScope())

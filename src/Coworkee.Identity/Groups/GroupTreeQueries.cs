@@ -44,21 +44,10 @@ internal sealed class SearchGroupTreeHandler(CoworkeeDbContext db) : IHandler<Se
 
         var matches = await db.Set<UserGroup>().AsNoTracking().Where(g => g.Code != null && g.Name.ToLower().Contains(search))
             .OrderBy(g => g.Code).Take(MaxMatches).Select(g => g.Code!).ToListAsync(cancellationToken);
-        var codes = matches.SelectMany(Prefixes).Distinct().ToList();
+        var codes = matches.SelectMany(GroupCodes.Prefixes).Distinct().ToList();
         // one JSON parameter however many codes: up to 3200 prefixes exceed the 2100 parameters of a SQL Server command
         var nodes = await db.Set<UserGroup>().Where(g => EF.Parameter(codes).Contains(g.Code!)).ToNodes(db).ToListAsync(cancellationToken);
         return nodes.OrderBy(g => g.Code, StringComparer.Ordinal).ToList();
-    }
-
-    /// <summary>Every code made of whole leading segments, the code itself last: the ancestors and the group.</summary>
-    private static IEnumerable<string> Prefixes(string code)
-    {
-        for (var dot = code.IndexOf('.'); dot >= 0; dot = code.IndexOf('.', dot + 1))
-        {
-            yield return code[..dot];
-        }
-
-        yield return code;
     }
 }
 

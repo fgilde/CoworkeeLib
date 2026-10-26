@@ -17,6 +17,17 @@ internal static class GroupCodes
 
     internal static bool IsDescendant(string code, string ancestor) => code.StartsWith(ancestor + ".", StringComparison.Ordinal);
 
+    /// <summary>Every code made of whole leading segments, the code itself last: the ancestors and the group.</summary>
+    internal static IEnumerable<string> Prefixes(string code)
+    {
+        for (var dot = code.IndexOf('.'); dot >= 0; dot = code.IndexOf('.', dot + 1))
+        {
+            yield return code[..dot];
+        }
+
+        yield return code;
+    }
+
     /// <summary>The code for a new child of <paramref name="parentId"/> (a root for null): the parent code plus the highest sibling segment plus one.</summary>
     // ponytail: two concurrent creates under one parent can pick the same code; the unique index rejects the second, which then retries by hand
     internal static async Task<string> NextAsync(DbSet<UserGroup> groups, string? parentCode, Guid? parentId, CancellationToken cancellationToken)

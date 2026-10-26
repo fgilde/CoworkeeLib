@@ -52,6 +52,15 @@ public sealed record MoveGroupRequest(Guid? ParentId);
 
 public sealed record MoveMembersRequest(Guid ToId);
 
+/// <summary>A group of the current user's picker: <paramref name="IsMember"/> for direct memberships, <paramref name="Selected"/> when it is part of the selection.</summary>
+public sealed record MyGroupDto(Guid Id, Guid? ParentId, string Code, string Name, bool IsMember, bool Selected);
+
+/// <summary>On the user's own topic: the group selection changed (another tab reloads its picker and tables).</summary>
+public static class GroupSelectionEvents
+{
+    public const string Changed = "groups.selection";
+}
+
 public sealed record PermissionDto(string Name, string DisplayName, IReadOnlyList<string> Implies);
 
 public sealed record PermissionGroupDto(string Name, string DisplayName, IReadOnlyList<PermissionDto> Permissions);
