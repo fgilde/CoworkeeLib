@@ -1,3 +1,4 @@
+using Coworkee.Application.Groups;
 using Coworkee.Application.Messaging;
 using Coworkee.Core.Results;
 using Coworkee.Domain;
@@ -33,9 +34,12 @@ internal sealed class EntityHistoryRegistration<TEntity, TResult>(string entityS
     where TEntity : class
     where TResult : Result
 {
-    internal override async Task<object?> FindAsync(IServiceProvider services, Guid id, CancellationToken cancellationToken) =>
-        await (await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken, withDeleted: true, unnarrowed: true))
+    internal override async Task<object?> FindAsync(IServiceProvider services, Guid id, CancellationToken cancellationToken)
+    {
+        using var unnarrowed = GroupScope.Unnarrowed();
+        return await (await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken, withDeleted: true))
             .SingleOrDefaultAsync(e => EF.Property<Guid>(e, nameof(Entity.Id)) == id, cancellationToken);
+    }
 
     internal override async Task<IReadOnlyList<object>> DeletedAsync(IServiceProvider services, int take, CancellationToken cancellationToken)
     {

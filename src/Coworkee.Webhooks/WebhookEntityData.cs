@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using Coworkee.Application.Groups;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.OData;
 using Coworkee.ResponseFilters;
@@ -42,7 +43,8 @@ internal static class WebhookEntityData
     private static async Task<object?> LoadAsync<TEntity>(IServiceProvider services, string key, CancellationToken cancellationToken)
         where TEntity : class
     {
-        var visible = await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken, withDeleted: true, unnarrowed: true);
+        using var unnarrowed = GroupScope.Unnarrowed();
+        var visible = await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken, withDeleted: true);
         var id = typeof(TEntity).GetProperty("Id")!;
         var entity = Expression.Parameter(typeof(TEntity));
         var match = Expression.Lambda<Func<TEntity, bool>>(

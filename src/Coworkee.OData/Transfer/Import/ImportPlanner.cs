@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Coworkee.Application.Authorization;
+using Coworkee.Application.Groups;
 using Coworkee.Contracts.Data;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -275,7 +276,8 @@ public sealed class ImportPlanner
     {
         var entity = Expression.Parameter(typeof(TEntity));
         var equals = Expression.Lambda<Func<TEntity, bool>>(Expression.Equal(Expression.Property(entity, property), Expression.Constant(value, property.PropertyType)), entity);
-        var visible = await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken, unnarrowed: true);
+        using var unnarrowed = GroupScope.Unnarrowed();
+        var visible = await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken);
         return [.. await visible.Where(equals).Take(2).ToListAsync(cancellationToken)];
     }
 }

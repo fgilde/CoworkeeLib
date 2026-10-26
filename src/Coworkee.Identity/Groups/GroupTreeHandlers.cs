@@ -17,6 +17,8 @@ internal sealed class MoveGroupValidator : AbstractValidator<MoveGroup>
     public MoveGroupValidator() => RuleFor(c => c.Id).NotEmpty();
 }
 
+// ponytail: two concurrent cross moves ("A under B", "B under A") both pass the cycle check and commit a ParentId cycle;
+// serializable isolation or re-reading the parent's code right before the save closes it
 internal sealed class MoveGroupHandler(CoworkeeDbContext db) : IHandler<MoveGroup, Result>
 {
     public async Task<Result> HandleAsync(MoveGroup command, CancellationToken cancellationToken)

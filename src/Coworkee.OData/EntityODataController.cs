@@ -1,3 +1,4 @@
+using Coworkee.Application.Groups;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.OData.Edm;
@@ -30,7 +31,11 @@ public class EntityODataController<TEntity> : GenericODataController<TEntity>, I
         HttpContext.Items[ODataEntityAccess.DeniedItem] = denied;
 
         // a single record opens whatever groups are selected; the selection narrows lists only
-        _visible = await ODataEntityAccess.VisibleAsync<TEntity>(HttpContext.RequestServices, HttpContext.RequestAborted, unnarrowed: context.RouteData.Values.ContainsKey("key"));
+        using (context.RouteData.Values.ContainsKey("key") ? GroupScope.Unnarrowed() : null)
+        {
+            _visible = await ODataEntityAccess.VisibleAsync<TEntity>(HttpContext.RequestServices, HttpContext.RequestAborted);
+        }
+
         await next();
     }
 

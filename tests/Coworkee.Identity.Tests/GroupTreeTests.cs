@@ -56,14 +56,13 @@ public sealed class GroupTreeTests(IdentityApp app) : IAsyncLifetime
     [Fact]
     public async Task Unknown_or_foreign_parent_is_rejected()
     {
-        var foreign = await app.InDbAsync(null, async db =>
+        var foreign = await app.InDbAsync(null, db =>
         {
             var tenant = new Tenant { Name = "Other", Identifier = "other" };
             var group = new UserGroup { Name = "Foreign", TenantId = tenant.Id, Code = "00001" };
             db.Add(tenant);
             db.Add(group);
-            await Task.CompletedTask;
-            return group.Id;
+            return Task.FromResult(group.Id);
         });
 
         foreach (var parent in new[] { foreign, Guid.CreateVersion7() })
@@ -91,11 +90,10 @@ public sealed class GroupTreeTests(IdentityApp app) : IAsyncLifetime
     public async Task Missing_codes_are_filled_in_name_order()
     {
         var kept = await CreateAsync("Kept");
-        await app.InDbAsync(_setup.TenantId, async db =>
+        await app.InDbAsync(_setup.TenantId, db =>
         {
             db.AddRange(new UserGroup { Name = "c" }, new UserGroup { Name = "a" }, new UserGroup { Name = "b" });
-            await Task.CompletedTask;
-            return 0;
+            return Task.FromResult(0);
         });
 
         await app.InDbAsync(null, async db =>
@@ -106,6 +104,59 @@ public sealed class GroupTreeTests(IdentityApp app) : IAsyncLifetime
 
         var codes = await app.InDbAsync(_setup.TenantId, db => db.Set<UserGroup>().ToDictionaryAsync(g => g.Name, g => g.Code, Ct));
         codes.ShouldBe(new Dictionary<string, string?> { ["Kept"] = "00001", ["a"] = "00002", ["b"] = "00003", ["c"] = "00004" }, ignoreOrder: true);
+    }
+
+    [Fact]
+    public async Task Missing_codes_are_numbered_per_tenant_and_a_second_run_changes_nothing()
+    {
+        await CreateAsync("Kept");
+        var other = await app.InDbAsync(null, db =>
+        {
+            var tenant = new Tenant { Name = "Other", Identifier = "other" };
+            db.Add(tenant);
+            db.AddRange(new UserGroup { Name = "y", TenantId = tenant.Id }, new UserGroup { Name = "x", TenantId = tenant.Id });
+            return Task.FromResult(tenant.Id);
+        });
+        await app.InDbAsync(_setup.TenantId, db =>
+        {
+            db.Add(new UserGroup { Name = "m" });
+            return Task.FromResult(0);
+        });
+
+        await FillMissingAsync();
+        var first = await AllCodesAsync();
+        await FillMissingAsync();
+
+        first.ShouldBe(new Dictionary<string, string?>
+        {
+            [$"{_setup.TenantId}/Kept"] = "00001", [$"{_setup.TenantId}/m"] = "00002", [$"{other}/x"] = "00001", [$"{other}/y"] = "00002",
+        }, ignoreOrder: true);
+        (await AllCodesAsync()).ShouldBe(first, ignoreOrder: true);
+    }
+
+    private Task<int> FillMissingAsync() => app.InDbAsync(null, async db =>
+    {
+        await GroupCodes.FillMissingAsync(db, Ct);
+        return 0;
+    });
+
+    private Task<Dictionary<string, string?>> AllCodesAsync() =>
+        app.InDbAsync(null, db => db.Set<UserGroup>().IgnoreQueryFilters().ToDictionaryAsync(g => $"{g.TenantId}/{g.Name}", g => g.Code, Ct));
+
+    [Fact]
+    public async Task Update_with_another_parent_points_to_the_move_route()
+    {
+        var a = await CreateAsync("A");
+        var b = await CreateAsync("B");
+        var a1 = await CreateAsync("A1", a);
+
+        var response = await Admin.PutAsJsonAsync($"/api/v1/identity/groups/{a1}", new GroupRequest("A1", null, b), Ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync(Ct)).ShouldContain("/parent");
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/groups/{a1}", new GroupRequest("A1x", "d"), Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/groups/{a1}", new GroupRequest("A1y", "d", a), Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await GroupsAsync())["A1y"].ParentId.ShouldBe(a);
     }
 
     [Fact]

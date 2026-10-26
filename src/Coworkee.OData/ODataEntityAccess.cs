@@ -56,11 +56,10 @@ public static class ODataEntityAccess
     }
 
     /// <param name="withDeleted">Keeps soft deleted rows, so a sync can tell clients what vanished.</param>
-    /// <param name="unnarrowed">Access instead of listing: the filters run inside <see cref="GroupScope.Unnarrowed"/>, the user's group selection does not narrow the rows.</param>
-    public static async Task<IQueryable<TEntity>> VisibleAsync<TEntity>(IServiceProvider services, CancellationToken cancellationToken, bool withDeleted = false, bool unnarrowed = false)
+    /// <remarks>Access instead of listing: call it inside <c>using (GroupScope.Unnarrowed())</c>, then the user's group selection does not narrow the rows.</remarks>
+    public static async Task<IQueryable<TEntity>> VisibleAsync<TEntity>(IServiceProvider services, CancellationToken cancellationToken, bool withDeleted = false)
         where TEntity : class
     {
-        using var scope = unnarrowed ? GroupScope.Unnarrowed() : null;
         var query = services.GetRequiredService<CoworkeeDbContext>().Set<TEntity>().AsNoTracking();
         if (withDeleted)
         {
@@ -88,8 +87,9 @@ public static class ODataEntityAccess
             return services.GetRequiredService<CoworkeeDbContext>().Set<TEntity>().Select(e => EF.Property<Guid>(e, "Id"));
         }
 
+        using var unnarrowed = GroupScope.Unnarrowed();
         return await IsGrantedAsync(services, typeof(TEntity), cancellationToken)
-            ? (await VisibleAsync<TEntity>(services, cancellationToken, unnarrowed: true)).Select(e => EF.Property<Guid>(e, "Id"))
+            ? (await VisibleAsync<TEntity>(services, cancellationToken)).Select(e => EF.Property<Guid>(e, "Id"))
             : null;
     }
 

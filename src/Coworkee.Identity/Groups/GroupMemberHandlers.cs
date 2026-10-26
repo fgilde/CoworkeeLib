@@ -23,7 +23,7 @@ internal static class GroupMembers
     public static readonly Error UnknownUser = Error.Validation("UserIds", "Unknown user.");
 
     public static async Task<bool> AllInTenantAsync(CoworkeeDbContext db, ICurrentUser currentUser, List<Guid> userIds, CancellationToken ct) =>
-        await db.Set<User>().CountAsync(u => userIds.Contains(u.Id) && u.TenantId == currentUser.TenantId, ct) == userIds.Count;
+        await db.Set<User>().CountAsync(u => EF.Parameter(userIds).Contains(u.Id) && u.TenantId == currentUser.TenantId, ct) == userIds.Count;
 
     public static void AddMissing(UserGroup group, IEnumerable<Guid> userIds) =>
         group.Members.AddRange(userIds.Where(id => group.Members.All(m => m.UserId != id)).Select(id => new UserGroupMember { GroupId = group.Id, UserId = id }));

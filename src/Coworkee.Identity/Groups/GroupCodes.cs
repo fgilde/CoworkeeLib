@@ -15,6 +15,9 @@ internal static class GroupCodes
 
     internal static int Depth(string code) => code.Count(c => c == '.') + 1;
 
+    /// <summary>The length of a code at <paramref name="depth"/> (1 for a root): 5 digits per segment, a dot between two.</summary>
+    internal static int Length(int depth) => (6 * depth) - 1;
+
     internal static bool IsDescendant(string code, string ancestor) => code.StartsWith(ancestor + ".", StringComparison.Ordinal);
 
     /// <summary>Every code made of whole leading segments, the code itself last: the ancestors and the group.</summary>

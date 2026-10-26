@@ -105,7 +105,8 @@ internal sealed class IdentityModelContributor : IModelContributor
             group.Property(g => g.Code).HasMaxLength(95);
             group.HasOne<UserGroup>().WithMany().HasForeignKey(g => g.ParentId).OnDelete(DeleteBehavior.Restrict);
             group.HasIndex(g => new { g.TenantId, g.Code }).IsUnique();
-            group.HasIndex(g => new { g.TenantId, g.ParentId, g.Name }).IsUnique().AreNullsDistinct(false);
+            // no filter: SQL Server would add "ParentId IS NOT NULL" and leave root names to the handler; its unique indexes treat NULLs as equal
+            group.HasIndex(g => new { g.TenantId, g.ParentId, g.Name }).IsUnique().AreNullsDistinct(false).HasFilter(null);
             group.HasMany(g => g.Members).WithOne().HasForeignKey(m => m.GroupId).OnDelete(DeleteBehavior.Cascade);
             group.HasMany(g => g.Roles).WithOne().HasForeignKey(r => r.GroupId).OnDelete(DeleteBehavior.Cascade);
         });

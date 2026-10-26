@@ -104,7 +104,9 @@ public sealed class GroupScopeTests(IdentityApp app) : IAsyncLifetime
         (await op.GetFromJsonAsync<List<GroupNodeDto>>($"/api/v1/identity/groups/children?parentId={a}", Ct))!.Select(n => n.Name).ShouldBe(["A1"]);
         (await op.GetFromJsonAsync<List<GroupNodeDto>>("/api/v1/identity/groups/tree?search=A1", Ct))!.Select(n => n.Name).ShouldBe(["A", "A1"]);
         (await op.GetAsync("/odata/Groups", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-        (await other.GetAsync("/api/v1/identity/groups/children", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        var denied = await other.GetAsync("/api/v1/identity/groups/children", Ct);
+        denied.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await denied.Content.ReadAsStringAsync(Ct)).ShouldContain(IdentityPermissions.Groups.ScopeAll);
         (await other.GetAsync("/api/v1/identity/groups/tree?search=A1", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
@@ -200,14 +202,13 @@ public sealed class GroupScopeTests(IdentityApp app) : IAsyncLifetime
     public async Task Nodes_and_ancestors_are_tenant_bound()
     {
         var (user, a, a1, _) = await MemberOfAAndBAsync();
-        var foreign = await app.InDbAsync(null, async db =>
+        var foreign = await app.InDbAsync(null, db =>
         {
             var tenant = new Tenant { Name = "Other", Identifier = "other" };
             var group = new UserGroup { Name = "A", TenantId = tenant.Id, Code = "00001" };
             db.Add(tenant);
             db.Add(group);
-            await Task.CompletedTask;
-            return group.Id;
+            return Task.FromResult(group.Id);
         });
 
         (await ScopeAsync(user, s => s.NodesAsync([a, a1, foreign], Ct))).Select(n => n.Id).ShouldBe([a, a1], ignoreOrder: true);

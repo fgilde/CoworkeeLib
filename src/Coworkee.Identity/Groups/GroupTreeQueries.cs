@@ -50,7 +50,7 @@ internal sealed class SearchGroupTreeHandler(CoworkeeDbContext db, IPermissionCh
         var matches = await db.Set<UserGroup>().AsNoTracking().Where(g => g.Code != null && g.Name.ToLower().Contains(search))
             .OrderBy(g => g.Code).Take(MaxMatches).Select(g => g.Code!).ToListAsync(cancellationToken);
         var codes = matches.SelectMany(GroupCodes.Prefixes).Distinct().ToList();
-        // one JSON parameter however many codes: up to 3200 prefixes exceed the 2100 parameters of a SQL Server command
+        // up to 3200 prefixes, more than the 2100 parameters of a SQL Server command; the 3200-prefix test guards that EF.Parameter keeps this one parameter
         var nodes = await db.Set<UserGroup>().Where(g => EF.Parameter(codes).Contains(g.Code!)).ToNodes(db).ToListAsync(cancellationToken);
         return nodes.OrderBy(g => g.Code, StringComparer.Ordinal).ToList();
     }
@@ -59,7 +59,7 @@ internal sealed class SearchGroupTreeHandler(CoworkeeDbContext db, IPermissionCh
 internal static class GroupNodes
 {
     // the same answer the pipeline gives for a missing [RequiresPermission]
-    internal static readonly Error NoBrowse = Error.Forbidden("auth.forbidden", $"Permission '{IdentityPermissions.Groups.View}' is required.");
+    internal static readonly Error NoBrowse = Error.Forbidden("auth.forbidden", $"Permission '{IdentityPermissions.Groups.View}' or '{IdentityPermissions.Groups.ScopeAll}' is required.");
 
     /// <summary>The tree routes: group admins, and operators with ScopeAll whose scope picker loads the tree lazily (no member lists).</summary>
     internal static async Task<bool> CanBrowseAsync(IPermissionChecker permissions, CancellationToken cancellationToken) =>

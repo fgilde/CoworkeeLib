@@ -119,6 +119,12 @@ internal sealed class UpdateGroupHandler(CoworkeeDbContext db) : IHandler<Update
             return GroupErrors.NotFound;
         }
 
+        // a null parent means "not specified": clients that predate the tree keep working
+        if (command.Group.ParentId is { } parentId && parentId != group.ParentId)
+        {
+            return GroupErrors.UseMoveForParent;
+        }
+
         var name = command.Group.Name.Trim();
         if (await db.Set<UserGroup>().AnyAsync(g => g.ParentId == group.ParentId && g.Name == name && g.Id != group.Id, cancellationToken))
         {
@@ -147,8 +153,8 @@ internal sealed class DeleteGroupHandler(CoworkeeDbContext db) : IHandler<Delete
             : [];
         subtree.Add(group);
         var ids = subtree.Select(g => g.Id).ToList();
-        db.RemoveRange(await db.Set<PermissionGrant>().Where(g => g.ProviderType == PermissionProviderType.Group && ids.Contains(g.ProviderKey)).ToListAsync(cancellationToken));
-        db.RemoveRange(await db.Set<ResourcePermission>().Where(p => p.PrincipalType == PrincipalType.Group && ids.Contains(p.PrincipalId)).ToListAsync(cancellationToken));
+        db.RemoveRange(await db.Set<PermissionGrant>().Where(g => g.ProviderType == PermissionProviderType.Group && EF.Parameter(ids).Contains(g.ProviderKey)).ToListAsync(cancellationToken));
+        db.RemoveRange(await db.Set<ResourcePermission>().Where(p => p.PrincipalType == PrincipalType.Group && EF.Parameter(ids).Contains(p.PrincipalId)).ToListAsync(cancellationToken));
         db.RemoveRange(subtree);
         return Result.Success();
     }
@@ -212,6 +218,9 @@ internal static class GroupErrors
 
     public static readonly Error ParentPathUnknown = new("identity.group_parent_path_unknown", "No group exists at this parent path.", ErrorKind.Validation,
         new Dictionary<string, string[]> { [nameof(GroupImportRow.ParentPath)] = ["No group exists at this parent path."] });
+
+    public static readonly Error UseMoveForParent = Error.Validation(nameof(GroupRequest.ParentId),
+        "An update keeps the parent; move the group with PUT /api/v1/identity/groups/{id}/parent.");
 
     public static readonly Error NameTaken = Error.Conflict("identity.group_name_taken", "A group with this name already exists.");
 }

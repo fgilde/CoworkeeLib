@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using Coworkee.Contracts;
 using Coworkee.Contracts.Identity;
 using Coworkee.Identity.Domain;
+using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Identity.Tests;
 
@@ -57,14 +58,13 @@ public sealed class GroupMemberTests(IdentityApp app) : IAsyncLifetime
     public async Task Foreign_tenant_user_is_rejected()
     {
         var group = await CreateGroupAsync("A");
-        var foreign = await app.InDbAsync(null, async db =>
+        var foreign = await app.InDbAsync(null, db =>
         {
             var tenant = new Tenant { Name = "Other", Identifier = "other" };
             var user = new User { UserName = "x@other", Email = "x@other", TenantId = tenant.Id };
             db.Add(tenant);
             db.Add(user);
-            await Task.CompletedTask;
-            return user.Id;
+            return Task.FromResult(user.Id);
         });
 
         (await PostAsync(Admin, $"{group}/members/add", new IdListRequest([foreign]))).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -94,6 +94,37 @@ public sealed class GroupMemberTests(IdentityApp app) : IAsyncLifetime
         permissions!.ShouldNotContain(IdentityPermissions.Groups.ScopeAll);
     }
 
+    [Fact]
+    public async Task Same_codes_in_another_tenant_survive_move_and_delete_and_tree_changes_need_Manage()
+    {
+        var a = await CreateGroupAsync("A");
+        await CreateGroupAsync("A1", a);
+        var b = await CreateGroupAsync("B");
+        var (other, foreignGroup) = await app.InDbAsync(null, db =>
+        {
+            var tenant = new Tenant { Name = "Other", Identifier = "other" };
+            var (oa, ob) = (new UserGroup { Name = "A", TenantId = tenant.Id, Code = "00001" }, new UserGroup { Name = "B", TenantId = tenant.Id, Code = "00002" });
+            db.Add(tenant);
+            db.AddRange(oa, ob, new UserGroup { Name = "A1", TenantId = tenant.Id, Code = "00001.00001", ParentId = oa.Id },
+                new UserGroup { Name = "B1", TenantId = tenant.Id, Code = "00002.00001", ParentId = ob.Id });
+            return Task.FromResult((tenant.Id, ob.Id));
+        });
+        var before = await TenantCodesAsync(other);
+        var members = await ClientWithAsync(IdentityPermissions.Groups.ManageMembers);
+
+        (await members.PutAsJsonAsync($"/api/v1/identity/groups/{a}/parent", new MoveGroupRequest(b), Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await members.DeleteAsync($"/api/v1/identity/groups/{b}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await PostAsync(members, $"{a}/members/move", new MoveMembersRequest(foreignGroup))).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/groups/{a}/parent", new MoveGroupRequest(b), Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await Admin.DeleteAsync($"/api/v1/identity/groups/{b}", Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        (await app.InDbAsync(_setup.TenantId, db => db.Set<UserGroup>().CountAsync(Ct))).ShouldBe(0);
+        (await TenantCodesAsync(other)).ShouldBe(before, ignoreOrder: true);
+    }
+
+    private Task<List<string>> TenantCodesAsync(Guid tenant) =>
+        app.InDbAsync(tenant, db => db.Set<UserGroup>().Select(g => $"{g.Name}|{g.Code}|{g.ParentId}").ToListAsync(Ct));
+
     private async Task<HttpClient> ClientWithAsync(string permission)
     {
         var user = await UserAsync("limited");
@@ -114,9 +145,9 @@ public sealed class GroupMemberTests(IdentityApp app) : IAsyncLifetime
         return (await response.Content.ReadFromJsonAsync<UserDto>(Ct))!.Id;
     }
 
-    private async Task<Guid> CreateGroupAsync(string name)
+    private async Task<Guid> CreateGroupAsync(string name, Guid? parent = null)
     {
-        var response = await Admin.PostAsJsonAsync("/api/v1/identity/groups", new GroupRequest(name, null), Ct);
+        var response = await Admin.PostAsJsonAsync("/api/v1/identity/groups", new GroupRequest(name, null, parent), Ct);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<Guid>(Ct);
     }
