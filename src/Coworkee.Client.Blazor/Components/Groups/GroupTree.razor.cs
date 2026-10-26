@@ -79,18 +79,18 @@ public partial class GroupTree
         StateHasChanged();
     }
 
-    /// <returns><c>false</c> when a later load (a newer search text) overtook this one and its result was dropped.</returns>
+    /// <returns><c>false</c> when the load failed (the shown nodes stay) or a later load (a newer search text) overtook it.</returns>
     private async Task<bool> LoadAsync()
     {
         var load = ++_loads;
         var search = _search;
-        var items = search.Length == 0 ? await ChildrenOfAsync(null) : Tree(await FetchAsync(() => Api.SearchGroupTreeAsync(search)));
-        if (load != _loads)
+        var nodes = await FetchAsync(() => search.Length == 0 ? Api.GetGroupChildrenAsync(null) : Api.SearchGroupTreeAsync(search));
+        if (nodes is null || load != _loads)
         {
             return false;
         }
 
-        _items = items;
+        _items = search.Length == 0 ? [.. nodes.Where(Shown).Select(Item)] : Tree(nodes);
         return true;
     }
 
@@ -103,11 +103,12 @@ public partial class GroupTree
     private async Task<IReadOnlyCollection<TreeItemData<GroupNodeDto>>> ChildrenAsync(GroupNodeDto? parent) => await ChildrenOfAsync(parent?.Id);
 
     private async Task<List<TreeItemData<GroupNodeDto>>> ChildrenOfAsync(Guid? parentId) =>
-        [.. (await FetchAsync(() => Api.GetGroupChildrenAsync(parentId))).Where(Shown).Select(Item)];
+        [.. (await FetchAsync(() => Api.GetGroupChildrenAsync(parentId)) ?? []).Where(Shown).Select(Item)];
 
-    private async Task<IReadOnlyList<GroupNodeDto>> FetchAsync(Func<Task<IReadOnlyList<GroupNodeDto>>> load)
+    /// <returns><c>null</c> when the API failed; the snackbar shows why.</returns>
+    private async Task<IReadOnlyList<GroupNodeDto>?> FetchAsync(Func<Task<IReadOnlyList<GroupNodeDto>>> load)
     {
-        IReadOnlyList<GroupNodeDto> nodes = [];
+        IReadOnlyList<GroupNodeDto>? nodes = null;
         await Snackbar.RunAsync(async () => nodes = await load());
         return nodes;
     }

@@ -1,4 +1,4 @@
-<CoworkeeDataTable T="UserRow" EntitySet="Users" Filter="@Filter" SearchFields="SearchFields" UrlState="false" SavedViews="false" Exportable="false" Facets="false"
+<CoworkeeDataTable @ref="_table" T="UserRow" EntitySet="Users" Filter="@Filter" RealtimeTopic="@Coworkee.Contracts.Realtime.RealtimeTopics.Entity("UserGroup", Group.Id)" SearchFields="SearchFields" UrlState="false" SavedViews="false" Exportable="false" Facets="false"
                    CreateText="Add member" CreatePermission="@IdentityPermissions.Groups.ManageMembers" OnCreate="AddAsync" NoRecordsText="No members.">
     <ToolBarContent>
         @if (CanManage && Group.Members.Count > 0)

@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20261026044503_Initial")]
+    [Migration("20261026064631_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -2713,7 +2713,7 @@ namespace MyApp.Infrastructure.Migrations
                         .IsRequired();
 
                     b.HasOne("Coworkee.Identity.Domain.User", null)
-                        .WithMany()
+                        .WithMany("Groups")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2965,6 +2965,11 @@ namespace MyApp.Infrastructure.Migrations
                     b.Navigation("Messages");
                 });
 
+            modelBuilder.Entity("Coworkee.Identity.Domain.User", b =>
+                {
+                    b.Navigation("Groups");
+                });
+
             modelBuilder.Entity("Coworkee.Identity.Domain.UserGroup", b =>
                 {
                     b.Navigation("Members");
@@ -3003,7 +3008,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20261026044503_Initial")]
+    [Migration("20261026064631_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -5422,7 +5427,7 @@ namespace MyApp.Infrastructure.Migrations
                         .IsRequired();
 
                     b.HasOne("Coworkee.Identity.Domain.User", null)
-                        .WithMany()
+                        .WithMany("Groups")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -5651,6 +5656,11 @@ namespace MyApp.Infrastructure.Migrations
             modelBuilder.Entity("Coworkee.Ai.Sessions.AiChatSession", b =>
                 {
                     b.Navigation("Messages");
+                });
+
+            modelBuilder.Entity("Coworkee.Identity.Domain.User", b =>
+                {
+                    b.Navigation("Groups");
                 });
 
             modelBuilder.Entity("Coworkee.Identity.Domain.UserGroup", b =>

@@ -38,6 +38,27 @@ public sealed class UserDetailTests : ClientTestBase
     }
 
     [Fact]
+    public void Managers_choose_groups_by_their_path_in_tree_order()
+    {
+        var customerA = new GroupDto(Guid.CreateVersion7(), "Customer A", null, [], [], null, "00001");
+        var hamburgA = new GroupDto(Guid.CreateVersion7(), "Hamburg", null, [], [], customerA.Id, "00001.00001");
+        var customerB = new GroupDto(Guid.CreateVersion7(), "Customer B", null, [], [], null, "00002");
+        var hamburgB = new GroupDto(Guid.CreateVersion7(), "Hamburg", null, [], [], customerB.Id, "00002.00001");
+        Api.GetGroupsAsync(Arg.Any<Contracts.PageRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new Contracts.PagedResult<GroupDto>([customerA, customerB, hamburgA, hamburgB], 4, 1, 200));
+        var auth = AddAuthorization();
+        auth.SetAuthorized("admin");
+        auth.SetPolicies(Security.PermissionPolicy.For(IdentityPermissions.Users.View), Security.PermissionPolicy.For(IdentityPermissions.Groups.Manage));
+        var popovers = Render<MudBlazor.MudPopoverProvider>();
+        var page = Render<UserDetail>(p => p.Add(d => d.Id, _user));
+
+        page.WaitForElement("[data-testid='user-groups']").MouseDown();
+
+        var options = popovers.WaitForElements(".mud-list-item").Select(i => i.TextContent.Trim()).ToList();
+        options.ShouldBe(["Customer A", "Customer A / Hamburg", "Customer B", "Customer B / Hamburg"], ignoreOrder: false);
+    }
+
+    [Fact]
     public void Group_chips_show_the_path_and_link_to_the_group()
     {
         var customer = new Data.Admin.GroupRow(Guid.CreateVersion7(), "Customer A", null, [], [], null, "00001");

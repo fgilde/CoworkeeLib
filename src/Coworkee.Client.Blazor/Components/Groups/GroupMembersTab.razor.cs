@@ -14,6 +14,7 @@ namespace Coworkee.Client.Blazor.Components.Groups;
 public partial class GroupMembersTab
 {
     private static readonly string[] SearchFields = [nameof(UserRow.Email), nameof(UserRow.FirstName), nameof(UserRow.LastName)];
+    private CoworkeeDataTable<UserRow>? _table;
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
@@ -57,6 +58,12 @@ public partial class GroupMembersTab
     {
         if (await Snackbar.RunAsync(action))
         {
+            // the filter stays the same, so the table reloads here; changes of others arrive on the group's entity topic
+            if (_table is not null)
+            {
+                await _table.ReloadAsync();
+            }
+
             await Changed.InvokeAsync();
         }
     }

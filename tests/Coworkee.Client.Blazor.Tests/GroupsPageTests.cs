@@ -219,6 +219,59 @@ public sealed class GroupsPageTests : ClientTestBase
     }
 
     [Fact]
+    public async Task Removing_a_member_reloads_the_members_table()
+    {
+        _odata.With("Groups", Row(Supplier, Ada.Id)).With("Users", Ada);
+        var users = 0;
+        _odata.Queried += (_, query) => users += query.Filter?.Contains("Groups/any") == true ? 1 : 0;
+        Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Supplier.Id}");
+        var page = RenderPage();
+        page.WaitForElement("[data-testid='group-title']");
+        await Tab(page, "Members").ClickAsync(new());
+        page.WaitForElement("[data-testid='remove-member-ada@acme.test']");
+        var before = users;
+
+        await page.Find("[data-testid='remove-member-ada@acme.test']").ClickAsync(new());
+
+        await Api.Received(1).RemoveGroupMembersAsync(Supplier.Id, Arg.Is<IReadOnlyList<Guid>>(ids => ids.Single() == Ada.Id), Arg.Any<CancellationToken>());
+        page.WaitForAssertion(() => users.ShouldBeGreaterThan(before));
+    }
+
+    [Fact]
+    public async Task Members_table_follows_the_groups_entity_topic()
+    {
+        _odata.With("Groups", Row(Supplier, Ada.Id)).With("Users", Ada);
+        var users = 0;
+        _odata.Queried += (_, query) => users += query.Filter?.Contains("Groups/any") == true ? 1 : 0;
+        Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Supplier.Id}");
+        var page = RenderPage();
+        page.WaitForElement("[data-testid='group-title']");
+        await Tab(page, "Members").ClickAsync(new());
+        page.WaitForElement("[data-member='ada@acme.test']");
+        var before = users;
+
+        Services.GetRequiredService<FakeRealtimeConnection>().Push($"entity:UserGroup:{Supplier.Id}");
+
+        page.WaitForAssertion(() => users.ShouldBeGreaterThan(before));
+    }
+
+    [Fact]
+    public void A_failed_reload_keeps_the_shown_groups()
+    {
+        _odata.With("Groups", Row(Supplier));
+        Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Supplier.Id}");
+        var page = RenderPage();
+        page.WaitForElement($"[data-group-node='{Supplier.Id}']");
+        Api.GetGroupChildrenAsync(null, Arg.Any<CancellationToken>()).Returns<IReadOnlyList<GroupNodeDto>>(_ => throw new Coworkee.Client.Blazor.Api.ApiException(500, "boom", null));
+
+        Services.GetRequiredService<FakeRealtimeConnection>().Push("type:UserGroup");
+
+        page.WaitForAssertion(() => Api.Received(2).GetGroupChildrenAsync(null, Arg.Any<CancellationToken>()));
+        page.FindAll("[data-group-node]").Select(n => n.TextContent).ShouldBe(["Customer A", "Supplier"], ignoreOrder: false);
+        page.Markup.ShouldNotContain("No groups yet.");
+    }
+
+    [Fact]
     public void Unknown_deep_link_says_the_group_was_not_found()
     {
         var queries = new List<ODataQuery>();

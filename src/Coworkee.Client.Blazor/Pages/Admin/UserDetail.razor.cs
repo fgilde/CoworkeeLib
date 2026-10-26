@@ -66,7 +66,7 @@ public partial class UserDetail
         try
         {
             _roles = await Api.GetRolesAsync();
-            _groups = _canManageGroups ? (await Api.GetGroupsAsync(new PageRequest(1, 200))).Items : [];
+            _groups = _canManageGroups ? [.. (await Api.GetGroupsAsync(new PageRequest(1, 200))).Items.OrderBy(g => g.Code, StringComparer.Ordinal)] : [];
             await LoadAsync();
         }
         catch (ApiException exception)
@@ -105,9 +105,11 @@ public partial class UserDetail
 
     private string RoleName(Guid id) => _roles.FirstOrDefault(r => r.Id == id)?.Name ?? string.Empty;
 
-    /// <summary>"Customer A / Hamburg" for the user's groups, the name for the others.</summary>
+    /// <summary>"Customer A / Hamburg": the user's groups from their ancestors, the choices of managers from the loaded groups.</summary>
     private string GroupName(Guid id, string? name = null) =>
-        _groupPaths.GetValueOrDefault(id) ?? _groups.FirstOrDefault(g => g.Id == id)?.Name ?? name ?? string.Empty;
+        _groupPaths.GetValueOrDefault(id)
+        ?? (_groups.FirstOrDefault(g => g.Id == id) is { } group ? Components.Groups.GroupPaths.Path(group.Code, group.Name, _groups.Select(g => (g.Code, g.Name))) : null)
+        ?? name ?? string.Empty;
 
     private Task SaveAsync(EditContext context) => RunAsync(async () =>
     {

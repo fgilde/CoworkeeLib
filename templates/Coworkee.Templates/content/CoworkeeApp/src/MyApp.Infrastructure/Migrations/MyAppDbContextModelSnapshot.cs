@@ -2710,7 +2710,7 @@ namespace MyApp.Infrastructure.Migrations
                         .IsRequired();
 
                     b.HasOne("Coworkee.Identity.Domain.User", null)
-                        .WithMany()
+                        .WithMany("Groups")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2960,6 +2960,11 @@ namespace MyApp.Infrastructure.Migrations
             modelBuilder.Entity("Coworkee.Ai.Sessions.AiChatSession", b =>
                 {
                     b.Navigation("Messages");
+                });
+
+            modelBuilder.Entity("Coworkee.Identity.Domain.User", b =>
+                {
+                    b.Navigation("Groups");
                 });
 
             modelBuilder.Entity("Coworkee.Identity.Domain.UserGroup", b =>
@@ -5416,7 +5421,7 @@ namespace MyApp.Infrastructure.Migrations
                         .IsRequired();
 
                     b.HasOne("Coworkee.Identity.Domain.User", null)
-                        .WithMany()
+                        .WithMany("Groups")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -5645,6 +5650,11 @@ namespace MyApp.Infrastructure.Migrations
             modelBuilder.Entity("Coworkee.Ai.Sessions.AiChatSession", b =>
                 {
                     b.Navigation("Messages");
+                });
+
+            modelBuilder.Entity("Coworkee.Identity.Domain.User", b =>
+                {
+                    b.Navigation("Groups");
                 });
 
             modelBuilder.Entity("Coworkee.Identity.Domain.UserGroup", b =>
