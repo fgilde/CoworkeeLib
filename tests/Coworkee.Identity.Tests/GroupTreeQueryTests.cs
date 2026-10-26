@@ -76,23 +76,58 @@ public sealed class GroupTreeQueryTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Search_resolves_more_ancestor_codes_than_a_command_has_parameters()
+    {
+        // 200 distinct chains of 16 levels: 3200 prefixes, above the 2100 parameters of a SQL Server command
+        await app.InDbAsync(_setup.TenantId, db =>
+        {
+            foreach (var chain in Enumerable.Range(1, 200))
+            {
+                Guid? parent = null;
+                var code = "";
+                for (var level = 1; level <= 16; level++)
+                {
+                    code += (level == 1 ? "" : ".") + (level == 1 ? $"{chain:D5}" : "00001");
+                    var group = new UserGroup { Name = level == 16 ? $"Leaf {chain}" : $"Node {chain}-{level}", Code = code, ParentId = parent };
+                    db.Add(group);
+                    parent = group.Id;
+                }
+            }
+
+            return Task.FromResult(0);
+        });
+
+        var nodes = await NodesAsync("tree?search=leaf");
+
+        nodes.Count.ShouldBe(3200);
+        nodes.Select(n => n.Code).Distinct().Count().ShouldBe(3200);
+        nodes.Count(n => n.Name.StartsWith("Leaf")).ShouldBe(200);
+    }
+
+    [Fact]
     public async Task Tree_queries_stay_in_the_tenant()
     {
         var mine = await CreateAsync("Shared name");
         await CreateAsync("Child", mine);
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/groups/{mine}/members", new IdListRequest([_setup.AdminUserId]), Ct)).EnsureSuccessStatusCode();
         var (tenant, admin) = await app.InDbAsync(null, async db =>
         {
             var tenant = new Tenant { Name = "Other", Identifier = "other" };
             var user = new User { TenantId = tenant.Id, UserName = "eve@other.test", Email = "eve@other.test", NormalizedUserName = "EVE@OTHER.TEST", NormalizedEmail = "EVE@OTHER.TEST" };
+            var colleague = new User { TenantId = tenant.Id, UserName = "fay@other.test", Email = "fay@other.test", NormalizedUserName = "FAY@OTHER.TEST", NormalizedEmail = "FAY@OTHER.TEST" };
             var role = await db.Set<Role>().IgnoreQueryFilters().FirstAsync(r => r.IsSystem && r.Name == SystemRoles.Admin);
-            db.AddRange(tenant, user, new IdentityUserRole<Guid> { UserId = user.Id, RoleId = role.Id },
-                new UserGroup { Name = "Shared name", TenantId = tenant.Id, Code = "00001" });
+            var group = new UserGroup { Name = "Shared name", TenantId = tenant.Id, Code = "00001" };
+            db.AddRange(tenant, user, colleague, new IdentityUserRole<Guid> { UserId = user.Id, RoleId = role.Id }, group,
+                new UserGroupMember { GroupId = group.Id, UserId = user.Id }, new UserGroupMember { GroupId = group.Id, UserId = colleague.Id });
             return (tenant.Id, user.Id);
         });
         var other = app.As(admin, tenant);
 
         (await NodesAsync("children", other)).Select(n => n.Code).ShouldBe(["00001"]);
         (await NodesAsync("children", other)).Single().ChildCount.ShouldBe(0);
+        (await NodesAsync("children", other)).Single().MemberCount.ShouldBe(2);
+        (await NodesAsync("children")).Single().MemberCount.ShouldBe(1);
+        (await NodesAsync("tree?search=shared", other)).Single().MemberCount.ShouldBe(2);
         (await NodesAsync($"children?parentId={mine}", other)).ShouldBeEmpty();
         (await NodesAsync("tree?search=child", other)).ShouldBeEmpty();
         (await NodesAsync("tree?search=shared", other)).Select(n => n.Id).ShouldNotContain(mine);

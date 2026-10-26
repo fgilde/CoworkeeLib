@@ -45,7 +45,8 @@ internal sealed class SearchGroupTreeHandler(CoworkeeDbContext db) : IHandler<Se
         var matches = await db.Set<UserGroup>().AsNoTracking().Where(g => g.Code != null && g.Name.ToLower().Contains(search))
             .OrderBy(g => g.Code).Take(MaxMatches).Select(g => g.Code!).ToListAsync(cancellationToken);
         var codes = matches.SelectMany(Prefixes).Distinct().ToList();
-        var nodes = await db.Set<UserGroup>().Where(g => codes.Contains(g.Code!)).ToNodes(db).ToListAsync(cancellationToken);
+        // one JSON parameter however many codes: up to 3200 prefixes exceed the 2100 parameters of a SQL Server command
+        var nodes = await db.Set<UserGroup>().Where(g => EF.Parameter(codes).Contains(g.Code!)).ToNodes(db).ToListAsync(cancellationToken);
         return nodes.OrderBy(g => g.Code, StringComparer.Ordinal).ToList();
     }
 
