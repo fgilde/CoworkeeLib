@@ -23,9 +23,9 @@ Auf der Seite eines Benutzers bearbeiten Administratoren alles, von der E-Mail-A
 
 Gruppen bilden pro Mandant einen Baum und können so Organisationseinheiten sein: Kunden, Tochtergesellschaften, Filialen. Eine Gruppe hat eine optionale übergeordnete Gruppe und einen `Code`, einen Pfad aus 5-stelligen Segmenten (`00001.00003`), den nur die Handler pflegen. Du legst eine Gruppe unter einer übergeordneten an, verschiebst sie (`PUT /api/v1/identity/groups/{id}/parent`, der Teilbaum zieht mit) oder löschst sie, womit auch ihre Untergruppen verschwinden. Namen sind unter Geschwistern eindeutig, die Tiefe ist auf 16 begrenzt. Gruppen einer bestehenden App werden zu Wurzeln; der Migrationshost vergibt ihre Codes beim nächsten Lauf.
 
-Benutzer sind Mitglied in beliebig vielen Gruppen. **Rollen und Berechtigungen hängen nicht an Gruppen**: Eine Gruppe vergibt als Einheit nichts, sie bestimmt nur, was ein Benutzer sieht. Mitglieder werden mit `Identity.Groups.ManageMembers` (in `Identity.Groups.Manage` enthalten) hinzugefügt, entfernt oder alle auf einmal in eine andere Gruppe verschoben. `Identity.Groups.ScopeAll` („In jeder Gruppe arbeiten") macht jede Gruppe des Mandanten zugänglich, für Operatoren ohne eigene Einheit; Administratoren mit allen Berechtigungen haben sie. Die Baum-Endpunkte (`/groups/children`, `/groups/tree`) akzeptieren `Groups.View` oder `ScopeAll`.
+Benutzer sind Mitglied in beliebig vielen Gruppen. **Einheiten vergeben von sich aus nichts**: Eine Gruppe bestimmt nur, was ein Benutzer sieht. Gruppen können weiterhin Rollen tragen (Reiter Rollen), aber die Rolle einer übergeordneten Gruppe erben ihre Untergruppen nicht. Mitglieder werden mit `Identity.Groups.ManageMembers` (in `Identity.Groups.Manage` enthalten) hinzugefügt, entfernt oder alle auf einmal in eine andere Gruppe verschoben. `Identity.Groups.ScopeAll` („Work in any group") macht jede Gruppe des Mandanten zugänglich, für Operatoren ohne eigene Einheit; Administratoren mit allen Berechtigungen haben sie. Die Baum-Endpunkte (`/groups/children`, `/groups/tree`) akzeptieren `Groups.View` oder `ScopeAll`.
 
-Auf der Gruppenseite lädt der Baum träge, mit Suche, Zählern und den Reitern Allgemein, Mitglieder und Rollen. `?group={id}` springt direkt zu einer Gruppe. Apps ergänzen eigene Reiter:
+Auf der Gruppenseite lädt der Baum bei Bedarf nach, mit Suche, Zählern und den Reitern Allgemein, Mitglieder und Rollen. `?group={id}` springt direkt zu einer Gruppe. Apps ergänzen eigene Reiter:
 
 ```csharp
 services.AddGroupDetailTab<OrganisationCodes>("Organisation codes", ShipmentPermissions.Shipments.View);
@@ -49,6 +49,9 @@ Die Auswahl im Picker der App-Leiste speichert der Server pro Benutzer (`cw.Grou
 Apps schränken ihre Zeilen mit einem Filter ein, der einmal gegen `ActiveAsync` geschrieben wird:
 
 ```csharp
+using Coworkee.Application.Groups;
+using Coworkee.OData;
+
 internal sealed class ShipmentFilter(IGroupScope scope) : IODataEntityFilter<Shipment>
 {
     public async Task<IQueryable<Shipment>> ApplyAsync(IQueryable<Shipment> query, CancellationToken ct)
@@ -57,6 +60,9 @@ internal sealed class ShipmentFilter(IGroupScope scope) : IODataEntityFilter<Shi
         return query.Where(s => EF.Parameter(ids).Contains(s.GroupId));
     }
 }
+
+// im Modul
+services.AddScoped<IODataEntityFilter<Shipment>, ShipmentFilter>();
 ```
 
 `EF.Parameter` ist auf SQL Server wichtig, das bei einem einfachen `Contains` mehr als 2100 Parameter ablehnt.
@@ -65,7 +71,7 @@ Die Auswahl bestimmt, was **Listen** zeigen, nicht, was ein Benutzer öffnen dar
 
 `<GroupScopePicker />` setzt du selbst in die App-Leiste; das Template-Layout enthält ihn nicht, und er blendet sich für Benutzer ohne zugängliche Gruppen aus. Datentabellen laden bei einer Änderung der Auswahl neu (`GroupScopeState`), und `IClientDataCache` ist die Schnittstelle für eigene clientseitige Caches.
 
-Der Gruppenimport nimmt `Name`, `Description` und `ParentPath` („Kunde A/Hamburg"); ein unbekanntes Elternteil ist eine Fehlerzeile, fehlende Eltern werden nicht angelegt. Ein `/` im Namen ist per Pfad nicht ansprechbar, leere Pfadsegmente werden ignoriert, eine leere Beschreibung löscht eine vorhandene nicht, und ein Probelauf kann unbekannte Pfade nicht melden (der echte Lauf schon). Das Users-OData-Set liefert `Groups` für Filter wie `Groups/any(m: m/GroupId eq {id})`.
+Der Gruppenimport (`Groups.Manage`) nimmt `Name`, `Description` und `ParentPath` („Kunde A/Hamburg") und ist ein Upsert über den Pfad: Eine Gruppe dieses Namens an diesem Pfad bekommt ihre Beschreibung aktualisiert, sonst wird sie angelegt. Fehlende Eltern werden nicht implizit angelegt (eine frühere Zeile derselben Datei kann sie anlegen); ein unbekanntes Elternteil ist eine Fehlerzeile. Ein `/` im Namen ist per Pfad nicht ansprechbar, leere Pfadsegmente werden ignoriert, eine leere Beschreibung löscht eine vorhandene nicht, und ein Probelauf kann unbekannte Pfade nicht melden (der echte Lauf schon). Das Users-OData-Set liefert `Groups` für Filter wie `Groups/any(m: m/GroupId eq {id})`.
 
 !!! warning "Echtzeit und Einheiten als Kunden"
     `[Realtime]` sendet `type:X` weiterhin an alle mit der Ansichts-Berechtigung. Sind Einheiten Kunden in einem Mandanten, sehen Clients anderer Einheiten die IDs und geänderten Eigenschaftsnamen von Datensätzen, die sie nicht öffnen dürfen (und laden neu). Themen pro Gruppe sind ein Folgeschritt.

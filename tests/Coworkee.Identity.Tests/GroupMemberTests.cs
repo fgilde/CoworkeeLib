@@ -90,8 +90,8 @@ public sealed class GroupMemberTests(IdentityApp app) : IAsyncLifetime
 
         var permissions = await client.GetFromJsonAsync<string[]>("/api/v1/identity/permissions/me", Ct);
 
-        permissions.ShouldContain(IdentityPermissions.Groups.ManageMembers);
-        permissions.ShouldNotContain(IdentityPermissions.Groups.ScopeAll);
+        permissions!.ShouldContain(IdentityPermissions.Groups.ManageMembers);
+        permissions!.ShouldNotContain(IdentityPermissions.Groups.ScopeAll);
     }
 
     private async Task<HttpClient> ClientWithAsync(string permission)

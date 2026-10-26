@@ -23,7 +23,7 @@ Administrators edit everything about a user on one page, from the email address 
 
 Groups form a tree per tenant, so they can stand for organisation units: customers, subsidiaries, branches. A group has an optional parent and a `Code`, a path of 5-digit segments (`00001.00003`) that only the handlers maintain. Create a group under a parent, move it (`PUT /api/v1/identity/groups/{id}/parent`, the subtree moves along) or delete it, which removes its sub-groups too. Names are unique among siblings, the depth is limited to 16. Groups of an existing app become roots; the migrations host gives them their codes on the next run.
 
-Users are members of any number of groups. **Roles and permissions do not depend on groups**: a group grants nothing by being a unit, it only decides what a user sees. Members are added, removed or moved all at once to another group with `Identity.Groups.ManageMembers` (implied by `Identity.Groups.Manage`). `Identity.Groups.ScopeAll` ("Work in any group") makes every group of the tenant accessible, for operators who belong to no unit; administrators with all permissions have it. The tree endpoints (`/groups/children`, `/groups/tree`) accept `Groups.View` or `ScopeAll`.
+Users are members of any number of groups. **Units grant nothing by themselves**: a group only decides what a user sees. Groups can still carry roles as before (Roles tab), but a parent's role is not inherited by its sub-groups. Members are added, removed or moved all at once to another group with `Identity.Groups.ManageMembers` (implied by `Identity.Groups.Manage`). `Identity.Groups.ScopeAll` ("Work in any group") makes every group of the tenant accessible, for operators who belong to no unit; administrators with all permissions have it. The tree endpoints (`/groups/children`, `/groups/tree`) accept `Groups.View` or `ScopeAll`.
 
 On the groups page the tree loads lazily, with a search, counts, and tabs for General, Members and Roles. `?group={id}` deep-links to a group. Apps add their own tabs:
 
@@ -49,6 +49,9 @@ The picker in the app bar stores the selection per user on the server (`cw.Group
 Apps scope their rows with a filter written once against `ActiveAsync`:
 
 ```csharp
+using Coworkee.Application.Groups;
+using Coworkee.OData;
+
 internal sealed class ShipmentFilter(IGroupScope scope) : IODataEntityFilter<Shipment>
 {
     public async Task<IQueryable<Shipment>> ApplyAsync(IQueryable<Shipment> query, CancellationToken ct)
@@ -57,6 +60,9 @@ internal sealed class ShipmentFilter(IGroupScope scope) : IODataEntityFilter<Shi
         return query.Where(s => EF.Parameter(ids).Contains(s.GroupId));
     }
 }
+
+// in the module
+services.AddScoped<IODataEntityFilter<Shipment>, ShipmentFilter>();
 ```
 
 `EF.Parameter` matters on SQL Server, which rejects more than 2100 parameters from a plain `Contains`.
@@ -65,7 +71,7 @@ The selection decides what **lists** show, not what a user may open. The library
 
 Place `<GroupScopePicker />` in your app bar yourself; the template layout does not include it, and it hides itself for users without accessible groups. Data tables reload when the selection changes (`GroupScopeState`), and `IClientDataCache` is the seam for your own client-side caches.
 
-Group import takes `Name`, `Description` and `ParentPath` ("Customer A/Hamburg"); an unknown parent is an error row, missing parents are not created. A `/` in a name cannot be addressed by path, empty path segments are ignored, a blank description does not clear an existing one, and a dry run cannot flag unknown paths (a real run does). The Users OData set exposes `Groups` for filters such as `Groups/any(m: m/GroupId eq {id})`.
+Group import (`Groups.Manage`) takes `Name`, `Description` and `ParentPath` ("Customer A/Hamburg") and is an upsert by path: a group of that name at that path gets its description updated, otherwise it is created. Missing parents are not created implicitly (an earlier row of the same file may create them); an unknown parent is an error row. A `/` in a name cannot be addressed by path, empty path segments are ignored, a blank description does not clear an existing one, and a dry run cannot flag unknown paths (a real run does). The Users OData set exposes `Groups` for filters such as `Groups/any(m: m/GroupId eq {id})`.
 
 !!! warning "Realtime and units as customers"
     `[Realtime]` still broadcasts `type:X` to everyone with the view permission. When units are customers in one tenant, clients of other units see the ids and changed property names of records they may not open (and reload). Per-group topics are a follow-up.
