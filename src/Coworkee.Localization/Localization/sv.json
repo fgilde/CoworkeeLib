@@ -1809,5 +1809,6 @@
   "Rename group": "Byt namn på grupp",
   "Search groups": "Sök grupper",
   "Top level": "Översta nivån",
-  "{0} members": "{0} medlemmar"
+  "{0} members": "{0} medlemmar",
+  "Group not found.": "Gruppen hittades inte."
 }

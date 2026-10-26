@@ -4,10 +4,10 @@
              SelectedValue="Selected" SelectedValueChanged="SelectAsync" Hover="true" Dense="Density.Dense" data-testid="group-tree">
     <ItemTemplate>
         <MudTreeViewItem T="GroupNodeDto" Value="context.Value" Items="context.Children" ItemsChanged="items => context.Children = items"
-                         CanExpand="context.Expandable" @bind-Expanded="context.Expanded">
+                         CanExpand="context.Expandable" @bind-Expanded="context.Expanded" ReadOnly="Disabled(context.Value!)">
             <BodyContent Context="item">
                 <div class="d-flex align-center gap-1" style="width:100%">
-                    <MudText Typo="Typo.body2" Style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" data-group-node="@item.Value!.Id">@item.Value.Name</MudText>
+                    <MudText Typo="Typo.body2" Class="@(Disabled(item.Value!) ? "mud-text-disabled" : null)" Style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" data-group-node="@item.Value!.Id">@item.Value.Name</MudText>
                     <MudTooltip Text="@L["{0} members", item.Value.MemberCount]" RootClass="ml-auto">
                         <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Icon="@Icons.Material.Outlined.Person" data-group-count="@item.Value.Id">@item.Value.MemberCount</MudChip>
                     </MudTooltip>

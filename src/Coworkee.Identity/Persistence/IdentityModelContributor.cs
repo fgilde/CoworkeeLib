@@ -114,7 +114,7 @@ internal sealed class IdentityModelContributor : IModelContributor
         {
             member.ToTable("GroupMembers", Schema);
             member.HasKey(m => new { m.GroupId, m.UserId });
-            member.HasOne<User>().WithMany().HasForeignKey(m => m.UserId).OnDelete(DeleteBehavior.Cascade);
+            member.HasOne<User>().WithMany(u => u.Groups).HasForeignKey(m => m.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<GroupSelection>(selection =>

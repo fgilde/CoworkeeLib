@@ -148,6 +148,29 @@ public sealed class GroupTreeQueryTests(IdentityApp app) : IAsyncLifetime
         rows[1].GetProperty("ParentId").GetGuid().ShouldBe(a);
     }
 
+    [Fact]
+    public async Task OData_users_filter_by_group_membership_within_the_tenant()
+    {
+        var crew = await CreateAsync("Crew");
+        (await Admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest("eve@acme.test", "Passw0rd!x", "Eve", null), Ct)).EnsureSuccessStatusCode();
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/groups/{crew}/members", new IdListRequest([_setup.AdminUserId]), Ct)).EnsureSuccessStatusCode();
+        var otherGroup = await app.InDbAsync(null, db =>
+        {
+            var tenant = new Tenant { Name = "Other", Identifier = "other" };
+            var user = new User { TenantId = tenant.Id, UserName = "fay@other.test", Email = "fay@other.test", NormalizedUserName = "FAY@OTHER.TEST", NormalizedEmail = "FAY@OTHER.TEST" };
+            var group = new UserGroup { Name = "Crew", TenantId = tenant.Id, Code = "00001" };
+            db.AddRange(tenant, user, group, new UserGroupMember { GroupId = group.Id, UserId = user.Id });
+            return Task.FromResult(group.Id);
+        });
+
+        async Task<List<string?>> MembersAsync(Guid group) =>
+            [.. (await Admin.GetFromJsonAsync<JsonElement>($"/odata/Users?$filter=Groups/any(m: m/GroupId eq {group})&$select=Email&$orderby=Email", Ct))
+                .GetProperty("value").EnumerateArray().Select(u => u.GetProperty("Email").GetString())];
+
+        (await MembersAsync(crew)).ShouldBe(["admin@acme.test"]);
+        (await MembersAsync(otherGroup)).ShouldBeEmpty();
+    }
+
     private async Task<IReadOnlyList<GroupNodeDto>> NodesAsync(string route, HttpClient? client = null)
     {
         var response = await (client ?? Admin).GetAsync($"/api/v1/identity/groups/{route}", Ct);

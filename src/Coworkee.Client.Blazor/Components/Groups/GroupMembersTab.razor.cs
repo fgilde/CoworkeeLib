@@ -32,8 +32,8 @@ public partial class GroupMembersTab
 
     [Parameter] public EventCallback Changed { get; set; }
 
-    // ponytail: the member ids go into the URL ($filter=Id in (...)); a group of some hundred members needs a members filter on the server
-    private string Filter => CoworkeeTagCloud.ToFilter([.. Group.Members.Select(m => m.UserId)]);
+    // the server resolves the membership: the URL stays the same size however many members the group has
+    private string Filter => $"Groups/any(m: m/GroupId eq {Group.Id})";
 
     private async Task AddAsync()
     {
@@ -47,7 +47,7 @@ public partial class GroupMembersTab
 
     private async Task MoveAllAsync()
     {
-        if (await GroupMoveDialog.PickAsync(Dialogs, L["Move all members of {0} to", Group.Name], Group.Id, allowRoot: false) is { Id: { } to })
+        if (await GroupMoveDialog.PickAsync(Dialogs, L["Move all members of {0} to", Group.Name], Group.Id, allowRoot: false, excludeSubtree: false) is { Id: { } to })
         {
             await RunAsync(() => Api.MoveGroupMembersAsync(Group.Id, to));
         }

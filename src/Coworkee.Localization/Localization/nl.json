@@ -1809,5 +1809,6 @@
   "Rename group": "Groep hernoemen",
   "Search groups": "Groepen zoeken",
   "Top level": "Hoogste niveau",
-  "{0} members": "{0} leden"
+  "{0} members": "{0} leden",
+  "Group not found.": "Groep niet gevonden."
 }

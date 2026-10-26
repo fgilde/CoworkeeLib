@@ -1809,5 +1809,6 @@
   "Rename group": "重命名组",
   "Search groups": "搜索组",
   "Top level": "顶层",
-  "{0} members": "{0} 名成员"
+  "{0} members": "{0} 名成员",
+  "Group not found.": "未找到该组。"
 }

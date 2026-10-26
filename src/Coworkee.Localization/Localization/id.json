@@ -1809,5 +1809,6 @@
   "Rename group": "Ganti nama grup",
   "Search groups": "Cari grup",
   "Top level": "Tingkat teratas",
-  "{0} members": "{0} anggota"
+  "{0} members": "{0} anggota",
+  "Group not found.": "Grup tidak ditemukan."
 }

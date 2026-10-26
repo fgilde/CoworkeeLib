@@ -1809,5 +1809,6 @@
   "Rename group": "Preimenuj grupu",
   "Search groups": "Pretraži grupe",
   "Top level": "Najviša razina",
-  "{0} members": "Članova: {0}"
+  "{0} members": "Članova: {0}",
+  "Group not found.": "Grupa nije pronađena."
 }

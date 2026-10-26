@@ -1809,5 +1809,6 @@
   "Rename group": "Renommer le groupe",
   "Search groups": "Rechercher des groupes",
   "Top level": "Niveau supérieur",
-  "{0} members": "{0} membres"
+  "{0} members": "{0} membres",
+  "Group not found.": "Groupe introuvable."
 }

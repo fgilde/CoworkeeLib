@@ -39,6 +39,8 @@ public partial class UserDetail
 
     [Inject] private IAuthorizationService Authorization { get; set; } = null!;
 
+    [Inject] private Data.IODataClient OData { get; set; } = null!;
+
     private UserDetailDto? _user;
     private IReadOnlyList<RoleDto> _roles = [];
     private IReadOnlyList<GroupDto> _groups = [];
@@ -50,6 +52,8 @@ public partial class UserDetail
     private string? _language;
     private bool _canManage;
     private bool _canManageGroups;
+    private bool _canViewGroups;
+    private Dictionary<Guid, string> _groupPaths = [];
     private bool _busy;
     private string? _error;
 
@@ -58,12 +62,11 @@ public partial class UserDetail
         var user = (await AuthenticationState).User;
         _canManage = (await Authorization.AuthorizeAsync(user, Security.PermissionPolicy.For(IdentityPermissions.Users.Manage))).Succeeded;
         _canManageGroups = (await Authorization.AuthorizeAsync(user, Security.PermissionPolicy.For(IdentityPermissions.Groups.Manage))).Succeeded;
-        var canViewGroups = _canManageGroups || (await Authorization.AuthorizeAsync(user, Security.PermissionPolicy.For(IdentityPermissions.Groups.View))).Succeeded;
+        _canViewGroups = _canManageGroups || (await Authorization.AuthorizeAsync(user, Security.PermissionPolicy.For(IdentityPermissions.Groups.View))).Succeeded;
         try
         {
             _roles = await Api.GetRolesAsync();
-            // ponytail: the first 200 groups name the paths; ancestors beyond them are left out of a path
-            _groups = canViewGroups ? [.. (await Api.GetGroupsAsync(new PageRequest(1, 200))).Items.OrderBy(g => g.Code, StringComparer.Ordinal)] : [];
+            _groups = _canManageGroups ? (await Api.GetGroupsAsync(new PageRequest(1, 200))).Items : [];
             await LoadAsync();
         }
         catch (ApiException exception)
@@ -81,6 +84,20 @@ public partial class UserDetail
         _meta = _form.ObjectEditMeta(meta => UserFormMeta.Apply(meta, L, !_canManage));
         _roleIds = _user.Roles.Select(r => r.Id).ToList();
         _groupIds = _user.Groups.Select(g => g.Id).ToList();
+        _groupPaths = await GroupPathsAsync();
+    }
+
+    // the paths only label the chips: without them the names stay, the page does not fail
+    private async Task<Dictionary<Guid, string>> GroupPathsAsync()
+    {
+        try
+        {
+            return _canViewGroups ? await Components.Groups.GroupPaths.OfAsync(OData, [.. _groupIds]) : [];
+        }
+        catch (ApiException)
+        {
+            return [];
+        }
     }
 
     private static string DisplayName(UserDetailDto user) =>
@@ -88,10 +105,9 @@ public partial class UserDetail
 
     private string RoleName(Guid id) => _roles.FirstOrDefault(r => r.Id == id)?.Name ?? string.Empty;
 
-    /// <summary>"Customer A / Hamburg"; just the name when the groups are not loaded.</summary>
-    private string GroupName(Guid id, string? name = null) => _groups.FirstOrDefault(g => g.Id == id) is { } group
-        ? Components.Groups.GroupPaths.Path(group.Code, group.Name, _groups.Select(g => (g.Code, g.Name)))
-        : name ?? string.Empty;
+    /// <summary>"Customer A / Hamburg" for the user's groups, the name for the others.</summary>
+    private string GroupName(Guid id, string? name = null) =>
+        _groupPaths.GetValueOrDefault(id) ?? _groups.FirstOrDefault(g => g.Id == id)?.Name ?? name ?? string.Empty;
 
     private Task SaveAsync(EditContext context) => RunAsync(async () =>
     {

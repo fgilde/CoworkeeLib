@@ -5,7 +5,7 @@
             <MudButton Class="mb-2" Variant="@(_pick is { Id: null } ? Variant.Filled : Variant.Outlined)" StartIcon="@Icons.Material.Outlined.VerticalAlignTop"
                        OnClick="() => _pick = new GroupPick(null)" data-testid="group-pick-root">@L["Top level"]</MudButton>
         }
-        <GroupTree SelectedId="_pick?.Id" SelectedChanged="node => _pick = new GroupPick(node.Id)" Exclude="Exclude" />
+        <GroupTree SelectedId="_pick?.Id" SelectedChanged="node => _pick = new GroupPick(node.Id)" Exclude="Exclude" ExcludeSubtree="ExcludeSubtree" />
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="() => Dialog.Cancel()">@L["Cancel"]</MudButton>

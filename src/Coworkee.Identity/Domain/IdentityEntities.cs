@@ -61,6 +61,9 @@ public sealed class User : IdentityUser<Guid>, IAuditable
 
     public DateTimeOffset? AvatarChangedAt { get; set; }
 
+    /// <summary>The groups the user is a member of; lets OData filter users by group (<c>Groups/any(m: m/GroupId eq …)</c>).</summary>
+    public List<UserGroupMember> Groups { get; } = [];
+
     public string? Street { get; set; }
 
     public string? ZipCode { get; set; }

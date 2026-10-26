@@ -14,8 +14,11 @@ public partial class GroupTree
 {
     private List<TreeItemData<GroupNodeDto>> _items = [];
     private string _search = string.Empty;
+    private int _loads;
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
+
+    [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
@@ -26,8 +29,11 @@ public partial class GroupTree
     /// <summary>Opens the tree down to the group with this code on the first load.</summary>
     [Parameter] public string? RevealCode { get; set; }
 
-    /// <summary>A group left out with its subtree, e.g. the one being moved.</summary>
+    /// <summary>A group that cannot be picked, e.g. the one being moved.</summary>
     [Parameter] public Guid? Exclude { get; set; }
+
+    /// <summary>Leaves <see cref="Exclude"/> out with its subtree (a group cannot move below itself); otherwise only the group itself is disabled.</summary>
+    [Parameter] public bool ExcludeSubtree { get; set; } = true;
 
     [Parameter] public RenderFragment<GroupNodeDto>? NodeActions { get; set; }
 
@@ -46,8 +52,7 @@ public partial class GroupTree
     public async Task ReloadAsync()
     {
         var expanded = Flatten(_items).Where(i => i.Expanded).Select(i => i.Value!.Id).ToHashSet();
-        await LoadAsync();
-        if (_search.Length == 0)
+        if (await LoadAsync() && _search.Length == 0)
         {
             await ExpandAsync(_items, expanded);
         }
@@ -74,8 +79,20 @@ public partial class GroupTree
         StateHasChanged();
     }
 
-    private async Task LoadAsync() =>
-        _items = _search.Length == 0 ? await ChildrenOfAsync(null) : Tree(await Api.SearchGroupTreeAsync(_search));
+    /// <returns><c>false</c> when a later load (a newer search text) overtook this one and its result was dropped.</returns>
+    private async Task<bool> LoadAsync()
+    {
+        var load = ++_loads;
+        var search = _search;
+        var items = search.Length == 0 ? await ChildrenOfAsync(null) : Tree(await FetchAsync(() => Api.SearchGroupTreeAsync(search)));
+        if (load != _loads)
+        {
+            return false;
+        }
+
+        _items = items;
+        return true;
+    }
 
     private async Task SearchAsync(string? text)
     {
@@ -86,7 +103,14 @@ public partial class GroupTree
     private async Task<IReadOnlyCollection<TreeItemData<GroupNodeDto>>> ChildrenAsync(GroupNodeDto? parent) => await ChildrenOfAsync(parent?.Id);
 
     private async Task<List<TreeItemData<GroupNodeDto>>> ChildrenOfAsync(Guid? parentId) =>
-        [.. (await Api.GetGroupChildrenAsync(parentId)).Where(Shown).Select(Item)];
+        [.. (await FetchAsync(() => Api.GetGroupChildrenAsync(parentId))).Where(Shown).Select(Item)];
+
+    private async Task<IReadOnlyList<GroupNodeDto>> FetchAsync(Func<Task<IReadOnlyList<GroupNodeDto>>> load)
+    {
+        IReadOnlyList<GroupNodeDto> nodes = [];
+        await Snackbar.RunAsync(async () => nodes = await load());
+        return nodes;
+    }
 
     private async Task ExpandAsync(List<TreeItemData<GroupNodeDto>> level, HashSet<Guid> expanded)
     {
@@ -102,7 +126,7 @@ public partial class GroupTree
     private List<TreeItemData<GroupNodeDto>> Tree(IReadOnlyList<GroupNodeDto> nodes)
     {
         // the excluded group comes along as ancestor of matches below it: leave out its whole subtree
-        var excluded = nodes.FirstOrDefault(n => n.Id == Exclude)?.Code;
+        var excluded = ExcludeSubtree ? nodes.FirstOrDefault(n => n.Id == Exclude)?.Code : null;
         var items = nodes.Where(n => excluded is null || !GroupPaths.Prefixes(n.Code).Contains(excluded)).ToDictionary(n => n.Id, Item);
         var children = items.Values.ToLookup(i => i.Value!.ParentId);
         foreach (var parent in items.Values.Where(p => children.Contains(p.Value!.Id)))
@@ -113,7 +137,9 @@ public partial class GroupTree
         return [.. items.Values.Where(i => i.Value!.ParentId is not { } parentId || !items.ContainsKey(parentId)).OrderBy(i => i.Value!.Name)];
     }
 
-    private bool Shown(GroupNodeDto node) => node.Id != Exclude;
+    private bool Shown(GroupNodeDto node) => !ExcludeSubtree || node.Id != Exclude;
+
+    private bool Disabled(GroupNodeDto node) => node.Id == Exclude;
 
     private static TreeItemData<GroupNodeDto> Item(GroupNodeDto node) => new() { Value = node, Text = node.Name, Expandable = node.ChildCount > 0 };
 
@@ -122,7 +148,7 @@ public partial class GroupTree
 
     private static IEnumerable<TreeItemData<GroupNodeDto>> Typed(IEnumerable<ITreeItemData<GroupNodeDto>> items) => items.OfType<TreeItemData<GroupNodeDto>>();
 
-    private Task SelectAsync(GroupNodeDto? node) => node is null ? Task.CompletedTask : SelectedChanged.InvokeAsync(node);
+    private Task SelectAsync(GroupNodeDto? node) => node is null || Disabled(node) ? Task.CompletedTask : SelectedChanged.InvokeAsync(node);
 
     private sealed class GroupNodeComparer : IEqualityComparer<GroupNodeDto?>
     {

@@ -1809,5 +1809,6 @@
   "Rename group": "Omdøb gruppe",
   "Search groups": "Søg i grupper",
   "Top level": "Øverste niveau",
-  "{0} members": "{0} medlemmer"
+  "{0} members": "{0} medlemmer",
+  "Group not found.": "Gruppen blev ikke fundet."
 }

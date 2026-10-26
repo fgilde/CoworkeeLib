@@ -19,15 +19,18 @@ public partial class GroupMoveDialog
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
-    /// <summary>The group that cannot be picked, with its subtree.</summary>
+    /// <summary>The group that cannot be picked.</summary>
     [Parameter] public Guid? Exclude { get; set; }
+
+    /// <summary>Hides the subtree of <see cref="Exclude"/> as well; off, its sub-groups stay pickable.</summary>
+    [Parameter] public bool ExcludeSubtree { get; set; } = true;
 
     /// <summary>Offers the top level besides the groups.</summary>
     [Parameter] public bool AllowRoot { get; set; }
 
-    public static async Task<GroupPick?> PickAsync(IDialogService dialogs, string title, Guid? exclude, bool allowRoot)
+    public static async Task<GroupPick?> PickAsync(IDialogService dialogs, string title, Guid? exclude, bool allowRoot, bool excludeSubtree = true)
     {
-        var parameters = new DialogParameters { [nameof(Exclude)] = exclude, [nameof(AllowRoot)] = allowRoot };
+        var parameters = new DialogParameters { [nameof(Exclude)] = exclude, [nameof(AllowRoot)] = allowRoot, [nameof(ExcludeSubtree)] = excludeSubtree };
         var dialog = await dialogs.ShowExAsync<GroupMoveDialog>(title, parameters, EditDialogExtensions.Small());
         return await dialog.Result is { Canceled: false, Data: GroupPick pick } ? pick : null;
     }

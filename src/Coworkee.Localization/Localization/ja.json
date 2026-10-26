@@ -1809,5 +1809,6 @@
   "Rename group": "グループ名を変更",
   "Search groups": "グループを検索",
   "Top level": "最上位",
-  "{0} members": "メンバー {0} 人"
+  "{0} members": "メンバー {0} 人",
+  "Group not found.": "グループが見つかりません。"
 }

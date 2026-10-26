@@ -1,6 +1,7 @@
 using Bunit;
 using Coworkee.Client.Blazor.Pages.Admin;
 using Coworkee.Contracts.Identity;
+using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 
 namespace Coworkee.Client.Blazor.Tests;
@@ -10,9 +11,11 @@ public sealed class UserDetailTests : ClientTestBase
     private static readonly Guid Editors = Guid.CreateVersion7();
     private static readonly Guid Admins = Guid.CreateVersion7();
     private readonly Guid _user = Guid.CreateVersion7();
+    private readonly FakeODataClient _odata = new();
 
     public UserDetailTests()
     {
+        Services.AddSingleton<Data.IODataClient>(_odata);
         Api.GetUserDetailAsync(_user, Arg.Any<CancellationToken>()).Returns(new UserDetailDto(
             _user, "bob@acme.test", "bob@acme.test", "Bob", "Builder", true, true, false, DateTimeOffset.UtcNow.AddMinutes(10), null,
             [new RoleRefDto(Editors, "Editors")], [new GroupRefDto(Guid.CreateVersion7(), "Crew")]));
@@ -37,11 +40,11 @@ public sealed class UserDetailTests : ClientTestBase
     [Fact]
     public void Group_chips_show_the_path_and_link_to_the_group()
     {
-        var customer = new GroupDto(Guid.CreateVersion7(), "Customer A", null, [], [], null, "00001");
-        var hamburg = new GroupDto(Guid.CreateVersion7(), "Hamburg", null, [], [], customer.Id, "00001.00001");
+        var customer = new Data.Admin.GroupRow(Guid.CreateVersion7(), "Customer A", null, [], [], null, "00001");
+        var hamburg = new Data.Admin.GroupRow(Guid.CreateVersion7(), "Hamburg", null, [], [], customer.Id, "00001.00001");
+        _odata.With("Groups", hamburg, customer);
         Api.GetUserDetailAsync(_user, Arg.Any<CancellationToken>()).Returns(new UserDetailDto(
             _user, "bob@acme.test", "bob@acme.test", "Bob", "Builder", true, false, false, null, null, [], [new GroupRefDto(hamburg.Id, "Hamburg")]));
-        Api.GetGroupsAsync(Arg.Any<Contracts.PageRequest>(), Arg.Any<CancellationToken>()).Returns(new Contracts.PagedResult<GroupDto>([hamburg, customer], 2, 1, 200));
         var auth = AddAuthorization();
         auth.SetAuthorized("viewer");
         auth.SetPolicies(Security.PermissionPolicy.For(IdentityPermissions.Users.View), Security.PermissionPolicy.For(IdentityPermissions.Groups.View));
@@ -50,6 +53,7 @@ public sealed class UserDetailTests : ClientTestBase
 
         page.WaitForAssertion(() => page.Find($"[data-group='{hamburg.Id}']").TextContent.ShouldContain("Customer A / Hamburg"));
         page.Find($"[data-group='{hamburg.Id}']").GetAttribute("href")!.ShouldEndWith($"/admin/groups?group={hamburg.Id}");
+        Api.DidNotReceiveWithAnyArgs().GetGroupsAsync(default!, default);
     }
 
     [Fact]

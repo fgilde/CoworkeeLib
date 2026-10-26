@@ -15,6 +15,8 @@ public partial class Groups
 {
     private GroupTree? _tree;
     private GroupRow? _group;
+    private Guid? _requested;
+    private bool _notFound;
     private List<(string? Code, string Name)> _ancestors = [];
     private List<GroupDetailTab> _appTabs = [];
     private bool _canManage;
@@ -64,7 +66,7 @@ public partial class Groups
     // a global search hit while the page is open
     protected override async Task OnParametersSetAsync()
     {
-        if (_ready && GroupId is { } id && id != _group?.Id)
+        if (_ready && GroupId is { } id && id != _requested)
         {
             await LoadAsync(id);
             if (_group?.Code is { } code && _tree is not null)
@@ -76,8 +78,10 @@ public partial class Groups
 
     private async Task LoadAsync(Guid id) => await Snackbar.RunAsync(async () =>
     {
+        _requested = id;
         var query = new ODataQuery { Filter = $"Id eq {id}", Top = 1, Count = false };
         _group = (await OData.QueryAsync<GroupRow>("Groups", query)).Items.FirstOrDefault(g => g.Id == id);
+        _notFound = _group is null;
         _ancestors = _group?.Code is { } code && code.Contains('.') ? await AncestorsAsync(code) : [];
     });
 
@@ -123,11 +127,25 @@ public partial class Groups
         }
     }
 
+    // someone else changed groups, members or roles: reload what is shown, keep the selection
+    private async Task RefreshAsync()
+    {
+        if (_requested is { } id)
+        {
+            await LoadAsync(id);
+        }
+
+        if (_tree is not null)
+        {
+            await _tree.ReloadAsync();
+        }
+    }
+
     private async Task DeletedAsync(GroupNodeDto node)
     {
         if (_group?.Code is { } code && GroupPaths.Prefixes(code).Contains(node.Code))
         {
-            _group = null;
+            (_group, _requested) = (null, null);
             Navigation.NavigateTo(Navigation.GetUriWithQueryParameter("group", (Guid?)null), replace: true);
         }
 

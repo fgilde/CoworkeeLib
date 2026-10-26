@@ -18,6 +18,7 @@ public sealed class GroupsPageTests : ClientTestBase
     private static readonly GroupNodeDto Hamburg = new(Guid.CreateVersion7(), Customer.Id, "00001.00001", "Hamburg", null, 0, 1);
     private static readonly GroupNodeDto Bremen = new(Guid.CreateVersion7(), Customer.Id, "00001.00002", "Bremen", null, 0, 0);
     private static readonly GroupNodeDto Supplier = new(Guid.CreateVersion7(), null, "00002", "Supplier", null, 0, 0);
+    private static readonly UserRow Ada = new(Guid.CreateVersion7(), "ada@acme.test", "Ada", "Lovelace", true, null, DateTimeOffset.UtcNow);
     private readonly FakeODataClient _odata = new();
     private IRenderedComponent<MudPopoverProvider> _popovers = null!;
 
@@ -121,8 +122,8 @@ public sealed class GroupsPageTests : ClientTestBase
     [Fact]
     public async Task Manage_actions_are_hidden_without_Manage()
     {
-        Grant(IdentityPermissions.Groups.View);
-        _odata.With("Groups", Row(Supplier));
+        Grant(IdentityPermissions.Groups.View, IdentityPermissions.Users.View);
+        _odata.With("Groups", Row(Supplier, Ada.Id)).With("Users", Ada);
         var page = RenderPage();
         page.WaitForElement($"[data-group-node='{Supplier.Id}']");
 
@@ -132,6 +133,104 @@ public sealed class GroupsPageTests : ClientTestBase
         page.FindAll("[data-testid='new-root-group']").ShouldBeEmpty();
         page.FindAll("[data-testid^='group-actions-']").ShouldBeEmpty();
         page.FindAll("[data-testid='group-save']").ShouldBeEmpty();
+
+        await Tab(page, "Members").ClickAsync(new());
+        page.WaitForElement("[data-member='ada@acme.test']");
+        page.FindAll("[data-testid='group-move-members']").ShouldBeEmpty();
+        page.FindAll("[data-testid^='remove-member-']").ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Members_table_filters_on_the_server_without_listing_member_ids()
+    {
+        var members = Enumerable.Range(0, 300).Select(_ => Guid.CreateVersion7()).ToArray();
+        _odata.With("Groups", Row(Supplier, members)).With("Users", Ada);
+        var queries = new List<ODataQuery>();
+        _odata.Queried += (_, query) => queries.Add(query);
+        Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Supplier.Id}");
+        var page = RenderPage();
+        page.WaitForElement("[data-testid='group-title']");
+
+        await Tab(page, "Members").ClickAsync(new());
+
+        page.WaitForElement("[data-member='ada@acme.test']");
+        var users = queries.Where(q => q.Filter?.Contains("Groups/any") == true).ToList();
+        users.ShouldNotBeEmpty();
+        users.ShouldAllBe(q => q.Filter!.Contains($"Groups/any(m: m/GroupId eq {Supplier.Id})"));
+        queries.ShouldAllBe(q => !members.Any(id => q.ToQueryString().Contains(id.ToString())));
+    }
+
+    [Fact]
+    public async Task Moving_all_members_into_a_sub_group_calls_the_api()
+    {
+        var dialogs = Render<MudDialogProvider>();
+        _odata.With("Groups", Row(Customer, Ada.Id)).With("Users", Ada);
+        Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Customer.Id}");
+        var page = RenderPage();
+        page.WaitForElement("[data-testid='group-title']");
+        await Tab(page, "Members").ClickAsync(new());
+        page.WaitForElement("[data-testid='group-move-members']");
+
+        var clicked = page.Find("[data-testid='group-move-members']").ClickAsync(new());
+        dialogs.WaitForElement($"[data-group-node='{Customer.Id}']");
+        await Expander(dialogs.Find($"[data-group-node='{Customer.Id}']")).ClickAsync(new());
+        dialogs.WaitForElement($"[data-group-node='{Hamburg.Id}']");
+        await dialogs.Find($"[data-group-node='{Hamburg.Id}']").ClickAsync(new());
+        await dialogs.Find("[data-testid='group-pick-ok']").ClickAsync(new());
+        await clicked;
+
+        await Api.Received(1).MoveGroupMembersAsync(Customer.Id, Hamburg.Id, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Group_move_dialog_hides_the_groups_own_subtree()
+    {
+        Api.SearchGroupTreeAsync("Ham", Arg.Any<CancellationToken>()).Returns([Customer, Hamburg]);
+        var dialogs = Render<MudDialogProvider>();
+        var page = RenderPage();
+        page.WaitForElement($"[data-group-node='{Customer.Id}']");
+
+        await page.Find($"[data-testid='group-actions-{Customer.Id}'] button, button[data-testid='group-actions-{Customer.Id}']").ClickAsync(new());
+        _popovers.WaitForElement("[data-testid='group-move']");
+        _ = _popovers.Find("[data-testid='group-move']").ClickAsync(new());
+
+        dialogs.WaitForAssertion(() => dialogs.FindAll("[data-group-node]").Select(n => n.TextContent).ShouldBe(["Supplier"]));
+        dialogs.Find("input[data-testid='group-search'], [data-testid='group-search'] input").Input("Ham");
+        dialogs.WaitForAssertion(() => dialogs.Markup.ShouldContain("No group matches."));
+        dialogs.FindAll("[data-group-node]").ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void A_change_by_someone_else_reloads_the_tree_and_keeps_the_selection()
+    {
+        _odata.With("Groups", Row(Supplier));
+        Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Supplier.Id}");
+        var page = RenderPage();
+        page.WaitForAssertion(() => page.Find("[data-testid='group-title']").TextContent.ShouldContain("Supplier"));
+        var renamed = Supplier with { Name = "Vendor" };
+        Api.GetGroupChildrenAsync(null, Arg.Any<CancellationToken>()).Returns([Customer, renamed]);
+        _odata.With("Groups", Row(renamed));
+
+        Services.GetRequiredService<FakeRealtimeConnection>().Push("type:UserGroup");
+
+        page.WaitForAssertion(() => page.Find($"[data-group-node='{Supplier.Id}']").TextContent.ShouldBe("Vendor"));
+        page.Find("[data-testid='group-title']").TextContent.ShouldContain("Vendor");
+        page.Find($"[data-group-node='{Supplier.Id}']").Closest(".mud-treeview-item-content")!.ClassList.ShouldContain("mud-treeview-item-selected");
+    }
+
+    [Fact]
+    public void Unknown_deep_link_says_the_group_was_not_found()
+    {
+        var queries = new List<ODataQuery>();
+        _odata.Queried += (_, query) => queries.Add(query);
+        Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Guid.CreateVersion7()}");
+
+        var page = RenderPage();
+
+        page.WaitForAssertion(() => page.Find("[data-testid='group-empty']").TextContent.ShouldBe("Group not found."));
+        page.Render();
+        page.Find("[data-testid='group-empty']").TextContent.ShouldBe("Group not found.");
+        queries.Count(q => q.Filter?.StartsWith("Id eq", StringComparison.Ordinal) == true).ShouldBe(1);
     }
 
     [Fact]
@@ -155,10 +254,15 @@ public sealed class GroupsPageTests : ClientTestBase
 
     private void Grant(params string[] permissions) => Api.GetMyPermissionsAsync(Arg.Any<CancellationToken>()).Returns(permissions);
 
-    private static GroupRow Row(GroupNodeDto node) => new(node.Id, node.Name, node.Description, [], [], node.ParentId, node.Code);
+    private static GroupRow Row(GroupNodeDto node, params Guid[] members) =>
+        new(node.Id, node.Name, node.Description, [.. members.Select(m => new GroupMemberRow(m))], [], node.ParentId, node.Code);
 
-    private static AngleSharp.Dom.IElement Expander(IRenderedComponent<Groups> page, GroupNodeDto node) =>
-        page.Find($"[data-group-node='{node.Id}']").Closest(".mud-treeview-item-content")!.QuerySelector(".mud-treeview-item-arrow button")!;
+    private static AngleSharp.Dom.IElement Expander(IRenderedComponent<Groups> page, GroupNodeDto node) => Expander(page.Find($"[data-group-node='{node.Id}']"));
+
+    private static AngleSharp.Dom.IElement Expander(AngleSharp.Dom.IElement node) =>
+        node.Closest(".mud-treeview-item-content")!.QuerySelector(".mud-treeview-item-arrow button")!;
+
+    private static AngleSharp.Dom.IElement Tab(IRenderedComponent<Groups> page, string title) => page.FindAll(".mud-tab").Single(t => t.TextContent.Trim() == title);
 
     private static List<string> Tabs(IRenderedComponent<Groups> page) => [.. page.FindAll(".mud-tab").Select(t => t.TextContent.Trim())];
 

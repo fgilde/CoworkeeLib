@@ -1809,5 +1809,6 @@
   "Rename group": "Přejmenovat skupinu",
   "Search groups": "Hledat skupiny",
   "Top level": "Nejvyšší úroveň",
-  "{0} members": "Členové: {0}"
+  "{0} members": "Členové: {0}",
+  "Group not found.": "Skupina nebyla nalezena."
 }

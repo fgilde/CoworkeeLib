@@ -2,6 +2,7 @@
 @using Coworkee.Client.Blazor.Components.Groups
 
 <PageHeader Title="Groups" Description="Groups give their members roles together." />
+<RealtimeSubscription Topic="@Coworkee.Contracts.Realtime.RealtimeTopics.Type("UserGroup")" OnEvent="_ => RefreshAsync()" />
 <MudGrid Spacing="3">
     <MudItem xs="12" md="4">
         <MudPaper Outlined="true" Class="pa-3">
@@ -49,7 +50,7 @@
         }
         else
         {
-            <MudText Class="mud-text-secondary pa-4">@L["Choose a group in the tree."]</MudText>
+            <MudText Class="mud-text-secondary pa-4" data-testid="group-empty">@L[_notFound ? "Group not found." : "Choose a group in the tree."]</MudText>
         }
     </MudItem>
 </MudGrid>
