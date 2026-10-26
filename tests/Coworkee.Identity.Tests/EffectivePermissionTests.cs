@@ -35,7 +35,7 @@ public sealed class EffectivePermissionTests(IdentityApp app) : IAsyncLifetime
 
         var permissions = await Admin.GetFromJsonAsync<string[]>($"/api/v1/identity/users/{user.Id}/permissions", Ct);
 
-        permissions.ShouldBe([IdentityPermissions.Groups.Manage, IdentityPermissions.Groups.View, IdentityPermissions.Users.View], ignoreOrder: true);
+        permissions.ShouldBe([IdentityPermissions.Groups.Manage, IdentityPermissions.Groups.ManageMembers, IdentityPermissions.Groups.View, IdentityPermissions.Users.View], ignoreOrder: true);
     }
 
     [Fact]

@@ -25,7 +25,7 @@ public sealed record UpdateGroup(Guid Id, GroupRequest Group) : ICommand<Result>
 [RequiresPermission(IdentityPermissions.Groups.Manage)]
 public sealed record DeleteGroup(Guid Id) : ICommand<Result>;
 
-[RequiresPermission(IdentityPermissions.Groups.Manage)]
+[RequiresPermission(IdentityPermissions.Groups.ManageMembers)]
 public sealed record SetGroupMembers(Guid Id, IReadOnlyList<Guid> UserIds) : ICommand<Result>;
 
 [RequiresPermission(IdentityPermissions.Groups.Manage)]
@@ -162,14 +162,13 @@ internal sealed class SetGroupMembersHandler(CoworkeeDbContext db, ICurrentUser 
         }
 
         var wanted = command.UserIds.Distinct().ToList();
-        var valid = await db.Set<User>().CountAsync(u => wanted.Contains(u.Id) && u.TenantId == currentUser.TenantId, cancellationToken);
-        if (valid != wanted.Count)
+        if (!await GroupMembers.AllInTenantAsync(db, currentUser, wanted, cancellationToken))
         {
-            return Error.Validation(nameof(command.UserIds), "Unknown user.");
+            return GroupMembers.UnknownUser;
         }
 
         group.Members.RemoveAll(m => !wanted.Contains(m.UserId));
-        group.Members.AddRange(wanted.Where(id => group.Members.All(m => m.UserId != id)).Select(id => new UserGroupMember { GroupId = group.Id, UserId = id }));
+        GroupMembers.AddMissing(group, wanted);
         return Result.Success();
     }
 }

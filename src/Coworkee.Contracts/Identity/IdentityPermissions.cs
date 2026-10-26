@@ -16,6 +16,8 @@ public static class IdentityPermissions
     {
         public const string View = "Identity.Groups.View";
         public const string Manage = "Identity.Groups.Manage";
+        public const string ManageMembers = "Identity.Groups.ManageMembers";
+        public const string ScopeAll = "Identity.Groups.ScopeAll";
     }
 
     public static class Roles

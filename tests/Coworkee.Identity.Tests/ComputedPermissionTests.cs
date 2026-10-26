@@ -37,7 +37,7 @@ public sealed class ComputedPermissionTests(IdentityApp app) : IAsyncLifetime
         var others = await app.As(other, _setup.TenantId).GetFromJsonAsync<string[]>("/api/v1/identity/permissions/me", Ct);
         var guarded = await app.As(lead, _setup.TenantId).GetAsync("/api/v1/identity/groups", Ct);
 
-        mine.ShouldBe([IdentityPermissions.Groups.Manage, IdentityPermissions.Groups.View, IdentityPermissions.Users.View], ignoreOrder: true);
+        mine.ShouldBe([IdentityPermissions.Groups.Manage, IdentityPermissions.Groups.ManageMembers, IdentityPermissions.Groups.View, IdentityPermissions.Users.View], ignoreOrder: true);
         effective.ShouldBe(mine, ignoreOrder: true);
         others.ShouldBeEmpty();
         guarded.StatusCode.ShouldBe(HttpStatusCode.OK);
