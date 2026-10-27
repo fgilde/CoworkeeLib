@@ -8,6 +8,7 @@ internal sealed class RabbitMqTransport(IConnection connection, RabbitMqOptions 
 {
     public const string TenantHeader = "coworkee-tenant";
     public const string ActorHeader = "coworkee-actor";
+    public const string ImpersonatorHeader = "coworkee-impersonator";
 
     private readonly SemaphoreSlim _gate = new(1, 1);
     private IChannel? _channel;
@@ -30,7 +31,7 @@ internal sealed class RabbitMqTransport(IConnection connection, RabbitMqOptions 
                 CorrelationId = message.CorrelationId,
                 ContentType = "application/json",
                 Persistent = true,
-                Headers = new Dictionary<string, object?> { [TenantHeader] = message.TenantId?.ToString(), [ActorHeader] = message.ActorId?.ToString() },
+                Headers = new Dictionary<string, object?> { [TenantHeader] = message.TenantId?.ToString(), [ActorHeader] = message.ActorId?.ToString(), [ImpersonatorHeader] = message.ImpersonatorId?.ToString() },
             };
             await _channel.BasicPublishAsync(options.Exchange, message.EventType, mandatory: false, properties, Encoding.UTF8.GetBytes(message.Payload), cancellationToken);
         }

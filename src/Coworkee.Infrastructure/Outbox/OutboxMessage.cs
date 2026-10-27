@@ -17,6 +17,9 @@ public sealed class OutboxMessage
 
     public Guid? ActorId { get; init; }
 
+    /// <summary>Who was signed in as <see cref="ActorId"/> ("Log in as"); the handlers run with him as <c>ICurrentUser.ImpersonatorId</c>.</summary>
+    public Guid? ImpersonatorId { get; init; }
+
     public string? CorrelationId { get; init; }
 
     public DateTimeOffset? ProcessedAt { get; set; }

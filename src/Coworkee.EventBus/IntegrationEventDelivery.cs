@@ -35,7 +35,7 @@ public sealed class IntegrationEventDelivery(IServiceScopeFactory scopes, TimePr
     private async Task DeliverTypedAsync<TEvent>(IntegrationMessage message, object integrationEvent, CancellationToken cancellationToken)
         where TEvent : IIntegrationEvent
     {
-        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(message.ActorId, message.TenantId));
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(message.ActorId, message.TenantId, message.ImpersonatorId));
         int count;
         await using (var probe = scopes.CreateAsyncScope())
         {

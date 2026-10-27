@@ -108,6 +108,18 @@ public sealed class RecordingJob(ICurrentUser currentUser) : IBackgroundJob<stri
     }
 }
 
+public sealed class GroupCreatingJob(JobsTestDbContext db, ICurrentUser currentUser) : IBackgroundJob<string>
+{
+    public static ConcurrentBag<string> Created { get; } = [];
+
+    public async Task ExecuteAsync(string args, CancellationToken cancellationToken)
+    {
+        db.Add(new Coworkee.Identity.Domain.UserGroup { Name = args, TenantId = currentUser.TenantId!.Value });
+        await db.SaveChangesAsync(cancellationToken);
+        Created.Add(args);
+    }
+}
+
 public sealed class FailingOnceJob : IBackgroundJob<string>
 {
     public static ConcurrentDictionary<string, int> Attempts { get; } = new();

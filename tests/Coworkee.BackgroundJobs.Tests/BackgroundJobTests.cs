@@ -3,6 +3,7 @@ using Coworkee.Core.Security;
 using Hangfire;
 using Hangfire.Storage;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.BackgroundJobs.Tests;
@@ -20,6 +21,25 @@ public sealed class BackgroundJobTests(JobsApp app)
 
         await Eventually(() => RecordingJob.Calls.Any(c => c.Value == marker));
         RecordingJob.Calls.Single(c => c.Value == marker).ShouldBe((marker, user, tenant));
+    }
+
+    [Fact]
+    public async Task A_job_enqueued_while_signed_in_as_another_user_names_the_impersonator_in_the_audit_trail()
+    {
+        var setup = await app.SetupAsync();
+        var (user, impersonator, name) = (Guid.CreateVersion7(), Guid.CreateVersion7(), "Group " + Guid.NewGuid());
+        using (CurrentUserScope.Begin(new ImpersonatedUser(user, setup.TenantId, impersonator)))
+        using (var scope = app.App.Services.CreateScope())
+        {
+            scope.ServiceProvider.GetRequiredService<IBackgroundJobs>().Enqueue<GroupCreatingJob, string>(name);
+        }
+
+        await Eventually(() => GroupCreatingJob.Created.Contains(name));
+        using var nobody = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
+        await using var read = app.App.Services.CreateAsyncScope();
+        var entry = await read.ServiceProvider.GetRequiredService<JobsTestDbContext>().Set<Coworkee.Infrastructure.Auditing.AuditEntry>().IgnoreQueryFilters()
+            .Where(e => e.ActorId == user).Select(e => new { e.EntityType, e.ImpersonatorId }).SingleAsync(Ct);
+        entry.ImpersonatorId.ShouldBe(impersonator);
     }
 
     [Fact]

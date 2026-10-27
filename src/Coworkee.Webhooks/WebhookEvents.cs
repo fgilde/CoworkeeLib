@@ -28,21 +28,22 @@ internal sealed class WebhookPublisher(CoworkeeDbContext db, ICurrentUser curren
 {
     public Task PublishAsync(string type, object data, CancellationToken cancellationToken = default)
     {
-        db.Add(WebhookOutbox.Message(new WebhookAppEvent(type, JsonSerializer.SerializeToElement(data, JsonSerializerOptions.Web)), currentUser.TenantId, currentUser.UserId, clock));
+        db.Add(WebhookOutbox.Message(new WebhookAppEvent(type, JsonSerializer.SerializeToElement(data, JsonSerializerOptions.Web)), currentUser.TenantId, currentUser, clock));
         return Task.CompletedTask;
     }
 }
 
 internal static class WebhookOutbox
 {
-    /// <param name="actorId">Null for an anonymous record; then the message carries no trace id either.</param>
-    public static OutboxMessage Message(object payload, Guid? tenantId, Guid? actorId, TimeProvider clock, bool anonymous = false) => new()
+    /// <param name="anonymous">An anonymous record: the message names no actor and carries no trace id.</param>
+    public static OutboxMessage Message(object payload, Guid? tenantId, ICurrentUser actor, TimeProvider clock, bool anonymous = false) => new()
     {
         Type = payload.GetType().AssemblyQualifiedName!,
         Payload = JsonSerializer.Serialize(payload, payload.GetType()),
         OccurredAt = clock.GetUtcNow(),
         TenantId = tenantId,
-        ActorId = anonymous ? null : actorId,
+        ActorId = anonymous ? null : actor.UserId,
+        ImpersonatorId = anonymous ? null : actor.ImpersonatorId,
         CorrelationId = anonymous ? null : Activity.Current?.TraceId.ToHexString(),
     };
 }
@@ -75,7 +76,7 @@ internal sealed class WebhookChangeInterceptor(IOptions<WebhookOptions> options,
             .Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted && options.Value.Entities.Contains(e.Metadata.GetRootType().ClrType))
             .Where(e => e.State != EntityState.Modified || e.Properties.Any(p => p.IsModified))
             .Select(e => WebhookOutbox.Message(
-                new WebhookEntityChanged(WebhookNames.EntitySet(registry, e.Metadata.GetRootType().ClrType), Key(e), Action(e)), TenantOf(e) ?? currentUser.TenantId, currentUser.UserId, clock, e.Entity is IAnonymous))
+                new WebhookEntityChanged(WebhookNames.EntitySet(registry, e.Metadata.GetRootType().ClrType), Key(e), Action(e)), TenantOf(e) ?? currentUser.TenantId, currentUser, clock, e.Entity is IAnonymous))
             .ToList();
         context.Set<OutboxMessage>().AddRange(messages);
     }

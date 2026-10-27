@@ -40,6 +40,7 @@ internal sealed class OutboxInterceptor(ICurrentUser currentUser, TimeProvider c
                 OccurredAt = now,
                 TenantId = currentUser.TenantId,
                 ActorId = aggregate is IAnonymous ? null : currentUser.UserId,
+                ImpersonatorId = aggregate is IAnonymous ? null : currentUser.ImpersonatorId,
                 CorrelationId = aggregate is IAnonymous ? null : correlationId,
             }));
             aggregate.ClearDomainEvents();

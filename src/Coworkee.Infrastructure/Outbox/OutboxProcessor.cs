@@ -29,7 +29,7 @@ public sealed partial class OutboxProcessor<TContext>(IServiceScopeFactory scope
             {
                 var type = Type.GetType(message.Type, throwOnError: true)!;
                 var payload = JsonSerializer.Deserialize(message.Payload, type)!;
-                using var actor = CurrentUserScope.Begin(new ImpersonatedUser(message.ActorId, message.TenantId));
+                using var actor = CurrentUserScope.Begin(new ImpersonatedUser(message.ActorId, message.TenantId, message.ImpersonatorId));
                 await using var handlerScope = scopes.CreateAsyncScope();
                 if (payload is IDomainEvent domainEvent)
                 {

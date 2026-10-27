@@ -19,6 +19,7 @@ internal sealed class OutboxEventBus(CoworkeeDbContext db, ICurrentUser currentU
             OccurredAt = clock.GetUtcNow(),
             TenantId = currentUser.TenantId,
             ActorId = currentUser.UserId,
+            ImpersonatorId = currentUser.ImpersonatorId,
             CorrelationId = Activity.Current?.TraceId.ToHexString(),
         });
         return Task.CompletedTask;

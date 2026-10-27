@@ -116,5 +116,6 @@ internal sealed class AccessChangeInterceptor(ICurrentUser currentUser, TimeProv
         OccurredAt = clock.GetUtcNow(),
         TenantId = tenantId,
         ActorId = currentUser.UserId,
+        ImpersonatorId = currentUser.ImpersonatorId,
     };
 }

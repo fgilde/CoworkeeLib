@@ -48,6 +48,7 @@ internal sealed class ElsaStimuli(IStimulusSender sender, ICurrentUser currentUs
     {
         input[ElsaInputs.UserId] = currentUser.UserId;
         input[ElsaInputs.TenantId] = currentUser.TenantId;
+        input[ElsaInputs.ImpersonatorId] = currentUser.ImpersonatorId;
         await sender.SendAsync(global::Elsa.Workflows.Helpers.ActivityTypeNameHelper.GenerateTypeName<TActivity>(), stimulus, new StimulusMetadata { Input = input! }, cancellationToken);
     }
 }
@@ -85,6 +86,7 @@ internal sealed class EntityChangeInterceptor(ElsaWorkflowOptions options, ICurr
             OccurredAt = clock.GetUtcNow(),
             TenantId = currentUser.TenantId,
             ActorId = c.Anonymous ? null : currentUser.UserId,
+            ImpersonatorId = c.Anonymous ? null : currentUser.ImpersonatorId,
         }));
     }
 }
@@ -102,4 +104,5 @@ public static class ElsaInputs
     public const string Action = "Action";
     public const string UserId = "UserId";
     public const string TenantId = "TenantId";
+    public const string ImpersonatorId = "ImpersonatorId";
 }

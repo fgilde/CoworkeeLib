@@ -84,7 +84,8 @@ internal sealed partial class RabbitMqConsumer(
             Encoding.UTF8.GetString(delivered.Body.Span),
             Header(properties, RabbitMqTransport.TenantHeader),
             Header(properties, RabbitMqTransport.ActorHeader),
-            properties.CorrelationId);
+            properties.CorrelationId,
+            Header(properties, RabbitMqTransport.ImpersonatorHeader));
     }
 
     private static Guid? Header(IReadOnlyBasicProperties properties, string name) =>

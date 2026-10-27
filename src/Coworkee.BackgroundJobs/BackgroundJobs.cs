@@ -110,21 +110,22 @@ public sealed class RecurringJobRunner<TJob>(IServiceProvider services)
     }
 }
 
-public sealed record JobEnvelope<TArgs>(TArgs Args, Guid? UserId, Guid? TenantId);
+/// <param name="ImpersonatorId">Who was signed in as <paramref name="UserId"/> when the job was enqueued ("Log in as"); the audit trail of the job names him too.</param>
+public sealed record JobEnvelope<TArgs>(TArgs Args, Guid? UserId, Guid? TenantId, Guid? ImpersonatorId = null);
 
 internal sealed class HangfireBackgroundJobs(IBackgroundJobClient client, ICurrentUser currentUser) : IBackgroundJobs
 {
     public string Enqueue<TJob, TArgs>(TArgs args, string queue = "default")
         where TJob : IBackgroundJob<TArgs>
     {
-        var envelope = new JobEnvelope<TArgs>(args, currentUser.UserId, currentUser.TenantId);
+        var envelope = new JobEnvelope<TArgs>(args, currentUser.UserId, currentUser.TenantId, currentUser.ImpersonatorId);
         return client.Enqueue<JobRunner<TJob, TArgs>>(queue, runner => runner.RunAsync(envelope, CancellationToken.None));
     }
 
     public string Schedule<TJob, TArgs>(TArgs args, TimeSpan delay, string queue = "default")
         where TJob : IBackgroundJob<TArgs>
     {
-        var envelope = new JobEnvelope<TArgs>(args, currentUser.UserId, currentUser.TenantId);
+        var envelope = new JobEnvelope<TArgs>(args, currentUser.UserId, currentUser.TenantId, currentUser.ImpersonatorId);
         return client.Schedule<JobRunner<TJob, TArgs>>(queue, runner => runner.RunAsync(envelope, CancellationToken.None), delay);
     }
 }
@@ -134,7 +135,7 @@ public sealed class JobRunner<TJob, TArgs>(IServiceProvider services)
 {
     public async Task RunAsync(JobEnvelope<TArgs> envelope, CancellationToken cancellationToken)
     {
-        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(envelope.UserId, envelope.TenantId));
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(envelope.UserId, envelope.TenantId, envelope.ImpersonatorId));
         await using var scope = services.CreateAsyncScope();
         await ActivatorUtilities.GetServiceOrCreateInstance<TJob>(scope.ServiceProvider).ExecuteAsync(envelope.Args, cancellationToken);
     }

@@ -102,6 +102,28 @@ public sealed class OutboxTests(DatabaseFixture database) : IAsyncLifetime
         context.TenantId.ShouldBe(raisingTenant);
     }
 
+    [Fact]
+    public async Task Handlers_of_an_event_raised_while_signed_in_as_another_user_name_the_impersonator_in_the_audit_trail()
+    {
+        await using var provider = Services(services => services.AddScoped<IDomainEventHandler<DocumentRenamed>, CopyingHandler>());
+        _user.ImpersonatorId = Guid.CreateVersion7();
+        var (raisingUser, impersonator) = (_user.UserId, _user.ImpersonatorId);
+        var document = new Document { Title = "A" };
+        document.Rename("B");
+        await SaveAsync(provider, document);
+
+        _user.UserId = null;
+        _user.ImpersonatorId = null;
+        await provider.GetRequiredService<OutboxProcessor<TestDbContext>>().ProcessBatchAsync(10, TestContext.Current.CancellationToken);
+
+        (await MessagesAsync(provider)).Single().ImpersonatorId.ShouldBe(impersonator);
+        await using var scope = provider.CreateAsyncScope();
+        var entries = await scope.ServiceProvider.GetRequiredService<TestDbContext>().Set<Auditing.AuditEntry>().IgnoreQueryFilters()
+            .Select(e => new { e.ActorId, e.ImpersonatorId }).ToListAsync(TestContext.Current.CancellationToken);
+        entries.Count.ShouldBe(2);
+        entries.ShouldAllBe(e => e.ActorId == raisingUser && e.ImpersonatorId == impersonator);
+    }
+
     private ServiceProvider Services(Action<IServiceCollection>? configure = null) => database.CreateServices(_user, _clock, services =>
     {
         services.AddSingleton<IDomainEventHandler<DocumentRenamed>>(_handler);
@@ -123,6 +145,15 @@ public sealed class OutboxTests(DatabaseFixture database) : IAsyncLifetime
             recorder.UserId = currentUser.UserId;
             recorder.TenantId = currentUser.TenantId;
             return Task.CompletedTask;
+        }
+    }
+
+    private sealed class CopyingHandler(TestDbContext db) : IDomainEventHandler<DocumentRenamed>
+    {
+        public async Task HandleAsync(DocumentRenamed domainEvent, CancellationToken cancellationToken)
+        {
+            db.Documents.Add(new Document { Title = "Copy of " + domainEvent.Title });
+            await db.SaveChangesAsync(cancellationToken);
         }
     }
 

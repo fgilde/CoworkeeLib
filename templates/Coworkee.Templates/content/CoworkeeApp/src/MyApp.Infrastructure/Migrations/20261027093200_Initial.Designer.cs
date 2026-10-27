@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20261027084507_Initial")]
+    [Migration("20261027093200_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -1074,6 +1074,9 @@ namespace MyApp.Infrastructure.Migrations
 
                     b.Property<string>("Error")
                         .HasColumnType("text");
+
+                    b.Property<Guid?>("ImpersonatorId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("NextAttemptAt")
                         .HasColumnType("timestamp with time zone");
@@ -3011,7 +3014,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20261027084507_Initial")]
+    [Migration("20261027093200_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -3997,6 +4000,9 @@ namespace MyApp.Infrastructure.Migrations
 
                     b.Property<string>("Error")
                         .HasColumnType("text");
+
+                    b.Property<Guid?>("ImpersonatorId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("NextAttemptAt")
                         .HasColumnType("timestamp with time zone");

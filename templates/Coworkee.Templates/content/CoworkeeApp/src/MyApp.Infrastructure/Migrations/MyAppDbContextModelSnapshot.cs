@@ -1072,6 +1072,9 @@ namespace MyApp.Infrastructure.Migrations
                     b.Property<string>("Error")
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("ImpersonatorId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset?>("NextAttemptAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -3991,6 +3994,9 @@ namespace MyApp.Infrastructure.Migrations
 
                     b.Property<string>("Error")
                         .HasColumnType("text");
+
+                    b.Property<Guid?>("ImpersonatorId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("NextAttemptAt")
                         .HasColumnType("timestamp with time zone");

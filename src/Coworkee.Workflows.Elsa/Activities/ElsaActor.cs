@@ -26,7 +26,9 @@ internal sealed class ElsaActor(AsyncServiceScope scope, IDisposable user) : IAs
         var tenantId = id is { } user
             ? await TenantOfAsync(scopes, user, context.CancellationToken)
             : ElsaValues.Guid(context, ElsaInputs.TenantId) ?? throw new InvalidOperationException("Set Run as: the workflow was not started in an organisation.");
-        var actor = CurrentUserScope.Begin(new ImpersonatedUser(id, tenantId));
+        // acting as the user who started the workflow keeps who was signed in as him; a "Run as" user acts on his own
+        var impersonator = userId is null ? ElsaValues.Guid(context, ElsaInputs.ImpersonatorId) : null;
+        var actor = CurrentUserScope.Begin(new ImpersonatedUser(id, tenantId, impersonator));
         return new ElsaActor(scopes.CreateAsyncScope(), actor);
     }
 

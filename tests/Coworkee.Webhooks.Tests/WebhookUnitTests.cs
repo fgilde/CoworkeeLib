@@ -80,13 +80,14 @@ public sealed class WebhookUnitTests
     public void Messages_of_anonymous_records_carry_no_actor_and_no_trace()
     {
         using var request = new System.Diagnostics.Activity("request").Start();
-        var user = Guid.NewGuid();
+        var (user, impersonator) = (Guid.NewGuid(), Guid.NewGuid());
+        var actor = new Core.Security.ImpersonatedUser(user, null, impersonator);
 
-        var named = WebhookOutbox.Message(new WebhookEntityChanged("Ballots", "1", WebhookNames.Created), null, user, TimeProvider.System);
-        var anonymous = WebhookOutbox.Message(new WebhookEntityChanged("Ballots", "1", WebhookNames.Created), null, user, TimeProvider.System, anonymous: true);
+        var named = WebhookOutbox.Message(new WebhookEntityChanged("Ballots", "1", WebhookNames.Created), null, actor, TimeProvider.System);
+        var anonymous = WebhookOutbox.Message(new WebhookEntityChanged("Ballots", "1", WebhookNames.Created), null, actor, TimeProvider.System, anonymous: true);
 
-        (named.ActorId, named.CorrelationId is not null).ShouldBe((user, true));
-        (anonymous.ActorId, anonymous.CorrelationId).ShouldBe((null, null));
+        (named.ActorId, named.ImpersonatorId, named.CorrelationId is not null).ShouldBe((user, impersonator, true));
+        (anonymous.ActorId, anonymous.ImpersonatorId, anonymous.CorrelationId).ShouldBe((null, null, null));
     }
 
     [Fact]
