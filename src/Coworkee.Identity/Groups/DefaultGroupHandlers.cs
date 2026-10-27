@@ -29,10 +29,24 @@ internal sealed class DefaultGroupHandlers(CoworkeeDbContext db) : IHandler<GetD
         {
             return await SetAsync(command.GroupId, cancellationToken);
         }
-        catch (Exception exception) when (exception is DbUpdateException or System.Data.Common.DbException { IsTransient: true })
+        catch (Exception exception) when (IsClash(exception))
         {
             return Conflict;
         }
+    }
+
+    // providers wrap it: Npgsql's execution strategy throws "likely due to a transient failure" around the DbUpdateException of a deadlock
+    internal static bool IsClash(Exception? exception)
+    {
+        for (; exception is not null; exception = exception.InnerException)
+        {
+            if (exception is DbUpdateException or System.Data.Common.DbException { IsTransient: true })
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // saved here, not by the pipeline, so a clash becomes a 409: EF does not order updates by a filtered unique index, so the old default is

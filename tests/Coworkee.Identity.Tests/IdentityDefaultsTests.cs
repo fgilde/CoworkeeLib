@@ -134,6 +134,14 @@ public sealed class IdentityDefaultsTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public void A_deadlock_wrapped_by_the_execution_strategy_still_counts_as_a_clash()
+    {
+        // Npgsql reports a deadlock as InvalidOperationException("likely due to a transient failure") around the DbUpdateException
+        Coworkee.Identity.Groups.DefaultGroupHandlers.IsClash(new InvalidOperationException("transient", new DbUpdateException("deadlock"))).ShouldBeTrue();
+        Coworkee.Identity.Groups.DefaultGroupHandlers.IsClash(new InvalidOperationException("other")).ShouldBeFalse();
+    }
+
+    [Fact]
     public async Task Concurrent_default_changes_answer_204_or_409_never_500()
     {
         var groups = new[] { await GroupAsync("A"), await GroupAsync("B"), await GroupAsync("C") };
