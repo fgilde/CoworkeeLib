@@ -115,6 +115,19 @@ public sealed class IdentityDefaultsTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Moving_the_default_while_another_tenant_has_one_changes_only_the_own_tenant()
+    {
+        var (a, b) = (await GroupAsync("A"), await GroupAsync("B"));
+        var (_, foreign) = await ForeignTenantAsync(isDefault: true);
+        await SetDefaultAsync(Admin, a);
+
+        (await SetDefaultAsync(Admin, b)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        var defaults = await app.InDbAsync(null, db => db.Set<UserGroup>().IgnoreQueryFilters().Where(g => g.IsDefault).Select(g => g.Id).ToListAsync(Ct));
+        defaults.ShouldBe([b, foreign], ignoreOrder: true);
+    }
+
+    [Fact]
     public async Task Default_role_flag_is_kept_when_a_client_leaves_it_out_and_needs_Roles_Manage()
     {
         var role = await RoleAsync("Customer", isDefault: true);
