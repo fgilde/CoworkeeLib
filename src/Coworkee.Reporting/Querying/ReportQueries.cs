@@ -103,9 +103,15 @@ internal sealed class ReportQueries(IServiceProvider services, ReportSchema sche
             : source;
     }
 
-    // the column of a field, through its navigations, keeps a DateTimeOffset as DateTimeOffsetToBinaryConverter writes it
-    private static bool StoredAsNumber(Microsoft.EntityFrameworkCore.Metadata.IModel model, Type rowType, IReadOnlyList<System.Reflection.PropertyInfo> chain)
+    // the column of a field, through its navigations, keeps a DateTimeOffset as DateTimeOffsetToBinaryConverter writes it, and the context maps the
+    // function the buckets read it with (a Coworkee DbContext does, through ReportModelContributor; an external one does not)
+    internal static bool StoredAsNumber(Microsoft.EntityFrameworkCore.Metadata.IModel model, Type rowType, IReadOnlyList<System.Reflection.PropertyInfo> chain)
     {
+        if (Microsoft.EntityFrameworkCore.RelationalModelExtensions.FindDbFunction(model, typeof(DateBuckets).GetMethod(nameof(DateBuckets.Stored))!) is null)
+        {
+            return false;
+        }
+
         var entity = model.FindEntityType(rowType);
         foreach (var step in chain.Take(chain.Count - 1))
         {
