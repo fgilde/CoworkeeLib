@@ -45,7 +45,7 @@ public sealed class ProtectedPropertyTests(ODataApp app) : IAsyncLifetime
 
         page.GetProperty("value")[0].TryGetProperty("Category", out _).ShouldBeFalse();
         page.GetProperty("value")[0].GetProperty("Price").GetDecimal().ShouldBe(99);
-        foreach (var query in new[] { "$filter=Category eq 'Tools'", "$orderby=Category", "$select=Name,Category" })
+        foreach (var query in new[] { "$filter=Category eq 'Tools'", "$orderby=Category", "$select=Name,Category", "$filter=category eq 'Tools'", "$select=name,category" })
         {
             (await Viewer.GetAsync($"/odata/Gadgets?{query}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden, query);
         }

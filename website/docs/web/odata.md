@@ -23,6 +23,8 @@ public sealed class MyAppCatalogModule : CoworkeeModule
 
 The permission of the set is checked on every call, tenants and soft delete filters apply as everywhere. `$top` is capped at 1000 (`Coworkee:OData:MaxTop`); invalid queries answer `400` with problem details.
 
+Names in the URI match regardless of case, so a camelCase client may send `$filter=name eq 'x'`, `$orderby=price` or `$expand=brand`; `Coworkee:OData:CaseInsensitive` (default `true`) turns that off. Responses keep the names of the C# properties (`Name`); a client that wants camelCase JSON maps them itself. Query options need their `$`: `filter=` is not read.
+
 ## Facets
 
 Mark the properties users should filter by:

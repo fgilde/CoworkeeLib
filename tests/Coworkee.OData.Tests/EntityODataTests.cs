@@ -46,6 +46,15 @@ public sealed class EntityODataTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Names_in_the_uri_match_regardless_of_case()
+    {
+        var page = await Admin.GetFromJsonAsync<JsonElement>("/odata/gadgets?$filter=name eq 'Lamp' or category eq 'Tools'&$orderby=price&$select=name,price&$count=true", Ct);
+
+        page.GetProperty("@odata.count").GetInt32().ShouldBe(3);
+        page.GetProperty("value").EnumerateArray().Select(g => g.GetProperty("Name").GetString()).ShouldBe(["Hammer", "Lamp", "Drill"]);
+    }
+
+    [Fact]
     public async Task Facets_come_with_the_page_when_asked_for()
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, "/odata/Gadgets");
