@@ -33,6 +33,9 @@ public sealed class ODataApp : DatabaseFixture
 
     public WebApplication App { get; private set; } = null!;
 
+    /// <summary>Takes the export mails instead of the Mailing module.</summary>
+    public RecordingExportMailer Mails { get; } = new();
+
     public override async ValueTask InitializeAsync()
     {
         await base.InitializeAsync();
@@ -70,6 +73,7 @@ public sealed class ODataApp : DatabaseFixture
         builder.Services.AddTestAuthentication();
         builder.Services.AddSingleton(provider => new InlineBackgroundJobs.Root(provider));
         builder.Services.AddScoped<Coworkee.BackgroundJobs.IBackgroundJobs, InlineBackgroundJobs>();
+        builder.Services.AddSingleton<Transfer.IExportMailer>(Mails);
         builder.Services.AddSingleton<FakeGroupScope>();
         builder.Services.AddSingleton<Coworkee.Application.Groups.IGroupScope>(provider => provider.GetRequiredService<FakeGroupScope>());
         foreach (var (key, value) in settings ?? new Dictionary<string, string>())
@@ -90,6 +94,7 @@ public sealed class ODataApp : DatabaseFixture
     {
         await ResetAsync();
         App.Services.GetRequiredService<FakeGroupScope>().Stored = [];
+        Mails.Sent.Clear();
         App.Services.GetRequiredService<SystemStateCache>().Reset();
         var response = await App.GetTestClient().PostAsJsonAsync("/api/v1/setup/complete",
             new CompleteSetupRequest("token", "Acme", "admin@acme.test", "Admin#12345", "Ada", "Admin"));
@@ -232,4 +237,15 @@ internal sealed class HideSecretGadgets : IODataEntityFilter<Gadget>
 {
     public Task<IQueryable<Gadget>> ApplyAsync(IQueryable<Gadget> query, CancellationToken cancellationToken) =>
         Task.FromResult(query.Where(g => g.Category != "Secret"));
+}
+
+public sealed class RecordingExportMailer : Transfer.IExportMailer
+{
+    public System.Collections.Concurrent.ConcurrentQueue<Transfer.DataExportMail> Sent { get; } = new();
+
+    public Task MailAsync(Transfer.DataExportMail mail, CancellationToken cancellationToken)
+    {
+        Sent.Enqueue(mail);
+        return Task.CompletedTask;
+    }
 }

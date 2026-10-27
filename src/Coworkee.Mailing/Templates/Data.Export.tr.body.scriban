@@ -1,0 +1,2 @@
+<p>Merhaba {{ user.first_name }},</p>
+{{ if attached }}<p>{{ export.name }} dışa aktarımı {{ export.file_name }} olarak eklendi.</p>{{ else }}<p>{{ export.name }} dışa aktarımı hazır. E-posta için çok büyük: uygulamada İçe ve dışa aktarma altında açın.</p>{{ end }}

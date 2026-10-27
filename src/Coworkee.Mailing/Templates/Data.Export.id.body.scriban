@@ -1,0 +1,2 @@
+<p>Halo {{ user.first_name }},</p>
+{{ if attached }}<p>Ekspor {{ export.name }} dilampirkan sebagai {{ export.file_name }}.</p>{{ else }}<p>Ekspor {{ export.name }} sudah siap. Ukurannya terlalu besar untuk email: buka di aplikasi pada Impor dan ekspor.</p>{{ end }}

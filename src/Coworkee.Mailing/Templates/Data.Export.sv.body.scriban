@@ -1,0 +1,2 @@
+<p>Hej {{ user.first_name }},</p>
+{{ if attached }}<p>Exporten {{ export.name }} är bifogad som {{ export.file_name }}.</p>{{ else }}<p>Exporten {{ export.name }} är klar. Den är för stor för ett mejl: öppna den i appen under Import och export.</p>{{ end }}

@@ -23,6 +23,10 @@ public sealed class ReportSubscription : Entity, IMultiTenant
 
     public int? DayOfMonth { get; set; }
 
+    public int Every { get; set; } = 1;
+
+    public MonthWeek? Week { get; set; }
+
     /// <summary>The date range and facets that replace the report's, as JSON (<see cref="ReportSubscriptionFilter"/>); null keeps the report's.</summary>
     public string? Filter { get; set; }
 
@@ -36,12 +40,15 @@ public sealed class ReportSubscription : Entity, IMultiTenant
 
     public DateTimeOffset CreatedAt { get; set; }
 
-    public ReportSchedule Schedule => new(Frequency, Time, TimeZone, Weekday, DayOfMonth);
+    public ReportSchedule Schedule => new(Frequency, Time, TimeZone, Weekday, DayOfMonth, Every, Week);
 
     public void Apply(ReportSchedule schedule, DateTimeOffset now)
     {
-        (Frequency, Time, TimeZone, Weekday, DayOfMonth) = (schedule.Frequency, schedule.Time, schedule.TimeZone,
-            schedule.Frequency == SubscriptionFrequency.Weekly ? schedule.Weekday : null, schedule.Frequency == SubscriptionFrequency.Monthly ? schedule.DayOfMonth : null);
+        var monthlyByWeek = schedule is { Frequency: SubscriptionFrequency.Monthly, Week: not null };
+        (Frequency, Time, TimeZone, Weekday, DayOfMonth, Every, Week) = (schedule.Frequency, schedule.Time, schedule.TimeZone,
+            schedule.Frequency == SubscriptionFrequency.Weekly || monthlyByWeek ? schedule.Weekday : null,
+            schedule.Frequency == SubscriptionFrequency.Monthly && !monthlyByWeek ? schedule.DayOfMonth : null,
+            Math.Max(1, schedule.Every), monthlyByWeek ? schedule.Week : null);
         NextRunAt = ReportSchedules.Next(Schedule, now).ToUniversalTime();
     }
 }

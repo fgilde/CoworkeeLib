@@ -1,0 +1,2 @@
+<p>Dobrý den, {{ user.first_name }},</p>
+{{ if attached }}<p>Export {{ export.name }} je přiložen jako {{ export.file_name }}.</p>{{ else }}<p>Export {{ export.name }} je hotový. Je příliš velký pro e-mail: otevřete jej v aplikaci v části Import a export.</p>{{ end }}

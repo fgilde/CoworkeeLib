@@ -21,13 +21,13 @@ public interface IAccessTokens
 public sealed record AccessTokenGrant(Guid TargetId, Guid? TenantId, Guid? UserId);
 ```
 
-Table `cw.AccessTokens` (Hash = SHA-256 of the token, unique; Purpose; TargetId; TenantId; UserId; ExpiresAt; SingleUse; UsedAt). The token is 32 random bytes base64url; only its hash is stored. Single use takes the row with one conditional `ExecuteUpdate` (`UsedAt == null && ExpiresAt > now`), so two parallel downloads cannot both win. Expiry uses `TimeProvider`. Issuing removes rows expired more than a day ago (`ponytail:` cleanup on write, a retention target if issuing gets rare).
+Table `cw.AccessTokens` (Hash = SHA-256 of the token, unique; Purpose; TargetId; TenantId; UserId; ExpiresAt; SingleUse; UsedAt). The token is 32 random bytes base64url; only its hash is stored. Single use takes the row with one conditional `ExecuteUpdate` (`UsedAt == null && ExpiresAt > now`), so two parallel downloads cannot both win. Expiry uses `TimeProvider`. Redeeming removes rows expired more than a day ago (`ponytail:` cleanup on use, a retention target if tokens get rare).
 
 **Files**: `CreateFileToken(Guid Id)` (`Files.View` + folder grant, like `OpenFile`) -> `FileTokenDto(Token, Url, ExpiresAt)`, 5 minutes, multi-use. `GET|HEAD /api/v1/files/token/{token}/{name}?download=true` anonymous; inline by default, attachment with `download=true`. Route `POST /api/v1/files/{id}/token`.
 
 **Record attachments**: `POST /api/v1/attachments/{type}/{id}/{slot}/{attachmentId}/token` (read check of the record) and anonymous `GET|HEAD /api/v1/attachments/token/{token}/{name}`.
 
-Client: `ICoworkeeApi.CreateFileTokenAsync`, `IAttachmentsApi`/client member for attachments if present.
+Client: `IFilesApi.CreateTokenAsync`, `IAttachmentsApi.CreateTokenAsync`; *Copy temporary link* on the Files page.
 
 ## L8 Exports
 
@@ -48,13 +48,13 @@ The export is a `DataTransferJob` (status Running -> Completed) written in the r
 
 **Mail**: OData cannot reference Mailing (Mailing depends on OData). OData defines `IExportMailer` (one method, `MailAsync(DataExportMail, ct)`); Mailing implements it with the new template `Data.Export` (23 languages, file attached). Without Mailing nothing is mailed (the job keeps the file).
 
-**Queue and mail**: `POST /api/v1/data/{set}/export/mail` body `MailExportRequest(Query, Recipients, FileName)` -> 202 with the job; the job mails the owner and the recipients. Extra recipients need `Data.ExportSchedules`.
+**Queue and mail**: `POST /api/v1/data/{set}/export/mail` body `MailExportRequest(Query, Recipients, FileName)` -> 202 with the job; the job mails the owner and the recipients. Extra recipients need `DataTransfer.ExportSchedules`.
 
 **Schedules**: entity `ExportSchedule` (`cw.ExportSchedules`): owner, `EntitySet`, `Query` (query string with `$filter`, `$search`, `$orderby`, `columns`, `format`), `Name`, `FileName`, `Recipients` (extra addresses), schedule fields of `ReportSchedule`, `Groups` (group selection when saved), `NextRunAt`, `LastRunAt`, `LastError`.
-Requests (`Data.ExportSchedules`, own schedules only): `GetExportSchedules`, `SaveExportSchedule(Id?, request)`, `DeleteExportSchedule`, `RunExportSchedule` (now). Save checks the set's view permission. Recurring job `coworkee-export-schedules` (*/5): due schedules per tenant, each run as the owner (`ImpersonatedUser`) enqueues an `ExportJob` with mail; the next run moves on. A run whose owner lost the set's permission fails into the job and `LastError`.
+Requests (`DataTransfer.ExportSchedules`, own schedules only): `GetExportSchedules`, `SaveExportSchedule(Id?, request)`, `DeleteExportSchedule`, `RunExportSchedule` (now). Save checks the set's view permission. Recurring job `coworkee-export-schedules` (*/5): due schedules per tenant, each run as the owner (`ImpersonatedUser`) writes the export, stores it as a completed job of the owner and mails it; the next run moves on. *Send now* runs the same in the request. A run whose owner lost the set's permission fails into the job and `LastError`.
 Currency is app logic (money conversion of an app's columns): the query string is kept verbatim, apps read their own parameters.
 
-Client: `IDataTransferApi` gets `StreamExportAsync` (progress callback, returns the ready URL), `MailExportAsync`, schedule members; `CoworkeeDataTable` export menu gets *Schedule export...* (dialog: name, frequency, every, weekday, day or ordinal weekday of month, time, time zone, format, file name, recipients) for holders of `Data.ExportSchedules`; page `data/export-schedules` (list, edit, run now, delete).
+Client: `IDataTransferApi` gets `StreamExportAsync` (progress callback, returns the ready URL), `MailExportAsync`, schedule members; `CoworkeeDataTable` export menu gets *Schedule export...* (dialog: name, frequency, every, weekday, day or ordinal weekday of month, time, time zone, format, file name, recipients) for holders of `DataTransfer.ExportSchedules`; page `data/export-schedules` (list, edit, run now, delete).
 
 ## L7 Comment status, validation hook, changed event
 
@@ -85,7 +85,7 @@ Coworkee:
 ## Permissions and tenants
 
 - Notification requests act on the current user's own rows; follows check the followed set. Follows, preferences, pending mails, export schedules, tokens carry the tenant; tokens redeem across tenants on purpose (anonymous) and the target is looked up with the token's tenant.
-- New permissions: `Social.Comments.SetStatus`, `Data.ExportSchedules`.
+- New permissions: `Social.Comments.SetStatus`, `DataTransfer.ExportSchedules`.
 
 ## Tests
 

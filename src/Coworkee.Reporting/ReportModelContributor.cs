@@ -33,6 +33,7 @@ internal sealed class ReportModelContributor : IModelContributor
             subscription.Ignore(s => s.Schedule);
             subscription.Property(s => s.Frequency).HasConversion<string>().HasMaxLength(20);
             subscription.Property(s => s.TimeZone).HasMaxLength(100);
+            subscription.Property(s => s.Week).HasConversion<string>().HasMaxLength(10);
             subscription.Property(s => s.Filter).HasColumnType("jsonb");
             subscription.Property(s => s.LastError).HasMaxLength(2000);
             subscription.HasIndex(s => s.NextRunAt);

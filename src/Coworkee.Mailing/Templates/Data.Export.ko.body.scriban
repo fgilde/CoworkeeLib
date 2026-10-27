@@ -1,0 +1,2 @@
+<p>{{ user.first_name }}님, 안녕하세요.</p>
+{{ if attached }}<p>내보내기 {{ export.name }}을(를) {{ export.file_name }}(으)로 첨부했습니다.</p>{{ else }}<p>내보내기 {{ export.name }}이(가) 준비되었습니다. 메일로 보내기에는 너무 크므로 앱의 가져오기 및 내보내기에서 여세요.</p>{{ end }}

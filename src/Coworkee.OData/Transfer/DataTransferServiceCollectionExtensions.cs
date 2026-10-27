@@ -1,5 +1,6 @@
 using Coworkee.Application.Authorization;
 using Coworkee.Application.Retention;
+using Coworkee.BackgroundJobs;
 using Coworkee.Contracts.Data;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.OData.Transfer.Import;
@@ -19,6 +20,8 @@ internal static class DataTransferServiceCollectionExtensions
         services.AddScoped<DataExports>();
         services.AddScoped<ImportJob>();
         services.AddScoped<ExportJob>();
+        services.AddScoped<ExportScheduleRunner>();
+        services.AddRecurringJob<ExportScheduleJob>(ExportScheduleJob.Id, ExportScheduleJob.Cron);
         services.AddRetentionTarget<DataTransferJobRetention>();
         return services;
     }
@@ -27,5 +30,7 @@ internal static class DataTransferServiceCollectionExtensions
 internal sealed class DataTransferPermissionDefinitions : IPermissionDefinitionContributor
 {
     public void Define(PermissionDefinitionContext context) =>
-        context.Group(DataTransferPermissions.GroupName, "Import and export").Add(DataTransferPermissions.Use, "Open the import and export page");
+        context.Group(DataTransferPermissions.GroupName, "Import and export")
+            .Add(DataTransferPermissions.Use, "Open the import and export page")
+            .Add(DataTransferPermissions.ExportSchedules, "Schedule list exports and mail them to others");
 }

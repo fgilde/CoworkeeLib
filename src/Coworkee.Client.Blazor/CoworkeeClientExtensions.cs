@@ -178,6 +178,7 @@ internal sealed class AdminNavigation : INavigationContributor
         new("Editions", "/admin/editions", MudBlazor.Icons.Material.Outlined.WorkspacePremium, Coworkee.Contracts.Features.FeaturePermissions.Editions, Group: System, Order: 3, HostOnly: true),
         new("Themes", "/admin/themes", MudBlazor.Icons.Material.Outlined.Palette, Coworkee.Contracts.Theming.ThemePermissions.Manage, Group: System, Order: 4),
         new("Import and export", "/admin/data-transfer", MudBlazor.Icons.Material.Outlined.ImportExport, Coworkee.Contracts.Data.DataTransferPermissions.Use, Group: System, Order: 7),
+        new("Scheduled exports", "/data/export-schedules", MudBlazor.Icons.Material.Outlined.ScheduleSend, Coworkee.Contracts.Data.DataTransferPermissions.ExportSchedules, Group: System, Order: 8),
         new("Backups", "/admin/backups", MudBlazor.Icons.Material.Outlined.Backup, Coworkee.Contracts.Backup.BackupPermissions.Manage, Group: System, Order: 5, HostOnly: true),
         new("Webhooks", "/admin/webhooks", MudBlazor.Icons.Material.Outlined.Webhook, Coworkee.Contracts.Webhooks.WebhookPermissions.Manage, Group: System, Order: 7),
         new("Mail templates", "/admin/mail/templates", MudBlazor.Icons.Material.Outlined.Email, Coworkee.Contracts.Mailing.MailPermissions.Templates.Manage, Group: Communication),

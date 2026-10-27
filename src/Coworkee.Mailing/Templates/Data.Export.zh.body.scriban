@@ -1,0 +1,2 @@
+<p>{{ user.first_name }}，您好：</p>
+{{ if attached }}<p>导出 {{ export.name }} 已作为 {{ export.file_name }} 附上。</p>{{ else }}<p>导出 {{ export.name }} 已就绪。文件太大，无法通过邮件发送：请在应用的“导入和导出”中打开。</p>{{ end }}

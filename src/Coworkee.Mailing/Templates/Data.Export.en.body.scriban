@@ -1,0 +1,2 @@
+<p>Hello {{ user.first_name }},</p>
+{{ if attached }}<p>The export {{ export.name }} is attached as {{ export.file_name }}.</p>{{ else }}<p>The export {{ export.name }} is ready. It is too large for a mail: open it in the app under Import and export.</p>{{ end }}

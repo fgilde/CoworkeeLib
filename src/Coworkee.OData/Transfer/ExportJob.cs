@@ -30,8 +30,12 @@ internal sealed class ExportJob(IServiceProvider services, DataExports exports, 
 
             using var selection = args.Groups is { Length: > 0 } groups ? GroupScope.Selection(groups) : null;
             var file = (await exports.WriteAsync(entity, new QueryString(job.Settings), null, cancellationToken))!;
-            (job.Result, job.ResultContentType, job.ResultFileName) = (file.Content, file.ContentType, file.Name);
+            (job.Result, job.ResultContentType, job.ResultFileName) = (file.Content, file.ContentType, job.FileName ?? file.Name);
             job.Status = DataTransferStatus.Completed;
+            if (args.Mail)
+            {
+                await exports.MailAsync(new DataExportMail(job.UserId, args.Recipients ?? [], job.EntitySet, file with { Name = job.ResultFileName }), cancellationToken);
+            }
         }
         catch (Exception exception)
         {

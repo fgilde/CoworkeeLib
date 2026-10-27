@@ -1,0 +1,2 @@
+<p>Hej {{ user.first_name }},</p>
+{{ if attached }}<p>Eksporten {{ export.name }} er vedhæftet som {{ export.file_name }}.</p>{{ else }}<p>Eksporten {{ export.name }} er klar. Den er for stor til en mail: åbn den i appen under Import og eksport.</p>{{ end }}

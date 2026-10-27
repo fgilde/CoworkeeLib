@@ -1,3 +1,4 @@
+using Coworkee.Application.Messaging;
 using Coworkee.AspNetCore.Http;
 using Coworkee.Contracts.Data;
 using Coworkee.OData.Transfer.Import;
@@ -15,6 +16,19 @@ internal static class DataTransferEndpoints
         data.MapGet("/{entitySet}/export", (string entitySet, HttpContext http, DataExports exports) => exports.ExportAsync(entitySet, http.Request.QueryString, http.RequestAborted))
             .Produces(StatusCodes.Status200OK, contentType: DataExport.XlsxContentType)
             .Produces<DataTransferJobDto>(StatusCodes.Status202Accepted);
+        data.MapGet("/{entitySet}/export/stream", (string entitySet, HttpContext http, DataExports exports) => exports.StreamAsync(entitySet, http))
+            .Produces<DataExportProgress>(StatusCodes.Status200OK, "application/x-ndjson");
+        data.MapPost("/{entitySet}/export/mail", (string entitySet, MailExportRequest request, DataExports exports, CancellationToken ct) => exports.MailAsync(entitySet, request, ct))
+            .Produces<DataTransferJobDto>(StatusCodes.Status202Accepted);
+        data.MapGet("/downloads/{token}", (string token, DataExports exports, CancellationToken ct) => exports.DownloadAsync(token, ct)).AllowAnonymous();
+
+        data.MapGet("/export-schedules", (string? entitySet, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetExportSchedulesQuery(entitySet), ct).ToHttpResult());
+        data.MapPost("/export-schedules", (SaveExportScheduleRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SaveExportScheduleCommand(null, body), ct).ToHttpResult());
+        data.MapPut("/export-schedules/{id:guid}", (Guid id, SaveExportScheduleRequest body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new SaveExportScheduleCommand(id, body), ct).ToHttpResult());
+        data.MapDelete("/export-schedules/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteExportScheduleCommand(id), ct).ToHttpResult());
+        data.MapPost("/export-schedules/{id:guid}/run", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new RunExportScheduleCommand(id), ct).ToHttpResult());
+
         data.MapPost("/{entitySet}/import", ImportAsync).DisableAntiforgery();
 
         data.MapGet("/imports", async (ImportService imports, CancellationToken ct) => TypedResults.Ok(await imports.TargetsAsync(ct)));

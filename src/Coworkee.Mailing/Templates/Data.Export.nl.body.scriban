@@ -1,0 +1,2 @@
+<p>Hallo {{ user.first_name }},</p>
+{{ if attached }}<p>De export {{ export.name }} is bijgevoegd als {{ export.file_name }}.</p>{{ else }}<p>De export {{ export.name }} is klaar. Hij is te groot voor een mail: open hem in de app onder Importeren en exporteren.</p>{{ end }}

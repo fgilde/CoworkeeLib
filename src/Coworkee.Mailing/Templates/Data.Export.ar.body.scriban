@@ -1,0 +1,2 @@
+<p>مرحبًا {{ user.first_name }}،</p>
+{{ if attached }}<p>التصدير {{ export.name }} مرفق باسم {{ export.file_name }}.</p>{{ else }}<p>التصدير {{ export.name }} جاهز. إنه كبير جدًا بالنسبة لرسالة بريد: افتحه في التطبيق ضمن الاستيراد والتصدير.</p>{{ end }}

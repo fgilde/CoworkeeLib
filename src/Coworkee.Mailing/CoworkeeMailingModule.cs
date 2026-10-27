@@ -40,6 +40,7 @@ public sealed class CoworkeeMailingModule : CoworkeeModule, IWebModule
         services.AddScoped<IMailTemplateCatalog, MailTemplateCatalog>();
         services.AddScoped<IMailTemplateRenderer, MailTemplateRenderer>();
         services.AddScoped<IMailSender, MailSender>();
+        services.TryAddScoped<Coworkee.OData.Transfer.IExportMailer, ExportMailer>();
         services.AddScoped<Application.Privacy.IPersonalDataContributor, MailPersonalData>();
         services.AddScoped<Coworkee.Application.Setup.ISetupCheck, MailSetupCheck>();
         services.AddHttpClient();

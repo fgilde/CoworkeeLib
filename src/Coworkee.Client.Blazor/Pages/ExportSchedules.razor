@@ -1,0 +1,55 @@
+@attribute [Authorize(Policy = PermissionPolicy.Prefix + Coworkee.Contracts.Data.DataTransferPermissions.ExportSchedules)]
+@using Coworkee.Client.Blazor.Components.Exports
+
+<PageHeader Title="Scheduled exports" Description="Lists that come by mail as file on a schedule, to you and further recipients." />
+
+@if (_schedules is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_schedules.Count == 0)
+{
+    <MudAlert Severity="Severity.Info" Dense="true" data-testid="export-schedules-empty">@L["No scheduled exports yet. Open a list and choose Schedule export in its export menu."]</MudAlert>
+}
+else
+{
+    <MudTable Items="_schedules" Dense="true" Hover="true" Elevation="0" Outlined="true" data-testid="export-schedules">
+        <HeaderContent>
+            <MudTh>@L["Name"]</MudTh>
+            <MudTh>@L["List"]</MudTh>
+            <MudTh>@L["When"]</MudTh>
+            <MudTh>@L["Recipients"]</MudTh>
+            <MudTh>@L["Next mail"]</MudTh>
+            <MudTh>@L["Last sent"]</MudTh>
+            <MudTh />
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Name</MudTd>
+            <MudTd>@context.EntitySet</MudTd>
+            <MudTd>@ScheduleText.Of(context.Schedule, L)</MudTd>
+            <MudTd>@(context.Recipients.Count == 0 ? L["Only you"] : string.Join(", ", context.Recipients))</MudTd>
+            <MudTd>@context.NextRunAt.ToLocalTime().ToString("g", System.Globalization.CultureInfo.CurrentCulture)</MudTd>
+            <MudTd>
+                @(context.LastRunAt?.ToLocalTime().ToString("g", System.Globalization.CultureInfo.CurrentCulture) ?? "–")
+                @if (context.LastError is { Length: > 0 } error)
+                {
+                    <MudTooltip Text="@error">
+                        <MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error" Size="Size.Small" aria-label="@L["Last mail failed: {0}", error]" data-testid="export-schedule-error" />
+                    </MudTooltip>
+                }
+            </MudTd>
+            <MudTd Style="text-align:right;white-space:nowrap">
+                <MudTooltip Text="@L["Send now"]">
+                    <MudIconButton Icon="@Icons.Material.Outlined.Send" Size="Size.Small" aria-label="@L["Send now"]" OnClick="() => RunAsync(context)" data-testid="export-schedule-run" />
+                </MudTooltip>
+                <MudTooltip Text="@L["Edit"]">
+                    <MudIconButton Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" aria-label="@L["Edit"]" OnClick="() => EditAsync(context)" data-testid="export-schedule-edit" />
+                </MudTooltip>
+                <MudTooltip Text="@L["Delete"]">
+                    <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Color="Color.Error" aria-label="@L["Delete"]" OnClick="() => DeleteAsync(context)"
+                                   data-testid="export-schedule-delete" />
+                </MudTooltip>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}

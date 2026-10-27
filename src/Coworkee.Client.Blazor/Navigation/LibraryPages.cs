@@ -22,6 +22,7 @@ internal static class LibraryPages
         new("audit", typeof(AuditLog), "admin/audit"),
         new("backups", typeof(Backups), "admin/backups"),
         new("data-transfer", typeof(DataTransfer), "admin/data-transfer"),
+        new("export-schedules", typeof(ExportSchedules), "data/export-schedules"),
         new("editions", typeof(Editions), "admin/editions"),
         new("languages", typeof(Languages), "admin/languages"),
         new("translations", typeof(Translations), "admin/translations"),

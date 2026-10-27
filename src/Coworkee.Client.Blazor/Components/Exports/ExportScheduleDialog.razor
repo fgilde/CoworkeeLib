@@ -1,0 +1,66 @@
+@using Coworkee.Contracts.Data
+@using Coworkee.Contracts.Reporting
+
+<MudDialog Class="@MudBlazor.Extensions.Helper.MudExCss.Classes.Dialog.Initial">
+    <DialogContent>
+        <MudStack Spacing="3" Class="pt-2" data-testid="export-schedule">
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["The list comes by mail as file, with the rows you may see when it runs."]</MudText>
+            <MudTextField T="string" @bind-Value="_name" Label="@L["Name"]" Variant="Variant.Outlined" MaxLength="200" Required="true" data-testid="export-schedule-name" />
+            <div class="cw-settings-row">
+                <MudSelect T="SubscriptionFrequency" @bind-Value="_frequency" Label="@L["How often"]" Variant="Variant.Outlined" data-testid="export-schedule-frequency">
+                    <MudSelectItem Value="SubscriptionFrequency.Daily">@L["Every day"]</MudSelectItem>
+                    <MudSelectItem Value="SubscriptionFrequency.Weekly">@L["Every week"]</MudSelectItem>
+                    <MudSelectItem Value="SubscriptionFrequency.Monthly">@L["Every month"]</MudSelectItem>
+                </MudSelect>
+                <MudNumericField T="int" @bind-Value="_every" Min="1" Max="12" Label="@L["Repeat every"]" HelperText="@L["1: each time, 2: every second time"]" Variant="Variant.Outlined"
+                                 data-testid="export-schedule-every" />
+            </div>
+            @if (_frequency == SubscriptionFrequency.Monthly)
+            {
+                <MudSelect T="MonthWeek?" @bind-Value="_week" Label="@L["On"]" Variant="Variant.Outlined" data-testid="export-schedule-week">
+                    <MudSelectItem T="MonthWeek?" Value="null">@L["A day of the month"]</MudSelectItem>
+                    @foreach (var week in Enum.GetValues<MonthWeek>())
+                    {
+                        <MudSelectItem T="MonthWeek?" Value="week">@ScheduleText.Week(week, L)</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+            @if (_frequency == SubscriptionFrequency.Weekly || (_frequency == SubscriptionFrequency.Monthly && _week is not null))
+            {
+                <MudSelect T="DayOfWeek" @bind-Value="_weekday" Label="@L["Weekday"]" Variant="Variant.Outlined" data-testid="export-schedule-weekday">
+                    @foreach (var day in ScheduleText.Weekdays)
+                    {
+                        <MudSelectItem Value="day">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(day)</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+            else if (_frequency == SubscriptionFrequency.Monthly)
+            {
+                <MudNumericField T="int" @bind-Value="_dayOfMonth" Min="1" Max="31" Label="@L["Day of the month"]" HelperText="@L["Shorter months take their last day."]" Variant="Variant.Outlined" />
+            }
+            <div class="cw-settings-row">
+                <MudTimePicker @bind-Time="_time" Label="@L["Time"]" Variant="Variant.Outlined" AmPm="false" data-testid="export-schedule-time" />
+                <MudAutocomplete T="string" @bind-Value="_timeZone" SearchFunc="SearchZones" Label="@L["Time zone"]" Variant="Variant.Outlined" MaxItems="50" CoerceValue="false" Strict="true" />
+            </div>
+            <div class="cw-settings-row">
+                <MudSelect T="ExportFileFormat" @bind-Value="_format" Label="@L["File format"]" Variant="Variant.Outlined">
+                    <MudSelectItem Value="ExportFileFormat.Xlsx">Excel</MudSelectItem>
+                    <MudSelectItem Value="ExportFileFormat.Csv">CSV</MudSelectItem>
+                    <MudSelectItem Value="ExportFileFormat.Json">JSON</MudSelectItem>
+                </MudSelect>
+                <MudTextField T="string" @bind-Value="_fileName" Label="@L["File name"]" Placeholder="@_name" Variant="Variant.Outlined" MaxLength="200" />
+            </div>
+            <MudTextField T="string" @bind-Value="_recipients" Label="@L["Further recipients"]" HelperText="@L["E-mail addresses, separated by commas. You always get the file."]"
+                          Variant="Variant.Outlined" Lines="2" data-testid="export-schedule-recipients" />
+            @if (Next is { } next)
+            {
+                <MudText Typo="Typo.caption" data-testid="export-schedule-next">@L["Next mail: {0}", next.ToLocalTime().ToString("f", System.Globalization.CultureInfo.CurrentCulture)]</MudText>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Dialog.Cancel()">@L["Cancel"]</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Outlined.ScheduleSend" Disabled="@(Next is null || string.IsNullOrWhiteSpace(_name))" OnClick="Save"
+                   data-testid="export-schedule-save">@L["Save"]</MudButton>
+    </DialogActions>
+</MudDialog>

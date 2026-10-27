@@ -334,15 +334,28 @@ public partial class CoworkeeDataTable<T> : IDisposable
         await ReloadAsync();
     }
 
+    private List<string> ExportColumns() => _grid is null ? [] : DataGridLayout<T>.Named(_grid)
+        .Where(c => DataGridLayout<T>.IsProperty(c) && !DataGridLayout<T>.IsHidden(c) && c.PropertyName?.Contains('.') == false)
+        .Select(c => c.PropertyName!)
+        .ToList();
+
+    /// <summary>Mails this list as it is filtered and sorted now, on a schedule.</summary>
+    private async Task ScheduleExportAsync()
+    {
+        var query = ExportQueries.Of(ExportFileFormat.Xlsx, new ODataQuery { Filter = CurrentFilter, OrderBy = _orderBy }, ExportColumns());
+        var api = Services.GetRequiredService<IDataTransferApi>();
+        if (await Exports.ExportScheduleDialog.ShowAsync(Dialogs, L["Schedule export"], EntitySet, query, ExportFileName) is { } request)
+        {
+            await Snackbar.RunAsync(() => api.SaveExportScheduleAsync(null, request), L["The export is scheduled."]);
+        }
+    }
+
     private async Task ExportAsync(ExportFormat format)
     {
         if (DataSource is null)
         {
             var query = new ODataQuery { Filter = CurrentFilter, OrderBy = _orderBy };
-            var columns = _grid is null ? [] : DataGridLayout<T>.Named(_grid)
-                .Where(c => DataGridLayout<T>.IsProperty(c) && !DataGridLayout<T>.IsHidden(c) && c.PropertyName?.Contains('.') == false)
-                .Select(c => c.PropertyName!)
-                .ToList();
+            var columns = ExportColumns();
             var fileFormat = format switch { ExportFormat.Csv => ExportFileFormat.Csv, ExportFormat.Json => ExportFileFormat.Json, _ => ExportFileFormat.Xlsx };
             ExportResult? result = null;
             if (await Snackbar.RunAsync(async () => result = await Services.GetRequiredService<IDataTransferApi>().ExportAsync(EntitySet, fileFormat, query, columns)))

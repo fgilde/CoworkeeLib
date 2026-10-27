@@ -1,0 +1,2 @@
+<p>Pozdrav {{ user.first_name }},</p>
+{{ if attached }}<p>Izvoz {{ export.name }} priložen je kao {{ export.file_name }}.</p>{{ else }}<p>Izvoz {{ export.name }} je spreman. Prevelik je za e-poštu: otvorite ga u aplikaciji pod Uvoz i izvoz.</p>{{ end }}

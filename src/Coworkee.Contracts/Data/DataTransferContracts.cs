@@ -8,7 +8,43 @@ public static class DataTransferPermissions
 
     /// <summary>Opens the import and export page; each set still needs its own permissions.</summary>
     public const string Use = "DataTransfer.Use";
+
+    /// <summary>Recurring list exports by mail and exports mailed to other addresses; the set still needs its own permissions.</summary>
+    public const string ExportSchedules = "DataTransfer.ExportSchedules";
 }
+
+/// <summary>
+/// One line of the export stream (application/x-ndjson): <paramref name="Phase"/> is counting, reading, writing, ready or failed.
+/// The ready line carries the anonymous one-time <paramref name="Url"/> (relative to the API, five minutes) of the file.
+/// </summary>
+public sealed record DataExportProgress(string Phase, int Percent, string? Url = null, string? FileName = null, Guid? JobId = null, string? Message = null)
+{
+    public const string Counting = "counting";
+    public const string Reading = "reading";
+    public const string Writing = "writing";
+    public const string Ready = "ready";
+    public const string Failed = "failed";
+}
+
+/// <summary>An export written in the background and mailed to the requester and <paramref name="Recipients"/>; <paramref name="Query"/> is the export's query string.</summary>
+public sealed record MailExportRequest(string? Query, IReadOnlyList<string>? Recipients = null, string? FileName = null);
+
+/// <param name="Query">The query string of the export: $filter, $search, $orderby, columns and format.</param>
+/// <param name="Recipients">Addresses that get the file besides the owner.</param>
+public sealed record SaveExportScheduleRequest(
+    string EntitySet, string Name, string? Query, Reporting.ReportSchedule Schedule, string? FileName = null, IReadOnlyList<string>? Recipients = null);
+
+public sealed record ExportScheduleDto(
+    Guid Id,
+    string EntitySet,
+    string Name,
+    string? Query,
+    Reporting.ReportSchedule Schedule,
+    string? FileName,
+    IReadOnlyList<string> Recipients,
+    DateTimeOffset NextRunAt,
+    DateTimeOffset? LastRunAt,
+    string? LastError);
 
 [JsonConverter(typeof(JsonStringEnumConverter<ImportMode>))]
 public enum ImportMode

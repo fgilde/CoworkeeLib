@@ -56,6 +56,25 @@ GET /api/v1/data/Products/export?format=csv&columns=Name,Rate&$filter=Rate gt 10
 
 Bis `Coworkee:OData:BackgroundExportRows` Zeilen (Standard 10 000) kommt die Datei sofort zurück. Größere Exporte antworten mit `202 Accepted` und einem Job; der Nutzer bekommt einen Hinweis mit *Herunterladen*-Button, sobald die Datei fertig ist. `Coworkee:OData:MaxExportRows` (Standard 100 000) begrenzt jeden Export. Berechtigungen, Entity-Filter und ausgeblendete Eigenschaften gelten wie in der Liste.
 
+### Fortschritts-Stream und einmaliger Download
+
+`GET /api/v1/data/{set}/export/stream` nimmt dieselbe Abfrage und antwortet mit `application/x-ndjson`, ein `DataExportProgress` pro Zeile: `counting`, `reading` (0-80 %, alle 500 Zeilen), `writing`, dann `ready` mit `url` (`api/v1/data/downloads/{token}`, relativ zur API), `fileName` und `jobId` oder `failed` mit einer Meldung. Der Link braucht keine Anmeldung, ein nativer `<a download>` funktioniert also; er öffnet die Datei einmal und nur fünf Minuten lang (`IAccessTokens`, siehe [Dateien](../modules/files.md#temporare-links)). Der Export läuft ohne den Abbruch der Anfrage: Verlässt der Client die Seite vor `ready`, wird er trotzdem geschrieben und dem Nutzer gemailt. So oder so behält die Job-Liste des Nutzers die Datei. `IDataTransferApi.StreamExportAsync` liest die Zeilen im Blazor-Client.
+
+### Gemailte und geplante Exporte
+
+`POST /api/v1/data/{set}/export/mail` mit `MailExportRequest(Query, Recipients, FileName)` schreibt den Export als Hintergrund-Job und mailt ihn dem Nutzer und den Empfängern (`202` mit dem Job). Andere Empfänger als der Nutzer brauchen `DataTransfer.ExportSchedules`.
+
+Geplante Exporte (`DataTransfer.ExportSchedules` plus die eigene Berechtigung des Sets) mailen eine Liste nach Plan: `ExportSchedule` (Tabelle `cw.ExportSchedules`) speichert das Set, die Abfrage unverändert (`$filter`, `$search`, `$orderby`, `columns`, `format`), einen Namen, einen Dateinamen, weitere Empfänger, die ausgewählten Gruppen und einen `ReportSchedule`: täglich, wöchentlich an einem Wochentag oder monatlich an einem Tag oder am ersten bis vierten oder letzten Wochentag (`Week`), jede n-te Periode (`Every`), zu einer Uhrzeit einer Zeitzone. Der Job `coworkee-export-schedules` (alle fünf Minuten) führt jeden fälligen Plan als sein Besitzer aus, so dass dessen Berechtigungen, Zeilenfilter und Gruppen bestimmen, was die Datei enthält; jeder Lauf ist ein Job des Besitzers mit der Datei, Fehler bleiben am Plan (`LastError`).
+
+| Aufruf | Zweck |
+|---|---|
+| `GET /api/v1/data/export-schedules?entitySet=` | die Pläne des Nutzers |
+| `POST /api/v1/data/export-schedules`, `PUT .../{id}` | einen anlegen oder ändern (`SaveExportScheduleRequest`) |
+| `DELETE /api/v1/data/export-schedules/{id}` | einen löschen |
+| `POST /api/v1/data/export-schedules/{id}/run` | jetzt senden; der Plan bleibt |
+
+Das Export-Menü einer Tabelle bietet Inhabern der Berechtigung *Export planen*; die Seite *Geplante Exporte* (`/data/export-schedules`, Schlüssel `export-schedules`) listet sie mit *Jetzt senden*, Bearbeiten und Löschen. Die Mail ist die Vorlage `Data.Export` (Mailing-Modul, 23 Sprachen); Dateien über 10 MB werden nicht angehängt, die Mail verweist dann auf die App. Ohne Mailing-Modul wird nichts gemailt (`IExportMailer`). App-Werte wie eine Währung bleiben in der Abfrage; die App liest sie selbst.
+
 ## HTTP-API
 
 | Aufruf | Zweck |
@@ -68,6 +87,8 @@ Bis `Coworkee:OData:BackgroundExportRows` Zeilen (Standard 10 000) kommt die Dat
 | `POST /api/v1/data/imports/{id}/undo` | den letzten Import rückgängig machen |
 | `GET/POST /api/v1/data/{set}/import/profiles`, `DELETE /api/v1/data/import-profiles/{id}` | gespeicherte Zuordnungen |
 | `GET /api/v1/data/jobs`, `GET /api/v1/data/jobs/{id}`, `GET /api/v1/data/jobs/{id}/file` | die Jobs des Nutzers und ihre Dateien |
+| `GET /api/v1/data/{set}/export/stream`, `GET /api/v1/data/downloads/{token}` | Export mit Fortschrittszeilen, sein einmaliger Download (ohne Anmeldung) |
+| `POST /api/v1/data/{set}/export/mail` | Export als Job, gemailt |
 | `POST /api/v1/data/{set}/import` | Import früherer Versionen in einem Schritt: Spalten heißen wie die Felder, nur neue Zeilen |
 
 **Stand:** Uploads und Ergebnisdateien liegen in der Job-Zeile in der Datenbank, das passt für Dateien von wenigen MB. Schlüssel- und Verweissuche stellen eine Abfrage pro Zeile und neuem Text. Rückgängig löscht nur angelegte Zeilen.

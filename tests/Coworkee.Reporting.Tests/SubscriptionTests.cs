@@ -100,6 +100,24 @@ public sealed partial class SubscriptionTests(ReportingApp app) : ReportingTestB
         next.Offset.ShouldBe(DateTimeOffset.Parse(expected, System.Globalization.CultureInfo.InvariantCulture).Offset);
     }
 
+    [Theory]
+    [InlineData("Monthly", "Friday", null, "Last", 1, "2026-10-01T00:00:00+00:00", "2026-10-30T09:00:00+00:00")]
+    [InlineData("Monthly", "Friday", null, "Last", 1, "2026-10-30T10:00:00+00:00", "2026-11-27T09:00:00+00:00")]
+    [InlineData("Monthly", "Monday", null, "First", 1, "2026-10-06T00:00:00+00:00", "2026-11-02T09:00:00+00:00")]
+    [InlineData("Monthly", "Tuesday", null, "Second", 1, "2026-10-01T00:00:00+00:00", "2026-10-13T09:00:00+00:00")]
+    [InlineData("Weekly", "Monday", null, null, 2, "2026-10-26T09:00:00+00:00", "2026-11-09T09:00:00+00:00")]
+    [InlineData("Daily", null, null, null, 3, "2026-10-26T09:00:00+00:00", "2026-10-29T09:00:00+00:00")]
+    [InlineData("Monthly", null, 15, null, 2, "2026-01-15T09:00:00+00:00", "2026-03-15T09:00:00+00:00")]
+    public void Schedules_repeat_every_nth_period_and_on_a_weekday_of_a_week_of_the_month(
+        string frequency, string? weekday, int? day, string? week, int every, string after, string expected)
+    {
+        var schedule = new ReportSchedule(Enum.Parse<SubscriptionFrequency>(frequency), new TimeOnly(9, 0), "UTC",
+            weekday is null ? null : Enum.Parse<DayOfWeek>(weekday), day, every, week is null ? null : Enum.Parse<MonthWeek>(week));
+
+        ReportSchedules.Next(schedule, DateTimeOffset.Parse(after, System.Globalization.CultureInfo.InvariantCulture))
+            .ShouldBe(DateTimeOffset.Parse(expected, System.Globalization.CultureInfo.InvariantCulture));
+    }
+
     [Fact]
     public async Task The_mail_shows_what_the_subscriber_may_see_with_an_excel_file()
     {

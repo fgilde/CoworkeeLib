@@ -1,0 +1,2 @@
+<p>{{ user.first_name }}様</p>
+{{ if attached }}<p>エクスポート {{ export.name }} を {{ export.file_name }} として添付しました。</p>{{ else }}<p>エクスポート {{ export.name }} の準備ができました。メールには大きすぎるため、アプリの「インポートとエクスポート」で開いてください。</p>{{ end }}

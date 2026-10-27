@@ -58,9 +58,7 @@ internal sealed class DataTransferApi(HttpClient http) : ApiClientBase(http), ID
     public async Task<ExportResult> ExportAsync(
         string entitySet, ExportFileFormat format, ODataQuery query, IReadOnlyCollection<string> columns, CancellationToken cancellationToken = default)
     {
-        var url = $"{Root}/{Uri.EscapeDataString(entitySet)}/export{(query with { Count = false, Top = null, Skip = null, Expand = null, Select = null }).ToQueryString()}";
-        url += (url.Contains('?') ? "&" : "?") + $"format={format.ToString().ToLowerInvariant()}"
-               + (columns.Count == 0 ? string.Empty : $"&columns={Uri.EscapeDataString(string.Join(",", columns))}");
+        var url = $"{Root}/{Uri.EscapeDataString(entitySet)}/export{ExportQueries.Of(format, query, columns)}";
         using var response = await SendContentAsync(HttpMethod.Get, url, null, cancellationToken);
         if (response.StatusCode == HttpStatusCode.Accepted)
         {
@@ -71,4 +69,24 @@ internal sealed class DataTransferApi(HttpClient http) : ApiClientBase(http), ID
         var name = response.Content.Headers.ContentDisposition?.FileNameStar ?? response.Content.Headers.ContentDisposition?.FileName?.Trim('"') ?? entitySet;
         return new ExportResult(await response.Content.ReadAsByteArrayAsync(cancellationToken), name, response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream", null);
     }
+
+    public IAsyncEnumerable<DataExportProgress> StreamExportAsync(string entitySet, string exportQuery, CancellationToken cancellationToken = default) =>
+        StreamAsync<DataExportProgress>($"{Root}/{Uri.EscapeDataString(entitySet)}/export/stream{exportQuery}", cancellationToken);
+
+    public async Task<DataTransferJobDto> MailExportAsync(string entitySet, MailExportRequest request, CancellationToken cancellationToken = default) =>
+        await SendAsync<DataTransferJobDto>(HttpMethod.Post, $"{Root}/{Uri.EscapeDataString(entitySet)}/export/mail", request, cancellationToken);
+
+    public async Task<IReadOnlyList<ExportScheduleDto>> GetExportSchedulesAsync(string? entitySet = null, CancellationToken cancellationToken = default) =>
+        await GetAsync<ExportScheduleDto[]>($"{Root}/export-schedules" + (entitySet is null ? string.Empty : $"?entitySet={Uri.EscapeDataString(entitySet)}"), cancellationToken);
+
+    public Task<ExportScheduleDto> SaveExportScheduleAsync(Guid? id, SaveExportScheduleRequest request, CancellationToken cancellationToken = default) =>
+        id is { } existing
+            ? SendAsync<ExportScheduleDto>(HttpMethod.Put, $"{Root}/export-schedules/{existing}", request, cancellationToken)
+            : SendAsync<ExportScheduleDto>(HttpMethod.Post, $"{Root}/export-schedules", request, cancellationToken);
+
+    public Task DeleteExportScheduleAsync(Guid id, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Delete, $"{Root}/export-schedules/{id}", null, cancellationToken);
+
+    public Task<ExportScheduleDto> RunExportScheduleAsync(Guid id, CancellationToken cancellationToken = default) =>
+        SendAsync<ExportScheduleDto>(HttpMethod.Post, $"{Root}/export-schedules/{id}/run", null, cancellationToken);
 }

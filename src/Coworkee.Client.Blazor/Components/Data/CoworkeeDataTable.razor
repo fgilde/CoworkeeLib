@@ -124,6 +124,13 @@
             }
             <MudMenuItem OnClick="() => ExportAsync(ExportFormat.Csv)">CSV</MudMenuItem>
             <MudMenuItem OnClick="() => ExportAsync(ExportFormat.Json)">JSON</MudMenuItem>
+            @if (DataSource is null)
+            {
+                <PermissionGate Permission="@Coworkee.Contracts.Data.DataTransferPermissions.ExportSchedules">
+                    <MudDivider />
+                    <MudMenuItem Icon="@Icons.Material.Outlined.ScheduleSend" OnClick="ScheduleExportAsync" data-testid="export-schedule">@L["Schedule export"]</MudMenuItem>
+                </PermissionGate>
+            }
         </MudMenu>
     }
     @if (OnDelete is not null && MultiSelection && _selected.Count > 0)

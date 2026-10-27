@@ -1,0 +1,2 @@
+<p>Olá, {{ user.first_name }},</p>
+{{ if attached }}<p>A exportação {{ export.name }} está anexada como {{ export.file_name }}.</p>{{ else }}<p>A exportação {{ export.name }} está pronta. Ela é grande demais para um e-mail: abra-a no aplicativo em Importar e exportar.</p>{{ end }}

@@ -29,5 +29,20 @@ internal sealed class DataTransferModelContributor : IModelContributor
             profile.Property(p => p.Culture).HasMaxLength(20);
             profile.HasIndex(p => new { p.TenantId, p.EntitySet, p.Name }).IsUnique();
         });
+        modelBuilder.Entity<ExportSchedule>(schedule =>
+        {
+            schedule.ToTable("ExportSchedules", "cw");
+            schedule.Ignore(s => s.Schedule);
+            schedule.Property(s => s.EntitySet).HasMaxLength(200);
+            schedule.Property(s => s.Name).HasMaxLength(200);
+            schedule.Property(s => s.Query).HasMaxLength(4000);
+            schedule.Property(s => s.FileName).HasMaxLength(260);
+            schedule.Property(s => s.Frequency).HasConversion<string>().HasMaxLength(20);
+            schedule.Property(s => s.Week).HasConversion<string>().HasMaxLength(10);
+            schedule.Property(s => s.TimeZone).HasMaxLength(100);
+            schedule.Property(s => s.LastError).HasMaxLength(2000);
+            schedule.HasIndex(s => s.NextRunAt);
+            schedule.HasIndex(s => new { s.TenantId, s.UserId });
+        });
     }
 }

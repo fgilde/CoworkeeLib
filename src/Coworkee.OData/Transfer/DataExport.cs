@@ -28,13 +28,17 @@ public static class DataExport
 {
     public const string XlsxContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
+    private const int ProgressRows = 500;
+
     public static ExportFileFormat Format(string? format) =>
         Enum.TryParse<ExportFileFormat>(format, ignoreCase: true, out var parsed) ? parsed : ExportFileFormat.Xlsx;
 
     /// <summary>The rows the query string selects; null when there are more than <paramref name="maxRows"/>.</summary>
-    internal static async Task<ExportFile?> WriteAsync<TEntity>(IServiceProvider services, string entitySet, QueryString query, int? maxRows, CancellationToken cancellationToken)
+    internal static async Task<ExportFile?> WriteAsync<TEntity>(
+        IServiceProvider services, string entitySet, QueryString query, int? maxRows, IProgress<DataExportProgress>? progress, CancellationToken cancellationToken)
         where TEntity : class
     {
+        progress?.Report(new DataExportProgress(DataExportProgress.Counting, 0));
         var model = services.GetRequiredService<IEdmModel>();
         var http = new DefaultHttpContext { RequestServices = services };
         http.ODataFeature().RoutePrefix = CoworkeeODataModule.RoutePrefix;
@@ -56,13 +60,26 @@ public static class DataExport
         var searched = await ODataEntityAccess.SearchAsync(services, await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken), options.Search?.RawValue,
             deniedByType, scope, cancellationToken);
         var rows = await scope.ApplyAsync(searched.ApplyODataFilter(options).ApplyODataOrderBy(options), cancellationToken);
-        if (maxRows is { } max && await rows.CountAsync(cancellationToken) > max)
+        var limit = services.GetRequiredService<IOptions<CoworkeeODataOptions>>().Value.MaxExportRows;
+        var total = maxRows is not null || progress is not null ? await rows.CountAsync(cancellationToken) : 0;
+        if (maxRows is { } max && total > max)
         {
             return null;
         }
 
         var computed = await ExportedAsync<TEntity>(services, cancellationToken);
-        var list = await Rows(rows, computed).Take(services.GetRequiredService<IOptions<CoworkeeODataOptions>>().Value.MaxExportRows).ToListAsync(cancellationToken);
+        var list = new List<ExportRow>();
+        var expected = Math.Max(1, Math.Min(total, limit));
+        await foreach (var row in Rows(rows, computed).Take(limit).AsAsyncEnumerable().WithCancellation(cancellationToken))
+        {
+            list.Add(row);
+            if (progress is not null && list.Count % ProgressRows == 0)
+            {
+                progress.Report(new DataExportProgress(DataExportProgress.Reading, Math.Min(80, list.Count * 80 / expected)));
+            }
+        }
+
+        progress?.Report(new DataExportProgress(DataExportProgress.Writing, 80));
         var wanted = http.Request.Query["columns"].ToString().Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         List<Column> all =
         [
