@@ -325,7 +325,10 @@
       "version": "0.0.1.42",
       "breaking": [
         "CodeCompletion.InsertText is the whole text including the trigger ({{ name }} instead of \" name }}\"); a pick replaces the typed trigger and the closing brackets Monaco added.",
-        "OData row filters and set permissions hold for navigations: $expand shows only rows the target set lists, $filter/$orderby through navigations see only visible rows, $expand into a set without its permission answers 403, and into a type whose IODataEntityFilter<T> does more than Where answers 400."
+        "OData row filters and set permissions hold for navigations: $expand shows only rows the target set lists, $filter/$orderby through navigations see only visible rows, $expand into a set without its permission answers 403, and into a type whose IODataEntityFilter<T> does more than Where answers 400.",
+        "OData query options need their $: options without it (filter=, orderby=, select=) are no longer read. Parameter aliases (@a=...) and $apply through navigations answer 400.",
+        "A query error that is not OData's own (e.g. EF cannot translate the query) answers 400 without detail; the message goes to the log.",
+        "AddODataImport with an id (update, upsert) refuses a set keyed by something other than a Guid, and AddExtendedAttributes refuses an entity without a Guid Id, at registration."
       ],
       "manual": [
         {

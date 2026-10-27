@@ -31,9 +31,9 @@ A set keyed by another property, of any primitive type, names it with `Key`:
 services.AddODataEntity<Country>("Countries", MasterDataPermissions.View, o => o.Key(c => c.IsoAlpha2Code));
 ```
 
-`GET /odata/Countries('DE')` reads one row (`/odata/Ranks(2)` for a number key). Lists, `$count`, facets, the global search (the hit's id is the key), exports, reports and `query_data` work as for any set. Features that address rows by a Guid `Id` refuse an entity without one when they are registered: record attachments, social (comments, tags, ratings, reactions), workflows, entity history and webhook entity events. Client entities leave such sets on the server. An entity that keeps a Guid `Id` next to another OData key still has them all.
+`GET /odata/Countries('DE')` reads one row (`/odata/Ranks(2)` for a number key). Lists, `$count`, facets, the global search (the hit's id is the key), exports, reports and `query_data` work as for any set. Features that address rows by a Guid `Id` refuse an entity without one when they are registered: record attachments, social (comments, tags, ratings, reactions), workflows, entity history and webhook entity events. Client entities leave such sets on the server. Imports that update or upsert (`AddODataImport` with an id) find rows by the set's key, which must be a Guid; for other keys register the import without an id (create only), else the registration throws. `AddExtendedAttributes` refuses an entity without a Guid `Id`. An entity that keeps a Guid `Id` next to another OData key still has them all.
 
-Names in the URI match regardless of case, so a camelCase client may send `$filter=name eq 'x'`, `$orderby=price` or `$expand=brand`; `Coworkee:OData:CaseInsensitive` (default `true`) turns that off. Responses keep the names of the C# properties (`Name`); a client that wants camelCase JSON maps them itself. Query options need their `$`: `filter=` is not read.
+Names in the URI match regardless of case, so a camelCase client may send `$filter=name eq 'x'`, `$orderby=price` or `$expand=brand`; `Coworkee:OData:CaseInsensitive` (default `true`) turns that off. Responses keep the names of the C# properties (`Name`); a client that wants camelCase JSON maps them itself. Query options need their `$`: `filter=` is not read. A `400` answer explains OData's own errors in `detail`; other failures of a query (for example EF cannot translate it) carry no detail and are logged, because their messages can quote row filters.
 
 ## Facets
 
@@ -83,18 +83,21 @@ An item is shown when the visible talks (every `IODataEntityFilter<Talk>`, tenan
 
 ### Navigations follow their target
 
-A query reaches other rows through navigations: `$expand`, `$filter=Invoices/any(...)`, `$orderby=Customer/Name`, nested `$count`, export and `query_data` filters, report fields. They show exactly what the target's own set lists for the user:
+A query reaches other rows through navigations: `$expand` (also `[AutoExpand]` navigations, which expand without it), `$filter=Invoices/any(...)`, `$orderby=Customer/Name`, nested `$count`, `$compute`, `/$count`, facets and their labels, export and `query_data` filters, global search fields, report fields. They show exactly what the target's own set lists for the user:
 
 - a collection only has the rows the target's `IODataEntityFilter<T>`s let through, and `any`, `all` and `$count` see only those;
-- a single navigation (`Customer`) is `null` when its row is hidden;
-- `$expand` into a set the user lacks the permission of answers `403` naming the navigation; in a `$filter` that set has no rows;
-- protected properties (`HideUnless`) of the target stay hidden, also through the navigation;
+- a single navigation (`Customer`) is `null` when its row is hidden, at every level (`Invoice/Shipment/Customer`), and a collection under a hidden reference is empty;
+- `$expand` into a set the user lacks the permission of answers `403` naming the navigation; in a `$filter`, and behind an `[AutoExpand]` navigation, that set has no rows;
+- protected properties (`HideUnless`), hidden members of a shared base and computed properties with a `Permission` of the target stay hidden, also through the navigation: naming them answers `403`, expanded rows leave them out;
 - a type with row filters but no set of its own gets its filters too;
-- a navigation to a base type (`Invoice.Shipment` of type `ShipmentBase`) applies the filters and permissions of every derived set to its rows.
+- a navigation to a base type (`Invoice.Shipment` of type `ShipmentBase`) applies the filters and permissions of every derived set to its rows;
+- facet counts come from the narrowed rows, and a facet label read through a navigation (`[ProvideFacet(LabelPath = "it.Customer.Name")]`) shows the key instead of the name when the user may not see that row.
 
-The filters are applied inside the query, so they must be plain `Where` calls on the query they get (closures with ids, `EF.Parameter`, subqueries and `AddODataChildFilter` are fine). A filter that does more (`OrderBy`, `Take`, `Join`, a new query) cannot be applied to a navigation: `$expand` into its type answers `400`, and in a `$filter` the type has no rows. The set's own list still uses the filter as it is. EF query filters of the DbContext (tenant, soft delete) apply to navigations as always.
+The filters are applied inside the query, so they must be plain `Where` calls on the query they get (closures with ids, `EF.Parameter`, subqueries and `AddODataChildFilter` are fine). A filter that does more (`OrderBy`, `Take`, `Join`, a new query), or fails on the empty in-memory query it is read from (one that asks the database first), cannot be applied to a navigation: `$expand` into its type answers `400`, and in a `$filter` the type has no rows. Other queries are not affected: only the targets a query actually reaches are checked, once per request. The set's own list still uses the filter as it is. EF query filters of the DbContext (tenant, soft delete) apply to navigations as always.
 
-`ODataNavigationScope.ForAsync(services, typeof(T), ct)` gives the same rules to own queries: `scope.Apply(query)` narrows every navigation in it, outside the rows `ODataEntityAccess.VisibleAsync` returned.
+The checks read the options as OData parses them, so `?+$filter=` or `%20$expand=` (a key with a space) are checked like `$filter`. Parameter aliases (`$filter=@a gt 5&@a=Size`) are refused with `400`, and so is `$apply` through a navigation (a hidden target would make a group of empty values); `$apply` over the set's own properties works.
+
+Not covered: own code that composes navigations on `ODataEntityAccess.VisibleAsync` without the scope, and the `Title`, `Subtitle`, `Url` and `Thumbnail` functions of the global search (they see the row's own columns only). `ODataNavigationScope.For(services, typeof(T))` gives the rules to own queries: `await scope.ApplyAsync(query, ct)` narrows every navigation in it, outside the rows `VisibleAsync` returned.
 
 ## Computed properties
 
@@ -126,7 +129,7 @@ Internal fields stay out of the model, so they are neither returned nor filterab
 services.AddODataEntity<Document>("Documents", DocumentPermissions.Documents.View, d => d.BlobKey);
 ```
 
-`Hide` and `HideUnless` also take members a base class declares (`o => o.Hide(s => s.Tags)` with `Tags` on `ShipmentBase`). Usually the EDM gives every set its own copy of the base's members, and they leave only this set. When a navigation points to the base class (`Invoice.Shipment` of type `ShipmentBase`), the EDM has the base as a type of its own that every derived set shares, and a hidden member cannot leave it for one set alone. It then stays in the model, and on the hiding set it is refused for everyone like a `HideUnless` property nobody holds the permission of: not serialized, `$filter`, `$orderby`, `$select` and `$expand` naming it answer `403`, exports, reports and search leave it out. Other sets of the base keep it. The app logs a warning at startup. Rows reached through a navigation to the base leave out the hidden properties of their own set; an expanded navigation property of such a row is not covered, so do not reach a set's hidden navigation through another set.
+`Hide` and `HideUnless` also take members a base class declares (`o => o.Hide(s => s.Tags)` with `Tags` on `ShipmentBase`). Usually the EDM gives every set its own copy of the base's members, and they leave only this set. When a navigation points to the base class (`Invoice.Shipment` of type `ShipmentBase`), the EDM has the base as a type of its own that every derived set shares, and a hidden member cannot leave it for one set alone. It then stays in the model, and on the hiding set it is refused for everyone like a `HideUnless` property nobody holds the permission of: not serialized, `$filter`, `$orderby`, `$select` and `$expand` naming it answer `403`, exports, reports and search leave it out. Other sets of the base keep it. The app logs a warning at startup. Rows reached through a navigation to the base leave out the hidden properties and navigations of their own set (`Stickers?$expand=Owner($expand=Stickers)` has no stickers on owners whose set hides them).
 
 ### Properties behind a permission
 

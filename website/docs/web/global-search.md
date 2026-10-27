@@ -30,6 +30,8 @@ context.Services.AddGlobalSearch<Product>(s => s
 
 The search sees exactly what the OData list of the set returns: its permission, the organisation, [row rules](odata.md#row-level-rules) and soft deletion. Searching a hidden property fails at start. It runs in two rounds: values that start with the text (or the record of a typed id) come at once, values that contain every word follow.
 
+Fields may read through a navigation (`t => t.Customer!.Name`): they are read in the query and follow the [navigation rules](odata.md#navigations-follow-their-target), so a hidden target neither matches nor shows. `Title`, `Subtitle`, `Url` and `Thumbnail` run on the loaded row, which has no navigations; use fields for values of other rows.
+
 | Option | Default |
 |---|---|
 | `Fields(...)` | required; the first is the title |

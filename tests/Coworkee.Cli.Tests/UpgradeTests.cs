@@ -44,6 +44,14 @@ public sealed class UpgradeTests
     }
 
     [Fact]
+    public void The_odata_rules_name_the_options_without_dollar_and_the_aliases()
+    {
+        var breaking = UpgradeRules.All.Single(r => r.Version == "0.0.1.42").Breaking!;
+
+        breaking.ShouldContain(b => b.Contains("filter=") && b.Contains("aliases"));
+    }
+
+    [Fact]
     public void Every_version_with_breaking_changes_in_the_changelog_has_rules()
     {
         var changelog = File.ReadAllText(Path.Combine(Dotnet.RepositoryRoot(), "website", "docs", "reference", "changelog.md")).ReplaceLineEndings("\n");
