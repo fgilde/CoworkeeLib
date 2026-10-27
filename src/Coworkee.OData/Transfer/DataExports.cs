@@ -184,6 +184,17 @@ public sealed partial class DataExports(
         : recipients.FirstOrDefault(r => r.Length > 254 || !MailAddress.TryCreate(r, out var address) || address.Address != r) is { } wrong ? $"{wrong} is no e-mail address."
         : null;
 
+    public const string NoGroupsLeft = "None of the selected groups is accessible anymore.";
+
+    /// <summary>
+    /// The saved group selection still accessible to the current user; null when nothing was selected (all groups). Empty when groups were selected but none
+    /// is left: the caller fails rather than widen the export to every group.
+    /// </summary>
+    internal static async Task<IReadOnlyList<Guid>?> GroupsAsync(IServiceProvider services, IReadOnlyCollection<Guid> saved, CancellationToken cancellationToken) =>
+        saved.Count == 0 || services.GetService<IGroupScope>() is not { } scope
+            ? null
+            : [.. saved.Intersect(await scope.AccessibleAsync(cancellationToken))];
+
     /// <summary>An export's query string with or without its question mark.</summary>
     public static QueryString Query(string? query) => string.IsNullOrEmpty(query) ? QueryString.Empty : new QueryString(query[0] == '?' ? query : "?" + query);
 

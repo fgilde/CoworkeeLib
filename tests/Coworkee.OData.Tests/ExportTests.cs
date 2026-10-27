@@ -218,6 +218,37 @@ public sealed class ExportTests(ODataApp app) : IAsyncLifetime
         (await app.InDbAsync(_setup.TenantId, db => db.Set<DataTransferJob>().CountAsync(Ct))).ShouldBe(0);
     }
 
+    [Fact]
+    public async Task Exports_of_groups_that_are_no_longer_accessible_fail_instead_of_listing_every_group()
+    {
+        var gone = Guid.CreateVersion7();
+        (await Admin.PostAsJsonAsync("/api/v1/data/export-schedules", Request(), Ct)).EnsureSuccessStatusCode();
+        await app.InDbAsync(_setup.TenantId, async db =>
+        {
+            (await db.Set<ExportSchedule>().SingleAsync(Ct)).Groups = [gone];
+            return await db.SaveChangesAsync(Ct);
+        });
+
+        (await RunDueSchedulesAsync()).LastError.ShouldBe(DataExports.NoGroupsLeft);
+        app.Mails.Sent.ShouldBeEmpty();
+
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(_setup.AdminUserId, _setup.TenantId));
+        await using var scope = app.App.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<GadgetDbContext>();
+        var job = new DataTransferJob
+        {
+            TenantId = _setup.TenantId, UserId = _setup.AdminUserId, Kind = DataTransferKind.Export, EntitySet = "Gadgets", Status = DataTransferStatus.Queued,
+            Settings = "?format=csv", CreatedAt = DateTimeOffset.UtcNow,
+        };
+        db.Add(job);
+        await db.SaveChangesAsync(Ct);
+        await scope.ServiceProvider.GetRequiredService<ExportJob>().ExecuteAsync(new ExportJobArgs(job.Id, [gone], Mail: true), Ct);
+
+        var failed = await app.InDbAsync(_setup.TenantId, d => d.Set<DataTransferJob>().AsNoTracking().SingleAsync(j => j.Id == job.Id, Ct));
+        (failed.Status, failed.Message, failed.Result).ShouldBe((DataTransferStatus.Failed, DataExports.NoGroupsLeft, null));
+        app.Mails.Sent.ShouldBeEmpty();
+    }
+
     /// <summary>Makes every schedule due, runs the job and returns the (single) schedule afterwards.</summary>
     private async Task<ExportSchedule> RunDueSchedulesAsync()
     {

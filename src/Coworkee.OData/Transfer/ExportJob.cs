@@ -28,7 +28,13 @@ internal sealed class ExportJob(IServiceProvider services, DataExports exports, 
                 throw new UnauthorizedAccessException($"You may not read {job.EntitySet}.");
             }
 
-            using var selection = args.Groups is { Length: > 0 } groups ? GroupScope.Selection(groups) : null;
+            var groups = await DataExports.GroupsAsync(services, args.Groups ?? [], cancellationToken);
+            if (groups is { Count: 0 })
+            {
+                throw new UnauthorizedAccessException(DataExports.NoGroupsLeft);
+            }
+
+            using var selection = groups is null ? null : GroupScope.Selection(groups);
             var file = (await exports.WriteAsync(entity, new QueryString(job.Settings), null, cancellationToken))!;
             (job.Result, job.ResultContentType, job.ResultFileName) = (file.Content, file.ContentType, job.FileName ?? file.Name);
             job.Status = DataTransferStatus.Completed;

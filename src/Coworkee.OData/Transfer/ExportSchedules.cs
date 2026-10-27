@@ -220,10 +220,14 @@ internal sealed partial class ExportScheduleRunner(
             {
                 error = $"The owner may no longer read {schedule.EntitySet}.";
             }
+            else if (await DataExports.GroupsAsync(services, schedule.Groups, cancellationToken) is { Count: 0 })
+            {
+                error = DataExports.NoGroupsLeft;
+            }
             else
             {
                 var query = DataExports.Query(schedule.Query);
-                using var selection = schedule.Groups.Count > 0 ? GroupScope.Selection(schedule.Groups) : null;
+                using var selection = await DataExports.GroupsAsync(services, schedule.Groups, cancellationToken) is { } groups ? GroupScope.Selection(groups) : null;
                 var file = (await exports.WriteAsync(entity, query, null, cancellationToken))!;
                 var job = exports.NewJob(entity, query, schedule.FileName ?? schedule.Name, DataTransferStatus.Completed);
                 (job.Result, job.ResultContentType, job.ResultFileName, job.FinishedAt) = (file.Content, file.ContentType, job.FileName, clock.GetUtcNow());
