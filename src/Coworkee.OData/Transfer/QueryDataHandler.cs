@@ -69,7 +69,7 @@ internal sealed class QueryDataHandler(IServiceProvider services, ODataEntityReg
         http.Request.QueryString = QueryString.Create(
             new[] { KeyValuePair.Create("$filter", query.Filter), KeyValuePair.Create("$orderby", query.OrderBy) }.Where(o => !string.IsNullOrWhiteSpace(o.Value)));
         var options = http.Request.ODataQueryOptions<TEntity>(model);
-        if (await services.GetRequiredService<Computed.ODataComputedProperties>().DeniedAsync(services, typeof(TEntity), cancellationToken, query.Filter, query.OrderBy))
+        if (ODataQueryGuard.Denies(options, await ODataEntityAccess.DeniedByTypeAsync(services, cancellationToken)))
         {
             throw new ODataException("The filter or order names a field you may not read.");
         }

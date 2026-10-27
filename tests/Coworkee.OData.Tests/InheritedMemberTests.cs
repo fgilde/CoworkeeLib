@@ -82,6 +82,18 @@ public sealed class InheritedMemberTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Hidden_members_reached_through_the_base_are_refused_however_they_are_spelled()
+    {
+        foreach (var query in new[] { "$filter=Owner/ Code eq 'B1'", "$filter=Owner/Code eq 'B1'", "$orderby=Owner/ Code", "$expand=Owner($compute=Code as C;$select=Name,C)", "$compute=Owner/ Code as C&$select=Text,C" })
+        {
+            (await Admin.GetAsync($"/odata/Stickers?{query}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden, query);
+        }
+
+        (await Admin.GetAsync("/odata/Stickers?$filter=Owner/Name eq 'Code'", Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await Admin.GetAsync("/odata/Bags?$filter=Code eq 'G1'&$expand=Stickers", Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
     public async Task Protected_members_of_a_base_class_need_their_permission_on_their_set_only()
     {
         var user = await (await Admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest($"viewer-{Guid.NewGuid():N}@acme.test", "Passw0rd!x", null, null), Ct))

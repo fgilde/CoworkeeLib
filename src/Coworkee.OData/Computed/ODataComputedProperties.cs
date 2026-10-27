@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using Microsoft.OData.Edm;
 
 namespace Coworkee.OData.Computed;
@@ -25,33 +24,6 @@ public sealed class ODataComputedProperties(ODataEntityRegistry registry, IEnume
                 _edm[type.AddStructuralProperty(property.Name, new EdmPrimitiveTypeReference(kind, true))] = property;
             }
         }
-    }
-
-    /// <summary>
-    /// Whether one of the texts (a $filter, an $orderby) names a property the user may not read (<see cref="ODataEntityAccess.DeniedPropertiesAsync"/>:
-    /// protected, hidden on a shared base, computed without its permission) of the set, or of another set through a navigation path (Manager/Salary).
-    /// </summary>
-    // ponytail: a word match, so a text literal with the exact name also counts; parse the clauses if that ever bites
-    internal async Task<bool> DeniedAsync(IServiceProvider services, Type entityType, CancellationToken cancellationToken, params string?[] texts)
-    {
-        if (texts.All(string.IsNullOrEmpty))
-        {
-            return false;
-        }
-
-        foreach (var set in registry.Entities)
-        {
-            var prefix = set.EntityType == entityType ? @"\b" : "/";
-            foreach (var name in await ODataEntityAccess.DeniedPropertiesAsync(services, set.EntityType, cancellationToken))
-            {
-                if (texts.Any(t => t is not null && Regex.IsMatch(t, $@"{prefix}{name}\b", RegexOptions.IgnoreCase)))
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
     }
 
     private static EdmPrimitiveTypeKind Kind(Type type) => (Nullable.GetUnderlyingType(type) ?? type) switch

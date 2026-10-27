@@ -16,6 +16,8 @@ public sealed class Shelf : AuditedEntity, IMultiTenant
     [ProvideFacet(Label = "Featured", LabelPath = "it.Featured.Name")]
     public Guid? FeaturedId { get; set; }
 
+    // a facet whose value is read through a navigation
+    [ProvideFacet(Label = "Featured name", ValuePath = "it.Featured.Name")]
     public Bin? Featured { get; set; }
 
     public List<Locker> Lockers { get; set; } = [];
@@ -60,6 +62,10 @@ public sealed class Tray : AuditedEntity, IMultiTenant
 
     [AutoExpand]
     public Bin? Bin { get; set; }
+
+    public Guid? ShelfId { get; set; }
+
+    public Shelf? Shelf { get; set; }
 
     public Guid TenantId { get; set; }
 }

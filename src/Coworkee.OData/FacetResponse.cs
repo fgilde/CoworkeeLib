@@ -25,8 +25,12 @@ internal static class FacetResponse
         var registry = services.GetRequiredService<ODataEntityRegistry>();
         var context = FacetContextDto.Decode(http.Request.Headers[FacetContextDto.Header]);
         var result = new List<FacetGroupDto>(facets.Count);
-        var denied = await ODataEntityAccess.DeniedPropertiesAsync(services, typeof(T), cancellationToken);
-        foreach (var facet in facets.Where(f => !denied.Contains(f.Field)))
+        var denied = http.Items[ODataEntityAccess.DeniedItem] is Dictionary<string, IReadOnlySet<string>> byType
+            ? byType.GetValueOrDefault(typeof(T).FullName!) ?? new HashSet<string>()
+            : await ODataEntityAccess.DeniedPropertiesAsync(services, typeof(T), cancellationToken);
+
+        // ponytail: a value read through a navigation would group over the target's hidden rows, so such groups are left out; scope them like labels if needed
+        foreach (var facet in facets.Where(f => !denied.Contains(f.Field) && !ThroughNavigation(typeof(T), f.ValuePath)))
         {
             var own = context is not null && context.Groups.ContainsKey(facet.Key) && context.Combines?.GetValueOrDefault(facet.Key) != FacetCombine.All;
             var rows = own ? await FilterAsync(visible, context!.Without(facet.Key), http, cancellationToken) : filtered;
@@ -103,6 +107,11 @@ internal static class FacetResponse
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         return dto with { Options = [.. dto.Options.Select(o => shown.Contains(Text(o.Value)) ? o : o with { Label = Text(o.Value) })] };
     }
+
+    private static bool ThroughNavigation(Type entityType, string? path) =>
+        (path?.StartsWith("it/", StringComparison.Ordinal) == true ? path[3..] : path)?.Split('/') is [var first, _, ..]
+        && entityType.GetProperty(first, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase) is { } property
+        && !Transfer.Import.ImportField.IsSimple(property.PropertyType);
 
     private static string Text(JsonElement value) => value.ValueKind == JsonValueKind.String ? value.GetString()! : value.ToString();
 

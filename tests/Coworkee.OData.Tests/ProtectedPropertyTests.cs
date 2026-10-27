@@ -23,7 +23,7 @@ public sealed class ProtectedPropertyTests(ODataApp app) : IAsyncLifetime
         await app.InDbAsync(_setup.TenantId, async db =>
         {
             db.AddRange(
-                new Gadget { Name = "Drill", Category = "Tools", Price = 99, TenantId = _setup.TenantId },
+                new Gadget { Name = "Drill", Category = "Tools", Price = 99, SerialCode = "SN-777", TenantId = _setup.TenantId },
                 new Gadget { Name = "Lamp", Category = "Light", Price = 35, TenantId = _setup.TenantId });
             return await db.SaveChangesAsync();
         });
@@ -54,6 +54,22 @@ public sealed class ProtectedPropertyTests(ODataApp app) : IAsyncLifetime
         (await Viewer.GetFromJsonAsync<JsonElement>("/odata/Gadgets?filter=Category eq 'Tools'", Ct)).GetProperty("value").GetArrayLength().ShouldBe(2);
         (await Admin.GetFromJsonAsync<JsonElement>("/odata/Gadgets?$filter=Category eq 'Tools'", Ct)).GetProperty("value")[0].GetProperty("Category").GetString().ShouldBe("Tools");
         (await Viewer.GetFromJsonAsync<JsonElement>($"/odata/Gadgets({page.GetProperty("value")[0].GetProperty("Id").GetGuid()})", Ct)).TryGetProperty("Category", out _).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Search_reads_only_properties_the_user_may_read()
+    {
+        static async Task<int> CountAsync(HttpClient client, string url) =>
+            (await client.GetFromJsonAsync<JsonElement>(url, TestContext.Current.CancellationToken)).GetProperty("value").GetArrayLength();
+
+        (await CountAsync(Viewer, "/odata/Gadgets?$search=tools")).ShouldBe(0);
+        (await CountAsync(Admin, "/odata/Gadgets?$search=tools")).ShouldBe(1);
+        (await CountAsync(Admin, "/odata/Gadgets?$search=SN-777")).ShouldBe(0); // hidden for everyone
+        (await CountAsync(Viewer, "/odata/Gadgets?$search=drill")).ShouldBe(1);
+
+        (await Viewer.GetStringAsync("/api/v1/data/Gadgets/export?format=csv&$search=tools", Ct)).ShouldNotContain("Drill");
+        (await Admin.GetStringAsync("/api/v1/data/Gadgets/export?format=csv&$search=SN-777", Ct)).ShouldNotContain("Drill");
+        (await Viewer.GetStringAsync("/api/v1/data/Gadgets/export?format=csv&$search=drill", Ct)).ShouldContain("Drill");
     }
 
     [Fact]

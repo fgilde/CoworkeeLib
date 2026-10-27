@@ -68,12 +68,12 @@ public sealed class ODataNavigationScope
         return PrepareAsync(collector.Targets, cancellationToken);
     }
 
-    /// <summary>Whether <paramref name="expression"/> reads a navigation of the scope.</summary>
-    internal bool Reaches(Expression expression)
+    /// <summary>Whether <paramref name="expression"/> reads a navigation whose target the scope narrows (rules, no permission, unfilterable); checked targets only.</summary>
+    internal bool Narrows(Expression expression)
     {
         var collector = new Collector(this);
         collector.Visit(expression);
-        return collector.Targets.Count > 0;
+        return collector.Targets.Any(t => _predicates.ContainsKey(t) || !_own.ContainsKey(t));
     }
 
     /// <summary>Checks every reachable target, for a query that could not be read ahead.</summary>

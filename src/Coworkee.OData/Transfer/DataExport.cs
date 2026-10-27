@@ -46,14 +46,13 @@ public static class DataExport
 
         var options = http.Request.ODataQueryOptions<TEntity>(model);
         var denied = await ODataEntityAccess.DeniedPropertiesAsync(services, typeof(TEntity), cancellationToken);
-        if (await services.GetRequiredService<Computed.ODataComputedProperties>().DeniedAsync(services, typeof(TEntity), cancellationToken,
-                options.RawValues.Filter, options.RawValues.OrderBy))
+        if (ODataQueryGuard.Denies(options, await ODataEntityAccess.DeniedByTypeAsync(services, cancellationToken)))
         {
             throw new UnauthorizedAccessException("The export filters or sorts on a property the user may not read.");
         }
 
         var rows = await ODataNavigationScope.For(services, typeof(TEntity)).ApplyAsync(
-            (await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken)).ApplyODataSearch(options.Search)!
+            ODataEntityAccess.Search(services, await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken), options.Search?.RawValue, denied)
                 .ApplyODataFilter(options)
                 .ApplyODataOrderBy(options), cancellationToken);
         if (maxRows is { } max && await rows.CountAsync(cancellationToken) > max)

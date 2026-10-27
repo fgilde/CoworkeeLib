@@ -37,7 +37,7 @@ public sealed class ImportWizardTests(ODataApp app) : IAsyncLifetime
     {
         var targets = await Admin.GetFromJsonAsync<List<ImportTargetDto>>("/api/v1/data/imports", Json, Ct);
 
-        targets!.Select(t => t.EntitySet).ShouldBe(["Groups", "Gadgets", "Widgets", "Parts", "Crates"], ignoreOrder: true);
+        targets!.Select(t => t.EntitySet).ShouldBe(["Groups", "Gadgets", "Widgets", "Parts", "Crates", "Coupons"], ignoreOrder: true);
         var widgets = targets.Single(t => t.EntitySet == "Widgets");
         widgets.CanUpdate.ShouldBeTrue();
         widgets.CanUndo.ShouldBeTrue();
@@ -113,6 +113,24 @@ public sealed class ImportWizardTests(ODataApp app) : IAsyncLifetime
         (job.Created, job.Updated, job.Failed).ShouldBe((1, 1, 0));
         var anvil = await app.InDbAsync(_setup.TenantId, db => db.Set<Widget>().SingleAsync(w => w.Name == "Anvil", Ct));
         (anvil.Price, anvil.Color, anvil.Kind, anvil.Active).ShouldBe((12m, "Red", WidgetKind.Wrench, true));
+    }
+
+    [Fact]
+    public async Task Upsert_updates_rows_of_a_set_keyed_by_a_guid_not_named_id()
+    {
+        var gold = await app.InDbAsync(_setup.TenantId, async db =>
+        {
+            var coupon = new Coupon { Name = "Gold", Percent = 5, TenantId = _setup.TenantId };
+            db.Add(coupon);
+            await db.SaveChangesAsync(Ct);
+            return coupon.Code;
+        });
+        var sheet = await UploadAsync("Coupons", "coupons.csv", Encoding.UTF8.GetBytes("Name;Percent\r\nGold;20\r\nSilver;10\r\n"));
+
+        var job = await PostAsync<DataTransferJobDto>($"/api/v1/data/imports/{sheet.JobId}/start", new ImportSettings(["Name", "Percent"], ImportMode.Upsert, "Name"));
+
+        (job.Created, job.Updated, job.Failed).ShouldBe((1, 1, 0));
+        (await app.InDbAsync(_setup.TenantId, db => db.Set<Coupon>().SingleAsync(c => c.Code == gold, Ct))).Percent.ShouldBe(20);
     }
 
     [Fact]

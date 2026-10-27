@@ -4,6 +4,7 @@ using System.Text.Json;
 using Coworkee.Contracts.Data;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Search;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.OData.Tests;
 
@@ -36,7 +37,7 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
             db.AddRange(open, other, third, new Badge { Name = "Silver", TenantId = tenant });
             await db.SaveChangesAsync();
             (open.Featured, other.Featured, third.Featured) = (plain, secret, visible);
-            db.AddRange(new Tray { Name = "T1", Bin = plain, TenantId = tenant }, new Tray { Name = "T2", Bin = secret, TenantId = tenant });
+            db.AddRange(new Tray { Name = "T1", Bin = plain, Shelf = open, TenantId = tenant }, new Tray { Name = "T2", Bin = secret, Shelf = open, TenantId = tenant });
             await db.SaveChangesAsync();
             return (plain.Id, secret.Id);
         });
@@ -88,6 +89,47 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_checks_read_the_bound_query_whatever_its_spelling()
+    {
+        var viewer = await UserWithAsync(ODataApp.ViewGadgets, ODataApp.ViewBins);
+        var binViewer = app.As(viewer, _setup.TenantId);
+        foreach (var query in new[]
+                 {
+                     "$compute=Featured/ Size as S&$select=Name,S", "$filter=Featured/ Volume gt 0", "$orderby=Featured/ Size", "$filter=Bins/any(b: b/ Size gt 1)",
+                     "$expand=Bins($filter=Size gt 1)", "$expand=Featured($compute=Size as S;$select=Name,S)", "$expand=Featured($expand=Badge;$orderby=Size)",
+                 })
+        {
+            (await binViewer.GetAsync($"/odata/Shelves?{query}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden, query);
+        }
+
+        // names inside literals are no properties
+        foreach (var query in new[] { "$filter=Name eq 'Featured/Size'", "$expand=Bins($filter=Name eq 'Size')", "$expand=Featured($expand=Badge($filter=Name ne 'Volume'))" })
+        {
+            (await binViewer.GetAsync($"/odata/Shelves?{query}", Ct)).StatusCode.ShouldBe(HttpStatusCode.OK, query);
+        }
+
+        // the other paths that take a filter: export, facet filters, the data tools and reports (FilteredAsync)
+        (await binViewer.GetAsync("/api/v1/data/Shelves/export?format=csv&$filter=Featured/ Size gt 0", Ct)).IsSuccessStatusCode.ShouldBeFalse();
+        using var facets = new HttpRequestMessage(HttpMethod.Get, "/odata/Shelves");
+        facets.Headers.Add(FacetContextDto.Header, new FacetContextDto("Featured/ Size gt 0", new Dictionary<string, string>()).Encode());
+        (await binViewer.SendAsync(facets, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        using var actor = Coworkee.Core.Security.CurrentUserScope.Begin(new Coworkee.Core.Security.ImpersonatedUser(viewer, _setup.TenantId));
+        await using var scope = app.App.Services.CreateAsyncScope();
+        await Should.ThrowAsync<Microsoft.OData.ODataException>(() => ODataEntityAccess.FilteredAsync<Shelf>(scope.ServiceProvider, "Featured/ Size gt 0", Ct));
+        (await ODataEntityAccess.FilteredAsync<Shelf>(scope.ServiceProvider, "Name eq 'Featured/Size'", Ct)).ShouldNotBeNull();
+        var dispatcher = scope.ServiceProvider.GetRequiredService<Coworkee.Application.Messaging.IDispatcher>();
+        (await dispatcher.SendAsync(new Coworkee.OData.Transfer.QueryDataQuery("Shelves", "Featured/ Size gt 0"), Ct)).Error!.Kind.ShouldBe(Coworkee.Core.Results.ErrorKind.Validation);
+    }
+
+    [Fact]
+    public async Task Apply_through_a_navigation_without_rules_still_groups()
+    {
+        var groups = (await GetAsync("/odata/Trays?$apply=groupby((Shelf/Name),aggregate($count as N))")).GetProperty("value");
+        groups.GetArrayLength().ShouldBe(1);
+        (await Admin.GetAsync("/odata/Trays?$apply=groupby((Bin/Name),aggregate($count as N))", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
     public async Task Auto_expanded_navigations_follow_their_target()
     {
         var trays = (await GetAsync("/odata/Trays?$orderby=Name")).GetProperty("value");
@@ -106,6 +148,9 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
         // the open shelf has a hidden bin named Secret: without the scope its facet would count 1
         var (_, facets) = await FacetsAsync(Admin, "$filter=Bins/any(b: b/Name eq 'Secret')&$top=0");
         facets.SelectMany(f => f.Options).ShouldAllBe(o => o.Count == 0);
+
+        // a value read through a navigation would group over hidden rows: no such group
+        (await FacetsAsync(Admin, "$top=0")).Facets.ShouldNotContain(f => f.Field == "Featured");
 
         var featured = (await FacetsAsync(Admin, "$top=0")).Facets.Single(f => f.Field == "FeaturedId").Options;
         featured.Select(o => o.Label.ToLowerInvariant()).ShouldBe(["plain", "visible", _secret.ToString()], ignoreOrder: true);

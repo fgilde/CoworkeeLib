@@ -85,6 +85,23 @@ public static class ODataEntityAccess
         return query;
     }
 
+    /// <summary>
+    /// $search over the string properties of the set the user may read (Nextended's default is every string property): hidden ones and
+    /// <paramref name="denied"/> ones (<see cref="DeniedPropertiesAsync"/>) neither match nor narrow, so a search is no oracle on them.
+    /// </summary>
+    internal static IQueryable<TEntity> Search<TEntity>(IServiceProvider services, IQueryable<TEntity> rows, string? text, IReadOnlySet<string> denied)
+        where TEntity : class
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return rows;
+        }
+
+        var hidden = services.GetRequiredService<ODataEntityRegistry>().Find(typeof(TEntity))?.HiddenProperties ?? [];
+        return Nextended.EF.QueryableExtensions.WhereContains(rows, text, [.. Nextended.Core.Contracts.ISearchable<TEntity>.GetSearchProperties()
+            .Where(p => p.Body is not System.Linq.Expressions.MemberExpression member || !(denied.Contains(member.Member.Name) || hidden.Contains(member.Member.Name)))]);
+    }
+
     /// <summary>Whether the query names parameter aliases (<c>@a=Size</c>): OData binds them inside the options, past the checks that read the options' text.</summary>
     internal static bool HasAliases(IQueryCollection query) => query.Keys.Any(k => k.Trim().StartsWith('@'));
 
@@ -126,7 +143,7 @@ public static class ODataEntityAccess
         where TEntity : class
     {
         var visible = await VisibleAsync<TEntity>(services, cancellationToken);
-        if (await services.GetRequiredService<Computed.ODataComputedProperties>().DeniedAsync(services, typeof(TEntity), cancellationToken, filter))
+        if (ODataQueryGuard.Denies(services, typeof(TEntity), filter, await DeniedByTypeAsync(services, cancellationToken)))
         {
             throw new Microsoft.OData.ODataException("The filter names a property the user may not read.");
         }

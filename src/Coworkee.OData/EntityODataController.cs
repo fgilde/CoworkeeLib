@@ -48,8 +48,7 @@ public class EntityODataController<TEntity> : GenericODataController<TEntity>, I
 
         var raw = options.RawValues;
         var denied = await ODataEntityAccess.DeniedByTypeAsync(services, cancellationToken);
-        if (await Get<Computed.ODataComputedProperties>().DeniedAsync(services, typeof(TEntity), cancellationToken, raw.Filter, raw.OrderBy, raw.Select, raw.Apply, raw.Compute, FacetFilters())
-            || Names(raw.Expand, ExpandDenied(denied)))
+        if (ODataQueryGuard.Denies(options, denied) || FacetFilters().Any(filter => ODataQueryGuard.Denies(services, typeof(TEntity), filter, denied)))
         {
             context.Result = new ForbidResult();
             return;
@@ -80,10 +79,10 @@ public class EntityODataController<TEntity> : GenericODataController<TEntity>, I
             return;
         }
 
-        // groups through a navigation would show a hidden target as a group of empty values, which the model does not allow
+        // groups through a navigation into narrowed rows would show a hidden target as a group of empty values, which the model does not allow
         if (!string.IsNullOrEmpty(raw.Apply) && Applied(scope))
         {
-            context.Result = Problem(StatusCodes.Status400BadRequest, "The query is not valid.", "$apply cannot read through navigations; group and aggregate the set's own properties.");
+            context.Result = Problem(StatusCodes.Status400BadRequest, "The query is not valid.", "$apply cannot read through navigations into rows with row rules or permissions; group and aggregate the set's own properties.");
             return;
         }
 
@@ -97,7 +96,7 @@ public class EntityODataController<TEntity> : GenericODataController<TEntity>, I
         try
         {
             var ignored = AllowedQueryOptions.Count | AllowedQueryOptions.Top | AllowedQueryOptions.Skip | AllowedQueryOptions.SkipToken;
-            return options.ApplyTo(_visible!.ApplyODataSearch(options.Search)!, new ODataQuerySettings(), ignored).Expression;
+            return options.ApplyTo(Searched(options), new ODataQuerySettings(), ignored).Expression;
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -110,7 +109,7 @@ public class EntityODataController<TEntity> : GenericODataController<TEntity>, I
     {
         try
         {
-            return scope.Reaches(Request.ODataQueryOptions<TEntity>(Get<IEdmModel>()).ApplyTo(_visible!, new ODataQuerySettings(), AllowedQueryOptions.All & ~AllowedQueryOptions.Apply).Expression);
+            return scope.Narrows(Request.ODataQueryOptions<TEntity>(Get<IEdmModel>()).ApplyTo(_visible!, new ODataQuerySettings(), AllowedQueryOptions.All & ~AllowedQueryOptions.Apply).Expression);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -152,22 +151,19 @@ public class EntityODataController<TEntity> : GenericODataController<TEntity>, I
     private static ObjectResult Problem(int status, string title, string detail) =>
         new(new ProblemDetails { Status = status, Title = title, Detail = detail }) { StatusCode = status, ContentTypes = { "application/problem+json" } };
 
-    // protected properties of every set (they can be nested: Manager($select=Salary)); hidden ones a shared base keeps only of this set
-    private IEnumerable<string> ExpandDenied(Dictionary<string, IReadOnlySet<string>> denied) =>
-        denied.SelectMany(d => d.Key == typeof(TEntity).FullName ? d.Value
-            : d.Value.Except(Get<ODataEntityRegistry>().Entities.First(e => e.EntityType.FullName == d.Key).SharedHidden, StringComparer.OrdinalIgnoreCase));
+    private IEnumerable<string?> FacetFilters() => Coworkee.Contracts.Data.FacetContextDto.Decode(Request.Headers[Coworkee.Contracts.Data.FacetContextDto.Header]) is { } facets
+        ? facets.Groups.Values.Prepend(facets.Base)
+        : [];
 
-    // ponytail: a word match on the whole $expand, as for $filter; parse the clause if a literal ever collides
-    private static bool Names(string? text, IEnumerable<string> names) =>
-        !string.IsNullOrEmpty(text) && names.Any(n => System.Text.RegularExpressions.Regex.IsMatch(text, $@"\b{n}\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase));
+    // the visible rows narrowed by $search over the properties the user may read
+    private IQueryable<TEntity> Searched(ODataQueryOptions options) =>
+        ODataEntityAccess.Search(HttpContext.RequestServices, Queryable(), options.Search?.RawValue,
+            ((Dictionary<string, IReadOnlySet<string>>)HttpContext.Items[ODataEntityAccess.DeniedItem]!).GetValueOrDefault(typeof(TEntity).FullName!) ?? new HashSet<string>());
 
-    private string? FacetFilters() => Coworkee.Contracts.Data.FacetContextDto.Decode(Request.Headers[Coworkee.Contracts.Data.FacetContextDto.Header]) is { } facets
-        ? string.Join(" ", facets.Groups.Values.Prepend(facets.Base))
-        : null;
-
+    // Nextended's Get searches every string property, hidden ones too
     public override async Task<IQueryable<TEntity>> Get(CancellationToken ct = default)
     {
-        var rows = await base.Get(ct);
+        var rows = Searched(Request.ODataQueryOptions<TEntity>(Get<IEdmModel>()));
         if (FacetsAsked())
         {
             // Nextended's own build would count on the filter without the navigation scope: an oracle on hidden rows
