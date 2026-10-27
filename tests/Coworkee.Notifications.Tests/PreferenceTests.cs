@@ -208,6 +208,22 @@ public sealed class PreferenceTests(NotificationApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_mail_job_sends_the_version_it_read_also_when_a_replacement_is_due_at_the_same_time()
+    {
+        var clock = new FakeTimeProvider(DateTimeOffset.UtcNow);
+        var eta = Message(TestNotificationModule.Eta) with { EntityType = "Shipments", EntityId = _shipment, Recipients = [_bob.Id] };
+        await app.PublishAsync(_setup.AdminUserId, _setup.TenantId, eta with { Title = "ETA 1 May" }, clock);
+        var seen = await app.InDbAsync(null, db => db.Set<PendingNotificationMail>().AsNoTracking().SingleAsync(Ct));
+
+        await app.PublishAsync(_setup.AdminUserId, _setup.TenantId, eta with { Title = "ETA 2 May" }, clock);
+
+        var now = await app.InDbAsync(null, db => db.Set<PendingNotificationMail>().AsNoTracking().SingleAsync(Ct));
+        (now.DueAt, now.Version == seen.Version).ShouldBe((seen.DueAt, false));
+        (await app.ClaimAsync(seen, clock)).ShouldBeFalse();
+        (await app.ClaimAsync(now, clock)).ShouldBeTrue();
+    }
+
+    [Fact]
     public async Task Parallel_publishes_of_one_entity_leave_one_waiting_mail_and_fail_no_command()
     {
         var clock = new FakeTimeProvider(DateTimeOffset.UtcNow);

@@ -36,6 +36,9 @@ public sealed class PendingNotificationMail : Entity
     public string? Link { get; set; }
 
     public DateTimeOffset DueAt { get; set; }
+
+    /// <summary>New on every change: the mail job sends exactly the version it read.</summary>
+    public Guid Version { get; set; }
 }
 
 /// <summary>A notification mail to wait, written after the command that sent it committed.</summary>
@@ -61,7 +64,7 @@ internal sealed partial class NotificationMailWaitingHandler(IServiceScopeFactor
                 db.Add(mail);
             }
 
-            (mail.Title, mail.Body, mail.Link, mail.DueAt) = (waiting.Title, waiting.Body, waiting.Link, waiting.DueAt);
+            (mail.Title, mail.Body, mail.Link, mail.DueAt, mail.Version) = (waiting.Title, waiting.Body, waiting.Link, waiting.DueAt, Guid.NewGuid());
             mail.Arguments = waiting.Arguments is null ? null : [.. waiting.Arguments];
             try
             {
@@ -164,7 +167,7 @@ internal sealed class NotificationMailJob(CoworkeeDbContext db, NotificationMail
 
     /// <summary>Takes the mail as it was read; false when a publisher replaced it meanwhile (it waits anew) or another run took it.</summary>
     internal async Task<bool> ClaimAsync(PendingNotificationMail seen, CancellationToken cancellationToken) =>
-        await db.Set<PendingNotificationMail>().Where(m => m.Id == seen.Id && m.DueAt == seen.DueAt).ExecuteDeleteAsync(cancellationToken) == 1;
+        await db.Set<PendingNotificationMail>().Where(m => m.Id == seen.Id && m.Version == seen.Version).ExecuteDeleteAsync(cancellationToken) == 1;
 }
 
 internal static class NotificationLinks
