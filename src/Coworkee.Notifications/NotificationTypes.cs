@@ -31,7 +31,10 @@ public sealed class NotificationTypeOptions
         string type, string? category, string name, NotificationScope scope = NotificationScope.All, bool inApp = true, bool email = false, TimeSpan? emailDelay = null) =>
         Add(new NotificationType(type, category, name, scope, inApp, email, emailDelay));
 
-    /// <summary>Users may follow existing <typeparamref name="TEntity"/>s they see through the entity's OData set; <paramref name="link"/> leads to one.</summary>
+    /// <summary>
+    /// Users may follow existing <typeparamref name="TEntity"/>s they see through the entity's OData set; <paramref name="link"/> leads to one. A notification
+    /// without an audience reaches only followers who still see the entity, each checked as himself (permission, row filters, groups).
+    /// </summary>
     public NotificationTypeOptions Followable<TEntity>(string entityType, Func<Guid, string>? link = null)
         where TEntity : class
     {
@@ -39,7 +42,11 @@ public sealed class NotificationTypeOptions
         return this;
     }
 
-    /// <summary>Users may follow any id of <paramref name="entityType"/>; the id is not checked.</summary>
+    /// <summary>
+    /// <b>Unchecked:</b> users may follow any id of <paramref name="entityType"/>, nobody checks that they see it. Their notifications therefore reach followers only
+    /// when the message names an <see cref="NotificationMessage.Audience"/>, limited to it; without one followers of such types get nothing. Use
+    /// <see cref="Followable{TEntity}"/> for records some users must not see.
+    /// </summary>
     public NotificationTypeOptions Followable(string entityType, Func<Guid, string>? link = null)
     {
         FollowTargets[entityType] = new FollowTarget(null, link);

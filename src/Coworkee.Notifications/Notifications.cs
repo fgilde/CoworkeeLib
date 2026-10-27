@@ -76,7 +76,10 @@ public sealed record NotificationMessage(string Type, string Title, string? Body
 
     public Guid? EntityId { get; init; }
 
-    /// <summary>Who may see the entity: users with the preference All get it; followers outside it do not. Null: followers and recipients only.</summary>
+    /// <summary>
+    /// Who may see the entity: users with the preference All get it; followers outside it do not. Null: every follower is checked as himself against the
+    /// entity's set (types registered with <c>Followable&lt;TEntity&gt;</c>); followers of types registered with <c>Followable(string)</c> then get nothing.
+    /// </summary>
     public IReadOnlyCollection<Guid>? Audience { get; init; }
 }
 
@@ -173,6 +176,10 @@ internal sealed class Notifier(
         {
             followers.IntersectWith(audience);
         }
+        else if (followers.Count > 0)
+        {
+            followers = await StillSeeingAsync(followers, message.EntityType!, message.EntityId!.Value, cancellationToken);
+        }
 
         var candidates = direct.Concat(followers).Concat(audience ?? []).Where(id => id != Guid.Empty).Distinct().ToList();
         var defaults = new NotificationPreference
@@ -203,6 +210,33 @@ internal sealed class Notifier(
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// The followers who still see the entity, each checked as himself against the set of a <c>Followable&lt;TEntity&gt;</c> registration (permission,
+    /// row filters, groups). Followers of entity types without that check get nothing without an audience.
+    /// </summary>
+    private async Task<HashSet<Guid>> StillSeeingAsync(HashSet<Guid> followers, string entityType, Guid entityId, CancellationToken cancellationToken)
+    {
+        if (services.GetService<NotificationTypeOptions>()?.FollowTargets.GetValueOrDefault(entityType)?.VisibleIdsAsync is not { } visibleIds)
+        {
+            return [];
+        }
+
+        // ponytail: one query per follower; batch by permission set when entities gather hundreds of followers
+        var scopes = services.GetRequiredService<IServiceScopeFactory>();
+        var seeing = new HashSet<Guid>();
+        foreach (var follower in followers)
+        {
+            using var actor = CurrentUserScope.Begin(new ImpersonatedUser(follower, currentUser.TenantId));
+            await using var scope = scopes.CreateAsyncScope();
+            if (await visibleIds(scope.ServiceProvider, cancellationToken) is { } ids && await ids.AnyAsync(id => id == entityId, cancellationToken))
+            {
+                seeing.Add(follower);
+            }
+        }
+
+        return seeing;
     }
 
     /// <summary>Waits until <paramref name="due"/>; a mail still waiting for the same user, type and entity is replaced and waits anew.</summary>

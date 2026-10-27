@@ -172,10 +172,13 @@ public sealed class Shipment : AuditedEntity, IMultiTenant
     public Guid TenantId { get; set; }
 }
 
-internal sealed class HiddenShipments : Coworkee.OData.IODataEntityFilter<Shipment>
+/// <summary>Hidden shipments for everyone, and every shipment for the <see cref="OutOfScope"/> users (as if they left the shipments' group).</summary>
+internal sealed class HiddenShipments(ICurrentUser currentUser) : Coworkee.OData.IODataEntityFilter<Shipment>
 {
+    public static readonly ConcurrentDictionary<Guid, bool> OutOfScope = new();
+
     public Task<IQueryable<Shipment>> ApplyAsync(IQueryable<Shipment> query, CancellationToken cancellationToken) =>
-        Task.FromResult(query.Where(s => s.Number != Shipment.Hidden));
+        Task.FromResult(currentUser.UserId is { } me && OutOfScope.ContainsKey(me) ? query.Where(_ => false) : query.Where(s => s.Number != Shipment.Hidden));
 }
 
 internal sealed class ShipmentModel : IModelContributor

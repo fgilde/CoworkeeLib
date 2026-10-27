@@ -99,6 +99,32 @@ public sealed class PreferenceTests(NotificationApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Followers_who_lost_the_permission_or_the_row_hear_nothing_and_guessed_ids_cannot_be_followed()
+    {
+        var dora = await CreateUserAsync("dora@acme.test", Shipment.ViewShipments);
+        foreach (var user in new[] { _bob, _carl, dora })
+        {
+            (await app.As(user.Id, _setup.TenantId).PutAsJsonAsync(Follow(_shipment), new FollowRequest(), Ct)).EnsureSuccessStatusCode();
+        }
+
+        (await app.As(_setup.AdminUserId, _setup.TenantId).PutAsJsonAsync($"/api/v1/identity/users/{_bob.Id}/roles", new IdListRequest([]), Ct)).EnsureSuccessStatusCode();
+        HiddenShipments.OutOfScope[_carl.Id] = true;
+        try
+        {
+            await app.PublishAsync(_setup.AdminUserId, _setup.TenantId, Message(TestNotificationModule.Eta) with { EntityType = "Shipments", EntityId = _shipment });
+        }
+        finally
+        {
+            HiddenShipments.OutOfScope.TryRemove(_carl.Id, out _);
+        }
+
+        (await InboxAsync(Bob)).ShouldBeEmpty();
+        (await InboxAsync(app.As(_carl.Id, _setup.TenantId))).ShouldBeEmpty();
+        (await InboxAsync(app.As(dora.Id, _setup.TenantId))).ShouldHaveSingleItem();
+        (await app.As(dora.Id, _setup.TenantId).PutAsJsonAsync(Follow(Guid.CreateVersion7()), new FollowRequest(), Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
     public async Task Done_takes_a_notification_out_of_the_open_inbox_and_counts_follow_the_categories()
     {
         await app.PublishAsync(_setup.AdminUserId, _setup.TenantId, Message(TestNotificationModule.Eta) with { Recipients = [_bob.Id] });
