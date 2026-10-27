@@ -202,3 +202,48 @@ export async function widenMentionChars(root) {
 
     return false;
 }
+
+// opens the placeholder (mention) list at the cursor of the visual mail editor, Quill or TipTap
+export function openPlaceholders(root) {
+    const container = root?.querySelector('.ql-container');
+    const quill = container && window.Quill?.find(container);
+    // a placeholder right after a word gets a space before it
+    if (quill?.getModule) {
+        const index = quill.getSelection(true)?.index ?? 0;
+        if (index > 0 && /\S/.test(quill.getText(index - 1, 1))) {
+            quill.insertText(index, ' ', 'user');
+            quill.setSelection(index + 1, 0, 'silent');
+        }
+        quill.getModule('mention')?.openMenu('{');
+        return;
+    }
+
+    const editor = root?.querySelector('.tt-container')?.mudTiptapEdit?.editor;
+    if (editor) {
+        // TipTap opens the list only after a space, a line start or a chip
+        const { from } = editor.state.selection;
+        const before = editor.state.doc.textBetween(Math.max(0, from - 1), from, '\n', '\n');
+        editor.chain().focus().insertContent(before && !/\s/.test(before) ? ' {' : '{').run();
+    }
+}
+
+// Ctrl+Space opens the placeholder list; the second brace of {{ is not typed, so {{ works like {
+export function placeholderKeys(root) {
+    if (!root || root.__cwPlaceholderKeys) {
+        return;
+    }
+
+    root.__cwPlaceholderKeys = true;
+    root.addEventListener('keydown', e => {
+        if (e.key === ' ' && e.ctrlKey && !e.altKey && !e.shiftKey) {
+            e.preventDefault();
+            openPlaceholders(root);
+        } else if (e.key === '{') {
+            const selection = window.getSelection();
+            const node = selection?.anchorNode;
+            if (selection?.isCollapsed && node?.nodeType === Node.TEXT_NODE && node.data[selection.anchorOffset - 1] === '{') {
+                e.preventDefault();
+            }
+        }
+    }, true);
+}

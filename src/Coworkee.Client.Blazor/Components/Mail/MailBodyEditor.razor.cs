@@ -3,14 +3,22 @@ using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Mailing;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using MudBlazor;
 using MudExRichTextEditor.Extensibility;
+using MudExRichTextEditor.Types;
 
 namespace Coworkee.Client.Blazor.Components.Mail;
 
-/// <summary>Edits a mail body visually (placeholders as <c>{</c> mentions) or as source; the value is always plain Scriban/HTML.</summary>
+/// <summary>
+/// Edits a mail body visually (placeholders as chips: <c>{</c>, <c>{{</c>, Ctrl+Space or the toolbar button open the list) or as source
+/// (suggestions after <c>{{</c> and on Ctrl+Space, placeholders highlighted); the value is always plain Scriban/HTML.
+/// </summary>
 public partial class MailBodyEditor : IAsyncDisposable
 {
     private const int MaxSuggestions = 20;
+
+    /// <summary>What <see cref="CodeEditor.Highlight"/> marks in the source: every <c>{{ ... }}</c> of one line.</summary>
+    internal const string PlaceholderPattern = @"\{\{.*?\}\}";
 
     private enum EditorMode
     {
@@ -30,10 +38,20 @@ public partial class MailBodyEditor : IAsyncDisposable
     private CodeEditor? _source;
     private ElementReference _visualHost;
     private IJSObjectReference? _module;
-    private bool _widened;
+    private QuillTool[] _tools = [];
+    private bool _hooked;
     private bool _touched;
 
     public MailBodyEditor() => _modules = [new MentionModule<MailPlaceholder>(SearchAsync, '{')];
+
+    protected override void OnInitialized() =>
+        // what mail clients render: no images (data URLs), no alignment or indent (Quill writes them as classes), no code blocks
+        _tools =
+        [
+            QuillTools.Header(), QuillTools.Bold(), QuillTools.Italic(), QuillTools.Underline(), QuillTools.Strike(), QuillTools.Color(), QuillTools.Background(),
+            QuillTools.OrderedList(), QuillTools.BulletList(), QuillTools.Blockquote(), QuillTools.Link(), new QuillTool("ql-clean", group: 6),
+            new CustomTool((_, _) => OpenPlaceholdersAsync(), Icons.Material.Outlined.DataObject, L["Insert placeholder"], Color.Inherit, 7, "cw-insert-placeholder"),
+        ];
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
@@ -64,12 +82,11 @@ public partial class MailBodyEditor : IAsyncDisposable
             _known = [.. Variables.Where(v => !v.IsList && !v.IsItem()).Select(v => v.Name)];
             _completions =
             [
-                .. Variables.Where(v => !v.IsList).Select(v => new CodeCompletion(v.Name, $" {v.Expression()} }}}}", v.Type)),
-                // shortcut: the cursor lands after the closing braces, not inside the statement
-                new("if", " if  }}"),
-                new("else", " else }}"),
-                new("end", " end }}"),
-                new("for", " for item in  }}"),
+                .. Variables.Where(v => !v.IsList).Select(v => new CodeCompletion(v.Name, $"{{{{ {v.Expression()} }}}}", v.Type)),
+                new("if", "{{ if $1 }}", Snippet: true),
+                new("else", "{{ else }}"),
+                new("end", "{{ end }}"),
+                new("for", "{{ for item in $1 }}", Snippet: true),
             ];
         }
 
@@ -112,7 +129,19 @@ public partial class MailBodyEditor : IAsyncDisposable
     }
 
     private Task<IEnumerable<MailPlaceholder>> SearchAsync(char denotation, string term) => Task.FromResult(
-        _known.Where(name => name.Contains(term, StringComparison.OrdinalIgnoreCase)).Take(MaxSuggestions).Select(name => new MailPlaceholder(name)));
+        _known.Where(name => name.Contains(term.Trim(), StringComparison.OrdinalIgnoreCase)).Take(MaxSuggestions).Select(name => new MailPlaceholder(name)));
+
+    private async Task OpenPlaceholdersAsync()
+    {
+        try
+        {
+            _module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");
+            await _module.InvokeVoidAsync("openPlaceholders", _visualHost);
+        }
+        catch (Exception e) when (e is JSException or JSDisconnectedException)
+        {
+        }
+    }
 
     private Task SetModeAsync(EditorMode mode)
     {
@@ -147,23 +176,28 @@ public partial class MailBodyEditor : IAsyncDisposable
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // TipTap takes any character up to the next space; only Quill's mention list needs widening
-        if (_mode != EditorMode.Visual || _visual?.Backend != RichTextBackend.Quill)
+        if (_mode != EditorMode.Visual || _visual is null)
         {
-            _widened = false;
+            _hooked = false;
             return;
         }
 
-        if (_widened)
+        if (_hooked)
         {
             return;
         }
 
-        _widened = true;
+        _hooked = true;
         try
         {
             _module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/Coworkee.Client.Blazor/coworkee.js");
-            await _module.InvokeVoidAsync("widenMentionChars", _visualHost);
+            await _module.InvokeVoidAsync("placeholderKeys", _visualHost);
+
+            // TipTap takes any character up to the next space; only Quill's mention list needs widening
+            if (_visual.Backend == RichTextBackend.Quill)
+            {
+                await _module.InvokeVoidAsync("widenMentionChars", _visualHost);
+            }
         }
         catch (Exception e) when (e is JSException or JSDisconnectedException)
         {

@@ -1,4 +1,11 @@
 @using Coworkee.Client.Blazor.Components.Editors
+@* placeholders as chips: the editors render the denotation char and the name as text, the chip shows the name only *@
+<style>
+    .cw-mail-visual span.mention { font-size: 0; display: inline-block; width: auto; height: auto; padding: 0 8px; margin: 0 1px; border-radius: 10px; user-select: all; cursor: default;
+        background: color-mix(in srgb, var(--mud-palette-primary) 14%, transparent); border: 1px solid color-mix(in srgb, var(--mud-palette-primary) 45%, transparent); }
+    .cw-mail-visual span.mention * { font-size: 0; margin: 0; }
+    .cw-mail-visual span.mention::after { content: attr(data-value); font-size: .8125rem; line-height: 1.6; font-family: monospace; color: var(--mud-palette-primary); }
+</style>
 <MudGrid Spacing="2">
     <MudItem xs="12" md="9">
         <MudStack Spacing="1">
@@ -9,22 +16,26 @@
                 </MudToggleGroup>
                 @if (_mode == EditorMode.Visual)
                 {
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">@L["Type { to insert a placeholder"]</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">@L["Type { or press Ctrl+Space to insert a placeholder"]</MudText>
                 }
-                else if (!VisualAllowed)
+                else
                 {
-                    <MudText Typo="Typo.caption" Color="Color.Secondary" data-testid="mail-visual-hint">@L["This template uses layout or logic the visual editor would change"]</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">@L["Type {{ or press Ctrl+Space for placeholders"]</MudText>
+                    @if (!VisualAllowed)
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" data-testid="mail-visual-hint">@L["This template uses layout or logic the visual editor would change"]</MudText>
+                    }
                 }
             </MudStack>
             @if (_mode == EditorMode.Visual)
             {
-                <div @ref="_visualHost" data-testid="mail-visual" @onkeydown="Touch" @onmousedown="Touch" @onpaste="Touch" @ondrop="Touch">
-                    <RichTextEditor @ref="_visual" Value="@_html" ValueChanged="VisualChangedAsync" Modules="_modules" Height="@Height" />
+                <div @ref="_visualHost" class="cw-mail-visual" data-testid="mail-visual" @onkeydown="Touch" @onmousedown="Touch" @onpaste="Touch" @ondrop="Touch">
+                    <RichTextEditor @ref="_visual" Value="@_html" ValueChanged="VisualChangedAsync" Modules="_modules" Tools="_tools" Height="@Height" />
                 </div>
             }
             else
             {
-                <CodeEditor @ref="_source" Value="@Value" ValueChanged="SourceChangedAsync" Language="html" Label="@L["Body"]" Completions="_completions" CompletionTrigger="{{" Height="@Height" />
+                <CodeEditor @ref="_source" Value="@Value" ValueChanged="SourceChangedAsync" Language="html" Label="@L["Body"]" Completions="_completions" CompletionTrigger="{{" Highlight="@PlaceholderPattern" Height="@Height" />
             }
         </MudStack>
     </MudItem>

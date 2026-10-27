@@ -32,8 +32,10 @@ public sealed class MailBodyEditorTests : ClientTestBase
 
         var editor = cut.FindComponent<CodeEditor>().Instance;
         editor.CompletionTrigger.ShouldBe("{{");
-        editor.Completions.ShouldNotBeNull().ShouldContain(new CodeCompletion("user.first_name", " user.first_name }}", "string"));
+        editor.Completions.ShouldNotBeNull().ShouldContain(new CodeCompletion("user.first_name", "{{ user.first_name }}", "string"));
+        editor.Completions.ShouldContain(new CodeCompletion("if", "{{ if $1 }}", Snippet: true));
         editor.Completions.ShouldNotContain(c => c.Label == "notifications");
+        editor.Highlight.ShouldBe(MailBodyEditor.PlaceholderPattern);
         cut.Find("[data-testid='mail-mode-visual']").HasAttribute("disabled").ShouldBeTrue();
         cut.Markup.ShouldContain("This template uses layout or logic the visual editor would change");
     }
@@ -165,7 +167,52 @@ public sealed class MailBodyEditorTests : ClientTestBase
         await cut.Find("[data-testid='mail-variable-notifications[].title']").ClickAsync(new());
 
         received.ShouldNotBeNull().ShouldContain("{{ item.title }}");
-        cut.FindComponent<CodeEditor>().Instance.Completions.ShouldNotBeNull().ShouldContain(new CodeCompletion("notifications[].title", " item.title }}", "string"));
+        cut.FindComponent<CodeEditor>().Instance.Completions.ShouldNotBeNull().ShouldContain(new CodeCompletion("notifications[].title", "{{ item.title }}", "string"));
+    }
+
+    [Fact]
+    public void A_body_with_a_styled_button_opens_in_the_source()
+    {
+        var cut = Render("<p style=\"margin:24px 0;\"><a href=\"{{ url }}\" style=\"background:#16140f;padding:12px 20px;\">Go</a></p>");
+
+        cut.FindComponents<RichTextEditor>().ShouldBeEmpty();
+        cut.Find("[data-testid='mail-mode-visual']").HasAttribute("disabled").ShouldBeTrue();
+    }
+
+    [Fact]
+    public void The_visual_toolbar_has_the_mail_tools_and_an_insert_placeholder_button()
+    {
+        var cut = Render("<p>Hi</p>");
+
+        var tools = cut.FindComponent<MudExTiptapEdit>().Instance.Tools.ShouldNotBeNull();
+        tools.Select(t => t.Class).ShouldContain("ql-bold");
+        tools.Select(t => t.Class).ShouldNotContain("ql-image");
+        tools.OfType<MudExRichTextEditor.Types.CustomTool>().ShouldHaveSingleItem().Class.ShouldBe("cw-insert-placeholder");
+    }
+
+    [Fact]
+    public async Task The_insert_placeholder_button_opens_the_list_at_the_cursor()
+    {
+        var module = JSInterop.SetupModule("./_content/Coworkee.Client.Blazor/coworkee.js");
+        module.Mode = JSRuntimeMode.Loose;
+        var cut = Render("<p>Hi</p>");
+        var tool = cut.FindComponent<MudExTiptapEdit>().Instance.Tools.OfType<MudExRichTextEditor.Types.CustomTool>().Single();
+
+        await cut.InvokeAsync(() => tool.OnClick(tool, cut.FindComponent<MudExTiptapEdit>().Instance));
+
+        module.VerifyInvoke("openPlaceholders");
+    }
+
+    [Fact]
+    public void Both_engines_get_the_placeholder_keys()
+    {
+        var module = JSInterop.SetupModule("./_content/Coworkee.Client.Blazor/coworkee.js");
+        module.Mode = JSRuntimeMode.Loose;
+
+        var cut = Render("<p>Hi</p>");
+
+        cut.WaitForAssertion(() => module.VerifyInvoke("placeholderKeys"));
+        module.Invocations.ShouldNotContain(i => i.Identifier == "widenMentionChars");
     }
 
     private Task UseRichTextEditorAsync(string engine)
