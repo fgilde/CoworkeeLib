@@ -48,6 +48,7 @@ public sealed class IdentityApp : DatabaseFixture
             seed.Settings["Theme.Mode"] = "dark";
         });
         builder.Services.AddScoped<Coworkee.Application.Setup.ISetupStep, RecordingSetupStep>();
+        builder.Services.AddScoped<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, RaceInjector>();
         builder.Services.AddSingleton<Coworkee.Realtime.IRealtimePublisher>(RecordingRealtimePublisher.Instance);
         builder.Services.AddComputedPermission(ComputedPermissionTests.Permission, (c, _) => Task.FromResult(ComputedPermissionTests.Leaders.ContainsKey(c.UserId)));
         App = builder.Build();
@@ -143,5 +144,24 @@ internal sealed class RecordingSetupStep : Coworkee.Application.Setup.ISetupStep
     {
         Last = request;
         return Task.FromResult<Coworkee.Core.Results.Error?>(null);
+    }
+}
+
+/// <summary>Runs <see cref="Once"/> while the next save that makes a group the default is about to write: another request changing the same rows in between.</summary>
+public sealed class RaceInjector : Microsoft.EntityFrameworkCore.Diagnostics.SaveChangesInterceptor
+{
+    public static Func<Task>? Once { get; set; }
+
+    public override async ValueTask<Microsoft.EntityFrameworkCore.Diagnostics.InterceptionResult<int>> SavingChangesAsync(
+        Microsoft.EntityFrameworkCore.Diagnostics.DbContextEventData eventData, Microsoft.EntityFrameworkCore.Diagnostics.InterceptionResult<int> result, CancellationToken cancellationToken = default)
+    {
+        if (Once is { } race && eventData.Context!.ChangeTracker.Entries<Coworkee.Identity.Domain.UserGroup>()
+                .Any(e => e.State == EntityState.Modified && e.Entity.IsDefault))
+        {
+            Once = null;
+            await race();
+        }
+
+        return result;
     }
 }

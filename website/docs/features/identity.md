@@ -100,7 +100,7 @@ Group import (`Groups.Manage`) takes `Name`, `Description` and `ParentPath` ("Cu
 await notifier.NotifyAsync(await scope.OwnersAsync(groupId, ct), "booking.created", "New booking", text, link, ct);
 ```
 
-The **default group** is the group new users join. One group per tenant can be it (a filtered unique index on `cw.Groups` enforces that, also for concurrent changes): the switch *Default group for new users* on the General tab (`Identity.Groups.Manage`), `PUT /api/v1/identity/groups/default` with `{ "groupId": ... }` (null clears it) or `ICoworkeeApi.SetDefaultGroupAsync`. Every signed-in user can read its id (`GET /api/v1/identity/groups/default`, `ICoworkeeApi.GetDefaultGroupIdAsync`, `IGroupScope.DefaultGroupIdAsync`). The seed creates it by name:
+The **default group** is the group new users join. One group per tenant can be it (a filtered unique index on `cw.Groups` enforces that; of two concurrent changes one may get 409 `identity.default_group_conflict`): the switch *Default group for new users* on the General tab (`Identity.Groups.Manage`), `PUT /api/v1/identity/groups/default` with `{ "groupId": ... }` (null clears it) or `ICoworkeeApi.SetDefaultGroupAsync`. Every signed-in user can read its id (`GET /api/v1/identity/groups/default`, `ICoworkeeApi.GetDefaultGroupIdAsync`, `IGroupScope.DefaultGroupIdAsync`). The seed creates it by name:
 
 ```csharp
 services.AddCoworkeeIdentitySeed(seed =>

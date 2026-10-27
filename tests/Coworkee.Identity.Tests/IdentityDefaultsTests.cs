@@ -115,6 +115,36 @@ public sealed class IdentityDefaultsTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_default_group_set_by_someone_else_meanwhile_answers_409()
+    {
+        // SQLite has one writer: the handler's transaction keeps the other write out until it is done, so the clash cannot happen there
+        Assert.SkipWhen(app.Provider == Coworkee.Contracts.Configuration.DatabaseProviders.Sqlite, "SQLite serializes writers.");
+        var (a, b) = (await GroupAsync("A"), await GroupAsync("B"));
+        RaceInjector.Once = () => app.InDbAsync(_setup.TenantId, async db =>
+        {
+            (await db.Set<UserGroup>().SingleAsync(g => g.Id == b, Ct)).IsDefault = true;
+            return 0;
+        });
+
+        var response = await SetDefaultAsync(Admin, a);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await response.Content.ReadAsStringAsync(Ct)).ShouldContain("identity.default_group_conflict");
+        (await app.InDbAsync(_setup.TenantId, db => db.Set<UserGroup>().Where(g => g.IsDefault).Select(g => g.Id).ToListAsync(Ct))).ShouldBe([b]);
+    }
+
+    [Fact]
+    public async Task Concurrent_default_changes_answer_204_or_409_never_500()
+    {
+        var groups = new[] { await GroupAsync("A"), await GroupAsync("B"), await GroupAsync("C") };
+
+        var responses = await Task.WhenAll(Enumerable.Range(0, 9).Select(i => SetDefaultAsync(Admin, groups[i % 3])));
+
+        responses.Select(r => r.StatusCode).ShouldAllBe(s => s == HttpStatusCode.NoContent || s == HttpStatusCode.Conflict);
+        (await app.InDbAsync(_setup.TenantId, db => db.Set<UserGroup>().CountAsync(g => g.IsDefault, Ct))).ShouldBe(1);
+    }
+
+    [Fact]
     public async Task Moving_the_default_while_another_tenant_has_one_changes_only_the_own_tenant()
     {
         var (a, b) = (await GroupAsync("A"), await GroupAsync("B"));

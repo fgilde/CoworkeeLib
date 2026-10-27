@@ -20,34 +20,48 @@ internal sealed class DefaultGroupHandlers(CoworkeeDbContext db) : IHandler<GetD
     public async Task<Result<DefaultGroupDto>> HandleAsync(GetDefaultGroup query, CancellationToken cancellationToken) =>
         new DefaultGroupDto(await db.Set<UserGroup>().Where(g => g.IsDefault).Select(g => (Guid?)g.Id).FirstOrDefaultAsync(cancellationToken));
 
+    // a concurrent change of the default group: the unique index (or a deadlock between the two transactions) refuses one of them
+    private static readonly Error Conflict = Error.Conflict("identity.default_group_conflict", "The default group was changed at the same time. Try again.");
+
     public async Task<Result> HandleAsync(SetDefaultGroup command, CancellationToken cancellationToken)
     {
+        try
+        {
+            return await SetAsync(command.GroupId, cancellationToken);
+        }
+        catch (Exception exception) when (exception is DbUpdateException or System.Data.Common.DbException { IsTransient: true })
+        {
+            return Conflict;
+        }
+    }
+
+    // saved here, not by the pipeline, so a clash becomes a 409: EF does not order updates by a filtered unique index, so the old default is
+    // saved first, in one transaction with the new one
+    private async Task<Result> SetAsync(Guid? groupId, CancellationToken cancellationToken)
+    {
+        await using var transaction = db.Database.CurrentTransaction is null ? await db.Database.BeginTransactionAsync(cancellationToken) : null;
+
         // the tenant filter keeps this to the caller's groups
-        var groups = await db.Set<UserGroup>().Where(g => g.IsDefault || g.Id == command.GroupId).ToListAsync(cancellationToken);
-        if (command.GroupId is { } id && groups.All(g => g.Id != id))
+        var groups = await db.Set<UserGroup>().Where(g => g.IsDefault || g.Id == groupId).ToListAsync(cancellationToken);
+        if (groupId is { } id && groups.All(g => g.Id != id))
         {
             return GroupErrors.NotFound;
         }
 
-        var old = groups.Where(g => g.IsDefault && g.Id != command.GroupId).ToList();
-        var next = groups.FirstOrDefault(g => g.Id == command.GroupId && !g.IsDefault);
-        old.ForEach(g => g.IsDefault = false);
-        if (next is null)
+        foreach (var group in groups.Where(g => g.IsDefault && g.Id != groupId))
         {
-            return Result.Success();
+            group.IsDefault = false;
         }
 
-        // EF does not order updates by a filtered unique index: the old default is saved first, in one transaction with the new one
-        await using var transaction = old.Count > 0 && db.Database.CurrentTransaction is null ? await db.Database.BeginTransactionAsync(cancellationToken) : null;
-        if (old.Count > 0)
+        await db.SaveChangesAsync(cancellationToken);
+        if (groups.FirstOrDefault(g => g.Id == groupId && !g.IsDefault) is { } next)
         {
+            next.IsDefault = true;
             await db.SaveChangesAsync(cancellationToken);
         }
 
-        next.IsDefault = true;
         if (transaction is not null)
         {
-            await db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
         }
 
