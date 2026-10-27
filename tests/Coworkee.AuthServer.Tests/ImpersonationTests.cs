@@ -75,6 +75,22 @@ public sealed class ImpersonationTests(AuthApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Locking_the_impersonator_ends_the_impersonation()
+    {
+        var helper = await CreateUserAsync("helper@acme.test", IdentityPermissions.Users.Impersonate);
+        var bob = await CreateUserAsync("bob@acme.test");
+        var flow = new OidcFlow(app);
+        await flow.SignInAsync("helper@acme.test", Password);
+        var ticket = (await OidcFlow.SendAsync(app, helper, _setup.TenantId, new StartImpersonation(bob))).Value.Ticket;
+        var tokens = await flow.RedeemAsync(await flow.FollowAsync(await RedeemAsync(flow, ticket, flow.AuthorizeUrl)));
+
+        (await OidcFlow.SendAsync(app, _setup.AdminUserId, _setup.TenantId, new LockUser(helper, null))).IsSuccess.ShouldBeTrue();
+
+        (await flow.RefreshAsync(tokens)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await flow.AuthorizeAsync()).Headers.Location!.ToString().ShouldContain("/Account/Login");
+    }
+
+    [Fact]
     public async Task Account_management_is_forbidden_while_signed_in_as_another_user()
     {
         var bob = await CreateUserAsync("bob@acme.test");

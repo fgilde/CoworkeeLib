@@ -62,7 +62,7 @@ internal static class AuthEndpoints
         var stampClaim = context.RequestServices.GetRequiredService<IOptions<IdentityOptions>>().Value.ClaimsIdentity.SecurityStampClaimType;
         var impersonating = AuthImpersonation.IsImpersonating(cookie.Principal);
         if (cookie.Principal.FindFirstValue(stampClaim) != user.SecurityStamp || (user.LockoutEnabled && user.LockoutEnd > clock.GetUtcNow())
-            || (impersonating && !await ImpersonatorIsActiveAsync(db, cookie.Principal)))
+            || (impersonating && !await ImpersonatorMayActAsync(db, cookie.Principal, clock)))
         {
             await context.SignOutAsync(IdentityConstants.ApplicationScheme);
             return SignInFirst(context);
@@ -102,8 +102,10 @@ internal static class AuthEndpoints
     internal static string? SessionOf(AuthenticateResult cookie) =>
         cookie.Properties?.Items.TryGetValue(OwnPassword.SessionItem, out var sid) == true ? sid : null;
 
-    private static async Task<bool> ImpersonatorIsActiveAsync(CoworkeeDbContext db, ClaimsPrincipal principal) =>
-        Guid.TryParse(principal.GetClaim(ImpersonationClaims.Impersonator), out var impersonatorId) && await FindActiveAsync(db, impersonatorId) is not null;
+    // a deactivated or locked impersonator ends the impersonation as well
+    private static async Task<bool> ImpersonatorMayActAsync(CoworkeeDbContext db, ClaimsPrincipal principal, TimeProvider clock) =>
+        Guid.TryParse(principal.GetClaim(ImpersonationClaims.Impersonator), out var impersonatorId)
+        && await FindActiveAsync(db, impersonatorId) is { } impersonator && !(impersonator.LockoutEnabled && impersonator.LockoutEnd > clock.GetUtcNow());
 
     private static async Task<bool> MaySignInAsync(HttpContext context, CoworkeeDbContext db, OpenIddictRequest request, User user)
     {
@@ -149,7 +151,7 @@ internal static class AuthEndpoints
         return (Results.Redirect("/Account/Consent?returnUrl=" + Uri.EscapeDataString(ReturnUrl(context))), null);
     }
 
-    private static async Task<IResult> TokenAsync(HttpContext context, CoworkeeDbContext db, IOptions<AuthServerOptions> options)
+    private static async Task<IResult> TokenAsync(HttpContext context, CoworkeeDbContext db, IOptions<AuthServerOptions> options, TimeProvider clock)
     {
         var request = context.GetOpenIddictServerRequest() ?? throw new InvalidOperationException("No OpenID Connect request.");
         if (request.IsClientCredentialsGrantType())
@@ -169,7 +171,7 @@ internal static class AuthEndpoints
         var stamp = result.Principal?.GetClaim(SessionStamp.ClaimType);
         var sid = result.Principal?.GetClaim(SessionStamp.SessionClaimType);
         if (user is null || (stamp is not null && !SessionStamp.IsCurrent(new UserStamp(user.SecurityStamp, user.KeptSession), stamp, sid))
-            || (AuthImpersonation.IsImpersonating(result.Principal) && !await ImpersonatorIsActiveAsync(db, result.Principal!)))
+            || (AuthImpersonation.IsImpersonating(result.Principal) && !await ImpersonatorMayActAsync(db, result.Principal!, clock)))
         {
             return Results.Forbid(Error(Errors.InvalidGrant, "The account is no longer allowed to sign in."), [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]);
         }
