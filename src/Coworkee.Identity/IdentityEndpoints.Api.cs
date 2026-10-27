@@ -51,6 +51,7 @@ internal static partial class IdentityEndpoints
         api.MapPost("/users/{id:guid}/unlock", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new UnlockUser(id), ct).ToHttpResult());
         api.MapPost("/users/{id:guid}/lock", (Guid id, LockUserRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new LockUser(id, body.Until), ct).ToHttpResult());
         api.MapPost("/users/{id:guid}/sign-out", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new SignOutUser(id), ct).ToHttpResult());
+        api.MapPost("/users/{id:guid}/impersonation", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new StartImpersonation(id), ct).ToHttpResult());
         api.MapPut("/users/{id:guid}", (Guid id, UpdateUserRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new UpdateUser(id, body), ct).ToHttpResult());
         api.MapGet("/users/{id:guid}/permissions", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetEffectivePermissions(id), ct).ToHttpResult());
         api.MapPut("/users/{id:guid}/roles", (Guid id, IdListRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SetUserRoles(id, body.Ids), ct).ToHttpResult());

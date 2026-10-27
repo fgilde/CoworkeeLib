@@ -33,6 +33,8 @@ public sealed class HttpCurrentUser(IHttpContextAccessor accessor) : ICurrentUse
     // a key without scopes grants nothing, never everything
     public IReadOnlyCollection<string>? PermissionScopes => ApiKeyId is null ? null : Principal!.FindAll(ApiKeyDefaults.ScopeClaim).Select(c => c.Value).ToArray();
 
+    public Guid? ImpersonatorId => CurrentUserScope.Current is { } ambient ? ambient.ImpersonatorId : ParseGuid(Principal?.FindFirstValue(ImpersonationClaims.Impersonator));
+
     // tokens of the client credentials grant name the client as subject
     private string? ServiceClient => Principal?.FindFirstValue("client_id") is { } client && Principal.FindFirstValue("sub") == client ? client : null;
 

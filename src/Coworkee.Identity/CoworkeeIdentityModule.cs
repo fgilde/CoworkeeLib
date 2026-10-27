@@ -44,6 +44,8 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
         services.AddScoped<IInterceptor, AccessChangeInterceptor>();
         services.AddScoped<IResourceAccessReader, ResourceAccessReader>();
         services.AddScoped<IUserDirectory, Users.UserDirectory>();
+        services.AddScoped<ImpersonationRules>();
+        services.AddSingleton<ImpersonationTickets>();
         services.AddScoped<Users.Profile.UserChanges>();
         services.AddScoped<Application.Privacy.IPersonalDataContributor, Users.Privacy.IdentityPersonalData>();
         services.AddSingleton<IModelContributor, ApiKeys.ApiKeyModel>();

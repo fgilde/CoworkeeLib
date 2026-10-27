@@ -17,6 +17,7 @@ public sealed record GetApiKeyScopes : IQuery<Result<IReadOnlyList<PermissionGro
 
 [AiTool(Exclude = true)]
 [RequiresPermission(ApiKeyPermissions.Create)]
+[NotWhileImpersonating]
 public sealed record CreateApiKey(CreateApiKeyRequest Key) : ICommand<Result<CreatedApiKeyDto>>;
 
 [AiTool(Exclude = true)]

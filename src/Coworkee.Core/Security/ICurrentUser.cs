@@ -21,4 +21,7 @@ public interface ICurrentUser
 
     /// <summary>The permissions the credential is limited to (an API key's scopes); null when the user's permissions apply in full.</summary>
     IReadOnlyCollection<string>? PermissionScopes => null;
+
+    /// <summary>The user who signed in as this one ("Log in as"), otherwise null.</summary>
+    Guid? ImpersonatorId => null;
 }

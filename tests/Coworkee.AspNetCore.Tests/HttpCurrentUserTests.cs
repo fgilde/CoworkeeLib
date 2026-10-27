@@ -46,6 +46,22 @@ public sealed class HttpCurrentUserTests
         user.PermissionScopes.ShouldBe(["Notes.Read"]);
     }
 
+    [Fact]
+    public void The_impersonator_comes_from_the_token_and_not_into_an_ambient_user_scope()
+    {
+        var impersonator = Guid.CreateVersion7();
+        var context = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity(
+                [new Claim("sub", Guid.CreateVersion7().ToString()), new Claim(ImpersonationClaims.Impersonator, impersonator.ToString())], "test")),
+        };
+        var user = new HttpCurrentUser(new HttpContextAccessor { HttpContext = context });
+
+        user.ImpersonatorId.ShouldBe(impersonator);
+        using var ambient = CurrentUserScope.Begin(new ImpersonatedUser(Guid.CreateVersion7(), null));
+        user.ImpersonatorId.ShouldBeNull();
+    }
+
     [Theory]
     [InlineData(null, "Bearer eyJhbGciOi", false)]
     [InlineData("", "Bearer eyJhbGciOi", false)]

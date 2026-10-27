@@ -17,6 +17,7 @@ internal sealed class IdentityPermissionDefinitions : IPermissionDefinitionContr
         context.Group(IdentityPermissions.GroupName, "Identity")
             .Add(IdentityPermissions.Users.View, "View users")
             .Add(IdentityPermissions.Users.Manage, "Manage users", IdentityPermissions.Users.View)
+            .Add(IdentityPermissions.Users.Impersonate, "Sign in as other users", IdentityPermissions.Users.View)
             .Add(IdentityPermissions.Groups.View, "View groups")
             .Add(IdentityPermissions.Groups.ManageMembers, "Manage group members", IdentityPermissions.Groups.View, IdentityPermissions.Users.View)
             .Add(IdentityPermissions.Groups.Manage, "Manage groups", IdentityPermissions.Groups.View, IdentityPermissions.Users.View, IdentityPermissions.Groups.ManageMembers)

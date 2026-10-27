@@ -10,6 +10,9 @@ public static class IdentityPermissions
     {
         public const string View = "Identity.Users.View";
         public const string Manage = "Identity.Users.Manage";
+
+        /// <summary>Sign in as another user of the organisation who holds no permission the caller lacks.</summary>
+        public const string Impersonate = "Identity.Users.Impersonate";
     }
 
     public static class Groups

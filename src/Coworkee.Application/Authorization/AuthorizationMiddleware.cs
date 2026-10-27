@@ -16,6 +16,12 @@ internal sealed class AuthorizationMiddleware(ICurrentUser currentUser, IService
     {
         var required = Requirements<TRequest>.Permissions;
         var resource = request as IResourceRequest;
+        if (Requirements<TRequest>.NotWhileImpersonating && currentUser.ImpersonatorId is not null)
+        {
+            return Fail<TResult>(
+                Error.Forbidden("auth.impersonating", "Not allowed while signed in as another user."), () => new ForbiddenException("Not allowed while signed in as another user."));
+        }
+
         if (required.Length == 0 && resource is null)
         {
             return await next();
@@ -54,5 +60,7 @@ internal sealed class AuthorizationMiddleware(ICurrentUser currentUser, IService
     {
         public static readonly string[] Permissions =
             typeof(TRequest).GetCustomAttributes<RequiresPermissionAttribute>().Select(a => a.Permission).ToArray();
+
+        public static readonly bool NotWhileImpersonating = typeof(TRequest).IsDefined(typeof(NotWhileImpersonatingAttribute));
     }
 }

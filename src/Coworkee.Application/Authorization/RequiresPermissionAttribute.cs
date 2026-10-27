@@ -7,6 +7,10 @@ public sealed class RequiresPermissionAttribute(string permission) : Attribute
     public string Permission { get; } = permission;
 }
 
+/// <summary>On a command or query: refused while the caller is signed in as another user ("Log in as"), e.g. changes of the user's own credentials.</summary>
+[AttributeUsage(AttributeTargets.Class)]
+public sealed class NotWhileImpersonatingAttribute : Attribute;
+
 public interface IResourceRequest
 {
     string ResourceType { get; }
