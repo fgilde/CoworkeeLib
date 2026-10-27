@@ -43,5 +43,14 @@ internal sealed class CoworkeeModelContributor : IModelContributor
             entity.Property(e => e.CorrelationId).HasMaxLength(64);
             entity.HasIndex(e => new { e.ProcessedAt, e.NextAttemptAt, e.OccurredAt });
         });
+
+        modelBuilder.Entity<Tokens.AccessToken>(entity =>
+        {
+            entity.ToTable("AccessTokens", Schema);
+            entity.Property(e => e.Hash).HasMaxLength(64);
+            entity.Property(e => e.Purpose).HasMaxLength(Tokens.AccessTokens.PurposeLength);
+            entity.HasIndex(e => e.Hash).IsUnique();
+            entity.HasIndex(e => e.ExpiresAt);
+        });
     }
 }

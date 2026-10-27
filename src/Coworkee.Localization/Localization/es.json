@@ -1819,5 +1819,7 @@
   "You see and do what {0} can until you go back to your account. The audit log names you as well.": "Verá y hará lo que puede {0} hasta que vuelva a su cuenta. El registro de auditoría también le nombra a usted.",
   "Impersonated by {0}": "Sesión iniciada por {0}",
   "Back to my account": "Volver a mi cuenta",
-  "impersonated by": "sesión iniciada por"
+  "impersonated by": "sesión iniciada por",
+  "Copy temporary link": "Copiar enlace temporal",
+  "Link copied. It opens the file for five minutes.": "Enlace copiado. Abre el archivo durante cinco minutos."
 }

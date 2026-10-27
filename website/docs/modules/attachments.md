@@ -41,6 +41,8 @@ Reading (list, open, download) follows the record: when the type has an [OData s
 
 A file over the slot's limit, of a type the slot does not take, with an empty or path-like name, or refused by a scanner answers 400.
 
+A short-lived anonymous link to one attachment: `POST /api/v1/attachments/{type}/{id}/{slot}/{attachmentId}/token` (whoever may read the record) returns a `FileTokenDto`; its `Url` (`AttachmentUrls.Token`) serves the file without sign-in for five minutes, inline or with `?download=true` as attachment. `IAttachmentsApi.CreateTokenAsync` calls it. See [temporary links](files.md#temporary-links).
+
 ## In app code
 
 `IRecordAttachments` does the same without access checks, for handlers that check access themselves:

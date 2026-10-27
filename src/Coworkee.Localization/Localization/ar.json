@@ -1819,5 +1819,7 @@
   "You see and do what {0} can until you go back to your account. The audit log names you as well.": "سترى وتفعل ما يستطيعه {0} حتى تعود إلى حسابك. يسجّل سجل التدقيق اسمك أيضًا.",
   "Impersonated by {0}": "منتحَل بواسطة {0}",
   "Back to my account": "العودة إلى حسابي",
-  "impersonated by": "بواسطة"
+  "impersonated by": "بواسطة",
+  "Copy temporary link": "نسخ رابط مؤقت",
+  "Link copied. It opens the file for five minutes.": "تم نسخ الرابط. يفتح الملف لمدة خمس دقائق."
 }

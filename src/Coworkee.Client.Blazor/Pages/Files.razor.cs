@@ -62,6 +62,8 @@ public partial class Files
         }
     }
 
+    private Task CopyTemporaryLinkAsync() => Selected is { } file ? FilePublishing.CopyTemporaryLinkAsync(JS, Api, Snackbar, L, Navigation, file) : Task.CompletedTask;
+
     private Task CopyLinkAsync() => Selected is { IsPublic: true } file ? FilePublishing.CopyPublicLinkAsync(JS, Snackbar, L, Navigation, file) : Task.CompletedTask;
 
     private Task PreviewAsync(MudExFileStructureNode node) => node.Handle is StoredFileDto file ? FilePreviewDialog.ShowAsync(Dialogs, file) : Task.CompletedTask;

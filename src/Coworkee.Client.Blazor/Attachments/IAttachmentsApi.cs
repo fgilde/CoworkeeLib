@@ -14,4 +14,7 @@ public interface IAttachmentsApi
     Task<RecordAttachmentDto> UploadAsync(string entityType, Guid entityId, string slot, string fileName, string? contentType, Stream content, CancellationToken cancellationToken = default);
 
     Task DeleteAsync(RecordAttachmentDto attachment, CancellationToken cancellationToken = default);
+
+    /// <summary>A link that opens the attachment without sign-in for five minutes (relative to the API).</summary>
+    Task<Contracts.Files.FileTokenDto> CreateTokenAsync(RecordAttachmentDto attachment, CancellationToken cancellationToken = default);
 }

@@ -1819,5 +1819,7 @@
   "You see and do what {0} can until you go back to your account. The audit log names you as well.": "Du ser og gør, hvad {0} kan, indtil du går tilbage til din konto. Revisionsloggen nævner også dig.",
   "Impersonated by {0}": "Logget ind af {0}",
   "Back to my account": "Tilbage til min konto",
-  "impersonated by": "logget ind af"
+  "impersonated by": "logget ind af",
+  "Copy temporary link": "Kopiér midlertidigt link",
+  "Link copied. It opens the file for five minutes.": "Link kopieret. Det åbner filen i fem minutter."
 }

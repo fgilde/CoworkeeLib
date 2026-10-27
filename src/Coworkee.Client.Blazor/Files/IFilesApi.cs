@@ -27,4 +27,7 @@ public interface IFilesApi
 
     /// <summary>The file's content; the caller disposes the stream.</summary>
     Task<Stream> OpenReadAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>A link that opens the file without sign-in for five minutes (<see cref="FileTokenDto.Url"/>, relative to the API).</summary>
+    Task<FileTokenDto> CreateTokenAsync(Guid id, CancellationToken cancellationToken = default);
 }

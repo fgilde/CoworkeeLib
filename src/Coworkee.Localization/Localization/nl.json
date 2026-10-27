@@ -1819,5 +1819,7 @@
   "You see and do what {0} can until you go back to your account. The audit log names you as well.": "U ziet en doet wat {0} kan totdat u teruggaat naar uw account. Het auditlogboek vermeldt u ook.",
   "Impersonated by {0}": "Ingelogd door {0}",
   "Back to my account": "Terug naar mijn account",
-  "impersonated by": "ingelogd door"
+  "impersonated by": "ingelogd door",
+  "Copy temporary link": "Tijdelijke link kopiëren",
+  "Link copied. It opens the file for five minutes.": "Link gekopieerd. Hij opent het bestand vijf minuten lang."
 }

@@ -71,6 +71,12 @@ On the *Files* page the bar above the file manager shares the selected file: *Ma
 
 `PublicFileChooser.ChooseAsync(...)` picks a file for pages anyone sees: it opens the file picker, asks before it makes a private file public and returns the absolute public address. The sign-in design uses it for its image or video.
 
+## Temporary links
+
+A file that stays private can still be opened without sign-in for a short time, e.g. by a viewer or a native download that sends no cookie: `POST /api/v1/files/{id}/token` (whoever may open the file) returns `FileTokenDto(Token, Url, ExpiresAt)`. `GET` or `HEAD` on `Url` (`/api/v1/files/token/{token}/{name}`, `FileLinks.Token(token, name)`) serves the file inline, with `?download=true` as attachment, for five minutes and as often as needed (the viewer asks several times). The token says nothing about the file; the database keeps only its hash. On the *Files* page *Copy temporary link* copies such a link; `IFilesApi.CreateTokenAsync` and `FilePublishing.CopyTemporaryLinkAsync` do it in own pages.
+
+The tokens come from `IAccessTokens` (`Coworkee.Infrastructure.Tokens`, table `cw.AccessTokens`): `Issue(purpose, targetId, lifetime, singleUse)` adds a token to the unit of work, `RedeemAsync(purpose, token)` returns the target with the organisation and user that issued it, or null when the token is unknown, expired or, for single use, taken already. Apps use it for their own anonymous links.
+
 ## Cloud file pickers
 
 Every `MudExUploadEdit` of the app can also take files from Google Drive, OneDrive and Dropbox: the upload of the file manager (Files page and the side sheet of `CoworkeeFilePicker`), the document upload of the template and the upload fields of your own pages. A picker shows as soon as it has its client id or app key; without one nothing changes.

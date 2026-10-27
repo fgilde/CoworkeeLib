@@ -68,6 +68,19 @@ public sealed class FilesSharingTests : ClientTestBase
     }
 
     [Fact]
+    public async Task Any_file_gets_a_temporary_link_that_stays_private()
+    {
+        var page = RenderPage(canManage: false);
+        _files.CreateTokenAsync(_photo.Id, Arg.Any<CancellationToken>()).Returns(new FileTokenDto("t0k", FileLinks.Token("t0k", "photo.png"), DateTimeOffset.UtcNow.AddMinutes(5)));
+        await SelectAsync(page, "photo.png");
+
+        await page.InvokeAsync(() => page.Find("[data-testid='file-copy-temporary-link']").ClickAsync(new()));
+
+        JSInterop.Invocations["navigator.clipboard.writeText"].Single().Arguments[0].ShouldBe("http://localhost/api/v1/files/token/t0k/photo.png");
+        await _files.DidNotReceive().SetPublicAsync(Arg.Any<Guid>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task Making_a_file_private_needs_no_question()
     {
         var page = RenderPage(canManage: true);

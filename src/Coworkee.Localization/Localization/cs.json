@@ -1819,5 +1819,7 @@
   "You see and do what {0} can until you go back to your account. The audit log names you as well.": "Uvidíte a uděláte to, co může {0}, dokud se nevrátíte ke svému účtu. Protokol auditu zaznamená i vás.",
   "Impersonated by {0}": "Přihlášen za {0}",
   "Back to my account": "Zpět na můj účet",
-  "impersonated by": "přihlášen za"
+  "impersonated by": "přihlášen za",
+  "Copy temporary link": "Kopírovat dočasný odkaz",
+  "Link copied. It opens the file for five minutes.": "Odkaz zkopírován. Otevírá soubor po dobu pěti minut."
 }

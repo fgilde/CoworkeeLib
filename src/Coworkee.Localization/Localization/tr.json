@@ -1819,5 +1819,7 @@
   "You see and do what {0} can until you go back to your account. The audit log names you as well.": "Hesabınıza dönene kadar {0} kullanıcısının yapabildiklerini görür ve yaparsınız. Denetim günlüğü sizi de kaydeder.",
   "Impersonated by {0}": "{0} tarafından oturum açıldı",
   "Back to my account": "Hesabıma dön",
-  "impersonated by": "oturumu açan:"
+  "impersonated by": "oturumu açan:",
+  "Copy temporary link": "Geçici bağlantıyı kopyala",
+  "Link copied. It opens the file for five minutes.": "Bağlantı kopyalandı. Dosyayı beş dakika boyunca açar."
 }

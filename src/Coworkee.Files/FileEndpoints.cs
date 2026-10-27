@@ -26,6 +26,9 @@ internal static class FileEndpoints
         // the file viewer asks with HEAD for type and size first
         files.MapMethods("/{id:guid}/content", [HttpMethods.Head], ContentAsync).ExcludeFromDescription();
         files.MapPut("/{id:guid}/public", (Guid id, FilePublicRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SetFilePublic(id, body.IsPublic), ct).ToHttpResult());
+        files.MapPost("/{id:guid}/token", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new CreateFileToken(id), ct).ToHttpResult());
+        files.MapGet("/token/{token}/{name}", TokenContentAsync).AllowAnonymous();
+        files.MapMethods("/token/{token}/{name}", [HttpMethods.Head], TokenContentAsync).AllowAnonymous().ExcludeFromDescription();
         files.MapGet("/public/{id:guid}/{name}", PublicContentAsync).AllowAnonymous();
         files.MapMethods("/public/{id:guid}/{name}", [HttpMethods.Head], PublicContentAsync).AllowAnonymous().ExcludeFromDescription();
     }
@@ -36,6 +39,14 @@ internal static class FileEndpoints
         var result = await dispatcher.SendAsync(new OpenPublicFile(id), cancellationToken);
         return result.IsSuccess
             ? new BlobContentResult(result.Value.Content, result.Value.ContentType, result.Value.Name, false, BlobContentResult.PublicCache)
+            : result.Error!.ToProblem();
+    }
+
+    private static async Task<IResult> TokenContentAsync(string token, string name, bool? download, IDispatcher dispatcher, CancellationToken cancellationToken)
+    {
+        var result = await dispatcher.SendAsync(new OpenFileByToken(token), cancellationToken);
+        return result.IsSuccess
+            ? new BlobContentResult(result.Value.Content, result.Value.ContentType, result.Value.Name, download == true)
             : result.Error!.ToProblem();
     }
 

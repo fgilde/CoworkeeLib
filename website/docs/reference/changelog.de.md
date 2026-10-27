@@ -17,6 +17,7 @@
 
 ### Hinzugefügt
 
+- Temporäre Dateilinks: `POST /api/v1/files/{id}/token` und `POST /api/v1/attachments/{type}/{id}/{slot}/{attachmentId}/token` liefern ein Token, das die Datei fünf Minuten lang ohne Anmeldung öffnet (`/api/v1/files/token/{token}/{name}`, inline oder `?download=true`); *Temporären Link kopieren* auf der Seite *Dateien*, `IFilesApi.CreateTokenAsync`, `IAttachmentsApi.CreateTokenAsync`. `IAccessTokens` (Tabelle `cw.AccessTokens`, einmalig oder bis zum Ablauf, nur Hashes gespeichert) für eigene anonyme Links. Apps brauchen eine Migration. Siehe [Dateien](../modules/files.md#temporare-links).
 - `CodeEditor.Highlight`: ein regulärer Ausdruck, dessen Treffer hervorgehoben werden; der Mail-Inhaltseditor hebt `{{ ... }}` hervor.
 - Mail-Inhaltseditor: Platzhalter sind Chips mit ihrem Namen, die visuelle Werkzeugleiste hat die Mail-Formatierungen und *Platzhalter einfügen*, Strg+Leertaste öffnet die Platzhalterliste in beiden Modi, `{{` wirkt im Visuell-Modus wie `{`. Siehe [Mailing](../modules/mailing.md).
 

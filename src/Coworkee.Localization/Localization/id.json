@@ -1819,5 +1819,7 @@
   "You see and do what {0} can until you go back to your account. The audit log names you as well.": "Anda melihat dan melakukan apa yang dapat dilakukan {0} sampai Anda kembali ke akun Anda. Log audit juga mencatat Anda.",
   "Impersonated by {0}": "Dimasuki oleh {0}",
   "Back to my account": "Kembali ke akun saya",
-  "impersonated by": "dimasuki oleh"
+  "impersonated by": "dimasuki oleh",
+  "Copy temporary link": "Salin tautan sementara",
+  "Link copied. It opens the file for five minutes.": "Tautan disalin. Tautan membuka file selama lima menit."
 }

@@ -1819,5 +1819,7 @@
   "You see and do what {0} can until you go back to your account. The audit log names you as well.": "Виждате и правите това, което може {0}, докато не се върнете към своя акаунт. Дневникът на одита записва и вас.",
   "Impersonated by {0}": "Влезли сте от името на {0}",
   "Back to my account": "Обратно към моя акаунт",
-  "impersonated by": "от името на"
+  "impersonated by": "от името на",
+  "Copy temporary link": "Копиране на временна връзка",
+  "Link copied. It opens the file for five minutes.": "Връзката е копирана. Тя отваря файла за пет минути."
 }

@@ -1819,5 +1819,7 @@
   "You see and do what {0} can until you go back to your account. The audit log names you as well.": "Βλέπετε και κάνετε ό,τι μπορεί ο/η {0} μέχρι να επιστρέψετε στον λογαριασμό σας. Το αρχείο ελέγχου καταγράφει και εσάς.",
   "Impersonated by {0}": "Σύνδεση από {0}",
   "Back to my account": "Επιστροφή στον λογαριασμό μου",
-  "impersonated by": "σύνδεση από"
+  "impersonated by": "σύνδεση από",
+  "Copy temporary link": "Αντιγραφή προσωρινού συνδέσμου",
+  "Link copied. It opens the file for five minutes.": "Ο σύνδεσμος αντιγράφηκε. Ανοίγει το αρχείο για πέντε λεπτά."
 }

@@ -1819,5 +1819,7 @@
   "You see and do what {0} can until you go back to your account. The audit log names you as well.": "Vidite i radite ono što može {0} dok se ne vratite na svoj korisnički račun. Zapisnik revizije bilježi i vas.",
   "Impersonated by {0}": "Prijavio {0}",
   "Back to my account": "Natrag na moj korisnički račun",
-  "impersonated by": "prijavio"
+  "impersonated by": "prijavio",
+  "Copy temporary link": "Kopiraj privremenu poveznicu",
+  "Link copied. It opens the file for five minutes.": "Poveznica kopirana. Otvara datoteku pet minuta."
 }

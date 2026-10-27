@@ -18,6 +18,8 @@
     }
     <MudButton Variant="Variant.Text" Size="Size.Small" Disabled="Selected is not { IsPublic: true }" StartIcon="@Icons.Material.Outlined.Link"
                OnClick="CopyLinkAsync" data-testid="file-copy-link">@L["Copy public link"]</MudButton>
+    <MudButton Variant="Variant.Text" Size="Size.Small" Disabled="Selected is null" StartIcon="@Icons.Material.Outlined.Timer"
+               OnClick="CopyTemporaryLinkAsync" data-testid="file-copy-temporary-link">@L["Copy temporary link"]</MudButton>
 </MudStack>
 <MudExFileManager Manager="_manager" Panels="MudExFileManagerPanels.Tree | MudExFileManagerPanels.Files | MudExFileManagerPanels.Meta" Height="@("75vh")"
                   CurrentDirectoryChanged="Enter" OnFileOpened="PreviewAsync" SelectedNodesChanged="Select" data-testid="files">

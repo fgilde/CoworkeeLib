@@ -43,6 +43,7 @@ public static class DbContextServiceCollectionExtensions
         });
         services.AddScoped<CoworkeeDbContext>(provider => provider.GetRequiredService<TContext>());
         services.TryAddSingleton<IDistributedLock, DatabaseDistributedLock>();
+        services.TryAddScoped<Tokens.IAccessTokens, Tokens.AccessTokens>();
         services.TryAddSingleton<DbXmlRepository>();
         services.TryAddSingleton<IVersionedTypeRegistry, VersionedTypeRegistry>();
         services.AddDataProtection().SetApplicationName("Coworkee");

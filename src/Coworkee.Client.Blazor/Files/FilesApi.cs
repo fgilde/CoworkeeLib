@@ -26,6 +26,9 @@ internal sealed class FilesApi(HttpClient http) : ApiClientBase(http), IFilesApi
     public Task<StoredFileDto> SetPublicAsync(Guid id, bool isPublic, CancellationToken cancellationToken = default) =>
         SendAsync<StoredFileDto>(HttpMethod.Put, $"{Root}/{id}/public", new FilePublicRequest(isPublic), cancellationToken);
 
+    public Task<FileTokenDto> CreateTokenAsync(Guid id, CancellationToken cancellationToken = default) =>
+        SendAsync<FileTokenDto>(HttpMethod.Post, $"{Root}/{id}/token", null, cancellationToken);
+
     public Task MoveAsync(MoveRequest request, CancellationToken cancellationToken = default) => SendAsync(HttpMethod.Post, $"{Root}/move", request, cancellationToken);
 
     public Task DeleteAsync(FileSelectionRequest request, CancellationToken cancellationToken = default) => SendAsync(HttpMethod.Post, $"{Root}/delete", request, cancellationToken);

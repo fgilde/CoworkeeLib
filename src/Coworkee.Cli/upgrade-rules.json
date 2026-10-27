@@ -328,8 +328,10 @@
         "OData row filters and set permissions hold for navigations: $expand shows only rows the target set lists, $filter/$orderby through navigations see only visible rows, $expand into a set without its permission answers 403, and into a type whose IODataEntityFilter<T> does more than Where answers 400.",
         "OData query options need their $: options without it (filter=, orderby=, select=) are no longer read. Parameter aliases (@a=...) and $apply through navigations into rows with row filters or permissions answer 400. $search matches only properties the user may read.",
         "A query error that is not OData's own (e.g. EF cannot translate the query) answers 400 without detail; the message goes to the log.",
-        "AddODataImport with an id (update, upsert) refuses a set keyed by something other than a Guid, and AddExtendedAttributes refuses an entity without a Guid Id, at registration."
+        "AddODataImport with an id (update, upsert) refuses a set keyed by something other than a Guid, and AddExtendedAttributes refuses an entity without a Guid Id, at registration.",
+        "New table cw.AccessTokens (temporary file and download links); add a migration. IFilesApi and IAttachmentsApi have a new member CreateTokenAsync: hand-written implementations and test fakes add it."
       ],
+      "needsMigration": true,
       "manual": [
         {
           "text": "Row filters of types reached through navigations must be plain Where calls on the query they get (no OrderBy, Take, Join or new query), otherwise $expand into the type answers 400 and $filter sees no rows of it.",

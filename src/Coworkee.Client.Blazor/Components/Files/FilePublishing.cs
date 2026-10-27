@@ -28,12 +28,25 @@ public static class FilePublishing
     /// <summary>The absolute address under which anyone opens the file once it is public.</summary>
     public static string PublicLink(NavigationManager navigation, StoredFileDto file) => navigation.ToAbsoluteUri(FileLinks.Public(file.Id, file.Name)).ToString();
 
-    public static async Task CopyPublicLinkAsync(IJSRuntime js, ISnackbar snackbar, CoworkeeLocalizer l, NavigationManager navigation, StoredFileDto file)
+    public static Task CopyPublicLinkAsync(IJSRuntime js, ISnackbar snackbar, CoworkeeLocalizer l, NavigationManager navigation, StoredFileDto file) =>
+        CopyAsync(js, snackbar, l, PublicLink(navigation, file), l["Link copied"]);
+
+    /// <summary>Copies a link that opens the file without sign-in for five minutes; the file stays private.</summary>
+    public static async Task CopyTemporaryLinkAsync(IJSRuntime js, IFilesApi files, ISnackbar snackbar, CoworkeeLocalizer l, NavigationManager navigation, StoredFileDto file)
+    {
+        FileTokenDto? token = null;
+        if (await snackbar.RunAsync(async () => token = await files.CreateTokenAsync(file.Id)))
+        {
+            await CopyAsync(js, snackbar, l, navigation.ToAbsoluteUri(token!.Url).ToString(), l["Link copied. It opens the file for five minutes."]);
+        }
+    }
+
+    private static async Task CopyAsync(IJSRuntime js, ISnackbar snackbar, CoworkeeLocalizer l, string link, string done)
     {
         try
         {
-            await js.InvokeVoidAsync("navigator.clipboard.writeText", PublicLink(navigation, file));
-            snackbar.Add(l["Link copied"], Severity.Success);
+            await js.InvokeVoidAsync("navigator.clipboard.writeText", link);
+            snackbar.Add(done, Severity.Success);
         }
         catch (JSException)
         {

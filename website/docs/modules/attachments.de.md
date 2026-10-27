@@ -41,6 +41,8 @@ Lesen (Liste, Öffnen, Herunterladen) folgt dem Datensatz: Hat der Typ ein [ODat
 
 Eine Datei über der Grenze des Slots, eines Typs, den der Slot nicht nimmt, mit leerem oder pfadartigem Namen oder von einem Scanner abgelehnt, ergibt 400.
 
+Ein kurzlebiger anonymer Link auf einen Anhang: `POST /api/v1/attachments/{type}/{id}/{slot}/{attachmentId}/token` (wer den Datensatz lesen darf) liefert ein `FileTokenDto`; seine `Url` (`AttachmentUrls.Token`) liefert die Datei fünf Minuten lang ohne Anmeldung, inline oder mit `?download=true` als Anhang. `IAttachmentsApi.CreateTokenAsync` ruft ihn auf. Siehe [Temporäre Links](files.md#temporare-links).
+
 ## Im App-Code
 
 `IRecordAttachments` macht dasselbe ohne Zugriffsprüfung, für Handler, die selbst prüfen:

@@ -1819,5 +1819,7 @@
   "You see and do what {0} can until you go back to your account. The audit log names you as well.": "在您返回自己的账户之前，您将看到并执行 {0} 能做的一切。审计日志也会记录您的名字。",
   "Impersonated by {0}": "由 {0} 代为登录",
   "Back to my account": "返回我的账户",
-  "impersonated by": "代为登录者："
+  "impersonated by": "代为登录者：",
+  "Copy temporary link": "复制临时链接",
+  "Link copied. It opens the file for five minutes.": "链接已复制。它可在五分钟内打开该文件。"
 }

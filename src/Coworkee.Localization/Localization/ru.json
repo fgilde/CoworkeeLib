@@ -1819,5 +1819,7 @@
   "You see and do what {0} can until you go back to your account. The audit log names you as well.": "Вы видите и делаете то, что может {0}, пока не вернётесь к своей учётной записи. Журнал аудита фиксирует и вас.",
   "Impersonated by {0}": "Вход выполнен пользователем {0}",
   "Back to my account": "Вернуться к своей учётной записи",
-  "impersonated by": "вход выполнен пользователем"
+  "impersonated by": "вход выполнен пользователем",
+  "Copy temporary link": "Копировать временную ссылку",
+  "Link copied. It opens the file for five minutes.": "Ссылка скопирована. Она открывает файл в течение пяти минут."
 }

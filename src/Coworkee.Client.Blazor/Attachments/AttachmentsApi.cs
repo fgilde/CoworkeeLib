@@ -23,4 +23,7 @@ internal sealed class AttachmentsApi(HttpClient http) : ApiClientBase(http), IAt
 
     public Task DeleteAsync(RecordAttachmentDto attachment, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Delete, AttachmentUrls.Content(attachment), null, cancellationToken);
+
+    public Task<Contracts.Files.FileTokenDto> CreateTokenAsync(RecordAttachmentDto attachment, CancellationToken cancellationToken = default) =>
+        SendAsync<Contracts.Files.FileTokenDto>(HttpMethod.Post, $"{AttachmentUrls.Slot(attachment.EntityType, attachment.EntityId, attachment.Slot)}/{attachment.Id}/token", null, cancellationToken);
 }

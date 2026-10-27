@@ -1819,5 +1819,7 @@
   "You see and do what {0} can until you go back to your account. The audit log names you as well.": "Du ser och gör det som {0} kan tills du går tillbaka till ditt konto. Granskningsloggen nämner dig också.",
   "Impersonated by {0}": "Inloggad av {0}",
   "Back to my account": "Tillbaka till mitt konto",
-  "impersonated by": "inloggad av"
+  "impersonated by": "inloggad av",
+  "Copy temporary link": "Kopiera tillfällig länk",
+  "Link copied. It opens the file for five minutes.": "Länken har kopierats. Den öppnar filen i fem minuter."
 }

@@ -17,6 +17,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Added
 
+- Temporary file links: `POST /api/v1/files/{id}/token` and `POST /api/v1/attachments/{type}/{id}/{slot}/{attachmentId}/token` return a token that opens the file without sign-in for five minutes (`/api/v1/files/token/{token}/{name}`, inline or `?download=true`); *Copy temporary link* on the *Files* page, `IFilesApi.CreateTokenAsync`, `IAttachmentsApi.CreateTokenAsync`. `IAccessTokens` (table `cw.AccessTokens`, single use or until expiry, only hashes stored) for own anonymous links. Apps need a migration. See [files](../modules/files.md#temporary-links).
 - `CodeEditor.Highlight`: a regular expression whose matches are highlighted; the mail body editor highlights `{{ ... }}`.
 - Mail body editor: placeholders are chips showing their name, the visual toolbar has the mail formatting tools and *Insert placeholder*, Ctrl+Space opens the placeholder list in both modes, `{{` works like `{` in Visual. See [mailing](../modules/mailing.md).
 
