@@ -165,5 +165,9 @@
   "The passkey was renamed.": "Το κλειδί πρόσβασης μετονομάστηκε.",
   "The passkey was removed.": "Το κλειδί πρόσβασης αφαιρέθηκε.",
   "This passkey is your only way to sign in. Set a password before you remove it.": "Αυτό το κλειδί πρόσβασης είναι ο μόνος τρόπος σύνδεσής σας. Ορίστε κωδικό πρόσβασης πριν το αφαιρέσετε.",
-  "The passkey did not work. Try again or use another way to sign in.": "Το κλειδί πρόσβασης δεν λειτούργησε. Δοκιμάστε ξανά ή συνδεθείτε με άλλον τρόπο."
+  "The passkey did not work. Try again or use another way to sign in.": "Το κλειδί πρόσβασης δεν λειτούργησε. Δοκιμάστε ξανά ή συνδεθείτε με άλλον τρόπο.",
+  "Sign in as another user": "Σύνδεση ως άλλος χρήστης",
+  "You may not sign in as this user.": "Δεν επιτρέπεται να συνδεθείτε ως αυτός ο χρήστης.",
+  "Back to my account": "Επιστροφή στον λογαριασμό μου",
+  "{0} is signed in as {1}.": "{0}: συνδεδεμένος ως {1}."
 }

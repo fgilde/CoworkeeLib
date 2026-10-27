@@ -165,5 +165,9 @@
   "The passkey was renamed.": "Se cambió el nombre de la llave de acceso.",
   "The passkey was removed.": "Se quitó la llave de acceso.",
   "This passkey is your only way to sign in. Set a password before you remove it.": "Esta llave de acceso es tu única forma de iniciar sesión. Define una contraseña antes de quitarla.",
-  "The passkey did not work. Try again or use another way to sign in.": "La llave de acceso no funcionó. Inténtalo de nuevo o inicia sesión de otra forma."
+  "The passkey did not work. Try again or use another way to sign in.": "La llave de acceso no funcionó. Inténtalo de nuevo o inicia sesión de otra forma.",
+  "Sign in as another user": "Iniciar sesión como otro usuario",
+  "You may not sign in as this user.": "No puede iniciar sesión como este usuario.",
+  "Back to my account": "Volver a mi cuenta",
+  "{0} is signed in as {1}.": "{0} ha iniciado sesión como {1}."
 }

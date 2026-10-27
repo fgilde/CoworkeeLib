@@ -1,0 +1,9 @@
+@page
+@model Coworkee.AuthServer.Pages.Account.StopImpersonationModel
+@{ ViewData["Title"] = T("Back to my account"); }
+<h1>@T("Back to my account")</h1>
+<p>@T("{0} is signed in as {1}.", Model.ImpersonatorName, Model.UserName)</p>
+<form method="post">
+  <input type="hidden" asp-for="ReturnUrl" />
+  <button type="submit" data-testid="stop-impersonation">@T("Back to my account")</button>
+</form>

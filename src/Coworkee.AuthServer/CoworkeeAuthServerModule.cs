@@ -38,7 +38,7 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
         services.AddSingleton<Application.Localization.ITextTranslator, AuthTextTranslator>();
         services.AddSingleton<AuthClientSeeder>();
         services.AddHostedService(provider => provider.GetRequiredService<AuthClientSeeder>());
-        services.AddRazorPages().AddApplicationPart(typeof(CoworkeeAuthServerModule).Assembly);
+        services.AddRazorPages(AuthImpersonation.Conventions).AddApplicationPart(typeof(CoworkeeAuthServerModule).Assembly);
         if (options.FrameAncestors.Count > 0)
         {
             // antiforgery's X-Frame-Options would forbid every frame; frame-ancestors of the policy allows the listed origins instead
@@ -60,6 +60,7 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
                 await OwnPassword.NameSession(signIn);
             };
         });
+        services.Configure<SecurityStampValidatorOptions>(stamps => stamps.OnRefreshingPrincipal = AuthImpersonation.KeepClaims);
         new IdentityBuilder(typeof(User), typeof(Role), services).AddSignInManager();
 
         services.AddOpenIddict()
@@ -161,7 +162,7 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
     }
 
     // clients added in the admin pages redirect to their origins as well; the auth server learns about them within a minute
-    private static async Task<StoredClients> StoredClientsAsync(Microsoft.AspNetCore.Http.HttpContext context)
+    internal static async Task<StoredClients> StoredClientsAsync(Microsoft.AspNetCore.Http.HttpContext context)
     {
         try
         {

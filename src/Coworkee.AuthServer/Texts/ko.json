@@ -165,5 +165,9 @@
   "The passkey was renamed.": "패스키 이름이 바뀌었습니다.",
   "The passkey was removed.": "패스키가 제거되었습니다.",
   "This passkey is your only way to sign in. Set a password before you remove it.": "이 패스키가 유일한 로그인 방법입니다. 제거하기 전에 비밀번호를 설정하세요.",
-  "The passkey did not work. Try again or use another way to sign in.": "패스키가 작동하지 않았습니다. 다시 시도하거나 다른 방법으로 로그인하세요."
+  "The passkey did not work. Try again or use another way to sign in.": "패스키가 작동하지 않았습니다. 다시 시도하거나 다른 방법으로 로그인하세요.",
+  "Sign in as another user": "다른 사용자로 로그인",
+  "You may not sign in as this user.": "이 사용자로 로그인할 수 없습니다.",
+  "Back to my account": "내 계정으로 돌아가기",
+  "{0} is signed in as {1}.": "{0}님이 {1}(으)로 로그인했습니다."
 }

@@ -165,5 +165,9 @@
   "The passkey was renamed.": "パスキーの名前を変更しました。",
   "The passkey was removed.": "パスキーを削除しました。",
   "This passkey is your only way to sign in. Set a password before you remove it.": "このパスキーが唯一のサインイン方法です。削除する前にパスワードを設定してください。",
-  "The passkey did not work. Try again or use another way to sign in.": "パスキーが機能しませんでした。もう一度試すか、別の方法でサインインしてください。"
+  "The passkey did not work. Try again or use another way to sign in.": "パスキーが機能しませんでした。もう一度試すか、別の方法でサインインしてください。",
+  "Sign in as another user": "別のユーザーとしてログイン",
+  "You may not sign in as this user.": "このユーザーとしてログインすることはできません。",
+  "Back to my account": "自分のアカウントに戻る",
+  "{0} is signed in as {1}.": "{0} が {1} としてログインしています。"
 }

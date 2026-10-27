@@ -165,5 +165,9 @@
   "The passkey was renamed.": "已重命名通行密钥。",
   "The passkey was removed.": "已移除通行密钥。",
   "This passkey is your only way to sign in. Set a password before you remove it.": "此通行密钥是你唯一的登录方式。移除前请先设置密码。",
-  "The passkey did not work. Try again or use another way to sign in.": "通行密钥无效。请重试或使用其他方式登录。"
+  "The passkey did not work. Try again or use another way to sign in.": "通行密钥无效。请重试或使用其他方式登录。",
+  "Sign in as another user": "以其他用户身份登录",
+  "You may not sign in as this user.": "您不能以此用户身份登录。",
+  "Back to my account": "返回我的账户",
+  "{0} is signed in as {1}.": "{0} 已以 {1} 的身份登录。"
 }

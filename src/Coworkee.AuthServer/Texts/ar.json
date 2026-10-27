@@ -165,5 +165,9 @@
   "The passkey was renamed.": "أُعيدت تسمية مفتاح المرور.",
   "The passkey was removed.": "أُزيل مفتاح المرور.",
   "This passkey is your only way to sign in. Set a password before you remove it.": "مفتاح المرور هذا هو طريقتك الوحيدة لتسجيل الدخول. عيّن كلمة مرور قبل إزالته.",
-  "The passkey did not work. Try again or use another way to sign in.": "لم يعمل مفتاح المرور. حاول مرة أخرى أو سجّل الدخول بطريقة أخرى."
+  "The passkey did not work. Try again or use another way to sign in.": "لم يعمل مفتاح المرور. حاول مرة أخرى أو سجّل الدخول بطريقة أخرى.",
+  "Sign in as another user": "تسجيل الدخول كمستخدم آخر",
+  "You may not sign in as this user.": "لا يُسمح لك بتسجيل الدخول باسم هذا المستخدم.",
+  "Back to my account": "العودة إلى حسابي",
+  "{0} is signed in as {1}.": "{0} مسجّل الدخول باسم {1}."
 }

@@ -165,5 +165,9 @@
   "The passkey was renamed.": "បាន​ប្ដូរ​ឈ្មោះ​សោ​ចូល។",
   "The passkey was removed.": "បាន​ដក​សោ​ចូល​ចេញ។",
   "This passkey is your only way to sign in. Set a password before you remove it.": "សោ​ចូល​នេះ​ជា​មធ្យោបាយ​តែ​មួយ​គត់​សម្រាប់​ចូល។ សូម​កំណត់​ពាក្យ​សម្ងាត់​មុន​ពេល​ដក​វា​ចេញ។",
-  "The passkey did not work. Try again or use another way to sign in.": "សោ​ចូល​មិន​ដំណើរការ​ទេ។ សូម​ព្យាយាម​ម្ដង​ទៀត ឬ​ចូល​តាម​វិធី​ផ្សេង។"
+  "The passkey did not work. Try again or use another way to sign in.": "សោ​ចូល​មិន​ដំណើរការ​ទេ។ សូម​ព្យាយាម​ម្ដង​ទៀត ឬ​ចូល​តាម​វិធី​ផ្សេង។",
+  "Sign in as another user": "ចូលគណនីជាអ្នកប្រើម្នាក់ទៀត",
+  "You may not sign in as this user.": "អ្នកមិនអាចចូលគណនីជាអ្នកប្រើនេះបានទេ។",
+  "Back to my account": "ត្រឡប់ទៅគណនីរបស់ខ្ញុំ",
+  "{0} is signed in as {1}.": "{0} បានចូលគណនីជា {1}។"
 }

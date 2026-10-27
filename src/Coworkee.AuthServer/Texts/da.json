@@ -165,5 +165,9 @@
   "The passkey was renamed.": "Adgangsnøglen blev omdøbt.",
   "The passkey was removed.": "Adgangsnøglen blev fjernet.",
   "This passkey is your only way to sign in. Set a password before you remove it.": "Denne adgangsnøgle er din eneste måde at logge ind på. Angiv en adgangskode, før du fjerner den.",
-  "The passkey did not work. Try again or use another way to sign in.": "Adgangsnøglen virkede ikke. Prøv igen, eller log ind på en anden måde."
+  "The passkey did not work. Try again or use another way to sign in.": "Adgangsnøglen virkede ikke. Prøv igen, eller log ind på en anden måde.",
+  "Sign in as another user": "Log ind som en anden bruger",
+  "You may not sign in as this user.": "Du må ikke logge ind som denne bruger.",
+  "Back to my account": "Tilbage til min konto",
+  "{0} is signed in as {1}.": "{0} er logget ind som {1}."
 }

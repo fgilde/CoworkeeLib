@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using System.Security.Claims;
 using Coworkee.Account;
 using Coworkee.Contracts.Configuration;
+using Coworkee.Contracts.Identity;
 using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
 using Coworkee.Identity.Users;
@@ -59,13 +60,16 @@ internal static class AuthEndpoints
 
         // signed out everywhere or locked by an administrator after this browser signed in: the sign-in no longer counts
         var stampClaim = context.RequestServices.GetRequiredService<IOptions<IdentityOptions>>().Value.ClaimsIdentity.SecurityStampClaimType;
-        if (cookie.Principal.FindFirstValue(stampClaim) != user.SecurityStamp || (user.LockoutEnabled && user.LockoutEnd > clock.GetUtcNow()))
+        var impersonating = AuthImpersonation.IsImpersonating(cookie.Principal);
+        if (cookie.Principal.FindFirstValue(stampClaim) != user.SecurityStamp || (user.LockoutEnabled && user.LockoutEnd > clock.GetUtcNow())
+            || (impersonating && !await ImpersonatorIsActiveAsync(db, cookie.Principal)))
         {
             await context.SignOutAsync(IdentityConstants.ApplicationScheme);
             return SignInFirst(context);
         }
 
-        if (await policy.RequiresChangeAsync(user, context.RequestAborted))
+        // only the user himself chooses his new password
+        if (!impersonating && await policy.RequiresChangeAsync(user, context.RequestAborted))
         {
             return Results.Redirect("/Account/ChangePasswordRequired?returnUrl=" + Uri.EscapeDataString(ReturnUrl(context)));
         }
@@ -81,15 +85,25 @@ internal static class AuthEndpoints
             return result;
         }
 
-        var sid = cookie.Properties?.Items.TryGetValue(OwnPassword.SessionItem, out var item) == true ? item : null;
-        var principal = await CreatePrincipalAsync(context.RequestServices, user, request.GetScopes(), options.Value, sid);
-        if (consent.AuthorizationId is { } authorizationId)
+        var sid = SessionOf(cookie);
+        var principal = await CreatePrincipalAsync(context.RequestServices, user, request.GetScopes(), options.Value, sid, cookie.Principal);
+        if (impersonating)
+        {
+            principal.SetAuthorizationId(await AuthImpersonation.CreateAuthorizationAsync(context.RequestServices, request, principal, sid, clock.GetUtcNow()));
+        }
+        else if (consent.AuthorizationId is { } authorizationId)
         {
             principal.SetAuthorizationId(authorizationId);
         }
 
         return Results.SignIn(principal, null, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
     }
+
+    internal static string? SessionOf(AuthenticateResult cookie) =>
+        cookie.Properties?.Items.TryGetValue(OwnPassword.SessionItem, out var sid) == true ? sid : null;
+
+    private static async Task<bool> ImpersonatorIsActiveAsync(CoworkeeDbContext db, ClaimsPrincipal principal) =>
+        Guid.TryParse(principal.GetClaim(ImpersonationClaims.Impersonator), out var impersonatorId) && await FindActiveAsync(db, impersonatorId) is not null;
 
     private static async Task<bool> MaySignInAsync(HttpContext context, CoworkeeDbContext db, OpenIddictRequest request, User user)
     {
@@ -154,12 +168,13 @@ internal static class AuthEndpoints
         // a new security stamp (signed out everywhere, locked, new password) ends the refresh tokens issued before
         var stamp = result.Principal?.GetClaim(SessionStamp.ClaimType);
         var sid = result.Principal?.GetClaim(SessionStamp.SessionClaimType);
-        if (user is null || (stamp is not null && !SessionStamp.IsCurrent(new UserStamp(user.SecurityStamp, user.KeptSession), stamp, sid)))
+        if (user is null || (stamp is not null && !SessionStamp.IsCurrent(new UserStamp(user.SecurityStamp, user.KeptSession), stamp, sid))
+            || (AuthImpersonation.IsImpersonating(result.Principal) && !await ImpersonatorIsActiveAsync(db, result.Principal!)))
         {
             return Results.Forbid(Error(Errors.InvalidGrant, "The account is no longer allowed to sign in."), [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]);
         }
 
-        var principal = await CreatePrincipalAsync(context.RequestServices, user, result.Principal!.GetScopes(), options.Value, sid);
+        var principal = await CreatePrincipalAsync(context.RequestServices, user, result.Principal!.GetScopes(), options.Value, sid, result.Principal!);
         if (result.Principal!.GetAuthorizationId() is { } authorizationId)
         {
             principal.SetAuthorizationId(authorizationId);
@@ -189,6 +204,12 @@ internal static class AuthEndpoints
 
     private static async Task<IResult> EndSessionAsync(HttpContext context)
     {
+        var cookie = await context.AuthenticateAsync(IdentityConstants.ApplicationScheme);
+        if (AuthImpersonation.IsImpersonating(cookie.Principal))
+        {
+            await AuthImpersonation.RevokeAsync(context.RequestServices, cookie.Principal!.FindFirstValue(ClaimTypes.NameIdentifier)!, SessionOf(cookie), context.RequestAborted);
+        }
+
         await context.SignOutAsync(IdentityConstants.ApplicationScheme);
         return Results.SignOut(new AuthenticationProperties { RedirectUri = "/" }, [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]);
     }
@@ -209,7 +230,9 @@ internal static class AuthEndpoints
         return await db.Set<User>().AsNoTracking().SingleOrDefaultAsync(u => u.Id == userId && u.IsActive);
     }
 
-    private static async Task<ClaimsPrincipal> CreatePrincipalAsync(IServiceProvider services, User user, ImmutableArray<string> scopes, AuthServerOptions options, string? sid)
+    /// <summary>The token principal of <paramref name="user"/>; an impersonation of the sign-in or the refreshed token (<paramref name="source"/>) carries over.</summary>
+    private static async Task<ClaimsPrincipal> CreatePrincipalAsync(
+        IServiceProvider services, User user, ImmutableArray<string> scopes, AuthServerOptions options, string? sid, ClaimsPrincipal source)
     {
         var db = services.GetRequiredService<CoworkeeDbContext>();
         List<string> roles;
@@ -224,18 +247,23 @@ internal static class AuthEndpoints
         var identity = new ClaimsIdentity(TokenValidationParameters.DefaultAuthenticationType, Claims.Name, Claims.Role);
         identity.SetClaim(Claims.Subject, user.Id.ToString())
             .SetClaim(Claims.Email, user.Email)
-            .SetClaim(Claims.Name, string.Join(' ', new[] { user.FirstName, user.LastName }.Where(n => !string.IsNullOrWhiteSpace(n))) is { Length: > 0 } name ? name : user.Email)
+            .SetClaim(Claims.Name, DisplayName(user))
             .SetClaim("tenant", user.TenantId.ToString())
             .SetClaim(SessionStamp.ClaimType, SessionStamp.Hash(user.SecurityStamp))
             .SetClaim(SessionStamp.SessionClaimType, sid)
             .SetClaim(SystemTenantClaim, await services.GetRequiredService<ITenantDirectory>().IsSystemTenantAsync(user.TenantId, CancellationToken.None) ? "true" : "false")
-            .SetClaims(Claims.Role, [.. roles]);
+            .SetClaims(Claims.Role, [.. roles])
+            .SetClaim(ImpersonationClaims.Impersonator, source.GetClaim(ImpersonationClaims.Impersonator))
+            .SetClaim(ImpersonationClaims.ImpersonatorName, source.GetClaim(ImpersonationClaims.ImpersonatorName));
 
         identity.SetScopes(scopes);
         identity.SetResources(await ResourcesAsync(services, scopes, options));
         identity.SetDestinations(claim => claim.Type is SessionStamp.ClaimType or SessionStamp.SessionClaimType ? [Destinations.AccessToken] : [Destinations.AccessToken, Destinations.IdentityToken]);
         return new ClaimsPrincipal(identity);
     }
+
+    internal static string DisplayName(User user) =>
+        string.Join(' ', new[] { user.FirstName, user.LastName }.Where(n => !string.IsNullOrWhiteSpace(n))) is { Length: > 0 } name ? name : user.Email!;
 
     /// <summary>The audiences of the access token: the resources of the API scopes from the configuration and of the stored scopes.</summary>
     internal static async Task<IEnumerable<string>> ResourcesAsync(IServiceProvider services, ImmutableArray<string> scopes, AuthServerOptions options)

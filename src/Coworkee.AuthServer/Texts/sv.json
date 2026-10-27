@@ -165,5 +165,9 @@
   "The passkey was renamed.": "Nyckeln fick ett nytt namn.",
   "The passkey was removed.": "Nyckeln togs bort.",
   "This passkey is your only way to sign in. Set a password before you remove it.": "Den här nyckeln är ditt enda sätt att logga in. Ange ett lösenord innan du tar bort den.",
-  "The passkey did not work. Try again or use another way to sign in.": "Nyckeln fungerade inte. Försök igen eller logga in på ett annat sätt."
+  "The passkey did not work. Try again or use another way to sign in.": "Nyckeln fungerade inte. Försök igen eller logga in på ett annat sätt.",
+  "Sign in as another user": "Logga in som en annan användare",
+  "You may not sign in as this user.": "Du får inte logga in som den här användaren.",
+  "Back to my account": "Tillbaka till mitt konto",
+  "{0} is signed in as {1}.": "{0} är inloggad som {1}."
 }

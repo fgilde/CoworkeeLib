@@ -165,5 +165,9 @@
   "The passkey was renamed.": "Přístupový klíč byl přejmenován.",
   "The passkey was removed.": "Přístupový klíč byl odebrán.",
   "This passkey is your only way to sign in. Set a password before you remove it.": "Tento přístupový klíč je váš jediný způsob přihlášení. Než ho odeberete, nastavte si heslo.",
-  "The passkey did not work. Try again or use another way to sign in.": "Přístupový klíč nefungoval. Zkuste to znovu nebo se přihlaste jinak."
+  "The passkey did not work. Try again or use another way to sign in.": "Přístupový klíč nefungoval. Zkuste to znovu nebo se přihlaste jinak.",
+  "Sign in as another user": "Přihlásit se jako jiný uživatel",
+  "You may not sign in as this user.": "Nemáte oprávnění přihlásit se jako tento uživatel.",
+  "Back to my account": "Zpět na můj účet",
+  "{0} is signed in as {1}.": "{0} je přihlášen jako {1}."
 }

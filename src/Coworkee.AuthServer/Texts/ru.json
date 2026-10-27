@@ -165,5 +165,9 @@
   "The passkey was renamed.": "Ключ доступа переименован.",
   "The passkey was removed.": "Ключ доступа удалён.",
   "This passkey is your only way to sign in. Set a password before you remove it.": "Этот ключ доступа — ваш единственный способ входа. Задайте пароль, прежде чем удалять его.",
-  "The passkey did not work. Try again or use another way to sign in.": "Ключ доступа не сработал. Попробуйте ещё раз или войдите другим способом."
+  "The passkey did not work. Try again or use another way to sign in.": "Ключ доступа не сработал. Попробуйте ещё раз или войдите другим способом.",
+  "Sign in as another user": "Войти как другой пользователь",
+  "You may not sign in as this user.": "Вы не можете войти как этот пользователь.",
+  "Back to my account": "Вернуться к своей учётной записи",
+  "{0} is signed in as {1}.": "{0} вошёл как {1}."
 }

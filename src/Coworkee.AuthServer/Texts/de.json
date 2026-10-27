@@ -165,5 +165,9 @@
   "The passkey was renamed.": "Der Passkey wurde umbenannt.",
   "The passkey was removed.": "Der Passkey wurde entfernt.",
   "This passkey is your only way to sign in. Set a password before you remove it.": "Dieser Passkey ist Ihr einziger Weg zur Anmeldung. Legen Sie ein Passwort fest, bevor Sie ihn entfernen.",
-  "The passkey did not work. Try again or use another way to sign in.": "Der Passkey hat nicht funktioniert. Versuchen Sie es erneut oder melden Sie sich anders an."
+  "The passkey did not work. Try again or use another way to sign in.": "Der Passkey hat nicht funktioniert. Versuchen Sie es erneut oder melden Sie sich anders an.",
+  "Sign in as another user": "Als anderer Benutzer anmelden",
+  "You may not sign in as this user.": "Sie dürfen sich nicht als dieser Benutzer anmelden.",
+  "Back to my account": "Zurück zu meinem Konto",
+  "{0} is signed in as {1}.": "{0} ist als {1} angemeldet."
 }

@@ -165,5 +165,9 @@
   "The passkey was renamed.": "Ключът за достъп беше преименуван.",
   "The passkey was removed.": "Ключът за достъп беше премахнат.",
   "This passkey is your only way to sign in. Set a password before you remove it.": "Този ключ за достъп е единственият ви начин за вход. Задайте парола, преди да го премахнете.",
-  "The passkey did not work. Try again or use another way to sign in.": "Ключът за достъп не сработи. Опитайте отново или влезте по друг начин."
+  "The passkey did not work. Try again or use another way to sign in.": "Ключът за достъп не сработи. Опитайте отново или влезте по друг начин.",
+  "Sign in as another user": "Вход като друг потребител",
+  "You may not sign in as this user.": "Нямате право да влезете като този потребител.",
+  "Back to my account": "Обратно към моя акаунт",
+  "{0} is signed in as {1}.": "{0} е влязъл като {1}."
 }

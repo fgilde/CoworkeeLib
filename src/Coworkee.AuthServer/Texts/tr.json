@@ -165,5 +165,9 @@
   "The passkey was renamed.": "Geçiş anahtarı yeniden adlandırıldı.",
   "The passkey was removed.": "Geçiş anahtarı kaldırıldı.",
   "This passkey is your only way to sign in. Set a password before you remove it.": "Bu geçiş anahtarı oturum açmanın tek yolu. Kaldırmadan önce bir parola belirleyin.",
-  "The passkey did not work. Try again or use another way to sign in.": "Geçiş anahtarı çalışmadı. Yeniden deneyin veya başka bir yolla oturum açın."
+  "The passkey did not work. Try again or use another way to sign in.": "Geçiş anahtarı çalışmadı. Yeniden deneyin veya başka bir yolla oturum açın.",
+  "Sign in as another user": "Başka bir kullanıcı olarak oturum aç",
+  "You may not sign in as this user.": "Bu kullanıcı olarak oturum açamazsınız.",
+  "Back to my account": "Hesabıma dön",
+  "{0} is signed in as {1}.": "{0}, {1} olarak oturum açtı."
 }

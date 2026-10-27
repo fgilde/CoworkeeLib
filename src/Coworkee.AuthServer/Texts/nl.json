@@ -165,5 +165,9 @@
   "The passkey was renamed.": "De passkey is hernoemd.",
   "The passkey was removed.": "De passkey is verwijderd.",
   "This passkey is your only way to sign in. Set a password before you remove it.": "Deze passkey is je enige manier om in te loggen. Stel een wachtwoord in voordat je hem verwijdert.",
-  "The passkey did not work. Try again or use another way to sign in.": "De passkey werkte niet. Probeer het opnieuw of log op een andere manier in."
+  "The passkey did not work. Try again or use another way to sign in.": "De passkey werkte niet. Probeer het opnieuw of log op een andere manier in.",
+  "Sign in as another user": "Inloggen als een andere gebruiker",
+  "You may not sign in as this user.": "U mag niet inloggen als deze gebruiker.",
+  "Back to my account": "Terug naar mijn account",
+  "{0} is signed in as {1}.": "{0} is ingelogd als {1}."
 }

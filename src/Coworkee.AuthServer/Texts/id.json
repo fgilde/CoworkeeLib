@@ -165,5 +165,9 @@
   "The passkey was renamed.": "Kunci sandi diganti namanya.",
   "The passkey was removed.": "Kunci sandi dihapus.",
   "This passkey is your only way to sign in. Set a password before you remove it.": "Kunci sandi ini satu-satunya cara Anda masuk. Tetapkan kata sandi sebelum menghapusnya.",
-  "The passkey did not work. Try again or use another way to sign in.": "Kunci sandi tidak berhasil. Coba lagi atau masuk dengan cara lain."
+  "The passkey did not work. Try again or use another way to sign in.": "Kunci sandi tidak berhasil. Coba lagi atau masuk dengan cara lain.",
+  "Sign in as another user": "Masuk sebagai pengguna lain",
+  "You may not sign in as this user.": "Anda tidak boleh masuk sebagai pengguna ini.",
+  "Back to my account": "Kembali ke akun saya",
+  "{0} is signed in as {1}.": "{0} masuk sebagai {1}."
 }

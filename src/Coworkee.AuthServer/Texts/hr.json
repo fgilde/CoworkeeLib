@@ -165,5 +165,9 @@
   "The passkey was renamed.": "Pristupni ključ je preimenovan.",
   "The passkey was removed.": "Pristupni ključ je uklonjen.",
   "This passkey is your only way to sign in. Set a password before you remove it.": "Ovaj pristupni ključ vaš je jedini način prijave. Postavite lozinku prije nego što ga uklonite.",
-  "The passkey did not work. Try again or use another way to sign in.": "Pristupni ključ nije uspio. Pokušajte ponovno ili se prijavite na drugi način."
+  "The passkey did not work. Try again or use another way to sign in.": "Pristupni ključ nije uspio. Pokušajte ponovno ili se prijavite na drugi način.",
+  "Sign in as another user": "Prijava kao drugi korisnik",
+  "You may not sign in as this user.": "Ne smijete se prijaviti kao ovaj korisnik.",
+  "Back to my account": "Natrag na moj korisnički račun",
+  "{0} is signed in as {1}.": "{0} je prijavljen kao {1}."
 }
