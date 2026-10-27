@@ -6,6 +6,7 @@
 
 ### Hinzugefügt
 
+- Gruppenbesitzer, eine Standardgruppe und Standardrollen: Besitzer im Reiter Mitglieder und mit `PUT /api/v1/identity/groups/{id}/owners`, die Standardgruppe im Reiter Allgemein und mit `GET`/`PUT /api/v1/identity/groups/default`, *Wird neuen Benutzern zugewiesen* auf der Rollenseite; jeder neue Benutzer (Administration, Registrierung, externe Registrierung und Single Sign-on, Seed, neue Mandanten, App-Importe über `UserManager`) bekommt die Standardrollen und tritt der Standardgruppe bei. Seed: `IdentitySeedOptions.DefaultGroup`, `SeedRole.IsDefault`. Siehe [Identität](../features/identity.md#besitzer-standardgruppe-und-standardrolle).
 - OData: `Coworkee:OData:CaseInsensitive` (`CoworkeeODataOptions.CaseInsensitive`, Standard `true`) legt fest, ob Namen in OData-URIs unabhängig von der Schreibweise passen (`$filter=name eq 'x'`); bisher war das immer an. Siehe [OData](../web/odata.md).
 - OData: `AddODataEntity<T>(..., o => o.Key(c => c.IsoCode))` registriert ein Set mit einer anderen Schlüsseleigenschaft beliebigen primitiven Typs; Einzelabfragen sind `/odata/Countries('DE')`. Datensatz-Anhänge, Social, Workflows, Entity-Historie und Webhook-Entity-Ereignisse weisen Entities ohne Guid-`Id` bei der Registrierung ab; Client-Entities überspringen solche Sets. Siehe [OData](../web/odata.md#schlussel-auer-id).
 - OData: berechnete Eigenschaften (`ODataComputedProperty`) lassen sich auswählen (`$select=ReferenceNumberDisplay`) und kommen dann mit ihrem Wert zurück; ein Ausdruck über die eigenen Spalten der Zeile funktioniert auch auf Sets externer Datenbanken. Siehe [OData](../web/odata.md#berechnete-eigenschaften).
@@ -19,6 +20,7 @@
 
 ### Geändert
 
+- `IGroupScope` hat zwei neue Member, `DefaultGroupIdAsync` und `OwnersAsync`; eigene Implementierungen und Test-Fakes ergänzen sie, ebenso die neuen `ICoworkeeApi`-Member `SetGroupOwnersAsync`, `GetDefaultGroupIdAsync` und `SetDefaultGroupAsync`. `RoleRequest` und `GroupDto` haben neue optionale Parameter (`IsDefault`, `OwnerIds`). Eine Migration ist nötig: `cw.Groups.IsDefault`, `cw.GroupMembers.IsOwner` und `cw.Roles.IsDefault` sind neue Spalten.
 - `CodeCompletion.InsertText` ist jetzt der ganze Text samt Auslöser (`{{ name }}` statt ` name }}`): Die Auswahl ersetzt, was vom `CompletionTrigger` getippt ist, und die schließenden Klammern, die Monaco ergänzt hat, und Strg+Leertaste fügt überall einen vollständigen Text ein. Neues Flag `Snippet` für Monaco-Snippets (`{{ if $1 }}`). Eigene Vorschläge für `CodeEditor` brauchen den Auslöser im Text.
 - Mail-Inhaltseditor: Inhalte, deren Markup der visuelle Editor ändern würde (andere Styles als `color`, `background-color` und `text-align`, Tags über Textformatierung hinaus, Kommentare), öffnen sich im Quelltext, eine gestaltete Schaltfläche geht beim Speichern also nicht mehr verloren. Die mitgelieferten Vorlagen mit Schaltfläche öffnen sich im Quelltext.
 

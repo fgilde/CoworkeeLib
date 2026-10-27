@@ -92,10 +92,40 @@ Place `<GroupScopePicker />` in your app bar yourself; the template layout does 
 
 Group import (`Groups.Manage`) takes `Name`, `Description` and `ParentPath` ("Customer A/Hamburg") and is an upsert by path: a group of that name at that path gets its description updated, otherwise it is created. Missing parents are not created implicitly (an earlier row of the same file may create them); an unknown parent is an error row. A `/` in a name cannot be addressed by path, empty path segments are ignored, a blank description does not clear an existing one, and a dry run cannot flag unknown paths (a real run does). The groups page has Import and Export buttons; the `Groups` set has a computed `ParentPath`, and the export writes `Name`, `Description` and `ParentPath` in tree order, so an export imports again, for example into another tenant. The Users OData set exposes `Groups` for filters such as `Groups/any(m: m/GroupId eq {id})`.
 
+### Owners, default group and default role
+
+**Owners** ("account owners") are members marked on the Members tab (star, `Identity.Groups.ManageMembers`) or with `PUT /api/v1/identity/groups/{id}/owners` (`ICoworkeeApi.SetGroupOwnersAsync`). The list replaces the owners; owners who are not members join the group, and leaving the group ends the ownership. Moving members does not carry ownership along. `GroupDto.OwnerIds` lists them, OData finds them with `Users?$filter=Groups/any(m: m/GroupId eq {id} and m/IsOwner)`, and server code asks `IGroupScope.OwnersAsync(groupId)`, for example for notification recipients:
+
+```csharp
+await notifier.NotifyAsync(await scope.OwnersAsync(groupId, ct), "booking.created", "New booking", text, link, ct);
+```
+
+The **default group** is the group new users join. One group per tenant can be it: the switch *Default group for new users* on the General tab (`Identity.Groups.Manage`), `PUT /api/v1/identity/groups/default` with `{ "groupId": ... }` (null clears it) or `ICoworkeeApi.SetDefaultGroupAsync`. Every signed-in user can read its id (`GET /api/v1/identity/groups/default`, `ICoworkeeApi.GetDefaultGroupIdAsync`, `IGroupScope.DefaultGroupIdAsync`). The seed creates it by name:
+
+```csharp
+services.AddCoworkeeIdentitySeed(seed =>
+{
+    seed.DefaultGroup = "Default Organization Unit";
+    seed.Roles.Add(new SeedRole("Customer", "Every new user", [ShipmentPermissions.Shipments.View]) { IsDefault = true });
+});
+```
+
+A **default role** (`Role.IsDefault`, *Given to new users* on the role page, `RoleRequest.IsDefault`; null keeps the value) is given to every new user. System roles cannot be default.
+
+Both apply to **every way a user is created**: *Create user*, self registration, the completion step of an external sign-up, the first single sign-on, the seed and its development sync, a new tenant's first admin, and app code that creates users through `UserManager` or `CreateUser` (an import, for example). Global default roles apply in every tenant, tenant roles in their own. A new user joins the default group only when it joins no other group in the same save. Existing users are not changed when a role or group becomes default.
+
+The default group is an **ordinary group** for `IGroupScope`: its members have it in their memberships, accessible and active groups. The library does not hide anything in it. An app whose records booked in the default group stay private to their creator adds that to its filter:
+
+```csharp
+var ids = (await scope.ActiveAsync(ct)).ToList();
+var standard = await scope.DefaultGroupIdAsync(ct);
+return query.Where(s => EF.Parameter(ids).Contains(s.GroupId) && (s.GroupId != standard || s.CreatedBy == user.UserId));
+```
+
 !!! warning "Realtime and units as customers"
     `[Realtime]` still broadcasts `type:X` to everyone with the view permission. When units are customers in one tenant, clients of other units see the ids and changed property names of records they may not open (and reload). Per-group topics are a follow-up.
 
-Workflow approvers, mail to a group, resource permissions and group roles use **direct** membership, not the tree.
+Workflow approvers, mail to a group, resource permissions, group roles and owners use **direct** membership, not the tree.
 
 ## Keycloak and other providers
 

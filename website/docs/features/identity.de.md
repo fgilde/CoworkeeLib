@@ -92,10 +92,40 @@ Die Auswahl bestimmt, was **Listen** zeigen, nicht, was ein Benutzer öffnen dar
 
 Der Gruppenimport (`Groups.Manage`) nimmt `Name`, `Description` und `ParentPath` („Kunde A/Hamburg") und ist ein Upsert über den Pfad: Eine Gruppe dieses Namens an diesem Pfad bekommt ihre Beschreibung aktualisiert, sonst wird sie angelegt. Fehlende Eltern werden nicht implizit angelegt (eine frühere Zeile derselben Datei kann sie anlegen); ein unbekanntes Elternteil ist eine Fehlerzeile. Ein `/` im Namen ist per Pfad nicht ansprechbar, leere Pfadsegmente werden ignoriert, eine leere Beschreibung löscht eine vorhandene nicht, und ein Probelauf kann unbekannte Pfade nicht melden (der echte Lauf schon). Die Gruppenseite hat Schaltflächen für Import und Export; das Set `Groups` hat ein berechnetes `ParentPath`, und der Export schreibt `Name`, `Description` und `ParentPath` in Baumreihenfolge, so dass sich ein Export wieder importieren lässt, etwa in einen anderen Mandanten. Das Users-OData-Set liefert `Groups` für Filter wie `Groups/any(m: m/GroupId eq {id})`.
 
+### Besitzer, Standardgruppe und Standardrolle
+
+**Besitzer** („Account Owner") sind Mitglieder, die im Reiter Mitglieder markiert werden (Stern, `Identity.Groups.ManageMembers`) oder mit `PUT /api/v1/identity/groups/{id}/owners` (`ICoworkeeApi.SetGroupOwnersAsync`). Die Liste ersetzt die Besitzer; Besitzer, die noch keine Mitglieder sind, treten der Gruppe bei, und wer die Gruppe verlässt, ist auch nicht mehr Besitzer. Das Verschieben von Mitgliedern nimmt den Besitz nicht mit. `GroupDto.OwnerIds` listet sie, OData findet sie mit `Users?$filter=Groups/any(m: m/GroupId eq {id} and m/IsOwner)`, und Servercode fragt `IGroupScope.OwnersAsync(groupId)`, etwa für Empfänger von Benachrichtigungen:
+
+```csharp
+await notifier.NotifyAsync(await scope.OwnersAsync(groupId, ct), "booking.created", "New booking", text, link, ct);
+```
+
+Die **Standardgruppe** ist die Gruppe, der neue Benutzer beitreten. Pro Mandant kann es eine geben: der Schalter *Standardgruppe für neue Benutzer* im Reiter Allgemein (`Identity.Groups.Manage`), `PUT /api/v1/identity/groups/default` mit `{ "groupId": ... }` (null hebt sie auf) oder `ICoworkeeApi.SetDefaultGroupAsync`. Ihre Id darf jeder angemeldete Benutzer lesen (`GET /api/v1/identity/groups/default`, `ICoworkeeApi.GetDefaultGroupIdAsync`, `IGroupScope.DefaultGroupIdAsync`). Der Seed legt sie über ihren Namen an:
+
+```csharp
+services.AddCoworkeeIdentitySeed(seed =>
+{
+    seed.DefaultGroup = "Default Organization Unit";
+    seed.Roles.Add(new SeedRole("Customer", "Every new user", [ShipmentPermissions.Shipments.View]) { IsDefault = true });
+});
+```
+
+Eine **Standardrolle** (`Role.IsDefault`, *Wird neuen Benutzern zugewiesen* auf der Rollenseite, `RoleRequest.IsDefault`; null behält den Wert) bekommt jeder neue Benutzer. Systemrollen können keine Standardrolle sein.
+
+Beides gilt für **jeden Weg, auf dem ein Benutzer entsteht**: *Benutzer anlegen*, Selbstregistrierung, der Abschluss einer externen Registrierung, das erste Single Sign-on, der Seed und sein Abgleich in der Entwicklung, der erste Administrator eines neuen Mandanten und App-Code, der Benutzer über `UserManager` oder `CreateUser` anlegt (etwa ein Import). Globale Standardrollen gelten in jedem Mandanten, Mandantenrollen in ihrem eigenen. In die Standardgruppe kommt ein neuer Benutzer nur, wenn er beim selben Speichern keiner anderen Gruppe beitritt. Vorhandene Benutzer bleiben unverändert, wenn eine Rolle oder Gruppe zum Standard wird.
+
+Für `IGroupScope` ist die Standardgruppe eine **gewöhnliche Gruppe**: Ihre Mitglieder haben sie in ihren Mitgliedschaften, erreichbaren und aktiven Gruppen. Die Bibliothek verbirgt darin nichts. Eine App, deren in der Standardgruppe gebuchte Datensätze nur ihr Ersteller sehen soll, ergänzt das in ihrem Filter:
+
+```csharp
+var ids = (await scope.ActiveAsync(ct)).ToList();
+var standard = await scope.DefaultGroupIdAsync(ct);
+return query.Where(s => EF.Parameter(ids).Contains(s.GroupId) && (s.GroupId != standard || s.CreatedBy == user.UserId));
+```
+
 !!! warning "Echtzeit und Einheiten als Kunden"
     `[Realtime]` sendet `type:X` weiterhin an alle mit der Ansichts-Berechtigung. Sind Einheiten Kunden in einem Mandanten, sehen Clients anderer Einheiten die IDs und geänderten Eigenschaftsnamen von Datensätzen, die sie nicht öffnen dürfen (und laden neu). Themen pro Gruppe sind ein Folgeschritt.
 
-Workflow-Genehmiger, Mail an eine Gruppe, Ressourcenberechtigungen und Gruppenrollen verwenden die **direkte** Mitgliedschaft, nicht den Baum.
+Workflow-Genehmiger, Mail an eine Gruppe, Ressourcenberechtigungen, Gruppenrollen und Besitzer verwenden die **direkte** Mitgliedschaft, nicht den Baum.
 
 ## Keycloak und andere Anbieter
 

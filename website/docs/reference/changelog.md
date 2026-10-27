@@ -6,6 +6,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Added
 
+- Group owners, a default group and default roles: owners on the Members tab and `PUT /api/v1/identity/groups/{id}/owners`, the default group on the General tab and `GET`/`PUT /api/v1/identity/groups/default`, *Given to new users* on the role page; every new user (admin, registration, external sign-up and single sign-on, seed, new tenants, app imports through `UserManager`) gets the default roles and joins the default group. Seed: `IdentitySeedOptions.DefaultGroup`, `SeedRole.IsDefault`. See [identity](../features/identity.md#owners-default-group-and-default-role).
 - OData: `Coworkee:OData:CaseInsensitive` (`CoworkeeODataOptions.CaseInsensitive`, default `true`) sets whether names in OData URIs match regardless of case (`$filter=name eq 'x'`); it was always on. See [OData](../web/odata.md).
 - OData: `AddODataEntity<T>(..., o => o.Key(c => c.IsoCode))` registers a set keyed by another property of any primitive type; by-key reads are `/odata/Countries('DE')`. Record attachments, social, workflows, entity history and webhook entity events refuse entities without a Guid `Id` at registration; client entities skip such sets. See [OData](../web/odata.md#keys-other-than-id).
 - OData: computed properties (`ODataComputedProperty`) can be selected (`$select=ReferenceNumberDisplay`) and then come back with their value; an expression over the row's own columns works on sets of external databases too. See [OData](../web/odata.md#computed-properties).
@@ -19,6 +20,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Changed
 
+- `IGroupScope` has two new members, `DefaultGroupIdAsync` and `OwnersAsync`; own implementations and test fakes add them, as they do for the new `ICoworkeeApi` members `SetGroupOwnersAsync`, `GetDefaultGroupIdAsync` and `SetDefaultGroupAsync`. `RoleRequest` and `GroupDto` have new optional parameters (`IsDefault`, `OwnerIds`). Add a migration: `cw.Groups.IsDefault`, `cw.GroupMembers.IsOwner` and `cw.Roles.IsDefault` are new columns.
 - `CodeCompletion.InsertText` is the whole text now, trigger included (`{{ name }}` instead of ` name }}`): a pick replaces what was typed of `CompletionTrigger` and the closing brackets Monaco added, and Ctrl+Space inserts a complete text anywhere. New `Snippet` flag for Monaco snippets (`{{ if $1 }}`). Own completions passed to `CodeEditor` need the trigger in their text.
 - Mail body editor: bodies whose markup the visual editor would change (styles other than `color`, `background-color` and `text-align`, tags beyond text formatting, comments) open in Source, so a styled button is no longer lost on save. The shipped templates with a button open in Source.
 
