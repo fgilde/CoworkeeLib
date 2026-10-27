@@ -1,6 +1,4 @@
 using System.Text.RegularExpressions;
-using Coworkee.Application.Authorization;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OData.Edm;
 
 namespace Coworkee.OData.Computed;
@@ -30,30 +28,26 @@ public sealed class ODataComputedProperties(ODataEntityRegistry registry, IEnume
     }
 
     /// <summary>
-    /// Whether one of the texts (a $filter, an $orderby) names a computed or protected property of the set the user lacks the permission of,
-    /// or a protected property of another set through a navigation path (Manager/Salary).
+    /// Whether one of the texts (a $filter, an $orderby) names a property the user may not read (<see cref="ODataEntityAccess.DeniedPropertiesAsync"/>:
+    /// protected, hidden on a shared base, computed without its permission) of the set, or of another set through a navigation path (Manager/Salary).
     /// </summary>
     // ponytail: a word match, so a text literal with the exact name also counts; parse the clauses if that ever bites
     internal async Task<bool> DeniedAsync(IServiceProvider services, Type entityType, CancellationToken cancellationToken, params string?[] texts)
     {
-        foreach (var protectedSet in registry.Entities.Where(e => e.HasDenials))
+        if (texts.All(string.IsNullOrEmpty))
         {
-            var prefix = protectedSet.EntityType == entityType ? @"\b" : "/";
-            foreach (var name in await ODataEntityAccess.DeniedPropertiesAsync(services, protectedSet.EntityType, cancellationToken))
+            return false;
+        }
+
+        foreach (var set in registry.Entities)
+        {
+            var prefix = set.EntityType == entityType ? @"\b" : "/";
+            foreach (var name in await ODataEntityAccess.DeniedPropertiesAsync(services, set.EntityType, cancellationToken))
             {
                 if (texts.Any(t => t is not null && Regex.IsMatch(t, $@"{prefix}{name}\b", RegexOptions.IgnoreCase)))
                 {
                     return true;
                 }
-            }
-        }
-
-        foreach (var property in Of(entityType).Where(p => p.Permission is not null))
-        {
-            if (texts.Any(t => t is not null && Regex.IsMatch(t, $@"\b{property.Name}\b", RegexOptions.IgnoreCase))
-                && !await services.GetRequiredService<IPermissionChecker>().IsGrantedAsync(property.Permission!, cancellationToken))
-            {
-                return true;
             }
         }
 

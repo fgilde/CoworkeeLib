@@ -36,6 +36,28 @@ public sealed class ODataApp : DatabaseFixture
     public override async ValueTask InitializeAsync()
     {
         await base.InitializeAsync();
+        App = Build();
+        await using (var scope = App.Services.CreateAsyncScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<GadgetDbContext>().Database.EnsureCreatedAsync();
+            await scope.ServiceProvider.GetRequiredService<ParcelDbContext>().GetService<IRelationalDatabaseCreator>().CreateTablesAsync();
+        }
+
+        App.UseCoworkee();
+        await App.StartAsync();
+    }
+
+    /// <summary>A second app on the same database with other settings, e.g. options the shared app keeps for all tests.</summary>
+    public async Task<WebApplication> StartAnotherAsync(IReadOnlyDictionary<string, string> settings)
+    {
+        var app = Build(settings);
+        app.UseCoworkee();
+        await app.StartAsync();
+        return app;
+    }
+
+    private WebApplication Build(IReadOnlyDictionary<string, string>? settings = null)
+    {
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
         builder.Configuration["Coworkee:SetupToken"] = "token";
@@ -50,15 +72,12 @@ public sealed class ODataApp : DatabaseFixture
         builder.Services.AddScoped<Coworkee.BackgroundJobs.IBackgroundJobs, InlineBackgroundJobs>();
         builder.Services.AddSingleton<FakeGroupScope>();
         builder.Services.AddSingleton<Coworkee.Application.Groups.IGroupScope>(provider => provider.GetRequiredService<FakeGroupScope>());
-        App = builder.Build();
-        await using (var scope = App.Services.CreateAsyncScope())
+        foreach (var (key, value) in settings ?? new Dictionary<string, string>())
         {
-            await scope.ServiceProvider.GetRequiredService<GadgetDbContext>().Database.EnsureCreatedAsync();
-            await scope.ServiceProvider.GetRequiredService<ParcelDbContext>().GetService<IRelationalDatabaseCreator>().CreateTablesAsync();
+            builder.Configuration[key] = value;
         }
 
-        App.UseCoworkee();
-        await App.StartAsync();
+        return builder.Build();
     }
 
     public override async ValueTask DisposeAsync()
@@ -108,6 +127,9 @@ internal sealed class GadgetModelContributor : IModelContributor
         modelBuilder.Entity<Bin>(bin => bin.ToTable("Bins"));
         modelBuilder.Entity<BinLabel>(label => label.ToTable("BinLabels"));
         modelBuilder.Entity<Locker>(locker => locker.ToTable("Lockers"));
+        modelBuilder.Entity<Badge>(badge => badge.ToTable("Badges"));
+        modelBuilder.Entity<Tray>(tray => tray.ToTable("Trays"));
+        modelBuilder.Entity<Peg>(peg => peg.ToTable("Pegs"));
         modelBuilder.Entity<Labeled>(labeled =>
         {
             labeled.ToTable("Labeled");
@@ -162,6 +184,13 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.AddScoped<IODataEntityFilter<BinLabel>, HideSecretLabels>();
         context.Services.AddODataEntity<Locker>("Lockers", ODataApp.ViewGadgets);
         context.Services.AddScoped<IODataEntityFilter<Locker>, FirstLockers>();
+        context.Services.AddODataEntity<Badge>("Badges", ODataApp.ViewGadgets);
+        context.Services.AddScoped<IODataEntityFilter<Badge>, HideSecretBadges>();
+        context.Services.AddODataEntity<Tray>("Trays", ODataApp.ViewGadgets);
+        context.Services.AddGlobalSearch<Tray>(s => s.Fields(t => t.Bin!.Name, t => t.Name).Page("/trays"));
+        context.Services.AddODataEntity<Peg>("Pegs", ODataApp.ViewGadgets);
+        context.Services.AddScoped<IODataEntityFilter<Peg>, PegsWhenAny>();
+        context.Services.AddSingleton<Coworkee.OData.Computed.IODataComputedPropertySource, BinVolume>();
         context.Services.AddODataEntity<Box>("Boxes", ODataApp.ViewGadgets, o => o.Hide(b => b.Stickers, b => b.Code).HideUnless(b => b.Note, ODataApp.SeeCategories));
         context.Services.AddScoped<IODataEntityFilter<Box>, HideSecretBoxes>();
         context.Services.AddODataEntity<Bag>("Bags", ODataApp.ViewGadgets);

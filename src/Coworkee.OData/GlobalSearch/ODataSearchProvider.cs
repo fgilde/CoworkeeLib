@@ -24,14 +24,12 @@ internal sealed class ODataSearchProvider<T> : IGlobalSearchProvider
     private readonly ODataEntityRegistry _registry;
     private readonly ODataSearchOptions<T> _options;
     private readonly PropertyInfo _id;
-    private readonly List<Func<T, string?>> _fields;
 
     public ODataSearchProvider(ODataEntityRegistry registry, ODataSearchOptions<T> options)
     {
         _registry = registry;
         _options = options;
         _id = typeof(T).GetProperty(Registration.Key) ?? throw new InvalidOperationException($"{typeof(T).Name} needs a {Registration.Key} property for the global search.");
-        _fields = [.. options.SearchFields.Select(f => f.Compile())];
         var hidden = options.SearchFields.Select(MemberName).Intersect(Registration.HiddenProperties).ToList();
         if (hidden.Count > 0)
         {
@@ -55,9 +53,9 @@ internal sealed class ODataSearchProvider<T> : IGlobalSearchProvider
     public async IAsyncEnumerable<GlobalSearchHit> SearchAsync(GlobalSearchQuery query, GlobalSearchContext context, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var visible = await ODataEntityAccess.VisibleAsync<T>(context.Services, cancellationToken);
-        var scope = await ODataNavigationScope.ForAsync(context.Services, typeof(T), cancellationToken);
+        var scope = ODataNavigationScope.For(context.Services, typeof(T));
         var denied = await ODataEntityAccess.DeniedPropertiesAsync(context.Services, typeof(T), cancellationToken);
-        var fields = Enumerable.Range(0, _fields.Count).Where(i => !denied.Contains(MemberName(_options.SearchFields[i]))).ToList();
+        var fields = Enumerable.Range(0, _options.SearchFields.Count).Where(i => !denied.Contains(MemberName(_options.SearchFields[i]))).ToList();
         if (fields.Count == 0)
         {
             yield break;
@@ -91,18 +89,21 @@ internal sealed class ODataSearchProvider<T> : IGlobalSearchProvider
         }
     }
 
-    // search fields may read through navigations: the scope keeps them to rows the user may see
+    // search fields may read through navigations: the scope keeps them to rows the user may see, and their values come from the query, so a
+    // field through a navigation shows a hidden row's value neither in the match nor in the title
     private async Task<IEnumerable<GlobalSearchHit>> HitsAsync(
         ODataNavigationScope scope, IQueryable<T> rows, GlobalSearchQuery query, List<int> fields, int take, CancellationToken cancellationToken)
     {
-        var found = await scope.Apply(rows.OrderBy(_options.SearchFields[fields[0]]).Take(take)).ToListAsync(cancellationToken);
-        return found.Select(row => Hit(row, query, fields)).OrderByDescending(h => h.Score);
+        var row = Expression.Parameter(typeof(T), "row");
+        var values = Expression.NewArrayInit(typeof(string), fields.Select(i => ReplacingExpressionVisitor.Replace(_options.SearchFields[i].Parameters[0], row, _options.SearchFields[i].Body)));
+        var found = rows.OrderBy(_options.SearchFields[fields[0]]).Take(take)
+            .Select(Expression.Lambda<Func<T, Found>>(Expression.New(typeof(Found).GetConstructors()[0], row, values), row));
+        return (await (await scope.ApplyAsync(found, cancellationToken)).ToListAsync(cancellationToken)).Select(f => Hit(f.Row, f.Values, query)).OrderByDescending(h => h.Score);
     }
 
-    // fields the user may not read neither match nor show
-    private GlobalSearchHit Hit(T row, GlobalSearchQuery query, List<int> fields)
+    // fields the user may not read neither match nor show; title, subtitle, link and thumbnail functions see the row's own columns only
+    private GlobalSearchHit Hit(T row, string?[] values, GlobalSearchQuery query)
     {
-        var values = fields.Select(i => _fields[i](row)).ToList();
         var id = _id.GetValue(row)?.ToString();
         var title = _options.TitleOf?.Invoke(row) ?? values[0] ?? id ?? string.Empty;
         // the database compares in its own way (collation, LOWER); a row it found counts even when the culture here disagrees
@@ -150,4 +151,6 @@ internal sealed class ODataSearchProvider<T> : IGlobalSearchProvider
         (field.Body as MemberExpression)?.Member.Name ?? string.Empty;
 
     private sealed record Text(string Value);
+
+    private sealed record Found(T Row, string?[] Values);
 }

@@ -17,24 +17,31 @@ public static class ODataEntityAccess
         services.GetRequiredService<ODataEntityRegistry>().Find(entityType)?.Permission is not { } permission
         || await services.GetRequiredService<IPermissionChecker>().IsGrantedAsync(permission, cancellationToken);
 
-    /// <summary>The properties of the set protected with HideUnless whose permission the current user lacks, and hidden ones the EDM keeps (a shared base type).</summary>
+    /// <summary>
+    /// The properties of the set protected with HideUnless whose permission the current user lacks, hidden ones the EDM keeps (a shared base type),
+    /// and computed properties without their permission.
+    /// </summary>
     public static async Task<IReadOnlySet<string>> DeniedPropertiesAsync(IServiceProvider services, Type entityType, CancellationToken cancellationToken)
     {
         var denied = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         _ = services.GetService<IEdmModel>(); // building it finds the hidden properties a shared base type keeps
-        if (services.GetRequiredService<ODataEntityRegistry>().Find(entityType) is not { HasDenials: true } registration)
+        if (services.GetRequiredService<ODataEntityRegistry>().Find(entityType) is { HasDenials: true } registration)
         {
-            return denied;
+            denied.UnionWith(registration.SharedHidden);
+            foreach (var (name, permission) in registration.ProtectedProperties)
+            {
+                if (!await services.GetRequiredService<IPermissionChecker>().IsGrantedAsync(permission, cancellationToken))
+                {
+                    denied.Add(name);
+                }
+            }
         }
 
-        denied.UnionWith(registration.SharedHidden);
-
-        var permissions = services.GetRequiredService<IPermissionChecker>();
-        foreach (var (name, permission) in registration.ProtectedProperties)
+        foreach (var property in services.GetService<Computed.ODataComputedProperties>()?.Of(entityType).Where(p => p.Permission is not null) ?? [])
         {
-            if (!await permissions.IsGrantedAsync(permission, cancellationToken))
+            if (!await services.GetRequiredService<IPermissionChecker>().IsGrantedAsync(property.Permission!, cancellationToken))
             {
-                denied.Add(name);
+                denied.Add(property.Name);
             }
         }
 
@@ -43,11 +50,11 @@ public static class ODataEntityAccess
 
     internal const string DeniedItem = "coworkee:odata:denied-properties";
 
-    /// <summary>The denied properties of every set with protected properties, by EDM type name, for the serializer of the request.</summary>
+    /// <summary>The denied properties of every set, by EDM type name, for the serializer of the request.</summary>
     internal static async Task<Dictionary<string, IReadOnlySet<string>>> DeniedByTypeAsync(IServiceProvider services, CancellationToken cancellationToken)
     {
         var denied = new Dictionary<string, IReadOnlySet<string>>(StringComparer.Ordinal);
-        foreach (var entity in services.GetRequiredService<ODataEntityRegistry>().Entities.Where(e => e.HasDenials))
+        foreach (var entity in services.GetRequiredService<ODataEntityRegistry>().Entities)
         {
             if (await DeniedPropertiesAsync(services, entity.EntityType, cancellationToken) is { Count: > 0 } names)
             {
@@ -77,6 +84,9 @@ public static class ODataEntityAccess
         ODataNavigationScope.Root(query.Expression);
         return query;
     }
+
+    /// <summary>Whether the query names parameter aliases (<c>@a=Size</c>): OData binds them inside the options, past the checks that read the options' text.</summary>
+    internal static bool HasAliases(IQueryCollection query) => query.Keys.Any(k => k.Trim().StartsWith('@'));
 
     /// <summary>Refuses an entity without a Guid <c>Id</c> (e.g. a set keyed with <c>Key(...)</c>) for a feature that addresses rows by it.</summary>
     public static void RequireGuidId<TEntity>(string feature)
@@ -111,7 +121,8 @@ public static class ODataEntityAccess
     /// Visible rows narrowed by an OData $filter, parsed against the EDM: hidden properties, unknown names and computed or protected properties
     /// without their permission fail with an ODataException. Navigations in the filter see only the rows of their target the user may see.
     /// </summary>
-    public static async Task<IQueryable<TEntity>> FilteredAsync<TEntity>(IServiceProvider services, string? filter, CancellationToken cancellationToken)
+    /// <param name="scope">The navigation scope of the caller, to check each target once per request; a new one without it.</param>
+    public static async Task<IQueryable<TEntity>> FilteredAsync<TEntity>(IServiceProvider services, string? filter, CancellationToken cancellationToken, ODataNavigationScope? scope = null)
         where TEntity : class
     {
         var visible = await VisibleAsync<TEntity>(services, cancellationToken);
@@ -129,6 +140,6 @@ public static class ODataEntityAccess
         http.ODataFeature().RoutePrefix = CoworkeeODataModule.RoutePrefix;
         http.Request.QueryString = QueryString.Create("$filter", filter);
         var filtered = visible.ApplyODataFilter(http.Request.ODataQueryOptions<TEntity>(services.GetRequiredService<IEdmModel>()));
-        return (await ODataNavigationScope.ForAsync(services, typeof(TEntity), cancellationToken)).Apply(filtered);
+        return await (scope ?? ODataNavigationScope.For(services, typeof(TEntity))).ApplyAsync(filtered, cancellationToken);
     }
 }

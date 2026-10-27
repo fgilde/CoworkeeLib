@@ -107,6 +107,7 @@ internal sealed class SalesModelContributor : IModelContributor
     {
         modelBuilder.Entity<Sale>(sale => sale.ToTable("Sales"));
         modelBuilder.Entity<Shopper>(shopper => shopper.ToTable("Shoppers"));
+        modelBuilder.Entity<Store>(store => store.ToTable("Stores").HasKey(s => s.Code));
     }
 }
 
@@ -152,6 +153,7 @@ public sealed class SalesReportingModule : CoworkeeModule
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
         context.Services.AddODataEntity<Sale>("Sales", ReportingApp.ViewSales, o => o.Hide(s => s.Secret).HideUnless(s => s.Quantity, ReportingApp.SeeQuantities));
         context.Services.AddODataEntity<Shopper>("Shoppers", ReportingApp.ViewShoppers);
+        context.Services.AddODataEntity<Store>("Stores", ReportingApp.ViewShoppers, o => o.Key(s => s.Code));
         context.Services.AddScoped<IODataEntityFilter<Sale>, HideHiddenRegion>();
         context.Services.AddScoped<IODataEntityFilter<Sale>, SouthOnlyFilter>();
         context.Services.AddScoped<IODataEntityFilter<Shopper>, HideShopperSeven>();

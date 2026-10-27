@@ -39,18 +39,23 @@ public static class DataExport
         var http = new DefaultHttpContext { RequestServices = services };
         http.ODataFeature().RoutePrefix = CoworkeeODataModule.RoutePrefix;
         http.Request.QueryString = query;
+        if (ODataEntityAccess.HasAliases(http.Request.Query))
+        {
+            throw new Microsoft.OData.ODataException("Parameter aliases (@name) are not supported.");
+        }
+
         var options = http.Request.ODataQueryOptions<TEntity>(model);
         var denied = await ODataEntityAccess.DeniedPropertiesAsync(services, typeof(TEntity), cancellationToken);
         if (await services.GetRequiredService<Computed.ODataComputedProperties>().DeniedAsync(services, typeof(TEntity), cancellationToken,
-                http.Request.Query["$filter"], http.Request.Query["$orderby"]))
+                options.RawValues.Filter, options.RawValues.OrderBy))
         {
             throw new UnauthorizedAccessException("The export filters or sorts on a property the user may not read.");
         }
 
-        var rows = (await ODataNavigationScope.ForAsync(services, typeof(TEntity), cancellationToken)).Apply(
+        var rows = await ODataNavigationScope.For(services, typeof(TEntity)).ApplyAsync(
             (await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken)).ApplyODataSearch(options.Search)!
                 .ApplyODataFilter(options)
-                .ApplyODataOrderBy(options));
+                .ApplyODataOrderBy(options), cancellationToken);
         if (maxRows is { } max && await rows.CountAsync(cancellationToken) > max)
         {
             return null;

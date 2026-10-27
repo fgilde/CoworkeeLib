@@ -72,6 +72,16 @@ public sealed class InheritedMemberTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_hidden_navigation_stays_hidden_on_rows_reached_through_the_base()
+    {
+        var stickers = (await Admin.GetFromJsonAsync<JsonElement>("/odata/Stickers?$expand=Owner($expand=Stickers)&$orderby=Text", Ct)).GetProperty("value");
+
+        stickers[0].GetProperty("Owner").GetProperty("Stickers")[0].GetProperty("Text").GetString().ShouldBe("Dry");
+        stickers[1].GetProperty("Owner").GetProperty("Name").GetString().ShouldBe("Box");
+        stickers[1].GetProperty("Owner").TryGetProperty("Stickers", out _).ShouldBeFalse();
+    }
+
+    [Fact]
     public async Task Protected_members_of_a_base_class_need_their_permission_on_their_set_only()
     {
         var user = await (await Admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest($"viewer-{Guid.NewGuid():N}@acme.test", "Passw0rd!x", null, null), Ct))

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.OData.Query;
 using Microsoft.OData;
 using Microsoft.OData.Edm;
 using Microsoft.OData.UriParser;
@@ -22,31 +23,67 @@ public class EntityODataController<TEntity> : GenericODataController<TEntity>, I
 
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
-        var query = Request.Query;
-        var denied = await ODataEntityAccess.DeniedByTypeAsync(HttpContext.RequestServices, HttpContext.RequestAborted);
-        if (await Get<Computed.ODataComputedProperties>().DeniedAsync(HttpContext.RequestServices, typeof(TEntity), HttpContext.RequestAborted,
-                query["$filter"], query["$orderby"], query["$select"], query["$apply"], query["$compute"], FacetFilters())
-            || Names(query["$expand"], ExpandDenied(denied)))
+        var services = HttpContext.RequestServices;
+        var cancellationToken = HttpContext.RequestAborted;
+
+        // every check reads the options as OData parses them: trimmed keys ("+$filter"), and no parameter aliases, which would carry names past the checks
+        ODataQueryOptions<TEntity> options;
+        SelectExpandClause? expand;
+        try
         {
-            context.Result = new Microsoft.AspNetCore.Mvc.ForbidResult();
+            if (ODataEntityAccess.HasAliases(Request.Query))
+            {
+                throw new ODataException("Parameter aliases (@name) are not supported.");
+            }
+
+            options = Request.ODataQueryOptions<TEntity>(Get<IEdmModel>());
+            _ = options.Compute?.ComputeClause; // $select may name what $compute adds
+            expand = options.SelectExpand?.SelectExpandClause;
+        }
+        catch (Exception exception) when (exception is ODataException or ArgumentException)
+        {
+            context.Result = Problem(StatusCodes.Status400BadRequest, "The query is not valid.", exception is ODataException ? exception.Message : "A query option is given twice or is not valid.");
+            return;
+        }
+
+        var raw = options.RawValues;
+        var denied = await ODataEntityAccess.DeniedByTypeAsync(services, cancellationToken);
+        if (await Get<Computed.ODataComputedProperties>().DeniedAsync(services, typeof(TEntity), cancellationToken, raw.Filter, raw.OrderBy, raw.Select, raw.Apply, raw.Compute, FacetFilters())
+            || Names(raw.Expand, ExpandDenied(denied)))
+        {
+            context.Result = new ForbidResult();
             return;
         }
 
         HttpContext.Items[ODataEntityAccess.DeniedItem] = denied;
 
         // a single record opens whatever groups are selected; the selection narrows lists only
-        ODataNavigationScope scope;
+        var scope = ODataNavigationScope.For(services, typeof(TEntity));
         using (context.RouteData.Values.ContainsKey("key") ? GroupScope.Unnarrowed() : null)
         {
-            _visible = await ODataEntityAccess.VisibleAsync<TEntity>(HttpContext.RequestServices, HttpContext.RequestAborted);
-            scope = ReadsNavigations()
-                ? await ODataNavigationScope.ForAsync(HttpContext.RequestServices, typeof(TEntity), HttpContext.RequestAborted)
-                : ODataNavigationScope.None;
+            _visible = await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken);
+
+            // the targets the query reaches, [AutoExpand] navigations included, inside the same group scope as the root
+            if (Reached(options) is { } reached)
+            {
+                await scope.PrepareAsync(reached, cancellationToken);
+            }
+            else
+            {
+                await scope.PrepareAllAsync(cancellationToken);
+            }
         }
 
-        if (ExpandRefusal(scope) is { } refusal)
+        if (Refusal(expand, scope) is { } refusal)
         {
             context.Result = refusal;
+            return;
+        }
+
+        // groups through a navigation would show a hidden target as a group of empty values, which the model does not allow
+        if (!string.IsNullOrEmpty(raw.Apply) && Applied(scope))
+        {
+            context.Result = Problem(StatusCodes.Status400BadRequest, "The query is not valid.", "$apply cannot read through navigations; group and aggregate the set's own properties.");
             return;
         }
 
@@ -54,46 +91,53 @@ public class EntityODataController<TEntity> : GenericODataController<TEntity>, I
         await next();
     }
 
-    // only these options (and facet filters) can name a navigation; plain pages skip the permission checks and filters of the targets
-    private bool ReadsNavigations() =>
-        Request.Headers.ContainsKey(Coworkee.Contracts.Data.FacetContextDto.Header)
-        || Request.Query.Keys.Any(k => k.ToLowerInvariant() is "$expand" or "$filter" or "$orderby" or "$select" or "$apply" or "$compute" or "$search");
+    // the query as [EnableQuery] builds it, without paging and counting; null when it does not build (then every reachable target is checked)
+    private System.Linq.Expressions.Expression? Reached(ODataQueryOptions<TEntity> options)
+    {
+        try
+        {
+            var ignored = AllowedQueryOptions.Count | AllowedQueryOptions.Top | AllowedQueryOptions.Skip | AllowedQueryOptions.SkipToken;
+            return options.ApplyTo(_visible!.ApplyODataSearch(options.Search)!, new ODataQuerySettings(), ignored).Expression;
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            return null;
+        }
+    }
+
+    // the rows $apply groups, read alone: through a navigation or not
+    private bool Applied(ODataNavigationScope scope)
+    {
+        try
+        {
+            return scope.Reaches(Request.ODataQueryOptions<TEntity>(Get<IEdmModel>()).ApplyTo(_visible!, new ODataQuerySettings(), AllowedQueryOptions.All & ~AllowedQueryOptions.Apply).Expression);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            return false; // [EnableQuery] answers the invalid query
+        }
+    }
 
     /// <summary>403 for an $expand into a set the user may not read, 400 for one whose row filters cannot apply inside the query.</summary>
-    private IActionResult? ExpandRefusal(ODataNavigationScope scope)
+    private static ObjectResult? Refusal(SelectExpandClause? clause, ODataNavigationScope scope)
     {
-        if (scope.Forbidden.Count + scope.Unfilterable.Count == 0 || string.IsNullOrEmpty(Request.Query["$expand"]))
+        if (scope.Forbidden.Count + scope.Unfilterable.Count == 0)
         {
             return null;
         }
 
-        SelectExpandClause? clause;
-        try
-        {
-            clause = Request.ODataQueryOptions<TEntity>(Get<IEdmModel>()).SelectExpand?.SelectExpandClause;
-        }
-        catch (ODataException)
-        {
-            return null; // [EnableQuery] answers the invalid query
-        }
-
-        return Refusal(clause, scope);
-    }
-
-    private static ObjectResult? Refusal(SelectExpandClause? clause, ODataNavigationScope scope)
-    {
         foreach (var item in clause?.SelectedItems.OfType<ExpandedReferenceSelectItem>() ?? [])
         {
             var navigation = ((NavigationPropertySegment)item.PathToNavigationProperty.LastSegment).NavigationProperty;
             var target = navigation.ToEntityType().FullName();
             if (scope.Forbidden.Any(t => t.FullName == target))
             {
-                return Problem(StatusCodes.Status403Forbidden, $"You may not expand {navigation.Name}: you may not read its entity set.");
+                return Problem(StatusCodes.Status403Forbidden, "The expand is not allowed.", $"You may not expand {navigation.Name}: you may not read its entity set.");
             }
 
             if (scope.Unfilterable.Any(t => t.FullName == target))
             {
-                return Problem(StatusCodes.Status400BadRequest, $"Cannot expand {navigation.Name}: the row filters of {navigation.ToEntityType().Name} do more than Where.");
+                return Problem(StatusCodes.Status400BadRequest, "The expand is not allowed.", $"Cannot expand {navigation.Name}: the row filters of {navigation.ToEntityType().Name} do more than Where.");
             }
 
             if (item is ExpandedNavigationSelectItem { SelectAndExpand: { } nested } && Refusal(nested, scope) is { } refusal)
@@ -105,8 +149,8 @@ public class EntityODataController<TEntity> : GenericODataController<TEntity>, I
         return null;
     }
 
-    private static ObjectResult Problem(int status, string detail) =>
-        new(new ProblemDetails { Status = status, Title = "The expand is not allowed.", Detail = detail }) { StatusCode = status, ContentTypes = { "application/problem+json" } };
+    private static ObjectResult Problem(int status, string title, string detail) =>
+        new(new ProblemDetails { Status = status, Title = title, Detail = detail }) { StatusCode = status, ContentTypes = { "application/problem+json" } };
 
     // protected properties of every set (they can be nested: Manager($select=Salary)); hidden ones a shared base keeps only of this set
     private IEnumerable<string> ExpandDenied(Dictionary<string, IReadOnlySet<string>> denied) =>
@@ -124,14 +168,23 @@ public class EntityODataController<TEntity> : GenericODataController<TEntity>, I
     public override async Task<IQueryable<TEntity>> Get(CancellationToken ct = default)
     {
         var rows = await base.Get(ct);
-        if (HttpContext.Items[FacetResourceSetSerializer.FacetsAnnotationName] is List<FacetGroup> facets)
+        if (FacetsAsked())
         {
-            var filtered = Scope.Apply(Queryable().ApplyODataFilter(Request.ODataQueryOptions<TEntity>(Get<IEdmModel>())));
+            // Nextended's own build would count on the filter without the navigation scope: an oracle on hidden rows
+            var filtered = await Scope.ApplyAsync(Queryable().ApplyODataFilter(Request.ODataQueryOptions<TEntity>(Get<IEdmModel>())), ct);
+            var options = GetFacetBuilderOptions();
+            var builder = Get<IFacetBuilder>().WithOptions(options);
+            var facets = options.IsDisjunctiveBuild ? await builder.BuildAsync(_ => Task.FromResult(filtered), [], ct) : await builder.BuildAsync(Queryable(), ct);
             HttpContext.Items[FacetResourceSetSerializer.FacetsAnnotationName] = await FacetResponse.BuildAsync(HttpContext, Queryable(), filtered, facets, ct);
         }
 
         return rows;
     }
+
+    private bool FacetsAsked() => base.ShouldBuildFacets();
+
+    // the facets are built in Get, from the scoped query
+    protected override bool ShouldBuildFacets() => false;
 
     protected override FacetBuilderOptions GetFacetBuilderOptions() => FacetLiterals.Options();
 

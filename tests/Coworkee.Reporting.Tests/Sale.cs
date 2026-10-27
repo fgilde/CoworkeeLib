@@ -38,3 +38,15 @@ public sealed class Shopper : Entity, IMultiTenant
 
     public Guid TenantId { get; set; }
 }
+
+/// <summary>A set keyed by a code, not by a Guid Id.</summary>
+public sealed class Store : IMultiTenant
+{
+    public required string Code { get; set; }
+
+    public required string Region { get; set; }
+
+    public int Seats { get; set; }
+
+    public Guid TenantId { get; set; }
+}

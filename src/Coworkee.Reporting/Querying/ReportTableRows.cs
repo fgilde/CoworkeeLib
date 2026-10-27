@@ -19,9 +19,10 @@ internal static class ReportTableRows
         IServiceProvider services, ReportSource source, IReadOnlyList<ReportField> columns, string? filter, ReportField? order, bool descending, int top, CancellationToken cancellationToken)
         where TRow : class
     {
+        var scope = source.Computed is null ? ODataNavigationScope.For(services, typeof(TRow)) : null;
         var rows = source.Computed is { } computed
             ? (IQueryable<TRow>)await computed.RowsAsync(services, filter, cancellationToken)
-            : await ODataEntityAccess.FilteredAsync<TRow>(services, filter, cancellationToken);
+            : await ODataEntityAccess.FilteredAsync<TRow>(services, filter, cancellationToken, scope);
         var row = Expression.Parameter(typeof(TRow), "r");
         if (order is not null)
         {
@@ -33,9 +34,9 @@ internal static class ReportTableRows
         var values = Expression.Lambda<Func<TRow, object?[]>>(
             Expression.NewArrayInit(typeof(object), columns.Select(c => Expression.Convert(c.Chain.Aggregate((Expression)row, Expression.Property), typeof(object)))), row);
         var page = rows.Take(top).Select(values);
-        if (source.Computed is null)
+        if (scope is not null)
         {
-            page = (await ODataNavigationScope.ForAsync(services, typeof(TRow), cancellationToken)).Apply(page);
+            page = await scope.ApplyAsync(page, cancellationToken);
         }
 
         return page.Provider is IAsyncQueryProvider ? await page.ToListAsync(cancellationToken) : [.. page];

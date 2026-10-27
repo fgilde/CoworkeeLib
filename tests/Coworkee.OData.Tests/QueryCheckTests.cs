@@ -1,0 +1,233 @@
+using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
+using Coworkee.Contracts.Data;
+using Coworkee.Contracts.Identity;
+using Coworkee.Contracts.Search;
+
+namespace Coworkee.OData.Tests;
+
+/// <summary>
+/// The checks of an OData query read the options as OData parses them, and every way a query reaches other rows goes through the navigation
+/// scope: spelled keys, aliases, [AutoExpand], facets and their labels, computed properties behind navigations, two filtered levels, search titles.
+/// </summary>
+public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
+{
+    private SetupResultDto _setup = null!;
+    private Guid _plain;
+    private Guid _secret;
+
+    public async ValueTask InitializeAsync()
+    {
+        _setup = await app.SetupAsync();
+        (_plain, _secret) = await app.InDbAsync(_setup.TenantId, async db =>
+        {
+            var tenant = _setup.TenantId;
+            var gold = new Badge { Name = "Gold", TenantId = tenant };
+            var plain = new Bin
+            {
+                Name = "Plain", Size = 1, Badge = gold, TenantId = tenant, Labels = [new BinLabel { Text = "Fragile", TenantId = tenant }],
+            };
+            var secret = new Bin { Name = "Secret", Size = 9, TenantId = tenant, Labels = [new BinLabel { Text = "Fragile", TenantId = tenant }] };
+            var visible = new Bin { Name = "Visible", Size = 2, Badge = new Badge { Name = "Secret", TenantId = tenant }, TenantId = tenant };
+            var open = new Shelf { Name = "Open", TenantId = tenant, Bins = [plain, secret], Pegs = [new Peg { Name = "P1", TenantId = tenant }] };
+            var other = new Shelf { Name = "Other", TenantId = tenant };
+            var third = new Shelf { Name = "Third", TenantId = tenant, Bins = [visible] };
+            db.AddRange(open, other, third, new Badge { Name = "Silver", TenantId = tenant });
+            await db.SaveChangesAsync();
+            (open.Featured, other.Featured, third.Featured) = (plain, secret, visible);
+            db.AddRange(new Tray { Name = "T1", Bin = plain, TenantId = tenant }, new Tray { Name = "T2", Bin = secret, TenantId = tenant });
+            await db.SaveChangesAsync();
+            return (plain.Id, secret.Id);
+        });
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
+
+    private HttpClient Admin => app.As(_setup.AdminUserId, _setup.TenantId);
+
+    private async Task<JsonElement> GetAsync(string url)
+    {
+        using var response = await Admin.GetAsync(url, Ct);
+        var body = await response.Content.ReadAsStringAsync(Ct);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, $"{url}: {body}");
+        return JsonDocument.Parse(body).RootElement;
+    }
+
+    private static string?[] Names(JsonElement rows, string property = "Name") =>
+        [.. rows.EnumerateArray().Select(r => r.ValueKind == JsonValueKind.Null ? null : r.GetProperty(property).GetString())];
+
+    [Fact]
+    public async Task Option_keys_with_spaces_and_aliases_do_not_pass_the_checks()
+    {
+        var viewer = app.As(await UserWithAsync(ODataApp.ViewGadgets), _setup.TenantId);
+        foreach (var query in new[] { "+$expand=Bins", "%20$expand=Bins", "$expand=Bins+" })
+        {
+            (await viewer.GetAsync($"/odata/Shelves?{query}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden, query);
+        }
+
+        (await GetAsync("/odata/Shelves?+$filter=Bins/any(b: b/Name eq 'Secret')&$count=true")).GetProperty("@odata.count").GetInt32().ShouldBe(0);
+
+        var binViewer = app.As(await UserWithAsync(ODataApp.ViewGadgets, ODataApp.ViewBins), _setup.TenantId);
+        foreach (var query in new[] { "+$filter=Size gt 5", "+$orderby=Size", "+$select=Volume", "%20$select=Name,Volume" })
+        {
+            (await binViewer.GetAsync($"/odata/Bins?{query}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden, query);
+        }
+
+        foreach (var query in new[] { "$filter=@a gt 5&@a=Size", "$orderby=@a&+@a=Size" })
+        {
+            var response = await binViewer.GetAsync($"/odata/Bins?{query}", Ct);
+            response.StatusCode.ShouldBe(HttpStatusCode.BadRequest, query);
+            (await response.Content.ReadAsStringAsync(Ct)).ShouldContain("aliases");
+        }
+
+        (await Admin.GetAsync("/api/v1/data/Bins/export?format=csv&$filter=@a gt 5&@a=Size", Ct)).IsSuccessStatusCode.ShouldBeFalse();
+        (await binViewer.GetAsync("/api/v1/data/Bins/export?format=csv&+$filter=Size gt 5", Ct)).IsSuccessStatusCode.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Auto_expanded_navigations_follow_their_target()
+    {
+        var trays = (await GetAsync("/odata/Trays?$orderby=Name")).GetProperty("value");
+        trays[0].GetProperty("Bin").GetProperty("Name").GetString().ShouldBe("Plain");
+        trays[1].GetProperty("Bin").ValueKind.ShouldBe(JsonValueKind.Null);
+
+        // a set the user may not read is not expanded behind his back, and the list stays readable
+        var viewer = app.As(await UserWithAsync(ODataApp.ViewGadgets), _setup.TenantId);
+        var page = await viewer.GetFromJsonAsync<JsonElement>("/odata/Trays", Ct);
+        page.GetProperty("value").EnumerateArray().ShouldAllBe(t => t.GetProperty("Bin").ValueKind == JsonValueKind.Null);
+    }
+
+    [Fact]
+    public async Task Facets_count_and_label_only_rows_the_user_may_see()
+    {
+        // the open shelf has a hidden bin named Secret: without the scope its facet would count 1
+        var (_, facets) = await FacetsAsync(Admin, "$filter=Bins/any(b: b/Name eq 'Secret')&$top=0");
+        facets.SelectMany(f => f.Options).ShouldAllBe(o => o.Count == 0);
+
+        var featured = (await FacetsAsync(Admin, "$top=0")).Facets.Single(f => f.Field == "FeaturedId").Options;
+        featured.Select(o => o.Label.ToLowerInvariant()).ShouldBe(["plain", "visible", _secret.ToString()], ignoreOrder: true);
+
+        // bins are not readable at all: no label names one
+        var viewer = app.As(await UserWithAsync(ODataApp.ViewGadgets), _setup.TenantId);
+        var hidden = (await FacetsAsync(viewer, "$top=0")).Facets.Single(f => f.Field == "FeaturedId").Options;
+        hidden.Count.ShouldBe(3);
+        hidden.Select(o => Guid.TryParse(o.Label, out var id)).ShouldAllBe(parsed => parsed);
+        hidden.Single(o => o.Label.Equals(_plain.ToString(), StringComparison.OrdinalIgnoreCase)).Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task Computed_properties_behind_a_navigation_need_their_permission()
+    {
+        var viewer = app.As(await UserWithAsync(ODataApp.ViewGadgets, ODataApp.ViewBins), _setup.TenantId);
+        foreach (var query in new[] { "$expand=Bins($select=Volume)", "$expand=Featured($select=Name,Volume)", "$filter=Featured/Volume gt 0", "$filter=Bins/any(b: b/Volume gt 0)", "$orderby=Featured/Volume" })
+        {
+            (await viewer.GetAsync($"/odata/Shelves?{query}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden, query);
+        }
+
+        var shelf = (await GetAsync("/odata/Shelves?$filter=Name eq 'Open'&$expand=Featured($select=Name,Volume)")).GetProperty("value")[0];
+        shelf.GetProperty("Featured").GetProperty("Volume").GetInt32().ShouldBe(10);
+    }
+
+    [Fact]
+    public async Task Two_filtered_reference_levels_and_a_collection_under_a_hidden_reference()
+    {
+        var shelves = (await GetAsync("/odata/Shelves?$expand=Featured($expand=Badge)&$orderby=Name")).GetProperty("value");
+        Names(shelves).ShouldBe(["Open", "Other", "Third"]);
+        shelves[0].GetProperty("Featured").GetProperty("Badge").GetProperty("Name").GetString().ShouldBe("Gold");
+        shelves[1].GetProperty("Featured").ValueKind.ShouldBe(JsonValueKind.Null);
+        shelves[2].GetProperty("Featured").GetProperty("Badge").ValueKind.ShouldBe(JsonValueKind.Null);
+
+        Names((await GetAsync("/odata/Shelves?$filter=Featured/Badge/Name eq 'Gold'")).GetProperty("value")).ShouldBe(["Open"]);
+        (await GetAsync("/odata/Shelves?$filter=Featured/Badge/Name eq 'Secret'")).GetProperty("value").GetArrayLength().ShouldBe(0);
+        Names((await GetAsync("/odata/Shelves?$filter=Featured/Badge/Name ne null&$orderby=Featured/Badge/Name desc,Name")).GetProperty("value")).ShouldBe(["Open"]);
+        (await GetAsync("/odata/Shelves?$orderby=Featured/Badge/Name,Name")).GetProperty("value").GetArrayLength().ShouldBe(3);
+
+        // the secret bin carries a Fragile label too; behind the hidden reference it is not there
+        Names((await GetAsync("/odata/Shelves?$filter=Featured/Labels/any(l: l/Text eq 'Fragile')")).GetProperty("value")).ShouldBe(["Open"]);
+    }
+
+    [Fact]
+    public async Task A_filter_that_fails_on_the_scope_hides_only_its_own_type()
+    {
+        (await GetAsync("/odata/Shelves?$expand=Bins&$filter=Name eq 'Open'")).GetProperty("value")[0].GetProperty("Bins").GetArrayLength().ShouldBe(1);
+        (await GetAsync("/odata/Pegs")).GetProperty("value").GetArrayLength().ShouldBe(1);
+        (await Admin.GetAsync("/odata/Shelves?$expand=Pegs", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await GetAsync("/odata/Shelves?$filter=Pegs/any()")).GetProperty("value").GetArrayLength().ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task The_count_segment_counts_only_visible_rows()
+    {
+        (await CountAsync("$filter=Bins/any(b: b/Name eq 'Secret')")).ShouldBe("0");
+        (await CountAsync("$filter=Bins/any()")).ShouldBe("2");
+    }
+
+    [Fact]
+    public async Task Apply_and_compute_through_a_navigation_see_only_visible_rows()
+    {
+        // a group of a hidden target would carry empty values the model does not allow: refused
+        foreach (var apply in new[] { "groupby((Featured/Name),aggregate($count as N))", "filter(Bins/any(b: b/Name eq 'Secret'))", "aggregate(Bins($count as N))" })
+        {
+            (await Admin.GetAsync($"/odata/Shelves?$apply={apply}", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest, apply);
+        }
+
+        (await GetAsync("/odata/Shelves?$apply=groupby((Name),aggregate($count as N))")).GetProperty("value").GetArrayLength().ShouldBe(3);
+
+        var computed = (await GetAsync("/odata/Shelves?$compute=Featured/Name as FeaturedName&$select=Name,FeaturedName&$orderby=Name")).GetProperty("value");
+        computed.EnumerateArray().Select(s => s.GetProperty("FeaturedName").ValueKind == JsonValueKind.Null ? null : s.GetProperty("FeaturedName").GetString())
+            .ShouldBe(["Plain", null, "Visible"]);
+    }
+
+    [Fact]
+    public async Task The_page_size_of_the_model_stays()
+    {
+        var page = await GetAsync("/odata/Badges?$orderby=Name");
+
+        Names(page.GetProperty("value")).ShouldBe(["Gold"]);
+        page.TryGetProperty("@odata.nextLink", out _).ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Search_titles_through_a_navigation_show_only_visible_rows()
+    {
+        var hits = (await Admin.GetFromJsonAsync<GlobalSearchResult>("/api/v1/search?types=trays&q=t", Ct))!.Hits;
+        hits.Select(h => h.Title).ShouldNotContain("Secret");
+
+        (await Admin.GetFromJsonAsync<GlobalSearchResult>("/api/v1/search?types=trays&q=plain", Ct))!.Hits.Single().Title.ShouldBe("Plain");
+        (await Admin.GetFromJsonAsync<GlobalSearchResult>("/api/v1/search?types=trays&q=secret", Ct))!.Hits.ShouldBeEmpty();
+    }
+
+    private async Task<string> CountAsync(string query)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"/odata/Shelves/$count?{query}");
+        request.Headers.Accept.ParseAdd("text/plain");
+        using var response = await Admin.SendAsync(request, Ct);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsStringAsync(Ct);
+    }
+
+    private async Task<(string[] Names, List<FacetGroupDto> Facets)> FacetsAsync(HttpClient client, string query)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"/odata/Shelves?{query}");
+        request.Headers.Add("Prefer", "odata.include-annotations=\"cn.facets\"");
+        using var response = await client.SendAsync(request, Ct);
+        var body = await response.Content.ReadAsStringAsync(Ct);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
+        var page = JsonDocument.Parse(body).RootElement;
+        return ([.. page.GetProperty("value").EnumerateArray().Select(r => r.GetProperty("Name").GetString()!)],
+            page.GetProperty("@cn.facets").Deserialize<List<FacetGroupDto>>(new JsonSerializerOptions(JsonSerializerDefaults.Web))!);
+    }
+
+    private async Task<Guid> UserWithAsync(params string[] permissions)
+    {
+        var user = await (await Admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest($"viewer-{Guid.NewGuid():N}@acme.test", "Passw0rd!x", null, null), Ct))
+            .Content.ReadFromJsonAsync<UserDto>(Ct);
+        var role = await (await Admin.PostAsJsonAsync("/api/v1/identity/roles", new RoleRequest("Viewers " + Guid.NewGuid().ToString("N")[..6], null), Ct)).Content.ReadFromJsonAsync<Guid>(Ct);
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{role}", new NameListRequest(permissions), Ct)).EnsureSuccessStatusCode();
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/users/{user!.Id}/roles", new IdListRequest([role]), Ct)).EnsureSuccessStatusCode();
+        return user.Id;
+    }
+}

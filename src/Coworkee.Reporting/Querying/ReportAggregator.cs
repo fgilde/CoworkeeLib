@@ -44,7 +44,7 @@ internal static class ReportAggregator
 
         query = Expression.Call(typeof(Queryable), nameof(Queryable.Take), [rowType], query, Expression.Constant(plan.Split is null && plan.Top is { } top ? top : MaxGroups + 1));
         var built = rows.Provider.CreateQuery(query);
-        var fetched = await (Task<List<IAggregateRow>>)FetchMethod.MakeGenericMethod(rowType).Invoke(null, [scope?.Apply(built) ?? built, cancellationToken])!;
+        var fetched = await (Task<List<IAggregateRow>>)FetchMethod.MakeGenericMethod(rowType).Invoke(null, [scope is null ? built : await scope.ApplyAsync(built, cancellationToken), cancellationToken])!;
         if (fetched.Count > MaxGroups)
         {
             return Error.Validation(nameof(ReportQueryRequest.GroupBy), $"More than {MaxGroups} groups; choose a coarser field or date bucket.");

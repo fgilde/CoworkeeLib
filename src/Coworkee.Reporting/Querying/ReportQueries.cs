@@ -104,13 +104,18 @@ internal sealed class ReportQueries(IServiceProvider services, ReportSchema sche
     internal async Task<IReadOnlySet<string>> GrantedAsync(CancellationToken cancellationToken) =>
         _granted ??= (await permissions.GetGrantedAsync(cancellationToken)).ToHashSet(StringComparer.Ordinal);
 
+    // one navigation scope for the filter and the grouped query: each target set is checked once
     private static async Task<Result<IReadOnlyList<ReportQueryRow>>> RunTypedAsync<TEntity>(IServiceProvider services, ReportSource source, string? filter, ReportPlan plan, CancellationToken cancellationToken)
-        where TEntity : class =>
-        await ReportAggregator.RunAsync(
-            source.Computed is { } computed
-                ? (IQueryable<TEntity>)await computed.RowsAsync(services, filter, cancellationToken)
-                : await ODataEntityAccess.FilteredAsync<TEntity>(services, filter, cancellationToken),
-            plan, cancellationToken, source.Computed is null ? await ODataNavigationScope.ForAsync(services, typeof(TEntity), cancellationToken) : null);
+        where TEntity : class
+    {
+        if (source.Computed is { } computed)
+        {
+            return await ReportAggregator.RunAsync((IQueryable<TEntity>)await computed.RowsAsync(services, filter, cancellationToken), plan, cancellationToken);
+        }
+
+        var scope = ODataNavigationScope.For(services, typeof(TEntity));
+        return await ReportAggregator.RunAsync(await ODataEntityAccess.FilteredAsync<TEntity>(services, filter, cancellationToken, scope), plan, cancellationToken, scope);
+    }
 
     private static Task CheckFilterAsync<TEntity>(IServiceProvider services, string? filter, CancellationToken cancellationToken)
         where TEntity : class =>
