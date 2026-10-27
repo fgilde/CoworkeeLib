@@ -244,6 +244,81 @@
         { "id": "MudBlazor.Extensions", "version": "9.11.6" }
       ],
       "needsMigration": true
+    },
+    {
+      "version": "0.0.1.41",
+      "breaking": [
+        "Groups form a tree: cw.Groups gets ParentId and Code, the name is unique per parent, new table cw.GroupSelections; add a migration (the migrations host gives existing groups their codes). SetGroupMembers needs Identity.Groups.ManageMembers (implied by Manage).",
+        "ICoworkeeApi has new group members (GetGroupChildrenAsync, SearchGroupTreeAsync, MoveGroupAsync, AddGroupMembersAsync, RemoveGroupMembersAsync, MoveGroupMembersAsync, GetMyGroupsAsync, SelectGroupsAsync): hand-written implementations and test fakes add them.",
+        "IUnitOfWork resolves to a wrapper that also saves external DbContexts, no longer to the DbContext itself; code that cast it to a DbContext injects the context instead.",
+        "Aspire 13.6.4: the app host SDK, Aspire.Hosting.* and Aspire.Hosting.Testing move to 13.6.4, the CommunityToolkit Aspire packages to 13.6.1.",
+        "Nextended 10.1.48: apps that pin Nextended packages move up."
+      ],
+      "needsMigration": true,
+      "packages": [
+        {
+          "id": "Aspire.AppHost.Sdk",
+          "version": "13.6.4"
+        },
+        {
+          "id": "Aspire.Hosting.Testing",
+          "version": "13.6.4"
+        },
+        {
+          "id": "Aspire.Hosting.Azure.Storage",
+          "version": "13.6.4"
+        },
+        {
+          "id": "Aspire.Hosting.RabbitMQ",
+          "version": "13.6.4"
+        },
+        {
+          "id": "Aspire.Hosting.SqlServer",
+          "version": "13.6.4"
+        },
+        {
+          "id": "Aspire.Hosting.PostgreSQL",
+          "version": "13.6.4"
+        },
+        {
+          "id": "Aspire.Hosting.Redis",
+          "version": "13.6.4"
+        },
+        {
+          "id": "Aspire.StackExchange.Redis",
+          "version": "13.6.4"
+        },
+        {
+          "id": "CommunityToolkit.Aspire.Hosting.Ollama",
+          "version": "13.6.1"
+        },
+        {
+          "id": "CommunityToolkit.Aspire.Hosting.MailPit",
+          "version": "13.6.1"
+        },
+        {
+          "id": "Nextended.Aspire.Hosting.AspireUI",
+          "version": "10.1.48"
+        },
+        {
+          "id": "Nextended.Core",
+          "version": "10.1.48"
+        },
+        {
+          "id": "Nextended.Web",
+          "version": "10.1.48"
+        }
+      ],
+      "manual": [
+        {
+          "text": "Implement the new ICoworkeeApi group members in hand-written implementations and test fakes (throw NotImplementedException where a fake does not need them).",
+          "find": ":\\s*ICoworkeeApi\\b",
+          "files": [
+            "src/**/*.cs",
+            "tests/**/*.cs"
+          ]
+        }
+      ]
     }
   ]
 }

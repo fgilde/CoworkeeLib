@@ -22,13 +22,13 @@
     <PackageVersion Include="Asp.Versioning.Http" Version="10.2.3" />
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.13" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.13" />
-    <PackageVersion Include="Aspire.Hosting" Version="13.6.1" />
-    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.6.1" />
-    <PackageVersion Include="Aspire.Hosting.Redis" Version="13.6.1" />
-    <PackageVersion Include="Aspire.Hosting.Docker" Version="13.6.1" />
-    <PackageVersion Include="Aspire.Hosting.Kubernetes" Version="13.6.1-preview.1.26506.6" />
-    <PackageVersion Include="Aspire.Hosting.Azure.AppContainers" Version="13.6.1" />
-    <PackageVersion Include="CommunityToolkit.Aspire.Hosting.MailPit" Version="13.6.0" />
+    <PackageVersion Include="Aspire.Hosting" Version="13.6.4" />
+    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.6.4" />
+    <PackageVersion Include="Aspire.Hosting.Redis" Version="13.6.4" />
+    <PackageVersion Include="Aspire.Hosting.Docker" Version="13.6.4" />
+    <PackageVersion Include="Aspire.Hosting.Kubernetes" Version="13.6.4-preview.1.26523.11" />
+    <PackageVersion Include="Aspire.Hosting.Azure.AppContainers" Version="13.6.4" />
+    <PackageVersion Include="CommunityToolkit.Aspire.Hosting.MailPit" Version="13.6.1" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.16.0" />
     <PackageVersion Include="Testcontainers.Azurite" Version="4.16.0" />
     <PackageVersion Include="Testcontainers" Version="4.16.0" />
@@ -55,15 +55,15 @@
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.23.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.13" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.13" />
-    <PackageVersion Include="Aspire.Hosting.Keycloak" Version="13.6.0-preview.1.26479.8" />
+    <PackageVersion Include="Aspire.Hosting.Keycloak" Version="13.6.4-preview.1.26523.11" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="10.10.0" />
-    <PackageVersion Include="Nextended.Core" Version="10.1.47" />
-    <PackageVersion Include="Nextended.CodeGen" Version="10.1.47" />
-    <PackageVersion Include="Nextended.Web" Version="10.1.47" />
-    <PackageVersion Include="Nextended.ResponseFilters.AspNetCore" Version="10.1.47" />
-    <PackageVersion Include="Nextended.Aspire.Hosting.Grafana" Version="10.1.47" />
-    <PackageVersion Include="Nextended.Aspire.Hosting.WebDataStudio" Version="10.1.47" />
-    <PackageVersion Include="Nextended.Aspire.Hosting.AspireUI" Version="10.1.47" />
+    <PackageVersion Include="Nextended.Core" Version="10.1.48" />
+    <PackageVersion Include="Nextended.CodeGen" Version="10.1.48" />
+    <PackageVersion Include="Nextended.Web" Version="10.1.48" />
+    <PackageVersion Include="Nextended.ResponseFilters.AspNetCore" Version="10.1.48" />
+    <PackageVersion Include="Nextended.Aspire.Hosting.Grafana" Version="10.1.48" />
+    <PackageVersion Include="Nextended.Aspire.Hosting.WebDataStudio" Version="10.1.48" />
+    <PackageVersion Include="Nextended.Aspire.Hosting.AspireUI" Version="10.1.48" />
     <PackageVersion Include="MudBlazor" Version="9.11.0" />
     <PackageVersion Include="MudBlazor.Extensions" Version="9.11.6" />
     <PackageVersion Include="MudExRichTextEditor" Version="9.5.5" />
@@ -104,7 +104,7 @@
   <ItemGroup Label="Database providers">
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.13" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.13" />
-    <PackageVersion Include="Aspire.Hosting.SqlServer" Version="13.6.1" />
+    <PackageVersion Include="Aspire.Hosting.SqlServer" Version="13.6.4" />
     <PackageVersion Include="Testcontainers.MsSql" Version="4.16.0" />
     <PackageVersion Include="Hangfire.SqlServer" Version="1.8.25" />
     <PackageVersion Include="Hangfire.InMemory" Version="1.0.0" />

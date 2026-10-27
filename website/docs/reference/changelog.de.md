@@ -19,6 +19,7 @@
 - `ICoworkeeApi` hat neue Gruppen-Mitglieder (`GetGroupChildrenAsync`, `SearchGroupTreeAsync`, `MoveGroupAsync`, `AddGroupMembersAsync`, `RemoveGroupMembersAsync`, `MoveGroupMembersAsync`, `GetMyGroupsAsync`, `SelectGroupsAsync`): eigene Implementierungen und Test-Fakes kompilieren erst wieder, wenn sie sie ergänzen.
 - `PUT /api/v1/identity/groups/{id}` mit einer anderen `ParentId` als der aktuellen übergeordneten Gruppe antwortet mit 400; verschoben wird eine Gruppe mit `PUT /api/v1/identity/groups/{id}/parent`. Fehlt `ParentId`, bleibt die übergeordnete Gruppe.
 - `IUnitOfWork` liefert eine Hülle, die die externen Contexts und dann den Context der App speichert, nicht mehr den DbContext selbst; Code, der es in einen DbContext umgewandelt hat, lässt sich stattdessen den Context geben.
+- Aspire 13.6.4 (App-Host-SDK, `Aspire.Hosting.*`, `Aspire.Hosting.Testing`), CommunityToolkit-Aspire-Pakete 13.6.1, Nextended 10.1.48; `coworkee update` hebt die festgelegten Pakete an.
 - `[Realtime]` sendet weiterhin an alle mit der Ansichts-Berechtigung; sind Gruppen Kunden in einem Mandanten, sehen Clients anderer Einheiten Datensatz-IDs und geänderte Eigenschaftsnamen. Themen pro Gruppe folgen.
 
 ## 0.0.1.40 (2026-10-25)

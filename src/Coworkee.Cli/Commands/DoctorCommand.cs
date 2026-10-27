@@ -43,7 +43,7 @@ internal static partial class DoctorCommand
             [.. version.Split('+', '-')[0].Split('.').TakeWhile(p => int.TryParse(p, out _)).Select(int.Parse)];
     }
 
-    /// <summary>The version in &lt;Project Sdk="Aspire.AppHost.Sdk/13.6.1"&gt; of the app host.</summary>
+    /// <summary>The version in &lt;Project Sdk="Aspire.AppHost.Sdk/13.6.4"&gt; of the app host.</summary>
     public static string? AspireSdk(string appHostProject) => AspireSdkVersion().Match(appHostProject) is { Success: true } m ? m.Groups[1].Value : null;
 
     /// <summary>The EF Core version of the app from Directory.Packages.props (Microsoft.EntityFrameworkCore*).</summary>
