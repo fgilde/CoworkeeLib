@@ -7,6 +7,8 @@ internal sealed class ReportModelContributor : IModelContributor
 {
     public void Apply(ModelBuilder modelBuilder)
     {
+        // date parts of a DateTimeOffset on SQLite, which the DbContext stores as a number (Querying.DateBuckets)
+        modelBuilder.HasDbFunction(typeof(Querying.DateBuckets).GetMethod(nameof(Querying.DateBuckets.Stored))!).HasName("abs").IsBuiltIn();
         modelBuilder.Entity<Report>(report =>
         {
             report.ToTable("Reports", "cw");

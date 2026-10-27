@@ -5,7 +5,8 @@ using Coworkee.Core.Results;
 namespace Coworkee.Reporting.Querying;
 
 /// <param name="WeekIndex">SQL Server has no day of week independent of its settings: weeks are counted from a Monday instead.</param>
-internal sealed record ReportGroup(ReportField Field, DateBucket Bucket, bool WeekIndex = false);
+/// <param name="BinaryDate">A DateTimeOffset of a Coworkee DbContext on SQLite, stored as a number (DateTimeOffsetToBinaryConverter): its parts are computed from it.</param>
+internal sealed record ReportGroup(ReportField Field, DateBucket Bucket, bool WeekIndex = false, bool BinaryDate = false);
 
 internal sealed record ReportValue(AggregateFunction Function, ReportField? Field);
 
@@ -15,11 +16,12 @@ internal sealed record ReportPlan(ReportGroup? Group, ReportGroup? Split, IReadO
     public const int MaxTop = 1000;
 
     /// <param name="granted">Permissions of the user among those navigations need.</param>
-    public static Result<ReportPlan> Create(ReportSource source, ReportQueryRequest request, IReadOnlySet<string> granted, string provider = DatabaseProviders.Postgres)
+    /// <param name="binaryDates">DateTimeOffset columns are numbers (a Coworkee DbContext on SQLite).</param>
+    public static Result<ReportPlan> Create(ReportSource source, ReportQueryRequest request, IReadOnlySet<string> granted, string provider = DatabaseProviders.Postgres, bool binaryDates = false)
     {
         var errors = new Dictionary<string, string[]>(StringComparer.Ordinal);
-        var group = GroupOf(source, request.GroupBy, nameof(request.GroupBy), granted, errors, provider);
-        var split = GroupOf(source, request.SplitBy, nameof(request.SplitBy), granted, errors, provider);
+        var group = GroupOf(source, request.GroupBy, nameof(request.GroupBy), granted, errors, provider, binaryDates);
+        var split = GroupOf(source, request.SplitBy, nameof(request.SplitBy), granted, errors, provider, binaryDates);
         if (split is not null && group is null)
         {
             errors[nameof(request.SplitBy)] = ["Series need a group by field."];
@@ -42,7 +44,7 @@ internal sealed record ReportPlan(ReportGroup? Group, ReportGroup? Split, IReadO
             : new ReportPlan(group, split, values!, request.SortBy, request.Descending, request.Top);
     }
 
-    private static ReportGroup? GroupOf(ReportSource source, ReportGroupBy? by, string key, IReadOnlySet<string> granted, Dictionary<string, string[]> errors, string provider)
+    private static ReportGroup? GroupOf(ReportSource source, ReportGroupBy? by, string key, IReadOnlySet<string> granted, Dictionary<string, string[]> errors, string provider, bool binaryDates)
     {
         if (by is null)
         {
@@ -60,16 +62,18 @@ internal sealed record ReportPlan(ReportGroup? Group, ReportGroup? Split, IReadO
             return null;
         }
 
-        // ponytail: EF's SQLite provider has no date parts of DateTimeOffset (stored as text); DateTime and DateOnly fields work there
-        if (field.Kind == ReportFieldKind.Date && provider == DatabaseProviders.Sqlite && (Nullable.GetUnderlyingType(field.ClrType) ?? field.ClrType) == typeof(DateTimeOffset))
+        // an exact point in time is no category; a day is
+        var bucket = field.Kind == ReportFieldKind.Date && by.Bucket == DateBucket.None ? DateBucket.Day : by.Bucket;
+
+        // EF's SQLite provider has no date parts of DateTimeOffset; a Coworkee DbContext stores it as a number the parts are computed from
+        var offset = field.Kind == ReportFieldKind.Date && provider == DatabaseProviders.Sqlite && (Nullable.GetUnderlyingType(field.ClrType) ?? field.ClrType) == typeof(DateTimeOffset);
+        if (offset && !binaryDates)
         {
-            errors[key] = [$"SQLite cannot group {field.Path} (DateTimeOffset) by date; use a DateTime or DateOnly field, or Postgres or SQL Server."];
+            errors[key] = [$"SQLite cannot group {field.Path} (DateTimeOffset) of this database by date; use a DateTime or DateOnly field, or Postgres or SQL Server."];
             return null;
         }
 
-        // an exact point in time is no category; a day is
-        var bucket = field.Kind == ReportFieldKind.Date && by.Bucket == DateBucket.None ? DateBucket.Day : by.Bucket;
-        return new ReportGroup(field, bucket, bucket == DateBucket.Week && provider == DatabaseProviders.SqlServer);
+        return new ReportGroup(field, bucket, bucket == DateBucket.Week && provider == DatabaseProviders.SqlServer, offset);
     }
 
     private static ReportValue? Value(ReportSource source, ReportAggregate aggregate, string key, IReadOnlySet<string> granted, Dictionary<string, string[]> errors)

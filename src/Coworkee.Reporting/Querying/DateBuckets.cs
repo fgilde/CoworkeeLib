@@ -11,11 +11,12 @@ internal static class DateBuckets
     /// <summary>The Monday weeks are counted from where the database has no day of week (<see cref="ReportGroup.WeekIndex"/>).</summary>
     public static readonly DateOnly Epoch = new(2000, 1, 3);
 
-    public static Expression Key(Expression date, DateBucket bucket, bool weekIndex = false)
+    /// <param name="binary">A DateTimeOffset the database keeps as a number (<see cref="ReportGroup.BinaryDate"/>).</param>
+    public static Expression Key(Expression date, DateBucket bucket, bool weekIndex = false, bool binary = false)
     {
         if (Nullable.GetUnderlyingType(date.Type) is not null)
         {
-            var value = Key(Expression.Property(date, nameof(Nullable<int>.Value)), bucket, weekIndex);
+            var value = Key(Expression.Property(date, nameof(Nullable<int>.Value)), bucket, weekIndex, binary);
             return Expression.Condition(Expression.Property(date, nameof(Nullable<int>.HasValue)),
                 Expression.Convert(value, typeof(int?)), Expression.Constant(null, typeof(int?)));
         }
@@ -23,6 +24,11 @@ internal static class DateBuckets
         if (weekIndex)
         {
             return Expression.Divide(DaysSinceEpoch(date), Expression.Constant(7));
+        }
+
+        if (binary)
+        {
+            return Expression.Convert(FromStored(date, bucket), typeof(int));
         }
 
         return bucket switch
@@ -33,6 +39,48 @@ internal static class DateBuckets
             DateBucket.Week => Day(Monday(date)),
             _ => Day(date),
         };
+    }
+
+    /// <summary>The stored number of a DateTimeOffset, as SQLite's abs() returns it (the number is never negative); mapped in the model, only for queries.</summary>
+    public static long Stored(DateTimeOffset value) => throw new InvalidOperationException("Stored runs only inside a database query.");
+
+    // DateTimeOffsetToBinaryConverter stores (local ticks / 1000) << 11 | offset minutes (11 bits, two's complement); the key is computed in UTC
+    // with integer arithmetic, days from 0001-01-01 (a Monday) to a civil date as in H. Hinnant's days_from_civil inverse
+    private static Expression FromStored(Expression date, DateBucket bucket)
+    {
+        var stored = Expression.Call(typeof(DateBuckets).GetMethod(nameof(Stored))!, date);
+        var offsetMinutes = Sub(Mod(Add(Mod(stored, 2048), C(1024)), 2048), C(1024));
+        var utcUnits = Sub(Div(stored, 2048), Mul(offsetMinutes, 600_000));
+        var days = Div(utcUnits, 864_000_000);
+        if (bucket == DateBucket.Week)
+        {
+            days = Sub(days, Mod(days, 7));
+        }
+
+        // days since 1970-03-01 shifted to 0000-03-01: z = days(0001-01-01) - 719162 + 719468
+        var z = Add(days, C(306));
+        var era = Div(z, 146_097);
+        var doe = Sub(z, Mul(era, 146_097));
+        var yoe = Div(Sub(Add(Sub(doe, Div(doe, 1460)), Div(doe, 36_524)), Div(doe, 146_096)), 365);
+        var doy = Sub(doe, Sub(Add(Mul(yoe, 365), Div(yoe, 4)), Div(yoe, 100)));
+        var mp = Div(Add(Mul(doy, 5), C(2)), 153);
+        var day = Add(Sub(doy, Div(Add(Mul(mp, 153), C(2)), 5)), C(1));
+        var month = Expression.Condition(Expression.LessThan(mp, C(10)), Add(mp, C(3)), Sub(mp, C(9)));
+        var year = Add(Add(Mul(era, 400), yoe), Expression.Condition(Expression.LessThanOrEqual(month, C(2)), C(1), C(0)));
+        return bucket switch
+        {
+            DateBucket.Year => year,
+            DateBucket.Quarter => Add(Mul(year, 10), Div(Add(month, C(2)), 3)),
+            DateBucket.Month => Add(Mul(year, 100), month),
+            _ => Add(Add(Mul(year, 10_000), Mul(month, 100)), day),
+        };
+
+        static Expression C(long value) => Expression.Constant(value);
+        static Expression Add(Expression a, Expression b) => Expression.Add(a, b);
+        static Expression Sub(Expression a, Expression b) => Expression.Subtract(a, b);
+        static Expression Mul(Expression a, long b) => Expression.Multiply(a, C(b));
+        static Expression Div(Expression a, long b) => Expression.Divide(a, C(b));
+        static Expression Mod(Expression a, long b) => Expression.Modulo(a, C(b));
     }
 
     /// <summary>The first day of the bucket and the first day after it.</summary>

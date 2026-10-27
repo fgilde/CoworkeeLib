@@ -86,7 +86,8 @@ internal sealed class ReportQueries(IServiceProvider services, ReportSchema sche
 
         // an app source aggregates in memory unless it hands out a query of the database
         var provider = source.Value.Computed is null ? CoworkeeDatabase.Provider(services.DbContextFor(source.Value.RowType).Database) : DatabaseProviders.Postgres;
-        return (source.Value, ReportPlan.Create(source.Value, request, await GrantedAsync(cancellationToken), provider));
+        var binaryDates = source.Value.Computed is null && services.DbContextFor(source.Value.RowType) is Coworkee.Infrastructure.Persistence.CoworkeeDbContext;
+        return (source.Value, ReportPlan.Create(source.Value, request, await GrantedAsync(cancellationToken), provider, binaryDates));
     }
 
     internal async Task<Result<ReportSource>> ReadableAsync(string name, CancellationToken cancellationToken)

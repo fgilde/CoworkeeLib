@@ -34,6 +34,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 - OData: two filtered reference levels (`Invoice/Shipment/Customer`) and a collection under a hidden reference translate; a row filter that fails on the in-memory query the scope reads it from hides only its own type, and only the navigation targets a query reaches are checked. `ODataNavigationScope.For(services, type)` with `ApplyAsync` replaces `ForAsync` and `Apply`; reports check each target once per query.
 - OData: `/odata/<Set>/$count` answered `500`; the model's page size (`[Page]`) applies on entity sets again.
 - Global search: fields through a navigation (`t => t.Bin!.Name`) are read in the query with the navigation's rules; a hidden target leaves the field empty. Before, the title read them from the loaded row, where navigations are not loaded.
+- Reports on SQLite group `DateTimeOffset` fields of a Coworkee DbContext by date (year, quarter, month, week, day, in UTC); they were rejected. The DbContext stores them as numbers; the buckets are computed from those.
 - `AddODataImport` with an id (update, upsert) refuses a set keyed by something other than a Guid at registration, and updates rows of sets keyed by a Guid other than `Id`. `AddExtendedAttributes` refuses an entity without a Guid `Id`.
 - Security, OData: query options without `$` (`filter=`, `orderby=`) are no longer read; they slipped past the checks of protected properties. Clients send `$filter`.
 

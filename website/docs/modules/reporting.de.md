@@ -141,7 +141,7 @@ Der Server prüft jedes Feld gegen die Quelle, baut `GroupBy` und `Select` mit E
 | Grenzen | 5.000 Gruppen, Top 1 bis 1.000 |
 | Abgelehnt | unbekannte oder verborgene Felder, Summen über Text, Zeiträume auf Nicht-Datumsfeldern, OData, das sich nicht parsen lässt |
 
-Alle drei Datenbank-Provider aggregieren in SQL. Auf SQL Server werden Wochen mit `DATEDIFF` ab einem Montag gezählt, weil der Wochentag dort von Servereinstellungen abhängt. Der SQLite-Provider von EF speichert `DateTimeOffset` als Text ohne Datumsteile, deshalb lehnt SQLite Zeiträume auf `DateTimeOffset`-Feldern ab (`DateTime` und `DateOnly` funktionieren); dafür Postgres oder SQL Server nutzen.
+Alle drei Datenbank-Provider aggregieren in SQL. Auf SQL Server werden Wochen mit `DATEDIFF` ab einem Montag gezählt, weil der Wochentag dort von Servereinstellungen abhängt. Auf SQLite speichert ein Coworkee-DbContext `DateTimeOffset` als Zahl; Zeiträume berechnen daraus das UTC-Datum. Ein `DateTimeOffset` eines [externen DbContext](../fundamentals/persistence.md#externe-datenbanken) hat auf SQLite keine Datumsteile, seine Zeiträume werden dort abgelehnt.
 
 Gemessen an den 100.000 Aufträgen der Demo (Postgres, warm): Anzahl nach Status 9 ms, Summe nach Monat 29 ms, Anzahl nach Woche 55 ms, Region nach Kanal 23 ms, Top 10 Kunden mit Join 30 ms, vier KPI-Werte 58 ms.
 

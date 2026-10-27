@@ -75,7 +75,7 @@ internal static class ReportAggregator
     private static Expression Key(ParameterExpression entity, ReportGroup group)
     {
         var access = Access(entity, group.Field);
-        return group.Field.Kind == ReportFieldKind.Date ? DateBuckets.Key(access, group.Bucket, group.WeekIndex) : access;
+        return group.Field.Kind == ReportFieldKind.Date ? DateBuckets.Key(access, group.Bucket, group.WeekIndex, group.BinaryDate) : access;
     }
 
     private static Expression Access(Expression entity, ReportField field) => field.Chain.Aggregate(entity, Expression.Property);

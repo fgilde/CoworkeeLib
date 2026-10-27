@@ -34,6 +34,7 @@
 - OData: zwei gefilterte Referenzebenen (`Invoice/Shipment/Customer`) und eine Sammlung unter einer ausgeblendeten Referenz lassen sich übersetzen; ein Zeilenfilter, der auf der In-Memory-Abfrage scheitert, aus der der Scope ihn liest, blendet nur seinen eigenen Typ aus, und geprüft werden nur die Navigationsziele, die eine Abfrage erreicht. `ODataNavigationScope.For(services, type)` mit `ApplyAsync` ersetzt `ForAsync` und `Apply`; Berichte prüfen jedes Ziel einmal pro Abfrage.
 - OData: `/odata/<Set>/$count` antwortete `500`; die Seitengröße des Modells (`[Page]`) gilt auf Entity-Sets wieder.
 - Globale Suche: Felder über eine Navigation (`t => t.Bin!.Name`) werden in der Abfrage mit den Regeln der Navigation gelesen; ein ausgeblendetes Ziel lässt das Feld leer. Bisher las der Titel sie aus der geladenen Zeile, in der Navigationen nicht geladen sind.
+- Berichte auf SQLite gruppieren `DateTimeOffset`-Felder eines Coworkee-DbContext nach Zeiträumen (Jahr, Quartal, Monat, Woche, Tag, in UTC); bisher wurden sie abgelehnt. Der DbContext speichert sie als Zahlen; die Zeiträume werden daraus berechnet.
 - `AddODataImport` mit Id (Aktualisieren, Upsert) weist ein Set, dessen Schlüssel keine Guid ist, bei der Registrierung ab und aktualisiert Zeilen von Sets mit einem Guid-Schlüssel außer `Id`. `AddExtendedAttributes` weist eine Entity ohne Guid-`Id` ab.
 - Sicherheit, OData: Abfrageoptionen ohne `$` (`filter=`, `orderby=`) werden nicht mehr gelesen; sie umgingen die Prüfung geschützter Eigenschaften. Clients senden `$filter`.
 
