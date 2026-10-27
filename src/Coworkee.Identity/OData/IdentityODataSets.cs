@@ -16,7 +16,9 @@ internal static class IdentityODataSets
         services.AddODataEntity<User>("Users", IdentityPermissions.Users.View,
             u => u.PasswordHash, u => u.PasswordHistory, u => u.KeptSession, u => u.SecurityStamp, u => u.ConcurrencyStamp, u => u.NormalizedEmail, u => u.NormalizedUserName);
         services.AddODataEntity<Role>("Roles", IdentityPermissions.Roles.View, r => r.NormalizedName, r => r.ConcurrencyStamp);
-        services.AddODataEntity<UserGroup>("Groups", IdentityPermissions.Groups.View);
+        // members can be thousands per group: the set leaves them out (the Users set filters by Groups/any(...)); roles are few and come along
+        services.AddODataEntity<UserGroup>("Groups", IdentityPermissions.Groups.View, g => g.Members);
+        services.AddScoped<IODataEntityFilter<UserGroup>, GroupODataFilter>();
         services.AddODataImport<GroupImportRow, Result<Guid>>("Groups", row => new ImportGroup(row));
         services.AddSingleton<Coworkee.OData.Computed.IODataComputedPropertySource, GroupODataProperties>();
         services.AddODataEntity<ApiKeys.ApiKey>("ApiKeys", ApiKeyPermissions.Manage, k => k.SecretHash);

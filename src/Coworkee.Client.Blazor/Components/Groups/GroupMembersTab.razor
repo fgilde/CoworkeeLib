@@ -7,7 +7,7 @@ else if (_canViewUsers == true)
     <CoworkeeDataTable @ref="_table" T="UserRow" EntitySet="Users" Filter="@Filter" RealtimeTopic="@Coworkee.Contracts.Realtime.RealtimeTopics.Entity("UserGroup", Group.Id)" SearchFields="SearchFields" UrlState="false" SavedViews="false" Exportable="false" Facets="false"
                        CreateText="Add member" CreatePermission="@IdentityPermissions.Groups.ManageMembers" OnCreate="AddAsync" NoRecordsText="No members.">
         <ToolBarContent>
-            @if (CanManage && Group.Members.Count > 0)
+            @if (CanManage && _memberCount > 0)
             {
                 <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.DriveFileMove" OnClick="MoveAllAsync" data-testid="group-move-members">@L["Move all members to…"]</MudButton>
             }

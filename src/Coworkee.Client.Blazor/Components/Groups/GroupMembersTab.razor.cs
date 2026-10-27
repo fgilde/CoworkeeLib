@@ -21,6 +21,7 @@ public partial class GroupMembersTab
     private bool? _canViewUsers;
     private GroupRow? _shown;
     private HashSet<Guid> _owners = [];
+    private long _memberCount;
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
 
@@ -55,8 +56,9 @@ public partial class GroupMembersTab
         if (_canViewUsers == true && !ReferenceEquals(_shown, Group))
         {
             _shown = Group;
-            var query = new ODataQuery { Filter = $"Groups/any(m: m/GroupId eq {Group.Id} and m/IsOwner)", Select = nameof(UserRow.Id), Count = false };
-            _owners = [.. (await OData.QueryAsync<UserRow>("Users", query)).Items.Select(u => u.Id)];
+            var owners = new ODataQuery { Filter = $"Groups/any(m: m/GroupId eq {Group.Id} and m/IsOwner)", Select = nameof(UserRow.Id), Count = false };
+            _owners = [.. (await OData.QueryAsync<UserRow>("Users", owners)).Items.Select(u => u.Id)];
+            _memberCount = (await OData.QueryAsync<UserRow>("Users", new ODataQuery { Filter = Filter, Select = nameof(UserRow.Id), Top = 0 })).Count ?? 0;
         }
     }
 

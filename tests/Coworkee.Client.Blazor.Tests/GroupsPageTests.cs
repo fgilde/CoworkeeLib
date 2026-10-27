@@ -123,7 +123,7 @@ public sealed class GroupsPageTests : ClientTestBase
     public async Task Manage_actions_are_hidden_without_Manage()
     {
         Grant(IdentityPermissions.Groups.View, IdentityPermissions.Users.View);
-        _odata.With("Groups", Row(Supplier, Ada.Id)).With("Users", Ada);
+        _odata.With("Groups", Row(Supplier)).With("Users", Ada);
         var page = RenderPage();
         page.WaitForElement($"[data-group-node='{Supplier.Id}']");
 
@@ -172,7 +172,7 @@ public sealed class GroupsPageTests : ClientTestBase
     public async Task Members_tab_without_Users_View_shows_a_hint_instead_of_the_table()
     {
         Grant(IdentityPermissions.Groups.View);
-        _odata.With("Groups", Row(Supplier, Ada.Id)).With("Users", Ada);
+        _odata.With("Groups", Row(Supplier)).With("Users", Ada);
         var users = 0;
         _odata.Queried += (_, query) => users += query.Filter?.Contains("Groups/any") == true ? 1 : 0;
         Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Supplier.Id}");
@@ -188,8 +188,8 @@ public sealed class GroupsPageTests : ClientTestBase
     [Fact]
     public async Task Members_table_filters_on_the_server_without_listing_member_ids()
     {
-        var members = Enumerable.Range(0, 300).Select(_ => Guid.CreateVersion7()).ToArray();
-        _odata.With("Groups", Row(Supplier, members)).With("Users", Ada);
+        var members = Enumerable.Range(0, 300).Select(i => Ada with { Id = Guid.CreateVersion7(), Email = $"u{i}@acme.test" }).Prepend(Ada).ToArray();
+        _odata.With("Groups", Row(Supplier)).With("Users", members);
         var queries = new List<ODataQuery>();
         _odata.Queried += (_, query) => queries.Add(query);
         Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Supplier.Id}");
@@ -202,14 +202,14 @@ public sealed class GroupsPageTests : ClientTestBase
         var users = queries.Where(q => q.Filter?.Contains("Groups/any") == true).ToList();
         users.ShouldNotBeEmpty();
         users.ShouldAllBe(q => q.Filter!.Contains($"Groups/any(m: m/GroupId eq {Supplier.Id}"));
-        queries.ShouldAllBe(q => !members.Any(id => q.ToQueryString().Contains(id.ToString())));
+        queries.ShouldAllBe(q => !members.Any(m => q.ToQueryString().Contains(m.Id.ToString())));
     }
 
     [Fact]
     public async Task Moving_all_members_into_a_sub_group_calls_the_api()
     {
         var dialogs = Render<MudDialogProvider>();
-        _odata.With("Groups", Row(Customer, Ada.Id)).With("Users", Ada);
+        _odata.With("Groups", Row(Customer)).With("Users", Ada);
         Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Customer.Id}");
         var page = RenderPage();
         page.WaitForElement("[data-testid='group-title']");
@@ -266,7 +266,7 @@ public sealed class GroupsPageTests : ClientTestBase
     [Fact]
     public async Task Removing_a_member_reloads_the_members_table()
     {
-        _odata.With("Groups", Row(Supplier, Ada.Id)).With("Users", Ada);
+        _odata.With("Groups", Row(Supplier)).With("Users", Ada);
         var users = 0;
         _odata.Queried += (_, query) => users += query.Filter?.Contains("Groups/any") == true ? 1 : 0;
         Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Supplier.Id}");
@@ -285,7 +285,7 @@ public sealed class GroupsPageTests : ClientTestBase
     [Fact]
     public async Task Members_table_follows_the_groups_entity_topic()
     {
-        _odata.With("Groups", Row(Supplier, Ada.Id)).With("Users", Ada);
+        _odata.With("Groups", Row(Supplier)).With("Users", Ada);
         var users = 0;
         _odata.Queried += (_, query) => users += query.Filter?.Contains("Groups/any") == true ? 1 : 0;
         Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Supplier.Id}");
@@ -301,11 +301,43 @@ public sealed class GroupsPageTests : ClientTestBase
     }
 
     [Fact]
+    public async Task Move_all_needs_members_of_the_group()
+    {
+        _odata.With("Groups", Row(Supplier));
+        Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Supplier.Id}");
+        var page = RenderPage();
+        page.WaitForElement("[data-testid='group-title']");
+
+        await Tab(page, "Members").ClickAsync(new());
+
+        page.WaitForElement("[data-testid='group-members-hidden'], .mud-table");
+        page.FindAll("[data-testid='group-move-members']").ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Roles_tab_shows_the_groups_roles_and_adding_one_keeps_the_others()
+    {
+        RoleDto viewer = new(Guid.CreateVersion7(), "Viewer", null, false), editor = new(Guid.CreateVersion7(), "Editor", null, false), auditor = new(Guid.CreateVersion7(), "Auditor", null, false);
+        Api.GetRolesAsync(Arg.Any<CancellationToken>()).Returns([viewer, editor, auditor]);
+        _odata.With("Groups", Row(Supplier, viewer.Id, editor.Id));
+        Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Supplier.Id}");
+        var page = RenderPage();
+        page.WaitForElement("[data-testid='group-title']");
+        await Tab(page, "Roles").ClickAsync(new());
+
+        var select = page.WaitForComponent<MudSelect<Guid>>();
+        page.WaitForAssertion(() => select.Instance.SelectedValues!.ShouldBe([viewer.Id, editor.Id], ignoreOrder: true));
+        await page.InvokeAsync(() => select.Instance.SelectedValuesChanged.InvokeAsync([viewer.Id, editor.Id, auditor.Id]));
+
+        await Api.Received(1).SetGroupRolesAsync(Supplier.Id, Arg.Is<IReadOnlyList<Guid>>(ids => ids.Count == 3 && ids.Contains(viewer.Id) && ids.Contains(editor.Id)), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task Owners_are_marked_in_the_members_tab_and_toggled_with_ManageMembers()
     {
         // the fake answers the owner query with every user, so Ada is an owner
         var queries = new List<ODataQuery>();
-        _odata.With("Groups", Row(Supplier, Ada.Id)).With("Users", Ada);
+        _odata.With("Groups", Row(Supplier)).With("Users", Ada);
         _odata.Queried += (_, query) => queries.Add(query);
         Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Supplier.Id}");
         var page = RenderPage();
@@ -323,7 +355,7 @@ public sealed class GroupsPageTests : ClientTestBase
     public async Task Owners_are_shown_read_only_without_ManageMembers()
     {
         Grant(IdentityPermissions.Groups.View, IdentityPermissions.Users.View);
-        _odata.With("Groups", Row(Supplier, Ada.Id)).With("Users", Ada);
+        _odata.With("Groups", Row(Supplier)).With("Users", Ada);
         Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Supplier.Id}");
         var page = RenderPage();
         page.WaitForElement("[data-testid='group-title']");
@@ -412,8 +444,9 @@ public sealed class GroupsPageTests : ClientTestBase
 
     private void Grant(params string[] permissions) => Api.GetMyPermissionsAsync(Arg.Any<CancellationToken>()).Returns(permissions);
 
-    private static GroupRow Row(GroupNodeDto node, params Guid[] members) =>
-        new(node.Id, node.Name, node.Description, [.. members.Select(m => new GroupMemberRow(m))], [], node.ParentId, node.Code);
+    // the shape the Groups set really has: roles, no members (those are rows of Users)
+    private static GroupRow Row(GroupNodeDto node, params Guid[] roles) =>
+        new(node.Id, node.Name, node.Description, [.. roles.Select(r => new GroupRoleRow(r))], node.ParentId, node.Code);
 
     private static AngleSharp.Dom.IElement Expander(IRenderedComponent<Groups> page, GroupNodeDto node) => Expander(page.Find($"[data-group-node='{node.Id}']"));
 

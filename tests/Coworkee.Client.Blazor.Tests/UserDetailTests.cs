@@ -61,8 +61,8 @@ public sealed class UserDetailTests : ClientTestBase
     [Fact]
     public void Group_chips_show_the_path_and_link_to_the_group()
     {
-        var customer = new Data.Admin.GroupRow(Guid.CreateVersion7(), "Customer A", null, [], [], null, "00001");
-        var hamburg = new Data.Admin.GroupRow(Guid.CreateVersion7(), "Hamburg", null, [], [], customer.Id, "00001.00001");
+        var customer = new Data.Admin.GroupRow(Guid.CreateVersion7(), "Customer A", null, [], null, "00001");
+        var hamburg = new Data.Admin.GroupRow(Guid.CreateVersion7(), "Hamburg", null, [], customer.Id, "00001.00001");
         _odata.With("Groups", hamburg, customer);
         Api.GetUserDetailAsync(_user, Arg.Any<CancellationToken>()).Returns(new UserDetailDto(
             _user, "bob@acme.test", "bob@acme.test", "Bob", "Builder", true, false, false, null, null, [], [new GroupRefDto(hamburg.Id, "Hamburg")]));
