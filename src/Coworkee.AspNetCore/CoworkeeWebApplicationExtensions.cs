@@ -5,6 +5,7 @@ using Coworkee.AspNetCore.Http;
 using Coworkee.AspNetCore.RateLimiting;
 using Coworkee.AspNetCore.Security;
 using Coworkee.AspNetCore.ApplicationServices;
+using Coworkee.Core.Diagnostics;
 using Coworkee.Core.Modularity;
 using Coworkee.Core.Security;
 using Microsoft.AspNetCore.Builder;
@@ -60,7 +61,6 @@ public static class CoworkeeWebApplicationExtensions
     public static WebApplication UseCoworkee(this WebApplication app)
     {
         app.UseExceptionHandler();
-        app.UseSecretPathRedaction();
         app.UseRequestLocalization(RequestCultures);
         foreach (var module in app.Services.GetRequiredService<IReadOnlyList<CoworkeeModule>>().OfType<IWebModule>())
         {

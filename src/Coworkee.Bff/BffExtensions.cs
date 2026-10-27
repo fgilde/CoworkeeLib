@@ -34,6 +34,8 @@ public static class BffExtensions
     {
         var options = builder.Configuration.GetSection(BffOptions.Section).Get<BffOptions>() ?? new BffOptions();
         builder.Services.Configure<BffOptions>(builder.Configuration.GetSection(BffOptions.Section));
+        // token links pass through the forwarder: their secret stays out of logs and traces
+        Coworkee.Core.Diagnostics.SecretPaths.AddSecretPathRedaction(builder.Services);
         if (options.FrameAncestors.Count > 0)
         {
             // antiforgery would forbid every frame; MapCoworkeeBff allows the listed origins instead

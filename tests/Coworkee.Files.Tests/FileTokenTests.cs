@@ -141,9 +141,33 @@ public sealed class FileTokenTests(FilesApp app) : IAsyncLifetime
         (await app.App.GetTestClient().GetAsync("/" + token.Url, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
 
         app.Logs.Lines.ShouldContain(line => line.Contains("/api/v1/files/token/***/secret.pdf"));
+        app.Logs.Lines.ShouldContain(line => line.Contains("RequestPath=/api/v1/files/token/***/secret.pdf"), "the hosting scope of the request");
         app.Logs.Lines.ShouldNotContain(line => line.Contains(token.Token));
         tags.ShouldContain(t => t.Contains("/api/v1/files/token/***/secret.pdf"));
         tags.ShouldNotContain(t => t.Contains(token.Token));
+    }
+
+    [Fact]
+    public void Tokens_are_masked_in_outgoing_and_forwarded_request_activities()
+    {
+        var stopped = new ConcurrentQueue<string>();
+        using var listener = new ActivityListener
+        {
+            ShouldListenTo = source => source.Name is "System.Net.Http" or "Yarp.ReverseProxy",
+            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+            ActivityStopped = activity => stopped.Enqueue($"{activity.DisplayName} {activity.GetTagItem("url.full")}"),
+        };
+        ActivitySource.AddActivityListener(listener);
+
+        foreach (var name in new[] { "System.Net.Http", "Yarp.ReverseProxy" })
+        {
+            using var source = new ActivitySource(name);
+            using var activity = source.StartActivity("GET /api/v1/data/downloads/s3cr3t")!;
+            activity.SetTag("url.full", "http://api/api/v1/files/token/s3cr3t/a.pdf");
+        }
+
+        stopped.Count.ShouldBe(2);
+        stopped.ShouldAllBe(s => !s.Contains("s3cr3t") && s.Contains("/token/***/") && s.Contains("/downloads/***"));
     }
 
     // the clock moves on: the tokens' time is up

@@ -77,7 +77,7 @@ A file that stays private can still be opened without sign-in for a short time, 
 
 The tokens come from `IAccessTokens` (`Coworkee.Infrastructure.Tokens`, table `cw.AccessTokens`; expired ones go with the retention target `access-tokens`, in apps without the Retention module a day after expiry when another token is redeemed): `Issue(purpose, targetId, lifetime, singleUse)` adds a token to the unit of work, `RedeemAsync(purpose, token)` returns the target with the organisation and user that issued it, or null when the token is unknown, expired or, for single use, taken already. Apps use it for their own anonymous links.
 
-The anonymous routes are rate limited per address (policy `tokens`, 120 per minute). The token never reaches logs or traces: the request lines of ASP.NET Core and the request activity (`url.path`, `url.full`, its name) show `/token/***/` and `/downloads/***`; `SecretPaths.Redact` masks it in own logs.
+The anonymous routes are rate limited per address (policy `tokens`, 120 per minute). The token never reaches logs or traces, in the API and in the BFF that forwards the links: the logs of ASP.NET Core, HttpClient and YARP (messages, values and scopes such as `RequestPath`) and the activities of incoming, forwarded and outgoing requests (`url.path`, `url.full`, `url.query`, their names) show `/token/***/` and `/downloads/***`. `AddCoworkee` and `AddCoworkeeBff` switch it on; `Coworkee.Core.Diagnostics.SecretPaths` (`Redact(string)`, `Redact(Activity)`, `AddSecretPathRedaction`) serves own hosts and logs. The activities are masked by a listener that the first call registers before the OpenTelemetry provider is built at host start.
 
 ## Cloud file pickers
 

@@ -186,25 +186,3 @@ public sealed class TestFilesModule : CoworkeeModule
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
     }
 }
-
-public sealed class CapturedLogs : ILoggerProvider
-{
-    public ConcurrentQueue<string> Lines { get; } = new();
-
-    public ILogger CreateLogger(string categoryName) => new Logger(this);
-
-    public void Dispose()
-    {
-    }
-
-    private sealed class Logger(CapturedLogs logs) : ILogger
-    {
-        public IDisposable? BeginScope<TState>(TState state)
-            where TState : notnull => null;
-
-        public bool IsEnabled(LogLevel logLevel) => true;
-
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
-            logs.Lines.Enqueue(formatter(state, exception) + " | " + string.Join(";", (state as IEnumerable<KeyValuePair<string, object?>> ?? []).Select(v => $"{v.Key}={v.Value}")));
-    }
-}
