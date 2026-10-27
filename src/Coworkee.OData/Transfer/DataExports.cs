@@ -2,6 +2,7 @@ using System.Net.Mail;
 using System.Reflection;
 using System.Text.Json;
 using System.Threading.Channels;
+using Coworkee.Application;
 using Coworkee.Application.Authorization;
 using Coworkee.Application.Groups;
 using Coworkee.BackgroundJobs;
@@ -71,17 +72,12 @@ public sealed partial class DataExports(
             return denied;
         }
 
-        if (await BusyAsync(http.RequestAborted))
-        {
-            return Results.Problem(title: "You have too many exports running. Wait until one is ready.", statusCode: StatusCodes.Status429TooManyRequests,
-                extensions: new Dictionary<string, object?> { ["code"] = "data_transfer.too_many_exports" });
-        }
-
         var entity = registry.Find(entitySet)!;
         var query = http.Request.QueryString;
-        var job = NewJob(entity, query, null, DataTransferStatus.Running);
-        db.Add(job);
-        await db.SaveChangesAsync(CancellationToken.None);
+        if (await ReserveAsync(entity, query, null, DataTransferStatus.Running, http.RequestAborted) is not { } job)
+        {
+            return TooManyExports();
+        }
 
         http.Response.ContentType = "application/x-ndjson";
         var lines = Channel.CreateUnbounded<DataExportProgress>(new UnboundedChannelOptions { SingleReader = true, SingleWriter = true });
@@ -235,6 +231,29 @@ public sealed partial class DataExports(
     /// Whether the user has <see cref="CoworkeeODataOptions.MaxConcurrentExports"/> exports running or queued. Ones older than
     /// <see cref="CoworkeeODataOptions.ExportTimeout"/> are stale (a server stopped while writing them) and fail first.
     /// </summary>
+    /// <summary>
+    /// The job of a new export, saved; null when the user has <see cref="CoworkeeODataOptions.MaxConcurrentExports"/> open. Check and insert run under a lock per
+    /// user, so parallel requests cannot all pass the check.
+    /// </summary>
+    private async Task<DataTransferJob?> ReserveAsync(
+        ODataEntityRegistration entity, QueryString query, string? fileName, DataTransferStatus status, CancellationToken cancellationToken)
+    {
+        await using var held = await services.GetRequiredService<IDistributedLock>().AcquireAsync($"coworkee-exports:{user.UserId}", TimeSpan.FromSeconds(10), cancellationToken);
+        if (held is null || await BusyAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        var job = NewJob(entity, query, fileName, status);
+        db.Add(job);
+        await db.SaveChangesAsync(cancellationToken);
+        return job;
+    }
+
+    private static IResult TooManyExports() =>
+        Results.Problem(title: "You have too many exports running. Wait until one is ready.", statusCode: StatusCodes.Status429TooManyRequests,
+            extensions: new Dictionary<string, object?> { ["code"] = "data_transfer.too_many_exports" });
+
     private async Task<bool> BusyAsync(CancellationToken cancellationToken)
     {
         var stale = clock.GetUtcNow() - options.Value.ExportTimeout;
@@ -257,9 +276,11 @@ public sealed partial class DataExports(
 
     private async Task<IResult> EnqueueAsync(ODataEntityRegistration entity, QueryString query, string? fileName, string[]? recipients, CancellationToken cancellationToken)
     {
-        var job = NewJob(entity, query, fileName, DataTransferStatus.Queued);
-        db.Add(job);
-        await db.SaveChangesAsync(cancellationToken);
+        if (await ReserveAsync(entity, query, fileName, DataTransferStatus.Queued, cancellationToken) is not { } job)
+        {
+            return TooManyExports();
+        }
+
         var groups = services.GetService<IGroupScope>() is { } scope ? await scope.SelectedAsync(cancellationToken) : [];
         services.GetRequiredService<IBackgroundJobs>().Enqueue<ExportJob, ExportJobArgs>(new ExportJobArgs(job.Id, [.. groups], recipients is not null, recipients));
         var dto = await services.GetRequiredService<DataTransferJobs>().GetAsync(job.Id, cancellationToken);

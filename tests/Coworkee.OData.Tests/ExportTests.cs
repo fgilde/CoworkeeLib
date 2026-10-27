@@ -137,6 +137,34 @@ public sealed class ExportTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Parallel_background_exports_of_one_user_stop_at_the_limit_on_every_route()
+    {
+        await app.InDbAsync(_setup.TenantId, async db =>
+        {
+            db.AddRange(Enumerable.Range(1, 4).Select(i => new Gadget { Name = $"Bulk {i}", Category = "Bulk", Price = i, TenantId = _setup.TenantId }));
+            return await db.SaveChangesAsync(Ct);
+        });
+        var root = app.App.Services.GetRequiredService<InlineBackgroundJobs.Root>();
+        root.Held = [];
+        try
+        {
+            var mailed = await Task.WhenAll(Enumerable.Range(0, 6).Select(_ => Admin.PostAsJsonAsync("/api/v1/data/Gadgets/export/mail", new MailExportRequest(null), Ct)));
+            mailed.Count(r => r.StatusCode == HttpStatusCode.Accepted).ShouldBe(2);
+            mailed.Count(r => r.StatusCode == HttpStatusCode.TooManyRequests).ShouldBe(4);
+
+            await app.InDbAsync(_setup.TenantId, db => db.Set<DataTransferJob>().ExecuteDeleteAsync(Ct));
+            var exported = await Task.WhenAll(Enumerable.Range(0, 5).Select(_ => Admin.GetAsync("/api/v1/data/Gadgets/export?format=csv", Ct)));
+            exported.Count(r => r.StatusCode == HttpStatusCode.Accepted).ShouldBe(2);
+            exported.Count(r => r.StatusCode == HttpStatusCode.TooManyRequests).ShouldBe(3);
+            (await app.InDbAsync(_setup.TenantId, db => db.Set<DataTransferJob>().CountAsync(Ct))).ShouldBe(2);
+        }
+        finally
+        {
+            root.Held = null;
+        }
+    }
+
+    [Fact]
     public async Task The_download_link_expires_after_five_minutes()
     {
         var ready = (await StreamAsync(Admin, "?format=csv"))[^1];
