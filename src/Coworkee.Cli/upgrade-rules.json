@@ -324,9 +324,17 @@
     {
       "version": "0.0.1.42",
       "breaking": [
-        "CodeCompletion.InsertText is the whole text including the trigger ({{ name }} instead of \" name }}\"); a pick replaces the typed trigger and the closing brackets Monaco added."
+        "CodeCompletion.InsertText is the whole text including the trigger ({{ name }} instead of \" name }}\"); a pick replaces the typed trigger and the closing brackets Monaco added.",
+        "OData row filters and set permissions hold for navigations: $expand shows only rows the target set lists, $filter/$orderby through navigations see only visible rows, $expand into a set without its permission answers 403, and into a type whose IODataEntityFilter<T> does more than Where answers 400."
       ],
       "manual": [
+        {
+          "text": "Row filters of types reached through navigations must be plain Where calls on the query they get (no OrderBy, Take, Join or new query), otherwise $expand into the type answers 400 and $filter sees no rows of it.",
+          "find": ":\\s*IODataEntityFilter<",
+          "files": [
+            "src/**/*.cs"
+          ]
+        },
         {
           "text": "Put the trigger into the InsertText of own CodeCompletion items passed to CodeEditor (\"{{ name }}\" instead of \" name }}\").",
           "find": "new\\s+CodeCompletion\\(",
