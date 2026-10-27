@@ -107,6 +107,8 @@ public sealed class CoworkeeAppTests : IDisposable
         settings["Coworkee__Auth__Clients__0__ClientId"].ShouldBe("demo-web");
         settings["Coworkee__Auth__Clients__1__ClientId"].ShouldBe("demo-airworks");
         settings["Coworkee__Auth__Clients__1__DisplayName"].ShouldBe("Demo (AirWorks)");
+        settings["Coworkee__Auth__Clients__0__AllowImpersonation"].ShouldBe("true");
+        settings.ShouldNotContainKey("Coworkee__Auth__Clients__1__AllowImpersonation");
         settings["Coworkee__Auth__Clients__1__Scopes__0"].ShouldBe("demo_api");
         settings["Coworkee__Auth__Clients__1__RedirectUris__0"].ShouldBe("{demo-airworks.bindings.https.url}/signin-oidc");
         settings["Coworkee__Auth__Clients__1__PostLogoutRedirectUris__0"].ShouldBe("{demo-airworks.bindings.https.url}/signout-callback-oidc");

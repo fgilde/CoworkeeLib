@@ -26,4 +26,7 @@ public sealed class AuthClientOptions
 
     /// <summary>Only administrators of the system organisation may sign in, e.g. for tools that see every organisation's data (Kibana).</summary>
     public bool SystemAdministratorsOnly { get; set; }
+
+    /// <summary>Someone signed in as another user ("Log in as") may use this client as that user; other clients refuse him (<c>access_denied</c>).</summary>
+    public bool AllowImpersonation { get; set; }
 }

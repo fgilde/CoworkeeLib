@@ -62,8 +62,14 @@ internal static class AuthEndpoints
         var stampClaim = context.RequestServices.GetRequiredService<IOptions<IdentityOptions>>().Value.ClaimsIdentity.SecurityStampClaimType;
         var impersonating = AuthImpersonation.IsImpersonating(cookie.Principal);
         if (cookie.Principal.FindFirstValue(stampClaim) != user.SecurityStamp || (user.LockoutEnabled && user.LockoutEnd > clock.GetUtcNow())
-            || (impersonating && !await ImpersonatorMayActAsync(db, cookie.Principal, clock)))
+            || (impersonating && !await AuthImpersonation.MayContinueAsync(context.RequestServices, cookie.Principal, user, context.RequestAborted)))
         {
+            // an impersonation that may not go on ends with its tokens; the impersonator signs in again himself
+            if (impersonating)
+            {
+                await AuthImpersonation.RevokeAsync(context.RequestServices, user.Id.ToString(), SessionOf(cookie), context.RequestAborted);
+            }
+
             await context.SignOutAsync(IdentityConstants.ApplicationScheme);
             return SignInFirst(context);
         }
@@ -74,12 +80,17 @@ internal static class AuthEndpoints
             return Results.Redirect("/Account/ChangePasswordRequired?returnUrl=" + Uri.EscapeDataString(ReturnUrl(context)));
         }
 
+        if (impersonating && !await AllowsImpersonationAsync(context, request))
+        {
+            return Results.Forbid(Error(Errors.AccessDenied, "This application cannot be used while signed in as another user."), [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]);
+        }
+
         if (!await MaySignInAsync(context, db, request, user))
         {
             return Results.Forbid(Error(Errors.AccessDenied, "Only administrators of the system organisation may use this application."), [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]);
         }
 
-        var consent = await ConsentAsync(context, request, user);
+        var consent = await ConsentAsync(context, request, user, impersonating);
         if (consent.Result is { } result)
         {
             return result;
@@ -102,10 +113,12 @@ internal static class AuthEndpoints
     internal static string? SessionOf(AuthenticateResult cookie) =>
         cookie.Properties?.Items.TryGetValue(OwnPassword.SessionItem, out var sid) == true ? sid : null;
 
-    // a deactivated or locked impersonator ends the impersonation as well
-    private static async Task<bool> ImpersonatorMayActAsync(CoworkeeDbContext db, ClaimsPrincipal principal, TimeProvider clock) =>
-        Guid.TryParse(principal.GetClaim(ImpersonationClaims.Impersonator), out var impersonatorId)
-        && await FindActiveAsync(db, impersonatorId) is { } impersonator && !(impersonator.LockoutEnabled && impersonator.LockoutEnd > clock.GetUtcNow());
+    private static async Task<bool> AllowsImpersonationAsync(HttpContext context, OpenIddictRequest request)
+    {
+        var applications = context.RequestServices.GetRequiredService<IOpenIddictApplicationManager>();
+        return await applications.FindByClientIdAsync(request.ClientId!, context.RequestAborted) is { } application
+               && (await applications.GetPropertiesAsync(application, context.RequestAborted)).ContainsKey(AuthImpersonation.AllowedProperty);
+    }
 
     private static async Task<bool> MaySignInAsync(HttpContext context, CoworkeeDbContext db, OpenIddictRequest request, User user)
     {
@@ -124,8 +137,11 @@ internal static class AuthEndpoints
                          select role.Id).AnyAsync(context.RequestAborted);
     }
 
-    /// <summary>Clients with explicit consent need the user's permanent authorization for the requested scopes; the consent page records it.</summary>
-    private static async Task<(IResult? Result, string? AuthorizationId)> ConsentAsync(HttpContext context, OpenIddictRequest request, User user)
+    /// <summary>
+    /// Clients with explicit consent need the user's permanent authorization for the requested scopes; the consent page records it.
+    /// Someone signed in as the user never consents for him: without the user's own grant the answer is <c>consent_required</c>.
+    /// </summary>
+    private static async Task<(IResult? Result, string? AuthorizationId)> ConsentAsync(HttpContext context, OpenIddictRequest request, User user, bool impersonating)
     {
         var applications = context.RequestServices.GetRequiredService<IOpenIddictApplicationManager>();
         var application = await applications.FindByClientIdAsync(request.ClientId!, context.RequestAborted)
@@ -143,7 +159,7 @@ internal static class AuthEndpoints
             return (null, await authorizations.GetIdAsync(granted, context.RequestAborted));
         }
 
-        if (request.HasPromptValue(PromptValues.None) || request[ConsentDenied] is not null)
+        if (impersonating || request.HasPromptValue(PromptValues.None) || request[ConsentDenied] is not null)
         {
             return (Results.Forbid(Error(Errors.ConsentRequired, "The user did not allow the application."), [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]), null);
         }
@@ -151,7 +167,7 @@ internal static class AuthEndpoints
         return (Results.Redirect("/Account/Consent?returnUrl=" + Uri.EscapeDataString(ReturnUrl(context))), null);
     }
 
-    private static async Task<IResult> TokenAsync(HttpContext context, CoworkeeDbContext db, IOptions<AuthServerOptions> options, TimeProvider clock)
+    private static async Task<IResult> TokenAsync(HttpContext context, CoworkeeDbContext db, IOptions<AuthServerOptions> options)
     {
         var request = context.GetOpenIddictServerRequest() ?? throw new InvalidOperationException("No OpenID Connect request.");
         if (request.IsClientCredentialsGrantType())
@@ -170,9 +186,14 @@ internal static class AuthEndpoints
         // a new security stamp (signed out everywhere, locked, new password) ends the refresh tokens issued before
         var stamp = result.Principal?.GetClaim(SessionStamp.ClaimType);
         var sid = result.Principal?.GetClaim(SessionStamp.SessionClaimType);
-        if (user is null || (stamp is not null && !SessionStamp.IsCurrent(new UserStamp(user.SecurityStamp, user.KeptSession), stamp, sid))
-            || (AuthImpersonation.IsImpersonating(result.Principal) && !await ImpersonatorMayActAsync(db, result.Principal!, clock)))
+        if (user is null || (stamp is not null && !SessionStamp.IsCurrent(new UserStamp(user.SecurityStamp, user.KeptSession), stamp, sid)))
         {
+            return Results.Forbid(Error(Errors.InvalidGrant, "The account is no longer allowed to sign in."), [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]);
+        }
+
+        if (AuthImpersonation.IsImpersonating(result.Principal) && !await AuthImpersonation.MayContinueAsync(context.RequestServices, result.Principal!, user, context.RequestAborted))
+        {
+            await AuthImpersonation.RevokeAsync(context.RequestServices, user.Id.ToString(), sid, context.RequestAborted);
             return Results.Forbid(Error(Errors.InvalidGrant, "The account is no longer allowed to sign in."), [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]);
         }
 
@@ -256,11 +277,15 @@ internal static class AuthEndpoints
             .SetClaim(SystemTenantClaim, await services.GetRequiredService<ITenantDirectory>().IsSystemTenantAsync(user.TenantId, CancellationToken.None) ? "true" : "false")
             .SetClaims(Claims.Role, [.. roles])
             .SetClaim(ImpersonationClaims.Impersonator, source.GetClaim(ImpersonationClaims.Impersonator))
-            .SetClaim(ImpersonationClaims.ImpersonatorName, source.GetClaim(ImpersonationClaims.ImpersonatorName));
+            .SetClaim(ImpersonationClaims.ImpersonatorName, source.GetClaim(ImpersonationClaims.ImpersonatorName))
+            .SetClaim(ImpersonationClaims.ImpersonatorStamp, source.GetClaim(ImpersonationClaims.ImpersonatorStamp))
+            .SetClaim(ImpersonationClaims.Started, source.GetClaim(ImpersonationClaims.Started));
 
         identity.SetScopes(scopes);
         identity.SetResources(await ResourcesAsync(services, scopes, options));
-        identity.SetDestinations(claim => claim.Type is SessionStamp.ClaimType or SessionStamp.SessionClaimType ? [Destinations.AccessToken] : [Destinations.AccessToken, Destinations.IdentityToken]);
+        identity.SetDestinations(claim => claim.Type is SessionStamp.ClaimType or SessionStamp.SessionClaimType or ImpersonationClaims.ImpersonatorStamp or ImpersonationClaims.Started
+            ? [Destinations.AccessToken]
+            : [Destinations.AccessToken, Destinations.IdentityToken]);
         return new ClaimsPrincipal(identity);
     }
 

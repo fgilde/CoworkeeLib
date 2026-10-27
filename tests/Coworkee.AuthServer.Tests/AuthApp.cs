@@ -37,6 +37,9 @@ public sealed class AuthApp : DatabaseFixture
 
     public CapturingDocumentStore Documents { get; } = new();
 
+    /// <summary>The app's clock; tests move it ahead, <see cref="SetupAsync"/> puts it back.</summary>
+    public ShiftedClock Clock { get; } = new();
+
     protected override string[] SchemasToExclude => ["hangfire"];
 
     public override async ValueTask InitializeAsync()
@@ -64,6 +67,7 @@ public sealed class AuthApp : DatabaseFixture
             ["Coworkee:Auth:Clients:0:Scopes:0"] = "test_api",
             ["Coworkee:Auth:Clients:0:ClientUri"] = "https://client.test/",
             ["Coworkee:Auth:Clients:0:Description"] = "The test app",
+            ["Coworkee:Auth:Clients:0:AllowImpersonation"] = "true",
             ["Coworkee:Auth:Clients:1:ClientId"] = ToolClientId,
             ["Coworkee:Auth:Clients:1:ClientSecret"] = "tool-secret",
             ["Coworkee:Auth:Clients:1:RedirectUris:0"] = ToolRedirectUri,
@@ -98,6 +102,7 @@ public sealed class AuthApp : DatabaseFixture
         });
         // changes made in the app (the sign-in design) reach the options like in a real deployment
         builder.Configuration.AddCoworkeeDatabaseConfiguration("test", TimeSpan.FromHours(1));
+        builder.Services.AddSingleton<TimeProvider>(Clock);
         builder.AddCoworkee<TestAuthModule>();
 
         // an API next to the auth server, validating its access tokens like the real API does
@@ -122,6 +127,13 @@ public sealed class AuthApp : DatabaseFixture
         App.MapGet("/test/api", (System.Security.Claims.ClaimsPrincipal user) => user.FindFirst("sub")?.Value)
             .RequireAuthorization(new Microsoft.AspNetCore.Authorization.AuthorizeAttribute { AuthenticationSchemes = "Bearer" });
         App.MapGet("/test/me", (ICurrentUser user) => new { user.UserId, user.ClientId, user.TenantId })
+            .RequireAuthorization(new Microsoft.AspNetCore.Authorization.AuthorizeAttribute { AuthenticationSchemes = "Bearer" });
+        // a change through the api with a real access token, for the audit trail
+        App.MapPost("/test/audit", async (AuthTestDbContext db, ICurrentUser user) =>
+            {
+                db.Add(new Coworkee.Identity.Domain.UserGroup { Name = "Audited " + Guid.NewGuid(), TenantId = user.TenantId!.Value });
+                await db.SaveChangesAsync();
+            })
             .RequireAuthorization(new Microsoft.AspNetCore.Authorization.AuthorizeAttribute { AuthenticationSchemes = "Bearer" });
         App.MapGet("/test/clients", (Coworkee.Application.Messaging.IDispatcher dispatcher, CancellationToken ct) =>
                 Coworkee.AspNetCore.Http.ResultHttpExtensions.ToHttpResult(dispatcher.SendAsync(new Clients.GetClients(), ct)))
@@ -154,6 +166,7 @@ public sealed class AuthApp : DatabaseFixture
     public async Task<SetupResultDto> SetupAsync()
     {
         await ResetAsync();
+        Clock.Shift = TimeSpan.Zero;
         Mails.Sent.Clear();
         Documents.Saved.Clear();
         await App.Services.GetRequiredService<Microsoft.Extensions.Caching.Hybrid.HybridCache>().RemoveByTagAsync("coworkee:settings");
@@ -213,6 +226,13 @@ public sealed class TestAuthModule : CoworkeeModule
     public override void ConfigureServices(ModuleServiceContext context) =>
         context.Services.AddCoworkeeDbContext<AuthTestDbContext>((provider, options) =>
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
+}
+
+public sealed class ShiftedClock : TimeProvider
+{
+    public TimeSpan Shift { get; set; }
+
+    public override DateTimeOffset GetUtcNow() => base.GetUtcNow() + Shift;
 }
 
 public sealed record CapturedMail(string To, string Template, object Model);

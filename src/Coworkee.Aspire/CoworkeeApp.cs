@@ -149,7 +149,7 @@ public sealed partial class CoworkeeApp
         where TProject : IProjectMetadata, new()
     {
         var auth = Require(AuthServer, nameof(AddAuthServer), nameof(AddWeb));
-        var web = BffClient<TProject>(suffix, Title, nameof(AddWeb))
+        var web = BffClient<TProject>(suffix, Title, nameof(AddWeb), allowImpersonation: true)
             .WithSettings(s => s.Coworkee.Bff.ForwardedPrefixes, "/admin/jobs", "/hubs")
             .WithSetting(s => s.Coworkee.Bff.Pwa.Name, Title);
         if (Options.LogoUrl is { } icon && icon.StartsWith('/'))
@@ -228,8 +228,11 @@ public sealed partial class CoworkeeApp
 
     private const string ElsaStudioUrl = "Coworkee__Workflows__Elsa__StudioUrl";
 
-    /// <summary>A host with Coworkee.Bff: signs in at the auth server as the next of its clients and forwards to the first api.</summary>
-    private IResourceBuilder<ProjectResource> BffClient<TProject>(string suffix, string displayName, string caller)
+    /// <summary>
+    /// A host with Coworkee.Bff: signs in at the auth server as the next of its clients and forwards to the first api.
+    /// <paramref name="allowImpersonation"/>: "Log in as" works there (the app itself); other clients turn an impersonator away.
+    /// </summary>
+    private IResourceBuilder<ProjectResource> BffClient<TProject>(string suffix, string displayName, string caller, bool allowImpersonation = false)
         where TProject : IProjectMetadata, new()
     {
         var auth = Require(AuthServer, nameof(AddAuthServer), caller);
@@ -256,6 +259,11 @@ public sealed partial class CoworkeeApp
             .WithSetting(s => s.Coworkee.Auth.Clients[index].ClientUri, redirect)
             .WithSetting(s => s.Coworkee.Auth.Clients[index].RedirectUris[0], ReferenceExpression.Create($"{redirect}/signin-oidc"))
             .WithSetting(s => s.Coworkee.Auth.Clients[index].PostLogoutRedirectUris[0], ReferenceExpression.Create($"{redirect}/signout-callback-oidc"));
+        if (allowImpersonation)
+        {
+            auth.WithSetting(s => s.Coworkee.Auth.Clients[index].AllowImpersonation, true);
+        }
+
         return host;
     }
 

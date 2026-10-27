@@ -3,6 +3,7 @@ using Coworkee.Contracts.Identity;
 using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
 using Coworkee.Identity.Users;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -19,7 +20,8 @@ namespace Coworkee.AuthServer.Pages.Account;
 /// </summary>
 [Authorize(AuthenticationSchemes = "Identity.Application")]
 public sealed class ImpersonateModel(
-    ImpersonationTickets tickets, ImpersonationRules rules, SignInManager<User> signIn, UserManager<User> users, ILogger<ImpersonateModel> logger) : PageModel
+    ImpersonationTickets tickets, ImpersonationRules rules, SignInManager<User> signIn, UserManager<User> users, TimeProvider clock, ILogger<ImpersonateModel> logger)
+    : PageModel
 {
     public string? Problem { get; private set; }
 
@@ -41,11 +43,9 @@ public sealed class ImpersonateModel(
             return Fail(StatusCodes.Status403Forbidden, T("You may not sign in as this user."));
         }
 
-        await signIn.SignInWithClaimsAsync(target, isPersistent: false,
-        [
-            new Claim(ImpersonationClaims.Impersonator, impersonator.Id.ToString()),
-            new Claim(ImpersonationClaims.ImpersonatorName, AuthEndpoints.DisplayName(impersonator)),
-        ]);
+        // the impersonation itself never outlives the browser; "Back to my account" restores a persistent own sign-in
+        var persistent = (await HttpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme)).Properties?.IsPersistent == true;
+        await signIn.SignInWithClaimsAsync(target, isPersistent: false, AuthImpersonation.StartClaims(impersonator, persistent, clock.GetUtcNow()));
         logger.Started(impersonator.Id, target.Id, redeemed.TenantId);
         return Redirect(returnUrl!);
     }

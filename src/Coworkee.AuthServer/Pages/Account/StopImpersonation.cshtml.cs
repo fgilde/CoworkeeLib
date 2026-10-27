@@ -12,7 +12,10 @@ using Microsoft.Extensions.Logging;
 
 namespace Coworkee.AuthServer.Pages.Account;
 
-/// <summary>Ends "Log in as": revokes what the impersonation got and signs the impersonator in again.</summary>
+/// <summary>
+/// Ends "Log in as": revokes what the impersonation got and signs the impersonator in again, unless he signed out everywhere, changed his password,
+/// was locked or deactivated since: then the browser is signed out.
+/// </summary>
 [Authorize(AuthenticationSchemes = "Identity.Application")]
 public sealed class StopImpersonationModel(SignInManager<User> signIn, UserManager<User> users, ILogger<StopImpersonationModel> logger) : PageModel
 {
@@ -56,9 +59,10 @@ public sealed class StopImpersonationModel(SignInManager<User> signIn, UserManag
         var sid = AuthEndpoints.SessionOf(await HttpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme));
         var revoked = await AuthImpersonation.RevokeAsync(HttpContext.RequestServices, userId, sid, HttpContext.RequestAborted);
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
-        if (await users.FindByIdAsync(impersonatorId.ToString()) is { IsActive: true } impersonator)
+        if (await AuthImpersonation.ImpersonatorAsync(HttpContext.RequestServices, User, HttpContext.RequestAborted) is not null
+            && await users.FindByIdAsync(impersonatorId.ToString()) is { } impersonator)
         {
-            await signIn.SignInAsync(impersonator, isPersistent: false);
+            await signIn.SignInAsync(impersonator, isPersistent: User.HasClaim(AuthImpersonation.PersistentClaim, "true"));
         }
         else
         {

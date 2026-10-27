@@ -13,6 +13,9 @@ public sealed class AuthServerOptions
 
     public TimeSpan AccessTokenLifetime { get; set; } = TimeSpan.FromMinutes(15);
 
+    /// <summary>How long "Log in as" lasts at most; after it, the next authorization or token refresh ends the impersonation.</summary>
+    public TimeSpan MaxImpersonationDuration { get; set; } = TimeSpan.FromHours(8);
+
     public Dictionary<string, string> ApiScopes { get; set; } = new(StringComparer.Ordinal);
 
     public List<AuthClientOptions> Clients { get; set; } = [];
