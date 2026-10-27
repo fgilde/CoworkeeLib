@@ -48,6 +48,7 @@ public sealed class WebhookOptions
     public WebhookOptions Entity<TEntity>()
         where TEntity : class
     {
+        Coworkee.OData.ODataEntityAccess.RequireGuidId<TEntity>("Webhook entity events");
         Entities.Add(typeof(TEntity));
         return this;
     }

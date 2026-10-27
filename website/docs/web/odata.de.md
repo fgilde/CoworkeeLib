@@ -23,6 +23,16 @@ public sealed class MyAppCatalogModule : CoworkeeModule
 
 Die Berechtigung des Sets wird bei jedem Aufruf geprüft, Mandanten- und Soft-Delete-Filter gelten wie überall. `$top` ist auf 1000 begrenzt (`Coworkee:OData:MaxTop`); ungültige Abfragen beantworten `400` mit Problem Details.
 
+### Schlüssel außer `Id`
+
+Ein Set mit einer anderen Schlüsseleigenschaft, von beliebigem primitivem Typ, nennt sie mit `Key`:
+
+```csharp
+services.AddODataEntity<Country>("Countries", MasterDataPermissions.View, o => o.Key(c => c.IsoAlpha2Code));
+```
+
+`GET /odata/Countries('DE')` liest eine Zeile (`/odata/Ranks(2)` bei einem Zahlenschlüssel). Listen, `$count`, Facetten, die globale Suche (die Id des Treffers ist der Schlüssel), Exporte, Berichte und `query_data` funktionieren wie bei jedem Set. Funktionen, die Zeilen über eine Guid-`Id` ansprechen, weisen eine Entity ohne sie schon bei der Registrierung ab: Datensatz-Anhänge, Social (Kommentare, Tags, Bewertungen, Reaktionen), Workflows, Entity-Historie und Webhook-Entity-Ereignisse. Client-Entities lassen solche Sets auf dem Server. Eine Entity, die neben einem anderen OData-Schlüssel eine Guid-`Id` behält, hat sie alle weiterhin.
+
 Namen in der URI passen unabhängig von Groß- und Kleinschreibung, ein camelCase-Client darf also `$filter=name eq 'x'`, `$orderby=price` oder `$expand=brand` senden; `Coworkee:OData:CaseInsensitive` (Standard `true`) schaltet das ab. Antworten behalten die Namen der C#-Eigenschaften (`Name`); ein Client, der camelCase-JSON möchte, bildet sie selbst ab. Abfrageoptionen brauchen ihr `$`: `filter=` wird nicht gelesen.
 
 ## Facetten

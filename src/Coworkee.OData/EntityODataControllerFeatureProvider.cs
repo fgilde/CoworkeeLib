@@ -10,7 +10,9 @@ internal sealed class EntityODataControllerFeatureProvider(ODataEntityRegistry r
     {
         foreach (var entity in registry.Entities)
         {
-            var controller = typeof(EntityODataController<>).MakeGenericType(entity.EntityType).GetTypeInfo();
+            var controller = (entity.KeyType == typeof(Guid)
+                ? typeof(EntityODataController<>).MakeGenericType(entity.EntityType)
+                : typeof(EntityODataController<,>).MakeGenericType(entity.EntityType, entity.KeyType)).GetTypeInfo();
             if (!feature.Controllers.Contains(controller))
             {
                 feature.Controllers.Add(controller);

@@ -97,6 +97,7 @@ public static class RecordAttachmentServiceCollectionExtensions
     public static IServiceCollection AddRecordAttachments<TEntity>(this IServiceCollection services, string entityType, Action<RecordAttachmentType> configure)
         where TEntity : class
     {
+        Coworkee.OData.ODataEntityAccess.RequireGuidId<TEntity>("Record attachments");
         if (services.FirstOrDefault(d => d.ServiceType == typeof(RecordAttachmentOptions))?.ImplementationInstance is not RecordAttachmentOptions options)
         {
             options = new RecordAttachmentOptions();

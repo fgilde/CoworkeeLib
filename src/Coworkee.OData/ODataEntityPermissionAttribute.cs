@@ -17,7 +17,7 @@ internal sealed class ODataEntityPermissionAttribute : Attribute, IAsyncActionFi
             return;
         }
 
-        var entityType = ((ControllerActionDescriptor)context.ActionDescriptor).ControllerTypeInfo.GenericTypeArguments.Single();
+        var entityType = ((ControllerActionDescriptor)context.ActionDescriptor).ControllerTypeInfo.GenericTypeArguments[0];
         if (!await ODataEntityAccess.IsGrantedAsync(context.HttpContext.RequestServices, entityType, context.HttpContext.RequestAborted))
         {
             context.Result = new ForbidResult();

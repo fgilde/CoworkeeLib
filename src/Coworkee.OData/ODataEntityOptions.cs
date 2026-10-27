@@ -10,6 +10,18 @@ public sealed class ODataEntityOptions<TEntity>
 
     internal Dictionary<string, string> Protected { get; } = [];
 
+    internal string? KeyName { get; private set; }
+
+    /// <summary>
+    /// The key of the set when it is not <c>Id</c>, e.g. <c>o =&gt; o.Key(c =&gt; c.IsoCode)</c>: any primitive type, by-key reads are
+    /// <c>/odata/Countries('DE')</c>. Features that need a Guid <c>Id</c> (client entities, attachments, social, workflows, history, webhooks) refuse such an entity.
+    /// </summary>
+    public ODataEntityOptions<TEntity> Key(Expression<Func<TEntity, object?>> property)
+    {
+        KeyName = ODataServiceCollectionExtensions.PropertyName(property);
+        return this;
+    }
+
     /// <summary>Out of the EDM for everyone: never serialized, filtered or sorted on.</summary>
     public ODataEntityOptions<TEntity> Hide(params Expression<Func<TEntity, object?>>[] properties)
     {

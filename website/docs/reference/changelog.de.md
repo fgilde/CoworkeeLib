@@ -4,6 +4,11 @@
 
 ## Unveröffentlicht
 
+### Hinzugefügt
+
+- OData: `Coworkee:OData:CaseInsensitive` (`CoworkeeODataOptions.CaseInsensitive`, Standard `true`) legt fest, ob Namen in OData-URIs unabhängig von der Schreibweise passen (`$filter=name eq 'x'`); bisher war das immer an. Siehe [OData](../web/odata.md).
+- OData: `AddODataEntity<T>(..., o => o.Key(c => c.IsoCode))` registriert ein Set mit einer anderen Schlüsseleigenschaft beliebigen primitiven Typs; Einzelabfragen sind `/odata/Countries('DE')`. Datensatz-Anhänge, Social, Workflows, Entity-Historie und Webhook-Entity-Ereignisse weisen Entities ohne Guid-`Id` bei der Registrierung ab; Client-Entities überspringen solche Sets. Siehe [OData](../web/odata.md#schlussel-auer-id).
+
 ### Geändert
 
 - `CodeCompletion.InsertText` ist jetzt der ganze Text samt Auslöser (`{{ name }}` statt ` name }}`): Die Auswahl ersetzt, was vom `CompletionTrigger` getippt ist, und die schließenden Klammern, die Monaco ergänzt hat, und Strg+Leertaste fügt überall einen vollständigen Text ein. Neues Flag `Snippet` für Monaco-Snippets (`{{ if $1 }}`). Eigene Vorschläge für `CodeEditor` brauchen den Auslöser im Text.
@@ -21,7 +26,6 @@
 - Sicherheit, OData: Zeilenfilter und Set-Berechtigungen gelten jetzt auch für Navigationen. `$expand` zeigt nur die Zeilen, die das Ziel-Set dem Benutzer auflistet (eine ausgeblendete einzelne Navigation ist `null`), `$filter` mit `any`/`all`/`$count` und `$orderby` über eine Navigation sehen nur sichtbare Zeilen, auch in Exporten, `query_data`, Facettenfiltern, `ODataEntityAccess.FilteredAsync` und der globalen Suche. `$expand` in ein Set ohne dessen Berechtigung antwortet `403`, in einen Typ, dessen `IODataEntityFilter<T>` mehr als `Where` tut (`OrderBy`, `Take`, eine neue Abfrage), `400`. Solche Filter sollten einfache `Where`-Aufrufe werden, wenn ihr Typ über Navigationen erreicht wird. `ODataNavigationScope` wendet die Regeln auf eigene Abfragen an. Siehe [OData](../web/odata.md#navigationen-folgen-ihrem-ziel).
 - Sicherheit, Berichte: Felder über eine Navigation (`Customer/Name`) gruppieren und aggregieren nur über die Zeilen, die das Ziel-Set dem Benutzer zeigt; ein ausgeblendetes Ziel zählt als leer. Bisher galt nur die Berechtigung des Sets. Tabellen-Widgets und Abo-Tabellen lesen sie genauso.
 - OData: `Hide` und `HideUnless` wirken für Member, die eine Basisklasse deklariert, auch wenn das EDM den Basistyp zwischen Sets teilt (eine Navigation zeigt auf die Basis): der Member bleibt im Modell und wird nur auf dem ausblendenden Set abgewiesen (`403`), mit einer Warnung beim Start. Geschützte Eigenschaften werden nach dem eigenen Typ der Zeile geprüft, so dass ein `HideUnless` auf einer geerbten Eigenschaft in Listen und expandierten Zeilen hält. Siehe [OData](../web/odata.md#eigenschaften-ausblenden).
-- OData: `Coworkee:OData:CaseInsensitive` (`CoworkeeODataOptions.CaseInsensitive`, Standard `true`) legt fest, ob Namen in OData-URIs unabhängig von der Schreibweise passen (`$filter=name eq 'x'`); bisher war das immer an. Siehe [OData](../web/odata.md).
 - OData-Antworten mit `400` tragen die Meldung des Abfragefehlers in `detail`.
 - Sicherheit, OData: Abfrageoptionen ohne `$` (`filter=`, `orderby=`) werden nicht mehr gelesen; sie umgingen die Prüfung geschützter Eigenschaften. Clients senden `$filter`.
 

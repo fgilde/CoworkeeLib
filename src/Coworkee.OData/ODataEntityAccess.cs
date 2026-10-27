@@ -78,6 +78,15 @@ public static class ODataEntityAccess
         return query;
     }
 
+    /// <summary>Refuses an entity without a Guid <c>Id</c> (e.g. a set keyed with <c>Key(...)</c>) for a feature that addresses rows by it.</summary>
+    public static void RequireGuidId<TEntity>(string feature)
+    {
+        if (typeof(TEntity).GetProperty("Id")?.PropertyType != typeof(Guid))
+        {
+            throw new InvalidOperationException($"{feature} needs a Guid Id property on {typeof(TEntity).Name}; entities keyed otherwise cannot use it.");
+        }
+    }
+
     /// <summary>
     /// The ids of the rows the current user may open (guards: attachments, social, children), whatever groups he selected: through the
     /// entity's registered set (null without the set's permission), without a set (or without the OData module) every row the app's DbContext
@@ -86,6 +95,7 @@ public static class ODataEntityAccess
     public static async Task<IQueryable<Guid>?> VisibleIdsAsync<TEntity>(IServiceProvider services, CancellationToken cancellationToken)
         where TEntity : class
     {
+        RequireGuidId<TEntity>("Opening rows by id");
         if (services.GetService<ODataEntityRegistry>()?.Find(typeof(TEntity)) is null)
         {
             return services.DbContextFor(typeof(TEntity)) is CoworkeeDbContext db ? db.Set<TEntity>().Select(e => EF.Property<Guid>(e, "Id")) : null;

@@ -70,12 +70,16 @@ public sealed class SocialOptions
     }
 
     private static SocialTarget For<TEntity>(Func<Guid, string>? link)
-        where TEntity : class => new(
-        ODataEntityAccess.VisibleIdsAsync<TEntity>,
-        typeof(IAuditable).IsAssignableFrom(typeof(TEntity))
-            ? (db, id, cancellationToken) => db.Set<TEntity>().Where(e => EF.Property<Guid>(e, "Id") == id).Select(e => EF.Property<Guid?>(e, nameof(IAuditable.CreatedBy))).FirstOrDefaultAsync(cancellationToken)
-            : null,
-        link);
+        where TEntity : class
+    {
+        ODataEntityAccess.RequireGuidId<TEntity>("Social");
+        return new(
+            ODataEntityAccess.VisibleIdsAsync<TEntity>,
+            typeof(IAuditable).IsAssignableFrom(typeof(TEntity))
+                ? (db, id, cancellationToken) => db.Set<TEntity>().Where(e => EF.Property<Guid>(e, "Id") == id).Select(e => EF.Property<Guid?>(e, nameof(IAuditable.CreatedBy))).FirstOrDefaultAsync(cancellationToken)
+                : null,
+            link);
+    }
 }
 
 public static class SocialServiceCollectionExtensions

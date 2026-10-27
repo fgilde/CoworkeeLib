@@ -55,7 +55,7 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
         foreach (var entity in registry.Entities)
         {
             var type = builder.AddEntityType(entity.EntityType);
-            type.HasKey(entity.EntityType.GetProperty("Id") ?? throw new InvalidOperationException($"{entity.EntityType.Name} needs an Id property for OData."));
+            type.HasKey(entity.EntityType.GetProperty(entity.Key) ?? throw new InvalidOperationException($"{entity.EntityType.Name} needs a {entity.Key} property as the key of its OData set."));
             foreach (var hidden in entity.HiddenProperties)
             {
                 type.RemoveProperty(entity.EntityType.GetProperty(hidden)!);

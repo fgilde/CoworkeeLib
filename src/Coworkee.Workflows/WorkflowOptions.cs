@@ -10,6 +10,7 @@ public sealed class WorkflowOptions
     public WorkflowOptions Entity<TEntity>(string entityType, Action<EntityWorkflow<TEntity>> configure)
         where TEntity : class
     {
+        Coworkee.OData.ODataEntityAccess.RequireGuidId<TEntity>("Workflows");
         var workflow = new EntityWorkflow<TEntity>(entityType);
         configure(workflow);
         workflow.Validate();

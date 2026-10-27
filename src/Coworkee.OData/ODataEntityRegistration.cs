@@ -5,6 +5,13 @@ public sealed record ODataEntityRegistration(Type EntityType, string EntitySet, 
     /// <summary>Properties only users with the permission see (property name to permission); for everyone else they are hidden.</summary>
     public IReadOnlyDictionary<string, string> ProtectedProperties { get; init; } = new Dictionary<string, string>();
 
+    /// <summary>The key property of the set, <c>Id</c> unless <see cref="ODataEntityOptions{TEntity}.Key"/> named another.</summary>
+    public string Key { get; init; } = "Id";
+
+    internal bool HasGuidId => Key == "Id" && EntityType.GetProperty("Id")?.PropertyType == typeof(Guid);
+
+    internal Type KeyType => EntityType.GetProperty(Key)?.PropertyType ?? throw new InvalidOperationException($"{EntityType.Name} needs a {Key} property as the key of its OData set.");
+
     /// <summary>
     /// Hidden properties the EDM keeps: a base type other sets share declares them, so they cannot leave the model of this set alone.
     /// They are denied to everyone on this set, like a <see cref="ProtectedProperties"/> entry nobody holds the permission of.

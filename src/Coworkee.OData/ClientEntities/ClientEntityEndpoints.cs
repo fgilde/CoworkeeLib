@@ -40,7 +40,8 @@ internal static class ClientEntityEndpoints
         var options = services.GetRequiredService<IOptions<ClientEntityOptions>>().Value;
         var maxTop = services.GetRequiredService<IOptions<CoworkeeODataOptions>>().Value.MaxTop;
         var sets = new List<ClientEntitySetInfo>();
-        foreach (var entity in services.GetRequiredService<ODataEntityRegistry>().Entities)
+        // the copy tracks rows by their Guid Id: sets keyed otherwise stay on the server
+        foreach (var entity in services.GetRequiredService<ODataEntityRegistry>().Entities.Where(e => e.HasGuidId))
         {
             if (options.Resolve(entity.EntityType) is { } settings && await ODataEntityAccess.IsGrantedAsync(services, entity.EntityType, http.RequestAborted))
             {
@@ -71,7 +72,7 @@ internal static class ClientEntityEndpoints
         var services = http.RequestServices;
         var entity = services.GetRequiredService<ODataEntityRegistry>().Entities
             .FirstOrDefault(e => string.Equals(e.EntitySet, entitySet, StringComparison.OrdinalIgnoreCase));
-        if (entity is null || services.GetRequiredService<IOptions<ClientEntityOptions>>().Value.Resolve(entity.EntityType) is not { } settings)
+        if (entity is not { HasGuidId: true } || services.GetRequiredService<IOptions<ClientEntityOptions>>().Value.Resolve(entity.EntityType) is not { } settings)
         {
             return Results.NotFound();
         }

@@ -4,6 +4,11 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Added
+
+- OData: `Coworkee:OData:CaseInsensitive` (`CoworkeeODataOptions.CaseInsensitive`, default `true`) sets whether names in OData URIs match regardless of case (`$filter=name eq 'x'`); it was always on. See [OData](../web/odata.md).
+- OData: `AddODataEntity<T>(..., o => o.Key(c => c.IsoCode))` registers a set keyed by another property of any primitive type; by-key reads are `/odata/Countries('DE')`. Record attachments, social, workflows, entity history and webhook entity events refuse entities without a Guid `Id` at registration; client entities skip such sets. See [OData](../web/odata.md#keys-other-than-id).
+
 ### Changed
 
 - `CodeCompletion.InsertText` is the whole text now, trigger included (`{{ name }}` instead of ` name }}`): a pick replaces what was typed of `CompletionTrigger` and the closing brackets Monaco added, and Ctrl+Space inserts a complete text anywhere. New `Snippet` flag for Monaco snippets (`{{ if $1 }}`). Own completions passed to `CodeEditor` need the trigger in their text.
@@ -21,7 +26,6 @@ Changes that need action in apps built on Coworkee. Newest first.
 - Security, OData: row filters and set permissions now hold for navigations too. `$expand` shows only the rows the target set lists for the user (a hidden single navigation is `null`), `$filter` with `any`/`all`/`$count` and `$orderby` through a navigation see only visible rows, also in exports, `query_data`, facet filters, `ODataEntityAccess.FilteredAsync` and the global search. `$expand` into a set without its permission answers `403`; into a type whose `IODataEntityFilter<T>` does more than `Where` (`OrderBy`, `Take`, a new query) `400`. Make such filters plain `Where` calls if their type is reached through navigations. `ODataNavigationScope` applies the rules to own queries. See [OData](../web/odata.md#navigations-follow-their-target).
 - Security, reports: fields through a navigation (`Customer/Name`) group and aggregate only over the rows the target set shows the user; a hidden target counts as empty. Before, only the set's permission applied. Table widgets and subscription sheets read them the same way.
 - OData: `Hide` and `HideUnless` work for members a base class declares, also when the EDM shares the base type between sets (a navigation points to the base): the member stays in the model and is refused on the hiding set only (`403`), with a warning at startup. Protected properties are checked by the row's own type, so a `HideUnless` on an inherited property holds in lists and expanded rows. See [OData](../web/odata.md#hiding-properties).
-- OData: `Coworkee:OData:CaseInsensitive` (`CoworkeeODataOptions.CaseInsensitive`, default `true`) sets whether names in OData URIs match regardless of case (`$filter=name eq 'x'`); it was always on. See [OData](../web/odata.md).
 - OData `400` answers carry the message of the query error in `detail`.
 - Security, OData: query options without `$` (`filter=`, `orderby=`) are no longer read; they slipped past the checks of protected properties. Clients send `$filter`.
 

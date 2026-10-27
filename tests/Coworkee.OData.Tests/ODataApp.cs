@@ -116,6 +116,12 @@ internal sealed class GadgetModelContributor : IModelContributor
         modelBuilder.Entity<Box>();
         modelBuilder.Entity<Bag>();
         modelBuilder.Entity<Sticker>(sticker => sticker.ToTable("Stickers"));
+        modelBuilder.Entity<Country>(country => country.ToTable("Countries").HasKey(c => c.IsoCode));
+        modelBuilder.Entity<Rank>(rank =>
+        {
+            rank.ToTable("Ranks").HasKey(r => r.Number);
+            rank.Property(r => r.Number).ValueGeneratedNever();
+        });
     }
 }
 
@@ -160,6 +166,9 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.AddScoped<IODataEntityFilter<Box>, HideSecretBoxes>();
         context.Services.AddODataEntity<Bag>("Bags", ODataApp.ViewGadgets);
         context.Services.AddODataEntity<Sticker>("Stickers", ODataApp.ViewGadgets);
+        context.Services.AddODataEntity<Country>("Countries", ODataApp.ViewGadgets, o => o.Key(c => c.IsoCode));
+        context.Services.AddGlobalSearch<Country>(s => s.Fields(c => c.Name).Page("/countries"));
+        context.Services.AddODataEntity<Rank>("Ranks", ODataApp.ViewGadgets, o => o.Key(r => r.Number));
         context.Services.AddDbContext<ParcelDbContext>((provider, options) =>
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
         context.Services.AddCoworkeeExternalDbContext<ParcelDbContext>();

@@ -83,6 +83,9 @@ public static class EntityHistoryServiceCollectionExtensions
     public static IServiceCollection AddEntityHistory<TEntity, TResult>(
         this IServiceCollection services, string entitySet, string restorePermission, Func<TEntity, IRequest<TResult>> toCommand)
         where TEntity : class
-        where TResult : Result =>
-        services.AddSingleton<EntityHistoryRegistration>(new EntityHistoryRegistration<TEntity, TResult>(entitySet, restorePermission, toCommand));
+        where TResult : Result
+    {
+        Coworkee.OData.ODataEntityAccess.RequireGuidId<TEntity>("Entity history");
+        return services.AddSingleton<EntityHistoryRegistration>(new EntityHistoryRegistration<TEntity, TResult>(entitySet, restorePermission, toCommand));
+    }
 }

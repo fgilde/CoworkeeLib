@@ -23,6 +23,16 @@ public sealed class MyAppCatalogModule : CoworkeeModule
 
 The permission of the set is checked on every call, tenants and soft delete filters apply as everywhere. `$top` is capped at 1000 (`Coworkee:OData:MaxTop`); invalid queries answer `400` with problem details.
 
+### Keys other than `Id`
+
+A set keyed by another property, of any primitive type, names it with `Key`:
+
+```csharp
+services.AddODataEntity<Country>("Countries", MasterDataPermissions.View, o => o.Key(c => c.IsoAlpha2Code));
+```
+
+`GET /odata/Countries('DE')` reads one row (`/odata/Ranks(2)` for a number key). Lists, `$count`, facets, the global search (the hit's id is the key), exports, reports and `query_data` work as for any set. Features that address rows by a Guid `Id` refuse an entity without one when they are registered: record attachments, social (comments, tags, ratings, reactions), workflows, entity history and webhook entity events. Client entities leave such sets on the server. An entity that keeps a Guid `Id` next to another OData key still has them all.
+
 Names in the URI match regardless of case, so a camelCase client may send `$filter=name eq 'x'`, `$orderby=price` or `$expand=brand`; `Coworkee:OData:CaseInsensitive` (default `true`) turns that off. Responses keep the names of the C# properties (`Name`); a client that wants camelCase JSON maps them itself. Query options need their `$`: `filter=` is not read.
 
 ## Facets

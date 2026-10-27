@@ -135,6 +135,8 @@ public class EntityODataController<TEntity> : GenericODataController<TEntity>, I
 
     protected override FacetBuilderOptions GetFacetBuilderOptions() => FacetLiterals.Options();
 
+    protected override string IdPropertyName => Get<ODataEntityRegistry>().Find(typeof(TEntity))?.Key ?? base.IdPropertyName;
+
     private ODataNavigationScope Scope => (ODataNavigationScope)HttpContext.Items[ScopedEnableQueryAttribute.ScopeItem]!;
 
     protected override IQueryable<TEntity> Queryable() => _visible ?? throw new InvalidOperationException("The query is prepared before the action runs.");

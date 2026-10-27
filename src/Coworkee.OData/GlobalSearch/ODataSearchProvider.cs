@@ -30,7 +30,7 @@ internal sealed class ODataSearchProvider<T> : IGlobalSearchProvider
     {
         _registry = registry;
         _options = options;
-        _id = typeof(T).GetProperty("Id") ?? throw new InvalidOperationException($"{typeof(T).Name} needs an Id property for the global search.");
+        _id = typeof(T).GetProperty(Registration.Key) ?? throw new InvalidOperationException($"{typeof(T).Name} needs a {Registration.Key} property for the global search.");
         _fields = [.. options.SearchFields.Select(f => f.Compile())];
         var hidden = options.SearchFields.Select(MemberName).Intersect(Registration.HiddenProperties).ToList();
         if (hidden.Count > 0)
@@ -140,10 +140,10 @@ internal sealed class ODataSearchProvider<T> : IGlobalSearchProvider
     // a member of a constant becomes a SQL parameter, a bare constant would be inlined into the statement
     private static MemberExpression Parameter(string value) => Expression.Property(Expression.Constant(new Text(value)), nameof(Text.Value));
 
-    private static Expression<Func<T, bool>> IdIs(Guid id)
+    private Expression<Func<T, bool>> IdIs(Guid id)
     {
         var row = Expression.Parameter(typeof(T), "row");
-        return Expression.Lambda<Func<T, bool>>(Expression.Equal(Expression.Property(row, "Id"), Expression.Constant(id)), row);
+        return Expression.Lambda<Func<T, bool>>(Expression.Equal(Expression.Property(row, _id), Expression.Constant(id)), row);
     }
 
     private static string MemberName(Expression<Func<T, string?>> field) =>
