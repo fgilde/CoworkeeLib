@@ -69,6 +69,12 @@ public abstract class CoworkeeDbContext(DbContextOptions options, ICurrentUser c
                 property.SetCollation(SqlServerCollation);
             }
 
+            // index filters write booleans as TRUE (Postgres, SQLite); a bit column of SQL Server compares with 1
+            foreach (var index in modelBuilder.Model.GetEntityTypes().SelectMany(t => t.GetIndexes()).Where(i => i.GetFilter()?.Contains("= TRUE", StringComparison.Ordinal) == true))
+            {
+                index.SetFilter(index.GetFilter()!.Replace("= TRUE", "= 1", StringComparison.Ordinal));
+            }
+
             // ponytail: SQL Server refuses cascades on self references (comment replies); EF deletes the loaded children, a bulk delete of a parent with children fails
             foreach (var key in modelBuilder.Model.GetEntityTypes().SelectMany(t => t.GetForeignKeys())
                          .Where(k => k.PrincipalEntityType == k.DeclaringEntityType && k.DeleteBehavior == DeleteBehavior.Cascade))

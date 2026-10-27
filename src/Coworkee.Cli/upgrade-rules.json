@@ -336,7 +336,7 @@
         "Notifications: cw.PendingNotificationMails.Key is required and unique with UserId and Type, cw.PendingNotificationMails gets Version; add a migration.",
         "Exports: cw.DataTransferJobs gets StartedAt and its Status is a concurrency token; add a migration.",
         "Notifications: cw.Notifications gets Mailed (the daily digest leaves out notifications mailed on their own); add a migration.",
-        "Group owners, default group and default roles: cw.GroupMembers gets IsOwner, cw.Groups and cw.Roles get IsDefault; add a migration. IGroupScope has the new members DefaultGroupIdAsync and OwnersAsync, ICoworkeeApi SetGroupOwnersAsync, GetDefaultGroupIdAsync and SetDefaultGroupAsync."
+        "Group owners, default group and default roles: cw.GroupMembers gets IsOwner, cw.Groups and cw.Roles get IsDefault, cw.Groups the unique index IX_Groups_TenantId_IsDefault (one default group per tenant); add a migration. The Groups OData set has no Members any more and GroupRow (Coworkee.Client.Blazor) lost Members, GroupMemberRow is gone: count members on Users with Groups/any(m: m/GroupId eq {id}). IGroupScope has the new members DefaultGroupIdAsync and OwnersAsync, ICoworkeeApi SetGroupOwnersAsync, GetDefaultGroupIdAsync and SetDefaultGroupAsync."
       ],
       "needsMigration": true,
       "manual": [

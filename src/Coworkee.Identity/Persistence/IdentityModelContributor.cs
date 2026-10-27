@@ -107,6 +107,8 @@ internal sealed class IdentityModelContributor : IModelContributor
             group.HasIndex(g => new { g.TenantId, g.Code }).IsUnique();
             // no filter: SQL Server would add "ParentId IS NOT NULL" and leave root names to the handler; its unique indexes treat NULLs as equal
             group.HasIndex(g => new { g.TenantId, g.ParentId, g.Name }).IsUnique().AreNullsDistinct(false).HasFilter(null);
+            // at most one default group per tenant; CoworkeeDbContext writes TRUE as 1 for SQL Server
+            group.HasIndex(g => new { g.TenantId, g.IsDefault }).IsUnique().HasFilter("\"IsDefault\" = TRUE");
             group.HasMany(g => g.Members).WithOne().HasForeignKey(m => m.GroupId).OnDelete(DeleteBehavior.Cascade);
             group.HasMany(g => g.Roles).WithOne().HasForeignKey(r => r.GroupId).OnDelete(DeleteBehavior.Cascade);
         });

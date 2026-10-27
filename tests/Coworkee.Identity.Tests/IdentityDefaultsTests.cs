@@ -96,6 +96,25 @@ public sealed class IdentityDefaultsTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Setting_the_default_twice_or_at_once_leaves_one_default_group_and_the_database_refuses_a_second()
+    {
+        var (a, b, c) = (await GroupAsync("A"), await GroupAsync("B"), await GroupAsync("C"));
+        (await SetDefaultAsync(Admin, a)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await SetDefaultAsync(Admin, a)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        await Task.WhenAll(Enumerable.Range(0, 6).Select(i => SetDefaultAsync(Admin, i % 2 == 0 ? b : c)));
+
+        var defaults = await app.InDbAsync(_setup.TenantId, db => db.Set<UserGroup>().Where(g => g.IsDefault).Select(g => g.Id).ToListAsync(Ct));
+        defaults.Count.ShouldBe(1);
+        defaults.ShouldBeSubsetOf([b, c]);
+        await Should.ThrowAsync<DbUpdateException>(() => app.InDbAsync(_setup.TenantId, async db =>
+        {
+            (await db.Set<UserGroup>().SingleAsync(g => g.Id == a, Ct)).IsDefault = true;
+            return 0;
+        }));
+    }
+
+    [Fact]
     public async Task Default_role_flag_is_kept_when_a_client_leaves_it_out_and_needs_Roles_Manage()
     {
         var role = await RoleAsync("Customer", isDefault: true);
