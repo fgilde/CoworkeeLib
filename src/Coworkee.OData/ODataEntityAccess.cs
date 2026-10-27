@@ -21,7 +21,7 @@ public static class ODataEntityAccess
     public static async Task<IReadOnlySet<string>> DeniedPropertiesAsync(IServiceProvider services, Type entityType, CancellationToken cancellationToken)
     {
         var denied = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        _ = services.GetRequiredService<IEdmModel>(); // building it finds the hidden properties a shared base type keeps
+        _ = services.GetService<IEdmModel>(); // building it finds the hidden properties a shared base type keeps
         if (services.GetRequiredService<ODataEntityRegistry>().Find(entityType) is not { HasDenials: true } registration)
         {
             return denied;
