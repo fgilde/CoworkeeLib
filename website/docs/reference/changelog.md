@@ -20,6 +20,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Changed
 
+- Turning on *Offered in the registration* (`RoleRequest.SelectableForRegistration`) or *Given to new users* needs `Identity.Users.Manage` and every permission of the role; `Roles.Manage` alone gets 403 (`identity.role_offer_more_permissions`).
 - `IGroupScope` has two new members, `DefaultGroupIdAsync` and `OwnersAsync`; own implementations and test fakes add them, as they do for the new `ICoworkeeApi` members `SetGroupOwnersAsync`, `GetDefaultGroupIdAsync` and `SetDefaultGroupAsync`. `RoleRequest` and `GroupDto` have new optional parameters (`IsDefault`, `OwnerIds`). Add a migration: `cw.Groups.IsDefault`, `cw.GroupMembers.IsOwner` and `cw.Roles.IsDefault` are new columns.
 - `CodeCompletion.InsertText` is the whole text now, trigger included (`{{ name }}` instead of ` name }}`): a pick replaces what was typed of `CompletionTrigger` and the closing brackets Monaco added, and Ctrl+Space inserts a complete text anywhere. New `Snippet` flag for Monaco snippets (`{{ if $1 }}`). Own completions passed to `CodeEditor` need the trigger in their text.
 - Mail body editor: bodies whose markup the visual editor would change (styles other than `color`, `background-color` and `text-align`, tags beyond text formatting, comments) open in Source, so a styled button is no longer lost on save. The shipped templates with a button open in Source.

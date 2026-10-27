@@ -43,7 +43,7 @@ internal sealed class GetRolesHandler(CoworkeeDbContext db, ICurrentUser current
             .ToListAsync(cancellationToken);
 }
 
-internal sealed class CreateRoleHandler(CoworkeeDbContext db, ICurrentUser currentUser) : IHandler<CreateRole, Result<Guid>>
+internal sealed class CreateRoleHandler(CoworkeeDbContext db, ICurrentUser currentUser, IPermissionChecker permissions) : IHandler<CreateRole, Result<Guid>>
 {
     public async Task<Result<Guid>> HandleAsync(CreateRole command, CancellationToken cancellationToken)
     {
@@ -51,6 +51,11 @@ internal sealed class CreateRoleHandler(CoworkeeDbContext db, ICurrentUser curre
         if (await RoleNames.TakenAsync(db, normalized, currentUser.TenantId, null, cancellationToken))
         {
             return RoleNames.Taken;
+        }
+
+        if (await RoleOffer.RefusedAsync(permissions, null, command.Role.SelectableForRegistration || command.Role.IsDefault == true, cancellationToken) is { } refused)
+        {
+            return refused;
         }
 
         var role = new Role
@@ -63,7 +68,7 @@ internal sealed class CreateRoleHandler(CoworkeeDbContext db, ICurrentUser curre
     }
 }
 
-internal sealed class UpdateRoleHandler(CoworkeeDbContext db, ICurrentUser currentUser) : IHandler<UpdateRole, Result>
+internal sealed class UpdateRoleHandler(CoworkeeDbContext db, ICurrentUser currentUser, IPermissionChecker permissions) : IHandler<UpdateRole, Result>
 {
     public async Task<Result> HandleAsync(UpdateRole command, CancellationToken cancellationToken)
     {
@@ -77,6 +82,12 @@ internal sealed class UpdateRoleHandler(CoworkeeDbContext db, ICurrentUser curre
         if (await RoleNames.TakenAsync(db, normalized, currentUser.TenantId, role.Id, cancellationToken))
         {
             return RoleNames.Taken;
+        }
+
+        var offered = (!role.SelectableForRegistration && command.Role.SelectableForRegistration) || (!role.IsDefault && command.Role.IsDefault == true);
+        if (await RoleOffer.RefusedAsync(permissions, role.Id, offered, cancellationToken) is { } refused)
+        {
+            return refused;
         }
 
         role.Name = command.Role.Name.Trim();
@@ -106,6 +117,33 @@ internal sealed class DeleteRoleHandler(CoworkeeDbContext db, ICurrentUser curre
         db.RemoveRange(await db.Set<PermissionGrant>().Where(g => g.ProviderType == PermissionProviderType.Role && g.ProviderKey == role.Id).ToListAsync(cancellationToken));
         db.Remove(role);
         return Result.Success();
+    }
+}
+
+/// <summary>
+/// A role given to every new user or offered in the registration hands its permissions to people nobody vetted: only who holds all of them
+/// (as for impersonation) and may manage users turns that on.
+/// </summary>
+internal static class RoleOffer
+{
+    public static readonly Error MorePermissions = Error.Forbidden("identity.role_offer_more_permissions",
+        "Only a user who may manage users and holds every permission of the role can give it to new users or offer it in the registration.");
+
+    public static async Task<Error?> RefusedAsync(IPermissionChecker permissions, Guid? roleId, bool offered, CancellationToken cancellationToken)
+    {
+        if (!offered)
+        {
+            return null;
+        }
+
+        if (!await permissions.IsGrantedAsync(IdentityPermissions.Users.Manage, cancellationToken))
+        {
+            return MorePermissions;
+        }
+
+        IReadOnlyCollection<string> role = roleId is { } id ? await ((PermissionChecker)permissions).RoleGrantsAsync(id, cancellationToken) : [];
+        var mine = await permissions.GetGrantedAsync(cancellationToken);
+        return role.Except(mine, StringComparer.Ordinal).Any() ? MorePermissions : null;
     }
 }
 

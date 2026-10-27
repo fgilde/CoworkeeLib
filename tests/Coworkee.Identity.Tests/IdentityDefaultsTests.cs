@@ -110,6 +110,33 @@ public sealed class IdentityDefaultsTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Offering_a_role_to_new_users_needs_Users_Manage_and_every_permission_of_the_role()
+    {
+        var harmless = await RoleAsync("Harmless");
+        var powerful = await RoleAsync("Powerful");
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{powerful}", new NameListRequest([IdentityPermissions.Permissions.Manage]), Ct)).EnsureSuccessStatusCode();
+        var rolesOnly = await ClientWithAsync(IdentityPermissions.Roles.Manage);
+        var manager = await ClientWithAsync(IdentityPermissions.Roles.Manage, IdentityPermissions.Users.Manage);
+
+        foreach (var request in new[] { new RoleRequest("Powerful", null, IsDefault: true), new RoleRequest("Powerful", null, SelectableForRegistration: true) })
+        {
+            (await manager.PutAsJsonAsync($"/api/v1/identity/roles/{powerful}", request, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+            (await rolesOnly.PutAsJsonAsync($"/api/v1/identity/roles/{powerful}", request, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        }
+
+        (await rolesOnly.PutAsJsonAsync($"/api/v1/identity/roles/{harmless}", new RoleRequest("Harmless", null, IsDefault: true), Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await rolesOnly.PostAsJsonAsync("/api/v1/identity/roles", new RoleRequest("New", null, IsDefault: true), Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await manager.PutAsJsonAsync($"/api/v1/identity/roles/{harmless}", new RoleRequest("Harmless", null, true, true), Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await manager.PostAsJsonAsync("/api/v1/identity/roles", new RoleRequest("New", null, IsDefault: true), Ct)).IsSuccessStatusCode.ShouldBeTrue();
+        // a role that already is the default may still be renamed by Roles.Manage alone
+        (await rolesOnly.PutAsJsonAsync($"/api/v1/identity/roles/{harmless}", new RoleRequest("Harmless 2", null, true), Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        var roles = await RolesAsync();
+        roles.Single(r => r.Id == powerful).ShouldSatisfyAllConditions(r => r.IsDefault.ShouldBeFalse(), r => r.SelectableForRegistration.ShouldBeFalse());
+        roles.Single(r => r.Id == harmless).IsDefault.ShouldBeTrue();
+    }
+
+    [Fact]
     public async Task Created_users_get_the_default_role_and_group_of_their_tenant_only()
     {
         var customer = await RoleAsync("Customer", isDefault: true);
@@ -289,11 +316,11 @@ public sealed class IdentityDefaultsTests(IdentityApp app) : IAsyncLifetime
     private Task<HttpResponseMessage> SetDefaultAsync(HttpClient client, Guid? group) =>
         client.PutAsJsonAsync("/api/v1/identity/groups/default", new DefaultGroupDto(group), Ct);
 
-    private async Task<HttpClient> ClientWithAsync(string permission)
+    private async Task<HttpClient> ClientWithAsync(params string[] permissions)
     {
         var user = await UserAsync("limited-" + Guid.NewGuid().ToString("N")[..6]);
-        var roleId = await RoleAsync("Limited " + permission);
-        (await Admin.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{roleId}", new NameListRequest([permission]), Ct)).EnsureSuccessStatusCode();
+        var roleId = await RoleAsync("Limited " + string.Join(",", permissions));
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{roleId}", new NameListRequest(permissions), Ct)).EnsureSuccessStatusCode();
         (await Admin.PutAsJsonAsync($"/api/v1/identity/users/{user}/roles", new IdListRequest([roleId]), Ct)).EnsureSuccessStatusCode();
         return app.As(user, _setup.TenantId);
     }

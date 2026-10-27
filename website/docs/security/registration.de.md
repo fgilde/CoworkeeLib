@@ -55,7 +55,7 @@ Admins bearbeiten dieselben Werte unter **Einstellungen > App-Einstellungen > Re
 
 ## Rollen in der Registrierung
 
-Eine Rolle mit **In der Registrierung angeboten** (auf der Rollenseite, `RoleRequest.SelectableForRegistration`, `SeedRole(..., SelectableForRegistration: true)`) erscheint in Schritt 3. Wer eine nicht angebotene Rolle schickt, bleibt mit einem Fehler im Schritt stehen. Systemrollen werden nie angeboten.
+Eine Rolle mit **In der Registrierung angeboten** (auf der Rollenseite, `RoleRequest.SelectableForRegistration`, `SeedRole(..., SelectableForRegistration: true)`) erscheint in Schritt 3. Wer eine nicht angebotene Rolle schickt, bleibt mit einem Fehler im Schritt stehen. Systemrollen werden nie angeboten. Wer das Kennzeichen einschaltet, braucht `Identity.Users.Manage` und jede Berechtigung, die die Rolle gibt (sonst `identity.role_offer_more_permissions`), damit ein Rollenverwalter Fremden nicht mehr geben kann, als er selbst hat; dasselbe gilt für *Wird neuen Benutzern zugewiesen* ([Standardrollen](../features/identity.md#besitzer-standardgruppe-und-standardrolle)).
 
 Das Kennzeichen ist eine Spalte von `cw.Roles`. Apps mit eigenen Migrationen legen nach dem Update eine an: `dotnet ef migrations add RoleSelectableForRegistration`.
 

@@ -110,7 +110,7 @@ services.AddCoworkeeIdentitySeed(seed =>
 });
 ```
 
-Eine **Standardrolle** (`Role.IsDefault`, *Wird neuen Benutzern zugewiesen* auf der Rollenseite, `RoleRequest.IsDefault`; null behält den Wert) bekommt jeder neue Benutzer. Systemrollen können keine Standardrolle sein.
+Eine **Standardrolle** (`Role.IsDefault`, *Wird neuen Benutzern zugewiesen* auf der Rollenseite, `RoleRequest.IsDefault`; null behält den Wert) bekommt jeder neue Benutzer. Systemrollen können keine Standardrolle sein. Wer das Kennzeichen (oder *In der Registrierung angeboten*) einschaltet, braucht `Identity.Users.Manage` und jede Berechtigung der Rolle; sonst scheitert die Anfrage mit 403 (`identity.role_offer_more_permissions`). Eine Rolle, die das Kennzeichen schon hat, lässt sich allein mit `Roles.Manage` umbenennen.
 
 Beides gilt für **jeden Weg, auf dem ein Benutzer entsteht**: *Benutzer anlegen*, Selbstregistrierung, der Abschluss einer externen Registrierung, das erste Single Sign-on, der Seed und sein Abgleich in der Entwicklung, der erste Administrator eines neuen Mandanten und App-Code, der Benutzer über `UserManager` oder `CreateUser` anlegt (etwa ein Import). Globale Standardrollen gelten in jedem Mandanten, Mandantenrollen in ihrem eigenen. In die Standardgruppe kommt ein neuer Benutzer nur, wenn er beim selben Speichern keiner anderen Gruppe beitritt. Vorhandene Benutzer bleiben unverändert, wenn eine Rolle oder Gruppe zum Standard wird.
 
