@@ -55,6 +55,7 @@ internal sealed class ODataSearchProvider<T> : IGlobalSearchProvider
     public async IAsyncEnumerable<GlobalSearchHit> SearchAsync(GlobalSearchQuery query, GlobalSearchContext context, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var visible = await ODataEntityAccess.VisibleAsync<T>(context.Services, cancellationToken);
+        var scope = await ODataNavigationScope.ForAsync(context.Services, typeof(T), cancellationToken);
         var denied = await ODataEntityAccess.DeniedPropertiesAsync(context.Services, typeof(T), cancellationToken);
         var fields = Enumerable.Range(0, _fields.Count).Where(i => !denied.Contains(MemberName(_options.SearchFields[i]))).ToList();
         if (fields.Count == 0)
@@ -69,7 +70,7 @@ internal sealed class ODataSearchProvider<T> : IGlobalSearchProvider
         var sent = new HashSet<string>(StringComparer.Ordinal);
         if (first is not null)
         {
-            foreach (var hit in await HitsAsync(first, query, fields, context.Limit, cancellationToken))
+            foreach (var hit in await HitsAsync(scope, first, query, fields, context.Limit, cancellationToken))
             {
                 sent.Add(hit.Id!);
                 yield return hit;
@@ -84,15 +85,17 @@ internal sealed class ODataSearchProvider<T> : IGlobalSearchProvider
         // ponytail: the second round reads the first round's rows again and drops them here; a NOT IN of their ids if limits grow
         var rest = query.Words.Aggregate(visible, (rows, word) =>
             rows.Where(AnyField(fields, value => Expression.Call(value, Contains, Parameter(word.ToLowerInvariant())))));
-        foreach (var hit in (await HitsAsync(rest, query, fields, context.Limit + sent.Count, cancellationToken)).Where(h => !sent.Contains(h.Id!)).Take(context.Limit - sent.Count))
+        foreach (var hit in (await HitsAsync(scope, rest, query, fields, context.Limit + sent.Count, cancellationToken)).Where(h => !sent.Contains(h.Id!)).Take(context.Limit - sent.Count))
         {
             yield return hit;
         }
     }
 
-    private async Task<IEnumerable<GlobalSearchHit>> HitsAsync(IQueryable<T> rows, GlobalSearchQuery query, List<int> fields, int take, CancellationToken cancellationToken)
+    // search fields may read through navigations: the scope keeps them to rows the user may see
+    private async Task<IEnumerable<GlobalSearchHit>> HitsAsync(
+        ODataNavigationScope scope, IQueryable<T> rows, GlobalSearchQuery query, List<int> fields, int take, CancellationToken cancellationToken)
     {
-        var found = await rows.OrderBy(_options.SearchFields[fields[0]]).Take(take).ToListAsync(cancellationToken);
+        var found = await scope.Apply(rows.OrderBy(_options.SearchFields[fields[0]]).Take(take)).ToListAsync(cancellationToken);
         return found.Select(row => Hit(row, query, fields)).OrderByDescending(h => h.Score);
     }
 

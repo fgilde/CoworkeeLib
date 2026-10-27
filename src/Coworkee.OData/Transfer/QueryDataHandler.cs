@@ -74,9 +74,10 @@ internal sealed class QueryDataHandler(IServiceProvider services, ODataEntityReg
             throw new ODataException("The filter or order names a field you may not read.");
         }
 
-        var visible = (await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken)).ApplyODataFilter(options);
+        var scope = await ODataNavigationScope.ForAsync(services, typeof(TEntity), cancellationToken);
+        var visible = scope.Apply((await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken)).ApplyODataFilter(options));
         var total = await visible.LongCountAsync(cancellationToken);
-        var rows = await visible.ApplyODataOrderBy(options).Skip(Math.Max(0, query.Skip)).Take(Math.Clamp(query.Top, 1, MaxRows)).ToListAsync(cancellationToken);
+        var rows = await scope.Apply(visible.ApplyODataOrderBy(options)).Skip(Math.Max(0, query.Skip)).Take(Math.Clamp(query.Top, 1, MaxRows)).ToListAsync(cancellationToken);
         var fields = query.Select?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
         var all = DataExport.Columns<TEntity>(model, await ODataEntityAccess.DeniedPropertiesAsync(services, typeof(TEntity), cancellationToken));
         var columns = all.Where(c => fields.Length == 0 || fields.Contains(c.Name, StringComparer.OrdinalIgnoreCase)).ToList();

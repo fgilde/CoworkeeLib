@@ -47,9 +47,10 @@ public static class DataExport
             throw new UnauthorizedAccessException("The export filters or sorts on a property the user may not read.");
         }
 
-        var rows = (await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken)).ApplyODataSearch(options.Search)!
-            .ApplyODataFilter(options)
-            .ApplyODataOrderBy(options);
+        var rows = (await ODataNavigationScope.ForAsync(services, typeof(TEntity), cancellationToken)).Apply(
+            (await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken)).ApplyODataSearch(options.Search)!
+                .ApplyODataFilter(options)
+                .ApplyODataOrderBy(options));
         if (maxRows is { } max && await rows.CountAsync(cancellationToken) > max)
         {
             return null;

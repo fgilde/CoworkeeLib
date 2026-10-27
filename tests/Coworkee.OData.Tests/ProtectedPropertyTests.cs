@@ -50,6 +50,8 @@ public sealed class ProtectedPropertyTests(ODataApp app) : IAsyncLifetime
             (await Viewer.GetAsync($"/odata/Gadgets?{query}", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden, query);
         }
 
+        // options without $ are no options: they cannot slip past the checks
+        (await Viewer.GetFromJsonAsync<JsonElement>("/odata/Gadgets?filter=Category eq 'Tools'", Ct)).GetProperty("value").GetArrayLength().ShouldBe(2);
         (await Admin.GetFromJsonAsync<JsonElement>("/odata/Gadgets?$filter=Category eq 'Tools'", Ct)).GetProperty("value")[0].GetProperty("Category").GetString().ShouldBe("Tools");
         (await Viewer.GetFromJsonAsync<JsonElement>($"/odata/Gadgets({page.GetProperty("value")[0].GetProperty("Id").GetGuid()})", Ct)).TryGetProperty("Category", out _).ShouldBeFalse();
     }

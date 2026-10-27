@@ -71,6 +71,7 @@ public static class ODataEntityAccess
             query = await filter.ApplyAsync(query, cancellationToken);
         }
 
+        ODataNavigationScope.Root(query.Expression);
         return query;
     }
 
@@ -93,7 +94,10 @@ public static class ODataEntityAccess
             : null;
     }
 
-    /// <summary>Visible rows narrowed by an OData $filter, parsed against the EDM: hidden properties, unknown names and computed or protected properties without their permission fail with an ODataException.</summary>
+    /// <summary>
+    /// Visible rows narrowed by an OData $filter, parsed against the EDM: hidden properties, unknown names and computed or protected properties
+    /// without their permission fail with an ODataException. Navigations in the filter see only the rows of their target the user may see.
+    /// </summary>
     public static async Task<IQueryable<TEntity>> FilteredAsync<TEntity>(IServiceProvider services, string? filter, CancellationToken cancellationToken)
         where TEntity : class
     {
@@ -111,6 +115,7 @@ public static class ODataEntityAccess
         var http = new DefaultHttpContext { RequestServices = services };
         http.ODataFeature().RoutePrefix = CoworkeeODataModule.RoutePrefix;
         http.Request.QueryString = QueryString.Create("$filter", filter);
-        return visible.ApplyODataFilter(http.Request.ODataQueryOptions<TEntity>(services.GetRequiredService<IEdmModel>()));
+        var filtered = visible.ApplyODataFilter(http.Request.ODataQueryOptions<TEntity>(services.GetRequiredService<IEdmModel>()));
+        return (await ODataNavigationScope.ForAsync(services, typeof(TEntity), cancellationToken)).Apply(filtered);
     }
 }

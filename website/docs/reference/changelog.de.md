@@ -18,6 +18,9 @@
 
 - Der visuelle Mail-Editor zeigte eine leere Werkzeugleiste: `RichTextEditor` übergab `Tools="null"`, was MudExRichTextEditor 9.5.5 als „keine Werkzeuge“ liest. Er übergibt `Tools` jetzt nur, wenn gesetzt.
 - Quelltext-Modus des Mail-Editors: `{{` tippen und einen Platzhalter wählen ergab `{{ name }}}}`, weil Monaco die Klammern schon geschlossen hatte.
+- Sicherheit, OData: Zeilenfilter und Set-Berechtigungen gelten jetzt auch für Navigationen. `$expand` zeigt nur die Zeilen, die das Ziel-Set dem Benutzer auflistet (eine ausgeblendete einzelne Navigation ist `null`), `$filter` mit `any`/`all`/`$count` und `$orderby` über eine Navigation sehen nur sichtbare Zeilen, auch in Exporten, `query_data`, Facettenfiltern, `ODataEntityAccess.FilteredAsync` und der globalen Suche. `$expand` in ein Set ohne dessen Berechtigung antwortet `403`, in einen Typ, dessen `IODataEntityFilter<T>` mehr als `Where` tut (`OrderBy`, `Take`, eine neue Abfrage), `400`. Solche Filter sollten einfache `Where`-Aufrufe werden, wenn ihr Typ über Navigationen erreicht wird. `ODataNavigationScope` wendet die Regeln auf eigene Abfragen an. Siehe [OData](../web/odata.md#navigationen-folgen-ihrem-ziel).
+- OData-Antworten mit `400` tragen die Meldung des Abfragefehlers in `detail`.
+- Sicherheit, OData: Abfrageoptionen ohne `$` (`filter=`, `orderby=`) werden nicht mehr gelesen; sie umgingen die Prüfung geschützter Eigenschaften. Clients senden `$filter`.
 
 ## 0.0.1.41 (2026-10-27)
 

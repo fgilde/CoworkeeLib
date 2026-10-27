@@ -18,6 +18,9 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 - The visual mail editor showed an empty toolbar: `RichTextEditor` passed `Tools="null"`, which MudExRichTextEditor 9.5.5 reads as no tools. It passes `Tools` only when set now.
 - Source mode of the mail editor: typing `{{` and picking a placeholder wrote `{{ name }}}}`, because Monaco had closed the braces already.
+- Security, OData: row filters and set permissions now hold for navigations too. `$expand` shows only the rows the target set lists for the user (a hidden single navigation is `null`), `$filter` with `any`/`all`/`$count` and `$orderby` through a navigation see only visible rows, also in exports, `query_data`, facet filters, `ODataEntityAccess.FilteredAsync` and the global search. `$expand` into a set without its permission answers `403`; into a type whose `IODataEntityFilter<T>` does more than `Where` (`OrderBy`, `Take`, a new query) `400`. Make such filters plain `Where` calls if their type is reached through navigations. `ODataNavigationScope` applies the rules to own queries. See [OData](../web/odata.md#navigations-follow-their-target).
+- OData `400` answers carry the message of the query error in `detail`.
+- Security, OData: query options without `$` (`filter=`, `orderby=`) are no longer read; they slipped past the checks of protected properties. Clients send `$filter`.
 
 ## 0.0.1.41 (2026-10-27)
 

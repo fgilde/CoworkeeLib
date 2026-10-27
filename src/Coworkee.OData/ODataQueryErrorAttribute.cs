@@ -15,7 +15,9 @@ internal sealed class ODataQueryErrorAttribute : Attribute, IAlwaysRunResultFilt
             {
                 Status = StatusCodes.Status400BadRequest,
                 Title = "The query is not valid.",
-                Detail = string.Join(" ", errors.Values.OfType<string[]>().SelectMany(m => m)),
+                // [EnableQuery] reports Message and ExceptionMessage as text; model state errors come as arrays; never the stack trace
+                Detail = string.Join(" ", errors.Where(e => e.Key is "Message" or "ExceptionMessage" || e.Value is string[])
+                    .SelectMany(e => e.Value as string[] ?? [e.Value as string ?? string.Empty])),
             })
             {
                 StatusCode = StatusCodes.Status400BadRequest,

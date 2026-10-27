@@ -69,6 +69,20 @@ services.AddODataChildFilter<TalkItem, Talk>(i => i.Talk);
 
 An item is shown when the visible talks (every `IODataEntityFilter<Talk>`, tenant and soft delete, as `ODataEntityAccess.VisibleAsync<Talk>` returns them) contain its talk; the query is a subquery on the foreign key, no join. Items without a talk are hidden. It adds up with other filters of the child.
 
+### Navigations follow their target
+
+A query reaches other rows through navigations: `$expand`, `$filter=Invoices/any(...)`, `$orderby=Customer/Name`, nested `$count`, export and `query_data` filters, report fields. They show exactly what the target's own set lists for the user:
+
+- a collection only has the rows the target's `IODataEntityFilter<T>`s let through, and `any`, `all` and `$count` see only those;
+- a single navigation (`Customer`) is `null` when its row is hidden;
+- `$expand` into a set the user lacks the permission of answers `403` naming the navigation; in a `$filter` that set has no rows;
+- protected properties (`HideUnless`) of the target stay hidden, also through the navigation;
+- a type with row filters but no set of its own gets its filters too.
+
+The filters are applied inside the query, so they must be plain `Where` calls on the query they get (closures with ids, `EF.Parameter`, subqueries and `AddODataChildFilter` are fine). A filter that does more (`OrderBy`, `Take`, `Join`, a new query) cannot be applied to a navigation: `$expand` into its type answers `400`, and in a `$filter` the type has no rows. The set's own list still uses the filter as it is. EF query filters of the DbContext (tenant, soft delete) apply to navigations as always.
+
+`ODataNavigationScope.ForAsync(services, typeof(T), ct)` gives the same rules to own queries: `scope.Apply(query)` narrows every navigation in it, outside the rows `ODataEntityAccess.VisibleAsync` returned.
+
 ## Hiding properties
 
 Internal fields stay out of the model, so they are neither returned nor filterable:

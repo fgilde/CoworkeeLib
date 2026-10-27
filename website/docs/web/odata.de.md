@@ -69,6 +69,20 @@ services.AddODataChildFilter<TalkItem, Talk>(i => i.Talk);
 
 Ein Punkt wird gezeigt, wenn die sichtbaren Gespräche (alle `IODataEntityFilter<Talk>`, Mandant und Soft Delete, so wie `ODataEntityAccess.VisibleAsync<Talk>` sie liefert) sein Gespräch enthalten; die Abfrage ist eine Unterabfrage auf den Fremdschlüssel, kein Join. Punkte ohne Gespräch sind ausgeblendet. Weitere Filter des Kinds gelten zusätzlich.
 
+### Navigationen folgen ihrem Ziel
+
+Über Navigationen erreicht eine Abfrage andere Zeilen: `$expand`, `$filter=Invoices/any(...)`, `$orderby=Customer/Name`, verschachteltes `$count`, Filter von Export und `query_data`, Berichtsfelder. Sie zeigen genau das, was das eigene Set des Ziels dem Benutzer auflistet:
+
+- eine Sammlung enthält nur die Zeilen, die die `IODataEntityFilter<T>` des Ziels durchlassen, und `any`, `all` und `$count` sehen nur diese;
+- eine einzelne Navigation (`Customer`) ist `null`, wenn ihre Zeile ausgeblendet ist;
+- `$expand` in ein Set, dessen Berechtigung dem Benutzer fehlt, antwortet `403` mit dem Namen der Navigation; in einem `$filter` hat dieses Set keine Zeilen;
+- geschützte Eigenschaften (`HideUnless`) des Ziels bleiben ausgeblendet, auch über die Navigation;
+- ein Typ mit Zeilenfiltern, aber ohne eigenes Set, bekommt seine Filter ebenfalls.
+
+Die Filter wirken innerhalb der Abfrage, deshalb müssen sie einfache `Where`-Aufrufe auf der übergebenen Abfrage sein (Closures mit Ids, `EF.Parameter`, Unterabfragen und `AddODataChildFilter` gehen). Ein Filter, der mehr tut (`OrderBy`, `Take`, `Join`, eine neue Abfrage), lässt sich nicht auf eine Navigation anwenden: `$expand` in seinen Typ antwortet `400`, und in einem `$filter` hat der Typ keine Zeilen. Die eigene Liste des Sets nutzt den Filter weiter so, wie er ist. EF-Abfragefilter des DbContext (Mandant, Soft Delete) gelten für Navigationen wie immer.
+
+`ODataNavigationScope.ForAsync(services, typeof(T), ct)` gibt eigenen Abfragen dieselben Regeln: `scope.Apply(query)` schränkt jede Navigation darin ein, außerhalb der Zeilen, die `ODataEntityAccess.VisibleAsync` geliefert hat.
+
 ## Eigenschaften ausblenden
 
 Interne Felder bleiben aus dem Modell, sie werden weder ausgeliefert noch sind sie filterbar:

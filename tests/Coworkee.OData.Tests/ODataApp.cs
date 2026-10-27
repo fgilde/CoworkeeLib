@@ -29,6 +29,8 @@ public sealed class ODataApp : DatabaseFixture
 
     public const string SeeCategories = "Gadgets.Categories";
 
+    public const string ViewBins = "Gadgets.Bins";
+
     public WebApplication App { get; private set; } = null!;
 
     public override async ValueTask InitializeAsync()
@@ -97,13 +99,22 @@ internal sealed class GadgetModelContributor : IModelContributor
         modelBuilder.Entity<Widget>(widget => widget.ToTable("Widgets"));
         modelBuilder.Entity<Part>(part => part.ToTable("Parts"));
         modelBuilder.Entity<Crate>(crate => crate.ToTable("Crates"));
+        modelBuilder.Entity<Shelf>(shelf =>
+        {
+            shelf.ToTable("Shelves");
+            shelf.HasMany(s => s.Bins).WithOne().HasForeignKey(b => b.ShelfId);
+            shelf.HasOne(s => s.Featured).WithMany().HasForeignKey(s => s.FeaturedId).OnDelete(DeleteBehavior.NoAction);
+        });
+        modelBuilder.Entity<Bin>(bin => bin.ToTable("Bins"));
+        modelBuilder.Entity<BinLabel>(label => label.ToTable("BinLabels"));
+        modelBuilder.Entity<Locker>(locker => locker.ToTable("Lockers"));
     }
 }
 
 internal sealed class GadgetPermissions : Coworkee.Application.Authorization.IPermissionDefinitionContributor
 {
     public void Define(Coworkee.Application.Authorization.PermissionDefinitionContext context) =>
-        context.Group("Gadgets", "Gadgets").Add(ODataApp.ViewGadgets, "View gadgets").Add(ODataApp.SeeCategories, "See categories");
+        context.Group("Gadgets", "Gadgets").Add(ODataApp.ViewGadgets, "View gadgets").Add(ODataApp.SeeCategories, "See categories").Add(ODataApp.ViewBins, "View bins");
 }
 
 [DependsOn(typeof(CoworkeeODataModule), typeof(CoworkeeIdentityModule))]
@@ -131,6 +142,12 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.AddScoped<IODataEntityFilter<Crate>, CratesOfActiveUnits>();
         context.Services.AddGlobalSearch<Crate>(s => s.Fields(c => c.Name).Page("/crates"));
         context.Services.AddODataImport("Crates", (Guid? id, CrateRow row) => new SaveCrateCommand(id, row));
+        context.Services.AddODataEntity<Shelf>("Shelves", ODataApp.ViewGadgets);
+        context.Services.AddODataEntity<Bin>("Bins", ODataApp.ViewBins, o => o.HideUnless(b => b.Size, ODataApp.SeeCategories));
+        context.Services.AddScoped<IODataEntityFilter<Bin>, HideSecretBins>();
+        context.Services.AddScoped<IODataEntityFilter<BinLabel>, HideSecretLabels>();
+        context.Services.AddODataEntity<Locker>("Lockers", ODataApp.ViewGadgets);
+        context.Services.AddScoped<IODataEntityFilter<Locker>, FirstLockers>();
         context.Services.AddDbContext<ParcelDbContext>((provider, options) =>
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
         context.Services.AddCoworkeeExternalDbContext<ParcelDbContext>();

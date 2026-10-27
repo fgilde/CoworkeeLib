@@ -27,7 +27,7 @@ internal static class FacetResponse
         foreach (var facet in facets.Where(f => !denied.Contains(f.Field)))
         {
             var own = context is not null && context.Groups.ContainsKey(facet.Key) && context.Combines?.GetValueOrDefault(facet.Key) != FacetCombine.All;
-            var rows = own ? Filter(visible, context!.Without(facet.Key), services) : filtered;
+            var rows = own ? Filter(visible, context!.Without(facet.Key), http) : filtered;
             var group = facet;
             if (own && facet.Type is not (FacetType.Range or FacetType.DateRange))
             {
@@ -51,7 +51,7 @@ internal static class FacetResponse
             if (property.Permission is null || await services.GetRequiredService<Coworkee.Application.Authorization.IPermissionChecker>().IsGrantedAsync(property.Permission, cancellationToken))
             {
                 var own = context is not null && context.Groups.ContainsKey(property.Name);
-                result.Add(await ComputedAsync(property, own ? Filter(visible, context!.Without(property.Name), services) : filtered, services, cancellationToken));
+                result.Add(await ComputedAsync(property, own ? Filter(visible, context!.Without(property.Name), http) : filtered, http, cancellationToken));
             }
         }
 
@@ -59,13 +59,13 @@ internal static class FacetResponse
     }
 
     // ponytail: one count per option; fine for the handful of workflow states, group in the database if options get many
-    private static async Task<FacetGroupDto> ComputedAsync<T>(Computed.ODataComputedProperty property, IQueryable<T> rows, IServiceProvider services, CancellationToken cancellationToken)
+    private static async Task<FacetGroupDto> ComputedAsync<T>(Computed.ODataComputedProperty property, IQueryable<T> rows, HttpContext http, CancellationToken cancellationToken)
         where T : class
     {
         var options = new List<FacetOptionDto>();
         foreach (var option in property.Facet!.Options)
         {
-            var count = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(Filter(rows, option.OData, services), cancellationToken);
+            var count = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(Filter(rows, option.OData, http), cancellationToken);
             options.Add(new FacetOptionDto(System.Text.Json.JsonSerializer.SerializeToElement(option.Value), option.Label, count > 0, count, option.OData)
             {
                 Meta = option.Color is null ? null : new Dictionary<string, string> { ["color"] = option.Color },
@@ -80,8 +80,8 @@ internal static class FacetResponse
         };
     }
 
-    /// <summary>The rows matching an OData $filter, read the way the entity set's own list reads it.</summary>
-    public static IQueryable<T> Filter<T>(IQueryable<T> rows, string? filter, IServiceProvider services)
+    /// <summary>The rows matching an OData $filter, read the way the entity set's own list reads it, navigations included.</summary>
+    public static IQueryable<T> Filter<T>(IQueryable<T> rows, string? filter, HttpContext request)
         where T : class
     {
         if (string.IsNullOrWhiteSpace(filter))
@@ -89,9 +89,11 @@ internal static class FacetResponse
             return rows;
         }
 
+        var services = request.RequestServices;
         var http = new DefaultHttpContext { RequestServices = services };
         http.ODataFeature().RoutePrefix = CoworkeeODataModule.RoutePrefix;
         http.Request.QueryString = QueryString.Create("$filter", filter);
-        return rows.ApplyODataFilter(http.Request.ODataQueryOptions<T>(services.GetRequiredService<IEdmModel>()));
+        var filtered = rows.ApplyODataFilter(http.Request.ODataQueryOptions<T>(services.GetRequiredService<IEdmModel>()));
+        return request.Items[ScopedEnableQueryAttribute.ScopeItem] is ODataNavigationScope scope ? scope.Apply(filtered) : filtered;
     }
 }
