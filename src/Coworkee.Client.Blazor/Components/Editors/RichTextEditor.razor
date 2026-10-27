@@ -11,10 +11,10 @@
 <div class="cw-rich-text" style="@(Height is null ? null : $"height:{Height}")">
     @if (Backend == RichTextBackend.Quill)
     {
-        <MudExRichTextEdit @ref="_quill" Value="@Value" ValueChanged="ValueChanged" Modules="@_quillModules" Immediate="Immediate" ReadOnly="ReadOnly" Tools="Tools" Placeholder="@(Placeholder ?? DefaultPlaceholder)" />
+        <MudExRichTextEdit @ref="_quill" Value="@Value" ValueChanged="ValueChanged" Modules="@_quillModules" Immediate="Immediate" ReadOnly="ReadOnly" @attributes="ToolsParameter" Placeholder="@(Placeholder ?? DefaultPlaceholder)" />
     }
     else
     {
-        <MudExTiptapEdit @ref="_tiptap" Value="@Value" ValueChanged="ValueChanged" Modules="@_tiptapModules" Immediate="Immediate" ReadOnly="ReadOnly" Tools="Tools" Placeholder="@(Placeholder ?? DefaultPlaceholder)" />
+        <MudExTiptapEdit @ref="_tiptap" Value="@Value" ValueChanged="ValueChanged" Modules="@_tiptapModules" Immediate="Immediate" ReadOnly="ReadOnly" @attributes="ToolsParameter" Placeholder="@(Placeholder ?? DefaultPlaceholder)" />
     }
 </div>

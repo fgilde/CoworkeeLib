@@ -57,4 +57,8 @@ public partial class RichTextEditor
     }
 
     public Task InsertHtmlAsync(string html) => Editor?.InsertHtmlAsync(html) ?? Task.CompletedTask;
+
+    // MudExRichTextEditor 9.5.5 shows an empty toolbar for an explicit Tools="null", so the parameter is only passed when set.
+    // ponytail: back to Tools="Tools" once the release with the null fix is referenced
+    private IReadOnlyDictionary<string, object> ToolsParameter => Tools is null ? new Dictionary<string, object>() : new Dictionary<string, object> { [nameof(Tools)] = Tools };
 }
