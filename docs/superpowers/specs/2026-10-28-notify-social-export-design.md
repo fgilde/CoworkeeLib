@@ -43,7 +43,7 @@ Original adds: NDJSON progress stream (phase, percent, ready with a 5 minute one
 **Progress**: `DataExport.WriteAsync` takes an `IProgress<DataExportProgress>`: `counting` 0, `reading` 0-80 by rows read, `writing` 80-99, then done. Rows are read in chunks of 500 to report.
 
 **Stream**: `GET /api/v1/data/{set}/export/stream?<same query as export>` -> `application/x-ndjson`, one JSON object per line:
-`{"phase":"reading","percent":40}` ... `{"phase":"ready","percent":100,"url":"/api/v1/data/downloads/<token>","fileName":"Products.xlsx","jobId":"..."}` or `{"phase":"failed","message":"Export failed"}`.
+`{"phase":"reading","percent":40}` ... `{"phase":"ready","percent":100,"url":"api/v1/data/downloads/<token>","fileName":"Products.xlsx","jobId":"..."}` or `{"phase":"failed","message":"Export failed"}`. Like `FileTokenDto.Url` the link is relative to the API, without a leading slash (`FileLinks` style); clients prefix the API base.
 The export is a `DataTransferJob` (status Running -> Completed) written in the request without the request's cancellation: when the client leaves, the export finishes and the file is mailed to the user (attachment). The `ready` URL is anonymous, single use, 5 minutes (`IAccessTokens`, purpose `data-export`).
 
 **Mail**: OData cannot reference Mailing (Mailing depends on OData). OData defines `IExportMailer` (one method, `MailAsync(DataExportMail, ct)`); Mailing implements it with the new template `Data.Export` (23 languages, file attached). Without Mailing nothing is mailed (the job keeps the file).
@@ -84,7 +84,7 @@ Coworkee:
 
 ## Permissions and tenants
 
-- Notification requests act on the current user's own rows; follows check the followed set. Follows, preferences, pending mails, export schedules, tokens carry the tenant; tokens redeem across tenants on purpose (anonymous) and the target is looked up with the token's tenant.
+- Notification requests act on the current user's own rows; follows check the followed set. Follows, export schedules and tokens carry the tenant (follows and schedules with the tenant query filter), pending mails the notification's tenant; preferences belong to the user only, whose id is unique across tenants, and are always read by `UserId`; tokens redeem across tenants on purpose (anonymous) and the target is looked up with the token's tenant.
 - New permissions: `Social.Comments.SetStatus`, `DataTransfer.ExportSchedules`.
 
 ## Tests
