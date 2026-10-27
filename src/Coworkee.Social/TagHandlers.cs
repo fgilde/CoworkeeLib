@@ -111,7 +111,7 @@ internal sealed class TagHandlers(CoworkeeDbContext db, SocialGuard guard, IPerm
             return db.Set<EntityTag>();
         }
 
-        if (visible.Provider == db.Set<EntityTag>().Provider)
+        if (visible.Provider == ((IQueryable)db.Set<EntityTag>()).Provider)
         {
             return db.Set<EntityTag>().Where(l => visible.Contains(l.EntityId));
         }
