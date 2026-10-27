@@ -268,7 +268,13 @@ public sealed class ImportPlanner
 
     private string Format(string text, params object?[] arguments) => string.Format(CultureInfo.CurrentCulture, _translate(text), arguments);
 
-    private static Guid IdOf(object entity) => (Guid)entity.GetType().GetProperty(ImportField.Id)!.GetValue(entity)!;
+    // the set's key when it is a Guid (Key(...) may name another property), else Id: imports that update need a Guid key (checked when registered)
+    private Guid IdOf(object entity)
+    {
+        var type = entity.GetType();
+        var key = _services.GetRequiredService<ODataEntityRegistry>().Find(type)?.Key;
+        return (Guid)type.GetProperty(key is not null && type.GetProperty(key)?.PropertyType == typeof(Guid) ? key : ImportField.Id)!.GetValue(entity)!;
+    }
 
     // ponytail: one query per key and per new lookup text; batch them per page of rows if large imports get slow
     private static async Task<List<object>> FindAsync<TEntity>(IServiceProvider services, PropertyInfo property, object? value, CancellationToken cancellationToken)

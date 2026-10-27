@@ -81,4 +81,18 @@ public sealed class KeyedSetTests(ODataApp app) : IAsyncLifetime
         app.App.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<ClientEntityOptions>>().Value.For<Country>();
         (await Admin.GetAsync("/api/v1/client-entities/Countries/changes", Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
+
+    [Fact]
+    public void Imports_that_update_refuse_a_set_keyed_otherwise_whatever_the_order()
+    {
+        var entityFirst = new ServiceCollection();
+        entityFirst.AddODataEntity<Rank>("Ranks", null, o => o.Key(r => r.Number));
+        entityFirst.AddODataImport<AddGadgetCommand>("Ranks"); // creating only needs no key
+        Should.Throw<InvalidOperationException>(() => entityFirst.AddODataImport("Ranks", (Guid? id, WidgetRow row) => new SaveWidgetCommand(id, row)))
+            .Message.ShouldContain("keyed by Number");
+
+        var importFirst = new ServiceCollection();
+        importFirst.AddODataImport("Ranks", (Guid? id, WidgetRow row) => new SaveWidgetCommand(id, row));
+        Should.Throw<InvalidOperationException>(() => importFirst.AddODataEntity<Rank>("Ranks", null, o => o.Key(r => r.Number)));
+    }
 }
