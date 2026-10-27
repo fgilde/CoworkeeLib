@@ -1,13 +1,17 @@
 using System.Collections.Concurrent;
 using System.Net.Http.Json;
+using Coworkee.Application.Messaging;
 using Coworkee.AspNetCore;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Realtime;
+using Coworkee.Contracts.Social;
 using Coworkee.Core.Modularity;
+using Coworkee.Core.Results;
 using Coworkee.Core.Security;
 using Coworkee.Domain;
 using Coworkee.Identity;
 using Coworkee.Identity.Setup;
+using Coworkee.Infrastructure.Outbox;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.Notifications;
 using Coworkee.OData;
@@ -37,6 +41,9 @@ public sealed class SocialApp : DatabaseFixture
 
     /// <summary>Notes with this text are hidden by the row filter of the Notes set from everyone but their creator.</summary>
     public const string Private = "private";
+
+    /// <summary>Notes with this text take no comments, like a booked quotation.</summary>
+    public const string Booked = "booked";
 
     public override async ValueTask InitializeAsync()
     {
@@ -125,6 +132,9 @@ public sealed class Note : AuditedEntity, IMultiTenant
 {
     public required string Text { get; set; }
 
+    /// <summary>Like a quotation: Request while one of its comments is Open, else Open.</summary>
+    public string State { get; set; } = "Open";
+
     public Guid TenantId { get; set; }
 }
 
@@ -138,6 +148,21 @@ internal sealed class PrivateNotes(ICurrentUser currentUser) : IODataEntityFilte
     {
         var me = currentUser.UserId;
         return Task.FromResult(query.Where(n => n.Text != SocialApp.Private || n.CreatedBy == me));
+    }
+}
+
+/// <summary>The quotation workflow of the original app: an Open comment moves the note to Request, none moves it back.</summary>
+internal sealed class NoteWorkflow(SocialTestDbContext db) : IDomainEventHandler<CommentChanged>
+{
+    public async Task HandleAsync(CommentChanged change, CancellationToken cancellationToken)
+    {
+        if (change.EntityType != "Notes" || await db.Set<Note>().SingleOrDefaultAsync(n => n.Id == change.EntityId, cancellationToken) is not { } note)
+        {
+            return;
+        }
+
+        note.State = await db.Set<Comment>().AnyAsync(c => c.EntityType == "Notes" && c.EntityId == note.Id && c.Status == CommentStatus.Open, cancellationToken) ? "Request" : "Open";
+        await db.SaveChangesAsync(cancellationToken);
     }
 }
 
@@ -161,7 +186,13 @@ public sealed class TestSocialModule : CoworkeeModule
             .Reactions<Note>("Notes")
             .CommentReactions()
             .Authorize(async (services, access, ct) => access.EntityId is not { } id
-                || !await services.GetRequiredService<CoworkeeDbContext>().Set<Note>().AnyAsync(n => n.Id == id && n.Text == SocialApp.Secret, ct)));
+                || !await services.GetRequiredService<CoworkeeDbContext>().Set<Note>().AnyAsync(n => n.Id == id && n.Text == SocialApp.Secret, ct))
+            .ValidateComments(async (services, comment, ct) =>
+                await services.GetRequiredService<CoworkeeDbContext>().Set<Note>().AnyAsync(n => n.Id == comment.EntityId && n.Text == SocialApp.Booked, ct)
+                    ? Error.Conflict("notes.booked", "Comments cannot be added or changed on a booked note.")
+                    : null));
+        context.Services.AddScoped<IDomainEventHandler<CommentChanged>, NoteWorkflow>();
+        context.Services.AddCoworkeeOutboxProcessing<SocialTestDbContext>();
         context.Services.AddCoworkeeDbContext<SocialTestDbContext>((provider, options) =>
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
     }

@@ -1847,5 +1847,10 @@
   "The export is on its way.": "De export is onderweg.",
   "Schedule export": "Export plannen",
   "The export is scheduled.": "De export is gepland.",
-  "Schedule list exports and mail them to others": "Lijstexports plannen en naar anderen mailen"
+  "Schedule list exports and mail them to others": "Lijstexports plannen en naar anderen mailen",
+  "Waiting for an answer": "Wacht op antwoord",
+  "Resolved": "Opgelost",
+  "No status": "Geen status",
+  "Write a question or request": "Schrijf een vraag of verzoek",
+  "Open and close comments": "Opmerkingen openen en sluiten"
 }

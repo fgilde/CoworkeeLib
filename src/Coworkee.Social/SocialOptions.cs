@@ -1,4 +1,5 @@
 using Coworkee.Contracts.Social;
+using Coworkee.Core.Results;
 using Coworkee.Domain;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.OData;
@@ -18,6 +19,10 @@ public enum SocialFeature
 /// <summary>What is about to happen: <see cref="EntityId"/> is null for questions about the whole entity type, such as the tag cloud.</summary>
 public sealed record SocialAccess(SocialFeature Feature, string EntityType, Guid? EntityId, bool Write);
 
+/// <summary>What is about to happen to a comment; <see cref="CommentId"/> is null while it is added.</summary>
+public sealed record CommentValidation(
+    CommentAction Action, string EntityType, Guid EntityId, string Text, CommentStatus Status, IReadOnlyDictionary<string, string>? Properties, Guid? CommentId, Guid? ParentId);
+
 /// <param name="VisibleIdsAsync">The ids the current user sees; null when he may not see the type at all.</param>
 internal sealed record SocialTarget(
     Func<IServiceProvider, CancellationToken, Task<IQueryable<Guid>?>>? VisibleIdsAsync,
@@ -30,6 +35,8 @@ public sealed class SocialOptions
     internal Dictionary<(SocialFeature Feature, string EntityType), SocialTarget> Targets { get; } = [];
 
     internal List<Func<IServiceProvider, SocialAccess, CancellationToken, Task<bool>>> AccessChecks { get; } = [];
+
+    internal List<Func<IServiceProvider, CommentValidation, CancellationToken, Task<Error?>>> CommentChecks { get; } = [];
 
     /// <summary>Comments on any id of <paramref name="entityType"/>; the id is not checked.</summary>
     public SocialOptions Comments(string entityType) => Add(SocialFeature.Comments, entityType, new(null, null, null));
@@ -60,6 +67,16 @@ public sealed class SocialOptions
     public SocialOptions Authorize(Func<IServiceProvider, SocialAccess, CancellationToken, Task<bool>> check)
     {
         AccessChecks.Add(check);
+        return this;
+    }
+
+    /// <summary>
+    /// A check before a comment is added, edited, gets a status or is deleted, e.g. no comments on a booked quotation; the first error is the answer.
+    /// Runs after the permissions and the access checks.
+    /// </summary>
+    public SocialOptions ValidateComments(Func<IServiceProvider, CommentValidation, CancellationToken, Task<Error?>> check)
+    {
+        CommentChecks.Add(check);
         return this;
     }
 

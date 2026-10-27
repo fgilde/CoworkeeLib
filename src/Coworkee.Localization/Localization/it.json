@@ -1847,5 +1847,10 @@
   "The export is on its way.": "L'esportazione è in arrivo.",
   "Schedule export": "Pianifica esportazione",
   "The export is scheduled.": "L'esportazione è pianificata.",
-  "Schedule list exports and mail them to others": "Pianificare esportazioni di elenchi e inviarle ad altri"
+  "Schedule list exports and mail them to others": "Pianificare esportazioni di elenchi e inviarle ad altri",
+  "Waiting for an answer": "In attesa di risposta",
+  "Resolved": "Risolto",
+  "No status": "Nessuno stato",
+  "Write a question or request": "Scrivi una domanda o una richiesta",
+  "Open and close comments": "Aprire e chiudere commenti"
 }

@@ -11,6 +11,12 @@ internal sealed class SocialApi(HttpClient http) : ApiClientBase(http), ISocialA
     public Task<CommentDto> AddCommentAsync(string entityType, Guid entityId, string text, Guid? parentId = null, CancellationToken cancellationToken = default) =>
         SendAsync<CommentDto>(HttpMethod.Post, Url("comments", entityType, entityId), new CommentRequest(text, parentId), cancellationToken);
 
+    public Task<CommentDto> AddCommentAsync(string entityType, Guid entityId, CommentRequest request, CancellationToken cancellationToken = default) =>
+        SendAsync<CommentDto>(HttpMethod.Post, Url("comments", entityType, entityId), request, cancellationToken);
+
+    public Task<CommentDto> SetCommentStatusAsync(Guid id, CommentStatus status, CancellationToken cancellationToken = default) =>
+        SendAsync<CommentDto>(HttpMethod.Put, $"api/v1/comments/{id}/status", new CommentStatusRequest(status), cancellationToken);
+
     public Task<CommentDto> EditCommentAsync(Guid id, string text, CancellationToken cancellationToken = default) =>
         SendAsync<CommentDto>(HttpMethod.Put, $"api/v1/comments/{id}", new CommentRequest(text), cancellationToken);
 

@@ -15,12 +15,13 @@ public sealed class SocialComponentsTests : ClientTestBase
     private static readonly Guid Bob = Guid.CreateVersion7();
     private readonly ISocialApi _api = Substitute.For<ISocialApi>();
     private readonly Guid _id = Guid.CreateVersion7();
+    private readonly IRenderedComponent<MudPopoverProvider> _popovers;
 
     public SocialComponentsTests()
     {
         Services.AddSingleton(_api);
         AddAuthorization().SetAuthorized("Ada").SetClaims(new Claim("sub", Me.ToString()));
-        Render<MudPopoverProvider>();
+        _popovers = Render<MudPopoverProvider>();
         Render<MudSnackbarProvider>();
     }
 
@@ -114,6 +115,23 @@ public sealed class SocialComponentsTests : ClientTestBase
         comments.WaitForAssertion(() => comments.Find($"[data-comment='{root.Id}'] [data-reaction='❤️']").TextContent.ShouldContain("1"));
         comments.FindAll("[data-testid='reaction-add']").ShouldBeEmpty();
         _api.DidNotReceiveWithAnyArgs().GetReactionsAsync(default!, default, default);
+    }
+
+    [Fact]
+    public async Task Comments_show_their_status_and_holders_of_the_permission_change_it_new_ones_start_open_where_asked()
+    {
+        var open = Comment(Bob, "Price?") with { Status = CommentStatus.Open };
+        _api.GetCommentsAsync("Quotes", _id, default).ReturnsForAnyArgs(new CommentThreadDto([open], true, false) { CanSetStatus = true });
+        var comments = Render<CoworkeeComments>(p => p.Add(c => c.EntityType, "Quotes").Add(c => c.EntityId, _id).Add(c => c.NewStatus, CommentStatus.Open));
+        comments.WaitForAssertion(() => comments.Find("[data-testid='comment-status']").TextContent.ShouldContain("Waiting for an answer"));
+
+        await comments.Find("[data-testid='comment-status-menu'] button").ClickAsync(new());
+        await _popovers.WaitForElement("[data-testid='comment-status-Closed']").ClickAsync(new());
+        await _api.Received(1).SetCommentStatusAsync(open.Id, CommentStatus.Closed, Arg.Any<CancellationToken>());
+
+        comments.Find("textarea[data-testid='comment-text']").Input("Another");
+        await comments.Find("[data-testid='comment-send']").ClickAsync(new());
+        await _api.Received(1).AddCommentAsync("Quotes", _id, Arg.Is<CommentRequest>(r => r.Text == "Another" && r.Status == CommentStatus.Open), Arg.Any<CancellationToken>());
     }
 
     private static CommentDto Comment(Guid author, string text, Guid? parentId = null) =>

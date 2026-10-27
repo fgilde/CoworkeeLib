@@ -1847,5 +1847,10 @@
   "The export is on its way.": "Ekspor sedang dikirim.",
   "Schedule export": "Jadwalkan ekspor",
   "The export is scheduled.": "Ekspor telah dijadwalkan.",
-  "Schedule list exports and mail them to others": "Menjadwalkan ekspor daftar dan mengirimkannya ke orang lain"
+  "Schedule list exports and mail them to others": "Menjadwalkan ekspor daftar dan mengirimkannya ke orang lain",
+  "Waiting for an answer": "Menunggu jawaban",
+  "Resolved": "Selesai",
+  "No status": "Tanpa status",
+  "Write a question or request": "Tulis pertanyaan atau permintaan",
+  "Open and close comments": "Membuka dan menutup komentar"
 }

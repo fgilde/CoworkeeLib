@@ -1847,5 +1847,10 @@
   "The export is on its way.": "Dışa aktarım yolda.",
   "Schedule export": "Dışa aktarmayı zamanla",
   "The export is scheduled.": "Dışa aktarım zamanlandı.",
-  "Schedule list exports and mail them to others": "Liste dışa aktarımlarını zamanlama ve başkalarına e-postayla gönderme"
+  "Schedule list exports and mail them to others": "Liste dışa aktarımlarını zamanlama ve başkalarına e-postayla gönderme",
+  "Waiting for an answer": "Yanıt bekliyor",
+  "Resolved": "Çözüldü",
+  "No status": "Durum yok",
+  "Write a question or request": "Bir soru veya talep yazın",
+  "Open and close comments": "Yorumları açma ve kapatma"
 }

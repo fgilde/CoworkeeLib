@@ -1847,5 +1847,10 @@
   "The export is on its way.": "내보내기를 보내는 중입니다.",
   "Schedule export": "내보내기 예약",
   "The export is scheduled.": "내보내기가 예약되었습니다.",
-  "Schedule list exports and mail them to others": "목록 내보내기를 예약하고 다른 사람에게 메일로 보내기"
+  "Schedule list exports and mail them to others": "목록 내보내기를 예약하고 다른 사람에게 메일로 보내기",
+  "Waiting for an answer": "답변 대기 중",
+  "Resolved": "해결됨",
+  "No status": "상태 없음",
+  "Write a question or request": "질문 또는 요청 작성",
+  "Open and close comments": "댓글 열기 및 닫기"
 }

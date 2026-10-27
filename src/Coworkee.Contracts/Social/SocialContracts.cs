@@ -9,6 +9,9 @@ public static class SocialPermissions
         public const string View = "Social.Comments.View";
         public const string Create = "Social.Comments.Create";
         public const string Moderate = "Social.Comments.Moderate";
+
+        /// <summary>Sets the status of any comment (open, closed); authors set it on their own comments with Create.</summary>
+        public const string SetStatus = "Social.Comments.SetStatus";
     }
 
     public static class Tags
@@ -57,10 +60,24 @@ public sealed record ReactionsDto(IReadOnlyList<ReactionDto> Reactions, bool Can
 
 public sealed record ReactionRequest(string Emoji);
 
+/// <summary>Whether a comment waits for an answer: an Open comment is a question or request until someone closes it.</summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter<CommentStatus>))]
+public enum CommentStatus
+{
+    None = 0,
+    Open = 1,
+    Closed = 2,
+}
+
 public sealed record CommentDto(Guid Id, Guid? ParentId, Guid AuthorId, string Text, DateTimeOffset CreatedAt, DateTimeOffset? EditedAt)
 {
     /// <summary>With comment reactions turned on and the right to see them.</summary>
     public IReadOnlyList<ReactionDto> Reactions { get; init; } = [];
+
+    public CommentStatus Status { get; init; }
+
+    /// <summary>App values of the comment, e.g. a reference number.</summary>
+    public IReadOnlyDictionary<string, string>? Properties { get; init; }
 }
 
 /// <summary>All comments of an entity, oldest first; replies point to their parent.</summary>
@@ -70,9 +87,16 @@ public sealed record CommentThreadDto(IReadOnlyList<CommentDto> Comments, bool C
     public bool ShowReactions { get; init; }
 
     public bool CanReact { get; init; }
+
+    /// <summary>May set the status of every comment (Social.Comments.SetStatus).</summary>
+    public bool CanSetStatus { get; init; }
 }
 
-public sealed record CommentRequest(string Text, Guid? ParentId = null);
+/// <param name="Status">On edit: null keeps the status.</param>
+/// <param name="Properties">App values (at most 20, keys up to 50 and values up to 500 characters); on edit null keeps them.</param>
+public sealed record CommentRequest(string Text, Guid? ParentId = null, CommentStatus? Status = null, IReadOnlyDictionary<string, string>? Properties = null);
+
+public sealed record CommentStatusRequest(CommentStatus Status);
 
 public sealed record TagDto(string Name, int Count);
 

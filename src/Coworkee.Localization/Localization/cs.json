@@ -1847,5 +1847,10 @@
   "The export is on its way.": "Export je na cestě.",
   "Schedule export": "Naplánovat export",
   "The export is scheduled.": "Export je naplánován.",
-  "Schedule list exports and mail them to others": "Plánovat exporty seznamů a posílat je ostatním"
+  "Schedule list exports and mail them to others": "Plánovat exporty seznamů a posílat je ostatním",
+  "Waiting for an answer": "Čeká na odpověď",
+  "Resolved": "Vyřešeno",
+  "No status": "Bez stavu",
+  "Write a question or request": "Napište dotaz nebo požadavek",
+  "Open and close comments": "Otevírat a uzavírat komentáře"
 }

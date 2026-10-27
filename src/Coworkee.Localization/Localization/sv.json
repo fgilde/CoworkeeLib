@@ -1847,5 +1847,10 @@
   "The export is on its way.": "Exporten är på väg.",
   "Schedule export": "Schemalägg export",
   "The export is scheduled.": "Exporten är schemalagd.",
-  "Schedule list exports and mail them to others": "Schemalägga listexporter och mejla dem till andra"
+  "Schedule list exports and mail them to others": "Schemalägga listexporter och mejla dem till andra",
+  "Waiting for an answer": "Väntar på svar",
+  "Resolved": "Löst",
+  "No status": "Ingen status",
+  "Write a question or request": "Skriv en fråga eller begäran",
+  "Open and close comments": "Öppna och stänga kommentarer"
 }

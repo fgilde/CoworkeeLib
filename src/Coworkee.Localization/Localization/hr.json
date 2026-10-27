@@ -1847,5 +1847,10 @@
   "The export is on its way.": "Izvoz je na putu.",
   "Schedule export": "Zakaži izvoz",
   "The export is scheduled.": "Izvoz je zakazan.",
-  "Schedule list exports and mail them to others": "Zakazati izvoze popisa i slati ih drugima"
+  "Schedule list exports and mail them to others": "Zakazati izvoze popisa i slati ih drugima",
+  "Waiting for an answer": "Čeka odgovor",
+  "Resolved": "Riješeno",
+  "No status": "Bez statusa",
+  "Write a question or request": "Napišite pitanje ili zahtjev",
+  "Open and close comments": "Otvaranje i zatvaranje komentara"
 }

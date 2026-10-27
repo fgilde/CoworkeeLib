@@ -1847,5 +1847,10 @@
   "The export is on its way.": "Eksporten er på vej.",
   "Schedule export": "Planlæg eksport",
   "The export is scheduled.": "Eksporten er planlagt.",
-  "Schedule list exports and mail them to others": "Planlæg eksport af lister, og send dem til andre"
+  "Schedule list exports and mail them to others": "Planlæg eksport af lister, og send dem til andre",
+  "Waiting for an answer": "Venter på svar",
+  "Resolved": "Løst",
+  "No status": "Ingen status",
+  "Write a question or request": "Skriv et spørgsmål eller en anmodning",
+  "Open and close comments": "Åbn og luk kommentarer"
 }

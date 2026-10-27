@@ -14,7 +14,23 @@
         @foreach (var (comment, depth) in Threaded())
         {
             <div style="@($"margin-left:{Math.Min(depth, 4) * 32}px")" data-comment="@comment.Id">
-                <UserCard UserId="comment.AuthorId">@Caption(comment)</UserCard>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <UserCard UserId="comment.AuthorId">@Caption(comment)</UserCard>
+                    @if (comment.Status != CommentStatus.None)
+                    {
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(comment.Status == CommentStatus.Open ? Color.Warning : Color.Success)"
+                                 Icon="@(comment.Status == CommentStatus.Open ? Icons.Material.Outlined.HelpOutline : Icons.Material.Outlined.CheckCircle)" data-testid="comment-status">@StatusText(comment.Status)</MudChip>
+                    }
+                    @if (_thread.CanSetStatus)
+                    {
+                        <MudMenu Icon="@Icons.Material.Outlined.Flag" Size="Size.Small" Dense="Density.Dense" aria-label="@L["Status"]" data-testid="comment-status-menu">
+                            @foreach (var status in Enum.GetValues<CommentStatus>())
+                            {
+                                <MudMenuItem Disabled="@(status == comment.Status)" OnClick="() => SetStatusAsync(comment, status)" data-testid="@($"comment-status-{status}")">@StatusText(status)</MudMenuItem>
+                            }
+                        </MudMenu>
+                    }
+                </MudStack>
                 @if (_editing == comment.Id)
                 {
                     <CommentComposer Text="@comment.Text" OnSubmit="text => EditAsync(comment, text)" OnCancel="() => _editing = null" />
@@ -53,7 +69,7 @@
         }
         @if (_thread.CanComment)
         {
-            <CommentComposer Placeholder="@L["Write a comment"]" OnSubmit="text => AddAsync(text, null)" />
+            <CommentComposer Placeholder="@L[NewStatus == CommentStatus.Open ? "Write a question or request" : "Write a comment"]" OnSubmit="text => AddAsync(text, null)" />
         }
     }
 </MudStack>

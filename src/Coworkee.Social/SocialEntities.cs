@@ -3,7 +3,8 @@ using Coworkee.Domain;
 
 namespace Coworkee.Social;
 
-public sealed class Comment : Entity, IMultiTenant, IHasRealtimeTopics
+/// <summary>A comment on an entity; every add, edit, status change and delete raises <see cref="CommentChanged"/> after the commit.</summary>
+public sealed class Comment : AggregateRoot, IMultiTenant, IHasRealtimeTopics
 {
     public Guid TenantId { get; set; }
 
@@ -21,8 +22,29 @@ public sealed class Comment : Entity, IMultiTenant, IHasRealtimeTopics
 
     public DateTimeOffset? EditedAt { get; set; }
 
+    public CommentStatus Status { get; set; }
+
+    /// <summary>App values such as a reference number, stored as JSON.</summary>
+    public Dictionary<string, string>? Properties { get; set; }
+
     public IEnumerable<string> RealtimeTopics => [SocialTopics.Comments(EntityType, EntityId)];
+
+    internal void Changed(CommentAction action) => Raise(new CommentChanged(Id, EntityType, EntityId, Status, action));
 }
+
+public enum CommentAction
+{
+    Added,
+    Edited,
+    StatusChanged,
+    Deleted,
+}
+
+/// <summary>
+/// A comment was added, edited, got another status or was deleted. Handlers (<c>IDomainEventHandler&lt;CommentChanged&gt;</c>) run after the commit as the
+/// user who did it, so they read the thread as it is now, e.g. to move a quotation to Request while one of its comments is Open.
+/// </summary>
+public sealed record CommentChanged(Guid CommentId, string EntityType, Guid EntityId, CommentStatus Status, CommentAction Action) : IDomainEvent;
 
 /// <summary>A tag of the tag set of one entity type.</summary>
 public sealed class Tag : Entity, IMultiTenant

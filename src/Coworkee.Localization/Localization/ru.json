@@ -1847,5 +1847,10 @@
   "The export is on its way.": "Экспорт отправлен.",
   "Schedule export": "Запланировать экспорт",
   "The export is scheduled.": "Экспорт запланирован.",
-  "Schedule list exports and mail them to others": "Планировать экспорт списков и отправлять его другим"
+  "Schedule list exports and mail them to others": "Планировать экспорт списков и отправлять его другим",
+  "Waiting for an answer": "Ожидает ответа",
+  "Resolved": "Решено",
+  "No status": "Без статуса",
+  "Write a question or request": "Напишите вопрос или запрос",
+  "Open and close comments": "Открывать и закрывать комментарии"
 }

@@ -1847,5 +1847,10 @@
   "The export is on its way.": "التصدير في الطريق.",
   "Schedule export": "جدولة التصدير",
   "The export is scheduled.": "تمت جدولة التصدير.",
-  "Schedule list exports and mail them to others": "جدولة تصدير القوائم وإرسالها بالبريد إلى آخرين"
+  "Schedule list exports and mail them to others": "جدولة تصدير القوائم وإرسالها بالبريد إلى آخرين",
+  "Waiting for an answer": "بانتظار الرد",
+  "Resolved": "تم الحل",
+  "No status": "بلا حالة",
+  "Write a question or request": "اكتب سؤالًا أو طلبًا",
+  "Open and close comments": "فتح التعليقات وإغلاقها"
 }

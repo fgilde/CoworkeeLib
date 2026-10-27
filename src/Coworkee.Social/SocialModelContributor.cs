@@ -14,6 +14,14 @@ internal sealed class SocialModelContributor : IModelContributor
             comment.Ignore(c => c.RealtimeTopics);
             comment.Property(c => c.EntityType).HasMaxLength(SocialLimits.EntityType);
             comment.Property(c => c.Text).HasMaxLength(SocialLimits.CommentText);
+            comment.Property(c => c.Status).HasConversion<string>().HasMaxLength(10);
+            comment.Property(c => c.Properties).HasConversion(
+                p => p == null ? null : System.Text.Json.JsonSerializer.Serialize(p, (System.Text.Json.JsonSerializerOptions?)null),
+                json => json == null ? null : System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(json, (System.Text.Json.JsonSerializerOptions?)null),
+                new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<Dictionary<string, string>?>(
+                    (a, b) => a == null ? b == null : b != null && a.Count == b.Count && !a.Except(b).Any(),
+                    p => p == null ? 0 : p.Count,
+                    p => p == null ? null : new Dictionary<string, string>(p)));
             comment.HasIndex(c => new { c.TenantId, c.EntityType, c.EntityId, c.CreatedAt });
             comment.HasOne<Comment>().WithMany().HasForeignKey(c => c.ParentId).OnDelete(DeleteBehavior.Cascade);
         });
@@ -58,6 +66,9 @@ internal static class SocialLimits
 {
     public const int EntityType = 100;
     public const int CommentText = 4000;
+    public const int CommentProperties = 20;
+    public const int PropertyName = 50;
+    public const int PropertyValue = 500;
     public const int TagName = 50;
     public const int Emoji = 16;
     public const int ReactionsPerUser = 20;

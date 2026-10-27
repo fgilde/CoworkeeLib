@@ -1847,5 +1847,10 @@
   "The export is on its way.": "エクスポートを送信しています。",
   "Schedule export": "エクスポートをスケジュール",
   "The export is scheduled.": "エクスポートをスケジュールしました。",
-  "Schedule list exports and mail them to others": "一覧のエクスポートをスケジュールし、他の人にメール送信する"
+  "Schedule list exports and mail them to others": "一覧のエクスポートをスケジュールし、他の人にメール送信する",
+  "Waiting for an answer": "回答待ち",
+  "Resolved": "解決済み",
+  "No status": "ステータスなし",
+  "Write a question or request": "質問または依頼を書く",
+  "Open and close comments": "コメントを開く・閉じる"
 }

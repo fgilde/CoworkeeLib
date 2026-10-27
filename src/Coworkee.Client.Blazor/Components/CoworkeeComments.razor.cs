@@ -34,6 +34,9 @@ public partial class CoworkeeComments : IAsyncDisposable
 
     [Parameter, EditorRequired] public Guid EntityId { get; set; }
 
+    /// <summary>The status of new comments (not replies), e.g. Open where every comment is a request that waits for an answer.</summary>
+    [Parameter] public CommentStatus NewStatus { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         var user = AuthenticationState is null ? null : (await AuthenticationState).User;
@@ -65,7 +68,9 @@ public partial class CoworkeeComments : IAsyncDisposable
 
     private async Task<bool> AddAsync(string text, Guid? parentId)
     {
-        var added = await Snackbar.RunAsync(() => Api.AddCommentAsync(EntityType, EntityId, text, parentId));
+        var added = await Snackbar.RunAsync(() => parentId is null && NewStatus != CommentStatus.None
+            ? Api.AddCommentAsync(EntityType, EntityId, new CommentRequest(text, Status: NewStatus))
+            : Api.AddCommentAsync(EntityType, EntityId, text, parentId));
         if (added)
         {
             _replyTo = null;
@@ -86,6 +91,21 @@ public partial class CoworkeeComments : IAsyncDisposable
 
         return saved;
     }
+
+    private async Task SetStatusAsync(CommentDto comment, CommentStatus status)
+    {
+        if (await Snackbar.RunAsync(() => Api.SetCommentStatusAsync(comment.Id, status)))
+        {
+            await LoadAsync();
+        }
+    }
+
+    private string StatusText(CommentStatus status) => status switch
+    {
+        CommentStatus.Open => L["Waiting for an answer"],
+        CommentStatus.Closed => L["Resolved"],
+        _ => L["No status"],
+    };
 
     private async Task DeleteAsync(CommentDto comment)
     {

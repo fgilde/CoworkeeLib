@@ -36,9 +36,28 @@ social.Authorize(async (services, access, ct) =>
 
 Moderate implies Create, Create implies View.
 
+`Social.Comments.SetStatus` (implies View) sets the status of any comment; authors change the status of their own comments with an edit.
+
 ## Comments
 
 Comments are threaded through `ParentId`. Deleting a comment deletes its replies. Every change is sent on the realtime topic `comments:{entityType}:{entityId}` (`SocialTopics.Comments`), so open threads reload live. With `Coworkee.Notifications` in the app, the creator of an audited entity and everyone who commented before get a notification, linked to the path from the registration.
+
+### Status, app values and checks
+
+A comment has a `Status`: `None`, `Open` (a question or request that waits for an answer) or `Closed`. It is set when the comment is written (`CommentRequest.Status`), by its author with an edit, or by holders of `Social.Comments.SetStatus` with `PUT /api/v1/comments/{id}/status` (`SetCommentStatusCommand`). `Properties` keeps app values of a comment, such as a reference number (at most 20, names up to 50 and values up to 500 characters); an edit without them keeps them.
+
+Apps check comments before they change with `ValidateComments`; the check sees the action, the entity, text, status and values, and its error is the answer (nothing is written):
+
+```csharp
+services.AddCoworkeeSocial(social => social
+    .Comments<Quotation>("Quotations", id => $"/quotations/{id}")
+    .ValidateComments(async (services, comment, ct) =>
+        await services.GetRequiredService<AppDbContext>().Quotations.AnyAsync(q => q.Id == comment.EntityId && q.Status == QuoteStatus.Booked, ct)
+            ? Error.Conflict("quotations.booked", "Comments cannot be added or changed on a booked quotation.")
+            : null));
+```
+
+Every add, edit, status change and delete raises the domain event `CommentChanged(CommentId, EntityType, EntityId, Status, Action)`. It goes through the outbox, so an `IDomainEventHandler<CommentChanged>` runs after the commit, as the user who made the change, and reads the thread as it is now: a quotation goes to *Request* while one of its comments is Open and back otherwise.
 
 ## Tags
 

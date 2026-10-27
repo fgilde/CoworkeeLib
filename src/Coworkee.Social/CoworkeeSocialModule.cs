@@ -37,9 +37,11 @@ public sealed class CoworkeeSocialModule : CoworkeeModule, IWebModule
         comments.MapGet("/{entityType}/{entityId:guid}", (string entityType, Guid entityId, IDispatcher d, CancellationToken ct) =>
             d.SendAsync(new GetCommentsQuery(entityType, entityId), ct).ToHttpResult());
         comments.MapPost("/{entityType}/{entityId:guid}", (string entityType, Guid entityId, CommentRequest body, IDispatcher d, CancellationToken ct) =>
-            d.SendAsync(new AddCommentCommand(entityType, entityId, body.Text, body.ParentId), ct).ToHttpResult());
+            d.SendAsync(new AddCommentCommand(entityType, entityId, body.Text, body.ParentId, body.Status ?? CommentStatus.None, body.Properties), ct).ToHttpResult());
         comments.MapPut("/{id:guid}", (Guid id, CommentRequest body, IDispatcher d, CancellationToken ct) =>
-            d.SendAsync(new EditCommentCommand(id, body.Text), ct).ToHttpResult());
+            d.SendAsync(new EditCommentCommand(id, body.Text, body.Status, body.Properties), ct).ToHttpResult());
+        comments.MapPut("/{id:guid}/status", (Guid id, CommentStatusRequest body, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new SetCommentStatusCommand(id, body.Status), ct).ToHttpResult());
         comments.MapDelete("/{id:guid}", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new DeleteCommentCommand(id), ct).ToHttpResult());
 
         var tags = app.MapCoworkeeApi("/api/v1/tags").WithTags("Tags").RequireAuthorization();
@@ -76,6 +78,7 @@ internal sealed class SocialPermissionDefinitions : IPermissionDefinitionContrib
             .Add(SocialPermissions.Comments.View, "View comments")
             .Add(SocialPermissions.Comments.Create, "Write comments", SocialPermissions.Comments.View)
             .Add(SocialPermissions.Comments.Moderate, "Moderate comments", SocialPermissions.Comments.Create)
+            .Add(SocialPermissions.Comments.SetStatus, "Open and close comments", SocialPermissions.Comments.View)
             .Add(SocialPermissions.Tags.View, "View tags")
             .Add(SocialPermissions.Tags.Create, "Tag entities", SocialPermissions.Tags.View)
             .Add(SocialPermissions.Tags.Moderate, "Manage tag sets", SocialPermissions.Tags.Create)

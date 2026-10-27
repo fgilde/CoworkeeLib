@@ -8,7 +8,13 @@ public interface ISocialApi
 
     Task<CommentDto> AddCommentAsync(string entityType, Guid entityId, string text, Guid? parentId = null, CancellationToken cancellationToken = default);
 
+    /// <summary>A comment with a status (Open: waits for an answer) or app values.</summary>
+    Task<CommentDto> AddCommentAsync(string entityType, Guid entityId, CommentRequest request, CancellationToken cancellationToken = default);
+
     Task<CommentDto> EditCommentAsync(Guid id, string text, CancellationToken cancellationToken = default);
+
+    /// <summary>Needs Social.Comments.SetStatus; authors change the status of their own comments with an edit.</summary>
+    Task<CommentDto> SetCommentStatusAsync(Guid id, CommentStatus status, CancellationToken cancellationToken = default);
 
     Task DeleteCommentAsync(Guid id, CancellationToken cancellationToken = default);
 

@@ -1847,5 +1847,10 @@
   "The export is on its way.": "导出正在发送。",
   "Schedule export": "计划导出",
   "The export is scheduled.": "已计划导出。",
-  "Schedule list exports and mail them to others": "计划列表导出并通过邮件发给他人"
+  "Schedule list exports and mail them to others": "计划列表导出并通过邮件发给他人",
+  "Waiting for an answer": "等待回复",
+  "Resolved": "已解决",
+  "No status": "无状态",
+  "Write a question or request": "写下问题或请求",
+  "Open and close comments": "打开和关闭评论"
 }

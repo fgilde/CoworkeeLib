@@ -1847,5 +1847,10 @@
   "The export is on its way.": "ការនាំចេញកំពុងធ្វើដំណើរ។",
   "Schedule export": "កំណត់កាលវិភាគនាំចេញ",
   "The export is scheduled.": "ការនាំចេញត្រូវបានកំណត់កាលវិភាគ។",
-  "Schedule list exports and mail them to others": "កំណត់កាលវិភាគនាំចេញបញ្ជី ហើយផ្ញើវាទៅអ្នកផ្សេង"
+  "Schedule list exports and mail them to others": "កំណត់កាលវិភាគនាំចេញបញ្ជី ហើយផ្ញើវាទៅអ្នកផ្សេង",
+  "Waiting for an answer": "កំពុងរង់ចាំចម្លើយ",
+  "Resolved": "បានដោះស្រាយ",
+  "No status": "គ្មានស្ថានភាព",
+  "Write a question or request": "សរសេរសំណួរ ឬសំណើ",
+  "Open and close comments": "បើក និងបិទមតិ"
 }

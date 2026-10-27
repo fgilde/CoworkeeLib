@@ -1847,5 +1847,10 @@
   "The export is on its way.": "Експорт уже в дорозі.",
   "Schedule export": "Запланувати експорт",
   "The export is scheduled.": "Експорт заплановано.",
-  "Schedule list exports and mail them to others": "Планувати експорт списків і надсилати його іншим"
+  "Schedule list exports and mail them to others": "Планувати експорт списків і надсилати його іншим",
+  "Waiting for an answer": "Очікує відповіді",
+  "Resolved": "Вирішено",
+  "No status": "Без статусу",
+  "Write a question or request": "Напишіть запитання або запит",
+  "Open and close comments": "Відкривати й закривати коментарі"
 }

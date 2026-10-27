@@ -1847,5 +1847,10 @@
   "The export is on its way.": "Η εξαγωγή είναι καθ' οδόν.",
   "Schedule export": "Προγραμματισμός εξαγωγής",
   "The export is scheduled.": "Η εξαγωγή προγραμματίστηκε.",
-  "Schedule list exports and mail them to others": "Προγραμματισμός εξαγωγών λιστών και αποστολή τους σε άλλους"
+  "Schedule list exports and mail them to others": "Προγραμματισμός εξαγωγών λιστών και αποστολή τους σε άλλους",
+  "Waiting for an answer": "Αναμένει απάντηση",
+  "Resolved": "Επιλύθηκε",
+  "No status": "Χωρίς κατάσταση",
+  "Write a question or request": "Γράψτε μια ερώτηση ή ένα αίτημα",
+  "Open and close comments": "Άνοιγμα και κλείσιμο σχολίων"
 }

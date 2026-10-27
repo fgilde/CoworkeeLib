@@ -36,9 +36,28 @@ social.Authorize(async (services, access, ct) =>
 
 Moderieren schließt Erstellen ein, Erstellen schließt Ansehen ein.
 
+`Social.Comments.SetStatus` (schließt Ansehen ein) setzt den Status jedes Kommentars; Autoren ändern den Status ihrer eigenen Kommentare beim Bearbeiten.
+
 ## Kommentare
 
 Kommentare bilden über `ParentId` einen Thread. Wer einen Kommentar löscht, löscht seine Antworten mit. Jede Änderung geht über das Realtime-Topic `comments:{entityType}:{entityId}` (`SocialTopics.Comments`) hinaus, offene Threads laden also live nach. Ist `Coworkee.Notifications` in der App, bekommen der Ersteller einer auditierten Entität und alle bisherigen Kommentatoren eine Benachrichtigung mit dem Pfad aus der Registrierung.
+
+### Status, App-Werte und Prüfungen
+
+Ein Kommentar hat einen `Status`: `None`, `Open` (eine Frage oder Anfrage, die auf Antwort wartet) oder `Closed`. Er wird beim Schreiben gesetzt (`CommentRequest.Status`), vom Autor beim Bearbeiten oder von Inhabern von `Social.Comments.SetStatus` mit `PUT /api/v1/comments/{id}/status` (`SetCommentStatusCommand`). `Properties` hält App-Werte eines Kommentars, etwa eine Referenznummer (höchstens 20, Namen bis 50 und Werte bis 500 Zeichen); ein Bearbeiten ohne sie behält sie.
+
+Apps prüfen Kommentare vor jeder Änderung mit `ValidateComments`; die Prüfung sieht Aktion, Entität, Text, Status und Werte, und ihr Fehler ist die Antwort (es wird nichts geschrieben):
+
+```csharp
+services.AddCoworkeeSocial(social => social
+    .Comments<Quotation>("Quotations", id => $"/quotations/{id}")
+    .ValidateComments(async (services, comment, ct) =>
+        await services.GetRequiredService<AppDbContext>().Quotations.AnyAsync(q => q.Id == comment.EntityId && q.Status == QuoteStatus.Booked, ct)
+            ? Error.Conflict("quotations.booked", "Comments cannot be added or changed on a booked quotation.")
+            : null));
+```
+
+Jedes Hinzufügen, Bearbeiten, Ändern des Status und Löschen löst das Domain-Event `CommentChanged(CommentId, EntityType, EntityId, Status, Action)` aus. Es läuft über die Outbox, ein `IDomainEventHandler<CommentChanged>` läuft also nach dem Commit, als der Benutzer, der die Änderung gemacht hat, und liest den Thread, wie er jetzt ist: Ein Angebot geht auf *Anfrage*, solange einer seiner Kommentare Open ist, sonst zurück.
 
 ## Tags
 
