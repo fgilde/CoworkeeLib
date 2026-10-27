@@ -9,6 +9,7 @@ using Coworkee.Core.Security;
 using Coworkee.Domain;
 using Coworkee.Identity;
 using Coworkee.Identity.Setup;
+using Coworkee.Infrastructure.Outbox;
 using Coworkee.Infrastructure.Persistence;
 using Coworkee.OData;
 using Coworkee.Testing;
@@ -103,7 +104,11 @@ public sealed class NotificationApp : DatabaseFixture
             : ActivatorUtilities.CreateInstance<Notifier>(scope.ServiceProvider, clock);
         await notifier.PublishAsync(message);
         await scope.ServiceProvider.GetRequiredService<NotificationTestDbContext>().SaveChangesAsync();
+        await ProcessOutboxAsync();
     }
+
+    /// <summary>Hands the committed domain events to their handlers, as the outbox service of the API host does.</summary>
+    public Task<int> ProcessOutboxAsync() => App.Services.GetRequiredService<OutboxProcessor<NotificationTestDbContext>>().ProcessBatchAsync(100, CancellationToken.None);
 
     public async Task<bool> ClaimAsync(PendingNotificationMail seen, TimeProvider clock)
     {
@@ -208,6 +213,9 @@ public sealed class TestNotificationModule : CoworkeeModule
     {
         context.Services.AddCoworkeeDbContext<NotificationTestDbContext>((provider, options) =>
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
+
+        // the tests run the outbox themselves
+        context.Services.AddSingleton<OutboxProcessor<NotificationTestDbContext>>();
         context.Services.AddSingleton<IModelContributor, ShipmentModel>();
         context.Services.AddSingleton<Coworkee.Application.Authorization.IPermissionDefinitionContributor, ShipmentPermissions>();
         context.Services.AddODataEntity<Shipment>("Shipments", Shipment.ViewShipments);

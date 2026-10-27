@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using Coworkee.Contracts;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Notifications;
+using Coworkee.Core.Security;
 using Coworkee.Mailing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -184,6 +185,26 @@ public sealed class PreferenceTests(NotificationApp app) : IAsyncLifetime
         var digest = (await MailsToAsync("bob@acme.test")).Single(m => m.TemplateName == NotificationDigestJob.Template);
         digest.HtmlBody.ShouldContain("Document shared");
         digest.HtmlBody.ShouldNotContain("Departed");
+    }
+
+    [Fact]
+    public async Task A_delayed_mail_waits_only_when_the_sending_command_commits()
+    {
+        var eta = Message(TestNotificationModule.Eta) with { Recipients = [_bob.Id] };
+        using (CurrentUserScope.Begin(new ImpersonatedUser(_setup.AdminUserId, _setup.TenantId)))
+        {
+            // the command fails after notifying: its unit of work is never saved
+            await using var scope = app.App.Services.CreateAsyncScope();
+            await scope.ServiceProvider.GetRequiredService<INotifier>().PublishAsync(eta, Ct);
+        }
+
+        await app.ProcessOutboxAsync();
+        (await app.InDbAsync(null, db => db.Set<PendingNotificationMail>().CountAsync(Ct))).ShouldBe(0);
+
+        await app.PublishAsync(_setup.AdminUserId, _setup.TenantId, eta);
+        (await app.InDbAsync(null, db => db.Set<PendingNotificationMail>().SingleAsync(Ct))).Title.ShouldBe("Departed");
+        await app.RunMailJobAsync(new FakeTimeProvider(DateTimeOffset.UtcNow.AddMinutes(2)));
+        (await MailsToAsync("bob@acme.test")).ShouldHaveSingleItem().Subject.ShouldBe("Departed");
     }
 
     [Fact]
