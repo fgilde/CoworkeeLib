@@ -197,7 +197,7 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.AddODataEntity<Box>("Boxes", ODataApp.ViewGadgets, o => o.Hide(b => b.Stickers, b => b.Code).HideUnless(b => b.Note, ODataApp.SeeCategories));
         context.Services.AddScoped<IODataEntityFilter<Box>, HideSecretBoxes>();
         context.Services.AddODataEntity<Bag>("Bags", ODataApp.ViewGadgets);
-        context.Services.AddODataEntity<Sticker>("Stickers", ODataApp.ViewGadgets);
+        context.Services.AddODataEntity<Sticker>("Stickers", ODataApp.ViewGadgets, o => o.HideUnless(s => s.Weight, ODataApp.SeeCategories).HideUnless(s => s.CreatedBy, ODataApp.SeeCategories));
         context.Services.AddODataEntity<Country>("Countries", ODataApp.ViewGadgets, o => o.Key(c => c.IsoCode));
         context.Services.AddGlobalSearch<Country>(s => s.Fields(c => c.Name).Page("/countries"));
         context.Services.AddODataEntity<Rank>("Ranks", ODataApp.ViewGadgets, o => o.Key(r => r.Number));

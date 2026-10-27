@@ -86,10 +86,12 @@ public static class ODataEntityAccess
     }
 
     /// <summary>
-    /// $search over the string properties of the set the user may read (Nextended's default is every string property): hidden ones and
-    /// <paramref name="denied"/> ones (<see cref="DeniedPropertiesAsync"/>) neither match nor narrow, so a search is no oracle on them.
+    /// $search over the string properties of the set the user may read (Nextended's default is every string property, an ISearchable entity
+    /// names its own, also through navigations): a field that reads a hidden member, or one <paramref name="denied"/> lists for the type it is
+    /// read from (<see cref="DeniedByTypeAsync"/>), neither matches nor narrows, so a search is no oracle on it. Navigations in the fields
+    /// follow their target through the caller's <see cref="ODataNavigationScope"/>.
     /// </summary>
-    internal static IQueryable<TEntity> Search<TEntity>(IServiceProvider services, IQueryable<TEntity> rows, string? text, IReadOnlySet<string> denied)
+    internal static IQueryable<TEntity> Search<TEntity>(IServiceProvider services, IQueryable<TEntity> rows, string? text, IReadOnlyDictionary<string, IReadOnlySet<string>> denied)
         where TEntity : class
     {
         if (string.IsNullOrWhiteSpace(text))
@@ -97,9 +99,40 @@ public static class ODataEntityAccess
             return rows;
         }
 
-        var hidden = services.GetRequiredService<ODataEntityRegistry>().Find(typeof(TEntity))?.HiddenProperties ?? [];
-        return Nextended.EF.QueryableExtensions.WhereContains(rows, text, [.. Nextended.Core.Contracts.ISearchable<TEntity>.GetSearchProperties()
-            .Where(p => p.Body is not System.Linq.Expressions.MemberExpression member || !(denied.Contains(member.Member.Name) || hidden.Contains(member.Member.Name)))]);
+        var registry = services.GetRequiredService<ODataEntityRegistry>();
+
+        // a member read from a type: hidden or denied on any set of that type, its bases or derived types (the row may be one of them)
+        bool Hidden(Type type, string name) => registry.Entities
+            .Where(e => e.EntityType.IsAssignableTo(type) || type.IsAssignableTo(e.EntityType))
+            .Any(e => e.HiddenProperties.Contains(name) || (denied.TryGetValue(e.EntityType.FullName!, out var names) && names.Contains(name)));
+
+        bool Readable(System.Linq.Expressions.LambdaExpression field)
+        {
+            for (var step = field.Body; step is not null;)
+            {
+                switch (step)
+                {
+                    case System.Linq.Expressions.UnaryExpression unary:
+                        step = unary.Operand;
+                        break;
+                    case System.Linq.Expressions.MemberExpression member when member.Expression is not null:
+                        if (Hidden(member.Expression.Type, member.Member.Name))
+                        {
+                            return false;
+                        }
+
+                        step = member.Expression;
+                        break;
+                    default:
+                        step = null;
+                        break;
+                }
+            }
+
+            return true;
+        }
+
+        return Nextended.EF.QueryableExtensions.WhereContains(rows, text, [.. Nextended.Core.Contracts.ISearchable<TEntity>.GetSearchProperties().Where(Readable)]);
     }
 
     /// <summary>Whether the query names parameter aliases (<c>@a=Size</c>): OData binds them inside the options, past the checks that read the options' text.</summary>

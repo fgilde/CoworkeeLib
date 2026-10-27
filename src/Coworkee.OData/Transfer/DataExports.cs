@@ -42,6 +42,10 @@ public sealed class DataExports(IServiceProvider services, CoworkeeDbContext db,
         {
             return Results.Forbid();
         }
+        catch (Microsoft.OData.ODataException exception)
+        {
+            return Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: "The query is not valid.", detail: exception.Message);
+        }
 
         if (file is not null)
         {

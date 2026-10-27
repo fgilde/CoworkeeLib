@@ -29,9 +29,13 @@ internal static class FacetResponse
             ? byType.GetValueOrDefault(typeof(T).FullName!) ?? new HashSet<string>()
             : await ODataEntityAccess.DeniedPropertiesAsync(services, typeof(T), cancellationToken);
 
-        // ponytail: a value read through a navigation would group over the target's hidden rows, so such groups are left out; scope them like labels if needed
-        foreach (var facet in facets.Where(f => !denied.Contains(f.Field) && !ThroughNavigation(typeof(T), f.ValuePath)))
+        foreach (var facet in facets.Where(f => !denied.Contains(f.Field)))
         {
+            if (await NarrowedAsync(visible, facet.ValuePath, http, cancellationToken))
+            {
+                continue;
+            }
+
             var own = context is not null && context.Groups.ContainsKey(facet.Key) && context.Combines?.GetValueOrDefault(facet.Key) != FacetCombine.All;
             var rows = own ? await FilterAsync(visible, context!.Without(facet.Key), http, cancellationToken) : filtered;
             var group = facet;
@@ -108,10 +112,45 @@ internal static class FacetResponse
         return dto with { Options = [.. dto.Options.Select(o => shown.Contains(Text(o.Value)) ? o : o with { Label = Text(o.Value) })] };
     }
 
-    private static bool ThroughNavigation(Type entityType, string? path) =>
-        (path?.StartsWith("it/", StringComparison.Ordinal) == true ? path[3..] : path)?.Split('/') is [var first, _, ..]
-        && entityType.GetProperty(first, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase) is { } property
-        && !Transfer.Import.ImportField.IsSimple(property.PropertyType);
+    /// <summary>
+    /// Whether a facet's value read through a navigation (<c>ValuePath = "it.Customer.Region"</c>) would group over rows the user may not see:
+    /// its target has row filters or a permission he lacks, or the value is a member denied to him. Such a group is left out; the key of the
+    /// target (<c>Customer/Id</c>, the foreign key's value) and complex members (<c>Address/City</c>) stay.
+    /// </summary>
+    // ponytail: left out rather than counted over the scoped rows; count through the scope if apps need such facets on filtered targets
+    private static async Task<bool> NarrowedAsync<T>(IQueryable<T> rows, string? valuePath, HttpContext http, CancellationToken cancellationToken)
+        where T : class
+    {
+        var path = valuePath?.StartsWith("it/", StringComparison.Ordinal) == true ? valuePath[3..] : valuePath;
+        if (path?.Split('/') is not [var first, var second, ..] segments)
+        {
+            return false;
+        }
+
+        if (segments.Length == 2 && typeof(T).GetProperty(first, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase) is { } navigation
+            && string.Equals(second, http.RequestServices.GetRequiredService<ODataEntityRegistry>().Find(navigation.PropertyType)?.Key ?? "Id", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var denied = http.Items[ODataEntityAccess.DeniedItem] as Dictionary<string, IReadOnlySet<string>> ?? await ODataEntityAccess.DeniedByTypeAsync(http.RequestServices, cancellationToken);
+        try
+        {
+            if (ODataQueryGuard.Denies(http.RequestServices, typeof(T), $"{path} ne null", denied))
+            {
+                return true;
+            }
+        }
+        catch (Microsoft.OData.ODataException)
+        {
+            return true;
+        }
+
+        var read = rows.Select($"it.{path.Replace('/', '.')}");
+        var scope = ScopeOf<T>(http);
+        await scope.PrepareAsync(read.Expression, cancellationToken);
+        return scope.Narrows(read.Expression);
+    }
 
     private static string Text(JsonElement value) => value.ValueKind == JsonValueKind.String ? value.GetString()! : value.ToString();
 

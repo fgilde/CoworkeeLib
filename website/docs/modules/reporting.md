@@ -141,7 +141,7 @@ The server checks every field against the source, builds `GroupBy` and `Select` 
 | Limits | 5,000 groups, top 1 to 1,000 |
 | Rejected | unknown or hidden fields, sums of text, buckets on non-dates, OData that does not parse |
 
-All three database providers aggregate in SQL. On SQL Server weeks are counted with `DATEDIFF` from a Monday, as its day of week depends on server settings. On SQLite a Coworkee DbContext stores `DateTimeOffset` as a number; date buckets compute the UTC date from it. A `DateTimeOffset` of an [external DbContext](../fundamentals/persistence.md#external-databases) on SQLite has no date parts, so its date buckets are rejected there.
+All three database providers aggregate in SQL. On SQL Server weeks are counted with `DATEDIFF` from a Monday, as its day of week depends on server settings. On SQLite a Coworkee DbContext stores `DateTimeOffset` as a number; date buckets compute the UTC date from it. A `DateTimeOffset` stored otherwise on SQLite (an [external DbContext](../fundamentals/persistence.md#external-databases), an own `HasConversion`) has no date parts, so its date buckets are rejected there.
 
 Measured on the demo's 100,000 sales orders (Postgres, warm): count by status 9 ms, sum by month 29 ms, count by week 55 ms, region by channel 23 ms, top 10 customers with join 30 ms, four KPI values 58 ms.
 

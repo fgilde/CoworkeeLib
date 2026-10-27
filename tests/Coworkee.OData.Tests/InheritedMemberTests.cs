@@ -94,6 +94,49 @@ public sealed class InheritedMemberTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Aggregates_through_a_navigation_need_the_permission_of_what_they_read()
+    {
+        var viewer = await ViewerAsync(ODataApp.ViewGadgets);
+        var query = "/odata/Bags?$apply=groupby((Name),aggregate(Stickers(Weight with max as M)))";
+
+        (await viewer.GetAsync(query, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await viewer.GetAsync("/odata/Bags?$expand=Stickers($apply=aggregate(Weight with max as M))", Ct)).StatusCode.ShouldNotBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task A_member_of_a_shared_base_hidden_on_one_set_stays_readable_on_the_others()
+    {
+        // CreatedBy is declared on AuditedEntity, which bins, shelves and stickers share; only stickers protect it
+        var viewer = await ViewerAsync(ODataApp.ViewGadgets, ODataApp.ViewBins);
+
+        (await viewer.GetAsync("/odata/Stickers?$filter=CreatedBy eq null", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        foreach (var query in new[] { "/odata/Bins?$filter=CreatedBy eq null", "/odata/Shelves?$expand=Bins($select=Name,CreatedBy)", "/odata/Bags?$expand=Stickers($select=Text)", "/odata/Shelves?$apply=groupby((CreatedBy))" })
+        {
+            (await viewer.GetAsync(query, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK, query);
+        }
+    }
+
+    [Fact]
+    public async Task Search_fields_through_a_navigation_follow_the_rules_of_what_they_read()
+    {
+        var viewer = await ViewerAsync(ODataApp.ViewGadgets);
+
+        (await viewer.GetFromJsonAsync<JsonElement>("/odata/Stickers?$search=fragile", Ct)).GetProperty("value").GetArrayLength().ShouldBe(0);
+        (await viewer.GetFromJsonAsync<JsonElement>("/odata/Stickers?$search=up", Ct)).GetProperty("value").GetArrayLength().ShouldBe(1);
+        (await Admin.GetFromJsonAsync<JsonElement>("/odata/Stickers?$search=fragile", Ct)).GetProperty("value")[0].GetProperty("Text").GetString().ShouldBe("Up");
+    }
+
+    private async Task<HttpClient> ViewerAsync(params string[] permissions)
+    {
+        var user = await (await Admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest($"viewer-{Guid.NewGuid():N}@acme.test", "Passw0rd!x", null, null), Ct))
+            .Content.ReadFromJsonAsync<UserDto>(Ct);
+        var role = await (await Admin.PostAsJsonAsync("/api/v1/identity/roles", new RoleRequest("Viewers " + Guid.NewGuid().ToString("N")[..6], null), Ct)).Content.ReadFromJsonAsync<Guid>(Ct);
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{role}", new NameListRequest(permissions), Ct)).EnsureSuccessStatusCode();
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/users/{user!.Id}/roles", new IdListRequest([role]), Ct)).EnsureSuccessStatusCode();
+        return app.As(user.Id, _setup.TenantId);
+    }
+
+    [Fact]
     public async Task Protected_members_of_a_base_class_need_their_permission_on_their_set_only()
     {
         var user = await (await Admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest($"viewer-{Guid.NewGuid():N}@acme.test", "Passw0rd!x", null, null), Ct))

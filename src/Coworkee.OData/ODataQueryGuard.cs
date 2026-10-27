@@ -25,7 +25,10 @@ internal sealed class ODataQueryGuard
 
     private ODataQueryGuard(IEdmModel model, IReadOnlyDictionary<string, IReadOnlySet<string>> denied) => (_model, _denied) = (model, denied);
 
-    /// <summary>Whether the options read a denied member; a clause OData cannot parse is left to [EnableQuery], which refuses it.</summary>
+    /// <summary>
+    /// Whether the options read a denied member. A clause OData cannot parse throws its <see cref="ODataException"/>: the caller answers 400
+    /// rather than run a query the guard could not read.
+    /// </summary>
     public static bool Denies(ODataQueryOptions options, IReadOnlyDictionary<string, IReadOnlySet<string>> denied)
     {
         if (denied.Count == 0)
@@ -34,20 +37,14 @@ internal sealed class ODataQueryGuard
         }
 
         var guard = new ODataQueryGuard(options.Context.Model, denied);
-        try
-        {
-            // $apply and $compute first: the other options may name what they add
-            guard.Walk(options.Apply?.ApplyClause);
-            guard.Walk(options.Compute?.ComputeClause);
-            guard.Walk(options.Filter?.FilterClause);
-            guard.Walk(options.OrderBy?.OrderByClause);
-            guard.Select(options.SelectExpand?.SelectExpandClause, options.Context.ElementType as IEdmStructuredType);
-        }
-        catch (ODataException)
-        {
-            return false;
-        }
+        var root = options.Context.ElementType as IEdmStructuredType;
 
+        // $apply and $compute first: the other options may name what they add
+        guard.Walk(options.Apply?.ApplyClause, root);
+        guard.Walk(options.Compute?.ComputeClause, root);
+        guard.Walk(options.Filter?.FilterClause, root);
+        guard.Walk(options.OrderBy?.OrderByClause, root);
+        guard.Select(options.SelectExpand?.SelectExpandClause, root);
         return guard._found;
     }
 
@@ -77,22 +74,22 @@ internal sealed class ODataQueryGuard
             {
                 case PathSelectItem path:
                     var target = Path(path.SelectedPath, type, viaNavigation: false);
-                    Walk(path.ComputeOption);
-                    Walk(path.FilterOption);
-                    Walk(path.OrderByOption);
+                    Walk(path.ComputeOption, target);
+                    Walk(path.FilterOption, target);
+                    Walk(path.OrderByOption, target);
                     Select(path.SelectAndExpand, target);
                     break;
                 case ExpandedCountSelectItem count:
-                    Path(count.PathToNavigationProperty, type, viaNavigation: true);
-                    Walk(count.FilterOption);
+                    Walk(count.FilterOption, Path(count.PathToNavigationProperty, type, viaNavigation: true));
                     break;
                 case ExpandedReferenceSelectItem expand:
                     // an expanded navigation of a shared base: the serializer leaves it out per row, by the row's own set
                     var expanded = Path(expand.PathToNavigationProperty, type, viaNavigation: true);
-                    Walk(expand.ComputeOption);
-                    Walk(expand.FilterOption);
-                    Walk(expand.OrderByOption);
-                    Walk(expand.CountOption);
+                    Walk(expand.ApplyOption, expanded);
+                    Walk(expand.ComputeOption, expanded);
+                    Walk(expand.FilterOption, expanded);
+                    Walk(expand.OrderByOption, expanded);
+                    Walk(expand.CountOption, expanded);
                     if (expand is ExpandedNavigationSelectItem { SelectAndExpand: { } nested })
                     {
                         Select(nested, expanded);
@@ -126,50 +123,26 @@ internal sealed class ODataQueryGuard
         return type;
     }
 
-    // every node of a parsed clause; the members it binds are checked
-    private void Walk(object? node)
+    // every node of a parsed clause: every property and navigation a node holds is checked, whatever the node, so an unknown kind of node
+    // fails closed; the type a member is read from is the node's source, else the type the clause is about (root, expanded target)
+    private void Walk(object? node, IEdmStructuredType? context)
     {
         if (node is null or string || _found || !_seen.Add(node))
         {
             return;
         }
 
-        switch (node)
+        if (node is SelectExpandClause clause)
         {
-            case SingleValuePropertyAccessNode access:
-                Check(access.Property, TypeOf(access.Source), derived: true);
-                break;
-            case CollectionPropertyAccessNode access:
-                Check(access.Property, TypeOf(access.Source), derived: true);
-                break;
-            case SingleComplexNode complex:
-                Check(complex.Property, TypeOf(complex.Source), derived: true);
-                break;
-            case CollectionComplexNode complex:
-                Check(complex.Property, TypeOf(complex.Source), derived: true);
-                break;
-            case SingleNavigationNode navigation:
-                Check(navigation.NavigationProperty, TypeOf(navigation.Source), derived: true);
-                break;
-            case CollectionNavigationNode navigation:
-                Check(navigation.NavigationProperty, TypeOf(navigation.Source), derived: true);
-                break;
-            case PropertySegment segment:
-                Check(segment.Property, null, derived: true);
-                break;
-            case NavigationPropertySegment segment:
-                Check(segment.NavigationProperty, null, derived: true);
-                break;
-            case SelectExpandClause clause:
-                Select(clause, null);
-                return;
+            Select(clause, context);
+            return;
         }
 
         if (node is IEnumerable items)
         {
             foreach (var item in items)
             {
-                Walk(item);
+                Walk(item, context);
             }
 
             return;
@@ -180,24 +153,31 @@ internal sealed class ODataQueryGuard
             return;
         }
 
+        var values = new List<(string Name, object Value)>();
         foreach (var property in node.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetIndexParameters().Length == 0))
         {
-            if (property.PropertyType.Namespace?.StartsWith("Microsoft.OData.Edm", StringComparison.Ordinal) == true)
-            {
-                continue;
-            }
-
-            object? value;
             try
             {
-                value = property.GetValue(node);
+                if (property.GetValue(node) is { } value)
+                {
+                    values.Add((property.Name, value));
+                }
             }
             catch (TargetInvocationException)
             {
-                continue;
             }
+        }
 
-            Walk(value);
+        var source = TypeOf(values.FirstOrDefault(v => v.Name == "Source").Value as QueryNode) ?? context;
+        foreach (var member in values.Select(v => v.Value).OfType<IEdmProperty>())
+        {
+            // a segment of a path ($expand, select) reads from the clause's type; a node from its source
+            Check(member, node is ODataPathSegment ? context : source, derived: true);
+        }
+
+        foreach (var (_, value) in values.Where(v => v.Value is not IEdmElement))
+        {
+            Walk(value, context);
         }
     }
 

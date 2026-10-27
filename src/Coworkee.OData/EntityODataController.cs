@@ -48,7 +48,19 @@ public class EntityODataController<TEntity> : GenericODataController<TEntity>, I
 
         var raw = options.RawValues;
         var denied = await ODataEntityAccess.DeniedByTypeAsync(services, cancellationToken);
-        if (ODataQueryGuard.Denies(options, denied) || FacetFilters().Any(filter => ODataQueryGuard.Denies(services, typeof(TEntity), filter, denied)))
+        bool refused;
+        try
+        {
+            refused = ODataQueryGuard.Denies(options, denied) || FacetFilters().Any(filter => ODataQueryGuard.Denies(services, typeof(TEntity), filter, denied));
+        }
+        catch (ODataException exception)
+        {
+            // what the guard cannot read is not run
+            context.Result = Problem(StatusCodes.Status400BadRequest, "The query is not valid.", exception.Message);
+            return;
+        }
+
+        if (refused)
         {
             context.Result = new ForbidResult();
             return;
@@ -157,8 +169,7 @@ public class EntityODataController<TEntity> : GenericODataController<TEntity>, I
 
     // the visible rows narrowed by $search over the properties the user may read
     private IQueryable<TEntity> Searched(ODataQueryOptions options) =>
-        ODataEntityAccess.Search(HttpContext.RequestServices, Queryable(), options.Search?.RawValue,
-            ((Dictionary<string, IReadOnlySet<string>>)HttpContext.Items[ODataEntityAccess.DeniedItem]!).GetValueOrDefault(typeof(TEntity).FullName!) ?? new HashSet<string>());
+        ODataEntityAccess.Search(HttpContext.RequestServices, Queryable(), options.Search?.RawValue, (Dictionary<string, IReadOnlySet<string>>)HttpContext.Items[ODataEntityAccess.DeniedItem]!);
 
     // Nextended's Get searches every string property, hidden ones too
     public override async Task<IQueryable<TEntity>> Get(CancellationToken ct = default)

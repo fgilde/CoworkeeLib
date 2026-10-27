@@ -60,11 +60,15 @@ public sealed class Tray : AuditedEntity, IMultiTenant
 
     public Guid? BinId { get; set; }
 
+    // the key of a filtered target is the foreign key's value: the facet stays
     [AutoExpand]
+    [ProvideFacet(Label = "Bin", ValuePath = "it.Bin.Id")]
     public Bin? Bin { get; set; }
 
     public Guid? ShelfId { get; set; }
 
+    // a target without rules: the facet through it stays
+    [ProvideFacet(Label = "Shelf", ValuePath = "it.Shelf.Name")]
     public Shelf? Shelf { get; set; }
 
     public Guid TenantId { get; set; }

@@ -122,6 +122,16 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task What_the_checks_cannot_parse_is_not_run()
+    {
+        using var facets = new HttpRequestMessage(HttpMethod.Get, "/odata/Shelves");
+        facets.Headers.Add(FacetContextDto.Header, new FacetContextDto("Nope eq 1", new Dictionary<string, string>()).Encode());
+        (await Admin.SendAsync(facets, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await Admin.GetAsync("/odata/Shelves?$filter=Featured/Size gt 0&$orderby=Nope", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await Admin.GetAsync("/api/v1/data/Shelves/export?format=csv&$filter=Nope eq 1", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
     public async Task Apply_through_a_navigation_without_rules_still_groups()
     {
         var groups = (await GetAsync("/odata/Trays?$apply=groupby((Shelf/Name),aggregate($count as N))")).GetProperty("value");
@@ -149,8 +159,11 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
         var (_, facets) = await FacetsAsync(Admin, "$filter=Bins/any(b: b/Name eq 'Secret')&$top=0");
         facets.SelectMany(f => f.Options).ShouldAllBe(o => o.Count == 0);
 
-        // a value read through a navigation would group over hidden rows: no such group
+        // a value read through a navigation into filtered rows would group over hidden ones: no such group; a target without rules and the key stay
         (await FacetsAsync(Admin, "$top=0")).Facets.ShouldNotContain(f => f.Field == "Featured");
+        var trays = (await FacetsAsync(Admin, "$top=0", "Trays")).Facets;
+        trays.Single(f => f.Field == "Shelf").Options.Single().Label.ShouldBe("Open");
+        trays.Single(f => f.Field == "Bin").Options.Count.ShouldBe(2);
 
         var featured = (await FacetsAsync(Admin, "$top=0")).Facets.Single(f => f.Field == "FeaturedId").Options;
         featured.Select(o => o.Label.ToLowerInvariant()).ShouldBe(["plain", "visible", _secret.ToString()], ignoreOrder: true);
@@ -257,9 +270,9 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
         return await response.Content.ReadAsStringAsync(Ct);
     }
 
-    private async Task<(string[] Names, List<FacetGroupDto> Facets)> FacetsAsync(HttpClient client, string query)
+    private async Task<(string[] Names, List<FacetGroupDto> Facets)> FacetsAsync(HttpClient client, string query, string set = "Shelves")
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, $"/odata/Shelves?{query}");
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"/odata/{set}?{query}");
         request.Headers.Add("Prefer", "odata.include-annotations=\"cn.facets\"");
         using var response = await client.SendAsync(request, Ct);
         var body = await response.Content.ReadAsStringAsync(Ct);
