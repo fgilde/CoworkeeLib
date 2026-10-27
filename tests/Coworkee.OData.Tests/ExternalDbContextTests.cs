@@ -1,5 +1,7 @@
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using ClosedXML.Excel;
 using Coworkee.Application.Messaging;
 using Coworkee.Contracts.Data;
 using Coworkee.Contracts.Identity;
@@ -48,6 +50,26 @@ public sealed class ExternalDbContextTests(ODataApp app) : IAsyncLifetime
 
         page.GetProperty("value").EnumerateArray().Select(p => p.GetProperty("Name").GetString()).ShouldBe(["Crate", "Pallet"]);
         page.GetProperty("@odata.count").GetInt32().ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task Without_the_permission_the_set_its_feed_and_export_are_forbidden()
+    {
+        var email = $"viewer-{Guid.NewGuid():N}@acme.test";
+        var user = await (await Admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest(email, "Passw0rd!x", null, null), Ct)).Content.ReadFromJsonAsync<UserDto>(Ct);
+        var viewer = app.As(user!.Id, _setup.TenantId);
+
+        (await viewer.GetAsync("/odata/Parcels", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await viewer.GetAsync("/api/v1/client-entities/Parcels/changes", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await viewer.GetAsync("/api/v1/data/Parcels/export", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task Export_writes_the_visible_external_rows()
+    {
+        using var workbook = new XLWorkbook(await Admin.GetStreamAsync("/api/v1/data/Parcels/export", Ct));
+
+        workbook.Worksheet(1).RowsUsed().Count().ShouldBe(3);
     }
 
     [Fact]

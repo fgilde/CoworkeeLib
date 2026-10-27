@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Coworkee.ExtendedAttributes;
 
 internal sealed class ExtendedAttributeHandlers(
-    CoworkeeDbContext db, IEnumerable<ExtendedAttributeRegistration> registrations, IPermissionChecker permissions, ICurrentUser currentUser)
+    CoworkeeDbContext db, IEnumerable<ExtendedAttributeRegistration> registrations, IPermissionChecker permissions, ICurrentUser currentUser, IServiceProvider services)
     : IHandler<GetExtendedAttributesQuery, Result<IReadOnlyList<ExtendedAttributeDto>>>,
       IHandler<SetExtendedAttributesCommand, Result<IReadOnlyList<ExtendedAttributeDto>>>
 {
@@ -60,7 +60,7 @@ internal sealed class ExtendedAttributeHandlers(
         }
 
         // ponytail: only the tenant filter applies here, not row level OData filters; check them in a decorator if an entity needs that
-        return await registration.ExistsAsync(db, entityId, cancellationToken) ? null : NotFound;
+        return await registration.ExistsAsync(services, entityId, cancellationToken) ? null : NotFound;
     }
 
     private IQueryable<ExtendedAttribute> Attributes(string entityType, Guid entityId) =>

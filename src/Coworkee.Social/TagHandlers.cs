@@ -104,10 +104,22 @@ internal sealed class TagHandlers(CoworkeeDbContext db, SocialGuard guard, IPerm
     }
 
     /// <summary>The tag links of entities the current user sees: counts and lists never tell of hidden rows.</summary>
-    private async Task<IQueryable<EntityTag>> LinksAsync(string entityType, CancellationToken cancellationToken) =>
-        await guard.VisibleIdsAsync(SocialFeature.Tags, entityType, cancellationToken) is { } visible
-            ? db.Set<EntityTag>().Where(l => visible.Contains(l.EntityId))
-            : db.Set<EntityTag>();
+    private async Task<IQueryable<EntityTag>> LinksAsync(string entityType, CancellationToken cancellationToken)
+    {
+        if (await guard.VisibleIdsAsync(SocialFeature.Tags, entityType, cancellationToken) is not { } visible)
+        {
+            return db.Set<EntityTag>();
+        }
+
+        if (visible.Provider == db.Set<EntityTag>().Provider)
+        {
+            return db.Set<EntityTag>().Where(l => visible.Contains(l.EntityId));
+        }
+
+        // ponytail: records of an external database: their ids come over as one list, fine for thousands; a join table in the app's database beyond that
+        var ids = await visible.ToListAsync(cancellationToken);
+        return db.Set<EntityTag>().Where(l => EF.Parameter(ids).Contains(l.EntityId));
+    }
 
     private IQueryable<Tag> Set(string entityType) => db.Set<Tag>().Where(t => t.EntityType == entityType);
 

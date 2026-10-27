@@ -66,4 +66,7 @@ public sealed record ClientEntitySettings
     /// e.g. the tables of an external database. Without them such sets download completely on every refresh.
     /// </summary>
     public IReadOnlyList<string> ChangedAt { get; set; } = [];
+
+    /// <summary>How far before the last refresh each refresh looks again, for commits that land after their timestamp; raise it for tables another system writes with its own clock.</summary>
+    public TimeSpan Overlap { get; set; } = TimeSpan.FromSeconds(5);
 }

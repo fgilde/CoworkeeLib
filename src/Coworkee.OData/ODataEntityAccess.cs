@@ -76,15 +76,15 @@ public static class ODataEntityAccess
 
     /// <summary>
     /// The ids of the rows the current user may open (guards: attachments, social, children), whatever groups he selected: through the
-    /// entity's registered set (null without the set's permission), without a set (or without the OData module) every row the DbContext
-    /// shows, so tenant and soft delete filters apply.
+    /// entity's registered set (null without the set's permission), without a set (or without the OData module) every row the app's DbContext
+    /// shows, so tenant and soft delete filters apply. An entity of an external DbContext needs its set: without one nobody may open its rows.
     /// </summary>
     public static async Task<IQueryable<Guid>?> VisibleIdsAsync<TEntity>(IServiceProvider services, CancellationToken cancellationToken)
         where TEntity : class
     {
         if (services.GetService<ODataEntityRegistry>()?.Find(typeof(TEntity)) is null)
         {
-            return services.DbContextFor(typeof(TEntity)).Set<TEntity>().Select(e => EF.Property<Guid>(e, "Id"));
+            return services.DbContextFor(typeof(TEntity)) is CoworkeeDbContext db ? db.Set<TEntity>().Select(e => EF.Property<Guid>(e, "Id")) : null;
         }
 
         using var unnarrowed = GroupScope.Unnarrowed();

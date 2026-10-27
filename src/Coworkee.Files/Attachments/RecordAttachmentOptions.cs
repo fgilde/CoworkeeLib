@@ -56,7 +56,8 @@ public abstract class RecordAttachmentType(string entityType)
     internal abstract Task<IQueryable<Guid>?> VisibleIdsAsync(IServiceProvider services, CancellationToken cancellationToken);
 
     /// <summary>The ids of every row, deleted or not, of all organisations: the records that still have a claim on their files.</summary>
-    internal abstract IQueryable<Guid> ExistingIds(CoworkeeDbContext db);
+    /// <summary>The ids of the records in the app's database, null for records of an external database.</summary>
+    internal abstract IQueryable<Guid>? ExistingIds(CoworkeeDbContext db);
 
     private RecordAttachmentType Add(AttachmentSlot slot)
     {
@@ -76,7 +77,7 @@ internal sealed class RecordAttachmentType<TEntity>(string entityType) : RecordA
     internal override Task<IQueryable<Guid>?> VisibleIdsAsync(IServiceProvider services, CancellationToken cancellationToken) =>
         ODataEntityAccess.VisibleIdsAsync<TEntity>(services, cancellationToken);
 
-    internal override IQueryable<Guid> ExistingIds(CoworkeeDbContext db) => db.Set<TEntity>().IgnoreQueryFilters().Select(e => EF.Property<Guid>(e, "Id"));
+    internal override IQueryable<Guid>? ExistingIds(CoworkeeDbContext db) => db.Model.FindEntityType(typeof(TEntity)) is null ? null : db.Set<TEntity>().IgnoreQueryFilters().Select(e => EF.Property<Guid>(e, "Id"));
 }
 
 /// <summary>The record types that take attachments, by the name used in the address (usually the OData set name).</summary>

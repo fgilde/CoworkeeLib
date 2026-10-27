@@ -70,6 +70,7 @@ Each set starts from the defaults, then the attribute, then the options, then it
 | `RefreshInterval` | 5 minutes | how often clients ask for changes |
 | `Enabled` | `true` | `false` keeps an attributed entity on the server |
 | `ChangedAt` | none | date properties that tell when a row was created or changed, for entities without `IAuditable` (tables of an [external database](../fundamentals/persistence.md#external-databases)); without them such a set downloads completely on every refresh |
+| `Overlap` | 5 seconds | how far before the last refresh each refresh looks again, for late commits and clock skew |
 
 === "Options"
 

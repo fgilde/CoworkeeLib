@@ -8,6 +8,7 @@ using Coworkee.Contracts.Data;
 using Coworkee.Contracts.Realtime;
 using Coworkee.Core.Security;
 using Coworkee.Domain;
+using Coworkee.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -23,8 +24,6 @@ namespace Coworkee.OData.ClientEntities;
 /// </summary>
 internal static class ClientEntityEndpoints
 {
-    // ponytail: rows saved within this window before a version are sent again, covering clock skew between servers and late commits.
-    private static readonly TimeSpan Overlap = TimeSpan.FromSeconds(5);
 
     public static void MapClientEntityEndpoints(this IEndpointRouteBuilder app)
     {
@@ -98,9 +97,9 @@ internal static class ClientEntityEndpoints
             return Results.Ok(new ClientEntityChanges(version, count, [], [], Reset: false));
         }
 
-        var from = since.Value - Overlap;
-        var changedSince = settings.ChangedAt.Count > 0 ? ChangedAfter<TEntity>(settings.ChangedAt, from)
-            : typeof(IAuditable).IsAssignableFrom(typeof(TEntity)) ? ChangedAfter<TEntity>([nameof(IAuditable.CreatedAt), nameof(IAuditable.ModifiedAt)], from)
+        var from = since.Value - settings.Overlap;
+        var changedSince = settings.ChangedAt.Count > 0 ? ChangedAfter<TEntity>(services, settings.ChangedAt, from)
+            : typeof(IAuditable).IsAssignableFrom(typeof(TEntity)) ? ChangedAfter<TEntity>(services, [nameof(IAuditable.CreatedAt), nameof(IAuditable.ModifiedAt)], from)
             : null;
         if (changedSince is null)
         {
@@ -131,23 +130,31 @@ internal static class ClientEntityEndpoints
     }
 
     /// <summary>e => e.A > from || e.B > from ..., with <paramref name="from"/> as a query parameter in the column's type.</summary>
-    private static Expression<Func<TEntity, bool>> ChangedAfter<TEntity>(IEnumerable<string> properties, DateTimeOffset from)
+    private static Expression<Func<TEntity, bool>> ChangedAfter<TEntity>(IServiceProvider services, IEnumerable<string> properties, DateTimeOffset from)
     {
+        var entity = services.DbContextFor(typeof(TEntity)).Model.FindEntityType(typeof(TEntity))!;
         var e = Expression.Parameter(typeof(TEntity), "e");
         Expression? any = null;
         foreach (var name in properties)
         {
-            var column = Expression.Property(e, name);
-            var type = Nullable.GetUnderlyingType(column.Type) ?? column.Type;
+            var property = entity.FindProperty(name) ?? throw new InvalidOperationException($"{typeof(TEntity).Name} has no property {name} for ChangedAt.");
+            var type = Nullable.GetUnderlyingType(property.ClrType) ?? property.ClrType;
             Expression bound = type == typeof(DateTimeOffset) ? Expression.Field(Expression.Constant(new StrongBox<DateTimeOffset>(from)), "Value")
-                : type == typeof(DateTime) ? Expression.Field(Expression.Constant(new StrongBox<DateTime>(from.UtcDateTime)), "Value")
+                : type == typeof(DateTime) ? Expression.Field(Expression.Constant(new StrongBox<DateTime>(Utc(from, property.GetColumnType()))), "Value")
                 : throw new InvalidOperationException($"{typeof(TEntity).Name}.{name} is no DateTime or DateTimeOffset.");
-            var after = Expression.GreaterThan(column, Expression.Convert(bound, column.Type));
+            var column = Expression.Call(typeof(EF), nameof(EF.Property), [property.ClrType], e, Expression.Constant(name));
+            var after = Expression.GreaterThan(column, Expression.Convert(bound, property.ClrType));
             any = any is null ? after : Expression.OrElse(any, after);
         }
 
         return Expression.Lambda<Func<TEntity, bool>>(any!, e);
     }
+
+    // Npgsql takes only unspecified DateTimes for a timestamp without time zone, other providers either kind
+    private static DateTime Utc(DateTimeOffset value, string columnType) =>
+        DateTime.SpecifyKind(value.UtcDateTime, columnType.StartsWith("timestamp", StringComparison.OrdinalIgnoreCase) && !columnType.Contains("with time zone", StringComparison.OrdinalIgnoreCase)
+            ? DateTimeKind.Unspecified
+            : DateTimeKind.Utc);
 
     private static async Task<IResult> IdsAsync<TEntity>(IServiceProvider services, ClientEntitySettings settings, DateTimeOffset? since, CancellationToken cancellationToken)
         where TEntity : class

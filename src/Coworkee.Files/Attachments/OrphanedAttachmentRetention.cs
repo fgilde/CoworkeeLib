@@ -23,7 +23,7 @@ internal sealed class OrphanedAttachmentRetention(CoworkeeDbContext db, RecordAt
     public async Task<long> CountAsync(DateTimeOffset before, CancellationToken cancellationToken)
     {
         long total = 0;
-        foreach (var type in options.Types.Values)
+        foreach (var type in Local())
         {
             total += await Orphans(type, before).LongCountAsync(cancellationToken);
         }
@@ -35,7 +35,7 @@ internal sealed class OrphanedAttachmentRetention(CoworkeeDbContext db, RecordAt
     {
         long total = 0;
         var failed = new List<string>();
-        foreach (var type in options.Types.Values)
+        foreach (var type in Local())
         {
             List<(Guid Id, string BlobKey)> batch;
             do
@@ -66,9 +66,12 @@ internal sealed class OrphanedAttachmentRetention(CoworkeeDbContext db, RecordAt
             : throw new RetentionIncompleteException(total, $"{failed.Count} blobs could not be deleted:{Environment.NewLine}{string.Join(Environment.NewLine, failed.Take(20))}");
     }
 
+    // ponytail: attachments of records in an external database are never cleaned up; one query cannot span two databases, compare ids in batches if they pile up
+    private IEnumerable<RecordAttachmentType> Local() => options.Types.Values.Where(t => t.ExistingIds(db) is not null);
+
     private IQueryable<RecordAttachment> Orphans(RecordAttachmentType type, DateTimeOffset before)
     {
-        var existing = type.ExistingIds(db);
+        var existing = type.ExistingIds(db)!;
         return db.Set<RecordAttachment>().IgnoreQueryFilters().Where(a => a.EntityType == type.EntityType && a.CreatedAt < before && !existing.Contains(a.EntityId));
     }
 }

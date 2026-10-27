@@ -70,6 +70,7 @@ Jedes Set startet mit den Standardwerten, dann wirken das Attribut, die Optionen
 | `RefreshInterval` | 5 Minuten | wie oft Clients nach Änderungen fragen |
 | `Enabled` | `true` | `false` lässt eine markierte Entity auf dem Server |
 | `ChangedAt` | keine | Datumseigenschaften, die sagen, wann eine Zeile angelegt oder geändert wurde, für Entities ohne `IAuditable` (Tabellen einer [externen Datenbank](../fundamentals/persistence.md#externe-datenbanken)); ohne sie lädt ein solches Set bei jeder Aktualisierung vollständig |
+| `Overlap` | 5 Sekunden | wie weit vor die letzte Aktualisierung jede Aktualisierung erneut schaut, für späte Commits und abweichende Uhren |
 
 === "Optionen"
 
