@@ -18,8 +18,12 @@ internal sealed class ExportJob(IServiceProvider services, DataExports exports, 
             return;
         }
 
-        job.Status = DataTransferStatus.Running;
-        await db.SaveChangesAsync(cancellationToken);
+        (job.Status, job.StartedAt) = (DataTransferStatus.Running, clock.GetUtcNow());
+        if (!await SavedAsync(job.Id, cancellationToken))
+        {
+            return;
+        }
+
         try
         {
             var entity = registry.Find(job.EntitySet) ?? throw new InvalidOperationException($"{job.EntitySet} is no OData set anymore.");
@@ -50,6 +54,22 @@ internal sealed class ExportJob(IServiceProvider services, DataExports exports, 
         }
 
         job.FinishedAt = clock.GetUtcNow();
-        await db.SaveChangesAsync(CancellationToken.None);
+        await SavedAsync(job.Id, CancellationToken.None);
+    }
+
+    /// <summary>False when the job changed meanwhile (the stale sweep failed it): its state stays, nothing of this run is written, also no mail.</summary>
+    private async Task<bool> SavedAsync(Guid jobId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+            return true;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            logger.LogWarning("Export {JobId} changed meanwhile; this run is dropped.", jobId);
+            db.ChangeTracker.Clear();
+            return false;
+        }
     }
 }

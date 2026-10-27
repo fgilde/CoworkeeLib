@@ -92,7 +92,7 @@ public sealed partial class DataExports(
             if (file is null)
             {
                 // too many rows for a request: the export job writes it; the client follows the job like any background export
-                (job.Status, queued) = (DataTransferStatus.Queued, true);
+                (job.Status, job.StartedAt, queued) = (DataTransferStatus.Queued, null, true);
             }
             else
             {
@@ -123,7 +123,17 @@ public sealed partial class DataExports(
 
         job.FinishedAt = clock.GetUtcNow();
         var token = file is not null && connected ? services.GetRequiredService<IAccessTokens>().Issue(DownloadPurpose, job.Id, DownloadLifetime, singleUse: true) : null;
-        await db.SaveChangesAsync(CancellationToken.None);
+        try
+        {
+            await db.SaveChangesAsync(CancellationToken.None);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // the stale sweep failed the job meanwhile
+            await WriteLineAsync(http, new DataExportProgress(DataExportProgress.Failed, 100, JobId: job.Id, Message: StaleExportJob.Message));
+            return Results.Empty;
+        }
+
         if (file is null)
         {
             await WriteLineAsync(http, new DataExportProgress(DataExportProgress.Failed, 100, JobId: job.Id, Message: job.Message));
@@ -245,6 +255,7 @@ public sealed partial class DataExports(
         }
 
         var job = NewJob(entity, query, fileName, status);
+        job.StartedAt = status == DataTransferStatus.Running ? job.CreatedAt : null;
         db.Add(job);
         await db.SaveChangesAsync(cancellationToken);
         return job;
@@ -256,17 +267,16 @@ public sealed partial class DataExports(
 
     private async Task<bool> BusyAsync(CancellationToken cancellationToken)
     {
-        var stale = clock.GetUtcNow() - options.Value.ExportTimeout;
-        var open = await db.Set<DataTransferJob>()
-            .Where(j => j.UserId == user.UserId && j.Kind == DataTransferKind.Export && (j.Status == DataTransferStatus.Running || j.Status == DataTransferStatus.Queued))
-            .ToListAsync(cancellationToken);
-        foreach (var job in open.Where(j => j.CreatedAt < stale))
+        var now = clock.GetUtcNow();
+        var mine = db.Set<DataTransferJob>().Where(j => j.UserId == user.UserId);
+        foreach (var job in await mine.Where(StaleExportJob.Stale(now, options.Value.ExportTimeout)).ToListAsync(cancellationToken))
         {
-            StaleExportJob.Fail(job, clock.GetUtcNow());
+            StaleExportJob.Fail(job, now);
         }
 
-        await db.SaveChangesAsync(cancellationToken);
-        return open.Count(j => j.CreatedAt >= stale) >= options.Value.MaxConcurrentExports;
+        await StaleExportJob.SaveAsync(db, cancellationToken);
+        return await mine.CountAsync(j => j.Kind == DataTransferKind.Export && (j.Status == DataTransferStatus.Running || j.Status == DataTransferStatus.Queued), cancellationToken)
+            >= options.Value.MaxConcurrentExports;
     }
 
     private async Task<IResult?> CheckAsync(string entitySet, CancellationToken cancellationToken) =>

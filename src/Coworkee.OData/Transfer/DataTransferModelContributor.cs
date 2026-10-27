@@ -12,7 +12,8 @@ internal sealed class DataTransferModelContributor : IModelContributor
             job.ToTable("DataTransferJobs", "cw");
             job.Property(j => j.EntitySet).HasMaxLength(200);
             job.Property(j => j.Kind).HasConversion<string>().HasMaxLength(20);
-            job.Property(j => j.Status).HasConversion<string>().HasMaxLength(20);
+            // a job that changed meanwhile (the stale sweep failed it) is not overwritten
+            job.Property(j => j.Status).HasConversion<string>().HasMaxLength(20).IsConcurrencyToken();
             job.Property(j => j.FileName).HasMaxLength(260);
             job.Property(j => j.ResultFileName).HasMaxLength(260);
             job.Property(j => j.ResultContentType).HasMaxLength(100);

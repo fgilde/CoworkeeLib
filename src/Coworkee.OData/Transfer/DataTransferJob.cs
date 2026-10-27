@@ -53,6 +53,9 @@ public sealed class DataTransferJob : Entity, IMultiTenant, IHasRealtimeTopics
 
     public DateTimeOffset CreatedAt { get; set; }
 
+    /// <summary>When it began running; the stale sweep measures from here, so time in the queue does not count.</summary>
+    public DateTimeOffset? StartedAt { get; set; }
+
     public DateTimeOffset? FinishedAt { get; set; }
 
     public IEnumerable<string> RealtimeTopics => [Contracts.Realtime.RealtimeTopics.User(UserId)];

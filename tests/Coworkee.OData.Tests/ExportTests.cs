@@ -113,11 +113,14 @@ public sealed class ExportTests(ODataApp app) : IAsyncLifetime
         {
             TenantId = tenant, UserId = Guid.CreateVersion7(), Kind = DataTransferKind.Export, EntitySet = "Gadgets", Status = status, CreatedAt = createdAt,
         };
-        var stuck = new[] { Job(_setup.TenantId, now.AddHours(-2), DataTransferStatus.Running), Job(other, now.AddHours(-3), DataTransferStatus.Queued) };
+        var stuck = new[] { Job(_setup.TenantId, now.AddHours(-2), DataTransferStatus.Running), Job(other, now.AddDays(-2), DataTransferStatus.Queued) };
         var fresh = Job(_setup.TenantId, now.AddMinutes(-1), DataTransferStatus.Running);
+        var waited = Job(_setup.TenantId, now.AddHours(-3), DataTransferStatus.Queued);
+        var startedLate = Job(_setup.TenantId, now.AddHours(-3), DataTransferStatus.Running);
+        startedLate.StartedAt = now.AddMinutes(-1);
         await app.InDbAsync(_setup.TenantId, async db =>
         {
-            db.AddRange(stuck[0], fresh);
+            db.AddRange(stuck[0], fresh, waited, startedLate);
             return await db.SaveChangesAsync(Ct);
         });
         await app.InDbAsync(other, async db =>
@@ -134,7 +137,49 @@ public sealed class ExportTests(ODataApp app) : IAsyncLifetime
         var jobs = await app.InDbAsync(null, db => db.Set<DataTransferJob>().IgnoreQueryFilters().AsNoTracking().ToDictionaryAsync(j => j.Id, Ct));
         stuck.ShouldAllBe(j => jobs[j.Id].Status == DataTransferStatus.Failed && jobs[j.Id].Message == StaleExportJob.Message);
         jobs[fresh.Id].Status.ShouldBe(DataTransferStatus.Running);
+        jobs[waited.Id].Status.ShouldBe(DataTransferStatus.Queued, "the time in the queue does not count");
+        jobs[startedLate.Id].Status.ShouldBe(DataTransferStatus.Running, "staleness counts from the start");
     }
+
+    [Fact]
+    public async Task The_export_job_runs_only_queued_jobs_and_keeps_a_failure_the_sweep_wrote_meanwhile()
+    {
+        var failed = await QueuedJobAsync(DataTransferStatus.Failed);
+        await RunExportJobAsync(failed);
+        (await JobAsync(failed)).ShouldSatisfyAllConditions(j => j.Status.ShouldBe(DataTransferStatus.Failed), j => j.StartedAt.ShouldBeNull(), j => j.Result.ShouldBeNull());
+
+        var swept = await QueuedJobAsync(DataTransferStatus.Queued);
+        app.Mails.During = () => app.InDbAsync(_setup.TenantId, db => db.Set<DataTransferJob>().Where(j => j.Id == swept)
+            .ExecuteUpdateAsync(j => j.SetProperty(x => x.Status, DataTransferStatus.Failed).SetProperty(x => x.Message, StaleExportJob.Message), Ct));
+        await RunExportJobAsync(swept);
+
+        var kept = await JobAsync(swept);
+        (kept.Status, kept.Message, kept.Result).ShouldBe((DataTransferStatus.Failed, StaleExportJob.Message, null));
+    }
+
+    private async Task<Guid> QueuedJobAsync(DataTransferStatus status)
+    {
+        var job = new DataTransferJob
+        {
+            TenantId = _setup.TenantId, UserId = _setup.AdminUserId, Kind = DataTransferKind.Export, EntitySet = "Gadgets", Status = status, Settings = "?format=csv",
+            CreatedAt = DateTimeOffset.UtcNow,
+        };
+        await app.InDbAsync(_setup.TenantId, async db =>
+        {
+            db.Add(job);
+            return await db.SaveChangesAsync(Ct);
+        });
+        return job.Id;
+    }
+
+    private async Task RunExportJobAsync(Guid id)
+    {
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(_setup.AdminUserId, _setup.TenantId));
+        await using var scope = app.App.Services.CreateAsyncScope();
+        await scope.ServiceProvider.GetRequiredService<ExportJob>().ExecuteAsync(new ExportJobArgs(id, Mail: true), Ct);
+    }
+
+    private Task<DataTransferJob> JobAsync(Guid id) => app.InDbAsync(_setup.TenantId, db => db.Set<DataTransferJob>().AsNoTracking().SingleAsync(j => j.Id == id, Ct));
 
     [Fact]
     public async Task Parallel_background_exports_of_one_user_stop_at_the_limit_on_every_route()
