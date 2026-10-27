@@ -169,6 +169,37 @@ public sealed class PreferenceTests(NotificationApp app) : IAsyncLifetime
         (await MailsToAsync("bob@acme.test")).Count.ShouldBe(1);
     }
 
+    [Fact]
+    public async Task Parallel_publishes_of_one_entity_leave_one_waiting_mail_and_fail_no_command()
+    {
+        var clock = new FakeTimeProvider(DateTimeOffset.UtcNow);
+        var eta = Message(TestNotificationModule.Eta) with { EntityType = "Shipments", EntityId = _shipment, Recipients = [_bob.Id] };
+
+        await Task.WhenAll(Enumerable.Range(1, 8).Select(i => app.PublishAsync(_setup.AdminUserId, _setup.TenantId, eta with { Title = $"ETA {i}" }, clock)));
+
+        (await app.InDbAsync(null, db => db.Set<PendingNotificationMail>().CountAsync(Ct))).ShouldBe(1);
+        (await InboxAsync(Bob)).Count.ShouldBe(8);
+    }
+
+    [Fact]
+    public async Task The_mail_job_does_not_send_a_mail_a_publisher_replaced_while_it_ran()
+    {
+        var clock = new FakeTimeProvider(DateTimeOffset.UtcNow);
+        var eta = Message(TestNotificationModule.Eta) with { EntityType = "Shipments", EntityId = _shipment, Recipients = [_bob.Id] };
+        await app.PublishAsync(_setup.AdminUserId, _setup.TenantId, eta with { Title = "ETA 1 May" }, clock);
+        var seen = await app.InDbAsync(null, db => db.Set<PendingNotificationMail>().AsNoTracking().SingleAsync(Ct));
+
+        clock.Advance(TimeSpan.FromSeconds(30));
+        await app.PublishAsync(_setup.AdminUserId, _setup.TenantId, eta with { Title = "ETA 2 May" }, clock);
+        (await app.ClaimAsync(seen, clock)).ShouldBeFalse();
+        (await app.InDbAsync(null, db => db.Set<PendingNotificationMail>().SingleAsync(Ct))).Title.ShouldBe("ETA 2 May");
+
+        clock.Advance(TimeSpan.FromMinutes(1));
+        await app.RunMailJobAsync(clock);
+        (await MailsToAsync("bob@acme.test")).ShouldHaveSingleItem().Subject.ShouldBe("ETA 2 May");
+        (await app.InDbAsync(null, db => db.Set<PendingNotificationMail>().CountAsync(Ct))).ShouldBe(0);
+    }
+
     private NotificationMessage Message(string type) => new(type, "Departed", "The shipment left the port.") { Link = $"/shipments/{_shipment}" };
 
     private static async Task<IReadOnlyList<NotificationDto>> InboxAsync(HttpClient client) =>

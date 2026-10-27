@@ -105,6 +105,12 @@ public sealed class NotificationApp : DatabaseFixture
         await scope.ServiceProvider.GetRequiredService<NotificationTestDbContext>().SaveChangesAsync();
     }
 
+    public async Task<bool> ClaimAsync(PendingNotificationMail seen, TimeProvider clock)
+    {
+        await using var scope = App.Services.CreateAsyncScope();
+        return await ActivatorUtilities.CreateInstance<NotificationMailJob>(scope.ServiceProvider, clock).ClaimAsync(seen, CancellationToken.None);
+    }
+
     public async Task RunMailJobAsync(TimeProvider clock)
     {
         await using var scope = App.Services.CreateAsyncScope();

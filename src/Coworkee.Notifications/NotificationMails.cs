@@ -21,8 +21,8 @@ public sealed class PendingNotificationMail : Entity
 
     public required string Type { get; set; }
 
-    /// <summary>The entity ("Shipments:{id}") that debounces; null waits on its own.</summary>
-    public string? Key { get; set; }
+    /// <summary>The entity ("Shipments:{id}") that debounces; a mail without an entity has a key of its own. Unique per user and type.</summary>
+    public required string Key { get; set; }
 
     public required string Title { get; set; }
 
@@ -94,17 +94,32 @@ internal sealed class NotificationMailJob(CoworkeeDbContext db, NotificationMail
         }
 
         var now = clock.GetUtcNow();
-        var due = await db.Set<PendingNotificationMail>().Where(m => m.DueAt <= now).OrderBy(m => m.DueAt).Take(Batch).ToListAsync(cancellationToken);
+        var due = await db.Set<PendingNotificationMail>().AsNoTracking().Where(m => m.DueAt <= now).OrderBy(m => m.DueAt).Take(Batch).ToListAsync(cancellationToken);
         if (due.Count == 0)
         {
             return;
         }
 
+        // the claims and the queued mails commit together: a mail is neither lost nor sent twice
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        var claimed = new List<PendingNotificationMail>();
+        foreach (var mail in due)
+        {
+            if (await ClaimAsync(mail, cancellationToken))
+            {
+                claimed.Add(mail);
+            }
+        }
+
         // ponytail: one mail per notification through the global mail settings, as the digest
-        await mails.QueueAsync([.. due.Select(m => new NotificationMails.Item(m.UserId, m.TenantId, m.Title, m.Body, m.Arguments, m.Link))], cancellationToken);
-        db.RemoveRange(due);
+        await mails.QueueAsync([.. claimed.Select(m => new NotificationMails.Item(m.UserId, m.TenantId, m.Title, m.Body, m.Arguments, m.Link))], cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
     }
+
+    /// <summary>Takes the mail as it was read; false when a publisher replaced it meanwhile (it waits anew) or another run took it.</summary>
+    internal async Task<bool> ClaimAsync(PendingNotificationMail seen, CancellationToken cancellationToken) =>
+        await db.Set<PendingNotificationMail>().Where(m => m.Id == seen.Id && m.DueAt == seen.DueAt).ExecuteDeleteAsync(cancellationToken) == 1;
 }
 
 internal static class NotificationLinks

@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Coworkee.Application.Messaging;
 using Coworkee.Application.Retention;
 using Coworkee.AspNetCore.Http;
@@ -98,8 +99,9 @@ public interface INotifier
     Task PublishAsync(NotificationMessage message, CancellationToken cancellationToken = default);
 }
 
-internal sealed class Notifier(
-    CoworkeeDbContext db, ICurrentUser currentUser, TimeProvider clock, Microsoft.Extensions.Options.IOptions<NotificationOptions> options, IServiceProvider services)
+internal sealed partial class Notifier(
+    CoworkeeDbContext db, ICurrentUser currentUser, TimeProvider clock, Microsoft.Extensions.Options.IOptions<NotificationOptions> options, IServiceProvider services,
+    ILogger<Notifier> logger)
     : INotifier
 {
     public Task NotifyAsync(IEnumerable<Guid> userIds, string type, string title, string? body = null, string? link = null, CancellationToken cancellationToken = default) =>
@@ -242,20 +244,47 @@ internal sealed class Notifier(
     /// <summary>Waits until <paramref name="due"/>; a mail still waiting for the same user, type and entity is replaced and waits anew.</summary>
     private async Task WaitAsync(NotificationMessage message, Guid userId, DateTimeOffset due, CancellationToken cancellationToken)
     {
-        var key = message is { EntityType: { } entityType, EntityId: { } entityId } ? $"{entityType}:{entityId}" : null;
-        var waiting = key is null
-            ? null
-            : db.Set<PendingNotificationMail>().Local.FirstOrDefault(m => m.UserId == userId && m.Type == message.Type && m.Key == key)
-              ?? await db.Set<PendingNotificationMail>().FirstOrDefaultAsync(m => m.UserId == userId && m.Type == message.Type && m.Key == key, cancellationToken);
-        if (waiting is null)
+        // without an entity nothing debounces: a key of its own
+        var key = message is { EntityType: { } entityType, EntityId: { } entityId } ? $"{entityType}:{entityId}" : Guid.NewGuid().ToString("N");
+        try
         {
-            waiting = new PendingNotificationMail { UserId = userId, TenantId = currentUser.TenantId, Type = message.Type, Key = key, Title = message.Title };
-            db.Add(waiting);
-        }
+            // in a context of its own and saved at once, so a parallel publisher or the mail job cannot fail the command's save;
+            // ponytail: the waiting mail stays when the command fails afterwards
+            for (var attempt = 0; attempt < 3; attempt++)
+            {
+                await using var scope = services.GetRequiredService<IServiceScopeFactory>().CreateAsyncScope();
+                var own = scope.ServiceProvider.GetRequiredService<CoworkeeDbContext>();
+                var waiting = await own.Set<PendingNotificationMail>().FirstOrDefaultAsync(m => m.UserId == userId && m.Type == message.Type && m.Key == key, cancellationToken);
+                if (waiting is null)
+                {
+                    waiting = new PendingNotificationMail { UserId = userId, TenantId = currentUser.TenantId, Type = message.Type, Key = key, Title = message.Title };
+                    own.Add(waiting);
+                }
 
-        (waiting.Title, waiting.Body, waiting.Link, waiting.DueAt) = (message.Title, message.Body, message.Link, due);
-        waiting.Arguments = message.Arguments is null ? null : [.. message.Arguments];
+                (waiting.Title, waiting.Body, waiting.Link, waiting.DueAt) = (message.Title, message.Body, message.Link, due);
+                waiting.Arguments = message.Arguments is null ? null : [.. message.Arguments];
+                try
+                {
+                    await own.SaveChangesAsync(cancellationToken);
+                    return;
+                }
+                catch (DbUpdateException)
+                {
+                    // another publisher added it, or the mail job took it meanwhile: look again
+                }
+            }
+
+            LogWaitFailed(logger, userId, message.Type, null);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            // a notification never fails the command that sends it
+            LogWaitFailed(logger, userId, message.Type, exception);
+        }
     }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The delayed mail of {Type} for {UserId} could not be saved.")]
+    private static partial void LogWaitFailed(ILogger logger, Guid userId, string type, Exception? exception);
 }
 
 /// <param name="Done">Null: open and done ones; false: open only; true: done only. <see cref="PageRequest.Search"/> looks in title and body.</param>
@@ -436,7 +465,7 @@ internal sealed class NotificationModelContributor : IModelContributor
             mail.Property(m => m.Title).HasMaxLength(300);
             mail.Property(m => m.Link).HasMaxLength(2000);
             mail.HasIndex(m => m.DueAt);
-            mail.HasIndex(m => new { m.UserId, m.Type, m.Key });
+            mail.HasIndex(m => new { m.UserId, m.Type, m.Key }).IsUnique();
         });
 
         modelBuilder.Entity<NotificationDigestState>(state =>
