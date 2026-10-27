@@ -105,6 +105,20 @@ public sealed class MailMentionHtmlTests
     [InlineData("{{- if user }}x{{ end }}", false)]
     [InlineData("{{~ if user }}x{{ end }}", false)]
     [InlineData("<TABLE>", false)]
+    [InlineData("<p style=\"margin:24px 0;\"><a href=\"{{ url }}\" style=\"background:#16140f;padding:12px 20px;\">Go</a></p>", false)]
+    [InlineData("<div>x</div>", false)]
+    [InlineData("<p>a<!-- note --></p>", false)]
+    [InlineData("<img src=\"x.png\">", false)]
+    [InlineData("<p id=\"x\">a</p>", false)]
+    [InlineData("<p class=\"lead\">a</p>", false)]
+    [InlineData("<p style=\"text-align: center\"><span style=\"color: rgb(1, 2, 3); background-color: #fff\">a</span></p>", true)]
+    [InlineData("<p class=\"ql-align-center\"><a href=\"{{ url }}\" target=\"_blank\" rel=\"noopener\">a</a></p>", true)]
+    [InlineData("<ul><li><p><strong>a</strong> <mark data-color=\"#ff0\" style=\"background-color: #ff0\">b</mark></p></li></ul><h2>c</h2><p>d<br>e</p>", true)]
+    [InlineData("<p>a &lt; b, 1 < 2</p>", true)]
     public void Visual_mode_is_only_allowed_for_simple_bodies(string body, bool allowed) =>
         MailVisualMode.Allowed(body).ShouldBe(allowed);
+
+    [Fact]
+    public void Mention_markup_opens_in_visual_mode() =>
+        MailVisualMode.Allowed($"<p>Hi {MailMentionHtml.Mention("user.first_name")}</p>").ShouldBeTrue();
 }
