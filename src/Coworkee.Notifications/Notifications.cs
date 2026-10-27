@@ -126,8 +126,14 @@ internal sealed class Notifier(
         var push = Push.PushConfiguration.IsOn(options.Value.Push);
         List<string>? arguments = message.Arguments is null ? null : [.. message.Arguments];
         var mails = new List<NotificationMails.Item>();
+
+        // a mail goes only to an active address; who has none keeps the notification for the digest
+        var reachable = recipients.Any(r => r.Preference.Email) && services.GetService<IUserDirectory>() is { } users
+            ? await users.GetActiveEmailsAsync([.. recipients.Where(r => r.Preference.Email).Select(r => r.UserId)], cancellationToken)
+            : null;
         foreach (var (userId, preference) in recipients)
         {
+            var email = preference.Email && (reachable?.ContainsKey(userId) ?? true);
             if (preference.InApp)
             {
                 var notification = new Notification
@@ -141,7 +147,7 @@ internal sealed class Notifier(
                     Arguments = arguments,
                     Link = message.Link,
                     CreatedAt = now,
-                    Mailed = preference.Email,
+                    Mailed = email,
                 };
                 if (push)
                 {
@@ -151,7 +157,7 @@ internal sealed class Notifier(
                 db.Add(notification);
             }
 
-            if (!preference.Email)
+            if (!email)
             {
                 continue;
             }

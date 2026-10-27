@@ -44,7 +44,6 @@ public sealed class PreferenceTests(NotificationApp app) : IAsyncLifetime
             .StatusCode.ShouldBe(HttpStatusCode.NotFound);
 
         // Status is off by default: addressed directly Bob gets nothing; switched on, by mail only
-        await app.PublishAsync(_setup.AdminUserId, _setup.TenantId, Message(TestNotificationModule.Status) with { Recipients = [_bob.Id] });
         (await InboxAsync(Bob)).ShouldBeEmpty();
         (await Bob.PutAsJsonAsync($"/api/v1/notifications/preferences/{TestNotificationModule.Status}", new SaveNotificationPreferenceRequest(NotificationScope.All, false, true), Ct))
             .EnsureSuccessStatusCode();
@@ -221,6 +220,18 @@ public sealed class PreferenceTests(NotificationApp app) : IAsyncLifetime
         (now.DueAt, now.Version == seen.Version).ShouldBe((seen.DueAt, false));
         (await app.ClaimAsync(seen, clock)).ShouldBeFalse();
         (await app.ClaimAsync(now, clock)).ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task A_recipient_without_an_active_address_gets_no_mail_and_keeps_the_notification_for_the_digest()
+    {
+        await app.InDbAsync(null, db => db.Set<Identity.Domain.User>().IgnoreQueryFilters().Where(u => u.Id == _bob.Id)
+            .ExecuteUpdateAsync(u => u.SetProperty(x => x.Email, (string?)null), Ct));
+
+        await app.PublishAsync(_setup.AdminUserId, _setup.TenantId, Message(TestNotificationModule.Eta) with { Recipients = [_bob.Id] });
+
+        (await app.InDbAsync(null, db => db.Set<Notification>().Where(n => n.UserId == _bob.Id).Select(n => n.Mailed).ToListAsync(Ct))).ShouldBe([false]);
+        (await app.InDbAsync(null, db => db.Set<PendingNotificationMail>().CountAsync(Ct))).ShouldBe(0);
     }
 
     [Fact]
