@@ -241,6 +241,24 @@ public sealed class ImpersonationTests(AuthApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_client_no_longer_allowing_impersonation_refuses_the_next_refresh()
+    {
+        var (_, flow, tokens) = await HelperAsBobAsync();
+        await AllowImpersonationAsync("test-web", allowed: false);
+        try
+        {
+            var refreshed = await flow.RefreshAsync(tokens);
+
+            refreshed.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+            (await refreshed.Content.ReadAsStringAsync(Ct)).ShouldContain("invalid_grant");
+        }
+        finally
+        {
+            await AllowImpersonationAsync("test-web");
+        }
+    }
+
+    [Fact]
     public async Task The_impersonation_survives_the_security_stamp_check_of_the_sign_in()
     {
         var (_, flow, _) = await HelperAsBobAsync();
@@ -354,14 +372,22 @@ public sealed class ImpersonationTests(AuthApp app) : IAsyncLifetime
     private static string IdentityCookie(HttpResponseMessage response) =>
         response.Headers.GetValues("Set-Cookie").First(c => c.StartsWith(".AspNetCore.Identity.Application=", StringComparison.Ordinal));
 
-    private async Task AllowImpersonationAsync(string clientId)
+    private async Task AllowImpersonationAsync(string clientId, bool allowed = true)
     {
         await using var scope = app.App.Services.CreateAsyncScope();
         var applications = scope.ServiceProvider.GetRequiredService<IOpenIddictApplicationManager>();
         var application = (await applications.FindByClientIdAsync(clientId, Ct))!;
         var descriptor = new OpenIddictApplicationDescriptor();
         await applications.PopulateAsync(descriptor, application, Ct);
-        descriptor.Properties[AuthImpersonation.AllowedProperty] = JsonSerializer.SerializeToElement(true);
+        if (allowed)
+        {
+            descriptor.Properties[AuthImpersonation.AllowedProperty] = JsonSerializer.SerializeToElement(true);
+        }
+        else
+        {
+            descriptor.Properties.Remove(AuthImpersonation.AllowedProperty);
+        }
+
         await applications.UpdateAsync(application, descriptor, Ct);
     }
 

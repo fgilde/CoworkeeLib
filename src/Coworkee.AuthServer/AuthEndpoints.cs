@@ -191,7 +191,8 @@ internal static class AuthEndpoints
             return Results.Forbid(Error(Errors.InvalidGrant, "The account is no longer allowed to sign in."), [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]);
         }
 
-        if (AuthImpersonation.IsImpersonating(result.Principal) && !await AuthImpersonation.MayContinueAsync(context.RequestServices, result.Principal!, user, context.RequestAborted))
+        if (AuthImpersonation.IsImpersonating(result.Principal)
+            && (!await AllowsImpersonationAsync(context, request) || !await AuthImpersonation.MayContinueAsync(context.RequestServices, result.Principal!, user, context.RequestAborted)))
         {
             await AuthImpersonation.RevokeAsync(context.RequestServices, user.Id.ToString(), sid, context.RequestAborted);
             return Results.Forbid(Error(Errors.InvalidGrant, "The account is no longer allowed to sign in."), [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]);
