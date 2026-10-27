@@ -2,6 +2,23 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Geändert
+
+- `CodeCompletion.InsertText` ist jetzt der ganze Text samt Auslöser (`{{ name }}` statt ` name }}`): Die Auswahl ersetzt, was vom `CompletionTrigger` getippt ist, und die schließenden Klammern, die Monaco ergänzt hat, und Strg+Leertaste fügt überall einen vollständigen Text ein. Neues Flag `Snippet` für Monaco-Snippets (`{{ if $1 }}`). Eigene Vorschläge für `CodeEditor` brauchen den Auslöser im Text.
+- Mail-Inhaltseditor: Inhalte, deren Markup der visuelle Editor ändern würde (andere Styles als `color`, `background-color` und `text-align`, Tags über Textformatierung hinaus, Kommentare), öffnen sich im Quelltext, eine gestaltete Schaltfläche geht beim Speichern also nicht mehr verloren. Die mitgelieferten Vorlagen mit Schaltfläche öffnen sich im Quelltext.
+
+### Hinzugefügt
+
+- `CodeEditor.Highlight`: ein regulärer Ausdruck, dessen Treffer hervorgehoben werden; der Mail-Inhaltseditor hebt `{{ ... }}` hervor.
+- Mail-Inhaltseditor: Platzhalter sind Chips mit ihrem Namen, die visuelle Werkzeugleiste hat die Mail-Formatierungen und *Platzhalter einfügen*, Strg+Leertaste öffnet die Platzhalterliste in beiden Modi, `{{` wirkt im Visuell-Modus wie `{`. Siehe [Mailing](../modules/mailing.md).
+
+### Behoben
+
+- Der visuelle Mail-Editor zeigte eine leere Werkzeugleiste: `RichTextEditor` übergab `Tools="null"`, was MudExRichTextEditor 9.5.5 als „keine Werkzeuge“ liest. Er übergibt `Tools` jetzt nur, wenn gesetzt.
+- Quelltext-Modus des Mail-Editors: `{{` tippen und einen Platzhalter wählen ergab `{{ name }}}}`, weil Monaco die Klammern schon geschlossen hatte.
+
 ## 0.0.1.41 (2026-10-27)
 
 ### Hinzugefügt

@@ -2,6 +2,23 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Changed
+
+- `CodeCompletion.InsertText` is the whole text now, trigger included (`{{ name }}` instead of ` name }}`): a pick replaces what was typed of `CompletionTrigger` and the closing brackets Monaco added, and Ctrl+Space inserts a complete text anywhere. New `Snippet` flag for Monaco snippets (`{{ if $1 }}`). Own completions passed to `CodeEditor` need the trigger in their text.
+- Mail body editor: bodies whose markup the visual editor would change (styles other than `color`, `background-color` and `text-align`, tags beyond text formatting, comments) open in Source, so a styled button is no longer lost on save. The shipped templates with a button open in Source.
+
+### Added
+
+- `CodeEditor.Highlight`: a regular expression whose matches are highlighted; the mail body editor highlights `{{ ... }}`.
+- Mail body editor: placeholders are chips showing their name, the visual toolbar has the mail formatting tools and *Insert placeholder*, Ctrl+Space opens the placeholder list in both modes, `{{` works like `{` in Visual. See [mailing](../modules/mailing.md).
+
+### Fixed
+
+- The visual mail editor showed an empty toolbar: `RichTextEditor` passed `Tools="null"`, which MudExRichTextEditor 9.5.5 reads as no tools. It passes `Tools` only when set now.
+- Source mode of the mail editor: typing `{{` and picking a placeholder wrote `{{ name }}}}`, because Monaco had closed the braces already.
+
 ## 0.0.1.41 (2026-10-27)
 
 ### Added
