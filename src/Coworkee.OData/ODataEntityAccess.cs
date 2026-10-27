@@ -87,11 +87,13 @@ public static class ODataEntityAccess
 
     /// <summary>
     /// $search over the string properties of the set the user may read (Nextended's default is every string property, an ISearchable entity
-    /// names its own, also through navigations): a field that reads a hidden member, or one <paramref name="denied"/> lists for the type it is
-    /// read from (<see cref="DeniedByTypeAsync"/>), neither matches nor narrows, so a search is no oracle on it. Navigations in the fields
-    /// follow their target through the caller's <see cref="ODataNavigationScope"/>.
+    /// names its own, also computed or through navigations): a field is left out when any member it reads is hidden, or listed by
+    /// <paramref name="denied"/> for the type it is read from (<see cref="DeniedByTypeAsync"/>), or reached through a navigation whose target
+    /// the <paramref name="scope"/> narrows. So a search is no oracle on what the user may not read.
     /// </summary>
-    internal static IQueryable<TEntity> Search<TEntity>(IServiceProvider services, IQueryable<TEntity> rows, string? text, IReadOnlyDictionary<string, IReadOnlySet<string>> denied)
+    internal static async Task<IQueryable<TEntity>> SearchAsync<TEntity>(
+        IServiceProvider services, IQueryable<TEntity> rows, string? text, IReadOnlyDictionary<string, IReadOnlySet<string>> denied, ODataNavigationScope scope,
+        CancellationToken cancellationToken)
         where TEntity : class
     {
         if (string.IsNullOrWhiteSpace(text))
@@ -106,33 +108,40 @@ public static class ODataEntityAccess
             .Where(e => e.EntityType.IsAssignableTo(type) || type.IsAssignableTo(e.EntityType))
             .Any(e => e.HiddenProperties.Contains(name) || (denied.TryGetValue(e.EntityType.FullName!, out var names) && names.Contains(name)));
 
-        bool Readable(System.Linq.Expressions.LambdaExpression field)
+        var fields = new List<System.Linq.Expressions.Expression<Func<TEntity, string?>>>();
+        foreach (var field in Nextended.Core.Contracts.ISearchable<TEntity>.GetSearchProperties())
         {
-            for (var step = field.Body; step is not null;)
+            var members = new Members();
+            members.Visit(field.Body);
+            if (members.Found.Any(m => Hidden(m.Expression!.Type, m.Member.Name)))
             {
-                switch (step)
-                {
-                    case System.Linq.Expressions.UnaryExpression unary:
-                        step = unary.Operand;
-                        break;
-                    case System.Linq.Expressions.MemberExpression member when member.Expression is not null:
-                        if (Hidden(member.Expression.Type, member.Member.Name))
-                        {
-                            return false;
-                        }
-
-                        step = member.Expression;
-                        break;
-                    default:
-                        step = null;
-                        break;
-                }
+                continue;
             }
 
-            return true;
+            await scope.PrepareAsync(field.Body, cancellationToken);
+            if (!scope.Narrows(field.Body))
+            {
+                fields.Add(field);
+            }
         }
 
-        return Nextended.EF.QueryableExtensions.WhereContains(rows, text, [.. Nextended.Core.Contracts.ISearchable<TEntity>.GetSearchProperties().Where(Readable)]);
+        return Nextended.EF.QueryableExtensions.WhereContains(rows, text, [.. fields]);
+    }
+
+    // every member a search field reads: concatenations, method calls and coalesces included
+    private sealed class Members : System.Linq.Expressions.ExpressionVisitor
+    {
+        public List<System.Linq.Expressions.MemberExpression> Found { get; } = [];
+
+        protected override System.Linq.Expressions.Expression VisitMember(System.Linq.Expressions.MemberExpression node)
+        {
+            if (node.Expression is not null)
+            {
+                Found.Add(node);
+            }
+
+            return base.VisitMember(node);
+        }
     }
 
     /// <summary>Whether the query names parameter aliases (<c>@a=Size</c>): OData binds them inside the options, past the checks that read the options' text.</summary>

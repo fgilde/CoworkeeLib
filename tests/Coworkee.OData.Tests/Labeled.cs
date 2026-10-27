@@ -29,7 +29,9 @@ public sealed class Bag : Labeled;
 /// <summary>Searched in its text and through its owner's note (ISearchable); weight and author are for users who see categories.</summary>
 public sealed class Sticker : AuditedEntity, IMultiTenant, Nextended.Core.Contracts.ISearchable<Sticker>
 {
-    public static System.Linq.Expressions.Expression<Func<Sticker, string?>>[] SearchProperties => [s => s.Text, s => s.Owner!.Note];
+    // a concatenation and a method call on the protected weight, and a navigation into owners (boxes have row filters)
+    public static System.Linq.Expressions.Expression<Func<Sticker, string?>>[] SearchProperties =>
+        [s => s.Text, s => s.Text + "/" + s.Weight, s => s.Weight.ToString(), s => s.Owner!.Note];
 
     public required string Text { get; set; }
 

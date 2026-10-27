@@ -127,13 +127,12 @@ internal static class FacetResponse
             return false;
         }
 
-        if (segments.Length == 2 && typeof(T).GetProperty(first, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase) is { } navigation
-            && string.Equals(second, http.RequestServices.GetRequiredService<ODataEntityRegistry>().Find(navigation.PropertyType)?.Key ?? "Id", StringComparison.OrdinalIgnoreCase))
+        var denied = http.Items[ODataEntityAccess.DeniedItem] as Dictionary<string, IReadOnlySet<string>> ?? await ODataEntityAccess.DeniedByTypeAsync(http.RequestServices, cancellationToken);
+        if (segments.Length == 2 && ForeignKeyRead<T>(http.RequestServices, first, second, denied))
         {
             return false;
         }
 
-        var denied = http.Items[ODataEntityAccess.DeniedItem] as Dictionary<string, IReadOnlySet<string>> ?? await ODataEntityAccess.DeniedByTypeAsync(http.RequestServices, cancellationToken);
         try
         {
             if (ODataQueryGuard.Denies(http.RequestServices, typeof(T), $"{path} ne null", denied))
@@ -150,6 +149,40 @@ internal static class FacetResponse
         var scope = ScopeOf<T>(http);
         await scope.PrepareAsync(read.Expression, cancellationToken);
         return scope.Narrows(read.Expression);
+    }
+
+    // Nav/Key reads the row's own foreign key column: only when that column is mapped on T, readable for the user, and the key is the one it points to
+    private static bool ForeignKeyRead<T>(IServiceProvider services, string navigationName, string keyName, IReadOnlyDictionary<string, IReadOnlySet<string>> denied)
+    {
+        var entity = Coworkee.Infrastructure.Persistence.ExternalDbContextServiceCollectionExtensions.DbContextFor(services, typeof(T)).Model.FindEntityType(typeof(T));
+        if (entity?.GetNavigations().FirstOrDefault(n => string.Equals(n.Name, navigationName, StringComparison.OrdinalIgnoreCase)) is not { IsCollection: false, IsOnDependent: true } navigation
+            || navigation.ForeignKey.Properties is not [var column] || column.IsShadowProperty()
+            || navigation.ForeignKey.PrincipalKey.Properties is not [var key] || !string.Equals(key.Name, keyName, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var hidden = services.GetRequiredService<ODataEntityRegistry>().Find(typeof(T))?.HiddenProperties ?? [];
+        return !hidden.Contains(column.Name) && !(denied.GetValueOrDefault(typeof(T).FullName!)?.Contains(column.Name) ?? false);
+    }
+
+    /// <summary>Refuses a facet whose value path starts with a collection navigation (<c>it.Lines.Id</c>): the facet builder cannot group by it.</summary>
+    internal static void RefuseCollectionPaths(Type entityType)
+    {
+        foreach (var property in entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            foreach (var facet in property.GetCustomAttributes<ProvideFacetAttribute>(inherit: true).Where(f => !string.IsNullOrWhiteSpace(f.ValuePath)))
+            {
+                var path = facet.ValuePath!.Replace('/', '.');
+                var first = (path.StartsWith("it.", StringComparison.Ordinal) ? path[3..] : path).Split('.')[0];
+                if (entityType.GetProperty(first, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase)?.PropertyType is { } type
+                    && type != typeof(string) && typeof(System.Collections.IEnumerable).IsAssignableFrom(type))
+                {
+                    throw new InvalidOperationException(
+                        $"The facet {entityType.Name}.{property.Name} reads {facet.ValuePath} through the collection {first}; a facet value must be a single value of the row or of a reference.");
+                }
+            }
+        }
     }
 
     private static string Text(JsonElement value) => value.ValueKind == JsonValueKind.String ? value.GetString()! : value.ToString();

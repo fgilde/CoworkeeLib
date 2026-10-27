@@ -53,9 +53,11 @@ public sealed class Badge : AuditedEntity, IMultiTenant
     public Guid TenantId { get; set; }
 }
 
-/// <summary>Expands its bin without $expand.</summary>
-public sealed class Tray : AuditedEntity, IMultiTenant
+/// <summary>Expands its bin without $expand; searched by name, by its shelf's name (no rules) and by its bin's name (row filters).</summary>
+public sealed class Tray : AuditedEntity, IMultiTenant, Nextended.Core.Contracts.ISearchable<Tray>
 {
+    public static System.Linq.Expressions.Expression<Func<Tray, string?>>[] SearchProperties => [t => t.Name, t => t.Shelf!.Name, t => t.Bin!.Name];
+
     public required string Name { get; set; }
 
     public Guid? BinId { get; set; }
@@ -141,4 +143,50 @@ internal sealed class BinVolume : Coworkee.OData.Computed.IODataComputedProperty
 
     public IEnumerable<Coworkee.OData.Computed.ODataComputedProperty> Properties(ODataEntityRegistry registry) =>
         [new(typeof(Bin), "Volume", typeof(int), row => Coworkee.OData.Computed.ODataComputedProperty.Inline(Volume, row)) { Permission = ODataApp.SeeCategories }];
+}
+
+/// <summary>Facets through references read by key: a mapped readable foreign key, a shadow one, a protected one, and a registered key that is not EF's.</summary>
+public sealed class Hook : AuditedEntity, IMultiTenant
+{
+    public required string Name { get; set; }
+
+    [ProvideFacet(Label = "Spare", ValuePath = "it.Spare.Id")]
+    public Bin? Spare { get; set; }
+
+    public Guid? MainId { get; set; }
+
+    [ProvideFacet(Label = "Main", ValuePath = "it.Main.Id")]
+    public Bin? Main { get; set; }
+
+    public Guid? BrandId { get; set; }
+
+    [ProvideFacet(Label = "Brand", ValuePath = "it.Brand.Code")]
+    public Brand? Brand { get; set; }
+
+    public Guid TenantId { get; set; }
+}
+
+/// <summary>A filtered set whose OData key (Code) is not its EF key (Id).</summary>
+public sealed class Brand : AuditedEntity, IMultiTenant
+{
+    public required string Code { get; set; }
+
+    public required string Name { get; set; }
+
+    public Guid TenantId { get; set; }
+}
+
+internal sealed class HideSecretBrands : IODataEntityFilter<Brand>
+{
+    public Task<IQueryable<Brand>> ApplyAsync(IQueryable<Brand> query, CancellationToken cancellationToken) =>
+        Task.FromResult(query.Where(b => b.Name != "Secret"));
+}
+
+/// <summary>A facet through a collection, which the facet builder cannot group by: refused when the model is built.</summary>
+public sealed class Rack
+{
+    public Guid Id { get; set; }
+
+    [ProvideFacet(Label = "Bins", ValuePath = "it.Bins.Id")]
+    public List<Bin> Bins { get; set; } = [];
 }

@@ -153,20 +153,7 @@ internal sealed class ODataQueryGuard
             return;
         }
 
-        var values = new List<(string Name, object Value)>();
-        foreach (var property in node.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetIndexParameters().Length == 0))
-        {
-            try
-            {
-                if (property.GetValue(node) is { } value)
-                {
-                    values.Add((property.Name, value));
-                }
-            }
-            catch (TargetInvocationException)
-            {
-            }
-        }
+        var values = Read(node);
 
         var source = TypeOf(values.FirstOrDefault(v => v.Name == "Source").Value as QueryNode) ?? context;
         foreach (var member in values.Select(v => v.Value).OfType<IEdmProperty>())
@@ -179,6 +166,28 @@ internal sealed class ODataQueryGuard
         {
             Walk(value, context);
         }
+    }
+
+    /// <summary>The public values of a node; one that cannot be read fails the check (an <see cref="ODataException"/>, so the query is not run).</summary>
+    internal static List<(string Name, object Value)> Read(object node)
+    {
+        var values = new List<(string Name, object Value)>();
+        foreach (var property in node.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetIndexParameters().Length == 0))
+        {
+            try
+            {
+                if (property.GetValue(node) is { } value)
+                {
+                    values.Add((property.Name, value));
+                }
+            }
+            catch (TargetInvocationException exception)
+            {
+                throw new ODataException($"The query could not be checked: {node.GetType().Name}.{property.Name} could not be read.", exception.InnerException);
+            }
+        }
+
+        return values;
     }
 
     private static IEdmStructuredType? TypeOf(QueryNode? source) => source switch

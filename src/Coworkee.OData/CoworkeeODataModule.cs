@@ -54,6 +54,7 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
         var builder = new ODataConventionModelBuilder();
         foreach (var entity in registry.Entities)
         {
+            FacetResponse.RefuseCollectionPaths(entity.EntityType);
             var type = builder.AddEntityType(entity.EntityType);
             type.HasKey(entity.EntityType.GetProperty(entity.Key) ?? throw new InvalidOperationException($"{entity.EntityType.Name} needs a {entity.Key} property as the key of its OData set."));
             foreach (var hidden in entity.HiddenProperties)

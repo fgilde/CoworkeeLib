@@ -4,6 +4,7 @@ using System.Text.Json;
 using Coworkee.Contracts.Data;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Search;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.OData.Tests;
@@ -129,6 +130,53 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
         (await Admin.SendAsync(facets, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await Admin.GetAsync("/odata/Shelves?$filter=Featured/Size gt 0&$orderby=Nope", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await Admin.GetAsync("/api/v1/data/Shelves/export?format=csv&$filter=Nope eq 1", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public void A_node_the_checks_cannot_read_fails_them()
+    {
+        Should.Throw<Microsoft.OData.ODataException>(() => ODataQueryGuard.Read(new Unreadable()));
+    }
+
+    [Fact]
+    public async Task Facets_through_a_reference_by_key_need_a_readable_mapped_foreign_key()
+    {
+        await app.InDbAsync(_setup.TenantId, async db =>
+        {
+            var tenant = _setup.TenantId;
+            var bin = await db.Set<Bin>().FirstAsync(b => b.Name == "Plain", Ct);
+            var hook = new Hook { Name = "H1", Main = bin, Brand = new Brand { Code = "AC", Name = "Acme", TenantId = tenant }, TenantId = tenant };
+            db.Add(hook);
+            db.Entry(hook).Property("SpareId").CurrentValue = bin.Id;
+            return await db.SaveChangesAsync(Ct);
+        });
+
+        // Main: a mapped readable foreign key to EF's key stays; Spare: a shadow foreign key, Brand: Code is the OData key, not EF's; both targets filter
+        var admin = (await FacetsAsync(Admin, "$top=0", "Hooks")).Facets.Select(f => f.Field).ToList();
+        admin.ShouldContain("Main");
+        admin.ShouldNotContain("Spare");
+        admin.ShouldNotContain("Brand");
+
+        // the foreign key is protected: through the filtered target the facet is left out
+        var viewer = app.As(await UserWithAsync(ODataApp.ViewGadgets, ODataApp.ViewBins), _setup.TenantId);
+        (await FacetsAsync(viewer, "$top=0", "Hooks")).Facets.Select(f => f.Field).ShouldNotContain("Main");
+
+        // a collection cannot be grouped by: refused when the model is built
+        Should.Throw<InvalidOperationException>(() => FacetResponse.RefuseCollectionPaths(typeof(Rack))).Message.ShouldContain("collection");
+        FacetResponse.RefuseCollectionPaths(typeof(Hook));
+        FacetResponse.RefuseCollectionPaths(typeof(Tray));
+    }
+
+    [Fact]
+    public async Task Search_fields_through_a_navigation_without_rules_stay()
+    {
+        (await GetAsync("/odata/Trays?$search=open")).GetProperty("value").GetArrayLength().ShouldBe(2);
+        (await GetAsync("/odata/Trays?$search=plain")).GetProperty("value").GetArrayLength().ShouldBe(0);
+    }
+
+    private sealed class Unreadable
+    {
+        public string Value => throw new InvalidOperationException("no");
     }
 
     [Fact]

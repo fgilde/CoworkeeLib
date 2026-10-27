@@ -131,6 +131,13 @@ internal sealed class GadgetModelContributor : IModelContributor
         modelBuilder.Entity<Tray>(tray => tray.ToTable("Trays"));
         modelBuilder.Entity<Peg>(peg => peg.ToTable("Pegs"));
         modelBuilder.Entity<Coupon>(coupon => coupon.ToTable("Coupons").HasKey(c => c.Code));
+        modelBuilder.Entity<Brand>(brand => brand.ToTable("Brands"));
+        modelBuilder.Entity<Hook>(hook =>
+        {
+            hook.ToTable("Hooks");
+            hook.HasOne(h => h.Spare).WithMany().HasForeignKey("SpareId").OnDelete(DeleteBehavior.NoAction);
+            hook.HasOne(h => h.Main).WithMany().HasForeignKey(h => h.MainId).OnDelete(DeleteBehavior.NoAction);
+        });
         modelBuilder.Entity<Labeled>(labeled =>
         {
             labeled.ToTable("Labeled");
@@ -193,6 +200,9 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.AddScoped<IODataEntityFilter<Peg>, PegsWhenAny>();
         context.Services.AddSingleton<Coworkee.OData.Computed.IODataComputedPropertySource, BinVolume>();
         context.Services.AddODataEntity<Coupon>("Coupons", ODataApp.ViewGadgets, o => o.Key(c => c.Code));
+        context.Services.AddODataEntity<Hook>("Hooks", ODataApp.ViewGadgets, o => o.HideUnless(h => h.MainId, ODataApp.SeeCategories));
+        context.Services.AddODataEntity<Brand>("Brands", ODataApp.ViewGadgets, o => o.Key(b => b.Code));
+        context.Services.AddScoped<IODataEntityFilter<Brand>, HideSecretBrands>();
         context.Services.AddODataImport("Coupons", (Guid? code, CouponRow row) => new SaveCouponCommand(code, row));
         context.Services.AddODataEntity<Box>("Boxes", ODataApp.ViewGadgets, o => o.Hide(b => b.Stickers, b => b.Code).HideUnless(b => b.Note, ODataApp.SeeCategories));
         context.Services.AddScoped<IODataEntityFilter<Box>, HideSecretBoxes>();

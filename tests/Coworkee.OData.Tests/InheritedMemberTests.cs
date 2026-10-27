@@ -19,7 +19,7 @@ public sealed class InheritedMemberTests(ODataApp app) : IAsyncLifetime
         {
             var tenant = _setup.TenantId;
             db.AddRange(
-                new Box { Name = "Box", Note = "fragile", Code = "B1", TenantId = tenant, Stickers = [new Sticker { Text = "Up", TenantId = tenant }] },
+                new Box { Name = "Box", Note = "fragile", Code = "B1", TenantId = tenant, Stickers = [new Sticker { Text = "Up", Weight = 42, TenantId = tenant }] },
                 new Bag { Name = "Bag", Note = "light", Code = "G1", TenantId = tenant, Stickers = [new Sticker { Text = "Dry", TenantId = tenant }] });
             return await db.SaveChangesAsync();
         });
@@ -117,13 +117,22 @@ public sealed class InheritedMemberTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Search_fields_through_a_navigation_follow_the_rules_of_what_they_read()
+    public async Task Search_fields_follow_the_rules_of_every_member_they_read()
     {
         var viewer = await ViewerAsync(ODataApp.ViewGadgets);
+        async Task<int> CountAsync(HttpClient client, string text) =>
+            (await client.GetFromJsonAsync<JsonElement>($"/odata/Stickers?$search={text}", Ct)).GetProperty("value").GetArrayLength();
 
-        (await viewer.GetFromJsonAsync<JsonElement>("/odata/Stickers?$search=fragile", Ct)).GetProperty("value").GetArrayLength().ShouldBe(0);
-        (await viewer.GetFromJsonAsync<JsonElement>("/odata/Stickers?$search=up", Ct)).GetProperty("value").GetArrayLength().ShouldBe(1);
-        (await Admin.GetFromJsonAsync<JsonElement>("/odata/Stickers?$search=fragile", Ct)).GetProperty("value")[0].GetProperty("Text").GetString().ShouldBe("Up");
+        // Text + "/" + Weight and Weight.ToString() read the protected weight
+        (await CountAsync(viewer, "42")).ShouldBe(0);
+        (await CountAsync(viewer, "up/")).ShouldBe(0);
+        (await CountAsync(Admin, "42")).ShouldBe(1);
+        (await CountAsync(Admin, "up/42")).ShouldBe(1);
+        (await CountAsync(viewer, "up")).ShouldBe(1);
+
+        // the owner's note is read through a navigation into rows with row filters (boxes): left out for everyone
+        (await CountAsync(viewer, "fragile")).ShouldBe(0);
+        (await CountAsync(Admin, "fragile")).ShouldBe(0);
     }
 
     private async Task<HttpClient> ViewerAsync(params string[] permissions)

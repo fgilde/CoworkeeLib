@@ -75,7 +75,7 @@ public class EntityODataController<TEntity> : GenericODataController<TEntity>, I
             _visible = await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken);
 
             // the targets the query reaches, [AutoExpand] navigations included, inside the same group scope as the root
-            if (Reached(options) is { } reached)
+            if (await ReachedAsync(options, scope) is { } reached)
             {
                 await scope.PrepareAsync(reached, cancellationToken);
             }
@@ -103,12 +103,12 @@ public class EntityODataController<TEntity> : GenericODataController<TEntity>, I
     }
 
     // the query as [EnableQuery] builds it, without paging and counting; null when it does not build (then every reachable target is checked)
-    private System.Linq.Expressions.Expression? Reached(ODataQueryOptions<TEntity> options)
+    private async Task<System.Linq.Expressions.Expression?> ReachedAsync(ODataQueryOptions<TEntity> options, ODataNavigationScope scope)
     {
         try
         {
             var ignored = AllowedQueryOptions.Count | AllowedQueryOptions.Top | AllowedQueryOptions.Skip | AllowedQueryOptions.SkipToken;
-            return options.ApplyTo(Searched(options), new ODataQuerySettings(), ignored).Expression;
+            return options.ApplyTo(await SearchedAsync(options, scope), new ODataQuerySettings(), ignored).Expression;
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -168,13 +168,14 @@ public class EntityODataController<TEntity> : GenericODataController<TEntity>, I
         : [];
 
     // the visible rows narrowed by $search over the properties the user may read
-    private IQueryable<TEntity> Searched(ODataQueryOptions options) =>
-        ODataEntityAccess.Search(HttpContext.RequestServices, Queryable(), options.Search?.RawValue, (Dictionary<string, IReadOnlySet<string>>)HttpContext.Items[ODataEntityAccess.DeniedItem]!);
+    private Task<IQueryable<TEntity>> SearchedAsync(ODataQueryOptions options, ODataNavigationScope scope) =>
+        ODataEntityAccess.SearchAsync(HttpContext.RequestServices, Queryable(), options.Search?.RawValue,
+            (Dictionary<string, IReadOnlySet<string>>)HttpContext.Items[ODataEntityAccess.DeniedItem]!, scope, HttpContext.RequestAborted);
 
     // Nextended's Get searches every string property, hidden ones too
     public override async Task<IQueryable<TEntity>> Get(CancellationToken ct = default)
     {
-        var rows = Searched(Request.ODataQueryOptions<TEntity>(Get<IEdmModel>()));
+        var rows = await SearchedAsync(Request.ODataQueryOptions<TEntity>(Get<IEdmModel>()), Scope);
         if (FacetsAsked())
         {
             // Nextended's own build would count on the filter without the navigation scope: an oracle on hidden rows

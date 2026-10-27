@@ -52,10 +52,10 @@ public static class DataExport
             throw new UnauthorizedAccessException("The export filters or sorts on a property the user may not read.");
         }
 
-        var rows = await ODataNavigationScope.For(services, typeof(TEntity)).ApplyAsync(
-            ODataEntityAccess.Search(services, await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken), options.Search?.RawValue, deniedByType)
-                .ApplyODataFilter(options)
-                .ApplyODataOrderBy(options), cancellationToken);
+        var scope = ODataNavigationScope.For(services, typeof(TEntity));
+        var searched = await ODataEntityAccess.SearchAsync(services, await ODataEntityAccess.VisibleAsync<TEntity>(services, cancellationToken), options.Search?.RawValue,
+            deniedByType, scope, cancellationToken);
+        var rows = await scope.ApplyAsync(searched.ApplyODataFilter(options).ApplyODataOrderBy(options), cancellationToken);
         if (maxRows is { } max && await rows.CountAsync(cancellationToken) > max)
         {
             return null;
