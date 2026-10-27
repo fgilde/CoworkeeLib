@@ -13,7 +13,8 @@ public sealed class StoredDateTests(ReportingApp app) : ReportingTestBase(app)
         var soldAt = typeof(Sale).GetProperty(nameof(Sale.SoldAt))!;
         await App.InDbAsync(Setup.TenantId, db =>
         {
-            ReportQueries.StoredAsNumber(db.Model, typeof(Sale), [soldAt]).ShouldBeTrue();
+            // a Coworkee DbContext stores DateTimeOffset as a number on SQLite only
+            ReportQueries.StoredAsNumber(db.Model, typeof(Sale), [soldAt]).ShouldBe(App.Provider == Coworkee.Contracts.Configuration.DatabaseProviders.Sqlite);
             return Task.CompletedTask;
         });
 
