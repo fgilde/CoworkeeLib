@@ -24,6 +24,9 @@ public sealed class NotificationTests : ClientTestBase
         Api.GetUnreadNotificationCountAsync(Arg.Any<CancellationToken>()).Returns(new UnreadCountDto(1));
         Api.GetNotificationsAsync(Arg.Any<bool>(), Arg.Any<PageRequest>(), Arg.Any<CancellationToken>())
             .Returns(c => c.Arg<bool>() ? new PagedResult<NotificationDto>([Unread], 1, 1, 25) : new PagedResult<NotificationDto>([Unread, Read], 2, 1, 25));
+        Api.GetNotificationsAsync(Arg.Any<NotificationFilter>(), Arg.Any<PageRequest>(), Arg.Any<CancellationToken>())
+            .Returns(c => c.Arg<NotificationFilter>().UnreadOnly ? new PagedResult<NotificationDto>([Unread], 1, 1, 25) : new PagedResult<NotificationDto>([Unread, Read], 2, 1, 25));
+        Api.GetNotificationCountsAsync(Arg.Any<CancellationToken>()).Returns(new NotificationCountsDto(2, 1, new Dictionary<string, int> { ["Shipment"] = 1 }));
         AddAuthorization().SetAuthorized("Ada").SetClaims(new Claim("sub", Me.ToString()));
     }
 
@@ -32,7 +35,7 @@ public sealed class NotificationTests : ClientTestBase
     {
         var localized = new NotificationDto(Guid.CreateVersion7(), "account.registration", "New registration", "{0} ({1}) waits for activation.", null,
             DateTimeOffset.UtcNow, null, ["Nia New", "nia@acme.test"]);
-        Api.GetNotificationsAsync(Arg.Any<bool>(), Arg.Any<PageRequest>(), Arg.Any<CancellationToken>()).Returns(new PagedResult<NotificationDto>([localized], 1, 1, 25));
+        Api.GetNotificationsAsync(Arg.Any<NotificationFilter>(), Arg.Any<PageRequest>(), Arg.Any<CancellationToken>()).Returns(new PagedResult<NotificationDto>([localized], 1, 1, 25));
 
         var page = Render<Notifications>();
 
@@ -117,5 +120,56 @@ public sealed class NotificationTests : ClientTestBase
         }
 
         bell.WaitForAssertion(() => Api.Received(1).GetUnreadNotificationCountAsync(Arg.Any<CancellationToken>()));
+    }
+
+    [Fact]
+    public async Task The_inbox_shows_open_ones_by_default_filters_done_and_category_and_marks_done()
+    {
+        var page = Render<Notifications>();
+        page.WaitForAssertion(() => page.FindAll("[data-notification]").Count.ShouldBe(2));
+        await Api.Received().GetNotificationsAsync(new NotificationFilter(Done: false), Arg.Any<PageRequest>(), Arg.Any<CancellationToken>());
+        page.Find("[data-testid='state-open']").TextContent.ShouldContain("(2)");
+
+        await page.Find("[data-testid='state-done']").ClickAsync(new());
+        await Api.Received().GetNotificationsAsync(new NotificationFilter(Done: true), Arg.Any<PageRequest>(), Arg.Any<CancellationToken>());
+        await page.Find("[data-category='Shipment']").ClickAsync(new());
+        await Api.Received().GetNotificationsAsync(new NotificationFilter(Category: "Shipment", Done: true), Arg.Any<PageRequest>(), Arg.Any<CancellationToken>());
+
+        await page.Find($"[data-notification='{Unread.Id}'] [data-testid='mark-done']").ClickAsync(new());
+        await Api.Received(1).MarkNotificationDoneAsync(Unread.Id, true, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Preferences_save_each_change_and_the_follow_button_toggles()
+    {
+        Render<MudPopoverProvider>();
+        var eta = new NotificationPreferenceDto("shipment.eta", "Shipment", "Estimated arrival changed", NotificationScope.Followed, true, false, NotificationScope.Followed, true, false);
+        Api.GetNotificationPreferencesAsync(Arg.Any<CancellationToken>()).Returns([eta]);
+        Api.SaveNotificationPreferenceAsync("shipment.eta", Arg.Any<SaveNotificationPreferenceRequest>(), Arg.Any<CancellationToken>())
+            .Returns(c => eta with { Email = c.Arg<SaveNotificationPreferenceRequest>().Email });
+        var editor = Render<NotificationPreferencesEditor>();
+        editor.WaitForAssertion(() => editor.Markup.ShouldContain("Estimated arrival changed"));
+
+        await editor.Find("[data-testid='preference-email'] input, input[data-testid='preference-email']").ChangeAsync(new() { Value = true });
+        await Api.Received(1).SaveNotificationPreferenceAsync("shipment.eta", new SaveNotificationPreferenceRequest(NotificationScope.Followed, true, true), Arg.Any<CancellationToken>());
+
+        var shipment = Guid.CreateVersion7();
+        Api.GetFollowStateAsync("Shipments", shipment, Arg.Any<CancellationToken>()).Returns(new FollowStateDto(false, true));
+        Api.FollowAsync("Shipments", shipment, "S-1", Arg.Any<CancellationToken>()).Returns(new FollowStateDto(true, true));
+        var button = Render<CoworkeeFollowButton>(p => p.Add(b => b.EntityType, "Shipments").Add(b => b.EntityId, shipment).Add(b => b.Title, "S-1"));
+        button.WaitForAssertion(() => button.Find("[data-testid='follow']").TextContent.ShouldContain("Follow"));
+
+        await button.Find("[data-testid='follow']").ClickAsync(new());
+        button.WaitForAssertion(() => button.Find("[data-testid='follow']").TextContent.ShouldContain("Following"));
+    }
+
+    [Fact]
+    public void The_follow_button_stays_hidden_where_following_is_not_allowed()
+    {
+        Api.GetFollowStateAsync("Shipments", Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns<FollowStateDto>(_ => throw new Api.ApiException(403, "forbidden", null));
+
+        var button = Render<CoworkeeFollowButton>(p => p.Add(b => b.EntityType, "Shipments").Add(b => b.EntityId, Guid.CreateVersion7()));
+
+        button.FindAll("[data-testid='follow']").ShouldBeEmpty();
     }
 }

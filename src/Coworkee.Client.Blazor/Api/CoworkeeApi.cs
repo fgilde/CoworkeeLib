@@ -359,6 +359,37 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
     public Task<PagedResult<NotificationDto>> GetNotificationsAsync(bool unreadOnly, PageRequest page, CancellationToken cancellationToken = default) =>
         GetAsync<PagedResult<NotificationDto>>($"api/v1/notifications?unreadOnly={unreadOnly.ToString().ToLowerInvariant()}&page={page.Page}&pageSize={page.PageSize}", cancellationToken);
 
+    public Task<PagedResult<NotificationDto>> GetNotificationsAsync(NotificationFilter filter, PageRequest page, CancellationToken cancellationToken = default) =>
+        GetAsync<PagedResult<NotificationDto>>(
+            $"api/v1/notifications?unreadOnly={filter.UnreadOnly.ToString().ToLowerInvariant()}&page={page.Page}&pageSize={page.PageSize}"
+            + (filter.Category is { } category ? $"&category={Uri.EscapeDataString(category)}" : string.Empty)
+            + (filter.Done is { } done ? $"&done={done.ToString().ToLowerInvariant()}" : string.Empty)
+            + (string.IsNullOrWhiteSpace(filter.Search) ? string.Empty : $"&search={Uri.EscapeDataString(filter.Search)}"), cancellationToken);
+
+    public Task<NotificationCountsDto> GetNotificationCountsAsync(CancellationToken cancellationToken = default) =>
+        GetAsync<NotificationCountsDto>("api/v1/notifications/counts", cancellationToken);
+
+    public Task MarkNotificationDoneAsync(Guid id, bool done, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Post, $"api/v1/notifications/{id}/{(done ? "done" : "undone")}", null, cancellationToken);
+
+    public async Task<IReadOnlyList<NotificationPreferenceDto>> GetNotificationPreferencesAsync(CancellationToken cancellationToken = default) =>
+        await GetAsync<NotificationPreferenceDto[]>("api/v1/notifications/preferences", cancellationToken);
+
+    public Task<NotificationPreferenceDto> SaveNotificationPreferenceAsync(string type, SaveNotificationPreferenceRequest preference, CancellationToken cancellationToken = default) =>
+        SendAsync<NotificationPreferenceDto>(HttpMethod.Put, $"api/v1/notifications/preferences/{Uri.EscapeDataString(type)}", preference, cancellationToken);
+
+    public async Task<IReadOnlyList<FollowDto>> GetFollowsAsync(CancellationToken cancellationToken = default) =>
+        await GetAsync<FollowDto[]>("api/v1/notifications/follows", cancellationToken);
+
+    public Task<FollowStateDto> GetFollowStateAsync(string entityType, Guid entityId, CancellationToken cancellationToken = default) =>
+        GetAsync<FollowStateDto>($"api/v1/notifications/follows/{Uri.EscapeDataString(entityType)}/{entityId}", cancellationToken);
+
+    public Task<FollowStateDto> FollowAsync(string entityType, Guid entityId, string? title = null, CancellationToken cancellationToken = default) =>
+        SendAsync<FollowStateDto>(HttpMethod.Put, $"api/v1/notifications/follows/{Uri.EscapeDataString(entityType)}/{entityId}", new FollowRequest(title), cancellationToken);
+
+    public Task<FollowStateDto> UnfollowAsync(string entityType, Guid entityId, CancellationToken cancellationToken = default) =>
+        SendAsync<FollowStateDto>(HttpMethod.Delete, $"api/v1/notifications/follows/{Uri.EscapeDataString(entityType)}/{entityId}", null, cancellationToken);
+
     public Task MarkNotificationReadAsync(Guid id, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Post, $"api/v1/notifications/{id}/read", null, cancellationToken);
 

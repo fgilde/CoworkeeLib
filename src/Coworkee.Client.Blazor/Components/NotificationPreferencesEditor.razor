@@ -1,0 +1,43 @@
+@using Coworkee.Contracts.Notifications
+
+@if (_preferences is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_preferences.Count == 0)
+{
+    <MudAlert Severity="Severity.Info" Dense="true">@L["This app has no notifications to choose from."]</MudAlert>
+}
+else
+{
+    <MudTable Items="_preferences" Dense="true" Elevation="0" Outlined="true" GroupBy="_byCategory" data-testid="notification-preferences">
+        <HeaderContent>
+            <MudTh>@L["Notification"]</MudTh>
+            <MudTh>@L["Who gets it"]</MudTh>
+            <MudTh>@L["In the app"]</MudTh>
+            <MudTh>@L["By e-mail"]</MudTh>
+        </HeaderContent>
+        <GroupHeaderTemplate>
+            <MudTh colspan="4"><MudText Typo="Typo.subtitle2">@(context.Key is string category ? L.Stored(category) : L["Other"])</MudText></MudTh>
+        </GroupHeaderTemplate>
+        <RowTemplate>
+            <MudTd data-preference="@context.Type">@L.Stored(context.Name)</MudTd>
+            <MudTd>
+                <MudSelect T="NotificationScope" Value="context.Scope" ValueChanged="scope => SaveAsync(context, scope, context.InApp, context.Email)" Dense="true" Margin="Margin.Dense"
+                           Variant="Variant.Outlined" data-testid="preference-scope">
+                    <MudSelectItem Value="NotificationScope.Off">@L["Nobody (off)"]</MudSelectItem>
+                    <MudSelectItem Value="NotificationScope.All">@L["All I may see"]</MudSelectItem>
+                    <MudSelectItem Value="NotificationScope.Followed">@L["Only what I follow"]</MudSelectItem>
+                </MudSelect>
+            </MudTd>
+            <MudTd>
+                <MudCheckBox T="bool" Value="context.InApp" ValueChanged="inApp => SaveAsync(context, context.Scope, inApp, context.Email)" Disabled="@(context.Scope == NotificationScope.Off)"
+                             aria-label="@L["In the app"]" data-testid="preference-inapp" />
+            </MudTd>
+            <MudTd>
+                <MudCheckBox T="bool" Value="context.Email" ValueChanged="email => SaveAsync(context, context.Scope, context.InApp, email)" Disabled="@(context.Scope == NotificationScope.Off)"
+                             aria-label="@L["By e-mail"]" data-testid="preference-email" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}

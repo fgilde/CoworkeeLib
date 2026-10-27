@@ -1,0 +1,3 @@
+<p>Hallo {{ user.first_name }},</p>
+<p>{{ if notification.link }}<a href="{{ notification.link }}">{{ notification.title }}</a>{{ else }}{{ notification.title }}{{ end }}</p>
+{{ if notification.body }}<p>{{ notification.body }}</p>{{ end }}

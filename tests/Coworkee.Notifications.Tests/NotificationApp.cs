@@ -2,12 +2,15 @@ using System.Collections.Concurrent;
 using System.Net.Http.Json;
 using Coworkee.AspNetCore;
 using Coworkee.Contracts.Identity;
+using Coworkee.Contracts.Notifications;
 using Coworkee.Contracts.Realtime;
 using Coworkee.Core.Modularity;
 using Coworkee.Core.Security;
+using Coworkee.Domain;
 using Coworkee.Identity;
 using Coworkee.Identity.Setup;
 using Coworkee.Infrastructure.Persistence;
+using Coworkee.OData;
 using Coworkee.Testing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -79,6 +82,42 @@ public sealed class NotificationApp : DatabaseFixture
 
     public HttpClient As(Guid userId, Guid tenantId) => App.GetTestClient().AsUser(userId, tenantId);
 
+    public async Task<Guid> AddShipmentAsync(Guid tenantId, string number = "S-1")
+    {
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, tenantId));
+        await using var scope = App.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<NotificationTestDbContext>();
+        var shipment = new Shipment { Number = number, TenantId = tenantId };
+        db.Add(shipment);
+        await db.SaveChangesAsync();
+        return shipment.Id;
+    }
+
+    /// <summary>Publishes as <paramref name="actor"/>; <paramref name="clock"/> stands in for the time when given.</summary>
+    public async Task PublishAsync(Guid? actor, Guid? tenantId, NotificationMessage message, TimeProvider? clock = null)
+    {
+        using var scopeActor = CurrentUserScope.Begin(new ImpersonatedUser(actor, tenantId));
+        await using var scope = App.Services.CreateAsyncScope();
+        var notifier = clock is null
+            ? scope.ServiceProvider.GetRequiredService<INotifier>()
+            : ActivatorUtilities.CreateInstance<Notifier>(scope.ServiceProvider, clock);
+        await notifier.PublishAsync(message);
+        await scope.ServiceProvider.GetRequiredService<NotificationTestDbContext>().SaveChangesAsync();
+    }
+
+    public async Task RunMailJobAsync(TimeProvider clock)
+    {
+        await using var scope = App.Services.CreateAsyncScope();
+        await ActivatorUtilities.CreateInstance<NotificationMailJob>(scope.ServiceProvider, clock).ExecuteAsync(CancellationToken.None);
+    }
+
+    public async Task<T> InDbAsync<T>(Guid? tenantId, Func<NotificationTestDbContext, Task<T>> action)
+    {
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, tenantId));
+        await using var scope = App.Services.CreateAsyncScope();
+        return await action(scope.ServiceProvider.GetRequiredService<NotificationTestDbContext>());
+    }
+
     public async Task NotifyAsync(Guid? actor, Guid? tenantId, params Guid[] users)
     {
         using var scopeActor = CurrentUserScope.Begin(new ImpersonatedUser(actor, tenantId));
@@ -122,10 +161,51 @@ public sealed class FakePushSender : Push.IPushSender
 public sealed class NotificationTestDbContext(DbContextOptions<NotificationTestDbContext> options, ICurrentUser currentUser, IEnumerable<IModelContributor> contributors)
     : CoworkeeDbContext(options, currentUser, contributors);
 
-[DependsOn(typeof(CoworkeeNotificationsModule), typeof(CoworkeeIdentityModule), typeof(Coworkee.Localization.CoworkeeLocalizationModule))]
+/// <summary>A followable record: the Shipments set needs <see cref="ViewShipments"/>, and hidden shipments are seen by nobody.</summary>
+public sealed class Shipment : AuditedEntity, IMultiTenant
+{
+    public const string ViewShipments = "Shipments.View";
+    public const string Hidden = "hidden";
+
+    public required string Number { get; set; }
+
+    public Guid TenantId { get; set; }
+}
+
+internal sealed class HiddenShipments : Coworkee.OData.IODataEntityFilter<Shipment>
+{
+    public Task<IQueryable<Shipment>> ApplyAsync(IQueryable<Shipment> query, CancellationToken cancellationToken) =>
+        Task.FromResult(query.Where(s => s.Number != Shipment.Hidden));
+}
+
+internal sealed class ShipmentModel : IModelContributor
+{
+    public void Apply(ModelBuilder modelBuilder) => modelBuilder.Entity<Shipment>(shipment => shipment.ToTable("Shipments"));
+}
+
+internal sealed class ShipmentPermissions : Coworkee.Application.Authorization.IPermissionDefinitionContributor
+{
+    public void Define(Coworkee.Application.Authorization.PermissionDefinitionContext context) =>
+        context.Group("Shipments", "Shipments").Add(Shipment.ViewShipments, "View shipments");
+}
+
+[DependsOn(typeof(CoworkeeNotificationsModule), typeof(CoworkeeIdentityModule), typeof(Coworkee.Localization.CoworkeeLocalizationModule), typeof(Coworkee.OData.CoworkeeODataModule))]
 public sealed class TestNotificationModule : CoworkeeModule
 {
-    public override void ConfigureServices(ModuleServiceContext context) =>
+    public const string Eta = "shipment.eta";
+    public const string Status = "shipment.status";
+
+    public override void ConfigureServices(ModuleServiceContext context)
+    {
         context.Services.AddCoworkeeDbContext<NotificationTestDbContext>((provider, options) =>
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
+        context.Services.AddSingleton<IModelContributor, ShipmentModel>();
+        context.Services.AddSingleton<Coworkee.Application.Authorization.IPermissionDefinitionContributor, ShipmentPermissions>();
+        context.Services.AddODataEntity<Shipment>("Shipments", Shipment.ViewShipments);
+        context.Services.AddScoped<Coworkee.OData.IODataEntityFilter<Shipment>, HiddenShipments>();
+        context.Services.AddNotificationTypes(n => n
+            .Add(Eta, "Shipment", "Estimated arrival changed", NotificationScope.Followed, inApp: true, email: true, emailDelay: TimeSpan.FromMinutes(1))
+            .Add(Status, "Shipment", "Status changed", NotificationScope.Off)
+            .Followable<Shipment>("Shipments", id => $"/shipments/{id}"));
+    }
 }

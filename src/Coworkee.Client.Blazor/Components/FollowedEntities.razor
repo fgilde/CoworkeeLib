@@ -1,0 +1,31 @@
+@if (_follows is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (_follows.Count == 0)
+{
+    <MudAlert Severity="Severity.Info" Dense="true" data-testid="follows-empty">@L["You follow nothing yet. Follow a record on its page to hear about it."]</MudAlert>
+}
+else
+{
+    <MudList T="string" Dense="true" data-testid="follows">
+        @foreach (var follow in _follows)
+        {
+            <MudListItem T="string" Icon="@Icons.Material.Outlined.Bookmark" data-follow="@follow.EntityId">
+                <MudStack Row="true" AlignItems="AlignItems.Center">
+                    @if (follow.Link is { } link)
+                    {
+                        <MudLink Href="@(Links.Href(link) ?? link)">@(follow.Title ?? follow.EntityId.ToString())</MudLink>
+                    }
+                    else
+                    {
+                        <MudText>@(follow.Title ?? follow.EntityId.ToString())</MudText>
+                    }
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@L.Stored(follow.EntityType) · @follow.CreatedAt.ToLocalTime().ToString("d")</MudText>
+                    <MudSpacer />
+                    <MudButton Size="Size.Small" Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.BookmarkRemove" OnClick="() => UnfollowAsync(follow)" data-testid="unfollow">@L["Unfollow"]</MudButton>
+                </MudStack>
+            </MudListItem>
+        }
+    </MudList>
+}

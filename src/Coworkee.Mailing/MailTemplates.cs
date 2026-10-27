@@ -176,6 +176,11 @@ internal sealed class CoreMailTemplates : IMailTemplateContributor
             user = User,
             notifications = new[] { new { title = "Document shared", body = "Grace shared a document with you.", link = "https://example.com/d/1" } },
         }, EmbeddedTemplates.Load(assembly, "Notifications.Digest")));
+        context.Add(new("Notifications.Notification", "Notification", new
+        {
+            user = User,
+            notification = new { title = "Document shared", body = "Grace shared a document with you.", link = "https://example.com/d/1" },
+        }, EmbeddedTemplates.Load(assembly, "Notifications.Notification")));
         context.Add(new(ExportMailer.Template, "Export", new { user = User, export = new { name = "Products", file_name = "Products.xlsx" }, attached = true },
             EmbeddedTemplates.Load(assembly, ExportMailer.Template)));
     }

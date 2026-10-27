@@ -6,5 +6,6 @@
     <ProjectReference Include="..\..\src\Coworkee.Testing\Coworkee.Testing.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
   </ItemGroup>
 </Project>

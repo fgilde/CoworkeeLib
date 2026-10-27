@@ -1,3 +1,5 @@
 <MudIconButton Size="Size.Small" Icon="@(Item.ReadAt is null ? Icons.Material.Outlined.Done : Icons.Material.Outlined.MarkEmailUnread)"
                aria-label="@ToggleText" title="@ToggleText" data-testid="@(Item.ReadAt is null ? "mark-read" : "mark-unread")" OnClick="ToggleAsync" />
+<MudIconButton Size="Size.Small" Icon="@(Item.DoneAt is null ? Icons.Material.Outlined.TaskAlt : Icons.Material.Outlined.Undo)"
+               aria-label="@DoneText" title="@DoneText" data-testid="@(Item.DoneAt is null ? "mark-done" : "mark-undone")" OnClick="DoneAsync" />
 <MudIconButton Size="Size.Small" Icon="@Icons.Material.Outlined.Delete" aria-label="@L["Delete"]" title="@L["Delete"]" data-testid="delete" OnClick="DeleteAsync" />

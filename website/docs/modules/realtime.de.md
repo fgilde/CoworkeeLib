@@ -118,4 +118,39 @@ Die Glocke zeigt die Zahl der ungelesenen und die letzten zehn; eine neu eintref
 | `GET /api/v1/notifications/unread-count` | |
 | `POST /api/v1/notifications/{id}/read`, `/{id}/unread` | |
 | `POST /api/v1/notifications/read-all` | |
+| `GET /api/v1/notifications?category=&done=&search=` | Filter des Eingangs: Kategorie, offen (`done=false`) oder erledigt, Text in Titel oder Inhalt |
+| `GET /api/v1/notifications/counts` | offene, ungelesene und offene pro Kategorie |
+| `POST /api/v1/notifications/{id}/done`, `/{id}/undone` | erledigt markiert auch als gelesen |
+| `GET /api/v1/notifications/preferences`, `PUT .../preferences/{type}` | die Wahl des Benutzers pro registriertem Typ |
+| `GET /api/v1/notifications/follows`, `GET/PUT/DELETE .../follows/{entityType}/{entityId}` | verfolgte Entitäten, Status, verfolgen, nicht mehr verfolgen |
 | `DELETE /api/v1/notifications/{id}`, `DELETE /api/v1/notifications` | eine, alle |
+
+### Einstellungen, Verfolgen und verzögerte Mails
+
+Apps registrieren die Benachrichtigungstypen, die Benutzer selbst wählen, und die Entitätstypen, denen sie folgen dürfen:
+
+```csharp
+services.AddNotificationTypes(n => n
+    .Add("shipment.eta", "Shipment", "Estimated arrival changed", NotificationScope.Followed, inApp: true, email: true, emailDelay: TimeSpan.FromMinutes(1))
+    .Add("quotation.new", "Quotation", "New quotation", NotificationScope.All)
+    .Followable<Shipment>("Shipments", id => $"/shipments/{id}"));
+```
+
+Ein Typ hat eine Kategorie (Filter und Zahlen des Eingangs), einen Namen (Übersetzungsschlüssel) und Vorgaben: den Umfang (`Off`, `All`, `Followed`) und die Kanäle (in der App, per E-Mail). Jeder Benutzer überschreibt sie pro Typ im Reiter *Einstellungen* von `/notifications` (`NotificationPreference`, Tabelle `cw.NotificationPreferences`). Verfolgen ist pro Entitätstyp freizuschalten: Mit `Followable<TEntity>` muss der Benutzer die Zeile über das OData-Set der Entität sehen (403 ohne die Berechtigung des Sets, 404 für eine verborgene oder fremde Zeile). `CoworkeeFollowButton` (`EntityType`, `EntityId`, `Title`) verfolgt und beendet das auf einer Detailseite; der Reiter *Gefolgt* listet, was der Benutzer verfolgt. `NotificationFollow` (`cw.NotificationFollows`) ist öffentlich, Apps filtern ihre Listen also danach (nur verfolgte, eine Spalte „verfolgt“).
+
+`INotifier.PublishAsync(NotificationMessage)` sendet an drei Arten von Empfängern:
+
+```csharp
+await notifier.PublishAsync(new NotificationMessage("shipment.eta", "Estimated arrival of {0} changed", "New: {1}")
+{
+    Arguments = [shipment.Number, eta.ToString("d")],
+    Link = $"/shipments/{shipment.Id}",
+    EntityType = "Shipments", EntityId = shipment.Id,  // ihre Verfolger
+    Audience = usersWhoMaySeeIt,                        // alle mit der Einstellung All
+    Recipients = [shipment.OwnerId],                    // direkt adressiert
+}, ct);
+```
+
+Direkt Adressierte bekommen sie, wenn ihr Umfang nicht Off ist; Verfolger bei All oder Followed (und nur die im Publikum, wenn eines angegeben ist); das Publikum bei All. Der Auslöser bekommt sie nur, wenn er adressiert ist. Pro Empfänger entscheiden die Kanäle: in der App eine Benachrichtigung, per E-Mail die Mail `Notifications.Notification` in der Sprache des Lesers. Ein Typ mit `emailDelay` lässt die Mail in `cw.PendingNotificationMails` warten; eine weitere Benachrichtigung desselben Benutzers, Typs und derselben Entität ersetzt sie vorher und wartet neu, ein Schwall von Änderungen endet also in einer Mail mit dem neuesten Text. Der Job `coworkee-notification-mails` verschickt fällige Mails jede Minute. `NotifyAsync` und `NotifyLocalizedAsync` sind `PublishAsync` mit `Recipients`; nicht registrierte Typen erreichen sie wie bisher nur in der App.
+
+Der Eingang listet standardmäßig die offenen Benachrichtigungen; *Erledigt* nimmt eine heraus (und markiert sie als gelesen), die Reiter zeigen offene, erledigte oder alle, die Chips filtern nach Kategorie mit ihren offenen Zahlen, die Suche sucht in Titel und Inhalt.

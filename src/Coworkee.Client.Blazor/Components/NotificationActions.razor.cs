@@ -6,7 +6,7 @@ using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Components;
 
-/// <summary>Mark read or unread and delete, for one notification.</summary>
+/// <summary>Mark read or unread, done or open again, and delete, for one notification.</summary>
 public partial class NotificationActions
 {
     [Parameter, EditorRequired] public NotificationDto Item { get; set; } = null!;
@@ -23,6 +23,10 @@ public partial class NotificationActions
 
     private Task ToggleAsync() =>
         RunAsync(() => Item.ReadAt is null ? Api.MarkNotificationReadAsync(Item.Id) : Api.MarkNotificationUnreadAsync(Item.Id));
+
+    private string DoneText => Item.DoneAt is null ? L["Mark as done"] : L["Back to open"];
+
+    private Task DoneAsync() => RunAsync(() => Api.MarkNotificationDoneAsync(Item.Id, Item.DoneAt is null));
 
     private Task DeleteAsync() => RunAsync(() => Api.DeleteNotificationAsync(Item.Id));
 

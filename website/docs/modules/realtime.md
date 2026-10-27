@@ -118,4 +118,39 @@ The bell shows the unread count and the latest ten; a notification that arrives 
 | `GET /api/v1/notifications/unread-count` | |
 | `POST /api/v1/notifications/{id}/read`, `/{id}/unread` | |
 | `POST /api/v1/notifications/read-all` | |
+| `GET /api/v1/notifications?category=&done=&search=` | inbox filters: category, open (`done=false`) or done, text in title or body |
+| `GET /api/v1/notifications/counts` | open, unread and open per category |
+| `POST /api/v1/notifications/{id}/done`, `/{id}/undone` | done also marks read |
+| `GET /api/v1/notifications/preferences`, `PUT .../preferences/{type}` | the user's choice per registered type |
+| `GET /api/v1/notifications/follows`, `GET/PUT/DELETE .../follows/{entityType}/{entityId}` | followed entities, follow state, follow, unfollow |
 | `DELETE /api/v1/notifications/{id}`, `DELETE /api/v1/notifications` | one, all |
+
+### Preferences, following and delayed mails
+
+Apps register the notification types users choose for themselves, and the entity types they may follow:
+
+```csharp
+services.AddNotificationTypes(n => n
+    .Add("shipment.eta", "Shipment", "Estimated arrival changed", NotificationScope.Followed, inApp: true, email: true, emailDelay: TimeSpan.FromMinutes(1))
+    .Add("quotation.new", "Quotation", "New quotation", NotificationScope.All)
+    .Followable<Shipment>("Shipments", id => $"/shipments/{id}"));
+```
+
+A type has a category (inbox filter and counts), a name (localization key) and defaults: the scope (`Off`, `All`, `Followed`) and the channels (in the app, by e-mail). Each user overrides them per type on the *Preferences* tab of `/notifications` (`NotificationPreference`, table `cw.NotificationPreferences`). Following is opt-in per entity type: with `Followable<TEntity>` the user must see the row through the entity's OData set (403 without the set's permission, 404 for a hidden or foreign row). `CoworkeeFollowButton` (`EntityType`, `EntityId`, `Title`) follows and unfollows on a detail page; the *Following* tab lists what the user follows. `NotificationFollow` (`cw.NotificationFollows`) is public, so apps filter their lists by it (followed only, an is-followed column).
+
+`INotifier.PublishAsync(NotificationMessage)` sends to three kinds of recipients:
+
+```csharp
+await notifier.PublishAsync(new NotificationMessage("shipment.eta", "Estimated arrival of {0} changed", "New: {1}")
+{
+    Arguments = [shipment.Number, eta.ToString("d")],
+    Link = $"/shipments/{shipment.Id}",
+    EntityType = "Shipments", EntityId = shipment.Id,  // its followers
+    Audience = usersWhoMaySeeIt,                        // everybody with the preference All
+    Recipients = [shipment.OwnerId],                    // addressed directly
+}, ct);
+```
+
+Addressed users get it unless their scope is Off; followers when it is All or Followed (and only those in the audience, when one is given); the audience when it is All. The actor gets it only when addressed. Per recipient the channels decide: in the app a notification, by e-mail the mail `Notifications.Notification` in the reader's language. A type with `emailDelay` lets the mail wait in `cw.PendingNotificationMails`; another notification of the same user, type and entity before that replaces it and waits anew, so a burst of changes ends in one mail with the latest text. The job `coworkee-notification-mails` sends due mails every minute. `NotifyAsync` and `NotifyLocalizedAsync` are `PublishAsync` with `Recipients`; unregistered types reach them in the app only, as before.
+
+The inbox lists open notifications by default; *Done* moves one out of it (and marks it read), the tabs show open, done or all, the chips filter by category with their open counts, the search looks in title and body.

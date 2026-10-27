@@ -1,0 +1,9 @@
+@if (_state is { CanFollow: true } state)
+{
+    <MudTooltip Text="@(state.Following ? L["You get notifications about this. Click to stop."] : L["Get notifications about this"])">
+        <MudButton Variant="@(state.Following ? Variant.Filled : Variant.Outlined)" Color="Color.Primary" Size="Size.Small" Disabled="_busy"
+                   StartIcon="@(state.Following ? Icons.Material.Filled.Bookmark : Icons.Material.Outlined.BookmarkAdd)" OnClick="ToggleAsync" data-testid="follow">
+            @L[state.Following ? "Following" : "Follow"]
+        </MudButton>
+    </MudTooltip>
+}

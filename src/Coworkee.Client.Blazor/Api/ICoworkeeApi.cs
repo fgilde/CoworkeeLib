@@ -257,6 +257,26 @@ public interface ICoworkeeApi
 
     Task<PagedResult<NotificationDto>> GetNotificationsAsync(bool unreadOnly, PageRequest page, CancellationToken cancellationToken = default);
 
+    /// <summary>The inbox filtered by category, open or done, unread and text (<see cref="NotificationFilter.Search"/>).</summary>
+    Task<PagedResult<NotificationDto>> GetNotificationsAsync(NotificationFilter filter, PageRequest page, CancellationToken cancellationToken = default);
+
+    Task<NotificationCountsDto> GetNotificationCountsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Done also marks read; not done brings it back into the open inbox.</summary>
+    Task MarkNotificationDoneAsync(Guid id, bool done, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<NotificationPreferenceDto>> GetNotificationPreferencesAsync(CancellationToken cancellationToken = default);
+
+    Task<NotificationPreferenceDto> SaveNotificationPreferenceAsync(string type, SaveNotificationPreferenceRequest preference, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<FollowDto>> GetFollowsAsync(CancellationToken cancellationToken = default);
+
+    Task<FollowStateDto> GetFollowStateAsync(string entityType, Guid entityId, CancellationToken cancellationToken = default);
+
+    Task<FollowStateDto> FollowAsync(string entityType, Guid entityId, string? title = null, CancellationToken cancellationToken = default);
+
+    Task<FollowStateDto> UnfollowAsync(string entityType, Guid entityId, CancellationToken cancellationToken = default);
+
     Task MarkNotificationReadAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task MarkAllNotificationsReadAsync(CancellationToken cancellationToken = default);

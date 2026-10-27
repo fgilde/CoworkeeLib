@@ -127,13 +127,5 @@ public sealed class NotificationDigestJob(
 
     private string? Text(string? text, IReadOnlyList<string>? arguments, CultureInfo? culture) => NotificationText.In(text, arguments, culture, translators);
 
-    /// <summary>Server-made links are relative paths; they are made absolute, anything that is not a path or http(s) is dropped.</summary>
-    private string? Absolute(string? link) => link switch
-    {
-        null or "" => null,
-        _ when link.StartsWith('/') && !link.StartsWith("//", StringComparison.Ordinal) =>
-            options.Value.PublicAppUrl is { Length: > 0 } root ? root.TrimEnd('/') + link : link,
-        _ when Uri.TryCreate(link, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp) => link,
-        _ => null,
-    };
+    private string? Absolute(string? link) => NotificationLinks.Absolute(link, options.Value.PublicAppUrl);
 }
