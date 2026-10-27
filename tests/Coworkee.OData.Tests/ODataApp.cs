@@ -108,6 +108,14 @@ internal sealed class GadgetModelContributor : IModelContributor
         modelBuilder.Entity<Bin>(bin => bin.ToTable("Bins"));
         modelBuilder.Entity<BinLabel>(label => label.ToTable("BinLabels"));
         modelBuilder.Entity<Locker>(locker => locker.ToTable("Lockers"));
+        modelBuilder.Entity<Labeled>(labeled =>
+        {
+            labeled.ToTable("Labeled");
+            labeled.HasMany(l => l.Stickers).WithOne(s => s.Owner).HasForeignKey(s => s.OwnerId);
+        });
+        modelBuilder.Entity<Box>();
+        modelBuilder.Entity<Bag>();
+        modelBuilder.Entity<Sticker>(sticker => sticker.ToTable("Stickers"));
     }
 }
 
@@ -148,6 +156,10 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.AddScoped<IODataEntityFilter<BinLabel>, HideSecretLabels>();
         context.Services.AddODataEntity<Locker>("Lockers", ODataApp.ViewGadgets);
         context.Services.AddScoped<IODataEntityFilter<Locker>, FirstLockers>();
+        context.Services.AddODataEntity<Box>("Boxes", ODataApp.ViewGadgets, o => o.Hide(b => b.Stickers, b => b.Code).HideUnless(b => b.Note, ODataApp.SeeCategories));
+        context.Services.AddScoped<IODataEntityFilter<Box>, HideSecretBoxes>();
+        context.Services.AddODataEntity<Bag>("Bags", ODataApp.ViewGadgets);
+        context.Services.AddODataEntity<Sticker>("Stickers", ODataApp.ViewGadgets);
         context.Services.AddDbContext<ParcelDbContext>((provider, options) =>
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
         context.Services.AddCoworkeeExternalDbContext<ParcelDbContext>();

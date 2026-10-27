@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.OData;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
 using Nextended.Core.Facets;
@@ -26,7 +27,7 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
         services.AddMessagingFromAssembly(typeof(CoworkeeODataModule).Assembly);
         services.AddSingleton<Computed.ODataComputedProperties>();
         services.AddSingleton<Microsoft.EntityFrameworkCore.Diagnostics.IInterceptor, Computed.ComputedQueryRoots>();
-        services.AddSingleton<IEdmModel>(sp => BuildModel(registry, sp.GetRequiredService<Computed.ODataComputedProperties>()));
+        services.AddSingleton<IEdmModel>(sp => BuildModel(registry, sp.GetRequiredService<Computed.ODataComputedProperties>(), sp.GetService<ILoggerFactory>()?.CreateLogger<CoworkeeODataModule>()));
         services.AddSingleton<Microsoft.Extensions.Options.IConfigureOptions<ODataOptions>, Computed.ODataRoute>();
         services.AddTransient<IFacetBuilder>(sp => new FacetBuilder(sp.GetRequiredService<IServiceScopeFactory>(), FacetLiterals.Options(), new FacetLiterals()));
         services.Configure<CoworkeeODataOptions>(context.Configuration.GetSection(CoworkeeODataOptions.Section));
@@ -48,7 +49,7 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
         GlobalSearch.GlobalSearchEndpoints.MapGlobalSearchEndpoints(app);
     }
 
-    private static IEdmModel BuildModel(ODataEntityRegistry registry, Computed.ODataComputedProperties computed)
+    private static IEdmModel BuildModel(ODataEntityRegistry registry, Computed.ODataComputedProperties computed, ILogger? logger)
     {
         var builder = new ODataConventionModelBuilder();
         foreach (var entity in registry.Entities)
@@ -64,6 +65,18 @@ public sealed class CoworkeeODataModule : CoworkeeModule, IWebModule
         }
 
         var model = (EdmModel)builder.GetEdmModel();
+        foreach (var entity in registry.Entities)
+        {
+            var type = (IEdmStructuredType)model.FindDeclaredType(entity.EntityType.FullName);
+            foreach (var hidden in entity.HiddenProperties.Where(h => type.FindProperty(h) is not null))
+            {
+                entity.SharedHidden.Add(hidden);
+                logger?.LogWarning(
+                    "{Set}: {Property} is declared on {Base}, a type the OData model shares with other sets, so Hide cannot remove it; it stays in the model and is refused on {Set} for everyone.",
+                    entity.EntitySet, hidden, type.FindProperty(hidden).DeclaringType.FullTypeName(), entity.EntitySet);
+            }
+        }
+
         computed.AddTo(model);
         return model;
     }

@@ -26,7 +26,7 @@ public class EntityODataController<TEntity> : GenericODataController<TEntity>, I
         var denied = await ODataEntityAccess.DeniedByTypeAsync(HttpContext.RequestServices, HttpContext.RequestAborted);
         if (await Get<Computed.ODataComputedProperties>().DeniedAsync(HttpContext.RequestServices, typeof(TEntity), HttpContext.RequestAborted,
                 query["$filter"], query["$orderby"], query["$select"], query["$apply"], query["$compute"], FacetFilters())
-            || Names(query["$expand"], denied.Values.SelectMany(n => n)))
+            || Names(query["$expand"], ExpandDenied(denied)))
         {
             context.Result = new Microsoft.AspNetCore.Mvc.ForbidResult();
             return;
@@ -107,6 +107,11 @@ public class EntityODataController<TEntity> : GenericODataController<TEntity>, I
 
     private static ObjectResult Problem(int status, string detail) =>
         new(new ProblemDetails { Status = status, Title = "The expand is not allowed.", Detail = detail }) { StatusCode = status, ContentTypes = { "application/problem+json" } };
+
+    // protected properties of every set (they can be nested: Manager($select=Salary)); hidden ones a shared base keeps only of this set
+    private IEnumerable<string> ExpandDenied(Dictionary<string, IReadOnlySet<string>> denied) =>
+        denied.SelectMany(d => d.Key == typeof(TEntity).FullName ? d.Value
+            : d.Value.Except(Get<ODataEntityRegistry>().Entities.First(e => e.EntityType.FullName == d.Key).SharedHidden, StringComparer.OrdinalIgnoreCase));
 
     // ponytail: a word match on the whole $expand, as for $filter; parse the clause if a literal ever collides
     private static bool Names(string? text, IEnumerable<string> names) =>

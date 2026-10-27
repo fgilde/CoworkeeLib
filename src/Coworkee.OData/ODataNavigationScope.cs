@@ -40,7 +40,8 @@ public sealed class ODataNavigationScope
     {
         var scope = new ODataNavigationScope();
         var registry = services.GetService<ODataEntityRegistry>();
-        foreach (var type in scope.Reachable(services, root))
+        var reachable = scope.Reachable(services, root);
+        foreach (var type in reachable.Select(t => t.ClrType).Distinct())
         {
             if (registry?.Find(type) is not null && !await ODataEntityAccess.IsGrantedAsync(services, type, cancellationToken))
             {
@@ -61,7 +62,36 @@ public sealed class ODataNavigationScope
             }
         }
 
+        scope.AddDerived(reachable);
         return scope;
+    }
+
+    /// <summary>
+    /// A navigation to a base type (Invoice.Shipment of ShipmentBase) also reads rows of the derived sets: each derived type with rules adds
+    /// <c>!(x is D) || rules((D)x)</c> to the base, so a shipment hidden in its own set is hidden there too.
+    /// </summary>
+    private void AddDerived(IEnumerable<Microsoft.EntityFrameworkCore.Metadata.IEntityType> types)
+    {
+        foreach (var type in types.Where(t => t.GetDerivedTypes().Any()))
+        {
+            var row = Expression.Parameter(type.ClrType, "x");
+            var conditions = type.GetDerivedTypes()
+                .Where(d => _predicates.ContainsKey(d.ClrType))
+                .Select(d => (Expression)Expression.OrElse(Expression.Not(Expression.TypeIs(row, d.ClrType)),
+                    ReplacingExpressionVisitor.Replace(_predicates[d.ClrType].Parameters[0], Expression.Convert(row, d.ClrType), _predicates[d.ClrType].Body)))
+                .ToList();
+            if (conditions.Count == 0)
+            {
+                continue;
+            }
+
+            if (_predicates.TryGetValue(type.ClrType, out var own))
+            {
+                conditions.Insert(0, ReplacingExpressionVisitor.Replace(own.Parameters[0], row, own.Body));
+            }
+
+            _predicates[type.ClrType] = Expression.Lambda(conditions.Aggregate(Expression.AndAlso), row);
+        }
     }
 
     /// <summary>The query with every navigation in it (outside the visible rows it started from) narrowed to the rows its target shows.</summary>
@@ -83,7 +113,7 @@ public sealed class ODataNavigationScope
     /// <summary>Marks the rows of a query as visible already: <see cref="Apply"/> does not touch navigations inside it (the set's own row filters).</summary>
     internal static void Root(Expression expression) => Roots.AddOrUpdate(expression, true);
 
-    private IEnumerable<Type> Reachable(IServiceProvider services, Type root)
+    private List<Microsoft.EntityFrameworkCore.Metadata.IEntityType> Reachable(IServiceProvider services, Type root)
     {
         if (services.DbContextFor(root).Model.FindEntityType(root) is not { } start)
         {
@@ -101,14 +131,15 @@ public sealed class ODataNavigationScope
                     _navigations.Add((property.DeclaringType, property.Name));
                 }
 
-                if (seen.Add(navigation.TargetEntityType))
+                // derived types too: their rows come through a navigation to the base, their own navigations through a cast
+                foreach (var target in navigation.TargetEntityType.GetDerivedTypesInclusive().Where(seen.Add))
                 {
-                    queue.Enqueue(navigation.TargetEntityType);
+                    queue.Enqueue(target);
                 }
             }
         }
 
-        return seen.Select(t => t.ClrType).Where(t => !t.IsGenericType).Distinct();
+        return [.. seen.Where(t => !t.ClrType.IsGenericType)];
     }
 
     private static LambdaExpression Nothing(Type type) => Expression.Lambda(Expression.Constant(false), Expression.Parameter(type, "x"));

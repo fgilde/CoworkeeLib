@@ -69,13 +69,13 @@ internal sealed partial class ReportSchema(ODataEntityRegistry registry, IEdmMod
         var fields = new List<ReportField>();
         if (model.FindDeclaredType(entity.EntityType.FullName) is IEdmEntityType type)
         {
-            fields.AddRange(Scalars(type, entity.EntityType, [], null, null, entity.ProtectedProperties));
-            foreach (var navigation in type.NavigationProperties().Where(n => n.TargetMultiplicity() != EdmMultiplicity.Many))
+            fields.AddRange(Scalars(type, entity.EntityType, [], null, null, entity.ProtectedProperties, entity.HiddenProperties));
+            foreach (var navigation in type.NavigationProperties().Where(n => n.TargetMultiplicity() != EdmMultiplicity.Many && !entity.HiddenProperties.Contains(n.Name)))
             {
                 var property = entity.EntityType.GetProperty(navigation.Name);
                 if (property is not null && registry.Find(property.PropertyType) is { } target && model.FindDeclaredType(property.PropertyType.FullName) is IEdmEntityType targetType)
                 {
-                    fields.AddRange(Scalars(targetType, property.PropertyType, [property], Label(property), target.Permission, target.ProtectedProperties));
+                    fields.AddRange(Scalars(targetType, property.PropertyType, [property], Label(property), target.Permission, target.ProtectedProperties, target.HiddenProperties));
                 }
             }
         }
@@ -83,10 +83,12 @@ internal sealed partial class ReportSchema(ODataEntityRegistry registry, IEdmMod
         return new ReportSource(entity.EntitySet, entity.EntityType, entity.Permission, Humanize(entity.EntitySet), fields);
     }
 
+    /// <param name="hidden">Hidden properties the EDM still has (declared on a base type other sets share).</param>
     private static IEnumerable<ReportField> Scalars(
-        IEdmStructuredType type, Type clrType, PropertyInfo[] prefix, string? prefixLabel, string? permission, IReadOnlyDictionary<string, string> protectedProperties)
+        IEdmStructuredType type, Type clrType, PropertyInfo[] prefix, string? prefixLabel, string? permission, IReadOnlyDictionary<string, string> protectedProperties,
+        IReadOnlyList<string>? hidden = null)
     {
-        foreach (var edm in type.StructuralProperties().Where(p => p.Type.IsPrimitive() || p.Type.IsEnum()))
+        foreach (var edm in type.StructuralProperties().Where(p => (p.Type.IsPrimitive() || p.Type.IsEnum()) && hidden?.Contains(p.Name) != true))
         {
             if (edm.Name == "TenantId" || clrType.GetProperty(edm.Name) is not { } property || Kind(property.PropertyType) is not { } kind)
             {

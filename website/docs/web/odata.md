@@ -77,7 +77,8 @@ A query reaches other rows through navigations: `$expand`, `$filter=Invoices/any
 - a single navigation (`Customer`) is `null` when its row is hidden;
 - `$expand` into a set the user lacks the permission of answers `403` naming the navigation; in a `$filter` that set has no rows;
 - protected properties (`HideUnless`) of the target stay hidden, also through the navigation;
-- a type with row filters but no set of its own gets its filters too.
+- a type with row filters but no set of its own gets its filters too;
+- a navigation to a base type (`Invoice.Shipment` of type `ShipmentBase`) applies the filters and permissions of every derived set to its rows.
 
 The filters are applied inside the query, so they must be plain `Where` calls on the query they get (closures with ids, `EF.Parameter`, subqueries and `AddODataChildFilter` are fine). A filter that does more (`OrderBy`, `Take`, `Join`, a new query) cannot be applied to a navigation: `$expand` into its type answers `400`, and in a `$filter` the type has no rows. The set's own list still uses the filter as it is. EF query filters of the DbContext (tenant, soft delete) apply to navigations as always.
 
@@ -90,6 +91,8 @@ Internal fields stay out of the model, so they are neither returned nor filterab
 ```csharp
 services.AddODataEntity<Document>("Documents", DocumentPermissions.Documents.View, d => d.BlobKey);
 ```
+
+`Hide` and `HideUnless` also take members a base class declares (`o => o.Hide(s => s.Tags)` with `Tags` on `ShipmentBase`). Usually the EDM gives every set its own copy of the base's members, and they leave only this set. When a navigation points to the base class (`Invoice.Shipment` of type `ShipmentBase`), the EDM has the base as a type of its own that every derived set shares, and a hidden member cannot leave it for one set alone. It then stays in the model, and on the hiding set it is refused for everyone like a `HideUnless` property nobody holds the permission of: not serialized, `$filter`, `$orderby`, `$select` and `$expand` naming it answer `403`, exports, reports and search leave it out. Other sets of the base keep it. The app logs a warning at startup. Rows reached through a navigation to the base leave out the hidden properties of their own set; an expanded navigation property of such a row is not covered, so do not reach a set's hidden navigation through another set.
 
 ### Properties behind a permission
 

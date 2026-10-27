@@ -77,7 +77,8 @@ Ein Punkt wird gezeigt, wenn die sichtbaren Gespräche (alle `IODataEntityFilter
 - eine einzelne Navigation (`Customer`) ist `null`, wenn ihre Zeile ausgeblendet ist;
 - `$expand` in ein Set, dessen Berechtigung dem Benutzer fehlt, antwortet `403` mit dem Namen der Navigation; in einem `$filter` hat dieses Set keine Zeilen;
 - geschützte Eigenschaften (`HideUnless`) des Ziels bleiben ausgeblendet, auch über die Navigation;
-- ein Typ mit Zeilenfiltern, aber ohne eigenes Set, bekommt seine Filter ebenfalls.
+- ein Typ mit Zeilenfiltern, aber ohne eigenes Set, bekommt seine Filter ebenfalls;
+- eine Navigation zu einem Basistyp (`Invoice.Shipment` vom Typ `ShipmentBase`) wendet die Filter und Berechtigungen jedes abgeleiteten Sets auf ihre Zeilen an.
 
 Die Filter wirken innerhalb der Abfrage, deshalb müssen sie einfache `Where`-Aufrufe auf der übergebenen Abfrage sein (Closures mit Ids, `EF.Parameter`, Unterabfragen und `AddODataChildFilter` gehen). Ein Filter, der mehr tut (`OrderBy`, `Take`, `Join`, eine neue Abfrage), lässt sich nicht auf eine Navigation anwenden: `$expand` in seinen Typ antwortet `400`, und in einem `$filter` hat der Typ keine Zeilen. Die eigene Liste des Sets nutzt den Filter weiter so, wie er ist. EF-Abfragefilter des DbContext (Mandant, Soft Delete) gelten für Navigationen wie immer.
 
@@ -90,6 +91,8 @@ Interne Felder bleiben aus dem Modell, sie werden weder ausgeliefert noch sind s
 ```csharp
 services.AddODataEntity<Document>("Documents", DocumentPermissions.Documents.View, d => d.BlobKey);
 ```
+
+`Hide` und `HideUnless` nehmen auch Member, die eine Basisklasse deklariert (`o => o.Hide(s => s.Tags)` mit `Tags` auf `ShipmentBase`). Meist gibt das EDM jedem Set eine eigene Kopie der Member der Basis, und sie verschwinden nur aus diesem Set. Zeigt eine Navigation auf die Basisklasse (`Invoice.Shipment` vom Typ `ShipmentBase`), hat das EDM die Basis als eigenen Typ, den alle abgeleiteten Sets teilen, und ein ausgeblendeter Member kann ihn nicht für ein Set allein verlassen. Er bleibt dann im Modell, und auf dem ausblendenden Set wird er für alle abgewiesen wie eine `HideUnless`-Eigenschaft, deren Berechtigung niemand hat: nicht serialisiert, `$filter`, `$orderby`, `$select` und `$expand` mit seinem Namen antworten `403`, Exporte, Berichte und Suche lassen ihn weg. Andere Sets der Basis behalten ihn. Die App protokolliert beim Start eine Warnung. Zeilen, die über eine Navigation zur Basis erreicht werden, lassen die ausgeblendeten Eigenschaften ihres eigenen Sets weg; eine expandierte Navigationseigenschaft einer solchen Zeile ist nicht abgedeckt, also die ausgeblendete Navigation eines Sets nicht über ein anderes Set erreichen.
 
 ### Eigenschaften hinter einer Berechtigung
 

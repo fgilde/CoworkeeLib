@@ -34,8 +34,22 @@ internal sealed class ComputedResourceSerializer(IODataSerializerProvider provid
     public override ODataProperty CreateStructuralProperty(IEdmStructuralProperty structuralProperty, ResourceContext resourceContext) =>
         computed.Find(structuralProperty) is null && !Denied(structuralProperty, resourceContext) ? base.CreateStructuralProperty(structuralProperty, resourceContext) : null!;
 
-    private static bool Denied(IEdmStructuralProperty property, ResourceContext context) =>
-        context.Request?.HttpContext.Items[ODataEntityAccess.DeniedItem] is Dictionary<string, IReadOnlySet<string>> denied
-        && denied.TryGetValue(property.DeclaringType.FullTypeName(), out var names)
-        && names.Contains(property.Name);
+    // the row's own type and its bases: a property a shared base declares is denied per set
+    private static bool Denied(IEdmStructuralProperty property, ResourceContext context)
+    {
+        if (context.Request?.HttpContext.Items[ODataEntityAccess.DeniedItem] is not Dictionary<string, IReadOnlySet<string>> denied)
+        {
+            return false;
+        }
+
+        for (var type = context.StructuredType; type is not null; type = type.BaseType())
+        {
+            if (denied.TryGetValue(type.FullTypeName(), out var names) && names.Contains(property.Name))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

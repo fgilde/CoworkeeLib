@@ -36,7 +36,7 @@ public sealed class ODataComputedProperties(ODataEntityRegistry registry, IEnume
     // ponytail: a word match, so a text literal with the exact name also counts; parse the clauses if that ever bites
     internal async Task<bool> DeniedAsync(IServiceProvider services, Type entityType, CancellationToken cancellationToken, params string?[] texts)
     {
-        foreach (var protectedSet in registry.Entities.Where(e => e.ProtectedProperties.Count > 0))
+        foreach (var protectedSet in registry.Entities.Where(e => e.HasDenials))
         {
             var prefix = protectedSet.EntityType == entityType ? @"\b" : "/";
             foreach (var name in await ODataEntityAccess.DeniedPropertiesAsync(services, protectedSet.EntityType, cancellationToken))

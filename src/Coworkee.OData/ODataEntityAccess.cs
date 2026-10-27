@@ -17,14 +17,17 @@ public static class ODataEntityAccess
         services.GetRequiredService<ODataEntityRegistry>().Find(entityType)?.Permission is not { } permission
         || await services.GetRequiredService<IPermissionChecker>().IsGrantedAsync(permission, cancellationToken);
 
-    /// <summary>The properties of the set protected with HideUnless whose permission the current user lacks.</summary>
+    /// <summary>The properties of the set protected with HideUnless whose permission the current user lacks, and hidden ones the EDM keeps (a shared base type).</summary>
     public static async Task<IReadOnlySet<string>> DeniedPropertiesAsync(IServiceProvider services, Type entityType, CancellationToken cancellationToken)
     {
         var denied = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        if (services.GetRequiredService<ODataEntityRegistry>().Find(entityType) is not { ProtectedProperties.Count: > 0 } registration)
+        _ = services.GetRequiredService<IEdmModel>(); // building it finds the hidden properties a shared base type keeps
+        if (services.GetRequiredService<ODataEntityRegistry>().Find(entityType) is not { HasDenials: true } registration)
         {
             return denied;
         }
+
+        denied.UnionWith(registration.SharedHidden);
 
         var permissions = services.GetRequiredService<IPermissionChecker>();
         foreach (var (name, permission) in registration.ProtectedProperties)
@@ -44,7 +47,7 @@ public static class ODataEntityAccess
     internal static async Task<Dictionary<string, IReadOnlySet<string>>> DeniedByTypeAsync(IServiceProvider services, CancellationToken cancellationToken)
     {
         var denied = new Dictionary<string, IReadOnlySet<string>>(StringComparer.Ordinal);
-        foreach (var entity in services.GetRequiredService<ODataEntityRegistry>().Entities.Where(e => e.ProtectedProperties.Count > 0))
+        foreach (var entity in services.GetRequiredService<ODataEntityRegistry>().Entities.Where(e => e.HasDenials))
         {
             if (await DeniedPropertiesAsync(services, entity.EntityType, cancellationToken) is { Count: > 0 } names)
             {
