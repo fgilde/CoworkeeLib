@@ -29,9 +29,26 @@ internal sealed class DefaultGroupHandlers(CoworkeeDbContext db) : IHandler<GetD
             return GroupErrors.NotFound;
         }
 
-        foreach (var group in groups)
+        var old = groups.Where(g => g.IsDefault && g.Id != command.GroupId).ToList();
+        var next = groups.FirstOrDefault(g => g.Id == command.GroupId && !g.IsDefault);
+        old.ForEach(g => g.IsDefault = false);
+        if (next is null)
         {
-            group.IsDefault = group.Id == command.GroupId;
+            return Result.Success();
+        }
+
+        // EF does not order updates by a filtered unique index: the old default is saved first, in one transaction with the new one
+        await using var transaction = old.Count > 0 && db.Database.CurrentTransaction is null ? await db.Database.BeginTransactionAsync(cancellationToken) : null;
+        if (old.Count > 0)
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
+        next.IsDefault = true;
+        if (transaction is not null)
+        {
+            await db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
         }
 
         return Result.Success();
