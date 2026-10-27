@@ -10,7 +10,7 @@ public static class SocialPermissions
         public const string Create = "Social.Comments.Create";
         public const string Moderate = "Social.Comments.Moderate";
 
-        /// <summary>Sets the status of any comment (open, closed); authors set it on their own comments with Create.</summary>
+        /// <summary>Changes the status of any comment (open, closed, also reopening); authors give a status only when they write a comment.</summary>
         public const string SetStatus = "Social.Comments.SetStatus";
     }
 

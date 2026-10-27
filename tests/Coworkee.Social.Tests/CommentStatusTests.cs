@@ -45,7 +45,7 @@ public sealed class CommentStatusTests(SocialApp app) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Setting_the_status_of_others_needs_its_permission_authors_set_their_own()
+    public async Task Changing_a_status_needs_its_permission_authors_only_give_one_when_they_write()
     {
         var bob = await CreateUserAsync("bob@acme.test", SocialPermissions.Comments.Create);
         var asBob = app.As(bob.Id, _setup.TenantId);
@@ -54,8 +54,14 @@ public sealed class CommentStatusTests(SocialApp app) : IAsyncLifetime
 
         (await asBob.PutAsJsonAsync($"/api/v1/comments/{admins.Id}/status", new CommentStatusRequest(CommentStatus.Open), Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await asBob.PutAsJsonAsync($"/api/v1/comments/{mine.Id}/status", new CommentStatusRequest(CommentStatus.Closed), Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-        (await ReadAsync<CommentDto>(await asBob.PutAsJsonAsync($"/api/v1/comments/{mine.Id}", new CommentRequest("Question", Status: CommentStatus.Closed), Ct))).Status
-            .ShouldBe(CommentStatus.Closed);
+        (await asBob.PutAsJsonAsync($"/api/v1/comments/{mine.Id}", new CommentRequest("Question", Status: CommentStatus.Closed), Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await ReadAsync<CommentDto>(await asBob.PutAsJsonAsync($"/api/v1/comments/{mine.Id}", new CommentRequest("Question?", Status: CommentStatus.Open), Ct))).Status
+            .ShouldBe(CommentStatus.Open);
+
+        // closed by someone with SetStatus: the author cannot reopen it
+        (await Admin.PutAsJsonAsync($"/api/v1/comments/{mine.Id}/status", new CommentStatusRequest(CommentStatus.Closed), Ct)).EnsureSuccessStatusCode();
+        (await asBob.PutAsJsonAsync($"/api/v1/comments/{mine.Id}", new CommentRequest("Still open", Status: CommentStatus.Open), Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await ReadAsync<CommentDto>(await asBob.PutAsJsonAsync($"/api/v1/comments/{mine.Id}", new CommentRequest("Thanks"), Ct))).Status.ShouldBe(CommentStatus.Closed);
         (await asBob.GetFromJsonAsync<CommentThreadDto>(Comments, Ct))!.CanSetStatus.ShouldBeFalse();
         (await app.As(_setup.AdminUserId, Guid.CreateVersion7()).PutAsJsonAsync($"/api/v1/comments/{mine.Id}/status", new CommentStatusRequest(CommentStatus.Open), Ct))
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);

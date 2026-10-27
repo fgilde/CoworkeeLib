@@ -98,6 +98,12 @@ internal sealed class CommentHandlers(
             return error;
         }
 
+        // only the status given when the comment was written is the author's; changing it later (also reopening) needs SetStatus
+        if (command.Status is { } changed && changed != comment.Status && !await permissions.IsGrantedAsync(SocialPermissions.Comments.SetStatus, cancellationToken))
+        {
+            return SocialGuard.Forbidden;
+        }
+
         var text = command.Text.Trim();
         var status = command.Status ?? comment.Status;
         var properties = command.Properties ?? comment.Properties;

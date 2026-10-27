@@ -36,7 +36,7 @@ social.Authorize(async (services, access, ct) =>
 
 Moderate implies Create, Create implies View.
 
-`Social.Comments.SetStatus` (implies View) sets the status of any comment; authors change the status of their own comments with an edit.
+`Social.Comments.SetStatus` (implies View) changes the status of any comment. Authors give a status only when they write a comment (as in a request thread); every later change, also reopening a comment someone closed, needs `Social.Comments.SetStatus`, with an edit as well as with `PUT /api/v1/comments/{id}/status`.
 
 ## Comments
 
@@ -44,7 +44,7 @@ Comments are threaded through `ParentId`. Deleting a comment deletes its replies
 
 ### Status, app values and checks
 
-A comment has a `Status`: `None`, `Open` (a question or request that waits for an answer) or `Closed`. It is set when the comment is written (`CommentRequest.Status`), by its author with an edit, or by holders of `Social.Comments.SetStatus` with `PUT /api/v1/comments/{id}/status` (`SetCommentStatusCommand`). `Properties` keeps app values of a comment, such as a reference number (at most 20, names up to 50 and values up to 500 characters); an edit without them keeps them.
+A comment has a `Status`: `None`, `Open` (a question or request that waits for an answer) or `Closed`. It is set when the comment is written (`CommentRequest.Status`) and changed by holders of `Social.Comments.SetStatus`, with `PUT /api/v1/comments/{id}/status` (`SetCommentStatusCommand`) or an edit. `Properties` keeps app values of a comment, such as a reference number (at most 20, names up to 50 and values up to 500 characters); an edit without them keeps them.
 
 Apps check comments before they change with `ValidateComments`; the check sees the action, the entity, text, status and values, and its error is the answer (nothing is written):
 
