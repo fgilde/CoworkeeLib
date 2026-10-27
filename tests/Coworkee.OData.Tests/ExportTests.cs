@@ -159,6 +159,36 @@ public sealed class ExportTests(ODataApp app) : IAsyncLifetime
         app.Mails.Sent.ShouldHaveSingleItem();
     }
 
+    [Fact]
+    public async Task A_schedule_sends_nothing_once_its_owner_lost_the_permission_or_was_deactivated()
+    {
+        var (owner, role) = await UserAndRoleAsync(DataTransferPermissions.ExportSchedules, ODataApp.ViewGadgets);
+        (await app.As(owner, _setup.TenantId).PostAsJsonAsync("/api/v1/data/export-schedules", Request(), Ct)).EnsureSuccessStatusCode();
+
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{role}", new NameListRequest([ODataApp.ViewGadgets]), Ct)).EnsureSuccessStatusCode();
+        (await RunDueSchedulesAsync()).LastError.ShouldBe("The owner may no longer schedule exports.");
+
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{role}", new NameListRequest([DataTransferPermissions.ExportSchedules, ODataApp.ViewGadgets]), Ct))
+            .EnsureSuccessStatusCode();
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/users/{owner}", new UpdateUserRequest("Ex", "Owner", IsActive: false), Ct)).EnsureSuccessStatusCode();
+        (await RunDueSchedulesAsync()).LastError.ShouldBe("The owner is no longer active.");
+
+        app.Mails.Sent.ShouldBeEmpty();
+        (await app.InDbAsync(_setup.TenantId, db => db.Set<DataTransferJob>().CountAsync(Ct))).ShouldBe(0);
+    }
+
+    /// <summary>Makes every schedule due, runs the job and returns the (single) schedule afterwards.</summary>
+    private async Task<ExportSchedule> RunDueSchedulesAsync()
+    {
+        await app.InDbAsync(null, db => db.Set<ExportSchedule>().IgnoreQueryFilters().ExecuteUpdateAsync(s => s.SetProperty(x => x.NextRunAt, DateTimeOffset.UtcNow.AddMinutes(-1)), Ct));
+        await using (var scope = app.App.Services.CreateAsyncScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<ExportScheduleJob>().ExecuteAsync(Ct);
+        }
+
+        return await app.InDbAsync(null, db => db.Set<ExportSchedule>().IgnoreQueryFilters().AsNoTracking().SingleAsync(Ct));
+    }
+
     private static SaveExportScheduleRequest Request() =>
         new("Gadgets", "Tools weekly", "?$filter=Category eq 'Tools'&format=csv", Weekly, "tools", ["boss@acme.test", " "]);
 
@@ -168,6 +198,16 @@ public sealed class ExportTests(ODataApp app) : IAsyncLifetime
         response.Content.Headers.ContentType!.MediaType.ShouldBe("application/x-ndjson");
         var text = await response.Content.ReadAsStringAsync(Ct);
         return [.. text.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(line => JsonSerializer.Deserialize<DataExportProgress>(line, JsonSerializerOptions.Web)!)];
+    }
+
+    private async Task<(Guid User, Guid Role)> UserAndRoleAsync(params string[] permissions)
+    {
+        var user = await (await Admin.PostAsJsonAsync("/api/v1/identity/users", new CreateUserRequest($"u-{Guid.NewGuid():N}@acme.test", "Passw0rd!x", null, null), Ct))
+            .Content.ReadFromJsonAsync<UserDto>(Ct);
+        var role = await (await Admin.PostAsJsonAsync("/api/v1/identity/roles", new RoleRequest("R " + Guid.NewGuid().ToString("N")[..6], null), Ct)).Content.ReadFromJsonAsync<Guid>(Ct);
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{role}", new NameListRequest(permissions), Ct)).EnsureSuccessStatusCode();
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/users/{user!.Id}/roles", new IdListRequest([role]), Ct)).EnsureSuccessStatusCode();
+        return (user.Id, role);
     }
 
     private async Task<Guid> UserWithAsync(params string[] permissions)

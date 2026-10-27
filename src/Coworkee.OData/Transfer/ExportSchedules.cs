@@ -192,7 +192,10 @@ internal sealed class ExportScheduleHandlers(
     private IQueryable<ExportSchedule> Mine() => db.Set<ExportSchedule>().Where(s => s.UserId == user.UserId);
 }
 
-/// <summary>One run of a schedule as its owner: the export becomes a job with the file, the file goes by mail; errors stay on the schedule.</summary>
+/// <summary>
+/// One run of a schedule as its owner: the export becomes a job with the file, the file goes by mail; errors stay on the schedule.
+/// Nothing is sent once the owner is deactivated or lost DataTransfer.ExportSchedules or the set's permission.
+/// </summary>
 internal sealed partial class ExportScheduleRunner(
     IServiceProvider services, CoworkeeDbContext db, DataExports exports, ODataEntityRegistry registry, TimeProvider clock, ILogger<ExportScheduleRunner> logger)
 {
@@ -201,7 +204,15 @@ internal sealed partial class ExportScheduleRunner(
         string? error = null;
         try
         {
-            if (registry.Find(schedule.EntitySet) is not { } entity)
+            if (services.GetService<IUserDirectory>() is { } users && !(await users.GetActiveEmailsAsync([schedule.UserId], cancellationToken)).ContainsKey(schedule.UserId))
+            {
+                error = "The owner is no longer active.";
+            }
+            else if (!await services.GetRequiredService<IPermissionChecker>().IsGrantedAsync(DataTransferPermissions.ExportSchedules, cancellationToken))
+            {
+                error = "The owner may no longer schedule exports.";
+            }
+            else if (registry.Find(schedule.EntitySet) is not { } entity)
             {
                 error = $"{schedule.EntitySet} is no entity set anymore.";
             }
