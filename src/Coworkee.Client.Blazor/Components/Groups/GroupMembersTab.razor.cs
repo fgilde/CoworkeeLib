@@ -1,5 +1,6 @@
 using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Components.Data;
+using Coworkee.Client.Blazor.Data;
 using Coworkee.Client.Blazor.Data.Admin;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Navigation;
@@ -18,8 +19,12 @@ public partial class GroupMembersTab
     private static readonly string[] SearchFields = [nameof(UserRow.Email), nameof(UserRow.FirstName), nameof(UserRow.LastName)];
     private CoworkeeDataTable<UserRow>? _table;
     private bool? _canViewUsers;
+    private GroupRow? _shown;
+    private HashSet<Guid> _owners = [];
 
     [Inject] private ICoworkeeApi Api { get; set; } = null!;
+
+    [Inject] private IODataClient OData { get; set; } = null!;
 
     [Inject] private IDialogService Dialogs { get; set; } = null!;
 
@@ -44,12 +49,36 @@ public partial class GroupMembersTab
     // the members are rows of the Users set, which Groups.View alone does not open
     protected override async Task OnInitializedAsync() => _canViewUsers = await Permissions.HasAsync(IdentityPermissions.Users.View);
 
+    // the page loads the group again after every change, also those of others
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_canViewUsers == true && !ReferenceEquals(_shown, Group))
+        {
+            _shown = Group;
+            var query = new ODataQuery { Filter = $"Groups/any(m: m/GroupId eq {Group.Id} and m/IsOwner)", Select = nameof(UserRow.Id), Count = false };
+            _owners = [.. (await OData.QueryAsync<UserRow>("Users", query)).Items.Select(u => u.Id)];
+        }
+    }
+
     private async Task AddAsync()
     {
         if (await Dialogs.ShowEditAsync(L["Add member"], new MemberForm(), Configure) is { UserId: var userId } && userId != Guid.Empty)
         {
             await RunAsync(() => Api.AddGroupMembersAsync(Group.Id, [userId]));
         }
+    }
+
+    private bool IsOwner(UserRow user) => _owners.Contains(user.Id);
+
+    private Task ToggleOwnerAsync(UserRow user)
+    {
+        var owners = _owners.ToList();
+        if (!owners.Remove(user.Id))
+        {
+            owners.Add(user.Id);
+        }
+
+        return RunAsync(() => Api.SetGroupOwnersAsync(Group.Id, owners));
     }
 
     private Task RemoveAsync(UserRow user) => RunAsync(() => Api.RemoveGroupMembersAsync(Group.Id, [user.Id]));

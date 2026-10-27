@@ -77,6 +77,11 @@ internal sealed class GroupScopeService(CoworkeeDbContext db, ICurrentUser user,
         return nodes.OrderBy(n => n.Code, StringComparer.Ordinal).ToList();
     }
 
+    public Task<Guid?> DefaultGroupIdAsync(CancellationToken ct) => Groups.Where(g => g.IsDefault).Select(g => (Guid?)g.Id).FirstOrDefaultAsync(ct);
+
+    public async Task<IReadOnlyList<Guid>> OwnersAsync(Guid groupId, CancellationToken ct) =>
+        await Groups.Where(g => g.Id == groupId).SelectMany(g => g.Members).Where(m => m.IsOwner).Select(m => m.UserId).ToListAsync(ct);
+
     private async Task<Access> AccessAsync(CancellationToken ct)
     {
         if (_access.TryGetValue(Actor, out var cached))

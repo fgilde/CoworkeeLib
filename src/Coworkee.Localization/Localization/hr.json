@@ -1873,5 +1873,10 @@
   "Mark as done": "Označi kao gotovo",
   "Back to open": "Vrati u otvorene",
   "Expired access tokens": "Istekli pristupni tokeni",
-  "Temporary file links and export downloads whose time is up.": "Privremene poveznice na datoteke i preuzimanja izvoza kojima je isteklo vrijeme."
+  "Temporary file links and export downloads whose time is up.": "Privremene poveznice na datoteke i preuzimanja izvoza kojima je isteklo vrijeme.",
+  "Make owner": "Postavi za vlasnika",
+  "Remove as owner": "Ukloni kao vlasnika",
+  "Default group": "Zadana grupa",
+  "Default group for new users": "Zadana grupa za nove korisnike",
+  "Given to new users": "Dodjeljuje se novim korisnicima"
 }

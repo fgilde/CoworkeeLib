@@ -5,6 +5,7 @@ using Coworkee.Core.Results;
 using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
 using Coworkee.Infrastructure.Persistence;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Identity.Groups;
@@ -17,6 +18,15 @@ public sealed record RemoveGroupMembers(Guid Id, IReadOnlyList<Guid> UserIds) : 
 
 [RequiresPermission(IdentityPermissions.Groups.ManageMembers)]
 public sealed record MoveGroupMembers(Guid FromId, Guid ToId) : ICommand<Result>;
+
+/// <summary>Makes exactly these users the owners of the group; users who are not members yet join it.</summary>
+[RequiresPermission(IdentityPermissions.Groups.ManageMembers)]
+public sealed record SetGroupOwners(Guid Id, IReadOnlyList<Guid> UserIds) : ICommand<Result>;
+
+internal sealed class SetGroupOwnersValidator : AbstractValidator<SetGroupOwners>
+{
+    public SetGroupOwnersValidator() => RuleFor(c => c.UserIds).NotNull();
+}
 
 internal static class GroupMembers
 {
@@ -84,6 +94,32 @@ internal sealed class MoveGroupMembersHandler(CoworkeeDbContext db) : IHandler<M
             var moved = from.Members.Select(m => m.UserId).ToList();
             from.Members.Clear();
             GroupMembers.AddMissing(to, moved);
+        }
+
+        return Result.Success();
+    }
+}
+
+internal sealed class SetGroupOwnersHandler(CoworkeeDbContext db, ICurrentUser currentUser) : IHandler<SetGroupOwners, Result>
+{
+    public async Task<Result> HandleAsync(SetGroupOwners command, CancellationToken cancellationToken)
+    {
+        var group = await GroupMembers.LoadAsync(db, command.Id, cancellationToken);
+        if (group is null)
+        {
+            return GroupErrors.NotFound;
+        }
+
+        var wanted = command.UserIds.Distinct().ToList();
+        if (!await GroupMembers.AllInTenantAsync(db, currentUser, wanted, cancellationToken))
+        {
+            return GroupMembers.UnknownUser;
+        }
+
+        GroupMembers.AddMissing(group, wanted);
+        foreach (var member in group.Members)
+        {
+            member.IsOwner = wanted.Contains(member.UserId);
         }
 
         return Result.Success();

@@ -1873,5 +1873,10 @@
   "Mark as done": "وضع علامة كمنجز",
   "Back to open": "إعادة إلى المفتوح",
   "Expired access tokens": "رموز الوصول المنتهية",
-  "Temporary file links and export downloads whose time is up.": "روابط الملفات المؤقتة وتنزيلات التصدير التي انتهت مدتها."
+  "Temporary file links and export downloads whose time is up.": "روابط الملفات المؤقتة وتنزيلات التصدير التي انتهت مدتها.",
+  "Make owner": "تعيين كمالك",
+  "Remove as owner": "إزالة كمالك",
+  "Default group": "المجموعة الافتراضية",
+  "Default group for new users": "المجموعة الافتراضية للمستخدمين الجدد",
+  "Given to new users": "يُمنح للمستخدمين الجدد"
 }

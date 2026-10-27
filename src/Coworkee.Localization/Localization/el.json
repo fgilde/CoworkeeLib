@@ -1873,5 +1873,10 @@
   "Mark as done": "Σήμανση ως ολοκληρωμένο",
   "Back to open": "Επιστροφή στα ανοιχτά",
   "Expired access tokens": "Ληγμένα διακριτικά πρόσβασης",
-  "Temporary file links and export downloads whose time is up.": "Προσωρινοί σύνδεσμοι αρχείων και λήψεις εξαγωγών που έχουν λήξει."
+  "Temporary file links and export downloads whose time is up.": "Προσωρινοί σύνδεσμοι αρχείων και λήψεις εξαγωγών που έχουν λήξει.",
+  "Make owner": "Ορισμός ως κατόχου",
+  "Remove as owner": "Αφαίρεση ως κατόχου",
+  "Default group": "Προεπιλεγμένη ομάδα",
+  "Default group for new users": "Προεπιλεγμένη ομάδα για νέους χρήστες",
+  "Given to new users": "Δίνεται σε νέους χρήστες"
 }

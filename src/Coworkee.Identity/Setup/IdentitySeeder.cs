@@ -35,6 +35,7 @@ internal sealed class IdentitySeeder(
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(adminId, tenantId));
         var roles = _options.Roles.ToDictionary(r => r.Name, r => AddRole(r, tenantId), StringComparer.OrdinalIgnoreCase);
         var adminRole = db.Set<Role>().Local.First(r => r.IsSystem && r.Name == SystemRoles.Admin);
+        await EnsureDefaultGroupAsync(tenantId, cancellationToken);
         foreach (var user in _options.Users.Where(u => u != admin))
         {
             if (await AddUserAsync(user, tenantId) is { } failed)
@@ -78,6 +79,7 @@ internal sealed class IdentitySeeder(
         var actorId = await db.Set<IdentityUserRole<Guid>>().Where(r => r.RoleId == adminRole.Id).Select(r => r.UserId).FirstOrDefaultAsync(cancellationToken);
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(actorId == Guid.Empty ? null : actorId, tenant.Id));
         var roles = new Dictionary<string, Role>(StringComparer.OrdinalIgnoreCase);
+        await EnsureDefaultGroupAsync(tenant.Id, cancellationToken);
         foreach (var seed in _options.Users)
         {
             var email = seed.Email.ToUpperInvariant();
@@ -154,11 +156,32 @@ internal sealed class IdentitySeeder(
         }
     }
 
+    // new users of this save join it (NewUserDefaults); an existing default group of the tenant wins over the configured name
+    private async Task EnsureDefaultGroupAsync(Guid tenantId, CancellationToken cancellationToken)
+    {
+        if (_options.DefaultGroup?.Trim() is not { Length: > 0 } name
+            || await db.Set<UserGroup>().IgnoreQueryFilters().AnyAsync(g => g.TenantId == tenantId && g.IsDefault, cancellationToken))
+        {
+            return;
+        }
+
+        var group = await db.Set<UserGroup>().IgnoreQueryFilters().FirstOrDefaultAsync(g => g.TenantId == tenantId && g.ParentId == null && g.Name == name, cancellationToken);
+        if (group is null)
+        {
+            var id = (await Groups.CreateGroupHandler.AddAsync(db, new GroupRequest(name, null), cancellationToken)).Value;
+            group = db.Set<UserGroup>().Local.First(g => g.Id == id);
+        }
+
+        group.TenantId = tenantId;
+        group.IsDefault = true;
+    }
+
     private Role AddRole(SeedRole seed, Guid tenantId)
     {
         var role = new Role
         {
             Name = seed.Name, NormalizedName = seed.Name.ToUpperInvariant(), Description = seed.Description, TenantId = tenantId, SelectableForRegistration = seed.SelectableForRegistration,
+            IsDefault = seed.IsDefault,
         };
         db.Add(role);
         db.AddRange(seed.Permissions.Select(p => new PermissionGrant { TenantId = tenantId, Name = p, ProviderType = PermissionProviderType.Role, ProviderKey = role.Id }));

@@ -335,10 +335,27 @@
         "Notifications: cw.Notifications gets Category and DoneAt, new tables cw.NotificationPreferences, cw.NotificationFollows and cw.PendingNotificationMails; add a migration. NotificationDto has the new optional members Category and DoneAt. INotifier has the new member PublishAsync and ICoworkeeApi new notification members (GetNotificationsAsync(NotificationFilter, ...), GetNotificationCountsAsync, MarkNotificationDoneAsync, preferences and follows): hand-written implementations and test fakes add them.",
         "Notifications: cw.PendingNotificationMails.Key is required and unique with UserId and Type, cw.PendingNotificationMails gets Version; add a migration.",
         "Exports: cw.DataTransferJobs gets StartedAt and its Status is a concurrency token; add a migration.",
-        "Notifications: cw.Notifications gets Mailed (the daily digest leaves out notifications mailed on their own); add a migration."
+        "Notifications: cw.Notifications gets Mailed (the daily digest leaves out notifications mailed on their own); add a migration.",
+        "Group owners, default group and default roles: cw.GroupMembers gets IsOwner, cw.Groups and cw.Roles get IsDefault; add a migration. IGroupScope has the new members DefaultGroupIdAsync and OwnersAsync, ICoworkeeApi SetGroupOwnersAsync, GetDefaultGroupIdAsync and SetDefaultGroupAsync."
       ],
       "needsMigration": true,
       "manual": [
+        {
+          "text": "Implement DefaultGroupIdAsync and OwnersAsync in own IGroupScope implementations and test fakes.",
+          "find": ":\\s*IGroupScope\\b",
+          "files": [
+            "src/**/*.cs",
+            "tests/**/*.cs"
+          ]
+        },
+        {
+          "text": "Implement SetGroupOwnersAsync, GetDefaultGroupIdAsync and SetDefaultGroupAsync in hand-written ICoworkeeApi implementations and test fakes.",
+          "find": ":\\s*ICoworkeeApi\\b",
+          "files": [
+            "src/**/*.cs",
+            "tests/**/*.cs"
+          ]
+        },
         {
           "text": "Row filters of types reached through navigations must be plain Where calls on the query they get (no OrderBy, Take, Join or new query), otherwise $expand into the type answers 400 and $filter sees no rows of it.",
           "find": ":\\s*IODataEntityFilter<",

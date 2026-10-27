@@ -11,6 +11,8 @@
         <PermissionView Permission="@IdentityPermissions.Roles.Manage">
             <MudSwitch T="bool" Value="_role.SelectableForRegistration" ValueChanged="SetSelectableAsync" Color="Color.Primary" Class="mb-4"
                        Label="@L["Offered in the registration"]" data-testid="role-registration" />
+            <MudSwitch T="bool" Value="_role.IsDefault" ValueChanged="SetDefaultAsync" Color="Color.Primary" Class="mb-4"
+                       Label="@L["Given to new users"]" data-testid="role-default" />
         </PermissionView>
     }
     @if (_role.IsSystem && _role.Name == "admin")

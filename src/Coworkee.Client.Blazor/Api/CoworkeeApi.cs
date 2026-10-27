@@ -192,6 +192,15 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
     public Task MoveGroupMembersAsync(Guid from, Guid to, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Post, $"{Identity}/groups/{from}/members/move", new MoveMembersRequest(to), cancellationToken);
 
+    public Task SetGroupOwnersAsync(Guid id, IReadOnlyList<Guid> userIds, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Put, $"{Identity}/groups/{id}/owners", new IdListRequest(userIds), cancellationToken);
+
+    public async Task<Guid?> GetDefaultGroupIdAsync(CancellationToken cancellationToken = default) =>
+        (await GetAsync<DefaultGroupDto>($"{Identity}/groups/default", cancellationToken)).GroupId;
+
+    public Task SetDefaultGroupAsync(Guid? groupId, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Put, $"{Identity}/groups/default", new DefaultGroupDto(groupId), cancellationToken);
+
     public async Task<IReadOnlyList<MyGroupDto>> GetMyGroupsAsync(CancellationToken cancellationToken = default) =>
         await GetAsync<MyGroupDto[]>($"{Identity}/groups/mine", cancellationToken);
 

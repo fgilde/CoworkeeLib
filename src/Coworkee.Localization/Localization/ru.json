@@ -1873,5 +1873,10 @@
   "Mark as done": "Отметить как выполненное",
   "Back to open": "Вернуть в открытые",
   "Expired access tokens": "Истёкшие токены доступа",
-  "Temporary file links and export downloads whose time is up.": "Временные ссылки на файлы и загрузки экспортов с истёкшим сроком."
+  "Temporary file links and export downloads whose time is up.": "Временные ссылки на файлы и загрузки экспортов с истёкшим сроком.",
+  "Make owner": "Сделать владельцем",
+  "Remove as owner": "Убрать из владельцев",
+  "Default group": "Группа по умолчанию",
+  "Default group for new users": "Группа по умолчанию для новых пользователей",
+  "Given to new users": "Выдаётся новым пользователям"
 }

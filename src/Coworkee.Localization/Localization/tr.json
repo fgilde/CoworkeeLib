@@ -1873,5 +1873,10 @@
   "Mark as done": "Bitti olarak işaretle",
   "Back to open": "Açığa geri al",
   "Expired access tokens": "Süresi dolmuş erişim belirteçleri",
-  "Temporary file links and export downloads whose time is up.": "Süresi dolan geçici dosya bağlantıları ve dışa aktarma indirmeleri."
+  "Temporary file links and export downloads whose time is up.": "Süresi dolan geçici dosya bağlantıları ve dışa aktarma indirmeleri.",
+  "Make owner": "Sahip yap",
+  "Remove as owner": "Sahiplikten çıkar",
+  "Default group": "Varsayılan grup",
+  "Default group for new users": "Yeni kullanıcılar için varsayılan grup",
+  "Given to new users": "Yeni kullanıcılara verilir"
 }

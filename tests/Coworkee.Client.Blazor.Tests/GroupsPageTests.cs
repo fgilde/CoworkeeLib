@@ -201,7 +201,7 @@ public sealed class GroupsPageTests : ClientTestBase
         page.WaitForElement("[data-member='ada@acme.test']");
         var users = queries.Where(q => q.Filter?.Contains("Groups/any") == true).ToList();
         users.ShouldNotBeEmpty();
-        users.ShouldAllBe(q => q.Filter!.Contains($"Groups/any(m: m/GroupId eq {Supplier.Id})"));
+        users.ShouldAllBe(q => q.Filter!.Contains($"Groups/any(m: m/GroupId eq {Supplier.Id}"));
         queries.ShouldAllBe(q => !members.Any(id => q.ToQueryString().Contains(id.ToString())));
     }
 
@@ -298,6 +298,66 @@ public sealed class GroupsPageTests : ClientTestBase
         Services.GetRequiredService<FakeRealtimeConnection>().Push($"entity:UserGroup:{Supplier.Id}");
 
         page.WaitForAssertion(() => users.ShouldBeGreaterThan(before));
+    }
+
+    [Fact]
+    public async Task Owners_are_marked_in_the_members_tab_and_toggled_with_ManageMembers()
+    {
+        // the fake answers the owner query with every user, so Ada is an owner
+        var queries = new List<ODataQuery>();
+        _odata.With("Groups", Row(Supplier, Ada.Id)).With("Users", Ada);
+        _odata.Queried += (_, query) => queries.Add(query);
+        Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Supplier.Id}");
+        var page = RenderPage();
+        page.WaitForElement("[data-testid='group-title']");
+        await Tab(page, "Members").ClickAsync(new());
+        page.WaitForElement("[data-testid='owner-ada@acme.test']");
+        queries.ShouldContain(q => q.Filter == $"Groups/any(m: m/GroupId eq {Supplier.Id} and m/IsOwner)");
+
+        await page.Find("[data-testid='owner-ada@acme.test']").ClickAsync(new());
+
+        await Api.Received(1).SetGroupOwnersAsync(Supplier.Id, Arg.Is<IReadOnlyList<Guid>>(ids => ids.Count == 0), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Owners_are_shown_read_only_without_ManageMembers()
+    {
+        Grant(IdentityPermissions.Groups.View, IdentityPermissions.Users.View);
+        _odata.With("Groups", Row(Supplier, Ada.Id)).With("Users", Ada);
+        Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Supplier.Id}");
+        var page = RenderPage();
+        page.WaitForElement("[data-testid='group-title']");
+
+        await Tab(page, "Members").ClickAsync(new());
+
+        page.WaitForElement("[data-testid='owner-ada@acme.test']").TagName.ShouldNotBe("BUTTON");
+        page.FindAll("button[data-testid='owner-ada@acme.test']").ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task The_default_group_is_marked_and_switched_in_the_general_tab()
+    {
+        _odata.With("Groups", Row(Supplier) with { IsDefault = true });
+        Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Supplier.Id}");
+        var page = RenderPage();
+        page.WaitForElement("[data-testid='group-default']").TextContent.ShouldContain("Default group");
+
+        page.Find("input[data-testid='group-default-switch'], [data-testid='group-default-switch'] input").Change(false);
+
+        await Api.Received(1).SetDefaultGroupAsync(null, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public void Making_a_group_the_default_needs_Manage()
+    {
+        Grant(IdentityPermissions.Groups.View);
+        _odata.With("Groups", Row(Supplier));
+        Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Supplier.Id}");
+        var page = RenderPage();
+        page.WaitForElement("[data-testid='group-title']");
+
+        page.FindAll("[data-testid='group-default']").ShouldBeEmpty();
+        page.FindAll("[data-testid='group-default-switch']").ShouldBeEmpty();
     }
 
     [Fact]

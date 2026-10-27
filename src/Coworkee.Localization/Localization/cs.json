@@ -1873,5 +1873,10 @@
   "Mark as done": "Označit jako hotové",
   "Back to open": "Zpět mezi otevřené",
   "Expired access tokens": "Vypršené přístupové tokeny",
-  "Temporary file links and export downloads whose time is up.": "Dočasné odkazy na soubory a stažení exportů, jejichž čas vypršel."
+  "Temporary file links and export downloads whose time is up.": "Dočasné odkazy na soubory a stažení exportů, jejichž čas vypršel.",
+  "Make owner": "Nastavit jako vlastníka",
+  "Remove as owner": "Odebrat jako vlastníka",
+  "Default group": "Výchozí skupina",
+  "Default group for new users": "Výchozí skupina pro nové uživatele",
+  "Given to new users": "Přiděluje se novým uživatelům"
 }

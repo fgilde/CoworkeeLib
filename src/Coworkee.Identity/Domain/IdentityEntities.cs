@@ -96,6 +96,9 @@ public sealed class Role : IdentityRole<Guid>, IAuditable
     /// <summary>Offered in the registration wizard; new users pick it themselves.</summary>
     public bool SelectableForRegistration { get; set; }
 
+    /// <summary>Every new user gets the role, however the user is created; never set on system roles.</summary>
+    public bool IsDefault { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
 
     public Guid? CreatedBy { get; set; }
@@ -119,6 +122,9 @@ public sealed class UserGroup : AuditedAggregateRoot, IMultiTenant
     /// <summary>Path of 5-digit segments joined by dots (<c>00001.00002</c>); null only until the migrations host has filled it for groups that existed before the tree.</summary>
     public string? Code { get; set; }
 
+    /// <summary>The default group of the tenant (at most one): new users join it unless they join another group as they are created.</summary>
+    public bool IsDefault { get; set; }
+
     public List<UserGroupMember> Members { get; } = [];
 
     public List<UserGroupRole> Roles { get; } = [];
@@ -129,6 +135,9 @@ public sealed class UserGroupMember
     public Guid GroupId { get; set; }
 
     public Guid UserId { get; set; }
+
+    /// <summary>The member owns the group ("account owner"); ownership ends with the membership.</summary>
+    public bool IsOwner { get; set; }
 }
 
 public sealed class GroupSelection

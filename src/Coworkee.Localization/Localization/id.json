@@ -1873,5 +1873,10 @@
   "Mark as done": "Tandai selesai",
   "Back to open": "Kembalikan ke terbuka",
   "Expired access tokens": "Token akses kedaluwarsa",
-  "Temporary file links and export downloads whose time is up.": "Tautan file sementara dan unduhan ekspor yang waktunya telah habis."
+  "Temporary file links and export downloads whose time is up.": "Tautan file sementara dan unduhan ekspor yang waktunya telah habis.",
+  "Make owner": "Jadikan pemilik",
+  "Remove as owner": "Hapus sebagai pemilik",
+  "Default group": "Grup bawaan",
+  "Default group for new users": "Grup bawaan untuk pengguna baru",
+  "Given to new users": "Diberikan kepada pengguna baru"
 }

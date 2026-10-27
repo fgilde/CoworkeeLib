@@ -1873,5 +1873,10 @@
   "Mark as done": "Markér som færdig",
   "Back to open": "Tilbage til åbne",
   "Expired access tokens": "Udløbne adgangstokens",
-  "Temporary file links and export downloads whose time is up.": "Midlertidige fillinks og eksportdownloads, hvis tid er udløbet."
+  "Temporary file links and export downloads whose time is up.": "Midlertidige fillinks og eksportdownloads, hvis tid er udløbet.",
+  "Make owner": "Gør til ejer",
+  "Remove as owner": "Fjern som ejer",
+  "Default group": "Standardgruppe",
+  "Default group for new users": "Standardgruppe for nye brugere",
+  "Given to new users": "Gives til nye brugere"
 }

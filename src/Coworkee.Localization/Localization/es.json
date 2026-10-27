@@ -1873,5 +1873,10 @@
   "Mark as done": "Marcar como hecho",
   "Back to open": "Volver a pendientes",
   "Expired access tokens": "Tokens de acceso caducados",
-  "Temporary file links and export downloads whose time is up.": "Enlaces temporales de archivos y descargas de exportaciones cuyo tiempo ha vencido."
+  "Temporary file links and export downloads whose time is up.": "Enlaces temporales de archivos y descargas de exportaciones cuyo tiempo ha vencido.",
+  "Make owner": "Hacer propietario",
+  "Remove as owner": "Quitar como propietario",
+  "Default group": "Grupo predeterminado",
+  "Default group for new users": "Grupo predeterminado para nuevos usuarios",
+  "Given to new users": "Se asigna a los nuevos usuarios"
 }

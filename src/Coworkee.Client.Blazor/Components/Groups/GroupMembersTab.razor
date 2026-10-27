@@ -19,6 +19,22 @@ else if (_canViewUsers == true)
             <PropertyColumn Property="u => u.LastName" Title="@L["Name"]">
                 <CellTemplate>@context.Item.Name</CellTemplate>
             </PropertyColumn>
+            <TemplateColumn T="UserRow" Sortable="false" Title="@L["Owner"]">
+                <CellTemplate>
+                    @{ var owner = IsOwner(context.Item); }
+                    @if (CanManage)
+                    {
+                        <MudTooltip Text="@L[owner ? "Remove as owner" : "Make owner"]">
+                            <MudIconButton Icon="@(owner ? Icons.Material.Filled.Star : Icons.Material.Outlined.StarBorder)" Color="@(owner ? Color.Warning : Color.Default)" Size="Size.Small"
+                                           aria-label="@L[owner ? "Remove as owner" : "Make owner"]" OnClick="() => ToggleOwnerAsync(context.Item)" data-testid="@($"owner-{context.Item.Email}")" />
+                        </MudTooltip>
+                    }
+                    else if (owner)
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Star" Color="Color.Warning" Size="Size.Small" Title="@L["Owner"]" data-testid="@($"owner-{context.Item.Email}")" />
+                    }
+                </CellTemplate>
+            </TemplateColumn>
             @if (CanManage)
             {
                 <TemplateColumn T="UserRow" Sortable="false">

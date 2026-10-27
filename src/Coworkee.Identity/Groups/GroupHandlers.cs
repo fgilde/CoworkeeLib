@@ -60,7 +60,8 @@ internal sealed class GetGroupsHandler(CoworkeeDbContext db) : IHandler<GetGroup
 
         var total = await groups.CountAsync(cancellationToken);
         var items = await groups.OrderBy(g => g.Name).Skip((page.Page - 1) * page.PageSize).Take(page.PageSize)
-            .Select(g => new GroupDto(g.Id, g.Name, g.Description, g.Members.Select(m => m.UserId).ToList(), g.Roles.Select(r => r.RoleId).ToList(), g.ParentId, g.Code))
+            .Select(g => new GroupDto(g.Id, g.Name, g.Description, g.Members.Select(m => m.UserId).ToList(), g.Roles.Select(r => r.RoleId).ToList(), g.ParentId, g.Code,
+                g.Members.Where(m => m.IsOwner).Select(m => m.UserId).ToList(), g.IsDefault))
             .ToListAsync(cancellationToken);
         return new PagedResult<GroupDto>(items, total, page.Page, page.PageSize);
     }

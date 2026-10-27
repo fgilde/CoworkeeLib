@@ -37,12 +37,20 @@ public sealed record LockUserRequest(DateTimeOffset? Until);
 
 public sealed record IdListRequest(IReadOnlyList<Guid> Ids);
 
-public sealed record RoleDto(Guid Id, string Name, string? Description, bool IsSystem, bool SelectableForRegistration = false);
+public sealed record RoleDto(Guid Id, string Name, string? Description, bool IsSystem, bool SelectableForRegistration = false, bool IsDefault = false);
 
-/// <summary>A role; <paramref name="SelectableForRegistration"/> offers it in the registration wizard.</summary>
-public sealed record RoleRequest(string Name, string? Description, bool SelectableForRegistration = false);
+/// <summary>
+/// A role; <paramref name="SelectableForRegistration"/> offers it in the registration wizard, <paramref name="IsDefault"/> gives it to every new user
+/// (null keeps the current value).
+/// </summary>
+public sealed record RoleRequest(string Name, string? Description, bool SelectableForRegistration = false, bool? IsDefault = null);
 
-public sealed record GroupDto(Guid Id, string Name, string? Description, IReadOnlyList<Guid> MemberIds, IReadOnlyList<Guid> RoleIds, Guid? ParentId = null, string? Code = null);
+/// <summary>A group; <paramref name="OwnerIds"/> are the members who own it, <paramref name="IsDefault"/> marks the group new users join.</summary>
+public sealed record GroupDto(Guid Id, string Name, string? Description, IReadOnlyList<Guid> MemberIds, IReadOnlyList<Guid> RoleIds, Guid? ParentId = null, string? Code = null,
+    IReadOnlyList<Guid>? OwnerIds = null, bool IsDefault = false);
+
+/// <summary>The default group of the tenant, null when there is none.</summary>
+public sealed record DefaultGroupDto(Guid? GroupId);
 
 public sealed record GroupNodeDto(Guid Id, Guid? ParentId, string Code, string Name, string? Description, int ChildCount, int MemberCount);
 

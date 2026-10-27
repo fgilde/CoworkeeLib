@@ -1873,5 +1873,10 @@
   "Mark as done": "Маркиране като готово",
   "Back to open": "Обратно към отворените",
   "Expired access tokens": "Изтекли маркери за достъп",
-  "Temporary file links and export downloads whose time is up.": "Временни връзки към файлове и изтегляния на експорти с изтекло време."
+  "Temporary file links and export downloads whose time is up.": "Временни връзки към файлове и изтегляния на експорти с изтекло време.",
+  "Make owner": "Направи собственик",
+  "Remove as owner": "Премахни като собственик",
+  "Default group": "Група по подразбиране",
+  "Default group for new users": "Група по подразбиране за нови потребители",
+  "Given to new users": "Дава се на новите потребители"
 }

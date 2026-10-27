@@ -1873,5 +1873,10 @@
   "Mark as done": "标记为已完成",
   "Back to open": "恢复为待办",
   "Expired access tokens": "已过期的访问令牌",
-  "Temporary file links and export downloads whose time is up.": "已过期的临时文件链接和导出下载。"
+  "Temporary file links and export downloads whose time is up.": "已过期的临时文件链接和导出下载。",
+  "Make owner": "设为所有者",
+  "Remove as owner": "取消所有者",
+  "Default group": "默认组",
+  "Default group for new users": "新用户的默认组",
+  "Given to new users": "授予新用户"
 }

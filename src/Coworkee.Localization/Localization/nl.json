@@ -1873,5 +1873,10 @@
   "Mark as done": "Markeren als klaar",
   "Back to open": "Terug naar open",
   "Expired access tokens": "Verlopen toegangstokens",
-  "Temporary file links and export downloads whose time is up.": "Tijdelijke bestandslinks en exportdownloads waarvan de tijd om is."
+  "Temporary file links and export downloads whose time is up.": "Tijdelijke bestandslinks en exportdownloads waarvan de tijd om is.",
+  "Make owner": "Eigenaar maken",
+  "Remove as owner": "Verwijderen als eigenaar",
+  "Default group": "Standaardgroep",
+  "Default group for new users": "Standaardgroep voor nieuwe gebruikers",
+  "Given to new users": "Wordt aan nieuwe gebruikers gegeven"
 }

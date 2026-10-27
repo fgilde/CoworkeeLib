@@ -35,7 +35,13 @@
         @if (_group is { } group)
         {
             <MudPaper Outlined="true" Class="pa-4">
-                <MudText Typo="Typo.h6" data-testid="group-title">@group.Name</MudText>
+                <div class="d-flex align-center gap-2">
+                    <MudText Typo="Typo.h6" data-testid="group-title">@group.Name</MudText>
+                    @if (group.IsDefault)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined" data-testid="group-default">@L["Default group"]</MudChip>
+                    }
+                </div>
                 <MudText Typo="Typo.caption" Class="mud-text-secondary">@GroupPaths.Path(group.Code, group.Name, _ancestors)</MudText>
                 <MudTabs @key="group.Id" Elevation="0" TabPanelsClass="pt-2" data-testid="group-tabs">
                     <MudTabPanel Text="@L["General"]">

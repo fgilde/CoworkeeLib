@@ -80,6 +80,7 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
         services.AddSingleton<SessionSignal>();
         services.AddHostedService(provider => provider.GetRequiredService<SessionSignal>());
         services.AddScoped<IInterceptor, SessionChangeInterceptor>();
+        services.AddScoped<IInterceptor, NewUserDefaults>();
         services.AddScoped<IUserStore<User>>(provider => new Users.CoworkeeUserStore(provider.GetRequiredService<CoworkeeDbContext>()) { AutoSaveChanges = false });
     }
 

@@ -1873,5 +1873,10 @@
   "Mark as done": "Markera som klar",
   "Back to open": "Tillbaka till öppna",
   "Expired access tokens": "Utgångna åtkomsttoken",
-  "Temporary file links and export downloads whose time is up.": "Tillfälliga fillänkar och exportnedladdningar vars tid har gått ut."
+  "Temporary file links and export downloads whose time is up.": "Tillfälliga fillänkar och exportnedladdningar vars tid har gått ut.",
+  "Make owner": "Gör till ägare",
+  "Remove as owner": "Ta bort som ägare",
+  "Default group": "Standardgrupp",
+  "Default group for new users": "Standardgrupp för nya användare",
+  "Given to new users": "Ges till nya användare"
 }

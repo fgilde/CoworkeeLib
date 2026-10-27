@@ -141,6 +141,15 @@ public interface ICoworkeeApi
     /// <summary>Moves all members of a group into another group.</summary>
     Task MoveGroupMembersAsync(Guid from, Guid to, CancellationToken cancellationToken = default);
 
+    /// <summary>Makes exactly these users the owners of the group; users who are not members yet join it.</summary>
+    Task SetGroupOwnersAsync(Guid id, IReadOnlyList<Guid> userIds, CancellationToken cancellationToken = default);
+
+    /// <summary>The group new users join, null when the tenant has none.</summary>
+    Task<Guid?> GetDefaultGroupIdAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Makes a group the one new users join; null leaves the tenant without a default group.</summary>
+    Task SetDefaultGroupAsync(Guid? groupId, CancellationToken cancellationToken = default);
+
     /// <summary>The groups the signed-in user may work in, with membership and selection.</summary>
     Task<IReadOnlyList<MyGroupDto>> GetMyGroupsAsync(CancellationToken cancellationToken = default);
 

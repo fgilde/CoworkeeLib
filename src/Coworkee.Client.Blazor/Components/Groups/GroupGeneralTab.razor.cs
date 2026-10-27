@@ -47,6 +47,14 @@ public partial class GroupGeneralTab
         }
     }
 
+    private async Task SetDefaultAsync(bool on)
+    {
+        if (await Snackbar.RunAsync(() => Api.SetDefaultGroupAsync(on ? Group.Id : null)))
+        {
+            await Changed.InvokeAsync();
+        }
+    }
+
     private async Task MoveAsync()
     {
         if (await GroupMoveDialog.MoveAsync(Dialogs, Api, Snackbar, L, Group.Id, Group.Name))

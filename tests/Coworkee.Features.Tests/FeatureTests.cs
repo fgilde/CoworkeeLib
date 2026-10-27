@@ -121,6 +121,28 @@ public sealed class FeatureTests(FeaturesApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_first_admin_of_a_new_tenant_gets_the_global_default_roles_but_not_those_of_the_host()
+    {
+        var (global, host) = await app.InDbAsync(async db =>
+        {
+            var global = new Coworkee.Identity.Domain.Role { Name = "Everyone", NormalizedName = "EVERYONE", IsDefault = true };
+            var host = new Coworkee.Identity.Domain.Role { Name = "Host default", NormalizedName = "HOST DEFAULT", TenantId = _setup.TenantId, IsDefault = true };
+            db.AddRange(global, host);
+            await db.SaveChangesAsync(Ct);
+            return (global.Id, host.Id);
+        });
+
+        var response = await Host.PostAsJsonAsync("/api/v1/tenants", new CreateTenantRequest("Gamma", "gamma", true, false, "admin@gamma.test", "Admin#12345"), Ct);
+        response.EnsureSuccessStatusCode();
+        var tenant = await response.Content.ReadFromJsonAsync<Guid>(Ct);
+
+        var roles = await app.InDbAsync(db => db.Set<Coworkee.Identity.Domain.User>().Where(u => u.TenantId == tenant)
+            .SelectMany(u => db.Set<Microsoft.AspNetCore.Identity.IdentityUserRole<Guid>>().Where(r => r.UserId == u.Id)).Select(r => r.RoleId).ToListAsync(Ct));
+        roles.ShouldContain(global);
+        roles.ShouldNotContain(host);
+    }
+
+    [Fact]
     public async Task Host_deactivates_tenants_but_not_itself()
     {
         var other = await app.CreateTenantAdminAsync();

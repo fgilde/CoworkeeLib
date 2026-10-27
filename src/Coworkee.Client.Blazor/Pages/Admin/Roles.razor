@@ -12,6 +12,10 @@
                 {
                     <MudChip T="string" Size="Size.Small">@L["system"]</MudChip>
                 }
+                @if (context.Item.IsDefault)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">@L["default"]</MudChip>
+                }
             </CellTemplate>
         </PropertyColumn>
         <PropertyColumn Property="r => r.Description" Title="@L["Description"]" />

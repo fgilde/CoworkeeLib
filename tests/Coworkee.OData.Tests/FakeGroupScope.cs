@@ -30,4 +30,8 @@ public sealed class FakeGroupScope(IHttpContextAccessor http) : IGroupScope
     public Task<IReadOnlyList<GroupNode>> NodesAsync(IEnumerable<Guid> ids, CancellationToken ct) => Task.FromResult<IReadOnlyList<GroupNode>>([]);
 
     public Task<IReadOnlyList<GroupNode>> AncestorsAsync(Guid id, CancellationToken ct) => Task.FromResult<IReadOnlyList<GroupNode>>([]);
+
+    public Task<Guid?> DefaultGroupIdAsync(CancellationToken ct) => Task.FromResult<Guid?>(null);
+
+    public Task<IReadOnlyList<Guid>> OwnersAsync(Guid groupId, CancellationToken ct) => Task.FromResult<IReadOnlyList<Guid>>([]);
 }

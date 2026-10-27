@@ -22,9 +22,17 @@ public partial class RoleDetail
 
     private async Task SetSelectableAsync(bool selectable)
     {
-        if (_role is { } role && await Snackbar.RunAsync(() => Api.UpdateRoleAsync(role.Id, new RoleRequest(role.Name, role.Description, selectable))))
+        if (_role is { } role && await Snackbar.RunAsync(() => Api.UpdateRoleAsync(role.Id, new RoleRequest(role.Name, role.Description, selectable, role.IsDefault))))
         {
             _role = role with { SelectableForRegistration = selectable };
+        }
+    }
+
+    private async Task SetDefaultAsync(bool isDefault)
+    {
+        if (_role is { } role && await Snackbar.RunAsync(() => Api.UpdateRoleAsync(role.Id, new RoleRequest(role.Name, role.Description, role.SelectableForRegistration, isDefault))))
+        {
+            _role = role with { IsDefault = isDefault };
         }
     }
 }

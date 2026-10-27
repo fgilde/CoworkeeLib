@@ -1873,5 +1873,10 @@
   "Mark as done": "សម្គាល់ថារួចរាល់",
   "Back to open": "ត្រឡប់ទៅបើកវិញ",
   "Expired access tokens": "ថូខឹនចូលប្រើដែលផុតកំណត់",
-  "Temporary file links and export downloads whose time is up.": "តំណឯកសារបណ្ដោះអាសន្ន និងការទាញយកការនាំចេញដែលផុតពេល។"
+  "Temporary file links and export downloads whose time is up.": "តំណឯកសារបណ្ដោះអាសន្ន និងការទាញយកការនាំចេញដែលផុតពេល។",
+  "Make owner": "កំណត់ជាម្ចាស់",
+  "Remove as owner": "ដកចេញពីម្ចាស់",
+  "Default group": "ក្រុមលំនាំដើម",
+  "Default group for new users": "ក្រុមលំនាំដើមសម្រាប់អ្នកប្រើថ្មី",
+  "Given to new users": "ផ្ដល់ឱ្យអ្នកប្រើថ្មី"
 }

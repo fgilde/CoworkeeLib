@@ -10,6 +10,7 @@
     </div>
     @if (CanManage)
     {
+        <MudSwitch T="bool" Value="Group.IsDefault" ValueChanged="SetDefaultAsync" Color="Color.Primary" Label="@L["Default group for new users"]" data-testid="group-default-switch" />
         <div>
             <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="string.IsNullOrWhiteSpace(_name)" OnClick="SaveAsync" data-testid="group-save">@L["Save"]</MudButton>
         </div>

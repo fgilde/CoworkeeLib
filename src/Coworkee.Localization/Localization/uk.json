@@ -1873,5 +1873,10 @@
   "Mark as done": "Позначити як виконане",
   "Back to open": "Повернути до відкритих",
   "Expired access tokens": "Прострочені токени доступу",
-  "Temporary file links and export downloads whose time is up.": "Тимчасові посилання на файли та завантаження експортів, термін яких минув."
+  "Temporary file links and export downloads whose time is up.": "Тимчасові посилання на файли та завантаження експортів, термін яких минув.",
+  "Make owner": "Зробити власником",
+  "Remove as owner": "Прибрати з власників",
+  "Default group": "Група за замовчуванням",
+  "Default group for new users": "Група за замовчуванням для нових користувачів",
+  "Given to new users": "Надається новим користувачам"
 }

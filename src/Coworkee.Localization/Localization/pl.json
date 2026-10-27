@@ -1873,5 +1873,10 @@
   "Mark as done": "Oznacz jako zrobione",
   "Back to open": "Przywróć do otwartych",
   "Expired access tokens": "Wygasłe tokeny dostępu",
-  "Temporary file links and export downloads whose time is up.": "Tymczasowe linki do plików i pobrania eksportów, których czas minął."
+  "Temporary file links and export downloads whose time is up.": "Tymczasowe linki do plików i pobrania eksportów, których czas minął.",
+  "Make owner": "Ustaw jako właściciela",
+  "Remove as owner": "Usuń jako właściciela",
+  "Default group": "Grupa domyślna",
+  "Default group for new users": "Grupa domyślna dla nowych użytkowników",
+  "Given to new users": "Nadawana nowym użytkownikom"
 }

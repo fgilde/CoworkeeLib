@@ -24,6 +24,18 @@ public sealed class RoleDetailTests : ClientTestBase
 
         page.WaitForElement("input[data-testid='role-registration'], [data-testid='role-registration'] input").Change(true);
 
-        Api.Received().UpdateRoleAsync(_role, new RoleRequest("Customer", "Buys things", true), Arg.Any<CancellationToken>());
+        Api.Received().UpdateRoleAsync(_role, new RoleRequest("Customer", "Buys things", true, false), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public void Managers_give_a_role_to_every_new_user_and_keep_the_registration_offer()
+    {
+        Api.GetRolesAsync(Arg.Any<CancellationToken>()).Returns([new RoleDto(_role, "Customer", "Buys things", false, SelectableForRegistration: true)]);
+        AddAuthorization().SetAuthorized("Ada").SetPolicies(Security.PermissionPolicy.For(IdentityPermissions.Roles.Manage));
+        var page = Render<RoleDetail>(p => p.Add(r => r.Id, _role));
+
+        page.WaitForElement("input[data-testid='role-default'], [data-testid='role-default'] input").Change(true);
+
+        Api.Received().UpdateRoleAsync(_role, new RoleRequest("Customer", "Buys things", true, true), Arg.Any<CancellationToken>());
     }
 }
