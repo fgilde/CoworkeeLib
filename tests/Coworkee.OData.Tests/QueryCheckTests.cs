@@ -147,6 +147,9 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
 
         // the secret bin carries a Fragile label too; behind the hidden reference it is not there
         Names((await GetAsync("/odata/Shelves?$filter=Featured/Labels/any(l: l/Text eq 'Fragile')")).GetProperty("value")).ShouldBe(["Open"]);
+        var labels = (await GetAsync("/odata/Shelves?$expand=Featured($select=Name,Labels)&$orderby=Name")).GetProperty("value");
+        labels[0].GetProperty("Featured").GetProperty("Labels").GetArrayLength().ShouldBe(1);
+        labels[1].GetProperty("Featured").ValueKind.ShouldBe(JsonValueKind.Null);
     }
 
     [Fact]

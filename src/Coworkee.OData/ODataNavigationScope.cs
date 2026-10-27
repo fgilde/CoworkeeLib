@@ -295,7 +295,32 @@ public sealed class ODataNavigationScope
     {
         private readonly HashSet<Expression> _nulled = [];
 
+        // tests that hold where the rewrite is: OData projects an expanded reference with IsNull = (x.Nav.Key == null), and the serializer
+        // writes null for it then, so its values need not test the reference again
+        private readonly List<Expression> _holding = [];
+
         public override Expression? Visit(Expression? node) => node is not null && Roots.TryGetValue(node, out _) ? node : base.Visit(node);
+
+        protected override Expression VisitMemberInit(MemberInitExpression node)
+        {
+            if (node.Bindings.OfType<MemberAssignment>().FirstOrDefault(b => b.Member.Name == "IsNull") is not { } isNull)
+            {
+                return base.VisitMemberInit(node);
+            }
+
+            var nullTest = Visit(isNull.Expression)!;
+            var holds = new Tests().Of(nullTest);
+            _holding.AddRange(holds);
+            try
+            {
+                return node.Update((NewExpression)Visit(node.NewExpression)!,
+                    node.Bindings.Select(b => b == isNull ? isNull.Update(nullTest) : VisitMemberBinding(b)));
+            }
+            finally
+            {
+                _holding.RemoveRange(_holding.Count - holds.Count, holds.Count);
+            }
+        }
 
         protected override Expression VisitMethodCall(MethodCallExpression node) =>
             IsInclude(node) ? node.Update(node.Object, [Visit(node.Arguments[0])!, .. node.Arguments.Skip(1)]) : base.VisitMethodCall(node);
@@ -317,7 +342,11 @@ public sealed class ODataNavigationScope
                 // a collection under a hidden reference is empty: x.A.Items.Where(i => shown(x.A) && shown(i)); through the inverse navigation
                 // the test reads the item's own parent, x.A.Items.Where(i => shown(i.A) && ...), which needs no lateral join (SQLite has none)
                 var item = Expression.Parameter(element, "e");
-                if (test is not null && scope._inverses.GetValueOrDefault((node.Member.DeclaringType, node.Member.Name)) is { } inverse && inverse.PropertyType == source!.Type)
+                if (test is not null && _holding.Any(h => ExpressionEqualityComparer.Instance.Equals(h, test)))
+                {
+                    test = null; // inside the projection of an expanded parent that is null when hidden; repeating the test would need a lateral join
+                }
+                else if (test is not null && scope._inverses.GetValueOrDefault((node.Member.DeclaringType, node.Member.Name)) is { } inverse && inverse.PropertyType == source!.Type)
                 {
                     test = ReplacingExpressionVisitor.Replace(source, Expression.Property(item, inverse), test);
                 }
@@ -328,6 +357,28 @@ public sealed class ODataNavigationScope
             }
 
             return And(test, predicate is null ? null : Body(predicate, plain)) is { } shown ? Nulled(shown, plain) : plain;
+        }
+
+        // the tests of the conditionals the rewrite put into an expression
+        private sealed class Tests : ExpressionVisitor
+        {
+            private readonly List<Expression> _found = [];
+
+            public List<Expression> Of(Expression expression)
+            {
+                Visit(expression);
+                return _found;
+            }
+
+            protected override Expression VisitConditional(ConditionalExpression node)
+            {
+                if (node.IfFalse is ConstantExpression { Value: null })
+                {
+                    _found.Add(node.Test);
+                }
+
+                return base.VisitConditional(node);
+            }
         }
 
         // (shown ? x.Nav : null).Name cannot be translated, shown ? x.Nav.Name : null can
