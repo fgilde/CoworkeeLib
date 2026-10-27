@@ -13,6 +13,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -50,6 +52,7 @@ public sealed class ODataApp : DatabaseFixture
         await using (var scope = App.Services.CreateAsyncScope())
         {
             await scope.ServiceProvider.GetRequiredService<GadgetDbContext>().Database.EnsureCreatedAsync();
+            await scope.ServiceProvider.GetRequiredService<ParcelDbContext>().GetService<IRelationalDatabaseCreator>().CreateTablesAsync();
         }
 
         App.UseCoworkee();
@@ -128,6 +131,13 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.AddScoped<IODataEntityFilter<Crate>, CratesOfActiveUnits>();
         context.Services.AddGlobalSearch<Crate>(s => s.Fields(c => c.Name).Page("/crates"));
         context.Services.AddODataImport("Crates", (Guid? id, CrateRow row) => new SaveCrateCommand(id, row));
+        context.Services.AddDbContext<ParcelDbContext>((provider, options) =>
+            options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
+        context.Services.AddCoworkeeExternalDbContext<ParcelDbContext>();
+        context.Services.AddODataEntity<Parcel>("Parcels", ODataApp.ViewGadgets);
+        context.Services.AddScoped<IODataEntityFilter<Parcel>, HideSecretParcels>();
+        context.Services.AddGlobalSearch<Parcel>(s => s.Fields(p => p.Name).Page("/parcels"));
+        context.Services.Configure<ClientEntityOptions>(o => o.For<Parcel>(s => s.ChangedAt = [nameof(Parcel.DateCreatedUtc), nameof(Parcel.DateUpdatedUtc)]));
     }
 }
 

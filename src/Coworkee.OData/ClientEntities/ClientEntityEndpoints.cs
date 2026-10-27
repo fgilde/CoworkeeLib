@@ -1,4 +1,6 @@
+using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using Coworkee.AspNetCore.Http;
@@ -96,15 +98,18 @@ internal static class ClientEntityEndpoints
             return Results.Ok(new ClientEntityChanges(version, count, [], [], Reset: false));
         }
 
-        if (!typeof(IAuditable).IsAssignableFrom(typeof(TEntity)))
+        var from = since.Value - Overlap;
+        var changedSince = settings.ChangedAt.Count > 0 ? ChangedAfter<TEntity>(settings.ChangedAt, from)
+            : typeof(IAuditable).IsAssignableFrom(typeof(TEntity)) ? ChangedAfter<TEntity>([nameof(IAuditable.CreatedAt), nameof(IAuditable.ModifiedAt)], from)
+            : null;
+        if (changedSince is null)
         {
             return Results.Ok(new ClientEntityChanges(version, count, [], [], Reset: true));
         }
 
-        var from = since.Value - Overlap;
         var limit = settings.BatchSize * 10;
         var changed = await visible
-            .Where(e => EF.Property<DateTimeOffset>(e, nameof(IAuditable.CreatedAt)) > from || EF.Property<DateTimeOffset?>(e, nameof(IAuditable.ModifiedAt)) > from)
+            .Where(changedSince)
             .Select(e => EF.Property<Guid>(e, nameof(Entity.Id)))
             .Take(limit + 1)
             .ToListAsync(cancellationToken);
@@ -123,6 +128,25 @@ internal static class ClientEntityEndpoints
         }
 
         return Results.Ok(new ClientEntityChanges(version, count, changed, deleted, Reset: false));
+    }
+
+    /// <summary>e => e.A > from || e.B > from ..., with <paramref name="from"/> as a query parameter in the column's type.</summary>
+    private static Expression<Func<TEntity, bool>> ChangedAfter<TEntity>(IEnumerable<string> properties, DateTimeOffset from)
+    {
+        var e = Expression.Parameter(typeof(TEntity), "e");
+        Expression? any = null;
+        foreach (var name in properties)
+        {
+            var column = Expression.Property(e, name);
+            var type = Nullable.GetUnderlyingType(column.Type) ?? column.Type;
+            Expression bound = type == typeof(DateTimeOffset) ? Expression.Field(Expression.Constant(new StrongBox<DateTimeOffset>(from)), "Value")
+                : type == typeof(DateTime) ? Expression.Field(Expression.Constant(new StrongBox<DateTime>(from.UtcDateTime)), "Value")
+                : throw new InvalidOperationException($"{typeof(TEntity).Name}.{name} is no DateTime or DateTimeOffset.");
+            var after = Expression.GreaterThan(column, Expression.Convert(bound, column.Type));
+            any = any is null ? after : Expression.OrElse(any, after);
+        }
+
+        return Expression.Lambda<Func<TEntity, bool>>(any!, e);
     }
 
     private static async Task<IResult> IdsAsync<TEntity>(IServiceProvider services, ClientEntitySettings settings, DateTimeOffset? since, CancellationToken cancellationToken)

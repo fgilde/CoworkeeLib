@@ -60,4 +60,10 @@ public sealed record ClientEntitySettings
 
     /// <summary>How often clients ask for changes; entities with [Realtime] are also refreshed as soon as they change.</summary>
     public TimeSpan RefreshInterval { get; set; } = TimeSpan.FromMinutes(5);
+
+    /// <summary>
+    /// Date properties (DateTime or DateTimeOffset, UTC) that tell when a row was created or last changed, for entities without IAuditable,
+    /// e.g. the tables of an external database. Without them such sets download completely on every refresh.
+    /// </summary>
+    public IReadOnlyList<string> ChangedAt { get; set; } = [];
 }

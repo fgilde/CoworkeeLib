@@ -69,6 +69,7 @@ Jedes Set startet mit den Standardwerten, dann wirken das Attribut, die Optionen
 | `MaxRows` | 50 000 | größere Sets bleiben auf dem Server; `[ClientEntity(MaxRows = …)]` setzt den Wert pro Entity |
 | `RefreshInterval` | 5 Minuten | wie oft Clients nach Änderungen fragen |
 | `Enabled` | `true` | `false` lässt eine markierte Entity auf dem Server |
+| `ChangedAt` | keine | Datumseigenschaften, die sagen, wann eine Zeile angelegt oder geändert wurde, für Entities ohne `IAuditable` (Tabellen einer [externen Datenbank](../fundamentals/persistence.md#externe-datenbanken)); ohne sie lädt ein solches Set bei jeder Aktualisierung vollständig |
 
 === "Optionen"
 

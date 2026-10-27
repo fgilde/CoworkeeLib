@@ -45,7 +45,7 @@ public sealed class ClientEntityFeedTests(ODataApp app) : IAsyncLifetime
         var manifest = await Admin.GetFromJsonAsync<ClientEntityManifest>("/api/v1/client-entities", Ct);
         var foreign = await app.As(_setup.AdminUserId, _otherTenant).GetFromJsonAsync<ClientEntityManifest>("/api/v1/client-entities", Ct);
 
-        var gadgets = manifest!.Sets.ShouldHaveSingleItem();
+        var gadgets = manifest!.Sets.Single(s => s.EntitySet == "Gadgets");
         gadgets.EntitySet.ShouldBe("Gadgets");
         gadgets.BatchSize.ShouldBe(1000);
         manifest.Partition.ShouldNotBe(foreign!.Partition);

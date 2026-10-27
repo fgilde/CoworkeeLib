@@ -74,6 +74,22 @@ using (CurrentUserScope.Begin(new ImpersonatedUser(adminId, tenantId)))
 }
 ```
 
+## Externe Datenbanken
+
+Eine App kann auch eine Datenbank lesen und schreiben, die ihr nicht gehört, etwa die Datenbank eines anderen Teams mit eigenem Schema. Sie wird in einem einfachen `DbContext` abgebildet (nicht `CoworkeeDbContext`: der brächte die Tabellen und Konventionen der Bibliothek mit), wie üblich registriert und Coworkee bekannt gemacht:
+
+```csharp title="MyApp.Shipping/ShippingModule.cs"
+services.AddDbContextPool<HubDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("Hub")));
+services.AddCoworkeeExternalDbContext<HubDbContext>();
+services.AddODataEntity<Shipment>("Shipments", ShippingPermissions.Shipments.View);
+services.AddScoped<IODataEntityFilter<Shipment>, ShipmentsOfMyCustomers>();
+```
+
+- OData-Sets, Zeilenfilter, globale Suche, Export, Berichte und Client-Entities lesen jede Entity aus dem Context, der sie abbildet.
+- Handler lassen sich den externen Context geben und ändern ihn; die Unit of Work speichert zuerst die externen Contexts mit Änderungen, dann den Context der App. Eine Transaktion über beide Datenbanken gibt es nicht: scheitert der Context der App, bleiben die externen Änderungen gespeichert.
+- Migrationen, Audit, Verlauf, Soft Delete, Mandantenfilter, `[Realtime]`, Webhooks, Workflows und die Outbox bleiben beim Context der App. Zeilen eines externen Contexts haben keinen Mandanten, also entscheidet ein Zeilenfilter, wer was sieht.
+- Client-Entities brauchen die Datumsspalten der externen Tabelle (`ChangedAt` in den [Einstellungen](../ui/client-entities.md#schritt-2-einstellungen-optional)); ohne sie lädt ein Set bei jeder Aktualisierung vollständig.
+
 ## Migrationen und Seed
 
 Migrationen liegen im Infrastruktur-Projekt und sind für dessen Datenbank-Provider erstellt:

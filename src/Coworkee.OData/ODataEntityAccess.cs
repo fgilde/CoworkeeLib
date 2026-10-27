@@ -60,7 +60,7 @@ public static class ODataEntityAccess
     public static async Task<IQueryable<TEntity>> VisibleAsync<TEntity>(IServiceProvider services, CancellationToken cancellationToken, bool withDeleted = false)
         where TEntity : class
     {
-        var query = services.GetRequiredService<CoworkeeDbContext>().Set<TEntity>().AsNoTracking();
+        var query = services.DbContextFor(typeof(TEntity)).Set<TEntity>().AsNoTracking();
         if (withDeleted)
         {
             query = query.IgnoreQueryFilters([CoworkeeDbContext.SoftDeleteFilter]);
@@ -84,7 +84,7 @@ public static class ODataEntityAccess
     {
         if (services.GetService<ODataEntityRegistry>()?.Find(typeof(TEntity)) is null)
         {
-            return services.GetRequiredService<CoworkeeDbContext>().Set<TEntity>().Select(e => EF.Property<Guid>(e, "Id"));
+            return services.DbContextFor(typeof(TEntity)).Set<TEntity>().Select(e => EF.Property<Guid>(e, "Id"));
         }
 
         using var unnarrowed = GroupScope.Unnarrowed();

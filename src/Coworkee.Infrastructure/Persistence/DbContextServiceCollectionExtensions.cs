@@ -48,7 +48,7 @@ public static class DbContextServiceCollectionExtensions
         services.AddDataProtection().SetApplicationName("Coworkee");
         services.AddSingleton<IConfigureOptions<KeyManagementOptions>>(provider =>
             new ConfigureOptions<KeyManagementOptions>(options => options.XmlRepository = provider.GetRequiredService<DbXmlRepository>()));
-        services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<TContext>());
+        services.AddScoped<IUnitOfWork>(provider => new CoworkeeUnitOfWork(provider, provider.GetRequiredService<TContext>()));
         return services;
     }
 }

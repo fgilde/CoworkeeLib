@@ -69,6 +69,7 @@ Each set starts from the defaults, then the attribute, then the options, then it
 | `MaxRows` | 50 000 | larger sets stay on the server; `[ClientEntity(MaxRows = …)]` sets it per entity |
 | `RefreshInterval` | 5 minutes | how often clients ask for changes |
 | `Enabled` | `true` | `false` keeps an attributed entity on the server |
+| `ChangedAt` | none | date properties that tell when a row was created or changed, for entities without `IAuditable` (tables of an [external database](../fundamentals/persistence.md#external-databases)); without them such a set downloads completely on every refresh |
 
 === "Options"
 

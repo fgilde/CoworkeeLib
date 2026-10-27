@@ -7,6 +7,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 ### Added
 
 - Group tree and scope: groups have a parent and a `Code` path (create under a parent, move with `PUT /api/v1/identity/groups/{id}/parent`, delete removes the subtree), members can be added, removed and moved, `IGroupScope` (`Coworkee.Application.Groups`) gives filters the accessible, selected and active groups, `<GroupScopePicker />` lets users narrow lists to some groups, `AddGroupDetailTab` adds tabs to the groups page, group import by parent path. New permissions `Identity.Groups.ManageMembers` (implied by `Manage`) and `Identity.Groups.ScopeAll`; see [identity](../features/identity.md#group-tree-and-scope).
+- External databases: `AddCoworkeeExternalDbContext<TContext>()` lets OData sets, row filters, search, export, reports and client entities read entities of a second, plain `DbContext`, and the unit of work saves it; client entities take `ChangedAt` date columns for entities without `IAuditable`. See [persistence](../fundamentals/persistence.md#external-databases).
 - Users OData set: `Groups` memberships, filter `Groups/any(m: m/GroupId eq {id})`.
 - Groups page: Import (`Groups.Manage`) and Export buttons. The `Groups` set has a computed `ParentPath` ("Customer A/Hamburg"), and the export writes `Name`, `Description` and `ParentPath` in tree order, so the file imports again, also into another tenant.
 - Computed OData properties with `Exported = true` are export columns; `ComputedQueryRoot` (moved from Workflows) and `ODataComputedProperty.Inline` help to write subqueries in them.
@@ -17,6 +18,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 - `SetGroupMembers` needs `Identity.Groups.ManageMembers` instead of `Manage`; roles with `Manage` keep working, it implies the new permission.
 - `ICoworkeeApi` has new group members (`GetGroupChildrenAsync`, `SearchGroupTreeAsync`, `MoveGroupAsync`, `AddGroupMembersAsync`, `RemoveGroupMembersAsync`, `MoveGroupMembersAsync`, `GetMyGroupsAsync`, `SelectGroupsAsync`): hand-written implementations and test fakes no longer compile until they add them.
 - `PUT /api/v1/identity/groups/{id}` with a `ParentId` other than the current parent answers 400; a group moves with `PUT /api/v1/identity/groups/{id}/parent`. A missing `ParentId` keeps the parent.
+- `IUnitOfWork` resolves to a wrapper that saves the external contexts and then the app's context, no longer to the DbContext itself; code that cast it to a DbContext injects the context instead.
 - `[Realtime]` still broadcasts to everyone with the view permission; with groups as customers in one tenant, clients of other units see record ids and changed property names. Per-group topics follow.
 
 ## 0.0.1.40 (2026-10-25)

@@ -55,7 +55,7 @@ internal static class WebhookEntityData
     // only the columns of the set: navigations are not loaded, hidden properties and protected ones the owner may not read never leave
     private static HashSet<string> Columns(IServiceProvider services, ODataEntityRegistration set, IReadOnlySet<string> denied) =>
     [
-        .. services.GetRequiredService<CoworkeeDbContext>().Model.FindEntityType(set.EntityType)!.GetProperties()
+        .. services.DbContextFor(set.EntityType).Model.FindEntityType(set.EntityType)!.GetProperties()
             .Where(p => !p.IsShadowProperty() && !set.HiddenProperties.Contains(p.Name) && !denied.Contains(p.Name))
             .Select(p => JsonNamingPolicy.CamelCase.ConvertName(p.Name)),
     ];

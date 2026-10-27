@@ -74,6 +74,22 @@ using (CurrentUserScope.Begin(new ImpersonatedUser(adminId, tenantId)))
 }
 ```
 
+## External databases
+
+An app can also read and write a database it does not own, for example another team's database with its own schema. Map it in a plain `DbContext` (not `CoworkeeDbContext`: that would add the library's tables and conventions), register it as usual and tell Coworkee about it:
+
+```csharp title="MyApp.Shipping/ShippingModule.cs"
+services.AddDbContextPool<HubDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("Hub")));
+services.AddCoworkeeExternalDbContext<HubDbContext>();
+services.AddODataEntity<Shipment>("Shipments", ShippingPermissions.Shipments.View);
+services.AddScoped<IODataEntityFilter<Shipment>, ShipmentsOfMyCustomers>();
+```
+
+- OData sets, row filters, global search, export, reports and client entities read each entity from the context that maps it.
+- Handlers inject the external context and change it; the unit of work saves the external contexts with changes first, then the app's context. There is no transaction across the two databases: if the app's context fails, the external changes stay saved.
+- Migrations, audit trail, history, soft delete, tenant filters, `[Realtime]`, webhooks, workflows and the outbox stay with the app's context. Rows of an external context have no tenant, so a row filter decides who sees what.
+- Client entities need the dates the external table keeps (`ChangedAt` in the [settings](../ui/client-entities.md#step-2-settings-optional)); without them a set downloads completely on every refresh.
+
 ## Migrations and seeding
 
 Migrations live in the infrastructure project and are made for its database provider:

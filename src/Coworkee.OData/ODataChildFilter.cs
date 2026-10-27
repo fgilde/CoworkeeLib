@@ -13,7 +13,7 @@ internal sealed class ODataChildFilter<TChild, TParent>(IServiceProvider service
     public async Task<IQueryable<TChild>> ApplyAsync(IQueryable<TChild> query, CancellationToken cancellationToken)
     {
         var parents = await ODataEntityAccess.VisibleAsync<TParent>(services, cancellationToken);
-        var key = services.GetRequiredService<CoworkeeDbContext>().Model.FindEntityType(typeof(TParent))!.FindPrimaryKey()!.Properties.Single().Name;
+        var key = services.DbContextFor(typeof(TParent)).Model.FindEntityType(typeof(TParent))!.FindPrimaryKey()!.Properties.Single().Name;
 
         // child => parents.Any(p => p.Id == child.Parent.Id); EF reads child.Parent.Id from the foreign key, no join
         var p = Expression.Parameter(typeof(TParent), "p");

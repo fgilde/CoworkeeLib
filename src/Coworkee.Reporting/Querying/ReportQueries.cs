@@ -4,13 +4,14 @@ using Coworkee.Application.Authorization;
 using Coworkee.Contracts.Configuration;
 using Coworkee.Contracts.Reporting;
 using Coworkee.Core.Results;
+using Coworkee.Infrastructure.Persistence;
 using Coworkee.OData;
 using Microsoft.OData;
 
 namespace Coworkee.Reporting.Querying;
 
 /// <summary>Sources the user may read and aggregates over them, with the entity set's permission, tenant and row filters.</summary>
-internal sealed class ReportQueries(IServiceProvider services, ReportSchema schema, IPermissionChecker permissions, Infrastructure.Persistence.CoworkeeDbContext db)
+internal sealed class ReportQueries(IServiceProvider services, ReportSchema schema, IPermissionChecker permissions)
 {
     private static readonly MethodInfo RunMethod = typeof(ReportQueries).GetMethod(nameof(RunTypedAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
     private static readonly MethodInfo CheckMethod = typeof(ReportQueries).GetMethod(nameof(CheckFilterAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
@@ -84,7 +85,7 @@ internal sealed class ReportQueries(IServiceProvider services, ReportSchema sche
         }
 
         // an app source aggregates in memory unless it hands out a query of the database
-        var provider = source.Value.Computed is null ? Infrastructure.Persistence.CoworkeeDatabase.Provider(db.Database) : DatabaseProviders.Postgres;
+        var provider = source.Value.Computed is null ? CoworkeeDatabase.Provider(services.DbContextFor(source.Value.RowType).Database) : DatabaseProviders.Postgres;
         return (source.Value, ReportPlan.Create(source.Value, request, await GrantedAsync(cancellationToken), provider));
     }
 
