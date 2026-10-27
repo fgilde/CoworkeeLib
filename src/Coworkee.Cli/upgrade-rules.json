@@ -333,7 +333,8 @@
         "Exports: new table cw.ExportSchedules and the columns Every and Week on cw.ReportSubscriptions; add a migration. IDataTransferApi has new members (StreamExportAsync, MailExportAsync, GetExportSchedulesAsync, SaveExportScheduleAsync, DeleteExportScheduleAsync, RunExportScheduleAsync): hand-written implementations and test fakes add them.",
         "Comments: cw.Comments gets Status and Properties; add a migration. Comment is an AggregateRoot now. ISocialApi has new members AddCommentAsync(entityType, entityId, CommentRequest) and SetCommentStatusAsync: hand-written implementations and test fakes add them.",
         "Notifications: cw.Notifications gets Category and DoneAt, new tables cw.NotificationPreferences, cw.NotificationFollows and cw.PendingNotificationMails; add a migration. NotificationDto has the new optional members Category and DoneAt. INotifier has the new member PublishAsync and ICoworkeeApi new notification members (GetNotificationsAsync(NotificationFilter, ...), GetNotificationCountsAsync, MarkNotificationDoneAsync, preferences and follows): hand-written implementations and test fakes add them.",
-        "Notifications: cw.PendingNotificationMails.Key is required and unique with UserId and Type; add a migration."
+        "Notifications: cw.PendingNotificationMails.Key is required and unique with UserId and Type; add a migration.",
+        "Notifications: cw.Notifications gets Mailed (the daily digest leaves out notifications mailed on their own); add a migration."
       ],
       "needsMigration": true,
       "manual": [

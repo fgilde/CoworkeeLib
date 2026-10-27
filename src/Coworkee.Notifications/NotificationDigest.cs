@@ -32,7 +32,10 @@ internal sealed class NotificationSettingDefinitions : ISettingDefinitionContrib
             .Add(NotificationDigestJob.Setting, "Daily e-mail with unread notifications", SettingType.Bool, [SettingScope.Global, SettingScope.User], "true", visibleToClient: true);
 }
 
-/// <summary>Once a day every user with unread notifications since the last digest (at most a day back) gets one mail listing them, unless they switched it off.</summary>
+/// <summary>
+/// Once a day every user with unread notifications since the last digest (at most a day back) gets one mail listing them, unless they switched it off.
+/// Notifications that went out as a mail of their own are left out.
+/// </summary>
 public sealed class NotificationDigestJob(
     CoworkeeDbContext db, IMailSender mails, IUserDirectory users, IDistributedLock locks, IOptions<NotificationOptions> options, TimeProvider clock,
     IEnumerable<ITextTranslator> translators, ILogger<NotificationDigestJob> logger) : IRecurringJob
@@ -62,7 +65,7 @@ public sealed class NotificationDigestJob(
         var optedOut = db.Set<SettingValue>().Where(v => v.Name == Setting && v.Scope == SettingScope.User && v.Value!.ToLower() == "false").Select(v => v.ScopeKey);
 
         // notifications of the window up to now: those created while the job runs go into tomorrow's digest
-        var unread = db.Set<Notification>().AsNoTracking().Where(n => n.ReadAt == null && n.CreatedAt > since && n.CreatedAt <= now);
+        var unread = db.Set<Notification>().AsNoTracking().Where(n => n.ReadAt == null && !n.Mailed && n.CreatedAt > since && n.CreatedAt <= now);
         unread = globallyOff ? unread.Where(n => optedIn.Contains(n.UserId)) : unread.Where(n => !optedOut.Contains(n.UserId));
 
         // every recipient in pages of users, so nobody is starved behind a cap

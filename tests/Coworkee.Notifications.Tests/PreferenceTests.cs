@@ -5,6 +5,7 @@ using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Notifications;
 using Coworkee.Mailing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Coworkee.Notifications.Tests;
@@ -167,6 +168,22 @@ public sealed class PreferenceTests(NotificationApp app) : IAsyncLifetime
 
         await app.RunMailJobAsync(clock);
         (await MailsToAsync("bob@acme.test")).Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task The_digest_leaves_out_what_went_out_as_a_mail_of_its_own()
+    {
+        await app.PublishAsync(_setup.AdminUserId, _setup.TenantId, Message(TestNotificationModule.Eta) with { Recipients = [_bob.Id] });
+        await app.NotifyAsync(_setup.AdminUserId, _setup.TenantId, _bob.Id);
+
+        await using (var scope = app.App.Services.CreateAsyncScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<NotificationDigestJob>().ExecuteAsync(Ct);
+        }
+
+        var digest = (await MailsToAsync("bob@acme.test")).Single(m => m.TemplateName == NotificationDigestJob.Template);
+        digest.HtmlBody.ShouldContain("Document shared");
+        digest.HtmlBody.ShouldNotContain("Departed");
     }
 
     [Fact]

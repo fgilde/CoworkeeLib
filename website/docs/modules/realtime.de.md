@@ -108,7 +108,7 @@ Lokalisierbare Benachrichtigungen nehmen die englischen Texte als Schlüssel mit
 await notifier.NotifyLocalizedAsync(adminIds, "account.registration", "New registration", "{0} ({1}) waits for activation.", [name, email], $"/admin/users/{id}", ct);
 ```
 
-Benutzer sehen sie in der Glocke der App-Leiste und auf der Benachrichtigungsseite, live über SignalR. Eine tägliche Zusammenfassung verschickt ungelesene per Mail (`Coworkee:Notifications:DigestCron`), mit Links auf `PublicAppUrl`.
+Benutzer sehen sie in der Glocke der App-Leiste und auf der Benachrichtigungsseite, live über SignalR. Eine tägliche Zusammenfassung verschickt ungelesene per Mail (`Coworkee:Notifications:DigestCron`), mit Links auf `PublicAppUrl`; Benachrichtigungen, die schon als eigene Mail hinausgingen (E-Mail-Kanal eines Typs), fehlen darin.
 
 Die Glocke zeigt die Zahl der ungelesenen und die letzten zehn; eine neu eintreffende Benachrichtigung erscheint als Snackbar mit Link darauf. Ein Klick markiert sie als gelesen und öffnet ihren Link (nur Seiten der App). Jede lässt sich wieder als ungelesen markieren und löschen; die Glocke markiert alle als gelesen, die Seite `/notifications` (auch ein Reiter von `/profile`) blättert durch alle oder nur die ungelesenen und löscht alle. Jede Änderung erreicht sofort alle offenen Tabs des Benutzers: das `NotificationCenter` des Clients hält die Zahl der ungelesenen und meldet `Changed` einmal pro Schwall, auch nach „Alle als gelesen markieren“.
 

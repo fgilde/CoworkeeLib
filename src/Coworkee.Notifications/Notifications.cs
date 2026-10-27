@@ -50,6 +50,9 @@ public sealed class Notification : AggregateRoot, IHasRealtimeTopics
     /// <summary>Marked done: the notification leaves the open inbox (and counts as read).</summary>
     public DateTimeOffset? DoneAt { get; set; }
 
+    /// <summary>Also sent as a mail of its own; the daily digest leaves it out.</summary>
+    public bool Mailed { get; set; }
+
     public IEnumerable<string> RealtimeTopics => [Contracts.Realtime.RealtimeTopics.User(UserId)];
 
     /// <summary>The text in English, placeholders filled.</summary>
@@ -139,6 +142,7 @@ internal sealed partial class Notifier(
                     Arguments = arguments,
                     Link = message.Link,
                     CreatedAt = now,
+                    Mailed = preference.Email,
                 };
                 if (push)
                 {
