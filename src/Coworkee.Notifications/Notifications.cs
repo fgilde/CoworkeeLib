@@ -267,6 +267,8 @@ internal sealed class Notifier(
             OccurredAt = now,
             TenantId = currentUser.TenantId,
             ActorId = currentUser.UserId,
+            ImpersonatorId = currentUser.ImpersonatorId,
+            CorrelationId = System.Diagnostics.Activity.Current?.TraceId.ToHexString(),
         });
     }
 }

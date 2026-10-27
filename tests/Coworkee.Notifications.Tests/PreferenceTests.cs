@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Coworkee.Application.Messaging;
 using Coworkee.Contracts;
 using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Notifications;
@@ -232,6 +233,38 @@ public sealed class PreferenceTests(NotificationApp app) : IAsyncLifetime
 
         (await app.InDbAsync(null, db => db.Set<Notification>().Where(n => n.UserId == _bob.Id).Select(n => n.Mailed).ToListAsync(Ct))).ShouldBe([false]);
         (await app.InDbAsync(null, db => db.Set<PendingNotificationMail>().CountAsync(Ct))).ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task An_older_waiting_mail_retried_after_a_newer_one_does_not_replace_it()
+    {
+        var now = DateTimeOffset.UtcNow;
+        NotificationMailWaiting Waiting(string title, DateTimeOffset due) =>
+            new(_bob.Id, _setup.TenantId, TestNotificationModule.Eta, $"Shipments:{_shipment}", title, null, null, null, due);
+
+        foreach (var waiting in new[] { Waiting("newer", now.AddMinutes(2)), Waiting("older", now.AddMinutes(1)) })
+        {
+            await using var scope = app.App.Services.CreateAsyncScope();
+            await scope.ServiceProvider.GetRequiredService<IDomainEventHandler<NotificationMailWaiting>>().HandleAsync(waiting, Ct);
+        }
+
+        (await app.InDbAsync(null, db => db.Set<PendingNotificationMail>().SingleAsync(Ct))).Title.ShouldBe("newer");
+    }
+
+    [Fact]
+    public async Task The_outbox_message_of_a_waiting_mail_carries_the_impersonator_and_the_correlation()
+    {
+        var impersonator = Guid.CreateVersion7();
+        using var activity = new System.Diagnostics.Activity("command").Start();
+        using (CurrentUserScope.Begin(new ImpersonatedUser(_setup.AdminUserId, _setup.TenantId, impersonator)))
+        {
+            await using var scope = app.App.Services.CreateAsyncScope();
+            await scope.ServiceProvider.GetRequiredService<INotifier>().PublishAsync(Message(TestNotificationModule.Eta) with { Recipients = [_bob.Id] }, Ct);
+            await scope.ServiceProvider.GetRequiredService<NotificationTestDbContext>().SaveChangesAsync(Ct);
+        }
+
+        var message = await app.InDbAsync(null, db => db.Set<Infrastructure.Outbox.OutboxMessage>().SingleAsync(m => m.Type.Contains(nameof(NotificationMailWaiting)), Ct));
+        (message.ActorId, message.ImpersonatorId, message.CorrelationId).ShouldBe((_setup.AdminUserId, impersonator, activity.TraceId.ToHexString()));
     }
 
     [Fact]

@@ -63,6 +63,11 @@ internal sealed partial class NotificationMailWaitingHandler(IServiceScopeFactor
                 mail = new PendingNotificationMail { UserId = waiting.UserId, TenantId = waiting.TenantId, Type = waiting.Type, Key = waiting.Key, Title = waiting.Title };
                 db.Add(mail);
             }
+            else if (waiting.DueAt < mail.DueAt)
+            {
+                // an older notification, retried by the outbox after a newer one: the newer text stays
+                return;
+            }
 
             (mail.Title, mail.Body, mail.Link, mail.DueAt, mail.Version) = (waiting.Title, waiting.Body, waiting.Link, waiting.DueAt, Guid.NewGuid());
             mail.Arguments = waiting.Arguments is null ? null : [.. waiting.Arguments];
