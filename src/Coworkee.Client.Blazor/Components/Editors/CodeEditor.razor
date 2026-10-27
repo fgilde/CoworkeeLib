@@ -15,7 +15,7 @@
     <div class="cw-code-editor" style="height:@Height">
         @if (_ready)
         {
-            <style>.cw-code-editor .monaco-editor-container { height: 100%; }</style>
+            <style>.cw-code-editor .monaco-editor-container { height: 100%; } .cw-code-highlight { color: var(--mud-palette-primary) !important; background: color-mix(in srgb, var(--mud-palette-primary) 14%, transparent); border-radius: 3px; }</style>
             <StandaloneCodeEditor @ref="_editor" ConstructionOptions="Options" OnDidInit="InitAsync" OnDidChangeModelContent="ChangedAsync" />
         }
         else

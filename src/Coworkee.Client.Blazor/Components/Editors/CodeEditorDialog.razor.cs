@@ -19,6 +19,8 @@ public partial class CodeEditorDialog
 
     [Parameter] public string? CompletionTrigger { get; set; }
 
+    [Parameter] public string? Highlight { get; set; }
+
     protected override void OnInitialized() => _value = Value;
 
     private async Task PushAsync(string? value)

@@ -27,6 +27,7 @@ public partial class CodeEditor : IAsyncDisposable
     private string _content = string.Empty;
     private (string Language, string Trigger, string ModelUri)? _registered;
     private string? _modelUri;
+    private List<string> _highlights = [];
     private string _language = string.Empty;
     private bool _readOnly;
 
@@ -52,8 +53,11 @@ public partial class CodeEditor : IAsyncDisposable
 
     [Parameter] public IReadOnlyList<CodeCompletion>? Completions { get; set; }
 
-    /// <summary>Text that opens the suggestions, e.g. <c>{{</c>; Monaco reacts to its last character.</summary>
+    /// <summary>Text that opens the suggestions, e.g. <c>{{</c>; Monaco reacts to its last character, Ctrl+Space opens them anywhere.</summary>
     [Parameter] public string? CompletionTrigger { get; set; }
+
+    /// <summary>A regular expression whose matches are highlighted, e.g. placeholders.</summary>
+    [Parameter] public string? Highlight { get; set; }
 
     [Parameter] public bool AllowFullscreen { get; set; } = true;
 
@@ -143,6 +147,24 @@ public partial class CodeEditor : IAsyncDisposable
         _initialized = true;
         await ApplyAsync();
         await RegisterCompletionsAsync();
+        await HighlightAsync(Value ?? string.Empty);
+    }
+
+    private async Task HighlightAsync(string text)
+    {
+        if (string.IsNullOrEmpty(Highlight) || _editor is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var decorations = CodeHighlights.Of(text, Highlight).Select(range => new ModelDeltaDecoration { Range = range, Options = new ModelDecorationOptions { InlineClassName = "cw-code-highlight" } });
+            _highlights = await (await _editor.GetModel()).DeltaDecorations(_highlights, [.. decorations], null);
+        }
+        catch (Exception e) when (e is JSException or JSDisconnectedException or System.Text.RegularExpressions.RegexMatchTimeoutException)
+        {
+        }
     }
 
     private async Task ApplyAsync()
@@ -176,7 +198,7 @@ public partial class CodeEditor : IAsyncDisposable
         try
         {
             _modelUri ??= (await _editor.GetModel()).Uri;
-            var registration = (Language, CompletionTrigger[^1..], _modelUri);
+            var registration = (Language, CompletionTrigger, _modelUri);
             if (registration == _registered)
             {
                 return;
@@ -205,6 +227,7 @@ public partial class CodeEditor : IAsyncDisposable
         {
             await Task.Delay(DebounceMilliseconds, debounce.Token);
             var text = await _editor!.GetValue();
+            await HighlightAsync(text);
             if (text != _content)
             {
                 _content = text;
@@ -226,6 +249,7 @@ public partial class CodeEditor : IAsyncDisposable
             { d => d.ReadOnly, ReadOnly },
             { d => d.Completions, Completions },
             { d => d.CompletionTrigger, CompletionTrigger },
+            { d => d.Highlight, Highlight },
         },
         new DialogOptionsEx { FullScreen = true, CloseButton = true });
 

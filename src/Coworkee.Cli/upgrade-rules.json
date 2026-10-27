@@ -320,6 +320,22 @@
           ]
         }
       ]
+    },
+    {
+      "version": "0.0.1.42",
+      "breaking": [
+        "CodeCompletion.InsertText is the whole text including the trigger ({{ name }} instead of \" name }}\"); a pick replaces the typed trigger and the closing brackets Monaco added."
+      ],
+      "manual": [
+        {
+          "text": "Put the trigger into the InsertText of own CodeCompletion items passed to CodeEditor (\"{{ name }}\" instead of \" name }}\").",
+          "find": "new\\s+CodeCompletion\\(",
+          "files": [
+            "src/**/*.cs",
+            "src/**/*.razor"
+          ]
+        }
+      ]
     }
   ]
 }
