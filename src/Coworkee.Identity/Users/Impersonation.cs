@@ -117,9 +117,11 @@ public sealed class ImpersonationRules(CoworkeeDbContext db, IPermissionChecker 
     private async Task<bool> InAccessibleGroupsAsync(Guid impersonatorId, Guid targetId, Guid? tenantId, CancellationToken cancellationToken)
     {
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, tenantId));
-        var groups = await db.Set<UserGroup>().AsNoTracking()
-            .SelectMany(g => g.Members.Where(m => m.UserId == impersonatorId || m.UserId == targetId).Select(m => new { m.UserId, g.Id, g.Code }))
-            .ToListAsync(cancellationToken);
+        // a join, not g.Members.Where(...): SQLite has no APPLY
+        var groups = await (from member in db.Set<UserGroupMember>()
+                            where member.UserId == impersonatorId || member.UserId == targetId
+                            join g in db.Set<UserGroup>() on member.GroupId equals g.Id
+                            select new { member.UserId, g.Id, g.Code }).AsNoTracking().ToListAsync(cancellationToken);
         var mine = groups.Where(g => g.UserId == impersonatorId).ToList();
         return groups.Where(g => g.UserId == targetId).All(target => mine.Any(own =>
             own.Id == target.Id || (own.Code is { } code && target.Code is { } targetCode && GroupCodes.IsDescendant(targetCode, code))));
