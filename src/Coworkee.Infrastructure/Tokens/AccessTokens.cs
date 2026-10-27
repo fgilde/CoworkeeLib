@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Infrastructure.Tokens;
 
-/// <summary>A short-lived token that opens one thing without sign-in; only the hash of the token is stored. Expired ones go with the retention target access-tokens.</summary>
+/// <summary>A short-lived token that opens one thing without sign-in; only the hash of the token is stored. Expired ones go with the retention target access-tokens, without the Retention module when another token is redeemed.</summary>
 [NotAudited]
 public sealed class AccessToken : Entity
 {
@@ -41,7 +41,10 @@ public interface IAccessTokens
     Task<AccessTokenGrant?> RedeemAsync(string purpose, string token, CancellationToken cancellationToken);
 }
 
-internal sealed class AccessTokens(CoworkeeDbContext db, ICurrentUser currentUser, TimeProvider clock) : IAccessTokens
+/// <summary>Registered by the Retention module, whose target access-tokens deletes expired tokens; without it tokens clean up after themselves.</summary>
+public sealed class RetentionCleansAccessTokens;
+
+internal sealed class AccessTokens(CoworkeeDbContext db, ICurrentUser currentUser, TimeProvider clock, RetentionCleansAccessTokens? retention = null) : IAccessTokens
 {
     public const int PurposeLength = 50;
 
@@ -81,6 +84,13 @@ internal sealed class AccessTokens(CoworkeeDbContext db, ICurrentUser currentUse
                 .ExecuteUpdateAsync(t => t.SetProperty(x => x.UsedAt, now), cancellationToken) != 1)
         {
             return null;
+        }
+
+        if (retention is null)
+        {
+            // ponytail: without the Retention module tokens expired a day ago go when one is redeemed
+            var old = now.AddDays(-1);
+            await db.Set<AccessToken>().Where(t => t.ExpiresAt < old).ExecuteDeleteAsync(cancellationToken);
         }
 
         return new AccessTokenGrant(row.TargetId, row.TenantId, row.UserId);

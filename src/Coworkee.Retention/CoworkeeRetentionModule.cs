@@ -31,6 +31,7 @@ public sealed class CoworkeeRetentionModule : CoworkeeModule, IWebModule
         services.AddScoped<RetentionRunner>();
         services.AddRetentionTarget<AuditRetention>().AddRetentionTarget<SnapshotRetention>().AddRetentionTarget<OutboxRetention>().AddRetentionTarget<SoftDeletedRetention>()
             .AddRetentionTarget<AccessTokenRetention>();
+        services.AddSingleton<Infrastructure.Tokens.RetentionCleansAccessTokens>();
         services.AddSystemStatus<RetentionStatus>();
         services.AddRecurringJob<RetentionJob>(RetentionExtensions.JobId, context.Configuration[$"{Section}:Cron"] ?? "41 2 * * *");
     }

@@ -55,6 +55,28 @@ public sealed class AccessTokenTests(DatabaseFixture database) : IAsyncLifetime
         row.ExpiresAt.ShouldBe(_clock.GetUtcNow().AddMinutes(5));
     }
 
+    [Theory]
+    [InlineData(false, 0)]
+    [InlineData(true, 1)]
+    public async Task Without_the_Retention_module_tokens_expired_a_day_ago_go_when_one_is_redeemed(bool retention, int left)
+    {
+        await using var provider = database.CreateServices(_user, _clock, services =>
+        {
+            if (retention)
+            {
+                services.AddSingleton<RetentionCleansAccessTokens>();
+            }
+        });
+        await IssueAsync(provider, "file", singleUse: false);
+        _clock.Advance(TimeSpan.FromDays(2));
+        var token = await IssueAsync(provider, "file", singleUse: false);
+
+        (await RedeemAsync(provider, "file", token)).ShouldNotBeNull();
+
+        await using var scope = provider.CreateAsyncScope();
+        scope.ServiceProvider.GetRequiredService<TestDbContext>().Set<AccessToken>().Count(t => t.ExpiresAt < _clock.GetUtcNow()).ShouldBe(left);
+    }
+
     private async Task<string> IssueAsync(IServiceProvider provider, string purpose, bool singleUse)
     {
         await using var scope = provider.CreateAsyncScope();
