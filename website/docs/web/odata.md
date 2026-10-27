@@ -96,6 +96,28 @@ The filters are applied inside the query, so they must be plain `Where` calls on
 
 `ODataNavigationScope.ForAsync(services, typeof(T), ct)` gives the same rules to own queries: `scope.Apply(query)` narrows every navigation in it, outside the rows `ODataEntityAccess.VisibleAsync` returned.
 
+## Computed properties
+
+A value computed from other columns, or from other tables, is an `ODataComputedProperty` of the set. The database evaluates it, so `$filter`, `$orderby` and `$select` work on it; it comes back only when `$select` names it:
+
+```csharp
+internal sealed class ShipmentProperties : IODataComputedPropertySource
+{
+    private static readonly Expression<Func<CalculatedShipment, string>> Display = s => s.ShipmentNumber + " / " + s.HouseBill;
+
+    public IEnumerable<ODataComputedProperty> Properties(ODataEntityRegistry registry) =>
+        [new(typeof(CalculatedShipment), "ReferenceNumberDisplay", typeof(string), row => ODataComputedProperty.Inline(Display, row))];
+}
+
+services.AddSingleton<IODataComputedPropertySource, ShipmentProperties>();
+```
+
+```http
+GET /odata/CalculatedShipments?$select=Id,ReferenceNumberDisplay&$orderby=ReferenceNumberDisplay&$filter=contains(ReferenceNumberDisplay, 'HB-1')
+```
+
+An expression over the row's own columns works on every set, also on one of an [external database](../fundamentals/persistence.md#external-databases). A subquery on another table uses `ComputedQueryRoot.Of<T>()` as its source; that needs the app's own DbContext. `Permission` hides the property from users without it, `Exported` makes it an export column, `Facet` gives it a facet group. A getter-only C# property (`public string Display => ...`) is no column; the OData model leaves it out, so expose such a value this way.
+
 ## Hiding properties
 
 Internal fields stay out of the model, so they are neither returned nor filterable:

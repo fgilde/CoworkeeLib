@@ -53,6 +53,15 @@ public sealed class ExternalDbContextTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_computed_property_of_an_external_set_filters_sorts_and_comes_back_when_selected()
+    {
+        var page = await Admin.GetFromJsonAsync<JsonElement>("/odata/Parcels?$select=Name,Label&$filter=endswith(Label, '(Acme)')&$orderby=Label desc", Ct);
+
+        page.GetProperty("value").EnumerateArray().Select(p => p.GetProperty("Label").GetString()).ShouldBe(["Pallet (Acme)", "Crate (Acme)"]);
+        (await Admin.GetFromJsonAsync<JsonElement>("/odata/Parcels?$top=1", Ct)).GetProperty("value")[0].TryGetProperty("Label", out _).ShouldBeFalse();
+    }
+
+    [Fact]
     public async Task Without_the_permission_the_set_its_feed_and_export_are_forbidden()
     {
         var email = $"viewer-{Guid.NewGuid():N}@acme.test";

@@ -8,6 +8,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 - OData: `Coworkee:OData:CaseInsensitive` (`CoworkeeODataOptions.CaseInsensitive`, default `true`) sets whether names in OData URIs match regardless of case (`$filter=name eq 'x'`); it was always on. See [OData](../web/odata.md).
 - OData: `AddODataEntity<T>(..., o => o.Key(c => c.IsoCode))` registers a set keyed by another property of any primitive type; by-key reads are `/odata/Countries('DE')`. Record attachments, social, workflows, entity history and webhook entity events refuse entities without a Guid `Id` at registration; client entities skip such sets. See [OData](../web/odata.md#keys-other-than-id).
+- OData: computed properties (`ODataComputedProperty`) can be selected (`$select=ReferenceNumberDisplay`) and then come back with their value; an expression over the row's own columns works on sets of external databases too. See [OData](../web/odata.md#computed-properties).
 
 ### Changed
 

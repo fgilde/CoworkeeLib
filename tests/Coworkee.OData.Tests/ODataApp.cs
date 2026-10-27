@@ -174,6 +174,7 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.AddCoworkeeExternalDbContext<ParcelDbContext>();
         context.Services.AddODataEntity<Parcel>("Parcels", ODataApp.ViewGadgets);
         context.Services.AddScoped<IODataEntityFilter<Parcel>, HideSecretParcels>();
+        context.Services.AddSingleton<Coworkee.OData.Computed.IODataComputedPropertySource, ParcelLabel>();
         context.Services.AddGlobalSearch<Parcel>(s => s.Fields(p => p.Name).Page("/parcels"));
         context.Services.Configure<ClientEntityOptions>(o => o.For<Parcel>(s => s.ChangedAt = [nameof(Parcel.DateCreatedUtc), nameof(Parcel.DateUpdatedUtc)]));
     }

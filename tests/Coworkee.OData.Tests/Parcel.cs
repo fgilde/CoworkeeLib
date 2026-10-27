@@ -31,6 +31,15 @@ internal sealed class HideSecretParcels : IODataEntityFilter<Parcel>
         Task.FromResult(query.Where(p => p.Owner != "Secret"));
 }
 
+/// <summary>A value computed from the columns of an external row: no ComputedQueryRoot, so it needs no interceptor of the context.</summary>
+internal sealed class ParcelLabel : Coworkee.OData.Computed.IODataComputedPropertySource
+{
+    private static readonly System.Linq.Expressions.Expression<Func<Parcel, string>> Label = p => p.Name + " (" + p.Owner + ")";
+
+    public IEnumerable<Coworkee.OData.Computed.ODataComputedProperty> Properties(ODataEntityRegistry registry) =>
+        [new(typeof(Parcel), "Label", typeof(string), row => Coworkee.OData.Computed.ODataComputedProperty.Inline(Label, row))];
+}
+
 /// <summary>Writes into both databases and leaves saving to the pipeline.</summary>
 public sealed record ShipParcelCommand(string Name) : ICommand<Result<Guid>>;
 

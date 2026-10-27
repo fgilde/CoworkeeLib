@@ -8,6 +8,7 @@
 
 - OData: `Coworkee:OData:CaseInsensitive` (`CoworkeeODataOptions.CaseInsensitive`, Standard `true`) legt fest, ob Namen in OData-URIs unabhängig von der Schreibweise passen (`$filter=name eq 'x'`); bisher war das immer an. Siehe [OData](../web/odata.md).
 - OData: `AddODataEntity<T>(..., o => o.Key(c => c.IsoCode))` registriert ein Set mit einer anderen Schlüsseleigenschaft beliebigen primitiven Typs; Einzelabfragen sind `/odata/Countries('DE')`. Datensatz-Anhänge, Social, Workflows, Entity-Historie und Webhook-Entity-Ereignisse weisen Entities ohne Guid-`Id` bei der Registrierung ab; Client-Entities überspringen solche Sets. Siehe [OData](../web/odata.md#schlussel-auer-id).
+- OData: berechnete Eigenschaften (`ODataComputedProperty`) lassen sich auswählen (`$select=ReferenceNumberDisplay`) und kommen dann mit ihrem Wert zurück; ein Ausdruck über die eigenen Spalten der Zeile funktioniert auch auf Sets externer Datenbanken. Siehe [OData](../web/odata.md#berechnete-eigenschaften).
 
 ### Geändert
 

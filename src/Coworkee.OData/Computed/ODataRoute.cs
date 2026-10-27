@@ -19,8 +19,11 @@ internal sealed class ODataRoute(IEdmModel model, ODataComputedProperties comput
         {
             services.AddSingleton<IODataSerializerProvider>(sp => new ComputedSerializerProvider(sp, computed));
             services.AddSingleton<ODataUriResolver>(_ => new ODataUriResolver { EnableCaseInsensitive = coworkee.Value.CaseInsensitive });
-            services.AddSingleton<IFilterBinder>(new ComputedFilterBinder(computed));
-            services.AddSingleton<IOrderByBinder>(new ComputedOrderByBinder(computed));
+            var filter = new ComputedFilterBinder(computed);
+            var orderBy = new ComputedOrderByBinder(computed);
+            services.AddSingleton<IFilterBinder>(filter);
+            services.AddSingleton<IOrderByBinder>(orderBy);
+            services.AddSingleton<ISelectExpandBinder>(new ComputedSelectExpandBinder(filter, orderBy, computed));
         });
     }
 }

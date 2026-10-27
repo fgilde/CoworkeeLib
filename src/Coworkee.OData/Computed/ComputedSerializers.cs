@@ -28,11 +28,16 @@ internal sealed class ComputedSerializerProvider : ODataSerializerProvider
         edmType.IsEntity() ? _resources : base.GetEdmTypeSerializer(edmType);
 }
 
-/// <summary>Leaves out computed properties and the protected properties the user may not see (<see cref="ODataEntityAccess.DeniedItem"/>).</summary>
+/// <summary>
+/// Leaves out the protected properties the user may not see (<see cref="ODataEntityAccess.DeniedItem"/>) and computed properties the row
+/// carries no value of: they have one only when <c>$select</c> names them.
+/// </summary>
 internal sealed class ComputedResourceSerializer(IODataSerializerProvider provider, ODataComputedProperties computed) : ODataResourceSerializer(provider)
 {
     public override ODataProperty CreateStructuralProperty(IEdmStructuralProperty structuralProperty, ResourceContext resourceContext) =>
-        computed.Find(structuralProperty) is null && !Denied(structuralProperty, resourceContext) ? base.CreateStructuralProperty(structuralProperty, resourceContext) : null!;
+        (computed.Find(structuralProperty) is null || resourceContext.EdmObject.TryGetPropertyValue(structuralProperty.Name, out _)) && !Denied(structuralProperty, resourceContext)
+            ? base.CreateStructuralProperty(structuralProperty, resourceContext)
+            : null!;
 
     // the row's own type and its bases: a property a shared base declares is denied per set
     private static bool Denied(IEdmStructuralProperty property, ResourceContext context)

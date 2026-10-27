@@ -96,6 +96,28 @@ Die Filter wirken innerhalb der Abfrage, deshalb müssen sie einfache `Where`-Au
 
 `ODataNavigationScope.ForAsync(services, typeof(T), ct)` gibt eigenen Abfragen dieselben Regeln: `scope.Apply(query)` schränkt jede Navigation darin ein, außerhalb der Zeilen, die `ODataEntityAccess.VisibleAsync` geliefert hat.
 
+## Berechnete Eigenschaften
+
+Ein Wert, der aus anderen Spalten oder anderen Tabellen berechnet wird, ist eine `ODataComputedProperty` des Sets. Die Datenbank wertet sie aus, deshalb funktionieren `$filter`, `$orderby` und `$select` auf ihr; zurück kommt sie nur, wenn `$select` sie nennt:
+
+```csharp
+internal sealed class ShipmentProperties : IODataComputedPropertySource
+{
+    private static readonly Expression<Func<CalculatedShipment, string>> Display = s => s.ShipmentNumber + " / " + s.HouseBill;
+
+    public IEnumerable<ODataComputedProperty> Properties(ODataEntityRegistry registry) =>
+        [new(typeof(CalculatedShipment), "ReferenceNumberDisplay", typeof(string), row => ODataComputedProperty.Inline(Display, row))];
+}
+
+services.AddSingleton<IODataComputedPropertySource, ShipmentProperties>();
+```
+
+```http
+GET /odata/CalculatedShipments?$select=Id,ReferenceNumberDisplay&$orderby=ReferenceNumberDisplay&$filter=contains(ReferenceNumberDisplay, 'HB-1')
+```
+
+Ein Ausdruck über die eigenen Spalten der Zeile funktioniert auf jedem Set, auch auf einem einer [externen Datenbank](../fundamentals/persistence.md#externe-datenbanken). Eine Unterabfrage auf eine andere Tabelle nutzt `ComputedQueryRoot.Of<T>()` als Quelle; das braucht den eigenen DbContext der App. `Permission` blendet die Eigenschaft für Benutzer ohne die Berechtigung aus, `Exported` macht sie zur Exportspalte, `Facet` gibt ihr eine Facettengruppe. Eine C#-Eigenschaft nur mit Getter (`public string Display => ...`) ist keine Spalte; das OData-Modell lässt sie weg, also so einen Wert auf diesem Weg anbieten.
+
 ## Eigenschaften ausblenden
 
 Interne Felder bleiben aus dem Modell, sie werden weder ausgeliefert noch sind sie filterbar:

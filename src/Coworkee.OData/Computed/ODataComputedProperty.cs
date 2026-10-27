@@ -5,7 +5,8 @@ namespace Coworkee.OData.Computed;
 
 /// <summary>
 /// A property of an entity set that has no CLR property, e.g. the workflow state of a row: <see cref="Bind"/> turns the row into an expression
-/// the database evaluates, so <c>$filter</c> and <c>$orderby</c> run on the server. It is never serialized, and stays out of reports and, unless <see cref="Exported"/>, out of exports.
+/// the database evaluates, so <c>$filter</c>, <c>$orderby</c> and <c>$select</c> run on the server; a row carries its value only when <c>$select</c> names it.
+/// It stays out of reports and, unless <see cref="Exported"/>, out of exports. An expression over the row's own columns works on external DbContexts too.
 /// </summary>
 /// <param name="Bind">The row expression to the value, e.g. a subquery on another table; query filters of the DbContext (tenant) apply to it.</param>
 public sealed record ODataComputedProperty(Type EntityType, string Name, Type Type, Func<Expression, Expression> Bind)
