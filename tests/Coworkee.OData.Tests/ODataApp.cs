@@ -95,6 +95,7 @@ public sealed class ODataApp : DatabaseFixture
         await ResetAsync();
         App.Services.GetRequiredService<FakeGroupScope>().Stored = [];
         Mails.Sent.Clear();
+        Mails.Fail = false;
         App.Services.GetRequiredService<SystemStateCache>().Reset();
         var response = await App.GetTestClient().PostAsJsonAsync("/api/v1/setup/complete",
             new CompleteSetupRequest("token", "Acme", "admin@acme.test", "Admin#12345", "Ada", "Admin"));
@@ -243,8 +244,16 @@ public sealed class RecordingExportMailer : Transfer.IExportMailer
 {
     public System.Collections.Concurrent.ConcurrentQueue<Transfer.DataExportMail> Sent { get; } = new();
 
+    /// <summary>Mailing throws, as a broken mail server would.</summary>
+    public bool Fail { get; set; }
+
     public Task MailAsync(Transfer.DataExportMail mail, CancellationToken cancellationToken)
     {
+        if (Fail)
+        {
+            throw new InvalidOperationException("The mail server is down.");
+        }
+
         Sent.Enqueue(mail);
         return Task.CompletedTask;
     }

@@ -249,6 +249,25 @@ public sealed class ExportTests(ODataApp app) : IAsyncLifetime
         app.Mails.Sent.ShouldBeEmpty();
     }
 
+    [Fact]
+    public async Task A_failed_run_takes_back_only_what_it_added()
+    {
+        (await Admin.PostAsJsonAsync("/api/v1/data/export-schedules", Request(), Ct)).EnsureSuccessStatusCode();
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(_setup.AdminUserId, _setup.TenantId));
+        await using var scope = app.App.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<GadgetDbContext>();
+        var pending = new Gadget { Name = "Pending", Category = "Tools", TenantId = _setup.TenantId };
+        db.Add(pending);
+        var schedule = await db.Set<ExportSchedule>().SingleAsync(Ct);
+        app.Mails.Fail = true;
+
+        await scope.ServiceProvider.GetRequiredService<ExportScheduleRunner>().RunAsync(schedule, DateTimeOffset.UtcNow, advance: false, Ct);
+
+        schedule.LastError.ShouldBe("The export failed.");
+        db.Entry(pending).State.ShouldBe(EntityState.Added);
+        db.ChangeTracker.Entries<DataTransferJob>().ShouldBeEmpty();
+    }
+
     /// <summary>Makes every schedule due, runs the job and returns the (single) schedule afterwards.</summary>
     private async Task<ExportSchedule> RunDueSchedulesAsync()
     {

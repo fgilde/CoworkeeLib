@@ -201,6 +201,8 @@ internal sealed partial class ExportScheduleRunner(
 {
     public async Task RunAsync(ExportSchedule schedule, DateTimeOffset now, bool advance, CancellationToken cancellationToken)
     {
+        // a failed run takes back what it added, nothing that was waiting in the unit of work before (Send now runs inside a request)
+        var before = db.ChangeTracker.Entries().Where(e => e.State == EntityState.Added).Select(e => e.Entity).ToHashSet(ReferenceEqualityComparer.Instance);
         string? error = null;
         try
         {
@@ -238,7 +240,7 @@ internal sealed partial class ExportScheduleRunner(
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             LogFailed(exception, schedule.Id);
-            foreach (var entry in db.ChangeTracker.Entries().Where(e => e.State == EntityState.Added).ToList())
+            foreach (var entry in db.ChangeTracker.Entries().Where(e => e.State == EntityState.Added && !before.Contains(e.Entity)).ToList())
             {
                 entry.State = EntityState.Detached;
             }
