@@ -63,6 +63,8 @@ Grenzen, die man kennen sollte:
 
 Jede Änderung an einer auditierten Entity wird Feld für Feld mit Benutzer, Zeitpunkt sowie altem und neuem Wert gespeichert. Die Admin-Oberfläche zeigt das pro Entity (`AuditTimeline`) und gesamt (Seite Audit-Log).
 
+Ein Interceptor, der beim Speichern Zeilen ergänzt, registriert sich als `IPreparingInterceptor` (`services.AddScoped<IPreparingInterceptor, MyDefaults>()`) statt als `IInterceptor`: Er läuft vor den eingebauten, so dass seine Zeilen Mandanten- und Auditfelder, Audit-Einträge, Historie, Outbox-, Echtzeit- und Webhook-Nachrichten bekommen. Das Identity-Modul ergänzt so die Standardrollen und die Standardgruppe eines neuen Benutzers.
+
 ## Mandanten und aktueller Benutzer
 
 `ICurrentUser` trägt Benutzer-ID, Mandanten-ID und Berechtigungen des Requests. Hintergrundjobs und die Outbox stellen den Benutzer wieder her, der sie gestartet hat. Wer als jemand anderes handeln muss, etwa in einem Seed, öffnet einen Scope:

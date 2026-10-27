@@ -63,6 +63,8 @@ Limits to know:
 
 Every change to an audited entity is written field by field with user, time and old and new value. The admin UI shows it per entity (`AuditTimeline`) and globally (Audit log page).
 
+An interceptor that adds rows while saving registers as `IPreparingInterceptor` (`services.AddScoped<IPreparingInterceptor, MyDefaults>()`) instead of `IInterceptor`: it runs before the built-in ones, so its rows get tenant and audit fields, audit entries, history, outbox, realtime and webhook messages. The identity module adds a new user's default roles and default group this way.
+
 ## Tenants and the current user
 
 `ICurrentUser` carries user id, tenant id and permissions of the request. Background jobs and the outbox restore the user who started them. To act as someone else, for example in a seed, open a scope:
