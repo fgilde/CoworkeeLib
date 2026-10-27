@@ -9,14 +9,6 @@ Changes that need action in apps built on Coworkee. Newest first.
 - OData: `Coworkee:OData:CaseInsensitive` (`CoworkeeODataOptions.CaseInsensitive`, default `true`) sets whether names in OData URIs match regardless of case (`$filter=name eq 'x'`); it was always on. See [OData](../web/odata.md).
 - OData: `AddODataEntity<T>(..., o => o.Key(c => c.IsoCode))` registers a set keyed by another property of any primitive type; by-key reads are `/odata/Countries('DE')`. Record attachments, social, workflows, entity history and webhook entity events refuse entities without a Guid `Id` at registration; client entities skip such sets. See [OData](../web/odata.md#keys-other-than-id).
 - OData: computed properties (`ODataComputedProperty`) can be selected (`$select=ReferenceNumberDisplay`) and then come back with their value; an expression over the row's own columns works on sets of external databases too. See [OData](../web/odata.md#computed-properties).
-
-### Changed
-
-- `CodeCompletion.InsertText` is the whole text now, trigger included (`{{ name }}` instead of ` name }}`): a pick replaces what was typed of `CompletionTrigger` and the closing brackets Monaco added, and Ctrl+Space inserts a complete text anywhere. New `Snippet` flag for Monaco snippets (`{{ if $1 }}`). Own completions passed to `CodeEditor` need the trigger in their text.
-- Mail body editor: bodies whose markup the visual editor would change (styles other than `color`, `background-color` and `text-align`, tags beyond text formatting, comments) open in Source, so a styled button is no longer lost on save. The shipped templates with a button open in Source.
-
-### Added
-
 - The daily notification digest leaves out notifications that went out as a mail of their own.
 - Notifications: types with categories and per-user preferences (`AddNotificationTypes`, scope Off/All/Followed, in the app and by e-mail, `cw.NotificationPreferences`), following entities (`Followable<T>`, `cw.NotificationFollows`, `CoworkeeFollowButton`), `INotifier.PublishAsync(NotificationMessage)` for recipients, followers and an audience, e-mails per notification (template `Notifications.Notification`) with delay and debounce (`cw.PendingNotificationMails`, job `coworkee-notification-mails`), done state, counts per category and search in the inbox (tabs *Inbox*, *Preferences*, *Following* on `/notifications`), new `ICoworkeeApi` members. Apps need a migration. See [realtime](../modules/realtime.md#preferences-following-and-delayed-mails).
 - Comments: `Status` (`None`, `Open`, `Closed`) and app `Properties`, `PUT /api/v1/comments/{id}/status` with the new permission `Social.Comments.SetStatus`, `SocialOptions.ValidateComments` (a check before every change), the domain event `CommentChanged` (after the commit). `CoworkeeComments` shows the status, offers a status menu and takes `NewStatus` for new comments; `ISocialApi.SetCommentStatusAsync` and `AddCommentAsync(..., CommentRequest)`. `Comment` is an aggregate root now; apps need a migration. See [social](../modules/social.md#status-app-values-and-checks).
@@ -24,6 +16,11 @@ Changes that need action in apps built on Coworkee. Newest first.
 - Temporary file links: `POST /api/v1/files/{id}/token` and `POST /api/v1/attachments/{type}/{id}/{slot}/{attachmentId}/token` return a token that opens the file without sign-in for five minutes (`/api/v1/files/token/{token}/{name}`, inline or `?download=true`); *Copy temporary link* on the *Files* page, `IFilesApi.CreateTokenAsync`, `IAttachmentsApi.CreateTokenAsync`. `IAccessTokens` (table `cw.AccessTokens`, single use or until expiry, only hashes stored) for own anonymous links. Apps need a migration. See [files](../modules/files.md#temporary-links).
 - `CodeEditor.Highlight`: a regular expression whose matches are highlighted; the mail body editor highlights `{{ ... }}`.
 - Mail body editor: placeholders are chips showing their name, the visual toolbar has the mail formatting tools and *Insert placeholder*, Ctrl+Space opens the placeholder list in both modes, `{{` works like `{` in Visual. See [mailing](../modules/mailing.md).
+
+### Changed
+
+- `CodeCompletion.InsertText` is the whole text now, trigger included (`{{ name }}` instead of ` name }}`): a pick replaces what was typed of `CompletionTrigger` and the closing brackets Monaco added, and Ctrl+Space inserts a complete text anywhere. New `Snippet` flag for Monaco snippets (`{{ if $1 }}`). Own completions passed to `CodeEditor` need the trigger in their text.
+- Mail body editor: bodies whose markup the visual editor would change (styles other than `color`, `background-color` and `text-align`, tags beyond text formatting, comments) open in Source, so a styled button is no longer lost on save. The shipped templates with a button open in Source.
 
 ### Fixed
 

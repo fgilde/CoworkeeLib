@@ -9,14 +9,6 @@
 - OData: `Coworkee:OData:CaseInsensitive` (`CoworkeeODataOptions.CaseInsensitive`, Standard `true`) legt fest, ob Namen in OData-URIs unabhängig von der Schreibweise passen (`$filter=name eq 'x'`); bisher war das immer an. Siehe [OData](../web/odata.md).
 - OData: `AddODataEntity<T>(..., o => o.Key(c => c.IsoCode))` registriert ein Set mit einer anderen Schlüsseleigenschaft beliebigen primitiven Typs; Einzelabfragen sind `/odata/Countries('DE')`. Datensatz-Anhänge, Social, Workflows, Entity-Historie und Webhook-Entity-Ereignisse weisen Entities ohne Guid-`Id` bei der Registrierung ab; Client-Entities überspringen solche Sets. Siehe [OData](../web/odata.md#schlussel-auer-id).
 - OData: berechnete Eigenschaften (`ODataComputedProperty`) lassen sich auswählen (`$select=ReferenceNumberDisplay`) und kommen dann mit ihrem Wert zurück; ein Ausdruck über die eigenen Spalten der Zeile funktioniert auch auf Sets externer Datenbanken. Siehe [OData](../web/odata.md#berechnete-eigenschaften).
-
-### Geändert
-
-- `CodeCompletion.InsertText` ist jetzt der ganze Text samt Auslöser (`{{ name }}` statt ` name }}`): Die Auswahl ersetzt, was vom `CompletionTrigger` getippt ist, und die schließenden Klammern, die Monaco ergänzt hat, und Strg+Leertaste fügt überall einen vollständigen Text ein. Neues Flag `Snippet` für Monaco-Snippets (`{{ if $1 }}`). Eigene Vorschläge für `CodeEditor` brauchen den Auslöser im Text.
-- Mail-Inhaltseditor: Inhalte, deren Markup der visuelle Editor ändern würde (andere Styles als `color`, `background-color` und `text-align`, Tags über Textformatierung hinaus, Kommentare), öffnen sich im Quelltext, eine gestaltete Schaltfläche geht beim Speichern also nicht mehr verloren. Die mitgelieferten Vorlagen mit Schaltfläche öffnen sich im Quelltext.
-
-### Hinzugefügt
-
 - Die tägliche Benachrichtigungs-Zusammenfassung lässt Benachrichtigungen aus, die schon als eigene Mail hinausgingen.
 - Benachrichtigungen: Typen mit Kategorien und Einstellungen pro Benutzer (`AddNotificationTypes`, Umfang Off/All/Followed, in der App und per E-Mail, `cw.NotificationPreferences`), Entitäten verfolgen (`Followable<T>`, `cw.NotificationFollows`, `CoworkeeFollowButton`), `INotifier.PublishAsync(NotificationMessage)` für Empfänger, Verfolger und ein Publikum, E-Mails pro Benachrichtigung (Vorlage `Notifications.Notification`) mit Verzögerung und Entprellung (`cw.PendingNotificationMails`, Job `coworkee-notification-mails`), Erledigt-Status, Zahlen pro Kategorie und Suche im Eingang (Reiter *Eingang*, *Einstellungen*, *Gefolgt* auf `/notifications`), neue `ICoworkeeApi`-Member. Apps brauchen eine Migration. Siehe [Realtime](../modules/realtime.md#einstellungen-verfolgen-und-verzogerte-mails).
 - Kommentare: `Status` (`None`, `Open`, `Closed`) und App-`Properties`, `PUT /api/v1/comments/{id}/status` mit der neuen Berechtigung `Social.Comments.SetStatus`, `SocialOptions.ValidateComments` (eine Prüfung vor jeder Änderung), das Domain-Event `CommentChanged` (nach dem Commit). `CoworkeeComments` zeigt den Status, bietet ein Status-Menü und nimmt `NewStatus` für neue Kommentare; `ISocialApi.SetCommentStatusAsync` und `AddCommentAsync(..., CommentRequest)`. `Comment` ist jetzt ein Aggregate Root; Apps brauchen eine Migration. Siehe [Social](../modules/social.md#status-app-werte-und-prufungen).
@@ -24,6 +16,11 @@
 - Temporäre Dateilinks: `POST /api/v1/files/{id}/token` und `POST /api/v1/attachments/{type}/{id}/{slot}/{attachmentId}/token` liefern ein Token, das die Datei fünf Minuten lang ohne Anmeldung öffnet (`/api/v1/files/token/{token}/{name}`, inline oder `?download=true`); *Temporären Link kopieren* auf der Seite *Dateien*, `IFilesApi.CreateTokenAsync`, `IAttachmentsApi.CreateTokenAsync`. `IAccessTokens` (Tabelle `cw.AccessTokens`, einmalig oder bis zum Ablauf, nur Hashes gespeichert) für eigene anonyme Links. Apps brauchen eine Migration. Siehe [Dateien](../modules/files.md#temporare-links).
 - `CodeEditor.Highlight`: ein regulärer Ausdruck, dessen Treffer hervorgehoben werden; der Mail-Inhaltseditor hebt `{{ ... }}` hervor.
 - Mail-Inhaltseditor: Platzhalter sind Chips mit ihrem Namen, die visuelle Werkzeugleiste hat die Mail-Formatierungen und *Platzhalter einfügen*, Strg+Leertaste öffnet die Platzhalterliste in beiden Modi, `{{` wirkt im Visuell-Modus wie `{`. Siehe [Mailing](../modules/mailing.md).
+
+### Geändert
+
+- `CodeCompletion.InsertText` ist jetzt der ganze Text samt Auslöser (`{{ name }}` statt ` name }}`): Die Auswahl ersetzt, was vom `CompletionTrigger` getippt ist, und die schließenden Klammern, die Monaco ergänzt hat, und Strg+Leertaste fügt überall einen vollständigen Text ein. Neues Flag `Snippet` für Monaco-Snippets (`{{ if $1 }}`). Eigene Vorschläge für `CodeEditor` brauchen den Auslöser im Text.
+- Mail-Inhaltseditor: Inhalte, deren Markup der visuelle Editor ändern würde (andere Styles als `color`, `background-color` und `text-align`, Tags über Textformatierung hinaus, Kommentare), öffnen sich im Quelltext, eine gestaltete Schaltfläche geht beim Speichern also nicht mehr verloren. Die mitgelieferten Vorlagen mit Schaltfläche öffnen sich im Quelltext.
 
 ### Behoben
 
