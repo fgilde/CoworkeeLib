@@ -14,6 +14,9 @@ export type BffUser = {
   appUrl?: string | null;
   /** App launcher of an AirWorks host (Coworkee:AirWorks:Launcher): menu or overlay. */
   launcher?: string | null;
+  /** The user who signed in as this one ("Log in as"); back with /bff/stop-impersonation?returnUrl=/. */
+  impersonatorId?: string | null;
+  impersonatorName?: string | null;
 };
 
 export const getUser = (options?: CoworkeeClientOptions) => apiRequest<BffUser>('/bff/user', {}, options);
