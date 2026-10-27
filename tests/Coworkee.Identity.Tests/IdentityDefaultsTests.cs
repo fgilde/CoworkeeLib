@@ -128,6 +128,36 @@ public sealed class IdentityDefaultsTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_added_role_link_and_membership_are_audited()
+    {
+        var customer = await RoleAsync("Customer", isDefault: true);
+        var standard = await GroupAsync("Default");
+        await SetDefaultAsync(Admin, standard);
+
+        var user = await UserAsync("new");
+
+        var audits = await app.InDbAsync(null, db => db.Set<Coworkee.Infrastructure.Auditing.AuditEntry>().IgnoreQueryFilters()
+            .Where(a => a.Action == Coworkee.Infrastructure.Auditing.AuditAction.Created).Select(a => new { a.EntityType, a.EntityId, a.ActorId }).ToListAsync(Ct));
+        audits.ShouldContain(a => a.EntityType == nameof(UserGroupMember) && a.EntityId == $"{standard},{user}" && a.ActorId == _setup.AdminUserId);
+        audits.ShouldContain(a => a.EntityType.StartsWith("IdentityUserRole") && a.EntityId == $"{user},{customer}" && a.ActorId == _setup.AdminUserId);
+    }
+
+    [Fact]
+    public async Task System_roles_are_never_given_by_default()
+    {
+        var system = await app.InDbAsync(null, async db =>
+        {
+            var role = await db.Set<Role>().IgnoreQueryFilters().SingleAsync(r => r.IsSystem && r.Name == SystemRoles.User, Ct);
+            role.IsDefault = true;
+            return role.Id;
+        });
+
+        var user = await UserAsync("plain");
+
+        (await RoleIdsAsync(user)).ShouldNotContain(system);
+    }
+
+    [Fact]
     public async Task Users_created_through_the_user_manager_get_the_defaults_unless_they_join_another_group()
     {
         var customer = await RoleAsync("Customer", isDefault: true);

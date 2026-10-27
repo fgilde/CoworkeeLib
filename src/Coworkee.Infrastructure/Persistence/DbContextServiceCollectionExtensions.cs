@@ -32,6 +32,7 @@ public static class DbContextServiceCollectionExtensions
         services.AddDbContext<TContext>((provider, options) =>
         {
             configure(provider, options);
+            options.AddInterceptors(provider.GetServices<IPreparingInterceptor>());
             options.AddInterceptors(
                 provider.GetRequiredService<SoftDeleteInterceptor>(),
                 provider.GetRequiredService<AuditablePropertiesInterceptor>(),
