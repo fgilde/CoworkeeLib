@@ -1,5 +1,6 @@
 using Coworkee.Application.Messaging;
 using Coworkee.AspNetCore.Http;
+using Coworkee.AspNetCore.RateLimiting;
 using Coworkee.Contracts.Data;
 using Coworkee.OData.Transfer.Import;
 using Microsoft.AspNetCore.Builder;
@@ -20,7 +21,8 @@ internal static class DataTransferEndpoints
             .Produces<DataExportProgress>(StatusCodes.Status200OK, "application/x-ndjson");
         data.MapPost("/{entitySet}/export/mail", (string entitySet, MailExportRequest request, DataExports exports, CancellationToken ct) => exports.MailAsync(entitySet, request, ct))
             .Produces<DataTransferJobDto>(StatusCodes.Status202Accepted);
-        data.MapGet("/downloads/{token}", (string token, DataExports exports, CancellationToken ct) => exports.DownloadAsync(token, ct)).AllowAnonymous();
+        data.MapGet("/downloads/{token}", (string token, DataExports exports, CancellationToken ct) => exports.DownloadAsync(token, ct)).AllowAnonymous()
+            .RequireCoworkeeRateLimit(CoworkeeRateLimitOptions.Tokens);
 
         data.MapGet("/export-schedules", (string? entitySet, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetExportSchedulesQuery(entitySet), ct).ToHttpResult());
         data.MapPost("/export-schedules", (SaveExportScheduleRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SaveExportScheduleCommand(null, body), ct).ToHttpResult());

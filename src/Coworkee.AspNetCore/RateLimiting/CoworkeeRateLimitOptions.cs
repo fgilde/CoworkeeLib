@@ -14,6 +14,9 @@ public sealed class CoworkeeRateLimitOptions
     /// <summary>Creating API keys.</summary>
     public const string ApiKeys = "apiKeys";
 
+    /// <summary>Anonymous links with a token: temporary file and attachment links, export downloads (per IP address).</summary>
+    public const string Tokens = "tokens";
+
     /// <summary>Not applied by the built-in modules; for application endpoints that take files.</summary>
     public const string Upload = "upload";
 
@@ -29,6 +32,7 @@ public sealed class CoworkeeRateLimitOptions
         [Ai] = new() { PermitLimit = 30 },
         [ApiKeys] = new() { PermitLimit = 10 },
         [Upload] = new() { PermitLimit = 120 },
+        [Tokens] = new() { PermitLimit = 120 },
     };
 }
 

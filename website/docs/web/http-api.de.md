@@ -71,6 +71,7 @@ Jede Version bekommt ein eigenes Dokument, `/openapi/v2.json`, und einen Eintrag
 | `auth` | 60 pro Minute | Anmelde-, Registrierungs- und Passwortseiten des Auth-Servers |
 | `ai` | 30 pro Minute | `/api/v1/ai/*` und `/mcp` |
 | `upload` | 120 pro Minute | nichts Eingebautes; für eigene Upload-Endpunkte |
+| `tokens` | 120 pro Minute | anonyme Token-Links: temporäre Datei- und Anhang-Links, Export-Downloads |
 | global | aus | jede Anfrage, sobald konfiguriert |
 
 ```csharp

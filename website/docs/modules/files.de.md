@@ -77,6 +77,8 @@ Eine Datei, die privat bleibt, lässt sich trotzdem kurz ohne Anmeldung öffnen,
 
 Die Tokens kommen von `IAccessTokens` (`Coworkee.Infrastructure.Tokens`, Tabelle `cw.AccessTokens`): `Issue(purpose, targetId, lifetime, singleUse)` legt ein Token in der Unit of Work an, `RedeemAsync(purpose, token)` liefert das Ziel mit Organisation und Benutzer, die es ausgestellt haben, oder null, wenn das Token unbekannt, abgelaufen oder (einmalig) schon eingelöst ist. Apps nutzen es für eigene anonyme Links.
 
+Die anonymen Routen sind pro Adresse in der Rate begrenzt (Policy `tokens`, 120 pro Minute). Das Token landet nie in Logs oder Traces: Die Anfragezeilen von ASP.NET Core und die Activity der Anfrage (`url.path`, `url.full`, ihr Name) zeigen `/token/***/` und `/downloads/***`; `SecretPaths.Redact` maskiert es in eigenen Logs.
+
 ## Cloud-Dateiauswahl
 
 Jedes `MudExUploadEdit` der App kann Dateien auch aus Google Drive, OneDrive und Dropbox übernehmen: der Upload des Dateimanagers (Seite Dateien und das Seitenblatt von `CoworkeeFilePicker`), der Dokument-Upload der Vorlage und die Upload-Felder eigener Seiten. Eine Auswahl erscheint, sobald ihre Client-ID oder ihr App-Key gesetzt ist; ohne bleibt alles wie bisher.

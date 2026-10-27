@@ -71,6 +71,7 @@ Each version gets its own document, `/openapi/v2.json`, and an entry in the Swag
 | `auth` | 60 per minute | sign-in, registration and password pages of the auth server |
 | `ai` | 30 per minute | `/api/v1/ai/*` and `/mcp` |
 | `upload` | 120 per minute | nothing built in; for your upload endpoints |
+| `tokens` | 120 per minute | anonymous token links: temporary file and attachment links, export downloads |
 | global | off | every request, once configured |
 
 ```csharp

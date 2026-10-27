@@ -1,6 +1,7 @@
 using Coworkee.Application;
 using Coworkee.AspNetCore;
 using Coworkee.AspNetCore.Http;
+using Coworkee.AspNetCore.RateLimiting;
 using Coworkee.Contracts.Attachments;
 using Coworkee.Contracts.Files;
 using Coworkee.Core.Security;
@@ -26,8 +27,9 @@ internal static class AttachmentEndpoints
         group.MapMethods("/{entityType}/{entityId:guid}/{slot}/{id:guid}", [HttpMethods.Head], ContentAsync).ExcludeFromDescription();
         var largest = options.Types.Values.SelectMany(t => t.Slots.Values).Select(s => s.MaxBytes).DefaultIfEmpty(RecordAttachmentType.DefaultMaxBytes).Max();
         group.MapPost("/{entityType}/{entityId:guid}/{slot}/{id:guid}/token", TokenAsync);
-        group.MapGet("/token/{token}/{name}", TokenContentAsync).AllowAnonymous();
-        group.MapMethods("/token/{token}/{name}", [HttpMethods.Head], TokenContentAsync).AllowAnonymous().ExcludeFromDescription();
+        group.MapGet("/token/{token}/{name}", TokenContentAsync).AllowAnonymous().RequireCoworkeeRateLimit(CoworkeeRateLimitOptions.Tokens);
+        group.MapMethods("/token/{token}/{name}", [HttpMethods.Head], TokenContentAsync).AllowAnonymous().RequireCoworkeeRateLimit(CoworkeeRateLimitOptions.Tokens)
+            .ExcludeFromDescription();
         group.MapPost("/{entityType}/{entityId:guid}/{slot}", UploadAsync).WithMetadata(new RequestSizeLimitAttribute(largest + 64 * 1024));
         group.MapDelete("/{entityType}/{entityId:guid}/{slot}/{id:guid}", DeleteAsync);
     }

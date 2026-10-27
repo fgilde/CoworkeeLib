@@ -1,6 +1,7 @@
 using Coworkee.Application.Messaging;
 using Coworkee.AspNetCore;
 using Coworkee.AspNetCore.Http;
+using Coworkee.AspNetCore.RateLimiting;
 using Coworkee.Contracts.Files;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -27,8 +28,9 @@ internal static class FileEndpoints
         files.MapMethods("/{id:guid}/content", [HttpMethods.Head], ContentAsync).ExcludeFromDescription();
         files.MapPut("/{id:guid}/public", (Guid id, FilePublicRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new SetFilePublic(id, body.IsPublic), ct).ToHttpResult());
         files.MapPost("/{id:guid}/token", (Guid id, IDispatcher d, CancellationToken ct) => d.SendAsync(new CreateFileToken(id), ct).ToHttpResult());
-        files.MapGet("/token/{token}/{name}", TokenContentAsync).AllowAnonymous();
-        files.MapMethods("/token/{token}/{name}", [HttpMethods.Head], TokenContentAsync).AllowAnonymous().ExcludeFromDescription();
+        files.MapGet("/token/{token}/{name}", TokenContentAsync).AllowAnonymous().RequireCoworkeeRateLimit(CoworkeeRateLimitOptions.Tokens);
+        files.MapMethods("/token/{token}/{name}", [HttpMethods.Head], TokenContentAsync).AllowAnonymous().RequireCoworkeeRateLimit(CoworkeeRateLimitOptions.Tokens)
+            .ExcludeFromDescription();
         files.MapGet("/public/{id:guid}/{name}", PublicContentAsync).AllowAnonymous();
         files.MapMethods("/public/{id:guid}/{name}", [HttpMethods.Head], PublicContentAsync).AllowAnonymous().ExcludeFromDescription();
     }

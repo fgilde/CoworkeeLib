@@ -25,6 +25,7 @@ public static class CoworkeeWebApplicationExtensions
         where TRoot : CoworkeeModule
     {
         builder.Services.AddHttpContextAccessor();
+        builder.Services.AddSecretPathRedaction();
         builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
         builder.Services.AddAuthentication();
         builder.Services.AddAuthorization();
@@ -59,6 +60,7 @@ public static class CoworkeeWebApplicationExtensions
     public static WebApplication UseCoworkee(this WebApplication app)
     {
         app.UseExceptionHandler();
+        app.UseSecretPathRedaction();
         app.UseRequestLocalization(RequestCultures);
         foreach (var module in app.Services.GetRequiredService<IReadOnlyList<CoworkeeModule>>().OfType<IWebModule>())
         {

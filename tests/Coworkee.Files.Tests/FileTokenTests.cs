@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -6,6 +8,7 @@ using Coworkee.Contracts.Attachments;
 using Coworkee.Contracts.Files;
 using Coworkee.Contracts.Identity;
 using Coworkee.Infrastructure.Tokens;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 
@@ -79,6 +82,68 @@ public sealed class FileTokenTests(FilesApp app) : IAsyncLifetime
             .StatusCode.ShouldBe(HttpStatusCode.NotFound);
         await ExpireAsync();
         (await app.App.GetTestClient().GetAsync("/" + token.Url, Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task A_token_of_a_deleted_file_or_attachment_opens_nothing()
+    {
+        var file = await UploadAsync(Admin, "gone.txt", "gone", "text/plain");
+        var fileToken = await (await Admin.PostAsync($"/api/v1/files/{file.Id}/token", null, Ct)).Content.ReadFromJsonAsync<FileTokenDto>(Ct);
+        var ticket = await app.AddTicketAsync(_setup.AdminUserId, _setup.TenantId);
+        var content = new ByteArrayContent(Encoding.UTF8.GetBytes("doc"));
+        content.Headers.ContentType = new MediaTypeHeaderValue("text/plain");
+        var attachment = await (await Admin.PostAsync($"/{AttachmentUrls.Slot("Tickets", ticket, "docs")}?name=a.txt", content, Ct)).Content.ReadFromJsonAsync<RecordAttachmentDto>(Ct);
+        var attachmentToken = await (await Admin.PostAsync($"/{AttachmentUrls.Content(attachment!)}/token", null, Ct)).Content.ReadFromJsonAsync<FileTokenDto>(Ct);
+
+        (await Admin.PostAsJsonAsync("/api/v1/files/delete", new FileSelectionRequest([file.Id], []), Ct)).EnsureSuccessStatusCode();
+        (await Admin.DeleteAsync($"/{AttachmentUrls.Content(attachment!)}", Ct)).EnsureSuccessStatusCode();
+
+        var anonymous = app.App.GetTestClient();
+        (await anonymous.GetAsync("/" + fileToken!.Url, Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await anonymous.GetAsync("/" + attachmentToken!.Url, Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Token_links_are_rate_limited_per_address()
+    {
+        var statuses = new List<HttpStatusCode>();
+        for (var i = 0; i <= FilesApp.TokenLimit; i++)
+        {
+            var context = await app.App.GetTestServer().SendAsync(c =>
+            {
+                c.Request.Method = HttpMethods.Get;
+                c.Request.Path = "/" + FileLinks.Token("guessed", "a.txt");
+                c.Connection.RemoteIpAddress = IPAddress.Parse("203.0.113.7");
+            }, Ct);
+            statuses.Add((HttpStatusCode)context.Response.StatusCode);
+        }
+
+        statuses.Take(FilesApp.TokenLimit).ShouldAllBe(s => s == HttpStatusCode.NotFound);
+        statuses[^1].ShouldBe(HttpStatusCode.TooManyRequests);
+    }
+
+    [Fact]
+    public async Task Tokens_are_masked_in_request_logs_and_in_the_request_activity()
+    {
+        var file = await UploadAsync(Admin, "secret.pdf", "pdf", "application/pdf");
+        var token = (await (await Admin.PostAsync($"/api/v1/files/{file.Id}/token", null, Ct)).Content.ReadFromJsonAsync<FileTokenDto>(Ct))!;
+        var tags = new ConcurrentQueue<string>();
+        using var listener = new ActivityListener
+        {
+            ShouldListenTo = source => source.Name == "Microsoft.AspNetCore",
+            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+            // as the OpenTelemetry instrumentation does, from the raw request
+            ActivityStarted = activity => activity.SetTag("url.full", "http://localhost/" + token.Url),
+            ActivityStopped = activity => tags.Enqueue($"{activity.DisplayName} {activity.GetTagItem("url.full")} {activity.GetTagItem("url.path")}"),
+        };
+        ActivitySource.AddActivityListener(listener);
+
+        (await app.App.GetTestClient().GetAsync("/" + token.Url, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        app.Logs.Lines.ShouldContain(line => line.Contains("/api/v1/files/token/***/secret.pdf"));
+        app.Logs.Lines.ShouldNotContain(line => line.Contains(token.Token));
+        tags.ShouldContain(t => t.Contains("/api/v1/files/token/***/secret.pdf"));
+        tags.ShouldNotContain(t => t.Contains(token.Token));
     }
 
     // the clock moves on: the tokens' time is up

@@ -23,6 +23,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 [assembly: AssemblyFixture(typeof(Coworkee.Files.Tests.FilesApp))]
 [assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly)]
@@ -35,6 +36,12 @@ public sealed class FilesApp : DatabaseFixture
 
     public WebApplication App { get; private set; } = null!;
 
+    /// <summary>Anonymous token requests one address may send per minute here.</summary>
+    public const int TokenLimit = 50;
+
+    /// <summary>Every log line the app writes.</summary>
+    public CapturedLogs Logs { get; } = new();
+
     public override async ValueTask InitializeAsync()
     {
         await base.InitializeAsync();
@@ -46,6 +53,8 @@ public sealed class FilesApp : DatabaseFixture
         builder.Configuration["Coworkee:Jobs:ConnectionStringName"] = "test";
         builder.Configuration["Coworkee:Jobs:RunServer"] = "false";
         builder.Configuration["Coworkee:Database:Provider"] = Provider;
+        builder.Configuration["Coworkee:RateLimiting:Policies:tokens:PermitLimit"] = TokenLimit.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        builder.Logging.AddProvider(Logs);
         builder.AddCoworkee<TestFilesModule>();
         builder.Services.AddTestAuthentication();
         App = builder.Build();
@@ -175,5 +184,27 @@ public sealed class TestFilesModule : CoworkeeModule
             .WriteRequires(Contracts.Files.FilePermissions.Upload));
         context.Services.AddCoworkeeDbContext<FilesTestDbContext>((provider, options) =>
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
+    }
+}
+
+public sealed class CapturedLogs : ILoggerProvider
+{
+    public ConcurrentQueue<string> Lines { get; } = new();
+
+    public ILogger CreateLogger(string categoryName) => new Logger(this);
+
+    public void Dispose()
+    {
+    }
+
+    private sealed class Logger(CapturedLogs logs) : ILogger
+    {
+        public IDisposable? BeginScope<TState>(TState state)
+            where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
+            logs.Lines.Enqueue(formatter(state, exception) + " | " + string.Join(";", (state as IEnumerable<KeyValuePair<string, object?>> ?? []).Select(v => $"{v.Key}={v.Value}")));
     }
 }
