@@ -1813,5 +1813,10 @@
   "{0} members": "Členové: {0}",
   "Group not found.": "Skupina nebyla nalezena.",
   "All my groups": "Všechny moje skupiny",
-  "{0} groups": "Skupiny: {0}"
+  "{0} groups": "Skupiny: {0}",
+  "Log in as": "Přihlásit se jako",
+  "You see and do what {0} can until you go back to your account. The audit log names you as well.": "Uvidíte a uděláte to, co může {0}, dokud se nevrátíte ke svému účtu. Protokol auditu zaznamená i vás.",
+  "Impersonated by {0}": "Přihlášen za {0}",
+  "Back to my account": "Zpět na můj účet",
+  "impersonated by": "přihlášen za"
 }

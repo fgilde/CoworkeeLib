@@ -1813,5 +1813,10 @@
   "{0} members": "{0} membres",
   "Group not found.": "Groupe introuvable.",
   "All my groups": "Tous mes groupes",
-  "{0} groups": "{0} groupes"
+  "{0} groups": "{0} groupes",
+  "Log in as": "Se connecter en tant que",
+  "You see and do what {0} can until you go back to your account. The audit log names you as well.": "Vous voyez et faites ce que {0} peut faire jusqu'à ce que vous reveniez à votre compte. Le journal d'audit vous mentionne aussi.",
+  "Impersonated by {0}": "Connecté par {0}",
+  "Back to my account": "Retour à mon compte",
+  "impersonated by": "connecté par"
 }

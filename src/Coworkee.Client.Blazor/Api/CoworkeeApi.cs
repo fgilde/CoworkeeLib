@@ -60,6 +60,9 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
     public Task LockUserAsync(Guid userId, DateTimeOffset? until, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Post, $"{Identity}/users/{userId}/lock", new LockUserRequest(until), cancellationToken);
 
+    public Task<ImpersonationTicketDto> StartImpersonationAsync(Guid userId, CancellationToken cancellationToken = default) =>
+        SendAsync<ImpersonationTicketDto>(HttpMethod.Post, $"{Identity}/users/{userId}/impersonation", null, cancellationToken);
+
     public Task SignOutUserAsync(Guid userId, CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Post, $"{Identity}/users/{userId}/sign-out", null, cancellationToken);
 

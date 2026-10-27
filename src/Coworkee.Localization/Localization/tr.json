@@ -1813,5 +1813,10 @@
   "{0} members": "{0} üye",
   "Group not found.": "Grup bulunamadı.",
   "All my groups": "Tüm gruplarım",
-  "{0} groups": "{0} grup"
+  "{0} groups": "{0} grup",
+  "Log in as": "Bu kullanıcı olarak oturum aç",
+  "You see and do what {0} can until you go back to your account. The audit log names you as well.": "Hesabınıza dönene kadar {0} kullanıcısının yapabildiklerini görür ve yaparsınız. Denetim günlüğü sizi de kaydeder.",
+  "Impersonated by {0}": "{0} tarafından oturum açıldı",
+  "Back to my account": "Hesabıma dön",
+  "impersonated by": "oturumu açan:"
 }

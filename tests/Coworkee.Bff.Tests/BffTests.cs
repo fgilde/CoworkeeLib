@@ -1,7 +1,12 @@
 using System.Net;
 using System.Net.Http.Json;
 using Coworkee.Contracts.Identity;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Testing.Handlers;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
@@ -11,6 +16,7 @@ namespace Coworkee.Bff.Tests;
 
 public sealed class BffTests : IAsyncLifetime
 {
+    private static readonly Guid Impersonator = Guid.CreateVersion7();
     private WebApplication _app = null!;
     private HttpClient _client = null!;
 
@@ -33,6 +39,9 @@ public sealed class BffTests : IAsyncLifetime
         _app = builder.Build();
         _app.MapCoworkeeBff();
         _app.MapGet("/test/page", () => "page").RequireAuthorization("perm:Identity.Roles.View");
+        _app.MapGet("/test/signin", (HttpContext context) => context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(new ClaimsIdentity(
+            [new Claim("sub", Guid.CreateVersion7().ToString()), new Claim("name", "Bob"), new Claim(ImpersonationClaims.Impersonator, Impersonator.ToString()),
+             new Claim(ImpersonationClaims.ImpersonatorName, "Ada Admin")], "test", "name", "role"))));
         await _app.StartAsync();
         _client = _app.GetTestClient();
     }
@@ -119,6 +128,41 @@ public sealed class BffTests : IAsyncLifetime
         var properties = _app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptionsMonitor<Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectOptions>>()
             .Get("OpenIdConnect").StateDataFormat.Unprotect(state)!;
         properties.RedirectUri.ShouldBe("/");
+    }
+
+    [Fact]
+    public async Task The_user_names_who_signed_in_as_him_and_offers_no_account_pages()
+    {
+        var server = _app.GetTestServer();
+        var browser = new HttpClient(new CookieContainerHandler { InnerHandler = server.CreateHandler() }) { BaseAddress = server.BaseAddress };
+        (await browser.GetAsync("/test/signin", TestContext.Current.CancellationToken)).EnsureSuccessStatusCode();
+
+        var user = await browser.GetFromJsonAsync<BffUserDto>("/bff/user", TestContext.Current.CancellationToken);
+
+        (user!.Name, user.ImpersonatorId, user.ImpersonatorName, user.ManageUrl).ShouldBe(("Bob", Impersonator, "Ada Admin", null));
+    }
+
+    [Fact]
+    public async Task Log_in_as_and_back_go_through_the_auth_server_and_return_through_the_login()
+    {
+        var start = await _client.GetAsync("/bff/impersonate?ticket=t%2B1&returnUrl=%2Fadmin", TestContext.Current.CancellationToken);
+        var stop = await _client.GetAsync("/bff/stop-impersonation", TestContext.Current.CancellationToken);
+
+        start.Headers.Location!.ToString().ShouldBe("https://auth.test/Account/Impersonate?ticket=t%2B1&returnUrl=http%3A%2F%2Flocalhost%2Fbff%2Flogin%3FreturnUrl%3D%252Fadmin");
+        stop.Headers.Location!.ToString().ShouldBe("https://auth.test/Account/StopImpersonation?returnUrl=http%3A%2F%2Flocalhost%2Fbff%2Flogin%3FreturnUrl%3D%252F");
+        (await _client.GetAsync("/bff/impersonate?returnUrl=%2F", TestContext.Current.CancellationToken)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Theory]
+    [InlineData("/\\evil.test")]
+    [InlineData("//evil.test")]
+    [InlineData("https://evil.test")]
+    public async Task Log_in_as_and_back_never_return_off_site(string returnUrl)
+    {
+        (await _client.GetAsync("/bff/impersonate?ticket=t&returnUrl=" + Uri.EscapeDataString(returnUrl), TestContext.Current.CancellationToken))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await _client.GetAsync("/bff/stop-impersonation?returnUrl=" + Uri.EscapeDataString(returnUrl), TestContext.Current.CancellationToken))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     [Fact]

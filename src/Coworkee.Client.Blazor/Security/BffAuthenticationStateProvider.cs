@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Coworkee.Client.Blazor.Api;
+using Coworkee.Contracts.Identity;
 using Microsoft.AspNetCore.Components.Authorization;
 
 namespace Coworkee.Client.Blazor.Security;
@@ -52,6 +53,12 @@ public sealed class BffAuthenticationStateProvider : AuthenticationStateProvider
             if (user.ManageUrl is { Length: > 0 } manage)
             {
                 claims.Add(new Claim("manage_url", manage));
+            }
+
+            if (user.ImpersonatorId is { } impersonator)
+            {
+                claims.Add(new Claim(ImpersonationClaims.Impersonator, impersonator.ToString()));
+                claims.Add(new Claim(ImpersonationClaims.ImpersonatorName, user.ImpersonatorName ?? string.Empty));
             }
 
             if (user.SystemTenant is { } system)

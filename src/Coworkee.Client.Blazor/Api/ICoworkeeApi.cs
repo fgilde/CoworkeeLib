@@ -46,6 +46,9 @@ public interface ICoworkeeApi
     /// <summary>Ends all sessions of the user at once; the open clients of the user sign out.</summary>
     Task SignOutUserAsync(Guid userId, CancellationToken cancellationToken = default);
 
+    /// <summary>A ticket to sign in as the user ("Log in as"); <c>bff/impersonate?ticket=...</c> redeems it within a minute.</summary>
+    Task<ImpersonationTicketDto> StartImpersonationAsync(Guid userId, CancellationToken cancellationToken = default);
+
     /// <summary>Mails a confirmation link to the new address; the current address stays until the link is opened.</summary>
     Task ChangeMyEmailAsync(ChangeEmailRequest request, CancellationToken cancellationToken = default);
 

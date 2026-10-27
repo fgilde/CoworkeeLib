@@ -1813,5 +1813,10 @@
   "{0} members": "Članova: {0}",
   "Group not found.": "Grupa nije pronađena.",
   "All my groups": "Sve moje grupe",
-  "{0} groups": "Broj grupa: {0}"
+  "{0} groups": "Broj grupa: {0}",
+  "Log in as": "Prijava kao",
+  "You see and do what {0} can until you go back to your account. The audit log names you as well.": "Vidite i radite ono što može {0} dok se ne vratite na svoj korisnički račun. Zapisnik revizije bilježi i vas.",
+  "Impersonated by {0}": "Prijavio {0}",
+  "Back to my account": "Natrag na moj korisnički račun",
+  "impersonated by": "prijavio"
 }

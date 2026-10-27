@@ -25,6 +25,9 @@ public partial class CoworkeeUserMenu : IDisposable
 
     private string SignInHref => Options.SignInHref(Nav.ToBaseRelativePath(Nav.Uri));
 
+    // the BFF has the auth server switch back and returns through its login
+    private void StopImpersonation() => Nav.NavigateTo("bff/stop-impersonation?returnUrl=%2F", forceLoad: true);
+
     private async Task LogoutAsync()
     {
         var logout = await Api.LogoutAsync();

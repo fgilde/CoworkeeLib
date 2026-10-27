@@ -1813,5 +1813,10 @@
   "{0} members": "{0} leden",
   "Group not found.": "Groep niet gevonden.",
   "All my groups": "Al mijn groepen",
-  "{0} groups": "{0} groepen"
+  "{0} groups": "{0} groepen",
+  "Log in as": "Inloggen als",
+  "You see and do what {0} can until you go back to your account. The audit log names you as well.": "U ziet en doet wat {0} kan totdat u teruggaat naar uw account. Het auditlogboek vermeldt u ook.",
+  "Impersonated by {0}": "Ingelogd door {0}",
+  "Back to my account": "Terug naar mijn account",
+  "impersonated by": "ingelogd door"
 }

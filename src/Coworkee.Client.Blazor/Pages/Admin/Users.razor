@@ -59,6 +59,13 @@
                 <PermissionView Permission="@IdentityPermissions.Users.Manage">
                     <MudIconButton Icon="@Icons.Material.Outlined.LockReset" Size="Size.Small" aria-label="@L["Send password reset"]" OnClick="() => SendResetAsync(context.Item)" />
                 </PermissionView>
+                <PermissionView Permission="@IdentityPermissions.Users.Impersonate">
+                    @if (context.Item.IsActive && Impersonation.Offers(_user, context.Item.Id))
+                    {
+                        <MudIconButton Icon="@Icons.Material.Outlined.SupervisorAccount" Size="Size.Small" aria-label="@L["Log in as"]" OnClick="() => ImpersonateAsync(context.Item)"
+                                       data-testid="@($"impersonate-{context.Item.Email}")" />
+                    }
+                </PermissionView>
             </CellTemplate>
         </TemplateColumn>
     </Columns>

@@ -1813,5 +1813,10 @@
   "{0} members": "{0} Mitglieder",
   "Group not found.": "Gruppe nicht gefunden.",
   "All my groups": "Alle meine Gruppen",
-  "{0} groups": "{0} Gruppen"
+  "{0} groups": "{0} Gruppen",
+  "Log in as": "Anmelden als",
+  "You see and do what {0} can until you go back to your account. The audit log names you as well.": "Sie sehen und tun, was {0} kann, bis Sie zu Ihrem Konto zurückkehren. Das Änderungsprotokoll nennt auch Sie.",
+  "Impersonated by {0}": "Angemeldet durch {0}",
+  "Back to my account": "Zurück zu meinem Konto",
+  "impersonated by": "angemeldet durch"
 }

@@ -3,6 +3,11 @@
         <ActiveRoleMenu />
         <ChatNotifier />
         <NotificationBell />
+        @if (context.User.FindFirst(ImpersonationClaims.ImpersonatorName)?.Value is { } impersonator)
+        {
+            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Icon="@Icons.Material.Outlined.SupervisorAccount" OnClick="StopImpersonation"
+                     data-testid="impersonation">@L["Impersonated by {0}", impersonator]</MudChip>
+        }
         <MudMenu Dense="Density.Dense" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" data-testid="user-menu">
             <ActivatorContent Context="menu">
                 <MudButton Variant="Variant.Text" Color="Color.Inherit" Class="ml-2" Style="text-transform:none"
@@ -26,6 +31,10 @@
                     <MudMenuItem OnClick="() => Pwa.InstallAsync()" Icon="@Icons.Material.Outlined.InstallMobile" data-testid="install-app">@L["Install app"]</MudMenuItem>
                 }
                 <MudDivider />
+                @if (context.User.HasClaim(c => c.Type == ImpersonationClaims.Impersonator))
+                {
+                    <MudMenuItem OnClick="StopImpersonation" Icon="@Icons.Material.Outlined.SupervisorAccount" data-testid="stop-impersonation">@L["Back to my account"]</MudMenuItem>
+                }
                 <MudMenuItem OnClick="LogoutAsync" Icon="@Icons.Material.Outlined.Logout">@L["Sign out"]</MudMenuItem>
             </ChildContent>
         </MudMenu>

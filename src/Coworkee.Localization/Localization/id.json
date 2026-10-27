@@ -1813,5 +1813,10 @@
   "{0} members": "{0} anggota",
   "Group not found.": "Grup tidak ditemukan.",
   "All my groups": "Semua grup saya",
-  "{0} groups": "{0} grup"
+  "{0} groups": "{0} grup",
+  "Log in as": "Masuk sebagai",
+  "You see and do what {0} can until you go back to your account. The audit log names you as well.": "Anda melihat dan melakukan apa yang dapat dilakukan {0} sampai Anda kembali ke akun Anda. Log audit juga mencatat Anda.",
+  "Impersonated by {0}": "Dimasuki oleh {0}",
+  "Back to my account": "Kembali ke akun saya",
+  "impersonated by": "dimasuki oleh"
 }

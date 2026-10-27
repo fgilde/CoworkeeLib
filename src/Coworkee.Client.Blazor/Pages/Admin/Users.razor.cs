@@ -3,7 +3,9 @@ using Coworkee.Client.Blazor.Components.Data;
 using Coworkee.Client.Blazor.Data.Admin;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Contracts.Identity;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 
 namespace Coworkee.Client.Blazor.Pages.Admin;
@@ -27,7 +29,17 @@ public partial class Users
 
     [Inject] private IDialogService Dialogs { get; set; } = null!;
 
-    protected override async Task OnInitializedAsync() => await Snackbar.RunAsync(async () => _roles = await Api.GetRolesAsync());
+    [Inject] private NavigationManager Nav { get; set; } = null!;
+
+    [CascadingParameter] private Task<AuthenticationState> AuthenticationState { get; set; } = null!;
+
+    private ClaimsPrincipal _user = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _user = (await AuthenticationState).User;
+        await Snackbar.RunAsync(async () => _roles = await Api.GetRolesAsync());
+    }
 
     private async Task LoadRolesAsync(IReadOnlyList<UserRow> users) =>
         await Snackbar.RunAsync(async () => _userRoles = await Api.GetUsersRolesAsync([.. users.Select(u => u.Id)]));
@@ -73,6 +85,8 @@ public partial class Users
             _permissionsOf = user;
         }
     }
+
+    private Task ImpersonateAsync(UserRow user) => Impersonation.StartAsync(Dialogs, Api, Snackbar, Nav, L, user.Id, user.Email);
 
     private Task SendResetAsync(UserRow user) => Snackbar.RunAsync(() => Api.SendPasswordResetAsync(user.Id), L["Password reset mail queued for {0}.", user.Email]);
 }

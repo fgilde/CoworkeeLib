@@ -1813,5 +1813,10 @@
   "{0} members": "{0} μέλη",
   "Group not found.": "Η ομάδα δεν βρέθηκε.",
   "All my groups": "Όλες οι ομάδες μου",
-  "{0} groups": "{0} ομάδες"
+  "{0} groups": "{0} ομάδες",
+  "Log in as": "Σύνδεση ως",
+  "You see and do what {0} can until you go back to your account. The audit log names you as well.": "Βλέπετε και κάνετε ό,τι μπορεί ο/η {0} μέχρι να επιστρέψετε στον λογαριασμό σας. Το αρχείο ελέγχου καταγράφει και εσάς.",
+  "Impersonated by {0}": "Σύνδεση από {0}",
+  "Back to my account": "Επιστροφή στον λογαριασμό μου",
+  "impersonated by": "σύνδεση από"
 }

@@ -55,11 +55,13 @@ public partial class UserDetail
     private bool _canViewGroups;
     private Dictionary<Guid, string> _groupPaths = [];
     private bool _busy;
+    private bool _mayImpersonate;
     private string? _error;
 
     protected override async Task OnParametersSetAsync()
     {
         var user = (await AuthenticationState).User;
+        _mayImpersonate = Impersonation.Offers(user, Id);
         _canManage = (await Authorization.AuthorizeAsync(user, Security.PermissionPolicy.For(IdentityPermissions.Users.Manage))).Succeeded;
         _canManageGroups = (await Authorization.AuthorizeAsync(user, Security.PermissionPolicy.For(IdentityPermissions.Groups.Manage))).Succeeded;
         _canViewGroups = _canManageGroups || (await Authorization.AuthorizeAsync(user, Security.PermissionPolicy.For(IdentityPermissions.Groups.View))).Succeeded;
@@ -168,6 +170,8 @@ public partial class UserDetail
             await RunAsync(() => Api.SignOutUserAsync(Id), L["The user was signed out everywhere."]);
         }
     }
+
+    private Task ImpersonateAsync() => Impersonation.StartAsync(Dialogs, Api, Snackbar, Nav, L, Id, _user!.Email);
 
     private sealed class LockForm
     {

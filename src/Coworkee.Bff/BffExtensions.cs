@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
@@ -151,6 +152,18 @@ public static class BffExtensions
     private static bool IsLocalPath([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] string? url) =>
         url is { Length: > 0 } && url[0] == '/' && (url.Length == 1 || (url[1] != '/' && url[1] != '\\'));
 
+    // "Log in as" and back switch the sign-in of the auth server, which then sends the browser through /bff/login, so this session follows
+    private static IResult ToAuthServer(BffOptions options, HttpContext context, string page, string? returnUrl, params KeyValuePair<string, string?>[] parameters)
+    {
+        if (returnUrl is not null && !IsLocalPath(returnUrl))
+        {
+            return Results.BadRequest();
+        }
+
+        var login = UriHelper.BuildAbsolute(context.Request.Scheme, context.Request.Host, context.Request.PathBase, "/bff/login", QueryString.Create("returnUrl", returnUrl ?? "/"));
+        return Results.Redirect(options.Authority.TrimEnd('/') + page + QueryString.Create([.. parameters, new("returnUrl", login)]));
+    }
+
     private static async Task<IResult> LogoutAsync(HttpContext context)
     {
         await context.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme, new AuthenticationProperties { RedirectUri = "/" });
@@ -209,6 +222,10 @@ public static class BffExtensions
             },
             [OpenIdConnectDefaults.AuthenticationScheme]));
         app.MapPost("/bff/logout", (Delegate)LogoutAsync);
+        app.MapGet("/bff/impersonate", (HttpContext context, string? ticket, string? returnUrl) => ticket is { Length: > 0 }
+            ? ToAuthServer(options, context, "/Account/Impersonate", returnUrl, KeyValuePair.Create("ticket", (string?)ticket))
+            : Results.BadRequest());
+        app.MapGet("/bff/stop-impersonation", (HttpContext context, string? returnUrl) => ToAuthServer(options, context, "/Account/StopImpersonation", returnUrl));
         app.MapGet(LoadingScreenLogo.Path, LoadingScreenLogo.ServeAsync);
         app.MapGet(LoadingScreenScript.Path, LoadingScreenScript.Serve);
         Pwa.PwaEndpoints.Map(app);
@@ -221,10 +238,13 @@ public static class BffExtensions
                 Guid.TryParse(user.FindFirstValue("sub"), out var id) ? id : null,
                 Guid.TryParse(user.FindFirstValue("tenant"), out var tenant) ? tenant : null,
                 user.FindAll("role").Select(c => c.Value).ToArray(),
-                options.Authority.TrimEnd('/') + "/Account/Manage",
+                // the account pages refuse someone signed in as another user
+                user.HasClaim(c => c.Type == ImpersonationClaims.Impersonator) ? null : options.Authority.TrimEnd('/') + "/Account/Manage",
                 user.FindFirstValue("system_tenant") is { } system ? system == "true" : null,
                 options.WebAppUrl is { Length: > 0 } web ? web.TrimEnd('/') : null,
-                launcher)
+                launcher,
+                Guid.TryParse(user.FindFirstValue(ImpersonationClaims.Impersonator), out var impersonator) ? impersonator : null,
+                user.FindFirstValue(ImpersonationClaims.ImpersonatorName))
             : BffUserDto.Anonymous with { Launcher = launcher });
 
         // the assistant may think and call tools for minutes before the first byte of its answer

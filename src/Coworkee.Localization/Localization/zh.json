@@ -1813,5 +1813,10 @@
   "{0} members": "{0} 名成员",
   "Group not found.": "未找到该组。",
   "All my groups": "我的所有用户组",
-  "{0} groups": "{0} 个用户组"
+  "{0} groups": "{0} 个用户组",
+  "Log in as": "以此用户身份登录",
+  "You see and do what {0} can until you go back to your account. The audit log names you as well.": "在您返回自己的账户之前，您将看到并执行 {0} 能做的一切。审计日志也会记录您的名字。",
+  "Impersonated by {0}": "由 {0} 代为登录",
+  "Back to my account": "返回我的账户",
+  "impersonated by": "代为登录者："
 }

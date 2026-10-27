@@ -1813,5 +1813,10 @@
   "{0} members": "Участников: {0}",
   "Group not found.": "Группа не найдена.",
   "All my groups": "Все мои группы",
-  "{0} groups": "Групп: {0}"
+  "{0} groups": "Групп: {0}",
+  "Log in as": "Войти как",
+  "You see and do what {0} can until you go back to your account. The audit log names you as well.": "Вы видите и делаете то, что может {0}, пока не вернётесь к своей учётной записи. Журнал аудита фиксирует и вас.",
+  "Impersonated by {0}": "Вход выполнен пользователем {0}",
+  "Back to my account": "Вернуться к своей учётной записи",
+  "impersonated by": "вход выполнен пользователем"
 }

@@ -1813,5 +1813,10 @@
   "{0} members": "メンバー {0} 人",
   "Group not found.": "グループが見つかりません。",
   "All my groups": "自分のすべてのグループ",
-  "{0} groups": "{0} 個のグループ"
+  "{0} groups": "{0} 個のグループ",
+  "Log in as": "このユーザーとしてログイン",
+  "You see and do what {0} can until you go back to your account. The audit log names you as well.": "自分のアカウントに戻るまで、{0} ができることを表示・実行できます。監査ログにはあなたの名前も記録されます。",
+  "Impersonated by {0}": "{0} による代理ログイン",
+  "Back to my account": "自分のアカウントに戻る",
+  "impersonated by": "代理ログイン:"
 }

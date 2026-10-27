@@ -1813,5 +1813,10 @@
   "{0} members": "{0} من الأعضاء",
   "Group not found.": "لم يتم العثور على المجموعة.",
   "All my groups": "كل مجموعاتي",
-  "{0} groups": "{0} مجموعات"
+  "{0} groups": "{0} مجموعات",
+  "Log in as": "تسجيل الدخول باسم",
+  "You see and do what {0} can until you go back to your account. The audit log names you as well.": "سترى وتفعل ما يستطيعه {0} حتى تعود إلى حسابك. يسجّل سجل التدقيق اسمك أيضًا.",
+  "Impersonated by {0}": "منتحَل بواسطة {0}",
+  "Back to my account": "العودة إلى حسابي",
+  "impersonated by": "بواسطة"
 }

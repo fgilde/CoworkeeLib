@@ -1813,5 +1813,10 @@
   "{0} members": "សមាជិក {0} នាក់",
   "Group not found.": "រកមិនឃើញក្រុមទេ។",
   "All my groups": "ក្រុមទាំងអស់របស់ខ្ញុំ",
-  "{0} groups": "{0} ក្រុម"
+  "{0} groups": "{0} ក្រុម",
+  "Log in as": "ចូលគណនីជា",
+  "You see and do what {0} can until you go back to your account. The audit log names you as well.": "អ្នកឃើញ និងធ្វើអ្វីដែល {0} អាចធ្វើបាន រហូតដល់អ្នកត្រឡប់ទៅគណនីរបស់អ្នកវិញ។ កំណត់ហេតុសវនកម្មក៏កត់ឈ្មោះអ្នកផងដែរ។",
+  "Impersonated by {0}": "ចូលដោយ {0}",
+  "Back to my account": "ត្រឡប់ទៅគណនីរបស់ខ្ញុំ",
+  "impersonated by": "ចូលដោយ"
 }

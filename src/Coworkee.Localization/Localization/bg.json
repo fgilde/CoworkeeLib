@@ -1813,5 +1813,10 @@
   "{0} members": "{0} членове",
   "Group not found.": "Групата не е намерена.",
   "All my groups": "Всички мои групи",
-  "{0} groups": "{0} групи"
+  "{0} groups": "{0} групи",
+  "Log in as": "Вход като",
+  "You see and do what {0} can until you go back to your account. The audit log names you as well.": "Виждате и правите това, което може {0}, докато не се върнете към своя акаунт. Дневникът на одита записва и вас.",
+  "Impersonated by {0}": "Влезли сте от името на {0}",
+  "Back to my account": "Обратно към моя акаунт",
+  "impersonated by": "от името на"
 }
