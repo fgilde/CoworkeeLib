@@ -31,4 +31,12 @@ public sealed class TestCurrentUser : ICurrentUser
     public string? ClientId => CurrentUserScope.Current?.ClientId;
 
     public IReadOnlyCollection<string> ClientPermissions => CurrentUserScope.Current?.ClientPermissions ?? [];
+
+    private Guid? _impersonatorId;
+
+    public Guid? ImpersonatorId
+    {
+        get => CurrentUserScope.Current is { } ambient ? ambient.ImpersonatorId : _impersonatorId;
+        set => _impersonatorId = value;
+    }
 }

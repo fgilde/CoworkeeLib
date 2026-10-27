@@ -11,6 +11,7 @@
 - Users-OData-Set: `Groups`-Mitgliedschaften, Filter `Groups/any(m: m/GroupId eq {id})`.
 - Gruppenseite: Schaltflächen für Import (`Groups.Manage`) und Export. Das Set `Groups` hat ein berechnetes `ParentPath` („Kunde A/Hamburg“), und der Export schreibt `Name`, `Description` und `ParentPath` in Baumreihenfolge, so dass sich die Datei wieder importieren lässt, auch in einen anderen Mandanten.
 - Berechnete OData-Eigenschaften mit `Exported = true` sind Spalten des Exports; `ComputedQueryRoot` (aus Workflows verschoben) und `ODataComputedProperty.Inline` helfen, Unterabfragen darin zu schreiben.
+- Als anderer Benutzer anmelden: Berechtigung `Identity.Users.Impersonate`, *Anmelden als* in der Benutzerliste und auf der Benutzerseite, *Zurück zu meinem Konto* im Benutzermenü. `POST /api/v1/identity/users/{id}/impersonation` stellt ein Ticket für eine Minute aus, `/bff/impersonate` und `/bff/stop-impersonation` wechseln die Anmeldung über die Auth-Server-Seiten `/Account/Impersonate` und `/Account/StopImpersonation`. Tokens tragen `impersonator` und `impersonator_name`, `/bff/user` liefert `ImpersonatorId` und `ImpersonatorName`. `[NotWhileImpersonating]` lehnt einen Request während einer Übernahme ab; siehe [Identität](../features/identity.md#als-anderer-benutzer-anmelden).
 
 ### Geändert
 
@@ -20,6 +21,9 @@
 - `PUT /api/v1/identity/groups/{id}` mit einer anderen `ParentId` als der aktuellen übergeordneten Gruppe antwortet mit 400; verschoben wird eine Gruppe mit `PUT /api/v1/identity/groups/{id}/parent`. Fehlt `ParentId`, bleibt die übergeordnete Gruppe.
 - `IUnitOfWork` liefert eine Hülle, die die externen Contexts und dann den Context der App speichert, nicht mehr den DbContext selbst; Code, der es in einen DbContext umgewandelt hat, lässt sich stattdessen den Context geben.
 - Aspire 13.6.4 (App-Host-SDK, `Aspire.Hosting.*`, `Aspire.Hosting.Testing`), CommunityToolkit-Aspire-Pakete 13.6.1, Nextended 10.1.48; `coworkee update` hebt die festgelegten Pakete an.
+- Apps brauchen eine Migration (`dotnet ef migrations add Impersonation`): `cw.AuditEntries` bekommt die Spalte `ImpersonatorId` (nullable).
+- `ICoworkeeApi` hat das neue Mitglied `StartImpersonationAsync`, `ICurrentUser` das Standardmitglied `ImpersonatorId` (null): Eigene Implementierungen von `ICoworkeeApi` und Test-Fakes kompilieren erst wieder, wenn sie es ergänzen; eigene `ICurrentUser`-Implementierungen, die Claims lesen, sollten den Claim `impersonator` liefern.
+- Ist jemand als anderer Benutzer angemeldet, antworten die Kontoseiten des Auth-Servers mit 403, und das Ändern der eigenen E-Mail-Adresse, das Anlegen von API-Schlüsseln, der Export der persönlichen Daten und das Löschen des eigenen Kontos werden abgelehnt (`auth.impersonating`).
 - `[Realtime]` sendet weiterhin an alle mit der Ansichts-Berechtigung; sind Gruppen Kunden in einem Mandanten, sehen Clients anderer Einheiten Datensatz-IDs und geänderte Eigenschaftsnamen. Themen pro Gruppe folgen.
 
 ## 0.0.1.40 (2026-10-25)

@@ -101,6 +101,7 @@ namespace MyApp.Infrastructure.Migrations
                     EntityId = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Action = table.Column<int>(type: "integer", nullable: false),
                     ActorId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ImpersonatorId = table.Column<Guid>(type: "uuid", nullable: true),
                     CorrelationId = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
                     OccurredAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     Changes = table.Column<string>(type: "jsonb", nullable: true)
@@ -2310,6 +2311,7 @@ namespace MyApp.Infrastructure.Migrations
                     EntityId = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Action = table.Column<int>(type: "integer", nullable: false),
                     ActorId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ImpersonatorId = table.Column<Guid>(type: "uuid", nullable: true),
                     CorrelationId = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
                     OccurredAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     Changes = table.Column<string>(type: "jsonb", nullable: true)

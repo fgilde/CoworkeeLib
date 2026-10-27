@@ -67,7 +67,7 @@ internal sealed class AuditQueryHandler(CoworkeeDbContext db, ICurrentUser curre
         return new PagedResult<AuditEntryDto>(
             items.Select(e => new AuditEntryDto(
                 e.Id, e.EntityType, e.EntityId, e.Action.ToString(), e.ActorId, e.ActorId is { } id ? names.GetValueOrDefault(id) : null,
-                e.OccurredAt, e.CorrelationId, e.Changes.Select(c => new AuditChangeDto(c.Property, c.OldValue, c.NewValue)).ToList())).ToList(),
+                e.OccurredAt, e.CorrelationId, e.Changes.Select(c => new AuditChangeDto(c.Property, c.OldValue, c.NewValue)).ToList(), e.ImpersonatorId)).ToList(),
             total, page, pageSize);
     }
 }
@@ -140,6 +140,7 @@ internal sealed class VersionHandlers(
             EntityId = snapshot.EntityId,
             Action = AuditAction.Restored,
             ActorId = currentUser.UserId,
+            ImpersonatorId = currentUser.ImpersonatorId,
             OccurredAt = clock.GetUtcNow(),
             Changes = [new AuditChange { Property = "RestoredRevision", NewValue = command.Revision.ToString(System.Globalization.CultureInfo.InvariantCulture) }],
         });

@@ -28,6 +28,13 @@
                 @if (context.Item.ActorId is { } actor)
                 {
                     <UserCard UserId="actor" />
+                    @if (context.Item.ImpersonatorId is { } impersonator)
+                    {
+                        <div class="d-flex align-center" style="gap:4px" data-testid="audit-impersonator">
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">@L["impersonated by"]</MudText>
+                            <UserCard UserId="impersonator" />
+                        </div>
+                    }
                 }
                 else
                 {

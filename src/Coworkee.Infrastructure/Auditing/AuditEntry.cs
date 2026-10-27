@@ -28,6 +28,9 @@ public sealed class AuditEntry
 
     public Guid? ActorId { get; init; }
 
+    /// <summary>The user who signed in as <see cref="ActorId"/> ("Log in as") and made the change.</summary>
+    public Guid? ImpersonatorId { get; init; }
+
     public string? CorrelationId { get; init; }
 
     public DateTimeOffset OccurredAt { get; init; }

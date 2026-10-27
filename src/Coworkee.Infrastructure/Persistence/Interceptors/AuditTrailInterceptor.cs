@@ -91,6 +91,7 @@ internal sealed class AuditTrailInterceptor(ICurrentUser currentUser, TimeProvid
             EntityId = string.Join(',', entry.Properties.Where(p => p.Metadata.IsPrimaryKey()).Select(p => p.CurrentValue is byte[] bytes ? System.Buffers.Text.Base64Url.EncodeToString(bytes) : p.CurrentValue)),
             Action = action,
             ActorId = currentUser.UserId,
+            ImpersonatorId = currentUser.ImpersonatorId,
             CorrelationId = correlationId,
             OccurredAt = now,
             Changes = changes,

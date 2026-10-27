@@ -11,6 +11,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 - Users OData set: `Groups` memberships, filter `Groups/any(m: m/GroupId eq {id})`.
 - Groups page: Import (`Groups.Manage`) and Export buttons. The `Groups` set has a computed `ParentPath` ("Customer A/Hamburg"), and the export writes `Name`, `Description` and `ParentPath` in tree order, so the file imports again, also into another tenant.
 - Computed OData properties with `Exported = true` are export columns; `ComputedQueryRoot` (moved from Workflows) and `ODataComputedProperty.Inline` help to write subqueries in them.
+- Log in as another user: permission `Identity.Users.Impersonate`, *Log in as* on the users list and the user page, *Back to my account* in the user menu. `POST /api/v1/identity/users/{id}/impersonation` issues a one-minute ticket, `/bff/impersonate` and `/bff/stop-impersonation` switch the sign-in through the auth server pages `/Account/Impersonate` and `/Account/StopImpersonation`. Tokens carry `impersonator` and `impersonator_name`, `/bff/user` returns `ImpersonatorId` and `ImpersonatorName`. `[NotWhileImpersonating]` refuses a request while impersonating; see [identity](../features/identity.md#log-in-as-another-user).
 
 ### Changed
 
@@ -20,6 +21,9 @@ Changes that need action in apps built on Coworkee. Newest first.
 - `PUT /api/v1/identity/groups/{id}` with a `ParentId` other than the current parent answers 400; a group moves with `PUT /api/v1/identity/groups/{id}/parent`. A missing `ParentId` keeps the parent.
 - `IUnitOfWork` resolves to a wrapper that saves the external contexts and then the app's context, no longer to the DbContext itself; code that cast it to a DbContext injects the context instead.
 - Aspire 13.6.4 (app host SDK, `Aspire.Hosting.*`, `Aspire.Hosting.Testing`), CommunityToolkit Aspire packages 13.6.1, Nextended 10.1.48; `coworkee update` moves the pinned packages.
+- Apps need a migration (`dotnet ef migrations add Impersonation`): `cw.AuditEntries` gets the nullable column `ImpersonatorId`.
+- `ICoworkeeApi` has the new member `StartImpersonationAsync`, `ICurrentUser` the default member `ImpersonatorId` (null): hand-written implementations of `ICoworkeeApi` and test fakes no longer compile until they add it; own `ICurrentUser` implementations that read claims should return the `impersonator` claim.
+- While someone is signed in as another user, the account pages of the auth server answer 403, and changing the own e-mail address, creating API keys, exporting personal data and deleting the own account are refused (`auth.impersonating`).
 - `[Realtime]` still broadcasts to everyone with the view permission; with groups as customers in one tenant, clients of other units see record ids and changed property names. Per-group topics follow.
 
 ## 0.0.1.40 (2026-10-25)

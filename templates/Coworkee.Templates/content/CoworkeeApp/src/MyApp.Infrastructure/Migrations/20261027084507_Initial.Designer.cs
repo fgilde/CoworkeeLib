@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20261026064631_Initial")]
+    [Migration("20261027084507_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -1016,6 +1016,9 @@ namespace MyApp.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("ImpersonatorId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("OccurredAt")
                         .HasColumnType("timestamp with time zone");
@@ -3008,7 +3011,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20261026064631_Initial")]
+    [Migration("20261027084507_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -3936,6 +3939,9 @@ namespace MyApp.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("ImpersonatorId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("OccurredAt")
                         .HasColumnType("timestamp with time zone");

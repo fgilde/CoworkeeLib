@@ -20,7 +20,8 @@ public sealed class ImpersonationUiTests : ClientTestBase
     public ImpersonationUiTests()
     {
         Services.AddSingleton<IODataClient>(new FakeODataClient()
-            .With("Users", new UserRow(Ada, "ada@acme.test", "Ada", "Admin", true, null, DateTimeOffset.UtcNow), new UserRow(Bob, "bob@acme.test", "Bob", null, true, null, DateTimeOffset.UtcNow)));
+            .With("Users", new UserRow(Ada, "ada@acme.test", "Ada", "Admin", true, null, DateTimeOffset.UtcNow), new UserRow(Bob, "bob@acme.test", "Bob", null, true, null, DateTimeOffset.UtcNow))
+            .With("AuditEntries", new Contracts.Auditing.AuditEntryDto(Guid.CreateVersion7(), "Brand", "42", "Updated", Ada, null, DateTimeOffset.UtcNow, null, [], Bob)));
         Api.GetRolesAsync(Arg.Any<CancellationToken>()).Returns([]);
         Api.GetSetupStatusAsync(Arg.Any<CancellationToken>()).Returns(new SetupStatusDto(true));
     }
@@ -88,6 +89,19 @@ public sealed class ImpersonationUiTests : ClientTestBase
         layout.WaitForElements(".mud-menu-item").ShouldContain(i => i.TextContent.Contains("Sign out"));
         layout.FindAll("[data-testid='stop-impersonation']").ShouldBeEmpty();
         layout.FindAll("[data-testid='impersonation']").ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void The_audit_log_names_who_signed_in_as_the_user()
+    {
+        SignIn(Contracts.Auditing.AuditPermissions.View);
+        Api.GetUserCardsAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns([new UserCardDto(Ada, "Ada Admin", null), new UserCardDto(Bob, "Bob Builder", null)]);
+
+        var page = Render<AuditLog>();
+
+        page.WaitForAssertion(() => page.Find("[data-testid='audit-impersonator']").TextContent.ShouldSatisfyAllConditions(
+            t => t.ShouldContain("impersonated by"), t => t.ShouldContain("Bob Builder")));
     }
 
     private void SignIn(params string[] permissions)

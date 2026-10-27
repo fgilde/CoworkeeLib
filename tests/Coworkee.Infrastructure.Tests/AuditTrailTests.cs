@@ -30,6 +30,17 @@ public sealed class AuditTrailTests(DatabaseFixture database) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_change_by_someone_signed_in_as_the_user_names_him_too()
+    {
+        _user.ImpersonatorId = Guid.CreateVersion7();
+
+        var id = await InsertAsync("Theirs");
+
+        var entry = (await EntriesAsync(id)).ShouldHaveSingleItem();
+        (entry.ActorId, entry.ImpersonatorId).ShouldBe((_user.UserId, _user.ImpersonatorId));
+    }
+
+    [Fact]
     public async Task Update_records_only_changed_values()
     {
         var id = await InsertAsync("Old");
