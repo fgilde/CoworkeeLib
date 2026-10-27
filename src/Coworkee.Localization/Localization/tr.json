@@ -1871,5 +1871,7 @@
   "You get notifications about this. Click to stop.": "Bununla ilgili bildirim alıyorsunuz. Durdurmak için tıklayın.",
   "Get notifications about this": "Bununla ilgili bildirim al",
   "Mark as done": "Bitti olarak işaretle",
-  "Back to open": "Açığa geri al"
+  "Back to open": "Açığa geri al",
+  "Expired access tokens": "Süresi dolmuş erişim belirteçleri",
+  "Temporary file links and export downloads whose time is up.": "Süresi dolan geçici dosya bağlantıları ve dışa aktarma indirmeleri."
 }

@@ -1871,5 +1871,7 @@
   "You get notifications about this. Click to stop.": "Вы получаете уведомления об этом. Нажмите, чтобы прекратить.",
   "Get notifications about this": "Получать уведомления об этом",
   "Mark as done": "Отметить как выполненное",
-  "Back to open": "Вернуть в открытые"
+  "Back to open": "Вернуть в открытые",
+  "Expired access tokens": "Истёкшие токены доступа",
+  "Temporary file links and export downloads whose time is up.": "Временные ссылки на файлы и загрузки экспортов с истёкшим сроком."
 }

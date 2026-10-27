@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Coworkee.Infrastructure.Tokens;
 
-/// <summary>A short-lived token that opens one thing without sign-in; only the hash of the token is stored.</summary>
+/// <summary>A short-lived token that opens one thing without sign-in; only the hash of the token is stored. Expired ones go with the retention target access-tokens.</summary>
 [NotAudited]
 public sealed class AccessToken : Entity
 {
@@ -83,9 +83,6 @@ internal sealed class AccessTokens(CoworkeeDbContext db, ICurrentUser currentUse
             return null;
         }
 
-        // ponytail: expired rows go when the next token is redeemed; a retention target if tokens get rare
-        var old = now.AddDays(-1);
-        await db.Set<AccessToken>().Where(t => t.ExpiresAt < old).ExecuteDeleteAsync(cancellationToken);
         return new AccessTokenGrant(row.TargetId, row.TenantId, row.UserId);
     }
 

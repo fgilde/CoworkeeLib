@@ -69,6 +69,7 @@ public static class Seed
             db.AddRange(root, child);
             db.Add(new StoredFile { Name = "a.txt", FolderId = child.Id, ContentType = "text/plain", BlobKey = fileBlob, TenantId = tenantId, IsDeleted = true, DeletedAt = now });
             db.Add(new DatabaseBackup { Name = $"{tag}.zip", BlobKey = backupBlob });
+            db.Add(new Infrastructure.Tokens.AccessToken { Hash = $"{tag}{Guid.NewGuid():N}", Purpose = "file", TargetId = Guid.NewGuid(), TenantId = tenantId, ExpiresAt = now });
             db.Add(new OpenIddictEntityFrameworkCoreToken<Guid>
             {
                 CreationDate = now.UtcDateTime, ExpirationDate = now.UtcDateTime.AddHours(1), Status = Statuses.Revoked, Type = "access_token", Subject = userId.ToString(),

@@ -1871,5 +1871,7 @@
   "You get notifications about this. Click to stop.": "Dostáváte k tomu oznámení. Kliknutím je zastavíte.",
   "Get notifications about this": "Dostávat k tomu oznámení",
   "Mark as done": "Označit jako hotové",
-  "Back to open": "Zpět mezi otevřené"
+  "Back to open": "Zpět mezi otevřené",
+  "Expired access tokens": "Vypršené přístupové tokeny",
+  "Temporary file links and export downloads whose time is up.": "Dočasné odkazy na soubory a stažení exportů, jejichž čas vypršel."
 }

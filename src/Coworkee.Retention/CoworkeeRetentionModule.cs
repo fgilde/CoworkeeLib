@@ -29,7 +29,8 @@ public sealed class CoworkeeRetentionModule : CoworkeeModule, IWebModule
         services.AddSingleton<ISettingDefinitionContributor, RetentionSettingDefinitions>();
         services.TryAddSingleton(TimeProvider.System);
         services.AddScoped<RetentionRunner>();
-        services.AddRetentionTarget<AuditRetention>().AddRetentionTarget<SnapshotRetention>().AddRetentionTarget<OutboxRetention>().AddRetentionTarget<SoftDeletedRetention>();
+        services.AddRetentionTarget<AuditRetention>().AddRetentionTarget<SnapshotRetention>().AddRetentionTarget<OutboxRetention>().AddRetentionTarget<SoftDeletedRetention>()
+            .AddRetentionTarget<AccessTokenRetention>();
         services.AddSystemStatus<RetentionStatus>();
         services.AddRecurringJob<RetentionJob>(RetentionExtensions.JobId, context.Configuration[$"{Section}:Cron"] ?? "41 2 * * *");
     }

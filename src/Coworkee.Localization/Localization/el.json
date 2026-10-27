@@ -1871,5 +1871,7 @@
   "You get notifications about this. Click to stop.": "Λαμβάνετε ειδοποιήσεις για αυτό. Κάντε κλικ για διακοπή.",
   "Get notifications about this": "Λήψη ειδοποιήσεων για αυτό",
   "Mark as done": "Σήμανση ως ολοκληρωμένο",
-  "Back to open": "Επιστροφή στα ανοιχτά"
+  "Back to open": "Επιστροφή στα ανοιχτά",
+  "Expired access tokens": "Ληγμένα διακριτικά πρόσβασης",
+  "Temporary file links and export downloads whose time is up.": "Προσωρινοί σύνδεσμοι αρχείων και λήψεις εξαγωγών που έχουν λήξει."
 }

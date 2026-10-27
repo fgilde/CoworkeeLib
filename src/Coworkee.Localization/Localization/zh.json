@@ -1871,5 +1871,7 @@
   "You get notifications about this. Click to stop.": "您会收到有关此内容的通知。点击停止。",
   "Get notifications about this": "接收有关此内容的通知",
   "Mark as done": "标记为已完成",
-  "Back to open": "恢复为待办"
+  "Back to open": "恢复为待办",
+  "Expired access tokens": "已过期的访问令牌",
+  "Temporary file links and export downloads whose time is up.": "已过期的临时文件链接和导出下载。"
 }

@@ -1871,5 +1871,7 @@
   "You get notifications about this. Click to stop.": "Получавате известия за това. Щракнете, за да спрете.",
   "Get notifications about this": "Получаване на известия за това",
   "Mark as done": "Маркиране като готово",
-  "Back to open": "Обратно към отворените"
+  "Back to open": "Обратно към отворените",
+  "Expired access tokens": "Изтекли маркери за достъп",
+  "Temporary file links and export downloads whose time is up.": "Временни връзки към файлове и изтегляния на експорти с изтекло време."
 }

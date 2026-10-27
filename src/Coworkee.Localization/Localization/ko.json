@@ -1871,5 +1871,7 @@
   "You get notifications about this. Click to stop.": "이 항목에 대한 알림을 받고 있습니다. 클릭하면 중지됩니다.",
   "Get notifications about this": "이 항목에 대한 알림 받기",
   "Mark as done": "완료로 표시",
-  "Back to open": "다시 할 일로"
+  "Back to open": "다시 할 일로",
+  "Expired access tokens": "만료된 액세스 토큰",
+  "Temporary file links and export downloads whose time is up.": "시간이 지난 임시 파일 링크와 내보내기 다운로드입니다."
 }

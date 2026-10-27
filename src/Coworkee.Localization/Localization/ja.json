@@ -1871,5 +1871,7 @@
   "You get notifications about this. Click to stop.": "これに関する通知を受け取っています。クリックで停止します。",
   "Get notifications about this": "これに関する通知を受け取る",
   "Mark as done": "完了にする",
-  "Back to open": "未完了に戻す"
+  "Back to open": "未完了に戻す",
+  "Expired access tokens": "期限切れのアクセストークン",
+  "Temporary file links and export downloads whose time is up.": "期限が切れた一時ファイルリンクとエクスポートのダウンロード。"
 }

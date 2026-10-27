@@ -1871,5 +1871,7 @@
   "You get notifications about this. Click to stop.": "تتلقى إشعارات حول هذا. انقر للإيقاف.",
   "Get notifications about this": "تلقي إشعارات حول هذا",
   "Mark as done": "وضع علامة كمنجز",
-  "Back to open": "إعادة إلى المفتوح"
+  "Back to open": "إعادة إلى المفتوح",
+  "Expired access tokens": "رموز الوصول المنتهية",
+  "Temporary file links and export downloads whose time is up.": "روابط الملفات المؤقتة وتنزيلات التصدير التي انتهت مدتها."
 }

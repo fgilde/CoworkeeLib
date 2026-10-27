@@ -1871,5 +1871,7 @@
   "You get notifications about this. Click to stop.": "Anda menerima notifikasi tentang ini. Klik untuk berhenti.",
   "Get notifications about this": "Dapatkan notifikasi tentang ini",
   "Mark as done": "Tandai selesai",
-  "Back to open": "Kembalikan ke terbuka"
+  "Back to open": "Kembalikan ke terbuka",
+  "Expired access tokens": "Token akses kedaluwarsa",
+  "Temporary file links and export downloads whose time is up.": "Tautan file sementara dan unduhan ekspor yang waktunya telah habis."
 }

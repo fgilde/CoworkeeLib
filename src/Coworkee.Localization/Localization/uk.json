@@ -1871,5 +1871,7 @@
   "You get notifications about this. Click to stop.": "Ви отримуєте сповіщення про це. Натисніть, щоб припинити.",
   "Get notifications about this": "Отримувати сповіщення про це",
   "Mark as done": "Позначити як виконане",
-  "Back to open": "Повернути до відкритих"
+  "Back to open": "Повернути до відкритих",
+  "Expired access tokens": "Прострочені токени доступу",
+  "Temporary file links and export downloads whose time is up.": "Тимчасові посилання на файли та завантаження експортів, термін яких минув."
 }

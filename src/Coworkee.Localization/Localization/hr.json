@@ -1871,5 +1871,7 @@
   "You get notifications about this. Click to stop.": "Dobivate obavijesti o ovome. Kliknite za prekid.",
   "Get notifications about this": "Primaj obavijesti o ovome",
   "Mark as done": "Označi kao gotovo",
-  "Back to open": "Vrati u otvorene"
+  "Back to open": "Vrati u otvorene",
+  "Expired access tokens": "Istekli pristupni tokeni",
+  "Temporary file links and export downloads whose time is up.": "Privremene poveznice na datoteke i preuzimanja izvoza kojima je isteklo vrijeme."
 }

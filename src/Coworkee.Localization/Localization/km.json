@@ -1871,5 +1871,7 @@
   "You get notifications about this. Click to stop.": "អ្នកទទួលការជូនដំណឹងអំពីរឿងនេះ។ ចុចដើម្បីបញ្ឈប់។",
   "Get notifications about this": "ទទួលការជូនដំណឹងអំពីរឿងនេះ",
   "Mark as done": "សម្គាល់ថារួចរាល់",
-  "Back to open": "ត្រឡប់ទៅបើកវិញ"
+  "Back to open": "ត្រឡប់ទៅបើកវិញ",
+  "Expired access tokens": "ថូខឹនចូលប្រើដែលផុតកំណត់",
+  "Temporary file links and export downloads whose time is up.": "តំណឯកសារបណ្ដោះអាសន្ន និងការទាញយកការនាំចេញដែលផុតពេល។"
 }

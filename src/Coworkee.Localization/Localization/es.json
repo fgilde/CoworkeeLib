@@ -1871,5 +1871,7 @@
   "You get notifications about this. Click to stop.": "Recibe notificaciones sobre esto. Haga clic para detenerlas.",
   "Get notifications about this": "Recibir notificaciones sobre esto",
   "Mark as done": "Marcar como hecho",
-  "Back to open": "Volver a pendientes"
+  "Back to open": "Volver a pendientes",
+  "Expired access tokens": "Tokens de acceso caducados",
+  "Temporary file links and export downloads whose time is up.": "Enlaces temporales de archivos y descargas de exportaciones cuyo tiempo ha vencido."
 }

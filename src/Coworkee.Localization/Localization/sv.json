@@ -1871,5 +1871,7 @@
   "You get notifications about this. Click to stop.": "Du får aviseringar om detta. Klicka för att sluta.",
   "Get notifications about this": "Få aviseringar om detta",
   "Mark as done": "Markera som klar",
-  "Back to open": "Tillbaka till öppna"
+  "Back to open": "Tillbaka till öppna",
+  "Expired access tokens": "Utgångna åtkomsttoken",
+  "Temporary file links and export downloads whose time is up.": "Tillfälliga fillänkar och exportnedladdningar vars tid har gått ut."
 }

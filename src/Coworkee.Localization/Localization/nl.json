@@ -1871,5 +1871,7 @@
   "You get notifications about this. Click to stop.": "U krijgt hier meldingen over. Klik om te stoppen.",
   "Get notifications about this": "Meldingen hierover krijgen",
   "Mark as done": "Markeren als klaar",
-  "Back to open": "Terug naar open"
+  "Back to open": "Terug naar open",
+  "Expired access tokens": "Verlopen toegangstokens",
+  "Temporary file links and export downloads whose time is up.": "Tijdelijke bestandslinks en exportdownloads waarvan de tijd om is."
 }
