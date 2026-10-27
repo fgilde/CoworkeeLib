@@ -31,7 +31,7 @@ services.AddODataEntity<Customer>("Customers", SalesPermissions.Orders.View);
 ```
 
 - **Felder** kommen aus dem EDM: mit `AddODataEntity(..., o => o.Secret)` verborgene Eigenschaften erscheinen nie, weder als Feld noch in einem Filter.
-- **Navigationen** zu einer anderen registrierten Menge ergänzen deren Felder, etwa `Customer/Name`; der Benutzer braucht auch die Berechtigung dieser Menge.
+- **Navigationen** zu einer anderen registrierten Menge ergänzen deren Felder, etwa `Customer/Name`; der Benutzer braucht auch die Berechtigung dieser Menge, und ihre Zeilenfilter gelten: ein Kunde, den der Benutzer nicht sehen darf, zählt als leer (`null`), nie unter seinem Namen.
 - **Beschriftungen** kommen aus `[ProvideFacet(Label = ...)]`, `[Display(Name = ...)]` oder dem Eigenschaftsnamen; Enum-Werte zeigen ihre `[Display]`-Namen.
 - **Zeilen** sind die, die auch die OData-Liste liefert: Mandantenfilter, Soft Delete und jeder `IODataEntityFilter<T>` gelten. Wer die Berechtigung der Menge nicht hat, bekommt für deren Widgets ein 403, der Rest des Berichts funktioniert weiter.
 - Entitäten mit `[Realtime]` aktualisieren offene Dashboards, sobald sich ihre Zeilen ändern.

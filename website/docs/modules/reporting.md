@@ -31,7 +31,7 @@ services.AddODataEntity<Customer>("Customers", SalesPermissions.Orders.View);
 ```
 
 - **Fields** come from the EDM: properties hidden with `AddODataEntity(..., o => o.Secret)` never show up, neither as field nor in a filter.
-- **Navigation** properties to another registered set add its fields, e.g. `Customer/Name`; the user needs the permission of that set too.
+- **Navigation** properties to another registered set add its fields, e.g. `Customer/Name`; the user needs the permission of that set too, and its row filters apply: a customer the user may not see counts as empty (`null`), never under its name.
 - **Labels** come from `[ProvideFacet(Label = ...)]`, `[Display(Name = ...)]` or the property name; enum members show their `[Display]` names.
 - **Rows** are the ones the OData list returns: tenant filter, soft delete and every `IODataEntityFilter<T>` apply. A user without the set's permission gets a 403 for widgets on it, the rest of the report still works.
 - Entities with `[Realtime]` refresh open dashboards when their rows change.

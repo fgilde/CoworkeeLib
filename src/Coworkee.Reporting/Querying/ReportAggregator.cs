@@ -17,7 +17,8 @@ internal static class ReportAggregator
 
     private static readonly MethodInfo FetchMethod = typeof(ReportAggregator).GetMethod(nameof(FetchAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
 
-    public static async Task<Result<IReadOnlyList<ReportQueryRow>>> RunAsync<TEntity>(IQueryable<TEntity> rows, ReportPlan plan, CancellationToken cancellationToken)
+    /// <param name="scope">Narrows navigation fields to the rows their target set shows.</param>
+    public static async Task<Result<IReadOnlyList<ReportQueryRow>>> RunAsync<TEntity>(IQueryable<TEntity> rows, ReportPlan plan, CancellationToken cancellationToken, OData.ODataNavigationScope? scope = null)
     {
         var entity = Expression.Parameter(typeof(TEntity), "e");
         var (keyBody, keyType) = KeyOf(entity, plan);
@@ -42,7 +43,8 @@ internal static class ReportAggregator
         }
 
         query = Expression.Call(typeof(Queryable), nameof(Queryable.Take), [rowType], query, Expression.Constant(plan.Split is null && plan.Top is { } top ? top : MaxGroups + 1));
-        var fetched = await (Task<List<IAggregateRow>>)FetchMethod.MakeGenericMethod(rowType).Invoke(null, [rows.Provider.CreateQuery(query), cancellationToken])!;
+        var built = rows.Provider.CreateQuery(query);
+        var fetched = await (Task<List<IAggregateRow>>)FetchMethod.MakeGenericMethod(rowType).Invoke(null, [scope?.Apply(built) ?? built, cancellationToken])!;
         if (fetched.Count > MaxGroups)
         {
             return Error.Validation(nameof(ReportQueryRequest.GroupBy), $"More than {MaxGroups} groups; choose a coarser field or date bucket.");

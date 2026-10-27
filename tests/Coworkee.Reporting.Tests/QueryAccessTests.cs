@@ -59,6 +59,21 @@ public sealed class QueryAccessTests(ReportingApp app) : ReportingTestBase(app)
     }
 
     [Fact]
+    public async Task A_navigation_field_counts_only_rows_its_target_shows()
+    {
+        var seller = await CreateUserAsync("territory@acme.test", ReportPermissions.View, ReportingApp.ViewSales, ReportingApp.ViewShoppers);
+        HideShopperSeven.Users[seller.Id] = true;
+        var byShopper = new ReportQueryRequest("Sales", GroupBy: new ReportGroupBy("Shopper/Name"), Top: 100);
+
+        var rows = (await QueryAsync(byShopper, App.As(seller.Id, Setup.TenantId))).Rows;
+
+        Visible.Count(s => s.Shopper!.Name == "Shopper 7").ShouldBeGreaterThan(0);
+        rows.Select(r => r.Key?.Value).ShouldNotContain("Shopper 7");
+        rows.Sum(r => r.Values[0]).ShouldBe(Visible.Count());
+        (await QueryAsync(byShopper)).Rows.Select(r => r.Key?.Value).ShouldContain("Shopper 7");
+    }
+
+    [Fact]
     public async Task A_protected_field_needs_its_permission()
     {
         var seller = App.As((await CreateUserAsync("plain@acme.test", ReportPermissions.View, ReportingApp.ViewSales)).Id, Setup.TenantId);

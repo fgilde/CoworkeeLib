@@ -110,7 +110,7 @@ internal sealed class ReportQueries(IServiceProvider services, ReportSchema sche
             source.Computed is { } computed
                 ? (IQueryable<TEntity>)await computed.RowsAsync(services, filter, cancellationToken)
                 : await ODataEntityAccess.FilteredAsync<TEntity>(services, filter, cancellationToken),
-            plan, cancellationToken);
+            plan, cancellationToken, source.Computed is null ? await ODataNavigationScope.ForAsync(services, typeof(TEntity), cancellationToken) : null);
 
     private static Task CheckFilterAsync<TEntity>(IServiceProvider services, string? filter, CancellationToken cancellationToken)
         where TEntity : class =>

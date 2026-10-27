@@ -33,6 +33,11 @@ internal static class ReportTableRows
         var values = Expression.Lambda<Func<TRow, object?[]>>(
             Expression.NewArrayInit(typeof(object), columns.Select(c => Expression.Convert(c.Chain.Aggregate((Expression)row, Expression.Property), typeof(object)))), row);
         var page = rows.Take(top).Select(values);
+        if (source.Computed is null)
+        {
+            page = (await ODataNavigationScope.ForAsync(services, typeof(TRow), cancellationToken)).Apply(page);
+        }
+
         return page.Provider is IAsyncQueryProvider ? await page.ToListAsync(cancellationToken) : [.. page];
     }
 }

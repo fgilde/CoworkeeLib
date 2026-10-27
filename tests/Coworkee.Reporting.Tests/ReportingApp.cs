@@ -132,6 +132,15 @@ internal sealed class SouthOnlyFilter(ICurrentUser currentUser) : IODataEntityFi
         Task.FromResult(currentUser.UserId is { } id && Users.ContainsKey(id) ? query.Where(s => s.Region == "South") : query);
 }
 
+/// <summary>A row filter on a navigation target: the users in <see cref="Users"/> do not see "Shopper 7".</summary>
+internal sealed class HideShopperSeven(ICurrentUser currentUser) : IODataEntityFilter<Shopper>
+{
+    public static readonly ConcurrentDictionary<Guid, bool> Users = new();
+
+    public Task<IQueryable<Shopper>> ApplyAsync(IQueryable<Shopper> query, CancellationToken cancellationToken) =>
+        Task.FromResult(currentUser.UserId is { } id && Users.ContainsKey(id) ? query.Where(s => s.Name != "Shopper 7") : query);
+}
+
 [DependsOn(typeof(CoworkeeReportingModule))]
 public sealed class SalesReportingModule : CoworkeeModule
 {
@@ -145,6 +154,7 @@ public sealed class SalesReportingModule : CoworkeeModule
         context.Services.AddODataEntity<Shopper>("Shoppers", ReportingApp.ViewShoppers);
         context.Services.AddScoped<IODataEntityFilter<Sale>, HideHiddenRegion>();
         context.Services.AddScoped<IODataEntityFilter<Sale>, SouthOnlyFilter>();
+        context.Services.AddScoped<IODataEntityFilter<Shopper>, HideShopperSeven>();
         context.Services.AddSingleton<TestDefaultLanguage>();
         context.Services.AddScoped<Coworkee.Application.Localization.IDefaultLanguage>(sp => sp.GetRequiredService<TestDefaultLanguage>());
         context.Services.AddSingleton<FakeAi>();
