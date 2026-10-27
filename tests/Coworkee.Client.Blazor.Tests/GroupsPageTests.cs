@@ -373,23 +373,38 @@ public sealed class GroupsPageTests : ClientTestBase
         Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Supplier.Id}");
         var page = RenderPage();
         page.WaitForElement("[data-testid='group-default']").TextContent.ShouldContain("Default group");
+        var input = page.Find("input[data-testid='group-default-switch'], [data-testid='group-default-switch'] input");
+        input.HasAttribute("checked").ShouldBeTrue();
 
-        page.Find("input[data-testid='group-default-switch'], [data-testid='group-default-switch'] input").Change(false);
+        input.Change(false);
 
         await Api.Received(1).SetDefaultGroupAsync(null, Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public void Making_a_group_the_default_needs_Manage()
+    public void Viewers_see_the_default_group_but_cannot_change_it()
     {
         Grant(IdentityPermissions.Groups.View);
+        _odata.With("Groups", Row(Supplier) with { IsDefault = true });
+        Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Supplier.Id}");
+        var page = RenderPage();
+        page.WaitForElement("[data-testid='group-title']");
+
+        page.Find("[data-testid='group-default']").TextContent.ShouldContain("Default group");
+        page.FindAll("[data-testid='group-default-switch']").ShouldBeEmpty();
+        page.FindAll("[data-testid='group-save']").ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void An_ordinary_group_has_no_default_chip_and_managers_get_the_switch_off()
+    {
         _odata.With("Groups", Row(Supplier));
         Services.GetRequiredService<NavigationManager>().NavigateTo($"/admin/groups?group={Supplier.Id}");
         var page = RenderPage();
         page.WaitForElement("[data-testid='group-title']");
 
         page.FindAll("[data-testid='group-default']").ShouldBeEmpty();
-        page.FindAll("[data-testid='group-default-switch']").ShouldBeEmpty();
+        page.Find("input[data-testid='group-default-switch'], [data-testid='group-default-switch'] input").HasAttribute("checked").ShouldBeFalse();
     }
 
     [Fact]
