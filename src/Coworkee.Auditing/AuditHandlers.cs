@@ -48,6 +48,11 @@ internal sealed class AuditQueryHandler(CoworkeeDbContext db, ICurrentUser curre
             entries = entries.Where(e => e.ActorId == actor);
         }
 
+        if (query.ImpersonatorId is { } impersonator)
+        {
+            entries = entries.Where(e => e.ImpersonatorId == impersonator);
+        }
+
         if (query.From is { } from)
         {
             entries = entries.Where(e => e.OccurredAt >= from);

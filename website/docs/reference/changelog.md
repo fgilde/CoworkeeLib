@@ -12,6 +12,9 @@ Changes that need action in apps built on Coworkee. Newest first.
 - Groups page: Import (`Groups.Manage`) and Export buttons. The `Groups` set has a computed `ParentPath` ("Customer A/Hamburg"), and the export writes `Name`, `Description` and `ParentPath` in tree order, so the file imports again, also into another tenant.
 - Computed OData properties with `Exported = true` are export columns; `ComputedQueryRoot` (moved from Workflows) and `ODataComputedProperty.Inline` help to write subqueries in them.
 - Log in as another user: permission `Identity.Users.Impersonate`, *Log in as* on the users list and the user page, *Back to my account* in the user menu. `POST /api/v1/identity/users/{id}/impersonation` issues a one-minute ticket, `/bff/impersonate` and `/bff/stop-impersonation` switch the sign-in through the auth server pages `/Account/Impersonate` and `/Account/StopImpersonation`. Tokens carry `impersonator` and `impersonator_name`, `/bff/user` returns `ImpersonatorId` and `ImpersonatorName`. `[NotWhileImpersonating]` refuses a request while impersonating; see [identity](../features/identity.md#log-in-as-another-user).
+- `AuthClientOptions.AllowImpersonation` (`Coworkee:Auth:Clients:<n>:AllowImpersonation`, default off): only such clients serve someone signed in as another user, the others answer `access_denied`. `AddWeb` sets it for the web client; set it for own BFF clients that should support *Log in as*.
+- `AuthServerOptions.MaxImpersonationDuration` (`Coworkee:Auth:MaxImpersonationDuration`, 8 hours): an impersonation ends at the next authorization or refresh after it. It also ends when the impersonator signs out everywhere, changes his password, is locked, or the rules no longer hold.
+- `AuditQuery.ImpersonatorId` (`GET /api/v1/audit?impersonatorId=...`); `ImpersonatedUser`, `JobEnvelope` and `IntegrationMessage` have an optional `ImpersonatorId`.
 
 ### Changed
 
@@ -22,8 +25,10 @@ Changes that need action in apps built on Coworkee. Newest first.
 - `IUnitOfWork` resolves to a wrapper that saves the external contexts and then the app's context, no longer to the DbContext itself; code that cast it to a DbContext injects the context instead.
 - Aspire 13.6.4 (app host SDK, `Aspire.Hosting.*`, `Aspire.Hosting.Testing`), CommunityToolkit Aspire packages 13.6.1, Nextended 10.1.48; `coworkee update` moves the pinned packages.
 - Apps need a migration (`dotnet ef migrations add Impersonation`): `cw.AuditEntries` gets the nullable column `ImpersonatorId`.
+- Apps need a migration (`dotnet ef migrations add Impersonation`): `cw.AuditEntries` and `cw.OutboxMessages` get the nullable column `ImpersonatorId`.
 - `ICoworkeeApi` has the new member `StartImpersonationAsync`, `ICurrentUser` the default member `ImpersonatorId` (null): hand-written implementations of `ICoworkeeApi` and test fakes no longer compile until they add it; own `ICurrentUser` implementations that read claims should return the `impersonator` claim.
-- While someone is signed in as another user, the account pages of the auth server answer 403, and changing the own e-mail address, creating API keys, exporting personal data and deleting the own account are refused (`auth.impersonating`).
+- While someone is signed in as another user, the account and consent pages of the auth server answer 403, and changing the own e-mail address, creating API keys, exporting personal data, deleting the own account, choosing the active role and creating or changing webhooks and report subscriptions are refused (`auth.impersonating`).
+- `IsLocalPath` of the BFF (`/bff/login`, `/bff/impersonate`, `/bff/stop-impersonation`) refuses return addresses with control characters or backslashes.
 - `[Realtime]` still broadcasts to everyone with the view permission; with groups as customers in one tenant, clients of other units see record ids and changed property names. Per-group topics follow.
 
 ## 0.0.1.40 (2026-10-25)

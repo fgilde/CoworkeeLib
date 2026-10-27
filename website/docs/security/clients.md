@@ -52,6 +52,8 @@ grant_type=client_credentials&client_id=reporting&client_secret=…&scope=myapp_
 
 For a client with explicit consent the auth server shows **Allow access** with the requested scopes. Allowing stores a permanent authorization; declining returns `consent_required` to the client.
 
+Someone signed in as another user ([Log in as](../features/identity.md#log-in-as-another-user)) never consents for him: without the user's own authorization the client gets `consent_required`. Only clients with `AllowImpersonation` (`Coworkee:Auth:Clients:<n>:AllowImpersonation`; `AddWeb` sets it for the web client) serve an impersonation at all, the others answer `access_denied`.
+
 On the account page (**Account security › Authorized applications**) users see every application with access, since when and with which scopes, and revoke it. Revoking ends the authorizations and tokens of that application; it has to ask for a sign-in again.
 
 ## App launcher

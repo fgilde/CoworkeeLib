@@ -4,6 +4,7 @@ using Coworkee.Contracts;
 using Coworkee.Contracts.Auditing;
 using Coworkee.Contracts.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Coworkee.Auditing.Tests;
 
@@ -52,6 +53,25 @@ public sealed class AuditTests(AuditApp app) : IAsyncLifetime
 
         var future = Uri.EscapeDataString(DateTimeOffset.UtcNow.AddHours(1).ToString("o"));
         (await Admin.GetFromJsonAsync<PagedResult<AuditEntryDto>>($"/api/v1/audit?entityType=Note&from={future}", Ct))!.Items.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Audit_filters_by_who_was_signed_in_as_the_actor()
+    {
+        var impersonator = Guid.CreateVersion7();
+        await app.CreateNoteAsync(_setup.AdminUserId, _setup.TenantId, "own");
+        var onBehalf = new Note { Text = "on behalf" };
+        using (Coworkee.Core.Security.CurrentUserScope.Begin(new Coworkee.Core.Security.ImpersonatedUser(_setup.AdminUserId, _setup.TenantId, impersonator)))
+        await using (var scope = app.App.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AuditTestDbContext>();
+            db.Add(onBehalf);
+            await db.SaveChangesAsync(Ct);
+        }
+
+        var page = await Admin.GetFromJsonAsync<PagedResult<AuditEntryDto>>($"/api/v1/audit?entityType=Note&impersonatorId={impersonator}", Ct);
+
+        page!.Items.ShouldHaveSingleItem().ShouldSatisfyAllConditions(e => e.EntityId.ShouldBe(onBehalf.Id.ToString()), e => e.ImpersonatorId.ShouldBe(impersonator));
     }
 
     [Fact]

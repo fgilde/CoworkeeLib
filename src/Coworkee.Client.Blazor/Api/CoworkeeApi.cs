@@ -338,6 +338,7 @@ internal sealed class CoworkeeApi(HttpClient http) : ApiClientBase(http), ICowor
         Add(parameters, "entityType", query.EntityType);
         Add(parameters, "entityId", query.EntityId);
         Add(parameters, "actorId", query.ActorId?.ToString());
+        Add(parameters, "impersonatorId", query.ImpersonatorId?.ToString());
         Add(parameters, "from", query.From?.ToString("o", System.Globalization.CultureInfo.InvariantCulture));
         Add(parameters, "to", query.To?.ToString("o", System.Globalization.CultureInfo.InvariantCulture));
         return GetAsync<PagedResult<AuditEntryDto>>($"api/v1/audit?{string.Join('&', parameters)}", cancellationToken);

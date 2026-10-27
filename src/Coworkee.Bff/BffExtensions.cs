@@ -149,8 +149,9 @@ public static class BffExtensions
         return options;
     }
 
+    // Url.IsLocalUrl's rules for a path, stricter on backslashes: browsers read "/\host" and "/<tab>/host" as another site
     private static bool IsLocalPath([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] string? url) =>
-        url is { Length: > 0 } && url[0] == '/' && (url.Length == 1 || (url[1] != '/' && url[1] != '\\'));
+        url is { Length: > 0 } && url[0] == '/' && (url.Length == 1 || url[1] != '/') && !url.Any(c => c == '\\' || char.IsControl(c));
 
     // "Log in as" and back switch the sign-in of the auth server, which then sends the browser through /bff/login, so this session follows
     private static IResult ToAuthServer(BffOptions options, HttpContext context, string page, string? returnUrl, params KeyValuePair<string, string?>[] parameters)

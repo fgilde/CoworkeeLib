@@ -64,6 +64,22 @@ public sealed class ImpersonationUiTests : ClientTestBase
         Services.GetRequiredService<NavigationManager>().Uri.ShouldBe("http://localhost/bff/impersonate?ticket=t%2B1&returnUrl=%2F");
     }
 
+    [Theory]
+    [InlineData(false, 1)]
+    [InlineData(true, 0)]
+    public void The_user_page_offers_log_in_as_only_while_the_user_is_not_locked(bool locked, int offered)
+    {
+        SignIn(IdentityPermissions.Users.Impersonate);
+        Api.GetUserDetailAsync(Bob, Arg.Any<CancellationToken>()).Returns(new UserDetailDto(
+            Bob, "bob@acme.test", "bob@acme.test", "Bob", null, true, true, false, locked ? DateTimeOffset.UtcNow.AddMinutes(10) : null, null, [], []));
+        Api.GetEffectivePermissionsAsync(Bob, Arg.Any<CancellationToken>()).Returns([]);
+
+        var page = Render<UserDetail>(p => p.Add(d => d.Id, Bob));
+
+        page.WaitForAssertion(() => page.Find("[data-testid='user-name']"));
+        page.FindAll("[data-testid='impersonate']").Count.ShouldBe(offered);
+    }
+
     [Fact]
     public async Task While_impersonating_the_app_bar_names_the_impersonator_and_the_menu_leads_back()
     {

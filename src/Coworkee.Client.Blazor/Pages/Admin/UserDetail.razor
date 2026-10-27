@@ -66,7 +66,7 @@ else
                 <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Outlined.Logout" OnClick="SignOutAsync" Disabled="_busy" data-testid="sign-out-everywhere">@L["Sign out everywhere"]</MudButton>
             </PermissionView>
             <PermissionView Permission="@IdentityPermissions.Users.Impersonate">
-                @if (_user.IsActive && _mayImpersonate)
+                @if (_user.IsActive && _user.LockedUntil is null && _mayImpersonate)
                 {
                     <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Outlined.SupervisorAccount" OnClick="ImpersonateAsync" Disabled="_busy"
                                data-testid="impersonate">@L["Log in as"]</MudButton>

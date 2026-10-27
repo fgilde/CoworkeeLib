@@ -52,6 +52,8 @@ grant_type=client_credentials&client_id=reporting&client_secret=…&scope=myapp_
 
 Bei einem Client mit expliziter Zustimmung zeigt der Auth-Server **Zugriff erlauben** mit den angefragten Scopes. Erlauben speichert eine dauerhafte Autorisierung; Ablehnen gibt `consent_required` an den Client zurück.
 
+Wer als anderer Benutzer angemeldet ist ([Als anderer Benutzer anmelden](../features/identity.md#als-anderer-benutzer-anmelden)), stimmt nie für ihn zu: Ohne die eigene Autorisierung des Benutzers bekommt der Client `consent_required`. Nur Clients mit `AllowImpersonation` (`Coworkee:Auth:Clients:<n>:AllowImpersonation`; `AddWeb` setzt es für den Web-Client) bedienen eine Übernahme überhaupt, die anderen antworten mit `access_denied`.
+
 Auf der Kontoseite (**Kontosicherheit › Autorisierte Anwendungen**) sehen Benutzer jede Anwendung mit Zugriff, seit wann und mit welchen Scopes, und widerrufen sie. Widerrufen beendet die Autorisierungen und Tokens dieser Anwendung; sie muss erneut um eine Anmeldung bitten.
 
 ## App-Launcher

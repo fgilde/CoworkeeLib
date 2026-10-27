@@ -118,6 +118,7 @@ public sealed class BffTests : IAsyncLifetime
 
     [Theory]
     [InlineData("/\\evil.test")]
+    [InlineData("/\t/evil.test")]
     [InlineData("//evil.test")]
     [InlineData("https://evil.test")]
     public async Task Login_never_redirects_off_site(string returnUrl)
@@ -155,6 +156,8 @@ public sealed class BffTests : IAsyncLifetime
 
     [Theory]
     [InlineData("/\\evil.test")]
+    [InlineData("/\t/evil.test")]
+    [InlineData("/a/..\\\\evil.test")]
     [InlineData("//evil.test")]
     [InlineData("https://evil.test")]
     public async Task Log_in_as_and_back_never_return_off_site(string returnUrl)
