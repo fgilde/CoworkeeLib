@@ -71,6 +71,12 @@ public sealed partial class DataExports(
             return denied;
         }
 
+        if (await BusyAsync(http.RequestAborted))
+        {
+            return Results.Problem(title: "You have too many exports running. Wait until one is ready.", statusCode: StatusCodes.Status429TooManyRequests,
+                extensions: new Dictionary<string, object?> { ["code"] = "data_transfer.too_many_exports" });
+        }
+
         var entity = registry.Find(entitySet)!;
         var query = http.Request.QueryString;
         var job = NewJob(entity, query, null, DataTransferStatus.Running);
@@ -81,20 +87,44 @@ public sealed partial class DataExports(
         var lines = Channel.CreateUnbounded<DataExportProgress>(new UnboundedChannelOptions { SingleReader = true, SingleWriter = true });
         var writing = WriteLinesAsync(lines.Reader, http);
         ExportFile? file = null;
+        var queued = false;
         try
         {
-            // not the request's token: the export finishes when the client leaves
-            file = await WriteAsync(entity, query, null, CancellationToken.None, new LineProgress(lines.Writer));
-            (job.Result, job.ResultContentType, job.ResultFileName, job.Status) = (file!.Content, file.ContentType, job.FileName ?? file.Name, DataTransferStatus.Completed);
+            // not the request's token: the export finishes when the client leaves, but not later than the timeout
+            using var timeout = new CancellationTokenSource(options.Value.ExportTimeout);
+            file = await WriteAsync(entity, query, options.Value.BackgroundExportRows, timeout.Token, new LineProgress(lines.Writer));
+            if (file is null)
+            {
+                // too many rows for a request: the export job writes it; the client follows the job like any background export
+                (job.Status, queued) = (DataTransferStatus.Queued, true);
+            }
+            else
+            {
+                (job.Result, job.ResultContentType, job.ResultFileName, job.Status) = (file.Content, file.ContentType, job.FileName ?? file.Name, DataTransferStatus.Completed);
+            }
         }
         catch (Exception exception)
         {
             LogFailed(exception, job.Id);
-            (job.Status, job.Message) = (DataTransferStatus.Failed, exception is UnauthorizedAccessException ? exception.Message : "Export failed");
+            (job.Status, job.Message) = (DataTransferStatus.Failed, exception switch
+            {
+                UnauthorizedAccessException => exception.Message,
+                OperationCanceledException => "The export took too long.",
+                _ => "Export failed",
+            });
         }
 
         lines.Writer.Complete();
         var connected = await writing;
+        if (queued)
+        {
+            await db.SaveChangesAsync(CancellationToken.None);
+            var groups = services.GetService<IGroupScope>() is { } scope ? await scope.SelectedAsync(CancellationToken.None) : [];
+            services.GetRequiredService<IBackgroundJobs>().Enqueue<ExportJob, ExportJobArgs>(new ExportJobArgs(job.Id, [.. groups], Mail: !connected));
+            await WriteLineAsync(http, new DataExportProgress(DataExportProgress.Queued, 100, JobId: job.Id));
+            return Results.Empty;
+        }
+
         job.FinishedAt = clock.GetUtcNow();
         var token = file is not null && connected ? services.GetRequiredService<IAccessTokens>().Issue(DownloadPurpose, job.Id, DownloadLifetime, singleUse: true) : null;
         await db.SaveChangesAsync(CancellationToken.None);
@@ -188,6 +218,25 @@ public sealed partial class DataExports(
         var clean = string.Concat((name ?? string.Empty).Where(c => !Path.GetInvalidFileNameChars().Contains(c))).Trim();
         clean = clean.Length == 0 ? entitySet : clean[..Math.Min(clean.Length, 200)];
         return clean.EndsWith(extension, StringComparison.OrdinalIgnoreCase) ? clean : clean + extension;
+    }
+
+    /// <summary>
+    /// Whether the user has <see cref="CoworkeeODataOptions.MaxConcurrentExports"/> exports running or queued. Ones older than
+    /// <see cref="CoworkeeODataOptions.ExportTimeout"/> are stale (a server stopped while writing them) and fail first.
+    /// </summary>
+    private async Task<bool> BusyAsync(CancellationToken cancellationToken)
+    {
+        var stale = clock.GetUtcNow() - options.Value.ExportTimeout;
+        var open = await db.Set<DataTransferJob>()
+            .Where(j => j.UserId == user.UserId && j.Kind == DataTransferKind.Export && (j.Status == DataTransferStatus.Running || j.Status == DataTransferStatus.Queued))
+            .ToListAsync(cancellationToken);
+        foreach (var job in open.Where(j => j.CreatedAt < stale))
+        {
+            (job.Status, job.Message, job.FinishedAt) = (DataTransferStatus.Failed, "The export took too long.", clock.GetUtcNow());
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        return open.Count(j => j.CreatedAt >= stale) >= options.Value.MaxConcurrentExports;
     }
 
     private async Task<IResult?> CheckAsync(string entitySet, CancellationToken cancellationToken) =>

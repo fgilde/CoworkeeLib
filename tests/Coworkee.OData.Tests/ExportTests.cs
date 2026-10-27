@@ -64,6 +64,47 @@ public sealed class ExportTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_stream_of_more_rows_than_a_request_takes_hands_over_to_the_export_job()
+    {
+        await app.InDbAsync(_setup.TenantId, async db =>
+        {
+            db.AddRange(Enumerable.Range(1, 4).Select(i => new Gadget { Name = $"Bulk {i}", Category = "Bulk", Price = i, TenantId = _setup.TenantId }));
+            return await db.SaveChangesAsync(Ct);
+        });
+
+        var last = (await StreamAsync(Admin, "?format=csv"))[^1];
+
+        (last.Phase, last.Url).ShouldBe((DataExportProgress.Queued, null));
+        var job = (await Admin.GetFromJsonAsync<DataTransferJobDto>($"/api/v1/data/jobs/{last.JobId}", Ct))!;
+        (job.Status, job.ResultFileName).ShouldBe((DataTransferStatus.Completed, "Gadgets.csv"));
+    }
+
+    [Fact]
+    public async Task Each_user_streams_only_a_few_exports_at_once_and_stale_ones_fail()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var stale = Job(now.AddHours(-2));
+        await app.InDbAsync(_setup.TenantId, async db =>
+        {
+            db.AddRange(stale, Job(now.AddMinutes(-1)), Job(now));
+            return await db.SaveChangesAsync(Ct);
+        });
+
+        var refused = await Admin.GetAsync("/api/v1/data/Gadgets/export/stream", Ct);
+
+        refused.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+        var failed = await app.InDbAsync(_setup.TenantId, db => db.Set<DataTransferJob>().AsNoTracking().SingleAsync(j => j.Id == stale.Id, Ct));
+        (failed.Status, failed.Message).ShouldBe((DataTransferStatus.Failed, "The export took too long."));
+        await app.InDbAsync(_setup.TenantId, db => db.Set<DataTransferJob>().Where(j => j.Status == DataTransferStatus.Running).ExecuteDeleteAsync(Ct));
+        (await StreamAsync(Admin, "?format=csv"))[^1].Phase.ShouldBe(DataExportProgress.Ready);
+
+        DataTransferJob Job(DateTimeOffset createdAt) => new()
+        {
+            TenantId = _setup.TenantId, UserId = _setup.AdminUserId, Kind = DataTransferKind.Export, EntitySet = "Gadgets", Status = DataTransferStatus.Running, CreatedAt = createdAt,
+        };
+    }
+
+    [Fact]
     public async Task The_download_link_expires_after_five_minutes()
     {
         var ready = (await StreamAsync(Admin, "?format=csv"))[^1];

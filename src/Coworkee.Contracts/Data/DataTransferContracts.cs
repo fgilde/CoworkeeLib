@@ -14,7 +14,7 @@ public static class DataTransferPermissions
 }
 
 /// <summary>
-/// One line of the export stream (application/x-ndjson): <paramref name="Phase"/> is counting, reading, writing, ready or failed.
+/// One line of the export stream (application/x-ndjson): <paramref name="Phase"/> is counting, reading, writing, ready, queued or failed.
 /// The ready line carries the anonymous one-time <paramref name="Url"/> (relative to the API, five minutes) of the file.
 /// </summary>
 public sealed record DataExportProgress(string Phase, int Percent, string? Url = null, string? FileName = null, Guid? JobId = null, string? Message = null)
@@ -24,6 +24,9 @@ public sealed record DataExportProgress(string Phase, int Percent, string? Url =
     public const string Writing = "writing";
     public const string Ready = "ready";
     public const string Failed = "failed";
+
+    /// <summary>Too many rows for the request: <c>JobId</c> is the background export that writes the file (and mails it when the client left).</summary>
+    public const string Queued = "queued";
 }
 
 /// <summary>An export written in the background and mailed to the requester and <paramref name="Recipients"/>; <paramref name="Query"/> is the export's query string.</summary>

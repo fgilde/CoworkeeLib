@@ -60,6 +60,8 @@ Up to `Coworkee:OData:BackgroundExportRows` rows (default 10 000) the file comes
 
 `GET /api/v1/data/{set}/export/stream` takes the same query and answers `application/x-ndjson`, one `DataExportProgress` per line: `counting`, `reading` (0-80 %, every 500 rows), `writing`, then `ready` with `url` (`api/v1/data/downloads/{token}`, relative to the API), `fileName` and `jobId`, or `failed` with a message. The link needs no sign-in, so a native `<a download>` works; it opens the file once and only for five minutes (`IAccessTokens`, see [files](../modules/files.md#temporary-links)). The export runs without the request's cancellation: when the client leaves before `ready`, it is written all the same and mailed to the user. Either way the user's job list keeps the file. `IDataTransferApi.StreamExportAsync` reads the lines in the Blazor client.
 
+More rows than `BackgroundExportRows` end the stream with `queued` and the `jobId`: the export job writes the file, as for any background export (and mails it when the client had left). A user has at most `Coworkee:OData:MaxConcurrentExports` (default 2) exports running or queued; another stream answers `429`. A streamed export is cancelled after `Coworkee:OData:ExportTimeout` (default 30 minutes) and its job fails; running or queued exports older than that (a server stopped while writing them) fail when the user starts the next one, so none stays running for ever.
+
 ### Mailed and scheduled exports
 
 `POST /api/v1/data/{set}/export/mail` with `MailExportRequest(Query, Recipients, FileName)` writes the export as a background job and mails it to the user and the recipients (`202` with the job). Recipients other than the user need `DataTransfer.ExportSchedules`.
