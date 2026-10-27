@@ -71,7 +71,7 @@ Geplante Exporte (`DataTransfer.ExportSchedules` plus die eigene Berechtigung de
 | Aufruf | Zweck |
 |---|---|
 | `GET /api/v1/data/export-schedules?entitySet=` | die Pläne des Nutzers |
-| `POST /api/v1/data/export-schedules`, `PUT .../{id}` | einen anlegen oder ändern (`SaveExportScheduleRequest`) |
+| `POST /api/v1/data/export-schedules`, `PUT .../{id}` | einen anlegen oder ändern (`SaveExportScheduleRequest`); die Abfrage durchläuft sofort die Abfrageprüfung des Sets (lesbare Eigenschaften, Navigationen, keine Parameter-Aliase): 403 oder 400 |
 | `DELETE /api/v1/data/export-schedules/{id}` | einen löschen |
 | `POST /api/v1/data/export-schedules/{id}/run` | jetzt senden; der Plan bleibt |
 

@@ -105,6 +105,7 @@ public sealed partial class DataExports(
             (job.Status, job.Message) = (DataTransferStatus.Failed, exception switch
             {
                 UnauthorizedAccessException => exception.Message,
+                Microsoft.OData.ODataException => $"The query is not valid: {exception.Message}",
                 OperationCanceledException => "The export took too long.",
                 _ => "Export failed",
             });

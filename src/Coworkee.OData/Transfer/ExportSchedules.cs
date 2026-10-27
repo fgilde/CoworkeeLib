@@ -110,7 +110,7 @@ internal sealed class SaveExportScheduleValidator : AbstractValidator<SaveExport
 }
 
 internal sealed class ExportScheduleHandlers(
-    CoworkeeDbContext db, IServiceProvider services, ODataEntityRegistry registry, ExportScheduleRunner runner, ICurrentUser user, TimeProvider clock)
+    CoworkeeDbContext db, IServiceProvider services, ODataEntityRegistry registry, ExportScheduleRunner runner, DataExports exports, ICurrentUser user, TimeProvider clock)
     : IHandler<GetExportSchedulesQuery, Result<IReadOnlyList<ExportScheduleDto>>>,
       IHandler<SaveExportScheduleCommand, Result<ExportScheduleDto>>,
       IHandler<DeleteExportScheduleCommand, Result>,
@@ -135,6 +135,20 @@ internal sealed class ExportScheduleHandlers(
         if (!await ODataEntityAccess.IsGrantedAsync(services, entity.EntityType, cancellationToken))
         {
             return Error.Forbidden("auth.forbidden", "You may not read this entity set.");
+        }
+
+        // the query passes the guard of the OData sets now (readable properties, navigations, no aliases), not only at the first run
+        try
+        {
+            await exports.WriteAsync(entity, DataExports.Query(request.Query), 0, cancellationToken);
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            return Error.Forbidden("auth.forbidden", exception.Message);
+        }
+        catch (Microsoft.OData.ODataException exception)
+        {
+            return Error.Validation("Query", $"The query is not valid: {exception.Message}");
         }
 
         var schedule = command.Id is { } id ? await Mine().SingleOrDefaultAsync(s => s.Id == id, cancellationToken) : null;
@@ -245,7 +259,12 @@ internal sealed partial class ExportScheduleRunner(
                 entry.State = EntityState.Detached;
             }
 
-            error = exception is UnauthorizedAccessException ? exception.Message : "The export failed.";
+            error = exception switch
+            {
+                UnauthorizedAccessException => exception.Message,
+                Microsoft.OData.ODataException => $"The query is not valid: {exception.Message}",
+                _ => "The export failed.",
+            };
         }
 
         schedule.LastRunAt = now;

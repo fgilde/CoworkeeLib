@@ -71,7 +71,7 @@ Scheduled exports (`DataTransfer.ExportSchedules` plus the set's own permission)
 | Call | Purpose |
 |---|---|
 | `GET /api/v1/data/export-schedules?entitySet=` | the user's schedules |
-| `POST /api/v1/data/export-schedules`, `PUT .../{id}` | create or change one (`SaveExportScheduleRequest`) |
+| `POST /api/v1/data/export-schedules`, `PUT .../{id}` | create or change one (`SaveExportScheduleRequest`); the query passes the set's query guard at once (readable properties, navigations, no parameter aliases): 403 or 400 |
 | `DELETE /api/v1/data/export-schedules/{id}` | delete one |
 | `POST /api/v1/data/export-schedules/{id}/run` | send it now; the schedule stays |
 

@@ -210,6 +210,20 @@ public sealed class ExportTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Scheduled_and_streamed_exports_pass_the_query_guard_of_the_sets()
+    {
+        var planner = app.As(await UserWithAsync(DataTransferPermissions.ExportSchedules, ODataApp.ViewGadgets), _setup.TenantId);
+
+        (await planner.PostAsJsonAsync("/api/v1/data/export-schedules", Request() with { Query = "?$filter=Category eq 'Tools'" }, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await planner.PostAsJsonAsync("/api/v1/data/export-schedules", Request() with { Query = "?$filter=Name eq @n&@n='Drill'" }, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await planner.PostAsJsonAsync("/api/v1/data/export-schedules", Request() with { Query = "?$filter=Name eq 'Drill'" }, Ct)).EnsureSuccessStatusCode();
+
+        var failed = (await StreamAsync(Admin, "?$filter=Name eq @n&@n='Drill'"))[^1];
+        failed.Phase.ShouldBe(DataExportProgress.Failed);
+        failed.Message.ShouldStartWith("The query is not valid");
+    }
+
+    [Fact]
     public async Task The_download_link_expires_after_five_minutes()
     {
         var ready = (await StreamAsync(Admin, "?format=csv"))[^1];
@@ -308,13 +322,13 @@ public sealed class ExportTests(ODataApp app) : IAsyncLifetime
     [Fact]
     public async Task A_schedule_sends_nothing_once_its_owner_lost_the_permission_or_was_deactivated()
     {
-        var (owner, role) = await UserAndRoleAsync(DataTransferPermissions.ExportSchedules, ODataApp.ViewGadgets);
+        var (owner, role) = await UserAndRoleAsync(DataTransferPermissions.ExportSchedules, ODataApp.ViewGadgets, ODataApp.SeeCategories);
         (await app.As(owner, _setup.TenantId).PostAsJsonAsync("/api/v1/data/export-schedules", Request(), Ct)).EnsureSuccessStatusCode();
 
-        (await Admin.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{role}", new NameListRequest([ODataApp.ViewGadgets]), Ct)).EnsureSuccessStatusCode();
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{role}", new NameListRequest([ODataApp.ViewGadgets, ODataApp.SeeCategories]), Ct)).EnsureSuccessStatusCode();
         (await RunDueSchedulesAsync()).LastError.ShouldBe("The owner may no longer schedule exports.");
 
-        (await Admin.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{role}", new NameListRequest([DataTransferPermissions.ExportSchedules, ODataApp.ViewGadgets]), Ct))
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/permissions/grants/Role/{role}", new NameListRequest([DataTransferPermissions.ExportSchedules, ODataApp.ViewGadgets, ODataApp.SeeCategories]), Ct))
             .EnsureSuccessStatusCode();
         (await Admin.PutAsJsonAsync($"/api/v1/identity/users/{owner}", new UpdateUserRequest("Ex", "Owner", IsActive: false), Ct)).EnsureSuccessStatusCode();
         (await RunDueSchedulesAsync()).LastError.ShouldBe("The owner is no longer active.");
