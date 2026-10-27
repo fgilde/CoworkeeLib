@@ -48,5 +48,8 @@ public sealed class Store : IMultiTenant
 
     public int Seats { get; set; }
 
+    /// <summary>Kept as text by its own conversion, not as the convention's number.</summary>
+    public DateTimeOffset? OpenedAt { get; set; }
+
     public Guid TenantId { get; set; }
 }

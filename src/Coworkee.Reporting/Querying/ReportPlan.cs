@@ -16,12 +16,12 @@ internal sealed record ReportPlan(ReportGroup? Group, ReportGroup? Split, IReadO
     public const int MaxTop = 1000;
 
     /// <param name="granted">Permissions of the user among those navigations need.</param>
-    /// <param name="binaryDates">DateTimeOffset columns are numbers (a Coworkee DbContext on SQLite).</param>
-    public static Result<ReportPlan> Create(ReportSource source, ReportQueryRequest request, IReadOnlySet<string> granted, string provider = DatabaseProviders.Postgres, bool binaryDates = false)
+    /// <param name="binaryDate">Whether a DateTimeOffset field is stored as a number (DateTimeOffsetToBinaryConverter, the convention of a Coworkee DbContext on SQLite).</param>
+    public static Result<ReportPlan> Create(ReportSource source, ReportQueryRequest request, IReadOnlySet<string> granted, string provider = DatabaseProviders.Postgres, Func<ReportField, bool>? binaryDate = null)
     {
         var errors = new Dictionary<string, string[]>(StringComparer.Ordinal);
-        var group = GroupOf(source, request.GroupBy, nameof(request.GroupBy), granted, errors, provider, binaryDates);
-        var split = GroupOf(source, request.SplitBy, nameof(request.SplitBy), granted, errors, provider, binaryDates);
+        var group = GroupOf(source, request.GroupBy, nameof(request.GroupBy), granted, errors, provider, binaryDate);
+        var split = GroupOf(source, request.SplitBy, nameof(request.SplitBy), granted, errors, provider, binaryDate);
         if (split is not null && group is null)
         {
             errors[nameof(request.SplitBy)] = ["Series need a group by field."];
@@ -44,7 +44,7 @@ internal sealed record ReportPlan(ReportGroup? Group, ReportGroup? Split, IReadO
             : new ReportPlan(group, split, values!, request.SortBy, request.Descending, request.Top);
     }
 
-    private static ReportGroup? GroupOf(ReportSource source, ReportGroupBy? by, string key, IReadOnlySet<string> granted, Dictionary<string, string[]> errors, string provider, bool binaryDates)
+    private static ReportGroup? GroupOf(ReportSource source, ReportGroupBy? by, string key, IReadOnlySet<string> granted, Dictionary<string, string[]> errors, string provider, Func<ReportField, bool>? binaryDate)
     {
         if (by is null)
         {
@@ -65,11 +65,12 @@ internal sealed record ReportPlan(ReportGroup? Group, ReportGroup? Split, IReadO
         // an exact point in time is no category; a day is
         var bucket = field.Kind == ReportFieldKind.Date && by.Bucket == DateBucket.None ? DateBucket.Day : by.Bucket;
 
-        // EF's SQLite provider has no date parts of DateTimeOffset; a Coworkee DbContext stores it as a number the parts are computed from
+        // EF's SQLite provider has no date parts of DateTimeOffset; stored as a number (a Coworkee DbContext's convention) the parts are computed
+        // from it, any other storage (an external DbContext, an own HasConversion) is refused
         var offset = field.Kind == ReportFieldKind.Date && provider == DatabaseProviders.Sqlite && (Nullable.GetUnderlyingType(field.ClrType) ?? field.ClrType) == typeof(DateTimeOffset);
-        if (offset && !binaryDates)
+        if (offset && binaryDate?.Invoke(field) != true)
         {
-            errors[key] = [$"SQLite cannot group {field.Path} (DateTimeOffset) of this database by date; use a DateTime or DateOnly field, or Postgres or SQL Server."];
+            errors[key] = [$"SQLite cannot group {field.Path} (DateTimeOffset) as stored by date; use a DateTime or DateOnly field, or Postgres or SQL Server."];
             return null;
         }
 

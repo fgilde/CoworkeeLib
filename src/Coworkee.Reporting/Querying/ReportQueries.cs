@@ -86,8 +86,9 @@ internal sealed class ReportQueries(IServiceProvider services, ReportSchema sche
 
         // an app source aggregates in memory unless it hands out a query of the database
         var provider = source.Value.Computed is null ? CoworkeeDatabase.Provider(services.DbContextFor(source.Value.RowType).Database) : DatabaseProviders.Postgres;
-        var binaryDates = source.Value.Computed is null && services.DbContextFor(source.Value.RowType) is Coworkee.Infrastructure.Persistence.CoworkeeDbContext;
-        return (source.Value, ReportPlan.Create(source.Value, request, await GrantedAsync(cancellationToken), provider, binaryDates));
+        var model = source.Value.Computed is null ? services.DbContextFor(source.Value.RowType).Model : null;
+        return (source.Value, ReportPlan.Create(source.Value, request, await GrantedAsync(cancellationToken), provider,
+            model is null ? null : field => StoredAsNumber(model, source.Value.RowType, field.Chain)));
     }
 
     internal async Task<Result<ReportSource>> ReadableAsync(string name, CancellationToken cancellationToken)
@@ -100,6 +101,18 @@ internal sealed class ReportQueries(IServiceProvider services, ReportSchema sche
         return source.Permission is { } permission && !(await GrantedAsync(cancellationToken)).Contains(permission)
             ? Error.Forbidden("reports.forbidden_set", $"You may not read {source.EntitySet}.")
             : source;
+    }
+
+    // the column of a field, through its navigations, keeps a DateTimeOffset as DateTimeOffsetToBinaryConverter writes it
+    private static bool StoredAsNumber(Microsoft.EntityFrameworkCore.Metadata.IModel model, Type rowType, IReadOnlyList<System.Reflection.PropertyInfo> chain)
+    {
+        var entity = model.FindEntityType(rowType);
+        foreach (var step in chain.Take(chain.Count - 1))
+        {
+            entity = entity?.FindNavigation(step.Name)?.TargetEntityType;
+        }
+
+        return entity?.FindProperty(chain[^1].Name)?.GetValueConverter() is Microsoft.EntityFrameworkCore.Storage.ValueConversion.DateTimeOffsetToBinaryConverter;
     }
 
     internal async Task<IReadOnlySet<string>> GrantedAsync(CancellationToken cancellationToken) =>

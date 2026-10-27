@@ -107,7 +107,8 @@ internal sealed class SalesModelContributor : IModelContributor
     {
         modelBuilder.Entity<Sale>(sale => sale.ToTable("Sales"));
         modelBuilder.Entity<Shopper>(shopper => shopper.ToTable("Shoppers"));
-        modelBuilder.Entity<Store>(store => store.ToTable("Stores").HasKey(s => s.Code));
+        modelBuilder.Entity<Store>(store => store.ToTable("Stores").HasKey(s => s.Code)); // OpenedAt: see KeyedSetReportTests
+        modelBuilder.Entity<Store>().Property(s => s.OpenedAt).HasConversion<string?>();
     }
 }
 

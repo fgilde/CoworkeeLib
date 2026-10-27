@@ -1,3 +1,4 @@
+using System.Net.Http.Json;
 using Coworkee.Contracts.Reporting;
 
 namespace Coworkee.Reporting.Tests;
@@ -22,5 +23,17 @@ public sealed class KeyedSetReportTests(ReportingApp app) : ReportingTestBase(ap
 
         var byCode = (await QueryAsync(new ReportQueryRequest("Stores", Filter: "Code ne 'N2'", GroupBy: new ReportGroupBy("Code")))).Rows;
         byCode.Select(r => r.Key!.Value).ShouldBe(["N1", "S1"]);
+    }
+
+    [Fact]
+    public async Task Sqlite_refuses_date_buckets_of_a_DateTimeOffset_with_its_own_conversion()
+    {
+        Assert.SkipUnless(App.Provider == Coworkee.Contracts.Configuration.DatabaseProviders.Sqlite, "Only SQLite computes date parts from the stored number.");
+
+        var response = await Admin.PostAsJsonAsync("/api/v1/reports/query", new ReportQueryRequest("Stores", GroupBy: new ReportGroupBy("OpenedAt", DateBucket.Month)), Ct);
+
+        response.StatusCode.ShouldBe(System.Net.HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync(Ct)).ShouldContain("SQLite cannot group OpenedAt");
+        (await QueryAsync(new ReportQueryRequest("Sales", GroupBy: new ReportGroupBy("SoldAt", DateBucket.Month)))).Rows.ShouldNotBeEmpty();
     }
 }
