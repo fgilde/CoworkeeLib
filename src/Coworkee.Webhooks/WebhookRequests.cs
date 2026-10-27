@@ -16,10 +16,12 @@ public sealed record GetWebhookEventTypesQuery : IQuery<Result<IReadOnlyList<Web
 
 [RequiresPermission(WebhookPermissions.Manage)]
 [AiTool(Exclude = true)]
+[NotWhileImpersonating]
 public sealed record CreateWebhookCommand(WebhookRequest Request) : ICommand<Result<WebhookSecretDto>>;
 
 [RequiresPermission(WebhookPermissions.Manage)]
 [AiTool(Exclude = true)]
+[NotWhileImpersonating]
 public sealed record UpdateWebhookCommand(Guid Id, WebhookRequest Request) : ICommand<Result>;
 
 [RequiresPermission(WebhookPermissions.Manage)]

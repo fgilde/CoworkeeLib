@@ -30,6 +30,8 @@ public static class ActiveRole
 
 public sealed record GetMyRoles(string? Permission) : IQuery<Result<MyRolesDto>>;
 
+// an impersonator would otherwise pick a role of the target that holds more than he does
+[NotWhileImpersonating]
 public sealed record SetActiveRole(Guid? RoleId) : ICommand<Result>;
 
 internal sealed class ActiveRoleHandlers(CoworkeeDbContext db, ICurrentUser currentUser, IPermissionChecker checker, IActiveRoleSwitch activeRoles)

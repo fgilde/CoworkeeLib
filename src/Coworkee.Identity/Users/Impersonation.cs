@@ -6,6 +6,7 @@ using Coworkee.Contracts.Identity;
 using Coworkee.Core.Results;
 using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
+using Coworkee.Identity.Groups;
 using Coworkee.Identity.Permissions;
 using Coworkee.Infrastructure.Persistence;
 using FluentValidation;
@@ -46,8 +47,8 @@ internal sealed class StartImpersonationHandler(ICurrentUser currentUser, Impers
     }
 }
 
-/// <summary>Who may sign in as whom; checked when the ticket is issued and again when the auth server redeems it.</summary>
-public sealed class ImpersonationRules(CoworkeeDbContext db, IPermissionChecker checker)
+/// <summary>Who may sign in as whom; checked when the ticket is issued, when the auth server redeems it and on every authorize and refresh of the impersonation.</summary>
+public sealed class ImpersonationRules(CoworkeeDbContext db, IPermissionChecker checker, TimeProvider clock)
 {
     internal static readonly Error Forbidden = Error.Forbidden("identity.impersonate_forbidden", "You may not sign in as other users.");
 
@@ -57,9 +58,13 @@ public sealed class ImpersonationRules(CoworkeeDbContext db, IPermissionChecker 
 
     private static readonly Error MorePermissions = Error.Forbidden("identity.impersonate_more_permissions", "The user holds permissions you do not have.");
 
+    private static readonly Error OtherGroups = Error.Forbidden("identity.impersonate_other_groups", "The user belongs to groups you cannot access.");
+
     /// <summary>
     /// Null when <paramref name="impersonatorId"/> may sign in as <paramref name="targetId"/>: he holds the permission and is not signed in as someone else
-    /// (<paramref name="currentImpersonator"/>), the target is another active user of the tenant and holds no permission he lacks.
+    /// (<paramref name="currentImpersonator"/>), the target is another active, unlocked user of the tenant, holds no permission he lacks (all roles,
+    /// whatever role either has picked; resource grants only where he holds the permission globally or on the same resource) and belongs only to groups
+    /// he can access.
     /// </summary>
     public async Task<Error?> CheckAsync(Guid impersonatorId, Guid? currentImpersonator, Guid targetId, Guid? tenantId, CancellationToken cancellationToken)
     {
@@ -74,9 +79,10 @@ public sealed class ImpersonationRules(CoworkeeDbContext db, IPermissionChecker 
         }
 
         bool exists;
+        var now = clock.GetUtcNow();
         using (CurrentUserScope.Begin(new ImpersonatedUser(null, tenantId)))
         {
-            exists = await db.Set<User>().AnyAsync(u => u.Id == targetId && u.TenantId == tenantId && u.IsActive, cancellationToken);
+            exists = await db.Set<User>().AnyAsync(u => u.Id == targetId && u.TenantId == tenantId && u.IsActive && !(u.LockoutEnabled && u.LockoutEnd > now), cancellationToken);
         }
 
         if (!exists)
@@ -84,16 +90,39 @@ public sealed class ImpersonationRules(CoworkeeDbContext db, IPermissionChecker 
             return UserErrors.NotFound;
         }
 
-        // both sets the same way, so an active role narrows both
+        // the full sets: the target can switch his active role, so a narrowed comparison would let him hold more than the impersonator
         var permissions = (PermissionChecker)checker;
-        var mine = await permissions.GetGrantedForAsync(impersonatorId, tenantId, cancellationToken);
+        var mine = await permissions.GetGrantedForAsync(impersonatorId, tenantId, cancellationToken, narrow: false);
         if (!mine.Contains(IdentityPermissions.Users.Impersonate))
         {
             return Forbidden;
         }
 
-        var theirs = await permissions.GetGrantedForAsync(targetId, tenantId, cancellationToken);
-        return theirs.Except(mine, StringComparer.Ordinal).Any() ? MorePermissions : null;
+        var theirs = await permissions.GetGrantedForAsync(targetId, tenantId, cancellationToken, narrow: false);
+        if (theirs.Except(mine, StringComparer.Ordinal).Any())
+        {
+            return MorePermissions;
+        }
+
+        var myResources = await permissions.GetResourceGrantsForAsync(impersonatorId, tenantId, cancellationToken);
+        if ((await permissions.GetResourceGrantsForAsync(targetId, tenantId, cancellationToken)).Any(g => !mine.Contains(g.Permission) && !myResources.Contains(g)))
+        {
+            return MorePermissions;
+        }
+
+        return mine.Contains(IdentityPermissions.Groups.ScopeAll) || await InAccessibleGroupsAsync(impersonatorId, targetId, tenantId, cancellationToken) ? null : OtherGroups;
+    }
+
+    // accessible as IGroupScope computes it: the impersonator's groups and their subtrees, by code
+    private async Task<bool> InAccessibleGroupsAsync(Guid impersonatorId, Guid targetId, Guid? tenantId, CancellationToken cancellationToken)
+    {
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, tenantId));
+        var groups = await db.Set<UserGroup>().AsNoTracking()
+            .SelectMany(g => g.Members.Where(m => m.UserId == impersonatorId || m.UserId == targetId).Select(m => new { m.UserId, g.Id, g.Code }))
+            .ToListAsync(cancellationToken);
+        var mine = groups.Where(g => g.UserId == impersonatorId).ToList();
+        return groups.Where(g => g.UserId == targetId).All(target => mine.Any(own =>
+            own.Id == target.Id || (own.Code is { } code && target.Code is { } targetCode && GroupCodes.IsDescendant(targetCode, code))));
     }
 }
 

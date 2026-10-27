@@ -179,6 +179,19 @@ public sealed class WebhookDeliveryTests(WebhooksApp app) : IAsyncLifetime
         }
     }
 
+    [Fact]
+    public async Task Someone_signed_in_as_another_user_creates_and_changes_no_webhooks()
+    {
+        var id = Guid.CreateVersion7();
+        using var actor = Core.Security.CurrentUserScope.Begin(new Core.Security.ImpersonatedUser(_setup.AdminUserId, _setup.TenantId, Guid.CreateVersion7()));
+        await using var scope = app.App.Services.CreateAsyncScope();
+        var dispatcher = scope.ServiceProvider.GetRequiredService<Application.Messaging.IDispatcher>();
+        var request = new WebhookRequest(app.ReceiverUrl, ["gadgets.*"]);
+
+        (await dispatcher.SendAsync(new CreateWebhookCommand(request), Ct)).Error!.Code.ShouldBe("auth.impersonating");
+        (await dispatcher.SendAsync(new UpdateWebhookCommand(id, request), Ct)).Error!.Code.ShouldBe("auth.impersonating");
+    }
+
     private async Task<string> SubscribeAsync(HttpClient client, string events, string query = "")
     {
         var response = await client.PostAsJsonAsync("/api/v1/webhooks", new WebhookRequest(app.ReceiverUrl + query, [events], "test"), Ct);

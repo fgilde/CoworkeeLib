@@ -153,11 +153,33 @@ internal sealed class PermissionChecker(
         return grants.Where(g => allowedRoles.Contains(g.RoleId)).Select(g => g.ResourceId).Distinct().ToList();
     }
 
-    internal async Task<string[]> GetGrantedForAsync(Guid userId, Guid? tenantId, CancellationToken cancellationToken)
+    /// <summary>What <paramref name="userId"/> holds; <paramref name="narrow"/> false ignores the active role, so the result is everything his roles give.</summary>
+    internal async Task<string[]> GetGrantedForAsync(Guid userId, Guid? tenantId, CancellationToken cancellationToken, bool narrow = true)
     {
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(userId, tenantId));
-        var narrow = await activeRoles.IsEnabledAsync(cancellationToken);
+        narrow = narrow && await activeRoles.IsEnabledAsync(cancellationToken);
         return [.. await WithComputedAsync(userId, tenantId, narrow, await LoadAsync(userId, tenantId, narrow, cancellationToken), cancellationToken)];
+    }
+
+    /// <summary>Every permission <paramref name="userId"/> holds on a single resource, directly or through his groups (resource type, id, permission).</summary>
+    internal async Task<HashSet<(string Type, Guid Id, string Permission)>> GetResourceGrantsForAsync(Guid userId, Guid? tenantId, CancellationToken cancellationToken)
+    {
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, tenantId));
+        var groupIds = await GroupIdsAsync(userId, cancellationToken);
+        var grants = await db.Set<ResourcePermission>()
+            .Where(p => (p.PrincipalType == PrincipalType.User && p.PrincipalId == userId)
+                        || (p.PrincipalType == PrincipalType.Group && groupIds.Contains(p.PrincipalId)))
+            .Select(p => new { p.ResourceType, p.ResourceId, p.RoleId })
+            .Distinct()
+            .ToListAsync(cancellationToken);
+        var result = new HashSet<(string, Guid, string)>();
+        foreach (var role in grants.GroupBy(g => g.RoleId))
+        {
+            var permissions = await GrantsForRolesAsync([role.Key], tenantId, cancellationToken);
+            result.UnionWith(role.SelectMany(g => permissions.Select(p => (g.ResourceType, g.ResourceId, p))));
+        }
+
+        return result;
     }
 
     // ponytail: computed permissions run once per scope (request) and user, never across requests: data changes show on the next request without invalidation

@@ -17,10 +17,12 @@ public sealed record GetAllReportSubscriptionsQuery : IQuery<Result<IReadOnlyLis
 
 [RequiresPermission(ReportPermissions.View)]
 [AiTool(Exclude = true)]
+[NotWhileImpersonating]
 public sealed record CreateReportSubscriptionCommand(SaveReportSubscriptionRequest Subscription) : ICommand<Result<ReportSubscriptionDto>>;
 
 [RequiresPermission(ReportPermissions.View)]
 [AiTool(Exclude = true)]
+[NotWhileImpersonating]
 public sealed record UpdateReportSubscriptionCommand(Guid Id, SaveReportSubscriptionRequest Subscription) : ICommand<Result<ReportSubscriptionDto>>;
 
 /// <summary>Ends one's own subscription; holders of <see cref="ReportPermissions.Subscriptions"/> end anyone's.</summary>

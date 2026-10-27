@@ -33,6 +33,19 @@ public sealed partial class SubscriptionTests(ReportingApp app) : ReportingTestB
         return (await response.Content.ReadFromJsonAsync<ReportDto>(Ct))!;
     }
 
+    [Fact]
+    public async Task Someone_signed_in_as_another_user_subscribes_to_no_report()
+    {
+        var report = await CreateReportAsync();
+        using var actor = Core.Security.CurrentUserScope.Begin(new Core.Security.ImpersonatedUser(Setup.AdminUserId, Setup.TenantId, Guid.CreateVersion7()));
+        await using var scope = App.App.Services.CreateAsyncScope();
+        var dispatcher = scope.ServiceProvider.GetRequiredService<Application.Messaging.IDispatcher>();
+
+        (await dispatcher.SendAsync(new CreateReportSubscriptionCommand(new SaveReportSubscriptionRequest(report.Id, Weekly)), Ct)).Error!.Code.ShouldBe("auth.impersonating");
+        (await dispatcher.SendAsync(new UpdateReportSubscriptionCommand(Guid.CreateVersion7(), new SaveReportSubscriptionRequest(report.Id, Weekly)), Ct)).Error!.Code
+            .ShouldBe("auth.impersonating");
+    }
+
     private static async Task<ReportSubscriptionDto> SubscribeAsync(HttpClient client, Guid reportId, ReportSchedule? schedule = null)
     {
         var response = await client.PostAsJsonAsync("/api/v1/reports/subscriptions", new SaveReportSubscriptionRequest(reportId, schedule ?? Weekly), Ct);
