@@ -252,7 +252,8 @@
         "ICoworkeeApi has new group members (GetGroupChildrenAsync, SearchGroupTreeAsync, MoveGroupAsync, AddGroupMembersAsync, RemoveGroupMembersAsync, MoveGroupMembersAsync, GetMyGroupsAsync, SelectGroupsAsync): hand-written implementations and test fakes add them.",
         "IUnitOfWork resolves to a wrapper that also saves external DbContexts, no longer to the DbContext itself; code that cast it to a DbContext injects the context instead.",
         "Aspire 13.6.4: the app host SDK, Aspire.Hosting.* and Aspire.Hosting.Testing move to 13.6.4, the CommunityToolkit Aspire packages to 13.6.1.",
-        "Nextended 10.1.48: apps that pin Nextended packages move up."
+        "Nextended 10.1.48: apps that pin Nextended packages move up.",
+        "Log in as another user: cw.AuditEntries and cw.OutboxMessages get the nullable column ImpersonatorId (same migration). ICoworkeeApi has the new member StartImpersonationAsync. Only auth clients with AllowImpersonation (Coworkee:Auth:Clients:<n>:AllowImpersonation; the web host of the app host has it) serve an impersonated user."
       ],
       "needsMigration": true,
       "packages": [
@@ -311,7 +312,7 @@
       ],
       "manual": [
         {
-          "text": "Implement the new ICoworkeeApi group members in hand-written implementations and test fakes (throw NotImplementedException where a fake does not need them).",
+          "text": "Implement StartImpersonationAsync and the new ICoworkeeApi group members in hand-written implementations and test fakes (throw NotImplementedException where a fake does not need them).",
           "find": ":\\s*ICoworkeeApi\\b",
           "files": [
             "src/**/*.cs",

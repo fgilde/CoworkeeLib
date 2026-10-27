@@ -24,7 +24,6 @@ Changes that need action in apps built on Coworkee. Newest first.
 - `PUT /api/v1/identity/groups/{id}` with a `ParentId` other than the current parent answers 400; a group moves with `PUT /api/v1/identity/groups/{id}/parent`. A missing `ParentId` keeps the parent.
 - `IUnitOfWork` resolves to a wrapper that saves the external contexts and then the app's context, no longer to the DbContext itself; code that cast it to a DbContext injects the context instead.
 - Aspire 13.6.4 (app host SDK, `Aspire.Hosting.*`, `Aspire.Hosting.Testing`), CommunityToolkit Aspire packages 13.6.1, Nextended 10.1.48; `coworkee update` moves the pinned packages.
-- Apps need a migration (`dotnet ef migrations add Impersonation`): `cw.AuditEntries` gets the nullable column `ImpersonatorId`.
 - Apps need a migration (`dotnet ef migrations add Impersonation`): `cw.AuditEntries` and `cw.OutboxMessages` get the nullable column `ImpersonatorId`.
 - `ICoworkeeApi` has the new member `StartImpersonationAsync`, `ICurrentUser` the default member `ImpersonatorId` (null): hand-written implementations of `ICoworkeeApi` and test fakes no longer compile until they add it; own `ICurrentUser` implementations that read claims should return the `impersonator` claim.
 - While someone is signed in as another user, the account and consent pages of the auth server answer 403, and changing the own e-mail address, creating API keys, exporting personal data, deleting the own account, choosing the active role and creating or changing webhooks and report subscriptions are refused (`auth.impersonating`).
