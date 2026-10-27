@@ -55,7 +55,7 @@ Admins edit the same values under **Settings > App settings > Registration**. Ea
 
 ## Roles offered in the registration
 
-A role with **Offered in the registration** (on the role page, `RoleRequest.SelectableForRegistration`, `SeedRole(..., SelectableForRegistration: true)`) appears in step 3. Sending a role that is not offered fails the step. System roles are never offered. Turning the flag on needs `Identity.Users.Manage` and every permission the role grants (`identity.role_offer_more_permissions` otherwise), so a role manager cannot hand strangers more than he holds himself; the same holds for *Given to new users* ([default roles](../features/identity.md#owners-default-group-and-default-role)).
+A role with **Offered in the registration** (on the role page, `RoleRequest.SelectableForRegistration`, null keeps the value, `SeedRole(..., SelectableForRegistration: true)`) appears in step 3. Sending a role that is not offered fails the step. System roles are never offered. Turning the flag on needs `Identity.Users.Manage` and every permission the role grants (`identity.role_offer_more_permissions` otherwise), so a role manager cannot hand strangers more than he holds himself; the same holds for *Given to new users* ([default roles](../features/identity.md#owners-default-group-and-default-role)).
 
 The flag is a column of `cw.Roles`. Apps with their own migrations add one after updating: `dotnet ef migrations add RoleSelectableForRegistration`.
 

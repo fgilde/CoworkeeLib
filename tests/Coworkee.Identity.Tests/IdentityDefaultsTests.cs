@@ -129,6 +129,16 @@ public sealed class IdentityDefaultsTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Each_flag_left_out_keeps_its_value()
+    {
+        var role = await RoleAsync("Customer");
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/roles/{role}", new RoleRequest("Customer", null, IsDefault: true), Ct)).EnsureSuccessStatusCode();
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/roles/{role}", new RoleRequest("Customer", null, SelectableForRegistration: true), Ct)).EnsureSuccessStatusCode();
+
+        (await RolesAsync()).Single(r => r.Id == role).ShouldSatisfyAllConditions(r => r.IsDefault.ShouldBeTrue(), r => r.SelectableForRegistration.ShouldBeTrue());
+    }
+
+    [Fact]
     public async Task Offering_a_role_to_new_users_needs_Users_Manage_and_every_permission_of_the_role()
     {
         var harmless = await RoleAsync("Harmless");

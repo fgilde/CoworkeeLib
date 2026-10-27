@@ -40,10 +40,10 @@ public sealed record IdListRequest(IReadOnlyList<Guid> Ids);
 public sealed record RoleDto(Guid Id, string Name, string? Description, bool IsSystem, bool SelectableForRegistration = false, bool IsDefault = false);
 
 /// <summary>
-/// A role; <paramref name="SelectableForRegistration"/> offers it in the registration wizard, <paramref name="IsDefault"/> gives it to every new user
-/// (null keeps the current value).
+/// A role; <paramref name="SelectableForRegistration"/> offers it in the registration wizard, <paramref name="IsDefault"/> gives it to every new user.
+/// A flag left null keeps its value (false for a new role), so a client changing one flag does not overwrite a concurrent change of the other.
 /// </summary>
-public sealed record RoleRequest(string Name, string? Description, bool SelectableForRegistration = false, bool? IsDefault = null);
+public sealed record RoleRequest(string Name, string? Description, bool? SelectableForRegistration = null, bool? IsDefault = null);
 
 /// <summary>A group; <paramref name="OwnerIds"/> are the members who own it, <paramref name="IsDefault"/> marks the group new users join.</summary>
 public sealed record GroupDto(Guid Id, string Name, string? Description, IReadOnlyList<Guid> MemberIds, IReadOnlyList<Guid> RoleIds, Guid? ParentId = null, string? Code = null,

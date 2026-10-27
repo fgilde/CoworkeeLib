@@ -24,7 +24,7 @@ public sealed class RoleDetailTests : ClientTestBase
 
         page.WaitForElement("input[data-testid='role-registration'], [data-testid='role-registration'] input").Change(true);
 
-        Api.Received().UpdateRoleAsync(_role, new RoleRequest("Customer", "Buys things", true, false), Arg.Any<CancellationToken>());
+        Api.Received().UpdateRoleAsync(_role, new RoleRequest("Customer", "Buys things", true, null), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -36,6 +36,6 @@ public sealed class RoleDetailTests : ClientTestBase
 
         page.WaitForElement("input[data-testid='role-default'], [data-testid='role-default'] input").Change(true);
 
-        Api.Received().UpdateRoleAsync(_role, new RoleRequest("Customer", "Buys things", true, true), Arg.Any<CancellationToken>());
+        Api.Received().UpdateRoleAsync(_role, new RoleRequest("Customer", "Buys things", null, true), Arg.Any<CancellationToken>());
     }
 }
