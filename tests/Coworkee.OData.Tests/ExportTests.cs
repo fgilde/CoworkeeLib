@@ -105,6 +105,38 @@ public sealed class ExportTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_recurring_sweep_fails_exports_stuck_past_the_timeout_of_every_user_and_organisation()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var other = Guid.CreateVersion7();
+        DataTransferJob Job(Guid tenant, DateTimeOffset createdAt, DataTransferStatus status) => new()
+        {
+            TenantId = tenant, UserId = Guid.CreateVersion7(), Kind = DataTransferKind.Export, EntitySet = "Gadgets", Status = status, CreatedAt = createdAt,
+        };
+        var stuck = new[] { Job(_setup.TenantId, now.AddHours(-2), DataTransferStatus.Running), Job(other, now.AddHours(-3), DataTransferStatus.Queued) };
+        var fresh = Job(_setup.TenantId, now.AddMinutes(-1), DataTransferStatus.Running);
+        await app.InDbAsync(_setup.TenantId, async db =>
+        {
+            db.AddRange(stuck[0], fresh);
+            return await db.SaveChangesAsync(Ct);
+        });
+        await app.InDbAsync(other, async db =>
+        {
+            db.Add(stuck[1]);
+            return await db.SaveChangesAsync(Ct);
+        });
+
+        await using (var scope = app.App.Services.CreateAsyncScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<StaleExportJob>().ExecuteAsync(Ct);
+        }
+
+        var jobs = await app.InDbAsync(null, db => db.Set<DataTransferJob>().IgnoreQueryFilters().AsNoTracking().ToDictionaryAsync(j => j.Id, Ct));
+        stuck.ShouldAllBe(j => jobs[j.Id].Status == DataTransferStatus.Failed && jobs[j.Id].Message == StaleExportJob.Message);
+        jobs[fresh.Id].Status.ShouldBe(DataTransferStatus.Running);
+    }
+
+    [Fact]
     public async Task The_download_link_expires_after_five_minutes()
     {
         var ready = (await StreamAsync(Admin, "?format=csv"))[^1];

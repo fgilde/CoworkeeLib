@@ -22,6 +22,7 @@ internal static class DataTransferServiceCollectionExtensions
         services.AddScoped<ExportJob>();
         services.AddScoped<ExportScheduleRunner>();
         services.AddRecurringJob<ExportScheduleJob>(ExportScheduleJob.Id, ExportScheduleJob.Cron);
+        services.AddRecurringJob<StaleExportJob>(StaleExportJob.Id, StaleExportJob.Cron);
         services.AddRetentionTarget<DataTransferJobRetention>();
         return services;
     }

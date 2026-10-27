@@ -243,7 +243,7 @@ public sealed partial class DataExports(
             .ToListAsync(cancellationToken);
         foreach (var job in open.Where(j => j.CreatedAt < stale))
         {
-            (job.Status, job.Message, job.FinishedAt) = (DataTransferStatus.Failed, "The export took too long.", clock.GetUtcNow());
+            StaleExportJob.Fail(job, clock.GetUtcNow());
         }
 
         await db.SaveChangesAsync(cancellationToken);
