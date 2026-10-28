@@ -15,7 +15,7 @@ public sealed record GetDefaultGroup : IQuery<Result<DefaultGroupDto>>;
 [RequiresPermission(IdentityPermissions.Groups.Manage)]
 public sealed record SetDefaultGroup(Guid? GroupId) : ICommand<Result>;
 
-internal sealed class DefaultGroupHandlers(CoworkeeDbContext db) : IHandler<GetDefaultGroup, Result<DefaultGroupDto>>, IHandler<SetDefaultGroup, Result>
+internal sealed class DefaultGroupHandlers(CoworkeeDbContext db, Roles.RoleOffer offer) : IHandler<GetDefaultGroup, Result<DefaultGroupDto>>, IHandler<SetDefaultGroup, Result>
 {
     public async Task<Result<DefaultGroupDto>> HandleAsync(GetDefaultGroup query, CancellationToken cancellationToken) =>
         new DefaultGroupDto(await db.Set<UserGroup>().Where(g => g.IsDefault).Select(g => (Guid?)g.Id).FirstOrDefaultAsync(cancellationToken));
@@ -60,6 +60,17 @@ internal sealed class DefaultGroupHandlers(CoworkeeDbContext db) : IHandler<GetD
         if (groupId is { } id && groups.All(g => g.Id != id))
         {
             return GroupErrors.NotFound;
+        }
+
+        // new users will get the roles and the grants of the group
+        if (groups.FirstOrDefault(g => g.Id == groupId && !g.IsDefault) is { } candidate)
+        {
+            var grants = await db.Set<PermissionGrant>().Where(g => g.ProviderType == PermissionProviderType.Group && g.ProviderKey == candidate.Id)
+                .Select(g => g.Name).ToListAsync(cancellationToken);
+            if ((candidate.Roles.Count > 0 || grants.Count > 0) && await offer.RefusedAsync([.. candidate.Roles.Select(r => r.RoleId)], grants, cancellationToken) is { } refused)
+            {
+                return refused;
+            }
         }
 
         foreach (var group in groups.Where(g => g.IsDefault && g.Id != groupId))

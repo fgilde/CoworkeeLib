@@ -43,7 +43,7 @@ internal sealed class GetGrantsHandler(CoworkeeDbContext db, ICurrentUser curren
             .ToListAsync(cancellationToken);
 }
 
-internal sealed class SetGrantsHandler(CoworkeeDbContext db, ICurrentUser currentUser, IPermissionDefinitionManager definitions)
+internal sealed class SetGrantsHandler(CoworkeeDbContext db, ICurrentUser currentUser, IPermissionDefinitionManager definitions, Roles.RoleOffer offer)
     : IHandler<SetGrants, Result>
 {
     public async Task<Result> HandleAsync(SetGrants command, CancellationToken cancellationToken)
@@ -63,6 +63,14 @@ internal sealed class SetGrantsHandler(CoworkeeDbContext db, ICurrentUser curren
         var current = await db.Set<PermissionGrant>()
             .Where(g => g.ProviderType == command.ProviderType && g.ProviderKey == command.ProviderKey && g.TenantId == currentUser.TenantId)
             .ToListAsync(cancellationToken);
+
+        // a role or group new users get passes what is added on to them
+        var added = wanted.Where(n => current.All(g => g.Name != n)).ToList();
+        if (added.Count > 0 && await ReachesNewUsersAsync(command, cancellationToken) && await offer.RefusedAsync([], added, cancellationToken) is { } refused)
+        {
+            return refused;
+        }
+
         db.RemoveRange(current.Where(g => !wanted.Contains(g.Name)));
         db.AddRange(wanted.Where(n => current.All(g => g.Name != n)).Select(n => new PermissionGrant
         {
@@ -73,6 +81,13 @@ internal sealed class SetGrantsHandler(CoworkeeDbContext db, ICurrentUser curren
         }));
         return Result.Success();
     }
+
+    private async Task<bool> ReachesNewUsersAsync(SetGrants command, CancellationToken cancellationToken) => command.ProviderType switch
+    {
+        PermissionProviderType.Role => await offer.ReachesNewUsersAsync(command.ProviderKey, cancellationToken),
+        PermissionProviderType.Group => await db.Set<UserGroup>().AnyAsync(g => g.Id == command.ProviderKey && g.IsDefault, cancellationToken),
+        _ => false,
+    };
 
     private Task<bool> ProviderExistsAsync(SetGrants command, CancellationToken cancellationToken) => command.ProviderType switch
     {

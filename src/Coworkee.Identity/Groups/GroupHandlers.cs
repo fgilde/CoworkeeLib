@@ -183,7 +183,7 @@ internal sealed class SetGroupMembersHandler(CoworkeeDbContext db, ICurrentUser 
     }
 }
 
-internal sealed class SetGroupRolesHandler(CoworkeeDbContext db, ICurrentUser currentUser) : IHandler<SetGroupRoles, Result>
+internal sealed class SetGroupRolesHandler(CoworkeeDbContext db, ICurrentUser currentUser, Roles.RoleOffer offer) : IHandler<SetGroupRoles, Result>
 {
     public async Task<Result> HandleAsync(SetGroupRoles command, CancellationToken cancellationToken)
     {
@@ -198,6 +198,13 @@ internal sealed class SetGroupRolesHandler(CoworkeeDbContext db, ICurrentUser cu
         if (valid != wanted.Count)
         {
             return Error.Validation(nameof(command.RoleIds), "Unknown role or system role. System roles cannot be assigned to groups.");
+        }
+
+        // new users join the default group and get its roles
+        var added = wanted.Where(id => group.Roles.All(r => r.RoleId != id)).ToList();
+        if (group.IsDefault && added.Count > 0 && await offer.RefusedAsync(added, null, cancellationToken) is { } refused)
+        {
+            return refused;
         }
 
         group.Roles.RemoveAll(r => !wanted.Contains(r.RoleId));

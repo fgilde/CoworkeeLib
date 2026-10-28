@@ -217,6 +217,48 @@ public sealed class IdentityDefaultsTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Making_a_group_the_default_needs_every_permission_of_its_roles_and_grants()
+    {
+        var (powerful, harmless) = (await RoleAsync("Powerful"), await RoleAsync("Harmless"));
+        await GrantAsync("Role", powerful, IdentityPermissions.Permissions.Manage);
+        var (strong, weak, granted) = (await GroupAsync("Strong"), await GroupAsync("Weak"), await GroupAsync("Granted"));
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/groups/{strong}/roles", new IdListRequest([powerful]), Ct)).EnsureSuccessStatusCode();
+        (await Admin.PutAsJsonAsync($"/api/v1/identity/groups/{weak}/roles", new IdListRequest([harmless]), Ct)).EnsureSuccessStatusCode();
+        await GrantAsync("Group", granted, IdentityPermissions.Groups.ScopeAll);
+        var manager = await ClientWithAsync(IdentityPermissions.Groups.Manage, IdentityPermissions.Users.Manage);
+
+        (await SetDefaultAsync(manager, strong)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await SetDefaultAsync(manager, granted)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await SetDefaultAsync(await ClientWithAsync(IdentityPermissions.Groups.Manage), weak)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await SetDefaultAsync(manager, weak)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await SetDefaultAsync(Admin, strong)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+    }
+
+    [Fact]
+    public async Task Roles_and_grants_added_to_what_new_users_get_need_the_same_permissions()
+    {
+        var (powerful, harmless, plain) = (await RoleAsync("Powerful"), await RoleAsync("Customer", isDefault: true), await RoleAsync("Plain"));
+        await GrantAsync("Role", powerful, IdentityPermissions.Permissions.Manage);
+        var (standard, other) = (await GroupAsync("Default"), await GroupAsync("Other"));
+        await SetDefaultAsync(Admin, standard);
+        var groups = await ClientWithAsync(IdentityPermissions.Groups.Manage, IdentityPermissions.Users.Manage);
+        var grants = await ClientWithAsync(IdentityPermissions.Permissions.Manage, IdentityPermissions.Users.Manage);
+
+        (await groups.PutAsJsonAsync($"/api/v1/identity/groups/{standard}/roles", new IdListRequest([powerful]), Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await groups.PutAsJsonAsync($"/api/v1/identity/groups/{standard}/roles", new IdListRequest([plain]), Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await groups.PutAsJsonAsync($"/api/v1/identity/groups/{other}/roles", new IdListRequest([powerful]), Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        // the default role, a role of the default group and the default group itself get nothing the caller lacks
+        foreach (var (type, key) in new[] { ("Role", harmless), ("Role", plain), ("Group", standard) })
+        {
+            (await GrantRequestAsync(grants, type, key, IdentityPermissions.Groups.ScopeAll)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+            (await GrantRequestAsync(grants, type, key, IdentityPermissions.Users.Manage)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        }
+
+        (await GrantRequestAsync(grants, "Role", powerful, IdentityPermissions.Groups.ScopeAll)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+    }
+
+    [Fact]
     public async Task The_offer_check_works_with_a_decorated_permission_checker()
     {
         var role = await RoleAsync("Powerful");
