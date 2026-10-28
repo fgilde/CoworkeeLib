@@ -2,7 +2,7 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
-## Unreleased
+## 0.0.1.42 (2026-10-28)
 
 - Notifications: a type can name a mail template (`mailTemplate`, `NotificationType.MailTemplate`) that renders the new `NotificationMessage.MailModel` next to `user` and `notification`; the model is stored as JSON with the waiting mail, so delayed and debounced mails render the latest one. `resolveEmailDelay` (`NotificationType.ResolveEmailDelay`) takes the mail delay from the sender's tenant (a feature, a setting) when a notification is published; `emailDelay` stays the default. `NotificationMailModel.Sample(model)` is the sample for the preview and test mail of such a template. Mail models may be dictionaries or JSON objects. A model with a reserved top-level name (`user`, `notification`, layout variables, Scriban builtins) or larger than 32 KB is refused with an `ArgumentException`; a template that fails to render falls back to the generic mail, and a failing delay resolver to `emailDelay`, without failing the command. Types without a template, and mails without a model, mail as before. Apps need a migration. See [realtime](../modules/realtime.md#mail-templates-per-type-and-delay-per-tenant).
 ### Added

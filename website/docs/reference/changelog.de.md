@@ -2,7 +2,7 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
-## Unveröffentlicht
+## 0.0.1.42 (2026-10-28)
 
 - Benachrichtigungen: Ein Typ kann eine Mail-Vorlage nennen (`mailTemplate`, `NotificationType.MailTemplate`), die das neue `NotificationMessage.MailModel` neben `user` und `notification` rendert; das Modell wird als JSON mit der wartenden Mail gespeichert, verzögerte und zusammengefasste Mails rendern also das neueste. `resolveEmailDelay` (`NotificationType.ResolveEmailDelay`) nimmt die Mail-Verzögerung beim Veröffentlichen von der Organisation des Absenders (ein Feature, eine Einstellung); `emailDelay` bleibt der Standard. `NotificationMailModel.Sample(model)` ist das Beispiel für Vorschau und Testmail einer solchen Vorlage. Mail-Modelle dürfen Dictionaries oder JSON-Objekte sein. Ein Modell mit einem reservierten Namen auf oberster Ebene (`user`, `notification`, Variablen des Layouts, Scriban-Builtins) oder größer als 32 KB wird mit einer `ArgumentException` abgewiesen; eine Vorlage, die sich nicht rendern lässt, fällt auf die allgemeine Mail zurück, ein scheiternder Verzögerungs-Resolver auf `emailDelay`, ohne den Befehl scheitern zu lassen. Typen ohne Vorlage und Mails ohne Modell mailen wie bisher. Apps brauchen eine Migration. Siehe [Echtzeit](../modules/realtime.md#mail-vorlagen-pro-typ-und-verzogerung-pro-organisation).
 ### Hinzugefügt
