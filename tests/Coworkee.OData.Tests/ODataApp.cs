@@ -102,6 +102,7 @@ public sealed class ODataApp : DatabaseFixture
         Mails.Sent.Clear();
         Mails.Fail = false;
         Mails.During = null;
+        (SleeperGate.During, SleeperGate.Closed) = (null, false);
         App.Services.GetRequiredService<SystemStateCache>().Reset();
         var response = await App.GetTestClient().PostAsJsonAsync("/api/v1/setup/complete",
             new CompleteSetupRequest("token", "Acme", "admin@acme.test", "Admin#12345", "Ada", "Admin"));

@@ -128,7 +128,13 @@ public sealed partial class DataExports(
 
         if (queued)
         {
-            await db.SaveChangesAsync(CancellationToken.None);
+            // Running -> Queued only while it still runs: a cancel or the sweep that came first wins, and nothing is handed over
+            if (await SaveOrFollowAsync(job) is { } lost)
+            {
+                await WriteLineAsync(http, lost);
+                return Results.Empty;
+            }
+
             var groups = services.GetService<IGroupScope>() is { } scope ? await scope.SelectedAsync(CancellationToken.None) : [];
             services.GetRequiredService<IBackgroundJobs>().Enqueue<ExportJob, ExportJobArgs>(new ExportJobArgs(job.Id, [.. groups], Mail: !connected));
             await WriteLineAsync(http, new DataExportProgress(DataExportProgress.Queued, 100, JobId: job.Id));
@@ -137,17 +143,10 @@ public sealed partial class DataExports(
 
         job.FinishedAt = clock.GetUtcNow();
         var token = file is not null && connected ? services.GetRequiredService<IAccessTokens>().Issue(DownloadPurpose, job.Id, DownloadLifetime, singleUse: true) : null;
-        try
+        // Running -> Completed or Failed only while it still runs: a cancel or the sweep that came first wins, with no file, link or mail
+        if (await SaveOrFollowAsync(job) is { } ended)
         {
-            await db.SaveChangesAsync(CancellationToken.None);
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            // the stale sweep failed the job meanwhile, or the user cancelled it as it ended
-            var cancelled = watch.Cancelled || await db.Set<DataTransferJob>().AsNoTracking().AnyAsync(j => j.Id == job.Id && j.Status == DataTransferStatus.Cancelled, CancellationToken.None);
-            await WriteLineAsync(http, cancelled
-                ? new DataExportProgress(DataExportProgress.Cancelled, 100, JobId: job.Id)
-                : new DataExportProgress(DataExportProgress.Failed, 100, JobId: job.Id, Message: StaleExportJob.Message));
+            await WriteLineAsync(http, ended);
             return Results.Empty;
         }
 
@@ -162,6 +161,27 @@ public sealed partial class DataExports(
         }
 
         return Results.Empty;
+    }
+
+    /// <summary>
+    /// Saves the job's next status, which applies only from the status it was read in (<c>Status</c> is a concurrency token). Null when it applied; else the
+    /// last line for what happened instead: cancelled, or failed with the sweep's message.
+    /// </summary>
+    private async Task<DataExportProgress?> SaveOrFollowAsync(DataTransferJob job)
+    {
+        try
+        {
+            await db.SaveChangesAsync(CancellationToken.None);
+            return null;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            db.ChangeTracker.Clear();
+            var now = await db.Set<DataTransferJob>().AsNoTracking().Where(j => j.Id == job.Id).Select(j => new { j.Status, j.Message }).SingleAsync(CancellationToken.None);
+            return now.Status == DataTransferStatus.Cancelled
+                ? new DataExportProgress(DataExportProgress.Cancelled, 100, JobId: job.Id)
+                : new DataExportProgress(DataExportProgress.Failed, 100, JobId: job.Id, Message: now.Message ?? StaleExportJob.Message);
+        }
     }
 
     /// <summary>
@@ -311,12 +331,7 @@ public sealed partial class DataExports(
     {
         var now = clock.GetUtcNow();
         var mine = db.Set<DataTransferJob>().Where(j => j.UserId == user.UserId);
-        foreach (var job in await mine.Where(StaleExportJob.Stale(now, options.Value.ExportTimeout)).ToListAsync(cancellationToken))
-        {
-            StaleExportJob.Fail(job, now);
-        }
-
-        await StaleExportJob.SaveAsync(db, cancellationToken);
+        await StaleExportJob.FailAsync(db, await mine.Where(StaleExportJob.Stale(now, options.Value.ExportTimeout)).ToListAsync(cancellationToken), now, cancellationToken);
         return await mine.CountAsync(j => j.Kind == DataTransferKind.Export && (j.Status == DataTransferStatus.Running || j.Status == DataTransferStatus.Queued), cancellationToken)
             >= options.Value.MaxConcurrentExports;
     }

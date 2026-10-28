@@ -30,12 +30,7 @@ public sealed class StaleExportJob(CoworkeeDbContext db, IOptions<CoworkeeODataO
         var now = clock.GetUtcNow();
         var jobs = await db.Set<DataTransferJob>().IgnoreQueryFilters().Where(Stale(now, options.Value.ExportTimeout))
             .OrderBy(j => j.CreatedAt).Take(Batch).ToListAsync(cancellationToken);
-        foreach (var job in jobs)
-        {
-            Fail(job, now);
-        }
-
-        await SaveAsync(db, cancellationToken);
+        await FailAsync(db, jobs, now, cancellationToken);
     }
 
     /// <summary>Exports running since longer than the timeout and the margin, or queued for a day without starting.</summary>
@@ -47,20 +42,22 @@ public sealed class StaleExportJob(CoworkeeDbContext db, IOptions<CoworkeeODataO
             && ((j.Status == DataTransferStatus.Running && (j.StartedAt ?? j.CreatedAt) < running) || (j.Status == DataTransferStatus.Queued && j.CreatedAt < queued));
     }
 
-    internal static void Fail(DataTransferJob job, DateTimeOffset now) => (job.Status, job.Message, job.FinishedAt) = (DataTransferStatus.Failed, Message, now);
-
-    /// <summary>Saves the failed jobs; one that finished meanwhile keeps its end (the next sweep looks again).</summary>
-    internal static async Task SaveAsync(CoworkeeDbContext db, CancellationToken cancellationToken)
+    /// <summary>
+    /// Fails the jobs one by one, each only from the status it was read in (<c>Status</c> is a concurrency token): a job that ended, was cancelled or moved on
+    /// meanwhile keeps that, and does not hold back the others.
+    /// </summary>
+    internal static async Task FailAsync(CoworkeeDbContext db, IEnumerable<DataTransferJob> jobs, DateTimeOffset now, CancellationToken cancellationToken)
     {
-        try
+        foreach (var job in jobs)
         {
-            await db.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            foreach (var entry in db.ChangeTracker.Entries<DataTransferJob>())
+            (job.Status, job.Message, job.FinishedAt) = (DataTransferStatus.Failed, Message, now);
+            try
             {
-                entry.State = EntityState.Detached;
+                await db.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                db.Entry(job).State = EntityState.Detached;
             }
         }
     }

@@ -26,6 +26,7 @@ internal sealed class ExportJob(
         }
 
         using var watch = cancellations.Start(job.Id, cancellationToken);
+        DataExportMail? mail = null;
         try
         {
             var entity = registry.Find(job.EntitySet) ?? throw new InvalidOperationException($"{job.EntitySet} is no OData set anymore.");
@@ -44,10 +45,7 @@ internal sealed class ExportJob(
             var file = (await exports.WriteAsync(entity, new QueryString(job.Settings), null, watch.Token))!;
             (job.Result, job.ResultContentType, job.ResultFileName) = (file.Content, file.ContentType, job.FileName ?? file.Name);
             job.Status = DataTransferStatus.Completed;
-            if (args.Mail && !watch.Cancelled)
-            {
-                await exports.MailAsync(new DataExportMail(job.UserId, args.Recipients ?? [], job.EntitySet, file with { Name = job.ResultFileName }), cancellationToken);
-            }
+            mail = args.Mail ? new DataExportMail(job.UserId, args.Recipients ?? [], job.EntitySet, file with { Name = job.ResultFileName }) : null;
         }
         catch (OperationCanceledException) when (watch.Cancelled)
         {
@@ -60,11 +58,29 @@ internal sealed class ExportJob(
             (job.Status, job.Message) = (DataTransferStatus.Failed, exception.Message[..Math.Min(exception.Message.Length, 2000)]);
         }
 
+        // Running -> Completed or Failed only while it still runs; the mail goes only after that applied, so a cancel or the sweep that came first wins
         job.FinishedAt = clock.GetUtcNow();
-        await SavedAsync(job.Id, CancellationToken.None);
+        if (!await SavedAsync(job.Id, CancellationToken.None) || mail is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await exports.MailAsync(mail, cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            // the file is there; the job stays completed and says that the mail failed
+            logger.LogError(exception, "The mail of export {JobId} failed.", job.Id);
+            job.Message = MailFailed;
+            await SavedAsync(job.Id, CancellationToken.None);
+        }
     }
 
-    /// <summary>False when the job changed meanwhile (the stale sweep failed it): its state stays, nothing of this run is written, also no mail.</summary>
+    public const string MailFailed = "The file is ready, but the mail could not be sent.";
+
+    /// <summary>False when the job changed meanwhile (the stale sweep failed it, the user cancelled it): its state stays, nothing of this run is written, also no mail.</summary>
     private async Task<bool> SavedAsync(Guid jobId, CancellationToken cancellationToken)
     {
         try

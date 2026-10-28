@@ -222,20 +222,78 @@ public sealed class ExportTests(ODataApp app) : IAsyncLifetime
         await RunExportJobAsync(failed);
         (await JobAsync(failed)).ShouldSatisfyAllConditions(j => j.Status.ShouldBe(DataTransferStatus.Failed), j => j.StartedAt.ShouldBeNull(), j => j.Result.ShouldBeNull());
 
-        var swept = await QueuedJobAsync(DataTransferStatus.Queued);
-        app.Mails.During = () => app.InDbAsync(_setup.TenantId, db => db.Set<DataTransferJob>().Where(j => j.Id == swept)
-            .ExecuteUpdateAsync(j => j.SetProperty(x => x.Status, DataTransferStatus.Failed).SetProperty(x => x.Message, StaleExportJob.Message), Ct));
+        // the sweep fails it while it writes: the job keeps the failure, without file and mail
+        var swept = await QueuedJobAsync(DataTransferStatus.Queued, "Sleepers");
+        SleeperGate.During = () => SetStatusAsync(swept, DataTransferStatus.Failed, StaleExportJob.Message);
         await RunExportJobAsync(swept);
 
         var kept = await JobAsync(swept);
         (kept.Status, kept.Message, kept.Result).ShouldBe((DataTransferStatus.Failed, StaleExportJob.Message, null));
+        app.Mails.Sent.ShouldBeEmpty();
+
+        // a cancel while it writes: cancelled, without file and mail
+        var cancelled = await QueuedJobAsync(DataTransferStatus.Queued, "Sleepers");
+        SleeperGate.During = () => SetStatusAsync(cancelled, DataTransferStatus.Cancelled, "Cancelled");
+        await RunExportJobAsync(cancelled);
+
+        (await JobAsync(cancelled)).ShouldSatisfyAllConditions(j => j.Status.ShouldBe(DataTransferStatus.Cancelled), j => j.Result.ShouldBeNull());
+        app.Mails.Sent.ShouldBeEmpty();
     }
 
-    private async Task<Guid> QueuedJobAsync(DataTransferStatus status)
+    [Fact]
+    public async Task A_cancel_racing_the_handoff_to_the_queue_wins_and_nothing_is_handed_over()
+    {
+        await SleepersAsync(8);
+        SleeperGate.During = () => SetStatusAsync(null, DataTransferStatus.Cancelled, "Cancelled");
+
+        var lines = await StreamAsync(Admin, "?format=csv", "Sleepers");
+
+        lines[^1].Phase.ShouldBe(DataExportProgress.Cancelled);
+        (await JobAsync(lines[^1].JobId!.Value)).ShouldSatisfyAllConditions(j => j.Status.ShouldBe(DataTransferStatus.Cancelled), j => j.Result.ShouldBeNull());
+        app.Mails.Sent.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task The_sweep_racing_the_handoff_to_the_queue_wins_and_nothing_is_handed_over()
+    {
+        await SleepersAsync(8);
+        SleeperGate.During = () => SetStatusAsync(null, DataTransferStatus.Failed, StaleExportJob.Message);
+
+        var lines = await StreamAsync(Admin, "?format=csv", "Sleepers");
+
+        (lines[^1].Phase, lines[^1].Message).ShouldBe((DataExportProgress.Failed, StaleExportJob.Message));
+        (await JobAsync(lines[^1].JobId!.Value)).ShouldSatisfyAllConditions(j => j.Status.ShouldBe(DataTransferStatus.Failed), j => j.Result.ShouldBeNull());
+        app.Mails.Sent.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task A_cancel_after_completion_keeps_the_job_completed()
+    {
+        var ready = (await StreamAsync(Admin, "?format=csv"))[^1];
+        ready.Phase.ShouldBe(DataExportProgress.Ready);
+
+        var answer = await (await Admin.PostAsync($"/api/v1/data/jobs/{ready.JobId}/cancel", null, Ct)).Content.ReadFromJsonAsync<DataTransferJobDto>(Ct);
+
+        answer!.Status.ShouldBe(DataTransferStatus.Completed);
+        (await JobAsync(ready.JobId!.Value)).ShouldSatisfyAllConditions(j => j.Status.ShouldBe(DataTransferStatus.Completed), j => j.Result.ShouldNotBeNull());
+    }
+
+    private Task<int> SleepersAsync(int count) => app.InDbAsync(_setup.TenantId, db =>
+    {
+        db.AddRange(Enumerable.Range(0, count).Select(i => new Sleeper { Name = $"S{i}", TenantId = _setup.TenantId }));
+        return db.SaveChangesAsync(Ct);
+    });
+
+    // what another instance (a cancel there) or the stale sweep writes while this one exports; without an id, the running Sleepers export
+    private Task<int> SetStatusAsync(Guid? id, DataTransferStatus status, string message) => app.InDbAsync(_setup.TenantId, db => db.Set<DataTransferJob>()
+        .Where(j => id == null ? j.EntitySet == "Sleepers" && j.Status == DataTransferStatus.Running : j.Id == id)
+        .ExecuteUpdateAsync(j => j.SetProperty(x => x.Status, status).SetProperty(x => x.Message, message), Ct));
+
+    private async Task<Guid> QueuedJobAsync(DataTransferStatus status, string entitySet = "Gadgets")
     {
         var job = new DataTransferJob
         {
-            TenantId = _setup.TenantId, UserId = _setup.AdminUserId, Kind = DataTransferKind.Export, EntitySet = "Gadgets", Status = status, Settings = "?format=csv",
+            TenantId = _setup.TenantId, UserId = _setup.AdminUserId, Kind = DataTransferKind.Export, EntitySet = entitySet, Status = status, Settings = "?format=csv",
             CreatedAt = DateTimeOffset.UtcNow,
         };
         await app.InDbAsync(_setup.TenantId, async db =>
@@ -476,9 +534,9 @@ public sealed class ExportTests(ODataApp app) : IAsyncLifetime
     private static SaveExportScheduleRequest Request() =>
         new("Gadgets", "Tools weekly", "?$filter=Category eq 'Tools'&format=csv", Weekly, "tools", ["boss@acme.test", " "]);
 
-    private static async Task<List<DataExportProgress>> StreamAsync(HttpClient client, string query)
+    private static async Task<List<DataExportProgress>> StreamAsync(HttpClient client, string query, string set = "Gadgets")
     {
-        using var response = await client.GetAsync("/api/v1/data/Gadgets/export/stream" + query, HttpCompletionOption.ResponseHeadersRead, Ct);
+        using var response = await client.GetAsync($"/api/v1/data/{set}/export/stream" + query, HttpCompletionOption.ResponseHeadersRead, Ct);
         response.Content.Headers.ContentType!.MediaType.ShouldBe("application/x-ndjson");
         var text = await response.Content.ReadAsStringAsync(Ct);
         return [.. text.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(line => JsonSerializer.Deserialize<DataExportProgress>(line, JsonSerializerOptions.Web)!)];

@@ -16,8 +16,16 @@ internal sealed class SleeperGate : IODataEntityFilter<Sleeper>
 {
     public static volatile bool Closed;
 
+    /// <summary>Runs once while an export reads the set, e.g. another instance changing the job meanwhile.</summary>
+    public static Func<Task>? During;
+
     public async Task<IQueryable<Sleeper>> ApplyAsync(IQueryable<Sleeper> query, CancellationToken cancellationToken)
     {
+        if (Interlocked.Exchange(ref During, null) is { } during)
+        {
+            await during();
+        }
+
         while (Closed)
         {
             await Task.Delay(50, cancellationToken);
