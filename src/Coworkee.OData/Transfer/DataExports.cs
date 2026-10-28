@@ -88,7 +88,7 @@ public sealed partial class DataExports(
         {
             // not the request's token: the export finishes when the client leaves, but not later than the timeout
             using var timeout = new CancellationTokenSource(options.Value.ExportTimeout);
-            file = await WriteAsync(entity, query, options.Value.BackgroundExportRows, timeout.Token, new LineProgress(lines.Writer));
+            file = await WriteAsync(entity, query, options.Value.BackgroundExportRows, timeout.Token, new LineProgress(lines.Writer, job.Id));
             if (file is null)
             {
                 // too many rows for a request: the export job writes it; the client follows the job like any background export
@@ -336,8 +336,8 @@ public sealed partial class DataExports(
     private partial void LogFailed(Exception exception, Guid jobId);
 
     // in order and at once: Progress<T> would post the lines to the thread pool
-    private sealed class LineProgress(ChannelWriter<DataExportProgress> lines) : IProgress<DataExportProgress>
+    private sealed class LineProgress(ChannelWriter<DataExportProgress> lines, Guid jobId) : IProgress<DataExportProgress>
     {
-        public void Report(DataExportProgress value) => lines.TryWrite(value);
+        public void Report(DataExportProgress value) => lines.TryWrite(value with { JobId = jobId });
     }
 }

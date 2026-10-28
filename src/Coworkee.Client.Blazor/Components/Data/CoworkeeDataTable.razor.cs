@@ -354,17 +354,9 @@ public partial class CoworkeeDataTable<T> : IDisposable
     {
         if (DataSource is null)
         {
-            var query = new ODataQuery { Filter = CurrentFilter, OrderBy = _orderBy };
-            var columns = ExportColumns();
             var fileFormat = format switch { ExportFormat.Csv => ExportFileFormat.Csv, ExportFormat.Json => ExportFileFormat.Json, _ => ExportFileFormat.Xlsx };
-            ExportResult? result = null;
-            if (await Snackbar.RunAsync(async () => result = await Services.GetRequiredService<IDataTransferApi>().ExportAsync(EntitySet, fileFormat, query, columns)))
-            {
-                await (result!.Job is { } job
-                    ? Services.GetRequiredService<DataTransferWatcher>().Announce(job)
-                    : Downloader.DownloadAsync($"{ExportFileName}{Path.GetExtension(result.FileName)}", result.ContentType, result.Content!));
-            }
-
+            var query = ExportQueries.Of(fileFormat, new ODataQuery { Filter = CurrentFilter, OrderBy = _orderBy }, ExportColumns());
+            await ExportProgressDialog.ShowAsync(Dialogs, L["Export"], EntitySet, query, ExportFileName);
             return;
         }
 

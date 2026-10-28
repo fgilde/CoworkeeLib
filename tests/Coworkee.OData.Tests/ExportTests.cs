@@ -48,6 +48,9 @@ public sealed class ExportTests(ODataApp app) : IAsyncLifetime
 
         lines[0].Phase.ShouldBe(DataExportProgress.Counting);
         lines.Select(l => l.Percent).ShouldBeInOrder();
+        lines.Select(l => l.JobId).Distinct().ShouldHaveSingleItem().ShouldNotBeNull();
+        var writing = lines.Single(l => l.Phase == DataExportProgress.Writing);
+        (writing.Rows, writing.Total).ShouldBe((2, 2));
         var ready = lines[^1];
         (ready.Phase, ready.Percent, ready.FileName).ShouldBe((DataExportProgress.Ready, 100, "Gadgets.xlsx"));
         var anonymous = app.App.GetTestClient();

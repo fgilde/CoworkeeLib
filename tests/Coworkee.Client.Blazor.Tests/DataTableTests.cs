@@ -172,8 +172,7 @@ public sealed class DataTableTests : ClientTestBase
     public async Task Excel_export_sends_the_current_filter_and_columns_and_import_opens_the_wizard()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
-        NSubstitute.SubstituteExtensions.ReturnsForAnyArgs(Transfer.ExportAsync(default!, default, default!, default!, default),
-            Task.FromResult(new ExportResult([1, 2], "Gadgets.xlsx", "application/octet-stream", null)));
+        NSubstitute.SubstituteExtensions.ReturnsForAnyArgs(Transfer.StreamExportAsync(default!, default!, default), AsyncEnumerable.Empty<DataExportProgress>());
         NSubstitute.SubstituteExtensions.ReturnsForAnyArgs(Transfer.GetTargetAsync(default!, default),
             Task.FromResult(new ImportTargetDto("Gadgets", [new ImportFieldDto("Name", "Name", "String", true)], false, false, [])));
         var dialogs = Render<MudDialogProvider>();
@@ -188,9 +187,9 @@ public sealed class DataTableTests : ClientTestBase
 
         await table.Find("[data-testid='export'] button").ClickAsync(new());
         await popovers.WaitForElement("[data-testid='export-excel']").ClickAsync(new());
-        table.WaitForAssertion(() => NSubstitute.Received.InOrder(() => Transfer.ExportAsync("Gadgets", ExportFileFormat.Xlsx,
-            NSubstitute.Arg.Is<ODataQuery>(q => q.Filter == "Price gt 1"), NSubstitute.Arg.Is<IReadOnlyCollection<string>>(c => c.SequenceEqual(new[] { "Name" })),
-            NSubstitute.Arg.Any<CancellationToken>())));
+        table.WaitForAssertion(() => NSubstitute.Received.InOrder(() => Transfer.StreamExportAsync("Gadgets",
+            ExportQueries.Of(ExportFileFormat.Xlsx, new ODataQuery { Filter = "Price gt 1" }, ["Name"]), NSubstitute.Arg.Any<CancellationToken>())));
+        dialogs.WaitForAssertion(() => dialogs.FindAll("[data-testid='export-progress']").ShouldBeEmpty());
 
         _ = table.Find("[data-testid='import']").ClickAsync(new()); // the wizard stays open, so the click does not finish
         dialogs.WaitForAssertion(() => dialogs.Markup.ShouldContain("Choose a CSV, Excel or JSON file"));

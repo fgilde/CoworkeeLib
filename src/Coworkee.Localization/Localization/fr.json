@@ -1878,5 +1878,16 @@
   "Remove as owner": "Retirer comme propriétaire",
   "Default group": "Groupe par défaut",
   "Default group for new users": "Groupe par défaut des nouveaux utilisateurs",
-  "Given to new users": "Attribué aux nouveaux utilisateurs"
+  "Given to new users": "Attribué aux nouveaux utilisateurs",
+  "Counting rows…": "Comptage des lignes…",
+  "Reading rows…": "Lecture des lignes…",
+  "Writing the file…": "Écriture du fichier…",
+  "{0} of {1} rows": "{0} sur {1} lignes",
+  "The export took too long.": "L'export a pris trop de temps.",
+  "The connection to the server was lost.": "La connexion au serveur a été perdue.",
+  "The export failed: {0}": "L'export a échoué : {0}",
+  "Export failed": "Échec de l'export",
+  "You have too many exports running. Wait until one is ready.": "Vous avez trop d'exports en cours. Attendez que l'un d'eux soit prêt.",
+  "The export query is not valid.": "La requête de l'export n'est pas valide.",
+  "You may not export this list.": "Vous n'êtes pas autorisé à exporter cette liste."
 }

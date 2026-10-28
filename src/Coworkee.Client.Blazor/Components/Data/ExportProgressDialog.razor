@@ -1,0 +1,15 @@
+<MudDialog Class="@MudBlazor.Extensions.Helper.MudExCss.Classes.Dialog.Initial" data-testid="export-progress">
+    <DialogContent>
+        <MudStack Spacing="2" Class="pt-2">
+            <MudText Typo="Typo.body2" data-testid="export-progress-phase">@PhaseText</MudText>
+            <MudProgressLinear Color="Color.Primary" Value="@(_line?.Percent ?? 0)" Indeterminate="@(_line is null)" Rounded="true" Size="Size.Medium" />
+            <MudStack Row="true" Justify="Justify.SpaceBetween">
+                <MudText Typo="Typo.caption" Class="mud-text-secondary" data-testid="export-progress-rows">@RowsText</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary" data-testid="export-progress-percent">@($"{_line?.Percent ?? 0} %")</MudText>
+            </MudStack>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" data-testid="export-progress-cancel">@L["Cancel"]</MudButton>
+    </DialogActions>
+</MudDialog>

@@ -1878,5 +1878,16 @@
   "Remove as owner": "Премахни като собственик",
   "Default group": "Група по подразбиране",
   "Default group for new users": "Група по подразбиране за нови потребители",
-  "Given to new users": "Дава се на новите потребители"
+  "Given to new users": "Дава се на новите потребители",
+  "Counting rows…": "Преброяване на редовете…",
+  "Reading rows…": "Четене на редовете…",
+  "Writing the file…": "Записване на файла…",
+  "{0} of {1} rows": "{0} от {1} реда",
+  "The export took too long.": "Експортът отне твърде много време.",
+  "The connection to the server was lost.": "Връзката със сървъра беше прекъсната.",
+  "The export failed: {0}": "Експортът не бе успешен: {0}",
+  "Export failed": "Експортът не бе успешен",
+  "You have too many exports running. Wait until one is ready.": "Имате твърде много активни експорти. Изчакайте, докато един бъде готов.",
+  "The export query is not valid.": "Заявката на експорта е невалидна.",
+  "You may not export this list.": "Нямате право да експортирате този списък."
 }

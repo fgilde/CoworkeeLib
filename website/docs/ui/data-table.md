@@ -28,7 +28,7 @@
 | `OnCreate`, `OnEdit`, `OnDelete` | callbacks; the table reloads after each of them |
 | `CreatePermission`, `EditPermission`, `DeletePermission` | hide the buttons without the permission |
 | `DescribeItem` | text for the delete confirmation |
-| `Exportable`, `ExportFileName` | Excel, CSV and JSON export of the current view (filter, sort, visible columns); large ones run as a background job, see [import and export](../web/import-export.md) |
+| `Exportable`, `ExportFileName` | Excel, CSV and JSON export of the current view (filter, sort, visible columns) with a progress dialog (rows, percent, cancel); large ones run as a background job, see [import and export](../web/import-export.md#progress-stream-and-one-time-download) |
 | `Importable`, `ImportPermission` | an *Import* button that opens the [import wizard](../web/import-export.md) |
 | `ToolBarContent` | extra buttons in the tool bar |
 | `PageSize` | rows per page (25); in endless mode rows load in chunks of at least 50 |

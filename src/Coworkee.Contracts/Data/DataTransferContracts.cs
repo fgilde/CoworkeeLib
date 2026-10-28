@@ -15,10 +15,16 @@ public static class DataTransferPermissions
 
 /// <summary>
 /// One line of the export stream (application/x-ndjson): <paramref name="Phase"/> is counting, reading, writing, ready, queued or failed.
-/// The ready line carries the anonymous one-time <paramref name="Url"/> (relative to the API, five minutes) of the file.
+/// The ready line carries the anonymous one-time <paramref name="Url"/> (relative to the API, five minutes) of the file; every line carries the <paramref name="JobId"/>.
 /// </summary>
 public sealed record DataExportProgress(string Phase, int Percent, string? Url = null, string? FileName = null, Guid? JobId = null, string? Message = null)
 {
+    /// <summary>The rows read so far (reading and writing lines).</summary>
+    public int? Rows { get; init; }
+
+    /// <summary>The rows the export holds, once they are counted.</summary>
+    public int? Total { get; init; }
+
     public const string Counting = "counting";
     public const string Reading = "reading";
     public const string Writing = "writing";

@@ -7,6 +7,13 @@ export function download(fileName, contentType, content) {
     URL.revokeObjectURL(url);
 }
 
+export function downloadUrl(url, fileName) {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    link.click();
+}
+
 let pointerX = null;
 
 export function trackPointer() {

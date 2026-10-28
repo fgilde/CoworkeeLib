@@ -70,16 +70,17 @@ public static class DataExport
         var computed = await ExportedAsync<TEntity>(services, cancellationToken);
         var list = new List<ExportRow>();
         var expected = Math.Max(1, Math.Min(total, limit));
+        progress?.Report(new DataExportProgress(DataExportProgress.Reading, 0) { Rows = 0, Total = Math.Min(total, limit) });
         await foreach (var row in Rows(rows, computed).Take(limit).AsAsyncEnumerable().WithCancellation(cancellationToken))
         {
             list.Add(row);
             if (progress is not null && list.Count % ProgressRows == 0)
             {
-                progress.Report(new DataExportProgress(DataExportProgress.Reading, Math.Min(80, list.Count * 80 / expected)));
+                progress.Report(new DataExportProgress(DataExportProgress.Reading, Math.Min(80, list.Count * 80 / expected)) { Rows = list.Count, Total = Math.Min(total, limit) });
             }
         }
 
-        progress?.Report(new DataExportProgress(DataExportProgress.Writing, 80));
+        progress?.Report(new DataExportProgress(DataExportProgress.Writing, 80) { Rows = list.Count, Total = list.Count });
         var wanted = http.Request.Query["columns"].ToString().Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         List<Column> all =
         [

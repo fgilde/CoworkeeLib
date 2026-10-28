@@ -28,7 +28,7 @@
 | `OnCreate`, `OnEdit`, `OnDelete` | Callbacks; die Tabelle lädt danach jeweils neu |
 | `CreatePermission`, `EditPermission`, `DeletePermission` | blenden die Schaltflächen ohne Berechtigung aus |
 | `DescribeItem` | Text für die Löschbestätigung |
-| `Exportable`, `ExportFileName` | Export der aktuellen Ansicht (Filter, Sortierung, sichtbare Spalten) als Excel, CSV und JSON; große Exporte laufen als Hintergrundjob, siehe [Import und Export](../web/import-export.md) |
+| `Exportable`, `ExportFileName` | Export der aktuellen Ansicht (Filter, Sortierung, sichtbare Spalten) als Excel, CSV und JSON mit Fortschrittsdialog (Zeilen, Prozent, Abbrechen); große Exporte laufen als Hintergrundjob, siehe [Import und Export](../web/import-export.md#fortschritts-stream-und-einmaliger-download) |
 | `Importable`, `ImportPermission` | ein *Import*-Button, der den [Import-Assistenten](../web/import-export.md) öffnet |
 | `ToolBarContent` | zusätzliche Schaltflächen in der Werkzeugleiste |
 | `PageSize` | Zeilen pro Seite (25); beim endlosen Scrollen kommen die Zeilen in Blöcken von mindestens 50 |

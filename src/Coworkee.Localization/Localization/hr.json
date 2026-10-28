@@ -1878,5 +1878,16 @@
   "Remove as owner": "Ukloni kao vlasnika",
   "Default group": "Zadana grupa",
   "Default group for new users": "Zadana grupa za nove korisnike",
-  "Given to new users": "Dodjeljuje se novim korisnicima"
+  "Given to new users": "Dodjeljuje se novim korisnicima",
+  "Counting rows…": "Brojanje redaka…",
+  "Reading rows…": "Čitanje redaka…",
+  "Writing the file…": "Pisanje datoteke…",
+  "{0} of {1} rows": "{0} od {1} redaka",
+  "The export took too long.": "Izvoz je trajao predugo.",
+  "The connection to the server was lost.": "Veza s poslužiteljem je prekinuta.",
+  "The export failed: {0}": "Izvoz nije uspio: {0}",
+  "Export failed": "Izvoz nije uspio",
+  "You have too many exports running. Wait until one is ready.": "Imate previše izvoza u tijeku. Pričekajte da jedan bude gotov.",
+  "The export query is not valid.": "Upit izvoza nije valjan.",
+  "You may not export this list.": "Ne smijete izvesti ovaj popis."
 }

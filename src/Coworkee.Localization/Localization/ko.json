@@ -1878,5 +1878,16 @@
   "Remove as owner": "소유자에서 제외",
   "Default group": "기본 그룹",
   "Default group for new users": "새 사용자의 기본 그룹",
-  "Given to new users": "새 사용자에게 부여"
+  "Given to new users": "새 사용자에게 부여",
+  "Counting rows…": "행 수를 세는 중…",
+  "Reading rows…": "행을 읽는 중…",
+  "Writing the file…": "파일을 쓰는 중…",
+  "{0} of {1} rows": "{1}개 중 {0}개 행",
+  "The export took too long.": "내보내기가 너무 오래 걸렸습니다.",
+  "The connection to the server was lost.": "서버와의 연결이 끊어졌습니다.",
+  "The export failed: {0}": "내보내기에 실패했습니다: {0}",
+  "Export failed": "내보내기 실패",
+  "You have too many exports running. Wait until one is ready.": "실행 중인 내보내기가 너무 많습니다. 하나가 완료될 때까지 기다리세요.",
+  "The export query is not valid.": "내보내기 쿼리가 올바르지 않습니다.",
+  "You may not export this list.": "이 목록을 내보낼 권한이 없습니다."
 }
