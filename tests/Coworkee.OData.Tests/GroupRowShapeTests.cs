@@ -35,6 +35,11 @@ public sealed class GroupRowShapeTests(ODataApp app) : IAsyncLifetime
         var row = raw.GetProperty("value")[0].Deserialize<GroupRow>(Web)!;
         row.Roles.Select(r => r.RoleId).ShouldBe([viewer, editor], ignoreOrder: true);
         (await Admin.GetAsync($"/odata/Groups?$filter=Id eq {group}&$expand=Members", Ct)).IsSuccessStatusCode.ShouldBeFalse();
+        // the guard of the navigation scope: the hidden member list cannot be filtered on, the roles can be selected and filtered
+        (await Admin.GetAsync($"/odata/Groups?$filter=Members/any(m: m/UserId eq {member})", Ct)).IsSuccessStatusCode.ShouldBeFalse();
+        var selected = await Admin.GetFromJsonAsync<JsonElement>($"/odata/Groups?$filter=Roles/any(r: r/RoleId eq {viewer})&$select=Id,Roles", Ct);
+        selected.GetProperty("value").EnumerateArray().Select(g => g.GetProperty("Id").GetGuid()).ShouldBe([group]);
+        selected.GetProperty("value")[0].GetProperty("Roles").GetArrayLength().ShouldBe(2);
 
         var count = await Admin.GetFromJsonAsync<JsonElement>($"/odata/Users?$filter=Groups/any(m: m/GroupId eq {group})&$select=Id&$top=0&$count=true", Ct);
         count.GetProperty("@odata.count").GetInt32().ShouldBe(2);

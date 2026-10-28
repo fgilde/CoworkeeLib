@@ -48,6 +48,8 @@ internal sealed class IdentityModelContributor : IModelContributor
             user.HasMany<IdentityUserToken<Guid>>().WithOne().HasForeignKey(t => t.UserId).IsRequired();
             user.HasMany<IdentityUserRole<Guid>>().WithOne().HasForeignKey(r => r.UserId).IsRequired();
             user.HasMany<IdentityUserPasskey<Guid>>().WithOne().HasForeignKey(p => p.UserId).IsRequired();
+            // loaded with the user, so OData's Users set shows the real memberships; row filters stay plain Where calls (navigation scope)
+            user.Navigation(u => u.Groups).AutoInclude();
         });
 
         modelBuilder.Entity<Role>(role =>
@@ -111,6 +113,7 @@ internal sealed class IdentityModelContributor : IModelContributor
             group.HasIndex(g => new { g.TenantId, g.IsDefault }).IsUnique().HasFilter("\"IsDefault\" = TRUE");
             group.HasMany(g => g.Members).WithOne().HasForeignKey(m => m.GroupId).OnDelete(DeleteBehavior.Cascade);
             group.HasMany(g => g.Roles).WithOne().HasForeignKey(r => r.GroupId).OnDelete(DeleteBehavior.Cascade);
+            group.Navigation(g => g.Roles).AutoInclude();
         });
 
         modelBuilder.Entity<UserGroupMember>(member =>
