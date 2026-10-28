@@ -245,6 +245,20 @@ public sealed class NotificationMailTemplateTests(NotificationApp app) : IAsyncL
         (mail.TemplateName, mail.Subject).ShouldBe((NotificationMails.Template, "Departed"));
     }
 
+    [Fact]
+    public async Task A_mail_waiting_without_a_model_sends_the_generic_mail_after_its_type_got_a_template()
+    {
+        // queued before Milestone had a template: no model
+        await HandleAsync(new NotificationMailWaiting(_bob, _setup.TenantId, TestNotificationModule.Milestone, "Shipments:1", "Departed", null, null, "/shipments/1",
+            DateTimeOffset.UtcNow));
+        (await app.InDbAsync(null, db => db.Set<PendingNotificationMail>().SingleAsync(Ct))).MailModel.ShouldBeNull();
+
+        await app.RunMailJobAsync(new FakeTimeProvider(DateTimeOffset.UtcNow.AddMinutes(1)));
+
+        var mail = (await MailsToAsync("bob@acme.test")).ShouldHaveSingleItem();
+        (mail.TemplateName, mail.Subject).ShouldBe((NotificationMails.Template, "Departed"));
+    }
+
     private async Task HandleAsync(NotificationMailWaiting waiting)
     {
         await using var scope = app.App.Services.CreateAsyncScope();

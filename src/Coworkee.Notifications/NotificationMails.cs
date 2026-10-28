@@ -133,7 +133,9 @@ internal sealed partial class NotificationMails(
                     body = NotificationText.In(item.Body, item.Arguments, culture, translators),
                     link = NotificationLinks.Absolute(item.Link, options.Value.PublicAppUrl),
                 });
-            await QueueOneAsync(email, await TemplateAsync(item.Type, cancellationToken), model, culture?.Name, item, cancellationToken);
+            // without a model (e.g. queued before its type got a template) the type's template would render empty: the generic mail goes out
+            var template = item.MailModel is null ? Template : await TemplateAsync(item.Type, cancellationToken);
+            await QueueOneAsync(email, template, model, culture?.Name, item, cancellationToken);
         }
     }
 
