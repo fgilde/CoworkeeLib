@@ -62,7 +62,7 @@ public sealed class Tray : AuditedEntity, IMultiTenant, Nextended.Core.Contracts
 
     public Guid? BinId { get; set; }
 
-    // the key of a filtered target is the foreign key's value: the facet stays
+    // a key read through a filtered target: hidden targets count as no value
     [AutoExpand]
     [ProvideFacet(Label = "Bin", ValuePath = "it.Bin.Id")]
     public Bin? Bin { get; set; }
@@ -72,6 +72,12 @@ public sealed class Tray : AuditedEntity, IMultiTenant, Nextended.Core.Contracts
     // a target without rules: the facet through it stays
     [ProvideFacet(Label = "Shelf", ValuePath = "it.Shelf.Name")]
     public Shelf? Shelf { get; set; }
+
+    public Guid? LockerId { get; set; }
+
+    // a target whose filter is no Where: the facet through it is left out
+    [ProvideFacet(Label = "Locker", ValuePath = "it.Locker.Name")]
+    public Locker? Locker { get; set; }
 
     public Guid TenantId { get; set; }
 }
@@ -163,7 +169,21 @@ public sealed class Hook : AuditedEntity, IMultiTenant
     [ProvideFacet(Label = "Brand", ValuePath = "it.Brand.Code")]
     public Brand? Brand { get; set; }
 
+    // an owned type used twice (a type the navigation scope does not check itself) with a navigation into filtered bins
+    [ProvideFacet(Label = "Front", ValuePath = "Front.BinId", LabelPath = "it.Front.Bin.Name", ValueType = typeof(Guid))]
+    public Mount? Front { get; set; }
+
+    [ProvideFacet(Label = "Back", ValuePath = "it.Back.Bin.Name")]
+    public Mount? Back { get; set; }
+
     public Guid TenantId { get; set; }
+}
+
+public sealed class Mount
+{
+    public Guid? BinId { get; set; }
+
+    public Bin? Bin { get; set; }
 }
 
 /// <summary>A filtered set whose OData key (Code) is not its EF key (Id).</summary>

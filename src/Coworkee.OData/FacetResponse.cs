@@ -29,15 +29,16 @@ internal static class FacetResponse
             ? byType.GetValueOrDefault(typeof(T).FullName!) ?? new HashSet<string>()
             : await ODataEntityAccess.DeniedPropertiesAsync(services, typeof(T), cancellationToken);
 
+        var scoped = await ScopedAsync(http, filtered, cancellationToken);
         foreach (var facet in facets.Where(f => !denied.Contains(f.Field)))
         {
-            if (await NarrowedAsync(visible, facet.ValuePath, http, cancellationToken))
+            if (await RefusedAsync(visible, facet.ValuePath, http, cancellationToken))
             {
                 continue;
             }
 
             var own = context is not null && context.Groups.ContainsKey(facet.Key) && context.Combines?.GetValueOrDefault(facet.Key) != FacetCombine.All;
-            var rows = own ? await FilterAsync(visible, context!.Without(facet.Key), http, cancellationToken) : filtered;
+            var rows = own ? ScopedQueryProvider.Wrap(await FilterAsync(visible, context!.Without(facet.Key), http, cancellationToken), ScopeOf<T>(http)) : scoped;
             var group = facet;
             if (own && facet.Type is not (FacetType.Range or FacetType.DateRange))
             {
@@ -46,7 +47,7 @@ internal static class FacetResponse
                 group = rebuilt.FirstOrDefault(g => g.Key == facet.Key) ?? facet;
             }
 
-            var dto = await VisibleLabelsAsync(FacetDtos.From(group, typeof(T), registry), group, rows, http, cancellationToken);
+            var dto = FacetDtos.From(group, typeof(T), registry);
             if (dto.ValueKind is FacetValueKind.Number or FacetValueKind.Date && facet.Type is FacetType.Range or FacetType.DateRange)
             {
                 var property = typeof(T).GetProperty(facet.Field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
@@ -88,51 +89,46 @@ internal static class FacetResponse
     }
 
     /// <summary>
-    /// Labels read through a navigation (<c>LabelPath = "it.Customer.Name"</c>) name only rows the user may see in the target's set: the builder
-    /// read them without its row filters and permission, so they are read again through the navigation scope; a hidden row shows its key.
+    /// The rows for the facet builder: the navigations it reads (value and label paths, the choices of other groups) show only the rows their
+    /// target's set lists for the user. A row whose target is hidden has no value there, as <c>$expand</c> shows null: it is left out of the
+    /// group, and a label read through a hidden target shows the key.
     /// </summary>
-    private static async Task<FacetGroupDto> VisibleLabelsAsync<T>(FacetGroupDto dto, FacetGroup group, IQueryable<T> rows, HttpContext http, CancellationToken cancellationToken)
+    internal static async Task<IQueryable<T>> ScopedAsync<T>(HttpContext http, IQueryable<T> rows, CancellationToken cancellationToken)
         where T : class
     {
-        var label = group.LabelPath?.Replace('/', '.');
-        if (label is null || group.ValuePath is not { } value || dto.Options.Count == 0 || !(label.StartsWith("it.", StringComparison.Ordinal) ? label[3..] : label).Contains('.'))
+        var scope = ScopeOf<T>(http);
+        foreach (var path in Paths(typeof(T)))
         {
-            return dto;
+            await scope.PrepareAsync(rows.Select($"it.{path}").Expression, cancellationToken);
         }
 
-        var matching = dto.Options.All(o => !string.IsNullOrEmpty(o.OData))
-            ? await FilterAsync(rows, string.Join(" or ", dto.Options.Select(o => $"({o.OData})")), http, cancellationToken)
-            : rows;
-        var pairs = matching.Select($"new ({value.Replace('/', '.')} as Value, {label} as Label)").Distinct();
-        var shown = (await (await ScopeOf<T>(http).ApplyAsync(pairs, cancellationToken)).ToDynamicListAsync(cancellationToken))
-            .Cast<DynamicClass>()
-            .Where(p => p.GetDynamicPropertyValue("Label") is not null)
-            .Select(p => p.GetDynamicPropertyValue("Value")?.ToString())
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        return dto with { Options = [.. dto.Options.Select(o => shown.Contains(Text(o.Value)) ? o : o with { Label = Text(o.Value) })] };
+        return ScopedQueryProvider.Wrap(rows, scope);
     }
 
+    // the value and label paths of the facets of a type, as Dynamic LINQ reads them
+    private static IEnumerable<string> Paths(Type entityType) => entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .SelectMany(p => p.GetCustomAttributes<ProvideFacetAttribute>(inherit: true).SelectMany(f => new[] { f.ValuePath ?? p.Name, f.LabelPath }))
+        .OfType<string>()
+        .Where(p => !string.IsNullOrWhiteSpace(p))
+        .Select(p => p.Replace('/', '.'))
+        .Select(p => p.StartsWith("it.", StringComparison.Ordinal) ? p[3..] : p)
+        .Distinct(StringComparer.Ordinal);
+
     /// <summary>
-    /// Whether a facet's value read through a navigation (<c>ValuePath = "it.Customer.Region"</c>) would group over rows the user may not see:
-    /// its target has row filters or a permission he lacks, or the value is a member denied to him. Such a group is left out; the key of the
-    /// target (<c>Customer/Id</c>, the foreign key's value) and complex members (<c>Address/City</c>) stay.
+    /// Whether a facet reads its value through a navigation the user may not follow: a member denied to him, a target set he may not read, or a
+    /// target whose row filters do more than <c>Where</c> (they cannot apply inside this query). Such a group is left out. Targets with row filters
+    /// stay: the builder counted their visible rows only (<see cref="ScopedAsync{T}"/>).
     /// </summary>
-    // ponytail: left out rather than counted over the scoped rows; count through the scope if apps need such facets on filtered targets
-    private static async Task<bool> NarrowedAsync<T>(IQueryable<T> rows, string? valuePath, HttpContext http, CancellationToken cancellationToken)
+    private static async Task<bool> RefusedAsync<T>(IQueryable<T> rows, string? valuePath, HttpContext http, CancellationToken cancellationToken)
         where T : class
     {
         var path = valuePath?.StartsWith("it/", StringComparison.Ordinal) == true ? valuePath[3..] : valuePath;
-        if (path?.Split('/') is not [var first, var second, ..] segments)
+        if (path is null || !path.Contains('/'))
         {
             return false;
         }
 
         var denied = http.Items[ODataEntityAccess.DeniedItem] as Dictionary<string, IReadOnlySet<string>> ?? await ODataEntityAccess.DeniedByTypeAsync(http.RequestServices, cancellationToken);
-        if (segments.Length == 2 && ForeignKeyRead<T>(http.RequestServices, first, second, denied))
-        {
-            return false;
-        }
-
         try
         {
             if (ODataQueryGuard.Denies(http.RequestServices, typeof(T), $"{path} ne null", denied))
@@ -148,22 +144,7 @@ internal static class FacetResponse
         var read = rows.Select($"it.{path.Replace('/', '.')}");
         var scope = ScopeOf<T>(http);
         await scope.PrepareAsync(read.Expression, cancellationToken);
-        return scope.Narrows(read.Expression);
-    }
-
-    // Nav/Key reads the row's own foreign key column: only when that column is mapped on T, readable for the user, and the key is the one it points to
-    private static bool ForeignKeyRead<T>(IServiceProvider services, string navigationName, string keyName, IReadOnlyDictionary<string, IReadOnlySet<string>> denied)
-    {
-        var entity = Coworkee.Infrastructure.Persistence.ExternalDbContextServiceCollectionExtensions.DbContextFor(services, typeof(T)).Model.FindEntityType(typeof(T));
-        if (entity?.GetNavigations().FirstOrDefault(n => string.Equals(n.Name, navigationName, StringComparison.OrdinalIgnoreCase)) is not { IsCollection: false, IsOnDependent: true } navigation
-            || navigation.ForeignKey.Properties is not [var column] || column.IsShadowProperty()
-            || navigation.ForeignKey.PrincipalKey.Properties is not [var key] || !string.Equals(key.Name, keyName, StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        var hidden = services.GetRequiredService<ODataEntityRegistry>().Find(typeof(T))?.HiddenProperties ?? [];
-        return !hidden.Contains(column.Name) && !(denied.GetValueOrDefault(typeof(T).FullName!)?.Contains(column.Name) ?? false);
+        return scope.Refuses(read.Expression);
     }
 
     /// <summary>Refuses a facet whose value path starts with a collection navigation (<c>it.Lines.Id</c>): the facet builder cannot group by it.</summary>
@@ -184,8 +165,6 @@ internal static class FacetResponse
             }
         }
     }
-
-    private static string Text(JsonElement value) => value.ValueKind == JsonValueKind.String ? value.GetString()! : value.ToString();
 
     private static ODataNavigationScope ScopeOf<T>(HttpContext http) =>
         http.Items[ScopedEnableQueryAttribute.ScopeItem] as ODataNavigationScope ?? ODataNavigationScope.For(http.RequestServices, typeof(T));

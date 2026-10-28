@@ -38,7 +38,8 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
             db.AddRange(open, other, third, new Badge { Name = "Silver", TenantId = tenant });
             await db.SaveChangesAsync();
             (open.Featured, other.Featured, third.Featured) = (plain, secret, visible);
-            db.AddRange(new Tray { Name = "T1", Bin = plain, Shelf = open, TenantId = tenant }, new Tray { Name = "T2", Bin = secret, Shelf = open, TenantId = tenant });
+            var locker = new Locker { Name = "L1", ShelfId = open.Id, TenantId = tenant };
+            db.AddRange(new Tray { Name = "T1", Bin = plain, Shelf = open, Locker = locker, TenantId = tenant }, new Tray { Name = "T2", Bin = secret, Shelf = open, TenantId = tenant });
             await db.SaveChangesAsync();
             return (plain.Id, secret.Id);
         });
@@ -151,15 +152,17 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
             return await db.SaveChangesAsync(Ct);
         });
 
-        // Main: a mapped readable foreign key to EF's key stays; Spare: a shadow foreign key, Brand: Code is the OData key, not EF's; both targets filter
-        var admin = (await FacetsAsync(Admin, "$top=0", "Hooks")).Facets.Select(f => f.Field).ToList();
-        admin.ShouldContain("Main");
-        admin.ShouldNotContain("Spare");
-        admin.ShouldNotContain("Brand");
+        // through a filtered target every kind of key stays and counts the visible targets: a mapped foreign key (Main), a shadow one (Spare),
+        // a key that is not EF's (Brand/Code)
+        var admin = (await FacetsAsync(Admin, "$top=0", "Hooks")).Facets;
+        foreach (var field in new[] { "Main", "Spare", "Brand" })
+        {
+            admin.Single(f => f.Field == field).Options.Single().Count.ShouldBe(1, field);
+        }
 
-        // the foreign key is protected: through the filtered target the facet is left out
+        // the foreign key is protected: the facet reads the target's key, which the user may read there, as $expand=Main($select=Id) shows it
         var viewer = app.As(await UserWithAsync(ODataApp.ViewGadgets, ODataApp.ViewBins), _setup.TenantId);
-        (await FacetsAsync(viewer, "$top=0", "Hooks")).Facets.Select(f => f.Field).ShouldNotContain("Main");
+        (await FacetsAsync(viewer, "$top=0", "Hooks")).Facets.Single(f => f.Field == "Main").Options.Single().Value.GetString().ShouldBe(_plain.ToString(), StringCompareShould.IgnoreCase);
 
         // a collection cannot be grouped by: refused when the model is built
         Should.Throw<InvalidOperationException>(() => FacetResponse.RefuseCollectionPaths(typeof(Rack))).Message.ShouldContain("collection");
@@ -207,11 +210,10 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
         var (_, facets) = await FacetsAsync(Admin, "$filter=Bins/any(b: b/Name eq 'Secret')&$top=0");
         facets.SelectMany(f => f.Options).ShouldAllBe(o => o.Count == 0);
 
-        // a value read through a navigation into filtered rows would group over hidden ones: no such group; a target without rules and the key stay
-        (await FacetsAsync(Admin, "$top=0")).Facets.ShouldNotContain(f => f.Field == "Featured");
+        // a value read through a navigation into filtered rows counts only the visible targets; a target without rules counts all
         var trays = (await FacetsAsync(Admin, "$top=0", "Trays")).Facets;
         trays.Single(f => f.Field == "Shelf").Options.Single().Label.ShouldBe("Open");
-        trays.Single(f => f.Field == "Bin").Options.Count.ShouldBe(2);
+        trays.Single(f => f.Field == "Bin").Options.Single().Value.GetString().ShouldBe(_plain.ToString(), StringCompareShould.IgnoreCase);
 
         var featured = (await FacetsAsync(Admin, "$top=0")).Facets.Single(f => f.Field == "FeaturedId").Options;
         featured.Select(o => o.Label.ToLowerInvariant()).ShouldBe(["plain", "visible", _secret.ToString()], ignoreOrder: true);
@@ -222,6 +224,51 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
         hidden.Count.ShouldBe(3);
         hidden.Select(o => Guid.TryParse(o.Label, out var id)).ShouldAllBe(parsed => parsed);
         hidden.Single(o => o.Label.Equals(_plain.ToString(), StringComparison.OrdinalIgnoreCase)).Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task Facets_through_a_filtered_target_count_only_its_visible_rows()
+    {
+        // the other shelf's featured bin is Secret, hidden by the bins' row filter: that shelf has no value, as $expand=Featured shows null
+        var featured = (await FacetsAsync(Admin, "$top=0")).Facets.Single(f => f.Field == "Featured").Options;
+        featured.Select(o => (o.Value.GetString(), o.Label, o.Count)).ShouldBe([("Plain", "Plain", 1), ("Visible", "Visible", 1)], ignoreOrder: true);
+        (await GetAsync("/odata/Shelves?$filter=Name eq 'Other'&$expand=Featured")).GetProperty("value")[0].GetProperty("Featured").ValueKind.ShouldBe(JsonValueKind.Null);
+
+        // nothing names the hidden target, its key included
+        var trays = JsonSerializer.Serialize((await FacetsAsync(Admin, "$top=0", "Trays")).Facets.Where(f => f.Field == "Bin"));
+        var shelves = JsonSerializer.Serialize((await FacetsAsync(Admin, "$top=0")).Facets.Where(f => f.Field == "Featured"));
+        foreach (var json in new[] { trays, shelves })
+        {
+            json.ShouldNotContain("Secret");
+            json.ShouldNotContain(_secret.ToString(), Case.Insensitive);
+        }
+
+        // an "any of" choice in the group keeps its alternatives; the other groups count with it
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/odata/Shelves?$filter=Featured/Name eq 'Plain'&$top=0");
+        request.Headers.Add("Prefer", "odata.include-annotations=\"cn.facets\"");
+        request.Headers.Add(FacetContextDto.Header, new FacetContextDto(null, new Dictionary<string, string> { ["featured"] = "Featured/Name eq 'Plain'" }).Encode());
+        using var response = await Admin.SendAsync(request, Ct);
+        var facets = (await response.Content.ReadFromJsonAsync<JsonElement>(Ct)).GetProperty("@cn.facets").Deserialize<List<FacetGroupDto>>(JsonSerializerOptions.Web)!;
+        facets.Single(f => f.Field == "Featured").Options.Select(o => (o.Label, o.Count)).ShouldBe([("Plain", 1), ("Visible", 1)], ignoreOrder: true);
+        facets.Single(f => f.Field == "Name").Options.Where(o => o.Count > 0).Select(o => o.Label).ShouldBe(["Open"]);
+
+        // through an owned type, as an order's buyer, supplier and ship to: the value through the filtered bin counts the visible ones, the
+        // owned foreign key is the row's own value and its label shows the key of a hidden bin
+        await app.InDbAsync(_setup.TenantId, async db =>
+        {
+            db.AddRange(
+                new Hook { Name = "H2", Front = new Mount { BinId = _plain }, Back = new Mount { BinId = _plain }, TenantId = _setup.TenantId },
+                new Hook { Name = "H3", Front = new Mount { BinId = _secret }, Back = new Mount { BinId = _secret }, TenantId = _setup.TenantId });
+            return await db.SaveChangesAsync(Ct);
+        });
+        var hooks = (await FacetsAsync(Admin, "$top=0", "Hooks")).Facets;
+        hooks.Single(f => f.Field == "Back").Options.Select(o => (o.Label, o.Count)).ShouldBe([("Plain", 1)]);
+        hooks.Single(f => f.Field == "Front").Options.Select(o => o.Label.ToLowerInvariant()).ShouldBe(["plain", _secret.ToString()], ignoreOrder: true);
+
+        // a target the user may not read and one whose filter is no Where leave the group out
+        var viewer = app.As(await UserWithAsync(ODataApp.ViewGadgets), _setup.TenantId);
+        (await FacetsAsync(viewer, "$top=0")).Facets.ShouldNotContain(f => f.Field == "Featured");
+        (await FacetsAsync(Admin, "$top=0", "Trays")).Facets.ShouldNotContain(f => f.Field == "Locker");
     }
 
     [Fact]

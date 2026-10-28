@@ -76,19 +76,30 @@ public sealed class ODataNavigationScope
         return collector.Targets.Any(t => _predicates.ContainsKey(t) || !_own.ContainsKey(t));
     }
 
+    /// <summary>Whether <paramref name="expression"/> reads a navigation into a set the user may not read or whose row filters cannot apply; checked targets only.</summary>
+    internal bool Refuses(Expression expression)
+    {
+        var collector = new Collector(this);
+        collector.Visit(expression);
+        return collector.Targets.Any(t => Forbidden.Contains(t) || Unfilterable.Contains(t));
+    }
+
     /// <summary>Checks every reachable target, for a query that could not be read ahead.</summary>
     internal Task PrepareAllAsync(CancellationToken cancellationToken) => PrepareAsync(_types.Keys.ToList(), cancellationToken);
 
     /// <summary>The query rewritten with the targets checked before (<see cref="PrepareAsync(Expression, CancellationToken)"/>).</summary>
-    internal IQueryable Apply(IQueryable query)
+    internal IQueryable Apply(IQueryable query) => _navigations.Count == 0 ? query : query.Provider.CreateQuery(Rewrite(query.Expression));
+
+    /// <summary>The expression rewritten with the targets checked before, also one that runs a query (<c>Count</c>, <c>Min</c>).</summary>
+    internal Expression Rewrite(Expression expression)
     {
         if (_navigations.Count == 0)
         {
-            return query;
+            return expression;
         }
 
-        var rewritten = query.Provider.CreateQuery(new Rewriter(this).Visit(query.Expression)!);
-        Root(rewritten.Expression);
+        var rewritten = new Rewriter(this).Visit(expression)!;
+        Root(rewritten);
         return rewritten;
     }
 

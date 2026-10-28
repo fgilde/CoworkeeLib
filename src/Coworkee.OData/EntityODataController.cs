@@ -182,7 +182,8 @@ public class EntityODataController<TEntity> : GenericODataController<TEntity>, I
             var filtered = await Scope.ApplyAsync(Queryable().ApplyODataFilter(Request.ODataQueryOptions<TEntity>(Get<IEdmModel>())), ct);
             var options = GetFacetBuilderOptions();
             var builder = Get<IFacetBuilder>().WithOptions(options);
-            var facets = options.IsDisjunctiveBuild ? await builder.BuildAsync(_ => Task.FromResult(filtered), [], ct) : await builder.BuildAsync(Queryable(), ct);
+            var source = await FacetResponse.ScopedAsync(HttpContext, options.IsDisjunctiveBuild ? filtered : Queryable(), ct);
+            var facets = options.IsDisjunctiveBuild ? await builder.BuildAsync(_ => Task.FromResult(source), [], ct) : await builder.BuildAsync(source, ct);
             HttpContext.Items[FacetResourceSetSerializer.FacetsAnnotationName] = await FacetResponse.BuildAsync(HttpContext, Queryable(), filtered, facets, ct);
         }
 

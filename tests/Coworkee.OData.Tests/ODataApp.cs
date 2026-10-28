@@ -144,6 +144,8 @@ internal sealed class GadgetModelContributor : IModelContributor
             hook.ToTable("Hooks");
             hook.HasOne(h => h.Spare).WithMany().HasForeignKey("SpareId").OnDelete(DeleteBehavior.NoAction);
             hook.HasOne(h => h.Main).WithMany().HasForeignKey(h => h.MainId).OnDelete(DeleteBehavior.NoAction);
+            hook.OwnsOne(h => h.Front, m => m.HasOne(x => x.Bin).WithMany().HasForeignKey(x => x.BinId).OnDelete(DeleteBehavior.NoAction));
+            hook.OwnsOne(h => h.Back, m => m.HasOne(x => x.Bin).WithMany().HasForeignKey(x => x.BinId).OnDelete(DeleteBehavior.NoAction));
         });
         modelBuilder.Entity<Labeled>(labeled =>
         {
