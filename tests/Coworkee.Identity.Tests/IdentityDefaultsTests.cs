@@ -217,6 +217,44 @@ public sealed class IdentityDefaultsTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_offer_check_works_with_a_decorated_permission_checker()
+    {
+        var role = await RoleAsync("Powerful");
+        await GrantAsync("Role", role, IdentityPermissions.Permissions.Manage);
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(_setup.AdminUserId, _setup.TenantId));
+        await using var scope = app.App.Services.CreateAsyncScope();
+        var services = scope.ServiceProvider;
+        var decorated = new DecoratedChecker(services.GetRequiredService<Coworkee.Application.Authorization.IPermissionChecker>());
+        var offer = new Coworkee.Identity.Roles.RoleOffer(decorated, services.GetRequiredService<IdentityTestDbContext>(),
+            services.GetRequiredService<Coworkee.Application.Authorization.IPermissionDefinitionManager>(), services.GetRequiredService<ICurrentUser>());
+
+        (await offer.RefusedAsync([role], null, Ct)).ShouldBeNull();
+        decorated.Without = IdentityPermissions.Permissions.Manage;
+        (await offer.RefusedAsync([role], null, Ct)).ShouldBe(Coworkee.Identity.Roles.RoleOffer.MorePermissions);
+    }
+
+    private sealed class DecoratedChecker(Coworkee.Application.Authorization.IPermissionChecker inner) : Coworkee.Application.Authorization.IPermissionChecker
+    {
+        public string? Without { get; set; }
+
+        public async Task<IReadOnlyCollection<string>> GetGrantedAsync(CancellationToken cancellationToken) =>
+            [.. (await inner.GetGrantedAsync(cancellationToken)).Where(p => p != Without)];
+
+        public async Task<bool> IsGrantedAsync(string permission, CancellationToken cancellationToken) => permission != Without && await inner.IsGrantedAsync(permission, cancellationToken);
+
+        public Task<bool> IsGrantedAsync(string permission, string resourceType, Guid resourceId, CancellationToken cancellationToken) =>
+            inner.IsGrantedAsync(permission, resourceType, resourceId, cancellationToken);
+
+        public Task<IReadOnlyCollection<Guid>> GetGrantedResourcesAsync(string permission, string resourceType, CancellationToken cancellationToken) =>
+            inner.GetGrantedResourcesAsync(permission, resourceType, cancellationToken);
+    }
+
+    private async Task GrantAsync(string type, Guid key, params string[] names) => (await GrantRequestAsync(Admin, type, key, names)).EnsureSuccessStatusCode();
+
+    private Task<HttpResponseMessage> GrantRequestAsync(HttpClient client, string type, Guid key, params string[] names) =>
+        client.PutAsJsonAsync($"/api/v1/identity/permissions/grants/{type}/{key}", new NameListRequest(names), Ct);
+
+    [Fact]
     public async Task Created_users_get_the_default_role_and_group_of_their_tenant_only()
     {
         var customer = await RoleAsync("Customer", isDefault: true);

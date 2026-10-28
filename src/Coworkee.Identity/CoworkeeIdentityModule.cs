@@ -35,6 +35,7 @@ public sealed class CoworkeeIdentityModule : CoworkeeModule, IWebModule
         services.AddSingleton<IPermissionDefinitionContributor, IdentityPermissionDefinitions>();
         services.AddHybridCache();
         services.AddScoped<IPermissionChecker, PermissionChecker>();
+        services.AddScoped<Roles.RoleOffer>();
         services.AddHttpContextAccessor();
         services.AddScoped<Application.Groups.IGroupScope, Groups.GroupScopeService>();
         services.AddScoped<Coworkee.OData.ClientEntities.IClientEntityPartitionPart, Groups.GroupScopePartitionPart>();

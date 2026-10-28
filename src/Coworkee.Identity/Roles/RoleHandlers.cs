@@ -43,7 +43,7 @@ internal sealed class GetRolesHandler(CoworkeeDbContext db, ICurrentUser current
             .ToListAsync(cancellationToken);
 }
 
-internal sealed class CreateRoleHandler(CoworkeeDbContext db, ICurrentUser currentUser, IPermissionChecker permissions) : IHandler<CreateRole, Result<Guid>>
+internal sealed class CreateRoleHandler(CoworkeeDbContext db, ICurrentUser currentUser, RoleOffer offer) : IHandler<CreateRole, Result<Guid>>
 {
     public async Task<Result<Guid>> HandleAsync(CreateRole command, CancellationToken cancellationToken)
     {
@@ -53,7 +53,7 @@ internal sealed class CreateRoleHandler(CoworkeeDbContext db, ICurrentUser curre
             return RoleNames.Taken;
         }
 
-        if (await RoleOffer.RefusedAsync(permissions, null, command.Role.SelectableForRegistration == true || command.Role.IsDefault == true, cancellationToken) is { } refused)
+        if ((command.Role.SelectableForRegistration == true || command.Role.IsDefault == true) && await offer.RefusedAsync([], null, cancellationToken) is { } refused)
         {
             return refused;
         }
@@ -68,7 +68,7 @@ internal sealed class CreateRoleHandler(CoworkeeDbContext db, ICurrentUser curre
     }
 }
 
-internal sealed class UpdateRoleHandler(CoworkeeDbContext db, ICurrentUser currentUser, IPermissionChecker permissions) : IHandler<UpdateRole, Result>
+internal sealed class UpdateRoleHandler(CoworkeeDbContext db, ICurrentUser currentUser, RoleOffer offer) : IHandler<UpdateRole, Result>
 {
     public async Task<Result> HandleAsync(UpdateRole command, CancellationToken cancellationToken)
     {
@@ -85,7 +85,7 @@ internal sealed class UpdateRoleHandler(CoworkeeDbContext db, ICurrentUser curre
         }
 
         var offered = (!role.SelectableForRegistration && command.Role.SelectableForRegistration == true) || (!role.IsDefault && command.Role.IsDefault == true);
-        if (await RoleOffer.RefusedAsync(permissions, role.Id, offered, cancellationToken) is { } refused)
+        if (offered && await offer.RefusedAsync([role.Id], null, cancellationToken) is { } refused)
         {
             return refused;
         }
@@ -121,30 +121,34 @@ internal sealed class DeleteRoleHandler(CoworkeeDbContext db, ICurrentUser curre
 }
 
 /// <summary>
-/// A role given to every new user or offered in the registration hands its permissions to people nobody vetted: only who holds all of them
-/// (as for impersonation) and may manage users turns that on.
+/// What new users get (a default role, a role offered in the registration, the roles of the default group) goes to people nobody vetted:
+/// only who may manage users and holds every permission of it (as for impersonation) hands it out, also by granting such a role more.
 /// </summary>
-internal static class RoleOffer
+internal sealed class RoleOffer(IPermissionChecker permissions, CoworkeeDbContext db, IPermissionDefinitionManager definitions, ICurrentUser currentUser)
 {
     public static readonly Error MorePermissions = Error.Forbidden("identity.role_offer_more_permissions",
         "Only a user who may manage users and holds every permission of the role can give it to new users or offer it in the registration.");
 
-    public static async Task<Error?> RefusedAsync(IPermissionChecker permissions, Guid? roleId, bool offered, CancellationToken cancellationToken)
+    /// <summary>Refused unless the caller has <c>Users.Manage</c> and every permission the roles grant, plus <paramref name="grants"/>.</summary>
+    public async Task<Error?> RefusedAsync(IReadOnlyCollection<Guid> roleIds, IEnumerable<string>? grants, CancellationToken cancellationToken)
     {
-        if (!offered)
-        {
-            return null;
-        }
-
         if (!await permissions.IsGrantedAsync(IdentityPermissions.Users.Manage, cancellationToken))
         {
             return MorePermissions;
         }
 
-        IReadOnlyCollection<string> role = roleId is { } id ? await ((PermissionChecker)permissions).RoleGrantsAsync(id, cancellationToken) : [];
+        var ids = roleIds.ToList();
+        var names = ids.Count == 0 ? [] : await db.Set<PermissionGrant>()
+            .Where(g => g.ProviderType == PermissionProviderType.Role && EF.Parameter(ids).Contains(g.ProviderKey) && (g.TenantId == null || g.TenantId == currentUser.TenantId))
+            .Select(g => g.Name).ToListAsync(cancellationToken);
         var mine = await permissions.GetGrantedAsync(cancellationToken);
-        return role.Except(mine, StringComparer.Ordinal).Any() ? MorePermissions : null;
+        return definitions.Expand(names.Concat(grants ?? [])).Except(mine, StringComparer.Ordinal).Any() ? MorePermissions : null;
     }
+
+    /// <summary>The role is a default role, offered in the registration or a role of the tenant's default group.</summary>
+    public async Task<bool> ReachesNewUsersAsync(Guid roleId, CancellationToken cancellationToken) =>
+        await db.Set<Role>().AnyAsync(r => r.Id == roleId && (r.IsDefault || r.SelectableForRegistration), cancellationToken)
+        || await db.Set<UserGroup>().AnyAsync(g => g.IsDefault && g.Roles.Any(r => r.RoleId == roleId), cancellationToken);
 }
 
 internal static class RoleNames
