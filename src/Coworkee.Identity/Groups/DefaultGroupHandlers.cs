@@ -25,22 +25,26 @@ internal sealed class DefaultGroupHandlers(CoworkeeDbContext db, Roles.RoleOffer
 
     public async Task<Result> HandleAsync(SetDefaultGroup command, CancellationToken cancellationToken)
     {
+        // inside a transaction of the caller the clash is its business: Postgres has aborted that transaction, so the error goes up
+        var own = db.Database.CurrentTransaction is null;
         try
         {
             return await SetAsync(command.GroupId, cancellationToken);
         }
-        catch (Exception exception) when (IsClash(exception))
+        catch (Exception exception) when (own && IsClash(exception))
         {
             return Conflict;
         }
     }
 
-    // providers wrap it: Npgsql's execution strategy throws "likely due to a transient failure" around the DbUpdateException of a deadlock
+    /// <summary>A unique index violation or a deadlock, also wrapped (Npgsql's execution strategy throws "likely due to a transient failure" around it).</summary>
     internal static bool IsClash(Exception? exception)
     {
         for (; exception is not null; exception = exception.InnerException)
         {
-            if (exception is DbUpdateException or System.Data.Common.DbException { IsTransient: true })
+            if (exception is Npgsql.PostgresException { SqlState: "23505" or "40P01" }
+                or Microsoft.Data.SqlClient.SqlException { Number: 2601 or 2627 or 1205 }
+                or Microsoft.Data.Sqlite.SqliteException { SqliteExtendedErrorCode: 2067 })
             {
                 return true;
             }

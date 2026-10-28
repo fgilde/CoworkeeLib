@@ -100,7 +100,7 @@ Der Gruppenimport (`Groups.Manage`) nimmt `Name`, `Description` und `ParentPath`
 await notifier.NotifyAsync(await scope.OwnersAsync(groupId, ct), "booking.created", "New booking", text, link, ct);
 ```
 
-Die **Standardgruppe** ist die Gruppe, der neue Benutzer beitreten. Pro Mandant kann es eine geben (ein gefilterter eindeutiger Index auf `cw.Groups` sorgt dafür; von zwei gleichzeitigen Änderungen kann eine 409 `identity.default_group_conflict` bekommen): der Schalter *Standardgruppe für neue Benutzer* im Reiter Allgemein (`Identity.Groups.Manage`), `PUT /api/v1/identity/groups/default` mit `{ "groupId": ... }` (null hebt sie auf) oder `ICoworkeeApi.SetDefaultGroupAsync`. Ihre Id darf jeder angemeldete Benutzer lesen (`GET /api/v1/identity/groups/default`, `ICoworkeeApi.GetDefaultGroupIdAsync`, `IGroupScope.DefaultGroupIdAsync`). Der Seed legt sie über ihren Namen an:
+Die **Standardgruppe** ist die Gruppe, der neue Benutzer beitreten. Pro Mandant kann es eine geben (ein gefilterter eindeutiger Index auf `cw.Groups` sorgt dafür; von zwei gleichzeitigen Änderungen kann eine 409 `identity.default_group_conflict` bekommen; in einer Transaktion des Aufrufers wird der Datenbankfehler stattdessen geworfen): der Schalter *Standardgruppe für neue Benutzer* im Reiter Allgemein (`Identity.Groups.Manage`), `PUT /api/v1/identity/groups/default` mit `{ "groupId": ... }` (null hebt sie auf) oder `ICoworkeeApi.SetDefaultGroupAsync`. Ihre Id darf jeder angemeldete Benutzer lesen (`GET /api/v1/identity/groups/default`, `ICoworkeeApi.GetDefaultGroupIdAsync`, `IGroupScope.DefaultGroupIdAsync`). Der Seed legt sie über ihren Namen an:
 
 ```csharp
 services.AddCoworkeeIdentitySeed(seed =>

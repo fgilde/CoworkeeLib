@@ -134,11 +134,46 @@ public sealed class IdentityDefaultsTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
-    public void A_deadlock_wrapped_by_the_execution_strategy_still_counts_as_a_clash()
+    public void Only_unique_violations_and_deadlocks_count_as_a_clash_also_wrapped()
     {
+        static Npgsql.PostgresException Postgres(string state) => new("message", "ERROR", "ERROR", state);
+        bool Clash(Exception e) => Coworkee.Identity.Groups.DefaultGroupHandlers.IsClash(e);
+
         // Npgsql reports a deadlock as InvalidOperationException("likely due to a transient failure") around the DbUpdateException
-        Coworkee.Identity.Groups.DefaultGroupHandlers.IsClash(new InvalidOperationException("transient", new DbUpdateException("deadlock"))).ShouldBeTrue();
-        Coworkee.Identity.Groups.DefaultGroupHandlers.IsClash(new InvalidOperationException("other")).ShouldBeFalse();
+        Clash(new InvalidOperationException("transient", new DbUpdateException("deadlock", Postgres("40P01")))).ShouldBeTrue();
+        Clash(new DbUpdateException("unique", Postgres("23505"))).ShouldBeTrue();
+        Clash(new DbUpdateException("foreign key", Postgres("23503"))).ShouldBeFalse();
+        Clash(new DbUpdateException("other")).ShouldBeFalse();
+        Clash(new InvalidOperationException("other")).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Other_save_errors_are_no_conflict()
+    {
+        var group = await GroupAsync("A");
+        RaceInjector.Once = () => throw new DbUpdateException("disk full");
+
+        (await SetDefaultAsync(Admin, group)).StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
+    }
+
+    [Fact]
+    public async Task Inside_a_transaction_of_the_caller_the_clash_is_thrown_not_answered()
+    {
+        Assert.SkipWhen(app.Provider == Coworkee.Contracts.Configuration.DatabaseProviders.Sqlite, "SQLite serializes writers.");
+        var (a, b) = (await GroupAsync("A"), await GroupAsync("B"));
+        RaceInjector.Once = () => app.InDbAsync(_setup.TenantId, async db =>
+        {
+            (await db.Set<UserGroup>().SingleAsync(g => g.Id == b, Ct)).IsDefault = true;
+            return 0;
+        });
+        using var actor = CurrentUserScope.Begin(new ImpersonatedUser(_setup.AdminUserId, _setup.TenantId));
+        await using var scope = app.App.Services.CreateAsyncScope();
+        await using var transaction = await scope.ServiceProvider.GetRequiredService<IdentityTestDbContext>().Database.BeginTransactionAsync(Ct);
+
+        var thrown = await Should.ThrowAsync<Exception>(() => scope.ServiceProvider.GetRequiredService<Coworkee.Application.Messaging.IDispatcher>()
+            .SendAsync(new Coworkee.Identity.Groups.SetDefaultGroup(a), Ct));
+
+        Coworkee.Identity.Groups.DefaultGroupHandlers.IsClash(thrown).ShouldBeTrue();
     }
 
     [Fact]
