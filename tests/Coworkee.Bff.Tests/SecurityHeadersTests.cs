@@ -92,4 +92,31 @@ public sealed class SecurityHeadersTests
         response.Headers.GetValues("Referrer-Policy").ShouldBe(["no-referrer"]);
         own.Headers.GetValues("Content-Security-Policy").ShouldBe(["sandbox"]);
     }
+
+    [Fact]
+    public async Task An_answer_that_brings_its_own_nosniff_still_carries_it_once()
+    {
+        var builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Coworkee:Bff:Authority"] = "https://auth.test",
+            ["Coworkee:Bff:ClientId"] = "web",
+            ["Coworkee:Bff:ApiAddress"] = "http://api.test",
+        });
+        builder.AddCoworkeeBff();
+        await using var app = builder.Build();
+        app.UseCoworkeeSecurityHeaders();
+        // as the reverse proxy does with the headers of the API's answer
+        app.MapGet("/forwarded", (HttpContext context) =>
+        {
+            context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+            return "forwarded";
+        });
+        await app.StartAsync(TestContext.Current.CancellationToken);
+
+        var response = await app.GetTestClient().GetAsync("/forwarded", TestContext.Current.CancellationToken);
+
+        response.Headers.GetValues("X-Content-Type-Options").ShouldBe(["nosniff"]);
+    }
 }

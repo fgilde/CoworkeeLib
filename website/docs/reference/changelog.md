@@ -34,6 +34,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Fixed
 
+- The BFF sends `X-Content-Type-Options: nosniff` once also on answers the reverse proxy forwards from the API (they carried it twice); an own `Referrer-Policy` of an answer is kept.
 - OData: a value-type member read through a navigation into a set the user may not read (`$filter=Main/Id ne null`) answered `500`; it is `null` now, like the rest of that target.
 - Groups page: the Roles tab showed no roles, and picking one removed the group's other roles; *Move all members to…* never showed. The `Groups` OData set serialized `Members` and `Roles` as empty lists. It now carries the real `Roles` and no `Members`, and the Users set its real `Groups`. `GroupRow` (Coworkee.Client.Blazor) has no `Members` any more and `GroupMemberRow` is gone; count members on `Users` with `Groups/any(m: m/GroupId eq {id})`.
 - The visual mail editor showed an empty toolbar: `RichTextEditor` passed `Tools="null"`, which MudExRichTextEditor 9.5.5 reads as no tools. It passes `Tools` only when set now.

@@ -46,11 +46,12 @@ public static class SecurityHeaders
         app.Use((context, next) =>
         {
             var headers = context.Response.Headers;
-            headers.XContentTypeOptions = "nosniff";
-            headers["Referrer-Policy"] = referrer;
-            // only for answers without an own policy: files from the API keep their sandbox, the loading screen logo its own
+            // set when the answer starts, so headers the reverse proxy copies from the API do not show up twice
             context.Response.OnStarting(() =>
             {
+                headers.XContentTypeOptions = "nosniff";
+                // only for answers without an own policy: files from the API keep their sandbox, the loading screen logo its own
+                headers.TryAdd("Referrer-Policy", referrer);
                 headers.TryAdd("Content-Security-Policy", policy);
                 return Task.CompletedTask;
             });

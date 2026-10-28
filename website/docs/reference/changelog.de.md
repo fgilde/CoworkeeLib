@@ -34,6 +34,7 @@
 
 ### Behoben
 
+- Der BFF sendet `X-Content-Type-Options: nosniff` auch bei Antworten, die der Reverse Proxy von der API weiterreicht, nur einmal (sie trugen es doppelt); eine eigene `Referrer-Policy` einer Antwort bleibt erhalten.
 - OData: ein Member mit Werttyp, über eine Navigation zu einem Set gelesen, das der Benutzer nicht lesen darf (`$filter=Main/Id ne null`), antwortete `500`; er ist jetzt `null` wie der Rest dieses Ziels.
 - Gruppenseite: Der Reiter Rollen zeigte keine Rollen, und wer eine wählte, entfernte die übrigen Rollen der Gruppe; *Alle Mitglieder verschieben nach…* erschien nie. Das OData-Set `Groups` lieferte `Members` und `Roles` als leere Listen. Es enthält jetzt die echten `Roles` und keine `Members` mehr, das Users-Set seine echten `Groups`. `GroupRow` (Coworkee.Client.Blazor) hat kein `Members` mehr, `GroupMemberRow` entfällt; Mitglieder zählt man auf `Users` mit `Groups/any(m: m/GroupId eq {id})`.
 - Der visuelle Mail-Editor zeigte eine leere Werkzeugleiste: `RichTextEditor` übergab `Tools="null"`, was MudExRichTextEditor 9.5.5 als „keine Werkzeuge“ liest. Er übergibt `Tools` jetzt nur, wenn gesetzt.
