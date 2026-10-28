@@ -10,6 +10,6 @@
         </MudStack>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancel" data-testid="export-progress-cancel">@L["Cancel"]</MudButton>
+        <MudButton OnClick="CancelAsync" Disabled="_cancelling" data-testid="export-progress-cancel">@L["Cancel"]</MudButton>
     </DialogActions>
 </MudDialog>

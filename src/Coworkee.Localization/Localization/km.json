@@ -1889,5 +1889,6 @@
   "Export failed": "ការនាំចេញបានបរាជ័យ",
   "You have too many exports running. Wait until one is ready.": "អ្នកមានការនាំចេញកំពុងដំណើរការច្រើនពេក។ សូមរង់ចាំរហូតដល់មួយរួចរាល់។",
   "The export query is not valid.": "សំណួររបស់ការនាំចេញមិនត្រឹមត្រូវទេ។",
-  "You may not export this list.": "អ្នកមិនអាចនាំចេញបញ្ជីនេះបានទេ។"
+  "You may not export this list.": "អ្នកមិនអាចនាំចេញបញ្ជីនេះបានទេ។",
+  "The export was cancelled.": "ការនាំចេញត្រូវបានបោះបង់។"
 }

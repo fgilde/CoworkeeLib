@@ -83,6 +83,77 @@ public sealed class ExportTests(ODataApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Cancel_stops_a_running_export_frees_its_slot_and_mails_nothing()
+    {
+        SleeperGate.Closed = true;
+        try
+        {
+            using var response = await Admin.GetAsync("/api/v1/data/Sleepers/export/stream", HttpCompletionOption.ResponseHeadersRead, Ct);
+            using var reader = new StreamReader(await response.Content.ReadAsStreamAsync(Ct));
+            var first = JsonSerializer.Deserialize<DataExportProgress>((await reader.ReadLineAsync(Ct))!, JsonSerializerOptions.Web)!;
+            var id = first.JobId.ShouldNotBeNull();
+
+            // the second slot is taken too: another export is refused
+            await app.InDbAsync(_setup.TenantId, db =>
+            {
+                db.Add(new DataTransferJob
+                {
+                    TenantId = _setup.TenantId, UserId = _setup.AdminUserId, Kind = DataTransferKind.Export, EntitySet = "Gadgets",
+                    Status = DataTransferStatus.Running, CreatedAt = DateTimeOffset.UtcNow, StartedAt = DateTimeOffset.UtcNow,
+                });
+                return db.SaveChangesAsync(Ct);
+            });
+            (await Admin.GetAsync("/api/v1/data/Gadgets/export/stream", Ct)).StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+
+            // another user neither sees nor cancels the job
+            var other = app.As(await UserWithAsync(ODataApp.ViewGadgets), _setup.TenantId);
+            (await other.PostAsync($"/api/v1/data/jobs/{id}/cancel", null, Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+            (await other.GetAsync($"/api/v1/data/jobs/{id}", Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+            var cancelled = await (await Admin.PostAsync($"/api/v1/data/jobs/{id}/cancel", null, Ct)).Content.ReadFromJsonAsync<DataTransferJobDto>(Ct);
+            cancelled!.Status.ShouldBe(DataTransferStatus.Cancelled);
+            var rest = await reader.ReadToEndAsync(Ct);
+            JsonSerializer.Deserialize<DataExportProgress>(rest.Split('\n', StringSplitOptions.RemoveEmptyEntries)[^1], JsonSerializerOptions.Web)!.Phase.ShouldBe(DataExportProgress.Cancelled);
+
+            // the slot is free at once, nothing is mailed and the job stays cancelled without a file
+            (await StreamAsync(Admin, "?format=csv"))[^1].Phase.ShouldBe(DataExportProgress.Ready);
+            app.Mails.Sent.ShouldBeEmpty();
+            var job = await app.InDbAsync(_setup.TenantId, db => db.Set<DataTransferJob>().AsNoTracking().SingleAsync(j => j.Id == id, Ct));
+            (job.Status, job.Result).ShouldBe((DataTransferStatus.Cancelled, (byte[]?)null));
+        }
+        finally
+        {
+            SleeperGate.Closed = false;
+        }
+    }
+
+    [Fact]
+    public async Task A_cancel_on_another_instance_stops_the_export_through_the_job_row()
+    {
+        var cancellations = app.App.Services.GetRequiredService<ExportCancellations>();
+        var poll = cancellations.Poll;
+        (SleeperGate.Closed, cancellations.Poll) = (true, TimeSpan.FromMilliseconds(100));
+        try
+        {
+            using var response = await Admin.GetAsync("/api/v1/data/Sleepers/export/stream", HttpCompletionOption.ResponseHeadersRead, Ct);
+            using var reader = new StreamReader(await response.Content.ReadAsStreamAsync(Ct));
+            var id = JsonSerializer.Deserialize<DataExportProgress>((await reader.ReadLineAsync(Ct))!, JsonSerializerOptions.Web)!.JobId!.Value;
+
+            // what the cancel endpoint of another instance writes; this instance only reads the row
+            await app.InDbAsync(_setup.TenantId, db => db.Set<DataTransferJob>().Where(j => j.Id == id)
+                .ExecuteUpdateAsync(s => s.SetProperty(j => j.Status, DataTransferStatus.Cancelled), Ct));
+
+            var rest = await reader.ReadToEndAsync(Ct).WaitAsync(TimeSpan.FromSeconds(30), Ct);
+            JsonSerializer.Deserialize<DataExportProgress>(rest.Split('\n', StringSplitOptions.RemoveEmptyEntries)[^1], JsonSerializerOptions.Web)!.Phase.ShouldBe(DataExportProgress.Cancelled);
+            app.Mails.Sent.ShouldBeEmpty();
+        }
+        finally
+        {
+            (SleeperGate.Closed, cancellations.Poll) = (false, poll);
+        }
+    }
+
+    [Fact]
     public async Task Each_user_streams_only_a_few_exports_at_once_and_stale_ones_fail()
     {
         var now = DateTimeOffset.UtcNow;

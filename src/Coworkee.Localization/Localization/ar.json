@@ -1889,5 +1889,6 @@
   "Export failed": "فشل التصدير",
   "You have too many exports running. Wait until one is ready.": "لديك عدد كبير جدًا من عمليات التصدير الجارية. انتظر حتى تكتمل إحداها.",
   "The export query is not valid.": "استعلام التصدير غير صالح.",
-  "You may not export this list.": "لا يُسمح لك بتصدير هذه القائمة."
+  "You may not export this list.": "لا يُسمح لك بتصدير هذه القائمة.",
+  "The export was cancelled.": "تم إلغاء التصدير."
 }

@@ -1889,5 +1889,6 @@
   "Export failed": "Export mislukt",
   "You have too many exports running. Wait until one is ready.": "U hebt te veel lopende exports. Wacht tot er een klaar is.",
   "The export query is not valid.": "De query van de export is ongeldig.",
-  "You may not export this list.": "U mag deze lijst niet exporteren."
+  "You may not export this list.": "U mag deze lijst niet exporteren.",
+  "The export was cancelled.": "De export is geannuleerd."
 }

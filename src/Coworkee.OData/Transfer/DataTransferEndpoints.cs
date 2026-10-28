@@ -49,6 +49,7 @@ internal static class DataTransferEndpoints
         data.MapGet("/jobs", async (string? entitySet, DataTransferJobs jobs, CancellationToken ct) => TypedResults.Ok(await jobs.ListAsync(entitySet, ct)));
         data.MapGet("/jobs/{id:guid}", (Guid id, DataTransferJobs jobs, CancellationToken ct) => jobs.GetAsync(id, ct).ToHttpResult());
         data.MapGet("/jobs/{id:guid}/file", DownloadAsync);
+        data.MapPost("/jobs/{id:guid}/cancel", (Guid id, DataExports exports, CancellationToken ct) => exports.CancelAsync(id, ct).ToHttpResult());
     }
 
     private static async Task<IResult> UploadAsync(string entitySet, IFormFile file, ImportService imports, CancellationToken cancellationToken)

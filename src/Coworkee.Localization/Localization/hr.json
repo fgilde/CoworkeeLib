@@ -1889,5 +1889,6 @@
   "Export failed": "Izvoz nije uspio",
   "You have too many exports running. Wait until one is ready.": "Imate previše izvoza u tijeku. Pričekajte da jedan bude gotov.",
   "The export query is not valid.": "Upit izvoza nije valjan.",
-  "You may not export this list.": "Ne smijete izvesti ovaj popis."
+  "You may not export this list.": "Ne smijete izvesti ovaj popis.",
+  "The export was cancelled.": "Izvoz je otkazan."
 }

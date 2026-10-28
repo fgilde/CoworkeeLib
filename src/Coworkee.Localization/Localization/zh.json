@@ -1889,5 +1889,6 @@
   "Export failed": "导出失败",
   "You have too many exports running. Wait until one is ready.": "正在运行的导出过多。请等待其中一个完成。",
   "The export query is not valid.": "导出查询无效。",
-  "You may not export this list.": "您无权导出此列表。"
+  "You may not export this list.": "您无权导出此列表。",
+  "The export was cancelled.": "导出已取消。"
 }

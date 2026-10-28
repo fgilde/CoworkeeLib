@@ -1889,5 +1889,6 @@
   "Export failed": "Exporten misslyckades",
   "You have too many exports running. Wait until one is ready.": "Du har för många exporter igång. Vänta tills en är klar.",
   "The export query is not valid.": "Exportens fråga är ogiltig.",
-  "You may not export this list.": "Du får inte exportera den här listan."
+  "You may not export this list.": "Du får inte exportera den här listan.",
+  "The export was cancelled.": "Exporten avbröts."
 }

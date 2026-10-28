@@ -67,7 +67,7 @@ public sealed class ExportProgressTests : ClientTestBase
     }
 
     [Fact]
-    public async Task Cancel_stops_waiting_and_the_export_continues_in_the_background()
+    public async Task Cancel_cancels_the_job_on_the_server()
     {
         var showing = ShowAsync();
         Write(new DataExportProgress(DataExportProgress.Reading, 40) { Rows = 1, Total = 2 });
@@ -76,9 +76,25 @@ public sealed class ExportProgressTests : ClientTestBase
         await _dialogs.Find("[data-testid='export-progress-cancel']").ClickAsync(new());
         await showing;
 
-        // the dialog closes first, then asks for the job
-        _dialogs.WaitForAssertion(() => Transfer.Received(1).GetJobAsync(_jobId, Arg.Any<CancellationToken>()));
-        _dialogs.WaitForAssertion(() => Snackbars.ShouldContain(s => s.Message == "The export runs in the background. You get the file here when it is ready."));
+        _dialogs.WaitForAssertion(() => Snackbars.ShouldContain(s => s.Message == "The export was cancelled."));
+        await Transfer.Received(1).CancelJobAsync(_jobId, Arg.Any<CancellationToken>());
+        await Transfer.DidNotReceive().GetJobAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        Snackbars.ShouldNotContain(s => s.Message.StartsWith("The export runs in the background", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task Cancel_before_the_first_line_waits_for_the_job_id_it_carries()
+    {
+        var showing = ShowAsync();
+        _dialogs.WaitForAssertion(() => _dialogs.Find("[data-testid='export-progress-cancel']"));
+        await _dialogs.Find("[data-testid='export-progress-cancel']").ClickAsync(new());
+        await Transfer.DidNotReceive().CancelJobAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+
+        Write(new DataExportProgress(DataExportProgress.Counting, 0));
+        await showing;
+
+        _dialogs.WaitForAssertion(() => Transfer.Received(1).CancelJobAsync(_jobId, Arg.Any<CancellationToken>()));
+        _dialogs.WaitForAssertion(() => Snackbars.ShouldContain(s => s.Message == "The export was cancelled."));
     }
 
     [Fact]

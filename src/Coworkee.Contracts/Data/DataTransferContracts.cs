@@ -14,7 +14,7 @@ public static class DataTransferPermissions
 }
 
 /// <summary>
-/// One line of the export stream (application/x-ndjson): <paramref name="Phase"/> is counting, reading, writing, ready, queued or failed.
+/// One line of the export stream (application/x-ndjson): <paramref name="Phase"/> is counting, reading, writing, ready, queued, failed or cancelled.
 /// The ready line carries the anonymous one-time <paramref name="Url"/> (relative to the API, five minutes) of the file; every line carries the <paramref name="JobId"/>.
 /// </summary>
 public sealed record DataExportProgress(string Phase, int Percent, string? Url = null, string? FileName = null, Guid? JobId = null, string? Message = null)
@@ -30,6 +30,9 @@ public sealed record DataExportProgress(string Phase, int Percent, string? Url =
     public const string Writing = "writing";
     public const string Ready = "ready";
     public const string Failed = "failed";
+
+    /// <summary>The user cancelled the export (<c>POST /api/v1/data/jobs/{id}/cancel</c>): no file, no mail.</summary>
+    public const string Cancelled = "cancelled";
 
     /// <summary>Too many rows for the request: <c>JobId</c> is the background export that writes the file (and mails it when the client left).</summary>
     public const string Queued = "queued";
@@ -79,6 +82,9 @@ public enum DataTransferStatus
     Completed,
     Failed,
     Undone,
+
+    /// <summary>An export the user stopped (<c>POST /api/v1/data/jobs/{id}/cancel</c>): it frees its slot, writes no file and sends no mail.</summary>
+    Cancelled,
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter<ExportFileFormat>))]
@@ -139,5 +145,5 @@ public sealed record DataTransferJobDto(
     DateTimeOffset? FinishedAt,
     bool CanUndo)
 {
-    public bool IsFinished => Status is DataTransferStatus.Completed or DataTransferStatus.Failed or DataTransferStatus.Undone;
+    public bool IsFinished => Status is DataTransferStatus.Completed or DataTransferStatus.Failed or DataTransferStatus.Undone or DataTransferStatus.Cancelled;
 }

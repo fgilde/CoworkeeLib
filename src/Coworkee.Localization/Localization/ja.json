@@ -1889,5 +1889,6 @@
   "Export failed": "エクスポートに失敗しました",
   "You have too many exports running. Wait until one is ready.": "実行中のエクスポートが多すぎます。いずれかが完了するまでお待ちください。",
   "The export query is not valid.": "エクスポートのクエリが無効です。",
-  "You may not export this list.": "この一覧をエクスポートする権限がありません。"
+  "You may not export this list.": "この一覧をエクスポートする権限がありません。",
+  "The export was cancelled.": "エクスポートをキャンセルしました。"
 }

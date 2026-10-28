@@ -338,7 +338,8 @@
         "Notifications: cw.Notifications gets Mailed (the daily digest leaves out notifications mailed on their own); add a migration.",
         "Group owners, default group and default roles: cw.GroupMembers gets IsOwner, cw.Groups and cw.Roles get IsDefault, cw.Groups the unique index IX_Groups_TenantId_IsDefault (one default group per tenant); add a migration. The Groups OData set has no Members any more and GroupRow (Coworkee.Client.Blazor) lost Members, GroupMemberRow is gone: count members on Users with Groups/any(m: m/GroupId eq {id}). IGroupScope has the new members DefaultGroupIdAsync and OwnersAsync, ICoworkeeApi SetGroupOwnersAsync, GetDefaultGroupIdAsync and SetDefaultGroupAsync.",
         "OData facets whose value is read through a navigation into a set with row filters count only the targets the user may see; a row whose target is hidden is left out of that group. Before, such facets were left out, and facets by the target's key counted hidden targets.",
-        "CoworkeeDataTable exports Excel, CSV and JSON through IDataTransferApi.StreamExportAsync with a progress dialog instead of ExportAsync; component tests that stub ExportAsync for the table's export menu stub StreamExportAsync."
+        "CoworkeeDataTable exports Excel, CSV and JSON through IDataTransferApi.StreamExportAsync with a progress dialog instead of ExportAsync; component tests that stub ExportAsync for the table's export menu stub StreamExportAsync. IDataTransferApi has the new member CancelJobAsync (POST /api/v1/data/jobs/{id}/cancel): hand-written implementations and test fakes add it. DataTransferStatus has the new member Cancelled: exhaustive switches over it add the case.",
+        "OData facets are left out when their label path, or a value path of the row other than the facet's own property, reads a member denied to the user, or when a label path is an expression the checks cannot parse."
       ],
       "needsMigration": true,
       "manual": [
@@ -366,9 +367,17 @@
           ]
         },
         {
-          "text": "Component tests of CoworkeeDataTable exports: stub IDataTransferApi.StreamExportAsync (a stream of DataExportProgress lines ending with ready, queued or failed) instead of ExportAsync.",
+          "text": "Component tests of CoworkeeDataTable exports: stub IDataTransferApi.StreamExportAsync (a stream of DataExportProgress lines ending with ready, queued, failed or cancelled) instead of ExportAsync.",
           "find": "\\.ExportAsync\\(",
           "files": [
+            "tests/**/*.cs"
+          ]
+        },
+        {
+          "text": "Implement CancelJobAsync in hand-written IDataTransferApi implementations and test fakes.",
+          "find": ":\\s*IDataTransferApi\\b",
+          "files": [
+            "src/**/*.cs",
             "tests/**/*.cs"
           ]
         },

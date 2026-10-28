@@ -94,6 +94,11 @@ public sealed class DataTransferWatcher(
 
     private void Announce(DataTransferJobDto job, bool ready)
     {
+        if (job.Status == DataTransferStatus.Cancelled)
+        {
+            return;
+        }
+
         if (!ready)
         {
             snackbar.Add(L["The export of {0} failed: {1}", job.EntitySet, job.Message ?? string.Empty], Severity.Error);

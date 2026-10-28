@@ -8,7 +8,8 @@ using Microsoft.Extensions.Logging;
 
 namespace Coworkee.OData.Transfer;
 
-internal sealed class ExportJob(IServiceProvider services, DataExports exports, CoworkeeDbContext db, ODataEntityRegistry registry, TimeProvider clock, ILogger<ExportJob> logger)
+internal sealed class ExportJob(
+    IServiceProvider services, DataExports exports, CoworkeeDbContext db, ODataEntityRegistry registry, ExportCancellations cancellations, TimeProvider clock, ILogger<ExportJob> logger)
     : IBackgroundJob<ExportJobArgs>
 {
     public async Task ExecuteAsync(ExportJobArgs args, CancellationToken cancellationToken)
@@ -24,6 +25,7 @@ internal sealed class ExportJob(IServiceProvider services, DataExports exports, 
             return;
         }
 
+        using var watch = cancellations.Start(job.Id, cancellationToken);
         try
         {
             var entity = registry.Find(job.EntitySet) ?? throw new InvalidOperationException($"{job.EntitySet} is no OData set anymore.");
@@ -39,13 +41,18 @@ internal sealed class ExportJob(IServiceProvider services, DataExports exports, 
             }
 
             using var selection = groups is null ? null : GroupScope.Selection(groups);
-            var file = (await exports.WriteAsync(entity, new QueryString(job.Settings), null, cancellationToken))!;
+            var file = (await exports.WriteAsync(entity, new QueryString(job.Settings), null, watch.Token))!;
             (job.Result, job.ResultContentType, job.ResultFileName) = (file.Content, file.ContentType, job.FileName ?? file.Name);
             job.Status = DataTransferStatus.Completed;
-            if (args.Mail)
+            if (args.Mail && !watch.Cancelled)
             {
                 await exports.MailAsync(new DataExportMail(job.UserId, args.Recipients ?? [], job.EntitySet, file with { Name = job.ResultFileName }), cancellationToken);
             }
+        }
+        catch (OperationCanceledException) when (watch.Cancelled)
+        {
+            // the cancel saved the job already
+            return;
         }
         catch (Exception exception)
         {

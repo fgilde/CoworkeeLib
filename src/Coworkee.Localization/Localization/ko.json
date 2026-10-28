@@ -1889,5 +1889,6 @@
   "Export failed": "내보내기 실패",
   "You have too many exports running. Wait until one is ready.": "실행 중인 내보내기가 너무 많습니다. 하나가 완료될 때까지 기다리세요.",
   "The export query is not valid.": "내보내기 쿼리가 올바르지 않습니다.",
-  "You may not export this list.": "이 목록을 내보낼 권한이 없습니다."
+  "You may not export this list.": "이 목록을 내보낼 권한이 없습니다.",
+  "The export was cancelled.": "내보내기가 취소되었습니다."
 }

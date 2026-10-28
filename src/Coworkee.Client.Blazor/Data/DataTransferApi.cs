@@ -73,6 +73,9 @@ internal sealed class DataTransferApi(HttpClient http) : ApiClientBase(http), ID
     public IAsyncEnumerable<DataExportProgress> StreamExportAsync(string entitySet, string exportQuery, CancellationToken cancellationToken = default) =>
         StreamAsync<DataExportProgress>($"{Root}/{Uri.EscapeDataString(entitySet)}/export/stream{exportQuery}", cancellationToken);
 
+    public Task<DataTransferJobDto> CancelJobAsync(Guid id, CancellationToken cancellationToken = default) =>
+        SendAsync<DataTransferJobDto>(HttpMethod.Post, $"{Root}/jobs/{id}/cancel", null, cancellationToken);
+
     public async Task<DataTransferJobDto> MailExportAsync(string entitySet, MailExportRequest request, CancellationToken cancellationToken = default) =>
         await SendAsync<DataTransferJobDto>(HttpMethod.Post, $"{Root}/{Uri.EscapeDataString(entitySet)}/export/mail", request, cancellationToken);
 

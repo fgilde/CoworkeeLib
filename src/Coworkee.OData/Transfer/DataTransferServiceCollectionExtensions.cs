@@ -18,6 +18,7 @@ internal static class DataTransferServiceCollectionExtensions
         services.AddScoped<ImportProfiles>();
         services.AddScoped<DataTransferJobs>();
         services.AddScoped<DataExports>();
+        services.AddSingleton<ExportCancellations>();
         services.AddScoped<ImportJob>();
         services.AddScoped<ExportJob>();
         services.AddScoped<ExportScheduleRunner>();

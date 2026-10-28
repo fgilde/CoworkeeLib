@@ -1889,5 +1889,6 @@
   "Export failed": "Eksport mislykkedes",
   "You have too many exports running. Wait until one is ready.": "Du har for mange eksporter i gang. Vent, til en er klar.",
   "The export query is not valid.": "Eksportens forespørgsel er ugyldig.",
-  "You may not export this list.": "Du må ikke eksportere denne liste."
+  "You may not export this list.": "Du må ikke eksportere denne liste.",
+  "The export was cancelled.": "Eksporten blev annulleret."
 }

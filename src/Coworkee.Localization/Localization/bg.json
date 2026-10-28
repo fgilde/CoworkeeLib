@@ -1889,5 +1889,6 @@
   "Export failed": "Експортът не бе успешен",
   "You have too many exports running. Wait until one is ready.": "Имате твърде много активни експорти. Изчакайте, докато един бъде готов.",
   "The export query is not valid.": "Заявката на експорта е невалидна.",
-  "You may not export this list.": "Нямате право да експортирате този списък."
+  "You may not export this list.": "Нямате право да експортирате този списък.",
+  "The export was cancelled.": "Експортът беше отменен."
 }

@@ -1889,5 +1889,6 @@
   "Export failed": "Dışa aktarma başarısız oldu",
   "You have too many exports running. Wait until one is ready.": "Çalışan çok fazla dışa aktarmanız var. Biri hazır olana kadar bekleyin.",
   "The export query is not valid.": "Dışa aktarma sorgusu geçerli değil.",
-  "You may not export this list.": "Bu listeyi dışa aktaramazsınız."
+  "You may not export this list.": "Bu listeyi dışa aktaramazsınız.",
+  "The export was cancelled.": "Dışa aktarma iptal edildi."
 }

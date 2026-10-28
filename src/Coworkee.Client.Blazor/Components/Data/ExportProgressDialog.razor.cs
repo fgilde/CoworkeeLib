@@ -12,7 +12,8 @@ namespace Coworkee.Client.Blazor.Components.Data;
 
 /// <summary>
 /// Runs a list export over the progress stream: shows the rows and percent, downloads the file through its one-time link, hands an export the
-/// server queued to <see cref="DataTransferWatcher"/>, and shows errors. Cancel stops waiting; the server finishes the file and it comes like a background export.
+/// server queued to <see cref="DataTransferWatcher"/>, and shows errors. Cancel stops the export on the server (no file, no mail); pressed before the
+/// first line, it waits for the job id that line carries.
 /// </summary>
 public partial class ExportProgressDialog : IDisposable
 {
@@ -20,6 +21,7 @@ public partial class ExportProgressDialog : IDisposable
     private DataExportProgress? _line;
     private Guid? _jobId;
     private bool _closed;
+    private bool _cancelling;
 
     [Inject] private IDataTransferApi Transfer { get; set; } = null!;
 
@@ -69,7 +71,13 @@ public partial class ExportProgressDialog : IDisposable
             await foreach (var line in Transfer.StreamExportAsync(EntitySet, Query, _cancel.Token))
             {
                 (_line, _jobId) = (line, line.JobId ?? _jobId);
-                if (line.Phase is DataExportProgress.Ready or DataExportProgress.Queued or DataExportProgress.Failed)
+                if (_cancelling && _jobId is { } id)
+                {
+                    await StopAsync(id);
+                    return;
+                }
+
+                if (line.Phase is DataExportProgress.Ready or DataExportProgress.Queued or DataExportProgress.Failed or DataExportProgress.Cancelled)
                 {
                     await FinishAsync(line);
                     return;
@@ -80,8 +88,7 @@ public partial class ExportProgressDialog : IDisposable
         }
         catch (OperationCanceledException) when (_cancel.IsCancellationRequested)
         {
-            // the user stopped waiting: the server writes the file all the same, so it is followed like a background export
-            await AnnounceAsync(_jobId);
+            // cancelled by the user (StopAsync) or the dialog went away
         }
         catch (OperationCanceledException)
         {
@@ -111,6 +118,9 @@ public partial class ExportProgressDialog : IDisposable
             case DataExportProgress.Queued:
                 await AnnounceAsync(line.JobId);
                 break;
+            case DataExportProgress.Cancelled:
+                Snackbar.Add(L["The export was cancelled."], Severity.Info);
+                break;
             default:
                 Snackbar.Add(L["The export failed: {0}", L[line.Message ?? "Export failed"]], Severity.Error);
                 break;
@@ -134,7 +144,25 @@ public partial class ExportProgressDialog : IDisposable
         _ => SnackbarApiExtensions.Describe(exception),
     };
 
-    private void Cancel() => _cancel.Cancel();
+    private async Task CancelAsync()
+    {
+        _cancelling = true;
+        if (_jobId is { } id)
+        {
+            await StopAsync(id);
+        }
+    }
+
+    // stops reading and cancels the job on the server: no file, no mail, the slot is free
+    private async Task StopAsync(Guid id)
+    {
+        _cancel.Cancel();
+        Close();
+        if (await Snackbar.RunAsync(() => Transfer.CancelJobAsync(id)))
+        {
+            Snackbar.Add(L["The export was cancelled."], Severity.Info);
+        }
+    }
 
     private void Close()
     {

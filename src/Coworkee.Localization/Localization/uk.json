@@ -1889,5 +1889,6 @@
   "Export failed": "Помилка експорту",
   "You have too many exports running. Wait until one is ready.": "У вас забагато активних експортів. Зачекайте, доки один буде готовий.",
   "The export query is not valid.": "Запит експорту недійсний.",
-  "You may not export this list.": "Ви не можете експортувати цей список."
+  "You may not export this list.": "Ви не можете експортувати цей список.",
+  "The export was cancelled.": "Експорт скасовано."
 }

@@ -81,14 +81,17 @@ public sealed partial class DataExports(
 
         http.Response.ContentType = "application/x-ndjson";
         var lines = Channel.CreateUnbounded<DataExportProgress>(new UnboundedChannelOptions { SingleReader = true, SingleWriter = true });
+        // the first line names the job at once, so a client can cancel it before the export reports anything
+        lines.Writer.TryWrite(new DataExportProgress(DataExportProgress.Counting, 0, JobId: job.Id));
         var writing = WriteLinesAsync(lines.Reader, http);
         ExportFile? file = null;
         var queued = false;
+        // not the request's token: the export finishes when the client leaves, but not later than the timeout or a cancel
+        using var timeout = new CancellationTokenSource(options.Value.ExportTimeout);
+        using var watch = services.GetRequiredService<ExportCancellations>().Start(job.Id, timeout.Token);
         try
         {
-            // not the request's token: the export finishes when the client leaves, but not later than the timeout
-            using var timeout = new CancellationTokenSource(options.Value.ExportTimeout);
-            file = await WriteAsync(entity, query, options.Value.BackgroundExportRows, timeout.Token, new LineProgress(lines.Writer, job.Id));
+            file = await WriteAsync(entity, query, options.Value.BackgroundExportRows, watch.Token, new LineProgress(lines.Writer, job.Id));
             if (file is null)
             {
                 // too many rows for a request: the export job writes it; the client follows the job like any background export
@@ -98,6 +101,9 @@ public sealed partial class DataExports(
             {
                 (job.Result, job.ResultContentType, job.ResultFileName, job.Status) = (file.Content, file.ContentType, job.FileName ?? file.Name, DataTransferStatus.Completed);
             }
+        }
+        catch (OperationCanceledException) when (watch.Cancelled)
+        {
         }
         catch (Exception exception)
         {
@@ -113,6 +119,13 @@ public sealed partial class DataExports(
 
         lines.Writer.Complete();
         var connected = await writing;
+        if (watch.Cancelled)
+        {
+            // the cancel saved the job already: no file, no mail, and the slot is free
+            await WriteLineAsync(http, new DataExportProgress(DataExportProgress.Cancelled, 100, JobId: job.Id));
+            return Results.Empty;
+        }
+
         if (queued)
         {
             await db.SaveChangesAsync(CancellationToken.None);
@@ -130,8 +143,11 @@ public sealed partial class DataExports(
         }
         catch (DbUpdateConcurrencyException)
         {
-            // the stale sweep failed the job meanwhile
-            await WriteLineAsync(http, new DataExportProgress(DataExportProgress.Failed, 100, JobId: job.Id, Message: StaleExportJob.Message));
+            // the stale sweep failed the job meanwhile, or the user cancelled it as it ended
+            var cancelled = watch.Cancelled || await db.Set<DataTransferJob>().AsNoTracking().AnyAsync(j => j.Id == job.Id && j.Status == DataTransferStatus.Cancelled, CancellationToken.None);
+            await WriteLineAsync(http, cancelled
+                ? new DataExportProgress(DataExportProgress.Cancelled, 100, JobId: job.Id)
+                : new DataExportProgress(DataExportProgress.Failed, 100, JobId: job.Id, Message: StaleExportJob.Message));
             return Results.Empty;
         }
 
@@ -146,6 +162,31 @@ public sealed partial class DataExports(
         }
 
         return Results.Empty;
+    }
+
+    /// <summary>
+    /// Cancels a running or queued export of the current user: the job becomes <see cref="DataTransferStatus.Cancelled"/>, which frees its slot at once, and the
+    /// export stops without a file or mail (on this instance at once, on others when they read the row). A finished job stays as it is. Other users get 404.
+    /// </summary>
+    public async Task<Coworkee.Core.Results.Result<DataTransferJobDto>> CancelAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var job = await db.Set<DataTransferJob>().SingleOrDefaultAsync(j => j.Id == id && j.UserId == user.UserId && j.Kind == DataTransferKind.Export, cancellationToken);
+        if (job is { Status: DataTransferStatus.Running or DataTransferStatus.Queued })
+        {
+            (job.Status, job.Message, job.FinishedAt) = (DataTransferStatus.Cancelled, "Cancelled", clock.GetUtcNow());
+            try
+            {
+                await db.SaveChangesAsync(cancellationToken);
+                services.GetRequiredService<ExportCancellations>().Trip(id);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // it ended meanwhile; the answer shows how
+                db.ChangeTracker.Clear();
+            }
+        }
+
+        return await services.GetRequiredService<DataTransferJobs>().GetAsync(id, cancellationToken);
     }
 
     /// <summary>Writes the export in the background and mails it to the user and <see cref="MailExportRequest.Recipients"/>.</summary>

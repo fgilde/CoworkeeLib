@@ -1889,5 +1889,6 @@
   "Export failed": "Export se nezdařil",
   "You have too many exports running. Wait until one is ready.": "Máte spuštěno příliš mnoho exportů. Počkejte, až bude jeden hotový.",
   "The export query is not valid.": "Dotaz exportu není platný.",
-  "You may not export this list.": "Tento seznam nemůžete exportovat."
+  "You may not export this list.": "Tento seznam nemůžete exportovat.",
+  "The export was cancelled.": "Export byl zrušen."
 }

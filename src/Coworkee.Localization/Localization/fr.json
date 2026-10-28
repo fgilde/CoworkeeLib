@@ -1889,5 +1889,6 @@
   "Export failed": "Échec de l'export",
   "You have too many exports running. Wait until one is ready.": "Vous avez trop d'exports en cours. Attendez que l'un d'eux soit prêt.",
   "The export query is not valid.": "La requête de l'export n'est pas valide.",
-  "You may not export this list.": "Vous n'êtes pas autorisé à exporter cette liste."
+  "You may not export this list.": "Vous n'êtes pas autorisé à exporter cette liste.",
+  "The export was cancelled.": "L'export a été annulé."
 }
