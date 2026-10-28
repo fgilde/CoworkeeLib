@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Net;
+using System.Text.Json;
 using Coworkee.Application.Localization;
 using Coworkee.Core.Security;
 using Coworkee.Infrastructure.Persistence;
@@ -117,13 +118,21 @@ internal sealed class MailTemplateRenderer(CoworkeeDbContext db, ICurrentUser cu
         }
 
         var result = new ScriptObject();
-        foreach (var property in model.GetType().GetProperties())
+        foreach (var (name, value) in Members(model))
         {
-            result[StandardMemberRenamer.Default(property)] = Convert(property.GetValue(model), escape);
+            result[name] = Convert(value, escape);
         }
 
         return result;
     }
+
+    // dictionaries and JSON objects (models stored as JSON) are named like the properties of an object: OldValue is old_value
+    private static IEnumerable<(string Name, object? Value)> Members(object model) => model switch
+    {
+        JsonElement json => json.EnumerateObject().Select(p => (StandardMemberRenamer.Rename(p.Name), (object?)p.Value)),
+        IEnumerable<KeyValuePair<string, object?>> pairs => pairs.Select(p => (StandardMemberRenamer.Rename(p.Key), p.Value)),
+        _ => model.GetType().GetProperties().Select(p => (StandardMemberRenamer.Default(p), p.GetValue(model))),
+    };
 
     private static object? Convert(object? value, bool escape) => value switch
     {
@@ -131,7 +140,20 @@ internal sealed class MailTemplateRenderer(CoworkeeDbContext db, ICurrentUser cu
         string text => escape ? WebUtility.HtmlEncode(text) : text,
         Uri uri => escape ? WebUtility.HtmlEncode(uri.ToString()) : uri.ToString(),
         _ when value.GetType().IsPrimitive || value is decimal or DateTime or DateTimeOffset or Guid or Enum => value,
+        JsonElement json => Convert(json, escape),
+        IEnumerable<KeyValuePair<string, object?>> => ToScript(value, escape),
         IEnumerable items => new ScriptArray(items.Cast<object?>().Select(item => Convert(item, escape))),
         _ => ToScript(value, escape),
+    };
+
+    private static object? Convert(JsonElement json, bool escape) => json.ValueKind switch
+    {
+        JsonValueKind.Object => ToScript(json, escape),
+        JsonValueKind.Array => new ScriptArray(json.EnumerateArray().Select(item => Convert(item, escape))),
+        JsonValueKind.String => Convert(json.GetString(), escape),
+        JsonValueKind.Number => json.TryGetInt64(out var number) ? (object)number : json.GetDouble(),
+        JsonValueKind.True => true,
+        JsonValueKind.False => false,
+        _ => null,
     };
 }

@@ -162,3 +162,35 @@ The follower check costs one query per follower without an `Audience`: each foll
 `NotifyAsync` and `NotifyLocalizedAsync` are `PublishAsync` with `Recipients`; unregistered types reach them in the app only, as before.
 
 The inbox lists open notifications by default; *Done* moves one out of it (and marks it read), the tabs show open, done or all, the chips filter by category with their open counts, the search looks in title and body.
+
+### Mail templates per type and delay per tenant
+
+A type can mail with a template of its own and take the mail delay from the sender's tenant:
+
+```csharp
+services.AddNotificationTypes(n => n
+    .Add("shipment.eta", "Shipment", "Estimated arrival changed", NotificationScope.Followed, email: true, emailDelay: TimeSpan.FromMinutes(1),
+        mailTemplate: "Shipments.EtaChanged",
+        resolveEmailDelay: async (services, ct) =>
+            int.TryParse(await services.GetRequiredService<IFeatureChecker>().GetValueAsync("Shipments.MailDelayMinutes", ct), out var minutes)
+                ? TimeSpan.FromMinutes(minutes) : null));
+
+await notifier.PublishAsync(new NotificationMessage("shipment.eta", "Estimated arrival of {0} changed")
+{
+    Arguments = [shipment.Number],
+    EntityType = "Shipments", EntityId = shipment.Id,
+    MailModel = new { shipment = new { shipment.Number, shipment.PortName }, OldValue = before.ToString("yyyy-MM-dd"), NewValue = after.ToString("yyyy-MM-dd") },
+}, ct);
+```
+
+`mailTemplate` names a mail template of [mailing](mailing.md) (registered with an `IMailTemplateContributor`, or an own template), so administrators change it on the mail templates page per language and organisation. It renders `MailModel` (an object or a dictionary): its members are the template's top-level names, named like the members of any mail model (`OldValue` is `old_value`), next to `user` (`first_name`, `email`) and `notification` (`title`, `body` in the reader's language, absolute `link`); a member of the model named `user` or `notification` wins. The model is stored as JSON with the outbox message and the waiting mail, so a delayed mail renders the model of the latest notification of its entity; values arrive as text, numbers, booleans, lists and objects, so format dates before publishing. Delayed mails render in the organisation that sent them (its template versions, its mail log). A type without a template, or with a name no template has (a warning goes to the log), sends the generic `Notifications.Notification` as before; its model is passed too, so an organisation's version of the generic template can read it.
+
+Give the template's definition `NotificationMailModel.Sample(model)` as its sample: the preview and the test mail on the mail templates page then show the sample model with a sample `user` and `notification`.
+
+```csharp
+context.Add(new MailTemplateDefinition("Shipments.EtaChanged", "Estimated arrival changed",
+    NotificationMailModel.Sample(new { shipment = new { Number = "S-1", PortName = "Hamburg" }, OldValue = "2026-05-01", NewValue = "2026-05-03" }),
+    EmbeddedTemplates.Load(typeof(ShipmentMails).Assembly, "Shipments.EtaChanged")));
+```
+
+`resolveEmailDelay` runs when a notification is published, with the services of the sender's scope (its tenant, features and settings). Its result is the delay for this notification; `null` keeps `emailDelay`, `TimeSpan.Zero` mails at once. The waiting mail keeps the due time it got, a newer notification of the same entity sets a new one.

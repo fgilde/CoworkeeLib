@@ -192,6 +192,19 @@ internal sealed class HiddenShipments(ICurrentUser currentUser) : Coworkee.OData
         Task.FromResult(currentUser.UserId is { } me && OutOfScope.ContainsKey(me) ? query.Where(_ => false) : query.Where(s => s.Number != Shipment.Hidden));
 }
 
+/// <summary>The mail of <see cref="TestNotificationModule.Milestone"/>: the model's values next to <c>user</c> and <c>notification</c>.</summary>
+internal sealed class MilestoneMailTemplate : Coworkee.Mailing.IMailTemplateContributor
+{
+    public void Define(Coworkee.Mailing.MailTemplateContext context) =>
+        context.Add(new Coworkee.Mailing.MailTemplateDefinition(TestNotificationModule.MilestoneTemplate, "Milestone",
+            NotificationMailModel.Sample(new { shipment = new { Number = "S-9" }, milestone_name = "ETA", OldValue = "1 May", new_value = "2 May", comment = "On time" }),
+            new Dictionary<string, Coworkee.Mailing.MailTemplateContent>
+            {
+                ["en"] = new("{{ shipment.number }}: {{ milestone_name }}",
+                    "<p>{{ user.email }}|{{ old_value }}|{{ new_value }}|{{ comment }}|{{ notification.title }}|{{ notification.link }}</p>"),
+            }));
+}
+
 internal sealed class ShipmentModel : IModelContributor
 {
     public void Apply(ModelBuilder modelBuilder) => modelBuilder.Entity<Shipment>(shipment => shipment.ToTable("Shipments"));
@@ -208,6 +221,12 @@ public sealed class TestNotificationModule : CoworkeeModule
 {
     public const string Eta = "shipment.eta";
     public const string Status = "shipment.status";
+    public const string Milestone = "shipment.milestone";
+    public const string Missing = "shipment.missing";
+    public const string MilestoneTemplate = "Test.Milestone";
+
+    /// <summary>The mail delay of <see cref="Milestone"/> per tenant, as a tenant feature would hold it; a tenant without one has the type's default.</summary>
+    public static readonly ConcurrentDictionary<Guid, TimeSpan> MilestoneDelays = new();
 
     public override void ConfigureServices(ModuleServiceContext context)
     {
@@ -220,9 +239,14 @@ public sealed class TestNotificationModule : CoworkeeModule
         context.Services.AddSingleton<Coworkee.Application.Authorization.IPermissionDefinitionContributor, ShipmentPermissions>();
         context.Services.AddODataEntity<Shipment>("Shipments", Shipment.ViewShipments);
         context.Services.AddScoped<Coworkee.OData.IODataEntityFilter<Shipment>, HiddenShipments>();
+        context.Services.AddSingleton<Coworkee.Mailing.IMailTemplateContributor, MilestoneMailTemplate>();
         context.Services.AddNotificationTypes(n => n
             .Add(Eta, "Shipment", "Estimated arrival changed", NotificationScope.Followed, inApp: true, email: true, emailDelay: TimeSpan.FromMinutes(1))
             .Add(Status, "Shipment", "Status changed", NotificationScope.Off)
+            .Add(Milestone, "Shipment", "Milestone changed", NotificationScope.All, email: true, emailDelay: TimeSpan.FromMinutes(1), mailTemplate: MilestoneTemplate,
+                resolveEmailDelay: (services, _) => Task.FromResult(
+                    MilestoneDelays.TryGetValue(services.GetRequiredService<ICurrentUser>().TenantId ?? Guid.Empty, out var delay) ? delay : (TimeSpan?)null))
+            .Add(Missing, "Shipment", "Template gone", NotificationScope.All, inApp: false, email: true, mailTemplate: "Test.Gone")
             .Followable<Shipment>("Shipments", id => $"/shipments/{id}"));
     }
 }

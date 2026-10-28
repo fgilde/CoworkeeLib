@@ -52,6 +52,27 @@ public sealed class MailTests(MailApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Dictionary_and_json_models_are_named_and_escaped_like_objects()
+    {
+        var content = new MailTemplateContent("{{ shipment.number }} {{ old_value }}", "<p>{{ comment }}|{{ count }}|{{ for s in stops }}{{ s.port_name }},{{ end }}|{{ flag }}</p>");
+        var json = System.Text.Json.JsonSerializer.SerializeToElement(new
+        {
+            Shipment = new { Number = "S<1>" }, OldValue = "a&b", Comment = "<b>x</b>", Count = 3, Stops = new[] { new { PortName = "<Hamburg>" } }, Flag = true,
+        });
+        var dictionary = new Dictionary<string, object?>
+        {
+            ["Shipment"] = new { Number = "S<1>" }, ["old_value"] = "a&b", ["comment"] = "<b>x</b>", ["Count"] = 3, ["stops"] = json.GetProperty("Stops"), ["flag"] = true,
+        };
+
+        foreach (var model in new object[] { json, dictionary })
+        {
+            var mail = await app.AsActorAsync(_setup.AdminUserId, _setup.TenantId, sp => sp.GetRequiredService<IMailTemplateRenderer>().RenderContentAsync(content, model, "en", Ct));
+            mail.Subject.ShouldBe("S<1> a&b");
+            mail.HtmlBody.ShouldContain("<p>&lt;b&gt;x&lt;/b&gt;|3|&lt;Hamburg&gt;,|true</p>");
+        }
+    }
+
+    [Fact]
     public async Task Culture_falls_back_to_language_then_english()
     {
         (await RenderAsync("Test.Hello", new { user = new { first_name = "Ada" } }, "de-AT")).Subject.ShouldBe("Hallo Ada");

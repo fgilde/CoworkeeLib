@@ -162,3 +162,35 @@ Die Prüfung der Verfolger kostet ohne `Audience` eine Abfrage pro Verfolger: Je
 `NotifyAsync` und `NotifyLocalizedAsync` sind `PublishAsync` mit `Recipients`; nicht registrierte Typen erreichen sie wie bisher nur in der App.
 
 Der Eingang listet standardmäßig die offenen Benachrichtigungen; *Erledigt* nimmt eine heraus (und markiert sie als gelesen), die Reiter zeigen offene, erledigte oder alle, die Chips filtern nach Kategorie mit ihren offenen Zahlen, die Suche sucht in Titel und Inhalt.
+
+### Mail-Vorlagen pro Typ und Verzögerung pro Organisation
+
+Ein Typ kann mit einer eigenen Vorlage mailen und die Mail-Verzögerung von der Organisation des Absenders nehmen:
+
+```csharp
+services.AddNotificationTypes(n => n
+    .Add("shipment.eta", "Shipment", "Estimated arrival changed", NotificationScope.Followed, email: true, emailDelay: TimeSpan.FromMinutes(1),
+        mailTemplate: "Shipments.EtaChanged",
+        resolveEmailDelay: async (services, ct) =>
+            int.TryParse(await services.GetRequiredService<IFeatureChecker>().GetValueAsync("Shipments.MailDelayMinutes", ct), out var minutes)
+                ? TimeSpan.FromMinutes(minutes) : null));
+
+await notifier.PublishAsync(new NotificationMessage("shipment.eta", "Estimated arrival of {0} changed")
+{
+    Arguments = [shipment.Number],
+    EntityType = "Shipments", EntityId = shipment.Id,
+    MailModel = new { shipment = new { shipment.Number, shipment.PortName }, OldValue = before.ToString("yyyy-MM-dd"), NewValue = after.ToString("yyyy-MM-dd") },
+}, ct);
+```
+
+`mailTemplate` nennt eine Mail-Vorlage aus [Mailing](mailing.md) (registriert mit einem `IMailTemplateContributor` oder eine eigene Vorlage), Administratoren ändern sie also auf der Seite der Mail-Vorlagen pro Sprache und Organisation. Sie rendert `MailModel` (ein Objekt oder ein Dictionary): Seine Member sind die Namen der obersten Ebene der Vorlage, benannt wie die Member jedes Mail-Modells (`OldValue` wird `old_value`), neben `user` (`first_name`, `email`) und `notification` (`title`, `body` in der Sprache des Lesers, absoluter `link`); ein Member des Modells namens `user` oder `notification` gewinnt. Das Modell wird als JSON mit der Outbox-Nachricht und der wartenden Mail gespeichert, eine verzögerte Mail rendert also das Modell der neuesten Benachrichtigung ihrer Entität; Werte kommen als Text, Zahlen, Wahrheitswerte, Listen und Objekte an, formatieren Sie Datumswerte also vor dem Veröffentlichen. Verzögerte Mails werden in der Organisation gerendert, die sie gesendet hat (ihre Vorlagenversionen, ihr Mail-Protokoll). Ein Typ ohne Vorlage oder mit einem Namen, den keine Vorlage hat (eine Warnung geht ins Log), sendet wie bisher die allgemeine `Notifications.Notification`; das Modell wird auch ihr übergeben, so dass die Version einer Organisation von der allgemeinen Vorlage es lesen kann.
+
+Geben Sie der Definition der Vorlage `NotificationMailModel.Sample(model)` als Beispiel: Vorschau und Testmail auf der Seite der Mail-Vorlagen zeigen dann das Beispielmodell mit einem Beispiel-`user` und einer Beispiel-`notification`.
+
+```csharp
+context.Add(new MailTemplateDefinition("Shipments.EtaChanged", "Estimated arrival changed",
+    NotificationMailModel.Sample(new { shipment = new { Number = "S-1", PortName = "Hamburg" }, OldValue = "2026-05-01", NewValue = "2026-05-03" }),
+    EmbeddedTemplates.Load(typeof(ShipmentMails).Assembly, "Shipments.EtaChanged")));
+```
+
+`resolveEmailDelay` läuft beim Veröffentlichen einer Benachrichtigung, mit den Diensten des Scopes des Absenders (seine Organisation, Features und Einstellungen). Sein Ergebnis ist die Verzögerung für diese Benachrichtigung; `null` behält `emailDelay`, `TimeSpan.Zero` mailt sofort. Die wartende Mail behält die Fälligkeit, die sie bekam, eine neuere Benachrichtigung derselben Entität setzt eine neue.

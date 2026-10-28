@@ -19,6 +19,8 @@ await mails.QueueAsync(customer.Email, "Orders.Shipped", new OrderShippedMail(cu
 
 Vorlagen nutzen [Scriban](https://github.com/scriban/scriban). Das Beispielmodell füllt die Vorschau und die Schaltfläche *Send test* im Vorlageneditor. Ein `en`-Standardtext ist Pflicht.
 
+Ein Modell ist ein Objekt, ein Dictionary (`Dictionary<string, object?>`) oder ein JSON-Objekt (`JsonElement`), etwa eines, das mit einer wartenden Mail gespeichert ist; Namen werden in jedem Fall klein mit Unterstrichen geschrieben (`OrderNumber` wird `order_number`), und Textwerte werden im Inhalt HTML-maskiert. [Benachrichtigungstypen](realtime.md#mail-vorlagen-pro-typ-und-verzogerung-pro-organisation) rendern ihre Vorlage mit einem solchen Modell.
+
 ## Eigene Vorlagen
 
 Neben den Vorlagen der Module legen Administratoren unter **Administration > Communication > Mail templates** (/admin/mail/templates, Berechtigung Mail.Templates.Manage) eigene an. **Neue Vorlage** fragt nach einem Namen (Buchstaben, Ziffern, ., _ und -; er lässt sich später nicht ändern und darf keine Vorlage des Systems oder der Organisation wiederholen), einem Anzeigenamen und einer Beschreibung; danach öffnet sich der Editor. Die Kopieren-Schaltfläche neben einer Vorlage legt aus ihrem Text in allen Sprachen eine eigene Vorlage an, unter einem freien Namen wie Identity.Welcome.copy. Eigene Vorlagen tragen die Markierung *custom*; nur sie lassen sich löschen, dabei entfallen auch ihre Texte. Benutzer der Systemorganisation können **Global** ankreuzen: Die Vorlage steht dann jeder Organisation zur Verfügung.

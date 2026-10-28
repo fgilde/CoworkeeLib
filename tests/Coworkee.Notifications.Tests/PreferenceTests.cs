@@ -40,7 +40,8 @@ public sealed class PreferenceTests(NotificationApp app) : IAsyncLifetime
     {
         var preferences = (await Bob.GetFromJsonAsync<NotificationPreferenceDto[]>("/api/v1/notifications/preferences", Ct))!;
         preferences.Select(p => (p.Type, p.Category, p.Scope, p.InApp, p.Email)).ShouldBe(
-            [(TestNotificationModule.Eta, "Shipment", NotificationScope.Followed, true, true), (TestNotificationModule.Status, "Shipment", NotificationScope.Off, true, false)]);
+            [(TestNotificationModule.Eta, "Shipment", NotificationScope.Followed, true, true), (TestNotificationModule.Milestone, "Shipment", NotificationScope.All, true, true),
+             (TestNotificationModule.Status, "Shipment", NotificationScope.Off, true, false), (TestNotificationModule.Missing, "Shipment", NotificationScope.All, false, true)]);
         (await Bob.PutAsJsonAsync("/api/v1/notifications/preferences/unknown", new SaveNotificationPreferenceRequest(NotificationScope.All, true, false), Ct))
             .StatusCode.ShouldBe(HttpStatusCode.NotFound);
 

@@ -85,6 +85,13 @@ public sealed record NotificationMessage(string Type, string Title, string? Body
     /// entity's set (types registered with <c>Followable&lt;TEntity&gt;</c>); followers of types registered with <c>Followable(string)</c> then get nothing.
     /// </summary>
     public IReadOnlyCollection<Guid>? Audience { get; init; }
+
+    /// <summary>
+    /// The model of the type's <see cref="NotificationType.MailTemplate"/>: an object or a dictionary, stored as JSON with a waiting mail (a newer one of the
+    /// same entity replaces it). Its members are the template's top-level names (<c>OldValue</c> becomes <c>old_value</c>), next to <c>user</c> and
+    /// <c>notification</c>; JSON has no dates, so format them as text.
+    /// </summary>
+    public object? MailModel { get; init; }
 }
 
 public interface INotifier
@@ -130,6 +137,8 @@ internal sealed class Notifier(
         var push = Push.PushConfiguration.IsOn(options.Value.Push);
         List<string>? arguments = message.Arguments is null ? null : [.. message.Arguments];
         var mails = new List<NotificationMails.Item>();
+        var model = NotificationMailModel.Json(message.MailModel);
+        var delay = type is not null && recipients.Any(r => r.Preference.Email) ? await type.EmailDelayAsync(services, cancellationToken) : null;
 
         // a mail goes only to an active address; who has none keeps the notification for the digest
         var reachable = recipients.Any(r => r.Preference.Email) && services.GetService<IUserDirectory>() is { } users
@@ -166,13 +175,13 @@ internal sealed class Notifier(
                 continue;
             }
 
-            if (type?.EmailDelay is { } delay && delay > TimeSpan.Zero)
+            if (delay > TimeSpan.Zero)
             {
-                Wait(message, userId, now, now.Add(delay));
+                Wait(message, model, userId, now, now.Add(delay.Value));
             }
             else
             {
-                mails.Add(new NotificationMails.Item(userId, currentUser.TenantId, message.Title, message.Body, message.Arguments, message.Link));
+                mails.Add(new NotificationMails.Item(userId, currentUser.TenantId, message.Type, message.Title, message.Body, message.Arguments, message.Link, model));
             }
         }
 
@@ -254,16 +263,15 @@ internal sealed class Notifier(
         return seeing;
     }
 
-    /// <summary>Waits until <paramref name="due"/>; a mail still waiting for the same user, type and entity is replaced and waits anew.</summary>
     /// <summary>
     /// The mail waits until <paramref name="due"/>. It is written by <see cref="NotificationMailWaitingHandler"/> after the command commits (outbox), so a command
     /// that fails sends nothing, and the write can never fail the command.
     /// </summary>
-    private void Wait(NotificationMessage message, Guid userId, DateTimeOffset now, DateTimeOffset due)
+    private void Wait(NotificationMessage message, string? model, Guid userId, DateTimeOffset now, DateTimeOffset due)
     {
         // without an entity nothing debounces: a key of its own
         var key = message is { EntityType: { } entityType, EntityId: { } entityId } ? $"{entityType}:{entityId}" : Guid.NewGuid().ToString("N");
-        var waiting = new NotificationMailWaiting(userId, currentUser.TenantId, message.Type, key, message.Title, message.Body, message.Arguments, message.Link, due);
+        var waiting = new NotificationMailWaiting(userId, currentUser.TenantId, message.Type, key, message.Title, message.Body, message.Arguments, message.Link, due, model);
         db.Add(new Infrastructure.Outbox.OutboxMessage
         {
             Type = typeof(NotificationMailWaiting).AssemblyQualifiedName!,

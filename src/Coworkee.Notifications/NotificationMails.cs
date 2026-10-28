@@ -11,6 +11,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Scriban.Runtime;
+using System.Text.Json;
 
 namespace Coworkee.Notifications;
 
@@ -35,6 +37,9 @@ public sealed class PendingNotificationMail : Entity
 
     public string? Link { get; set; }
 
+    /// <summary>The <see cref="NotificationMessage.MailModel"/> as JSON.</summary>
+    public string? MailModel { get; set; }
+
     public DateTimeOffset DueAt { get; set; }
 
     /// <summary>New on every change: the mail job sends exactly the version it read.</summary>
@@ -43,7 +48,8 @@ public sealed class PendingNotificationMail : Entity
 
 /// <summary>A notification mail to wait, written after the command that sent it committed.</summary>
 public sealed record NotificationMailWaiting(
-    Guid UserId, Guid? TenantId, string Type, string Key, string Title, string? Body, IReadOnlyList<string>? Arguments, string? Link, DateTimeOffset DueAt) : IDomainEvent;
+    Guid UserId, Guid? TenantId, string Type, string Key, string Title, string? Body, IReadOnlyList<string>? Arguments, string? Link, DateTimeOffset DueAt,
+    string? MailModel = null) : IDomainEvent;
 
 /// <summary>Adds the waiting mail or replaces the one of the same user, type and entity (debounce); each try in a context of its own, the outbox retries.</summary>
 internal sealed partial class NotificationMailWaitingHandler(IServiceScopeFactory scopes, ILogger<NotificationMailWaitingHandler> logger) : IDomainEventHandler<NotificationMailWaiting>
@@ -69,7 +75,7 @@ internal sealed partial class NotificationMailWaitingHandler(IServiceScopeFactor
                 return;
             }
 
-            (mail.Title, mail.Body, mail.Link, mail.DueAt, mail.Version) = (waiting.Title, waiting.Body, waiting.Link, waiting.DueAt, Guid.NewGuid());
+            (mail.Title, mail.Body, mail.Link, mail.MailModel, mail.DueAt, mail.Version) = (waiting.Title, waiting.Body, waiting.Link, waiting.MailModel, waiting.DueAt, Guid.NewGuid());
             mail.Arguments = waiting.Arguments is null ? null : [.. waiting.Arguments];
             try
             {
@@ -88,13 +94,16 @@ internal sealed partial class NotificationMailWaitingHandler(IServiceScopeFactor
     private partial void LogRetry(Exception exception, string type, Guid userId);
 }
 
-/// <summary>Writes one notification as mail in the reader's language (template <see cref="Template"/>); the mail joins the current unit of work.</summary>
-internal sealed class NotificationMails(
-    CoworkeeDbContext db, IMailSender mails, IUserDirectory users, IEnumerable<ITextTranslator> translators, IOptions<NotificationOptions> options)
+/// <summary>
+/// Writes one notification as mail in the reader's language, with its type's template or <see cref="Template"/>; the mail joins the current unit of work.
+/// </summary>
+internal sealed partial class NotificationMails(
+    CoworkeeDbContext db, IMailSender mails, IUserDirectory users, IEnumerable<ITextTranslator> translators, IOptions<NotificationOptions> options,
+    NotificationTypeOptions types, IMailTemplateCatalog catalog, ILogger<NotificationMails> logger)
 {
     public const string Template = "Notifications.Notification";
 
-    public sealed record Item(Guid UserId, Guid? TenantId, string Title, string? Body, IReadOnlyList<string>? Arguments, string? Link);
+    public sealed record Item(Guid UserId, Guid? TenantId, string Type, string Title, string? Body, IReadOnlyList<string>? Arguments, string? Link, string? MailModel);
 
     public async Task QueueAsync(IReadOnlyCollection<Item> items, CancellationToken cancellationToken)
     {
@@ -115,17 +124,92 @@ internal sealed class NotificationMails(
             }
 
             var culture = cultures.GetValueOrDefault(item.UserId);
-            await mails.QueueAsync(email, Template, new
-            {
-                user = new { first_name = names.GetValueOrDefault(item.UserId) ?? email, email },
-                notification = new
+            await mails.QueueAsync(email, await TemplateAsync(item.Type, cancellationToken), NotificationMailModel.Build(
+                item.MailModel,
+                new { first_name = names.GetValueOrDefault(item.UserId) ?? email, email },
+                new
                 {
                     title = NotificationText.In(item.Title, item.Arguments, culture, translators),
                     body = NotificationText.In(item.Body, item.Arguments, culture, translators),
                     link = NotificationLinks.Absolute(item.Link, options.Value.PublicAppUrl),
-                },
-            }, culture?.Name, cancellationToken);
+                }), culture?.Name, cancellationToken);
         }
+    }
+
+    // a template that does not exist (any more) must not stop the mails: they go out generic
+    private async Task<string> TemplateAsync(string type, CancellationToken cancellationToken)
+    {
+        if (types.Find(type)?.MailTemplate is not { } template)
+        {
+            return Template;
+        }
+
+        if (await catalog.FindAsync(template, cancellationToken) is not null)
+        {
+            return template;
+        }
+
+        LogMissingTemplate(template, type);
+        return Template;
+    }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The mail template {Template} of the notification type {Type} does not exist; the generic notification mail goes out.")]
+    private partial void LogMissingTemplate(string template, string type);
+}
+
+/// <summary>The model of a notification mail: the members of <see cref="NotificationMessage.MailModel"/> next to <c>user</c> and <c>notification</c>.</summary>
+public static class NotificationMailModel
+{
+    private static readonly object SampleUser = new { first_name = "Ada", email = "ada@example.com" };
+
+    private static readonly object SampleNotification = new { title = "Document shared", body = "Grace shared a document with you.", link = "https://example.com/d/1" };
+
+    /// <summary>
+    /// The sample of a notification type's mail template (<see cref="MailTemplateDefinition.SampleModel"/>): <paramref name="model"/> with a sample
+    /// <c>user</c> and <c>notification</c>, so the preview and the test mail on the mail templates page show what a real mail shows.
+    /// </summary>
+    public static object Sample(object model)
+    {
+        var sample = new ScriptObject();
+        foreach (var property in model.GetType().GetProperties().Where(p => p.GetIndexParameters().Length == 0))
+        {
+            sample[StandardMemberRenamer.Default(property)] = property.GetValue(model);
+        }
+
+        sample.TryAdd("user", SampleUser);
+        sample.TryAdd("notification", SampleNotification);
+        return sample;
+    }
+
+    /// <summary>The model as JSON for the waiting mail; it must be an object (or a dictionary).</summary>
+    internal static string? Json(object? model)
+    {
+        if (model is null)
+        {
+            return null;
+        }
+
+        var json = JsonSerializer.SerializeToElement(model);
+        return json.ValueKind == JsonValueKind.Object
+            ? json.GetRawText()
+            : throw new ArgumentException("The mail model of a notification is an object or a dictionary.", nameof(model));
+    }
+
+    /// <summary>The model's members win over <c>user</c> and <c>notification</c>.</summary>
+    internal static Dictionary<string, object?> Build(string? json, object user, object notification)
+    {
+        var values = new Dictionary<string, object?>(StringComparer.Ordinal);
+        if (json is not null)
+        {
+            foreach (var (name, value) in JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json)!)
+            {
+                values[StandardMemberRenamer.Rename(name)] = value;
+            }
+        }
+
+        values.TryAdd("user", user);
+        values.TryAdd("notification", notification);
+        return values;
     }
 }
 
@@ -164,8 +248,13 @@ internal sealed class NotificationMailJob(CoworkeeDbContext db, NotificationMail
             }
         }
 
-        // ponytail: one mail per notification through the global mail settings, as the digest
-        await mails.QueueAsync([.. claimed.Select(m => new NotificationMails.Item(m.UserId, m.TenantId, m.Title, m.Body, m.Arguments, m.Link))], cancellationToken);
+        // ponytail: one mail per notification through the global mail settings, as the digest; templates and the mail log follow the mail's tenant
+        foreach (var tenant in claimed.GroupBy(m => m.TenantId))
+        {
+            using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, tenant.Key));
+            await mails.QueueAsync([.. tenant.Select(m => new NotificationMails.Item(m.UserId, m.TenantId, m.Type, m.Title, m.Body, m.Arguments, m.Link, m.MailModel))], cancellationToken);
+        }
+
         await db.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }

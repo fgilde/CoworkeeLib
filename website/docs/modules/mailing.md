@@ -19,6 +19,8 @@ await mails.QueueAsync(customer.Email, "Orders.Shipped", new OrderShippedMail(cu
 
 Templates use [Scriban](https://github.com/scriban/scriban). The sample model fills the preview and the *Send test* button of the template editor. An `en` default is required.
 
+A model is an object, a dictionary (`Dictionary<string, object?>`) or a JSON object (`JsonElement`), for example one stored with a waiting mail; names are made lower case with underscores in each case (`OrderNumber` is `order_number`), and text values are HTML-escaped in the body. [Notification types](realtime.md#mail-templates-per-type-and-delay-per-tenant) render their template with such a model.
+
 ## Own templates
 
 Besides the templates of the modules, administrators create their own under **Administration > Communication > Mail templates** (/admin/mail/templates, permission Mail.Templates.Manage). **New template** asks for a name (letters, digits, ., _ and -; it cannot change later and cannot repeat a template of the system or of the organisation), a display name and a description; the editor opens right after. The copy button next to a template creates a custom template from its text in all languages, under a free name like Identity.Welcome.copy. Own templates are marked *custom*; only they can be deleted, which also removes their texts. Users of the system organisation can tick **Global**: the template is then available to every organisation.
