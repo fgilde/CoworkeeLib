@@ -104,7 +104,7 @@ public sealed class ExportProgressTests : ClientTestBase
         Write(new DataExportProgress(DataExportProgress.Failed, 100, Message: "The export took too long."));
         await showing;
 
-        Snackbars.ShouldContain(s => s.Message == "The export failed: The export took too long." && s.Severity == Severity.Error);
+        _dialogs.WaitForAssertion(() => Snackbars.ShouldContain(s => s.Message == "The export failed: The export took too long." && s.Severity == Severity.Error));
     }
 
     [Theory]
@@ -116,7 +116,7 @@ public sealed class ExportProgressTests : ClientTestBase
 
         await ShowAsync();
 
-        Snackbars.ShouldContain(s => s.Message == message && s.Severity == Severity.Error);
+        _dialogs.WaitForAssertion(() => Snackbars.ShouldContain(s => s.Message == message && s.Severity == Severity.Error));
     }
 
     [Fact]
@@ -126,7 +126,7 @@ public sealed class ExportProgressTests : ClientTestBase
 
         await ShowAsync();
 
-        Snackbars.ShouldContain(s => s.Message == "The export took too long.");
+        _dialogs.WaitForAssertion(() => Snackbars.ShouldContain(s => s.Message == "The export took too long."));
     }
 
     private static async IAsyncEnumerable<DataExportProgress> Refused(int status)
