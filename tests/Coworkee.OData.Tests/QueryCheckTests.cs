@@ -265,10 +265,64 @@ public sealed class QueryCheckTests(ODataApp app) : IAsyncLifetime
         hooks.Single(f => f.Field == "Back").Options.Select(o => (o.Label, o.Count)).ShouldBe([("Plain", 1)]);
         hooks.Single(f => f.Field == "Front").Options.Select(o => o.Label.ToLowerInvariant()).ShouldBe(["plain", _secret.ToString()], ignoreOrder: true);
 
-        // a target the user may not read and one whose filter is no Where leave the group out
+        // a target the user may not read and one whose filter is no Where leave the group out, also through an owned type
         var viewer = app.As(await UserWithAsync(ODataApp.ViewGadgets), _setup.TenantId);
         (await FacetsAsync(viewer, "$top=0")).Facets.ShouldNotContain(f => f.Field == "Featured");
+        (await FacetsAsync(viewer, "$top=0", "Hooks")).Facets.ShouldNotContain(f => f.Field == "Back");
+        // a value type read through that target is null in a filter too (EF folded the constant test and failed)
+        (await viewer.GetFromJsonAsync<JsonElement>("/odata/Hooks?$filter=Main/Id ne null", Ct)).GetProperty("value").GetArrayLength().ShouldBe(0);
         (await FacetsAsync(Admin, "$top=0", "Trays")).Facets.ShouldNotContain(f => f.Field == "Locker");
+    }
+
+    [Fact]
+    public async Task A_range_through_a_filtered_target_spans_only_the_visible_targets()
+    {
+        // the featured bins are Plain (1), Secret (9, hidden) and Visible (2)
+        var depth = (await FacetsAsync(Admin, "$top=0")).Facets.Single(f => f.Field == "Depth");
+        (depth.Min, depth.Max).ShouldBe(("1", "2"));
+        depth.Options.Sum(o => o.Count).ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task Facets_need_every_member_their_value_and_label_read()
+    {
+        var viewer = app.As(await UserWithAsync(ODataApp.ViewGadgets, ODataApp.ViewBins), _setup.TenantId);
+
+        // the label reads Bin/Size, which needs SeeCategories
+        (await FacetsAsync(Admin, "$top=0", "Trays")).Facets.ShouldContain(f => f.Field == "BinId");
+        (await FacetsAsync(viewer, "$top=0", "Trays")).Facets.ShouldNotContain(f => f.Field == "BinId");
+
+        // the facet sits on Name but its value is MainId, which needs SeeCategories
+        (await FacetsAsync(Admin, "$top=0", "Hooks")).Facets.ShouldContain(f => f.Field == "Name");
+        (await FacetsAsync(viewer, "$top=0", "Hooks")).Facets.ShouldNotContain(f => f.Field == "Name");
+    }
+
+    [Fact]
+    public async Task Facet_groups_the_scope_did_not_check_are_left_out_without_failing()
+    {
+        var paths = FacetResponse.Paths(typeof(Shelf));
+        FacetResponse.Checked(new Nextended.Core.Facets.FacetGroup { Key = "featured", Field = "Featured", ValuePath = "it/Featured/Name" }, paths).ShouldBeTrue();
+        FacetResponse.Checked(new Nextended.Core.Facets.FacetGroup { Key = "x", Field = "Name", ValuePath = "Featured/Badge/Name" }, paths).ShouldBeFalse();
+        FacetResponse.Checked(new Nextended.Core.Facets.FacetGroup { Key = "y", Field = "FeaturedId", ValuePath = "FeaturedId", LabelPath = "Featured/Badge/Name" }, paths).ShouldBeFalse();
+
+        // the builder's query through a target nobody checked shows no rows there instead of failing the request
+        await using var services = app.App.Services.CreateAsyncScope();
+        var db = services.ServiceProvider.GetRequiredService<GadgetDbContext>();
+        var scope = ODataNavigationScope.For(services.ServiceProvider, typeof(Shelf));
+        var shelves = db.Set<Shelf>().IgnoreQueryFilters().Where(s => s.TenantId == _setup.TenantId);
+        var names = await ScopedQueryProvider.Wrap(shelves, scope).Select(s => s.Featured!.Name).ToListAsync(Ct);
+        names.Count.ShouldBe(3);
+        names.ShouldAllBe(n => n == null);
+        Should.Throw<InvalidOperationException>(() => scope.Apply(shelves.Select(s => s.Featured!.Name)));
+    }
+
+    [Fact]
+    public async Task A_row_filter_that_fails_behind_navigations_is_logged_once_per_type()
+    {
+        await GetAsync("/odata/Shelves?$filter=Pegs/any()");
+        await GetAsync("/odata/Shelves?$filter=Pegs/any()");
+
+        app.Logs.Warnings.Count(w => w.Contains("row filters of Peg", StringComparison.Ordinal)).ShouldBe(1);
     }
 
     [Fact]

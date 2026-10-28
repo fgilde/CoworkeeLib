@@ -24,6 +24,10 @@ public sealed class Shelf : AuditedEntity, IMultiTenant
 
     public List<Peg> Pegs { get; set; } = [];
 
+    // a range read through the filtered bins: smallest and largest come from the visible ones
+    [ProvideFacet(Label = "Featured size", ValuePath = "Featured.Size", ValueType = typeof(int), Type = FacetType.Range)]
+    public int Depth { get; set; }
+
     public Guid TenantId { get; set; }
 }
 
@@ -60,6 +64,8 @@ public sealed class Tray : AuditedEntity, IMultiTenant, Nextended.Core.Contracts
 
     public required string Name { get; set; }
 
+    // a label read through a protected member of the target (Bin.Size needs SeeCategories)
+    [ProvideFacet(Label = "Bin size", ValuePath = "BinId", LabelPath = "it.Bin.Size", ValueType = typeof(Guid))]
     public Guid? BinId { get; set; }
 
     // a key read through a filtered target: hidden targets count as no value
@@ -154,6 +160,8 @@ internal sealed class BinVolume : Coworkee.OData.Computed.IODataComputedProperty
 /// <summary>Facets through references read by key: a mapped readable foreign key, a shadow one, a protected one, and a registered key that is not EF's.</summary>
 public sealed class Hook : AuditedEntity, IMultiTenant
 {
+    // a value of the row other than the facet's property, and protected (MainId needs SeeCategories)
+    [ProvideFacet(Label = "Main id", ValuePath = "MainId", ValueType = typeof(Guid))]
     public required string Name { get; set; }
 
     [ProvideFacet(Label = "Spare", ValuePath = "it.Spare.Id")]

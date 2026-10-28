@@ -30,9 +30,10 @@ internal static class FacetResponse
             : await ODataEntityAccess.DeniedPropertiesAsync(services, typeof(T), cancellationToken);
 
         var scoped = await ScopedAsync(http, filtered, cancellationToken);
+        var prepared = Paths(typeof(T));
         foreach (var facet in facets.Where(f => !denied.Contains(f.Field)))
         {
-            if (await RefusedAsync(visible, facet.ValuePath, http, cancellationToken))
+            if (!Checked(facet, prepared) || await RefusedAsync(visible, facet, http, cancellationToken))
             {
                 continue;
             }
@@ -97,7 +98,7 @@ internal static class FacetResponse
         where T : class
     {
         var scope = ScopeOf<T>(http);
-        foreach (var path in Paths(typeof(T)))
+        foreach (var path in Paths(typeof(T)).Order(StringComparer.Ordinal))
         {
             await scope.PrepareAsync(rows.Select($"it.{path}").Expression, cancellationToken);
         }
@@ -105,46 +106,62 @@ internal static class FacetResponse
         return ScopedQueryProvider.Wrap(rows, scope);
     }
 
-    // the value and label paths of the facets of a type, as Dynamic LINQ reads them
-    private static IEnumerable<string> Paths(Type entityType) => entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-        .SelectMany(p => p.GetCustomAttributes<ProvideFacetAttribute>(inherit: true).SelectMany(f => new[] { f.ValuePath ?? p.Name, f.LabelPath }))
+    /// <summary>The value and label paths of the facets of a type as the facet builder reads them (its own attribute scan), in Dynamic LINQ form without "it.".</summary>
+    internal static HashSet<string> Paths(Type entityType) => entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .SelectMany(p => p.GetCustomAttributes<ProvideFacetAttribute>(inherit: true)
+            .SelectMany(f => new[] { string.IsNullOrWhiteSpace(f.ValuePath) ? p.Name : f.ValuePath, string.IsNullOrWhiteSpace(f.LabelPath) ? null : f.LabelPath }))
         .OfType<string>()
-        .Where(p => !string.IsNullOrWhiteSpace(p))
-        .Select(p => p.Replace('/', '.'))
-        .Select(p => p.StartsWith("it.", StringComparison.Ordinal) ? p[3..] : p)
-        .Distinct(StringComparer.Ordinal);
+        .Select(Normalize)
+        .ToHashSet(StringComparer.Ordinal);
 
     /// <summary>
-    /// Whether a facet reads its value through a navigation the user may not follow: a member denied to him, a target set he may not read, or a
-    /// target whose row filters do more than <c>Where</c> (they cannot apply inside this query). Such a group is left out. Targets with row filters
-    /// stay: the builder counted their visible rows only (<see cref="ScopedAsync{T}"/>).
+    /// Whether the scope checked the paths of a group before the builder ran (<see cref="Paths"/>). The builder's query shows no rows of a target nobody checked,
+    /// so a group it got elsewhere would count wrongly: it is left out instead of failing the request.
     /// </summary>
-    private static async Task<bool> RefusedAsync<T>(IQueryable<T> rows, string? valuePath, HttpContext http, CancellationToken cancellationToken)
+    internal static bool Checked(FacetGroup facet, IReadOnlySet<string> paths) =>
+        paths.Contains(Normalize(facet.ValuePath ?? facet.Field)) && (facet.LabelPath is not { } label || paths.Contains(Normalize(label)));
+
+    private static string Normalize(string path)
+    {
+        var dotted = path.Replace('/', '.');
+        return dotted.StartsWith("it.", StringComparison.Ordinal) ? dotted[3..] : dotted;
+    }
+
+    /// <summary>
+    /// Whether the user may not have a facet: its value or label path reads a member denied to him (also one of the row itself other than the facet's
+    /// property, or one behind a navigation), or a path the checks cannot parse (a label that is an expression); or its value goes through a navigation
+    /// into a set he may not read or whose row filters do more than <c>Where</c> (they cannot apply inside this query). Such a group is left out. Targets
+    /// with row filters stay: the builder counted their visible rows only (<see cref="ScopedAsync{T}"/>).
+    /// </summary>
+    private static async Task<bool> RefusedAsync<T>(IQueryable<T> rows, FacetGroup facet, HttpContext http, CancellationToken cancellationToken)
         where T : class
     {
-        var path = valuePath?.StartsWith("it/", StringComparison.Ordinal) == true ? valuePath[3..] : valuePath;
-        if (path is null || !path.Contains('/'))
-        {
-            return false;
-        }
-
         var denied = http.Items[ODataEntityAccess.DeniedItem] as Dictionary<string, IReadOnlySet<string>> ?? await ODataEntityAccess.DeniedByTypeAsync(http.RequestServices, cancellationToken);
-        try
+        foreach (var read in new[] { facet.ValuePath ?? facet.Field, facet.LabelPath }.OfType<string>())
         {
-            if (ODataQueryGuard.Denies(http.RequestServices, typeof(T), $"{path} ne null", denied))
+            try
+            {
+                if (ODataQueryGuard.Denies(http.RequestServices, typeof(T), $"{Normalize(read).Replace('.', '/')} ne null", denied))
+                {
+                    return true;
+                }
+            }
+            catch (Microsoft.OData.ODataException)
             {
                 return true;
             }
         }
-        catch (Microsoft.OData.ODataException)
+
+        var path = Normalize(facet.ValuePath ?? facet.Field);
+        if (!path.Contains('.'))
         {
-            return true;
+            return false;
         }
 
-        var read = rows.Select($"it.{path.Replace('/', '.')}");
+        var value = rows.Select($"it.{path}");
         var scope = ScopeOf<T>(http);
-        await scope.PrepareAsync(read.Expression, cancellationToken);
-        return scope.Refuses(read.Expression);
+        await scope.PrepareAsync(value.Expression, cancellationToken);
+        return scope.Refuses(value.Expression);
     }
 
     /// <summary>Refuses a facet whose value path starts with a collection navigation (<c>it.Lines.Id</c>): the facet builder cannot group by it.</summary>

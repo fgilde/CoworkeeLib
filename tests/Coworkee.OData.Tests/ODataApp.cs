@@ -17,6 +17,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 [assembly: AssemblyFixture(typeof(Coworkee.OData.Tests.ODataApp))]
 [assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly)]
@@ -35,6 +36,9 @@ public sealed class ODataApp : DatabaseFixture
 
     /// <summary>Takes the export mails instead of the Mailing module.</summary>
     public RecordingExportMailer Mails { get; } = new();
+
+    /// <summary>The warnings the app logged.</summary>
+    public RecordingLoggerProvider Logs { get; } = new();
 
     public override async ValueTask InitializeAsync()
     {
@@ -71,6 +75,7 @@ public sealed class ODataApp : DatabaseFixture
         builder.Configuration["Coworkee:Database:Provider"] = Provider;
         builder.AddCoworkee<GadgetModule>();
         builder.Services.AddTestAuthentication();
+        builder.Logging.AddProvider(Logs);
         builder.Services.AddSingleton(provider => new InlineBackgroundJobs.Root(provider));
         builder.Services.AddScoped<Coworkee.BackgroundJobs.IBackgroundJobs, InlineBackgroundJobs>();
         builder.Services.AddSingleton<Transfer.IExportMailer>(Mails);
@@ -137,6 +142,7 @@ internal sealed class GadgetModelContributor : IModelContributor
         modelBuilder.Entity<Badge>(badge => badge.ToTable("Badges"));
         modelBuilder.Entity<Tray>(tray => tray.ToTable("Trays"));
         modelBuilder.Entity<Peg>(peg => peg.ToTable("Pegs"));
+        modelBuilder.Entity<Sleeper>(sleeper => sleeper.ToTable("Sleepers"));
         modelBuilder.Entity<Coupon>(coupon => coupon.ToTable("Coupons").HasKey(c => c.Code));
         modelBuilder.Entity<Brand>(brand => brand.ToTable("Brands"));
         modelBuilder.Entity<Hook>(hook =>
@@ -207,6 +213,8 @@ public sealed class GadgetModule : CoworkeeModule
         context.Services.AddGlobalSearch<Tray>(s => s.Fields(t => t.Bin!.Name, t => t.Name).Page("/trays"));
         context.Services.AddODataEntity<Peg>("Pegs", ODataApp.ViewGadgets);
         context.Services.AddScoped<IODataEntityFilter<Peg>, PegsWhenAny>();
+        context.Services.AddODataEntity<Sleeper>("Sleepers", ODataApp.ViewGadgets);
+        context.Services.AddScoped<IODataEntityFilter<Sleeper>, SleeperGate>();
         context.Services.AddSingleton<Coworkee.OData.Computed.IODataComputedPropertySource, BinVolume>();
         context.Services.AddODataEntity<Coupon>("Coupons", ODataApp.ViewGadgets, o => o.Key(c => c.Code));
         context.Services.AddODataEntity<Hook>("Hooks", ODataApp.ViewGadgets, o => o.HideUnless(h => h.MainId, ODataApp.SeeCategories));

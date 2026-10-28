@@ -22,6 +22,9 @@ public sealed class ODataNavigationScope
     // queries VisibleAsync built or Apply rewrote: their row filters are applied already, the rewrite leaves them alone
     private static readonly ConditionalWeakTable<Expression, object> Roots = new();
 
+    // the types whose failing row filters were logged: once per process, not per request
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, byte> Warned = new();
+
     private static readonly MethodInfo HarvestMethod = typeof(ODataNavigationScope).GetMethod(nameof(HarvestAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
 
     private readonly IServiceProvider _services;
@@ -90,15 +93,18 @@ public sealed class ODataNavigationScope
     /// <summary>The query rewritten with the targets checked before (<see cref="PrepareAsync(Expression, CancellationToken)"/>).</summary>
     internal IQueryable Apply(IQueryable query) => _navigations.Count == 0 ? query : query.Provider.CreateQuery(Rewrite(query.Expression));
 
-    /// <summary>The expression rewritten with the targets checked before, also one that runs a query (<c>Count</c>, <c>Min</c>).</summary>
-    internal Expression Rewrite(Expression expression)
+    /// <summary>
+    /// The expression rewritten with the targets checked before, also one that runs a query (<c>Count</c>, <c>Min</c>). A target not checked fails, or with
+    /// <paramref name="hideUnchecked"/> shows no rows.
+    /// </summary>
+    internal Expression Rewrite(Expression expression, bool hideUnchecked = false)
     {
         if (_navigations.Count == 0)
         {
             return expression;
         }
 
-        var rewritten = new Rewriter(this).Visit(expression)!;
+        var rewritten = new Rewriter(this, hideUnchecked).Visit(expression)!;
         Root(rewritten);
         return rewritten;
     }
@@ -134,8 +140,12 @@ public sealed class ODataNavigationScope
             catch (Exception exception) when (exception is not OperationCanceledException)
             {
                 // fails closed for this type only, the rest of the query works
-                _services.GetService<ILoggerFactory>()?.CreateLogger<ODataNavigationScope>()
-                    .LogWarning(exception, "The row filters of {Type} failed outside its own set; behind navigations its rows stay hidden.", type.Name);
+                if (Warned.TryAdd(type, 0))
+                {
+                    _services.GetService<ILoggerFactory>()?.CreateLogger<ODataNavigationScope>()
+                        .LogWarning(exception, "The row filters of {Type} failed outside its own set; behind navigations its rows stay hidden.", type.Name);
+                }
+
                 harvest = (false, null);
             }
 
@@ -219,10 +229,10 @@ public sealed class ODataNavigationScope
         node.Expression is not null && _navigations.Contains((node.Member.DeclaringType, node.Member.Name)) ? ElementType(node.Type) ?? node.Type : null;
 
     // a target the scope has not checked (a query applied without ApplyAsync) fails instead of showing unfiltered rows
-    private LambdaExpression? Predicate(Type type) =>
-        !_types.ContainsKey(type) || _own.ContainsKey(type)
-            ? _predicates.GetValueOrDefault(type)
-            : throw new InvalidOperationException($"The navigation scope has not checked {type.Name}; apply it with ApplyAsync.");
+    private LambdaExpression? Predicate(Type type, bool hideUnchecked) =>
+        !_types.ContainsKey(type) || _own.ContainsKey(type) ? _predicates.GetValueOrDefault(type)
+        : hideUnchecked ? Nothing(type)
+        : throw new InvalidOperationException($"The navigation scope has not checked {type.Name}; apply it with ApplyAsync.");
 
     private static Expression Body(LambdaExpression predicate, Expression row) => ReplacingExpressionVisitor.Replace(predicate.Parameters[0], row, predicate.Body);
 
@@ -302,7 +312,7 @@ public sealed class ODataNavigationScope
         }
     }
 
-    private sealed class Rewriter(ODataNavigationScope scope) : ExpressionVisitor
+    private sealed class Rewriter(ODataNavigationScope scope, bool hideUnchecked) : ExpressionVisitor
     {
         private readonly HashSet<Expression> _nulled = [];
 
@@ -347,7 +357,7 @@ public sealed class ODataNavigationScope
             // a navigation is read from the plain parent and a hidden parent's test joins its own: (shown(x.A) && shown(x.A.B)) ? x.A.B : null
             var (test, source) = parent is ConditionalExpression conditional && _nulled.Contains(conditional) ? (conditional.Test, conditional.IfTrue) : (null, parent);
             var plain = node.Update(source);
-            var predicate = scope.Predicate(target);
+            var predicate = scope.Predicate(target, hideUnchecked);
             if (ElementType(node.Type) is { } element)
             {
                 // a collection under a hidden reference is empty: x.A.Items.Where(i => shown(x.A) && shown(i)); through the inverse navigation
@@ -409,7 +419,10 @@ public sealed class ODataNavigationScope
 
             // a value type keeps its type: (int)(shown ? (int?)x.Nav.Size : null) is NULL in SQL
             var nullable = typeof(Nullable<>).MakeGenericType(value.Type);
-            return Expression.Convert(Expression.Condition(shown, Expression.Convert(value, nullable), Expression.Constant(null, nullable)), value.Type);
+            var read = Expression.Convert(value, nullable);
+            // a target with no rows (no permission) has the test false: EF would fold the constant and then evaluate (int)(int?)null, so the test reads the row
+            var test = shown is ConstantExpression { Value: false } ? Expression.NotEqual(read, read) : shown;
+            return Expression.Convert(Expression.Condition(test, read, Expression.Constant(null, nullable)), value.Type);
         }
     }
 }

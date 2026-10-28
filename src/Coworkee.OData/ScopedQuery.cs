@@ -7,7 +7,7 @@ namespace Coworkee.OData;
 /// <summary>
 /// A query that goes through the navigation scope when it runs, with everything composed on it later: the facet builder adds its own
 /// <c>Where</c>/<c>GroupBy</c> over value and label paths, and those navigations show only the rows their target lists for the user.
-/// The targets must be checked before (<see cref="ODataNavigationScope.PrepareAsync(Expression, CancellationToken)"/>); an unchecked one fails.
+/// The targets must be checked before (<see cref="ODataNavigationScope.PrepareAsync(Expression, CancellationToken)"/>); an unchecked one shows no rows.
 /// </summary>
 internal sealed class ScopedQuery<T>(ScopedQueryProvider provider, Expression expression) : IOrderedQueryable<T>, IAsyncEnumerable<T>
 {
@@ -35,14 +35,17 @@ internal sealed class ScopedQueryProvider(IQueryProvider inner, ODataNavigationS
 
     public IQueryable<TElement> CreateQuery<TElement>(Expression expression) => new ScopedQuery<TElement>(this, expression);
 
-    public object? Execute(Expression expression) => inner.Execute(scope.Rewrite(expression));
+    public object? Execute(Expression expression) => inner.Execute(Rewrite(expression));
 
-    public TResult Execute<TResult>(Expression expression) => inner.Execute<TResult>(scope.Rewrite(expression));
+    public TResult Execute<TResult>(Expression expression) => inner.Execute<TResult>(Rewrite(expression));
 
     public TResult ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken = default) =>
-        ((IAsyncQueryProvider)inner).ExecuteAsync<TResult>(scope.Rewrite(expression), cancellationToken);
+        ((IAsyncQueryProvider)inner).ExecuteAsync<TResult>(Rewrite(expression), cancellationToken);
 
-    internal IQueryable<T> Run<T>(Expression expression) => inner.CreateQuery<T>(scope.Rewrite(expression));
+    internal IQueryable<T> Run<T>(Expression expression) => inner.CreateQuery<T>(Rewrite(expression));
+
+    // a target nobody checked shows no rows instead of failing the request; FacetResponse leaves out groups whose paths were not checked
+    private Expression Rewrite(Expression expression) => scope.Rewrite(expression, hideUnchecked: true);
 
     private static Type ElementOf(Type type) =>
         type.GetInterfaces().Append(type).First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>)).GenericTypeArguments[0];
