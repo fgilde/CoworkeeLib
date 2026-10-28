@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20261028000747_Initial")]
+    [Migration("20261028111205_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -1759,6 +1759,9 @@ namespace MyApp.Infrastructure.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
+                    b.Property<string>("MailModel")
+                        .HasColumnType("text");
+
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uuid");
 
@@ -3305,7 +3308,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20261028000747_Initial")]
+    [Migration("20261028111205_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -4975,6 +4978,9 @@ namespace MyApp.Infrastructure.Migrations
                     b.Property<string>("Link")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("MailModel")
+                        .HasColumnType("text");
 
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uuid");

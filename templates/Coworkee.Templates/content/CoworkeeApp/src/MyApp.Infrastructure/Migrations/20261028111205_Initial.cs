@@ -763,6 +763,7 @@ namespace MyApp.Infrastructure.Migrations
                     Body = table.Column<string>(type: "text", nullable: true),
                     Arguments = table.Column<List<string>>(type: "text[]", nullable: true),
                     Link = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    MailModel = table.Column<string>(type: "text", nullable: true),
                     DueAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     Version = table.Column<Guid>(type: "uuid", nullable: false)
                 },
@@ -3121,6 +3122,7 @@ namespace MyApp.Infrastructure.Migrations
                     Body = table.Column<string>(type: "text", nullable: true),
                     Arguments = table.Column<List<string>>(type: "text[]", nullable: true),
                     Link = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    MailModel = table.Column<string>(type: "text", nullable: true),
                     DueAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     Version = table.Column<Guid>(type: "uuid", nullable: false)
                 },
