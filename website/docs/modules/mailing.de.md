@@ -19,7 +19,7 @@ await mails.QueueAsync(customer.Email, "Orders.Shipped", new OrderShippedMail(cu
 
 Vorlagen nutzen [Scriban](https://github.com/scriban/scriban). Das Beispielmodell füllt die Vorschau und die Schaltfläche *Send test* im Vorlageneditor. Ein `en`-Standardtext ist Pflicht.
 
-Ein Modell ist ein Objekt, ein Dictionary (`Dictionary<string, object?>`) oder ein JSON-Objekt (`JsonElement`), etwa eines, das mit einer wartenden Mail gespeichert ist; Namen werden in jedem Fall klein mit Unterstrichen geschrieben (`OrderNumber` wird `order_number`), und Textwerte werden im Inhalt HTML-maskiert. [Benachrichtigungstypen](realtime.md#mail-vorlagen-pro-typ-und-verzogerung-pro-organisation) rendern ihre Vorlage mit einem solchen Modell.
+Ein Modell ist ein Objekt, ein Dictionary (`Dictionary<string, object?>`) oder ein JSON-Objekt (`JsonElement`), etwa eines, das mit einer wartenden Mail gespeichert ist; Namen werden in jedem Fall klein mit Unterstrichen geschrieben (`OrderNumber` wird `order_number`), und Textwerte werden im Inhalt HTML-maskiert. Das Layout verlinkt eine `unsubscribe_url` des Modells nur, wenn sie eine absolute http(s)-Adresse ist. [Benachrichtigungstypen](realtime.md#mail-vorlagen-pro-typ-und-verzogerung-pro-organisation) rendern ihre Vorlage mit einem solchen Modell.
 
 ## Eigene Vorlagen
 

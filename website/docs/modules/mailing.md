@@ -19,7 +19,7 @@ await mails.QueueAsync(customer.Email, "Orders.Shipped", new OrderShippedMail(cu
 
 Templates use [Scriban](https://github.com/scriban/scriban). The sample model fills the preview and the *Send test* button of the template editor. An `en` default is required.
 
-A model is an object, a dictionary (`Dictionary<string, object?>`) or a JSON object (`JsonElement`), for example one stored with a waiting mail; names are made lower case with underscores in each case (`OrderNumber` is `order_number`), and text values are HTML-escaped in the body. [Notification types](realtime.md#mail-templates-per-type-and-delay-per-tenant) render their template with such a model.
+A model is an object, a dictionary (`Dictionary<string, object?>`) or a JSON object (`JsonElement`), for example one stored with a waiting mail; names are made lower case with underscores in each case (`OrderNumber` is `order_number`), and text values are HTML-escaped in the body. The layout links an `unsubscribe_url` of the model only when it is an absolute http(s) address. [Notification types](realtime.md#mail-templates-per-type-and-delay-per-tenant) render their template with such a model.
 
 ## Own templates
 

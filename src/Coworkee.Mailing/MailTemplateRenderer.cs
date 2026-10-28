@@ -50,7 +50,8 @@ internal sealed class MailTemplateRenderer(CoworkeeDbContext db, ICurrentUser cu
         var subject = (await RenderAsync(content.Subject, plain)).Trim();
         var body = await RenderAsync(content.Body, ToScript(model, escape: true));
         var layoutModel = new ScriptObject { ["subject"] = WebUtility.HtmlEncode(subject), ["content"] = body };
-        if (plain.TryGetValue("unsubscribe_url", out var unsubscribe) && unsubscribe is string { Length: > 0 } link)
+        if (plain.TryGetValue("unsubscribe_url", out var unsubscribe) && unsubscribe is string { Length: > 0 } link
+            && Uri.TryCreate(link, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp))
         {
             layoutModel["unsubscribe_url"] = WebUtility.HtmlEncode(link);
         }

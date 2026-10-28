@@ -228,6 +228,9 @@ public sealed class TestNotificationModule : CoworkeeModule
     /// <summary>The mail delay of <see cref="Milestone"/> per tenant, as a tenant feature would hold it; a tenant without one has the type's default.</summary>
     public static readonly ConcurrentDictionary<Guid, TimeSpan> MilestoneDelays = new();
 
+    /// <summary>Tenants whose delay resolver throws.</summary>
+    public static readonly ConcurrentDictionary<Guid, bool> FailingDelays = new();
+
     public override void ConfigureServices(ModuleServiceContext context)
     {
         context.Services.AddCoworkeeDbContext<NotificationTestDbContext>((provider, options) =>
@@ -244,8 +247,13 @@ public sealed class TestNotificationModule : CoworkeeModule
             .Add(Eta, "Shipment", "Estimated arrival changed", NotificationScope.Followed, inApp: true, email: true, emailDelay: TimeSpan.FromMinutes(1))
             .Add(Status, "Shipment", "Status changed", NotificationScope.Off)
             .Add(Milestone, "Shipment", "Milestone changed", NotificationScope.All, email: true, emailDelay: TimeSpan.FromMinutes(1), mailTemplate: MilestoneTemplate,
-                resolveEmailDelay: (services, _) => Task.FromResult(
-                    MilestoneDelays.TryGetValue(services.GetRequiredService<ICurrentUser>().TenantId ?? Guid.Empty, out var delay) ? delay : (TimeSpan?)null))
+                resolveEmailDelay: (services, _) =>
+                {
+                    var tenant = services.GetRequiredService<ICurrentUser>().TenantId ?? Guid.Empty;
+                    return FailingDelays.ContainsKey(tenant)
+                        ? throw new InvalidOperationException("The feature store is down.")
+                        : Task.FromResult(MilestoneDelays.TryGetValue(tenant, out var delay) ? delay : (TimeSpan?)null);
+                })
             .Add(Missing, "Shipment", "Template gone", NotificationScope.All, inApp: false, email: true, mailTemplate: "Test.Gone")
             .Followable<Shipment>("Shipments", id => $"/shipments/{id}"));
     }

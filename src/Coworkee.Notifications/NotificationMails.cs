@@ -124,7 +124,7 @@ internal sealed partial class NotificationMails(
             }
 
             var culture = cultures.GetValueOrDefault(item.UserId);
-            await mails.QueueAsync(email, await TemplateAsync(item.Type, cancellationToken), NotificationMailModel.Build(
+            var model = NotificationMailModel.Build(
                 item.MailModel,
                 new { first_name = names.GetValueOrDefault(item.UserId) ?? email, email },
                 new
@@ -132,7 +132,37 @@ internal sealed partial class NotificationMails(
                     title = NotificationText.In(item.Title, item.Arguments, culture, translators),
                     body = NotificationText.In(item.Body, item.Arguments, culture, translators),
                     link = NotificationLinks.Absolute(item.Link, options.Value.PublicAppUrl),
-                }), culture?.Name, cancellationToken);
+                });
+            await QueueOneAsync(email, await TemplateAsync(item.Type, cancellationToken), model, culture?.Name, item, cancellationToken);
+        }
+    }
+
+    // a template that fails to render (an edited version, a model it cannot read) falls back to the generic mail, and when that fails too the mail is
+    // dropped: neither stops the other mails of the job's batch nor the sending command. The sender renders before it adds the mail, so nothing is left behind.
+    private async Task QueueOneAsync(string email, string template, object model, string? culture, Item item, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await mails.QueueAsync(email, template, model, culture, cancellationToken);
+            return;
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException && template != Template)
+        {
+            LogRenderFailed(exception, template, item.Type, item.UserId);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            LogDropped(exception, item.Type, item.UserId);
+            return;
+        }
+
+        try
+        {
+            await mails.QueueAsync(email, Template, model, culture, cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            LogDropped(exception, item.Type, item.UserId);
         }
     }
 
@@ -155,11 +185,24 @@ internal sealed partial class NotificationMails(
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "The mail template {Template} of the notification type {Type} does not exist; the generic notification mail goes out.")]
     private partial void LogMissingTemplate(string template, string type);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The mail template {Template} of the notification type {Type} failed for {UserId}; the generic notification mail goes out.")]
+    private partial void LogRenderFailed(Exception exception, string template, string type, Guid userId);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "The notification mail of {Type} for {UserId} could not be rendered and is dropped.")]
+    private partial void LogDropped(Exception exception, string type, Guid userId);
 }
 
 /// <summary>The model of a notification mail: the members of <see cref="NotificationMessage.MailModel"/> next to <c>user</c> and <c>notification</c>.</summary>
 public static class NotificationMailModel
 {
+    /// <summary>The largest model, as UTF-8 JSON.</summary>
+    public const int MaxBytes = 32 * 1024;
+
+    // names the library fills (user, notification, the layout's subject, content and unsubscribe_url) and Scriban's builtin objects; compared without case and underscores
+    private static readonly HashSet<string> Reserved = new(
+        new[] { "user", "notification", "subject", "content", "unsubscribe_url" }.Concat(new Scriban.Functions.BuiltinFunctions().Keys).Select(Normalize),
+        StringComparer.Ordinal);
     private static readonly object SampleUser = new { first_name = "Ada", email = "ada@example.com" };
 
     private static readonly object SampleNotification = new { title = "Document shared", body = "Grace shared a document with you.", link = "https://example.com/d/1" };
@@ -176,12 +219,12 @@ public static class NotificationMailModel
             sample[StandardMemberRenamer.Default(property)] = property.GetValue(model);
         }
 
-        sample.TryAdd("user", SampleUser);
-        sample.TryAdd("notification", SampleNotification);
+        sample["user"] = SampleUser;
+        sample["notification"] = SampleNotification;
         return sample;
     }
 
-    /// <summary>The model as JSON for the waiting mail; it must be an object (or a dictionary).</summary>
+    /// <summary>The model as JSON for the waiting mail: an object (or a dictionary) of at most <see cref="MaxBytes"/> without reserved top-level names.</summary>
     internal static string? Json(object? model)
     {
         if (model is null)
@@ -190,12 +233,23 @@ public static class NotificationMailModel
         }
 
         var json = JsonSerializer.SerializeToElement(model);
-        return json.ValueKind == JsonValueKind.Object
-            ? json.GetRawText()
-            : throw new ArgumentException("The mail model of a notification is an object or a dictionary.", nameof(model));
+        if (json.ValueKind != JsonValueKind.Object)
+        {
+            throw new ArgumentException("The mail model of a notification is an object or a dictionary.", nameof(model));
+        }
+
+        if (json.EnumerateObject().Select(p => p.Name).FirstOrDefault(IsReserved) is { } reserved)
+        {
+            throw new ArgumentException($"The mail model of a notification cannot have a member '{reserved}': the library fills it.", nameof(model));
+        }
+
+        var text = json.GetRawText();
+        return System.Text.Encoding.UTF8.GetByteCount(text) <= MaxBytes
+            ? text
+            : throw new ArgumentException($"The mail model of a notification is at most {MaxBytes / 1024} KB as JSON.", nameof(model));
     }
 
-    /// <summary>The model's members win over <c>user</c> and <c>notification</c>.</summary>
+    /// <summary>The model's members next to the trusted <c>user</c> and <c>notification</c>, which always win; reserved names of older rows are left out.</summary>
     internal static Dictionary<string, object?> Build(string? json, object user, object notification)
     {
         var values = new Dictionary<string, object?>(StringComparer.Ordinal);
@@ -203,14 +257,21 @@ public static class NotificationMailModel
         {
             foreach (var (name, value) in JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json)!)
             {
-                values[StandardMemberRenamer.Rename(name)] = value;
+                if (!IsReserved(name))
+                {
+                    values[StandardMemberRenamer.Rename(name)] = value;
+                }
             }
         }
 
-        values.TryAdd("user", user);
-        values.TryAdd("notification", notification);
+        values["user"] = user;
+        values["notification"] = notification;
         return values;
     }
+
+    private static bool IsReserved(string name) => Reserved.Contains(Normalize(name));
+
+    private static string Normalize(string name) => name.Replace("_", string.Empty, StringComparison.Ordinal).ToLowerInvariant();
 }
 
 /// <summary>Every minute: the waiting notification mails whose delay is over.</summary>
@@ -255,6 +316,8 @@ internal sealed class NotificationMailJob(CoworkeeDbContext db, NotificationMail
             await mails.QueueAsync([.. tenant.Select(m => new NotificationMails.Item(m.UserId, m.TenantId, m.Type, m.Title, m.Body, m.Arguments, m.Link, m.MailModel))], cancellationToken);
         }
 
+        // the MailQueued outbox rows of these mails get the tenant of this save, which is none: harmless today, because their handler only enqueues the send
+        // job by mail id, and that job reads the mail by id and sends through the global mail settings
         await db.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }

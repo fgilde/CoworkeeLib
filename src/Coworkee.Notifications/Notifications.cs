@@ -89,7 +89,7 @@ public sealed record NotificationMessage(string Type, string Title, string? Body
     /// <summary>
     /// The model of the type's <see cref="NotificationType.MailTemplate"/>: an object or a dictionary, stored as JSON with a waiting mail (a newer one of the
     /// same entity replaces it). Its members are the template's top-level names (<c>OldValue</c> becomes <c>old_value</c>), next to <c>user</c> and
-    /// <c>notification</c>; JSON has no dates, so format them as text.
+    /// <c>notification</c>, which it cannot set (nor layout variables or Scriban builtins); at most 32 KB as JSON. JSON has no dates, so format them as text.
     /// </summary>
     public object? MailModel { get; init; }
 }
@@ -113,8 +113,9 @@ public interface INotifier
     Task PublishAsync(NotificationMessage message, CancellationToken cancellationToken = default);
 }
 
-internal sealed class Notifier(
-    CoworkeeDbContext db, ICurrentUser currentUser, TimeProvider clock, Microsoft.Extensions.Options.IOptions<NotificationOptions> options, IServiceProvider services)
+internal sealed partial class Notifier(
+    CoworkeeDbContext db, ICurrentUser currentUser, TimeProvider clock, Microsoft.Extensions.Options.IOptions<NotificationOptions> options, IServiceProvider services,
+    ILogger<Notifier> logger)
     : INotifier
 {
     public Task NotifyAsync(IEnumerable<Guid> userIds, string type, string title, string? body = null, string? link = null, CancellationToken cancellationToken = default) =>
@@ -138,7 +139,7 @@ internal sealed class Notifier(
         List<string>? arguments = message.Arguments is null ? null : [.. message.Arguments];
         var mails = new List<NotificationMails.Item>();
         var model = NotificationMailModel.Json(message.MailModel);
-        var delay = type is not null && recipients.Any(r => r.Preference.Email) ? await type.EmailDelayAsync(services, cancellationToken) : null;
+        var delay = type is not null && recipients.Any(r => r.Preference.Email) ? await EmailDelayAsync(type, cancellationToken) : null;
 
         // a mail goes only to an active address; who has none keeps the notification for the digest
         var reachable = recipients.Any(r => r.Preference.Email) && services.GetService<IUserDirectory>() is { } users
@@ -187,6 +188,23 @@ internal sealed class Notifier(
 
         await services.GetRequiredService<NotificationMails>().QueueAsync(mails, cancellationToken);
     }
+
+    // a resolver that fails must not fail the command that publishes: the type's static delay holds
+    private async Task<TimeSpan?> EmailDelayAsync(NotificationType type, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await type.EmailDelayAsync(services, cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            LogDelayFailed(exception, type.Type);
+            return type.EmailDelay;
+        }
+    }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The mail delay of the notification type {Type} could not be resolved; its default applies.")]
+    private partial void LogDelayFailed(Exception exception, string type);
 
     /// <summary>Who gets it and how: addressed users unless their scope is Off, followers with All or Followed, the audience with All; never the actor unless addressed.</summary>
     private async Task<List<(Guid UserId, NotificationPreference Preference)>> RecipientsAsync(NotificationMessage message, NotificationType? type, CancellationToken cancellationToken)

@@ -51,6 +51,23 @@ public sealed class MailTests(MailApp app) : IAsyncLifetime
         (await RenderAsync("Notifications.Digest", definitions.Single(d => d.Name == "Notifications.Digest").SampleModel, culture)).Subject.ShouldContain("1");
     }
 
+    [Theory]
+    [InlineData("https://app.test/u/1", true)]
+    [InlineData("http://app.test/u/1", true)]
+    [InlineData("javascript:alert(1)", false)]
+    [InlineData("data:text/html,x", false)]
+    [InlineData("/u/1", false)]
+    public async Task The_layout_links_only_an_http_unsubscribe_url(string url, bool linked)
+    {
+        var content = new MailTemplateContent("Hi", "<p>Body</p>");
+
+        var mail = await app.AsActorAsync(_setup.AdminUserId, _setup.TenantId, sp =>
+            sp.GetRequiredService<IMailTemplateRenderer>().RenderContentAsync(content, new { unsubscribe_url = url }, "en", Ct));
+
+        mail.HtmlBody.Contains("Unsubscribe", StringComparison.Ordinal).ShouldBe(linked);
+        mail.HtmlBody.Contains(url, StringComparison.Ordinal).ShouldBe(linked);
+    }
+
     [Fact]
     public async Task Dictionary_and_json_models_are_named_and_escaped_like_objects()
     {
