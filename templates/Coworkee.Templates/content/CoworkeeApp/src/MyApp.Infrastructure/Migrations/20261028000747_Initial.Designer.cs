@@ -14,7 +14,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20261027202706_Initial")]
+    [Migration("20261028000747_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -681,6 +681,9 @@ namespace MyApp.Infrastructure.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsSystem")
                         .HasColumnType("boolean");
 
@@ -929,6 +932,9 @@ namespace MyApp.Infrastructure.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTimeOffset?>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -953,6 +959,10 @@ namespace MyApp.Infrastructure.Migrations
                     b.HasIndex("TenantId", "Code")
                         .IsUnique();
 
+                    b.HasIndex("TenantId", "IsDefault")
+                        .IsUnique()
+                        .HasFilter("\"IsDefault\" = TRUE");
+
                     b.HasIndex("TenantId", "ParentId", "Name")
                         .IsUnique();
 
@@ -968,6 +978,9 @@ namespace MyApp.Infrastructure.Migrations
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("IsOwner")
+                        .HasColumnType("boolean");
 
                     b.HasKey("GroupId", "UserId");
 
@@ -3292,7 +3305,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MyApp.Infrastructure.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20261027202706_Initial")]
+    [Migration("20261028000747_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -3885,6 +3898,9 @@ namespace MyApp.Infrastructure.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsSystem")
                         .HasColumnType("boolean");
 
@@ -4133,6 +4149,9 @@ namespace MyApp.Infrastructure.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTimeOffset?>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -4157,6 +4176,10 @@ namespace MyApp.Infrastructure.Migrations
                     b.HasIndex("TenantId", "Code")
                         .IsUnique();
 
+                    b.HasIndex("TenantId", "IsDefault")
+                        .IsUnique()
+                        .HasFilter("\"IsDefault\" = TRUE");
+
                     b.HasIndex("TenantId", "ParentId", "Name")
                         .IsUnique();
 
@@ -4172,6 +4195,9 @@ namespace MyApp.Infrastructure.Migrations
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("IsOwner")
+                        .HasColumnType("boolean");
 
                     b.HasKey("GroupId", "UserId");
 

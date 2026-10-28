@@ -464,6 +464,7 @@ namespace MyApp.Infrastructure.Migrations
                     TenantId = table.Column<Guid>(type: "uuid", nullable: false),
                     ParentId = table.Column<Guid>(type: "uuid", nullable: true),
                     Code = table.Column<string>(type: "character varying(95)", maxLength: 95, nullable: true),
+                    IsDefault = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
                     ModifiedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -860,6 +861,7 @@ namespace MyApp.Infrastructure.Migrations
                     Description = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     IsSystem = table.Column<bool>(type: "boolean", nullable: false),
                     SelectableForRegistration = table.Column<bool>(type: "boolean", nullable: false),
+                    IsDefault = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
                     ModifiedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -1401,7 +1403,8 @@ namespace MyApp.Infrastructure.Migrations
                 columns: table => new
                 {
                     GroupId = table.Column<Guid>(type: "uuid", nullable: false),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: false)
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsOwner = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -1774,6 +1777,14 @@ namespace MyApp.Infrastructure.Migrations
                 table: "Groups",
                 columns: new[] { "TenantId", "Code" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Groups_TenantId_IsDefault",
+                schema: "cw",
+                table: "Groups",
+                columns: new[] { "TenantId", "IsDefault" },
+                unique: true,
+                filter: "\"IsDefault\" = TRUE");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Groups_TenantId_ParentId_Name",
@@ -2811,6 +2822,7 @@ namespace MyApp.Infrastructure.Migrations
                     TenantId = table.Column<Guid>(type: "uuid", nullable: false),
                     ParentId = table.Column<Guid>(type: "uuid", nullable: true),
                     Code = table.Column<string>(type: "character varying(95)", maxLength: 95, nullable: true),
+                    IsDefault = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
                     ModifiedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -3207,6 +3219,7 @@ namespace MyApp.Infrastructure.Migrations
                     Description = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     IsSystem = table.Column<bool>(type: "boolean", nullable: false),
                     SelectableForRegistration = table.Column<bool>(type: "boolean", nullable: false),
+                    IsDefault = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
                     ModifiedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -3682,7 +3695,8 @@ namespace MyApp.Infrastructure.Migrations
                 columns: table => new
                 {
                     GroupId = table.Column<Guid>(type: "uuid", nullable: false),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: false)
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsOwner = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -4022,6 +4036,14 @@ namespace MyApp.Infrastructure.Migrations
                 table: "Groups",
                 columns: new[] { "TenantId", "Code" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Groups_TenantId_IsDefault",
+                schema: "cw",
+                table: "Groups",
+                columns: new[] { "TenantId", "IsDefault" },
+                unique: true,
+                filter: "\"IsDefault\" = TRUE");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Groups_TenantId_ParentId_Name",
