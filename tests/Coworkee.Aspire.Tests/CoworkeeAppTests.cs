@@ -223,6 +223,23 @@ public sealed class CoworkeeAppTests : IDisposable
         (await Environment(app.AuthServer!.Resource))["Coworkee__Cors__Origins__1"].ShouldBe("{two.bindings.http.url}");
     }
 
+    [Theory]
+    [InlineData("openid")]
+    [InlineData("Offline_Access")]
+    [InlineData("demo_api")]
+    [InlineData("Shop")]
+    public void Scope_aliases_must_not_be_standard_scopes_or_taken(string alias)
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var app = builder.AddCoworkeeApp("demo");
+        app.AddAuthServer<FakeProjects.Auth>();
+        app.AddApi<FakeProjects.Api>();
+        app.AddSpaClient("one", builder.AddContainer("one", "node").WithHttpEndpoint(port: 4201, name: "http"), apiScopeAliases: ["Shop"]);
+
+        Should.Throw<ArgumentException>(() => app.AddSpaClient("two", builder.AddContainer("two", "node").WithHttpEndpoint(port: 4202, name: "http"), apiScopeAliases: [alias]))
+            .Message.ShouldContain(alias);
+    }
+
     [Fact]
     public void A_spa_client_needs_the_api()
     {

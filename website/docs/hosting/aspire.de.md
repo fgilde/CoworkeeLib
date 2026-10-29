@@ -87,7 +87,7 @@ app.AddSpaClient("spa", spa, scopes: ["files"], apiScopeAliases: ["Shop"], allow
 | Client | `spa`, öffentlich (ohne Secret), Authorization Code mit PKCE plus Refresh-Tokens, implizite Zustimmung |
 | Redirect- und Abmelde-Adresse | genau die Adresse des Endpunkts (`endpointName`, Standard `http`), plus `redirectPath`, wenn angegeben; Startadresse im Launcher |
 | Scopes | der Scope der API `{name}_api`, die übergebenen `scopes` und die Aliase |
-| API-Scope-Aliase | jeder Alias ist ein weiterer Scope mit der Audience der API (`Coworkee:Auth:ApiScopes:Shop = shop_api`), für Apps, die einen Scope mit eigenem Namen anfordern |
+| API-Scope-Aliase | jeder Alias ist ein weiterer Scope mit der Audience der API (`Coworkee:Auth:ApiScopes:Shop = shop_api`), für Apps, die einen Scope mit eigenem Namen anfordern; ein Standard-Scope (`openid`, `profile`, `email`, `roles`, `offline_access`), der Scope der API oder ein schon vergebener Alias wirft |
 | Übernahme | `allowImpersonation: true` lässt [Anmelden als](../features/identity.md#als-anderer-benutzer-anmelden) die App erreichen |
 | CORS | der Origin kommt in `Coworkee:Cors:Origins` des Auth-Servers und jeder API, auch später hinzugefügter (siehe [CORS](../security/clients.md#aufrufe-von-anderen-origins-cors)) |
 
