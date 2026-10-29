@@ -77,6 +77,8 @@ internal sealed class TestTexts : ILocalizationResourceContributor
 {
     public void Define(LocalizationResourceContext context) =>
         context.Add("de", new Dictionary<string, string> { ["Brands"] = "Marken", ["Save"] = "Speichern" })
+            // imported texts keyed otherwise than by their English wording
+            .Add("en", new Dictionary<string, string> { ["Shop::Brands.Title"] = "Brand names" })
             .AddEmbeddedJson(typeof(TestTexts).Assembly);
 }
 

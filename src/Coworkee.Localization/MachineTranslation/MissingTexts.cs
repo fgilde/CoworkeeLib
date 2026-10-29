@@ -11,7 +11,7 @@ namespace Coworkee.Localization.MachineTranslation;
 
 /// <summary>
 /// Fills the texts a language lacks (module texts and keys clients reported) with machine translations. Texts are keyed by their English
-/// wording; with another source language (setting <see cref="LocalizationSettings.TranslationSource"/>) a text starts from that language's wording when it has one.
+/// wording, or start from their English text when the key is none; with another source language (setting <see cref="LocalizationSettings.TranslationSource"/>) a text starts from that language's wording when it has one.
 /// </summary>
 public sealed class MissingTexts(CoworkeeDbContext db, LocalizationResources resources, TextStore store, TextTranslator translator, ISettingProvider settings)
 {
@@ -31,11 +31,14 @@ public sealed class MissingTexts(CoworkeeDbContext db, LocalizationResources res
         var sourceTexts = source == English ? new Dictionary<string, string>() : await store.GetAsync(source, cancellationToken);
         var fromSource = missing.Where(sourceTexts.ContainsKey).ToList();
         var fromEnglish = missing.Except(fromSource).ToList();
+        // a key that is no English text (e.g. imported "{Resource}::{key}") starts from its English text when it has one
+        var english = await store.GetAsync(English, cancellationToken);
+        string EnglishOf(string key) => english.TryGetValue(key, out var text) && text.Length > 0 ? text : key;
 
         var translatedSource = await translator.TranslateAsync([.. fromSource.Select(k => sourceTexts[k]).Distinct()], source, culture, cancellationToken);
-        var translatedEnglish = await translator.TranslateAsync(fromEnglish, English, culture, cancellationToken);
+        var translatedEnglish = await translator.TranslateAsync([.. fromEnglish.Select(EnglishOf).Distinct()], English, culture, cancellationToken);
         var translated = fromSource.Where(k => translatedSource.ContainsKey(sourceTexts[k])).Select(k => (Key: k, Value: translatedSource[sourceTexts[k]]))
-            .Concat(translatedEnglish.Select(t => (t.Key, t.Value)))
+            .Concat(fromEnglish.Where(k => translatedEnglish.ContainsKey(EnglishOf(k))).Select(k => (Key: k, Value: translatedEnglish[EnglishOf(k)])))
             .ToList();
         foreach (var (key, value) in translated)
         {

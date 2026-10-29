@@ -154,7 +154,7 @@ Die Einstellungsgruppe *Übersetzung* (nur global, `Localization.*`):
 | `Localization.TranslationSource` | Die Sprache, von der aus übersetzt wird, Standard `en` |
 | `Localization.AutoTranslate` | Beim Einschalten einer Sprache und nach dem Start übersetzen (Standard `true`); aus, übersetzt nur der Knopf |
 
-Texte sind nach ihrem englischen Wortlaut geschlüsselt, Englisch ist also die natürliche Ausgangssprache. Mit `TranslationSource` auf `de` geht ein Text von seinem deutschen Wortlaut aus, wenn es einen gibt (mitgeliefert oder bearbeitet), sonst vom englischen; eine Sprache übersetzt nie aus sich selbst, `de-CH` geht also vom Englischen aus.
+Texte sind nach ihrem englischen Wortlaut geschlüsselt, Englisch ist also die natürliche Ausgangssprache. Mit `TranslationSource` auf `de` geht ein Text von seinem deutschen Wortlaut aus, wenn es einen gibt (mitgeliefert oder bearbeitet), sonst vom englischen; eine Sprache übersetzt nie aus sich selbst, `de-CH` geht also vom Englischen aus. Ein Schlüssel, der kein englischer Text ist (etwa importierte Texte mit Schlüsseln `{Resource}::{key}`), geht von seinem englischen Text aus (einer `en`-Ressource oder einer bearbeiteten englischen Übersetzung) statt vom Schlüssel; ohne einen wird wie bisher der Schlüssel übersetzt.
 
 ### Im AppHost
 
