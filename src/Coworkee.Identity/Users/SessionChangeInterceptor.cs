@@ -69,7 +69,9 @@ internal sealed class SessionChangeInterceptor(SessionSignal signal, TimeProvide
             if (entry.Property(u => u.SecurityStamp).OriginalValue != entry.Entity.SecurityStamp)
             {
                 _pending.RemoveAll(c => c.UserId == entry.Entity.Id);
-                _pending.Add(new SessionChange(entry.Entity.Id, Reason(entry)));
+                // KeptSession is "{sid} {previous stamp} {stamp}" (SessionStamp.Keep)
+                var kept = entry.Entity.KeptSession is { } session && entry.Property(u => u.KeptSession).IsModified ? session.Split(' ')[0] : null;
+                _pending.Add(new SessionChange(entry.Entity.Id, Reason(entry), kept));
             }
         }
     }

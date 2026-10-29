@@ -31,6 +31,14 @@ public sealed class ToolDiscoveryTests
     }
 
     [Fact]
+    public void A_request_needing_several_permissions_is_a_tool_that_needs_them_all()
+    {
+        var tool = new AiToolCatalog([], [new Coworkee.Identity.CoworkeeIdentityModule()]).Tools.Single(t => t.RequestType == typeof(Coworkee.Identity.Users.Lookups.GetUsersGrantedQuery));
+
+        tool.Permissions.ShouldBe([Contracts.Identity.IdentityPermissions.Users.View, Contracts.Identity.IdentityPermissions.Roles.View], ignoreOrder: true);
+    }
+
+    [Fact]
     public void The_global_search_is_a_read_only_tool_for_assistant_and_mcp()
     {
         var tool = new AiToolCatalog([], [new Coworkee.OData.CoworkeeODataModule()]).Tools.Single(t => t.Name == "global_search");

@@ -72,6 +72,12 @@ public sealed class CoworkeeAuthServerModule : CoworkeeModule, IWebModule
                     .SetUserInfoEndpointUris("/connect/userinfo");
                 server.AllowAuthorizationCodeFlow().AllowRefreshTokenFlow().AllowClientCredentialsFlow();
                 server.RequireProofKeyForCodeExchange();
+                // plain sends the verifier itself through the browser: S256 only
+                server.Configure(o =>
+                {
+                    o.CodeChallengeMethods.Clear();
+                    o.CodeChallengeMethods.Add(CodeChallengeMethods.Sha256);
+                });
                 server.RegisterScopes([Scopes.OpenId, Scopes.Profile, Scopes.Email, Scopes.Roles, Scopes.OfflineAccess, .. options.ApiScopes.Keys]);
                 server.SetAccessTokenLifetime(options.AccessTokenLifetime);
                 AddCertificates(server, options, context.Configuration);

@@ -38,10 +38,11 @@ public sealed class RealtimeApp : DatabaseFixture
     }
 
     /// <summary>An instance of the app on the shared database, behind <paramref name="redis"/> when given.</summary>
-    public async Task<WebApplication> StartInstanceAsync(string? redis)
+    public async Task<WebApplication> StartInstanceAsync(string? redis, Dictionary<string, string?>? settings = null)
     {
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
+        builder.Configuration.AddInMemoryCollection(settings ?? []);
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
         builder.Configuration["ConnectionStrings:redis"] = redis;
@@ -75,7 +76,8 @@ public sealed class RealtimeApp : DatabaseFixture
         return (await response.Content.ReadFromJsonAsync<SetupResultDto>())!;
     }
 
-    public async Task<Listener> ConnectAsync(Guid userId, Guid tenantId, DateTimeOffset? expires = null, WebApplication? on = null)
+    /// <param name="claims">further claims of the token, e.g. <c>sid=abc</c></param>
+    public async Task<Listener> ConnectAsync(Guid userId, Guid tenantId, DateTimeOffset? expires = null, WebApplication? on = null, params string[] claims)
     {
         var server = (on ?? App).GetTestServer();
         var connection = new HubConnectionBuilder()
@@ -83,7 +85,7 @@ public sealed class RealtimeApp : DatabaseFixture
             {
                 options.HttpMessageHandlerFactory = _ => server.CreateHandler();
                 options.Transports = HttpTransportType.LongPolling;
-                options.Headers["Authorization"] = $"{TestAuthHandler.SchemeName} {userId};{tenantId};{expires?.ToUnixTimeSeconds()}";
+                options.Headers["Authorization"] = string.Join(';', [$"{TestAuthHandler.SchemeName} {userId}", tenantId.ToString(), $"{expires?.ToUnixTimeSeconds()}", .. claims]);
             })
             .Build();
         var listener = new Listener(connection);

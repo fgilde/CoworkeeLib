@@ -32,6 +32,17 @@ Aus den Definitionen entsteht die Berechtigungsmatrix im Rolleneditor: gruppiert
 
 Berechtigungen auf Ressourcen vererben sich entlang einer Hierarchie, die du mit `IResourceHierarchy` beschreibst (etwa Ordner in Ordnern). `IResourceRestriction` entzieht bestimmten Rollen den Zugriff wieder, auch Inhabern einer globalen Berechtigung.
 
+### Wer eine Berechtigung hat
+
+`IPermissionChecker.UsersGrantedAsync(permission, groupId, page, ct)` listet die aktiven Benutzer der Organisation des Aufrufers, die eine Berechtigung haben, etwa für Empfängerlisten oder Auswahlfelder: über eine Rolle (eigene oder die einer ihrer Gruppen), eine eigene Berechtigung oder eine ihrer Gruppen, auch über eine Berechtigung, die sie einschließt; Administratoren immer. Das Ergebnis ist eine Seite von Benutzer-IDs, nach E-Mail sortiert, `PageRequest.Search` sucht in E-Mail und Namen. `groupId` schränkt auf Mitglieder dieser Gruppe und ihrer Untergruppen ein. Wie bei jeder Prüfung gibt eine Gruppe nur ihren eigenen Mitgliedern Rechte, nicht denen ihrer Untergruppen. Alle Rollen zählen, egal welche Rolle ein Benutzer als aktive gewählt hat; berechnete Berechtigungen und Berechtigungen auf einzelnen Ressourcen nicht. Über HTTP mit `Identity.Users.View` und `Identity.Roles.View` (die Liste verrät so viel wie die Rollenseite):
+
+```http
+GET /api/v1/identity/users/granted?permission=Orders.Approve&groupId={id}&page=1&pageSize=25&search=ann
+→ { items: [UserDto], totalCount, page, pageSize }
+```
+
+Eine unbekannte Berechtigung antwortet `400`, eine unbekannte Gruppe `404`. Eigene `IPermissionChecker`-Implementierungen liefern eine leere Seite, solange sie die Methode nicht implementieren.
+
 ## Berechnete Berechtigungen
 
 Manche Rechte folgen aus Daten, nicht aus einer Rolle: „führt mindestens eine Person“, „besitzt ein Projekt“. Eine berechnete Berechtigung vergibt eine definierte Berechtigung, sobald ihre Prüfung true liefert:

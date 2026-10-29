@@ -32,6 +32,17 @@ The definitions build the permission matrix in the role editor: grouped, searcha
 
 Resource grants inherit along a hierarchy you describe with `IResourceHierarchy` (folders in folders, for example). `IResourceRestriction` takes access away again for certain roles, even from holders of a global grant.
 
+### Who holds a permission
+
+`IPermissionChecker.UsersGrantedAsync(permission, groupId, page, ct)` lists the active users of the caller's organisation who hold a permission, for recipient lists or pickers: through a role (their own or one of their groups), a grant of their own or a grant of one of their groups, also through a permission that implies it; administrators always. The result is a page of user ids ordered by email, `PageRequest.Search` looks in email and names. `groupId` narrows to members of that group and its sub-groups. As in every check, a group grants only to its own members, not to those of its sub-groups. All roles count, whatever role a user picked as active; computed permissions and grants on single resources do not. Over HTTP with `Identity.Users.View` and `Identity.Roles.View` (the list tells as much as the roles page):
+
+```http
+GET /api/v1/identity/users/granted?permission=Orders.Approve&groupId={id}&page=1&pageSize=25&search=ann
+→ { items: [UserDto], totalCount, page, pageSize }
+```
+
+An unknown permission answers `400`, an unknown group `404`. Own `IPermissionChecker` implementations return an empty page unless they implement it.
+
 ## Computed permissions
 
 Some rights follow from data, not from a role: "leads at least one person", "owns a project". A computed permission grants a defined permission whenever its check answers true:

@@ -9,7 +9,7 @@ Der Auth-Server ist ein vollständiger OpenID-Connect-Provider. Neben den Client
 | Feld | Bedeutung |
 |---|---|
 | Client-ID | die `client_id`, die der Client sendet |
-| Typ | `public` (Browser- und Mobile-Apps, nur PKCE) oder `confidential` (Server mit Geheimnis) |
+| Typ | `public` (Browser- und Mobile-Apps, nur PKCE, `S256`) oder `confidential` (Server mit Geheimnis) |
 | Zustimmung | `implicit` meldet direkt an, `explicit` fragt den Benutzer einmal je Scope-Auswahl |
 | Weiterleitungsadressen | wohin Codes gehen dürfen; ihre Origins kommen auch in die `form-action` der Content Security Policy |
 | Adressen nach der Abmeldung | erlaubte Werte für `post_logout_redirect_uri` |
@@ -96,9 +96,25 @@ Administratoren können ihre eigene Sitzung so nicht beenden, und nur Administra
 
 ### Das eigene Passwort ändern
 
-Ein neues Passwort ändert den Stamp ebenfalls, eine Passwortänderung beendet also die anderen Sitzungen: Ihre Tokens und Refresh-Tokens werden abgelehnt, ihre Realtime-Verbindungen schließen, ihre Anmeldung am Auth-Server zählt nicht mehr. Die Sitzung, in der das Passwort geändert wurde, läuft weiter: Jede Anmeldung am Auth-Server bekommt eine Sitzungs-ID, die in ihre Tokens geht (`sid`), und der Benutzerdatensatz merkt sich diese ID mit dem Stamp davor (`KeptSession`). Ihre Tokens bleiben bis zur nächsten Erneuerung gültig, die sie für den neuen Stamp ausstellt; jede spätere Stamp-Änderung hebt die Ausnahme auf.
+Ein neues Passwort ändert den Stamp ebenfalls, eine Passwortänderung beendet also die anderen Sitzungen: Ihre Tokens und Refresh-Tokens werden abgelehnt, ihre Realtime-Verbindungen schließen, ihre Anmeldung am Auth-Server zählt nicht mehr. Die Sitzung, in der das Passwort geändert wurde, läuft weiter: Jede Anmeldung am Auth-Server bekommt eine Sitzungs-ID, die in ihre Tokens geht (`sid`), und der Benutzerdatensatz merkt sich diese ID mit dem Stamp davor (`KeptSession`). Ihre Tokens bleiben bis zur nächsten Erneuerung gültig, die sie für den neuen Stamp ausstellt; jede spätere Stamp-Änderung hebt die Ausnahme auf. `SessionRevoked` nennt diese Sitzung (`SessionRevokedPayload.KeptSessionId`, die `sid`): `SessionGuard` ignoriert die Nachricht, wenn es die eigene Sitzung ist, und eine Single-Page-App ignoriert ein `SessionRevoked` mit der `sid` ihres eigenen Access Tokens genauso.
+
+Apps ohne die Kontoseiten ändern es über die API, mit denselben Regeln: `PUT /api/v1/identity/me/password` mit `{ currentPassword, newPassword }` antwortet `204`. Ein falsches aktuelles Passwort antwortet `400` (Feld `CurrentPassword`) und zählt zur Sperre, Passwortregeln und Historie antworten `400` (Feld `NewPassword`), ein Konto ohne Passwort `409` (`account.no_password`). Abgelehnt wird es, während jemand als anderer Benutzer angemeldet ist (`auth.impersonating`), und mit einem API-Schlüssel (`account.own_sign_in_required`); es ist begrenzt wie die Anmeldung (Rate-Limit-Policy `auth`). Die aufrufende Sitzung behält ihre Tokens über die `sid` ihres Access Tokens; ein Token ohne sie endet mit den anderen. Das Anmeldecookie des Auth-Servers in diesem Browser zählt nicht mehr, die nächste Anmeldung dort fragt nach dem neuen Passwort.
 
 Andere Module klinken sich mit `IUserSessionListener` ein (aufgerufen, nachdem ein Administrator die Sitzungen eines Benutzers beendet hat).
+
+## Aufrufe von anderen Origins (CORS)
+
+Browser-Apps auf einem anderen Origin (die [Single-Page-Apps](../hosting/aspire.md#single-page-apps) des App-Hosts) rufen den Auth-Server (Discovery, Schlüssel, Token) und die API direkt auf. `UseCoworkee` setzt auf beiden eine CORS-Policy, die genau die Origins aus `Coworkee:Cors:Origins` zulässt, bei leerer Liste keinen:
+
+```json
+"Coworkee": { "Cors": { "Origins": [ "https://spa.example.com" ] } }
+```
+
+- Ein Eintrag ist Schema, Host und Port; ein Pfad wird ignoriert, `*` oder etwas, das keine http(s)-Adresse ist, verhindert den Start.
+- Jede Methode und jeder Header, `Content-Disposition` lesbar, Preflights zehn Minuten gecacht. Keine Credentials: Die App schickt ihr Token im `Authorization`-Header, nie ein Cookie.
+- Endpunkte, die ein Browser mit Credentials aufrufen muss, schalten das mit `.RequireCors(CoworkeeCors.WithCredentials)` ein: dieselben Origins plus `Access-Control-Allow-Credentials`. Der Realtime-Hub tut das, weil der Browser-Client von SignalR mit Credentials verhandelt.
+- Andere Origins bekommen keine CORS-Header, der Browser verwirft also die Antwort; Aufrufe vom selben Origin und von Servern sind nicht betroffen.
+- Der Web-Host (BFF) entfernt jeden `Access-Control-*`-Header aus seinen Antworten, auch aus denen, die er von der API weiterleitet: Dort ist das Sitzungscookie das Credential, kein anderer Origin darf also lesen, was er antwortet.
 
 ## Passwortregeln und Sperre
 

@@ -24,5 +24,8 @@ internal static class AccountEndpoints
         api.MapPost("/me/email", (ChangeEmailRequest body, IDispatcher d, CancellationToken ct) =>
                 d.SendAsync(new ChangeMyEmail(body.NewEmail, body.CurrentPassword), ct).ToHttpResult())
             .RequireCoworkeeRateLimit(CoworkeeRateLimitOptions.Auth);
+        api.MapPut("/me/password", (ChangePasswordRequest body, IDispatcher d, CancellationToken ct) =>
+                d.SendAsync(new Password.ChangeMyPassword(body.CurrentPassword, body.NewPassword), ct).ToHttpResult())
+            .RequireCoworkeeRateLimit(CoworkeeRateLimitOptions.Auth);
     }
 }

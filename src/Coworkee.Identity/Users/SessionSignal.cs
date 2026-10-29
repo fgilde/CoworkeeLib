@@ -8,8 +8,11 @@ using StackExchange.Redis;
 
 namespace Coworkee.Identity.Users;
 
-/// <summary>A user whose security stamp changed; <paramref name="Reason"/> is "locked", "password-changed" or "signed-out".</summary>
-public sealed record SessionChange(Guid UserId, string Reason);
+/// <summary>
+/// A user whose security stamp changed; <paramref name="Reason"/> is "locked", "password-changed" or "signed-out", <paramref name="KeptSessionId"/> the session
+/// that changed its own password and goes on.
+/// </summary>
+public sealed record SessionChange(Guid UserId, string Reason, string? KeptSessionId = null);
 
 /// <summary>
 /// Tells every instance that security stamps changed: each drops the cached stamps and ends the realtime connections of the sessions
@@ -78,7 +81,7 @@ public sealed partial class SessionSignal(SessionStamps stamps, IServiceProvider
             await stamps.ForgetAsync(change.UserId, cancellationToken);
             if (connections is not null)
             {
-                await connections.EndAsync(change.UserId, principal => KeepsAsync(change.UserId, principal, cancellationToken), change.Reason, cancellationToken);
+                await connections.EndAsync(change.UserId, principal => KeepsAsync(change.UserId, principal, cancellationToken), change.Reason, cancellationToken, change.KeptSessionId);
             }
         }
     }

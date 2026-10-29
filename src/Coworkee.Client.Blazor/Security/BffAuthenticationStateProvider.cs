@@ -61,6 +61,12 @@ public sealed class BffAuthenticationStateProvider : AuthenticationStateProvider
                 claims.Add(new Claim(ImpersonationClaims.ImpersonatorName, user.ImpersonatorName ?? string.Empty));
             }
 
+            // the session of the sign-in, for its realtime topic
+            if (user.SessionId is { Length: > 0 } sid)
+            {
+                claims.Add(new Claim("sid", sid));
+            }
+
             if (user.SystemTenant is { } system)
             {
                 claims.Add(new Claim(SystemTenant.ClaimType, system ? "true" : "false"));

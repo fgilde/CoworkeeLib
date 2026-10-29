@@ -160,6 +160,98 @@ public sealed class CoworkeeAppTests : IDisposable
     }
 
     [Fact]
+    public async Task A_spa_client_is_a_public_client_at_its_own_address_with_scope_aliases_and_its_origin_in_the_cors_policies()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var app = builder.AddCoworkeeApp("demo", o => o.DisplayName = "Demo");
+        var auth = app.AddAuthServer<FakeProjects.Auth>();
+        var api = app.AddApi<FakeProjects.Api>();
+        app.AddWeb<FakeProjects.Web>();
+        var spa = builder.AddContainer("realtime", "node").WithHttpEndpoint(port: 4200, name: "http");
+
+        app.AddSpaClient("realtime", spa, scopes: ["files"], apiScopeAliases: ["Shop"], allowImpersonation: true).ShouldBe(spa);
+
+        var settings = await Environment(auth.Resource);
+        settings["Coworkee__Auth__Clients__1__ClientId"].ShouldBe("realtime");
+        settings["Coworkee__Auth__Clients__1__DisplayName"].ShouldBe("Demo (realtime)");
+        settings.ShouldNotContainKey("Coworkee__Auth__Clients__1__ClientSecret");
+        settings["Coworkee__Auth__Clients__1__RedirectUris__0"].ShouldBe("{realtime.bindings.http.url}");
+        settings["Coworkee__Auth__Clients__1__PostLogoutRedirectUris__0"].ShouldBe("{realtime.bindings.http.url}");
+        settings["Coworkee__Auth__Clients__1__ClientUri"].ShouldBe("{realtime.bindings.http.url}");
+        settings["Coworkee__Auth__Clients__1__AllowImpersonation"].ShouldBe("true");
+        settings["Coworkee__Auth__Clients__1__Scopes__0"].ShouldBe("demo_api");
+        settings["Coworkee__Auth__Clients__1__Scopes__1"].ShouldBe("files");
+        settings["Coworkee__Auth__Clients__1__Scopes__2"].ShouldBe("Shop");
+        settings["Coworkee__Auth__ApiScopes__Shop"].ShouldBe("demo_api");
+        settings["Coworkee__Cors__Origins__0"].ShouldBe("{realtime.bindings.http.url}");
+        (await Environment(api.Resource))["Coworkee__Cors__Origins__0"].ShouldBe("{realtime.bindings.http.url}");
+    }
+
+    [Fact]
+    public async Task A_deployed_spa_client_takes_its_address_from_a_parameter()
+    {
+        var builder = DistributedApplication.CreateBuilder(["--operation", "publish"]);
+        var app = builder.AddCoworkeeApp("demo");
+        var auth = app.AddAuthServer<FakeProjects.Auth>();
+        var api = app.AddApi<FakeProjects.Api>();
+        var spa = builder.AddContainer("realtime", "node").WithHttpEndpoint(port: 4200, name: "http");
+
+        app.AddSpaClient("realtime", spa, redirectPath: "/callback");
+
+        var settings = await Environment(auth.Resource);
+        settings["Coworkee__Auth__Clients__0__RedirectUris__0"].ShouldBe("{demo-realtime-url.value}/callback");
+        settings["Coworkee__Cors__Origins__0"].ShouldBe("{demo-realtime-url.value}");
+        settings.ShouldNotContainKey("Coworkee__Auth__Clients__0__AllowImpersonation");
+        (await Environment(api.Resource))["Coworkee__Cors__Origins__0"].ShouldBe("{demo-realtime-url.value}");
+    }
+
+    [Fact]
+    public async Task Apis_added_after_a_spa_client_allow_its_origin_too()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var app = builder.AddCoworkeeApp("demo");
+        app.AddAuthServer<FakeProjects.Auth>();
+        app.AddApi<FakeProjects.Api>();
+        app.AddSpaClient("one", builder.AddContainer("one", "node").WithHttpEndpoint(port: 4201, name: "http"));
+
+        var later = app.AddApi<FakeProjects.Api>("reports");
+        app.AddSpaClient("two", builder.AddContainer("two", "node").WithHttpEndpoint(port: 4202, name: "http"));
+
+        var settings = await Environment(later.Resource);
+        settings["Coworkee__Cors__Origins__0"].ShouldBe("{one.bindings.http.url}");
+        settings["Coworkee__Cors__Origins__1"].ShouldBe("{two.bindings.http.url}");
+        (await Environment(app.AuthServer!.Resource))["Coworkee__Cors__Origins__1"].ShouldBe("{two.bindings.http.url}");
+    }
+
+    [Theory]
+    [InlineData("openid")]
+    [InlineData("Offline_Access")]
+    [InlineData("demo_api")]
+    [InlineData("Shop")]
+    public void Scope_aliases_must_not_be_standard_scopes_or_taken(string alias)
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var app = builder.AddCoworkeeApp("demo");
+        app.AddAuthServer<FakeProjects.Auth>();
+        app.AddApi<FakeProjects.Api>();
+        app.AddSpaClient("one", builder.AddContainer("one", "node").WithHttpEndpoint(port: 4201, name: "http"), apiScopeAliases: ["Shop"]);
+
+        Should.Throw<ArgumentException>(() => app.AddSpaClient("two", builder.AddContainer("two", "node").WithHttpEndpoint(port: 4202, name: "http"), apiScopeAliases: [alias]))
+            .Message.ShouldContain(alias);
+    }
+
+    [Fact]
+    public void A_spa_client_needs_the_api()
+    {
+        var builder = DistributedApplication.CreateBuilder();
+        var app = builder.AddCoworkeeApp("demo");
+        app.AddAuthServer<FakeProjects.Auth>();
+
+        Should.Throw<InvalidOperationException>(() => app.AddSpaClient("spa", builder.AddContainer("spa", "node").WithHttpEndpoint(name: "http")))
+            .Message.ShouldContain("AddApi");
+    }
+
+    [Fact]
     public void The_airworks_client_needs_the_api()
     {
         var app = DistributedApplication.CreateBuilder().AddCoworkeeApp("demo");

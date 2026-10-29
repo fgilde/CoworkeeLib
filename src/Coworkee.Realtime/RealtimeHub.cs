@@ -44,7 +44,7 @@ public sealed class RealtimeHub(IEnumerable<IRealtimeTopicAuthorizer> authorizer
     {
         var (userId, tenantId) = RealtimeConnections.Identity(Context.User);
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(userId, tenantId));
-        if (!await IsAllowedAsync(authorizers, topic, Context.ConnectionAborted))
+        if (!await IsAllowedAsync(authorizers, Context.User, topic, Context.ConnectionAborted))
         {
             throw new HubException($"Not allowed to subscribe to '{topic}'.");
         }
@@ -59,14 +59,18 @@ public sealed class RealtimeHub(IEnumerable<IRealtimeTopicAuthorizer> authorizer
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, RealtimeGroups.For(RealtimeConnections.Identity(Context.User).TenantId, topic), Context.ConnectionAborted);
     }
 
-    internal static async Task<bool> IsAllowedAsync(IEnumerable<IRealtimeTopicAuthorizer> authorizers, string topic, CancellationToken cancellationToken) =>
-        authorizers.FirstOrDefault(a => a.Handles(topic)) is { } authorizer && await authorizer.AuthorizeAsync(topic, cancellationToken);
+    // a session topic belongs to the connections whose token names that session; the authorizers see the user, not the token
+    internal static async Task<bool> IsAllowedAsync(IEnumerable<IRealtimeTopicAuthorizer> authorizers, ClaimsPrincipal? user, string topic, CancellationToken cancellationToken) =>
+        topic.StartsWith(RealtimeTopics.SessionPrefix, StringComparison.Ordinal)
+            ? user?.FindFirstValue("sid") is { Length: > 0 } sid && topic == RealtimeTopics.Session(sid)
+            : authorizers.FirstOrDefault(a => a.Handles(topic)) is { } authorizer && await authorizer.AuthorizeAsync(topic, cancellationToken);
 }
 
 public static class RealtimeGroups
 {
     public static string For(Guid? tenantId, string topic) =>
-        topic.StartsWith("user:", StringComparison.Ordinal) || topic.StartsWith(GlobalTopicAuthorizer.Prefix, StringComparison.Ordinal) ? topic : $"{tenantId}|{topic}";
+        topic.StartsWith("user:", StringComparison.Ordinal) || topic.StartsWith(RealtimeTopics.SessionPrefix, StringComparison.Ordinal)
+        || topic.StartsWith(GlobalTopicAuthorizer.Prefix, StringComparison.Ordinal) ? topic : $"{tenantId}|{topic}";
 }
 
 public interface IRealtimeTopicAuthorizer

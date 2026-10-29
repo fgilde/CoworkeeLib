@@ -47,7 +47,8 @@ public sealed class CoworkeeRealtimeModule : CoworkeeModule, IWebModule
 
     public void ConfigureApplication(WebApplication app)
     {
-        app.MapHub<RealtimeHub>(RealtimeHubMethods.Path);
+        // SignalR's browser client negotiates with credentials
+        app.MapHub<RealtimeHub>(RealtimeHubMethods.Path).RequireCors(CoworkeeCors.WithCredentials);
         app.MapCoworkeeApi("/api/v1/realtime").WithTags("Realtime").RequireAuthorization()
             .MapGet("/presence", async (RealtimePresence presence, ICurrentUser user) => TypedResults.Ok(await presence.OnlineAsync(user.TenantId)));
     }

@@ -28,6 +28,8 @@ internal static partial class IdentityEndpoints
     private static void MapUsers(RouteGroupBuilder api)
     {
         api.MapGet("/users", ([AsParameters] PageRequest page, IDispatcher d, CancellationToken ct) => d.SendAsync(new GetUsers(page), ct).ToHttpResult());
+        api.MapGet("/users/granted", (string permission, Guid? groupId, [AsParameters] PageRequest page, IDispatcher d, CancellationToken ct) =>
+            d.SendAsync(new Users.Lookups.GetUsersGrantedQuery(permission, groupId, page), ct).ToHttpResult());
         api.MapPost("/users", (CreateUserRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new CreateUser(body), ct).ToHttpResult());
         api.MapGet("/me", (IDispatcher d, CancellationToken ct) => d.SendAsync(new GetMyProfile(), ct).ToHttpResult());
         api.MapPut("/me", (UpdateProfileRequest body, IDispatcher d, CancellationToken ct) => d.SendAsync(new UpdateMyProfile(body), ct).ToHttpResult());

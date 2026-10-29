@@ -201,6 +201,21 @@ public static class BffExtensions
             });
         }
 
+        // the session cookie is the credential here: no other origin may read answers sent with it, whatever CORS headers the API forwards
+        app.Use((context, next) =>
+        {
+            context.Response.OnStarting(() =>
+            {
+                foreach (var header in context.Response.Headers.Keys.Where(k => k.StartsWith("Access-Control-", StringComparison.OrdinalIgnoreCase)).ToList())
+                {
+                    context.Response.Headers.Remove(header);
+                }
+
+                return Task.CompletedTask;
+            });
+            return next(context);
+        });
+
         app.Use(async (context, next) =>
         {
             var unsafeMethod = !HttpMethods.IsGet(context.Request.Method) && !HttpMethods.IsHead(context.Request.Method) && !HttpMethods.IsOptions(context.Request.Method);
@@ -247,7 +262,8 @@ public static class BffExtensions
                 options.WebAppUrl is { Length: > 0 } web ? web.TrimEnd('/') : null,
                 launcher,
                 Guid.TryParse(user.FindFirstValue(ImpersonationClaims.Impersonator), out var impersonator) ? impersonator : null,
-                user.FindFirstValue(ImpersonationClaims.ImpersonatorName))
+                user.FindFirstValue(ImpersonationClaims.ImpersonatorName),
+                user.FindFirstValue("sid"))
             : BffUserDto.Anonymous with { Launcher = launcher });
 
         // the assistant may think and call tools for minutes before the first byte of its answer

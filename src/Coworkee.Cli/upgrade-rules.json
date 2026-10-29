@@ -395,12 +395,23 @@
     {
       "version": "0.0.1.43",
       "breaking": [
-        "OData $search on a set with AddGlobalSearch<T>(s => s.Fields(...)) looks in those fields only, not in every string property; an ISearchable entity keeps its own fields."
+        "OData $search on a set with AddGlobalSearch<T>(s => s.Fields(...)) looks in those fields only, not in every string property; an ISearchable entity keeps its own fields.",
+        "New endpoints PUT /api/v1/identity/me/password and GET /api/v1/identity/users/granted: regenerate OpenAPI snapshots and SDKs.",
+        "UseCoworkee always adds the CORS middleware with the policy of Coworkee:Cors:Origins (empty: no cross-origin calls, as before); an origin '*' or one that is no http(s) address stops the start.",
+        "IPermissionChecker has the new member UsersGrantedAsync with a default implementation (an empty page); own implementations that should answer it implement it.",
+        "PKCE accepts only S256 code challenges; clients sending code_challenge_method=plain or no method get invalid_request."
       ],
       "manual": [
         {
           "text": "Check that the Fields(...) of AddGlobalSearch name everything the table's search box of the set should find; $search on the OData list uses them now (or implement ISearchable on the entity for other fields).",
           "find": "AddGlobalSearch<",
+          "files": [
+            "src/**/*.cs"
+          ]
+        },
+        {
+          "text": "Move own CORS origins for browser apps to Coworkee:Cors:Origins (or app.AddSpaClient in the app host) and drop the own AddCors/UseCors, so one policy applies.",
+          "find": "\\bUseCors\\(|\\bAddCors\\(",
           "files": [
             "src/**/*.cs"
           ]
