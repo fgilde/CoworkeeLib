@@ -7,6 +7,7 @@
 ### Hinzugefügt
 
 - Das Beenden von Sitzungen läuft durch `IRealtimePublisher`: Jede Instanz veröffentlicht `SessionRevoked` auf `user:{id}` mit dem `SessionRevokedPayload` (Grund, `KeptSessionId`) einmal je Sitzungsänderung, damit ein Decorator die Verbindungen eines eigenen Hubs der App beenden kann. `RealtimePublisher` schickt diesen Typ an keine Gruppe; `RealtimeHub`-Clients bekommen genau das, was sie vorher bekamen. Decorators, die jede Nachricht weiterleiten, sehen den neuen Typ. Siehe [Clients](../security/clients.md#uberall-abmelden-und-sperren).
+- `CoworkeeApp.SpaClientUrl(resource)`: die öffentliche Adresse einer mit `AddSpaClient` hinzugefügten Single-Page-App (ihr Endpunkt im Lauf, der Parameter `{name}-{resource}-url` im Deployment), etwa für das eigene `APP_URL` der App; eine Ressource ohne `AddSpaClient` wirft. Siehe [Aspire](../hosting/aspire.md#single-page-apps).
 
 ### Geändert
 

@@ -7,6 +7,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 ### Added
 
 - Session revocation passes `IRealtimePublisher`: every instance publishes `SessionRevoked` on `user:{id}` with the `SessionRevokedPayload` (reason, `KeptSessionId`) once per session change, so a decorator can end the connections of an app's own hub. `RealtimePublisher` sends that type to no group; `RealtimeHub` clients get exactly what they got before. Decorators that forward every message see the new type. See [clients](../security/clients.md#signing-out-everywhere-and-locking).
+- `CoworkeeApp.SpaClientUrl(resource)`: the public address of a single-page app added with `AddSpaClient` (its endpoint while running, the parameter `{name}-{resource}-url` in a deployment), e.g. for the app's own `APP_URL`; a resource without `AddSpaClient` throws. See [Aspire](../hosting/aspire.md#single-page-apps).
 
 ### Changed
 
