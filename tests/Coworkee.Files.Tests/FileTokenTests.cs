@@ -7,6 +7,7 @@ using System.Text;
 using Coworkee.Contracts.Attachments;
 using Coworkee.Contracts.Files;
 using Coworkee.Contracts.Identity;
+using Coworkee.Core.Diagnostics;
 using Coworkee.Infrastructure.Tokens;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
@@ -168,6 +169,31 @@ public sealed class FileTokenTests(FilesApp app) : IAsyncLifetime
 
         stopped.Count.ShouldBe(2);
         stopped.ShouldAllBe(s => !s.Contains("s3cr3t") && s.Contains("/token/***/") && s.Contains("/downloads/***"));
+    }
+
+    [Fact]
+    public async Task Tokens_in_query_strings_are_masked_in_request_logs_and_activities()
+    {
+        var tags = new ConcurrentQueue<string>();
+        const string query = "?access_token=s3cr3t-at&id_token_hint=s3cr3t-hint&page=2&code=s3cr3t-code&refresh_token=s3cr3t-rt";
+        using var listener = new ActivityListener
+        {
+            ShouldListenTo = source => source.Name == "Microsoft.AspNetCore",
+            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+            ActivityStarted = activity => activity.SetTag("url.query", query[1..]).SetTag("url.full", "http://localhost/hubs/realtime" + query),
+            ActivityStopped = activity => tags.Enqueue($"{activity.GetTagItem("url.full")} {activity.GetTagItem("url.query")}"),
+        };
+        ActivitySource.AddActivityListener(listener);
+
+        await app.App.GetTestClient().GetAsync("/hubs/realtime" + query, Ct);
+
+        // Microsoft.AspNetCore.Hosting.Diagnostics: "Request starting ... /hubs/realtime?access_token=..."
+        app.Logs.Lines.ShouldContain(line => line.Contains("/hubs/realtime?access_token=***&id_token_hint=***&page=2&code=***&refresh_token=***"));
+        app.Logs.Lines.ShouldNotContain(line => line.Contains("s3cr3t"));
+        tags.ShouldContain(t => t.Contains("access_token=***&id_token_hint=***&page=2"));
+        tags.ShouldNotContain(t => t.Contains("s3cr3t"));
+        SecretPaths.Redact("https://auth/connect/logout?id_token_hint=eyJ.x.y&post_logout_redirect_uri=https://app").ShouldBe("https://auth/connect/logout?id_token_hint=***&post_logout_redirect_uri=https://app");
+        SecretPaths.Redact("/odata/Codes?$filter=code eq 'x'&encode=1").ShouldBe("/odata/Codes?$filter=code eq 'x'&encode=1");
     }
 
     // the clock moves on: the tokens' time is up

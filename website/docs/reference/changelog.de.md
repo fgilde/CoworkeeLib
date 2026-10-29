@@ -2,6 +2,19 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- Das Beenden von Sitzungen läuft durch `IRealtimePublisher`: Jede Instanz veröffentlicht `SessionRevoked` auf `user:{id}` mit dem `SessionRevokedPayload` (Grund, `KeptSessionId`) einmal je Sitzungsänderung, damit ein Decorator die Verbindungen eines eigenen Hubs der App beenden kann. `RealtimePublisher` schickt diesen Typ an keine Gruppe; `RealtimeHub`-Clients bekommen genau das, was sie vorher bekamen. Decorators, die jede Nachricht weiterleiten, sehen den neuen Typ. Siehe [Clients](../security/clients.md#uberall-abmelden-und-sperren).
+- `CoworkeeApp.SpaClientUrl(resource)`: die öffentliche Adresse einer mit `AddSpaClient` hinzugefügten Single-Page-App (ihr Endpunkt im Lauf, der Parameter `{name}-{resource}-url` im Deployment), etwa für das eigene `APP_URL` der App; eine Ressource ohne `AddSpaClient` wirft. Siehe [Aspire](../hosting/aspire.md#single-page-apps).
+
+### Geändert
+
+- OData: Das Service-Dokument (`/odata`) und `$metadata` brauchen auf jeder Route (`/odata` und jede `AddCoworkeeODataRoute`) eine Anmeldung, anonyme Anfragen bekommen `401`; vorher nannten sie jedem jedes Set und jeden Eigenschaftsnamen des Modells. Beide werden jetzt auf jedem Host ausgeliefert (vorher nur, wo die Part-Erkennung von MVC die Assembly von OData fand). `Coworkee:OData:AnonymousMetadata` (`CoworkeeODataOptions.AnonymousMetadata`, Standard `false`) öffnet sie wieder. Clients, die `$metadata` anonym lesen, schicken ein Token oder setzen die Option. Siehe [OData](../web/odata.md).
+- Die Maskierung in Logs und Traces von `AddCoworkee` und `AddCoworkeeBff` (`SecretPaths`) deckt auch Geheimnisse in Query-Strings ab: `access_token` (SignalR-WebSockets), `id_token`, `id_token_hint`, `refresh_token`, `token`, `code`, `code_verifier`, `client_secret`, `client_assertion` und `password` zeigen `***` in den Request-Zeilen von `Microsoft.AspNetCore.Hosting.Diagnostics`, in HttpClient- und YARP-Logs und in den URL-Tags der Activities. Siehe [Dateien](../modules/files.md#temporare-links).
+- Die maschinelle Übersetzung fehlender Texte geht vom englischen Text eines Schlüssels aus, wenn der Schlüssel keiner ist (importierte Texte mit Schlüsseln `{Resource}::{key}` und einer `en`-Ressource), nicht vom Schlüssel selbst. Siehe [Lokalisierung](../modules/localization.md).
+
 ## 0.0.1.43 (2026-10-29)
 
 ### Hinzugefügt

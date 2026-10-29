@@ -18,5 +18,13 @@ internal sealed class EntityODataControllerFeatureProvider(ODataEntityRegistry r
                 feature.Controllers.Add(controller);
             }
         }
+
+        // the service document and $metadata on every route, whether or not the host's part discovery found OData's assembly; the sign-in comes from
+        // EntityODataControllerNameProvider
+        var metadata = typeof(Microsoft.AspNetCore.OData.Routing.Controllers.MetadataController).GetTypeInfo();
+        if (!feature.Controllers.Contains(metadata))
+        {
+            feature.Controllers.Add(metadata);
+        }
     }
 }

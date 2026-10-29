@@ -185,6 +185,9 @@ public sealed class CoworkeeAppTests : IDisposable
         settings["Coworkee__Auth__ApiScopes__Shop"].ShouldBe("demo_api");
         settings["Coworkee__Cors__Origins__0"].ShouldBe("{realtime.bindings.http.url}");
         (await Environment(api.Resource))["Coworkee__Cors__Origins__0"].ShouldBe("{realtime.bindings.http.url}");
+        spa.WithEnvironment("APP_URL", app.SpaClientUrl(spa));
+        (await Environment(spa.Resource))["APP_URL"].ShouldBe("{realtime.bindings.http.url}");
+        Should.Throw<InvalidOperationException>(() => app.SpaClientUrl(builder.AddContainer("other", "node"))).Message.ShouldContain("AddSpaClient");
     }
 
     [Fact]
@@ -203,6 +206,8 @@ public sealed class CoworkeeAppTests : IDisposable
         settings["Coworkee__Cors__Origins__0"].ShouldBe("{demo-realtime-url.value}");
         settings.ShouldNotContainKey("Coworkee__Auth__Clients__0__AllowImpersonation");
         (await Environment(api.Resource))["Coworkee__Cors__Origins__0"].ShouldBe("{demo-realtime-url.value}");
+        spa.WithEnvironment("APP_URL", app.SpaClientUrl(spa));
+        (await Environment(spa.Resource))["APP_URL"].ShouldBe("{demo-realtime-url.value}");
     }
 
     [Fact]

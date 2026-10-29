@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
 namespace Coworkee.OData;
 
-internal sealed class EntityODataControllerNameProvider(ODataEntityRegistry registry) : IApplicationModelProvider
+internal sealed class EntityODataControllerNameProvider(ODataEntityRegistry registry, bool anonymousMetadata) : IApplicationModelProvider
 {
     public int Order => -500;
 
@@ -41,7 +41,19 @@ internal sealed class EntityODataControllerNameProvider(ODataEntityRegistry regi
         }
     }
 
+    // after OData's provider (Order 100) wrote the route selectors: the service document and $metadata name every set and property, so they need a sign-in
     public void OnProvidersExecuted(ApplicationModelProviderContext context)
     {
+        if (anonymousMetadata)
+        {
+            return;
+        }
+
+        foreach (var selector in context.Result.Controllers
+                     .Where(c => c.ControllerType == typeof(Microsoft.AspNetCore.OData.Routing.Controllers.MetadataController))
+                     .SelectMany(c => c.Actions).SelectMany(a => a.Selectors))
+        {
+            selector.EndpointMetadata.Add(new Microsoft.AspNetCore.Authorization.AuthorizeAttribute());
+        }
     }
 }

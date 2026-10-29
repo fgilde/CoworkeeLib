@@ -23,6 +23,8 @@ public sealed class MyAppCatalogModule : CoworkeeModule
 
 Die Berechtigung des Sets wird bei jedem Aufruf geprüft, Mandanten- und Soft-Delete-Filter gelten wie überall. `$top` ist auf 1000 begrenzt (`Coworkee:OData:MaxTop`); ungültige Abfragen beantworten `400` mit Problem Details.
 
+Das Service-Dokument (`GET /odata`) und `GET /odata/$metadata` nennen jedes Set und jeden Eigenschaftsnamen des Modells; sie brauchen deshalb auf jeder Route eine Anmeldung (`401` ohne), unabhängig von den Berechtigungen des Benutzers. `Coworkee:OData:AnonymousMetadata` (`CoworkeeODataOptions.AnonymousMetadata`, Standard `false`) öffnet beide wieder für Clients, die das Modell anonym lesen; die Sets behalten ihre Prüfungen.
+
 ### Schlüssel außer `Id`
 
 Ein Set mit einer anderen Schlüsseleigenschaft, von beliebigem primitivem Typ, nennt sie mit `Key`:

@@ -154,7 +154,7 @@ The settings group *Translation* (global only, `Localization.*`):
 | `Localization.TranslationSource` | The language translations start from, default `en` |
 | `Localization.AutoTranslate` | Translate when a language is switched on and after the start (default `true`); off, only the button translates |
 
-Texts are keyed by their English wording, so English is the natural source. With `TranslationSource` set to `de`, a text starts from its German wording when there is one (shipped or edited) and from English otherwise; a language never translates from itself, so `de-CH` starts from English.
+Texts are keyed by their English wording, so English is the natural source. With `TranslationSource` set to `de`, a text starts from its German wording when there is one (shipped or edited) and from English otherwise; a language never translates from itself, so `de-CH` starts from English. A key that is no English text (imported texts keyed `{Resource}::{key}`, for example) starts from its English text (an `en` resource or an edited English translation) instead of the key; without one the key is translated as before.
 
 ### In the app host
 

@@ -8,7 +8,8 @@ using Microsoft.Extensions.Logging;
 namespace Coworkee.Core.Diagnostics;
 
 /// <summary>
-/// Anonymous links carry their secret in the path (<c>/token/{token}</c>, <c>/downloads/{token}</c>). <see cref="AddSecretPathRedaction"/> replaces it by
+/// Anonymous links carry their secret in the path (<c>/token/{token}</c>, <c>/downloads/{token}</c>), SignalR and OpenID Connect in the query
+/// (<c>?access_token=</c>, <c>?id_token_hint=</c>, see <see cref="Redact(string)"/>). <see cref="AddSecretPathRedaction"/> replaces them by
 /// <see cref="Mask"/> in the logs of ASP.NET Core, HttpClient and YARP (messages, values and scopes such as RequestPath) and in the activities of incoming,
 /// forwarded and outgoing requests (url.path, url.full and the other url tags, display name) before any exporter sees them.
 /// </summary>
@@ -35,11 +36,16 @@ public static partial class SecretPaths
         return listener;
     });
 
-    /// <summary><paramref name="text"/> with the secret segment after /token/ and /downloads/ masked.</summary>
-    public static string Redact(string text) => Contains(text) ? Secret().Replace(text, Mask) : text;
+    /// <summary>
+    /// <paramref name="text"/> with the secret segment after /token/ and /downloads/ masked, and the values of the query parameters <c>access_token</c>
+    /// (SignalR's WebSocket token), <c>id_token</c>, <c>id_token_hint</c>, <c>refresh_token</c>, <c>token</c>, <c>code</c>, <c>code_verifier</c>,
+    /// <c>client_secret</c>, <c>client_assertion</c> and <c>password</c>.
+    /// </summary>
+    public static string Redact(string text) => Contains(text) ? QuerySecret().Replace(Secret().Replace(text, Mask), Mask) : text;
 
     public static bool Contains(string? text) =>
-        text is not null && (text.Contains("/token/", StringComparison.OrdinalIgnoreCase) || text.Contains("/downloads/", StringComparison.OrdinalIgnoreCase));
+        text is not null && (text.Contains("/token/", StringComparison.OrdinalIgnoreCase) || text.Contains("/downloads/", StringComparison.OrdinalIgnoreCase)
+            || (text.Contains('=') && QuerySecret().IsMatch(text)));
 
     /// <summary>Masks the secret in the url tags and the name of <paramref name="activity"/>, e.g. from an instrumentation's enrich callback.</summary>
     public static void Redact(Activity activity)
@@ -69,6 +75,10 @@ public static partial class SecretPaths
 
         return services;
     }
+
+    [GeneratedRegex(@"(?<=(?:^|[?&])(?:access_token|id_token|id_token_hint|refresh_token|token|code|code_verifier|client_secret|client_assertion|password)=)[^&#\s""']+",
+        RegexOptions.IgnoreCase)]
+    private static partial Regex QuerySecret();
 
     [GeneratedRegex(@"(?<=/(?:token|downloads)/)[^/?#\s""']+", RegexOptions.IgnoreCase)]
     private static partial Regex Secret();

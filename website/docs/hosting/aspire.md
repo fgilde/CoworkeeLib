@@ -91,7 +91,13 @@ app.AddSpaClient("spa", spa, scopes: ["files"], apiScopeAliases: ["Shop"], allow
 | Impersonation | `allowImpersonation: true` lets [Log in as](../features/identity.md#log-in-as-another-user) reach the app |
 | CORS | the origin goes into `Coworkee:Cors:Origins` of the auth server and of every api, also of apis added later (see [CORS](../security/clients.md#cross-origin-calls-cors)) |
 
-In a deployment the address comes from the parameter `{name}-{resource}-url` (e.g. `https://spa.example.com`), like the public addresses of the services. The app itself needs the addresses of the auth server and the api; pass them as you need (`WithEnvironment`).
+In a deployment the address comes from the parameter `{name}-{resource}-url` (e.g. `https://spa.example.com`), like the public addresses of the services. The app itself needs the addresses of the auth server and the api, and often its own; pass them as you need (`WithEnvironment`). `app.SpaClientUrl(spa)` is the app's own address, the endpoint while running and the parameter in a deployment; `app.PublicUrl(service)` the one of a service:
+
+```csharp
+spa.WithEnvironment("APP_URL", app.SpaClientUrl(spa))
+    .WithEnvironment("API_URL", app.PublicUrl(app.Apis[0]))
+    .WithEnvironment("AUTH_URL", app.PublicUrl(app.AuthServer!));
+```
 
 ## Infrastructure from the packages
 

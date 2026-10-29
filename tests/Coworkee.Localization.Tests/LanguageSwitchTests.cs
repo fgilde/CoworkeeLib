@@ -65,6 +65,24 @@ public sealed class LanguageSwitchTests(LocalizationApp app) : IAsyncLifetime
         var texts = (await app.Anonymous().GetFromJsonAsync<TextsDto>("/api/v1/localization/texts/fr", Ct))!.Texts;
         texts["Brands"].ShouldBe("fr:de:Marken");
         texts["Only in English"].ShouldBe("fr:en:Only in English");
+        texts["Shop::Brands.Title"].ShouldBe("fr:en:Brand names", "not in German: from the English text, not the key");
+    }
+
+    [Fact]
+    public async Task Keys_that_are_no_english_text_are_translated_from_their_english_text()
+    {
+        await SetAsync(new()
+        {
+            [LocalizationSettings.TranslationProvider] = TranslationProviders.LibreTranslate,
+            [LocalizationSettings.TranslationEndpoint] = "http://libretranslate.test",
+        });
+        (await Admin.PostAsJsonAsync("/api/v1/localization/missing", new MissingTextsRequest(["Only in English"]), Ct)).EnsureSuccessStatusCode();
+
+        (await SwitchAsync("fr", true)).Translated.ShouldBeGreaterThan(0);
+
+        var texts = (await app.Anonymous().GetFromJsonAsync<TextsDto>("/api/v1/localization/texts/fr", Ct))!.Texts;
+        texts["Shop::Brands.Title"].ShouldBe("fr:en:Brand names");
+        texts["Only in English"].ShouldBe("fr:en:Only in English");
     }
 
     [Fact]

@@ -9,6 +9,8 @@ public sealed partial class CoworkeeApp
 
     private readonly List<ReferenceExpression> _spaOrigins = [];
 
+    private readonly Dictionary<IResource, ReferenceExpression> _spaUrls = [];
+
     private readonly HashSet<string> _scopeAliases = new(StringComparer.Ordinal);
 
     /// <summary>
@@ -62,8 +64,19 @@ public sealed partial class CoworkeeApp
         }
 
         _spaOrigins.Add(url);
+        _spaUrls[resource.Resource] = url;
         return resource;
     }
+
+    /// <summary>
+    /// The public address of a single-page app added with <see cref="AddSpaClient"/>: the endpoint while the app host runs, the parameter
+    /// <c>{app}-{resource}-url</c> in a deployment. E.g. <c>spa.WithEnvironment("APP_URL", app.SpaClientUrl(spa))</c> for the app's own settings.
+    /// </summary>
+    public ReferenceExpression SpaClientUrl<T>(IResourceBuilder<T> resource)
+        where T : IResource =>
+        _spaUrls.TryGetValue(resource.Resource, out var url)
+            ? url
+            : throw new InvalidOperationException($"{resource.Resource.Name} is no single-page app of {Name}; add it with {nameof(AddSpaClient)} first.");
 
     // read when the app host starts or publishes, so apis added after AddSpaClient get the origins too
     private void WithSpaOrigins(IResourceBuilder<ProjectResource> service) =>

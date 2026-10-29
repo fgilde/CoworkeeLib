@@ -23,6 +23,8 @@ public sealed class MyAppCatalogModule : CoworkeeModule
 
 The permission of the set is checked on every call, tenants and soft delete filters apply as everywhere. `$top` is capped at 1000 (`Coworkee:OData:MaxTop`); invalid queries answer `400` with problem details.
 
+The service document (`GET /odata`) and `GET /odata/$metadata` list every set and property name of the model, so they need a sign-in on every route (`401` without one), whatever the user's permissions. `Coworkee:OData:AnonymousMetadata` (`CoworkeeODataOptions.AnonymousMetadata`, default `false`) opens both again for clients that read the model anonymously; the sets keep their checks.
+
 ### Keys other than `Id`
 
 A set keyed by another property, of any primitive type, names it with `Key`:
