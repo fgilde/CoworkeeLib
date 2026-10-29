@@ -3,15 +3,20 @@ using System.Text.Json;
 using Coworkee.Application.Authorization;
 using Coworkee.Application.Messaging;
 using Coworkee.Contracts.Identity;
+using Coworkee.Contracts.Realtime;
+using Coworkee.Domain;
 using Coworkee.Core.Results;
 using Coworkee.Core.Security;
 using Coworkee.Identity.Domain;
 using Coworkee.Identity.Groups;
 using Coworkee.Identity.Permissions;
+using Coworkee.Infrastructure.Outbox;
 using Coworkee.Infrastructure.Persistence;
+using Coworkee.Realtime;
 using FluentValidation;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Coworkee.Identity.Users;
@@ -129,6 +134,29 @@ public sealed class ImpersonationRules(CoworkeeDbContext db, IPermissionChecker 
 }
 
 public sealed record ImpersonationTicket(Guid ImpersonatorId, Guid TargetId, Guid? TenantId);
+
+/// <summary>
+/// The auth server ended "Log in as" (stop, expiry, revocation); it writes the event to the outbox, the host that processes the outbox (the api)
+/// puts <see cref="RealtimeEventTypes.ImpersonationEnded"/> on the target's user topic.
+/// </summary>
+public sealed record ImpersonationEnded(Guid TargetId, Guid ImpersonatorId) : IDomainEvent
+{
+    public OutboxMessage ToOutbox(DateTimeOffset now) => new()
+    {
+        Type = typeof(ImpersonationEnded).AssemblyQualifiedName!,
+        Payload = JsonSerializer.Serialize(this),
+        OccurredAt = now,
+        ActorId = ImpersonatorId,
+    };
+}
+
+internal sealed class ImpersonationEndedHandler(IServiceProvider services) : IDomainEventHandler<ImpersonationEnded>
+{
+    // hosts without the realtime module have nobody to tell
+    public Task HandleAsync(ImpersonationEnded domainEvent, CancellationToken cancellationToken) =>
+        services.GetService<IRealtimePublisher>()?.PublishAsync(null, RealtimeTopics.User(domainEvent.TargetId), RealtimeEventTypes.ImpersonationEnded,
+            new ImpersonationEndedPayload(domainEvent.TargetId, domainEvent.ImpersonatorId), cancellationToken) ?? Task.CompletedTask;
+}
 
 /// <summary>Protects tickets with the key ring all hosts share, so the auth server reads what the API issued; a ticket lives a minute.</summary>
 public sealed class ImpersonationTickets(IDataProtectionProvider provider, TimeProvider clock)

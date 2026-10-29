@@ -7,6 +7,9 @@ public sealed record RealtimeEnvelope(string Topic, string Type, JsonElement Pay
 /// <summary>Why the session ended: "signed-out", "locked" or "password-changed" (in another session or by an administrator).</summary>
 public sealed record SessionRevokedPayload(string Reason);
 
+/// <summary>"Log in as" <paramref name="TargetId"/> by <paramref name="ImpersonatorId"/> ended: stopped, expired or revoked at the auth server.</summary>
+public sealed record ImpersonationEndedPayload(Guid TargetId, Guid ImpersonatorId);
+
 public sealed record EntityChangedPayload(string EntityType, string EntityId, string Action, IReadOnlyList<string> ChangedProperties)
 {
     public const string Created = "Created";
@@ -35,6 +38,12 @@ public static class RealtimeEventTypes
 
     /// <summary>On the user's own topic: the session ended (signed out or locked by an administrator, new password); the client ends it too.</summary>
     public const string SessionRevoked = "SessionRevoked";
+
+    /// <summary>
+    /// On the target's user topic: an impersonation of him ended (<see cref="ImpersonationEndedPayload"/>); clients signed in as him by that impersonator
+    /// sign in again. His own sessions hear it too and ignore it.
+    /// </summary>
+    public const string ImpersonationEnded = "ImpersonationEnded";
 }
 
 public static class RealtimeTopics

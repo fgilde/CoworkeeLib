@@ -14,7 +14,7 @@ public sealed class LogoutModel(SignInManager<User> signIn) : PageModel
         var cookie = await HttpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
         if (AuthImpersonation.IsImpersonating(cookie.Principal))
         {
-            await AuthImpersonation.RevokeAsync(HttpContext.RequestServices, cookie.Principal!.FindFirstValue(ClaimTypes.NameIdentifier)!, AuthEndpoints.SessionOf(cookie),
+            await AuthImpersonation.RevokeAsync(HttpContext.RequestServices, cookie.Principal!, cookie.Principal!.FindFirstValue(ClaimTypes.NameIdentifier)!, AuthEndpoints.SessionOf(cookie),
                 HttpContext.RequestAborted);
         }
 

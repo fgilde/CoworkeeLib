@@ -67,7 +67,7 @@ internal static class AuthEndpoints
             // an impersonation that may not go on ends with its tokens; the impersonator signs in again himself
             if (impersonating)
             {
-                await AuthImpersonation.RevokeAsync(context.RequestServices, user.Id.ToString(), SessionOf(cookie), context.RequestAborted);
+                await AuthImpersonation.RevokeAsync(context.RequestServices, cookie.Principal, user.Id.ToString(), SessionOf(cookie), context.RequestAborted);
             }
 
             await context.SignOutAsync(IdentityConstants.ApplicationScheme);
@@ -194,7 +194,7 @@ internal static class AuthEndpoints
         if (AuthImpersonation.IsImpersonating(result.Principal)
             && (!await AllowsImpersonationAsync(context, request) || !await AuthImpersonation.MayContinueAsync(context.RequestServices, result.Principal!, user, context.RequestAborted)))
         {
-            await AuthImpersonation.RevokeAsync(context.RequestServices, user.Id.ToString(), sid, context.RequestAborted);
+            await AuthImpersonation.RevokeAsync(context.RequestServices, result.Principal!, user.Id.ToString(), sid, context.RequestAborted);
             return Results.Forbid(Error(Errors.InvalidGrant, "The account is no longer allowed to sign in."), [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]);
         }
 
@@ -231,7 +231,7 @@ internal static class AuthEndpoints
         var cookie = await context.AuthenticateAsync(IdentityConstants.ApplicationScheme);
         if (AuthImpersonation.IsImpersonating(cookie.Principal))
         {
-            await AuthImpersonation.RevokeAsync(context.RequestServices, cookie.Principal!.FindFirstValue(ClaimTypes.NameIdentifier)!, SessionOf(cookie), context.RequestAborted);
+            await AuthImpersonation.RevokeAsync(context.RequestServices, cookie.Principal!, cookie.Principal!.FindFirstValue(ClaimTypes.NameIdentifier)!, SessionOf(cookie), context.RequestAborted);
         }
 
         await context.SignOutAsync(IdentityConstants.ApplicationScheme);

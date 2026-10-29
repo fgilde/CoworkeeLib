@@ -3,6 +3,7 @@ using Coworkee.Client.Blazor.Api;
 using Coworkee.Client.Blazor.Localization;
 using Coworkee.Client.Blazor.Realtime;
 using Coworkee.Client.Blazor.Security;
+using Coworkee.Contracts.Identity;
 using Coworkee.Contracts.Realtime;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -25,15 +26,35 @@ public partial class SessionGuard : IAsyncDisposable
 
     [Inject] private CoworkeeLocalizer L { get; set; } = null!;
 
+    [Inject] private CoworkeeClientOptions Options { get; set; } = null!;
+
     [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         var user = AuthenticationState is null ? null : (await AuthenticationState).User;
+        var impersonator = user?.FindFirst(ImpersonationClaims.Impersonator)?.Value;
         if (ClientUser.From(user).TryGetUserId(out var userId))
         {
-            _subscription = await Realtime.SubscribeAsync(RealtimeTopics.User(userId),
-                envelope => envelope.Type == RealtimeEventTypes.SessionRevoked ? InvokeAsync(() => EndAsync(envelope)) : Task.CompletedTask);
+            _subscription = await Realtime.SubscribeAsync(RealtimeTopics.User(userId), envelope => envelope.Type switch
+            {
+                RealtimeEventTypes.SessionRevoked => InvokeAsync(() => EndAsync(envelope)),
+                RealtimeEventTypes.ImpersonationEnded when Ended(envelope, impersonator) => InvokeAsync(SignInAgain),
+                _ => Task.CompletedTask,
+            });
+        }
+    }
+
+    // the impersonation of this session ended elsewhere (another tab, another app, its expiry): the sign-in goes back to the auth server, which knows who is signed in now
+    private static bool Ended(RealtimeEnvelope envelope, string? impersonator) =>
+        impersonator is not null && envelope.Payload.Deserialize<ImpersonationEndedPayload>(JsonSerializerOptions.Web)?.ImpersonatorId.ToString() == impersonator;
+
+    private void SignInAgain()
+    {
+        if (!_ended)
+        {
+            _ended = true;
+            Nav.NavigateTo(Options.SignInHref(Nav.ToBaseRelativePath(Nav.Uri)), forceLoad: true);
         }
     }
 

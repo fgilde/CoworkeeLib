@@ -38,10 +38,11 @@ public sealed class RealtimeApp : DatabaseFixture
     }
 
     /// <summary>An instance of the app on the shared database, behind <paramref name="redis"/> when given.</summary>
-    public async Task<WebApplication> StartInstanceAsync(string? redis)
+    public async Task<WebApplication> StartInstanceAsync(string? redis, Dictionary<string, string?>? settings = null)
     {
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
+        builder.Configuration.AddInMemoryCollection(settings ?? []);
         builder.Configuration["Coworkee:SetupToken"] = "token";
         builder.Configuration["ConnectionStrings:test"] = ConnectionString;
         builder.Configuration["ConnectionStrings:redis"] = redis;

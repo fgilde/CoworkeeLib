@@ -57,7 +57,7 @@ public sealed class StopImpersonationModel(SignInManager<User> signIn, UserManag
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var sid = AuthEndpoints.SessionOf(await HttpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme));
-        var revoked = await AuthImpersonation.RevokeAsync(HttpContext.RequestServices, userId, sid, HttpContext.RequestAborted);
+        var revoked = await AuthImpersonation.RevokeAsync(HttpContext.RequestServices, User, userId, sid, HttpContext.RequestAborted);
         using var actor = CurrentUserScope.Begin(new ImpersonatedUser(null, null));
         if (await AuthImpersonation.ImpersonatorAsync(HttpContext.RequestServices, User, HttpContext.RequestAborted) is not null
             && await users.FindByIdAsync(impersonatorId.ToString()) is { } impersonator)
