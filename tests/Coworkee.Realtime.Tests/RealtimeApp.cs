@@ -199,5 +199,23 @@ public sealed class TestRealtimeModule : CoworkeeModule
         context.Services.AddSingleton<IPermissionDefinitionContributor>(sp => sp.GetRequiredService<TicketModel>());
         context.Services.AddCoworkeeDbContext<RealtimeTestDbContext>((provider, options) =>
             options.UseCoworkeeDatabase(provider.GetRequiredService<IConfiguration>(), "test"));
+
+        // an app bridge to another hub: it decorates the publisher
+        var publisher = context.Services.Single(d => d.ServiceType == typeof(IRealtimePublisher));
+        context.Services.Remove(publisher);
+        context.Services.AddSingleton<IRealtimePublisher>(provider =>
+            new RecordingPublisher((IRealtimePublisher)ActivatorUtilities.CreateInstance(provider, publisher.ImplementationType!)));
+    }
+}
+
+/// <summary>What passed the publisher, as a decorator of an app sees it.</summary>
+public sealed class RecordingPublisher(IRealtimePublisher inner) : IRealtimePublisher
+{
+    public ConcurrentQueue<(string Topic, string Type, object Payload)> Published { get; } = new();
+
+    public Task PublishAsync(Guid? tenantId, string topic, string type, object payload, CancellationToken cancellationToken = default)
+    {
+        Published.Enqueue((topic, type, payload));
+        return inner.PublishAsync(tenantId, topic, type, payload, cancellationToken);
     }
 }

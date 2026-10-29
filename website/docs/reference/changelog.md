@@ -4,6 +4,10 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ## Unreleased
 
+### Added
+
+- Session revocation passes `IRealtimePublisher`: every instance publishes `SessionRevoked` on `user:{id}` with the `SessionRevokedPayload` (reason, `KeptSessionId`) once per session change, so a decorator can end the connections of an app's own hub. `RealtimePublisher` sends that type to no group; `RealtimeHub` clients get exactly what they got before. Decorators that forward every message see the new type. See [clients](../security/clients.md#signing-out-everywhere-and-locking).
+
 ### Changed
 
 - OData: the service document (`/odata`) and `$metadata` need a sign-in on every route (`/odata` and every `AddCoworkeeODataRoute`), anonymous requests get `401`; they listed every set and property name of the model to anyone. Both are served on every host now (before only where MVC's part discovery found OData's assembly). `Coworkee:OData:AnonymousMetadata` (`CoworkeeODataOptions.AnonymousMetadata`, default `false`) opens them again. Clients that read `$metadata` anonymously send a token or set the option. See [OData](../web/odata.md).

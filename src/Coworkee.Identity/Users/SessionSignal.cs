@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text.Json;
+using Coworkee.Contracts.Realtime;
 using Coworkee.Realtime;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -76,12 +77,25 @@ public sealed partial class SessionSignal(SessionStamps stamps, IServiceProvider
     private async Task HandleAsync(IEnumerable<SessionChange> changes, CancellationToken cancellationToken)
     {
         var connections = services.GetService<RealtimeConnections>();
+        var publisher = services.GetService<IRealtimePublisher>();
         foreach (var change in changes)
         {
             await stamps.ForgetAsync(change.UserId, cancellationToken);
             if (connections is not null)
             {
                 await connections.EndAsync(change.UserId, principal => KeepsAsync(change.UserId, principal, cancellationToken), change.Reason, cancellationToken, change.KeptSessionId);
+            }
+
+            // for decorators of the publisher (an app's own hub ends its connections of this instance); RealtimePublisher sends it nowhere, the
+            // RealtimeHub connections that ended got it above
+            try
+            {
+                await (publisher?.PublishAsync(null, RealtimeTopics.User(change.UserId), RealtimeEventTypes.SessionRevoked,
+                    new SessionRevokedPayload(change.Reason, change.KeptSessionId), cancellationToken) ?? Task.CompletedTask);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                LogForwardFailed(exception);
             }
         }
     }
@@ -101,4 +115,7 @@ public sealed partial class SessionSignal(SessionStamps stamps, IServiceProvider
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Handling a session change from another instance failed")]
     private partial void LogReceiveFailed(Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Publishing a session revocation through the realtime publisher failed")]
+    private partial void LogForwardFailed(Exception exception);
 }

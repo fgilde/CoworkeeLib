@@ -4,6 +4,10 @@
 
 ## Unveröffentlicht
 
+### Hinzugefügt
+
+- Das Beenden von Sitzungen läuft durch `IRealtimePublisher`: Jede Instanz veröffentlicht `SessionRevoked` auf `user:{id}` mit dem `SessionRevokedPayload` (Grund, `KeptSessionId`) einmal je Sitzungsänderung, damit ein Decorator die Verbindungen eines eigenen Hubs der App beenden kann. `RealtimePublisher` schickt diesen Typ an keine Gruppe; `RealtimeHub`-Clients bekommen genau das, was sie vorher bekamen. Decorators, die jede Nachricht weiterleiten, sehen den neuen Typ. Siehe [Clients](../security/clients.md#uberall-abmelden-und-sperren).
+
 ### Geändert
 
 - OData: Das Service-Dokument (`/odata`) und `$metadata` brauchen auf jeder Route (`/odata` und jede `AddCoworkeeODataRoute`) eine Anmeldung, anonyme Anfragen bekommen `401`; vorher nannten sie jedem jedes Set und jeden Eigenschaftsnamen des Modells. Beide werden jetzt auf jedem Host ausgeliefert (vorher nur, wo die Part-Erkennung von MVC die Assembly von OData fand). `Coworkee:OData:AnonymousMetadata` (`CoworkeeODataOptions.AnonymousMetadata`, Standard `false`) öffnet sie wieder. Clients, die `$metadata` anonym lesen, schicken ein Token oder setzen die Option. Siehe [OData](../web/odata.md).
