@@ -9,7 +9,7 @@ The auth server is a full OpenID Connect provider. Besides the clients from the 
 | Field | Meaning |
 |---|---|
 | Client id | the `client_id` the client sends |
-| Type | `public` (browser and mobile apps, PKCE only) or `confidential` (servers with a secret) |
+| Type | `public` (browser and mobile apps, PKCE only, `S256`) or `confidential` (servers with a secret) |
 | Consent | `implicit` signs in straight away, `explicit` asks the user once per scope set |
 | Redirect addresses | where codes may go; their origins also enter the `form-action` of the content security policy |
 | Addresses after sign-out | allowed `post_logout_redirect_uri` values |

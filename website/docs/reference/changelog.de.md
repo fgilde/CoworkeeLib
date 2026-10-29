@@ -15,6 +15,7 @@
 
 ### Geändert
 
+- PKCE nimmt nur noch `S256`-Challenges: Der Auth-Server nahm vorher auch `plain` (und eine Challenge ohne Methode); Clients, die `plain` schicken, bekommen `invalid_request`.
 - Ein falsches aktuelles Passwort bei `POST /api/v1/identity/me/email` zählt wieder zur Sperre (der Fehlversuch wurde nicht gespeichert).
 - `IPermissionChecker` hat das neue Mitglied `UsersGrantedAsync` mit einer Standardimplementierung (eine leere Seite). Neue Endpunkte: OpenAPI-Snapshots und SDKs neu erzeugen.
 

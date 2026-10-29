@@ -397,7 +397,8 @@
       "breaking": [
         "New endpoints PUT /api/v1/identity/me/password and GET /api/v1/identity/users/granted: regenerate OpenAPI snapshots and SDKs.",
         "UseCoworkee always adds the CORS middleware with the policy of Coworkee:Cors:Origins (empty: no cross-origin calls, as before); an origin '*' or one that is no http(s) address stops the start.",
-        "IPermissionChecker has the new member UsersGrantedAsync with a default implementation (an empty page); own implementations that should answer it implement it."
+        "IPermissionChecker has the new member UsersGrantedAsync with a default implementation (an empty page); own implementations that should answer it implement it.",
+        "PKCE accepts only S256 code challenges; clients sending code_challenge_method=plain or no method get invalid_request."
       ],
       "manual": [
         {

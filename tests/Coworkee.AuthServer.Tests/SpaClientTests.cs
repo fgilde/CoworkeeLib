@@ -33,6 +33,24 @@ public sealed class SpaClientTests(AuthApp app) : IAsyncLifetime
         (await withoutPkce.Content.ReadAsStringAsync(Ct)).ShouldContain("code_challenge");
     }
 
+    [Theory]
+    [InlineData("&code_challenge_method=plain")]
+    [InlineData("")]
+    public async Task Only_s256_challenges_are_taken(string method)
+    {
+        var flow = new OidcFlow(app, AuthApp.SpaClientId, AuthApp.SpaUrl);
+        (await flow.LoginAsync("admin@acme.test", "Admin#12345")).StatusCode.ShouldBe(HttpStatusCode.Redirect);
+
+        var response = await flow.Browser.GetAsync(
+            $"/connect/authorize?client_id={AuthApp.SpaClientId}&response_type=code&scope=openid&redirect_uri={Uri.EscapeDataString(AuthApp.SpaUrl)}&code_challenge=abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHI{method}", Ct);
+
+        (response.Headers.Location?.ToString() ?? string.Empty).ShouldNotContain("code=");
+        var answer = response.Headers.Location?.Query ?? await response.Content.ReadAsStringAsync(Ct);
+        answer.ShouldContain("invalid_request");
+        using var discovery = System.Text.Json.JsonDocument.Parse(await flow.Browser.GetStringAsync("/.well-known/openid-configuration", Ct));
+        discovery.RootElement.GetProperty("code_challenge_methods_supported").EnumerateArray().Select(m => m.GetString()).ShouldBe(["S256"]);
+    }
+
     [Fact]
     public async Task The_redirect_address_must_match_exactly()
     {

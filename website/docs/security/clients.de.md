@@ -9,7 +9,7 @@ Der Auth-Server ist ein vollständiger OpenID-Connect-Provider. Neben den Client
 | Feld | Bedeutung |
 |---|---|
 | Client-ID | die `client_id`, die der Client sendet |
-| Typ | `public` (Browser- und Mobile-Apps, nur PKCE) oder `confidential` (Server mit Geheimnis) |
+| Typ | `public` (Browser- und Mobile-Apps, nur PKCE, `S256`) oder `confidential` (Server mit Geheimnis) |
 | Zustimmung | `implicit` meldet direkt an, `explicit` fragt den Benutzer einmal je Scope-Auswahl |
 | Weiterleitungsadressen | wohin Codes gehen dürfen; ihre Origins kommen auch in die `form-action` der Content Security Policy |
 | Adressen nach der Abmeldung | erlaubte Werte für `post_logout_redirect_uri` |
