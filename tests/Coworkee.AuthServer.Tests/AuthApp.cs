@@ -30,6 +30,8 @@ public sealed class AuthApp : DatabaseFixture
     public const string RedirectUri = "https://client.test/signin-oidc";
     public const string ToolClientId = "test-tool";
     public const string ToolRedirectUri = "https://tool.test/oauth2/callback";
+    public const string SpaClientId = "test-spa";
+    public const string SpaUrl = "http://spa.test";
 
     public WebApplication App { get; private set; } = null!;
 
@@ -73,6 +75,15 @@ public sealed class AuthApp : DatabaseFixture
             ["Coworkee:Auth:Clients:1:RedirectUris:0"] = ToolRedirectUri,
             ["Coworkee:Auth:Clients:1:ShowInLauncher"] = "false",
             ["Coworkee:Auth:Clients:1:SystemAdministratorsOnly"] = "true",
+            // what AddSpaClient configures: a public client at the app's address, an alias of the api scope and its origin in the CORS policy
+            ["Coworkee:Auth:Clients:2:ClientId"] = SpaClientId,
+            ["Coworkee:Auth:Clients:2:RedirectUris:0"] = SpaUrl,
+            ["Coworkee:Auth:Clients:2:PostLogoutRedirectUris:0"] = SpaUrl,
+            ["Coworkee:Auth:Clients:2:Scopes:0"] = "Shop",
+            ["Coworkee:Auth:Clients:2:ShowInLauncher"] = "false",
+            ["Coworkee:Auth:Clients:2:AllowImpersonation"] = "true",
+            ["Coworkee:Auth:ApiScopes:Shop"] = "test_api",
+            ["Coworkee:Cors:Origins:0"] = SpaUrl,
             ["Coworkee:Jobs:ConnectionStringName"] = "test",
             ["Coworkee:Jobs:RunServer"] = "false",
             ["Coworkee:Account:PublicAuthUrl"] = "http://localhost",

@@ -34,6 +34,7 @@ public static class CoworkeeWebApplicationExtensions
         builder.Services.Configure<CoworkeeRateLimitOptions>(builder.Configuration.GetSection(CoworkeeRateLimitOptions.Section));
         builder.Services.Configure<Contracts.Configuration.CoworkeeServicesOptions>(builder.Configuration.GetSection(Contracts.Configuration.CoworkeeServicesOptions.Section));
         builder.Services.Configure<Contracts.Configuration.CoworkeeAspireUIOptions>(builder.Configuration.GetSection(Contracts.Configuration.CoworkeeAspireUIOptions.Section));
+        builder.Services.AddCoworkeeCors(builder.Configuration);
         builder.Services.AddRateLimiter(_ => { });
         builder.Services.AddOptions<RateLimiterOptions>().Configure<IOptions<CoworkeeRateLimitOptions>>(CoworkeeRateLimiter.Configure);
         var modules = builder.Services.AddCoworkeeModules<TRoot>(builder.Configuration);
@@ -61,6 +62,8 @@ public static class CoworkeeWebApplicationExtensions
     public static WebApplication UseCoworkee(this WebApplication app)
     {
         app.UseExceptionHandler();
+        // before the modules: the auth server answers discovery and token requests in its authentication handler
+        app.UseCors(CoworkeeCors.Policy);
         app.UseRequestLocalization(RequestCultures);
         foreach (var module in app.Services.GetRequiredService<IReadOnlyList<CoworkeeModule>>().OfType<IWebModule>())
         {

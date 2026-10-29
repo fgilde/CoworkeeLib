@@ -14,6 +14,8 @@ public sealed class CoworkeeSection
 
     public ApiAuthenticationOptions ApiAuth { get; } = new();
 
+    public CoworkeeCorsOptions Cors { get; } = new();
+
     public StorageOptions Storage { get; } = new();
 
     public NotificationOptions Notifications { get; } = new();
