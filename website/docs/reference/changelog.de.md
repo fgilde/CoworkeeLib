@@ -2,6 +2,22 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- Single-Page-Apps im App-Host: `app.AddSpaClient(clientId, resource, endpointName, scopes, apiScopeAliases, allowImpersonation, redirectPath)` registriert einen öffentlichen Client mit PKCE an der Adresse der Ressource (in einem Deployment ein Parameter `{name}-{resource}-url`), API-Scope-Aliase mit der Audience der API und den Origin der Ressource in der CORS-Policy. Siehe [Aspire](../hosting/aspire.md#single-page-apps).
+- CORS: `UseCoworkee` setzt auf Auth-Server und APIs eine Policy mit genau den Origins aus `Coworkee:Cors:Origins` (`CoworkeeCorsOptions`), ohne Credentials; Endpunkte schalten Credentials mit `.RequireCors(CoworkeeCors.WithCredentials)` ein, der Realtime-Hub tut das. Ohne Origins ist wie bisher nichts von anderen Origins erlaubt; `*` verhindert den Start. Siehe [Clients](../security/clients.md#aufrufe-von-anderen-origins-cors).
+- `PUT /api/v1/identity/me/password` (`ChangeMyPassword`, `ChangePasswordRequest`): das eigene neue Passwort mit dem aktuellen, Passwortregeln und Historie, abgelehnt während einer Übernahme und mit API-Schlüsseln, begrenzt wie die Anmeldung; die anderen Sitzungen enden, die aufrufende behält ihre Tokens. Siehe [Clients](../security/clients.md#das-eigene-passwort-andern).
+- Der Auth-Server meldet das Ende einer Übernahme (Zurück, Ablauf, Widerruf, Abmelden) über die Outbox (`ImpersonationEnded`); die API schickt `RealtimeEventTypes.ImpersonationEnded` (`ImpersonationEndedPayload`) auf das Benutzer-Topic des Ziels, `SessionGuard` meldet die übernommene Blazor-Sitzung neu an. Siehe [Identität](../features/identity.md#als-anderer-benutzer-anmelden).
+- `IPermissionChecker.UsersGrantedAsync` und `GET /api/v1/identity/users/granted` (`GetUsersGrantedQuery`, `Identity.Users.View`): Benutzer der Organisation, die eine Berechtigung über Rollen, eigene und Gruppen-Berechtigungen haben, optional in einem Teilbaum von Gruppen, seitenweise. Siehe [Berechtigungen](../security/permissions.md#wer-eine-berechtigung-hat).
+- `Coworkee.Testing`: Die Test-Anmeldung nimmt weitere Claims nach dem dritten Teil ihres Headers (`Test {user};{tenant};;sid=abc`).
+
+### Geändert
+
+- Ein falsches aktuelles Passwort bei `POST /api/v1/identity/me/email` zählt wieder zur Sperre (der Fehlversuch wurde nicht gespeichert).
+- `IPermissionChecker` hat das neue Mitglied `UsersGrantedAsync` mit einer Standardimplementierung (eine leere Seite). Neue Endpunkte: OpenAPI-Snapshots und SDKs neu erzeugen.
+
 ## 0.0.1.42 (2026-10-28)
 
 - Benachrichtigungen: Ein Typ kann eine Mail-Vorlage nennen (`mailTemplate`, `NotificationType.MailTemplate`), die das neue `NotificationMessage.MailModel` neben `user` und `notification` rendert; das Modell wird als JSON mit der wartenden Mail gespeichert, verzögerte und zusammengefasste Mails rendern also das neueste. `resolveEmailDelay` (`NotificationType.ResolveEmailDelay`) nimmt die Mail-Verzögerung beim Veröffentlichen von der Organisation des Absenders (ein Feature, eine Einstellung); `emailDelay` bleibt der Standard. `NotificationMailModel.Sample(model)` ist das Beispiel für Vorschau und Testmail einer solchen Vorlage. Mail-Modelle dürfen Dictionaries oder JSON-Objekte sein. Ein Modell mit einem reservierten Namen auf oberster Ebene (`user`, `notification`, Variablen des Layouts, Scriban-Builtins) oder größer als 32 KB wird mit einer `ArgumentException` abgewiesen; eine Vorlage, die sich nicht rendern lässt, fällt auf die allgemeine Mail zurück, ein scheiternder Verzögerungs-Resolver auf `emailDelay`, ohne den Befehl scheitern zu lassen. Typen ohne Vorlage und Mails ohne Modell mailen wie bisher. Apps brauchen eine Migration. Siehe [Echtzeit](../modules/realtime.md#mail-vorlagen-pro-typ-und-verzogerung-pro-organisation).

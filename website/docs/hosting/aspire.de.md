@@ -72,6 +72,27 @@ Explizite Aufrufe funktionieren weiter und haben Vorrang: Ein Projekt, das vor `
 
 Ruf sie in dieser Reihenfolge auf (`AddProjects()` tut das). `AddWeb` vor `AddAuthServer` wirft eine Exception, die genau das sagt.
 
+### Single-Page-Apps
+
+Eine Browser-App, die sich selbst am Auth-Server anmeldet und ihr Access Token an die API schickt, ohne BFF (etwa eine React- oder Angular-App), ist ein öffentlicher Client. `AddSpaClient` registriert sie für jede Ressource mit HTTP-Endpunkt, nach der API:
+
+```csharp
+var app = builder.AddCoworkeeApp("shop").AddProjects();
+var spa = builder.AddJavaScriptApp("spa", "../../frontend", "dev").WithHttpEndpoint(port: 4200, env: "PORT");
+app.AddSpaClient("spa", spa, scopes: ["files"], apiScopeAliases: ["Shop"], allowImpersonation: true);
+```
+
+| Was | Wert |
+|---|---|
+| Client | `spa`, öffentlich (ohne Secret), Authorization Code mit PKCE plus Refresh-Tokens, implizite Zustimmung |
+| Redirect- und Abmelde-Adresse | genau die Adresse des Endpunkts (`endpointName`, Standard `http`), plus `redirectPath`, wenn angegeben; Startadresse im Launcher |
+| Scopes | der Scope der API `{name}_api`, die übergebenen `scopes` und die Aliase |
+| API-Scope-Aliase | jeder Alias ist ein weiterer Scope mit der Audience der API (`Coworkee:Auth:ApiScopes:Shop = shop_api`), für Apps, die einen Scope mit eigenem Namen anfordern |
+| Übernahme | `allowImpersonation: true` lässt [Anmelden als](../features/identity.md#als-anderer-benutzer-anmelden) die App erreichen |
+| CORS | der Origin kommt in `Coworkee:Cors:Origins` des Auth-Servers und jeder bis dahin hinzugefügten API (siehe [CORS](../security/clients.md#aufrufe-von-anderen-origins-cors)) |
+
+In einem Deployment kommt die Adresse aus dem Parameter `{name}-{resource}-url` (z. B. `https://spa.example.com`), wie die öffentlichen Adressen der Dienste. Die App selbst braucht die Adressen von Auth-Server und API; gib sie ihr so mit, wie sie sie liest (`WithEnvironment`).
+
 ## Infrastruktur aus den Paketen
 
 Bevor Coworkee einen Dienst verdrahtet, liest es dessen `obj/project.assets.json` und schaut, welche Pakete und Projekte er nutzt, direkt oder über andere Projekte:

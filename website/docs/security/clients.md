@@ -98,7 +98,22 @@ Administrators cannot end their own session this way, and only administrators ca
 
 A new password changes the stamp too, so changing it ends the other sessions: their tokens and refresh tokens are refused, their realtime connections close, their sign-in at the auth server no longer counts. The session that changed it keeps going: every sign-in at the auth server gets a session id that goes into its tokens (`sid`), and the user's record keeps that id with the stamp before (`KeptSession`). Its tokens stay valid until their next refresh, which issues them for the new stamp; any later stamp change voids the exception.
 
+Apps without the account pages change it through the API, with the same rules: `PUT /api/v1/identity/me/password` with `{ currentPassword, newPassword }` answers `204`. A wrong current password answers `400` (field `CurrentPassword`) and counts towards the lockout, the password rules and the history answer `400` (field `NewPassword`), an account without password `409` (`account.no_password`). It is refused while signed in as another user (`auth.impersonating`) and with an API key (`account.own_sign_in_required`), and limited like the sign-in (rate limit policy `auth`). The calling session keeps its tokens through the `sid` of its access token; a token without one ends with the others. The auth server's sign-in cookie of that browser no longer counts, the next sign-in there asks for the new password.
+
 Other modules hook in with `IUserSessionListener` (called after an administrator ended a user's sessions).
+
+## Cross-origin calls (CORS)
+
+Browser apps on another origin (the [single-page apps](../hosting/aspire.md#single-page-apps) of the app host) call the auth server (discovery, keys, token) and the API directly. `UseCoworkee` applies a CORS policy on both that allows exactly the origins of `Coworkee:Cors:Origins`, and none when the list is empty:
+
+```json
+"Coworkee": { "Cors": { "Origins": [ "https://spa.example.com" ] } }
+```
+
+- An entry is scheme, host and port; a path is ignored, `*` or anything that is no http(s) address stops the start.
+- Any method and header, `Content-Disposition` readable, preflights cached for ten minutes. No credentials: the app sends its token in the `Authorization` header, never a cookie.
+- Endpoints a browser has to call with credentials opt in with `.RequireCors(CoworkeeCors.WithCredentials)`, same origins plus `Access-Control-Allow-Credentials`. The realtime hub does, because SignalR's browser client negotiates with credentials.
+- Other origins get no CORS headers, so the browser refuses the answer; calls from the same origin and from servers are not affected.
 
 ## Password rules and lockout
 

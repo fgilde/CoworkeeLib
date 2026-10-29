@@ -72,6 +72,27 @@ Explicit calls still work and win: a project added before `AddProjects()` is not
 
 Call them in this order (`AddProjects()` does). Calling `AddWeb` before `AddAuthServer` throws and says so.
 
+### Single-page apps
+
+A browser app that signs in at the auth server itself and sends its access token to the API, without a BFF (a React or Angular app, for example), is a public client. `AddSpaClient` registers it for any resource with an HTTP endpoint, after the api:
+
+```csharp
+var app = builder.AddCoworkeeApp("shop").AddProjects();
+var spa = builder.AddJavaScriptApp("spa", "../../frontend", "dev").WithHttpEndpoint(port: 4200, env: "PORT");
+app.AddSpaClient("spa", spa, scopes: ["files"], apiScopeAliases: ["Shop"], allowImpersonation: true);
+```
+
+| What | Value |
+|---|---|
+| Client | `spa`, public (no secret), authorization code with PKCE plus refresh tokens, implicit consent |
+| Redirect and post-logout address | the address of the endpoint (`endpointName`, default `http`) exactly, plus `redirectPath` when given; home address in the launcher |
+| Scopes | the api's scope `{name}_api`, the `scopes` you pass and the aliases |
+| API scope aliases | each alias is a further scope with the api's audience (`Coworkee:Auth:ApiScopes:Shop = shop_api`), for apps that ask for a scope of their own name |
+| Impersonation | `allowImpersonation: true` lets [Log in as](../features/identity.md#log-in-as-another-user) reach the app |
+| CORS | the origin goes into `Coworkee:Cors:Origins` of the auth server and of every api added so far (see [CORS](../security/clients.md#cross-origin-calls-cors)) |
+
+In a deployment the address comes from the parameter `{name}-{resource}-url` (e.g. `https://spa.example.com`), like the public addresses of the services. The app itself needs the addresses of the auth server and the api; pass them as you need (`WithEnvironment`).
+
 ## Infrastructure from the packages
 
 Before wiring a service, Coworkee reads the service's `obj/project.assets.json` and looks at the packages and projects it uses, directly or through other projects:

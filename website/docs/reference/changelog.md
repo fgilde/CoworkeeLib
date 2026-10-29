@@ -2,6 +2,22 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Added
+
+- Single-page apps in the app host: `app.AddSpaClient(clientId, resource, endpointName, scopes, apiScopeAliases, allowImpersonation, redirectPath)` registers a public client with PKCE at the resource's address (a parameter `{name}-{resource}-url` in a deployment), API scope aliases with the api's audience and the resource's origin in the CORS policy. See [Aspire](../hosting/aspire.md#single-page-apps).
+- CORS: `UseCoworkee` applies a policy of the exact origins in `Coworkee:Cors:Origins` (`CoworkeeCorsOptions`) on the auth server and the APIs, without credentials; endpoints opt into credentials with `.RequireCors(CoworkeeCors.WithCredentials)`, the realtime hub does. Without origins nothing cross-origin is allowed, as before; `*` stops the start. See [clients](../security/clients.md#cross-origin-calls-cors).
+- `PUT /api/v1/identity/me/password` (`ChangeMyPassword`, `ChangePasswordRequest`): the own new password with the current one, password rules and history, refused while impersonating and with API keys, rate limited like the sign-in; the other sessions end, the calling one keeps its tokens. See [clients](../security/clients.md#changing-the-own-password).
+- The auth server announces the end of an impersonation (stop, expiry, revocation, sign-out) through the outbox (`ImpersonationEnded`); the api sends `RealtimeEventTypes.ImpersonationEnded` (`ImpersonationEndedPayload`) on the target's user topic, `SessionGuard` signs the impersonated Blazor session in again. See [identity](../features/identity.md#log-in-as-another-user).
+- `IPermissionChecker.UsersGrantedAsync` and `GET /api/v1/identity/users/granted` (`GetUsersGrantedQuery`, `Identity.Users.View`): users of the organisation holding a permission through roles, own and group grants, optionally within a group subtree, paged. See [permissions](../security/permissions.md#who-holds-a-permission).
+- `Coworkee.Testing`: the test authentication takes further claims after the third part of its header (`Test {user};{tenant};;sid=abc`).
+
+### Changed
+
+- A wrong current password of `POST /api/v1/identity/me/email` counts towards the lockout again (the failed attempt was not saved).
+- `IPermissionChecker` has the new member `UsersGrantedAsync` with a default (an empty page). New endpoints: regenerate OpenAPI snapshots and SDKs.
+
 ## 0.0.1.42 (2026-10-28)
 
 - Notifications: a type can name a mail template (`mailTemplate`, `NotificationType.MailTemplate`) that renders the new `NotificationMessage.MailModel` next to `user` and `notification`; the model is stored as JSON with the waiting mail, so delayed and debounced mails render the latest one. `resolveEmailDelay` (`NotificationType.ResolveEmailDelay`) takes the mail delay from the sender's tenant (a feature, a setting) when a notification is published; `emailDelay` stays the default. `NotificationMailModel.Sample(model)` is the sample for the preview and test mail of such a template. Mail models may be dictionaries or JSON objects. A model with a reserved top-level name (`user`, `notification`, layout variables, Scriban builtins) or larger than 32 KB is refused with an `ArgumentException`; a template that fails to render falls back to the generic mail, and a failing delay resolver to `emailDelay`, without failing the command. Types without a template, and mails without a model, mail as before. Apps need a migration. See [realtime](../modules/realtime.md#mail-templates-per-type-and-delay-per-tenant).

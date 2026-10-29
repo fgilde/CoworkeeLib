@@ -98,7 +98,22 @@ Administratoren können ihre eigene Sitzung so nicht beenden, und nur Administra
 
 Ein neues Passwort ändert den Stamp ebenfalls, eine Passwortänderung beendet also die anderen Sitzungen: Ihre Tokens und Refresh-Tokens werden abgelehnt, ihre Realtime-Verbindungen schließen, ihre Anmeldung am Auth-Server zählt nicht mehr. Die Sitzung, in der das Passwort geändert wurde, läuft weiter: Jede Anmeldung am Auth-Server bekommt eine Sitzungs-ID, die in ihre Tokens geht (`sid`), und der Benutzerdatensatz merkt sich diese ID mit dem Stamp davor (`KeptSession`). Ihre Tokens bleiben bis zur nächsten Erneuerung gültig, die sie für den neuen Stamp ausstellt; jede spätere Stamp-Änderung hebt die Ausnahme auf.
 
+Apps ohne die Kontoseiten ändern es über die API, mit denselben Regeln: `PUT /api/v1/identity/me/password` mit `{ currentPassword, newPassword }` antwortet `204`. Ein falsches aktuelles Passwort antwortet `400` (Feld `CurrentPassword`) und zählt zur Sperre, Passwortregeln und Historie antworten `400` (Feld `NewPassword`), ein Konto ohne Passwort `409` (`account.no_password`). Abgelehnt wird es, während jemand als anderer Benutzer angemeldet ist (`auth.impersonating`), und mit einem API-Schlüssel (`account.own_sign_in_required`); es ist begrenzt wie die Anmeldung (Rate-Limit-Policy `auth`). Die aufrufende Sitzung behält ihre Tokens über die `sid` ihres Access Tokens; ein Token ohne sie endet mit den anderen. Das Anmeldecookie des Auth-Servers in diesem Browser zählt nicht mehr, die nächste Anmeldung dort fragt nach dem neuen Passwort.
+
 Andere Module klinken sich mit `IUserSessionListener` ein (aufgerufen, nachdem ein Administrator die Sitzungen eines Benutzers beendet hat).
+
+## Aufrufe von anderen Origins (CORS)
+
+Browser-Apps auf einem anderen Origin (die [Single-Page-Apps](../hosting/aspire.md#single-page-apps) des App-Hosts) rufen den Auth-Server (Discovery, Schlüssel, Token) und die API direkt auf. `UseCoworkee` setzt auf beiden eine CORS-Policy, die genau die Origins aus `Coworkee:Cors:Origins` zulässt, bei leerer Liste keinen:
+
+```json
+"Coworkee": { "Cors": { "Origins": [ "https://spa.example.com" ] } }
+```
+
+- Ein Eintrag ist Schema, Host und Port; ein Pfad wird ignoriert, `*` oder etwas, das keine http(s)-Adresse ist, verhindert den Start.
+- Jede Methode und jeder Header, `Content-Disposition` lesbar, Preflights zehn Minuten gecacht. Keine Credentials: Die App schickt ihr Token im `Authorization`-Header, nie ein Cookie.
+- Endpunkte, die ein Browser mit Credentials aufrufen muss, schalten das mit `.RequireCors(CoworkeeCors.WithCredentials)` ein: dieselben Origins plus `Access-Control-Allow-Credentials`. Der Realtime-Hub tut das, weil der Browser-Client von SignalR mit Credentials verhandelt.
+- Andere Origins bekommen keine CORS-Header, der Browser verwirft also die Antwort; Aufrufe vom selben Origin und von Servern sind nicht betroffen.
 
 ## Passwortregeln und Sperre
 

@@ -391,6 +391,23 @@
           ]
         }
       ]
+    },
+    {
+      "version": "0.0.1.43",
+      "breaking": [
+        "New endpoints PUT /api/v1/identity/me/password and GET /api/v1/identity/users/granted: regenerate OpenAPI snapshots and SDKs.",
+        "UseCoworkee always adds the CORS middleware with the policy of Coworkee:Cors:Origins (empty: no cross-origin calls, as before); an origin '*' or one that is no http(s) address stops the start.",
+        "IPermissionChecker has the new member UsersGrantedAsync with a default implementation (an empty page); own implementations that should answer it implement it."
+      ],
+      "manual": [
+        {
+          "text": "Move own CORS origins for browser apps to Coworkee:Cors:Origins (or app.AddSpaClient in the app host) and drop the own AddCors/UseCors, so one policy applies.",
+          "find": "\\bUseCors\\(|\\bAddCors\\(",
+          "files": [
+            "src/**/*.cs"
+          ]
+        }
+      ]
     }
   ]
 }
