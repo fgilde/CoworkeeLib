@@ -2,6 +2,12 @@
 
 Changes that need action in apps built on Coworkee. Newest first.
 
+## Unreleased
+
+### Changed
+
+- OData: the service document (`/odata`) and `$metadata` need a sign-in on every route (`/odata` and every `AddCoworkeeODataRoute`), anonymous requests get `401`; they listed every set and property name of the model to anyone. Both are served on every host now (before only where MVC's part discovery found OData's assembly). `Coworkee:OData:AnonymousMetadata` (`CoworkeeODataOptions.AnonymousMetadata`, default `false`) opens them again. Clients that read `$metadata` anonymously send a token or set the option. See [OData](../web/odata.md).
+
 ## 0.0.1.43 (2026-10-29)
 
 ### Added

@@ -6,6 +6,12 @@ public sealed class CoworkeeODataOptions
 
     public int MaxTop { get; set; } = 1000;
 
+    /// <summary>
+    /// The service document (<c>/odata</c>) and <c>$metadata</c> of every route answer without sign-in. Off by default: both name every set and property
+    /// of the model, for any role.
+    /// </summary>
+    public bool AnonymousMetadata { get; set; }
+
     public int MaxExportRows { get; set; } = 100_000;
 
     /// <summary>Exports of more rows run as a background job; the user gets a download link when the file is ready.</summary>

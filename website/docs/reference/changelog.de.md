@@ -2,6 +2,12 @@
 
 Änderungen, die in Apps auf Basis von Coworkee Handlungsbedarf auslösen. Neueste zuerst.
 
+## Unveröffentlicht
+
+### Geändert
+
+- OData: Das Service-Dokument (`/odata`) und `$metadata` brauchen auf jeder Route (`/odata` und jede `AddCoworkeeODataRoute`) eine Anmeldung, anonyme Anfragen bekommen `401`; vorher nannten sie jedem jedes Set und jeden Eigenschaftsnamen des Modells. Beide werden jetzt auf jedem Host ausgeliefert (vorher nur, wo die Part-Erkennung von MVC die Assembly von OData fand). `Coworkee:OData:AnonymousMetadata` (`CoworkeeODataOptions.AnonymousMetadata`, Standard `false`) öffnet sie wieder. Clients, die `$metadata` anonym lesen, schicken ein Token oder setzen die Option. Siehe [OData](../web/odata.md).
+
 ## 0.0.1.43 (2026-10-29)
 
 ### Hinzugefügt

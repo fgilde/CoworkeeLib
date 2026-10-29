@@ -417,6 +417,23 @@
           ]
         }
       ]
+    },
+    {
+      "version": "0.0.1.44",
+      "breaking": [
+        "OData: the service document (/odata) and $metadata need a sign-in on every route; anonymous requests get 401. Coworkee:OData:AnonymousMetadata = true opens them again."
+      ],
+      "manual": [
+        {
+          "text": "Clients that read the OData service document or $metadata without a token send one now, or set Coworkee:OData:AnonymousMetadata. An own convention or filter that put a sign-in on OData's MetadataController can go.",
+          "find": "MetadataController|\\$metadata",
+          "files": [
+            "src/**/*.cs",
+            "src/**/*.ts",
+            "src/**/*.js"
+          ]
+        }
+      ]
     }
   ]
 }
