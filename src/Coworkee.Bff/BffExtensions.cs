@@ -201,6 +201,21 @@ public static class BffExtensions
             });
         }
 
+        // the session cookie is the credential here: no other origin may read answers sent with it, whatever CORS headers the API forwards
+        app.Use((context, next) =>
+        {
+            context.Response.OnStarting(() =>
+            {
+                foreach (var header in context.Response.Headers.Keys.Where(k => k.StartsWith("Access-Control-", StringComparison.OrdinalIgnoreCase)).ToList())
+                {
+                    context.Response.Headers.Remove(header);
+                }
+
+                return Task.CompletedTask;
+            });
+            return next(context);
+        });
+
         app.Use(async (context, next) =>
         {
             var unsafeMethod = !HttpMethods.IsGet(context.Request.Method) && !HttpMethods.IsHead(context.Request.Method) && !HttpMethods.IsOptions(context.Request.Method);

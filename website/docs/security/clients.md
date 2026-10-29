@@ -114,6 +114,7 @@ Browser apps on another origin (the [single-page apps](../hosting/aspire.md#sing
 - Any method and header, `Content-Disposition` readable, preflights cached for ten minutes. No credentials: the app sends its token in the `Authorization` header, never a cookie.
 - Endpoints a browser has to call with credentials opt in with `.RequireCors(CoworkeeCors.WithCredentials)`, same origins plus `Access-Control-Allow-Credentials`. The realtime hub does, because SignalR's browser client negotiates with credentials.
 - Other origins get no CORS headers, so the browser refuses the answer; calls from the same origin and from servers are not affected.
+- The web host (BFF) removes every `Access-Control-*` header from its answers, also those it forwards from the API: there the session cookie is the credential, so no other origin may read what it answers.
 
 ## Password rules and lockout
 

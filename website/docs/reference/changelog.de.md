@@ -15,6 +15,7 @@
 
 ### Geändert
 
+- Der BFF entfernt `Access-Control-*`-Header aus seinen Antworten, CORS-Header, die die API für Single-Page-Apps setzt, gelten also nie für die über den Web-Host weitergeleitete Cookie-Sitzung.
 - PKCE nimmt nur noch `S256`-Challenges: Der Auth-Server nahm vorher auch `plain` (und eine Challenge ohne Methode); Clients, die `plain` schicken, bekommen `invalid_request`.
 - Ein falsches aktuelles Passwort bei `POST /api/v1/identity/me/email` zählt wieder zur Sperre (der Fehlversuch wurde nicht gespeichert).
 - `IPermissionChecker` hat das neue Mitglied `UsersGrantedAsync` mit einer Standardimplementierung (eine leere Seite). Neue Endpunkte: OpenAPI-Snapshots und SDKs neu erzeugen.

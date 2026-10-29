@@ -114,6 +114,7 @@ Browser-Apps auf einem anderen Origin (die [Single-Page-Apps](../hosting/aspire.
 - Jede Methode und jeder Header, `Content-Disposition` lesbar, Preflights zehn Minuten gecacht. Keine Credentials: Die App schickt ihr Token im `Authorization`-Header, nie ein Cookie.
 - Endpunkte, die ein Browser mit Credentials aufrufen muss, schalten das mit `.RequireCors(CoworkeeCors.WithCredentials)` ein: dieselben Origins plus `Access-Control-Allow-Credentials`. Der Realtime-Hub tut das, weil der Browser-Client von SignalR mit Credentials verhandelt.
 - Andere Origins bekommen keine CORS-Header, der Browser verwirft also die Antwort; Aufrufe vom selben Origin und von Servern sind nicht betroffen.
+- Der Web-Host (BFF) entfernt jeden `Access-Control-*`-Header aus seinen Antworten, auch aus denen, die er von der API weiterleitet: Dort ist das Sitzungscookie das Credential, kein anderer Origin darf also lesen, was er antwortet.
 
 ## Passwortregeln und Sperre
 

@@ -15,6 +15,7 @@ Changes that need action in apps built on Coworkee. Newest first.
 
 ### Changed
 
+- The BFF removes `Access-Control-*` headers from its answers, so CORS headers the API sets for single-page apps never apply to the cookie session forwarded through the web host.
 - PKCE takes only `S256` challenges: the auth server accepted `plain` (and a challenge without method) before; clients that send `plain` get `invalid_request`.
 - A wrong current password of `POST /api/v1/identity/me/email` counts towards the lockout again (the failed attempt was not saved).
 - `IPermissionChecker` has the new member `UsersGrantedAsync` with a default (an empty page). New endpoints: regenerate OpenAPI snapshots and SDKs.
